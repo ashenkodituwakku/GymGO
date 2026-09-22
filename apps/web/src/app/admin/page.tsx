@@ -7,6 +7,12 @@ import { loadGyms } from '@/server/gyms';
 import { readStore } from '@/server/store';
 import { titleCase } from '@/lib/format';
 
+/**
+ * Rendered per request, never prerendered: what this page shows depends
+ * entirely on who is asking and on data that changes between requests.
+ */
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Moderation',
   robots: { index: false, follow: false },

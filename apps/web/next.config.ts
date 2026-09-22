@@ -2,6 +2,12 @@ import type { NextConfig } from 'next';
 
 const config: NextConfig = {
   reactStrictMode: true,
+  /*
+   * The build output directory is overridable so a production build (or the
+   * end-to-end suite, which runs one) does not overwrite the artefacts a dev
+   * server is serving from.
+   */
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
   // The domain package ships TypeScript source so web and future Expo clients
   // compile the same rules rather than a drifting published build.
   transpilePackages: ['@gymgo/domain'],

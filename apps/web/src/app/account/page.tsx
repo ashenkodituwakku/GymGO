@@ -3,6 +3,12 @@ import Link from 'next/link';
 import { PERSONAS, authEnabled, getCurrentUser } from '@/server/auth';
 import { config } from '@/server/config';
 
+/**
+ * Rendered per request, never prerendered: what this page shows depends
+ * entirely on who is asking and on data that changes between requests.
+ */
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Account',
   robots: { index: false, follow: false },

@@ -74,6 +74,14 @@ export function FilterPanel({
 
   const dumbbellsSelected = requiredEquipment.includes('dumbbells');
 
+  /*
+   * These inputs are uncontrolled so typing stays responsive, which means
+   * React will not update their DOM value when the URL changes underneath
+   * them — including on back navigation. Keying each one to its value from the
+   * URL remounts it, so the controls always show the search that is actually
+   * running.
+   */
+
   return (
     <form
       className="search-filters"
@@ -89,6 +97,7 @@ export function FilterPanel({
           Suburb or postcode
         </label>
         <input
+          key={`q-${text}`}
           id="filter-q"
           name="q"
           type="search"
@@ -102,6 +111,7 @@ export function FilterPanel({
           Within {radiusKm} km
         </label>
         <input
+          key={`r-${radiusKm}`}
           id="filter-r"
           name="r"
           type="range"
@@ -119,6 +129,7 @@ export function FilterPanel({
         <legend>When you want to train</legend>
         <div className="row" style={{ flexWrap: 'nowrap', gap: 8 }}>
           <input
+            key={`date-${visitDate}`}
             name="date"
             type="date"
             aria-label="Visit date"
@@ -126,6 +137,7 @@ export function FilterPanel({
             onChange={(event) => setValue('date', event.currentTarget.value)}
           />
           <input
+            key={`time-${visitTime}`}
             name="time"
             type="time"
             aria-label="Visit time"
@@ -144,6 +156,7 @@ export function FilterPanel({
           Visit budget (A$)
         </label>
         <input
+          key={`budget-${budget}`}
           id="filter-budget"
           name="budget"
           type="number"
@@ -187,6 +200,7 @@ export function FilterPanel({
             Heaviest dumbbell pair, at least (kg)
           </label>
           <input
+            key={`db-${dumbbellMin}`}
             id="filter-db"
             name="db"
             type="number"
@@ -230,6 +244,7 @@ export function FilterPanel({
           Do you live or work locally?
         </label>
         <select
+          key={`resident-${isLocalResident}`}
           id="filter-resident"
           name="resident"
           defaultValue={isLocalResident}
@@ -250,6 +265,7 @@ export function FilterPanel({
           Sort by
         </label>
         <select
+          key={`sort-${sort}`}
           id="filter-sort"
           name="sort"
           defaultValue={sort}

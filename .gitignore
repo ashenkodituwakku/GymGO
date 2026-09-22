@@ -1,9 +1,13 @@
 node_modules/
 .next/
+.next-e2e/
 out/
 dist/
 coverage/
 *.tsbuildinfo
+
+# End-to-end test store
+.data-e2e/
 
 # Local runtime data written by the file-backed dev store.
 # Production uses PostgreSQL/PostGIS; see docs/ARCHITECTURE.md.

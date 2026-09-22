@@ -92,10 +92,19 @@ async function ensureUser(personaId: string): Promise<User> {
   });
 }
 
-/** The caller, or the anonymous user. Never throws; browsing needs no account. */
+/**
+ * The caller, or the anonymous user. Never throws; browsing needs no account.
+ *
+ * `cookies()` is read before anything else, unconditionally. Reading it is
+ * what marks a page as per-request, and a page whose content depends on who is
+ * asking must never be prerendered at build time — a statically generated
+ * moderation queue or owner dashboard would serve everyone the empty state it
+ * was built with. Doing the read first means that cannot depend on which
+ * adapter happens to be configured when the build runs.
+ */
 export async function getCurrentUser(): Promise<User> {
-  if (!authEnabled()) return ANONYMOUS;
   const jar = await cookies();
+  if (!authEnabled()) return ANONYMOUS;
   const userId = jar.get(COOKIE_NAME)?.value;
   if (!userId) return ANONYMOUS;
 

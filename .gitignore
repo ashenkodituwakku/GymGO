@@ -1,0 +1,23 @@
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Local runtime data written by the file-backed dev store.
+# Production uses PostgreSQL/PostGIS; see docs/ARCHITECTURE.md.
+.data/
+
+# Environment files. Only .env.example is committed.
+.env
+.env.local
+.env.*.local
+
+# Test artefacts
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+.DS_Store

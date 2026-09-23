@@ -1,9 +1,9 @@
 /**
- * The map, on iOS and Android.
+ * The map, on iPhone.
  *
- * react-native-maps draws with Apple's MapKit on iPhone (no key, no account)
- * and Google Maps on Android. In Expo Go both work as-is; a standalone Android
- * build needs a Google Maps key — see docs/STATUS.md.
+ * react-native-maps draws with Apple's MapKit (no key, no account). Android
+ * uses GymMap.android.tsx instead, because Google Maps doesn't load in Expo
+ * Go on Android at the moment.
  *
  * Apple's and Google's own points of interest are switched off: these are
  * invented demo gyms, and a real business label appearing beside one would

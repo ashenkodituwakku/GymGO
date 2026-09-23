@@ -81,8 +81,8 @@ service, which is your decision to make. Nothing has been provisioned.
   They were taken in Chromium, not on a phone. They show the blur fallback,
   not Liquid Glass, and MapLibre, not MapKit or Google Maps.
 
-**Not done, and it matters:** the app has **never run on a physical phone or a
-simulator.** This machine has no iOS simulator and no Android emulator. Nothing
+**Not done, and it matters:** apart from the Android map report above, the app
+has **not been checked on a physical phone or a simulator**. This machine has no iOS simulator and no Android emulator. Nothing
 about touch, gestures, keyboard behaviour, haptics, safe areas, the native map,
 Liquid Glass or performance has been observed. The first run in Expo Go on a
 real phone is the next test. Expect to fix things there.
@@ -91,11 +91,17 @@ real phone is the next test. Expect to fix things there.
 
 - **iPhone:** Apple MapKit through react-native-maps. It needs no key and no
   account.
-- **Android in Expo Go:** Google Maps inside Expo Go works as it is.
-- **A standalone Android build:** needs a Google Maps API key, which means a
-  Google Cloud account with billing enabled. None has been obtained or used.
-- **Web preview:** OpenFreeMap tiles (OpenStreetMap data). They are free, with
-  attribution, and the credit is kept visible above the sheet.
+- **Android:** first tested on a real phone (a Nothing Phone (3a) in Expo
+  Go), where Google Maps stayed blank. That is a current Expo Go bug
+  (expo/expo#49323, open). Android now draws the map in a web view with
+  MapLibre and OpenFreeMap tiles, the same as the PC. So no Google Maps key
+  is needed, now or for a standalone build. That page was tested in a
+  phone-sized Chromium: tiles, pins, the selected pin, padding for the sheet,
+  and pin taps reaching the app. It has **not** yet been confirmed on the
+  phone. It needs an internet connection on the phone to fetch the map
+  library and tiles. There is no "you are here" dot on Android yet.
+- **PC (browser):** OpenFreeMap tiles (OpenStreetMap data). They are free,
+  with attribution, and the credit is kept visible above the sheet.
 
 Apple's and Google's own place labels are switched off, so no real business
 appears next to an invented one. On Android that is a map style rule, which has

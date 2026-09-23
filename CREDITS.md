@@ -10,7 +10,8 @@ one row of actions), not from borrowing its assets.
 | Component | What it does here | Licence |
 |---|---|---|
 | [@gorhom/bottom-sheet](https://github.com/gorhom/react-native-bottom-sheet) | The results sheet, place card and filters: the draggable Maps-style sheets | MIT |
-| [react-native-maps](https://github.com/react-native-maps/react-native-maps) | The map: Apple MapKit on iPhone, Google Maps on Android | MIT |
+| [react-native-maps](https://github.com/react-native-maps/react-native-maps) | The map on iPhone (Apple MapKit) | MIT |
+| [react-native-webview](https://github.com/react-native-webview/react-native-webview) | Hosts the Android map (MapLibre + OpenFreeMap) | MIT |
 | [expo-glass-effect](https://docs.expo.dev/versions/latest/sdk/glass-effect/) | Liquid Glass on iOS 26 for the floating controls | MIT |
 | [expo-blur](https://docs.expo.dev/versions/latest/sdk/blur-view/) | System blur materials where Liquid Glass isn't available | MIT |
 | [expo-symbols](https://docs.expo.dev/versions/latest/sdk/symbols/) | Icons: SF Symbols on iPhone, Material Symbols elsewhere | MIT |
@@ -44,9 +45,9 @@ every real listing and at the foot of the results. Prices, hours and
 equipment were read from each gym's own website, and each fact links to its
 page.
 
-## Map tiles (browser)
+## Map tiles (PC and Android)
 
-In the browser (the PC version), the map is drawn with
+On the PC and on Android, the map is drawn with
 [MapLibre GL JS](https://maplibre.org/) (BSD-3-Clause) and tiles from
 [OpenFreeMap](https://openfreemap.org/). The credit shown on the map is a
 licence condition and must stay visible:

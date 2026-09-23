@@ -3,7 +3,7 @@
  * it is unit-tested with the copy.
  */
 
-import { formatMoney, type OfferSelection } from '@gymgo/domain';
+import { formatMoney, type GymRecord, type OfferSelection } from '@gymgo/domain';
 
 export interface PriceLine {
   headline: string;
@@ -39,4 +39,14 @@ export function depositLine(offers: OfferSelection): string | null {
   const deposit = formatMoney(cost.depositsMinor, cost.currency);
   if (cost.cashNeededTodayMinor === null) return `Plus a ${deposit} refundable deposit.`;
   return `Plus a ${deposit} refundable deposit — ${formatMoney(cost.cashNeededTodayMinor, cost.currency)} on the day.`;
+}
+
+/**
+ * A Google Maps search for the gym. Maps URLs need no key and cost nothing,
+ * so this works even when the live Google details are switched off.
+ */
+export function googleMapsSearchUrl(record: GymRecord): string {
+  const { name, address } = record.location;
+  const query = [name, address.line1, address.suburb, address.state].filter(Boolean).join(', ');
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }

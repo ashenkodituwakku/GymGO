@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { depositLine, priceLine } from './present';
+import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
+import { depositLine, googleMapsSearchUrl, priceLine } from './present';
 import { atPlace, initialFilters, runSearch } from './query';
 import { geocodePlace } from './places';
 
@@ -57,5 +58,17 @@ describe('depositLine', () => {
 
   it('is absent when there is no deposit', () => {
     expect(depositLine(resultFor('Ironbark Strength Co.').offers)).toBeNull();
+  });
+});
+
+describe('googleMapsSearchUrl', () => {
+  it('searches Google Maps by name and address, with no key in the link', () => {
+    const gym = MELBOURNE_GYMS.find((record) => record.location.id === 'dohertys-gym-city')!;
+    const url = googleMapsSearchUrl(gym);
+    expect(url.startsWith('https://www.google.com/maps/search/?api=1&query=')).toBe(true);
+    const query = decodeURIComponent(url.split('query=')[1]!);
+    expect(query).toContain(gym.location.name);
+    expect(query).toContain(gym.location.address.line1);
+    expect(url).not.toMatch(/key=/i);
   });
 });

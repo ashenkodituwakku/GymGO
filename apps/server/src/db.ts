@@ -51,6 +51,19 @@ const SCHEMA = `
     moderated_by text
   );
   create index if not exists reviews_gym on reviews(gym_id, status);
+  create table if not exists photos (
+    id text primary key,
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    type text not null check (type in ('jpeg', 'png')),
+    bytes integer not null,
+    status text not null default 'pending' check (status in ('pending', 'published', 'rejected', 'removed')),
+    moderation_reason text,
+    created_at text not null,
+    moderated_at text,
+    moderated_by text
+  );
+  create index if not exists photos_gym on photos(gym_id, status);
   create table if not exists gyms (
     id text primary key,
     record_json text not null,
@@ -105,4 +118,10 @@ export function allGyms(db: Db): GymRecord[] {
 
 export function gymExists(db: Db, gymId: string): boolean {
   return db.prepare('select 1 from gyms where id = ?').get(gymId) !== undefined;
+}
+
+/** True for the invented demo gyms, which nobody can have photographed. */
+export function gymIsDemo(db: Db, gymId: string): boolean {
+  const row = db.prepare('select is_demo from gyms where id = ?').get(gymId) as { is_demo: number } | undefined;
+  return row?.is_demo === 1;
 }

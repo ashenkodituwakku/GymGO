@@ -8,7 +8,7 @@
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
-import { explainNoMatches, type ResultTier, type SearchOutcome } from '@gymgo/domain';
+import { explainNoMatches, type SearchOutcome } from '@gymgo/domain';
 import { suggestPlaces, type AppPlace } from '@/lib/places';
 import { EMPTY, PLACEHOLDER, TIER, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
 import { activeFilterCount, type Filters } from '@/lib/query';
@@ -17,8 +17,6 @@ import { haptic } from '@/lib/haptics';
 import { GymRow } from './GymRow';
 import { Icon } from './Icon';
 import { Chip, TIER_COLOUR, Txt } from './ui';
-
-const TIER_ORDER: ResultTier[] = ['confirmed', 'needs_confirmation', 'ruled_out'];
 
 /** A critically-damped spring: rows glide to their new place, no bounce. */
 const GLIDE = LinearTransition.springify().damping(26).stiffness(260);
@@ -41,6 +39,7 @@ export function ResultsContent({
   accountInitial,
   onOpenAccount,
   dataNote,
+  covers,
 }: {
   outcome: SearchOutcome;
   filters: Filters;
@@ -62,6 +61,8 @@ export function ResultsContent({
   onOpenAccount: () => void;
   /** The line at the foot of the list about where the data comes from. */
   dataNote: string;
+  /** Each gym's newest member photo, by gym ID. */
+  covers: Record<string, string>;
 }) {
   const SearchInput = inSheet ? BottomSheetTextInput : TextInput;
   const suggestions = query.trim() ? suggestPlaces(query) : [];
@@ -196,15 +197,15 @@ export function ResultsContent({
         </View>
       )}
 
-      {/* Nothing fits --------------------------------------------------- */}
-      {total > 0 && outcome.counts.confirmed === 0 && (
+      {/* Nothing is a sure thing ------------------------------------------ */}
+      {total > 0 && outcome.counts.confirmed === 0 && filterCount === 0 && (
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.hint}>
+          {EMPTY.unconfirmedLine}
+        </Txt>
+      )}
+      {total > 0 && outcome.counts.confirmed === 0 && filterCount > 0 && (
         <View style={styles.explain}>
-          <Txt variant="headline">{filterCount === 0 ? EMPTY.unconfirmed : EMPTY.results}</Txt>
-          {filterCount === 0 && (
-            <Txt variant="footnote" color={color.labelSecondary} style={styles.explainLine}>
-              {EMPTY.unconfirmedLine}
-            </Txt>
-          )}
+          <Txt variant="headline">{EMPTY.results}</Txt>
           {explainNoMatches(outcome)
             .slice(0, 2)
             .map((line) => (
@@ -228,33 +229,25 @@ export function ResultsContent({
         </View>
       )}
 
-      {/* Results -------------------------------------------------------- */}
-      {TIER_ORDER.map((tier) => {
-        const group = outcome.results.filter((result) => result.tier === tier);
-        if (group.length === 0) return null;
-        const tone = TIER_COLOUR[tier];
-        return (
-          <Animated.View
-            key={tier}
-            style={styles.group}
-            entering={FadeIn.duration(220)}
-            exiting={FadeOut.duration(140)}
-            layout={GLIDE}
-          >
-            <View style={styles.groupHeader}>
-              <View style={[styles.dot, { backgroundColor: tone.fill }]} />
-              <Txt variant="headline" color={tone.ink}>
-                {TIER[tier].label}
-              </Txt>
-              <Txt variant="footnote" color={color.labelSecondary}>
-                {group.length}
-              </Txt>
-            </View>
-            <Txt variant="footnote" color={color.labelSecondary} style={styles.groupLine}>
-              {TIER[tier].line}
-            </Txt>
+      {/* Results: one list, best first; the ones that don't fit sit apart. */}
+      {[
+        { key: 'fits', title: null, list: outcome.results.filter((result) => result.tier !== 'ruled_out') },
+        { key: 'misses', title: `${TIER.ruled_out.emoji} ${TIER.ruled_out.label}`, list: outcome.results.filter((result) => result.tier === 'ruled_out') },
+      ].map((group) =>
+        group.list.length === 0 ? null : (
+          <Animated.View key={group.key} style={styles.group} entering={FadeIn.duration(220)} exiting={FadeOut.duration(140)} layout={GLIDE}>
+            {group.title && (
+              <View style={styles.groupHeader}>
+                <Txt variant="headline" color={TIER_COLOUR.ruled_out.ink}>
+                  {group.title}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary}>
+                  {group.list.length}
+                </Txt>
+              </View>
+            )}
             <View style={styles.list}>
-              {group.map((result, index) => (
+              {group.list.map((result, index) => (
                 <Animated.View
                   key={result.record.location.id}
                   entering={FadeIn.duration(220)}
@@ -265,14 +258,15 @@ export function ResultsContent({
                   <GymRow
                     result={result}
                     visitMinute={filters.visitMinuteOfDay}
+                    cover={covers[result.record.location.id] ?? null}
                     onPress={() => onSelect(result.record.location.id)}
                   />
                 </Animated.View>
               ))}
             </View>
           </Animated.View>
-        );
-      })}
+        ),
+      )}
 
       <View style={styles.footer}>
         <Txt variant="caption" color={color.labelTertiary} style={styles.footerText}>
@@ -393,17 +387,17 @@ const styles = StyleSheet.create({
     gap: space[1],
   },
   explainLine: { marginTop: 2 },
+  hint: { paddingHorizontal: space[4], marginTop: space[1] },
   relaxations: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2], marginTop: space[3] },
 
-  group: { marginTop: space[5] },
+  group: { marginTop: space[4] },
   groupHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[2],
     paddingHorizontal: space[4],
+    marginBottom: space[2],
   },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  groupLine: { paddingHorizontal: space[4], marginTop: 2, marginBottom: space[2] },
   list: {
     marginHorizontal: space[4],
     // Concentric with the sheet's corners, and a little translucent so the
@@ -413,7 +407,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.82)',
     overflow: 'hidden',
   },
-  rowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 72 },
+  rowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 86 },
 
   footer: { paddingHorizontal: space[6], paddingTop: space[6] },
   footerText: { textAlign: 'center' },

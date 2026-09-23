@@ -1,6 +1,6 @@
 /**
  * Your account: sign in or create one, your saved gyms, and, for moderators,
- * the reviews waiting for a decision.
+ * the reviews and photos waiting for a decision.
  *
  * Accounts live on the GymGO server on your own computer. Nothing is sent
  * anywhere else, and no email is sent to you: an email address here is just
@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import type { GymRecord, Review } from '@gymgo/domain';
 import { api, ApiError, OfflineError } from '@/lib/api';
 import type { AccountApi } from '@/lib/useAccount';
@@ -31,15 +31,18 @@ export function AccountContent({
   inSheet,
   onOpenGym,
   onClose,
+  onPhotosChanged,
 }: {
   account: AccountApi;
   records: GymRecord[];
   inSheet: boolean;
   onOpenGym: (id: string) => void;
   onClose: () => void;
+  /** A photo was published, so list thumbnails may have changed. */
+  onPhotosChanged: () => void;
 }) {
   if (account.state === 'signed_in' && account.account) {
-    return <SignedIn account={account} records={records} onOpenGym={onOpenGym} onClose={onClose} />;
+    return <SignedIn account={account} records={records} onOpenGym={onOpenGym} onClose={onClose} onPhotosChanged={onPhotosChanged} />;
   }
   return <SignInForm account={account} inSheet={inSheet} />;
 }
@@ -155,11 +158,13 @@ function SignedIn({
   records,
   onOpenGym,
   onClose,
+  onPhotosChanged,
 }: {
   account: AccountApi;
   records: GymRecord[];
   onOpenGym: (id: string) => void;
   onClose: () => void;
+  onPhotosChanged: () => void;
 }) {
   const me = account.account!;
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -221,6 +226,7 @@ function SignedIn({
         </View>
       )}
 
+      {moderator && account.token && <PhotoQueue token={account.token} records={records} onPublished={onPhotosChanged} />}
       {moderator && account.token && <ModerationQueue token={account.token} records={records} />}
 
       {error && <Notice icon="info" text={error} tone="danger" />}
@@ -244,7 +250,7 @@ function SignedIn({
         />
       </View>
       <Txt variant="caption" color={color.labelTertiary} style={styles.small}>
-        Deleting removes your account, saved gyms and reviews from the server.
+        Deleting removes your account, saved gyms, reviews and photos from the server.
       </Txt>
     </View>
   );
@@ -309,6 +315,78 @@ function ModerationQueue({ token, records }: { token: string; records: GymRecord
   );
 }
 
+/**
+ * Members' photos waiting for a moderator. Publish only a photo that shows
+ * this gym and no one's face without their say-so; it will carry the
+ * uploader's name.
+ */
+function PhotoQueue({ token, records, onPublished }: { token: string; records: GymRecord[]; onPublished: () => void }) {
+  const [queue, setQueue] = useState<Awaited<ReturnType<typeof api.photoQueue>>['photos'] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api
+      .photoQueue(token)
+      .then((data) => setQueue(data.photos))
+      .catch((caught: unknown) => setError(messageFor(caught)));
+  }, [token]);
+
+  const decide = async (photoId: string, decision: 'publish' | 'reject') => {
+    try {
+      await api.moderatePhoto(token, photoId, decision === 'reject' ? { decision, reason: 'Did not meet the photo guidelines.' } : { decision });
+      haptic.success();
+      setQueue((current) => (current ?? []).filter((item) => item.id !== photoId));
+      if (decision === 'publish') onPublished();
+    } catch (caught) {
+      setError(messageFor(caught));
+    }
+  };
+
+  return (
+    <View>
+      <Txt variant="headline" style={styles.heading}>
+        📷 Photos waiting {queue ? `(${queue.length})` : ''}
+      </Txt>
+      {error && <Notice icon="info" text={error} tone="danger" />}
+      {queue?.length === 0 && (
+        <Txt variant="subhead" color={color.labelSecondary}>
+          Nothing to check.
+        </Txt>
+      )}
+      {queue && queue.length > 0 && (
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.guide}>
+          Publish it only if it shows that gym and no one who looks like they didn’t agree to be in it.
+        </Txt>
+      )}
+      {queue?.map((photo) => {
+        const gym = records.find((record) => record.location.id === photo.gymId);
+        return (
+          <View key={photo.id} style={styles.queueItem}>
+            {photo.dataUrl ? (
+              <Image source={{ uri: photo.dataUrl }} style={styles.queuePhoto} resizeMode="cover" />
+            ) : (
+              <Txt variant="footnote" color={color.labelSecondary}>
+                The file is missing.
+              </Txt>
+            )}
+            <Txt variant="footnote" color={color.labelSecondary}>
+              {gym ? gym.location.name : photo.gymId} · by {photo.credit}
+            </Txt>
+            <View style={styles.queueButtons}>
+              <View style={styles.flex}>
+                <PrimaryButton label="Publish" onPress={() => void decide(photo.id, 'publish')} />
+              </View>
+              <View style={styles.flex}>
+                <PrimaryButton label="Reject" tone="danger" onPress={() => void decide(photo.id, 'reject')} />
+              </View>
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 export function Notice({ icon, text, tone = 'brand' }: { icon: 'info' | 'offline'; text: string; tone?: 'brand' | 'danger' }) {
   return (
     <View style={[styles.notice, { backgroundColor: tone === 'danger' ? color.dangerTint : color.brandTint }]}>
@@ -327,6 +405,8 @@ const styles = StyleSheet.create({
   switch: { alignSelf: 'center', paddingVertical: space[2] },
   small: { textAlign: 'center' },
   flex: { flex: 1 },
+  guide: { marginBottom: space[2] },
+  queuePhoto: { width: '100%', height: 180, borderRadius: radius.md },
 
   profile: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   avatar: {

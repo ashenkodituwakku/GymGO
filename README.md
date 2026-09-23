@@ -102,7 +102,62 @@ moderator, run this in the GymGO folder:
 npx pnpm@10 --filter @gymgo/server make-moderator you@example.com
 ```
 
-Then open your account in the app to see the reviews waiting for a decision.
+Then open your account in the app to see the reviews and photos waiting for a
+decision.
+
+### Gym photos
+
+GymGO only shows gym photos that its own members took and chose to share. It
+never copies them from gym websites (they're copyrighted) and never shows a
+stand-in picture of some other gym. A gym nobody has photographed yet says
+**No photo supplied yet**.
+
+To add one, open a gym, tap **+ Add a photo**, and pick a picture you took
+there. You're asked to confirm you took it and are happy for it to show with
+your name. The server removes the photo's hidden details (including where it
+was taken) before saving it, and it stays hidden until a moderator publishes
+it. A photo the moderator turns down is deleted. Photos live in `apps/server/data/photos/` on your computer.
+
+### Google info (optional, off by default)
+
+Each gym has a **See it on Google** button. Without any setup it tells you
+Google info is off and opens the gym in Google Maps, which is free and needs
+nothing.
+
+To show Google's rating, photos, reviews and opening hours inside GymGO
+instead, you need your own Google Maps Platform key. Google's rules and
+prices mean:
+
+- **It needs a Google Cloud account with billing turned on.** Google gives a
+  free allowance each month and then charges. At the time of writing that was
+  about 1,000 place lookups and 1,000 photos a month for the kind GymGO uses.
+  One gym's Google page uses one lookup and up to four photos, so roughly 250
+  page opens a month are free. Check Google's current pricing before you
+  switch it on, and set a daily limit on the API in Google Cloud so it can
+  never cost more than you've decided.
+- **GymGO never saves what Google sends.** It is fetched fresh each time.
+  Only Google's ID for each gym is kept, which Google allows.
+- **It shows on its own full screen, with no map.** Google doesn't allow its
+  place details beside a map that isn't Google's, and GymGO's maps are
+  Apple's and OpenStreetMap's.
+- **Google, and every photo and review author, is credited**, with links.
+- **It doesn't change GymGO's answers.** Google's hours are when a gym is
+  open, not when a visitor can come in.
+
+To switch it on: in Google Cloud, create a project, turn on billing, enable
+**Places API (New)**, and create an API key restricted to that API. Then
+start GymGO with the key set. On Windows PowerShell:
+
+```powershell
+$env:GOOGLE_PLACES_API_KEY = "your-key-here"
+gymgo
+```
+
+On a Mac or Linux: `GOOGLE_PLACES_API_KEY=your-key-here npx pnpm@10 app`.
+
+The key stays on your computer. The app never sees it: the server asks Google
+and passes the answer on. The server's start-up message says whether Google
+info is on.
 
 ### The older website
 
@@ -224,7 +279,7 @@ OpenStreetMap (© OpenStreetMap contributors, ODbL). Prices, hours and
 equipment come only from each gym's own website, read on 23 September 2026,
 and every fact in the app links to the page it came from. What a gym doesn't
 publish is shown as unknown, not guessed. That is why most of them show
-**Worth a call**: for example, no gym states whether a first-time visitor needs
+**Call first** 📞: for example, no gym states whether a first-time visitor needs
 an induction, so none can honestly be a sure thing yet. Nothing here was
 supplied by or agreed with the gyms, and none of them has been contacted.
 

@@ -1,37 +1,42 @@
 /**
- * One gym in the results list, in the shape of a Maps search result: a round
- * category glyph in the colour of how well it fits, the name, a line about
- * guest entry, and the price where the eye lands last.
+ * One gym in the results list: its photo (or a friendly tile when nobody has
+ * shared one), the name and how far away it is, one status chip, and the
+ * price where the eye lands last.
  */
 
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { formatDistanceKm, type GymSearchResult } from '@gymgo/domain';
-import { accessLine } from '@/lib/copy';
+import { TIER, accessLine } from '@/lib/copy';
+import { photoUrl } from '@/lib/api';
 import { priceLine } from '@/lib/present';
-import { color, face, space } from '@/lib/theme';
+import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
-import { Icon } from './Icon';
 import { TIER_COLOUR, Txt } from './ui';
 
 export function GymRow({
   result,
   visitMinute,
+  cover,
   onPress,
 }: {
   result: GymSearchResult;
   visitMinute: number;
+  /** Server path of the gym's newest member photo, if it has one. */
+  cover: string | null;
   onPress: () => void;
 }) {
   const location = result.record.location;
   const tone = TIER_COLOUR[result.tier];
+  const tier = TIER[result.tier];
   const price = priceLine(result.offers);
   const access = accessLine(result.access.verdict, visitMinute);
-  const accessInk =
-    result.access.verdict === 'admits_visitor'
-      ? color.goodInk
-      : result.access.verdict === 'not_admitted'
-        ? color.noInk
-        : color.maybeInk;
+  const coverUri = cover ? photoUrl(cover) : null;
+  const where = [
+    location.address.suburb,
+    result.distanceKm !== null ? formatDistanceKm(result.distanceKm).replace(' straight line', '') : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <Pressable
@@ -40,24 +45,29 @@ export function GymRow({
         onPress();
       }}
       accessibilityRole="button"
-      accessibilityLabel={`${location.name}. ${access}. ${price.headline}.`}
+      accessibilityLabel={`${location.name}, ${where}. ${tier.label}: ${access}. ${price.headline} ${price.caption}.`}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.fill }]}
     >
-      <View style={[styles.glyph, { backgroundColor: tone.fill }]}>
-        <Icon name="gym" size={17} color={color.onBrand} weight="bold" />
-      </View>
+      {coverUri ? (
+        <Image source={{ uri: coverUri }} style={styles.thumb} resizeMode="cover" />
+      ) : (
+        <View style={[styles.thumb, styles.tile, { backgroundColor: tone.tint }]}>
+          <Txt style={styles.tileEmoji}>{location.isDemoData ? '🧪' : '🏋️'}</Txt>
+        </View>
+      )}
 
       <View style={styles.middle}>
         <Txt variant="headline" numberOfLines={1}>
           {location.name}
         </Txt>
         <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-          {location.address.suburb}
-          {result.distanceKm !== null ? ` · ${formatDistanceKm(result.distanceKm).replace(' straight line', '')}` : ''}
+          {where}
         </Txt>
-        <Txt variant="footnote" color={accessInk} numberOfLines={1} style={styles.access}>
-          {access}
-        </Txt>
+        <View style={[styles.chip, { backgroundColor: tone.tint }]}>
+          <Txt variant="caption" color={tone.ink} style={styles.chipText} numberOfLines={1}>
+            {tier.emoji} {tier.label}
+          </Txt>
+        </View>
       </View>
 
       <View style={styles.trailing}>
@@ -78,17 +88,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space[3],
     paddingVertical: space[3],
-    paddingHorizontal: space[4],
-    borderRadius: 14,
+    paddingHorizontal: space[3],
+    borderRadius: 18,
   },
-  glyph: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+  thumb: {
+    width: 62,
+    height: 62,
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.fill,
   },
-  middle: { flex: 1, minWidth: 0 },
-  access: { ...face('medium'), marginTop: 1 },
+  tile: { alignItems: 'center', justifyContent: 'center' },
+  tileEmoji: { fontSize: 28, lineHeight: 34 },
+  middle: { flex: 1, minWidth: 0, gap: 2 },
+  chip: {
+    alignSelf: 'flex-start',
+    marginTop: 3,
+    paddingHorizontal: space[2],
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+  },
+  chipText: face('bold'),
   trailing: { alignItems: 'flex-end', maxWidth: 96 },
 });

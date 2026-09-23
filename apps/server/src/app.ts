@@ -13,8 +13,15 @@
  *   DELETE /api/saved/:gymId
  *   GET    /api/gyms/:gymId/reviews       published reviews, plus your own
  *   POST   /api/gyms/:gymId/reviews       { overall, body, visitedOn? } -> held for moderation
+ *   GET    /api/gyms/:gymId/photos        published photos, plus your own waiting ones
+ *   POST   /api/gyms/:gymId/photos        { data (base64 JPEG/PNG), consent: true } -> held for moderation
+ *   GET    /api/photos/covers             { gymId: url } of each gym's newest published photo
+ *   GET    /api/photos/:id                a published photo's image
+ *   GET    /api/gyms/:gymId/google        live Google Maps details (only with the owner's key)
  *   GET    /api/moderation/reviews        moderators: the queue
  *   POST   /api/moderation/reviews/:id    moderators: { decision, reason? }
+ *   GET    /api/moderation/photos         moderators: photos waiting
+ *   POST   /api/moderation/photos/:id     moderators: { decision, reason? }
  *
  * Every route that changes something re-checks permission here with the
  * shared domain rules. The app hiding a button is not access control.
@@ -36,7 +43,9 @@ import {
   validateSignup,
   type AccountRow,
 } from './auth';
-import { allGyms, gymExists, type Db } from './db';
+import { allGyms, gymExists, gymIsDemo, type Db } from './db';
+import { GoogleError, GooglePlaces } from './google';
+import { MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
 
 export interface AppOptions {
   db: Db;
@@ -46,6 +55,12 @@ export interface AppOptions {
   now?: () => Date;
   /** New accounts allowed per address per hour. */
   signupsPerHour?: number;
+  /** Where photo files are kept; null keeps them in memory (tests). */
+  photoDir?: string | null;
+  /** The owner's Google Places key, if they chose to set one. */
+  googleKey?: string | null;
+  /** Swappable for tests, so no test ever calls Google. */
+  fetchImpl?: typeof fetch;
 }
 
 class HttpError extends Error {
@@ -78,12 +93,12 @@ export function isAllowedOrigin(origin: string, extra: string[] = []): boolean {
   return /^(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(host);
 }
 
-async function readJson(req: IncomingMessage): Promise<unknown> {
+async function readJson(req: IncomingMessage, maxBytes = MAX_BODY_BYTES): Promise<unknown> {
   const chunks: Buffer[] = [];
   let size = 0;
   for await (const chunk of req) {
     size += (chunk as Buffer).length;
-    if (size > MAX_BODY_BYTES) throw new HttpError(413, 'That request is too large.');
+    if (size > maxBytes) throw new HttpError(413, 'That request is too large.');
     chunks.push(chunk as Buffer);
   }
   if (size === 0) return {};
@@ -156,6 +171,9 @@ export function createApp(options: AppOptions) {
   // Wrong passwords: 10 per address and email per 15 minutes.
   const loginLimiter = new AttemptLimiter(10, 15 * 60_000);
   const signupLimiter = new AttemptLimiter(options.signupsPerHour ?? 20, 60 * 60_000);
+  const photoLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
+  const photos = new PhotoStore(options.photoDir ?? null);
+  const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
 
   function caller(req: IncomingMessage): { account: AccountRow | null; user: User; token: string | null } {
     const token = bearer(req);
@@ -221,7 +239,10 @@ export function createApp(options: AppOptions) {
       const { account } = requireAccount(req);
       if (method === 'GET') return send(res, 200, { account: publicAccount(account) });
       if (method === 'DELETE') {
-        // Sessions, saved gyms and reviews go with it (foreign keys cascade).
+        // Sessions, saved gyms, reviews and photo records go with it (foreign
+        // keys cascade); the photo files are removed here.
+        const owned = db.prepare('select id, type from photos where user_id = ?').all(account.id) as Array<{ id: string; type: PhotoType }>;
+        for (const photo of owned) photos.remove(photo.id, photo.type);
         db.prepare('delete from users where id = ?').run(account.id);
         return send(res, 204);
       }
@@ -290,6 +311,99 @@ export function createApp(options: AppOptions) {
       }
     }
 
+    // --- Photos ------------------------------------------------------------
+    if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'photos' && parts.length === 4) {
+      const gymId = decodeURIComponent(parts[2]!);
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+
+      if (method === 'GET') {
+        const { account } = caller(req);
+        const rows = db
+          .prepare(
+            `select photos.id, photos.status, photos.created_at, photos.user_id, users.display_name
+             from photos join users on users.id = photos.user_id
+             where photos.gym_id = ? order by photos.created_at desc`,
+          )
+          .all(gymId) as Array<{ id: string; status: string; created_at: string; user_id: string; display_name: string }>;
+        return send(res, 200, {
+          photos: rows
+            .filter((row) => row.status === 'published')
+            .map((row) => ({ id: row.id, url: `/api/photos/${row.id}`, credit: row.display_name, createdAt: row.created_at })),
+          mine: account
+            ? rows
+                .filter((row) => row.user_id === account.id && row.status !== 'published')
+                .map((row) => ({ id: row.id, status: row.status, createdAt: row.created_at }))
+            : [],
+        });
+      }
+
+      if (method === 'POST') {
+        const { account, user } = requireAccount(req);
+        requirePermission(user, 'review.create', gymId);
+        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to photograph.');
+        // Base64 inflates by a third; allow for that plus the JSON around it.
+        const body = (await readJson(req, Math.ceil(MAX_PHOTO_BYTES * 1.4) + 1024)) as Record<string, unknown>;
+        if (body.consent !== true) {
+          throw new HttpError(400, 'Confirm you took this photo and are happy for GymGO to show it.');
+        }
+        if (typeof body.data !== 'string' || body.data.length === 0) throw new HttpError(400, 'No photo was attached.');
+        const raw = Buffer.from(body.data.replace(/^data:image\/[a-z]+;base64,/, ''), 'base64');
+        if (raw.length > MAX_PHOTO_BYTES) throw new HttpError(413, 'Photos can be up to 4 MB.');
+        const clean = cleanPhoto(raw);
+        if (!clean) throw new HttpError(400, 'That isn\u2019t a JPEG or PNG photo we can read.');
+        if (!photoLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That\u2019s a lot of photos for one day. Try again tomorrow.');
+        const id = randomUUID();
+        photos.save(id, clean.type, clean.bytes);
+        db.prepare(`insert into photos (id, gym_id, user_id, type, bytes, status, created_at) values (?, ?, ?, ?, ?, 'pending', ?)`).run(
+          id,
+          gymId,
+          account.id,
+          clean.type,
+          clean.bytes.length,
+          now().toISOString(),
+        );
+        return send(res, 201, { photo: { id, status: 'pending' } });
+      }
+    }
+
+    if (method === 'GET' && path === '/api/photos/covers') {
+      // The newest published photo of each gym, for the list's thumbnails.
+      const rows = db
+        .prepare(
+          `select gym_id, id from photos p where status = 'published'
+           and created_at = (select max(created_at) from photos where gym_id = p.gym_id and status = 'published')`,
+        )
+        .all() as Array<{ gym_id: string; id: string }>;
+      return send(res, 200, { covers: Object.fromEntries(rows.map((row) => [row.gym_id, `/api/photos/${row.id}`])) });
+    }
+
+    if (method === 'GET' && parts[0] === 'api' && parts[1] === 'photos' && parts.length === 3) {
+      const row = db.prepare(`select id, type from photos where id = ? and status = 'published'`).get(decodeURIComponent(parts[2]!)) as
+        | { id: string; type: PhotoType }
+        | undefined;
+      const bytes = row ? photos.read(row.id, row.type) : null;
+      if (!row || !bytes) throw new HttpError(404, 'No such photo.');
+      res.statusCode = 200;
+      res.setHeader('Content-Type', row.type === 'jpeg' ? 'image/jpeg' : 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.end(bytes);
+      return;
+    }
+
+    // --- Google Maps (live, only with the owner's key) ----------------------
+    if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'google' && parts.length === 4) {
+      const gymId = decodeURIComponent(parts[2]!);
+      const record = allGyms(db).find((item) => item.location.id === gymId);
+      if (!record) throw new HttpError(404, 'No gym with that id.');
+      try {
+        return send(res, 200, await google.lookup(record));
+      } catch (error) {
+        if (error instanceof GoogleError) throw new HttpError(error.status, error.message);
+        throw new HttpError(502, 'Couldn\u2019t reach Google Maps.');
+      }
+    }
+
     // --- Moderation --------------------------------------------------------
     if (method === 'GET' && path === '/api/moderation/reviews') {
       const { user } = requireAccount(req);
@@ -312,6 +426,55 @@ export function createApp(options: AppOptions) {
         )
         .run(decision === 'publish' ? 'published' : 'rejected', reason, now().toISOString(), user.id, decodeURIComponent(parts[3]!));
       if (result.changes === 0) throw new HttpError(404, 'No pending review with that id.');
+      return send(res, 204);
+    }
+
+    if (method === 'GET' && path === '/api/moderation/photos') {
+      const { user } = requireAccount(req);
+      requirePermission(user, 'moderation.view_queue');
+      const rows = db
+        .prepare(
+          `select photos.id, photos.gym_id, photos.type, photos.created_at, users.display_name
+           from photos join users on users.id = photos.user_id
+           where photos.status = 'pending' order by photos.created_at limit 20`,
+        )
+        .all() as Array<{ id: string; gym_id: string; type: PhotoType; created_at: string; display_name: string }>;
+      return send(res, 200, {
+        // Waiting photos aren't public, so the moderator gets them inline.
+        photos: rows.map((row) => {
+          const bytes = photos.read(row.id, row.type);
+          return {
+            id: row.id,
+            gymId: row.gym_id,
+            credit: row.display_name,
+            createdAt: row.created_at,
+            dataUrl: bytes ? `data:image/${row.type};base64,${bytes.toString('base64')}` : null,
+          };
+        }),
+      });
+    }
+
+    if (method === 'POST' && parts[0] === 'api' && parts[1] === 'moderation' && parts[2] === 'photos' && parts.length === 4) {
+      const { user } = requireAccount(req);
+      requirePermission(user, 'review.moderate');
+      const body = (await readJson(req)) as Record<string, unknown>;
+      const decision = body.decision;
+      if (decision !== 'publish' && decision !== 'reject') throw new HttpError(400, 'Decide publish or reject.');
+      const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 300) : null;
+      if (decision === 'reject' && !reason) throw new HttpError(400, 'Give a reason when rejecting.');
+      const photoId = decodeURIComponent(parts[3]!);
+      const pending = db.prepare(`select type from photos where id = ? and status = 'pending'`).get(photoId) as { type: PhotoType } | undefined;
+      if (!pending) throw new HttpError(404, 'No pending photo with that id.');
+      db.prepare(`update photos set status = ?, moderation_reason = ?, moderated_at = ?, moderated_by = ? where id = ?`).run(
+        decision === 'publish' ? 'published' : 'rejected',
+        reason,
+        now().toISOString(),
+        user.id,
+        photoId,
+      );
+      // A rejected photo is never shown, so its file isn't kept. The record
+      // stays, with the reason, so the uploader can see what happened.
+      if (decision === 'reject') photos.remove(photoId, pending.type);
       return send(res, 204);
     }
 

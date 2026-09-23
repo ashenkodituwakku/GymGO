@@ -18,7 +18,8 @@ import BottomSheet, {
 } from '@gorhom/bottom-sheet';
 import * as Location from 'expo-location';
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Keyboard, Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Keyboard, Modal, Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LatLng } from '@gymgo/domain';
 import { MELBOURNE_ATTRIBUTION } from '@gymgo/melbourne-data';
@@ -33,8 +34,10 @@ import { color, face, radius, shadow, space } from '@/lib/theme';
 import { AccountContent } from '@/components/AccountContent';
 import { FiltersContent } from '@/components/FiltersContent';
 import { Glass } from '@/components/Glass';
+import { GooglePage } from '@/components/GooglePage';
 import { GymMap, type GymMapHandle, type MapPin } from '@/components/GymMap';
 import { Icon } from '@/components/Icon';
+import { PhotoHero } from '@/components/PhotoHero';
 import { PlaceCard, PlaceHeader } from '@/components/PlaceCard';
 import { ResultsContent } from '@/components/ResultsContent';
 import { ReviewsSection } from '@/components/ReviewsSection';
@@ -71,6 +74,8 @@ export default function MapScreen() {
   const [locationShown, setLocationShown] = useState(false);
   const [sheetTop, setSheetTop] = useState(PEEK);
   const [cardScrolled, setCardScrolled] = useState(false);
+  // The gym whose Google Maps page is open, full screen over everything.
+  const [googleFor, setGoogleFor] = useState<string | null>(null);
   // Desktop: which panel sits beside the results.
   const [panel, setPanel] = useState<Panel>(null);
   // Phone: where the results sheet was before a place card pushed it down,
@@ -266,6 +271,7 @@ export default function MapScreen() {
       accountInitial={account.account ? account.account.displayName.slice(0, 1).toUpperCase() : null}
       onOpenAccount={openAccount}
       dataNote={dataNote}
+      covers={data.covers}
     />
   );
 
@@ -278,13 +284,39 @@ export default function MapScreen() {
         visitDate={filters.visitDate}
         saved={account.saved.includes(selected.record.location.id)}
         onToggleSave={() => account.toggleSave(selected.record.location.id)}
+        onOpenGoogle={() => setGoogleFor(selected.record.location.id)}
         asOf={asOf}
+        photos={
+          <PhotoHero
+            gymId={selected.record.location.id}
+            isDemo={selected.record.location.isDemoData}
+            account={account}
+            onSignIn={openAccount}
+            width={inSheet ? undefined : PANEL_WIDTH}
+          />
+        }
         reviews={<ReviewsSection gymId={selected.record.location.id} account={account} inSheet={inSheet} onSignIn={openAccount} />}
       />
     );
 
   const accountContent = (inSheet: boolean) => (
-    <AccountContent account={account} records={data.records} inSheet={inSheet} onOpenGym={openGym} onClose={closeAccount} />
+    <AccountContent account={account} records={data.records} inSheet={inSheet} onOpenGym={openGym} onClose={closeAccount} onPhotosChanged={data.refreshCovers} />
+  );
+
+  // Google's page covers the whole screen, map included: its terms don't
+  // allow its place details beside a map that isn't Google's.
+  const googleRecord = googleFor ? data.records.find((record) => record.location.id === googleFor) : undefined;
+  const googleModal = (
+    <Modal
+      visible={googleRecord !== undefined}
+      animationType="slide"
+      presentationStyle="fullScreen"
+      onRequestClose={() => setGoogleFor(null)}
+    >
+      <GestureHandlerRootView style={styles.root}>
+        {googleRecord && <GooglePage record={googleRecord} onClose={() => setGoogleFor(null)} />}
+      </GestureHandlerRootView>
+    </Modal>
   );
 
   const statusPill = (
@@ -393,6 +425,7 @@ export default function MapScreen() {
           {controls}
         </View>
         {selfCheckBanner}
+        {googleModal}
       </View>
     );
   }
@@ -464,6 +497,7 @@ export default function MapScreen() {
         />
       }
       account={accountContent(true)}
+      google={googleModal}
     />
   );
 }
@@ -498,6 +532,7 @@ function PhoneShell(props: {
   onPlaceDismiss: () => void;
   filters: ReactNode;
   account: ReactNode;
+  google: ReactNode;
 }) {
   const { insets, height } = props;
   // iOS sheet feel: quick, settles without wobbling.
@@ -591,6 +626,7 @@ function PhoneShell(props: {
           {props.account}
         </BottomSheetScrollView>
       </BottomSheetModal>
+      {props.google}
     </View>
   );
 }

@@ -1,6 +1,6 @@
 /**
- * A gym's place card, laid out the way Apple Maps lays out a place: the name,
- * one row of actions, a strip of at-a-glance facts, then detail.
+ * A gym's place card: photos, one row of actions, one clear answer, three
+ * quick facts, then the detail folded away until you want it.
  *
  * Everything the card says comes from the same evaluation that coloured the
  * pin and placed the row, so the three can never disagree.
@@ -24,14 +24,14 @@ import {
   type Provenance,
   type Tri,
 } from '@gymgo/domain';
-import { EMPTY, TIER, accessLine, accessShort, checkedAgo, ratingShort, sourceLabel, timeLabel } from '@/lib/copy';
+import { TIER, accessLine, checkedAgo, ratingShort, sourceLabel } from '@/lib/copy';
 import { depositLine, priceLine } from '@/lib/present';
 import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Icon } from './Icon';
 import { StateGlyphRow } from './StateGlyphRow';
 import { Glass } from './Glass';
-import { ActionButton, Card, CloseButton, TIER_COLOUR, Txt } from './ui';
+import { ActionButton, CloseButton, Fold, TIER_COLOUR, Txt } from './ui';
 
 const TRAINING: Record<string, string> = {
   full_gym: 'Gym',
@@ -95,7 +95,9 @@ export function PlaceCard({
   visitDate,
   saved,
   onToggleSave,
+  onOpenGoogle,
   asOf,
+  photos,
   reviews,
 }: {
   result: GymSearchResult;
@@ -103,21 +105,28 @@ export function PlaceCard({
   visitDate: string;
   saved: boolean;
   onToggleSave: () => void;
+  /** The live Google Maps page for this gym (its own screen, away from our map). */
+  onOpenGoogle: () => void;
   asOf: Date;
-  /** The live reviews section, which needs the account and the server. */
+  /** Members' photos across the top, which need the account and the server. */
+  photos: React.ReactNode;
+  /** The live reviews section, likewise. */
   reviews: React.ReactNode;
 }) {
   const [notice, setNotice] = useState<string | null>(null);
   const record = result.record;
   const location = record.location;
   const tone = TIER_COLOUR[result.tier];
+  const tier = TIER[result.tier];
   const price = priceLine(result.offers);
   const deposit = depositLine(result.offers);
-  const at = timeLabel(visitMinute);
 
   const offers = assessAllOffers(record.offers, { visitLocalDate: visitDate, asOf });
   const longer = record.offers.filter((offer) => isMultiVisitProduct(offer) || offer.productType === 'membership');
-  const reasons = result.limitations.slice(0, 4);
+  const reasons = result.limitations.slice(0, 3);
+  const kit = record.equipment.filter((item) => item.presence === 'yes');
+  const guestHours = result.access.visitorSchedule ? summariseWeek(result.access.visitorSchedule)[0] : null;
+  const sources = sourcesOf(record);
 
   // Demo listings have invented addresses and numbers. Say so, rather than
   // opening a map to nowhere or dialling a stranger.
@@ -148,11 +157,13 @@ export function PlaceCard({
 
   return (
     <View style={styles.wrap}>
+      {photos}
+
       {/* Actions -------------------------------------------------------- */}
       <View style={styles.actions}>
         <ActionButton
           icon="directions"
-          label="Directions"
+          label="Go"
           primary
           onPress={location.isDemoData ? demo("this gym doesn't exist, so there's nowhere to route to.") : directions}
         />
@@ -185,40 +196,19 @@ export function PlaceCard({
         </View>
       )}
 
-      {/* At a glance ---------------------------------------------------- */}
-      <View style={styles.metrics}>
-        <Metric label="VISIT" value={price.headline} tint={price.confirmed ? color.label : color.maybeInk} />
-        <View style={styles.metricDivider} />
-        <Metric
-          label={`AT ${at.toUpperCase()}`}
-          value={accessShort(result.access.verdict)}
-          tint={
-            result.access.verdict === 'admits_visitor'
-              ? color.goodInk
-              : result.access.verdict === 'not_admitted'
-                ? color.noInk
-                : color.maybeInk
-          }
-        />
-        <View style={styles.metricDivider} />
-        <Metric
-          label={result.rating.count ? `RATING (${result.rating.count})` : 'RATING'}
-          value={ratingShort(result.rating.average)}
-          tint={color.label}
-        />
-      </View>
-
-      {/* Verdict -------------------------------------------------------- */}
+      {/* The one answer ------------------------------------------------- */}
       <View style={[styles.verdict, { backgroundColor: tone.tint }]}>
         <View style={styles.verdictHead}>
-          <Icon name={tone.icon} size={20} color={tone.fill} />
-          <Txt variant="headline" color={tone.ink}>
-            {TIER[result.tier].label}
-          </Txt>
+          <Txt style={styles.verdictEmoji}>{tier.emoji}</Txt>
+          <View style={styles.flex}>
+            <Txt variant="title2" color={tone.ink}>
+              {tier.label}
+            </Txt>
+            <Txt variant="subhead" color={color.label}>
+              {accessLine(result.access.verdict, visitMinute)}
+            </Txt>
+          </View>
         </View>
-        <Txt variant="subhead" color={color.label}>
-          {accessLine(result.access.verdict, visitMinute)}. {TIER[result.tier].line}
-        </Txt>
         {reasons.length > 0 && (
           <View style={styles.reasons}>
             {reasons.map((reason, index) => (
@@ -233,141 +223,184 @@ export function PlaceCard({
         )}
       </View>
 
-      {/* Photos --------------------------------------------------------- */}
-      <View style={styles.photos}>
-        <Icon name="photo" size={22} color={color.labelTertiary} />
-        <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-          {EMPTY.photos}
-        </Txt>
+      {/* At a glance ---------------------------------------------------- */}
+      <View style={styles.facts}>
+        <Fact emoji="💵" value={price.headline} caption={price.caption} tint={price.confirmed ? color.label : color.maybeInk} />
+        <Fact
+          emoji="⭐"
+          value={result.rating.average === null ? 'New' : result.rating.average.toFixed(1)}
+          caption={result.rating.count ? `${result.rating.count} review${result.rating.count === 1 ? '' : 's'}` : 'no reviews yet'}
+          tint={color.label}
+        />
+        <Fact emoji="🏋️" value={kit.length ? String(kit.length) : '?'} caption={kit.length ? 'kinds of kit' : 'kit unlisted'} tint={kit.length ? color.label : color.maybeInk} />
       </View>
 
-      {/* Price ---------------------------------------------------------- */}
-      <Section icon="wallet" title="What you'll pay">
-        {offers.filter((assessment) => !isMultiVisitProduct(assessment.offer) && assessment.offer.productType !== 'membership').map((assessment) => {
-          const cost = assessment.cost;
-          const total = cost.known && cost.totalNonRefundableMinor !== null ? formatMoney(cost.totalNonRefundableMinor) : 'Ask';
-          const blocked = assessment.reasons.find((reason) => reason.severity === 'blocking');
-          return (
-            <View key={assessment.offer.id} style={styles.offer}>
-              <View style={styles.offerHead}>
-                <View style={styles.flex}>
-                  <Txt variant="headline">{assessment.offer.label}</Txt>
-                  <Txt variant="footnote" color={color.labelSecondary}>
-                    {productTypeLabel(assessment.offer.productType)}
-                  </Txt>
-                </View>
-                <Txt variant="figure" color={blocked ? color.labelSecondary : color.label}>
-                  {total}
-                </Txt>
-              </View>
-              {!cost.known && (
-                <Txt variant="footnote" color={color.maybeInk}>
-                  {cost.unknownReasons.join(' ')}
-                </Txt>
-              )}
-              {blocked && (
-                <Txt variant="footnote" color={color.noInk}>
-                  {blocked.message}
-                </Txt>
-              )}
-            </View>
-          );
-        })}
-        {deposit && (
-          <Txt variant="footnote" color={color.labelSecondary}>
-            {deposit}
-          </Txt>
-        )}
-        {longer.length > 0 && (
-          <View style={styles.longer}>
-            {longer.map((offer) => {
-              const membership = describeMembership(offer);
+      {!location.isDemoData && (
+        <Pressable
+          onPress={() => {
+            haptic.select();
+            onOpenGoogle();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="See this gym on Google Maps"
+          style={({ pressed }) => [styles.google, pressed && { opacity: 0.75 }]}
+        >
+          <Txt style={styles.googleEmoji}>🔎</Txt>
+          <View style={styles.flex}>
+            <Txt variant="headline">See it on Google</Txt>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              Google’s photos, reviews and hours, live
+            </Txt>
+          </View>
+          <Icon name="chevron" size={14} color={color.labelTertiary} />
+        </Pressable>
+      )}
+
+      {/* The detail, folded away ---------------------------------------- */}
+      <View style={styles.folds}>
+        <Fold emoji="💵" title="Prices" summary={price.headline === '—' ? 'Not published' : `${price.headline} · ${price.caption}`}>
+          {offers
+            .filter((assessment) => !isMultiVisitProduct(assessment.offer) && assessment.offer.productType !== 'membership')
+            .map((assessment) => {
+              const cost = assessment.cost;
+              const total = cost.known && cost.totalNonRefundableMinor !== null ? formatMoney(cost.totalNonRefundableMinor) : 'Ask';
+              const blocked = assessment.reasons.find((reason) => reason.severity === 'blocking');
               return (
-                <Txt key={offer.id} variant="footnote" color={color.labelSecondary}>
-                  {offer.label}: {offer.baseAmountMinor === null ? 'price unconfirmed' : formatMoney(offer.baseAmountMinor)}
-                  {membership ? ` ${membership.billingLabel} · ${membership.minimumTermLabel.toLowerCase()}` : offer.validityDays ? ` for ${offer.validityDays} days` : ''}
+                <View key={assessment.offer.id} style={styles.offer}>
+                  <View style={styles.offerHead}>
+                    <View style={styles.flex}>
+                      <Txt variant="headline">{assessment.offer.label}</Txt>
+                      <Txt variant="footnote" color={color.labelSecondary}>
+                        {productTypeLabel(assessment.offer.productType)}
+                      </Txt>
+                    </View>
+                    <Txt variant="figure" color={blocked ? color.labelSecondary : color.label}>
+                      {total}
+                    </Txt>
+                  </View>
+                  {!cost.known && (
+                    <Txt variant="footnote" color={color.maybeInk}>
+                      {cost.unknownReasons.join(' ')}
+                    </Txt>
+                  )}
+                  {blocked && (
+                    <Txt variant="footnote" color={color.noInk}>
+                      {blocked.message}
+                    </Txt>
+                  )}
+                </View>
+              );
+            })}
+          {record.offers.length === 0 && (
+            <Txt variant="subhead" color={color.labelSecondary}>
+              This gym doesn’t publish a visit price, so we don’t show one. Ask when you call.
+            </Txt>
+          )}
+          {deposit && (
+            <Txt variant="footnote" color={color.labelSecondary}>
+              {deposit}
+            </Txt>
+          )}
+          {longer.length > 0 && (
+            <View style={styles.longer}>
+              {longer.map((offer) => {
+                const membership = describeMembership(offer);
+                return (
+                  <Txt key={offer.id} variant="footnote" color={color.labelSecondary}>
+                    {offer.label}: {offer.baseAmountMinor === null ? 'price unconfirmed' : formatMoney(offer.baseAmountMinor)}
+                    {membership
+                      ? ` ${membership.billingLabel} · ${membership.minimumTermLabel.toLowerCase()}`
+                      : offer.validityDays
+                        ? ` for ${offer.validityDays} days`
+                        : ''}
+                  </Txt>
+                );
+              })}
+            </View>
+          )}
+          <Evidence provenance={result.offers.bestAvailable?.offer.provenance} age={result.offers.bestAvailable?.freshness.ageDays ?? null} />
+        </Fold>
+
+        <Fold emoji="🚪" title="Getting in" summary={guestHours ? `Guests ${guestHours}` : 'Guest hours not published'}>
+          <Hours label="Guests" schedule={result.access.visitorSchedule} highlight />
+          <Hours label="Front desk" schedule={result.access.staffedSchedule} />
+          <Hours label="Members" schedule={result.access.memberSchedule} />
+          <View style={styles.prereqs}>
+            <Prereq label="Book ahead" value={record.prerequisites.advanceBookingRequired} />
+            <Prereq label="Induction first visit" value={record.prerequisites.inductionRequired} />
+            <Prereq label="Photo ID" value={record.prerequisites.photoIdRequired} />
+            <Prereq label="Member signs you in" value={record.prerequisites.memberAccompanimentRequired} />
+          </View>
+          {record.prerequisites.notes.length > 0 && (
+            <View style={styles.notes}>
+              {record.prerequisites.notes.map((note) => (
+                <Txt key={note} variant="footnote" color={color.labelSecondary}>
+                  • {note}
                 </Txt>
+              ))}
+            </View>
+          )}
+          <Evidence provenance={record.prerequisites.provenance} />
+        </Fold>
+
+        <Fold
+          emoji="🏋️"
+          title="Equipment"
+          summary={kit.length ? kit.slice(0, 3).map((item) => equipmentLabel(item.equipmentTypeId)).join(', ') + (kit.length > 3 ? '…' : '') : 'Not published'}
+          initiallyOpen={result.equipment.matches.length > 0}
+        >
+          {result.equipment.matches.length > 0 && (
+            <View style={styles.kitAsked}>
+              {result.equipment.matches.map((match) => (
+                <StateGlyphRow
+                  key={match.requirement.equipmentTypeId}
+                  state={match.state}
+                  label={`${equipmentLabel(match.requirement.equipmentTypeId)}${match.requirement.minMaxWeightKg ? ` ${match.requirement.minMaxWeightKg} kg+` : ''}`}
+                  detail={match.detail}
+                />
+              ))}
+            </View>
+          )}
+          <View style={styles.kitGrid}>
+            {EQUIPMENT_TYPES.map((type) => {
+              const observation = kit.find((item) => item.equipmentTypeId === type.id);
+              if (!observation) return null;
+              const extra =
+                observation.maxWeightKg !== null ? `to ${observation.maxWeightKg} kg` : observation.count !== null ? `×${observation.count}` : null;
+              return (
+                <View key={type.id} style={styles.kitChip}>
+                  <Txt variant="footnote">{type.label}</Txt>
+                  {extra && (
+                    <Txt variant="footnote" color={color.labelSecondary}>
+                      {extra}
+                    </Txt>
+                  )}
+                </View>
               );
             })}
           </View>
-        )}
-        <Evidence provenance={result.offers.bestAvailable?.offer.provenance} age={result.offers.bestAvailable?.freshness.ageDays ?? null} />
-      </Section>
+          {kit.length === 0 && (
+            <Txt variant="subhead" color={color.labelSecondary}>
+              This gym doesn’t publish its equipment, so we don’t list any. Ask when you call.
+            </Txt>
+          )}
+          {record.equipment[0] && <Evidence provenance={record.equipment[0].provenance} />}
+        </Fold>
 
-      {/* Getting in ----------------------------------------------------- */}
-      <Section icon="door" title="Getting in">
-        <Hours label="Guests" schedule={result.access.visitorSchedule} highlight />
-        <Hours label="Front desk" schedule={result.access.staffedSchedule} />
-        <Hours label="Members" schedule={result.access.memberSchedule} />
-        <View style={styles.prereqs}>
-          <Prereq label="Book ahead" value={record.prerequisites.advanceBookingRequired} />
-          <Prereq label="Induction first visit" value={record.prerequisites.inductionRequired} />
-          <Prereq label="Photo ID" value={record.prerequisites.photoIdRequired} />
-          <Prereq label="Member signs you in" value={record.prerequisites.memberAccompanimentRequired} />
-        </View>
-        {record.prerequisites.notes.length > 0 && (
-          <View style={styles.notes}>
-            {record.prerequisites.notes.map((note) => (
-              <Txt key={note} variant="footnote" color={color.labelSecondary}>
-                • {note}
-              </Txt>
-            ))}
-          </View>
-        )}
-        <Evidence provenance={record.prerequisites.provenance} />
-      </Section>
+        <Fold
+          emoji="⭐"
+          title="Reviews"
+          summary={result.rating.count ? `${ratingShort(result.rating.average)} from ${result.rating.count}` : 'None yet — be the first'}
+        >
+          {reviews}
+        </Fold>
 
-      {/* The kit -------------------------------------------------------- */}
-      <Section icon="gym" title="The kit">
-        {result.equipment.matches.length > 0 && (
-          <View style={styles.kitAsked}>
-            {result.equipment.matches.map((match) => (
-              <StateGlyphRow
-                key={match.requirement.equipmentTypeId}
-                state={match.state}
-                label={`${equipmentLabel(match.requirement.equipmentTypeId)}${match.requirement.minMaxWeightKg ? ` ${match.requirement.minMaxWeightKg} kg+` : ''}`}
-                detail={match.detail}
-              />
-            ))}
-          </View>
+        {sources.length > 0 && (
+          <Fold emoji="📚" title="Where this comes from" summary={`${sources.length} source${sources.length === 1 ? '' : 's'}, all linked`}>
+            <Sources sources={sources} />
+          </Fold>
         )}
-        <View style={styles.kitGrid}>
-          {EQUIPMENT_TYPES.map((type) => {
-            const observation = record.equipment.find((item) => item.equipmentTypeId === type.id);
-            if (!observation || observation.presence !== 'yes') return null;
-            const extra =
-              observation.maxWeightKg !== null
-                ? `to ${observation.maxWeightKg} kg`
-                : observation.count !== null
-                  ? `×${observation.count}`
-                  : null;
-            return (
-              <View key={type.id} style={styles.kitChip}>
-                <Txt variant="footnote">{type.label}</Txt>
-                {extra && (
-                  <Txt variant="footnote" color={color.labelSecondary}>
-                    {extra}
-                  </Txt>
-                )}
-              </View>
-            );
-          })}
-        </View>
-        {!record.equipment.some((item) => item.presence === 'yes') && (
-          <Txt variant="subhead" color={color.labelSecondary}>
-            This gym doesn’t publish its equipment, so we don’t list any. Ask when you call.
-          </Txt>
-        )}
-        {record.equipment[0] && <Evidence provenance={record.equipment[0].provenance} />}
-      </Section>
-
-      {/* Reviews -------------------------------------------------------- */}
-      <Section icon="people" title="Reviews">
-        {reviews}
-      </Section>
-
-      {/* Sources -------------------------------------------------------- */}
-      <Sources record={record} />
+      </View>
 
       {location.isDemoData && (
         <Txt variant="caption" color={color.labelTertiary} style={styles.demo}>
@@ -378,27 +411,16 @@ export function PlaceCard({
   );
 }
 
-function Metric({ label, value, tint }: { label: string; value: string; tint: string }) {
+function Fact({ emoji, value, caption, tint }: { emoji: string; value: string; caption: string; tint: string }) {
   return (
-    <View style={styles.metric}>
-      <Txt variant="eyebrow" color={color.labelSecondary} numberOfLines={1}>
-        {label}
-      </Txt>
-      <Txt variant="figure" color={tint}>
+    <View style={styles.fact}>
+      <Txt style={styles.factEmoji}>{emoji}</Txt>
+      <Txt variant="figure" color={tint} numberOfLines={1}>
         {value}
       </Txt>
-    </View>
-  );
-}
-
-function Section({ icon, title, children }: { icon: Parameters<typeof Icon>[0]['name']; title: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.section}>
-      <View style={styles.sectionHead}>
-        <Icon name={icon} size={17} color={color.brand} />
-        <Txt variant="title2">{title}</Txt>
-      </View>
-      <Card style={styles.sectionCard}>{children}</Card>
+      <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
+        {caption}
+      </Txt>
     </View>
   );
 }
@@ -459,11 +481,14 @@ function Evidence({ provenance, age }: { provenance: Provenance | undefined; age
   );
 }
 
+type Source = GymSearchResult['record']['location']['provenance']['sources'][number];
+
 /**
- * Every source behind this listing, in one place. For real gyms that is the
+ * Every source behind this listing, once each. For real gyms that is the
  * operator's own pages and OpenStreetMap, whose licence asks for the credit.
  */
-function Sources({ record }: { record: GymSearchResult['record'] }) {
+function sourcesOf(record: GymSearchResult['record']): Source[] {
+  if (record.location.isDemoData) return [];
   const all = [
     record.location.provenance,
     record.prerequisites.provenance,
@@ -471,12 +496,13 @@ function Sources({ record }: { record: GymSearchResult['record'] }) {
     ...record.offers.map((item) => item.provenance),
     ...record.equipment.map((item) => item.provenance),
   ].flatMap((provenance) => provenance.sources);
-  const unique = [...new Map(all.filter((source) => source.evidenceRef).map((source) => [source.evidenceRef, source])).values()];
-  if (record.location.isDemoData || unique.length === 0) return null;
+  return [...new Map(all.filter((source) => source.evidenceRef).map((source) => [source.evidenceRef, source])).values()];
+}
 
+function Sources({ sources }: { sources: Source[] }) {
   return (
-    <Section icon="source" title="Where this comes from">
-      {unique.map((source) => (
+    <View>
+      {sources.map((source) => (
         <Pressable
           key={source.evidenceRef}
           onPress={() => void WebBrowser.openBrowserAsync(source.evidenceRef!)}
@@ -495,7 +521,7 @@ function Sources({ record }: { record: GymSearchResult['record'] }) {
         Anything not listed by the gym is marked unknown, not guessed. Map data © OpenStreetMap contributors, ODbL.
         Nothing here was supplied by the gym.
       </Txt>
-    </Section>
+    </View>
   );
 }
 
@@ -524,37 +550,40 @@ const styles = StyleSheet.create({
     backgroundColor: color.brandTint,
   },
 
-  metrics: {
-    flexDirection: 'row',
-    marginTop: space[4],
-    paddingVertical: space[3],
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: color.separator,
-  },
-  metric: { flex: 1, gap: 3, paddingHorizontal: space[1] },
-  metricDivider: { width: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginHorizontal: space[2] },
-
-  verdict: { marginTop: space[4], padding: space[4], borderRadius: radius.lg, gap: space[2] },
-  verdictHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  reasons: { gap: space[2], marginTop: space[1] },
+  verdict: { marginTop: space[4], padding: space[4], borderRadius: radius.xl, borderCurve: 'continuous', gap: space[3] },
+  verdictHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  verdictEmoji: { fontSize: 34, lineHeight: 42 },
+  reasons: { gap: space[2] },
   reason: { flexDirection: 'row', gap: space[2], alignItems: 'flex-start' },
   bullet: { width: 5, height: 5, borderRadius: 3, marginTop: 7 },
 
-  photos: {
-    marginTop: space[4],
-    height: 110,
-    borderRadius: radius.lg,
-    backgroundColor: color.groupedBackground,
+  facts: { flexDirection: 'row', gap: space[2], marginTop: space[3] },
+  fact: {
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[2],
-    paddingHorizontal: space[6],
+    gap: 1,
+    paddingVertical: space[3],
+    paddingHorizontal: space[1],
+    borderRadius: radius.lg + 4,
+    borderCurve: 'continuous',
+    backgroundColor: 'rgba(255, 255, 255, 0.86)',
   },
+  factEmoji: { fontSize: 20, lineHeight: 26 },
 
-  section: { marginTop: space[6] },
-  sectionHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginBottom: space[2] },
-  sectionCard: { gap: space[3] },
+  google: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    marginTop: space[3],
+    paddingHorizontal: space[4],
+    paddingVertical: space[3],
+    borderRadius: radius.lg + 4,
+    borderCurve: 'continuous',
+    backgroundColor: 'rgba(255, 255, 255, 0.86)',
+  },
+  googleEmoji: { fontSize: 22, lineHeight: 28, width: 30, textAlign: 'center' },
+
+  folds: { gap: space[2], marginTop: space[4] },
 
   offer: { gap: 4 },
   offerHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },

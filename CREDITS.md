@@ -18,6 +18,7 @@ one row of actions), not from borrowing its assets.
 | [Material Symbols](https://fonts.google.com/icons) via @expo-google-fonts/material-symbols | Icon font on Android and the web preview | Apache-2.0 (font), MIT (package) |
 | [react-native-reanimated](https://github.com/software-mansion/react-native-reanimated) | Sheet springs and the list's glide animations | MIT |
 | [react-native-gesture-handler](https://github.com/software-mansion/react-native-gesture-handler) | Sheet dragging | MIT |
+| [expo-image-picker](https://docs.expo.dev/versions/latest/sdk/imagepicker/) | Choosing a photo to share of a gym | MIT |
 | [expo-haptics](https://docs.expo.dev/versions/latest/sdk/haptics/), [expo-location](https://docs.expo.dev/versions/latest/sdk/location/), [AsyncStorage](https://github.com/react-native-async-storage/async-storage) | Taps you can feel, "near me", saved gyms | MIT |
 
 SF Symbols are drawn by iOS itself and are used under Apple's terms, which
@@ -57,8 +58,21 @@ licence condition and must stay visible:
 OpenStreetMap data is © OpenStreetMap contributors, available under the
 [Open Database Licence](https://www.openstreetmap.org/copyright).
 
-On a phone, the map is Apple's or Google's, and each shows its own legal
-notice.
+On iPhone, the map is Apple's, which shows its own legal notice.
+
+## Gym photos
+
+Every gym photo in GymGO was taken and shared by a GymGO member, who agreed
+to it being shown, and is credited to them by name on the photo. None is
+taken from a gym's website or anywhere else.
+
+## Google Maps (only when switched on)
+
+With the owner's own key, a gym's **See it on Google** page shows details
+from Google Maps: rating, opening hours, photos and reviews. That page is
+credited "Google Maps", and every photo and review names its author with a
+link, as Google requires. That content belongs to Google and its
+contributors. GymGO shows it live and does not store it.
 
 ## Demo data
 

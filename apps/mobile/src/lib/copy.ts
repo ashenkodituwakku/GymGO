@@ -14,20 +14,24 @@
 import type { AccessVerdict, ResultTier } from '@gymgo/domain';
 
 export interface TierCopy {
+  emoji: string;
   label: string;
   line: string;
 }
 
 export const TIER: Record<ResultTier, TierCopy> = {
   confirmed: {
+    emoji: '💪',
     label: 'Good to go',
     line: 'Everything you asked for checks out.',
   },
   needs_confirmation: {
-    label: 'Worth a call',
+    emoji: '📞',
+    label: 'Call first',
     line: "Could work — a few things we couldn't confirm.",
   },
   ruled_out: {
+    emoji: '🙅',
     label: 'Not a fit',
     line: "Something you need isn't there.",
   },
@@ -49,6 +53,7 @@ export function sessionGreeting(minuteOfDay: number): string {
   return 'Late one?';
 }
 
+/** A little personality per verdict, as a short chip for the list. */
 /** "7 pm", "6:30 am", "12 pm". */
 export function timeLabel(minuteOfDay: number): string {
   const hour24 = Math.floor(minuteOfDay / 60) % 24;
@@ -101,11 +106,10 @@ export function summaryLine(total: number, confirmed: number, minuteOfDay: numbe
 
 export const EMPTY = {
   reviews: 'No reviews yet. Train there and be the first.',
-  photos: "No photos yet — we only post ones we're allowed to.",
+  photos: 'No photo supplied yet',
   results: 'Nothing ticks every box. Loosen one and try again.',
   /** No filters are on: what's missing is information, not a looser search. */
-  unconfirmed: 'None of these gyms publishes everything we check',
-  unconfirmedLine: "So none is a sure thing yet. Each card says exactly what to ask when you call.",
+  unconfirmedLine: 'Gyms rarely publish everything we check, so each card says exactly what to ask. 📞',
   outOfArea: "We only cover inner Melbourne for now (plus a Sydney demo), so here's the CBD.",
   locationDenied: 'No worries — search a suburb instead.',
   locationFar: "You're outside inner Melbourne, so we're showing the CBD instead.",

@@ -13,20 +13,30 @@ export type DataStatus = 'loading' | 'live' | 'offline';
 export function useGymData() {
   const [records, setRecords] = useState<GymRecord[]>(BUNDLED_GYMS);
   const [status, setStatus] = useState<DataStatus>('loading');
+  /** Each gym's newest member photo, for list thumbnails. */
+  const [covers, setCovers] = useState<Record<string, string>>({});
+
+  const refreshCovers = useCallback(() => {
+    api
+      .covers()
+      .then((result) => setCovers(result.covers))
+      .catch(() => undefined);
+  }, []);
 
   const refresh = useCallback(async () => {
     try {
       const data = await api.gyms();
       setRecords(data.gyms);
       setStatus('live');
+      refreshCovers();
     } catch {
       setStatus('offline');
     }
-  }, []);
+  }, [refreshCovers]);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  return { records, status, refresh };
+  return { records, status, covers, refresh, refreshCovers };
 }

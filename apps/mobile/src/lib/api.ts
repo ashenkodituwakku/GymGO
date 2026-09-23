@@ -44,7 +44,7 @@ async function request<T>(method: string, path: string, options: { token?: strin
   const base = apiBase();
   if (!base) throw new OfflineError('No server address.');
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000);
+  const timer = setTimeout(() => controller.abort(), method === 'POST' && path.endsWith('/photos') ? 60000 : 8000);
   let response: Response;
   try {
     response = await fetch(`${base}${path}`, {
@@ -67,6 +67,47 @@ async function request<T>(method: string, path: string, options: { token?: strin
     throw new ApiError(response.status, typeof data.error === 'string' ? data.error : 'Something went wrong.');
   }
   return data as T;
+}
+
+export interface GymPhoto {
+  id: string;
+  /** Server-relative; pass through photoUrl(). */
+  url: string;
+  credit: string;
+  createdAt: string;
+}
+
+export interface GoogleAuthor {
+  name: string;
+  uri: string | null;
+  photoUri: string | null;
+}
+
+export interface GooglePlace {
+  placeId: string;
+  name: string;
+  address: string | null;
+  rating: number | null;
+  ratingCount: number | null;
+  openNow: boolean | null;
+  hours: string[];
+  phone: string | null;
+  website: string | null;
+  googleMapsUri: string | null;
+  businessStatus: string | null;
+  photos: Array<{ uri: string; authors: GoogleAuthor[] }>;
+  reviews: Array<{ rating: number | null; text: string; when: string | null; author: GoogleAuthor; googleMapsUri: string | null }>;
+}
+
+export type GoogleResult =
+  | { configured: false }
+  | { configured: true; found: false; reason: 'demo' | 'no_match' }
+  | { configured: true; found: true; place: GooglePlace };
+
+/** A server path such as /api/photos/abc as a full URL. */
+export function photoUrl(path: string): string | null {
+  const base = apiBase();
+  return base ? `${base}${path}` : null;
 }
 
 export interface Account {
@@ -95,6 +136,28 @@ export const api = {
     request<{ reviews: Review[]; mine: Review[] }>('GET', `/api/gyms/${encodeURIComponent(gymId)}/reviews`, { token }),
   postReview: (token: string, gymId: string, body: { overall: number; body: string }) =>
     request<{ review: Review }>('POST', `/api/gyms/${encodeURIComponent(gymId)}/reviews`, { token, body }),
+
+  photos: (gymId: string, token: string | null) =>
+    request<{ photos: GymPhoto[]; mine: Array<{ id: string; status: string; createdAt: string }> }>(
+      'GET',
+      `/api/gyms/${encodeURIComponent(gymId)}/photos`,
+      { token },
+    ),
+  uploadPhoto: (token: string, gymId: string, data: string) =>
+    request<{ photo: { id: string; status: string } }>('POST', `/api/gyms/${encodeURIComponent(gymId)}/photos`, {
+      token,
+      body: { data, consent: true },
+    }),
+  covers: () => request<{ covers: Record<string, string> }>('GET', '/api/photos/covers'),
+  google: (gymId: string) => request<GoogleResult>('GET', `/api/gyms/${encodeURIComponent(gymId)}/google`),
+  photoQueue: (token: string) =>
+    request<{ photos: Array<{ id: string; gymId: string; credit: string; createdAt: string; dataUrl: string | null }> }>(
+      'GET',
+      '/api/moderation/photos',
+      { token },
+    ),
+  moderatePhoto: (token: string, photoId: string, body: { decision: 'publish' | 'reject'; reason?: string }) =>
+    request<unknown>('POST', `/api/moderation/photos/${encodeURIComponent(photoId)}`, { token, body }),
 
   moderationQueue: (token: string) => request<{ reviews: Review[] }>('GET', '/api/moderation/reviews', { token }),
   moderate: (token: string, reviewId: string, body: { decision: 'publish' | 'reject'; reason?: string }) =>

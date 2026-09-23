@@ -3,7 +3,7 @@
  */
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   Platform,
   Pressable,
@@ -126,6 +126,56 @@ export function Divider({ inset = 0 }: { inset?: number }) {
 }
 
 // --- Buttons ----------------------------------------------------------------
+
+/**
+ * A section that starts folded: an emoji, a title and a one-line summary.
+ * Tap to open. Keeps a gym's card short until you want the detail.
+ */
+export function Fold({
+  emoji,
+  title,
+  summary,
+  initiallyOpen = false,
+  children,
+}: {
+  emoji: string;
+  title: string;
+  summary?: string;
+  initiallyOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(initiallyOpen);
+  return (
+    <View style={styles.fold}>
+      <Pressable
+        onPress={() => {
+          haptic.select();
+          setOpen(!open);
+        }}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        accessibilityLabel={`${title}${summary ? `, ${summary}` : ''}`}
+        style={({ pressed }) => [styles.foldHead, pressed && { opacity: 0.7 }]}
+      >
+        <Txt variant="title2" style={styles.foldEmoji}>
+          {emoji}
+        </Txt>
+        <View style={styles.foldText}>
+          <Txt variant="headline">{title}</Txt>
+          {summary ? (
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+              {summary}
+            </Txt>
+          ) : null}
+        </View>
+        <View style={{ transform: [{ rotate: open ? '90deg' : '0deg' }] }}>
+          <Icon name="chevron" size={14} color={color.labelTertiary} />
+        </View>
+      </Pressable>
+      {open && <View style={styles.foldBody}>{children}</View>}
+    </View>
+  );
+}
 
 export interface CapsuleButton {
   icon: IconName;
@@ -339,6 +389,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  fold: {
+    borderRadius: radius.lg + 4,
+    borderCurve: 'continuous',
+    backgroundColor: 'rgba(255, 255, 255, 0.86)',
+    overflow: 'hidden',
+  },
+  foldHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
+  foldEmoji: { width: 30, textAlign: 'center' },
+  foldText: { flex: 1, gap: 1 },
+  foldBody: { paddingHorizontal: space[4], paddingBottom: space[4], gap: space[3] },
 
   field: { gap: 6 },
   fieldLabel: face('medium'),

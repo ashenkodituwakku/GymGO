@@ -35,9 +35,18 @@ The app is set in **Helvetica**.
   License (LaTeX Project Public License 1.3c). The unmodified font files and
   the licence are in `apps/mobile/assets/fonts/`.
 
-## Map data (web preview only)
+## Gym data
 
-The browser preview of the phone app draws its map with
+The real Melbourne gyms' names and positions come from
+[OpenStreetMap](https://www.openstreetmap.org/copyright), © OpenStreetMap
+contributors, under the Open Database Licence. The app shows that credit on
+every real listing and at the foot of the results. Prices, hours and
+equipment were read from each gym's own website, and each fact links to its
+page.
+
+## Map tiles (browser)
+
+In the browser (the PC version), the map is drawn with
 [MapLibre GL JS](https://maplibre.org/) (BSD-3-Clause) and tiles from
 [OpenFreeMap](https://openfreemap.org/). The credit shown on the map is a
 licence condition and must stay visible:

@@ -2,8 +2,20 @@
  * Small building blocks shared by every screen.
  */
 
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type StyleProp,
+  type TextInputProps,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
 import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
@@ -210,22 +222,63 @@ export function ActionButton({
   );
 }
 
-export function PrimaryButton({ label, onPress }: { label: string; onPress: () => void }) {
+/**
+ * A labelled text field. Inside a bottom sheet it must be the sheet's own
+ * input, so the sheet can move out of the keyboard's way; in the desktop
+ * panels it's a plain one.
+ */
+export function TextField({
+  label,
+  inSheet,
+  ...props
+}: TextInputProps & { label: string; inSheet: boolean }) {
+  const Input = inSheet ? BottomSheetTextInput : TextInput;
+  return (
+    <View style={styles.field}>
+      <Txt variant="footnote" color={color.labelSecondary} style={styles.fieldLabel}>
+        {label}
+      </Txt>
+      <Input
+        placeholderTextColor={color.labelTertiary}
+        accessibilityLabel={label}
+        {...props}
+        style={[styles.fieldInput, props.style]}
+      />
+    </View>
+  );
+}
+
+export function PrimaryButton({
+  label,
+  onPress,
+  disabled = false,
+  tone = 'brand',
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  tone?: 'brand' | 'quiet' | 'danger';
+}) {
+  const fill = tone === 'brand' ? color.brand : tone === 'danger' ? color.dangerTint : color.fill;
+  const ink = tone === 'brand' ? color.onBrand : tone === 'danger' ? color.dangerInk : color.brand;
   return (
     <Pressable
+      disabled={disabled}
       onPress={() => {
         haptic.tap();
         onPress();
       }}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.primary, pressed && { backgroundColor: color.brandPressed }]}
+      accessibilityState={{ disabled }}
+      style={({ pressed }) => [styles.primary, { backgroundColor: fill }, pressed && { opacity: 0.8 }, disabled && { opacity: 0.45 }]}
     >
-      <Txt variant="headline" color={color.onBrand}>
+      <Txt variant="headline" color={ink}>
         {label}
       </Txt>
     </Pressable>
   );
 }
+
 
 const styles = StyleSheet.create({
   pill: {
@@ -281,9 +334,25 @@ const styles = StyleSheet.create({
 
   primary: {
     height: 52,
-    borderRadius: radius.md,
-    backgroundColor: color.brand,
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  field: { gap: 6 },
+  fieldLabel: face('medium'),
+  fieldInput: {
+    height: 48,
+    paddingHorizontal: space[4],
+    borderRadius: radius.md,
+    borderCurve: 'continuous',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.separator,
+    fontSize: 17,
+    color: color.label,
+    ...face('regular'),
+    ...(Platform.OS === 'web' ? { outlineWidth: 0 } : null),
   },
 });

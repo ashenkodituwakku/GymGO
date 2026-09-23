@@ -6,52 +6,51 @@
     Finds the GymGO checkout (cloning it on first run), makes sure pnpm is
     available and installs dependencies when they are missing or out of date.
 
-    By default it starts the phone app's development server and prints a QR
-    code. Scan it with Expo Go on an iPhone or Android phone on the same
-    Wi-Fi, and the app opens on the phone. No Mac or Xcode needed.
+    Then it starts two things together:
+      - the GymGO server, which keeps accounts, saved gyms and reviews in a
+        database file on this computer (free, nothing to sign up for);
+      - the GymGO app, which opens in your browser so you can use it on this
+        PC, and prints a QR code so you can open it on your phone with Expo Go.
 
-    With -Web it starts the older website instead, with the demo dataset and
-    development sign-in, and opens the browser once the server answers.
-
-    Both recompile on every file save. Press Ctrl+C to stop.
+    Both reload when files change. Press Ctrl+C to stop both.
 
 .PARAMETER Path
     Where the checkout lives. Defaults to a GymGO folder in your home
     directory. Cloned there if it does not exist yet.
 
-.PARAMETER Web
-    Start the website instead of the phone app.
-
 .PARAMETER Tunnel
-    Phone app only: route the connection through Expo's tunnel, for when the
-    phone and this computer are not on the same Wi-Fi (or the Wi-Fi blocks
-    devices from seeing each other). Slower; Expo may ask to install a helper.
+    For a phone that is not on the same Wi-Fi as this computer. Slower, and
+    Expo may ask to install a helper. The phone then shows the gyms from the
+    app's offline copy; signing in needs the same Wi-Fi.
 
-.PARAMETER Port
-    Website only: port to serve on. Defaults to 3000.
+.PARAMETER NoBrowser
+    Do not open a browser window.
 
 .PARAMETER Update
     Pull the latest commits before starting.
 
-.PARAMETER NoBrowser
-    Website only: do not open a browser window.
+.PARAMETER OldWebsite
+    Start the older Next.js website instead of the app.
+
+.PARAMETER Port
+    Old website only: port to serve on. Defaults to 3000.
 
 .EXAMPLE
     gymgo
-    gymgo -Tunnel
     gymgo -Update
-    gymgo -Web
-    gymgo -Web -Port 3001 -NoBrowser
+    gymgo -Tunnel
+    gymgo -NoBrowser
+    gymgo -OldWebsite
 #>
 [CmdletBinding()]
 param(
     [string] $Path = (Join-Path $HOME 'GymGO'),
-    [switch] $Web,
     [switch] $Tunnel,
-    [ValidateRange(1, 65535)]
-    [int] $Port = 3000,
+    [switch] $NoBrowser,
     [switch] $Update,
-    [switch] $NoBrowser
+    [switch] $OldWebsite,
+    [ValidateRange(1, 65535)]
+    [int] $Port = 3000
 )
 
 $ErrorActionPreference = 'Stop'
@@ -59,7 +58,8 @@ Set-StrictMode -Version Latest
 
 $RepoUrl = 'https://github.com/ashenkodituwakku/GymGO.git'
 $Branch = 'claude/friendly-johnson-9rzxrj'
-$MinNode = [version]'20.9.0'
+# node:sqlite, which the server's database uses, needs 22.13 or newer.
+$MinNode = [version]'22.13.0'
 $PnpmVersion = '10.33.0'
 
 # Output markers are plain ASCII on purpose. Windows PowerShell 5.1 reads a
@@ -177,10 +177,16 @@ try {
     }
     Write-Done 'Dependencies ready'
 
-    # --- Phone app -----------------------------------------------------------------
-    if (-not $Web) {
+    # --- The app and its server ----------------------------------------------
+    if (-not $OldWebsite) {
         Write-Host ''
-        Write-Host '  Starting the GymGO phone app' -ForegroundColor White
+        Write-Host '  Starting GymGO: the server and the app' -ForegroundColor White
+        Write-Host ''
+        if (-not $NoBrowser) {
+            Write-Host '  On this PC: the app opens in your browser at http://localhost:8081'
+        } else {
+            Write-Host '  On this PC: open http://localhost:8081 in your browser'
+        }
         Write-Host ''
         Write-Host '  On your phone:' -ForegroundColor White
         Write-Host '    1. Install "Expo Go" from the App Store or Google Play.'
@@ -192,12 +198,13 @@ try {
         Write-Host '  If Windows asks whether Node.js may use the network, allow it on' -ForegroundColor DarkGray
         Write-Host '  private networks, or the phone cannot reach this computer.' -ForegroundColor DarkGray
         Write-Host '  Phone cannot connect? Stop with Ctrl+C and run: gymgo -Tunnel' -ForegroundColor DarkGray
-        Write-Host '  Save a file and the app reloads on the phone. Ctrl+C stops it.' -ForegroundColor DarkGray
+        Write-Host '  Ctrl+C stops everything.' -ForegroundColor DarkGray
         Write-Host ''
 
-        $expoArgs = @('--filter', '@gymgo/mobile', 'exec', 'expo', 'start')
-        if ($Tunnel) { $expoArgs += '--tunnel' }
-        Invoke-Pnpm @expoArgs
+        $devArgs = @((Join-Path $Path 'scripts/dev.mjs'))
+        if ($NoBrowser) { $devArgs += '--no-browser' }
+        if ($Tunnel) { $devArgs += '--tunnel' }
+        & node @devArgs
         return
     }
 
@@ -215,7 +222,7 @@ try {
             if (-not $NoBrowser) { Start-Process $url }
             return
         }
-        Stop-WithError "Something else is already using port $Port." "Start on another port with: gymgo -Port $($Port + 1)"
+        Stop-WithError "Something else is already using port $Port." "Start on another port with: gymgo -OldWebsite -Port $($Port + 1)"
     }
 
     # --- Open the browser once the server answers -------------------------------

@@ -1,0 +1,29 @@
+{
+  "name": "@gymgo/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GymGO's API: accounts, saved gyms, reviews and moderation, on Node's built-in SQLite. Free to run; no external services.",
+  "type": "module",
+  "scripts": {
+    "start": "node --no-warnings=ExperimentalWarning --import tsx src/main.ts",
+    "dev": "node --no-warnings=ExperimentalWarning --import tsx --watch src/main.ts",
+    "make-moderator": "node --no-warnings=ExperimentalWarning --import tsx src/cli.ts moderator",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gymgo/demo-data": "workspace:*",
+    "@gymgo/domain": "workspace:*",
+    "@gymgo/melbourne-data": "workspace:*",
+    "tsx": "^4.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.1"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

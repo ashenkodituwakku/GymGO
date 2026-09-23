@@ -39,6 +39,9 @@ because "the code does X" is not the same as "someone decided X".
 | Search runs on the device | No server, no account, nothing to deploy for the pilot; the same `search()` the website runs. |
 | Liquid Glass on small controls, thick material on sheets | A list over a busy street map has to stay readable. Liquid Glass at sheet size is too see-through for body text. |
 | Helvetica throughout | Asked for. iPhone uses the built-in Helvetica Neue (Regular, Medium, Bold). Android has no Helvetica and a licence costs money, so it bundles TeX Gyre Heros, a free clone. That clone has no Medium cut, so medium weights render Regular on Android. All weights go through `face()` in `theme.ts`, because Android picks custom fonts by name and a bare `fontWeight` would give a faux bold. |
+| Local server on Node's built-in SQLite | "Free servers and databases" without signing anyone up for anything: it runs on the owner's PC, costs nothing, and needs no keys. A hosted free tier is a later choice for the owner, because it means an account with a provider. |
+| Real gyms from OpenStreetMap + the gyms' own sites | OSM is openly licensed (ODbL, attribution shown). Operator websites are the only place a price or hours can be read without contacting anyone. Nothing was inferred: staffed hours are never treated as guest hours unless the gym says so. |
+| One command runs server + app | `scripts/dev.mjs` spawns both through the same Node, so it doesn't depend on a shell or on how pnpm is installed. It works the same from the launcher, `pnpm app` or plain `node`. |
 | Weekly hours start on Monday | Australian timetables do. Changed in the shared domain, so the website follows. |
 
 ## Traps
@@ -62,6 +65,15 @@ writes to `.next`, so the suite could pass or fail against an old build, and
 its store was never reset, so a second run met the first run's approved
 corrections. The Playwright web server now deletes `.data-e2e` and builds fresh
 before serving. Slower, and correct.
+
+**No real gym is "Good to go", and that is correct.** The best-documented,
+Doherty's City, publishes its price, guest hours and walk-in policy, but not
+whether a first visit needs an induction. An unconfirmed requirement is never
+treated as met. Don't "fix" this by defaulting induction to no.
+
+**`pgrep -f` / `pkill -f` will match your own shell.** Any pattern you pass
+appears in your own command line. Use a bracket trick (`[e]xpo start`) or
+look processes up in `/proc`.
 
 **Screenshots from a sandbox may lose map tiles.** A proxy that drops some tile
 requests leaves a blank map. The harness used for the app screenshots fetched

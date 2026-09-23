@@ -2,20 +2,19 @@
 
 **Find a gym that fits your workout, budget and visit time.**
 
-## Run the app on your phone
+## Start GymGO
 
-GymGO is an iPhone and Android app. You run it from your computer and open it
-on your phone with **Expo Go**, a free app from Expo. You don't need a Mac,
-Xcode, an Apple developer account or an app store listing.
-
-**On your phone:** install **Expo Go** from the App Store or Google Play, and
-join the same Wi-Fi as your computer.
+GymGO is an app for iPhone, Android and your PC's browser. One command
+starts it on your computer. It opens in your browser, and you can open it on
+your phone with **Expo Go**, a free app. It also starts a small server
+on your computer that keeps accounts, saved gyms and reviews in a database
+file. Everything is free: no Mac, no Xcode, no sign-ups, no API keys.
 
 ### On Windows
 
 Open **PowerShell** (Start menu → type *PowerShell*). Then:
 
-**1. Install Node.js and Git** (skip if you have them):
+**1. Install Node.js and Git** (skip if you have them; GymGO needs Node 22.13 or newer):
 
 ```powershell
 winget install OpenJS.NodeJS.LTS Git.Git
@@ -41,25 +40,29 @@ git clone -b claude/friendly-johnson-9rzxrj https://github.com/ashenkodituwakku/
 & "$HOME\GymGO\scripts\gymgo.ps1"
 ```
 
-A QR code appears in PowerShell. The first start takes a minute or two.
+The first start takes a minute or two. Then:
 
-**5. Open it on your phone.** On an **iPhone**, point the **Camera** app at the
-QR code and tap the banner. On **Android**, open **Expo Go** and tap
-*Scan QR code*. GymGO opens on the phone.
+- **On your PC:** the app opens in your browser at **http://localhost:8081**.
+  If it doesn't, open that address yourself.
+- **On your phone:** install **Expo Go** from the App Store or Google Play,
+  and join the same Wi-Fi as your PC. Then scan the QR code in PowerShell:
+  on an **iPhone** with the **Camera** app, on **Android** from inside
+  **Expo Go**.
 
-If Windows asks whether Node.js may use the network, choose **Allow**. Without
-that, the phone can't reach your computer.
+If Windows asks whether Node.js may use the network, choose **Allow**.
+Without that, your phone can't reach your PC.
 
-**Phone won't connect?** Press **Ctrl+C**, then run this, which works across
-different networks. It's slower, and Expo may ask to install a small helper.
-Type `Y`.
+Press **Ctrl+C** in PowerShell to stop everything.
+
+**Phone won't connect?** Stop with **Ctrl+C** and run:
 
 ```powershell
 & "$HOME\GymGO\scripts\gymgo.ps1" -Tunnel
 ```
 
-Save a file on the computer and the app reloads on the phone. Press
-**Ctrl+C** in PowerShell to stop.
+This works even when the phone is on a different network, but it's slower.
+In this mode the phone shows the gyms from the app's built-in copy. Signing
+in and reviews on the phone need the same Wi-Fi as the PC.
 
 **Optional: start it from anywhere by typing `gymgo`.** Run this once, then open
 a new PowerShell window:
@@ -69,8 +72,12 @@ if (!(Test-Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out
 Add-Content $PROFILE "`nfunction gymgo { & `"$HOME\GymGO\scripts\gymgo.ps1`" @args }"
 ```
 
-Then `gymgo` starts the app, `gymgo -Tunnel` uses the tunnel, and
-`gymgo -Update` pulls the latest version first.
+After that you can run:
+
+- `gymgo` to start everything;
+- `gymgo -Update` to get the latest version first;
+- `gymgo -Tunnel` when the phone isn't on the same Wi-Fi;
+- `gymgo -NoBrowser` to start without opening a browser window.
 
 ### On a Mac or Linux
 
@@ -78,16 +85,30 @@ Then `gymgo` starts the app, `gymgo -Tunnel` uses the tunnel, and
 git clone -b claude/friendly-johnson-9rzxrj https://github.com/ashenkodituwakku/GymGO.git ~/GymGO
 cd ~/GymGO
 npx pnpm@10 install
-npx pnpm@10 app          # or: npx pnpm@10 app --tunnel
+npx pnpm@10 app          # add --tunnel if the phone can't connect
 ```
 
-Scan the QR code as above.
+### Accounts
+
+Tap the person icon next to the search box to create an account. Your saved
+gyms then follow you between your PC and your phone, and you can write
+reviews. Accounts live only in `apps/server/data/gymgo.db` on your
+computer. Passwords are stored hashed, and no emails are sent.
+
+Reviews wait for a moderator before they appear. To make your own account a
+moderator, run this in the GymGO folder:
+
+```powershell
+npx pnpm@10 --filter @gymgo/server make-moderator you@example.com
+```
+
+Then open your account in the app to see the reviews waiting for a decision.
 
 ### The older website
 
-The first version of GymGO was a website, and it's still in the repository.
-To run it, start the launcher with `-Web` (or run `pnpm dev`), then open
-**http://localhost:3000**. New work goes into the phone app.
+The first version of GymGO was a Next.js website, and it's still in the
+repository. Start it with `gymgo -OldWebsite` (or `pnpm dev`) and open
+**http://localhost:3000**. New work goes into the app.
 
 ---
 
@@ -115,12 +136,13 @@ paid service.
 ```bash
 pnpm install
 
-pnpm app          # phone app: prints a QR code for Expo Go
+pnpm app          # server + app: opens the browser, QR code for Expo Go
+pnpm server       # just the server (http://localhost:4000)
 pnpm dev          # website: http://localhost:3000
 pnpm build        # website production build
 pnpm start        # serve the website production build
 
-pnpm verify       # typecheck + lint + unit tests, every package (199 tests)
+pnpm verify       # typecheck + lint + unit tests, every package
 pnpm test         # unit tests only
 pnpm test:e2e     # website: fresh build + Playwright at 3 viewports
 ```
@@ -163,8 +185,11 @@ runs with honest "not configured" states rather than fake successes.
 packages/domain/     Framework-free rules. No React, no Next, no I/O.
                      The phone and the website run the same search from
                      here, so a pin's colour and a row's verdict can't drift.
-packages/demo-data/  17 fictional demo gyms covering the edge cases, and the
-                     pilot suburbs the search box understands.
+packages/melbourne-data/  23 real inner-Melbourne gyms, every fact linked to
+                     where it was read (gym websites, OpenStreetMap).
+packages/demo-data/  17 fictional Sydney gyms covering the edge cases.
+apps/server/         The API: accounts, saved gyms, reviews, moderation, on
+                     Node's built-in SQLite. Free, local, no external services.
 apps/mobile/         The iOS and Android app (Expo, React Native).
   src/app/           The one screen: a map with sheets over it.
   src/components/    Map, pins, sheets, place card, filters.
@@ -183,17 +208,33 @@ docs/                Architecture, data model, API, status, launch checklist.
 does not collapse them into "production ready". Read it before quoting any of
 this as finished.
 
-In short: the phone app is built, typechecked, unit-tested, and its iOS and
-Android bundles compile. Its interface has been checked in a browser preview
-only; it has **not** been run on a real phone or simulator yet. The website
-pilot works locally and is tested locally. Nothing is deployed and nothing has
-been submitted to an app store. No real gym data has been collected, no gym has
+In short: the app runs on your PC in the browser, with a real local server
+and database behind it. Its iOS and Android bundles compile, but it has
+**not** been run on a real phone or simulator yet. The Melbourne gyms are
+real, with sources; most of their details are unknown because the gyms don't
+publish them. Nothing is deployed, and nothing has been submitted to an app
+store. No real gym data has been collected, no gym has
 been contacted, and no customer research has been done — the whole product
 thesis is still a hypothesis.
 
+## Real data, and what "unknown" means
+
+The 23 Melbourne gyms are real. Names and map positions come from
+OpenStreetMap (© OpenStreetMap contributors, ODbL). Prices, hours and
+equipment come only from each gym's own website, read on 23 September 2026,
+and every fact in the app links to the page it came from. What a gym doesn't
+publish is shown as unknown, not guessed. That is why most of them show
+**Worth a call**: for example, no gym states whether a first-time visitor needs
+an induction, so none can honestly be a sure thing yet. Nothing here was
+supplied by or agreed with the gyms, and none of them has been contacted.
+
+Prices and hours count as current for 30 days after they were checked. After
+that the app flags them as due for a recheck.
+
 ## Demo data
 
-The 17 gyms in `packages/demo-data/` are invented. None of the names,
+The 17 Sydney gyms in `packages/demo-data/` are invented. Search a Sydney
+suburb such as Surry Hills to see them. None of the names,
 addresses, prices, hours, equipment or reviews describe a real business. Every
 record is flagged `isDemoData`, the interface says so on every page, and
 production ingestion refuses records carrying the flag.

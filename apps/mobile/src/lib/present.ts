@@ -17,7 +17,7 @@ export interface PriceLine {
  */
 export function priceLine(offers: OfferSelection): PriceLine {
   const chosen = offers.bestAvailable;
-  if (!chosen) return { headline: '—', caption: 'no day pass', confirmed: false };
+  if (!chosen) return { headline: '—', caption: 'price unknown', confirmed: false };
 
   const total = chosen.cost.totalNonRefundableMinor;
   if (!chosen.cost.known || total === null) {

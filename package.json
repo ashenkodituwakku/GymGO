@@ -5,10 +5,10 @@
   "description": "Gym Information Map - find a gym that fits your workout, budget and visit time.",
   "packageManager": "pnpm@10.33.0",
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22.13.0"
   },
   "scripts": {
-    "app": "pnpm --filter @gymgo/mobile start",
+    "app": "node scripts/dev.mjs",
     "dev": "pnpm --filter @gymgo/web dev",
     "build": "pnpm --filter @gymgo/web build",
     "start": "pnpm --filter @gymgo/web start",
@@ -16,6 +16,7 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "test:e2e": "pnpm --filter @gymgo/web test:e2e",
-    "verify": "pnpm typecheck && pnpm lint && pnpm test"
+    "verify": "pnpm typecheck && pnpm lint && pnpm test",
+    "server": "pnpm --filter @gymgo/server start"
   }
 }

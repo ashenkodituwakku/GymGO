@@ -103,9 +103,12 @@ export const EMPTY = {
   reviews: 'No reviews yet. Train there and be the first.',
   photos: "No photos yet — we only post ones we're allowed to.",
   results: 'Nothing ticks every box. Loosen one and try again.',
-  outOfArea: "We're only in inner Sydney for now — showing that instead.",
+  /** No filters are on: what's missing is information, not a looser search. */
+  unconfirmed: 'None of these gyms publishes everything we check',
+  unconfirmedLine: "So none is a sure thing yet. Each card says exactly what to ask when you call.",
+  outOfArea: "We only cover inner Melbourne for now (plus a Sydney demo), so here's the CBD.",
   locationDenied: 'No worries — search a suburb instead.',
-  locationFar: "You're outside our pilot area, so we're showing inner Sydney.",
+  locationFar: "You're outside inner Melbourne, so we're showing the CBD instead.",
   crowd: "Live crowd info isn't something we have — so we won't guess.",
 } as const;
 

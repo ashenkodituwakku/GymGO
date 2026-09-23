@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { accessLine, accessShort, checkedAgo, ratingShort, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
-import { activeFilterCount, applyRelaxation, defaultVisit, initialFilters, runSearch, toQuery } from './query';
+import { activeFilterCount, applyRelaxation, atPlace, defaultVisit, initialFilters, runSearch, toQuery } from './query';
+import { geocodePlace } from './places';
+
+const SURRY_HILLS = atPlace(geocodePlace('Surry Hills').place!);
 import { checkTimeZoneSupport } from './selfcheck';
 
 describe('voice', () => {
@@ -90,6 +93,7 @@ describe('query', () => {
     const outcome = runSearch(
       {
         ...initialFilters(NOW),
+        ...SURRY_HILLS,
         visitDate: '2026-09-23',
         visitMinuteOfDay: 19 * 60,
         budgetMinor: 3000,

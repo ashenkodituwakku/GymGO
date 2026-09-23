@@ -4,6 +4,44 @@ Reported in separate columns on purpose. None of this is "production ready",
 and collapsing these into that phrase would be the single most misleading thing
 this document could do.
 
+## Server, accounts and data (`apps/server`, `packages/melbourne-data`)
+
+| | Implemented locally | Tested locally | Externally integrated | Deployed |
+|---|---|---|---|---|
+| API server (Node, built-in SQLite) | ✅ | ✅ 14 tests over real HTTP | n/a, runs on your PC | ❌ not hosted |
+| Sign-up, sign-in, sign-out, delete account | ✅ | ✅ tests + driven in the browser | ❌ no email verification | ❌ |
+| Saved gyms synced to the account | ✅ | ✅ tests + driven in the browser | n/a | ❌ |
+| Reviews held for moderation; moderator queue | ✅ | ✅ tests; posting driven in the browser | n/a | ❌ |
+| Real Melbourne gyms (23), every fact sourced | ✅ | ✅ 11 honesty tests | ⚠️ one-off read, 23 Sep 2026 | n/a |
+
+**Free, and what that means here:** the server and database run on your own
+computer. That costs nothing and needs no account anywhere. It also means
+the phone only reaches them on the same Wi-Fi. Hosting them for free
+elsewhere (for example a free Postgres tier) would mean signing up for a
+service, which is your decision to make. Nothing has been provisioned.
+
+**Security, stated plainly:**
+
+- Passwords are hashed with scrypt, and sessions are random tokens stored
+  hashed.
+- Sign-in attempts are rate-limited, and browser access is limited to
+  localhost and your home network.
+- There is no email verification and no password reset.
+- The API runs over plain HTTP on your network. Fine for a pilot on your own
+  Wi-Fi; not for the internet.
+
+**The Melbourne data:**
+
+- Names and positions come from OpenStreetMap (ODbL). Prices, hours and
+  equipment come only from the gyms' own sites, read once on 23 September
+  2026.
+- Only 9 of the 23 gyms publish anything we could use beyond their location.
+  None states whether a first visit needs an induction. So no gym is "Good to
+  go", which is the honest result.
+- Map-only gyms are marked as not confirmed to be trading.
+- Prices go stale after 30 days, and there is no re-checking process yet.
+- No gym has been contacted.
+
 ## Phone app (`apps/mobile`, Expo)
 
 | | Implemented locally | Tested locally | Externally integrated | Native-tested | Deployed | Store-approved |
@@ -20,18 +58,24 @@ this document could do.
 | Time-zone self-check at start-up | ✅ | ✅ unit tests | n/a | ❌ | n/a | ❌ |
 | App icon, splash screen | ❌ | ❌ | n/a | ❌ | n/a | ❌ |
 | Store builds (EAS / Xcode / Gradle) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| PC browser layout (side panels) | ✅ | ✅ driven end to end at 1440 × 900 | n/a | n/a | ❌ | n/a |
 
 **What "tested locally" means for the phone app, exactly:**
 
-- It typechecks, and 22 unit tests pass. They include the same reference search
+- It typechecks, and 26 unit tests pass. They include the same reference search
   the website runs, run through the app's own filter code: 3 confirmed results,
   Ironbark first.
 - `expo export` builds both the **iOS and Android bundles** into Hermes
-  bytecode without errors: 1,845 and 1,938 modules. The web-only map library
+  bytecode without errors: 1,852 and 1,956 modules. The web-only map library
   is confirmed absent from both.
 - `expo-doctor` passes 21/21 checks.
-- The interface was driven with Playwright in the **react-native-web preview**
-  at 390 × 844. It covered the map with pins, opening a place card from a row,
+- The interface was driven with Playwright in the browser build at 390 × 844,
+  and at 1440 × 900 for the PC layout. On the PC that browser build is the
+  product itself, not a preview.
+- The PC run covered creating an account, searching Fitzroy, opening a gym,
+  saving it and writing a review. That review showed as waiting for a
+  moderator, and the saved gym appeared in the account.
+- The phone-sized run covered the map with pins, opening a place card from a row,
   closing it, the filters sheet, tightening filters to "nothing fits" with its
   suggestions, and place search. Those screenshots are the only visual evidence.
   They were taken in Chromium, not on a phone. They show the blur fallback,
@@ -84,16 +128,18 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 
 | Check | Result |
 |---|---|
-| `pnpm typecheck` | Clean, all four packages |
+| `pnpm typecheck` | Clean, all six packages |
 | `pnpm lint` | No ESLint warnings or errors (web); tsc clean elsewhere |
 | `@gymgo/domain` unit tests | **115 passed** |
 | `@gymgo/demo-data` unit tests | **23 passed** |
-| `@gymgo/mobile` unit tests | **22 passed** |
+| `@gymgo/melbourne-data` unit tests | **11 passed** |
+| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **14 passed** |
+| `@gymgo/mobile` unit tests | **26 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
-| `expo export` (iOS + Android) | Both bundles compiled |
+| `expo export` (iOS + Android) | Both compiled (1,852 and 1,956 modules) |
 | `expo-doctor` | 21/21 checks passed |
 | `pnpm build` | Compiled successfully |
-| Playwright (390 / 768 / 1440), fresh build | **99 passed**, 24 skipped |
+| Playwright, old website (390 / 768 / 1440), fresh build | **99 passed**, 24 skipped (website unchanged since) |
 
 The 24 skips are the contribution and moderation suite at phone and tablet
 width: it writes to a shared local store, so running it in three browsers at

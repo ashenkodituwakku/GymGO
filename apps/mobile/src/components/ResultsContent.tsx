@@ -6,10 +6,10 @@
  */
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { explainNoMatches, type ResultTier, type SearchOutcome } from '@gymgo/domain';
-import { suggestPlaces, type Place } from '@gymgo/demo-data';
+import { suggestPlaces, type AppPlace } from '@/lib/places';
 import { EMPTY, PLACEHOLDER, TIER, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
 import { activeFilterCount, type Filters } from '@/lib/query';
 import { color, face, radius, space } from '@/lib/theme';
@@ -37,13 +37,17 @@ export function ResultsContent({
   onSelect,
   onApplyRelaxation,
   notice,
+  inSheet,
+  accountInitial,
+  onOpenAccount,
+  dataNote,
 }: {
   outcome: SearchOutcome;
   filters: Filters;
   query: string;
   onQueryChange: (text: string) => void;
   onSearchFocus: () => void;
-  onPickPlace: (place: Place) => void;
+  onPickPlace: (place: AppPlace) => void;
   onSubmitSearch: () => void;
   onToggleEquipment: (id: string) => void;
   onToggleBudget: () => void;
@@ -51,7 +55,15 @@ export function ResultsContent({
   onSelect: (id: string) => void;
   onApplyRelaxation: (index: number) => void;
   notice: string | null;
+  /** In a bottom sheet (phone) or a plain panel (desktop). */
+  inSheet: boolean;
+  /** The signed-in person's initial, or null when signed out. */
+  accountInitial: string | null;
+  onOpenAccount: () => void;
+  /** The line at the foot of the list about where the data comes from. */
+  dataNote: string;
 }) {
+  const SearchInput = inSheet ? BottomSheetTextInput : TextInput;
   const suggestions = query.trim() ? suggestPlaces(query) : [];
   const filterCount = activeFilterCount(filters);
   const total = outcome.results.length;
@@ -62,7 +74,7 @@ export function ResultsContent({
       <View style={styles.searchRow}>
         <View style={styles.search}>
           <Icon name="search" size={16} color={color.labelSecondary} />
-          <BottomSheetTextInput
+          <SearchInput
             value={query}
             onChangeText={onQueryChange}
             onFocus={onSearchFocus}
@@ -93,6 +105,23 @@ export function ResultsContent({
             </View>
           )}
         </Pressable>
+        <Pressable
+          onPress={() => {
+            haptic.tap();
+            onOpenAccount();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={accountInitial ? 'Your account' : 'Sign in'}
+          style={({ pressed }) => [styles.avatar, accountInitial ? styles.avatarSignedIn : null, pressed && { opacity: 0.7 }]}
+        >
+          {accountInitial ? (
+            <Txt variant="headline" color={color.onBrand}>
+              {accountInitial}
+            </Txt>
+          ) : (
+            <Icon name="account" size={22} color={color.brand} />
+          )}
+        </Pressable>
       </View>
 
       {suggestions.length > 0 && (
@@ -113,6 +142,7 @@ export function ResultsContent({
               <Txt variant="body">{place.name}</Txt>
               <Txt variant="footnote" color={color.labelSecondary}>
                 {place.postcode}
+                {place.city === 'sydney' ? ' · Sydney demo' : ''}
               </Txt>
             </Pressable>
           ))}
@@ -169,7 +199,12 @@ export function ResultsContent({
       {/* Nothing fits --------------------------------------------------- */}
       {total > 0 && outcome.counts.confirmed === 0 && (
         <View style={styles.explain}>
-          <Txt variant="headline">{EMPTY.results}</Txt>
+          <Txt variant="headline">{filterCount === 0 ? EMPTY.unconfirmed : EMPTY.results}</Txt>
+          {filterCount === 0 && (
+            <Txt variant="footnote" color={color.labelSecondary} style={styles.explainLine}>
+              {EMPTY.unconfirmedLine}
+            </Txt>
+          )}
           {explainNoMatches(outcome)
             .slice(0, 2)
             .map((line) => (
@@ -241,7 +276,8 @@ export function ResultsContent({
 
       <View style={styles.footer}>
         <Txt variant="caption" color={color.labelTertiary} style={styles.footerText}>
-          Demo data — every gym here is invented for testing.{'\n'}
+          {dataNote}
+          {'\n'}
           {EMPTY.crowd}
         </Txt>
       </View>
@@ -280,6 +316,15 @@ const styles = StyleSheet.create({
     // The web preview's focus ring; phones draw none.
     ...(Platform.OS === 'web' ? { outlineWidth: 0 } : null),
   },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: color.brandTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarSignedIn: { backgroundColor: color.brand },
   filterButton: {
     width: 40,
     height: 40,

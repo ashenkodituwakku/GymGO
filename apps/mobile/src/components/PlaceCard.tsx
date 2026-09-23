@@ -21,6 +21,7 @@ import {
   summariseWeek,
   type AccessSchedule,
   type GymSearchResult,
+  type Provenance,
   type Tri,
 } from '@gymgo/domain';
 import { EMPTY, TIER, accessLine, accessShort, checkedAgo, ratingShort, sourceLabel, timeLabel } from '@/lib/copy';
@@ -53,10 +54,13 @@ export function PlaceHeader({
   result,
   onClose,
   scrolled,
+  topPadding = 0,
 }: {
   result: GymSearchResult;
   onClose: () => void;
   scrolled: boolean;
+  /** Extra space above the name, inside the frosted strip. */
+  topPadding?: number;
 }) {
   const location = result.record.location;
   const subtitle = [
@@ -68,7 +72,7 @@ export function PlaceHeader({
     .join(' · ');
 
   return (
-    <View style={styles.headerBar}>
+    <View style={[styles.headerBar, { paddingTop: topPadding }]}>
       {scrolled && <Glass kind="bar" style={StyleSheet.absoluteFill} />}
       <View style={styles.header}>
         <View style={styles.headerText}>
@@ -92,6 +96,7 @@ export function PlaceCard({
   saved,
   onToggleSave,
   asOf,
+  reviews,
 }: {
   result: GymSearchResult;
   visitMinute: number;
@@ -99,6 +104,8 @@ export function PlaceCard({
   saved: boolean;
   onToggleSave: () => void;
   asOf: Date;
+  /** The live reviews section, which needs the account and the server. */
+  reviews: React.ReactNode;
 }) {
   const [notice, setNotice] = useState<string | null>(null);
   const record = result.record;
@@ -124,7 +131,7 @@ export function PlaceCard({
     const url = Platform.select({
       ios: `https://maps.apple.com/?daddr=${lat},${lng}&q=${label}`,
       android: `geo:${lat},${lng}?q=${lat},${lng}(${label})`,
-      default: `https://maps.apple.com/?daddr=${lat},${lng}&q=${label}`,
+      default: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
     });
     void Linking.openURL(url).catch(() => setNotice("Couldn't open a maps app on this device."));
   };
@@ -284,7 +291,7 @@ export function PlaceCard({
             })}
           </View>
         )}
-        <Evidence status={result.offers.bestAvailable?.offer.provenance.status} age={result.offers.bestAvailable?.freshness.ageDays ?? null} />
+        <Evidence provenance={result.offers.bestAvailable?.offer.provenance} age={result.offers.bestAvailable?.freshness.ageDays ?? null} />
       </Section>
 
       {/* Getting in ----------------------------------------------------- */}
@@ -298,6 +305,16 @@ export function PlaceCard({
           <Prereq label="Photo ID" value={record.prerequisites.photoIdRequired} />
           <Prereq label="Member signs you in" value={record.prerequisites.memberAccompanimentRequired} />
         </View>
+        {record.prerequisites.notes.length > 0 && (
+          <View style={styles.notes}>
+            {record.prerequisites.notes.map((note) => (
+              <Txt key={note} variant="footnote" color={color.labelSecondary}>
+                • {note}
+              </Txt>
+            ))}
+          </View>
+        )}
+        <Evidence provenance={record.prerequisites.provenance} />
       </Section>
 
       {/* The kit -------------------------------------------------------- */}
@@ -336,14 +353,21 @@ export function PlaceCard({
             );
           })}
         </View>
+        {!record.equipment.some((item) => item.presence === 'yes') && (
+          <Txt variant="subhead" color={color.labelSecondary}>
+            This gym doesn’t publish its equipment, so we don’t list any. Ask when you call.
+          </Txt>
+        )}
+        {record.equipment[0] && <Evidence provenance={record.equipment[0].provenance} />}
       </Section>
 
       {/* Reviews -------------------------------------------------------- */}
       <Section icon="people" title="Reviews">
-        <Txt variant="subhead" color={color.labelSecondary}>
-          {result.rating.count === 0 ? EMPTY.reviews : `${ratingShort(result.rating.average)} from ${result.rating.count} member review${result.rating.count === 1 ? '' : 's'}.`}
-        </Txt>
+        {reviews}
       </Section>
+
+      {/* Sources -------------------------------------------------------- */}
+      <Sources record={record} />
 
       {location.isDemoData && (
         <Txt variant="caption" color={color.labelTertiary} style={styles.demo}>
@@ -412,12 +436,66 @@ function Prereq({ label, value }: { label: string; value: Tri }) {
   );
 }
 
-function Evidence({ status, age }: { status: string | undefined; age: number | null }) {
-  if (!status) return null;
+/** One line saying where a fact came from and when, linking to the page. */
+function Evidence({ provenance, age }: { provenance: Provenance | undefined; age?: number | null }) {
+  if (!provenance || provenance.status === 'unknown') return null;
+  const first = provenance.sources[0];
+  const ageDays = age ?? (first ? Math.max(0, Math.floor((Date.now() - Date.parse(first.checkedAt)) / 86_400_000)) : null);
+  const text = `${first?.label ?? sourceLabel(provenance.status)} · ${checkedAgo(ageDays)}`;
+  const url = first?.evidenceRef?.startsWith('https://') ? first.evidenceRef : null;
+  if (!url) {
+    return (
+      <Txt variant="caption" color={color.labelTertiary}>
+        {text}
+      </Txt>
+    );
+  }
   return (
-    <Txt variant="caption" color={color.labelTertiary}>
-      {sourceLabel(status)} · {checkedAgo(age)}
-    </Txt>
+    <Pressable onPress={() => void WebBrowser.openBrowserAsync(url)} accessibilityRole="link" hitSlop={6}>
+      <Txt variant="caption" color={color.brand}>
+        {text} ↗
+      </Txt>
+    </Pressable>
+  );
+}
+
+/**
+ * Every source behind this listing, in one place. For real gyms that is the
+ * operator's own pages and OpenStreetMap, whose licence asks for the credit.
+ */
+function Sources({ record }: { record: GymSearchResult['record'] }) {
+  const all = [
+    record.location.provenance,
+    record.prerequisites.provenance,
+    ...record.schedules.map((item) => item.provenance),
+    ...record.offers.map((item) => item.provenance),
+    ...record.equipment.map((item) => item.provenance),
+  ].flatMap((provenance) => provenance.sources);
+  const unique = [...new Map(all.filter((source) => source.evidenceRef).map((source) => [source.evidenceRef, source])).values()];
+  if (record.location.isDemoData || unique.length === 0) return null;
+
+  return (
+    <Section icon="source" title="Where this comes from">
+      {unique.map((source) => (
+        <Pressable
+          key={source.evidenceRef}
+          onPress={() => void WebBrowser.openBrowserAsync(source.evidenceRef!)}
+          accessibilityRole="link"
+          style={styles.sourceRow}
+        >
+          <Txt variant="subhead" color={color.brand} style={styles.flex}>
+            {source.label}
+          </Txt>
+          <Txt variant="caption" color={color.labelTertiary}>
+            Read {new Date(source.checkedAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
+          </Txt>
+        </Pressable>
+      ))}
+      <Txt variant="caption" color={color.labelTertiary} style={styles.sourceNote}>
+        Anything not listed by the gym is marked unknown, not guessed. Map data © OpenStreetMap contributors, ODbL.
+        Nothing here was supplied by the gym.
+      </Txt>
+    </Section>
   );
 }
 
@@ -512,4 +590,7 @@ const styles = StyleSheet.create({
   },
 
   demo: { textAlign: 'center', marginTop: space[6] },
+  notes: { gap: 4, marginTop: space[3] },
+  sourceRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: space[2] },
+  sourceNote: { marginTop: space[2] },
 });

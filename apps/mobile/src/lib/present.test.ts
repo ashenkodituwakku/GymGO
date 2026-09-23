@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { depositLine, priceLine } from './present';
-import { initialFilters, runSearch } from './query';
+import { atPlace, initialFilters, runSearch } from './query';
+import { geocodePlace } from './places';
+
+const SURRY_HILLS = atPlace(geocodePlace('Surry Hills').place!);
 
 const ASOF = new Date('2026-09-22T00:00:00.000Z');
 
 function resultFor(name: string, budgetMinor: number | null = null) {
   const outcome = runSearch(
-    { ...initialFilters(ASOF), visitDate: '2026-09-23', visitMinuteOfDay: 19 * 60, budgetMinor, radiusKm: 10 },
+    { ...initialFilters(ASOF), ...SURRY_HILLS, visitDate: '2026-09-23', visitMinuteOfDay: 19 * 60, budgetMinor, radiusKm: 10 },
     {},
     ASOF,
   );
@@ -39,7 +42,7 @@ describe('priceLine', () => {
   it('never turns a week pass into a visit price', () => {
     expect(priceLine(resultFor('Paddington Hill Fitness').offers)).toEqual({
       headline: '—',
-      caption: 'no day pass',
+      caption: 'price unknown',
       confirmed: false,
     });
   });

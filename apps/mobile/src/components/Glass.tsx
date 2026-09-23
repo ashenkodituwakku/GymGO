@@ -73,7 +73,7 @@ export function Glass({
 
   return (
     <View style={[styles.clip, styles.continuous, style]}>
-      <Backdrop thick={thick} />
+      <Backdrop thick={thick} bar={kind === 'bar'} />
       {tint ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tint, opacity: 0.92 }]} /> : null}
       {kind !== 'bar' ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, shape, tint ? styles.sheenOnTint : styles.sheen]} /> : null}
       {kind !== 'bar' ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, shape, styles.rim]} /> : null}
@@ -82,7 +82,7 @@ export function Glass({
   );
 }
 
-function Backdrop({ thick }: { thick: boolean }) {
+function Backdrop({ thick, bar }: { thick: boolean; bar: boolean }) {
   if (Platform.OS === 'ios') {
     return (
       <BlurView
@@ -96,11 +96,11 @@ function Backdrop({ thick }: { thick: boolean }) {
   if (Platform.OS === 'web') {
     return (
       <BlurView pointerEvents="none" intensity={thick ? 70 : 45} tint="light" style={StyleSheet.absoluteFill}>
-        <View style={[StyleSheet.absoluteFill, thick ? styles.webThick : styles.webThin]} />
+        <View style={[StyleSheet.absoluteFill, bar ? styles.webBar : thick ? styles.webThick : styles.webThin]} />
       </BlurView>
     );
   }
-  return <View pointerEvents="none" style={[StyleSheet.absoluteFill, thick ? styles.washThick : styles.washThin]} />;
+  return <View pointerEvents="none" style={[StyleSheet.absoluteFill, bar ? styles.washBar : thick ? styles.washThick : styles.washThin]} />;
 }
 
 /** The corner radii of the surface, so the overlays follow its shape. */
@@ -133,6 +133,8 @@ const styles = StyleSheet.create({
   webThick: { backgroundColor: 'rgba(250, 250, 253, 0.66)' },
   washThin: { backgroundColor: 'rgba(255, 255, 255, 0.8)' },
   washThick: { backgroundColor: 'rgba(248, 248, 251, 0.94)' },
+  webBar: { backgroundColor: 'rgba(250, 250, 253, 0.93)' },
+  washBar: { backgroundColor: 'rgba(248, 248, 251, 0.98)' },
 
   sheen: gradient(SHEEN),
   sheenOnTint: gradient(SHEEN_ON_TINT),

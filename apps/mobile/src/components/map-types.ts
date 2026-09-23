@@ -14,6 +14,8 @@ export interface GymMapProps {
   /** Space the bottom sheet covers, so centring accounts for it. */
   bottomInset: number;
   topInset: number;
+  /** Space a side panel covers (desktop web), so centring accounts for it. */
+  leftInset?: number;
   showsUserLocation: boolean;
   onSelect: (id: string) => void;
   onMapPress: () => void;

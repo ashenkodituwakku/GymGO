@@ -45,6 +45,7 @@ export const color = {
   noTint: 'rgba(142, 142, 147, 0.14)',
   danger: '#FF3B30',
   dangerInk: '#D70015',
+  dangerTint: 'rgba(255, 59, 48, 0.12)',
 
   // Glass fallbacks where the platform has no native material.
   glass: 'rgba(255, 255, 255, 0.78)',

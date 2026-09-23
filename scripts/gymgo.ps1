@@ -45,17 +45,22 @@ $Branch = 'claude/friendly-johnson-9rzxrj'
 $MinNode = [version]'20.9.0'
 $PnpmVersion = '10.33.0'
 
+# Output markers are plain ASCII on purpose. Windows PowerShell 5.1 reads a
+# script without a byte-order mark as Windows-1252, and the UTF-8 bytes of a
+# tick mark decode to a curly quote that it treats as the end of a string:
+# one decorative character made the whole script fail to parse. Keep this
+# file ASCII; a test in apps/web enforces it.
 function Write-Step([string] $Message) {
-    Write-Host "  > $Message" -ForegroundColor Cyan
+    Write-Host "  >  $Message" -ForegroundColor Cyan
 }
 
 function Write-Done([string] $Message) {
-    Write-Host "  ✓ $Message" -ForegroundColor Green
+    Write-Host "  OK $Message" -ForegroundColor Green
 }
 
 function Stop-WithError([string] $Message, [string] $Fix) {
     Write-Host ''
-    Write-Host "  ✗ $Message" -ForegroundColor Red
+    Write-Host "  !! $Message" -ForegroundColor Red
     if ($Fix) { Write-Host "    $Fix" -ForegroundColor Yellow }
     Write-Host ''
     exit 1
@@ -69,7 +74,9 @@ function Test-PortOpen([int] $PortNumber) {
     } catch {
         return $false
     } finally {
-        $client.Dispose()
+        # Close() rather than Dispose(): public on every .NET Framework that
+        # Windows PowerShell 5.1 runs on.
+        $client.Close()
     }
 }
 
@@ -200,9 +207,14 @@ try {
     Invoke-Pnpm --filter '@gymgo/web' exec next dev --port $Port
 } finally {
     if ($opener) { Remove-Job $opener -Force -ErrorAction SilentlyContinue }
-    foreach ($name in $savedEnv.Keys) {
-        Set-Item -Path "Env:$name" -Value $savedEnv[$name] -ErrorAction SilentlyContinue
-        if ($null -eq $savedEnv[$name]) { Remove-Item -Path "Env:$name" -ErrorAction SilentlyContinue }
+    # Put the caller's environment back exactly as it was: restore values that
+    # existed, remove ones that did not.
+    foreach ($name in @($savedEnv.Keys)) {
+        if ($null -eq $savedEnv[$name]) {
+            Remove-Item -Path "Env:$name" -ErrorAction SilentlyContinue
+        } else {
+            Set-Item -Path "Env:$name" -Value $savedEnv[$name]
+        }
     }
     Pop-Location
 }

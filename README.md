@@ -4,34 +4,48 @@
 
 ## Start it on your computer
 
-You need **Node.js** and **Git**. On Windows, install both once with:
+### Windows
+
+Open **PowerShell** (Start menu → type *PowerShell*). Then:
+
+**1. Install Node.js and Git** (skip if you have them):
 
 ```powershell
 winget install OpenJS.NodeJS.LTS Git.Git
 ```
 
-Then close and reopen PowerShell.
+Close PowerShell and open a new window.
 
-### Windows (PowerShell)
+**2. Allow scripts to run** (once per computer; type `Y` if asked):
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+**3. Download GymGO:**
 
 ```powershell
 git clone -b claude/friendly-johnson-9rzxrj https://github.com/ashenkodituwakku/GymGO.git "$HOME\GymGO"
+```
+
+**4. Start it:**
+
+```powershell
 & "$HOME\GymGO\scripts\gymgo.ps1"
 ```
 
-Your browser opens **http://localhost:3000** by itself. Press **Ctrl+C** to stop.
+Your browser opens **http://localhost:3000** by itself. The first start takes a
+minute or two. Press **Ctrl+C** to stop.
 
-**Start it from anywhere by typing `gymgo`** — run this once, then open a new
-PowerShell window:
+**Optional: start it from anywhere by typing `gymgo`.** Run this once, then open
+a new PowerShell window:
 
 ```powershell
+if (!(Test-Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
 Add-Content $PROFILE "`nfunction gymgo { & `"$HOME\GymGO\scripts\gymgo.ps1`" @args }"
 ```
 
-`gymgo -Update` pulls the latest version first.
-
-> If PowerShell says *running scripts is disabled*, run this once and try again:
-> `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+`gymgo -Update` pulls the latest version before starting.
 
 ### Mac or Linux
 

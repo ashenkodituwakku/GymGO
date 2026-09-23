@@ -38,6 +38,7 @@ because "the code does X" is not the same as "someone decided X".
 | Light mode only, system indigo brand | Asked for light by default. Indigo is distinct from the map's blues and greens, and from the three tier colours, so "tap here" is never confused with "good to go". |
 | Search runs on the device | No server, no account, nothing to deploy for the pilot; the same `search()` the website runs. |
 | Liquid Glass on small controls, thick material on sheets | A list over a busy street map has to stay readable. Liquid Glass at sheet size is too see-through for body text. |
+| Helvetica throughout | Asked for. iPhone uses the built-in Helvetica Neue (Regular, Medium, Bold). Android has no Helvetica and a licence costs money, so it bundles TeX Gyre Heros, a free clone. That clone has no Medium cut, so medium weights render Regular on Android. All weights go through `face()` in `theme.ts`, because Android picks custom fonts by name and a bare `fontWeight` would give a faux bold. |
 | Weekly hours start on Monday | Australian timetables do. Changed in the shared domain, so the website follows. |
 
 ## Traps

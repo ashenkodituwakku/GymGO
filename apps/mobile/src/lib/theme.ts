@@ -65,37 +65,56 @@ export const radius = {
 } as const;
 
 /**
- * SF Pro Rounded for display type — the face Apple uses in Fitness and
- * Activity — gives the app its voice. Body text stays in the standard system
- * face for legibility.
+ * Helvetica, everywhere.
+ *
+ * iPhone: Helvetica Neue, which ships with iOS, in its real Regular, Medium
+ * and Bold cuts.
+ *
+ * Android and the web preview: Helvetica isn't on those devices, and
+ * bundling it needs a paid licence. They use TeX Gyre Heros instead, a free
+ * Helvetica clone (GUST Font License / LPPL), from assets/fonts. It has no
+ * Medium cut, so medium falls back to Regular there.
+ *
+ * Custom fonts on Android are picked by name, not by weight, so every weight
+ * in the app goes through `face()`. A bare `fontWeight` would give Android a
+ * faux bold rather than the real cut.
  */
-export const font = {
-  rounded: Platform.select({
-    ios: 'ui-rounded',
-    web: "ui-rounded, 'SF Pro Rounded', 'Nunito', system-ui, sans-serif",
-    default: 'sans-serif-medium',
-  }),
-  text: Platform.select({
-    ios: undefined,
-    web: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif",
-    default: undefined,
-  }),
-};
+export type Weight = 'regular' | 'medium' | 'bold';
 
+/** Names the bundled faces are registered under (see app/_layout.tsx). */
+export const BUNDLED_FACES = {
+  HelveticaCloneRegular: require('../../assets/fonts/texgyreheros-regular.otf'),
+  HelveticaCloneBold: require('../../assets/fonts/texgyreheros-bold.otf'),
+} as const;
+
+/** True where the app must load the bundled faces before drawing text. */
+export const NEEDS_BUNDLED_FACES = Platform.OS !== 'ios';
+
+const IOS_WEIGHT = { regular: '400', medium: '500', bold: '700' } as const;
+
+export function face(weight: Weight = 'regular'): { fontFamily: string; fontWeight: '400' | '500' | '700' | 'normal' } {
+  if (Platform.OS === 'ios') return { fontFamily: 'Helvetica Neue', fontWeight: IOS_WEIGHT[weight] };
+  return { fontFamily: weight === 'bold' ? 'HelveticaCloneBold' : 'HelveticaCloneRegular', fontWeight: 'normal' };
+}
+
+/**
+ * Tracking tuned for Helvetica: tight at display sizes, where it was drawn to
+ * be set tight, and neutral at text sizes. Small caps are opened up.
+ */
 export const type = {
-  largeTitle: { fontSize: 32, lineHeight: 38, fontWeight: '800', letterSpacing: -0.6, fontFamily: font.rounded },
-  title: { fontSize: 26, lineHeight: 31, fontWeight: '800', letterSpacing: -0.5, fontFamily: font.rounded },
-  title2: { fontSize: 21, lineHeight: 26, fontWeight: '700', letterSpacing: -0.35, fontFamily: font.rounded },
-  headline: { fontSize: 17, lineHeight: 22, fontWeight: '600', letterSpacing: -0.4, fontFamily: font.text },
-  body: { fontSize: 17, lineHeight: 22, fontWeight: '400', letterSpacing: -0.4, fontFamily: font.text },
-  callout: { fontSize: 16, lineHeight: 21, fontWeight: '400', letterSpacing: -0.3, fontFamily: font.text },
-  subhead: { fontSize: 15, lineHeight: 20, fontWeight: '400', letterSpacing: -0.2, fontFamily: font.text },
-  footnote: { fontSize: 13, lineHeight: 18, fontWeight: '400', letterSpacing: -0.1, fontFamily: font.text },
-  caption: { fontSize: 12, lineHeight: 16, fontWeight: '500', letterSpacing: 0, fontFamily: font.text },
+  largeTitle: { fontSize: 32, lineHeight: 38, letterSpacing: -0.8, ...face('bold') },
+  title: { fontSize: 26, lineHeight: 31, letterSpacing: -0.6, ...face('bold') },
+  title2: { fontSize: 21, lineHeight: 26, letterSpacing: -0.4, ...face('bold') },
+  headline: { fontSize: 17, lineHeight: 22, letterSpacing: -0.2, ...face('bold') },
+  body: { fontSize: 17, lineHeight: 22, letterSpacing: 0, ...face('regular') },
+  callout: { fontSize: 16, lineHeight: 21, letterSpacing: 0, ...face('regular') },
+  subhead: { fontSize: 15, lineHeight: 20, letterSpacing: 0, ...face('regular') },
+  footnote: { fontSize: 13, lineHeight: 18, letterSpacing: 0, ...face('regular') },
+  caption: { fontSize: 12, lineHeight: 16, letterSpacing: 0.1, ...face('medium') },
   /** Small caps labels in metric strips, as in Maps. */
-  eyebrow: { fontSize: 11, lineHeight: 13, fontWeight: '600', letterSpacing: 0.5, fontFamily: font.text },
+  eyebrow: { fontSize: 11, lineHeight: 13, letterSpacing: 0.8, ...face('bold') },
   /** Big numbers: prices, ratings. */
-  figure: { fontSize: 19, lineHeight: 23, fontWeight: '700', letterSpacing: -0.4, fontFamily: font.rounded },
+  figure: { fontSize: 19, lineHeight: 23, letterSpacing: -0.4, ...face('bold') },
 } as const;
 
 export const shadow = {

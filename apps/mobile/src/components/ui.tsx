@@ -7,7 +7,7 @@ import { Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type
 import type { ResultTier } from '@gymgo/domain';
 import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
-import { HIT, color, radius, shadow, space, type } from '@/lib/theme';
+import { HIT, color, face, radius, shadow, space, type } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignSelf: 'flex-start',
   },
-  pillText: { fontWeight: '700' },
+  pillText: face('bold'),
 
   chip: {
     flexDirection: 'row',
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.fill,
   },
   chipSelected: { backgroundColor: color.brand },
-  chipText: { fontWeight: '600' },
+  chipText: face('medium'),
 
   card: {
     backgroundColor: color.card,
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   },
   actionPrimary: { backgroundColor: color.brand },
   actionTinted: { backgroundColor: color.brandTint },
-  actionLabel: { fontWeight: '600' },
+  actionLabel: face('medium'),
 
   primary: {
     height: 52,

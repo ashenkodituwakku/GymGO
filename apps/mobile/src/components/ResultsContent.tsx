@@ -12,7 +12,7 @@ import { explainNoMatches, type ResultTier, type SearchOutcome } from '@gymgo/do
 import { suggestPlaces, type Place } from '@gymgo/demo-data';
 import { EMPTY, PLACEHOLDER, TIER, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
 import { activeFilterCount, type Filters } from '@/lib/query';
-import { color, radius, space } from '@/lib/theme';
+import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { GymRow } from './GymRow';
 import { Icon } from './Icon';
@@ -272,6 +272,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 17,
+    ...face('regular'),
     color: color.label,
     paddingVertical: 0,
     height: 40,
@@ -300,7 +301,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },
-  badgeText: { fontSize: 10, lineHeight: 12, fontWeight: '700' },
+  badgeText: { fontSize: 10, lineHeight: 12, ...face('bold') },
 
   suggestions: { paddingHorizontal: space[2], paddingTop: space[2] },
   suggestion: {

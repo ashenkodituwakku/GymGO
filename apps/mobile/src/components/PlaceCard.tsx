@@ -25,7 +25,7 @@ import {
 } from '@gymgo/domain';
 import { EMPTY, TIER, accessLine, accessShort, checkedAgo, ratingShort, sourceLabel, timeLabel } from '@/lib/copy';
 import { depositLine, priceLine } from '@/lib/present';
-import { color, radius, space } from '@/lib/theme';
+import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Icon } from './Icon';
 import { StateGlyphRow } from './StateGlyphRow';
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
   wrap: { paddingHorizontal: space[4], paddingBottom: space[8] },
   flex: { flex: 1 },
   center: { textAlign: 'center' },
-  bold: { fontWeight: '600' },
+  bold: face('bold'),
 
   headerBar: {
     backgroundColor: color.groupedBackground,

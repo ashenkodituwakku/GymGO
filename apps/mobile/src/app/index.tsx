@@ -24,7 +24,7 @@ import { EMPTY } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { applyRelaxation, initialFilters, runSearch, type Filters } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
-import { color, space } from '@/lib/theme';
+import { color, face, space } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
 import { Glass } from '@/components/Glass';
 import { GymMap, type GymMapHandle, type MapPin } from '@/components/GymMap';
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     borderColor: color.glassBorder,
   },
   demoDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: color.maybe },
-  demoText: { fontWeight: '600' },
+  demoText: face('medium'),
 
   selfCheck: {
     position: 'absolute',

@@ -8,7 +8,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { formatDistanceKm, type GymSearchResult } from '@gymgo/domain';
 import { accessLine } from '@/lib/copy';
 import { priceLine } from '@/lib/present';
-import { color, space } from '@/lib/theme';
+import { color, face, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Icon } from './Icon';
 import { TIER_COLOUR, Txt } from './ui';
@@ -89,6 +89,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   middle: { flex: 1, minWidth: 0 },
-  access: { fontWeight: '600', marginTop: 1 },
+  access: { ...face('medium'), marginTop: 1 },
   trailing: { alignItems: 'flex-end', maxWidth: 96 },
 });

@@ -23,6 +23,18 @@ SF Symbols are drawn by iOS itself and are used under Apple's terms, which
 allow them in apps running on Apple platforms. They are not copied into this
 repository.
 
+## Typeface
+
+The app is set in **Helvetica**.
+
+- **iPhone:** Helvetica Neue, which ships with iOS. Nothing is bundled.
+- **Android and the web preview:** Helvetica isn't installed there, and
+  bundling it needs a paid licence. They use
+  [TeX Gyre Heros](https://www.gust.org.pl/projects/e-foundry/tex-gyre/heros),
+  a free Helvetica clone by the GUST e-foundry, distributed under the GUST Font
+  License (LaTeX Project Public License 1.3c). The unmodified font files and
+  the licence are in `apps/mobile/assets/fonts/`.
+
 ## Map data (web preview only)
 
 The browser preview of the phone app draws its map with

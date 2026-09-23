@@ -17,7 +17,7 @@ import {
   nowInPilot,
   type Filters,
 } from '@/lib/query';
-import { color, radius, space } from '@/lib/theme';
+import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Chip, PrimaryButton, Txt } from './ui';
 
@@ -218,7 +218,7 @@ function Segmented<T extends string>({
 const styles = StyleSheet.create({
   wrap: { paddingHorizontal: space[4], paddingBottom: space[8] },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: space[1] },
-  reset: { fontWeight: '500' },
+  reset: face('medium'),
   group: { marginTop: space[6], gap: space[3] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   subLabel: { marginTop: space[1] },
@@ -239,6 +239,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     elevation: 2,
   },
-  segmentText: { fontWeight: '500' },
-  segmentTextSelected: { fontWeight: '700' },
+  segmentText: face('medium'),
+  segmentTextSelected: face('bold'),
 });

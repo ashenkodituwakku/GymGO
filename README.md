@@ -2,9 +2,16 @@
 
 **Find a gym that fits your workout, budget and visit time.**
 
-## Start it on your computer
+## Run the app on your phone
 
-### Windows
+GymGO is an iPhone and Android app. You run it from your computer and open it
+on your phone with **Expo Go**, a free app from Expo. You don't need a Mac,
+Xcode, an Apple developer account or an app store listing.
+
+**On your phone:** install **Expo Go** from the App Store or Google Play, and
+join the same Wi-Fi as your computer.
+
+### On Windows
 
 Open **PowerShell** (Start menu → type *PowerShell*). Then:
 
@@ -34,8 +41,25 @@ git clone -b claude/friendly-johnson-9rzxrj https://github.com/ashenkodituwakku/
 & "$HOME\GymGO\scripts\gymgo.ps1"
 ```
 
-Your browser opens **http://localhost:3000** by itself. The first start takes a
-minute or two. Press **Ctrl+C** to stop.
+A QR code appears in PowerShell. The first start takes a minute or two.
+
+**5. Open it on your phone.** On an **iPhone**, point the **Camera** app at the
+QR code and tap the banner. On **Android**, open **Expo Go** and tap
+*Scan QR code*. GymGO opens on the phone.
+
+If Windows asks whether Node.js may use the network, choose **Allow**. Without
+that, the phone can't reach your computer.
+
+**Phone won't connect?** Press **Ctrl+C**, then run this, which works across
+different networks. It's slower, and Expo may ask to install a small helper.
+Type `Y`.
+
+```powershell
+& "$HOME\GymGO\scripts\gymgo.ps1" -Tunnel
+```
+
+Save a file on the computer and the app reloads on the phone. Press
+**Ctrl+C** in PowerShell to stop.
 
 **Optional: start it from anywhere by typing `gymgo`.** Run this once, then open
 a new PowerShell window:
@@ -45,18 +69,25 @@ if (!(Test-Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out
 Add-Content $PROFILE "`nfunction gymgo { & `"$HOME\GymGO\scripts\gymgo.ps1`" @args }"
 ```
 
-`gymgo -Update` pulls the latest version before starting.
+Then `gymgo` starts the app, `gymgo -Tunnel` uses the tunnel, and
+`gymgo -Update` pulls the latest version first.
 
-### Mac or Linux
+### On a Mac or Linux
 
 ```bash
 git clone -b claude/friendly-johnson-9rzxrj https://github.com/ashenkodituwakku/GymGO.git ~/GymGO
 cd ~/GymGO
 npx pnpm@10 install
-npx pnpm@10 dev
+npx pnpm@10 app          # or: npx pnpm@10 app --tunnel
 ```
 
-Then open **http://localhost:3000**. Press **Ctrl+C** to stop.
+Scan the QR code as above.
+
+### The older website
+
+The first version of GymGO was a website, and it's still in the repository.
+To run it, start the launcher with `-Web` (or run `pnpm dev`), then open
+**http://localhost:3000**. New work goes into the phone app.
 
 ---
 
@@ -84,13 +115,14 @@ paid service.
 ```bash
 pnpm install
 
-pnpm dev          # http://localhost:3000
-pnpm build        # production build
-pnpm start        # serve the production build
+pnpm app          # phone app: prints a QR code for Expo Go
+pnpm dev          # website: http://localhost:3000
+pnpm build        # website production build
+pnpm start        # serve the website production build
 
-pnpm verify       # typecheck + lint + unit tests (174 tests)
+pnpm verify       # typecheck + lint + unit tests, every package (199 tests)
 pnpm test         # unit tests only
-pnpm test:e2e     # Playwright, 3 viewports (needs a build first)
+pnpm test:e2e     # website: fresh build + Playwright at 3 viewports
 ```
 
 Start here: [`/search?q=Surry+Hills&budget=30&date=2026-09-23&time=19:00&eq=squat_rack&eq=cable_station&eq=dumbbells&db=40&r=5`](http://localhost:3000/search?q=Surry+Hills&budget=30&date=2026-09-23&time=19:00&eq=squat_rack&eq=cable_station&eq=dumbbells&db=40&r=5)
@@ -128,15 +160,20 @@ runs with honest "not configured" states rather than fake successes.
 ## Layout
 
 ```
-packages/domain/   Framework-free rules. No React, no Next, no I/O.
-                   Shared with future Expo clients so the decision that
-                   ranks a list is the same one that renders a detail page.
-apps/web/          Next.js App Router pilot.
-  src/app/         Pages and the /api/v1 server API.
-  src/server/      Config, persistence, repositories, auth, moderation.
-  src/fixtures/    17 fictional demo gyms covering the edge cases.
-  e2e/             Playwright specs at 390 / 768 / 1440 px.
-docs/              Architecture, data model, API, status, launch checklist.
+packages/domain/     Framework-free rules. No React, no Next, no I/O.
+                     The phone and the website run the same search from
+                     here, so a pin's colour and a row's verdict can't drift.
+packages/demo-data/  17 fictional demo gyms covering the edge cases, and the
+                     pilot suburbs the search box understands.
+apps/mobile/         The iOS and Android app (Expo, React Native).
+  src/app/           The one screen: a map with sheets over it.
+  src/components/    Map, pins, sheets, place card, filters.
+  src/lib/           The app's voice (copy.ts), theme, filter state.
+apps/web/            The earlier Next.js website pilot.
+  src/app/           Pages and the /api/v1 server API.
+  src/server/        Config, persistence, repositories, auth, moderation.
+  e2e/               Playwright specs at 390 / 768 / 1440 px.
+docs/                Architecture, data model, API, status, launch checklist.
 ```
 
 ## What is and is not done
@@ -146,14 +183,17 @@ docs/              Architecture, data model, API, status, launch checklist.
 does not collapse them into "production ready". Read it before quoting any of
 this as finished.
 
-In short: the web pilot works locally and is tested locally. No native client
-exists. Nothing is deployed. No real gym data has been collected, no gym has
+In short: the phone app is built, typechecked, unit-tested, and its iOS and
+Android bundles compile. Its interface has been checked in a browser preview
+only; it has **not** been run on a real phone or simulator yet. The website
+pilot works locally and is tested locally. Nothing is deployed and nothing has
+been submitted to an app store. No real gym data has been collected, no gym has
 been contacted, and no customer research has been done — the whole product
 thesis is still a hypothesis.
 
 ## Demo data
 
-The 17 gyms in `apps/web/src/fixtures/` are invented. None of the names,
+The 17 gyms in `packages/demo-data/` are invented. None of the names,
 addresses, prices, hours, equipment or reviews describe a real business. Every
 record is flagged `isDemoData`, the interface says so on every page, and
 production ingestion refuses records carrying the flag.

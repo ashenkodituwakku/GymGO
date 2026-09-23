@@ -8,6 +8,7 @@
     "node": ">=20.9.0"
   },
   "scripts": {
+    "app": "pnpm --filter @gymgo/mobile start",
     "dev": "pnpm --filter @gymgo/web dev",
     "build": "pnpm --filter @gymgo/web build",
     "start": "pnpm --filter @gymgo/web start",

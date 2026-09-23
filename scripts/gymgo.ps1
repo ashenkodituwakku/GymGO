@@ -4,33 +4,50 @@
 
 .DESCRIPTION
     Finds the GymGO checkout (cloning it on first run), makes sure pnpm is
-    available, installs dependencies when they are missing or out of date,
-    starts the development server with the demo dataset and development
-    sign-in, and opens the browser once the server answers.
+    available and installs dependencies when they are missing or out of date.
 
-    The dev server recompiles on every file save. Press Ctrl+C to stop it.
+    By default it starts the phone app's development server and prints a QR
+    code. Scan it with Expo Go on an iPhone or Android phone on the same
+    Wi-Fi, and the app opens on the phone. No Mac or Xcode needed.
+
+    With -Web it starts the older website instead, with the demo dataset and
+    development sign-in, and opens the browser once the server answers.
+
+    Both recompile on every file save. Press Ctrl+C to stop.
 
 .PARAMETER Path
     Where the checkout lives. Defaults to a GymGO folder in your home
     directory. Cloned there if it does not exist yet.
 
+.PARAMETER Web
+    Start the website instead of the phone app.
+
+.PARAMETER Tunnel
+    Phone app only: route the connection through Expo's tunnel, for when the
+    phone and this computer are not on the same Wi-Fi (or the Wi-Fi blocks
+    devices from seeing each other). Slower; Expo may ask to install a helper.
+
 .PARAMETER Port
-    Port to serve on. Defaults to 3000.
+    Website only: port to serve on. Defaults to 3000.
 
 .PARAMETER Update
     Pull the latest commits before starting.
 
 .PARAMETER NoBrowser
-    Do not open a browser window.
+    Website only: do not open a browser window.
 
 .EXAMPLE
     gymgo
+    gymgo -Tunnel
     gymgo -Update
-    gymgo -Port 3001 -NoBrowser
+    gymgo -Web
+    gymgo -Web -Port 3001 -NoBrowser
 #>
 [CmdletBinding()]
 param(
     [string] $Path = (Join-Path $HOME 'GymGO'),
+    [switch] $Web,
+    [switch] $Tunnel,
     [ValidateRange(1, 65535)]
     [int] $Port = 3000,
     [switch] $Update,
@@ -159,6 +176,30 @@ try {
         if ($LASTEXITCODE -ne 0) { Stop-WithError 'Installing dependencies failed.' 'Scroll up for the error from pnpm.' }
     }
     Write-Done 'Dependencies ready'
+
+    # --- Phone app -----------------------------------------------------------------
+    if (-not $Web) {
+        Write-Host ''
+        Write-Host '  Starting the GymGO phone app' -ForegroundColor White
+        Write-Host ''
+        Write-Host '  On your phone:' -ForegroundColor White
+        Write-Host '    1. Install "Expo Go" from the App Store or Google Play.'
+        Write-Host '    2. Join the same Wi-Fi as this computer.'
+        Write-Host '    3. When the QR code appears below, scan it:'
+        Write-Host '         iPhone  - with the Camera app'
+        Write-Host '         Android - with the scanner inside Expo Go'
+        Write-Host ''
+        Write-Host '  If Windows asks whether Node.js may use the network, allow it on' -ForegroundColor DarkGray
+        Write-Host '  private networks, or the phone cannot reach this computer.' -ForegroundColor DarkGray
+        Write-Host '  Phone cannot connect? Stop with Ctrl+C and run: gymgo -Tunnel' -ForegroundColor DarkGray
+        Write-Host '  Save a file and the app reloads on the phone. Ctrl+C stops it.' -ForegroundColor DarkGray
+        Write-Host ''
+
+        $expoArgs = @('--filter', '@gymgo/mobile', 'exec', 'expo', 'start')
+        if ($Tunnel) { $expoArgs += '--tunnel' }
+        Invoke-Pnpm @expoArgs
+        return
+    }
 
     # --- Port --------------------------------------------------------------------
     $url = "http://localhost:$Port"

@@ -3,22 +3,46 @@
 ## The shape of it
 
 ```
-packages/domain          apps/web                      (later) apps/mobile
-─────────────────        ──────────────────────        ──────────────────
-types, money, time  ───► Next.js App Router      ───►  Expo / React Native
-access, offers,          server API (/api/v1)          same rules, native
-equipment, search,       file-backed dev store         navigation and map
-authz, tokens            fixtures
+packages/domain          packages/demo-data        apps/mobile (the product)
+─────────────────        ──────────────────        ─────────────────────────
+types, money, time  ───► 17 invented gyms    ───►  Expo / React Native
+access, offers,          pilot suburbs,            search runs on the device;
+equipment, search,       geocode                   map + sheets, Maps-style
+authz, tokens
+                                              └──► apps/web (earlier pilot)
+                                                   Next.js, server API,
+                                                   file-backed dev store
 ```
 
 `packages/domain` has no React, no Next, and no I/O. Everything in it is pure:
 given the same records and query it returns the same verdict. That is what lets
-the same decision run on the server for an indexable page, in the browser when a
-filter changes, and later in a React Native client — without a second
-implementation drifting away from the first.
+the same decision run on a phone, on the server for an indexable page, and in
+the browser when a filter changes, with no second implementation drifting away
+from the first. The phone app runs `search()` on the device against the demo
+dataset; nothing is fetched.
 
-It ships TypeScript source rather than a build, and the web app lists it in
-`transpilePackages`. One compile step, no stale published artefact.
+Both packages ship TypeScript source rather than a build. The website lists
+them in `transpilePackages`; Metro resolves them through the pnpm workspace
+(supported from Expo SDK 54). One compile step, no stale published artefact.
+
+### The phone app
+
+One screen, the way Apple Maps is one screen: the map fills it and sheets
+stack over it.
+
+- **Results sheet** (`ResultsContent`): always present. It peeks, sits at half
+  height, or goes full. It holds search, the quick filters, and results
+  grouped by tier.
+- **Place card** (`PlaceCard`): a modal sheet stacked on top of the results.
+  The name stays pinned while the detail scrolls. Closing it puts the results
+  sheet back where it was.
+- **Filters** (`FiltersContent`): a modal sheet whose changes apply live. Its
+  button says how many gyms are left, so the controls and the results never
+  disagree.
+
+`GymMap.tsx` (react-native-maps) is the phone's map. Metro swaps in
+`GymMap.web.tsx` (MapLibre) only for the browser preview, so MapLibre is never
+in a phone bundle.
 
 ## Why the rules live in one place
 

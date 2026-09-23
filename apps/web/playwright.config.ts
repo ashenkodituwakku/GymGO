@@ -48,14 +48,21 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'pnpm start --port 3100',
+    // Every run starts from a clean store and a fresh build of the current
+    // code. The contribution tests approve changes, so a store left over from
+    // an earlier run makes the next run fail; and serving a build left in
+    // .next-e2e would test yesterday's code. Plain node for the reset so it
+    // works in Windows shells too.
+    command:
+      "node -e \"require('fs').rmSync('.data-e2e',{recursive:true,force:true})\" && pnpm build && pnpm start --port 3100",
     url: 'http://127.0.0.1:3100',
     // Never reuse a server already on the port. One started without the
     // sign-in variables once made every permission test fail at the login
     // step for reasons that had nothing to do with the code under test;
     // refusing to start is a clearer failure than testing the wrong server.
     reuseExistingServer: false,
-    timeout: 120_000,
+    // Includes the production build.
+    timeout: 400_000,
     env: {
       GYMGO_DATA_SOURCE: 'demo',
       GYMGO_AUTH_ADAPTER: 'local-dev',

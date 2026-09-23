@@ -10,7 +10,7 @@ const config: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR ?? '.next',
   // The domain package ships TypeScript source so web and future Expo clients
   // compile the same rules rather than a drifting published build.
-  transpilePackages: ['@gymgo/domain'],
+  transpilePackages: ['@gymgo/domain', '@gymgo/demo-data'],
   eslint: {
     dirs: ['src'],
   },

@@ -12,6 +12,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@gymgo/demo-data": "workspace:*",
     "@gymgo/domain": "workspace:*",
     "next": "15.5.25",
     "react": "^19.3.0",

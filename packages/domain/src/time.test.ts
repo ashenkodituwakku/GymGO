@@ -118,11 +118,18 @@ describe('isOpenAt', () => {
 describe('summariseWeek', () => {
   it('collapses identical consecutive days into a range', () => {
     const visitor = schedule('visitor', { windows: weekdayWindows(9 * 60, 17 * 60) });
-    expect(summariseWeek(visitor)).toEqual([
-      'Sun: Closed',
-      'Mon–Fri: 9am – 5pm',
-      'Sat: Closed',
-    ]);
+    expect(summariseWeek(visitor)).toEqual(['Mon–Fri: 9am – 5pm', 'Sat–Sun: Closed']);
+  });
+
+  it('starts the week on Monday', () => {
+    const visitor = schedule('visitor', {
+      windows: [
+        ...weekdayWindows(6 * 60, 21 * 60),
+        { day: 6, openMinute: 8 * 60, closeMinute: 18 * 60 },
+        { day: 0, openMinute: 9 * 60, closeMinute: 16 * 60 },
+      ],
+    });
+    expect(summariseWeek(visitor)).toEqual(['Mon–Fri: 6am – 9pm', 'Sat: 8am – 6pm', 'Sun: 9am – 4pm']);
   });
 
   it('says "Not confirmed" rather than "Closed" for an unestablished schedule', () => {

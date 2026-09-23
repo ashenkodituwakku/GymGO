@@ -5,8 +5,11 @@ where the traps are.
 
 ## What was built
 
-A complete web vertical slice of the Gym Information Map pilot, plus the
-operational screens that keep its data honest. See `README.md` for how to run
+An iOS and Android app (`apps/mobile`, Expo), map-first in the manner of Apple
+Maps, running the shared search rules on the device against the demo dataset.
+Before that, a complete web vertical slice of the pilot, plus the operational
+screens that keep its data honest. The website is kept, but new work goes into
+the app. See `README.md` for how to run
 it and `docs/STATUS.md` for what is and is not finished.
 
 ## Decisions made without asking
@@ -25,7 +28,43 @@ because "the code does X" is not the same as "someone decided X".
 | Full dynamic rendering for session pages | Correctness over prerendering. See the trap below. |
 | Equipment SEO pages limited to four anchor suburbs | Inner-city suburbs overlap at 1.5 km, so one page per pair would be near-duplicates — the thin-generated-page problem in disguise. |
 
+### Phone app decisions
+
+| Decision | Reasoning |
+|---|---|
+| Expo, runnable in Expo Go | The owner is on Windows with no Mac. Expo Go runs the app on a real iPhone from a Windows PC, with no Xcode, developer account or build step. Every library was chosen to work inside Expo Go. |
+| react-native-maps, not a custom map | MapKit on iPhone needs no key and is what Maps users expect. A standalone Android build will need a Google Maps key; that is a decision with a billing account attached, so it was left for the owner. |
+| @gorhom/bottom-sheet for the sheets | MIT, works in Expo Go, and is the standard for Maps-style sheets. A native-sheet alternative that looked closer to Apple Maps needs a development build and had no clear licence. |
+| Light mode only, system indigo brand | Asked for light by default. Indigo is distinct from the map's blues and greens, and from the three tier colours, so "tap here" is never confused with "good to go". |
+| Search runs on the device | No server, no account, nothing to deploy for the pilot; the same `search()` the website runs. |
+| Liquid Glass on small controls, thick material on sheets | A list over a busy street map has to stay readable. Liquid Glass at sheet size is too see-through for body text. |
+| Weekly hours start on Monday | Australian timetables do. Changed in the shared domain, so the website follows. |
+
 ## Traps
+
+**The app has not been seen on a phone.** Everything visual was checked in the
+react-native-web preview. The first Expo Go run is the real test.
+
+**MapLibre's stylesheet makes its container `position: relative`.** On the web
+preview that silently cancelled `StyleSheet.absoluteFill` and gave the map zero
+height. The map now sits inside an absolutely-filled wrapper.
+
+**react-native-maps spells it `showsPointsOfInterests`** (with the extra *s*) and
+ignores it on Android, where hiding business labels takes a `customMapStyle`
+rule instead.
+
+**`CI=1 expo start` does not watch files.** Metro prints "reloads are disabled"
+and keeps serving the old bundle. Start it without `CI` when iterating.
+
+**`pnpm test:e2e` used to test whatever was in `.next-e2e`.** `pnpm build`
+writes to `.next`, so the suite could pass or fail against an old build, and
+its store was never reset, so a second run met the first run's approved
+corrections. The Playwright web server now deletes `.data-e2e` and builds fresh
+before serving. Slower, and correct.
+
+**Screenshots from a sandbox may lose map tiles.** A proxy that drops some tile
+requests leaves a blank map. The harness used for the app screenshots fetched
+tiles through curl with retries and a cache; the app itself needs nothing.
 
 **Session pages must not be statically prerendered.** `getCurrentUser()` reads
 cookies unconditionally, *before* checking whether the auth adapter is enabled.

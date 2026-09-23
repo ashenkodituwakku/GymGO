@@ -252,17 +252,18 @@ export function summariseWeek(schedule: AccessSchedule): string[] {
     byDay.set(day, windows.length === 0 ? 'Closed' : windows.join(', '));
   }
 
+  // Monday first, as Australian timetables are written.
+  const order = [1, 2, 3, 4, 5, 6, 0];
   const lines: string[] = [];
   let runStart = 0;
-  for (let day = 1; day <= 7; day += 1) {
-    const current = day < 7 ? byDay.get(day) : null;
-    if (current !== byDay.get(runStart)) {
-      const label =
-        runStart === day - 1
-          ? DAY_LABELS[runStart]
-          : `${DAY_LABELS[runStart]}–${DAY_LABELS[day - 1]}`;
-      lines.push(`${label}: ${byDay.get(runStart)}`);
-      runStart = day;
+  for (let index = 1; index <= order.length; index += 1) {
+    const current = index < order.length ? byDay.get(order[index]!) : null;
+    const first = order[runStart]!;
+    if (current !== byDay.get(first)) {
+      const last = order[index - 1]!;
+      const label = first === last ? DAY_LABELS[first] : `${DAY_LABELS[first]}–${DAY_LABELS[last]}`;
+      lines.push(`${label}: ${byDay.get(first)}`);
+      runStart = index;
     }
   }
   return lines;

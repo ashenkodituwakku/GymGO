@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "GymGO",
+    "slug": "gymgo",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "gymgo",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "GymGO uses your location only when you tap the locate button, to list gyms near you. It is never stored or sent anywhere."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

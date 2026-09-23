@@ -8,7 +8,7 @@
  */
 
 import type { GymRecord, Provenance, Review } from '@gymgo/domain';
-import { DEMO_GYMS } from '@/fixtures/gyms';
+import { DEMO_GYMS } from '@gymgo/demo-data';
 import { config } from './config';
 import { readStore, type AppliedPatch } from './store';
 

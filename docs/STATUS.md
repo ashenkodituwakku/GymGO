@@ -4,6 +4,60 @@ Reported in separate columns on purpose. None of this is "production ready",
 and collapsing these into that phrase would be the single most misleading thing
 this document could do.
 
+## Phone app (`apps/mobile`, Expo)
+
+| | Implemented locally | Tested locally | Externally integrated | Native-tested | Deployed | Store-approved |
+|---|---|---|---|---|---|---|
+| Search, filters, tiering on the device | ✅ | ✅ unit tests | n/a | ❌ | n/a | ❌ |
+| Map with tier-coloured pins | ✅ | ⚠️ web preview only | ⚠️ see below | ❌ | n/a | ❌ |
+| Results sheet, place card, filters sheet | ✅ | ⚠️ web preview only | n/a | ❌ | n/a | ❌ |
+| Directions / call / website hand-off | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
+| Locate me (foreground, never stored) | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
+| Saved gyms (on the device) | ✅ | ⚠️ web preview only | n/a | ❌ | n/a | ❌ |
+| Liquid Glass (iOS 26) / blur fallbacks | ✅ | ⚠️ blur fallback only | n/a | ❌ | n/a | ❌ |
+| Haptics | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
+| Time-zone self-check at start-up | ✅ | ✅ unit tests | n/a | ❌ | n/a | ❌ |
+| App icon, splash screen | ❌ | ❌ | n/a | ❌ | n/a | ❌ |
+| Store builds (EAS / Xcode / Gradle) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+**What "tested locally" means for the phone app, exactly:**
+
+- It typechecks, and 22 unit tests pass. They include the same reference search
+  the website runs, run through the app's own filter code: 3 confirmed results,
+  Ironbark first.
+- `expo export` builds both the **iOS and Android bundles** into Hermes
+  bytecode without errors: 1,845 and 1,938 modules. The web-only map library
+  is confirmed absent from both.
+- `expo-doctor` passes 21/21 checks.
+- The interface was driven with Playwright in the **react-native-web preview**
+  at 390 × 844. It covered the map with pins, opening a place card from a row,
+  closing it, the filters sheet, tightening filters to "nothing fits" with its
+  suggestions, and place search. Those screenshots are the only visual evidence.
+  They were taken in Chromium, not on a phone. They show the blur fallback,
+  not Liquid Glass, and MapLibre, not MapKit or Google Maps.
+
+**Not done, and it matters:** the app has **never run on a physical phone or a
+simulator.** This machine has no iOS simulator and no Android emulator. Nothing
+about touch, gestures, keyboard behaviour, haptics, safe areas, the native map,
+Liquid Glass or performance has been observed. The first run in Expo Go on a
+real phone is the next test. Expect to fix things there.
+
+**Maps, per platform:**
+
+- **iPhone:** Apple MapKit through react-native-maps. It needs no key and no
+  account.
+- **Android in Expo Go:** Google Maps inside Expo Go works as it is.
+- **A standalone Android build:** needs a Google Maps API key, which means a
+  Google Cloud account with billing enabled. None has been obtained or used.
+- **Web preview:** OpenFreeMap tiles (OpenStreetMap data). They are free, with
+  attribution, and the credit is kept visible above the sheet.
+
+Apple's and Google's own place labels are switched off, so no real business
+appears next to an invented one. On Android that is a map style rule, which has
+not been seen working.
+
+## Website (`apps/web`, the earlier pilot)
+
 | | Implemented locally | Tested locally | Externally integrated | Native-tested | Deployed | Store-approved |
 |---|---|---|---|---|---|---|
 | Search, filters, tiering, ranking | ✅ | ✅ | n/a | ❌ | ❌ | n/a |
@@ -20,7 +74,6 @@ this document could do.
 | Map rendering | ⚠️ written | ❌ **never run** | ❌ no basemap | ❌ | ❌ | n/a |
 | Authentication | ⚠️ dev adapter only | ✅ | ❌ no provider | ❌ | ❌ | n/a |
 | Persistence | ⚠️ JSON file | ✅ | ❌ no database | ❌ | ❌ | n/a |
-| iOS / Android client | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | macOS native binary | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Real gym data | ❌ | ❌ | ❌ | ❌ | ❌ | n/a |
 
@@ -30,14 +83,18 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 
 | Check | Result |
 |---|---|
-| `pnpm typecheck` | Clean, both packages |
-| `pnpm lint` | No ESLint warnings or errors |
-| `@gymgo/domain` unit tests | **114 passed** |
-| `@gymgo/web` unit tests | **60 passed** |
+| `pnpm typecheck` | Clean, all four packages |
+| `pnpm lint` | No ESLint warnings or errors (web); tsc clean elsewhere |
+| `@gymgo/domain` unit tests | **115 passed** |
+| `@gymgo/demo-data` unit tests | **23 passed** |
+| `@gymgo/mobile` unit tests | **22 passed** |
+| `@gymgo/web` unit tests | **39 passed** |
+| `expo export` (iOS + Android) | Both bundles compiled |
+| `expo-doctor` | 21/21 checks passed |
 | `pnpm build` | Compiled successfully |
-| Playwright (390 / 768 / 1440) | **98 passed**, 22 skipped |
+| Playwright (390 / 768 / 1440), fresh build | **99 passed**, 24 skipped |
 
-The 22 skips are the contribution and moderation suite at phone and tablet
+The 24 skips are the contribution and moderation suite at phone and tablet
 width: it writes to a shared local store, so running it in three browsers at
 once would have the tests trip over each other. Those pages' layout is covered
 by the accessibility suite at all three widths.
@@ -76,9 +133,12 @@ name; the skip link works.
 
 ### Not built
 
-- **Native iOS and Android.** Nothing scaffolded, built, or run on a device or
-  simulator. The domain package is structured to be shared, which is
-  preparation, not progress. A web screenshot is not native QA evidence.
+- **Native QA of the phone app.** Built and bundled, but never run on a
+  device or simulator (see the top of this document). A web-preview screenshot
+  is not native QA evidence.
+- **Store builds.** No app icon, splash screen, bundle identifiers, EAS
+  project, signing, or store listing. None of those were asked for yet, and
+  most involve an account or a fee.
 - **A native macOS binary.** A separate later deliverable. The desktop website
   and the installable web experience cover the Mac requirement for now.
 - **A support channel.** `/support` says plainly that no channel is connected

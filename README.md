@@ -2,6 +2,50 @@
 
 **Find a gym that fits your workout, budget and visit time.**
 
+## Start it on your computer
+
+You need **Node.js** and **Git**. On Windows, install both once with:
+
+```powershell
+winget install OpenJS.NodeJS.LTS Git.Git
+```
+
+Then close and reopen PowerShell.
+
+### Windows (PowerShell)
+
+```powershell
+git clone -b claude/friendly-johnson-9rzxrj https://github.com/ashenkodituwakku/GymGO.git "$HOME\GymGO"
+& "$HOME\GymGO\scripts\gymgo.ps1"
+```
+
+Your browser opens **http://localhost:3000** by itself. Press **Ctrl+C** to stop.
+
+**Start it from anywhere by typing `gymgo`** — run this once, then open a new
+PowerShell window:
+
+```powershell
+Add-Content $PROFILE "`nfunction gymgo { & `"$HOME\GymGO\scripts\gymgo.ps1`" @args }"
+```
+
+`gymgo -Update` pulls the latest version first.
+
+> If PowerShell says *running scripts is disabled*, run this once and try again:
+> `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+
+### Mac or Linux
+
+```bash
+git clone -b claude/friendly-johnson-9rzxrj https://github.com/ashenkodituwakku/GymGO.git ~/GymGO
+cd ~/GymGO
+npx pnpm@10 install
+npx pnpm@10 dev
+```
+
+Then open **http://localhost:3000**. Press **Ctrl+C** to stop.
+
+---
+
 A gym discovery and comparison pilot for inner Sydney. It answers three
 questions that a map pin and an "open now" badge do not: does this gym have the
 equipment I need, what will the visit actually cost, and can a visitor get in at

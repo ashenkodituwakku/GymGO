@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openFilters } from './helpers';
 
 const REFERENCE =
   '/search?q=Surry+Hills&budget=30&date=2026-09-23&time=19%3A00&eq=squat_rack&r=5';
@@ -44,6 +45,9 @@ test.describe('layout and keyboard', () => {
 
   test('equipment filter chips are reachable and toggleable by keyboard', async ({ page }) => {
     await page.goto(REFERENCE);
+    // On phones the panel is collapsed; opening it must itself work from the
+    // keyboard, so this path never touches the mouse.
+    await openFilters(page, 'keyboard');
 
     const chip = page.getByRole('checkbox', { name: 'Cable station' });
     await chip.focus();
@@ -51,6 +55,24 @@ test.describe('layout and keyboard', () => {
     await page.keyboard.press('Space');
 
     await expect(page).toHaveURL(/eq=cable_station/);
+  });
+
+  test('on phones, results come before the filter controls', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'phone-390', 'phone layout only');
+    await page.goto(REFERENCE);
+
+    const toggle = page.locator('.filters__toggle');
+    await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    // The collapsed summary says what the search is, so nothing is hidden
+    // without a trace.
+    await expect(toggle).toContainText('Surry Hills');
+    await expect(toggle).toContainText('A$30');
+
+    // The first result is on the first screen, not below the controls.
+    const firstCard = page.locator('article.card').first();
+    const box = await firstCard.boundingBox();
+    expect(box?.y ?? Infinity).toBeLessThan(844);
   });
 
   test('every interactive control has an accessible name', async ({ page }) => {

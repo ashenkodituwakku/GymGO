@@ -14,6 +14,9 @@ const config: NextConfig = {
   eslint: {
     dirs: ['src'],
   },
+  // The floating dev-tools badge sits over the page corner and ends up in
+  // every screenshot of the interface; build errors still surface as overlays.
+  devIndicators: false,
   async headers() {
     return [
       {

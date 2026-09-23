@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openFilters } from './helpers';
 
 /**
  * The core journey, at every viewport the product claims to support.
@@ -76,6 +77,7 @@ test.describe('search', () => {
     expect(before).not.toContain('0 confirmed');
 
     // Tightening the budget must change what is confirmed.
+    await openFilters(page);
     await page.getByLabel('Visit budget (A$)').fill('15');
     await expect(page).toHaveURL(/budget=15/);
     await expect(counts).toContainText('0 confirmed matches');

@@ -32,7 +32,15 @@ import { loadAuditTrail, MODERATION_ACTION_LABELS } from '@/server/moderation';
 import { getCurrentUser } from '@/server/auth';
 import { PILOT_AREA, PILOT_FRESHNESS, config } from '@/server/config';
 import { formatMinuteInput, parseSearchParams, type ParamsRecord } from '@/server/search-params';
-import { accessBadgeClass, cashNeededNote, priceHeadline, titleCase } from '@/lib/format';
+import { accessBadgeClass, cashNeededNote, priceHeadline, priceSummary, titleCase } from '@/lib/format';
+import type { AccessVerdict } from '@gymgo/domain';
+
+const ACCESS_METRIC_CLASS: Record<AccessVerdict, string> = {
+  admits_visitor: 'metric__value--confirmed',
+  needs_confirmation: 'metric__value--unconfirmed',
+  not_admitted: 'metric__value--ruled-out',
+  unknown: 'metric__value--unconfirmed',
+};
 
 export async function generateStaticParams() {
   const gyms = await loadGyms();
@@ -162,13 +170,46 @@ export default async function GymPage({
           {location.address.line1}, {location.address.suburb} {location.address.state}{' '}
           {location.address.postcode} · {location.trainingTypes.map(titleCase).join(', ')}
         </p>
-        <div className="row">
-          <span className={accessBadgeClass(evaluation.access.verdict)}>
-            {accessVerdictLabel(evaluation.access.verdict)} at{' '}
-            {formatMinuteInput(parsed.query.visitMinuteOfDay)} on {parsed.query.visitDate}
-          </span>
-          <span className="meta-line">{describeRating(rating)}</span>
+
+        {/* The three answers the page exists for, in the Maps metric-strip
+            pattern. Each value is coloured by how settled it is, not by
+            whether it is good news. */}
+        <div className="metric-strip" role="group" aria-label="At a glance">
+          <div className="metric">
+            <span className="metric__label">Visit cost</span>
+            <span
+              className={`metric__value ${
+                evaluation.offers.confirmed
+                  ? ''
+                  : evaluation.offers.bestAvailable
+                    ? 'metric__value--unconfirmed'
+                    : 'metric__value--ruled-out'
+              }`}
+            >
+              {priceSummary(evaluation.offers).headline}
+            </span>
+          </div>
+          <div className="metric">
+            <span className="metric__label">
+              Visitors at {formatMinuteInput(parsed.query.visitMinuteOfDay)}
+            </span>
+            <span className={`metric__value ${ACCESS_METRIC_CLASS[evaluation.access.verdict]}`}>
+              {accessVerdictLabel(evaluation.access.verdict)}
+            </span>
+          </div>
+          <div className="metric">
+            <span className="metric__label">
+              Reviews{rating.count > 0 ? ` (${rating.count})` : ''}
+            </span>
+            <span className="metric__value">
+              {rating.average === null ? 'None yet' : `★ ${rating.average.toFixed(1)}`}
+            </span>
+          </div>
         </div>
+        <p className="meta-line" style={{ margin: 0 }}>
+          For {parsed.query.visitDate} at {formatMinuteInput(parsed.query.visitMinuteOfDay)},{' '}
+          {PILOT_AREA.timezone}. {describeRating(rating)}.
+        </p>
       </header>
 
       {location.operatingStatus !== 'open' && (

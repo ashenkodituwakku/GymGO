@@ -50,7 +50,11 @@ export default defineConfig({
   webServer: {
     command: 'pnpm start --port 3100',
     url: 'http://127.0.0.1:3100',
-    reuseExistingServer: !process.env.CI,
+    // Never reuse a server already on the port. One started without the
+    // sign-in variables once made every permission test fail at the login
+    // step for reasons that had nothing to do with the code under test;
+    // refusing to start is a clearer failure than testing the wrong server.
+    reuseExistingServer: false,
     timeout: 120_000,
     env: {
       GYMGO_DATA_SOURCE: 'demo',

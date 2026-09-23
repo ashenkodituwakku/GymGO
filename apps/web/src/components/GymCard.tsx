@@ -8,6 +8,7 @@ import {
 } from '@gymgo/domain';
 import { SaveButton } from './SaveButton';
 import { CompareToggle } from './CompareToggle';
+import { StateGlyph, glyphFor } from './StateGlyph';
 import {
   TIER_BADGE_CLASS,
   TIER_LABEL,
@@ -16,15 +17,6 @@ import {
   cashNeededNote,
   priceSummary,
 } from '@/lib/format';
-
-const MATCH_BADGE: Record<string, string> = {
-  confirmed: 'badge badge--confirmed',
-  missing: 'badge badge--ruled-out',
-  below_requirement: 'badge badge--ruled-out',
-  stale: 'badge badge--unconfirmed',
-  conflicting: 'badge badge--unconfirmed',
-  unknown: 'badge badge--neutral',
-};
 
 /**
  * One result.
@@ -56,7 +48,7 @@ export function GymCard({ result, searchQuery }: { result: GymSearchResult; sear
             {distanceKm !== null ? ` · ${formatDistanceKm(distanceKm)}` : ''}
           </p>
         </div>
-        <div style={{ textAlign: 'right' }}>
+        <div className="gym-card__pricing">
           <div className="gym-card__price">{price.headline}</div>
           <div className="meta-line">{price.sublabel}</div>
         </div>
@@ -75,13 +67,20 @@ export function GymCard({ result, searchQuery }: { result: GymSearchResult; sear
       </div>
 
       {equipment.matches.length > 0 && (
-        <ul className="match-list" style={{ marginTop: 10 }}>
+        <ul className="spec-list" style={{ marginTop: 12 }} aria-label="Your equipment">
           {equipment.matches.map((match) => (
             <li key={match.requirement.equipmentTypeId}>
-              <span className={MATCH_BADGE[match.state] ?? 'badge badge--neutral'}>
+              <StateGlyph state={glyphFor(match.state)} />
+              <span>
                 {equipmentLabel(match.requirement.equipmentTypeId)}
-                {match.requirement.minMaxWeightKg ? ` ${match.requirement.minMaxWeightKg} kg` : ''}:{' '}
-                {equipmentMatchStateLabel(match.state)}
+                {match.requirement.minMaxWeightKg ? ` ${match.requirement.minMaxWeightKg} kg` : ''}
+                {match.state === 'confirmed' ? (
+                  // Confirmed is the quiet case, so the word is for screen
+                  // readers only; anything else is said out loud.
+                  <span className="visually-hidden">: {equipmentMatchStateLabel(match.state)}</span>
+                ) : (
+                  <span className="spec__state"> · {equipmentMatchStateLabel(match.state)}</span>
+                )}
               </span>
             </li>
           ))}

@@ -41,7 +41,7 @@ export function MapPanel({
 }) {
   if (!provider.configured) {
     return (
-      <div className="map-panel">
+      <div className="map-panel map-panel--empty">
         <div className="map-panel__body">
           <div className="stack stack--tight">
             <p>

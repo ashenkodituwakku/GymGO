@@ -1,8 +1,19 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useTransition } from 'react';
+import { useCallback, useState, useTransition } from 'react';
 import { AMENITIES, EQUIPMENT_TYPES, SORT_DESCRIPTIONS, type SortKey } from '@gymgo/domain';
+
+/** "19:00" → "7 pm", "06:30" → "6:30 am". */
+function formatTime(value: string): string {
+  const [hourText, minuteText] = value.split(':');
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return value;
+  const suffix = hour < 12 ? 'am' : 'pm';
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return minute === 0 ? `${hour12} ${suffix}` : `${hour12}:${String(minute).padStart(2, '0')} ${suffix}`;
+}
 
 /**
  * The filter panel.
@@ -74,6 +85,19 @@ export function FilterPanel({
 
   const dumbbellsSelected = requiredEquipment.includes('dumbbells');
 
+  // Collapsed by default; only has any effect on phones (see globals.css).
+  const [expanded, setExpanded] = useState(false);
+  const summary = [
+    text.trim() || 'Inner Sydney',
+    formatTime(visitTime),
+    budget ? `A$${budget}` : 'any budget',
+    requiredEquipment.length > 0
+      ? `${requiredEquipment.length} ${requiredEquipment.length === 1 ? 'item' : 'items'}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   /*
    * These inputs are uncontrolled so typing stays responsive, which means
    * React will not update their DOM value when the URL changes underneath
@@ -92,6 +116,21 @@ export function FilterPanel({
     >
       <input type="hidden" name="view" value={searchParams.get('view') ?? 'list'} />
 
+      {/* Phones only (hidden by CSS above 767 px): the panel collapses to a
+          one-line summary so results are the first thing on screen, not the
+          fifteen hundred pixels of controls above them. */}
+      <button
+        type="button"
+        className="filters__toggle"
+        aria-expanded={expanded}
+        aria-controls="filter-body"
+        onClick={() => setExpanded((open) => !open)}
+      >
+        <span className="filters__toggle-title">Filters</span>
+        <span className="filters__toggle-summary">{summary}</span>
+      </button>
+
+      <div className="filters__body" id="filter-body">
       <div className="field">
         <label className="field__label" htmlFor="filter-q">
           Suburb or postcode
@@ -286,6 +325,7 @@ export function FilterPanel({
         <a className="button button--small" href="/search">
           Clear all
         </a>
+      </div>
       </div>
     </form>
   );

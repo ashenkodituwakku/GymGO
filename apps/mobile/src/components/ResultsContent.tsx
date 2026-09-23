@@ -266,7 +266,8 @@ const styles = StyleSheet.create({
     gap: space[2],
     height: 40,
     paddingHorizontal: space[3],
-    borderRadius: radius.sm,
+    // iOS 26 search fields are capsules.
+    borderRadius: radius.pill,
     backgroundColor: color.fill,
   },
   input: {
@@ -359,9 +360,12 @@ const styles = StyleSheet.create({
   dot: { width: 8, height: 8, borderRadius: 4 },
   groupLine: { paddingHorizontal: space[4], marginTop: 2, marginBottom: space[2] },
   list: {
-    marginHorizontal: space[3],
-    borderRadius: radius.lg,
-    backgroundColor: color.card,
+    marginHorizontal: space[4],
+    // Concentric with the sheet's corners, and a little translucent so the
+    // glass reads through at the edges.
+    borderRadius: 26,
+    borderCurve: 'continuous',
+    backgroundColor: 'rgba(255, 255, 255, 0.82)',
     overflow: 'hidden',
   },
   rowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 72 },

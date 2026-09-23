@@ -34,6 +34,13 @@ const ICONS = {
   info: { ios: 'info.circle.fill', android: 'info', web: 'info' },
   sparkle: { ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' },
   pin: { ios: 'mappin.circle.fill', android: 'location_on', web: 'location_on' },
+  fit: { ios: 'arrow.up.left.and.arrow.down.right', android: 'fit_screen', web: 'fit_screen' },
+  account: { ios: 'person.crop.circle.fill', android: 'account_circle', web: 'account_circle' },
+  signOut: { ios: 'rectangle.portrait.and.arrow.right', android: 'logout', web: 'logout' },
+  star: { ios: 'star.fill', android: 'star', web: 'star' },
+  cloud: { ios: 'icloud.fill', android: 'cloud', web: 'cloud' },
+  offline: { ios: 'icloud.slash.fill', android: 'cloud_off', web: 'cloud_off' },
+  source: { ios: 'link', android: 'link', web: 'link' },
 } as const;
 
 export type IconName = keyof typeof ICONS;

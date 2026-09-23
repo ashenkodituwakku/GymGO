@@ -29,7 +29,8 @@ import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Icon } from './Icon';
 import { StateGlyphRow } from './StateGlyphRow';
-import { ActionButton, Card, TIER_COLOUR, Txt } from './ui';
+import { Glass } from './Glass';
+import { ActionButton, Card, CloseButton, TIER_COLOUR, Txt } from './ui';
 
 const TRAINING: Record<string, string> = {
   full_gym: 'Gym',
@@ -43,8 +44,20 @@ const TRAINING: Record<string, string> = {
 /**
  * The name and close button. Separate from the card so the sheet can pin it
  * while the detail scrolls under it, as Maps does.
+ *
+ * It is clear while the card is at rest, so the glass sheet shows through
+ * unbroken. A frosted strip fades in only once content scrolls beneath it:
+ * iOS 26's scroll-edge effect.
  */
-export function PlaceHeader({ result, onClose }: { result: GymSearchResult; onClose: () => void }) {
+export function PlaceHeader({
+  result,
+  onClose,
+  scrolled,
+}: {
+  result: GymSearchResult;
+  onClose: () => void;
+  scrolled: boolean;
+}) {
   const location = result.record.location;
   const subtitle = [
     TRAINING[location.trainingTypes[0] ?? 'full_gym'] ?? 'Gym',
@@ -56,6 +69,7 @@ export function PlaceHeader({ result, onClose }: { result: GymSearchResult; onCl
 
   return (
     <View style={styles.headerBar}>
+      {scrolled && <Glass kind="bar" style={StyleSheet.absoluteFill} />}
       <View style={styles.header}>
         <View style={styles.headerText}>
           <Txt variant="title" numberOfLines={2}>
@@ -65,18 +79,7 @@ export function PlaceHeader({ result, onClose }: { result: GymSearchResult; onCl
             {subtitle}
           </Txt>
         </View>
-        <Pressable
-          onPress={() => {
-            haptic.tap();
-            onClose();
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="Close"
-          hitSlop={10}
-          style={styles.close}
-        >
-          <Icon name="close" size={13} color={color.labelSecondary} weight="bold" />
-        </Pressable>
+        <CloseButton onPress={onClose} />
       </View>
     </View>
   );
@@ -425,21 +428,11 @@ const styles = StyleSheet.create({
   bold: face('bold'),
 
   headerBar: {
-    backgroundColor: color.groupedBackground,
     paddingHorizontal: space[4],
     paddingBottom: space[2],
   },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3], paddingTop: space[1] },
   headerText: { flex: 1, gap: 2 },
-  close: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: color.fill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
 
   actions: { flexDirection: 'row', gap: space[2], marginTop: space[2] },
 

@@ -79,6 +79,13 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
         450,
       );
     },
+    fitTo(points) {
+      if (points.length === 0) return;
+      map.current?.fitToCoordinates(
+        points.map((point) => ({ latitude: point.lat, longitude: point.lng })),
+        { edgePadding: { top: 60, right: 60, bottom: 60, left: 60 }, animated: true },
+      );
+    },
   }));
 
   return (

@@ -1,75 +1,147 @@
 /**
  * The material things float on.
  *
- * `thin` is for small controls over the map: real Liquid Glass on iOS 26
- * (expo-glass-effect), the system chrome blur on earlier iOS and in the web
- * preview. `thick` is for sheets that carry a list: the thick system
- * material, because a list over a busy street map must stay readable, and
- * Liquid Glass at sheet size over a map is too see-through for body text.
+ * iOS 26 and later: Apple's own Liquid Glass (UIGlassEffect, through
+ * expo-glass-effect). It is rendered by the system, so it bends the map
+ * behind it, catches light at its edges and, when `interactive`, flexes
+ * under a finger, exactly as system controls do.
  *
- * Android gets near-opaque surfaces: a heavy real-time blur over a live map
- * costs frames on mid-range phones, and Material's own surfaces are opaque.
+ * Everywhere else there is no real glass, so this builds the closest honest
+ * imitation from parts:
+ *  - a backdrop: the system blur material on older iPhones, the browser's
+ *    backdrop blur in the web preview, and a bright wash on Android, where a
+ *    live blur over a map costs frames and the map view often can't be
+ *    sampled anyway;
+ *  - an optional tint, for prominent buttons;
+ *  - a sheen, light falling from the top edge;
+ *  - a specular rim, the bright hairline edge that makes glass read as glass.
  *
- * One component, so every floating surface changes together.
+ * `kind` picks what a surface is for:
+ *  - `control`: buttons and pills over the map;
+ *  - `sheet`: a sheet's surface, which uses a thicker backdrop in imitation;
+ *  - `bar`: a frosted strip for content scrolling under a pinned header,
+ *    which is always a blur, never glass on glass.
+ *
+ * One component, so every glass surface changes together.
  */
 
 import { BlurView } from 'expo-blur';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { ReactNode } from 'react';
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { color } from '@/lib/theme';
 
-const liquidGlass = Platform.OS === 'ios' && isLiquidGlassAvailable();
+/** True when the device draws Apple's real Liquid Glass. */
+export const HAS_LIQUID_GLASS =
+  Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
+
+export type GlassKind = 'control' | 'sheet' | 'bar';
 
 export function Glass({
+  kind = 'control',
   style,
   children,
+  tint,
   interactive = false,
-  weight = 'thin',
+  clear = false,
 }: {
+  kind?: GlassKind;
   style?: StyleProp<ViewStyle>;
   children?: ReactNode;
+  /** Tinted glass, for a prominent button. */
+  tint?: string;
+  /** Let the glass flex and glint under a finger (iOS 26). */
   interactive?: boolean;
-  weight?: 'thin' | 'thick';
+  /** The more transparent Liquid Glass variant, for controls over busy imagery. */
+  clear?: boolean;
 }) {
-  if (liquidGlass && weight === 'thin') {
+  if (HAS_LIQUID_GLASS && kind !== 'bar') {
     return (
-      <GlassView style={style} glassEffectStyle="regular" isInteractive={interactive} colorScheme="light">
+      <GlassView
+        style={[styles.continuous, style]}
+        glassEffectStyle={clear ? 'clear' : 'regular'}
+        tintColor={tint}
+        isInteractive={interactive}
+        colorScheme="light"
+      >
         {children}
       </GlassView>
     );
   }
 
+  const shape = cornerShape(style);
+  const thick = kind !== 'control';
+
+  return (
+    <View style={[styles.clip, styles.continuous, style]}>
+      <Backdrop thick={thick} />
+      {tint ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tint, opacity: 0.92 }]} /> : null}
+      {kind !== 'bar' ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, shape, tint ? styles.sheenOnTint : styles.sheen]} /> : null}
+      {kind !== 'bar' ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, shape, styles.rim]} /> : null}
+      {children}
+    </View>
+  );
+}
+
+function Backdrop({ thick }: { thick: boolean }) {
   if (Platform.OS === 'ios') {
     return (
       <BlurView
-        intensity={weight === 'thick' ? 100 : 80}
-        tint={weight === 'thick' ? 'systemThickMaterialLight' : 'systemChromeMaterialLight'}
-        style={[styles.clip, style]}
-      >
-        {children}
-      </BlurView>
+        pointerEvents="none"
+        intensity={100}
+        tint={thick ? 'systemThickMaterialLight' : 'systemUltraThinMaterialLight'}
+        style={StyleSheet.absoluteFill}
+      />
     );
   }
-
   if (Platform.OS === 'web') {
-    // The browser's backdrop blur, with a white wash matching the system
-    // materials' own tint.
     return (
-      <BlurView intensity={weight === 'thick' ? 60 : 40} tint="light" style={[styles.clip, style]}>
-        <View style={[StyleSheet.absoluteFill, weight === 'thick' ? styles.webThick : styles.webThin]} />
-        {children}
+      <BlurView pointerEvents="none" intensity={thick ? 70 : 45} tint="light" style={StyleSheet.absoluteFill}>
+        <View style={[StyleSheet.absoluteFill, thick ? styles.webThick : styles.webThin]} />
       </BlurView>
     );
   }
-
-  return <View style={[weight === 'thick' ? styles.solidThick : styles.solid, style]}>{children}</View>;
+  return <View pointerEvents="none" style={[StyleSheet.absoluteFill, thick ? styles.washThick : styles.washThin]} />;
 }
+
+/** The corner radii of the surface, so the overlays follow its shape. */
+function cornerShape(style: StyleProp<ViewStyle>): ViewStyle {
+  const flat = StyleSheet.flatten(style) ?? {};
+  return {
+    borderRadius: flat.borderRadius,
+    borderTopLeftRadius: flat.borderTopLeftRadius,
+    borderTopRightRadius: flat.borderTopRightRadius,
+    borderBottomLeftRadius: flat.borderBottomLeftRadius,
+    borderBottomRightRadius: flat.borderBottomRightRadius,
+  };
+}
+
+const SHEEN = 'linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 38%, rgba(255,255,255,0) 60%)';
+const SHEEN_ON_TINT = 'linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 55%)';
+
+// Web takes CSS `backgroundImage`; React Native's own renderer takes
+// `experimental_backgroundImage`. Same gradient either way.
+const gradient = (value: string): ViewStyle =>
+  (Platform.OS === 'web' ? { backgroundImage: value } : { experimental_backgroundImage: value }) as ViewStyle;
 
 const styles = StyleSheet.create({
   clip: { overflow: 'hidden' },
-  webThin: { backgroundColor: 'rgba(255, 255, 255, 0.62)' },
-  webThick: { backgroundColor: 'rgba(250, 250, 252, 0.86)' },
-  solid: { backgroundColor: color.glass },
-  solidThick: { backgroundColor: '#F7F7F9' },
+  // Apple's squircle corners, rather than circular arcs. iOS only; ignored
+  // elsewhere.
+  continuous: { borderCurve: 'continuous' },
+
+  webThin: { backgroundColor: 'rgba(255, 255, 255, 0.42)' },
+  webThick: { backgroundColor: 'rgba(250, 250, 253, 0.66)' },
+  washThin: { backgroundColor: 'rgba(255, 255, 255, 0.8)' },
+  washThick: { backgroundColor: 'rgba(248, 248, 251, 0.94)' },
+
+  sheen: gradient(SHEEN),
+  sheenOnTint: gradient(SHEEN_ON_TINT),
+
+  // The specular rim: a bright inner edge along the top, a faint one below,
+  // and a hairline all round.
+  rim: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255, 255, 255, 0.7)',
+    boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.9), inset 0 -1px 1px rgba(0, 0, 0, 0.05)',
+  },
 });

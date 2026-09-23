@@ -68,6 +68,13 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
       const zoom = Math.log2(360 / span) - 0.6;
       map.current?.flyTo({ center: [centre.lng, centre.lat], zoom, duration: 450 });
     },
+    fitTo(points) {
+      const first = points[0];
+      if (!map.current || !first) return;
+      const bounds = new maplibregl.LngLatBounds([first.lng, first.lat], [first.lng, first.lat]);
+      for (const point of points) bounds.extend([point.lng, point.lat]);
+      map.current.fitBounds(bounds, { padding: 60, duration: 500, maxZoom: 15 });
+    },
   }));
 
   useEffect(() => {

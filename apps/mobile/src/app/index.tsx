@@ -31,13 +31,17 @@ import { GymMap, type GymMapHandle, type MapPin } from '@/components/GymMap';
 import { Icon } from '@/components/Icon';
 import { PlaceCard, PlaceHeader } from '@/components/PlaceCard';
 import { ResultsContent } from '@/components/ResultsContent';
-import { SheetBackground, SolidSheetBackground } from '@/components/SheetBackground';
-import { RoundButton, Txt } from '@/components/ui';
+import { SHEET_GAP, SolidSheetBackground, floatingGlassBackground } from '@/components/SheetBackground';
+import { ControlCapsule, Txt } from '@/components/ui';
 
 const SAVED_KEY = 'gymgo.saved.v1';
 /** Beyond this from the pilot centre, "near you" would list nothing useful. */
 const PILOT_REACH_KM = 15;
 const PEEK = 150;
+
+// Made once: a component identity that changes would remount the sheet.
+const ResultsBackground = floatingGlassBackground(2);
+const PlaceBackground = floatingGlassBackground(1);
 
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
@@ -53,6 +57,7 @@ export default function MapScreen() {
   const [saved, setSaved] = useState<string[]>([]);
   const [locationShown, setLocationShown] = useState(false);
   const [sheetTop, setSheetTop] = useState(PEEK);
+  const [cardScrolled, setCardScrolled] = useState(false);
   // Where the results sheet was before a place card pushed it down, so
   // closing the card puts it back — as Maps does.
   const sheetIndex = useRef(1);
@@ -247,7 +252,16 @@ export default function MapScreen() {
           </Txt>
         </Glass>
 
-        <RoundButton icon="locate" accessibilityLabel="Show gyms near me" onPress={() => void locate()} />
+        <ControlCapsule
+          buttons={[
+            {
+              icon: 'fit',
+              accessibilityLabel: 'Show every gym in the list',
+              onPress: () => map.current?.fitTo(pins.map((pin) => pin.position)),
+            },
+            { icon: 'locate', accessibilityLabel: 'Show gyms near me', onPress: () => void locate() },
+          ]}
+        />
       </View>
 
       {!selfCheck.ok && (
@@ -266,7 +280,9 @@ export default function MapScreen() {
         index={1}
         snapPoints={snapPoints}
         animationConfigs={spring}
-        backgroundComponent={SheetBackground}
+        backgroundComponent={ResultsBackground}
+        detached
+        bottomInset={SHEET_GAP}
         handleIndicatorStyle={styles.handle}
         keyboardBehavior="extend"
         keyboardBlurBehavior="restore"
@@ -304,10 +320,13 @@ export default function MapScreen() {
         snapPoints={placeSnaps}
         animationConfigs={spring}
         enableDynamicSizing={false}
-        backgroundComponent={SolidSheetBackground}
+        backgroundComponent={PlaceBackground}
+        detached
+        bottomInset={SHEET_GAP}
         handleIndicatorStyle={styles.handle}
         onDismiss={() => {
           setSelectedId(null);
+          setCardScrolled(false);
           if (restoreIndex.current !== null) mainSheet.current?.snapToIndex(restoreIndex.current);
           restoreIndex.current = null;
         }}
@@ -316,8 +335,12 @@ export default function MapScreen() {
           <BottomSheetScrollView
             stickyHeaderIndices={[0]}
             contentContainerStyle={{ paddingBottom: insets.bottom + space[6] }}
+            onScroll={(event) => {
+              const past = event.nativeEvent.contentOffset.y > 4;
+              if (past !== cardScrolled) setCardScrolled(past);
+            }}
           >
-            <PlaceHeader result={selected} onClose={closePlace} />
+            <PlaceHeader result={selected} onClose={closePlace} scrolled={cardScrolled} />
             <PlaceCard
               key={selected.record.location.id}
               result={selected}

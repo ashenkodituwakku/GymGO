@@ -115,41 +115,66 @@ export function Divider({ inset = 0 }: { inset?: number }) {
 
 // --- Buttons ----------------------------------------------------------------
 
-/** A round floating control over the map. */
-export function RoundButton({
-  icon,
-  onPress,
-  accessibilityLabel,
-  tint = color.brand,
-  children,
-}: {
+export interface CapsuleButton {
   icon: IconName;
-  onPress: () => void;
   accessibilityLabel: string;
-  tint?: string;
-  children?: ReactNode;
-}) {
+  onPress: () => void;
+}
+
+/**
+ * The map's floating controls, stacked in one glass capsule with hairlines
+ * between them, as Maps stacks its own. Real Liquid Glass on iOS 26, which
+ * flexes under a finger.
+ */
+export function ControlCapsule({ buttons }: { buttons: CapsuleButton[] }) {
   return (
-    <Pressable
-      onPress={() => {
-        haptic.tap();
-        onPress();
-      }}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      style={({ pressed }) => [styles.round, pressed && { transform: [{ scale: 0.92 }] }]}
-    >
-      <Glass style={styles.roundGlass}>
-        <Icon name={icon} size={18} color={tint} />
-        {children}
+    <View style={styles.capsuleShadow}>
+      <Glass style={styles.capsule} interactive>
+        {buttons.map((button, index) => (
+          <View key={button.accessibilityLabel}>
+            {index > 0 && <View style={styles.capsuleDivider} />}
+            <Pressable
+              onPress={() => {
+                haptic.tap();
+                button.onPress();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={button.accessibilityLabel}
+              style={({ pressed }) => [styles.capsuleButton, pressed && styles.capsulePressed]}
+            >
+              <Icon name={button.icon} size={18} color={color.brand} />
+            </Pressable>
+          </View>
+        ))}
       </Glass>
-    </Pressable>
+    </View>
+  );
+}
+
+/** The round glass close button that sits in a sheet's corner. */
+export function CloseButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Glass style={styles.close} interactive>
+      <Pressable
+        onPress={() => {
+          haptic.tap();
+          onPress();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Close"
+        hitSlop={10}
+        style={styles.closeHit}
+      >
+        <Icon name="close" size={13} color={color.labelSecondary} weight="bold" />
+      </Pressable>
+    </Glass>
   );
 }
 
 /**
- * The Maps action button: icon over a short label, equal widths in a row.
- * `primary` is the filled brand button; the rest are tinted.
+ * The Maps action button: icon over a short label, equal widths in a row, in
+ * glass. `primary` is tinted glass in the brand colour, the way iOS 26 marks
+ * the one action that matters most.
  */
 export function ActionButton({
   icon,
@@ -164,25 +189,24 @@ export function ActionButton({
   primary?: boolean;
   accessibilityLabel?: string;
 }) {
+  const ink = primary ? color.onBrand : color.brand;
   return (
-    <Pressable
-      onPress={() => {
-        haptic.tap();
-        onPress();
-      }}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? label}
-      style={({ pressed }) => [
-        styles.action,
-        primary ? styles.actionPrimary : styles.actionTinted,
-        pressed && { transform: [{ scale: 0.95 }], opacity: 0.9 },
-      ]}
-    >
-      <Icon name={icon} size={19} color={primary ? color.onBrand : color.brand} />
-      <Txt variant="caption" color={primary ? color.onBrand : color.brand} style={styles.actionLabel}>
-        {label}
-      </Txt>
-    </Pressable>
+    <Glass style={styles.action} tint={primary ? color.brand : undefined} interactive>
+      <Pressable
+        onPress={() => {
+          haptic.tap();
+          onPress();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel ?? label}
+        style={({ pressed }) => [styles.actionHit, pressed && { opacity: 0.6 }]}
+      >
+        <Icon name={icon} size={19} color={ink} />
+        <Txt variant="caption" color={ink} style={styles.actionLabel}>
+          {label}
+        </Txt>
+      </Pressable>
+    </Glass>
   );
 }
 
@@ -242,31 +266,17 @@ const styles = StyleSheet.create({
   },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator },
 
-  round: {
-    width: HIT,
-    height: HIT,
-    borderRadius: HIT / 2,
-    ...shadow.float,
-  },
-  roundGlass: {
-    flex: 1,
-    borderRadius: HIT / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.glassBorder,
-  },
+  capsuleShadow: { borderRadius: 22, ...shadow.float },
+  capsule: { width: HIT, borderRadius: HIT / 2, overflow: 'hidden' },
+  capsuleButton: { width: HIT, height: HIT, alignItems: 'center', justifyContent: 'center' },
+  capsulePressed: { backgroundColor: 'rgba(0, 0, 0, 0.06)' },
+  capsuleDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 10, backgroundColor: color.separator },
 
-  action: {
-    flex: 1,
-    height: 58,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
-  },
-  actionPrimary: { backgroundColor: color.brand },
-  actionTinted: { backgroundColor: color.brandTint },
+  close: { width: 30, height: 30, borderRadius: 15, marginTop: 2 },
+  closeHit: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  action: { flex: 1, height: 58, borderRadius: radius.lg },
+  actionHit: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
   actionLabel: face('medium'),
 
   primary: {

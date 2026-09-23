@@ -22,4 +22,6 @@ export interface GymMapProps {
 export interface GymMapHandle {
   /** Move the camera; `span` is the visible latitude range in degrees. */
   flyTo: (centre: LatLng, span?: number) => void;
+  /** Frame every one of these points, clear of the sheet and controls. */
+  fitTo: (points: LatLng[]) => void;
 }

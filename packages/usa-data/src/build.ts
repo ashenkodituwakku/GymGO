@@ -9,7 +9,7 @@
  * product shows those as unknown and says to call.
  */
 
-import type { AccessSchedule, EvidenceSource, GymRecord, OpeningWindow, Provenance } from '@gymgo/domain';
+import type { AccessSchedule, AmenityObservation, EvidenceSource, GymRecord, OpeningWindow, Provenance } from '@gymgo/domain';
 import { usCity } from './cities';
 import { FETCHED } from './data';
 import type { GymRow } from './rows';
@@ -58,6 +58,18 @@ function memberHours(row: GymRow, timezone: string): AccessSchedule[] {
   ];
 }
 
+/** Pool, sauna, showers, step-free entrance: only where the map says yes or no. */
+function mappedAmenities(row: GymRow): AmenityObservation[] {
+  return Object.entries(row.amenities ?? {}).map(([amenityId, present]) => ({
+    id: `${row.id}-${amenityId}`,
+    gymId: row.id,
+    amenityId: amenityId as AmenityObservation['amenityId'],
+    present,
+    note: null,
+    provenance: fromMap(row),
+  }));
+}
+
 export function usRecord(row: GymRow): GymRecord {
   const city = usCity(row.city);
   return {
@@ -82,6 +94,8 @@ export function usRecord(row: GymRow): GymRecord {
       operatingStatusNote: 'On the map, but we have not confirmed with the operator that this branch is trading.',
       phone: row.phone ?? null,
       website: row.website ?? null,
+      email: row.email ?? null,
+      activities: row.activities ?? [],
       // We hold no photographs we have permission to show.
       photos: [],
       isDemoData: false,
@@ -89,7 +103,7 @@ export function usRecord(row: GymRow): GymRecord {
       provenance: fromMap(row),
     },
     equipment: [],
-    amenities: [],
+    amenities: mappedAmenities(row),
     offers: [],
     schedules: memberHours(row, city.timezone),
     prerequisites: {

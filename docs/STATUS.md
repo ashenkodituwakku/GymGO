@@ -20,7 +20,8 @@ this document could do.
 | Members' equipment reports (👍/👎 per machine, tallied) | ✅ | ✅ 2 server tests + driven in the browser | n/a | ❌ |
 | GymGO Pro through Stripe: checkout, manage page, webhooks, who is Pro | ✅ | ✅ 21 tests with a stand-in Stripe; webhook signatures made and checked with Stripe's own library | ❌ **never run against Stripe itself**: no Stripe account or key was used | ❌ |
 | Free limits enforced by the server (10 saved gyms; workout library is Pro) | ✅ | ✅ tests | n/a | ❌ |
-| Extra Google photos and reviews (owner's own key, paid) | ✅ | ⚠️ tests with a fake Google only | ❌ **never called with a real key** | ❌ |
+| Emails, classes and facilities from OpenStreetMap (US gyms) | ✅ | ✅ honesty tests; shown in the browser | ⚠️ one-off fetch, 24 Sep 2026 | n/a |
+| Extra Google photos, reviews, hours, phone, website, summary, accessibility, parking, payments (owner's own key, paid), on each gym page | ✅ | ⚠️ tests with a fake Google only; layout checked in the browser with stand-in data | ❌ **never called with a real key** | ❌ |
 
 **Photos:** only members' own photos, which they confirm they took. The
 server checks each file really is a JPEG or PNG, strips its hidden details

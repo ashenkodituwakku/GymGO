@@ -51,7 +51,6 @@ const ICONS = {
   'hand-heart': ['duotone'],
   camera: ['duotone'],
   'chat-circle-text': ['duotone'],
-  'google-logo': ['duotone'],
   'phone-call': ['duotone'],
   'shuffle-angular': ['duotone'],
   'share-network': ['duotone'],

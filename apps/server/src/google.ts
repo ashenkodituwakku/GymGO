@@ -45,6 +45,13 @@ export interface GooglePlace {
   website: string | null;
   googleMapsUri: string | null;
   businessStatus: string | null;
+  /** Google's one-line description, when it has written one. */
+  summary: string | null;
+  /** "Gym", "Fitness center"… */
+  type: string | null;
+  phoneInternational: string | null;
+  /** Yes/no details Google holds: accessibility, parking, payments. */
+  details: Array<{ group: 'Accessibility' | 'Parking' | 'Payments'; label: string; value: boolean }>;
   photos: Array<{ uri: string; authors: GoogleAuthor[] }>;
   reviews: Array<{
     rating: number | null;
@@ -73,10 +80,27 @@ export class GoogleError extends Error {
 const MATCH_RADIUS_KM = 0.15;
 
 /**
- * Google bills each photo separately, so a page shows a few, not all ten
- * Google offers. Four keeps the free monthly allowance going further.
+ * Google bills each photo separately, so a page shows some, not all ten
+ * Google offers. Six keeps the free monthly allowance going a fair way.
  */
-const MAX_PHOTOS = 4;
+const MAX_PHOTOS = 6;
+
+/** Google's yes/no fields, and how to say them. */
+const DETAILS: Array<{ group: 'Accessibility' | 'Parking' | 'Payments'; field: string; key: string; label: string }> = [
+  { group: 'Accessibility', field: 'accessibilityOptions', key: 'wheelchairAccessibleEntrance', label: 'Wheelchair-accessible entrance' },
+  { group: 'Accessibility', field: 'accessibilityOptions', key: 'wheelchairAccessibleRestroom', label: 'Wheelchair-accessible toilet' },
+  { group: 'Accessibility', field: 'accessibilityOptions', key: 'wheelchairAccessibleParking', label: 'Wheelchair-accessible parking' },
+  { group: 'Parking', field: 'parkingOptions', key: 'freeParkingLot', label: 'Free car park' },
+  { group: 'Parking', field: 'parkingOptions', key: 'paidParkingLot', label: 'Paid car park' },
+  { group: 'Parking', field: 'parkingOptions', key: 'freeStreetParking', label: 'Free street parking' },
+  { group: 'Parking', field: 'parkingOptions', key: 'paidStreetParking', label: 'Paid street parking' },
+  { group: 'Parking', field: 'parkingOptions', key: 'freeGarageParking', label: 'Free garage parking' },
+  { group: 'Parking', field: 'parkingOptions', key: 'paidGarageParking', label: 'Paid garage parking' },
+  { group: 'Payments', field: 'paymentOptions', key: 'acceptsCreditCards', label: 'Credit cards' },
+  { group: 'Payments', field: 'paymentOptions', key: 'acceptsDebitCards', label: 'Debit cards' },
+  { group: 'Payments', field: 'paymentOptions', key: 'acceptsNfc', label: 'Tap to pay' },
+  { group: 'Payments', field: 'paymentOptions', key: 'acceptsCashOnly', label: 'Cash only' },
+];
 
 function author(raw: Record<string, unknown> | undefined): GoogleAuthor {
   return {
@@ -178,7 +202,13 @@ export class GooglePlaces {
         'currentOpeningHours.openNow',
         'regularOpeningHours.weekdayDescriptions',
         'nationalPhoneNumber',
+        'internationalPhoneNumber',
         'websiteUri',
+        'editorialSummary',
+        'primaryTypeDisplayName',
+        'accessibilityOptions',
+        'parkingOptions',
+        'paymentOptions',
         'googleMapsUri',
         'businessStatus',
         'photos',
@@ -224,6 +254,14 @@ export class GooglePlaces {
         openNow: typeof data.currentOpeningHours?.openNow === 'boolean' ? data.currentOpeningHours.openNow : null,
         hours: Array.isArray(data.regularOpeningHours?.weekdayDescriptions) ? data.regularOpeningHours.weekdayDescriptions : [],
         phone: typeof data.nationalPhoneNumber === 'string' ? data.nationalPhoneNumber : null,
+        phoneInternational: typeof data.internationalPhoneNumber === 'string' ? data.internationalPhoneNumber : null,
+        summary: typeof data.editorialSummary?.text === 'string' ? data.editorialSummary.text : null,
+        type: typeof data.primaryTypeDisplayName?.text === 'string' ? data.primaryTypeDisplayName.text : null,
+        // Only what Google actually says; a missing field stays missing, never "no".
+        details: DETAILS.flatMap((item) => {
+          const value = (data[item.field] as Record<string, unknown> | undefined)?.[item.key];
+          return typeof value === 'boolean' ? [{ group: item.group, label: item.label, value }] : [];
+        }),
         website: typeof data.websiteUri === 'string' ? data.websiteUri : null,
         googleMapsUri: typeof data.googleMapsUri === 'string' ? data.googleMapsUri : null,
         businessStatus: typeof data.businessStatus === 'string' ? data.businessStatus : null,

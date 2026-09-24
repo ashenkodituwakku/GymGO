@@ -85,6 +85,11 @@ async function fakeGoogle(input: string | URL | Request, init?: RequestInit): Pr
       currentOpeningHours: { openNow: true },
       regularOpeningHours: { weekdayDescriptions: ['Monday: 5:00 AM – 12:00 AM'] },
       googleMapsUri: 'https://maps.google.com/?cid=1',
+      editorialSummary: { text: 'Old-school gym open late.' },
+      primaryTypeDisplayName: { text: 'Gym' },
+      internationalPhoneNumber: '+61 3 9642 0000',
+      accessibilityOptions: { wheelchairAccessibleEntrance: false },
+      paymentOptions: { acceptsCreditCards: true, acceptsNfc: true },
       photos: [{ name: 'places/ChIJ-dohertys/photos/p1', authorAttributions: [{ displayName: 'Pat', uri: 'https://maps.google.com/contrib/1' }] }],
       reviews: [{ rating: 5, text: { text: 'Open late.' }, relativePublishTimeDescription: 'a month ago', authorAttribution: { displayName: 'Sam' } }],
     });
@@ -269,8 +274,17 @@ describe('Google Maps details', () => {
         googleMapsUri: 'https://maps.google.com/?cid=1',
         photos: [{ uri: 'https://lh3.googleusercontent.com/p1', authors: [{ name: 'Pat', uri: 'https://maps.google.com/contrib/1' }] }],
         reviews: [expect.objectContaining({ text: 'Open late.', author: expect.objectContaining({ name: 'Sam' }) })],
+        summary: 'Old-school gym open late.',
+        type: 'Gym',
+        phoneInternational: '+61 3 9642 0000',
       },
     });
+    // Only what Google says: a "no" stays a no, and nothing it didn't mention appears.
+    expect(result.body.place.details).toEqual([
+      { group: 'Accessibility', label: 'Wheelchair-accessible entrance', value: false },
+      { group: 'Payments', label: 'Credit cards', value: true },
+      { group: 'Payments', label: 'Tap to pay', value: true },
+    ]);
     // The key never reaches the app.
     expect(JSON.stringify(result.body)).not.toContain('test-key');
     // Only the place ID is kept; Google's content isn't stored anywhere.

@@ -103,6 +103,10 @@ export interface GooglePlace {
   website: string | null;
   googleMapsUri: string | null;
   businessStatus: string | null;
+  summary: string | null;
+  type: string | null;
+  phoneInternational: string | null;
+  details: Array<{ group: 'Accessibility' | 'Parking' | 'Payments'; label: string; value: boolean }>;
   photos: Array<{ uri: string; authors: GoogleAuthor[] }>;
   reviews: Array<{ rating: number | null; text: string; when: string | null; author: GoogleAuthor; googleMapsUri: string | null }>;
 }

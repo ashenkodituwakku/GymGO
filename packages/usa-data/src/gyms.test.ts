@@ -42,11 +42,16 @@ describe('US gyms from OpenStreetMap', () => {
     }
   });
 
-  it('invents nothing: no prices, no equipment, no amenities, no photos, no guest or staffed hours', () => {
+  it('invents nothing: no prices, no equipment, no photos, no guest or staffed hours', () => {
     for (const record of US_GYMS) {
       expect(record.offers).toEqual([]);
       expect(record.equipment).toEqual([]);
-      expect(record.amenities).toEqual([]);
+      // Facilities only where the map says yes or no, credited to the map.
+      for (const amenity of record.amenities) {
+        expect(['yes', 'no']).toContain(amenity.present);
+        expect(amenity.provenance.status).toBe('community_reported');
+      }
+      if (record.location.email) expect(record.location.email).toMatch(/^[^@\s]+@[^@\s]+\.[^@\s]+$/);
       expect(record.location.photos).toEqual([]);
       for (const item of record.schedules) expect(item.audience).toBe('member');
     }

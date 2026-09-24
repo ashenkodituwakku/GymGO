@@ -193,6 +193,41 @@ def parse_hours(text):
     return out
 
 
+ACTIVITIES = {
+    'swimming': 'Swimming', 'yoga': 'Yoga', 'pilates': 'Pilates', 'boxing': 'Boxing', 'kickboxing': 'Kickboxing',
+    'crossfit': 'CrossFit', 'weightlifting': 'Weightlifting', 'powerlifting': 'Powerlifting', 'cycling': 'Spin',
+    'spin': 'Spin', 'climbing': 'Climbing', 'martial_arts': 'Martial arts', 'jiu-jitsu': 'Jiu-jitsu',
+    'basketball': 'Basketball', 'squash': 'Squash', 'tennis': 'Tennis', 'running': 'Running', 'dance': 'Dance',
+    'gymnastics': 'Gymnastics', 'rowing': 'Rowing', 'barre': 'Barre', 'mma': 'MMA',
+}
+
+
+def activities(tags):
+    """Sports and classes the map lists, beyond plain "fitness"."""
+    out = []
+    for sport in tags.get('sport', '').split(';'):
+        label = ACTIVITIES.get(sport.strip())
+        if label and label not in out:
+            out.append(label)
+    return out
+
+
+def amenities(tags):
+    """Facilities the map states outright. Anything unmapped stays unknown."""
+    found = {}
+    sports = set(tags.get('sport', '').split(';'))
+    if tags.get('swimming_pool') in ('yes', 'indoor', 'outdoor') or 'swimming' in sports:
+        found['pool'] = 'yes'
+    if tags.get('sauna') in ('yes', 'no'):
+        found['sauna'] = tags['sauna']
+    if tags.get('shower') in ('yes', 'no'):
+        found['showers'] = tags['shower']
+    # wheelchair=yes means step-free; "limited" says too little to call either way.
+    if tags.get('wheelchair') in ('yes', 'no'):
+        found['step_free_entrance'] = tags['wheelchair']
+    return found
+
+
 def slug(text):
     return re.sub(r'[^a-z0-9]+', '-', text.lower().replace("'", '').replace('’', '')).strip('-')
 
@@ -256,6 +291,13 @@ def main(src):
             site = tags.get('website') or tags.get('contact:website')
             if site and site.startswith('http'):
                 row['website'] = site.split(';')[0].strip()
+            email = (tags.get('email') or tags.get('contact:email') or '').split(';')[0].strip()
+            if re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', email):
+                row['email'] = email
+            if activities(tags):
+                row['activities'] = activities(tags)
+            if amenities(tags):
+                row['amenities'] = amenities(tags)
             if tags.get('opening_hours'):
                 hours = parse_hours(tags['opening_hours'])
                 if hours is None:

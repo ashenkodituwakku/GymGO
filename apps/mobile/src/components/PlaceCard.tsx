@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import {
   EQUIPMENT_TYPES,
+  amenityLabel,
   assessAllOffers,
   describeMembership,
   equipmentLabel,
@@ -427,6 +428,43 @@ export function PlaceCard({
           {memberKit}
         </Fold>
 
+        {(record.amenities.length > 0 || (location.activities?.length ?? 0) > 0 || location.email) && (
+          <Fold emoji="🧖" title="Facilities & more" summary={facilitiesSummary(record)}>
+            {record.amenities.length > 0 && (
+              <View style={styles.kitGrid}>
+                {record.amenities.map((amenity) => (
+                  <View key={amenity.id} style={[styles.kitChip, { backgroundColor: amenity.present === 'yes' ? color.goodTint : color.noTint }]}>
+                    <Txt variant="footnote" color={amenity.present === 'yes' ? color.goodInk : color.noInk}>
+                      {amenity.present === 'yes' ? '✓' : '✗'} {amenityLabel(amenity.amenityId)}
+                    </Txt>
+                  </View>
+                ))}
+              </View>
+            )}
+            {(location.activities?.length ?? 0) > 0 && (
+              <Txt variant="subhead">
+                🤸 Also listed: {location.activities!.join(', ')}
+              </Txt>
+            )}
+            {location.email && (
+              <Pressable
+                onPress={() => void Linking.openURL(`mailto:${location.email}`).catch(() => setNotice('No mail app to open.'))}
+                accessibilityRole="link"
+                accessibilityLabel={`Email ${location.email}`}
+                hitSlop={6}
+              >
+                <Txt variant="subhead" color={color.brand}>
+                  ✉️ {location.email}
+                </Txt>
+              </Pressable>
+            )}
+            <Txt variant="footnote" color={color.labelSecondary}>
+              Mapped by volunteers, not checked by GymGO. Anything not listed is unknown, not a no.
+            </Txt>
+            <Evidence provenance={record.amenities[0]?.provenance ?? location.provenance} />
+          </Fold>
+        )}
+
         <Fold
           emoji="⭐"
           title="Reviews"
@@ -499,6 +537,13 @@ function Prereq({ label, value }: { label: string; value: Tri }) {
 }
 
 /** One line saying where a fact came from and when, linking to the page. */
+/** "Pool, step-free · Yoga · email": what the facilities fold holds. */
+function facilitiesSummary(record: GymSearchResult['record']): string {
+  const yes = record.amenities.filter((item) => item.present === 'yes').map((item) => amenityLabel(item.amenityId));
+  const parts = [yes.slice(0, 2).join(', '), record.location.activities?.slice(0, 2).join(', '), record.location.email ? 'email' : null];
+  return parts.filter(Boolean).join(' · ') || 'What the map lists';
+}
+
 function Evidence({ provenance, age }: { provenance: Provenance | undefined; age?: number | null }) {
   if (!provenance || provenance.status === 'unknown') return null;
   const first = provenance.sources[0];

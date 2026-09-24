@@ -106,7 +106,9 @@ export function GooglePage({ record, onClose }: { record: GymRecord; onClose: ()
   );
 }
 
-function PlaceDetails({ place }: { place: GooglePlace }) {
+const DETAIL_EMOJI = { Accessibility: '♿', Parking: '🅿️', Payments: '💳' } as const;
+
+export function PlaceDetails({ place }: { place: GooglePlace }) {
   const { width } = useWindowDimensions();
   const photoWidth = Math.min(width - space[4] * 2, 520) * 0.82;
   const closed = place.businessStatus && place.businessStatus !== 'OPERATIONAL';
@@ -137,9 +139,15 @@ function PlaceDetails({ place }: { place: GooglePlace }) {
         ) : null}
         {place.address && (
           <Txt variant="subhead" color={color.labelSecondary}>
-            {place.address}
+            📍 {place.address}
           </Txt>
         )}
+        {place.type && (
+          <Txt variant="footnote" color={color.labelSecondary}>
+            🏷️ {place.type} on Google
+          </Txt>
+        )}
+        {place.summary && <Txt variant="subhead">“{place.summary}”</Txt>}
       </View>
 
       {place.photos.length > 0 && (
@@ -165,6 +173,27 @@ function PlaceDetails({ place }: { place: GooglePlace }) {
           </View>
         )}
       </View>
+
+      {(['Accessibility', 'Parking', 'Payments'] as const).map((group) => {
+        const items = place.details.filter((item) => item.group === group);
+        if (items.length === 0) return null;
+        return (
+          <View key={group} style={styles.card}>
+            <Txt variant="headline">
+              {DETAIL_EMOJI[group]} {group}
+            </Txt>
+            <View style={styles.detailChips}>
+              {items.map((item) => (
+                <View key={item.label} style={[styles.detailChip, { backgroundColor: item.value ? color.goodTint : color.noTint }]}>
+                  <Txt variant="footnote" color={item.value ? color.goodInk : color.noInk}>
+                    {item.value ? '✓' : '✗'} {item.label}
+                  </Txt>
+                </View>
+              ))}
+            </View>
+          </View>
+        );
+      })}
 
       {place.hours.length > 0 && (
         <View style={styles.card}>
@@ -270,6 +299,8 @@ const styles = StyleSheet.create({
   photo: { height: 190, borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.fill },
   credit: { flexDirection: 'row', flexWrap: 'wrap' },
   links: { flexDirection: 'row', gap: space[2] },
+  detailChips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2], marginTop: space[1] },
+  detailChip: { paddingHorizontal: space[3], paddingVertical: 4, borderRadius: radius.pill },
   card: {
     gap: space[1],
     padding: space[4],

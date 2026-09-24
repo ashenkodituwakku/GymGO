@@ -128,6 +128,15 @@ or Android's "Approximate"), GymGO says so, because distances will be off.
 If you're outside every city GymGO covers, it takes you to the nearest one
 and tells you how far away that is.
 
+### Emails, classes and facilities (free)
+
+Some gyms' OpenStreetMap entries also list an email address, sports or
+classes (yoga, swimming, boxing…) and facilities (pool, sauna, showers,
+step-free entrance). Where they do, the gym's card shows them under
+**Facilities & more**, labelled as mapped by volunteers. Anything not listed
+is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
+31 with facilities, all in the US data.
+
 ### Cities
 
 - **Melbourne**: 23 real gyms, with prices and hours from each gym's own
@@ -224,10 +233,18 @@ If GymGO ever becomes a business, Google asks for its official Maps Embed
 API instead of the public embed. That's also free and unlimited, but it
 needs a Google Cloud account with billing set up.
 
-#### Optional extra: Google's photos and reviews on the same page
+#### Optional extra: Google's photos, reviews and details on every gym
 
-With your own Google Places API key, the same page also lists Google's
-photos, reviews and opening hours under the map. **This part is not free.**
+With your own Google Places API key, each gym's own page gets a **From
+Google Maps** section, and the Google page shows the same under the map:
+Google's photos (up to six) with each photographer credited, its rating and
+latest reviews, whether it's open now and its opening hours, phone number,
+website, Google's one-line description, and what Google knows about
+accessibility, parking and payment. It's labelled as Google's, isn't saved,
+and never changes GymGO's own answer. Google doesn't hold email addresses,
+so there are none from Google. And there's no free way to get this data out
+of Google: copying it from Google Maps pages breaks Google's terms, so GymGO
+uses Google's own API or its free embed, nothing else. **This part is not free.**
 It needs a Google Cloud account with billing turned on. Google gives a free
 allowance each month and then charges. At the time of writing that was about
 1,000 place lookups and 1,000 photos a month for the kind GymGO uses, so

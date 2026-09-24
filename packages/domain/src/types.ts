@@ -405,6 +405,13 @@ export interface GymLocation {
   operatingStatusNote: string | null;
   phone: string | null;
   website: string | null;
+  /** A contact email, where a source lists one. */
+  email?: string | null;
+  /**
+   * Sports and classes a source lists beyond the gym floor ("Yoga",
+   * "Swimming"), with the same provenance as the location.
+   */
+  activities?: string[];
   /** Empty array renders as "No photo supplied", never a coloured placeholder. */
   photos: GymPhoto[];
   /**

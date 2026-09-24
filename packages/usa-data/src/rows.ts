@@ -37,6 +37,11 @@ export interface GymRow {
   type: TrainingType;
   phone?: string;
   website?: string;
+  email?: string;
+  /** Sports and classes from the map's `sport` tag. */
+  activities?: string[];
+  /** Facilities the map states outright; unmapped ones stay unknown. */
+  amenities?: Partial<Record<'pool' | 'sauna' | 'showers' | 'step_free_entrance', 'yes' | 'no'>>;
   /** Mapped opening hours: round the clock, or [day (0 = Sunday), open, close] in minutes. */
   hours?: 'always' | Array<[number, number, number]>;
 }

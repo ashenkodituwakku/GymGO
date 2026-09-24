@@ -11,6 +11,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GoogleModal } from '@/components/GoogleModal';
+import { GoogleSection } from '@/components/GoogleSection';
 import { Icon, type IconName } from '@/components/Icon';
 import { MemberKit } from '@/components/MemberKit';
 import { PhotoHero } from '@/components/PhotoHero';
@@ -129,6 +130,7 @@ export default function GymPage() {
             }
             reviews={<ReviewsSection gymId={location.id} account={account} inSheet={false} onSignIn={() => router.navigate('/profile')} />}
           />
+          <GoogleSection record={result.record} />
           <View style={styles.mapButton}>
             <PrimaryButton
               label="🗺️  Show on the map"

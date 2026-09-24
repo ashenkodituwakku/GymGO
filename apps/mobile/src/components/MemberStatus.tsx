@@ -9,14 +9,14 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { api, ApiError, OfflineError, type GymStatusSummary } from '@/lib/api';
+import { StyleSheet, View } from 'react-native';
+import { api, problemText, type GymStatusSummary } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { WHEN_CHOICES, localDateDaysAgo } from '@/lib/present';
 import type { AccountApi } from '@/lib/useAccount';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, radius, space } from '@/lib/theme';
 import { Icon } from './Icon';
-import { PrimaryButton, Txt } from './ui';
+import { ChoiceChip, PrimaryButton, Txt } from './ui';
 
 // Both parts of the card read the same answer; a report refreshes both.
 const listeners = new Map<string, Set<() => void>>();
@@ -79,7 +79,7 @@ export function MemberStatus({ gymId, isDemo, account, onSignIn }: { gymId: stri
 
   const fail = (error: unknown) => {
     haptic.warn();
-    setNotice(error instanceof OfflineError ? 'Can’t reach the GymGO server right now.' : error instanceof ApiError ? error.message : 'That didn’t save. Try again?');
+    setNotice(problemText(error));
   };
   const save = async () => {
     if (!token || !status) return;
@@ -105,22 +105,7 @@ export function MemberStatus({ gymId, isDemo, account, onSignIn }: { gymId: stri
       fail(error);
     }
   };
-  const chip = (key: string, label: string, on: boolean, onPress: () => void) => (
-    <Pressable
-      key={key}
-      onPress={() => {
-        haptic.select();
-        onPress();
-      }}
-      accessibilityRole="radio"
-      accessibilityState={{ selected: on }}
-      style={({ pressed }) => [styles.chip, on && styles.chipOn, pressed && { opacity: 0.7 }]}
-    >
-      <Txt variant="footnote" color={on ? color.onBrand : color.label} style={face('medium')}>
-        {label}
-      </Txt>
-    </Pressable>
-  );
+  const chip = (key: string, label: string, on: boolean, onPress: () => void) => <ChoiceChip key={key} label={label} selected={on} onPress={onPress} />;
 
   return (
     <View style={styles.wrap}>
@@ -184,7 +169,5 @@ const styles = StyleSheet.create({
   wrap: { gap: space[2], paddingTop: space[3], marginTop: space[2], borderTopWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
   editor: { gap: space[2] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  chip: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.fill },
-  chipOn: { backgroundColor: color.brand },
   buttons: { flexDirection: 'row', gap: space[2] },
 });

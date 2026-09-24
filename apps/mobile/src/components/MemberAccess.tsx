@@ -10,14 +10,14 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { api, ApiError, OfflineError, type AccessOutcome, type AccessSummary } from '@/lib/api';
+import { StyleSheet, View } from 'react-native';
+import { api, problemText, type AccessOutcome, type AccessSummary } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { WHEN_CHOICES, localDateDaysAgo } from '@/lib/present';
 import type { AccountApi } from '@/lib/useAccount';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, space } from '@/lib/theme';
 import { Icon, type IconName } from './Icon';
-import { PrimaryButton, Txt } from './ui';
+import { ChoiceChip, PrimaryButton, Txt } from './ui';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; summary: AccessSummary };
 
@@ -61,13 +61,7 @@ export function MemberAccess({
   const { summary } = load;
   const fail = (error: unknown) => {
     haptic.warn();
-    setNotice(
-      error instanceof OfflineError
-        ? 'Can’t reach the GymGO server right now.'
-        : error instanceof ApiError
-          ? error.message
-          : 'That didn’t save. Try again?',
-    );
+    setNotice(problemText(error));
   };
   const counts: Record<AccessOutcome, number> = {
     walked_in: summary.walkedIn,
@@ -166,21 +160,7 @@ function Editor({
   const [saving, setSaving] = useState(false);
 
   const chip = (key: string, label: string, on: boolean, onPress: () => void, icon?: IconName) => (
-    <Pressable
-      key={key}
-      onPress={() => {
-        haptic.select();
-        onPress();
-      }}
-      accessibilityRole="radio"
-      accessibilityState={{ selected: on }}
-      style={({ pressed }) => [styles.chip, on && styles.chipOn, pressed && { opacity: 0.7 }]}
-    >
-      {icon && <Icon name={icon} size={13} color={on ? color.onBrand : color.label} />}
-      <Txt variant="footnote" color={on ? color.onBrand : color.label} style={face('medium')}>
-        {label}
-      </Txt>
-    </Pressable>
+    <ChoiceChip key={key} label={label} selected={on} onPress={onPress} icon={icon} />
   );
 
   return (
@@ -229,7 +209,5 @@ const styles = StyleSheet.create({
   count: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   editor: { gap: space[2] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.fill },
-  chipOn: { backgroundColor: color.brand },
   buttons: { flexDirection: 'row', gap: space[2] },
 });

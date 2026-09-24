@@ -9,15 +9,15 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { api, ApiError, OfflineError, type PriceSummary } from '@/lib/api';
+import { StyleSheet, View } from 'react-native';
+import { api, problemText, type PriceSummary } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { moneyLabel } from '@/lib/places';
 import { WHEN_CHOICES as WHEN, localDateDaysAgo as dateDaysAgo, parseAmount } from '@/lib/present';
 import type { AccountApi } from '@/lib/useAccount';
-import { color, face, radius, space } from '@/lib/theme';
-import { PrimaryButton, TextField, Txt } from './ui';
+import { color, space } from '@/lib/theme';
+import { ChoiceChip, PrimaryButton, TextField, Txt } from './ui';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; summary: PriceSummary };
 
@@ -63,13 +63,7 @@ export function MemberPrices({
   const money = (minor: number) => moneyLabel(minor, country);
   const fail = (error: unknown) => {
     haptic.warn();
-    setNotice(
-      error instanceof OfflineError
-        ? 'Can’t reach the GymGO server right now.'
-        : error instanceof ApiError
-          ? error.message
-          : 'That didn’t save. Try again?',
-    );
+    setNotice(problemText(error));
   };
 
   return (
@@ -190,20 +184,7 @@ function Editor({
       </Txt>
       <View style={styles.chips}>
         {WHEN.map((option, index) => (
-          <Pressable
-            key={option.label}
-            onPress={() => {
-              haptic.select();
-              setWhen(index);
-            }}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: when === index }}
-            style={({ pressed }) => [styles.chip, when === index && styles.chipOn, pressed && { opacity: 0.7 }]}
-          >
-            <Txt variant="footnote" color={when === index ? color.onBrand : color.label} style={face('medium')}>
-              {option.label}
-            </Txt>
-          </Pressable>
+          <ChoiceChip key={option.label} label={option.label} selected={when === index} onPress={() => setWhen(index)} />
         ))}
       </View>
       <Txt variant="caption" color={color.labelSecondary}>
@@ -236,7 +217,5 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   editor: { gap: space[2] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  chip: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.fill },
-  chipOn: { backgroundColor: color.brand },
   buttons: { flexDirection: 'row', gap: space[2] },
 });

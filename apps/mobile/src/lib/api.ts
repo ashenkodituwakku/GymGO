@@ -42,6 +42,13 @@ export class ApiError extends Error {
 /** The server couldn't be reached at all. */
 export class OfflineError extends Error {}
 
+/** What to tell someone when a request to the GymGO server failed. */
+export function problemText(error: unknown, fallback = 'That didn’t save. Try again?'): string {
+  if (error instanceof OfflineError) return 'Can’t reach the GymGO server right now.';
+  if (error instanceof ApiError) return error.message;
+  return fallback;
+}
+
 async function request<T>(method: string, path: string, options: { token?: string | null; body?: unknown } = {}): Promise<T> {
   const base = apiBase();
   if (!base) throw new OfflineError('No server address.');

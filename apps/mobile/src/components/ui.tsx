@@ -75,6 +75,28 @@ export function TierPill({ tier }: { tier: ResultTier }) {
 
 // --- Chips ------------------------------------------------------------------
 
+/** A small one-of-several choice ("Walked in", "Last week"), for the members' report forms. */
+export function ChoiceChip({ label, selected, onPress, icon }: { label: string; selected: boolean; onPress: () => void; icon?: IconName }) {
+  return (
+    <Pressable
+      onPress={() => {
+        haptic.select();
+        onPress();
+      }}
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      accessibilityLabel={label}
+      hitSlop={4}
+      style={({ pressed }) => [styles.choiceChip, selected && styles.choiceChipOn, pressed && { opacity: 0.7 }]}
+    >
+      {icon && <Icon name={icon} size={13} color={selected ? color.onBrand : color.label} />}
+      <Txt variant="footnote" color={selected ? color.onBrand : color.label} style={face('medium')}>
+        {label}
+      </Txt>
+    </Pressable>
+  );
+}
+
 export function Chip({
   label,
   selected,
@@ -387,6 +409,16 @@ export function PrimaryButton({
 
 
 const styles = StyleSheet.create({
+  choiceChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: space[3],
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    backgroundColor: color.fill,
+  },
+  choiceChipOn: { backgroundColor: color.brand },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',

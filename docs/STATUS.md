@@ -14,7 +14,8 @@ this document could do.
 | Reviews held for moderation; moderator queue | ✅ | ✅ tests; posting driven in the browser | n/a | ❌ |
 | Real Melbourne gyms (23), every fact sourced | ✅ | ✅ 11 honesty tests | ⚠️ one-off read, 23 Sep 2026 | n/a |
 | Member photos: consent, hidden details removed, moderated, credited | ✅ | ✅ tests + driven in the browser | n/a | ❌ |
-| Live Google Maps page (owner's own key) | ✅ | ⚠️ tests with a fake Google only | ❌ **never called the real Google** | ❌ |
+| Google's map and card for each gym (free embed, no key) | ✅ | ✅ loaded from Google in the browser, phone and PC sizes | ✅ Google's public embed | ❌ |
+| Extra Google photos and reviews (owner's own key, paid) | ✅ | ⚠️ tests with a fake Google only | ❌ **never called with a real key** | ❌ |
 
 **Photos:** only members' own photos, which they confirm they took. The
 server checks each file really is a JPEG or PNG, strips its hidden details
@@ -24,7 +25,19 @@ take no photos. None has been uploaded apart from a test image
 labelled "TEST UPLOAD" in a throwaway database. There is no automatic check
 for faces or unsuitable content: that's the moderator's job.
 
-**Google:** off unless the owner sets `GOOGLE_PLACES_API_KEY`. The code
+**Google, the free part:** each gym's Google page shows Google's own
+embeddable map with Google's card for the gym (name, address, star rating,
+number of reviews). It is loaded straight from Google, with no key, and
+GymGO stores none of it. It was seen working in Chromium for Doherty's Gym
+City ("4.4 ★ (177)"). Google only shows that card when the embed is at least
+about 420 px wide, so on narrow screens the embed is laid out at 440 px and
+scaled down. That was checked in the browser at phone size, and the phone
+app's wrapper page was checked in mobile Chromium. It has **not** been seen
+in a real phone's web view. Google's guidelines allow a plain embed without
+permission, but ask revenue-generating apps to use the official Maps Embed
+API. That is also free, but needs a Cloud account with billing set up.
+
+**Google, the paid extra:** off unless the owner sets `GOOGLE_PLACES_API_KEY`. The code
 follows Google's rules as read on 23 September 2026. Only place IDs are
 stored, nothing else is cached, the page has no map on it, and Google and
 every author are credited. It has **not** been run against the real Google,
@@ -81,15 +94,15 @@ service, which is your decision to make. Nothing has been provisioned.
 | Store builds (EAS / Xcode / Gradle) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | PC browser layout (side panels) | ✅ | ✅ driven end to end at 1440 × 900 | n/a | n/a | ❌ | n/a |
 | Gym photos: strip on the card, thumbnails in the list, add a photo | ✅ | ✅ driven in the browser (web file picker) | n/a | ❌ phone photo picker not seen | n/a | ❌ |
-| "See it on Google" full-screen page | ✅ | ⚠️ "off" state live; "on" state from faked data only | ❌ | ❌ | n/a | ❌ |
+| "See it on Google" full-screen page | ✅ | ✅ Google's embed live in the browser; key-only extras from faked data | ✅ free embed | ❌ web view not seen | n/a | ❌ |
 
 **What "tested locally" means for the phone app, exactly:**
 
-- It typechecks, and 27 unit tests pass. They include the same reference search
+- It typechecks, and 28 unit tests pass. They include the same reference search
   the website runs, run through the app's own filter code: 3 confirmed results,
   Ironbark first.
 - `expo export` builds both the **iOS and Android bundles** into Hermes
-  bytecode without errors: 1,879 and 1,838 modules. The web-only map library
+  bytecode without errors: 1,886 and 1,934 modules. The web-only map library
   is confirmed absent from both.
 - `expo-doctor` passes 21/21 checks.
 - The interface was driven with Playwright in the browser build at 390 × 844,
@@ -169,9 +182,9 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 | `@gymgo/demo-data` unit tests | **23 passed** |
 | `@gymgo/melbourne-data` unit tests | **11 passed** |
 | `@gymgo/server` tests (real HTTP, in-memory SQLite) | **25 passed** |
-| `@gymgo/mobile` unit tests | **27 passed** |
+| `@gymgo/mobile` unit tests | **28 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
-| `expo export` (iOS + Android) | Both compiled (1,879 and 1,838 modules) |
+| `expo export` (iOS + Android) | Both compiled (1,886 and 1,934 modules) |
 | `expo-doctor` | 21/21 checks passed |
 | `pnpm build` | Compiled successfully |
 | Playwright, old website (390 / 768 / 1440), fresh build | **99 passed**, 24 skipped (website unchanged since) |

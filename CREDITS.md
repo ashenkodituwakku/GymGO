@@ -66,12 +66,13 @@ Every gym photo in GymGO was taken and shared by a GymGO member, who agreed
 to it being shown, and is credited to them by name on the photo. None is
 taken from a gym's website or anywhere else.
 
-## Google Maps (only when switched on)
+## Google Maps
 
-With the owner's own key, a gym's **See it on Google** page shows details
-from Google Maps: rating, opening hours, photos and reviews. That page is
-credited "Google Maps", and every photo and review names its author with a
-link, as Google requires. That content belongs to Google and its
+Each gym's **See it on Google** page shows Google's own embedded map and
+place card, loaded from Google and carrying Google's own credits and terms.
+With the owner's own key, the page can also list Google's photos and reviews.
+Those are credited "Google Maps", and every photo and review names its author
+with a link, as Google requires. All of it belongs to Google and its
 contributors. GymGO shows it live and does not store it.
 
 ## Demo data

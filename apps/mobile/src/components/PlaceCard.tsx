@@ -249,7 +249,7 @@ export function PlaceCard({
           <View style={styles.flex}>
             <Txt variant="headline">See it on Google</Txt>
             <Txt variant="footnote" color={color.labelSecondary}>
-              Google’s photos, reviews and hours, live
+              Google’s rating, reviews and photos, free
             </Txt>
           </View>
           <Icon name="chevron" size={14} color={color.labelTertiary} />

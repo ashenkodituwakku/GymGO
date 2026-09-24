@@ -1,20 +1,20 @@
 /**
- * What Google Maps says about a gym, live, on its own full screen.
+ * What Google Maps says about a gym, on its own full screen.
  *
- * Google's terms decide the shape of this page:
- *  - It fills the screen and has no map on it, because Google doesn't allow
- *    its place details next to a map that isn't Google's (ours are Apple's
- *    and OpenStreetMap's).
- *  - Everything is fetched fresh each time and never saved; the server keeps
- *    only Google's ID for the place.
- *  - Google is credited, every photo and review names its author with a link,
- *    and "Open in Google Maps" is always there.
- *  - None of it changes GymGO's own answer. Google's opening hours are when a
- *    gym is open, not when a visitor may come; its reviews aren't ours.
+ * Free, with no key and no account: the top of the page is Google's own
+ * embeddable map with Google's card for the gym (its star rating, number of
+ * reviews and address), loaded straight from Google. One tap on it, or on
+ * "Open in Google Maps", shows every photo and review in Google Maps itself.
+ * GymGO copies and stores none of it; Google shows and credits its own
+ * content.
  *
- * It only works once whoever runs the GymGO server adds their own Google key.
- * Without one, the page says so and still offers the plain Google Maps link,
- * which needs no key at all.
+ * If whoever runs the GymGO server has also set their own Places API key
+ * (billing needed), Google's photos, reviews and hours appear right here as
+ * well, under the same rules: fetched fresh, never saved, every author
+ * credited, and on a page whose only map is Google's.
+ *
+ * None of it changes GymGO's own answer. Google's opening hours are when a
+ * gym is open, not when a visitor may come; its reviews aren't ours.
  */
 
 import * as WebBrowser from 'expo-web-browser';
@@ -22,45 +22,34 @@ import { useEffect, useState } from 'react';
 import { Image, Linking, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { GymRecord } from '@gymgo/domain';
-import { api, ApiError, OfflineError, type GoogleAuthor, type GooglePlace, type GoogleResult } from '@/lib/api';
-import { googleMapsSearchUrl } from '@/lib/present';
+import { api, type GoogleAuthor, type GooglePlace } from '@/lib/api';
+import { googleMapsEmbedUrl, googleMapsSearchUrl } from '@/lib/present';
 import { color, face, radius, space } from '@/lib/theme';
+import { GoogleEmbed } from './GoogleEmbed';
 import { CloseButton, PrimaryButton, Txt } from './ui';
-
-type State = { kind: 'loading' } | { kind: 'ready'; result: GoogleResult } | { kind: 'failed'; message: string };
 
 const open = (url: string) => void WebBrowser.openBrowserAsync(url).catch(() => Linking.openURL(url));
 
 export function GooglePage({ record, onClose }: { record: GymRecord; onClose: () => void }) {
   const insets = useSafeAreaInsets();
-  const [state, setState] = useState<State>({ kind: 'loading' });
+  const { height } = useWindowDimensions();
+  // Google's extra details, only when the server has a Places key. Without
+  // one (the usual case) this stays null and the free embed is the page.
+  const [place, setPlace] = useState<GooglePlace | null>(null);
   const gymId = record.location.id;
 
   useEffect(() => {
     let live = true;
-    setState({ kind: 'loading' });
+    setPlace(null);
     api
       .google(gymId)
-      .then((result) => live && setState({ kind: 'ready', result }))
-      .catch(
-        (error) =>
-          live &&
-          setState({
-            kind: 'failed',
-            message:
-              error instanceof OfflineError
-                ? 'Can’t reach the GymGO server, so we can’t ask Google right now.'
-                : error instanceof ApiError
-                  ? error.message
-                  : 'Google didn’t answer. Try again in a bit.',
-          }),
-      );
+      .then((result) => live && result.configured && result.found && setPlace(result.place))
+      .catch(() => undefined);
     return () => {
       live = false;
     };
   }, [gymId]);
 
-  const place = state.kind === 'ready' && state.result.configured && state.result.found ? state.result.place : null;
   const mapsUrl = place?.googleMapsUri ?? googleMapsSearchUrl(record);
 
   return (
@@ -71,62 +60,38 @@ export function GooglePage({ record, onClose }: { record: GymRecord; onClose: ()
             ON GOOGLE MAPS
           </Txt>
           <Txt variant="title" numberOfLines={2}>
-            {place?.name ?? record.location.name}
+            {record.location.name}
           </Txt>
         </View>
         <CloseButton onPress={onClose} />
       </View>
 
       <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space[8] }]}>
-        {state.kind === 'loading' && (
-          <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-            Asking Google… 🔎
-          </Txt>
-        )}
+        <GoogleEmbed url={googleMapsEmbedUrl(record)} height={Math.round(Math.min(Math.max(height * 0.5, 320), 520))} />
 
-        {state.kind === 'failed' && <Message emoji="😕" title="Couldn’t load Google’s info" text={state.message} />}
-
-        {state.kind === 'ready' && !state.result.configured && (
-          <Message
-            emoji="🔌"
-            title="Google info isn’t switched on"
-            text={
-              'Google only lets apps show its photos, reviews and hours live, through its own paid service. ' +
-              'Whoever runs this GymGO server can switch it on with their own Google Maps key (see “Google info” in the README). ' +
-              'Until then, the button below opens this gym in Google Maps itself.'
-            }
-          />
-        )}
-
-        {state.kind === 'ready' && state.result.configured && !state.result.found && (
-          <Message
-            emoji="🤷"
-            title={state.result.reason === 'demo' ? 'This is a made-up demo gym' : 'We couldn’t find it on Google'}
-            text={
-              state.result.reason === 'demo'
-                ? 'It isn’t a real place, so Google has nothing on it.'
-                : 'No Google listing sits at this gym’s address. The button below searches Google Maps for it instead.'
-            }
-          />
-        )}
-
-        {place && <PlaceDetails place={place} />}
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+          That’s Google’s own map and listing, straight from Google, free. Tap the ↗ on Google’s card or the button
+          below to see every photo and review in Google Maps. 📸
+        </Txt>
 
         <View style={styles.cta}>
           <PrimaryButton label="Open in Google Maps" onPress={() => open(mapsUrl)} />
         </View>
 
         {place && (
-          <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-            Shown live from Google and not saved by GymGO. Google’s hours are when the gym is open, which isn’t always
-            when a visitor can come: GymGO’s own card says that.
-          </Txt>
+          <>
+            <Txt variant="title2" style={styles.more}>
+              More from Google
+            </Txt>
+            <PlaceDetails place={place} />
+            <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+              Shown live from Google and not saved by GymGO. Google’s hours are when the gym is open, which isn’t always
+              when a visitor can come: GymGO’s own card says that.
+            </Txt>
+            {/* Google's attribution, required wherever its place details show. */}
+            <Txt style={styles.attribution}>Google Maps</Txt>
+          </>
         )}
-
-        {/* Google's attribution, required wherever its place details show. */}
-        <Txt style={styles.attribution}>
-          Google Maps
-        </Txt>
       </ScrollView>
     </View>
   );
@@ -272,20 +237,6 @@ function Credit({ prefix, authors }: { prefix: string; authors: GoogleAuthor[] }
   );
 }
 
-function Message({ emoji, title, text }: { emoji: string; title: string; text: string }) {
-  return (
-    <View style={styles.message}>
-      <Txt style={styles.bigEmoji}>{emoji}</Txt>
-      <Txt variant="title2" style={styles.center}>
-        {title}
-      </Txt>
-      <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-        {text}
-      </Txt>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.groupedBackground },
   flex: { flex: 1 },
@@ -302,8 +253,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   body: { paddingHorizontal: space[4], gap: space[4], width: '100%', maxWidth: 640, alignSelf: 'center' },
-  message: { alignItems: 'center', gap: space[2], paddingVertical: space[6], paddingHorizontal: space[2] },
-  bigEmoji: { fontSize: 48, lineHeight: 58 },
+  more: { marginTop: space[4] },
   details: { gap: space[4] },
   summary: { gap: space[2], alignItems: 'flex-start' },
   badge: { paddingHorizontal: space[3], paddingVertical: 4, borderRadius: radius.pill },

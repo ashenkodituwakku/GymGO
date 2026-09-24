@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
-import { depositLine, googleMapsSearchUrl, priceLine } from './present';
+import { depositLine, googleMapsEmbedUrl, googleMapsSearchUrl, priceLine } from './present';
 import { atPlace, initialFilters, runSearch } from './query';
 import { geocodePlace } from './places';
 
@@ -70,5 +70,17 @@ describe('googleMapsSearchUrl', () => {
     expect(query).toContain(gym.location.name);
     expect(query).toContain(gym.location.address.line1);
     expect(url).not.toMatch(/key=/i);
+  });
+});
+
+describe('googleMapsEmbedUrl', () => {
+  it('asks Google for its free embeddable map of this gym, with no key', () => {
+    const gym = MELBOURNE_GYMS.find((record) => record.location.id === 'dohertys-gym-city')!;
+    const url = new URL(googleMapsEmbedUrl(gym));
+    expect(url.origin).toBe('https://maps.google.com');
+    expect(url.searchParams.get('output')).toBe('embed');
+    expect(url.searchParams.get('q')).toContain(gym.location.name);
+    expect(url.searchParams.get('q')).toContain(gym.location.address.line1);
+    expect(url.searchParams.has('key')).toBe(false);
   });
 });

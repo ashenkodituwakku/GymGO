@@ -46,7 +46,22 @@ export function depositLine(offers: OfferSelection): string | null {
  * so this works even when the live Google details are switched off.
  */
 export function googleMapsSearchUrl(record: GymRecord): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(googleQuery(record))}`;
+}
+
+/**
+ * Google's own embeddable map, centred on the gym, with Google's card for it
+ * (name, address, star rating, number of reviews, and a link to the full
+ * listing). This is Google's public "Embed a map" feature: free, unlimited,
+ * no key and no account. Google shows and credits its own content, so GymGO
+ * copies and stores nothing.
+ */
+export function googleMapsEmbedUrl(record: GymRecord): string {
+  return `https://maps.google.com/maps?q=${encodeURIComponent(googleQuery(record))}&z=16&hl=en&output=embed`;
+}
+
+/** Name and street address: enough for Google to find the right listing. */
+function googleQuery(record: GymRecord): string {
   const { name, address } = record.location;
-  const query = [name, address.line1, address.suburb, address.state].filter(Boolean).join(', ');
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+  return [name, address.line1, address.suburb, address.state].filter(Boolean).join(', ');
 }

@@ -44,7 +44,7 @@ because "the code does X" is not the same as "someone decided X".
 | One command runs server + app | `scripts/dev.mjs` spawns both through the same Node, so it doesn't depend on a shell or on how pnpm is installed. It works the same from the launcher, `pnpm app` or plain `node`. |
 | Weekly hours start on Monday | Australian timetables do. Changed in the shared domain, so the website follows. |
 | Gym photos come only from members | Asked for gym images. Photos on gym websites are copyrighted, and a picture of a different gym would be a lie about the place. So members share their own, confirm they took them, have location data stripped, and wait for a moderator. Until someone does, the card says "No photo supplied yet" and the list shows a plain 🏋️ tile, which is clearly a symbol and not a photo. |
-| Google's info on its own page, live, behind the owner's key | Asked to "import data from Google". Google's terms forbid copying or storing Places content, forbid showing it with a non-Google map, and need a billing account. So nothing is imported: a separate full-screen page asks Google fresh each time, stores only the place ID, and credits everyone. Without a key it just opens Google Maps, which is free. |
+| Google's info through Google's own free embed | Asked to "import data from Google", then for a completely free way. Google's terms forbid copying or storing Places content, and its API needs a billing account. Google's public "Embed a map" is free, keyless and unlimited, and shows Google's card (stars, review count, address) with a link to every photo and review. So each gym's Google page is that embed, full screen. The paid Places API extras stay optional behind the owner's key. |
 | Simpler card: one answer, three facts, folded detail | Asked for simpler and more playful. The verdict is one emoji and a word, and the detail folds under one-line summaries, so nothing honest was removed, only tucked away. "Worth a call" became "Call first", which says what to do. |
 
 ## Traps
@@ -54,6 +54,14 @@ way to fill the unknowns, and Google's terms forbid it (no copying, no
 caching beyond the place ID). It would also blur what GymGO checked with
 what Google says. The Google page is deliberately separate, and its hours are
 labelled as opening hours, not guest hours.
+
+**Don't scrape Google Maps** to get its reviews and photos "for free". It
+breaks Google's terms, Google blocks it, and the reviews and photos belong
+to their authors. The embed is the free, allowed route.
+
+**Keep Google's embed at least 420 px wide.** Below that Google swaps its
+card for a bare "Open in Maps" button. `GoogleEmbed` lays it out at 440 px
+and scales it down; don't "simplify" that away.
 
 **Don't show the Google page beside the map.** It is a full-screen modal for
 that reason. A side panel on the PC would break Google's rules.

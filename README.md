@@ -118,35 +118,41 @@ your name. The server removes the photo's hidden details (including where it
 was taken) before saving it, and it stays hidden until a moderator publishes
 it. A photo the moderator turns down is deleted. Photos live in `apps/server/data/photos/` on your computer.
 
-### Google info (optional, off by default)
+### Google info (free, nothing to set up)
 
-Each gym has a **See it on Google** button. Without any setup it tells you
-Google info is off and opens the gym in Google Maps, which is free and needs
-nothing.
+Each gym has a **See it on Google** button. It opens a full-screen page with
+**Google's own map and card for the gym**: its name, address, star rating
+and number of reviews, straight from Google. Tap the ↗ on Google's card, or
+**Open in Google Maps**, to see every photo and review in Google Maps
+itself. This uses Google's public "Embed a map" feature, so it's free, with
+no key, no account and no limit.
 
-To show Google's rating, photos, reviews and opening hours inside GymGO
-instead, you need your own Google Maps Platform key. Google's rules and
-prices mean:
+Why not pull Google's photos and reviews into GymGO's own pages? Google's
+terms don't allow copying or storing them, and scraping them breaks those
+terms. The reviews and photos also belong to the people who posted them.
+Showing Google's own embed and linking to Google is the free way to do it
+properly.
 
-- **It needs a Google Cloud account with billing turned on.** Google gives a
-  free allowance each month and then charges. At the time of writing that was
-  about 1,000 place lookups and 1,000 photos a month for the kind GymGO uses.
-  One gym's Google page uses one lookup and up to four photos, so roughly 250
-  page opens a month are free. Check Google's current pricing before you
-  switch it on, and set a daily limit on the API in Google Cloud so it can
-  never cost more than you've decided.
-- **GymGO never saves what Google sends.** It is fetched fresh each time.
-  Only Google's ID for each gym is kept, which Google allows.
-- **It shows on its own full screen, with no map.** Google doesn't allow its
-  place details beside a map that isn't Google's, and GymGO's maps are
-  Apple's and OpenStreetMap's.
-- **Google, and every photo and review author, is credited**, with links.
-- **It doesn't change GymGO's answers.** Google's hours are when a gym is
-  open, not when a visitor can come in.
+If GymGO ever becomes a business, Google asks for its official Maps Embed
+API instead of the public embed. That's also free and unlimited, but it
+needs a Google Cloud account with billing set up.
 
-To switch it on: in Google Cloud, create a project, turn on billing, enable
-**Places API (New)**, and create an API key restricted to that API. Then
-start GymGO with the key set. On Windows PowerShell:
+#### Optional extra: Google's photos and reviews on the same page
+
+With your own Google Places API key, the same page also lists Google's
+photos, reviews and opening hours under the map. **This part is not free.**
+It needs a Google Cloud account with billing turned on. Google gives a free
+allowance each month and then charges. At the time of writing that was about
+1,000 place lookups and 1,000 photos a month for the kind GymGO uses, so
+roughly 250 page opens a month are free (one lookup and up to four photos
+each). Check Google's current pricing first, and set a daily limit on the
+API in Google Cloud so it can never cost more than you've decided.
+
+Even then, GymGO never saves what Google sends (only Google's ID for each
+gym, which Google allows), credits Google and every photo and review author,
+and doesn't let Google's hours change its own answers. To switch it on, in
+Google Cloud create a project, turn on billing, enable **Places API (New)**,
+create an API key restricted to that API, then start GymGO with it:
 
 ```powershell
 $env:GOOGLE_PLACES_API_KEY = "your-key-here"
@@ -154,10 +160,7 @@ gymgo
 ```
 
 On a Mac or Linux: `GOOGLE_PLACES_API_KEY=your-key-here npx pnpm@10 app`.
-
-The key stays on your computer. The app never sees it: the server asks Google
-and passes the answer on. The server's start-up message says whether Google
-info is on.
+The key stays on your computer; the app never sees it.
 
 ### The older website
 

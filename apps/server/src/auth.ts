@@ -81,6 +81,26 @@ export function validateSignup(input: unknown): { email: string; password: strin
   return { email, password, displayName };
 }
 
+/** A display name, tidied, or an error saying what's wrong with it. */
+export function validateDisplayName(input: unknown): string {
+  const name = typeof input === 'string' ? input.trim().replace(/\s+/g, ' ') : '';
+  if (name.length < 1 || name.length > 40) throw new AuthInputError('Add a name between 1 and 40 characters.');
+  return name;
+}
+
+/** A new password, or an error saying what's wrong with it. */
+export function validateNewPassword(input: unknown): string {
+  const password = typeof input === 'string' ? input : '';
+  if (password.length < 8) throw new AuthInputError('Use at least 8 characters for your password.');
+  if (password.length > 200) throw new AuthInputError('That password is too long.');
+  return password;
+}
+
+/** Sign out everywhere except the session in use. */
+export function endOtherSessions(db: Db, userId: string, keepToken: string): void {
+  db.prepare('delete from sessions where user_id = ? and token_hash != ?').run(userId, sha256(keepToken));
+}
+
 export function createAccount(db: Db, input: { email: string; password: string; displayName: string }, now = new Date()): AccountRow | null {
   const existing = db.prepare('select 1 from users where email = ?').get(input.email);
   if (existing) return null;

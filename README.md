@@ -199,6 +199,10 @@ gyms then follow you between your PC and your phone, and you can write
 reviews. Accounts live only in `apps/server/data/gymgo.db` on your
 computer. Passwords are stored hashed, and no emails are sent.
 
+In Profile you can **change your name** and **change your password** (it
+asks for the current one, and signs out any other device signed in as you).
+There's no "forgot password" yet, because GymGO sends no email.
+
 **Download my data** in Profile gives you everything GymGO holds about you
 as one JSON file: your account, sign-in dates, saved gyms, reviews, photo
 records, machine, price and visit reports, workouts and subscription (never

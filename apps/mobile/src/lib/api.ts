@@ -286,6 +286,9 @@ export const api = {
     request<{ workout: SavedWorkout }>('POST', '/api/workouts', { token, body }),
   deleteWorkout: (token: string, id: string) => request<unknown>('DELETE', `/api/workouts/${encodeURIComponent(id)}`, { token }),
 
+  rename: (token: string, displayName: string) => request<{ account: Account }>('PATCH', '/api/me', { token, body: { displayName } }),
+  changePassword: (token: string, body: { currentPassword: string; newPassword: string }) =>
+    request<unknown>('POST', '/api/me/password', { token, body }),
   exportMyData: (token: string) => request<Record<string, unknown>>('GET', '/api/me/export', { token }),
   memberReports: (token: string) => request<{ reports: MemberReport[] }>('GET', '/api/moderation/member-reports', { token }),
   removeMemberReport: (token: string, report: Pick<MemberReport, 'kind' | 'gymId' | 'userId'>) =>

@@ -118,6 +118,20 @@ export function useAccount() {
     storeLocalSaved([]);
   }, []);
 
+  const rename = useCallback(async (displayName: string) => {
+    const current = token.current;
+    if (!current) return;
+    const result = await api.rename(current, displayName);
+    setAccount(result.account);
+  }, []);
+
+  /** Changes the password; any other device signed in as you is signed out. */
+  const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+    const current = token.current;
+    if (!current) return;
+    await api.changePassword(current, { currentPassword, newPassword });
+  }, []);
+
   const toggleSave = useCallback((gymId: string) => {
     setSaved((current) => {
       const adding = !current.includes(gymId);
@@ -143,6 +157,8 @@ export function useAccount() {
     signUp,
     signOut,
     deleteAccount,
+    rename,
+    changePassword,
     toggleSave,
   };
 }

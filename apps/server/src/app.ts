@@ -12,6 +12,8 @@
  *   PUT    /api/saved/:gymId
  *   DELETE /api/saved/:gymId
  *   GET    /api/me/export                 everything held about you, as a JSON file
+ *   PATCH  /api/me                        { displayName } -> your account, renamed
+ *   POST   /api/me/password               { currentPassword, newPassword } -> changed; other devices signed out
  *   GET    /api/gyms/:gymId/reviews       published reviews, plus your own
  *   POST   /api/gyms/:gymId/reviews       { overall, body, visitedOn? } -> held for moderation
  *   GET    /api/gyms/:gymId/photos        published photos, plus your own waiting ones
@@ -70,11 +72,16 @@ import {
   accountForToken,
   checkLogin,
   createAccount,
+  endOtherSessions,
   endSession,
+  hashPassword,
   publicAccount,
   startSession,
   toUser,
+  validateDisplayName,
+  validateNewPassword,
   validateSignup,
+  verifyPassword,
   type AccountRow,
 } from './auth';
 import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
@@ -515,9 +522,31 @@ export function createApp(options: AppOptions) {
       });
     }
 
+    if (method === 'POST' && path === '/api/me/password') {
+      const { account } = requireAccount(req);
+      const body = (await readJson(req)) as Record<string, unknown>;
+      const current = typeof body.currentPassword === 'string' ? body.currentPassword : '';
+      const next = validateNewPassword(body.newPassword);
+      // Guessing the current password is as limited as guessing at sign-in.
+      if (!loginLimiter.allow(`password|${account.id}`, now().getTime())) {
+        throw new HttpError(429, 'Too many attempts. Wait a few minutes and try again.');
+      }
+      if (!verifyPassword(current, account.password_hash)) throw new HttpError(403, 'Your current password isn\u2019t right.');
+      db.prepare('update users set password_hash = ? where id = ?').run(hashPassword(next), account.id);
+      // Anyone else signed in as you is signed out; this device stays in.
+      endOtherSessions(db, account.id, bearer(req)!);
+      return send(res, 204);
+    }
+
     if (path === '/api/me') {
       const { account } = requireAccount(req);
       if (method === 'GET') return send(res, 200, { account: publicAccount(account), plan: billing.planFor(account.id).plan });
+      if (method === 'PATCH') {
+        const body = (await readJson(req)) as Record<string, unknown>;
+        const displayName = validateDisplayName(body.displayName);
+        db.prepare('update users set display_name = ? where id = ?').run(displayName, account.id);
+        return send(res, 200, { account: publicAccount({ ...account, display_name: displayName }) });
+      }
       if (method === 'DELETE') {
         // A running subscription is cancelled first, so nobody keeps paying
         // for an account that's gone. If that can't happen, nothing is deleted.
@@ -1047,7 +1076,7 @@ export function createApp(options: AppOptions) {
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Vary', 'Origin');
       res.setHeader('Access-Control-Allow-Headers', 'authorization, content-type');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
       res.setHeader('Access-Control-Max-Age', '600');
     }
     if (req.method === 'OPTIONS') return send(res, 204);

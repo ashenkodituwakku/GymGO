@@ -8,7 +8,7 @@ import { formatPlanPrice } from '@gymgo/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { MemberReportQueue, ModerationQueue, PhotoQueue, SignInForm } from '@/components/AccountContent';
+import { AccountSettings, MemberReportQueue, ModerationQueue, PhotoQueue, SignInForm } from '@/components/AccountContent';
 import { Group, Row, TILE, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { ApiError } from '@/lib/api';
@@ -74,6 +74,9 @@ export default function Profile() {
                 {moderator ? ' · Moderator' : ''}
               </Txt>
             </View>
+          </View>
+          <View style={styles.settings}>
+            <AccountSettings account={account} />
           </View>
         </Group>
       ) : (
@@ -237,6 +240,7 @@ function Explainer({ children }: { children: string }) {
 }
 
 const styles = StyleSheet.create({
+  settings: { paddingHorizontal: space[4], paddingBottom: space[4] },
   flex: { flex: 1 },
   center: { textAlign: 'center' },
   me: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4] },

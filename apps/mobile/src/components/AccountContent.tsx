@@ -191,6 +191,73 @@ export function ModerationQueue({ token, records }: { token: string; records: Gy
   );
 }
 
+/** Change your name or password, one small form at a time. */
+export function AccountSettings({ account }: { account: AccountApi }) {
+  const [editing, setEditing] = useState<'name' | 'password' | null>(null);
+  const [name, setName] = useState(account.account?.displayName ?? '');
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<{ text: string; tone: 'good' | 'danger' } | null>(null);
+
+  const open = (which: 'name' | 'password') => {
+    setNotice(null);
+    setName(account.account?.displayName ?? '');
+    setCurrent('');
+    setNext('');
+    setEditing((shown) => (shown === which ? null : which));
+  };
+  const run = async (work: () => Promise<void>, done: string) => {
+    setBusy(true);
+    try {
+      await work();
+      haptic.success();
+      setEditing(null);
+      setNotice({ text: done, tone: 'good' });
+    } catch (caught) {
+      haptic.warn();
+      setNotice({ text: messageFor(caught), tone: 'danger' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <View style={styles.settings}>
+      <View style={styles.queueButtons}>
+        <View style={styles.flex}>
+          <PrimaryButton label="Change name" tone="quiet" onPress={() => open('name')} />
+        </View>
+        <View style={styles.flex}>
+          <PrimaryButton label="Change password" tone="quiet" onPress={() => open('password')} />
+        </View>
+      </View>
+      {editing === 'name' && (
+        <View style={styles.settings}>
+          <TextField label="Your name, as others see it" value={name} onChangeText={setName} autoComplete="name" inSheet={false} maxLength={40} />
+          <PrimaryButton
+            label={busy ? 'Saving…' : 'Save name'}
+            disabled={busy || !name.trim()}
+            onPress={() => void run(() => account.rename(name), 'Name changed.')}
+          />
+        </View>
+      )}
+      {editing === 'password' && (
+        <View style={styles.settings}>
+          <TextField label="Current password" value={current} onChangeText={setCurrent} secureTextEntry autoComplete="current-password" inSheet={false} />
+          <TextField label="New password (8 characters or more)" value={next} onChangeText={setNext} secureTextEntry autoComplete="new-password" inSheet={false} />
+          <PrimaryButton
+            label={busy ? 'Saving…' : 'Save password'}
+            disabled={busy || !current || next.length < 8}
+            onPress={() => void run(() => account.changePassword(current, next), 'Password changed. Any other device signed in as you has been signed out.')}
+          />
+        </View>
+      )}
+      {notice && <Notice icon="info" text={notice.text} tone={notice.tone === 'good' ? 'brand' : 'danger'} />}
+    </View>
+  );
+}
+
 const OUTCOME_LABEL: Record<AccessOutcome, string> = { walked_in: 'walked in', booked_first: 'had to book first', turned_away: 'turned away' };
 
 /**
@@ -370,6 +437,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
   },
   queueButtons: { flexDirection: 'row', gap: space[2] },
+  settings: { gap: space[2] },
 
   notice: {
     flexDirection: 'row',

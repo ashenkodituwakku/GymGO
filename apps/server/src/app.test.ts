@@ -74,6 +74,42 @@ describe('compression', () => {
   });
 });
 
+describe('changing your name and password', () => {
+  it('lets a browser send every method the app uses, including PATCH', async () => {
+    const preflight = await fetch(`${base}/api/me`, {
+      method: 'OPTIONS',
+      headers: { origin: 'http://localhost:8081', 'access-control-request-method': 'PATCH' },
+    });
+    const allowed = (preflight.headers.get('access-control-allow-methods') ?? '').split(',').map((method) => method.trim());
+    for (const method of ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']) expect(allowed).toContain(method);
+  });
+
+  it('renames you, and shows the new name on your account', async () => {
+    const me = await signUp('Sam');
+    expect((await call('PATCH', '/api/me', { token: me.token, body: { displayName: '  Sam   Lee ' } })).body!.account.displayName).toBe('Sam Lee');
+    expect((await call('GET', '/api/me', { token: me.token })).body!.account.displayName).toBe('Sam Lee');
+    expect((await call('PATCH', '/api/me', { token: me.token, body: { displayName: '' } })).status).toBe(400);
+    expect((await call('PATCH', '/api/me', { body: { displayName: 'Nobody' } })).status).toBe(401);
+  });
+
+  it('changes your password only with the current one, and signs out your other devices', async () => {
+    const me = await signUp('Pat');
+    const otherDevice = (await call('POST', '/api/auth/login', { body: { email: me.email, password: 'correct horse' } })).body!.token as string;
+    expect((await call('GET', '/api/me', { token: otherDevice })).status).toBe(200);
+
+    expect((await call('POST', '/api/me/password', { token: me.token, body: { currentPassword: 'wrong horse', newPassword: 'battery staple' } })).status).toBe(403);
+    expect((await call('POST', '/api/me/password', { token: me.token, body: { currentPassword: 'correct horse', newPassword: 'short' } })).status).toBe(400);
+    expect((await call('POST', '/api/me/password', { token: me.token, body: { currentPassword: 'correct horse', newPassword: 'battery staple' } })).status).toBe(204);
+
+    // This device stays signed in; the other one is out.
+    expect((await call('GET', '/api/me', { token: me.token })).status).toBe(200);
+    expect((await call('GET', '/api/me', { token: otherDevice })).status).toBe(401);
+    // Only the new password works now.
+    expect((await call('POST', '/api/auth/login', { body: { email: me.email, password: 'correct horse' } })).status).toBe(401);
+    expect((await call('POST', '/api/auth/login', { body: { email: me.email, password: 'battery staple' } })).status).toBe(200);
+  });
+});
+
 describe('passwords', () => {
   it('hashes with a salt and verifies only the right password', () => {
     const one = hashPassword('correct horse');

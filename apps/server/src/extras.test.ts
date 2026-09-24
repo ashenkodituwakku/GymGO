@@ -317,6 +317,45 @@ describe('what members paid for a casual visit', () => {
   });
 });
 
+describe('how getting in went for visiting members', () => {
+  const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+
+  it('counts each member’s latest visit by outcome, without names, and lets them change or remove it', async () => {
+    const gym = '/api/gyms/carlton-fitness/access';
+    expect((await call('GET', gym)).body).toMatchObject({ count: 0, walkedIn: 0, bookedFirst: 0, turnedAway: 0, latestVisitOn: null, mine: null });
+    expect((await call('PUT', gym, { body: { outcome: 'walked_in', visitedOn: day(0) } })).status).toBe(401);
+
+    const [a, b, c] = [await signUp(), await signUp(), await signUp()];
+    await call('PUT', gym, { token: a.token, body: { outcome: 'walked_in', visitedOn: day(-2) } });
+    await call('PUT', gym, { token: b.token, body: { outcome: 'walked_in', visitedOn: day(-20) } });
+    await call('PUT', gym, { token: c.token, body: { outcome: 'booked_first', visitedOn: day(-1) } });
+    const summary = await call('GET', gym, { token: c.token });
+    expect(summary.body).toMatchObject({ count: 3, walkedIn: 2, bookedFirst: 1, turnedAway: 0, latestVisitOn: day(-1) });
+    expect(summary.body.mine).toEqual({ outcome: 'booked_first', visitedOn: day(-1) });
+    expect(JSON.stringify(summary.body)).not.toMatch(/Lifter|@example/);
+
+    await call('PUT', gym, { token: c.token, body: { outcome: 'turned_away', visitedOn: day(0) } });
+    expect((await call('GET', gym)).body).toMatchObject({ count: 3, bookedFirst: 0, turnedAway: 1 });
+    expect((await call('DELETE', gym, { token: c.token })).status).toBe(204);
+    expect((await call('GET', gym)).body).toMatchObject({ count: 2, turnedAway: 0 });
+  });
+
+  it('turns away unknown outcomes, bad or stale dates, and invented demo gyms', async () => {
+    const { token } = await signUp();
+    const gym = '/api/gyms/carlton-fitness/access';
+    for (const body of [
+      { outcome: 'snuck_in', visitedOn: day(0) },
+      { outcome: 'walked_in', visitedOn: 'last week' },
+      { outcome: 'walked_in', visitedOn: day(4) },
+      { outcome: 'walked_in', visitedOn: day(-400) },
+    ]) {
+      expect((await call('PUT', gym, { token, body })).status).toBe(400);
+    }
+    const demo = `/api/gyms/${DEMO_GYMS[0]!.location.id}/access`;
+    expect((await call('PUT', demo, { token, body: { outcome: 'walked_in', visitedOn: day(0) } })).status).toBe(400);
+  });
+});
+
 describe('Google Maps details', () => {
   it('matches the gym, returns live details with credits, and stores only the place ID', async () => {
     const result = await call('GET', '/api/gyms/dohertys-gym-city/google');

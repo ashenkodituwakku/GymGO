@@ -103,6 +103,7 @@ export function PlaceCard({
   photos,
   memberKit,
   memberPrices,
+  memberAccess,
   reviews,
 }: {
   result: GymSearchResult;
@@ -121,6 +122,8 @@ export function PlaceCard({
   memberKit: React.ReactNode;
   /** What members paid for a visit, under the gym's own prices. */
   memberPrices?: React.ReactNode;
+  /** How getting in went for visiting members, under the gym's own rules. */
+  memberAccess?: React.ReactNode;
   /** The live reviews section, likewise. */
   reviews: React.ReactNode;
 }) {
@@ -387,6 +390,7 @@ export function PlaceCard({
             </View>
           )}
           <Evidence provenance={record.prerequisites.provenance} />
+          {memberAccess}
         </Fold>
 
         <Fold

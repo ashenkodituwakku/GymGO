@@ -248,6 +248,16 @@ In lists and cards, a gym that publishes no visit price shows members'
 typical figure instead of a dash, marked as theirs: **~A$22 · members say**.
 A price the gym publishes always wins, even an unclear one.
 
+### How getting in went, from members
+
+Whether a visitor can walk in is the question GymGO exists to answer, and
+most gyms don't publish it. Under a gym's **Getting in**, signed-in members
+can say what happened when they went as a visitor: **walked in**, **had to
+book first** or **turned away**, and roughly when. Everyone sees the counts
+from the last year (door rules change), without names, labelled as members'
+visits and not the gym's rule. Like every member report, it never makes a
+gym "Good to go".
+
 ### Gym logos
 
 Eight chains have a logo that is free to reuse, found through Wikidata (the

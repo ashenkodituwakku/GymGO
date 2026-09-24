@@ -68,6 +68,7 @@ const ICONS = {
   list: { ios: 'list.bullet', android: 'list', web: 'list' },
   thumbsUp: { ios: 'hand.thumbsup.fill', android: 'thumb_up', web: 'thumb_up' },
   flask: { ios: 'flask.fill', android: 'science', web: 'science' },
+  calendar: { ios: 'calendar', android: 'event', web: 'event' },
   thumbsDown: { ios: 'hand.thumbsdown.fill', android: 'thumb_down', web: 'thumb_down' },
   question: { ios: 'questionmark.circle.fill', android: 'help', web: 'help' },
 } as const;

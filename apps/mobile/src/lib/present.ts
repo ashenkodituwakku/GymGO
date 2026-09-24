@@ -89,3 +89,18 @@ export function parseAmount(text: string): number | null {
   if (!/^\d{1,3}(\.\d{1,2})?$/.test(clean)) return null;
   return Math.round(Number(clean) * 100);
 }
+
+/** Roughly when something happened; exact dates aren't worth the typing. */
+export const WHEN_CHOICES = [
+  { label: 'Today', days: 0 },
+  { label: 'Yesterday', days: 1 },
+  { label: 'Last week', days: 7 },
+  { label: 'Last month', days: 30 },
+  { label: 'A few months ago', days: 90 },
+] as const;
+
+/** The local calendar day `days` ago, as "2026-09-24": the day as the member thinks of it. */
+export function localDateDaysAgo(days: number, now: Date = new Date()): string {
+  const date = new Date(now.getTime() - days * 86_400_000);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}

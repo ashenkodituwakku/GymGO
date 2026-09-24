@@ -36,6 +36,7 @@ import { Glass } from '@/components/Glass';
 import { GoogleModal } from '@/components/GoogleModal';
 import { GymMap, type GymMapHandle, type MapPin } from '@/components/GymMap';
 import { Icon } from '@/components/Icon';
+import { MemberAccess } from '@/components/MemberAccess';
 import { MemberKit } from '@/components/MemberKit';
 import { MemberPrices } from '@/components/MemberPrices';
 import { PhotoHero } from '@/components/PhotoHero';
@@ -334,6 +335,9 @@ function MapScreen() {
             inSheet={inSheet}
             onSignIn={openAccount}
           />
+        }
+        memberAccess={
+          <MemberAccess gymId={selected.record.location.id} isDemo={selected.record.location.isDemoData} account={account} onSignIn={openAccount} />
         }
         memberPrices={
           <MemberPrices

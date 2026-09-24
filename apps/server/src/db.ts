@@ -84,6 +84,15 @@ const SCHEMA = `
     primary key (gym_id, user_id)
   );
   create index if not exists price_reports_gym on price_reports(gym_id);
+  create table if not exists access_reports (
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    outcome text not null check (outcome in ('walked_in', 'booked_first', 'turned_away')),
+    visited_on text not null,
+    reported_at text not null,
+    primary key (gym_id, user_id)
+  );
+  create index if not exists access_reports_gym on access_reports(gym_id);
   create table if not exists billing_customers (
     user_id text primary key references users(id) on delete cascade,
     stripe_customer_id text not null unique,

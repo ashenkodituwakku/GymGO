@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
-import { depositLine, googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl, parseAmount, priceLine } from './present';
+import { WHEN_CHOICES, depositLine, googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl, localDateDaysAgo, parseAmount, priceLine } from './present';
 import { atPlace, initialFilters, runSearch } from './query';
 import { geocodePlace } from './places';
 
@@ -124,5 +124,15 @@ describe('members’ prices on a row', () => {
       const published = resultFor(name).offers;
       expect(priceLine(published, { typicalMinor: 999, country: 'AU' })).toEqual(priceLine(published));
     }
+  });
+});
+
+describe('roughly when', () => {
+  it('turns a choice into the local calendar day it means', () => {
+    const noon = new Date(2026, 8, 24, 12, 0);
+    expect(localDateDaysAgo(0, noon)).toBe('2026-09-24');
+    expect(localDateDaysAgo(1, noon)).toBe('2026-09-23');
+    expect(localDateDaysAgo(30, noon)).toBe('2026-08-25');
+    expect(WHEN_CHOICES.map((choice) => choice.days)).toEqual([0, 1, 7, 30, 90]);
   });
 });

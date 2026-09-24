@@ -14,27 +14,12 @@ import { api, ApiError, OfflineError, type PriceSummary } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { moneyLabel } from '@/lib/places';
-import { parseAmount } from '@/lib/present';
+import { WHEN_CHOICES as WHEN, localDateDaysAgo as dateDaysAgo, parseAmount } from '@/lib/present';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space } from '@/lib/theme';
 import { PrimaryButton, TextField, Txt } from './ui';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; summary: PriceSummary };
-
-/** Roughly when you paid; exact dates aren't worth the typing. */
-const WHEN = [
-  { label: 'Today', days: 0 },
-  { label: 'Yesterday', days: 1 },
-  { label: 'Last week', days: 7 },
-  { label: 'Last month', days: 30 },
-  { label: 'A few months ago', days: 90 },
-] as const;
-
-const dateDaysAgo = (days: number) => {
-  const date = new Date(Date.now() - days * 86_400_000);
-  // The local calendar day, as the member thinks of it.
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-};
 
 export function MemberPrices({
   gymId,

@@ -23,6 +23,9 @@
  *   PUT    /api/gyms/:gymId/prices        { amountMinor, paidOn } -> your report (replaces your last)
  *   DELETE /api/gyms/:gymId/prices        take back your report
  *   GET    /api/prices/typical            { gymId: { typicalMinor, count } } for every gym members have priced
+ *   GET    /api/gyms/:gymId/access        how visiting went for members: walked in / booked first / turned away
+ *   PUT    /api/gyms/:gymId/access        { outcome, visitedOn } -> your report (replaces your last)
+ *   DELETE /api/gyms/:gymId/access        take back your report
  *   GET    /api/gyms/:gymId/google        live Google Maps details (only with the owner's key)
  *   GET    /api/billing/plans             GymGO Pro's prices, and whether it's on sale
  *   GET    /api/billing                   your plan (Free or Pro) and subscription
@@ -190,6 +193,11 @@ function median(sorted: number[]): number {
   return sorted.length % 2 ? sorted[middle]! : Math.round((sorted[middle - 1]! + sorted[middle]!) / 2);
 }
 
+type AccessOutcome = 'walked_in' | 'booked_first' | 'turned_away';
+
+/** How long a member's report of getting in keeps counting. */
+const ACCESS_REPORT_DAYS = 365;
+
 /** How long a member's price report keeps counting. */
 const PRICE_REPORT_DAYS = 730;
 
@@ -271,6 +279,7 @@ export function createApp(options: AppOptions) {
   const photoLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
   const equipmentLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
   const priceLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
+  const accessLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   const photos = new PhotoStore(options.photoDir ?? null);
   const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
   const billing = new Billing(db, {
@@ -779,6 +788,65 @@ export function createApp(options: AppOptions) {
            on conflict (gym_id, user_id) do update set amount_minor = excluded.amount_minor, currency = excluded.currency,
              paid_on = excluded.paid_on, reported_at = excluded.reported_at`,
         ).run(gymId, account.id, amount, currency, paidOn, now().toISOString());
+        return send(res, 204);
+      }
+    }
+
+    // --- How getting in went for visiting members -------------------------------
+    // Members' reports of their own visits, shown as theirs next to (never
+    // instead of) what the gym publishes about guests. Door policies change,
+    // so only the last year counts.
+    if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'access' && parts.length === 4) {
+      const gymId = decodeURIComponent(parts[2]!);
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+      const since = new Date(now().getTime() - ACCESS_REPORT_DAYS * 86_400_000).toISOString().slice(0, 10);
+
+      if (method === 'GET') {
+        const { account } = caller(req);
+        const rows = db
+          .prepare('select outcome, visited_on from access_reports where gym_id = ? and visited_on >= ?')
+          .all(gymId, since) as Array<{ outcome: AccessOutcome; visited_on: string }>;
+        const counts = { walked_in: 0, booked_first: 0, turned_away: 0 };
+        for (const row of rows) counts[row.outcome] += 1;
+        const mine = account
+          ? (db.prepare('select outcome, visited_on from access_reports where gym_id = ? and user_id = ?').get(gymId, account.id) as
+              | { outcome: AccessOutcome; visited_on: string }
+              | undefined)
+          : undefined;
+        return send(res, 200, {
+          count: rows.length,
+          walkedIn: counts.walked_in,
+          bookedFirst: counts.booked_first,
+          turnedAway: counts.turned_away,
+          latestVisitOn: rows.reduce<string | null>((latest, row) => (latest && latest > row.visited_on ? latest : row.visited_on), null),
+          mine: mine ? { outcome: mine.outcome, visitedOn: mine.visited_on } : null,
+        });
+      }
+
+      if (method === 'PUT' || method === 'DELETE') {
+        const { account, user } = requireAccount(req);
+        requirePermission(user, 'correction.create', gymId);
+        if (method === 'DELETE') {
+          db.prepare('delete from access_reports where gym_id = ? and user_id = ?').run(gymId, account.id);
+          return send(res, 204);
+        }
+        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to report.');
+        const body = (await readJson(req)) as Record<string, unknown>;
+        const outcome = body.outcome;
+        if (outcome !== 'walked_in' && outcome !== 'booked_first' && outcome !== 'turned_away') {
+          throw new HttpError(400, 'Say whether you walked in, had to book first, or were turned away.');
+        }
+        const visitedOn = typeof body.visitedOn === 'string' ? body.visitedOn : '';
+        const tomorrow = new Date(now().getTime() + 86_400_000).toISOString().slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(visitedOn) || Number.isNaN(Date.parse(visitedOn)) || visitedOn > tomorrow) {
+          throw new HttpError(400, 'Say when you went, as a date that has happened.');
+        }
+        if (visitedOn < since) throw new HttpError(400, 'That was over a year ago; door rules change, so it wouldn\u2019t help anyone now.');
+        if (!accessLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That\u2019s a lot of updates for one day. Try again tomorrow.');
+        db.prepare(
+          `insert into access_reports (gym_id, user_id, outcome, visited_on, reported_at) values (?, ?, ?, ?, ?)
+           on conflict (gym_id, user_id) do update set outcome = excluded.outcome, visited_on = excluded.visited_on, reported_at = excluded.reported_at`,
+        ).run(gymId, account.id, outcome, visitedOn, now().toISOString());
         return send(res, 204);
       }
     }

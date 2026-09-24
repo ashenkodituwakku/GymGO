@@ -85,6 +85,18 @@ export interface GymPhoto {
   createdAt: string;
 }
 
+export type AccessOutcome = 'walked_in' | 'booked_first' | 'turned_away';
+
+/** How getting in went for members who visited as guests, in the last year. */
+export interface AccessSummary {
+  count: number;
+  walkedIn: number;
+  bookedFirst: number;
+  turnedAway: number;
+  latestVisitOn: string | null;
+  mine: { outcome: AccessOutcome; visitedOn: string } | null;
+}
+
 /** What members paid for one casual visit: typical (median), range, how many, how recent. */
 export interface PriceSummary {
   currency: 'AUD' | 'USD';
@@ -230,6 +242,10 @@ export const api = {
     ),
   reportEquipment: (token: string, gymId: string, items: EquipmentReportItem[]) =>
     request<unknown>('PUT', `/api/gyms/${encodeURIComponent(gymId)}/equipment`, { token, body: { items } }),
+  access: (gymId: string, token: string | null) => request<AccessSummary>('GET', `/api/gyms/${encodeURIComponent(gymId)}/access`, { token }),
+  reportAccess: (token: string, gymId: string, body: { outcome: AccessOutcome; visitedOn: string }) =>
+    request<unknown>('PUT', `/api/gyms/${encodeURIComponent(gymId)}/access`, { token, body }),
+  deleteAccess: (token: string, gymId: string) => request<unknown>('DELETE', `/api/gyms/${encodeURIComponent(gymId)}/access`, { token }),
   typicalPrices: () => request<{ typical: Record<string, { typicalMinor: number; count: number }> }>('GET', '/api/prices/typical'),
   prices: (gymId: string, token: string | null) => request<PriceSummary>('GET', `/api/gyms/${encodeURIComponent(gymId)}/prices`, { token }),
   reportPrice: (token: string, gymId: string, body: { amountMinor: number; paidOn: string }) =>

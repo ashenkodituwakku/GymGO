@@ -8,8 +8,9 @@ this document could do.
 
 | | Implemented locally | Tested locally | Externally integrated | Deployed |
 |---|---|---|---|---|
-| API server (Node, built-in SQLite) | ✅ | ✅ 54 tests over real HTTP | n/a, runs on your PC | ❌ not hosted |
+| API server (Node, built-in SQLite) | ✅ | ✅ 56 tests over real HTTP | n/a, runs on your PC | ❌ not hosted |
 | Gzip for larger answers (the gym list: 1.5 MB → 0.1 MB) | ✅ | ✅ 2 server tests + measured locally | n/a | ❌ |
+| Members' visits: walked in / booked first / turned away, one per member per gym, last year only, no names | ✅ | ✅ 2 server tests + reported and shown in the browser | n/a | ❌ |
 | Members' visit prices: one report per member per gym, median and range, no names, 2-year window; "~A$22 · members say" in lists when the gym publishes none | ✅ | ✅ 4 server tests + 2 app tests + reported and shown in the browser (gym page and list) | n/a | ❌ |
 | Sign-up, sign-in, sign-out, delete account | ✅ | ✅ tests + driven in the browser | ❌ no email verification | ❌ |
 | Saved gyms synced to the account | ✅ | ✅ tests + driven in the browser | n/a | ❌ |

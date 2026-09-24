@@ -16,6 +16,7 @@ import { GoogleModal } from '@/components/GoogleModal';
 import { GoogleSection, useGooglePlace } from '@/components/GoogleSection';
 import { GooglePhotos } from '@/components/GooglePage';
 import { Icon, type IconName } from '@/components/Icon';
+import { MemberAccess } from '@/components/MemberAccess';
 import { MemberKit } from '@/components/MemberKit';
 import { MemberPrices } from '@/components/MemberPrices';
 import { PhotoHero } from '@/components/PhotoHero';
@@ -148,6 +149,9 @@ export default function GymPage() {
                 inSheet={false}
                 onSignIn={() => router.navigate('/profile')}
               />
+            }
+            memberAccess={
+              <MemberAccess gymId={location.id} isDemo={location.isDemoData} account={account} onSignIn={() => router.navigate('/profile')} />
             }
             memberPrices={
               <MemberPrices

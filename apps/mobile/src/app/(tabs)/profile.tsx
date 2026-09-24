@@ -8,7 +8,7 @@ import { formatPlanPrice } from '@gymgo/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { ModerationQueue, PhotoQueue, SignInForm } from '@/components/AccountContent';
+import { MemberReportQueue, ModerationQueue, PhotoQueue, SignInForm } from '@/components/AccountContent';
 import { Group, Row, TILE, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { ApiError } from '@/lib/api';
@@ -112,6 +112,7 @@ export default function Profile() {
           <View style={styles.card}>
             <PhotoQueue token={account.token} records={data.records} onPublished={data.refreshCovers} />
             <ModerationQueue token={account.token} records={data.records} />
+            <MemberReportQueue token={account.token} records={data.records} />
           </View>
         </View>
       )}

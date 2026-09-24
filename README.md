@@ -258,6 +258,9 @@ from the last year (door rules change), without names, labelled as members'
 visits and not the gym's rule. Like every member report, it never makes a
 gym "Good to go".
 
+Price and visit reports show straight away. Moderators see the latest 50 in
+Profile, with who sent each, and can remove any that are wrong or abusive.
+
 ### Gym logos
 
 Eight chains have a logo that is free to reuse, found through Wikidata (the

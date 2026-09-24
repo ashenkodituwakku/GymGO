@@ -10,7 +10,8 @@
 import { useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import type { GymRecord, Review } from '@gymgo/domain';
-import { api, ApiError, OfflineError } from '@/lib/api';
+import { api, ApiError, OfflineError, type AccessOutcome, type MemberReport } from '@/lib/api';
+import { moneyLabel } from '@/lib/places';
 import type { AccountApi } from '@/lib/useAccount';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, space } from '@/lib/theme';
@@ -183,6 +184,64 @@ export function ModerationQueue({ token, records }: { token: string; records: Gy
                 <PrimaryButton label="Reject" tone="danger" onPress={() => void decide(review, 'reject')} />
               </View>
             </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+const OUTCOME_LABEL: Record<AccessOutcome, string> = { walked_in: 'walked in', booked_first: 'had to book first', turned_away: 'turned away' };
+
+/**
+ * Members' price and visit reports show straight away, so moderators look
+ * over the latest and remove any that are wrong or abusive.
+ */
+export function MemberReportQueue({ token, records }: { token: string; records: GymRecord[] }) {
+  const [reports, setReports] = useState<MemberReport[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api
+      .memberReports(token)
+      .then((data) => setReports(data.reports))
+      .catch((caught: unknown) => setError(messageFor(caught)));
+  }, [token]);
+
+  const remove = async (report: MemberReport) => {
+    try {
+      await api.removeMemberReport(token, report);
+      haptic.success();
+      setReports((current) => (current ?? []).filter((item) => !(item.kind === report.kind && item.gymId === report.gymId && item.userId === report.userId)));
+    } catch (caught) {
+      setError(messageFor(caught));
+    }
+  };
+
+  return (
+    <View>
+      <Txt variant="headline" style={styles.heading}>
+        Latest price and visit reports {reports ? `(${reports.length})` : ''}
+      </Txt>
+      {error && <Notice icon="info" text={error} tone="danger" />}
+      {reports?.length === 0 && (
+        <Txt variant="subhead" color={color.labelSecondary}>
+          No reports yet.
+        </Txt>
+      )}
+      {reports?.map((report) => {
+        const gym = records.find((record) => record.location.id === report.gymId);
+        const what =
+          report.kind === 'price' && report.amountMinor !== null
+            ? `paid ${moneyLabel(report.amountMinor, report.currency === 'USD' ? 'US' : 'AU')} for a visit`
+            : `${report.outcome ? OUTCOME_LABEL[report.outcome] : 'visited'}`;
+        return (
+          <View key={`${report.kind}-${report.gymId}-${report.userId}`} style={styles.queueItem}>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              {gym ? gym.location.name : report.gymId} · {report.author} · {new Date(report.on).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+            </Txt>
+            <Txt variant="subhead">{what}</Txt>
+            <PrimaryButton label="Remove" tone="danger" onPress={() => void remove(report)} />
           </View>
         );
       })}

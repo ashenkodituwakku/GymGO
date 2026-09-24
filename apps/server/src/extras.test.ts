@@ -356,6 +356,35 @@ describe('how getting in went for visiting members', () => {
   });
 });
 
+describe('moderating members’ price and visit reports', () => {
+  it('shows moderators the latest reports with who sent them, and lets them remove one', async () => {
+    const day = new Date().toISOString().slice(0, 10);
+    const member = await signUp();
+    await call('PUT', '/api/gyms/prime-athletica-fitzroy/prices', { token: member.token, body: { amountMinor: 45000, paidOn: day } });
+    await call('PUT', '/api/gyms/prime-athletica-fitzroy/access', { token: member.token, body: { outcome: 'turned_away', visitedOn: day } });
+
+    // Members can't see or remove others' reports.
+    expect((await call('GET', '/api/moderation/member-reports', { token: member.token })).status).toBe(403);
+    expect((await call('DELETE', `/api/moderation/member-reports/price/prime-athletica-fitzroy/${member.id}`, { token: member.token })).status).toBe(403);
+
+    const moderator = await signUp();
+    db.prepare(`update users set role = 'moderator' where id = ?`).run(moderator.id);
+    const list = await call('GET', '/api/moderation/member-reports', { token: moderator.token });
+    expect(list.body.reports).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'price', gymId: 'prime-athletica-fitzroy', userId: member.id, amountMinor: 45000, currency: 'AUD' }),
+        expect.objectContaining({ kind: 'access', gymId: 'prime-athletica-fitzroy', userId: member.id, outcome: 'turned_away' }),
+      ]),
+    );
+
+    // The A$450 "visit" is plainly wrong: out it goes, and the summary forgets it.
+    expect((await call('DELETE', `/api/moderation/member-reports/price/prime-athletica-fitzroy/${member.id}`, { token: moderator.token })).status).toBe(204);
+    expect((await call('GET', '/api/gyms/prime-athletica-fitzroy/prices')).body.count).toBe(0);
+    expect((await call('DELETE', `/api/moderation/member-reports/price/prime-athletica-fitzroy/${member.id}`, { token: moderator.token })).status).toBe(404);
+    expect((await call('DELETE', `/api/moderation/member-reports/photos/prime-athletica-fitzroy/${member.id}`, { token: moderator.token })).status).toBe(400);
+  });
+});
+
 describe('Google Maps details', () => {
   it('matches the gym, returns live details with credits, and stores only the place ID', async () => {
     const result = await call('GET', '/api/gyms/dohertys-gym-city/google');

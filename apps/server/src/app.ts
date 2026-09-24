@@ -41,6 +41,8 @@
  *   POST   /api/moderation/reviews/:id    moderators: { decision, reason? }
  *   GET    /api/moderation/photos         moderators: photos waiting
  *   POST   /api/moderation/photos/:id     moderators: { decision, reason? }
+ *   GET    /api/moderation/member-reports moderators: the latest price and visit reports, with who sent them
+ *   DELETE /api/moderation/member-reports/:kind/:gymId/:userId   moderators: remove one
  *
  * Every route that changes something re-checks permission here with the
  * shared domain rules. The app hiding a button is not access control.
@@ -886,6 +888,60 @@ export function createApp(options: AppOptions) {
         )
         .run(decision === 'publish' ? 'published' : 'rejected', reason, now().toISOString(), user.id, decodeURIComponent(parts[3]!));
       if (result.changes === 0) throw new HttpError(404, 'No pending review with that id.');
+      return send(res, 204);
+    }
+
+    // Price and visit reports show at once, unmoderated, so moderators can
+    // look over the latest and take out any that are wrong or abusive.
+    if (method === 'GET' && path === '/api/moderation/member-reports') {
+      const { user } = requireAccount(req);
+      requirePermission(user, 'moderation.view_queue');
+      const rows = db
+        .prepare(
+          `select 'price' as kind, price_reports.gym_id, price_reports.user_id, users.display_name,
+                  price_reports.amount_minor, price_reports.currency, null as outcome, price_reports.paid_on as on_date, price_reports.reported_at
+           from price_reports join users on users.id = price_reports.user_id
+           union all
+           select 'access', access_reports.gym_id, access_reports.user_id, users.display_name,
+                  null, null, access_reports.outcome, access_reports.visited_on, access_reports.reported_at
+           from access_reports join users on users.id = access_reports.user_id
+           order by reported_at desc limit 50`,
+        )
+        .all() as Array<{
+        kind: 'price' | 'access';
+        gym_id: string;
+        user_id: string;
+        display_name: string;
+        amount_minor: number | null;
+        currency: string | null;
+        outcome: string | null;
+        on_date: string;
+        reported_at: string;
+      }>;
+      return send(res, 200, {
+        reports: rows.map((row) => ({
+          kind: row.kind,
+          gymId: row.gym_id,
+          userId: row.user_id,
+          author: row.display_name,
+          amountMinor: row.amount_minor,
+          currency: row.currency,
+          outcome: row.outcome,
+          on: row.on_date,
+          reportedAt: row.reported_at,
+        })),
+      });
+    }
+
+    if (method === 'DELETE' && parts[0] === 'api' && parts[1] === 'moderation' && parts[2] === 'member-reports' && parts.length === 6) {
+      const { user } = requireAccount(req);
+      requirePermission(user, 'correction.moderate');
+      const table = parts[3] === 'price' ? 'price_reports' : parts[3] === 'access' ? 'access_reports' : null;
+      if (!table) throw new HttpError(400, 'Say which kind of report: price or access.');
+      const result = db
+        .prepare(`delete from ${table} where gym_id = ? and user_id = ?`)
+        .run(decodeURIComponent(parts[4]!), decodeURIComponent(parts[5]!));
+      if (result.changes === 0) throw new HttpError(404, 'No report like that.');
       return send(res, 204);
     }
 

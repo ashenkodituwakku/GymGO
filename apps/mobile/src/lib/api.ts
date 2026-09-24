@@ -87,6 +87,19 @@ export interface GymPhoto {
 
 export type AccessOutcome = 'walked_in' | 'booked_first' | 'turned_away';
 
+/** A member's price or visit report, as moderators see it. */
+export interface MemberReport {
+  kind: 'price' | 'access';
+  gymId: string;
+  userId: string;
+  author: string;
+  amountMinor: number | null;
+  currency: 'AUD' | 'USD' | null;
+  outcome: AccessOutcome | null;
+  on: string;
+  reportedAt: string;
+}
+
 /** How getting in went for members who visited as guests, in the last year. */
 export interface AccessSummary {
   count: number;
@@ -273,6 +286,13 @@ export const api = {
     request<{ workout: SavedWorkout }>('POST', '/api/workouts', { token, body }),
   deleteWorkout: (token: string, id: string) => request<unknown>('DELETE', `/api/workouts/${encodeURIComponent(id)}`, { token }),
 
+  memberReports: (token: string) => request<{ reports: MemberReport[] }>('GET', '/api/moderation/member-reports', { token }),
+  removeMemberReport: (token: string, report: Pick<MemberReport, 'kind' | 'gymId' | 'userId'>) =>
+    request<unknown>(
+      'DELETE',
+      `/api/moderation/member-reports/${report.kind}/${encodeURIComponent(report.gymId)}/${encodeURIComponent(report.userId)}`,
+      { token },
+    ),
   moderationQueue: (token: string) => request<{ reviews: Review[] }>('GET', '/api/moderation/reviews', { token }),
   moderate: (token: string, reviewId: string, body: { decision: 'publish' | 'reject'; reason?: string }) =>
     request<unknown>('POST', `/api/moderation/reviews/${encodeURIComponent(reviewId)}`, { token, body }),

@@ -551,10 +551,11 @@ In short: the app runs on your PC in the browser, with a real local server
 and database behind it. Its iOS and Android bundles compile, but it has
 **not** been run on a real phone or simulator yet. The Melbourne gyms are
 real, with sources; most of their details are unknown because the gyms don't
-publish them. The US gyms are real but map-only, and nobody has checked that
-each one is still trading. Nothing is deployed, and nothing has been submitted to an app
-store. No real gym data has been collected, no gym has
-been contacted, and no customer research has been done — the whole product
+publish them. The other Australian and the US gyms are real but map-only,
+from OpenStreetMap, and nobody has checked that each one is still trading;
+members' reports are how their prices and door rules get filled in. Nothing
+is deployed, and nothing has been submitted to an app store. No gym has been
+contacted, and no customer research has been done — the whole product
 thesis is still a hypothesis.
 
 ## Real data, and what "unknown" means

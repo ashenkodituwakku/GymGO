@@ -41,6 +41,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
+import { gzipSync } from 'node:zlib';
 import {
   ANONYMOUS,
   EQUIPMENT_TYPES,
@@ -179,6 +180,9 @@ function cleanWorkoutPlan(input: unknown) {
   };
 }
 
+/** Below this, compressing costs more than it saves. */
+const GZIP_FROM_BYTES = 2048;
+
 function send(res: ServerResponse, status: number, body?: unknown): void {
   res.statusCode = status;
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -188,7 +192,17 @@ function send(res: ServerResponse, status: number, body?: unknown): void {
     return;
   }
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(JSON.stringify(body));
+  const json = Buffer.from(JSON.stringify(body));
+  // The gym list is about 1.5 MB of JSON and a tenth of that gzipped; phones
+  // and browsers unzip it themselves.
+  const accepts = /\bgzip\b/.test(String(res.req?.headers['accept-encoding'] ?? ''));
+  res.setHeader('Vary', 'Accept-Encoding');
+  if (accepts && json.length >= GZIP_FROM_BYTES) {
+    res.setHeader('Content-Encoding', 'gzip');
+    res.end(gzipSync(json));
+    return;
+  }
+  res.end(json);
 }
 
 function bearer(req: IncomingMessage): string | null {

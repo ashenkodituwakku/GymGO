@@ -4,11 +4,12 @@ Reported in separate columns on purpose. None of this is "production ready",
 and collapsing these into that phrase would be the single most misleading thing
 this document could do.
 
-## Server, accounts and data (`apps/server`, `packages/melbourne-data`, `packages/usa-data`)
+## Server, accounts and data (`apps/server`, `packages/melbourne-data`, `packages/au-data`, `packages/usa-data`)
 
 | | Implemented locally | Tested locally | Externally integrated | Deployed |
 |---|---|---|---|---|
-| API server (Node, built-in SQLite) | ✅ | ✅ 48 tests over real HTTP | n/a, runs on your PC | ❌ not hosted |
+| API server (Node, built-in SQLite) | ✅ | ✅ 50 tests over real HTTP | n/a, runs on your PC | ❌ not hosted |
+| Gzip for larger answers (the gym list: 1.5 MB → 0.1 MB) | ✅ | ✅ 2 server tests + measured locally | n/a | ❌ |
 | Sign-up, sign-in, sign-out, delete account | ✅ | ✅ tests + driven in the browser | ❌ no email verification | ❌ |
 | Saved gyms synced to the account | ✅ | ✅ tests + driven in the browser | n/a | ❌ |
 | Reviews held for moderation; moderator queue | ✅ | ✅ tests; posting driven in the browser | n/a | ❌ |

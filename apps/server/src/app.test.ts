@@ -1,4 +1,4 @@
-import { createServer, type Server } from 'node:http';
+import { createServer, get as httpGet, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
@@ -46,6 +46,33 @@ async function signUp(name = 'Sam') {
   expect(result.status).toBe(201);
   return { token: result.body!.token as string, email, id: result.body!.account.id as string };
 }
+
+describe('compression', () => {
+  it('gzips the gym list for clients that accept it, and not for those that don’t', async () => {
+    const zipped = await fetch(`${base}/api/gyms`, { headers: { 'accept-encoding': 'gzip' } });
+    expect(zipped.headers.get('content-encoding')).toBe('gzip');
+    expect(zipped.headers.get('vary')).toContain('Accept-Encoding');
+    // fetch unzips it, as phones and browsers do.
+    expect(((await zipped.json()) as { gyms: unknown[] }).gyms.length).toBeGreaterThan(20);
+
+    const plain = await new Promise<{ encoding: string | undefined; body: string }>((resolve, reject) => {
+      const request = httpGet(`${base}/api/gyms`, { headers: { 'accept-encoding': 'identity' } }, (response) => {
+        let body = '';
+        response.setEncoding('utf8');
+        response.on('data', (chunk: string) => (body += chunk));
+        response.on('end', () => resolve({ encoding: response.headers['content-encoding'], body }));
+      });
+      request.on('error', reject);
+    });
+    expect(plain.encoding).toBeUndefined();
+    expect((JSON.parse(plain.body) as { gyms: unknown[] }).gyms.length).toBeGreaterThan(20);
+  });
+
+  it('leaves small answers alone', async () => {
+    const health = await fetch(`${base}/api/health`, { headers: { 'accept-encoding': 'gzip' } });
+    expect(health.headers.get('content-encoding')).toBeNull();
+  });
+});
 
 describe('passwords', () => {
   it('hashes with a salt and verifies only the right password', () => {

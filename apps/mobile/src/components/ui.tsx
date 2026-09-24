@@ -33,15 +33,21 @@ export function Txt({
   style,
   children,
   numberOfLines,
+  accessibilityRole,
 }: {
   variant?: Variant;
   color?: string;
   style?: StyleProp<TextStyle>;
   children: ReactNode;
   numberOfLines?: number;
+  accessibilityRole?: 'header';
 }) {
   return (
-    <Text style={[type[variant] as TextStyle, { color: tint }, style]} numberOfLines={numberOfLines}>
+    <Text
+      style={[type[variant] as TextStyle, { color: tint }, style]}
+      numberOfLines={numberOfLines}
+      accessibilityRole={accessibilityRole}
+    >
       {children}
     </Text>
   );

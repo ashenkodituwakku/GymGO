@@ -41,6 +41,15 @@ const ICONS = {
   cloud: { ios: 'icloud.fill', android: 'cloud', web: 'cloud' },
   offline: { ios: 'icloud.slash.fill', android: 'cloud_off', web: 'cloud_off' },
   source: { ios: 'link', android: 'link', web: 'link' },
+  home: { ios: 'house.fill', android: 'home', web: 'home' },
+  map: { ios: 'map.fill', android: 'map', web: 'map' },
+  share: { ios: 'square.and.arrow.up', android: 'share', web: 'ios_share' },
+  sort: { ios: 'arrow.up.arrow.down', android: 'swap_vert', web: 'swap_vert' },
+  compare: { ios: 'rectangle.split.3x1', android: 'view_column', web: 'view_column' },
+  check: { ios: 'checkmark', android: 'check', web: 'check' },
+  settings: { ios: 'gearshape.fill', android: 'settings', web: 'settings' },
+  history: { ios: 'clock.arrow.circlepath', android: 'history', web: 'history' },
+  back: { ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' },
 } as const;
 
 export type IconName = keyof typeof ICONS;

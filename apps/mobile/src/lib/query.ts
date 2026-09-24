@@ -19,6 +19,7 @@ import {
   type Review,
   type SearchOutcome,
   type SearchQuery,
+  type SortKey,
   type Tri,
 } from '@gymgo/domain';
 import { DEMO_GYMS } from '@gymgo/demo-data';
@@ -44,7 +45,15 @@ export interface Filters {
   equipment: string[];
   dumbbellMinKg: number | null;
   isLocalResident: Tri;
+  sort: SortKey;
 }
+
+export const SORTS: Array<{ key: SortKey; label: string }> = [
+  { key: 'best_match', label: 'Best match' },
+  { key: 'distance', label: 'Closest' },
+  { key: 'visit_cost', label: 'Cheapest' },
+  { key: 'rating', label: 'Top rated' },
+];
 
 /**
  * Local date and minute-of-day in the pilot's time zone. Melbourne and
@@ -88,6 +97,15 @@ export function defaultVisit(now: Date = new Date()): { date: string; minute: nu
   return { date, minute: nextHour };
 }
 
+/**
+ * The next time the clock reads `minute`: today if that is still ahead,
+ * otherwise tomorrow. "Early start" picked at 9 am means tomorrow's 6 am.
+ */
+export function nextVisitAt(minute: number, now: Date = new Date()): { date: string; minute: number } {
+  const today = nowInPilot(now);
+  return { date: minute > today.minute ? today.date : addDays(today.date, 1), minute };
+}
+
 /** The part of the filters a place decides: where, what it's called, and its clock. */
 export function atPlace(place: AppPlace): Pick<Filters, 'centre' | 'placeName' | 'timezone'> {
   return { centre: place.position, placeName: place.name, timezone: CITIES[place.city].timezone };
@@ -104,6 +122,7 @@ export function initialFilters(now: Date = new Date()): Filters {
     equipment: [],
     dumbbellMinKg: null,
     isLocalResident: 'unknown',
+    sort: 'best_match',
   };
 }
 
@@ -122,7 +141,7 @@ export function toQuery(filters: Filters): SearchQuery {
     timezone: filters.timezone,
     requiredEquipment,
     profile: { ...UNKNOWN_VISITOR, isLocalResident: filters.isLocalResident },
-    sort: 'best_match',
+    sort: filters.sort,
   });
 }
 

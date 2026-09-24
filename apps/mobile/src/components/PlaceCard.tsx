@@ -25,6 +25,7 @@ import {
   type Tri,
 } from '@gymgo/domain';
 import { TIER, accessLine, checkedAgo, ratingShort, sourceLabel } from '@/lib/copy';
+import { shareGym } from '@/lib/actions';
 import { depositLine, priceLine } from '@/lib/present';
 import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
@@ -187,6 +188,15 @@ export function PlaceCard({
             if (!saved) haptic.success();
             onToggleSave();
           }}
+        />
+        <ActionButton
+          icon="share"
+          label="Share"
+          onPress={
+            location.isDemoData
+              ? demo("it's invented, so there's nothing real to share.")
+              : () => void shareGym(record).then((ok) => !ok && setNotice('Sharing isn’t available here.'))
+          }
         />
       </View>
 

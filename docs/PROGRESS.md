@@ -43,12 +43,25 @@ because "the code does X" is not the same as "someone decided X".
 | Real gyms from OpenStreetMap + the gyms' own sites | OSM is openly licensed (ODbL, attribution shown). Operator websites are the only place a price or hours can be read without contacting anyone. Nothing was inferred: staffed hours are never treated as guest hours unless the gym says so. |
 | One command runs server + app | `scripts/dev.mjs` spawns both through the same Node, so it doesn't depend on a shell or on how pnpm is installed. It works the same from the launcher, `pnpm app` or plain `node`. |
 | Weekly hours start on Monday | Australian timetables do. Changed in the shared domain, so the website follows. |
+| Four tabs, with the system's tab bar on phones | Asked for a home page and a more iOS feel. Native tabs give Apple's own (Liquid Glass) tab bar on iPhone and Material's on Android, rather than an imitation. The browser has no native bar, so it gets GymGO's floating glass one, bottom centre when narrow and top right when wide. |
+| Shared app state (`lib/app-state.tsx`) | Four tabs need the same search, gyms, account, recents and compare list. Tabs ask Explore to do things (open a gym, focus search, locate) through a counted request, so the same request twice still works. |
+| Home picks only set the search | "Early start", "Under A$25" and the rest just change the filters and open Explore, so every answer still comes from the same rules as the map. Nothing on Home is a separate ranking. |
+| A gym page as well as the map card | Lists (Home, Saved, Compare) push a proper page with back-swipe, as iOS apps do. The map keeps its sheet card. Both render the same `PlaceCard`. |
 | Gym photos come only from members | Asked for gym images. Photos on gym websites are copyrighted, and a picture of a different gym would be a lie about the place. So members share their own, confirm they took them, have location data stripped, and wait for a moderator. Until someone does, the card says "No photo supplied yet" and the list shows a plain 🏋️ tile, which is clearly a symbol and not a photo. |
 | Google's info through Google's own free embed | Asked to "import data from Google", then for a completely free way. Google's terms forbid copying or storing Places content, and its API needs a billing account. Google's public "Embed a map" is free, keyless and unlimited, and shows Google's card (stars, review count, address) with a link to every photo and review. So each gym's Google page is that embed, full screen. The paid Places API extras stay optional behind the owner's key. |
 | Machines come from members, not Google | Asked for "the machines they have" from Google. Google has no equipment data, only photos, which can't be copied, and gyms' sites rarely list machines. So members tick what they saw, one report each per gym, shown as tallies next to (never merged into) what the gym publishes. Keeping them out of the search means one wrong report can't make a gym "Good to go". |
 | Simpler card: one answer, three facts, folded detail | Asked for simpler and more playful. The verdict is one emoji and a word, and the detail folds under one-line summaries, so nothing honest was removed, only tucked away. "Worth a call" became "Call first", which says what to do. |
 
 ## Traps
+
+**The Explore sheets live in a layer that stops above the tab bar.** Its
+own `BottomSheetModalProvider` sits in that layer, so a gym's card can't
+float over another tab, and the floating glass background ends at the
+layer's bottom so the sheet reads as a card. Moving the provider back to
+the root puts sheets over every tab.
+
+**Metro can wedge after routes are moved** ("Got unexpected undefined").
+Restart it with `--clear`.
 
 **Don't "import" Google data into the gym records.** It would be the obvious
 way to fill the unknowns, and Google's terms forbid it (no copying, no

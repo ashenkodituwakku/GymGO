@@ -1,13 +1,13 @@
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { BUNDLED_FACES, NEEDS_BUNDLED_FACES } from '@/lib/theme';
+import { AppProvider } from '@/lib/app-state';
+import { BUNDLED_FACES, NEEDS_BUNDLED_FACES, color, face } from '@/lib/theme';
 
 // Hold the splash screen until the typeface is ready, so nothing draws in the
 // wrong font first. iPhone has Helvetica built in and loads nothing.
@@ -16,8 +16,9 @@ SplashScreen.preventAutoHideAsync().catch(() => undefined);
 const FACES = NEEDS_BUNDLED_FACES ? BUNDLED_FACES : {};
 
 /**
- * The app is one screen, like Maps: the map, and sheets over it. Light
- * appearance is fixed in app.json; the status bar is dark to match.
+ * Four tabs (Home, Explore, Saved, Profile), with a gym's own page pushed on
+ * top of them and Compare as a sheet. Light appearance is fixed in app.json;
+ * the status bar is dark to match.
  */
 export default function RootLayout() {
   const [loaded, error] = useFonts(FACES);
@@ -34,10 +35,31 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
-        <BottomSheetModalProvider>
+        <AppProvider>
           <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false }} />
-        </BottomSheetModalProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              headerTintColor: color.brand,
+              headerTitleStyle: { ...face('bold'), color: color.label },
+              headerBackTitle: 'Back',
+            }}
+          >
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="gym/[id]"
+              options={{
+                headerShown: true,
+                title: '',
+                // iOS: the header is frosted glass over the photo, as in Maps.
+                headerTransparent: Platform.OS === 'ios',
+                headerBlurEffect: 'systemChromeMaterialLight',
+                headerShadowVisible: false,
+              }}
+            />
+            <Stack.Screen name="compare" options={{ headerShown: true, title: 'Compare', presentation: 'modal' }} />
+          </Stack>
+        </AppProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

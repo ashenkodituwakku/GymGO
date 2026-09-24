@@ -1,4 +1,4 @@
-import type { BottomSheetBackgroundProps } from '@gorhom/bottom-sheet';
+import { useBottomSheetInternal, type BottomSheetBackgroundProps } from '@gorhom/bottom-sheet';
 import type { FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated';
@@ -13,17 +13,22 @@ export const SHEET_GAP = 8;
  * sides and bottom, with every corner rounded concentrically with the
  * display's own. At its tallest detent it grows out to the screen's edges.
  *
- * Pair with `detached` and `bottomInset={SHEET_GAP}` on the sheet, which lift
- * the sheet off the bottom edge. This background then reaches back down to
- * the edge as it opens fully.
+ * The sheet lives in a layer that ends a gap above the tab bar. Below its
+ * tallest detent the glass ends at the layer's bottom rather than running on
+ * out of sight, so it reads as a card floating above the tab bar with all
+ * four corners rounded. Fully open, it also reaches out to the sides.
  *
  * `fullIndex` is the snap-point index at which the sheet goes edge to edge.
  */
 export function floatingGlassBackground(fullIndex: number): FC<BottomSheetBackgroundProps> {
   function FloatingGlassBackground({ style, animatedIndex }: BottomSheetBackgroundProps) {
+    const { animatedPosition, animatedDetentsState } = useBottomSheetInternal();
     const inset = useAnimatedStyle(() => {
       const gap = interpolate(animatedIndex.value, [fullIndex - 1, fullIndex], [SHEET_GAP, 0], Extrapolation.CLAMP);
-      return { left: gap, right: gap, bottom: gap - SHEET_GAP };
+      // The part of the sheet below the screen (or the tab bar) at this height.
+      const highest = animatedDetentsState.value.highestDetentPosition ?? animatedPosition.value;
+      const hidden = Math.max(0, animatedPosition.value - highest);
+      return { left: gap, right: gap, bottom: hidden };
     });
 
     return (

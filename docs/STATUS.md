@@ -103,16 +103,23 @@ service, which is your decision to make. Nothing has been provisioned.
 | App icon, splash screen | ❌ | ❌ | n/a | ❌ | n/a | ❌ |
 | Store builds (EAS / Xcode / Gradle) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | PC browser layout (side panels) | ✅ | ✅ driven end to end at 1440 × 900 | n/a | n/a | ❌ | n/a |
+| Tabs: Home, Explore, Saved, Profile | ✅ | ⚠️ browser's glass tab bar only | n/a | ❌ Apple/Android native tab bar never seen | n/a | ❌ |
+| Home (picks, nearby, saved, recent, suburbs, counts) | ✅ | ✅ driven at phone and PC sizes | n/a | ❌ | n/a | ❌ |
+| Gym page (pushed screen, share/compare/save) | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |
+| Compare up to 3 gyms | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |
+| Sort (best match, closest, cheapest, top rated) | ✅ | ⚠️ tsc; browser cycles, iPhone action sheet not seen | n/a | ❌ | n/a | ❌ |
+| Recently viewed, haptics switch (kept on the device) | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |
+| Press-and-hold preview and menu on gym cards | ✅ | ❌ iPhone only, never seen | n/a | ❌ | n/a | ❌ |
 | Gym photos: strip on the card, thumbnails in the list, add a photo | ✅ | ✅ driven in the browser (web file picker) | n/a | ❌ phone photo picker not seen | n/a | ❌ |
 | "See it on Google" full-screen page | ✅ | ✅ Google's embed live in the browser; key-only extras from faked data | ✅ free embed | ❌ web view not seen | n/a | ❌ |
 
 **What "tested locally" means for the phone app, exactly:**
 
-- It typechecks, and 29 unit tests pass. They include the same reference search
+- It typechecks, and 31 unit tests pass. They include the same reference search
   the website runs, run through the app's own filter code: 3 confirmed results,
   Ironbark first.
 - `expo export` builds both the **iOS and Android bundles** into Hermes
-  bytecode without errors: 1,887 and 1,927 modules. The web-only map library
+  bytecode without errors: 1,918 and 1,970 modules. The web-only map library
   is confirmed absent from both.
 - `expo-doctor` passes 21/21 checks.
 - The interface was driven with Playwright in the browser build at 390 × 844,
@@ -132,6 +139,13 @@ service, which is your decision to make. Nothing has been provisioned.
   suggestions, and place search. Those screenshots are the only visual evidence.
   They were taken in Chromium, not on a phone. They show the blur fallback,
   not Liquid Glass, and MapLibre, not MapKit or Google Maps.
+
+**The tabs, and what hasn't been seen:** on phones the tab bar is the
+system's own (Expo Router's native tabs), so on iOS 26 it should be Apple's
+Liquid Glass bar. That, the iPhone press-and-hold previews, the sort action
+sheet and how the Explore sheets sit above the real tab bar have only been
+built and bundled, not seen. The browser version uses GymGO's own glass tab
+bar and was driven end to end.
 
 **Not done, and it matters:** apart from the Android map report above, the app
 has **not been checked on a physical phone or a simulator**. This machine has no iOS simulator and no Android emulator. Nothing
@@ -192,9 +206,9 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 | `@gymgo/demo-data` unit tests | **23 passed** |
 | `@gymgo/melbourne-data` unit tests | **11 passed** |
 | `@gymgo/server` tests (real HTTP, in-memory SQLite) | **27 passed** |
-| `@gymgo/mobile` unit tests | **29 passed** |
+| `@gymgo/mobile` unit tests | **31 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
-| `expo export` (iOS + Android) | Both compiled (1,887 and 1,927 modules) |
+| `expo export` (iOS + Android) | Both compiled (1,918 and 1,970 modules) |
 | `expo-doctor` | 21/21 checks passed |
 | `pnpm build` | Compiled successfully |
 | Playwright, old website (390 / 768 / 1440), fresh build | **99 passed**, 24 skipped (website unchanged since) |

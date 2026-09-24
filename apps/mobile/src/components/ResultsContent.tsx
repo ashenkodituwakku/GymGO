@@ -11,7 +11,7 @@ import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanim
 import { explainNoMatches, type SearchOutcome } from '@gymgo/domain';
 import { suggestPlaces, type AppPlace } from '@/lib/places';
 import { EMPTY, PLACEHOLDER, TIER, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
-import { activeFilterCount, type Filters } from '@/lib/query';
+import { SORTS, activeFilterCount, type Filters } from '@/lib/query';
 import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { GymRow } from './GymRow';
@@ -40,6 +40,8 @@ export function ResultsContent({
   onOpenAccount,
   dataNote,
   covers,
+  searchRef,
+  onSort,
 }: {
   outcome: SearchOutcome;
   filters: Filters;
@@ -63,6 +65,10 @@ export function ResultsContent({
   dataNote: string;
   /** Each gym's newest member photo, by gym ID. */
   covers: Record<string, string>;
+  /** So other tabs can put the cursor in the search box. */
+  searchRef?: React.RefObject<TextInput | null>;
+  /** Choose how the list is ordered. */
+  onSort: () => void;
 }) {
   // The sheet-aware input throws in a browser; see TextField in ui.tsx.
   const SearchInput = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
@@ -77,6 +83,7 @@ export function ResultsContent({
         <View style={styles.search}>
           <Icon name="search" size={16} color={color.labelSecondary} />
           <SearchInput
+            ref={searchRef as never}
             value={query}
             onChangeText={onQueryChange}
             onFocus={onSearchFocus}
@@ -158,6 +165,13 @@ export function ResultsContent({
         contentContainerStyle={styles.chips}
         keyboardShouldPersistTaps="handled"
       >
+        <Chip
+          icon="sort"
+          label={SORTS.find((item) => item.key === filters.sort)?.label ?? 'Best match'}
+          selected={filters.sort !== 'best_match'}
+          onPress={onSort}
+          accessibilityLabel={`Sorted by ${SORTS.find((item) => item.key === filters.sort)?.label ?? 'best match'}. Change`}
+        />
         <Chip
           icon="clock"
           label={timeLabel(filters.visitMinuteOfDay)}

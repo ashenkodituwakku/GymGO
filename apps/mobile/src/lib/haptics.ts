@@ -7,23 +7,31 @@
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
-const enabled = Platform.OS === 'ios' || Platform.OS === 'android';
+const supported = Platform.OS === 'ios' || Platform.OS === 'android';
+let switchedOn = true;
+
+/** The Haptics switch in Profile. */
+export function setHapticsEnabled(on: boolean) {
+  switchedOn = on;
+}
+
+const on = () => supported && switchedOn;
 
 export const haptic = {
   /** A filter chip, a segment, a sheet settling at a new height. */
   select: () => {
-    if (enabled) void Haptics.selectionAsync();
+    if (on()) void Haptics.selectionAsync();
   },
   /** Opening a gym, tapping a pin. */
   tap: () => {
-    if (enabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (on()) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   },
   /** Saving a gym. */
   success: () => {
-    if (enabled) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (on()) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   },
   /** Something the person asked for could not be done. */
   warn: () => {
-    if (enabled) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    if (on()) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
   },
 };

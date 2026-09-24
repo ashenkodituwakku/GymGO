@@ -88,6 +88,27 @@ npx pnpm@10 install
 npx pnpm@10 app          # add --tunnel if the phone can't connect
 ```
 
+### What's in the app
+
+Four tabs along the bottom, as in any iPhone app (on an iPhone it's Apple's
+own tab bar; in a browser, a floating glass one):
+
+- **Home**: a greeting, the search, one-tap picks ("Early start", "After
+  work", "Under A$25", "Squat racks", "Near me"), gyms near where you're
+  looking, your saved and recently viewed gyms, suburbs to browse, and a
+  count of what GymGO actually knows so far.
+- **Explore**: the map with the results sheet, filters, and sorting (best
+  match, closest, cheapest, top rated).
+- **Saved**: your saved gyms. Tick two or three to **compare** them side by
+  side: answer, price, guest entry, what to bring, machines, rating and
+  distance.
+- **Profile**: sign in, your gyms, moderation (for moderators), a haptics
+  switch, and where GymGO's facts come from.
+
+Tap any gym to open its own page, with share, compare and save at the top.
+On an iPhone, press and hold a gym card on Home for a preview and a quick
+menu.
+
 ### Accounts
 
 Tap the person icon next to the search box to create an account. Your saved

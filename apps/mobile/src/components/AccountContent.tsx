@@ -1,6 +1,6 @@
 /**
- * Your account: sign in or create one, your saved gyms, and, for moderators,
- * the reviews and photos waiting for a decision.
+ * The account pieces the Profile tab is made of: the sign-in / create-account
+ * form, and, for moderators, the reviews and photos waiting for a decision.
  *
  * Accounts live on the GymGO server on your own computer. Nothing is sent
  * anywhere else, and no email is sent to you: an email address here is just
@@ -25,29 +25,7 @@ function messageFor(error: unknown): string {
   return 'Something went wrong. Try again.';
 }
 
-export function AccountContent({
-  account,
-  records,
-  inSheet,
-  onOpenGym,
-  onClose,
-  onPhotosChanged,
-}: {
-  account: AccountApi;
-  records: GymRecord[];
-  inSheet: boolean;
-  onOpenGym: (id: string) => void;
-  onClose: () => void;
-  /** A photo was published, so list thumbnails may have changed. */
-  onPhotosChanged: () => void;
-}) {
-  if (account.state === 'signed_in' && account.account) {
-    return <SignedIn account={account} records={records} onOpenGym={onOpenGym} onClose={onClose} onPhotosChanged={onPhotosChanged} />;
-  }
-  return <SignInForm account={account} inSheet={inSheet} />;
-}
-
-function SignInForm({ account, inSheet }: { account: AccountApi; inSheet: boolean }) {
+export function SignInForm({ account, inSheet }: { account: AccountApi; inSheet: boolean }) {
   const [mode, setMode] = useState<'sign_in' | 'create'>('sign_in');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -153,110 +131,7 @@ function SignInForm({ account, inSheet }: { account: AccountApi; inSheet: boolea
   );
 }
 
-function SignedIn({
-  account,
-  records,
-  onOpenGym,
-  onClose,
-  onPhotosChanged,
-}: {
-  account: AccountApi;
-  records: GymRecord[];
-  onOpenGym: (id: string) => void;
-  onClose: () => void;
-  onPhotosChanged: () => void;
-}) {
-  const me = account.account!;
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const savedGyms = account.saved
-    .map((id) => records.find((record) => record.location.id === id))
-    .filter((record): record is GymRecord => record !== undefined);
-  const moderator = me.role === 'moderator' || me.role === 'admin';
-
-  return (
-    <View style={styles.wrap}>
-      <View style={styles.profile}>
-        <View style={styles.avatar}>
-          <Txt variant="title2" color={color.onBrand}>
-            {me.displayName.slice(0, 1).toUpperCase()}
-          </Txt>
-        </View>
-        <View style={styles.flex}>
-          <Txt variant="title2">{me.displayName}</Txt>
-          <Txt variant="subhead" color={color.labelSecondary}>
-            {me.email}
-            {moderator ? ' · Moderator' : ''}
-          </Txt>
-        </View>
-      </View>
-
-      <Txt variant="headline" style={styles.heading}>
-        Saved gyms
-      </Txt>
-      {savedGyms.length === 0 ? (
-        <Txt variant="subhead" color={color.labelSecondary}>
-          Nothing saved yet. Tap Save on any gym and it shows up here, on your phone and your PC.
-        </Txt>
-      ) : (
-        <View style={styles.list}>
-          {savedGyms.map((record, index) => (
-            <Pressable
-              key={record.location.id}
-              onPress={() => {
-                onClose();
-                onOpenGym(record.location.id);
-              }}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.row, index > 0 && styles.rowBorder, pressed && { backgroundColor: color.fill }]}
-            >
-              <View style={styles.flex}>
-                <Txt variant="body" style={face('medium')}>
-                  {record.location.name}
-                  {record.location.branch ? ` ${record.location.branch}` : ''}
-                </Txt>
-                <Txt variant="footnote" color={color.labelSecondary}>
-                  {record.location.address.suburb}
-                  {record.location.isDemoData ? ' · demo' : ''}
-                </Txt>
-              </View>
-              <Icon name="chevron" size={14} color={color.labelTertiary} />
-            </Pressable>
-          ))}
-        </View>
-      )}
-
-      {moderator && account.token && <PhotoQueue token={account.token} records={records} onPublished={onPhotosChanged} />}
-      {moderator && account.token && <ModerationQueue token={account.token} records={records} />}
-
-      {error && <Notice icon="info" text={error} tone="danger" />}
-
-      <View style={styles.actions}>
-        <PrimaryButton label="Sign out" tone="quiet" onPress={() => void account.signOut()} />
-        <PrimaryButton
-          label={confirmDelete ? 'Tap again to delete everything' : 'Delete account'}
-          tone="danger"
-          onPress={async () => {
-            if (!confirmDelete) {
-              setConfirmDelete(true);
-              return;
-            }
-            try {
-              await account.deleteAccount();
-            } catch (caught) {
-              setError(messageFor(caught));
-            }
-          }}
-        />
-      </View>
-      <Txt variant="caption" color={color.labelTertiary} style={styles.small}>
-        Deleting removes your account, saved gyms, reviews and photos from the server.
-      </Txt>
-    </View>
-  );
-}
-
-function ModerationQueue({ token, records }: { token: string; records: GymRecord[] }) {
+export function ModerationQueue({ token, records }: { token: string; records: GymRecord[] }) {
   const [queue, setQueue] = useState<Review[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -320,7 +195,7 @@ function ModerationQueue({ token, records }: { token: string; records: GymRecord
  * this gym and no one's face without their say-so; it will carry the
  * uploader's name.
  */
-function PhotoQueue({ token, records, onPublished }: { token: string; records: GymRecord[]; onPublished: () => void }) {
+export function PhotoQueue({ token, records, onPublished }: { token: string; records: GymRecord[]; onPublished: () => void }) {
   const [queue, setQueue] = useState<Awaited<ReturnType<typeof api.photoQueue>>['photos'] | null>(null);
   const [error, setError] = useState<string | null>(null);
 

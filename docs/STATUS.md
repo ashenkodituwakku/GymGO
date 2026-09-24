@@ -100,6 +100,8 @@ service, which is your decision to make. Nothing has been provisioned.
 | Directions / call / website hand-off | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
 | Precise location: opens where you are, blue dot, nearest covered city when outside | ✅ | ⚠️ browser only, with simulated positions (New York, Toronto) | n/a | ❌ GPS, iPhone "Precise: Off" and Android "Approximate" never seen | n/a | ❌ |
 | 15 US cities: search, miles and $, visit times on local clocks | ✅ | ✅ unit tests + driven in the browser (New York, Seattle, Philadelphia, Chicago) | n/a | ❌ | n/a | ❌ |
+| 6 more Australian cities (Brisbane, Perth, Adelaide, Canberra, Gold Coast, Hobart), map-only, 189 gyms | ✅ | ✅ 10 data tests + place tests + driven in the browser (Brisbane) | ✅ OpenStreetMap, fetched once | ❌ | n/a | ❌ |
+| Scrolling the tab screens in a browser | ✅ fixed: the tab container never shrank, so Home grew past the window and couldn't scroll | ✅ mouse wheel at phone and PC sizes | n/a | ❌ not checked on a phone that the old version was broken there too | n/a | ❌ |
 | Workout builder: tap muscles on a body, plan from the gym's machines | ✅ | ✅ 6 unit tests + driven in the browser | n/a | ❌ taps on the native SVG body never seen | n/a | ❌ |
 | Saved gyms (on the device) | ✅ | ⚠️ web preview only | n/a | ❌ | n/a | ❌ |
 | Liquid Glass (iOS 26) / blur fallbacks | ✅ | ⚠️ blur fallback only | n/a | ❌ | n/a | ❌ |
@@ -129,7 +131,7 @@ service, which is your decision to make. Nothing has been provisioned.
   the website runs, run through the app's own filter code: 3 confirmed results,
   Ironbark first.
 - `expo export` builds both the **iOS and Android bundles** into Hermes
-  bytecode without errors: 2,059 and 1,919 modules. The web-only map library
+  bytecode without errors: 2,063 and 2,111 modules. The web-only map library
   is confirmed absent from both.
 - `expo-doctor` passes 21/21 checks.
 - The interface was driven with Playwright in the browser build at 390 × 844,
@@ -298,6 +300,9 @@ name; the skip link works.
 - **Structured data (schema.org).** Would need to be backed by visible, licensed
   facts. A decision to make with real data.
 - **Crowd reporting.** Modelled, deliberately unpopulated.
+- **Real Sydney gyms.** The invented demo gyms occupy inner Sydney. Adding
+  real ones means first moving the demo somewhere fictional, which touches
+  the demo data and the tests built on it.
 
 ### Not started at all
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CITIES, DEFAULT_PLACE, cityAt, cityNear, distanceLabel, geocodePlace, moneyLabel, nearestCity, radiusChoices, suggestPlaces } from './places';
+import { CITIES, CITY_LIST, DEFAULT_PLACE, cityAt, cityNear, distanceLabel, geocodePlace, moneyLabel, nearestCity, placeContext, radiusChoices, suggestPlaces } from './places';
 import { BUNDLED_GYMS, atPlace, initialFilters, moveTo, runSearch } from './query';
 
 describe('places', () => {
@@ -12,7 +12,7 @@ describe('places', () => {
     expect(geocodePlace('fitzroy').place?.city).toBe('melbourne');
     expect(geocodePlace('3056').place?.name).toBe('Brunswick');
     expect(geocodePlace('Surry Hills').place?.city).toBe('sydney');
-    expect(geocodePlace('Perth')).toEqual({ place: null, outOfArea: true });
+    expect(geocodePlace('Darwin')).toEqual({ place: null, outOfArea: true });
     expect(geocodePlace('Timbuktu')).toEqual({ place: null, outOfArea: true });
     expect(suggestPlaces('brun').map((place) => place.name)).toEqual(['Brunswick', 'Brunswick East']);
   });
@@ -20,7 +20,7 @@ describe('places', () => {
   it('knows which city a point is in, and when it is in neither', () => {
     expect(cityNear({ lat: -37.8, lng: 144.97 })?.id).toBe('melbourne');
     expect(cityNear({ lat: -33.88, lng: 151.2 })?.id).toBe('sydney');
-    expect(cityNear({ lat: -31.95, lng: 115.86 })).toBeNull();
+    expect(cityNear({ lat: -12.46, lng: 130.84 })).toBeNull(); // Darwin
     expect(CITIES.sydney.demo).toBe(true);
     expect(CITIES.melbourne.demo).toBe(false);
   });
@@ -53,6 +53,28 @@ describe('places', () => {
     expect(suggestPlaces('capitol hill', 6, 'denver')[0]?.city).toBe('denver');
   });
 
+  it('knows six more Australian cities from the map, on their own clocks', () => {
+    expect(cityNear({ lat: -27.47, lng: 153.03 })?.id).toBe('brisbane');
+    expect(cityNear({ lat: -31.95, lng: 115.86 })?.id).toBe('perth');
+    expect(cityAt({ lat: -42.88, lng: 147.33 }).id).toBe('hobart');
+    expect(CITIES.perth.timezone).toBe('Australia/Perth');
+    expect(CITIES.adelaide.timezone).toBe('Australia/Adelaide');
+    expect(CITIES['gold-coast'].timezone).toBe('Australia/Brisbane');
+    expect(CITIES.brisbane).toMatchObject({ country: 'AU', mapOnly: true, demo: false, region: 'QLD' });
+    // Suburbs from the map, with their city named since they have no postcode.
+    const valley = geocodePlace('Fortitude Valley').place!;
+    expect(valley.city).toBe('brisbane');
+    expect(placeContext(valley)).toBe('Brisbane, QLD');
+    expect(geocodePlace('Subiaco').place?.city).toBe('perth');
+    expect(geocodePlace('Brissy').place?.city).toBe('brisbane');
+    // Real Paddington (Brisbane) and the demo's Paddington (Sydney): where you are wins.
+    expect(geocodePlace('Paddington', 'sydney').place?.city).toBe('sydney');
+    expect(geocodePlace('Paddington', 'brisbane').place?.city).toBe('brisbane');
+    // Melbourne still first, the demo still last.
+    expect(CITY_LIST[0]!.id).toBe('melbourne');
+    expect(CITY_LIST.at(-1)!.id).toBe('sydney');
+  });
+
   it('knows the US cities, their clocks, and how far out they reach', () => {
     expect(cityNear({ lat: 40.73, lng: -73.99 })?.id).toBe('new-york');
     expect(cityNear({ lat: 34.05, lng: -118.25 })?.id).toBe('los-angeles');
@@ -64,8 +86,9 @@ describe('places', () => {
     // Toronto isn't covered; the nearest city that is, is Philadelphia (~530 km).
     expect(cityNear({ lat: 43.65, lng: -79.38 })).toBeNull();
     expect(nearestCity({ lat: 43.65, lng: -79.38 }).city.id).toBe('philadelphia');
-    // Perth is nearest Melbourne, not the Sydney demo.
-    expect(nearestCity({ lat: -31.95, lng: 115.86 }).city.id).toBe('melbourne');
+    // Townsville isn't covered; the nearest city that is, is Brisbane, never the Sydney demo.
+    expect(cityNear({ lat: -19.26, lng: 146.82 })).toBeNull();
+    expect(nearestCity({ lat: -19.26, lng: 146.82 }).city.id).toBe('brisbane');
     expect(cityAt({ lat: 47.61, lng: -122.33 }).id).toBe('seattle');
   });
 

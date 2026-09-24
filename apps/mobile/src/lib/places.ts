@@ -1,11 +1,11 @@
 /**
  * Where the search box can take you.
  *
- * Inner Melbourne is real: real gyms, each fact sourced. Fifteen US cities
- * are real too, but map-only: gyms from OpenStreetMap, with no prices and no
- * guest hours until a gym publishes them. The Sydney suburbs lead to the
- * invented demo gyms, kept so every edge case can still be tried, and always
- * labelled as demo.
+ * Inner Melbourne is real: real gyms, each fact sourced. Six more Australian
+ * cities and fifteen US cities are real too, but map-only: gyms from
+ * OpenStreetMap, with no prices and no guest hours until a gym publishes
+ * them. The Sydney suburbs lead to the invented demo gyms, kept so every edge
+ * case can still be tried, and always labelled as demo.
  *
  * No React Native here, so it is unit-tested in Node.
  */
@@ -13,9 +13,10 @@
 import { haversineKm, type LatLng } from '@gymgo/domain';
 import { PILOT_CENTRE, PILOT_PLACES, PILOT_TIMEZONE } from '@gymgo/demo-data';
 import { MELBOURNE, MELBOURNE_CENTRE, MELBOURNE_PLACES } from '@gymgo/melbourne-data';
+import { AU_CITIES, AU_PLACES, type AuCityId } from '@gymgo/au-data';
 import { US_CITIES, US_PLACES, type UsCityId } from '@gymgo/usa-data';
 
-export type CityId = 'melbourne' | 'sydney' | UsCityId;
+export type CityId = 'melbourne' | 'sydney' | AuCityId | UsCityId;
 
 export interface City {
   id: CityId;
@@ -61,6 +62,23 @@ export const CITIES: Record<CityId, City> = {
     mapOnly: false,
   },
   ...(Object.fromEntries(
+    AU_CITIES.map((city) => [
+      city.id,
+      {
+        id: city.id,
+        name: city.name,
+        region: city.state,
+        country: 'AU',
+        timezone: city.timezone,
+        centre: city.centre,
+        reachKm: Math.max(15, city.radiusKm * 2.5),
+        aliases: city.aliases,
+        demo: false,
+        mapOnly: true,
+      } satisfies City,
+    ]),
+  ) as Record<AuCityId, City>),
+  ...(Object.fromEntries(
     US_CITIES.map((city) => [
       city.id,
       {
@@ -80,16 +98,17 @@ export const CITIES: Record<CityId, City> = {
   ) as Record<UsCityId, City>),
 };
 
-/** Real cities first, Melbourne leading; the demo last. */
+/** Real cities first, Melbourne leading, then Australia's others; the demo last. */
 export const CITY_LIST: City[] = [
   CITIES.melbourne,
+  ...AU_CITIES.map((city) => CITIES[city.id]),
   ...US_CITIES.map((city) => CITIES[city.id]),
   CITIES.sydney,
 ];
 
 export interface AppPlace {
   name: string;
-  /** Australian postcodes; empty for US neighborhoods. */
+  /** Melbourne's and the demo's postcodes; empty for places from the map. */
   postcode: string;
   position: LatLng;
   city: CityId;
@@ -97,6 +116,9 @@ export interface AppPlace {
 
 export const PLACES: AppPlace[] = [
   ...MELBOURNE_PLACES.map((place) => ({ ...place, city: 'melbourne' as const })),
+  // Each other Australian city by name, then its suburbs.
+  ...AU_CITIES.map((city) => ({ name: city.name, postcode: '', position: city.centre, city: city.id })),
+  ...AU_PLACES.map((place) => ({ name: place.name, postcode: '', position: place.position, city: place.city })),
   // Each US city by name, then its neighborhoods.
   ...US_CITIES.map((city) => ({ name: city.name, postcode: '', position: city.centre, city: city.id })),
   ...US_PLACES.map((place) => ({ name: place.name, postcode: '', position: place.position, city: place.city })),
@@ -185,7 +207,8 @@ export function suggestPlaces(query: string, limit = 6, prefer?: CityId): AppPla
 export function placeContext(place: AppPlace): string {
   const city = CITIES[place.city];
   if (place.name === city.name) return city.country === 'US' ? `${city.region}, USA` : city.region;
-  return city.country === 'US' ? `${city.name}, ${city.region}` : place.postcode ? `${city.region} ${place.postcode}` : city.region;
+  if (city.country === 'US' || city.mapOnly) return `${city.name}, ${city.region}`;
+  return place.postcode ? `${city.region} ${place.postcode}` : city.region;
 }
 
 /** The nearest city GymGO covers, and how far away it is. */

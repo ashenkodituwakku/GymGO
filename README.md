@@ -148,6 +148,12 @@ is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
 
 - **Melbourne**: 23 real gyms, with prices and hours from each gym's own
   website where it publishes them.
+- **6 more Australian cities**: Brisbane, Perth, Adelaide, Canberra, the Gold
+  Coast and Hobart, with 189 real gyms between them. Like the US cities
+  below, these are **map-only**, from OpenStreetMap: no prices, guest hours
+  or machine lists yet, so every one says **Call first**. Distances are in
+  kilometres and money in A$. Real Sydney isn't in yet, because the invented
+  demo gyms sit on inner-Sydney streets and the two would be easy to mix up.
 - **15 US cities**: New York, Los Angeles, Chicago, Houston, Miami, San
   Francisco, Seattle, Boston, Austin, Denver, Las Vegas, Washington DC,
   Atlanta, San Diego and Philadelphia, with 477 real gyms between them. These
@@ -157,8 +163,9 @@ is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
   miles and money in dollars there.
 - **Sydney**: invented demo gyms for testing, always labelled as demo.
 
-Search a city ("New York", "NYC", "Philly"), a neighborhood ("SoHo",
-"Capitol Hill, Seattle") or a Melbourne suburb or postcode. Visit times are
+Search a city ("Brisbane", "New York", "NYC", "Philly"), a suburb or
+neighborhood ("Fortitude Valley", "SoHo", "Capitol Hill, Seattle") or a
+Melbourne suburb or postcode. Visit times are
 always on the searched city's clock.
 
 ### Build a workout

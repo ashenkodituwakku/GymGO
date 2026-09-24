@@ -220,21 +220,33 @@ export default function Home() {
       {/* Other cities ------------------------------------------------------- */}
       <View style={styles.section}>
         <SectionHeader icon="globe-hemisphere-west" title="Other cities" />
-        <View style={styles.suburbs}>
-          {otherCities.map((item) => (
-            <Pressable
-              key={item.id}
-              onPress={() => goToPlace(cityPlace(item))}
-              accessibilityRole="button"
-              accessibilityLabel={`${item.name}, ${item.country === 'US' ? 'USA' : 'Australia'}`}
-              style={({ pressed }) => [styles.suburb, pressed && { opacity: 0.7 }]}
-            >
-              <Txt variant="subhead" style={face('medium')}>
-                {item.name}
+        {(['AU', 'US'] as const).map((country) => {
+          const list = otherCities.filter((item) => item.country === country);
+          if (list.length === 0) return null;
+          const label = country === 'AU' ? 'Australia' : 'USA';
+          return (
+            <View key={country} style={styles.country}>
+              <Txt variant="footnote" color={color.labelSecondary} style={styles.countryLabel}>
+                {label.toUpperCase()}
               </Txt>
-            </Pressable>
-          ))}
-        </View>
+              <View style={styles.suburbs}>
+                {list.map((item) => (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => goToPlace(cityPlace(item))}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${item.name}, ${label}`}
+                    style={({ pressed }) => [styles.suburb, pressed && { opacity: 0.7 }]}
+                  >
+                    <Txt variant="subhead" style={face('medium')}>
+                      {item.name}
+                    </Txt>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          );
+        })}
       </View>
 
     </TabScreen>
@@ -310,6 +322,8 @@ const styles = StyleSheet.create({
   carousel: { marginHorizontal: -space[4] },
   carouselContent: { paddingHorizontal: space[4], paddingBottom: space[2], gap: space[3] },
 
+  country: { gap: space[2] },
+  countryLabel: { ...face('bold'), letterSpacing: 0.6 },
   suburbs: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   suburb: { paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.background, ...shadow.card },
   suburbOn: { backgroundColor: color.brand },

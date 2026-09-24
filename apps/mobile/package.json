@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.2.14",
+    "@gymgo/au-data": "workspace:*",
     "@gymgo/demo-data": "workspace:*",
     "@gymgo/domain": "workspace:*",
     "@gymgo/melbourne-data": "workspace:*",

@@ -51,11 +51,13 @@ every real listing and at the foot of the results. Prices, hours and
 equipment were read from each gym's own website, and each fact links to its
 page.
 
-The 477 gyms in 15 US cities, and the neighbourhoods the search box knows
-there, also come from OpenStreetMap (© OpenStreetMap contributors, ODbL),
-fetched on 24 September 2026 through the Overpass API. They are a derived
-database under the ODbL: `packages/usa-data/scripts/generate.py` shows
-exactly how they were filtered, and every gym links back to its map
+The 477 gyms in 15 US cities and the 189 in Brisbane, Perth, Adelaide,
+Canberra, the Gold Coast and Hobart, and the suburbs and neighbourhoods the
+search box knows there, also come from OpenStreetMap (© OpenStreetMap
+contributors, ODbL), fetched on 24 September 2026 through the Overpass API.
+They are derived databases under the ODbL: `scripts/osm_gyms.py` and each
+package's `scripts/generate.py` (`packages/usa-data`, `packages/au-data`)
+show exactly how they were filtered, and every gym links back to its map
 element.
 
 ## Map tiles (PC and Android)

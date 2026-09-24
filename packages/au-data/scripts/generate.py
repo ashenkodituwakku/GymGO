@@ -1,7 +1,8 @@
 """
-Turn raw OpenStreetMap answers into src/data.ts.
+Turn raw OpenStreetMap answers into src/data.ts for GymGO's map-only
+Australian cities.
 
-Input: one JSON file per city (osm-us/<city>.json), each the saved answer to
+Input: one JSON file per city (from scripts/fetch.py), each the saved answer to
 
     nwr["leisure"="fitness_centre"]["name"](around:R,lat,lng); out center tags;
     node["place"~"^(suburb|neighbourhood|quarter)$"]["name"](around:R,lat,lng); out;
@@ -9,7 +10,7 @@ Input: one JSON file per city (osm-us/<city>.json), each the saved answer to
 from the Overpass API (maps.mail.ru mirror), with the time it was fetched.
 
 What counts as a gym is decided in scripts/osm_gyms.py at the repository
-root, shared with packages/au-data. Then the 40 nearest the city centre.
+root, shared with packages/usa-data. Then the 40 nearest the city centre.
 
 Usage: python3 scripts/generate.py <dir with city json files>
 """
@@ -23,37 +24,36 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, '..', 'src', 'data.ts')
 PER_CITY = 40
 PLACES_PER_CITY = 14
+STATES = {'ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA'}
 
 # Must match src/cities.ts.
 CITIES = {
-    'new-york': ('NY', 40.7549, -73.9840, 6000),
-    'los-angeles': ('CA', 34.0736, -118.3400, 9000),
-    'chicago': ('IL', 41.8900, -87.6300, 6000),
-    'houston': ('TX', 29.7500, -95.3800, 8000),
-    'miami': ('FL', 25.7800, -80.1600, 7000),
-    'san-francisco': ('CA', 37.7749, -122.4194, 5000),
-    'seattle': ('WA', 47.6150, -122.3350, 5000),
-    'boston': ('MA', 42.3550, -71.0650, 5000),
-    'austin': ('TX', 30.2750, -97.7400, 6000),
-    'denver': ('CO', 39.7400, -104.9850, 6000),
-    'las-vegas': ('NV', 36.1400, -115.1600, 8000),
-    'washington-dc': ('DC', 38.9050, -77.0350, 5000),
-    'atlanta': ('GA', 33.7700, -84.3850, 6000),
-    'san-diego': ('CA', 32.7300, -117.1550, 6000),
-    'philadelphia': ('PA', 39.9526, -75.1652, 5000),
+    'brisbane': ('QLD', -27.4698, 153.0251, 7000),
+    'perth': ('WA', -31.9523, 115.8613, 7000),
+    'adelaide': ('SA', -34.9285, 138.6007, 6000),
+    'canberra': ('ACT', -35.2809, 149.1300, 8000),
+    'gold-coast': ('QLD', -28.0023, 153.4145, 9000),
+    'hobart': ('TAS', -42.8821, 147.3272, 6000),
 }
 CITY_NAMES = {
-    'new-york': 'New York', 'los-angeles': 'Los Angeles', 'chicago': 'Chicago', 'houston': 'Houston',
-    'miami': 'Miami', 'san-francisco': 'San Francisco', 'seattle': 'Seattle', 'boston': 'Boston',
-    'austin': 'Austin', 'denver': 'Denver', 'las-vegas': 'Las Vegas', 'washington-dc': 'Washington',
-    'atlanta': 'Atlanta', 'san-diego': 'San Diego', 'philadelphia': 'Philadelphia',
+    'brisbane': 'Brisbane', 'perth': 'Perth', 'adelaide': 'Adelaide', 'canberra': 'Canberra',
+    'gold-coast': 'Gold Coast', 'hobart': 'Hobart',
 }
+
+
+def state_of(tags, default):
+    """The state from the address when it's a real Australian one ("Queensland" → QLD)."""
+    raw = (tags.get('addr:state') or '').strip().upper()
+    names = {'QUEENSLAND': 'QLD', 'WESTERN AUSTRALIA': 'WA', 'SOUTH AUSTRALIA': 'SA', 'TASMANIA': 'TAS',
+             'AUSTRALIAN CAPITAL TERRITORY': 'ACT', 'NEW SOUTH WALES': 'NSW', 'VICTORIA': 'VIC', 'NORTHERN TERRITORY': 'NT'}
+    raw = names.get(raw, raw)
+    return raw if raw in STATES else default
 
 
 def main(src):
     fetched, gyms_out, places_out, ids, stats = {}, [], [], set(), {}
     parsed = unparsed = 0
-    for city, (state, lat, lng, radius) in CITIES.items():
+    for city, (state, lat, lng, _radius) in CITIES.items():
         data = json.load(open(os.path.join(src, f'{city}.json')))
         fetched[city] = data['fetchedAt']
         centre = (lat, lng)
@@ -82,12 +82,7 @@ def main(src):
             base = slug('-'.join(filter(None, [name, branch or (street if street else None), city])))
             gid = base if base not in ids else f'{base}-{el["type"][0]}{el["id"]}'
             ids.add(gid)
-            row = {
-                'city': city,
-                'id': gid,
-                'osm': f'{el["type"]}/{el["id"]}',
-                'name': name,
-            }
+            row = {'city': city, 'id': gid, 'osm': f'{el["type"]}/{el["id"]}', 'name': name}
             if tags.get('brand'):
                 row['brand'] = tags['brand']
             if re.fullmatch(r'Q\d+', tags.get('brand:wikidata', '')):
@@ -95,9 +90,10 @@ def main(src):
             if branch:
                 row['branch'] = branch
             row['line1'] = line1
-            row['locality'] = tags.get('addr:city') or CITY_NAMES[city]
-            row['state'] = (tags.get('addr:state') or state).upper()[:2]
-            row['zip'] = (tags.get('addr:postcode') or '')[:5]
+            row['suburb'] = tags.get('addr:suburb') or tags.get('addr:city') or CITY_NAMES[city]
+            row['state'] = state_of(tags, state)
+            postcode = (tags.get('addr:postcode') or '').strip()
+            row['postcode'] = postcode if re.fullmatch(r'\d{4}', postcode) else ''
             row['lat'] = round(pos[0], 6)
             row['lng'] = round(pos[1], 6)
             row['type'] = training_type(name, tags)
@@ -123,19 +119,17 @@ def main(src):
                     row['hours'] = hours
             gyms_out.append(row)
 
-        # Neighbourhoods for the search box: the notable ones (they have a
-        # Wikidata entry), nearest the centre first.
+        # Suburbs for the search box, nearest the centre first. Australian
+        # suburbs are official names, so every place=suburb counts; smaller
+        # neighbourhoods only when they're notable (they have a Wikidata entry).
         names = set()
         cands = []
         for el in data['places']:
             tags = el['tags']
             pos = position(el)
-            if not pos or 'wikidata' not in tags:
+            if not pos or (tags.get('place') != 'suburb' and 'wikidata' not in tags):
                 continue
-            name = re.sub(r'^\w+: ', '', tags.get('name:en') or tags['name'])  # "18b: The Arts District"
-            # Heritage listings, not names people search for.
-            if re.search(r'historic district|thematic', name, re.I):
-                continue
+            name = tags.get('name:en') or tags['name']
             if name.lower() in names or name.lower() == CITY_NAMES[city].lower():
                 continue
             names.add(name.lower())
@@ -148,10 +142,10 @@ def main(src):
         '// Generated by scripts/generate.py from OpenStreetMap data. Do not edit by hand.',
         '// © OpenStreetMap contributors, available under the Open Database License (ODbL).',
         '',
-        "import type { GymRow, PlaceRow, UsCityId } from './rows';",
+        "import type { AuCityId, GymRow, PlaceRow } from './rows';",
         '',
-        '/** When each city\'s data was fetched from the Overpass API. */',
-        'export const FETCHED: Record<UsCityId, string> = {',
+        "/** When each city's data was fetched from the Overpass API. */",
+        'export const FETCHED: Record<AuCityId, string> = {',
     ]
     lines += [f"  '{c}': '{t}'," for c, t in fetched.items()]
     lines += ['};', '', '// prettier-ignore', 'export const GYM_ROWS: GymRow[] = [']
@@ -161,8 +155,8 @@ def main(src):
     lines += ['];', '']
     open(OUT, 'w').write('\n'.join(lines))
     for city, (raw, ok, kept) in stats.items():
-        print(f'{city:15} {raw:4} mapped, {ok:4} kept after filters, {kept:3} used')
-    print('gyms', len(gyms_out), 'places', len(places_out), 'hours parsed', parsed, 'unparsed', unparsed)
+        print(f'{city:12} {raw:4} mapped, {ok:4} kept after filters, {kept:3} used')
+    print('gyms', len(gyms_out), 'suburbs', len(places_out), 'hours parsed', parsed, 'unparsed', unparsed)
 
 
 if __name__ == '__main__':

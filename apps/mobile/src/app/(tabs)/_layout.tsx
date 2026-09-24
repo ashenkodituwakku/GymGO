@@ -55,7 +55,9 @@ export default function TabsLayout() {
   return (
     <TabBarInset.Provider value={bottom + BAR_HEIGHT + 8}>
       <Tabs style={styles.root}>
-        <TabSlot />
+        {/* Its own container defaults to never shrinking, which lets a
+            screen grow past the window so nothing scrolls. */}
+        <TabSlot style={styles.slot} />
         {/* Declares the routes; the visible bar is GymGO's own. */}
         <TabList style={styles.hidden}>
           {TABS.map((tab) => (
@@ -211,6 +213,7 @@ function useAndroidKeyboard(): boolean {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  slot: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 },
   hidden: { display: 'none' },
   dock: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   shadow: {

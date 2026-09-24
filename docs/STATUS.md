@@ -277,47 +277,47 @@ name; the skip link works.
 
 ## Known gaps
 
-### Never exercised
+### Phone app and server (`apps/mobile`, `apps/server`)
 
-- **The map.** No basemap is configured, so `MapCanvas` has never rendered. The
-  unconfigured state is tested; the configured one is not. Treat the MapLibre
-  code as unreviewed-in-practice until someone runs it with a real style URL.
-
-### Development-only
-
-- **Authentication.** `local-dev` has no passwords and no identity checks. It is
-  refused in a production build unless two variables are set deliberately, and
-  then every page carries a warning banner. A real provider is required before
-  anyone but a developer uses this.
-- **Persistence.** The JSON file store will not survive a serverless deployment
-  and does not scale. `docs/sql/001_schema.sql` is the production schema; the
-  repository functions in `src/server/` are the seam.
-
-### Not built
-
-- **Native QA of the phone app.** Built and bundled, but never run on a
-  device or simulator (see the top of this document). A web-preview screenshot
-  is not native QA evidence.
+- **Native QA.** Built and bundled for iOS and Android, but never run on a
+  device or simulator. Everything above marked "browser" was seen in the web
+  build, which shares the code but not the native pieces (Apple Maps, SF
+  Symbols, Liquid Glass, haptics, the share sheet, the photo picker).
 - **Store builds.** No app icon, splash screen, bundle identifiers, EAS
-  project, signing, or store listing. None of those were asked for yet, and
-  most involve an account or a fee.
-- **A native macOS binary.** A separate later deliverable. The desktop website
-  and the installable web experience cover the Mac requirement for now.
-- **A support channel.** `/support` says plainly that no channel is connected
-  and the addresses are placeholders. This must exist before contributions open
-  to the public.
-- **Structured data (schema.org).** Would need to be backed by visible, licensed
-  facts. A decision to make with real data.
-- **Crowd reporting.** Modelled, deliberately unpopulated.
+  project, signing or store listing. None were asked for, and most involve an
+  account or a fee.
+- **Hosting.** The server runs on your own computer. Nothing is deployed, so
+  accounts, reviews and members' reports live in one SQLite file there.
+- **Real gym data is thin on detail.** 23 Melbourne gyms were researched fact
+  by fact; the other ~1,000 in 8 Australian and 15 US cities are map-only
+  (names, places, sometimes hours), so almost every card says "Call first".
+  Members' price, visit and machine reports are the way that improves.
+- **No email.** Sign-up sends nothing, so there's no email check and no
+  password reset.
+- **Google's extras and Stripe** are built but have never been used with the
+  owner's real keys.
+
+### The older website (`apps/web`)
+
+- **Invented data only.** Its 17 listings are the demo gyms.
+- **The map has never rendered.** No basemap is configured, so `MapCanvas` is
+  tested only in its unconfigured state.
+- **Development-only sign-in.** `local-dev` has no passwords; a production
+  build refuses it unless two variables are set on purpose, and then every
+  page carries a warning.
+- **File storage.** The JSON file store won't survive a serverless
+  deployment; `docs/sql/001_schema.sql` is the production schema.
+- **No support channel, no schema.org data.**
 
 ### Not started at all
 
-- **Any real gym data.** All 17 listings are invented.
 - **Any customer research.** No interviews, no operator conversations, no task
   testing, no pilot. The product thesis is a hypothesis and this build does not
   make it less of one.
 - **Any external contact.** No gym has been approached. No outreach has
   happened.
+- **Crowd levels.** Modelled, deliberately unpopulated: GymGO shows no
+  "busy now" it can't back up.
 
 ## What would need deciding before production
 

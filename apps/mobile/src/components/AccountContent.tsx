@@ -258,7 +258,13 @@ export function AccountSettings({ account }: { account: AccountApi }) {
   );
 }
 
-const OUTCOME_LABEL: Record<AccessOutcome, string> = { walked_in: 'walked in', booked_first: 'had to book first', turned_away: 'turned away' };
+const OUTCOME_LABEL: Record<AccessOutcome | 'closed' | 'open', string> = {
+  walked_in: 'walked in',
+  booked_first: 'had to book first',
+  turned_away: 'turned away',
+  closed: 'says it has closed',
+  open: 'says it’s still open',
+};
 
 /**
  * Members' price and visit reports show straight away, so moderators look

@@ -29,6 +29,9 @@
  *   GET    /api/gyms/:gymId/access        how visiting went for members: walked in / booked first / turned away
  *   PUT    /api/gyms/:gymId/access        { outcome, visitedOn } -> your report (replaces your last)
  *   DELETE /api/gyms/:gymId/access        take back your report
+ *   GET    /api/gyms/:gymId/status        whether members say it has closed: closed / still open counts
+ *   PUT    /api/gyms/:gymId/status        { status: 'closed' | 'open', seenOn } -> your report (replaces your last)
+ *   DELETE /api/gyms/:gymId/status        take back your report
  *   GET    /api/gyms/:gymId/google        live Google Maps details (only with the owner's key)
  *   GET    /api/billing/plans             GymGO Pro's prices, and whether it's on sale
  *   GET    /api/billing                   your plan (Free or Pro) and subscription
@@ -205,6 +208,9 @@ function median(sorted: number[]): number {
 
 type AccessOutcome = 'walked_in' | 'booked_first' | 'turned_away';
 
+/** How long a member's report that a gym has closed (or is open) keeps counting. */
+const STATUS_REPORT_DAYS = 183;
+
 /** How long a member's report of getting in keeps counting. */
 const ACCESS_REPORT_DAYS = 365;
 
@@ -290,6 +296,7 @@ export function createApp(options: AppOptions) {
   const equipmentLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
   const priceLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   const accessLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
+  const statusLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   const photos = new PhotoStore(options.photoDir ?? null);
   const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
   const billing = new Billing(db, {
@@ -508,6 +515,9 @@ export function createApp(options: AppOptions) {
         priceReports: rows(
           `select gym_id as gymId, amount_minor as amountMinor, currency, paid_on as paidOn, reported_at as reportedAt
            from price_reports where user_id = ? order by reported_at`,
+        ),
+        gymStatusReports: rows(
+          `select gym_id as gymId, status, seen_on as seenOn, reported_at as reportedAt from status_reports where user_id = ? order by reported_at`,
         ),
         visitReports: rows(
           `select gym_id as gymId, outcome, visited_on as visitedOn, reported_at as reportedAt from access_reports where user_id = ? order by reported_at`,
@@ -926,6 +936,62 @@ export function createApp(options: AppOptions) {
       }
     }
 
+    // --- Whether the gym is still there, from members -------------------------
+    // Map data can be years old. Members who went by say it has closed, or
+    // that it's still open; the card warns only on their word, labelled as
+    // theirs. Six months of reports count.
+    if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'status' && parts.length === 4) {
+      const gymId = decodeURIComponent(parts[2]!);
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+      const since = new Date(now().getTime() - STATUS_REPORT_DAYS * 86_400_000).toISOString().slice(0, 10);
+
+      if (method === 'GET') {
+        const { account } = caller(req);
+        const rows = db
+          .prepare('select status, seen_on from status_reports where gym_id = ? and seen_on >= ?')
+          .all(gymId, since) as Array<{ status: 'closed' | 'open'; seen_on: string }>;
+        const latest = (status: 'closed' | 'open') =>
+          rows.filter((row) => row.status === status).reduce<string | null>((max, row) => (max && max > row.seen_on ? max : row.seen_on), null);
+        const mine = account
+          ? (db.prepare('select status, seen_on from status_reports where gym_id = ? and user_id = ?').get(gymId, account.id) as
+              | { status: 'closed' | 'open'; seen_on: string }
+              | undefined)
+          : undefined;
+        return send(res, 200, {
+          closed: rows.filter((row) => row.status === 'closed').length,
+          open: rows.filter((row) => row.status === 'open').length,
+          latestClosedOn: latest('closed'),
+          latestOpenOn: latest('open'),
+          mine: mine ? { status: mine.status, seenOn: mine.seen_on } : null,
+        });
+      }
+
+      if (method === 'PUT' || method === 'DELETE') {
+        const { account, user } = requireAccount(req);
+        requirePermission(user, 'correction.create', gymId);
+        if (method === 'DELETE') {
+          db.prepare('delete from status_reports where gym_id = ? and user_id = ?').run(gymId, account.id);
+          return send(res, 204);
+        }
+        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to report.');
+        const body = (await readJson(req)) as Record<string, unknown>;
+        const status = body.status;
+        if (status !== 'closed' && status !== 'open') throw new HttpError(400, 'Say whether it has closed or is still open.');
+        const seenOn = typeof body.seenOn === 'string' ? body.seenOn : '';
+        const tomorrow = new Date(now().getTime() + 86_400_000).toISOString().slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(seenOn) || Number.isNaN(Date.parse(seenOn)) || seenOn > tomorrow) {
+          throw new HttpError(400, 'Say when you saw it, as a date that has happened.');
+        }
+        if (seenOn < since) throw new HttpError(400, 'That was over six months ago; say what you saw more recently.');
+        if (!statusLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That\u2019s a lot of updates for one day. Try again tomorrow.');
+        db.prepare(
+          `insert into status_reports (gym_id, user_id, status, seen_on, reported_at) values (?, ?, ?, ?, ?)
+           on conflict (gym_id, user_id) do update set status = excluded.status, seen_on = excluded.seen_on, reported_at = excluded.reported_at`,
+        ).run(gymId, account.id, status, seenOn, now().toISOString());
+        return send(res, 204);
+      }
+    }
+
     // --- Google Maps (live, only with the owner's key) ----------------------
     if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'google' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
@@ -978,10 +1044,14 @@ export function createApp(options: AppOptions) {
            select 'access', access_reports.gym_id, access_reports.user_id, users.display_name,
                   null, null, access_reports.outcome, access_reports.visited_on, access_reports.reported_at
            from access_reports join users on users.id = access_reports.user_id
+           union all
+           select 'status', status_reports.gym_id, status_reports.user_id, users.display_name,
+                  null, null, status_reports.status, status_reports.seen_on, status_reports.reported_at
+           from status_reports join users on users.id = status_reports.user_id
            order by reported_at desc limit 50`,
         )
         .all() as Array<{
-        kind: 'price' | 'access';
+        kind: 'price' | 'access' | 'status';
         gym_id: string;
         user_id: string;
         display_name: string;
@@ -1009,8 +1079,8 @@ export function createApp(options: AppOptions) {
     if (method === 'DELETE' && parts[0] === 'api' && parts[1] === 'moderation' && parts[2] === 'member-reports' && parts.length === 6) {
       const { user } = requireAccount(req);
       requirePermission(user, 'correction.moderate');
-      const table = parts[3] === 'price' ? 'price_reports' : parts[3] === 'access' ? 'access_reports' : null;
-      if (!table) throw new HttpError(400, 'Say which kind of report: price or access.');
+      const table = { price: 'price_reports', access: 'access_reports', status: 'status_reports' }[parts[3] ?? ''] ?? null;
+      if (!table) throw new HttpError(400, 'Say which kind of report: price, access or status.');
       const result = db
         .prepare(`delete from ${table} where gym_id = ? and user_id = ?`)
         .run(decodeURIComponent(parts[4]!), decodeURIComponent(parts[5]!));

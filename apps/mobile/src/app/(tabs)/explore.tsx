@@ -40,6 +40,7 @@ import { Icon } from '@/components/Icon';
 import { MemberAccess } from '@/components/MemberAccess';
 import { MemberKit } from '@/components/MemberKit';
 import { MemberPrices } from '@/components/MemberPrices';
+import { MemberStatus, StatusWarning } from '@/components/MemberStatus';
 import { PhotoHero } from '@/components/PhotoHero';
 import { PlaceCard, PlaceHeader } from '@/components/PlaceCard';
 import { ResultsContent } from '@/components/ResultsContent';
@@ -345,6 +346,8 @@ function MapScreen() {
             onSignIn={openAccount}
           />
         }
+        statusWarning={<StatusWarning gymId={selected.record.location.id} isDemo={selected.record.location.isDemoData} token={account.state === 'signed_in' ? account.token : null} />}
+        memberStatus={<MemberStatus gymId={selected.record.location.id} isDemo={selected.record.location.isDemoData} account={account} onSignIn={openAccount} />}
         memberAccess={
           <MemberAccess gymId={selected.record.location.id} isDemo={selected.record.location.isDemoData} account={account} onSignIn={openAccount} />
         }

@@ -87,15 +87,25 @@ export interface GymPhoto {
 
 export type AccessOutcome = 'walked_in' | 'booked_first' | 'turned_away';
 
-/** A member's price or visit report, as moderators see it. */
+/** Whether members say a gym has closed, over the last six months. */
+export interface GymStatusSummary {
+  closed: number;
+  open: number;
+  latestClosedOn: string | null;
+  latestOpenOn: string | null;
+  mine: { status: 'closed' | 'open'; seenOn: string } | null;
+}
+
+/** A member's price, visit or open/closed report, as moderators see it. */
 export interface MemberReport {
-  kind: 'price' | 'access';
+  kind: 'price' | 'access' | 'status';
   gymId: string;
   userId: string;
   author: string;
   amountMinor: number | null;
   currency: 'AUD' | 'USD' | null;
-  outcome: AccessOutcome | null;
+  /** A visit's outcome, or for a status report, "closed" or "open". */
+  outcome: AccessOutcome | 'closed' | 'open' | null;
   on: string;
   reportedAt: string;
 }
@@ -255,6 +265,10 @@ export const api = {
     ),
   reportEquipment: (token: string, gymId: string, items: EquipmentReportItem[]) =>
     request<unknown>('PUT', `/api/gyms/${encodeURIComponent(gymId)}/equipment`, { token, body: { items } }),
+  gymStatus: (gymId: string, token: string | null) => request<GymStatusSummary>('GET', `/api/gyms/${encodeURIComponent(gymId)}/status`, { token }),
+  reportGymStatus: (token: string, gymId: string, body: { status: 'closed' | 'open'; seenOn: string }) =>
+    request<unknown>('PUT', `/api/gyms/${encodeURIComponent(gymId)}/status`, { token, body }),
+  deleteGymStatus: (token: string, gymId: string) => request<unknown>('DELETE', `/api/gyms/${encodeURIComponent(gymId)}/status`, { token }),
   access: (gymId: string, token: string | null) => request<AccessSummary>('GET', `/api/gyms/${encodeURIComponent(gymId)}/access`, { token }),
   reportAccess: (token: string, gymId: string, body: { outcome: AccessOutcome; visitedOn: string }) =>
     request<unknown>('PUT', `/api/gyms/${encodeURIComponent(gymId)}/access`, { token, body }),

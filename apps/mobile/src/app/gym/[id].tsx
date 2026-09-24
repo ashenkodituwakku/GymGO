@@ -19,6 +19,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { MemberAccess } from '@/components/MemberAccess';
 import { MemberKit } from '@/components/MemberKit';
 import { MemberPrices } from '@/components/MemberPrices';
+import { MemberStatus, StatusWarning } from '@/components/MemberStatus';
 import { PhotoHero } from '@/components/PhotoHero';
 import { PlaceCard } from '@/components/PlaceCard';
 import { ReviewsSection } from '@/components/ReviewsSection';
@@ -150,6 +151,8 @@ export default function GymPage() {
                 onSignIn={() => router.navigate('/profile')}
               />
             }
+            statusWarning={<StatusWarning gymId={location.id} isDemo={location.isDemoData} token={account.state === 'signed_in' ? account.token : null} />}
+            memberStatus={<MemberStatus gymId={location.id} isDemo={location.isDemoData} account={account} onSignIn={() => router.navigate('/profile')} />}
             memberAccess={
               <MemberAccess gymId={location.id} isDemo={location.isDemoData} account={account} onSignIn={() => router.navigate('/profile')} />
             }

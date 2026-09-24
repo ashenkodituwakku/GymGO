@@ -356,6 +356,36 @@ describe('how getting in went for visiting members', () => {
   });
 });
 
+describe('whether a gym has closed, from members', () => {
+  const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+
+  it('counts closed and still-open reports from the last six months, without names', async () => {
+    const gym = '/api/gyms/lincoln-square-fitness/status';
+    expect((await call('GET', gym)).status).toBe(404);
+    const real = '/api/gyms/carlton-fitness/status';
+    expect((await call('GET', real)).body).toEqual({ closed: 0, open: 0, latestClosedOn: null, latestOpenOn: null, mine: null });
+    const [a, b, c] = [await signUp(), await signUp(), await signUp()];
+    await call('PUT', real, { token: a.token, body: { status: 'closed', seenOn: day(-3) } });
+    await call('PUT', real, { token: b.token, body: { status: 'closed', seenOn: day(-1) } });
+    await call('PUT', real, { token: c.token, body: { status: 'open', seenOn: day(-10) } });
+    const summary = await call('GET', real, { token: a.token });
+    expect(summary.body).toEqual({ closed: 2, open: 1, latestClosedOn: day(-1), latestOpenOn: day(-10), mine: { status: 'closed', seenOn: day(-3) } });
+    expect(JSON.stringify(summary.body)).not.toMatch(/Lifter|@example/);
+    expect((await call('DELETE', real, { token: a.token })).status).toBe(204);
+    expect((await call('GET', real)).body).toMatchObject({ closed: 1, open: 1 });
+  });
+
+  it('turns away unknown statuses, stale or future dates, and invented demo gyms', async () => {
+    const { token } = await signUp();
+    const real = '/api/gyms/carlton-fitness/status';
+    for (const body of [{ status: 'moved', seenOn: day(0) }, { status: 'closed', seenOn: day(3) }, { status: 'closed', seenOn: day(-200) }]) {
+      expect((await call('PUT', real, { token, body })).status).toBe(400);
+    }
+    const demo = `/api/gyms/${DEMO_GYMS[0]!.location.id}/status`;
+    expect((await call('PUT', demo, { token, body: { status: 'closed', seenOn: day(0) } })).status).toBe(400);
+  });
+});
+
 describe('moderating members’ price and visit reports', () => {
   it('shows moderators the latest reports with who sent them, and lets them remove one', async () => {
     const day = new Date().toISOString().slice(0, 10);

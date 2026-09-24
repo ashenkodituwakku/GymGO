@@ -106,6 +106,8 @@ export function PlaceCard({
   memberKit,
   memberPrices,
   memberAccess,
+  statusWarning,
+  memberStatus,
   reviews,
 }: {
   result: GymSearchResult;
@@ -126,6 +128,10 @@ export function PlaceCard({
   memberPrices?: React.ReactNode;
   /** How getting in went for visiting members, under the gym's own rules. */
   memberAccess?: React.ReactNode;
+  /** A warning, at the top, when members say the gym has closed. */
+  statusWarning?: React.ReactNode;
+  /** Saying whether it has closed, under "Where this comes from". */
+  memberStatus?: React.ReactNode;
   /** The live reviews section, likewise. */
   reviews: React.ReactNode;
 }) {
@@ -220,6 +226,8 @@ export function PlaceCard({
           </Txt>
         </View>
       )}
+
+      {statusWarning}
 
       {/* The one answer ------------------------------------------------- */}
       <View style={[styles.verdict, { backgroundColor: tone.tint }]}>
@@ -495,6 +503,7 @@ export function PlaceCard({
         {sources.length > 0 && (
           <Fold icon="book" title="Where this comes from" summary={`${sources.length} source${sources.length === 1 ? '' : 's'}, all linked`}>
             <Sources sources={sources} />
+            {memberStatus}
           </Fold>
         )}
       </View>

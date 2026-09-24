@@ -270,8 +270,18 @@ from the last year (door rules change), without names, labelled as members'
 visits and not the gym's rule. Like every member report, it never makes a
 gym "Good to go".
 
-Price and visit reports show straight away. Moderators see the latest 50 in
-Profile, with who sent each, and can remove any that are wrong or abusive.
+### Has it closed? From members
+
+Map data can be years old, and nobody has checked that every gym is still
+trading. Under a gym's **Where this comes from**, members can say **it has
+closed** or **it's still open**, and when they saw it. When more members say
+closed than open (over the last six months), the gym's card warns at the
+top: "Members say this gym has closed", with how many and when, and "check
+before you go". It's their word, labelled as theirs.
+
+Price, visit and closed/open reports show straight away. Moderators see the
+latest 50 in Profile, with who sent each, and can remove any that are wrong
+or abusive.
 
 ### Gym logos
 

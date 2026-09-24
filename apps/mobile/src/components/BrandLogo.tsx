@@ -46,6 +46,16 @@ export function LogoPlate({ location }: { location: GymLocation }) {
   );
 }
 
+/** A small logo plate, for the header of a gym's card. */
+export function LogoBadge({ location }: { location: GymLocation }) {
+  if (!logoFor(location)) return null;
+  return (
+    <View style={[styles.plate, styles.badge]}>
+      <BrandLogo location={location} width={84} height={30} area={1100} />
+    </View>
+  );
+}
+
 /** The credit a logo needs: where it's from, its licence, and that GymGO isn't the brand. */
 export function LogoCredit({ location }: { location: GymLocation }) {
   const logo = logoFor(location);
@@ -63,6 +73,7 @@ export function LogoCredit({ location }: { location: GymLocation }) {
 }
 
 const styles = StyleSheet.create({
+  badge: { paddingHorizontal: 8, paddingVertical: 6, marginBottom: 0, alignSelf: 'auto', borderRadius: radius.md },
   plate: {
     alignSelf: 'flex-start',
     alignItems: 'center',

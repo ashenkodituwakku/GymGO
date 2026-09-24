@@ -32,6 +32,7 @@ import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Icon, type IconName } from './Icon';
 import { StateGlyphRow } from './StateGlyphRow';
+import { LogoBadge, LogoCredit } from './BrandLogo';
 import { Glass } from './Glass';
 import { ActionButton, CloseButton, Fold, TIER_COLOUR, Txt } from './ui';
 
@@ -77,6 +78,7 @@ export function PlaceHeader({
     <View style={[styles.headerBar, { paddingTop: topPadding }]}>
       {scrolled && <Glass kind="bar" style={StyleSheet.absoluteFill} />}
       <View style={styles.header}>
+        <LogoBadge location={location} />
         <View style={styles.headerText}>
           <Txt variant="title" numberOfLines={2}>
             {location.name}
@@ -497,6 +499,11 @@ export function PlaceCard({
         )}
       </View>
 
+      {/* Wherever a brand's logo shows, its credit does too. */}
+      <View style={styles.logoCredit}>
+        <LogoCredit location={location} />
+      </View>
+
       {location.isDemoData && (
         <Txt variant="caption" color={color.labelSecondary} style={styles.demo}>
           Demo listing. This gym, its prices and its hours are invented for testing.
@@ -727,4 +734,5 @@ const styles = StyleSheet.create({
   notes: { gap: 4, marginTop: space[3] },
   sourceRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: space[2] },
   sourceNote: { marginTop: space[2] },
+  logoCredit: { marginTop: space[3] },
 });

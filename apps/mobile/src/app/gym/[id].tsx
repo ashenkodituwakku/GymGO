@@ -10,7 +10,7 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { LogoCredit, LogoPlate } from '@/components/BrandLogo';
+import { LogoPlate } from '@/components/BrandLogo';
 import { GoogleEmbed } from '@/components/GoogleEmbed';
 import { GoogleModal } from '@/components/GoogleModal';
 import { GoogleSection, useGooglePlace } from '@/components/GoogleSection';
@@ -166,9 +166,6 @@ export default function GymPage() {
             reviews={<ReviewsSection gymId={location.id} account={account} inSheet={false} onSignIn={() => router.navigate('/profile')} />}
           />
           <GoogleSection place={place} photosAbove={googlePhotos} />
-          <View style={styles.credits}>
-            <LogoCredit location={location} />
-          </View>
           <View style={styles.mapButton}>
             <PrimaryButton
               label="Show on the map"
@@ -211,7 +208,6 @@ const styles = StyleSheet.create({
   column: { maxWidth: '100%' },
   title: { gap: 2, paddingHorizontal: space[4], paddingTop: space[2], paddingBottom: space[3] },
   streetView: { gap: space[1] },
-  credits: { paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[2] },
   mapButton: { paddingHorizontal: space[4] },
   headerButtons: { flexDirection: 'row', alignItems: 'center', gap: space[4], paddingHorizontal: space[1] },
   headerButton: { padding: 4 },

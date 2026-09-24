@@ -274,8 +274,9 @@ Profile, with who sent each, and can remove any that are wrong or abusive.
 Eight chains have a logo that is free to reuse, found through Wikidata (the
 brand's "logo image") and hosted on Wikimedia Commons: 24 Hour Fitness,
 CrossFit, Equinox, Fitness First, Gold's Gym, LA Fitness, Life Time and Snap
-Fitness. Each shows at the top of that chain's gym pages, and on its cards
-when no member has shared a photo. Seven are public domain as simple text or
+Fitness. Each shows at the top of that chain's gym pages, beside the name on
+its card when you tap it on the map, and on its tiles when no member has
+shared a photo. Seven are public domain as simple text or
 shapes; Gold's Gym's is CC BY 4.0, credited to Gold's Gym. Every gym page
 with a logo credits it and says GymGO isn't connected to or endorsed by the
 brand. A logo is still its owner's trademark: GymGO uses it only to say

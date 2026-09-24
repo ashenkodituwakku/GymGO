@@ -31,6 +31,23 @@ export function priceLine(offers: OfferSelection): PriceLine {
   return { headline, caption: 'not for you', confirmed: false };
 }
 
+/** An emoji for the kind of gym, for tiles with no photo: clearly a symbol, never a picture of the place. */
+export function gymEmoji(location: { isDemoData: boolean; trainingTypes: string[] }): string {
+  if (location.isDemoData) return '🧪';
+  const [type] = location.trainingTypes;
+  return type === 'crossfit_box'
+    ? '🤸'
+    : type === 'studio'
+      ? '🔥'
+      : type === 'aquatic_centre'
+        ? '🏊'
+        : type === 'strength_focused'
+          ? '🏋️‍♂️'
+          : type === 'functional'
+            ? '🤾'
+            : '🏋️';
+}
+
 /** "Plus a A$20 deposit — A$45 on the day." or null when there is none. */
 export function depositLine(offers: OfferSelection): string | null {
   const cost = offers.bestAvailable?.cost;

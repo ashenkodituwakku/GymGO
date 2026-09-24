@@ -6,6 +6,7 @@
 import { StyleSheet, View } from 'react-native';
 import { color, face, radius, space } from '@/lib/theme';
 import { KIT_LABEL, muscleLabel, type Exercise, type Kit } from '@/lib/workout';
+import { PIcon } from './PIcon';
 import { Txt } from './ui';
 
 export function ExerciseCard({
@@ -38,7 +39,7 @@ export function ExerciseCard({
       <View style={styles.flex}>
         <Txt variant="headline">{exercise.name}</Txt>
         <Txt variant="subhead" color={color.brand} style={face('bold')}>
-          {exercise.cardio ? 'Finisher' : `${sets} × ${reps} · rest ${restSeconds} s`}
+          {exercise.cardio ? '🔥 Finisher' : `${sets} × ${reps} · rest ${restSeconds} s`}
         </Txt>
         <Txt variant="footnote" color={color.labelSecondary}>
           {exercise.cue}
@@ -69,9 +70,12 @@ function KitUsed({ uses, confirmed, forGym }: { uses: Kit[]; confirmed: boolean;
   }
   if (!forGym) {
     return (
-      <Txt variant="caption" color={color.labelSecondary}>
-        🏋️ {names}
-      </Txt>
+      <View style={styles.kit}>
+        <PIcon name="barbell" size={15} color={color.labelSecondary} accent={color.brand} />
+        <Txt variant="caption" color={color.labelSecondary}>
+          {names}
+        </Txt>
+      </View>
     );
   }
   return (
@@ -101,5 +105,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   meta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], marginTop: space[2] },
+  kit: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   tag: { paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.brandTint },
 });

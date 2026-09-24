@@ -11,6 +11,7 @@ import { haptic } from '@/lib/haptics';
 import { useBottomClearance } from '@/lib/layout';
 import { color, radius, space } from '@/lib/theme';
 import { Icon, type IconName } from './Icon';
+import { PIcon, type PhosphorName } from './PIcon';
 import { Txt } from './ui';
 
 
@@ -62,9 +63,21 @@ function TabScreenInner({ title, eyebrow, right, children }: { title: string; ey
 }
 
 /** A section heading with an optional action on the right ("See all"). */
-export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
+export function SectionHeader({
+  title,
+  action,
+  onAction,
+  icon,
+}: {
+  title: string;
+  action?: string;
+  onAction?: () => void;
+  /** A two-tone Phosphor icon before the title. */
+  icon?: PhosphorName;
+}) {
   return (
     <View style={styles.sectionHeader}>
+      {icon ? <PIcon name={icon} size={26} color={color.brand} accent={color.brand} /> : null}
       <Txt variant="title2" style={styles.flex}>
         {title}
       </Txt>

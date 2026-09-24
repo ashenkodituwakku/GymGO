@@ -79,7 +79,7 @@ export default function Profile() {
         </View>
       )}
 
-      <Group header="GymGO Pro">
+      <Group header="✨ GymGO Pro">
         <Row
           emoji="✨"
           tile={TILE.indigo}
@@ -92,7 +92,7 @@ export default function Profile() {
         <Row emoji="💪" tile={TILE.orange} title="My workouts" onPress={() => router.push('/workouts')} />
       </Group>
 
-      <Group header="Your gyms">
+      <Group header="🏋️ Your gyms">
         <Row icon="saved" tile={TILE.orange} title="Saved" value={String(account.saved.length)} onPress={() => router.navigate('/saved')} />
         <Row icon="history" tile={TILE.blue} title="Recently viewed" value={String(recents.length)} onPress={() => router.navigate('/')} />
         <Row
@@ -107,7 +107,7 @@ export default function Profile() {
       {moderator && account.token && (
         <View style={styles.moderation}>
           <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
-            MODERATION
+            🛡️ MODERATION
           </Txt>
           <View style={styles.card}>
             <PhotoQueue token={account.token} records={data.records} onPublished={data.refreshCovers} />
@@ -117,7 +117,7 @@ export default function Profile() {
       )}
 
       <Group
-        header="Preferences"
+        header="⚙️ Preferences"
         footer={Platform.OS === 'web' ? 'Haptics are the small taps you feel on a phone; a browser has none.' : undefined}
       >
         <Row
@@ -128,7 +128,7 @@ export default function Profile() {
         />
       </Group>
 
-      <Group header="About GymGO">
+      <Group header="💬 About GymGO">
         <Row icon="good" tile={TILE.green} title="How we check facts" onPress={() => toggle('facts')} />
         {about === 'facts' && (
           <Explainer>

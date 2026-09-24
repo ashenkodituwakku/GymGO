@@ -16,7 +16,7 @@ import { Icon } from '@/components/Icon';
 import { Group, Row, SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
-import { EMPTY, TIER, timeLabel } from '@/lib/copy';
+import { EMPTY, TIER, sessionEmoji, timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { CITY_LIST, PLACES, cityAt, cityPlace, moneyLabel, type AppPlace } from '@/lib/places';
 import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, nextVisitAt, runSearch, type Filters } from '@/lib/query';
@@ -134,7 +134,11 @@ export default function Home() {
   return (
     <TabScreen
       eyebrow={clock.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
-      title={name ? `${greeting(clock.getHours() * 60)}, ${name}` : `${greeting(clock.getHours() * 60)} 👋`}
+      title={
+        name
+          ? `${greeting(clock.getHours() * 60)}, ${name} ${sessionEmoji(clock.getHours() * 60)}`
+          : `${greeting(clock.getHours() * 60)} ${sessionEmoji(clock.getHours() * 60)}`
+      }
       right={
         <Pressable
           onPress={() => router.navigate('/profile')}
@@ -198,6 +202,7 @@ export default function Home() {
       {/* Nearby ------------------------------------------------------------ */}
       <View style={styles.section}>
         <SectionHeader
+          icon="map-pin"
           title={filters.placeName === YOUR_LOCATION ? 'Near you' : `Near ${filters.placeName}`}
           action="Map"
           onAction={() => explore({ recentre: true })}
@@ -223,7 +228,7 @@ export default function Home() {
 
       {saved.length > 0 && (
         <View style={styles.section}>
-          <SectionHeader title="Saved" action="See all" onAction={() => router.navigate('/saved')} />
+          <SectionHeader icon="bookmarks" title="Saved" action="See all" onAction={() => router.navigate('/saved')} />
           <Carousel>
             {saved.map((result) => (
               <GymCard key={result.record.location.id} result={result} width={176} />
@@ -234,7 +239,7 @@ export default function Home() {
 
       {recent.length > 0 && (
         <View style={styles.section}>
-          <SectionHeader title="Recently viewed" action="Clear" onAction={clearRecents} />
+          <SectionHeader icon="clock-counter-clockwise" title="Recently viewed" action="Clear" onAction={clearRecents} />
           <Carousel>
             {recent.map((result) => (
               <GymCard key={result.record.location.id} result={result} width={176} />
@@ -245,7 +250,7 @@ export default function Home() {
 
       {/* Suburbs ----------------------------------------------------------- */}
       <View style={styles.section}>
-        <SectionHeader title={`Browse ${city.name}`} />
+        <SectionHeader icon="compass" title={`Browse ${city.name}`} />
         <View style={styles.suburbs}>
           {browse.map((place) => {
             const on = filters.placeName === place.name;
@@ -267,7 +272,7 @@ export default function Home() {
 
       {/* Other cities ------------------------------------------------------- */}
       <View style={styles.section}>
-        <SectionHeader title="Other cities" />
+        <SectionHeader icon="globe-hemisphere-west" title="Other cities" />
         <Carousel>
           {otherCities.map((item) => (
             <Pressable
@@ -291,7 +296,7 @@ export default function Home() {
 
       {/* What GymGO knows ---------------------------------------------------- */}
       <View style={styles.section}>
-        <SectionHeader title={`What we know in ${city.name}`} />
+        <SectionHeader icon="seal-check" title={`What we know in ${city.name}`} />
         <View style={styles.stats}>
           <Stat value={real.length} label="real gyms mapped" />
           <Stat value={withPrice} label="publish a price" />
@@ -305,7 +310,7 @@ export default function Home() {
         </Txt>
       </View>
 
-      <Group header="How GymGO answers">
+      <Group header="💡 How GymGO answers">
         <Row emoji={TIER.confirmed.emoji} title={TIER.confirmed.label} subtitle="Everything you asked for is confirmed by a source we checked." />
         <Row emoji={TIER.needs_confirmation.emoji} title={TIER.needs_confirmation.label} subtitle="Could work. The card says exactly what to ask." />
         <Row emoji={TIER.ruled_out.emoji} title={TIER.ruled_out.label} subtitle="Something you need is known not to be there." />

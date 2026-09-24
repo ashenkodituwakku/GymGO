@@ -9,7 +9,7 @@ import type { GymSearchResult } from '@gymgo/domain';
 import { distanceLabel } from '@/lib/places';
 import { TIER, accessLine } from '@/lib/copy';
 import { photoUrl } from '@/lib/api';
-import { priceLine } from '@/lib/present';
+import { priceLine, gymEmoji } from '@/lib/present';
 import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { TIER_COLOUR, Txt } from './ui';
@@ -53,7 +53,7 @@ export function GymRow({
         <Image source={{ uri: coverUri }} style={styles.thumb} resizeMode="cover" />
       ) : (
         <View style={[styles.thumb, styles.tile, { backgroundColor: tone.tint }]}>
-          <Txt style={styles.tileEmoji}>{location.isDemoData ? '🧪' : '🏋️'}</Txt>
+          <Txt style={styles.tileEmoji}>{gymEmoji(location)}</Txt>
         </View>
       )}
 

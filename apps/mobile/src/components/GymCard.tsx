@@ -17,7 +17,7 @@ import { photoUrl } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
-import { priceLine } from '@/lib/present';
+import { priceLine, gymEmoji } from '@/lib/present';
 import { color, face, radius, shadow, space } from '@/lib/theme';
 import { TIER_COLOUR, Txt } from './ui';
 
@@ -51,7 +51,7 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
               <Image source={{ uri: cover }} style={styles.image} resizeMode="cover" />
             ) : (
               <View style={[styles.image, styles.tile, { backgroundColor: tone.tint }]}>
-                <Txt style={styles.tileEmoji}>{location.isDemoData ? '🧪' : '🏋️'}</Txt>
+                <Txt style={styles.tileEmoji}>{gymEmoji(location)}</Txt>
               </View>
             )}
             <View style={styles.body}>

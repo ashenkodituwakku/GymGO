@@ -10,7 +10,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 're
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { explainNoMatches, type SearchOutcome } from '@gymgo/domain';
 import { cityAt, moneyLabel, placeContext, suggestPlaces, type AppPlace } from '@/lib/places';
-import { EMPTY, PLACEHOLDER, TIER, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
+import { EMPTY, PLACEHOLDER, TIER, sessionEmoji, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
 import { SORTS, activeFilterCount, type Filters } from '@/lib/query';
 import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
@@ -194,7 +194,7 @@ export function ResultsContent({
       {/* Summary -------------------------------------------------------- */}
       <View style={styles.summary}>
         <Txt variant="eyebrow" color={color.brand} style={styles.greeting}>
-          {sessionGreeting(filters.visitMinuteOfDay).toUpperCase()}
+          {sessionEmoji(filters.visitMinuteOfDay)} {sessionGreeting(filters.visitMinuteOfDay).toUpperCase()}
         </Txt>
         <Txt variant="title2">
           {filters.placeName === 'your location' ? 'Near you' : `Near ${filters.placeName}`}

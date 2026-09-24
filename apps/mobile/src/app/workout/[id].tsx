@@ -36,6 +36,9 @@ import {
 
 type KitMode = 'gym' | 'typical';
 
+/** Short, so three fit side by side on a phone. */
+const GOAL_LABEL: Record<Goal, string> = { strength: '🏋️ Strength', muscle: '💪 Muscle', endurance: '🔥 Endurance' };
+
 export default function WorkoutScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, account, billing, openPro } = useApp();
@@ -124,7 +127,7 @@ export default function WorkoutScreen() {
       <Stack.Screen options={{ title: 'Workout' }} />
       <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
         <View style={styles.intro}>
-          <Txt variant="largeTitle">Build a workout</Txt>
+          <Txt variant="largeTitle">Build a workout 💪</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
             {gymName ? `For ${gymName}. ` : ''}Tap the muscles you want to train.
           </Txt>
@@ -169,11 +172,11 @@ export default function WorkoutScreen() {
         {/* Options ------------------------------------------------------------ */}
         <View style={styles.card}>
           <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
-            GOAL
+            🎯 GOAL
           </Txt>
-          <Segmented options={GOALS.map((item) => ({ value: item.id, label: item.label }))} value={goal} onChange={setGoal} />
+          <Segmented options={GOALS.map((item) => ({ value: item.id, label: GOAL_LABEL[item.id] }))} value={goal} onChange={setGoal} />
           <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
-            LENGTH
+            ⏱️ LENGTH
           </Txt>
           <Segmented
             options={[
@@ -187,7 +190,7 @@ export default function WorkoutScreen() {
           {record && (
             <>
               <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
-                MACHINES
+                🛠️ MACHINES
               </Txt>
               <Segmented
                 options={[

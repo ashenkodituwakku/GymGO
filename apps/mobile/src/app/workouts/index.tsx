@@ -36,7 +36,7 @@ export default function MyWorkouts() {
   if (!token) {
     return (
       <View style={styles.empty}>
-        <Txt variant="title2">🔖 Your workouts</Txt>
+        <Txt variant="title2">📒 Your workouts</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           Sign in to see the workouts you’ve saved.
         </Txt>
@@ -66,7 +66,7 @@ export default function MyWorkouts() {
       )}
       {workouts !== null && workouts.length === 0 && (
         <View style={styles.emptyCard}>
-          <Txt variant="headline">No saved workouts yet</Txt>
+          <Txt variant="headline">📒 No saved workouts yet</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
             {billing.isPro ? 'Build one, then tap 🔖 Save.' : 'With GymGO Pro, tap 🔖 Save on any workout you build to keep it here.'}
           </Txt>
@@ -82,7 +82,7 @@ export default function MyWorkouts() {
               accessibilityRole="button"
               style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
             >
-              <Txt style={styles.rowEmoji}>💪</Txt>
+              <Txt style={styles.rowEmoji}>{workout.plan.goal === 'strength' ? '🏋️' : workout.plan.goal === 'endurance' ? '🔥' : '💪'}</Txt>
               <View style={styles.flex}>
                 <Txt variant="headline" numberOfLines={1}>
                   {workout.name}

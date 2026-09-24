@@ -133,7 +133,7 @@ export default function ProScreen() {
         {/* Already Pro --------------------------------------------------------- */}
         {billing.isPro && (
           <View style={[styles.card, styles.onPro]}>
-            <Txt variant="title2">{welcome ? 'You’re on Pro 🎉' : 'You’re on Pro'}</Txt>
+            <Txt variant="title2">{welcome ? 'You’re on Pro 🎉' : 'You’re on Pro 👑'}</Txt>
             <Txt variant="subhead" color={color.labelSecondary}>
               {describeSubscription(billing.subscription)}
             </Txt>
@@ -231,7 +231,7 @@ export default function ProScreen() {
 
         {/* Always free -------------------------------------------------------------------- */}
         <View style={styles.card}>
-          <Txt variant="headline">Always free, for everyone</Txt>
+          <Txt variant="headline">💚 Always free, for everyone</Txt>
           {ALWAYS_FREE.map((line) => (
             <View key={line} style={styles.freeLine}>
               <Txt variant="subhead" color={color.goodInk}>

@@ -4,18 +4,22 @@
  * switch haptics; and read where GymGO's facts come from.
  */
 
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { formatPlanPrice } from '@gymgo/domain';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { ModerationQueue, PhotoQueue, SignInForm } from '@/components/AccountContent';
 import { Group, Row, TILE, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
+import { ApiError } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
+import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
 import { color, space } from '@/lib/theme';
 
 export default function Profile() {
-  const { account, data, recents, compare, prefs, setPref } = useApp();
+  const { account, data, recents, compare, prefs, setPref, billing, openPro } = useApp();
   const router = useRouter();
+  const params = useLocalSearchParams<{ checkout?: string }>();
   const [about, setAbout] = useState<'facts' | 'sources' | 'privacy' | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +27,32 @@ export default function Profile() {
   const moderator = me?.role === 'moderator' || me?.role === 'admin';
 
   const toggle = (key: 'facts' | 'sources' | 'privacy') => setAbout((current) => (current === key ? null : key));
+
+  // Back from Stripe's manage page in a browser: pick up any change.
+  const { refresh } = billing;
+  useEffect(() => {
+    if (params.checkout === 'portal' && account.state === 'signed_in') void refresh(true);
+  }, [params.checkout, account.state, refresh]);
+
+  const manage = async () => {
+    if (!account.token) return;
+    setError(null);
+    try {
+      const outcome = await openManage(account.token);
+      if (outcome !== 'left') await refresh(true);
+    } catch (problem) {
+      setError(problem instanceof ApiError ? problem.message : 'Couldn’t reach the GymGO server.');
+    }
+  };
+
+  const sub = billing.subscription;
+  const proLine = billing.isPro
+    ? sub?.endsAt
+      ? `Cancelled · Pro until ${new Date(sub.endsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
+      : sub?.amountMinor && sub.currency
+        ? `${formatPlanPrice(sub.amountMinor, sub.currency)} a ${sub.interval ?? 'period'}${sub.renewsAt ? ` · renews ${new Date(sub.renewsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : ''}`
+        : 'On for this account'
+    : `${billing.limits.savedGyms} saved gyms, compare ${billing.limits.compare}`;
 
   return (
     <TabScreen title="Profile">
@@ -48,6 +78,19 @@ export default function Profile() {
           <SignInForm account={account} inSheet={false} />
         </View>
       )}
+
+      <Group header="GymGO Pro">
+        <Row
+          emoji="✨"
+          tile={TILE.indigo}
+          title={billing.isPro ? 'GymGO Pro' : 'Free plan'}
+          subtitle={proLine}
+          value={billing.isPro ? undefined : 'Upgrade'}
+          onPress={() => openPro()}
+        />
+        {billing.isPro && me && CAN_BUY_HERE && <Row icon="settings" tile={TILE.grey} title="Manage subscription" onPress={() => void manage()} />}
+        <Row emoji="💪" tile={TILE.orange} title="My workouts" onPress={() => router.push('/workouts')} />
+      </Group>
 
       <Group header="Your gyms">
         <Row icon="saved" tile={TILE.orange} title="Saved" value={String(account.saved.length)} onPress={() => router.navigate('/saved')} />
@@ -107,14 +150,21 @@ export default function Profile() {
           <Explainer>
             Your account lives on the GymGO server on your own computer. Your precise location, if you allow it, is used on
             this device to find gyms near you and measure distances. It is never stored or sent to GymGO or anyone else.
-            Photos have their location data removed before they’re saved.
+            Photos have their location data removed before they’re saved. If you subscribe to Pro, Stripe handles the payment:
+            GymGO never sees your card, and Stripe gets your name and email for the receipt.
           </Explainer>
         )}
         <Row icon="settings" tile={TILE.grey} title="Version" value="0.1.0 · pilot" chevron={false} />
       </Group>
 
       {me && (
-        <Group footer={confirmDelete ? 'This removes your account, saved gyms, reviews, photos and machine reports from the server.' : undefined}>
+        <Group
+          footer={
+            confirmDelete
+              ? `This removes your account, saved gyms, workouts, reviews, photos and machine reports from the server.${billing.isPro ? ' Your Pro subscription is cancelled first.' : ''}`
+              : undefined
+          }
+        >
           <Row icon="signOut" tile={TILE.blue} title="Sign out" onPress={() => void account.signOut()} />
           <Row
             icon="no"
@@ -126,8 +176,10 @@ export default function Profile() {
               try {
                 await account.deleteAccount();
                 setConfirmDelete(false);
-              } catch {
-                setError('Couldn’t reach the GymGO server, so nothing was deleted.');
+              } catch (problem) {
+                setError(
+                  problem instanceof ApiError ? `${problem.message} Nothing was deleted.` : 'Couldn’t reach the GymGO server, so nothing was deleted.',
+                );
               }
             }}
           />

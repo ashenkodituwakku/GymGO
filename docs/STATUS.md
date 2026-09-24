@@ -8,7 +8,7 @@ this document could do.
 
 | | Implemented locally | Tested locally | Externally integrated | Deployed |
 |---|---|---|---|---|
-| API server (Node, built-in SQLite) | ✅ | ✅ 27 tests over real HTTP | n/a, runs on your PC | ❌ not hosted |
+| API server (Node, built-in SQLite) | ✅ | ✅ 48 tests over real HTTP | n/a, runs on your PC | ❌ not hosted |
 | Sign-up, sign-in, sign-out, delete account | ✅ | ✅ tests + driven in the browser | ❌ no email verification | ❌ |
 | Saved gyms synced to the account | ✅ | ✅ tests + driven in the browser | n/a | ❌ |
 | Reviews held for moderation; moderator queue | ✅ | ✅ tests; posting driven in the browser | n/a | ❌ |
@@ -18,6 +18,8 @@ this document could do.
 | Google's map and card for each gym (free embed, no key) | ✅ | ✅ loaded from Google in the browser, phone and PC sizes | ✅ Google's public embed | ❌ |
 | Google Street View nearest each gym (free embed, no key) | ✅ | ✅ loaded in the browser (Carlton Fitness's shopfront) | ✅ Google's public embed | ❌ |
 | Members' equipment reports (👍/👎 per machine, tallied) | ✅ | ✅ 2 server tests + driven in the browser | n/a | ❌ |
+| GymGO Pro through Stripe: checkout, manage page, webhooks, who is Pro | ✅ | ✅ 21 tests with a stand-in Stripe; webhook signatures made and checked with Stripe's own library | ❌ **never run against Stripe itself**: no Stripe account or key was used | ❌ |
+| Free limits enforced by the server (10 saved gyms; workout library is Pro) | ✅ | ✅ tests | n/a | ❌ |
 | Extra Google photos and reviews (owner's own key, paid) | ✅ | ⚠️ tests with a fake Google only | ❌ **never called with a real key** | ❌ |
 
 **Photos:** only members' own photos, which they confirm they took. The
@@ -102,6 +104,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Liquid Glass (iOS 26) / blur fallbacks | ✅ | ⚠️ blur fallback only | n/a | ❌ | n/a | ❌ |
 | Haptics | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
 | Helvetica (built-in on iOS, free clone on Android) | ✅ | ⚠️ clone only, in web preview | n/a | ❌ | n/a | ❌ |
+| GymGO Pro screen, plan in Profile, Free limits, workout library | ✅ | ✅ whole loop driven in the browser against a stand-in Stripe (checkout, return, manage, cancel) | ❌ real Stripe never used | ❌ the phone's in-app browser round trip not seen | n/a | ❌ |
 | Time-zone self-check at start-up | ✅ | ✅ unit tests | n/a | ❌ | n/a | ❌ |
 | App icon, splash screen | ❌ | ❌ | n/a | ❌ | n/a | ❌ |
 | Store builds (EAS / Xcode / Gradle) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -198,6 +201,26 @@ not been seen working.
 | macOS native binary | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Real gym data | ❌ | ❌ | ❌ | ❌ | ❌ | n/a |
 
+**Payments, exactly:** the server's Stripe code was written against the
+Stripe library's own type definitions (API version 2026-08-26), and the real
+client was checked to fit the interface the server uses. The setup script
+typechecks against the same types. Webhook signatures in the tests are made
+and verified by Stripe's library. But no call has ever reached Stripe: this
+build was made without a Stripe account or key. The first real test is the
+owner's, in test mode, with Stripe's test card (see README). On a phone,
+checkout opens in an in-app browser that closes when Stripe sends you back;
+that round trip has only been reasoned about, not seen. Nothing here takes
+real money: that needs live keys, a hosted `https` server, terms and privacy
+pages, tax registration where it applies, and a decision about app-store
+rules (below).
+
+**App stores and subscriptions:** Apple and Google have their own rules for
+selling digital subscriptions inside apps, and they differ by country. A
+store build therefore hides the buy button unless `EXPO_PUBLIC_NATIVE_CHECKOUT=on`
+is set deliberately. Before submitting, check both stores' current payment
+rules; outside places where linking to web payment is allowed, Pro would
+need Apple's and Google's own in-app purchase as well.
+
 ## Verification evidence
 
 Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
@@ -206,14 +229,14 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 |---|---|
 | `pnpm typecheck` | Clean, all seven packages |
 | `pnpm lint` | No ESLint warnings or errors (web); tsc clean elsewhere |
-| `@gymgo/domain` unit tests | **115 passed** |
+| `@gymgo/domain` unit tests | **119 passed** |
 | `@gymgo/demo-data` unit tests | **23 passed** |
 | `@gymgo/melbourne-data` unit tests | **11 passed** |
 | `@gymgo/usa-data` unit tests | **11 passed** |
-| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **27 passed** |
+| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **48 passed** |
 | `@gymgo/mobile` unit tests | **44 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
-| `expo export` (iOS + Android) | Both compiled (2,045 and 2,097 modules) |
+| `expo export` (iOS + Android) | Both compiled (2,058 and 2,105 modules) |
 | `expo-doctor` | 21/21 checks passed |
 | `pnpm build` (website) | Compiled successfully; not rerun this round, the website is unchanged |
 | Playwright, old website (390 / 768 / 1440), fresh build | **99 passed**, 24 skipped (website unchanged since) |

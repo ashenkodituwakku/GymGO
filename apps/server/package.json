@@ -2,7 +2,7 @@
   "name": "@gymgo/server",
   "version": "0.1.0",
   "private": true,
-  "description": "GymGO's API: accounts, saved gyms, reviews and moderation, on Node's built-in SQLite. Free to run; no external services.",
+  "description": "GymGO's API: accounts, saved gyms, reviews, moderation and GymGO Pro (Stripe), on Node's built-in SQLite.",
   "type": "module",
   "scripts": {
     "start": "node --no-warnings=ExperimentalWarning --import tsx src/main.ts",
@@ -10,13 +10,15 @@
     "make-moderator": "node --no-warnings=ExperimentalWarning --import tsx src/cli.ts moderator",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "stripe:setup": "node --no-warnings=ExperimentalWarning --import tsx src/stripe-setup.ts"
   },
   "dependencies": {
     "@gymgo/demo-data": "workspace:*",
     "@gymgo/domain": "workspace:*",
     "@gymgo/melbourne-data": "workspace:*",
     "@gymgo/usa-data": "workspace:*",
+    "stripe": "22.6.2",
     "tsx": "^4.20.0"
   },
   "devDependencies": {

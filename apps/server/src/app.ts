@@ -20,6 +20,16 @@
  *   GET    /api/gyms/:gymId/equipment     what members say the gym has, tallied (plus your own)
  *   PUT    /api/gyms/:gymId/equipment     { items: [{ equipmentTypeId, presence, maxWeightKg? }] } -> your report
  *   GET    /api/gyms/:gymId/google        live Google Maps details (only with the owner's key)
+ *   GET    /api/billing/plans             GymGO Pro's prices, and whether it's on sale
+ *   GET    /api/billing                   your plan (Free or Pro) and subscription
+ *   POST   /api/billing/checkout          { interval, currency, returnUrl } -> { url } of Stripe Checkout
+ *   POST   /api/billing/portal            { returnUrl } -> { url } of Stripe's page to manage or cancel
+ *   POST   /api/billing/sync              re-read your subscription from Stripe
+ *   GET    /api/billing/return            where Stripe sends people back to; forwards them into the app
+ *   POST   /api/billing/webhook           Stripe's events (signature checked)
+ *   GET    /api/workouts                  your saved workouts
+ *   POST   /api/workouts                  Pro: { name, gymId?, plan } -> saved
+ *   DELETE /api/workouts/:id
  *   GET    /api/moderation/reviews        moderators: the queue
  *   POST   /api/moderation/reviews/:id    moderators: { decision, reason? }
  *   GET    /api/moderation/photos         moderators: photos waiting
@@ -31,7 +41,18 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { ANONYMOUS, EQUIPMENT_TYPES, can, publishedReviews, type Permission, type Review, type User } from '@gymgo/domain';
+import {
+  ANONYMOUS,
+  EQUIPMENT_TYPES,
+  LIMITS,
+  can,
+  publishedReviews,
+  type BillingCurrency,
+  type BillingInterval,
+  type Permission,
+  type Review,
+  type User,
+} from '@gymgo/domain';
 import {
   AttemptLimiter,
   AuthInputError,
@@ -45,6 +66,7 @@ import {
   validateSignup,
   type AccountRow,
 } from './auth';
+import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
 import { allGyms, gymExists, gymIsDemo, type Db } from './db';
 import { GoogleError, GooglePlaces } from './google';
 import { MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
@@ -63,12 +85,18 @@ export interface AppOptions {
   googleKey?: string | null;
   /** Swappable for tests, so no test ever calls Google. */
   fetchImpl?: typeof fetch;
+  /** Stripe, for GymGO Pro. Without a client, Pro isn't on sale. */
+  billing?: { stripe: StripeApi | null; webhookSecret: string | null };
+  /** This server's public address, once hosted. */
+  publicUrl?: string | null;
 }
 
 class HttpError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    /** For the app to act on, e.g. `pro_required` opens the Pro screen. */
+    readonly code?: string,
   ) {
     super(message);
   }
@@ -109,6 +137,46 @@ async function readJson(req: IncomingMessage, maxBytes = MAX_BODY_BYTES): Promis
   } catch {
     throw new HttpError(400, 'The request body isn’t valid JSON.');
   }
+}
+
+async function readRaw(req: IncomingMessage, maxBytes: number): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of req) {
+    size += (chunk as Buffer).length;
+    if (size > maxBytes) throw new HttpError(413, 'That request is too large.');
+    chunks.push(chunk as Buffer);
+  }
+  return Buffer.concat(chunks);
+}
+
+/** A saved workout, checked field by field: only what the app needs to show it again. */
+function cleanWorkoutPlan(input: unknown) {
+  const plan = (input ?? {}) as Record<string, unknown>;
+  const text = (value: unknown, max: number) => (typeof value === 'string' && value.length <= max ? value : null);
+  const texts = (value: unknown, maxItems: number, maxLength: number) =>
+    Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length <= maxLength).slice(0, maxItems) : [];
+  const int = (value: unknown, min: number, max: number) =>
+    typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max ? value : null;
+  const items = Array.isArray(plan.items) ? plan.items : [];
+  if (items.length === 0 || items.length > 12) throw new HttpError(400, 'A workout needs 1 to 12 exercises.');
+  const cleanItems = items.map((raw) => {
+    const item = (raw ?? {}) as Record<string, unknown>;
+    const exerciseId = text(item.exerciseId, 60);
+    const sets = int(item.sets, 1, 10);
+    const reps = text(item.reps, 20);
+    const restSeconds = int(item.restSeconds, 0, 600);
+    if (!exerciseId || sets === null || !reps || restSeconds === null) throw new HttpError(400, 'That workout isn’t in a shape GymGO can save.');
+    return { exerciseId, sets, reps, restSeconds, uses: texts(item.uses, 4, 40), confirmed: item.confirmed === true };
+  });
+  return {
+    version: 1,
+    muscles: texts(plan.muscles, 15, 30),
+    goal: text(plan.goal, 20),
+    gymName: text(plan.gymName, 120),
+    items: cleanItems,
+    uncovered: texts(plan.uncovered, 15, 30),
+  };
 }
 
 function send(res: ServerResponse, status: number, body?: unknown): void {
@@ -177,6 +245,25 @@ export function createApp(options: AppOptions) {
   const equipmentLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
   const photos = new PhotoStore(options.photoDir ?? null);
   const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
+  const billing = new Billing(db, {
+    stripe: options.billing?.stripe ?? null,
+    webhookSecret: options.billing?.webhookSecret ?? null,
+    now,
+  });
+
+  /** How the caller reached this server, for the page Stripe sends people back to. */
+  function publicBase(req: IncomingMessage): string {
+    if (options.publicUrl) return options.publicUrl;
+    const host = req.headers.host ?? '';
+    if (!/^[a-z0-9.\-]+(:\d{1,5})?$|^\[[0-9a-f:]+\](:\d{1,5})?$/i.test(host)) throw new HttpError(400, 'Unexpected Host header.');
+    return `http://${host}`;
+  }
+
+  function returnUrlFrom(value: unknown): string {
+    const url = safeReturnUrl(value, (origin) => isAllowedOrigin(origin, options.allowedOrigins));
+    if (!url) throw new HttpError(400, 'That return address isn’t allowed.');
+    return url;
+  }
 
   function caller(req: IncomingMessage): { account: AccountRow | null; user: User; token: string | null } {
     const token = bearer(req);
@@ -205,6 +292,113 @@ export function createApp(options: AppOptions) {
 
     if (method === 'GET' && path === '/api/gyms') {
       return send(res, 200, { gyms: allGyms(db), attribution: options.attribution, generatedAt: now().toISOString() });
+    }
+
+    // --- GymGO Pro ----------------------------------------------------------
+    if (method === 'POST' && path === '/api/billing/webhook') {
+      await billing.handleWebhook(await readRaw(req, 1024 * 1024), req.headers['stripe-signature'] as string | undefined);
+      return send(res, 200, { received: true });
+    }
+
+    if (method === 'GET' && path === '/api/billing/plans') {
+      const { available, prices } = await billing.prices();
+      return send(res, 200, { available, prices, limits: LIMITS });
+    }
+
+    if (method === 'GET' && path === '/api/billing/return') {
+      const result = url.searchParams.get('result');
+      const kind = result === 'success' || result === 'cancelled' || result === 'portal' ? result : 'portal';
+      const to = safeReturnUrl(url.searchParams.get('to'), (origin) => isAllowedOrigin(origin, options.allowedOrigins));
+      const sessionId = url.searchParams.get('session_id');
+      if (kind === 'success' && sessionId && /^cs_(test|live)_[A-Za-z0-9]{10,200}$/.test(sessionId) && billing.enabled) {
+        // Turn Pro on now, without waiting for a webhook that may never come.
+        await billing.syncCheckoutSession(sessionId).catch((error: unknown) => console.error('[billing] return sync failed', error));
+      }
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'");
+      res.setHeader('Referrer-Policy', 'no-referrer');
+      res.end(returnPage(kind, to ? withQuery(to, { checkout: kind }) : null));
+      return;
+    }
+
+    if (path === '/api/billing' && method === 'GET') {
+      const { account } = requireAccount(req);
+      return send(res, 200, { ...(await billing.planForFresh(account.id)), available: billing.enabled });
+    }
+
+    if (method === 'POST' && path === '/api/billing/sync') {
+      const { account } = requireAccount(req);
+      return send(res, 200, { ...(await billing.syncAccount(account.id)), available: billing.enabled });
+    }
+
+    if (method === 'POST' && path === '/api/billing/checkout') {
+      const { account } = requireAccount(req);
+      const body = (await readJson(req)) as Record<string, unknown>;
+      const interval = body.interval;
+      const currency = body.currency;
+      if (interval !== 'month' && interval !== 'year') throw new HttpError(400, 'Choose monthly or yearly.');
+      if (currency !== 'aud' && currency !== 'usd') throw new HttpError(400, 'Choose A$ or US$.');
+      const returnUrl = returnUrlFrom(body.returnUrl);
+      const back = `${publicBase(req)}/api/billing/return?to=${encodeURIComponent(returnUrl)}`;
+      const checkoutUrl = await billing.checkout(
+        account,
+        { interval: interval as BillingInterval, currency: currency as BillingCurrency },
+        // Stripe fills in {CHECKOUT_SESSION_ID} itself; it must stay unencoded.
+        { success: `${back}&result=success&session_id={CHECKOUT_SESSION_ID}`, cancel: `${back}&result=cancelled` },
+      );
+      return send(res, 200, { url: checkoutUrl });
+    }
+
+    if (method === 'POST' && path === '/api/billing/portal') {
+      const { account } = requireAccount(req);
+      const body = (await readJson(req)) as Record<string, unknown>;
+      const returnUrl = returnUrlFrom(body.returnUrl);
+      const back = `${publicBase(req)}/api/billing/return?to=${encodeURIComponent(returnUrl)}&result=portal`;
+      return send(res, 200, { url: await billing.portal(account, back) });
+    }
+
+    // --- Saved workouts (Pro) ---------------------------------------------
+    if (path === '/api/workouts' && method === 'GET') {
+      const { account } = requireAccount(req);
+      const rows = db
+        .prepare('select id, name, gym_id, plan_json, created_at from workouts where user_id = ? order by created_at desc')
+        .all(account.id) as Array<{ id: string; name: string; gym_id: string | null; plan_json: string; created_at: string }>;
+      return send(res, 200, {
+        workouts: rows.map((row) => ({ id: row.id, name: row.name, gymId: row.gym_id, createdAt: row.created_at, plan: JSON.parse(row.plan_json) })),
+      });
+    }
+
+    if (path === '/api/workouts' && method === 'POST') {
+      const { account } = requireAccount(req);
+      if (!billing.isPro(account.id)) throw new HttpError(403, 'Saving workouts is part of GymGO Pro.', 'pro_required');
+      const body = (await readJson(req)) as Record<string, unknown>;
+      const name = typeof body.name === 'string' ? body.name.trim().replace(/\s+/g, ' ') : '';
+      if (name.length < 1 || name.length > 80) throw new HttpError(400, 'Give it a name of up to 80 characters.');
+      const gymId = typeof body.gymId === 'string' && body.gymId.length <= 120 ? body.gymId : null;
+      const plan = cleanWorkoutPlan(body.plan);
+      const count = (db.prepare('select count(*) as n from workouts where user_id = ?').get(account.id) as { n: number }).n;
+      if (count >= LIMITS.pro.savedWorkouts) throw new HttpError(409, `You’ve saved ${count} workouts, the most there’s room for. Delete one first.`);
+      const id = randomUUID();
+      const createdAt = now().toISOString();
+      db.prepare('insert into workouts (id, user_id, name, gym_id, plan_json, created_at) values (?, ?, ?, ?, ?, ?)').run(
+        id,
+        account.id,
+        name,
+        gymId,
+        JSON.stringify(plan),
+        createdAt,
+      );
+      return send(res, 201, { workout: { id, name, gymId, createdAt, plan } });
+    }
+
+    if (method === 'DELETE' && parts[0] === 'api' && parts[1] === 'workouts' && parts.length === 3) {
+      const { account } = requireAccount(req);
+      // Allowed on Free too: nobody loses the right to tidy what they kept.
+      const removed = db.prepare('delete from workouts where id = ? and user_id = ?').run(decodeURIComponent(parts[2]!), account.id);
+      if (removed.changes === 0) throw new HttpError(404, 'No saved workout with that id.');
+      return send(res, 204);
     }
 
     // --- Accounts --------------------------------------------------------
@@ -240,8 +434,11 @@ export function createApp(options: AppOptions) {
 
     if (path === '/api/me') {
       const { account } = requireAccount(req);
-      if (method === 'GET') return send(res, 200, { account: publicAccount(account) });
+      if (method === 'GET') return send(res, 200, { account: publicAccount(account), plan: billing.planFor(account.id).plan });
       if (method === 'DELETE') {
+        // A running subscription is cancelled first, so nobody keeps paying
+        // for an account that's gone. If that can't happen, nothing is deleted.
+        await billing.cancelAllFor(account.id);
         // Sessions, saved gyms, reviews and photo records go with it (foreign
         // keys cascade); the photo files are removed here.
         const owned = db.prepare('select id, type from photos where user_id = ?').all(account.id) as Array<{ id: string; type: PhotoType }>;
@@ -265,6 +462,12 @@ export function createApp(options: AppOptions) {
       const gymId = decodeURIComponent(parts[2]!);
       if (method === 'PUT') {
         if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+        const limit = billing.planFor(account.id).limits.savedGyms;
+        const already = db.prepare('select 1 from saved_gyms where user_id = ? and gym_id = ?').get(account.id, gymId);
+        const count = (db.prepare('select count(*) as n from saved_gyms where user_id = ?').get(account.id) as { n: number }).n;
+        if (!already && count >= limit) {
+          throw new HttpError(403, `Free accounts can save ${limit} gyms. GymGO Pro saves as many as you like.`, 'pro_required');
+        }
         db.prepare('insert or ignore into saved_gyms (user_id, gym_id, created_at) values (?, ?, ?)').run(
           account.id,
           gymId,
@@ -582,7 +785,10 @@ export function createApp(options: AppOptions) {
     try {
       await route(req, res);
     } catch (error) {
-      if (error instanceof HttpError || error instanceof AuthInputError) {
+      if (error instanceof HttpError || error instanceof BillingError) {
+        return send(res, error.status, { error: error.message, ...(error.code ? { code: error.code } : {}) });
+      }
+      if (error instanceof AuthInputError) {
         return send(res, error.status, { error: error.message });
       }
       console.error(error);

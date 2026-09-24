@@ -57,9 +57,29 @@ because "the code does X" is not the same as "someone decided X".
 | Workout plans use only confirmed machines | Asked for a workout generator "for the machines each gym has". Most gyms publish none, so the plan uses the gym's published kit plus members' majority reports, and marks each exercise ✓. With under three confirmed machines it starts on a "typical gym" plan and marks anything unconfirmed "?". It never says a gym has a machine it hasn't been told about. |
 | GymGO draws the body itself | react-native-body-highlighter's drawings are good (MIT), but its component bakes a dark colour into every muscle and prints warnings in the browser. GymGO uses its shapes with its own small renderer: native SVG on phones, plain keyboard-reachable SVG in the browser. |
 | Tab bar like Instagram's on iOS 26 | Asked for it. Icons only, filled when selected, in a floating glass capsule. On phones it's still the system tab bar (labels hidden but read out by VoiceOver); the browser draws its own with a sliding highlight. |
+| What's Free and what's Pro | Asked to decide. The rule: nothing that tells you the truth about a gym is ever paid for. Every gym, verdict, source, published price and hour, review, photo, machine report and the workout builder stay free. Pro is about keeping more: unlimited saved gyms (Free: 10), comparing 4 gyms (Free: 2), and a workout library in your account. Defined once in `packages/domain/src/plans.ts`. |
+| Pro's price | A$3.99 a month or A$29.99 a year (save 37%); US$2.99 or US$19.99 (save 44%). Priced below workout apps like Strong or Hevy Pro, because Pro here is about convenience, not the core product. Tax-inclusive, so the shown price is the paid price. Prices are Stripe prices found by lookup key, so the server never holds price ids and a price change needs no code change. |
+| Stripe's hosted pages, not a card form | Checkout and the customer portal are Stripe's own pages, so GymGO never touches card details, Apple Pay and Google Pay come for free where enabled, and cancelling is one tap on a page GymGO doesn't control. |
+| Three ways Pro status arrives | Webhooks can't reach a server on someone's laptop. So the return page asks Stripe about the checkout straight away, the app asks for a re-sync after checkout and the portal, and without a webhook secret the server re-syncs at most every 10 minutes. With webhooks, events are re-read from Stripe (never trusted as sent) and de-duplicated. |
+| `past_due` stays Pro | While Stripe retries a card, the subscriber keeps Pro. Stripe ends the subscription if payment never succeeds, and then it's Free. |
+| Deleting an account cancels its subscription | Otherwise someone could keep paying for an account that no longer exists. If it can't be cancelled (payments not connected), nothing is deleted and they're told why. |
+| Ending Pro deletes nothing | Saved gyms over 10 and saved workouts stay, readable and deletable. Only adding more stops. |
+| A switch for selling inside phone apps | App-store payment rules vary by country, so store builds hide the buy button unless `EXPO_PUBLIC_NATIVE_CHECKOUT=on`. Expo Go and the browser always show it. |
 | Simpler card: one answer, three facts, folded detail | Asked for simpler and more playful. The verdict is one emoji and a word, and the detail folds under one-line summaries, so nothing honest was removed, only tucked away. "Worth a call" became "Call first", which says what to do. |
 
 ## Traps
+
+**Stripe's `{CHECKOUT_SESSION_ID}` must stay unencoded** in the success
+URL; Stripe fills it in. The server builds that URL by hand for this reason.
+
+**In the current Stripe API, the billing period lives on subscription
+items** (`items.data[0].current_period_end`), not on the subscription.
+
+**Stripe only sends people back to `http(s)` pages**, so checkout returns to
+`/api/billing/return` on the GymGO server, which confirms the payment and
+forwards into the app (`gymgo://`, `exp://`) or the web page. It only
+forwards to addresses on an allow-list, so it can't be used as an open
+redirect.
 
 **Refreshing the US gyms.** The main Overpass server resets connections from
 some networks; the `maps.mail.ru` mirror worked. Ask for `out center tags`

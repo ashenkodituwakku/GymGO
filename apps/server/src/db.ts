@@ -74,6 +74,40 @@ const SCHEMA = `
     primary key (gym_id, user_id, equipment_type_id)
   );
   create index if not exists equipment_reports_gym on equipment_reports(gym_id);
+  create table if not exists billing_customers (
+    user_id text primary key references users(id) on delete cascade,
+    stripe_customer_id text not null unique,
+    created_at text not null,
+    synced_at text
+  );
+  create table if not exists subscriptions (
+    stripe_subscription_id text primary key,
+    user_id text not null references users(id) on delete cascade,
+    status text not null,
+    interval text,
+    currency text,
+    amount_minor integer,
+    price_lookup_key text,
+    current_period_end text,
+    cancel_at text,
+    cancel_at_period_end integer not null default 0,
+    updated_at text not null
+  );
+  create index if not exists subscriptions_user on subscriptions(user_id);
+  create table if not exists stripe_events (
+    id text primary key,
+    type text not null,
+    received_at text not null
+  );
+  create table if not exists workouts (
+    id text primary key,
+    user_id text not null references users(id) on delete cascade,
+    name text not null,
+    gym_id text,
+    plan_json text not null,
+    created_at text not null
+  );
+  create index if not exists workouts_user on workouts(user_id, created_at);
   create table if not exists gyms (
     id text primary key,
     record_json text not null,

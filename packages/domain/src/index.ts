@@ -20,4 +20,5 @@ export * from './reviews';
 export * from './search';
 export * from './authz';
 export * from './schemas';
+export * from './plans';
 export * as tokens from './tokens';

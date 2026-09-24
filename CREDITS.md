@@ -20,6 +20,7 @@ one row of actions), not from borrowing its assets.
 | [react-native-gesture-handler](https://github.com/software-mansion/react-native-gesture-handler) | Sheet dragging | MIT |
 | [expo-image-picker](https://docs.expo.dev/versions/latest/sdk/imagepicker/) | Choosing a photo to share of a gym | MIT |
 | [react-native-body-highlighter](https://github.com/HichamELBSI/react-native-body-highlighter) (© ELABBASSI Hicham) | The front and back body drawings in the workout builder. GymGO uses its muscle shapes and outlines (`apps/mobile/src/components/body/`) and draws them itself | MIT |
+| [stripe-node](https://github.com/stripe/stripe-node) (server only) | Talks to Stripe for GymGO Pro: checkout, the customer portal, webhook signatures | MIT |
 | [react-native-svg](https://github.com/software-mansion/react-native-svg) | Draws the body on iPhone and Android | MIT |
 | [expo-haptics](https://docs.expo.dev/versions/latest/sdk/haptics/), [expo-location](https://docs.expo.dev/versions/latest/sdk/location/), [AsyncStorage](https://github.com/react-native-async-storage/async-storage) | Taps you can feel, "near me", saved gyms | MIT |
 

@@ -9,13 +9,16 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { LIMITS } from '@gymgo/domain';
 import { setHapticsEnabled } from './haptics';
 import { currentFix, type Fix } from './location';
 import { DEFAULT_PLACE, cityNear, cityPlace, nearestCity, type City } from './places';
 import { locatedNotice } from './copy';
 import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, type Filters } from './query';
 import { useAccount } from './useAccount';
+import { useBilling } from './useBilling';
 import { useGymData } from './useGymData';
 
 export interface ExploreRequest {
@@ -49,7 +52,9 @@ const PREFS_KEY = 'gymgo.prefs.v1';
 /** Only that GymGO has asked for location once, never where you were. */
 const ASKED_KEY = 'gymgo.location-asked.v1';
 const MAX_RECENTS = 10;
-export const MAX_COMPARE = 3;
+
+/** Why the Pro screen opened, so it can say so. */
+export type ProReason = 'saved' | 'compare' | 'workouts';
 
 type AppState = {
   data: ReturnType<typeof useGymData>;
@@ -66,6 +71,10 @@ type AppState = {
   requestExplore: (request: Omit<ExploreRequest, 'nonce'>) => void;
   prefs: Prefs;
   setPref: <K extends keyof Prefs>(key: K, value: Prefs[K]) => void;
+  /** Free or Pro, and what Pro costs. */
+  billing: ReturnType<typeof useBilling>;
+  /** Show the Pro screen, e.g. when a Free limit is reached. */
+  openPro: (reason?: ProReason) => void;
   /** Where you are, from this session's last fix. Memory only. */
   here: Fix | null;
   /** Find you and move the search there (or to the nearest city covered). */
@@ -89,7 +98,29 @@ function storeJson(key: string, value: unknown) {
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const data = useGymData();
-  const account = useAccount();
+  const accountApi = useAccount();
+  const billing = useBilling(accountApi);
+  const { limits } = billing;
+
+  const openPro = useCallback((reason?: ProReason) => {
+    router.push({ pathname: '/pro', params: reason ? { reason } : {} });
+  }, []);
+
+  // Saving past the Free limit opens the Pro screen instead. The server
+  // checks too; this is only so nobody taps and sees nothing happen.
+  const account = useMemo(
+    () => ({
+      ...accountApi,
+      toggleSave: (gymId: string) => {
+        if (!accountApi.saved.includes(gymId) && accountApi.saved.length >= limits.savedGyms) {
+          openPro('saved');
+          return;
+        }
+        accountApi.toggleSave(gymId);
+      },
+    }),
+    [accountApi, limits.savedGyms, openPro],
+  );
   const [filters, setFilters] = useState<Filters>(() => initialFilters());
   const [recents, setRecents] = useState<string[]>([]);
   const [compare, setCompare] = useState<string[]>([]);
@@ -162,11 +193,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     storeJson(RECENTS_KEY, []);
   }, []);
 
-  const toggleCompare = useCallback((gymId: string) => {
-    setCompare((current) =>
-      current.includes(gymId) ? current.filter((id) => id !== gymId) : [...current, gymId].slice(-MAX_COMPARE),
-    );
-  }, []);
+  const toggleCompare = useCallback(
+    (gymId: string) => {
+      if (!compare.includes(gymId) && compare.length >= limits.compare && limits.compare < LIMITS.pro.compare) {
+        openPro('compare');
+        return;
+      }
+      setCompare((current) =>
+        current.includes(gymId) ? current.filter((id) => id !== gymId) : [...current, gymId].slice(-limits.compare),
+      );
+    },
+    [compare, limits.compare, openPro],
+  );
 
   const clearCompare = useCallback(() => setCompare([]), []);
 
@@ -199,10 +237,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       requestExplore,
       prefs,
       setPref,
+      billing,
+      openPro,
       here,
       locate,
     }),
-    [data, account, filters, recents, addRecent, clearRecents, compare, toggleCompare, clearCompare, exploreRequest, requestExplore, prefs, setPref, here, locate],
+    [data, account, filters, recents, addRecent, clearRecents, compare, toggleCompare, clearCompare, exploreRequest, requestExplore, prefs, setPref, billing, openPro, here, locate],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

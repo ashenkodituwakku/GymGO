@@ -10,14 +10,14 @@ import { GymRow } from '@/components/GymRow';
 import { Icon } from '@/components/Icon';
 import { TabScreen } from '@/components/ios';
 import { PrimaryButton, Txt } from '@/components/ui';
-import { MAX_COMPARE, useApp } from '@/lib/app-state';
+import { useApp } from '@/lib/app-state';
 import { timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { resultsById } from '@/lib/results';
 import { color, face, radius, space } from '@/lib/theme';
 
 export default function Saved() {
-  const { data, account, filters, compare, toggleCompare, requestExplore } = useApp();
+  const { data, account, filters, compare, toggleCompare, requestExplore, billing, openPro } = useApp();
   const router = useRouter();
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   const byId = useMemo(() => resultsById(filters, data.records, asOf), [filters, data.records, asOf]);
@@ -61,8 +61,16 @@ export default function Saved() {
       ) : (
         <>
           <Txt variant="footnote" color={color.labelSecondary}>
-            Tick up to {MAX_COMPARE} to compare them side by side.
+            Tick up to {billing.limits.compare} to compare them side by side.
+            {billing.isPro ? '' : ` ${account.saved.length} of ${billing.limits.savedGyms} saved on Free.`}
           </Txt>
+          {!billing.isPro && account.saved.length >= billing.limits.savedGyms - 2 && (
+            <Pressable onPress={() => openPro('saved')} accessibilityRole="button" style={styles.upsell}>
+              <Txt variant="subhead" color={color.brand} style={face('bold')}>
+                ✨ Save as many as you like with GymGO Pro
+              </Txt>
+            </Pressable>
+          )}
           <View style={styles.list}>
             {saved.map((result, index) => {
               const id = result.record.location.id;
@@ -126,6 +134,7 @@ const styles = StyleSheet.create({
   },
   emptyEmoji: { fontSize: 48, lineHeight: 58 },
   list: { backgroundColor: color.background, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
+  upsell: { paddingVertical: space[2] },
   row: { flexDirection: 'row', alignItems: 'center', paddingRight: space[3] },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 86 },
   tick: {

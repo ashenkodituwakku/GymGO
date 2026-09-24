@@ -59,6 +59,9 @@ export default function RootLayout() {
             />
             <Stack.Screen name="compare" options={{ headerShown: true, title: 'Compare', presentation: 'modal' }} />
             <Stack.Screen name="workout/[id]" options={{ headerShown: true, title: 'Workout' }} />
+            <Stack.Screen name="workouts/index" options={{ headerShown: true, title: 'My workouts' }} />
+            <Stack.Screen name="workouts/[id]" options={{ headerShown: true, title: 'Workout' }} />
+            <Stack.Screen name="pro" options={{ headerShown: true, title: 'GymGO Pro', presentation: 'modal' }} />
           </Stack>
         </AppProvider>
       </SafeAreaProvider>

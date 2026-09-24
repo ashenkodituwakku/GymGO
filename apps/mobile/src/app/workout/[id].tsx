@@ -13,7 +13,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BodyPicker } from '@/components/BodyPicker';
 import { Chip, PrimaryButton, Segmented, Txt } from '@/components/ui';
-import { api } from '@/lib/api';
+import { ExerciseCard } from '@/components/ExerciseCard';
+import { ApiError, api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, space } from '@/lib/theme';
@@ -37,7 +38,7 @@ type KitMode = 'gym' | 'typical';
 
 export default function WorkoutScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data, account } = useApp();
+  const { data, account, billing, openPro } = useApp();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const record = id && id !== 'any' ? (data.records.find((item) => item.location.id === id) ?? null) : null;
@@ -76,6 +77,47 @@ export default function WorkoutScreen() {
   const toggle = (muscle: Muscle) =>
     setMuscles((current) => (current.includes(muscle) ? current.filter((item) => item !== muscle) : [...current, muscle]));
   const gymName = record?.location.name ?? null;
+
+  // Saving to the account's library is Pro. A new plan can be saved again.
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | string>('idle');
+  useEffect(() => setSaveState('idle'), [workout]);
+  const saveWorkout = async () => {
+    if (!billing.isPro || account.state !== 'signed_in' || !account.token) {
+      openPro('workouts');
+      return;
+    }
+    setSaveState('saving');
+    const name = [muscles.map(muscleLabel).slice(0, 3).join(', '), gymName].filter(Boolean).join(' · ').slice(0, 80) || 'Workout';
+    try {
+      await api.saveWorkout(account.token, {
+        name,
+        gymId: record?.location.id ?? null,
+        plan: {
+          muscles,
+          goal,
+          gymName,
+          items: workout.items.map((item) => ({
+            exerciseId: item.exercise.id,
+            sets: item.sets,
+            reps: item.reps,
+            restSeconds: item.restSeconds,
+            uses: item.uses,
+            confirmed: item.confirmed,
+          })),
+          uncovered: workout.uncovered,
+        },
+      });
+      haptic.success();
+      setSaveState('saved');
+    } catch (error) {
+      if (error instanceof ApiError && error.code === 'pro_required') {
+        setSaveState('idle');
+        openPro('workouts');
+      } else {
+        setSaveState(error instanceof ApiError ? error.message : 'Couldn’t reach the GymGO server to save it.');
+      }
+    }
+  };
 
   return (
     <>
@@ -171,34 +213,27 @@ export default function WorkoutScreen() {
           />
         ) : (
           <View style={styles.result}>
-            <View style={styles.resultHead}>
-              <Txt variant="title2" style={styles.flex}>
-                Your workout
-              </Txt>
-              <Pressable
+            <Txt variant="title2">Your workout</Txt>
+            <View style={styles.actions}>
+              <ActionPill
+                label="🔀 Shuffle"
                 onPress={() => {
                   haptic.select();
                   setSeed((value) => value + 1);
                 }}
-                accessibilityRole="button"
-                hitSlop={8}
-                style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.7 }]}
-              >
-                <Txt variant="subhead" color={color.brand} style={face('bold')}>
-                  🔀 Shuffle
-                </Txt>
-              </Pressable>
+              />
               {workout.items.length > 0 && (
-                <Pressable
+                <ActionPill
+                  label={saveState === 'saved' ? '✓ Saved' : saveState === 'saving' ? 'Saving…' : `🔖 Save${billing.isPro ? '' : ' · Pro'}`}
+                  disabled={saveState === 'saving' || saveState === 'saved'}
+                  onPress={() => void saveWorkout()}
+                />
+              )}
+              {workout.items.length > 0 && (
+                <ActionPill
+                  label="↗ Share"
                   onPress={() => void Share.share({ message: workoutText(workout, gymName) }).catch(() => undefined)}
-                  accessibilityRole="button"
-                  hitSlop={8}
-                  style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.7 }]}
-                >
-                  <Txt variant="subhead" color={color.brand} style={face('bold')}>
-                    Share
-                  </Txt>
-                </Pressable>
+                />
               )}
             </View>
 
@@ -218,33 +253,31 @@ export default function WorkoutScreen() {
             )}
 
             {workout.items.map((item, index) => (
-              <View key={`${item.exercise.id}-${index}`} style={styles.exercise}>
-                <View style={styles.number}>
-                  <Txt variant="subhead" color={color.onBrand} style={face('bold')}>
-                    {index + 1}
-                  </Txt>
-                </View>
-                <View style={styles.flex}>
-                  <Txt variant="headline">{item.exercise.name}</Txt>
-                  <Txt variant="subhead" color={color.brand} style={face('bold')}>
-                    {item.exercise.cardio ? 'Finisher' : `${item.sets} × ${item.reps} · rest ${item.restSeconds} s`}
-                  </Txt>
-                  <Txt variant="footnote" color={color.labelSecondary}>
-                    {item.exercise.cue}
-                  </Txt>
-                  <View style={styles.meta}>
-                    {item.exercise.primary.map((muscle) => (
-                      <View key={muscle} style={styles.tag}>
-                        <Txt variant="caption" color={color.brand}>
-                          {muscleLabel(muscle)}
-                        </Txt>
-                      </View>
-                    ))}
-                    <KitUsed uses={item.uses} confirmed={item.confirmed} forGym={record !== null} />
-                  </View>
-                </View>
-              </View>
+              <ExerciseCard
+                key={`${item.exercise.id}-${index}`}
+                index={index}
+                exercise={item.exercise}
+                sets={item.sets}
+                reps={item.reps}
+                restSeconds={item.restSeconds}
+                uses={item.uses}
+                confirmed={item.confirmed}
+                forGym={record !== null}
+              />
             ))}
+
+            {saveState === 'saved' && (
+              <Pressable onPress={() => router.push('/workouts')} accessibilityRole="link" style={styles.savedLink}>
+                <Txt variant="subhead" color={color.brand} style={face('bold')}>
+                  🔖 Saved to My workouts ›
+                </Txt>
+              </Pressable>
+            )}
+            {saveState !== 'idle' && saveState !== 'saving' && saveState !== 'saved' && (
+              <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
+                {saveState}
+              </Txt>
+            )}
 
             {record && (
               <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
@@ -268,26 +301,20 @@ export default function WorkoutScreen() {
   );
 }
 
-function KitUsed({ uses, confirmed, forGym }: { uses: Kit[]; confirmed: boolean; forGym: boolean }) {
-  const names = uses.map((kit) => KIT_LABEL[kit]).join(' + ');
-  if (uses.length === 0) {
-    return (
-      <Txt variant="caption" color={color.goodInk}>
-        ✓ Body weight
-      </Txt>
-    );
-  }
-  if (!forGym) {
-    return (
-      <Txt variant="caption" color={color.labelSecondary}>
-        🏋️ {names}
-      </Txt>
-    );
-  }
+function ActionPill({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) {
   return (
-    <Txt variant="caption" color={confirmed ? color.goodInk : color.maybeInk}>
-      {confirmed ? `✓ ${names}` : `? ${names} (not confirmed here)`}
-    </Txt>
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      hitSlop={4}
+      style={({ pressed }) => [styles.pill, pressed && { opacity: 0.7 }, disabled && { opacity: 0.6 }]}
+    >
+      <Txt variant="subhead" color={color.brand} style={face('bold')}>
+        {label}
+      </Txt>
+    </Pressable>
   );
 }
 
@@ -331,7 +358,9 @@ const styles = StyleSheet.create({
   caps: { letterSpacing: 0.3, marginBottom: -space[1] },
   warn: { padding: space[3], borderRadius: radius.md, backgroundColor: color.maybeTint },
   result: { gap: space[3] },
-  resultHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  pill: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandTint },
+  savedLink: { alignSelf: 'center', paddingVertical: space[1] },
   smallButton: { paddingVertical: space[1] },
   exercise: {
     flexDirection: 'row',

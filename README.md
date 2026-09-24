@@ -246,6 +246,85 @@ gymgo
 On a Mac or Linux: `GOOGLE_PLACES_API_KEY=your-key-here npx pnpm@10 app`.
 The key stays on your computer; the app never sees it.
 
+### GymGO Pro (subscriptions, through Stripe)
+
+GymGO has two plans. **Free** is everything that tells you the truth about a
+gym: every gym and city, the answer for your visit and why, the source behind
+every fact, prices and hours where published, reviews, photos, members'
+machine reports and the workout builder. That is never behind Pro.
+
+**Pro** is for keeping more:
+
+| | Free | Pro |
+|---|---|---|
+| Saved gyms | Up to 10 | Unlimited |
+| Compare side by side | 2 gyms | 4 gyms |
+| Workout library | Build and share | Save workouts to your account, reopen them on any device |
+
+One tier, two ways to pay, tax included:
+
+| | Australia | United States |
+|---|---|---|
+| Monthly | A$3.99 | US$2.99 |
+| Yearly | A$29.99 (save 37%) | US$19.99 (save 44%) |
+
+The prices live in `packages/domain/src/plans.ts`; change them there and run the setup below
+again. Existing subscribers keep the price they signed up at.
+
+People pay on **Stripe's own checkout page**, so GymGO never sees a card.
+They manage or cancel on Stripe's page too (Profile → Manage subscription),
+and keep Pro to the end of what they paid for. If Pro ends, nothing they
+saved is deleted; they just can't add more than Free allows. Deleting an
+account cancels its subscription first.
+
+**Until you connect Stripe, Pro isn't on sale**: the Pro screen shows the
+planned prices and says "Not on sale yet". To connect it (test mode, no real
+money):
+
+1. Make a free account at stripe.com. Stay in **Test mode**, go to
+   Developers → API keys and copy the **Secret key** (it starts `sk_test_`).
+2. Copy `apps/server/.env.example` to `apps/server/.env.local` and put the
+   key after `STRIPE_SECRET_KEY=`. That file is git-ignored; the key stays on
+   your computer and the app never sees it.
+3. Create GymGO Pro in your Stripe account (the product, its four prices and
+   the manage-subscription page). This charges nobody:
+
+   ```bash
+   npx pnpm@10 --filter @gymgo/server stripe:setup
+   ```
+
+4. Start GymGO as usual. The server says `GymGO Pro payments (Stripe): on,
+   test mode`. Sign in, open Profile → GymGO Pro, pick a plan, and pay with
+   Stripe's test card **4242 4242 4242 4242**, any future date, any CVC.
+
+**Webhooks** (recommended): they tell GymGO about renewals, failed payments
+and cancellations as they happen. Without them Pro still turns on straight
+after checkout, and the app re-checks with Stripe now and then. On your
+computer, install the Stripe CLI and run
+`stripe listen --forward-to localhost:4000/api/billing/webhook`, then put the
+`whsec_…` it prints after `STRIPE_WEBHOOK_SECRET=`.
+
+**Taking real money** needs more than a live key, and none of it is done:
+
+- The server has to be hosted on a public `https://` address, with a webhook
+  endpoint added in Stripe for `checkout.session.completed` and
+  `customer.subscription.*`. Nothing is deployed.
+- Terms of service, a privacy policy and a refund policy, linked from the Pro
+  screen and Stripe's settings.
+- Tax: in Australia, registering for GST once turnover reaches A$75,000; in
+  the US, sales tax on subscriptions varies by state. Stripe Tax can work it
+  out. Prices are set tax-inclusive so what's shown is what's paid.
+- **App stores.** Apple and Google have their own rules for selling
+  subscriptions inside an app, and they differ by country and change often.
+  As of writing, Apple requires its own in-app purchase for digital
+  subscriptions except where a country's rules allow links to outside
+  payment (the US storefront allows it); Google Play has similar rules with
+  its own exceptions. Check both stores' current policies before submitting.
+  So a store build hides the buy button unless `EXPO_PUBLIC_NATIVE_CHECKOUT=on`
+  is set on purpose; in Expo Go and the browser it's always there.
+
+The setup refuses a live key (`sk_live_…`) unless you add `--live`.
+
 ### The older website
 
 The first version of GymGO was a Next.js website, and it's still in the

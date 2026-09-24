@@ -13,7 +13,7 @@
 
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import type { GymRecord, Review } from '@gymgo/domain';
+import type { BillingCurrency, BillingInterval, GymRecord, PlanId, PlanLimits, ProPrice, Review } from '@gymgo/domain';
 
 const PORT = 4000;
 
@@ -32,6 +32,8 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    /** The server's reason, when it gives one: `pro_required`, `billing_off`… */
+    readonly code: string | null = null,
   ) {
     super(message);
   }
@@ -44,7 +46,9 @@ async function request<T>(method: string, path: string, options: { token?: strin
   const base = apiBase();
   if (!base) throw new OfflineError('No server address.');
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), method === 'POST' && path.endsWith('/photos') ? 60000 : 8000);
+  // Photos upload slowly; billing waits on Stripe.
+  const slow = (method === 'POST' && path.endsWith('/photos')) || path.startsWith('/api/billing');
+  const timer = setTimeout(() => controller.abort(), slow ? 30000 : 8000);
   let response: Response;
   try {
     response = await fetch(`${base}${path}`, {
@@ -64,7 +68,11 @@ async function request<T>(method: string, path: string, options: { token?: strin
   const text = await response.text();
   const data = text ? (JSON.parse(text) as Record<string, unknown>) : {};
   if (!response.ok) {
-    throw new ApiError(response.status, typeof data.error === 'string' ? data.error : 'Something went wrong.');
+    throw new ApiError(
+      response.status,
+      typeof data.error === 'string' ? data.error : 'Something went wrong.',
+      typeof data.code === 'string' ? data.code : null,
+    );
   }
   return data as T;
 }
@@ -133,6 +141,41 @@ export interface Account {
   createdAt: string;
 }
 
+export interface SubscriptionInfo {
+  status: string;
+  interval: BillingInterval | null;
+  currency: BillingCurrency | null;
+  amountMinor: number | null;
+  renewsAt: string | null;
+  endsAt: string | null;
+}
+
+export interface BillingState {
+  plan: PlanId;
+  limits: PlanLimits;
+  subscription: SubscriptionInfo | null;
+  /** Payments are connected on the server. */
+  available: boolean;
+}
+
+/** A plan kept in the account, as it was when saved. */
+export interface SavedWorkoutPlan {
+  version: number;
+  muscles: string[];
+  goal: string | null;
+  gymName: string | null;
+  items: Array<{ exerciseId: string; sets: number; reps: string; restSeconds: number; uses: string[]; confirmed: boolean }>;
+  uncovered: string[];
+}
+
+export interface SavedWorkout {
+  id: string;
+  name: string;
+  gymId: string | null;
+  createdAt: string;
+  plan: SavedWorkoutPlan;
+}
+
 export const api = {
   gyms: () => request<{ gyms: GymRecord[]; attribution: string; generatedAt: string }>('GET', '/api/gyms'),
 
@@ -181,6 +224,18 @@ export const api = {
     ),
   moderatePhoto: (token: string, photoId: string, body: { decision: 'publish' | 'reject'; reason?: string }) =>
     request<unknown>('POST', `/api/moderation/photos/${encodeURIComponent(photoId)}`, { token, body }),
+
+  billingPlans: () => request<{ available: boolean; prices: ProPrice[]; limits: Record<PlanId, PlanLimits> }>('GET', '/api/billing/plans'),
+  billing: (token: string) => request<BillingState>('GET', '/api/billing', { token }),
+  syncBilling: (token: string) => request<BillingState>('POST', '/api/billing/sync', { token }),
+  checkout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string }) =>
+    request<{ url: string }>('POST', '/api/billing/checkout', { token, body }),
+  billingPortal: (token: string, returnUrl: string) => request<{ url: string }>('POST', '/api/billing/portal', { token, body: { returnUrl } }),
+
+  workouts: (token: string) => request<{ workouts: SavedWorkout[] }>('GET', '/api/workouts', { token }),
+  saveWorkout: (token: string, body: { name: string; gymId: string | null; plan: Omit<SavedWorkoutPlan, 'version'> }) =>
+    request<{ workout: SavedWorkout }>('POST', '/api/workouts', { token, body }),
+  deleteWorkout: (token: string, id: string) => request<unknown>('DELETE', `/api/workouts/${encodeURIComponent(id)}`, { token }),
 
   moderationQueue: (token: string) => request<{ reviews: Review[] }>('GET', '/api/moderation/reviews', { token }),
   moderate: (token: string, reviewId: string, body: { decision: 'publish' | 'reject'; reason?: string }) =>

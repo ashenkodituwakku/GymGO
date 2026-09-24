@@ -1,12 +1,12 @@
 /**
- * Compare: up to three gyms side by side for the current search, row by row
+ * Compare: two gyms side by side (four with GymGO Pro) for the current search, row by row
  * (answer, price, guest entry, what you need to bring, machines, rating,
  * distance). Unknowns stay unknown here too: a blank is never a "no".
  */
 
 import { Stack, useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { summariseWeek, type GymSearchResult, type Tri } from '@gymgo/domain';
 import { Icon } from '@/components/Icon';
 import { PrimaryButton, TIER_COLOUR, Txt } from '@/components/ui';
@@ -23,8 +23,9 @@ const tri = (value: Tri): Cell =>
   value === 'yes' ? { text: 'Yes' } : value === 'no' ? { text: 'No' } : { text: 'Not known', ink: color.maybeInk };
 
 export default function Compare() {
-  const { data, filters, compare, toggleCompare, clearCompare } = useApp();
+  const { data, filters, compare, toggleCompare, clearCompare, billing, openPro } = useApp();
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   const byId = useMemo(() => resultsById(filters, data.records, asOf), [filters, data.records, asOf]);
   const gyms = compare.map((id) => byId.get(id)).filter((result): result is GymSearchResult => result !== undefined);
@@ -34,7 +35,7 @@ export default function Compare() {
       <View style={styles.empty}>
         <Stack.Screen options={{ title: 'Compare' }} />
         <Txt style={styles.emoji}>⚖️</Txt>
-        <Txt variant="title2">Pick two or three gyms</Txt>
+        <Txt variant="title2">Pick {billing.limits.compare === 2 ? 'two' : `two to ${billing.limits.compare}`} gyms</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           Tick them in Saved, or tap the compare button on a gym’s page. On iPhone you can also press and hold a gym on Home.
         </Txt>
@@ -121,52 +122,64 @@ export default function Compare() {
         <Txt variant="footnote" color={color.labelSecondary}>
           For a visit at {at}. The cheapest confirmed price is in bold.
         </Txt>
-        <View style={styles.headRow}>
-          {gyms.map((result) => (
-            <View key={result.record.location.id} style={styles.head}>
-              <Pressable
-                onPress={() => router.push({ pathname: '/gym/[id]', params: { id: result.record.location.id } })}
-                accessibilityRole="link"
-                style={styles.flex}
-              >
-                <Txt variant="headline" numberOfLines={2}>
-                  {result.record.location.name}
-                </Txt>
-                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-                  {result.record.location.address.suburb}
-                </Txt>
-              </Pressable>
-              <Pressable
-                onPress={() => toggleCompare(result.record.location.id)}
-                accessibilityRole="button"
-                accessibilityLabel={`Remove ${result.record.location.name}`}
-                hitSlop={8}
-                style={styles.remove}
-              >
-                <Icon name="close" size={11} color={color.labelSecondary} weight="bold" />
-              </Pressable>
-            </View>
-          ))}
-        </View>
-        {rows.map((row) => (
-          <View key={row.label} style={styles.row}>
-            <Txt variant="eyebrow" color={color.labelSecondary}>
-              {row.label.toUpperCase()}
-            </Txt>
-            <View style={styles.cells}>
-              {row.cells.map((cell, index) => (
-                <Txt
-                  key={index}
-                  variant="subhead"
-                  color={cell.ink ?? color.label}
-                  style={[styles.cell, cell.strong && face('bold')]}
-                >
-                  {cell.text}
-                </Txt>
+        {/* Wider than the screen with four gyms: it scrolls sideways. */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tableScroll}>
+          <View style={[styles.table, { width: Math.max(Math.min(width, 760) - space[4] * 2, gyms.length * 150) }]}>
+            <View style={styles.headRow}>
+              {gyms.map((result) => (
+                <View key={result.record.location.id} style={styles.head}>
+                  <Pressable
+                    onPress={() => router.push({ pathname: '/gym/[id]', params: { id: result.record.location.id } })}
+                    accessibilityRole="link"
+                    style={styles.flex}
+                  >
+                    <Txt variant="headline" numberOfLines={2}>
+                      {result.record.location.name}
+                    </Txt>
+                    <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                      {result.record.location.address.suburb}
+                    </Txt>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => toggleCompare(result.record.location.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove ${result.record.location.name}`}
+                    hitSlop={8}
+                    style={styles.remove}
+                  >
+                    <Icon name="close" size={11} color={color.labelSecondary} weight="bold" />
+                  </Pressable>
+                </View>
               ))}
             </View>
+            {rows.map((row) => (
+              <View key={row.label} style={styles.row}>
+                <Txt variant="eyebrow" color={color.labelSecondary}>
+                  {row.label.toUpperCase()}
+                </Txt>
+                <View style={styles.cells}>
+                  {row.cells.map((cell, index) => (
+                    <Txt
+                      key={index}
+                      variant="subhead"
+                      color={cell.ink ?? color.label}
+                      style={[styles.cell, cell.strong && face('bold')]}
+                    >
+                      {cell.text}
+                    </Txt>
+                  ))}
+                </View>
+              </View>
+            ))}
           </View>
-        ))}
+        </ScrollView>
+        {!billing.isPro && (
+          <Pressable onPress={() => openPro('compare')} accessibilityRole="button" style={styles.upsell}>
+            <Txt variant="subhead" color={color.brand} style={face('bold')}>
+              ✨ Compare up to 4 gyms with GymGO Pro
+            </Txt>
+          </Pressable>
+        )}
       </ScrollView>
     </>
   );
@@ -177,6 +190,9 @@ const styles = StyleSheet.create({
   center: { textAlign: 'center' },
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], width: '100%', maxWidth: 760, alignSelf: 'center', paddingBottom: space[8] },
+  tableScroll: { marginHorizontal: -space[4] },
+  table: { gap: space[3], marginHorizontal: space[4] },
+  upsell: { alignSelf: 'center', paddingVertical: space[2] },
   headRow: { flexDirection: 'row', gap: space[3] },
   head: {
     flex: 1,

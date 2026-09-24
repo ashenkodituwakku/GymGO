@@ -80,7 +80,7 @@ export const CITIES: Record<CityId, City> = {
         mapOnly: true,
       } satisfies City,
     ]),
-  ) as Record<AuCityId, City>),
+  ) as Record<Exclude<AuCityId, 'melbourne'>, City>),
   ...(Object.fromEntries(
     US_CITIES.map((city) => [
       city.id,

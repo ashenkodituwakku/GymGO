@@ -211,6 +211,27 @@ describe('ranking', () => {
     expect(outcome.results[2]?.rating.average).toBeNull();
   });
 
+  it('best match puts the gym with fewer open questions first; closest ignores them', () => {
+    // Near, but its price and guest hours are unpublished.
+    const vague = gym('near-but-vague', {
+      location: location({ id: 'near-but-vague', slug: 'near-but-vague', name: 'near', position: { lat: -33.8847, lng: 151.2113 } }),
+      offers: [offer({ baseAmountMinor: null })],
+      schedules: [],
+    });
+    // A little farther, and only its price is unpublished.
+    const clear = gym('farther-but-clear', {
+      location: location({ id: 'farther-but-clear', slug: 'farther-but-clear', name: 'far', position: { lat: -33.8900, lng: 151.2113 } }),
+      offers: [offer({ baseAmountMinor: null })],
+    });
+    const best = runSearch([vague, clear], { ...REFERENCE_QUERY, sort: 'best_match' }).results;
+    expect(best.map((r) => r.tier)).toEqual(['needs_confirmation', 'needs_confirmation']);
+    expect(best[0]!.limitations.length).toBeLessThan(best[1]!.limitations.length);
+    expect(best.map((r) => r.record.location.id)).toEqual(['farther-but-clear', 'near-but-vague']);
+
+    const closest = runSearch([vague, clear], { ...REFERENCE_QUERY, sort: 'distance' }).results;
+    expect(closest.map((r) => r.record.location.id)).toEqual(['near-but-vague', 'farther-but-clear']);
+  });
+
   it('is stable: the same input produces the same order every time', () => {
     const records = [gym('c'), gym('a'), gym('b')];
     const first = runSearch(records).results.map((r) => r.record.location.id);

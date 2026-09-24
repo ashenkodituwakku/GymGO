@@ -2,7 +2,7 @@
 
 import type { TrainingType } from '@gymgo/domain';
 
-export type AuCityId = 'sydney' | 'brisbane' | 'perth' | 'adelaide' | 'canberra' | 'gold-coast' | 'hobart';
+export type AuCityId = 'melbourne' | 'sydney' | 'brisbane' | 'perth' | 'adelaide' | 'canberra' | 'gold-coast' | 'hobart';
 
 export interface GymRow {
   city: AuCityId;

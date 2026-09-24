@@ -1,4 +1,5 @@
 import { defaultQuery, haversineKm, search, type GymRecord } from '@gymgo/domain';
+import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { describe, expect, it } from 'vitest';
 import { AU_CITIES, AU_GYMS, AU_PLACES, auCity } from './index';
 import { GYM_ROWS } from './data';
@@ -93,6 +94,18 @@ describe('Australian gyms from OpenStreetMap', () => {
   it('leaves out what isn’t a public gym', () => {
     const banned = /yoga|pilates|barre|hotel|apartment|university|college|defence|barracks/i;
     for (const record of AU_GYMS) expect(record.location.name).not.toMatch(banned);
+  });
+
+  it('adds Melbourne’s other mapped gyms, never a copy of a researched one', () => {
+    const extras = GYM_ROWS.filter((row) => row.city === 'melbourne');
+    expect(extras.length).toBeGreaterThanOrEqual(20);
+    for (const row of extras) expect(row.state).toBe('VIC');
+    // Melbourne's researched gyms carry their map element; none reappears here.
+    const researched = MELBOURNE_GYMS.map((record) => record.location.externalRefs.openStreetMap);
+    expect(researched.length).toBeGreaterThanOrEqual(20);
+    for (const row of extras) expect(researched).not.toContain(row.osm);
+    // And Melbourne isn't listed as one of this package's cities.
+    expect(AU_CITIES.map((city) => city.id)).not.toContain('melbourne');
   });
 
   it('has suburbs to search in every city', () => {

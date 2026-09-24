@@ -28,6 +28,7 @@ STATES = {'ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA'}
 
 # Must match src/cities.ts.
 CITIES = {
+    'melbourne': ('VIC', -37.8142, 144.9632, 7000),
     'sydney': ('NSW', -33.8688, 151.2093, 7000),
     'brisbane': ('QLD', -27.4698, 153.0251, 7000),
     'perth': ('WA', -31.9523, 115.8613, 7000),
@@ -37,7 +38,7 @@ CITIES = {
     'hobart': ('TAS', -42.8821, 147.3272, 6000),
 }
 CITY_NAMES = {
-    'sydney': 'Sydney', 'brisbane': 'Brisbane', 'perth': 'Perth', 'adelaide': 'Adelaide', 'canberra': 'Canberra',
+    'melbourne': 'Melbourne', 'sydney': 'Sydney', 'brisbane': 'Brisbane', 'perth': 'Perth', 'adelaide': 'Adelaide', 'canberra': 'Canberra',
     'gold-coast': 'Gold Coast', 'hobart': 'Hobart',
 }
 
@@ -51,8 +52,30 @@ def state_of(tags, default):
     return raw if raw in STATES else default
 
 
+# Melbourne's researched gyms live in packages/melbourne-data. The map's
+# copies of them are left out here, by map element or, failing that, by a
+# gym of the same name within 100 metres.
+RESEARCHED = os.path.join(HERE, '..', '..', 'melbourne-data', 'src', 'gyms.ts')
+
+
+def researched_gyms():
+    text = open(RESEARCHED).read()
+    found = []
+    for m in re.finditer(r"name: '([^']+)',.*?lat: (-?[\d.]+),\s*lng: (-?[\d.]+),\s*osmElement: '([a-z]+/\d+)'", text, re.S):
+        found.append({'name': m.group(1), 'pos': (float(m.group(2)), float(m.group(3))), 'osm': m.group(4)})
+    return found
+
+
+def same_gym(name, pos, other):
+    words = lambda text: set(re.findall(r'[a-z0-9]+', text.lower().replace('’', "'").replace("'", ''))) - {'the', 'gym', 'fitness', 'health', 'club', 'clubs'}
+    near = km(pos, other['pos']) <= 0.1
+    return near and (words(name) & words(other['name']) or not words(name) or not words(other['name']))
+
+
 def main(src):
     fetched, gyms_out, places_out, ids, stats = {}, [], [], set(), {}
+    researched = researched_gyms()
+    assert len(researched) >= 20, 'could not read the researched Melbourne gyms'
     parsed = unparsed = 0
     for city, (state, lat, lng, _radius) in CITIES.items():
         data = json.load(open(os.path.join(src, f'{city}.json')))
@@ -63,6 +86,8 @@ def main(src):
             tags, name = el['tags'], el['tags']['name'].strip()
             pos = position(el)
             if not pos or not keep(name, tags):
+                continue
+            if city == 'melbourne' and any(f'{el["type"]}/{el["id"]}' == gym['osm'] or same_gym(name, pos, gym) for gym in researched):
                 continue
             key = (name.lower(), round(pos[0], 4), round(pos[1], 4))
             if key in seen:
@@ -120,6 +145,10 @@ def main(src):
                     row['hours'] = hours
             gyms_out.append(row)
 
+        # Suburbs for the search box, nearest the centre first. Melbourne's
+        # come with postcodes from packages/melbourne-data instead.
+        if city == 'melbourne':
+            continue
         # Suburbs for the search box, nearest the centre first. Australian
         # suburbs are official names, so every place=suburb counts; smaller
         # neighbourhoods only when they're notable (they have a Wikidata entry).

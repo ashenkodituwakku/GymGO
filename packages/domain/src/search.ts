@@ -41,7 +41,7 @@ export type SortKey = 'best_match' | 'distance' | 'visit_cost' | 'rating';
 
 export const SORT_DESCRIPTIONS: Record<SortKey, string> = {
   best_match:
-    'Confirmed matches first, then results needing confirmation, then straight-line distance.',
+    'Confirmed matches first, then results needing confirmation; within each, the fewest open questions, then straight-line distance.',
   distance: 'Confirmed matches first, then nearest by straight-line distance.',
   visit_cost:
     'Confirmed matches first, then lowest confirmed visit cost. Unconfirmed prices come last.',
@@ -302,8 +302,15 @@ function compareResults(a: GymSearchResult, b: GymSearchResult, sort: SortKey): 
       }
       break;
     }
+    case 'best_match': {
+      // Fewer things to call about is a better match: a gym that publishes
+      // its guest hours and price beats one that publishes nothing.
+      const open = (result: GymSearchResult) => result.limitations.filter((reason) => reason.severity !== 'info').length;
+      const questionDelta = open(a) - open(b);
+      if (questionDelta !== 0) return questionDelta;
+      break;
+    }
     case 'distance':
-    case 'best_match':
       break;
   }
 

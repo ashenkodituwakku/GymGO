@@ -104,7 +104,9 @@ Chrome and Edge (blur only in Safari and Firefox).
   you, your saved and recently viewed gyms, then neighbourhoods and other
   cities as chips.
 - **Explore**: the map with the results sheet, filters, and sorting (best
-  match, closest, cheapest, top rated).
+  match, closest, cheapest, top rated). "Best match" means: gyms that meet
+  everything you asked first, then, among the rest, the ones with the fewest
+  things you'd need to call about, then the nearest.
 - **Saved**: your saved gyms. Tick two or three to **compare** them side by
   side: answer, price, guest entry, what to bring, machines, rating and
   distance.
@@ -146,8 +148,10 @@ is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
 
 ### Cities
 
-- **Melbourne**: 23 real gyms, with prices and hours from each gym's own
-  website where it publishes them.
+- **Melbourne**: 23 researched gyms, with prices and hours from each gym's
+  own website where it publishes them, plus 40 more from OpenStreetMap
+  (map-only, like the cities below). The map's copies of the researched 23
+  are left out, so none shows twice.
 - **7 more Australian cities**: Sydney, Brisbane, Perth, Adelaide, Canberra,
   the Gold Coast and Hobart, with 229 real gyms between them. Like the US
   cities below, these are **map-only**, from OpenStreetMap: no prices, guest

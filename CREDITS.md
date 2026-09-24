@@ -51,8 +51,8 @@ every real listing and at the foot of the results. Prices, hours and
 equipment were read from each gym's own website, and each fact links to its
 page.
 
-The 477 gyms in 15 US cities and the 229 in Sydney, Brisbane, Perth,
-Adelaide, Canberra, the Gold Coast and Hobart, and the suburbs and neighbourhoods the
+The 477 gyms in 15 US cities, the 229 in Sydney, Brisbane, Perth,
+Adelaide, Canberra, the Gold Coast and Hobart, and 40 more around Melbourne, and the suburbs and neighbourhoods the
 search box knows there, also come from OpenStreetMap (© OpenStreetMap
 contributors, ODbL), fetched on 24 September 2026 through the Overpass API.
 They are derived databases under the ODbL: `scripts/osm_gyms.py` and each

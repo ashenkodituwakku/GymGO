@@ -20,6 +20,7 @@
     "@gymgo/domain": "workspace:*"
   },
   "devDependencies": {
+    "@gymgo/melbourne-data": "workspace:*",
     "typescript": "^5.9.3",
     "vitest": "^5.0.1"
   }

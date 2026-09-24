@@ -32,4 +32,20 @@ export const AU_CITIES: AuCity[] = [
   { id: 'hobart', name: 'Hobart', state: 'TAS', timezone: 'Australia/Hobart', centre: { lat: -42.8821, lng: 147.3272 }, radiusKm: 6, aliases: [] },
 ];
 
-export const auCity = (id: AuCityId): AuCity => AU_CITIES.find((city) => city.id === id)!;
+/**
+ * Melbourne's other mapped gyms. The city itself belongs to
+ * packages/melbourne-data, where its gyms are researched one by one; these
+ * are the rest of what the map holds there, map-only like everywhere else.
+ * Not in AU_CITIES, so apps don't list Melbourne twice.
+ */
+export const MELBOURNE_MAP_AREA: AuCity = {
+  id: 'melbourne',
+  name: 'Melbourne',
+  state: 'VIC',
+  timezone: 'Australia/Melbourne',
+  centre: { lat: -37.8142, lng: 144.9632 },
+  radiusKm: 7,
+  aliases: [],
+};
+
+export const auCity = (id: AuCityId): AuCity => [...AU_CITIES, MELBOURNE_MAP_AREA].find((city) => city.id === id)!;

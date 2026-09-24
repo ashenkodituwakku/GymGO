@@ -171,8 +171,10 @@ is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
   streets as real Sydney ones.
 
 Search a city ("Brisbane", "New York", "NYC", "Philly"), a suburb or
-neighborhood ("Fortitude Valley", "SoHo", "Capitol Hill, Seattle") or a
-Melbourne suburb or postcode. Visit times are
+neighborhood ("Fortitude Valley", "SoHo", "Capitol Hill, Seattle"), a
+Melbourne suburb or postcode, or a gym by name ("Equinox", "snap fit"):
+matching gyms are suggested nearest first, and pressing Enter on a name
+opens the closest one. Visit times are
 always on the searched city's clock.
 
 ### Build a workout

@@ -101,7 +101,7 @@ export default function Home() {
         </Pressable>
       }
     >
-      <SearchButton placeholder="Search a suburb, neighborhood or city" onPress={() => explore({ focusSearch: true })} />
+      <SearchButton placeholder="Search a suburb, city or gym" onPress={() => explore({ focusSearch: true })} />
 
       {/* Shortcuts --------------------------------------------------------- */}
       <View style={styles.shortcuts}>

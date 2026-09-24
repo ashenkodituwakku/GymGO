@@ -27,6 +27,7 @@ import { EMPTY, locatedNotice } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { cityAt, geocodePlace, type AppPlace } from '@/lib/places';
 import { useApp } from '@/lib/app-state';
+import { suggestGyms } from '@/lib/gymSearch';
 import { useBottomClearance } from '@/lib/layout';
 import { SORTS, applyRelaxation, atPlace, moveTo, runSearch } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
@@ -130,16 +131,22 @@ function MapScreen() {
     [],
   );
 
+  // openGym is defined below; the search reaches it through this ref.
+  const openGymRef = useRef<(id: string) => void>(() => undefined);
+
   const submitSearch = useCallback(() => {
     const result = geocodePlace(query, cityAt(filters.centre).id);
     Keyboard.dismiss();
     if (result.place) return pickPlace(result.place);
+    // Not a place: maybe a gym's name. Open the best match.
+    const gym = suggestGyms(query, data.records, filters.centre, 1)[0];
+    if (gym) return openGymRef.current(gym.location.id);
     if (result.outOfArea) {
       // Stay put and say so, rather than jump somewhere unasked.
       haptic.warn();
       setNotice(EMPTY.outOfArea);
     }
-  }, [query, pickPlace, filters.centre]);
+  }, [query, pickPlace, filters.centre, data.records]);
 
   // Your precise position, used for this search on this device only.
   const locate = useCallback(async () => {
@@ -186,6 +193,7 @@ function MapScreen() {
     },
     [data.records, outcome, wide, addRecent, setFilters],
   );
+  openGymRef.current = openGym;
 
   const closePlace = useCallback(() => {
     if (wide) {
@@ -303,6 +311,7 @@ function MapScreen() {
       onSort={chooseSort}
       covers={data.covers}
       memberPrices={data.memberPrices}
+      records={data.records}
     />
   );
 

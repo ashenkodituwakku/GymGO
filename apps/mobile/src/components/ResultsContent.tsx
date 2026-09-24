@@ -8,8 +8,9 @@
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
-import { explainNoMatches, type SearchOutcome } from '@gymgo/domain';
-import { cityAt, moneyLabel, placeContext, suggestPlaces, type AppPlace } from '@/lib/places';
+import { explainNoMatches, haversineKm, type GymRecord, type SearchOutcome } from '@gymgo/domain';
+import { suggestGyms } from '@/lib/gymSearch';
+import { cityAt, distanceLabel, moneyLabel, placeContext, suggestPlaces, type AppPlace } from '@/lib/places';
 import { EMPTY, PLACEHOLDER, TIER, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
 import { SORTS, activeFilterCount, type Filters } from '@/lib/query';
 import { color, face, radius, space } from '@/lib/theme';
@@ -33,6 +34,7 @@ export function ResultsContent({
   onToggleBudget,
   onOpenFilters,
   onSelect,
+  records,
   onApplyRelaxation,
   notice,
   inSheet,
@@ -55,6 +57,8 @@ export function ResultsContent({
   onToggleBudget: () => void;
   onOpenFilters: () => void;
   onSelect: (id: string) => void;
+  /** The gyms that can be searched by name (the current mode's). */
+  records: readonly GymRecord[];
   onApplyRelaxation: (index: number) => void;
   notice: string | null;
   /** In a bottom sheet (phone) or a plain panel (desktop). */
@@ -77,6 +81,8 @@ export function ResultsContent({
   const SearchInput = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
   const city = cityAt(filters.centre);
   const suggestions = query.trim() ? suggestPlaces(query, 6, city.id) : [];
+  // Gyms by name too ("Equinox", "snap fit"), nearest first, after places.
+  const gymSuggestions = query.trim() ? suggestGyms(query, records, filters.centre, 4) : [];
   const filterCount = activeFilterCount(filters);
   const total = outcome.results.length;
 
@@ -97,7 +103,7 @@ export function ResultsContent({
             returnKeyType="search"
             autoCorrect={false}
             style={styles.input}
-            accessibilityLabel="Search a suburb, neighborhood or city"
+            accessibilityLabel="Search a suburb, city or gym"
           />
         </View>
         <Pressable
@@ -137,7 +143,7 @@ export function ResultsContent({
         </Pressable>
       </View>
 
-      {suggestions.length > 0 && (
+      {(suggestions.length > 0 || gymSuggestions.length > 0) && (
         <View style={styles.suggestions}>
           {suggestions.map((place) => (
             <Pressable
@@ -159,6 +165,32 @@ export function ResultsContent({
               </Txt>
             </Pressable>
           ))}
+          {gymSuggestions.map((record) => {
+            const location = record.location;
+            return (
+              <Pressable
+                key={location.id}
+                onPress={() => {
+                  haptic.select();
+                  onSelect(location.id);
+                }}
+                style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
+                accessibilityRole="button"
+                accessibilityLabel={`${location.name}, gym in ${location.address.suburb}`}
+              >
+                <View style={[styles.suggestionGlyph, styles.gymGlyph]}>
+                  <Icon name="gym" size={16} color={color.onBrand} />
+                </View>
+                <Txt variant="body">
+                  {location.name}
+                  {location.branch ? ` ${location.branch}` : ''}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary}>
+                  Gym · {location.address.suburb} · {distanceLabel(haversineKm(filters.centre, location.position), location.address.countryCode)}
+                </Txt>
+              </Pressable>
+            );
+          })}
         </View>
       )}
 
@@ -338,6 +370,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  gymGlyph: { backgroundColor: color.brand },
   avatarSignedIn: { backgroundColor: color.brand },
   filterButton: {
     width: 40,

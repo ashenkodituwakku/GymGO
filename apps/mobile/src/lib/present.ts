@@ -75,3 +75,10 @@ function googleQuery(record: GymRecord): string {
   const { name, address } = record.location;
   return [name, address.line1, address.suburb, address.state].filter(Boolean).join(', ');
 }
+
+/** What someone typed as a price, in cents: "24.50", "$24.50" or "A$25" → 2450 / 2500; anything else → null. */
+export function parseAmount(text: string): number | null {
+  const clean = text.trim().replace(/^A?\$/i, '');
+  if (!/^\d{1,3}(\.\d{1,2})?$/.test(clean)) return null;
+  return Math.round(Number(clean) * 100);
+}

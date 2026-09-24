@@ -85,6 +85,17 @@ export interface GymPhoto {
   createdAt: string;
 }
 
+/** What members paid for one casual visit: typical (median), range, how many, how recent. */
+export interface PriceSummary {
+  currency: 'AUD' | 'USD';
+  count: number;
+  typicalMinor: number | null;
+  lowMinor: number | null;
+  highMinor: number | null;
+  latestPaidOn: string | null;
+  mine: { amountMinor: number; paidOn: string } | null;
+}
+
 export interface GoogleAuthor {
   name: string;
   uri: string | null;
@@ -219,6 +230,10 @@ export const api = {
     ),
   reportEquipment: (token: string, gymId: string, items: EquipmentReportItem[]) =>
     request<unknown>('PUT', `/api/gyms/${encodeURIComponent(gymId)}/equipment`, { token, body: { items } }),
+  prices: (gymId: string, token: string | null) => request<PriceSummary>('GET', `/api/gyms/${encodeURIComponent(gymId)}/prices`, { token }),
+  reportPrice: (token: string, gymId: string, body: { amountMinor: number; paidOn: string }) =>
+    request<unknown>('PUT', `/api/gyms/${encodeURIComponent(gymId)}/prices`, { token, body }),
+  deletePrice: (token: string, gymId: string) => request<unknown>('DELETE', `/api/gyms/${encodeURIComponent(gymId)}/prices`, { token }),
   google: (gymId: string) => request<GoogleResult>('GET', `/api/gyms/${encodeURIComponent(gymId)}/google`),
   photoQueue: (token: string) =>
     request<{ photos: Array<{ id: string; gymId: string; credit: string; createdAt: string; dataUrl: string | null }> }>(

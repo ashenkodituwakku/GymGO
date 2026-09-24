@@ -17,6 +17,7 @@ import { GoogleSection, useGooglePlace } from '@/components/GoogleSection';
 import { GooglePhotos } from '@/components/GooglePage';
 import { Icon, type IconName } from '@/components/Icon';
 import { MemberKit } from '@/components/MemberKit';
+import { MemberPrices } from '@/components/MemberPrices';
 import { PhotoHero } from '@/components/PhotoHero';
 import { PlaceCard } from '@/components/PlaceCard';
 import { ReviewsSection } from '@/components/ReviewsSection';
@@ -143,6 +144,16 @@ export default function GymPage() {
               <MemberKit
                 gymId={location.id}
                 isDemo={location.isDemoData}
+                account={account}
+                inSheet={false}
+                onSignIn={() => router.navigate('/profile')}
+              />
+            }
+            memberPrices={
+              <MemberPrices
+                gymId={location.id}
+                isDemo={location.isDemoData}
+                country={location.address.countryCode}
                 account={account}
                 inSheet={false}
                 onSignIn={() => router.navigate('/profile')}

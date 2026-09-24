@@ -162,7 +162,8 @@ export default function Profile() {
           <Explainer>
             Your account lives on the GymGO server on your own computer. Your precise location, if you allow it, is used on
             this device to find gyms near you and measure distances. It is never stored or sent to GymGO or anyone else.
-            Photos have their location data removed before they’re saved. If you subscribe to Pro, Stripe handles the payment:
+            Photos have their location data removed before they’re saved. What you say you paid for a visit is shown without your
+            name. If you subscribe to Pro, Stripe handles the payment:
             GymGO never sees your card, and Stripe gets your name and email for the receipt.
           </Explainer>
         )}

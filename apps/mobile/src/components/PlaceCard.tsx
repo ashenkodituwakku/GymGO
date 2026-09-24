@@ -102,6 +102,7 @@ export function PlaceCard({
   asOf,
   photos,
   memberKit,
+  memberPrices,
   reviews,
 }: {
   result: GymSearchResult;
@@ -118,6 +119,8 @@ export function PlaceCard({
   photos: React.ReactNode;
   /** What members say the gym has, likewise. */
   memberKit: React.ReactNode;
+  /** What members paid for a visit, under the gym's own prices. */
+  memberPrices?: React.ReactNode;
   /** The live reviews section, likewise. */
   reviews: React.ReactNode;
 }) {
@@ -361,6 +364,7 @@ export function PlaceCard({
             </View>
           )}
           <Evidence provenance={result.offers.bestAvailable?.offer.provenance} age={result.offers.bestAvailable?.freshness.ageDays ?? null} />
+          {memberPrices}
         </Fold>
 
         <Fold icon="door" title="Getting in" summary={guestHours ? `Guests ${guestHours}` : 'Guest hours not published'}>

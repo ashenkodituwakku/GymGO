@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
-import { depositLine, googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl, priceLine } from './present';
+import { depositLine, googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl, parseAmount, priceLine } from './present';
 import { atPlace, initialFilters, runSearch } from './query';
 import { geocodePlace } from './places';
 
@@ -92,5 +92,20 @@ describe('googleStreetViewEmbedUrl', () => {
     expect(url.searchParams.get('output')).toBe('svembed');
     expect(url.searchParams.get('cbll')).toBe(`${gym.location.position.lat},${gym.location.position.lng}`);
     expect(url.searchParams.has('key')).toBe(false);
+  });
+});
+
+describe('typed prices', () => {
+  it('reads what people type as a price, in cents', () => {
+    expect(parseAmount('25')).toBe(2500);
+    expect(parseAmount(' 24.50 ')).toBe(2450);
+    expect(parseAmount('24.5')).toBe(2450);
+    expect(parseAmount('$19.99')).toBe(1999);
+    expect(parseAmount('A$30')).toBe(3000);
+    expect(parseAmount('0.10')).toBe(10);
+  });
+
+  it('refuses anything that isn’t plainly an amount', () => {
+    for (const text of ['', 'free', '25 dollars', '1,000', '12.345', '-5', '1e3', '2500.00']) expect(parseAmount(text)).toBeNull();
   });
 });

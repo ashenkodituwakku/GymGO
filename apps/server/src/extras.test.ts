@@ -6,6 +6,7 @@ import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { DEMO_GYMS } from '@gymgo/demo-data';
+import { US_GYMS } from '@gymgo/usa-data';
 import { createApp } from './app';
 import { openDb, seedGyms, type Db } from './db';
 import { cleanPhoto, stripJpeg, stripPng } from './photos';
@@ -99,7 +100,7 @@ async function fakeGoogle(input: string | URL | Request, init?: RequestInit): Pr
 
 beforeAll(async () => {
   db = openDb(':memory:');
-  seedGyms(db, [...MELBOURNE_GYMS, ...DEMO_GYMS]);
+  seedGyms(db, [...MELBOURNE_GYMS, ...DEMO_GYMS, US_GYMS[0]!]);
   photoDir = mkdtempSync(join(tmpdir(), 'gymgo-photos-'));
   server = createServer(
     createApp({ db, attribution: 'test', signupsPerHour: 1000, photoDir, googleKey: 'test-key', fetchImpl: fakeGoogle as typeof fetch }),
@@ -256,6 +257,56 @@ describe('what members say a gym has', () => {
     expect((await call('PUT', gym, { token, body: { items: [{ equipmentTypeId: 'dumbbells', presence: 'yes', maxWeightKg: 900 }] } })).status).toBe(400);
     const demo = `/api/gyms/${DEMO_GYMS[0]!.location.id}/equipment`;
     expect((await call('PUT', demo, { token, body: { items: [{ equipmentTypeId: 'bench', presence: 'yes' }] } })).status).toBe(400);
+  });
+});
+
+describe('what members paid for a casual visit', () => {
+  const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+
+  it('gives the typical price (the median) and range, counts each member once, and never shows who', async () => {
+    const gym = '/api/gyms/carlton-fitness/prices';
+    expect((await call('GET', gym)).body).toMatchObject({ currency: 'AUD', count: 0, typicalMinor: null, mine: null });
+    expect((await call('PUT', gym, { body: { amountMinor: 2000, paidOn: day(0) } })).status).toBe(401);
+
+    const [a, b, c] = [await signUp(), await signUp(), await signUp()];
+    for (const [who, amount, when] of [[a, 2000, -3], [b, 2500, -40], [c, 9900, -1]] as const) {
+      expect((await call('PUT', gym, { token: who.token, body: { amountMinor: amount, paidOn: day(when) } })).status).toBe(204);
+    }
+    const summary = await call('GET', gym, { token: a.token });
+    // The odd A$99 report can't drag the typical price up.
+    expect(summary.body).toMatchObject({ count: 3, typicalMinor: 2500, lowMinor: 2000, highMinor: 9900, latestPaidOn: day(-1) });
+    expect(summary.body.mine).toEqual({ amountMinor: 2000, paidOn: day(-3) });
+    expect(JSON.stringify(summary.body)).not.toMatch(/Lifter|@example/);
+
+    // Reporting again replaces your report; taking it back removes it.
+    await call('PUT', gym, { token: c.token, body: { amountMinor: 2200, paidOn: day(0) } });
+    expect((await call('GET', gym)).body).toMatchObject({ count: 3, typicalMinor: 2200, highMinor: 2500 });
+    expect((await call('DELETE', gym, { token: c.token })).status).toBe(204);
+    expect((await call('GET', gym)).body).toMatchObject({ count: 2, typicalMinor: 2250 });
+  });
+
+  it('turns away amounts and dates that can’t be right, and invented demo gyms', async () => {
+    const { token } = await signUp();
+    const gym = '/api/gyms/carlton-fitness/prices';
+    for (const body of [
+      { amountMinor: 0, paidOn: day(0) },
+      { amountMinor: 50001, paidOn: day(0) },
+      { amountMinor: 19.5, paidOn: day(0) },
+      { amountMinor: 2000, paidOn: 'yesterday' },
+      { amountMinor: 2000, paidOn: day(5) },
+      { amountMinor: 2000, paidOn: day(-800) },
+    ]) {
+      expect((await call('PUT', gym, { token, body })).status).toBe(400);
+    }
+    const demo = `/api/gyms/${DEMO_GYMS[0]!.location.id}/prices`;
+    expect((await call('PUT', demo, { token, body: { amountMinor: 2000, paidOn: day(0) } })).status).toBe(400);
+  });
+
+  it('keeps a US gym’s reports in US dollars', async () => {
+    const { token } = await signUp();
+    const gym = `/api/gyms/${US_GYMS[0]!.location.id}/prices`;
+    await call('PUT', gym, { token, body: { amountMinor: 1500, paidOn: day(-2) } });
+    expect((await call('GET', gym)).body).toMatchObject({ currency: 'USD', count: 1, typicalMinor: 1500 });
   });
 });
 

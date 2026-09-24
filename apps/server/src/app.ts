@@ -19,6 +19,9 @@
  *   GET    /api/photos/:id                a published photo's image
  *   GET    /api/gyms/:gymId/equipment     what members say the gym has, tallied (plus your own)
  *   PUT    /api/gyms/:gymId/equipment     { items: [{ equipmentTypeId, presence, maxWeightKg? }] } -> your report
+ *   GET    /api/gyms/:gymId/prices        what members paid for a casual visit: count, typical, range (plus yours)
+ *   PUT    /api/gyms/:gymId/prices        { amountMinor, paidOn } -> your report (replaces your last)
+ *   DELETE /api/gyms/:gymId/prices        take back your report
  *   GET    /api/gyms/:gymId/google        live Google Maps details (only with the owner's key)
  *   GET    /api/billing/plans             GymGO Pro's prices, and whether it's on sale
  *   GET    /api/billing                   your plan (Free or Pro) and subscription
@@ -68,7 +71,7 @@ import {
   type AccountRow,
 } from './auth';
 import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
-import { allGyms, gymExists, gymIsDemo, type Db } from './db';
+import { allGyms, gymCountry, gymExists, gymIsDemo, type Db } from './db';
 import { GoogleError, GooglePlaces } from './google';
 import { MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
 
@@ -180,6 +183,9 @@ function cleanWorkoutPlan(input: unknown) {
   };
 }
 
+/** How long a member's price report keeps counting. */
+const PRICE_REPORT_DAYS = 730;
+
 /** Below this, compressing costs more than it saves. */
 const GZIP_FROM_BYTES = 2048;
 
@@ -257,6 +263,7 @@ export function createApp(options: AppOptions) {
   const signupLimiter = new AttemptLimiter(options.signupsPerHour ?? 20, 60 * 60_000);
   const photoLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
   const equipmentLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
+  const priceLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   const photos = new PhotoStore(options.photoDir ?? null);
   const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
   const billing = new Billing(db, {
@@ -691,6 +698,69 @@ export function createApp(options: AppOptions) {
           db.exec('rollback');
           throw error;
         }
+        return send(res, 204);
+      }
+    }
+
+    // --- What members paid for a casual visit ---------------------------------
+    // Members' reports, shown as theirs next to (never instead of) what the gym
+    // publishes. The typical figure is the median, so one odd report can't
+    // move it far; reports over two years old stop counting.
+    if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'prices' && parts.length === 4) {
+      const gymId = decodeURIComponent(parts[2]!);
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+      const currency = gymCountry(db, gymId) === 'US' ? 'USD' : 'AUD';
+      const since = new Date(now().getTime() - PRICE_REPORT_DAYS * 86_400_000).toISOString().slice(0, 10);
+
+      if (method === 'GET') {
+        const { account } = caller(req);
+        const rows = db
+          .prepare('select amount_minor, paid_on from price_reports where gym_id = ? and currency = ? and paid_on >= ? order by amount_minor')
+          .all(gymId, currency, since) as Array<{ amount_minor: number; paid_on: string }>;
+        const amounts = rows.map((row) => row.amount_minor);
+        const middle = Math.floor(amounts.length / 2);
+        const median = amounts.length === 0 ? null : amounts.length % 2 ? amounts[middle]! : Math.round((amounts[middle - 1]! + amounts[middle]!) / 2);
+        const mine = account
+          ? (db.prepare('select amount_minor, paid_on from price_reports where gym_id = ? and user_id = ?').get(gymId, account.id) as
+              | { amount_minor: number; paid_on: string }
+              | undefined)
+          : undefined;
+        return send(res, 200, {
+          currency,
+          count: amounts.length,
+          typicalMinor: median,
+          lowMinor: amounts[0] ?? null,
+          highMinor: amounts.at(-1) ?? null,
+          latestPaidOn: rows.reduce<string | null>((latest, row) => (latest && latest > row.paid_on ? latest : row.paid_on), null),
+          mine: mine ? { amountMinor: mine.amount_minor, paidOn: mine.paid_on } : null,
+        });
+      }
+
+      if (method === 'PUT' || method === 'DELETE') {
+        const { account, user } = requireAccount(req);
+        requirePermission(user, 'correction.create', gymId);
+        if (method === 'DELETE') {
+          db.prepare('delete from price_reports where gym_id = ? and user_id = ?').run(gymId, account.id);
+          return send(res, 204);
+        }
+        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to report.');
+        const body = (await readJson(req)) as Record<string, unknown>;
+        const amount = Number(body.amountMinor);
+        if (!Number.isInteger(amount) || amount < 100 || amount > 50000) {
+          throw new HttpError(400, `Enter what one casual visit cost, between ${currency === 'USD' ? '$' : 'A$'}1 and ${currency === 'USD' ? '$' : 'A$'}500.`);
+        }
+        const paidOn = typeof body.paidOn === 'string' ? body.paidOn : '';
+        const tomorrow = new Date(now().getTime() + 86_400_000).toISOString().slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(paidOn) || Number.isNaN(Date.parse(paidOn)) || paidOn > tomorrow) {
+          throw new HttpError(400, 'Say when you paid, as a date that has happened.');
+        }
+        if (paidOn < since) throw new HttpError(400, 'That was over two years ago; prices change, so it wouldn\u2019t help anyone now.');
+        if (!priceLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That\u2019s a lot of updates for one day. Try again tomorrow.');
+        db.prepare(
+          `insert into price_reports (gym_id, user_id, amount_minor, currency, paid_on, reported_at) values (?, ?, ?, ?, ?, ?)
+           on conflict (gym_id, user_id) do update set amount_minor = excluded.amount_minor, currency = excluded.currency,
+             paid_on = excluded.paid_on, reported_at = excluded.reported_at`,
+        ).run(gymId, account.id, amount, currency, paidOn, now().toISOString());
         return send(res, 204);
       }
     }

@@ -74,6 +74,16 @@ const SCHEMA = `
     primary key (gym_id, user_id, equipment_type_id)
   );
   create index if not exists equipment_reports_gym on equipment_reports(gym_id);
+  create table if not exists price_reports (
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    amount_minor integer not null check (amount_minor between 100 and 50000),
+    currency text not null check (currency in ('AUD', 'USD')),
+    paid_on text not null,
+    reported_at text not null,
+    primary key (gym_id, user_id)
+  );
+  create index if not exists price_reports_gym on price_reports(gym_id);
   create table if not exists billing_customers (
     user_id text primary key references users(id) on delete cascade,
     stripe_customer_id text not null unique,
@@ -162,6 +172,12 @@ export function allGyms(db: Db): GymRecord[] {
 
 export function gymExists(db: Db, gymId: string): boolean {
   return db.prepare('select 1 from gyms where id = ?').get(gymId) !== undefined;
+}
+
+/** The gym's country ("AU", "US"), from its stored record. */
+export function gymCountry(db: Db, gymId: string): string | null {
+  const row = db.prepare('select record_json from gyms where id = ?').get(gymId) as { record_json: string } | undefined;
+  return row ? (JSON.parse(row.record_json) as GymRecord).location.address.countryCode : null;
 }
 
 /** True for the invented demo gyms, which nobody can have photographed. */

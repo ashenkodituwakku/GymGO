@@ -37,6 +37,7 @@ import { GoogleModal } from '@/components/GoogleModal';
 import { GymMap, type GymMapHandle, type MapPin } from '@/components/GymMap';
 import { Icon } from '@/components/Icon';
 import { MemberKit } from '@/components/MemberKit';
+import { MemberPrices } from '@/components/MemberPrices';
 import { PhotoHero } from '@/components/PhotoHero';
 import { PlaceCard, PlaceHeader } from '@/components/PlaceCard';
 import { ResultsContent } from '@/components/ResultsContent';
@@ -328,6 +329,16 @@ function MapScreen() {
           <MemberKit
             gymId={selected.record.location.id}
             isDemo={selected.record.location.isDemoData}
+            account={account}
+            inSheet={inSheet}
+            onSignIn={openAccount}
+          />
+        }
+        memberPrices={
+          <MemberPrices
+            gymId={selected.record.location.id}
+            isDemo={selected.record.location.isDemoData}
+            country={selected.record.location.address.countryCode}
             account={account}
             inSheet={inSheet}
             onSignIn={openAccount}

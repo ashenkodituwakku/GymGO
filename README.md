@@ -231,6 +231,19 @@ your name. The server removes the photo's hidden details (including where it
 was taken) before saving it, and it stays hidden until a moderator publishes
 it. A photo the moderator turns down is deleted. Photos live in `apps/server/data/photos/` on your computer.
 
+### What a visit costs, from members
+
+Most gyms on the map don't publish a casual-visit price. So under a gym's
+**Prices**, signed-in members can say what they paid for one visit and
+roughly when (today, last week, a few months ago). Everyone then sees
+**What members paid**: the typical price (the median, so one odd report
+can't move it far), the range, how many members and when the latest paid.
+Names are never shown. It's labelled as members' reports, not checked by
+GymGO or the gym, and it never counts as the gym's own price or makes a gym
+"Good to go". Each member has one report per gym (reporting again replaces
+it, and it can be removed), reports over two years old stop counting, and
+amounts must be between $1 and $500.
+
 ### Gym logos
 
 Eight chains have a logo that is free to reuse, found through Wikidata (the

@@ -99,10 +99,10 @@ iOS 26 it's made of Apple's own Liquid Glass material, on older iPhones and
 Android the closest blur, and in a browser a glass with real refraction in
 Chrome and Edge (blur only in Safari and Firefox).
 
-- **Home**: a greeting, the search, one-tap picks ("Early start", "After
-  work", "Under $25", "Squat racks", "Near me"), **Build a workout**, gyms
-  near you, your saved and recently viewed gyms, neighbourhoods in your city,
-  the other cities, and a count of what GymGO actually knows there.
+- **Home**: kept short. A greeting, the search, four one-tap picks (Near
+  me, Early start, After work, Under $25), **Build a workout**, gyms near
+  you, your saved and recently viewed gyms, then neighbourhoods and other
+  cities as chips.
 - **Explore**: the map with the results sheet, filters, and sorting (best
   match, closest, cheapest, top rated).
 - **Saved**: your saved gyms. Tick two or three to **compare** them side by
@@ -112,8 +112,15 @@ Chrome and Edge (blur only in Safari and Firefox).
   switch, and where GymGO's facts come from.
 
 Tap any gym to open its own page, with share, compare and save at the top.
-On an iPhone, press and hold a gym card on Home for a preview and a quick
-menu.
+It opens with the gym's logo (for the chains that have a free one, below)
+and its photos. On an iPhone, press and hold a gym card on Home for a preview
+and a quick menu.
+
+Buttons and rows use proper symbols rather than emoji: Apple's SF Symbols on
+iPhone, Google's Material Symbols on Android and in the browser, and
+Phosphor's two-tone icons in the tab bar and section headings. So a phone
+button shows a handset, directions an arrow sign, and so on, drawn the way
+the rest of the phone draws them.
 
 ### Where you are
 
@@ -190,14 +197,47 @@ decision.
 
 GymGO only shows gym photos that its own members took and chose to share. It
 never copies them from gym websites (they're copyrighted) and never shows a
-stand-in picture of some other gym. A gym nobody has photographed yet says
-**No photo supplied yet**.
+stand-in picture of some other gym.
+
+The top of a gym's page shows, in this order:
+
+1. **Members' photos**, each with the member's name on it.
+2. If there are none, and the owner has set up the optional Google key
+   (below), **Google's photos** of the place, each credited to whoever took
+   it, with "Google Maps" underneath.
+3. Otherwise **Google Street View** outside the gym, labelled as such (it
+   may not face the door). This is Google's free public embed.
+
+It always says when no member has shared a photo yet, and an invented demo
+gym says **No photo supplied yet**.
 
 To add one, open a gym, tap **+ Add a photo**, and pick a picture you took
 there. You're asked to confirm you took it and are happy for it to show with
 your name. The server removes the photo's hidden details (including where it
 was taken) before saving it, and it stays hidden until a moderator publishes
 it. A photo the moderator turns down is deleted. Photos live in `apps/server/data/photos/` on your computer.
+
+### Gym logos
+
+Eight chains have a logo that is free to reuse, found through Wikidata (the
+brand's "logo image") and hosted on Wikimedia Commons: 24 Hour Fitness,
+CrossFit, Equinox, Fitness First, Gold's Gym, LA Fitness, Life Time and Snap
+Fitness. Each shows at the top of that chain's gym pages, and on its cards
+when no member has shared a photo. Seven are public domain as simple text or
+shapes; Gold's Gym's is CC BY 4.0, credited to Gold's Gym. Every gym page
+with a logo credits it and says GymGO isn't connected to or endorsed by the
+brand. A logo is still its owner's trademark: GymGO uses it only to say
+which gym this is.
+
+Other chains (Planet Fitness, Orangetheory, Anytime Fitness and so on) have
+no free logo on Commons. Their logos are copyrighted, so GymGO doesn't copy
+them from their websites; their cards show a plain symbol instead.
+
+The logos are copied into the app (`apps/mobile/assets/logos/`), so the app
+never fetches them from Wikimedia. To look for new ones after the gym data
+changes, run `node apps/mobile/scripts/brand-logos.mjs`. It keeps only logos
+under a licence GymGO can use, and goes slowly because Wikimedia limits busy
+networks.
 
 ### What machines a gym has
 
@@ -208,9 +248,9 @@ things, kept apart:
 - **What the gym publishes**, with a link to the page it came from.
 - **What members say**: anyone signed in can open a gym's **Equipment**
   section, tap **Trained here? Tick what they have**, and mark each machine
-  👍 or 👎, plus the heaviest dumbbells if they know. The card then shows a
-  tally, such as "Squat rack 👍 3", with how many members reported and
-  when. You can change your report any time. Members' reports are labelled
+  **Yes** or **No** (thumbs up or down), plus the heaviest dumbbells if they
+  know. The card then shows a tally, such as "Squat rack, 3 thumbs up", with
+  how many members reported and when. You can change your report any time. Members' reports are labelled
   as theirs and never make a gym "Good to go" on their own.
 
 ### Google info (free, nothing to set up)
@@ -235,8 +275,9 @@ needs a Google Cloud account with billing set up.
 
 #### Optional extra: Google's photos, reviews and details on every gym
 
-With your own Google Places API key, each gym's own page gets a **From
-Google Maps** section, and the Google page shows the same under the map:
+With your own Google Places API key, each gym's own page gets Google's
+photos at the top (when no member has shared one) and a **From Google Maps**
+section, and the Google page shows the same under the map:
 Google's photos (up to six) with each photographer credited, its rating and
 latest reviews, whether it's open now and its opening hours, phone number,
 website, Google's one-line description, and what Google knows about

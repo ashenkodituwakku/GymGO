@@ -15,24 +15,20 @@ import type { AccessVerdict, ResultTier } from '@gymgo/domain';
 import { distanceLabel } from './places';
 
 export interface TierCopy {
-  emoji: string;
   label: string;
   line: string;
 }
 
 export const TIER: Record<ResultTier, TierCopy> = {
   confirmed: {
-    emoji: '💪',
     label: 'Good to go',
     line: 'Everything you asked for checks out.',
   },
   needs_confirmation: {
-    emoji: '📞',
     label: 'Call first',
     line: "Could work — a few things we couldn't confirm.",
   },
   ruled_out: {
-    emoji: '🙅',
     label: 'Not a fit',
     line: "Something you need isn't there.",
   },
@@ -43,18 +39,6 @@ export const TIER: Record<ResultTier, TierCopy> = {
  * not to the clock, so planning tomorrow's 6 am from the couch at 9 pm still
  * reads "Early one?".
  */
-/** An emoji for the time of day: 🦉 🌅 ☕ 🥪 ☀️ 🌆 🌙. */
-export function sessionEmoji(minuteOfDay: number): string {
-  const hour = Math.floor(minuteOfDay / 60) % 24;
-  if (hour < 5) return '🦉';
-  if (hour < 9) return '🌅';
-  if (hour < 11) return '☕';
-  if (hour < 14) return '🥪';
-  if (hour < 17) return '☀️';
-  if (hour < 20) return '🌆';
-  return '🌙';
-}
-
 export function sessionGreeting(minuteOfDay: number): string {
   const hour = Math.floor(minuteOfDay / 60) % 24;
   if (hour < 5) return 'Can’t sleep? Same.';
@@ -122,12 +106,12 @@ export const EMPTY = {
   photos: 'No photo supplied yet',
   results: 'Nothing ticks every box. Loosen one and try again.',
   /** No filters are on: what's missing is information, not a looser search. */
-  unconfirmedLine: 'Gyms rarely publish everything we check, so each card says exactly what to ask. 📞',
-  outOfArea: "🗺️ We don't cover that yet. Try a Melbourne suburb, or a US city like New York, Chicago or Austin.",
-  locationDenied: '🙈 No worries — search a suburb or city instead.',
-  locationUnavailable: "🛰️ Couldn't get a fix on where you are. Search a suburb or city instead.",
+  unconfirmedLine: 'Gyms rarely publish everything we check, so each card says exactly what to ask.',
+  outOfArea: "We don't cover that yet. Try a Melbourne suburb, or a US city like New York, Chicago or Austin.",
+  locationDenied: 'No worries — search a suburb or city instead.',
+  locationUnavailable: "Couldn't get a fix on where you are. Search a suburb or city instead.",
   locationApproximate:
-    '🎯 Your phone is only sharing your approximate location, so distances may be well off. Turn on Precise Location for GymGO in Settings.',
+    'Your phone is only sharing your approximate location, so distances may be well off. Turn on Precise Location for GymGO in Settings.',
   crowd: "Live crowd info isn't something we have — so we won't guess.",
 } as const;
 
@@ -145,7 +129,7 @@ export function locatedNotice(
     case 'unavailable':
       return EMPTY.locationUnavailable;
     case 'nearest':
-      return `📍 You're ${distanceLabel(result.km, result.city.country)} from ${result.city.name}, the nearest city we cover, so here it is.`;
+      return `You're ${distanceLabel(result.km, result.city.country)} from ${result.city.name}, the nearest city we cover, so here it is.`;
     case 'here':
       return result.fix.approximate ? EMPTY.locationApproximate : null;
   }

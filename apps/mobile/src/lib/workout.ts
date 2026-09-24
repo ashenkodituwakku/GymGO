@@ -53,12 +53,12 @@ export const MUSCLES: Array<{ id: Muscle; label: string; side: 'front' | 'back' 
 export const muscleLabel = (id: Muscle) => MUSCLES.find((item) => item.id === id)?.label ?? id;
 
 /** One-tap selections. */
-export const PRESETS: Array<{ label: string; emoji: string; muscles: Muscle[] }> = [
-  { label: 'Push', emoji: '🫸', muscles: ['chest', 'deltoids', 'triceps'] },
-  { label: 'Pull', emoji: '🪢', muscles: ['upper-back', 'biceps', 'trapezius'] },
-  { label: 'Legs', emoji: '🦵', muscles: ['quadriceps', 'hamstring', 'gluteal', 'calves'] },
-  { label: 'Core', emoji: '🧱', muscles: ['abs', 'obliques', 'lower-back'] },
-  { label: 'Full body', emoji: '⚡', muscles: ['chest', 'upper-back', 'quadriceps', 'hamstring', 'deltoids', 'abs'] },
+export const PRESETS: Array<{ label: string; muscles: Muscle[] }> = [
+  { label: 'Push', muscles: ['chest', 'deltoids', 'triceps'] },
+  { label: 'Pull', muscles: ['upper-back', 'biceps', 'trapezius'] },
+  { label: 'Legs', muscles: ['quadriceps', 'hamstring', 'gluteal', 'calves'] },
+  { label: 'Core', muscles: ['abs', 'obliques', 'lower-back'] },
+  { label: 'Full body', muscles: ['chest', 'upper-back', 'quadriceps', 'hamstring', 'deltoids', 'abs'] },
 ];
 
 // --- Equipment ---------------------------------------------------------------
@@ -366,5 +366,5 @@ export function workoutText(workout: Workout, gymName: string | null): string {
     (item, index) =>
       `${index + 1}. ${item.exercise.name}: ${item.exercise.cardio ? item.exercise.cue : `${item.sets} × ${item.reps}, rest ${item.restSeconds} s`}`,
   );
-  return [`💪 Workout${gymName ? ` at ${gymName}` : ''} (made with GymGO)`, ...lines].join('\n');
+  return [`Workout${gymName ? ` at ${gymName}` : ''} (made with GymGO)`, ...lines].join('\n');
 }

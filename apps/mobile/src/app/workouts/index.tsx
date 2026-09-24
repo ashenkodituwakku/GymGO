@@ -10,7 +10,7 @@ import { Icon } from '@/components/Icon';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, radius, space } from '@/lib/theme';
 
 export default function MyWorkouts() {
   const { account, billing, openPro } = useApp();
@@ -36,7 +36,7 @@ export default function MyWorkouts() {
   if (!token) {
     return (
       <View style={styles.empty}>
-        <Txt variant="title2">📒 Your workouts</Txt>
+        <Txt variant="title2">Your workouts</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           Sign in to see the workouts you’ve saved.
         </Txt>
@@ -66,11 +66,11 @@ export default function MyWorkouts() {
       )}
       {workouts !== null && workouts.length === 0 && (
         <View style={styles.emptyCard}>
-          <Txt variant="headline">📒 No saved workouts yet</Txt>
+          <Txt variant="headline">No saved workouts yet</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
-            {billing.isPro ? 'Build one, then tap 🔖 Save.' : 'With GymGO Pro, tap 🔖 Save on any workout you build to keep it here.'}
+            {billing.isPro ? 'Build one, then tap Save.' : 'With GymGO Pro, tap Save on any workout you build to keep it here.'}
           </Txt>
-          <PrimaryButton label="💪 Build a workout" onPress={() => router.push({ pathname: '/workout/[id]', params: { id: 'any' } })} />
+          <PrimaryButton label="Build a workout" icon="workout" onPress={() => router.push({ pathname: '/workout/[id]', params: { id: 'any' } })} />
         </View>
       )}
       {workouts !== null && workouts.length > 0 && (
@@ -82,7 +82,9 @@ export default function MyWorkouts() {
               accessibilityRole="button"
               style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
             >
-              <Txt style={styles.rowEmoji}>{workout.plan.goal === 'strength' ? '🏋️' : workout.plan.goal === 'endurance' ? '🔥' : '💪'}</Txt>
+              <View style={styles.rowIcon}>
+                <Icon name={workout.plan.goal === 'endurance' ? 'bolt' : 'workout'} size={18} color={color.onBrand} />
+              </View>
               <View style={styles.flex}>
                 <Txt variant="headline" numberOfLines={1}>
                   {workout.name}
@@ -117,5 +119,5 @@ const styles = StyleSheet.create({
   list: { backgroundColor: color.background, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
-  rowEmoji: { fontSize: 24, lineHeight: 30, ...face('regular') },
+  rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.brand, alignItems: 'center', justifyContent: 'center' },
 });

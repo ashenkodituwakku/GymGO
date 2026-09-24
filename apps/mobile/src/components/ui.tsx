@@ -57,7 +57,7 @@ export function Txt({
 
 export const TIER_COLOUR: Record<ResultTier, { fill: string; ink: string; tint: string; icon: IconName }> = {
   confirmed: { fill: color.good, ink: color.goodInk, tint: color.goodTint, icon: 'good' },
-  needs_confirmation: { fill: color.maybe, ink: color.maybeInk, tint: color.maybeTint, icon: 'maybe' },
+  needs_confirmation: { fill: color.maybe, ink: color.maybeInk, tint: color.maybeTint, icon: 'call' },
   ruled_out: { fill: color.no, ink: color.noInk, tint: color.noTint, icon: 'no' },
 };
 
@@ -139,12 +139,15 @@ export function Divider({ inset = 0 }: { inset?: number }) {
  */
 export function Fold({
   emoji,
+  icon,
   title,
   summary,
   initiallyOpen = false,
   children,
 }: {
-  emoji: string;
+  emoji?: string;
+  /** A symbol in a tinted circle; preferred over an emoji. */
+  icon?: IconName;
   title: string;
   summary?: string;
   initiallyOpen?: boolean;
@@ -163,9 +166,15 @@ export function Fold({
         accessibilityLabel={`${title}${summary ? `, ${summary}` : ''}`}
         style={({ pressed }) => [styles.foldHead, pressed && { opacity: 0.7 }]}
       >
-        <Txt variant="title2" style={styles.foldEmoji}>
-          {emoji}
-        </Txt>
+        {icon ? (
+          <View style={styles.foldIcon}>
+            <Icon name={icon} size={17} color={color.brand} />
+          </View>
+        ) : (
+          <Txt variant="title2" style={styles.foldEmoji}>
+            {emoji}
+          </Txt>
+        )}
         <View style={styles.foldText}>
           <Txt variant="headline">{title}</Txt>
           {summary ? (
@@ -347,8 +356,10 @@ export function PrimaryButton({
   onPress,
   disabled = false,
   tone = 'brand',
+  icon,
 }: {
   label: string;
+  icon?: IconName;
   onPress: () => void;
   disabled?: boolean;
   tone?: 'brand' | 'quiet' | 'danger';
@@ -366,6 +377,7 @@ export function PrimaryButton({
       accessibilityState={{ disabled }}
       style={({ pressed }) => [styles.primary, { backgroundColor: fill }, pressed && { opacity: 0.8 }, disabled && { opacity: 0.45 }]}
     >
+      {icon ? <Icon name={icon} size={17} color={ink} /> : null}
       <Txt variant="headline" color={ink}>
         {label}
       </Txt>
@@ -430,6 +442,8 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: radius.lg,
     borderCurve: 'continuous',
+    flexDirection: 'row',
+    gap: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -442,6 +456,14 @@ const styles = StyleSheet.create({
   },
   foldHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   foldEmoji: { width: 30, textAlign: 'center' },
+  foldIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: color.brandTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   foldText: { flex: 1, gap: 1 },
   foldBody: { paddingHorizontal: space[4], paddingBottom: space[4], gap: space[3] },
 

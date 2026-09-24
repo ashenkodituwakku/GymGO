@@ -133,7 +133,6 @@ export const TILE = {
 
 export function Row({
   icon,
-  emoji,
   tile = TILE.indigo,
   title,
   subtitle,
@@ -144,7 +143,6 @@ export function Row({
   toggle,
 }: {
   icon?: IconName;
-  emoji?: string;
   tile?: string;
   title: string;
   subtitle?: string;
@@ -160,10 +158,6 @@ export function Row({
       {icon ? (
         <View style={[styles.tile, { backgroundColor: tile }]}>
           <Icon name={icon} size={16} color="#FFFFFF" />
-        </View>
-      ) : emoji ? (
-        <View style={[styles.tile, styles.emojiTile]}>
-          <Txt style={styles.emoji}>{emoji}</Txt>
         </View>
       ) : null}
       <View style={styles.rowText}>
@@ -246,8 +240,6 @@ const styles = StyleSheet.create({
 
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, minHeight: 50, paddingVertical: 8 },
   tile: { width: 29, height: 29, borderRadius: 7, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
-  emojiTile: { backgroundColor: color.fill },
-  emoji: { fontSize: 17, lineHeight: 22 },
   rowText: { flex: 1, gap: 1 },
   value: { maxWidth: '45%' },
 

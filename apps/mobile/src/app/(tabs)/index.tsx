@@ -1,8 +1,8 @@
 /**
- * Home: a place to start. A greeting, the search, one-tap picks for the
- * common questions ("somewhere I can train at 6 am", "under $25"), the gyms
- * near where you're looking, what you've saved and looked at, neighbourhoods
- * and other cities to browse, and how GymGO decides what it tells you.
+ * Home: a place to start, kept short. A greeting, the search, four
+ * shortcuts (near me, 6 am, 6 pm, under $25), the workout builder, the gyms
+ * near where you're looking, what you've saved and looked at, and places to
+ * browse. How GymGO checks its facts lives in Profile → About.
  *
  * Every pick just sets the search and hands over to the Explore tab, so the
  * answers always come from the same rules as the map.
@@ -12,14 +12,14 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { GymCard } from '@/components/GymCard';
-import { Icon } from '@/components/Icon';
-import { Group, Row, SearchButton, SectionHeader, TabScreen } from '@/components/ios';
+import { Icon, type IconName } from '@/components/Icon';
+import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
-import { EMPTY, TIER, sessionEmoji, timeLabel } from '@/lib/copy';
+import { EMPTY, timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { CITY_LIST, PLACES, cityAt, cityPlace, moneyLabel, type AppPlace } from '@/lib/places';
-import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, nextVisitAt, runSearch, type Filters } from '@/lib/query';
+import { YOUR_LOCATION, atPlace, moveTo, nextVisitAt, runSearch, type Filters } from '@/lib/query';
 import { resultsById } from '@/lib/results';
 import { color, face, radius, shadow, space } from '@/lib/theme';
 
@@ -53,15 +53,6 @@ export default function Home() {
     : PLACES.filter((place) => place.city === city.id && place.name !== city.name).slice(0, 10);
   const otherCities = CITY_LIST.filter((item) => item.id !== city.id && !item.demo);
 
-  // What GymGO actually knows about the real gyms here, counted, not claimed.
-  const real = useMemo(
-    () => data.records.filter((record) => !record.location.isDemoData && cityAt(record.location.position).id === city.id),
-    [data.records, city.id],
-  );
-  const withPrice = real.filter((record) => record.offers.some((offer) => offer.baseAmountMinor !== null)).length;
-  const withGuestHours = real.filter((record) => record.schedules.some((item) => item.audience === 'visitor')).length;
-  const withKit = real.filter((record) => record.equipment.some((item) => item.presence === 'yes')).length;
-
   const explore = (request: Parameters<typeof requestExplore>[0] = {}) => {
     requestExplore(request);
     router.navigate('/explore');
@@ -77,68 +68,21 @@ export default function Home() {
     return { visitDate: next.date, visitMinuteOfDay: next.minute };
   };
 
-  const picks: Array<{ emoji: string; title: string; line: string; tint: string; onPress: () => void }> = [
+  const shortcuts: Array<{ icon: IconName; title: string; onPress: () => void }> = [
+    { icon: 'locate', title: 'Near me', onPress: () => explore({ locate: true }) },
+    { icon: 'sunrise', title: 'Early start', onPress: () => pick((current) => ({ ...current, ...visit(6 * 60) })) },
+    { icon: 'moon', title: 'After work', onPress: () => pick((current) => ({ ...current, ...visit(18 * 60) })) },
     {
-      emoji: '🌅',
-      title: 'Early start',
-      line: 'Guests at 6 am',
-      tint: '#FFF4D6',
-      onPress: () => pick((current) => ({ ...current, ...visit(6 * 60) })),
-    },
-    {
-      emoji: '🌙',
-      title: 'After work',
-      line: 'Guests at 6 pm',
-      tint: '#E8E7FB',
-      onPress: () => pick((current) => ({ ...current, ...visit(18 * 60) })),
-    },
-    {
-      emoji: '💵',
+      icon: 'money',
       title: `Under ${moneyLabel(2500, city.country)}`,
-      line: 'A visit that fits',
-      tint: '#E3F6E8',
       onPress: () => pick((current) => ({ ...current, budgetMinor: 2500 })),
-    },
-    {
-      emoji: '🏋️',
-      title: 'Squat racks',
-      line: 'Must have one',
-      tint: '#FFE9E3',
-      onPress: () =>
-        pick((current) => ({
-          ...current,
-          equipment: current.equipment.includes('squat_rack') ? current.equipment : [...current.equipment, 'squat_rack'],
-        })),
-    },
-    { emoji: '📍', title: 'Near me', line: 'Use my location', tint: '#E1F0FF', onPress: () => explore({ locate: true }) },
-    {
-      emoji: '✨',
-      title: 'Everything',
-      line: 'Clear my filters',
-      tint: '#F1EAF9',
-      onPress: () =>
-        pick((current) => {
-          const fresh = defaultVisit(new Date(), current.timezone);
-          return {
-            ...initialFilters(),
-            centre: current.centre,
-            placeName: current.placeName,
-            timezone: current.timezone,
-            visitDate: fresh.date,
-            visitMinuteOfDay: fresh.minute,
-          };
-        }),
     },
   ];
 
   return (
     <TabScreen
       eyebrow={clock.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
-      title={
-        name
-          ? `${greeting(clock.getHours() * 60)}, ${name} ${sessionEmoji(clock.getHours() * 60)}`
-          : `${greeting(clock.getHours() * 60)} ${sessionEmoji(clock.getHours() * 60)}`
-      }
+      title={name ? `${greeting(clock.getHours() * 60)}, ${name}` : greeting(clock.getHours() * 60)}
       right={
         <Pressable
           onPress={() => router.navigate('/profile')}
@@ -146,33 +90,34 @@ export default function Home() {
           accessibilityLabel={account.account ? 'Your profile' : 'Sign in'}
           style={({ pressed }) => [styles.avatar, account.account && styles.avatarOn, pressed && { opacity: 0.7 }]}
         >
-          <Txt variant="headline" color={account.account ? color.onBrand : color.brand}>
-            {account.account ? account.account.displayName.slice(0, 1).toUpperCase() : '👤'}
-          </Txt>
+          {account.account ? (
+            <Txt variant="headline" color={color.onBrand}>
+              {account.account.displayName.slice(0, 1).toUpperCase()}
+            </Txt>
+          ) : (
+            <Icon name="account" size={22} color={color.brand} />
+          )}
         </Pressable>
       }
     >
       <SearchButton placeholder="Search a suburb, neighborhood or city" onPress={() => explore({ focusSearch: true })} />
 
-      {/* Quick picks ------------------------------------------------------- */}
-      <View style={styles.picks}>
-        {picks.map((item) => (
+      {/* Shortcuts --------------------------------------------------------- */}
+      <View style={styles.shortcuts}>
+        {shortcuts.map((item) => (
           <Pressable
             key={item.title}
             onPress={item.onPress}
             accessibilityRole="button"
-            accessibilityLabel={`${item.title}: ${item.line}`}
-            style={({ pressed }) => [styles.pick, { backgroundColor: item.tint }, pressed && { transform: [{ scale: 0.97 }] }]}
+            accessibilityLabel={item.title}
+            style={({ pressed }) => [styles.shortcut, pressed && { transform: [{ scale: 0.96 }] }]}
           >
-            <Txt style={styles.pickEmoji}>{item.emoji}</Txt>
-            <View style={styles.flex}>
-              <Txt variant="headline" numberOfLines={1}>
-                {item.title}
-              </Txt>
-              <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-                {item.line}
-              </Txt>
+            <View style={styles.shortcutIcon}>
+              <Icon name={item.icon} size={20} color={color.brand} />
             </View>
+            <Txt variant="footnote" style={[styles.center, face('medium')]} numberOfLines={1}>
+              {item.title}
+            </Txt>
           </Pressable>
         ))}
       </View>
@@ -187,13 +132,15 @@ export default function Home() {
         accessibilityLabel="Build a workout: tap the muscles you want to train"
         style={({ pressed }) => [styles.workout, pressed && { transform: [{ scale: 0.98 }] }]}
       >
-        <Txt style={styles.workoutEmoji}>💪</Txt>
+        <View style={styles.workoutIcon}>
+          <Icon name="workout" size={22} color={color.onBrand} />
+        </View>
         <View style={styles.flex}>
           <Txt variant="headline" color={color.onBrand}>
             Build a workout
           </Txt>
           <Txt variant="footnote" color="rgba(255, 255, 255, 0.86)">
-            Tap the muscles you want to train. From a gym’s page, it fits that gym’s machines.
+            Pick muscles, get a plan
           </Txt>
         </View>
         <Icon name="chevron" size={14} color="rgba(255, 255, 255, 0.8)" />
@@ -273,53 +220,23 @@ export default function Home() {
       {/* Other cities ------------------------------------------------------- */}
       <View style={styles.section}>
         <SectionHeader icon="globe-hemisphere-west" title="Other cities" />
-        <Carousel>
+        <View style={styles.suburbs}>
           {otherCities.map((item) => (
             <Pressable
               key={item.id}
               onPress={() => goToPlace(cityPlace(item))}
               accessibilityRole="button"
               accessibilityLabel={`${item.name}, ${item.country === 'US' ? 'USA' : 'Australia'}`}
-              style={({ pressed }) => [styles.city, pressed && { transform: [{ scale: 0.97 }] }]}
+              style={({ pressed }) => [styles.suburb, pressed && { opacity: 0.7 }]}
             >
-              <Txt style={styles.cityFlag}>{item.country === 'US' ? '🇺🇸' : '🇦🇺'}</Txt>
-              <Txt variant="headline" numberOfLines={1}>
+              <Txt variant="subhead" style={face('medium')}>
                 {item.name}
-              </Txt>
-              <Txt variant="footnote" color={color.labelSecondary}>
-                {item.mapOnly ? 'Map only for now' : 'Prices and hours'}
               </Txt>
             </Pressable>
           ))}
-        </Carousel>
-      </View>
-
-      {/* What GymGO knows ---------------------------------------------------- */}
-      <View style={styles.section}>
-        <SectionHeader icon="seal-check" title={`What we know in ${city.name}`} />
-        <View style={styles.stats}>
-          <Stat value={real.length} label="real gyms mapped" />
-          <Stat value={withPrice} label="publish a price" />
-          <Stat value={withGuestHours} label="publish guest hours" />
-          <Stat value={withKit} label="list their machines" />
         </View>
-        <Txt variant="footnote" color={color.labelSecondary}>
-          {city.mapOnly
-            ? 'These gyms come from OpenStreetMap, so no prices or guest hours yet: each says “Call first” rather than guessing. You can add what machines a gym has from its page.'
-            : 'Counted from each gym’s own website. The rest is unknown, so it says “Call first” rather than guessing. You can add what machines a gym has from its page.'}
-        </Txt>
       </View>
 
-      <Group header="💡 How GymGO answers">
-        <Row emoji={TIER.confirmed.emoji} title={TIER.confirmed.label} subtitle="Everything you asked for is confirmed by a source we checked." />
-        <Row emoji={TIER.needs_confirmation.emoji} title={TIER.needs_confirmation.label} subtitle="Could work. The card says exactly what to ask." />
-        <Row emoji={TIER.ruled_out.emoji} title={TIER.ruled_out.label} subtitle="Something you need is known not to be there." />
-        <Row emoji="🔗" title="Every fact is linked" subtitle="Tap one to see the page it came from, and when." />
-      </Group>
-
-      <Txt variant="caption" color={color.labelTertiary} style={styles.note}>
-        {EMPTY.crowd}
-      </Txt>
     </TabScreen>
   );
 }
@@ -335,19 +252,6 @@ function Carousel({ children }: { children: React.ReactNode }) {
     >
       {children}
     </ScrollView>
-  );
-}
-
-function Stat({ value, label }: { value: number; label: string }) {
-  return (
-    <View style={styles.stat}>
-      <Txt variant="title" color={color.brand}>
-        {value}
-      </Txt>
-      <Txt variant="footnote" color={color.labelSecondary}>
-        {label}
-      </Txt>
-    </View>
   );
 }
 
@@ -387,7 +291,20 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     backgroundColor: color.brand,
   },
-  workoutEmoji: { fontSize: 34, lineHeight: 40 },
+  workoutIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255, 255, 255, 0.2)', alignItems: 'center', justifyContent: 'center' },
+  shortcuts: { flexDirection: 'row', gap: space[2] },
+  shortcut: {
+    flex: 1,
+    alignItems: 'center',
+    gap: space[2],
+    paddingVertical: space[3],
+    paddingHorizontal: space[1],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.background,
+  },
+  shortcutIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
+  center: { textAlign: 'center' },
 
   section: { gap: space[3] },
   carousel: { marginHorizontal: -space[4] },

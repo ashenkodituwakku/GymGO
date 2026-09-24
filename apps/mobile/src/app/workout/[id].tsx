@@ -12,6 +12,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BodyPicker } from '@/components/BodyPicker';
+import { Icon, type IconName } from '@/components/Icon';
 import { Chip, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ExerciseCard } from '@/components/ExerciseCard';
 import { ApiError, api } from '@/lib/api';
@@ -37,7 +38,7 @@ import {
 type KitMode = 'gym' | 'typical';
 
 /** Short, so three fit side by side on a phone. */
-const GOAL_LABEL: Record<Goal, string> = { strength: '🏋️ Strength', muscle: '💪 Muscle', endurance: '🔥 Endurance' };
+const GOAL_LABEL: Record<Goal, string> = { strength: 'Strength', muscle: 'Muscle', endurance: 'Endurance' };
 
 export default function WorkoutScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -127,7 +128,7 @@ export default function WorkoutScreen() {
       <Stack.Screen options={{ title: 'Workout' }} />
       <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
         <View style={styles.intro}>
-          <Txt variant="largeTitle">Build a workout 💪</Txt>
+          <Txt variant="largeTitle">Build a workout</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
             {gymName ? `For ${gymName}. ` : ''}Tap the muscles you want to train.
           </Txt>
@@ -155,7 +156,7 @@ export default function WorkoutScreen() {
             {PRESETS.map((preset) => (
               <Chip
                 key={preset.label}
-                label={`${preset.emoji} ${preset.label}`}
+                label={preset.label}
                 selected={preset.muscles.every((muscle) => muscles.includes(muscle)) && preset.muscles.length === muscles.length}
                 onPress={() => setMuscles(preset.muscles)}
               />
@@ -172,11 +173,11 @@ export default function WorkoutScreen() {
         {/* Options ------------------------------------------------------------ */}
         <View style={styles.card}>
           <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
-            🎯 GOAL
+            GOAL
           </Txt>
           <Segmented options={GOALS.map((item) => ({ value: item.id, label: GOAL_LABEL[item.id] }))} value={goal} onChange={setGoal} />
           <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
-            ⏱️ LENGTH
+            LENGTH
           </Txt>
           <Segmented
             options={[
@@ -190,7 +191,7 @@ export default function WorkoutScreen() {
           {record && (
             <>
               <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
-                🛠️ MACHINES
+                MACHINES
               </Txt>
               <Segmented
                 options={[
@@ -207,7 +208,8 @@ export default function WorkoutScreen() {
 
         {!built ? (
           <PrimaryButton
-            label={muscles.length ? '✨ Build my workout' : 'Pick at least one muscle'}
+            label={muscles.length ? 'Build my workout' : 'Pick at least one muscle'}
+            icon={muscles.length ? 'sparkle' : undefined}
             disabled={muscles.length === 0}
             onPress={() => {
               haptic.success();
@@ -219,7 +221,8 @@ export default function WorkoutScreen() {
             <Txt variant="title2">Your workout</Txt>
             <View style={styles.actions}>
               <ActionPill
-                label="🔀 Shuffle"
+                label="Shuffle"
+                icon="shuffle"
                 onPress={() => {
                   haptic.select();
                   setSeed((value) => value + 1);
@@ -227,14 +230,16 @@ export default function WorkoutScreen() {
               />
               {workout.items.length > 0 && (
                 <ActionPill
-                  label={saveState === 'saved' ? '✓ Saved' : saveState === 'saving' ? 'Saving…' : `🔖 Save${billing.isPro ? '' : ' · Pro'}`}
+                  label={saveState === 'saved' ? 'Saved' : saveState === 'saving' ? 'Saving…' : `Save${billing.isPro ? '' : ' · Pro'}`}
+                  icon={saveState === 'saved' ? 'saved' : 'save'}
                   disabled={saveState === 'saving' || saveState === 'saved'}
                   onPress={() => void saveWorkout()}
                 />
               )}
               {workout.items.length > 0 && (
                 <ActionPill
-                  label="↗ Share"
+                  label="Share"
+                  icon="share"
                   onPress={() => void Share.share({ message: workoutText(workout, gymName) }).catch(() => undefined)}
                 />
               )}
@@ -272,7 +277,7 @@ export default function WorkoutScreen() {
             {saveState === 'saved' && (
               <Pressable onPress={() => router.push('/workouts')} accessibilityRole="link" style={styles.savedLink}>
                 <Txt variant="subhead" color={color.brand} style={face('bold')}>
-                  🔖 Saved to My workouts ›
+                  Saved to My workouts ›
                 </Txt>
               </Pressable>
             )}
@@ -304,7 +309,7 @@ export default function WorkoutScreen() {
   );
 }
 
-function ActionPill({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) {
+function ActionPill({ label, icon, onPress, disabled = false }: { label: string; icon: IconName; onPress: () => void; disabled?: boolean }) {
   return (
     <Pressable
       onPress={onPress}
@@ -314,6 +319,7 @@ function ActionPill({ label, onPress, disabled = false }: { label: string; onPre
       hitSlop={4}
       style={({ pressed }) => [styles.pill, pressed && { opacity: 0.7 }, disabled && { opacity: 0.6 }]}
     >
+      <Icon name={icon} size={15} color={color.brand} />
       <Txt variant="subhead" color={color.brand} style={face('bold')}>
         {label}
       </Txt>
@@ -362,7 +368,7 @@ const styles = StyleSheet.create({
   warn: { padding: space[3], borderRadius: radius.md, backgroundColor: color.maybeTint },
   result: { gap: space[3] },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  pill: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandTint },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandTint },
   savedLink: { alignSelf: 'center', paddingVertical: space[1] },
   smallButton: { paddingVertical: space[1] },
   exercise: {

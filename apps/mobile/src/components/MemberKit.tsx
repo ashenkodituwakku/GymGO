@@ -14,6 +14,7 @@ import { api, ApiError, OfflineError, type EquipmentReportItem, type EquipmentTa
 import { haptic } from '@/lib/haptics';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space } from '@/lib/theme';
+import { Icon, type IconName } from './Icon';
 import { PrimaryButton, TextField, Txt } from './ui';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; reporters: number; items: EquipmentTally[]; mine: EquipmentReportItem[] };
@@ -72,7 +73,7 @@ export function MemberKit({
 
   return (
     <View style={styles.wrap}>
-      <Txt variant="headline">👥 Members say</Txt>
+      <Txt variant="headline">Members say</Txt>
       {tallies.length === 0 ? (
         <Txt variant="subhead" color={color.labelSecondary}>
           Nobody has said what’s here yet. Trained here? You could be the first.
@@ -85,11 +86,22 @@ export function MemberKit({
                 {equipmentLabel(item.equipmentTypeId)}
                 {item.maxWeightKg ? ` to ${item.maxWeightKg} kg` : ''}
               </Txt>
-              <Txt variant="footnote" color={color.labelSecondary}>
-                {item.yes > 0 ? `👍 ${item.yes}` : ''}
-                {item.yes > 0 && item.no > 0 ? '  ' : ''}
-                {item.no > 0 ? `👎 ${item.no}` : ''}
-              </Txt>
+              {item.yes > 0 && (
+                <View style={styles.count}>
+                  <Icon name="thumbsUp" size={12} color={color.goodInk} />
+                  <Txt variant="footnote" color={color.labelSecondary}>
+                    {item.yes}
+                  </Txt>
+                </View>
+              )}
+              {item.no > 0 && (
+                <View style={styles.count}>
+                  <Icon name="thumbsDown" size={12} color={color.noInk} />
+                  <Txt variant="footnote" color={color.labelSecondary}>
+                    {item.no}
+                  </Txt>
+                </View>
+              )}
             </View>
           ))}
         </View>
@@ -117,7 +129,7 @@ export function MemberKit({
               await api.reportEquipment(token, gymId, items);
               haptic.success();
               setEditing(false);
-              setNotice('Thanks! 💪 Your report is in. It shows as one member’s view, next to anyone else’s.');
+              setNotice('Thanks! Your report is in. It shows as one member’s view, next to anyone else’s.');
               refresh();
             } catch (error) {
               haptic.warn();
@@ -181,8 +193,8 @@ function Editor({
           <Txt variant="subhead" style={styles.flex} numberOfLines={1}>
             {type.label}
           </Txt>
-          <Choice label="👍 Yes" on={answers[type.id] === 'yes'} onPress={() => set(type.id, 'yes')} name={`${type.label}: yes`} />
-          <Choice label="👎 No" on={answers[type.id] === 'no'} onPress={() => set(type.id, 'no')} name={`${type.label}: no`} />
+          <Choice label="Yes" icon="thumbsUp" on={answers[type.id] === 'yes'} onPress={() => set(type.id, 'yes')} name={`${type.label}: yes`} />
+          <Choice label="No" icon="thumbsDown" on={answers[type.id] === 'no'} onPress={() => set(type.id, 'no')} name={`${type.label}: no`} />
         </View>
       ))}
       {answers.dumbbells === 'yes' && (
@@ -225,7 +237,7 @@ function Editor({
   );
 }
 
-function Choice({ label, on, onPress, name }: { label: string; on: boolean; onPress: () => void; name: string }) {
+function Choice({ label, icon, on, onPress, name }: { label: string; icon: IconName; on: boolean; onPress: () => void; name: string }) {
   return (
     <Pressable
       onPress={onPress}
@@ -235,6 +247,7 @@ function Choice({ label, on, onPress, name }: { label: string; on: boolean; onPr
       hitSlop={4}
       style={({ pressed }) => [styles.choice, on && styles.choiceOn, pressed && { opacity: 0.7 }]}
     >
+      <Icon name={icon} size={13} color={on ? color.onBrand : color.label} />
       <Txt variant="footnote" color={on ? color.onBrand : color.label} style={face('medium')}>
         {label}
       </Txt>
@@ -246,6 +259,7 @@ const styles = StyleSheet.create({
   wrap: { gap: space[2], paddingTop: space[3], borderTopWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
   flex: { flex: 1 },
   tallies: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  count: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   tally: {
     flexDirection: 'row',
     gap: 6,
@@ -258,6 +272,9 @@ const styles = StyleSheet.create({
   editor: { gap: space[2] },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   choice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: radius.pill,

@@ -44,7 +44,7 @@ export default function Saved() {
     >
       {saved.length === 0 ? (
         <View style={styles.empty}>
-          <Txt style={styles.emptyEmoji}>🔖</Txt>
+          <Icon name="saved" size={44} color={color.brand} />
           <Txt variant="title2">Nothing saved yet</Txt>
           <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
             Tap Save on any gym and it lands here.{' '}
@@ -67,7 +67,7 @@ export default function Saved() {
           {!billing.isPro && account.saved.length >= billing.limits.savedGyms - 2 && (
             <Pressable onPress={() => openPro('saved')} accessibilityRole="button" style={styles.upsell}>
               <Txt variant="subhead" color={color.brand} style={face('bold')}>
-                ✨ Save as many as you like with GymGO Pro
+                Save as many as you like with GymGO Pro ›
               </Txt>
             </Pressable>
           )}
@@ -132,7 +132,6 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     backgroundColor: color.background,
   },
-  emptyEmoji: { fontSize: 48, lineHeight: 58 },
   list: { backgroundColor: color.background, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
   upsell: { paddingVertical: space[2] },
   row: { flexDirection: 'row', alignItems: 'center', paddingRight: space[3] },

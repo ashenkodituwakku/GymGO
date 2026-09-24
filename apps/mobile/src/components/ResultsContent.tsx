@@ -10,7 +10,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 're
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { explainNoMatches, type SearchOutcome } from '@gymgo/domain';
 import { cityAt, moneyLabel, placeContext, suggestPlaces, type AppPlace } from '@/lib/places';
-import { EMPTY, PLACEHOLDER, TIER, sessionEmoji, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
+import { EMPTY, PLACEHOLDER, TIER, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
 import { SORTS, activeFilterCount, type Filters } from '@/lib/query';
 import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
@@ -194,7 +194,7 @@ export function ResultsContent({
       {/* Summary -------------------------------------------------------- */}
       <View style={styles.summary}>
         <Txt variant="eyebrow" color={color.brand} style={styles.greeting}>
-          {sessionEmoji(filters.visitMinuteOfDay)} {sessionGreeting(filters.visitMinuteOfDay).toUpperCase()}
+          {sessionGreeting(filters.visitMinuteOfDay).toUpperCase()}
         </Txt>
         <Txt variant="title2">
           {filters.placeName === 'your location' ? 'Near you' : `Near ${filters.placeName}`}
@@ -248,7 +248,7 @@ export function ResultsContent({
       {/* Results: one list, best first; the ones that don't fit sit apart. */}
       {[
         { key: 'fits', title: null, list: outcome.results.filter((result) => result.tier !== 'ruled_out') },
-        { key: 'misses', title: `${TIER.ruled_out.emoji} ${TIER.ruled_out.label}`, list: outcome.results.filter((result) => result.tier === 'ruled_out') },
+        { key: 'misses', title: TIER.ruled_out.label, list: outcome.results.filter((result) => result.tier === 'ruled_out') },
       ].map((group) =>
         group.list.length === 0 ? null : (
           <Animated.View key={group.key} style={styles.group} entering={FadeIn.duration(220)} exiting={FadeOut.duration(140)} layout={GLIDE}>

@@ -30,7 +30,7 @@ import { shareGym } from '@/lib/actions';
 import { depositLine, priceLine } from '@/lib/present';
 import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 import { StateGlyphRow } from './StateGlyphRow';
 import { Glass } from './Glass';
 import { ActionButton, CloseButton, Fold, TIER_COLOUR, Txt } from './ui';
@@ -216,7 +216,9 @@ export function PlaceCard({
       {/* The one answer ------------------------------------------------- */}
       <View style={[styles.verdict, { backgroundColor: tone.tint }]}>
         <View style={styles.verdictHead}>
-          <Txt style={styles.verdictEmoji}>{tier.emoji}</Txt>
+          <View style={[styles.verdictIcon, { backgroundColor: tone.fill }]}>
+            <Icon name={tone.icon} size={22} color="#FFFFFF" />
+          </View>
           <View style={styles.flex}>
             <Txt variant="title2" color={tone.ink}>
               {tier.label}
@@ -242,14 +244,14 @@ export function PlaceCard({
 
       {/* At a glance ---------------------------------------------------- */}
       <View style={styles.facts}>
-        <Fact emoji="💵" value={price.headline} caption={price.caption} tint={price.confirmed ? color.label : color.maybeInk} />
+        <Fact icon="money" value={price.headline} caption={price.caption} tint={price.confirmed ? color.label : color.maybeInk} />
         <Fact
-          emoji="⭐"
+          icon="star"
           value={result.rating.average === null ? 'New' : result.rating.average.toFixed(1)}
           caption={result.rating.count ? `${result.rating.count} review${result.rating.count === 1 ? '' : 's'}` : 'no reviews yet'}
           tint={color.label}
         />
-        <Fact emoji="🏋️" value={kit.length ? String(kit.length) : '?'} caption={kit.length ? 'kinds of kit' : 'kit unlisted'} tint={kit.length ? color.label : color.maybeInk} />
+        <Fact icon="gym" value={kit.length ? String(kit.length) : '?'} caption={kit.length ? 'kinds of kit' : 'kit unlisted'} tint={kit.length ? color.label : color.maybeInk} />
       </View>
 
       {!location.isDemoData && (
@@ -262,7 +264,9 @@ export function PlaceCard({
           accessibilityLabel="See this gym on Google Maps"
           style={({ pressed }) => [styles.google, pressed && { opacity: 0.75 }]}
         >
-          <Txt style={styles.googleEmoji}>🔎</Txt>
+          <View style={styles.rowIcon}>
+            <Icon name="google" size={18} color={color.onBrand} />
+          </View>
           <View style={styles.flex}>
             <Txt variant="headline">See it on Google</Txt>
             <Txt variant="footnote" color={color.labelSecondary}>
@@ -282,7 +286,9 @@ export function PlaceCard({
         accessibilityLabel="Build a workout for this gym"
         style={({ pressed }) => [styles.google, pressed && { opacity: 0.75 }]}
       >
-        <Txt style={styles.googleEmoji}>💪</Txt>
+        <View style={styles.rowIcon}>
+          <Icon name="workout" size={18} color={color.onBrand} />
+        </View>
         <View style={styles.flex}>
           <Txt variant="headline">Build a workout here</Txt>
           <Txt variant="footnote" color={color.labelSecondary}>
@@ -294,7 +300,7 @@ export function PlaceCard({
 
       {/* The detail, folded away ---------------------------------------- */}
       <View style={styles.folds}>
-        <Fold emoji="💵" title="Prices" summary={price.headline === '—' ? 'Not published' : `${price.headline} · ${price.caption}`}>
+        <Fold icon="money" title="Prices" summary={price.headline === '—' ? 'Not published' : `${price.headline} · ${price.caption}`}>
           {offers
             .filter((assessment) => !isMultiVisitProduct(assessment.offer) && assessment.offer.productType !== 'membership')
             .map((assessment) => {
@@ -357,7 +363,7 @@ export function PlaceCard({
           <Evidence provenance={result.offers.bestAvailable?.offer.provenance} age={result.offers.bestAvailable?.freshness.ageDays ?? null} />
         </Fold>
 
-        <Fold emoji="🚪" title="Getting in" summary={guestHours ? `Guests ${guestHours}` : 'Guest hours not published'}>
+        <Fold icon="door" title="Getting in" summary={guestHours ? `Guests ${guestHours}` : 'Guest hours not published'}>
           <Hours label="Guests" schedule={result.access.visitorSchedule} highlight />
           <Hours label="Front desk" schedule={result.access.staffedSchedule} />
           <Hours label="Members" schedule={result.access.memberSchedule} />
@@ -380,7 +386,7 @@ export function PlaceCard({
         </Fold>
 
         <Fold
-          emoji="🏋️"
+          icon="gym"
           title="Equipment"
           summary={
             kit.length
@@ -429,7 +435,7 @@ export function PlaceCard({
         </Fold>
 
         {(record.amenities.length > 0 || (location.activities?.length ?? 0) > 0 || location.email) && (
-          <Fold emoji="🧖" title="Facilities & more" summary={facilitiesSummary(record)}>
+          <Fold icon="facilities" title="Facilities & more" summary={facilitiesSummary(record)}>
             {record.amenities.length > 0 && (
               <View style={styles.kitGrid}>
                 {record.amenities.map((amenity) => (
@@ -443,7 +449,7 @@ export function PlaceCard({
             )}
             {(location.activities?.length ?? 0) > 0 && (
               <Txt variant="subhead">
-                🤸 Also listed: {location.activities!.join(', ')}
+                Also listed: {location.activities!.join(', ')}
               </Txt>
             )}
             {location.email && (
@@ -453,9 +459,12 @@ export function PlaceCard({
                 accessibilityLabel={`Email ${location.email}`}
                 hitSlop={6}
               >
-                <Txt variant="subhead" color={color.brand}>
-                  ✉️ {location.email}
-                </Txt>
+                <View style={styles.mailRow}>
+                  <Icon name="mail" size={15} color={color.brand} />
+                  <Txt variant="subhead" color={color.brand}>
+                    {location.email}
+                  </Txt>
+                </View>
               </Pressable>
             )}
             <Txt variant="footnote" color={color.labelSecondary}>
@@ -466,7 +475,7 @@ export function PlaceCard({
         )}
 
         <Fold
-          emoji="⭐"
+          icon="star"
           title="Reviews"
           summary={result.rating.count ? `${ratingShort(result.rating.average)} from ${result.rating.count}` : 'None yet — be the first'}
         >
@@ -474,7 +483,7 @@ export function PlaceCard({
         </Fold>
 
         {sources.length > 0 && (
-          <Fold emoji="📚" title="Where this comes from" summary={`${sources.length} source${sources.length === 1 ? '' : 's'}, all linked`}>
+          <Fold icon="book" title="Where this comes from" summary={`${sources.length} source${sources.length === 1 ? '' : 's'}, all linked`}>
             <Sources sources={sources} />
           </Fold>
         )}
@@ -489,10 +498,10 @@ export function PlaceCard({
   );
 }
 
-function Fact({ emoji, value, caption, tint }: { emoji: string; value: string; caption: string; tint: string }) {
+function Fact({ icon, value, caption, tint }: { icon: IconName; value: string; caption: string; tint: string }) {
   return (
     <View style={styles.fact}>
-      <Txt style={styles.factEmoji}>{emoji}</Txt>
+      <Icon name={icon} size={20} color={color.brand} />
       <Txt variant="figure" color={tint} numberOfLines={1}>
         {value}
       </Txt>
@@ -638,6 +647,7 @@ const styles = StyleSheet.create({
   verdict: { marginTop: space[4], padding: space[4], borderRadius: radius.xl, borderCurve: 'continuous', gap: space[3] },
   verdictHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   verdictEmoji: { fontSize: 34, lineHeight: 42 },
+  verdictIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   reasons: { gap: space[2] },
   reason: { flexDirection: 'row', gap: space[2], alignItems: 'flex-start' },
   bullet: { width: 5, height: 5, borderRadius: 3, marginTop: 7 },
@@ -667,6 +677,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.86)',
   },
   googleEmoji: { fontSize: 22, lineHeight: 28, width: 30, textAlign: 'center' },
+  mailRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.brand, alignItems: 'center', justifyContent: 'center' },
 
   folds: { gap: space[2], marginTop: space[4] },
 

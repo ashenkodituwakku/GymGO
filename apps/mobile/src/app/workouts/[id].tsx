@@ -33,7 +33,7 @@ export default function SavedWorkoutScreen() {
     return (
       <View style={styles.missing}>
         <Stack.Screen options={{ title: 'Workout' }} />
-        <Txt variant="title2">🤷 Not found</Txt>
+        <Txt variant="title2">Not found</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           {token ? 'This workout isn’t in your account any more.' : 'Sign in to see your saved workouts.'}
         </Txt>
@@ -106,18 +106,20 @@ export default function SavedWorkoutScreen() {
         )}
         <View style={styles.buttons}>
           <PrimaryButton
-            label="↗ Share"
+            label="Share"
+            icon="share"
             tone="quiet"
             onPress={() => void Share.share({ message: workoutText(workout, saved.plan.gymName) }).catch(() => undefined)}
           />
           {saved.gymId && (
             <PrimaryButton
-              label="🏋️ Open the gym"
+              label="Open the gym"
+              icon="gym"
               tone="quiet"
               onPress={() => router.push({ pathname: '/gym/[id]', params: { id: saved.gymId! } })}
             />
           )}
-          <PrimaryButton label={confirmDelete ? 'Tap again to delete' : 'Delete workout'} tone="danger" onPress={() => void remove()} />
+          <PrimaryButton label={confirmDelete ? 'Tap again to delete' : 'Delete workout'} icon="trash" tone="danger" onPress={() => void remove()} />
           {problem && (
             <Txt variant="footnote" color={color.dangerInk}>
               {problem}

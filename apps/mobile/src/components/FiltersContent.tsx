@@ -73,7 +73,7 @@ export function FiltersContent({
         </Pressable>
       </View>
 
-      <Group title="⏰ When are you training?">
+      <Group title="When are you training?">
         <Segmented
           options={[
             { label: 'Today', value: today },
@@ -95,7 +95,7 @@ export function FiltersContent({
         <Hint>We check when visitors can walk in — not when members can.</Hint>
       </Group>
 
-      <Group title="💵 Budget per visit">
+      <Group title="Budget per visit">
         <View style={styles.chips}>
           {BUDGET_PRESETS.map((budget) => (
             <Chip
@@ -109,7 +109,7 @@ export function FiltersContent({
         <Hint>What you don't get back: price, tax and any must-pay fee. Refundable deposits are shown separately.</Hint>
       </Group>
 
-      <Group title="🏋️ Must have">
+      <Group title="Must have">
         <View style={styles.chips}>
           {QUICK_EQUIPMENT.map((id) => (
             <Chip key={id} label={equipmentLabel(id)} selected={filters.equipment.includes(id)} onPress={() => toggleEquipment(id)} />
@@ -135,7 +135,7 @@ export function FiltersContent({
         <Hint>Every one has to be there. If we don't know, it doesn't count.</Hint>
       </Group>
 
-      <Group title="🏠 Live or work nearby?">
+      <Group title="Live or work nearby?">
         <Segmented<Tri>
           options={[
             { label: 'Yes', value: 'yes' },
@@ -148,7 +148,7 @@ export function FiltersContent({
         <Hint>Some free trials are for locals only. Telling us lets those count for or against.</Hint>
       </Group>
 
-      <Group title="📏 How far">
+      <Group title="How far">
         <View style={styles.chips}>
           {radiusChoices(country).map((choice) => (
             <Chip

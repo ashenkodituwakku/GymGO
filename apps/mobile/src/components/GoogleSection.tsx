@@ -20,14 +20,16 @@ import { PlaceDetails } from './GooglePage';
 import { PIcon } from './PIcon';
 import { Txt } from './ui';
 
-export function GoogleSection({ record }: { record: GymRecord }) {
+/** The gym's Google listing, when the server has a key and Google knows the place. */
+export function useGooglePlace(record: GymRecord | undefined): GooglePlace | null {
   const [place, setPlace] = useState<GooglePlace | null>(null);
-  const gymId = record.location.id;
+  const gymId = record?.location.id;
+  const isDemo = record?.location.isDemoData ?? true;
 
   useEffect(() => {
     let live = true;
     setPlace(null);
-    if (record.location.isDemoData) return;
+    if (!gymId || isDemo) return;
     api
       .google(gymId)
       .then((result) => live && result.configured && result.found && setPlace(result.place))
@@ -35,8 +37,13 @@ export function GoogleSection({ record }: { record: GymRecord }) {
     return () => {
       live = false;
     };
-  }, [gymId, record.location.isDemoData]);
+  }, [gymId, isDemo]);
 
+  return place;
+}
+
+/** `photosAbove` when the page already shows Google's photos at the top. */
+export function GoogleSection({ place, photosAbove = false }: { place: GooglePlace | null; photosAbove?: boolean }) {
   if (!place) return null;
   return (
     <View style={styles.section}>
@@ -49,7 +56,7 @@ export function GoogleSection({ record }: { record: GymRecord }) {
       <Txt variant="footnote" color={color.labelSecondary}>
         Live from Google, not checked by GymGO and not saved. It doesn’t change GymGO’s answer above.
       </Txt>
-      <PlaceDetails place={place} />
+      <PlaceDetails place={place} hidePhotos={photosAbove} />
       {/* Google's attribution, required wherever its place details show. */}
       <Txt style={styles.attribution}>Google Maps</Txt>
     </View>

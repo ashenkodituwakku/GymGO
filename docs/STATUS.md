@@ -17,7 +17,7 @@ this document could do.
 | Member photos: consent, hidden details removed, moderated, credited | ✅ | ✅ tests + driven in the browser | n/a | ❌ |
 | Google's map and card for each gym (free embed, no key) | ✅ | ✅ loaded from Google in the browser, phone and PC sizes | ✅ Google's public embed | ❌ |
 | Google Street View nearest each gym (free embed, no key) | ✅ | ✅ loaded in the browser (Carlton Fitness's shopfront) | ✅ Google's public embed | ❌ |
-| Members' equipment reports (👍/👎 per machine, tallied) | ✅ | ✅ 2 server tests + driven in the browser | n/a | ❌ |
+| Members' equipment reports (yes/no per machine, tallied) | ✅ | ✅ 2 server tests + driven in the browser | n/a | ❌ |
 | GymGO Pro through Stripe: checkout, manage page, webhooks, who is Pro | ✅ | ✅ 21 tests with a stand-in Stripe; webhook signatures made and checked with Stripe's own library | ❌ **never run against Stripe itself**: no Stripe account or key was used | ❌ |
 | Free limits enforced by the server (10 saved gyms; workout library is Pro) | ✅ | ✅ tests | n/a | ❌ |
 | Emails, classes and facilities from OpenStreetMap (US gyms) | ✅ | ✅ honesty tests; shown in the browser | ⚠️ one-off fetch, 24 Sep 2026 | n/a |
@@ -48,7 +48,7 @@ API. That is also free, but needs a Cloud account with billing set up.
 bars and plates). The other sites say "free weights" or "cardio" at most,
 which isn't specific enough to record. Members' reports fill the gap, shown
 as tallies and labelled as members'. They are not moderated. One member can
-make one report per gym, so a single bad report shows as "👍 1" and nothing
+make one report per gym, so a single bad report shows as "1 thumbs up" and nothing
 more. They don't feed the search.
 
 **Google, the paid extra:** off unless the owner sets `GOOGLE_PLACES_API_KEY`. The code
@@ -111,7 +111,10 @@ service, which is your decision to make. Nothing has been provisioned.
 | Store builds (EAS / Xcode / Gradle) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | PC browser layout (side panels) | ✅ | ✅ driven end to end at 1440 × 900 | n/a | n/a | ❌ | n/a |
 | Tabs: Home, Explore, Saved, Profile (Instagram-style glass capsule, draggable lens) | ✅ | ⚠️ browser only: taps, and dragging with touch events | n/a | ❌ Liquid Glass material and the drag never seen on a phone | n/a | ❌ |
-| Home (picks, workout, nearby, saved, recent, neighbourhoods, other cities, counts) | ✅ | ✅ driven at phone and PC sizes | n/a | ❌ | n/a | ❌ |
+| Home, simplified (four picks, workout, nearby, saved, recent, neighbourhoods and cities as chips) | ✅ | ✅ driven at phone size | n/a | ❌ | n/a | ❌ |
+| Symbols instead of emoji on buttons, rows, chips and empty states (SF Symbols / Material Symbols / Phosphor) | ✅ | ⚠️ Material Symbols seen in the browser; SF Symbols only on an iPhone, never seen | n/a | ❌ | n/a | ❌ |
+| Brand logos (8 chains, from Wikimedia Commons, bundled) on gym pages and cards, credited | ✅ | ✅ driven in the browser (Equinox, Gold's Gym, Snap Fitness); in both native bundles | ✅ fetched from Wikidata and Commons once, by script | ❌ | n/a | ❌ |
+| Top of a gym page: members' photos, else Google's photos (owner's key), else Street View | ✅ | ⚠️ Google's photos only with stubbed data; Street View embed blank in this sandbox (no Google access from the test browser) | ⚠️ Street View is Google's free embed; Places photos never called with a real key | ❌ | n/a | ❌ |
 | Gym page (pushed screen, share/compare/save) | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |
 | Compare up to 3 gyms | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |
 | Sort (best match, closest, cheapest, top rated) | ✅ | ⚠️ tsc; browser cycles, iPhone action sheet not seen | n/a | ❌ | n/a | ❌ |
@@ -126,7 +129,7 @@ service, which is your decision to make. Nothing has been provisioned.
   the website runs, run through the app's own filter code: 3 confirmed results,
   Ironbark first.
 - `expo export` builds both the **iOS and Android bundles** into Hermes
-  bytecode without errors: 1,918 and 1,970 modules. The web-only map library
+  bytecode without errors: 2,059 and 1,919 modules. The web-only map library
   is confirmed absent from both.
 - `expo-doctor` passes 21/21 checks.
 - The interface was driven with Playwright in the browser build at 390 × 844,

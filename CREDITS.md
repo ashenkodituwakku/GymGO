@@ -23,6 +23,7 @@ one row of actions), not from borrowing its assets.
 | [stripe-node](https://github.com/stripe/stripe-node) (server only) | Talks to Stripe for GymGO Pro: checkout, the customer portal, webhook signatures | MIT |
 | [Phosphor Icons](https://phosphoricons.com) (© Phosphor Icons) | The tab bar's icons and the two-tone icons around the app. The icons used are copied as path data into `apps/mobile/src/components/phosphor.ts` by `scripts/phosphor-icons.mjs` | MIT |
 | [react-native-svg](https://github.com/software-mansion/react-native-svg) | Draws the body on iPhone and Android | MIT |
+| [sharp](https://sharp.pixelplumbing.com) (development only) | Trims and shrinks the brand logos when `scripts/brand-logos.mjs` fetches them. Not in the app | Apache-2.0 |
 | [expo-haptics](https://docs.expo.dev/versions/latest/sdk/haptics/), [expo-location](https://docs.expo.dev/versions/latest/sdk/location/), [AsyncStorage](https://github.com/react-native-async-storage/async-storage) | Taps you can feel, "near me", saved gyms | MIT |
 
 SF Symbols are drawn by iOS itself and are used under Apple's terms, which
@@ -73,15 +74,43 @@ On iPhone, the map is Apple's, which shows its own legal notice.
 
 ## Gym photos
 
-Every gym photo in GymGO was taken and shared by a GymGO member, who agreed
-to it being shown, and is credited to them by name on the photo. None is
-taken from a gym's website or anywhere else.
+Every gym photo GymGO stores was taken and shared by a GymGO member, who
+agreed to it being shown, and is credited to them by name on the photo. None
+is taken from a gym's website or anywhere else. The only other photos in the
+app are Google's, shown live and credited as described under Google Maps.
+
+## Gym logos
+
+Brand logos come from [Wikimedia Commons](https://commons.wikimedia.org),
+found through each brand's Wikidata "logo image" (P154). GymGO keeps only
+files whose Commons page gives a licence it can use, copies them into
+`apps/mobile/assets/logos/` (trimmed and shrunk), and credits each on the
+gym's page with a link to its Commons page.
+
+| Brand | File on Commons | Licence |
+|---|---|---|
+| 24 Hour Fitness | [24_Hour_Fitness_logo.svg](https://commons.wikimedia.org/wiki/File:24_Hour_Fitness_logo.svg) | Public domain (logo) |
+| CrossFit | [Logo_CrossFit.svg](https://commons.wikimedia.org/wiki/File:Logo_CrossFit.svg) | Public domain (text logo) |
+| Equinox | [Equinox_Fitness_logo.png](https://commons.wikimedia.org/wiki/File:Equinox_Fitness_logo.png) | Public domain (logo) |
+| Fitness First | [Fitness_First_Logo.svg](https://commons.wikimedia.org/wiki/File:Fitness_First_Logo.svg) | Public domain (text logo) |
+| Gold's Gym | [Gold's_Gym_Weight_Plate_Logo_Primary_150x150.png](https://commons.wikimedia.org/wiki/File:Gold's_Gym_Weight_Plate_Logo_Primary_150x150.png) | CC BY 4.0, © Gold's Gym |
+| LA Fitness | [LA_Fitness_logo.svg](https://commons.wikimedia.org/wiki/File:LA_Fitness_logo.svg) | Public domain (text logo) |
+| Life Time | [Life_Time_Fitness_logo.svg](https://commons.wikimedia.org/wiki/File:Life_Time_Fitness_logo.svg) | Public domain (text logo) |
+| Snap Fitness | [Snap_Fitness_logo.svg](https://commons.wikimedia.org/wiki/File:Snap_Fitness_logo.svg) | Public domain (text logo) |
+
+A free copyright licence doesn't cancel a trademark. These logos belong to
+their brands. GymGO shows each only on that brand's own gyms, to say which
+gym it is, and says on the page that GymGO isn't connected to or endorsed by
+the brand.
 
 ## Google Maps
 
 Each gym's **See it on Google** page shows Google's own embedded map and
 place card, loaded from Google and carrying Google's own credits and terms.
-With the owner's own key, the page can also list Google's photos and reviews.
+With the owner's own key, the page can also list Google's photos and reviews,
+and a gym's own page shows Google's photos at the top when no member has
+shared one. Without a key, the top of that page shows Google's free Street
+View embed instead, labelled as Google's.
 Those are credited "Google Maps", and every photo and review names its author
 with a link, as Google requires. All of it belongs to Google and its
 contributors. GymGO shows it live and does not store it.

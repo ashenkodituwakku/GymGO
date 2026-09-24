@@ -34,7 +34,7 @@ export default function Compare() {
     return (
       <View style={styles.empty}>
         <Stack.Screen options={{ title: 'Compare' }} />
-        <Txt style={styles.emoji}>⚖️</Txt>
+        <Icon name="compare" size={44} color={color.brand} />
         <Txt variant="title2">Pick {billing.limits.compare === 2 ? 'two' : `two to ${billing.limits.compare}`} gyms</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           Tick them in Saved, or tap the compare button on a gym’s page. On iPhone you can also press and hold a gym on Home.
@@ -50,47 +50,47 @@ export default function Compare() {
 
   const rows: Array<{ label: string; cells: Cell[] }> = [
     {
-      label: '✅ Answer',
-      cells: gyms.map((result) => ({ text: `${TIER[result.tier].emoji} ${TIER[result.tier].label}`, ink: TIER_COLOUR[result.tier].ink, strong: true })),
+      label: 'Answer',
+      cells: gyms.map((result) => ({ text: TIER[result.tier].label, ink: TIER_COLOUR[result.tier].ink, strong: true })),
     },
     {
-      label: '💵 A visit costs',
+      label: 'A visit costs',
       cells: gyms.map((result, index) => {
         const price = priceLine(result.offers);
         return { text: `${price.headline} ${price.caption}`, strong: prices[index] === cheapest, ink: price.confirmed ? undefined : color.maybeInk };
       }),
     },
     {
-      label: `🚪 Guests at ${at}`,
+      label: `Guests at ${at}`,
       cells: gyms.map((result) => ({
         text: accessShort(result.access.verdict),
         ink: result.access.verdict === 'admits_visitor' ? color.goodInk : result.access.verdict === 'not_admitted' ? color.noInk : color.maybeInk,
       })),
     },
     {
-      label: '🕒 Guest hours',
+      label: 'Guest hours',
       cells: gyms.map((result) =>
         result.access.visitorSchedule ? { text: summariseWeek(result.access.visitorSchedule).join('\n') } : { text: 'Not published', ink: color.maybeInk },
       ),
     },
-    { label: '📅 Book ahead', cells: gyms.map((result) => tri(result.record.prerequisites.advanceBookingRequired)) },
-    { label: '🧑‍🏫 Induction first visit', cells: gyms.map((result) => tri(result.record.prerequisites.inductionRequired)) },
-    { label: '🪪 Photo ID', cells: gyms.map((result) => tri(result.record.prerequisites.photoIdRequired)) },
+    { label: 'Book ahead', cells: gyms.map((result) => tri(result.record.prerequisites.advanceBookingRequired)) },
+    { label: 'Induction first visit', cells: gyms.map((result) => tri(result.record.prerequisites.inductionRequired)) },
+    { label: 'Photo ID', cells: gyms.map((result) => tri(result.record.prerequisites.photoIdRequired)) },
     {
-      label: '🏋️ Machines the gym lists',
+      label: 'Machines the gym lists',
       cells: gyms.map((result) => {
         const count = result.record.equipment.filter((item) => item.presence === 'yes').length;
         return count ? { text: String(count) } : { text: 'None listed', ink: color.maybeInk };
       }),
     },
     {
-      label: '⭐ Rating',
+      label: 'Rating',
       cells: gyms.map((result) =>
         result.rating.average === null ? { text: 'No reviews yet', ink: color.labelSecondary } : { text: `★ ${result.rating.average.toFixed(1)} (${result.rating.count})` },
       ),
     },
     {
-      label: '📍 Distance',
+      label: 'Distance',
       cells: gyms.map((result) => ({
         text: result.distanceKm === null ? '—' : distanceLabel(result.distanceKm, result.record.location.address.countryCode),
       })),
@@ -176,7 +176,7 @@ export default function Compare() {
         {!billing.isPro && (
           <Pressable onPress={() => openPro('compare')} accessibilityRole="button" style={styles.upsell}>
             <Txt variant="subhead" color={color.brand} style={face('bold')}>
-              ✨ Compare up to 4 gyms with GymGO Pro
+              Compare up to 4 gyms with GymGO Pro ›
             </Txt>
           </Pressable>
         )}
@@ -221,5 +221,4 @@ const styles = StyleSheet.create({
   cells: { flexDirection: 'row', gap: space[3] },
   cell: { flex: 1 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
-  emoji: { fontSize: 48, lineHeight: 58 },
 });

@@ -39,7 +39,7 @@ export function ExerciseCard({
       <View style={styles.flex}>
         <Txt variant="headline">{exercise.name}</Txt>
         <Txt variant="subhead" color={color.brand} style={face('bold')}>
-          {exercise.cardio ? '🔥 Finisher' : `${sets} × ${reps} · rest ${restSeconds} s`}
+          {exercise.cardio ? 'Finisher' : `${sets} × ${reps} · rest ${restSeconds} s`}
         </Txt>
         <Txt variant="footnote" color={color.labelSecondary}>
           {exercise.cue}

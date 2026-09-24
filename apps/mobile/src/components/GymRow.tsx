@@ -9,9 +9,11 @@ import type { GymSearchResult } from '@gymgo/domain';
 import { distanceLabel } from '@/lib/places';
 import { TIER, accessLine } from '@/lib/copy';
 import { photoUrl } from '@/lib/api';
-import { priceLine, gymEmoji } from '@/lib/present';
+import { priceLine } from '@/lib/present';
 import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
+import { BrandLogo, logoFor } from './BrandLogo';
+import { Icon } from './Icon';
 import { TIER_COLOUR, Txt } from './ui';
 
 export function GymRow({
@@ -52,8 +54,8 @@ export function GymRow({
       {coverUri ? (
         <Image source={{ uri: coverUri }} style={styles.thumb} resizeMode="cover" />
       ) : (
-        <View style={[styles.thumb, styles.tile, { backgroundColor: tone.tint }]}>
-          <Txt style={styles.tileEmoji}>{gymEmoji(location)}</Txt>
+        <View style={[styles.thumb, styles.tile, { backgroundColor: logoFor(location) ? '#FFFFFF' : color.brandTint }]}>
+          {logoFor(location) ? <BrandLogo location={location} width={52} height={48} area={1500} /> : <Icon name="gym" size={24} color={color.brand} />}
         </View>
       )}
 
@@ -64,9 +66,10 @@ export function GymRow({
         <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
           {where}
         </Txt>
-        <View style={[styles.chip, { backgroundColor: tone.tint }]}>
+        <View style={[styles.chip, styles.chipRow, { backgroundColor: tone.tint }]}>
+          <Icon name={tone.icon} size={11} color={tone.ink} />
           <Txt variant="caption" color={tone.ink} style={styles.chipText} numberOfLines={1}>
-            {tier.emoji} {tier.label}
+            {tier.label}
           </Txt>
         </View>
       </View>
@@ -100,8 +103,8 @@ const styles = StyleSheet.create({
     backgroundColor: color.fill,
   },
   tile: { alignItems: 'center', justifyContent: 'center' },
-  tileEmoji: { fontSize: 28, lineHeight: 34 },
   middle: { flex: 1, minWidth: 0, gap: 2 },
+  chipRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   chip: {
     alignSelf: 'flex-start',
     marginTop: 3,

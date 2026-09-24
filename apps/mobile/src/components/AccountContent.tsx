@@ -220,7 +220,7 @@ export function PhotoQueue({ token, records, onPublished }: { token: string; rec
   return (
     <View>
       <Txt variant="headline" style={styles.heading}>
-        📷 Photos waiting {queue ? `(${queue.length})` : ''}
+        Photos waiting {queue ? `(${queue.length})` : ''}
       </Txt>
       {error && <Notice icon="info" text={error} tone="danger" />}
       {queue?.length === 0 && (

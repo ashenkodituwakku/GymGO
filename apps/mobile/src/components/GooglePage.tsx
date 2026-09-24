@@ -72,15 +72,15 @@ export function GooglePage({ record, onClose }: { record: GymRecord; onClose: ()
 
         <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
           That’s Google’s own map and listing, straight from Google, free. Tap the ↗ on Google’s card or the button
-          below to see every photo and review in Google Maps. 📸
+          below to see every photo and review in Google Maps.
         </Txt>
 
         <View style={styles.cta}>
-          <PrimaryButton label="Open in Google Maps" onPress={() => open(mapsUrl)} />
+          <PrimaryButton label="Open in Google Maps" icon="map" onPress={() => open(mapsUrl)} />
         </View>
 
         <Txt variant="title2" style={styles.more}>
-          🚶 Street View
+          Street View
         </Txt>
         <GoogleEmbed url={googleStreetViewEmbedUrl(record)} height={260} />
         <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
@@ -106,9 +106,28 @@ export function GooglePage({ record, onClose }: { record: GymRecord; onClose: ()
   );
 }
 
-const DETAIL_EMOJI = { Accessibility: '♿', Parking: '🅿️', Payments: '💳' } as const;
+/**
+ * Google's photos of a place, a page at a time, each credited to whoever
+ * took it, with Google's attribution beneath. For the top of a gym's page.
+ */
+export function GooglePhotos({ photos, width }: { photos: GooglePlace['photos']; width: number }) {
+  return (
+    <View style={styles.hero}>
+      <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={{ width }}>
+        {photos.map((photo, index) => (
+          <View key={`${index}-${photo.uri}`} style={{ width, gap: 4 }}>
+            <Image source={{ uri: photo.uri }} style={[styles.heroPhoto, { width }]} resizeMode="cover" />
+            <Credit prefix={`Photo ${index + 1} of ${photos.length}`} authors={photo.authors} />
+          </View>
+        ))}
+      </ScrollView>
+      <Txt style={styles.heroAttribution}>Google Maps</Txt>
+    </View>
+  );
+}
 
-export function PlaceDetails({ place }: { place: GooglePlace }) {
+/** Google's details; `hidePhotos` when the photos already show above. */
+export function PlaceDetails({ place, hidePhotos = false }: { place: GooglePlace; hidePhotos?: boolean }) {
   const { width } = useWindowDimensions();
   const photoWidth = Math.min(width - space[4] * 2, 520) * 0.82;
   const closed = place.businessStatus && place.businessStatus !== 'OPERATIONAL';
@@ -118,7 +137,7 @@ export function PlaceDetails({ place }: { place: GooglePlace }) {
       <View style={styles.summary}>
         {place.rating !== null && (
           <Txt variant="headline">
-            ⭐ {place.rating.toFixed(1)}
+            ★ {place.rating.toFixed(1)}
             <Txt variant="subhead" color={color.labelSecondary}>
               {place.ratingCount ? `  ·  ${place.ratingCount.toLocaleString()} Google reviews` : ''}
             </Txt>
@@ -139,18 +158,18 @@ export function PlaceDetails({ place }: { place: GooglePlace }) {
         ) : null}
         {place.address && (
           <Txt variant="subhead" color={color.labelSecondary}>
-            📍 {place.address}
+            {place.address}
           </Txt>
         )}
         {place.type && (
           <Txt variant="footnote" color={color.labelSecondary}>
-            🏷️ {place.type} on Google
+            {place.type} on Google
           </Txt>
         )}
         {place.summary && <Txt variant="subhead">“{place.summary}”</Txt>}
       </View>
 
-      {place.photos.length > 0 && (
+      {!hidePhotos && place.photos.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.photos}>
           {place.photos.map((photo, index) => (
             <View key={`${index}-${photo.uri}`} style={{ width: photoWidth, gap: 4 }}>
@@ -164,12 +183,12 @@ export function PlaceDetails({ place }: { place: GooglePlace }) {
       <View style={styles.links}>
         {place.phone && (
           <View style={styles.flex}>
-            <PrimaryButton label={`📞 ${place.phone}`} tone="quiet" onPress={() => void Linking.openURL(`tel:${place.phone!.replace(/\s+/g, '')}`)} />
+            <PrimaryButton label={place.phone} icon="call" tone="quiet" onPress={() => void Linking.openURL(`tel:${place.phone!.replace(/\s+/g, '')}`)} />
           </View>
         )}
         {place.website && (
           <View style={styles.flex}>
-            <PrimaryButton label="🌐 Website" tone="quiet" onPress={() => open(place.website!)} />
+            <PrimaryButton label="Website" icon="website" tone="quiet" onPress={() => open(place.website!)} />
           </View>
         )}
       </View>
@@ -180,7 +199,7 @@ export function PlaceDetails({ place }: { place: GooglePlace }) {
         return (
           <View key={group} style={styles.card}>
             <Txt variant="headline">
-              {DETAIL_EMOJI[group]} {group}
+              {group}
             </Txt>
             <View style={styles.detailChips}>
               {items.map((item) => (
@@ -197,7 +216,7 @@ export function PlaceDetails({ place }: { place: GooglePlace }) {
 
       {place.hours.length > 0 && (
         <View style={styles.card}>
-          <Txt variant="headline">🕒 Opening hours</Txt>
+          <Txt variant="headline">Opening hours</Txt>
           {place.hours.map((line) => (
             <Txt key={line} variant="subhead" color={color.labelSecondary}>
               {line}
@@ -208,7 +227,7 @@ export function PlaceDetails({ place }: { place: GooglePlace }) {
 
       {place.reviews.length > 0 && (
         <View style={styles.reviews}>
-          <Txt variant="title2">💬 What people say on Google</Txt>
+          <Txt variant="title2">What people say on Google</Txt>
           <Txt variant="footnote" color={color.labelSecondary}>
             Google picks these few and puts its most relevant first.
           </Txt>
@@ -296,6 +315,9 @@ const styles = StyleSheet.create({
   summary: { gap: space[2], alignItems: 'flex-start' },
   badge: { paddingHorizontal: space[3], paddingVertical: 4, borderRadius: radius.pill },
   photos: { gap: space[3] },
+  hero: { gap: 2 },
+  heroPhoto: { height: 240, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.fill },
+  heroAttribution: { fontSize: 12, color: '#5F6368', ...face('bold') },
   photo: { height: 190, borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.fill },
   credit: { flexDirection: 'row', flexWrap: 'wrap' },
   links: { flexDirection: 'row', gap: space[2] },

@@ -17,8 +17,10 @@ import { photoUrl } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
-import { priceLine, gymEmoji } from '@/lib/present';
+import { priceLine } from '@/lib/present';
 import { color, face, radius, shadow, space } from '@/lib/theme';
+import { BrandLogo, logoFor } from './BrandLogo';
+import { Icon } from './Icon';
 import { TIER_COLOUR, Txt } from './ui';
 
 export function GymCard({ result, width = 216 }: { result: GymSearchResult; width?: number }) {
@@ -50,8 +52,8 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
             {cover ? (
               <Image source={{ uri: cover }} style={styles.image} resizeMode="cover" />
             ) : (
-              <View style={[styles.image, styles.tile, { backgroundColor: tone.tint }]}>
-                <Txt style={styles.tileEmoji}>{gymEmoji(location)}</Txt>
+              <View style={[styles.image, styles.tile, { backgroundColor: logoFor(location) ? '#FFFFFF' : color.brandTint }]}>
+                {logoFor(location) ? <BrandLogo location={location} width={width * 0.72} height={76} area={5200} /> : <Icon name="gym" size={36} color={color.brand} />}
               </View>
             )}
             <View style={styles.body}>
@@ -62,9 +64,10 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
                 {where}
               </Txt>
               <View style={styles.foot}>
-                <View style={[styles.chip, { backgroundColor: tone.tint }]}>
+                <View style={[styles.chip, styles.chipRow, { backgroundColor: tone.tint }]}>
+                  <Icon name={tone.icon} size={11} color={tone.ink} />
                   <Txt variant="caption" color={tone.ink} style={face('bold')} numberOfLines={1}>
-                    {tier.emoji} {tier.label}
+                    {tier.label}
                   </Txt>
                 </View>
                 <Txt variant="subhead" color={price.confirmed ? color.label : color.labelSecondary} style={face('bold')}>
@@ -109,8 +112,8 @@ const styles = StyleSheet.create({
   },
   image: { width: '100%', height: 118, backgroundColor: color.fill },
   tile: { alignItems: 'center', justifyContent: 'center' },
-  tileEmoji: { fontSize: 40, lineHeight: 48 },
   body: { padding: space[3], gap: 2 },
   foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], marginTop: space[2] },
+  chipRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   chip: { paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill, flexShrink: 1 },
 });

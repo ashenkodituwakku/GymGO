@@ -276,6 +276,8 @@ def main(src):
             }
             if tags.get('brand'):
                 row['brand'] = tags['brand']
+            if re.fullmatch(r'Q\d+', tags.get('brand:wikidata', '')):
+                row['brandWikidata'] = tags['brand:wikidata']
             if branch:
                 row['branch'] = branch
             row['line1'] = line1

@@ -99,7 +99,7 @@ export function usRecord(row: GymRow): GymRecord {
       // We hold no photographs we have permission to show.
       photos: [],
       isDemoData: false,
-      externalRefs: { openStreetMap: row.osm },
+      externalRefs: { openStreetMap: row.osm, ...(row.brandWikidata ? { wikidataBrand: row.brandWikidata } : {}) },
       provenance: fromMap(row),
     },
     equipment: [],

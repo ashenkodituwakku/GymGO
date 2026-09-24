@@ -21,6 +21,7 @@ import {
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Icon, type IconName } from '@/components/Icon';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp, type ProReason } from '@/lib/app-state';
 import { ApiError, OfflineError } from '@/lib/api';
@@ -28,6 +29,8 @@ import { haptic } from '@/lib/haptics';
 import { cityAt } from '@/lib/places';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
 import { color, face, radius, space } from '@/lib/theme';
+
+const FEATURE_ICON: Record<string, IconName> = { 'Saved gyms': 'saved', 'Compare side by side': 'compare', 'Workout library': 'workout' };
 
 const REASON: Record<ProReason, string> = {
   saved: 'You’ve saved as many gyms as Free keeps. Pro saves as many as you like.',
@@ -120,7 +123,7 @@ export default function ProScreen() {
         {/* Hero ------------------------------------------------------------ */}
         <View style={styles.hero}>
           <View style={styles.badge}>
-            <Txt style={styles.badgeEmoji}>✨</Txt>
+            <Icon name="crown" size={36} color={color.onBrand} />
           </View>
           <Txt variant="largeTitle" style={styles.center}>
             GymGO Pro
@@ -133,7 +136,7 @@ export default function ProScreen() {
         {/* Already Pro --------------------------------------------------------- */}
         {billing.isPro && (
           <View style={[styles.card, styles.onPro]}>
-            <Txt variant="title2">{welcome ? 'You’re on Pro 🎉' : 'You’re on Pro 👑'}</Txt>
+            <Txt variant="title2">{welcome ? 'Welcome to Pro' : 'You’re on Pro'}</Txt>
             <Txt variant="subhead" color={color.labelSecondary}>
               {describeSubscription(billing.subscription)}
             </Txt>
@@ -160,7 +163,9 @@ export default function ProScreen() {
           </View>
           {PRO_FEATURES.map((feature) => (
             <View key={feature.title} style={styles.tableRow}>
-              <Txt style={styles.featureEmoji}>{feature.emoji}</Txt>
+              <View style={styles.featureIcon}>
+                <Icon name={FEATURE_ICON[feature.title] ?? 'sparkle'} size={17} color={color.brand} />
+              </View>
               <Txt variant="subhead" style={[styles.flex, face('medium')]}>
                 {feature.title}
               </Txt>
@@ -231,12 +236,10 @@ export default function ProScreen() {
 
         {/* Always free -------------------------------------------------------------------- */}
         <View style={styles.card}>
-          <Txt variant="headline">💚 Always free, for everyone</Txt>
+          <Txt variant="headline">Always free, for everyone</Txt>
           {ALWAYS_FREE.map((line) => (
             <View key={line} style={styles.freeLine}>
-              <Txt variant="subhead" color={color.goodInk}>
-                ✓
-              </Txt>
+              <Icon name="check" size={16} color={color.goodInk} />
               <Txt variant="subhead" style={styles.flex}>
                 {line}
               </Txt>
@@ -388,7 +391,7 @@ const styles = StyleSheet.create({
   onPro: { borderWidth: 2, borderColor: color.brand },
   tableHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   tableRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  featureEmoji: { fontSize: 20, lineHeight: 26, width: 28 },
+  featureIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
   column: { width: 84, textAlign: 'center' },
   plans: { gap: space[3] },
   plan: {
@@ -410,6 +413,6 @@ const styles = StyleSheet.create({
   tag: { paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.brand },
   currency: { alignSelf: 'center', marginTop: -space[2] },
   problem: { padding: space[3], borderRadius: radius.md, backgroundColor: color.dangerTint },
-  freeLine: { flexDirection: 'row', gap: space[2] },
+  freeLine: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   fine: { textAlign: 'center', paddingHorizontal: space[2] },
 });

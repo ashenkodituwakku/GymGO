@@ -26,6 +26,8 @@ export interface GymRow {
   osm: string;
   name: string;
   brand?: string;
+  /** The brand's Wikidata item, e.g. "Q7201095" for Planet Fitness. */
+  brandWikidata?: string;
   branch?: string;
   /** Street address; empty when the map doesn't have one. */
   line1: string;

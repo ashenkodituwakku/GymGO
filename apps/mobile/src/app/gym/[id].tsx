@@ -10,8 +10,11 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { LogoCredit, LogoPlate } from '@/components/BrandLogo';
+import { GoogleEmbed } from '@/components/GoogleEmbed';
 import { GoogleModal } from '@/components/GoogleModal';
-import { GoogleSection } from '@/components/GoogleSection';
+import { GoogleSection, useGooglePlace } from '@/components/GoogleSection';
+import { GooglePhotos } from '@/components/GooglePage';
 import { Icon, type IconName } from '@/components/Icon';
 import { MemberKit } from '@/components/MemberKit';
 import { PhotoHero } from '@/components/PhotoHero';
@@ -19,6 +22,7 @@ import { PlaceCard } from '@/components/PlaceCard';
 import { ReviewsSection } from '@/components/ReviewsSection';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { shareGym } from '@/lib/actions';
+import { googleStreetViewEmbedUrl } from '@/lib/present';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { distanceLabel } from '@/lib/places';
@@ -37,6 +41,9 @@ export default function GymPage() {
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   const result = useMemo(() => (id ? resultsById(filters, data.records, asOf).get(id) : undefined), [id, filters, data.records, asOf]);
 
+  const place = useGooglePlace(result?.record);
+  const googlePhotos = Boolean(place && place.photos.length > 0);
+
   useEffect(() => {
     if (id) addRecent(id);
   }, [id, addRecent]);
@@ -45,7 +52,7 @@ export default function GymPage() {
     return (
       <View style={styles.missing}>
         <Stack.Screen options={{ title: 'Gym' }} />
-        <Txt variant="title2">🤷 Gym not found</Txt>
+        <Txt variant="title2">Gym not found</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           It may have been removed from GymGO. Try searching the map.
         </Txt>
@@ -96,6 +103,7 @@ export default function GymPage() {
       >
         <View style={[styles.column, { width: cardWidth }]}>
           <View style={styles.title}>
+            <LogoPlate location={location} />
             <Txt variant="largeTitle">{location.name}</Txt>
             <Txt variant="subhead" color={color.labelSecondary}>
               {subtitle}
@@ -117,6 +125,18 @@ export default function GymPage() {
                 account={account}
                 onSignIn={() => router.navigate('/profile')}
                 width={cardWidth}
+                fallback={
+                  googlePhotos ? (
+                    <GooglePhotos photos={place!.photos} width={cardWidth - space[4] * 2} />
+                  ) : (
+                    <View style={styles.streetView}>
+                      <GoogleEmbed url={googleStreetViewEmbedUrl(result.record)} height={220} />
+                      <Txt variant="caption" color={color.labelSecondary}>
+                        Google Street View outside the gym. It may not face the door.
+                      </Txt>
+                    </View>
+                  )
+                }
               />
             }
             memberKit={
@@ -130,10 +150,14 @@ export default function GymPage() {
             }
             reviews={<ReviewsSection gymId={location.id} account={account} inSheet={false} onSignIn={() => router.navigate('/profile')} />}
           />
-          <GoogleSection record={result.record} />
+          <GoogleSection place={place} photosAbove={googlePhotos} />
+          <View style={styles.credits}>
+            <LogoCredit location={location} />
+          </View>
           <View style={styles.mapButton}>
             <PrimaryButton
-              label="🗺️  Show on the map"
+              label="Show on the map"
+              icon="map"
               tone="quiet"
               onPress={() => {
                 requestExplore({ gymId: location.id });
@@ -170,7 +194,9 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { alignItems: 'center', paddingBottom: space[8] },
   column: { maxWidth: '100%' },
-  title: { paddingHorizontal: space[4], paddingTop: space[2], paddingBottom: space[3], gap: 2 },
+  title: { gap: 2, paddingHorizontal: space[4], paddingTop: space[2], paddingBottom: space[3] },
+  streetView: { gap: space[1] },
+  credits: { paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[2] },
   mapButton: { paddingHorizontal: space[4] },
   headerButtons: { flexDirection: 'row', alignItems: 'center', gap: space[4], paddingHorizontal: space[1] },
   headerButton: { padding: 4 },

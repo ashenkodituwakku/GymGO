@@ -3,18 +3,20 @@
  *
  * Every photo here was taken by a GymGO member, checked by a moderator, and
  * is credited to them. None is borrowed from the gym's website or stands in
- * for a different gym. When there are none yet, the card says so plainly
- * and invites the first one.
+ * for a different gym. When there are none yet, the page can pass a labelled
+ * fallback (Google's own photos of the place, or Street View outside it);
+ * otherwise the card says "No photo supplied" and invites the first one.
  */
 
 import * as ImagePicker from 'expo-image-picker';
-import { useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { api, ApiError, OfflineError, photoUrl, type GymPhoto } from '@/lib/api';
 import { EMPTY } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space } from '@/lib/theme';
+import { Icon } from './Icon';
 import { PrimaryButton, Txt } from './ui';
 
 type Step = { kind: 'idle' } | { kind: 'confirm'; uri: string; data: string } | { kind: 'sending' } | { kind: 'done'; text: string };
@@ -25,7 +27,10 @@ export function PhotoHero({
   account,
   onSignIn,
   width: panelWidth,
+  fallback,
 }: {
+  /** Shown instead of "No photo supplied yet" when nobody has shared one (e.g. Street View). */
+  fallback?: ReactNode;
   gymId: string;
   isDemo: boolean;
   account: AccountApi;
@@ -77,7 +82,7 @@ export function PhotoHero({
     try {
       await api.uploadPhoto(token, gymId, data);
       haptic.success();
-      setStep({ kind: 'done', text: 'Thanks! 🙌 A moderator will check it, then it shows here with your name on it.' });
+      setStep({ kind: 'done', text: 'Thanks! A moderator will check it, then it shows here with your name on it.' });
       load();
     } catch (error) {
       haptic.warn();
@@ -123,17 +128,25 @@ export function PhotoHero({
               <View key={photo.id} style={{ width }}>
                 {uri && <Image source={{ uri }} style={[styles.photo, { width }]} resizeMode="cover" accessibilityLabel={`Photo by ${photo.credit}`} />}
                 <View style={styles.credit}>
+                  <Icon name="photo" size={11} color={color.onBrand} />
                   <Txt variant="caption" color={color.onBrand}>
-                    📷 {photo.credit}
+                    {photo.credit}
                   </Txt>
                 </View>
               </View>
             );
           })}
         </ScrollView>
+      ) : fallback && !isDemo && photos !== null ? (
+        <View style={[styles.fallback, { width }]}>
+          {fallback}
+          <Txt variant="footnote" color={color.labelSecondary}>
+            No GymGO member photos yet. Been here? Add the first.
+          </Txt>
+        </View>
       ) : (
         <View style={[styles.empty, { width }]}>
-          <Txt variant="title">📷</Txt>
+          <Icon name="photo" size={30} color={color.labelTertiary} />
           <Txt variant="headline">{EMPTY.photos}</Txt>
           <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
             {isDemo ? 'This is an invented demo gym, so there’s nothing to photograph.' : 'Been here? Your photo could be the first.'}
@@ -169,6 +182,7 @@ export function PhotoHero({
 
 const styles = StyleSheet.create({
   wrap: { gap: space[2], alignItems: 'flex-start' },
+  fallback: { gap: space[2] },
   photo: { height: 180, borderRadius: radius.xl, borderCurve: 'continuous' },
   credit: {
     position: 'absolute',
@@ -178,6 +192,9 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: radius.pill,
     backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   empty: {
     height: 150,

@@ -57,7 +57,7 @@ const PlaceBackground = floatingGlassBackground(1);
 type Panel = 'place' | 'filters' | null;
 
 export default function ExploreTab() {
-  // Its own safe area, so the tab bar counts in the bottom inset.
+  // Its own safe area provider, so the sheets measure from this screen.
   return (
     <SafeAreaProvider>
       <MapScreen />

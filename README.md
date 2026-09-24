@@ -91,10 +91,13 @@ npx pnpm@10 app          # add --tunnel if the phone can't connect
 ### What's in the app
 
 Four tabs along the bottom, icons only, the way Instagram does it on iOS 26:
-a floating Liquid Glass capsule, with the tab you're on filled in and a glass
-highlight behind it. On an iPhone it's Apple's own tab bar (real Liquid Glass
-on iOS 26); in a browser, GymGO draws the same capsule with the highlight
-sliding between tabs.
+a floating Liquid Glass capsule above the home indicator, the tab you're on
+filled in (your initial for Profile once you're signed in), and a glass lens
+behind it that springs to the tab you tap. Drag the lens along the bar to
+switch tabs; it swells under your finger. It's the same bar everywhere: on
+iOS 26 it's made of Apple's own Liquid Glass material, on older iPhones and
+Android the closest blur, and in a browser a glass with real refraction in
+Chrome and Edge (blur only in Safari and Firefox).
 
 - **Home**: a greeting, the search, one-tap picks ("Early start", "After
   work", "Under $25", "Squat racks", "Near me"), **Build a workout**, gyms

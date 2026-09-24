@@ -109,7 +109,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | App icon, splash screen | ❌ | ❌ | n/a | ❌ | n/a | ❌ |
 | Store builds (EAS / Xcode / Gradle) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | PC browser layout (side panels) | ✅ | ✅ driven end to end at 1440 × 900 | n/a | n/a | ❌ | n/a |
-| Tabs: Home, Explore, Saved, Profile (icons only, Instagram-style) | ✅ | ⚠️ browser's glass capsule only | n/a | ❌ Apple/Android native tab bar never seen | n/a | ❌ |
+| Tabs: Home, Explore, Saved, Profile (Instagram-style glass capsule, draggable lens) | ✅ | ⚠️ browser only: taps, and dragging with touch events | n/a | ❌ Liquid Glass material and the drag never seen on a phone | n/a | ❌ |
 | Home (picks, workout, nearby, saved, recent, neighbourhoods, other cities, counts) | ✅ | ✅ driven at phone and PC sizes | n/a | ❌ | n/a | ❌ |
 | Gym page (pushed screen, share/compare/save) | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |
 | Compare up to 3 gyms | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |

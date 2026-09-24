@@ -25,3 +25,7 @@ blob-report/
 .playwright/
 
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc

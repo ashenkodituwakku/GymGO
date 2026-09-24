@@ -301,7 +301,7 @@ export default function WorkoutScreen() {
             )}
           </View>
         )}
-        <Txt variant="caption" color={color.labelTertiary} style={styles.center}>
+        <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
           General training ideas, not medical advice. Warm up, and pick weights you can move well.
         </Txt>
       </ScrollView>

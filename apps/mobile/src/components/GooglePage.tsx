@@ -238,7 +238,7 @@ export function PlaceDetails({ place, hidePhotos = false }: { place: GooglePlace
                 {review.rating !== null && <Txt variant="subhead">{'★'.repeat(Math.round(review.rating))}</Txt>}
               </View>
               {review.when && (
-                <Txt variant="caption" color={color.labelTertiary}>
+                <Txt variant="caption" color={color.labelSecondary}>
                   {review.when}
                 </Txt>
               )}

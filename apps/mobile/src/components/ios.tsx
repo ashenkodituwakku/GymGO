@@ -217,7 +217,7 @@ export function SearchButton({ placeholder, onPress }: { placeholder: string; on
       style={({ pressed }) => [styles.search, pressed && { opacity: 0.75 }]}
     >
       <Icon name="search" size={17} color={color.labelSecondary} />
-      <Txt variant="body" color={color.labelTertiary} style={styles.flex}>
+      <Txt variant="body" color={color.labelSecondary} style={styles.flex}>
         {placeholder}
       </Txt>
     </Pressable>

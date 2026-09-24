@@ -52,7 +52,7 @@ export function LogoCredit({ location }: { location: GymLocation }) {
   if (!logo) return null;
   return (
     <Pressable onPress={() => void WebBrowser.openBrowserAsync(logo.page)} accessibilityRole="link" hitSlop={6}>
-      <Txt variant="caption" color={color.labelTertiary}>
+      <Txt variant="caption" color={color.labelSecondary}>
         {logo.license.startsWith('Public domain')
           ? 'Logo via Wikimedia Commons (public domain). '
           : `Logo © ${logo.author ?? 'its author'}, ${logo.license}, via Wikimedia Commons. `}

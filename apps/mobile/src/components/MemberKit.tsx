@@ -107,7 +107,7 @@ export function MemberKit({
         </View>
       )}
       {tallies.length > 0 && (
-        <Txt variant="caption" color={color.labelTertiary}>
+        <Txt variant="caption" color={color.labelSecondary}>
           From {load.reporters} member{load.reporters === 1 ? '' : 's'}, last on{' '}
           {new Date(last).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}. Not checked by GymGO or the gym.
         </Txt>

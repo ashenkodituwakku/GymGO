@@ -490,7 +490,7 @@ export function PlaceCard({
       </View>
 
       {location.isDemoData && (
-        <Txt variant="caption" color={color.labelTertiary} style={styles.demo}>
+        <Txt variant="caption" color={color.labelSecondary} style={styles.demo}>
           Demo listing. This gym, its prices and its hours are invented for testing.
         </Txt>
       )}
@@ -561,7 +561,7 @@ function Evidence({ provenance, age }: { provenance: Provenance | undefined; age
   const url = first?.evidenceRef?.startsWith('https://') ? first.evidenceRef : null;
   if (!url) {
     return (
-      <Txt variant="caption" color={color.labelTertiary}>
+      <Txt variant="caption" color={color.labelSecondary}>
         {text}
       </Txt>
     );
@@ -606,12 +606,12 @@ function Sources({ sources }: { sources: Source[] }) {
           <Txt variant="subhead" color={color.brand} style={styles.flex}>
             {source.label}
           </Txt>
-          <Txt variant="caption" color={color.labelTertiary}>
+          <Txt variant="caption" color={color.labelSecondary}>
             Read {new Date(source.checkedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
           </Txt>
         </Pressable>
       ))}
-      <Txt variant="caption" color={color.labelTertiary} style={styles.sourceNote}>
+      <Txt variant="caption" color={color.labelSecondary} style={styles.sourceNote}>
         Anything not listed by the gym is marked unknown, not guessed. Map data © OpenStreetMap contributors, ODbL.
         Nothing here was supplied by the gym.
       </Txt>

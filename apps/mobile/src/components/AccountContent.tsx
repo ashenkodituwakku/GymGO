@@ -123,7 +123,7 @@ export function SignInForm({ account, inSheet }: { account: AccountApi; inSheet:
         </Txt>
       </Pressable>
 
-      <Txt variant="caption" color={color.labelTertiary} style={styles.small}>
+      <Txt variant="caption" color={color.labelSecondary} style={styles.small}>
         Your account is stored on the GymGO server running on your computer. Passwords are stored hashed, never as
         typed. We don&apos;t send emails.
       </Txt>

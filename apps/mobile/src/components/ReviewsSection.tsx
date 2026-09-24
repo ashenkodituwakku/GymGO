@@ -181,7 +181,7 @@ function ReviewForm({ gymId, token, inSheet, onDone }: { gymId: string; token: s
         </Txt>
       )}
       <PrimaryButton label={busy ? 'Sending…' : 'Send for review'} onPress={() => void submit()} disabled={busy || stars === 0 || body.trim().length < 10} />
-      <Txt variant="caption" color={color.labelTertiary}>
+      <Txt variant="caption" color={color.labelSecondary}>
         A moderator reads every review before it appears.
       </Txt>
     </View>

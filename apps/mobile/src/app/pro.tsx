@@ -247,7 +247,7 @@ export default function ProScreen() {
           ))}
         </View>
 
-        <Txt variant="caption" color={color.labelTertiary} style={styles.fine}>
+        <Txt variant="caption" color={color.labelSecondary} style={styles.fine}>
           Prices include tax. Pro renews automatically until you cancel. Cancel any time from Profile → Manage subscription, and
           you keep Pro until the end of what you’ve paid for. If Pro ends, nothing you saved is deleted; you just can’t add more
           than Free allows. Payments are handled by Stripe: GymGO never sees your card, and Stripe gets your name and email for

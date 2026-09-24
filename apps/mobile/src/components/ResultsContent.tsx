@@ -285,7 +285,7 @@ export function ResultsContent({
       )}
 
       <View style={styles.footer}>
-        <Txt variant="caption" color={color.labelTertiary} style={styles.footerText}>
+        <Txt variant="caption" color={color.labelSecondary} style={styles.footerText}>
           {dataNote}
           {'\n'}
           {EMPTY.crowd}

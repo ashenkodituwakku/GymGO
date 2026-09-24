@@ -13,15 +13,17 @@ const allFacts = (record: GymRecord) => [
 ];
 
 describe('Australian gyms from OpenStreetMap', () => {
-  it('covers six cities with real gyms, none of them demo data', () => {
-    expect(AU_CITIES.map((city) => city.id)).toEqual(['brisbane', 'perth', 'adelaide', 'canberra', 'gold-coast', 'hobart']);
-    expect(AU_GYMS.length).toBeGreaterThanOrEqual(120);
+  it('covers seven cities with real gyms, none of them demo data', () => {
+    expect(AU_CITIES.map((city) => city.id)).toEqual(['sydney', 'brisbane', 'perth', 'adelaide', 'canberra', 'gold-coast', 'hobart']);
+    expect(AU_GYMS.length).toBeGreaterThanOrEqual(150);
     for (const city of AU_CITIES) expect(GYM_ROWS.filter((row) => row.city === city.id).length).toBeGreaterThanOrEqual(5);
     for (const record of AU_GYMS) expect(record.location.isDemoData).toBe(false);
   });
 
-  it('leaves Sydney to the demo, so real and invented gyms never share streets', () => {
-    for (const row of GYM_ROWS) expect(row.state).not.toBe('NSW');
+  it('has real Sydney gyms, in New South Wales', () => {
+    const sydney = GYM_ROWS.filter((row) => row.city === 'sydney');
+    expect(sydney.length).toBeGreaterThanOrEqual(20);
+    for (const row of sydney) expect(row.state).toBe('NSW');
   });
 
   it('has unique ids ending in their city', () => {

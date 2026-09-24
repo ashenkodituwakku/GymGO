@@ -148,12 +148,11 @@ is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
 
 - **Melbourne**: 23 real gyms, with prices and hours from each gym's own
   website where it publishes them.
-- **6 more Australian cities**: Brisbane, Perth, Adelaide, Canberra, the Gold
-  Coast and Hobart, with 189 real gyms between them. Like the US cities
-  below, these are **map-only**, from OpenStreetMap: no prices, guest hours
-  or machine lists yet, so every one says **Call first**. Distances are in
-  kilometres and money in A$. Real Sydney isn't in yet, because the invented
-  demo gyms sit on inner-Sydney streets and the two would be easy to mix up.
+- **7 more Australian cities**: Sydney, Brisbane, Perth, Adelaide, Canberra,
+  the Gold Coast and Hobart, with 229 real gyms between them. Like the US
+  cities below, these are **map-only**, from OpenStreetMap: no prices, guest
+  hours or machine lists yet, so every one says **Call first**. Distances are
+  in kilometres and money in A$.
 - **15 US cities**: New York, Los Angeles, Chicago, Houston, Miami, San
   Francisco, Seattle, Boston, Austin, Denver, Las Vegas, Washington DC,
   Atlanta, San Diego and Philadelphia, with 477 real gyms between them. These
@@ -161,7 +160,11 @@ is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
   opening hours, from OpenStreetMap. There are no prices, guest hours or
   machine lists yet, so every one says **Call first**. Distances are in
   miles and money in dollars there.
-- **Sydney**: invented demo gyms for testing, always labelled as demo.
+- **Demo mode** (Profile → Preferences, off to start): invented gyms in inner
+  Sydney that show every case GymGO handles, from "Good to go" to "Not a
+  fit". Turning it on hides every real gym, and turning it off hides every
+  invented one, so the two never share a map: the demo gyms sit on the same
+  streets as real Sydney ones.
 
 Search a city ("Brisbane", "New York", "NYC", "Philly"), a suburb or
 neighborhood ("Fortitude Valley", "SoHo", "Capitol Hill, Seattle") or a
@@ -537,8 +540,9 @@ US gym is called open for business on the map's word alone.
 
 ## Demo data
 
-The 17 Sydney gyms in `packages/demo-data/` are invented. Search a Sydney
-suburb such as Surry Hills to see them. None of the names,
+The 17 Sydney gyms in `packages/demo-data/` are invented. In the phone app,
+turn on **Demo mode** in Profile to see them (the older website shows them
+when you search a Sydney suburb such as Surry Hills). None of the names,
 addresses, prices, hours, equipment or reviews describe a real business. Every
 record is flagged `isDemoData`, the interface says so on every page, and
 production ingestion refuses records carrying the flag.

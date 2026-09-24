@@ -152,7 +152,7 @@ export function ResultsContent({
               <Txt variant="body">{place.name}</Txt>
               <Txt variant="footnote" color={color.labelSecondary}>
                 {placeContext(place)}
-                {place.city === 'sydney' ? ' · Sydney demo' : ''}
+                {place.city === 'sydney-demo' ? ' · invented demo' : ''}
               </Txt>
             </Pressable>
           ))}

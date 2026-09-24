@@ -1,11 +1,14 @@
 /**
  * Where the search box can take you.
  *
- * Inner Melbourne is real: real gyms, each fact sourced. Six more Australian
- * cities and fifteen US cities are real too, but map-only: gyms from
- * OpenStreetMap, with no prices and no guest hours until a gym publishes
- * them. The Sydney suburbs lead to the invented demo gyms, kept so every edge
- * case can still be tried, and always labelled as demo.
+ * Inner Melbourne is real: real gyms, each fact sourced. Seven more
+ * Australian cities, Sydney among them, and fifteen US cities are real too,
+ * but map-only: gyms from OpenStreetMap, with no prices and no guest hours
+ * until a gym publishes them.
+ *
+ * The invented demo gyms, kept so every edge case can still be tried, sit on
+ * inner-Sydney streets too. So they only appear in demo mode, and demo mode
+ * shows nothing real: the two never share a map or a search.
  *
  * No React Native here, so it is unit-tested in Node.
  */
@@ -16,7 +19,7 @@ import { MELBOURNE, MELBOURNE_CENTRE, MELBOURNE_PLACES } from '@gymgo/melbourne-
 import { AU_CITIES, AU_PLACES, type AuCityId } from '@gymgo/au-data';
 import { US_CITIES, US_PLACES, type UsCityId } from '@gymgo/usa-data';
 
-export type CityId = 'melbourne' | 'sydney' | AuCityId | UsCityId;
+export type CityId = 'melbourne' | 'sydney-demo' | AuCityId | UsCityId;
 
 export interface City {
   id: CityId;
@@ -50,9 +53,9 @@ export const CITIES: Record<CityId, City> = {
     demo: false,
     mapOnly: false,
   },
-  sydney: {
+  'sydney-demo': {
     ...AU,
-    id: 'sydney',
+    id: 'sydney-demo',
     name: 'Sydney demo',
     region: 'NSW',
     timezone: PILOT_TIMEZONE,
@@ -103,7 +106,7 @@ export const CITY_LIST: City[] = [
   CITIES.melbourne,
   ...AU_CITIES.map((city) => CITIES[city.id]),
   ...US_CITIES.map((city) => CITIES[city.id]),
-  CITIES.sydney,
+  CITIES['sydney-demo'],
 ];
 
 export interface AppPlace {
@@ -122,7 +125,7 @@ export const PLACES: AppPlace[] = [
   // Each US city by name, then its neighborhoods.
   ...US_CITIES.map((city) => ({ name: city.name, postcode: '', position: city.centre, city: city.id })),
   ...US_PLACES.map((place) => ({ name: place.name, postcode: '', position: place.position, city: place.city })),
-  ...PILOT_PLACES.map((place) => ({ ...place, city: 'sydney' as const })),
+  ...PILOT_PLACES.map((place) => ({ ...place, city: 'sydney-demo' as const })),
 ];
 
 export const DEFAULT_PLACE: AppPlace = PLACES[0]!;
@@ -130,9 +133,31 @@ export const DEFAULT_PLACE: AppPlace = PLACES[0]!;
 /** The place that stands for a whole city: its centre, under its name. */
 export function cityPlace(city: City): AppPlace {
   if (city.id === 'melbourne') return DEFAULT_PLACE;
-  if (city.id === 'sydney') return PLACES.find((place) => place.city === 'sydney')!;
+  if (city.id === 'sydney-demo') return PLACES.find((place) => place.city === 'sydney-demo')!;
   return PLACES.find((place) => place.city === city.id && place.name === city.name)!;
 }
+
+// --- Demo mode ----------------------------------------------------------------
+
+let demoMode = false;
+
+/**
+ * Demo mode: only the invented demo city and its suburbs; otherwise only the
+ * real ones. Set by the app from the Profile switch; everything below reads it.
+ */
+export function setDemoMode(on: boolean): void {
+  demoMode = on;
+}
+
+export const isDemoMode = (): boolean => demoMode;
+
+/** The cities you can search and browse right now. */
+export const activeCities = (): City[] => CITY_LIST.filter((city) => city.demo === demoMode);
+
+const activePlaces = (): AppPlace[] => PLACES.filter((place) => CITIES[place.city].demo === demoMode);
+
+/** Where the app opens: Melbourne, or the demo's first suburb in demo mode. */
+export const homePlace = (): AppPlace => (demoMode ? cityPlace(CITIES['sydney-demo']) : DEFAULT_PLACE);
 
 const normalise = (value: string) =>
   value
@@ -143,7 +168,7 @@ const normalise = (value: string) =>
 
 /** "SoHo, New York" or "SoHo new york": a place name with its city after it. */
 function withCity(needle: string): { name: string; city: City } | null {
-  for (const city of CITY_LIST) {
+  for (const city of activeCities()) {
     for (const cityName of [city.name, ...city.aliases]) {
       const tail = normalise(cityName);
       for (const joiner of [', ', ' ']) {
@@ -163,23 +188,23 @@ export function geocodePlace(query: string | null, prefer?: CityId): { place: Ap
   if (!query || !query.trim()) return { place: null, outOfArea: false };
   const needle = normalise(query);
 
-  const city = CITY_LIST.find((item) => [item.name, ...item.aliases].some((name) => normalise(name) === needle));
+  const city = activeCities().find((item) => [item.name, ...item.aliases].some((name) => normalise(name) === needle));
   if (city) return { place: cityPlace(city), outOfArea: false };
 
   const scoped = withCity(needle);
   if (scoped) {
-    const inCity = PLACES.filter((place) => place.city === scoped.city.id);
+    const inCity = activePlaces().filter((place) => place.city === scoped.city.id);
     const hit = inCity.find((place) => normalise(place.name) === scoped.name) ?? inCity.find((place) => normalise(place.name).startsWith(scoped.name));
     if (hit) return { place: hit, outOfArea: false };
   }
 
   const exact = preferring(
-    PLACES.filter((place) => normalise(place.name) === needle || (place.postcode !== '' && place.postcode === needle)),
+    activePlaces().filter((place) => normalise(place.name) === needle || (place.postcode !== '' && place.postcode === needle)),
     prefer,
   );
   if (exact) return { place: exact, outOfArea: false };
   const partial = preferring(
-    PLACES.filter((place) => normalise(place.name).startsWith(needle)),
+    activePlaces().filter((place) => normalise(place.name).startsWith(needle)),
     prefer,
   );
   if (partial) return { place: partial, outOfArea: false };
@@ -189,8 +214,8 @@ export function geocodePlace(query: string | null, prefer?: CityId): { place: Ap
 export function suggestPlaces(query: string, limit = 6, prefer?: CityId): AppPlace[] {
   const needle = normalise(query);
   if (!needle) return [];
-  const cities = CITY_LIST.filter((city) => [city.name, ...city.aliases].some((name) => normalise(name).startsWith(needle))).map(cityPlace);
-  const places = PLACES.filter(
+  const cities = activeCities().filter((city) => [city.name, ...city.aliases].some((name) => normalise(name).startsWith(needle))).map(cityPlace);
+  const places = activePlaces().filter(
     (place) => normalise(place.name).includes(needle) || (place.postcode !== '' && place.postcode.startsWith(needle)),
   )
     // Starts-with before contains; your current city first.
@@ -212,7 +237,7 @@ export function placeContext(place: AppPlace): string {
 }
 
 /** The nearest city GymGO covers, and how far away it is. */
-export function nearestCity(point: LatLng, cities: City[] = CITY_LIST.filter((city) => !city.demo)): { city: City; km: number } {
+export function nearestCity(point: LatLng, cities: City[] = activeCities()): { city: City; km: number } {
   let best = { city: cities[0]!, km: Infinity };
   for (const city of cities) {
     const km = haversineKm(point, city.centre);
@@ -223,7 +248,7 @@ export function nearestCity(point: LatLng, cities: City[] = CITY_LIST.filter((ci
 
 /** The city a point belongs to, if it is within reach of one. */
 export function cityNear(point: LatLng): City | null {
-  const { city, km } = nearestCity(point, CITY_LIST);
+  const { city, km } = nearestCity(point);
   return km <= city.reachKm ? city : null;
 }
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CITIES, CITY_LIST, DEFAULT_PLACE, cityAt, cityNear, distanceLabel, geocodePlace, moneyLabel, nearestCity, placeContext, radiusChoices, suggestPlaces } from './places';
+import { haversineKm } from '@gymgo/domain';
+import { CITIES, CITY_LIST, DEFAULT_PLACE, activeCities, cityAt, cityNear, distanceLabel, geocodePlace, homePlace, moneyLabel, nearestCity, placeContext, radiusChoices, setDemoMode, suggestPlaces } from './places';
 import { BUNDLED_GYMS, atPlace, initialFilters, moveTo, runSearch } from './query';
 
 describe('places', () => {
@@ -8,10 +9,11 @@ describe('places', () => {
     expect(initialFilters(new Date('2026-09-23T05:00:00Z')).timezone).toBe('Australia/Melbourne');
   });
 
-  it('finds Melbourne suburbs by name or postcode, and the Sydney demo by its suburbs', () => {
+  it('finds Melbourne suburbs by name or postcode, and real Sydney by its suburbs', () => {
     expect(geocodePlace('fitzroy').place?.city).toBe('melbourne');
     expect(geocodePlace('3056').place?.name).toBe('Brunswick');
     expect(geocodePlace('Surry Hills').place?.city).toBe('sydney');
+    expect(CITIES.sydney.demo).toBe(false);
     expect(geocodePlace('Darwin')).toEqual({ place: null, outOfArea: true });
     expect(geocodePlace('Timbuktu')).toEqual({ place: null, outOfArea: true });
     expect(suggestPlaces('brun').map((place) => place.name)).toEqual(['Brunswick', 'Brunswick East']);
@@ -21,18 +23,40 @@ describe('places', () => {
     expect(cityNear({ lat: -37.8, lng: 144.97 })?.id).toBe('melbourne');
     expect(cityNear({ lat: -33.88, lng: 151.2 })?.id).toBe('sydney');
     expect(cityNear({ lat: -12.46, lng: 130.84 })).toBeNull(); // Darwin
-    expect(CITIES.sydney.demo).toBe(true);
+    expect(CITIES['sydney-demo'].demo).toBe(true);
     expect(CITIES.melbourne.demo).toBe(false);
   });
 
-  it('shows real gyms around Melbourne and demo gyms only around Sydney', () => {
+  it('shows only real gyms around Melbourne', () => {
     const asOf = new Date('2026-09-23T05:00:00Z');
     const melbourne = runSearch({ ...initialFilters(asOf), radiusKm: 10 }, { records: BUNDLED_GYMS }, asOf);
     expect(melbourne.results.length).toBeGreaterThan(15);
     expect(melbourne.results.every((result) => !result.record.location.isDemoData)).toBe(true);
+  });
 
-    const sydney = runSearch({ ...initialFilters(asOf), ...atPlace(geocodePlace('Surry Hills').place!) }, {}, asOf);
-    expect(sydney.results.every((result) => result.record.location.isDemoData)).toBe(true);
+  it('keeps the invented demo apart from real Sydney: demo mode shows only the demo', () => {
+    // Why the mode exists: the demo gyms sit among real Sydney ones.
+    const demo = BUNDLED_GYMS.filter((record) => record.location.isDemoData);
+    const realSydney = BUNDLED_GYMS.filter((record) => !record.location.isDemoData && record.location.address.state === 'NSW');
+    expect(realSydney.length).toBeGreaterThan(20);
+    expect(realSydney.some((real) => demo.some((fake) => haversineKm(real.location.position, fake.location.position) < 1))).toBe(true);
+
+    // Off (the default): no demo city or suburb to be found.
+    expect(activeCities().some((city) => city.demo)).toBe(false);
+    expect(homePlace()).toBe(DEFAULT_PLACE);
+    try {
+      setDemoMode(true);
+      expect(activeCities().map((city) => city.id)).toEqual(['sydney-demo']);
+      expect(homePlace().city).toBe('sydney-demo');
+      expect(geocodePlace('Surry Hills').place?.city).toBe('sydney-demo');
+      expect(cityAt({ lat: -33.88, lng: 151.2 }).id).toBe('sydney-demo');
+      // Nothing real is searchable in demo mode.
+      expect(geocodePlace('Fitzroy')).toEqual({ place: null, outOfArea: true });
+      expect(suggestPlaces('new york')).toEqual([]);
+    } finally {
+      setDemoMode(false);
+    }
+    expect(geocodePlace('Surry Hills').place?.city).toBe('sydney');
   });
 
   it('finds US cities by name or nickname', () => {
@@ -53,7 +77,7 @@ describe('places', () => {
     expect(suggestPlaces('capitol hill', 6, 'denver')[0]?.city).toBe('denver');
   });
 
-  it('knows six more Australian cities from the map, on their own clocks', () => {
+  it('knows seven more Australian cities from the map, on their own clocks', () => {
     expect(cityNear({ lat: -27.47, lng: 153.03 })?.id).toBe('brisbane');
     expect(cityNear({ lat: -31.95, lng: 115.86 })?.id).toBe('perth');
     expect(cityAt({ lat: -42.88, lng: 147.33 }).id).toBe('hobart');
@@ -67,12 +91,11 @@ describe('places', () => {
     expect(placeContext(valley)).toBe('Brisbane, QLD');
     expect(geocodePlace('Subiaco').place?.city).toBe('perth');
     expect(geocodePlace('Brissy').place?.city).toBe('brisbane');
-    // Real Paddington (Brisbane) and the demo's Paddington (Sydney): where you are wins.
-    expect(geocodePlace('Paddington', 'sydney').place?.city).toBe('sydney');
-    expect(geocodePlace('Paddington', 'brisbane').place?.city).toBe('brisbane');
+    // Real Paddington (Brisbane), never the demo's while demo mode is off.
+    expect(geocodePlace('Paddington').place?.city).toBe('brisbane');
     // Melbourne still first, the demo still last.
     expect(CITY_LIST[0]!.id).toBe('melbourne');
-    expect(CITY_LIST.at(-1)!.id).toBe('sydney');
+    expect(CITY_LIST.at(-1)!.id).toBe('sydney-demo');
   });
 
   it('knows the US cities, their clocks, and how far out they reach', () => {

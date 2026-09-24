@@ -18,7 +18,7 @@ import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { EMPTY, timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
-import { CITY_LIST, PLACES, cityAt, cityPlace, moneyLabel, type AppPlace } from '@/lib/places';
+import { PLACES, activeCities, cityAt, cityPlace, moneyLabel, type AppPlace } from '@/lib/places';
 import { YOUR_LOCATION, atPlace, moveTo, nextVisitAt, runSearch, type Filters } from '@/lib/query';
 import { resultsById } from '@/lib/results';
 import { color, face, radius, shadow, space } from '@/lib/theme';
@@ -51,7 +51,8 @@ export default function Home() {
   const browse = city.id === 'melbourne'
     ? MELBOURNE_PICKS.map((suburb) => PLACES.find((place) => place.name === suburb && place.city === 'melbourne')).filter((place) => place !== undefined)
     : PLACES.filter((place) => place.city === city.id && place.name !== city.name).slice(0, 10);
-  const otherCities = CITY_LIST.filter((item) => item.id !== city.id && !item.demo);
+  // In demo mode there's only the demo, so no other cities.
+  const otherCities = activeCities().filter((item) => item.id !== city.id);
 
   const explore = (request: Parameters<typeof requestExplore>[0] = {}) => {
     requestExplore(request);
@@ -218,36 +219,38 @@ export default function Home() {
       </View>
 
       {/* Other cities ------------------------------------------------------- */}
-      <View style={styles.section}>
-        <SectionHeader icon="globe-hemisphere-west" title="Other cities" />
-        {(['AU', 'US'] as const).map((country) => {
-          const list = otherCities.filter((item) => item.country === country);
-          if (list.length === 0) return null;
-          const label = country === 'AU' ? 'Australia' : 'USA';
-          return (
-            <View key={country} style={styles.country}>
-              <Txt variant="footnote" color={color.labelSecondary} style={styles.countryLabel}>
-                {label.toUpperCase()}
-              </Txt>
-              <View style={styles.suburbs}>
-                {list.map((item) => (
-                  <Pressable
-                    key={item.id}
-                    onPress={() => goToPlace(cityPlace(item))}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${item.name}, ${label}`}
-                    style={({ pressed }) => [styles.suburb, pressed && { opacity: 0.7 }]}
-                  >
-                    <Txt variant="subhead" style={face('medium')}>
-                      {item.name}
-                    </Txt>
-                  </Pressable>
-                ))}
+      {otherCities.length > 0 && (
+        <View style={styles.section}>
+          <SectionHeader icon="globe-hemisphere-west" title="Other cities" />
+          {(['AU', 'US'] as const).map((country) => {
+            const list = otherCities.filter((item) => item.country === country);
+            if (list.length === 0) return null;
+            const label = country === 'AU' ? 'Australia' : 'USA';
+            return (
+              <View key={country} style={styles.country}>
+                <Txt variant="footnote" color={color.labelSecondary} style={styles.countryLabel}>
+                  {label.toUpperCase()}
+                </Txt>
+                <View style={styles.suburbs}>
+                  {list.map((item) => (
+                    <Pressable
+                      key={item.id}
+                      onPress={() => goToPlace(cityPlace(item))}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${item.name}, ${label}`}
+                      style={({ pressed }) => [styles.suburb, pressed && { opacity: 0.7 }]}
+                    >
+                      <Txt variant="subhead" style={face('medium')}>
+                        {item.name}
+                      </Txt>
+                    </Pressable>
+                  ))}
+                </View>
               </View>
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
+      )}
 
     </TabScreen>
   );

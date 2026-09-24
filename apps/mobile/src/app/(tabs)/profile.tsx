@@ -118,13 +118,25 @@ export default function Profile() {
 
       <Group
         header="Preferences"
-        footer={Platform.OS === 'web' ? 'Haptics are the small taps you feel on a phone; a browser has none.' : undefined}
+        footer={[
+          Platform.OS === 'web' ? 'Haptics are the small taps you feel on a phone; a browser has none.' : null,
+          'Demo mode swaps every real gym for invented ones in inner Sydney, made up to show each case GymGO handles. Nothing in it is real, and real gyms come back when you turn it off.',
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
         <Row
           icon="sparkle"
           tile={TILE.pink}
           title="Haptics"
           toggle={{ value: prefs.haptics, onChange: (value) => setPref('haptics', value) }}
+        />
+        <Row
+          icon="flask"
+          tile={TILE.orange}
+          title="Demo mode"
+          subtitle={prefs.demo ? 'Showing invented gyms only' : undefined}
+          toggle={{ value: prefs.demo, onChange: (value) => setPref('demo', value) }}
         />
       </Group>
 

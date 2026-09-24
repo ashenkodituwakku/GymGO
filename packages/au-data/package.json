@@ -2,7 +2,7 @@
   "name": "@gymgo/au-data",
   "version": "0.1.0",
   "private": true,
-  "description": "Gyms in six more Australian cities, from OpenStreetMap (ODbL). Map-only: no prices, hours only where mapped.",
+  "description": "Gyms in seven more Australian cities, from OpenStreetMap (ODbL). Map-only: no prices, hours only where mapped.",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

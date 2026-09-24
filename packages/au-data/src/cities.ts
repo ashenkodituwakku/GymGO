@@ -3,8 +3,8 @@
  * researched one by one, in packages/melbourne-data). Each is the area its
  * gyms were fetched from: a circle around the centre, `radiusKm` across.
  *
- * Sydney isn't here yet: GymGO's invented demo gyms sit in inner Sydney, and
- * real gyms on the same streets would be too easy to mix up with them.
+ * GymGO's invented demo gyms also sit in inner Sydney. Apps never show the
+ * two together: the demo only appears in its own demo mode.
  */
 
 import type { LatLng } from '@gymgo/domain';
@@ -23,6 +23,7 @@ export interface AuCity {
 }
 
 export const AU_CITIES: AuCity[] = [
+  { id: 'sydney', name: 'Sydney', state: 'NSW', timezone: 'Australia/Sydney', centre: { lat: -33.8688, lng: 151.2093 }, radiusKm: 7, aliases: ['Syd', 'Sydney CBD'] },
   { id: 'brisbane', name: 'Brisbane', state: 'QLD', timezone: 'Australia/Brisbane', centre: { lat: -27.4698, lng: 153.0251 }, radiusKm: 7, aliases: ['Brissy', 'Brisvegas'] },
   { id: 'perth', name: 'Perth', state: 'WA', timezone: 'Australia/Perth', centre: { lat: -31.9523, lng: 115.8613 }, radiusKm: 7, aliases: [] },
   { id: 'adelaide', name: 'Adelaide', state: 'SA', timezone: 'Australia/Adelaide', centre: { lat: -34.9285, lng: 138.6007 }, radiusKm: 6, aliases: ['Radelaide'] },

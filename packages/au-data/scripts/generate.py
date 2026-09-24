@@ -28,6 +28,7 @@ STATES = {'ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA'}
 
 # Must match src/cities.ts.
 CITIES = {
+    'sydney': ('NSW', -33.8688, 151.2093, 7000),
     'brisbane': ('QLD', -27.4698, 153.0251, 7000),
     'perth': ('WA', -31.9523, 115.8613, 7000),
     'adelaide': ('SA', -34.9285, 138.6007, 6000),
@@ -36,7 +37,7 @@ CITIES = {
     'hobart': ('TAS', -42.8821, 147.3272, 6000),
 }
 CITY_NAMES = {
-    'brisbane': 'Brisbane', 'perth': 'Perth', 'adelaide': 'Adelaide', 'canberra': 'Canberra',
+    'sydney': 'Sydney', 'brisbane': 'Brisbane', 'perth': 'Perth', 'adelaide': 'Adelaide', 'canberra': 'Canberra',
     'gold-coast': 'Gold Coast', 'hobart': 'Hobart',
 }
 

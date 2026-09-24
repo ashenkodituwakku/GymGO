@@ -22,7 +22,7 @@ NOT_A_GYM = re.compile(
     r'chiropract|massage|spa\b|kids|pole\b|aerial|bodyrok|lagree|megaformer|reformer|swim school|'
     r'zumba|piyo|down dog|physique 57|revolution studio|cycle|handle bar|rock gym|exhale|krav|kms\b|'
     r'combat|mma\b|ismma|grinning yogi|float|cryo|squash|syretch|platesculpt|boys and girls|define body|'
-    r'futsal|parkour park|my first gym|muay thai',
+    r'futsal|parkour park|my first gym|muay thai|^technogym$',
     re.I,
 )
 NOT_PUBLIC = re.compile(

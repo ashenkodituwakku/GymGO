@@ -14,7 +14,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { LIMITS } from '@gymgo/domain';
 import { setHapticsEnabled } from './haptics';
 import { currentFix, type Fix } from './location';
-import { DEFAULT_PLACE, cityNear, cityPlace, nearestCity, type City } from './places';
+import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, type City } from './places';
 import { locatedNotice } from './copy';
 import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, type Filters } from './query';
 import { useAccount } from './useAccount';
@@ -45,6 +45,12 @@ export type Located =
 
 export interface Prefs {
   haptics: boolean;
+  /**
+   * Demo mode: only the invented demo gyms, for trying every edge case.
+   * Off, only real gyms show. Never both, since the demo sits on real
+   * Sydney streets.
+   */
+  demo: boolean;
 }
 
 const RECENTS_KEY = 'gymgo.recents.v1';
@@ -125,7 +131,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [recents, setRecents] = useState<string[]>([]);
   const [compare, setCompare] = useState<string[]>([]);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
-  const [prefs, setPrefs] = useState<Prefs>({ haptics: true });
+  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, demo: false });
+  // Place search reads the mode, so it must match before anything renders.
+  setDemoMode(prefs.demo);
   const [here, setHere] = useState<Fix | null>(null);
 
   useEffect(() => {
@@ -133,9 +141,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (Array.isArray(value)) setRecents(value.filter((id): id is string => typeof id === 'string').slice(0, MAX_RECENTS));
     });
     void loadJson<Partial<Prefs>>(PREFS_KEY, {}).then((value) => {
-      const next = { haptics: value.haptics !== false };
+      const next = { haptics: value.haptics !== false, demo: value.demo === true };
       setHapticsEnabled(next.haptics);
+      setDemoMode(next.demo);
       setPrefs(next);
+      if (next.demo) setFilters((current) => moveTo(current, atPlace(homePlace())));
     });
   }, []);
 
@@ -219,11 +229,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
       storeJson(PREFS_KEY, next);
       return next;
     });
+    if (key === 'demo') {
+      // Switching worlds: search from the new one's home, and let go of
+      // gyms picked in the other.
+      setDemoMode(Boolean(value));
+      setFilters((current) => moveTo(current, atPlace(homePlace())));
+      setCompare([]);
+    }
   }, []);
+
+  // Only the gyms of the current mode: real, or (in demo mode) invented.
+  const visibleData = useMemo(
+    () => ({ ...data, records: data.records.filter((record) => record.location.isDemoData === prefs.demo) }),
+    [data, prefs.demo],
+  );
 
   const value = useMemo<AppState>(
     () => ({
-      data,
+      data: visibleData,
       account,
       filters,
       setFilters,
@@ -242,7 +265,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       here,
       locate,
     }),
-    [data, account, filters, recents, addRecent, clearRecents, compare, toggleCompare, clearCompare, exploreRequest, requestExplore, prefs, setPref, billing, openPro, here, locate],
+    [visibleData, account, filters, recents, addRecent, clearRecents, compare, toggleCompare, clearCompare, exploreRequest, requestExplore, prefs, setPref, billing, openPro, here, locate],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

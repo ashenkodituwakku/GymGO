@@ -11,6 +11,7 @@
  *   GET    /api/saved                     { gymIds }
  *   PUT    /api/saved/:gymId
  *   DELETE /api/saved/:gymId
+ *   GET    /api/me/export                 everything held about you, as a JSON file
  *   GET    /api/gyms/:gymId/reviews       published reviews, plus your own
  *   POST   /api/gyms/:gymId/reviews       { overall, body, visitedOn? } -> held for moderation
  *   GET    /api/gyms/:gymId/photos        published photos, plus your own waiting ones
@@ -469,6 +470,49 @@ export function createApp(options: AppOptions) {
       const token = bearer(req);
       if (token) endSession(db, token);
       return send(res, 204);
+    }
+
+    // Everything GymGO holds about you, as one file. Never the password hash
+    // or session tokens; the photo images themselves stay on the server.
+    if (method === 'GET' && path === '/api/me/export') {
+      const { account } = requireAccount(req);
+      const id = account.id;
+      const rows = (sql: string) => db.prepare(sql).all(id) as Array<Record<string, unknown>>;
+      const today = now().toISOString().slice(0, 10);
+      res.setHeader('Content-Disposition', `attachment; filename="gymgo-my-data-${today}.json"`);
+      return send(res, 200, {
+        exportedAt: now().toISOString(),
+        note: 'Everything GymGO holds about you. Your password is stored only as a salted hash, which is left out; so are sign-in tokens.',
+        account: rows('select id, email, display_name as displayName, role, blocked, created_at as createdAt from users where id = ?')[0],
+        signIns: rows('select created_at as signedInAt, expires_at as expiresAt from sessions where user_id = ? order by created_at'),
+        savedGyms: rows('select gym_id as gymId, created_at as savedAt from saved_gyms where user_id = ? order by created_at'),
+        reviews: rows(
+          `select id, gym_id as gymId, overall, body, visited_on as visitedOn, status, moderation_reason as moderationReason,
+                  created_at as createdAt, moderated_at as moderatedAt from reviews where user_id = ? order by created_at`,
+        ),
+        photos: rows(
+          `select id, gym_id as gymId, type, bytes, status, moderation_reason as moderationReason, created_at as createdAt,
+                  moderated_at as moderatedAt from photos where user_id = ? order by created_at`,
+        ),
+        equipmentReports: rows(
+          `select gym_id as gymId, equipment_type_id as equipmentTypeId, presence, max_weight_kg as maxWeightKg, reported_at as reportedAt
+           from equipment_reports where user_id = ? order by reported_at`,
+        ),
+        priceReports: rows(
+          `select gym_id as gymId, amount_minor as amountMinor, currency, paid_on as paidOn, reported_at as reportedAt
+           from price_reports where user_id = ? order by reported_at`,
+        ),
+        visitReports: rows(
+          `select gym_id as gymId, outcome, visited_on as visitedOn, reported_at as reportedAt from access_reports where user_id = ? order by reported_at`,
+        ),
+        workouts: rows('select id, name, gym_id as gymId, plan_json, created_at as createdAt from workouts where user_id = ? order by created_at').map(
+          ({ plan_json, ...workout }) => ({ ...workout, plan: JSON.parse(String(plan_json)) }),
+        ),
+        subscriptions: rows(
+          `select status, interval, currency, amount_minor as amountMinor, current_period_end as currentPeriodEnd, cancel_at as cancelAt,
+                  cancel_at_period_end as cancelAtPeriodEnd, updated_at as updatedAt from subscriptions where user_id = ? order by updated_at`,
+        ),
+      });
     }
 
     if (path === '/api/me') {

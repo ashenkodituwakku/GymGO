@@ -13,6 +13,7 @@ import { Group, Row, TILE, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
+import { downloadMyData } from '@/lib/exportData';
 import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
 import { color, space } from '@/lib/theme';
 
@@ -22,8 +23,10 @@ export default function Profile() {
   const params = useLocalSearchParams<{ checkout?: string }>();
   const [about, setAbout] = useState<'facts' | 'sources' | 'privacy' | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [exported, setExported] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const me = account.state === 'signed_in' ? account.account : null;
+  const token = account.state === 'signed_in' ? account.token : null;
   const moderator = me?.role === 'moderator' || me?.role === 'admin';
 
   const toggle = (key: 'facts' | 'sources' | 'privacy') => setAbout((current) => (current === key ? null : key));
@@ -165,7 +168,8 @@ export default function Profile() {
             this device to find gyms near you and measure distances. It is never stored or sent to GymGO or anyone else.
             Photos have their location data removed before they’re saved. What you say you paid for a visit is shown without your
             name. If you subscribe to Pro, Stripe handles the payment:
-            GymGO never sees your card, and Stripe gets your name and email for the receipt.
+            GymGO never sees your card, and Stripe gets your name and email for the receipt. Signed in, Download my data (below)
+            gives you everything GymGO holds about you as one file.
           </Explainer>
         )}
         <Row icon="settings" tile={TILE.grey} title="Version" value="0.1.0 · pilot" chevron={false} />
@@ -175,10 +179,26 @@ export default function Profile() {
         <Group
           footer={
             confirmDelete
-              ? `This removes your account, saved gyms, workouts, reviews, photos and machine reports from the server.${billing.isPro ? ' Your Pro subscription is cancelled first.' : ''}`
+              ? `This removes your account, saved gyms, workouts, reviews, photos and your machine, price and visit reports from the server.${billing.isPro ? ' Your Pro subscription is cancelled first.' : ''}`
               : undefined
           }
         >
+          <Row
+            icon="download"
+            tile={TILE.teal}
+            title="Download my data"
+            subtitle={exported ?? undefined}
+            onPress={async () => {
+              if (!token) return;
+              try {
+                setExported('Preparing your file…');
+                await downloadMyData(token);
+                setExported('Everything GymGO holds about you, as one file.');
+              } catch {
+                setExported('Couldn’t reach the GymGO server. Try again?');
+              }
+            }}
+          />
           <Row icon="signOut" tile={TILE.blue} title="Sign out" onPress={() => void account.signOut()} />
           <Row
             icon="no"

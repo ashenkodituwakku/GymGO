@@ -385,6 +385,36 @@ describe('moderating members’ price and visit reports', () => {
   });
 });
 
+describe('downloading your data', () => {
+  it('gives you everything held about you, and nothing secret or anyone else’s', async () => {
+    expect((await call('GET', '/api/me/export')).status).toBe(401);
+    const me = await signUp();
+    const someoneElse = await signUp();
+    const today = new Date().toISOString().slice(0, 10);
+    expect((await call('PUT', '/api/saved/carlton-fitness', { token: me.token })).status).toBeLessThan(300);
+    await call('PUT', '/api/gyms/carlton-fitness/prices', { token: me.token, body: { amountMinor: 2000, paidOn: today } });
+    await call('PUT', '/api/gyms/carlton-fitness/access', { token: me.token, body: { outcome: 'walked_in', visitedOn: today } });
+    await call('PUT', '/api/gyms/carlton-fitness/prices', { token: someoneElse.token, body: { amountMinor: 3000, paidOn: today } });
+
+    const response = await fetch(`${base}/api/me/export`, { headers: { authorization: `Bearer ${me.token}` } });
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-disposition')).toMatch(/attachment; filename="gymgo-my-data-\d{4}-\d{2}-\d{2}\.json"/);
+    const data = (await response.json()) as Record<string, any>;
+    expect(data.account).toMatchObject({ id: me.id, displayName: expect.stringMatching(/^Lifter/) });
+    expect(data.savedGyms.map((row: { gymId: string }) => row.gymId)).toContain('carlton-fitness');
+    expect(data.priceReports).toEqual([expect.objectContaining({ gymId: 'carlton-fitness', amountMinor: 2000 })]);
+    expect(data.visitReports).toEqual([expect.objectContaining({ outcome: 'walked_in' })]);
+    expect(data.signIns.length).toBeGreaterThan(0);
+
+    const text = JSON.stringify(data);
+    const { password_hash: hash } = db.prepare('select password_hash from users where id = ?').get(me.id) as { password_hash: string };
+    expect(text).not.toContain(hash);
+    expect(text).not.toMatch(/password_?hash|token_?hash/i);
+    expect(text).not.toContain(me.token);
+    expect(text).not.toContain(someoneElse.id);
+  });
+});
+
 describe('Google Maps details', () => {
   it('matches the gym, returns live details with credits, and stores only the place ID', async () => {
     const result = await call('GET', '/api/gyms/dohertys-gym-city/google');

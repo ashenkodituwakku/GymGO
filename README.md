@@ -199,6 +199,12 @@ gyms then follow you between your PC and your phone, and you can write
 reviews. Accounts live only in `apps/server/data/gymgo.db` on your
 computer. Passwords are stored hashed, and no emails are sent.
 
+**Download my data** in Profile gives you everything GymGO holds about you
+as one JSON file: your account, sign-in dates, saved gyms, reviews, photo
+records, machine, price and visit reports, workouts and subscription (never
+your password hash or sign-in tokens). In a browser it downloads; on a phone
+it opens the share sheet. **Delete account** removes all of it.
+
 Reviews wait for a moderator before they appear. To make your own account a
 moderator, run this in the GymGO folder:
 

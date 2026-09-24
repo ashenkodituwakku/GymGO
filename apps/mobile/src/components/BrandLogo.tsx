@@ -1,27 +1,23 @@
 /**
  * A gym brand's logo, from Wikimedia Commons, when there is one.
  *
- * Matched by the brand's Wikidata ID (from the map) or its exact name, and
- * never for invented demo gyms. Logos are the brands' trademarks: shown only
- * to say which gym this is, credited, and with no claim of any partnership.
+ * Matched as lib/logoMatch.ts explains: by the brand's Wikidata ID or its
+ * exact name, never loosely, and never for invented demo gyms. Logos are the
+ * brands' trademarks: shown only to say which gym this is, credited, and
+ * with no claim of any partnership.
  */
 
 import * as WebBrowser from 'expo-web-browser';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import type { GymLocation } from '@gymgo/domain';
+import { LOGO_IMAGES } from '@/lib/brandLogoImages';
 import { BRAND_LOGOS, type BrandLogo as Logo } from '@/lib/brandLogos';
+import { matchLogo } from '@/lib/logoMatch';
 import { color, radius } from '@/lib/theme';
 import { Txt } from './ui';
 
-const normalise = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-
 export function logoFor(location: GymLocation): Logo | null {
-  if (location.isDemoData) return null;
-  const qid = location.externalRefs.wikidataBrand;
-  const byId = qid ? BRAND_LOGOS.find((logo) => logo.qid === qid) : undefined;
-  if (byId) return byId;
-  const names = [location.brand, location.name].filter((name): name is string => Boolean(name)).map(normalise);
-  return BRAND_LOGOS.find((logo) => names.includes(normalise(logo.brand))) ?? null;
+  return matchLogo(location, BRAND_LOGOS);
 }
 
 /**
@@ -37,7 +33,7 @@ export function BrandLogo({ location, width, height, area }: { location: GymLoca
   const shrink = Math.min(1, width / w, height / h);
   w *= shrink;
   h *= shrink;
-  return <Image source={logo.image} style={{ width: w, height: h }} resizeMode="contain" accessibilityLabel={`${logo.brand} logo`} />;
+  return <Image source={LOGO_IMAGES[logo.slug]} style={{ width: w, height: h }} resizeMode="contain" accessibilityLabel={`${logo.brand} logo`} />;
 }
 
 /** The logo on a white plate, for the top of a gym's page. */

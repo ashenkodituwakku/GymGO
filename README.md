@@ -90,13 +90,16 @@ npx pnpm@10 app          # add --tunnel if the phone can't connect
 
 ### What's in the app
 
-Four tabs along the bottom, as in any iPhone app (on an iPhone it's Apple's
-own tab bar; in a browser, a floating glass one):
+Four tabs along the bottom, icons only, the way Instagram does it on iOS 26:
+a floating Liquid Glass capsule, with the tab you're on filled in and a glass
+highlight behind it. On an iPhone it's Apple's own tab bar (real Liquid Glass
+on iOS 26); in a browser, GymGO draws the same capsule with the highlight
+sliding between tabs.
 
 - **Home**: a greeting, the search, one-tap picks ("Early start", "After
-  work", "Under A$25", "Squat racks", "Near me"), gyms near where you're
-  looking, your saved and recently viewed gyms, suburbs to browse, and a
-  count of what GymGO actually knows so far.
+  work", "Under $25", "Squat racks", "Near me"), **Build a workout**, gyms
+  near you, your saved and recently viewed gyms, neighbourhoods in your city,
+  the other cities, and a count of what GymGO actually knows there.
 - **Explore**: the map with the results sheet, filters, and sorting (best
   match, closest, cheapest, top rated).
 - **Saved**: your saved gyms. Tick two or three to **compare** them side by
@@ -108,6 +111,51 @@ own tab bar; in a browser, a floating glass one):
 Tap any gym to open its own page, with share, compare and save at the top.
 On an iPhone, press and hold a gym card on Home for a preview and a quick
 menu.
+
+### Where you are
+
+GymGO opens where you are. The first time, it asks for your location once;
+after that it uses it only if you allowed it. It asks for your **precise**
+position (full GPS accuracy, not rounded), so distances and the blue "you
+are here" dot are right. The position stays on your device, in memory, for
+the search: it is never saved, and never sent to the GymGO server or anyone
+else. If you've only allowed approximate location (iPhone's "Precise: Off",
+or Android's "Approximate"), GymGO says so, because distances will be off.
+
+If you're outside every city GymGO covers, it takes you to the nearest one
+and tells you how far away that is.
+
+### Cities
+
+- **Melbourne**: 23 real gyms, with prices and hours from each gym's own
+  website where it publishes them.
+- **15 US cities**: New York, Los Angeles, Chicago, Houston, Miami, San
+  Francisco, Seattle, Boston, Austin, Denver, Las Vegas, Washington DC,
+  Atlanta, San Diego and Philadelphia, with 477 real gyms between them. These
+  are **map-only**: names, addresses, phone numbers, websites and sometimes
+  opening hours, from OpenStreetMap. There are no prices, guest hours or
+  machine lists yet, so every one says **Call first**. Distances are in
+  miles and money in dollars there.
+- **Sydney**: invented demo gyms for testing, always labelled as demo.
+
+Search a city ("New York", "NYC", "Philly"), a neighborhood ("SoHo",
+"Capitol Hill, Seattle") or a Melbourne suburb or postcode. Visit times are
+always on the searched city's clock.
+
+### Build a workout
+
+Tap **Build a workout** on Home, or **Build a workout here** on any gym.
+Tap the muscles you want to train on the body (front and back; there's also
+a plain list), or pick Push, Pull, Legs, Core or Full body. Choose a goal
+(strength, muscle, endurance) and a length (4, 6 or 8 exercises), and GymGO
+builds a session: compound lifts first, sets × reps, rest, and a tip for
+each. **Shuffle** for another version, **Share** to send it.
+
+From a gym's page it uses only the machines that gym publishes or that its
+members have reported, and marks each exercise ✓ where the kit is
+confirmed. Most gyms haven't published their machines, so for those it
+offers a **typical gym** plan instead and marks anything not confirmed with
+"?". It never claims a gym has a machine it hasn't been told about.
 
 ### Accounts
 
@@ -281,13 +329,17 @@ packages/domain/     Framework-free rules. No React, no Next, no I/O.
                      here, so a pin's colour and a row's verdict can't drift.
 packages/melbourne-data/  23 real inner-Melbourne gyms, every fact linked to
                      where it was read (gym websites, OpenStreetMap).
+packages/usa-data/   477 real gyms in 15 US cities, map-only, from
+                     OpenStreetMap. scripts/generate.py rebuilds it.
 packages/demo-data/  17 fictional Sydney gyms covering the edge cases.
 apps/server/         The API: accounts, saved gyms, reviews, moderation, on
                      Node's built-in SQLite. Free, local, no external services.
 apps/mobile/         The iOS and Android app (Expo, React Native).
-  src/app/           The one screen: a map with sheets over it.
-  src/components/    Map, pins, sheets, place card, filters.
-  src/lib/           The app's voice (copy.ts), theme, filter state.
+  src/app/           Tabs (Home, Explore, Saved, Profile), gym page,
+                     Compare and Workout.
+  src/components/    Map, pins, sheets, place card, filters, body picker.
+  src/lib/           The app's voice (copy.ts), theme, filter state,
+                     cities (places.ts), location, workout generator.
 apps/web/            The earlier Next.js website pilot.
   src/app/           Pages and the /api/v1 server API.
   src/server/        Config, persistence, repositories, auth, moderation.
@@ -306,7 +358,8 @@ In short: the app runs on your PC in the browser, with a real local server
 and database behind it. Its iOS and Android bundles compile, but it has
 **not** been run on a real phone or simulator yet. The Melbourne gyms are
 real, with sources; most of their details are unknown because the gyms don't
-publish them. Nothing is deployed, and nothing has been submitted to an app
+publish them. The US gyms are real but map-only, and nobody has checked that
+each one is still trading. Nothing is deployed, and nothing has been submitted to an app
 store. No real gym data has been collected, no gym has
 been contacted, and no customer research has been done — the whole product
 thesis is still a hypothesis.
@@ -324,6 +377,16 @@ supplied by or agreed with the gyms, and none of them has been contacted.
 
 Prices and hours count as current for 30 days after they were checked. After
 that the app flags them as due for a recheck.
+
+The 477 US gyms are real places on OpenStreetMap, fetched on 24 September
+2026 (© OpenStreetMap contributors, ODbL). The script keeps gyms and fitness
+studios you can walk into and drops what the map marks private, gyms inside
+hotels, apartment blocks, offices and campuses, generic "Fitness Center"
+rooms, and yoga, pilates, barre, cycling, dance and climbing studios. It then
+keeps the 40 nearest each city centre. Everything from the map is labelled
+community-reported, not checked. Opening hours are used only when they're
+mapped in a simple form, and count as member hours, never guest hours. No
+US gym is called open for business on the map's word alone.
 
 ## Demo data
 

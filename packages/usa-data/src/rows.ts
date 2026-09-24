@@ -1,0 +1,49 @@
+/** The shape of the generated rows in data.ts. */
+
+import type { TrainingType } from '@gymgo/domain';
+
+export type UsCityId =
+  | 'new-york'
+  | 'los-angeles'
+  | 'chicago'
+  | 'houston'
+  | 'miami'
+  | 'san-francisco'
+  | 'seattle'
+  | 'boston'
+  | 'austin'
+  | 'denver'
+  | 'las-vegas'
+  | 'washington-dc'
+  | 'atlanta'
+  | 'san-diego'
+  | 'philadelphia';
+
+export interface GymRow {
+  city: UsCityId;
+  id: string;
+  /** The OpenStreetMap element, e.g. "node/1383939144". */
+  osm: string;
+  name: string;
+  brand?: string;
+  branch?: string;
+  /** Street address; empty when the map doesn't have one. */
+  line1: string;
+  locality: string;
+  state: string;
+  zip: string;
+  lat: number;
+  lng: number;
+  type: TrainingType;
+  phone?: string;
+  website?: string;
+  /** Mapped opening hours: round the clock, or [day (0 = Sunday), open, close] in minutes. */
+  hours?: 'always' | Array<[number, number, number]>;
+}
+
+export interface PlaceRow {
+  city: UsCityId;
+  name: string;
+  lat: number;
+  lng: number;
+}

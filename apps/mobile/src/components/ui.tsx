@@ -183,6 +183,42 @@ export function Fold({
   );
 }
 
+/** An iOS segmented control: a grey track with the chosen segment raised. */
+export function Segmented<T extends string | number>({
+  options,
+  value,
+  onChange,
+}: {
+  options: Array<{ value: T; label: string }>;
+  value: T;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <View style={styles.segmented} accessibilityRole="tablist">
+      {options.map((option) => {
+        const on = option.value === value;
+        return (
+          <Pressable
+            key={String(option.value)}
+            onPress={() => {
+              if (on) return;
+              haptic.select();
+              onChange(option.value);
+            }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: on }}
+            style={[styles.segment, on && styles.segmentOn]}
+          >
+            <Txt variant="footnote" color={color.label} style={on ? face('bold') : face('medium')} numberOfLines={1}>
+              {option.label}
+            </Txt>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 export interface CapsuleButton {
   icon: IconName;
   accessibilityLabel: string;
@@ -408,6 +444,17 @@ const styles = StyleSheet.create({
   foldEmoji: { width: 30, textAlign: 'center' },
   foldText: { flex: 1, gap: 1 },
   foldBody: { paddingHorizontal: space[4], paddingBottom: space[4], gap: space[3] },
+
+  segmented: { flexDirection: 'row', padding: 2, borderRadius: 9, backgroundColor: 'rgba(118, 118, 128, 0.12)' },
+  segment: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 7, paddingHorizontal: 6, borderRadius: 7 },
+  segmentOn: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
 
   field: { gap: 6 },
   fieldLabel: face('medium'),

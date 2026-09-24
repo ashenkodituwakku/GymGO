@@ -5,7 +5,8 @@
  */
 
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import { formatDistanceKm, type GymSearchResult } from '@gymgo/domain';
+import type { GymSearchResult } from '@gymgo/domain';
+import { distanceLabel } from '@/lib/places';
 import { TIER, accessLine } from '@/lib/copy';
 import { photoUrl } from '@/lib/api';
 import { priceLine } from '@/lib/present';
@@ -33,7 +34,7 @@ export function GymRow({
   const coverUri = cover ? photoUrl(cover) : null;
   const where = [
     location.address.suburb,
-    result.distanceKm !== null ? formatDistanceKm(result.distanceKm).replace(' straight line', '') : null,
+    result.distanceKm !== null ? distanceLabel(result.distanceKm, result.record.location.address.countryCode) : null,
   ]
     .filter(Boolean)
     .join(' · ');

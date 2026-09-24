@@ -24,13 +24,15 @@ import {
 } from '@gymgo/domain';
 import { DEMO_GYMS } from '@gymgo/demo-data';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
+import { US_GYMS } from '@gymgo/usa-data';
 import { CITIES, DEFAULT_PLACE, type AppPlace } from './places';
 
 /**
- * The records bundled into the app: real Melbourne first, then the Sydney
- * demo. Used until the server answers, or when it can't be reached.
+ * The records bundled into the app: real Melbourne first, then the US cities
+ * (map-only), then the Sydney demo. Used until the server answers, or when it
+ * can't be reached.
  */
-export const BUNDLED_GYMS: GymRecord[] = [...MELBOURNE_GYMS, ...DEMO_GYMS];
+export const BUNDLED_GYMS: GymRecord[] = [...MELBOURNE_GYMS, ...US_GYMS, ...DEMO_GYMS];
 
 export interface Filters {
   centre: LatLng;
@@ -56,12 +58,12 @@ export const SORTS: Array<{ key: SortKey; label: string }> = [
 ];
 
 /**
- * Local date and minute-of-day in the pilot's time zone. Melbourne and
- * Sydney keep the same clock, daylight saving included.
+ * Local date and minute-of-day in a city's time zone: a 6 am visit in New
+ * York means 6 am New York time, wherever the phone is.
  */
-export function nowInPilot(now: Date = new Date()): { date: string; minute: number } {
+export function nowIn(timezone: string, now: Date = new Date()): { date: string; minute: number } {
   const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: CITIES.melbourne.timezone,
+    timeZone: timezone,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -89,8 +91,8 @@ export function addDays(date: string, days: number): string {
  * 10 pm it rolls to 7 am *tomorrow*, and in the small hours to 7 am today —
  * never to a time that has already passed.
  */
-export function defaultVisit(now: Date = new Date()): { date: string; minute: number } {
-  const { date, minute } = nowInPilot(now);
+export function defaultVisit(now: Date = new Date(), timezone: string = CITIES.melbourne.timezone): { date: string; minute: number } {
+  const { date, minute } = nowIn(timezone, now);
   const nextHour = (Math.floor(minute / 60) + 1) * 60;
   if (nextHour >= 22 * 60) return { date: addDays(date, 1), minute: 7 * 60 };
   if (nextHour < 6 * 60) return { date, minute: 7 * 60 };
@@ -101,8 +103,8 @@ export function defaultVisit(now: Date = new Date()): { date: string; minute: nu
  * The next time the clock reads `minute`: today if that is still ahead,
  * otherwise tomorrow. "Early start" picked at 9 am means tomorrow's 6 am.
  */
-export function nextVisitAt(minute: number, now: Date = new Date()): { date: string; minute: number } {
-  const today = nowInPilot(now);
+export function nextVisitAt(minute: number, timezone: string, now: Date = new Date()): { date: string; minute: number } {
+  const today = nowIn(timezone, now);
   return { date: minute > today.minute ? today.date : addDays(today.date, 1), minute };
 }
 
@@ -111,10 +113,24 @@ export function atPlace(place: AppPlace): Pick<Filters, 'centre' | 'placeName' |
   return { centre: place.position, placeName: place.name, timezone: CITIES[place.city].timezone };
 }
 
-export function initialFilters(now: Date = new Date()): Filters {
-  const visit = defaultVisit(now);
+/**
+ * Move the search somewhere else. In another time zone, "6 pm" stays 6 pm
+ * but in the new city's clock, on the next day that's still ahead there.
+ */
+export function moveTo(current: Filters, where: Pick<Filters, 'centre' | 'placeName' | 'timezone'>, now: Date = new Date()): Filters {
+  if (where.timezone === current.timezone) return { ...current, ...where };
+  const visit = nextVisitAt(current.visitMinuteOfDay, where.timezone, now);
+  return { ...current, ...where, visitDate: visit.date, visitMinuteOfDay: visit.minute };
+}
+
+/** What the search calls the spot you're standing on. */
+export const YOUR_LOCATION = 'your location';
+
+export function initialFilters(now: Date = new Date(), place: AppPlace = DEFAULT_PLACE): Filters {
+  const where = atPlace(place);
+  const visit = defaultVisit(now, where.timezone);
   return {
-    ...atPlace(DEFAULT_PLACE),
+    ...where,
     radiusKm: 5,
     visitDate: visit.date,
     visitMinuteOfDay: visit.minute,

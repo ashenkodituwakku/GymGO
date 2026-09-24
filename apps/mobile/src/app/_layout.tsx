@@ -58,6 +58,7 @@ export default function RootLayout() {
               }}
             />
             <Stack.Screen name="compare" options={{ headerShown: true, title: 'Compare', presentation: 'modal' }} />
+            <Stack.Screen name="workout/[id]" options={{ headerShown: true, title: 'Workout' }} />
           </Stack>
         </AppProvider>
       </SafeAreaProvider>

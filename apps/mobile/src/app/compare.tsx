@@ -7,10 +7,11 @@
 import { Stack, useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { formatDistanceKm, summariseWeek, type GymSearchResult, type Tri } from '@gymgo/domain';
+import { summariseWeek, type GymSearchResult, type Tri } from '@gymgo/domain';
 import { Icon } from '@/components/Icon';
 import { PrimaryButton, TIER_COLOUR, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
+import { distanceLabel } from '@/lib/places';
 import { TIER, accessShort, timeLabel } from '@/lib/copy';
 import { priceLine } from '@/lib/present';
 import { resultsById } from '@/lib/results';
@@ -90,7 +91,7 @@ export default function Compare() {
     {
       label: 'Distance',
       cells: gyms.map((result) => ({
-        text: result.distanceKm === null ? '—' : formatDistanceKm(result.distanceKm).replace(' straight line', ''),
+        text: result.distanceKm === null ? '—' : distanceLabel(result.distanceKm, result.record.location.address.countryCode),
       })),
     },
   ];

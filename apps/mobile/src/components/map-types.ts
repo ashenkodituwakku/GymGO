@@ -17,6 +17,11 @@ export interface GymMapProps {
   /** Space a side panel covers (desktop web), so centring accounts for it. */
   leftInset?: number;
   showsUserLocation: boolean;
+  /**
+   * Where you are, for the maps that can't find you themselves (the browser
+   * and Android's map page). iPhone's Apple map draws its own blue dot.
+   */
+  userLocation?: LatLng | null;
   onSelect: (id: string) => void;
   onMapPress: () => void;
 }

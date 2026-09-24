@@ -12,6 +12,7 @@
  */
 
 import type { AccessVerdict, ResultTier } from '@gymgo/domain';
+import { distanceLabel } from './places';
 
 export interface TierCopy {
   emoji: string;
@@ -110,11 +111,33 @@ export const EMPTY = {
   results: 'Nothing ticks every box. Loosen one and try again.',
   /** No filters are on: what's missing is information, not a looser search. */
   unconfirmedLine: 'Gyms rarely publish everything we check, so each card says exactly what to ask. 📞',
-  outOfArea: "We only cover inner Melbourne for now (plus a Sydney demo), so here's the CBD.",
-  locationDenied: 'No worries — search a suburb instead.',
-  locationFar: "You're outside inner Melbourne, so we're showing the CBD instead.",
+  outOfArea: "We don't cover that yet. Try a Melbourne suburb, or a US city like New York, Chicago or Austin.",
+  locationDenied: 'No worries — search a suburb or city instead.',
+  locationUnavailable: "Couldn't get a fix on where you are. Search a suburb or city instead.",
+  locationApproximate:
+    'Your phone is only sharing your approximate location, so distances may be well off. Turn on Precise Location for GymGO in Settings.',
   crowd: "Live crowd info isn't something we have — so we won't guess.",
 } as const;
+
+/** What to say after finding you, if anything. */
+export function locatedNotice(
+  result:
+    | { kind: 'here'; fix: { approximate: boolean } }
+    | { kind: 'nearest'; km: number; city: { name: string; country: string } }
+    | { kind: 'denied' }
+    | { kind: 'unavailable' },
+): string | null {
+  switch (result.kind) {
+    case 'denied':
+      return EMPTY.locationDenied;
+    case 'unavailable':
+      return EMPTY.locationUnavailable;
+    case 'nearest':
+      return `You're ${distanceLabel(result.km, result.city.country)} from ${result.city.name}, the nearest city we cover, so here it is.`;
+    case 'here':
+      return result.fix.approximate ? EMPTY.locationApproximate : null;
+  }
+}
 
 export const PLACEHOLDER = 'Where are we lifting?';
 

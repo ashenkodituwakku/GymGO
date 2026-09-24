@@ -18,19 +18,17 @@ import BottomSheet, {
   BottomSheetBackdrop,
   useBottomSheetSpringConfigs,
 } from '@gorhom/bottom-sheet';
-import * as Location from 'expo-location';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'expo-router';
 import { ActionSheetIOS, Keyboard, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type TextInput } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { LatLng } from '@gymgo/domain';
 import { MELBOURNE_ATTRIBUTION } from '@gymgo/melbourne-data';
-import { EMPTY } from '@/lib/copy';
+import { EMPTY, locatedNotice } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
-import { CITIES, DEFAULT_PLACE, cityNear, geocodePlace, type AppPlace, type City } from '@/lib/places';
+import { cityAt, geocodePlace, type AppPlace } from '@/lib/places';
 import { useApp } from '@/lib/app-state';
 import { useBottomClearance } from '@/lib/layout';
-import { SORTS, applyRelaxation, atPlace, runSearch } from '@/lib/query';
+import { SORTS, applyRelaxation, atPlace, moveTo, runSearch } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
 import { color, face, radius, shadow, space } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
@@ -77,11 +75,10 @@ function MapScreen() {
   // The time-zone self-check runs once; its answer can't change mid-session.
   const selfCheck = useMemo(() => checkTimeZoneSupport(), []);
 
-  const { data, account, filters, setFilters, addRecent, exploreRequest } = useApp();
+  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe } = useApp();
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [locationShown, setLocationShown] = useState(false);
   const [sheetTop, setSheetTop] = useState(PEEK);
   const [cardScrolled, setCardScrolled] = useState(false);
   // The gym whose Google Maps page is open, full screen over everything.
@@ -115,20 +112,15 @@ function MapScreen() {
   );
   const selected = outcome.results.find((result) => result.record.location.id === selectedId) ?? null;
   const showingDemo = outcome.results.some((result) => result.record.location.isDemoData);
+  const city = cityAt(filters.centre);
 
   // --- Moving around --------------------------------------------------------
-
-  const goTo = useCallback((centre: LatLng, placeName: string, city: City, message: string | null = null) => {
-    setFilters((current) => ({ ...current, centre, placeName, timezone: city.timezone }));
-    setNotice(message);
-    map.current?.flyTo(centre, 0.045);
-  }, []);
 
   const pickPlace = useCallback(
     (place: AppPlace) => {
       Keyboard.dismiss();
       setQuery('');
-      setFilters((current) => ({ ...current, ...atPlace(place) }));
+      setFilters((current) => moveTo(current, atPlace(place)));
       setNotice(null);
       map.current?.flyTo(place.position, 0.045);
       mainSheet.current?.snapToIndex(1);
@@ -137,44 +129,28 @@ function MapScreen() {
   );
 
   const submitSearch = useCallback(() => {
-    const result = geocodePlace(query);
+    const result = geocodePlace(query, cityAt(filters.centre).id);
     Keyboard.dismiss();
     if (result.place) return pickPlace(result.place);
     if (result.outOfArea) {
+      // Stay put and say so, rather than jump somewhere unasked.
       haptic.warn();
-      setQuery('');
-      goTo(DEFAULT_PLACE.position, DEFAULT_PLACE.name, CITIES.melbourne, EMPTY.outOfArea);
+      setNotice(EMPTY.outOfArea);
     }
-  }, [query, pickPlace, goTo]);
+  }, [query, pickPlace, filters.centre]);
 
+  // Your precise position, used for this search on this device only.
   const locate = useCallback(async () => {
-    try {
-      const permission = await Location.requestForegroundPermissionsAsync();
-      if (!permission.granted) {
-        haptic.warn();
-        setNotice(EMPTY.locationDenied);
-        return;
-      }
-      setLocationShown(true);
-      const fix = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      // Rounded to ~100 m: enough to sort by distance, not enough to pin a
-      // doorway. Held in memory for this search only; never saved or sent.
-      const here = {
-        lat: Math.round(fix.coords.latitude * 1000) / 1000,
-        lng: Math.round(fix.coords.longitude * 1000) / 1000,
-      };
-      const city = cityNear(here);
-      if (!city) {
-        haptic.warn();
-        goTo(DEFAULT_PLACE.position, DEFAULT_PLACE.name, CITIES.melbourne, EMPTY.locationFar);
-        return;
-      }
+    const result = await findMe(true);
+    setNotice(locatedNotice(result));
+    if (result.kind === 'here') {
       haptic.success();
-      goTo(here, 'your location', city);
-    } catch {
-      setNotice("Couldn't get a fix on where you are. Search a suburb instead.");
+      map.current?.flyTo(result.fix.position, 0.03);
+      return;
     }
-  }, [goTo]);
+    haptic.warn();
+    if (result.kind === 'nearest') map.current?.flyTo(result.city.centre, 0.06);
+  }, [findMe]);
 
   // --- Selecting a gym ------------------------------------------------------
 
@@ -186,8 +162,13 @@ function MapScreen() {
       Keyboard.dismiss();
       // A saved gym can be outside the current search; bring the search to it.
       if (!outcome.results.some((item) => item.record.location.id === id)) {
-        const city = cityNear(record.location.position) ?? CITIES.melbourne;
-        setFilters((current) => ({ ...current, centre: record.location.position, placeName: record.location.address.suburb, timezone: city.timezone }));
+        setFilters((current) =>
+          moveTo(current, {
+            centre: record.location.position,
+            placeName: record.location.address.suburb,
+            timezone: record.location.timezone,
+          }),
+        );
       }
       setSelectedId(id);
       setCardScrolled(false);
@@ -280,6 +261,7 @@ function MapScreen() {
     if (!exploreRequest || exploreRequest.nonce === handledRequest.current) return;
     handledRequest.current = exploreRequest.nonce;
     if (exploreRequest.recentre) map.current?.flyTo(latestFilters.current.centre, 0.045);
+    if (exploreRequest.notice) setNotice(exploreRequest.notice);
     if (exploreRequest.gymId) openGym(exploreRequest.gymId);
     if (exploreRequest.locate) void locate();
     if (exploreRequest.focusSearch) {
@@ -292,7 +274,9 @@ function MapScreen() {
 
   const dataNote = showingDemo
     ? 'The Sydney gyms are invented demo data, for testing.'
-    : `Real gyms. Tap a fact to see where we read it; anything a gym doesn't publish is unknown. ${MELBOURNE_ATTRIBUTION}.`;
+    : city.mapOnly
+      ? `Real gyms from OpenStreetMap: names, addresses and sometimes opening hours, mapped by volunteers. Prices, guest hours and machines are unknown until a gym publishes them, so call first. ${MELBOURNE_ATTRIBUTION}.`
+      : `Real gyms. Tap a fact to see where we read it; anything a gym doesn't publish is unknown. ${MELBOURNE_ATTRIBUTION}.`;
 
   const results = (inSheet: boolean) => (
     <ResultsContent
@@ -329,6 +313,7 @@ function MapScreen() {
         saved={account.saved.includes(selected.record.location.id)}
         onToggleSave={() => account.toggleSave(selected.record.location.id)}
         onOpenGoogle={() => setGoogleFor(selected.record.location.id)}
+        onOpenWorkout={() => router.push({ pathname: '/workout/[id]', params: { id: selected.record.location.id } })}
         asOf={asOf}
         photos={
           <PhotoHero
@@ -367,10 +352,10 @@ function MapScreen() {
         {showingDemo
           ? 'Sydney · demo gyms'
           : data.status === 'live'
-            ? 'Melbourne · live data'
+            ? `${city.name} · live data`
             : data.status === 'offline'
-              ? 'Melbourne · offline copy'
-              : 'Melbourne'}
+              ? `${city.name} · offline copy`
+              : city.name}
       </Txt>
     </Glass>
   );
@@ -409,22 +394,23 @@ function MapScreen() {
           selectedId={selectedId}
           initialCentre={filters.centre}
           topInset={PANEL_GAP}
-          bottomInset={PANEL_GAP}
+          bottomInset={PANEL_GAP + clearance}
           leftInset={panelsWidth}
-          showsUserLocation={locationShown}
+          showsUserLocation={here !== null}
+          userLocation={here?.position ?? null}
           onSelect={openGym}
           onMapPress={() => {
             if (panel === 'place') closePlace();
           }}
         />
 
-        <DesktopPanel left={PANEL_GAP}>
+        <DesktopPanel left={PANEL_GAP} bottom={PANEL_GAP + clearance}>
           <View style={styles.panelTop}>{statusPill}</View>
           <ScrollView keyboardShouldPersistTaps="handled">{results(false)}</ScrollView>
         </DesktopPanel>
 
         {panel && (
-          <DesktopPanel left={PANEL_GAP * 2 + PANEL_WIDTH}>
+          <DesktopPanel left={PANEL_GAP * 2 + PANEL_WIDTH} bottom={PANEL_GAP + clearance}>
             {panel === 'place' && selected ? (
               <ScrollView
                 stickyHeaderIndices={[0]}
@@ -484,7 +470,8 @@ function MapScreen() {
           topInset={insets.top}
           // Keep the map's idea of "centre" above the sheet, not behind it.
           bottomInset={Math.min(sheetTop, height * 0.5)}
-          showsUserLocation={locationShown}
+          showsUserLocation={here !== null}
+          userLocation={here?.position ?? null}
           onSelect={openGym}
           onMapPress={() => {
             Keyboard.dismiss();
@@ -533,9 +520,9 @@ function MapScreen() {
 }
 
 /** A floating glass panel down the left of a wide window. */
-function DesktopPanel({ left, children }: { left: number; children: ReactNode }) {
+function DesktopPanel({ left, bottom, children }: { left: number; bottom: number; children: ReactNode }) {
   return (
-    <View style={[styles.panel, { left, width: PANEL_WIDTH }]}>
+    <View style={[styles.panel, { left, bottom, width: PANEL_WIDTH }]}>
       <Glass kind="sheet" style={StyleSheet.absoluteFill} />
       {children}
     </View>
@@ -689,7 +676,6 @@ const styles = StyleSheet.create({
   panel: {
     position: 'absolute',
     top: PANEL_GAP,
-    bottom: PANEL_GAP,
     borderRadius: radius.xl + 4,
     borderCurve: 'continuous',
     overflow: 'hidden',

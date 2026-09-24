@@ -5,7 +5,7 @@
  */
 
 import type { ReactNode } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Switch, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance } from '@/lib/layout';
@@ -13,8 +13,6 @@ import { color, radius, space } from '@/lib/theme';
 import { Icon, type IconName } from './Icon';
 import { Txt } from './ui';
 
-/** Wide browser windows put the tab bar top right, so titles start lower. */
-const WIDE = 900;
 
 /**
  * A tab's screen: its own safe area (so the tab bar counts), a scrolling
@@ -36,14 +34,12 @@ export function TabScreen(props: {
 function TabScreenInner({ title, eyebrow, right, children }: { title: string; eyebrow?: string; right?: ReactNode; children: ReactNode }) {
   const insets = useSafeAreaInsets();
   const clearance = useBottomClearance();
-  const { width } = useWindowDimensions();
-  const wide = Platform.OS === 'web' && width >= WIDE;
   return (
     <ScrollView
       style={styles.screen}
       contentContainerStyle={[
         styles.content,
-        { paddingTop: insets.top + (wide ? 80 : space[3]), paddingBottom: clearance + space[8] },
+        { paddingTop: insets.top + (Platform.OS === 'web' ? space[6] : space[3]), paddingBottom: clearance + space[8] },
       ]}
       keyboardShouldPersistTaps="handled"
     >

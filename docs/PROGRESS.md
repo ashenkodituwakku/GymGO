@@ -50,9 +50,27 @@ because "the code does X" is not the same as "someone decided X".
 | Gym photos come only from members | Asked for gym images. Photos on gym websites are copyrighted, and a picture of a different gym would be a lie about the place. So members share their own, confirm they took them, have location data stripped, and wait for a moderator. Until someone does, the card says "No photo supplied yet" and the list shows a plain 🏋️ tile, which is clearly a symbol and not a photo. |
 | Google's info through Google's own free embed | Asked to "import data from Google", then for a completely free way. Google's terms forbid copying or storing Places content, and its API needs a billing account. Google's public "Embed a map" is free, keyless and unlimited, and shows Google's card (stars, review count, address) with a link to every photo and review. So each gym's Google page is that embed, full screen. The paid Places API extras stay optional behind the owner's key. |
 | Machines come from members, not Google | Asked for "the machines they have" from Google. Google has no equipment data, only photos, which can't be copied, and gyms' sites rarely list machines. So members tick what they saw, one report each per gym, shown as tallies next to (never merged into) what the gym publishes. Keeping them out of the search means one wrong report can't make a gym "Good to go". |
+| Precise location, asked once, never stored | Asked to "use your precise location". The app asks for full GPS accuracy (not rounded any more) the first time it opens, then only uses it if allowed. The fix stays in memory on the device and never reaches the server. If the phone only shares an approximate position, the app says so instead of pretending distances are exact. |
+| US cities are map-only, from OpenStreetMap | Asked for lots of gyms in popular US cities. The only free, openly licensed source is OpenStreetMap, which has names, positions and sometimes hours, but no prices or guest rules. So all 477 are community-reported, never "open for business" on the map's word, with no invented prices, and every one says "Call first". Mapped opening hours count as member hours, never guest hours. |
+| What counts as a gym in the US data | The map mixes gyms with yoga, pilates, cycling and climbing studios, and with private gyms in hotels, apartment blocks, offices and campuses. Those are filtered out by rules in `packages/usa-data/scripts/generate.py`, plus a short named list read by hand. Fitness studios (Orangetheory, F45, Barry's, boxing) stay, labelled as studios. 40 nearest the centre per city keeps the map readable. |
+| Visit times follow the searched city's clock | A "6 pm" visit in New York means 6 pm New York time wherever the phone is. Moving to another time zone keeps the time of day and picks its next occurrence there. |
+| Workout plans use only confirmed machines | Asked for a workout generator "for the machines each gym has". Most gyms publish none, so the plan uses the gym's published kit plus members' majority reports, and marks each exercise ✓. With under three confirmed machines it starts on a "typical gym" plan and marks anything unconfirmed "?". It never says a gym has a machine it hasn't been told about. |
+| GymGO draws the body itself | react-native-body-highlighter's drawings are good (MIT), but its component bakes a dark colour into every muscle and prints warnings in the browser. GymGO uses its shapes with its own small renderer: native SVG on phones, plain keyboard-reachable SVG in the browser. |
+| Tab bar like Instagram's on iOS 26 | Asked for it. Icons only, filled when selected, in a floating glass capsule. On phones it's still the system tab bar (labels hidden but read out by VoiceOver); the browser draws its own with a sliding highlight. |
 | Simpler card: one answer, three facts, folded detail | Asked for simpler and more playful. The verdict is one emoji and a word, and the detail folds under one-line summaries, so nothing honest was removed, only tucked away. "Worth a call" became "Call first", which says what to do. |
 
 ## Traps
+
+**Refreshing the US gyms.** The main Overpass server resets connections from
+some networks; the `maps.mail.ru` mirror worked. Ask for `out center tags`
+for gyms (ways need a centre) and plain `out` for neighbourhood nodes:
+`out tags` drops their coordinates. Then run
+`python3 packages/usa-data/scripts/generate.py <folder of city JSON files>`
+and the package's tests. The raw JSON isn't committed.
+
+**The start-up location fix mustn't undo a choice.** It arrives a moment
+after launch. If someone has already picked a place by then, it's ignored
+(`onlyIfUntouched` in `lib/app-state.tsx`).
 
 **The Explore sheets live in a layer that stops above the tab bar.** Its
 own `BottomSheetModalProvider` sits in that layer, so a gym's card can't

@@ -16,6 +16,7 @@
     "@gymgo/demo-data": "workspace:*",
     "@gymgo/domain": "workspace:*",
     "@gymgo/melbourne-data": "workspace:*",
+    "@gymgo/usa-data": "workspace:*",
     "tsx": "^4.20.0"
   },
   "devDependencies": {

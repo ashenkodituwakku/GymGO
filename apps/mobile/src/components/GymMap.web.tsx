@@ -54,7 +54,7 @@ function pinElement(fill: string, selected: boolean, label: string): HTMLElement
 }
 
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
-  { pins, selectedId, initialCentre, bottomInset, topInset, leftInset = 0, onSelect, onMapPress },
+  { pins, selectedId, initialCentre, bottomInset, topInset, leftInset = 0, userLocation = null, onSelect, onMapPress },
   ref,
 ) {
   const host = useRef<View>(null);
@@ -128,6 +128,19 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     });
   }, [pins, selectedId]);
 
+  // You are here: the system-style blue dot with a soft halo.
+  const userMarker = useRef<maplibregl.Marker | null>(null);
+  useEffect(() => {
+    const instance = map.current;
+    if (!instance) return;
+    userMarker.current?.remove();
+    userMarker.current = null;
+    if (!userLocation) return;
+    userMarker.current = new maplibregl.Marker({ element: userDot(), anchor: 'center' })
+      .setLngLat([userLocation.lng, userLocation.lat])
+      .addTo(instance);
+  }, [userLocation]);
+
   // MapLibre's stylesheet makes its container `position: relative`, which
   // would cancel an absolute fill — so the fill goes on a wrapper instead.
   return (
@@ -140,3 +153,15 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
 const styles = StyleSheet.create({
   host: { width: '100%', height: '100%' },
 });
+
+function userDot(): HTMLElement {
+  const halo = document.createElement('div');
+  halo.setAttribute('aria-label', 'You are here');
+  halo.style.cssText =
+    'width:36px;height:36px;border-radius:18px;background:rgba(0,122,255,0.18);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1000;';
+  const dot = document.createElement('div');
+  dot.style.cssText =
+    'width:16px;height:16px;border-radius:8px;background:#007AFF;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3);';
+  halo.appendChild(dot);
+  return halo;
+}

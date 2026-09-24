@@ -14,7 +14,6 @@ import {
   assessAllOffers,
   describeMembership,
   equipmentLabel,
-  formatDistanceKm,
   formatMoney,
   isMultiVisitProduct,
   productTypeLabel,
@@ -25,6 +24,7 @@ import {
   type Tri,
 } from '@gymgo/domain';
 import { TIER, accessLine, checkedAgo, ratingShort, sourceLabel } from '@/lib/copy';
+import { distanceLabel } from '@/lib/places';
 import { shareGym } from '@/lib/actions';
 import { depositLine, priceLine } from '@/lib/present';
 import { color, face, radius, space } from '@/lib/theme';
@@ -67,7 +67,7 @@ export function PlaceHeader({
   const subtitle = [
     TRAINING[location.trainingTypes[0] ?? 'full_gym'] ?? 'Gym',
     location.address.suburb,
-    result.distanceKm !== null ? formatDistanceKm(result.distanceKm).replace(' straight line', '') : null,
+    result.distanceKm !== null ? distanceLabel(result.distanceKm, result.record.location.address.countryCode) : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -97,6 +97,7 @@ export function PlaceCard({
   saved,
   onToggleSave,
   onOpenGoogle,
+  onOpenWorkout,
   asOf,
   photos,
   memberKit,
@@ -109,6 +110,8 @@ export function PlaceCard({
   onToggleSave: () => void;
   /** The live Google Maps page for this gym (its own screen, away from our map). */
   onOpenGoogle: () => void;
+  /** The workout generator, for this gym's machines. */
+  onOpenWorkout: () => void;
   asOf: Date;
   /** Members' photos across the top, which need the account and the server. */
   photos: React.ReactNode;
@@ -268,6 +271,25 @@ export function PlaceCard({
           <Icon name="chevron" size={14} color={color.labelTertiary} />
         </Pressable>
       )}
+
+      <Pressable
+        onPress={() => {
+          haptic.select();
+          onOpenWorkout();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Build a workout for this gym"
+        style={({ pressed }) => [styles.google, pressed && { opacity: 0.75 }]}
+      >
+        <Txt style={styles.googleEmoji}>💪</Txt>
+        <View style={styles.flex}>
+          <Txt variant="headline">Build a workout here</Txt>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            Tap muscles on a body, get a plan for its machines
+          </Txt>
+        </View>
+        <Icon name="chevron" size={14} color={color.labelTertiary} />
+      </Pressable>
 
       {/* The detail, folded away ---------------------------------------- */}
       <View style={styles.folds}>
@@ -531,7 +553,7 @@ function Sources({ sources }: { sources: Source[] }) {
             {source.label}
           </Txt>
           <Txt variant="caption" color={color.labelTertiary}>
-            Read {new Date(source.checkedAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
+            Read {new Date(source.checkedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
           </Txt>
         </Pressable>
       ))}

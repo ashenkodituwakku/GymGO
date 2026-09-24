@@ -4,7 +4,7 @@ Reported in separate columns on purpose. None of this is "production ready",
 and collapsing these into that phrase would be the single most misleading thing
 this document could do.
 
-## Server, accounts and data (`apps/server`, `packages/melbourne-data`)
+## Server, accounts and data (`apps/server`, `packages/melbourne-data`, `packages/usa-data`)
 
 | | Implemented locally | Tested locally | Externally integrated | Deployed |
 |---|---|---|---|---|
@@ -13,6 +13,7 @@ this document could do.
 | Saved gyms synced to the account | ✅ | ✅ tests + driven in the browser | n/a | ❌ |
 | Reviews held for moderation; moderator queue | ✅ | ✅ tests; posting driven in the browser | n/a | ❌ |
 | Real Melbourne gyms (23), every fact sourced | ✅ | ✅ 11 honesty tests | ⚠️ one-off read, 23 Sep 2026 | n/a |
+| Real US gyms (477 in 15 cities), map-only from OpenStreetMap | ✅ | ✅ 11 honesty tests; served by the local server | ⚠️ one-off fetch, 24 Sep 2026; nobody has checked each gym is trading | n/a |
 | Member photos: consent, hidden details removed, moderated, credited | ✅ | ✅ tests + driven in the browser | n/a | ❌ |
 | Google's map and card for each gym (free embed, no key) | ✅ | ✅ loaded from Google in the browser, phone and PC sizes | ✅ Google's public embed | ❌ |
 | Google Street View nearest each gym (free embed, no key) | ✅ | ✅ loaded in the browser (Carlton Fitness's shopfront) | ✅ Google's public embed | ❌ |
@@ -94,7 +95,9 @@ service, which is your decision to make. Nothing has been provisioned.
 | Map with tier-coloured pins | ✅ | ⚠️ web preview only | ⚠️ see below | ❌ | n/a | ❌ |
 | Results sheet, place card, filters sheet | ✅ | ⚠️ web preview only | n/a | ❌ | n/a | ❌ |
 | Directions / call / website hand-off | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
-| Locate me (foreground, never stored) | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
+| Precise location: opens where you are, blue dot, nearest covered city when outside | ✅ | ⚠️ browser only, with simulated positions (New York, Toronto) | n/a | ❌ GPS, iPhone "Precise: Off" and Android "Approximate" never seen | n/a | ❌ |
+| 15 US cities: search, miles and $, visit times on local clocks | ✅ | ✅ unit tests + driven in the browser (New York, Seattle, Philadelphia, Chicago) | n/a | ❌ | n/a | ❌ |
+| Workout builder: tap muscles on a body, plan from the gym's machines | ✅ | ✅ 6 unit tests + driven in the browser | n/a | ❌ taps on the native SVG body never seen | n/a | ❌ |
 | Saved gyms (on the device) | ✅ | ⚠️ web preview only | n/a | ❌ | n/a | ❌ |
 | Liquid Glass (iOS 26) / blur fallbacks | ✅ | ⚠️ blur fallback only | n/a | ❌ | n/a | ❌ |
 | Haptics | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
@@ -103,8 +106,8 @@ service, which is your decision to make. Nothing has been provisioned.
 | App icon, splash screen | ❌ | ❌ | n/a | ❌ | n/a | ❌ |
 | Store builds (EAS / Xcode / Gradle) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | PC browser layout (side panels) | ✅ | ✅ driven end to end at 1440 × 900 | n/a | n/a | ❌ | n/a |
-| Tabs: Home, Explore, Saved, Profile | ✅ | ⚠️ browser's glass tab bar only | n/a | ❌ Apple/Android native tab bar never seen | n/a | ❌ |
-| Home (picks, nearby, saved, recent, suburbs, counts) | ✅ | ✅ driven at phone and PC sizes | n/a | ❌ | n/a | ❌ |
+| Tabs: Home, Explore, Saved, Profile (icons only, Instagram-style) | ✅ | ⚠️ browser's glass capsule only | n/a | ❌ Apple/Android native tab bar never seen | n/a | ❌ |
+| Home (picks, workout, nearby, saved, recent, neighbourhoods, other cities, counts) | ✅ | ✅ driven at phone and PC sizes | n/a | ❌ | n/a | ❌ |
 | Gym page (pushed screen, share/compare/save) | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |
 | Compare up to 3 gyms | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |
 | Sort (best match, closest, cheapest, top rated) | ✅ | ⚠️ tsc; browser cycles, iPhone action sheet not seen | n/a | ❌ | n/a | ❌ |
@@ -115,7 +118,7 @@ service, which is your decision to make. Nothing has been provisioned.
 
 **What "tested locally" means for the phone app, exactly:**
 
-- It typechecks, and 31 unit tests pass. They include the same reference search
+- It typechecks, and 44 unit tests pass. They include the same reference search
   the website runs, run through the app's own filter code: 3 confirmed results,
   Ironbark first.
 - `expo export` builds both the **iOS and Android bundles** into Hermes
@@ -165,7 +168,8 @@ real phone is the next test. Expect to fix things there.
   phone-sized Chromium: tiles, pins, the selected pin, padding for the sheet,
   and pin taps reaching the app. It has **not** yet been confirmed on the
   phone. It needs an internet connection on the phone to fetch the map
-  library and tiles. There is no "you are here" dot on Android yet.
+  library and tiles. Its "you are here" dot is drawn by that page and has
+  only been seen in the browser version.
 - **PC (browser):** OpenFreeMap tiles (OpenStreetMap data). They are free,
   with attribution, and the credit is kept visible above the sheet.
 
@@ -200,17 +204,18 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 
 | Check | Result |
 |---|---|
-| `pnpm typecheck` | Clean, all six packages |
+| `pnpm typecheck` | Clean, all seven packages |
 | `pnpm lint` | No ESLint warnings or errors (web); tsc clean elsewhere |
 | `@gymgo/domain` unit tests | **115 passed** |
 | `@gymgo/demo-data` unit tests | **23 passed** |
 | `@gymgo/melbourne-data` unit tests | **11 passed** |
+| `@gymgo/usa-data` unit tests | **11 passed** |
 | `@gymgo/server` tests (real HTTP, in-memory SQLite) | **27 passed** |
-| `@gymgo/mobile` unit tests | **31 passed** |
+| `@gymgo/mobile` unit tests | **44 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
-| `expo export` (iOS + Android) | Both compiled (1,918 and 1,970 modules) |
+| `expo export` (iOS + Android) | Both compiled (2,045 and 2,097 modules) |
 | `expo-doctor` | 21/21 checks passed |
-| `pnpm build` | Compiled successfully |
+| `pnpm build` (website) | Compiled successfully; not rerun this round, the website is unchanged |
 | Playwright, old website (390 / 768 / 1440), fresh build | **99 passed**, 24 skipped (website unchanged since) |
 
 The 24 skips are the contribution and moderation suite at phone and tablet

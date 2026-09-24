@@ -98,6 +98,7 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
     return wrap;
   }
 
+  var userMarker = null;
   window.gymgo = {
     setPins: function (pins, selectedId) {
       markers.forEach(function (marker) { marker.remove(); });
@@ -122,6 +123,17 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
       var bounds = new maplibregl.LngLatBounds([points[0].lng, points[0].lat], [points[0].lng, points[0].lat]);
       points.forEach(function (point) { bounds.extend([point.lng, point.lat]); });
       map.fitBounds(bounds, { padding: 60, duration: 500, maxZoom: 15 });
+    },
+    setUser: function (lat, lng) {
+      if (userMarker) userMarker.remove();
+      userMarker = null;
+      if (lat === null) return;
+      var halo = document.createElement('div');
+      halo.style.cssText = 'width:36px;height:36px;border-radius:18px;background:rgba(0,122,255,0.18);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1000;';
+      var dot = document.createElement('div');
+      dot.style.cssText = 'width:16px;height:16px;border-radius:8px;background:#007AFF;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3);';
+      halo.appendChild(dot);
+      userMarker = new maplibregl.Marker({ element: halo, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
     },
     setPadding: function (top, bottom) {
       map.setPadding({ top: top, bottom: bottom, left: 0, right: 0 });

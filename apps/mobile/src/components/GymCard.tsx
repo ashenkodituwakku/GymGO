@@ -10,7 +10,8 @@
 
 import { Link } from 'expo-router';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import { formatDistanceKm, type GymSearchResult } from '@gymgo/domain';
+import type { GymSearchResult } from '@gymgo/domain';
+import { distanceLabel } from '@/lib/places';
 import { openDirections, shareGym } from '@/lib/actions';
 import { photoUrl } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -30,7 +31,7 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
   const cover = data.covers[id] ? photoUrl(data.covers[id]!) : null;
   const saved = account.saved.includes(id);
   const comparing = compare.includes(id);
-  const where = [location.address.suburb, result.distanceKm !== null ? formatDistanceKm(result.distanceKm).replace(' straight line', '') : null]
+  const where = [location.address.suburb, result.distanceKm !== null ? distanceLabel(result.distanceKm, result.record.location.address.countryCode) : null]
     .filter(Boolean)
     .join(' · ');
 

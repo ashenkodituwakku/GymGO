@@ -1,9 +1,11 @@
 /**
  * Where the search box can take you.
  *
- * Inner Melbourne is real: real gyms, each fact sourced. The Sydney suburbs
- * lead to the invented demo gyms, kept so every edge case can still be tried,
- * and always labelled as demo.
+ * Inner Melbourne is real: real gyms, each fact sourced. Fifteen US cities
+ * are real too, but map-only: gyms from OpenStreetMap, with no prices and no
+ * guest hours until a gym publishes them. The Sydney suburbs lead to the
+ * invented demo gyms, kept so every edge case can still be tried, and always
+ * labelled as demo.
  *
  * No React Native here, so it is unit-tested in Node.
  */
@@ -11,25 +13,83 @@
 import { haversineKm, type LatLng } from '@gymgo/domain';
 import { PILOT_CENTRE, PILOT_PLACES, PILOT_TIMEZONE } from '@gymgo/demo-data';
 import { MELBOURNE, MELBOURNE_CENTRE, MELBOURNE_PLACES } from '@gymgo/melbourne-data';
+import { US_CITIES, US_PLACES, type UsCityId } from '@gymgo/usa-data';
 
-export type CityId = 'melbourne' | 'sydney';
+export type CityId = 'melbourne' | 'sydney' | UsCityId;
 
 export interface City {
   id: CityId;
   name: string;
+  /** "VIC", "NY"… */
+  region: string;
+  country: 'AU' | 'US';
   timezone: string;
   centre: LatLng;
+  /** Beyond this from the centre, "near you" would list nothing useful. */
+  reachKm: number;
+  /** Other names people type: "NYC", "Philly". */
+  aliases: string[];
   /** Every gym here is invented. */
   demo: boolean;
+  /** Only positions and names from the map: no prices or guest hours yet. */
+  mapOnly: boolean;
 }
 
+const AU = { country: 'AU' as const, aliases: [] as string[] };
+
 export const CITIES: Record<CityId, City> = {
-  melbourne: { id: 'melbourne', name: 'Melbourne', timezone: MELBOURNE, centre: MELBOURNE_CENTRE, demo: false },
-  sydney: { id: 'sydney', name: 'Sydney demo', timezone: PILOT_TIMEZONE, centre: PILOT_CENTRE, demo: true },
+  melbourne: {
+    ...AU,
+    id: 'melbourne',
+    name: 'Melbourne',
+    region: 'VIC',
+    timezone: MELBOURNE,
+    centre: MELBOURNE_CENTRE,
+    reachKm: 15,
+    demo: false,
+    mapOnly: false,
+  },
+  sydney: {
+    ...AU,
+    id: 'sydney',
+    name: 'Sydney demo',
+    region: 'NSW',
+    timezone: PILOT_TIMEZONE,
+    centre: PILOT_CENTRE,
+    reachKm: 15,
+    demo: true,
+    mapOnly: false,
+  },
+  ...(Object.fromEntries(
+    US_CITIES.map((city) => [
+      city.id,
+      {
+        id: city.id,
+        name: city.name,
+        region: city.state,
+        country: 'US',
+        timezone: city.timezone,
+        centre: city.centre,
+        // Gyms were fetched within `radiusKm`; nearby suburbs still get them.
+        reachKm: Math.max(15, city.radiusKm * 2.5),
+        aliases: city.aliases,
+        demo: false,
+        mapOnly: true,
+      } satisfies City,
+    ]),
+  ) as Record<UsCityId, City>),
 };
+
+/** Real cities first, Melbourne leading; the demo last. */
+export const CITY_LIST: City[] = [
+  CITIES.melbourne,
+  ...US_CITIES.map((city) => CITIES[city.id]),
+  CITIES.sydney,
+];
 
 export interface AppPlace {
   name: string;
+  /** Australian postcodes; empty for US neighborhoods. */
   postcode: string;
   position: LatLng;
   city: CityId;
@@ -37,36 +97,138 @@ export interface AppPlace {
 
 export const PLACES: AppPlace[] = [
   ...MELBOURNE_PLACES.map((place) => ({ ...place, city: 'melbourne' as const })),
+  // Each US city by name, then its neighborhoods.
+  ...US_CITIES.map((city) => ({ name: city.name, postcode: '', position: city.centre, city: city.id })),
+  ...US_PLACES.map((place) => ({ name: place.name, postcode: '', position: place.position, city: place.city })),
   ...PILOT_PLACES.map((place) => ({ ...place, city: 'sydney' as const })),
 ];
 
 export const DEFAULT_PLACE: AppPlace = PLACES[0]!;
 
-/** Beyond this from a city's centre, "near you" would list nothing useful. */
-export const CITY_REACH_KM = 15;
+/** The place that stands for a whole city: its centre, under its name. */
+export function cityPlace(city: City): AppPlace {
+  if (city.id === 'melbourne') return DEFAULT_PLACE;
+  if (city.id === 'sydney') return PLACES.find((place) => place.city === 'sydney')!;
+  return PLACES.find((place) => place.city === city.id && place.name === city.name)!;
+}
 
-const normalise = (value: string) => value.trim().toLowerCase().replace(/\s+/g, ' ');
+const normalise = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[.’']/g, '')
+    .replace(/\s+/g, ' ');
 
-export function geocodePlace(query: string | null): { place: AppPlace | null; outOfArea: boolean } {
+/** "SoHo, New York" or "SoHo new york": a place name with its city after it. */
+function withCity(needle: string): { name: string; city: City } | null {
+  for (const city of CITY_LIST) {
+    for (const cityName of [city.name, ...city.aliases]) {
+      const tail = normalise(cityName);
+      for (const joiner of [', ', ' ']) {
+        if (needle.endsWith(joiner + tail)) return { name: needle.slice(0, -(joiner + tail).length).trim(), city };
+      }
+    }
+  }
+  return null;
+}
+
+/** Same name in two cities ("Midtown", "Chinatown"): the one in `prefer` wins. */
+function preferring(matches: AppPlace[], prefer: CityId | undefined): AppPlace | undefined {
+  return matches.find((place) => place.city === prefer) ?? matches[0];
+}
+
+export function geocodePlace(query: string | null, prefer?: CityId): { place: AppPlace | null; outOfArea: boolean } {
   if (!query || !query.trim()) return { place: null, outOfArea: false };
   const needle = normalise(query);
-  const exact = PLACES.find((place) => normalise(place.name) === needle || place.postcode === needle);
+
+  const city = CITY_LIST.find((item) => [item.name, ...item.aliases].some((name) => normalise(name) === needle));
+  if (city) return { place: cityPlace(city), outOfArea: false };
+
+  const scoped = withCity(needle);
+  if (scoped) {
+    const inCity = PLACES.filter((place) => place.city === scoped.city.id);
+    const hit = inCity.find((place) => normalise(place.name) === scoped.name) ?? inCity.find((place) => normalise(place.name).startsWith(scoped.name));
+    if (hit) return { place: hit, outOfArea: false };
+  }
+
+  const exact = preferring(
+    PLACES.filter((place) => normalise(place.name) === needle || (place.postcode !== '' && place.postcode === needle)),
+    prefer,
+  );
   if (exact) return { place: exact, outOfArea: false };
-  const partial = PLACES.find((place) => normalise(place.name).startsWith(needle));
+  const partial = preferring(
+    PLACES.filter((place) => normalise(place.name).startsWith(needle)),
+    prefer,
+  );
   if (partial) return { place: partial, outOfArea: false };
   return { place: null, outOfArea: true };
 }
 
-export function suggestPlaces(query: string, limit = 6): AppPlace[] {
+export function suggestPlaces(query: string, limit = 6, prefer?: CityId): AppPlace[] {
   const needle = normalise(query);
   if (!needle) return [];
-  return PLACES.filter((place) => normalise(place.name).includes(needle) || place.postcode.startsWith(needle)).slice(0, limit);
+  const cities = CITY_LIST.filter((city) => [city.name, ...city.aliases].some((name) => normalise(name).startsWith(needle))).map(cityPlace);
+  const places = PLACES.filter(
+    (place) => normalise(place.name).includes(needle) || (place.postcode !== '' && place.postcode.startsWith(needle)),
+  )
+    // Starts-with before contains; your current city first.
+    .sort(
+      (a, b) =>
+        Number(!normalise(a.name).startsWith(needle)) - Number(!normalise(b.name).startsWith(needle)) ||
+        Number(a.city !== prefer) - Number(b.city !== prefer),
+    );
+  const seen = new Set<AppPlace>();
+  return [...cities, ...places].filter((place) => (seen.has(place) ? false : (seen.add(place), true))).slice(0, limit);
+}
+
+/** Where a place is, for a second line in suggestions: "New York", "VIC". */
+export function placeContext(place: AppPlace): string {
+  const city = CITIES[place.city];
+  if (place.name === city.name) return city.country === 'US' ? `${city.region}, USA` : city.region;
+  return city.country === 'US' ? `${city.name}, ${city.region}` : place.postcode ? `${city.region} ${place.postcode}` : city.region;
+}
+
+/** The nearest city GymGO covers, and how far away it is. */
+export function nearestCity(point: LatLng, cities: City[] = CITY_LIST.filter((city) => !city.demo)): { city: City; km: number } {
+  let best = { city: cities[0]!, km: Infinity };
+  for (const city of cities) {
+    const km = haversineKm(point, city.centre);
+    if (km < best.km) best = { city, km };
+  }
+  return best;
 }
 
 /** The city a point belongs to, if it is within reach of one. */
 export function cityNear(point: LatLng): City | null {
-  for (const city of Object.values(CITIES)) {
-    if (haversineKm(point, city.centre) <= CITY_REACH_KM) return city;
+  const { city, km } = nearestCity(point, CITY_LIST);
+  return km <= city.reachKm ? city : null;
+}
+
+/** The city a search centre is in, or the nearest one. */
+export const cityAt = (point: LatLng): City => cityNear(point) ?? nearestCity(point).city;
+
+// --- Units and money ----------------------------------------------------------
+
+const KM_PER_MILE = 1.609344;
+
+/** "350 m", "2.4 km"; in the US, "0.2 mi", "1.5 mi". Straight-line distance. */
+export function distanceLabel(km: number, country: string): string {
+  if (country === 'US') {
+    const miles = km / KM_PER_MILE;
+    return miles < 10 ? `${miles.toFixed(1)} mi` : `${Math.round(miles)} mi`;
   }
-  return null;
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  return `${km.toFixed(1)} km`;
+}
+
+/** Search radius choices, in the local unit, stored as kilometres. */
+export function radiusChoices(country: string): Array<{ km: number; label: string }> {
+  if (country === 'US') return [1, 2, 3, 5, 10].map((miles) => ({ km: miles * KM_PER_MILE, label: `${miles} mi` }));
+  return [2, 5, 10, 20].map((km) => ({ km, label: `${km} km` }));
+}
+
+/** "A$25" in Australia, "$25" in the US. */
+export function moneyLabel(minor: number, country: string): string {
+  const whole = minor % 100 === 0 ? String(minor / 100) : (minor / 100).toFixed(2);
+  return `${country === 'US' ? '$' : 'A$'}${whole}`;
 }

@@ -20,7 +20,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "GymGO uses your location only when you tap the locate button, to list gyms near you. It is never stored or sent anywhere."
+          "locationWhenInUsePermission": "GymGO uses your precise location on this device to show gyms near you and how far away they are. It is never stored or sent anywhere."
         }
       ],
       "expo-secure-store",

@@ -5,7 +5,7 @@
  */
 
 import { Pressable, StyleSheet, View } from 'react-native';
-import { equipmentLabel, formatMoney, type Tri } from '@gymgo/domain';
+import { equipmentLabel, type Tri } from '@gymgo/domain';
 import { timeLabel } from '@/lib/copy';
 import {
   BUDGET_PRESETS,
@@ -14,11 +14,13 @@ import {
   TIME_PRESETS,
   addDays,
   initialFilters,
-  nowInPilot,
+  defaultVisit,
+  nowIn,
   type Filters,
 } from '@/lib/query';
 import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
+import { cityAt, moneyLabel, radiusChoices } from '@/lib/places';
 import { Chip, PrimaryButton, Txt } from './ui';
 
 export function FiltersContent({
@@ -32,7 +34,8 @@ export function FiltersContent({
   resultCount: number;
   onDone: () => void;
 }) {
-  const today = nowInPilot().date;
+  const today = nowIn(filters.timezone).date;
+  const country = cityAt(filters.centre).country;
   const tomorrow = addDays(today, 1);
   const set = (patch: Partial<Filters>) => onChange({ ...filters, ...patch });
 
@@ -51,8 +54,15 @@ export function FiltersContent({
         <Pressable
           onPress={() => {
             haptic.select();
-            const fresh = initialFilters();
-            onChange({ ...fresh, centre: filters.centre, placeName: filters.placeName });
+            const visit = defaultVisit(new Date(), filters.timezone);
+            onChange({
+              ...initialFilters(),
+              centre: filters.centre,
+              placeName: filters.placeName,
+              timezone: filters.timezone,
+              visitDate: visit.date,
+              visitMinuteOfDay: visit.minute,
+            });
           }}
           accessibilityRole="button"
           hitSlop={10}
@@ -90,7 +100,7 @@ export function FiltersContent({
           {BUDGET_PRESETS.map((budget) => (
             <Chip
               key={String(budget)}
-              label={budget === null ? 'Any' : `Under ${formatMoney(budget)}`}
+              label={budget === null ? 'Any' : `Under ${moneyLabel(budget, country)}`}
               selected={filters.budgetMinor === budget}
               onPress={() => set({ budgetMinor: budget })}
             />
@@ -140,8 +150,13 @@ export function FiltersContent({
 
       <Group title="How far">
         <View style={styles.chips}>
-          {[2, 5, 10].map((km) => (
-            <Chip key={km} label={`${km} km`} selected={filters.radiusKm === km} onPress={() => set({ radiusKm: km })} />
+          {radiusChoices(country).map((choice) => (
+            <Chip
+              key={choice.label}
+              label={choice.label}
+              selected={Math.abs(filters.radiusKm - choice.km) < 0.01}
+              onPress={() => set({ radiusKm: choice.km })}
+            />
           ))}
         </View>
         <Hint>As the crow flies. We don't estimate travel time.</Hint>

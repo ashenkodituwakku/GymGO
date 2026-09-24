@@ -11,7 +11,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { setHapticsEnabled } from './haptics';
-import { initialFilters, type Filters } from './query';
+import { currentFix, type Fix } from './location';
+import { DEFAULT_PLACE, cityNear, cityPlace, nearestCity, type City } from './places';
+import { locatedNotice } from './copy';
+import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, type Filters } from './query';
 import { useAccount } from './useAccount';
 import { useGymData } from './useGymData';
 
@@ -25,7 +28,17 @@ export interface ExploreRequest {
   locate?: boolean;
   /** Move the map to the search's (new) centre. */
   recentre?: boolean;
+  /** Something to say above the results, e.g. why the search moved. */
+  notice?: string;
 }
+
+/** What finding you produced. */
+export type Located =
+  | { kind: 'here'; fix: Fix; city: City }
+  /** Outside every city GymGO covers: the search went to the nearest one. */
+  | { kind: 'nearest'; fix: Fix; city: City; km: number }
+  | { kind: 'denied' }
+  | { kind: 'unavailable' };
 
 export interface Prefs {
   haptics: boolean;
@@ -33,6 +46,8 @@ export interface Prefs {
 
 const RECENTS_KEY = 'gymgo.recents.v1';
 const PREFS_KEY = 'gymgo.prefs.v1';
+/** Only that GymGO has asked for location once, never where you were. */
+const ASKED_KEY = 'gymgo.location-asked.v1';
 const MAX_RECENTS = 10;
 export const MAX_COMPARE = 3;
 
@@ -51,6 +66,10 @@ type AppState = {
   requestExplore: (request: Omit<ExploreRequest, 'nonce'>) => void;
   prefs: Prefs;
   setPref: <K extends keyof Prefs>(key: K, value: Prefs[K]) => void;
+  /** Where you are, from this session's last fix. Memory only. */
+  here: Fix | null;
+  /** Find you and move the search there (or to the nearest city covered). */
+  locate: (ask: boolean) => Promise<Located>;
 };
 
 const AppContext = createContext<AppState | null>(null);
@@ -76,6 +95,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [compare, setCompare] = useState<string[]>([]);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
   const [prefs, setPrefs] = useState<Prefs>({ haptics: true });
+  const [here, setHere] = useState<Fix | null>(null);
 
   useEffect(() => {
     void loadJson<unknown>(RECENTS_KEY, []).then((value) => {
@@ -87,6 +107,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setPrefs(next);
     });
   }, []);
+
+  const findMe = useCallback(async (ask: boolean, onlyIfUntouched: boolean): Promise<Located> => {
+    const fix = await currentFix(ask);
+    if (fix === 'denied' || fix === 'unavailable') return { kind: fix };
+    setHere(fix);
+    const city = cityNear(fix.position);
+    const nearest = city ? null : nearestCity(fix.position);
+    const where = city
+      ? { centre: fix.position, placeName: YOUR_LOCATION, timezone: city.timezone }
+      : atPlace(cityPlace(nearest!.city));
+    setFilters((current) => {
+      if (!onlyIfUntouched) return moveTo(current, where);
+      // At start-up, never undo a place someone already picked; and the
+      // visit time, never chosen yet, becomes the next hour on local time.
+      if (current.placeName !== DEFAULT_PLACE.name) return current;
+      const visit = defaultVisit(new Date(), where.timezone);
+      return { ...current, ...where, visitDate: visit.date, visitMinuteOfDay: visit.minute };
+    });
+    return city ? { kind: 'here', fix, city } : { kind: 'nearest', fix, city: nearest!.city, km: nearest!.km };
+  }, []);
+
+  const locate = useCallback((ask: boolean) => findMe(ask, false), [findMe]);
+
+  // Open where you are. The first launch asks once; after that, only if
+  // you've allowed it. The fix itself is never stored.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const asked = await loadJson<boolean>(ASKED_KEY, false);
+      if (cancelled) return;
+      if (!asked) storeJson(ASKED_KEY, true);
+      const result = await findMe(!asked, true);
+      if (!cancelled && (result.kind === 'here' || result.kind === 'nearest')) {
+        const notice = locatedNotice(result) ?? undefined;
+        setExploreRequest((current) => ({ recentre: true, notice, nonce: (current?.nonce ?? 0) + 1 }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [findMe]);
 
   const addRecent = useCallback((gymId: string) => {
     setRecents((current) => {
@@ -138,8 +199,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       requestExplore,
       prefs,
       setPref,
+      here,
+      locate,
     }),
-    [data, account, filters, recents, addRecent, clearRecents, compare, toggleCompare, clearCompare, exploreRequest, requestExplore, prefs, setPref],
+    [data, account, filters, recents, addRecent, clearRecents, compare, toggleCompare, clearCompare, exploreRequest, requestExplore, prefs, setPref, here, locate],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -110,7 +110,7 @@ function ReviewItem({ review }: { review: Review }) {
     <View style={styles.item}>
       <Txt variant="footnote" color={color.labelSecondary}>
         {'★'.repeat(review.overall)}
-        {'☆'.repeat(5 - review.overall)} · {review.authorDisplayName} · {new Date(review.createdAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+        {'☆'.repeat(5 - review.overall)} · {review.authorDisplayName} · {new Date(review.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
       </Txt>
       <Txt variant="subhead">{review.body}</Txt>
     </View>

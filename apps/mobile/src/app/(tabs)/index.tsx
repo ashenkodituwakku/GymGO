@@ -1,8 +1,8 @@
 /**
  * Home: a place to start. A greeting, the search, one-tap picks for the
- * common questions ("somewhere I can train at 6 am", "under A$25"), the gyms
- * near where you're looking, what you've saved and looked at, suburbs to
- * browse, and how GymGO decides what it tells you.
+ * common questions ("somewhere I can train at 6 am", "under $25"), the gyms
+ * near where you're looking, what you've saved and looked at, neighbourhoods
+ * and other cities to browse, and how GymGO decides what it tells you.
  *
  * Every pick just sets the search and hands over to the Explore tab, so the
  * answers always come from the same rules as the map.
@@ -12,18 +12,19 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { GymCard } from '@/components/GymCard';
+import { Icon } from '@/components/Icon';
 import { Group, Row, SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { EMPTY, TIER, timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
-import { PLACES, type AppPlace } from '@/lib/places';
-import { atPlace, initialFilters, nextVisitAt, nowInPilot, runSearch, type Filters } from '@/lib/query';
+import { CITY_LIST, PLACES, cityAt, cityPlace, moneyLabel, type AppPlace } from '@/lib/places';
+import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, nextVisitAt, runSearch, type Filters } from '@/lib/query';
 import { resultsById } from '@/lib/results';
 import { color, face, radius, shadow, space } from '@/lib/theme';
 
-/** Suburbs worth a tap, in the order people ask about them. */
-const SUBURBS = ['Melbourne CBD', 'Fitzroy', 'Collingwood', 'Brunswick', 'Carlton', 'Richmond', 'South Melbourne', 'Northcote'];
+/** Melbourne suburbs worth a tap, in the order people ask about them. */
+const MELBOURNE_PICKS = ['Melbourne CBD', 'Fitzroy', 'Collingwood', 'Brunswick', 'Carlton', 'Richmond', 'South Melbourne', 'Northcote'];
 
 function greeting(minute: number): string {
   if (minute < 12 * 60) return 'Good morning';
@@ -42,11 +43,21 @@ export default function Home() {
   const nearby = outcome.results.slice(0, 10);
   const saved = account.saved.map((id) => byId.get(id)).filter((result) => result !== undefined);
   const recent = recents.map((id) => byId.get(id)).filter((result) => result !== undefined);
-  const now = nowInPilot();
+  const clock = new Date();
   const name = account.account?.displayName.split(' ')[0];
+  const city = cityAt(filters.centre);
 
-  // What GymGO actually knows about the real gyms, counted, not claimed.
-  const real = data.records.filter((record) => !record.location.isDemoData);
+  // Where to browse: this city's neighbourhoods, then the other cities.
+  const browse = city.id === 'melbourne'
+    ? MELBOURNE_PICKS.map((suburb) => PLACES.find((place) => place.name === suburb && place.city === 'melbourne')).filter((place) => place !== undefined)
+    : PLACES.filter((place) => place.city === city.id && place.name !== city.name).slice(0, 10);
+  const otherCities = CITY_LIST.filter((item) => item.id !== city.id && !item.demo);
+
+  // What GymGO actually knows about the real gyms here, counted, not claimed.
+  const real = useMemo(
+    () => data.records.filter((record) => !record.location.isDemoData && cityAt(record.location.position).id === city.id),
+    [data.records, city.id],
+  );
   const withPrice = real.filter((record) => record.offers.some((offer) => offer.baseAmountMinor !== null)).length;
   const withGuestHours = real.filter((record) => record.schedules.some((item) => item.audience === 'visitor')).length;
   const withKit = real.filter((record) => record.equipment.some((item) => item.presence === 'yes')).length;
@@ -60,7 +71,11 @@ export default function Home() {
     setFilters(change);
     explore({ recentre: true });
   };
-  const goToPlace = (place: AppPlace) => pick((current) => ({ ...current, ...atPlace(place) }));
+  const goToPlace = (place: AppPlace) => pick((current) => moveTo(current, atPlace(place)));
+  const visit = (minute: number) => {
+    const next = nextVisitAt(minute, filters.timezone);
+    return { visitDate: next.date, visitMinuteOfDay: next.minute };
+  };
 
   const picks: Array<{ emoji: string; title: string; line: string; tint: string; onPress: () => void }> = [
     {
@@ -79,7 +94,7 @@ export default function Home() {
     },
     {
       emoji: '💵',
-      title: 'Under A$25',
+      title: `Under ${moneyLabel(2500, city.country)}`,
       line: 'A visit that fits',
       tint: '#E3F6E8',
       onPress: () => pick((current) => ({ ...current, budgetMinor: 2500 })),
@@ -102,19 +117,24 @@ export default function Home() {
       line: 'Clear my filters',
       tint: '#F1EAF9',
       onPress: () =>
-        pick((current) => ({
-          ...initialFilters(),
-          centre: current.centre,
-          placeName: current.placeName,
-          timezone: current.timezone,
-        })),
+        pick((current) => {
+          const fresh = defaultVisit(new Date(), current.timezone);
+          return {
+            ...initialFilters(),
+            centre: current.centre,
+            placeName: current.placeName,
+            timezone: current.timezone,
+            visitDate: fresh.date,
+            visitMinuteOfDay: fresh.minute,
+          };
+        }),
     },
   ];
 
   return (
     <TabScreen
-      eyebrow={new Date().toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
-      title={name ? `${greeting(now.minute)}, ${name}` : `${greeting(now.minute)} 👋`}
+      eyebrow={clock.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
+      title={name ? `${greeting(clock.getHours() * 60)}, ${name}` : `${greeting(clock.getHours() * 60)} 👋`}
       right={
         <Pressable
           onPress={() => router.navigate('/profile')}
@@ -128,7 +148,7 @@ export default function Home() {
         </Pressable>
       }
     >
-      <SearchButton placeholder="Search a suburb or postcode" onPress={() => explore({ focusSearch: true })} />
+      <SearchButton placeholder="Search a suburb, neighborhood or city" onPress={() => explore({ focusSearch: true })} />
 
       {/* Quick picks ------------------------------------------------------- */}
       <View style={styles.picks}>
@@ -153,16 +173,38 @@ export default function Home() {
         ))}
       </View>
 
+      {/* Workout ----------------------------------------------------------- */}
+      <Pressable
+        onPress={() => {
+          haptic.select();
+          router.push({ pathname: '/workout/[id]', params: { id: 'any' } });
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Build a workout: tap the muscles you want to train"
+        style={({ pressed }) => [styles.workout, pressed && { transform: [{ scale: 0.98 }] }]}
+      >
+        <Txt style={styles.workoutEmoji}>💪</Txt>
+        <View style={styles.flex}>
+          <Txt variant="headline" color={color.onBrand}>
+            Build a workout
+          </Txt>
+          <Txt variant="footnote" color="rgba(255, 255, 255, 0.86)">
+            Tap the muscles you want to train. From a gym’s page, it fits that gym’s machines.
+          </Txt>
+        </View>
+        <Icon name="chevron" size={14} color="rgba(255, 255, 255, 0.8)" />
+      </Pressable>
+
       {/* Nearby ------------------------------------------------------------ */}
       <View style={styles.section}>
         <SectionHeader
-          title={filters.placeName === 'your location' ? 'Near you' : `Near ${filters.placeName}`}
+          title={filters.placeName === YOUR_LOCATION ? 'Near you' : `Near ${filters.placeName}`}
           action="Map"
           onAction={() => explore({ recentre: true })}
         />
         <Txt variant="footnote" color={color.labelSecondary}>
           For a visit at {timeLabel(filters.visitMinuteOfDay)}
-          {filters.budgetMinor ? `, under A$${filters.budgetMinor / 100}` : ''}
+          {filters.budgetMinor ? `, under ${moneyLabel(filters.budgetMinor, city.country)}` : ''}
           {filters.equipment.length ? `, with ${filters.equipment.length} must-have${filters.equipment.length > 1 ? 's' : ''}` : ''}. Hold a
           card for more.
         </Txt>
@@ -203,21 +245,19 @@ export default function Home() {
 
       {/* Suburbs ----------------------------------------------------------- */}
       <View style={styles.section}>
-        <SectionHeader title="Browse by suburb" />
+        <SectionHeader title={`Browse ${city.name}`} />
         <View style={styles.suburbs}>
-          {SUBURBS.map((suburb) => {
-            const place = PLACES.find((item) => item.name === suburb && item.city === 'melbourne');
-            if (!place) return null;
+          {browse.map((place) => {
             const on = filters.placeName === place.name;
             return (
               <Pressable
-                key={suburb}
+                key={place.name}
                 onPress={() => goToPlace(place)}
                 accessibilityRole="button"
                 style={({ pressed }) => [styles.suburb, on && styles.suburbOn, pressed && { opacity: 0.7 }]}
               >
                 <Txt variant="subhead" color={on ? color.onBrand : color.label} style={face('medium')}>
-                  {suburb}
+                  {place.name}
                 </Txt>
               </Pressable>
             );
@@ -225,9 +265,33 @@ export default function Home() {
         </View>
       </View>
 
+      {/* Other cities ------------------------------------------------------- */}
+      <View style={styles.section}>
+        <SectionHeader title="Other cities" />
+        <Carousel>
+          {otherCities.map((item) => (
+            <Pressable
+              key={item.id}
+              onPress={() => goToPlace(cityPlace(item))}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.name}, ${item.country === 'US' ? 'USA' : 'Australia'}`}
+              style={({ pressed }) => [styles.city, pressed && { transform: [{ scale: 0.97 }] }]}
+            >
+              <Txt style={styles.cityFlag}>{item.country === 'US' ? '🇺🇸' : '🇦🇺'}</Txt>
+              <Txt variant="headline" numberOfLines={1}>
+                {item.name}
+              </Txt>
+              <Txt variant="footnote" color={color.labelSecondary}>
+                {item.mapOnly ? 'Map only for now' : 'Prices and hours'}
+              </Txt>
+            </Pressable>
+          ))}
+        </Carousel>
+      </View>
+
       {/* What GymGO knows ---------------------------------------------------- */}
       <View style={styles.section}>
-        <SectionHeader title="What we know so far" />
+        <SectionHeader title={`What we know in ${city.name}`} />
         <View style={styles.stats}>
           <Stat value={real.length} label="real gyms mapped" />
           <Stat value={withPrice} label="publish a price" />
@@ -235,8 +299,9 @@ export default function Home() {
           <Stat value={withKit} label="list their machines" />
         </View>
         <Txt variant="footnote" color={color.labelSecondary}>
-          Counted from each gym’s own website. The rest is unknown, so it says “Call first” rather than guessing. You can add
-          what machines a gym has from its page.
+          {city.mapOnly
+            ? 'These gyms come from OpenStreetMap, so no prices or guest hours yet: each says “Call first” rather than guessing. You can add what machines a gym has from its page.'
+            : 'Counted from each gym’s own website. The rest is unknown, so it says “Call first” rather than guessing. You can add what machines a gym has from its page.'}
         </Txt>
       </View>
 
@@ -252,11 +317,6 @@ export default function Home() {
       </Txt>
     </TabScreen>
   );
-}
-
-function visit(minute: number) {
-  const next = nextVisitAt(minute);
-  return { visitDate: next.date, visitMinuteOfDay: next.minute };
 }
 
 function Carousel({ children }: { children: React.ReactNode }) {
@@ -313,6 +373,17 @@ const styles = StyleSheet.create({
   },
   pickEmoji: { fontSize: 26, lineHeight: 32 },
 
+  workout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    padding: space[4],
+    borderRadius: radius.xl,
+    borderCurve: 'continuous',
+    backgroundColor: color.brand,
+  },
+  workoutEmoji: { fontSize: 34, lineHeight: 40 },
+
   section: { gap: space[3] },
   carousel: { marginHorizontal: -space[4] },
   carouselContent: { paddingHorizontal: space[4], paddingBottom: space[2], gap: space[3] },
@@ -320,6 +391,16 @@ const styles = StyleSheet.create({
   suburbs: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   suburb: { paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.background, ...shadow.card },
   suburbOn: { backgroundColor: color.brand },
+  city: {
+    width: 150,
+    gap: 2,
+    padding: space[3],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.background,
+    ...shadow.card,
+  },
+  cityFlag: { fontSize: 24, lineHeight: 30 },
 
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
   stat: {

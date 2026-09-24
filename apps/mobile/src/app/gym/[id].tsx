@@ -10,7 +10,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { formatDistanceKm } from '@gymgo/domain';
 import { GoogleModal } from '@/components/GoogleModal';
 import { Icon, type IconName } from '@/components/Icon';
 import { MemberKit } from '@/components/MemberKit';
@@ -21,6 +20,7 @@ import { PrimaryButton, Txt } from '@/components/ui';
 import { shareGym } from '@/lib/actions';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
+import { distanceLabel } from '@/lib/places';
 import { resultsById } from '@/lib/results';
 import { color, space } from '@/lib/theme';
 
@@ -57,7 +57,7 @@ export default function GymPage() {
   const saved = account.saved.includes(location.id);
   const comparing = compare.includes(location.id);
   const cardWidth = Math.min(width, PAGE_WIDTH);
-  const subtitle = [location.address.suburb, result.distanceKm !== null ? formatDistanceKm(result.distanceKm).replace(' straight line', '') : null]
+  const subtitle = [location.address.suburb, result.distanceKm !== null ? distanceLabel(result.distanceKm, location.address.countryCode) : null]
     .filter(Boolean)
     .join(' · ');
 
@@ -107,6 +107,7 @@ export default function GymPage() {
             saved={saved}
             onToggleSave={() => account.toggleSave(location.id)}
             onOpenGoogle={() => setGoogleOpen(true)}
+            onOpenWorkout={() => router.push({ pathname: '/workout/[id]', params: { id: location.id } })}
             asOf={asOf}
             photos={
               <PhotoHero

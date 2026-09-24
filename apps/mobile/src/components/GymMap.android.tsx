@@ -24,7 +24,7 @@ export type { GymMapHandle, MapPin } from './map-types';
 const COLOURS = Object.fromEntries(Object.entries(TIER_COLOUR).map(([tier, tone]) => [tier, tone.fill]));
 
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
-  { pins, selectedId, initialCentre, bottomInset, topInset, onSelect, onMapPress },
+  { pins, selectedId, initialCentre, bottomInset, topInset, userLocation = null, onSelect, onMapPress },
   ref,
 ) {
   const web = useRef<WebView>(null);
@@ -60,6 +60,10 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   useEffect(() => {
     run(`gymgo.setPins(${JSON.stringify(pins)},${JSON.stringify(selectedId)})`);
   }, [pins, selectedId, run]);
+
+  useEffect(() => {
+    run(userLocation ? `gymgo.setUser(${userLocation.lat},${userLocation.lng})` : 'gymgo.setUser(null,null)');
+  }, [userLocation, run]);
 
   useEffect(() => {
     run(`gymgo.setPadding(${Math.round(topInset)},${Math.round(bottomInset)})`);

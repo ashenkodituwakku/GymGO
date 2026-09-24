@@ -9,7 +9,7 @@ import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { explainNoMatches, type SearchOutcome } from '@gymgo/domain';
-import { suggestPlaces, type AppPlace } from '@/lib/places';
+import { cityAt, moneyLabel, placeContext, suggestPlaces, type AppPlace } from '@/lib/places';
 import { EMPTY, PLACEHOLDER, TIER, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
 import { SORTS, activeFilterCount, type Filters } from '@/lib/query';
 import { color, face, radius, space } from '@/lib/theme';
@@ -72,7 +72,8 @@ export function ResultsContent({
 }) {
   // The sheet-aware input throws in a browser; see TextField in ui.tsx.
   const SearchInput = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
-  const suggestions = query.trim() ? suggestPlaces(query) : [];
+  const city = cityAt(filters.centre);
+  const suggestions = query.trim() ? suggestPlaces(query, 6, city.id) : [];
   const filterCount = activeFilterCount(filters);
   const total = outcome.results.length;
 
@@ -93,7 +94,7 @@ export function ResultsContent({
             returnKeyType="search"
             autoCorrect={false}
             style={styles.input}
-            accessibilityLabel="Search a suburb or postcode"
+            accessibilityLabel="Search a suburb, neighborhood or city"
           />
         </View>
         <Pressable
@@ -137,7 +138,7 @@ export function ResultsContent({
         <View style={styles.suggestions}>
           {suggestions.map((place) => (
             <Pressable
-              key={place.name}
+              key={`${place.city}-${place.name}`}
               onPress={() => {
                 haptic.select();
                 onPickPlace(place);
@@ -150,7 +151,7 @@ export function ResultsContent({
               </View>
               <Txt variant="body">{place.name}</Txt>
               <Txt variant="footnote" color={color.labelSecondary}>
-                {place.postcode}
+                {placeContext(place)}
                 {place.city === 'sydney' ? ' · Sydney demo' : ''}
               </Txt>
             </Pressable>
@@ -180,7 +181,7 @@ export function ResultsContent({
           accessibilityLabel={`Visiting at ${timeLabel(filters.visitMinuteOfDay)}. Change time`}
         />
         <Chip
-          label="Under A$30"
+          label={`Under ${moneyLabel(3000, city.country)}`}
           selected={filters.budgetMinor === 3000}
           onPress={onToggleBudget}
         />

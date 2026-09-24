@@ -105,8 +105,9 @@ export default function Profile() {
         <Row icon="info" tile={TILE.grey} title="Privacy" onPress={() => toggle('privacy')} />
         {about === 'privacy' && (
           <Explainer>
-            Your account lives on the GymGO server on your own computer. Your location is used only when you tap “near me”,
-            rounded to about 100 m, and never stored. Photos have their location data removed before they’re saved.
+            Your account lives on the GymGO server on your own computer. Your precise location, if you allow it, is used on
+            this device to find gyms near you and measure distances. It is never stored or sent to GymGO or anyone else.
+            Photos have their location data removed before they’re saved.
           </Explainer>
         )}
         <Row icon="settings" tile={TILE.grey} title="Version" value="0.1.0 · pilot" chevron={false} />

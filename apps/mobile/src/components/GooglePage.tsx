@@ -118,7 +118,7 @@ function PlaceDetails({ place }: { place: GooglePlace }) {
           <Txt variant="headline">
             ⭐ {place.rating.toFixed(1)}
             <Txt variant="subhead" color={color.labelSecondary}>
-              {place.ratingCount ? `  ·  ${place.ratingCount.toLocaleString('en-AU')} Google reviews` : ''}
+              {place.ratingCount ? `  ·  ${place.ratingCount.toLocaleString()} Google reviews` : ''}
             </Txt>
           </Txt>
         )}

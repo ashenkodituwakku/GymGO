@@ -110,6 +110,21 @@ export function photoUrl(path: string): string | null {
   return base ? `${base}${path}` : null;
 }
 
+export interface EquipmentTally {
+  equipmentTypeId: string;
+  yes: number;
+  no: number;
+  /** Heaviest reported, for dumbbells. */
+  maxWeightKg: number | null;
+  lastReportedAt: string;
+}
+
+export interface EquipmentReportItem {
+  equipmentTypeId: string;
+  presence: 'yes' | 'no';
+  maxWeightKg?: number | null;
+}
+
 export interface Account {
   id: string;
   email: string;
@@ -149,6 +164,14 @@ export const api = {
       body: { data, consent: true },
     }),
   covers: () => request<{ covers: Record<string, string> }>('GET', '/api/photos/covers'),
+  equipment: (gymId: string, token: string | null) =>
+    request<{ reporters: number; items: EquipmentTally[]; mine: EquipmentReportItem[] }>(
+      'GET',
+      `/api/gyms/${encodeURIComponent(gymId)}/equipment`,
+      { token },
+    ),
+  reportEquipment: (token: string, gymId: string, items: EquipmentReportItem[]) =>
+    request<unknown>('PUT', `/api/gyms/${encodeURIComponent(gymId)}/equipment`, { token, body: { items } }),
   google: (gymId: string) => request<GoogleResult>('GET', `/api/gyms/${encodeURIComponent(gymId)}/google`),
   photoQueue: (token: string) =>
     request<{ photos: Array<{ id: string; gymId: string; credit: string; createdAt: string; dataUrl: string | null }> }>(

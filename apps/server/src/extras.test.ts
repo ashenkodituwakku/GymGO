@@ -204,6 +204,56 @@ describe('gym photos', () => {
   });
 });
 
+describe('what members say a gym has', () => {
+  it('tallies each member’s latest report, apart from anything the gym publishes', async () => {
+    const gym = '/api/gyms/carlton-fitness/equipment';
+    expect((await call('GET', gym)).body).toEqual({ reporters: 0, items: [], mine: [] });
+    expect((await call('PUT', gym, { body: { items: [] } })).status).toBe(401);
+
+    const first = await signUp();
+    const second = await signUp();
+    expect(
+      (
+        await call('PUT', gym, {
+          token: first.token,
+          body: { items: [{ equipmentTypeId: 'squat_rack', presence: 'yes' }, { equipmentTypeId: 'dumbbells', presence: 'yes', maxWeightKg: 40 }] },
+        })
+      ).status,
+    ).toBe(204);
+    await call('PUT', gym, {
+      token: second.token,
+      body: { items: [{ equipmentTypeId: 'squat_rack', presence: 'no' }, { equipmentTypeId: 'dumbbells', presence: 'yes', maxWeightKg: 50 }] },
+    });
+
+    const tally = await call('GET', gym, { token: first.token });
+    expect(tally.body.reporters).toBe(2);
+    expect(tally.body.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ equipmentTypeId: 'squat_rack', yes: 1, no: 1, maxWeightKg: null }),
+        expect.objectContaining({ equipmentTypeId: 'dumbbells', yes: 2, no: 0, maxWeightKg: 50 }),
+      ]),
+    );
+    expect(tally.body.mine).toHaveLength(2);
+
+    // A new report replaces the old one: leaving an item out clears it.
+    await call('PUT', gym, { token: first.token, body: { items: [{ equipmentTypeId: 'bench', presence: 'yes' }] } });
+    const after = await call('GET', gym, { token: first.token });
+    expect(after.body.mine).toEqual([{ equipmentTypeId: 'bench', presence: 'yes', maxWeightKg: null }]);
+    expect(after.body.items.find((item: { equipmentTypeId: string }) => item.equipmentTypeId === 'squat_rack')).toMatchObject({ yes: 0, no: 1 });
+  });
+
+  it('rejects unknown equipment, bad weights and invented demo gyms', async () => {
+    const { token } = await signUp();
+    const gym = '/api/gyms/carlton-fitness/equipment';
+    expect((await call('PUT', gym, { token, body: { items: [{ equipmentTypeId: 'jacuzzi', presence: 'yes' }] } })).status).toBe(400);
+    expect((await call('PUT', gym, { token, body: { items: [{ equipmentTypeId: 'bench', presence: 'maybe' }] } })).status).toBe(400);
+    expect((await call('PUT', gym, { token, body: { items: [{ equipmentTypeId: 'bench', presence: 'yes', maxWeightKg: 30 }] } })).status).toBe(400);
+    expect((await call('PUT', gym, { token, body: { items: [{ equipmentTypeId: 'dumbbells', presence: 'yes', maxWeightKg: 900 }] } })).status).toBe(400);
+    const demo = `/api/gyms/${DEMO_GYMS[0]!.location.id}/equipment`;
+    expect((await call('PUT', demo, { token, body: { items: [{ equipmentTypeId: 'bench', presence: 'yes' }] } })).status).toBe(400);
+  });
+});
+
 describe('Google Maps details', () => {
   it('matches the gym, returns live details with credits, and stores only the place ID', async () => {
     const result = await call('GET', '/api/gyms/dohertys-gym-city/google');

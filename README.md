@@ -118,14 +118,29 @@ your name. The server removes the photo's hidden details (including where it
 was taken) before saving it, and it stays hidden until a moderator publishes
 it. A photo the moderator turns down is deleted. Photos live in `apps/server/data/photos/` on your computer.
 
+### What machines a gym has
+
+Gyms hardly ever publish their equipment. Their websites say "free weights"
+and "cardio", and Google has no equipment list either. So GymGO shows two
+things, kept apart:
+
+- **What the gym publishes**, with a link to the page it came from.
+- **What members say**: anyone signed in can open a gym's **Equipment**
+  section, tap **Trained here? Tick what they have**, and mark each machine
+  👍 or 👎, plus the heaviest dumbbells if they know. The card then shows a
+  tally, such as "Squat rack 👍 3", with how many members reported and
+  when. You can change your report any time. Members' reports are labelled
+  as theirs and never make a gym "Good to go" on their own.
+
 ### Google info (free, nothing to set up)
 
 Each gym has a **See it on Google** button. It opens a full-screen page with
 **Google's own map and card for the gym**: its name, address, star rating
 and number of reviews, straight from Google. Tap the ↗ on Google's card, or
 **Open in Google Maps**, to see every photo and review in Google Maps
-itself. This uses Google's public "Embed a map" feature, so it's free, with
-no key, no account and no limit.
+itself. Under that is Google's **Street View** nearest the gym, so you can
+see the building. Both use Google's public embed, so they're free, with no
+key, no account and no limit.
 
 Why not pull Google's photos and reviews into GymGO's own pages? Google's
 terms don't allow copying or storing them, and scraping them breaks those

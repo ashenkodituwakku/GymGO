@@ -17,6 +17,8 @@
  *   POST   /api/gyms/:gymId/photos        { data (base64 JPEG/PNG), consent: true } -> held for moderation
  *   GET    /api/photos/covers             { gymId: url } of each gym's newest published photo
  *   GET    /api/photos/:id                a published photo's image
+ *   GET    /api/gyms/:gymId/equipment     what members say the gym has, tallied (plus your own)
+ *   PUT    /api/gyms/:gymId/equipment     { items: [{ equipmentTypeId, presence, maxWeightKg? }] } -> your report
  *   GET    /api/gyms/:gymId/google        live Google Maps details (only with the owner's key)
  *   GET    /api/moderation/reviews        moderators: the queue
  *   POST   /api/moderation/reviews/:id    moderators: { decision, reason? }
@@ -29,7 +31,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { ANONYMOUS, can, publishedReviews, type Permission, type Review, type User } from '@gymgo/domain';
+import { ANONYMOUS, EQUIPMENT_TYPES, can, publishedReviews, type Permission, type Review, type User } from '@gymgo/domain';
 import {
   AttemptLimiter,
   AuthInputError,
@@ -172,6 +174,7 @@ export function createApp(options: AppOptions) {
   const loginLimiter = new AttemptLimiter(10, 15 * 60_000);
   const signupLimiter = new AttemptLimiter(options.signupsPerHour ?? 20, 60 * 60_000);
   const photoLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
+  const equipmentLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
   const photos = new PhotoStore(options.photoDir ?? null);
   const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
 
@@ -389,6 +392,90 @@ export function createApp(options: AppOptions) {
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.end(bytes);
       return;
+    }
+
+    // --- What members say a gym has ------------------------------------------
+    // Gyms rarely publish their equipment, so members who train there tick
+    // what they saw. Each member has one report per gym, which they can
+    // change. These are shown as tallies ("3 members say yes"), apart from
+    // what the gym itself publishes, and never decide a search result.
+    if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'equipment' && parts.length === 4) {
+      const gymId = decodeURIComponent(parts[2]!);
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+
+      if (method === 'GET') {
+        const { account } = caller(req);
+        const items = db
+          .prepare(
+            `select equipment_type_id,
+                    sum(presence = 'yes') as yes,
+                    sum(presence = 'no') as no,
+                    max(case when presence = 'yes' then max_weight_kg end) as max_weight_kg,
+                    max(reported_at) as last_reported_at
+             from equipment_reports where gym_id = ? group by equipment_type_id`,
+          )
+          .all(gymId) as Array<{ equipment_type_id: string; yes: number; no: number; max_weight_kg: number | null; last_reported_at: string }>;
+        const reporters = (db.prepare('select count(distinct user_id) as n from equipment_reports where gym_id = ?').get(gymId) as { n: number }).n;
+        const mine = account
+          ? (db
+              .prepare('select equipment_type_id, presence, max_weight_kg from equipment_reports where gym_id = ? and user_id = ?')
+              .all(gymId, account.id) as Array<{ equipment_type_id: string; presence: 'yes' | 'no'; max_weight_kg: number | null }>)
+          : [];
+        return send(res, 200, {
+          reporters,
+          items: items.map((row) => ({
+            equipmentTypeId: row.equipment_type_id,
+            yes: row.yes,
+            no: row.no,
+            maxWeightKg: row.max_weight_kg,
+            lastReportedAt: row.last_reported_at,
+          })),
+          mine: mine.map((row) => ({ equipmentTypeId: row.equipment_type_id, presence: row.presence, maxWeightKg: row.max_weight_kg })),
+        });
+      }
+
+      if (method === 'PUT') {
+        const { account, user } = requireAccount(req);
+        requirePermission(user, 'correction.create', gymId);
+        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to report.');
+        const body = (await readJson(req)) as Record<string, unknown>;
+        if (!Array.isArray(body.items)) throw new HttpError(400, 'Send the list of what you saw.');
+        const seen = new Set<string>();
+        const items = body.items.map((raw) => {
+          const item = (raw ?? {}) as Record<string, unknown>;
+          const type = EQUIPMENT_TYPES.find((candidate) => candidate.id === item.equipmentTypeId);
+          if (!type) throw new HttpError(400, 'That isn\u2019t equipment we track.');
+          if (seen.has(type.id)) throw new HttpError(400, `${type.label} is listed twice.`);
+          seen.add(type.id);
+          if (item.presence !== 'yes' && item.presence !== 'no') throw new HttpError(400, `Say yes or no for ${type.label}.`);
+          let maxWeightKg: number | null = null;
+          if (item.maxWeightKg !== undefined && item.maxWeightKg !== null) {
+            const kg = Number(item.maxWeightKg);
+            if (!type.usesMaxWeight || item.presence !== 'yes' || !Number.isInteger(kg) || kg < 1 || kg > 200) {
+              throw new HttpError(400, `The heaviest ${type.label.toLowerCase()} should be a whole number of kg, up to 200.`);
+            }
+            maxWeightKg = kg;
+          }
+          return { typeId: type.id, presence: item.presence, maxWeightKg };
+        });
+        if (!equipmentLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That\u2019s a lot of updates for one day. Try again tomorrow.');
+
+        const at = now().toISOString();
+        const insert = db.prepare(
+          `insert into equipment_reports (gym_id, user_id, equipment_type_id, presence, max_weight_kg, reported_at) values (?, ?, ?, ?, ?, ?)`,
+        );
+        db.exec('begin');
+        try {
+          // A report replaces your last one for this gym, so "not sure" clears a tick.
+          db.prepare('delete from equipment_reports where gym_id = ? and user_id = ?').run(gymId, account.id);
+          for (const item of items) insert.run(gymId, account.id, item.typeId, item.presence, item.maxWeightKg, at);
+          db.exec('commit');
+        } catch (error) {
+          db.exec('rollback');
+          throw error;
+        }
+        return send(res, 204);
+      }
     }
 
     // --- Google Maps (live, only with the owner's key) ----------------------

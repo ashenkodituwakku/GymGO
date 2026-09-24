@@ -98,6 +98,7 @@ export function PlaceCard({
   onOpenGoogle,
   asOf,
   photos,
+  memberKit,
   reviews,
 }: {
   result: GymSearchResult;
@@ -110,6 +111,8 @@ export function PlaceCard({
   asOf: Date;
   /** Members' photos across the top, which need the account and the server. */
   photos: React.ReactNode;
+  /** What members say the gym has, likewise. */
+  memberKit: React.ReactNode;
   /** The live reviews section, likewise. */
   reviews: React.ReactNode;
 }) {
@@ -346,7 +349,11 @@ export function PlaceCard({
         <Fold
           emoji="🏋️"
           title="Equipment"
-          summary={kit.length ? kit.slice(0, 3).map((item) => equipmentLabel(item.equipmentTypeId)).join(', ') + (kit.length > 3 ? '…' : '') : 'Not published'}
+          summary={
+            kit.length
+              ? kit.slice(0, 3).map((item) => equipmentLabel(item.equipmentTypeId)).join(', ') + (kit.length > 3 ? '…' : '')
+              : 'Not published by the gym · see what members say'
+          }
           initiallyOpen={result.equipment.matches.length > 0}
         >
           {result.equipment.matches.length > 0 && (
@@ -381,10 +388,11 @@ export function PlaceCard({
           </View>
           {kit.length === 0 && (
             <Txt variant="subhead" color={color.labelSecondary}>
-              This gym doesn’t publish its equipment, so we don’t list any. Ask when you call.
+              The gym doesn’t publish its equipment, so GymGO doesn’t claim any.
             </Txt>
           )}
           {record.equipment[0] && <Evidence provenance={record.equipment[0].provenance} />}
+          {memberKit}
         </Fold>
 
         <Fold

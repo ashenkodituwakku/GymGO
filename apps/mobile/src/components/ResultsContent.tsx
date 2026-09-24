@@ -64,7 +64,8 @@ export function ResultsContent({
   /** Each gym's newest member photo, by gym ID. */
   covers: Record<string, string>;
 }) {
-  const SearchInput = inSheet ? BottomSheetTextInput : TextInput;
+  // The sheet-aware input throws in a browser; see TextField in ui.tsx.
+  const SearchInput = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
   const suggestions = query.trim() ? suggestPlaces(query) : [];
   const filterCount = activeFilterCount(filters);
   const total = outcome.results.length;

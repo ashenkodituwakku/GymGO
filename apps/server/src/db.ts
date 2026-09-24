@@ -64,6 +64,16 @@ const SCHEMA = `
     moderated_by text
   );
   create index if not exists photos_gym on photos(gym_id, status);
+  create table if not exists equipment_reports (
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    equipment_type_id text not null,
+    presence text not null check (presence in ('yes', 'no')),
+    max_weight_kg integer,
+    reported_at text not null,
+    primary key (gym_id, user_id, equipment_type_id)
+  );
+  create index if not exists equipment_reports_gym on equipment_reports(gym_id);
   create table if not exists gyms (
     id text primary key,
     record_json text not null,

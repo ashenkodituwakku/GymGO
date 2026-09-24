@@ -60,6 +60,16 @@ export function googleMapsEmbedUrl(record: GymRecord): string {
   return `https://maps.google.com/maps?q=${encodeURIComponent(googleQuery(record))}&z=16&hl=en&output=embed`;
 }
 
+/**
+ * Google's Street View nearest the gym's map position, from the same free
+ * public embed. It shows whichever panorama is closest, so it may face the
+ * street rather than the door; people can drag to look around.
+ */
+export function googleStreetViewEmbedUrl(record: GymRecord): string {
+  const { lat, lng } = record.location.position;
+  return `https://maps.google.com/maps?layer=c&cbll=${lat},${lng}&cbp=11,0,0,0,0&hl=en&output=svembed`;
+}
+
 /** Name and street address: enough for Google to find the right listing. */
 function googleQuery(record: GymRecord): string {
   const { name, address } = record.location;

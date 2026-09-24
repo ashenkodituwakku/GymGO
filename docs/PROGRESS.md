@@ -45,6 +45,7 @@ because "the code does X" is not the same as "someone decided X".
 | Weekly hours start on Monday | Australian timetables do. Changed in the shared domain, so the website follows. |
 | Gym photos come only from members | Asked for gym images. Photos on gym websites are copyrighted, and a picture of a different gym would be a lie about the place. So members share their own, confirm they took them, have location data stripped, and wait for a moderator. Until someone does, the card says "No photo supplied yet" and the list shows a plain 🏋️ tile, which is clearly a symbol and not a photo. |
 | Google's info through Google's own free embed | Asked to "import data from Google", then for a completely free way. Google's terms forbid copying or storing Places content, and its API needs a billing account. Google's public "Embed a map" is free, keyless and unlimited, and shows Google's card (stars, review count, address) with a link to every photo and review. So each gym's Google page is that embed, full screen. The paid Places API extras stay optional behind the owner's key. |
+| Machines come from members, not Google | Asked for "the machines they have" from Google. Google has no equipment data, only photos, which can't be copied, and gyms' sites rarely list machines. So members tick what they saw, one report each per gym, shown as tallies next to (never merged into) what the gym publishes. Keeping them out of the search means one wrong report can't make a gym "Good to go". |
 | Simpler card: one answer, three facts, folded detail | Asked for simpler and more playful. The verdict is one emoji and a word, and the detail folds under one-line summaries, so nothing honest was removed, only tucked away. "Worth a call" became "Call first", which says what to do. |
 
 ## Traps
@@ -62,6 +63,11 @@ to their authors. The embed is the free, allowed route.
 **Keep Google's embed at least 420 px wide.** Below that Google swaps its
 card for a bare "Open in Maps" button. `GoogleEmbed` lays it out at 440 px
 and scales it down; don't "simplify" that away.
+
+**Don't use `BottomSheetTextInput` in the browser.** It calls
+`TextInput.State.currentlyFocusedInput`, which react-native-web lacks, so
+typing in any sheet crashed the phone-sized browser layout. `TextField` and
+the search box use a plain `TextInput` on web.
 
 **Don't show the Google page beside the map.** It is a full-screen modal for
 that reason. A side panel on the PC would break Google's rules.

@@ -8,13 +8,15 @@ this document could do.
 
 | | Implemented locally | Tested locally | Externally integrated | Deployed |
 |---|---|---|---|---|
-| API server (Node, built-in SQLite) | ✅ | ✅ 25 tests over real HTTP | n/a, runs on your PC | ❌ not hosted |
+| API server (Node, built-in SQLite) | ✅ | ✅ 27 tests over real HTTP | n/a, runs on your PC | ❌ not hosted |
 | Sign-up, sign-in, sign-out, delete account | ✅ | ✅ tests + driven in the browser | ❌ no email verification | ❌ |
 | Saved gyms synced to the account | ✅ | ✅ tests + driven in the browser | n/a | ❌ |
 | Reviews held for moderation; moderator queue | ✅ | ✅ tests; posting driven in the browser | n/a | ❌ |
 | Real Melbourne gyms (23), every fact sourced | ✅ | ✅ 11 honesty tests | ⚠️ one-off read, 23 Sep 2026 | n/a |
 | Member photos: consent, hidden details removed, moderated, credited | ✅ | ✅ tests + driven in the browser | n/a | ❌ |
 | Google's map and card for each gym (free embed, no key) | ✅ | ✅ loaded from Google in the browser, phone and PC sizes | ✅ Google's public embed | ❌ |
+| Google Street View nearest each gym (free embed, no key) | ✅ | ✅ loaded in the browser (Carlton Fitness's shopfront) | ✅ Google's public embed | ❌ |
+| Members' equipment reports (👍/👎 per machine, tallied) | ✅ | ✅ 2 server tests + driven in the browser | n/a | ❌ |
 | Extra Google photos and reviews (owner's own key, paid) | ✅ | ⚠️ tests with a fake Google only | ❌ **never called with a real key** | ❌ |
 
 **Photos:** only members' own photos, which they confirm they took. The
@@ -36,6 +38,14 @@ app's wrapper page was checked in mobile Chromium. It has **not** been seen
 in a real phone's web view. Google's guidelines allow a plain embed without
 permission, but ask revenue-generating apps to use the official Maps Embed
 API. That is also free, but needs a Cloud account with billing set up.
+
+**Equipment:** only 2 of the 23 real gyms publish any specific equipment
+(Absolute MMA, and Australian Strength Performance's platforms and Eleiko
+bars and plates). The other sites say "free weights" or "cardio" at most,
+which isn't specific enough to record. Members' reports fill the gap, shown
+as tallies and labelled as members'. They are not moderated. One member can
+make one report per gym, so a single bad report shows as "👍 1" and nothing
+more. They don't feed the search.
 
 **Google, the paid extra:** off unless the owner sets `GOOGLE_PLACES_API_KEY`. The code
 follows Google's rules as read on 23 September 2026. Only place IDs are
@@ -98,11 +108,11 @@ service, which is your decision to make. Nothing has been provisioned.
 
 **What "tested locally" means for the phone app, exactly:**
 
-- It typechecks, and 28 unit tests pass. They include the same reference search
+- It typechecks, and 29 unit tests pass. They include the same reference search
   the website runs, run through the app's own filter code: 3 confirmed results,
   Ironbark first.
 - `expo export` builds both the **iOS and Android bundles** into Hermes
-  bytecode without errors: 1,886 and 1,934 modules. The web-only map library
+  bytecode without errors: 1,887 and 1,927 modules. The web-only map library
   is confirmed absent from both.
 - `expo-doctor` passes 21/21 checks.
 - The interface was driven with Playwright in the browser build at 390 × 844,
@@ -181,10 +191,10 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 | `@gymgo/domain` unit tests | **115 passed** |
 | `@gymgo/demo-data` unit tests | **23 passed** |
 | `@gymgo/melbourne-data` unit tests | **11 passed** |
-| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **25 passed** |
-| `@gymgo/mobile` unit tests | **28 passed** |
+| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **27 passed** |
+| `@gymgo/mobile` unit tests | **29 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
-| `expo export` (iOS + Android) | Both compiled (1,886 and 1,934 modules) |
+| `expo export` (iOS + Android) | Both compiled (1,887 and 1,927 modules) |
 | `expo-doctor` | 21/21 checks passed |
 | `pnpm build` | Compiled successfully |
 | Playwright, old website (390 / 768 / 1440), fresh build | **99 passed**, 24 skipped (website unchanged since) |

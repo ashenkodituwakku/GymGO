@@ -37,6 +37,7 @@ import { Glass } from '@/components/Glass';
 import { GooglePage } from '@/components/GooglePage';
 import { GymMap, type GymMapHandle, type MapPin } from '@/components/GymMap';
 import { Icon } from '@/components/Icon';
+import { MemberKit } from '@/components/MemberKit';
 import { PhotoHero } from '@/components/PhotoHero';
 import { PlaceCard, PlaceHeader } from '@/components/PlaceCard';
 import { ResultsContent } from '@/components/ResultsContent';
@@ -293,6 +294,15 @@ export default function MapScreen() {
             account={account}
             onSignIn={openAccount}
             width={inSheet ? undefined : PANEL_WIDTH}
+          />
+        }
+        memberKit={
+          <MemberKit
+            gymId={selected.record.location.id}
+            isDemo={selected.record.location.isDemoData}
+            account={account}
+            inSheet={inSheet}
+            onSignIn={openAccount}
           />
         }
         reviews={<ReviewsSection gymId={selected.record.location.id} account={account} inSheet={inSheet} onSignIn={openAccount} />}

@@ -5,6 +5,7 @@
  * embeddable map with Google's card for the gym (its star rating, number of
  * reviews and address), loaded straight from Google. One tap on it, or on
  * "Open in Google Maps", shows every photo and review in Google Maps itself.
+ * Below it, Google's Street View nearest the gym, from the same free embed.
  * GymGO copies and stores none of it; Google shows and credits its own
  * content.
  *
@@ -23,7 +24,7 @@ import { Image, Linking, Pressable, ScrollView, StyleSheet, View, useWindowDimen
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { GymRecord } from '@gymgo/domain';
 import { api, type GoogleAuthor, type GooglePlace } from '@/lib/api';
-import { googleMapsEmbedUrl, googleMapsSearchUrl } from '@/lib/present';
+import { googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl } from '@/lib/present';
 import { color, face, radius, space } from '@/lib/theme';
 import { GoogleEmbed } from './GoogleEmbed';
 import { CloseButton, PrimaryButton, Txt } from './ui';
@@ -77,6 +78,14 @@ export function GooglePage({ record, onClose }: { record: GymRecord; onClose: ()
         <View style={styles.cta}>
           <PrimaryButton label="Open in Google Maps" onPress={() => open(mapsUrl)} />
         </View>
+
+        <Txt variant="title2" style={styles.more}>
+          🚶 Street View
+        </Txt>
+        <GoogleEmbed url={googleStreetViewEmbedUrl(record)} height={260} />
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+          Google’s Street View nearest the gym. Drag to look around: it may not be facing the door.
+        </Txt>
 
         {place && (
           <>

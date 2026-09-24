@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
-import { depositLine, googleMapsEmbedUrl, googleMapsSearchUrl, priceLine } from './present';
+import { depositLine, googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl, priceLine } from './present';
 import { atPlace, initialFilters, runSearch } from './query';
 import { geocodePlace } from './places';
 
@@ -81,6 +81,16 @@ describe('googleMapsEmbedUrl', () => {
     expect(url.searchParams.get('output')).toBe('embed');
     expect(url.searchParams.get('q')).toContain(gym.location.name);
     expect(url.searchParams.get('q')).toContain(gym.location.address.line1);
+    expect(url.searchParams.has('key')).toBe(false);
+  });
+});
+
+describe('googleStreetViewEmbedUrl', () => {
+  it('asks Google for Street View at the gym, with no key', () => {
+    const gym = MELBOURNE_GYMS.find((record) => record.location.id === 'dohertys-gym-city')!;
+    const url = new URL(googleStreetViewEmbedUrl(gym));
+    expect(url.searchParams.get('output')).toBe('svembed');
+    expect(url.searchParams.get('cbll')).toBe(`${gym.location.position.lat},${gym.location.position.lng}`);
     expect(url.searchParams.has('key')).toBe(false);
   });
 });

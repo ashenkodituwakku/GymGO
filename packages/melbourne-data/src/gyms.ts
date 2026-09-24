@@ -251,6 +251,10 @@ const absoluteMma = record(
 // --- Australian Strength Performance, Brunswick East ------------------------
 
 const ASP_HOME = website('https://trainasp.com.au/', "Gym's website: home page");
+// "Dedicated lifting platforms" and "Premium racks and bars: Including Eleiko
+// competition equipment and calibrated plates." It also mentions racks
+// without saying which kind, so no rack type is recorded.
+const ASP_OFFER = website('https://trainasp.com.au/what-we-offer/', "Gym's website: what we offer");
 const aspId = 'australian-strength-performance';
 
 const asp = record(
@@ -275,6 +279,7 @@ const asp = record(
         source: ASP_HOME,
       }),
     ],
+    equipment: equipment(aspId, ['lifting_platform', 'barbells'], ASP_OFFER),
     prerequisites: prerequisites(aspId, {
       notes: ['Offers a free first visit, booked in advance.', 'Public holiday hours are posted on its social media.'],
       source: ASP_HOME,

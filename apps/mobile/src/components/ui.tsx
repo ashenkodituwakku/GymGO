@@ -282,7 +282,9 @@ export function TextField({
   inSheet,
   ...props
 }: TextInputProps & { label: string; inSheet: boolean }) {
-  const Input = inSheet ? BottomSheetTextInput : TextInput;
+  // The sheet-aware input keeps the keyboard and sheet in step on phones. In
+  // a browser it calls a phone-only API and throws, so use a plain input there.
+  const Input = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
   return (
     <View style={styles.field}>
       <Txt variant="footnote" color={color.labelSecondary} style={styles.fieldLabel}>

@@ -96,6 +96,12 @@ export function installLiquidGlass(): void {
   </filter>`;
   document.body.appendChild(svg);
   if (canRefract()) document.documentElement.setAttribute('data-glass-refract', '');
+
+  // Each tab is a link, and pressing a mouse on a link and moving starts the
+  // browser's own drag-the-link, which cancels the lens drag. Touch doesn't.
+  document.addEventListener('dragstart', (event) => {
+    if (event.target instanceof Element && event.target.closest('[role="tablist"]')) event.preventDefault();
+  });
 }
 
 /** Fit the refraction to the bar's size, so the bend lands on its edges. */

@@ -20,7 +20,7 @@
 
 import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui';
 import { router, usePathname } from 'expo-router';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import { Keyboard, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -98,7 +98,14 @@ function GlassTabBar({ bottom }: { bottom: number }) {
     router.navigate(tab.href);
   };
 
-  // Drag the lens along the bar to switch tabs.
+  // Drag the lens along the bar to switch tabs. With a mouse, the browser
+  // follows a drag with a click on the tab it started on; that click mustn't
+  // take you back, so presses just after a drag are ignored.
+  const dragEndedAt = useRef(0);
+  const markDragEnd = () => {
+    dragEndedAt.current = Date.now();
+  };
+  const justDragged = () => Date.now() - dragEndedAt.current < 400;
   const last = TABS.length - 1;
   const drag = Gesture.Pan()
     .activeOffsetX([-10, 10])
@@ -111,6 +118,7 @@ function GlassTabBar({ bottom }: { bottom: number }) {
     .onEnd(() => {
       const target = Math.min(Math.max(Math.round(x.value / tabWidth), 0), last);
       x.value = withSpring(target * tabWidth, SPRING);
+      runOnJS(markDragEnd)();
       runOnJS(go)(target);
     })
     .onFinalize(() => {
@@ -151,7 +159,7 @@ function GlassTabBar({ bottom }: { bottom: number }) {
           <View style={styles.row}>
             {TABS.map((tab) => (
               <TabTrigger key={tab.name} name={tab.name} asChild>
-                <TabButton icon={tab.icon} label={tab.label} width={tabWidth} />
+                <TabButton icon={tab.icon} label={tab.label} width={tabWidth} ignorePress={justDragged} />
               </TabTrigger>
             ))}
           </View>
@@ -161,8 +169,10 @@ function GlassTabBar({ bottom }: { bottom: number }) {
   );
 }
 
-const TabButton = forwardRef<View, TabTriggerSlotProps & { icon: PhosphorName; label: string; width: number }>(function TabButton(
-  { icon, label, width, isFocused, onPress, ...props },
+type TabButtonProps = TabTriggerSlotProps & { icon: PhosphorName; label: string; width: number; ignorePress: () => boolean };
+
+const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
+  { icon, label, width, ignorePress, isFocused, onPress, ...props },
   ref,
 ) {
   const { account } = useApp();
@@ -172,6 +182,10 @@ const TabButton = forwardRef<View, TabTriggerSlotProps & { icon: PhosphorName; l
       ref={ref}
       {...props}
       onPress={(event) => {
+        if (ignorePress()) {
+          event.preventDefault();
+          return;
+        }
         if (!isFocused) haptic.select();
         onPress?.(event);
       }}

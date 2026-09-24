@@ -112,7 +112,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | App icon, splash screen | ❌ | ❌ | n/a | ❌ | n/a | ❌ |
 | Store builds (EAS / Xcode / Gradle) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | PC browser layout (side panels) | ✅ | ✅ driven end to end at 1440 × 900 | n/a | n/a | ❌ | n/a |
-| Tabs: Home, Explore, Saved, Profile (Instagram-style glass capsule, draggable lens) | ✅ | ⚠️ browser only: taps, and dragging with touch events | n/a | ❌ Liquid Glass material and the drag never seen on a phone | n/a | ❌ |
+| Tabs: Home, Explore, Saved, Profile (Instagram-style glass capsule, draggable lens) | ✅ | ⚠️ browser only: taps, and dragging with touch and with a mouse | n/a | ❌ Liquid Glass material and the drag never seen on a phone | n/a | ❌ |
 | Home, simplified (four picks, workout, nearby, saved, recent, neighbourhoods and cities as chips) | ✅ | ✅ driven at phone size | n/a | ❌ | n/a | ❌ |
 | Symbols instead of emoji on buttons, rows, chips and empty states (SF Symbols / Material Symbols / Phosphor) | ✅ | ⚠️ Material Symbols seen in the browser; SF Symbols only on an iPhone, never seen | n/a | ❌ | n/a | ❌ |
 | Brand logos (8 chains, from Wikimedia Commons, bundled) on gym pages and cards, credited | ✅ | ✅ driven in the browser (Equinox, Gold's Gym, Snap Fitness); in both native bundles | ✅ fetched from Wikidata and Commons once, by script | ❌ | n/a | ❌ |

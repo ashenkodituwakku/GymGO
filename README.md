@@ -244,6 +244,10 @@ GymGO or the gym, and it never counts as the gym's own price or makes a gym
 it, and it can be removed), reports over two years old stop counting, and
 amounts must be between $1 and $500.
 
+In lists and cards, a gym that publishes no visit price shows members'
+typical figure instead of a dash, marked as theirs: **~A$22 · members say**.
+A price the gym publishes always wins, even an unclear one.
+
 ### Gym logos
 
 Eight chains have a logo that is free to reuse, found through Wikidata (the

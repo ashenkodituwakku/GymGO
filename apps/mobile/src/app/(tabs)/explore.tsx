@@ -301,6 +301,7 @@ function MapScreen() {
       searchRef={searchInput}
       onSort={chooseSort}
       covers={data.covers}
+      memberPrices={data.memberPrices}
     />
   );
 

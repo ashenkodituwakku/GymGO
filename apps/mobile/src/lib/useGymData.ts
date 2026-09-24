@@ -15,6 +15,15 @@ export function useGymData() {
   const [status, setStatus] = useState<DataStatus>('loading');
   /** Each gym's newest member photo, for list thumbnails. */
   const [covers, setCovers] = useState<Record<string, string>>({});
+  /** What members typically paid for a visit, by gym, for lists. */
+  const [memberPrices, setMemberPrices] = useState<Record<string, { typicalMinor: number; count: number }>>({});
+
+  const refreshMemberPrices = useCallback(() => {
+    api
+      .typicalPrices()
+      .then((result) => setMemberPrices(result.typical))
+      .catch(() => undefined);
+  }, []);
 
   const refreshCovers = useCallback(() => {
     api
@@ -29,14 +38,15 @@ export function useGymData() {
       setRecords(data.gyms);
       setStatus('live');
       refreshCovers();
+      refreshMemberPrices();
     } catch {
       setStatus('offline');
     }
-  }, [refreshCovers]);
+  }, [refreshCovers, refreshMemberPrices]);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  return { records, status, covers, refresh, refreshCovers };
+  return { records, status, covers, memberPrices, refresh, refreshCovers, refreshMemberPrices };
 }

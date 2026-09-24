@@ -109,3 +109,20 @@ describe('typed prices', () => {
     for (const text of ['', 'free', '25 dollars', '1,000', '12.345', '-5', '1e3', '2500.00']) expect(parseAmount(text)).toBeNull();
   });
 });
+
+describe('members’ prices on a row', () => {
+  const none = { bestAvailable: null } as unknown as Parameters<typeof priceLine>[0];
+
+  it('shows what members typically paid, marked as theirs, only when the gym publishes no price', () => {
+    expect(priceLine(none)).toEqual({ headline: '—', caption: 'price unknown', confirmed: false });
+    expect(priceLine(none, { typicalMinor: 2245, country: 'AU' })).toEqual({ headline: '~A$22', caption: 'members say', confirmed: false });
+    expect(priceLine(none, { typicalMinor: 1550, country: 'US' })).toMatchObject({ headline: '~$16', caption: 'members say' });
+  });
+
+  it('never lets members’ figure replace a price the gym publishes, even an unclear one', () => {
+    for (const name of ['Quarry Lane Barbell', 'Tallow Street Gym']) {
+      const published = resultFor(name).offers;
+      expect(priceLine(published, { typicalMinor: 999, country: 'AU' })).toEqual(priceLine(published));
+    }
+  });
+});

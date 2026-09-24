@@ -4,6 +4,7 @@
  */
 
 import { formatMoney, type GymRecord, type OfferSelection } from '@gymgo/domain';
+import { moneyLabel } from './places';
 
 export interface PriceLine {
   headline: string;
@@ -14,10 +15,16 @@ export interface PriceLine {
 /**
  * The price on a row. What we actually hold, never a guess: an unknown fee is
  * "Ask", not a lower number; a price over budget is still shown, as the price.
+ * When the gym publishes no price at all but members have said what they
+ * paid, their typical figure shows instead, marked as theirs ("~A$22",
+ * "members say"), never as the gym's.
  */
-export function priceLine(offers: OfferSelection): PriceLine {
+export function priceLine(offers: OfferSelection, members?: { typicalMinor: number; country: string } | null): PriceLine {
   const chosen = offers.bestAvailable;
-  if (!chosen) return { headline: '—', caption: 'price unknown', confirmed: false };
+  if (!chosen) {
+    if (members) return { headline: `~${moneyLabel(Math.round(members.typicalMinor / 100) * 100, members.country)}`, caption: 'members say', confirmed: false };
+    return { headline: '—', caption: 'price unknown', confirmed: false };
+  }
 
   const total = chosen.cost.totalNonRefundableMinor;
   if (!chosen.cost.known || total === null) {

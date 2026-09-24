@@ -22,6 +22,7 @@
  *   GET    /api/gyms/:gymId/prices        what members paid for a casual visit: count, typical, range (plus yours)
  *   PUT    /api/gyms/:gymId/prices        { amountMinor, paidOn } -> your report (replaces your last)
  *   DELETE /api/gyms/:gymId/prices        take back your report
+ *   GET    /api/prices/typical            { gymId: { typicalMinor, count } } for every gym members have priced
  *   GET    /api/gyms/:gymId/google        live Google Maps details (only with the owner's key)
  *   GET    /api/billing/plans             GymGO Pro's prices, and whether it's on sale
  *   GET    /api/billing                   your plan (Free or Pro) and subscription
@@ -181,6 +182,12 @@ function cleanWorkoutPlan(input: unknown) {
     items: cleanItems,
     uncovered: texts(plan.uncovered, 15, 30),
   };
+}
+
+/** The middle of sorted amounts (the mean of the middle two for an even count). */
+function median(sorted: number[]): number {
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle]! : Math.round((sorted[middle - 1]! + sorted[middle]!) / 2);
 }
 
 /** How long a member's price report keeps counting. */
@@ -702,6 +709,19 @@ export function createApp(options: AppOptions) {
       }
     }
 
+    // The typical price members paid at each gym, for lists: one request, not one per gym.
+    if (method === 'GET' && path === '/api/prices/typical') {
+      const since = new Date(now().getTime() - PRICE_REPORT_DAYS * 86_400_000).toISOString().slice(0, 10);
+      const rows = db
+        .prepare('select gym_id, amount_minor from price_reports where paid_on >= ? order by gym_id, amount_minor')
+        .all(since) as Array<{ gym_id: string; amount_minor: number }>;
+      const byGym = new Map<string, number[]>();
+      for (const row of rows) byGym.set(row.gym_id, [...(byGym.get(row.gym_id) ?? []), row.amount_minor]);
+      const typical: Record<string, { typicalMinor: number; count: number }> = {};
+      for (const [gymId, amounts] of byGym) typical[gymId] = { typicalMinor: median(amounts), count: amounts.length };
+      return send(res, 200, { typical });
+    }
+
     // --- What members paid for a casual visit ---------------------------------
     // Members' reports, shown as theirs next to (never instead of) what the gym
     // publishes. The typical figure is the median, so one odd report can't
@@ -718,8 +738,6 @@ export function createApp(options: AppOptions) {
           .prepare('select amount_minor, paid_on from price_reports where gym_id = ? and currency = ? and paid_on >= ? order by amount_minor')
           .all(gymId, currency, since) as Array<{ amount_minor: number; paid_on: string }>;
         const amounts = rows.map((row) => row.amount_minor);
-        const middle = Math.floor(amounts.length / 2);
-        const median = amounts.length === 0 ? null : amounts.length % 2 ? amounts[middle]! : Math.round((amounts[middle - 1]! + amounts[middle]!) / 2);
         const mine = account
           ? (db.prepare('select amount_minor, paid_on from price_reports where gym_id = ? and user_id = ?').get(gymId, account.id) as
               | { amount_minor: number; paid_on: string }
@@ -728,7 +746,7 @@ export function createApp(options: AppOptions) {
         return send(res, 200, {
           currency,
           count: amounts.length,
-          typicalMinor: median,
+          typicalMinor: amounts.length ? median(amounts) : null,
           lowMinor: amounts[0] ?? null,
           highMinor: amounts.at(-1) ?? null,
           latestPaidOn: rows.reduce<string | null>((latest, row) => (latest && latest > row.paid_on ? latest : row.paid_on), null),

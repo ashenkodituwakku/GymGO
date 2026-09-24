@@ -84,6 +84,7 @@ export default function Saved() {
                         result={result}
                         visitMinute={filters.visitMinuteOfDay}
                         cover={data.covers[id] ?? null}
+                        memberTypicalMinor={data.memberPrices[id]?.typicalMinor ?? null}
                         onPress={() => router.push({ pathname: '/gym/[id]', params: { id } })}
                       />
                     </View>

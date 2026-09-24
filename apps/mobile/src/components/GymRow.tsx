@@ -20,18 +20,24 @@ export function GymRow({
   result,
   visitMinute,
   cover,
+  memberTypicalMinor = null,
   onPress,
 }: {
   result: GymSearchResult;
   visitMinute: number;
   /** Server path of the gym's newest member photo, if it has one. */
   cover: string | null;
+  /** What members typically paid, shown only when the gym publishes no price. */
+  memberTypicalMinor?: number | null;
   onPress: () => void;
 }) {
   const location = result.record.location;
   const tone = TIER_COLOUR[result.tier];
   const tier = TIER[result.tier];
-  const price = priceLine(result.offers);
+  const price = priceLine(
+    result.offers,
+    memberTypicalMinor === null ? null : { typicalMinor: memberTypicalMinor, country: location.address.countryCode },
+  );
   const access = accessLine(result.access.verdict, visitMinute);
   const coverUri = cover ? photoUrl(cover) : null;
   const where = [

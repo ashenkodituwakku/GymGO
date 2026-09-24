@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { api, ApiError, OfflineError, type PriceSummary } from '@/lib/api';
+import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { moneyLabel } from '@/lib/places';
 import { parseAmount } from '@/lib/present';
@@ -50,6 +51,7 @@ export function MemberPrices({
   inSheet: boolean;
   onSignIn: () => void;
 }) {
+  const { data } = useApp();
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [editing, setEditing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -130,6 +132,7 @@ export function MemberPrices({
                     setEditing(false);
                     setNotice('Your report is gone.');
                     refresh();
+                    data.refreshMemberPrices();
                   } catch (error) {
                     fail(error);
                   }
@@ -143,6 +146,7 @@ export function MemberPrices({
               setEditing(false);
               setNotice('Thanks! It shows as one member’s report, next to anyone else’s.');
               refresh();
+              data.refreshMemberPrices();
             } catch (error) {
               fail(error);
             }

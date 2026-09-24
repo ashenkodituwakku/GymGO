@@ -302,6 +302,13 @@ describe('what members paid for a casual visit', () => {
     expect((await call('PUT', demo, { token, body: { amountMinor: 2000, paidOn: day(0) } })).status).toBe(400);
   });
 
+  it('lists the typical price for every gym members have priced, in one request', async () => {
+    const all = await call('GET', '/api/prices/typical');
+    expect(all.status).toBe(200);
+    expect(all.body.typical['carlton-fitness']).toEqual({ typicalMinor: 2250, count: 2 });
+    for (const entry of Object.values(all.body.typical) as Array<{ count: number }>) expect(entry.count).toBeGreaterThan(0);
+  });
+
   it('keeps a US gym’s reports in US dollars', async () => {
     const { token } = await signUp();
     const gym = `/api/gyms/${US_GYMS[0]!.location.id}/prices`;

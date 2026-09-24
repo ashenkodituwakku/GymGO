@@ -40,6 +40,7 @@ export function ResultsContent({
   onOpenAccount,
   dataNote,
   covers,
+  memberPrices,
   searchRef,
   onSort,
 }: {
@@ -65,6 +66,8 @@ export function ResultsContent({
   dataNote: string;
   /** Each gym's newest member photo, by gym ID. */
   covers: Record<string, string>;
+  /** What members typically paid, by gym. */
+  memberPrices: Record<string, { typicalMinor: number }>;
   /** So other tabs can put the cursor in the search box. */
   searchRef?: React.RefObject<TextInput | null>;
   /** Choose how the list is ordered. */
@@ -275,6 +278,7 @@ export function ResultsContent({
                     result={result}
                     visitMinute={filters.visitMinuteOfDay}
                     cover={covers[result.record.location.id] ?? null}
+                    memberTypicalMinor={memberPrices[result.record.location.id]?.typicalMinor ?? null}
                     onPress={() => onSelect(result.record.location.id)}
                   />
                 </Animated.View>

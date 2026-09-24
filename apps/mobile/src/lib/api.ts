@@ -230,6 +230,7 @@ export const api = {
     ),
   reportEquipment: (token: string, gymId: string, items: EquipmentReportItem[]) =>
     request<unknown>('PUT', `/api/gyms/${encodeURIComponent(gymId)}/equipment`, { token, body: { items } }),
+  typicalPrices: () => request<{ typical: Record<string, { typicalMinor: number; count: number }> }>('GET', '/api/prices/typical'),
   prices: (gymId: string, token: string | null) => request<PriceSummary>('GET', `/api/gyms/${encodeURIComponent(gymId)}/prices`, { token }),
   reportPrice: (token: string, gymId: string, body: { amountMinor: number; paidOn: string }) =>
     request<unknown>('PUT', `/api/gyms/${encodeURIComponent(gymId)}/prices`, { token, body }),

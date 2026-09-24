@@ -2,7 +2,7 @@
  * Brand logos for GymGO, from Wikidata and Wikimedia Commons.
  *
  * For every gym brand the data knows (Wikidata IDs from OpenStreetMap's
- * brand:wikidata tags, plus a few Australian brands by name), ask Wikidata
+ * brand:wikidata tags in the US and Australian data, plus a few brands by name), ask Wikidata
  * for the brand's logo (property P154), read each file's licence and author
  * from its Commons page, and keep only logos under a licence GymGO can use
  * (public domain as a simple logo, CC0 or CC BY/BY-SA). Each is trimmed,
@@ -78,8 +78,13 @@ async function sparql(query) {
 /** The plain text of a wiki field: links and templates reduced to their words. */
 function plain(text) {
   if (!text) return null;
-  const clean = text
-    .replace(/\{\{\s*unknown[^}]*\}\}/gi, '')
+  // Templates nest ({{AutVec|o={{Label|Q1}}|…}}): take them out innermost first.
+  let flat = text.replace(/\{\{\s*unknown[^}]*\}\}/gi, '');
+  for (let previous = ''; previous !== flat; ) {
+    previous = flat;
+    flat = flat.replace(/\{\{[^{}]*\}\}/g, '');
+  }
+  const clean = flat
     .replace(/\[\[[^\]|]*\|([^\]]*)\]\]/g, '$1')
     .replace(/\[\[([^\]]*)\]\]/g, '$1')
     .replace(/\[https?:\S+\s([^\]]*)\]/g, '$1')
@@ -108,8 +113,9 @@ function fileUrl(file) {
 }
 
 async function main() {
-  const usa = readFileSync(join(root, 'packages', 'usa-data', 'src', 'data.ts'), 'utf8');
-  const qids = [...new Set([...usa.matchAll(/"brandWikidata": "(Q\d+)"/g)].map((match) => match[1]))].sort();
+  // Every brand the map-only data knows, in both countries.
+  const data = ['usa-data', 'au-data'].map((pkg) => readFileSync(join(root, 'packages', pkg, 'src', 'data.ts'), 'utf8')).join('\n');
+  const qids = [...new Set([...data.matchAll(/"brandWikidata": "(Q\d+)"/g)].map((match) => match[1]))].sort();
   const label = 'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }';
   const rows = await sparql(
     `SELECT ?item ?itemLabel ?logo WHERE { VALUES ?item { ${qids.map((q) => `wd:${q}`).join(' ')} } ?item wdt:P154 ?logo . ${label} }`,

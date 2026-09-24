@@ -93,9 +93,11 @@ gym's page with a link to its Commons page.
 |---|---|---|
 | 24 Hour Fitness | [24_Hour_Fitness_logo.svg](https://commons.wikimedia.org/wiki/File:24_Hour_Fitness_logo.svg) | Public domain (logo) |
 | CrossFit | [Logo_CrossFit.svg](https://commons.wikimedia.org/wiki/File:Logo_CrossFit.svg) | Public domain (text logo) |
+| Curves | [Curves_fitness_logo.svg](https://commons.wikimedia.org/wiki/File:Curves_fitness_logo.svg) | Public domain (text logo) |
 | Equinox | [Equinox_Fitness_logo.png](https://commons.wikimedia.org/wiki/File:Equinox_Fitness_logo.png) | Public domain (logo) |
 | Fitness First | [Fitness_First_Logo.svg](https://commons.wikimedia.org/wiki/File:Fitness_First_Logo.svg) | Public domain (text logo) |
 | Gold's Gym | [Gold's_Gym_Weight_Plate_Logo_Primary_150x150.png](https://commons.wikimedia.org/wiki/File:Gold's_Gym_Weight_Plate_Logo_Primary_150x150.png) | CC BY 4.0, © Gold's Gym |
+| Kieser | [Kieser_Logo_2025.svg](https://commons.wikimedia.org/wiki/File:Kieser_Logo_2025.svg) | Public domain (text logo) |
 | LA Fitness | [LA_Fitness_logo.svg](https://commons.wikimedia.org/wiki/File:LA_Fitness_logo.svg) | Public domain (text logo) |
 | Life Time | [Life_Time_Fitness_logo.svg](https://commons.wikimedia.org/wiki/File:Life_Time_Fitness_logo.svg) | Public domain (text logo) |
 | Snap Fitness | [Snap_Fitness_logo.svg](https://commons.wikimedia.org/wiki/File:Snap_Fitness_logo.svg) | Public domain (text logo) |

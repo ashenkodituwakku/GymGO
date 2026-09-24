@@ -122,7 +122,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Home, simplified (four picks, workout, nearby, saved, recent, neighbourhoods and cities as chips) | ✅ | ✅ driven at phone size | n/a | ❌ | n/a | ❌ |
 | Accessibility in the browser: every button and link named, text contrast, keyboard order | ✅ | ✅ scanned 9 screens (0 unnamed controls); text colours checked at WCAG AA (fine print moved off the faint grey, which was 2.9:1); Tab order and focus rings checked on Home | n/a | ❌ VoiceOver / TalkBack never run | n/a | ❌ |
 | Symbols instead of emoji on buttons, rows, chips and empty states (SF Symbols / Material Symbols / Phosphor) | ✅ | ⚠️ Material Symbols seen in the browser; SF Symbols only on an iPhone, never seen | n/a | ❌ | n/a | ❌ |
-| Brand logos (8 chains, from Wikimedia Commons, bundled) on gym pages and cards, credited | ✅ | ✅ driven in the browser (Equinox, Gold's Gym, Snap Fitness); in both native bundles | ✅ fetched from Wikidata and Commons once, by script | ❌ | n/a | ❌ |
+| Brand logos (10 chains, from Wikimedia Commons, bundled) on gym pages and cards, credited | ✅ | ✅ driven in the browser (Equinox, Gold's Gym, Snap Fitness); in both native bundles | ✅ fetched from Wikidata and Commons once, by script | ❌ | n/a | ❌ |
 | Top of a gym page: members' photos, else Google's photos (owner's key), else Street View | ✅ | ⚠️ Google's photos only with stubbed data; Street View embed blank in this sandbox (no Google access from the test browser) | ⚠️ Street View is Google's free embed; Places photos never called with a real key | ❌ | n/a | ❌ |
 | Gym page (pushed screen, share/compare/save) | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |
 | Compare up to 3 gyms | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |

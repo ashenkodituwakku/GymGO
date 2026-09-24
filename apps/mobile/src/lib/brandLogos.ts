@@ -19,9 +19,11 @@ export interface BrandLogo {
 export const BRAND_LOGOS: BrandLogo[] = [
   { qid: "Q4631849", brand: "24 Hour Fitness", slug: "24-hour-fitness", aspect: 4.44, page: "https://commons.wikimedia.org/wiki/File:24_Hour_Fitness_logo.svg", license: "Public domain (simple logo)", author: "24 Hour Fitness" },
   { qid: "Q2072840", brand: "CrossFit", slug: "crossfit", aspect: 3.78, page: "https://commons.wikimedia.org/wiki/File:Logo_CrossFit.svg", license: "Public domain (simple logo)", author: "CrossFit, LLC" },
+  { qid: "Q5196080", brand: "Curves International", slug: "curves-international", aspect: 2.93, page: "https://commons.wikimedia.org/wiki/File:Curves_fitness_logo.svg", license: "Public domain (simple logo)", author: null },
   { qid: "Q5384535", brand: "Equinox Fitness", slug: "equinox-fitness", aspect: 7.87, page: "https://commons.wikimedia.org/wiki/File:Equinox_Fitness_logo.png", license: "Public domain (simple logo)", author: "Equinox Fitness" },
   { qid: "Q127120", brand: "Fitness First", slug: "fitness-first", aspect: 5, page: "https://commons.wikimedia.org/wiki/File:Fitness_First_Logo.svg", license: "Public domain (simple logo)", author: null },
   { qid: "Q1536234", brand: "Gold's Gym", slug: "golds-gym", aspect: 1, page: "https://commons.wikimedia.org/wiki/File:Gold's_Gym_Weight_Plate_Logo_Primary_150x150.png", license: "CC BY 4.0", author: "Gold's Gym" },
+  { qid: "Q1112367", brand: "Kieser", slug: "kieser", aspect: 3.53, page: "https://commons.wikimedia.org/wiki/File:Kieser_Logo_2025.svg", license: "Public domain (simple logo)", author: "Kieser, originally uploaded by Schreibmaschine1993" },
   { qid: "Q6457180", brand: "LA Fitness", slug: "la-fitness", aspect: 2.93, page: "https://commons.wikimedia.org/wiki/File:LA_Fitness_logo.svg", license: "Public domain (simple logo)", author: "LA Fitness International LLC" },
   { qid: "Q6545004", brand: "Life Time", slug: "life-time", aspect: 4.66, page: "https://commons.wikimedia.org/wiki/File:Life_Time_Fitness_logo.svg", license: "Public domain (simple logo)", author: "Life Time" },
   { qid: "Q7547254", brand: "Snap Fitness", slug: "snap-fitness", aspect: 6.96, page: "https://commons.wikimedia.org/wiki/File:Snap_Fitness_logo.svg", license: "Public domain (simple logo)", author: "Snap Fitness" },

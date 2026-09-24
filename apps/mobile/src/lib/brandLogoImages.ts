@@ -6,9 +6,11 @@ import type { ImageSourcePropType } from 'react-native';
 export const LOGO_IMAGES: Record<string, ImageSourcePropType> = {
   "24-hour-fitness": require('../../assets/logos/24-hour-fitness.png'),
   "crossfit": require('../../assets/logos/crossfit.png'),
+  "curves-international": require('../../assets/logos/curves-international.png'),
   "equinox-fitness": require('../../assets/logos/equinox-fitness.png'),
   "fitness-first": require('../../assets/logos/fitness-first.png'),
   "golds-gym": require('../../assets/logos/golds-gym.png'),
+  "kieser": require('../../assets/logos/kieser.png'),
   "la-fitness": require('../../assets/logos/la-fitness.png'),
   "life-time": require('../../assets/logos/life-time.png'),
   "snap-fitness": require('../../assets/logos/snap-fitness.png'),

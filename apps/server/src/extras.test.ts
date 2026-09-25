@@ -10,6 +10,7 @@ import { US_GYMS } from '@gymgo/usa-data';
 import { createApp } from './app';
 import { openDb, seedGyms, type Db } from './db';
 import { cleanPhoto, stripJpeg, stripPng } from './photos';
+import { sameName } from './google';
 
 // --- A tiny JPEG with an EXIF block that carries a fake GPS tag. -------------
 const SOI = Buffer.from([0xff, 0xd8]);
@@ -68,12 +69,23 @@ async function fakeGoogle(input: string | URL | Request, init?: RequestInit): Pr
   if (headers.get('X-Goog-Api-Key') !== 'test-key') return Response.json({ error: { message: 'bad key' } }, { status: 403 });
   if (url.endsWith('places:searchText')) {
     const body = JSON.parse(String(init?.body));
+    const near = (id: string, name: string, types: string[], northMetres: number) => ({
+      id,
+      displayName: { text: name },
+      types,
+      location: { latitude: body.locationBias.circle.center.latitude + northMetres / 111_000, longitude: body.locationBias.circle.center.longitude },
+    });
     if (String(body.textQuery).includes('Absolute')) {
       // Only a listing 2 km away: not this gym.
-      return Response.json({ places: [{ id: 'far-away', location: { latitude: -37.83, longitude: 144.99 } }] });
+      return Response.json({ places: [{ id: 'far-away', displayName: { text: 'Absolute MMA' }, location: { latitude: -37.83, longitude: 144.99 } }] });
     }
+    if (String(body.textQuery).includes('Prime Athletica')) {
+      // Close, but a café and a shopping centre: not this gym, whatever the distance.
+      return Response.json({ places: [near('ChIJ-cafe', 'Brunetti Café', ['cafe'], 20), near('ChIJ-mall', 'Smith Street Centre', ['shopping_mall'], 10)] });
+    }
+    // Doherty's: the shopping centre is nearer, but the gym is the one named.
     return Response.json({
-      places: [{ id: 'ChIJ-dohertys', location: { latitude: CITY.location.position.lat + 0.0003, longitude: CITY.location.position.lng } }],
+      places: [near('ChIJ-mall', 'QV Melbourne', ['shopping_mall'], 10), near('ChIJ-dohertys', 'Dohertys Gym City', ['gym'], 33)],
     });
   }
   if (url.includes('/photos/p1/media')) return Response.json({ photoUri: 'https://lh3.googleusercontent.com/p1' });
@@ -445,6 +457,18 @@ describe('downloading your data', () => {
   });
 });
 
+describe('is this Google listing the gym?', () => {
+  it('matches on a real word of the name, not on filler or the suburb', () => {
+    expect(sameName('Doherty’s Gym', 'Dohertys Gym City')).toBe(true);
+    expect(sameName('Fitness First', 'Fitness First Bondi Junction')).toBe(true);
+    expect(sameName('Snap Fitness', 'QV Melbourne')).toBe(false);
+    expect(sameName('CrossFit Fitzroy', 'CrossFit Fitzroy', ['Fitzroy', 'VIC'])).toBe(true);
+    expect(sameName('CrossFit Fitzroy', 'Fitzroy Pharmacy', ['Fitzroy', 'VIC'])).toBe(false);
+    expect(sameName('The Gym', 'The Gym')).toBe(true);
+    expect(sameName('The Gym', 'Gym Bar')).toBe(false);
+  });
+});
+
 describe('Google Maps details', () => {
   it('matches the gym, returns live details with credits, and stores only the place ID', async () => {
     const result = await call('GET', '/api/gyms/dohertys-gym-city/google');
@@ -487,6 +511,15 @@ describe('Google Maps details', () => {
   it('won’t attach a listing that is too far from the gym to be it', async () => {
     const result = await call('GET', '/api/gyms/absolute-mma-melbourne-cbd/google');
     expect(result.body).toEqual({ configured: true, found: false, reason: 'no_match' });
+  });
+
+  it('won’t attach the café next door or the centre it’s in, and re-checks matches made by the old rule', async () => {
+    const prime = MELBOURNE_GYMS.find((gym) => gym.location.name === 'Prime Athletica')!.location.id;
+    // Matched under the old nearest-listing rule to the shopping centre:
+    db.prepare('insert or replace into google_places (gym_id, place_id, matched_at, rule) values (?, ?, ?, 1)').run(prime, 'ChIJ-mall', '2026-09-01T00:00:00Z');
+    const result = await call('GET', `/api/gyms/${prime}/google`);
+    expect(result.body).toEqual({ configured: true, found: false, reason: 'no_match' });
+    expect(db.prepare('select place_id, rule from google_places where gym_id = ?').get(prime)).toEqual({ place_id: null, rule: 2 });
   });
 
   it('doesn’t look up invented demo gyms', async () => {

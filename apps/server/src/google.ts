@@ -78,6 +78,38 @@ export class GoogleError extends Error {
 
 /** How far a Google listing may be from our map position and still be this gym. */
 const MATCH_RADIUS_KM = 0.15;
+/** Closer than this, a listing Google calls a gym may be this gym under another name. */
+const SAME_SPOT_KM = 0.04;
+/** Bumped whenever the matching rule changes, so gyms matched by an older rule are matched again. */
+const MATCH_RULE = 2;
+
+const FILLER = new Set(['the', 'gym', 'gyms', 'fitness', 'health', 'club', 'clubs', 'centre', 'center', 'studio', 'studios', 'training', 'and', 'of', 'co']);
+const FITNESS_TYPES = new Set(['gym', 'fitness_center', 'sports_club', 'sports_complex', 'sports_activity_location']);
+
+function nameWords(text: string): Set<string> {
+  const words = text
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/['’]/g, '')
+    .match(/[a-z0-9]+/g);
+  return new Set((words ?? []).filter((word) => !FILLER.has(word)));
+}
+
+/**
+ * Whether Google's name for a place is plausibly our gym's: they share a
+ * word that isn't filler or the name of the place it's in ("Doherty's Gym"
+ * and "Dohertys Gym City" share "dohertys"; "CrossFit Fitzroy" and "Fitzroy
+ * Pharmacy" share only the suburb, so they don't match). Names that are all
+ * filler must match exactly.
+ */
+export function sameName(ours: string, theirs: string, placeNames: string[] = []): boolean {
+  const place = new Set(placeNames.flatMap((name) => [...nameWords(name)]));
+  const a = new Set([...nameWords(ours)].filter((word) => !place.has(word)));
+  const b = nameWords(theirs);
+  if (a.size === 0 || b.size === 0) return ours.trim().toLowerCase() === theirs.trim().toLowerCase();
+  return [...a].some((word) => b.has(word));
+}
 
 /**
  * Google bills each photo separately, so a page shows some, not all ten
@@ -119,8 +151,11 @@ export class GooglePlaces {
     db.exec(`create table if not exists google_places (
       gym_id text primary key,
       place_id text,
-      matched_at text not null
+      matched_at text not null,
+      rule integer not null default 1
     )`);
+    const columns = db.prepare('pragma table_info(google_places)').all() as Array<{ name: string }>;
+    if (!columns.some((column) => column.name === 'rule')) db.exec('alter table google_places add column rule integer not null default 1');
   }
 
   get configured(): boolean {
@@ -145,17 +180,23 @@ export class GooglePlaces {
     return data;
   }
 
-  /** The gym's Google place ID, found once by name and address near our position, then remembered. */
+  /**
+   * The gym's Google place ID, found once and remembered. The listing must
+   * be this gym, not merely near it: within 150 m and sharing a real word of
+   * its name (or its brand's), or, failing that, a listing Google calls a gym
+   * within 40 m. So the shopping centre it's in, or the café next door, never
+   * lends the gym its photos.
+   */
   async placeIdFor(record: GymRecord): Promise<string | null> {
-    const known = this.db.prepare('select place_id from google_places where gym_id = ?').get(record.location.id) as
-      | { place_id: string | null }
+    const known = this.db.prepare('select place_id, rule from google_places where gym_id = ?').get(record.location.id) as
+      | { place_id: string | null; rule: number }
       | undefined;
-    if (known) return known.place_id;
+    if (known && known.rule >= MATCH_RULE) return known.place_id;
 
     const { location } = record;
     const data = await this.call(`${PLACES}/places:searchText`, {
       method: 'POST',
-      fieldMask: 'places.id,places.location',
+      fieldMask: 'places.id,places.location,places.displayName,places.types',
       body: {
         textQuery: `${location.name} ${location.address.line1} ${location.address.suburb} ${location.address.state}`,
         locationBias: {
@@ -164,23 +205,29 @@ export class GooglePlaces {
         maxResultCount: 5,
       },
     });
-    const candidates = (Array.isArray(data.places) ? data.places : []) as Array<Record<string, any>>;
-    const match = candidates
+    const candidates = ((Array.isArray(data.places) ? data.places : []) as Array<Record<string, any>>)
       .map((place) => ({
         id: typeof place.id === 'string' ? place.id : null,
+        name: typeof place.displayName?.text === 'string' ? place.displayName.text : '',
+        types: Array.isArray(place.types) ? (place.types as unknown[]).filter((type): type is string => typeof type === 'string') : [],
         km:
           typeof place.location?.latitude === 'number'
             ? haversineKm(location.position, { lat: place.location.latitude, lng: place.location.longitude })
             : Infinity,
       }))
       .filter((place) => place.id && place.km <= MATCH_RADIUS_KM)
-      .sort((a, b) => a.km - b.km)[0];
+      .sort((a, b) => a.km - b.km);
+    const where = [location.address.suburb, location.address.state];
+    const named = candidates.find(
+      (place) => sameName(location.name, place.name, where) || (location.brand !== null && sameName(location.brand, place.name, where)),
+    );
+    const match = named ?? candidates.find((place) => place.km <= SAME_SPOT_KM && place.types.some((type) => FITNESS_TYPES.has(type)));
 
     const placeId = match?.id ?? null;
     // Place IDs may be stored indefinitely under Google's terms; nothing else is.
     this.db
-      .prepare('insert or replace into google_places (gym_id, place_id, matched_at) values (?, ?, ?)')
-      .run(location.id, placeId, new Date().toISOString());
+      .prepare('insert or replace into google_places (gym_id, place_id, matched_at, rule) values (?, ?, ?, ?)')
+      .run(location.id, placeId, new Date().toISOString(), MATCH_RULE);
     return placeId;
   }
 

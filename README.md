@@ -236,7 +236,12 @@ The top of a gym's page shows, in this order:
 1. **Members' photos**, each with the member's name on it.
 2. If there are none, and the owner has set up the optional Google key
    (below), **Google's photos** of the place, each credited to whoever took
-   it, with "Google Maps" underneath.
+   it, with "Google Maps" underneath. They're only ever the exact gym's: a
+   Google listing is used only if it's within 150 m and shares a real word
+   of the gym's name (not "gym" or "fitness", and not the suburb), or, failing
+   that, if Google calls it a gym and it's within 40 m. So the shopping
+   centre a gym is in, or the café next door, never lends it their photos;
+   a gym with no sure match simply shows no Google photos.
 3. Otherwise **Google Street View** outside the gym, labelled as such (it
    may not face the door). This is Google's free public embed.
 

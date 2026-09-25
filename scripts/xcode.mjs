@@ -59,17 +59,34 @@ export function lanAddress(interfaces = networkInterfaces()) {
 }
 
 /** What the project is made from: remake it when any of these change. */
-function configFingerprint(bundleId, team) {
+export function configFingerprint(bundleId = process.env.GYMGO_IOS_BUNDLE_ID || defaultBundleId(), team = process.env.GYMGO_APPLE_TEAM_ID || null) {
   const hash = createHash('sha256');
   for (const file of ['app.json', 'app.config.js', 'package.json']) hash.update(readFileSync(join(mobileDir, file)));
-  hash.update(`${bundleId}|${team ?? ''}`);
+  hash.update(`${bundleId}|${team ?? ''}|${process.env.GYMGO_APPLE_SIGN_IN ?? ''}|${process.env.GYMGO_GOOGLE_CLIENT_ID_IOS ?? ''}`);
   return hash.digest('hex').slice(0, 16);
 }
 
+/** The same settings file the server reads, so Google and Apple sign-in are set up once for both. */
+function loadServerSettings() {
+  const file = join(root, 'apps', 'server', '.env.local');
+  if (!existsSync(file)) return;
+  const before = { ...process.env };
+  process.loadEnvFile(file);
+  Object.assign(process.env, before);
+}
+
 export function prepareXcode(options = {}) {
+  loadServerSettings();
   const { clean = false, open = true, team = process.env.GYMGO_APPLE_TEAM_ID || null } = options;
   if (process.platform !== 'darwin') {
     throw new Stop('Xcode runs only on a Mac.', 'On Windows or Linux, use Expo Go on your phone instead: see README → Start GymGO.');
+  }
+  const developerDir = spawnSync('xcode-select', ['-p'], { encoding: 'utf8' }).stdout?.trim() ?? '';
+  if (developerDir.includes('CommandLineTools') && existsSync('/Applications/Xcode.app')) {
+    throw new Stop(
+      'Xcode is installed, but the Mac is set to use only its command line tools.',
+      'Point it at Xcode (it asks for your Mac password):\n      sudo xcode-select -s /Applications/Xcode.app/Contents/Developer',
+    );
   }
   if (!ok('xcodebuild', ['-version'])) {
     throw new Stop(
@@ -93,15 +110,24 @@ export function prepareXcode(options = {}) {
     const args = [expoCli, 'prebuild', '--platform', 'ios'];
     // Remaking an existing project starts it fresh, so nothing stale is left behind.
     if (existsSync(iosDir)) args.push('--clean');
-    const made = spawnSync(process.execPath, args, { cwd: mobileDir, stdio: 'inherit', env: { ...env, CI: '1' } });
+    const made = spawnSync(process.execPath, args, { cwd: mobileDir, stdio: 'inherit', env: { ...env, CI: '1', LANG: env.LANG || 'en_US.UTF-8' } });
     // Prebuild fetches the native parts itself; if that was skipped or
     // stopped short, the workspace Xcode opens is missing, so fetch them here.
     if (made.status === 0 && !existsSync(workspace) && existsSync(join(iosDir, 'GymGO.xcodeproj'))) {
       console.log('  >  Fetching the native parts (pod install)');
-      spawnSync('pod', ['install'], { cwd: iosDir, stdio: 'inherit' });
+      const pods = spawnSync('pod', ['install'], { cwd: iosDir, stdio: 'inherit', env: { ...env, LANG: env.LANG || 'en_US.UTF-8' } });
+      if (pods.status !== 0) {
+        throw new Stop(
+          'CocoaPods couldn’t fetch the native parts.',
+          'Update its list of parts and try again:\n      pod repo update && bash ~/GymGO/scripts/gymgo-mac.sh --xcode --clean',
+        );
+      }
     }
     if (made.status !== 0 || !existsSync(workspace)) {
-      throw new Stop('Making the Xcode project failed.', 'Scroll up for the error. `node scripts/xcode.mjs --clean` starts it again from scratch.');
+      throw new Stop(
+        'Making the Xcode project failed.',
+        'Scroll up for the error. `bash ~/GymGO/scripts/gymgo-mac.sh --xcode --clean` starts it again from scratch; `--doctor` prints what to share.',
+      );
     }
     writeFileSync(STAMP, JSON.stringify({ fingerprint, bundleId, team }, null, 2));
   } else {
@@ -111,13 +137,19 @@ export function prepareXcode(options = {}) {
   // A release build carries its code inside the app, so it can't ask the
   // bundler where the server is: it's told here, at build time. (A debug
   // build finds it on its own: the Mac it loaded its code from.)
+  // And Xcode's own build steps run Node, but Xcode doesn't see Homebrew's
+  // folders, so it's told exactly which Node: without this a build stops
+  // with "node: command not found".
   const address = lanAddress();
-  if (address) {
-    writeFileSync(
-      join(iosDir, '.xcode.env.local'),
-      `# Written by scripts/xcode.mjs: where a release build finds the GymGO server.\nexport EXPO_PUBLIC_API_URL=http://${address}:${SERVER_PORT}\n`,
-    );
-  }
+  writeFileSync(
+    join(iosDir, '.xcode.env.local'),
+    [
+      '# Written by scripts/xcode.mjs each time GymGO starts.',
+      `export NODE_BINARY=${JSON.stringify(process.execPath)}`,
+      ...(address ? [`export EXPO_PUBLIC_API_URL=http://${address}:${SERVER_PORT}`] : []),
+      '',
+    ].join('\n'),
+  );
 
   if (open) {
     execFileSync('open', ['-a', 'Xcode', workspace]);

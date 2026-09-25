@@ -99,15 +99,17 @@ After that you can run:
 
 ### On a Mac or Linux
 
+In Terminal, one line, whether or not you've downloaded GymGO before:
+
 ```bash
-git clone -b claude/friendly-johnson-9rzxrj https://github.com/ashenkodituwakku/GymGO.git ~/GymGO
-bash ~/GymGO/scripts/gymgo-mac.sh      # add --tunnel if the phone can't connect
+curl -fsSL https://raw.githubusercontent.com/ashenkodituwakku/GymGO/claude/friendly-johnson-9rzxrj/scripts/gymgo-mac.sh | bash
 ```
 
-It checks Node, installs what's missing in the project, and starts the
-server and the app, like the Windows launcher. `--update` pulls the latest
-version first. (On Linux, `npx pnpm@10 install` then `npx pnpm@10 app` in
-`~/GymGO` does the same.)
+It downloads GymGO into `~/GymGO` (or brings an existing copy up to date,
+whatever state it's in), installs what's missing, and starts the server and
+the app, like the Windows launcher. Add `-s -- --tunnel` after `bash` if the
+phone can't connect. (On Linux, `npx pnpm@10 install` then `npx pnpm@10 app`
+in `~/GymGO` does the same.)
 
 ### On a Mac, in Xcode (Simulator or your iPhone)
 
@@ -126,18 +128,29 @@ your own iPhone.
 brew install node cocoapods
 ```
 
-**2. Download GymGO and open it in Xcode:**
+**2. Get GymGO and open it in Xcode** (one line; the same line updates it later):
 
 ```bash
-git clone -b claude/friendly-johnson-9rzxrj https://github.com/ashenkodituwakku/GymGO.git ~/GymGO
-bash ~/GymGO/scripts/gymgo-mac.sh --xcode
+curl -fsSL https://raw.githubusercontent.com/ashenkodituwakku/GymGO/claude/friendly-johnson-9rzxrj/scripts/gymgo-mac.sh | bash -s -- --xcode
 ```
 
-The first time takes a few minutes: it makes the Xcode project from the
-app's settings (`expo prebuild`, into `apps/mobile/ios`, which isn't kept in
-git), fetches its native parts with CocoaPods, and opens it in Xcode. It
-also starts the GymGO server and the bundler the app loads its code from,
-so leave Terminal open.
+This works from any starting point: no copy yet, an old copy, a copy on the
+wrong branch, or one with your own edits (those are set aside with `git
+stash`, not lost; `git -C ~/GymGO stash pop` brings them back). It then runs
+the newest version of itself, installs what's needed, makes the Xcode project
+from the app's settings (`expo prebuild`, into `apps/mobile/ios`, which isn't
+kept in git), fetches its native parts with CocoaPods, and opens it in Xcode.
+It also starts the GymGO server and the bundler the app loads its code from,
+so leave Terminal open. The first time takes a few minutes.
+
+**It keeps itself up to date while it runs.** Every three minutes it checks
+GitHub for a newer GymGO and moves to it (only when you haven't edited
+anything). New app code reloads in the running app by itself; new server
+code restarts the server; new dependencies are installed; and if the app's
+native parts changed, it remakes the Xcode project and says so in Terminal:
+then press Run (⌘R) in Xcode again. `--no-auto-update` turns this off.
+
+Once you have it, `bash ~/GymGO/scripts/gymgo-mac.sh --xcode` does the same.
 
 **3. In Xcode:**
 
@@ -168,8 +181,19 @@ Good to know:
   `bash ~/GymGO/scripts/gymgo-mac.sh --xcode --team ABCDE12345` (your team
   id is under Xcode → Settings → Accounts, or in the project's Build Settings
   → Development Team once you've picked it).
-- After updating (`--xcode --update`), the project is remade only if the
-  app's settings changed. `--clean` remakes it from scratch.
+- The project is remade only when the app's settings changed. `--clean`
+  remakes it from scratch.
+- Something not working? Run `bash ~/GymGO/scripts/gymgo-mac.sh --doctor`: it
+  prints your Xcode, CocoaPods, Node and GymGO versions and where things
+  stand, to paste into a message. The usual fixes:
+  - "Xcode is installed, but the Mac is set to use only its command line
+    tools": `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`.
+  - A build that stops with "node: command not found": run the launcher
+    again; it writes the exact Node into `apps/mobile/ios/.xcode.env.local`.
+  - CocoaPods errors: `pod repo update`, then the launcher with `--clean`.
+  - "Signing requires a development team": step 2 of "In Xcode" above.
+  - "No such module" or odd build errors after an update: Product → Clean
+    Build Folder (⇧⌘K) in Xcode, then Run.
 - In the Simulator, set where "you" are with **Features → Location**.
 - A **Release** build (Product → Scheme → Edit Scheme → Run → Build
   Configuration) carries its code inside the app, so it runs without the

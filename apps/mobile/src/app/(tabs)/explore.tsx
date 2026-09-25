@@ -563,11 +563,13 @@ function MapScreen() {
       <View
         style={[
           styles.pillDot,
-          { backgroundColor: showingDemo ? color.maybe : data.status === 'live' ? color.good : color.no },
+          { backgroundColor: locked ? color.brand : showingDemo ? color.maybe : data.status === 'live' ? color.good : color.no },
         ]}
       />
       <Txt variant="footnote" style={styles.pillText}>
-        {showingDemo
+        {locked
+          ? `${filters.placeName === THIS_AREA ? 'This area' : filters.placeName} · with GymGO Pro`
+          : showingDemo
           ? 'Sydney · demo gyms'
           : filters.bbox || outsideCities
             ? `${filters.placeName === THIS_AREA ? 'This area' : filters.placeName === YOUR_LOCATION ? 'Near you' : filters.placeName} · map data`

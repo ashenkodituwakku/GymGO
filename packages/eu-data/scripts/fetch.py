@@ -1,6 +1,6 @@
 """
 Fetch gyms and districts for GymGO's European map-only cities from
-OpenStreetMap, through the Overpass API (maps.mail.ru mirror), and save each
+OpenStreetMap, through the Overpass API (lz4 instance, else the mail.ru mirror), and save each
 city's raw answer with the time it was fetched.
 
     python3 scripts/fetch.py <dir>          fetch cities not already in <dir>
@@ -11,7 +11,12 @@ The cities and radii must match src/cities.ts.
 
 import json, math, os, subprocess, sys, time
 
-MIRROR = 'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+# Tried in turn each attempt: the main Overpass service's second instance,
+# then the mail.ru mirror (overpass-api.de itself refuses this network).
+MIRRORS = [
+    'https://lz4.overpass-api.de/api/interpreter',
+    'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+]
 UA = 'GymGO/0.1 (gym finder pilot; https://github.com/ashenkodituwakku/GymGO)'
 
 # Must match src/cities.ts: centre and radius in metres.
@@ -36,15 +41,16 @@ CITIES = {
 
 def overpass(query):
     for attempt in range(6):
-        r = subprocess.run(['curl', '-sS', '--max-time', '120', '-A', UA, '-H', 'Accept: application/json', '-X', 'POST', MIRROR,
-                            '--data-urlencode', 'data=' + query, '-w', '\n%{http_code}'], capture_output=True, text=True)
-        body, _, code = r.stdout.rpartition('\n')
-        if code == '200':
-            try:
-                return json.loads(body)
-            except ValueError:
-                pass
-        print('  retry', attempt + 1, code, r.stderr.strip()[:80], file=sys.stderr)
+        for mirror in MIRRORS:
+            r = subprocess.run(['curl', '-sS', '--max-time', '120', '-A', UA, '-H', 'Accept: application/json', '-X', 'POST', mirror,
+                                '--data-urlencode', 'data=' + query, '-w', '\n%{http_code}'], capture_output=True, text=True)
+            body, _, code = r.stdout.rpartition('\n')
+            if code == '200':
+                try:
+                    return json.loads(body)
+                except ValueError:
+                    pass
+            print('  retry', attempt + 1, mirror.split('/')[2], code, r.stderr.strip()[:80], file=sys.stderr)
         time.sleep(3 + attempt * 4)
     raise SystemExit('failed: ' + query[:80])
 

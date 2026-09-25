@@ -54,6 +54,8 @@ function useNow(active: boolean): number {
 }
 
 const exerciseOf = (id: string) => EXERCISES.find((exercise) => exercise.id === id) ?? null;
+/** Done for a time or a distance rather than for reps. */
+const isTimed = (item: ActiveItem) => exerciseOf(item.exerciseId)?.cardio === true || repRange(item.reps) === null;
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 
 export default function TrainScreen() {
@@ -102,9 +104,10 @@ export default function TrainScreen() {
 
   const finish = async () => {
     setProblem(null);
-    const exercises = draftToLogged(session.items);
+    // Timed and distance work (a plank, an incline walk) isn't a set of reps, so it isn't logged as one.
+    const exercises = draftToLogged(session.items.filter((item) => !isTimed(item)));
     if (exercises.length === 0) {
-      setProblem('Tick at least one set to log this workout, or discard it.');
+      setProblem('Tick at least one set of reps to log this workout, or discard it.');
       return;
     }
     if (!token) {
@@ -241,7 +244,7 @@ function ExerciseLog({
   onRest: (seconds: number) => void;
 }) {
   const exercise = exerciseOf(item.exerciseId);
-  const timed = exercise?.cardio === true || repRange(item.reps) === null;
+  const timed = isTimed(item);
   const bodyWeight = exercise ? exercise.needs.some((option) => option.length === 0) && !exercise.needs.some((option) => option.length > 0) : false;
   const barbell = exercise ? exercise.needs.some((option) => option.includes('barbells')) : false;
   const last = useMemo(() => lastTime(history, item.exerciseId), [history, item.exerciseId]);

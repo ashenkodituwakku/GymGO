@@ -19,8 +19,8 @@
  */
 
 import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui';
-import { router, usePathname } from 'expo-router';
-import { forwardRef, useEffect, useRef, useState } from 'react';
+import { router, useFocusEffect, usePathname } from 'expo-router';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -51,13 +51,16 @@ const TABS: Array<{ name: string; href: '/' | '/explore' | '/saved' | '/profile'
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   // The first time GymGO opens, it asks which country is yours: Free covers it.
+  // Only once you're on a tab: a gym opened from a link shows first.
   const { prefsReady, prefs } = useApp();
   const asked = useRef(false);
-  useEffect(() => {
-    if (!prefsReady || prefs.country || prefs.demo || asked.current) return;
-    asked.current = true;
-    router.push({ pathname: '/country', params: { first: '1' } });
-  }, [prefsReady, prefs.country, prefs.demo]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!prefsReady || prefs.country || prefs.demo || asked.current) return;
+      asked.current = true;
+      router.push({ pathname: '/country', params: { first: '1' } });
+    }, [prefsReady, prefs.country, prefs.demo]),
+  );
   // Like iOS 26, the bar floats just above the home indicator.
   const bottom = Math.max(insets.bottom - 12, 14);
   return (

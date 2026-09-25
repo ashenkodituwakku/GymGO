@@ -34,3 +34,30 @@ export function suggestGyms(query: string, records: readonly GymRecord[], near: 
     .slice(0, limit)
     .map((hit) => hit.record);
 }
+
+/** How near a gym must be for Enter to open it outright. */
+const OPEN_WITHIN_KM = 50;
+
+/**
+ * Whether pressing Enter opens this gym, the best name match, rather than
+ * looking the words up as a place: only when it's near the map and the words
+ * aren't the suburb or town of a gym GymGO has. "snap" means the Snap Fitness
+ * down the road; "Bendigo", with "Bendigo Strength Co" loaded, means the
+ * town. A gym further off is opened only if the place finder has no place by
+ * exactly that name (see `placeForEnter`).
+ */
+export function enterOpensGym(query: string, gym: GymRecord, near: LatLng, records: readonly GymRecord[] = [gym]): boolean {
+  const needle = normalise(query);
+  if (records.some((record) => normalise(record.location.address.suburb) === needle)) return false;
+  return haversineKm(near, gym.location.position) <= OPEN_WITHIN_KM;
+}
+
+/**
+ * Which of the place finder's answers Enter goes to. With a gym by that name
+ * to fall back on, only a place called exactly what was typed: "Austin" is
+ * the city, but "Equinox" is the gym, not "Equinox Terrace" in Vermont.
+ */
+export function placeForEnter<Place extends { name: string }>(query: string, places: readonly Place[], orGym: boolean): Place | null {
+  if (!orGym) return places[0] ?? null;
+  return places.find((place) => normalise(place.name) === normalise(query)) ?? null;
+}

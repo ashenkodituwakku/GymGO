@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { suggestGyms } from './gymSearch';
+import { enterOpensGym, placeForEnter, suggestGyms } from './gymSearch';
 import { BUNDLED_GYMS } from './query';
 
 const real = BUNDLED_GYMS.filter((record) => !record.location.isDemoData);
@@ -37,5 +37,37 @@ describe('finding a gym by name', () => {
     expect(names('itness')).toEqual([]);
     expect(names('f')).toEqual([]);
     expect(names('zzzz')).toEqual([]);
+  });
+});
+
+describe('what Enter does with a gym name match', () => {
+  const snap = suggestGyms('snap', real, MELBOURNE, 1)[0]!;
+  const equinox = suggestGyms('equinox', real, NEW_YORK, 1)[0]!;
+
+  it('opens a gym near the map', () => {
+    expect(enterOpensGym('snap', snap, MELBOURNE)).toBe(true);
+  });
+
+  it('looks the words up as a place first when the gym is far away', () => {
+    expect(enterOpensGym('equinox', equinox, MELBOURNE)).toBe(false);
+    expect(enterOpensGym('equinox', equinox, NEW_YORK)).toBe(true);
+  });
+
+  it('takes the name of a town GymGO has gyms in as the town', () => {
+    const at = (name: string, suburb: string) => ({ ...snap, location: { ...snap.location, name, address: { ...snap.location.address, suburb } } });
+    const strength = at('Bendigo Strength Co', 'Bendigo');
+    expect(enterOpensGym('bendigo', strength, snap.location.position)).toBe(false);
+    expect(enterOpensGym('bendigo strength', strength, snap.location.position)).toBe(true);
+    // The best match is in a neighbouring suburb, but other gyms are in Bendigo itself.
+    const stadium = at('Bendigo Stadium Gym', 'Kangaroo Flat');
+    expect(enterOpensGym('bendigo', stadium, snap.location.position, [stadium, strength])).toBe(false);
+  });
+
+  it('goes to a place by that exact name, else falls back to the gym', () => {
+    const equinoxes = [{ name: 'Equinox Terrace' }, { name: 'Equinox Farms' }];
+    expect(placeForEnter('equinox', equinoxes, true)).toBeNull();
+    expect(placeForEnter('Austin', [{ name: 'Austin' }, { name: 'Austin Lake' }], true)).toEqual({ name: 'Austin' });
+    // Nothing to fall back on: the finder's best guess.
+    expect(placeForEnter('equinox', equinoxes, false)).toEqual({ name: 'Equinox Terrace' });
   });
 });

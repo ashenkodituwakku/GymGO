@@ -29,7 +29,7 @@ import { EMPTY, locatedNotice } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { cityAt, cityNear, geocodePlace, type AppPlace } from '@/lib/places';
 import { useApp } from '@/lib/app-state';
-import { suggestGyms } from '@/lib/gymSearch';
+import { enterOpensGym, placeForEnter, suggestGyms } from '@/lib/gymSearch';
 import { useBottomClearance } from '@/lib/layout';
 import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, boxAround, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
@@ -146,12 +146,15 @@ function MapScreen() {
   // openGym and searchBox are defined below; the search reaches them through these refs.
   const openGymRef = useRef<(id: string) => void>(() => undefined);
   const searchBoxRef = useRef<(box: BoundingBox, named?: FoundPlace) => Promise<void>>(async () => undefined);
-  const pendingPlace = useRef<{ place: FoundPlace; timer: ReturnType<typeof setTimeout> } | null>(null);
+  /** A typed place the map is flying to, searched once it's there. `from` is the view it left. */
+  const pendingPlace = useRef<{ place: FoundPlace; span: number; from: BoundingBox | null; timer: ReturnType<typeof setTimeout> } | null>(null);
+  const viewBoxRef = useRef<BoundingBox | null>(null);
 
   /** Anywhere in Australia or the US: ask the server's place finder, fly there and search it. */
-  const findPlace = useCallback(async (text: string) => {
+  const findPlace = useCallback(async (text: string, orGym?: string) => {
     try {
-      const found = (await api.places(text)).places[0];
+      const found = placeForEnter(text, (await api.places(text)).places, orGym !== undefined);
+      if (!found && orGym) return openGymRef.current(orGym);
       if (!found) {
         haptic.warn();
         setNotice(`Nothing called “${text}” in Australia or the US. Try a suburb or town name.`);
@@ -167,9 +170,10 @@ function MapScreen() {
         pendingPlace.current = null;
         void searchBoxRef.current(box, found);
       }, 2000);
-      pendingPlace.current = { place: found, timer };
+      pendingPlace.current = { place: found, span, from: viewBoxRef.current, timer };
       map.current?.flyTo({ lat: found.lat, lng: found.lng }, span);
     } catch (error) {
+      if (orGym) return openGymRef.current(orGym);
       haptic.warn();
       setNotice(problemText(error, EMPTY.outOfArea));
     }
@@ -179,11 +183,12 @@ function MapScreen() {
     const result = geocodePlace(query, cityAt(filters.centre).id);
     Keyboard.dismiss();
     if (result.place) return pickPlace(result.place);
-    // Not a place: maybe a gym's name. Open the best match.
+    // Not a place: maybe a gym's name. Open the best match if it's nearby
+    // and the words aren't its town; otherwise look them up as a place
+    // anywhere in Australia or the US first, falling back to the gym.
     const gym = suggestGyms(query, data.records, filters.centre, 1)[0];
-    if (gym) return openGymRef.current(gym.location.id);
-    // Not a place GymGO knows by heart: look it up anywhere in Australia or the US.
-    if (result.outOfArea) void findPlace(query.trim());
+    if (gym && enterOpensGym(query, gym, filters.centre, data.records)) return openGymRef.current(gym.location.id);
+    if (result.outOfArea) void findPlace(query.trim(), gym?.location.id);
   }, [query, pickPlace, filters.centre, data.records, findPlace]);
 
   // Your precise position, used for this search on this device only.
@@ -224,7 +229,9 @@ function MapScreen() {
       setAreaBusy(true);
       try {
         const answer = await data.searchArea(box);
-        const inBox = [...answer.gyms, ...data.records.filter((record) => isWithinBox(record.location.position, box))];
+        // What's loaded already, plus what's new (a gym found before counts once).
+        const fresh = new Set(answer.gyms.map((record) => record.location.id));
+        const inBox = [...answer.gyms, ...data.records.filter((record) => !fresh.has(record.location.id) && isWithinBox(record.location.position, box))];
         const timezone = inBox[0]?.location.timezone ?? filters.timezone;
         setFilters((current) => inArea(current, box, named?.name ?? nameForArea(inBox, box), timezone));
         setSelectedId(null);
@@ -262,9 +269,13 @@ function MapScreen() {
 
   // A typed place is searched once the map has arrived there, so the list
   // matches exactly what's on screen (or after a moment, if the map didn't move).
+  // Not the view it left, nor a wide one that merely includes the place.
+  viewBoxRef.current = viewBox;
   useEffect(() => {
     const pending = pendingPlace.current;
-    if (!pending || !viewBox || !isWithinBox({ lat: pending.place.lat, lng: pending.place.lng }, viewBox)) return;
+    if (!pending || !viewBox || viewBox === pending.from) return;
+    if (!isWithinBox({ lat: pending.place.lat, lng: pending.place.lng }, viewBox)) return;
+    if (viewBox.north - viewBox.south > pending.span * 5) return;
     clearTimeout(pending.timer);
     pendingPlace.current = null;
     void searchBox(viewBox, pending.place);
@@ -302,6 +313,8 @@ function MapScreen() {
       if (!record) return;
       haptic.tap();
       Keyboard.dismiss();
+      // Opened from the search box: the suggestions have done their job.
+      setQuery('');
       // A saved gym can be outside the current search; bring the search to it.
       if (!outcome.results.some((item) => item.record.location.id === id)) {
         setFilters((current) =>

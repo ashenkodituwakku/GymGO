@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { GymRecord } from '@gymgo/domain';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { createApp } from './app';
-import { auStateForPostcode, whereIs } from './area';
+import { AreaSearch, auStateForPostcode, whereIs } from './area';
 import { openDb, seedGyms, type Db } from './db';
 
 // --- A stand-in for the Overpass API: nothing here calls the real one. -------
@@ -220,6 +220,23 @@ describe('when a map server fails', () => {
     expect(answer.gyms.map((gym) => gym.location.name).sort()).toEqual(['Bendigo Strength Co', 'Snap Fitness']);
     expect(calls).toEqual(['https://down.test/api', 'https://odd.test/api', 'https://up.test/api']);
     other.close();
+    otherDb.close();
+  });
+});
+
+describe('two searches of one area at once', () => {
+  it('reads the map once: the second waits its turn, then finds the area fresh', async () => {
+    let reads = 0;
+    const slow = async (): Promise<Response> => {
+      reads += 1;
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      return Response.json({ elements: bendigoElements() });
+    };
+    const otherDb = openDb(':memory:');
+    const search = new AreaSearch(otherDb, { known: () => [], fetchImpl: slow as typeof fetch, endpoints: ['https://up.test/api'] });
+    const [first, second] = await Promise.all([search.search(BENDIGO), search.search(BENDIGO)]);
+    expect(reads).toBe(1);
+    expect(second.gyms.map((gym) => gym.location.id)).toEqual(first.gyms.map((gym) => gym.location.id));
     otherDb.close();
   });
 });

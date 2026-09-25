@@ -225,10 +225,15 @@ export class AreaSearch {
       throw new AreaError(422, 'GymGO covers Australia and the United States for now.', 'unsupported_country');
     }
 
-    const stale = this.staleTiles(box);
-    if (stale.length > 0) {
-      // One read at a time, so a burst of searches never hammers the service.
-      const run = this.queue.then(() => this.fetchTiles(stale.map((tile) => tile.box), stale.map((tile) => tile.key)));
+    if (this.staleTiles(box).length > 0) {
+      // One read at a time, so a burst of searches never hammers the service,
+      // and what's stale is worked out again when its turn comes: a search
+      // queued behind another of the same area then reads nothing twice.
+      const run = this.queue.then(() => {
+        const stale = this.staleTiles(box);
+        if (stale.length === 0) return;
+        return this.fetchTiles(stale.map((tile) => tile.box), stale.map((tile) => tile.key));
+      });
       this.queue = run.catch(() => undefined);
       await run;
     }

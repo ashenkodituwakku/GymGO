@@ -149,5 +149,10 @@ export function useGymData() {
     [addFound],
   );
 
-  return { records, status, covers, memberPrices, refresh, refreshCovers, refreshMemberPrices, searchArea, ensureGyms };
+  // One object while nothing in it changes, so what's built on it (the app's
+  // shared state, callbacks that use it) doesn't change on every render.
+  return useMemo(
+    () => ({ records, status, covers, memberPrices, refresh, refreshCovers, refreshMemberPrices, searchArea, ensureGyms }),
+    [records, status, covers, memberPrices, refresh, refreshCovers, refreshMemberPrices, searchArea, ensureGyms],
+  );
 }

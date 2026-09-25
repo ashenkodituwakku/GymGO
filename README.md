@@ -239,8 +239,18 @@ Chrome and Edge (blur only in Safari and Firefox).
   side: answer, price, what members paid (labelled as theirs, never the
   gym's price), guest entry, what to bring, machines, rating and distance.
   The round compare button in a map card's header adds a gym too.
-- **Profile**: sign in, your gyms, **Progress**, moderation (for
-  moderators), a haptics switch, and where GymGO's facts come from.
+- **Profile**: laid out like Settings. Your account card (tap it for
+  **Account**: name, email, password, Apple and Google, your data, sign out,
+  delete), Training (Progress, My workouts, Plate calculator), Pro, your
+  gyms, Settings (Country, **Appearance**, Haptics, Demo mode), and where
+  GymGO's facts come from. Signed out, a card to sign in with Apple, Google
+  or email.
+- **Appearance**: Automatic (follows your phone), Light or Dark, for
+  everyone. With Pro, four more accent colours (Ocean, Grape, Rose,
+  Graphite) besides Indigo. Evidence colours (green, orange, grey) never
+  change with the accent, so they always mean the same thing. Switching
+  fades smoothly and keeps you on the screen you were on; the map, glass
+  and the phone's own keyboards and menus follow too.
 
 ### Training
 
@@ -596,6 +606,53 @@ use your own list instead, set
 Looking places up by name uses Photon's public server; set
 `GYMGO_GEOCODER_URL` to use another Photon server.
 
+### Sign in with Google and Apple
+
+Both are built, and both are **off until you set them up**, because each
+needs you to register GymGO with Google or Apple. GymGO checks every
+sign-in on the server: the token's signature against Google's or Apple's
+published keys, that it was made for your app, that it's in date, and a
+one-time code against replay. It never learns a Google or Apple password.
+It never quietly joins a Google or Apple sign-in to an existing
+email-and-password account with the same address (GymGO doesn't check the
+emails people sign up with, so that could be someone else's account); the
+account's owner connects Google or Apple from **Account** instead.
+
+**Google** (free):
+
+1. In [Google Cloud Console](https://console.cloud.google.com), make a
+   project, then APIs & Services → OAuth consent screen: External, app name
+   GymGO, and add yourself as a test user.
+2. Credentials → Create credentials → OAuth client ID, once per place you
+   run GymGO:
+   - **Web application**, for the browser: add `http://localhost:8081` under
+     both Authorized JavaScript origins and Authorized redirect URIs.
+   - **iOS**, for the Xcode build: the bundle ID is your app id
+     (`com.yourname.gymgo`; the Mac launcher prints it).
+   - **Android**: package `app.gymgo.local` and your debug key's SHA-1.
+3. Put the client ids in `apps/server/.env.local` (make the file):
+
+   ```
+   GYMGO_GOOGLE_CLIENT_ID_WEB=1234-abc.apps.googleusercontent.com
+   GYMGO_GOOGLE_CLIENT_ID_IOS=1234-def.apps.googleusercontent.com
+   ```
+
+   Client ids aren't secrets. Start GymGO again: the server says `Sign in
+   with Google: on`, and the Mac launcher remakes the Xcode project so
+   Google can hand the sign-in back to the app.
+
+**Apple** needs a paid Apple Developer Program membership ($99 a year): a
+free Personal Team can't sign an app that has Sign in with Apple, so it's
+off by default and nothing here turns it on for you. With a paid team, add
+`GYMGO_APPLE_SIGN_IN=on` to `apps/server/.env.local` and run the Mac
+launcher with `--xcode --team YOURTEAMID`: the Xcode project gets the
+capability, and the server accepts tokens for your app id. Apple's button
+shows on iPhone only (Apple's sign-in on the web and Android needs a
+separate Services ID, not set up here).
+
+Until then, email and password work as before, and the buttons simply
+don't show.
+
 ### GymGO Pro (subscriptions, through Stripe)
 
 GymGO has two plans. When it first opens it asks **which country is
@@ -617,6 +674,7 @@ saved list always opens, wherever the gym is.
 | Workout library | Build and share | Save workouts to your account, reopen them on any device |
 | Progress charts | Your records and history | A chart for every exercise |
 | Next-session targets | Last time's numbers | What to lift next, worked out for you |
+| Colour themes | Indigo, light or dark | Five accents, light or dark |
 
 One tier, two ways to pay, tax included:
 

@@ -12,7 +12,7 @@ import { photoUrl } from '@/lib/api';
 import { priceLine } from '@/lib/present';
 import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
-import { BrandLogo, logoFor } from './BrandLogo';
+import { MarkImage, useGymMark } from './BrandLogo';
 import { Icon } from './Icon';
 import { TIER_COLOUR, Txt } from './ui';
 
@@ -40,6 +40,7 @@ export function GymRow({
   );
   const access = accessLine(result.access.verdict, visitMinute);
   const coverUri = cover ? photoUrl(cover) : null;
+  const mark = useGymMark(location);
   const where = [
     location.address.suburb,
     result.distanceKm !== null ? distanceLabel(result.distanceKm, result.record.location.address.countryCode) : null,
@@ -60,8 +61,8 @@ export function GymRow({
       {coverUri ? (
         <Image source={{ uri: coverUri }} style={styles.thumb} resizeMode="cover" />
       ) : (
-        <View style={[styles.thumb, styles.tile, { backgroundColor: logoFor(location) ? '#FFFFFF' : color.brandTint }]}>
-          {logoFor(location) ? <BrandLogo location={location} width={52} height={48} area={1500} /> : <Icon name="gym" size={24} color={color.brand} />}
+        <View style={[styles.thumb, styles.tile, { backgroundColor: mark ? '#FFFFFF' : color.brandTint }]}>
+          {mark ? <MarkImage mark={mark} name={location.name} width={52} height={48} area={1500} /> : <Icon name="gym" size={24} color={color.brand} />}
         </View>
       )}
 

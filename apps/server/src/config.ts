@@ -43,6 +43,11 @@ export const PUBLIC_URL = process.env.GYMGO_PUBLIC_URL?.trim().replace(/\/+$/, '
  * through. The main public one is the default; any mirror works.
  */
 export const OVERPASS_URL = process.env.GYMGO_OVERPASS_URL?.trim() || undefined;
+/**
+ * Gyms' own website icons, shown beside their names. On by default; set
+ * GYMGO_SITE_ICONS=off to never fetch from gyms' websites.
+ */
+export const SITE_ICONS = (process.env.GYMGO_SITE_ICONS ?? 'on').trim().toLowerCase() !== 'off';
 export const ALLOWED_ORIGINS = (process.env.GYMGO_ALLOWED_ORIGINS ?? '').split(',').map((item) => item.trim()).filter(Boolean);
 
 /**

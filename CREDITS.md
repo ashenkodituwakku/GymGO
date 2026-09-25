@@ -111,6 +111,15 @@ their brands. GymGO shows each only on that brand's own gyms, to say which
 gym it is, and says on the page that GymGO isn't connected to or endorsed by
 the brand.
 
+### Icons from gyms' own websites
+
+For gyms without a Commons logo, GymGO shows the icon the gym's own website
+publishes (its home-screen icon or declared logo), fetched by the GymGO
+server when first needed and kept for a month. It is not copied into this
+repository. Each is the gym's own mark, shown beside its name the way a
+browser shows a site's icon, credited on the gym's page to the website it
+came from, with the same "not connected or endorsed" line.
+
 ## Google Maps
 
 Each gym's **See it on Google** page shows Google's own embedded map and

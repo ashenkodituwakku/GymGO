@@ -8,7 +8,7 @@ this document could do.
 
 | | Implemented locally | Tested locally | Externally integrated | Deployed |
 |---|---|---|---|---|
-| API server (Node, built-in SQLite) | ✅ | ✅ 74 tests over real HTTP | n/a, runs on your PC | ❌ not hosted |
+| API server (Node, built-in SQLite) | ✅ | ✅ 83 tests over real HTTP | n/a, runs on your PC | ❌ not hosted |
 | Gzip for larger answers (the gym list: 1.5 MB → 0.1 MB) | ✅ | ✅ 2 server tests + measured locally | n/a | ❌ |
 | Members' visits: walked in / booked first / turned away, one per member per gym, last year only, no names | ✅ | ✅ 2 server tests + reported and shown in the browser | n/a | ❌ |
 | Members say a gym has closed or is still open (6 months); the card warns when closed outnumbers open | ✅ | ✅ 2 server tests + reported and the warning seen in the browser | n/a | ❌ |
@@ -124,6 +124,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Home, simplified (four picks, workout, nearby, saved, recent, neighbourhoods and cities as chips) | ✅ | ✅ driven at phone size | n/a | ❌ | n/a | ❌ |
 | Accessibility in the browser: every button and link named, text contrast, keyboard order | ✅ | ✅ scanned 9 screens (0 unnamed controls); text colours checked at WCAG AA (fine print moved off the faint grey, which was 2.9:1); Tab order and focus rings checked on Home | n/a | ❌ VoiceOver / TalkBack never run | n/a | ❌ |
 | Symbols instead of emoji on buttons, rows, chips and empty states (SF Symbols / Material Symbols / Phosphor) | ✅ | ⚠️ Material Symbols seen in the browser; SF Symbols only on an iPhone, never seen | n/a | ❌ | n/a | ❌ |
+| Gyms' own website icons where there's no Commons logo: card header, gym page, list tiles, credited to the site | ✅ | ✅ 9 server tests (stand-in web: fake and tiny images refused, one visit per site) + guard checked live (localtest.me, lvh.me, 127.0.0.1.nip.io refused) + real icons seen in the browser (Doherty's, Absolute MMA, Anytime Fitness) | ✅ gyms' websites, fetched live by the server | ❌ | n/a | ❌ |
 | Brand logos (10 chains, from Wikimedia Commons, bundled) on gym pages and cards, credited | ✅ | ✅ driven in the browser (Equinox, Gold's Gym, Snap Fitness); in both native bundles | ✅ fetched from Wikidata and Commons once, by script | ❌ | n/a | ❌ |
 | Top of a gym page: members' photos, else Google's photos (owner's key), else Street View | ✅ | ⚠️ Google's photos only with stubbed data; Street View embed blank in this sandbox (no Google access from the test browser) | ⚠️ Street View is Google's free embed; Places photos never called with a real key | ❌ | n/a | ❌ |
 | Gym page (pushed screen, share/compare/save) | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |

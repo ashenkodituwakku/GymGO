@@ -13,6 +13,7 @@ import {
   PHOTO_DIR,
   PORT,
   PUBLIC_URL,
+  SITE_ICONS,
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
 } from './config';
@@ -31,6 +32,7 @@ const server = createServer(
     billing: { stripe: STRIPE_SECRET_KEY ? createStripe(STRIPE_SECRET_KEY) : null, webhookSecret: STRIPE_WEBHOOK_SECRET },
     publicUrl: PUBLIC_URL,
     area: { endpoint: OVERPASS_URL },
+    siteIcons: { enabled: SITE_ICONS },
   }),
 );
 

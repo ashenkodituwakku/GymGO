@@ -19,7 +19,7 @@ import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { priceLine } from '@/lib/present';
 import { color, face, radius, shadow, space } from '@/lib/theme';
-import { BrandLogo, logoFor } from './BrandLogo';
+import { MarkImage, useGymMark } from './BrandLogo';
 import { Icon } from './Icon';
 import { TIER_COLOUR, Txt } from './ui';
 
@@ -32,6 +32,7 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
   const members = data.memberPrices[id];
   const price = priceLine(result.offers, members ? { typicalMinor: members.typicalMinor, country: location.address.countryCode } : null);
   const cover = data.covers[id] ? photoUrl(data.covers[id]!) : null;
+  const mark = useGymMark(location);
   const saved = account.saved.includes(id);
   const comparing = compare.includes(id);
   const where = [location.address.suburb, result.distanceKm !== null ? distanceLabel(result.distanceKm, result.record.location.address.countryCode) : null]
@@ -53,8 +54,8 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
             {cover ? (
               <Image source={{ uri: cover }} style={styles.image} resizeMode="cover" />
             ) : (
-              <View style={[styles.image, styles.tile, { backgroundColor: logoFor(location) ? '#FFFFFF' : color.brandTint }]}>
-                {logoFor(location) ? <BrandLogo location={location} width={width * 0.72} height={76} area={5200} /> : <Icon name="gym" size={36} color={color.brand} />}
+              <View style={[styles.image, styles.tile, { backgroundColor: mark ? '#FFFFFF' : color.brandTint }]}>
+                {mark ? <MarkImage mark={mark} name={location.name} width={width * 0.72} height={76} area={5200} /> : <Icon name="gym" size={36} color={color.brand} />}
               </View>
             )}
             <View style={styles.body}>

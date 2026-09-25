@@ -120,8 +120,8 @@ Chrome and Edge (blur only in Safari and Firefox).
   switch, and where GymGO's facts come from.
 
 Tap any gym to open its own page, with share, compare and save at the top.
-It opens with the gym's logo (for the chains that have a free one, below)
-and its photos. On an iPhone, press and hold a gym card on Home for a preview
+It opens with the gym's logo (a chain's free logo, or the icon from the
+gym's own website; see below) and its photos. On an iPhone, press and hold a gym card on Home for a preview
 and a quick menu.
 
 Buttons and rows use proper symbols rather than emoji: Apple's SF Symbols on
@@ -302,11 +302,21 @@ with a logo credits it and says GymGO isn't connected to or endorsed by the
 brand. A logo is still its owner's trademark: GymGO uses it only to say
 which gym this is.
 
-Other chains (Planet Fitness, Orangetheory, Anytime Fitness and so on) have
-no free logo on Commons. Their logos are copyrighted, so GymGO doesn't copy
-them from their websites; their cards show a plain symbol instead.
+Every other gym with a website gets **the icon from its own website**: the
+square picture a phone puts on its home screen, or the logo the site
+declares for search engines. It's shown the way a browser or a search engine
+shows a site's icon beside its link, credited to the site ("Icon from
+dohertysgym.com, the gym's own website"), and never altered. The server
+fetches it the first time someone looks, keeps it for a month (a week when
+there's none), and shares it between a chain's branches. It only accepts real
+PNG, JPEG, WebP or GIF images at least 64 pixels square, and it will only
+connect to public addresses, because website addresses come from
+OpenStreetMap, which anyone can edit. A gym without a website, or whose site
+has no usable icon (or refuses automated visitors), shows a plain symbol,
+never a made-up logo. To switch website icons off, start the server with
+`GYMGO_SITE_ICONS=off`.
 
-The logos are copied into the app (`apps/mobile/assets/logos/`), so the app
+The Commons logos are copied into the app (`apps/mobile/assets/logos/`), so the app
 never fetches them from Wikimedia. To look for new ones after the gym data
 changes, run `node apps/mobile/scripts/brand-logos.mjs`. It keeps only logos
 under a licence GymGO can use, and goes slowly because Wikimedia limits busy

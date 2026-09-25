@@ -35,6 +35,7 @@
  *   PUT    /api/gyms/:gymId/status        { status: 'closed' | 'open', seenOn } -> your report (replaces your last)
  *   DELETE /api/gyms/:gymId/status        take back your report
  *   GET    /api/gyms/:gymId/google        live Google Maps details (only with the owner's key)
+ *   GET    /api/gyms/:gymId/icon          the icon from the gym's own website (PNG/JPEG/WebP/GIF), or 404
  *   GET    /api/billing/plans             GymGO Pro's prices, and whether it's on sale
  *   GET    /api/billing                   your plan (Free or Pro) and subscription
  *   POST   /api/billing/checkout          { interval, currency, returnUrl } -> { url } of Stripe Checkout
@@ -91,6 +92,7 @@ import {
 } from './auth';
 import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
 import { AreaError, AreaSearch, parseBox } from './area';
+import { SiteIcons, type SafeGet } from './siteicons';
 import { allGyms, gymCountry, gymExists, gymIsDemo, gymRecord, type Db } from './db';
 import { GoogleError, GooglePlaces } from './google';
 import { MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
@@ -115,6 +117,8 @@ export interface AppOptions {
   publicUrl?: string | null;
   /** "Search this area": which Overpass API server to ask, and a stand-in fetch for tests. */
   area?: { endpoint?: string; fetchImpl?: typeof fetch };
+  /** Gyms' own website icons: on unless switched off; `get` stands in for the web in tests. */
+  siteIcons?: { enabled?: boolean; get?: SafeGet };
 }
 
 class HttpError extends Error {
@@ -304,6 +308,9 @@ export function createApp(options: AppOptions) {
   const statusLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   // Area searches that need a live map read: 30 per address per hour.
   const areaLimiter = new AttemptLimiter(30, 60 * 60_000);
+  // Website icons not yet kept: 300 per address per hour (a results list asks for about 40).
+  const iconLimiter = new AttemptLimiter(300, 60 * 60_000);
+  const siteIcons = new SiteIcons(db, { get: options.siteIcons?.get, now });
   const area = new AreaSearch(db, { endpoint: options.area?.endpoint, fetchImpl: options.area?.fetchImpl, now, known: () => allGyms(db) });
   const photos = new PhotoStore(options.photoDir ?? null);
   const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
@@ -1018,6 +1025,30 @@ export function createApp(options: AppOptions) {
         ).run(gymId, account.id, status, seenOn, now().toISOString());
         return send(res, 204);
       }
+    }
+
+    // --- The gym's own website icon -------------------------------------------
+    if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'icon' && parts.length === 4) {
+      const record = gymRecord(db, decodeURIComponent(parts[2]!));
+      if (!record) throw new HttpError(404, 'No gym with that id.');
+      const website = record.location.website;
+      if (options.siteIcons?.enabled === false) throw new HttpError(404, 'Website icons are switched off.', 'off');
+      if (record.location.isDemoData || !website) throw new HttpError(404, 'This gym has no website to take an icon from.', 'none');
+      let icon = siteIcons.cached(website);
+      if (icon === undefined) {
+        if (!iconLimiter.allow(`${req.socket.remoteAddress}`, now().getTime())) throw new HttpError(429, 'Too many icons at once. Try again soon.');
+        icon = await siteIcons.icon(website);
+      }
+      if (!icon) throw new HttpError(404, 'The gym’s website has no icon GymGO can show.', 'none');
+      res.statusCode = 200;
+      res.setHeader('Content-Type', icon.mime);
+      res.setHeader('Content-Length', String(icon.bytes.length));
+      res.setHeader('Cache-Control', 'public, max-age=604800');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+      res.setHeader('X-Icon-Source', encodeURI(icon.source));
+      res.end(icon.bytes);
+      return;
     }
 
     // --- Google Maps (live, only with the owner's key) ----------------------

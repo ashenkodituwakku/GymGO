@@ -92,8 +92,6 @@ export type Weight = 'regular' | 'medium' | 'semibold' | 'bold';
 /** Names the bundled faces are registered under (see app/_layout.tsx and lib/fonts.ts). */
 export { BUNDLED_FACES } from './fonts';
 
-/** True where the app must load the bundled faces before drawing text. */
-export const NEEDS_BUNDLED_FACES = Platform.OS !== 'ios';
 
 const NUMERIC = { regular: '400', medium: '500', semibold: '600', bold: '700' } as const;
 const INTER: Record<Weight, string> = {
@@ -106,6 +104,9 @@ const INTER: Record<Weight, string> = {
 /** Where SF Pro is what actually draws: iPhone, and browsers on Apple devices. */
 const SF_DRAWS =
   Platform.OS === 'ios' || (Platform.OS === 'web' && typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent));
+
+/** True where the app must load the bundled faces (Inter) before drawing text: never where SF Pro draws. */
+export const NEEDS_BUNDLED_FACES = !SF_DRAWS;
 
 export function face(weight: Weight = 'regular'): { fontFamily: string; fontWeight: '400' | '500' | '600' | '700' | 'normal' } {
   if (Platform.OS === 'ios') return { fontFamily: 'System', fontWeight: NUMERIC[weight] };

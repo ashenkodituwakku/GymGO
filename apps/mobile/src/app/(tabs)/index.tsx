@@ -10,7 +10,7 @@
 
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GymCard } from '@/components/GymCard';
 import { Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
@@ -32,6 +32,16 @@ function greeting(minute: number): string {
   if (minute < 17 * 60) return 'Good afternoon';
   return 'Good evening';
 }
+
+/** The page's column width on wide screens (TabScreen's maxWidth). */
+const COLUMN = 760;
+
+/** How Home groups the built-in cities. */
+const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
+  { label: 'Australia', has: (country) => country === 'AU' },
+  { label: 'USA', has: (country) => country === 'US' },
+  { label: 'Europe', has: (country) => country !== 'AU' && country !== 'US' },
+];
 
 export default function Home() {
   const { data, account, filters, setFilters, recents, clearRecents, requestExplore } = useApp();
@@ -237,12 +247,11 @@ export default function Home() {
           <Txt variant="footnote" color={color.labelSecondary} style={styles.anywhere}>
             Or anywhere in the world: type a town on the map, or move the map and tap Search this area.
           </Txt>
-          {(['AU', 'US'] as const).map((country) => {
-            const list = otherCities.filter((item) => item.country === country);
+          {REGIONS.map(({ label, has }) => {
+            const list = otherCities.filter((item) => has(item.country));
             if (list.length === 0) return null;
-            const label = country === 'AU' ? 'Australia' : 'USA';
             return (
-              <View key={country} style={styles.country}>
+              <View key={label} style={styles.country}>
                 <Txt variant="footnote" color={color.labelSecondary} style={styles.countryLabel}>
                   {label.toUpperCase()}
                 </Txt>
@@ -252,7 +261,7 @@ export default function Home() {
                       key={item.id}
                       onPress={() => goToPlace(cityPlace(item))}
                       accessibilityRole="button"
-                      accessibilityLabel={`${item.name}, ${label}`}
+                      accessibilityLabel={`${item.name}, ${label === 'Europe' ? item.region : label}`}
                       style={({ pressed }) => [styles.suburb, pressed && { opacity: 0.7 }]}
                     >
                       <Txt variant="subhead" style={face('medium')}>
@@ -272,12 +281,17 @@ export default function Home() {
 }
 
 function Carousel({ children }: { children: React.ReactNode }) {
+  // On a phone the row runs to the screen's edges, as in iOS. On a wide
+  // screen the page is a centred column, and running 16 points past it
+  // just looks cut off, so the row keeps to the column there.
+  const { width } = useWindowDimensions();
+  const bleed = width < COLUMN + space[4] * 2;
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={styles.carousel}
-      contentContainerStyle={styles.carouselContent}
+      style={bleed && styles.carousel}
+      contentContainerStyle={[styles.carouselContent, !bleed && styles.carouselInColumn]}
       decelerationRate="fast"
     >
       {children}
@@ -339,6 +353,7 @@ const styles = StyleSheet.create({
   section: { gap: space[3] },
   carousel: { marginHorizontal: -space[4] },
   carouselContent: { paddingHorizontal: space[4], paddingBottom: space[2], gap: space[3] },
+  carouselInColumn: { paddingHorizontal: 0 },
 
   country: { gap: space[2] },
   countryLabel: { ...face('semibold'), letterSpacing: 0.6 },

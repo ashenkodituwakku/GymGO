@@ -112,7 +112,9 @@ service, which is your decision to make. Nothing has been provisioned.
 | Scrolling the tab screens in a browser | ✅ fixed: the tab container never shrank, so Home grew past the window and couldn't scroll | ✅ mouse wheel at phone and PC sizes | n/a | ❌ not checked on a phone that the old version was broken there too | n/a | ❌ |
 | Workout builder: tap muscles on a body, plan from the gym's machines | ✅ | ✅ 6 unit tests + driven in the browser | n/a | ❌ taps on the native SVG body never seen | n/a | ❌ |
 | Saved gyms (on the device) | ✅ | ⚠️ web preview only | n/a | ❌ | n/a | ❌ |
-| Liquid Glass (iOS 26) / blur fallbacks | ✅ | ⚠️ blur fallback only | n/a | ❌ | n/a | ❌ |
+| Liquid Glass (iOS 26) / blur fallbacks | ✅ | ⚠️ browser imitation only: every floating glass control (status pill, map buttons, Search this area, the card's buttons) now bends the map at its edges like the tab bar (Chrome and Edge; a blur elsewhere), seen in phone and desktop screenshots | n/a | ❌ | n/a | ❌ |
+| Compact title on frosted glass once the large title scrolls away (Home, Saved, Profile) | ✅ | ✅ scrolled in the browser at phone size | n/a | ❌ | n/a | ❌ |
+| The map's credit (OpenFreeMap/OpenStreetMap, Apple's Legal) stays above the sheet at every sheet height | ✅ | ✅ phone-size browser (it hid behind the sheet whenever the sheet was over half the screen); Android map page and Apple's label not seen | n/a | ❌ | n/a | ❌ |
 | Haptics | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
 | Motion: spring presses on every button, chip and card; Save and Compare pop; a gym's sections and Home's cards rise in a stagger; notices, icons and folds fade; the segmented pill slides; saved rows glide out; all off under Reduce Motion | ✅ | ⚠️ driven in the browser (sections stay in place after the sheet moves; pill slides; fold opens; no errors); the springier phone versions never seen on a device | n/a | ❌ | n/a | ❌ |
 | SF Pro to Apple's iOS text styles (system font on iPhone and Apple browsers; Inter, the closest free face, on Android and elsewhere) | ✅ | ⚠️ only Inter seen, in this sandbox's browser (no SF Pro installed); SF Pro itself never seen on an iPhone or Mac | n/a | ❌ | n/a | ❌ |

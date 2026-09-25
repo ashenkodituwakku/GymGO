@@ -11,12 +11,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { LIMITS } from '@gymgo/domain';
+import { LIMITS, haversineKm } from '@gymgo/domain';
 import { setHapticsEnabled } from './haptics';
 import { currentFix, type Fix } from './location';
 import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, type City } from './places';
 import { locatedNotice } from './copy';
-import { YOUR_LOCATION, atPlace, boxAround, defaultVisit, initialFilters, moveTo, type Filters } from './query';
+import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, reachFor, tilesAround, type Filters } from './query';
 import { useAccount } from './useAccount';
 import { useBilling } from './useBilling';
 import { useGymData } from './useGymData';
@@ -39,7 +39,7 @@ export interface ExploreRequest {
 export type Located =
   | { kind: 'here'; fix: Fix; city: City }
   /** Outside the cities GymGO carries, but in AU or the US: the map around you was searched. */
-  | { kind: 'area'; fix: Fix; gyms: number }
+  | { kind: 'area'; fix: Fix; gyms: number; radiusKm: number }
   /** Outside every city GymGO covers: the search went to the nearest one. */
   | { kind: 'nearest'; fix: Fix; city: City; km: number }
   | { kind: 'denied' }
@@ -166,12 +166,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const city = cityNear(fix.position);
     // Outside the cities GymGO carries: search the map around you (Australia
     // and the US), and only failing that, go to the nearest city it carries.
-    let around: { timezone: string; gyms: number } | null = null;
+    let around: { timezone: string; gyms: number; radiusKm: number } | null = null;
     if (!city) {
-      const box = boxAround(fix.position, 0.1);
+      // Whole map tiles around you, never your position: see tilesAround().
+      const box = tilesAround(fix.position);
       try {
         const answer = await searchArea(box);
-        if (answer.where) around = { timezone: answer.where.timezone, gyms: answer.gyms.length };
+        if (answer.where) {
+          // Distances are worked out here, on the device, from your real position.
+          const reach = reachFor(answer.gyms.map((gym) => haversineKm(fix.position, gym.location.position)));
+          around = { timezone: answer.where.timezone, gyms: reach.count, radiusKm: reach.radiusKm };
+        }
       } catch {
         // Unreachable, or outside Australia and the US: the nearest city it is.
       }
@@ -182,16 +187,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       : around
         ? { centre: fix.position, placeName: YOUR_LOCATION, timezone: around.timezone }
         : atPlace(cityPlace(nearest!.city));
+    const reach = (next: Filters) => (around ? { ...next, radiusKm: around.radiusKm } : next);
     setFilters((current) => {
-      if (!onlyIfUntouched) return moveTo(current, where);
+      if (!onlyIfUntouched) return reach(moveTo(current, where));
       // At start-up, never undo a place someone already picked; and the
       // visit time, never chosen yet, becomes the next hour on local time.
       if (current.placeName !== DEFAULT_PLACE.name) return current;
       const visit = defaultVisit(new Date(), where.timezone);
-      return { ...current, ...where, visitDate: visit.date, visitMinuteOfDay: visit.minute };
+      return reach({ ...current, ...where, visitDate: visit.date, visitMinuteOfDay: visit.minute });
     });
     if (city) return { kind: 'here', fix, city };
-    if (around) return { kind: 'area', fix, gyms: around.gyms };
+    if (around) return { kind: 'area', fix, gyms: around.gyms, radiusKm: around.radiusKm };
     return { kind: 'nearest', fix, city: nearest!.city, km: nearest!.km };
   }, [searchArea]);
 

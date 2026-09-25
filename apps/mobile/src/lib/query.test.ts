@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AU_GYMS } from '@gymgo/au-data';
-import { THIS_AREA, boxAround, boxDrift, inArea, initialFilters, moveTo, nameForArea, nearLabel, nextVisitAt, nowIn, runSearch } from './query';
+import { THIS_AREA, boxAround, boxDrift, reachFor, tilesAround, inArea, initialFilters, moveTo, nameForArea, nearLabel, nextVisitAt, nowIn, runSearch } from './query';
 
 describe('nextVisitAt', () => {
   // 9:30 am in Melbourne on 24 September 2026 (AEST, UTC+10).
@@ -84,5 +84,25 @@ describe('boxAround', () => {
     // At 60° south a degree of longitude is half as long, so the box is twice as many degrees wide.
     expect(box.east - box.west).toBeCloseTo(0.2);
     expect((box.east + box.west) / 2).toBeCloseTo(150);
+  });
+});
+
+describe('tilesAround', () => {
+  it('asks for whole tiles around you, the same box anywhere in your tile', () => {
+    const a = tilesAround({ lat: -36.7571, lng: 144.2794 });
+    const b = tilesAround({ lat: -36.7012, lng: 144.2001 });
+    expect(a).toEqual(b);
+    expect(a).toEqual({ south: -36.9, north: -36.6, west: 144.1, east: 144.4 });
+    // You're inside it, with a whole tile to spare on every side.
+    expect(a.south < -36.8 && a.north > -36.7 && a.west < 144.2 && a.east > 144.3).toBe(true);
+  });
+});
+
+describe('reachFor', () => {
+  it('keeps 5 km when something is that close, widens to 10 km only to reach something', () => {
+    expect(reachFor([1.2, 7, 30])).toEqual({ radiusKm: 5, count: 1 });
+    expect(reachFor([6.5, 9.9, 30])).toEqual({ radiusKm: 10, count: 2 });
+    expect(reachFor([14, 30])).toEqual({ radiusKm: 5, count: 0 });
+    expect(reachFor([])).toEqual({ radiusKm: 5, count: 0 });
   });
 });

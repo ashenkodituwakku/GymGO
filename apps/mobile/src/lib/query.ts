@@ -151,6 +151,31 @@ export function boxAround(point: { lat: number; lng: number }, span: number): Bo
   return { north: point.lat + span / 2, south: point.lat - span / 2, east: point.lng + lngSpan / 2, west: point.lng - lngSpan / 2 };
 }
 
+/**
+ * The block of whole map tiles (a tenth of a degree each, as the server
+ * reads the map) around a point: 3 × 3 tiles, about 30 km across. Used to
+ * ask for the gyms around you without saying where you are: any two spots
+ * in the same tile ask for exactly the same box.
+ */
+export function tilesAround(point: { lat: number; lng: number }): BoundingBox {
+  const y = Math.floor(point.lat * 10);
+  const x = Math.floor(point.lng * 10);
+  return { south: (y - 1) / 10, north: (y + 2) / 10, west: (x - 1) / 10, east: (x + 2) / 10 };
+}
+
+/**
+ * How wide to search around you: the usual 5 km, or 10 km when nothing is
+ * mapped within 5 but something is within 10. No further, because the map
+ * tiles asked for (tilesAround) are only sure to reach about 10 km out.
+ */
+export function reachFor(distancesKm: number[], usual = 5): { radiusKm: number; count: number } {
+  for (const radiusKm of [usual, 10]) {
+    const count = distancesKm.filter((km) => km <= radiusKm).length;
+    if (count > 0) return { radiusKm, count };
+  }
+  return { radiusKm: usual, count: 0 };
+}
+
 /** How far the map has moved from a box: the larger of the centre's shift and the change in size, as a share of the box. */
 export function boxDrift(from: BoundingBox, to: BoundingBox): number {
   const height = from.north - from.south;

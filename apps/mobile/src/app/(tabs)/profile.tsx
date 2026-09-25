@@ -159,9 +159,12 @@ export default function Profile() {
         <Row icon="source" tile={TILE.indigo} title="Where the data comes from" onPress={() => toggle('sources')} />
         {about === 'sources' && (
           <Explainer>
-            Gym names and map positions: © OpenStreetMap contributors (ODbL). Prices, hours and equipment: each gym’s own
-            website, read on 23 September 2026. Maps: Apple Maps on iPhone, OpenFreeMap elsewhere. The Google page shows
-            Google’s own map and Street View, straight from Google. Photos, reviews and machine reports: GymGO members.
+            Gym names, map positions and most opening hours: © OpenStreetMap contributors (ODbL), read on 24 September 2026,
+            or live when you search an area. Towns you type are found with Photon, from the same map. For Melbourne’s 23
+            researched gyms, prices, hours and equipment come from each gym’s own website, read on 23 September 2026. Logos:
+            Wikimedia Commons for ten chains, otherwise the icon on the gym’s own website. Maps: Apple Maps on iPhone,
+            OpenFreeMap elsewhere. The Google page shows Google’s own map and Street View, straight from Google. Photos,
+            reviews, what members paid and machine reports: GymGO members.
           </Explainer>
         )}
         <Row icon="info" tile={TILE.grey} title="Privacy" onPress={() => toggle('privacy')} />
@@ -169,6 +172,9 @@ export default function Profile() {
           <Explainer>
             Your account lives on the GymGO server on your own computer. Your precise location, if you allow it, is used on
             this device to find gyms near you and measure distances. It is never stored or sent to GymGO or anyone else.
+            Outside the cities GymGO carries, the app asks the GymGO server for the gyms in the whole map tiles around you (a
+            block about 30 km across, the same for everyone in it), never your position. When you search an area or type a
+            town, the server is told that area or name to look up on OpenStreetMap, not who you are.
             Photos have their location data removed before they’re saved. What you say you paid for a visit is shown without your
             name. If you subscribe to Pro, Stripe handles the payment:
             GymGO never sees your card, and Stripe gets your name and email for the receipt. Signed in, Download my data (below)

@@ -144,8 +144,9 @@ describe('startup self-check', () => {
 
 describe('what finding you says', () => {
   it('outside the cities GymGO carries, says the gyms came from the map', () => {
-    expect(locatedNotice({ kind: 'area', fix: { approximate: false }, gyms: 6 })).toMatch(/OpenStreetMap: map-only, so call before you go\.$/);
-    expect(locatedNotice({ kind: 'area', fix: { approximate: false }, gyms: 0 })).toMatch(/no gyms mapped near you yet/);
+    expect(locatedNotice({ kind: 'area', fix: { approximate: false }, gyms: 6, radiusKm: 5 })).toMatch(/OpenStreetMap: map-only, so call before you go\.$/);
+    expect(locatedNotice({ kind: 'area', fix: { approximate: false }, gyms: 2, radiusKm: 10 })).toMatch(/^Nothing's mapped within 5 km of you, so this shows the 2 gyms within 10 km/);
+    expect(locatedNotice({ kind: 'area', fix: { approximate: false }, gyms: 0, radiusKm: 5 })).toMatch(/no gyms mapped close to you yet/);
   });
 
   it('in a city it carries, says nothing unless the fix is rough', () => {

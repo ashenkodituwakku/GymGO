@@ -3,7 +3,9 @@
  *
  * High-accuracy GPS, not rounded, so distances and the "you are here" dot are
  * right. It is used on this device only, for this search: it is never saved
- * and never sent to the GymGO server or anyone else.
+ * and never sent to the GymGO server or anyone else. (Outside the cities
+ * GymGO carries, the server is asked for the gyms in the whole map tiles
+ * around you, the same box for everyone in a tile: see tilesAround().)
  *
  * If you've only allowed approximate location (Android's "Approximate", or
  * iOS's "Precise: Off"), GymGO says so, because distances will be off by a

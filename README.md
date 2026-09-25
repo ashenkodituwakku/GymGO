@@ -147,7 +147,11 @@ or Android's "Approximate"), GymGO says so, because distances will be off.
 
 If you're outside the cities GymGO carries but still in Australia or the
 US, it searches the map around you (as "Search this area" does) and opens
-"Near you" with what it finds, labelled as map data. Only outside those two
+"Near you" with what it finds, labelled as map data. To do that without
+sending your position, it asks the server for the whole map tiles around
+you: a block about 30 km across, exactly the same request for anyone in
+the same 11 km tile. Your precise position still never leaves the device;
+it's used there to sort by distance. Only outside those two
 countries, or if the map servers can't be reached, does it take you to the
 nearest city it carries, and say how far away that is.
 

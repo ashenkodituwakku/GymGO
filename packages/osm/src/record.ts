@@ -39,7 +39,8 @@ export interface MapOnlyGym {
 }
 
 export interface Whereabouts {
-  countryCode: 'AU' | 'US';
+  /** ISO 3166-1 alpha-2. */
+  countryCode: string;
   timezone: string;
   /** When the map was read. */
   fetchedAt: string;

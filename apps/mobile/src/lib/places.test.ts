@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { haversineKm } from '@gymgo/domain';
-import { CITIES, CITY_LIST, DEFAULT_PLACE, activeCities, cityAt, cityNear, distanceLabel, geocodePlace, homePlace, moneyLabel, nearestCity, placeContext, radiusChoices, setDemoMode, suggestPlaces } from './places';
+import { CITIES, CITY_LIST, DEFAULT_PLACE, activeCities, cityAt, cityNear, distanceLabel, geocodePlace, homePlace, moneyLabel, nearestCity, placeContext, radiusChoices, setDemoMode, suggestPlaces, tracksPrices } from './places';
 import { BUNDLED_GYMS, atPlace, initialFilters, moveTo, runSearch } from './query';
 
 describe('places', () => {
@@ -127,6 +127,14 @@ describe('places', () => {
     expect(moneyLabel(2500, 'US')).toBe('$25');
     expect(moneyLabel(1250, 'US')).toBe('$12.50');
     expect(radiusChoices('US').map((choice) => choice.label)).toEqual(['1 mi', '2 mi', '3 mi', '5 mi', '10 mi']);
+  });
+
+  it('speaks miles in the UK and kilometres in the rest of the world, and keeps prices only in A$ and US$', () => {
+    expect(distanceLabel(1.609344, 'GB')).toBe('1.0 mi');
+    expect(distanceLabel(2.44, 'DE')).toBe('2.4 km');
+    expect(distanceLabel(2.44, 'JP')).toBe('2.4 km');
+    expect(radiusChoices('FR').map((choice) => choice.label)).toEqual(['2 km', '5 km', '10 km', '20 km']);
+    expect([tracksPrices('AU'), tracksPrices('US'), tracksPrices('GB'), tracksPrices('JP')]).toEqual([true, true, false, false]);
   });
 
   it('shows real, map-only gyms in New York, on New York time, with nothing invented', () => {

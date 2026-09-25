@@ -68,6 +68,11 @@ links back to its map element.
 wherever the map is showing; those gyms are filtered by the same rules and
 carry the same credit and link.
 
+Which country a found gym is in comes from
+[country-coder](https://github.com/rapideditor/country-coder) (ISC), the
+OpenStreetMap iD editor's offline country borders; its time zone from
+tz-lookup.
+
 Towns and suburbs typed into the search box, when GymGO doesn't know them
 already, are looked up with [Photon](https://photon.komoot.io) by komoot, a
 free geocoder built on OpenStreetMap data (© OpenStreetMap contributors,

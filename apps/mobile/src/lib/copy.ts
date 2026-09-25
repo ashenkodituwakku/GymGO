@@ -12,7 +12,7 @@
  */
 
 import type { AccessVerdict, ResultTier } from '@gymgo/domain';
-import { distanceLabel } from './places';
+import { distanceLabel, usesMiles } from './places';
 
 export interface TierCopy {
   label: string;
@@ -120,7 +120,7 @@ export const EMPTY = {
 export function locatedNotice(
   result:
     | { kind: 'here'; fix: { approximate: boolean } }
-    | { kind: 'area'; fix: { approximate: boolean }; gyms: number; radiusKm: number }
+    | { kind: 'area'; fix: { approximate: boolean }; gyms: number; radiusKm: number; countryCode: string }
     | { kind: 'nearest'; km: number; city: { name: string; country: string } }
     | { kind: 'denied' }
     | { kind: 'unavailable' },
@@ -131,14 +131,15 @@ export function locatedNotice(
     case 'unavailable':
       return EMPTY.locationUnavailable;
     case 'nearest':
-      return `You're ${distanceLabel(result.km, result.city.country)} from ${result.city.name}, the nearest city we cover, so here it is.`;
+      return `Couldn't search the map around you just now, so here's ${result.city.name}, the nearest city GymGO has built in (${distanceLabel(result.km, result.city.country)} away).`;
     case 'here':
       return result.fix.approximate ? EMPTY.locationApproximate : null;
     case 'area': {
       const rough = result.fix.approximate ? ` ${EMPTY.locationApproximate}` : '';
       if (result.gyms === 0) return `OpenStreetMap has no gyms mapped close to you yet. Move the map and tap Search this area to look further out.${rough}`;
       if (result.radiusKm > 5) {
-        return `Nothing's mapped within 5 km of you, so this shows ${result.gyms === 1 ? 'the gym' : `the ${result.gyms} gyms`} within ${result.radiusKm} km, from OpenStreetMap: map-only, so call before you go.${rough}`;
+        const within = (km: number) => (usesMiles(result.countryCode) ? distanceLabel(km, result.countryCode) : `${km} km`);
+        return `Nothing's mapped within ${within(5)} of you, so this shows ${result.gyms === 1 ? 'the gym' : `the ${result.gyms} gyms`} within ${within(result.radiusKm)}, from OpenStreetMap: map-only, so call before you go.${rough}`;
       }
       return `Gyms around you from OpenStreetMap: map-only, so call before you go.${rough}`;
     }

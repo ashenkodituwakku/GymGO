@@ -42,11 +42,12 @@ export class ApiError extends Error {
 /** A town or suburb the server's place finder found. */
 export interface FoundPlace {
   name: string;
-  /** "Victoria, Australia". */
+  /** "Victoria, Australia", "Bavaria, Germany". */
   region: string;
   lat: number;
   lng: number;
-  countryCode: 'AU' | 'US';
+  /** ISO 3166-1 alpha-2. */
+  countryCode: string;
   kind: 'city' | 'suburb';
 }
 
@@ -140,7 +141,8 @@ export interface AccessSummary {
 
 /** What members paid for one casual visit: typical (median), range, how many, how recent. */
 export interface PriceSummary {
-  currency: 'AUD' | 'USD';
+  /** Null for a gym outside Australia and the US, where no prices are kept yet. */
+  currency: 'AUD' | 'USD' | null;
   count: number;
   typicalMinor: number | null;
   lowMinor: number | null;
@@ -246,11 +248,11 @@ export interface SavedWorkout {
 
 export const api = {
   gyms: () => request<{ gyms: GymRecord[]; attribution: string; generatedAt: string }>('GET', '/api/gyms'),
-  /** Towns and suburbs in Australia and the US called this, best first (for search on submit). */
+  /** Towns and suburbs anywhere called this, best first (for search on submit). */
   places: (q: string) => request<{ places: FoundPlace[]; attribution: string }>('GET', `/api/places?q=${encodeURIComponent(q)}`),
   /** One gym by id, including ones found by searching an area. */
   gym: (id: string) => request<{ gym: GymRecord }>('GET', `/api/gyms/${encodeURIComponent(id)}`),
-  /** The gyms OpenStreetMap has in a box (Australia and the US), read live by the server and kept. */
+  /** The gyms OpenStreetMap has in a box, anywhere, read live by the server and kept. */
   area: (box: { south: number; west: number; north: number; east: number }) =>
     request<{
       gyms: GymRecord[];
@@ -258,7 +260,7 @@ export const api = {
       truncated: boolean;
       attribution: string;
       /** The country and time zone of the middle of the area. */
-      where: { countryCode: 'AU' | 'US'; timezone: string } | null;
+      where: { countryCode: string; timezone: string } | null;
     }>(
       'GET',
       `/api/area?${new URLSearchParams({

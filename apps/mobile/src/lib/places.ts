@@ -259,9 +259,27 @@ export const cityAt = (point: LatLng): City => cityNear(point) ?? nearestCity(po
 
 const KM_PER_MILE = 1.609344;
 
-/** "350 m", "2.4 km"; in the US, "0.2 mi", "1.5 mi". Straight-line distance. */
+/**
+ * Countries whose road signs are in miles: the US and the UK, and the
+ * territories and islands that follow them (from country-coder's
+ * roadSpeedUnit). Everywhere else is kilometres.
+ */
+const MILES = new Set([
+  'US', 'GB', 'PR', 'GU', 'VI', 'AS', 'MP', 'UM', 'IM', 'JE', 'GG', 'FK', 'SH', 'AI', 'KY', 'MS', 'TC', 'VG',
+  'AG', 'BS', 'BZ', 'DM', 'GD', 'KN', 'LC', 'VC', 'FM', 'MH', 'PW',
+]);
+
+export const usesMiles = (country: string) => MILES.has(country);
+
+/**
+ * Where GymGO keeps visit prices (members' reports, budgets): Australian and
+ * US dollars, for now. Elsewhere prices are simply unknown.
+ */
+export const tracksPrices = (country: string) => country === 'AU' || country === 'US';
+
+/** "350 m", "2.4 km"; in the US and UK, "0.2 mi", "1.5 mi". Straight-line distance. */
 export function distanceLabel(km: number, country: string): string {
-  if (country === 'US') {
+  if (usesMiles(country)) {
     const miles = km / KM_PER_MILE;
     return miles < 10 ? `${miles.toFixed(1)} mi` : `${Math.round(miles).toLocaleString('en-US')} mi`;
   }
@@ -272,12 +290,12 @@ export function distanceLabel(km: number, country: string): string {
 
 /** Search radius choices, in the local unit, stored as kilometres. */
 export function radiusChoices(country: string): Array<{ km: number; label: string }> {
-  if (country === 'US') return [1, 2, 3, 5, 10].map((miles) => ({ km: miles * KM_PER_MILE, label: `${miles} mi` }));
+  if (usesMiles(country)) return [1, 2, 3, 5, 10].map((miles) => ({ km: miles * KM_PER_MILE, label: `${miles} mi` }));
   return [2, 5, 10, 20].map((km) => ({ km, label: `${km} km` }));
 }
 
-/** "A$25" in Australia, "$25" in the US. */
+/** "A$25" in Australia, "$25" in the US (the only places prices are kept: see tracksPrices). */
 export function moneyLabel(minor: number, country: string): string {
   const whole = minor % 100 === 0 ? String(minor / 100) : (minor / 100).toFixed(2);
-  return `${country === 'US' ? '$' : 'A$'}${whole}`;
+  return `${country === 'US' ? '$' : country === 'AU' ? 'A$' : ''}${whole}`;
 }

@@ -23,20 +23,29 @@ describe('moveTo', () => {
 
   it('keeps the visit as it is within the same time zone', () => {
     const filters = { ...initialFilters(morning), visitMinuteOfDay: 18 * 60, visitDate: '2026-09-24' };
-    const moved = moveTo(filters, { centre: { lat: -37.8, lng: 144.98 }, placeName: 'Fitzroy', timezone: 'Australia/Melbourne' }, morning);
+    const moved = moveTo(filters, { centre: { lat: -37.8, lng: 144.98 }, placeName: 'Fitzroy', timezone: 'Australia/Melbourne', countryCode: 'AU' }, morning);
     expect(moved.visitDate).toBe('2026-09-24');
     expect(moved.visitMinuteOfDay).toBe(18 * 60);
   });
 
   it('puts the same time of day on the new city’s clock, never in its past', () => {
     const filters = { ...initialFilters(morning), visitMinuteOfDay: 18 * 60, visitDate: '2026-09-24' };
-    const ny = moveTo(filters, { centre: { lat: 40.75, lng: -73.98 }, placeName: 'New York', timezone: 'America/New_York' }, morning);
+    const ny = moveTo(filters, { centre: { lat: 40.75, lng: -73.98 }, placeName: 'New York', timezone: 'America/New_York', countryCode: 'US' }, morning);
     // 6 pm has passed in New York (it's 7:30 pm Wednesday), so Thursday 6 pm.
     expect(ny.timezone).toBe('America/New_York');
     expect(ny.visitDate).toBe('2026-09-24');
     expect(ny.visitMinuteOfDay).toBe(18 * 60);
-    const early = moveTo({ ...filters, visitMinuteOfDay: 21 * 60 }, { centre: { lat: 40.75, lng: -73.98 }, placeName: 'New York', timezone: 'America/New_York' }, morning);
+    const early = moveTo({ ...filters, visitMinuteOfDay: 21 * 60 }, { centre: { lat: 40.75, lng: -73.98 }, placeName: 'New York', timezone: 'America/New_York', countryCode: 'US' }, morning);
     expect(early.visitDate).toBe('2026-09-23');
+  });
+
+  it('drops the budget in another country, since it was in the old one’s money', () => {
+    const filters = { ...initialFilters(morning), budgetMinor: 3000 };
+    const fitzroy = moveTo(filters, { centre: { lat: -37.8, lng: 144.98 }, placeName: 'Fitzroy', timezone: 'Australia/Melbourne', countryCode: 'AU' }, morning);
+    expect(fitzroy.budgetMinor).toBe(3000);
+    const tokyo = moveTo(filters, { centre: { lat: 35.68, lng: 139.7 }, placeName: 'Shinjuku', timezone: 'Asia/Tokyo', countryCode: 'JP' }, morning);
+    expect(tokyo.budgetMinor).toBeNull();
+    expect(tokyo.countryCode).toBe('JP');
   });
 });
 
@@ -45,7 +54,7 @@ describe('Search this area', () => {
   const filters = initialFilters(new Date('2026-09-23T23:30:00Z'));
 
   it('limits the results to the box, whatever the radius', () => {
-    const area = inArea(filters, hobart, 'Hobart', 'Australia/Hobart');
+    const area = inArea(filters, hobart, 'Hobart', { timezone: 'Australia/Hobart', countryCode: 'AU' });
     const outcome = runSearch(area, { records: AU_GYMS });
     expect(outcome.results.length).toBeGreaterThan(0);
     for (const result of outcome.results) {
@@ -56,8 +65,8 @@ describe('Search this area', () => {
   });
 
   it('is cleared by picking a place', () => {
-    const area = inArea(filters, hobart, 'Hobart', 'Australia/Hobart');
-    expect(moveTo(area, { centre: { lat: -37.8, lng: 144.96 }, placeName: 'Melbourne', timezone: 'Australia/Melbourne' }).bbox).toBeNull();
+    const area = inArea(filters, hobart, 'Hobart', { timezone: 'Australia/Hobart', countryCode: 'AU' });
+    expect(moveTo(area, { centre: { lat: -37.8, lng: 144.96 }, placeName: 'Melbourne', timezone: 'Australia/Melbourne', countryCode: 'AU' }).bbox).toBeNull();
   });
 
   it('names the area after the gym nearest the middle, or says "this area"', () => {

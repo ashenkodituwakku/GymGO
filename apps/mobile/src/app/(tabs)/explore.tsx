@@ -150,14 +150,14 @@ function MapScreen() {
   const pendingPlace = useRef<{ place: FoundPlace; span: number; from: BoundingBox | null; timer: ReturnType<typeof setTimeout> } | null>(null);
   const viewBoxRef = useRef<BoundingBox | null>(null);
 
-  /** Anywhere in Australia or the US: ask the server's place finder, fly there and search it. */
+  /** Anywhere in the world: ask the server's place finder, fly there and search it. */
   const findPlace = useCallback(async (text: string, orGym?: string) => {
     try {
       const found = placeForEnter(text, (await api.places(text)).places, orGym !== undefined);
       if (!found && orGym) return openGymRef.current(orGym);
       if (!found) {
         haptic.warn();
-        setNotice(`Nothing called “${text}” in Australia or the US. Try a suburb or town name.`);
+        setNotice(`Couldn’t find a place called “${text}”. Try a suburb or town name.`);
         return;
       }
       setQuery('');
@@ -185,7 +185,7 @@ function MapScreen() {
     if (result.place) return pickPlace(result.place);
     // Not a place: maybe a gym's name. Open the best match if it's nearby
     // and the words aren't its town; otherwise look them up as a place
-    // anywhere in Australia or the US first, falling back to the gym.
+    // anywhere in the world first, falling back to the gym.
     const gym = suggestGyms(query, data.records, filters.centre, 1)[0];
     if (gym && enterOpensGym(query, gym, filters.centre, data.records)) return openGymRef.current(gym.location.id);
     if (result.outOfArea) void findPlace(query.trim(), gym?.location.id);
@@ -232,8 +232,12 @@ function MapScreen() {
         // What's loaded already, plus what's new (a gym found before counts once).
         const fresh = new Set(answer.gyms.map((record) => record.location.id));
         const inBox = [...answer.gyms, ...data.records.filter((record) => !fresh.has(record.location.id) && isWithinBox(record.location.position, box))];
-        const timezone = inBox[0]?.location.timezone ?? filters.timezone;
-        setFilters((current) => inArea(current, box, named?.name ?? nameForArea(inBox, box), timezone));
+        // The area's own clock and country (the server's word, else a gym's, else as before).
+        const first = inBox[0]?.location;
+        const area = answer.where ?? (first ? { timezone: first.timezone, countryCode: first.address.countryCode } : filters);
+        setFilters((current) =>
+          inArea(current, box, named?.name ?? nameForArea(inBox, box), { timezone: area.timezone, countryCode: area.countryCode }),
+        );
         setSelectedId(null);
         const where = named ? `${named.name}, ${named.region}: ` : '';
         if (inBox.length === 0) {
@@ -259,7 +263,7 @@ function MapScreen() {
         setAreaBusy(false);
       }
     },
-    [areaBusy, data, filters.timezone, setFilters, wide],
+    [areaBusy, data, filters, setFilters, wide],
   );
   searchBoxRef.current = searchBox;
 
@@ -322,6 +326,7 @@ function MapScreen() {
             centre: record.location.position,
             placeName: record.location.address.suburb,
             timezone: record.location.timezone,
+            countryCode: record.location.address.countryCode,
           }),
         );
       }

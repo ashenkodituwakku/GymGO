@@ -19,7 +19,7 @@ import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { EMPTY, timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
-import { PLACES, activeCities, cityAt, cityPlace, moneyLabel, type AppPlace } from '@/lib/places';
+import { PLACES, activeCities, cityNear, cityPlace, moneyLabel, tracksPrices, type AppPlace } from '@/lib/places';
 import { atPlace, moveTo, nearLabel, nextVisitAt, runSearch, type Filters } from '@/lib/query';
 import { resultsById } from '@/lib/results';
 import { color, face, radius, shadow, space } from '@/lib/theme';
@@ -46,14 +46,17 @@ export default function Home() {
   const recent = recents.map((id) => byId.get(id)).filter((result) => result !== undefined);
   const clock = new Date();
   const name = account.account?.displayName.split(' ')[0];
-  const city = cityAt(filters.centre);
+  // The carried city the search is in; none out in the rest of the world.
+  const city = cityNear(filters.centre);
 
   // Where to browse: this city's neighbourhoods, then the other cities.
-  const browse = city.id === 'melbourne'
-    ? MELBOURNE_PICKS.map((suburb) => PLACES.find((place) => place.name === suburb && place.city === 'melbourne')).filter((place) => place !== undefined)
-    : PLACES.filter((place) => place.city === city.id && place.name !== city.name).slice(0, 10);
+  const browse = !city
+    ? []
+    : city.id === 'melbourne'
+      ? MELBOURNE_PICKS.map((suburb) => PLACES.find((place) => place.name === suburb && place.city === 'melbourne')).filter((place) => place !== undefined)
+      : PLACES.filter((place) => place.city === city.id && place.name !== city.name).slice(0, 10);
   // In demo mode there's only the demo, so no other cities.
-  const otherCities = activeCities().filter((item) => item.id !== city.id);
+  const otherCities = activeCities().filter((item) => item.id !== city?.id);
 
   const explore = (request: Parameters<typeof requestExplore>[0] = {}) => {
     requestExplore(request);
@@ -74,11 +77,14 @@ export default function Home() {
     { icon: 'locate', title: 'Near me', onPress: () => explore({ locate: true }) },
     { icon: 'sunrise', title: 'Early start', onPress: () => pick((current) => ({ ...current, ...visit(6 * 60) })) },
     { icon: 'moon', title: 'After work', onPress: () => pick((current) => ({ ...current, ...visit(18 * 60) })) },
-    {
-      icon: 'money',
-      title: `Under ${moneyLabel(2500, city.country)}`,
-      onPress: () => pick((current) => ({ ...current, budgetMinor: 2500 })),
-    },
+    // A budget only where GymGO keeps prices; elsewhere, a lunchtime visit.
+    tracksPrices(filters.countryCode)
+      ? {
+          icon: 'money',
+          title: `Under ${moneyLabel(2500, filters.countryCode)}`,
+          onPress: () => pick((current) => ({ ...current, budgetMinor: 2500 })),
+        }
+      : { icon: 'clock', title: 'Lunchtime', onPress: () => pick((current) => ({ ...current, ...visit(12 * 60) })) },
   ];
 
   return (
@@ -161,7 +167,7 @@ export default function Home() {
         />
         <Txt variant="footnote" color={color.labelSecondary}>
           For a visit at {timeLabel(filters.visitMinuteOfDay)}
-          {filters.budgetMinor ? `, under ${moneyLabel(filters.budgetMinor, city.country)}` : ''}
+          {filters.budgetMinor ? `, under ${moneyLabel(filters.budgetMinor, filters.countryCode)}` : ''}
           {filters.equipment.length ? `, with ${filters.equipment.length} must-have${filters.equipment.length > 1 ? 's' : ''}` : ''}. Hold a
           card for more.
         </Txt>
@@ -201,6 +207,7 @@ export default function Home() {
       )}
 
       {/* Suburbs ----------------------------------------------------------- */}
+      {city && browse.length > 0 && (
       <View style={styles.section}>
         <SectionHeader icon="compass" title={`Browse ${city.name}`} />
         <View style={styles.suburbs}>
@@ -221,11 +228,15 @@ export default function Home() {
           })}
         </View>
       </View>
+      )}
 
       {/* Other cities ------------------------------------------------------- */}
       {otherCities.length > 0 && (
         <View style={styles.section}>
-          <SectionHeader icon="globe-hemisphere-west" title="Other cities" />
+          <SectionHeader icon="globe-hemisphere-west" title={city ? 'Other cities' : 'Cities GymGO knows well'} />
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.anywhere}>
+            Or anywhere in the world: type a town on the map, or move the map and tap Search this area.
+          </Txt>
           {(['AU', 'US'] as const).map((country) => {
             const list = otherCities.filter((item) => item.country === country);
             if (list.length === 0) return null;
@@ -331,6 +342,7 @@ const styles = StyleSheet.create({
 
   country: { gap: space[2] },
   countryLabel: { ...face('semibold'), letterSpacing: 0.6 },
+  anywhere: { marginBottom: space[3] },
   suburbs: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   suburb: { paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.background, ...shadow.card },
   suburbOn: { backgroundColor: color.brand },

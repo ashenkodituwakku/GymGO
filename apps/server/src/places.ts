@@ -1,16 +1,16 @@
 /**
- * Finding a town or suburb anywhere in Australia or the US, by name.
+ * Finding a town or suburb anywhere in the world, by name.
  *
  * The app knows the suburbs of its bundled cities by heart. For anywhere
- * else ("Bendigo", "Boise"), it asks here when someone presses Enter, and
+ * else ("Bendigo", "Boise", "Kyoto"), it asks here when someone presses Enter, and
  * this asks Photon (photon.komoot.io), a free geocoder built on
  * OpenStreetMap. The app then flies there and searches the area for gyms.
  *
  * Photon is free and asks only for fair use, so: one request at a time, at
  * most one a second, only on submit (never as someone types), answers kept
  * for a month, and a per-address limit on new questions. Only towns,
- * suburbs and localities come back, and only in the two countries GymGO
- * covers.
+ * suburbs and localities come back, with English names where the map has
+ * them ("Munich" as well as "München").
  */
 
 import type { Db } from './db';
@@ -24,11 +24,12 @@ const MAX_RESULTS = 5;
 
 export interface FoundPlace {
   name: string;
-  /** "Victoria, Australia", "Texas, United States". */
+  /** "Victoria, Australia", "Texas, United States", "Bavaria, Germany". */
   region: string;
   lat: number;
   lng: number;
-  countryCode: 'AU' | 'US';
+  /** ISO 3166-1 alpha-2. */
+  countryCode: string;
   /** A city or town, or a suburb or neighbourhood (sets how far the map zooms). */
   kind: 'city' | 'suburb';
 }
@@ -52,7 +53,7 @@ export function normaliseQuery(text: string): string {
     .trim();
 }
 
-/** Photon's features → places GymGO can search: towns and suburbs in AU and the US, best first. */
+/** Photon's features → places GymGO can search: towns and suburbs, best first, each once. */
 export function readPhoton(data: unknown): FoundPlace[] {
   const features = (data as { features?: unknown[] } | null)?.features;
   if (!Array.isArray(features)) return [];
@@ -61,12 +62,13 @@ export function readPhoton(data: unknown): FoundPlace[] {
   for (const feature of features as Array<Record<string, any>>) {
     const p = feature?.properties ?? {};
     const [lng, lat] = Array.isArray(feature?.geometry?.coordinates) ? feature.geometry.coordinates : [];
-    const country = p.countrycode === 'AU' || p.countrycode === 'US' ? (p.countrycode as 'AU' | 'US') : null;
+    const country = typeof p.countrycode === 'string' && /^[A-Z]{2}$/.test(p.countrycode) ? p.countrycode : null;
     if (!country || typeof p.name !== 'string' || typeof lat !== 'number' || typeof lng !== 'number') continue;
     const kind = p.type === 'city' ? 'city' : p.type === 'district' || p.type === 'locality' ? 'suburb' : null;
     if (!kind) continue;
-    const region = [p.state, country === 'AU' ? 'Australia' : 'United States'].filter((part) => typeof part === 'string' && part).join(', ');
-    const key = `${p.name.toLowerCase()}|${region}`;
+    const region = [p.state, p.country].filter((part) => typeof part === 'string' && part).join(', ');
+    // A city and its own district of the same name are one place.
+    const key = `${p.name.toLowerCase()}|${country}|${typeof p.state === 'string' ? p.state : ''}`;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push({ name: p.name, region, lat, lng, countryCode: country, kind });

@@ -11,7 +11,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE } from './motion';
 import { explainNoMatches, haversineKm, type GymRecord, type SearchOutcome } from '@gymgo/domain';
 import { suggestGyms } from '@/lib/gymSearch';
-import { cityAt, distanceLabel, moneyLabel, placeContext, suggestPlaces, type AppPlace } from '@/lib/places';
+import { cityAt, distanceLabel, moneyLabel, placeContext, suggestPlaces, tracksPrices, type AppPlace } from '@/lib/places';
 import { EMPTY, PLACEHOLDER, TIER, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
 import { SORTS, activeFilterCount, nearLabel, type Filters } from '@/lib/query';
 import { color, face, radius, space } from '@/lib/theme';
@@ -218,11 +218,9 @@ export function ResultsContent({
           onPress={onOpenFilters}
           accessibilityLabel={`Visiting at ${timeLabel(filters.visitMinuteOfDay)}. Change time`}
         />
-        <Chip
-          label={`Under ${moneyLabel(3000, city.country)}`}
-          selected={filters.budgetMinor === 3000}
-          onPress={onToggleBudget}
-        />
+        {tracksPrices(filters.countryCode) && (
+          <Chip label={`Under ${moneyLabel(3000, filters.countryCode)}`} selected={filters.budgetMinor === 3000} onPress={onToggleBudget} />
+        )}
         <Chip label="Squat rack" selected={filters.equipment.includes('squat_rack')} onPress={() => onToggleEquipment('squat_rack')} />
         <Chip label="Dumbbells" selected={filters.equipment.includes('dumbbells')} onPress={() => onToggleEquipment('dumbbells')} />
         <Chip label="Cables" selected={filters.equipment.includes('cable_station')} onPress={() => onToggleEquipment('cable_station')} />

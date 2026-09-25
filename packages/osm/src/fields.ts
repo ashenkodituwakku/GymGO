@@ -35,10 +35,18 @@ export function branchOf(tags: Tags): string | undefined {
   return branch || undefined;
 }
 
-export function line1Of(tags: Tags): string {
+/**
+ * Countries that write the house number before the street ("12 Mitchell
+ * Street", "12 rue de Rivoli"). Most of the rest write it after
+ * ("Hauptstraße 12", "Calle Mayor 12").
+ */
+const NUMBER_FIRST = new Set(['AU', 'US', 'CA', 'GB', 'IE', 'NZ', 'FR', 'LU', 'ZA', 'SG', 'MY', 'PH', 'IN', 'HK', 'NG', 'KE', 'GH']);
+
+export function line1Of(tags: Tags, countryCode = 'AU'): string {
   const street = tags['addr:street'] ?? '';
   const number = tags['addr:housenumber'] ?? '';
-  return street ? `${number} ${street}`.trim() : '';
+  if (!street) return '';
+  return (NUMBER_FIRST.has(countryCode) ? `${number} ${street}` : `${street} ${number}`).trim();
 }
 
 export function brandOf(tags: Tags): { brand?: string; brandWikidata?: string } {

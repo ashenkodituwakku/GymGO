@@ -1,10 +1,10 @@
 /**
  * "Search this area": gyms from OpenStreetMap for wherever the map is showing.
  *
- * The bundled cities cover a circle round each centre. Anywhere else in
- * Australia or the US, the app can ask for the area on screen, and this
- * reads the map live through the Overpass API, filtered by exactly the
- * rules the bundled cities use (packages/osm), into map-only records.
+ * The bundled cities cover a circle round each centre. Anywhere else in the
+ * world, the app can ask for the area on screen, and this reads the map live
+ * through the Overpass API, filtered by exactly the rules the bundled cities
+ * use (packages/osm), into map-only records.
  *
  * Being a good citizen of a free, volunteer-run service:
  *  - The world is cut into fixed tiles a tenth of a degree square (about
@@ -16,10 +16,13 @@
  *
  * The gyms are saved (area_gyms), so they can be saved, reviewed and
  * reported on like any other, and a link to one still works tomorrow.
- * Only Australia and the US: those are the countries whose prices, time
- * zones and addresses GymGO knows.
+ * Each gym's country comes from country-coder (the OpenStreetMap iD
+ * editor's offline borders) and its time zone from tz-lookup, so hours and
+ * "open at 6 pm" are in the gym's own clock anywhere. Australia's and the
+ * US's addresses get their states worked out; elsewhere they're as mapped.
  */
 
+import { iso1A2Code } from '@rapideditor/country-coder';
 import tzlookup from '@photostructure/tz-lookup';
 import type { GymRecord } from '@gymgo/domain';
 import {
@@ -84,16 +87,6 @@ const MAX_GYMS = 200;
 /** Live map reads per day, across everyone. Overpass asks for under 10,000. */
 const DAILY_LIVE = 500;
 
-const US_ZONES = new Set([
-  'America/New_York', 'America/Detroit', 'America/Kentucky/Louisville', 'America/Kentucky/Monticello',
-  'America/Indiana/Indianapolis', 'America/Indiana/Vincennes', 'America/Indiana/Winamac', 'America/Indiana/Marengo',
-  'America/Indiana/Petersburg', 'America/Indiana/Vevay', 'America/Chicago', 'America/Indiana/Tell_City',
-  'America/Indiana/Knox', 'America/Menominee', 'America/North_Dakota/Center', 'America/North_Dakota/New_Salem',
-  'America/North_Dakota/Beulah', 'America/Denver', 'America/Boise', 'America/Phoenix', 'America/Los_Angeles',
-  'America/Anchorage', 'America/Juneau', 'America/Sitka', 'America/Metlakatla', 'America/Yakutat', 'America/Nome',
-  'America/Adak', 'Pacific/Honolulu',
-]);
-
 /** Australia's time zones and the state each one means (Sydney's is also Canberra's, so it's settled by postcode). */
 const AU_ZONE_STATE: Record<string, string> = {
   'Australia/Melbourne': 'VIC', 'Australia/Brisbane': 'QLD', 'Australia/Lindeman': 'QLD', 'Australia/Adelaide': 'SA',
@@ -122,17 +115,29 @@ export function auStateForPostcode(postcode: string): string {
   return '';
 }
 
-/** Where a point is, as far as GymGO is concerned: which country and time zone, or null outside AU and the US. */
-export function whereIs(lat: number, lng: number): { countryCode: 'AU' | 'US'; timezone: string } | null {
-  let zone: string;
+export interface Whereabouts {
+  /** ISO 3166-1 alpha-2: "AU", "US", "GB", "JP". Territories count as their country (Puerto Rico is US). */
+  countryCode: string;
+  /** IANA time zone: "Australia/Melbourne", "Europe/London". */
+  timezone: string;
+}
+
+/**
+ * Which country and time zone a point is in, or null out at sea. Borders
+ * over water are rough, so a point just offshore can still get a country;
+ * one whose clock would only be a sea zone ("Etc/GMT-10") gets null.
+ */
+export function whereIs(lat: number, lng: number): Whereabouts | null {
+  const countryCode = iso1A2Code([lng, lat]);
+  if (!countryCode) return null;
+  let timezone: string;
   try {
-    zone = tzlookup(lat, lng);
+    timezone = tzlookup(lat, lng);
   } catch {
     return null;
   }
-  if (zone in AU_ZONE_STATE) return { countryCode: 'AU', timezone: zone };
-  if (US_ZONES.has(zone)) return { countryCode: 'US', timezone: zone };
-  return null;
+  if (timezone.startsWith('Etc/')) return null;
+  return { countryCode, timezone };
 }
 
 export function parseBox(params: URLSearchParams): Box {
@@ -173,8 +178,8 @@ export interface AreaAnswer {
   fetchedAt: string | null;
   /** More gyms than one answer holds: the nearest the middle were kept. */
   truncated: boolean;
-  /** The country and time zone of the middle of the area. */
-  where: { countryCode: 'AU' | 'US'; timezone: string } | null;
+  /** The country and time zone of the middle of the area (or, if that's sea, of the gym nearest it). */
+  where: Whereabouts | null;
 }
 
 export interface AreaOptions {
@@ -184,6 +189,8 @@ export interface AreaOptions {
   now?: () => Date;
   /** Gyms already in the bundled data; the map's copies of them are left out. */
   known: () => GymRecord[];
+  /** Where a server's failure is noted (the console by default). */
+  log?: (line: string) => void;
 }
 
 export class AreaSearch {
@@ -191,6 +198,9 @@ export class AreaSearch {
   private readonly fetchImpl: Fetch;
   private readonly now: () => Date;
   private queue: Promise<unknown> = Promise.resolve();
+  /** The Overpass server that answered last. */
+  private preferred: string | null = null;
+  private readonly log: (line: string) => void;
   private day = '';
   private liveToday = 0;
 
@@ -201,6 +211,7 @@ export class AreaSearch {
     this.endpoints = options.endpoints?.length ? options.endpoints : DEFAULT_OVERPASS;
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.now = options.now ?? (() => new Date());
+    this.log = options.log ?? ((line) => console.warn(line));
   }
 
   /** Whether answering this area needs a live map read (so the caller can rate-limit only those). */
@@ -221,9 +232,6 @@ export class AreaSearch {
     const tiles = tilesOf(box);
     if (tiles.length > MAX_TILES) throw new AreaError(400, 'That’s a big area. Zoom in a little and search again.', 'too_big');
     const middle: [number, number] = [(box.south + box.north) / 2, (box.west + box.east) / 2];
-    if (!whereIs(...middle) && !tiles.some((tile) => whereIs((tile.box.south + tile.box.north) / 2, (tile.box.west + tile.box.east) / 2))) {
-      throw new AreaError(422, 'GymGO covers Australia and the United States for now.', 'unsupported_country');
-    }
 
     if (this.staleTiles(box).length > 0) {
       // One read at a time, so a burst of searches never hammers the service,
@@ -249,7 +257,11 @@ export class AreaSearch {
     current.sort((a, b) => km(middle, [a.lat, a.lng]) - km(middle, [b.lat, b.lng]));
     const kept = current.slice(0, MAX_GYMS);
     const oldest = kept.reduce<string | null>((min, row) => (min === null || row.fetched_at < min ? row.fetched_at : min), null);
-    return { gyms: kept.map((row) => row.record), fetchedAt: oldest, truncated: current.length > MAX_GYMS, where: whereIs(...middle) };
+    // A coastal view's middle can be out at sea: then the nearest gym says where this is.
+    const nearest = kept[0]?.record.location;
+    const where =
+      whereIs(...middle) ?? (nearest ? { countryCode: nearest.address.countryCode, timezone: nearest.timezone } : null);
+    return { gyms: kept.map((row) => row.record), fetchedAt: oldest, truncated: current.length > MAX_GYMS, where };
   }
 
   private async fetchTiles(boxes: Box[], keys: string[]): Promise<void> {
@@ -273,10 +285,15 @@ export class AreaSearch {
       'nwr["leisure"="fitness_centre"]["name"];out center tags;' +
       'node["place"~"^(city|town|suburb|village|neighbourhood|quarter|hamlet)$"]["name"];out;';
 
-    // The first server that answers properly wins; a slow, busy or odd one passes to the next.
+    // The first server that answers properly wins; a slow, busy or odd one
+    // passes to the next. The one that answered last time is asked first, so
+    // a server that's down (or refuses this network) costs one wait, not one
+    // per search.
     let data: { elements: OsmElement[] } | null = null;
     let busy = false;
-    for (const endpoint of this.endpoints) {
+    const order = this.preferred ? [this.preferred, ...this.endpoints.filter((endpoint) => endpoint !== this.preferred)] : this.endpoints;
+    for (const endpoint of order) {
+      const host = new URL(endpoint).host;
       try {
         const response = await this.fetchImpl(endpoint, {
           method: 'POST',
@@ -289,10 +306,13 @@ export class AreaSearch {
         // A runtime error comes back as 200 with a remark and no data: not an answer.
         if (response.ok && body && Array.isArray(body.elements) && !/error/i.test(body.remark ?? '')) {
           data = { elements: body.elements };
+          this.preferred = endpoint;
           break;
         }
-      } catch {
+        this.log(`[area] ${host} answered ${response.status}${body?.remark ? `: ${body.remark.slice(0, 120)}` : ''}; trying the next`);
+      } catch (error) {
         // Timed out or unreachable: try the next.
+        this.log(`[area] ${host} didn't answer (${error instanceof Error ? error.name : 'error'}); trying the next`);
       }
     }
     if (!data) {
@@ -362,7 +382,7 @@ export class AreaSearch {
     tags: Record<string, string>,
     el: OsmElement,
     pos: [number, number],
-    where: { countryCode: 'AU' | 'US'; timezone: string },
+    where: Whereabouts,
     places: Place[],
     fetchedAt: string,
   ): GymRecord {
@@ -379,10 +399,14 @@ export class AreaSearch {
       let named = (tags['addr:state'] ?? '').trim().toUpperCase();
       named = AU_STATE_NAMES[named] ?? named;
       state = AU_STATES.has(named) ? named : auStateForPostcode(postcode) || AU_ZONE_STATE[where.timezone] || '';
-    } else {
+    } else if (where.countryCode === 'US') {
       postcode = /^\d{5}/.test(rawPostcode) ? rawPostcode.slice(0, 5) : '';
       const named = (tags['addr:state'] ?? '').trim().toUpperCase();
       state = /^[A-Z]{2}$/.test(named) ? named : '';
+    } else {
+      // Elsewhere, as mapped: postcodes and regions take too many shapes to check.
+      postcode = rawPostcode.slice(0, 12);
+      state = (tags['addr:state'] || tags['addr:province'] || '').trim().slice(0, 40);
     }
     const branch = branchOf(tags);
     const { hoursUnreadable: _unreadable, ...extras } = extrasOf(tags);
@@ -393,7 +417,7 @@ export class AreaSearch {
         name,
         ...brandOf(tags),
         ...(branch ? { branch } : {}),
-        line1: line1Of(tags),
+        line1: line1Of(tags, where.countryCode),
         locality,
         state,
         postcode,

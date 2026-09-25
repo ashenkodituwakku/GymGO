@@ -1,4 +1,4 @@
-import { candidate, contactOf, extrasOf, pyJson } from './fields';
+import { candidate, contactOf, extrasOf, line1Of, pyJson } from './fields';
 import { mapOnlyRecord } from './record';
 import { keep, parseHours, slug, trainingType } from './rules';
 
@@ -134,6 +134,13 @@ describe('reading an element', () => {
     expect(contactOf({ phone: '+61 3 9000 0000;+61 3 9000 0001', website: 'www.example.com', email: 'not an email' })).toEqual({
       phone: '+61 3 9000 0000',
     });
+  });
+
+  it('puts the house number where the country does', () => {
+    const tags = { 'addr:street': 'Hauptstraße', 'addr:housenumber': '12' };
+    expect(line1Of(tags, 'DE')).toBe('Hauptstraße 12');
+    expect(line1Of(tags, 'AU')).toBe('12 Hauptstraße');
+    expect(line1Of({ 'addr:housenumber': '12' }, 'DE')).toBe('');
   });
 
   it('flags hours that are mapped but unreadable', () => {

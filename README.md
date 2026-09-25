@@ -107,12 +107,15 @@ Chrome and Edge (blur only in Safari and Firefox).
   match, closest, cheapest, top rated). "Best match" means: gyms that meet
   everything you asked first, then, among the rest, the ones with the fewest
   things you'd need to call about, then the nearest. Move the map anywhere in
-  Australia or the US and **Search this area** appears: it asks the server,
+  the world and **Search this area** appears: it asks the server,
   which reads OpenStreetMap for the area on screen (through the free Overpass
   API), keeps what the same rules count as a gym, and remembers each area for
   a month so a busy area costs one request, not one per person. Those gyms
-  are map-only like the rest: name, address, sometimes hours, "call first".
-  Type any town or suburb in Australia or the US ("Bendigo", "Boise") and
+  are map-only like the rest: name, address, sometimes hours, "call first",
+  each on its own country's clock and in its own units (miles in the US and
+  UK). Visit prices (budgets, members' reports) are kept in A$ and US$ only
+  for now; elsewhere a price is simply unknown, and the app says so.
+  Type any town or suburb anywhere ("Bendigo", "Boise", "Kyoto") and
   press Enter: if it isn't one GymGO knows by heart, the server looks it up
   (Photon, a free OpenStreetMap geocoder, asked only on Enter and at most
   once a second, answers kept a month), and the map flies there and

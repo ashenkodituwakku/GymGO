@@ -881,9 +881,15 @@ export function createApp(options: AppOptions) {
     if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'prices' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
       if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
-      const currency = gymCountry(db, gymId) === 'US' ? 'USD' : 'AUD';
+      // Reports are kept in Australian and US dollars only, for now: what a
+      // visit costs elsewhere (¥, ₹, €) needs its own sensible range.
+      const country = gymCountry(db, gymId);
+      const currency = country === 'US' ? 'USD' : country === 'AU' ? 'AUD' : null;
       const since = new Date(now().getTime() - PRICE_REPORT_DAYS * 86_400_000).toISOString().slice(0, 10);
 
+      if (method === 'GET' && currency === null) {
+        return send(res, 200, { currency: null, count: 0, typicalMinor: null, lowMinor: null, highMinor: null, latestPaidOn: null, mine: null });
+      }
       if (method === 'GET') {
         const { account } = caller(req);
         const rows = db
@@ -914,6 +920,7 @@ export function createApp(options: AppOptions) {
           return send(res, 204);
         }
         if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to report.');
+        if (currency === null) throw new HttpError(400, 'Visit prices can be reported for gyms in Australia and the US for now.');
         const body = (await readJson(req)) as Record<string, unknown>;
         const amount = Number(body.amountMinor);
         if (!Number.isInteger(amount) || amount < 100 || amount > 50000) {

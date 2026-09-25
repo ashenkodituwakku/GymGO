@@ -144,9 +144,20 @@ describe('startup self-check', () => {
 
 describe('what finding you says', () => {
   it('outside the cities GymGO carries, says the gyms came from the map', () => {
-    expect(locatedNotice({ kind: 'area', fix: { approximate: false }, gyms: 6, radiusKm: 5 })).toMatch(/OpenStreetMap: map-only, so call before you go\.$/);
-    expect(locatedNotice({ kind: 'area', fix: { approximate: false }, gyms: 2, radiusKm: 10 })).toMatch(/^Nothing's mapped within 5 km of you, so this shows the 2 gyms within 10 km/);
-    expect(locatedNotice({ kind: 'area', fix: { approximate: false }, gyms: 0, radiusKm: 5 })).toMatch(/no gyms mapped close to you yet/);
+    const area = { kind: 'area' as const, fix: { approximate: false }, countryCode: 'DE' };
+    expect(locatedNotice({ ...area, gyms: 6, radiusKm: 5 })).toMatch(/OpenStreetMap: map-only, so call before you go\.$/);
+    expect(locatedNotice({ ...area, gyms: 2, radiusKm: 10 })).toMatch(/^Nothing's mapped within 5 km of you, so this shows the 2 gyms within 10 km/);
+    expect(locatedNotice({ ...area, gyms: 0, radiusKm: 5 })).toMatch(/no gyms mapped close to you yet/);
+  });
+
+  it('says how far in miles in the US and UK', () => {
+    expect(locatedNotice({ kind: 'area', fix: { approximate: false }, countryCode: 'GB', gyms: 2, radiusKm: 10 })).toMatch(/^Nothing's mapped within 3\.1 mi of you, so this shows the 2 gyms within 6\.2 mi/);
+  });
+
+  it('when the map around you can’t be searched, says why it shows the nearest built-in city', () => {
+    expect(locatedNotice({ kind: 'nearest', km: 2155.6, city: { name: 'Sydney', country: 'AU' } })).toBe(
+      "Couldn't search the map around you just now, so here's Sydney, the nearest city GymGO has built in (2,156 km away).",
+    );
   });
 
   it('in a city it carries, says nothing unless the fix is rough', () => {

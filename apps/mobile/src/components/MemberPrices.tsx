@@ -14,7 +14,7 @@ import Animated from 'react-native-reanimated';
 import { api, problemText, type PriceSummary } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { moneyLabel } from '@/lib/places';
+import { moneyLabel, tracksPrices } from '@/lib/places';
 import { WHEN_CHOICES as WHEN, localDateDaysAgo as dateDaysAgo, parseAmount } from '@/lib/present';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, space } from '@/lib/theme';
@@ -44,12 +44,14 @@ export function MemberPrices({
   const [notice, setNotice] = useState<string | null>(null);
   const token = account.state === 'signed_in' ? account.token : null;
 
+  const kept = tracksPrices(country);
   const refresh = useCallback(() => {
+    if (!kept) return;
     api
       .prices(gymId, token)
       .then((summary) => setLoad({ state: 'ready', summary }))
       .catch(() => setLoad({ state: 'offline' }));
-  }, [gymId, token]);
+  }, [gymId, token, kept]);
 
   useEffect(() => {
     setLoad({ state: 'loading' });
@@ -58,7 +60,18 @@ export function MemberPrices({
     refresh();
   }, [refresh]);
 
-  if (isDemo || load.state === 'loading') return null;
+  if (isDemo) return null;
+  if (!kept) {
+    return (
+      <Animated.View style={styles.wrap} layout={GLIDE}>
+        <Txt variant="headline">What members paid</Txt>
+        <Txt variant="subhead" color={color.labelSecondary}>
+          GymGO keeps visit prices in Australia and the US for now, so ask what a visit costs when you call.
+        </Txt>
+      </Animated.View>
+    );
+  }
+  if (load.state === 'loading') return null;
   if (load.state === 'offline') return null;
 
   const { summary } = load;

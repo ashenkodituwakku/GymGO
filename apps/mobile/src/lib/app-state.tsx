@@ -39,7 +39,7 @@ export interface ExploreRequest {
 export type Located =
   | { kind: 'here'; fix: Fix; city: City }
   /** Outside the cities GymGO carries, but in AU or the US: the map around you was searched. */
-  | { kind: 'area'; fix: Fix; gyms: number; radiusKm: number }
+  | { kind: 'area'; fix: Fix; gyms: number; radiusKm: number; countryCode: string }
   /** Outside every city GymGO covers: the search went to the nearest one. */
   | { kind: 'nearest'; fix: Fix; city: City; km: number }
   | { kind: 'denied' }
@@ -164,9 +164,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (fix === 'denied' || fix === 'unavailable') return { kind: fix };
     setHere(fix);
     const city = cityNear(fix.position);
-    // Outside the cities GymGO carries: search the map around you (Australia
-    // and the US), and only failing that, go to the nearest city it carries.
-    let around: { timezone: string; gyms: number; radiusKm: number } | null = null;
+    // Outside the cities GymGO carries: search the map around you, anywhere
+    // in the world, and only failing that (no server, or out at sea), go to
+    // the nearest city it carries.
+    let around: { timezone: string; countryCode: string; gyms: number; radiusKm: number } | null = null;
     if (!city) {
       // Whole map tiles around you, never your position: see tilesAround().
       const box = tilesAround(fix.position);
@@ -175,17 +176,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (answer.where) {
           // Distances are worked out here, on the device, from your real position.
           const reach = reachFor(answer.gyms.map((gym) => haversineKm(fix.position, gym.location.position)));
-          around = { timezone: answer.where.timezone, gyms: reach.count, radiusKm: reach.radiusKm };
+          around = { ...answer.where, gyms: reach.count, radiusKm: reach.radiusKm };
         }
       } catch {
-        // Unreachable, or outside Australia and the US: the nearest city it is.
+        // Unreachable: the nearest city it is.
       }
     }
     const nearest = city || around ? null : nearestCity(fix.position);
     const where = city
-      ? { centre: fix.position, placeName: YOUR_LOCATION, timezone: city.timezone }
+      ? { centre: fix.position, placeName: YOUR_LOCATION, timezone: city.timezone, countryCode: city.country }
       : around
-        ? { centre: fix.position, placeName: YOUR_LOCATION, timezone: around.timezone }
+        ? { centre: fix.position, placeName: YOUR_LOCATION, timezone: around.timezone, countryCode: around.countryCode }
         : atPlace(cityPlace(nearest!.city));
     const reach = (next: Filters) => (around ? { ...next, radiusKm: around.radiusKm } : next);
     setFilters((current) => {
@@ -197,7 +198,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return reach({ ...current, ...where, visitDate: visit.date, visitMinuteOfDay: visit.minute });
     });
     if (city) return { kind: 'here', fix, city };
-    if (around) return { kind: 'area', fix, gyms: around.gyms, radiusKm: around.radiusKm };
+    if (around) return { kind: 'area', fix, gyms: around.gyms, radiusKm: around.radiusKm, countryCode: around.countryCode };
     return { kind: 'nearest', fix, city: nearest!.city, km: nearest!.km };
   }, [searchArea]);
 

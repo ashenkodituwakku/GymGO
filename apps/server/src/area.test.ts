@@ -74,11 +74,19 @@ const areaPath = (box: { south: number; west: number; north: number; east: numbe
   `/api/area?south=${box.south}&west=${box.west}&north=${box.north}&east=${box.east}`;
 
 describe('where a point is', () => {
-  it('knows Australia and the US, with the right time zone, and nowhere else', () => {
+  it('knows the country and time zone anywhere on land', () => {
     expect(whereIs(-36.757, 144.279)).toEqual({ countryCode: 'AU', timezone: 'Australia/Melbourne' });
     expect(whereIs(31.76, -106.49)).toEqual({ countryCode: 'US', timezone: 'America/Denver' });
-    expect(whereIs(42.3, -83.02)).toBeNull(); // Windsor, Ontario, across the river from Detroit
-    expect(whereIs(-36.85, 174.76)).toBeNull(); // Auckland
+    expect(whereIs(42.3, -83.02)).toEqual({ countryCode: 'CA', timezone: 'America/Toronto' }); // Windsor, across the river from Detroit
+    expect(whereIs(-36.85, 174.76)).toEqual({ countryCode: 'NZ', timezone: 'Pacific/Auckland' });
+    expect(whereIs(51.5, -0.12)).toEqual({ countryCode: 'GB', timezone: 'Europe/London' });
+    expect(whereIs(35.68, 139.7)).toEqual({ countryCode: 'JP', timezone: 'Asia/Tokyo' });
+    expect(whereIs(18.45, -66.1)?.countryCode).toBe('US'); // Puerto Rico counts as the US
+  });
+
+  it('knows nothing out at sea', () => {
+    expect(whereIs(-30, -120)).toBeNull(); // the South Pacific
+    expect(whereIs(0, -30)).toBeNull(); // the Atlantic
   });
 
   it('reads the state from an Australian postcode, Canberra included', () => {
@@ -152,10 +160,53 @@ describe('Search this area', () => {
     expect(overpassCalls).toHaveLength(0);
   });
 
-  it('says plainly where GymGO does not cover', async () => {
+  it('searches anywhere: Auckland, labelled with its own country, clock and address order', async () => {
+    mapped = [
+      { type: 'node', id: 21, lat: -36.848, lon: 174.763, tags: { leisure: 'fitness_centre', name: 'Les Mills Auckland City', 'addr:street': 'Victoria Street West', 'addr:housenumber': '186', 'addr:postcode': '1010' } },
+      { type: 'node', id: 22, lat: -36.85, lon: 174.77, tags: { leisure: 'fitness_centre', name: 'Kraftraum', 'addr:street': 'Queen Street', 'addr:housenumber': '9', 'addr:country': 'DE' } },
+    ];
     const result = await call('GET', areaPath({ south: -36.9, west: 174.7, north: -36.8, east: 174.8 }));
-    expect(result.status).toBe(422);
-    expect(result.body.code).toBe('unsupported_country');
+    expect(result.status).toBe(200);
+    expect(result.body.where).toEqual({ countryCode: 'NZ', timezone: 'Pacific/Auckland' });
+    const [les, kraftraum] = result.body.gyms as GymRecord[];
+    expect(les!.location.address).toMatchObject({ countryCode: 'NZ', line1: '186 Victoria Street West', postcode: '1010' });
+    expect(les!.location.timezone).toBe('Pacific/Auckland');
+    // The country comes from where it is, not from a mistyped tag.
+    expect(kraftraum!.location.address.countryCode).toBe('NZ');
+  });
+
+  it('takes visit prices only in Australian and US dollars, and says so', async () => {
+    const prices = '/api/gyms/les-mills-auckland-city-n21/prices';
+    expect((await call('GET', prices)).body).toMatchObject({ currency: null, count: 0, typicalMinor: null });
+    const signup = await fetch(`${base}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'auckland@example.com', password: 'correct horse', displayName: 'Kiwi' }),
+    }).then((response) => response.json() as Promise<{ token: string }>);
+    const put = await fetch(`${base}${prices}`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${signup.token}` },
+      body: JSON.stringify({ amountMinor: 2500, paidOn: '2026-09-20' }),
+    });
+    expect(put.status).toBe(400);
+    expect(((await put.json()) as { error: string }).error).toContain('Australia and the US');
+  });
+
+  it('writes the house number after the street where the country does', async () => {
+    mapped = [
+      { type: 'node', id: 31, lat: 52.52, lon: 13.405, tags: { leisure: 'fitness_centre', name: 'Kraftwerk Gym', 'addr:street': 'Rathausstraße', 'addr:housenumber': '5', 'addr:postcode': '10178', 'addr:city': 'Berlin' } },
+    ];
+    const result = await call('GET', areaPath({ south: 52.5, west: 13.38, north: 52.54, east: 13.42 }));
+    expect(result.body.gyms[0].location.address).toMatchObject({ countryCode: 'DE', line1: 'Rathausstraße 5', suburb: 'Berlin', postcode: '10178' });
+    expect(result.body.where.timezone).toBe('Europe/Berlin');
+  });
+
+  it('searches the sea without complaint, and finds nothing there', async () => {
+    mapped = [];
+    const result = await call('GET', areaPath({ south: -30.1, west: -120.1, north: -30, east: -120 }));
+    expect(result.status).toBe(200);
+    expect(result.body.gyms).toEqual([]);
+    expect(result.body.where).toBeNull();
   });
 
   it('rejects a malformed box', async () => {
@@ -220,6 +271,28 @@ describe('when a map server fails', () => {
     expect(answer.gyms.map((gym) => gym.location.name).sort()).toEqual(['Bendigo Strength Co', 'Snap Fitness']);
     expect(calls).toEqual(['https://down.test/api', 'https://odd.test/api', 'https://up.test/api']);
     other.close();
+    otherDb.close();
+  });
+
+  it('asks the server that answered last time first', async () => {
+    const calls: string[] = [];
+    const flaky = async (input: string | URL | Request): Promise<Response> => {
+      calls.push(String(input));
+      if (String(input).startsWith('https://down.test')) throw new Error('timed out');
+      return Response.json({ elements: bendigoElements() });
+    };
+    const otherDb = openDb(':memory:');
+    const logged: string[] = [];
+    const search = new AreaSearch(otherDb, {
+      known: () => [],
+      fetchImpl: flaky as typeof fetch,
+      endpoints: ['https://down.test/api', 'https://up.test/api'],
+      log: (line) => logged.push(line),
+    });
+    await search.search(BENDIGO);
+    await search.search({ south: -37.8, west: 145.0, north: -37.7, east: 145.1 });
+    expect(calls).toEqual(['https://down.test/api', 'https://up.test/api', 'https://up.test/api']);
+    expect(logged).toEqual(["[area] down.test didn't answer (Error); trying the next"]);
     otherDb.close();
   });
 });

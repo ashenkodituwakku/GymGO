@@ -26,7 +26,6 @@ import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp, type ProReason } from '@/lib/app-state';
 import { ApiError, OfflineError } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
-import { cityAt } from '@/lib/places';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
 import { color, face, radius, space } from '@/lib/theme';
 
@@ -43,7 +42,7 @@ export default function ProScreen() {
   const router = useRouter();
   const { account, billing, filters } = useApp();
   const [interval, setInterval] = useState<BillingInterval>('year');
-  const [currency, setCurrency] = useState<BillingCurrency>(cityAt(filters.centre).country === 'US' ? 'usd' : 'aud');
+  const [currency, setCurrency] = useState<BillingCurrency>(filters.countryCode === 'US' ? 'usd' : 'aud');
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [welcome, setWelcome] = useState(false);

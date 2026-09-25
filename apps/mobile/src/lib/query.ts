@@ -43,6 +43,11 @@ export interface Filters {
   placeName: string;
   /** The time zone the visit time is in: the searched city's. */
   timezone: string;
+  /**
+   * The country searched (ISO 3166-1: "AU", "US", "GB"): miles or
+   * kilometres, and whether visit prices are tracked there.
+   */
+  countryCode: string;
   radiusKm: number;
   /**
    * Set by "Search this area": the results are the gyms inside this box,
@@ -116,30 +121,42 @@ export function nextVisitAt(minute: number, timezone: string, now: Date = new Da
   return { date: minute > today.minute ? today.date : addDays(today.date, 1), minute };
 }
 
-/** The part of the filters a place decides: where, what it's called, and its clock. */
-export function atPlace(place: AppPlace): Pick<Filters, 'centre' | 'placeName' | 'timezone'> {
-  return { centre: place.position, placeName: place.name, timezone: CITIES[place.city].timezone };
+/** Where a search is: the place, what it's called, its clock and its country. */
+export type Whereabouts = Pick<Filters, 'centre' | 'placeName' | 'timezone' | 'countryCode'>;
+
+/** The part of the filters a place decides: where, what it's called, its clock and country. */
+export function atPlace(place: AppPlace): Whereabouts {
+  const city = CITIES[place.city];
+  return { centre: place.position, placeName: place.name, timezone: city.timezone, countryCode: city.country };
 }
 
 /**
  * Move the search somewhere else. In another time zone, "6 pm" stays 6 pm
- * but in the new city's clock, on the next day that's still ahead there.
+ * but in the new city's clock, on the next day that's still ahead there. In
+ * another country the budget goes: A$30 isn't $30, let alone ¥30.
  */
-export function moveTo(
-  current: Filters,
-  where: Pick<Filters, 'centre' | 'placeName' | 'timezone'> & { bbox?: BoundingBox | null },
-  now: Date = new Date(),
-): Filters {
-  const next = { ...current, ...where, bbox: where.bbox ?? null };
+export function moveTo(current: Filters, where: Whereabouts & { bbox?: BoundingBox | null }, now: Date = new Date()): Filters {
+  const next = {
+    ...current,
+    ...where,
+    bbox: where.bbox ?? null,
+    budgetMinor: where.countryCode === current.countryCode ? current.budgetMinor : null,
+  };
   if (where.timezone === current.timezone) return next;
   const visit = nextVisitAt(current.visitMinuteOfDay, where.timezone, now);
   return { ...next, visitDate: visit.date, visitMinuteOfDay: visit.minute };
 }
 
 /** The search as "the gyms in this box": what "Search this area" does. */
-export function inArea(current: Filters, box: BoundingBox, placeName: string, timezone: string, now: Date = new Date()): Filters {
+export function inArea(
+  current: Filters,
+  box: BoundingBox,
+  placeName: string,
+  where: Pick<Filters, 'timezone' | 'countryCode'>,
+  now: Date = new Date(),
+): Filters {
   const centre = { lat: (box.north + box.south) / 2, lng: (box.east + box.west) / 2 };
-  return moveTo(current, { centre, placeName, timezone, bbox: box }, now);
+  return moveTo(current, { centre, placeName, ...where, bbox: box }, now);
 }
 
 /**

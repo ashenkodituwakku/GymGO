@@ -20,7 +20,7 @@ import {
 } from '@/lib/query';
 import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
-import { cityAt, moneyLabel, radiusChoices } from '@/lib/places';
+import { moneyLabel, radiusChoices, tracksPrices } from '@/lib/places';
 import { Chip, PrimaryButton, Txt } from './ui';
 
 export function FiltersContent({
@@ -35,7 +35,7 @@ export function FiltersContent({
   onDone: () => void;
 }) {
   const today = nowIn(filters.timezone).date;
-  const country = cityAt(filters.centre).country;
+  const country = filters.countryCode;
   const tomorrow = addDays(today, 1);
   const set = (patch: Partial<Filters>) => onChange({ ...filters, ...patch });
 
@@ -97,17 +97,23 @@ export function FiltersContent({
       </Group>
 
       <Group title="Budget per visit">
-        <View style={styles.chips}>
-          {BUDGET_PRESETS.map((budget) => (
-            <Chip
-              key={String(budget)}
-              label={budget === null ? 'Any' : `Under ${moneyLabel(budget, country)}`}
-              selected={filters.budgetMinor === budget}
-              onPress={() => set({ budgetMinor: budget })}
-            />
-          ))}
-        </View>
-        <Hint>What you don't get back: price, tax and any must-pay fee. Refundable deposits are shown separately.</Hint>
+        {tracksPrices(country) ? (
+          <>
+            <View style={styles.chips}>
+              {BUDGET_PRESETS.map((budget) => (
+                <Chip
+                  key={String(budget)}
+                  label={budget === null ? 'Any' : `Under ${moneyLabel(budget, country)}`}
+                  selected={filters.budgetMinor === budget}
+                  onPress={() => set({ budgetMinor: budget })}
+                />
+              ))}
+            </View>
+            <Hint>What you don't get back: price, tax and any must-pay fee. Refundable deposits are shown separately.</Hint>
+          </>
+        ) : (
+          <Hint>GymGO keeps visit prices in Australia and the US for now. Here, every price is unknown, so ask when you call.</Hint>
+        )}
       </Group>
 
       <Group title="Must have">

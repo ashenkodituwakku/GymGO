@@ -118,6 +118,7 @@ export default function GymPage() {
             visitDate={filters.visitDate}
             saved={saved}
             onToggleSave={() => account.toggleSave(location.id)}
+            saveAndShareElsewhere
             onOpenGoogle={() => setGoogleOpen(true)}
             onOpenWorkout={() => router.push({ pathname: '/workout/[id]', params: { id: location.id } })}
             asOf={asOf}

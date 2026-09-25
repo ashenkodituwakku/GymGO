@@ -493,6 +493,8 @@ const styles = StyleSheet.create({
 
   primary: {
     height: 52,
+    // Room at the ends for when a button sizes to its label (a centred column).
+    paddingHorizontal: 22,
     borderRadius: radius.lg,
     borderCurve: 'continuous',
     flexDirection: 'row',

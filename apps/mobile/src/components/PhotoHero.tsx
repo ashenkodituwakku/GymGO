@@ -118,6 +118,8 @@ export function PhotoHero({
   }
 
   const list = photos ?? [];
+  // With nothing to show, the "No photo supplied" line carries its own add button.
+  const emptyRow = list.length === 0 && !(fallback && !isDemo && photos !== null);
   return (
     <View style={styles.wrap}>
       {list.length > 0 ? (
@@ -145,16 +147,34 @@ export function PhotoHero({
           </Txt>
         </View>
       ) : (
+        // One slim row, so the gym's answer isn't pushed off the card by an empty frame.
         <View style={[styles.empty, { width }]}>
-          <Icon name="photo" size={30} color={color.labelTertiary} />
-          <Txt variant="headline">{EMPTY.photos}</Txt>
-          <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-            {isDemo ? 'This is an invented demo gym, so there’s nothing to photograph.' : 'Been here? Your photo could be the first.'}
-          </Txt>
+          <Icon name="photo" size={20} color={color.labelTertiary} />
+          <View style={styles.flex}>
+            <Txt variant="subhead" style={face('bold')}>
+              {EMPTY.photos}
+            </Txt>
+            <Txt variant="caption" color={color.labelSecondary}>
+              {isDemo ? 'An invented demo gym: nothing to photograph.' : 'Been here? Yours could be the first.'}
+            </Txt>
+          </View>
+          {!isDemo && step.kind !== 'sending' && (
+            <Pressable
+              onPress={() => void pick()}
+              accessibilityRole="button"
+              accessibilityLabel={token ? 'Add a photo' : 'Sign in to add a photo'}
+              hitSlop={8}
+              style={({ pressed }) => [styles.addPill, pressed && { opacity: 0.7 }]}
+            >
+              <Txt variant="footnote" color={color.brand} style={face('bold')}>
+                {token ? 'Add one' : 'Sign in to add'}
+              </Txt>
+            </Pressable>
+          )}
         </View>
       )}
 
-      {!isDemo && step.kind !== 'sending' && (
+      {!emptyRow && !isDemo && step.kind !== 'sending' && (
         <Pressable onPress={() => void pick()} accessibilityRole="button" style={({ pressed }) => [styles.add, pressed && { opacity: 0.7 }]}>
           <Txt variant="subhead" color={color.brand} style={face('bold')}>
             {token ? '+ Add a photo' : '+ Sign in to add a photo'}
@@ -197,19 +217,19 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   empty: {
-    height: 150,
-    borderRadius: radius.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    paddingVertical: space[3],
+    paddingHorizontal: space[4],
+    borderRadius: radius.lg,
     borderCurve: 'continuous',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: 'rgba(88, 86, 214, 0.28)',
     backgroundColor: 'rgba(88, 86, 214, 0.06)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-    paddingHorizontal: space[4],
   },
-  center: { textAlign: 'center' },
+  addPill: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
   add: { paddingVertical: space[1] },
   confirm: { gap: space[3] },
   preview: { height: 200, borderRadius: radius.xl },

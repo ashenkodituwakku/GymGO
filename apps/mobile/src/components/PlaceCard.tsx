@@ -118,6 +118,7 @@ export function PlaceCard({
   statusWarning,
   memberStatus,
   reviews,
+  saveAndShareElsewhere = false,
 }: {
   result: GymSearchResult;
   visitMinute: number;
@@ -126,6 +127,8 @@ export function PlaceCard({
   onToggleSave: () => void;
   /** The live Google Maps page for this gym (its own screen, away from our map). */
   onOpenGoogle: () => void;
+  /** Save and Share are in the screen's own top bar (the gym page), so the action row leaves them out. */
+  saveAndShareElsewhere?: boolean;
   /** The workout generator, for this gym's machines. */
   onOpenWorkout: () => void;
   asOf: Date;
@@ -208,23 +211,27 @@ export function PlaceCard({
           label="Website"
           onPress={location.isDemoData ? demo("there's no real website to open.") : website}
         />
-        <ActionButton
-          icon={saved ? 'saved' : 'save'}
-          label={saved ? 'Saved' : 'Save'}
-          onPress={() => {
-            if (!saved) haptic.success();
-            onToggleSave();
-          }}
-        />
-        <ActionButton
-          icon="share"
-          label="Share"
-          onPress={
-            location.isDemoData
-              ? demo("it's invented, so there's nothing real to share.")
-              : () => void shareGym(record).then((ok) => !ok && setNotice('Sharing isn’t available here.'))
-          }
-        />
+        {!saveAndShareElsewhere && (
+          <>
+            <ActionButton
+              icon={saved ? 'saved' : 'save'}
+              label={saved ? 'Saved' : 'Save'}
+              onPress={() => {
+                if (!saved) haptic.success();
+                onToggleSave();
+              }}
+            />
+            <ActionButton
+              icon="share"
+              label="Share"
+              onPress={
+                location.isDemoData
+                  ? demo("it's invented, so there's nothing real to share.")
+                  : () => void shareGym(record).then((ok) => !ok && setNotice('Sharing isn’t available here.'))
+              }
+            />
+          </>
+        )}
       </View>
 
       {notice && (

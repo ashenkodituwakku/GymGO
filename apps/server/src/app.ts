@@ -119,7 +119,7 @@ export interface AppOptions {
   /** This server's public address, once hosted. */
   publicUrl?: string | null;
   /** "Search this area": which Overpass API server to ask, and a stand-in fetch for tests. */
-  area?: { endpoints?: string[]; fetchImpl?: typeof fetch };
+  area?: { endpoints?: string[]; fetchImpl?: typeof fetch; retryDelayMs?: number; log?: (line: string) => void };
   /** Finding a town by name: which geocoder to ask, and a stand-in fetch for tests. */
   places?: { endpoint?: string; fetchImpl?: typeof fetch };
   /** Gyms' own website icons: on unless switched off; `get` stands in for the web in tests. */
@@ -321,7 +321,7 @@ export function createApp(options: AppOptions) {
   // New place questions (not already answered): 60 per address per hour.
   const placeLimiter = new AttemptLimiter(60, 60 * 60_000);
   const places = new PlaceSearch(db, { endpoint: options.places?.endpoint, fetchImpl: options.places?.fetchImpl, now });
-  const area = new AreaSearch(db, { endpoints: options.area?.endpoints, fetchImpl: options.area?.fetchImpl, now, known: () => allGyms(db) });
+  const area = new AreaSearch(db, { ...options.area, now, known: () => allGyms(db) });
   const photos = new PhotoStore(options.photoDir ?? null);
   const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
   const billing = new Billing(db, {

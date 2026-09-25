@@ -191,6 +191,8 @@ export interface AreaOptions {
   known: () => GymRecord[];
   /** Where a server's failure is noted (the console by default). */
   log?: (line: string) => void;
+  /** The pause before asking a busy server again. */
+  retryDelayMs?: number;
 }
 
 export class AreaSearch {
@@ -201,6 +203,7 @@ export class AreaSearch {
   /** The Overpass server that answered last. */
   private preferred: string | null = null;
   private readonly log: (line: string) => void;
+  private readonly retryDelayMs: number;
   private day = '';
   private liveToday = 0;
 
@@ -212,6 +215,7 @@ export class AreaSearch {
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.now = options.now ?? (() => new Date());
     this.log = options.log ?? ((line) => console.warn(line));
+    this.retryDelayMs = options.retryDelayMs ?? 2000;
   }
 
   /** Whether answering this area needs a live map read (so the caller can rate-limit only those). */
@@ -292,27 +296,37 @@ export class AreaSearch {
     let data: { elements: OsmElement[] } | null = null;
     let busy = false;
     const order = this.preferred ? [this.preferred, ...this.endpoints.filter((endpoint) => endpoint !== this.preferred)] : this.endpoints;
-    for (const endpoint of order) {
+    servers: for (const endpoint of order) {
       const host = new URL(endpoint).host;
-      try {
-        const response = await this.fetchImpl(endpoint, {
-          method: 'POST',
-          headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
-          body: new URLSearchParams({ data: query }).toString(),
-          signal: AbortSignal.timeout(PER_SERVER_MS),
-        });
-        if (response.status === 429 || response.status === 504) busy = true;
-        const body = (await response.json().catch(() => null)) as { elements?: OsmElement[]; remark?: string } | null;
-        // A runtime error comes back as 200 with a remark and no data: not an answer.
-        if (response.ok && body && Array.isArray(body.elements) && !/error/i.test(body.remark ?? '')) {
-          data = { elements: body.elements };
-          this.preferred = endpoint;
+      // A server that says it's busy (429, 504) gets one more try after a
+      // pause: a busy mirror often answers the second time, and it may be
+      // the only one that answers at all.
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        try {
+          const response = await this.fetchImpl(endpoint, {
+            method: 'POST',
+            headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+            body: new URLSearchParams({ data: query }).toString(),
+            signal: AbortSignal.timeout(PER_SERVER_MS),
+          });
+          const saysBusy = response.status === 429 || response.status === 504;
+          if (saysBusy) busy = true;
+          const body = (await response.json().catch(() => null)) as { elements?: OsmElement[]; remark?: string } | null;
+          // A runtime error comes back as 200 with a remark and no data: not an answer.
+          if (response.ok && body && Array.isArray(body.elements) && !/error/i.test(body.remark ?? '')) {
+            data = { elements: body.elements };
+            this.preferred = endpoint;
+            break servers;
+          }
+          const again = saysBusy && attempt === 1;
+          this.log(`[area] ${host} answered ${response.status}${body?.remark ? `: ${body.remark.slice(0, 120)}` : ''}; ${again ? 'trying it again' : 'trying the next'}`);
+          if (!again) break;
+          await new Promise((resolve) => setTimeout(resolve, this.retryDelayMs));
+        } catch (error) {
+          // Timed out or unreachable: try the next.
+          this.log(`[area] ${host} didn't answer (${error instanceof Error ? error.name : 'error'}); trying the next`);
           break;
         }
-        this.log(`[area] ${host} answered ${response.status}${body?.remark ? `: ${body.remark.slice(0, 120)}` : ''}; trying the next`);
-      } catch (error) {
-        // Timed out or unreachable: try the next.
-        this.log(`[area] ${host} didn't answer (${error instanceof Error ? error.name : 'error'}); trying the next`);
       }
     }
     if (!data) {

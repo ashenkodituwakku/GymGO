@@ -46,7 +46,7 @@ beforeAll(async () => {
       attribution: 'test',
       signupsPerHour: 1000,
       now: () => clock,
-      area: { fetchImpl: fakeOverpass as typeof fetch, endpoints: ['https://overpass.test/api/interpreter'] },
+      area: { fetchImpl: fakeOverpass as typeof fetch, endpoints: ['https://overpass.test/api/interpreter'], retryDelayMs: 0, log: () => undefined },
     }),
   );
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -221,9 +221,10 @@ describe('Search this area', () => {
     expect(busy.status).toBe(503);
     overpassDown = false;
     mapped = [];
+    // Asked twice while busy (it said 429: one more try), then once more.
     const again = await call('GET', areaPath(box));
     expect(again.status).toBe(200);
-    expect(overpassCalls).toHaveLength(2);
+    expect(overpassCalls).toHaveLength(3);
   });
 
   it('applies today’s rules to gyms kept from an earlier read', async () => {
@@ -271,6 +272,31 @@ describe('when a map server fails', () => {
     expect(answer.gyms.map((gym) => gym.location.name).sort()).toEqual(['Bendigo Strength Co', 'Snap Fitness']);
     expect(calls).toEqual(['https://down.test/api', 'https://odd.test/api', 'https://up.test/api']);
     other.close();
+    otherDb.close();
+  });
+
+  it('asks a busy server once more before moving on', async () => {
+    const calls: string[] = [];
+    let first = true;
+    const busyOnce = async (input: string | URL | Request): Promise<Response> => {
+      calls.push(String(input));
+      if (first) {
+        first = false;
+        return new Response('busy', { status: 504 });
+      }
+      return Response.json({ elements: bendigoElements() });
+    };
+    const otherDb = openDb(':memory:');
+    const search = new AreaSearch(otherDb, {
+      known: () => [],
+      fetchImpl: busyOnce as typeof fetch,
+      endpoints: ['https://busy.test/api', 'https://other.test/api'],
+      log: () => undefined,
+      retryDelayMs: 0,
+    });
+    const answer = await search.search(BENDIGO);
+    expect(answer.gyms.length).toBe(2);
+    expect(calls).toEqual(['https://busy.test/api', 'https://busy.test/api']);
     otherDb.close();
   });
 

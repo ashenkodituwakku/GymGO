@@ -120,6 +120,7 @@ export const EMPTY = {
 export function locatedNotice(
   result:
     | { kind: 'here'; fix: { approximate: boolean } }
+    | { kind: 'area'; fix: { approximate: boolean }; gyms: number }
     | { kind: 'nearest'; km: number; city: { name: string; country: string } }
     | { kind: 'denied' }
     | { kind: 'unavailable' },
@@ -133,6 +134,10 @@ export function locatedNotice(
       return `You're ${distanceLabel(result.km, result.city.country)} from ${result.city.name}, the nearest city we cover, so here it is.`;
     case 'here':
       return result.fix.approximate ? EMPTY.locationApproximate : null;
+    case 'area':
+      return result.gyms > 0
+        ? `Gyms around you from OpenStreetMap: map-only, so call before you go.${result.fix.approximate ? ` ${EMPTY.locationApproximate}` : ''}`
+        : 'OpenStreetMap has no gyms mapped near you yet. Move the map and tap Search this area to look further out.';
   }
 }
 

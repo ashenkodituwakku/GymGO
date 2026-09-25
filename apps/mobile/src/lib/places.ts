@@ -263,10 +263,11 @@ const KM_PER_MILE = 1.609344;
 export function distanceLabel(km: number, country: string): string {
   if (country === 'US') {
     const miles = km / KM_PER_MILE;
-    return miles < 10 ? `${miles.toFixed(1)} mi` : `${Math.round(miles)} mi`;
+    return miles < 10 ? `${miles.toFixed(1)} mi` : `${Math.round(miles).toLocaleString('en-US')} mi`;
   }
   if (km < 1) return `${Math.round(km * 1000)} m`;
-  return `${km.toFixed(1)} km`;
+  // Tenths only where they mean something: "2.4 km", but "38 km", "2,156 km".
+  return km < 10 ? `${km.toFixed(1)} km` : `${Math.round(km).toLocaleString('en-AU')} km`;
 }
 
 /** Search radius choices, in the local unit, stored as kilometres. */

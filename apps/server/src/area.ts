@@ -173,6 +173,8 @@ export interface AreaAnswer {
   fetchedAt: string | null;
   /** More gyms than one answer holds: the nearest the middle were kept. */
   truncated: boolean;
+  /** The country and time zone of the middle of the area. */
+  where: { countryCode: 'AU' | 'US'; timezone: string } | null;
 }
 
 export interface AreaOptions {
@@ -242,7 +244,7 @@ export class AreaSearch {
     current.sort((a, b) => km(middle, [a.lat, a.lng]) - km(middle, [b.lat, b.lng]));
     const kept = current.slice(0, MAX_GYMS);
     const oldest = kept.reduce<string | null>((min, row) => (min === null || row.fetched_at < min ? row.fetched_at : min), null);
-    return { gyms: kept.map((row) => row.record), fetchedAt: oldest, truncated: current.length > MAX_GYMS };
+    return { gyms: kept.map((row) => row.record), fetchedAt: oldest, truncated: current.length > MAX_GYMS, where: whereIs(...middle) };
   }
 
   private async fetchTiles(boxes: Box[], keys: string[]): Promise<void> {

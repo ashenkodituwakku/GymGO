@@ -145,8 +145,11 @@ the search: it is never saved, and never sent to the GymGO server or anyone
 else. If you've only allowed approximate location (iPhone's "Precise: Off",
 or Android's "Approximate"), GymGO says so, because distances will be off.
 
-If you're outside every city GymGO covers, it takes you to the nearest one
-and tells you how far away that is.
+If you're outside the cities GymGO carries but still in Australia or the
+US, it searches the map around you (as "Search this area" does) and opens
+"Near you" with what it finds, labelled as map data. Only outside those two
+countries, or if the map servers can't be reached, does it take you to the
+nearest city it carries, and say how far away that is.
 
 ### Emails, classes and facilities (free)
 

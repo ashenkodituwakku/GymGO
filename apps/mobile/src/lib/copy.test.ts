@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accessLine, accessShort, checkedAgo, ratingShort, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
+import { accessLine, accessShort, checkedAgo, locatedNotice, ratingShort, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
 import { activeFilterCount, applyRelaxation, atPlace, defaultVisit, initialFilters, runSearch, toQuery } from './query';
 import { geocodePlace } from './places';
 
@@ -139,5 +139,16 @@ describe('query', () => {
 describe('startup self-check', () => {
   it('passes where full time-zone support exists', () => {
     expect(checkTimeZoneSupport()).toEqual({ ok: true, detail: 'Time-zone support verified.' });
+  });
+});
+
+describe('what finding you says', () => {
+  it('outside the cities GymGO carries, says the gyms came from the map', () => {
+    expect(locatedNotice({ kind: 'area', fix: { approximate: false }, gyms: 6 })).toMatch(/OpenStreetMap: map-only, so call before you go\.$/);
+    expect(locatedNotice({ kind: 'area', fix: { approximate: false }, gyms: 0 })).toMatch(/no gyms mapped near you yet/);
+  });
+
+  it('in a city it carries, says nothing unless the fix is rough', () => {
+    expect(locatedNotice({ kind: 'here', fix: { approximate: false } })).toBeNull();
   });
 });

@@ -252,7 +252,14 @@ export const api = {
   gym: (id: string) => request<{ gym: GymRecord }>('GET', `/api/gyms/${encodeURIComponent(id)}`),
   /** The gyms OpenStreetMap has in a box (Australia and the US), read live by the server and kept. */
   area: (box: { south: number; west: number; north: number; east: number }) =>
-    request<{ gyms: GymRecord[]; fetchedAt: string | null; truncated: boolean; attribution: string }>(
+    request<{
+      gyms: GymRecord[];
+      fetchedAt: string | null;
+      truncated: boolean;
+      attribution: string;
+      /** The country and time zone of the middle of the area. */
+      where: { countryCode: 'AU' | 'US'; timezone: string } | null;
+    }>(
       'GET',
       `/api/area?${new URLSearchParams({
         south: box.south.toFixed(5),

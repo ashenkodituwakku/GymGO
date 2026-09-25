@@ -120,6 +120,9 @@ describe('places', () => {
     expect(distanceLabel(2.44, 'AU')).toBe('2.4 km');
     expect(distanceLabel(1.609344, 'US')).toBe('1.0 mi');
     expect(distanceLabel(40, 'US')).toBe('25 mi');
+    expect(distanceLabel(38.4, 'AU')).toBe('38 km');
+    expect(distanceLabel(2155.6, 'AU')).toBe('2,156 km');
+    expect(distanceLabel(4000, 'US')).toBe('2,485 mi');
     expect(moneyLabel(2500, 'AU')).toBe('A$25');
     expect(moneyLabel(2500, 'US')).toBe('$25');
     expect(moneyLabel(1250, 'US')).toBe('$12.50');

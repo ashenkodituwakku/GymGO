@@ -27,11 +27,11 @@ import { MELBOURNE_ATTRIBUTION } from '@gymgo/melbourne-data';
 import { api, problemText, type FoundPlace } from '@/lib/api';
 import { EMPTY, locatedNotice } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
-import { cityAt, geocodePlace, type AppPlace } from '@/lib/places';
+import { cityAt, cityNear, geocodePlace, type AppPlace } from '@/lib/places';
 import { useApp } from '@/lib/app-state';
 import { suggestGyms } from '@/lib/gymSearch';
 import { useBottomClearance } from '@/lib/layout';
-import { SORTS, THIS_AREA, applyRelaxation, atPlace, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
+import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
 import { color, face, radius, shadow, space } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
@@ -126,6 +126,8 @@ function MapScreen() {
   const selected = outcome.results.find((result) => result.record.location.id === selectedId) ?? null;
   const showingDemo = outcome.results.some((result) => result.record.location.isDemoData);
   const city = cityAt(filters.centre);
+  // Somewhere GymGO doesn't carry a city for: the gyms there came from the map.
+  const outsideCities = cityNear(filters.centre) === null;
 
   // --- Moving around --------------------------------------------------------
 
@@ -189,9 +191,9 @@ function MapScreen() {
   const locate = useCallback(async () => {
     const result = await findMe(true);
     setNotice(locatedNotice(result));
-    if (result.kind === 'here') {
+    if (result.kind === 'here' || result.kind === 'area') {
       haptic.success();
-      map.current?.flyTo(result.fix.position, 0.03);
+      map.current?.flyTo(result.fix.position, result.kind === 'area' ? 0.06 : 0.03);
       return;
     }
     haptic.warn();
@@ -416,7 +418,7 @@ function MapScreen() {
 
   const dataNote = showingDemo
     ? 'The Sydney gyms are invented demo data, for testing.'
-    : city.mapOnly || filters.bbox
+    : city.mapOnly || filters.bbox || outsideCities
       ? `Real gyms from OpenStreetMap: names, addresses and sometimes opening hours, mapped by volunteers. Prices, guest hours and machines are unknown until a gym publishes them, so call first. ${MELBOURNE_ATTRIBUTION}.`
       : `Real gyms. Tap a fact to see where we read it; anything a gym doesn't publish is unknown. ${MELBOURNE_ATTRIBUTION}.`;
 
@@ -510,8 +512,8 @@ function MapScreen() {
       <Txt variant="footnote" style={styles.pillText}>
         {showingDemo
           ? 'Sydney · demo gyms'
-          : filters.bbox
-            ? `${filters.placeName === THIS_AREA ? 'This area' : filters.placeName} · map data`
+          : filters.bbox || outsideCities
+            ? `${filters.placeName === THIS_AREA ? 'This area' : filters.placeName === YOUR_LOCATION ? 'Near you' : filters.placeName} · map data`
             : data.status === 'live'
             ? `${city.name} · live data`
             : data.status === 'offline'

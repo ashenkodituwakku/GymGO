@@ -109,6 +109,7 @@ describe('Search this area', () => {
     const strength = gyms.find((gym) => gym.location.name === 'Bendigo Strength Co')!;
     expect(strength.location.trainingTypes).toEqual(['strength_focused']);
     expect(result.body.attribution).toContain('OpenStreetMap');
+    expect(result.body.where).toEqual({ countryCode: 'AU', timezone: 'Australia/Melbourne' });
   });
 
   it('answers the same area again from what it saved, without asking the map', async () => {

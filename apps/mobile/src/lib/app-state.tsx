@@ -38,6 +38,8 @@ export interface ExploreRequest {
 /** What finding you produced. */
 export type Located =
   | { kind: 'here'; fix: Fix; city: City }
+  /** Outside the cities GymGO carries, but in AU or the US: the map around you was searched. */
+  | { kind: 'area'; fix: Fix; gyms: number }
   /** Outside every city GymGO covers: the search went to the nearest one. */
   | { kind: 'nearest'; fix: Fix; city: City; km: number }
   | { kind: 'denied' }
@@ -156,15 +158,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ensureGyms([...accountApi.saved, ...recents, ...compare]);
   }, [ensureGyms, accountApi.saved, recents, compare, data.status]);
 
+  const { searchArea } = data;
   const findMe = useCallback(async (ask: boolean, onlyIfUntouched: boolean): Promise<Located> => {
     const fix = await currentFix(ask);
     if (fix === 'denied' || fix === 'unavailable') return { kind: fix };
     setHere(fix);
     const city = cityNear(fix.position);
-    const nearest = city ? null : nearestCity(fix.position);
+    // Outside the cities GymGO carries: search the map around you (Australia
+    // and the US), and only failing that, go to the nearest city it carries.
+    let around: { timezone: string; gyms: number } | null = null;
+    if (!city) {
+      const span = 0.1;
+      const lngSpan = span / Math.max(0.2, Math.cos((fix.position.lat * Math.PI) / 180));
+      const box = {
+        north: fix.position.lat + span / 2,
+        south: fix.position.lat - span / 2,
+        east: fix.position.lng + lngSpan / 2,
+        west: fix.position.lng - lngSpan / 2,
+      };
+      try {
+        const answer = await searchArea(box);
+        if (answer.where) around = { timezone: answer.where.timezone, gyms: answer.gyms.length };
+      } catch {
+        // Unreachable, or outside Australia and the US: the nearest city it is.
+      }
+    }
+    const nearest = city || around ? null : nearestCity(fix.position);
     const where = city
       ? { centre: fix.position, placeName: YOUR_LOCATION, timezone: city.timezone }
-      : atPlace(cityPlace(nearest!.city));
+      : around
+        ? { centre: fix.position, placeName: YOUR_LOCATION, timezone: around.timezone }
+        : atPlace(cityPlace(nearest!.city));
     setFilters((current) => {
       if (!onlyIfUntouched) return moveTo(current, where);
       // At start-up, never undo a place someone already picked; and the
@@ -173,8 +197,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const visit = defaultVisit(new Date(), where.timezone);
       return { ...current, ...where, visitDate: visit.date, visitMinuteOfDay: visit.minute };
     });
-    return city ? { kind: 'here', fix, city } : { kind: 'nearest', fix, city: nearest!.city, km: nearest!.km };
-  }, []);
+    if (city) return { kind: 'here', fix, city };
+    if (around) return { kind: 'area', fix, gyms: around.gyms };
+    return { kind: 'nearest', fix, city: nearest!.city, km: nearest!.km };
+  }, [searchArea]);
 
   const locate = useCallback((ask: boolean) => findMe(ask, false), [findMe]);
 
@@ -187,7 +213,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       if (!asked) storeJson(ASKED_KEY, true);
       const result = await findMe(!asked, true);
-      if (!cancelled && (result.kind === 'here' || result.kind === 'nearest')) {
+      if (!cancelled && (result.kind === 'here' || result.kind === 'nearest' || result.kind === 'area')) {
         const notice = locatedNotice(result) ?? undefined;
         setExploreRequest((current) => ({ recentre: true, notice, nonce: (current?.nonce ?? 0) + 1 }));
       }

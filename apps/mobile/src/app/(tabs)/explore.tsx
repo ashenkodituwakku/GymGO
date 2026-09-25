@@ -31,7 +31,7 @@ import { cityAt, cityNear, geocodePlace, type AppPlace } from '@/lib/places';
 import { useApp } from '@/lib/app-state';
 import { suggestGyms } from '@/lib/gymSearch';
 import { useBottomClearance } from '@/lib/layout';
-import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
+import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, boxAround, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
 import { color, face, radius, shadow, space } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
@@ -160,8 +160,7 @@ function MapScreen() {
       setQuery('');
       // A town gets about 11 km of map, a suburb about 5.
       const span = found.kind === 'city' ? 0.1 : 0.045;
-      const lngSpan = span / Math.max(0.2, Math.cos((found.lat * Math.PI) / 180));
-      const box = { north: found.lat + span / 2, south: found.lat - span / 2, east: found.lng + lngSpan / 2, west: found.lng - lngSpan / 2 };
+      const box = boxAround(found, span);
       if (pendingPlace.current) clearTimeout(pendingPlace.current.timer);
       const timer = setTimeout(() => {
         if (pendingPlace.current?.place !== found) return;

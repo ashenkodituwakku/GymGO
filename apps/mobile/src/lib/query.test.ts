@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AU_GYMS } from '@gymgo/au-data';
-import { THIS_AREA, boxDrift, inArea, initialFilters, moveTo, nameForArea, nearLabel, nextVisitAt, nowIn, runSearch } from './query';
+import { THIS_AREA, boxAround, boxDrift, inArea, initialFilters, moveTo, nameForArea, nearLabel, nextVisitAt, nowIn, runSearch } from './query';
 
 describe('nextVisitAt', () => {
   // 9:30 am in Melbourne on 24 September 2026 (AEST, UTC+10).
@@ -74,5 +74,15 @@ describe('Search this area', () => {
     expect(boxDrift(hobart, panned)).toBeCloseTo(0.5);
     const zoomedOut = { north: -42.855, south: -42.915, east: 147.375, west: 147.275 };
     expect(boxDrift(hobart, zoomedOut)).toBeCloseTo(1);
+  });
+});
+
+describe('boxAround', () => {
+  it('is as wide on the ground as it is tall', () => {
+    const box = boxAround({ lat: -60, lng: 150 }, 0.1);
+    expect(box.north - box.south).toBeCloseTo(0.1);
+    // At 60° south a degree of longitude is half as long, so the box is twice as many degrees wide.
+    expect(box.east - box.west).toBeCloseTo(0.2);
+    expect((box.east + box.west) / 2).toBeCloseTo(150);
   });
 });

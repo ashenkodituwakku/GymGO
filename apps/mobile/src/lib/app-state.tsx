@@ -16,7 +16,7 @@ import { setHapticsEnabled } from './haptics';
 import { currentFix, type Fix } from './location';
 import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, type City } from './places';
 import { locatedNotice } from './copy';
-import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, type Filters } from './query';
+import { YOUR_LOCATION, atPlace, boxAround, defaultVisit, initialFilters, moveTo, type Filters } from './query';
 import { useAccount } from './useAccount';
 import { useBilling } from './useBilling';
 import { useGymData } from './useGymData';
@@ -168,14 +168,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // and the US), and only failing that, go to the nearest city it carries.
     let around: { timezone: string; gyms: number } | null = null;
     if (!city) {
-      const span = 0.1;
-      const lngSpan = span / Math.max(0.2, Math.cos((fix.position.lat * Math.PI) / 180));
-      const box = {
-        north: fix.position.lat + span / 2,
-        south: fix.position.lat - span / 2,
-        east: fix.position.lng + lngSpan / 2,
-        west: fix.position.lng - lngSpan / 2,
-      };
+      const box = boxAround(fix.position, 0.1);
       try {
         const answer = await searchArea(box);
         if (answer.where) around = { timezone: answer.where.timezone, gyms: answer.gyms.length };

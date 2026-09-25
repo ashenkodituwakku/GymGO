@@ -142,6 +142,15 @@ export function inArea(current: Filters, box: BoundingBox, placeName: string, ti
   return moveTo(current, { centre, placeName, timezone, bbox: box }, now);
 }
 
+/**
+ * A box `span` degrees of latitude tall around a point, as wide on the
+ * ground as it is tall (so a box in Hobart isn't squashed).
+ */
+export function boxAround(point: { lat: number; lng: number }, span: number): BoundingBox {
+  const lngSpan = span / Math.max(0.2, Math.cos((point.lat * Math.PI) / 180));
+  return { north: point.lat + span / 2, south: point.lat - span / 2, east: point.lng + lngSpan / 2, west: point.lng - lngSpan / 2 };
+}
+
 /** How far the map has moved from a box: the larger of the centre's shift and the change in size, as a share of the box. */
 export function boxDrift(from: BoundingBox, to: BoundingBox): number {
   const height = from.north - from.south;

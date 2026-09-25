@@ -68,11 +68,11 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
               <View style={styles.foot}>
                 <View style={[styles.chip, styles.chipRow, { backgroundColor: tone.tint }]}>
                   <Icon name={tone.icon} size={11} color={tone.ink} />
-                  <Txt variant="caption" color={tone.ink} style={face('bold')} numberOfLines={1}>
+                  <Txt variant="caption" color={tone.ink} style={face('semibold')} numberOfLines={1}>
                     {tier.label}
                   </Txt>
                 </View>
-                <Txt variant="subhead" color={price.confirmed ? color.label : color.labelSecondary} style={face('bold')}>
+                <Txt variant="subhead" color={price.confirmed ? color.label : color.labelSecondary} style={face('semibold')}>
                   {price.headline}
                 </Txt>
               </View>

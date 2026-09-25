@@ -32,15 +32,19 @@ repository.
 
 ## Typeface
 
-The app is set in **Helvetica**.
+The app is set in **SF Pro**, Apple's system typeface, following Apple's
+iOS text styles.
 
-- **iPhone:** Helvetica Neue, which ships with iOS. Nothing is bundled.
-- **Android and the web preview:** Helvetica isn't installed there, and
-  bundling it needs a paid licence. They use
-  [TeX Gyre Heros](https://www.gust.org.pl/projects/e-foundry/tex-gyre/heros),
-  a free Helvetica clone by the GUST e-foundry, distributed under the GUST Font
-  License (LaTeX Project Public License 1.3c). The unmodified font files and
-  the licence are in `apps/mobile/assets/fonts/`.
+- **iPhone:** SF Pro is the system font, so nothing is bundled.
+- **The browser on a Mac or iPhone:** SF Pro, through the system font. A
+  PC with SF Pro installed also gets it, by name.
+- **Android, and browsers without SF Pro:** Apple's licence for SF Pro
+  covers only Apple's own platforms, so it can't be shipped inside the app
+  for anything else. They use [Inter](https://rsms.me/inter/) by Rasmus
+  Andersson, the closest free match, under the SIL Open Font License 1.1,
+  from the [@expo-google-fonts/inter](https://github.com/expo/google-fonts)
+  package (MIT). Only the Regular, Medium, SemiBold and Bold cuts are
+  bundled, and not in the iPhone app.
 
 ## Gym data
 

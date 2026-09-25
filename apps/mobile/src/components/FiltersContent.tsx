@@ -256,5 +256,5 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   segmentText: face('medium'),
-  segmentTextSelected: face('bold'),
+  segmentTextSelected: face('semibold'),
 });

@@ -114,7 +114,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Saved gyms (on the device) | ✅ | ⚠️ web preview only | n/a | ❌ | n/a | ❌ |
 | Liquid Glass (iOS 26) / blur fallbacks | ✅ | ⚠️ blur fallback only | n/a | ❌ | n/a | ❌ |
 | Haptics | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
-| Helvetica (built-in on iOS, free clone on Android) | ✅ | ⚠️ clone only, in web preview | n/a | ❌ | n/a | ❌ |
+| SF Pro to Apple's iOS text styles (system font on iPhone and Apple browsers; Inter, the closest free face, on Android and elsewhere) | ✅ | ⚠️ only Inter seen, in this sandbox's browser (no SF Pro installed); SF Pro itself never seen on an iPhone or Mac | n/a | ❌ | n/a | ❌ |
 | GymGO Pro screen, plan in Profile, Free limits, workout library | ✅ | ✅ whole loop driven in the browser against a stand-in Stripe (checkout, return, manage, cancel) | ❌ real Stripe never used | ❌ the phone's in-app browser round trip not seen | n/a | ❌ |
 | Time-zone self-check at start-up | ✅ | ✅ unit tests | n/a | ❌ | n/a | ❌ |
 | App icon, splash screen | ❌ | ❌ | n/a | ❌ | n/a | ❌ |

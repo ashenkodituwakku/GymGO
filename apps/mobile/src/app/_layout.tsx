@@ -10,8 +10,16 @@ import { AppProvider } from '@/lib/app-state';
 import { BUNDLED_FACES, NEEDS_BUNDLED_FACES, color, face } from '@/lib/theme';
 
 // Hold the splash screen until the typeface is ready, so nothing draws in the
-// wrong font first. iPhone has Helvetica built in and loads nothing.
+// wrong font first. iPhone draws in SF Pro, built in, and loads nothing.
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
+
+// Browser: real weights only (never a bold faked from a regular cut), and
+// text smoothed the way macOS draws SF Pro in Apple's own pages.
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  const css = document.createElement('style');
+  css.textContent = '*{font-synthesis:none}body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}';
+  document.head.appendChild(css);
+}
 
 const FACES = NEEDS_BUNDLED_FACES ? BUNDLED_FACES : {};
 
@@ -41,7 +49,7 @@ export default function RootLayout() {
             screenOptions={{
               headerShown: false,
               headerTintColor: color.brand,
-              headerTitleStyle: { ...face('bold'), color: color.label },
+              headerTitleStyle: { ...face('semibold'), color: color.label },
               headerBackTitle: 'Back',
             }}
           >

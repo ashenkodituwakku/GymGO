@@ -151,7 +151,7 @@ export function PhotoHero({
         <View style={[styles.empty, { width }]}>
           <Icon name="photo" size={20} color={color.labelTertiary} />
           <View style={styles.flex}>
-            <Txt variant="subhead" style={face('bold')}>
+            <Txt variant="subhead" style={face('semibold')}>
               {EMPTY.photos}
             </Txt>
             <Txt variant="caption" color={color.labelSecondary}>
@@ -166,7 +166,7 @@ export function PhotoHero({
               hitSlop={8}
               style={({ pressed }) => [styles.addPill, pressed && { opacity: 0.7 }]}
             >
-              <Txt variant="footnote" color={color.brand} style={face('bold')}>
+              <Txt variant="footnote" color={color.brand} style={face('semibold')}>
                 {token ? 'Add one' : 'Sign in to add'}
               </Txt>
             </Pressable>
@@ -176,7 +176,7 @@ export function PhotoHero({
 
       {!emptyRow && !isDemo && step.kind !== 'sending' && (
         <Pressable onPress={() => void pick()} accessibilityRole="button" style={({ pressed }) => [styles.add, pressed && { opacity: 0.7 }]}>
-          <Txt variant="subhead" color={color.brand} style={face('bold')}>
+          <Txt variant="subhead" color={color.brand} style={face('semibold')}>
             {token ? '+ Add a photo' : '+ Sign in to add a photo'}
           </Txt>
         </Pressable>

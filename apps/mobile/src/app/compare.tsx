@@ -175,7 +175,7 @@ export default function Compare() {
                       key={index}
                       variant="subhead"
                       color={cell.ink ?? color.label}
-                      style={[styles.cell, cell.strong && face('bold')]}
+                      style={[styles.cell, cell.strong && face('semibold')]}
                     >
                       {cell.text}
                     </Txt>
@@ -187,7 +187,7 @@ export default function Compare() {
         </ScrollView>
         {!billing.isPro && (
           <Pressable onPress={() => openPro('compare')} accessibilityRole="button" style={styles.upsell}>
-            <Txt variant="subhead" color={color.brand} style={face('bold')}>
+            <Txt variant="subhead" color={color.brand} style={face('semibold')}>
               Compare up to 4 gyms with GymGO Pro ›
             </Txt>
           </Pressable>

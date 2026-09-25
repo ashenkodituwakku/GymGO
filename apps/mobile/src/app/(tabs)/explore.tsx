@@ -229,7 +229,7 @@ function MapScreen() {
         style={styles.areaHit}
       >
         {areaBusy ? <ActivityIndicator size="small" color={color.brand} /> : <Icon name="search" size={15} color={color.brand} />}
-        <Txt variant="subhead" color={color.brand} style={face('bold')}>
+        <Txt variant="subhead" color={color.brand} style={face('semibold')}>
           {areaBusy ? 'Searching the map…' : 'Search this area'}
         </Txt>
       </Pressable>

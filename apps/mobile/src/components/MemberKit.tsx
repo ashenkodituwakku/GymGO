@@ -82,7 +82,7 @@ export function MemberKit({
         <View style={styles.tallies}>
           {tallies.map((item) => (
             <View key={item.equipmentTypeId} style={[styles.tally, item.yes === 0 && styles.tallyNo]}>
-              <Txt variant="footnote" style={face('bold')}>
+              <Txt variant="footnote" style={face('semibold')}>
                 {equipmentLabel(item.equipmentTypeId)}
                 {item.maxWeightKg ? ` to ${item.maxWeightKg} kg` : ''}
               </Txt>

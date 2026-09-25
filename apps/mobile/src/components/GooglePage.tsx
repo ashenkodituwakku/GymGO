@@ -145,13 +145,13 @@ export function PlaceDetails({ place, hidePhotos = false }: { place: GooglePlace
         )}
         {closed ? (
           <View style={[styles.badge, { backgroundColor: color.noTint }]}>
-            <Txt variant="footnote" color={color.noInk} style={face('bold')}>
+            <Txt variant="footnote" color={color.noInk} style={face('semibold')}>
               {place.businessStatus === 'CLOSED_PERMANENTLY' ? 'Google says: closed for good' : 'Google says: closed for now'}
             </Txt>
           </View>
         ) : place.openNow !== null ? (
           <View style={[styles.badge, { backgroundColor: place.openNow ? color.goodTint : color.maybeTint }]}>
-            <Txt variant="footnote" color={place.openNow ? color.goodInk : color.maybeInk} style={face('bold')}>
+            <Txt variant="footnote" color={place.openNow ? color.goodInk : color.maybeInk} style={face('semibold')}>
               {place.openNow ? 'Open now' : 'Closed now'}
             </Txt>
           </View>

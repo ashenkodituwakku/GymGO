@@ -66,56 +66,87 @@ export const radius = {
 } as const;
 
 /**
- * Helvetica, everywhere.
+ * SF Pro, Apple's system typeface, set the way Apple sets it.
  *
- * iPhone: Helvetica Neue, which ships with iOS, in its real Regular, Medium
- * and Bold cuts.
+ * iPhone: the system font, which is SF Pro. iOS switches between its Text
+ * and Display optical sizes (at 20 pt) and applies SF's size-specific
+ * tracking itself, so no letter-spacing is set there.
  *
- * Android and the web preview: Helvetica isn't on those devices, and
- * bundling it needs a paid licence. They use TeX Gyre Heros instead, a free
- * Helvetica clone (GUST Font License / LPPL), from assets/fonts. It has no
- * Medium cut, so medium falls back to Regular there.
+ * Browser: SF Pro through the system font on a Mac or iPhone, or by name
+ * where someone has installed it; otherwise Inter.
  *
- * Custom fonts on Android are picked by name, not by weight, so every weight
- * in the app goes through `face()`. A bare `fontWeight` would give Android a
- * faux bold rather than the real cut.
+ * Android, and browsers without SF Pro: Inter (SIL Open Font Licence), the
+ * closest free match. Apple's licence for SF Pro only covers Apple's own
+ * platforms, so it can't be shipped inside the app for anything else. Inter
+ * gets the size-based tracking its designer publishes for it, which is
+ * what makes it sit like SF: slightly tight at text sizes, tighter still
+ * for headings.
+ *
+ * Sizes, line heights and weights follow Apple's iOS text styles (Large
+ * Title 34/41, Body 17/22, Headline 17/22 semibold, and so on). Every
+ * weight goes through `face()`: Android picks bundled fonts by name, and a
+ * bare `fontWeight` there would give a faux bold instead of the real cut.
  */
-export type Weight = 'regular' | 'medium' | 'bold';
+export type Weight = 'regular' | 'medium' | 'semibold' | 'bold';
 
-/** Names the bundled faces are registered under (see app/_layout.tsx). */
-export const BUNDLED_FACES = {
-  HelveticaCloneRegular: require('../../assets/fonts/texgyreheros-regular.otf'),
-  HelveticaCloneBold: require('../../assets/fonts/texgyreheros-bold.otf'),
-} as const;
+/** Names the bundled faces are registered under (see app/_layout.tsx and lib/fonts.ts). */
+export { BUNDLED_FACES } from './fonts';
 
 /** True where the app must load the bundled faces before drawing text. */
 export const NEEDS_BUNDLED_FACES = Platform.OS !== 'ios';
 
-const IOS_WEIGHT = { regular: '400', medium: '500', bold: '700' } as const;
+const NUMERIC = { regular: '400', medium: '500', semibold: '600', bold: '700' } as const;
+const INTER: Record<Weight, string> = {
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semibold: 'Inter_600SemiBold',
+  bold: 'Inter_700Bold',
+};
 
-export function face(weight: Weight = 'regular'): { fontFamily: string; fontWeight: '400' | '500' | '700' | 'normal' } {
-  if (Platform.OS === 'ios') return { fontFamily: 'Helvetica Neue', fontWeight: IOS_WEIGHT[weight] };
-  return { fontFamily: weight === 'bold' ? 'HelveticaCloneBold' : 'HelveticaCloneRegular', fontWeight: 'normal' };
+/** Where SF Pro is what actually draws: iPhone, and browsers on Apple devices. */
+const SF_DRAWS =
+  Platform.OS === 'ios' || (Platform.OS === 'web' && typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent));
+
+export function face(weight: Weight = 'regular'): { fontFamily: string; fontWeight: '400' | '500' | '600' | '700' | 'normal' } {
+  if (Platform.OS === 'ios') return { fontFamily: 'System', fontWeight: NUMERIC[weight] };
+  if (Platform.OS === 'web') {
+    // The system font first (SF Pro on Apple devices), then SF Pro by name, then Inter.
+    return { fontFamily: `-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", ${INTER[weight]}, system-ui, sans-serif`, fontWeight: NUMERIC[weight] };
+  }
+  return { fontFamily: INTER[weight], fontWeight: 'normal' };
 }
 
 /**
- * Tracking tuned for Helvetica: tight at display sizes, where it was drawn to
- * be set tight, and neutral at text sizes. Small caps are opened up.
+ * Letter-spacing for a size, in points. None where SF Pro draws: the system
+ * applies SF's own tracking table. For Inter, its designer's formula
+ * (rsms.me/inter/dynmetrics): tracking = -0.0223 + 0.185 × e^(-0.1745 × size) em.
  */
+export function tracking(size: number): number {
+  if (SF_DRAWS) return 0;
+  return Math.round((-0.0223 + 0.185 * Math.exp(-0.1745 * size)) * size * 100) / 100;
+}
+
+const style = (fontSize: number, lineHeight: number, weight: Weight) => ({ fontSize, lineHeight, letterSpacing: tracking(fontSize), ...face(weight) });
+
+/** Apple's iOS text styles, at the default text size. */
 export const type = {
-  largeTitle: { fontSize: 32, lineHeight: 38, letterSpacing: -0.8, ...face('bold') },
-  title: { fontSize: 26, lineHeight: 31, letterSpacing: -0.6, ...face('bold') },
-  title2: { fontSize: 21, lineHeight: 26, letterSpacing: -0.4, ...face('bold') },
-  headline: { fontSize: 17, lineHeight: 22, letterSpacing: -0.2, ...face('bold') },
-  body: { fontSize: 17, lineHeight: 22, letterSpacing: 0, ...face('regular') },
-  callout: { fontSize: 16, lineHeight: 21, letterSpacing: 0, ...face('regular') },
-  subhead: { fontSize: 15, lineHeight: 20, letterSpacing: 0, ...face('regular') },
-  footnote: { fontSize: 13, lineHeight: 18, letterSpacing: 0, ...face('regular') },
-  caption: { fontSize: 12, lineHeight: 16, letterSpacing: 0.1, ...face('medium') },
-  /** Small caps labels in metric strips, as in Maps. */
-  eyebrow: { fontSize: 11, lineHeight: 13, letterSpacing: 0.8, ...face('bold') },
-  /** Big numbers: prices, ratings. */
-  figure: { fontSize: 19, lineHeight: 23, letterSpacing: -0.4, ...face('bold') },
+  /** Large Title, emphasized, as on a screen's opening heading. */
+  largeTitle: style(34, 41, 'bold'),
+  /** Title 1, emphasized. */
+  title: style(28, 34, 'bold'),
+  /** Title 2, emphasized. */
+  title2: style(22, 28, 'bold'),
+  headline: style(17, 22, 'semibold'),
+  body: style(17, 22, 'regular'),
+  callout: style(16, 21, 'regular'),
+  subhead: style(15, 20, 'regular'),
+  footnote: style(13, 18, 'regular'),
+  /** Caption 1. */
+  caption: style(12, 16, 'regular'),
+  /** Small capitals over figures, as in Maps (Caption 2 size, opened up because it's set in capitals). */
+  eyebrow: { ...style(11, 13, 'semibold'), letterSpacing: 0.6 },
+  /** Big numbers: prices, ratings (Title 3 size). */
+  figure: style(20, 25, 'bold'),
 } as const;
 
 export const shadow = {

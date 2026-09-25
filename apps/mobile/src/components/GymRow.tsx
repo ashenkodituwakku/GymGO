@@ -119,6 +119,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: radius.pill,
   },
-  chipText: face('bold'),
+  chipText: face('semibold'),
   trailing: { alignItems: 'flex-end', maxWidth: 96 },
 });

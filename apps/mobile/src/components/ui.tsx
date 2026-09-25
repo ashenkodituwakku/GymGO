@@ -240,7 +240,7 @@ export function Segmented<T extends string | number>({
             accessibilityState={{ selected: on }}
             style={[styles.segment, on && styles.segmentOn]}
           >
-            <Txt variant="footnote" color={color.label} style={on ? face('bold') : face('medium')} numberOfLines={1}>
+            <Txt variant="footnote" color={color.label} style={on ? face('semibold') : face('medium')} numberOfLines={1}>
               {option.label}
             </Txt>
           </Pressable>
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignSelf: 'flex-start',
   },
-  pillText: face('bold'),
+  pillText: face('semibold'),
 
   chip: {
     flexDirection: 'row',

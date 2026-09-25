@@ -14,6 +14,7 @@
     "doctor": "expo-doctor"
   },
   "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.2",
     "@gorhom/bottom-sheet": "^5.2.14",
     "@gymgo/au-data": "workspace:*",
     "@gymgo/demo-data": "workspace:*",

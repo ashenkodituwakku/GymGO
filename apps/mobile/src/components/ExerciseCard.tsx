@@ -32,13 +32,13 @@ export function ExerciseCard({
   return (
     <View style={styles.exercise}>
       <View style={styles.number}>
-        <Txt variant="subhead" color={color.onBrand} style={face('bold')}>
+        <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
           {index + 1}
         </Txt>
       </View>
       <View style={styles.flex}>
         <Txt variant="headline">{exercise.name}</Txt>
-        <Txt variant="subhead" color={color.brand} style={face('bold')}>
+        <Txt variant="subhead" color={color.brand} style={face('semibold')}>
           {exercise.cardio ? 'Finisher' : `${sets} × ${reps} · rest ${restSeconds} s`}
         </Txt>
         <Txt variant="footnote" color={color.labelSecondary}>

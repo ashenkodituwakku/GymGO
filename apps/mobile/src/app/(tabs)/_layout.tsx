@@ -198,7 +198,7 @@ const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
         // Your own initial for Profile, ringed when selected, as Instagram shows your photo.
         <View style={[styles.avatarRing, isFocused && styles.avatarRingOn]}>
           <View style={styles.avatar}>
-            <Txt variant="subhead" color={color.onBrand} style={face('bold')}>
+            <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
               {initial}
             </Txt>
           </View>

@@ -83,7 +83,7 @@ export function MemberAccess({
               <View key={outcome.id} style={styles.count}>
                 <Icon name={outcome.icon} size={14} color={outcome.ink} />
                 <Txt variant="subhead">
-                  {outcome.label} <Txt variant="subhead" style={face('bold')}>{counts[outcome.id]}</Txt>
+                  {outcome.label} <Txt variant="subhead" style={face('semibold')}>{counts[outcome.id]}</Txt>
                 </Txt>
               </View>
             ))}

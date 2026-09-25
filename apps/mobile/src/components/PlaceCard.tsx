@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
   wrap: { paddingHorizontal: space[4], paddingBottom: space[8] },
   flex: { flex: 1 },
   center: { textAlign: 'center' },
-  bold: face('bold'),
+  bold: face('semibold'),
 
   headerBar: {
     paddingHorizontal: space[4],

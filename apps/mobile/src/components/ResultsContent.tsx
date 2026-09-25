@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },
-  badgeText: { fontSize: 10, lineHeight: 12, ...face('bold') },
+  badgeText: { fontSize: 10, lineHeight: 12, ...face('semibold') },
 
   suggestions: { paddingHorizontal: space[2], paddingTop: space[2] },
   suggestion: {

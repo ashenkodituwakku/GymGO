@@ -72,7 +72,7 @@ export function BodyPicker({
         hitSlop={8}
         style={styles.listToggle}
       >
-        <Txt variant="subhead" color={color.brand} style={face('bold')}>
+        <Txt variant="subhead" color={color.brand} style={face('semibold')}>
           {listOpen ? 'Hide the muscle list' : 'Pick from a list instead'}
         </Txt>
       </Pressable>

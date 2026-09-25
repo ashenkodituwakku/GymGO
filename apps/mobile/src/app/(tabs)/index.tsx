@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
   carouselContent: { paddingHorizontal: space[4], paddingBottom: space[2], gap: space[3] },
 
   country: { gap: space[2] },
-  countryLabel: { ...face('bold'), letterSpacing: 0.6 },
+  countryLabel: { ...face('semibold'), letterSpacing: 0.6 },
   suburbs: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   suburb: { paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.background, ...shadow.card },
   suburbOn: { backgroundColor: color.brand },

@@ -35,7 +35,7 @@ export default function Saved() {
             accessibilityRole="button"
             style={({ pressed }) => [styles.compareButton, pressed && { opacity: 0.7 }]}
           >
-            <Txt variant="subhead" color={color.onBrand} style={face('bold')}>
+            <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
               Compare {picked.length}
             </Txt>
           </Pressable>
@@ -66,7 +66,7 @@ export default function Saved() {
           </Txt>
           {!billing.isPro && account.saved.length >= billing.limits.savedGyms - 2 && (
             <Pressable onPress={() => openPro('saved')} accessibilityRole="button" style={styles.upsell}>
-              <Txt variant="subhead" color={color.brand} style={face('bold')}>
+              <Txt variant="subhead" color={color.brand} style={face('semibold')}>
                 Save as many as you like with GymGO Pro ›
               </Txt>
             </Pressable>

@@ -112,7 +112,7 @@ export default function ProScreen() {
           title: '',
           headerRight: () => (
             <Pressable onPress={close} accessibilityRole="button" hitSlop={8}>
-              <Txt variant="body" color={color.brand} style={face('bold')}>
+              <Txt variant="body" color={color.brand} style={face('semibold')}>
                 Done
               </Txt>
             </Pressable>
@@ -157,7 +157,7 @@ export default function ProScreen() {
             <Txt variant="footnote" color={color.labelSecondary} style={styles.column}>
               FREE
             </Txt>
-            <Txt variant="footnote" color={color.brand} style={[styles.column, face('bold')]}>
+            <Txt variant="footnote" color={color.brand} style={[styles.column, face('semibold')]}>
               PRO
             </Txt>
           </View>
@@ -172,7 +172,7 @@ export default function ProScreen() {
               <Txt variant="footnote" color={color.labelSecondary} style={styles.column}>
                 {feature.free}
               </Txt>
-              <Txt variant="footnote" color={color.label} style={[styles.column, face('bold')]}>
+              <Txt variant="footnote" color={color.label} style={[styles.column, face('semibold')]}>
                 {feature.pro}
               </Txt>
             </View>
@@ -335,7 +335,7 @@ function PlanOption({
           <Txt variant="headline">{title}</Txt>
           {tag && (
             <View style={styles.tag}>
-              <Txt variant="caption" color={color.onBrand} style={face('bold')}>
+              <Txt variant="caption" color={color.onBrand} style={face('semibold')}>
                 {tag}
               </Txt>
             </View>
@@ -345,7 +345,7 @@ function PlanOption({
           {detail}
         </Txt>
       </View>
-      <Txt variant="subhead" style={face('bold')}>
+      <Txt variant="subhead" style={face('semibold')}>
         {price}
       </Txt>
     </Pressable>

@@ -276,7 +276,7 @@ export default function WorkoutScreen() {
 
             {saveState === 'saved' && (
               <Pressable onPress={() => router.push('/workouts')} accessibilityRole="link" style={styles.savedLink}>
-                <Txt variant="subhead" color={color.brand} style={face('bold')}>
+                <Txt variant="subhead" color={color.brand} style={face('semibold')}>
                   Saved to My workouts ›
                 </Txt>
               </Pressable>
@@ -320,7 +320,7 @@ function ActionPill({ label, icon, onPress, disabled = false }: { label: string;
       style={({ pressed }) => [styles.pill, pressed && { opacity: 0.7 }, disabled && { opacity: 0.6 }]}
     >
       <Icon name={icon} size={15} color={color.brand} />
-      <Txt variant="subhead" color={color.brand} style={face('bold')}>
+      <Txt variant="subhead" color={color.brand} style={face('semibold')}>
         {label}
       </Txt>
     </Pressable>

@@ -31,8 +31,8 @@ branch: don't open another PR unless asked. Before changing anything, read
 ## The code
 
 pnpm monorepo, Node 22. `pnpm install`, then `pnpm verify` (typecheck, lint,
-all tests: at last count domain 120, osm 25, demo 23, melbourne 11, au 11,
-usa 11, eu 10, web 39, mobile 87, server 106; all passing).
+all tests: at last count domain 121, osm 25, demo 23, melbourne 11, au 11,
+usa 12, eu 10, web 39, mobile 111, server 119; all passing).
 
 - `apps/mobile`: the app (Expo SDK 57, React Native, expo-router,
   Reanimated). Runs on iOS, Android and in a browser (`npx expo start
@@ -51,6 +51,14 @@ usa 11, eu 10, web 39, mobile 87, server 106; all passing).
   bundled map-only cities, made by `scripts/generate.ts` from OpenStreetMap.
   `packages/melbourne-data`: 23 gyms researched fact by fact.
 - `apps/web`: an older Next.js site; leave it unless asked.
+- Training: `src/lib/training.ts` (records, targets, plates, streak; pure
+  and tested), `src/lib/activeSession.ts` (the workout in progress, kept
+  on the device), `src/lib/useTraining.ts` (the log), screens `train.tsx`,
+  `plates.tsx`, `progress/`. Server: `/api/training` in `app.ts`.
+- On a Mac: `scripts/gymgo-mac.sh --xcode` (wraps `scripts/dev.mjs --xcode`
+  and `scripts/xcode.mjs`) generates `apps/mobile/ios` with `expo prebuild`
+  and opens Xcode. Never yet run on a real Mac: expect the first real build
+  to surface something, and fix it from what the owner reports.
 
 Running it in this sandbox: start the server with `NODE_USE_ENV_PROXY=1`
 (so its fetches use the proxy) and `EXPO_PUBLIC_API_URL=http://localhost:4000`
@@ -117,6 +125,15 @@ London (Shoreditch) failed: the one reachable Overpass mirror gave up with a
    a denser area still times out, split the query (gyms and place names as
    separate requests) or use smaller tiles there, tested with a stand-in
    Overpass in `apps/server/src/area.test.ts`.
+
+5. **USA focus: done.** 40 US cities (1,055 gyms), US first everywhere,
+   search asks for "a city, ZIP code or gym", pounds and miles, US$ on the
+   Pro screen, street addresses on gym pages.
+6. **Run it from Xcode on a Mac: ready, untested on a Mac** (see above).
+7. **Features for training, and more Pro: done.** Logging with a rest
+   timer, plates, records and Progress (free); charts and next-session
+   targets (Pro). Ideas not yet built: a weekly goal, supersets, notes per
+   set, and exporting the log as CSV.
 
 One thing the owner turned down: clearing the search text when a gym opens
 from the search box (the suggestion list otherwise stays over the card).

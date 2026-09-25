@@ -111,11 +111,12 @@ London (Shoreditch) failed: the one reachable Overpass mirror gave up with a
    live area search abroad for a non-Pro caller (`home` parameter, 403
    `pro_required`). Pro can't actually be bought until the owner connects
    Stripe (README → GymGO Pro), so until then nobody can search abroad.
-4. **Make dense cities work live.** A busy Overpass server (429 or 504)
-   now gets one more try before the next is asked. If central London still
-   fails, split the query (gyms and place names as separate requests), or
-   use smaller tiles where a tile is dense. Test with a stand-in Overpass
-   in `apps/server/src/area.test.ts`.
+4. **Dense cities live: working.** A busy Overpass server (429 or 504)
+   gets one more try before the next is asked, and the one that answered
+   last is asked first. Hackney (22 gyms) and Camden (13) came back live. If
+   a denser area still times out, split the query (gyms and place names as
+   separate requests) or use smaller tiles there, tested with a stand-in
+   Overpass in `apps/server/src/area.test.ts`.
 
 One thing the owner turned down: clearing the search text when a gym opens
 from the search box (the suggestion list otherwise stays over the card).

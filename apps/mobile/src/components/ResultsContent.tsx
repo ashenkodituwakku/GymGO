@@ -5,6 +5,7 @@
  * rather than over the map, so the map is never covered by more than it needs.
  */
 
+import { useState } from 'react';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -97,18 +98,24 @@ export function ResultsContent({
   const gymSuggestions = query.trim() ? suggestGyms(query, records, filters.centre, 4) : [];
   const filterCount = activeFilterCount(filters);
   const total = outcome.results.length;
+  const [focused, setFocused] = useState(false);
 
   return (
     <View style={styles.wrap}>
       {/* Search --------------------------------------------------------- */}
       <View style={styles.searchRow}>
-        <View style={styles.search}>
+        <View style={[styles.search, focused && styles.searchFocused]}>
           <Icon name="search" size={16} color={color.labelSecondary} />
           <SearchInput
             ref={searchRef as never}
             value={query}
             onChangeText={onQueryChange}
-            onFocus={onSearchFocus}
+            onFocus={() => {
+              // In a browser, where the keyboard can land here, show it; phones draw no ring.
+              if (Platform.OS === 'web') setFocused(true);
+              onSearchFocus();
+            }}
+            onBlur={() => setFocused(false)}
             onSubmitEditing={onSubmitSearch}
             placeholder={PLACEHOLDER}
             placeholderTextColor={color.labelTertiary}
@@ -402,7 +409,10 @@ const styles = themed(() => StyleSheet.create({
     // iOS 26 search fields are capsules.
     borderRadius: radius.pill,
     backgroundColor: color.fill,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
+  searchFocused: { borderColor: color.brand },
   input: {
     flex: 1,
     fontSize: 17,

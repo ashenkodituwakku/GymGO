@@ -36,6 +36,10 @@ function pinElement(fill: string, selected: boolean, label: string): HTMLElement
   const wrap = document.createElement('button');
   wrap.type = 'button';
   wrap.setAttribute('aria-label', label);
+  // Out of the Tab order: the list beside the map has every one of these
+  // gyms, in order, so the keyboard reaches the search and list first
+  // rather than forty pins.
+  wrap.tabIndex = -1;
   wrap.style.cssText =
     'display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0;cursor:pointer;';
   const disc = document.createElement('div');

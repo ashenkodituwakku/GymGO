@@ -39,6 +39,17 @@ export class ApiError extends Error {
   }
 }
 
+/** A town or suburb the server's place finder found. */
+export interface FoundPlace {
+  name: string;
+  /** "Victoria, Australia". */
+  region: string;
+  lat: number;
+  lng: number;
+  countryCode: 'AU' | 'US';
+  kind: 'city' | 'suburb';
+}
+
 /** The server couldn't be reached at all. */
 export class OfflineError extends Error {}
 
@@ -55,7 +66,7 @@ async function request<T>(method: string, path: string, options: { token?: strin
   const controller = new AbortController();
   // Photos upload slowly; billing waits on Stripe; an area search may wait on the map service.
   const slow = (method === 'POST' && path.endsWith('/photos')) || path.startsWith('/api/billing');
-  const timer = setTimeout(() => controller.abort(), path.startsWith('/api/area') ? 75000 : slow ? 30000 : 8000);
+  const timer = setTimeout(() => controller.abort(), path.startsWith('/api/area') ? 75000 : slow || path.startsWith('/api/places') ? 30000 : 8000);
   let response: Response;
   try {
     response = await fetch(`${base}${path}`, {
@@ -235,6 +246,8 @@ export interface SavedWorkout {
 
 export const api = {
   gyms: () => request<{ gyms: GymRecord[]; attribution: string; generatedAt: string }>('GET', '/api/gyms'),
+  /** Towns and suburbs in Australia and the US called this, best first (for search on submit). */
+  places: (q: string) => request<{ places: FoundPlace[]; attribution: string }>('GET', `/api/places?q=${encodeURIComponent(q)}`),
   /** One gym by id, including ones found by searching an area. */
   gym: (id: string) => request<{ gym: GymRecord }>('GET', `/api/gyms/${encodeURIComponent(id)}`),
   /** The gyms OpenStreetMap has in a box (Australia and the US), read live by the server and kept. */

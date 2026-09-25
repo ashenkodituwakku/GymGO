@@ -39,10 +39,16 @@ export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET?.trim() |
  */
 export const PUBLIC_URL = process.env.GYMGO_PUBLIC_URL?.trim().replace(/\/+$/, '') || null;
 /**
- * Optional. The Overpass API server "Search this area" reads OpenStreetMap
- * through. The main public one is the default; any mirror works.
+ * Optional. The Overpass API servers "Search this area" reads OpenStreetMap
+ * through, comma-separated, tried in turn. By default the main public one,
+ * then two public mirrors.
  */
-export const OVERPASS_URL = process.env.GYMGO_OVERPASS_URL?.trim() || undefined;
+export const OVERPASS_URLS = (process.env.GYMGO_OVERPASS_URL ?? '')
+  .split(',')
+  .map((url) => url.trim())
+  .filter(Boolean);
+/** Optional. The Photon geocoder to find towns by name through. Photon's public server is the default. */
+export const GEOCODER_URL = process.env.GYMGO_GEOCODER_URL?.trim() || undefined;
 /**
  * Gyms' own website icons, shown beside their names. On by default; set
  * GYMGO_SITE_ICONS=off to never fetch from gyms' websites.

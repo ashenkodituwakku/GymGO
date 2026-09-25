@@ -17,6 +17,8 @@ describe('what counts as a gym', () => {
     expect(keep('Hot Yoga Collective', {})).toBe(false);
     expect(keep('Northside Studio', { sport: 'yoga;pilates' })).toBe(false);
     expect(keep('Muay Thai Academy', {})).toBe(false);
+    expect(keep("Max's Junior Boxing", {})).toBe(false);
+    expect(keep('Youth Fitness Club', {})).toBe(false);
   });
 
   it('drops gyms inside hotels, homes and campuses, and generic rooms', () => {

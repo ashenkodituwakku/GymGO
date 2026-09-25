@@ -68,6 +68,11 @@ links back to its map element.
 wherever the map is showing; those gyms are filtered by the same rules and
 carry the same credit and link.
 
+Towns and suburbs typed into the search box, when GymGO doesn't know them
+already, are looked up with [Photon](https://photon.komoot.io) by komoot, a
+free geocoder built on OpenStreetMap data (© OpenStreetMap contributors,
+ODbL).
+
 ## Map tiles (PC and Android)
 
 On the PC and on Android, the map is drawn with

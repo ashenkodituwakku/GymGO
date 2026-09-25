@@ -107,7 +107,8 @@ export const EMPTY = {
   results: 'Nothing ticks every box. Loosen one and try again.',
   /** No filters are on: what's missing is information, not a looser search. */
   unconfirmedLine: 'Gyms rarely publish everything we check, so each card says exactly what to ask.',
-  outOfArea: "We don't cover that yet. Try a Melbourne suburb, or a US city like New York, Chicago or Austin.",
+  /** When looking a typed place up failed (not when it wasn't found). */
+  outOfArea: "Couldn't look that place up just now. Try again, or move the map there and tap Search this area.",
   locationDenied: 'No worries — search a suburb or city instead.',
   locationUnavailable: "Couldn't get a fix on where you are. Search a suburb or city instead.",
   locationApproximate:

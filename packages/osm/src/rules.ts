@@ -36,7 +36,9 @@ const NOT_A_GYM = new RegExp(
     'chiropract|massage|spa\\b|kids|pole\\b|aerial|bodyrok|lagree|megaformer|reformer|swim school|' +
     'zumba|piyo|down dog|physique 57|revolution studio|cycle|handle bar|rock gym|exhale|krav|kms\\b|' +
     'combat|mma\\b|ismma|grinning yogi|float|cryo|squash|syretch|platesculpt|boys and girls|define body|' +
-    'futsal|parkour park|my first gym|muay thai|^technogym$',
+    'futsal|parkour park|my first gym|muay thai|^technogym$|' +
+    // Children's programmes that call themselves junior or youth.
+    '\\bjunior|\\byouth\\b',
   'i',
 );
 

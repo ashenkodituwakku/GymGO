@@ -41,7 +41,13 @@ beforeAll(async () => {
   db = openDb(':memory:');
   seedGyms(db, MELBOURNE_GYMS);
   server = createServer(
-    createApp({ db, attribution: 'test', signupsPerHour: 1000, now: () => clock, area: { fetchImpl: fakeOverpass as typeof fetch } }),
+    createApp({
+      db,
+      attribution: 'test',
+      signupsPerHour: 1000,
+      now: () => clock,
+      area: { fetchImpl: fakeOverpass as typeof fetch, endpoints: ['https://overpass.test/api/interpreter'] },
+    }),
   );
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -175,5 +181,33 @@ describe('Search this area', () => {
     expect(overpassCalls).toHaveLength(1);
     expect(result.body.gyms.map((gym: GymRecord) => gym.location.name)).toEqual(['Snap Fitness']);
     expect((await call('GET', '/api/gyms/bendigo-strength-co-w13')).status).toBe(404);
+  });
+});
+
+describe('when a map server fails', () => {
+  it('asks the next one: a timeout, then a runtime error reported as 200, then an answer', async () => {
+    const calls: string[] = [];
+    const flaky = async (input: string | URL | Request): Promise<Response> => {
+      const url = String(input);
+      calls.push(url);
+      if (url.startsWith('https://down.test')) throw new Error('timed out');
+      if (url.startsWith('https://odd.test')) return Response.json({ elements: [], remark: 'runtime error: Query timed out' });
+      return Response.json({ elements: bendigoElements() });
+    };
+    const otherDb = openDb(':memory:');
+    const other = createServer(
+      createApp({
+        db: otherDb,
+        attribution: 'test',
+        area: { fetchImpl: flaky as typeof fetch, endpoints: ['https://down.test/api', 'https://odd.test/api', 'https://up.test/api'] },
+      }),
+    );
+    await new Promise<void>((resolve) => other.listen(0, '127.0.0.1', resolve));
+    const url = `http://127.0.0.1:${(other.address() as AddressInfo).port}${areaPath(BENDIGO)}`;
+    const answer = (await (await fetch(url)).json()) as { gyms: GymRecord[] };
+    expect(answer.gyms.map((gym) => gym.location.name).sort()).toEqual(['Bendigo Strength Co', 'Snap Fitness']);
+    expect(calls).toEqual(['https://down.test/api', 'https://odd.test/api', 'https://up.test/api']);
+    other.close();
+    otherDb.close();
   });
 });

@@ -5,6 +5,7 @@
  *   GET    /api/gyms                      every gym record, with its sources
  *   GET    /api/gyms/:gymId               one gym's record, including ones found by searching an area
  *   GET    /api/area?south&west&north&east  gyms on OpenStreetMap in that box (AU and US), read live and kept
+ *   GET    /api/places?q=                 towns and suburbs in AU and the US by name (for search on submit)
  *   POST   /api/auth/signup               { email, password, displayName }
  *   POST   /api/auth/login                { email, password }
  *   POST   /api/auth/logout
@@ -93,6 +94,7 @@ import {
 } from './auth';
 import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
 import { AreaError, AreaSearch, parseBox } from './area';
+import { PlaceError, PlaceSearch } from './places';
 import { SiteIcons, chainWebsites, type SafeGet } from './siteicons';
 import { allGyms, gymCountry, gymExists, gymIsDemo, gymRecord, type Db } from './db';
 import { GoogleError, GooglePlaces } from './google';
@@ -117,7 +119,9 @@ export interface AppOptions {
   /** This server's public address, once hosted. */
   publicUrl?: string | null;
   /** "Search this area": which Overpass API server to ask, and a stand-in fetch for tests. */
-  area?: { endpoint?: string; fetchImpl?: typeof fetch };
+  area?: { endpoints?: string[]; fetchImpl?: typeof fetch };
+  /** Finding a town by name: which geocoder to ask, and a stand-in fetch for tests. */
+  places?: { endpoint?: string; fetchImpl?: typeof fetch };
   /** Gyms' own website icons: on unless switched off; `get` stands in for the web in tests. */
   siteIcons?: { enabled?: boolean; get?: SafeGet };
 }
@@ -314,7 +318,10 @@ export function createApp(options: AppOptions) {
   const siteIcons = new SiteIcons(db, { get: options.siteIcons?.get, now });
   // A chain's shared website, for branches the map gives none (worked out once, from the bundled gyms).
   let chainSite: ((record: GymRecord) => string | null) | null = null;
-  const area = new AreaSearch(db, { endpoint: options.area?.endpoint, fetchImpl: options.area?.fetchImpl, now, known: () => allGyms(db) });
+  // New place questions (not already answered): 60 per address per hour.
+  const placeLimiter = new AttemptLimiter(60, 60 * 60_000);
+  const places = new PlaceSearch(db, { endpoint: options.places?.endpoint, fetchImpl: options.places?.fetchImpl, now });
+  const area = new AreaSearch(db, { endpoints: options.area?.endpoints, fetchImpl: options.area?.fetchImpl, now, known: () => allGyms(db) });
   const photos = new PhotoStore(options.photoDir ?? null);
   const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
   const billing = new Billing(db, {
@@ -376,6 +383,19 @@ export function createApp(options: AppOptions) {
         return send(res, 200, { ...answer, attribution: '© OpenStreetMap contributors (ODbL)' });
       } catch (error) {
         if (error instanceof AreaError) throw new HttpError(error.status, error.message, error.code);
+        throw error;
+      }
+    }
+
+    if (method === 'GET' && path === '/api/places') {
+      const query = url.searchParams.get('q') ?? '';
+      try {
+        if (places.cached(query) === undefined && !placeLimiter.allow(`${req.socket.remoteAddress}`, now().getTime())) {
+          throw new HttpError(429, 'That’s a lot of place searches. Try again in a little while.');
+        }
+        return send(res, 200, { places: await places.search(query), attribution: '© OpenStreetMap contributors (ODbL), via Photon by komoot' });
+      } catch (error) {
+        if (error instanceof PlaceError) throw new HttpError(error.status, error.message);
         throw error;
       }
     }

@@ -112,6 +112,11 @@ Chrome and Edge (blur only in Safari and Firefox).
   API), keeps what the same rules count as a gym, and remembers each area for
   a month so a busy area costs one request, not one per person. Those gyms
   are map-only like the rest: name, address, sometimes hours, "call first".
+  Type any town or suburb in Australia or the US ("Bendigo", "Boise") and
+  press Enter: if it isn't one GymGO knows by heart, the server looks it up
+  (Photon, a free OpenStreetMap geocoder, asked only on Enter and at most
+  once a second, answers kept a month), and the map flies there and
+  searches it.
 - **Saved**: your saved gyms. Tick two or three to **compare** them side by
   side: answer, price, what members paid (labelled as theirs, never the
   gym's price), guest entry, what to bring, machines, rating and distance.
@@ -407,9 +412,13 @@ The key stays on your computer; the app never sees it.
 free and needs no account; its operators ask for fewer than 10,000 requests
 a day, and GymGO stays far under that: one request at a time, at most 500 a
 day, 30 an hour per address, and each tenth-of-a-degree tile (about 11 km)
-fetched at most once a month. If that server is slow or refuses your
-network, point GymGO at another Overpass server with
-`GYMGO_OVERPASS_URL=https://…/api/interpreter`.
+fetched at most once a month. Public Overpass servers are often slow or
+refuse a given network, so GymGO tries the main one, then two public
+mirrors (kumi.systems and VK's maps.mail.ru), giving each 30 seconds. To
+use your own list instead, set
+`GYMGO_OVERPASS_URL=https://…/api/interpreter,https://…/api/interpreter`.
+Looking places up by name uses Photon's public server; set
+`GYMGO_GEOCODER_URL` to use another Photon server.
 
 ### GymGO Pro (subscriptions, through Stripe)
 

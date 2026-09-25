@@ -8,7 +8,7 @@ this document could do.
 
 | | Implemented locally | Tested locally | Externally integrated | Deployed |
 |---|---|---|---|---|
-| API server (Node, built-in SQLite) | ✅ | ✅ 90 tests over real HTTP | n/a, runs on your PC | ❌ not hosted |
+| API server (Node, built-in SQLite) | ✅ | ✅ 96 tests over real HTTP | n/a, runs on your PC | ❌ not hosted |
 | Gzip for larger answers (the gym list: 1.5 MB → 0.1 MB) | ✅ | ✅ 2 server tests + measured locally | n/a | ❌ |
 | Members' visits: walked in / booked first / turned away, one per member per gym, last year only, no names | ✅ | ✅ 2 server tests + reported and shown in the browser | n/a | ❌ |
 | Members say a gym has closed or is still open (6 months); the card warns when closed outnumbers open | ✅ | ✅ 2 server tests + reported and the warning seen in the browser | n/a | ❌ |
@@ -130,7 +130,8 @@ service, which is your decision to make. Nothing has been provisioned.
 | Top of a gym page: members' photos, else Google's photos of the exact gym (owner's key; the listing must share a real word of the name, or be a gym within 40 m), else Street View | ✅ | ⚠️ Google's photos only with stubbed data; Street View embed blank in this sandbox (no Google access from the test browser) | ⚠️ Street View is Google's free embed; Places photos never called with a real key | ❌ | n/a | ❌ |
 | Gym page (pushed screen, share/compare/save) | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |
 | Compare up to 3 gyms (incl. a "Members paid" row; add from the map card's round compare button) | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |
-| Search this area: gyms from OpenStreetMap for wherever the map is (AU and US), same rules as the bundled cities, kept a month per 11 km tile | ✅ | ✅ 11 server tests (stand-in Overpass) + 4 unit tests + driven in the browser over Bendigo (7 gyms found live) and Hobart, desktop and phone layouts | ✅ Overpass API, read live (a mirror from this sandbox; the main server refuses it) | ❌ | n/a | ❌ |
+| Search this area: gyms from OpenStreetMap for wherever the map is (AU and US), same rules as the bundled cities, kept a month per 11 km tile | ✅ | ✅ 12 server tests (stand-in Overpass, incl. falling over to the next server) + 4 unit tests + driven in the browser over Bendigo (7 gyms found live) and Hobart, desktop and phone layouts | ✅ Overpass API, read live (a mirror from this sandbox; the main server refuses it) | ❌ | n/a | ❌ |
+| Type any town or suburb in AU or the US and press Enter: looked up (Photon, cached a month, one a second), then flown to and searched | ✅ | ✅ 5 server tests (stand-in Photon) + driven in the browser ("Bendigo": 10 gyms; a made-up name says so) | ✅ Photon, called live | ❌ | n/a | ❌ |
 | Search gyms by name, nearest first; Enter opens the closest | ✅ | ✅ 4 unit tests + driven in the browser ("equinox") | n/a | ❌ | n/a | ❌ |
 | Sort (best match, closest, cheapest, top rated); best match = fewest open questions, then nearest | ✅ | ✅ domain test for the order + checked on Melbourne in the browser; iPhone action sheet not seen | n/a | ❌ | n/a | ❌ |
 | Melbourne's other 40 mapped gyms (map-only), without copies of the researched 23 | ✅ | ✅ data test (no researched map element reappears) + 63 gyms near the CBD in the browser | ✅ OpenStreetMap, fetched once | ❌ | n/a | ❌ |

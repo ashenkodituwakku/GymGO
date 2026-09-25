@@ -58,7 +58,18 @@ export class AreaError extends Error {
   }
 }
 
-export const DEFAULT_OVERPASS = 'https://overpass-api.de/api/interpreter';
+/**
+ * The public Overpass servers, tried in turn: the main one first, then the
+ * public instances listed on the OpenStreetMap wiki. Any one of them is
+ * often slow or refusing a given network at a given moment.
+ */
+export const DEFAULT_OVERPASS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+];
+/** How long to give one server before trying the next. */
+const PER_SERVER_MS = 30_000;
 const USER_AGENT = 'GymGO/0.1 (gym finder; https://github.com/ashenkodituwakku/GymGO)';
 
 /** Tiles are a tenth of a degree on each side. */
@@ -164,7 +175,8 @@ export interface AreaAnswer {
 }
 
 export interface AreaOptions {
-  endpoint?: string;
+  /** Overpass servers to ask, in order (the first that answers wins). */
+  endpoints?: string[];
   fetchImpl?: Fetch;
   now?: () => Date;
   /** Gyms already in the bundled data; the map's copies of them are left out. */
@@ -172,7 +184,7 @@ export interface AreaOptions {
 }
 
 export class AreaSearch {
-  private readonly endpoint: string;
+  private readonly endpoints: string[];
   private readonly fetchImpl: Fetch;
   private readonly now: () => Date;
   private queue: Promise<unknown> = Promise.resolve();
@@ -183,7 +195,7 @@ export class AreaSearch {
     private readonly db: Db,
     private readonly options: AreaOptions,
   ) {
-    this.endpoint = options.endpoint ?? DEFAULT_OVERPASS;
+    this.endpoints = options.endpoints?.length ? options.endpoints : DEFAULT_OVERPASS;
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.now = options.now ?? (() => new Date());
   }
@@ -248,23 +260,32 @@ export class AreaSearch {
       'nwr["leisure"="fitness_centre"]["name"];out center tags;' +
       'node["place"~"^(city|town|suburb|village|neighbourhood|quarter|hamlet)$"]["name"];out;';
 
-    let response: Response;
-    try {
-      response = await this.fetchImpl(this.endpoint, {
-        method: 'POST',
-        headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
-        body: new URLSearchParams({ data: query }).toString(),
-        signal: AbortSignal.timeout(60_000),
-      });
-    } catch {
-      throw new AreaError(502, 'The map service didn’t answer. Try again in a minute.', 'upstream');
+    // The first server that answers properly wins; a slow, busy or odd one passes to the next.
+    let data: { elements: OsmElement[] } | null = null;
+    let busy = false;
+    for (const endpoint of this.endpoints) {
+      try {
+        const response = await this.fetchImpl(endpoint, {
+          method: 'POST',
+          headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+          body: new URLSearchParams({ data: query }).toString(),
+          signal: AbortSignal.timeout(PER_SERVER_MS),
+        });
+        if (response.status === 429 || response.status === 504) busy = true;
+        const body = (await response.json().catch(() => null)) as { elements?: OsmElement[]; remark?: string } | null;
+        // A runtime error comes back as 200 with a remark and no data: not an answer.
+        if (response.ok && body && Array.isArray(body.elements) && !/error/i.test(body.remark ?? '')) {
+          data = { elements: body.elements };
+          break;
+        }
+      } catch {
+        // Timed out or unreachable: try the next.
+      }
     }
-    if (response.status === 429 || response.status === 504) {
-      throw new AreaError(503, 'The map service is busy. Try again in a minute.', 'upstream');
-    }
-    const data = (await response.json().catch(() => null)) as { elements?: OsmElement[] } | null;
-    if (!response.ok || !data || !Array.isArray(data.elements)) {
-      throw new AreaError(502, 'The map service sent something unexpected. Try again in a minute.', 'upstream');
+    if (!data) {
+      throw busy
+        ? new AreaError(503, 'The map service is busy. Try again in a minute.', 'upstream')
+        : new AreaError(502, 'The map service didn’t answer. Try again in a minute.', 'upstream');
     }
 
     const fetchedAt = this.now().toISOString().replace(/\.\d{3}Z$/, 'Z');

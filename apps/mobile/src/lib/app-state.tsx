@@ -67,6 +67,7 @@ export interface Prefs {
 }
 
 const RECENTS_KEY = 'gymgo.recents.v1';
+const COMPARE_KEY = 'gymgo.compare.v1';
 const PREFS_KEY = 'gymgo.prefs.v1';
 /** Only that GymGO has asked for location once, never where you were. */
 const ASKED_KEY = 'gymgo.location-asked.v1';
@@ -149,6 +150,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [filters, setFilters] = useState<Filters>(() => initialFilters());
   const [recents, setRecents] = useState<string[]>([]);
   const [compare, setCompare] = useState<string[]>([]);
+  const compareLoaded = useRef(false);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
   const [prefs, setPrefs] = useState<Prefs>({ haptics: true, demo: false, country: null });
   const [prefsReady, setPrefsReady] = useState(false);
@@ -159,6 +161,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void loadJson<unknown>(RECENTS_KEY, []).then((value) => {
       if (Array.isArray(value)) setRecents(value.filter((id): id is string => typeof id === 'string').slice(0, MAX_RECENTS));
+    });
+    // Gyms picked to compare stay picked through a reload or a relaunch.
+    void loadJson<unknown>(COMPARE_KEY, []).then((value) => {
+      const stored = Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string').slice(-LIMITS.pro.compare) : [];
+      setCompare((current) => (current.length ? current : stored));
+      compareLoaded.current = true;
     });
     void loadJson<Partial<Prefs>>(PREFS_KEY, {}).then((value) => {
       const country = typeof value.country === 'string' && /^[A-Z]{2}$/.test(value.country) ? value.country : null;
@@ -176,6 +184,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (compareLoaded.current) storeJson(COMPARE_KEY, compare);
+  }, [compare]);
+  // Past the plan's limit (Pro ended, say): keep the most recent picks. Only
+  // once the plan is known, so a Pro member's picks aren't cut while it loads.
+  useEffect(() => {
+    if (billing.planKnown) setCompare((current) => (current.length > limits.compare ? current.slice(-limits.compare) : current));
+  }, [billing.planKnown, limits.compare]);
 
   // A saved or recent gym outside the bundled cities (found by searching an
   // area, maybe on another device) is fetched by id, so its row isn't blank.

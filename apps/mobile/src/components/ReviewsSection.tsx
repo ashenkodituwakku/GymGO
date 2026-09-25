@@ -123,6 +123,15 @@ function ReviewForm({ gymId, token, inSheet, onDone }: { gymId: string; token: s
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // What's still needed, said instead of a silently greyed-out button (the server asks the same).
+  const written = body.trim().length;
+  const missing =
+    stars === 0
+      ? 'Tap a star to rate it.'
+      : written < 10
+        ? `Say a little more: at least 10 characters${written ? ` (${10 - written} to go)` : ''}.`
+        : null;
+
   const submit = async () => {
     setBusy(true);
     setError(null);
@@ -180,9 +189,9 @@ function ReviewForm({ gymId, token, inSheet, onDone }: { gymId: string; token: s
           {error}
         </Txt>
       )}
-      <PrimaryButton label={busy ? 'Sending…' : 'Send for review'} onPress={() => void submit()} disabled={busy || stars === 0 || body.trim().length < 10} />
+      <PrimaryButton label={busy ? 'Sending…' : 'Send for review'} onPress={() => void submit()} disabled={busy || missing !== null} />
       <Txt variant="caption" color={color.labelSecondary}>
-        A moderator reads every review before it appears.
+        {missing ?? 'A moderator reads every review before it appears.'}
       </Txt>
     </View>
   );

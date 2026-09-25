@@ -43,6 +43,10 @@ const FACES = NEEDS_BUNDLED_FACES ? BUNDLED_FACES : {};
  * top of them and Compare as a sheet. Light or dark follows your choice in
  * Settings → Appearance (the phone's, to start).
  */
+// A page opened straight from a link (a shared gym, say) sits on top of the
+// tabs, so it has a way back rather than being the whole app.
+export const unstable_settings = { initialRouteName: '(tabs)' };
+
 export default function RootLayout() {
   const [loaded, error] = useFonts(FACES);
   const [themeReady, setThemeReady] = useState(Platform.OS === 'web');

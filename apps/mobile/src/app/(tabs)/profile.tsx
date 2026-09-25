@@ -95,7 +95,9 @@ export default function Profile() {
           value={billing.isPro ? undefined : 'Upgrade'}
           onPress={() => openPro()}
         />
-        {billing.isPro && me && CAN_BUY_HERE && <Row icon="settings" tile={TILE.grey} title="Manage subscription" onPress={() => void manage()} />}
+        {billing.isPro && me && CAN_BUY_HERE && billing.subscription?.manageable !== false && (
+          <Row icon="settings" tile={TILE.grey} title="Manage subscription" onPress={() => void manage()} />
+        )}
         <Row icon="workout" tile={TILE.orange} title="My workouts" onPress={() => router.push('/workouts')} />
       </Group>
 

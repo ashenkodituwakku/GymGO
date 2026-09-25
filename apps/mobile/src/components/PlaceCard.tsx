@@ -28,7 +28,7 @@ import {
 import { TIER, accessLine, checkedAgo, ratingShort, sourceLabel } from '@/lib/copy';
 import { distanceLabel } from '@/lib/places';
 import { shareGym } from '@/lib/actions';
-import { depositLine, priceLine } from '@/lib/present';
+import { addressLines, depositLine, priceLine } from '@/lib/present';
 import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Icon, type IconName } from './Icon';
@@ -37,7 +37,7 @@ import { useApp } from '@/lib/app-state';
 import { LogoBadge, LogoCredit } from './BrandLogo';
 import { Glass } from './Glass';
 import { FADE_IN, FADE_OUT, Pressy, rise } from './motion';
-import { ActionButton, CloseButton, Fold, RoundToggle, TIER_COLOUR, Txt } from './ui';
+import { ActionButton, CloseButton, Fold, InfoRow, RoundToggle, TIER_COLOUR, Txt } from './ui';
 
 const TRAINING: Record<string, string> = {
   full_gym: 'Gym',
@@ -163,6 +163,7 @@ export function PlaceCard({
   const kit = record.equipment.filter((item) => item.presence === 'yes');
   const guestHours = result.access.visitorSchedule ? summariseWeek(result.access.visitorSchedule)[0] : null;
   const sources = sourcesOf(record);
+  const address = addressLines(location.address);
 
   // Demo listings have invented addresses and numbers. Say so, rather than
   // opening a map to nowhere or dialling a stranger.
@@ -339,6 +340,7 @@ export function PlaceCard({
 
       {/* The detail, folded away ---------------------------------------- */}
       <Animated.View style={styles.folds} entering={rise(5)}>
+        {address.length > 0 && <InfoRow icon="pin" title="Address" lines={address} />}
         <Fold icon="money" title="Prices" summary={price.headline === '—' ? 'Not published' : `${price.headline} · ${price.caption}`}>
           {offers
             .filter((assessment) => !isMultiVisitProduct(assessment.offer) && assessment.offer.productType !== 'membership')

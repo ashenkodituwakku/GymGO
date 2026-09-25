@@ -114,6 +114,8 @@ export interface SubscriptionView {
   renewsAt: string | null;
   /** When Pro ends, if it's been cancelled. */
   endsAt: string | null;
+  /** Bought through Stripe, so Stripe's page can change or cancel it. The local dev account's Pro can't be. */
+  manageable: boolean;
 }
 
 export interface PlanView {
@@ -205,7 +207,7 @@ export class Billing {
     const current = rows.find((row) => isProStatus(row.status) && !this.endedLocally(row, now)) ?? null;
     const shown = current ?? rows[0] ?? null;
     const plan: PlanId = current ? 'pro' : 'free';
-    return { plan, limits: LIMITS[plan], subscription: shown ? this.view(shown) : null };
+    return { plan, limits: LIMITS[plan], subscription: shown ? this.view(shown, this.customerIdFor(userId) !== null) : null };
   }
 
   isPro(userId: string): boolean {
@@ -218,7 +220,7 @@ export class Billing {
     return end !== null && Date.parse(end) <= now;
   }
 
-  private view(row: SubscriptionRow): SubscriptionView {
+  private view(row: SubscriptionRow, manageable: boolean): SubscriptionView {
     const ending = row.cancel_at ?? (row.cancel_at_period_end ? row.current_period_end : null);
     const live = isProStatus(row.status);
     return {
@@ -228,6 +230,7 @@ export class Billing {
       amountMinor: row.amount_minor,
       renewsAt: live && !ending ? row.current_period_end : null,
       endsAt: live ? ending : null,
+      manageable,
     };
   }
 

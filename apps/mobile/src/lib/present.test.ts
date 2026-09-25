@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
-import { WHEN_CHOICES, depositLine, googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl, localDateDaysAgo, parseAmount, priceLine } from './present';
+import { WHEN_CHOICES, addressLines, depositLine, googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl, localDateDaysAgo, parseAmount, priceLine } from './present';
 import { atPlace, initialFilters, runSearch } from './query';
 import { geocodePlace } from './places';
 
@@ -134,5 +134,23 @@ describe('roughly when', () => {
     expect(localDateDaysAgo(1, noon)).toBe('2026-09-23');
     expect(localDateDaysAgo(30, noon)).toBe('2026-08-25');
     expect(WHEN_CHOICES.map((choice) => choice.days)).toEqual([0, 1, 7, 30, 90]);
+  });
+});
+
+describe('a gym\'s address', () => {
+  const at = (countryCode: string, parts: Partial<{ line1: string; suburb: string; state: string; postcode: string }>) =>
+    addressLines({ line1: '', line2: null, suburb: '', state: '', postcode: '', countryCode, ...parts });
+
+  it('is set out the way post is addressed there', () => {
+    expect(at('US', { line1: '38 West 38th Street', suburb: 'New York', state: 'NY', postcode: '10018' })).toEqual(['38 West 38th Street', 'New York, NY 10018']);
+    expect(at('AU', { line1: '12 Smith Street', suburb: 'Fitzroy', state: 'VIC', postcode: '3065' })).toEqual(['12 Smith Street', 'Fitzroy VIC 3065']);
+    expect(at('GB', { line1: '1 Mare Street', suburb: 'London', postcode: 'E8 4RP' })).toEqual(['1 Mare Street', 'London E8 4RP']);
+    expect(at('DE', { line1: 'Oranienstraße 5', suburb: 'Berlin', state: 'Berlin', postcode: '10997' })).toEqual(['Oranienstraße 5', '10997 Berlin']);
+  });
+
+  it('leaves out what the map doesn\'t give, without stray commas', () => {
+    expect(at('US', { line1: '111 West 40th Street', suburb: 'New York', state: 'NY' })).toEqual(['111 West 40th Street', 'New York, NY']);
+    expect(at('US', { suburb: 'Austin' })).toEqual(['Austin']);
+    expect(at('FR', { suburb: 'Paris' })).toEqual(['Paris']);
   });
 });

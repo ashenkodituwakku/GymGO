@@ -296,7 +296,7 @@ describe('coming back from Stripe', () => {
     const me = await call(withStripe.base, 'GET', '/api/billing', { token: person.token });
     expect(me.body.plan).toBe('pro');
     expect(me.body.limits).toEqual(LIMITS.pro);
-    expect(me.body.subscription).toMatchObject({ status: 'active', interval: 'year', currency: 'aud', amountMinor: 2999, renewsAt: '2026-10-24T00:00:00.000Z', endsAt: null });
+    expect(me.body.subscription).toMatchObject({ status: 'active', interval: 'year', currency: 'aud', amountMinor: 2999, renewsAt: '2026-10-24T00:00:00.000Z', endsAt: null, manageable: true });
   });
 
   it('never forwards anywhere it doesn’t trust', async () => {

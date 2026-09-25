@@ -3,7 +3,7 @@
  * it is unit-tested with the copy.
  */
 
-import { formatMoney, type GymRecord, type OfferSelection } from '@gymgo/domain';
+import { formatMoney, type GymRecord, type OfferSelection, type PostalAddress } from '@gymgo/domain';
 import { moneyLabel } from './places';
 
 export interface PriceLine {
@@ -75,6 +75,35 @@ export function googleMapsEmbedUrl(record: GymRecord): string {
 export function googleStreetViewEmbedUrl(record: GymRecord): string {
   const { lat, lng } = record.location.position;
   return `https://maps.google.com/maps?layer=c&cbll=${lat},${lng}&cbp=11,0,0,0,0&hl=en&output=svembed`;
+}
+
+/**
+ * A street address set out the way post is addressed there: "New York, NY
+ * 10018" in the US and Canada, "Fitzroy VIC 3065" in Australia, "London SW1A
+ * 1AA" in Britain, "10115 Berlin" in most of Europe. Parts the map doesn't
+ * give are left out, never filled in.
+ */
+export function addressLines(address: PostalAddress): string[] {
+  const { line1, line2, suburb, state, postcode, countryCode } = address;
+  const join = (parts: string[], between = ' ') => parts.filter(Boolean).join(between);
+  let place: string;
+  switch (countryCode) {
+    case 'US':
+    case 'CA':
+      place = join([join([suburb, state], ', '), postcode]);
+      break;
+    case 'AU':
+    case 'NZ':
+      place = join([suburb, state, postcode]);
+      break;
+    case 'GB':
+    case 'IE':
+      place = join([suburb, postcode]);
+      break;
+    default:
+      place = join([postcode, suburb]);
+  }
+  return [line1, line2 ?? '', place].filter(Boolean);
 }
 
 /** Name and street address: enough for Google to find the right listing. */

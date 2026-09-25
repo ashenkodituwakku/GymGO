@@ -40,8 +40,13 @@ describe('the dev Pro account', () => {
     const response = await login(DEV_PRO_PASSWORD);
     expect(response.status).toBe(200);
     const { token } = (await response.json()) as { token: string };
-    const plan = (await (await fetch(`${base}/api/billing`, { headers: { authorization: `Bearer ${token}` } })).json()) as { plan: string };
+    const plan = (await (await fetch(`${base}/api/billing`, { headers: { authorization: `Bearer ${token}` } })).json()) as {
+      plan: string;
+      subscription: { manageable: boolean };
+    };
     expect(plan.plan).toBe('pro');
+    // Nobody paid, so there's nothing on Stripe's page to change or cancel.
+    expect(plan.subscription.manageable).toBe(false);
     // Pro opens every country: Paris searched by someone whose country is Australia.
     const paris = await fetch(`${base}/api/area?south=48.84&west=2.33&north=48.88&east=2.37&home=AU`, { headers: { authorization: `Bearer ${token}` } });
     expect(paris.status).toBe(200);

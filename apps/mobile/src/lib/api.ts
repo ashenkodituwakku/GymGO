@@ -223,6 +223,8 @@ export interface SubscriptionInfo {
   amountMinor: number | null;
   renewsAt: string | null;
   endsAt: string | null;
+  /** Stripe's page can change or cancel it (the local dev account's Pro can't be). Missing from older servers. */
+  manageable?: boolean;
 }
 
 export interface BillingState {

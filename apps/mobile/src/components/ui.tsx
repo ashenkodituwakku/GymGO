@@ -155,6 +155,29 @@ export function Divider({ inset = 0 }: { inset?: number }) {
 
 // --- Buttons ----------------------------------------------------------------
 
+/** A fact that's short enough to show whole, in the same card as the folds (a gym's address). */
+export function InfoRow({ icon, title, lines, accessibilityLabel }: { icon: IconName; title: string; lines: string[]; accessibilityLabel?: string }) {
+  return (
+    <View style={styles.fold} accessible accessibilityLabel={accessibilityLabel ?? `${title}: ${lines.join(', ')}`}>
+      <View style={[styles.foldHead, styles.infoHead]}>
+        <View style={styles.foldIcon}>
+          <Icon name={icon} size={17} color={color.brand} />
+        </View>
+        <View style={styles.foldText}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {title}
+          </Txt>
+          {lines.map((line) => (
+            <Txt key={line} variant="body">
+              {line}
+            </Txt>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
 /**
  * A section that starts folded: an emoji, a title and a one-line summary.
  * Tap to open. Keeps a gym's card short until you want the detail.
@@ -566,6 +589,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   foldText: { flex: 1, gap: 1 },
+  infoHead: { alignItems: 'flex-start' },
   foldBody: { paddingHorizontal: space[4], paddingBottom: space[4], gap: space[3] },
 
   segmented: { flexDirection: 'row', padding: 2, borderRadius: 9, backgroundColor: 'rgba(118, 118, 128, 0.12)' },

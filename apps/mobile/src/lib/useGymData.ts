@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { BoundingBox, GymRecord } from '@gymgo/domain';
 import { ApiError, api } from './api';
@@ -9,6 +10,19 @@ import { BUNDLED_GYMS } from './query';
  * is showing. Same sources and dates, just not refreshed.
  */
 export type DataStatus = 'loading' | 'live' | 'offline';
+
+/**
+ * Gyms found by searching an area are kept on the device too (the newest
+ * 250), so a saved or recent one still shows when the server can't be
+ * reached. Each keeps the date it was read from the map.
+ */
+const FOUND_KEY = 'gymgo.found.v1';
+const FOUND_KEPT = 250;
+
+function isRecord(value: unknown): value is GymRecord {
+  const location = (value as { location?: { id?: unknown; name?: unknown; position?: unknown } } | null)?.location;
+  return typeof location?.id === 'string' && typeof location.name === 'string' && typeof location.position === 'object';
+}
 
 export function useGymData() {
   const [base, setBase] = useState<GymRecord[]>(BUNDLED_GYMS);
@@ -29,11 +43,47 @@ export function useGymData() {
   const addFound = useCallback((more: GymRecord[]) => {
     if (more.length === 0) return;
     setFound((current) => {
+      // Newest last, so the oldest are the ones dropped when there are too many to keep.
       const byId = new Map(current.map((record) => [record.location.id, record]));
-      for (const record of more) byId.set(record.location.id, record);
+      for (const record of more) {
+        byId.delete(record.location.id);
+        byId.set(record.location.id, record);
+      }
       return [...byId.values()];
     });
   }, []);
+
+  // Found gyms from earlier sessions, then keep what's found from now on.
+  const restored = useRef(false);
+  useEffect(() => {
+    AsyncStorage.getItem(FOUND_KEY)
+      .then((raw) => {
+        restored.current = true;
+        const kept = raw ? (JSON.parse(raw) as unknown) : [];
+        if (Array.isArray(kept)) {
+          // Anything found this session already is newer: it goes last and wins.
+          setFound((current) => {
+            const byId = new Map(kept.filter(isRecord).map((record) => [record.location.id, record]));
+            for (const record of current) {
+              byId.delete(record.location.id);
+              byId.set(record.location.id, record);
+            }
+            return [...byId.values()];
+          });
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        restored.current = true;
+      });
+  }, []);
+  useEffect(() => {
+    if (!restored.current) return;
+    const timer = setTimeout(() => {
+      AsyncStorage.setItem(FOUND_KEY, JSON.stringify(found.slice(-FOUND_KEPT))).catch(() => undefined);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [found]);
 
   const refreshMemberPrices = useCallback(() => {
     api

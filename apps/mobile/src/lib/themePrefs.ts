@@ -11,7 +11,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Appearance, Platform } from 'react-native';
 import { ACCENT_IDS, FREE_ACCENT, applyTheme, type AccentId, type AppearanceChoice, type Scheme } from './theme';
 
@@ -95,4 +95,28 @@ export function useThemeChoice(): ThemeChoice {
     () => choice,
     () => choice,
   );
+}
+
+/**
+ * The phone's (or browser's) own light or dark, kept current while GymGO is
+ * open. Listened to directly: in a browser, the prefers-color-scheme media
+ * query; on a phone, Appearance. `live` is false while you've picked Light
+ * or Dark yourself, when GymGO's override is what Appearance reports.
+ */
+export function useSystemScheme(live: boolean): Scheme {
+  const [scheme, setScheme] = useState<Scheme>(systemScheme);
+  useEffect(() => {
+    if (!live) return;
+    setScheme(systemScheme());
+    if (Platform.OS === 'web') {
+      const query = typeof window !== 'undefined' ? window.matchMedia?.('(prefers-color-scheme: dark)') : null;
+      if (!query) return;
+      const onChange = (event: MediaQueryListEvent) => setScheme(event.matches ? 'dark' : 'light');
+      query.addEventListener('change', onChange);
+      return () => query.removeEventListener('change', onChange);
+    }
+    const subscription = Appearance.addChangeListener(({ colorScheme }) => setScheme(colorScheme === 'dark' ? 'dark' : 'light'));
+    return () => subscription.remove();
+  }, [live]);
+  return scheme;
 }

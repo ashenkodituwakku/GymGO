@@ -3,7 +3,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useNavigationContainerRe
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { Appearance, Platform, StyleSheet, useColorScheme } from 'react-native';
+import { Appearance, Platform, StyleSheet } from 'react-native';
 import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -22,7 +22,7 @@ import {
   type AccentId,
   type Scheme,
 } from '@/lib/theme';
-import { loadThemeChoice, schemeFor, systemScheme, useThemeChoice } from '@/lib/themePrefs';
+import { loadThemeChoice, schemeFor, useSystemScheme, useThemeChoice } from '@/lib/themePrefs';
 
 // Hold the splash screen until the typeface is ready, so nothing draws in the
 // wrong font first. iPhone draws in SF Pro, built in, and loads nothing.
@@ -75,12 +75,7 @@ export default function RootLayout() {
 function useWantedTheme(): { scheme: Scheme; accent: AccentId } {
   const choice = useThemeChoice();
   const { billing } = useApp();
-  const system = useColorScheme();
-  const [phone, setPhone] = useState(systemScheme);
-  useEffect(() => {
-    // Only the phone's own setting counts for "System", not GymGO's override.
-    if (choice.appearance === 'system') setPhone(system === 'dark' ? 'dark' : 'light');
-  }, [system, choice.appearance]);
+  const phone = useSystemScheme(choice.appearance === 'system');
   // Tell the phone, so its own parts (keyboards, menus, Liquid Glass) match.
   useEffect(() => {
     if (Platform.OS !== 'web') Appearance.setColorScheme(choice.appearance === 'system' ? 'unspecified' : choice.appearance);

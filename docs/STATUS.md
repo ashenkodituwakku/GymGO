@@ -262,19 +262,27 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 
 | Check | Result |
 |---|---|
-| `pnpm typecheck` | Clean, all seven packages |
+| `pnpm typecheck` | Clean, every package |
 | `pnpm lint` | No ESLint warnings or errors (web); tsc clean elsewhere |
-| `@gymgo/domain` unit tests | **119 passed** |
+| `@gymgo/domain` unit tests | **121 passed** |
 | `@gymgo/demo-data` unit tests | **23 passed** |
 | `@gymgo/melbourne-data` unit tests | **11 passed** |
-| `@gymgo/usa-data` unit tests | **11 passed** |
-| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **48 passed** |
-| `@gymgo/mobile` unit tests | **44 passed** |
+| `@gymgo/au-data` unit tests | **11 passed** |
+| `@gymgo/usa-data` unit tests | **12 passed** |
+| `@gymgo/eu-data` unit tests | **10 passed** |
+| `@gymgo/osm` unit tests | **25 passed** |
+| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **130 passed** |
+| `@gymgo/mobile` unit tests | **122 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
-| `expo export` (iOS + Android) | Both compiled (2,058 and 2,105 modules) |
+| `expo export` (iOS + Android) | Both compiled to Hermes bytecode |
 | `expo-doctor` | 21/21 checks passed |
+| `expo prebuild` (iOS + Android, on Linux) | Both generated. The iPhone asks only for location while in use, photos and the local network; Android for location, internet and vibration |
+| Phone app in a browser (Chromium, 390 / 768 / 1280 wide) | Scripted by hand, not a suite in the repo: search, filters, save, compare, review, country, sign-in, training, keyboard use, Escape, offline server, location allowed / unanswered / abroad |
 | `pnpm build` (website) | Compiled successfully; not rerun this round, the website is unchanged |
 | Playwright, old website (390 / 768 / 1440), fresh build | **99 passed**, 24 skipped (website unchanged since) |
+
+Not run anywhere: a real iPhone, iPad or Android phone, Xcode itself, or
+sign-in with real Google or Apple credentials.
 
 The 24 skips are the contribution and moderation suite at phone and tablet
 width: it writes to a shared local store, so running it in three browsers at

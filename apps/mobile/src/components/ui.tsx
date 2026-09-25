@@ -285,6 +285,8 @@ export interface CapsuleButton {
   icon: IconName;
   accessibilityLabel: string;
   onPress: () => void;
+  /** Working on it (finding you, say): a spinner, and presses wait. */
+  busy?: boolean;
 }
 
 /**
@@ -297,19 +299,21 @@ export function ControlCapsule({ buttons }: { buttons: CapsuleButton[] }) {
     <View style={styles.capsuleShadow}>
       <Glass style={styles.capsule} interactive>
         {buttons.map((button, index) => (
-          <View key={button.accessibilityLabel}>
+          <View key={button.icon}>
             {index > 0 && <View style={styles.capsuleDivider} />}
             <Pressy
               scaleTo={0.86}
               onPress={() => {
+                if (button.busy) return;
                 haptic.tap();
                 button.onPress();
               }}
               accessibilityRole="button"
               accessibilityLabel={button.accessibilityLabel}
+              aria-busy={button.busy === true}
               style={({ pressed }) => [styles.capsuleButton, pressed && styles.capsulePressed]}
             >
-              <Icon name={button.icon} size={18} color={color.brand} />
+              {button.busy ? <ActivityIndicator size="small" color={color.brand} /> : <Icon name={button.icon} size={18} color={color.brand} />}
             </Pressy>
           </View>
         ))}

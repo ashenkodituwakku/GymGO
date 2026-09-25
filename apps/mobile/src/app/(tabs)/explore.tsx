@@ -216,17 +216,28 @@ function MapScreen() {
   }, [query, pickPlace, filters.centre, searchable, findPlace]);
 
   // Your precise position, used for this search on this device only.
+  // While it's finding you the button spins, and another tap waits for this one.
+  const [locating, setLocating] = useState(false);
+  const locatingRef = useRef(false);
   const locate = useCallback(async () => {
-    const result = await findMe(true);
-    setNotice(locatedNotice(result));
-    if (result.kind === 'here' || result.kind === 'area') {
-      haptic.success();
-      map.current?.flyTo(result.fix.position, result.kind === 'area' ? 0.06 : 0.03);
-      return;
+    if (locatingRef.current) return;
+    locatingRef.current = true;
+    setLocating(true);
+    try {
+      const result = await findMe(true);
+      setNotice(locatedNotice(result, prefs.country));
+      if (result.kind === 'here' || result.kind === 'area') {
+        haptic.success();
+        map.current?.flyTo(result.fix.position, result.kind === 'area' ? 0.06 : 0.03);
+        return;
+      }
+      haptic.warn();
+      if (result.kind === 'nearest') map.current?.flyTo(result.city.centre, 0.06);
+    } finally {
+      locatingRef.current = false;
+      setLocating(false);
     }
-    haptic.warn();
-    if (result.kind === 'nearest') map.current?.flyTo(result.city.centre, 0.06);
-  }, [findMe]);
+  }, [findMe, prefs.country]);
 
   // --- Search this area -------------------------------------------------------
 
@@ -627,7 +638,7 @@ function MapScreen() {
           accessibilityLabel: 'Show every gym in the list',
           onPress: () => map.current?.fitTo(pins.map((pin) => pin.position)),
         },
-        { icon: 'locate', accessibilityLabel: 'Show gyms near me', onPress: () => void locate() },
+        { icon: 'locate', accessibilityLabel: locating ? 'Finding you' : 'Show gyms near me', onPress: () => void locate(), busy: locating },
       ]}
     />
   );

@@ -41,7 +41,9 @@ export async function currentFix(ask: boolean): Promise<FixResult> {
   const approximate = permission.android?.accuracy === 'coarse';
 
   try {
-    const fix = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
+    // Indoors a precise fix can take a long while, or never come: past
+    // FIX_TIMEOUT_MS, the last known position is used, or none.
+    const fix = await withTimeout(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest }), FIX_TIMEOUT_MS);
     return {
       position: { lat: fix.coords.latitude, lng: fix.coords.longitude },
       accuracyM: fix.coords.accuracy ?? null,
@@ -57,4 +59,24 @@ export async function currentFix(ask: boolean): Promise<FixResult> {
       approximate: approximate || (last.coords.accuracy ?? 0) > 1000,
     };
   }
+}
+
+/** How long to wait for a precise fix once location is allowed. */
+export const FIX_TIMEOUT_MS = 12_000;
+
+/** The promise's value, or a rejection once `ms` have passed without one. */
+export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timed out')), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
 }

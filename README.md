@@ -64,6 +64,21 @@ This works even when the phone is on a different network, but it's slower.
 In this mode the phone shows the gyms from the app's built-in copy. Signing
 in and reviews on the phone need the same Wi-Fi as the PC.
 
+**Try GymGO Pro without paying.** The launcher makes a ready-made Pro
+account on your computer. In the app, open Profile → Sign in, and use:
+
+| | |
+|---|---|
+| Email | `dev@gymgo.test` |
+| Password | `GymGO-dev-pro-2026` |
+
+It's for trying Pro (every country, unlimited saved gyms, comparing four,
+the workout library) on this computer only. Nobody paid for its Pro, so the
+server makes it only when told to (`GYMGO_DEV_PRO=on`, which the launcher
+sets) and refuses even then on a server with a public address
+(`GYMGO_PUBLIC_URL`) or live Stripe keys. Start with `gymgo -NoDevAccount`
+to leave it out.
+
 **Optional: start it from anywhere by typing `gymgo`.** Run this once, then open
 a new PowerShell window:
 
@@ -77,7 +92,8 @@ After that you can run:
 - `gymgo` to start everything;
 - `gymgo -Update` to get the latest version first;
 - `gymgo -Tunnel` when the phone isn't on the same Wi-Fi;
-- `gymgo -NoBrowser` to start without opening a browser window.
+- `gymgo -NoBrowser` to start without opening a browser window;
+- `gymgo -NoDevAccount` to start without the ready-made Pro account.
 
 ### On a Mac or Linux
 

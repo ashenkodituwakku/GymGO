@@ -29,6 +29,11 @@
 .PARAMETER Update
     Pull the latest commits before starting.
 
+.PARAMETER NoDevAccount
+    Do not make the ready-made Pro account for trying GymGO on this
+    computer (dev@gymgo.test). It is made by default, only on this
+    computer's own database, and never on a hosted server.
+
 .PARAMETER OldWebsite
     Start the older Next.js website instead of the app.
 
@@ -40,6 +45,7 @@
     gymgo -Update
     gymgo -Tunnel
     gymgo -NoBrowser
+    gymgo -NoDevAccount
     gymgo -OldWebsite
 #>
 [CmdletBinding()]
@@ -48,6 +54,7 @@ param(
     [switch] $Tunnel,
     [switch] $NoBrowser,
     [switch] $Update,
+    [switch] $NoDevAccount,
     [switch] $OldWebsite,
     [ValidateRange(1, 65535)]
     [int] $Port = 3000
@@ -158,6 +165,7 @@ Push-Location $Path
 $savedEnv = @{
     GYMGO_DATA_SOURCE  = $env:GYMGO_DATA_SOURCE
     GYMGO_AUTH_ADAPTER = $env:GYMGO_AUTH_ADAPTER
+    GYMGO_DEV_PRO      = $env:GYMGO_DEV_PRO
 }
 $opener = $null
 
@@ -200,6 +208,17 @@ try {
         Write-Host '  Phone cannot connect? Stop with Ctrl+C and run: gymgo -Tunnel' -ForegroundColor DarkGray
         Write-Host '  Ctrl+C stops everything.' -ForegroundColor DarkGray
         Write-Host ''
+
+        # A ready-made Pro account, on this computer only (the server refuses
+        # to make it if it's ever hosted). Turn it off with -NoDevAccount.
+        if (-not $NoDevAccount) {
+            $env:GYMGO_DEV_PRO = 'on'
+            Write-Host '  Try Pro: Profile > Sign in with' -ForegroundColor White
+            Write-Host '    email     dev@gymgo.test'
+            Write-Host '    password  GymGO-dev-pro-2026'
+            Write-Host '  (this computer only; start with -NoDevAccount to leave it out)' -ForegroundColor DarkGray
+            Write-Host ''
+        }
 
         $devArgs = @((Join-Path $Path 'scripts/dev.mjs'))
         if ($NoBrowser) { $devArgs += '--no-browser' }

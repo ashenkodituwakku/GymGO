@@ -17,11 +17,25 @@ import {
   SITE_ICONS,
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
+  DEV_PRO_ACCOUNT,
 } from './config';
 import { openDb, seedGyms } from './db';
+import { devAccountRefusal, ensureDevProAccount } from './devAccount';
 
 const db = openDb(DB_PATH);
 seedGyms(db, GYM_RECORDS);
+
+// A ready-made Pro account for trying GymGO on this computer; never on a hosted one.
+let devAccountLine: string | null = null;
+if (DEV_PRO_ACCOUNT) {
+  const refusal = devAccountRefusal({ publicUrl: PUBLIC_URL, stripeKey: STRIPE_SECRET_KEY });
+  if (refusal) {
+    devAccountLine = `[server] Dev Pro account: not made, because ${refusal}.`;
+  } else {
+    const dev = ensureDevProAccount(db);
+    devAccountLine = `[server] Dev Pro account (this computer only): sign in as ${dev.email} with password ${dev.password}`;
+  }
+}
 
 const server = createServer(
   createApp({
@@ -62,6 +76,7 @@ server.listen(PORT, HOST, () => {
   console.log(`[server] GymGO API on http://localhost:${PORT} (database: ${DB_PATH})`);
   if (lan.length > 0) console.log(`[server] Phones on your Wi-Fi reach it at ${lan.join(' or ')}`);
   console.log(`[server] GymGO Pro payments (Stripe): ${stripeMode(STRIPE_SECRET_KEY)}`);
+  if (devAccountLine) console.log(devAccountLine);
   if (STRIPE_SECRET_KEY) {
     console.log(
       STRIPE_WEBHOOK_SECRET

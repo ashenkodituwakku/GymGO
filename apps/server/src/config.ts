@@ -55,6 +55,11 @@ export const GEOCODER_URL = process.env.GYMGO_GEOCODER_URL?.trim() || undefined;
  * GYMGO_SITE_ICONS=off to never fetch from gyms' websites.
  */
 export const SITE_ICONS = (process.env.GYMGO_SITE_ICONS ?? 'on').trim().toLowerCase() !== 'off';
+/**
+ * Local testing only: a ready-made Pro account (see devAccount.ts). The
+ * launcher (scripts/gymgo.ps1) turns it on; a hosted server never makes it.
+ */
+export const DEV_PRO_ACCOUNT = (process.env.GYMGO_DEV_PRO ?? '').trim().toLowerCase() === 'on';
 export const ALLOWED_ORIGINS = (process.env.GYMGO_ALLOWED_ORIGINS ?? '').split(',').map((item) => item.trim()).filter(Boolean);
 
 /**

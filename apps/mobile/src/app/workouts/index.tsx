@@ -11,8 +11,10 @@ import { PrimaryButton, Txt } from '@/components/ui';
 import { api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { color, radius, space, themed } from '@/lib/theme';
+import { usePageTitle } from '@/lib/pageTitle';
 
 export default function MyWorkouts() {
+  usePageTitle('My workouts');
   const { account, billing, openPro } = useApp();
   const router = useRouter();
   const [workouts, setWorkouts] = useState<SavedWorkout[] | null>(null);

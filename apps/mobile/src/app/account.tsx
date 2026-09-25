@@ -18,6 +18,7 @@ import { useApp } from '@/lib/app-state';
 import { downloadMyData } from '@/lib/exportData';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, space, themed } from '@/lib/theme';
+import { usePageTitle } from '@/lib/pageTitle';
 
 const PROVIDER_NAME: Record<SignInProvider, string> = { google: 'Google', apple: 'Apple' };
 
@@ -28,6 +29,7 @@ function messageFor(error: unknown): string {
 }
 
 export default function AccountScreen() {
+  usePageTitle('Account');
   const { account, billing } = useApp();
   const router = useRouter();
   const me = account.state === 'signed_in' ? account.account : null;

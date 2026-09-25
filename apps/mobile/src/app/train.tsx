@@ -42,6 +42,7 @@ import {
 } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
 import { EXERCISES } from '@/lib/workout';
+import { usePageTitle } from '@/lib/pageTitle';
 
 /** Ticks once a second while something on screen counts. */
 function useNow(active: boolean): number {
@@ -60,6 +61,7 @@ const isTimed = (item: ActiveItem) => exerciseOf(item.exerciseId)?.cardio === tr
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 
 export default function TrainScreen() {
+  usePageTitle('Workout');
   const session = useActiveSession();
   const { account, billing, openPro } = useApp();
   const token = account.state === 'signed_in' ? account.token : null;

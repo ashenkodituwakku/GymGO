@@ -16,6 +16,7 @@ import { TIER, accessShort, timeLabel } from '@/lib/copy';
 import { priceLine } from '@/lib/present';
 import { resultsById } from '@/lib/results';
 import { color, face, radius, space, themed } from '@/lib/theme';
+import { usePageTitle } from '@/lib/pageTitle';
 
 type Cell = { text: string; ink?: string; strong?: boolean };
 
@@ -26,6 +27,7 @@ const tri = (value: Tri): Cell =>
 /** Small counts in words, as in running text ("two to four gyms"). */
 const NUMBER_WORD: Record<number, string> = { 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six' };
 export default function Compare() {
+  usePageTitle('Compare');
   const { data, filters, compare, toggleCompare, clearCompare, billing, openPro } = useApp();
   const router = useRouter();
   const { width } = useWindowDimensions();

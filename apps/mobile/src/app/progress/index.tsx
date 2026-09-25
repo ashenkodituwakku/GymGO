@@ -30,11 +30,13 @@ import {
 } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
 import { EXERCISES } from '@/lib/workout';
+import { usePageTitle } from '@/lib/pageTitle';
 
 const nameOf = (id: string) => EXERCISES.find((exercise) => exercise.id === id)?.name ?? id;
 const longDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
 
 export default function ProgressScreen() {
+  usePageTitle('Progress');
   const { account, prefs } = useApp();
   const token = account.state === 'signed_in' ? account.token : null;
   const log = useTrainingLog(token);

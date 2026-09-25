@@ -10,11 +10,13 @@ import { Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { BAR, formatWeight, parseWeight, plateLoad, unitFor, type WeightUnit } from '@/lib/training';
+import { usePageTitle } from '@/lib/pageTitle';
 
 /** The bars most gyms have: a men's Olympic bar, and the lighter women's bar. */
 const BARS: Record<WeightUnit, number[]> = { kg: [20, 15], lb: [45, 35] };
 
 export default function PlatesScreen() {
+  usePageTitle('Plates');
   const params = useLocalSearchParams<{ weight?: string; unit?: string }>();
   const { prefs } = useApp();
   const [unit, setUnit] = useState<WeightUnit>(params.unit === 'kg' || params.unit === 'lb' ? params.unit : unitFor(prefs.country));

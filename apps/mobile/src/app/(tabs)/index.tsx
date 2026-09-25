@@ -25,6 +25,7 @@ import { PLACES, activeCities, cityNear, cityPlace, moneyLabel, tracksPrices, ty
 import { atPlace, moveTo, nearLabel, nextVisitAt, runSearch, type Filters } from '@/lib/query';
 import { resultsById } from '@/lib/results';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { usePageTitle } from '@/lib/pageTitle';
 
 /** Melbourne suburbs worth a tap, in the order people ask about them. */
 const MELBOURNE_PICKS = ['Melbourne CBD', 'Fitzroy', 'Collingwood', 'Brunswick', 'Carlton', 'Richmond', 'South Melbourne', 'Northcote'];
@@ -49,6 +50,7 @@ const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
 ];
 
 export default function Home() {
+  usePageTitle(null);
   const { data, account, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs } = useApp();
   const active = useActiveSession();
   const [showAll, setShowAll] = useState<Record<string, boolean>>({});

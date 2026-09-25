@@ -14,6 +14,7 @@ import { color, radius, space, themed } from '@/lib/theme';
 import { e1rmSeries, formatWeight, fromKg, personalRecords, setsSummary, unitFor } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
 import { EXERCISES } from '@/lib/workout';
+import { usePageTitle } from '@/lib/pageTitle';
 
 /** "25 Sep", with the year only when it isn't this one. */
 const dayLabel = (iso: string) => {
@@ -29,6 +30,7 @@ export default function ExerciseProgressScreen() {
   const router = useRouter();
   const unit = unitFor(prefs.country);
   const exercise = EXERCISES.find((item) => item.id === exerciseId) ?? null;
+  usePageTitle(exercise?.name ?? 'Progress');
   const record = useMemo(() => personalRecords(log.sessions).get(exerciseId) ?? null, [log.sessions, exerciseId]);
   const series = useMemo(() => e1rmSeries(log.sessions, exerciseId), [log.sessions, exerciseId]);
   const done = log.sessions.filter((session) => session.exercises.some((item) => item.exerciseId === exerciseId));

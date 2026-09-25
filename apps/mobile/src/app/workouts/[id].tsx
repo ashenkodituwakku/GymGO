@@ -13,8 +13,10 @@ import { workoutFromSaved } from '@/lib/savedWorkouts';
 import { unitFor } from '@/lib/training';
 import { color, radius, space, themed } from '@/lib/theme';
 import { GOALS, muscleLabel, workoutText, type Muscle } from '@/lib/workout';
+import { usePageTitle } from '@/lib/pageTitle';
 
 export default function SavedWorkoutScreen() {
+  usePageTitle('Workout');
   const { id } = useLocalSearchParams<{ id: string }>();
   const { account, prefs } = useApp();
   const active = useActiveSession();

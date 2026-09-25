@@ -28,6 +28,7 @@ import { ApiError, OfflineError } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
 import { color, face, radius, space, themed } from '@/lib/theme';
+import { usePageTitle } from '@/lib/pageTitle';
 
 const FEATURE_ICON: Record<string, IconName> = {
   'Gyms worldwide': 'globe',
@@ -49,6 +50,7 @@ const REASON: Record<ProReason, string> = {
 };
 
 export default function ProScreen() {
+  usePageTitle('GymGO Pro');
   const params = useLocalSearchParams<{ reason?: string; checkout?: string }>();
   const router = useRouter();
   const { account, billing, filters, prefs } = useApp();

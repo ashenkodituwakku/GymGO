@@ -13,6 +13,7 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { ACCENTS, ACCENT_IDS, FREE_ACCENT, color, face, radius, space, themed, type AccentId, type AppearanceChoice } from '@/lib/theme';
 import { setThemeChoice, useThemeChoice } from '@/lib/themePrefs';
+import { usePageTitle } from '@/lib/pageTitle';
 
 const MODES: Array<{ id: AppearanceChoice; label: string }> = [
   { id: 'system', label: 'Automatic' },
@@ -27,6 +28,7 @@ const PREVIEW = {
 } as const;
 
 export default function AppearanceScreen() {
+  usePageTitle('Appearance');
   const choice = useThemeChoice();
   const { billing, openPro } = useApp();
 

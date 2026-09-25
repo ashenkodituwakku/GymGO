@@ -52,6 +52,7 @@ import { SHEET_GAP, SolidSheetBackground, floatingGlassBackground } from '@/comp
 import { CloseButton, ControlCapsule, Txt } from '@/components/ui';
 import { DROP_IN, FADE_OUT, usePressScale } from '@/components/motion';
 import Animated from 'react-native-reanimated';
+import { usePageTitle } from '@/lib/pageTitle';
 
 const PEEK = 150;
 /** Below this width the phone layout is used, even in a browser. */
@@ -85,6 +86,7 @@ function MapScreen() {
   const selfCheck = useMemo(() => checkTimeZoneSupport(), []);
 
   const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe, prefs, prefsReady, mayExplore, openPro } = useApp();
+  usePageTitle('Explore');
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);

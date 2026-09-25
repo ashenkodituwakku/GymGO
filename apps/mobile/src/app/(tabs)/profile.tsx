@@ -21,8 +21,10 @@ import { useThemeChoice } from '@/lib/themePrefs';
 import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
+import { usePageTitle } from '@/lib/pageTitle';
 
 export default function Profile() {
+  usePageTitle('Profile');
   const { account, data, recents, compare, prefs, setPref, billing, openPro } = useApp();
   const themeChoice = useThemeChoice();
   const router = useRouter();

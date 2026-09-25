@@ -17,8 +17,10 @@ import { timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { resultsById } from '@/lib/results';
 import { color, face, radius, space, themed } from '@/lib/theme';
+import { usePageTitle } from '@/lib/pageTitle';
 
 export default function Saved() {
+  usePageTitle('Saved');
   const { data, account, filters, compare, toggleCompare, requestExplore, billing, openPro } = useApp();
   const router = useRouter();
   const asOf = useMemo(() => new Date(), [filters, data.records]);

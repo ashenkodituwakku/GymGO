@@ -14,6 +14,7 @@ import { COUNTRIES, FOCUS_COUNTRY, builtInCountries, countryByCode, deviceCountr
 import { haptic } from '@/lib/haptics';
 import { CITY_LIST } from '@/lib/places';
 import { NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
+import { usePageTitle } from '@/lib/pageTitle';
 
 /** How many built-in cities each country has. */
 const CITY_COUNT = CITY_LIST.filter((city) => !city.demo).reduce<Record<string, number>>((counts, city) => {
@@ -22,6 +23,7 @@ const CITY_COUNT = CITY_LIST.filter((city) => !city.demo).reduce<Record<string, 
 }, {});
 
 export default function CountryScreen() {
+  usePageTitle('Country');
   const params = useLocalSearchParams<{ first?: string }>();
   const first = params.first === '1';
   const router = useRouter();

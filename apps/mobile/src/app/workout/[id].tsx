@@ -36,6 +36,7 @@ import {
   type Length,
   type Muscle,
 } from '@/lib/workout';
+import { usePageTitle } from '@/lib/pageTitle';
 
 type KitMode = 'gym' | 'typical';
 
@@ -43,6 +44,7 @@ type KitMode = 'gym' | 'typical';
 const GOAL_LABEL: Record<Goal, string> = { strength: 'Strength', muscle: 'Muscle', endurance: 'Endurance' };
 
 export default function WorkoutScreen() {
+  usePageTitle('Build a workout');
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, account, billing, openPro, prefs } = useApp();
   const active = useActiveSession();

@@ -31,6 +31,7 @@ import { haptic } from '@/lib/haptics';
 import { distanceLabel } from '@/lib/places';
 import { resultsById } from '@/lib/results';
 import { color, space, themed } from '@/lib/theme';
+import { usePageTitle } from '@/lib/pageTitle';
 
 const PAGE_WIDTH = 720;
 
@@ -43,6 +44,7 @@ export default function GymPage() {
 
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   const result = useMemo(() => (id ? resultsById(filters, data.records, asOf).get(id) : undefined), [id, filters, data.records, asOf]);
+  usePageTitle(result?.record.location.name ?? 'Gym');
 
   const place = useGooglePlace(result?.record);
   const googlePhotos = Boolean(place && place.photos.length > 0);

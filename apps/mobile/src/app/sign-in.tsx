@@ -17,6 +17,7 @@ import { ApiError, OfflineError } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
+import { usePageTitle } from '@/lib/pageTitle';
 
 type Mode = 'sign_in' | 'create';
 
@@ -33,6 +34,7 @@ export default function SignInScreen() {
   const { account } = useApp();
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(params.mode === 'create' ? 'create' : 'sign_in');
+  usePageTitle(mode === 'create' ? 'Create an account' : 'Sign in');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

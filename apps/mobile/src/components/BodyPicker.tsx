@@ -66,7 +66,7 @@ export function BodyPicker({
       <Pressable
         onPress={() => setListOpen((open) => !open)}
         accessibilityRole="button"
-        accessibilityState={{ expanded: listOpen }}
+        aria-expanded={listOpen}
         hitSlop={8}
         style={styles.listToggle}
       >

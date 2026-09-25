@@ -339,7 +339,7 @@ function PlanOption({
         onPress();
       }}
       accessibilityRole="radio"
-      accessibilityState={{ checked: selected }}
+      aria-checked={selected}
       accessibilityLabel={`${title}, ${price}${tag ? `, ${tag}` : ''}`}
       style={({ pressed }) => [styles.plan, selected && styles.planOn, pressed && { transform: [{ scale: 0.98 }] }]}
     >

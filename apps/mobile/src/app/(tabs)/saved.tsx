@@ -150,7 +150,7 @@ function CompareTick({ on, name, onPress }: { on: boolean; name: string; onPress
         onPress();
       }}
       accessibilityRole="checkbox"
-      accessibilityState={{ checked: on }}
+      aria-checked={on}
       accessibilityLabel={`Compare ${name}`}
       hitSlop={8}
       style={[styles.tick, on && styles.tickOn]}

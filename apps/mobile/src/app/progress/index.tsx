@@ -194,7 +194,7 @@ function SessionRow({
           onToggle();
         }}
         accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
+        aria-expanded={open}
         style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.fill }]}
       >
         <View style={styles.flex}>

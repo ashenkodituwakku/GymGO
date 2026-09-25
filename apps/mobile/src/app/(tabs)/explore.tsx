@@ -330,7 +330,7 @@ function MapScreen() {
             disabled={areaBusy}
             accessibilityRole="button"
             accessibilityLabel="Search this area"
-            accessibilityState={{ busy: areaBusy }}
+            aria-busy={areaBusy}
             style={styles.areaHit}
           >
             {areaBusy ? <ActivityIndicator size="small" color={color.brand} /> : <Icon name="search" size={15} color={color.brand} />}
@@ -665,7 +665,7 @@ function MapScreen() {
                 <FiltersContent
                   filters={filters}
                   onChange={setFilters}
-                  resultCount={outcome.results.length}
+                  counts={outcome.counts}
                   onDone={() => setPanel(selectedId ? 'place' : null)}
                 />
               </ScrollView>
@@ -759,7 +759,7 @@ function MapScreen() {
         <FiltersContent
           filters={filters}
           onChange={setFilters}
-          resultCount={outcome.results.length}
+          counts={outcome.counts}
           onDone={() => filterSheet.current?.dismiss()}
         />
       }

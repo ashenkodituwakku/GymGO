@@ -308,7 +308,7 @@ function Line({
         onPress();
       }}
       accessibilityRole="button"
-      accessibilityState={open === undefined ? undefined : { expanded: open }}
+      aria-expanded={open}
       style={({ pressed }) => [...style, pressed && { backgroundColor: color.pressed }]}
     >
       {body}

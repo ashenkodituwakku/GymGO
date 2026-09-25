@@ -8,6 +8,7 @@
 
 import { SymbolView } from 'expo-symbols';
 import type { ComponentProps } from 'react';
+import { View } from 'react-native';
 
 type SymbolName = ComponentProps<typeof SymbolView>['name'];
 
@@ -104,13 +105,18 @@ export function Icon({
   color: string;
   weight?: ComponentProps<typeof SymbolView>['weight'];
 }) {
+  // Decoration: whatever the icon means is in the label beside it or on its
+  // button. In a browser the symbol is a font glyph, whose character would
+  // otherwise be read out as part of the button's name.
   return (
-    <SymbolView
-      name={ICONS[name] as unknown as SymbolName}
-      size={size}
-      tintColor={color}
-      weight={weight}
-      resizeMode="scaleAspectFit"
-    />
+    <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none">
+      <SymbolView
+        name={ICONS[name] as unknown as SymbolName}
+        size={size}
+        tintColor={color}
+        weight={weight}
+        resizeMode="scaleAspectFit"
+      />
+    </View>
   );
 }

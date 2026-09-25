@@ -246,7 +246,7 @@ function Choice({ label, icon, on, onPress, name }: { label: string; icon: IconN
     <Pressable
       onPress={onPress}
       accessibilityRole="checkbox"
-      accessibilityState={{ checked: on }}
+      aria-checked={on}
       accessibilityLabel={name}
       hitSlop={4}
       style={({ pressed }) => [styles.choice, on && styles.choiceOn, pressed && { opacity: 0.7 }]}

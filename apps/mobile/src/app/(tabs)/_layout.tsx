@@ -198,7 +198,7 @@ const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
         onPress?.(event);
       }}
       accessibilityRole="tab"
-      accessibilityState={{ selected: isFocused }}
+      aria-selected={isFocused}
       accessibilityLabel={label}
       style={({ pressed }) => [styles.tab, { width }, pressed && styles.pressed]}
     >

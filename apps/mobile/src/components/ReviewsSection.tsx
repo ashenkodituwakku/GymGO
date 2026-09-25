@@ -155,7 +155,7 @@ function ReviewForm({ gymId, token, inSheet, onDone }: { gymId: string; token: s
               setStars(value);
             }}
             accessibilityRole="radio"
-            accessibilityState={{ selected: stars === value }}
+            aria-checked={stars === value}
             accessibilityLabel={`${value} star${value === 1 ? '' : 's'}`}
             hitSlop={6}
           >

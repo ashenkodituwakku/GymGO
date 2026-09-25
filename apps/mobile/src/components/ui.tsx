@@ -76,7 +76,7 @@ export function ChoiceChip({ label, selected, onPress, icon }: { label: string; 
         onPress();
       }}
       accessibilityRole="radio"
-      accessibilityState={{ selected }}
+      aria-checked={selected}
       accessibilityLabel={label}
       hitSlop={4}
       style={[styles.choiceChip, selected && styles.choiceChipOn]}
@@ -110,7 +110,7 @@ export function Chip({
         onPress();
       }}
       accessibilityRole="checkbox"
-      accessibilityState={{ checked: selected }}
+      aria-checked={selected}
       accessibilityLabel={accessibilityLabel ?? label}
       hitSlop={4}
       style={[styles.chip, selected && styles.chipSelected]}
@@ -201,7 +201,7 @@ export function Fold({
           setOpen(!open);
         }}
         accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
+        aria-expanded={open}
         accessibilityLabel={`${title}${summary ? `, ${summary}` : ''}`}
         style={({ pressed }) => [styles.foldHead, pressed && { opacity: 0.7 }]}
       >
@@ -268,7 +268,7 @@ export function Segmented<T extends string | number>({
               onChange(option.value);
             }}
             accessibilityRole="tab"
-            accessibilityState={{ selected: on }}
+            aria-selected={on}
             style={[styles.segment, on && width === 0 && styles.segmentOn]}
           >
             <Txt variant="footnote" color={color.label} style={on ? face('semibold') : face('medium')} numberOfLines={1}>
@@ -477,7 +477,8 @@ export function PrimaryButton({
         onPress();
       }}
       accessibilityRole="button"
-      accessibilityState={{ disabled: disabled || busy, busy }}
+      aria-disabled={disabled || busy}
+      aria-busy={busy}
       style={({ pressed }) => [styles.primary, { backgroundColor: fill }, pressed && { opacity: 0.9 }, disabled && !busy && { opacity: 0.45 }]}
     >
       {busy ? <ActivityIndicator size="small" color={ink} /> : icon ? <Icon name={icon} size={17} color={ink} /> : null}

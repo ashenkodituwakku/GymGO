@@ -102,6 +102,19 @@ export function summaryLine(total: number, confirmed: number, minuteOfDay: numbe
   return `${gyms} nearby · ${confirmed} good to go at ${timeLabel(minuteOfDay)}`;
 }
 
+/**
+ * The button at the foot of Filters: how many gyms could still work, and how
+ * many of those are sure things. Gyms the filters rule out aren't counted.
+ */
+export function filtersButtonLabel(counts: { confirmed: number; needs_confirmation: number }): string {
+  const possible = counts.confirmed + counts.needs_confirmation;
+  if (possible === 0) return 'No gyms — loosen something';
+  const gyms = `Show ${possible === 1 ? '1 gym' : `${possible} gyms`}`;
+  if (counts.confirmed === possible) return gyms;
+  if (counts.confirmed === 0) return `${gyms} · none a sure thing`;
+  return `${gyms} · ${counts.confirmed} good to go`;
+}
+
 export const EMPTY = {
   reviews: 'No reviews yet. Train there and be the first.',
   photos: 'No photo supplied yet',

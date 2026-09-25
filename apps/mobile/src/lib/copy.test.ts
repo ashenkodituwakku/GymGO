@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accessLine, accessShort, checkedAgo, locatedNotice, ratingShort, searchPrompt, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
+import { accessLine, accessShort, checkedAgo, filtersButtonLabel, locatedNotice, ratingShort, searchPrompt, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
 import { activeFilterCount, applyRelaxation, atPlace, defaultVisit, initialFilters, runSearch, toQuery } from './query';
 import { geocodePlace } from './places';
 
@@ -50,6 +50,13 @@ describe('voice', () => {
     expect(summaryLine(9, 0, 19 * 60)).toBe('9 gyms nearby · none a sure thing at 7 pm');
     expect(summaryLine(9, 3, 19 * 60)).toBe('9 gyms nearby · 3 good to go at 7 pm');
     expect(summaryLine(1, 1, 7 * 60)).toBe('1 gym nearby · 1 good to go at 7 am');
+  });
+
+  it("counts only gyms that could work on the Filters button, and says how sure", () => {
+    expect(filtersButtonLabel({ confirmed: 0, needs_confirmation: 0 })).toBe('No gyms — loosen something');
+    expect(filtersButtonLabel({ confirmed: 0, needs_confirmation: 40 })).toBe('Show 40 gyms · none a sure thing');
+    expect(filtersButtonLabel({ confirmed: 3, needs_confirmation: 5 })).toBe('Show 8 gyms · 3 good to go');
+    expect(filtersButtonLabel({ confirmed: 1, needs_confirmation: 0 })).toBe('Show 1 gym');
   });
 
   it('describes evidence age honestly', () => {

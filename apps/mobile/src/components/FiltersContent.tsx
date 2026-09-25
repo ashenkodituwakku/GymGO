@@ -1,12 +1,12 @@
 /**
  * Filters. Changes apply as you make them, and the button at the bottom says
- * how many gyms that leaves — so there is never a moment where the controls
- * and the results disagree.
+ * how many gyms could still work, and how many are sure things — so there is
+ * never a moment where the controls and the results disagree.
  */
 
 import { Pressable, StyleSheet, View } from 'react-native';
 import { equipmentLabel, type Tri } from '@gymgo/domain';
-import { timeLabel } from '@/lib/copy';
+import { filtersButtonLabel, timeLabel } from '@/lib/copy';
 import {
   BUDGET_PRESETS,
   DUMBBELL_PRESETS,
@@ -26,12 +26,12 @@ import { Chip, PrimaryButton, Txt } from './ui';
 export function FiltersContent({
   filters,
   onChange,
-  resultCount,
+  counts,
   onDone,
 }: {
   filters: Filters;
   onChange: (next: Filters) => void;
-  resultCount: number;
+  counts: { confirmed: number; needs_confirmation: number };
   onDone: () => void;
 }) {
   const today = nowIn(filters.timezone).date;
@@ -171,7 +171,7 @@ export function FiltersContent({
 
       <View style={styles.footer}>
         <PrimaryButton
-          label={resultCount === 0 ? 'No gyms — loosen something' : `Show ${resultCount} gym${resultCount === 1 ? '' : 's'}`}
+          label={filtersButtonLabel(counts)}
           onPress={onDone}
         />
       </View>
@@ -224,7 +224,7 @@ function Segmented<T extends string>({
               onChange(option.value);
             }}
             accessibilityRole="radio"
-            accessibilityState={{ selected }}
+            aria-checked={selected}
             style={[styles.segment, selected && styles.segmentSelected]}
           >
             <Txt variant="footnote" style={selected ? styles.segmentTextSelected : styles.segmentText}>

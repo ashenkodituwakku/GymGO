@@ -393,7 +393,7 @@ const ExerciseLog = memo(function ExerciseLog({
           <Pressable
             onPress={() => tick(at)}
             accessibilityRole="checkbox"
-            accessibilityState={{ checked: set.done }}
+            aria-checked={set.done}
             accessibilityLabel={`Set ${at + 1} done`}
             hitSlop={8}
           >

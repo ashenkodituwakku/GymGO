@@ -61,7 +61,7 @@ export default function AppearanceScreen() {
               key={mode.id}
               onPress={() => pickMode(mode.id)}
               accessibilityRole="radio"
-              accessibilityState={{ checked: on }}
+              aria-checked={on}
               accessibilityLabel={mode.id === 'system' ? 'Automatic: follow your phone' : mode.label}
               style={styles.mode}
             >
@@ -112,7 +112,7 @@ export default function AppearanceScreen() {
               key={id}
               onPress={() => pickAccent(id)}
               accessibilityRole="radio"
-              accessibilityState={{ checked: on }}
+              aria-checked={on}
               accessibilityLabel={`${accent.name}${locked ? ', part of GymGO Pro' : ''}`}
               style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.pressed }]}
             >

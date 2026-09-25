@@ -339,7 +339,7 @@ function ActionPill({ label, icon, onPress, disabled = false }: { label: string;
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
-      accessibilityState={{ disabled }}
+      aria-disabled={disabled}
       hitSlop={4}
       style={({ pressed }) => [styles.pill, pressed && { opacity: 0.7 }, disabled && { opacity: 0.6 }]}
     >

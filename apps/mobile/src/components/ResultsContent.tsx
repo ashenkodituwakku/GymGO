@@ -166,6 +166,7 @@ export function ResultsContent({
               }}
               style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
               accessibilityRole="button"
+              accessibilityLabel={`${place.name}, ${placeContext(place)}${place.city === 'sydney-demo' ? ', invented demo' : ''}`}
             >
               <View style={styles.suggestionGlyph}>
                 <Icon name="pin" size={16} color={color.onBrand} />

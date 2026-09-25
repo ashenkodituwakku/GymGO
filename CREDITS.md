@@ -118,15 +118,23 @@ gym's page with a link to its Commons page.
 | Brand | File on Commons | Licence |
 |---|---|---|
 | 24 Hour Fitness | [24_Hour_Fitness_logo.svg](https://commons.wikimedia.org/wiki/File:24_Hour_Fitness_logo.svg) | Public domain (logo) |
+| ACTIV FITNESS | [ACTIV_FITNESS_logo.jpg](https://commons.wikimedia.org/wiki/File:ACTIV_FITNESS_logo.jpg) | Public domain (simple logo) |
 | CrossFit | [Logo_CrossFit.svg](https://commons.wikimedia.org/wiki/File:Logo_CrossFit.svg) | Public domain (text logo) |
 | Curves | [Curves_fitness_logo.svg](https://commons.wikimedia.org/wiki/File:Curves_fitness_logo.svg) | Public domain (text logo) |
 | Equinox | [Equinox_Fitness_logo.png](https://commons.wikimedia.org/wiki/File:Equinox_Fitness_logo.png) | Public domain (logo) |
 | Fitness First | [Fitness_First_Logo.svg](https://commons.wikimedia.org/wiki/File:Fitness_First_Logo.svg) | Public domain (text logo) |
+| FitX | [Logo_FitX.svg](https://commons.wikimedia.org/wiki/File:Logo_FitX.svg) | Public domain (simple logo) |
 | Gold's Gym | [Gold's_Gym_Weight_Plate_Logo_Primary_150x150.png](https://commons.wikimedia.org/wiki/File:Gold's_Gym_Weight_Plate_Logo_Primary_150x150.png) | CC BY 4.0, © Gold's Gym |
+| GoodLife Fitness | [GoodLife_Fitness_logo.svg](https://commons.wikimedia.org/wiki/File:GoodLife_Fitness_logo.svg) | Public domain (simple logo) |
+| The Gym Group | [The_Gym_Group_Logo_08.2022.svg](https://commons.wikimedia.org/wiki/File:The_Gym_Group_Logo_08.2022.svg) | Public domain (simple logo) |
+| John Reed Fitness | [John_Reed_Fitness_Logo.png](https://commons.wikimedia.org/wiki/File:John_Reed_Fitness_Logo.png) | Public domain (simple logo) |
 | Kieser | [Kieser_Logo_2025.svg](https://commons.wikimedia.org/wiki/File:Kieser_Logo_2025.svg) | Public domain (text logo) |
 | LA Fitness | [LA_Fitness_logo.svg](https://commons.wikimedia.org/wiki/File:LA_Fitness_logo.svg) | Public domain (text logo) |
 | Life Time | [Life_Time_Fitness_logo.svg](https://commons.wikimedia.org/wiki/File:Life_Time_Fitness_logo.svg) | Public domain (text logo) |
+| Nuffield Health | [Nuffield_Health_logo.svg](https://commons.wikimedia.org/wiki/File:Nuffield_Health_logo.svg) | Public domain (simple logo) |
 | Snap Fitness | [Snap_Fitness_logo.svg](https://commons.wikimedia.org/wiki/File:Snap_Fitness_logo.svg) | Public domain (text logo) |
+| SportCity | [Sportcity-logo.png](https://commons.wikimedia.org/wiki/File:Sportcity-logo.png) | Public domain (simple logo) |
+| Virgin Active | [Virgin_Active.svg](https://commons.wikimedia.org/wiki/File:Virgin_Active.svg) | Public domain (simple logo) |
 
 A free copyright licence doesn't cancel a trademark. These logos belong to
 their brands. GymGO shows each only on that brand's own gyms, to say which

@@ -22,6 +22,9 @@ type Cell = { text: string; ink?: string; strong?: boolean };
 const tri = (value: Tri): Cell =>
   value === 'yes' ? { text: 'Yes' } : value === 'no' ? { text: 'No' } : { text: 'Not known', ink: color.maybeInk };
 
+
+/** Small counts in words, as in running text ("two to four gyms"). */
+const NUMBER_WORD: Record<number, string> = { 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six' };
 export default function Compare() {
   const { data, filters, compare, toggleCompare, clearCompare, billing, openPro } = useApp();
   const router = useRouter();
@@ -35,7 +38,7 @@ export default function Compare() {
       <View style={styles.empty}>
         <Stack.Screen options={{ title: 'Compare' }} />
         <Icon name="compare" size={44} color={color.brand} />
-        <Txt variant="title2">Pick {billing.limits.compare === 2 ? 'two' : `two to ${billing.limits.compare}`} gyms</Txt>
+        <Txt variant="title2">Pick {billing.limits.compare === 2 ? 'two' : `two to ${NUMBER_WORD[billing.limits.compare] ?? billing.limits.compare}`} gyms</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           Tick them in Saved, or tap the compare button on a gym’s page. On iPhone you can also press and hold a gym on Home.
         </Txt>

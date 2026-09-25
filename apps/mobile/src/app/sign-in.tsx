@@ -15,7 +15,7 @@ import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ApiError, OfflineError } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
 
 type Mode = 'sign_in' | 'create';
 
@@ -318,7 +318,8 @@ const styles = themed(() =>
     },
     fieldFocused: { borderColor: color.brand },
     fieldProblem: { borderColor: color.maybe },
-    fieldInput: { flex: 1, height: '100%', fontSize: 17, color: color.label, ...face('regular') },
+    // The box's border shows focus, in the accent, instead of the browser's own ring.
+    fieldInput: { flex: 1, height: '100%', fontSize: 17, color: color.label, ...NO_WEB_OUTLINE, ...face('regular') },
     fieldHint: { marginLeft: space[4] },
     rule: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginLeft: space[1] },
     error: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2], padding: space[3], borderRadius: radius.md, backgroundColor: color.dangerTint },

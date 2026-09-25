@@ -154,7 +154,7 @@ export default function ProScreen() {
             <Txt variant="subhead" color={color.labelSecondary}>
               {describeSubscription(billing.subscription)}
             </Txt>
-            {CAN_BUY_HERE ? (
+            {billing.subscription?.manageable === false ? null : CAN_BUY_HERE ? (
               <PrimaryButton label={busy ? 'Opening Stripe…' : 'Manage subscription'} tone="quiet" disabled={busy} onPress={() => void manage()} />
             ) : (
               <Txt variant="footnote" color={color.labelSecondary}>
@@ -368,6 +368,8 @@ function PlanOption({
 
 function describeSubscription(subscription: ReturnType<typeof useApp>['billing']['subscription']): string {
   if (!subscription) return 'Pro is on for this account.';
+  // The ready-made account for trying GymGO on your own computer: nobody paid, nothing renews.
+  if (subscription.manageable === false) return 'Pro for trying GymGO on this computer. No payment, nothing to renew.';
   const price =
     subscription.amountMinor !== null && subscription.currency
       ? `${formatPlanPrice(subscription.amountMinor, subscription.currency)} a ${subscription.interval ?? 'period'}`

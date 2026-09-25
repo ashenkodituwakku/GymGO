@@ -103,7 +103,8 @@ export default function AppearanceScreen() {
       <View style={styles.group}>
         {ACCENT_IDS.map((id, index) => {
           const accent = ACCENTS[id];
-          const on = choice.accent === id;
+          // The accent in use: a Pro accent kept from before shows as Indigo without Pro.
+          const on = (billing.isPro || choice.accent === FREE_ACCENT ? choice.accent : FREE_ACCENT) === id;
           const locked = id !== FREE_ACCENT && !billing.isPro;
           const scheme = color.label === '#FFFFFF' ? 'dark' : 'light';
           return (

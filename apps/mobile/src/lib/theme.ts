@@ -19,7 +19,7 @@
  * (app/_layout.tsx), so nothing needs to import a hook to follow the theme.
  */
 
-import { Platform } from 'react-native';
+import { Platform, type TextStyle } from 'react-native';
 
 export type Scheme = 'light' | 'dark';
 /** What you picked: follow the phone, or always one. */
@@ -360,6 +360,12 @@ export const shadow = {
     elevation: 1,
   },
 } as const;
+
+/**
+ * For a text field whose box shows focus itself (an accent border): the
+ * browser's own focus box would be drawn inside it as well, so it's left out.
+ */
+export const NO_WEB_OUTLINE = (Platform.OS === 'web' ? { outlineStyle: 'none' } : {}) as unknown as TextStyle;
 
 /** Minimum touch target, per Apple's Human Interface Guidelines. */
 export const HIT = 44;

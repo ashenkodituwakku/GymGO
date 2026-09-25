@@ -13,7 +13,7 @@ import { useApp } from '@/lib/app-state';
 import { COUNTRIES, FOCUS_COUNTRY, builtInCountries, countryByCode, deviceCountry, flagOf, searchCountries, type Country } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { CITY_LIST } from '@/lib/places';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
 
 /** How many built-in cities each country has. */
 const CITY_COUNT = CITY_LIST.filter((city) => !city.demo).reduce<Record<string, number>>((counts, city) => {
@@ -27,6 +27,7 @@ export default function CountryScreen() {
   const router = useRouter();
   const { prefs, chooseCountry, billing } = useApp();
   const [query, setQuery] = useState('');
+  const [focused, setFocused] = useState(false);
   // The device's own region, or GymGO's main market when it doesn't say.
   const suggested = useMemo(() => deviceCountry() ?? FOCUS_COUNTRY, []);
 
@@ -68,11 +69,13 @@ export default function CountryScreen() {
               ? 'You have GymGO Pro, so every country is open to you. This sets where GymGO opens.'
               : 'GymGO Free covers one country, with every gym in it. GymGO Pro adds every other country, for when you travel.'}
           </Txt>
-          <View style={styles.search}>
+          <View style={[styles.search, focused && styles.searchFocused]}>
             <Icon name="search" size={16} color={color.labelSecondary} />
             <TextInput
               value={query}
               onChangeText={setQuery}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
               placeholder="Search countries"
               placeholderTextColor={color.labelTertiary}
               autoCorrect={false}
@@ -151,8 +154,12 @@ const styles = themed(() => StyleSheet.create({
     height: 40,
     borderRadius: radius.md,
     backgroundColor: color.fill,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
-  input: { flex: 1, fontSize: 17, color: color.label, ...face('regular') },
+  // The field's own focus ring, in the accent, instead of the browser's box.
+  searchFocused: { borderColor: color.brand },
+  input: { flex: 1, fontSize: 17, color: color.label, ...NO_WEB_OUTLINE, ...face('regular') },
   sectionTitle: { marginTop: space[5], marginBottom: space[2], marginLeft: space[4], letterSpacing: 0.4 },
   row: {
     flexDirection: 'row',

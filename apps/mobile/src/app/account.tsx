@@ -11,7 +11,7 @@ import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native
 import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, rise } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
-import { SocialButtons, useSignInProviders, type TokenHandler } from '@/components/SocialSignIn';
+import { GoogleMark, SocialButtons, useSignInProviders, type TokenHandler } from '@/components/SocialSignIn';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { ApiError, OfflineError, api, type SignInMethods, type SignInProvider } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -180,6 +180,7 @@ export default function AccountScreen() {
               key={provider}
               first={false}
               icon={provider === 'apple' ? 'account' : 'google'}
+              mark={provider === 'google' ? <GoogleMark /> : undefined}
               title={PROVIDER_NAME[provider]}
               value={link ? (link.email ?? 'Connected') : 'Not connected'}
               action={link ? { label: 'Disconnect', onPress: () => void disconnect(provider) } : undefined}
@@ -264,6 +265,7 @@ function Line({
   first = true,
   destructive = false,
   action,
+  mark,
 }: {
   icon: IconName;
   title: string;
@@ -273,10 +275,12 @@ function Line({
   first?: boolean;
   destructive?: boolean;
   action?: { label: string; onPress: () => void };
+  /** A brand's own mark in place of the icon. */
+  mark?: ReactNode;
 }) {
   const body = (
     <>
-      <Icon name={icon} size={18} color={destructive ? color.dangerInk : color.brand} />
+      {mark ?? <Icon name={icon} size={18} color={destructive ? color.dangerInk : color.brand} />}
       <Txt variant="body" color={destructive ? color.dangerInk : color.label} style={styles.flex}>
         {title}
       </Txt>

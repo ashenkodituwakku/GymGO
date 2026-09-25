@@ -19,6 +19,38 @@ export const AUD: CurrencyCode = 'AUD';
 /** Australian GST rate, used only to label tax-inclusive prices, never to invent one. */
 export const GST_RATE = 0.1;
 
+/** The currencies members' visit prices are kept in: similar sizes, so one sanity range fits them all. */
+export type ReportCurrency = 'AUD' | 'USD' | 'EUR' | 'GBP' | 'CHF';
+
+/**
+ * Countries that use the euro: the euro area (Bulgaria joined on
+ * 1 January 2026) and the states that use it by agreement or on their own.
+ */
+const EURO = new Set([
+  'AT', 'BE', 'BG', 'HR', 'CY', 'EE', 'FI', 'FR', 'DE', 'GR', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PT', 'SK', 'SI', 'ES',
+  'AD', 'MC', 'SM', 'VA', 'ME', 'XK',
+]);
+
+/**
+ * The currency visit prices are kept in for a country, or null where GymGO
+ * doesn't keep them yet: a currency whose visits cost thousands (yen,
+ * rupiah) needs its own sanity range first.
+ */
+export function reportCurrency(countryCode: string): ReportCurrency | null {
+  if (countryCode === 'AU') return 'AUD';
+  if (countryCode === 'US') return 'USD';
+  if (countryCode === 'GB') return 'GBP';
+  if (countryCode === 'CH' || countryCode === 'LI') return 'CHF';
+  return EURO.has(countryCode) ? 'EUR' : null;
+}
+
+/** "A$25", "$25", "€25", "£25", "CHF 25": the whole amount, cents only when there are some. */
+export function priceLabel(amountMinor: number, currency: ReportCurrency): string {
+  const body = amountMinor % 100 === 0 ? String(amountMinor / 100) : (amountMinor / 100).toFixed(2);
+  const symbol = { AUD: 'A$', USD: '$', EUR: '€', GBP: '£', CHF: 'CHF ' }[currency];
+  return `${symbol}${body}`;
+}
+
 export function money(amountMinor: number, currency: CurrencyCode = AUD): Money {
   return { amountMinor, currency };
 }

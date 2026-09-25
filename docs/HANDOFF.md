@@ -97,10 +97,10 @@ London (Shoreditch) failed: the one reachable Overpass mirror gave up with a
    by `scripts/fetch.py` (bounding-box queries through the mail.ru mirror)
    then `scripts/generate.ts`. Still open: logos for Europe's chains
    (`apps/mobile/scripts/brand-logos.mjs` already reads eu-data; run it and
-   check each licence), and optionally visit prices in EUR, GBP and CHF (the
-   A$1–500 range fits them, not SEK, NOK, DKK, PLN, CZK or HUF; the
-   `price_reports` table's `check (currency in ('AUD','USD'))` needs a
-   table-rebuild migration in `apps/server/src/db.ts`).
+   check each licence). Visit prices now work in €, £ and CHF as well as A$
+   and US$ (`reportCurrency` in `packages/domain/src/money.ts`; the
+   database migrates itself); kronor, zloty and the like would each need
+   their own sanity range.
 3. **Your country is free, the rest of the world is Pro: done.** The owner
    asked for this. The first launch asks "Where do you train?"
    (`src/app/country.tsx`, 198 countries from `src/lib/countries.ts`, made

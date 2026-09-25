@@ -78,7 +78,7 @@ const SCHEMA = `
     gym_id text not null,
     user_id text not null references users(id) on delete cascade,
     amount_minor integer not null check (amount_minor between 100 and 50000),
-    currency text not null check (currency in ('AUD', 'USD')),
+    currency text not null check (currency in ('AUD', 'USD', 'EUR', 'GBP', 'CHF')),
     paid_on text not null,
     reported_at text not null,
     primary key (gym_id, user_id)
@@ -164,7 +164,40 @@ export function openDb(path: string): Db {
   db.exec('pragma foreign_keys = on;');
   if (path !== ':memory:') db.exec('pragma journal_mode = wal;');
   db.exec(SCHEMA);
+  migrate(db);
   return db;
+}
+
+/**
+ * Changes to tables made before the current schema. SQLite can't change a
+ * table's checks in place, so a table whose check has to widen is rebuilt,
+ * once, keeping its rows.
+ */
+function migrate(db: Db): void {
+  // Visit prices in euros, pounds and Swiss francs as well as A$ and US$.
+  const prices = db.prepare("select sql from sqlite_master where type = 'table' and name = 'price_reports'").get() as { sql: string } | undefined;
+  if (prices && !prices.sql.includes("'EUR'")) {
+    db.exec('begin');
+    try {
+      db.exec(`create table price_reports_widened (
+        gym_id text not null,
+        user_id text not null references users(id) on delete cascade,
+        amount_minor integer not null check (amount_minor between 100 and 50000),
+        currency text not null check (currency in ('AUD', 'USD', 'EUR', 'GBP', 'CHF')),
+        paid_on text not null,
+        reported_at text not null,
+        primary key (gym_id, user_id)
+      )`);
+      db.exec('insert into price_reports_widened (gym_id, user_id, amount_minor, currency, paid_on, reported_at) select gym_id, user_id, amount_minor, currency, paid_on, reported_at from price_reports');
+      db.exec('drop table price_reports');
+      db.exec('alter table price_reports_widened rename to price_reports');
+      db.exec('create index if not exists price_reports_gym on price_reports(gym_id)');
+      db.exec('commit');
+    } catch (error) {
+      db.exec('rollback');
+      throw error;
+    }
+  }
 }
 
 /**

@@ -66,7 +66,7 @@ export function MemberPrices({
       <Animated.View style={styles.wrap} layout={GLIDE}>
         <Txt variant="headline">What members paid</Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
-          GymGO keeps visit prices in Australia and the US for now, so ask what a visit costs when you call.
+          GymGO keeps visit prices in Australia, the US, the UK, Switzerland and the euro countries for now, so ask what a visit costs when you call.
         </Txt>
       </Animated.View>
     );
@@ -179,7 +179,8 @@ function Editor({
   const [saving, setSaving] = useState(false);
   const minor = parseAmount(amount);
   const invalid = amount.trim() !== '' && (minor === null || minor < 100 || minor > 50000);
-  const symbol = country === 'US' ? '$' : 'A$';
+  // "A$", "$", "€", "£", "CHF": the label's own symbol, without the number.
+  const symbol = moneyLabel(100, country).replace(/\s?1$/, '');
 
   return (
     <Animated.View style={styles.editor} entering={FADE_IN}>

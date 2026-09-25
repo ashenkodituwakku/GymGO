@@ -13,7 +13,7 @@
  * No React Native here, so it is unit-tested in Node.
  */
 
-import { haversineKm, type LatLng } from '@gymgo/domain';
+import { haversineKm, priceLabel, reportCurrency, type LatLng } from '@gymgo/domain';
 import { PILOT_CENTRE, PILOT_PLACES, PILOT_TIMEZONE } from '@gymgo/demo-data';
 import { MELBOURNE, MELBOURNE_CENTRE, MELBOURNE_PLACES } from '@gymgo/melbourne-data';
 import { AU_CITIES, AU_PLACES, type AuCityId } from '@gymgo/au-data';
@@ -299,10 +299,11 @@ const MILES = new Set([
 export const usesMiles = (country: string) => MILES.has(country);
 
 /**
- * Where GymGO keeps visit prices (members' reports, budgets): Australian and
- * US dollars, for now. Elsewhere prices are simply unknown.
+ * Where GymGO keeps visit prices (members' reports, budgets): A$, US$, €, £
+ * and CHF, where a visit costs about the same number. Elsewhere prices are
+ * simply unknown.
  */
-export const tracksPrices = (country: string) => country === 'AU' || country === 'US';
+export const tracksPrices = (country: string) => reportCurrency(country) !== null;
 
 /** "350 m", "2.4 km"; in the US and UK, "0.2 mi", "1.5 mi". Straight-line distance. */
 export function distanceLabel(km: number, country: string): string {
@@ -321,8 +322,9 @@ export function radiusChoices(country: string): Array<{ km: number; label: strin
   return [2, 5, 10, 20].map((km) => ({ km, label: `${km} km` }));
 }
 
-/** "A$25" in Australia, "$25" in the US (the only places prices are kept: see tracksPrices). */
+/** "A$25" in Australia, "$25" in the US, "€25", "£25", "CHF 25" (only where prices are kept: see tracksPrices). */
 export function moneyLabel(minor: number, country: string): string {
-  const whole = minor % 100 === 0 ? String(minor / 100) : (minor / 100).toFixed(2);
-  return `${country === 'US' ? '$' : country === 'AU' ? 'A$' : ''}${whole}`;
+  const currency = reportCurrency(country);
+  if (currency) return priceLabel(minor, currency);
+  return minor % 100 === 0 ? String(minor / 100) : (minor / 100).toFixed(2);
 }

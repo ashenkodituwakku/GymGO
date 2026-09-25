@@ -175,7 +175,7 @@ describe('Search this area', () => {
     expect(kraftraum!.location.address.countryCode).toBe('NZ');
   });
 
-  it('takes visit prices only in Australian and US dollars, and says so', async () => {
+  it('takes no visit prices where a visit costs another order of magnitude (New Zealand, for now), and says so', async () => {
     const prices = '/api/gyms/les-mills-auckland-city-n21/prices';
     expect((await call('GET', prices)).body).toMatchObject({ currency: null, count: 0, typicalMinor: null });
     const signup = await fetch(`${base}/api/auth/signup`, {
@@ -189,7 +189,7 @@ describe('Search this area', () => {
       body: JSON.stringify({ amountMinor: 2500, paidOn: '2026-09-20' }),
     });
     expect(put.status).toBe(400);
-    expect(((await put.json()) as { error: string }).error).toContain('Australia and the US');
+    expect(((await put.json()) as { error: string }).error).toContain('the euro countries');
   });
 
   it('writes the house number after the street where the country does', async () => {
@@ -199,6 +199,22 @@ describe('Search this area', () => {
     const result = await call('GET', areaPath({ south: 52.5, west: 13.38, north: 52.54, east: 13.42 }, 'DE'));
     expect(result.body.gyms[0].location.address).toMatchObject({ countryCode: 'DE', line1: 'Rathausstraße 5', suburb: 'Berlin', postcode: '10178' });
     expect(result.body.where.timezone).toBe('Europe/Berlin');
+  });
+
+  it('keeps a German gym’s visit prices in euros', async () => {
+    const signup = await fetch(`${base}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'berlin@example.com', password: 'correct horse', displayName: 'Berliner' }),
+    }).then((response) => response.json() as Promise<{ token: string }>);
+    const prices = '/api/gyms/kraftwerk-gym-n31/prices';
+    const put = await fetch(`${base}${prices}`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${signup.token}` },
+      body: JSON.stringify({ amountMinor: 1500, paidOn: '2026-09-20' }),
+    });
+    expect(put.status).toBe(204);
+    expect((await call('GET', prices)).body).toMatchObject({ currency: 'EUR', count: 1, typicalMinor: 1500 });
   });
 
   it('keeps other countries for Pro: a Free search abroad is refused before the map is read', async () => {

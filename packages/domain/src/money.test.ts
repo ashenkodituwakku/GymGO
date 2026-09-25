@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { budgetVerdict, computeCost, describeMembership, formatMoney } from './money';
+import { budgetVerdict, computeCost, describeMembership, formatMoney, priceLabel, reportCurrency } from './money';
 import { offer } from './testing';
 
 describe('computeCost', () => {
@@ -161,5 +161,16 @@ describe('describeMembership', () => {
 
   it('returns nothing for a non-membership product', () => {
     expect(describeMembership(offer())).toBeNull();
+  });
+});
+
+describe('which money visit prices are kept in', () => {
+  it('knows the dollar, pound, Swiss franc and euro countries, and no others yet', () => {
+    expect(['AU', 'US', 'GB', 'CH', 'FR', 'DE', 'BG', 'IE'].map(reportCurrency)).toEqual(['AUD', 'USD', 'GBP', 'CHF', 'EUR', 'EUR', 'EUR', 'EUR']);
+    expect(['JP', 'SE', 'DK', 'PL', 'NZ'].map(reportCurrency)).toEqual([null, null, null, null, null]);
+    expect(priceLabel(2500, 'EUR')).toBe('€25');
+    expect(priceLabel(1250, 'GBP')).toBe('£12.50');
+    expect(priceLabel(3000, 'CHF')).toBe('CHF 30');
+    expect(priceLabel(2000, 'AUD')).toBe('A$20');
   });
 });

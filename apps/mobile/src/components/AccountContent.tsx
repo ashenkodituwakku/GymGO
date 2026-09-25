@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import type { GymRecord, Review } from '@gymgo/domain';
+import { priceLabel, type GymRecord, type Review } from '@gymgo/domain';
 import { api, ApiError, OfflineError, type AccessOutcome, type MemberReport } from '@/lib/api';
 import { moneyLabel } from '@/lib/places';
 import type { AccountApi } from '@/lib/useAccount';
@@ -306,7 +306,7 @@ export function MemberReportQueue({ token, records }: { token: string; records: 
         const gym = records.find((record) => record.location.id === report.gymId);
         const what =
           report.kind === 'price' && report.amountMinor !== null
-            ? `paid ${moneyLabel(report.amountMinor, report.currency === 'USD' ? 'US' : 'AU')} for a visit`
+            ? `paid ${report.currency ? priceLabel(report.amountMinor, report.currency) : moneyLabel(report.amountMinor, '')} for a visit`
             : `${report.outcome ? OUTCOME_LABEL[report.outcome] : 'visited'}`;
         return (
           <View key={`${report.kind}-${report.gymId}-${report.userId}`} style={styles.queueItem}>

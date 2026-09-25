@@ -112,7 +112,7 @@ export function FiltersContent({
             <Hint>What you don't get back: price, tax and any must-pay fee. Refundable deposits are shown separately.</Hint>
           </>
         ) : (
-          <Hint>GymGO keeps visit prices in Australia and the US for now. Here, every price is unknown, so ask when you call.</Hint>
+          <Hint>GymGO keeps visit prices in Australia, the US, the UK, Switzerland and the euro countries for now. Here, every price is unknown, so ask when you call.</Hint>
         )}
       </Group>
 

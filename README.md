@@ -113,8 +113,9 @@ Chrome and Edge (blur only in Safari and Firefox).
   a month so a busy area costs one request, not one per person. Those gyms
   are map-only like the rest: name, address, sometimes hours, "call first",
   each on its own country's clock and in its own units (miles in the US and
-  UK). Visit prices (budgets, members' reports) are kept in A$ and US$ only
-  for now; elsewhere a price is simply unknown, and the app says so.
+  UK). Visit prices (budgets, members' reports) are kept in A$, US$, €, £
+  and CHF for now; elsewhere (yen, kronor, rupiah) a price is simply unknown,
+  and the app says so.
   Type any town or suburb anywhere ("Bendigo", "Boise", "Kyoto") and
   press Enter: if it isn't one GymGO knows by heart, the server looks it up
   (Photon, a free OpenStreetMap geocoder, asked only on Enter and at most
@@ -190,8 +191,9 @@ is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
   Zurich, with 600 real gyms between them (the 40 nearest each centre), and
   the districts the search box knows there, under their local names.
   **Map-only**, like the Australian and US cities: every one says **Call
-  first**. Distances are in miles in London and kilometres elsewhere; visit
-  prices aren't kept in Europe yet, so they're simply unknown.
+  first**. Distances are in miles in London and kilometres elsewhere.
+  Members can report what a visit cost in €, £ or CHF; in Stockholm and
+  Copenhagen (kronor) prices aren't kept yet.
 - **Demo mode** (Profile → Preferences, off to start): invented gyms in inner
   Sydney that show every case GymGO handles, from "Good to go" to "Not a
   fit". Turning it on hides every real gym, and turning it off hides every

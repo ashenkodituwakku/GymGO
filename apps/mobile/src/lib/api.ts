@@ -13,7 +13,7 @@
 
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import type { BillingCurrency, BillingInterval, GymRecord, PlanId, PlanLimits, ProPrice, Review } from '@gymgo/domain';
+import type { BillingCurrency, BillingInterval, GymRecord, PlanId, PlanLimits, ProPrice, ReportCurrency, Review } from '@gymgo/domain';
 
 const PORT = 4000;
 
@@ -127,7 +127,7 @@ export interface MemberReport {
   userId: string;
   author: string;
   amountMinor: number | null;
-  currency: 'AUD' | 'USD' | null;
+  currency: ReportCurrency | null;
   /** A visit's outcome, or for a status report, "closed" or "open". */
   outcome: AccessOutcome | 'closed' | 'open' | null;
   on: string;
@@ -146,8 +146,8 @@ export interface AccessSummary {
 
 /** What members paid for one casual visit: typical (median), range, how many, how recent. */
 export interface PriceSummary {
-  /** Null for a gym outside Australia and the US, where no prices are kept yet. */
-  currency: 'AUD' | 'USD' | null;
+  /** Null for a gym where no prices are kept yet (outside A$, US$, €, £ and CHF). */
+  currency: ReportCurrency | null;
   count: number;
   typicalMinor: number | null;
   lowMinor: number | null;

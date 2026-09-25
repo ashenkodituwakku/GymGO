@@ -66,7 +66,9 @@ import {
   EQUIPMENT_TYPES,
   LIMITS,
   can,
+  priceLabel,
   publishedReviews,
+  reportCurrency,
   type BillingCurrency,
   type BillingInterval,
   type GymRecord,
@@ -895,10 +897,10 @@ export function createApp(options: AppOptions) {
     if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'prices' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
       if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
-      // Reports are kept in Australian and US dollars only, for now: what a
-      // visit costs elsewhere (¥, ₹, €) needs its own sensible range.
+      // Reports are kept in A$, US$, €, £ and CHF, where a visit costs about
+      // the same number: what a visit costs in ¥ or ₹ needs its own range.
       const country = gymCountry(db, gymId);
-      const currency = country === 'US' ? 'USD' : country === 'AU' ? 'AUD' : null;
+      const currency = country ? reportCurrency(country) : null;
       const since = new Date(now().getTime() - PRICE_REPORT_DAYS * 86_400_000).toISOString().slice(0, 10);
 
       if (method === 'GET' && currency === null) {
@@ -934,11 +936,11 @@ export function createApp(options: AppOptions) {
           return send(res, 204);
         }
         if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to report.');
-        if (currency === null) throw new HttpError(400, 'Visit prices can be reported for gyms in Australia and the US for now.');
+        if (currency === null) throw new HttpError(400, 'Visit prices can be reported in Australia, the US, the UK, Switzerland and the euro countries for now.');
         const body = (await readJson(req)) as Record<string, unknown>;
         const amount = Number(body.amountMinor);
         if (!Number.isInteger(amount) || amount < 100 || amount > 50000) {
-          throw new HttpError(400, `Enter what one casual visit cost, between ${currency === 'USD' ? '$' : 'A$'}1 and ${currency === 'USD' ? '$' : 'A$'}500.`);
+          throw new HttpError(400, `Enter what one casual visit cost, between ${priceLabel(100, currency)} and ${priceLabel(50000, currency)}.`);
         }
         const paidOn = typeof body.paidOn === 'string' ? body.paidOn : '';
         const tomorrow = new Date(now().getTime() + 86_400_000).toISOString().slice(0, 10);

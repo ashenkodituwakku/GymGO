@@ -15,7 +15,7 @@ this document could do.
 | Change your name and password (current password needed; other devices signed out) | ✅ | ✅ 3 server tests (including the browser's PATCH preflight, a real bug the first browser run caught) + driven in the browser | n/a | ❌ |
 | Download my data (everything held about you, as one JSON file; no password hash or tokens) | ✅ | ✅ 1 server test + downloaded and read in the browser; phone share sheet not seen | n/a | ❌ |
 | Moderators review and remove members' price and visit reports | ✅ | ✅ 1 server test (members refused) + the list seen in the browser | n/a | ❌ |
-| Members' visit prices: one report per member per gym, median and range, no names, 2-year window; "~A$22 · members say" in lists when the gym publishes none | ✅ | ✅ 4 server tests + 2 app tests + reported and shown in the browser (gym page and list) | n/a | ❌ |
+| Members' visit prices: one report per member per gym, median and range, no names, 2-year window; "~A$22 · members say" in lists when the gym publishes none; kept in A$, US$, €, £ or CHF by the gym's country (older databases migrate themselves) | ✅ | ✅ 4 server tests + 2 app tests + a euro report for a Berlin gym + the migration tested on an old-schema file + reported and shown in the browser (A$ only: gym page and list) | n/a | ❌ |
 | Sign-up, sign-in, sign-out, delete account | ✅ | ✅ tests + driven in the browser | ❌ no email verification | ❌ |
 | Saved gyms synced to the account | ✅ | ✅ tests + driven in the browser | n/a | ❌ |
 | Reviews held for moderation; moderator queue | ✅ | ✅ tests; posting driven in the browser | n/a | ❌ |
@@ -322,9 +322,10 @@ name; the skip link works.
   nobody can search other countries (they can switch their own country in
   Profile). The rule is checked by the server for live area searches; the
   built-in cities ship inside the app, so for those it's the app's word.
-- **Prices outside Australia and the US.** Anywhere else, budgets and
-  members' visit-price reports are off (the A$1–500 range means nothing in
-  yen or rupiah), so every price there is unknown. The gym-name rules are
+- **Prices outside five currencies.** Budgets and members' visit-price
+  reports work in A$, US$, €, £ and CHF, where one sanity range (1 to 500)
+  fits. Elsewhere, Stockholm and Copenhagen included, they're off (the range
+  means nothing in kronor, yen or rupiah), so every price there is unknown. The gym-name rules are
   English-first, so a hotel or kids' gym named in another language can slip
   through.
 - **SF Pro has only been seen as its stand-in.** This sandbox has no SF Pro,

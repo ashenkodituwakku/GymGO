@@ -129,12 +129,13 @@ describe('places', () => {
     expect(radiusChoices('US').map((choice) => choice.label)).toEqual(['1 mi', '2 mi', '3 mi', '5 mi', '10 mi']);
   });
 
-  it('speaks miles in the UK and kilometres in the rest of the world, and keeps prices only in A$ and US$', () => {
+  it('speaks miles in the UK and kilometres in the rest of the world, and keeps prices in A$, US$, €, £ and CHF', () => {
     expect(distanceLabel(1.609344, 'GB')).toBe('1.0 mi');
     expect(distanceLabel(2.44, 'DE')).toBe('2.4 km');
     expect(distanceLabel(2.44, 'JP')).toBe('2.4 km');
     expect(radiusChoices('FR').map((choice) => choice.label)).toEqual(['2 km', '5 km', '10 km', '20 km']);
-    expect([tracksPrices('AU'), tracksPrices('US'), tracksPrices('GB'), tracksPrices('JP')]).toEqual([true, true, false, false]);
+    expect([tracksPrices('AU'), tracksPrices('US'), tracksPrices('GB'), tracksPrices('FR'), tracksPrices('CH'), tracksPrices('JP'), tracksPrices('SE')]).toEqual([true, true, true, true, true, false, false]);
+    expect([moneyLabel(3000, 'FR'), moneyLabel(3000, 'GB'), moneyLabel(3000, 'CH')]).toEqual(['€30', '£30', 'CHF 30']);
   });
 
   it('knows fifteen European cities, by English and local names, accents or not', () => {
@@ -147,11 +148,11 @@ describe('places', () => {
     expect(CITIES.munich.timezone).toBe('Europe/Berlin');
   });
 
-  it('shows London’s gyms in miles and Berlin’s in kilometres, prices unknown in both', () => {
+  it('shows London’s gyms in miles and Berlin’s in kilometres, with nothing priced by the map', () => {
     const asOf = new Date('2026-09-24T14:00:00Z');
     for (const [name, unit] of [['London', 'mi'], ['Berlin', 'km']] as const) {
       const filters = moveTo(initialFilters(asOf), atPlace(geocodePlace(name).place!), asOf);
-      expect(tracksPrices(filters.countryCode)).toBe(false);
+      expect(tracksPrices(filters.countryCode)).toBe(true);
       const outcome = runSearch({ ...filters, radiusKm: 3 }, { records: BUNDLED_GYMS }, asOf);
       expect(outcome.results.length).toBeGreaterThan(10);
       const first = outcome.results[0]!;

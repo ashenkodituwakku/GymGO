@@ -32,7 +32,7 @@ branch: don't open another PR unless asked. Before changing anything, read
 
 pnpm monorepo, Node 22. `pnpm install`, then `pnpm verify` (typecheck, lint,
 all tests: at last count domain 121, osm 25, demo 23, melbourne 11, au 11,
-usa 12, eu 10, web 39, mobile 111, server 119; all passing).
+usa 12, eu 10, web 39, mobile 113, server 130; all passing).
 
 - `apps/mobile`: the app (Expo SDK 57, React Native, expo-router,
   Reanimated). Runs on iOS, Android and in a browser (`npx expo start
@@ -55,6 +55,17 @@ usa 12, eu 10, web 39, mobile 111, server 119; all passing).
   and tested), `src/lib/activeSession.ts` (the workout in progress, kept
   on the device), `src/lib/useTraining.ts` (the log), screens `train.tsx`,
   `plates.tsx`, `progress/`. Server: `/api/training` in `app.ts`.
+- Theme: `src/lib/theme.ts` has light and dark palettes and five accents
+  (Indigo free, the rest Pro); `color` changes in place, and every style
+  sheet is wrapped in `themed(() => StyleSheet.create(...))` so it's remade
+  after a switch. Never read a colour into a module-level constant; wrap it
+  in `themed()` too. `app/_layout.tsx` redraws the screens under a
+  crossfade and restores the navigation state. `src/lib/themePrefs.ts`
+  keeps the choice. A unit test checks AA contrast for every palette.
+- Sign in with Google/Apple: `apps/server/src/identity.ts` (token checks),
+  routes in `app.ts`; app side `src/components/SocialSignIn.tsx`,
+  `src/app/sign-in.tsx`, `src/app/account.tsx`. Off until the owner sets
+  client ids (README → Sign in with Google and Apple).
 - On a Mac: `scripts/gymgo-mac.sh --xcode` (wraps `scripts/dev.mjs --xcode`
   and `scripts/xcode.mjs`) generates `apps/mobile/ios` with `expo prebuild`
   and opens Xcode. Never yet run on a real Mac: expect the first real build
@@ -134,6 +145,12 @@ London (Shoreditch) failed: the one reachable Overpass mirror gave up with a
    timer, plates, records and Progress (free); charts and next-session
    targets (Pro). Ideas not yet built: a weekly goal, supersets, notes per
    set, and exporting the log as CSV.
+
+8. **Dark mode and Pro themes, Google and Apple sign-in, a better login
+   and settings area, smoother animation: done** (see above). The Mac
+   launcher was reported not working; it was rebuilt to start from any
+   state and to keep itself updated, but it still hasn't run on a real Mac:
+   ask the owner for `gymgo-mac.sh --doctor` output if it fails again.
 
 One thing the owner turned down: clearing the search text when a gym opens
 from the search box (the suggestion list otherwise stays over the card).

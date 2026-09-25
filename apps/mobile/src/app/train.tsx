@@ -197,7 +197,7 @@ export default function TrainScreen() {
               {problem}
             </Txt>
           )}
-          {problem && !token && <PrimaryButton label="Sign in" tone="quiet" onPress={() => router.navigate('/profile')} />}
+          {problem && !token && <PrimaryButton label="Sign in" tone="quiet" onPress={() => router.push('/sign-in')} />}
           <PrimaryButton
             label={confirmDiscard ? 'Tap again to discard it' : 'Discard workout'}
             tone="danger"

@@ -230,6 +230,21 @@ export interface Account {
   displayName: string;
   role: 'member' | 'owner' | 'moderator' | 'admin';
   createdAt: string;
+  /** False for an account made with Google or Apple until a password is set. Missing from older servers. */
+  hasPassword?: boolean;
+}
+
+export type SignInProvider = 'google' | 'apple';
+
+/** Which of Google and Apple sign-in the server has been set up for. */
+export interface SignInProviders {
+  google: { web: string | null; ios: string | null; android: string | null } | null;
+  apple: boolean;
+}
+
+export interface SignInMethods {
+  password: boolean;
+  identities: Array<{ provider: SignInProvider; email: string | null; connectedAt: string }>;
 }
 
 export interface SubscriptionInfo {
@@ -300,6 +315,14 @@ export const api = {
   signUp: (body: { email: string; password: string; displayName: string }) =>
     request<{ token: string; account: Account }>('POST', '/api/auth/signup', { body }),
   signIn: (body: { email: string; password: string }) => request<{ token: string; account: Account }>('POST', '/api/auth/login', { body }),
+  providers: () => request<SignInProviders>('GET', '/api/auth/providers'),
+  /** Sign in (or, the first time, sign up) with a Google or Apple ID token. */
+  signInWith: (provider: SignInProvider, body: { idToken: string; nonce: string | null; name?: string | null }) =>
+    request<{ token: string; account: Account; created: boolean }>('POST', `/api/auth/${provider}`, { body }),
+  signInMethods: (token: string) => request<SignInMethods>('GET', '/api/me/identities', { token }),
+  connect: (token: string, provider: SignInProvider, body: { idToken: string; nonce: string | null }) =>
+    request<{ connected: SignInProvider; email: string | null }>('POST', `/api/me/identities/${provider}`, { token, body }),
+  disconnect: (token: string, provider: SignInProvider) => request<unknown>('DELETE', `/api/me/identities/${provider}`, { token }),
   signOut: (token: string) => request<unknown>('POST', '/api/auth/logout', { token }),
   me: (token: string) => request<{ account: Account }>('GET', '/api/me', { token }),
   deleteAccount: (token: string) => request<unknown>('DELETE', '/api/me', { token }),

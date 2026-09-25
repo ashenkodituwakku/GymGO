@@ -198,6 +198,8 @@ function ThemedStack() {
         <Stack.Screen name="pro" options={{ headerShown: true, title: 'GymGO Pro', presentation: 'modal' }} />
         <Stack.Screen name="country" options={{ headerShown: true, title: 'Country', presentation: 'modal' }} />
         <Stack.Screen name="appearance" options={{ headerShown: true, title: 'Appearance' }} />
+        <Stack.Screen name="sign-in" options={{ headerShown: true, title: '', presentation: 'modal' }} />
+        <Stack.Screen name="account" options={{ headerShown: true, title: 'Account' }} />
       </Stack>
       {veilColour && <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle]} />}
     </ThemeProvider>

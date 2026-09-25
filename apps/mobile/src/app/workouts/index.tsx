@@ -40,7 +40,7 @@ export default function MyWorkouts() {
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           Sign in to see the workouts you’ve saved.
         </Txt>
-        <PrimaryButton label="Sign in" onPress={() => router.navigate('/profile')} />
+        <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />
       </View>
     );
   }

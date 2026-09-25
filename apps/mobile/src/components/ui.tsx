@@ -5,18 +5,7 @@
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { useEffect, useState, type ReactNode } from 'react';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import {
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  type StyleProp,
-  type TextInputProps,
-  type TextStyle,
-  type ViewStyle,
-} from 'react-native';
+import { ActivityIndicator, Platform, Pressable, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle } from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
 import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
@@ -467,28 +456,31 @@ export function PrimaryButton({
   disabled = false,
   tone = 'brand',
   icon,
+  busy = false,
 }: {
   label: string;
   icon?: IconName;
   onPress: () => void;
   disabled?: boolean;
   tone?: 'brand' | 'quiet' | 'danger';
+  /** Working on it: a spinner in place of the icon, and no second press. */
+  busy?: boolean;
 }) {
   const fill = tone === 'brand' ? color.brandFill : tone === 'danger' ? color.dangerTint : color.fill;
   const ink = tone === 'brand' ? color.onBrand : tone === 'danger' ? color.dangerInk : color.brand;
   return (
     <Pressy
       scaleTo={0.97}
-      disabled={disabled}
+      disabled={disabled || busy}
       onPress={() => {
         haptic.tap();
         onPress();
       }}
       accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      style={({ pressed }) => [styles.primary, { backgroundColor: fill }, pressed && { opacity: 0.9 }, disabled && { opacity: 0.45 }]}
+      accessibilityState={{ disabled: disabled || busy, busy }}
+      style={({ pressed }) => [styles.primary, { backgroundColor: fill }, pressed && { opacity: 0.9 }, disabled && !busy && { opacity: 0.45 }]}
     >
-      {icon ? <Icon name={icon} size={17} color={ink} /> : null}
+      {busy ? <ActivityIndicator size="small" color={ink} /> : icon ? <Icon name={icon} size={17} color={ink} /> : null}
       <Txt variant="headline" color={ink}>
         {label}
       </Txt>

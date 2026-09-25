@@ -57,7 +57,7 @@ export default function ProgressScreen() {
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           Sign in (it’s free) and every workout you finish is kept here, with your records and your streak.
         </Txt>
-        <PrimaryButton label="Sign in" onPress={() => router.navigate('/profile')} />
+        <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />
       </View>
     );
   }

@@ -84,6 +84,11 @@ const ICONS = {
   done: { ios: 'checkmark.circle.fill', android: 'check_circle', web: 'check_circle' },
   todo: { ios: 'circle', android: 'radio_button_unchecked', web: 'radio_button_unchecked' },
   palette: { ios: 'paintpalette.fill', android: 'palette', web: 'palette' },
+  eye: { ios: 'eye', android: 'visibility', web: 'visibility' },
+  eyeOff: { ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' },
+  lock: { ios: 'lock.fill', android: 'lock', web: 'lock' },
+  person: { ios: 'person.fill', android: 'person', web: 'person' },
+  key: { ios: 'key.fill', android: 'key', web: 'key' },
 } as const;
 
 export type IconName = keyof typeof ICONS;

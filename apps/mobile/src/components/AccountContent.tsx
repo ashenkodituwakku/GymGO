@@ -1,6 +1,7 @@
 /**
- * The account pieces the Profile tab is made of: the sign-in / create-account
- * form, and, for moderators, the reviews and photos waiting for a decision.
+ * For moderators, on the Profile tab: the reviews, photos and members'
+ * reports waiting for a decision. (Signing in is app/sign-in.tsx; your
+ * account's settings are app/account.tsx.)
  *
  * Accounts live on the GymGO server on your own computer. Nothing is sent
  * anywhere else, and no email is sent to you: an email address here is just
@@ -24,112 +25,6 @@ function messageFor(error: unknown): string {
   }
   if (error instanceof ApiError) return error.message;
   return 'Something went wrong. Try again.';
-}
-
-export function SignInForm({ account, inSheet }: { account: AccountApi; inSheet: boolean }) {
-  const [mode, setMode] = useState<'sign_in' | 'create'>('sign_in');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const submit = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      if (mode === 'create') await account.signUp(name, email, password);
-      else await account.signIn(email, password);
-      haptic.success();
-    } catch (caught) {
-      haptic.warn();
-      setError(messageFor(caught));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const ready = email.trim().length > 3 && password.length >= (mode === 'create' ? 8 : 1) && (mode === 'sign_in' || name.trim().length > 0);
-
-  return (
-    <View style={styles.wrap}>
-      <Txt variant="title">{mode === 'create' ? 'Create your account' : 'Welcome back'}</Txt>
-      <Txt variant="subhead" color={color.labelSecondary} style={styles.lede}>
-        {mode === 'create'
-          ? 'Save gyms on your phone and your PC, and write reviews.'
-          : 'Sign in to see your saved gyms everywhere.'}
-      </Txt>
-
-      {account.state === 'unreachable' && (
-        <Notice icon="offline" text="You’re signed in, but the GymGO server isn’t reachable right now. Your saved gyms on this device still work." />
-      )}
-
-      <View style={styles.form}>
-        {mode === 'create' && (
-          <TextField
-            inSheet={inSheet}
-            label="Your name"
-            value={name}
-            onChangeText={setName}
-            placeholder="What reviewers see"
-            autoComplete="name"
-            textContentType="name"
-            maxLength={40}
-          />
-        )}
-        <TextField
-          inSheet={inSheet}
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="you@example.com"
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="email-address"
-          autoComplete="email"
-          textContentType="emailAddress"
-        />
-        <TextField
-          inSheet={inSheet}
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          placeholder={mode === 'create' ? 'At least 8 characters' : 'Your password'}
-          secureTextEntry
-          autoComplete={mode === 'create' ? 'new-password' : 'current-password'}
-          textContentType={mode === 'create' ? 'newPassword' : 'password'}
-          onSubmitEditing={() => ready && void submit()}
-        />
-      </View>
-
-      {error && <Notice icon="info" text={error} tone="danger" />}
-
-      <PrimaryButton
-        label={busy ? 'One moment…' : mode === 'create' ? 'Create account' : 'Sign in'}
-        onPress={() => void submit()}
-        disabled={!ready || busy}
-      />
-
-      <Pressable
-        onPress={() => {
-          haptic.select();
-          setMode(mode === 'create' ? 'sign_in' : 'create');
-          setError(null);
-        }}
-        accessibilityRole="button"
-        style={styles.switch}
-      >
-        <Txt variant="subhead" color={color.brand} style={face('medium')}>
-          {mode === 'create' ? 'Already have an account? Sign in' : 'New here? Create an account'}
-        </Txt>
-      </Pressable>
-
-      <Txt variant="caption" color={color.labelSecondary} style={styles.small}>
-        Your account is stored on the GymGO server running on your computer. Passwords are stored hashed, never as
-        typed. We don&apos;t send emails.
-      </Txt>
-    </View>
-  );
 }
 
 export function ModerationQueue({ token, records }: { token: string; records: GymRecord[] }) {
@@ -187,73 +82,6 @@ export function ModerationQueue({ token, records }: { token: string; records: Gy
           </View>
         );
       })}
-    </View>
-  );
-}
-
-/** Change your name or password, one small form at a time. */
-export function AccountSettings({ account }: { account: AccountApi }) {
-  const [editing, setEditing] = useState<'name' | 'password' | null>(null);
-  const [name, setName] = useState(account.account?.displayName ?? '');
-  const [current, setCurrent] = useState('');
-  const [next, setNext] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<{ text: string; tone: 'good' | 'danger' } | null>(null);
-
-  const open = (which: 'name' | 'password') => {
-    setNotice(null);
-    setName(account.account?.displayName ?? '');
-    setCurrent('');
-    setNext('');
-    setEditing((shown) => (shown === which ? null : which));
-  };
-  const run = async (work: () => Promise<void>, done: string) => {
-    setBusy(true);
-    try {
-      await work();
-      haptic.success();
-      setEditing(null);
-      setNotice({ text: done, tone: 'good' });
-    } catch (caught) {
-      haptic.warn();
-      setNotice({ text: messageFor(caught), tone: 'danger' });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <View style={styles.settings}>
-      <View style={styles.queueButtons}>
-        <View style={styles.flex}>
-          <PrimaryButton label="Change name" tone="quiet" onPress={() => open('name')} />
-        </View>
-        <View style={styles.flex}>
-          <PrimaryButton label="Change password" tone="quiet" onPress={() => open('password')} />
-        </View>
-      </View>
-      {editing === 'name' && (
-        <View style={styles.settings}>
-          <TextField label="Your name, as others see it" value={name} onChangeText={setName} autoComplete="name" inSheet={false} maxLength={40} />
-          <PrimaryButton
-            label={busy ? 'Saving…' : 'Save name'}
-            disabled={busy || !name.trim()}
-            onPress={() => void run(() => account.rename(name), 'Name changed.')}
-          />
-        </View>
-      )}
-      {editing === 'password' && (
-        <View style={styles.settings}>
-          <TextField label="Current password" value={current} onChangeText={setCurrent} secureTextEntry autoComplete="current-password" inSheet={false} />
-          <TextField label="New password (8 characters or more)" value={next} onChangeText={setNext} secureTextEntry autoComplete="new-password" inSheet={false} />
-          <PrimaryButton
-            label={busy ? 'Saving…' : 'Save password'}
-            disabled={busy || !current || next.length < 8}
-            onPress={() => void run(() => account.changePassword(current, next), 'Password changed. Any other device signed in as you has been signed out.')}
-          />
-        </View>
-      )}
-      {notice && <Notice icon="info" text={notice.text} tone={notice.tone === 'good' ? 'brand' : 'danger'} />}
     </View>
   );
 }

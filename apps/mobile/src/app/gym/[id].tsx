@@ -156,7 +156,7 @@ export default function GymPage() {
                 gymId={location.id}
                 isDemo={location.isDemoData}
                 account={account}
-                onSignIn={() => router.navigate('/profile')}
+                onSignIn={() => router.push('/sign-in')}
                 width={cardWidth}
                 fallback={
                   googlePhotos ? (
@@ -178,13 +178,13 @@ export default function GymPage() {
                 isDemo={location.isDemoData}
                 account={account}
                 inSheet={false}
-                onSignIn={() => router.navigate('/profile')}
+                onSignIn={() => router.push('/sign-in')}
               />
             }
             statusWarning={<StatusWarning gymId={location.id} isDemo={location.isDemoData} token={account.state === 'signed_in' ? account.token : null} />}
-            memberStatus={<MemberStatus gymId={location.id} isDemo={location.isDemoData} account={account} onSignIn={() => router.navigate('/profile')} />}
+            memberStatus={<MemberStatus gymId={location.id} isDemo={location.isDemoData} account={account} onSignIn={() => router.push('/sign-in')} />}
             memberAccess={
-              <MemberAccess gymId={location.id} isDemo={location.isDemoData} account={account} onSignIn={() => router.navigate('/profile')} />
+              <MemberAccess gymId={location.id} isDemo={location.isDemoData} account={account} onSignIn={() => router.push('/sign-in')} />
             }
             memberPrices={
               <MemberPrices
@@ -193,10 +193,10 @@ export default function GymPage() {
                 country={location.address.countryCode}
                 account={account}
                 inSheet={false}
-                onSignIn={() => router.navigate('/profile')}
+                onSignIn={() => router.push('/sign-in')}
               />
             }
-            reviews={<ReviewsSection gymId={location.id} account={account} inSheet={false} onSignIn={() => router.navigate('/profile')} />}
+            reviews={<ReviewsSection gymId={location.id} account={account} inSheet={false} onSignIn={() => router.push('/sign-in')} />}
           />
           <GoogleSection place={place} photosAbove={googlePhotos} />
           <View style={styles.mapButton}>

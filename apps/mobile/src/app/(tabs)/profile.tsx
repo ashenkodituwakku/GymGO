@@ -8,16 +8,19 @@ import { formatPlanPrice } from '@gymgo/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { AccountSettings, MemberReportQueue, ModerationQueue, PhotoQueue, SignInForm } from '@/components/AccountContent';
+import { MemberReportQueue, ModerationQueue, PhotoQueue } from '@/components/AccountContent';
+import { Icon } from '@/components/Icon';
+import { Pressy } from '@/components/motion';
+import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
 import { Group, Row, TILE, TabScreen } from '@/components/ios';
-import { Txt } from '@/components/ui';
+import { PrimaryButton, Txt } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { countryName } from '@/lib/country';
 import { useThemeChoice } from '@/lib/themePrefs';
-import { downloadMyData } from '@/lib/exportData';
 import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
-import { color, space, themed } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
+import { haptic } from '@/lib/haptics';
 
 export default function Profile() {
   const { account, data, recents, compare, prefs, setPref, billing, openPro } = useApp();
@@ -25,11 +28,8 @@ export default function Profile() {
   const router = useRouter();
   const params = useLocalSearchParams<{ checkout?: string }>();
   const [about, setAbout] = useState<'facts' | 'sources' | 'privacy' | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [exported, setExported] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const me = account.state === 'signed_in' ? account.account : null;
-  const token = account.state === 'signed_in' ? account.token : null;
   const moderator = me?.role === 'moderator' || me?.role === 'admin';
 
   const toggle = (key: 'facts' | 'sources' | 'privacy') => setAbout((current) => (current === key ? null : key));
@@ -63,30 +63,41 @@ export default function Profile() {
   return (
     <TabScreen title="Profile">
       {me ? (
-        <Group>
-          <View style={styles.me}>
-            <View style={styles.avatar}>
-              <Txt variant="title" color={color.onBrand}>
-                {me.displayName.slice(0, 1).toUpperCase()}
-              </Txt>
-            </View>
-            <View style={styles.flex}>
-              <Txt variant="title2">{me.displayName}</Txt>
-              <Txt variant="subhead" color={color.labelSecondary}>
-                {me.email}
-                {moderator ? ' · Moderator' : ''}
-              </Txt>
-            </View>
+        <Pressy
+          scaleTo={0.98}
+          onPress={() => router.push('/account')}
+          accessibilityRole="button"
+          accessibilityLabel={`${me.displayName}, ${me.email}. Account settings`}
+          style={styles.meCard}
+        >
+          <View style={styles.avatar}>
+            <Txt variant="title" color={color.onBrand}>
+              {me.displayName.slice(0, 1).toUpperCase()}
+            </Txt>
           </View>
-          <View style={styles.settings}>
-            <AccountSettings account={account} />
+          <View style={styles.flex}>
+            <Txt variant="title2" numberOfLines={1}>
+              {me.displayName}
+            </Txt>
+            <Txt variant="subhead" color={color.labelSecondary} numberOfLines={1}>
+              {me.email}
+              {moderator ? ' · Moderator' : ''}
+            </Txt>
+            <Txt variant="footnote" color={color.brand} style={face('medium')}>
+              {billing.isPro ? 'GymGO Pro · Account settings' : 'Account settings'}
+            </Txt>
           </View>
-        </Group>
+          <Icon name="chevron" size={14} color={color.labelTertiary} />
+        </Pressy>
       ) : (
-        <View style={styles.signIn}>
-          <SignInForm account={account} inSheet={false} />
-        </View>
+        <SignInCard />
       )}
+
+      <Group header="Training">
+        <Row icon="chart" tile={TILE.green} title="Progress" subtitle="Your log, records and streak" onPress={() => router.push('/progress')} />
+        <Row icon="workout" tile={TILE.orange} title="My workouts" onPress={() => router.push('/workouts')} />
+        <Row icon="plates" tile={TILE.teal} title="Plate calculator" onPress={() => router.push('/plates')} />
+      </Group>
 
       <Group header="GymGO Pro">
         <Row
@@ -100,8 +111,6 @@ export default function Profile() {
         {billing.isPro && me && CAN_BUY_HERE && billing.subscription?.manageable !== false && (
           <Row icon="settings" tile={TILE.grey} title="Manage subscription" onPress={() => void manage()} />
         )}
-        <Row icon="workout" tile={TILE.orange} title="My workouts" onPress={() => router.push('/workouts')} />
-        <Row icon="chart" tile={TILE.green} title="Progress" subtitle="Your log, records and streak" onPress={() => router.push('/progress')} />
       </Group>
 
       <Group header="Your gyms">
@@ -130,7 +139,7 @@ export default function Profile() {
       )}
 
       <Group
-        header="Preferences"
+        header="Settings"
         footer={[
           Platform.OS === 'web' ? 'Haptics are the small taps you feel on a phone; a browser has none.' : null,
           'Demo mode swaps every real gym for invented ones in inner Sydney, made up to show each case GymGO handles. Nothing in it is real, and real gyms come back when you turn it off.',
@@ -205,56 +214,59 @@ export default function Profile() {
         <Row icon="settings" tile={TILE.grey} title="Version" value="0.1.0 · pilot" chevron={false} />
       </Group>
 
-      {me && (
-        <Group
-          footer={
-            confirmDelete
-              ? `This removes your account, saved gyms, workouts, reviews, photos and your machine, price and visit reports from the server.${billing.isPro ? ' Your Pro subscription is cancelled first.' : ''}`
-              : undefined
-          }
-        >
-          <Row
-            icon="download"
-            tile={TILE.teal}
-            title="Download my data"
-            subtitle={exported ?? undefined}
-            onPress={async () => {
-              if (!token) return;
-              try {
-                setExported('Preparing your file…');
-                await downloadMyData(token);
-                setExported('Everything GymGO holds about you, as one file.');
-              } catch {
-                setExported('Couldn’t reach the GymGO server. Try again?');
-              }
-            }}
-          />
-          <Row icon="signOut" tile={TILE.blue} title="Sign out" onPress={() => void account.signOut()} />
-          <Row
-            icon="no"
-            tile={TILE.red}
-            title={confirmDelete ? 'Tap again to delete everything' : 'Delete account'}
-            destructive
-            onPress={async () => {
-              if (!confirmDelete) return setConfirmDelete(true);
-              try {
-                await account.deleteAccount();
-                setConfirmDelete(false);
-              } catch (problem) {
-                setError(
-                  problem instanceof ApiError ? `${problem.message} Nothing was deleted.` : 'Couldn’t reach the GymGO server, so nothing was deleted.',
-                );
-              }
-            }}
-          />
-        </Group>
-      )}
       {error && (
         <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
           {error}
         </Txt>
       )}
     </TabScreen>
+  );
+}
+
+/** Signed out: Apple and Google where they're set up, then email. */
+function SignInCard() {
+  const { account } = useApp();
+  const router = useRouter();
+  const social = useAnySocial();
+  const [problem, setProblem] = useState<string | null>(null);
+  const withProvider: TokenHandler = async (provider, idToken, nonce, name) => {
+    setProblem(null);
+    try {
+      await account.signInWith(provider, idToken, nonce, name);
+      haptic.success();
+    } catch (caught) {
+      haptic.warn();
+      setProblem(caught instanceof ApiError ? caught.message : 'Couldn’t reach the GymGO server. Try again.');
+    }
+  };
+  return (
+    <View style={styles.signInCard}>
+      <View style={styles.signInHead}>
+        <View style={styles.badge}>
+          <Icon name="account" size={26} color={color.onBrand} />
+        </View>
+        <View style={styles.flex}>
+          <Txt variant="title2">Sign in to GymGO</Txt>
+          <Txt variant="subhead" color={color.labelSecondary}>
+            Your saved gyms, workouts and training log, on every device.
+          </Txt>
+        </View>
+      </View>
+      {account.state === 'unreachable' && (
+        <Txt variant="footnote" color={color.maybeInk}>
+          You’re signed in, but the GymGO server isn’t reachable right now. Your saved gyms on this device still work.
+        </Txt>
+      )}
+      <SocialButtons onToken={withProvider} onError={setProblem} />
+      {social && <OrDivider label="or" />}
+      <PrimaryButton label="Sign in with email" icon="mail" onPress={() => router.push('/sign-in')} />
+      <PrimaryButton label="Create an account" tone="quiet" onPress={() => router.push({ pathname: '/sign-in', params: { mode: 'create' } })} />
+      {problem && (
+        <Txt variant="footnote" color={color.dangerInk}>
+          {problem}
+        </Txt>
+      )}
+    </View>
   );
 }
 
@@ -270,7 +282,18 @@ const styles = themed(() => StyleSheet.create({
   settings: { paddingHorizontal: space[4], paddingBottom: space[4] },
   flex: { flex: 1 },
   center: { textAlign: 'center' },
-  me: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4] },
+  meCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    padding: space[4],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.card,
+  },
+  signInCard: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
+  signInHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginBottom: space[1] },
+  badge: { width: 52, height: 52, borderRadius: 15, borderCurve: 'continuous', backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
   avatar: {
     width: 60,
     height: 60,
@@ -279,7 +302,6 @@ const styles = themed(() => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  signIn: { marginHorizontal: -space[4] },
   moderation: { gap: 6 },
   caps: { paddingHorizontal: space[4], letterSpacing: 0.3 },
   card: { backgroundColor: color.card, borderRadius: 12, padding: space[4], gap: space[4] },

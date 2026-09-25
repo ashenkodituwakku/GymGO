@@ -235,7 +235,7 @@ export default function ProScreen() {
               busy={busy}
               label={chosen ? `Continue · ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}` : 'Continue'}
               onSubscribe={() => void subscribe()}
-              onSignIn={() => router.navigate('/profile')}
+              onSignIn={() => router.push('/sign-in')}
             />
           </>
         )}

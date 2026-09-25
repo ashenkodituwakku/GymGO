@@ -9,7 +9,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, ApiError, OfflineError, type Account } from './api';
+import { api, ApiError, OfflineError, type Account, type SignInProvider } from './api';
 import { loadToken, storeToken } from './session';
 
 const SAVED_KEY = 'gymgo.saved.v1';
@@ -97,6 +97,23 @@ export function useAccount() {
     [adopt],
   );
 
+  /** Signs in with a Google or Apple ID token; the first time, that makes the account. Returns whether it was new. */
+  const signInWith = useCallback(
+    async (provider: SignInProvider, idToken: string, nonce: string | null, name?: string | null) => {
+      const result = await api.signInWith(provider, { idToken, nonce, name });
+      await adopt(result.token, result.account);
+      return result.created;
+    },
+    [adopt],
+  );
+
+  const refreshAccount = useCallback(async () => {
+    const current = token.current;
+    if (!current) return;
+    const { account: me } = await api.me(current);
+    setAccount(me);
+  }, []);
+
   const signOut = useCallback(async () => {
     const current = token.current;
     token.current = null;
@@ -155,6 +172,8 @@ export function useAccount() {
     saved,
     signIn,
     signUp,
+    signInWith,
+    refreshAccount,
     signOut,
     deleteAccount,
     rename,

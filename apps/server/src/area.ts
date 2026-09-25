@@ -28,6 +28,7 @@ import {
   candidate,
   contactOf,
   extrasOf,
+  keep,
   km,
   line1Of,
   mapOnlyRecord,
@@ -233,10 +234,15 @@ export class AreaSearch {
     const rows = this.db
       .prepare('select record_json, lat, lng, fetched_at from area_gyms where lat between ? and ? and lng between ? and ?')
       .all(box.south, box.north, box.west, box.east) as Array<{ record_json: string; lat: number; lng: number; fetched_at: string }>;
-    rows.sort((a, b) => km(middle, [a.lat, a.lng]) - km(middle, [b.lat, b.lng]));
-    const kept = rows.slice(0, MAX_GYMS);
+    // The name rules run again on what was kept, so a rule fixed since an
+    // area was read (a kids' programme let through, say) applies at once.
+    const current = rows
+      .map((row) => ({ ...row, record: JSON.parse(row.record_json) as GymRecord }))
+      .filter((row) => keep(row.record.location.name, {}));
+    current.sort((a, b) => km(middle, [a.lat, a.lng]) - km(middle, [b.lat, b.lng]));
+    const kept = current.slice(0, MAX_GYMS);
     const oldest = kept.reduce<string | null>((min, row) => (min === null || row.fetched_at < min ? row.fetched_at : min), null);
-    return { gyms: kept.map((row) => JSON.parse(row.record_json) as GymRecord), fetchedAt: oldest, truncated: rows.length > MAX_GYMS };
+    return { gyms: kept.map((row) => row.record), fetchedAt: oldest, truncated: current.length > MAX_GYMS };
   }
 
   private async fetchTiles(boxes: Box[], keys: string[]): Promise<void> {

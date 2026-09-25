@@ -174,6 +174,17 @@ describe('Search this area', () => {
     expect(overpassCalls).toHaveLength(2);
   });
 
+  it('applies today’s rules to gyms kept from an earlier read', async () => {
+    // Stored before a rule change let it through; the rules now leave it out.
+    const record = { location: { id: 'maxs-junior-boxing-n77', name: "Max's Junior Boxing" } };
+    db.prepare('insert into area_gyms (id, osm, record_json, lat, lng, fetched_at) values (?, ?, ?, ?, ?, ?)').run(
+      'maxs-junior-boxing-n77', 'node/77', JSON.stringify(record), -36.758, 144.28, '2026-09-25T00:00:00Z',
+    );
+    const result = await call('GET', areaPath(BENDIGO));
+    expect(result.body.gyms.map((gym: GymRecord) => gym.location.name)).not.toContain("Max's Junior Boxing");
+    expect(overpassCalls).toHaveLength(0);
+  });
+
   it('re-reads an area after a month, and drops gyms gone from the map', async () => {
     clock = new Date('2026-10-30T00:00:00Z');
     mapped = bendigoElements().filter((el) => el.id !== 13);

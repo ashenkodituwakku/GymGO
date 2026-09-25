@@ -72,6 +72,17 @@ const ICONS = {
   download: { ios: 'arrow.down.circle.fill', android: 'download', web: 'download' },
   thumbsDown: { ios: 'hand.thumbsdown.fill', android: 'thumb_down', web: 'thumb_down' },
   question: { ios: 'questionmark.circle.fill', android: 'help', web: 'help' },
+  chart: { ios: 'chart.line.uptrend.xyaxis', android: 'show_chart', web: 'show_chart' },
+  timer: { ios: 'timer', android: 'timer', web: 'timer' },
+  trophy: { ios: 'trophy.fill', android: 'emoji_events', web: 'emoji_events' },
+  flame: { ios: 'flame.fill', android: 'local_fire_department', web: 'local_fire_department' },
+  play: { ios: 'play.fill', android: 'play_arrow', web: 'play_arrow' },
+  target: { ios: 'scope', android: 'track_changes', web: 'track_changes' },
+  plus: { ios: 'plus', android: 'add', web: 'add' },
+  minus: { ios: 'minus', android: 'remove', web: 'remove' },
+  plates: { ios: 'dumbbell.fill', android: 'fitness_center', web: 'fitness_center' },
+  done: { ios: 'checkmark.circle.fill', android: 'check_circle', web: 'check_circle' },
+  todo: { ios: 'circle', android: 'radio_button_unchecked', web: 'radio_button_unchecked' },
 } as const;
 
 export type IconName = keyof typeof ICONS;

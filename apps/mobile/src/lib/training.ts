@@ -301,3 +301,44 @@ export function clockLabel(seconds: number): string {
 }
 
 const byDate = (a: TrainingSession, b: TrainingSession) => (a.finishedAt < b.finishedAt ? -1 : a.finishedAt > b.finishedAt ? 1 : 0);
+
+// --- A session in progress -------------------------------------------------------
+
+/** One set as it's being typed: text until it's done. */
+export interface DraftSet {
+  weight: string;
+  reps: string;
+  done: boolean;
+}
+
+/** "62.5", "62,5" or " 135 " → the number; blank → null (body weight); anything else → undefined. */
+export function parseWeight(text: string): number | null | undefined {
+  const clean = text.trim().replace(',', '.');
+  if (!clean) return null;
+  if (!/^\d{1,4}(\.\d{1,2})?$/.test(clean)) return undefined;
+  const value = Number(clean);
+  return value > 0 && value <= 1500 ? value : clean === '0' ? null : undefined;
+}
+
+/** Whole reps, 0 to 200; anything else → undefined. */
+export function parseReps(text: string): number | undefined {
+  const clean = text.trim();
+  if (!/^\d{1,3}$/.test(clean)) return undefined;
+  const value = Number(clean);
+  return value <= 200 ? value : undefined;
+}
+
+/** The sets you ticked, as they'll be kept. Sets left unticked, or unreadable, aren't logged. */
+export function draftToLogged(items: Array<{ exerciseId: string; sets: DraftSet[] }>): LoggedExercise[] {
+  return items
+    .map((item) => ({
+      exerciseId: item.exerciseId,
+      sets: item.sets.flatMap((set) => {
+        if (!set.done) return [];
+        const weight = parseWeight(set.weight);
+        const reps = parseReps(set.reps);
+        return weight === undefined || reps === undefined || reps === 0 ? [] : [{ weight, reps }];
+      }),
+    }))
+    .filter((item) => item.sets.length > 0);
+}

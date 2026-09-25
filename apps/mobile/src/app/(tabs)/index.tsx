@@ -16,6 +16,7 @@ import { Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
+import { useActiveSession } from '@/lib/activeSession';
 import { useApp } from '@/lib/app-state';
 import { EMPTY, searchPrompt, timeLabel } from '@/lib/copy';
 import { countryInSentence } from '@/lib/country';
@@ -49,6 +50,7 @@ const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
 
 export default function Home() {
   const { data, account, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs } = useApp();
+  const active = useActiveSession();
   const [showAll, setShowAll] = useState<Record<string, boolean>>({});
   // Another country than yours, without Pro: no gyms listed, just the way to Pro.
   const locked = !mayExplore(filters.countryCode);
@@ -150,6 +152,29 @@ export default function Home() {
       </View>
 
       {/* Workout ----------------------------------------------------------- */}
+      {active && (
+        <Pressy
+          scaleTo={0.97}
+          onPress={() => {
+            haptic.select();
+            router.push('/train');
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`Back to your workout: ${active.name}`}
+          style={styles.resume}
+        >
+          <View style={styles.resumeIcon}>
+            <Icon name="play" size={16} color={color.onBrand} />
+          </View>
+          <View style={styles.flex}>
+            <Txt variant="headline">Back to your workout</Txt>
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+              {active.name} · {active.items.reduce((sum, item) => sum + item.sets.filter((set) => set.done).length, 0)} sets done
+            </Txt>
+          </View>
+          <Icon name="chevron" size={14} color={color.labelTertiary} />
+        </Pressy>
+      )}
       <Pressy
         scaleTo={0.97}
         onPress={() => {
@@ -372,6 +397,16 @@ const styles = StyleSheet.create({
   },
   pickEmoji: { fontSize: 26, lineHeight: 32 },
 
+  resume: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    padding: space[3],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.goodTint,
+  },
+  resumeIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.good, alignItems: 'center', justifyContent: 'center' },
   workout: {
     flexDirection: 'row',
     alignItems: 'center',

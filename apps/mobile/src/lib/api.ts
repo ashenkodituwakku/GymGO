@@ -17,6 +17,7 @@
 import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
 import type { BillingCurrency, BillingInterval, GymRecord, PlanId, PlanLimits, ProPrice, ReportCurrency, Review } from '@gymgo/domain';
+import type { TrainingSession } from './training';
 
 const PORT = 4000;
 
@@ -366,6 +367,11 @@ export const api = {
   saveWorkout: (token: string, body: { name: string; gymId: string | null; plan: Omit<SavedWorkoutPlan, 'version'> }) =>
     request<{ workout: SavedWorkout }>('POST', '/api/workouts', { token, body }),
   deleteWorkout: (token: string, id: string) => request<unknown>('DELETE', `/api/workouts/${encodeURIComponent(id)}`, { token }),
+
+  /** Your training log, newest first. */
+  training: (token: string) => request<{ sessions: TrainingSession[] }>('GET', '/api/training', { token }),
+  logTraining: (token: string, body: Omit<TrainingSession, 'id'>) => request<{ session: TrainingSession }>('POST', '/api/training', { token, body }),
+  deleteTraining: (token: string, id: string) => request<unknown>('DELETE', `/api/training/${encodeURIComponent(id)}`, { token }),
 
   rename: (token: string, displayName: string) => request<{ account: Account }>('PATCH', '/api/me', { token, body: { displayName } }),
   changePassword: (token: string, body: { currentPassword: string; newPassword: string }) =>

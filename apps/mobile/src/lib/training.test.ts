@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
   clockLabel,
+  draftToLogged,
   durationLabel,
   e1rmSeries,
   formatWeight,
   lastTime,
   nextTarget,
   oneRepMax,
+  parseReps,
+  parseWeight,
   personalRecords,
   plateLoad,
   recordsBroken,
@@ -173,5 +176,32 @@ describe('over time', () => {
     expect(durationLabel(65 * 60_000)).toBe('1 h 5 min');
     expect(clockLabel(90)).toBe('1:30');
     expect(clockLabel(4.2)).toBe('0:05');
+  });
+});
+
+describe('a session in progress', () => {
+  it('reads what was typed, forgivingly but never guessing', () => {
+    expect(parseWeight('62.5')).toBe(62.5);
+    expect(parseWeight('62,5')).toBe(62.5);
+    expect(parseWeight('  ')).toBeNull();
+    expect(parseWeight('0')).toBeNull();
+    expect(parseWeight('abc')).toBeUndefined();
+    expect(parseWeight('-5')).toBeUndefined();
+    expect(parseReps('8')).toBe(8);
+    expect(parseReps('8.5')).toBeUndefined();
+    expect(parseReps('')).toBeUndefined();
+  });
+
+  it('keeps only the sets you ticked', () => {
+    expect(
+      draftToLogged([
+        { exerciseId: 'squat', sets: [{ weight: '100', reps: '5', done: true }, { weight: '100', reps: '5', done: false }, { weight: 'x', reps: '5', done: true }] },
+        { exerciseId: 'push-up', sets: [{ weight: '', reps: '20', done: true }] },
+        { exerciseId: 'plank', sets: [{ weight: '', reps: '', done: false }] },
+      ]),
+    ).toEqual([
+      { exerciseId: 'squat', sets: [{ weight: 100, reps: 5 }] },
+      { exerciseId: 'push-up', sets: [{ weight: null, reps: 20 }] },
+    ]);
   });
 });

@@ -73,7 +73,7 @@ const ASKED_KEY = 'gymgo.location-asked.v1';
 const MAX_RECENTS = 10;
 
 /** Why the Pro screen opened, so it can say so. */
-export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide';
+export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress';
 
 type AppState = {
   data: ReturnType<typeof useGymData>;

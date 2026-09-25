@@ -99,6 +99,7 @@ export default function Profile() {
           <Row icon="settings" tile={TILE.grey} title="Manage subscription" onPress={() => void manage()} />
         )}
         <Row icon="workout" tile={TILE.orange} title="My workouts" onPress={() => router.push('/workouts')} />
+        <Row icon="chart" tile={TILE.green} title="Progress" subtitle="Your log, records and streak" onPress={() => router.push('/progress')} />
       </Group>
 
       <Group header="Your gyms">

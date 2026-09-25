@@ -215,8 +215,45 @@ Chrome and Edge (blur only in Safari and Firefox).
   side: answer, price, what members paid (labelled as theirs, never the
   gym's price), guest entry, what to bring, machines, rating and distance.
   The round compare button in a map card's header adds a gym too.
-- **Profile**: sign in, your gyms, moderation (for moderators), a haptics
-  switch, and where GymGO's facts come from.
+- **Profile**: sign in, your gyms, **Progress**, moderation (for
+  moderators), a haptics switch, and where GymGO's facts come from.
+
+### Training
+
+Build a workout (Home → **Build a workout**, or from a gym's page), then
+tap **Start**. Each exercise shows its sets as rows: type the weight and
+reps and tick the set. Last time's numbers are already filled in as a
+guide, so on a repeat session it's mostly ticking.
+
+- **Rest timer.** Ticking a set starts the rest the plan calls for (90 s,
+  say), in a glass bar at the bottom with −15, +15 and Skip. The phone
+  buzzes when it's up.
+- **Last time.** Beside each exercise: what you did the last time you
+  logged it ("135 lb × 10, 10, 9").
+- **Plates.** On barbell exercises, **Plates** shows what to load on each
+  side of the bar for the weight you typed (45, 35, 25, 10, 5 and 2.5 lb
+  plates, or 25 down to 1.25 kg), and says if standard plates can't make it
+  exactly. Also in Progress → Plate calculator.
+- **Records.** Finish, and GymGO tells you which records you broke:
+  heaviest weight, strongest set (by estimated one-rep max), or most reps on
+  a body-weight exercise. Only against your own earlier sessions: the first
+  time you log something is a starting point, not a record.
+- **Progress** (Profile → Progress): weeks in a row you've trained,
+  workouts this week, your records for every exercise, and every session,
+  each of which you can open or delete.
+- **Pounds in the US**, kilograms elsewhere; switch before you type the
+  first weight. A blank weight is body weight, never zero.
+
+A workout in progress is kept on your device as you go, so closing the app
+between sets loses nothing, and Home shows **Back to your workout**. It's
+saved to your account when you finish, so logging needs a (free) account.
+
+With **Pro**, each exercise in Progress has a chart of your estimated
+one-rep max over time, and while you train each exercise shows **Aim**:
+what to lift next, by double progression. Keep the weight until every set
+reaches the top of the rep range, then add the smallest jump (5 lb or
+2.5 kg) and start again at the bottom. It's worked out from your own last
+session, and says why.
 
 Tap any gym to open its own page, with share, compare and save at the top.
 It opens with the gym's logo (a chain's free logo, or the icon from the
@@ -542,8 +579,9 @@ yours**; you can change it in Profile → Country. **Free** is everything that
 tells you the truth about a gym in that country: every gym and city, the
 answer for your visit and why, the source behind every fact, prices and hours
 where published, reviews, photos, members' machine reports and the workout
-builder. A gym's page opened from a link or your saved list always opens,
-wherever the gym is.
+builder, plus logging your workouts with the rest timer, plate calculator,
+your records and your history. A gym's page opened from a link or your
+saved list always opens, wherever the gym is.
 
 **Pro** is for going further and keeping more:
 
@@ -553,6 +591,8 @@ wherever the gym is.
 | Saved gyms | Up to 10 | Unlimited |
 | Compare side by side | 2 gyms | 4 gyms |
 | Workout library | Build and share | Save workouts to your account, reopen them on any device |
+| Progress charts | Your records and history | A chart for every exercise |
+| Next-session targets | Last time's numbers | What to lift next, worked out for you |
 
 One tier, two ways to pay, tax included:
 

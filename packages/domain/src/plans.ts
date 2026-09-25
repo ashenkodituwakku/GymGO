@@ -9,8 +9,9 @@
  * the workout builder are free for everyone, and a gym page opened from a
  * link or your saved list opens wherever the gym is. Pro is for going
  * further and keeping more: finding gyms in every other country (the owner's
- * call, for people who travel), more saved gyms, bigger comparisons, and a
- * library of your own workouts.
+ * call, for people who travel), more saved gyms, bigger comparisons, a
+ * library of your own workouts, and charts and targets drawn from your own
+ * training log (logging itself, with your records, is free).
  *
  * Prices are what you pay, tax included. Stripe holds the real prices; these
  * are what the setup script creates there, and what the app shows when
@@ -68,6 +69,8 @@ export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; p
   { emoji: '🔖', title: 'Saved gyms', free: `Up to ${LIMITS.free.savedGyms}`, pro: 'Unlimited' },
   { emoji: '⚖️', title: 'Compare side by side', free: `${LIMITS.free.compare} gyms`, pro: `${LIMITS.pro.compare} gyms` },
   { emoji: '💪', title: 'Workout library', free: 'Build and share', pro: 'Save them, reopen on any device' },
+  { emoji: '📈', title: 'Progress charts', free: 'Your records and history', pro: 'A chart for every exercise' },
+  { emoji: '🎯', title: 'Next-session targets', free: 'Last time’s numbers', pro: 'What to lift next, worked out for you' },
 ];
 
 /** Free for everyone, always. Listed on the Pro screen so nobody wonders. */
@@ -79,6 +82,7 @@ export const ALWAYS_FREE = [
   'Published prices, guest hours and machines',
   'Reviews, photos and members’ machine reports',
   'The workout builder',
+  'Logging your workouts, with a rest timer, a plate calculator and your records',
 ] as const;
 
 /**

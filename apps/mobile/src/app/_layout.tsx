@@ -69,6 +69,10 @@ export default function RootLayout() {
             <Stack.Screen name="workout/[id]" options={{ headerShown: true, title: 'Workout' }} />
             <Stack.Screen name="workouts/index" options={{ headerShown: true, title: 'My workouts' }} />
             <Stack.Screen name="workouts/[id]" options={{ headerShown: true, title: 'Workout' }} />
+            <Stack.Screen name="train" options={{ headerShown: true, title: 'Workout', gestureEnabled: false }} />
+            <Stack.Screen name="plates" options={{ headerShown: true, title: 'Plates', presentation: 'modal' }} />
+            <Stack.Screen name="progress/index" options={{ headerShown: true, title: 'Progress' }} />
+            <Stack.Screen name="progress/[exercise]" options={{ headerShown: true, title: '' }} />
             <Stack.Screen name="pro" options={{ headerShown: true, title: 'GymGO Pro', presentation: 'modal' }} />
             <Stack.Screen name="country" options={{ headerShown: true, title: 'Country', presentation: 'modal' }} />
           </Stack>

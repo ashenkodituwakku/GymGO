@@ -5,16 +5,19 @@ import { useEffect, useState } from 'react';
 import { ScrollView, Share, StyleSheet, View } from 'react-native';
 import { ExerciseCard } from '@/components/ExerciseCard';
 import { PrimaryButton, Txt } from '@/components/ui';
+import { startSession, useActiveSession } from '@/lib/activeSession';
 import { api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { workoutFromSaved } from '@/lib/savedWorkouts';
+import { unitFor } from '@/lib/training';
 import { color, radius, space } from '@/lib/theme';
 import { GOALS, muscleLabel, workoutText, type Muscle } from '@/lib/workout';
 
 export default function SavedWorkoutScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { account } = useApp();
+  const { account, prefs } = useApp();
+  const active = useActiveSession();
   const router = useRouter();
   const [saved, setSaved] = useState<SavedWorkout | null | 'missing'>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -105,6 +108,24 @@ export default function SavedWorkoutScreen() {
           </Txt>
         )}
         <View style={styles.buttons}>
+          <PrimaryButton
+            label={active ? 'Back to your workout' : 'Start workout'}
+            icon="play"
+            onPress={() => {
+              haptic.success();
+              if (!active) {
+                startSession({
+                  name: saved.name,
+                  workoutId: saved.id,
+                  gymId: saved.gymId,
+                  gymName: saved.plan.gymName,
+                  unit: unitFor(prefs.country),
+                  items: workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds })),
+                });
+              }
+              router.push('/train');
+            }}
+          />
           <PrimaryButton
             label="Share"
             icon="share"

@@ -29,21 +29,33 @@ import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
 import { color, face, radius, space } from '@/lib/theme';
 
-const FEATURE_ICON: Record<string, IconName> = { 'Saved gyms': 'saved', 'Compare side by side': 'compare', 'Workout library': 'workout' };
+const FEATURE_ICON: Record<string, IconName> = {
+  'Gyms worldwide': 'globe',
+  'Saved gyms': 'saved',
+  'Compare side by side': 'compare',
+  'Workout library': 'workout',
+  'Progress charts': 'chart',
+  'Next-session targets': 'target',
+};
 
 const REASON: Record<ProReason, string> = {
   saved: 'You’ve saved as many gyms as Free keeps. Pro saves as many as you like.',
   compare: 'Free compares two gyms at a time. Pro lines up four.',
   workouts: 'Keep your workouts in your account with Pro, and open them on any device.',
   worldwide: 'GymGO Free covers the country you chose. Pro finds gyms in every country, wherever you travel.',
+  progress: 'Your log and records are free. Pro draws a chart for every exercise and works out what to lift next.',
 };
 
 export default function ProScreen() {
   const params = useLocalSearchParams<{ reason?: string; checkout?: string }>();
   const router = useRouter();
-  const { account, billing, filters } = useApp();
+  const { account, billing, filters, prefs } = useApp();
   const [interval, setInterval] = useState<BillingInterval>('year');
-  const [currency, setCurrency] = useState<BillingCurrency>(filters.countryCode === 'US' ? 'usd' : 'aud');
+  // Pro is sold in A$ and US$: A$ for Australia and New Zealand, US$ for
+  // everyone else. From the country you chose, or where you're looking.
+  const home = prefs.country ?? filters.countryCode;
+  const [picked, setCurrency] = useState<BillingCurrency | null>(null);
+  const currency: BillingCurrency = picked ?? (home === 'AU' || home === 'NZ' ? 'aud' : 'usd');
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [welcome, setWelcome] = useState(false);
@@ -205,7 +217,7 @@ export default function ProScreen() {
               )}
             </View>
             <Pressable
-              onPress={() => setCurrency((current) => (current === 'aud' ? 'usd' : 'aud'))}
+              onPress={() => setCurrency(currency === 'aud' ? 'usd' : 'aud')}
               accessibilityRole="button"
               hitSlop={8}
               style={styles.currency}

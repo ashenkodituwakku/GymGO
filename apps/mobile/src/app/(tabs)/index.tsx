@@ -10,7 +10,7 @@
 
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GymCard } from '@/components/GymCard';
 import { Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
@@ -212,8 +212,9 @@ export default function Home() {
         <Txt variant="footnote" color={color.labelSecondary}>
           For a visit at {timeLabel(filters.visitMinuteOfDay)}
           {filters.budgetMinor ? `, under ${moneyLabel(filters.budgetMinor, filters.countryCode)}` : ''}
-          {filters.equipment.length ? `, with ${filters.equipment.length} must-have${filters.equipment.length > 1 ? 's' : ''}` : ''}. Hold a
-          card for more.
+          {filters.equipment.length ? `, with ${filters.equipment.length} must-have${filters.equipment.length > 1 ? 's' : ''}` : ''}.
+          {/* The hold menu (save, share, compare) is the iPhone's own. */}
+          {Platform.OS === 'ios' ? ' Hold a card for more.' : ''}
         </Txt>
         {locked ? (
           <Pressable

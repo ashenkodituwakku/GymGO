@@ -20,18 +20,26 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "GymGO uses your precise location on this device to show gyms near you and how far away they are. It is never stored or sent anywhere."
+          "locationWhenInUsePermission": "GymGO uses your precise location on this device to show gyms near you and how far away they are. It is never stored or sent anywhere.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "motionUsagePermission": false
         }
       ],
-      "expo-secure-store",
-    [
-      "expo-image-picker",
-      {
-        "photosPermission": "GymGO opens your photos only when you choose to share a picture of a gym.",
-        "cameraPermission": false,
-        "microphonePermission": false
-      }
-    ]
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "GymGO opens your photos only when you choose to share a picture of a gym.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

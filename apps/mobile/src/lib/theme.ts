@@ -19,7 +19,7 @@
  * (app/_layout.tsx), so nothing needs to import a hook to follow the theme.
  */
 
-import { Platform, StyleSheet, type TextStyle } from 'react-native';
+import { Platform, StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 
 export type Scheme = 'light' | 'dark';
 /** What you picked: follow the phone, or always one. */
@@ -342,23 +342,21 @@ export const type = {
   figure: style(20, 25, 'bold'),
 } as const;
 
+/**
+ * A black drop shadow, `radius` blurred and `y` points down. Phones get React
+ * Native's shadow props (and Android's elevation); a browser gets the same
+ * shadow as CSS box-shadow, which is what react-native-web wants now.
+ */
+export function dropShadow(opacity: number, radius: number, y: number, elevation: number): ViewStyle {
+  if (Platform.OS === 'web') return { boxShadow: `0px ${y}px ${radius}px rgba(0, 0, 0, ${opacity})` };
+  return { shadowColor: '#000000', shadowOpacity: opacity, shadowRadius: radius, shadowOffset: { width: 0, height: y }, elevation };
+}
+
 export const shadow = {
   /** Floating controls over the map. */
-  float: {
-    shadowColor: color.shadow,
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
+  float: dropShadow(0.14, 14, 4, 6),
   /** Cards inside sheets. */
-  card: {
-    shadowColor: color.shadow,
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
-  },
+  card: dropShadow(0.05, 6, 1, 1),
 } as const;
 
 /**

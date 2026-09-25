@@ -18,7 +18,7 @@ import {
   nowIn,
   type Filters,
 } from '@/lib/query';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, dropShadow, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { moneyLabel, radiusChoices, tracksPrices } from '@/lib/places';
 import { Chip, PrimaryButton, Txt } from './ui';
@@ -255,11 +255,7 @@ const styles = themed(() => StyleSheet.create({
   segment: { flex: 1, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: 7 },
   segmentSelected: {
     backgroundColor: color.cardRaised,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
+    ...dropShadow(0.1, 4, 1, 2),
   },
   segmentText: face('medium'),
   segmentTextSelected: face('semibold'),

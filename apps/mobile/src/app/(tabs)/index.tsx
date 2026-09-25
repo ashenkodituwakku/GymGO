@@ -24,7 +24,7 @@ import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityNear, cityPlace, moneyLabel, tracksPrices, type AppPlace } from '@/lib/places';
 import { atPlace, moveTo, nearLabel, nextVisitAt, runSearch, type Filters } from '@/lib/query';
 import { resultsById } from '@/lib/results';
-import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { color, dropShadow, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 
 /** Melbourne suburbs worth a tap, in the order people ask about them. */
@@ -452,7 +452,7 @@ const styles = themed(() => StyleSheet.create({
   proTag: { ...face('bold'), letterSpacing: 0.6 },
   lockedText: { flex: 1, gap: 2 },
   cityChip: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  moreChip: { backgroundColor: color.brandTint, shadowOpacity: 0 },
+  moreChip: { backgroundColor: color.brandTint, ...dropShadow(0, 0, 0, 0) },
   suburbs: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   suburb: { paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.card, ...shadow.card },
   suburbOn: { backgroundColor: color.brandFill },

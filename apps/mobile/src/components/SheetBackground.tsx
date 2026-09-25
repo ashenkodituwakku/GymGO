@@ -2,7 +2,7 @@ import { useBottomSheetInternal, type BottomSheetBackgroundProps } from '@gorhom
 import type { FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated';
-import { NO_TOUCH, color, radius, themed } from '@/lib/theme';
+import { NO_TOUCH, color, dropShadow, radius, themed } from '@/lib/theme';
 import { Glass, HAS_LIQUID_GLASS } from './Glass';
 
 /** How far a floating sheet sits in from the screen's edges. */
@@ -50,11 +50,7 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.sheet,
     borderCurve: 'continuous',
     // Real Liquid Glass casts its own soft shadow; the imitation needs one.
-    shadowColor: color.shadow,
-    shadowOpacity: HAS_LIQUID_GLASS ? 0.08 : 0.16,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 12,
+    ...dropShadow(HAS_LIQUID_GLASS ? 0.08 : 0.16, 24, 4, 12),
   },
   glass: {
     ...StyleSheet.absoluteFill,
@@ -65,10 +61,6 @@ const styles = themed(() => StyleSheet.create({
     borderTopLeftRadius: radius.sheet,
     borderTopRightRadius: radius.sheet,
     borderCurve: 'continuous',
-    shadowColor: color.shadow,
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: -2 },
-    elevation: 16,
+    ...dropShadow(0.16, 24, -2, 16),
   },
 }));

@@ -9,7 +9,7 @@ import { ActivityIndicator, Platform, Pressable, type StyleProp, StyleSheet, Tex
 import type { ResultTier } from '@gymgo/domain';
 import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
-import { NO_TOUCH, color, face, HIT, radius, shadow, space, themed, type } from '@/lib/theme';
+import { NO_TOUCH, color, dropShadow, face, HIT, radius, shadow, space, themed, type } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { FADE_IN, FADE_OUT, GLIDE, Pressy, SETTLE, usePop, usePressScale } from './motion';
@@ -598,19 +598,11 @@ const styles = themed(() => StyleSheet.create({
     left: 2,
     borderRadius: 7,
     backgroundColor: color.cardRaised,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...dropShadow(0.12, 4, 2, 2),
   },
   segmentOn: {
     backgroundColor: color.cardRaised,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...dropShadow(0.12, 4, 2, 2),
   },
 
   field: { gap: 6 },

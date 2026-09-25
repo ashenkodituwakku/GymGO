@@ -8,6 +8,7 @@
 
 import Svg, { Path } from 'react-native-svg';
 import { PHOSPHOR, type IconPaths } from './phosphor';
+import { NO_TOUCH } from '@/lib/theme';
 
 export type PhosphorName = keyof typeof PHOSPHOR;
 type Weight = 'regular' | 'fill' | 'duotone';
@@ -29,7 +30,7 @@ export function PIcon({
   const set = PHOSPHOR[name] as Partial<Record<Weight, IconPaths>>;
   const paths = set[weight] ?? set.duotone ?? set.regular ?? set.fill ?? [];
   return (
-    <Svg width={size} height={size} viewBox="0 0 256 256" pointerEvents="none">
+    <Svg width={size} height={size} viewBox="0 0 256 256" style={NO_TOUCH}>
       {paths.map((path, index) => (
         <Path
           key={index}

@@ -6,7 +6,7 @@
 
 import { StyleSheet, View } from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
-import { NO_TOUCH, color, themed } from '@/lib/theme';
+import { NO_TOUCH, color, dropShadow, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { TIER_COLOUR } from './ui';
 
@@ -41,11 +41,7 @@ const styles = themed(() => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderColor: color.pinBorder,
-    shadowColor: '#000',
-    shadowOpacity: 0.22,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 4,
+    ...dropShadow(0.22, 4, 2, 4),
   },
   pointer: {
     width: 0,

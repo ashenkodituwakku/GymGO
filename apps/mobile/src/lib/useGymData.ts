@@ -79,8 +79,9 @@ export function useGymData() {
   const requested = useRef(new Set<string>());
   const latest = useRef(records);
   latest.current = records;
+  /** Fetch any of these gyms that aren't loaded; resolves once they've arrived (or couldn't). */
   const ensureGyms = useCallback(
-    (ids: string[]) => {
+    (ids: string[]): Promise<void> => {
       const loaded = new Set(latest.current.map((record) => record.location.id));
       const missing = ids.filter((id) => !loaded.has(id) && !requested.current.has(id));
       for (const id of missing) requested.current.add(id);
@@ -93,9 +94,7 @@ export function useGymData() {
             if (!(error instanceof ApiError)) requested.current.delete(id);
             return null;
           });
-      void Promise.all(missing.map(fetchOne)).then((gyms) =>
-        addFound(gyms.filter((gym): gym is GymRecord => gym !== null)),
-      );
+      return Promise.all(missing.map(fetchOne)).then((gyms) => addFound(gyms.filter((gym): gym is GymRecord => gym !== null)));
     },
     [addFound],
   );

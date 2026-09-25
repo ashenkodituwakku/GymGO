@@ -9,7 +9,7 @@
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { LogoPlate } from '@/components/BrandLogo';
 import { GoogleEmbed } from '@/components/GoogleEmbed';
 import { GoogleModal } from '@/components/GoogleModal';
@@ -50,6 +50,35 @@ export default function GymPage() {
   useEffect(() => {
     if (id) addRecent(id);
   }, [id, addRecent]);
+
+  // A gym found by searching an area isn't in the app's own data: opened
+  // from a link, it's fetched first. "Not found" only once that's failed.
+  const [looking, setLooking] = useState(true);
+  const { ensureGyms } = data;
+  const known = Boolean(result);
+  useEffect(() => {
+    if (!id || known) return;
+    let live = true;
+    setLooking(true);
+    void ensureGyms([id]).finally(() => {
+      if (live) setLooking(false);
+    });
+    return () => {
+      live = false;
+    };
+  }, [id, known, ensureGyms]);
+
+  if (!result && looking) {
+    return (
+      <View style={styles.missing}>
+        <Stack.Screen options={{ title: 'Gym' }} />
+        <ActivityIndicator color={color.brand} />
+        <Txt variant="subhead" color={color.labelSecondary}>
+          Finding this gym…
+        </Txt>
+      </View>
+    );
+  }
 
   if (!result) {
     return (

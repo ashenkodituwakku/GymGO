@@ -155,7 +155,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // area, maybe on another device) is fetched by id, so its row isn't blank.
   const { ensureGyms } = data;
   useEffect(() => {
-    ensureGyms([...accountApi.saved, ...recents, ...compare]);
+    void ensureGyms([...accountApi.saved, ...recents, ...compare]);
   }, [ensureGyms, accountApi.saved, recents, compare, data.status]);
 
   const { searchArea } = data;

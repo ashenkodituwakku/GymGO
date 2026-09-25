@@ -19,15 +19,18 @@ export default function PlatesScreen() {
   usePageTitle('Plates');
   const params = useLocalSearchParams<{ weight?: string; unit?: string }>();
   const { prefs } = useApp();
-  const [unit, setUnit] = useState<WeightUnit>(params.unit === 'kg' || params.unit === 'lb' ? params.unit : unitFor(prefs.country));
+  // Your country's unit (read once your settings have loaded), until you pick one.
+  const [picked, setPicked] = useState<WeightUnit | null>(params.unit === 'kg' || params.unit === 'lb' ? params.unit : null);
+  const unit = picked ?? unitFor(prefs.country);
   const [text, setText] = useState(params.weight ?? '');
-  const [bar, setBar] = useState<number>(BAR[unit]);
+  const [pickedBar, setBar] = useState<number | null>(null);
+  const bar = pickedBar ?? BAR[unit];
   const weight = parseWeight(text);
   const load = typeof weight === 'number' ? plateLoad(weight, unit, bar) : null;
 
   const switchUnit = (next: WeightUnit) => {
-    setUnit(next);
-    setBar(BAR[next]);
+    setPicked(next);
+    setBar(null);
   };
 
   return (

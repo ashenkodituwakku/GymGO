@@ -306,6 +306,27 @@ export function CloseButton({ onPress }: { onPress: () => void }) {
   );
 }
 
+/** A round glass toggle beside the close button: compare this gym, say. */
+export function RoundToggle({ icon, on, label, onPress }: { icon: IconName; on: boolean; label: string; onPress: () => void }) {
+  return (
+    <Glass style={styles.close} tint={on ? color.brand : undefined} interactive>
+      <Pressable
+        onPress={() => {
+          haptic.select();
+          onPress();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ selected: on }}
+        hitSlop={10}
+        style={styles.closeHit}
+      >
+        <Icon name={icon} size={14} color={on ? color.onBrand : color.brand} />
+      </Pressable>
+    </Glass>
+  );
+}
+
 /**
  * The Maps action button: icon over a short label, equal widths in a row, in
  * glass. `primary` is tinted glass in the brand colour, the way iOS 26 marks

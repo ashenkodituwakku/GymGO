@@ -127,7 +127,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Brand logos (10 chains, from Wikimedia Commons, bundled) on gym pages and cards, credited | ✅ | ✅ driven in the browser (Equinox, Gold's Gym, Snap Fitness); in both native bundles | ✅ fetched from Wikidata and Commons once, by script | ❌ | n/a | ❌ |
 | Top of a gym page: members' photos, else Google's photos (owner's key), else Street View | ✅ | ⚠️ Google's photos only with stubbed data; Street View embed blank in this sandbox (no Google access from the test browser) | ⚠️ Street View is Google's free embed; Places photos never called with a real key | ❌ | n/a | ❌ |
 | Gym page (pushed screen, share/compare/save) | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |
-| Compare up to 3 gyms | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |
+| Compare up to 3 gyms (incl. a "Members paid" row; add from the map card's round compare button) | ✅ | ✅ driven in the browser | n/a | ❌ | n/a | ❌ |
 | Search gyms by name, nearest first; Enter opens the closest | ✅ | ✅ 4 unit tests + driven in the browser ("equinox") | n/a | ❌ | n/a | ❌ |
 | Sort (best match, closest, cheapest, top rated); best match = fewest open questions, then nearest | ✅ | ✅ domain test for the order + checked on Melbourne in the browser; iPhone action sheet not seen | n/a | ❌ | n/a | ❌ |
 | Melbourne's other 40 mapped gyms (map-only), without copies of the researched 23 | ✅ | ✅ data test (no researched map element reappears) + 63 gyms near the CBD in the browser | ✅ OpenStreetMap, fetched once | ❌ | n/a | ❌ |

@@ -108,8 +108,9 @@ Chrome and Edge (blur only in Safari and Firefox).
   everything you asked first, then, among the rest, the ones with the fewest
   things you'd need to call about, then the nearest.
 - **Saved**: your saved gyms. Tick two or three to **compare** them side by
-  side: answer, price, guest entry, what to bring, machines, rating and
-  distance.
+  side: answer, price, what members paid (labelled as theirs, never the
+  gym's price), guest entry, what to bring, machines, rating and distance.
+  The round compare button in a map card's header adds a gym too.
 - **Profile**: sign in, your gyms, moderation (for moderators), a haptics
   switch, and where GymGO's facts come from.
 

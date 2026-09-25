@@ -11,7 +11,7 @@ import { summariseWeek, type GymSearchResult, type Tri } from '@gymgo/domain';
 import { Icon } from '@/components/Icon';
 import { PrimaryButton, TIER_COLOUR, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
-import { distanceLabel } from '@/lib/places';
+import { distanceLabel, moneyLabel } from '@/lib/places';
 import { TIER, accessShort, timeLabel } from '@/lib/copy';
 import { priceLine } from '@/lib/present';
 import { resultsById } from '@/lib/results';
@@ -58,6 +58,18 @@ export default function Compare() {
       cells: gyms.map((result, index) => {
         const price = priceLine(result.offers);
         return { text: `${price.headline} ${price.caption}`, strong: prices[index] === cheapest, ink: price.confirmed ? undefined : color.maybeInk };
+      }),
+    },
+    {
+      // Members' reports, never the gym's price: shown apart, and never bold.
+      label: 'Members paid',
+      cells: gyms.map((result) => {
+        const members = data.memberPrices[result.record.location.id];
+        return members
+          ? {
+              text: `~${moneyLabel(Math.round(members.typicalMinor / 100) * 100, result.record.location.address.countryCode)} (${members.count} member${members.count === 1 ? '' : 's'})`,
+            }
+          : { text: 'No reports', ink: color.labelSecondary };
       }),
     },
     {

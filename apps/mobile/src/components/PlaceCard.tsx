@@ -32,9 +32,10 @@ import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Icon, type IconName } from './Icon';
 import { StateGlyphRow } from './StateGlyphRow';
+import { useApp } from '@/lib/app-state';
 import { LogoBadge, LogoCredit } from './BrandLogo';
 import { Glass } from './Glass';
-import { ActionButton, CloseButton, Fold, TIER_COLOUR, Txt } from './ui';
+import { ActionButton, CloseButton, Fold, RoundToggle, TIER_COLOUR, Txt } from './ui';
 
 const TRAINING: Record<string, string> = {
   full_gym: 'Gym',
@@ -66,6 +67,8 @@ export function PlaceHeader({
   topPadding?: number;
 }) {
   const location = result.record.location;
+  const { compare, toggleCompare } = useApp();
+  const comparing = compare.includes(location.id);
   const subtitle = [
     TRAINING[location.trainingTypes[0] ?? 'full_gym'] ?? 'Gym',
     location.address.suburb,
@@ -87,6 +90,12 @@ export function PlaceHeader({
             {subtitle}
           </Txt>
         </View>
+        <RoundToggle
+          icon="compare"
+          on={comparing}
+          label={comparing ? 'Remove from Compare' : 'Add to Compare'}
+          onPress={() => toggleCompare(location.id)}
+        />
         <CloseButton onPress={onClose} />
       </View>
     </View>

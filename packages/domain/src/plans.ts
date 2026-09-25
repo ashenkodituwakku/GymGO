@@ -3,10 +3,13 @@
  * limits the server enforces, and what Pro costs.
  *
  * The rule that decides what goes where: nothing that tells you the truth
- * about a gym is ever behind Pro. Every gym, every city, the answer and why,
- * the source behind each fact, published prices and hours, reviews, photos,
- * members' machine reports and the workout builder are free for everyone.
- * Pro is for keeping more: more saved gyms, bigger comparisons, and a
+ * about a gym is ever behind Pro. In your own country (you choose it when
+ * the app first opens) every gym, the answer and why, the source behind each
+ * fact, published prices and hours, reviews, photos, members' reports and
+ * the workout builder are free for everyone, and a gym page opened from a
+ * link or your saved list opens wherever the gym is. Pro is for going
+ * further and keeping more: finding gyms in every other country (the owner's
+ * call, for people who travel), more saved gyms, bigger comparisons, and a
  * library of your own workouts.
  *
  * Prices are what you pay, tax included. Stripe holds the real prices; these
@@ -56,11 +59,12 @@ export const PRO_PRICES: ProPrice[] = [
 
 export const PRO_PRODUCT = {
   name: 'GymGO Pro',
-  description: 'Unlimited saved gyms, compare up to 4 gyms, and a library of your workouts on every device.',
+  description: 'Gyms in every country, unlimited saved gyms, compare up to 4 gyms, and a library of your workouts on every device.',
 } as const;
 
 /** What Pro adds, with what Free gets instead. */
 export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; pro: string }> = [
+  { emoji: '🌍', title: 'Gyms worldwide', free: 'Your country', pro: 'Every country, wherever you travel' },
   { emoji: '🔖', title: 'Saved gyms', free: `Up to ${LIMITS.free.savedGyms}`, pro: 'Unlimited' },
   { emoji: '⚖️', title: 'Compare side by side', free: `${LIMITS.free.compare} gyms`, pro: `${LIMITS.pro.compare} gyms` },
   { emoji: '💪', title: 'Workout library', free: 'Build and share', pro: 'Save them, reopen on any device' },
@@ -68,7 +72,8 @@ export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; p
 
 /** Free for everyone, always. Listed on the Pro screen so nobody wonders. */
 export const ALWAYS_FREE = [
-  'Every gym in every city, on the map and in the list',
+  'Every gym in your country, on the map and in the list',
+  'A gym’s page from a link or your saved list, wherever it is',
   'The answer for your visit, and exactly why',
   'The source and date behind every fact',
   'Published prices, guest hours and machines',

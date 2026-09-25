@@ -107,6 +107,8 @@ service, which is your decision to make. Nothing has been provisioned.
 | Directions / call / website hand-off | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
 | Precise location: opens where you are, blue dot, nearest covered city when outside | ✅ | ⚠️ browser only, with simulated positions (New York, Toronto) | n/a | ❌ GPS, iPhone "Precise: Off" and Android "Approximate" never seen | n/a | ❌ |
 | 15 US cities: search, miles and $, visit times on local clocks | ✅ | ✅ unit tests + driven in the browser (New York, Seattle, Philadelphia, Chicago) | n/a | ❌ | n/a | ❌ |
+| 15 European cities (London, Paris, Berlin, Madrid, Barcelona, Rome, Milan, Amsterdam, Dublin, Lisbon, Vienna, Munich, Stockholm, Copenhagen, Zurich), map-only, 600 gyms, districts under local names, accent-free search | ✅ | ✅ 10 data tests + 2 place tests + driven in the browser (London in miles, 40 pins; Paris with Pro, 40 pins) | ✅ OpenStreetMap, fetched once by bounding box (the circle query timed out for London) | ❌ | n/a | ❌ |
+| Choose your country (first launch, and Profile → Country): Free covers it, Pro every country. Outside it, no pins or list, just "Gyms in France are part of GymGO Pro" and the way back; a typed town, a built-in city (tagged PRO on Home) and "Search this area" all lead there; gym pages from links or Saved always open | ✅ | ✅ 7 country tests + 2 server tests (a Free search abroad refused before the map is read; a Pro account searches Paris) + driven in the browser (picker on a fresh visit, "uk" finds the UK, Paris and Kyoto locked for Free, Paris open for a Pro account) | ✅ the server checks Pro for live area searches | ❌ | n/a | ❌ |
 | 7 more Australian cities (Sydney, Brisbane, Perth, Adelaide, Canberra, Gold Coast, Hobart), map-only, 229 gyms | ✅ | ✅ 10 data tests + place tests + driven in the browser (Sydney, Brisbane) | ✅ OpenStreetMap, fetched once | ❌ | n/a | ❌ |
 | Demo mode (Profile switch): only invented gyms when on, only real ones when off | ✅ | ✅ a place test that switches it + driven in the browser (Sydney real, then demo) | n/a | ❌ | n/a | ❌ |
 | Scrolling the tab screens in a browser | ✅ fixed: the tab container never shrank, so Home grew past the window and couldn't scroll | ✅ mouse wheel at phone and PC sizes | n/a | ❌ not checked on a phone that the old version was broken there too | n/a | ❌ |
@@ -315,6 +317,11 @@ name; the skip link works.
 - **Google's extras and Stripe** are built but have never been used with the
   owner's real keys, so Google's photos of the exact gym have been matched
   only against a stand-in for Google.
+- **Pro can't be bought yet.** Gyms outside your country are part of Pro,
+  and Pro is on sale only once the owner connects Stripe, so until then
+  nobody can search other countries (they can switch their own country in
+  Profile). The rule is checked by the server for live area searches; the
+  built-in cities ship inside the app, so for those it's the app's word.
 - **Prices outside Australia and the US.** Anywhere else, budgets and
   members' visit-price reports are off (the A$1–500 range means nothing in
   yen or rupiah), so every price there is unknown. The gym-name rules are

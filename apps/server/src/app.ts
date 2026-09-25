@@ -4,7 +4,7 @@
  *   GET    /api/health
  *   GET    /api/gyms                      every gym record, with its sources
  *   GET    /api/gyms/:gymId               one gym's record, including ones found by searching an area
- *   GET    /api/area?south&west&north&east  gyms on OpenStreetMap in that box (AU and US), read live and kept
+ *   GET    /api/area?south&west&north&east&home  gyms on OpenStreetMap in that box, read live and kept; outside `home`, Pro only
  *   GET    /api/places?q=                 towns and suburbs in AU and the US by name (for search on submit)
  *   POST   /api/auth/signup               { email, password, displayName }
  *   POST   /api/auth/login                { email, password }
@@ -93,7 +93,7 @@ import {
   type AccountRow,
 } from './auth';
 import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
-import { AreaError, AreaSearch, parseBox } from './area';
+import { AreaError, AreaSearch, parseBox, whereIs } from './area';
 import { PlaceError, PlaceSearch } from './places';
 import { SiteIcons, chainWebsites, type SafeGet } from './siteicons';
 import { allGyms, gymCountry, gymExists, gymIsDemo, gymRecord, type Db } from './db';
@@ -132,6 +132,8 @@ class HttpError extends Error {
     message: string,
     /** For the app to act on, e.g. `pro_required` opens the Pro screen. */
     readonly code?: string,
+    /** Anything else the app needs to act on it, e.g. which country an area is in. */
+    readonly detail?: Record<string, string>,
   ) {
     super(message);
   }
@@ -376,6 +378,18 @@ export function createApp(options: AppOptions) {
     if (method === 'GET' && path === '/api/area') {
       try {
         const box = parseBox(url.searchParams);
+        // GymGO Free covers the country you chose; Pro, every country (see
+        // packages/domain/src/plans.ts). The app says which is yours, and an
+        // area whose middle is elsewhere needs Pro, before anything is read.
+        const home = (url.searchParams.get('home') ?? '').trim().toUpperCase();
+        if (!/^[A-Z]{2}$/.test(home)) throw new HttpError(400, 'Say which country is yours (home=AU, for one).');
+        const middle = whereIs((box.south + box.north) / 2, (box.west + box.east) / 2);
+        if (middle && middle.countryCode !== home) {
+          const { account } = caller(req);
+          if (!account || !billing.isPro(account.id)) {
+            throw new HttpError(403, 'Gyms outside the country you chose are part of GymGO Pro.', 'pro_required', { countryCode: middle.countryCode });
+          }
+        }
         if (area.needsFetch(box) && !areaLimiter.allow(`${req.socket.remoteAddress}`, now().getTime())) {
           throw new AreaError(429, 'That’s a lot of searching. Try again in a little while.', 'rate_limited');
         }
@@ -1245,7 +1259,8 @@ export function createApp(options: AppOptions) {
       await route(req, res);
     } catch (error) {
       if (error instanceof HttpError || error instanceof BillingError) {
-        return send(res, error.status, { error: error.message, ...(error.code ? { code: error.code } : {}) });
+        const detail = error instanceof HttpError ? error.detail : undefined;
+        return send(res, error.status, { error: error.message, ...(error.code ? { code: error.code } : {}), ...detail });
       }
       if (error instanceof AuthInputError) {
         return send(res, error.status, { error: error.message });

@@ -17,6 +17,7 @@
     "@gymgo/au-data": "workspace:*",
     "@gymgo/demo-data": "workspace:*",
     "@gymgo/domain": "workspace:*",
+    "@gymgo/eu-data": "workspace:*",
     "@gymgo/melbourne-data": "workspace:*",
     "@gymgo/osm": "workspace:*",
     "@gymgo/usa-data": "workspace:*",

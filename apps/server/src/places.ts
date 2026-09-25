@@ -13,6 +13,7 @@
  * them ("Munich" as well as "München").
  */
 
+import tzlookup from '@photostructure/tz-lookup';
 import type { Db } from './db';
 
 type Fetch = typeof fetch;
@@ -32,6 +33,8 @@ export interface FoundPlace {
   countryCode: string;
   /** A city or town, or a suburb or neighbourhood (sets how far the map zooms). */
   kind: 'city' | 'suburb';
+  /** Its clock, so a visit time there means local time. */
+  timezone: string;
 }
 
 export class PlaceError extends Error {
@@ -71,7 +74,13 @@ export function readPhoton(data: unknown): FoundPlace[] {
     const key = `${p.name.toLowerCase()}|${country}|${typeof p.state === 'string' ? p.state : ''}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push({ name: p.name, region, lat, lng, countryCode: country, kind });
+    let timezone: string;
+    try {
+      timezone = tzlookup(lat, lng);
+    } catch {
+      continue;
+    }
+    out.push({ name: p.name, region, lat, lng, countryCode: country, kind, timezone });
     if (out.length >= MAX_RESULTS) break;
   }
   return out;

@@ -49,9 +49,9 @@ const get = async (path: string) => {
 describe('reading the place finder', () => {
   it('keeps towns and suburbs anywhere, once each, best first', () => {
     expect(readPhoton(BENDIGO)).toEqual([
-      { name: 'Bendigo', region: 'Victoria, Australia', lat: -36.7590183, lng: 144.2826718, countryCode: 'AU', kind: 'city' },
-      { name: 'Bendigo', region: 'Otago, New Zealand', lat: -44.92, lng: 169.34, countryCode: 'NZ', kind: 'suburb' },
-      { name: 'Bendigo', region: 'Scotland, United Kingdom', lat: 58.94, lng: -2.96, countryCode: 'GB', kind: 'suburb' },
+      { name: 'Bendigo', region: 'Victoria, Australia', lat: -36.7590183, lng: 144.2826718, countryCode: 'AU', kind: 'city', timezone: 'Australia/Melbourne' },
+      { name: 'Bendigo', region: 'Otago, New Zealand', lat: -44.92, lng: 169.34, countryCode: 'NZ', kind: 'suburb', timezone: 'Pacific/Auckland' },
+      { name: 'Bendigo', region: 'Scotland, United Kingdom', lat: 58.94, lng: -2.96, countryCode: 'GB', kind: 'suburb', timezone: 'Europe/London' },
     ]);
     expect(readPhoton(null)).toEqual([]);
     expect(readPhoton({ features: [{ properties: { type: 'state', name: 'Texas', countrycode: 'US' }, geometry: { coordinates: [-99, 31] } }] })).toEqual([]);

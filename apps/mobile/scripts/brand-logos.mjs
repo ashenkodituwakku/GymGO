@@ -2,7 +2,7 @@
  * Brand logos for GymGO, from Wikidata and Wikimedia Commons.
  *
  * For every gym brand the data knows (Wikidata IDs from OpenStreetMap's
- * brand:wikidata tags in the US and Australian data, plus a few brands by name), ask Wikidata
+ * brand:wikidata tags in the US, Australian and European data, plus a few brands by name), ask Wikidata
  * for the brand's logo (property P154), read each file's licence and author
  * from its Commons page, and keep only logos under a licence GymGO can use
  * (public domain as a simple logo, CC0 or CC BY/BY-SA). Each is trimmed,
@@ -114,7 +114,7 @@ function fileUrl(file) {
 
 async function main() {
   // Every brand the map-only data knows, in both countries.
-  const data = ['usa-data', 'au-data'].map((pkg) => readFileSync(join(root, 'packages', pkg, 'src', 'data.ts'), 'utf8')).join('\n');
+  const data = ['usa-data', 'au-data', 'eu-data'].map((pkg) => readFileSync(join(root, 'packages', pkg, 'src', 'data.ts'), 'utf8')).join('\n');
   const qids = [...new Set([...data.matchAll(/"brandWikidata": "(Q\d+)"/g)].map((match) => match[1]))].sort();
   const label = 'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }';
   const rows = await sparql(

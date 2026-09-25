@@ -50,6 +50,14 @@ const TABS: Array<{ name: string; href: '/' | '/explore' | '/saved' | '/profile'
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  // The first time GymGO opens, it asks which country is yours: Free covers it.
+  const { prefsReady, prefs } = useApp();
+  const asked = useRef(false);
+  useEffect(() => {
+    if (!prefsReady || prefs.country || prefs.demo || asked.current) return;
+    asked.current = true;
+    router.push({ pathname: '/country', params: { first: '1' } });
+  }, [prefsReady, prefs.country, prefs.demo]);
   // Like iOS 26, the bar floats just above the home indicator.
   const bottom = Math.max(insets.bottom - 12, 14);
   return (

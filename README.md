@@ -185,6 +185,13 @@ is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
   opening hours, from OpenStreetMap. There are no prices, guest hours or
   machine lists yet, so every one says **Call first**. Distances are in
   miles and money in dollars there.
+- **15 European cities**: London, Paris, Berlin, Madrid, Barcelona, Rome,
+  Milan, Amsterdam, Dublin, Lisbon, Vienna, Munich, Stockholm, Copenhagen and
+  Zurich, with 600 real gyms between them (the 40 nearest each centre), and
+  the districts the search box knows there, under their local names.
+  **Map-only**, like the Australian and US cities: every one says **Call
+  first**. Distances are in miles in London and kilometres elsewhere; visit
+  prices aren't kept in Europe yet, so they're simply unknown.
 - **Demo mode** (Profile → Preferences, off to start): invented gyms in inner
   Sydney that show every case GymGO handles, from "Good to go" to "Not a
   fit". Turning it on hides every real gym, and turning it off hides every
@@ -432,15 +439,19 @@ Looking places up by name uses Photon's public server; set
 
 ### GymGO Pro (subscriptions, through Stripe)
 
-GymGO has two plans. **Free** is everything that tells you the truth about a
-gym: every gym and city, the answer for your visit and why, the source behind
-every fact, prices and hours where published, reviews, photos, members'
-machine reports and the workout builder. That is never behind Pro.
+GymGO has two plans. When it first opens it asks **which country is
+yours**; you can change it in Profile → Country. **Free** is everything that
+tells you the truth about a gym in that country: every gym and city, the
+answer for your visit and why, the source behind every fact, prices and hours
+where published, reviews, photos, members' machine reports and the workout
+builder. A gym's page opened from a link or your saved list always opens,
+wherever the gym is.
 
-**Pro** is for keeping more:
+**Pro** is for going further and keeping more:
 
 | | Free | Pro |
 |---|---|---|
+| Gyms worldwide | Your country | Every country, wherever you travel |
 | Saved gyms | Up to 10 | Unlimited |
 | Compare side by side | 2 gyms | 4 gyms |
 | Workout library | Build and share | Save workouts to your account, reopen them on any device |
@@ -597,6 +608,8 @@ packages/usa-data/   477 real gyms in 15 US cities, map-only, from
 packages/au-data/    269 more Australian gyms the same way (Sydney,
                      Brisbane, Perth, Adelaide, Canberra, Gold Coast,
                      Hobart, and Melbourne beyond the researched 23).
+packages/eu-data/    600 real gyms in 15 European cities, map-only, the
+                     same way (scripts/fetch.py, then scripts/generate.ts).
 packages/osm/        What counts as a gym on OpenStreetMap, and how a mapped
                      gym becomes a map-only record: one copy, used by both
                      generators and by the server's "Search this area".

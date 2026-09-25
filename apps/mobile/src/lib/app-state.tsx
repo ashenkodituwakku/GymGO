@@ -10,8 +10,10 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { LIMITS, haversineKm } from '@gymgo/domain';
+import { ApiError } from './api';
+import { canSearchIn, openingPlace } from './country';
 import { setHapticsEnabled } from './haptics';
 import { currentFix, type Fix } from './location';
 import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, type City } from './places';
@@ -42,6 +44,10 @@ export type Located =
   | { kind: 'area'; fix: Fix; gyms: number; radiusKm: number; countryCode: string }
   /** Outside every city GymGO covers: the search went to the nearest one. */
   | { kind: 'nearest'; fix: Fix; city: City; km: number }
+  /** The map around you couldn't be searched: the search went to your country's opening place. */
+  | { kind: 'home'; fix: Fix; placeName: string }
+  /** In another country than the one you chose, without Pro: the search stays at home. */
+  | { kind: 'abroad'; fix: Fix; countryCode: string; home: string }
   | { kind: 'denied' }
   | { kind: 'unavailable' };
 
@@ -53,6 +59,11 @@ export interface Prefs {
    * Sydney streets.
    */
   demo: boolean;
+  /**
+   * The country you chose (ISO 3166-1): GymGO Free covers it, Pro every
+   * country. Null until chosen, and until then nothing is shut.
+   */
+  country: string | null;
 }
 
 const RECENTS_KEY = 'gymgo.recents.v1';
@@ -62,7 +73,7 @@ const ASKED_KEY = 'gymgo.location-asked.v1';
 const MAX_RECENTS = 10;
 
 /** Why the Pro screen opened, so it can say so. */
-export type ProReason = 'saved' | 'compare' | 'workouts';
+export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide';
 
 type AppState = {
   data: ReturnType<typeof useGymData>;
@@ -83,6 +94,12 @@ type AppState = {
   billing: ReturnType<typeof useBilling>;
   /** Show the Pro screen, e.g. when a Free limit is reached. */
   openPro: (reason?: ProReason) => void;
+  /** Whether gyms in this country can be searched: yours, or any with Pro. */
+  mayExplore: (countryCode: string) => boolean;
+  /** Make this country yours, and take the search there. */
+  chooseCountry: (code: string) => void;
+  /** Prefs have been read from the device (so a missing country really is missing). */
+  prefsReady: boolean;
   /** Where you are, from this session's last fix. Memory only. */
   here: Fix | null;
   /** Find you and move the search there (or to the nearest city covered). */
@@ -133,7 +150,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [recents, setRecents] = useState<string[]>([]);
   const [compare, setCompare] = useState<string[]>([]);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
-  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, demo: false });
+  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, demo: false, country: null });
+  const [prefsReady, setPrefsReady] = useState(false);
   // Place search reads the mode, so it must match before anything renders.
   setDemoMode(prefs.demo);
   const [here, setHere] = useState<Fix | null>(null);
@@ -143,11 +161,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (Array.isArray(value)) setRecents(value.filter((id): id is string => typeof id === 'string').slice(0, MAX_RECENTS));
     });
     void loadJson<Partial<Prefs>>(PREFS_KEY, {}).then((value) => {
-      const next = { haptics: value.haptics !== false, demo: value.demo === true };
+      const country = typeof value.country === 'string' && /^[A-Z]{2}$/.test(value.country) ? value.country : null;
+      const next = { haptics: value.haptics !== false, demo: value.demo === true, country };
       setHapticsEnabled(next.haptics);
       setDemoMode(next.demo);
       setPrefs(next);
+      setPrefsReady(true);
       if (next.demo) setFilters((current) => moveTo(current, atPlace(homePlace())));
+      else if (country) {
+        // Open in your country, unless a place was already picked.
+        const opening = openingPlace(country);
+        if (opening) setFilters((current) => (current.placeName === DEFAULT_PLACE.name ? moveTo(current, opening) : current));
+      }
     });
   }, []);
 
@@ -158,36 +183,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
     void ensureGyms([...accountApi.saved, ...recents, ...compare]);
   }, [ensureGyms, accountApi.saved, recents, compare, data.status]);
 
+  // What finding you needs to know, read when it runs rather than making it anew each change.
+  const reachRef = useRef({ home: prefs.country, pro: billing.isPro, token: accountApi.token });
+  reachRef.current = { home: prefs.country, pro: billing.isPro, token: accountApi.token };
+
   const { searchArea } = data;
   const findMe = useCallback(async (ask: boolean, onlyIfUntouched: boolean): Promise<Located> => {
     const fix = await currentFix(ask);
     if (fix === 'denied' || fix === 'unavailable') return { kind: fix };
     setHere(fix);
+    const { home, pro, token } = reachRef.current;
     const city = cityNear(fix.position);
+    // In a built-in city in another country, without Pro: stay at home.
+    if (city && home && !canSearchIn(city.country, home, pro)) return { kind: 'abroad', fix, countryCode: city.country, home };
     // Outside the cities GymGO carries: search the map around you, anywhere
     // in the world, and only failing that (no server, or out at sea), go to
     // the nearest city it carries.
     let around: { timezone: string; countryCode: string; gyms: number; radiusKm: number } | null = null;
-    if (!city) {
+    if (!city && home) {
       // Whole map tiles around you, never your position: see tilesAround().
       const box = tilesAround(fix.position);
       try {
-        const answer = await searchArea(box);
+        const answer = await searchArea(box, home, token);
         if (answer.where) {
           // Distances are worked out here, on the device, from your real position.
           const reach = reachFor(answer.gyms.map((gym) => haversineKm(fix.position, gym.location.position)));
           around = { ...answer.where, gyms: reach.count, radiusKm: reach.radiusKm };
         }
-      } catch {
-        // Unreachable: the nearest city it is.
+      } catch (error) {
+        // Abroad without Pro: say so, and stay at home. Unreachable: see below.
+        if (error instanceof ApiError && error.code === 'pro_required' && typeof error.detail.countryCode === 'string') {
+          return { kind: 'abroad', fix, countryCode: error.detail.countryCode, home };
+        }
       }
     }
-    const nearest = city || around ? null : nearestCity(fix.position);
+    // Failing that: your country's opening place, or (no country chosen) the nearest built-in city.
+    const fallback = city || around || !home ? null : openingPlace(home);
+    const nearest = city || around || fallback ? null : nearestCity(fix.position);
     const where = city
       ? { centre: fix.position, placeName: YOUR_LOCATION, timezone: city.timezone, countryCode: city.country }
       : around
         ? { centre: fix.position, placeName: YOUR_LOCATION, timezone: around.timezone, countryCode: around.countryCode }
-        : atPlace(cityPlace(nearest!.city));
+        : (fallback ?? atPlace(cityPlace(nearest!.city)));
     const reach = (next: Filters) => (around ? { ...next, radiusKm: around.radiusKm } : next);
     setFilters((current) => {
       if (!onlyIfUntouched) return reach(moveTo(current, where));
@@ -199,21 +236,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     if (city) return { kind: 'here', fix, city };
     if (around) return { kind: 'area', fix, gyms: around.gyms, radiusKm: around.radiusKm, countryCode: around.countryCode };
+    if (fallback) return { kind: 'home', fix, placeName: fallback.placeName };
     return { kind: 'nearest', fix, city: nearest!.city, km: nearest!.km };
   }, [searchArea]);
 
   const locate = useCallback((ask: boolean) => findMe(ask, false), [findMe]);
 
   // Open where you are. The first launch asks once; after that, only if
-  // you've allowed it. The fix itself is never stored.
+  // you've allowed it. The fix itself is never stored. It waits for your
+  // country, which the first launch asks for first.
+  const openedHere = useRef(false);
   useEffect(() => {
+    if (!prefsReady || !prefs.country || openedHere.current) return;
+    openedHere.current = true;
     let cancelled = false;
     void (async () => {
       const asked = await loadJson<boolean>(ASKED_KEY, false);
       if (cancelled) return;
       if (!asked) storeJson(ASKED_KEY, true);
       const result = await findMe(!asked, true);
-      if (!cancelled && (result.kind === 'here' || result.kind === 'nearest' || result.kind === 'area')) {
+      if (!cancelled && result.kind !== 'denied' && result.kind !== 'unavailable') {
         const notice = locatedNotice(result) ?? undefined;
         setExploreRequest((current) => ({ recentre: true, notice, nonce: (current?.nonce ?? 0) + 1 }));
       }
@@ -221,7 +263,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [findMe]);
+  }, [findMe, prefsReady, prefs.country]);
 
   const addRecent = useCallback((gymId: string) => {
     setRecents((current) => {
@@ -254,6 +296,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const requestExplore = useCallback((request: Omit<ExploreRequest, 'nonce'>) => {
     setExploreRequest((current) => ({ ...request, nonce: (current?.nonce ?? 0) + 1 }));
   }, []);
+
+  const mayExplore = useCallback((countryCode: string) => canSearchIn(countryCode, prefs.country, billing.isPro), [prefs.country, billing.isPro]);
+
+  const chooseCountry = useCallback((code: string) => {
+    setPrefs((current) => {
+      const next = { ...current, country: code };
+      storeJson(PREFS_KEY, next);
+      return next;
+    });
+    const opening = openingPlace(code);
+    if (opening && !prefs.demo) setFilters((current) => moveTo(current, opening));
+    setExploreRequest((current) => ({ recentre: true, nonce: (current?.nonce ?? 0) + 1 }));
+  }, [prefs.demo]);
 
   const setPref = useCallback(<K extends keyof Prefs>(key: K, value: Prefs[K]) => {
     setPrefs((current) => {
@@ -295,10 +350,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setPref,
       billing,
       openPro,
+      mayExplore,
+      chooseCountry,
+      prefsReady,
       here,
       locate,
     }),
-    [visibleData, account, filters, recents, addRecent, clearRecents, compare, toggleCompare, clearCompare, exploreRequest, requestExplore, prefs, setPref, billing, openPro, here, locate],
+    [visibleData, account, filters, recents, addRecent, clearRecents, compare, toggleCompare, clearCompare, exploreRequest, requestExplore, prefs, setPref, billing, openPro, mayExplore, chooseCountry, prefsReady, here, locate],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

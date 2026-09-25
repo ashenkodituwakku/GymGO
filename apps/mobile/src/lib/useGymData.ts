@@ -115,10 +115,14 @@ export function useGymData() {
     void refresh();
   }, [refresh]);
 
-  /** Ask the server for the gyms on the map in this box; they join the records. Throws when it can't. */
+  /**
+   * Ask the server for the gyms on the map in this box; they join the
+   * records. `home` is your country (elsewhere needs Pro, so `token` says
+   * who's asking). Throws when it can't, `pro_required` included.
+   */
   const searchArea = useCallback(
-    async (box: BoundingBox) => {
-      const answer = await api.area(box);
+    async (box: BoundingBox, home: string, token: string | null) => {
+      const answer = await api.area(box, home, token);
       addFound(answer.gyms);
       return answer;
     },

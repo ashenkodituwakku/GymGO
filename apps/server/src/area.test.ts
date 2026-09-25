@@ -70,8 +70,8 @@ async function call(method: string, path: string, token?: string) {
   return { status: response.status, body: text ? JSON.parse(text) : null };
 }
 
-const areaPath = (box: { south: number; west: number; north: number; east: number }) =>
-  `/api/area?south=${box.south}&west=${box.west}&north=${box.north}&east=${box.east}`;
+const areaPath = (box: { south: number; west: number; north: number; east: number }, home = 'AU') =>
+  `/api/area?south=${box.south}&west=${box.west}&north=${box.north}&east=${box.east}&home=${home}`;
 
 describe('where a point is', () => {
   it('knows the country and time zone anywhere on land', () => {
@@ -165,7 +165,7 @@ describe('Search this area', () => {
       { type: 'node', id: 21, lat: -36.848, lon: 174.763, tags: { leisure: 'fitness_centre', name: 'Les Mills Auckland City', 'addr:street': 'Victoria Street West', 'addr:housenumber': '186', 'addr:postcode': '1010' } },
       { type: 'node', id: 22, lat: -36.85, lon: 174.77, tags: { leisure: 'fitness_centre', name: 'Kraftraum', 'addr:street': 'Queen Street', 'addr:housenumber': '9', 'addr:country': 'DE' } },
     ];
-    const result = await call('GET', areaPath({ south: -36.9, west: 174.7, north: -36.8, east: 174.8 }));
+    const result = await call('GET', areaPath({ south: -36.9, west: 174.7, north: -36.8, east: 174.8 }, 'NZ'));
     expect(result.status).toBe(200);
     expect(result.body.where).toEqual({ countryCode: 'NZ', timezone: 'Pacific/Auckland' });
     const [les, kraftraum] = result.body.gyms as GymRecord[];
@@ -196,9 +196,39 @@ describe('Search this area', () => {
     mapped = [
       { type: 'node', id: 31, lat: 52.52, lon: 13.405, tags: { leisure: 'fitness_centre', name: 'Kraftwerk Gym', 'addr:street': 'Rathausstraße', 'addr:housenumber': '5', 'addr:postcode': '10178', 'addr:city': 'Berlin' } },
     ];
-    const result = await call('GET', areaPath({ south: 52.5, west: 13.38, north: 52.54, east: 13.42 }));
+    const result = await call('GET', areaPath({ south: 52.5, west: 13.38, north: 52.54, east: 13.42 }, 'DE'));
     expect(result.body.gyms[0].location.address).toMatchObject({ countryCode: 'DE', line1: 'Rathausstraße 5', suburb: 'Berlin', postcode: '10178' });
     expect(result.body.where.timezone).toBe('Europe/Berlin');
+  });
+
+  it('keeps other countries for Pro: a Free search abroad is refused before the map is read', async () => {
+    const berlin = { south: 52.5, west: 13.38, north: 52.54, east: 13.42 };
+    const refused = await call('GET', areaPath(berlin, 'AU'));
+    expect(refused.status).toBe(403);
+    expect(refused.body).toMatchObject({ code: 'pro_required', countryCode: 'DE' });
+    expect(overpassCalls).toHaveLength(0);
+    // Saying no country at all isn't an answer.
+    expect((await call('GET', areaPath(berlin, ''))).status).toBe(400);
+  });
+
+  it('lets a Pro account search any country', async () => {
+    const signup = await fetch(`${base}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'traveller@example.com', password: 'correct horse', displayName: 'Traveller' }),
+    }).then((response) => response.json() as Promise<{ token: string; account: { id: string } }>);
+    db.prepare(
+      `insert into subscriptions (stripe_subscription_id, user_id, status, interval, currency, amount_minor, price_lookup_key, current_period_end, cancel_at, cancel_at_period_end, updated_at)
+       values ('sub_test_traveller', ?, 'active', 'year', 'aud', 2999, 'gymgo_pro_year_aud', '2027-09-25T00:00:00Z', null, 0, '2026-09-25T00:00:00Z')`,
+    ).run(signup.account.id);
+    mapped = [{ type: 'node', id: 41, lat: 48.86, lon: 2.35, tags: { leisure: 'fitness_centre', name: 'Club Rivoli' } }];
+    const response = await fetch(`${base}${areaPath({ south: 48.84, west: 2.33, north: 48.88, east: 2.37 }, 'AU')}`, {
+      headers: { authorization: `Bearer ${signup.token}` },
+    });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { gyms: GymRecord[]; where: { countryCode: string } };
+    expect(body.where.countryCode).toBe('FR');
+    expect(body.gyms.map((gym) => gym.location.name)).toEqual(['Club Rivoli']);
   });
 
   it('searches the sea without complaint, and finds nothing there', async () => {

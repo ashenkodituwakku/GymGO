@@ -70,6 +70,7 @@ export default function RootLayout() {
             <Stack.Screen name="workouts/index" options={{ headerShown: true, title: 'My workouts' }} />
             <Stack.Screen name="workouts/[id]" options={{ headerShown: true, title: 'Workout' }} />
             <Stack.Screen name="pro" options={{ headerShown: true, title: 'GymGO Pro', presentation: 'modal' }} />
+            <Stack.Screen name="country" options={{ headerShown: true, title: 'Country', presentation: 'modal' }} />
           </Stack>
         </AppProvider>
       </SafeAreaProvider>

@@ -137,6 +137,29 @@ describe('places', () => {
     expect([tracksPrices('AU'), tracksPrices('US'), tracksPrices('GB'), tracksPrices('JP')]).toEqual([true, true, false, false]);
   });
 
+  it('knows fifteen European cities, by English and local names, accents or not', () => {
+    expect(geocodePlace('London').place?.city).toBe('london');
+    for (const [typed, city] of [['Zürich', 'zurich'], ['zurich', 'zurich'], ['München', 'munich'], ['muenchen', 'munich'], ['Wien', 'vienna'], ['Lisboa', 'lisbon'], ['kobenhavn', 'copenhagen']] as const) {
+      expect(geocodePlace(typed).place?.city).toBe(city);
+    }
+    expect(cityAt({ lat: 48.86, lng: 2.35 }).id).toBe('paris');
+    expect(CITIES.london).toMatchObject({ country: 'GB', region: 'UK', timezone: 'Europe/London', mapOnly: true, demo: false });
+    expect(CITIES.munich.timezone).toBe('Europe/Berlin');
+  });
+
+  it('shows London’s gyms in miles and Berlin’s in kilometres, prices unknown in both', () => {
+    const asOf = new Date('2026-09-24T14:00:00Z');
+    for (const [name, unit] of [['London', 'mi'], ['Berlin', 'km']] as const) {
+      const filters = moveTo(initialFilters(asOf), atPlace(geocodePlace(name).place!), asOf);
+      expect(tracksPrices(filters.countryCode)).toBe(false);
+      const outcome = runSearch({ ...filters, radiusKm: 3 }, { records: BUNDLED_GYMS }, asOf);
+      expect(outcome.results.length).toBeGreaterThan(10);
+      const first = outcome.results[0]!;
+      expect(distanceLabel(first.distanceKm!, first.record.location.address.countryCode)).toMatch(new RegExp(`${unit}$|\\d m$`));
+      for (const result of outcome.results) expect(result.record.offers).toEqual([]);
+    }
+  });
+
   it('shows real, map-only gyms in New York, on New York time, with nothing invented', () => {
     const asOf = new Date('2026-09-24T14:00:00Z');
     const filters = moveTo(initialFilters(asOf), atPlace(geocodePlace('New York').place!), asOf);

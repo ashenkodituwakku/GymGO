@@ -12,6 +12,7 @@
  */
 
 import type { AccessVerdict, ResultTier } from '@gymgo/domain';
+import { countryInSentence } from './country';
 import { distanceLabel, usesMiles } from './places';
 
 export interface TierCopy {
@@ -122,6 +123,8 @@ export function locatedNotice(
     | { kind: 'here'; fix: { approximate: boolean } }
     | { kind: 'area'; fix: { approximate: boolean }; gyms: number; radiusKm: number; countryCode: string }
     | { kind: 'nearest'; km: number; city: { name: string; country: string } }
+    | { kind: 'home'; placeName: string }
+    | { kind: 'abroad'; countryCode: string; home: string }
     | { kind: 'denied' }
     | { kind: 'unavailable' },
 ): string | null {
@@ -132,6 +135,10 @@ export function locatedNotice(
       return EMPTY.locationUnavailable;
     case 'nearest':
       return `Couldn't search the map around you just now, so here's ${result.city.name}, the nearest city GymGO has built in (${distanceLabel(result.km, result.city.country)} away).`;
+    case 'home':
+      return `Couldn't search the map around you just now, so here's ${result.placeName}.`;
+    case 'abroad':
+      return `You're in ${countryInSentence(result.countryCode)}. GymGO Free covers ${countryInSentence(result.home)}, the country you chose; gyms everywhere else are part of Pro. Here's ${countryInSentence(result.home)}.`;
     case 'here':
       return result.fix.approximate ? EMPTY.locationApproximate : null;
     case 'area': {

@@ -24,8 +24,9 @@ import { ActionSheetIOS, ActivityIndicator, Keyboard, Platform, Pressable, Scrol
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isWithinBox, type BoundingBox } from '@gymgo/domain';
 import { MELBOURNE_ATTRIBUTION } from '@gymgo/melbourne-data';
-import { api, problemText, type FoundPlace } from '@/lib/api';
+import { ApiError, api, problemText, type FoundPlace } from '@/lib/api';
 import { EMPTY, locatedNotice } from '@/lib/copy';
+import { openingPlace } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { cityAt, cityNear, geocodePlace, type AppPlace } from '@/lib/places';
 import { useApp } from '@/lib/app-state';
@@ -83,7 +84,7 @@ function MapScreen() {
   // The time-zone self-check runs once; its answer can't change mid-session.
   const selfCheck = useMemo(() => checkTimeZoneSupport(), []);
 
-  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe, prefs } = useApp();
+  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe, prefs, mayExplore, openPro } = useApp();
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -112,7 +113,13 @@ function MapScreen() {
   // "As of" is fixed per render pass so the list and the card agree on
   // freshness; it moves on whenever the filters or data do.
   const asOf = useMemo(() => new Date(), [filters, data.records]);
-  const outcome = useMemo(() => runSearch(filters, { records: data.records }, asOf), [filters, data.records, asOf]);
+  // Another country than yours, without Pro: no pins or list, just the way to Pro (or home).
+  const locked = mayExplore(filters.countryCode) ? null : { country: filters.countryCode, home: prefs.country ?? filters.countryCode };
+  const searchable = useMemo(() => data.records.filter((record) => mayExplore(record.location.address.countryCode)), [data.records, mayExplore]);
+  const outcome = useMemo(() => {
+    const found = runSearch(filters, { records: data.records }, asOf);
+    return locked ? { ...found, results: [] } : found;
+  }, [filters, data.records, asOf, locked === null]);
   const pins: MapPin[] = useMemo(
     () =>
       outcome.results.map((result) => ({
@@ -146,6 +153,8 @@ function MapScreen() {
   // openGym and searchBox are defined below; the search reaches them through these refs.
   const openGymRef = useRef<(id: string) => void>(() => undefined);
   const searchBoxRef = useRef<(box: BoundingBox, named?: FoundPlace) => Promise<void>>(async () => undefined);
+  const mayExploreRef = useRef(mayExplore);
+  mayExploreRef.current = mayExplore;
   /** A typed place the map is flying to, searched once it's there. `from` is the view it left. */
   const pendingPlace = useRef<{ place: FoundPlace; span: number; from: BoundingBox | null; timer: ReturnType<typeof setTimeout> } | null>(null);
   const viewBoxRef = useRef<BoundingBox | null>(null);
@@ -163,6 +172,13 @@ function MapScreen() {
       setQuery('');
       // A town gets about 11 km of map, a suburb about 5.
       const span = found.kind === 'city' ? 0.1 : 0.045;
+      if (!mayExploreRef.current(found.countryCode)) {
+        // Another country, without Pro: go there, and the list says what Pro adds.
+        haptic.warn();
+        setFilters((current) => moveTo(current, { centre: { lat: found.lat, lng: found.lng }, placeName: found.name, timezone: found.timezone, countryCode: found.countryCode }));
+        map.current?.flyTo({ lat: found.lat, lng: found.lng }, span);
+        return;
+      }
       const box = boxAround(found, span);
       if (pendingPlace.current) clearTimeout(pendingPlace.current.timer);
       const timer = setTimeout(() => {
@@ -186,10 +202,10 @@ function MapScreen() {
     // Not a place: maybe a gym's name. Open the best match if it's nearby
     // and the words aren't its town; otherwise look them up as a place
     // anywhere in the world first, falling back to the gym.
-    const gym = suggestGyms(query, data.records, filters.centre, 1)[0];
-    if (gym && enterOpensGym(query, gym, filters.centre, data.records)) return openGymRef.current(gym.location.id);
+    const gym = suggestGyms(query, searchable, filters.centre, 1)[0];
+    if (gym && enterOpensGym(query, gym, filters.centre, searchable)) return openGymRef.current(gym.location.id);
     if (result.outOfArea) void findPlace(query.trim(), gym?.location.id);
-  }, [query, pickPlace, filters.centre, data.records, findPlace]);
+  }, [query, pickPlace, filters.centre, searchable, findPlace]);
 
   // Your precise position, used for this search on this device only.
   const locate = useCallback(async () => {
@@ -225,10 +241,15 @@ function MapScreen() {
   const searchBox = useCallback(
     async (box: BoundingBox, named?: FoundPlace) => {
       if (areaBusy) return;
+      // Free covers the country you chose; until there is one, choose it first.
+      if (!prefs.country) {
+        router.push('/country');
+        return;
+      }
       haptic.tap();
       setAreaBusy(true);
       try {
-        const answer = await data.searchArea(box);
+        const answer = await data.searchArea(box, prefs.country, account.token);
         // What's loaded already, plus what's new (a gym found before counts once).
         const fresh = new Set(answer.gyms.map((record) => record.location.id));
         const inBox = [...answer.gyms, ...data.records.filter((record) => !fresh.has(record.location.id) && isWithinBox(record.location.position, box))];
@@ -258,12 +279,19 @@ function MapScreen() {
         if (!wide && sheetIndex.current === 0) mainSheet.current?.snapToIndex(1);
       } catch (error) {
         haptic.warn();
-        setNotice(problemText(error, 'Couldn’t search this area. Try again?'));
+        if (error instanceof ApiError && error.code === 'pro_required' && typeof error.detail.countryCode === 'string') {
+          // Another country, without Pro: the list says what Pro adds, and the way back.
+          const countryCode = error.detail.countryCode;
+          setFilters((current) => inArea(current, box, named?.name ?? THIS_AREA, { timezone: named?.timezone ?? current.timezone, countryCode }));
+          setNotice(null);
+        } else {
+          setNotice(problemText(error, 'Couldn’t search this area. Try again?'));
+        }
       } finally {
         setAreaBusy(false);
       }
     },
-    [areaBusy, data, filters, setFilters, wide],
+    [areaBusy, data, filters, setFilters, wide, prefs.country, account.token],
   );
   searchBoxRef.current = searchBox;
 
@@ -308,6 +336,15 @@ function MapScreen() {
       </Animated.View>
     </Animated.View>
   );
+
+  /** Back to your own country's opening place, from one Free doesn't cover. */
+  const goHome = useCallback(() => {
+    const opening = prefs.country ? openingPlace(prefs.country) : null;
+    if (!opening) return;
+    haptic.tap();
+    setFilters((current) => moveTo(current, opening));
+    map.current?.flyTo(opening.centre, 0.06);
+  }, [prefs.country, setFilters]);
 
   // --- Selecting a gym ------------------------------------------------------
 
@@ -462,7 +499,10 @@ function MapScreen() {
       onSort={chooseSort}
       covers={data.covers}
       memberPrices={data.memberPrices}
-      records={data.records}
+      records={searchable}
+      locked={locked}
+      onSeePro={() => openPro('worldwide')}
+      onGoHome={goHome}
     />
   );
 

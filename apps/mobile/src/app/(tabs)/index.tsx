@@ -18,6 +18,7 @@ import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { EMPTY, timeLabel } from '@/lib/copy';
+import { countryInSentence } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityNear, cityPlace, moneyLabel, tracksPrices, type AppPlace } from '@/lib/places';
 import { atPlace, moveTo, nearLabel, nextVisitAt, runSearch, type Filters } from '@/lib/query';
@@ -44,14 +45,16 @@ const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
 ];
 
 export default function Home() {
-  const { data, account, filters, setFilters, recents, clearRecents, requestExplore } = useApp();
+  const { data, account, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs } = useApp();
+  // Another country than yours, without Pro: no gyms listed, just the way to Pro.
+  const locked = !mayExplore(filters.countryCode);
   const router = useRouter();
 
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   const outcome = useMemo(() => runSearch(filters, { records: data.records }, asOf), [filters, data.records, asOf]);
   const byId = useMemo(() => resultsById(filters, data.records, asOf), [filters, data.records, asOf]);
 
-  const nearby = outcome.results.slice(0, 10);
+  const nearby = locked ? [] : outcome.results.slice(0, 10);
   const saved = account.saved.map((id) => byId.get(id)).filter((result) => result !== undefined);
   const recent = recents.map((id) => byId.get(id)).filter((result) => result !== undefined);
   const clock = new Date();
@@ -181,7 +184,23 @@ export default function Home() {
           {filters.equipment.length ? `, with ${filters.equipment.length} must-have${filters.equipment.length > 1 ? 's' : ''}` : ''}. Hold a
           card for more.
         </Txt>
-        {nearby.length ? (
+        {locked ? (
+          <Pressable
+            onPress={() => openPro('worldwide')}
+            accessibilityRole="button"
+            accessibilityLabel={`Gyms in ${countryInSentence(filters.countryCode)} are part of GymGO Pro. See GymGO Pro`}
+            style={({ pressed }) => [styles.locked, pressed && { opacity: 0.8 }]}
+          >
+            <Icon name="globe" size={22} color={color.brand} />
+            <View style={styles.lockedText}>
+              <Txt variant="headline">Gyms in {countryInSentence(filters.countryCode)} are part of GymGO Pro</Txt>
+              <Txt variant="footnote" color={color.labelSecondary}>
+                Free covers {prefs.country ? countryInSentence(prefs.country) : 'your country'}. Pro finds gyms in every country.
+              </Txt>
+            </View>
+            <Icon name="chevron" size={14} color={color.labelTertiary} />
+          </Pressable>
+        ) : nearby.length ? (
           <Carousel>
             {nearby.map((result, index) => (
               <GymCard key={result.record.location.id} result={result} index={index} />
@@ -261,12 +280,17 @@ export default function Home() {
                       key={item.id}
                       onPress={() => goToPlace(cityPlace(item))}
                       accessibilityRole="button"
-                      accessibilityLabel={`${item.name}, ${label === 'Europe' ? item.region : label}`}
-                      style={({ pressed }) => [styles.suburb, pressed && { opacity: 0.7 }]}
+                      accessibilityLabel={`${item.name}, ${label === 'Europe' ? item.region : label}${mayExplore(item.country) ? '' : ', with GymGO Pro'}`}
+                      style={({ pressed }) => [styles.suburb, styles.cityChip, pressed && { opacity: 0.7 }]}
                     >
                       <Txt variant="subhead" style={face('medium')}>
                         {item.name}
                       </Txt>
+                      {!mayExplore(item.country) && (
+                        <Txt variant="caption" color={color.brand} style={styles.proTag}>
+                          PRO
+                        </Txt>
+                      )}
                     </Pressable>
                   ))}
                 </View>
@@ -358,6 +382,17 @@ const styles = StyleSheet.create({
   country: { gap: space[2] },
   countryLabel: { ...face('semibold'), letterSpacing: 0.6 },
   anywhere: { marginBottom: space[3] },
+  locked: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    padding: space[4],
+    borderRadius: radius.lg,
+    backgroundColor: color.brandTint,
+  },
+  proTag: { ...face('bold'), letterSpacing: 0.6 },
+  lockedText: { flex: 1, gap: 2 },
+  cityChip: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   suburbs: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   suburb: { paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.background, ...shadow.card },
   suburbOn: { backgroundColor: color.brand },

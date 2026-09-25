@@ -2,9 +2,9 @@
  * Where the search box can take you.
  *
  * Inner Melbourne is real: real gyms, each fact sourced. Seven more
- * Australian cities, Sydney among them, and fifteen US cities are real too,
- * but map-only: gyms from OpenStreetMap, with no prices and no guest hours
- * until a gym publishes them.
+ * Australian cities, Sydney among them, fifteen US cities and fifteen
+ * European ones are real too, but map-only: gyms from OpenStreetMap, with no
+ * prices and no guest hours until a gym publishes them.
  *
  * The invented demo gyms, kept so every edge case can still be tried, sit on
  * inner-Sydney streets too. So they only appear in demo mode, and demo mode
@@ -18,15 +18,17 @@ import { PILOT_CENTRE, PILOT_PLACES, PILOT_TIMEZONE } from '@gymgo/demo-data';
 import { MELBOURNE, MELBOURNE_CENTRE, MELBOURNE_PLACES } from '@gymgo/melbourne-data';
 import { AU_CITIES, AU_PLACES, type AuCityId } from '@gymgo/au-data';
 import { US_CITIES, US_PLACES, type UsCityId } from '@gymgo/usa-data';
+import { EU_CITIES, EU_PLACES, type EuCityId } from '@gymgo/eu-data';
 
-export type CityId = 'melbourne' | 'sydney-demo' | AuCityId | UsCityId;
+export type CityId = 'melbourne' | 'sydney-demo' | AuCityId | UsCityId | EuCityId;
 
 export interface City {
   id: CityId;
   name: string;
-  /** "VIC", "NY"… */
+  /** "VIC", "NY"; in Europe, the country ("UK", "France"). */
   region: string;
-  country: 'AU' | 'US';
+  /** ISO 3166-1 alpha-2. */
+  country: string;
   timezone: string;
   centre: LatLng;
   /** Beyond this from the centre, "near you" would list nothing useful. */
@@ -99,6 +101,23 @@ export const CITIES: Record<CityId, City> = {
       } satisfies City,
     ]),
   ) as Record<UsCityId, City>),
+  ...(Object.fromEntries(
+    EU_CITIES.map((city) => [
+      city.id,
+      {
+        id: city.id,
+        name: city.name,
+        region: city.countryName,
+        country: city.country,
+        timezone: city.timezone,
+        centre: city.centre,
+        reachKm: Math.max(15, city.radiusKm * 2.5),
+        aliases: city.aliases,
+        demo: false,
+        mapOnly: true,
+      } satisfies City,
+    ]),
+  ) as Record<EuCityId, City>),
 };
 
 /** Real cities first, Melbourne leading, then Australia's others; the demo last. */
@@ -106,6 +125,7 @@ export const CITY_LIST: City[] = [
   CITIES.melbourne,
   ...AU_CITIES.map((city) => CITIES[city.id]),
   ...US_CITIES.map((city) => CITIES[city.id]),
+  ...EU_CITIES.map((city) => CITIES[city.id]),
   CITIES['sydney-demo'],
 ];
 
@@ -125,6 +145,9 @@ export const PLACES: AppPlace[] = [
   // Each US city by name, then its neighborhoods.
   ...US_CITIES.map((city) => ({ name: city.name, postcode: '', position: city.centre, city: city.id })),
   ...US_PLACES.map((place) => ({ name: place.name, postcode: '', position: place.position, city: place.city })),
+  // Each European city by name, then its districts (local names).
+  ...EU_CITIES.map((city) => ({ name: city.name, postcode: '', position: city.centre, city: city.id })),
+  ...EU_PLACES.map((place) => ({ name: place.name, postcode: '', position: place.position, city: place.city })),
   ...PILOT_PLACES.map((place) => ({ ...place, city: 'sydney-demo' as const })),
 ];
 
@@ -159,10 +182,13 @@ const activePlaces = (): AppPlace[] => PLACES.filter((place) => CITIES[place.cit
 /** Where the app opens: Melbourne, or the demo's first suburb in demo mode. */
 export const homePlace = (): AppPlace => (demoMode ? cityPlace(CITIES['sydney-demo']) : DEFAULT_PLACE);
 
+// Accents don't count: "zurich" finds Zürich, "lavapies" Lavapiés.
 const normalise = (value: string) =>
   value
     .trim()
     .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[.’']/g, '')
     .replace(/\s+/g, ' ');
 
@@ -232,6 +258,7 @@ export function suggestPlaces(query: string, limit = 6, prefer?: CityId): AppPla
 export function placeContext(place: AppPlace): string {
   const city = CITIES[place.city];
   if (place.name === city.name) return city.country === 'US' ? `${city.region}, USA` : city.region;
+  // In Europe the region is the country: "Shoreditch · London, UK".
   if (city.country === 'US' || city.mapOnly) return `${city.name}, ${city.region}`;
   return place.postcode ? `${city.region} ${place.postcode}` : city.region;
 }

@@ -61,8 +61,16 @@ search box knows there, also come from OpenStreetMap (© OpenStreetMap
 contributors, ODbL), fetched on 24 September 2026 through the Overpass API.
 They are derived databases under the ODbL: `packages/osm` (what counts as
 a gym) and each package's `scripts/generate.ts` (`packages/usa-data`,
-`packages/au-data`) show exactly how they were filtered, and every gym
-links back to its map element.
+`packages/au-data`, `packages/eu-data`) show exactly how they were
+filtered, and every gym links back to its map element. The 600 gyms in 15
+European cities, and their districts, were fetched the same way on 25
+September 2026.
+
+The list of countries you can choose (their codes and English names) comes
+from [country-coder](https://github.com/rapideditor/country-coder) (ISC);
+each capital, where the app opens in a country without a built-in city, from
+[Wikidata](https://www.wikidata.org) (CC0), with its time zone from
+tz-lookup. `apps/mobile/scripts/countries.mjs` rebuilds it.
 
 "Search this area" reads the same map live, through the Overpass API, for
 wherever the map is showing; those gyms are filtered by the same rules and

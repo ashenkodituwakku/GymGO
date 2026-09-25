@@ -10,6 +10,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 're
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE } from './motion';
 import { explainNoMatches, haversineKm, type GymRecord, type SearchOutcome } from '@gymgo/domain';
+import { countryInSentence } from '@/lib/country';
 import { suggestGyms } from '@/lib/gymSearch';
 import { cityAt, distanceLabel, moneyLabel, placeContext, suggestPlaces, tracksPrices, type AppPlace } from '@/lib/places';
 import { EMPTY, PLACEHOLDER, TIER, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
@@ -18,7 +19,7 @@ import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { GymRow } from './GymRow';
 import { Icon } from './Icon';
-import { Chip, TIER_COLOUR, Txt } from './ui';
+import { Chip, PrimaryButton, TIER_COLOUR, Txt } from './ui';
 
 /** A critically-damped spring: rows glide to their new place, no bounce. */
 // Rows gliding when the list re-sorts: the app's one GLIDE (components/motion.tsx).
@@ -46,6 +47,9 @@ export function ResultsContent({
   memberPrices,
   searchRef,
   onSort,
+  locked = null,
+  onSeePro,
+  onGoHome,
 }: {
   outcome: SearchOutcome;
   filters: Filters;
@@ -77,6 +81,10 @@ export function ResultsContent({
   searchRef?: React.RefObject<TextInput | null>;
   /** Choose how the list is ordered. */
   onSort: () => void;
+  /** Searching a country GymGO Free doesn't cover: this one, and yours. */
+  locked?: { country: string; home: string } | null;
+  onSeePro?: () => void;
+  onGoHome?: () => void;
 }) {
   // The sheet-aware input throws in a browser; see TextField in ui.tsx.
   const SearchInput = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
@@ -236,7 +244,7 @@ export function ResultsContent({
           {nearLabel(filters.placeName)}
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
-          {summaryLine(total, outcome.counts.confirmed, filters.visitMinuteOfDay)}
+          {locked ? `In ${countryInSentence(locked.country)}, with GymGO Pro` : summaryLine(total, outcome.counts.confirmed, filters.visitMinuteOfDay)}
         </Txt>
       </View>
 
@@ -246,6 +254,26 @@ export function ResultsContent({
           <Txt variant="footnote" style={styles.noticeText}>
             {notice}
           </Txt>
+        </Animated.View>
+      )}
+
+      {/* Another country, without Pro ------------------------------------- */}
+      {locked && (
+        <Animated.View style={styles.lock} entering={FADE_IN} exiting={FADE_OUT}>
+          <View style={styles.lockBadge}>
+            <Icon name="globe" size={22} color={color.brand} />
+          </View>
+          <Txt variant="headline" style={styles.lockTitle}>
+            Gyms in {countryInSentence(locked.country)} are part of GymGO Pro
+          </Txt>
+          <Txt variant="subhead" color={color.labelSecondary} style={styles.lockText}>
+            GymGO Free covers {countryInSentence(locked.home)}, the country you chose, with every gym in it. Pro finds gyms in every country,
+            wherever you travel.
+          </Txt>
+          <View style={styles.lockButtons}>
+            {onSeePro && <PrimaryButton label="See GymGO Pro" icon="sparkle" onPress={onSeePro} />}
+            {onGoHome && <PrimaryButton label={`Back to ${countryInSentence(locked.home)}`} tone="quiet" onPress={onGoHome} />}
+          </View>
         </Animated.View>
       )}
 
@@ -333,6 +361,24 @@ export function ResultsContent({
 }
 
 const styles = StyleSheet.create({
+  lock: {
+    alignItems: 'center',
+    gap: space[2],
+    padding: space[5],
+    borderRadius: radius.lg,
+    backgroundColor: color.brandTint,
+  },
+  lockBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: color.background,
+  },
+  lockTitle: { textAlign: 'center' },
+  lockText: { textAlign: 'center' },
+  lockButtons: { alignSelf: 'stretch', gap: space[2], marginTop: space[2] },
   wrap: { paddingBottom: space[8] },
 
   searchRow: {

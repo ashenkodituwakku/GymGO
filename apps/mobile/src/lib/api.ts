@@ -34,6 +34,8 @@ export class ApiError extends Error {
     message: string,
     /** The server's reason, when it gives one: `pro_required`, `billing_off`… */
     readonly code: string | null = null,
+    /** Anything else the server said, e.g. `countryCode` for an area that needs Pro. */
+    readonly detail: Record<string, unknown> = {},
   ) {
     super(message);
   }
@@ -49,6 +51,8 @@ export interface FoundPlace {
   /** ISO 3166-1 alpha-2. */
   countryCode: string;
   kind: 'city' | 'suburb';
+  /** Its clock. */
+  timezone: string;
 }
 
 /** The server couldn't be reached at all. */
@@ -91,6 +95,7 @@ async function request<T>(method: string, path: string, options: { token?: strin
       response.status,
       typeof data.error === 'string' ? data.error : 'Something went wrong.',
       typeof data.code === 'string' ? data.code : null,
+      data,
     );
   }
   return data as T;
@@ -253,7 +258,7 @@ export const api = {
   /** One gym by id, including ones found by searching an area. */
   gym: (id: string) => request<{ gym: GymRecord }>('GET', `/api/gyms/${encodeURIComponent(id)}`),
   /** The gyms OpenStreetMap has in a box, anywhere, read live by the server and kept. */
-  area: (box: { south: number; west: number; north: number; east: number }) =>
+  area: (box: { south: number; west: number; north: number; east: number }, home: string, token: string | null) =>
     request<{
       gyms: GymRecord[];
       fetchedAt: string | null;
@@ -268,7 +273,10 @@ export const api = {
         west: box.west.toFixed(5),
         north: box.north.toFixed(5),
         east: box.east.toFixed(5),
+        // Free covers your own country; elsewhere the server wants Pro.
+        home,
       }).toString()}`,
+      { token },
     ),
 
   signUp: (body: { email: string; password: string; displayName: string }) =>

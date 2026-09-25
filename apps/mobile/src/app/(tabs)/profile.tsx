@@ -13,6 +13,7 @@ import { Group, Row, TILE, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
+import { countryName } from '@/lib/country';
 import { downloadMyData } from '@/lib/exportData';
 import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
 import { color, space } from '@/lib/theme';
@@ -132,6 +133,14 @@ export default function Profile() {
           .filter(Boolean)
           .join(' ')}
       >
+        <Row
+          icon="globe"
+          tile={TILE.blue}
+          title="Country"
+          value={prefs.country ? countryName(prefs.country) : 'Choose'}
+          subtitle={billing.isPro ? 'Every country is open with Pro' : 'GymGO Free covers this country'}
+          onPress={() => router.push('/country')}
+        />
         <Row
           icon="sparkle"
           tile={TILE.pink}

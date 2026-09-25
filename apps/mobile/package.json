@@ -19,6 +19,7 @@
     "@gymgo/au-data": "workspace:*",
     "@gymgo/demo-data": "workspace:*",
     "@gymgo/domain": "workspace:*",
+    "@gymgo/eu-data": "workspace:*",
     "@gymgo/melbourne-data": "workspace:*",
     "@gymgo/usa-data": "workspace:*",
     "@react-native-async-storage/async-storage": "2.2.0",

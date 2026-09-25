@@ -35,6 +35,7 @@ const REASON: Record<ProReason, string> = {
   saved: 'You’ve saved as many gyms as Free keeps. Pro saves as many as you like.',
   compare: 'Free compares two gyms at a time. Pro lines up four.',
   workouts: 'Keep your workouts in your account with Pro, and open them on any device.',
+  worldwide: 'GymGO Free covers the country you chose. Pro finds gyms in every country, wherever you travel.',
 };
 
 export default function ProScreen() {
@@ -48,7 +49,7 @@ export default function ProScreen() {
   const [welcome, setWelcome] = useState(false);
   const token = account.token;
   const signedIn = account.state === 'signed_in' && token !== null;
-  const reason = params.reason === 'saved' || params.reason === 'compare' || params.reason === 'workouts' ? params.reason : null;
+  const reason = params.reason && params.reason in REASON ? (params.reason as ProReason) : null;
 
   // Back from Stripe in a browser: confirm with the server before celebrating.
   const { refresh } = billing;

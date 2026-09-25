@@ -32,7 +32,7 @@ branch: don't open another PR unless asked. Before changing anything, read
 
 pnpm monorepo, Node 22. `pnpm install`, then `pnpm verify` (typecheck, lint,
 all tests: at last count domain 120, osm 25, demo 23, melbourne 11, au 11,
-usa 11, web 39, mobile 78, server 103; all passing).
+usa 11, eu 10, web 39, mobile 87, server 106; all passing).
 
 - `apps/mobile`: the app (Expo SDK 57, React Native, expo-router,
   Reanimated). Runs on iOS, Android and in a browser (`npx expo start
@@ -73,40 +73,49 @@ was verified live on Kyoto (68 gyms) and Kreuzberg (68 gyms, in km). Central
 London (Shoreditch) failed: the one reachable Overpass mirror gave up with a
 504.
 
-## What the owner asked for next
+## What the owner asked for next, and how far it got
 
 1. **Make the UI look better, with the Liquid Glass effect throughout.**
-   Liquid Glass exists already (the glass tab-bar capsule, `Glass`
-   surfaces; on iOS 26 it's the system material, and elsewhere a blur
-   fallback). Take it further, tastefully: search bar, results sheet,
-   filter chips, the "Search this area" pill, the status pill, map
-   controls, the place card's header and action buttons, the Home cards.
-   Keep text contrast at WCAG AA over any map, respect Reduce Transparency
-   and Reduce Motion, and keep every control named for screen readers.
-   Take screenshots before and after at phone (390×844) and desktop
-   (1280×860) sizes, and judge them critically. Apple's Maps app on iOS 26
-   is the reference.
-2. **Expand to Europe with built-in gyms**, like the Australian and US
-   city packs. Add a `packages/eu-data` (copy `packages/au-data`'s shape
-   and generator) for major cities: London, Paris, Berlin, Madrid,
-   Barcelona, Rome, Milan, Amsterdam, Dublin, Lisbon, Vienna, Munich,
-   Stockholm, Copenhagen and Zurich, say. Read them from OpenStreetMap once,
-   by script, with the same `packages/osm` rules, and credit them (ODbL) in
-   `CREDITS.md`.
-   - Widen `City.country` in `apps/mobile/src/lib/places.ts` beyond
-     `'AU' | 'US'`.
-   - Group Home's "Other cities" by region (Australia, USA, Europe); see
-     `(['AU', 'US'] as const)` in `src/app/(tabs)/index.tsx`.
-   - Seed the server (`GYM_RECORDS` in `apps/server/src/config.ts`), and
-     keep an eye on bundle size.
-   - Optionally, take visit prices in EUR, GBP and CHF: the A$1–500 range
-     fits them, but not SEK, NOK, DKK, PLN, CZK or HUF. The
-     `price_reports` table has `check (currency in ('AUD','USD'))`, so it
-     needs a table-rebuild migration in `apps/server/src/db.ts`.
-3. **Make dense cities work.** For central London's 504, try splitting the
-   Overpass query (gyms and place names as separate requests), retrying the
-   answering server once, or smaller tiles where a tile is dense. Test it
-   with a stand-in Overpass in `apps/server/src/area.test.ts`.
+   Liquid Glass exists (the glass tab-bar capsule, `Glass` surfaces; on iOS
+   26 it's the system material, and elsewhere a blur fallback). Done so
+   far:
+   - every floating glass control in the browser bends the map at its
+     edges like the tab bar (`refractionFor` in `liquidGlass.web.ts`);
+   - Home, Saved and Profile get a compact title on frosted glass when
+     scrolled (`TabScreen` in `ios.tsx`);
+   - the map's credit no longer hides behind the sheet (`creditInset`);
+   - Home's carousels keep to the page column on wide screens.
+   Still open: the results sheet, filter chips and Home cards could go
+   further. Keep text contrast at WCAG AA over any map, respect Reduce
+   Transparency and Reduce Motion, and keep every control named. Take
+   screenshots before and after at phone (390×844) and desktop (1280×860)
+   sizes, and judge them critically. Apple's Maps app on iOS 26 is the
+   reference.
+2. **Europe: done.** `packages/eu-data` has 600 gyms in 15 cities
+   (London, Paris, Berlin, Madrid, Barcelona, Rome, Milan, Amsterdam,
+   Dublin, Lisbon, Vienna, Munich, Stockholm, Copenhagen, Zurich), rebuilt
+   by `scripts/fetch.py` (bounding-box queries through the mail.ru mirror)
+   then `scripts/generate.ts`. Still open: logos for Europe's chains
+   (`apps/mobile/scripts/brand-logos.mjs` already reads eu-data; run it and
+   check each licence), and optionally visit prices in EUR, GBP and CHF (the
+   A$1–500 range fits them, not SEK, NOK, DKK, PLN, CZK or HUF; the
+   `price_reports` table's `check (currency in ('AUD','USD'))` needs a
+   table-rebuild migration in `apps/server/src/db.ts`).
+3. **Your country is free, the rest of the world is Pro: done.** The owner
+   asked for this. The first launch asks "Where do you train?"
+   (`src/app/country.tsx`, 198 countries from `src/lib/countries.ts`, made
+   by `scripts/countries.mjs` from country-coder and Wikidata), and Profile
+   → Country changes it. `src/lib/country.ts` decides who may search where;
+   outside your country without Pro, Explore and Home show "Gyms in France
+   are part of GymGO Pro" instead of pins and a list. The server refuses a
+   live area search abroad for a non-Pro caller (`home` parameter, 403
+   `pro_required`). Pro can't actually be bought until the owner connects
+   Stripe (README → GymGO Pro), so until then nobody can search abroad.
+4. **Make dense cities work live.** A busy Overpass server (429 or 504)
+   now gets one more try before the next is asked. If central London still
+   fails, split the query (gyms and place names as separate requests), or
+   use smaller tiles where a tile is dense. Test with a stand-in Overpass
+   in `apps/server/src/area.test.ts`.
 
 One thing the owner turned down: clearing the search text when a gym opens
 from the search box (the suggestion list otherwise stays over the card).

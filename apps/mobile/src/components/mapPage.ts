@@ -145,10 +145,10 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
       halo.appendChild(dot);
       userMarker = new maplibregl.Marker({ element: halo, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
     },
-    setPadding: function (top, bottom) {
+    setPadding: function (top, bottom, credit) {
       map.setPadding({ top: top, bottom: bottom, left: 0, right: 0 });
       var corner = document.querySelector('.maplibregl-ctrl-bottom-left');
-      if (corner) corner.style.bottom = (bottom + 6) + 'px';
+      if (corner) corner.style.bottom = ((credit || bottom) + 6) + 'px';
     }
   };
 

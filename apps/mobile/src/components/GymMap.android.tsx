@@ -24,7 +24,7 @@ export type { GymMapHandle, MapPin } from './map-types';
 const COLOURS = Object.fromEntries(Object.entries(TIER_COLOUR).map(([tier, tone]) => [tier, tone.fill]));
 
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
-  { pins, selectedId, initialCentre, bottomInset, topInset, userLocation = null, onSelect, onMapPress, onRegionChange },
+  { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, userLocation = null, onSelect, onMapPress, onRegionChange },
   ref,
 ) {
   const web = useRef<WebView>(null);
@@ -66,8 +66,8 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   }, [userLocation, run]);
 
   useEffect(() => {
-    run(`gymgo.setPadding(${Math.round(topInset)},${Math.round(bottomInset)})`);
-  }, [topInset, bottomInset, run]);
+    run(`gymgo.setPadding(${Math.round(topInset)},${Math.round(bottomInset)},${Math.round(Math.max(bottomInset, creditInset ?? 0))})`);
+  }, [topInset, bottomInset, creditInset, run]);
 
   const onMessage = useCallback((event: WebViewMessageEvent) => {
     let message: PageMessage;

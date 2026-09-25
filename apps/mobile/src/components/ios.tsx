@@ -4,12 +4,14 @@
  * coloured icon tile, a value and a chevron.
  */
 
-import type { ReactNode } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
+import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance } from '@/lib/layout';
 import { color, radius, space } from '@/lib/theme';
+import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
 import { Txt } from './ui';
@@ -32,33 +34,62 @@ export function TabScreen(props: {
   );
 }
 
+/** How tall the compact bar is, below the status bar. */
+const BAR = 44;
+
 function TabScreenInner({ title, eyebrow, right, children }: { title: string; eyebrow?: string; right?: ReactNode; children: ReactNode }) {
   const insets = useSafeAreaInsets();
   const clearance = useBottomClearance();
+  const top = insets.top + (Platform.OS === 'web' ? space[6] : space[3]);
+  // Where the large title ends: once it has scrolled under the bar, the
+  // compact title fades in on a strip of glass, as in iOS.
+  const [titleBottom, setTitleBottom] = useState(96);
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((event) => {
+    scrollY.value = event.contentOffset.y;
+  });
+  const barStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [titleBottom - insets.top - BAR - 8, titleBottom - insets.top - BAR + 12], [0, 1], 'clamp'),
+  }));
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={[
-        styles.content,
-        { paddingTop: insets.top + (Platform.OS === 'web' ? space[6] : space[3]), paddingBottom: clearance + space[8] },
-      ]}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.titleRow}>
-        <View style={styles.flex}>
-          {eyebrow ? (
-            <Txt variant="eyebrow" color={color.labelSecondary}>
-              {eyebrow}
+    <View style={styles.flex}>
+      <Animated.ScrollView
+        style={styles.screen}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={[styles.content, { paddingTop: top, paddingBottom: clearance + space[8] }]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.titleRow} onLayout={(event) => setTitleBottom(event.nativeEvent.layout.y + event.nativeEvent.layout.height)}>
+          <View style={styles.flex}>
+            {eyebrow ? (
+              <Txt variant="eyebrow" color={color.labelSecondary}>
+                {eyebrow}
+              </Txt>
+            ) : null}
+            <Txt variant="largeTitle" accessibilityRole="header">
+              {title}
             </Txt>
-          ) : null}
-          <Txt variant="largeTitle" accessibilityRole="header">
+          </View>
+          {right}
+        </View>
+        {children}
+      </Animated.ScrollView>
+      <Animated.View pointerEvents="none" style={[styles.bar, { height: insets.top + BAR }, barStyle]}>
+        <Glass kind="bar" style={StyleSheet.absoluteFill} />
+        {/* The large title is the heading; this is the same words, for the eye only. */}
+        <View
+          style={[styles.barTitle, { paddingTop: insets.top }]}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          aria-hidden
+        >
+          <Txt variant="headline" numberOfLines={1}>
             {title}
           </Txt>
         </View>
-        {right}
-      </View>
-      {children}
-    </ScrollView>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -229,6 +260,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.groupedBackground },
   content: { paddingHorizontal: space[4], gap: space[5], width: '100%', maxWidth: 760, alignSelf: 'center' },
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space[3] },
+  bar: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' },
+  barTitle: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[8] + space[6] },
 
   sectionHeader: { flexDirection: 'row', alignItems: 'baseline', gap: space[2], marginBottom: -space[2] },
 

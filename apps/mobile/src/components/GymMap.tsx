@@ -52,7 +52,7 @@ function GymMarker({ pin, selected, onPress }: { pin: MapPin; selected: boolean;
 }
 
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
-  { pins, selectedId, initialCentre, bottomInset, topInset, showsUserLocation, onSelect, onMapPress, onRegionChange },
+  { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, showsUserLocation, onSelect, onMapPress, onRegionChange },
   ref,
 ) {
   const map = useRef<MapView>(null);
@@ -99,6 +99,8 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
         longitudeDelta: 0.045,
       }}
       mapPadding={{ top: topInset, right: 0, bottom: bottomInset, left: 0 }}
+      // Apple's "Legal" link must stay visible: keep it above the sheet's edge.
+      legalLabelInsets={{ top: 0, right: 0, bottom: Math.max(bottomInset, creditInset ?? 0) + 6, left: 12 }}
       showsUserLocation={showsUserLocation}
       showsMyLocationButton={false}
       showsCompass={false}

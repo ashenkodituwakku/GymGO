@@ -54,7 +54,7 @@ function pinElement(fill: string, selected: boolean, label: string): HTMLElement
 }
 
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
-  { pins, selectedId, initialCentre, bottomInset, topInset, leftInset = 0, userLocation = null, onSelect, onMapPress, onRegionChange },
+  { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, leftInset = 0, userLocation = null, onSelect, onMapPress, onRegionChange },
   ref,
 ) {
   const host = useRef<View>(null);
@@ -113,10 +113,10 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     instance.setPadding({ top: topInset, bottom: bottomInset, left: leftInset, right: 0 });
     const corner = instance.getContainer().querySelector<HTMLElement>('.maplibregl-ctrl-bottom-left');
     if (corner) {
-      corner.style.bottom = `${bottomInset + 6}px`;
+      corner.style.bottom = `${Math.max(bottomInset, creditInset ?? 0) + 6}px`;
       corner.style.left = `${leftInset}px`;
     }
-  }, [bottomInset, topInset, leftInset]);
+  }, [bottomInset, creditInset, topInset, leftInset]);
 
   useEffect(() => {
     const instance = map.current;

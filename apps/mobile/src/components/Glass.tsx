@@ -27,8 +27,9 @@
 
 import { BlurView } from 'expo-blur';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
-import type { ReactNode } from 'react';
-import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { Platform, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { installLiquidGlass, refractionFor } from './liquidGlass';
 
 /** True when the device draws Apple's real Liquid Glass. */
 export const HAS_LIQUID_GLASS =
@@ -68,6 +69,16 @@ export function Glass({
     );
   }
 
+  // In the browser, controls get the tab bar's own glass: a blur that also
+  // bends the map near the edges (Chrome and Edge), sized to each control.
+  if (Platform.OS === 'web' && kind === 'control' && !tint) {
+    return (
+      <WebGlassControl style={style} clear={clear}>
+        {children}
+      </WebGlassControl>
+    );
+  }
+
   const shape = cornerShape(style);
   const thick = kind !== 'control';
 
@@ -77,6 +88,22 @@ export function Glass({
       {tint ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tint, opacity: 0.92 }]} /> : null}
       {kind !== 'bar' ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, shape, tint ? styles.sheenOnTint : styles.sheen]} /> : null}
       {kind !== 'bar' ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, shape, styles.rim]} /> : null}
+      {children}
+    </View>
+  );
+}
+
+function WebGlassControl({ style, clear, children }: { style?: StyleProp<ViewStyle>; clear: boolean; children?: ReactNode }) {
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  installLiquidGlass();
+  const onLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    if (!size || Math.round(size.width) !== Math.round(width) || Math.round(size.height) !== Math.round(height)) setSize({ width, height });
+  };
+  const mark = size ? refractionFor(size.width, size.height) : { dataSet: { glass: 'control' } };
+  return (
+    <View {...mark} onLayout={onLayout} style={[styles.clip, style, clear && styles.webClear]}>
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, cornerShape(style), styles.sheen]} />
       {children}
     </View>
   );
@@ -130,6 +157,7 @@ const styles = StyleSheet.create({
   continuous: { borderCurve: 'continuous' },
 
   webThin: { backgroundColor: 'rgba(255, 255, 255, 0.42)' },
+  webClear: { opacity: 0.96 },
   webThick: { backgroundColor: 'rgba(250, 250, 253, 0.66)' },
   washThin: { backgroundColor: 'rgba(255, 255, 255, 0.8)' },
   washThick: { backgroundColor: 'rgba(248, 248, 251, 0.94)' },

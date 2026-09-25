@@ -654,6 +654,7 @@ function MapScreen() {
           topInset={insets.top}
           // Keep the map's idea of "centre" above the sheet, not behind it.
           bottomInset={Math.min(sheetTop, height * 0.5)}
+          creditInset={sheetTop}
           showsUserLocation={here !== null}
           userLocation={here?.position ?? null}
           onSelect={openGym}

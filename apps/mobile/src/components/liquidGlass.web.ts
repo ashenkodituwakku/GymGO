@@ -52,6 +52,20 @@ html[data-glass-refract] [data-glass="bar"] {
   -webkit-backdrop-filter: url(#${FILTER_ID}) blur(5px) saturate(190%) brightness(1.05);
   backdrop-filter: url(#${FILTER_ID}) blur(5px) saturate(190%) brightness(1.05);
 }
+[data-glass="control"] {
+  background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.3) 100%);
+  -webkit-backdrop-filter: blur(10px) saturate(190%) brightness(1.04);
+  backdrop-filter: blur(10px) saturate(190%) brightness(1.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    inset 1px 0 0 rgba(255,255,255,0.45),
+    inset -1px 0 0 rgba(255,255,255,0.3),
+    inset 0 -1px 0 rgba(255,255,255,0.4),
+    inset 0 0 16px rgba(255,255,255,0.28),
+    0 8px 24px rgba(0,0,0,0.14),
+    0 1px 4px rgba(0,0,0,0.08);
+  outline: 0.5px solid rgba(0,0,0,0.05);
+}
 [data-glass="shine"] {
   background:
     radial-gradient(140% 100% at 12% -30%, rgba(255,255,255,0.7), rgba(255,255,255,0) 52%),
@@ -117,4 +131,40 @@ export function sizeRefraction(width: number, height: number): void {
 
 export function glassMark(kind: 'bar' | 'shine' | 'lens' | 'lift'): object {
   return { dataSet: { glass: kind } };
+}
+
+/**
+ * The same bend for any glass control, sized to it: one filter and one CSS
+ * rule per size, made the first time a control of that size appears.
+ */
+const sized = new Set<string>();
+export function refractionFor(width: number, height: number): object {
+  if (typeof document === 'undefined' || width < 8 || height < 8) return {};
+  const w = Math.round(width);
+  const h = Math.round(height);
+  const key = `${w}x${h}`;
+  if (!sized.has(key)) {
+    sized.add(key);
+    const id = `${FILTER_ID}-${key}`;
+    // Thick glass bends more: about two-thirds of the short side, as the tab bar does.
+    const scale = Math.round(Math.min(w, h) * 0.66);
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('width', '0');
+    svg.setAttribute('height', '0');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.style.position = 'absolute';
+    svg.innerHTML = `<filter id="${id}" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" x="0" y="0" width="${w}" height="${h}" color-interpolation-filters="sRGB">
+    <feImage href="${displacementMap()}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="map"/>
+    <feDisplacementMap in="SourceGraphic" in2="map" scale="${scale}" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>`;
+    document.body.appendChild(svg);
+    const style = document.createElement('style');
+    style.textContent = `html[data-glass-refract] [data-refract="${key}"] {
+  -webkit-backdrop-filter: url(#${id}) blur(5px) saturate(190%) brightness(1.04);
+  backdrop-filter: url(#${id}) blur(5px) saturate(190%) brightness(1.04);
+}`;
+    document.head.appendChild(style);
+  }
+  return { dataSet: { glass: 'control', refract: key } };
 }

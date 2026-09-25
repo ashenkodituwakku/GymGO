@@ -13,6 +13,13 @@ export interface GymMapProps {
   initialCentre: LatLng;
   /** Space the bottom sheet covers, so centring accounts for it. */
   bottomInset: number;
+  /**
+   * Where the sheet's top edge actually is, from the bottom, when it's higher
+   * than `bottomInset` (which is capped so the map doesn't centre in a
+   * sliver). The map's credit sits just above it: the licence says it must
+   * stay visible.
+   */
+  creditInset?: number;
   topInset: number;
   /** Space a side panel covers (desktop web), so centring accounts for it. */
   leftInset?: number;

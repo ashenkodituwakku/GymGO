@@ -47,6 +47,9 @@
  *   GET    /api/workouts                  your saved workouts
  *   POST   /api/workouts                  Pro: { name, gymId?, plan } -> saved
  *   DELETE /api/workouts/:id
+ *   GET    /api/training                  the sessions you've logged, newest first
+ *   POST   /api/training                  { name, unit, startedAt, finishedAt, workoutId?, gymId?, exercises } -> logged
+ *   DELETE /api/training/:id
  *   GET    /api/moderation/reviews        moderators: the queue
  *   POST   /api/moderation/reviews/:id    moderators: { decision, reason? }
  *   GET    /api/moderation/photos         moderators: photos waiting
@@ -217,6 +220,79 @@ function cleanWorkoutPlan(input: unknown) {
     uncovered: texts(plan.uncovered, 15, 30),
   };
 }
+
+/** Sessions kept per account: years of training; the cap only stops a runaway script. */
+export const MAX_TRAINING_SESSIONS = 5000;
+
+/**
+ * A logged session, checked field by field. A weight left blank is body
+ * weight (null), never zero; reps of 0 are a set planned but not done.
+ */
+export function cleanTrainingSession(input: unknown, now: Date) {
+  const body = (input ?? {}) as Record<string, unknown>;
+  const bad = () => new HttpError(400, 'That session isn’t in a shape GymGO can keep.');
+  const name = typeof body.name === 'string' ? body.name.trim().replace(/\s+/g, ' ') : '';
+  if (name.length < 1 || name.length > 80) throw new HttpError(400, 'Give it a name of up to 80 characters.');
+  const unit = body.unit === 'kg' || body.unit === 'lb' ? body.unit : null;
+  if (!unit) throw bad();
+  const time = (value: unknown) => (typeof value === 'string' && value.length <= 40 && !Number.isNaN(Date.parse(value)) ? new Date(value) : null);
+  const started = time(body.startedAt);
+  const finished = time(body.finishedAt);
+  if (!started || !finished || finished < started) throw bad();
+  if (finished.getTime() > now.getTime() + 5 * 60_000) throw new HttpError(400, 'That session finishes in the future.');
+  if (finished.getTime() - started.getTime() > 24 * 3_600_000) throw new HttpError(400, 'A session can last up to a day.');
+  const id = (value: unknown, max: number) => (typeof value === 'string' && value.length >= 1 && value.length <= max ? value : null);
+  const exercises = Array.isArray(body.exercises) ? body.exercises : [];
+  if (exercises.length < 1 || exercises.length > 40) throw bad();
+  const clean = exercises.map((raw) => {
+    const item = (raw ?? {}) as Record<string, unknown>;
+    const exerciseId = typeof item.exerciseId === 'string' && /^[a-z0-9-]{1,60}$/.test(item.exerciseId) ? item.exerciseId : null;
+    const sets = Array.isArray(item.sets) ? item.sets : null;
+    if (!exerciseId || !sets || sets.length > 30) throw bad();
+    return {
+      exerciseId,
+      sets: sets.map((rawSet) => {
+        const set = (rawSet ?? {}) as Record<string, unknown>;
+        const weight = set.weight === null ? null : typeof set.weight === 'number' && Number.isFinite(set.weight) && set.weight > 0 && set.weight <= 1500 ? Math.round(set.weight * 100) / 100 : undefined;
+        const reps = typeof set.reps === 'number' && Number.isInteger(set.reps) && set.reps >= 0 && set.reps <= 200 ? set.reps : undefined;
+        if (weight === undefined || reps === undefined) throw bad();
+        return { weight, reps };
+      }),
+    };
+  });
+  if (!clean.some((item) => item.sets.some((set) => set.reps > 0))) throw new HttpError(400, 'Log at least one set before finishing.');
+  return {
+    name,
+    unit,
+    startedAt: started.toISOString(),
+    finishedAt: finished.toISOString(),
+    workoutId: id(body.workoutId, 60),
+    gymId: id(body.gymId, 120),
+    exercises: clean,
+  };
+}
+
+type TrainingRow = {
+  id: string;
+  name: string;
+  unit: string;
+  started_at: string;
+  finished_at: string;
+  workout_id: string | null;
+  gym_id: string | null;
+  exercises_json: string;
+};
+
+const trainingView = (row: TrainingRow) => ({
+  id: row.id,
+  name: row.name,
+  unit: row.unit,
+  startedAt: row.started_at,
+  finishedAt: row.finished_at,
+  workoutId: row.workout_id,
+  gymId: row.gym_id,
+  exercises: JSON.parse(row.exercises_json),
+});
 
 /** The middle of sorted amounts (the mean of the middle two for an even count). */
 function median(sorted: number[]): number {
@@ -529,6 +605,48 @@ export function createApp(options: AppOptions) {
       return send(res, 204);
     }
 
+    // --- Training log (free: it's your own numbers) ---------------------------
+    if (path === '/api/training' && method === 'GET') {
+      const { account } = requireAccount(req);
+      const rows = db
+        .prepare(
+          'select id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json from training_sessions where user_id = ? order by finished_at desc limit ?',
+        )
+        .all(account.id, MAX_TRAINING_SESSIONS) as TrainingRow[];
+      return send(res, 200, { sessions: rows.map(trainingView) });
+    }
+
+    if (path === '/api/training' && method === 'POST') {
+      const { account } = requireAccount(req);
+      const session = cleanTrainingSession(await readJson(req), now());
+      const count = (db.prepare('select count(*) as n from training_sessions where user_id = ?').get(account.id) as { n: number }).n;
+      if (count >= MAX_TRAINING_SESSIONS) throw new HttpError(409, `You’ve logged ${count} sessions, the most there’s room for. Delete some old ones first.`);
+      const id = randomUUID();
+      db.prepare(
+        `insert into training_sessions (id, user_id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json, created_at)
+         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        id,
+        account.id,
+        session.name,
+        session.unit,
+        session.startedAt,
+        session.finishedAt,
+        session.workoutId,
+        session.gymId,
+        JSON.stringify(session.exercises),
+        now().toISOString(),
+      );
+      return send(res, 201, { session: { id, ...session } });
+    }
+
+    if (method === 'DELETE' && parts[0] === 'api' && parts[1] === 'training' && parts.length === 3) {
+      const { account } = requireAccount(req);
+      const removed = db.prepare('delete from training_sessions where id = ? and user_id = ?').run(decodeURIComponent(parts[2]!), account.id);
+      if (removed.changes === 0) throw new HttpError(404, 'No logged session with that id.');
+      return send(res, 204);
+    }
+
     // --- Accounts --------------------------------------------------------
     if (method === 'POST' && path === '/api/auth/signup') {
       const input = validateSignup(await readJson(req));
@@ -599,6 +717,10 @@ export function createApp(options: AppOptions) {
         workouts: rows('select id, name, gym_id as gymId, plan_json, created_at as createdAt from workouts where user_id = ? order by created_at').map(
           ({ plan_json, ...workout }) => ({ ...workout, plan: JSON.parse(String(plan_json)) }),
         ),
+        trainingSessions: rows(
+          `select id, name, unit, started_at as startedAt, finished_at as finishedAt, workout_id as workoutId, gym_id as gymId, exercises_json
+           from training_sessions where user_id = ? order by finished_at`,
+        ).map(({ exercises_json, ...session }) => ({ ...session, exercises: JSON.parse(String(exercises_json)) })),
         subscriptions: rows(
           `select status, interval, currency, amount_minor as amountMinor, current_period_end as currentPeriodEnd, cancel_at as cancelAt,
                   cancel_at_period_end as cancelAtPeriodEnd, updated_at as updatedAt from subscriptions where user_id = ? order by updated_at`,

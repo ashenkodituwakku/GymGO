@@ -136,6 +136,19 @@ const SCHEMA = `
     created_at text not null
   );
   create index if not exists workouts_user on workouts(user_id, created_at);
+  create table if not exists training_sessions (
+    id text primary key,
+    user_id text not null references users(id) on delete cascade,
+    name text not null,
+    unit text not null check (unit in ('kg', 'lb')),
+    started_at text not null,
+    finished_at text not null,
+    workout_id text,
+    gym_id text,
+    exercises_json text not null,
+    created_at text not null
+  );
+  create index if not exists training_sessions_user on training_sessions(user_id, finished_at);
   create table if not exists gyms (
     id text primary key,
     record_json text not null,

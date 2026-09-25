@@ -130,11 +130,15 @@ const ORDER = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 const TIME = /^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$/;
 const ONE_DAY = /^(Mo|Tu|We|Th|Fr|Sa|Su)$/;
 const DAY_RANGE = /^(Mo|Tu|We|Th|Fr|Sa|Su)-(Mo|Tu|We|Th|Fr|Sa|Su)$/;
+/** A rule: its days ("Mo-Fr", "Sa,Su", "Su, PH") and then its times. */
+const DAY = '(?:Mo|Tu|We|Th|Fr|Sa|Su)';
+const RULE = new RegExp(`^(${DAY}(?:-${DAY})?(?:\\s*,\\s*(?:${DAY}(?:-${DAY})?|PH))*)\\s+(.+)$`);
 
 function dayList(spec: string): number[] | null {
   const days: number[] = [];
   for (const raw of spec.split(',')) {
     const part = raw.trim();
+    if (part === 'PH') continue; // Public holidays aren't modelled; the weekdays still hold.
     if (ONE_DAY.test(part)) {
       days.push(DAYS.indexOf(part));
     } else if (DAY_RANGE.test(part)) {
@@ -157,48 +161,62 @@ function dayList(spec: string): number[] | null {
 /** Round the clock, or [day (0 = Sunday), open, close] in minutes. */
 export type MappedHours = 'always' | Array<[number, number, number]>;
 
-/** 'always', a list of [day, open, close] windows, or null when not simple. */
+/**
+ * 'always', a list of [day, open, close] windows, or null when not simple.
+ *
+ * Rules are separated by ";", and a later one replaces an earlier one for
+ * its days. A comma straight after a time, before a day, adds a rule rather
+ * than replacing ("Mo,We 07:00-11:00, Mo-Th 16:00-20:00" is open twice on
+ * Monday); a comma between days is just a list ("Sa,Su 07:00-19:00").
+ * Public-holiday rules are left out: holidays aren't modelled.
+ */
 export function parseHours(input: string): MappedHours | null {
-  let text = input.trim();
+  const text = input.trim();
   if (text === '24/7' || text === 'Mo-Su 00:00-24:00' || text === '00:00-24:00') return 'always';
-  // "Mo-Fr 06:00-21:00, Sa 08:00-17:00": a comma before a day starts a new rule.
-  text = text.replace(/,\s*(?=(Mo|Tu|We|Th|Fr|Sa|Su)\b)/g, '; ');
   const week = new Map<number, Array<[number, number]>>();
-  const rules = text
+  const normalRules = text
     .split(';')
     .map((rule) => rule.trim())
     .filter((rule) => rule !== '');
-  for (const rule of rules) {
-    if (rule === 'PH off' || rule === 'PH closed') continue; // Holiday closures aren't modelled; the rest still holds.
-    const m = /^((?:Mo|Tu|We|Th|Fr|Sa|Su)[A-Za-z,\- ]*?)\s+(.+)$/.exec(rule);
-    let days: number[];
-    let times: string;
-    const listed = m ? dayList(m[1]!.replaceAll(' ', '')) : null;
-    if (m && listed !== null) {
-      days = listed;
-      times = m[2]!.trim();
-    } else if (/^\d/.test(rule)) {
-      days = [0, 1, 2, 3, 4, 5, 6];
-      times = rule;
-    } else {
-      return null;
+  for (const normal of normalRules) {
+    const parts = normal.split(/(?<=\d)\s*,\s*(?=(?:Mo|Tu|We|Th|Fr|Sa|Su|PH)\b)/);
+    for (const [index, raw] of parts.entries()) {
+      const rule = raw.trim();
+      const adds = index > 0;
+      if (/^PH\b/.test(rule)) continue; // Holidays aren't modelled; the rest still holds.
+      const m = RULE.exec(rule);
+      let days: number[];
+      let times: string;
+      const listed = m ? dayList(m[1]!.replaceAll(' ', '')) : null;
+      if (m && listed !== null) {
+        days = listed;
+        times = m[2]!.trim();
+      } else if (/^\d/.test(rule)) {
+        days = [0, 1, 2, 3, 4, 5, 6];
+        times = rule;
+      } else {
+        return null;
+      }
+      if (times === 'off' || times === 'closed') {
+        for (const day of days) week.set(day, []);
+        continue;
+      }
+      const windows: Array<[number, number]> = [];
+      for (const span of times.split(',')) {
+        const t = TIME.exec(span.trim());
+        if (!t) return null;
+        const open = Number(t[1]) * 60 + Number(t[2]);
+        let close = Number(t[3]) * 60 + Number(t[4]);
+        if (close === 23 * 60 + 59) close = 1440;
+        if (open >= 1440 || close > 1440) return null;
+        if (close <= open) close += 1440; // Past midnight.
+        windows.push([open, close]);
+      }
+      for (const day of days) {
+        const kept = adds ? [...(week.get(day) ?? []), ...windows] : windows;
+        week.set(day, kept.sort((a, b) => a[0] - b[0]));
+      }
     }
-    if (times === 'off' || times === 'closed') {
-      for (const day of days) week.set(day, []);
-      continue;
-    }
-    const windows: Array<[number, number]> = [];
-    for (const span of times.split(',')) {
-      const t = TIME.exec(span.trim());
-      if (!t) return null;
-      const open = Number(t[1]) * 60 + Number(t[2]);
-      let close = Number(t[3]) * 60 + Number(t[4]);
-      if (close === 23 * 60 + 59) close = 1440;
-      if (open >= 1440 || close > 1440) return null;
-      if (close <= open) close += 1440; // Past midnight.
-      windows.push([open, close]);
-    }
-    for (const day of days) week.set(day, windows); // A later rule replaces an earlier one for its days.
   }
   const out: Array<[number, number, number]> = [];
   for (const day of [...week.keys()].sort((a, b) => a - b)) {

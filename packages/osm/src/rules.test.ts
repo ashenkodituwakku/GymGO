@@ -81,6 +81,36 @@ describe('opening hours', () => {
     expect(Array.isArray(hours) && hours.map(([day]) => day)).toEqual([0, 1, 6]);
   });
 
+  it('reads a list of days, not a new rule, in "Sa,Su"', () => {
+    expect(parseHours('Mo-Fr 05:00-21:00; Sa,Su 07:00-19:00')).toEqual([
+      [0, 420, 1140],
+      [1, 300, 1260],
+      [2, 300, 1260],
+      [3, 300, 1260],
+      [4, 300, 1260],
+      [5, 300, 1260],
+      [6, 420, 1140],
+    ]);
+    expect(parseHours('Mo-Tu,Th 06:00-20:30')!.length).toBe(3);
+  });
+
+  it('adds a rule after a comma rather than replacing, as the format says', () => {
+    // Monday is open in the morning and the evening.
+    const hours = parseHours('Mo,We,Fr 07:00-11:00, Mo-Th 16:00-20:00, Sa 08:00-12:00');
+    expect(Array.isArray(hours) && hours.filter(([day]) => day === 1)).toEqual([
+      [1, 420, 660],
+      [1, 960, 1200],
+    ]);
+  });
+
+  it('leaves public holidays out of day lists and rules', () => {
+    expect(parseHours('Mo-Su,PH 05:00-23:00')!.length).toBe(7);
+    const sundayOff = parseHours('Mo-Th 10:00-14:00,15:00-19:00; Fr-Sa 09:00-12:00; Su, PH off');
+    expect(Array.isArray(sundayOff) && sundayOff.some(([day]) => day === 0)).toBe(false);
+    expect(Array.isArray(sundayOff) && sundayOff.length).toBe(10);
+    expect(parseHours('Mo-Fr 06:00-20:00; PH 09:00-12:00')!.length).toBe(5);
+  });
+
   it('ignores public-holiday closures but keeps the rest', () => {
     expect(parseHours('Mo 06:00-10:00; PH off')).toEqual([[1, 360, 600]]);
   });

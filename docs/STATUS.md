@@ -124,7 +124,8 @@ service, which is your decision to make. Nothing has been provisioned.
 | GymGO Pro screen, plan in Profile, Free limits, workout library | ✅ | ✅ whole loop driven in the browser against a stand-in Stripe (checkout, return, manage, cancel) | ❌ real Stripe never used | ❌ the phone's in-app browser round trip not seen | n/a | ❌ |
 | Time-zone self-check at start-up | ✅ | ✅ unit tests | n/a | ❌ | n/a | ❌ |
 | App icon, splash screen | ❌ | ❌ | n/a | ❌ | n/a | ❌ |
-| Store builds (EAS / Xcode / Gradle) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Run from Xcode on a Mac (Simulator or your own iPhone, free Apple ID): `scripts/gymgo-mac.sh --xcode` makes the project with `expo prebuild`, fetches pods, writes the server address for release builds, opens Xcode; a debug build finds the server on the Mac it loaded its code from | ✅ | 🟡 project generation checked here (bundle id, team, local-network and location permissions, the build phase reading `.xcode.env.local`), the flow run end to end with Xcode, CocoaPods and `open` stood in for, and the iOS bundle built (2,091 modules); **never built or run in real Xcode**: this sandbox has no Mac | n/a | ❌ | n/a | ❌ |
+| Store builds (EAS / App Store / Play) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | PC browser layout (side panels) | ✅ | ✅ driven end to end at 1440 × 900 | n/a | n/a | ❌ | n/a |
 | Tabs: Home, Explore, Saved, Profile (Instagram-style glass capsule, draggable lens) | ✅ | ⚠️ browser only: taps, and dragging with touch and with a mouse | n/a | ❌ Liquid Glass material and the drag never seen on a phone | n/a | ❌ |
 | Home, simplified (four picks, workout, nearby, saved, recent, neighbourhoods and cities as chips) | ✅ | ✅ driven at phone size | n/a | ❌ | n/a | ❌ |
@@ -293,12 +294,14 @@ name; the skip link works.
 ### Phone app and server (`apps/mobile`, `apps/server`)
 
 - **Native QA.** Built and bundled for iOS and Android, but never run on a
-  device or simulator. Everything above marked "browser" was seen in the web
+  device or simulator. The Xcode path (`scripts/gymgo-mac.sh --xcode`) is
+  ready for a Mac but has never been through a real Xcode build; expect the
+  first run there to surface something. Everything above marked "browser" was seen in the web
   build, which shares the code but not the native pieces (Apple Maps, SF
   Symbols, Liquid Glass, haptics, the share sheet, the photo picker).
-- **Store builds.** No app icon, splash screen, bundle identifiers, EAS
-  project, signing or store listing. None were asked for, and most involve an
-  account or a fee.
+- **Store builds.** No app icon, splash screen, EAS project, store signing
+  or store listing. The bundle id is made per person, for running your own
+  build from Xcode. None were asked for, and most involve an account or a fee.
 - **Hosting.** The server runs on your own computer. Nothing is deployed, so
   accounts, reviews and members' reports live in one SQLite file there.
 - **Real gym data is thin on detail.** 23 Melbourne gyms were researched fact

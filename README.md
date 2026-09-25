@@ -8,7 +8,9 @@ GymGO is an app for iPhone, Android and your PC's browser. One command
 starts it on your computer. It opens in your browser, and you can open it on
 your phone with **Expo Go**, a free app. It also starts a small server
 on your computer that keeps accounts, saved gyms and reviews in a database
-file. Everything is free: no Mac, no Xcode, no sign-ups, no API keys.
+file. Everything is free: no Mac, no Xcode, no sign-ups, no API keys. If you
+do have a Mac, you can also [run it from Xcode](#on-a-mac-in-xcode-simulator-or-your-iphone)
+on the iPhone Simulator or your own iPhone.
 
 ### On Windows
 
@@ -99,10 +101,82 @@ After that you can run:
 
 ```bash
 git clone -b claude/friendly-johnson-9rzxrj https://github.com/ashenkodituwakku/GymGO.git ~/GymGO
-cd ~/GymGO
-npx pnpm@10 install
-npx pnpm@10 app          # add --tunnel if the phone can't connect
+bash ~/GymGO/scripts/gymgo-mac.sh      # add --tunnel if the phone can't connect
 ```
+
+It checks Node, installs what's missing in the project, and starts the
+server and the app, like the Windows launcher. `--update` pulls the latest
+version first. (On Linux, `npx pnpm@10 install` then `npx pnpm@10 app` in
+`~/GymGO` does the same.)
+
+### On a Mac, in Xcode (Simulator or your iPhone)
+
+This builds GymGO as a real iPhone app: Apple Maps, SF Symbols, Liquid
+Glass and haptics, which Expo Go and the browser only approximate. It needs
+no paid Apple developer account: a free Apple ID is enough to run it on
+your own iPhone.
+
+**1. Install the tools** (once; all free):
+
+- **Xcode**, from the Mac App Store. Open it once to finish installing, and
+  if it asks, add the iOS platform (Xcode → Settings → Components).
+- **Homebrew** from [brew.sh](https://brew.sh), then in Terminal:
+
+```bash
+brew install node cocoapods
+```
+
+**2. Download GymGO and open it in Xcode:**
+
+```bash
+git clone -b claude/friendly-johnson-9rzxrj https://github.com/ashenkodituwakku/GymGO.git ~/GymGO
+bash ~/GymGO/scripts/gymgo-mac.sh --xcode
+```
+
+The first time takes a few minutes: it makes the Xcode project from the
+app's settings (`expo prebuild`, into `apps/mobile/ios`, which isn't kept in
+git), fetches its native parts with CocoaPods, and opens it in Xcode. It
+also starts the GymGO server and the bundler the app loads its code from,
+so leave Terminal open.
+
+**3. In Xcode:**
+
+1. At the top, next to **GymGO**, pick where to run it: an **iPhone
+   Simulator**, or **your iPhone**. Plug the iPhone in with a cable the first
+   time and tap **Trust**. It then shows in **Window → Devices and
+   Simulators**, where you can also turn on connecting over Wi-Fi.
+2. Click the **GymGO** project on the left → **Signing & Capabilities** →
+   **Team**: pick your Apple ID (**Personal Team**). If it isn't listed, add
+   it in **Xcode → Settings → Accounts**.
+3. Press **Run** (⌘R).
+
+On your iPhone, the first time: turn on **Settings → Privacy & Security →
+Developer Mode** (the phone restarts), and if it says "Untrusted Developer",
+go to **Settings → General → VPN & Device Management** → your Apple ID →
+**Trust**. When GymGO asks to find devices on your local network, allow it:
+that's how it reaches the server on your Mac. The iPhone needs the same
+Wi-Fi as the Mac.
+
+Good to know:
+
+- With a free Apple ID, Apple lets an app you build run for **7 days**; after
+  that, press Run in Xcode again. A paid developer account ($99 a year) lifts
+  that, but isn't needed.
+- The app id is made from your Mac user name (`com.yourname.gymgo`), because
+  Apple wants it to be yours. Set `GYMGO_IOS_BUNDLE_ID` to choose another.
+- Pass your team to skip step 2 each time the project is remade:
+  `bash ~/GymGO/scripts/gymgo-mac.sh --xcode --team ABCDE12345` (your team
+  id is under Xcode → Settings → Accounts, or in the project's Build Settings
+  → Development Team once you've picked it).
+- After updating (`--xcode --update`), the project is remade only if the
+  app's settings changed. `--clean` remakes it from scratch.
+- In the Simulator, set where "you" are with **Features → Location**.
+- A **Release** build (Product → Scheme → Edit Scheme → Run → Build
+  Configuration) carries its code inside the app, so it runs without the
+  bundler; it still needs the Mac's server for accounts and reviews, at the
+  address the launcher wrote into `apps/mobile/ios/.xcode.env.local`.
+- Prefer the command line? `cd ~/GymGO/apps/mobile && npx expo run:ios
+  --device` builds and installs without opening Xcode.
 
 ### What's in the app
 

@@ -29,3 +29,7 @@ blob-report/
 # Python
 __pycache__/
 *.pyc
+
+# Native projects, generated on a Mac by scripts/gymgo-mac.sh (expo prebuild).
+apps/mobile/ios/
+apps/mobile/android/

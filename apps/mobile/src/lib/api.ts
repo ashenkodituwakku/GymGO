@@ -5,14 +5,17 @@
  *  - EXPO_PUBLIC_API_URL, when set (a hosted server later on);
  *  - in the browser, the same machine that served the page, port 4000;
  *  - on a phone in Expo Go, the computer Expo is running on (its address is
- *    in the dev-server URL), port 4000.
+ *    in the dev-server URL), port 4000;
+ *  - in a debug build run from Xcode, the Mac its code was loaded from,
+ *    port 4000 (a release build has no such Mac, so the Mac launcher sets
+ *    EXPO_PUBLIC_API_URL for it).
  *
  * Every call has a timeout, and callers treat "couldn't reach the server"
  * as its own state rather than as an empty answer.
  */
 
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 import type { BillingCurrency, BillingInterval, GymRecord, PlanId, PlanLimits, ProPrice, ReportCurrency, Review } from '@gymgo/domain';
 
 const PORT = 4000;
@@ -24,8 +27,20 @@ export function apiBase(): string | null {
     return `${window.location.protocol}//${window.location.hostname}:${PORT}`;
   }
   const hostUri = Constants.expoConfig?.hostUri ?? null;
-  const host = hostUri?.split(':')[0];
+  const host = hostUri?.split(':')[0] || bundleHost();
   return host ? `http://${host}:${PORT}` : null;
+}
+
+/** The computer a debug build loaded its code from ("192.168.1.20", or "localhost" in the Simulator). */
+function bundleHost(): string | null {
+  try {
+    const source = NativeModules.SourceCode as { scriptURL?: string; getConstants?: () => { scriptURL?: string } } | undefined;
+    const url = source?.scriptURL ?? source?.getConstants?.().scriptURL;
+    // A release build loads from a file inside the app: no computer to ask.
+    return (url && /^https?:\/\/([^/:]+)/.exec(url)?.[1]) || null;
+  } catch {
+    return null;
+  }
 }
 
 export class ApiError extends Error {

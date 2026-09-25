@@ -30,15 +30,30 @@ export default function ExerciseProgressScreen() {
   const router = useRouter();
   const unit = unitFor(prefs.country);
   const exercise = EXERCISES.find((item) => item.id === exerciseId) ?? null;
-  usePageTitle(exercise?.name ?? 'Progress');
+  // An id GymGO doesn't list (a mistyped link, or an exercise since renamed): its words, readably.
+  const title = exercise?.name ?? humanise(exerciseId);
+  usePageTitle(title);
   const record = useMemo(() => personalRecords(log.sessions).get(exerciseId) ?? null, [log.sessions, exerciseId]);
   const series = useMemo(() => e1rmSeries(log.sessions, exerciseId), [log.sessions, exerciseId]);
   const done = log.sessions.filter((session) => session.exercises.some((item) => item.exerciseId === exerciseId));
 
+  if (!exercise && done.length === 0 && log.status !== 'loading') {
+    return (
+      <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
+        <Stack.Screen options={{ title: '' }} />
+        <Txt variant="title2">No exercise by that name</Txt>
+        <Txt variant="subhead" color={color.labelSecondary}>
+          GymGO doesn’t list “{title}”, and you haven’t logged it. Your exercises are on the Progress page.
+        </Txt>
+        <PrimaryButton label="Back to Progress" tone="quiet" onPress={() => (router.canGoBack() ? router.back() : router.replace('/progress'))} />
+      </ScrollView>
+    );
+  }
+
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title: '' }} />
-      <Txt variant="largeTitle">{exercise?.name ?? exerciseId}</Txt>
+      <Txt variant="largeTitle">{title}</Txt>
 
       {record && (
         <View style={styles.facts}>
@@ -101,6 +116,12 @@ export default function ExerciseProgressScreen() {
       <PrimaryButton label="Back to Progress" tone="quiet" onPress={() => (router.canGoBack() ? router.back() : router.replace('/progress'))} />
     </ScrollView>
   );
+}
+
+/** "barbell-back-squat" → "Barbell back squat". */
+function humanise(id: string): string {
+  const words = id.replace(/[-_]+/g, ' ').trim();
+  return words ? words[0]!.toUpperCase() + words.slice(1) : 'This exercise';
 }
 
 function Fact({ label, value }: { label: string; value: string }) {

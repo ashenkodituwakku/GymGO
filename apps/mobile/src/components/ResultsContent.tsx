@@ -237,8 +237,13 @@ export function ResultsContent({
           onPress={onOpenFilters}
           accessibilityLabel={`Visiting at ${timeLabel(filters.visitMinuteOfDay)}. Change time`}
         />
+        {/* The budget that's on, set from anywhere (Home's tile, Filters); tapping it clears it. */}
         {tracksPrices(filters.countryCode) && (
-          <Chip label={`Under ${moneyLabel(3000, filters.countryCode)}`} selected={filters.budgetMinor === 3000} onPress={onToggleBudget} />
+          <Chip
+            label={`Under ${moneyLabel(filters.budgetMinor ?? 3000, filters.countryCode)}`}
+            selected={filters.budgetMinor !== null}
+            onPress={onToggleBudget}
+          />
         )}
         <Chip label="Squat rack" selected={filters.equipment.includes('squat_rack')} onPress={() => onToggleEquipment('squat_rack')} />
         <Chip label="Dumbbells" selected={filters.equipment.includes('dumbbells')} onPress={() => onToggleEquipment('dumbbells')} />

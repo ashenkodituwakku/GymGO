@@ -427,7 +427,7 @@ function MapScreen() {
   }, []);
 
   const toggleBudget = useCallback(() => {
-    setFilters((current) => ({ ...current, budgetMinor: current.budgetMinor === 3000 ? null : 3000 }));
+    setFilters((current) => ({ ...current, budgetMinor: current.budgetMinor !== null ? null : 3000 }));
   }, []);
 
   const relax = useCallback(

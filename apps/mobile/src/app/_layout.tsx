@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider, useApp } from '@/lib/app-state';
 import {
+  NO_TOUCH,
   BUNDLED_FACES,
   FREE_ACCENT,
   NEEDS_BUNDLED_FACES,
@@ -204,7 +205,7 @@ function ThemedStack() {
         <Stack.Screen name="sign-in" options={{ ...MODAL, headerShown: true, title: '' }} />
         <Stack.Screen name="account" options={{ headerShown: true, title: 'Account' }} />
       </Stack>
-      {veilColour && <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle]} />}
+      {veilColour && <Animated.View style={[NO_TOUCH, StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle]} />}
     </ThemeProvider>
   );
 }

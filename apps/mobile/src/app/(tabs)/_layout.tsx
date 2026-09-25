@@ -32,7 +32,7 @@ import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { TabBarInset } from '@/lib/layout';
-import { color, currentTheme, face, themed } from '@/lib/theme';
+import { CHILD_TOUCH, NO_TOUCH, color, currentTheme, face, themed } from '@/lib/theme';
 
 const BAR_HEIGHT = 64;
 const SIDE_MARGIN = 22;
@@ -141,7 +141,7 @@ function GlassTabBar({ bottom }: { bottom: number }) {
   if (keyboardUp) return null;
 
   const lens = (
-    <Animated.View pointerEvents="none" style={[styles.lens, { width: tabWidth }, lensStyle]}>
+    <Animated.View style={[NO_TOUCH, styles.lens, { width: tabWidth }, lensStyle]}>
       <View {...glassMark('lens')} style={[StyleSheet.absoluteFill, styles.lensShape, Platform.OS !== 'web' && styles.lensNative]} />
       <Animated.View
         {...glassMark('lift')}
@@ -151,7 +151,7 @@ function GlassTabBar({ bottom }: { bottom: number }) {
   );
 
   return (
-    <View style={[styles.dock, { bottom }]} pointerEvents="box-none">
+    <View style={[CHILD_TOUCH, styles.dock, { bottom }]}>
       <GestureDetector gesture={drag}>
         <View style={[styles.shadow, { width: barWidth }]} accessibilityRole="tablist">
           {/* The glass, clipped to the capsule… */}

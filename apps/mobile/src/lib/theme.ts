@@ -19,7 +19,7 @@
  * (app/_layout.tsx), so nothing needs to import a hook to follow the theme.
  */
 
-import { Platform, type TextStyle } from 'react-native';
+import { Platform, StyleSheet, type TextStyle } from 'react-native';
 
 export type Scheme = 'light' | 'dark';
 /** What you picked: follow the phone, or always one. */
@@ -360,6 +360,19 @@ export const shadow = {
     elevation: 1,
   },
 } as const;
+
+/**
+ * Where touches go. Made with StyleSheet.create: in a browser only compiled
+ * styles understand 'box-none' (an inline one would swallow every click).
+ */
+const touches = StyleSheet.create({
+  /** Touches pass through this view (decoration over something tappable). */
+  none: { pointerEvents: 'none' },
+  /** Touches pass through this view itself, but reach its children. */
+  childrenOnly: { pointerEvents: 'box-none' },
+});
+export const NO_TOUCH = touches.none;
+export const CHILD_TOUCH = touches.childrenOnly;
 
 /**
  * For a text field whose box shows focus itself (an accent border): the

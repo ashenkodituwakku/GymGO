@@ -2,7 +2,7 @@ import { useBottomSheetInternal, type BottomSheetBackgroundProps } from '@gorhom
 import type { FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated';
-import { color, radius, themed } from '@/lib/theme';
+import { NO_TOUCH, color, radius, themed } from '@/lib/theme';
 import { Glass, HAS_LIQUID_GLASS } from './Glass';
 
 /** How far a floating sheet sits in from the screen's edges. */
@@ -32,7 +32,7 @@ export function floatingGlassBackground(fullIndex: number): FC<BottomSheetBackgr
     });
 
     return (
-      <Animated.View pointerEvents="none" style={[style, styles.floating, inset]}>
+      <Animated.View style={[NO_TOUCH, style, styles.floating, inset]}>
         <Glass kind="sheet" style={styles.glass} />
       </Animated.View>
     );
@@ -42,7 +42,7 @@ export function floatingGlassBackground(fullIndex: number): FC<BottomSheetBackgr
 
 /** The opaque variant, for a modal that covers most of the screen. */
 export function SolidSheetBackground({ style }: BottomSheetBackgroundProps) {
-  return <View style={[style, styles.solid]} pointerEvents="none" />;
+  return <View style={[NO_TOUCH, style, styles.solid]} />;
 }
 
 const styles = themed(() => StyleSheet.create({

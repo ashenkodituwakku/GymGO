@@ -9,7 +9,7 @@ import { ActivityIndicator, Platform, Pressable, type StyleProp, StyleSheet, Tex
 import type { ResultTier } from '@gymgo/domain';
 import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
-import { color, face, HIT, radius, shadow, space, themed, type } from '@/lib/theme';
+import { NO_TOUCH, color, face, HIT, radius, shadow, space, themed, type } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { FADE_IN, FADE_OUT, GLIDE, Pressy, SETTLE, usePop, usePressScale } from './motion';
@@ -256,7 +256,7 @@ export function Segmented<T extends string | number>({
   const pill = useAnimatedStyle(() => ({ transform: [{ translateX: left.value }] }));
   return (
     <View style={styles.segmented} accessibilityRole="tablist" onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
-      {width > 0 && <Animated.View pointerEvents="none" style={[styles.segmentPill, { width: slot }, pill]} />}
+      {width > 0 && <Animated.View style={[NO_TOUCH, styles.segmentPill, { width: slot }, pill]} />}
       {options.map((option) => {
         const on = option.value === value;
         return (

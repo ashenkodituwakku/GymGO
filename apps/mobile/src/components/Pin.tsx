@@ -6,7 +6,7 @@
 
 import { StyleSheet, View } from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
-import { color, themed } from '@/lib/theme';
+import { NO_TOUCH, color, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { TIER_COLOUR } from './ui';
 
@@ -15,7 +15,7 @@ export function Pin({ tier, selected }: { tier: ResultTier; selected: boolean })
   const size = selected ? 44 : 30;
 
   return (
-    <View style={styles.wrap} pointerEvents="none">
+    <View style={[NO_TOUCH, styles.wrap]}>
       <View
         style={[
           styles.disc,

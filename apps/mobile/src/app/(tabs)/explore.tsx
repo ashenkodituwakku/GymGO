@@ -34,7 +34,7 @@ import { enterOpensGym, placeForEnter, suggestGyms } from '@/lib/gymSearch';
 import { useBottomClearance } from '@/lib/layout';
 import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, boxAround, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
-import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { CHILD_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
 import { Glass } from '@/components/Glass';
 import { GoogleModal } from '@/components/GoogleModal';
@@ -704,10 +704,10 @@ function MapScreen() {
           </DesktopPanel>
         )}
 
-        <View style={[styles.desktopControls, { top: PANEL_GAP }]} pointerEvents="box-none">
+        <View style={[CHILD_TOUCH, styles.desktopControls, { top: PANEL_GAP }]}>
           {controls}
         </View>
-        <View style={[styles.areaRow, { top: PANEL_GAP, left: panelsWidth + PANEL_GAP, right: PANEL_GAP + 64 }]} pointerEvents="box-none">
+        <View style={[CHILD_TOUCH, styles.areaRow, { top: PANEL_GAP, left: panelsWidth + PANEL_GAP, right: PANEL_GAP + 64 }]}>
           {areaButton}
         </View>
         {selfCheckBanner}
@@ -756,10 +756,10 @@ function MapScreen() {
       }
       topBar={
         <>
-          <View style={[styles.areaRow, { top: insets.top + space[2] + 44, left: space[4], right: space[4] }]} pointerEvents="box-none">
+          <View style={[CHILD_TOUCH, styles.areaRow, { top: insets.top + space[2] + 44, left: space[4], right: space[4] }]}>
             {areaButton}
           </View>
-          <View style={[styles.topBar, { top: insets.top + space[2] }]} pointerEvents="box-none">
+          <View style={[CHILD_TOUCH, styles.topBar, { top: insets.top + space[2] }]}>
             {statusPill}
             {controls}
           </View>
@@ -864,8 +864,7 @@ function PhoneShell(props: {
           a sheet ever sits behind it (as in Find My). Its own sheet host
           also keeps a gym's card on this tab when you switch away. */}
       <View
-        style={[styles.sheetLayer, { bottom: clearance + SHEET_GAP }]}
-        pointerEvents="box-none"
+        style={[CHILD_TOUCH, styles.sheetLayer, { bottom: clearance + SHEET_GAP }]}
         onLayout={(event) => setHeight(event.nativeEvent.layout.height)}
       >
         <BottomSheetModalProvider>

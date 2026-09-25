@@ -57,34 +57,38 @@ export function GymCard({ result, width = 216, index = 0 }: { result: GymSearchR
           style={styles.press}
         >
           {/* Sized here, not on the Pressable: on the web the link wrapper
-              replaces the Pressable's style. */}
-          <Animated.View style={[styles.card, { width }, press.style]} entering={rise(index)}>
-            {cover ? (
-              <Image source={{ uri: cover }} style={styles.image} resizeMode="cover" />
-            ) : (
-              <View style={[styles.image, styles.tile, { backgroundColor: mark ? color.logoPlate : color.brandTint }]}>
-                {mark ? <MarkImage mark={mark} name={location.name} width={width * 0.72} height={76} area={5200} /> : <Icon name="gym" size={36} color={color.brand} />}
-              </View>
-            )}
-            <View style={styles.body}>
-              <Txt variant="headline" numberOfLines={1}>
-                {location.name}
-              </Txt>
-              <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-                {where}
-              </Txt>
-              <View style={styles.foot}>
-                <View style={[styles.chip, styles.chipRow, { backgroundColor: tone.tint }]}>
-                  <Icon name={tone.icon} size={11} color={tone.ink} />
-                  <Txt variant="caption" color={tone.ink} style={face('semibold')} numberOfLines={1}>
-                    {tier.label}
+              replaces the Pressable's style. The entrance and the press each
+              move the card, so each has its own view and neither overwrites
+              the other's transform. */}
+          <Animated.View entering={rise(index)}>
+            <Animated.View style={[styles.card, { width }, press.style]}>
+              {cover ? (
+                <Image source={{ uri: cover }} style={styles.image} resizeMode="cover" />
+              ) : (
+                <View style={[styles.image, styles.tile, { backgroundColor: mark ? color.logoPlate : color.brandTint }]}>
+                  {mark ? <MarkImage mark={mark} name={location.name} width={width * 0.72} height={76} area={5200} /> : <Icon name="gym" size={36} color={color.brand} />}
+                </View>
+              )}
+              <View style={styles.body}>
+                <Txt variant="headline" numberOfLines={1}>
+                  {location.name}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                  {where}
+                </Txt>
+                <View style={styles.foot}>
+                  <View style={[styles.chip, styles.chipRow, { backgroundColor: tone.tint }]}>
+                    <Icon name={tone.icon} size={11} color={tone.ink} />
+                    <Txt variant="caption" color={tone.ink} style={face('semibold')} numberOfLines={1}>
+                      {tier.label}
+                    </Txt>
+                  </View>
+                  <Txt variant="subhead" color={price.confirmed ? color.label : color.labelSecondary} style={face('semibold')}>
+                    {price.headline}
                   </Txt>
                 </View>
-                <Txt variant="subhead" color={price.confirmed ? color.label : color.labelSecondary} style={face('semibold')}>
-                  {price.headline}
-                </Txt>
               </View>
-            </View>
+            </Animated.View>
           </Animated.View>
         </Pressable>
       </Link.Trigger>

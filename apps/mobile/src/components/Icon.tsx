@@ -109,7 +109,7 @@ export function Icon({
   // button. In a browser the symbol is a font glyph, whose character would
   // otherwise be read out as part of the button's name.
   return (
-    <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none">
+    <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <SymbolView
         name={ICONS[name] as unknown as SymbolName}
         size={size}

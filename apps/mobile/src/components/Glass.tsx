@@ -30,7 +30,7 @@ import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'ex
 import { useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { installLiquidGlass, refractionFor } from './liquidGlass';
-import { color, currentTheme, themed } from '@/lib/theme';
+import { NO_TOUCH, color, currentTheme, themed } from '@/lib/theme';
 
 /** True when the device draws Apple's real Liquid Glass. */
 export const HAS_LIQUID_GLASS =
@@ -86,9 +86,9 @@ export function Glass({
   return (
     <View style={[styles.clip, styles.continuous, style]}>
       <Backdrop thick={thick} bar={kind === 'bar'} />
-      {tint ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tint, opacity: 0.92 }]} /> : null}
-      {kind !== 'bar' ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, shape, tint ? styles.sheenOnTint : styles.sheen]} /> : null}
-      {kind !== 'bar' ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, shape, styles.rim]} /> : null}
+      {tint ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, { backgroundColor: tint, opacity: 0.92 }]} /> : null}
+      {kind !== 'bar' ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, shape, tint ? styles.sheenOnTint : styles.sheen]} /> : null}
+      {kind !== 'bar' ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, shape, styles.rim]} /> : null}
       {children}
     </View>
   );
@@ -104,7 +104,7 @@ function WebGlassControl({ style, clear, children }: { style?: StyleProp<ViewSty
   const mark = size ? refractionFor(size.width, size.height) : { dataSet: { glass: 'control' } };
   return (
     <View {...mark} onLayout={onLayout} style={[styles.clip, style, clear && styles.webClear]}>
-      <View pointerEvents="none" style={[StyleSheet.absoluteFill, cornerShape(style), styles.sheen]} />
+      <View style={[NO_TOUCH, StyleSheet.absoluteFill, cornerShape(style), styles.sheen]} />
       {children}
     </View>
   );
@@ -114,21 +114,20 @@ function Backdrop({ thick, bar }: { thick: boolean; bar: boolean }) {
   if (Platform.OS === 'ios') {
     return (
       <BlurView
-        pointerEvents="none"
         intensity={100}
         tint={dark() ? (thick ? 'systemThickMaterialDark' : 'systemUltraThinMaterialDark') : thick ? 'systemThickMaterialLight' : 'systemUltraThinMaterialLight'}
-        style={StyleSheet.absoluteFill}
+        style={[NO_TOUCH, StyleSheet.absoluteFill]}
       />
     );
   }
   if (Platform.OS === 'web') {
     return (
-      <BlurView pointerEvents="none" intensity={thick ? 70 : 45} tint={dark() ? 'dark' : 'light'} style={StyleSheet.absoluteFill}>
+      <BlurView intensity={thick ? 70 : 45} tint={dark() ? 'dark' : 'light'} style={[NO_TOUCH, StyleSheet.absoluteFill]}>
         <View style={[StyleSheet.absoluteFill, bar ? styles.webBar : thick ? styles.webThick : styles.webThin]} />
       </BlurView>
     );
   }
-  return <View pointerEvents="none" style={[StyleSheet.absoluteFill, bar ? styles.washBar : thick ? styles.washThick : styles.washThin]} />;
+  return <View style={[NO_TOUCH, StyleSheet.absoluteFill, bar ? styles.washBar : thick ? styles.washThick : styles.washThin]} />;
 }
 
 /** The corner radii of the surface, so the overlays follow its shape. */

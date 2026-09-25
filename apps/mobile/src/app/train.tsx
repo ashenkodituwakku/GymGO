@@ -18,7 +18,7 @@ import { endSession, updateSession, useActiveSession, type ActiveItem } from '@/
 import { ApiError, api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { CHILD_TOUCH, color, face, radius, space, themed } from '@/lib/theme';
 import {
   clockLabel,
   draftToLogged,
@@ -491,7 +491,7 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
   }, [now, endsAt]);
   const onChange = (seconds: number) => updateSession((current) => ({ ...current, restEndsAt: seconds > 0 ? Date.now() + seconds * 1000 : null }));
   return (
-    <Animated.View entering={FadeInDown} exiting={FadeOutDown} style={[styles.restWrap, { bottom: bottom + space[3] }]} pointerEvents="box-none">
+    <Animated.View entering={FadeInDown} exiting={FadeOutDown} style={[CHILD_TOUCH, styles.restWrap, { bottom: bottom + space[3] }]}>
       <Glass kind="control" style={styles.rest}>
         <View style={styles.restTrack}>
           <Drain endsAt={endsAt} total={total} />

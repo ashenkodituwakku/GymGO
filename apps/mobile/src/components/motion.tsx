@@ -115,12 +115,9 @@ export function Pressy({
   const press = usePressScale(scaleTo);
   const [pressed, setPressed] = useState(false);
   const resolved = typeof style === 'function' ? style({ pressed, hovered: false } as PressableStateCallbackType) : style;
-  return (
+  const pressable = (
     <AnimatedPressable
       {...props}
-      entering={entering}
-      exiting={exiting}
-      layout={layout}
       onPressIn={(event: GestureResponderEvent) => {
         setPressed(true);
         press.onPressIn();
@@ -135,5 +132,14 @@ export function Pressy({
     >
       {children}
     </AnimatedPressable>
+  );
+  if (!entering && !exiting && !layout) return pressable;
+  // An entrance (or exit) moves the view too: it gets a view of its own, so
+  // neither animation overwrites the other's transform. Size and place come
+  // from the style, on the Pressable, as before.
+  return (
+    <Animated.View entering={entering} exiting={exiting} layout={layout}>
+      {pressable}
+    </Animated.View>
   );
 }

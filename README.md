@@ -152,6 +152,16 @@ then press Run (⌘R) in Xcode again. `--no-auto-update` turns this off.
 
 Once you have it, `bash ~/GymGO/scripts/gymgo-mac.sh --xcode` does the same.
 
+**Optional: start it by typing `gymgo`.** Run this once, then open a new
+Terminal window:
+
+```bash
+echo 'alias gymgo="bash ~/GymGO/scripts/gymgo-mac.sh"' >> ~/.zshrc
+```
+
+After that, `gymgo` starts everything, and `gymgo --xcode`, `gymgo --tunnel`
+and `gymgo --doctor` work as above.
+
 **3. In Xcode:**
 
 1. At the top, next to **GymGO**, pick where to run it: an **iPhone

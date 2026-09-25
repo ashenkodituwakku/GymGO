@@ -115,6 +115,17 @@ export function filtersButtonLabel(counts: { confirmed: number; needs_confirmati
   return `${gyms} · ${counts.confirmed} good to go`;
 }
 
+/**
+ * When the GymGO server can't be reached at sign-in. In a browser it runs on
+ * the same computer; a phone also has to be on that computer's Wi-Fi (or the
+ * launcher's tunnel).
+ */
+export function serverOfflineLine(platform: string): string {
+  return platform === 'web'
+    ? 'Can’t reach the GymGO server. Start GymGO on this computer, then try again.'
+    : 'Can’t reach the GymGO server. Check GymGO is running on your computer and this phone is on the same Wi-Fi, then try again.';
+}
+
 export const EMPTY = {
   reviews: 'No reviews yet. Train there and be the first.',
   photos: 'No photo supplied yet',

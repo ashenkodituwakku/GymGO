@@ -9,7 +9,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { serverOfflineLine } from '@/lib/copy';
 import { priceLabel, type GymRecord, type Review } from '@gymgo/domain';
 import { api, ApiError, OfflineError, type AccessOutcome, type MemberReport } from '@/lib/api';
 import { moneyLabel } from '@/lib/places';
@@ -21,7 +22,7 @@ import { PrimaryButton, TextField, Txt } from './ui';
 
 function messageFor(error: unknown): string {
   if (error instanceof OfflineError) {
-    return 'Can’t reach the GymGO server. Start it on your computer with the gymgo command, then try again.';
+    return serverOfflineLine(Platform.OS);
   }
   if (error instanceof ApiError) return error.message;
   return 'Something went wrong. Try again.';

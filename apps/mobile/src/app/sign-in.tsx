@@ -6,7 +6,8 @@
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { serverOfflineLine } from '@/lib/copy';
 import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, rise } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
@@ -22,7 +23,7 @@ type Mode = 'sign_in' | 'create';
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function messageFor(error: unknown): string {
-  if (error instanceof OfflineError) return 'Can’t reach the GymGO server. Start it on your computer with the gymgo command, then try again.';
+  if (error instanceof OfflineError) return serverOfflineLine(Platform.OS);
   if (error instanceof ApiError) return error.message;
   return 'Something went wrong. Try again.';
 }

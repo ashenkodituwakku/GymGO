@@ -35,7 +35,7 @@
  *   PUT    /api/gyms/:gymId/status        { status: 'closed' | 'open', seenOn } -> your report (replaces your last)
  *   DELETE /api/gyms/:gymId/status        take back your report
  *   GET    /api/gyms/:gymId/google        live Google Maps details (only with the owner's key)
- *   GET    /api/gyms/:gymId/icon          the icon from the gym's own website (PNG/JPEG/WebP/GIF), or 404
+ *   GET    /api/gyms/:gymId/icon          the icon from the gym's own website, or its chain's (PNG/JPEG/WebP/GIF), or 404
  *   GET    /api/billing/plans             GymGO Pro's prices, and whether it's on sale
  *   GET    /api/billing                   your plan (Free or Pro) and subscription
  *   POST   /api/billing/checkout          { interval, currency, returnUrl } -> { url } of Stripe Checkout
@@ -68,6 +68,7 @@ import {
   publishedReviews,
   type BillingCurrency,
   type BillingInterval,
+  type GymRecord,
   type Permission,
   type Review,
   type User,
@@ -92,7 +93,7 @@ import {
 } from './auth';
 import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
 import { AreaError, AreaSearch, parseBox } from './area';
-import { SiteIcons, type SafeGet } from './siteicons';
+import { SiteIcons, chainWebsites, type SafeGet } from './siteicons';
 import { allGyms, gymCountry, gymExists, gymIsDemo, gymRecord, type Db } from './db';
 import { GoogleError, GooglePlaces } from './google';
 import { MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
@@ -311,6 +312,8 @@ export function createApp(options: AppOptions) {
   // Website icons not yet kept: 300 per address per hour (a results list asks for about 40).
   const iconLimiter = new AttemptLimiter(300, 60 * 60_000);
   const siteIcons = new SiteIcons(db, { get: options.siteIcons?.get, now });
+  // A chain's shared website, for branches the map gives none (worked out once, from the bundled gyms).
+  let chainSite: ((record: GymRecord) => string | null) | null = null;
   const area = new AreaSearch(db, { endpoint: options.area?.endpoint, fetchImpl: options.area?.fetchImpl, now, known: () => allGyms(db) });
   const photos = new PhotoStore(options.photoDir ?? null);
   const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
@@ -1031,7 +1034,8 @@ export function createApp(options: AppOptions) {
     if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'icon' && parts.length === 4) {
       const record = gymRecord(db, decodeURIComponent(parts[2]!));
       if (!record) throw new HttpError(404, 'No gym with that id.');
-      const website = record.location.website;
+      chainSite ??= chainWebsites(allGyms(db));
+      const website = record.location.website ?? chainSite(record);
       if (options.siteIcons?.enabled === false) throw new HttpError(404, 'Website icons are switched off.', 'off');
       if (record.location.isDemoData || !website) throw new HttpError(404, 'This gym has no website to take an icon from.', 'none');
       let icon = siteIcons.cached(website);

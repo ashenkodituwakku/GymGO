@@ -16,17 +16,21 @@
  *    metadata addresses) can be reached, even through a redirect;
  *  - small pages and small images only, a short timeout, three redirects;
  *  - only PNG, JPEG, WebP and GIF, recognised by their bytes, at least
- *    64 pixels square; served back with the type they really are.
+ *    64 pixels square; served back with the type they really are;
+ *  - not a white mark on a transparent background, which would vanish on
+ *    the app's white plate (the next candidate is tried instead).
  *
- * Results are kept by website origin for a month (a week when there was no
- * icon), so a chain's branches share one fetch and a page of results costs
- * each site one visit a month.
+ * Results are kept by website origin for a month (a week when the site has
+ * no usable icon, an hour when it didn't answer), so a chain's branches
+ * share one fetch and a page of results costs each site one visit a month.
  */
 
 import { lookup as dnsLookup, type LookupAddress } from 'node:dns';
 import http from 'node:http';
 import https from 'node:https';
 import { BlockList, isIP } from 'node:net';
+import { inflateSync } from 'node:zlib';
+import type { GymRecord } from '@gymgo/domain';
 import type { Db } from './db';
 
 const UA = 'GymGO/0.1 (site icon for a gym finder; https://github.com/ashenkodituwakku/GymGO)';
@@ -36,6 +40,9 @@ const TIMEOUT_MS = 8000;
 const MAX_REDIRECTS = 3;
 const FOUND_DAYS = 30;
 const NONE_DAYS = 7;
+/** A site that didn't answer (timed out, refused, 5xx) is asked again after an hour, not a week. */
+const UNREACHABLE_DAYS = 1 / 24;
+const UNREACHABLE = 'unreachable';
 const MIN_SIDE = 64;
 
 // --- Where the fetcher may go -------------------------------------------------
@@ -264,6 +271,110 @@ export function sniffImage(bytes: Buffer): { mime: string; width: number; height
   return null;
 }
 
+/**
+ * Whether a PNG is a light mark on a transparent background (a white logo
+ * meant for a dark header), which would vanish on the white plate the app
+ * draws. Only plain 8-bit, non-interlaced PNGs up to 1024 px are read; for
+ * anything else the answer is "no".
+ */
+export function lightOnTransparent(bytes: Buffer): boolean {
+  try {
+    const width = bytes.readUInt32BE(16);
+    const height = bytes.readUInt32BE(20);
+    const depth = bytes[24];
+    const type = bytes[25];
+    const channels = type === 6 ? 4 : type === 4 ? 2 : 0; // Only the types with an alpha channel.
+    if (depth !== 8 || bytes[28] !== 0 || channels === 0 || width > 1024 || height > 1024) return false;
+    const parts: Buffer[] = [];
+    for (let offset = 8; offset + 8 <= bytes.length; ) {
+      const length = bytes.readUInt32BE(offset);
+      const kind = bytes.toString('latin1', offset + 4, offset + 8);
+      if (kind === 'IDAT') parts.push(bytes.subarray(offset + 8, offset + 8 + length));
+      if (kind === 'IEND') break;
+      offset += 12 + length;
+    }
+    const stride = width * channels;
+    const raw = inflateSync(Buffer.concat(parts), { maxOutputLength: height * (stride + 1) });
+    const pixels = Buffer.alloc(height * stride);
+    for (let y = 0; y < height; y += 1) {
+      const filter = raw[y * (stride + 1)];
+      for (let x = 0; x < stride; x += 1) {
+        const left = x >= channels ? pixels[y * stride + x - channels]! : 0;
+        const up = y > 0 ? pixels[(y - 1) * stride + x]! : 0;
+        const corner = x >= channels && y > 0 ? pixels[(y - 1) * stride + x - channels]! : 0;
+        let value = raw[y * (stride + 1) + 1 + x]!;
+        if (filter === 1) value += left;
+        else if (filter === 2) value += up;
+        else if (filter === 3) value += (left + up) >> 1;
+        else if (filter === 4) {
+          const guess = left + up - corner;
+          const [a, b, c] = [Math.abs(guess - left), Math.abs(guess - up), Math.abs(guess - corner)];
+          value += a <= b && a <= c ? left : b <= c ? up : corner;
+        }
+        pixels[y * stride + x] = value & 255;
+      }
+    }
+    let clear = 0;
+    let opaque = 0;
+    let light = 0;
+    for (let i = 0; i < width * height; i += 1) {
+      const p = i * channels;
+      if (pixels[p + channels - 1]! < 32) {
+        clear += 1;
+        continue;
+      }
+      opaque += 1;
+      const [r, g, b] = channels === 4 ? [pixels[p]!, pixels[p + 1]!, pixels[p + 2]!] : [pixels[p]!, pixels[p]!, pixels[p]!];
+      light += (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    }
+    return clear / (width * height) > 0.2 && opaque > 0 && light / opaque > 0.85;
+  } catch {
+    return false;
+  }
+}
+
+// --- A chain's website, for branches the map gives none --------------------------
+
+/**
+ * The website shared by a chain's branches in one country, for a branch the
+ * map gives no website of its own. Only when at least two branches use the
+ * very same site and no other site is as common: CrossFit affiliates, say,
+ * are separate gyms with their own sites, and must never borrow each other's
+ * icon.
+ */
+export function chainWebsites(records: GymRecord[]): (record: GymRecord) => string | null {
+  // A branch is known by its brand's Wikidata item and by its brand name; the
+  // map tags some branches with one and some with the other.
+  const keys = (record: GymRecord) => {
+    const { brand, externalRefs, address } = record.location;
+    return [externalRefs.wikidataBrand, brand?.trim().toLowerCase()].filter(Boolean).map((id) => `${address.countryCode}|${id}`);
+  };
+  const hosts = new Map<string, Map<string, number>>();
+  for (const record of records) {
+    const url = record.location.website ? allowedUrl(record.location.website) : null;
+    if (!url || record.location.isDemoData) continue;
+    const host = url.hostname.replace(/^www\./, '');
+    for (const k of keys(record)) {
+      const counts = hosts.get(k) ?? new Map<string, number>();
+      counts.set(host, (counts.get(host) ?? 0) + 1);
+      hosts.set(k, counts);
+    }
+  }
+  const chosen = new Map<string, string>();
+  for (const [k, counts] of hosts) {
+    const ranked = [...counts].sort((a, b) => b[1] - a[1]);
+    const [top, next] = ranked;
+    if (top && top[1] >= 2 && (!next || next[1] < top[1])) chosen.set(k, `https://${top[0]}/`);
+  }
+  return (record) => {
+    for (const k of keys(record)) {
+      const site = chosen.get(k);
+      if (site) return site;
+    }
+    return null;
+  };
+}
+
 // --- The store ------------------------------------------------------------------
 
 export interface SiteIcon {
@@ -307,7 +418,7 @@ export class SiteIcons {
       | undefined;
     if (!row) return undefined;
     const days = (this.now().getTime() - Date.parse(row.fetched_at)) / 86_400_000;
-    if (days > (row.found ? FOUND_DAYS : NONE_DAYS)) return undefined;
+    if (days > (row.found ? FOUND_DAYS : row.source === UNREACHABLE ? UNREACHABLE_DAYS : NONE_DAYS)) return undefined;
     return row.found && row.bytes ? { mime: row.mime!, bytes: Buffer.from(row.bytes), source: row.source ?? origin } : null;
   }
 
@@ -338,8 +449,10 @@ export class SiteIcons {
   private async fetchIcon(page: URL): Promise<SiteIcon | null> {
     const get = this.options.get ?? safeGet;
     let found: (SiteIcon & { width: number; height: number }) | null = null;
+    let unreachable = false;
     try {
       const home = await get(page, PAGE_BYTES, 'text/html,application/xhtml+xml');
+      unreachable = home.status >= 500 || home.status === 429;
       const html = home.status < 400 && /html/i.test(home.type) ? home.body.toString('utf8') : '';
       for (const candidate of iconCandidates(html, home.url).slice(0, 4)) {
         try {
@@ -348,6 +461,8 @@ export class SiteIcons {
           const kind = sniffImage(image.body);
           if (!kind || kind.width < MIN_SIDE || kind.height < MIN_SIDE || kind.width > 4096 || kind.height > 4096) continue;
           if (Math.max(kind.width / kind.height, kind.height / kind.width) > 4) continue;
+          // A white mark on nothing would vanish on the app's white plate: try the next.
+          if (kind.mime === 'image/png' && lightOnTransparent(image.body)) continue;
           found = { mime: kind.mime, bytes: image.body, source: image.url, width: kind.width, height: kind.height };
           break;
         } catch {
@@ -355,7 +470,7 @@ export class SiteIcons {
         }
       }
     } catch {
-      // The site didn't answer: keep "none" for a week.
+      unreachable = true;
     }
     this.db
       .prepare(
@@ -363,7 +478,16 @@ export class SiteIcons {
          on conflict(origin) do update set found = excluded.found, mime = excluded.mime, bytes = excluded.bytes, width = excluded.width,
            height = excluded.height, source = excluded.source, fetched_at = excluded.fetched_at`,
       )
-      .run(page.origin, found ? 1 : 0, found?.mime ?? null, found?.bytes ?? null, found?.width ?? null, found?.height ?? null, found?.source ?? null, this.now().toISOString());
+      .run(
+        page.origin,
+        found ? 1 : 0,
+        found?.mime ?? null,
+        found?.bytes ?? null,
+        found?.width ?? null,
+        found?.height ?? null,
+        found?.source ?? (unreachable ? UNREACHABLE : null),
+        this.now().toISOString(),
+      );
     return found ? { mime: found.mime, bytes: found.bytes, source: found.source } : null;
   }
 }

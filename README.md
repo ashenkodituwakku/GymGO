@@ -308,8 +308,14 @@ declares for search engines. It's shown the way a browser or a search engine
 shows a site's icon beside its link, credited to the site ("Icon from
 dohertysgym.com, the gym's own website"), and never altered. The server
 fetches it the first time someone looks, keeps it for a month (a week when
-there's none), and shares it between a chain's branches. It only accepts real
-PNG, JPEG, WebP or GIF images at least 64 pixels square, and it will only
+there's none, an hour when the site didn't answer), and shares it between a
+chain's branches. A branch the map gives no website borrows its chain's, but
+only when two or more branches in that country share the very same site: a
+CrossFit affiliate never shows another affiliate's icon. In the bundled
+cities that's about 240 of 769 real gyms, on top of the ten chains with
+Commons logos. It only accepts real
+PNG, JPEG, WebP or GIF images at least 64 pixels square (never a white mark
+on a transparent background, which would vanish on the white plate), and it will only
 connect to public addresses, because website addresses come from
 OpenStreetMap, which anyone can edit. A gym without a website, or whose site
 has no usable icon (or refuses automated visitors), shows a plain symbol,

@@ -33,9 +33,11 @@ export function logoFor(location: GymLocation): Logo | null {
 /** What's known about each gym's website icon this session: its size, or null for none. */
 const siteIcons = new Map<string, { width: number; height: number } | null>();
 
+/** Where the server has the gym's website icon; a branch with no site of its own may have its chain's. */
 function siteIconUri(location: GymLocation): string | null {
   const base = apiBase();
-  if (!base || location.isDemoData || !location.website) return null;
+  const chain = location.brand || location.externalRefs.wikidataBrand;
+  if (!base || location.isDemoData || (!location.website && !chain)) return null;
   return `${base}/api/gyms/${encodeURIComponent(location.id)}/icon`;
 }
 
@@ -145,10 +147,18 @@ export function LogoCredit({ location }: { location: GymLocation }) {
   const mark = useGymMark(location);
   if (!mark) return null;
   if (mark.kind === 'site') {
+    if (!location.website) {
+      // A branch the map gives no website: the icon is from its chain's.
+      return (
+        <Txt variant="caption" color={color.labelSecondary}>
+          Icon from {location.brand ?? location.name}’s own website. It’s their mark; GymGO isn’t connected to or endorsed by them.
+        </Txt>
+      );
+    }
     return (
       <Pressable onPress={() => void WebBrowser.openBrowserAsync(location.website!)} accessibilityRole="link" hitSlop={6}>
         <Txt variant="caption" color={color.labelSecondary}>
-          Icon from {host(location.website!)}, the gym’s own website. It’s their mark; GymGO isn’t connected to or endorsed by them. ↗
+          Icon from {host(location.website)}, the gym’s own website. It’s their mark; GymGO isn’t connected to or endorsed by them. ↗
         </Txt>
       </Pressable>
     );

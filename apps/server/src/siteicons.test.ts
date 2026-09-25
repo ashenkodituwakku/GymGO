@@ -5,7 +5,9 @@ import { DEMO_GYMS } from '@gymgo/demo-data';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { createApp } from './app';
 import { openDb, seedGyms, type Db } from './db';
-import { allowedUrl, iconCandidates, isPrivateAddress, sniffImage, type Fetched, type SafeGet } from './siteicons';
+import { deflateSync } from 'node:zlib';
+import { SiteIcons, allowedUrl, chainWebsites, iconCandidates, isPrivateAddress, lightOnTransparent, sniffImage, type Fetched, type SafeGet } from './siteicons';
+import type { GymRecord } from '@gymgo/domain';
 
 /** A PNG header of the given size: all the checks read. */
 function png(width: number, height: number): Buffer {
@@ -17,6 +19,45 @@ function png(width: number, height: number): Buffer {
   head.writeUInt32BE(height, 20);
   return head;
 }
+
+/** A real RGBA PNG: `pixel(x, y)` gives [r, g, b, a]. */
+function rgbaPng(size: number, pixel: (x: number, y: number) => [number, number, number, number]): Buffer {
+  const lines: Buffer[] = [];
+  for (let y = 0; y < size; y += 1) {
+    const line = Buffer.alloc(1 + size * 4);
+    for (let x = 0; x < size; x += 1) Buffer.from(pixel(x, y)).copy(line, 1 + x * 4);
+    lines.push(line);
+  }
+  const chunk = (kind: string, data: Buffer) => {
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    return Buffer.concat([length, Buffer.from(kind, 'latin1'), data, Buffer.alloc(4)]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(size, 0);
+  header.writeUInt32BE(size, 4);
+  header[8] = 8;
+  header[9] = 6;
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', header),
+    chunk('IDAT', deflateSync(Buffer.concat(lines))),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
+}
+
+describe('icons that would vanish on a white plate', () => {
+  it('spots a white mark on a transparent background', () => {
+    const whiteOnClear = rgbaPng(64, (x) => (x < 32 ? [255, 255, 255, 255] : [0, 0, 0, 0]));
+    expect(lightOnTransparent(whiteOnClear)).toBe(true);
+  });
+
+  it('keeps dark marks, and opaque icons whatever their colour', () => {
+    expect(lightOnTransparent(rgbaPng(64, (x) => (x < 32 ? [20, 20, 20, 255] : [0, 0, 0, 0])))).toBe(false);
+    expect(lightOnTransparent(rgbaPng(64, () => [250, 250, 250, 255]))).toBe(false);
+    expect(lightOnTransparent(Buffer.from('not a png at all, just some bytes here'))).toBe(false);
+  });
+});
 
 describe('where the icon fetcher may go', () => {
   it('refuses private, loopback, link-local and metadata addresses', () => {
@@ -91,8 +132,13 @@ const WEB: Record<string, Omit<Fetched, 'url'>> = {
   'https://primeathletica.com.au/fake.png': { status: 200, type: 'image/png', body: Buffer.from('<html>not an image</html>') },
 };
 
+let flakyUp = false;
 const fakeGet: SafeGet = async (url) => {
   visits.push(url.href);
+  // A site that's down the first time and fine later.
+  if (url.href === 'https://flaky.example.com/' && !flakyUp) throw new Error('timed out');
+  if (url.href === 'https://flaky.example.com/') return { status: 200, type: 'text/html', body: Buffer.from('<link rel="apple-touch-icon" href="/t.png">'), url: url.href };
+  if (url.href === 'https://flaky.example.com/t.png') return { status: 200, type: 'image/png', body: png(120, 120), url: url.href };
   const page = WEB[url.href];
   return page ? { ...page, url: url.href } : { status: 404, type: 'text/html', body: Buffer.alloc(0), url: url.href };
 };
@@ -100,6 +146,7 @@ const fakeGet: SafeGet = async (url) => {
 let server: Server;
 let base: string;
 let db: Db;
+let clock = new Date('2026-09-25T00:00:00Z');
 
 beforeAll(async () => {
   db = openDb(':memory:');
@@ -138,8 +185,53 @@ describe('GET /api/gyms/:id/icon', () => {
     expect(((await response.json()) as { code: string }).code).toBe('none');
   });
 
+  it('asks a site that didn’t answer again after an hour, not a week', async () => {
+    const icons = new SiteIcons(db, { get: fakeGet, now: () => clock });
+    expect(await icons.icon('https://flaky.example.com/')).toBeNull();
+    flakyUp = true;
+    expect(icons.cached('https://flaky.example.com/')).toBeNull(); // still remembered within the hour
+    clock = new Date(clock.getTime() + 61 * 60_000);
+    expect(icons.cached('https://flaky.example.com/')).toBeUndefined();
+    expect((await icons.icon('https://flaky.example.com/'))?.mime).toBe('image/png');
+  });
+
   it('has nothing for invented demo gyms or unknown ids', async () => {
     expect((await fetch(`${base}/api/gyms/${DEMO_GYMS[0]!.location.id}/icon`)).status).toBe(404);
     expect((await fetch(`${base}/api/gyms/no-such-gym/icon`)).status).toBe(404);
+  });
+});
+
+describe('a chain’s website, for branches without one', () => {
+  const branch = (id: string, brand: string | null, website: string | null, country = 'AU', wikidataBrand?: string): GymRecord =>
+    ({
+      location: {
+        id,
+        brand,
+        website,
+        isDemoData: false,
+        address: { countryCode: country },
+        externalRefs: wikidataBrand ? { wikidataBrand } : {},
+      },
+    }) as unknown as GymRecord;
+
+  it('uses the site two or more branches share, in the same country', () => {
+    const find = chainWebsites([
+      branch('a', 'Anytime Fitness', 'https://www.anytimefitness.com.au/gyms/a', 'AU', 'Q4778364'),
+      branch('b', 'Anytime Fitness', 'https://anytimefitness.com.au/gyms/b', 'AU', 'Q4778364'),
+      branch('c', 'Anytime Fitness', 'https://www.anytimefitness.com/gyms/c', 'US', 'Q4778364'),
+    ]);
+    expect(find(branch('d', 'Anytime Fitness', null, 'AU', 'Q4778364'))).toBe('https://anytimefitness.com.au/');
+    // Only one US branch has a site: not enough to call it the chain's.
+    expect(find(branch('e', 'Anytime Fitness', null, 'US', 'Q4778364'))).toBeNull();
+    // A branch tagged with the brand's name but not its Wikidata item still finds it.
+    expect(find(branch('f', 'Anytime Fitness', null, 'AU'))).toBe('https://anytimefitness.com.au/');
+  });
+
+  it('never lends one independent affiliate’s site to another', () => {
+    const find = chainWebsites([
+      branch('a', 'CrossFit', 'https://www.k2crossfit.com/', 'US', 'Q2072840'),
+      branch('b', 'CrossFit', 'https://persistenceathletics.com/', 'US', 'Q2072840'),
+    ]);
+    expect(find(branch('c', 'CrossFit', null, 'US', 'Q2072840'))).toBeNull();
   });
 });

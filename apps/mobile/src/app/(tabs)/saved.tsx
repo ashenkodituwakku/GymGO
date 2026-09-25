@@ -1,6 +1,6 @@
 /**
  * Saved: the gyms you kept, with their answer for your current search, and
- * a tick on each to pick up to three to compare side by side.
+ * a tick on each to pick gyms to compare side by side (2 on Free, 4 on Pro).
  */
 
 import { useRouter } from 'expo-router';

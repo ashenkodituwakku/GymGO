@@ -109,6 +109,17 @@ describe('places', () => {
     // Toronto isn't covered; the nearest city that is, is Philadelphia (~530 km).
     expect(cityNear({ lat: 43.65, lng: -79.38 })).toBeNull();
     expect(nearestCity({ lat: 43.65, lng: -79.38 }).city.id).toBe('philadelphia');
+  });
+
+  it('finds the cities in a US state, by name or postal code', () => {
+    const texas = suggestPlaces('Texas', 10).map((place) => place.city);
+    expect(texas).toEqual(expect.arrayContaining(['houston', 'austin']));
+    expect(geocodePlace('tx').place?.city).toBe('houston');
+    expect(geocodePlace('Colorado').place?.city).toBe('denver');
+    expect(suggestPlaces('calif', 10).map((place) => place.city)).toEqual(expect.arrayContaining(['los-angeles', 'san-francisco', 'san-diego']));
+    // A city's own name still wins: New York is the city, Washington is DC.
+    expect(geocodePlace('New York').place?.city).toBe('new-york');
+    expect(geocodePlace('Washington').place?.city).toBe('washington-dc');
     // Townsville isn't covered; the nearest city that is, is Brisbane, never the Sydney demo.
     expect(cityNear({ lat: -19.26, lng: 146.82 })).toBeNull();
     expect(nearestCity({ lat: -19.26, lng: 146.82 }).city.id).toBe('brisbane');

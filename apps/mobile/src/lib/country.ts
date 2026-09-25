@@ -77,9 +77,13 @@ export function deviceCountry(): string | null {
   return countryFromLocales(locales);
 }
 
-/** Countries GymGO has built-in cities in, in the order it lists them. */
+/** GymGO's main market: listed first, and suggested when the device doesn't say where it is. */
+export const FOCUS_COUNTRY = 'US';
+
+/** Countries GymGO has built-in cities in: the US first, then as the cities are listed. */
 export function builtInCountries(): string[] {
-  return [...new Set(CITY_LIST.filter((city) => !city.demo).map((city) => city.country))];
+  const codes = [...new Set(CITY_LIST.filter((city) => !city.demo).map((city) => city.country))];
+  return [FOCUS_COUNTRY, ...codes.filter((code) => code !== FOCUS_COUNTRY)];
 }
 
 /**

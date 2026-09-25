@@ -10,7 +10,7 @@ import { Platform, Pressable, SectionList, StyleSheet, TextInput, View } from 'r
 import { Icon } from '@/components/Icon';
 import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
-import { COUNTRIES, builtInCountries, countryByCode, deviceCountry, flagOf, searchCountries, type Country } from '@/lib/country';
+import { COUNTRIES, FOCUS_COUNTRY, builtInCountries, countryByCode, deviceCountry, flagOf, searchCountries, type Country } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { CITY_LIST } from '@/lib/places';
 import { color, face, radius, space } from '@/lib/theme';
@@ -27,7 +27,8 @@ export default function CountryScreen() {
   const router = useRouter();
   const { prefs, chooseCountry, billing } = useApp();
   const [query, setQuery] = useState('');
-  const suggested = useMemo(() => deviceCountry(), []);
+  // The device's own region, or GymGO's main market when it doesn't say.
+  const suggested = useMemo(() => deviceCountry() ?? FOCUS_COUNTRY, []);
 
   const sections = useMemo(() => {
     if (query.trim()) return [{ title: '', data: searchCountries(query) }];

@@ -29,7 +29,8 @@ describe('choosing your country', () => {
   });
 
   it('opens on a built-in city where there is one, else the capital, on its clock', () => {
-    expect(builtInCountries().slice(0, 3)).toEqual(['AU', 'US', 'GB']);
+    // The US leads: it's GymGO's main market.
+    expect(builtInCountries().slice(0, 3)).toEqual(['US', 'AU', 'GB']);
     expect(openingPlace('AU')).toMatchObject({ placeName: 'Melbourne CBD', countryCode: 'AU', timezone: 'Australia/Melbourne' });
     expect(openingPlace('GB')).toMatchObject({ placeName: 'London', countryCode: 'GB', timezone: 'Europe/London' });
     expect(openingPlace('JP')).toMatchObject({ placeName: 'Tokyo', countryCode: 'JP', timezone: 'Asia/Tokyo' });

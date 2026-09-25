@@ -155,6 +155,8 @@ function MapScreen() {
   const searchBoxRef = useRef<(box: BoundingBox, named?: FoundPlace) => Promise<void>>(async () => undefined);
   const mayExploreRef = useRef(mayExplore);
   mayExploreRef.current = mayExplore;
+  const homeRef = useRef(prefs.country);
+  homeRef.current = prefs.country;
   /** A typed place the map is flying to, searched once it's there. `from` is the view it left. */
   const pendingPlace = useRef<{ place: FoundPlace; span: number; from: BoundingBox | null; timer: ReturnType<typeof setTimeout> } | null>(null);
   const viewBoxRef = useRef<BoundingBox | null>(null);
@@ -162,7 +164,11 @@ function MapScreen() {
   /** Anywhere in the world: ask the server's place finder, fly there and search it. */
   const findPlace = useCallback(async (text: string, orGym?: string) => {
     try {
-      const found = placeForEnter(text, (await api.places(text)).places, orGym !== undefined);
+      // Your own country's match first: "10001" is Manhattan to an American, not Cáceres.
+      const places = (await api.places(text)).places;
+      const home = homeRef.current;
+      const ranked = [...places.filter((place) => place.countryCode === home), ...places.filter((place) => place.countryCode !== home)];
+      const found = placeForEnter(text, ranked, orGym !== undefined);
       if (!found && orGym) return openGymRef.current(orGym);
       if (!found) {
         haptic.warn();

@@ -217,6 +217,12 @@ export function geocodePlace(query: string | null, prefer?: CityId): { place: Ap
   const city = activeCities().find((item) => [item.name, ...item.aliases].some((name) => normalise(name) === needle));
   if (city) return { place: cityPlace(city), outOfArea: false };
 
+  // A US state: its first built-in city ("Texas" is Houston).
+  const inState = citiesInState(query)[0];
+  if (inState && (needle.length === 2 || Object.values(US_STATES).some((name) => normalise(name) === needle))) {
+    return { place: cityPlace(inState), outOfArea: false };
+  }
+
   const scoped = withCity(needle);
   if (scoped) {
     const inCity = activePlaces().filter((place) => place.city === scoped.city.id);
@@ -237,10 +243,40 @@ export function geocodePlace(query: string | null, prefer?: CityId): { place: Ap
   return { place: null, outOfArea: true };
 }
 
+/** US states and DC by postal code, so "Texas" or "TX" finds the cities GymGO has there. */
+const US_STATES: Record<string, string> = {
+  AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut',
+  DE: 'Delaware', DC: 'District of Columbia', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois',
+  IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland',
+  MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri', MT: 'Montana',
+  NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York',
+  NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania',
+  RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah',
+  VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming',
+};
+
+/**
+ * The built-in US cities in a state typed by name or postal code ("Texas",
+ * "tx"), in the order GymGO lists them. A few letters of a name are enough
+ * ("calif"). Cities' own names come first elsewhere, so "New York" and
+ * "Washington" stay the cities.
+ */
+export function citiesInState(query: string): City[] {
+  const needle = normalise(query);
+  if (needle.length < 2) return [];
+  const codes = Object.keys(US_STATES).filter(
+    (code) => code.toLowerCase() === needle || (needle.length >= 3 && normalise(US_STATES[code]!).startsWith(needle)),
+  );
+  return activeCities().filter((city) => city.country === 'US' && codes.includes(city.region));
+}
+
 export function suggestPlaces(query: string, limit = 6, prefer?: CityId): AppPlace[] {
   const needle = normalise(query);
   if (!needle) return [];
-  const cities = activeCities().filter((city) => [city.name, ...city.aliases].some((name) => normalise(name).startsWith(needle))).map(cityPlace);
+  const cities = [
+    ...activeCities().filter((city) => [city.name, ...city.aliases].some((name) => normalise(name).startsWith(needle))),
+    ...citiesInState(query),
+  ].map(cityPlace);
   const places = activePlaces().filter(
     (place) => normalise(place.name).includes(needle) || (place.postcode !== '' && place.postcode.startsWith(needle)),
   )

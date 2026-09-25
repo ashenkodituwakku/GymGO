@@ -9,7 +9,7 @@
  */
 
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GymCard } from '@/components/GymCard';
 import { Pressy } from '@/components/motion';
@@ -34,18 +34,22 @@ function greeting(minute: number): string {
   return 'Good evening';
 }
 
+/** How many of a region's cities show before "N more". */
+const CITIES_SHOWN = 12;
+
 /** The page's column width on wide screens (TabScreen's maxWidth). */
 const COLUMN = 760;
 
 /** How Home groups the built-in cities. */
 const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
-  { label: 'Australia', has: (country) => country === 'AU' },
   { label: 'USA', has: (country) => country === 'US' },
+  { label: 'Australia', has: (country) => country === 'AU' },
   { label: 'Europe', has: (country) => country !== 'AU' && country !== 'US' },
 ];
 
 export default function Home() {
   const { data, account, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs } = useApp();
+  const [showAll, setShowAll] = useState<Record<string, boolean>>({});
   // Another country than yours, without Pro: no gyms listed, just the way to Pro.
   const locked = !mayExplore(filters.countryCode);
   const router = useRouter();
@@ -267,8 +271,11 @@ export default function Home() {
             Or anywhere in the world: type a town on the map, or move the map and tap Search this area.
           </Txt>
           {REGIONS.map(({ label, has }) => {
-            const list = otherCities.filter((item) => has(item.country));
-            if (list.length === 0) return null;
+            const all = otherCities.filter((item) => has(item.country));
+            if (all.length === 0) return null;
+            // A long list (the US has 40) shows its first dozen until asked for the rest.
+            const open = showAll[label] === true || all.length <= CITIES_SHOWN + 2;
+            const list = open ? all : all.slice(0, CITIES_SHOWN);
             return (
               <View key={label} style={styles.country}>
                 <Txt variant="footnote" color={color.labelSecondary} style={styles.countryLabel}>
@@ -293,6 +300,21 @@ export default function Home() {
                       )}
                     </Pressable>
                   ))}
+                  {!open && (
+                    <Pressable
+                      onPress={() => {
+                        haptic.select();
+                        setShowAll((current) => ({ ...current, [label]: true }));
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${all.length - CITIES_SHOWN} more cities in ${label}`}
+                      style={({ pressed }) => [styles.suburb, styles.moreChip, pressed && { opacity: 0.7 }]}
+                    >
+                      <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                        {all.length - CITIES_SHOWN} more
+                      </Txt>
+                    </Pressable>
+                  )}
                 </View>
               </View>
             );
@@ -393,6 +415,7 @@ const styles = StyleSheet.create({
   proTag: { ...face('bold'), letterSpacing: 0.6 },
   lockedText: { flex: 1, gap: 2 },
   cityChip: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  moreChip: { backgroundColor: color.brandTint, shadowOpacity: 0 },
   suburbs: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   suburb: { paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.background, ...shadow.card },
   suburbOn: { backgroundColor: color.brand },

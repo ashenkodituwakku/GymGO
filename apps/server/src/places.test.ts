@@ -57,6 +57,20 @@ describe('reading the place finder', () => {
     expect(readPhoton({ features: [{ properties: { type: 'state', name: 'Texas', countrycode: 'US' }, geometry: { coordinates: [-99, 31] } }] })).toEqual([]);
   });
 
+  it('reads a ZIP code as a place in its city, in every country that has it', () => {
+    const zips = readPhoton({
+      features: [
+        { properties: { type: 'other', osm_value: 'postcode', postcode: '10001', city: 'Cáceres', state: 'Extremadura', country: 'Spain', countrycode: 'ES' }, geometry: { coordinates: [-6.4, 39.5] } },
+        { properties: { type: 'other', osm_value: 'postcode', postcode: '10001', city: 'New York', state: 'New York', country: 'United States', countrycode: 'US' }, geometry: { coordinates: [-73.99, 40.75] } },
+        { properties: { type: 'other', osm_value: 'bus_stop', name: 'Stop 10001', countrycode: 'US' }, geometry: { coordinates: [-73.9, 40.7] } },
+      ],
+    });
+    expect(zips.map((place) => [place.name, place.region, place.countryCode])).toEqual([
+      ['10001', 'Cáceres, Extremadura, Spain', 'ES'],
+      ['10001', 'New York, New York, United States', 'US'],
+    ]);
+  });
+
   it('treats questions that differ only in case and punctuation as one', () => {
     expect(normaliseQuery('  Bendigo, VIC ')).toBe(normaliseQuery('bendigo vic'));
   });

@@ -13,7 +13,7 @@ import { router } from 'expo-router';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { LIMITS, haversineKm } from '@gymgo/domain';
 import { ApiError } from './api';
-import { canSearchIn, openingPlace } from './country';
+import { FOCUS_COUNTRY, canSearchIn, openingPlace } from './country';
 import { setHapticsEnabled } from './haptics';
 import { currentFix, type Fix } from './location';
 import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, type City } from './places';
@@ -168,9 +168,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setPrefs(next);
       setPrefsReady(true);
       if (next.demo) setFilters((current) => moveTo(current, atPlace(homePlace())));
-      else if (country) {
-        // Open in your country, unless a place was already picked.
-        const opening = openingPlace(country);
+      else {
+        // Open in your country (the US, GymGO's main market, until you've
+        // chosen), unless a place was already picked.
+        const opening = openingPlace(country ?? FOCUS_COUNTRY);
         if (opening) setFilters((current) => (current.placeName === DEFAULT_PLACE.name ? moveTo(current, opening) : current));
       }
     });
@@ -318,10 +319,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return next;
     });
     if (key === 'demo') {
-      // Switching worlds: search from the new one's home, and let go of
-      // gyms picked in the other.
+      // Switching worlds: search from the new one's home (the demo's, or
+      // your country's), and let go of gyms picked in the other.
       setDemoMode(Boolean(value));
-      setFilters((current) => moveTo(current, atPlace(homePlace())));
+      const opening = value ? null : openingPlace(reachRef.current.home ?? FOCUS_COUNTRY);
+      setFilters((current) => moveTo(current, opening ?? atPlace(homePlace())));
       setCompare([]);
     }
   }, []);

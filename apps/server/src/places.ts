@@ -66,12 +66,16 @@ export function readPhoton(data: unknown): FoundPlace[] {
     const p = feature?.properties ?? {};
     const [lng, lat] = Array.isArray(feature?.geometry?.coordinates) ? feature.geometry.coordinates : [];
     const country = typeof p.countrycode === 'string' && /^[A-Z]{2}$/.test(p.countrycode) ? p.countrycode : null;
-    if (!country || typeof p.name !== 'string' || typeof lat !== 'number' || typeof lng !== 'number') continue;
-    const kind = p.type === 'city' ? 'city' : p.type === 'district' || p.type === 'locality' ? 'suburb' : null;
+    if (!country || typeof lat !== 'number' || typeof lng !== 'number') continue;
+    // A ZIP or postcode ("10001", "SW1A 1AA") comes back as a postcode area: named for the code, placed in its city.
+    const postcode = p.osm_value === 'postcode' ? String(p.postcode ?? p.name ?? '').trim() : '';
+    const kind = p.type === 'city' ? 'city' : p.type === 'district' || p.type === 'locality' || postcode ? 'suburb' : null;
     if (!kind) continue;
-    const region = [p.state, p.country].filter((part) => typeof part === 'string' && part).join(', ');
+    const region = [postcode ? p.city : null, p.state, p.country].filter((part) => typeof part === 'string' && part).join(', ');
+    const name = postcode || p.name;
+    if (typeof name !== 'string' || !name) continue;
     // A city and its own district of the same name are one place.
-    const key = `${p.name.toLowerCase()}|${country}|${typeof p.state === 'string' ? p.state : ''}`;
+    const key = `${name.toLowerCase()}|${country}|${typeof p.state === 'string' ? p.state : ''}`;
     if (seen.has(key)) continue;
     seen.add(key);
     let timezone: string;
@@ -80,7 +84,7 @@ export function readPhoton(data: unknown): FoundPlace[] {
     } catch {
       continue;
     }
-    out.push({ name: p.name, region, lat, lng, countryCode: country, kind, timezone });
+    out.push({ name, region, lat, lng, countryCode: country, kind, timezone });
     if (out.length >= MAX_RESULTS) break;
   }
   return out;
@@ -137,6 +141,8 @@ export class PlaceSearch {
     url.searchParams.set('limit', '15');
     url.searchParams.set('lang', 'en');
     for (const layer of ['city', 'district', 'locality']) url.searchParams.append('layer', layer);
+    // Something with a digit that could be a ZIP or postcode: postcode areas too (Photon files them under "other").
+    if (/\d/.test(text) && /^[A-Za-z0-9 -]{3,10}$/.test(text)) url.searchParams.append('layer', 'other');
     let response: Response;
     try {
       response = await (this.options.fetchImpl ?? fetch)(url, {

@@ -1,8 +1,8 @@
 {
-  "name": "@gymgo/usa-data",
+  "name": "@gymgo/osm",
   "version": "0.1.0",
   "private": true,
-  "description": "Gyms in 15 US cities, from OpenStreetMap (ODbL). Map-only: no prices, hours only where mapped.",
+  "description": "What counts as a gym on OpenStreetMap, and how a mapped gym becomes a map-only GymGO record. Shared by the city data generators and the server's area search.",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -12,16 +12,12 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit",
-    "generate": "tsx scripts/generate.ts"
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@gymgo/domain": "workspace:*",
-    "@gymgo/osm": "workspace:*"
+    "@gymgo/domain": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^22.20.0",
-    "tsx": "^4.20.0",
     "typescript": "^5.9.3",
     "vitest": "^5.0.1"
   }

@@ -538,7 +538,13 @@ packages/domain/     Framework-free rules. No React, no Next, no I/O.
 packages/melbourne-data/  23 real inner-Melbourne gyms, every fact linked to
                      where it was read (gym websites, OpenStreetMap).
 packages/usa-data/   477 real gyms in 15 US cities, map-only, from
-                     OpenStreetMap. scripts/generate.py rebuilds it.
+                     OpenStreetMap. scripts/generate.ts rebuilds it.
+packages/au-data/    269 more Australian gyms the same way (Sydney,
+                     Brisbane, Perth, Adelaide, Canberra, Gold Coast,
+                     Hobart, and Melbourne beyond the researched 23).
+packages/osm/        What counts as a gym on OpenStreetMap, and how a mapped
+                     gym becomes a map-only record: one copy, used by both
+                     generators and by the server's "Search this area".
 packages/demo-data/  17 fictional Sydney gyms covering the edge cases.
 apps/server/         The API: accounts, saved gyms, reviews, moderation, on
                      Node's built-in SQLite. Free, local, no external services.

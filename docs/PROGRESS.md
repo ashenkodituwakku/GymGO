@@ -95,7 +95,7 @@ redirect.
 some networks; the `maps.mail.ru` mirror worked. Ask for `out center tags`
 for gyms (ways need a centre) and plain `out` for neighbourhood nodes:
 `out tags` drops their coordinates. Then run
-`python3 packages/usa-data/scripts/generate.py <folder of city JSON files>`
+`pnpm --filter @gymgo/usa-data generate <folder of city JSON files>`
 and the package's tests. The raw JSON isn't committed.
 
 **The start-up location fix mustn't undo a choice.** It arrives a moment

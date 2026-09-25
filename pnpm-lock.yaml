@@ -229,10 +229,19 @@ importers:
       '@gymgo/domain':
         specifier: workspace:*
         version: link:../domain
+      '@gymgo/osm':
+        specifier: workspace:*
+        version: link:../osm
     devDependencies:
       '@gymgo/melbourne-data':
         specifier: workspace:*
         version: link:../melbourne-data
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.4
+      tsx:
+        specifier: ^4.20.0
+        version: 4.23.15
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -279,12 +288,34 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1(@types/node@22.20.4)(vite@8.3.0(@types/node@22.20.4)(esbuild@0.28.2)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
-  packages/usa-data:
+  packages/osm:
     dependencies:
       '@gymgo/domain':
         specifier: workspace:*
         version: link:../domain
     devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@types/node@22.20.4)(vite@8.3.0(@types/node@22.20.4)(esbuild@0.28.2)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/usa-data:
+    dependencies:
+      '@gymgo/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@gymgo/osm':
+        specifier: workspace:*
+        version: link:../osm
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.4
+      tsx:
+        specifier: ^4.20.0
+        version: 4.23.15
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

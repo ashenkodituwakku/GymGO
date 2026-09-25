@@ -84,7 +84,7 @@ function MapScreen() {
   // The time-zone self-check runs once; its answer can't change mid-session.
   const selfCheck = useMemo(() => checkTimeZoneSupport(), []);
 
-  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe, prefs, mayExplore, openPro } = useApp();
+  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe, prefs, prefsReady, mayExplore, openPro } = useApp();
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -616,22 +616,27 @@ function MapScreen() {
     const panelsWidth = PANEL_GAP + PANEL_WIDTH + (panel ? PANEL_GAP + PANEL_WIDTH : 0);
     return (
       <View style={styles.root}>
-        <GymMap
-          ref={map}
-          pins={pins}
-          selectedId={selectedId}
-          initialCentre={filters.centre}
-          topInset={PANEL_GAP}
-          bottomInset={PANEL_GAP + clearance}
-          leftInset={panelsWidth}
-          showsUserLocation={here !== null}
-          userLocation={here?.position ?? null}
-          onSelect={openGym}
-          onRegionChange={setViewBox}
-          onMapPress={() => {
-            if (panel === 'place') closePlace();
-          }}
-        />
+        {/* The map opens where the search is, so it waits for your country. */}
+        {prefsReady ? (
+          <GymMap
+            ref={map}
+            pins={pins}
+            selectedId={selectedId}
+            initialCentre={filters.centre}
+            topInset={PANEL_GAP}
+            bottomInset={PANEL_GAP + clearance}
+            leftInset={panelsWidth}
+            showsUserLocation={here !== null}
+            userLocation={here?.position ?? null}
+            onSelect={openGym}
+            onRegionChange={setViewBox}
+            onMapPress={() => {
+              if (panel === 'place') closePlace();
+            }}
+          />
+        ) : (
+          <View style={styles.mapWaiting} />
+        )}
 
         <DesktopPanel left={PANEL_GAP} bottom={PANEL_GAP + clearance}>
           <View style={styles.panelTop}>{statusPill}</View>
@@ -694,24 +699,29 @@ function MapScreen() {
       placeSheet={placeSheet}
       filterSheet={filterSheet}
       map={
-        <GymMap
-          ref={map}
-          pins={pins}
-          selectedId={selectedId}
-          initialCentre={filters.centre}
-          topInset={insets.top}
-          // Keep the map's idea of "centre" above the sheet, not behind it.
-          bottomInset={Math.min(sheetTop, height * 0.5)}
-          creditInset={sheetTop}
-          showsUserLocation={here !== null}
-          userLocation={here?.position ?? null}
-          onSelect={openGym}
-          onRegionChange={setViewBox}
-          onMapPress={() => {
-            Keyboard.dismiss();
-            if (selectedId) closePlace();
-          }}
-        />
+        // The map opens where the search is, so it waits for your country.
+        prefsReady ? (
+          <GymMap
+            ref={map}
+            pins={pins}
+            selectedId={selectedId}
+            initialCentre={filters.centre}
+            topInset={insets.top}
+            // Keep the map's idea of "centre" above the sheet, not behind it.
+            bottomInset={Math.min(sheetTop, height * 0.5)}
+            creditInset={sheetTop}
+            showsUserLocation={here !== null}
+            userLocation={here?.position ?? null}
+            onSelect={openGym}
+            onRegionChange={setViewBox}
+            onMapPress={() => {
+              Keyboard.dismiss();
+              if (selectedId) closePlace();
+            }}
+          />
+        ) : (
+          <View style={styles.mapWaiting} />
+        )
       }
       topBar={
         <>
@@ -888,6 +898,7 @@ function PhoneShell(props: {
 }
 
 const styles = StyleSheet.create({
+  mapWaiting: { ...StyleSheet.absoluteFill, backgroundColor: color.groupedBackground },
   root: { flex: 1, backgroundColor: color.groupedBackground },
   sheetLayer: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' },
   flex: { flex: 1 },

@@ -13,7 +13,7 @@
 
 import type { AccessVerdict, ResultTier } from '@gymgo/domain';
 import { countryInSentence } from './country';
-import { distanceLabel, usesMiles } from './places';
+import { KM_PER_MILE, distanceLabel, usesMiles } from './places';
 
 export interface TierCopy {
   label: string;
@@ -110,14 +110,26 @@ export const EMPTY = {
   unconfirmedLine: 'Gyms rarely publish everything we check, so each card says exactly what to ask.',
   /** When looking a typed place up failed (not when it wasn't found). */
   outOfArea: "Couldn't look that place up just now. Try again, or move the map there and tap Search this area.",
-  locationDenied: 'No worries — search a suburb or city instead.',
-  locationUnavailable: "Couldn't get a fix on where you are. Search a suburb or city instead.",
   locationApproximate:
     'Your phone is only sharing your approximate location, so distances may be well off. Turn on Precise Location for GymGO in Settings.',
   crowd: "Live crowd info isn't something we have — so we won't guess.",
 } as const;
 
-/** What to say after finding you, if anything. */
+/** A place to type, in the words people use at home: suburbs in Australia, ZIP codes in the US. */
+function placeWords(home: string | null): string {
+  if (home === 'US') return 'a city or ZIP code';
+  if (home === 'AU' || home === 'NZ') return 'a suburb or city';
+  return 'a town or city';
+}
+
+/** What the search box asks for. */
+export function searchPrompt(home: string | null): string {
+  if (home === 'US') return 'Search a city, ZIP code or gym';
+  if (home === 'AU' || home === 'NZ') return 'Search a suburb, city or gym';
+  return 'Search a town, city or gym';
+}
+
+/** What to say after finding you, if anything. `home` is the country you chose. */
 export function locatedNotice(
   result:
     | { kind: 'here'; fix: { approximate: boolean } }
@@ -127,12 +139,13 @@ export function locatedNotice(
     | { kind: 'abroad'; countryCode: string; home: string }
     | { kind: 'denied' }
     | { kind: 'unavailable' },
+  home: string | null = null,
 ): string | null {
   switch (result.kind) {
     case 'denied':
-      return EMPTY.locationDenied;
+      return `No worries — search ${placeWords(home)} instead.`;
     case 'unavailable':
-      return EMPTY.locationUnavailable;
+      return `Couldn't get a fix on where you are. Search ${placeWords(home)} instead.`;
     case 'nearest':
       return `Couldn't search the map around you just now, so here's ${result.city.name}, the nearest city GymGO has built in (${distanceLabel(result.km, result.city.country)} away).`;
     case 'home':
@@ -145,7 +158,8 @@ export function locatedNotice(
       const rough = result.fix.approximate ? ` ${EMPTY.locationApproximate}` : '';
       if (result.gyms === 0) return `OpenStreetMap has no gyms mapped close to you yet. Move the map and tap Search this area to look further out.${rough}`;
       if (result.radiusKm > 5) {
-        const within = (km: number) => (usesMiles(result.countryCode) ? distanceLabel(km, result.countryCode) : `${km} km`);
+        // Whole miles: the steps are 5 and 10 km, and "3.1 mi" reads as more exact than it is.
+        const within = (km: number) => (usesMiles(result.countryCode) ? `${Math.round(km / KM_PER_MILE)} mi` : `${km} km`);
         return `Nothing's mapped within ${within(5)} of you, so this shows ${result.gyms === 1 ? 'the gym' : `the ${result.gyms} gyms`} within ${within(result.radiusKm)}, from OpenStreetMap: map-only, so call before you go.${rough}`;
       }
       return `Gyms around you from OpenStreetMap: map-only, so call before you go.${rough}`;

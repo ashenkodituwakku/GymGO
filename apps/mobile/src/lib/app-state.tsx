@@ -257,7 +257,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!asked) storeJson(ASKED_KEY, true);
       const result = await findMe(!asked, true);
       if (!cancelled && result.kind !== 'denied' && result.kind !== 'unavailable') {
-        const notice = locatedNotice(result) ?? undefined;
+        const notice = locatedNotice(result, reachRef.current.home) ?? undefined;
         setExploreRequest((current) => ({ recentre: true, notice, nonce: (current?.nonce ?? 0) + 1 }));
       }
     })();
@@ -298,7 +298,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setExploreRequest((current) => ({ ...request, nonce: (current?.nonce ?? 0) + 1 }));
   }, []);
 
-  const mayExplore = useCallback((countryCode: string) => canSearchIn(countryCode, prefs.country, billing.isPro), [prefs.country, billing.isPro]);
+  // The demo's gyms are invented, so where they are isn't part of Pro.
+  const mayExplore = useCallback(
+    (countryCode: string) => prefs.demo || canSearchIn(countryCode, prefs.country, billing.isPro),
+    [prefs.demo, prefs.country, billing.isPro],
+  );
 
   const chooseCountry = useCallback((code: string) => {
     setPrefs((current) => {
@@ -324,6 +328,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDemoMode(Boolean(value));
       const opening = value ? null : openingPlace(reachRef.current.home ?? FOCUS_COUNTRY);
       setFilters((current) => moveTo(current, opening ?? atPlace(homePlace())));
+      setExploreRequest((current) => ({ recentre: true, nonce: (current?.nonce ?? 0) + 1 }));
       setCompare([]);
     }
   }, []);

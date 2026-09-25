@@ -37,7 +37,8 @@ export default function CountryScreen() {
     const top = pick([prefs.country, suggested]);
     return [
       ...(top.length ? [{ title: prefs.country ? 'Yours' : 'Suggested', data: top }] : []),
-      { title: 'With cities built in', data: pick(builtInCountries()) },
+      // Less the ones already on top, so the first thing you see isn't there twice.
+      { title: 'With cities built in', data: pick(builtInCountries()).filter((country) => !top.includes(country)) },
       { title: 'Every country', data: COUNTRIES },
     ];
   }, [query, prefs.country, suggested]);

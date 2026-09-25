@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accessLine, accessShort, checkedAgo, locatedNotice, ratingShort, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
+import { accessLine, accessShort, checkedAgo, locatedNotice, ratingShort, searchPrompt, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
 import { activeFilterCount, applyRelaxation, atPlace, defaultVisit, initialFilters, runSearch, toQuery } from './query';
 import { geocodePlace } from './places';
 
@@ -151,7 +151,13 @@ describe('what finding you says', () => {
   });
 
   it('says how far in miles in the US and UK', () => {
-    expect(locatedNotice({ kind: 'area', fix: { approximate: false }, countryCode: 'GB', gyms: 2, radiusKm: 10 })).toMatch(/^Nothing's mapped within 3\.1 mi of you, so this shows the 2 gyms within 6\.2 mi/);
+    expect(locatedNotice({ kind: 'area', fix: { approximate: false }, countryCode: 'GB', gyms: 2, radiusKm: 10 })).toMatch(/^Nothing's mapped within 3 mi of you, so this shows the 2 gyms within 6 mi/);
+  });
+
+  it('when you say no, suggests typing a place in the words used at home', () => {
+    expect(locatedNotice({ kind: 'denied' }, 'US')).toBe('No worries — search a city or ZIP code instead.');
+    expect(locatedNotice({ kind: 'denied' }, 'AU')).toBe('No worries — search a suburb or city instead.');
+    expect(locatedNotice({ kind: 'unavailable' }, 'DE')).toBe("Couldn't get a fix on where you are. Search a town or city instead.");
   });
 
   it('when the map around you can’t be searched, says why it shows the nearest built-in city', () => {
@@ -162,5 +168,14 @@ describe('what finding you says', () => {
 
   it('in a city it carries, says nothing unless the fix is rough', () => {
     expect(locatedNotice({ kind: 'here', fix: { approximate: false } })).toBeNull();
+  });
+});
+
+describe('the search box', () => {
+  it('asks for places the way people there name them', () => {
+    expect(searchPrompt('US')).toBe('Search a city, ZIP code or gym');
+    expect(searchPrompt('AU')).toBe('Search a suburb, city or gym');
+    expect(searchPrompt('FR')).toBe('Search a town, city or gym');
+    expect(searchPrompt(null)).toBe('Search a town, city or gym');
   });
 });

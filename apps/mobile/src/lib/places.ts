@@ -320,7 +320,7 @@ export const cityAt = (point: LatLng): City => cityNear(point) ?? nearestCity(po
 
 // --- Units and money ----------------------------------------------------------
 
-const KM_PER_MILE = 1.609344;
+export const KM_PER_MILE = 1.609344;
 
 /**
  * Countries whose road signs are in miles: the US and the UK, and the

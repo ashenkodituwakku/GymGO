@@ -13,7 +13,7 @@ import { explainNoMatches, haversineKm, type GymRecord, type SearchOutcome } fro
 import { countryInSentence } from '@/lib/country';
 import { suggestGyms } from '@/lib/gymSearch';
 import { cityAt, distanceLabel, moneyLabel, placeContext, suggestPlaces, tracksPrices, type AppPlace } from '@/lib/places';
-import { EMPTY, PLACEHOLDER, TIER, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
+import { EMPTY, PLACEHOLDER, TIER, searchPrompt, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
 import { SORTS, activeFilterCount, nearLabel, type Filters } from '@/lib/query';
 import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
@@ -48,6 +48,7 @@ export function ResultsContent({
   searchRef,
   onSort,
   locked = null,
+  home = null,
   onSeePro,
   onGoHome,
 }: {
@@ -83,6 +84,8 @@ export function ResultsContent({
   onSort: () => void;
   /** Searching a country GymGO Free doesn't cover: this one, and yours. */
   locked?: { country: string; home: string } | null;
+  /** The country you chose, for the search box's wording. */
+  home?: string | null;
   onSeePro?: () => void;
   onGoHome?: () => void;
 }) {
@@ -112,7 +115,7 @@ export function ResultsContent({
             returnKeyType="search"
             autoCorrect={false}
             style={styles.input}
-            accessibilityLabel="Search a suburb, city or gym"
+            accessibilityLabel={searchPrompt(home)}
           />
         </View>
         <Pressable

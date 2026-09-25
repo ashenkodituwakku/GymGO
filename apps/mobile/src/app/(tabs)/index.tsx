@@ -17,7 +17,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
-import { EMPTY, timeLabel } from '@/lib/copy';
+import { EMPTY, searchPrompt, timeLabel } from '@/lib/copy';
 import { countryInSentence } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityNear, cityPlace, moneyLabel, tracksPrices, type AppPlace } from '@/lib/places';
@@ -126,7 +126,7 @@ export default function Home() {
         </Pressy>
       }
     >
-      <SearchButton placeholder="Search a suburb, city or gym" onPress={() => explore({ focusSearch: true })} />
+      <SearchButton placeholder={searchPrompt(prefs.country)} onPress={() => explore({ focusSearch: true })} />
 
       {/* Shortcuts --------------------------------------------------------- */}
       <View style={styles.shortcuts}>

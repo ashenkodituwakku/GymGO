@@ -16,7 +16,7 @@ import { useApp } from '@/lib/app-state';
 import { timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { resultsById } from '@/lib/results';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 
 export default function Saved() {
   const { data, account, filters, compare, toggleCompare, requestExplore, billing, openPro } = useApp();
@@ -105,14 +105,14 @@ export default function Saved() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   flex: { flex: 1 },
   center: { textAlign: 'center' },
   compareButton: {
     paddingHorizontal: space[4],
     paddingVertical: space[2],
     borderRadius: radius.pill,
-    backgroundColor: color.brand,
+    backgroundColor: color.brandFill,
     marginBottom: 4,
   },
   empty: {
@@ -121,9 +121,9 @@ const styles = StyleSheet.create({
     padding: space[6],
     borderRadius: radius.xl,
     borderCurve: 'continuous',
-    backgroundColor: color.background,
+    backgroundColor: color.card,
   },
-  list: { backgroundColor: color.background, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
+  list: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
   upsell: { paddingVertical: space[2] },
   row: { flexDirection: 'row', alignItems: 'center', paddingRight: space[3] },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 86 },
@@ -136,8 +136,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tickOn: { backgroundColor: color.brand, borderColor: color.brand },
-});
+  tickOn: { backgroundColor: color.brandFill, borderColor: color.brand },
+}));
 
 /** The compare tick beside a saved gym: it sinks under a finger and pops when ticked. */
 function CompareTick({ on, name, onPress }: { on: boolean; name: string; onPress: () => void }) {

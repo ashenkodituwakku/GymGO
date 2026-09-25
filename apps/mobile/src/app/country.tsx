@@ -13,7 +13,7 @@ import { useApp } from '@/lib/app-state';
 import { COUNTRIES, FOCUS_COUNTRY, builtInCountries, countryByCode, deviceCountry, flagOf, searchCountries, type Country } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { CITY_LIST } from '@/lib/places';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 
 /** How many built-in cities each country has. */
 const CITY_COUNT = CITY_LIST.filter((city) => !city.demo).reduce<Record<string, number>>((counts, city) => {
@@ -138,7 +138,7 @@ export default function CountryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
   header: { gap: space[2], marginBottom: space[2] },
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     gap: space[3],
     paddingHorizontal: space[4],
     paddingVertical: space[3],
-    backgroundColor: color.background,
+    backgroundColor: color.card,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: color.separator,
   },
@@ -177,4 +177,4 @@ const styles = StyleSheet.create({
   },
   flex: { flex: 1, gap: 2 },
   empty: { textAlign: 'center', marginTop: space[6] },
-});
+}));

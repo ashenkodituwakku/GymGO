@@ -15,7 +15,7 @@ import { api, ApiError, OfflineError, photoUrl, type GymPhoto } from '@/lib/api'
 import { EMPTY } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import type { AccountApi } from '@/lib/useAccount';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { PrimaryButton, Txt } from './ui';
 
@@ -200,7 +200,7 @@ export function PhotoHero({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wrap: { gap: space[2], alignItems: 'flex-start' },
   fallback: { gap: space[2] },
   photo: { height: 180, borderRadius: radius.xl, borderCurve: 'continuous' },
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[2],
     paddingVertical: 3,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: color.scrim,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -226,8 +226,8 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: 'rgba(88, 86, 214, 0.28)',
-    backgroundColor: 'rgba(88, 86, 214, 0.06)',
+    borderColor: color.brandBorder,
+    backgroundColor: color.brandWash,
   },
   addPill: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
   add: { paddingVertical: space[1] },
@@ -235,4 +235,4 @@ const styles = StyleSheet.create({
   preview: { height: 200, borderRadius: radius.xl },
   row: { flexDirection: 'row', gap: space[2] },
   flex: { flex: 1 },
-});
+}));

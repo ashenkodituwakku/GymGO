@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import { BAR, formatWeight, parseWeight, plateLoad, unitFor, type WeightUnit } from '@/lib/training';
 
 /** The bars most gyms have: a men's Olympic bar, and the lighter women's bar. */
@@ -116,7 +116,7 @@ export default function PlatesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], width: '100%', maxWidth: 560, alignSelf: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
@@ -141,4 +141,4 @@ const styles = StyleSheet.create({
     backgroundColor: color.brandTint,
     alignItems: 'center',
   },
-});
+}));

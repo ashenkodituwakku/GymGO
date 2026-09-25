@@ -34,7 +34,7 @@ import { enterOpensGym, placeForEnter, suggestGyms } from '@/lib/gymSearch';
 import { useBottomClearance } from '@/lib/layout';
 import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, boxAround, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
-import { color, face, radius, shadow, space } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
 import { Glass } from '@/components/Glass';
 import { GoogleModal } from '@/components/GoogleModal';
@@ -897,7 +897,7 @@ function PhoneShell(props: {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   mapWaiting: { ...StyleSheet.absoluteFill, backgroundColor: color.groupedBackground },
   root: { flex: 1, backgroundColor: color.groupedBackground },
   sheetLayer: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' },
@@ -947,8 +947,8 @@ const styles = StyleSheet.create({
     gap: space[2],
     padding: space[3],
     borderRadius: 14,
-    backgroundColor: '#FFF4E5',
+    backgroundColor: color.warnBackground,
   },
 
-  handle: { backgroundColor: 'rgba(60, 60, 67, 0.3)', width: 36, height: 5 },
-});
+  handle: { backgroundColor: color.handle, width: 36, height: 5 },
+}));

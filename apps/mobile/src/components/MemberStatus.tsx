@@ -15,7 +15,7 @@ import { api, problemText, type GymStatusSummary } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { WHEN_CHOICES, localDateDaysAgo } from '@/lib/present';
 import type { AccountApi } from '@/lib/useAccount';
-import { color, radius, space } from '@/lib/theme';
+import { color, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { ChoiceChip, PrimaryButton, Txt } from './ui';
 import { FADE_IN, GLIDE } from './motion';
@@ -159,7 +159,7 @@ export function MemberStatus({ gymId, isDemo, account, onSignIn }: { gymId: stri
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   flex: { flex: 1 },
   warning: {
     flexDirection: 'row',
@@ -174,4 +174,4 @@ const styles = StyleSheet.create({
   editor: { gap: space[2] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   buttons: { flexDirection: 'row', gap: space[2] },
-});
+}));

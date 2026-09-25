@@ -4,7 +4,7 @@
  */
 
 import { StyleSheet, View } from 'react-native';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import { KIT_LABEL, muscleLabel, type Exercise, type Kit } from '@/lib/workout';
 import { PIcon } from './PIcon';
 import { Txt } from './ui';
@@ -85,7 +85,7 @@ function KitUsed({ uses, confirmed, forGym }: { uses: Kit[]; confirmed: boolean;
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   flex: { flex: 1 },
   exercise: {
     flexDirection: 'row',
@@ -93,13 +93,13 @@ const styles = StyleSheet.create({
     padding: space[4],
     borderRadius: radius.xl,
     borderCurve: 'continuous',
-    backgroundColor: color.background,
+    backgroundColor: color.card,
   },
   number: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: color.brand,
+    backgroundColor: color.brandFill,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
@@ -107,4 +107,4 @@ const styles = StyleSheet.create({
   meta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], marginTop: space[2] },
   kit: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   tag: { paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.brandTint },
-});
+}));

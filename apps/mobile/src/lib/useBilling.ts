@@ -62,6 +62,8 @@ export function useBilling(account: AccountApi) {
   return {
     plan,
     isPro: plan === 'pro',
+    /** The plan is the server's answer, not a guess from last time (or you're signed out, so it's Free). */
+    planKnown: state !== null || account.state === 'signed_out',
     limits: LIMITS[plan],
     subscription: state?.subscription ?? null,
     /** Pro can be bought through this server right now. */

@@ -27,7 +27,7 @@ import { useApp, type ProReason } from '@/lib/app-state';
 import { ApiError, OfflineError } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 
 const FEATURE_ICON: Record<string, IconName> = {
   'Gyms worldwide': 'globe',
@@ -36,6 +36,7 @@ const FEATURE_ICON: Record<string, IconName> = {
   'Workout library': 'workout',
   'Progress charts': 'chart',
   'Next-session targets': 'target',
+  'Colour themes': 'palette',
 };
 
 const REASON: Record<ProReason, string> = {
@@ -44,6 +45,7 @@ const REASON: Record<ProReason, string> = {
   workouts: 'Keep your workouts in your account with Pro, and open them on any device.',
   worldwide: 'GymGO Free covers the country you chose. Pro finds gyms in every country, wherever you travel.',
   progress: 'Your log and records are free. Pro draws a chart for every exercise and works out what to lift next.',
+  themes: 'Dark mode is free for everyone. Pro adds four more accent colours: Ocean, Grape, Rose and Graphite.',
 };
 
 export default function ProScreen() {
@@ -382,7 +384,7 @@ function messageFor(error: unknown): string {
   return Platform.OS === 'web' ? 'Something went wrong opening Stripe. Try again.' : 'Something went wrong. Try again.';
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   flex: { flex: 1 },
   center: { textAlign: 'center' },
   gap: { gap: space[2] },
@@ -394,12 +396,12 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 22,
     borderCurve: 'continuous',
-    backgroundColor: color.brand,
+    backgroundColor: color.brandFill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeEmoji: { fontSize: 36, lineHeight: 44 },
-  card: { backgroundColor: color.background, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3] },
+  card: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3] },
   onPro: { borderWidth: 2, borderColor: color.brand },
   tableHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   tableRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
@@ -413,7 +415,7 @@ const styles = StyleSheet.create({
     padding: space[4],
     borderRadius: radius.xl,
     borderCurve: 'continuous',
-    backgroundColor: color.background,
+    backgroundColor: color.card,
     borderWidth: 2,
     borderColor: 'transparent',
   },
@@ -422,9 +424,9 @@ const styles = StyleSheet.create({
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: color.labelTertiary, alignItems: 'center', justifyContent: 'center' },
   radioOn: { borderColor: color.brand },
   radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: color.brand },
-  tag: { paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.brand },
+  tag: { paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.brandFill },
   currency: { alignSelf: 'center', marginTop: -space[2] },
   problem: { padding: space[3], borderRadius: radius.md, backgroundColor: color.dangerTint },
   freeLine: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   fine: { textAlign: 'center', paddingHorizontal: space[2] },
-});
+}));

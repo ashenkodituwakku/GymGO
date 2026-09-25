@@ -14,7 +14,7 @@ import { EQUIPMENT_TYPES, equipmentLabel } from '@gymgo/domain';
 import { api, ApiError, OfflineError, type EquipmentReportItem, type EquipmentTally } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import type { AccountApi } from '@/lib/useAccount';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon, type IconName } from './Icon';
 import { PrimaryButton, TextField, Txt } from './ui';
 import { FADE_IN, GLIDE } from './motion';
@@ -259,7 +259,7 @@ function Choice({ label, icon, on, onPress, name }: { label: string; icon: IconN
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wrap: { gap: space[2], paddingTop: space[3], borderTopWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
   flex: { flex: 1 },
   tallies: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
@@ -284,6 +284,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: color.fill,
   },
-  choiceOn: { backgroundColor: color.brand },
+  choiceOn: { backgroundColor: color.brandFill },
   buttons: { flexDirection: 'row', gap: space[2], marginTop: space[1] },
-});
+}));

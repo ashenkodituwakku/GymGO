@@ -10,7 +10,7 @@ import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useS
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance } from '@/lib/layout';
-import { color, radius, space } from '@/lib/theme';
+import { color, radius, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
@@ -151,8 +151,8 @@ export function Group({ header, footer, children }: { header?: string; footer?: 
 }
 
 /** Settings-style icon tile colours. */
-export const TILE = {
-  indigo: color.brand,
+export const TILE = themed(() => ({
+  indigo: color.brandFill,
   green: '#34C759',
   orange: '#FF9500',
   red: '#FF3B30',
@@ -160,7 +160,7 @@ export const TILE = {
   teal: '#30B0C7',
   grey: '#8E8E93',
   pink: '#FF2D55',
-} as const;
+}));
 
 export function Row({
   icon,
@@ -188,7 +188,7 @@ export function Row({
     <View style={styles.row}>
       {icon ? (
         <View style={[styles.tile, { backgroundColor: tile }]}>
-          <Icon name={icon} size={16} color="#FFFFFF" />
+          <Icon name={icon} size={16} color={color.onBrand} />
         </View>
       ) : null}
       <View style={styles.rowText}>
@@ -255,7 +255,7 @@ export function SearchButton({ placeholder, onPress }: { placeholder: string; on
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, backgroundColor: color.groupedBackground },
   content: { paddingHorizontal: space[4], gap: space[5], width: '100%', maxWidth: 760, alignSelf: 'center' },
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   group: { gap: 6 },
   groupHeader: { paddingHorizontal: space[4], letterSpacing: 0.3 },
   groupFooter: { paddingHorizontal: space[4] },
-  groupBody: { backgroundColor: color.background, borderRadius: 12, borderCurve: 'continuous', overflow: 'hidden' },
+  groupBody: { backgroundColor: color.card, borderRadius: 12, borderCurve: 'continuous', overflow: 'hidden' },
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 16 + 29 + 12 },
 
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, minHeight: 50, paddingVertical: 8 },
@@ -283,6 +283,6 @@ const styles = StyleSheet.create({
     height: 44,
     paddingHorizontal: space[3],
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(118, 118, 128, 0.12)',
+    backgroundColor: color.fill,
   },
-});
+}));

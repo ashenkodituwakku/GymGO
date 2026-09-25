@@ -18,10 +18,11 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { TIER_COLOUR } from './ui';
 import type { GymMapHandle, GymMapProps } from './map-types';
+import { currentTheme, themed } from '@/lib/theme';
 
 export type { GymMapHandle, MapPin } from './map-types';
 
-const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+import { DARK_STYLE_URL, STYLE_URL } from './mapPage';
 
 /** A dumbbell, drawn as plain shapes so the preview needs no icon font. */
 const DUMBBELL_SVG =
@@ -82,7 +83,7 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     if (!container) return;
     const instance = new maplibregl.Map({
       container,
-      style: STYLE_URL,
+      style: currentTheme().scheme === 'dark' ? DARK_STYLE_URL : STYLE_URL,
       center: [initialCentre.lng, initialCentre.lat],
       zoom: 13.2,
       attributionControl: false,
@@ -158,9 +159,9 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   );
 });
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   host: { width: '100%', height: '100%' },
-});
+}));
 
 function userDot(): HTMLElement {
   const halo = document.createElement('div');

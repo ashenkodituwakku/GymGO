@@ -1,13 +1,14 @@
 /** One view of the body, on iPhone and Android (react-native-svg). */
 
 import Svg, { G, Path } from 'react-native-svg';
-import { BORDER, VIEWBOX, outlineFor, shapesFor, type FigureProps } from './shapes';
+import { VIEWBOX, outlineFor, shapesFor, type FigureProps } from './shapes';
+import { color } from '@/lib/theme';
 
 export function BodyFigure({ gender, side, width, height, fillFor, pickable, onPress }: FigureProps) {
   return (
     <Svg viewBox={VIEWBOX[gender][side]} width={width} height={height}>
       <G fill="none" strokeWidth={2}>
-        <Path d={outlineFor(gender, side)} stroke={BORDER} vectorEffect="non-scaling-stroke" />
+        <Path d={outlineFor(gender, side)} stroke={color.bodyBorder} vectorEffect="non-scaling-stroke" />
       </G>
       {shapesFor(gender, side).map((shape) => (
         <Path

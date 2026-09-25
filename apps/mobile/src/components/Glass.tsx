@@ -30,6 +30,7 @@ import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'ex
 import { useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { installLiquidGlass, refractionFor } from './liquidGlass';
+import { color, currentTheme, themed } from '@/lib/theme';
 
 /** True when the device draws Apple's real Liquid Glass. */
 export const HAS_LIQUID_GLASS =
@@ -115,14 +116,14 @@ function Backdrop({ thick, bar }: { thick: boolean; bar: boolean }) {
       <BlurView
         pointerEvents="none"
         intensity={100}
-        tint={thick ? 'systemThickMaterialLight' : 'systemUltraThinMaterialLight'}
+        tint={dark() ? (thick ? 'systemThickMaterialDark' : 'systemUltraThinMaterialDark') : thick ? 'systemThickMaterialLight' : 'systemUltraThinMaterialLight'}
         style={StyleSheet.absoluteFill}
       />
     );
   }
   if (Platform.OS === 'web') {
     return (
-      <BlurView pointerEvents="none" intensity={thick ? 70 : 45} tint="light" style={StyleSheet.absoluteFill}>
+      <BlurView pointerEvents="none" intensity={thick ? 70 : 45} tint={dark() ? 'dark' : 'light'} style={StyleSheet.absoluteFill}>
         <View style={[StyleSheet.absoluteFill, bar ? styles.webBar : thick ? styles.webThick : styles.webThin]} />
       </BlurView>
     );
@@ -142,7 +143,12 @@ function cornerShape(style: StyleProp<ViewStyle>): ViewStyle {
   };
 }
 
-const SHEEN = 'linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 38%, rgba(255,255,255,0) 60%)';
+const dark = () => currentTheme().scheme === 'dark';
+// Light catches the top edge; on dark glass it's a fainter glint.
+const sheen = () =>
+  dark()
+    ? 'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 38%, rgba(255,255,255,0) 60%)'
+    : 'linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 38%, rgba(255,255,255,0) 60%)';
 const SHEEN_ON_TINT = 'linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 55%)';
 
 // Web takes CSS `backgroundImage`; React Native's own renderer takes
@@ -150,28 +156,30 @@ const SHEEN_ON_TINT = 'linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(2
 const gradient = (value: string): ViewStyle =>
   (Platform.OS === 'web' ? { backgroundImage: value } : { experimental_backgroundImage: value }) as ViewStyle;
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   clip: { overflow: 'hidden' },
   // Apple's squircle corners, rather than circular arcs. iOS only; ignored
   // elsewhere.
   continuous: { borderCurve: 'continuous' },
 
-  webThin: { backgroundColor: 'rgba(255, 255, 255, 0.42)' },
+  webThin: { backgroundColor: color.glassThin },
   webClear: { opacity: 0.96 },
-  webThick: { backgroundColor: 'rgba(250, 250, 253, 0.66)' },
-  washThin: { backgroundColor: 'rgba(255, 255, 255, 0.8)' },
-  washThick: { backgroundColor: 'rgba(248, 248, 251, 0.94)' },
-  webBar: { backgroundColor: 'rgba(250, 250, 253, 0.93)' },
-  washBar: { backgroundColor: 'rgba(248, 248, 251, 0.98)' },
+  webThick: { backgroundColor: color.glassThick },
+  washThin: { backgroundColor: color.glassWashThin },
+  washThick: { backgroundColor: color.glassWashThick },
+  webBar: { backgroundColor: color.glassBar },
+  washBar: { backgroundColor: color.glassWashBar },
 
-  sheen: gradient(SHEEN),
+  sheen: gradient(sheen()),
   sheenOnTint: gradient(SHEEN_ON_TINT),
 
   // The specular rim: a bright inner edge along the top, a faint one below,
   // and a hairline all round.
   rim: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.7)',
-    boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.9), inset 0 -1px 1px rgba(0, 0, 0, 0.05)',
+    borderColor: color.glassEdge,
+    boxShadow: dark()
+      ? 'inset 0 1px 1px rgba(255, 255, 255, 0.18), inset 0 -1px 1px rgba(0, 0, 0, 0.3)'
+      : 'inset 0 1px 1px rgba(255, 255, 255, 0.9), inset 0 -1px 1px rgba(0, 0, 0, 0.05)',
   },
-});
+}));

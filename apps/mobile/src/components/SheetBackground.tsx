@@ -2,7 +2,7 @@ import { useBottomSheetInternal, type BottomSheetBackgroundProps } from '@gorhom
 import type { FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated';
-import { color, radius } from '@/lib/theme';
+import { color, radius, themed } from '@/lib/theme';
 import { Glass, HAS_LIQUID_GLASS } from './Glass';
 
 /** How far a floating sheet sits in from the screen's edges. */
@@ -45,7 +45,7 @@ export function SolidSheetBackground({ style }: BottomSheetBackgroundProps) {
   return <View style={[style, styles.solid]} pointerEvents="none" />;
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   floating: {
     borderRadius: radius.sheet,
     borderCurve: 'continuous',
@@ -71,4 +71,4 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -2 },
     elevation: 16,
   },
-});
+}));

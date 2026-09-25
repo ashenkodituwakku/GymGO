@@ -19,7 +19,7 @@ import { startSession, useActiveSession } from '@/lib/activeSession';
 import { ApiError, api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import { unitFor } from '@/lib/training';
 import {
   GOALS,
@@ -378,13 +378,13 @@ function KitNote({ mode, has, gymName }: { mode: KitMode; has: Kit[]; gymName: s
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   flex: { flex: 1 },
   center: { textAlign: 'center' },
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[4], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
   intro: { gap: 2 },
-  card: { backgroundColor: color.background, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3] },
+  card: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3] },
   bodyTop: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   genderSwitch: { width: 150 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
@@ -401,17 +401,17 @@ const styles = StyleSheet.create({
     padding: space[4],
     borderRadius: radius.xl,
     borderCurve: 'continuous',
-    backgroundColor: color.background,
+    backgroundColor: color.card,
   },
   number: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: color.brand,
+    backgroundColor: color.brandFill,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
   },
   meta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], marginTop: space[2] },
   tag: { paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.brandTint },
-});
+}));

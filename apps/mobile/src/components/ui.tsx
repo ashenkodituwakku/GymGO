@@ -20,7 +20,7 @@ import {
 import type { ResultTier } from '@gymgo/domain';
 import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
-import { HIT, color, face, radius, shadow, space, type } from '@/lib/theme';
+import { color, face, HIT, radius, shadow, space, themed, type } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { FADE_IN, FADE_OUT, GLIDE, Pressy, SETTLE, usePop, usePressScale } from './motion';
@@ -57,11 +57,11 @@ export function Txt({
 
 // --- Evidence tiers ---------------------------------------------------------
 
-export const TIER_COLOUR: Record<ResultTier, { fill: string; ink: string; tint: string; icon: IconName }> = {
-  confirmed: { fill: color.good, ink: color.goodInk, tint: color.goodTint, icon: 'good' },
-  needs_confirmation: { fill: color.maybe, ink: color.maybeInk, tint: color.maybeTint, icon: 'call' },
-  ruled_out: { fill: color.no, ink: color.noInk, tint: color.noTint, icon: 'no' },
-};
+export const TIER_COLOUR: Record<ResultTier, { fill: string; ink: string; tint: string; icon: IconName }> = themed(() => ({
+  confirmed: { fill: color.good, ink: color.goodInk, tint: color.goodTint, icon: 'good' as IconName },
+  needs_confirmation: { fill: color.maybe, ink: color.maybeInk, tint: color.maybeTint, icon: 'call' as IconName },
+  ruled_out: { fill: color.no, ink: color.noInk, tint: color.noTint, icon: 'no' as IconName },
+}));
 
 export function TierPill({ tier }: { tier: ResultTier }) {
   const tone = TIER_COLOUR[tier];
@@ -360,7 +360,7 @@ export function RoundToggle({ icon, on, label, onPress }: { icon: IconName; on: 
   const pop = usePop(on);
   return (
     <Animated.View style={press.style}>
-      <Glass style={styles.close} tint={on ? color.brand : undefined} interactive>
+      <Glass style={styles.close} tint={on ? color.brandFill : undefined} interactive>
         <Pressable
           onPress={() => {
             haptic.select();
@@ -409,7 +409,7 @@ export function ActionButton({
   const pop = usePop(on);
   return (
     <Animated.View style={[styles.actionWrap, press.style]}>
-      <Glass style={styles.action} tint={primary ? color.brand : undefined} interactive>
+      <Glass style={styles.action} tint={primary ? color.brandFill : undefined} interactive>
         <Pressable
           onPress={() => {
             haptic.tap();
@@ -474,7 +474,7 @@ export function PrimaryButton({
   disabled?: boolean;
   tone?: 'brand' | 'quiet' | 'danger';
 }) {
-  const fill = tone === 'brand' ? color.brand : tone === 'danger' ? color.dangerTint : color.fill;
+  const fill = tone === 'brand' ? color.brandFill : tone === 'danger' ? color.dangerTint : color.fill;
   const ink = tone === 'brand' ? color.onBrand : tone === 'danger' ? color.dangerInk : color.brand;
   return (
     <Pressy
@@ -497,7 +497,7 @@ export function PrimaryButton({
 }
 
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   choiceChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: color.fill,
   },
-  choiceChipOn: { backgroundColor: color.brand },
+  choiceChipOn: { backgroundColor: color.brandFill },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: color.fill,
   },
-  chipSelected: { backgroundColor: color.brand },
+  chipSelected: { backgroundColor: color.brandFill },
   chipText: face('medium'),
 
   card: {
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
   capsuleShadow: { borderRadius: 22, ...shadow.float },
   capsule: { width: HIT, borderRadius: HIT / 2, overflow: 'hidden' },
   capsuleButton: { width: HIT, height: HIT, alignItems: 'center', justifyContent: 'center' },
-  capsulePressed: { backgroundColor: 'rgba(0, 0, 0, 0.06)' },
+  capsulePressed: { backgroundColor: color.pressed },
   capsuleDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 10, backgroundColor: color.separator },
 
   close: { width: 30, height: 30, borderRadius: 15, marginTop: 2 },
@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
   fold: {
     borderRadius: radius.lg + 4,
     borderCurve: 'continuous',
-    backgroundColor: 'rgba(255, 255, 255, 0.86)',
+    backgroundColor: color.cardGlass,
     overflow: 'hidden',
   },
   foldHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
   infoHead: { alignItems: 'flex-start' },
   foldBody: { paddingHorizontal: space[4], paddingBottom: space[4], gap: space[3] },
 
-  segmented: { flexDirection: 'row', padding: 2, borderRadius: 9, backgroundColor: 'rgba(118, 118, 128, 0.12)' },
+  segmented: { flexDirection: 'row', padding: 2, borderRadius: 9, backgroundColor: color.fill },
   segment: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 7, paddingHorizontal: 6, borderRadius: 7 },
   segmentPill: {
     position: 'absolute',
@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
     bottom: 2,
     left: 2,
     borderRadius: 7,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: color.cardRaised,
     shadowColor: '#000',
     shadowOpacity: 0.12,
     shadowRadius: 4,
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   segmentOn: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: color.cardRaised,
     shadowColor: '#000',
     shadowOpacity: 0.12,
     shadowRadius: 4,
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[4],
     borderRadius: radius.md,
     borderCurve: 'continuous',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: color.cardGlass,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.separator,
     fontSize: 17,
@@ -631,4 +631,4 @@ const styles = StyleSheet.create({
     ...face('regular'),
     ...(Platform.OS === 'web' ? { outlineWidth: 0 } : null),
   },
-});
+}));

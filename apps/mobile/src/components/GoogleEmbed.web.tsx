@@ -9,7 +9,7 @@
 
 import { createElement, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { color, radius } from '@/lib/theme';
+import { color, radius, themed } from '@/lib/theme';
 
 const EMBED_WIDTH = 440;
 
@@ -40,6 +40,6 @@ export function GoogleEmbed({ url, height }: { url: string; height: number }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   frame: { borderRadius: radius.lg + 4, overflow: 'hidden', backgroundColor: color.fill },
-});
+}));

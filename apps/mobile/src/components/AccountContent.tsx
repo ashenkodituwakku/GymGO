@@ -14,7 +14,7 @@ import { api, ApiError, OfflineError, type AccessOutcome, type MemberReport } fr
 import { moneyLabel } from '@/lib/places';
 import type { AccountApi } from '@/lib/useAccount';
 import { haptic } from '@/lib/haptics';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { PrimaryButton, TextField, Txt } from './ui';
 
@@ -405,7 +405,7 @@ export function Notice({ icon, text, tone = 'brand' }: { icon: 'info' | 'offline
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wrap: { paddingHorizontal: space[4], paddingBottom: space[8], gap: space[4] },
   lede: { marginTop: -space[2] },
   form: { gap: space[3] },
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: color.brand,
+    backgroundColor: color.brandFill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   list: {
     borderRadius: radius.lg,
     borderCurve: 'continuous',
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: color.cardGlass,
     overflow: 'hidden',
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     padding: space[3],
     marginBottom: space[2],
     borderRadius: radius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: color.cardGlass,
   },
   queueButtons: { flexDirection: 'row', gap: space[2] },
   settings: { gap: space[2] },
@@ -452,4 +452,4 @@ const styles = StyleSheet.create({
     padding: space[3],
     borderRadius: radius.md,
   },
-});
+}));

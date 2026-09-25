@@ -14,12 +14,14 @@ import { Txt } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { countryName } from '@/lib/country';
+import { useThemeChoice } from '@/lib/themePrefs';
 import { downloadMyData } from '@/lib/exportData';
 import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
-import { color, space } from '@/lib/theme';
+import { color, space, themed } from '@/lib/theme';
 
 export default function Profile() {
   const { account, data, recents, compare, prefs, setPref, billing, openPro } = useApp();
+  const themeChoice = useThemeChoice();
   const router = useRouter();
   const params = useLocalSearchParams<{ checkout?: string }>();
   const [about, setAbout] = useState<'facts' | 'sources' | 'privacy' | null>(null);
@@ -145,6 +147,13 @@ export default function Profile() {
           onPress={() => router.push('/country')}
         />
         <Row
+          icon="palette"
+          tile={TILE.indigo}
+          title="Appearance"
+          value={themeChoice.appearance === 'system' ? 'Automatic' : themeChoice.appearance === 'dark' ? 'Dark' : 'Light'}
+          onPress={() => router.push('/appearance')}
+        />
+        <Row
           icon="sparkle"
           tile={TILE.pink}
           title="Haptics"
@@ -257,7 +266,7 @@ function Explainer({ children }: { children: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   settings: { paddingHorizontal: space[4], paddingBottom: space[4] },
   flex: { flex: 1 },
   center: { textAlign: 'center' },
@@ -266,13 +275,13 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: color.brand,
+    backgroundColor: color.brandFill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   signIn: { marginHorizontal: -space[4] },
   moderation: { gap: 6 },
   caps: { paddingHorizontal: space[4], letterSpacing: 0.3 },
-  card: { backgroundColor: color.background, borderRadius: 12, padding: space[4], gap: space[4] },
+  card: { backgroundColor: color.card, borderRadius: 12, padding: space[4], gap: space[4] },
   explainer: { paddingHorizontal: 16, paddingBottom: space[3], paddingLeft: 16 + 29 + 12 },
-});
+}));

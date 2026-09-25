@@ -29,7 +29,7 @@ import { TIER, accessLine, checkedAgo, ratingShort, sourceLabel } from '@/lib/co
 import { distanceLabel } from '@/lib/places';
 import { shareGym } from '@/lib/actions';
 import { addressLines, depositLine, priceLine } from '@/lib/present';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Icon, type IconName } from './Icon';
 import { StateGlyphRow } from './StateGlyphRow';
@@ -253,7 +253,7 @@ export function PlaceCard({
       <Animated.View style={[styles.verdict, { backgroundColor: tone.tint }]} entering={rise(1)}>
         <View style={styles.verdictHead}>
           <View style={[styles.verdictIcon, { backgroundColor: tone.fill }]}>
-            <Icon name={tone.icon} size={22} color="#FFFFFF" />
+            <Icon name={tone.icon} size={22} color={color.onBrand} />
           </View>
           <View style={styles.flex}>
             <Txt variant="title2" color={tone.ink}>
@@ -668,7 +668,7 @@ function Sources({ sources }: { sources: Source[] }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wrap: { paddingHorizontal: space[4], paddingBottom: space[8] },
   flex: { flex: 1 },
   center: { textAlign: 'center' },
@@ -710,7 +710,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[1],
     borderRadius: radius.lg + 4,
     borderCurve: 'continuous',
-    backgroundColor: 'rgba(255, 255, 255, 0.86)',
+    backgroundColor: color.cardGlass,
   },
   factEmoji: { fontSize: 20, lineHeight: 26 },
 
@@ -723,11 +723,11 @@ const styles = StyleSheet.create({
     paddingVertical: space[3],
     borderRadius: radius.lg + 4,
     borderCurve: 'continuous',
-    backgroundColor: 'rgba(255, 255, 255, 0.86)',
+    backgroundColor: color.cardGlass,
   },
   googleEmoji: { fontSize: 22, lineHeight: 28, width: 30, textAlign: 'center' },
   mailRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.brand, alignItems: 'center', justifyContent: 'center' },
+  rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
 
   folds: { gap: space[2], marginTop: space[4] },
 
@@ -769,4 +769,4 @@ const styles = StyleSheet.create({
   sourceRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: space[2] },
   sourceNote: { marginTop: space[2] },
   logoCredit: { marginTop: space[3] },
-});
+}));

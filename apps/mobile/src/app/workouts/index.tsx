@@ -10,7 +10,7 @@ import { Icon } from '@/components/Icon';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
-import { color, radius, space } from '@/lib/theme';
+import { color, radius, space, themed } from '@/lib/theme';
 
 export default function MyWorkouts() {
   const { account, billing, openPro } = useApp();
@@ -108,16 +108,16 @@ export default function MyWorkouts() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   flex: { flex: 1 },
   center: { textAlign: 'center' },
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
-  emptyCard: { backgroundColor: color.background, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3] },
+  emptyCard: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3] },
   notice: { padding: space[3], borderRadius: radius.md, backgroundColor: color.fill },
-  list: { backgroundColor: color.background, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
+  list: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
-  rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.brand, alignItems: 'center', justifyContent: 'center' },
-});
+  rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
+}));

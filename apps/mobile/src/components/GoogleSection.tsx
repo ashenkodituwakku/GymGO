@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { GymRecord } from '@gymgo/domain';
 import { api, type GooglePlace } from '@/lib/api';
-import { color, face, space } from '@/lib/theme';
+import { color, face, space, themed } from '@/lib/theme';
 import { PlaceDetails } from './GooglePage';
 import { PIcon } from './PIcon';
 import { Txt } from './ui';
@@ -63,9 +63,9 @@ export function GoogleSection({ place, photosAbove = false }: { place: GooglePla
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   flex: { flex: 1 },
   section: { gap: space[3], paddingHorizontal: space[4], marginTop: space[4] },
   head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  attribution: { textAlign: 'center', fontSize: 13, color: '#5F6368', ...face('bold') },
-});
+  attribution: { textAlign: 'center', fontSize: 13, color: color.googleInk, ...face('bold') },
+}));

@@ -13,6 +13,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import { currentTheme } from '@/lib/theme';
 import type { GymMapHandle, GymMapProps, MapPin } from './map-types';
 import { Pin } from './Pin';
 
@@ -92,6 +93,7 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     <MapView
       ref={map}
       style={StyleSheet.absoluteFill}
+      userInterfaceStyle={currentTheme().scheme}
       initialRegion={{
         latitude: initialCentre.lat,
         longitude: initialCentre.lng,

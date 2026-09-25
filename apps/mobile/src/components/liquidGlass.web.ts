@@ -82,6 +82,50 @@ html[data-glass-refract] [data-glass="bar"] {
   backdrop-filter: saturate(170%) brightness(1.08);
   box-shadow: inset 0 1px 1px #fff, inset 0 0 14px rgba(255,255,255,0.7), 0 8px 22px rgba(0,0,0,0.16);
 }
+
+/* Dark mode (html[data-gg-scheme="dark"], set by app/_layout.tsx): smoked glass, fainter rims. */
+html[data-gg-scheme="dark"] [data-glass="bar"] {
+  background: linear-gradient(180deg, rgba(58,58,62,0.52) 0%, rgba(36,36,40,0.44) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    inset 1px 0 0 rgba(255,255,255,0.08),
+    inset -1px 0 0 rgba(255,255,255,0.06),
+    inset 0 -1px 0 rgba(255,255,255,0.06),
+    inset 0 0 22px rgba(255,255,255,0.04),
+    0 14px 34px rgba(0,0,0,0.5),
+    0 2px 8px rgba(0,0,0,0.3);
+  outline: 0.5px solid rgba(255,255,255,0.08);
+}
+html[data-gg-scheme="dark"] [data-glass="control"] {
+  background: linear-gradient(180deg, rgba(62,62,66,0.6) 0%, rgba(40,40,44,0.5) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    inset 1px 0 0 rgba(255,255,255,0.08),
+    inset -1px 0 0 rgba(255,255,255,0.06),
+    inset 0 -1px 0 rgba(255,255,255,0.05),
+    0 8px 24px rgba(0,0,0,0.45),
+    0 1px 4px rgba(0,0,0,0.3);
+  outline: 0.5px solid rgba(255,255,255,0.08);
+}
+html[data-gg-scheme="dark"] [data-glass="shine"] {
+  background:
+    radial-gradient(140% 100% at 12% -30%, rgba(255,255,255,0.14), rgba(255,255,255,0) 52%),
+    radial-gradient(90% 90% at 96% 130%, rgba(255,255,255,0.06), rgba(255,255,255,0) 58%);
+}
+html[data-gg-scheme="dark"] [data-glass="lens"] {
+  background: rgba(118,118,128,0.3);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 1px rgba(0,0,0,0.2);
+}
+html[data-gg-scheme="dark"] .maplibregl-ctrl-attrib {
+  background: rgba(28,28,30,0.82) !important;
+  color: #AEAEB2;
+}
+html[data-gg-scheme="dark"] .maplibregl-ctrl-attrib a { color: #E5E5EA; }
+html[data-gg-scheme="dark"] .maplibregl-ctrl-attrib-button { filter: invert(1); }
+html[data-gg-scheme="dark"] [data-glass="lift"] {
+  background: radial-gradient(120% 120% at 30% 0%, rgba(120,120,128,0.7), rgba(80,80,86,0.5) 60%);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), inset 0 0 14px rgba(255,255,255,0.08), 0 8px 22px rgba(0,0,0,0.5);
+}
 `;
 
 /** Refraction needs Chromium's support for SVG filters in backdrop-filter. */

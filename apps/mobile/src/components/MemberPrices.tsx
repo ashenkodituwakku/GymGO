@@ -17,7 +17,7 @@ import { haptic } from '@/lib/haptics';
 import { moneyLabel, tracksPrices } from '@/lib/places';
 import { WHEN_CHOICES as WHEN, localDateDaysAgo as dateDaysAgo, parseAmount } from '@/lib/present';
 import type { AccountApi } from '@/lib/useAccount';
-import { color, space } from '@/lib/theme';
+import { color, space, themed } from '@/lib/theme';
 import { ChoiceChip, PrimaryButton, TextField, Txt } from './ui';
 import { FADE_IN, GLIDE } from './motion';
 
@@ -230,10 +230,10 @@ function Editor({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wrap: { gap: space[2], paddingTop: space[3], borderTopWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
   flex: { flex: 1 },
   editor: { gap: space[2] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   buttons: { flexDirection: 'row', gap: space[2] },
-});
+}));

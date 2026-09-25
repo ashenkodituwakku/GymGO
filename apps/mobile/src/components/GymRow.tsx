@@ -10,7 +10,7 @@ import { distanceLabel } from '@/lib/places';
 import { TIER, accessLine } from '@/lib/copy';
 import { photoUrl } from '@/lib/api';
 import { priceLine } from '@/lib/present';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { MarkImage, useGymMark } from './BrandLogo';
 import { Icon } from './Icon';
@@ -61,7 +61,7 @@ export function GymRow({
       {coverUri ? (
         <Image source={{ uri: coverUri }} style={styles.thumb} resizeMode="cover" />
       ) : (
-        <View style={[styles.thumb, styles.tile, { backgroundColor: mark ? '#FFFFFF' : color.brandTint }]}>
+        <View style={[styles.thumb, styles.tile, { backgroundColor: mark ? color.logoPlate : color.brandTint }]}>
           {mark ? <MarkImage mark={mark} name={location.name} width={52} height={48} area={1500} /> : <Icon name="gym" size={24} color={color.brand} />}
         </View>
       )}
@@ -93,7 +93,7 @@ export function GymRow({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -121,4 +121,4 @@ const styles = StyleSheet.create({
   },
   chipText: face('semibold'),
   trailing: { alignItems: 'flex-end', maxWidth: 96 },
-});
+}));

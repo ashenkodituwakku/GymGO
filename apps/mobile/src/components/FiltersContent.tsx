@@ -18,7 +18,7 @@ import {
   nowIn,
   type Filters,
 } from '@/lib/query';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { moneyLabel, radiusChoices, tracksPrices } from '@/lib/places';
 import { Chip, PrimaryButton, Txt } from './ui';
@@ -237,7 +237,7 @@ function Segmented<T extends string>({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wrap: { paddingHorizontal: space[4], paddingBottom: space[8] },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: space[1] },
   reset: face('medium'),
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   },
   segment: { flex: 1, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: 7 },
   segmentSelected: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: color.cardRaised,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -263,4 +263,4 @@ const styles = StyleSheet.create({
   },
   segmentText: face('medium'),
   segmentTextSelected: face('semibold'),
-});
+}));

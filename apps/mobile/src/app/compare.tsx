@@ -15,7 +15,7 @@ import { distanceLabel, moneyLabel } from '@/lib/places';
 import { TIER, accessShort, timeLabel } from '@/lib/copy';
 import { priceLine } from '@/lib/present';
 import { resultsById } from '@/lib/results';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 
 type Cell = { text: string; ink?: string; strong?: boolean };
 
@@ -197,7 +197,7 @@ export default function Compare() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   flex: { flex: 1 },
   center: { textAlign: 'center' },
   page: { flex: 1, backgroundColor: color.groupedBackground },
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     padding: space[3],
     borderRadius: radius.lg,
     borderCurve: 'continuous',
-    backgroundColor: color.background,
+    backgroundColor: color.card,
   },
   remove: {
     width: 22,
@@ -228,9 +228,9 @@ const styles = StyleSheet.create({
     padding: space[3],
     borderRadius: radius.lg,
     borderCurve: 'continuous',
-    backgroundColor: color.background,
+    backgroundColor: color.card,
   },
   cells: { flexDirection: 'row', gap: space[3] },
   cell: { flex: 1 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
-});
+}));

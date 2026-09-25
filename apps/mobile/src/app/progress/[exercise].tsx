@@ -10,7 +10,7 @@ import { Icon } from '@/components/Icon';
 import { ProgressChart } from '@/components/ProgressChart';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
-import { color, radius, space } from '@/lib/theme';
+import { color, radius, space, themed } from '@/lib/theme';
 import { e1rmSeries, formatWeight, fromKg, personalRecords, setsSummary, unitFor } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
 import { EXERCISES } from '@/lib/workout';
@@ -112,7 +112,7 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
   flex: { flex: 1 },
@@ -125,4 +125,4 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   date: { width: 80 },
-});
+}));

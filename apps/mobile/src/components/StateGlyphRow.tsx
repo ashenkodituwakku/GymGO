@@ -5,7 +5,7 @@
 
 import { StyleSheet, View } from 'react-native';
 import { equipmentMatchStateLabel, type EquipmentMatchState } from '@gymgo/domain';
-import { color, face, space } from '@/lib/theme';
+import { color, face, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { Txt } from './ui';
 
@@ -37,8 +37,8 @@ export function StateGlyphRow({ state, label, detail }: { state: EquipmentMatchS
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   row: { flexDirection: 'row', gap: space[2], alignItems: 'flex-start' },
   text: { flex: 1 },
   label: face('medium'),
-});
+}));

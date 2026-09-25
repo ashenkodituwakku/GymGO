@@ -9,14 +9,12 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { haptic } from '@/lib/haptics';
-import { color, face, space } from '@/lib/theme';
+import { color, face, space, themed } from '@/lib/theme';
 import { MUSCLES, muscleLabel, type Muscle } from '@/lib/workout';
 import { BodyFigure } from './body/BodyFigure';
 import type { Gender } from './body/shapes';
 import { Chip, Txt } from './ui';
 
-const IDLE = '#D5D5DB';
-const INERT = '#ECECEF';
 const isMuscle = (slug: string): slug is Muscle => MUSCLES.some((muscle) => muscle.id === slug);
 
 export function BodyPicker({
@@ -53,7 +51,7 @@ export function BodyPicker({
               side={side}
               width={figureWidth}
               height={figureWidth * 2}
-              fillFor={(slug) => (!isMuscle(slug) ? INERT : isSelected(slug) ? color.brand : IDLE)}
+              fillFor={(slug) => (!isMuscle(slug) ? color.bodyInert : isSelected(slug) ? color.brand : color.bodyIdle)}
               pickable={isMuscle}
               selected={isSelected}
               labelFor={(slug) => (isMuscle(slug) ? muscleLabel(slug) : slug)}
@@ -87,10 +85,10 @@ export function BodyPicker({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wrap: { gap: space[2] },
   row: { flexDirection: 'row', justifyContent: 'center', gap: space[3] },
   figure: { alignItems: 'center', gap: space[1] },
   listToggle: { alignSelf: 'center', paddingVertical: space[1] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2], justifyContent: 'center' },
-});
+}));

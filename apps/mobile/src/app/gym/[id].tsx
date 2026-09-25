@@ -30,7 +30,7 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { distanceLabel } from '@/lib/places';
 import { resultsById } from '@/lib/results';
-import { color, space } from '@/lib/theme';
+import { color, space, themed } from '@/lib/theme';
 
 const PAGE_WIDTH = 720;
 
@@ -235,7 +235,7 @@ function HeaderButton({ icon, label, onPress, on = false }: { icon: IconName; la
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { alignItems: 'center', paddingBottom: space[8] },
   column: { maxWidth: '100%' },
@@ -246,4 +246,4 @@ const styles = StyleSheet.create({
   headerButton: { padding: 4 },
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
   center: { textAlign: 'center' },
-});
+}));

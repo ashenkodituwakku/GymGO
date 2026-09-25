@@ -22,7 +22,7 @@ import { apiBase } from '@/lib/api';
 import { LOGO_IMAGES } from '@/lib/brandLogoImages';
 import { BRAND_LOGOS, type BrandLogo as Logo } from '@/lib/brandLogos';
 import { matchLogo } from '@/lib/logoMatch';
-import { color, radius } from '@/lib/theme';
+import { color, radius, themed } from '@/lib/theme';
 import { Txt } from './ui';
 import { FADE_IN } from './motion';
 
@@ -179,7 +179,7 @@ export function LogoCredit({ location }: { location: GymLocation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   badge: { paddingHorizontal: 8, paddingVertical: 6, marginBottom: 0, alignSelf: 'auto', borderRadius: radius.md },
   plate: {
     alignSelf: 'flex-start',
@@ -188,10 +188,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     marginBottom: 6,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: color.logoPlate,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.separator,
     borderRadius: radius.lg,
     borderCurve: 'continuous',
   },
-});
+}));

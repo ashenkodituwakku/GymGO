@@ -19,7 +19,7 @@ import { useApp } from '@/lib/app-state';
 import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { priceLine } from '@/lib/present';
-import { color, face, radius, shadow, space } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { MarkImage, useGymMark } from './BrandLogo';
 import { rise, usePressScale } from './motion';
 import { Icon } from './Icon';
@@ -62,7 +62,7 @@ export function GymCard({ result, width = 216, index = 0 }: { result: GymSearchR
             {cover ? (
               <Image source={{ uri: cover }} style={styles.image} resizeMode="cover" />
             ) : (
-              <View style={[styles.image, styles.tile, { backgroundColor: mark ? '#FFFFFF' : color.brandTint }]}>
+              <View style={[styles.image, styles.tile, { backgroundColor: mark ? color.logoPlate : color.brandTint }]}>
                 {mark ? <MarkImage mark={mark} name={location.name} width={width * 0.72} height={76} area={5200} /> : <Icon name="gym" size={36} color={color.brand} />}
               </View>
             )}
@@ -111,10 +111,10 @@ export function GymCard({ result, width = 216, index = 0 }: { result: GymSearchR
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   press: { borderRadius: radius.xl },
   card: {
-    backgroundColor: color.background,
+    backgroundColor: color.card,
     borderRadius: radius.xl,
     borderCurve: 'continuous',
     overflow: 'hidden',
@@ -126,4 +126,4 @@ const styles = StyleSheet.create({
   foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], marginTop: space[2] },
   chipRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   chip: { paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill, flexShrink: 1 },
-});
+}));

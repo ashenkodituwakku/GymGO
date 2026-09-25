@@ -16,18 +16,18 @@ import { api, problemText, type AccessOutcome, type AccessSummary } from '@/lib/
 import { haptic } from '@/lib/haptics';
 import { WHEN_CHOICES, localDateDaysAgo } from '@/lib/present';
 import type { AccountApi } from '@/lib/useAccount';
-import { color, face, space } from '@/lib/theme';
+import { color, face, space, themed } from '@/lib/theme';
 import { Icon, type IconName } from './Icon';
 import { ChoiceChip, PrimaryButton, Txt } from './ui';
 import { FADE_IN, GLIDE } from './motion';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; summary: AccessSummary };
 
-const OUTCOMES: Array<{ id: AccessOutcome; label: string; icon: IconName; ink: string }> = [
-  { id: 'walked_in', label: 'Walked in', icon: 'good', ink: color.goodInk },
-  { id: 'booked_first', label: 'Had to book first', icon: 'calendar', ink: color.maybeInk },
-  { id: 'turned_away', label: 'Turned away', icon: 'no', ink: color.noInk },
-];
+const OUTCOMES: Array<{ id: AccessOutcome; label: string; icon: IconName; ink: string }> = themed(() => [
+  { id: 'walked_in' as AccessOutcome, label: 'Walked in', icon: 'good' as IconName, ink: color.goodInk },
+  { id: 'booked_first' as AccessOutcome, label: 'Had to book first', icon: 'calendar' as IconName, ink: color.maybeInk },
+  { id: 'turned_away' as AccessOutcome, label: 'Turned away', icon: 'no' as IconName, ink: color.noInk },
+]);
 
 export function MemberAccess({
   gymId,
@@ -206,7 +206,7 @@ function Editor({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wrap: { gap: space[2], paddingTop: space[3], borderTopWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
   flex: { flex: 1 },
   counts: { gap: space[1] },
@@ -214,4 +214,4 @@ const styles = StyleSheet.create({
   editor: { gap: space[2] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   buttons: { flexDirection: 'row', gap: space[2] },
-});
+}));

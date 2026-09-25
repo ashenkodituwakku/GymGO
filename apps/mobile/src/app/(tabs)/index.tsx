@@ -24,7 +24,7 @@ import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityNear, cityPlace, moneyLabel, tracksPrices, type AppPlace } from '@/lib/places';
 import { atPlace, moveTo, nearLabel, nextVisitAt, runSearch, type Filters } from '@/lib/query';
 import { resultsById } from '@/lib/results';
-import { color, face, radius, shadow, space } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 
 /** Melbourne suburbs worth a tap, in the order people ask about them. */
 const MELBOURNE_PICKS = ['Melbourne CBD', 'Fitzroy', 'Collingwood', 'Brunswick', 'Carlton', 'Richmond', 'South Melbourne', 'Northcote'];
@@ -192,11 +192,11 @@ export default function Home() {
           <Txt variant="headline" color={color.onBrand}>
             Build a workout
           </Txt>
-          <Txt variant="footnote" color="rgba(255, 255, 255, 0.86)">
+          <Txt variant="footnote" color={color.onBrandSoft}>
             Pick muscles, get a plan
           </Txt>
         </View>
-        <Icon name="chevron" size={14} color="rgba(255, 255, 255, 0.8)" />
+        <Icon name="chevron" size={14} color={color.onBrandSoft} />
       </Pressy>
 
       {/* Nearby ------------------------------------------------------------ */}
@@ -370,7 +370,7 @@ function Carousel({ children }: { children: React.ReactNode }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   avatar: {
     width: 40,
     height: 40,
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 2,
   },
-  avatarOn: { backgroundColor: color.brand },
+  avatarOn: { backgroundColor: color.brandFill },
 
   picks: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
   flex: { flex: 1 },
@@ -414,9 +414,9 @@ const styles = StyleSheet.create({
     padding: space[4],
     borderRadius: radius.xl,
     borderCurve: 'continuous',
-    backgroundColor: color.brand,
+    backgroundColor: color.brandFill,
   },
-  workoutIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255, 255, 255, 0.2)', alignItems: 'center', justifyContent: 'center' },
+  workoutIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: color.onBrandFaint, alignItems: 'center', justifyContent: 'center' },
   shortcuts: { flexDirection: 'row', gap: space[2] },
   shortcut: {
     flex: 1,
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[1],
     borderRadius: radius.lg,
     borderCurve: 'continuous',
-    backgroundColor: color.background,
+    backgroundColor: color.card,
   },
   shortcutIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
   center: { textAlign: 'center' },
@@ -452,15 +452,15 @@ const styles = StyleSheet.create({
   cityChip: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   moreChip: { backgroundColor: color.brandTint, shadowOpacity: 0 },
   suburbs: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  suburb: { paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.background, ...shadow.card },
-  suburbOn: { backgroundColor: color.brand },
+  suburb: { paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.card, ...shadow.card },
+  suburbOn: { backgroundColor: color.brandFill },
   city: {
     width: 150,
     gap: 2,
     padding: space[3],
     borderRadius: radius.lg,
     borderCurve: 'continuous',
-    backgroundColor: color.background,
+    backgroundColor: color.card,
     ...shadow.card,
   },
   cityFlag: { fontSize: 24, lineHeight: 30 },
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     padding: space[3],
     borderRadius: radius.lg,
     borderCurve: 'continuous',
-    backgroundColor: color.background,
+    backgroundColor: color.card,
   },
   note: { textAlign: 'center' },
-});
+}));

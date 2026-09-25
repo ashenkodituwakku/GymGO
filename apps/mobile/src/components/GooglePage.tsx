@@ -25,7 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { GymRecord } from '@gymgo/domain';
 import { api, type GoogleAuthor, type GooglePlace } from '@/lib/api';
 import { googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl } from '@/lib/present';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import { GoogleEmbed } from './GoogleEmbed';
 import { CloseButton, PrimaryButton, Txt } from './ui';
 
@@ -294,7 +294,7 @@ function Credit({ prefix, authors }: { prefix: string; authors: GoogleAuthor[] }
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   root: { flex: 1, backgroundColor: color.groupedBackground },
   flex: { flex: 1 },
   center: { textAlign: 'center' },
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   photos: { gap: space[3] },
   hero: { gap: 2 },
   heroPhoto: { height: 240, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.fill },
-  heroAttribution: { fontSize: 12, color: '#5F6368', ...face('bold') },
+  heroAttribution: { fontSize: 12, color: color.googleInk, ...face('bold') },
   photo: { height: 190, borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.fill },
   credit: { flexDirection: 'row', flexWrap: 'wrap' },
   links: { flexDirection: 'row', gap: space[2] },
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     padding: space[4],
     borderRadius: radius.lg + 4,
     borderCurve: 'continuous',
-    backgroundColor: color.background,
+    backgroundColor: color.card,
   },
   reviews: { gap: space[2] },
   reviewHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] },
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: space[2],
     fontSize: 13,
-    color: '#5F6368',
+    color: color.googleInk,
     ...face('bold'),
   },
-});
+}));

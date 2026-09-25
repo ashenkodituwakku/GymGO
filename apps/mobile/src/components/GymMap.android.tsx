@@ -18,10 +18,10 @@ import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { mapPageHtml, type PageMessage } from './mapPage';
 import { TIER_COLOUR } from './ui';
 import type { GymMapHandle, GymMapProps } from './map-types';
+import { color, currentTheme, themed } from '@/lib/theme';
 
 export type { GymMapHandle, MapPin } from './map-types';
 
-const COLOURS = Object.fromEntries(Object.entries(TIER_COLOUR).map(([tier, tone]) => [tier, tone.fill]));
 
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, userLocation = null, onSelect, onMapPress, onRegionChange },
@@ -35,7 +35,15 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
 
   // Built once: the page keeps its own camera from then on.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const html = useMemo(() => mapPageHtml({ centre: initialCentre, colours: COLOURS }), []);
+  const html = useMemo(
+    () =>
+      mapPageHtml({
+        centre: initialCentre,
+        colours: Object.fromEntries(Object.entries(TIER_COLOUR).map(([tier, tone]) => [tier, tone.fill])),
+        dark: currentTheme().scheme === 'dark',
+      }),
+    [],
+  );
 
   /** Run a call in the page, or hold it until the page says it's ready. */
   const run = useCallback((script: string) => {
@@ -116,6 +124,6 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   );
 });
 
-const styles = StyleSheet.create({
-  web: { flex: 1, backgroundColor: '#F2F2F7' },
-});
+const styles = themed(() => StyleSheet.create({
+  web: { flex: 1, backgroundColor: color.groupedBackground },
+}));

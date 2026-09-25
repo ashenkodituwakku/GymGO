@@ -11,7 +11,7 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { workoutFromSaved } from '@/lib/savedWorkouts';
 import { unitFor } from '@/lib/training';
-import { color, radius, space } from '@/lib/theme';
+import { color, radius, space, themed } from '@/lib/theme';
 import { GOALS, muscleLabel, workoutText, type Muscle } from '@/lib/workout';
 
 export default function SavedWorkoutScreen() {
@@ -152,11 +152,11 @@ export default function SavedWorkoutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   center: { textAlign: 'center' },
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
   intro: { gap: 2, marginBottom: space[1] },
   buttons: { gap: space[2], marginTop: space[2] },
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground, borderRadius: radius.xl },
-});
+}));

@@ -39,7 +39,6 @@ export const VIEWBOX: Record<Gender, Record<Side, string>> = {
   female: { front: '-50 -40 734 1538', back: '756 0 774 1448' },
 };
 
-export const BORDER = '#C4C4CA';
 
 const SOURCES = {
   male: { front: bodyFront, back: bodyBack },

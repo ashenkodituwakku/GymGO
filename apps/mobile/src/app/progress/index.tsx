@@ -12,7 +12,7 @@ import { useActiveSession } from '@/lib/activeSession';
 import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import {
   durationLabel,
   formatWeight,
@@ -238,7 +238,7 @@ function SessionRow({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
@@ -253,4 +253,4 @@ const styles = StyleSheet.create({
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   detail: { paddingHorizontal: space[4], paddingBottom: space[3], gap: space[1] },
   delete: { alignSelf: 'flex-start', paddingVertical: space[2] },
-});
+}));

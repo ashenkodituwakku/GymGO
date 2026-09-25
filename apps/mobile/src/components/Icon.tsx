@@ -83,6 +83,7 @@ const ICONS = {
   plates: { ios: 'dumbbell.fill', android: 'fitness_center', web: 'fitness_center' },
   done: { ios: 'checkmark.circle.fill', android: 'check_circle', web: 'check_circle' },
   todo: { ios: 'circle', android: 'radio_button_unchecked', web: 'radio_button_unchecked' },
+  palette: { ios: 'paintpalette.fill', android: 'palette', web: 'palette' },
 } as const;
 
 export type IconName = keyof typeof ICONS;

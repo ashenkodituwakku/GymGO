@@ -14,6 +14,8 @@ import type { LatLng } from '@gymgo/domain';
 
 export const MAPLIBRE_VERSION = '5.24.0';
 export const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+/** OpenFreeMap's dark style, for dark mode. */
+export const DARK_STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
 
 export type PageMessage =
   | { type: 'ready' }
@@ -22,9 +24,9 @@ export type PageMessage =
   | { type: 'moved'; box: { north: number; south: number; east: number; west: number } }
   | { type: 'error'; message: string };
 
-export function mapPageHtml(options: { centre: LatLng; colours: Record<string, string> }): string {
+export function mapPageHtml(options: { centre: LatLng; colours: Record<string, string>; dark?: boolean }): string {
   const cdn = `https://cdn.jsdelivr.net/npm/maplibre-gl@${MAPLIBRE_VERSION}/dist`;
-  const config = JSON.stringify({ centre: options.centre, colours: options.colours, style: STYLE_URL });
+  const config = JSON.stringify({ centre: options.centre, colours: options.colours, style: options.dark ? DARK_STYLE_URL : STYLE_URL });
   return `<!doctype html>
 <html>
 <head>
@@ -32,10 +34,10 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <link rel="stylesheet" href="${cdn}/maplibre-gl.css">
 <style>
-  html, body, #map { margin: 0; padding: 0; width: 100%; height: 100%; background: #F2F2F7; }
+  html, body, #map { margin: 0; padding: 0; width: 100%; height: 100%; background: ${options.dark ? '#000000' : '#F2F2F7'}; }
   body { -webkit-tap-highlight-color: transparent; font-family: sans-serif; }
   #offline { display: none; position: absolute; inset: 0; align-items: center; justify-content: center;
-    padding: 24px; text-align: center; color: #6C6C70; font-size: 15px; }
+    padding: 24px; text-align: center; color: ${options.dark ? '#AEAEB2' : '#6C6C70'}; font-size: 15px; }
   .maplibregl-ctrl-attrib { font-size: 11px; }
 </style>
 </head>

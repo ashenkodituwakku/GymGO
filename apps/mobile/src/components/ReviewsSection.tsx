@@ -13,7 +13,7 @@ import { api, ApiError, OfflineError } from '@/lib/api';
 import { EMPTY } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import type { AccountApi } from '@/lib/useAccount';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import { PrimaryButton, TextField, Txt } from './ui';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; reviews: Review[]; mine: Review[] };
@@ -188,11 +188,11 @@ function ReviewForm({ gymId, token, inSheet, onDone }: { gymId: string; token: s
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wrap: { gap: space[3] },
   item: { gap: 4, paddingTop: space[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   pending: { gap: 4, padding: space[3], borderRadius: radius.md, backgroundColor: color.maybeTint },
   form: { gap: space[3] },
   stars: { flexDirection: 'row', gap: space[2] },
   body: { height: 110, paddingTop: space[3], textAlignVertical: 'top' },
-});
+}));

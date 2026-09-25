@@ -32,7 +32,7 @@ import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { TabBarInset } from '@/lib/layout';
-import { color, face } from '@/lib/theme';
+import { color, currentTheme, face, themed } from '@/lib/theme';
 
 const BAR_HEIGHT = 64;
 const SIDE_MARGIN = 22;
@@ -233,7 +233,7 @@ function useAndroidKeyboard(): boolean {
   return up;
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   root: { flex: 1 },
   slot: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 },
   hidden: { display: 'none' },
@@ -254,19 +254,19 @@ const styles = StyleSheet.create({
   },
   lensShape: { borderRadius: (BAR_HEIGHT - LENS_INSET * 2) / 2, borderCurve: 'continuous' },
   lensNative: {
-    backgroundColor: 'rgba(118, 118, 128, 0.16)',
+    backgroundColor: color.fill,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
+    borderColor: color.glassEdge,
   },
   liftNative: {
-    backgroundColor: 'rgba(255, 255, 255, 0.72)',
+    backgroundColor: currentTheme().scheme === 'dark' ? 'rgba(120, 120, 128, 0.36)' : 'rgba(255, 255, 255, 0.72)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.95)',
+    borderColor: currentTheme().scheme === 'dark' ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.95)',
     boxShadow: '0 6px 16px rgba(0, 0, 0, 0.14)',
   },
   tab: { height: BAR_HEIGHT, alignItems: 'center', justifyContent: 'center' },
   pressed: { transform: [{ scale: 0.9 }] },
   avatarRing: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   avatarRingOn: { borderWidth: 2, borderColor: color.label },
-  avatar: { width: 26, height: 26, borderRadius: 13, backgroundColor: color.brand, alignItems: 'center', justifyContent: 'center' },
-});
+  avatar: { width: 26, height: 26, borderRadius: 13, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
+}));

@@ -17,7 +17,7 @@ import { endSession, updateSession, useActiveSession, type ActiveItem } from '@/
 import { ApiError, api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import {
   clockLabel,
   draftToLogged,
@@ -529,7 +529,7 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
   intro: { gap: 2, marginBottom: space[1] },
@@ -571,9 +571,9 @@ const styles = StyleSheet.create({
   restRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], paddingVertical: space[3] },
   restClock: { fontVariant: ['tabular-nums'] },
   restButton: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandTint },
-  restButtonStrong: { backgroundColor: color.brand },
+  restButtonStrong: { backgroundColor: color.brandFill },
   summary: { alignItems: 'stretch', paddingTop: space[8] },
   bigIcon: { alignSelf: 'center', width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: color.card },
   record: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, backgroundColor: color.card },
-});
+}));
 

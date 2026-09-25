@@ -15,7 +15,7 @@ import { suggestGyms } from '@/lib/gymSearch';
 import { cityAt, distanceLabel, moneyLabel, placeContext, suggestPlaces, tracksPrices, type AppPlace } from '@/lib/places';
 import { EMPTY, PLACEHOLDER, TIER, searchPrompt, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
 import { SORTS, activeFilterCount, nearLabel, type Filters } from '@/lib/query';
-import { color, face, radius, space } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { GymRow } from './GymRow';
 import { Icon } from './Icon';
@@ -363,7 +363,7 @@ export function ResultsContent({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   lock: {
     alignItems: 'center',
     gap: space[2],
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: color.background,
+    backgroundColor: color.card,
   },
   lockTitle: { textAlign: 'center' },
   lockText: { textAlign: 'center' },
@@ -420,8 +420,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  gymGlyph: { backgroundColor: color.brand },
-  avatarSignedIn: { backgroundColor: color.brand },
+  gymGlyph: { backgroundColor: color.brandFill },
+  avatarSignedIn: { backgroundColor: color.brandFill },
   filterButton: {
     width: 40,
     height: 40,
@@ -438,11 +438,11 @@ const styles = StyleSheet.create({
     height: 18,
     paddingHorizontal: 4,
     borderRadius: 9,
-    backgroundColor: color.brand,
+    backgroundColor: color.brandFill,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: color.card,
   },
   badgeText: { fontSize: 10, lineHeight: 12, ...face('semibold') },
 
@@ -507,11 +507,11 @@ const styles = StyleSheet.create({
     // glass reads through at the edges.
     borderRadius: 26,
     borderCurve: 'continuous',
-    backgroundColor: 'rgba(255, 255, 255, 0.82)',
+    backgroundColor: color.cardGlass,
     overflow: 'hidden',
   },
   rowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 86 },
 
   footer: { paddingHorizontal: space[6], paddingTop: space[6] },
   footerText: { textAlign: 'center' },
-});
+}));

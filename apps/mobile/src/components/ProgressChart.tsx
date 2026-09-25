@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Line, Polyline } from 'react-native-svg';
-import { color, space } from '@/lib/theme';
+import { color, space, themed } from '@/lib/theme';
 import { formatWeight, fromKg, type WeightUnit } from '@/lib/training';
 import { Txt } from './ui';
 
@@ -86,9 +86,9 @@ export function ProgressChart({ points, unit }: { points: Array<{ date: string; 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wrap: { gap: space[2] },
   legend: { flexDirection: 'row', justifyContent: 'space-between' },
   chart: { height: HEIGHT, width: '100%' },
   axis: { flexDirection: 'row', justifyContent: 'space-between' },
-});
+}));

@@ -14,7 +14,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { color, radius, space } from '@/lib/theme';
+import { color, radius, space, themed } from '@/lib/theme';
 import { Txt } from './ui';
 
 export const EMBED_WIDTH = 440;
@@ -62,9 +62,9 @@ export function GoogleEmbed({ url, height }: { url: string; height: number }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   frame: { borderRadius: radius.lg + 4, borderCurve: 'continuous', overflow: 'hidden', backgroundColor: color.fill },
   web: { flex: 1, backgroundColor: 'transparent' },
   failed: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space[4] },
   center: { textAlign: 'center' },
-});
+}));

@@ -71,6 +71,7 @@ export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; p
   { emoji: '💪', title: 'Workout library', free: 'Build and share', pro: 'Save them, reopen on any device' },
   { emoji: '📈', title: 'Progress charts', free: 'Your records and history', pro: 'A chart for every exercise' },
   { emoji: '🎯', title: 'Next-session targets', free: 'Last time’s numbers', pro: 'What to lift next, worked out for you' },
+  { emoji: '🎨', title: 'Colour themes', free: 'Indigo, light or dark', pro: 'Five accents, light or dark' },
 ];
 
 /** Free for everyone, always. Listed on the Pro screen so nobody wonders. */
@@ -83,6 +84,7 @@ export const ALWAYS_FREE = [
   'Reviews, photos and members’ machine reports',
   'The workout builder',
   'Logging your workouts, with a rest timer, a plate calculator and your records',
+  'Dark mode',
 ] as const;
 
 /**

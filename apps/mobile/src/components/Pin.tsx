@@ -6,7 +6,7 @@
 
 import { StyleSheet, View } from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
-import { color } from '@/lib/theme';
+import { color, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { TIER_COLOUR } from './ui';
 
@@ -35,12 +35,12 @@ export function Pin({ tier, selected }: { tier: ResultTier; selected: boolean })
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   wrap: { alignItems: 'center' },
   disc: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderColor: '#FFFFFF',
+    borderColor: color.pinBorder,
     shadowColor: '#000',
     shadowOpacity: 0.22,
     shadowRadius: 4,
@@ -57,4 +57,4 @@ const styles = StyleSheet.create({
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
   },
-});
+}));

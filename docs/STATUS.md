@@ -302,14 +302,14 @@ name; the skip link works.
 - **Hosting.** The server runs on your own computer. Nothing is deployed, so
   accounts, reviews and members' reports live in one SQLite file there.
 - **Real gym data is thin on detail.** 23 Melbourne gyms were researched fact
-  by fact; the other ~1,000 in 8 Australian and 15 US cities, and whatever
+  by fact; the other ~1,900 in 8 Australian, 40 US and 15 European cities, and whatever
   "Search this area" finds elsewhere, are map-only (names, places, sometimes
   hours), so almost every card says "Call first". Members' price, visit and
   machine reports are the way that improves.
 - **Free public services under the live features.** "Search this area" and
   finding towns by name lean on free, volunteer-run services (the Overpass
   servers, Photon). GymGO is gentle with them (caching, one request at a
-  time, daily caps, three Overpass servers in turn), but they can be slow or
+  time, daily caps, four Overpass servers in turn), but they can be slow or
   down, and a busy hosted GymGO would want its own Overpass and Photon
   servers. Gyms' website icons are fetched from the gyms' own sites; a site
   that blocks automated visitors (Planet Fitness does) shows no icon.

@@ -106,7 +106,12 @@ Chrome and Edge (blur only in Safari and Firefox).
 - **Explore**: the map with the results sheet, filters, and sorting (best
   match, closest, cheapest, top rated). "Best match" means: gyms that meet
   everything you asked first, then, among the rest, the ones with the fewest
-  things you'd need to call about, then the nearest.
+  things you'd need to call about, then the nearest. Move the map anywhere in
+  Australia or the US and **Search this area** appears: it asks the server,
+  which reads OpenStreetMap for the area on screen (through the free Overpass
+  API), keeps what the same rules count as a gym, and remembers each area for
+  a month so a busy area costs one request, not one per person. Those gyms
+  are map-only like the rest: name, address, sometimes hours, "call first".
 - **Saved**: your saved gyms. Tick two or three to **compare** them side by
   side: answer, price, what members paid (labelled as theirs, never the
   gym's price), guest entry, what to bring, machines, rating and distance.
@@ -374,6 +379,16 @@ gymgo
 
 On a Mac or Linux: `GOOGLE_PLACES_API_KEY=your-key-here npx pnpm@10 app`.
 The key stays on your computer; the app never sees it.
+
+### Search this area (OpenStreetMap, free, no key)
+
+"Search this area" asks the public Overpass API at `overpass-api.de`. It's
+free and needs no account; its operators ask for fewer than 10,000 requests
+a day, and GymGO stays far under that: one request at a time, at most 500 a
+day, 30 an hour per address, and each tenth-of-a-degree tile (about 11 km)
+fetched at most once a month. If that server is slow or refuses your
+network, point GymGO at another Overpass server with
+`GYMGO_OVERPASS_URL=https://…/api/interpreter`.
 
 ### GymGO Pro (subscriptions, through Stripe)
 

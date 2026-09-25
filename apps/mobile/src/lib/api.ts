@@ -53,9 +53,9 @@ async function request<T>(method: string, path: string, options: { token?: strin
   const base = apiBase();
   if (!base) throw new OfflineError('No server address.');
   const controller = new AbortController();
-  // Photos upload slowly; billing waits on Stripe.
+  // Photos upload slowly; billing waits on Stripe; an area search may wait on the map service.
   const slow = (method === 'POST' && path.endsWith('/photos')) || path.startsWith('/api/billing');
-  const timer = setTimeout(() => controller.abort(), slow ? 30000 : 8000);
+  const timer = setTimeout(() => controller.abort(), path.startsWith('/api/area') ? 75000 : slow ? 30000 : 8000);
   let response: Response;
   try {
     response = await fetch(`${base}${path}`, {
@@ -235,6 +235,19 @@ export interface SavedWorkout {
 
 export const api = {
   gyms: () => request<{ gyms: GymRecord[]; attribution: string; generatedAt: string }>('GET', '/api/gyms'),
+  /** One gym by id, including ones found by searching an area. */
+  gym: (id: string) => request<{ gym: GymRecord }>('GET', `/api/gyms/${encodeURIComponent(id)}`),
+  /** The gyms OpenStreetMap has in a box (Australia and the US), read live by the server and kept. */
+  area: (box: { south: number; west: number; north: number; east: number }) =>
+    request<{ gyms: GymRecord[]; fetchedAt: string | null; truncated: boolean; attribution: string }>(
+      'GET',
+      `/api/area?${new URLSearchParams({
+        south: box.south.toFixed(5),
+        west: box.west.toFixed(5),
+        north: box.north.toFixed(5),
+        east: box.east.toFixed(5),
+      }).toString()}`,
+    ),
 
   signUp: (body: { email: string; password: string; displayName: string }) =>
     request<{ token: string; account: Account }>('POST', '/api/auth/signup', { body }),

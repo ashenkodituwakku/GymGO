@@ -9,6 +9,7 @@ import {
   GOOGLE_PLACES_API_KEY,
   GYM_RECORDS,
   HOST,
+  OVERPASS_URL,
   PHOTO_DIR,
   PORT,
   PUBLIC_URL,
@@ -29,6 +30,7 @@ const server = createServer(
     googleKey: GOOGLE_PLACES_API_KEY,
     billing: { stripe: STRIPE_SECRET_KEY ? createStripe(STRIPE_SECRET_KEY) : null, webhookSecret: STRIPE_WEBHOOK_SECRET },
     publicUrl: PUBLIC_URL,
+    area: { endpoint: OVERPASS_URL },
   }),
 );
 

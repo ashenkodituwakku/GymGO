@@ -12,7 +12,7 @@ import { explainNoMatches, haversineKm, type GymRecord, type SearchOutcome } fro
 import { suggestGyms } from '@/lib/gymSearch';
 import { cityAt, distanceLabel, moneyLabel, placeContext, suggestPlaces, type AppPlace } from '@/lib/places';
 import { EMPTY, PLACEHOLDER, TIER, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
-import { SORTS, activeFilterCount, type Filters } from '@/lib/query';
+import { SORTS, activeFilterCount, nearLabel, type Filters } from '@/lib/query';
 import { color, face, radius, space } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { GymRow } from './GymRow';
@@ -176,7 +176,7 @@ export function ResultsContent({
                 }}
                 style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
                 accessibilityRole="button"
-                accessibilityLabel={`${location.name}, gym in ${location.address.suburb}`}
+                accessibilityLabel={location.address.suburb ? `${location.name}, gym in ${location.address.suburb}` : `${location.name}, gym`}
               >
                 <View style={[styles.suggestionGlyph, styles.gymGlyph]}>
                   <Icon name="gym" size={16} color={color.onBrand} />
@@ -186,7 +186,9 @@ export function ResultsContent({
                   {location.branch ? ` ${location.branch}` : ''}
                 </Txt>
                 <Txt variant="footnote" color={color.labelSecondary}>
-                  Gym · {location.address.suburb} · {distanceLabel(haversineKm(filters.centre, location.position), location.address.countryCode)}
+                  {['Gym', location.address.suburb, distanceLabel(haversineKm(filters.centre, location.position), location.address.countryCode)]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </Txt>
               </Pressable>
             );
@@ -232,7 +234,7 @@ export function ResultsContent({
           {sessionGreeting(filters.visitMinuteOfDay).toUpperCase()}
         </Txt>
         <Txt variant="title2">
-          {filters.placeName === 'your location' ? 'Near you' : `Near ${filters.placeName}`}
+          {nearLabel(filters.placeName)}
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
           {summaryLine(total, outcome.counts.confirmed, filters.visitMinuteOfDay)}

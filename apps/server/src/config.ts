@@ -38,6 +38,11 @@ export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET?.trim() |
  * for the page Stripe returns people to. Locally it's worked out per request.
  */
 export const PUBLIC_URL = process.env.GYMGO_PUBLIC_URL?.trim().replace(/\/+$/, '') || null;
+/**
+ * Optional. The Overpass API server "Search this area" reads OpenStreetMap
+ * through. The main public one is the default; any mirror works.
+ */
+export const OVERPASS_URL = process.env.GYMGO_OVERPASS_URL?.trim() || undefined;
 export const ALLOWED_ORIGINS = (process.env.GYMGO_ALLOWED_ORIGINS ?? '').split(',').map((item) => item.trim()).filter(Boolean);
 
 /**

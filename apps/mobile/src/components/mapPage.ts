@@ -19,6 +19,7 @@ export type PageMessage =
   | { type: 'ready' }
   | { type: 'select'; id: string }
   | { type: 'mapPress' }
+  | { type: 'moved'; box: { north: number; south: number; east: number; west: number } }
   | { type: 'error'; message: string };
 
 export function mapPageHtml(options: { centre: LatLng; colours: Record<string, string> }): string {
@@ -70,6 +71,15 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
   // The tile licence requires this credit to stay visible.
   map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
   map.on('click', function () { post({ type: 'mapPress' }); });
+  // The area on screen, clear of the sheet, whenever the map comes to rest.
+  map.on('moveend', function () {
+    var pad = map.getPadding();
+    var canvas = map.getCanvas();
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    var nw = map.unproject([pad.left || 0, pad.top || 0]);
+    var se = map.unproject([w - (pad.right || 0), Math.max((pad.top || 0) + 1, h - (pad.bottom || 0))]);
+    post({ type: 'moved', box: { north: nw.lat, south: se.lat, west: nw.lng, east: se.lng } });
+  });
   map.on('error', function (event) {
     var message = event && event.error && event.error.message ? event.error.message : 'map error';
     post({ type: 'error', message: message });

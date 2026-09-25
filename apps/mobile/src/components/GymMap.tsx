@@ -52,7 +52,7 @@ function GymMarker({ pin, selected, onPress }: { pin: MapPin; selected: boolean;
 }
 
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
-  { pins, selectedId, initialCentre, bottomInset, topInset, showsUserLocation, onSelect, onMapPress },
+  { pins, selectedId, initialCentre, bottomInset, topInset, showsUserLocation, onSelect, onMapPress, onRegionChange },
   ref,
 ) {
   const map = useRef<MapView>(null);
@@ -109,6 +109,14 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
       showsBuildings
       toolbarEnabled={false}
       pitchEnabled={Platform.OS === 'ios'}
+      onRegionChangeComplete={(region) =>
+        onRegionChange?.({
+          north: region.latitude + region.latitudeDelta / 2,
+          south: region.latitude - region.latitudeDelta / 2,
+          east: region.longitude + region.longitudeDelta / 2,
+          west: region.longitude - region.longitudeDelta / 2,
+        })
+      }
       onPress={(event) => {
         if (event.nativeEvent.action === 'marker-press') return;
         if (pendingMapPress.current) clearTimeout(pendingMapPress.current);

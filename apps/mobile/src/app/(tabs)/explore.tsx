@@ -20,16 +20,18 @@ import BottomSheet, {
 } from '@gorhom/bottom-sheet';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'expo-router';
-import { ActionSheetIOS, Keyboard, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type TextInput } from 'react-native';
+import { ActionSheetIOS, ActivityIndicator, Keyboard, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions, type TextInput } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { isWithinBox, type BoundingBox } from '@gymgo/domain';
 import { MELBOURNE_ATTRIBUTION } from '@gymgo/melbourne-data';
+import { problemText } from '@/lib/api';
 import { EMPTY, locatedNotice } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { cityAt, geocodePlace, type AppPlace } from '@/lib/places';
 import { useApp } from '@/lib/app-state';
 import { suggestGyms } from '@/lib/gymSearch';
 import { useBottomClearance } from '@/lib/layout';
-import { SORTS, applyRelaxation, atPlace, moveTo, runSearch } from '@/lib/query';
+import { SORTS, THIS_AREA, applyRelaxation, atPlace, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
 import { color, face, radius, shadow, space } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
@@ -79,7 +81,7 @@ function MapScreen() {
   // The time-zone self-check runs once; its answer can't change mid-session.
   const selfCheck = useMemo(() => checkTimeZoneSupport(), []);
 
-  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe } = useApp();
+  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe, prefs } = useApp();
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -93,6 +95,10 @@ function MapScreen() {
   // so closing the card puts it back — as Maps does.
   const sheetIndex = useRef(1);
   const restoreIndex = useRef<number | null>(null);
+
+  // The area on screen, and whether "Search this area" is reading the map.
+  const [viewBox, setViewBox] = useState<BoundingBox | null>(null);
+  const [areaBusy, setAreaBusy] = useState(false);
 
   const map = useRef<GymMapHandle>(null);
   const mainSheet = useRef<BottomSheet>(null);
@@ -161,6 +167,74 @@ function MapScreen() {
     haptic.warn();
     if (result.kind === 'nearest') map.current?.flyTo(result.city.centre, 0.06);
   }, [findMe]);
+
+  // --- Search this area -------------------------------------------------------
+
+  // Offered once the map has moved well away from what the list shows, as
+  // in Apple Maps. Never in demo mode: it finds real gyms.
+  const offerArea = useMemo(() => {
+    if (!viewBox || prefs.demo) return false;
+    if (filters.bbox) return boxDrift(filters.bbox, viewBox) > 0.35;
+    const height = viewBox.north - viewBox.south;
+    const width = viewBox.east - viewBox.west;
+    const shift = Math.max(
+      Math.abs((viewBox.north + viewBox.south) / 2 - filters.centre.lat) / height,
+      Math.abs((viewBox.east + viewBox.west) / 2 - filters.centre.lng) / width,
+    );
+    // Moved more than half a screen, or zoomed well out past the search radius.
+    return shift > 0.6 || height > ((filters.radiusKm * 2) / 111) * 2.5;
+  }, [viewBox, prefs.demo, filters.bbox, filters.centre, filters.radiusKm]);
+
+  const searchThisArea = useCallback(async () => {
+    if (!viewBox || areaBusy) return;
+    const box = viewBox;
+    haptic.tap();
+    setAreaBusy(true);
+    try {
+      const answer = await data.searchArea(box);
+      const inBox = [...answer.gyms, ...data.records.filter((record) => isWithinBox(record.location.position, box))];
+      const timezone = inBox[0]?.location.timezone ?? filters.timezone;
+      setFilters((current) => inArea(current, box, nameForArea(inBox, box), timezone));
+      setSelectedId(null);
+      if (inBox.length === 0) {
+        haptic.warn();
+        setNotice('OpenStreetMap has no gyms mapped in this area yet.');
+      } else {
+        haptic.success();
+        setNotice(
+          answer.truncated
+            ? 'Lots of gyms here, so these are the 200 nearest the middle. Zoom in to see the rest.'
+            : answer.gyms.length > 0
+              ? `${answer.gyms.length} gym${answer.gyms.length === 1 ? '' : 's'} from OpenStreetMap in this area. Map-only, so call before you go.`
+              : 'The map has no gyms here beyond the ones already shown.',
+        );
+      }
+      if (!wide && sheetIndex.current === 0) mainSheet.current?.snapToIndex(1);
+    } catch (error) {
+      haptic.warn();
+      setNotice(problemText(error, 'Couldn’t search this area. Try again?'));
+    } finally {
+      setAreaBusy(false);
+    }
+  }, [viewBox, areaBusy, data, filters.timezone, setFilters, wide]);
+
+  const areaButton = (offerArea || areaBusy) && !selectedId && (
+    <Glass style={styles.areaButton} interactive>
+      <Pressable
+        onPress={() => void searchThisArea()}
+        disabled={areaBusy}
+        accessibilityRole="button"
+        accessibilityLabel="Search this area"
+        accessibilityState={{ busy: areaBusy }}
+        style={styles.areaHit}
+      >
+        {areaBusy ? <ActivityIndicator size="small" color={color.brand} /> : <Icon name="search" size={15} color={color.brand} />}
+        <Txt variant="subhead" color={color.brand} style={face('bold')}>
+          {areaBusy ? 'Searching the map…' : 'Search this area'}
+        </Txt>
+      </Pressable>
+    </Glass>
+  );
 
   // --- Selecting a gym ------------------------------------------------------
 
@@ -285,7 +359,7 @@ function MapScreen() {
 
   const dataNote = showingDemo
     ? 'The Sydney gyms are invented demo data, for testing.'
-    : city.mapOnly
+    : city.mapOnly || filters.bbox
       ? `Real gyms from OpenStreetMap: names, addresses and sometimes opening hours, mapped by volunteers. Prices, guest hours and machines are unknown until a gym publishes them, so call first. ${MELBOURNE_ATTRIBUTION}.`
       : `Real gyms. Tap a fact to see where we read it; anything a gym doesn't publish is unknown. ${MELBOURNE_ATTRIBUTION}.`;
 
@@ -379,7 +453,9 @@ function MapScreen() {
       <Txt variant="footnote" style={styles.pillText}>
         {showingDemo
           ? 'Sydney · demo gyms'
-          : data.status === 'live'
+          : filters.bbox
+            ? `${filters.placeName === THIS_AREA ? 'This area' : filters.placeName} · map data`
+            : data.status === 'live'
             ? `${city.name} · live data`
             : data.status === 'offline'
               ? `${city.name} · offline copy`
@@ -427,6 +503,7 @@ function MapScreen() {
           showsUserLocation={here !== null}
           userLocation={here?.position ?? null}
           onSelect={openGym}
+          onRegionChange={setViewBox}
           onMapPress={() => {
             if (panel === 'place') closePlace();
           }}
@@ -470,6 +547,9 @@ function MapScreen() {
         <View style={[styles.desktopControls, { top: PANEL_GAP }]} pointerEvents="box-none">
           {controls}
         </View>
+        <View style={[styles.areaRow, { top: PANEL_GAP, left: panelsWidth + PANEL_GAP, right: PANEL_GAP + 64 }]} pointerEvents="box-none">
+          {areaButton}
+        </View>
         {selfCheckBanner}
         {googleModal}
       </View>
@@ -501,6 +581,7 @@ function MapScreen() {
           showsUserLocation={here !== null}
           userLocation={here?.position ?? null}
           onSelect={openGym}
+          onRegionChange={setViewBox}
           onMapPress={() => {
             Keyboard.dismiss();
             if (selectedId) closePlace();
@@ -508,10 +589,15 @@ function MapScreen() {
         />
       }
       topBar={
-        <View style={[styles.topBar, { top: insets.top + space[2] }]} pointerEvents="box-none">
-          {statusPill}
-          {controls}
-        </View>
+        <>
+          <View style={[styles.areaRow, { top: insets.top + space[2] + 44, left: space[4], right: space[4] }]} pointerEvents="box-none">
+            {areaButton}
+          </View>
+          <View style={[styles.topBar, { top: insets.top + space[2] }]} pointerEvents="box-none">
+            {statusPill}
+            {controls}
+          </View>
+        </>
       }
       banner={selfCheckBanner}
       results={results(true)}
@@ -712,6 +798,10 @@ const styles = StyleSheet.create({
   panelTop: { paddingHorizontal: space[4], paddingTop: space[4], paddingBottom: space[2] },
   panelClose: { alignItems: 'flex-end', paddingHorizontal: space[4], paddingTop: space[4] },
   desktopControls: { position: 'absolute', right: PANEL_GAP },
+
+  areaRow: { position: 'absolute', alignItems: 'center' },
+  areaButton: { height: 38, borderRadius: 19, ...shadow.float },
+  areaHit: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4] },
 
   selfCheck: {
     position: 'absolute',

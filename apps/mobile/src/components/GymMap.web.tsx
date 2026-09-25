@@ -54,14 +54,14 @@ function pinElement(fill: string, selected: boolean, label: string): HTMLElement
 }
 
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
-  { pins, selectedId, initialCentre, bottomInset, topInset, leftInset = 0, userLocation = null, onSelect, onMapPress },
+  { pins, selectedId, initialCentre, bottomInset, topInset, leftInset = 0, userLocation = null, onSelect, onMapPress, onRegionChange },
   ref,
 ) {
   const host = useRef<View>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const markers = useRef<maplibregl.Marker[]>([]);
-  const handlers = useRef({ onSelect, onMapPress });
-  handlers.current = { onSelect, onMapPress };
+  const handlers = useRef({ onSelect, onMapPress, onRegionChange });
+  handlers.current = { onSelect, onMapPress, onRegionChange };
 
   useImperativeHandle(ref, () => ({
     flyTo(centre, span = 0.03) {
@@ -92,6 +92,14 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     // its own "Legal" link.
     instance.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
     instance.on('click', () => handlers.current.onMapPress());
+    // The area on screen, clear of the panels and sheet, whenever the map comes to rest.
+    instance.on('moveend', () => {
+      const { top = 0, bottom = 0, left = 0, right = 0 } = instance.getPadding();
+      const canvas = instance.getCanvas();
+      const nw = instance.unproject([left, top]);
+      const se = instance.unproject([canvas.clientWidth - right, Math.max(top + 1, canvas.clientHeight - bottom)]);
+      handlers.current.onRegionChange?.({ north: nw.lat, south: se.lat, west: nw.lng, east: se.lng });
+    });
     map.current = instance;
     if (__DEV__) (globalThis as { __gymgoMap?: maplibregl.Map }).__gymgoMap = instance;
     return () => instance.remove();

@@ -18,7 +18,9 @@
     "@gymgo/demo-data": "workspace:*",
     "@gymgo/domain": "workspace:*",
     "@gymgo/melbourne-data": "workspace:*",
+    "@gymgo/osm": "workspace:*",
     "@gymgo/usa-data": "workspace:*",
+    "@photostructure/tz-lookup": "^11.7.0",
     "stripe": "22.6.2",
     "tsx": "^4.20.0"
   },

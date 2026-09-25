@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { initialFilters, moveTo, nextVisitAt, nowIn } from './query';
+import { AU_GYMS } from '@gymgo/au-data';
+import { THIS_AREA, boxDrift, inArea, initialFilters, moveTo, nameForArea, nearLabel, nextVisitAt, nowIn, runSearch } from './query';
 
 describe('nextVisitAt', () => {
   // 9:30 am in Melbourne on 24 September 2026 (AEST, UTC+10).
@@ -36,5 +37,42 @@ describe('moveTo', () => {
     expect(ny.visitMinuteOfDay).toBe(18 * 60);
     const early = moveTo({ ...filters, visitMinuteOfDay: 21 * 60 }, { centre: { lat: 40.75, lng: -73.98 }, placeName: 'New York', timezone: 'America/New_York' }, morning);
     expect(early.visitDate).toBe('2026-09-23');
+  });
+});
+
+describe('Search this area', () => {
+  const hobart = { north: -42.87, south: -42.9, east: 147.35, west: 147.3 };
+  const filters = initialFilters(new Date('2026-09-23T23:30:00Z'));
+
+  it('limits the results to the box, whatever the radius', () => {
+    const area = inArea(filters, hobart, 'Hobart', 'Australia/Hobart');
+    const outcome = runSearch(area, { records: AU_GYMS });
+    expect(outcome.results.length).toBeGreaterThan(0);
+    for (const result of outcome.results) {
+      const { lat, lng } = result.record.location.position;
+      expect(lat <= hobart.north && lat >= hobart.south && lng <= hobart.east && lng >= hobart.west).toBe(true);
+    }
+    expect(area.centre).toEqual({ lat: -42.885, lng: 147.325 });
+  });
+
+  it('is cleared by picking a place', () => {
+    const area = inArea(filters, hobart, 'Hobart', 'Australia/Hobart');
+    expect(moveTo(area, { centre: { lat: -37.8, lng: 144.96 }, placeName: 'Melbourne', timezone: 'Australia/Melbourne' }).bbox).toBeNull();
+  });
+
+  it('names the area after the gym nearest the middle, or says "this area"', () => {
+    expect(nameForArea(AU_GYMS, hobart)).toBe('Hobart');
+    expect(nameForArea(AU_GYMS, { north: -10, south: -10.1, east: 130.1, west: 130 })).toBe(THIS_AREA);
+    expect(nearLabel(THIS_AREA)).toBe('In this area');
+    expect(nearLabel('your location')).toBe('Near you');
+    expect(nearLabel('Fitzroy')).toBe('Near Fitzroy');
+  });
+
+  it('measures how far the map has moved from the searched box', () => {
+    expect(boxDrift(hobart, hobart)).toBe(0);
+    const panned = { ...hobart, north: hobart.north + 0.015, south: hobart.south + 0.015 };
+    expect(boxDrift(hobart, panned)).toBeCloseTo(0.5);
+    const zoomedOut = { north: -42.855, south: -42.915, east: 147.375, west: 147.275 };
+    expect(boxDrift(hobart, zoomedOut)).toBeCloseTo(1);
   });
 });

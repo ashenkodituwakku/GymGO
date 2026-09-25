@@ -1,4 +1,4 @@
-import type { LatLng, ResultTier } from '@gymgo/domain';
+import type { BoundingBox, LatLng, ResultTier } from '@gymgo/domain';
 
 export interface MapPin {
   id: string;
@@ -24,6 +24,8 @@ export interface GymMapProps {
   userLocation?: LatLng | null;
   onSelect: (id: string) => void;
   onMapPress: () => void;
+  /** The area on screen, each time the map comes to rest after moving. */
+  onRegionChange?: (box: BoundingBox) => void;
 }
 
 export interface GymMapHandle {

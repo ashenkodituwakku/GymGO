@@ -149,6 +149,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // A saved or recent gym outside the bundled cities (found by searching an
+  // area, maybe on another device) is fetched by id, so its row isn't blank.
+  const { ensureGyms } = data;
+  useEffect(() => {
+    ensureGyms([...accountApi.saved, ...recents, ...compare]);
+  }, [ensureGyms, accountApi.saved, recents, compare, data.status]);
+
   const findMe = useCallback(async (ask: boolean, onlyIfUntouched: boolean): Promise<Located> => {
     const fix = await currentFix(ask);
     if (fix === 'denied' || fix === 'unavailable') return { kind: fix };

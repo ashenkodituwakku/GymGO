@@ -60,6 +60,7 @@ export function FiltersContent({
               centre: filters.centre,
               placeName: filters.placeName,
               timezone: filters.timezone,
+              bbox: filters.bbox,
               visitDate: visit.date,
               visitMinuteOfDay: visit.minute,
             });

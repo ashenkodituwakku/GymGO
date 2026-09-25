@@ -12,6 +12,8 @@
 import {
   UNKNOWN_VISITOR,
   defaultQuery,
+  haversineKm,
+  type BoundingBox,
   search,
   type EquipmentRequirement,
   type GymRecord,
@@ -42,6 +44,11 @@ export interface Filters {
   /** The time zone the visit time is in: the searched city's. */
   timezone: string;
   radiusKm: number;
+  /**
+   * Set by "Search this area": the results are the gyms inside this box,
+   * and the radius is ignored. Picking a place or finding you clears it.
+   */
+  bbox: BoundingBox | null;
   visitDate: string;
   visitMinuteOfDay: number;
   budgetMinor: number | null;
@@ -118,14 +125,64 @@ export function atPlace(place: AppPlace): Pick<Filters, 'centre' | 'placeName' |
  * Move the search somewhere else. In another time zone, "6 pm" stays 6 pm
  * but in the new city's clock, on the next day that's still ahead there.
  */
-export function moveTo(current: Filters, where: Pick<Filters, 'centre' | 'placeName' | 'timezone'>, now: Date = new Date()): Filters {
-  if (where.timezone === current.timezone) return { ...current, ...where };
+export function moveTo(
+  current: Filters,
+  where: Pick<Filters, 'centre' | 'placeName' | 'timezone'> & { bbox?: BoundingBox | null },
+  now: Date = new Date(),
+): Filters {
+  const next = { ...current, ...where, bbox: where.bbox ?? null };
+  if (where.timezone === current.timezone) return next;
   const visit = nextVisitAt(current.visitMinuteOfDay, where.timezone, now);
-  return { ...current, ...where, visitDate: visit.date, visitMinuteOfDay: visit.minute };
+  return { ...next, visitDate: visit.date, visitMinuteOfDay: visit.minute };
+}
+
+/** The search as "the gyms in this box": what "Search this area" does. */
+export function inArea(current: Filters, box: BoundingBox, placeName: string, timezone: string, now: Date = new Date()): Filters {
+  const centre = { lat: (box.north + box.south) / 2, lng: (box.east + box.west) / 2 };
+  return moveTo(current, { centre, placeName, timezone, bbox: box }, now);
+}
+
+/** How far the map has moved from a box: the larger of the centre's shift and the change in size, as a share of the box. */
+export function boxDrift(from: BoundingBox, to: BoundingBox): number {
+  const height = from.north - from.south;
+  const width = from.east - from.west;
+  if (height <= 0 || width <= 0) return Infinity;
+  const shift = Math.max(
+    Math.abs((to.north + to.south) / 2 - (from.north + from.south) / 2) / height,
+    Math.abs((to.east + to.west) / 2 - (from.east + from.west) / 2) / width,
+  );
+  const zoom = Math.abs(Math.log2((to.north - to.south) / height));
+  return Math.max(shift, zoom);
 }
 
 /** What the search calls the spot you're standing on. */
 export const YOUR_LOCATION = 'your location';
+
+/** What the search calls an area searched from the map that no gym names. */
+export const THIS_AREA = 'this area';
+
+/** The heading over the results: "Near you", "Near Fitzroy", "In this area". */
+export function nearLabel(placeName: string): string {
+  if (placeName === YOUR_LOCATION) return 'Near you';
+  if (placeName === THIS_AREA) return 'In this area';
+  return `Near ${placeName}`;
+}
+
+/**
+ * What to call an area searched from the map: the suburb of the gym nearest
+ * the middle of the screen, or "this area" when no gym there names one.
+ */
+export function nameForArea(records: GymRecord[], box: BoundingBox): string {
+  const middle = { lat: (box.north + box.south) / 2, lng: (box.east + box.west) / 2 };
+  let best: { name: string; distance: number } | null = null;
+  for (const record of records) {
+    const { position, address } = record.location;
+    if (!address.suburb || position.lat > box.north || position.lat < box.south || position.lng > box.east || position.lng < box.west) continue;
+    const distance = haversineKm(middle, position);
+    if (!best || distance < best.distance) best = { name: address.suburb, distance };
+  }
+  return best ? best.name : THIS_AREA;
+}
 
 export function initialFilters(now: Date = new Date(), place: AppPlace = DEFAULT_PLACE): Filters {
   const where = atPlace(place);
@@ -133,6 +190,7 @@ export function initialFilters(now: Date = new Date(), place: AppPlace = DEFAULT
   return {
     ...where,
     radiusKm: 5,
+    bbox: null,
     visitDate: visit.date,
     visitMinuteOfDay: visit.minute,
     budgetMinor: null,
@@ -152,6 +210,7 @@ export function toQuery(filters: Filters): SearchQuery {
   return defaultQuery({
     centre: filters.centre,
     radiusKm: filters.radiusKm,
+    bbox: filters.bbox,
     budgetMinor: filters.budgetMinor,
     visitDate: filters.visitDate,
     visitMinuteOfDay: filters.visitMinuteOfDay,

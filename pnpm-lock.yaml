@@ -152,9 +152,15 @@ importers:
       '@gymgo/melbourne-data':
         specifier: workspace:*
         version: link:../../packages/melbourne-data
+      '@gymgo/osm':
+        specifier: workspace:*
+        version: link:../../packages/osm
       '@gymgo/usa-data':
         specifier: workspace:*
         version: link:../../packages/usa-data
+      '@photostructure/tz-lookup':
+        specifier: ^11.7.0
+        version: 11.7.0
       stripe:
         specifier: 22.6.2
         version: 22.6.2(@types/node@22.20.4)
@@ -1464,6 +1470,9 @@ packages:
 
   '@phosphor-icons/core@2.1.1':
     resolution: {integrity: sha512-v4ARvrip4qBCImOE5rmPUylOEK4iiED9ZyKjcvzuezqMaiRASCHKcRIuvvxL/twvLpkfnEODCOJp5dM4eZilxQ==}
+
+  '@photostructure/tz-lookup@11.7.0':
+    resolution: {integrity: sha512-QbKHXvleluMIlAHf2JiQTJNU5rLQBeQhLobyRqgXZ6NNGKqNikaRkjYviJ4nMU7Y75QE7bBYM8xjiFGjAukyhw==}
 
   '@playwright/test@1.63.0':
     resolution: {integrity: sha512-oxMK4vllB9RK5NQ2l1pq1IfOf2AvnEuj/vYGDj0H2nMtmtZpKtCwt/l00GEO6xjGfpBNAvjovvYdCm50dRQkpQ==}
@@ -6383,6 +6392,8 @@ snapshots:
 
   '@phosphor-icons/core@2.1.1': {}
 
+  '@photostructure/tz-lookup@11.7.0': {}
+
   '@playwright/test@1.63.0':
     dependencies:
       playwright: 1.63.0
@@ -6717,7 +6728,9 @@ snapshots:
       metro-runtime: 0.84.6
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 

@@ -1,0 +1,387 @@
+/**
+ * "Search this area": gyms from OpenStreetMap for wherever the map is showing.
+ *
+ * The bundled cities cover a circle round each centre. Anywhere else in
+ * Australia or the US, the app can ask for the area on screen, and this
+ * reads the map live through the Overpass API, filtered by exactly the
+ * rules the bundled cities use (packages/osm), into map-only records.
+ *
+ * Being a good citizen of a free, volunteer-run service:
+ *  - The world is cut into fixed tiles a tenth of a degree square (about
+ *    11 km). A tile is fetched at most once a month; after that everyone
+ *    gets the saved copy, so a busy area costs one request, not one per
+ *    person.
+ *  - One request at a time, a daily cap, and a per-address limit.
+ *  - Requests carry a User-Agent that says who we are.
+ *
+ * The gyms are saved (area_gyms), so they can be saved, reviewed and
+ * reported on like any other, and a link to one still works tomorrow.
+ * Only Australia and the US: those are the countries whose prices, time
+ * zones and addresses GymGO knows.
+ */
+
+import tzlookup from '@photostructure/tz-lookup';
+import type { GymRecord } from '@gymgo/domain';
+import {
+  branchOf,
+  brandOf,
+  candidate,
+  contactOf,
+  extrasOf,
+  km,
+  line1Of,
+  mapOnlyRecord,
+  osmRef,
+  position,
+  slug,
+  trainingType,
+  type OsmElement,
+} from '@gymgo/osm';
+import type { Db } from './db';
+
+type Fetch = typeof fetch;
+
+export interface Box {
+  south: number;
+  west: number;
+  north: number;
+  east: number;
+}
+
+export class AreaError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+    readonly code?: string,
+  ) {
+    super(message);
+  }
+}
+
+export const DEFAULT_OVERPASS = 'https://overpass-api.de/api/interpreter';
+const USER_AGENT = 'GymGO/0.1 (gym finder; https://github.com/ashenkodituwakku/GymGO)';
+
+/** Tiles are a tenth of a degree on each side. */
+const TILE = 10;
+/** At most this many tiles per search: about 45 × 55 km at Melbourne's latitude. */
+const MAX_TILES = 30;
+/** A fetched tile is reused for this long. */
+const FRESH_DAYS = 30;
+/** The most gyms one answer holds, nearest the middle of the area first. */
+const MAX_GYMS = 200;
+/** Live map reads per day, across everyone. Overpass asks for under 10,000. */
+const DAILY_LIVE = 500;
+
+const US_ZONES = new Set([
+  'America/New_York', 'America/Detroit', 'America/Kentucky/Louisville', 'America/Kentucky/Monticello',
+  'America/Indiana/Indianapolis', 'America/Indiana/Vincennes', 'America/Indiana/Winamac', 'America/Indiana/Marengo',
+  'America/Indiana/Petersburg', 'America/Indiana/Vevay', 'America/Chicago', 'America/Indiana/Tell_City',
+  'America/Indiana/Knox', 'America/Menominee', 'America/North_Dakota/Center', 'America/North_Dakota/New_Salem',
+  'America/North_Dakota/Beulah', 'America/Denver', 'America/Boise', 'America/Phoenix', 'America/Los_Angeles',
+  'America/Anchorage', 'America/Juneau', 'America/Sitka', 'America/Metlakatla', 'America/Yakutat', 'America/Nome',
+  'America/Adak', 'Pacific/Honolulu',
+]);
+
+/** Australia's time zones and the state each one means (Sydney's is also Canberra's, so it's settled by postcode). */
+const AU_ZONE_STATE: Record<string, string> = {
+  'Australia/Melbourne': 'VIC', 'Australia/Brisbane': 'QLD', 'Australia/Lindeman': 'QLD', 'Australia/Adelaide': 'SA',
+  'Australia/Perth': 'WA', 'Australia/Eucla': 'WA', 'Australia/Hobart': 'TAS', 'Australia/Darwin': 'NT',
+  'Australia/Broken_Hill': 'NSW', 'Australia/Lord_Howe': 'NSW', 'Australia/Sydney': '',
+};
+
+const AU_STATES = new Set(['ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA']);
+const AU_STATE_NAMES: Record<string, string> = {
+  QUEENSLAND: 'QLD', 'WESTERN AUSTRALIA': 'WA', 'SOUTH AUSTRALIA': 'SA', TASMANIA: 'TAS',
+  'AUSTRALIAN CAPITAL TERRITORY': 'ACT', 'NEW SOUTH WALES': 'NSW', VICTORIA: 'VIC', 'NORTHERN TERRITORY': 'NT',
+};
+
+/** The Australian state a postcode belongs to (Australia Post's ranges). */
+export function auStateForPostcode(postcode: string): string {
+  if (!/^\d{4}$/.test(postcode)) return '';
+  const n = Number(postcode);
+  if ((n >= 200 && n <= 299) || (n >= 2600 && n <= 2618) || (n >= 2900 && n <= 2920)) return 'ACT';
+  if (n >= 800 && n <= 999) return 'NT';
+  if (n >= 1000 && n <= 2999) return 'NSW';
+  if ((n >= 3000 && n <= 3999) || (n >= 8000 && n <= 8999)) return 'VIC';
+  if ((n >= 4000 && n <= 4999) || (n >= 9000 && n <= 9999)) return 'QLD';
+  if (n >= 5000 && n <= 5999) return 'SA';
+  if (n >= 6000 && n <= 6999) return 'WA';
+  if (n >= 7000 && n <= 7999) return 'TAS';
+  return '';
+}
+
+/** Where a point is, as far as GymGO is concerned: which country and time zone, or null outside AU and the US. */
+export function whereIs(lat: number, lng: number): { countryCode: 'AU' | 'US'; timezone: string } | null {
+  let zone: string;
+  try {
+    zone = tzlookup(lat, lng);
+  } catch {
+    return null;
+  }
+  if (zone in AU_ZONE_STATE) return { countryCode: 'AU', timezone: zone };
+  if (US_ZONES.has(zone)) return { countryCode: 'US', timezone: zone };
+  return null;
+}
+
+export function parseBox(params: URLSearchParams): Box {
+  const read = (name: string) => {
+    const value = Number(params.get(name));
+    if (!params.has(name) || !Number.isFinite(value)) throw new AreaError(400, `Missing or bad "${name}".`);
+    return value;
+  };
+  const box = { south: read('south'), west: read('west'), north: read('north'), east: read('east') };
+  if (box.south < -90 || box.north > 90 || box.south >= box.north) throw new AreaError(400, 'South must be below north.');
+  if (box.west < -180 || box.east > 180 || box.west >= box.east) throw new AreaError(400, 'West must be left of east.');
+  return box;
+}
+
+function tilesOf(box: Box): Array<{ key: string; box: Box }> {
+  const tiles: Array<{ key: string; box: Box }> = [];
+  // A hair of slack, so 0.7 × 10 = 7.000000000000001 doesn't add a whole row of tiles.
+  const [south, north] = [Math.floor(box.south * TILE + 1e-9), Math.ceil(box.north * TILE - 1e-9)];
+  const [west, east] = [Math.floor(box.west * TILE + 1e-9), Math.ceil(box.east * TILE - 1e-9)];
+  for (let y = south; y < Math.max(north, south + 1); y += 1) {
+    for (let x = west; x < Math.max(east, west + 1); x += 1) {
+      tiles.push({ key: `${y}:${x}`, box: { south: y / TILE, north: (y + 1) / TILE, west: x / TILE, east: (x + 1) / TILE } });
+    }
+  }
+  return tiles;
+}
+
+const inBox = (box: Box, lat: number, lng: number) => lat >= box.south && lat <= box.north && lng >= box.west && lng <= box.east;
+
+interface Place {
+  name: string;
+  pos: [number, number];
+}
+
+export interface AreaAnswer {
+  gyms: GymRecord[];
+  /** When the oldest part of this answer was read from the map. */
+  fetchedAt: string | null;
+  /** More gyms than one answer holds: the nearest the middle were kept. */
+  truncated: boolean;
+}
+
+export interface AreaOptions {
+  endpoint?: string;
+  fetchImpl?: Fetch;
+  now?: () => Date;
+  /** Gyms already in the bundled data; the map's copies of them are left out. */
+  known: () => GymRecord[];
+}
+
+export class AreaSearch {
+  private readonly endpoint: string;
+  private readonly fetchImpl: Fetch;
+  private readonly now: () => Date;
+  private queue: Promise<unknown> = Promise.resolve();
+  private day = '';
+  private liveToday = 0;
+
+  constructor(
+    private readonly db: Db,
+    private readonly options: AreaOptions,
+  ) {
+    this.endpoint = options.endpoint ?? DEFAULT_OVERPASS;
+    this.fetchImpl = options.fetchImpl ?? fetch;
+    this.now = options.now ?? (() => new Date());
+  }
+
+  /** Whether answering this area needs a live map read (so the caller can rate-limit only those). */
+  needsFetch(box: Box): boolean {
+    return this.staleTiles(box).length > 0;
+  }
+
+  private staleTiles(box: Box) {
+    const cutoff = new Date(this.now().getTime() - FRESH_DAYS * 86_400_000).toISOString();
+    const fresh = this.db.prepare('select fetched_at from area_tiles where tile = ?');
+    return tilesOf(box).filter((tile) => {
+      const row = fresh.get(tile.key) as { fetched_at: string } | undefined;
+      return !row || row.fetched_at < cutoff;
+    });
+  }
+
+  async search(box: Box): Promise<AreaAnswer> {
+    const tiles = tilesOf(box);
+    if (tiles.length > MAX_TILES) throw new AreaError(400, 'That’s a big area. Zoom in a little and search again.', 'too_big');
+    const middle: [number, number] = [(box.south + box.north) / 2, (box.west + box.east) / 2];
+    if (!whereIs(...middle) && !tiles.some((tile) => whereIs((tile.box.south + tile.box.north) / 2, (tile.box.west + tile.box.east) / 2))) {
+      throw new AreaError(422, 'GymGO covers Australia and the United States for now.', 'unsupported_country');
+    }
+
+    const stale = this.staleTiles(box);
+    if (stale.length > 0) {
+      // One read at a time, so a burst of searches never hammers the service.
+      const run = this.queue.then(() => this.fetchTiles(stale.map((tile) => tile.box), stale.map((tile) => tile.key)));
+      this.queue = run.catch(() => undefined);
+      await run;
+    }
+
+    const rows = this.db
+      .prepare('select record_json, lat, lng, fetched_at from area_gyms where lat between ? and ? and lng between ? and ?')
+      .all(box.south, box.north, box.west, box.east) as Array<{ record_json: string; lat: number; lng: number; fetched_at: string }>;
+    rows.sort((a, b) => km(middle, [a.lat, a.lng]) - km(middle, [b.lat, b.lng]));
+    const kept = rows.slice(0, MAX_GYMS);
+    const oldest = kept.reduce<string | null>((min, row) => (min === null || row.fetched_at < min ? row.fetched_at : min), null);
+    return { gyms: kept.map((row) => JSON.parse(row.record_json) as GymRecord), fetchedAt: oldest, truncated: rows.length > MAX_GYMS };
+  }
+
+  private async fetchTiles(boxes: Box[], keys: string[]): Promise<void> {
+    const today = this.now().toISOString().slice(0, 10);
+    if (today !== this.day) {
+      this.day = today;
+      this.liveToday = 0;
+    }
+    if (this.liveToday >= DAILY_LIVE) throw new AreaError(503, 'GymGO has read the map a lot today. Try again tomorrow.', 'busy');
+    this.liveToday += 1;
+
+    const box: Box = {
+      south: Math.min(...boxes.map((item) => item.south)),
+      west: Math.min(...boxes.map((item) => item.west)),
+      north: Math.max(...boxes.map((item) => item.north)),
+      east: Math.max(...boxes.map((item) => item.east)),
+    };
+    const bbox = `${box.south},${box.west},${box.north},${box.east}`;
+    const query =
+      `[out:json][timeout:40][bbox:${bbox}];` +
+      'nwr["leisure"="fitness_centre"]["name"];out center tags;' +
+      'node["place"~"^(city|town|suburb|village|neighbourhood|quarter|hamlet)$"]["name"];out;';
+
+    let response: Response;
+    try {
+      response = await this.fetchImpl(this.endpoint, {
+        method: 'POST',
+        headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+        body: new URLSearchParams({ data: query }).toString(),
+        signal: AbortSignal.timeout(60_000),
+      });
+    } catch {
+      throw new AreaError(502, 'The map service didn’t answer. Try again in a minute.', 'upstream');
+    }
+    if (response.status === 429 || response.status === 504) {
+      throw new AreaError(503, 'The map service is busy. Try again in a minute.', 'upstream');
+    }
+    const data = (await response.json().catch(() => null)) as { elements?: OsmElement[] } | null;
+    if (!response.ok || !data || !Array.isArray(data.elements)) {
+      throw new AreaError(502, 'The map service sent something unexpected. Try again in a minute.', 'upstream');
+    }
+
+    const fetchedAt = this.now().toISOString().replace(/\.\d{3}Z$/, 'Z');
+    const places: Place[] = [];
+    const gyms: OsmElement[] = [];
+    for (const el of data.elements) {
+      if (el.tags?.leisure === 'fitness_centre') gyms.push(el);
+      else if (el.tags?.place && el.tags.name) {
+        const pos = position(el);
+        if (pos) places.push({ name: el.tags['name:en'] || el.tags.name, pos });
+      }
+    }
+
+    const known = this.options.known().filter((record) => !record.location.isDemoData);
+    const knownRefs = new Set(known.map((record) => record.location.externalRefs.openStreetMap).filter(Boolean));
+    const records = new Map<string, { record: GymRecord; lat: number; lng: number; osm: string }>();
+    for (const el of gyms) {
+      const found = candidate(el);
+      if (!found) continue;
+      const osm = osmRef(el);
+      if (knownRefs.has(osm)) continue;
+      const [lat, lng] = found.pos;
+      if (known.some((record) => sameGym(found.name, found.pos, record))) continue;
+      const where = whereIs(lat, lng);
+      if (!where) continue;
+      const record = this.toRecord(found.name, found.tags, el, found.pos, where, places, fetchedAt);
+      records.set(osm, { record, lat, lng, osm });
+    }
+
+    const upsert = this.db.prepare(
+      `insert into area_gyms (id, osm, record_json, lat, lng, fetched_at) values (?, ?, ?, ?, ?, ?)
+       on conflict(osm) do update set record_json = excluded.record_json, lat = excluded.lat, lng = excluded.lng, fetched_at = excluded.fetched_at`,
+    );
+    const inArea = this.db.prepare('select osm, lat, lng from area_gyms where lat between ? and ? and lng between ? and ?');
+    const remove = this.db.prepare('delete from area_gyms where osm = ?');
+    const mark = this.db.prepare(
+      'insert into area_tiles (tile, fetched_at, gyms) values (?, ?, ?) on conflict(tile) do update set fetched_at = excluded.fetched_at, gyms = excluded.gyms',
+    );
+    this.db.exec('begin');
+    try {
+      for (const item of records.values()) upsert.run(item.record.location.id, item.osm, JSON.stringify(item.record), item.lat, item.lng, fetchedAt);
+      // Gyms gone from the map since the last read go too. Saved gyms and
+      // reviews that point at them stay, and simply stop matching.
+      for (const tileBox of boxes) {
+        const rows = inArea.all(tileBox.south, tileBox.north, tileBox.west, tileBox.east) as Array<{ osm: string; lat: number; lng: number }>;
+        for (const row of rows) if (!records.has(row.osm) && inBox(tileBox, row.lat, row.lng)) remove.run(row.osm);
+      }
+      boxes.forEach((tileBox, index) => {
+        const count = [...records.values()].filter((item) => inBox(tileBox, item.lat, item.lng)).length;
+        mark.run(keys[index]!, fetchedAt, count);
+      });
+      this.db.exec('commit');
+    } catch (error) {
+      this.db.exec('rollback');
+      throw error;
+    }
+  }
+
+  private toRecord(
+    name: string,
+    tags: Record<string, string>,
+    el: OsmElement,
+    pos: [number, number],
+    where: { countryCode: 'AU' | 'US'; timezone: string },
+    places: Place[],
+    fetchedAt: string,
+  ): GymRecord {
+    const nearest = places
+      .map((place) => ({ place, d: km(pos, place.pos) }))
+      .filter((item) => item.d <= 8)
+      .sort((a, b) => a.d - b.d)[0]?.place.name;
+    const locality = tags['addr:suburb'] || tags['addr:city'] || nearest || '';
+    const rawPostcode = (tags['addr:postcode'] ?? '').trim();
+    let state: string;
+    let postcode: string;
+    if (where.countryCode === 'AU') {
+      postcode = /^\d{4}$/.test(rawPostcode) ? rawPostcode : '';
+      let named = (tags['addr:state'] ?? '').trim().toUpperCase();
+      named = AU_STATE_NAMES[named] ?? named;
+      state = AU_STATES.has(named) ? named : auStateForPostcode(postcode) || AU_ZONE_STATE[where.timezone] || '';
+    } else {
+      postcode = /^\d{5}/.test(rawPostcode) ? rawPostcode.slice(0, 5) : '';
+      const named = (tags['addr:state'] ?? '').trim().toUpperCase();
+      state = /^[A-Z]{2}$/.test(named) ? named : '';
+    }
+    const branch = branchOf(tags);
+    const { hoursUnreadable: _unreadable, ...extras } = extrasOf(tags);
+    return mapOnlyRecord(
+      {
+        id: `${slug(name) || 'gym'}-${el.type[0]}${el.id}`,
+        osm: osmRef(el),
+        name,
+        ...brandOf(tags),
+        ...(branch ? { branch } : {}),
+        line1: line1Of(tags),
+        locality,
+        state,
+        postcode,
+        lat: Number(pos[0].toFixed(6)),
+        lng: Number(pos[1].toFixed(6)),
+        type: trainingType(name, tags),
+        ...contactOf(tags),
+        ...extras,
+      },
+      { ...where, fetchedAt },
+    );
+  }
+}
+
+const IGNORED_WORDS = new Set(['the', 'gym', 'fitness', 'health', 'club', 'clubs']);
+const words = (text: string) =>
+  new Set([...text.toLowerCase().replaceAll('’', "'").replaceAll("'", '').matchAll(/[a-z0-9]+/g)].map((m) => m[0]).filter((w) => !IGNORED_WORDS.has(w)));
+
+/** A gym we already hold under another element: the same name within 100 metres. */
+function sameGym(name: string, pos: [number, number], record: GymRecord): boolean {
+  if (km(pos, [record.location.position.lat, record.location.position.lng]) > 0.1) return false;
+  const a = words(name);
+  const b = words(record.location.name);
+  return [...a].some((word) => b.has(word)) || a.size === 0 || b.size === 0;
+}

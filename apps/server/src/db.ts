@@ -142,6 +142,20 @@ const SCHEMA = `
     is_demo integer not null,
     updated_at text not null
   );
+  create table if not exists area_gyms (
+    id text primary key,
+    osm text not null unique,
+    record_json text not null,
+    lat real not null,
+    lng real not null,
+    fetched_at text not null
+  );
+  create index if not exists area_gyms_position on area_gyms(lat, lng);
+  create table if not exists area_tiles (
+    tile text primary key,
+    fetched_at text not null,
+    gyms integer not null
+  );
 `;
 
 export function openDb(path: string): Db {
@@ -188,14 +202,26 @@ export function allGyms(db: Db): GymRecord[] {
   return rows.map((row) => JSON.parse(row.record_json) as GymRecord);
 }
 
+/**
+ * Any gym by id: one of the bundled records, or one found by "Search this
+ * area" (see area.ts), which are kept in their own table.
+ */
+export function gymRecord(db: Db, gymId: string): GymRecord | null {
+  const row = (db.prepare('select record_json from gyms where id = ?').get(gymId) ??
+    db.prepare('select record_json from area_gyms where id = ?').get(gymId)) as { record_json: string } | undefined;
+  return row ? (JSON.parse(row.record_json) as GymRecord) : null;
+}
+
 export function gymExists(db: Db, gymId: string): boolean {
-  return db.prepare('select 1 from gyms where id = ?').get(gymId) !== undefined;
+  return (
+    db.prepare('select 1 from gyms where id = ?').get(gymId) !== undefined ||
+    db.prepare('select 1 from area_gyms where id = ?').get(gymId) !== undefined
+  );
 }
 
 /** The gym's country ("AU", "US"), from its stored record. */
 export function gymCountry(db: Db, gymId: string): string | null {
-  const row = db.prepare('select record_json from gyms where id = ?').get(gymId) as { record_json: string } | undefined;
-  return row ? (JSON.parse(row.record_json) as GymRecord).location.address.countryCode : null;
+  return gymRecord(db, gymId)?.location.address.countryCode ?? null;
 }
 
 /** True for the invented demo gyms, which nobody can have photographed. */

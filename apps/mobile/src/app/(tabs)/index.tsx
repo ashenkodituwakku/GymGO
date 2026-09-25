@@ -19,7 +19,7 @@ import { useApp } from '@/lib/app-state';
 import { EMPTY, timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityAt, cityPlace, moneyLabel, type AppPlace } from '@/lib/places';
-import { YOUR_LOCATION, atPlace, moveTo, nextVisitAt, runSearch, type Filters } from '@/lib/query';
+import { atPlace, moveTo, nearLabel, nextVisitAt, runSearch, type Filters } from '@/lib/query';
 import { resultsById } from '@/lib/results';
 import { color, face, radius, shadow, space } from '@/lib/theme';
 
@@ -151,7 +151,7 @@ export default function Home() {
       <View style={styles.section}>
         <SectionHeader
           icon="map-pin"
-          title={filters.placeName === YOUR_LOCATION ? 'Near you' : `Near ${filters.placeName}`}
+          title={nearLabel(filters.placeName)}
           action="Map"
           onAction={() => explore({ recentre: true })}
         />

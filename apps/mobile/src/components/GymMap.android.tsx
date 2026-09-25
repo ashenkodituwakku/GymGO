@@ -24,14 +24,14 @@ export type { GymMapHandle, MapPin } from './map-types';
 const COLOURS = Object.fromEntries(Object.entries(TIER_COLOUR).map(([tier, tone]) => [tier, tone.fill]));
 
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
-  { pins, selectedId, initialCentre, bottomInset, topInset, userLocation = null, onSelect, onMapPress },
+  { pins, selectedId, initialCentre, bottomInset, topInset, userLocation = null, onSelect, onMapPress, onRegionChange },
   ref,
 ) {
   const web = useRef<WebView>(null);
   const ready = useRef(false);
   const queue = useRef<string[]>([]);
-  const handlers = useRef({ onSelect, onMapPress });
-  handlers.current = { onSelect, onMapPress };
+  const handlers = useRef({ onSelect, onMapPress, onRegionChange });
+  handlers.current = { onSelect, onMapPress, onRegionChange };
 
   // Built once: the page keeps its own camera from then on.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,6 +84,8 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
       handlers.current.onSelect(message.id);
     } else if (message.type === 'mapPress') {
       handlers.current.onMapPress();
+    } else if (message.type === 'moved') {
+      handlers.current.onRegionChange?.(message.box);
     } else if (message.type === 'error') {
       console.warn('[map]', message.message);
     }

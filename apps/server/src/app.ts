@@ -3,6 +3,8 @@
  *
  *   GET    /api/health
  *   GET    /api/gyms                      every gym record, with its sources
+ *   GET    /api/gyms/:gymId               one gym's record, including ones found by searching an area
+ *   GET    /api/area?south&west&north&east  gyms on OpenStreetMap in that box (AU and US), read live and kept
  *   POST   /api/auth/signup               { email, password, displayName }
  *   POST   /api/auth/login                { email, password }
  *   POST   /api/auth/logout
@@ -88,7 +90,8 @@ import {
   type AccountRow,
 } from './auth';
 import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
-import { allGyms, gymCountry, gymExists, gymIsDemo, type Db } from './db';
+import { AreaError, AreaSearch, parseBox } from './area';
+import { allGyms, gymCountry, gymExists, gymIsDemo, gymRecord, type Db } from './db';
 import { GoogleError, GooglePlaces } from './google';
 import { MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
 
@@ -110,6 +113,8 @@ export interface AppOptions {
   billing?: { stripe: StripeApi | null; webhookSecret: string | null };
   /** This server's public address, once hosted. */
   publicUrl?: string | null;
+  /** "Search this area": which Overpass API server to ask, and a stand-in fetch for tests. */
+  area?: { endpoint?: string; fetchImpl?: typeof fetch };
 }
 
 class HttpError extends Error {
@@ -297,6 +302,9 @@ export function createApp(options: AppOptions) {
   const priceLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   const accessLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   const statusLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
+  // Area searches that need a live map read: 30 per address per hour.
+  const areaLimiter = new AttemptLimiter(30, 60 * 60_000);
+  const area = new AreaSearch(db, { endpoint: options.area?.endpoint, fetchImpl: options.area?.fetchImpl, now, known: () => allGyms(db) });
   const photos = new PhotoStore(options.photoDir ?? null);
   const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
   const billing = new Billing(db, {
@@ -346,6 +354,26 @@ export function createApp(options: AppOptions) {
 
     if (method === 'GET' && path === '/api/gyms') {
       return send(res, 200, { gyms: allGyms(db), attribution: options.attribution, generatedAt: now().toISOString() });
+    }
+
+    if (method === 'GET' && path === '/api/area') {
+      try {
+        const box = parseBox(url.searchParams);
+        if (area.needsFetch(box) && !areaLimiter.allow(`${req.socket.remoteAddress}`, now().getTime())) {
+          throw new AreaError(429, 'That’s a lot of searching. Try again in a little while.', 'rate_limited');
+        }
+        const answer = await area.search(box);
+        return send(res, 200, { ...answer, attribution: '© OpenStreetMap contributors (ODbL)' });
+      } catch (error) {
+        if (error instanceof AreaError) throw new HttpError(error.status, error.message, error.code);
+        throw error;
+      }
+    }
+
+    if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && parts.length === 3) {
+      const record = gymRecord(db, decodeURIComponent(parts[2]!));
+      if (!record) throw new HttpError(404, 'No gym with that id.');
+      return send(res, 200, { gym: record });
     }
 
     // --- GymGO Pro ----------------------------------------------------------
@@ -995,7 +1023,7 @@ export function createApp(options: AppOptions) {
     // --- Google Maps (live, only with the owner's key) ----------------------
     if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'google' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
-      const record = allGyms(db).find((item) => item.location.id === gymId);
+      const record = gymRecord(db, gymId);
       if (!record) throw new HttpError(404, 'No gym with that id.');
       try {
         return send(res, 200, await google.lookup(record));

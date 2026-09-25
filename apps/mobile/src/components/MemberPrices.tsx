@@ -10,6 +10,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { api, problemText, type PriceSummary } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -18,6 +19,7 @@ import { WHEN_CHOICES as WHEN, localDateDaysAgo as dateDaysAgo, parseAmount } fr
 import type { AccountApi } from '@/lib/useAccount';
 import { color, space } from '@/lib/theme';
 import { ChoiceChip, PrimaryButton, TextField, Txt } from './ui';
+import { FADE_IN, GLIDE } from './motion';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; summary: PriceSummary };
 
@@ -67,7 +69,7 @@ export function MemberPrices({
   };
 
   return (
-    <View style={styles.wrap}>
+    <Animated.View style={styles.wrap} layout={GLIDE}>
       <Txt variant="headline">What members paid</Txt>
       {summary.count === 0 || summary.typicalMinor === null ? (
         <Txt variant="subhead" color={color.labelSecondary}>
@@ -91,9 +93,11 @@ export function MemberPrices({
       )}
 
       {notice && (
-        <Txt variant="footnote" color={color.labelSecondary}>
-          {notice}
-        </Txt>
+        <Animated.View entering={FADE_IN}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {notice}
+          </Txt>
+        </Animated.View>
       )}
 
       {editing && token ? (
@@ -138,7 +142,7 @@ export function MemberPrices({
           onPress={() => (token ? setEditing(true) : onSignIn())}
         />
       )}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -165,7 +169,7 @@ function Editor({
   const symbol = country === 'US' ? '$' : 'A$';
 
   return (
-    <View style={styles.editor}>
+    <Animated.View style={styles.editor} entering={FADE_IN}>
       <TextField
         label={`What one casual visit cost, in ${symbol}`}
         value={amount}
@@ -208,7 +212,7 @@ function Editor({
         </View>
       </View>
       {onRemove && <PrimaryButton label="Remove my report" tone="quiet" onPress={() => void onRemove()} />}
-    </View>
+    </Animated.View>
   );
 }
 

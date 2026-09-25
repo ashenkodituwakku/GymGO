@@ -7,6 +7,8 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { GymRow } from '@/components/GymRow';
+import { FADE_OUT, GLIDE, Pressy, rise, usePop } from '@/components/motion';
+import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { TabScreen } from '@/components/ios';
 import { PrimaryButton, Txt } from '@/components/ui';
@@ -76,7 +78,7 @@ export default function Saved() {
               const id = result.record.location.id;
               const on = compare.includes(id);
               return (
-                <View key={id}>
+                <Animated.View key={id} entering={rise(index)} exiting={FADE_OUT} layout={GLIDE}>
                   {index > 0 && <View style={styles.divider} />}
                   <View style={styles.row}>
                     <View style={styles.flex}>
@@ -88,21 +90,9 @@ export default function Saved() {
                         onPress={() => router.push({ pathname: '/gym/[id]', params: { id } })}
                       />
                     </View>
-                    <Pressable
-                      onPress={() => {
-                        haptic.select();
-                        toggleCompare(id);
-                      }}
-                      accessibilityRole="checkbox"
-                      accessibilityState={{ checked: on }}
-                      accessibilityLabel={`Compare ${result.record.location.name}`}
-                      hitSlop={8}
-                      style={[styles.tick, on && styles.tickOn]}
-                    >
-                      {on && <Icon name="check" size={13} color={color.onBrand} weight="bold" />}
-                    </Pressable>
+                    <CompareTick on={on} name={result.record.location.name} onPress={() => toggleCompare(id)} />
                   </View>
-                </View>
+                </Animated.View>
               );
             })}
           </View>
@@ -148,3 +138,28 @@ const styles = StyleSheet.create({
   },
   tickOn: { backgroundColor: color.brand, borderColor: color.brand },
 });
+
+/** The compare tick beside a saved gym: it sinks under a finger and pops when ticked. */
+function CompareTick({ on, name, onPress }: { on: boolean; name: string; onPress: () => void }) {
+  const pop = usePop(on);
+  return (
+    <Pressy
+      scaleTo={0.85}
+      onPress={() => {
+        haptic.select();
+        onPress();
+      }}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: on }}
+      accessibilityLabel={`Compare ${name}`}
+      hitSlop={8}
+      style={[styles.tick, on && styles.tickOn]}
+    >
+      {on && (
+        <Animated.View style={pop}>
+          <Icon name="check" size={13} color={color.onBrand} weight="bold" />
+        </Animated.View>
+      )}
+    </Pressy>
+  );
+}

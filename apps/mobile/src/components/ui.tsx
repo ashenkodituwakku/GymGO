@@ -3,7 +3,8 @@
  */
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import {
   Platform,
   Pressable,
@@ -22,6 +23,7 @@ import { haptic } from '@/lib/haptics';
 import { HIT, color, face, radius, shadow, space, type } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
+import { FADE_IN, FADE_OUT, GLIDE, Pressy, SETTLE, usePop, usePressScale } from './motion';
 
 // --- Text -------------------------------------------------------------------
 
@@ -78,7 +80,8 @@ export function TierPill({ tier }: { tier: ResultTier }) {
 /** A small one-of-several choice ("Walked in", "Last week"), for the members' report forms. */
 export function ChoiceChip({ label, selected, onPress, icon }: { label: string; selected: boolean; onPress: () => void; icon?: IconName }) {
   return (
-    <Pressable
+    <Pressy
+      scaleTo={0.94}
       onPress={() => {
         haptic.select();
         onPress();
@@ -87,13 +90,13 @@ export function ChoiceChip({ label, selected, onPress, icon }: { label: string; 
       accessibilityState={{ selected }}
       accessibilityLabel={label}
       hitSlop={4}
-      style={({ pressed }) => [styles.choiceChip, selected && styles.choiceChipOn, pressed && { opacity: 0.7 }]}
+      style={[styles.choiceChip, selected && styles.choiceChipOn]}
     >
       {icon && <Icon name={icon} size={13} color={selected ? color.onBrand : color.label} />}
       <Txt variant="footnote" color={selected ? color.onBrand : color.label} style={face('medium')}>
         {label}
       </Txt>
-    </Pressable>
+    </Pressy>
   );
 }
 
@@ -111,7 +114,8 @@ export function Chip({
   accessibilityLabel?: string;
 }) {
   return (
-    <Pressable
+    <Pressy
+      scaleTo={0.94}
       onPress={() => {
         haptic.select();
         onPress();
@@ -120,17 +124,13 @@ export function Chip({
       accessibilityState={{ checked: selected }}
       accessibilityLabel={accessibilityLabel ?? label}
       hitSlop={4}
-      style={({ pressed }) => [
-        styles.chip,
-        selected && styles.chipSelected,
-        pressed && { transform: [{ scale: 0.96 }] },
-      ]}
+      style={[styles.chip, selected && styles.chipSelected]}
     >
       {icon && <Icon name={icon} size={14} color={selected ? color.onBrand : color.label} />}
       <Txt variant="subhead" color={selected ? color.onBrand : color.label} style={styles.chipText}>
         {label}
       </Txt>
-    </Pressable>
+    </Pressy>
   );
 }
 
@@ -176,8 +176,13 @@ export function Fold({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(initiallyOpen);
+  const turn = useSharedValue(initiallyOpen ? 90 : 0);
+  useEffect(() => {
+    turn.value = withSpring(open ? 90 : 0, SETTLE);
+  }, [open, turn]);
+  const chevron = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.value}deg` }] }));
   return (
-    <View style={styles.fold}>
+    <Animated.View style={styles.fold} layout={GLIDE}>
       <Pressable
         onPress={() => {
           haptic.select();
@@ -205,12 +210,16 @@ export function Fold({
             </Txt>
           ) : null}
         </View>
-        <View style={{ transform: [{ rotate: open ? '90deg' : '0deg' }] }}>
+        <Animated.View style={chevron}>
           <Icon name="chevron" size={14} color={color.labelTertiary} />
-        </View>
+        </Animated.View>
       </Pressable>
-      {open && <View style={styles.foldBody}>{children}</View>}
-    </View>
+      {open && (
+        <Animated.View style={styles.foldBody} entering={FADE_IN} exiting={FADE_OUT}>
+          {children}
+        </Animated.View>
+      )}
+    </Animated.View>
   );
 }
 
@@ -224,8 +233,18 @@ export function Segmented<T extends string | number>({
   value: T;
   onChange: (value: T) => void;
 }) {
+  // The raised pill slides to the chosen segment (all segments are one width).
+  const [width, setWidth] = useState(0);
+  const index = Math.max(0, options.findIndex((option) => option.value === value));
+  const slot = options.length > 0 ? (width - 4) / options.length : 0;
+  const left = useSharedValue(index * slot);
+  useEffect(() => {
+    left.value = width > 0 ? withSpring(index * slot, SETTLE) : index * slot;
+  }, [index, slot, width, left]);
+  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: left.value }] }));
   return (
-    <View style={styles.segmented} accessibilityRole="tablist">
+    <View style={styles.segmented} accessibilityRole="tablist" onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
+      {width > 0 && <Animated.View pointerEvents="none" style={[styles.segmentPill, { width: slot }, pill]} />}
       {options.map((option) => {
         const on = option.value === value;
         return (
@@ -238,7 +257,7 @@ export function Segmented<T extends string | number>({
             }}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
-            style={[styles.segment, on && styles.segmentOn]}
+            style={[styles.segment, on && width === 0 && styles.segmentOn]}
           >
             <Txt variant="footnote" color={color.label} style={on ? face('semibold') : face('medium')} numberOfLines={1}>
               {option.label}
@@ -268,7 +287,8 @@ export function ControlCapsule({ buttons }: { buttons: CapsuleButton[] }) {
         {buttons.map((button, index) => (
           <View key={button.accessibilityLabel}>
             {index > 0 && <View style={styles.capsuleDivider} />}
-            <Pressable
+            <Pressy
+              scaleTo={0.86}
               onPress={() => {
                 haptic.tap();
                 button.onPress();
@@ -278,7 +298,7 @@ export function ControlCapsule({ buttons }: { buttons: CapsuleButton[] }) {
               style={({ pressed }) => [styles.capsuleButton, pressed && styles.capsulePressed]}
             >
               <Icon name={button.icon} size={18} color={color.brand} />
-            </Pressable>
+            </Pressy>
           </View>
         ))}
       </Glass>
@@ -288,42 +308,55 @@ export function ControlCapsule({ buttons }: { buttons: CapsuleButton[] }) {
 
 /** The round glass close button that sits in a sheet's corner. */
 export function CloseButton({ onPress }: { onPress: () => void }) {
+  const press = usePressScale(0.86);
   return (
-    <Glass style={styles.close} interactive>
-      <Pressable
-        onPress={() => {
-          haptic.tap();
-          onPress();
-        }}
-        accessibilityRole="button"
-        accessibilityLabel="Close"
-        hitSlop={10}
-        style={styles.closeHit}
-      >
-        <Icon name="close" size={13} color={color.labelSecondary} weight="bold" />
-      </Pressable>
-    </Glass>
+    <Animated.View style={press.style}>
+      <Glass style={styles.close} interactive>
+        <Pressable
+          onPress={() => {
+            haptic.tap();
+            onPress();
+          }}
+          onPressIn={press.onPressIn}
+          onPressOut={press.onPressOut}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+          hitSlop={10}
+          style={styles.closeHit}
+        >
+          <Icon name="close" size={13} color={color.labelSecondary} weight="bold" />
+        </Pressable>
+      </Glass>
+    </Animated.View>
   );
 }
 
 /** A round glass toggle beside the close button: compare this gym, say. */
 export function RoundToggle({ icon, on, label, onPress }: { icon: IconName; on: boolean; label: string; onPress: () => void }) {
+  const press = usePressScale(0.86);
+  const pop = usePop(on);
   return (
-    <Glass style={styles.close} tint={on ? color.brand : undefined} interactive>
-      <Pressable
-        onPress={() => {
-          haptic.select();
-          onPress();
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        accessibilityState={{ selected: on }}
-        hitSlop={10}
-        style={styles.closeHit}
-      >
-        <Icon name={icon} size={14} color={on ? color.onBrand : color.brand} />
-      </Pressable>
-    </Glass>
+    <Animated.View style={press.style}>
+      <Glass style={styles.close} tint={on ? color.brand : undefined} interactive>
+        <Pressable
+          onPress={() => {
+            haptic.select();
+            onPress();
+          }}
+          onPressIn={press.onPressIn}
+          onPressOut={press.onPressOut}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          accessibilityState={{ selected: on }}
+          hitSlop={10}
+          style={styles.closeHit}
+        >
+          <Animated.View style={pop}>
+            <Icon name={icon} size={14} color={on ? color.onBrand : color.brand} />
+          </Animated.View>
+        </Pressable>
+      </Glass>
+    </Animated.View>
   );
 }
 
@@ -338,31 +371,42 @@ export function ActionButton({
   onPress,
   primary = false,
   accessibilityLabel,
+  on = false,
 }: {
   icon: IconName;
   label: string;
   onPress: () => void;
   primary?: boolean;
   accessibilityLabel?: string;
+  /** Switched on (Saved): the symbol pops once when it turns on. */
+  on?: boolean;
 }) {
   const ink = primary ? color.onBrand : color.brand;
+  const press = usePressScale(0.94);
+  const pop = usePop(on);
   return (
-    <Glass style={styles.action} tint={primary ? color.brand : undefined} interactive>
-      <Pressable
-        onPress={() => {
-          haptic.tap();
-          onPress();
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel ?? label}
-        style={({ pressed }) => [styles.actionHit, pressed && { opacity: 0.6 }]}
-      >
-        <Icon name={icon} size={19} color={ink} />
-        <Txt variant="caption" color={ink} style={styles.actionLabel}>
-          {label}
-        </Txt>
-      </Pressable>
-    </Glass>
+    <Animated.View style={[styles.actionWrap, press.style]}>
+      <Glass style={styles.action} tint={primary ? color.brand : undefined} interactive>
+        <Pressable
+          onPress={() => {
+            haptic.tap();
+            onPress();
+          }}
+          onPressIn={press.onPressIn}
+          onPressOut={press.onPressOut}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel ?? label}
+          style={styles.actionHit}
+        >
+          <Animated.View style={pop}>
+            <Icon name={icon} size={19} color={ink} />
+          </Animated.View>
+          <Txt variant="caption" color={ink} style={styles.actionLabel}>
+            {label}
+          </Txt>
+        </Pressable>
+      </Glass>
+    </Animated.View>
   );
 }
 
@@ -410,7 +454,8 @@ export function PrimaryButton({
   const fill = tone === 'brand' ? color.brand : tone === 'danger' ? color.dangerTint : color.fill;
   const ink = tone === 'brand' ? color.onBrand : tone === 'danger' ? color.dangerInk : color.brand;
   return (
-    <Pressable
+    <Pressy
+      scaleTo={0.97}
       disabled={disabled}
       onPress={() => {
         haptic.tap();
@@ -418,13 +463,13 @@ export function PrimaryButton({
       }}
       accessibilityRole="button"
       accessibilityState={{ disabled }}
-      style={({ pressed }) => [styles.primary, { backgroundColor: fill }, pressed && { opacity: 0.8 }, disabled && { opacity: 0.45 }]}
+      style={({ pressed }) => [styles.primary, { backgroundColor: fill }, pressed && { opacity: 0.9 }, disabled && { opacity: 0.45 }]}
     >
       {icon ? <Icon name={icon} size={17} color={ink} /> : null}
       <Txt variant="headline" color={ink}>
         {label}
       </Txt>
-    </Pressable>
+    </Pressy>
   );
 }
 
@@ -487,7 +532,8 @@ const styles = StyleSheet.create({
   close: { width: 30, height: 30, borderRadius: 15, marginTop: 2 },
   closeHit: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-  action: { flex: 1, height: 58, borderRadius: radius.lg },
+  actionWrap: { flex: 1 },
+  action: { height: 58, borderRadius: radius.lg },
   actionHit: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
   actionLabel: face('medium'),
 
@@ -524,6 +570,19 @@ const styles = StyleSheet.create({
 
   segmented: { flexDirection: 'row', padding: 2, borderRadius: 9, backgroundColor: 'rgba(118, 118, 128, 0.12)' },
   segment: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 7, paddingHorizontal: 6, borderRadius: 7 },
+  segmentPill: {
+    position: 'absolute',
+    top: 2,
+    bottom: 2,
+    left: 2,
+    borderRadius: 7,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
   segmentOn: {
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',

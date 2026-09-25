@@ -114,6 +114,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Saved gyms (on the device) | ✅ | ⚠️ web preview only | n/a | ❌ | n/a | ❌ |
 | Liquid Glass (iOS 26) / blur fallbacks | ✅ | ⚠️ blur fallback only | n/a | ❌ | n/a | ❌ |
 | Haptics | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
+| Motion: spring presses on every button, chip and card; Save and Compare pop; a gym's sections and Home's cards rise in a stagger; notices, icons and folds fade; the segmented pill slides; saved rows glide out; all off under Reduce Motion | ✅ | ⚠️ driven in the browser (sections stay in place after the sheet moves; pill slides; fold opens; no errors); the springier phone versions never seen on a device | n/a | ❌ | n/a | ❌ |
 | SF Pro to Apple's iOS text styles (system font on iPhone and Apple browsers; Inter, the closest free face, on Android and elsewhere) | ✅ | ⚠️ only Inter seen, in this sandbox's browser (no SF Pro installed); SF Pro itself never seen on an iPhone or Mac | n/a | ❌ | n/a | ❌ |
 | GymGO Pro screen, plan in Profile, Free limits, workout library | ✅ | ✅ whole loop driven in the browser against a stand-in Stripe (checkout, return, manage, cancel) | ❌ real Stripe never used | ❌ the phone's in-app browser round trip not seen | n/a | ❌ |
 | Time-zone self-check at start-up | ✅ | ✅ unit tests | n/a | ❌ | n/a | ❌ |

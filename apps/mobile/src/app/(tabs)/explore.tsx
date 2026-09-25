@@ -49,6 +49,8 @@ import { ResultsContent } from '@/components/ResultsContent';
 import { ReviewsSection } from '@/components/ReviewsSection';
 import { SHEET_GAP, SolidSheetBackground, floatingGlassBackground } from '@/components/SheetBackground';
 import { CloseButton, ControlCapsule, Txt } from '@/components/ui';
+import { DROP_IN, FADE_OUT, usePressScale } from '@/components/motion';
+import Animated from 'react-native-reanimated';
 
 const PEEK = 150;
 /** Below this width the phone layout is used, even in a browser. */
@@ -99,6 +101,7 @@ function MapScreen() {
   // The area on screen, and whether "Search this area" is reading the map.
   const [viewBox, setViewBox] = useState<BoundingBox | null>(null);
   const [areaBusy, setAreaBusy] = useState(false);
+  const areaPress = usePressScale(0.94);
 
   const map = useRef<GymMapHandle>(null);
   const mainSheet = useRef<BottomSheet>(null);
@@ -219,21 +222,27 @@ function MapScreen() {
   }, [viewBox, areaBusy, data, filters.timezone, setFilters, wide]);
 
   const areaButton = (offerArea || areaBusy) && !selectedId && (
-    <Glass style={styles.areaButton} interactive>
-      <Pressable
-        onPress={() => void searchThisArea()}
-        disabled={areaBusy}
-        accessibilityRole="button"
-        accessibilityLabel="Search this area"
-        accessibilityState={{ busy: areaBusy }}
-        style={styles.areaHit}
-      >
-        {areaBusy ? <ActivityIndicator size="small" color={color.brand} /> : <Icon name="search" size={15} color={color.brand} />}
-        <Txt variant="subhead" color={color.brand} style={face('semibold')}>
-          {areaBusy ? 'Searching the map…' : 'Search this area'}
-        </Txt>
-      </Pressable>
-    </Glass>
+    <Animated.View entering={DROP_IN} exiting={FADE_OUT}>
+      <Animated.View style={areaPress.style}>
+        <Glass style={styles.areaButton} interactive>
+          <Pressable
+            onPressIn={areaPress.onPressIn}
+            onPressOut={areaPress.onPressOut}
+            onPress={() => void searchThisArea()}
+            disabled={areaBusy}
+            accessibilityRole="button"
+            accessibilityLabel="Search this area"
+            accessibilityState={{ busy: areaBusy }}
+            style={styles.areaHit}
+          >
+            {areaBusy ? <ActivityIndicator size="small" color={color.brand} /> : <Icon name="search" size={15} color={color.brand} />}
+            <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+              {areaBusy ? 'Searching the map…' : 'Search this area'}
+            </Txt>
+          </Pressable>
+        </Glass>
+      </Animated.View>
+    </Animated.View>
   );
 
   // --- Selecting a gym ------------------------------------------------------

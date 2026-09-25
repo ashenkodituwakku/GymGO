@@ -10,6 +10,7 @@
 
 import { Link } from 'expo-router';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import type { GymSearchResult } from '@gymgo/domain';
 import { distanceLabel } from '@/lib/places';
 import { openDirections, shareGym } from '@/lib/actions';
@@ -20,10 +21,12 @@ import { haptic } from '@/lib/haptics';
 import { priceLine } from '@/lib/present';
 import { color, face, radius, shadow, space } from '@/lib/theme';
 import { MarkImage, useGymMark } from './BrandLogo';
+import { rise, usePressScale } from './motion';
 import { Icon } from './Icon';
 import { TIER_COLOUR, Txt } from './ui';
 
-export function GymCard({ result, width = 216 }: { result: GymSearchResult; width?: number }) {
+/** `index`: its place in the row, so a row of cards rises into place one after another. */
+export function GymCard({ result, width = 216, index = 0 }: { result: GymSearchResult; width?: number; index?: number }) {
   const { account, data, compare, toggleCompare } = useApp();
   const location = result.record.location;
   const id = location.id;
@@ -33,6 +36,7 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
   const price = priceLine(result.offers, members ? { typicalMinor: members.typicalMinor, country: location.address.countryCode } : null);
   const cover = data.covers[id] ? photoUrl(data.covers[id]!) : null;
   const mark = useGymMark(location);
+  const press = usePressScale(0.97);
   const saved = account.saved.includes(id);
   const comparing = compare.includes(id);
   const where = [location.address.suburb, result.distanceKm !== null ? distanceLabel(result.distanceKm, result.record.location.address.countryCode) : null]
@@ -43,14 +47,18 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
     <Link href={{ pathname: '/gym/[id]', params: { id } }} asChild>
       <Link.Trigger>
         <Pressable
-          onPressIn={() => haptic.tap()}
+          onPressIn={() => {
+            haptic.tap();
+            press.onPressIn();
+          }}
+          onPressOut={press.onPressOut}
           accessibilityRole="link"
           accessibilityLabel={`${location.name}, ${where}. ${tier.label}. ${price.headline} ${price.caption}.`}
           style={styles.press}
         >
           {/* Sized here, not on the Pressable: on the web the link wrapper
               replaces the Pressable's style. */}
-          <View style={[styles.card, { width }]}>
+          <Animated.View style={[styles.card, { width }, press.style]} entering={rise(index)}>
             {cover ? (
               <Image source={{ uri: cover }} style={styles.image} resizeMode="cover" />
             ) : (
@@ -77,7 +85,7 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
                 </Txt>
               </View>
             </View>
-          </View>
+          </Animated.View>
         </Pressable>
       </Link.Trigger>
       <Link.Preview />

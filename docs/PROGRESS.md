@@ -82,6 +82,14 @@ because "the code does X" is not the same as "someone decided X".
 
 ## Traps
 
+**Spring entrances break the web layout.** Reanimated's web version pins a
+view that entered with a spring (or custom start values) in place, as
+`position: absolute`, once its container moves, and a bottom sheet always
+moves. The gym card collapsed to its photo row. So `components/motion.tsx`
+uses springs on the phone and plain timed fades in the browser; keep new
+entrances going through `rise()` and `DROP_IN` rather than calling
+`springify()` directly.
+
 **Stripe's `{CHECKOUT_SESSION_ID}` must stay unencoded** in the success
 URL; Stripe fills it in. The server builds that URL by hand for this reason.
 

@@ -7,7 +7,8 @@
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { FADE_IN, FADE_OUT, GLIDE } from './motion';
 import { explainNoMatches, haversineKm, type GymRecord, type SearchOutcome } from '@gymgo/domain';
 import { suggestGyms } from '@/lib/gymSearch';
 import { cityAt, distanceLabel, moneyLabel, placeContext, suggestPlaces, type AppPlace } from '@/lib/places';
@@ -20,7 +21,7 @@ import { Icon } from './Icon';
 import { Chip, TIER_COLOUR, Txt } from './ui';
 
 /** A critically-damped spring: rows glide to their new place, no bounce. */
-const GLIDE = LinearTransition.springify().damping(26).stiffness(260);
+// Rows gliding when the list re-sorts: the app's one GLIDE (components/motion.tsx).
 
 export function ResultsContent({
   outcome,
@@ -242,12 +243,12 @@ export function ResultsContent({
       </View>
 
       {notice && (
-        <View style={styles.notice}>
+        <Animated.View key={notice} style={styles.notice} entering={FADE_IN} exiting={FADE_OUT}>
           <Icon name="info" size={16} color={color.brand} />
           <Txt variant="footnote" style={styles.noticeText}>
             {notice}
           </Txt>
-        </View>
+        </Animated.View>
       )}
 
       {/* Nothing is a sure thing ------------------------------------------ */}

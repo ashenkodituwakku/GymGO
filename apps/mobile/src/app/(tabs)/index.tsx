@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { GymCard } from '@/components/GymCard';
+import { Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
@@ -85,11 +86,12 @@ export default function Home() {
       eyebrow={clock.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
       title={name ? `${greeting(clock.getHours() * 60)}, ${name}` : greeting(clock.getHours() * 60)}
       right={
-        <Pressable
+        <Pressy
+          scaleTo={0.9}
           onPress={() => router.navigate('/profile')}
           accessibilityRole="button"
           accessibilityLabel={account.account ? 'Your profile' : 'Sign in'}
-          style={({ pressed }) => [styles.avatar, account.account && styles.avatarOn, pressed && { opacity: 0.7 }]}
+          style={[styles.avatar, account.account && styles.avatarOn]}
         >
           {account.account ? (
             <Txt variant="headline" color={color.onBrand}>
@@ -98,7 +100,7 @@ export default function Home() {
           ) : (
             <Icon name="account" size={22} color={color.brand} />
           )}
-        </Pressable>
+        </Pressy>
       }
     >
       <SearchButton placeholder="Search a suburb, city or gym" onPress={() => explore({ focusSearch: true })} />
@@ -106,12 +108,13 @@ export default function Home() {
       {/* Shortcuts --------------------------------------------------------- */}
       <View style={styles.shortcuts}>
         {shortcuts.map((item) => (
-          <Pressable
+          <Pressy
             key={item.title}
+            scaleTo={0.93}
             onPress={item.onPress}
             accessibilityRole="button"
             accessibilityLabel={item.title}
-            style={({ pressed }) => [styles.shortcut, pressed && { transform: [{ scale: 0.96 }] }]}
+            style={styles.shortcut}
           >
             <View style={styles.shortcutIcon}>
               <Icon name={item.icon} size={20} color={color.brand} />
@@ -119,19 +122,20 @@ export default function Home() {
             <Txt variant="footnote" style={[styles.center, face('medium')]} numberOfLines={1}>
               {item.title}
             </Txt>
-          </Pressable>
+          </Pressy>
         ))}
       </View>
 
       {/* Workout ----------------------------------------------------------- */}
-      <Pressable
+      <Pressy
+        scaleTo={0.97}
         onPress={() => {
           haptic.select();
           router.push({ pathname: '/workout/[id]', params: { id: 'any' } });
         }}
         accessibilityRole="button"
         accessibilityLabel="Build a workout: tap the muscles you want to train"
-        style={({ pressed }) => [styles.workout, pressed && { transform: [{ scale: 0.98 }] }]}
+        style={styles.workout}
       >
         <View style={styles.workoutIcon}>
           <Icon name="workout" size={22} color={color.onBrand} />
@@ -145,7 +149,7 @@ export default function Home() {
           </Txt>
         </View>
         <Icon name="chevron" size={14} color="rgba(255, 255, 255, 0.8)" />
-      </Pressable>
+      </Pressy>
 
       {/* Nearby ------------------------------------------------------------ */}
       <View style={styles.section}>
@@ -163,8 +167,8 @@ export default function Home() {
         </Txt>
         {nearby.length ? (
           <Carousel>
-            {nearby.map((result) => (
-              <GymCard key={result.record.location.id} result={result} />
+            {nearby.map((result, index) => (
+              <GymCard key={result.record.location.id} result={result} index={index} />
             ))}
           </Carousel>
         ) : (
@@ -178,8 +182,8 @@ export default function Home() {
         <View style={styles.section}>
           <SectionHeader icon="bookmarks" title="Saved" action="See all" onAction={() => router.navigate('/saved')} />
           <Carousel>
-            {saved.map((result) => (
-              <GymCard key={result.record.location.id} result={result} width={176} />
+            {saved.map((result, index) => (
+              <GymCard key={result.record.location.id} result={result} width={176} index={index} />
             ))}
           </Carousel>
         </View>
@@ -189,8 +193,8 @@ export default function Home() {
         <View style={styles.section}>
           <SectionHeader icon="clock-counter-clockwise" title="Recently viewed" action="Clear" onAction={clearRecents} />
           <Carousel>
-            {recent.map((result) => (
-              <GymCard key={result.record.location.id} result={result} width={176} />
+            {recent.map((result, index) => (
+              <GymCard key={result.record.location.id} result={result} width={176} index={index} />
             ))}
           </Carousel>
         </View>

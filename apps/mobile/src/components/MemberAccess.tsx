@@ -11,6 +11,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { api, problemText, type AccessOutcome, type AccessSummary } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { WHEN_CHOICES, localDateDaysAgo } from '@/lib/present';
@@ -18,6 +19,7 @@ import type { AccountApi } from '@/lib/useAccount';
 import { color, face, space } from '@/lib/theme';
 import { Icon, type IconName } from './Icon';
 import { ChoiceChip, PrimaryButton, Txt } from './ui';
+import { FADE_IN, GLIDE } from './motion';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; summary: AccessSummary };
 
@@ -70,7 +72,7 @@ export function MemberAccess({
   };
 
   return (
-    <View style={styles.wrap}>
+    <Animated.View style={styles.wrap} layout={GLIDE}>
       <Txt variant="headline">What visiting members found</Txt>
       {summary.count === 0 ? (
         <Txt variant="subhead" color={color.labelSecondary}>
@@ -97,9 +99,11 @@ export function MemberAccess({
       )}
 
       {notice && (
-        <Txt variant="footnote" color={color.labelSecondary}>
-          {notice}
-        </Txt>
+        <Animated.View entering={FADE_IN}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {notice}
+          </Txt>
+        </Animated.View>
       )}
 
       {editing && token ? (
@@ -140,7 +144,7 @@ export function MemberAccess({
           onPress={() => (token ? setEditing(true) : onSignIn())}
         />
       )}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -164,7 +168,7 @@ function Editor({
   );
 
   return (
-    <View style={styles.editor}>
+    <Animated.View style={styles.editor} entering={FADE_IN}>
       <Txt variant="footnote" color={color.labelSecondary}>
         When you went as a visitor (not as a member), what happened?
       </Txt>
@@ -198,7 +202,7 @@ function Editor({
         </View>
       </View>
       {onRemove && <PrimaryButton label="Remove my report" tone="quiet" onPress={() => void onRemove()} />}
-    </View>
+    </Animated.View>
   );
 }
 

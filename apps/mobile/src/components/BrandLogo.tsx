@@ -16,6 +16,7 @@
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import type { GymLocation } from '@gymgo/domain';
 import { apiBase } from '@/lib/api';
 import { LOGO_IMAGES } from '@/lib/brandLogoImages';
@@ -23,6 +24,7 @@ import { BRAND_LOGOS, type BrandLogo as Logo } from '@/lib/brandLogos';
 import { matchLogo } from '@/lib/logoMatch';
 import { color, radius } from '@/lib/theme';
 import { Txt } from './ui';
+import { FADE_IN } from './motion';
 
 export function logoFor(location: GymLocation): Logo | null {
   return matchLogo(location, BRAND_LOGOS);
@@ -97,7 +99,8 @@ export function MarkImage({ mark, name, width, height, area }: { mark: Mark; nam
   }
   const square = aspect > 0.8 && aspect < 1.25;
   return (
-    <Image
+    <Animated.Image
+      entering={FADE_IN}
       source={{ uri: mark.uri }}
       style={{ width: w, height: h, borderRadius: square ? Math.min(w, h) * 0.22 : 0 }}
       resizeMode="contain"

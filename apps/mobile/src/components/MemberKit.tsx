@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { EQUIPMENT_TYPES, equipmentLabel } from '@gymgo/domain';
 import { api, ApiError, OfflineError, type EquipmentReportItem, type EquipmentTally } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
@@ -16,6 +17,7 @@ import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space } from '@/lib/theme';
 import { Icon, type IconName } from './Icon';
 import { PrimaryButton, TextField, Txt } from './ui';
+import { FADE_IN, GLIDE } from './motion';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; reporters: number; items: EquipmentTally[]; mine: EquipmentReportItem[] };
 type Answer = 'yes' | 'no' | null;
@@ -72,7 +74,7 @@ export function MemberKit({
   const last = load.items.reduce((latest, item) => (item.lastReportedAt > latest ? item.lastReportedAt : latest), '');
 
   return (
-    <View style={styles.wrap}>
+    <Animated.View style={styles.wrap} layout={GLIDE}>
       <Txt variant="headline">Members say</Txt>
       {tallies.length === 0 ? (
         <Txt variant="subhead" color={color.labelSecondary}>
@@ -114,9 +116,11 @@ export function MemberKit({
       )}
 
       {notice && (
-        <Txt variant="footnote" color={color.labelSecondary}>
-          {notice}
-        </Txt>
+        <Animated.View entering={FADE_IN}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {notice}
+          </Txt>
+        </Animated.View>
       )}
 
       {editing && token ? (
@@ -150,7 +154,7 @@ export function MemberKit({
           onPress={() => (token ? setEditing(true) : onSignIn())}
         />
       )}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -184,7 +188,7 @@ function Editor({
   const chosen = Object.entries(answers).filter((entry): entry is [string, 'yes' | 'no'] => entry[1] !== null);
 
   return (
-    <View style={styles.editor}>
+    <Animated.View style={styles.editor} entering={FADE_IN}>
       <Txt variant="footnote" color={color.labelSecondary}>
         Only tick what you’ve seen yourself. Leave anything you’re not sure about.
       </Txt>
@@ -233,7 +237,7 @@ function Editor({
           <PrimaryButton label="Cancel" tone="quiet" onPress={onCancel} />
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

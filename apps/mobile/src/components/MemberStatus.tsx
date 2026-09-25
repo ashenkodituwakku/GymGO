@@ -10,6 +10,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { api, problemText, type GymStatusSummary } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { WHEN_CHOICES, localDateDaysAgo } from '@/lib/present';
@@ -17,6 +18,7 @@ import type { AccountApi } from '@/lib/useAccount';
 import { color, radius, space } from '@/lib/theme';
 import { Icon } from './Icon';
 import { ChoiceChip, PrimaryButton, Txt } from './ui';
+import { FADE_IN, GLIDE } from './motion';
 
 // Both parts of the card read the same answer; a report refreshes both.
 const listeners = new Map<string, Set<() => void>>();
@@ -108,7 +110,7 @@ export function MemberStatus({ gymId, isDemo, account, onSignIn }: { gymId: stri
   const chip = (key: string, label: string, on: boolean, onPress: () => void) => <ChoiceChip key={key} label={label} selected={on} onPress={onPress} />;
 
   return (
-    <View style={styles.wrap}>
+    <Animated.View style={styles.wrap} layout={GLIDE}>
       <Txt variant="headline">Is it still there?</Txt>
       <Txt variant="footnote" color={color.labelSecondary}>
         {summary.closed + summary.open === 0
@@ -116,12 +118,14 @@ export function MemberStatus({ gymId, isDemo, account, onSignIn }: { gymId: stri
           : `In the last six months, ${summary.closed} member${summary.closed === 1 ? '' : 's'} said it has closed and ${summary.open} said it’s still open.`}
       </Txt>
       {notice && (
-        <Txt variant="footnote" color={color.labelSecondary}>
-          {notice}
-        </Txt>
+        <Animated.View entering={FADE_IN}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {notice}
+          </Txt>
+        </Animated.View>
       )}
       {editing && token ? (
-        <View style={styles.editor}>
+        <Animated.View style={styles.editor} entering={FADE_IN}>
           <View style={styles.chips}>
             {chip('closed', 'It has closed', status === 'closed', () => setStatus('closed'))}
             {chip('open', 'It’s still open', status === 'open', () => setStatus('open'))}
@@ -139,7 +143,7 @@ export function MemberStatus({ gymId, isDemo, account, onSignIn }: { gymId: stri
             </View>
           </View>
           {summary.mine && <PrimaryButton label="Remove my report" tone="quiet" onPress={() => void remove()} />}
-        </View>
+        </Animated.View>
       ) : (
         <PrimaryButton
           label={token ? (summary.mine ? 'Change what you saw' : 'Closed, or still open? Say so') : 'Sign in to say if it has closed'}
@@ -151,7 +155,7 @@ export function MemberStatus({ gymId, isDemo, account, onSignIn }: { gymId: stri
           }}
         />
       )}
-    </View>
+    </Animated.View>
   );
 }
 

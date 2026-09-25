@@ -9,6 +9,7 @@
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import {
   EQUIPMENT_TYPES,
   amenityLabel,
@@ -35,6 +36,7 @@ import { StateGlyphRow } from './StateGlyphRow';
 import { useApp } from '@/lib/app-state';
 import { LogoBadge, LogoCredit } from './BrandLogo';
 import { Glass } from './Glass';
+import { FADE_IN, FADE_OUT, Pressy, rise } from './motion';
 import { ActionButton, CloseButton, Fold, RoundToggle, TIER_COLOUR, Txt } from './ui';
 
 const TRAINING: Record<string, string> = {
@@ -194,7 +196,7 @@ export function PlaceCard({
       {photos}
 
       {/* Actions -------------------------------------------------------- */}
-      <View style={styles.actions}>
+      <Animated.View style={styles.actions} entering={rise(0)}>
         <ActionButton
           icon="directions"
           label="Go"
@@ -216,6 +218,7 @@ export function PlaceCard({
             <ActionButton
               icon={saved ? 'saved' : 'save'}
               label={saved ? 'Saved' : 'Save'}
+              on={saved}
               onPress={() => {
                 if (!saved) haptic.success();
                 onToggleSave();
@@ -232,21 +235,21 @@ export function PlaceCard({
             />
           </>
         )}
-      </View>
+      </Animated.View>
 
       {notice && (
-        <View style={styles.notice}>
+        <Animated.View style={styles.notice} entering={FADE_IN} exiting={FADE_OUT}>
           <Icon name="info" size={15} color={color.brand} />
           <Txt variant="footnote" style={styles.flex}>
             {notice}
           </Txt>
-        </View>
+        </Animated.View>
       )}
 
       {statusWarning}
 
       {/* The one answer ------------------------------------------------- */}
-      <View style={[styles.verdict, { backgroundColor: tone.tint }]}>
+      <Animated.View style={[styles.verdict, { backgroundColor: tone.tint }]} entering={rise(1)}>
         <View style={styles.verdictHead}>
           <View style={[styles.verdictIcon, { backgroundColor: tone.fill }]}>
             <Icon name={tone.icon} size={22} color="#FFFFFF" />
@@ -272,10 +275,10 @@ export function PlaceCard({
             ))}
           </View>
         )}
-      </View>
+      </Animated.View>
 
       {/* At a glance ---------------------------------------------------- */}
-      <View style={styles.facts}>
+      <Animated.View style={styles.facts} entering={rise(2)}>
         <Fact icon="money" value={price.headline} caption={price.caption} tint={price.confirmed ? color.label : color.maybeInk} />
         <Fact
           icon="star"
@@ -284,10 +287,12 @@ export function PlaceCard({
           tint={color.label}
         />
         <Fact icon="gym" value={kit.length ? String(kit.length) : '?'} caption={kit.length ? 'kinds of kit' : 'kit unlisted'} tint={kit.length ? color.label : color.maybeInk} />
-      </View>
+      </Animated.View>
 
       {!location.isDemoData && (
-        <Pressable
+        <Pressy
+          scaleTo={0.98}
+          entering={rise(3)}
           onPress={() => {
             haptic.select();
             onOpenGoogle();
@@ -306,10 +311,12 @@ export function PlaceCard({
             </Txt>
           </View>
           <Icon name="chevron" size={14} color={color.labelTertiary} />
-        </Pressable>
+        </Pressy>
       )}
 
-      <Pressable
+      <Pressy
+        scaleTo={0.98}
+        entering={rise(4)}
         onPress={() => {
           haptic.select();
           onOpenWorkout();
@@ -328,10 +335,10 @@ export function PlaceCard({
           </Txt>
         </View>
         <Icon name="chevron" size={14} color={color.labelTertiary} />
-      </Pressable>
+      </Pressy>
 
       {/* The detail, folded away ---------------------------------------- */}
-      <View style={styles.folds}>
+      <Animated.View style={styles.folds} entering={rise(5)}>
         <Fold icon="money" title="Prices" summary={price.headline === '—' ? 'Not published' : `${price.headline} · ${price.caption}`}>
           {offers
             .filter((assessment) => !isMultiVisitProduct(assessment.offer) && assessment.offer.productType !== 'membership')
@@ -522,7 +529,7 @@ export function PlaceCard({
             {memberStatus}
           </Fold>
         )}
-      </View>
+      </Animated.View>
 
       {/* Wherever a brand's logo shows, its credit does too. */}
       <View style={styles.logoCredit}>

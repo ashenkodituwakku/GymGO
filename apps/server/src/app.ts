@@ -9,6 +9,12 @@
  *   POST   /api/auth/signup               { email, password, displayName }
  *   POST   /api/auth/login                { email, password }
  *   POST   /api/auth/logout
+ *   GET    /api/auth/providers            which of Google and Apple sign-in are on, and Google's client ids
+ *   POST   /api/auth/google               { idToken, nonce } -> signed in (the account is made the first time)
+ *   POST   /api/auth/apple                { idToken, nonce, name? } -> signed in (likewise)
+ *   GET    /api/me/identities             how you can sign in: password, Google, Apple
+ *   POST   /api/me/identities/:provider   { idToken, nonce } -> Google or Apple connected to this account
+ *   DELETE /api/me/identities/:provider   disconnected (never the last way in)
  *   GET    /api/me                        the signed-in account
  *   DELETE /api/me                        delete the account and its data
  *   GET    /api/saved                     { gymIds }
@@ -87,6 +93,7 @@ import {
   createAccount,
   endOtherSessions,
   endSession,
+  hasPassword,
   hashPassword,
   publicAccount,
   startSession,
@@ -104,6 +111,7 @@ import { SiteIcons, chainWebsites, type SafeGet } from './siteicons';
 import { allGyms, gymCountry, gymExists, gymIsDemo, gymRecord, type Db } from './db';
 import { GoogleError, GooglePlaces } from './google';
 import { MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
+import { IdentityError, IdentityVerifier, label, type Provider, type VerifiedIdentity } from './identity';
 
 export interface AppOptions {
   db: Db;
@@ -129,6 +137,12 @@ export interface AppOptions {
   places?: { endpoint?: string; fetchImpl?: typeof fetch };
   /** Gyms' own website icons: on unless switched off; `get` stands in for the web in tests. */
   siteIcons?: { enabled?: boolean; get?: SafeGet };
+  /** Sign in with Google and Apple: the client ids each accepts, and a stand-in fetch for their keys in tests. */
+  signIn?: {
+    google?: { web: string | null; ios: string | null; android: string | null };
+    apple?: string[];
+    fetchImpl?: typeof fetch;
+  };
 }
 
 class HttpError extends Error {
@@ -404,6 +418,33 @@ export function createApp(options: AppOptions) {
   const area = new AreaSearch(db, { ...options.area, now, known: () => allGyms(db) });
   const photos = new PhotoStore(options.photoDir ?? null);
   const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
+  const identities = new IdentityVerifier({ fetchImpl: options.signIn?.fetchImpl, now });
+  const googleIds = options.signIn?.google ?? { web: null, ios: null, android: null };
+  const audiences: Record<Provider, string[]> = {
+    google: [googleIds.web, googleIds.ios, googleIds.android].filter((id): id is string => Boolean(id)),
+    apple: options.signIn?.apple ?? [],
+  };
+
+  /** Check a Google or Apple ID token from the request body, or say why not. */
+  const identityFrom = async (provider: Provider, body: Record<string, unknown>): Promise<VerifiedIdentity> => {
+    const idToken = typeof body.idToken === 'string' && body.idToken.length < 8000 ? body.idToken : '';
+    const nonce = typeof body.nonce === 'string' && body.nonce.length <= 200 ? body.nonce : null;
+    if (!idToken) throw new HttpError(400, `Sign in with ${label(provider)} didn’t finish. Try again.`);
+    try {
+      return await identities.verify(provider, idToken, audiences[provider], nonce);
+    } catch (error) {
+      if (error instanceof IdentityError) throw new HttpError(audiences[provider].length ? 401 : 404, error.message);
+      throw error;
+    }
+  };
+
+  const identityRows = (userId: string) =>
+    db.prepare('select provider, email, created_at from identities where user_id = ? order by created_at').all(userId) as Array<{
+      provider: Provider;
+      email: string | null;
+      created_at: string;
+    }>;
+
   const billing = new Billing(db, {
     stripe: options.billing?.stripe ?? null,
     webhookSecret: options.billing?.webhookSecret ?? null,
@@ -672,6 +713,103 @@ export function createApp(options: AppOptions) {
       return send(res, 200, { token: startSession(db, account.id, now()), account: publicAccount(account) });
     }
 
+    // --- Sign in with Google or Apple --------------------------------------
+    if (method === 'GET' && path === '/api/auth/providers') {
+      return send(res, 200, {
+        google: audiences.google.length ? { web: googleIds.web, ios: googleIds.ios, android: googleIds.android } : null,
+        apple: audiences.apple.length > 0,
+      });
+    }
+
+    if (method === 'POST' && (path === '/api/auth/google' || path === '/api/auth/apple')) {
+      const provider: Provider = path.endsWith('google') ? 'google' : 'apple';
+      if (!loginLimiter.allow(`${req.socket.remoteAddress}|${provider}`, now().getTime())) {
+        throw new HttpError(429, 'Too many attempts. Wait a few minutes and try again.');
+      }
+      const body = (await readJson(req)) as Record<string, unknown>;
+      const who = await identityFrom(provider, body);
+      const linked = db.prepare('select user_id from identities where provider = ? and subject = ?').get(provider, who.subject) as
+        | { user_id: string }
+        | undefined;
+      let account = linked ? (db.prepare('select * from users where id = ?').get(linked.user_id) as AccountRow | undefined) : undefined;
+      let created = false;
+      if (!account) {
+        if (!who.email || !who.emailVerified) {
+          throw new HttpError(400, `${label(provider)} didn’t share a verified email address, which a GymGO account needs.`);
+        }
+        const existing = db.prepare('select * from users where email = ?').get(who.email) as AccountRow | undefined;
+        if (existing && hasPassword(existing)) {
+          // Never joined on email alone: GymGO doesn't check the emails people
+          // sign up with, so a password account with this address could be
+          // someone else's. Its owner connects Google or Apple from Settings.
+          throw new HttpError(
+            409,
+            `There’s already a GymGO account with ${who.email}. Sign in with its password, then connect ${label(provider)} in Settings → Account.`,
+            'connect_from_settings',
+          );
+        }
+        if (existing) {
+          // Made with the other provider, which verified the same address.
+          account = existing;
+        } else {
+          const fromEmail = who.email.split('@')[0]!.replace(/[._-]+/g, ' ').trim();
+          const offered = provider === 'apple' && typeof body.name === 'string' ? body.name : who.name;
+          const displayName = (offered ?? '').trim().replace(/\s+/g, ' ').slice(0, 40) || fromEmail.slice(0, 40) || 'GymGO member';
+          account = createAccount(db, { email: who.email, password: null, displayName }, now())!;
+          created = true;
+        }
+        db.prepare('insert into identities (provider, subject, user_id, email, created_at) values (?, ?, ?, ?, ?)').run(
+          provider,
+          who.subject,
+          account.id,
+          who.email,
+          now().toISOString(),
+        );
+      }
+      if (account.blocked) throw new HttpError(403, 'This account has been blocked.');
+      return send(res, created ? 201 : 200, { token: startSession(db, account.id, now()), account: publicAccount(account), created });
+    }
+
+    if (method === 'GET' && path === '/api/me/identities') {
+      const { account } = requireAccount(req);
+      return send(res, 200, {
+        password: hasPassword(account),
+        identities: identityRows(account.id).map((row) => ({ provider: row.provider, email: row.email, connectedAt: row.created_at })),
+      });
+    }
+
+    if (parts[0] === 'api' && parts[1] === 'me' && parts[2] === 'identities' && parts.length === 4 && (method === 'POST' || method === 'DELETE')) {
+      const { account } = requireAccount(req);
+      const provider = parts[3] === 'google' || parts[3] === 'apple' ? parts[3] : null;
+      if (!provider) throw new HttpError(404, 'Only Google and Apple can be connected.');
+      if (method === 'POST') {
+        const who = await identityFrom(provider, (await readJson(req)) as Record<string, unknown>);
+        const taken = db.prepare('select user_id from identities where provider = ? and subject = ?').get(provider, who.subject) as
+          | { user_id: string }
+          | undefined;
+        if (taken && taken.user_id !== account.id) {
+          throw new HttpError(409, `That ${label(provider)} account already signs in to a different GymGO account.`);
+        }
+        if (!taken) {
+          db.prepare('delete from identities where user_id = ? and provider = ?').run(account.id, provider);
+          db.prepare('insert into identities (provider, subject, user_id, email, created_at) values (?, ?, ?, ?, ?)').run(
+            provider,
+            who.subject,
+            account.id,
+            who.email,
+            now().toISOString(),
+          );
+        }
+        return send(res, 200, { connected: provider, email: who.email });
+      }
+      const others = identityRows(account.id).filter((row) => row.provider !== provider).length;
+      if (!hasPassword(account) && others === 0) {
+        throw new HttpError(409, `${label(provider)} is your only way to sign in. Set a password first, then disconnect it.`);
+      }
+      db.prepare('delete from identities where user_id = ? and provider = ?').run(account.id, provider);
+      return send(res, 204);
+    }
+
     if (method === 'POST' && path === '/api/auth/logout') {
       const token = bearer(req);
       if (token) endSession(db, token);
@@ -691,6 +829,7 @@ export function createApp(options: AppOptions) {
         note: 'Everything GymGO holds about you. Your password is stored only as a salted hash, which is left out; so are sign-in tokens.',
         account: rows('select id, email, display_name as displayName, role, blocked, created_at as createdAt from users where id = ?')[0],
         signIns: rows('select created_at as signedInAt, expires_at as expiresAt from sessions where user_id = ? order by created_at'),
+        connectedSignIns: rows('select provider, email, created_at as connectedAt from identities where user_id = ? order by created_at'),
         savedGyms: rows('select gym_id as gymId, created_at as savedAt from saved_gyms where user_id = ? order by created_at'),
         reviews: rows(
           `select id, gym_id as gymId, overall, body, visited_on as visitedOn, status, moderation_reason as moderationReason,
@@ -737,7 +876,8 @@ export function createApp(options: AppOptions) {
       if (!loginLimiter.allow(`password|${account.id}`, now().getTime())) {
         throw new HttpError(429, 'Too many attempts. Wait a few minutes and try again.');
       }
-      if (!verifyPassword(current, account.password_hash)) throw new HttpError(403, 'Your current password isn\u2019t right.');
+      // An account made with Google or Apple sets its first password without one.
+      if (hasPassword(account) && !verifyPassword(current, account.password_hash)) throw new HttpError(403, 'Your current password isn\u2019t right.');
       db.prepare('update users set password_hash = ? where id = ?').run(hashPassword(next), account.id);
       // Anyone else signed in as you is signed out; this device stays in.
       endOtherSessions(db, account.id, bearer(req)!);

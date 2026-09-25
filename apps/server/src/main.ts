@@ -18,6 +18,8 @@ import {
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
   DEV_PRO_ACCOUNT,
+  APPLE_SIGN_IN_IDS,
+  GOOGLE_SIGN_IN,
 } from './config';
 import { openDb, seedGyms } from './db';
 import { devAccountRefusal, ensureDevProAccount } from './devAccount';
@@ -49,6 +51,7 @@ const server = createServer(
     area: { endpoints: OVERPASS_URLS },
     places: { endpoint: GEOCODER_URL },
     siteIcons: { enabled: SITE_ICONS },
+    signIn: { google: GOOGLE_SIGN_IN, apple: APPLE_SIGN_IN_IDS },
   }),
 );
 
@@ -84,6 +87,17 @@ server.listen(PORT, HOST, () => {
         : '[server] Stripe webhooks: off. Pro still turns on after checkout; changes made in Stripe show up when the app re-checks.',
     );
   }
+  const googleIds = Object.entries(GOOGLE_SIGN_IN).filter(([, id]) => id).map(([platform]) => platform);
+  console.log(
+    googleIds.length
+      ? `[server] Sign in with Google: on (${googleIds.join(', ')})`
+      : '[server] Sign in with Google: off (no GYMGO_GOOGLE_CLIENT_ID_* set; see README)',
+  );
+  console.log(
+    APPLE_SIGN_IN_IDS.length
+      ? `[server] Sign in with Apple: on (${APPLE_SIGN_IN_IDS.join(', ')})`
+      : '[server] Sign in with Apple: off (no GYMGO_APPLE_CLIENT_IDS set; see README)',
+  );
   console.log(
     GOOGLE_PLACES_API_KEY
       ? '[server] Google Maps details: on (using your GOOGLE_PLACES_API_KEY; Google may bill your account)'

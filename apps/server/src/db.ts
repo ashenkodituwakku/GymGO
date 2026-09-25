@@ -31,6 +31,15 @@ const SCHEMA = `
     expires_at text not null
   );
   create index if not exists sessions_user on sessions(user_id);
+  create table if not exists identities (
+    provider text not null check (provider in ('google', 'apple')),
+    subject text not null,
+    user_id text not null references users(id) on delete cascade,
+    email text,
+    created_at text not null,
+    primary key (provider, subject)
+  );
+  create index if not exists identities_user on identities(user_id);
   create table if not exists saved_gyms (
     user_id text not null references users(id) on delete cascade,
     gym_id text not null,

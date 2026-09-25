@@ -59,6 +59,22 @@ export const SITE_ICONS = (process.env.GYMGO_SITE_ICONS ?? 'on').trim().toLowerC
  * Local testing only: a ready-made Pro account (see devAccount.ts). The
  * launcher (scripts/gymgo.ps1) turns it on; a hosted server never makes it.
  */
+/**
+ * Optional. Sign in with Google: the OAuth client ids from the owner's own
+ * Google Cloud project (free), one per platform the app runs on. Client ids
+ * are public identifiers, not secrets. Without them, Google sign-in is off.
+ */
+export const GOOGLE_SIGN_IN = {
+  web: process.env.GYMGO_GOOGLE_CLIENT_ID_WEB?.trim() || null,
+  ios: process.env.GYMGO_GOOGLE_CLIENT_ID_IOS?.trim() || null,
+  android: process.env.GYMGO_GOOGLE_CLIENT_ID_ANDROID?.trim() || null,
+};
+/**
+ * Optional. Sign in with Apple: the iPhone app's bundle id(s), comma-separated.
+ * Needs a paid Apple Developer account (a free Personal Team can't use it).
+ * Without it, Apple sign-in is off.
+ */
+export const APPLE_SIGN_IN_IDS = (process.env.GYMGO_APPLE_CLIENT_IDS ?? '').split(',').map((item) => item.trim()).filter(Boolean);
 export const DEV_PRO_ACCOUNT = (process.env.GYMGO_DEV_PRO ?? '').trim().toLowerCase() === 'on';
 export const ALLOWED_ORIGINS = (process.env.GYMGO_ALLOWED_ORIGINS ?? '').split(',').map((item) => item.trim()).filter(Boolean);
 

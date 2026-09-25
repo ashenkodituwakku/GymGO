@@ -60,8 +60,11 @@ export function toUser(row: AccountRow): User {
 
 /** What the signed-in person sees about themselves. */
 export function publicAccount(row: AccountRow) {
-  return { id: row.id, email: row.email, displayName: row.display_name, role: row.role, createdAt: row.created_at };
+  return { id: row.id, email: row.email, displayName: row.display_name, role: row.role, createdAt: row.created_at, hasPassword: hasPassword(row) };
 }
+
+/** Accounts made with Google or Apple have no password until one is set. */
+export const hasPassword = (row: AccountRow) => row.password_hash !== '';
 
 export class AuthInputError extends Error {
   readonly status = 400;
@@ -101,14 +104,14 @@ export function endOtherSessions(db: Db, userId: string, keepToken: string): voi
   db.prepare('delete from sessions where user_id = ? and token_hash != ?').run(userId, sha256(keepToken));
 }
 
-export function createAccount(db: Db, input: { email: string; password: string; displayName: string }, now = new Date()): AccountRow | null {
+export function createAccount(db: Db, input: { email: string; password: string | null; displayName: string }, now = new Date()): AccountRow | null {
   const existing = db.prepare('select 1 from users where email = ?').get(input.email);
   if (existing) return null;
   const row: AccountRow = {
     id: randomUUID(),
     email: input.email,
     display_name: input.displayName,
-    password_hash: hashPassword(input.password),
+    password_hash: input.password === null ? '' : hashPassword(input.password),
     role: 'member',
     blocked: 0,
     created_at: now.toISOString(),
@@ -126,7 +129,7 @@ export function findByEmail(db: Db, email: string): AccountRow | undefined {
 /** Returns the account when the password matches, otherwise null. */
 export function checkLogin(db: Db, email: string, password: string): AccountRow | null {
   const row = findByEmail(db, email);
-  if (!row) {
+  if (!row || !hasPassword(row)) {
     verifyPassword(password, DUMMY_HASH);
     return null;
   }

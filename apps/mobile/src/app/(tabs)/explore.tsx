@@ -19,7 +19,7 @@ import BottomSheet, {
   useBottomSheetSpringConfigs,
 } from '@gorhom/bottom-sheet';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { ActionSheetIOS, ActivityIndicator, Keyboard, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions, type TextInput } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isWithinBox, type BoundingBox } from '@gymgo/domain';
@@ -94,6 +94,8 @@ function MapScreen() {
   const [googleFor, setGoogleFor] = useState<string | null>(null);
   // Desktop: which panel sits beside the results.
   const [panel, setPanel] = useState<Panel>(null);
+  // Phone: whether the Filters sheet is up.
+  const filtersShown = useRef(false);
   // Phone: where the results sheet was before a place card pushed it down,
   // so closing the card puts it back — as Maps does.
   const sheetIndex = useRef(1);
@@ -428,8 +430,37 @@ function MapScreen() {
   const openFilters = useCallback(() => {
     Keyboard.dismiss();
     if (wide) setPanel('filters');
-    else filterSheet.current?.present();
+    else {
+      filterSheet.current?.present();
+      filtersShown.current = true;
+    }
   }, [wide]);
+
+  // In a browser, Escape closes what's on top: Filters, then a gym's card.
+  // Only while this tab is showing, and not under Google's full-screen page
+  // (which closes itself on Escape).
+  const escape = useRef<() => boolean>(() => false);
+  escape.current = () => {
+    if (googleFor) return false;
+    if (wide) {
+      if (panel === 'filters') setPanel(selectedId ? 'place' : null);
+      else if (panel === 'place') closePlace();
+      else return false;
+    } else if (filtersShown.current) filterSheet.current?.dismiss();
+    else if (selectedId) closePlace();
+    else return false;
+    return true;
+  };
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== 'web') return;
+      const onKey = (event: KeyboardEvent) => {
+        if (event.key === 'Escape' && !event.defaultPrevented && escape.current()) event.preventDefault();
+      };
+      window.addEventListener('keydown', onKey);
+      return () => window.removeEventListener('keydown', onKey);
+    }, []),
+  );
 
   // iPhone: Apple's action sheet. Elsewhere each tap moves to the next order.
   const chooseSort = useCallback(() => {
@@ -763,6 +794,9 @@ function MapScreen() {
           onDone={() => filterSheet.current?.dismiss()}
         />
       }
+      onFiltersDismiss={() => {
+        filtersShown.current = false;
+      }}
       google={googleModal}
     />
   );
@@ -797,6 +831,7 @@ function PhoneShell(props: {
   place: ReactNode;
   onPlaceDismiss: () => void;
   filters: ReactNode;
+  onFiltersDismiss: () => void;
   google: ReactNode;
 }) {
   const { insets, clearance } = props;
@@ -887,6 +922,7 @@ function PhoneShell(props: {
         backgroundComponent={SolidSheetBackground}
         handleIndicatorStyle={styles.handle}
         backdropComponent={backdrop}
+        onDismiss={props.onFiltersDismiss}
       >
         <BottomSheetScrollView contentContainerStyle={{ paddingBottom: space[4] }}>{props.filters}</BottomSheetScrollView>
       </BottomSheetModal>

@@ -173,6 +173,10 @@ function ThemedStack() {
           headerStyle: { backgroundColor: color.background },
           contentStyle: { backgroundColor: color.groupedBackground },
           headerBackTitle: 'Back',
+          // iPhone: swipe back from anywhere on the screen, not just the edge.
+          fullScreenGestureEnabled: true,
+          // Android: the same slide-over as iPhone, rather than a fade-up.
+          animation: Platform.OS === 'android' ? 'ios_from_right' : 'default',
         }}
       >
         <Stack.Screen name="(tabs)" />
@@ -187,24 +191,27 @@ function ThemedStack() {
             headerShadowVisible: false,
           }}
         />
-        <Stack.Screen name="compare" options={{ headerShown: true, title: 'Compare', presentation: 'modal' }} />
+        <Stack.Screen name="compare" options={{ ...MODAL, headerShown: true, title: 'Compare' }} />
         <Stack.Screen name="workout/[id]" options={{ headerShown: true, title: 'Workout' }} />
         <Stack.Screen name="workouts/index" options={{ headerShown: true, title: 'My workouts' }} />
         <Stack.Screen name="workouts/[id]" options={{ headerShown: true, title: 'Workout' }} />
         <Stack.Screen name="train" options={{ headerShown: true, title: 'Workout', gestureEnabled: false }} />
-        <Stack.Screen name="plates" options={{ headerShown: true, title: 'Plates', presentation: 'modal' }} />
+        <Stack.Screen name="plates" options={{ ...MODAL, headerShown: true, title: 'Plates' }} />
         <Stack.Screen name="progress/index" options={{ headerShown: true, title: 'Progress' }} />
         <Stack.Screen name="progress/[exercise]" options={{ headerShown: true, title: '' }} />
-        <Stack.Screen name="pro" options={{ headerShown: true, title: 'GymGO Pro', presentation: 'modal' }} />
-        <Stack.Screen name="country" options={{ headerShown: true, title: 'Country', presentation: 'modal' }} />
+        <Stack.Screen name="pro" options={{ ...MODAL, headerShown: true, title: 'GymGO Pro' }} />
+        <Stack.Screen name="country" options={{ ...MODAL, headerShown: true, title: 'Country' }} />
         <Stack.Screen name="appearance" options={{ headerShown: true, title: 'Appearance' }} />
-        <Stack.Screen name="sign-in" options={{ headerShown: true, title: '', presentation: 'modal' }} />
+        <Stack.Screen name="sign-in" options={{ ...MODAL, headerShown: true, title: '' }} />
         <Stack.Screen name="account" options={{ headerShown: true, title: 'Account' }} />
       </Stack>
       {veilColour && <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle]} />}
     </ThemeProvider>
   );
 }
+
+/** A sheet from below, on every platform. */
+const MODAL = { presentation: 'modal', animation: Platform.OS === 'android' ? 'slide_from_bottom' : 'default' } as const;
 
 /** The page behind the app in a browser, so overscroll and the address bar match. */
 function paintPage() {

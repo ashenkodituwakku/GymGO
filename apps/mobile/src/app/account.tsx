@@ -8,7 +8,8 @@
 import { Stack, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import { FADE_IN, FADE_OUT, GLIDE, rise } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { SocialButtons, useSignInProviders, type TokenHandler } from '@/components/SocialSignIn';
 import { PrimaryButton, Txt } from '@/components/ui';
@@ -18,7 +19,6 @@ import { downloadMyData } from '@/lib/exportData';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, space, themed } from '@/lib/theme';
 
-const SMOOTH = LinearTransition.springify().damping(24).stiffness(240);
 const PROVIDER_NAME: Record<SignInProvider, string> = { google: 'Google', apple: 'Apple' };
 
 function messageFor(error: unknown): string {
@@ -92,7 +92,7 @@ export default function AccountScreen() {
     <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       <Stack.Screen options={{ title: 'Account' }} />
 
-      <Animated.View entering={FadeIn.duration(260)} style={styles.head}>
+      <Animated.View entering={rise(0)} style={styles.head}>
         <View style={styles.avatar}>
           <Txt variant="largeTitle" color={color.onBrand}>
             {me.displayName.slice(0, 1).toUpperCase()}
@@ -115,7 +115,7 @@ export default function AccountScreen() {
       </Animated.View>
 
       {notice && (
-        <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)} style={[styles.notice, notice.good ? styles.noticeGood : styles.noticeBad]}>
+        <Animated.View entering={FADE_IN} exiting={FADE_OUT} style={[styles.notice, notice.good ? styles.noticeGood : styles.noticeBad]}>
           <Icon name={notice.good ? 'done' : 'info'} size={16} color={notice.good ? color.goodInk : color.dangerInk} />
           <Txt variant="footnote" color={notice.good ? color.goodInk : color.dangerInk} style={styles.flex}>
             {notice.text}
@@ -188,7 +188,7 @@ export default function AccountScreen() {
         })}
       </Section>
       {offered.some((provider) => !connected(provider)) && (
-        <Animated.View layout={SMOOTH} style={styles.connect}>
+        <Animated.View layout={GLIDE} style={styles.connect}>
           <SocialButtons intent="connect" onToken={connect} hide={offered.filter((provider) => connected(provider))} onError={(text) => say(text, false)} />
         </Animated.View>
       )}
@@ -239,7 +239,7 @@ export default function AccountScreen() {
 
 function Section({ title, footer, children }: { title?: string; footer?: string; children: ReactNode }) {
   return (
-    <Animated.View layout={SMOOTH} style={styles.section}>
+    <Animated.View layout={GLIDE} style={styles.section}>
       {title && (
         <Txt variant="footnote" color={color.labelSecondary} style={styles.sectionTitle}>
           {title.toUpperCase()}
@@ -316,7 +316,7 @@ function NameForm({ current, onSave }: { current: string; onSave: (name: string)
   const [name, setName] = useState(current);
   const [busy, setBusy] = useState(false);
   return (
-    <Animated.View entering={FadeIn.duration(200)} style={styles.form}>
+    <Animated.View entering={FADE_IN} style={styles.form}>
       <TextInput value={name} onChangeText={setName} autoFocus maxLength={40} autoComplete="name" style={styles.input} accessibilityLabel="Your name" placeholderTextColor={color.labelTertiary} />
       <PrimaryButton
         label="Save name"
@@ -337,7 +337,7 @@ function PasswordForm({ needsCurrent, onSave }: { needsCurrent: boolean; onSave:
   const [next, setNext] = useState('');
   const [busy, setBusy] = useState(false);
   return (
-    <Animated.View entering={FadeIn.duration(200)} style={styles.form}>
+    <Animated.View entering={FADE_IN} style={styles.form}>
       {needsCurrent && (
         <TextInput
           value={current}

@@ -5,7 +5,8 @@
 
 import { Stack } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import { FADE_IN } from '@/components/motion';
 import { Icon } from '@/components/Icon';
 import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
@@ -124,7 +125,7 @@ export default function AppearanceScreen() {
                 <Icon name="crown" size={15} color={color.labelTertiary} />
               ) : (
                 on && (
-                  <Animated.View entering={FadeIn.duration(160)}>
+                  <Animated.View entering={FADE_IN}>
                     <Icon name="check" size={17} color={color.brand} />
                   </Animated.View>
                 )

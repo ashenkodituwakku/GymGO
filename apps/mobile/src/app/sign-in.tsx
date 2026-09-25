@@ -7,7 +7,8 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import { FADE_IN, FADE_OUT, GLIDE, rise } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
@@ -19,7 +20,6 @@ import { color, face, radius, space, themed } from '@/lib/theme';
 type Mode = 'sign_in' | 'create';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const SMOOTH = LinearTransition.springify().damping(24).stiffness(240);
 
 function messageFor(error: unknown): string {
   if (error instanceof OfflineError) return 'Can’t reach the GymGO server. Start it on your computer with the gymgo command, then try again.';
@@ -63,11 +63,11 @@ export default function SignInScreen() {
       haptic.warn();
       setError(message);
       shake.value = withSequence(
-        withTiming(-8, { duration: 50 }),
-        withTiming(8, { duration: 70 }),
-        withTiming(-5, { duration: 60 }),
-        withTiming(3, { duration: 50 }),
-        withTiming(0, { duration: 40 }),
+        withTiming(-8, { duration: 50, reduceMotion: ReduceMotion.System }),
+        withTiming(8, { duration: 70, reduceMotion: ReduceMotion.System }),
+        withTiming(-5, { duration: 60, reduceMotion: ReduceMotion.System }),
+        withTiming(3, { duration: 50, reduceMotion: ReduceMotion.System }),
+        withTiming(0, { duration: 40, reduceMotion: ReduceMotion.System }),
       );
     },
     [shake],
@@ -120,7 +120,7 @@ export default function SignInScreen() {
       contentInsetAdjustmentBehavior="automatic"
     >
       <Stack.Screen options={{ title: '' }} />
-      <Animated.View entering={FadeInDown.duration(320)} style={styles.hero}>
+      <Animated.View entering={rise(0)} style={styles.hero}>
         <View style={styles.badge}>
           <Icon name="workout" size={30} color={color.onBrand} />
         </View>
@@ -144,13 +144,13 @@ export default function SignInScreen() {
       />
 
       <SocialButtons onToken={withProvider} onError={fail} />
-      <Animated.View layout={SMOOTH}>
+      <Animated.View layout={GLIDE}>
         <SocialDivider />
       </Animated.View>
 
-      <Animated.View layout={SMOOTH} style={[styles.form, shakeStyle]}>
+      <Animated.View layout={GLIDE} style={[styles.form, shakeStyle]}>
         {mode === 'create' && (
-          <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(120)}>
+          <Animated.View entering={FADE_IN} exiting={FADE_OUT}>
             <AuthField
               icon="person"
               label="Your name"
@@ -211,7 +211,7 @@ export default function SignInScreen() {
           }
         />
         {mode === 'create' && (
-          <Animated.View entering={FadeIn.duration(200)} style={styles.rule}>
+          <Animated.View entering={FADE_IN} style={styles.rule}>
             <Icon name={password.length >= 8 ? 'done' : 'todo'} size={15} color={password.length >= 8 ? color.good : color.labelTertiary} />
             <Txt variant="footnote" color={password.length >= 8 ? color.goodInk : color.labelSecondary}>
               8 characters or more
@@ -221,7 +221,7 @@ export default function SignInScreen() {
       </Animated.View>
 
       {error && (
-        <Animated.View entering={FadeIn.duration(180)} style={styles.error} accessibilityLiveRegion="assertive">
+        <Animated.View entering={FADE_IN} style={styles.error} accessibilityLiveRegion="assertive">
           <Icon name="info" size={16} color={color.dangerInk} />
           <Txt variant="footnote" color={color.dangerInk} style={styles.flex}>
             {error}
@@ -229,7 +229,7 @@ export default function SignInScreen() {
         </Animated.View>
       )}
 
-      <Animated.View layout={SMOOTH}>
+      <Animated.View layout={GLIDE}>
         <PrimaryButton label={mode === 'create' ? 'Create account' : 'Sign in'} busy={busy} disabled={!ready} onPress={() => void submit()} />
       </Animated.View>
 

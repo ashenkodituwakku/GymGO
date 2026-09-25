@@ -6,9 +6,10 @@
  */
 
 import { Stack, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
+import Animated, { Easing, FadeInDown, FadeOutDown, ReduceMotion, ZoomIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { FADE_IN, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
 import { Icon } from '@/components/Icon';
@@ -65,20 +66,28 @@ export default function TrainScreen() {
   const log = useTrainingLog(token);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const now = useNow(session !== null);
   const [done, setDone] = useState<{ session: TrainingSession; records: NewRecord[] } | null>(null);
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
 
-  // The rest is over: a buzz, and the timer goes.
   const restEndsAt = session?.restEndsAt ?? null;
-  useEffect(() => {
-    if (restEndsAt !== null && now >= restEndsAt) {
-      haptic.success();
-      updateSession((current) => ({ ...current, restEndsAt: null }));
-    }
-  }, [now, restEndsAt]);
+  // Stable across renders, so a card only redraws when its own sets change.
+  const changeSets = useCallback(
+    (index: number, sets: ActiveItem['sets']) =>
+      updateSession((current) => ({ ...current, items: current.items.map((other, at) => (at === index ? { ...other, sets } : other)) })),
+    [],
+  );
+  const startRest = useCallback(
+    (seconds: number) => updateSession((current) => ({ ...current, restEndsAt: seconds > 0 ? Date.now() + seconds * 1000 : null, restTotal: seconds })),
+    [],
+  );
+  const unitNow = session?.unit ?? 'kg';
+  const openPlates = useCallback(
+    (weight: string | null) => router.push({ pathname: '/plates', params: { weight: weight ?? '', unit: unitNow } }),
+    [router, unitNow],
+  );
+  const showPro = useCallback(() => openPro('progress'), [openPro]);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
@@ -138,14 +147,13 @@ export default function TrainScreen() {
     }
   };
 
-  const restLeft = restEndsAt !== null ? Math.max(0, (restEndsAt - now) / 1000) : null;
 
   return (
     <View style={styles.page}>
       <Stack.Screen options={{ title: '' }} />
       <ScrollView
         style={styles.page}
-        contentContainerStyle={[styles.content, { paddingBottom: space[8] + (restLeft !== null ? 90 : 0) + insets.bottom }]}
+        contentContainerStyle={[styles.content, { paddingBottom: space[8] + (restEndsAt !== null ? 90 : 0) + insets.bottom }]}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
         contentInsetAdjustmentBehavior="automatic"
@@ -153,7 +161,8 @@ export default function TrainScreen() {
         <View style={styles.intro}>
           <Txt variant="largeTitle">{session.name}</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
-            {[session.gymName, `${clockLabel((now - Date.parse(session.startedAt)) / 1000)} so far`, `${ticked} of ${planned} sets`].filter(Boolean).join(' · ')}
+            {session.gymName ? `${session.gymName} · ` : ''}
+            <Elapsed since={session.startedAt} /> so far · {ticked} of {planned} sets
           </Txt>
         </View>
 
@@ -183,10 +192,10 @@ export default function TrainScreen() {
             unit={session.unit}
             history={log.sessions}
             isPro={billing.isPro}
-            onPro={() => openPro('progress')}
-            onPlates={(weight) => router.push({ pathname: '/plates', params: { weight: weight ?? '', unit: session.unit } })}
-            onChange={(sets) => updateSession((current) => ({ ...current, items: current.items.map((other, at) => (at === index ? { ...other, sets } : other)) }))}
-            onRest={(seconds) => updateSession((current) => ({ ...current, restEndsAt: seconds > 0 ? Date.now() + seconds * 1000 : null, restTotal: seconds }))}
+            onPro={showPro}
+            onPlates={openPlates}
+            onChange={changeSets}
+            onRest={startRest}
           />
         ))}
 
@@ -215,14 +224,14 @@ export default function TrainScreen() {
         </View>
       </ScrollView>
 
-      {restLeft !== null && <RestBar left={restLeft} total={session.restTotal} bottom={insets.bottom} onChange={(seconds) => updateSession((current) => ({ ...current, restEndsAt: seconds > 0 ? Date.now() + seconds * 1000 : null }))} />}
+      {restEndsAt !== null && <RestBar endsAt={restEndsAt} total={session.restTotal} bottom={insets.bottom} />}
     </View>
   );
 }
 
 // --- One exercise ------------------------------------------------------------------
 
-function ExerciseLog({
+const ExerciseLog = memo(function ExerciseLog({
   index,
   item,
   unit,
@@ -240,7 +249,7 @@ function ExerciseLog({
   isPro: boolean;
   onPro: () => void;
   onPlates: (weight: string | null) => void;
-  onChange: (sets: ActiveItem['sets']) => void;
+  onChange: (index: number, sets: ActiveItem['sets']) => void;
   onRest: (seconds: number) => void;
 }) {
   const exercise = exerciseOf(item.exerciseId);
@@ -256,7 +265,7 @@ function ExerciseLog({
   const weightGuess = target?.weight ?? (lastWeight !== null && last ? Number(fromKg(toKg(lastWeight, last.unit), unit).toFixed(1)) : null);
   const repsGuess = target?.reps ?? repRange(item.reps)?.low ?? null;
 
-  const setAt = (at: number, patch: Partial<ActiveItem['sets'][number]>) => onChange(item.sets.map((set, i) => (i === at ? { ...set, ...patch } : set)));
+  const setAt = (at: number, patch: Partial<ActiveItem['sets'][number]>) => onChange(index, item.sets.map((set, i) => (i === at ? { ...set, ...patch } : set)));
 
   const tick = (at: number) => {
     const set = item.sets[at]!;
@@ -388,7 +397,7 @@ function ExerciseLog({
             accessibilityLabel={`Set ${at + 1} done`}
             hitSlop={8}
           >
-            <Icon name={set.done ? 'done' : 'todo'} size={30} color={set.done ? color.good : color.labelTertiary} />
+            <Tick done={set.done} />
           </Pressable>
         </View>
       ))}
@@ -405,7 +414,7 @@ function ExerciseLog({
             onPress={() => {
               haptic.select();
               const previous = item.sets[item.sets.length - 1];
-              onChange([...item.sets, { weight: previous?.weight ?? '', reps: previous?.reps ?? '', done: false }]);
+              onChange(index, [...item.sets, { weight: previous?.weight ?? '', reps: previous?.reps ?? '', done: false }]);
             }}
             accessibilityRole="button"
             accessibilityLabel="Add a set"
@@ -420,7 +429,7 @@ function ExerciseLog({
             <Pressable
               onPress={() => {
                 haptic.select();
-                onChange(item.sets.slice(0, -1));
+                onChange(index, item.sets.slice(0, -1));
               }}
               accessibilityRole="button"
               accessibilityLabel="Remove the last set"
@@ -436,17 +445,56 @@ function ExerciseLog({
       )}
     </View>
   );
+});
+
+/** The set's tick, which pops once when it's ticked. */
+function Tick({ done }: { done: boolean }) {
+  const pop = usePop(done);
+  return (
+    <Animated.View style={pop}>
+      <Icon name={done ? 'done' : 'todo'} size={30} color={done ? color.good : color.labelTertiary} />
+    </Animated.View>
+  );
+}
+
+/** The rest bar's fill, draining smoothly (not a step a second) until the rest is up. */
+function Drain({ endsAt, total }: { endsAt: number; total: number }) {
+  const share = useSharedValue(total > 0 ? Math.min(1, Math.max(0, (endsAt - Date.now()) / (total * 1000))) : 0);
+  useEffect(() => {
+    const left = Math.max(0, endsAt - Date.now());
+    share.value = total > 0 ? Math.min(1, left / (total * 1000)) : 0;
+    share.value = withTiming(0, { duration: left, easing: Easing.linear });
+  }, [endsAt, total, share]);
+  const fill = useAnimatedStyle(() => ({ width: `${share.value * 100}%` }));
+  return <Animated.View style={[styles.restFill, fill]} />;
+}
+
+// --- Time ------------------------------------------------------------------------
+
+/** "12:04", ticking by itself so the rest of the screen doesn't redraw every second. */
+function Elapsed({ since }: { since: string }) {
+  const now = useNow(true);
+  return <>{clockLabel((now - Date.parse(since)) / 1000)}</>;
 }
 
 // --- Rest ------------------------------------------------------------------------
 
-function RestBar({ left, total, bottom, onChange }: { left: number; total: number; bottom: number; onChange: (seconds: number) => void }) {
-  const share = total > 0 ? Math.min(1, left / total) : 0;
+function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bottom: number }) {
+  const now = useNow(true);
+  const left = Math.max(0, (endsAt - now) / 1000);
+  // The rest is over: a buzz, and the bar goes.
+  useEffect(() => {
+    if (now >= endsAt) {
+      haptic.success();
+      updateSession((current) => ({ ...current, restEndsAt: null }));
+    }
+  }, [now, endsAt]);
+  const onChange = (seconds: number) => updateSession((current) => ({ ...current, restEndsAt: seconds > 0 ? Date.now() + seconds * 1000 : null }));
   return (
     <Animated.View entering={FadeInDown} exiting={FadeOutDown} style={[styles.restWrap, { bottom: bottom + space[3] }]} pointerEvents="box-none">
       <Glass kind="control" style={styles.rest}>
         <View style={styles.restTrack}>
-          <View style={[styles.restFill, { width: `${share * 100}%` }]} />
+          <Drain endsAt={endsAt} total={total} />
         </View>
         <View style={styles.restRow}>
           <Icon name="timer" size={18} color={color.brand} />
@@ -496,9 +544,9 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
   return (
     <ScrollView style={styles.page} contentContainerStyle={[styles.content, styles.summary]}>
       <Stack.Screen options={{ title: '' }} />
-      <View style={styles.bigIcon}>
+      <Animated.View entering={records.length ? ZoomIn.springify().damping(12).stiffness(180).reduceMotion(ReduceMotion.System) : FADE_IN} style={styles.bigIcon}>
         <Icon name={records.length ? 'trophy' : 'done'} size={40} color={records.length ? color.maybe : color.good} />
-      </View>
+      </Animated.View>
       <Txt variant="largeTitle" style={styles.center}>
         {records.length ? `${records.length} new record${records.length === 1 ? '' : 's'}!` : 'Workout done'}
       </Txt>

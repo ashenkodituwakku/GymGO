@@ -6,6 +6,8 @@
 import { Stack, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { GLIDE, rise } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useActiveSession } from '@/lib/activeSession';
@@ -65,11 +67,11 @@ export default function ProgressScreen() {
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title: 'Progress' }} />
-      <View style={styles.stats}>
+      <Animated.View entering={rise(0)} style={styles.stats}>
         <Stat icon="flame" tint={color.maybe} value={String(weekStreak(log.sessions))} label={weekStreak(log.sessions) === 1 ? 'week in a row' : 'weeks in a row'} />
         <Stat icon="calendar" tint={color.brand} value={String(sessionsThisWeek(log.sessions))} label="this week" />
         <Stat icon="workout" tint={color.good} value={String(log.sessions.length)} label={log.sessions.length === 1 ? 'workout' : 'workouts'} />
-      </View>
+      </Animated.View>
       {start}
 
       {log.status === 'loading' && (
@@ -96,7 +98,7 @@ export default function ProgressScreen() {
           <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
             YOUR RECORDS
           </Txt>
-          <View style={styles.group}>
+          <Animated.View entering={rise(1)} layout={GLIDE} style={styles.group}>
             {records.map(([exerciseId, record], index) => {
               const best = record.heaviestSet;
               return (
@@ -121,7 +123,7 @@ export default function ProgressScreen() {
                 </Pressable>
               );
             })}
-          </View>
+          </Animated.View>
         </>
       )}
 
@@ -130,7 +132,7 @@ export default function ProgressScreen() {
           <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
             HISTORY
           </Txt>
-          <View style={styles.group}>
+          <Animated.View entering={rise(2)} layout={GLIDE} style={styles.group}>
             {log.sessions.map((session, index) => (
               <SessionRow
                 key={session.id}
@@ -144,7 +146,7 @@ export default function ProgressScreen() {
                 }}
               />
             ))}
-          </View>
+          </Animated.View>
         </>
       )}
 

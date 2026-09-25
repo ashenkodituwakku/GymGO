@@ -24,7 +24,8 @@ describe('finding a gym by name', () => {
   });
 
   it('puts names that start with it before names that merely contain the word', () => {
-    const hits = names('fitness', MELBOURNE, 50);
+    // Enough to reach past the many names that start with it (over 50 since the US grew).
+    const hits = names('fitness', MELBOURNE, 400);
     // Leading punctuation doesn't count: "& Fitness" starts with "fitness".
     const starts = (name: string) => name.toLowerCase().replace(/^[^a-z0-9]+/, '').startsWith('fitness');
     const firstContains = hits.findIndex((name) => !starts(name));

@@ -195,10 +195,15 @@ is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
   cities below, these are **map-only**, from OpenStreetMap: no prices, guest
   hours or machine lists yet, so every one says **Call first**. Distances are
   in kilometres and money in A$.
-- **15 US cities**: New York, Los Angeles, Chicago, Houston, Miami, San
-  Francisco, Seattle, Boston, Austin, Denver, Las Vegas, Washington DC,
-  Atlanta, San Diego and Philadelphia, with 477 real gyms between them. These
-  are **map-only**: names, addresses, phone numbers, websites and sometimes
+- **40 US cities**, GymGO's main market: New York, Brooklyn, Los Angeles,
+  Chicago, Houston, Miami, San Francisco, Oakland, San Jose, Seattle,
+  Portland, Boston, Austin, Dallas, San Antonio, Denver, Salt Lake City,
+  Phoenix, Las Vegas, Washington DC, Baltimore, Philadelphia, Pittsburgh,
+  Atlanta, Charlotte, Raleigh, Nashville, Orlando, Tampa, New Orleans,
+  Minneapolis, Detroit, Cleveland, Columbus, Indianapolis, Kansas City,
+  St. Louis, Sacramento, San Diego and Honolulu, with 1,055 real gyms between
+  them. Search a city, a neighborhood, a state ("Texas", "TX") or a ZIP code
+  ("10001"). These are **map-only**: names, addresses, phone numbers, websites and sometimes
   opening hours, from OpenStreetMap. There are no prices, guest hours or
   machine lists yet, so every one says **Call first**. Distances are in
   miles and money in dollars there.
@@ -621,7 +626,7 @@ packages/domain/     Framework-free rules. No React, no Next, no I/O.
                      here, so a pin's colour and a row's verdict can't drift.
 packages/melbourne-data/  23 real inner-Melbourne gyms, every fact linked to
                      where it was read (gym websites, OpenStreetMap).
-packages/usa-data/   477 real gyms in 15 US cities, map-only, from
+packages/usa-data/   1,055 real gyms in 40 US cities, map-only, from
                      OpenStreetMap. scripts/generate.ts rebuilds it.
 packages/au-data/    269 more Australian gyms the same way (Sydney,
                      Brisbane, Perth, Adelaide, Canberra, Gold Coast,
@@ -679,8 +684,8 @@ supplied by or agreed with the gyms, and none of them has been contacted.
 Prices and hours count as current for 30 days after they were checked. After
 that the app flags them as due for a recheck.
 
-The 477 US gyms are real places on OpenStreetMap, fetched on 24 September
-2026 (© OpenStreetMap contributors, ODbL). The script keeps gyms and fitness
+The 1,055 US gyms are real places on OpenStreetMap, fetched on 24 and 25
+September 2026 (© OpenStreetMap contributors, ODbL). The script keeps gyms and fitness
 studios you can walk into and drops what the map marks private, gyms inside
 hotels, apartment blocks, offices and campuses, generic "Fitness Center"
 rooms, and yoga, pilates, barre, cycling, dance and climbing studios. It then

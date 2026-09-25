@@ -2,7 +2,7 @@
  * Where the search box can take you.
  *
  * Inner Melbourne is real: real gyms, each fact sourced. Seven more
- * Australian cities, Sydney among them, fifteen US cities and fifteen
+ * Australian cities, Sydney among them, forty US cities and fifteen
  * European ones are real too, but map-only: gyms from OpenStreetMap, with no
  * prices and no guest hours until a gym publishes them.
  *

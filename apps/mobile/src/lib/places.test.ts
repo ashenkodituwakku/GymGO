@@ -106,16 +106,21 @@ describe('places', () => {
     expect(CITIES.denver.timezone).toBe('America/Denver');
     expect(CITIES.seattle.timezone).toBe('America/Los_Angeles');
     expect(CITIES['new-york'].mapOnly).toBe(true);
-    // Toronto isn't covered; the nearest city that is, is Philadelphia (~530 km).
+    // Toronto isn't covered; the nearest city that is, is Cleveland (~300 km).
     expect(cityNear({ lat: 43.65, lng: -79.38 })).toBeNull();
-    expect(nearestCity({ lat: 43.65, lng: -79.38 }).city.id).toBe('philadelphia');
+    expect(nearestCity({ lat: 43.65, lng: -79.38 }).city.id).toBe('cleveland');
+    // The 25 added cities keep their own clocks: Phoenix has no daylight saving, Honolulu its own zone.
+    expect(CITIES.phoenix.timezone).toBe('America/Phoenix');
+    expect(CITIES.honolulu.timezone).toBe('Pacific/Honolulu');
+    expect(geocodePlace('NOLA').place?.city).toBe('new-orleans');
+    expect(geocodePlace('st louis').place?.city).toBe('st-louis');
   });
 
   it('finds the cities in a US state, by name or postal code', () => {
     const texas = suggestPlaces('Texas', 10).map((place) => place.city);
-    expect(texas).toEqual(expect.arrayContaining(['houston', 'austin']));
+    expect(texas).toEqual(expect.arrayContaining(['houston', 'austin', 'dallas', 'san-antonio']));
     expect(geocodePlace('tx').place?.city).toBe('houston');
-    expect(geocodePlace('Colorado').place?.city).toBe('denver');
+    expect(geocodePlace('Ohio').place?.city).toBe('columbus');
     expect(suggestPlaces('calif', 10).map((place) => place.city)).toEqual(expect.arrayContaining(['los-angeles', 'san-francisco', 'san-diego']));
     // A city's own name still wins: New York is the city, Washington is DC.
     expect(geocodePlace('New York').place?.city).toBe('new-york');

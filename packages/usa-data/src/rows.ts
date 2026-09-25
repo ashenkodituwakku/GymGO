@@ -17,7 +17,32 @@ export type UsCityId =
   | 'washington-dc'
   | 'atlanta'
   | 'san-diego'
-  | 'philadelphia';
+  | 'philadelphia'
+  | 'phoenix'
+  | 'dallas'
+  | 'san-antonio'
+  | 'san-jose'
+  | 'portland'
+  | 'nashville'
+  | 'minneapolis'
+  | 'new-orleans'
+  | 'orlando'
+  | 'tampa'
+  | 'charlotte'
+  | 'salt-lake-city'
+  | 'detroit'
+  | 'pittsburgh'
+  | 'baltimore'
+  | 'kansas-city'
+  | 'columbus'
+  | 'indianapolis'
+  | 'raleigh'
+  | 'sacramento'
+  | 'st-louis'
+  | 'honolulu'
+  | 'brooklyn'
+  | 'oakland'
+  | 'cleveland';
 
 export interface GymRow {
   city: UsCityId;

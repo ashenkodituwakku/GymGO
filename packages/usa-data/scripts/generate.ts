@@ -1,12 +1,16 @@
 /**
  * Turn raw OpenStreetMap answers into src/data.ts.
  *
- * Input: one JSON file per city (<city>.json), each the saved answer to
+ * Input: one JSON file per city (<city>.json, from scripts/fetch.py), each the saved answer to
  *
- *     nwr["leisure"="fitness_centre"]["name"](around:R,lat,lng); out center tags;
- *     node["place"~"^(suburb|neighbourhood|quarter)$"]["name"](around:R,lat,lng); out;
+ *     nwr["leisure"="fitness_centre"]["name"]; out center tags;
+ *     node["place"~"^(suburb|neighbourhood|quarter)$"]["name"]; out;
  *
- * from the Overpass API, with the time it was fetched.
+ * for the city's circle (the first 15 cities) or its bounding box (the rest,
+ * which the busy mirror answers more readily), from the Overpass API, with
+ * the time it was fetched. Only what's inside the circle is kept, and a gym
+ * two cities' circles share (Brooklyn and New York) is listed once, under
+ * the first.
  *
  * What counts as a gym is decided in packages/osm, shared with
  * packages/au-data and the server's "Search this area". Then the 40
@@ -60,6 +64,7 @@ function main(src: string) {
   let parsed = 0;
   let unparsed = 0;
 
+  const taken = new Set<string>();
   for (const city of US_CITIES) {
     const cityName = PLACE_NAME[city.id] ?? city.name;
     const data = JSON.parse(readFileSync(join(src, `${city.id}.json`), 'utf8')) as CityFile;
@@ -70,6 +75,8 @@ function main(src: string) {
     for (const el of data.gyms) {
       const found = candidate(el);
       if (!found) continue;
+      // Inside the circle (with the half-kilometre a large building's centre can stray), and not another city's.
+      if (km(centre, found.pos) > city.radiusKm + 0.5 || taken.has(osmRef(el))) continue;
       const key = `${found.name.toLowerCase()}|${round(found.pos[0], 4)}|${round(found.pos[1], 4)}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -80,6 +87,7 @@ function main(src: string) {
     stats.push(`${city.id.padEnd(15)} ${String(data.gyms.length).padStart(4)} mapped, ${String(rows.length).padStart(4)} kept after filters, ${String(kept.length).padStart(3)} used`);
 
     for (const { el, name, tags, pos } of kept) {
+      taken.add(osmRef(el));
       const street = tags['addr:street'] ?? '';
       const branch = branchOf(tags);
       const base = slug([name, branch ?? (street || null), city.id].filter(Boolean).join('-'));
@@ -110,21 +118,27 @@ function main(src: string) {
     }
 
     // Neighbourhoods for the search box: the notable ones (they have a
-    // Wikidata entry), nearest the centre first.
+    // Wikidata entry), nearest the centre first. A city with fewer than
+    // five of those (San Antonio has none) is topped up with the nearest
+    // other mapped neighbourhoods.
+    const pick = (notable: boolean, names: Set<string>) => {
+      const found: Array<{ d: number; name: string; pos: [number, number] }> = [];
+      for (const el of data.places) {
+        const tags = el.tags ?? {};
+        const pos = position(el);
+        if (!pos || ('wikidata' in tags) !== notable || km(centre, pos) > city.radiusKm + 0.5) continue;
+        const name = (tags['name:en'] || tags.name!).replace(/^\w+: /, ''); // "18b: The Arts District"
+        // Heritage listings, not names people search for.
+        if (/historic district|thematic/i.test(name)) continue;
+        if (names.has(name.toLowerCase()) || name.toLowerCase() === cityName.toLowerCase()) continue;
+        names.add(name.toLowerCase());
+        found.push({ d: km(centre, pos), name, pos });
+      }
+      return found.sort((a, b) => a.d - b.d || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    };
     const names = new Set<string>();
-    const cands: Array<{ d: number; name: string; pos: [number, number] }> = [];
-    for (const el of data.places) {
-      const tags = el.tags ?? {};
-      const pos = position(el);
-      if (!pos || !('wikidata' in tags)) continue;
-      const name = (tags['name:en'] || tags.name!).replace(/^\w+: /, ''); // "18b: The Arts District"
-      // Heritage listings, not names people search for.
-      if (/historic district|thematic/i.test(name)) continue;
-      if (names.has(name.toLowerCase()) || name.toLowerCase() === cityName.toLowerCase()) continue;
-      names.add(name.toLowerCase());
-      cands.push({ d: km(centre, pos), name, pos });
-    }
-    cands.sort((a, b) => a.d - b.d || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    let cands = pick(true, names);
+    if (cands.length < 5) cands = [...cands, ...pick(false, names).slice(0, 5 - cands.length)];
     for (const { name, pos } of cands.slice(0, PLACES_PER_CITY)) {
       placesOut.push({ city: city.id, name, lat: round(pos[0], 5), lng: round(pos[1], 5) });
     }
@@ -141,10 +155,16 @@ function main(src: string) {
     ...fetched.map(([city, at]) => `  '${city}': '${at}',`),
     '};',
     '',
-    '// prettier-ignore',
-    'export const GYM_ROWS: GymRow[] = [',
-    ...gymsOut.map((row) => `  ${pyJson(row)},`),
-    '];',
+    // One typed list per city, joined: a single list of a thousand rows is
+    // more than TypeScript will check in one go ("union type too complex").
+    ...US_CITIES.flatMap((city) => [
+      '// prettier-ignore',
+      `const ${constName(city.id)}: GymRow[] = [`,
+      ...gymsOut.filter((row) => row.city === city.id).map((row) => `  ${pyJson(row)},`),
+      '];',
+      '',
+    ]),
+    `export const GYM_ROWS: GymRow[] = [${US_CITIES.map((city) => `...${constName(city.id)}`).join(', ')}];`,
     '',
     '// prettier-ignore',
     'export const PLACE_ROWS: PlaceRow[] = [',
@@ -156,6 +176,9 @@ function main(src: string) {
   for (const line of stats) console.log(line);
   console.log('gyms', gymsOut.length, 'places', placesOut.length, 'hours parsed', parsed, 'unparsed', unparsed);
 }
+
+/** "new-york" → NEW_YORK. */
+const constName = (id: string) => id.toUpperCase().replace(/-/g, '_');
 
 const dir = process.argv[2];
 if (!dir) {

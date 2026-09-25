@@ -13,11 +13,16 @@ const allFacts = (record: GymRecord) => [
 ];
 
 describe('US gyms from OpenStreetMap', () => {
-  it('covers 15 cities with hundreds of real gyms, none of them demo data', () => {
-    expect(US_CITIES).toHaveLength(15);
-    expect(US_GYMS.length).toBeGreaterThanOrEqual(400);
+  it('covers 40 cities with over a thousand real gyms, none of them demo data', () => {
+    expect(US_CITIES).toHaveLength(40);
+    expect(US_GYMS.length).toBeGreaterThanOrEqual(1000);
     for (const city of US_CITIES) expect(GYM_ROWS.filter((row) => row.city === city.id).length).toBeGreaterThanOrEqual(5);
     for (const record of US_GYMS) expect(record.location.isDemoData).toBe(false);
+  });
+
+  it('lists each mapped gym once, even where two cities meet (Brooklyn and New York)', () => {
+    const refs = GYM_ROWS.map((row) => row.osm);
+    expect(new Set(refs).size).toBe(refs.length);
   });
 
   it('has unique ids that cannot clash with Melbourne’s', () => {

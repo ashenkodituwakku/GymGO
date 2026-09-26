@@ -31,6 +31,8 @@ export interface ActiveSession {
   /** When the rest you're on ends (ms since 1970), and how long it was. */
   restEndsAt: number | null;
   restTotal: number;
+  /** When you last changed anything (a set, a weight, the rest), for when it ended. */
+  lastActiveAt?: string;
 }
 
 let current: ActiveSession | null = null;
@@ -94,9 +96,11 @@ export function startSession(plan: {
   emit();
 }
 
-export function updateSession(change: (session: ActiveSession) => ActiveSession): void {
+/** `activity: false` for changes GymGO makes itself (a rest running out), not you. */
+export function updateSession(change: (session: ActiveSession) => ActiveSession, { activity = true }: { activity?: boolean } = {}): void {
   if (!current) return;
   current = change(current);
+  if (activity) current = { ...current, lastActiveAt: new Date().toISOString() };
   persist();
   emit();
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   clockLabel,
+  finishedAtFor,
   draftToLogged,
   durationLabel,
   e1rmSeries,
@@ -176,6 +177,8 @@ describe('over time', () => {
     expect(durationLabel(65 * 60_000)).toBe('1 h 5 min');
     expect(clockLabel(90)).toBe('1:30');
     expect(clockLabel(4.2)).toBe('0:05');
+    expect(clockLabel(3930)).toBe('1:05:30');
+    expect(clockLabel(14 * 3600)).toBe('14:00:00');
   });
 });
 
@@ -203,5 +206,19 @@ describe('a session in progress', () => {
       { exerciseId: 'squat', sets: [{ weight: 100, reps: 5 }] },
       { exerciseId: 'push-up', sets: [{ weight: null, reps: 20 }] },
     ]);
+  });
+});
+
+describe('when a workout ended', () => {
+  const started = '2026-09-25T18:00:00.000Z';
+  it('is now, while you are still at it', () => {
+    const now = new Date('2026-09-25T19:10:00.000Z');
+    expect(finishedAtFor(started, '2026-09-25T18:55:00.000Z', now)).toBe(now.toISOString());
+  });
+  it('is your last change when it was left open for hours', () => {
+    expect(finishedAtFor(started, '2026-09-25T18:52:00.000Z', new Date('2026-09-26T08:00:00.000Z'))).toBe('2026-09-25T18:52:00.000Z');
+  });
+  it('falls back to the start when nothing was ever changed', () => {
+    expect(finishedAtFor(started, undefined, new Date('2026-09-26T08:00:00.000Z'))).toBe(started);
   });
 });

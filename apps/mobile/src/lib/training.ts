@@ -294,10 +294,23 @@ export function durationLabel(ms: number): string {
   return minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${minutes % 60} min` : ''}`;
 }
 
-/** "1:30". */
+/** "1:30"; past an hour, "1:05:30". */
 export function clockLabel(seconds: number): string {
   const whole = Math.max(0, Math.ceil(seconds));
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+  const secs = String(whole % 60).padStart(2, '0');
+  if (whole < 3600) return `${Math.floor(whole / 60)}:${secs}`;
+  return `${Math.floor(whole / 3600)}:${String(Math.floor((whole % 3600) / 60)).padStart(2, '0')}:${secs}`;
+}
+
+/**
+ * When a workout ended, for the log. Usually now; but if nothing has
+ * changed for over an hour (it was left open, maybe overnight), it ended
+ * with the last thing you did, not hours later.
+ */
+export function finishedAtFor(startedAt: string, lastActiveAt: string | undefined, now: Date = new Date()): string {
+  const last = Date.parse(lastActiveAt ?? startedAt);
+  if (Number.isFinite(last) && now.getTime() - last > 60 * 60_000) return new Date(last).toISOString();
+  return now.toISOString();
 }
 
 const byDate = (a: TrainingSession, b: TrainingSession) => (a.finishedAt < b.finishedAt ? -1 : a.finishedAt > b.finishedAt ? 1 : 0);

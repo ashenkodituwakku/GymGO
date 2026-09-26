@@ -21,6 +21,7 @@ import { haptic } from '@/lib/haptics';
 import { CHILD_TOUCH, color, face, radius, space, themed } from '@/lib/theme';
 import {
   clockLabel,
+  finishedAtFor,
   draftToLogged,
   durationLabel,
   formatWeight,
@@ -130,7 +131,7 @@ export default function TrainScreen() {
       name: session.name,
       unit: session.unit,
       startedAt: session.startedAt,
-      finishedAt: new Date().toISOString(),
+      finishedAt: finishedAtFor(session.startedAt, session.lastActiveAt),
       workoutId: session.workoutId,
       gymId: session.gymId,
       exercises,
@@ -488,7 +489,7 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
   useEffect(() => {
     if (now >= endsAt) {
       haptic.success();
-      updateSession((current) => ({ ...current, restEndsAt: null }));
+      updateSession((current) => ({ ...current, restEndsAt: null }), { activity: false });
     }
   }, [now, endsAt]);
   const onChange = (seconds: number) => updateSession((current) => ({ ...current, restEndsAt: seconds > 0 ? Date.now() + seconds * 1000 : null }));

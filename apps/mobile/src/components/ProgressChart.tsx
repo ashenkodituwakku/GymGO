@@ -1,6 +1,7 @@
 /**
- * Your estimated one-rep max over time, one point per session: a plain line
- * chart of your own logged numbers. Nothing is smoothed or projected.
+ * Your estimated one-rep max over time, one point per day you trained it: a
+ * plain line chart of your own logged numbers. Nothing is smoothed or
+ * projected. The weights sit on the gridlines at the right, as in Health.
  */
 
 import { useState } from 'react';
@@ -12,6 +13,8 @@ import { Txt } from './ui';
 
 const HEIGHT = 170;
 const PAD = 10;
+/** Room at the right for the gridlines' weights. */
+const GUTTER = 58;
 
 export function ProgressChart({ points, unit }: { points: Array<{ date: string; kg: number }>; unit: WeightUnit }) {
   const [width, setWidth] = useState(0);
@@ -24,11 +27,15 @@ export function ProgressChart({ points, unit }: { points: Array<{ date: string; 
   const first = Date.parse(points[0]?.date ?? '');
   const last = Date.parse(points[points.length - 1]?.date ?? '');
   const x = (index: number) => {
-    if (points.length === 1) return width / 2;
+    if (points.length === 1) return (width - GUTTER) / 2;
     const at = Date.parse(points[index]!.date);
-    return PAD + ((at - first) / Math.max(1, last - first)) * (width - PAD * 2);
+    return PAD + ((at - first) / Math.max(1, last - first)) * (width - GUTTER - PAD * 2);
   };
   const y = (value: number) => PAD + (1 - (value - base) / span) * (HEIGHT - PAD * 2);
+  // The gridlines, top to bottom, and the weight each marks.
+  const grid = [0, 0.5, 1].map((share) => ({ at: PAD + share * (HEIGHT - PAD * 2), value: base + span * (1 - share) }));
+  // Whole numbers, unless the lines are closer together than that.
+  const gridLabel = (value: number) => formatWeight(span >= 4 ? Math.round(value) : Math.round(value * 10) / 10, unit);
   const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
   const change = values.length > 1 ? values[values.length - 1]! - values[0]! : 0;
 
@@ -36,7 +43,7 @@ export function ProgressChart({ points, unit }: { points: Array<{ date: string; 
     <View
       style={styles.wrap}
       accessible
-      accessibilityLabel={`Estimated one-rep max, ${points.length} sessions, from ${formatWeight(Math.round(values[0] ?? 0), unit)} to ${formatWeight(Math.round(values[values.length - 1] ?? 0), unit)}`}
+      accessibilityLabel={`Estimated one-rep max, ${points.length} ${points.length === 1 ? 'day' : 'days'}, from ${formatWeight(Math.round(values[0] ?? 0), unit)} to ${formatWeight(Math.round(values[values.length - 1] ?? 0), unit)}`}
     >
       <View style={styles.legend}>
         <Txt variant="caption" color={color.labelSecondary}>
@@ -52,8 +59,8 @@ export function ProgressChart({ points, unit }: { points: Array<{ date: string; 
       <View style={styles.chart} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
         {width > 0 && (
           <Svg width={width} height={HEIGHT}>
-            {[0, 0.5, 1].map((share) => (
-              <Line key={share} x1={0} x2={width} y1={PAD + share * (HEIGHT - PAD * 2)} y2={PAD + share * (HEIGHT - PAD * 2)} stroke={color.separator} strokeWidth={1} />
+            {grid.map((line) => (
+              <Line key={line.at} x1={0} x2={width - GUTTER + space[2]} y1={line.at} y2={line.at} stroke={color.separator} strokeWidth={1} />
             ))}
             {points.length > 1 && (
               <Polyline
@@ -70,17 +77,22 @@ export function ProgressChart({ points, unit }: { points: Array<{ date: string; 
             ))}
           </Svg>
         )}
+        {width > 0 &&
+          grid.map((line) => (
+            <Txt key={line.at} variant="caption" color={color.labelTertiary} numberOfLines={1} style={[styles.gridLabel, { top: line.at - 8 }]}>
+              {gridLabel(line.value)}
+            </Txt>
+          ))}
       </View>
-      <View style={styles.axis}>
+      <View style={[styles.axis, { marginRight: GUTTER }, points.length === 1 && styles.axisSingle]}>
         <Txt variant="caption" color={color.labelTertiary}>
           {points[0] ? day(points[0].date) : ''}
         </Txt>
-        <Txt variant="caption" color={color.labelTertiary}>
-          {formatWeight(Math.round(base), unit)} – {formatWeight(Math.round(base + span), unit)}
-        </Txt>
-        <Txt variant="caption" color={color.labelTertiary}>
-          {points.length > 1 ? day(points[points.length - 1]!.date) : ''}
-        </Txt>
+        {points.length > 1 && (
+          <Txt variant="caption" color={color.labelTertiary}>
+            {day(points[points.length - 1]!.date)}
+          </Txt>
+        )}
       </View>
     </View>
   );
@@ -91,4 +103,7 @@ const styles = themed(() => StyleSheet.create({
   legend: { flexDirection: 'row', justifyContent: 'space-between' },
   chart: { height: HEIGHT, width: '100%' },
   axis: { flexDirection: 'row', justifyContent: 'space-between' },
+  // One day: its date under its point, in the middle.
+  axisSingle: { justifyContent: 'center' },
+  gridLabel: { position: 'absolute', right: 0, width: GUTTER - space[2], textAlign: 'right', lineHeight: 16 },
 }));

@@ -73,7 +73,7 @@ export default function ExerciseProgressScreen() {
             </Txt>
           )}
           <Txt variant="footnote" color={color.labelSecondary}>
-            Each point is your best set that session, as an estimated 1-rep max. Your next target shows beside the exercise when you start a workout.
+            Each point is your best set that day, as an estimated 1-rep max. Your next target shows beside the exercise when you start a workout.
           </Txt>
         </View>
       ) : (

@@ -247,16 +247,27 @@ export function volumeKg(session: TrainingSession): number {
 
 export const setCount = (session: TrainingSession) => session.exercises.reduce((sum, logged) => sum + logged.sets.filter((set) => set.reps > 0).length, 0);
 
-/** Your best estimated one-rep max in each session, oldest first: the line on a progress chart. */
+/**
+ * Your best estimated one-rep max on each day you did the exercise, oldest
+ * first: the line on a progress chart. Two sessions on one day (a morning
+ * and an evening) make one point, the day's best, so the line never doubles
+ * back on itself.
+ */
 export function e1rmSeries(sessions: TrainingSession[], exerciseId: string): Array<{ date: string; kg: number }> {
-  const points: Array<{ date: string; kg: number }> = [];
+  const points: Array<{ date: string; kg: number; day: string }> = [];
   for (const session of [...sessions].sort(byDate)) {
     const logged = session.exercises.find((item) => item.exerciseId === exerciseId);
     if (!logged) continue;
     const best = Math.max(...logged.sets.map((set) => (set.weight ? (oneRepMax(toKg(set.weight, session.unit), set.reps) ?? 0) : 0)), 0);
-    if (best > 0) points.push({ date: session.finishedAt, kg: best });
+    if (best <= 0) continue;
+    const finished = new Date(session.finishedAt);
+    const day = `${finished.getFullYear()}-${finished.getMonth()}-${finished.getDate()}`;
+    const previous = points[points.length - 1];
+    if (previous?.day === day) {
+      if (best > previous.kg) Object.assign(previous, { kg: best, date: session.finishedAt });
+    } else points.push({ date: session.finishedAt, kg: best, day });
   }
-  return points;
+  return points.map(({ date, kg }) => ({ date, kg }));
 }
 
 /** Monday of the week `date` falls in, at local midnight. */

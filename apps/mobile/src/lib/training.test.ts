@@ -152,13 +152,22 @@ describe('over time', () => {
     expect(volumeKg(session('2026-09-01T10:00:00Z', { squat: [[100, 5], [100, 5]], 'push-up': [[null, 20]] }))).toBe(1000);
   });
 
-  it('draws one point per session: its best estimate', () => {
+  it('draws one point per day: its best estimate', () => {
     const series = e1rmSeries(
       [session('2026-09-08T10:00:00Z', { squat: [[105, 5]] }), session('2026-09-01T10:00:00Z', { squat: [[100, 5], [90, 8]] }), session('2026-09-04T10:00:00Z', { lunge: [[20, 10]] })],
       'squat',
     );
     expect(series.map((point) => point.date)).toEqual(['2026-09-01T10:00:00Z', '2026-09-08T10:00:00Z']);
     expect(series[0]!.kg).toBeCloseTo(116.67, 2);
+  });
+
+  it('makes one point of two sessions on the same day: the better one', () => {
+    const morning = new Date(2026, 8, 8, 7).toISOString();
+    const evening = new Date(2026, 8, 8, 19).toISOString();
+    const nextDay = new Date(2026, 8, 9, 7).toISOString();
+    const series = e1rmSeries([session(morning, { squat: [[110, 5]] }), session(evening, { squat: [[100, 5]] }), session(nextDay, { squat: [[105, 5]] })], 'squat');
+    expect(series.map((point) => point.date)).toEqual([morning, nextDay]);
+    expect(series[0]!.kg).toBeCloseTo(128.33, 2);
   });
 
   it('counts weeks in a row, without losing the streak on a Monday morning', () => {

@@ -260,14 +260,59 @@ export function e1rmSeries(sessions: TrainingSession[], exerciseId: string): Arr
     if (!logged) continue;
     const best = Math.max(...logged.sets.map((set) => (set.weight ? (oneRepMax(toKg(set.weight, session.unit), set.reps) ?? 0) : 0)), 0);
     if (best <= 0) continue;
-    const finished = new Date(session.finishedAt);
-    const day = `${finished.getFullYear()}-${finished.getMonth()}-${finished.getDate()}`;
+    const day = dayKey(new Date(session.finishedAt));
     const previous = points[points.length - 1];
     if (previous?.day === day) {
       if (best > previous.kg) Object.assign(previous, { kg: best, date: session.finishedAt });
     } else points.push({ date: session.finishedAt, kg: best, day });
   }
   return points.map(({ date, kg }) => ({ date, kg }));
+}
+
+/** The local calendar day a moment falls on, as a key that sessions on the same day share. */
+function dayKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+export interface SessionDay {
+  key: string;
+  /** "Today", "Yesterday", or the date, with its year once it isn't this year. */
+  label: string;
+  sessions: TrainingSession[];
+}
+
+/**
+ * The log split into the days you trained, keeping its order (newest first),
+ * so a day with a morning and an evening session reads as one day, not two
+ * rows repeating the same date. A session belongs to the day it finished, as
+ * it does for the streak and the chart.
+ */
+export function sessionsByDay(sessions: TrainingSession[], now: Date = new Date()): SessionDay[] {
+  const today = dayKey(now);
+  const yesterday = dayKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+  const days = new Map<string, SessionDay>();
+  for (const session of sessions) {
+    const finished = new Date(session.finishedAt);
+    const key = dayKey(finished);
+    let day = days.get(key);
+    if (!day) {
+      const label =
+        key === today
+          ? 'Today'
+          : key === yesterday
+            ? 'Yesterday'
+            : finished.toLocaleDateString(undefined, {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: finished.getFullYear() === now.getFullYear() ? undefined : 'numeric',
+              });
+      day = { key, label, sessions: [] };
+      days.set(key, day);
+    }
+    day.sessions.push(session);
+  }
+  return [...days.values()];
 }
 
 /** Monday of the week `date` falls in, at local midnight. */

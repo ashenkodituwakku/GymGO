@@ -15,6 +15,7 @@ import {
   plateLoad,
   recordsBroken,
   repRange,
+  sessionsByDay,
   sessionsThisWeek,
   setsSummary,
   unitFor,
@@ -179,6 +180,23 @@ describe('over time', () => {
     expect(weekStreak(sessions, nextMonday)).toBe(3);
     expect(weekStreak(sessions, new Date(2026, 9, 6))).toBe(0);
     expect(sessionsThisWeek(sessions, wednesday)).toBe(1);
+  });
+
+  it('groups the log by the day each session finished, newest first', () => {
+    const now = new Date(2026, 8, 23, 20); // Wed 23 Sep 2026, 8 pm
+    const at = (m: number, d: number, h: number, y = 2026) => session(new Date(y, m, d, h).toISOString(), { squat: [[100, 5]] });
+    const evening = at(8, 23, 18);
+    const morning = at(8, 23, 7);
+    const lateLastNight = at(8, 22, 23);
+    const sunday = at(8, 20, 10);
+    const lastYear = at(11, 30, 9, 2025);
+    const days = sessionsByDay([evening, morning, lateLastNight, sunday, lastYear], now);
+    expect(days.map((day) => day.sessions.map((logged) => logged.id))).toEqual([[evening.id, morning.id], [lateLastNight.id], [sunday.id], [lastYear.id]]);
+    expect(days[0]!.label).toBe('Today');
+    expect(days[1]!.label).toBe('Yesterday');
+    expect(days[2]!.label).not.toMatch(/2026/); // this year's dates leave the year off
+    expect(days[3]!.label).toMatch(/2025/);
+    expect(sessionsByDay([], now)).toEqual([]);
   });
 
   it('says how long, briefly', () => {

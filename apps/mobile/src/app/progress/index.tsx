@@ -13,6 +13,7 @@ import { PrimaryButton, Txt } from '@/components/ui';
 import { useActiveSession } from '@/lib/activeSession';
 import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
+import { timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import {
@@ -20,6 +21,7 @@ import {
   formatWeight,
   fromKg,
   personalRecords,
+  sessionsByDay,
   sessionsThisWeek,
   setCount,
   setsSummary,
@@ -33,7 +35,11 @@ import { EXERCISES } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 
 const nameOf = (id: string) => EXERCISES.find((exercise) => exercise.id === id)?.name ?? id;
-const longDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+/** When a session started, as "6:40 pm": the day it was is the heading above it. */
+const startTime = (iso: string) => {
+  const started = new Date(iso);
+  return timeLabel(started.getHours() * 60 + started.getMinutes());
+};
 
 export default function ProgressScreen() {
   usePageTitle('Progress');
@@ -44,6 +50,7 @@ export default function ProgressScreen() {
   const router = useRouter();
   const unit = unitFor(prefs.country);
   const records = useMemo(() => [...personalRecords(log.sessions)].sort((a, b) => b[1].sessions - a[1].sessions || nameOf(a[0]).localeCompare(nameOf(b[0]))), [log.sessions]);
+  const days = useMemo(() => sessionsByDay(log.sessions), [log.sessions]);
   const [open, setOpen] = useState<string | null>(null);
 
   const start = active ? (
@@ -134,19 +141,28 @@ export default function ProgressScreen() {
           <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
             HISTORY
           </Txt>
-          <Animated.View entering={rise(2)} layout={GLIDE} style={styles.group}>
-            {log.sessions.map((session, index) => (
-              <SessionRow
-                key={session.id}
-                session={session}
-                first={index === 0}
-                open={open === session.id}
-                onToggle={() => setOpen(open === session.id ? null : session.id)}
-                onDelete={async () => {
-                  await api.deleteTraining(token, session.id);
-                  log.remove(session.id);
-                }}
-              />
+          <Animated.View entering={rise(2)} layout={GLIDE} style={styles.days}>
+            {days.map((day) => (
+              <View key={day.key} style={styles.day}>
+                <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" style={[face('semibold'), styles.dayLabel]}>
+                  {day.label}
+                </Txt>
+                <View style={styles.group}>
+                  {day.sessions.map((session, index) => (
+                    <SessionRow
+                      key={session.id}
+                      session={session}
+                      first={index === 0}
+                      open={open === session.id}
+                      onToggle={() => setOpen(open === session.id ? null : session.id)}
+                      onDelete={async () => {
+                        await api.deleteTraining(token, session.id);
+                        log.remove(session.id);
+                      }}
+                    />
+                  ))}
+                </View>
+              </View>
             ))}
           </Animated.View>
         </>
@@ -202,7 +218,7 @@ function SessionRow({
         <View style={styles.flex}>
           <Txt variant="body">{session.name}</Txt>
           <Txt variant="footnote" color={color.labelSecondary}>
-            {[longDate(session.finishedAt), durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt)), `${setCount(session)} set${setCount(session) === 1 ? '' : 's'}`, volume > 0 ? `${Math.round(volume).toLocaleString()} ${session.unit}` : null]
+            {[startTime(session.startedAt), durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt)), `${setCount(session)} set${setCount(session) === 1 ? '' : 's'}`, volume > 0 ? `${Math.round(volume).toLocaleString()} ${session.unit}` : null]
               .filter(Boolean)
               .join(' · ')}
           </Txt>
@@ -252,6 +268,9 @@ const styles = themed(() => StyleSheet.create({
   stat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: space[3], borderRadius: radius.lg, backgroundColor: color.card },
   problem: { gap: space[2] },
   section: { marginTop: space[3], marginLeft: space[4] },
+  days: { gap: space[4] },
+  day: { gap: space[2] },
+  dayLabel: { marginLeft: space[4] },
   group: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },

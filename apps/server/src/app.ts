@@ -343,10 +343,10 @@ const PRICE_REPORT_DAYS = 730;
 /** Below this, compressing costs more than it saves. */
 const GZIP_FROM_BYTES = 2048;
 
-function send(res: ServerResponse, status: number, body?: unknown): void {
+function send(res: ServerResponse, status: number, body?: unknown, cacheControl = 'no-store'): void {
   res.statusCode = status;
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Cache-Control', cacheControl);
   if (body === undefined) {
     res.end();
     return;
@@ -1392,13 +1392,19 @@ export function createApp(options: AppOptions) {
       chainSite ??= chainWebsites(allGyms(db));
       const website = record.location.website ?? chainSite(record);
       if (options.siteIcons?.enabled === false) throw new HttpError(404, 'Website icons are switched off.', 'off');
-      if (record.location.isDemoData || !website) throw new HttpError(404, 'This gym has no website to take an icon from.', 'none');
+      // A missing icon is kept by the browser too, so a list doesn't ask again
+      // on every visit: a day when there's no website, an hour when the site had
+      // no usable icon or didn't answer (the server asks such a site again after
+      // an hour at the soonest).
+      if (record.location.isDemoData || !website) {
+        return send(res, 404, { error: 'This gym has no website to take an icon from.', code: 'none' }, 'public, max-age=86400');
+      }
       let icon = siteIcons.cached(website);
       if (icon === undefined) {
         if (!iconLimiter.allow(`${req.socket.remoteAddress}`, now().getTime())) throw new HttpError(429, 'Too many icons at once. Try again soon.');
         icon = await siteIcons.icon(website);
       }
-      if (!icon) throw new HttpError(404, 'The gym’s website has no icon GymGO can show.', 'none');
+      if (!icon) return send(res, 404, { error: 'The gym’s website has no icon GymGO can show.', code: 'none' }, 'public, max-age=3600');
       res.statusCode = 200;
       res.setHeader('Content-Type', icon.mime);
       res.setHeader('Content-Length', String(icon.bytes.length));

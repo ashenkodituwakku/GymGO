@@ -183,6 +183,8 @@ describe('GET /api/gyms/:id/icon', () => {
     const response = await fetch(`${base}/api/gyms/${PRIME.location.id}/icon`);
     expect(response.status).toBe(404);
     expect(((await response.json()) as { code: string }).code).toBe('none');
+    // Kept by the browser for an hour: the server asks a site again after an hour at the soonest.
+    expect(response.headers.get('cache-control')).toBe('public, max-age=3600');
   });
 
   it('asks a site that didn’t answer again after an hour, not a week', async () => {
@@ -196,8 +198,14 @@ describe('GET /api/gyms/:id/icon', () => {
   });
 
   it('has nothing for invented demo gyms or unknown ids', async () => {
-    expect((await fetch(`${base}/api/gyms/${DEMO_GYMS[0]!.location.id}/icon`)).status).toBe(404);
-    expect((await fetch(`${base}/api/gyms/no-such-gym/icon`)).status).toBe(404);
+    const demo = await fetch(`${base}/api/gyms/${DEMO_GYMS[0]!.location.id}/icon`);
+    expect(demo.status).toBe(404);
+    // The browser keeps a known absence for a day, so a list doesn't ask on every visit.
+    expect(demo.headers.get('cache-control')).toBe('public, max-age=86400');
+    const unknown = await fetch(`${base}/api/gyms/no-such-gym/icon`);
+    expect(unknown.status).toBe(404);
+    // An unknown id might be a gym not loaded yet: never kept.
+    expect(unknown.headers.get('cache-control')).toBe('no-store');
   });
 });
 

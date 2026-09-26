@@ -268,7 +268,8 @@ const styles = themed(() => StyleSheet.create({
     borderColor: currentTheme().scheme === 'dark' ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.95)',
     boxShadow: '0 6px 16px rgba(0, 0, 0, 0.14)',
   },
-  tab: { height: BAR_HEIGHT, alignItems: 'center', justifyContent: 'center' },
+  // Rounded like the bar, so the keyboard's focus ring is a pill, not a box.
+  tab: { height: BAR_HEIGHT, alignItems: 'center', justifyContent: 'center', borderRadius: BAR_HEIGHT / 2 },
   pressed: { transform: [{ scale: 0.9 }] },
   avatarRing: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   avatarRingOn: { borderWidth: 2, borderColor: color.label },

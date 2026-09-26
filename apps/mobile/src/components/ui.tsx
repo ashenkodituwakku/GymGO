@@ -612,7 +612,8 @@ const styles = themed(() => StyleSheet.create({
 
   actionWrap: { flex: 1 },
   action: { height: 58, borderRadius: radius.lg },
-  actionHit: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
+  // Rounded like its glass, so the keyboard's focus ring follows the shape.
+  actionHit: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: radius.lg },
   actionLabel: face('medium'),
 
   primary: {

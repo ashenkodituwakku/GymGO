@@ -31,9 +31,20 @@ SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 // Browser: real weights only (never a bold faked from a regular cut), and
 // text smoothed the way macOS draws SF Pro in Apple's own pages.
+// Keyboard focus is a ring in the accent colour with a band of the page's
+// own colour inside it, laid over the control's edge. The browser's own ring
+// is near-black (lost in dark mode) and drawn outside, where rounded cards
+// and glass buttons cut it to fragments; drawn over the top, a gym card's
+// photo can't hide it, and the inner band keeps it visible on a button
+// filled with the accent. Text fields draw their own focus, so they're left
+// alone.
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
   const css = document.createElement('style');
-  css.textContent = '*{font-synthesis:none}body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}';
+  css.textContent =
+    '*{font-synthesis:none}body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}' +
+    ':not(input):not(textarea):focus-visible{outline:none}' +
+    ':not(input):not(textarea):focus-visible::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:10;' +
+    'box-shadow:inset 0 0 0 2px var(--gg-focus),inset 0 0 0 4px var(--gg-focus-inner)}';
   document.head.appendChild(css);
 }
 
@@ -221,6 +232,8 @@ const MODAL = { presentation: 'modal', animation: Platform.OS === 'android' ? 's
 function paintPage() {
   document.documentElement.dataset.ggScheme = currentTheme().scheme;
   document.documentElement.style.colorScheme = currentTheme().scheme;
+  document.documentElement.style.setProperty('--gg-focus', color.brand);
+  document.documentElement.style.setProperty('--gg-focus-inner', color.card);
   document.body.style.backgroundColor = color.groupedBackground;
 }
 if (Platform.OS === 'web' && typeof document !== 'undefined') paintPage();

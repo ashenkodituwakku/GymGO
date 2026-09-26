@@ -35,6 +35,7 @@
  *   PUT    /api/gyms/:gymId/prices        { amountMinor, paidOn } -> your report (replaces your last)
  *   DELETE /api/gyms/:gymId/prices        take back your report
  *   GET    /api/prices/typical            { gymId: { typicalMinor, count } } for every gym members have priced
+ *   GET    /api/reviews/ratings           { gymId: { average, count } } from published reviews, for every gym that has any
  *   GET    /api/gyms/:gymId/access        how visiting went for members: walked in / booked first / turned away
  *   PUT    /api/gyms/:gymId/access        { outcome, visitedOn } -> your report (replaces your last)
  *   DELETE /api/gyms/:gymId/access        take back your report
@@ -1150,6 +1151,19 @@ export function createApp(options: AppOptions) {
       const typical: Record<string, { typicalMinor: number; count: number }> = {};
       for (const [gymId, amounts] of byGym) typical[gymId] = { typicalMinor: median(amounts), count: amounts.length };
       return send(res, 200, { typical });
+    }
+
+    // --- Ratings from published reviews, for every gym that has any ----------
+    // Lists and cards show a gym's rating without fetching its reviews. Only
+    // published reviews count; the average is to one decimal, as a gym's own
+    // review section shows it.
+    if (method === 'GET' && path === '/api/reviews/ratings') {
+      const rows = db
+        .prepare(`select gym_id, count(*) as count, avg(overall) as average from reviews where status = 'published' group by gym_id`)
+        .all() as Array<{ gym_id: string; count: number; average: number }>;
+      const ratings: Record<string, { average: number; count: number }> = {};
+      for (const row of rows) ratings[row.gym_id] = { average: Math.round(row.average * 10) / 10, count: row.count };
+      return send(res, 200, { ratings });
     }
 
     // --- What members paid for a casual visit ---------------------------------

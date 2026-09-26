@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { BoundingBox, GymRecord } from '@gymgo/domain';
+import type { BoundingBox, GymRecord, RatingSummary } from '@gymgo/domain';
 import { ApiError, api } from './api';
 import { BUNDLED_GYMS } from './query';
 
@@ -33,6 +33,8 @@ export function useGymData() {
   const [covers, setCovers] = useState<Record<string, string>>({});
   /** What members typically paid for a visit, by gym, for lists. */
   const [memberPrices, setMemberPrices] = useState<Record<string, { typicalMinor: number; count: number }>>({});
+  /** Each gym's rating from its published reviews, for lists, cards and sorting. */
+  const [ratings, setRatings] = useState<Record<string, RatingSummary>>({});
 
   const records = useMemo(() => {
     if (found.length === 0) return base;
@@ -92,6 +94,13 @@ export function useGymData() {
       .catch(() => undefined);
   }, []);
 
+  const refreshRatings = useCallback(() => {
+    api
+      .reviewRatings()
+      .then((result) => setRatings(result.ratings))
+      .catch(() => undefined);
+  }, []);
+
   const refreshCovers = useCallback(() => {
     api
       .covers()
@@ -106,10 +115,11 @@ export function useGymData() {
       setStatus('live');
       refreshCovers();
       refreshMemberPrices();
+      refreshRatings();
     } catch {
       setStatus('offline');
     }
-  }, [refreshCovers, refreshMemberPrices]);
+  }, [refreshCovers, refreshMemberPrices, refreshRatings]);
 
   useEffect(() => {
     void refresh();
@@ -156,7 +166,7 @@ export function useGymData() {
   // One object while nothing in it changes, so what's built on it (the app's
   // shared state, callbacks that use it) doesn't change on every render.
   return useMemo(
-    () => ({ records, status, covers, memberPrices, refresh, refreshCovers, refreshMemberPrices, searchArea, ensureGyms }),
-    [records, status, covers, memberPrices, refresh, refreshCovers, refreshMemberPrices, searchArea, ensureGyms],
+    () => ({ records, status, covers, memberPrices, ratings, refresh, refreshCovers, refreshMemberPrices, refreshRatings, searchArea, ensureGyms }),
+    [records, status, covers, memberPrices, ratings, refresh, refreshCovers, refreshMemberPrices, refreshRatings, searchArea, ensureGyms],
   );
 }

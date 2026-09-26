@@ -32,7 +32,7 @@ export default function Compare() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const asOf = useMemo(() => new Date(), [filters, data.records]);
-  const byId = useMemo(() => resultsById(filters, data.records, asOf), [filters, data.records, asOf]);
+  const byId = useMemo(() => resultsById(filters, data.records, asOf, data.ratings), [filters, data.records, asOf, data.ratings]);
   const gyms = compare.map((id) => byId.get(id)).filter((result): result is GymSearchResult => result !== undefined);
 
   if (gyms.length < 2) {

@@ -28,7 +28,7 @@ function messageFor(error: unknown): string {
   return 'Something went wrong. Try again.';
 }
 
-export function ModerationQueue({ token, records }: { token: string; records: GymRecord[] }) {
+export function ModerationQueue({ token, records, onPublished }: { token: string; records: GymRecord[]; onPublished?: () => void }) {
   const [queue, setQueue] = useState<Review[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,6 +48,8 @@ export function ModerationQueue({ token, records }: { token: string; records: Gy
       await api.moderate(token, review.id, decision === 'reject' ? { decision, reason: 'Did not meet the review guidelines.' } : { decision });
       haptic.success();
       setQueue((current) => (current ?? []).filter((item) => item.id !== review.id));
+      // A published review changes the gym's rating in lists and cards.
+      if (decision === 'publish') onPublished?.();
     } catch (caught) {
       setError(messageFor(caught));
     }

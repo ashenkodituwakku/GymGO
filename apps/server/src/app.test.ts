@@ -238,6 +238,30 @@ describe('reviews and moderation', () => {
     expect(published.body!.reviews[0].body).toBe('Good racks, friendly staff at the desk.');
   });
 
+  it("gives every gym's rating from published reviews only, for lists and cards", async () => {
+    const before = await call('GET', '/api/reviews/ratings');
+    expect(before.status).toBe(200);
+    expect(before.body!.ratings['dohertys-gym-city']).toBeUndefined();
+
+    const moderator = await signUp('Mod');
+    db.prepare(`update users set role = 'moderator' where id = ?`).run(moderator.id);
+    const post = async (overall: number, publish: boolean) => {
+      const author = await signUp();
+      const posted = await call('POST', '/api/gyms/dohertys-gym-city/reviews', {
+        token: author.token,
+        body: { overall, body: 'Trained here on a day pass last week.' },
+      });
+      if (publish) await call('POST', `/api/moderation/reviews/${posted.body!.review.id}`, { token: moderator.token, body: { decision: 'publish' } });
+    };
+    await post(5, true);
+    await post(4, true);
+    await post(4, true);
+    await post(1, false); // Still waiting for a moderator: doesn't count.
+
+    const after = await call('GET', '/api/reviews/ratings');
+    expect(after.body!.ratings['dohertys-gym-city']).toEqual({ average: 4.3, count: 3 });
+  });
+
   it('needs a reason to reject, and one review per person per gym', async () => {
     const author = await signUp();
     const posted = await call('POST', '/api/gyms/dohertys-gym-city/reviews', {

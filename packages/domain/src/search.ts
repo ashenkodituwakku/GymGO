@@ -119,6 +119,11 @@ export interface SearchOutcome {
 export interface SearchInput {
   records: GymRecord[];
   reviewsByGymId: Record<string, Review[]>;
+  /**
+   * Ratings already summarised from published reviews held elsewhere (the
+   * GymGO server's), used in place of summarising `reviewsByGymId`.
+   */
+  ratingsByGymId?: Record<string, RatingSummary>;
   query: SearchQuery;
   asOf?: Date;
   policy?: FreshnessPolicy;
@@ -140,7 +145,7 @@ function dedupeReasons(reasons: AccessReason[]): AccessReason[] {
 export function evaluateGym(
   record: GymRecord,
   query: SearchQuery,
-  options: { reviews?: Review[]; asOf?: Date; policy?: FreshnessPolicy } = {},
+  options: { reviews?: Review[]; rating?: RatingSummary; asOf?: Date; policy?: FreshnessPolicy } = {},
 ): GymSearchResult {
   const asOf = options.asOf ?? new Date();
   const policy = options.policy ?? DEFAULT_FRESHNESS_POLICY;
@@ -159,7 +164,7 @@ export function evaluateGym(
   const equipment = matchEquipment(query.requiredEquipment, record.equipment, { asOf, policy });
   const preferred = matchEquipment(query.preferredEquipment, record.equipment, { asOf, policy });
   const amenities = matchAmenities(query.requiredAmenities, record.amenities, { asOf, policy });
-  const rating = summariseRatings(reviews);
+  const rating = options.rating ?? summariseRatings(reviews);
 
   const distanceKm = query.centre ? haversineKm(query.centre, record.location.position) : null;
 
@@ -343,6 +348,7 @@ export function search(input: SearchInput): SearchOutcome {
     .map((record) =>
       evaluateGym(record, query, {
         reviews: reviewsByGymId[record.location.id] ?? [],
+        rating: input.ratingsByGymId?.[record.location.id],
         asOf,
         policy,
       }),
@@ -358,7 +364,7 @@ export function search(input: SearchInput): SearchOutcome {
 
   const relaxations =
     counts.confirmed === 0
-      ? suggestRelaxations({ records: inArea, reviewsByGymId, query, asOf, policy })
+      ? suggestRelaxations({ records: inArea, reviewsByGymId, ratingsByGymId: input.ratingsByGymId, query, asOf, policy })
       : [];
 
   return { results, counts, relaxations, sortDescription: SORT_DESCRIPTIONS[query.sort] };
@@ -384,6 +390,7 @@ function countConfirmed(input: SearchInput): number {
     if (!withinArea(record, input.query)) continue;
     const result = evaluateGym(record, input.query, {
       reviews: input.reviewsByGymId[record.location.id] ?? [],
+      rating: input.ratingsByGymId?.[record.location.id],
       asOf: input.asOf,
       policy: input.policy,
     });

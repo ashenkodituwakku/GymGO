@@ -16,7 +16,7 @@
 
 import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
-import type { BillingCurrency, BillingInterval, GymRecord, PlanId, PlanLimits, ProPrice, ReportCurrency, Review } from '@gymgo/domain';
+import type { BillingCurrency, BillingInterval, GymRecord, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, Review } from '@gymgo/domain';
 import type { TrainingSession } from './training';
 
 const PORT = 4000;
@@ -365,6 +365,8 @@ export const api = {
     request<unknown>('PUT', `/api/gyms/${encodeURIComponent(gymId)}/access`, { token, body }),
   deleteAccess: (token: string, gymId: string) => request<unknown>('DELETE', `/api/gyms/${encodeURIComponent(gymId)}/access`, { token }),
   typicalPrices: () => request<{ typical: Record<string, { typicalMinor: number; count: number }> }>('GET', '/api/prices/typical'),
+  /** Every gym's rating from its published reviews, for lists and cards. */
+  reviewRatings: () => request<{ ratings: Record<string, RatingSummary> }>('GET', '/api/reviews/ratings'),
   prices: (gymId: string, token: string | null) => request<PriceSummary>('GET', `/api/gyms/${encodeURIComponent(gymId)}/prices`, { token }),
   reportPrice: (token: string, gymId: string, body: { amountMinor: number; paidOn: string }) =>
     request<unknown>('PUT', `/api/gyms/${encodeURIComponent(gymId)}/prices`, { token, body }),

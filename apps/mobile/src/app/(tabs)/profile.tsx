@@ -134,7 +134,7 @@ export default function Profile() {
           </Txt>
           <View style={styles.card}>
             <PhotoQueue token={account.token} records={data.records} onPublished={data.refreshCovers} />
-            <ModerationQueue token={account.token} records={data.records} />
+            <ModerationQueue token={account.token} records={data.records} onPublished={data.refreshRatings} />
             <MemberReportQueue token={account.token} records={data.records} />
           </View>
         </View>

@@ -5,10 +5,15 @@
  * Distances stay measured from the search's centre.
  */
 
-import type { GymRecord, GymSearchResult } from '@gymgo/domain';
+import type { GymRecord, GymSearchResult, RatingSummary } from '@gymgo/domain';
 import { runSearch, type Filters } from './query';
 
-export function resultsById(filters: Filters, records: GymRecord[], asOf: Date): Map<string, GymSearchResult> {
-  const outcome = runSearch({ ...filters, radiusKm: 100_000 }, { records }, asOf);
+export function resultsById(
+  filters: Filters,
+  records: GymRecord[],
+  asOf: Date,
+  ratings?: Record<string, RatingSummary>,
+): Map<string, GymSearchResult> {
+  const outcome = runSearch({ ...filters, radiusKm: 100_000 }, { records, ratings }, asOf);
   return new Map(outcome.results.map((result) => [result.record.location.id, result]));
 }

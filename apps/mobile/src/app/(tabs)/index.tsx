@@ -59,8 +59,8 @@ export default function Home() {
   const router = useRouter();
 
   const asOf = useMemo(() => new Date(), [filters, data.records]);
-  const outcome = useMemo(() => runSearch(filters, { records: data.records }, asOf), [filters, data.records, asOf]);
-  const byId = useMemo(() => resultsById(filters, data.records, asOf), [filters, data.records, asOf]);
+  const outcome = useMemo(() => runSearch(filters, { records: data.records, ratings: data.ratings }, asOf), [filters, data.records, data.ratings, asOf]);
+  const byId = useMemo(() => resultsById(filters, data.records, asOf, data.ratings), [filters, data.records, asOf, data.ratings]);
 
   const nearby = locked ? [] : outcome.results.slice(0, 10);
   const saved = account.saved.map((id) => byId.get(id)).filter((result) => result !== undefined);

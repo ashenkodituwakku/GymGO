@@ -211,6 +211,18 @@ describe('ranking', () => {
     expect(outcome.results[2]?.rating.average).toBeNull();
   });
 
+  it("uses ratings summarised elsewhere (the server's published reviews) when given", () => {
+    const outcome = search({
+      records: [gym('unrated'), gym('lowRated'), gym('rated')],
+      reviewsByGymId: {},
+      ratingsByGymId: { rated: { average: 4.5, count: 2 }, lowRated: { average: 2, count: 1 } },
+      query: { ...REFERENCE_QUERY, sort: 'rating' },
+    });
+    expect(outcome.results.map((r) => r.record.location.id)).toEqual(['rated', 'lowRated', 'unrated']);
+    expect(outcome.results[0]?.rating).toEqual({ average: 4.5, count: 2 });
+    expect(outcome.results[2]?.rating).toEqual({ average: null, count: 0 });
+  });
+
   it('best match puts the gym with fewer open questions first; closest ignores them', () => {
     // Near, but its price and guest hours are unpublished.
     const vague = gym('near-but-vague', {

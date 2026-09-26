@@ -121,9 +121,9 @@ function MapScreen() {
   const locked = mayExplore(filters.countryCode) ? null : { country: filters.countryCode, home: prefs.country ?? filters.countryCode };
   const searchable = useMemo(() => data.records.filter((record) => mayExplore(record.location.address.countryCode)), [data.records, mayExplore]);
   const outcome = useMemo(() => {
-    const found = runSearch(filters, { records: data.records }, asOf);
+    const found = runSearch(filters, { records: data.records, ratings: data.ratings }, asOf);
     return locked ? { ...found, results: [] } : found;
-  }, [filters, data.records, asOf, locked === null]);
+  }, [filters, data.records, data.ratings, asOf, locked === null]);
   const pins: MapPin[] = useMemo(
     () =>
       outcome.results.map((result) => ({

@@ -18,6 +18,7 @@ import {
   type EquipmentRequirement,
   type GymRecord,
   type LatLng,
+  type RatingSummary,
   type Review,
   type SearchOutcome,
   type SearchQuery,
@@ -275,12 +276,13 @@ export function toQuery(filters: Filters): SearchQuery {
 
 export function runSearch(
   filters: Filters,
-  data: { records?: GymRecord[]; reviews?: Record<string, Review[]> } = {},
+  data: { records?: GymRecord[]; reviews?: Record<string, Review[]>; ratings?: Record<string, RatingSummary> } = {},
   asOf: Date = new Date(),
 ): SearchOutcome {
   return search({
     records: data.records ?? BUNDLED_GYMS,
     reviewsByGymId: data.reviews ?? {},
+    ratingsByGymId: data.ratings,
     query: toQuery(filters),
     asOf,
   });

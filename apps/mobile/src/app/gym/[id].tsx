@@ -43,7 +43,7 @@ export default function GymPage() {
   const [googleOpen, setGoogleOpen] = useState(false);
 
   const asOf = useMemo(() => new Date(), [filters, data.records]);
-  const result = useMemo(() => (id ? resultsById(filters, data.records, asOf).get(id) : undefined), [id, filters, data.records, asOf]);
+  const result = useMemo(() => (id ? resultsById(filters, data.records, asOf, data.ratings).get(id) : undefined), [id, filters, data.records, asOf, data.ratings]);
   usePageTitle(result?.record.location.name ?? 'Gym');
 
   const place = useGooglePlace(result?.record);

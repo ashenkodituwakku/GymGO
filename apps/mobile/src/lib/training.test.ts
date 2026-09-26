@@ -21,6 +21,7 @@ import {
   unitFor,
   volumeKg,
   weekStreak,
+  weightFor,
   type LoggedSet,
   type TrainingSession,
   type WeightUnit,
@@ -132,6 +133,17 @@ describe('last time and next time', () => {
   it('converts when you switch units', () => {
     const target = nextTarget({ sets: [{ weight: 100, reps: 5 }], unit: 'kg' }, '5', 'lb')!;
     expect(target.weight).toBe(225.5); // 220.5 lb, plus 5
+  });
+});
+
+describe('an untyped set', () => {
+  it('stands for the weight of the set before it, else the guess', () => {
+    const sets = [{ weight: '22.5' }, { weight: '' }, { weight: ' ' }, { weight: '25' }, { weight: '' }];
+    expect(weightFor(sets, 1, 20)).toBe('22.5');
+    expect(weightFor(sets, 2, 20)).toBe('22.5'); // skips a blank one
+    expect(weightFor(sets, 4, 20)).toBe('25'); // the nearest, not the first
+    expect(weightFor(sets, 0, 20)).toBe('20');
+    expect(weightFor([{ weight: '' }, { weight: '' }], 1, null)).toBe('');
   });
 });
 

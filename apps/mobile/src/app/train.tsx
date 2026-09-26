@@ -37,6 +37,7 @@ import {
   setsSummary,
   toKg,
   volumeKg,
+  weightFor,
   type NewRecord,
   type Target,
   type TrainingSession,
@@ -279,7 +280,7 @@ const ExerciseLog = memo(function ExerciseLog({
       setAt(at, { done: false });
       return;
     }
-    const weight = set.weight.trim() || (bodyWeight || timed ? '' : weightGuess !== null ? String(weightGuess) : '');
+    const weight = set.weight.trim() || (bodyWeight || timed ? '' : weightFor(item.sets, at, weightGuess));
     const reps = timed ? '1' : set.reps.trim() || (repsGuess !== null ? String(repsGuess) : '');
     if (!timed && (parseReps(reps) === undefined || parseReps(reps) === 0)) return setHint('Type how many reps you did.');
     if (parseWeight(weight) === undefined) return setHint(`That weight doesn’t read as a number of ${unit}.`);
@@ -373,7 +374,7 @@ const ExerciseLog = memo(function ExerciseLog({
               <Input
                 value={set.weight}
                 onChangeText={(weight) => setAt(at, { weight })}
-                placeholder={bodyWeight ? 'BW' : weightGuess !== null ? String(weightGuess) : '—'}
+                placeholder={bodyWeight ? 'BW' : weightFor(item.sets, at, weightGuess) || '—'}
                 placeholderTextColor={color.labelTertiary}
                 keyboardType="decimal-pad"
                 inputMode="decimal"

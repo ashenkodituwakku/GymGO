@@ -155,6 +155,20 @@ export function setsSummary(sets: LoggedSet[], unit: WeightUnit): string {
 
 // --- What to aim for next ------------------------------------------------------
 
+/**
+ * The weight a set you haven't typed in stands for: the nearest earlier set's
+ * this session (you mostly lift the same again), else `guess` (the target, or
+ * last time's). Blank when there's nothing to go on. Without the earlier set,
+ * typing 22.5 for set 1 and ticking set 2 logged set 2 with no weight at all.
+ */
+export function weightFor(sets: ReadonlyArray<{ weight: string }>, at: number, guess: number | null): string {
+  for (let earlier = at - 1; earlier >= 0; earlier--) {
+    const typed = sets[earlier]?.weight.trim();
+    if (typed) return typed;
+  }
+  return guess !== null ? String(guess) : '';
+}
+
 /** "8–10" → 8 to 10; "5" → 5 to 5; timed or distance work ("30–45 s") → null. */
 export function repRange(reps: string): { low: number; high: number } | null {
   const match = /^(\d+)(?:\s*[–-]\s*(\d+))?$/.exec(reps.trim());

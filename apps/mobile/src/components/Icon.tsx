@@ -55,6 +55,7 @@ const ICONS = {
   workout: { ios: 'figure.strengthtraining.traditional', android: 'exercise', web: 'exercise' },
   shuffle: { ios: 'shuffle', android: 'shuffle', web: 'shuffle' },
   mail: { ios: 'envelope.fill', android: 'mail', web: 'mail' },
+  bug: { ios: 'ladybug.fill', android: 'bug_report', web: 'bug_report' },
   crown: { ios: 'crown.fill', android: 'workspace_premium', web: 'workspace_premium' },
   sunrise: { ios: 'sunrise.fill', android: 'wb_twilight', web: 'wb_twilight' },
   moon: { ios: 'moon.stars.fill', android: 'bedtime', web: 'bedtime' },

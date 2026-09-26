@@ -48,6 +48,9 @@ const FACES = NEEDS_BUNDLED_FACES ? BUNDLED_FACES : {};
 // tabs, so it has a way back rather than being the whole app.
 export const unstable_settings = { initialRouteName: '(tabs)' };
 
+// If drawing any screen throws, this shows instead of a blank or developer page.
+export { CrashScreen as ErrorBoundary } from '@/components/CrashScreen';
+
 export default function RootLayout() {
   const [loaded, error] = useFonts(FACES);
   const [themeReady, setThemeReady] = useState(Platform.OS === 'web');
@@ -204,6 +207,7 @@ function ThemedStack() {
         <Stack.Screen name="appearance" options={{ headerShown: true, title: 'Appearance' }} />
         <Stack.Screen name="sign-in" options={{ ...MODAL, headerShown: true, title: '' }} />
         <Stack.Screen name="account" options={{ headerShown: true, title: 'Account' }} />
+        <Stack.Screen name="report-bug" options={{ ...MODAL, headerShown: true, title: 'Report a bug' }} />
       </Stack>
       {veilColour && <Animated.View style={[NO_TOUCH, StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle]} />}
     </ThemeProvider>

@@ -14,6 +14,7 @@ this document could do.
 | Members say a gym has closed or is still open (6 months); the card warns when closed outnumbers open | ✅ | ✅ 2 server tests + reported and the warning seen in the browser | n/a | ❌ |
 | Change your name and password (current password needed; other devices signed out) | ✅ | ✅ 3 server tests (including the browser's PATCH preflight, a real bug the first browser run caught) + driven in the browser | n/a | ❌ |
 | Download my data (everything held about you, as one JSON file; no password hash or tokens) | ✅ | ✅ 1 server test + downloaded and read in the browser; phone share sheet not seen | n/a | ❌ |
+| Report a bug (Profile, and the crash screen): kept on the server, emailed to the team through the owner's SMTP account, retried, 5 an hour per person, 50 emails a day | ✅ | ✅ 15 server tests + 3 app tests + sent from the browser, signed in and out, offline and from the crash screen, into a local stand-in mail server | ❌ no SMTP account set; no real inbox has received one | ❌ |
 | Moderators review and remove members' price and visit reports | ✅ | ✅ 1 server test (members refused) + the list seen in the browser | n/a | ❌ |
 | Members' visit prices: one report per member per gym, median and range, no names, 2-year window; "~A$22 · members say" in lists when the gym publishes none; kept in A$, US$, €, £ or CHF by the gym's country (older databases migrate themselves) | ✅ | ✅ 4 server tests + 2 app tests + a euro report for a Berlin gym + the migration tested on an old-schema file + reported and shown in the browser (A$ only: gym page and list) | n/a | ❌ |
 | Sign-up, sign-in, sign-out, delete account | ✅ | ✅ tests + driven in the browser | ❌ no email verification | ❌ |
@@ -271,8 +272,8 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 | `@gymgo/usa-data` unit tests | **12 passed** |
 | `@gymgo/eu-data` unit tests | **10 passed** |
 | `@gymgo/osm` unit tests | **25 passed** |
-| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **131 passed** |
-| `@gymgo/mobile` unit tests | **132 passed** |
+| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **146 passed** |
+| `@gymgo/mobile` unit tests | **135 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
 | `expo export` (iOS + Android) | Both compiled to Hermes bytecode |
 | `expo-doctor` | 21/21 checks passed |
@@ -332,7 +333,10 @@ name; the skip link works.
   down, and a busy hosted GymGO would want its own Overpass and Photon
   servers. Gyms' website icons are fetched from the gyms' own sites; a site
   that blocks automated visitors (Planet Fitness does) shows no icon.
-- **No email.** Sign-up sends nothing, so there's no email check and no
+- **Almost no email.** The only email the server sends is a bug report, to
+  the team, and only once the owner gives it an SMTP account
+  (`GYMGO_SMTP_URL`; checked against a local stand-in mail server, never a
+  real inbox). Sign-up sends nothing, so there's no email check and no
   password reset.
 - **Google's extras and Stripe** are built but have never been used with the
   owner's real keys, so Google's photos of the exact gym have been matched

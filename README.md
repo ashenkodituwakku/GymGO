@@ -407,7 +407,8 @@ offers a **typical gym** plan instead and marks anything not confirmed with
 Tap the person icon next to the search box to create an account. Your saved
 gyms then follow you between your PC and your phone, and you can write
 reviews. Accounts live only in `apps/server/data/gymgo.db` on your
-computer. Passwords are stored hashed, and no emails are sent.
+computer. Passwords are stored hashed, and no emails are sent to you (the
+only email GymGO sends is a bug report, to the team; see below).
 
 In Profile you can **change your name** and **change your password** (it
 asks for the current one, and signs out any other device signed in as you).
@@ -415,8 +416,8 @@ There's no "forgot password" yet, because GymGO sends no email.
 
 **Download my data** in Profile gives you everything GymGO holds about you
 as one JSON file: your account, sign-in dates, saved gyms, reviews, photo
-records, machine, price and visit reports, workouts and subscription (never
-your password hash or sign-in tokens). In a browser it downloads; on a phone
+records, machine, price and visit reports, workouts, bug reports and
+subscription (never your password hash or sign-in tokens). In a browser it downloads; on a phone
 it opens the share sheet. **Delete account** removes all of it.
 
 Reviews wait for a moderator before they appear. To make your own account a
@@ -428,6 +429,42 @@ npx pnpm@10 --filter @gymgo/server make-moderator you@example.com
 
 Then open your account in the app to see the reviews and photos waiting for a
 decision.
+
+### Report a bug
+
+**Profile → Report a bug** lets anyone, signed in or not, tell the team what
+went wrong. The form lists the app and device details that go with it (the
+app's version, the kind of device and browser, screen size, the screen it
+came from, the country and appearance settings, and whether you're signed
+in), and you can switch them off. It never sends your location, searches or
+gyms. Signed in, you can ask for a reply at your account's email; signed out,
+you can leave an address. If a screen ever breaks, the crash screen offers
+**Try again** and a one-tap report with the error attached.
+
+Every report is kept on the GymGO server first, and moderators can read them
+under Profile → Moderation. The server emails each one to
+**ashenkodit@gmail.com** and **mahogany.81926@gmail.com**, with the reporter
+as the reply-to address, once you give it an email account to send
+through. GymGO has no mail service of its own, so it uses one you already
+have. With Gmail (free):
+
+1. In your Google Account, turn on 2-Step Verification, then make an **app
+   password** (Security → 2-Step Verification → App passwords).
+2. Add this line to `apps/server/.env.local`, with your address (its `@`
+   written as `%40`) and the app password:
+
+   ```
+   GYMGO_SMTP_URL=smtps://you%40gmail.com:your-app-password@smtp.gmail.com:465
+   ```
+
+3. Restart GymGO. The server's first lines say `Bug reports: kept here and
+   emailed to …`.
+
+Reports sent before email was set up, or while the mail server was down, go
+out when it's back (checked every 15 minutes, five tries each, at most 50
+emails a day). `GYMGO_BUG_REPORT_TO` sends them elsewhere (comma-separated)
+and `GYMGO_MAIL_FROM` changes the sender. A person can send five reports an
+hour.
 
 ### Gym photos
 

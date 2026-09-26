@@ -8,7 +8,7 @@ import { formatPlanPrice } from '@gymgo/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { MemberReportQueue, ModerationQueue, PhotoQueue } from '@/components/AccountContent';
+import { BugReportQueue, MemberReportQueue, ModerationQueue, PhotoQueue } from '@/components/AccountContent';
 import { AppBadge, Wordmark } from '@/components/BrandMark';
 import { Icon } from '@/components/Icon';
 import { Pressy } from '@/components/motion';
@@ -137,6 +137,7 @@ export default function Profile() {
             <PhotoQueue token={account.token} records={data.records} onPublished={data.refreshCovers} />
             <ModerationQueue token={account.token} records={data.records} onPublished={data.refreshRatings} />
             <MemberReportQueue token={account.token} records={data.records} />
+            <BugReportQueue token={account.token} />
           </View>
         </View>
       )}
@@ -214,6 +215,13 @@ export default function Profile() {
             gives you everything GymGO holds about you as one file.
           </Explainer>
         )}
+        <Row
+          icon="bug"
+          tile={TILE.red}
+          title="Report a bug"
+          subtitle="Something not working? Tell the team"
+          onPress={() => router.push({ pathname: '/report-bug', params: { from: 'Profile' } })}
+        />
         <Row icon="settings" tile={TILE.grey} title="Version" value="0.1.0 · pilot" chevron={false} />
       </Group>
 

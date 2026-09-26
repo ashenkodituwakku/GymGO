@@ -23,11 +23,13 @@
     "@gymgo/usa-data": "workspace:*",
     "@photostructure/tz-lookup": "^11.7.0",
     "@rapideditor/country-coder": "5.6.1",
+    "nodemailer": "^7.0.13",
     "stripe": "22.6.2",
     "tsx": "^4.20.0"
   },
   "devDependencies": {
     "@types/node": "^22.20.0",
+    "@types/nodemailer": "^8.0.2",
     "typescript": "^5.9.3",
     "vitest": "^5.0.1"
   },

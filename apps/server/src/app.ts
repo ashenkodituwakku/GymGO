@@ -62,6 +62,8 @@
  *   GET    /api/moderation/photos         moderators: photos waiting
  *   POST   /api/moderation/photos/:id     moderators: { decision, reason? }
  *   GET    /api/moderation/member-reports moderators: the latest price and visit reports, with who sent them
+ *   POST   /api/bug-reports               anyone: { description, replyTo?, context? } -> kept, and emailed to the team
+ *   GET    /api/moderation/bug-reports    moderators: the latest bug reports, and whether each was emailed
  *   DELETE /api/moderation/member-reports/:kind/:gymId/:userId   moderators: remove one
  *
  * Every route that changes something re-checks permission here with the
@@ -113,6 +115,8 @@ import { allGyms, gymCountry, gymExists, gymIsDemo, gymRecord, type Db } from '.
 import { GoogleError, GooglePlaces } from './google';
 import { MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
 import { IdentityError, IdentityVerifier, label, type Provider, type VerifiedIdentity } from './identity';
+import { BugReportError, BugReports, cleanBugReport } from './bugReports';
+import type { SendMail } from './mail';
 
 export interface AppOptions {
   db: Db;
@@ -143,6 +147,15 @@ export interface AppOptions {
     google?: { web: string | null; ios: string | null; android: string | null };
     apple?: string[];
     fetchImpl?: typeof fetch;
+  };
+  /** Bug reports: how to email them (none: kept here only), who to, and how many a day at most. */
+  bugReports?: {
+    send?: SendMail | null;
+    to?: string[];
+    perDay?: number;
+    log?: (line: string) => void;
+    /** How often to retry reports that didn't go (and send any kept before email was set up); off unless set. */
+    retryEveryMs?: number;
   };
 }
 
@@ -418,6 +431,20 @@ export function createApp(options: AppOptions) {
   const places = new PlaceSearch(db, { endpoint: options.places?.endpoint, fetchImpl: options.places?.fetchImpl, now });
   const area = new AreaSearch(db, { ...options.area, now, known: () => allGyms(db) });
   const photos = new PhotoStore(options.photoDir ?? null);
+  const bugReports = new BugReports(db, {
+    send: options.bugReports?.send ?? null,
+    to: options.bugReports?.to ?? [],
+    perDay: options.bugReports?.perDay,
+    log: options.bugReports?.log ?? ((line) => console.warn(line)),
+    now,
+  });
+  // Bug reports: 5 an hour from one account, or from one address when signed out.
+  const bugLimiter = new AttemptLimiter(5, 60 * 60_000);
+  const retryEvery = options.bugReports?.retryEveryMs ?? 0;
+  if (bugReports.emailing && retryEvery > 0) {
+    void bugReports.deliverWaiting();
+    setInterval(() => void bugReports.deliverWaiting(), retryEvery).unref();
+  }
   const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
   const identities = new IdentityVerifier({ fetchImpl: options.signIn?.fetchImpl, now });
   const googleIds = options.signIn?.google ?? { web: null, ios: null, android: null };
@@ -865,6 +892,10 @@ export function createApp(options: AppOptions) {
           `select status, interval, currency, amount_minor as amountMinor, current_period_end as currentPeriodEnd, cancel_at as cancelAt,
                   cancel_at_period_end as cancelAtPeriodEnd, updated_at as updatedAt from subscriptions where user_id = ? order by updated_at`,
         ),
+        bugReports: rows(
+          `select id, description, reply_to as replyTo, context_json, status, created_at as createdAt, sent_at as emailedAt
+           from bug_reports where user_id = ? order by created_at`,
+        ).map(({ context_json, ...report }) => ({ ...report, device: JSON.parse(String(context_json)) })),
       });
     }
 
@@ -1410,6 +1441,32 @@ export function createApp(options: AppOptions) {
         .run(decision === 'publish' ? 'published' : 'rejected', reason, now().toISOString(), user.id, decodeURIComponent(parts[3]!));
       if (result.changes === 0) throw new HttpError(404, 'No pending review with that id.');
       return send(res, 204);
+    }
+
+    // --- Bug reports ------------------------------------------------------------
+    // Kept first, then emailed to the team; the answer says whether the email went.
+    if (method === 'POST' && path === '/api/bug-reports') {
+      const { account } = caller(req);
+      const key = account ? `account:${account.id}` : `address:${req.socket.remoteAddress}`;
+      if (!bugLimiter.allow(key, now().getTime())) throw new HttpError(429, 'That’s a lot of reports at once. Try again in an hour.');
+      let report;
+      try {
+        report = cleanBugReport(await readJson(req));
+      } catch (error) {
+        if (error instanceof BugReportError) throw new HttpError(error.status, error.message);
+        throw error;
+      }
+      const id = bugReports.create(report, account ? { id: account.id, email: account.email, displayName: account.display_name } : null);
+      // A slow mail server doesn't keep the app waiting: after a few seconds
+      // the answer goes back and the email carries on.
+      const emailed = await bugReports.deliverWithin(id, 8000);
+      return send(res, 201, { id, emailed });
+    }
+
+    if (method === 'GET' && path === '/api/moderation/bug-reports') {
+      const { user } = requireAccount(req);
+      requirePermission(user, 'moderation.view_queue');
+      return send(res, 200, { emailing: bugReports.emailing, reports: bugReports.latest() });
     }
 
     // Price and visit reports show at once, unmoderated, so moderators can

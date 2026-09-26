@@ -76,6 +76,21 @@ export const GOOGLE_SIGN_IN = {
  */
 export const APPLE_SIGN_IN_IDS = (process.env.GYMGO_APPLE_CLIENT_IDS ?? '').split(',').map((item) => item.trim()).filter(Boolean);
 export const DEV_PRO_ACCOUNT = (process.env.GYMGO_DEV_PRO ?? '').trim().toLowerCase() === 'on';
+/**
+ * Optional. The SMTP account bug reports are emailed through, as one address:
+ * smtps://you%40gmail.com:app-password@smtp.gmail.com:465 for Gmail (an app
+ * password, from your Google account's security settings, not your own
+ * password). This holds a password: keep it in .env.local, never in git.
+ * Without it, reports are kept on this server only.
+ */
+export const SMTP_URL = process.env.GYMGO_SMTP_URL?.trim() || null;
+/** Optional. Who the report emails say they're from; by default the SMTP account itself. */
+export const MAIL_FROM = process.env.GYMGO_MAIL_FROM?.trim() || null;
+/** Where bug reports are emailed, comma-separated. By default, the GymGO team. */
+export const BUG_REPORT_TO = (process.env.GYMGO_BUG_REPORT_TO ?? 'ashenkodit@gmail.com, mahogany.81926@gmail.com')
+  .split(',')
+  .map((item) => item.trim())
+  .filter(Boolean);
 export const ALLOWED_ORIGINS = (process.env.GYMGO_ALLOWED_ORIGINS ?? '').split(',').map((item) => item.trim()).filter(Boolean);
 
 /**

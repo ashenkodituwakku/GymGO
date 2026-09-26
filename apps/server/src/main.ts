@@ -20,7 +20,11 @@ import {
   DEV_PRO_ACCOUNT,
   APPLE_SIGN_IN_IDS,
   GOOGLE_SIGN_IN,
+  BUG_REPORT_TO,
+  MAIL_FROM,
+  SMTP_URL,
 } from './config';
+import { senderFor, smtpMailer } from './mail';
 import { openDb, seedGyms } from './db';
 import { devAccountRefusal, ensureDevProAccount } from './devAccount';
 
@@ -39,6 +43,10 @@ if (DEV_PRO_ACCOUNT) {
   }
 }
 
+// Bug reports are emailed through the owner's own SMTP account, when there is one.
+const mailFrom = SMTP_URL ? senderFor(SMTP_URL, MAIL_FROM) : null;
+const bugMail = SMTP_URL && mailFrom ? smtpMailer(SMTP_URL, mailFrom) : null;
+
 const server = createServer(
   createApp({
     db,
@@ -52,6 +60,7 @@ const server = createServer(
     places: { endpoint: GEOCODER_URL },
     siteIcons: { enabled: SITE_ICONS },
     signIn: { google: GOOGLE_SIGN_IN, apple: APPLE_SIGN_IN_IDS },
+    bugReports: { send: bugMail, to: BUG_REPORT_TO, retryEveryMs: 15 * 60_000 },
   }),
 );
 
@@ -97,6 +106,13 @@ server.listen(PORT, HOST, () => {
     APPLE_SIGN_IN_IDS.length
       ? `[server] Sign in with Apple: on (${APPLE_SIGN_IN_IDS.join(', ')})`
       : '[server] Sign in with Apple: off (no GYMGO_APPLE_CLIENT_IDS set; see README)',
+  );
+  console.log(
+    bugMail
+      ? `[server] Bug reports: kept here and emailed to ${BUG_REPORT_TO.join(', ')}`
+      : SMTP_URL
+        ? '[server] Bug reports: kept here only. GYMGO_SMTP_URL has no email address to send from; set GYMGO_MAIL_FROM (see README)'
+        : '[server] Bug reports: kept here only (no GYMGO_SMTP_URL set, so nothing is emailed; see README)',
   );
   console.log(
     GOOGLE_PLACES_API_KEY

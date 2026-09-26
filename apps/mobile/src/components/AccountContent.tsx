@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { Image, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { serverOfflineLine } from '@/lib/copy';
 import { priceLabel, type GymRecord, type Review } from '@gymgo/domain';
-import { api, ApiError, OfflineError, type AccessOutcome, type MemberReport } from '@/lib/api';
+import { api, ApiError, OfflineError, type AccessOutcome, type BugReportItem, type MemberReport } from '@/lib/api';
 import { moneyLabel } from '@/lib/places';
 import type { AccountApi } from '@/lib/useAccount';
 import { haptic } from '@/lib/haptics';
@@ -153,6 +153,80 @@ export function MemberReportQueue({ token, records }: { token: string; records: 
   );
 }
 
+const BUG_STATUS: Record<BugReportItem['status'], string> = { sent: 'Emailed', pending: 'Not emailed yet', failed: 'Couldn’t be emailed' };
+
+/**
+ * Bug reports from the app, newest first. They're emailed to the team when
+ * the server has email set up; this is where they can always be read.
+ */
+export function BugReportQueue({ token }: { token: string }) {
+  const [data, setData] = useState<{ emailing: boolean; reports: BugReportItem[] } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
+
+  useEffect(() => {
+    api
+      .bugReports(token)
+      .then(setData)
+      .catch((caught: unknown) => setError(messageFor(caught)));
+  }, [token]);
+
+  return (
+    <View>
+      <Txt variant="headline" style={styles.heading}>
+        Bug reports {data ? `(${data.reports.length})` : ''}
+      </Txt>
+      {error && <Notice icon="info" text={error} tone="danger" />}
+      {data && !data.emailing && <Notice icon="info" text="This server doesn’t email reports yet (no GYMGO_SMTP_URL set), so they’re only here." />}
+      {data?.reports.length === 0 && (
+        <Txt variant="subhead" color={color.labelSecondary}>
+          No reports yet.
+        </Txt>
+      )}
+      {data?.reports.map((report) => {
+        const expanded = open === report.id;
+        return (
+          <Pressable
+            key={report.id}
+            onPress={() => setOpen(expanded ? null : report.id)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded }}
+            aria-expanded={expanded}
+            style={styles.queueItem}
+          >
+            <Txt variant="footnote" color={color.labelSecondary}>
+              {new Date(report.createdAt).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} ·{' '}
+              {report.reporter?.displayName ?? 'Not signed in'} · {BUG_STATUS[report.status]}
+            </Txt>
+            <Txt variant="subhead" numberOfLines={expanded ? undefined : 3}>
+              {report.description}
+            </Txt>
+            {expanded && (
+              <View style={styles.bugDetails}>
+                {report.replyTo && (
+                  <Txt variant="footnote" color={color.labelSecondary}>
+                    Reply to {report.replyTo}
+                  </Txt>
+                )}
+                {report.context.map((line) => (
+                  <Txt key={line.label} variant="footnote" color={color.labelSecondary}>
+                    {line.label}: {line.value}
+                  </Txt>
+                ))}
+                {report.lastError && report.status !== 'sent' && (
+                  <Txt variant="footnote" color={color.dangerInk}>
+                    Email problem: {report.lastError}
+                  </Txt>
+                )}
+              </View>
+            )}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 /**
  * Members' photos waiting for a moderator. Publish only a photo that shows
  * this gym and no one's face without their say-so; it will carry the
@@ -266,6 +340,7 @@ const styles = themed(() => StyleSheet.create({
   rowBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   actions: { gap: space[2], marginTop: space[2] },
 
+  bugDetails: { gap: 2, marginTop: space[1] },
   queueItem: {
     gap: space[2],
     padding: space[3],

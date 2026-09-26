@@ -86,7 +86,8 @@ async function request<T>(method: string, path: string, options: { token?: strin
   if (!base) throw new OfflineError('No server address.');
   const controller = new AbortController();
   // Photos upload slowly; billing waits on Stripe; an area search may wait on the map service.
-  const slow = (method === 'POST' && path.endsWith('/photos')) || path.startsWith('/api/billing');
+  // A bug report waits (a few seconds at most) for its email to go.
+  const slow = (method === 'POST' && (path.endsWith('/photos') || path === '/api/bug-reports')) || path.startsWith('/api/billing');
   const timer = setTimeout(() => controller.abort(), path.startsWith('/api/area') ? 75000 : slow || path.startsWith('/api/places') ? 30000 : 8000);
   let response: Response;
   try {
@@ -137,6 +138,29 @@ export interface GymStatusSummary {
 }
 
 /** A member's price, visit or open/closed report, as moderators see it. */
+/** A bug report as the app sends it. */
+export interface BugReportDraft {
+  description: string;
+  /** Where the team can reply, if the person asked for one. */
+  replyTo: string | null;
+  /** The app and device details the person agreed to send. */
+  context: Array<{ label: string; value: string }>;
+}
+
+/** A bug report as moderators see it. */
+export interface BugReportItem {
+  id: string;
+  description: string;
+  replyTo: string | null;
+  reporter: { id: string; displayName: string | null; email: string | null } | null;
+  context: Array<{ label: string; value: string }>;
+  status: 'pending' | 'sent' | 'failed';
+  attempts: number;
+  lastError: string | null;
+  createdAt: string;
+  sentAt: string | null;
+}
+
 export interface MemberReport {
   kind: 'price' | 'access' | 'status';
   gymId: string;
@@ -409,6 +433,10 @@ export const api = {
       `/api/moderation/member-reports/${report.kind}/${encodeURIComponent(report.gymId)}/${encodeURIComponent(report.userId)}`,
       { token },
     ),
+  /** Send a bug report to the GymGO team. `emailed` says whether the email has gone yet (it's kept either way). */
+  reportBug: (token: string | null, report: BugReportDraft) => request<{ id: string; emailed: boolean }>('POST', '/api/bug-reports', { token, body: report }),
+  /** Moderators: the latest bug reports, and whether this server emails them. */
+  bugReports: (token: string) => request<{ emailing: boolean; reports: BugReportItem[] }>('GET', '/api/moderation/bug-reports', { token }),
   moderationQueue: (token: string) => request<{ reviews: Review[] }>('GET', '/api/moderation/reviews', { token }),
   moderate: (token: string, reviewId: string, body: { decision: 'publish' | 'reject'; reason?: string }) =>
     request<unknown>('POST', `/api/moderation/reviews/${encodeURIComponent(reviewId)}`, { token, body }),

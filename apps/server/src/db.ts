@@ -178,6 +178,19 @@ const SCHEMA = `
     fetched_at text not null,
     gyms integer not null
   );
+  create table if not exists bug_reports (
+    id text primary key,
+    user_id text references users(id) on delete cascade,
+    reply_to text,
+    description text not null,
+    context_json text not null,
+    status text not null default 'pending' check (status in ('pending', 'sent', 'failed')),
+    attempts integer not null default 0,
+    last_error text,
+    created_at text not null,
+    sent_at text
+  );
+  create index if not exists bug_reports_status on bug_reports(status, created_at);
 `;
 
 export function openDb(path: string): Db {

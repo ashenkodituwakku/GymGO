@@ -388,6 +388,7 @@ export function ActionButton({
   primary = false,
   accessibilityLabel,
   on = false,
+  unavailable = false,
 }: {
   icon: IconName;
   label: string;
@@ -396,8 +397,15 @@ export function ActionButton({
   accessibilityLabel?: string;
   /** Switched on (Saved): the symbol pops once when it turns on. */
   on?: boolean;
+  /**
+   * Nothing to act on (no phone number on record, say). Greyed out before
+   * anyone taps it, but still pressable, so a tap can say why; not marked
+   * disabled, since it still does something. Pass an accessibilityLabel that
+   * says what's missing, for anyone who can't see the grey.
+   */
+  unavailable?: boolean;
 }) {
-  const ink = primary ? color.onBrand : color.brand;
+  const ink = unavailable ? color.labelTertiary : primary ? color.onBrand : color.brand;
   const press = usePressScale(0.94);
   const pop = usePop(on);
   return (

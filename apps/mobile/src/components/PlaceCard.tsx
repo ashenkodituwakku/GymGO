@@ -207,11 +207,15 @@ export function PlaceCard({
         <ActionButton
           icon="call"
           label="Call"
+          unavailable={!location.isDemoData && !location.phone}
+          accessibilityLabel={!location.isDemoData && !location.phone ? 'Call: no phone number on record' : undefined}
           onPress={location.isDemoData ? demo("that number isn't real, so we haven't dialled it.") : call}
         />
         <ActionButton
           icon="website"
           label="Website"
+          unavailable={!location.isDemoData && !location.website}
+          accessibilityLabel={!location.isDemoData && !location.website ? 'Website: none on record' : undefined}
           onPress={location.isDemoData ? demo("there's no real website to open.") : website}
         />
         {!saveAndShareElsewhere && (

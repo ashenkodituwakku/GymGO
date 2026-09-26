@@ -33,6 +33,16 @@ export function checkTimeZoneSupport(): SelfCheck {
     if (roundTrip !== 19 * 60) {
       return { ok: false, detail: `Reading local time gave minute ${roundTrip}.` };
     }
+    // The rest of the world too: a northern summer (New York, EDT, UTC−4) and
+    // a half-hour zone (India, UTC+5:30), where rounding to the hour breaks.
+    const north = zonedTimeToInstant('2026-07-01', 7 * 60, 'America/New_York').toISOString();
+    if (north !== '2026-07-01T11:00:00.000Z') {
+      return { ok: false, detail: `Northern daylight-saving conversion gave ${north}.` };
+    }
+    const half = localMinuteOfDay(new Date('2026-09-22T12:00:00.000Z'), 'Asia/Kolkata');
+    if (half !== 17 * 60 + 30) {
+      return { ok: false, detail: `A half-hour time zone gave minute ${half}.` };
+    }
     return { ok: true, detail: 'Time-zone support verified.' };
   } catch (error) {
     return { ok: false, detail: error instanceof Error ? error.message : 'Time-zone support failed.' };

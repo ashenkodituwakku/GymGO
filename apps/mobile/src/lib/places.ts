@@ -4,7 +4,9 @@
  * Inner Melbourne is real: real gyms, each fact sourced. Seven more
  * Australian cities, Sydney among them, forty US cities and fifteen
  * European ones are real too, but map-only: gyms from OpenStreetMap, with no
- * prices and no guest hours until a gym publishes them.
+ * prices and no guest hours until a gym publishes them. Every other country
+ * has its biggest cities by name (WORLD_CITIES), whose gyms are read from the
+ * map when you go there.
  *
  * The invented demo gyms, kept so every edge case can still be tried, sit on
  * inner-Sydney streets too. So they only appear in demo mode, and demo mode

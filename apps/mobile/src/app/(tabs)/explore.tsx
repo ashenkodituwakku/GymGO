@@ -669,7 +669,7 @@ function MapScreen() {
     <View style={[styles.selfCheck, { top: insets.top + 64 }]}>
       <Icon name="maybe" size={16} color={color.maybeInk} />
       <Txt variant="footnote" color={color.maybeInk} style={styles.flex}>
-        {`This device can't do Australian time zones reliably, so guest-hour answers may be an hour out. (${selfCheck.detail})`}
+        {`This device can't work out time zones reliably, so guest-hour answers may be an hour out. (${selfCheck.detail})`}
       </Txt>
     </View>
   );

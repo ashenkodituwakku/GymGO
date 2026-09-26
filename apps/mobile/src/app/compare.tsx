@@ -124,6 +124,56 @@ export default function Compare() {
     },
   ];
 
+  // Room for every gym across, at 150 points each, or it scrolls sideways.
+  const room = Math.min(width, 760) - space[4] * 2;
+  const fits = gyms.length * 150 <= room;
+  const tableWidth = Math.max(room, gyms.length * 150);
+
+  const head = (
+    <View style={styles.headRow}>
+      {gyms.map((result) => (
+        <View key={result.record.location.id} style={styles.head}>
+          <Pressable
+            onPress={() => router.push({ pathname: '/gym/[id]', params: { id: result.record.location.id } })}
+            accessibilityRole="link"
+            style={styles.flex}
+          >
+            <Txt variant="headline" numberOfLines={2}>
+              {result.record.location.name}
+            </Txt>
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+              {result.record.location.address.suburb}
+            </Txt>
+          </Pressable>
+          <Pressable
+            onPress={() => toggleCompare(result.record.location.id)}
+            accessibilityRole="button"
+            accessibilityLabel={`Remove ${result.record.location.name}`}
+            hitSlop={8}
+            style={styles.remove}
+          >
+            <Icon name="close" size={11} color={color.labelSecondary} weight="bold" />
+          </Pressable>
+        </View>
+      ))}
+    </View>
+  );
+
+  const body = rows.map((row) => (
+    <View key={row.label} style={styles.row}>
+      <Txt variant="eyebrow" color={color.labelSecondary}>
+        {row.label.toUpperCase()}
+      </Txt>
+      <View style={styles.cells}>
+        {row.cells.map((cell, index) => (
+          <Txt key={index} variant="subhead" color={cell.ink ?? color.label} style={[styles.cell, cell.strong && face('semibold')]}>
+            {cell.text}
+          </Txt>
+        ))}
+      </View>
+    </View>
+  ));
+
   return (
     <>
       <Stack.Screen
@@ -146,61 +196,28 @@ export default function Compare() {
           ),
         }}
       />
-      <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
+      <ScrollView
+        style={styles.page}
+        contentContainerStyle={styles.content}
+        contentInsetAdjustmentBehavior="automatic"
+        // When every gym fits across, their names stay at the top as the rows scroll under them.
+        stickyHeaderIndices={fits ? [1] : undefined}
+      >
         <Txt variant="footnote" color={color.labelSecondary}>
           For a visit {visitWhen(filters.visitMinuteOfDay, visitIsLater(filters))}. The cheapest confirmed price is in bold.
         </Txt>
-        {/* Wider than the screen with four gyms: it scrolls sideways. */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tableScroll}>
-          <View style={[styles.table, { width: Math.max(Math.min(width, 760) - space[4] * 2, gyms.length * 150) }]}>
-            <View style={styles.headRow}>
-              {gyms.map((result) => (
-                <View key={result.record.location.id} style={styles.head}>
-                  <Pressable
-                    onPress={() => router.push({ pathname: '/gym/[id]', params: { id: result.record.location.id } })}
-                    accessibilityRole="link"
-                    style={styles.flex}
-                  >
-                    <Txt variant="headline" numberOfLines={2}>
-                      {result.record.location.name}
-                    </Txt>
-                    <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-                      {result.record.location.address.suburb}
-                    </Txt>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => toggleCompare(result.record.location.id)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Remove ${result.record.location.name}`}
-                    hitSlop={8}
-                    style={styles.remove}
-                  >
-                    <Icon name="close" size={11} color={color.labelSecondary} weight="bold" />
-                  </Pressable>
-                </View>
-              ))}
+        {fits ? (
+          <View style={styles.stickyHead}>{head}</View>
+        ) : (
+          // Wider than the screen (four gyms on a phone): it scrolls sideways, names and all.
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tableScroll}>
+            <View style={[styles.table, { width: tableWidth }]}>
+              {head}
+              {body}
             </View>
-            {rows.map((row) => (
-              <View key={row.label} style={styles.row}>
-                <Txt variant="eyebrow" color={color.labelSecondary}>
-                  {row.label.toUpperCase()}
-                </Txt>
-                <View style={styles.cells}>
-                  {row.cells.map((cell, index) => (
-                    <Txt
-                      key={index}
-                      variant="subhead"
-                      color={cell.ink ?? color.label}
-                      style={[styles.cell, cell.strong && face('semibold')]}
-                    >
-                      {cell.text}
-                    </Txt>
-                  ))}
-                </View>
-              </View>
-            ))}
-          </View>
-        </ScrollView>
+          </ScrollView>
+        )}
+        {fits && <View style={styles.tableFits}>{body}</View>}
         {!billing.isPro && (
           <Pressable onPress={() => openPro('compare')} accessibilityRole="button" style={styles.upsell}>
             <Txt variant="subhead" color={color.brand} style={face('semibold')}>
@@ -222,6 +239,9 @@ const styles = themed(() => StyleSheet.create({
   content: { padding: space[4], gap: space[3], width: '100%', maxWidth: 760, alignSelf: 'center', paddingBottom: space[8] },
   tableScroll: { marginHorizontal: -space[4] },
   table: { gap: space[3], marginHorizontal: space[4] },
+  tableFits: { gap: space[3] },
+  // Covers the rows scrolling under the names, edge to edge of the column.
+  stickyHead: { backgroundColor: color.groupedBackground, paddingVertical: space[2], marginVertical: -space[2] },
   upsell: { alignSelf: 'center', paddingVertical: space[2] },
   headRow: { flexDirection: 'row', gap: space[3] },
   head: {

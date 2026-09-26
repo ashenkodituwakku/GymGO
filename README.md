@@ -204,6 +204,9 @@ Good to know:
   - "Signing requires a development team": step 2 of "In Xcode" above.
   - "No such module" or odd build errors after an update: Product → Clean
     Build Folder (⇧⌘K) in Xcode, then Run.
+  - "Reference to type 'INIntent' broken by a context change" (Expo.swiftmodule):
+    your copy predates the fix in `patches/`. Update GymGO with the launcher
+    (it reinstalls and remakes the project), then Clean Build Folder and Run.
 - In the Simulator, set where "you" are with **Features → Location**.
 - A **Release** build (Product → Scheme → Edit Scheme → Run → Build
   Configuration) carries its code inside the app, so it runs without the

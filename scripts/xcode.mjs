@@ -65,6 +65,10 @@ export function configFingerprint(bundleId = process.env.GYMGO_IOS_BUNDLE_ID || 
   // The app icon and splash images are copied into the project too.
   const images = join(mobileDir, 'assets', 'images');
   if (existsSync(images)) for (const file of readdirSync(images).sort()) hash.update(readFileSync(join(images, file)));
+  // A patched dependency (patches/, applied by pnpm) moves to a new folder
+  // under node_modules, and the project's native parts point at the old one.
+  const patches = join(root, 'patches');
+  if (existsSync(patches)) for (const file of readdirSync(patches).sort()) hash.update(`${file}\n`).update(readFileSync(join(patches, file)));
   hash.update(`${bundleId}|${team ?? ''}|${process.env.GYMGO_APPLE_SIGN_IN ?? ''}|${process.env.GYMGO_GOOGLE_CLIENT_ID_IOS ?? ''}`);
   return hash.digest('hex').slice(0, 16);
 }

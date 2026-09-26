@@ -264,15 +264,15 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 |---|---|
 | `pnpm typecheck` | Clean, every package |
 | `pnpm lint` | No ESLint warnings or errors (web); tsc clean elsewhere |
-| `@gymgo/domain` unit tests | **121 passed** |
+| `@gymgo/domain` unit tests | **122 passed** |
 | `@gymgo/demo-data` unit tests | **23 passed** |
 | `@gymgo/melbourne-data` unit tests | **11 passed** |
 | `@gymgo/au-data` unit tests | **11 passed** |
 | `@gymgo/usa-data` unit tests | **12 passed** |
 | `@gymgo/eu-data` unit tests | **10 passed** |
 | `@gymgo/osm` unit tests | **25 passed** |
-| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **130 passed** |
-| `@gymgo/mobile` unit tests | **124 passed** |
+| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **131 passed** |
+| `@gymgo/mobile` unit tests | **131 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
 | `expo export` (iOS + Android) | Both compiled to Hermes bytecode |
 | `expo-doctor` | 21/21 checks passed |

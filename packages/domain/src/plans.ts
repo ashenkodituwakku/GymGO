@@ -65,13 +65,13 @@ export const PRO_PRODUCT = {
 
 /** What Pro adds, with what Free gets instead. */
 export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; pro: string }> = [
-  { emoji: '🌍', title: 'Gyms worldwide', free: 'Your country', pro: 'Every country, wherever you travel' },
+  { emoji: '🌍', title: 'Gyms worldwide', free: 'Your country', pro: 'Every country' },
   { emoji: '🔖', title: 'Saved gyms', free: `Up to ${LIMITS.free.savedGyms}`, pro: 'Unlimited' },
   { emoji: '⚖️', title: 'Compare side by side', free: `${LIMITS.free.compare} gyms`, pro: `${LIMITS.pro.compare} gyms` },
-  { emoji: '💪', title: 'Workout library', free: 'Build and share', pro: 'Save them, reopen on any device' },
-  { emoji: '📈', title: 'Progress charts', free: 'Your records and history', pro: 'A chart for every exercise' },
-  { emoji: '🎯', title: 'Next-session targets', free: 'Last time’s numbers', pro: 'What to lift next, worked out for you' },
-  { emoji: '🎨', title: 'Colour themes', free: 'Indigo, light or dark', pro: 'Five accents, light or dark' },
+  { emoji: '💪', title: 'Workout library', free: 'Build and share', pro: 'Saved to your account' },
+  { emoji: '📈', title: 'Progress charts', free: 'Records and history', pro: 'A chart per exercise' },
+  { emoji: '🎯', title: 'Session targets', free: 'Last time’s numbers', pro: 'What to lift next' },
+  { emoji: '🎨', title: 'Colour themes', free: 'Indigo, light or dark', pro: 'Five accent colours' },
 ];
 
 /** Free for everyone, always. Listed on the Pro screen so nobody wonders. */

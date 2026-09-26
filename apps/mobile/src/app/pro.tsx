@@ -36,7 +36,7 @@ const FEATURE_ICON: Record<string, IconName> = {
   'Compare side by side': 'compare',
   'Workout library': 'workout',
   'Progress charts': 'chart',
-  'Next-session targets': 'target',
+  'Session targets': 'target',
   'Colour themes': 'palette',
 };
 
@@ -173,7 +173,7 @@ export default function ProScreen() {
             <Txt variant="footnote" color={color.labelSecondary} style={styles.column}>
               FREE
             </Txt>
-            <Txt variant="footnote" color={color.brand} style={[styles.column, face('semibold')]}>
+            <Txt variant="footnote" color={color.brand} style={[styles.column, styles.proColumn, face('semibold')]}>
               PRO
             </Txt>
           </View>
@@ -188,7 +188,7 @@ export default function ProScreen() {
               <Txt variant="footnote" color={color.labelSecondary} style={styles.column}>
                 {feature.free}
               </Txt>
-              <Txt variant="footnote" color={color.label} style={[styles.column, face('semibold')]}>
+              <Txt variant="footnote" color={color.label} style={[styles.column, styles.proColumn, face('semibold')]}>
                 {feature.pro}
               </Txt>
             </View>
@@ -411,6 +411,8 @@ const styles = themed(() => StyleSheet.create({
   tableRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   featureIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
   column: { width: 84, textAlign: 'center' },
+  // Pro's column is the one being sold: room for its words on a phone.
+  proColumn: { width: 100 },
   plans: { gap: space[3] },
   plan: {
     flexDirection: 'row',

@@ -19,10 +19,10 @@ import { Txt } from '@/components/ui';
 import { useActiveSession } from '@/lib/activeSession';
 import { useApp } from '@/lib/app-state';
 import { lookupLine, noGymsLine, searchPrompt, timeLabel, visitWhen } from '@/lib/copy';
-import { countryInSentence } from '@/lib/country';
+import { countryInSentence, countryName } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
-import { PLACES, activeCities, cityNear, cityPlace, moneyLabel, tracksPrices, type AppPlace } from '@/lib/places';
-import { atPlace, moveTo, nearLabel, nextVisitAt, runSearch, visitIsLater, type Filters } from '@/lib/query';
+import { PLACES, activeCities, cityNear, cityPlace, moneyLabel, tracksPrices, worldCitiesIn, type AppPlace, type City, type WorldCity } from '@/lib/places';
+import { atPlace, atWorldCity, moveTo, nearLabel, nextVisitAt, runSearch, visitIsLater, type Filters } from '@/lib/query';
 import { resultsById } from '@/lib/results';
 import { color, dropShadow, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -78,6 +78,16 @@ export default function Home() {
       : PLACES.filter((place) => place.city === city.id && place.name !== city.name).slice(0, 10);
   // In demo mode there's only the demo, so no other cities.
   const otherCities = activeCities().filter((item) => item.id !== city?.id);
+  // Your own country first: the cities GymGO carries there, then its other
+  // biggest (their gyms are read from the map when you go), bar where you are.
+  const home = prefs.country;
+  const homeCities: Array<City | WorldCity> = home
+    ? [...otherCities.filter((item) => item.country === home), ...worldCitiesIn(home).filter((item) => item.name !== filters.placeName)]
+    : [];
+  const groups = [
+    ...(home && homeCities.length ? [{ label: countryName(home), cities: homeCities }] : []),
+    ...REGIONS.map(({ label, has }) => ({ label, cities: otherCities.filter((item) => has(item.country) && item.country !== home) })),
+  ].filter((group) => group.cities.length > 0);
 
   const explore = (request: Parameters<typeof requestExplore>[0] = {}) => {
     requestExplore(request);
@@ -89,6 +99,8 @@ export default function Home() {
     explore({ recentre: true });
   };
   const goToPlace = (place: AppPlace) => pick((current) => moveTo(current, atPlace(place)));
+  const goToCity = (item: City | WorldCity) =>
+    'id' in item ? goToPlace(cityPlace(item)) : pick((current) => moveTo(current, atWorldCity(item)));
   const visit = (minute: number) => {
     const next = nextVisitAt(minute, filters.timezone);
     return { visitDate: next.date, visitMinuteOfDay: next.minute, visitPicked: true };
@@ -326,43 +338,44 @@ export default function Home() {
       </View>
       )}
 
-      {/* Other cities ------------------------------------------------------- */}
-      {otherCities.length > 0 && (
+      {/* Cities: your country's first ------------------------------------ */}
+      {groups.length > 0 && (
         <View style={styles.section}>
-          <SectionHeader icon="globe-hemisphere-west" title={city ? 'Other cities' : 'Cities GymGO knows well'} />
+          <SectionHeader icon="globe-hemisphere-west" title={city ? 'Other cities' : 'Cities'} />
           <Txt variant="footnote" color={color.labelSecondary} style={styles.anywhere}>
             Or anywhere in the world: type a town on the map, or move the map and tap Search this area.
           </Txt>
-          {REGIONS.map(({ label, has }) => {
-            const all = otherCities.filter((item) => has(item.country));
-            if (all.length === 0) return null;
+          {groups.map(({ label, cities }) => {
             // A long list (the US has 40) shows its first dozen until asked for the rest.
-            const open = showAll[label] === true || all.length <= CITIES_SHOWN + 2;
-            const list = open ? all : all.slice(0, CITIES_SHOWN);
+            const open = showAll[label] === true || cities.length <= CITIES_SHOWN + 2;
+            const list = open ? cities : cities.slice(0, CITIES_SHOWN);
             return (
               <View key={label} style={styles.country}>
                 <Txt variant="footnote" color={color.labelSecondary} style={styles.countryLabel}>
                   {label.toUpperCase()}
                 </Txt>
                 <View style={styles.suburbs}>
-                  {list.map((item) => (
-                    <Pressable
-                      key={item.id}
-                      onPress={() => goToPlace(cityPlace(item))}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${item.name}, ${label === 'Europe' ? item.region : label}${mayExplore(item.country) ? '' : ', with GymGO Pro'}`}
-                      style={({ pressed }) => [styles.suburb, styles.cityChip, pressed && { opacity: 0.7 }]}
-                    >
-                      <Txt variant="subhead" style={face('medium')}>
-                        {item.name}
-                      </Txt>
-                      {!mayExplore(item.country) && (
-                        <Txt variant="caption" color={color.brand} style={styles.proTag}>
-                          PRO
+                  {list.map((item) => {
+                    const where = 'id' in item ? (label === 'Europe' ? item.region : countryName(item.country)) : countryName(item.country);
+                    return (
+                      <Pressable
+                        key={'id' in item ? item.id : `${item.country}:${item.name}`}
+                        onPress={() => goToCity(item)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${item.name}, ${where}${mayExplore(item.country) ? '' : ', with GymGO Pro'}`}
+                        style={({ pressed }) => [styles.suburb, styles.cityChip, pressed && { opacity: 0.7 }]}
+                      >
+                        <Txt variant="subhead" style={face('medium')}>
+                          {item.name}
                         </Txt>
-                      )}
-                    </Pressable>
-                  ))}
+                        {!mayExplore(item.country) && (
+                          <Txt variant="caption" color={color.brand} style={styles.proTag}>
+                            PRO
+                          </Txt>
+                        )}
+                      </Pressable>
+                    );
+                  })}
                   {!open && (
                     <Pressable
                       onPress={() => {
@@ -370,11 +383,11 @@ export default function Home() {
                         setShowAll((current) => ({ ...current, [label]: true }));
                       }}
                       accessibilityRole="button"
-                      accessibilityLabel={`${all.length - CITIES_SHOWN} more cities in ${label}`}
+                      accessibilityLabel={`${cities.length - CITIES_SHOWN} more cities in ${label}`}
                       style={({ pressed }) => [styles.suburb, styles.moreChip, pressed && { opacity: 0.7 }]}
                     >
                       <Txt variant="subhead" color={color.brand} style={face('semibold')}>
-                        {all.length - CITIES_SHOWN} more
+                        {cities.length - CITIES_SHOWN} more
                       </Txt>
                     </Pressable>
                   )}

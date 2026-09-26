@@ -19,6 +19,7 @@ import { MELBOURNE, MELBOURNE_CENTRE, MELBOURNE_PLACES } from '@gymgo/melbourne-
 import { AU_CITIES, AU_PLACES, type AuCityId } from '@gymgo/au-data';
 import { US_CITIES, US_PLACES, type UsCityId } from '@gymgo/usa-data';
 import { EU_CITIES, EU_PLACES, type EuCityId } from '@gymgo/eu-data';
+import { WORLD_CITY_ROWS } from './worldCities';
 
 export type CityId = 'melbourne' | 'sydney-demo' | AuCityId | UsCityId | EuCityId;
 
@@ -317,6 +318,62 @@ export function cityNear(point: LatLng): City | null {
 
 /** The city a search centre is in, or the nearest one. */
 export const cityAt = (point: LatLng): City => cityNear(point) ?? nearestCity(point).city;
+
+// --- Every country's cities -------------------------------------------------------
+
+/**
+ * One of a country's biggest cities that GymGO has no gyms built in for
+ * (Osaka, Toronto, São Paulo): somewhere to go. Its gyms are read from
+ * OpenStreetMap when you get there (see wantsLookup in query.ts).
+ */
+export interface WorldCity {
+  name: string;
+  /** ISO 3166-1 alpha-2, as the server names the country of a gym there. */
+  country: string;
+  centre: LatLng;
+  timezone: string;
+}
+
+export const WORLD_CITIES: WorldCity[] = WORLD_CITY_ROWS.map(([name, country, lat, lng, timezone]) => ({ name, country, centre: { lat, lng }, timezone }));
+
+const REAL_CITIES = CITY_LIST.filter((city) => !city.demo);
+
+/** A city GymGO carries already (New York, Paris): it has its own chip and its own gyms. */
+const carried = (city: WorldCity) => {
+  const { city: nearest, km } = nearestCity(city.centre, REAL_CITIES);
+  return km <= nearest.reachKm;
+};
+
+/** The world cities GymGO doesn't carry already, worked out once. */
+let uncarried: WorldCity[] | null = null;
+const notCarried = (): WorldCity[] => (uncarried ??= WORLD_CITIES.filter((city) => !carried(city)));
+
+/** A country's biggest cities that GymGO doesn't carry already, biggest first. None in demo mode. */
+export function worldCitiesIn(country: string): WorldCity[] {
+  if (demoMode) return [];
+  return notCarried().filter((city) => city.country === country);
+}
+
+/**
+ * Those cities whose names start with what was typed ("osa" → Osaka), your
+ * own country's first, then the biggest. Two letters at least; none in demo mode.
+ */
+export function suggestWorldCities(query: string, limit = 4, home: string | null = null): WorldCity[] {
+  const needle = normalise(query);
+  if (needle.length < 2 || demoMode) return [];
+  return notCarried()
+    .filter((city) => normalise(city.name).startsWith(needle))
+    .map((city, index) => ({ city, index }))
+    .sort((a, b) => Number(normalise(a.city.name) !== needle) - Number(normalise(b.city.name) !== needle) || Number(a.city.country !== home) - Number(b.city.country !== home) || a.index - b.index)
+    .slice(0, limit)
+    .map(({ city }) => city);
+}
+
+/** The city with exactly this name, your own country's if two share it ("Hamilton"). */
+export const worldCityNamed = (query: string, home: string | null = null): WorldCity | null => {
+  const [best] = suggestWorldCities(query, 1, home);
+  return best && normalise(best.name) === normalise(query) ? best : null;
+};
 
 // --- Units and money ----------------------------------------------------------
 

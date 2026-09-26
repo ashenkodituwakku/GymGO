@@ -327,15 +327,15 @@ the search: it is never saved, and never sent to the GymGO server or anyone
 else. If you've only allowed approximate location (iPhone's "Precise: Off",
 or Android's "Approximate"), GymGO says so, because distances will be off.
 
-If you're outside the cities GymGO carries but still in Australia or the
-US, it searches the map around you (as "Search this area" does) and opens
-"Near you" with what it finds, labelled as map data. To do that without
+If you're outside the cities GymGO carries, anywhere in the world, it
+searches the map around you (as "Search this area" does) and opens "Near
+you" with what it finds, labelled as map data. To do that without
 sending your position, it asks the server for the whole map tiles around
 you: a block about 30 km across, exactly the same request for anyone in
 the same 11 km tile. Your precise position still never leaves the device;
-it's used there to sort by distance. Only outside those two
-countries, or if the map servers can't be reached, does it take you to the
-nearest city it carries, and say how far away that is.
+it's used there to sort by distance. Only if the map servers can't be
+reached does it take you to your country's opening city (or, before you've
+chosen a country, the nearest city it carries), and say why.
 
 ### Emails, classes and facilities (free)
 
@@ -377,6 +377,13 @@ is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
   first**. Distances are in miles in London and kilometres elsewhere.
   Members can report what a visit cost in €, £ or CHF; in Stockholm and
   Copenhagen (kronor) prices aren't kept yet.
+- **Every other country**: choose any country and GymGO opens on its
+  capital (or where you are) and reads the gyms around it from
+  OpenStreetMap by itself ("Looking for gyms around Tokyo…"). Home lists
+  your country's biggest cities (up to twelve, from GeoNames: Osaka,
+  Toronto, São Paulo…), and the search box suggests them as you type;
+  their gyms are read from the map when you go. Like the cities above,
+  these are **map-only**.
 - **Demo mode** (Profile → Preferences, off to start): invented gyms in inner
   Sydney that show every case GymGO handles, from "Good to go" to "Not a
   fit". Turning it on hides every real gym, and turning it off hides every

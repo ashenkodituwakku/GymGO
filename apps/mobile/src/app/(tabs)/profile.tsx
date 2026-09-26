@@ -194,7 +194,8 @@ export default function Profile() {
         {about === 'sources' && (
           <Explainer>
             Gym names, map positions and most opening hours: © OpenStreetMap contributors (ODbL), read on 24 September 2026,
-            or live when you search an area. Towns you type are found with Photon, from the same map. For Melbourne’s 23
+            or live when you search an area. Towns you type are found with Photon, from the same map; each country’s biggest
+            cities come from GeoNames (CC BY 4.0). For Melbourne’s 23
             researched gyms, prices, hours and equipment come from each gym’s own website, read on 23 September 2026. Logos:
             Wikimedia Commons for ten chains, otherwise the icon on the gym’s own website. Maps: Apple Maps on iPhone,
             OpenFreeMap elsewhere. The Google page shows Google’s own map and Street View, straight from Google. Photos,

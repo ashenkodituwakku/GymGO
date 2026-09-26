@@ -11,9 +11,9 @@ import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, TextInp
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE } from './motion';
 import { explainNoMatches, haversineKm, type GymRecord, type SearchOutcome } from '@gymgo/domain';
-import { countryInSentence } from '@/lib/country';
+import { countryInSentence, countryName } from '@/lib/country';
 import { suggestGyms } from '@/lib/gymSearch';
-import { cityAt, distanceLabel, moneyLabel, placeContext, suggestPlaces, tracksPrices, type AppPlace } from '@/lib/places';
+import { cityAt, distanceLabel, moneyLabel, placeContext, suggestPlaces, suggestWorldCities, tracksPrices, type AppPlace, type WorldCity } from '@/lib/places';
 import { EMPTY, PLACEHOLDER, TIER, lookupLine, searchPrompt, sessionGreeting, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
 import type { Lookup } from '@/lib/app-state';
 import { SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
@@ -33,6 +33,7 @@ export function ResultsContent({
   onQueryChange,
   onSearchFocus,
   onPickPlace,
+  onPickWorldCity,
   onSubmitSearch,
   onToggleEquipment,
   onToggleBudget,
@@ -62,6 +63,8 @@ export function ResultsContent({
   onQueryChange: (text: string) => void;
   onSearchFocus: () => void;
   onPickPlace: (place: AppPlace) => void;
+  /** One of a country's biggest cities GymGO has no gyms built in for. */
+  onPickWorldCity: (city: WorldCity) => void;
   onSubmitSearch: () => void;
   onToggleEquipment: (id: string) => void;
   onToggleBudget: () => void;
@@ -100,6 +103,8 @@ export function ResultsContent({
   const SearchInput = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
   const city = cityAt(filters.centre);
   const suggestions = query.trim() ? suggestPlaces(query, 6, city.id) : [];
+  // Then the biggest cities of every country ("Osaka", "Toronto"), your own country's first.
+  const worldSuggestions = query.trim() ? suggestWorldCities(query, Math.min(3, 6 - suggestions.length), home) : [];
   // Gyms by name too ("Equinox", "snap fit"), nearest first, after places.
   const gymSuggestions = query.trim() ? suggestGyms(query, records, filters.centre, 4) : [];
   const filterCount = activeFilterCount(filters);
@@ -168,7 +173,7 @@ export function ResultsContent({
         </Pressable>
       </View>
 
-      {(suggestions.length > 0 || gymSuggestions.length > 0) && (
+      {(suggestions.length > 0 || worldSuggestions.length > 0 || gymSuggestions.length > 0) && (
         <View style={styles.suggestions}>
           {suggestions.map((place) => (
             <Pressable
@@ -191,6 +196,30 @@ export function ResultsContent({
                 <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
                   {placeContext(place)}
                   {place.city === 'sydney-demo' ? ' · invented demo' : ''}
+                </Txt>
+              </View>
+            </Pressable>
+          ))}
+          {worldSuggestions.map((item) => (
+            <Pressable
+              key={`${item.country}:${item.name}`}
+              onPress={() => {
+                haptic.select();
+                onPickWorldCity(item);
+              }}
+              style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.name}, ${countryName(item.country)}`}
+            >
+              <View style={styles.suggestionGlyph}>
+                <Icon name="pin" size={16} color={color.onBrand} />
+              </View>
+              <View style={styles.suggestionText}>
+                <Txt variant="body" numberOfLines={1}>
+                  {item.name}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                  {countryName(item.country)}
                 </Txt>
               </View>
             </Pressable>

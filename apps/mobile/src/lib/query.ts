@@ -30,7 +30,7 @@ import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { AU_GYMS } from '@gymgo/au-data';
 import { US_GYMS } from '@gymgo/usa-data';
 import { EU_GYMS } from '@gymgo/eu-data';
-import { CITIES, DEFAULT_PLACE, type AppPlace } from './places';
+import { CITIES, DEFAULT_PLACE, type AppPlace, type WorldCity } from './places';
 
 /**
  * The records bundled into the app: real Melbourne first, then the other
@@ -155,6 +155,11 @@ export type Whereabouts = Pick<Filters, 'centre' | 'placeName' | 'timezone' | 'c
 export function atPlace(place: AppPlace): Whereabouts {
   const city = CITIES[place.city];
   return { centre: place.position, placeName: place.name, timezone: city.timezone, countryCode: city.country };
+}
+
+/** Where a search is in one of a country's cities GymGO has no gyms built in for. */
+export function atWorldCity(city: WorldCity): Whereabouts {
+  return { centre: city.centre, placeName: city.name, timezone: city.timezone, countryCode: city.country };
 }
 
 /**

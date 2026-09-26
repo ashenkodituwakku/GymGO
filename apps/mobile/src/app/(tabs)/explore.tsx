@@ -28,11 +28,11 @@ import { ApiError, api, problemText, type FoundPlace } from '@/lib/api';
 import { EMPTY, locatedNotice } from '@/lib/copy';
 import { openingPlace } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
-import { cityAt, cityNear, geocodePlace, type AppPlace } from '@/lib/places';
+import { cityAt, cityNear, geocodePlace, worldCityNamed, type AppPlace, type WorldCity } from '@/lib/places';
 import { useApp } from '@/lib/app-state';
 import { enterOpensGym, placeForEnter, suggestGyms } from '@/lib/gymSearch';
 import { useBottomClearance } from '@/lib/layout';
-import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, boxAround, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
+import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, atWorldCity, boxAround, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
 import { CHILD_TOUCH, NO_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
@@ -152,6 +152,19 @@ function MapScreen() {
     [],
   );
 
+  /** One of a country's biggest cities GymGO has no gyms built in for: its gyms are read from the map there. */
+  const pickWorldCity = useCallback(
+    (city: WorldCity) => {
+      Keyboard.dismiss();
+      setQuery('');
+      setFilters((current) => moveTo(current, atWorldCity(city)));
+      setNotice(null);
+      map.current?.flyTo(city.centre, 0.1);
+      mainSheet.current?.snapToIndex(1);
+    },
+    [],
+  );
+
   // openGym and searchBox are defined below; the search reaches them through these refs.
   const openGymRef = useRef<(id: string) => void>(() => undefined);
   const searchBoxRef = useRef<(box: BoundingBox, named?: FoundPlace) => Promise<void>>(async () => undefined);
@@ -207,13 +220,16 @@ function MapScreen() {
     const result = geocodePlace(query, cityAt(filters.centre).id);
     Keyboard.dismiss();
     if (result.place) return pickPlace(result.place);
+    // One of a country's biggest cities, by its exact name: no need to look it up.
+    const world = worldCityNamed(query.trim(), prefs.country);
+    if (world) return pickWorldCity(world);
     // Not a place: maybe a gym's name. Open the best match if it's nearby
     // and the words aren't its town; otherwise look them up as a place
     // anywhere in the world first, falling back to the gym.
     const gym = suggestGyms(query, searchable, filters.centre, 1)[0];
     if (gym && enterOpensGym(query, gym, filters.centre, searchable)) return openGymRef.current(gym.location.id);
     if (result.outOfArea) void findPlace(query.trim(), gym?.location.id);
-  }, [query, pickPlace, filters.centre, searchable, findPlace]);
+  }, [query, pickPlace, pickWorldCity, prefs.country, filters.centre, searchable, findPlace]);
 
   // Your precise position, used for this search on this device only.
   // While it's finding you the button spins, and another tap waits for this one.
@@ -534,6 +550,7 @@ function MapScreen() {
       onQueryChange={setQuery}
       onSearchFocus={() => mainSheet.current?.snapToIndex(2)}
       onPickPlace={pickPlace}
+      onPickWorldCity={pickWorldCity}
       onSubmitSearch={submitSearch}
       onToggleEquipment={toggleEquipment}
       onToggleBudget={toggleBudget}

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { haversineKm } from '@gymgo/domain';
-import { CITIES, CITY_LIST, DEFAULT_PLACE, activeCities, cityAt, cityNear, distanceLabel, geocodePlace, homePlace, moneyLabel, nearestCity, placeContext, radiusChoices, setDemoMode, suggestPlaces, tracksPrices } from './places';
-import { BUNDLED_GYMS, atPlace, initialFilters, moveTo, runSearch } from './query';
+import { CITIES, CITY_LIST, DEFAULT_PLACE, WORLD_CITIES, activeCities, cityAt, cityNear, distanceLabel, geocodePlace, homePlace, moneyLabel, nearestCity, placeContext, radiusChoices, setDemoMode, suggestPlaces, suggestWorldCities, tracksPrices, worldCitiesIn, worldCityNamed } from './places';
+import { COUNTRIES } from './countries';
+import { BUNDLED_GYMS, atPlace, atWorldCity, initialFilters, moveTo, runSearch } from './query';
 
 describe('places', () => {
   it('opens on Melbourne, where the real gyms are', () => {
@@ -189,6 +190,48 @@ describe('places', () => {
       expect(result.record.offers).toEqual([]);
       // No guest hours or price: never a sure thing.
       expect(result.tier).not.toBe('confirmed');
+    }
+  });
+});
+
+describe('every country\u2019s cities', () => {
+  it('lists a country\u2019s biggest cities, biggest first, leaving out the ones GymGO carries', () => {
+    const japan = worldCitiesIn('JP').map((city) => city.name);
+    expect(japan[0]).toBe('Tokyo');
+    expect(japan).toEqual(expect.arrayContaining(['Osaka', 'Kyoto', 'Sapporo']));
+    // London and New York have their own gyms built in; Manchester doesn't.
+    expect(worldCitiesIn('GB').map((city) => city.name)).not.toContain('London');
+    expect(worldCitiesIn('GB').map((city) => city.name)).toContain('Manchester');
+    expect(worldCitiesIn('US').map((city) => city.name)).not.toContain('New York City');
+  });
+
+  it('suggests them as you type, your own country\u2019s first', () => {
+    expect(suggestWorldCities('osa')[0]?.name).toBe('Osaka');
+    expect(suggestWorldCities('Hamilton', 4, 'NZ')[0]?.country).toBe('NZ');
+    expect(suggestWorldCities('Hamilton', 4, 'CA')[0]?.country).toBe('CA');
+    expect(suggestWorldCities('s')).toEqual([]);
+    expect(worldCityNamed('toronto')?.country).toBe('CA');
+    expect(worldCityNamed('toron')).toBeNull();
+    expect(worldCityNamed('sao paulo')?.name).toBe('São Paulo');
+  });
+
+  it('keeps every city in a country you can choose, on a real clock', () => {
+    const codes = new Set(COUNTRIES.map((country) => country.code));
+    for (const city of WORLD_CITIES) {
+      expect(codes.has(city.country), city.name).toBe(true);
+      expect(() => new Intl.DateTimeFormat('en', { timeZone: city.timezone }), city.name).not.toThrow();
+    }
+    const osaka = atWorldCity(worldCityNamed('Osaka')!);
+    expect(osaka).toMatchObject({ placeName: 'Osaka', timezone: 'Asia/Tokyo', countryCode: 'JP' });
+  });
+
+  it('stays out of demo mode, which has only the invented gyms', () => {
+    setDemoMode(true);
+    try {
+      expect(worldCitiesIn('JP')).toEqual([]);
+      expect(suggestWorldCities('osaka')).toEqual([]);
+    } finally {
+      setDemoMode(false);
     }
   });
 });

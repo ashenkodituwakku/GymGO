@@ -72,6 +72,15 @@ each capital, where the app opens in a country without a built-in city, from
 [Wikidata](https://www.wikidata.org) (CC0), with its time zone from
 tz-lookup. `apps/mobile/scripts/countries.mjs` rebuilds it.
 
+Each country's biggest cities (up to twelve, on Home and in the search box,
+where GymGO has no built-in city) and their populations come from
+[GeoNames](https://www.geonames.org) (CC BY 4.0), through the
+[all-the-cities](https://github.com/zeke/all-the-cities) package (MIT),
+with each city's country from country-coder and its time zone from
+tz-lookup. Only names and positions: the gyms there are read from
+OpenStreetMap when you go. `apps/mobile/scripts/world-cities.mjs` rebuilds
+it.
+
 "Search this area" reads the same map live, through the Overpass API, for
 wherever the map is showing; those gyms are filtered by the same rules and
 carry the same credit and link.

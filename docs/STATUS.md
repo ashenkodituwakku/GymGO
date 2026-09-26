@@ -16,7 +16,7 @@ this document could do.
 | Download my data (everything held about you, as one JSON file; no password hash or tokens) | ✅ | ✅ 1 server test + downloaded and read in the browser; phone share sheet not seen | n/a | ❌ |
 | Report a bug (Profile, and the crash screen): kept on the server, emailed to the team through the owner's SMTP account, retried, 5 an hour per person, 50 emails a day | ✅ | ✅ 15 server tests + 3 app tests + sent from the browser, signed in and out, offline and from the crash screen, into a local stand-in mail server | ❌ no SMTP account set; no real inbox has received one | ❌ |
 | Moderators review and remove members' price and visit reports | ✅ | ✅ 1 server test (members refused) + the list seen in the browser | n/a | ❌ |
-| Members' visit prices: one report per member per gym, median and range, no names, 2-year window; "~A$22 · members say" in lists when the gym publishes none; kept in A$, US$, €, £ or CHF by the gym's country (older databases migrate themselves) | ✅ | ✅ 4 server tests + 2 app tests + a euro report for a Berlin gym + the migration tested on an old-schema file + reported and shown in the browser (A$ only: gym page and list) | n/a | ❌ |
+| Members' visit prices: one report per member per gym, median and range, no names, 2-year window; "~A$22 · members say" in lists when the gym publishes none; kept in the gym's country's own currency, never converted, with the typo check (1 to 500 dollars' worth) and budget steps sized to it (¥100 to ¥50,000; "Under ¥2,500"); none where the exchange rate is too unsettled (Iran, Lebanon, Venezuela, Syria, Cuba, Myanmar, Yemen, Sudan, South Sudan, North Korea); older databases migrate themselves | ✅ | ✅ 7 server tests (euros in Berlin, NZ$ in Auckland, yen in Tokyo with ¥50 refused, none in Tehran) + app and domain tests (every listed country's money, labels such as "¥1,500" and "Rp500,000", typed "¥1,500" and "24,50") + both older schemas migrated + reported and shown in the browser | n/a | ❌ |
 | Sign-up, sign-in, sign-out, delete account | ✅ | ✅ tests + driven in the browser | ❌ no email verification | ❌ |
 | Saved gyms synced to the account | ✅ | ✅ tests + driven in the browser | n/a | ❌ |
 | Reviews held for moderation; moderator queue | ✅ | ✅ tests; posting driven in the browser | n/a | ❌ |
@@ -267,15 +267,15 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 |---|---|
 | `pnpm typecheck` | Clean, every package |
 | `pnpm lint` | No ESLint warnings or errors (web); tsc clean elsewhere |
-| `@gymgo/domain` unit tests | **122 passed** |
+| `@gymgo/domain` unit tests | **126 passed** |
 | `@gymgo/demo-data` unit tests | **23 passed** |
 | `@gymgo/melbourne-data` unit tests | **11 passed** |
 | `@gymgo/au-data` unit tests | **11 passed** |
 | `@gymgo/usa-data` unit tests | **12 passed** |
 | `@gymgo/eu-data` unit tests | **10 passed** |
 | `@gymgo/osm` unit tests | **25 passed** |
-| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **146 passed** |
-| `@gymgo/mobile` unit tests | **144 passed** |
+| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **149 passed** |
+| `@gymgo/mobile` unit tests | **146 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
 | `expo export` (iOS + Android) | Both compiled to Hermes bytecode |
 | `expo-doctor` | 21/21 checks passed |
@@ -348,12 +348,14 @@ name; the skip link works.
   nobody can search other countries (they can switch their own country in
   Profile). The rule is checked by the server for live area searches; the
   built-in cities ship inside the app, so for those it's the app's word.
-- **Prices outside five currencies.** Budgets and members' visit-price
-  reports work in A$, US$, €, £ and CHF, where one sanity range (1 to 500)
-  fits. Elsewhere, Stockholm and Copenhagen included, they're off (the range
-  means nothing in kronor, yen or rupiah), so every price there is unknown. The gym-name rules are
-  English-first, so a hotel or kids' gym named in another language can slip
-  through.
+- **Prices where money is unsettled.** Budgets and members' visit-price
+  reports work in every country's own currency, with the typo check sized
+  by a rough, hand-set scale per currency (about what a US dollar is there,
+  rounded; `packages/domain/src/currencies.ts`). It never converts a price,
+  but a currency that loses a lot of value would need its scale raised. Where
+  the rate is too unsettled for any scale (Iran, Lebanon, Venezuela and a
+  few more), prices stay unknown. The gym-name rules are English-first, so a
+  hotel or kids' gym named in another language can slip through.
 - **SF Pro has only been seen as its stand-in.** This sandbox has no SF Pro,
   so the browser here drew Inter; the iPhone and Mac rendering is unseen.
 

@@ -240,9 +240,10 @@ Chrome and Edge (blur only in Safari and Firefox).
   a month so a busy area costs one request, not one per person. Those gyms
   are map-only like the rest: name, address, sometimes hours, "call first",
   each on its own country's clock and in its own units (miles in the US and
-  UK). Visit prices (budgets, members' reports) are kept in A$, US$, €, £
-  and CHF for now; elsewhere (yen, kronor, rupiah) a price is simply unknown,
-  and the app says so.
+  UK). Visit prices (budgets, members' reports) are kept in each country's
+  own currency (A$, €, ¥, ₹, SEK…), never converted; only where the exchange
+  rate moves too much to check a price against (Iran, Lebanon, Venezuela and
+  a few more) is a price simply unknown, and the app says so.
   Type any town or suburb anywhere ("Bendigo", "Boise", "Kyoto") and
   press Enter: if it isn't one GymGO knows by heart, the server looks it up
   (Photon, a free OpenStreetMap geocoder, asked only on Enter and at most
@@ -375,8 +376,8 @@ is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
   the districts the search box knows there, under their local names.
   **Map-only**, like the Australian and US cities: every one says **Call
   first**. Distances are in miles in London and kilometres elsewhere.
-  Members can report what a visit cost in €, £ or CHF; in Stockholm and
-  Copenhagen (kronor) prices aren't kept yet.
+  Members can report what a visit cost in the local currency (€, £, CHF,
+  SEK, DKK).
 - **Every other country**: choose any country and GymGO opens on its
   capital (or where you are) and reads the gyms around it from
   OpenStreetMap by itself ("Looking for gyms around Tokyo…"). Home lists
@@ -516,7 +517,10 @@ Names are never shown. It's labelled as members' reports, not checked by
 GymGO or the gym, and it never counts as the gym's own price or makes a gym
 "Good to go". Each member has one report per gym (reporting again replaces
 it, and it can be removed), reports over two years old stop counting, and
-amounts must be between $1 and $500.
+amounts are kept in the gym's country's own currency and must be between 1
+and 500 dollars' worth, in that currency's own sizes: A$1 to A$500, ¥100 to
+¥50,000, ₹100 to ₹50,000. That range is only a check for typos; no price is
+ever converted. Budgets step the same way ("Under ¥2,500" in Japan).
 
 In lists and cards, a gym that publishes no visit price shows members'
 typical figure instead of a dash, marked as theirs: **~A$22 · members say**.

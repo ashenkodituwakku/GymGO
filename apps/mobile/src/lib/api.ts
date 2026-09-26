@@ -186,7 +186,7 @@ export interface AccessSummary {
 
 /** What members paid for one casual visit: typical (median), range, how many, how recent. */
 export interface PriceSummary {
-  /** Null for a gym where no prices are kept yet (outside A$, US$, €, £ and CHF). */
+  /** Null for a gym where no prices are kept (where the exchange rate is too unsettled to check one against). */
   currency: ReportCurrency | null;
   count: number;
   typicalMinor: number | null;

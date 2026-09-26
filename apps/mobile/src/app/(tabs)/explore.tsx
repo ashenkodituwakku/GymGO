@@ -28,7 +28,7 @@ import { ApiError, api, problemText, type FoundPlace } from '@/lib/api';
 import { EMPTY, locatedNotice } from '@/lib/copy';
 import { openingPlace } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
-import { cityAt, cityNear, geocodePlace, worldCityNamed, type AppPlace, type WorldCity } from '@/lib/places';
+import { cityAt, cityNear, geocodePlace, localBudget, worldCityNamed, type AppPlace, type WorldCity } from '@/lib/places';
 import { useApp } from '@/lib/app-state';
 import { enterOpensGym, placeForEnter, suggestGyms } from '@/lib/gymSearch';
 import { useBottomClearance } from '@/lib/layout';
@@ -443,7 +443,8 @@ function MapScreen() {
   }, []);
 
   const toggleBudget = useCallback(() => {
-    setFilters((current) => ({ ...current, budgetMinor: current.budgetMinor !== null ? null : 3000 }));
+    // In the country's own sizes: A$30, but ¥3,000.
+    setFilters((current) => ({ ...current, budgetMinor: current.budgetMinor !== null ? null : localBudget(3000, current.countryCode) }));
   }, []);
 
   const relax = useCallback(

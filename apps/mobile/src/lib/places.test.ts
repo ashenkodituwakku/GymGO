@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { haversineKm } from '@gymgo/domain';
-import { CITIES, CITY_LIST, DEFAULT_PLACE, WORLD_CITIES, activeCities, cityAt, cityNear, distanceLabel, geocodePlace, homePlace, moneyLabel, nearestCity, placeContext, radiusChoices, setDemoMode, suggestPlaces, suggestWorldCities, tracksPrices, worldCitiesIn, worldCityNamed } from './places';
+import { CITIES, CITY_LIST, DEFAULT_PLACE, WORLD_CITIES, activeCities, localBudget, cityAt, cityNear, distanceLabel, geocodePlace, homePlace, moneyLabel, nearestCity, placeContext, radiusChoices, setDemoMode, suggestPlaces, suggestWorldCities, tracksPrices, worldCitiesIn, worldCityNamed } from './places';
 import { COUNTRIES } from './countries';
+import { COUNTRY_CURRENCY } from '@gymgo/domain';
 import { BUNDLED_GYMS, atPlace, atWorldCity, initialFilters, moveTo, runSearch } from './query';
 
 describe('places', () => {
@@ -151,8 +152,13 @@ describe('places', () => {
     expect(distanceLabel(2.44, 'DE')).toBe('2.4\u00a0km');
     expect(distanceLabel(2.44, 'JP')).toBe('2.4\u00a0km');
     expect(radiusChoices('FR').map((choice) => choice.label)).toEqual(['2 km', '5 km', '10 km', '20 km']);
-    expect([tracksPrices('AU'), tracksPrices('US'), tracksPrices('GB'), tracksPrices('FR'), tracksPrices('CH'), tracksPrices('JP'), tracksPrices('SE')]).toEqual([true, true, true, true, true, false, false]);
+    expect(['AU', 'US', 'GB', 'FR', 'CH', 'JP', 'SE', 'IN'].map(tracksPrices)).toEqual([true, true, true, true, true, true, true, true]);
+    // Not where the exchange rate is too unsettled to check a price against.
+    expect(['IR', 'LB', 'VE'].map(tracksPrices)).toEqual([false, false, false]);
     expect([moneyLabel(3000, 'FR'), moneyLabel(3000, 'GB'), moneyLabel(3000, 'CH')]).toEqual(['€30', '£30', 'CHF 30']);
+    // Budgets in each country's own sizes: 25 is A$25, but ¥2,500 and ₩25,000.
+    expect([localBudget(2500, 'AU'), localBudget(2500, 'JP'), localBudget(2500, 'KR')]).toEqual([2500, 250_000, 2_500_000]);
+    expect(moneyLabel(localBudget(2500, 'JP'), 'JP')).toBe('¥2,500');
   });
 
   it('knows fifteen European cities, by English and local names, accents or not', () => {
@@ -213,6 +219,10 @@ describe('every country\u2019s cities', () => {
     expect(worldCityNamed('toronto')?.country).toBe('CA');
     expect(worldCityNamed('toron')).toBeNull();
     expect(worldCityNamed('sao paulo')?.name).toBe('São Paulo');
+  });
+
+  it('knows the money of every country you can choose (or knows it keeps none there)', () => {
+    for (const country of COUNTRIES) expect(COUNTRY_CURRENCY[country.code], country.name).not.toBeUndefined();
   });
 
   it('keeps every city in a country you can choose, on a real clock', () => {

@@ -13,7 +13,7 @@
  * No React Native here, so it is unit-tested in Node.
  */
 
-import { haversineKm, priceLabel, reportCurrency, type LatLng } from '@gymgo/domain';
+import { currencyScale, haversineKm, priceLabel, reportCurrency, type LatLng } from '@gymgo/domain';
 import { PILOT_CENTRE, PILOT_PLACES, PILOT_TIMEZONE } from '@gymgo/demo-data';
 import { MELBOURNE, MELBOURNE_CENTRE, MELBOURNE_PLACES } from '@gymgo/melbourne-data';
 import { AU_CITIES, AU_PLACES, type AuCityId } from '@gymgo/au-data';
@@ -392,11 +392,21 @@ const MILES = new Set([
 export const usesMiles = (country: string) => MILES.has(country);
 
 /**
- * Where GymGO keeps visit prices (members' reports, budgets): A$, US$, €, £
- * and CHF, where a visit costs about the same number. Elsewhere prices are
+ * Where GymGO keeps visit prices (members' reports, budgets): every country,
+ * in its own currency, except where the exchange rate is too unsettled to
+ * check a price against (see the domain's currencies.ts). There prices are
  * simply unknown.
  */
 export const tracksPrices = (country: string) => reportCurrency(country) !== null;
+
+/**
+ * A budget in a country's own sizes: 25 is A$25 or $25, but ¥2,500. The
+ * domain's scale only sizes budgets; it never converts a price.
+ */
+export function localBudget(dollarsMinor: number, country: string): number {
+  const currency = reportCurrency(country);
+  return currency ? Math.round(dollarsMinor * currencyScale(currency)) : dollarsMinor;
+}
 
 /** "350 m", "2.4 km"; in the US and UK, "0.2 mi", "1.5 mi". Straight-line distance. */
 export function distanceLabel(km: number, country: string): string {
@@ -416,7 +426,7 @@ export function radiusChoices(country: string): Array<{ km: number; label: strin
   return [2, 5, 10, 20].map((km) => ({ km, label: `${km} km` }));
 }
 
-/** "A$25" in Australia, "$25" in the US, "€25", "£25", "CHF 25" (only where prices are kept: see tracksPrices). */
+/** "A$25" in Australia, "$25" in the US, "€25", "¥2,500" in Japan (only where prices are kept: see tracksPrices). */
 export function moneyLabel(minor: number, country: string): string {
   const currency = reportCurrency(country);
   if (currency) return priceLabel(minor, currency);

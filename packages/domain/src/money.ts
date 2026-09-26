@@ -13,41 +13,55 @@ import type {
   VisitOffer,
   IsoDate,
 } from './types';
+import { COUNTRY_CURRENCY, CURRENCY_FACTS } from './currencies';
 
 export const AUD: CurrencyCode = 'AUD';
 
 /** Australian GST rate, used only to label tax-inclusive prices, never to invent one. */
 export const GST_RATE = 0.1;
 
-/** The currencies members' visit prices are kept in: similar sizes, so one sanity range fits them all. */
-export type ReportCurrency = 'AUD' | 'USD' | 'EUR' | 'GBP' | 'CHF';
-
-/**
- * Countries that use the euro: the euro area (Bulgaria joined on
- * 1 January 2026) and the states that use it by agreement or on their own.
- */
-const EURO = new Set([
-  'AT', 'BE', 'BG', 'HR', 'CY', 'EE', 'FI', 'FR', 'DE', 'GR', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PT', 'SK', 'SI', 'ES',
-  'AD', 'MC', 'SM', 'VA', 'ME', 'XK',
-]);
+/** A currency members' visit prices are kept in (ISO 4217): the gym's country's own. */
+export type ReportCurrency = string;
 
 /**
  * The currency visit prices are kept in for a country, or null where GymGO
- * doesn't keep them yet: a currency whose visits cost thousands (yen,
- * rupiah) needs its own sanity range first.
+ * doesn't keep them: a country it doesn't list, or one whose exchange rate is
+ * too unsettled for a sanity range to mean anything (see currencies.ts).
  */
 export function reportCurrency(countryCode: string): ReportCurrency | null {
-  if (countryCode === 'AU') return 'AUD';
-  if (countryCode === 'US') return 'USD';
-  if (countryCode === 'GB') return 'GBP';
-  if (countryCode === 'CH' || countryCode === 'LI') return 'CHF';
-  return EURO.has(countryCode) ? 'EUR' : null;
+  const currency = COUNTRY_CURRENCY[countryCode];
+  return currency && CURRENCY_FACTS[currency] ? currency : null;
 }
 
-/** "A$25", "$25", "€25", "£25", "CHF 25": the whole amount, cents only when there are some. */
+/**
+ * Roughly what one US dollar is in a currency (1 for dollars, euros and
+ * pounds, 100 for yen): only to size ranges and budget steps, never to
+ * convert a price.
+ */
+export const currencyScale = (currency: ReportCurrency): number => CURRENCY_FACTS[currency]?.scale ?? 1;
+
+/**
+ * What one casual visit can plausibly cost, in minor units: A$1 to A$500, or
+ * the same in the currency's own sizes (¥100 to ¥50,000). Catches typos, not
+ * dear gyms.
+ */
+export function visitPriceRange(currency: ReportCurrency): { minMinor: number; maxMinor: number } {
+  const scale = currencyScale(currency);
+  return { minMinor: Math.round(100 * scale), maxMinor: Math.round(50_000 * scale) };
+}
+
+/** "1,500": whole thousands separated, as prices are written in English. */
+const grouped = (whole: number) => String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+/**
+ * "A$25", "$25", "€25", "£12.50", "CHF 30", "¥1,500", "SEK 250": the whole
+ * amount, cents only when there are some.
+ */
 export function priceLabel(amountMinor: number, currency: ReportCurrency): string {
-  const body = amountMinor % 100 === 0 ? String(amountMinor / 100) : (amountMinor / 100).toFixed(2);
-  const symbol = { AUD: 'A$', USD: '$', EUR: '€', GBP: '£', CHF: 'CHF ' }[currency];
+  const whole = Math.floor(amountMinor / 100);
+  const cents = amountMinor % 100;
+  const body = cents === 0 ? grouped(whole) : `${grouped(whole)}.${String(cents).padStart(2, '0')}`;
+  const symbol = CURRENCY_FACTS[currency]?.symbol ?? `${currency} `;
   return `${symbol}${body}`;
 }
 

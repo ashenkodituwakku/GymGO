@@ -14,7 +14,8 @@ import Animated from 'react-native-reanimated';
 import { api, problemText, type PriceSummary } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { moneyLabel, tracksPrices } from '@/lib/places';
+import { reportCurrency, visitPriceRange } from '@gymgo/domain';
+import { localBudget, moneyLabel, tracksPrices } from '@/lib/places';
 import { WHEN_CHOICES as WHEN, localDateDaysAgo as dateDaysAgo, parseAmount } from '@/lib/present';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, space, themed } from '@/lib/theme';
@@ -66,7 +67,7 @@ export function MemberPrices({
       <Animated.View style={styles.wrap} layout={GLIDE}>
         <Txt variant="headline">What members paid</Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
-          GymGO keeps visit prices in Australia, the US, the UK, Switzerland and the euro countries for now, so ask what a visit costs when you call.
+          GymGO doesn’t keep visit prices here: the exchange rate moves too much to check a price against. Ask what a visit costs when you call.
         </Txt>
       </Animated.View>
     );
@@ -178,9 +179,13 @@ function Editor({
   const [when, setWhen] = useState<number>(0);
   const [saving, setSaving] = useState(false);
   const minor = parseAmount(amount);
-  const invalid = amount.trim() !== '' && (minor === null || minor < 100 || minor > 50000);
-  // "A$", "$", "€", "£", "CHF": the label's own symbol, without the number.
+  // A$1 to A$500, or the same in the currency's own sizes (¥100 to ¥50,000), as the server checks.
+  const range = visitPriceRange(reportCurrency(country) ?? 'AUD');
+  const invalid = amount.trim() !== '' && (minor === null || minor < range.minMinor || minor > range.maxMinor);
+  // "A$", "$", "€", "¥", "SEK": the label's own symbol, without the number.
   const symbol = moneyLabel(100, country).replace(/\s?1$/, '');
+  // "25", or "2500" in yen: an everyday price, as the example.
+  const example = String(localBudget(2500, country) / 100);
 
   return (
     <Animated.View style={styles.editor} entering={FADE_IN}>
@@ -189,12 +194,12 @@ function Editor({
         value={amount}
         onChangeText={setAmount}
         keyboardType="decimal-pad"
-        placeholder="25"
+        placeholder={example}
         inSheet={inSheet}
       />
       {invalid && (
         <Txt variant="footnote" color={color.noInk}>
-          Enter an amount between {symbol}1 and {symbol}500, like 25 or 24.50.
+          Enter an amount between {moneyLabel(range.minMinor, country)} and {moneyLabel(range.maxMinor, country)}, like {example}.
         </Txt>
       )}
       <Txt variant="footnote" color={color.labelSecondary}>

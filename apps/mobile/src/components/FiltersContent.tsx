@@ -20,7 +20,7 @@ import {
 } from '@/lib/query';
 import { color, dropShadow, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
-import { moneyLabel, radiusChoices, tracksPrices } from '@/lib/places';
+import { localBudget, moneyLabel, radiusChoices, tracksPrices } from '@/lib/places';
 import { Chip, PrimaryButton, Txt } from './ui';
 
 export function FiltersContent({
@@ -100,19 +100,23 @@ export function FiltersContent({
         {tracksPrices(country) ? (
           <>
             <View style={styles.chips}>
-              {BUDGET_PRESETS.map((budget) => (
-                <Chip
-                  key={String(budget)}
-                  label={budget === null ? 'Any' : `Under ${moneyLabel(budget, country)}`}
-                  selected={filters.budgetMinor === budget}
-                  onPress={() => set({ budgetMinor: budget })}
-                />
-              ))}
+              {BUDGET_PRESETS.map((preset) => {
+                // In the country's own sizes: A$25, but ¥2,500.
+                const budget = preset === null ? null : localBudget(preset, country);
+                return (
+                  <Chip
+                    key={String(preset)}
+                    label={budget === null ? 'Any' : `Under ${moneyLabel(budget, country)}`}
+                    selected={filters.budgetMinor === budget}
+                    onPress={() => set({ budgetMinor: budget })}
+                  />
+                );
+              })}
             </View>
             <Hint>What you don't get back: price, tax and any must-pay fee. Refundable deposits are shown separately.</Hint>
           </>
         ) : (
-          <Hint>GymGO keeps visit prices in Australia, the US, the UK, Switzerland and the euro countries for now. Here, every price is unknown, so ask when you call.</Hint>
+          <Hint>GymGO doesn’t keep visit prices here: the exchange rate moves too much to check a price against. Every price is unknown, so ask when you call.</Hint>
         )}
       </Group>
 

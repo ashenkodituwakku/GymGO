@@ -70,6 +70,20 @@ async function call(method: string, path: string, token?: string) {
   return { status: response.status, body: text ? JSON.parse(text) : null };
 }
 
+const signUp = (email: string) =>
+  fetch(`${base}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password: 'correct horse', displayName: 'Lifter' }),
+  }).then((response) => response.json() as Promise<{ token: string }>);
+
+const put = (path: string, token: string, amountMinor: number) =>
+  fetch(`${base}${path}`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+    body: JSON.stringify({ amountMinor, paidOn: '2026-09-20' }),
+  });
+
 const areaPath = (box: { south: number; west: number; north: number; east: number }, home = 'AU') =>
   `/api/area?south=${box.south}&west=${box.west}&north=${box.north}&east=${box.east}&home=${home}`;
 
@@ -175,21 +189,35 @@ describe('Search this area', () => {
     expect(kraftraum!.location.address.countryCode).toBe('NZ');
   });
 
-  it('takes no visit prices where a visit costs another order of magnitude (New Zealand, for now), and says so', async () => {
+  it('keeps a New Zealand gym\u2019s visit prices in its own dollars', async () => {
     const prices = '/api/gyms/les-mills-auckland-city-n21/prices';
+    expect((await call('GET', prices)).body).toMatchObject({ currency: 'NZD', count: 0, typicalMinor: null });
+    const signup = await signUp('auckland@example.com');
+    expect((await put(prices, signup.token, 2500)).status).toBe(204);
+    expect((await call('GET', prices)).body).toMatchObject({ currency: 'NZD', count: 1, typicalMinor: 2500 });
+  });
+
+  it('keeps a Tokyo gym\u2019s prices in yen, checked against a range sized to the yen', async () => {
+    mapped = [{ type: 'node', id: 41, lat: 35.6812, lon: 139.7671, tags: { leisure: 'fitness_centre', name: 'Marunouchi Strength' } }];
+    expect((await call('GET', areaPath({ south: 35.66, west: 139.74, north: 35.7, east: 139.79 }, 'JP'))).status).toBe(200);
+    const prices = '/api/gyms/marunouchi-strength-n41/prices';
+    const signup = await signUp('tokyo@example.com');
+    // ¥50 is a typo in yen, though 50 would be a fine price in dollars.
+    const tooLow = await put(prices, signup.token, 5000);
+    expect(tooLow.status).toBe(400);
+    expect(((await tooLow.json()) as { error: string }).error).toBe('Enter what one casual visit cost, between ¥100 and ¥50,000.');
+    expect((await put(prices, signup.token, 250_000)).status).toBe(204);
+    expect((await call('GET', prices)).body).toMatchObject({ currency: 'JPY', count: 1, typicalMinor: 250_000 });
+  });
+
+  it('takes no visit prices where the exchange rate is too unsettled to check one against, and says so', async () => {
+    mapped = [{ type: 'node', id: 51, lat: 35.7, lon: 51.41, tags: { leisure: 'fitness_centre', name: 'Tehran Iron' } }];
+    expect((await call('GET', areaPath({ south: 35.68, west: 51.38, north: 35.72, east: 51.44 }, 'IR'))).status).toBe(200);
+    const prices = '/api/gyms/tehran-iron-n51/prices';
     expect((await call('GET', prices)).body).toMatchObject({ currency: null, count: 0, typicalMinor: null });
-    const signup = await fetch(`${base}/api/auth/signup`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: 'auckland@example.com', password: 'correct horse', displayName: 'Kiwi' }),
-    }).then((response) => response.json() as Promise<{ token: string }>);
-    const put = await fetch(`${base}${prices}`, {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${signup.token}` },
-      body: JSON.stringify({ amountMinor: 2500, paidOn: '2026-09-20' }),
-    });
-    expect(put.status).toBe(400);
-    expect(((await put.json()) as { error: string }).error).toContain('the euro countries');
+    const refused = await put(prices, (await signUp('tehran@example.com')).token, 2500);
+    expect(refused.status).toBe(400);
+    expect(((await refused.json()) as { error: string }).error).toContain('exchange rate');
   });
 
   it('writes the house number after the street where the country does', async () => {

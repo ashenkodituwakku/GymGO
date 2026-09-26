@@ -13,7 +13,7 @@ import { FADE_IN, FADE_OUT, GLIDE } from './motion';
 import { explainNoMatches, haversineKm, type GymRecord, type SearchOutcome } from '@gymgo/domain';
 import { countryInSentence, countryName } from '@/lib/country';
 import { suggestGyms } from '@/lib/gymSearch';
-import { cityAt, distanceLabel, moneyLabel, placeContext, suggestPlaces, suggestWorldCities, tracksPrices, type AppPlace, type WorldCity } from '@/lib/places';
+import { cityAt, distanceLabel, localBudget, moneyLabel, placeContext, suggestPlaces, suggestWorldCities, tracksPrices, type AppPlace, type WorldCity } from '@/lib/places';
 import { EMPTY, PLACEHOLDER, TIER, lookupLine, searchPrompt, sessionGreeting, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
 import type { Lookup } from '@/lib/app-state';
 import { SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
@@ -281,7 +281,7 @@ export function ResultsContent({
         {/* The budget that's on, set from anywhere (Home's tile, Filters); tapping it clears it. */}
         {tracksPrices(filters.countryCode) && (
           <Chip
-            label={`Under ${moneyLabel(filters.budgetMinor ?? 3000, filters.countryCode)}`}
+            label={`Under ${moneyLabel(filters.budgetMinor ?? localBudget(3000, filters.countryCode), filters.countryCode)}`}
             selected={filters.budgetMinor !== null}
             onPress={onToggleBudget}
           />

@@ -81,6 +81,7 @@ import {
   priceLabel,
   publishedReviews,
   reportCurrency,
+  visitPriceRange,
   type BillingCurrency,
   type BillingInterval,
   type GymRecord,
@@ -1204,8 +1205,8 @@ export function createApp(options: AppOptions) {
     if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'prices' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
       if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
-      // Reports are kept in A$, US$, €, £ and CHF, where a visit costs about
-      // the same number: what a visit costs in ¥ or ₹ needs its own range.
+      // Reports are kept in the gym's country's own currency, never converted;
+      // none where the exchange rate is too unsettled to check a price against.
       const country = gymCountry(db, gymId);
       const currency = country ? reportCurrency(country) : null;
       const since = new Date(now().getTime() - PRICE_REPORT_DAYS * 86_400_000).toISOString().slice(0, 10);
@@ -1243,11 +1244,15 @@ export function createApp(options: AppOptions) {
           return send(res, 204);
         }
         if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to report.');
-        if (currency === null) throw new HttpError(400, 'Visit prices can be reported in Australia, the US, the UK, Switzerland and the euro countries for now.');
+        if (currency === null) {
+          throw new HttpError(400, 'GymGO doesn\u2019t keep visit prices here yet: the exchange rate moves too much to check a price against.');
+        }
         const body = (await readJson(req)) as Record<string, unknown>;
         const amount = Number(body.amountMinor);
-        if (!Number.isInteger(amount) || amount < 100 || amount > 50000) {
-          throw new HttpError(400, `Enter what one casual visit cost, between ${priceLabel(100, currency)} and ${priceLabel(50000, currency)}.`);
+        // A$1 to A$500, or the same in the currency's own sizes (¥100 to ¥50,000): typos, not dear gyms.
+        const range = visitPriceRange(currency);
+        if (!Number.isInteger(amount) || amount < range.minMinor || amount > range.maxMinor) {
+          throw new HttpError(400, `Enter what one casual visit cost, between ${priceLabel(range.minMinor, currency)} and ${priceLabel(range.maxMinor, currency)}.`);
         }
         const paidOn = typeof body.paidOn === 'string' ? body.paidOn : '';
         const tomorrow = new Date(now().getTime() + 86_400_000).toISOString().slice(0, 10);

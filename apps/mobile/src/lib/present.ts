@@ -112,11 +112,23 @@ function googleQuery(record: GymRecord): string {
   return [name, address.line1, address.suburb, address.state].filter(Boolean).join(', ');
 }
 
-/** What someone typed as a price, in cents: "24.50", "$24.50" or "A$25" → 2450 / 2500; anything else → null. */
+/**
+ * What someone typed as a price, in hundredths: "24.50", "$24.50", "A$25",
+ * "¥1,500", "SEK 250" or "24,50" → 2450, 2450, 2500, 150000, 25000, 2450;
+ * anything else → null. A comma before three digits groups thousands; before
+ * one or two, it's the decimal point, as much of the world writes it. Whether
+ * the amount is plausible is the currency's range's call, not this.
+ */
 export function parseAmount(text: string): number | null {
-  const clean = text.trim().replace(/^A?\$/i, '');
-  if (!/^\d{1,3}(\.\d{1,2})?$/.test(clean)) return null;
-  return Math.round(Number(clean) * 100);
+  if (text.includes('-')) return null;
+  // A symbol or code in front ("¥", "A$", "SEK "), or a short one after ("kr", "zł").
+  const clean = text.trim().replace(/^[^\d\s]{1,4}\s?/, '').replace(/\s?[^\d\s.,]{1,3}$/, '');
+  let number: string;
+  if (/^\d{1,3}(,\d{3})+(\.\d{1,2})?$/.test(clean)) number = clean.replace(/,/g, '');
+  else if (/^\d+,\d{1,2}$/.test(clean)) number = clean.replace(',', '.');
+  else if (/^\d{1,9}(\.\d{1,2})?$/.test(clean)) number = clean;
+  else return null;
+  return Math.round(Number(number) * 100);
 }
 
 /** Roughly when something happened; exact dates aren't worth the typing. */

@@ -3,7 +3,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { budgetVerdict, computeCost, describeMembership, formatMoney, priceLabel, reportCurrency } from './money';
+import { budgetVerdict, computeCost, currencyScale, describeMembership, formatMoney, priceLabel, reportCurrency, visitPriceRange } from './money';
+import { COUNTRY_CURRENCY, CURRENCY_FACTS } from './currencies';
 import { offer } from './testing';
 
 describe('computeCost', () => {
@@ -165,12 +166,39 @@ describe('describeMembership', () => {
 });
 
 describe('which money visit prices are kept in', () => {
-  it('knows the dollar, pound, Swiss franc and euro countries, and no others yet', () => {
+  it('keeps each country\u2019s own currency, dollars where prices are in dollars', () => {
     expect(['AU', 'US', 'GB', 'CH', 'FR', 'DE', 'BG', 'IE'].map(reportCurrency)).toEqual(['AUD', 'USD', 'GBP', 'CHF', 'EUR', 'EUR', 'EUR', 'EUR']);
-    expect(['JP', 'SE', 'DK', 'PL', 'NZ'].map(reportCurrency)).toEqual([null, null, null, null, null]);
+    expect(['JP', 'SE', 'DK', 'PL', 'NZ', 'IN', 'BR'].map(reportCurrency)).toEqual(['JPY', 'SEK', 'DKK', 'PLN', 'NZD', 'INR', 'BRL']);
+    expect(['EC', 'PA', 'ZW', 'LI', 'XK'].map(reportCurrency)).toEqual(['USD', 'USD', 'USD', 'CHF', 'EUR']);
+  });
+
+  it('keeps none where the exchange rate is too unsettled for a sanity range, or the country is unknown', () => {
+    expect(['IR', 'LB', 'VE', 'SY', 'ZZ'].map(reportCurrency)).toEqual([null, null, null, null, null]);
+  });
+
+  it('writes amounts the way prices are written, never converting them', () => {
     expect(priceLabel(2500, 'EUR')).toBe('€25');
     expect(priceLabel(1250, 'GBP')).toBe('£12.50');
     expect(priceLabel(3000, 'CHF')).toBe('CHF 30');
     expect(priceLabel(2000, 'AUD')).toBe('A$20');
+    expect(priceLabel(150_000, 'JPY')).toBe('¥1,500');
+    expect(priceLabel(25_000, 'SEK')).toBe('SEK 250');
+    expect(priceLabel(50_000_000, 'IDR')).toBe('Rp500,000');
+    expect(priceLabel(123_456_78, 'USD')).toBe('$123,456.78');
+  });
+
+  it('sizes the sanity range to the currency: A$1 to A$500, ¥100 to ¥50,000', () => {
+    expect(visitPriceRange('AUD')).toEqual({ minMinor: 100, maxMinor: 50_000 });
+    expect(visitPriceRange('JPY')).toEqual({ minMinor: 10_000, maxMinor: 5_000_000 });
+    expect(visitPriceRange('KWD')).toEqual({ minMinor: 50, maxMinor: 25_000 });
+    expect(currencyScale('VND')).toBe(30_000);
+  });
+
+  it('has a way to write, and a scale for, every currency a country uses', () => {
+    for (const [country, currency] of Object.entries(COUNTRY_CURRENCY)) {
+      if (currency === null) continue;
+      expect(CURRENCY_FACTS[currency], `${country} ${currency}`).toBeDefined();
+      expect(currency).toMatch(/^[A-Z]{3}$/);
+    }
   });
 });

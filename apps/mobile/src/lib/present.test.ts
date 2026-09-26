@@ -105,8 +105,18 @@ describe('typed prices', () => {
     expect(parseAmount('0.10')).toBe(10);
   });
 
+  it('reads amounts in any currency, thousands and decimal commas included', () => {
+    expect(parseAmount('¥1,500')).toBe(150_000);
+    expect(parseAmount('1500')).toBe(150_000);
+    expect(parseAmount('SEK 250')).toBe(25_000);
+    expect(parseAmount('250 kr')).toBe(25_000);
+    expect(parseAmount('24,50')).toBe(2450);
+    expect(parseAmount('Rp150,000')).toBe(15_000_000);
+    expect(parseAmount('2500.00')).toBe(250_000);
+  });
+
   it('refuses anything that isn’t plainly an amount', () => {
-    for (const text of ['', 'free', '25 dollars', '1,000', '12.345', '-5', '1e3', '2500.00']) expect(parseAmount(text)).toBeNull();
+    for (const text of ['', 'free', '25 dollars', '1,00,0', '12.345', '-5', '1e3', '1.500.000']) expect(parseAmount(text)).toBeNull();
   });
 });
 

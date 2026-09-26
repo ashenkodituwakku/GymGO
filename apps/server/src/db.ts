@@ -86,8 +86,8 @@ const SCHEMA = `
   create table if not exists price_reports (
     gym_id text not null,
     user_id text not null references users(id) on delete cascade,
-    amount_minor integer not null check (amount_minor between 100 and 50000),
-    currency text not null check (currency in ('AUD', 'USD', 'EUR', 'GBP', 'CHF')),
+    amount_minor integer not null check (amount_minor > 0),
+    currency text not null check (length(currency) = 3),
     paid_on text not null,
     reported_at text not null,
     primary key (gym_id, user_id)
@@ -209,16 +209,17 @@ export function openDb(path: string): Db {
  * once, keeping its rows.
  */
 function migrate(db: Db): void {
-  // Visit prices in euros, pounds and Swiss francs as well as A$ and US$.
+  // Visit prices in every country's own currency, sized to it (¥ and ₹ as
+  // well as A$ and €): the old fixed list of currencies and range go.
   const prices = db.prepare("select sql from sqlite_master where type = 'table' and name = 'price_reports'").get() as { sql: string } | undefined;
-  if (prices && !prices.sql.includes("'EUR'")) {
+  if (prices && prices.sql.includes('currency in (')) {
     db.exec('begin');
     try {
       db.exec(`create table price_reports_widened (
         gym_id text not null,
         user_id text not null references users(id) on delete cascade,
-        amount_minor integer not null check (amount_minor between 100 and 50000),
-        currency text not null check (currency in ('AUD', 'USD', 'EUR', 'GBP', 'CHF')),
+        amount_minor integer not null check (amount_minor > 0),
+        currency text not null check (length(currency) = 3),
         paid_on text not null,
         reported_at text not null,
         primary key (gym_id, user_id)

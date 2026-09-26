@@ -1,6 +1,6 @@
 /**
  * Home: a place to start, kept short. A greeting, the search, four
- * shortcuts (near me, 6 am, 6 pm, under $25), the workout builder, the gyms
+ * shortcuts (near me, 6 am, 6 pm, under $25 or the local equivalent), the workout builder, the gyms
  * near where you're looking, what you've saved and looked at, and places to
  * browse. How GymGO checks its facts lives in Profile → About.
  *
@@ -21,7 +21,7 @@ import { useApp } from '@/lib/app-state';
 import { lookupLine, noGymsLine, searchPrompt, timeLabel, visitWhen } from '@/lib/copy';
 import { countryInSentence, countryName } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
-import { PLACES, activeCities, cityNear, cityPlace, moneyLabel, tracksPrices, worldCitiesIn, type AppPlace, type City, type WorldCity } from '@/lib/places';
+import { PLACES, activeCities, cityNear, cityPlace, localBudget, moneyLabel, tracksPrices, worldCitiesIn, type AppPlace, type City, type WorldCity } from '@/lib/places';
 import { atPlace, atWorldCity, moveTo, nearLabel, nextVisitAt, runSearch, visitIsLater, type Filters } from '@/lib/query';
 import { resultsById } from '@/lib/results';
 import { color, dropShadow, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -114,8 +114,8 @@ export default function Home() {
     tracksPrices(filters.countryCode)
       ? {
           icon: 'money',
-          title: `Under ${moneyLabel(2500, filters.countryCode)}`,
-          onPress: () => pick((current) => ({ ...current, budgetMinor: 2500 })),
+          title: `Under ${moneyLabel(localBudget(2500, filters.countryCode), filters.countryCode)}`,
+          onPress: () => pick((current) => ({ ...current, budgetMinor: localBudget(2500, current.countryCode) })),
         }
       : { icon: 'clock', title: 'Lunchtime', onPress: () => pick((current) => ({ ...current, ...visit(12 * 60) })) },
   ];

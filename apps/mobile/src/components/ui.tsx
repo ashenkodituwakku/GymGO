@@ -3,13 +3,13 @@
  */
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { useEffect, useState, type ReactNode } from 'react';
+import { forwardRef, useEffect, useState, type ReactNode } from 'react';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ActivityIndicator, Platform, Pressable, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle } from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
 import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
-import { NO_TOUCH, color, dropShadow, face, HIT, radius, shadow, space, themed, type } from '@/lib/theme';
+import { NO_TOUCH, color, dropShadow, face, HIT, radius, shadow, space, themed, type, webFocusRing } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { FADE_IN, FADE_OUT, GLIDE, Pressy, SETTLE, usePop, usePressScale } from './motion';
@@ -438,18 +438,68 @@ export function TextField({
 }: TextInputProps & { label: string; inSheet: boolean }) {
   // The sheet-aware input keeps the keyboard and sheet in step on phones. In
   // a browser it calls a phone-only API and throws, so use a plain input there.
-  const Input = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
+  const Field = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
+  const focus = useFocus(props);
   return (
     <View style={styles.field}>
       <Txt variant="footnote" color={color.labelSecondary} style={styles.fieldLabel}>
         {label}
       </Txt>
-      <Input
+      <Field
         placeholderTextColor={color.labelTertiary}
         accessibilityLabel={label}
         {...props}
-        style={[styles.fieldInput, props.style]}
+        {...focus.handlers}
+        style={[styles.fieldInput, props.style, webFocusRing(focus.on)]}
       />
+    </View>
+  );
+}
+
+/** A bare text field, with focus shown the app's way in a browser. */
+export const Input = forwardRef<TextInput, TextInputProps>(function Input(props, ref) {
+  const focus = useFocus(props);
+  return (
+    <TextInput
+      ref={ref}
+      placeholderTextColor={color.labelTertiary}
+      {...props}
+      {...focus.handlers}
+      style={[props.style, webFocusRing(focus.on)]}
+    />
+  );
+});
+
+/** Whether a field has focus, keeping any focus handlers it was given. */
+function useFocus({ onFocus, onBlur }: Pick<TextInputProps, 'onFocus' | 'onBlur'>) {
+  const [on, setOn] = useState(false);
+  return {
+    on,
+    handlers: {
+      onFocus: ((event) => {
+        setOn(true);
+        onFocus?.(event);
+      }) as NonNullable<TextInputProps['onFocus']>,
+      onBlur: ((event) => {
+        setOn(false);
+        onBlur?.(event);
+      }) as NonNullable<TextInputProps['onBlur']>,
+    },
+  };
+}
+
+/**
+ * An empty photo slot. When a gym has no photo and no logo, the card says so
+ * in words rather than filling the space with a picture of nothing.
+ * Decoration only: the card's own label already names the gym.
+ */
+export function NoPhoto({ compact = false, style }: { compact?: boolean; style?: StyleProp<ViewStyle> }) {
+  return (
+    <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.noPhoto, style]}>
+      {!compact && <Icon name="photo" size={20} color={color.labelTertiary} />}
+      <Txt variant="caption" color={color.labelSecondary} style={[styles.noPhotoText, compact && styles.noPhotoCompact]}>
+        No photo supplied
+      </Txt>
     </View>
   );
 }
@@ -605,6 +655,9 @@ const styles = themed(() => StyleSheet.create({
     ...dropShadow(0.12, 4, 2, 2),
   },
 
+  noPhoto: { alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: color.fill, padding: space[1] },
+  noPhotoText: { textAlign: 'center', ...face('medium') },
+  noPhotoCompact: { fontSize: 10, lineHeight: 12 },
   field: { gap: 6 },
   fieldLabel: face('medium'),
   fieldInput: {

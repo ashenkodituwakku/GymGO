@@ -7,12 +7,12 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, rise } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { GoogleMark, SocialButtons, useSignInProviders, type TokenHandler } from '@/components/SocialSignIn';
-import { PrimaryButton, Txt } from '@/components/ui';
+import { Input, PrimaryButton, Txt } from '@/components/ui';
 import { ApiError, OfflineError, api, type SignInMethods, type SignInProvider } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { downloadMyData } from '@/lib/exportData';
@@ -323,7 +323,7 @@ function NameForm({ current, onSave }: { current: string; onSave: (name: string)
   const [busy, setBusy] = useState(false);
   return (
     <Animated.View entering={FADE_IN} style={styles.form}>
-      <TextInput value={name} onChangeText={setName} autoFocus maxLength={40} autoComplete="name" style={styles.input} accessibilityLabel="Your name" placeholderTextColor={color.labelTertiary} />
+      <Input value={name} onChangeText={setName} autoFocus maxLength={40} autoComplete="name" style={styles.input} accessibilityLabel="Your name" placeholderTextColor={color.labelTertiary} />
       <PrimaryButton
         label="Save name"
         busy={busy}
@@ -345,7 +345,7 @@ function PasswordForm({ needsCurrent, onSave }: { needsCurrent: boolean; onSave:
   return (
     <Animated.View entering={FADE_IN} style={styles.form}>
       {needsCurrent && (
-        <TextInput
+        <Input
           value={current}
           onChangeText={setCurrent}
           secureTextEntry
@@ -356,7 +356,7 @@ function PasswordForm({ needsCurrent, onSave }: { needsCurrent: boolean; onSave:
           placeholderTextColor={color.labelTertiary}
         />
       )}
-      <TextInput
+      <Input
         value={next}
         onChangeText={setNext}
         secureTextEntry

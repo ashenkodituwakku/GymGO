@@ -8,13 +8,13 @@
 import { Stack, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { Easing, FadeInDown, FadeOutDown, ReduceMotion, ZoomIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { FADE_IN, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
 import { Icon } from '@/components/Icon';
-import { PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { endSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
 import { ApiError, api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -367,7 +367,7 @@ const ExerciseLog = memo(function ExerciseLog({
           </Txt>
           {!timed && (
             <>
-              <TextInput
+              <Input
                 value={set.weight}
                 onChangeText={(weight) => setAt(at, { weight })}
                 placeholder={bodyWeight ? 'BW' : weightGuess !== null ? String(weightGuess) : '—'}
@@ -381,7 +381,7 @@ const ExerciseLog = memo(function ExerciseLog({
               <Txt variant="subhead" color={color.labelTertiary}>
                 ×
               </Txt>
-              <TextInput
+              <Input
                 value={set.reps}
                 onChangeText={(reps) => setAt(at, { reps })}
                 placeholder={repsGuess !== null ? String(repsGuess) : '—'}

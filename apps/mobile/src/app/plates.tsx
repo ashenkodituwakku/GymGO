@@ -5,8 +5,8 @@
 
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { Segmented, Txt } from '@/components/ui';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Input, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { BAR, formatWeight, parseWeight, plateLoad, unitFor, type WeightUnit } from '@/lib/training';
@@ -40,7 +40,7 @@ export default function PlatesScreen() {
         Type the total you want on the bar, bar included.
       </Txt>
       <View style={styles.row}>
-        <TextInput
+        <Input
           value={text}
           onChangeText={setText}
           placeholder={unit === 'kg' ? '100' : '225'}

@@ -378,5 +378,15 @@ export const CHILD_TOUCH = touches.childrenOnly;
  */
 export const NO_WEB_OUTLINE = (Platform.OS === 'web' ? { outlineStyle: 'none' } : {}) as unknown as TextStyle;
 
+/**
+ * For a bare text field in a browser: focus drawn as a ring in the app's
+ * accent, not the browser's own (orange on Linux, blue elsewhere). Phones
+ * show focus with the caret and keyboard, so nothing changes there.
+ */
+export function webFocusRing(focused: boolean): TextStyle {
+  if (Platform.OS !== 'web') return {};
+  return (focused ? { outlineStyle: 'solid', outlineWidth: 2, outlineColor: color.brand, outlineOffset: 1 } : { outlineStyle: 'none' }) as unknown as TextStyle;
+}
+
 /** Minimum touch target, per Apple's Human Interface Guidelines. */
 export const HIT = 44;

@@ -1,6 +1,6 @@
 /**
  * A gym as a card in a horizontal row on the Home and Saved screens: its
- * photo (or a plain tile when nobody has shared one), its name, where it is,
+ * photo (or its logo, or "No photo supplied"), its name, where it is,
  * one status chip and the price.
  *
  * On iPhone, pressing and holding shows a preview of the gym's page with a
@@ -23,7 +23,7 @@ import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { MarkImage, useGymMark } from './BrandLogo';
 import { rise, usePressScale } from './motion';
 import { Icon } from './Icon';
-import { TIER_COLOUR, Txt } from './ui';
+import { NoPhoto, TIER_COLOUR, Txt } from './ui';
 
 /** `index`: its place in the row, so a row of cards rises into place one after another. */
 export function GymCard({ result, width = 216, index = 0 }: { result: GymSearchResult; width?: number; index?: number }) {
@@ -64,10 +64,12 @@ export function GymCard({ result, width = 216, index = 0 }: { result: GymSearchR
             <Animated.View style={[styles.card, { width }, press.style]}>
               {cover ? (
                 <Image source={{ uri: cover }} style={styles.image} resizeMode="cover" />
-              ) : (
-                <View style={[styles.image, styles.tile, { backgroundColor: mark ? color.logoPlate : color.brandTint }]}>
-                  {mark ? <MarkImage mark={mark} name={location.name} width={width * 0.72} height={76} area={5200} /> : <Icon name="gym" size={36} color={color.brand} />}
+              ) : mark ? (
+                <View style={[styles.image, styles.tile, { backgroundColor: color.logoPlate }]}>
+                  <MarkImage mark={mark} name={location.name} width={width * 0.72} height={76} area={5200} />
                 </View>
+              ) : (
+                <NoPhoto style={styles.image} />
               )}
               <View style={styles.body}>
                 <Txt variant="headline" numberOfLines={1}>

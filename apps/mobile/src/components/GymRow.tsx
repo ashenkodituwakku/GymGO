@@ -14,7 +14,7 @@ import { color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { MarkImage, useGymMark } from './BrandLogo';
 import { Icon } from './Icon';
-import { TIER_COLOUR, Txt } from './ui';
+import { NoPhoto, TIER_COLOUR, Txt } from './ui';
 
 export function GymRow({
   result,
@@ -60,10 +60,12 @@ export function GymRow({
     >
       {coverUri ? (
         <Image source={{ uri: coverUri }} style={styles.thumb} resizeMode="cover" />
-      ) : (
-        <View style={[styles.thumb, styles.tile, { backgroundColor: mark ? color.logoPlate : color.brandTint }]}>
-          {mark ? <MarkImage mark={mark} name={location.name} width={52} height={48} area={1500} /> : <Icon name="gym" size={24} color={color.brand} />}
+      ) : mark ? (
+        <View style={[styles.thumb, styles.tile, { backgroundColor: color.logoPlate }]}>
+          <MarkImage mark={mark} name={location.name} width={52} height={48} area={1500} />
         </View>
+      ) : (
+        <NoPhoto compact style={styles.thumb} />
       )}
 
       <View style={styles.middle}>

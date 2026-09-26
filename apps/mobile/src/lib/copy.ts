@@ -235,6 +235,21 @@ export function noGymsLine(placeName: string, radiusKm: number, country: string)
   return `No gyms mapped within ${reach} of ${where} yet. Open the map to look further out.`;
 }
 
+/** Past this, a distance on a gym's own page says where it's measured from. */
+const FAR_KM = 50;
+
+/**
+ * How far a gym is, on its own page, where no "Near Fitzroy" heading says
+ * from where. Close by, the number alone reads naturally. Further off it
+ * names the start: "654 km from Melbourne", "8,153 km from you". Measured
+ * from the middle of a map area far away, it means nothing, so it's left off.
+ */
+export function gymDistanceLine(km: number, country: string, placeName: string): string | null {
+  if (km < FAR_KM) return distanceLabel(km, country);
+  if (placeName === THIS_AREA) return null;
+  return `${distanceLabel(km, country)} from ${placeName === YOUR_LOCATION ? 'you' : placeName}`;
+}
+
 export const PLACEHOLDER = 'Where are we lifting?';
 
 /** Sources, in plain words. */

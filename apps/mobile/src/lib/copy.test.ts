@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accessLine, accessShort, checkedAgo, filtersButtonLabel, locatedNotice, lookupLine, noGymsLine, serverOfflineLine, statusSummaryLine, ratingShort, searchPrompt, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
+import { accessLine, accessShort, checkedAgo, filtersButtonLabel, gymDistanceLine, locatedNotice, lookupLine, noGymsLine, serverOfflineLine, statusSummaryLine, ratingShort, searchPrompt, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
 import { activeFilterCount, applyRelaxation, atPlace, defaultVisit, initialFilters, runSearch, toQuery } from './query';
 import { geocodePlace } from './places';
 
@@ -212,5 +212,14 @@ describe('when there are no gyms to show', () => {
     expect(noGymsLine('Fitzroy', 5, 'AU')).toBe('No gyms mapped within 5\u00a0km of Fitzroy yet. Open the map to look further out.');
     expect(noGymsLine('your location', 5 * 1.609344, 'US')).toBe('No gyms mapped within 5\u00a0mi of you yet. Open the map to look further out.');
     expect(noGymsLine('this area', 5, 'GB')).toBe('OpenStreetMap has no gyms mapped in this area yet.');
+  });
+
+  it('says where a far-off gym is measured from, on its own page', () => {
+    expect(gymDistanceLine(1.1, 'AU', 'Melbourne')).toBe('1.1\u00a0km');
+    expect(gymDistanceLine(654, 'AU', 'Melbourne')).toBe('654\u00a0km from Melbourne');
+    expect(gymDistanceLine(8153, 'JP', 'your location')).toBe('8,153\u00a0km from you');
+    expect(gymDistanceLine(16672, 'US', 'New York')).toBe('10,360\u00a0mi from New York');
+    expect(gymDistanceLine(3, 'AU', 'this area')).toBe('3.0\u00a0km');
+    expect(gymDistanceLine(654, 'AU', 'this area')).toBeNull();
   });
 });

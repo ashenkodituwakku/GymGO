@@ -25,8 +25,7 @@ import {
   type Provenance,
   type Tri,
 } from '@gymgo/domain';
-import { TIER, accessLine, checkedAgo, ratingShort, sourceLabel } from '@/lib/copy';
-import { distanceLabel } from '@/lib/places';
+import { TIER, accessLine, checkedAgo, gymDistanceLine, ratingShort, sourceLabel } from '@/lib/copy';
 import { shareGym } from '@/lib/actions';
 import { addressLines, depositLine, priceLine } from '@/lib/present';
 import { color, face, radius, space, themed } from '@/lib/theme';
@@ -69,12 +68,12 @@ export function PlaceHeader({
   topPadding?: number;
 }) {
   const location = result.record.location;
-  const { compare, toggleCompare } = useApp();
+  const { compare, toggleCompare, filters } = useApp();
   const comparing = compare.includes(location.id);
   const subtitle = [
     TRAINING[location.trainingTypes[0] ?? 'full_gym'] ?? 'Gym',
     location.address.suburb,
-    result.distanceKm !== null ? distanceLabel(result.distanceKm, result.record.location.address.countryCode) : null,
+    result.distanceKm !== null ? gymDistanceLine(result.distanceKm, location.address.countryCode, filters.placeName) : null,
   ]
     .filter(Boolean)
     .join(' · ');

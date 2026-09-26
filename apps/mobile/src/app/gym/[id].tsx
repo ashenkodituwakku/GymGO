@@ -28,7 +28,7 @@ import { shareGym } from '@/lib/actions';
 import { googleStreetViewEmbedUrl } from '@/lib/present';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { distanceLabel } from '@/lib/places';
+import { gymDistanceLine } from '@/lib/copy';
 import { resultsById } from '@/lib/results';
 import { color, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -101,7 +101,7 @@ export default function GymPage() {
   const saved = account.saved.includes(location.id);
   const comparing = compare.includes(location.id);
   const cardWidth = Math.min(width, PAGE_WIDTH);
-  const subtitle = [location.address.suburb, result.distanceKm !== null ? distanceLabel(result.distanceKm, location.address.countryCode) : null]
+  const subtitle = [location.address.suburb, result.distanceKm !== null ? gymDistanceLine(result.distanceKm, location.address.countryCode, filters.placeName) : null]
     .filter(Boolean)
     .join(' · ');
 

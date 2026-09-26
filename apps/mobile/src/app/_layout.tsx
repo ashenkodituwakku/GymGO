@@ -1,5 +1,5 @@
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useNavigationContainerRef } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, router, useNavigationContainerRef, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
@@ -111,6 +111,7 @@ function useWantedTheme(): { scheme: Scheme; accent: AccentId } {
  * out: about a third of a second, and instant with Reduce Motion.
  */
 function ThemedStack() {
+  useEscapeClosesSheets();
   const wanted = useWantedTheme();
   const version = useSyncExternalStore(subscribeTheme, themeVersion, themeVersion);
   const navigation = useNavigationContainerRef();
@@ -227,6 +228,38 @@ function ThemedStack() {
 
 /** A sheet from below, on every platform. */
 const MODAL = { presentation: 'modal', animation: Platform.OS === 'android' ? 'slide_from_bottom' : 'default' } as const;
+
+/** The screens above that open as a sheet. */
+const SHEET_PATHS = new Set(['/compare', '/plates', '/pro', '/country', '/sign-in', '/report-bug']);
+
+/**
+ * In a browser, Escape closes a screen that opened as a sheet, as it would a
+ * dialog. In a text field with something typed in it, the first press only
+ * leaves the field, so a stray one can't throw away a half-written report.
+ */
+function useEscapeClosesSheets() {
+  const pathname = usePathname();
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !SHEET_PATHS.has(pathname)) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      const field = document.activeElement;
+      const typed =
+        field instanceof HTMLTextAreaElement || (field instanceof HTMLInputElement && field.type !== 'checkbox' && field.type !== 'radio');
+      if (typed && field.value) {
+        field.blur();
+        return;
+      }
+      event.preventDefault();
+      if (router.canGoBack()) router.back();
+      else router.replace('/');
+    };
+    // On the way down, before a text field sees it: they stop key presses
+    // from travelling any further.
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [pathname]);
+}
 
 /** The page behind the app in a browser, so overscroll and the address bar match. */
 function paintPage() {

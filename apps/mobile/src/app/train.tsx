@@ -6,6 +6,7 @@
  */
 
 import { Stack, useRouter } from 'expo-router';
+import { useKeepAwake } from 'expo-keep-awake';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { Easing, FadeInDown, FadeOutDown, ReduceMotion, ZoomIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -154,6 +155,7 @@ export default function TrainScreen() {
   return (
     <View style={styles.page}>
       <Stack.Screen options={{ title: '' }} />
+      <StayAwake />
       <ScrollView
         style={styles.page}
         contentContainerStyle={[styles.content, { paddingBottom: space[8] + (restEndsAt !== null ? 90 : 0) + insets.bottom }]}
@@ -475,6 +477,12 @@ function Drain({ endsAt, total }: { endsAt: number; total: number }) {
 // --- Time ------------------------------------------------------------------------
 
 /** "12:04", ticking by itself so the rest of the screen doesn't redraw every second. */
+/** The screen stays on while this workout is open, so it isn't locked between sets. */
+function StayAwake() {
+  useKeepAwake('gymgo-workout', { suppressDeactivateWarnings: true });
+  return null;
+}
+
 function Elapsed({ since }: { since: string }) {
   const now = useNow(true);
   return <>{clockLabel((now - Date.parse(since)) / 1000)}</>;

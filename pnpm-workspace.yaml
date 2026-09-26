@@ -1,0 +1,5 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+patchedDependencies:
+  expo@57.0.25: patches/expo@57.0.25.patch

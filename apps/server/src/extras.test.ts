@@ -1,0 +1,540 @@
+import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { createServer, type Server } from 'node:http';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import type { AddressInfo } from 'node:net';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
+import { DEMO_GYMS } from '@gymgo/demo-data';
+import { US_GYMS } from '@gymgo/usa-data';
+import { createApp } from './app';
+import { openDb, seedGyms, type Db } from './db';
+import { cleanPhoto, stripJpeg, stripPng } from './photos';
+import { sameName } from './google';
+
+// --- A tiny JPEG with an EXIF block that carries a fake GPS tag. -------------
+const SOI = Buffer.from([0xff, 0xd8]);
+const app0 = Buffer.concat([Buffer.from([0xff, 0xe0, 0x00, 0x10]), Buffer.from('JFIF\0\x01\x01\0\0\x01\0\x01\0\0', 'latin1')]);
+const exifPayload = Buffer.from('Exif\0\0GPSLatitude-37.8', 'latin1');
+const app1 = Buffer.concat([Buffer.from([0xff, 0xe1]), Buffer.from([0x00, exifPayload.length + 2]), exifPayload]);
+const sos = Buffer.from([0xff, 0xda, 0x00, 0x08, 1, 1, 0, 0, 0x3f, 0, 0x12, 0x34, 0x56, 0xff, 0xd9]);
+const JPEG_WITH_GPS = Buffer.concat([SOI, app0, app1, sos]);
+
+function pngChunk(type: string, data: Buffer) {
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(data.length);
+  return Buffer.concat([length, Buffer.from(type, 'latin1'), data, Buffer.alloc(4)]);
+}
+const PNG_WITH_TEXT = Buffer.concat([
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+  pngChunk('IHDR', Buffer.alloc(13)),
+  pngChunk('tEXt', Buffer.from('Location\0home', 'latin1')),
+  pngChunk('IDAT', Buffer.from([1, 2, 3])),
+  pngChunk('IEND', Buffer.alloc(0)),
+]);
+
+describe('photo cleaning', () => {
+  it('removes EXIF (where GPS lives) from a JPEG and keeps the image', () => {
+    const clean = stripJpeg(JPEG_WITH_GPS)!;
+    expect(clean.includes(Buffer.from('GPSLatitude'))).toBe(false);
+    expect(clean.includes(Buffer.from('JFIF'))).toBe(true);
+    expect(clean.subarray(-2)).toEqual(Buffer.from([0xff, 0xd9]));
+  });
+
+  it('removes text metadata from a PNG', () => {
+    const clean = stripPng(PNG_WITH_TEXT)!;
+    expect(clean.includes(Buffer.from('Location'))).toBe(false);
+    expect(clean.includes(Buffer.from('IDAT'))).toBe(true);
+  });
+
+  it('refuses anything that is not a JPEG or PNG, whatever it claims', () => {
+    expect(cleanPhoto(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'))).toBeNull();
+    expect(cleanPhoto(Buffer.from([0xff, 0xd8, 0xff, 0x00]))).toBeNull();
+  });
+});
+
+// --- Server with a fake Google -----------------------------------------------
+let server: Server;
+let base: string;
+let db: Db;
+let photoDir: string;
+const googleCalls: string[] = [];
+
+const CITY = MELBOURNE_GYMS.find((gym) => gym.location.id === 'dohertys-gym-city')!;
+
+async function fakeGoogle(input: string | URL | Request, init?: RequestInit): Promise<Response> {
+  const url = String(input);
+  googleCalls.push(url);
+  const headers = new Headers(init?.headers);
+  if (headers.get('X-Goog-Api-Key') !== 'test-key') return Response.json({ error: { message: 'bad key' } }, { status: 403 });
+  if (url.endsWith('places:searchText')) {
+    const body = JSON.parse(String(init?.body));
+    const near = (id: string, name: string, types: string[], northMetres: number) => ({
+      id,
+      displayName: { text: name },
+      types,
+      location: { latitude: body.locationBias.circle.center.latitude + northMetres / 111_000, longitude: body.locationBias.circle.center.longitude },
+    });
+    if (String(body.textQuery).includes('Absolute')) {
+      // Only a listing 2 km away: not this gym.
+      return Response.json({ places: [{ id: 'far-away', displayName: { text: 'Absolute MMA' }, location: { latitude: -37.83, longitude: 144.99 } }] });
+    }
+    if (String(body.textQuery).includes('Prime Athletica')) {
+      // Close, but a café and a shopping centre: not this gym, whatever the distance.
+      return Response.json({ places: [near('ChIJ-cafe', 'Brunetti Café', ['cafe'], 20), near('ChIJ-mall', 'Smith Street Centre', ['shopping_mall'], 10)] });
+    }
+    // Doherty's: the shopping centre is nearer, but the gym is the one named.
+    return Response.json({
+      places: [near('ChIJ-mall', 'QV Melbourne', ['shopping_mall'], 10), near('ChIJ-dohertys', 'Dohertys Gym City', ['gym'], 33)],
+    });
+  }
+  if (url.includes('/photos/p1/media')) return Response.json({ photoUri: 'https://lh3.googleusercontent.com/p1' });
+  if (url.includes('/places/ChIJ-dohertys')) {
+    return Response.json({
+      id: 'ChIJ-dohertys',
+      displayName: { text: 'Dohertys Gym City' },
+      rating: 4.6,
+      userRatingCount: 812,
+      currentOpeningHours: { openNow: true },
+      regularOpeningHours: { weekdayDescriptions: ['Monday: 5:00 AM – 12:00 AM'] },
+      googleMapsUri: 'https://maps.google.com/?cid=1',
+      editorialSummary: { text: 'Old-school gym open late.' },
+      primaryTypeDisplayName: { text: 'Gym' },
+      internationalPhoneNumber: '+61 3 9642 0000',
+      accessibilityOptions: { wheelchairAccessibleEntrance: false },
+      paymentOptions: { acceptsCreditCards: true, acceptsNfc: true },
+      photos: [{ name: 'places/ChIJ-dohertys/photos/p1', authorAttributions: [{ displayName: 'Pat', uri: 'https://maps.google.com/contrib/1' }] }],
+      reviews: [{ rating: 5, text: { text: 'Open late.' }, relativePublishTimeDescription: 'a month ago', authorAttribution: { displayName: 'Sam' } }],
+    });
+  }
+  return Response.json({ error: { message: 'unexpected' } }, { status: 404 });
+}
+
+beforeAll(async () => {
+  db = openDb(':memory:');
+  seedGyms(db, [...MELBOURNE_GYMS, ...DEMO_GYMS, US_GYMS[0]!]);
+  photoDir = mkdtempSync(join(tmpdir(), 'gymgo-photos-'));
+  server = createServer(
+    createApp({ db, attribution: 'test', signupsPerHour: 1000, photoDir, googleKey: 'test-key', fetchImpl: fakeGoogle as typeof fetch }),
+  );
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+});
+
+afterAll(() => {
+  server.close();
+  db.close();
+  rmSync(photoDir, { recursive: true, force: true });
+});
+
+async function call(method: string, path: string, options: { token?: string; body?: unknown } = {}) {
+  const response = await fetch(`${base}${path}`, {
+    method,
+    headers: {
+      ...(options.token ? { authorization: `Bearer ${options.token}` } : {}),
+      ...(options.body !== undefined ? { 'content-type': 'application/json' } : {}),
+    },
+    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+  });
+  const type = response.headers.get('content-type') ?? '';
+  const payload = type.startsWith('image/') ? Buffer.from(await response.arrayBuffer()) : await response.text();
+  return { status: response.status, type, raw: payload, body: typeof payload === 'string' && payload ? JSON.parse(payload) : null };
+}
+
+let counter = 0;
+async function signUp() {
+  counter += 1;
+  const result = await call('POST', '/api/auth/signup', {
+    body: { email: `photo${counter}@example.com`, password: 'correct horse', displayName: `Lifter ${counter}` },
+  });
+  return { token: result.body.token as string, id: result.body.account.id as string };
+}
+
+describe('gym photos', () => {
+  it('needs an account and explicit consent, and only takes real images', async () => {
+    const data = JPEG_WITH_GPS.toString('base64');
+    expect((await call('POST', '/api/gyms/dohertys-gym-city/photos', { body: { data, consent: true } })).status).toBe(401);
+    const { token } = await signUp();
+    expect((await call('POST', '/api/gyms/dohertys-gym-city/photos', { token, body: { data } })).status).toBe(400);
+    const svg = Buffer.from('<svg/>').toString('base64');
+    expect((await call('POST', '/api/gyms/dohertys-gym-city/photos', { token, body: { data: svg, consent: true } })).status).toBe(400);
+  });
+
+  it('holds a photo for moderation, strips its location, then shows it credited', async () => {
+    const author = await signUp();
+    const posted = await call('POST', '/api/gyms/dohertys-gym-city/photos', {
+      token: author.token,
+      body: { data: `data:image/jpeg;base64,${JPEG_WITH_GPS.toString('base64')}`, consent: true },
+    });
+    expect(posted.status).toBe(201);
+    const id = posted.body.photo.id as string;
+
+    // Not public yet, but the uploader sees it's waiting.
+    expect((await call('GET', `/api/photos/${id}`)).status).toBe(404);
+    const mine = await call('GET', '/api/gyms/dohertys-gym-city/photos', { token: author.token });
+    expect(mine.body.photos).toEqual([]);
+    expect(mine.body.mine).toEqual([expect.objectContaining({ id, status: 'pending' })]);
+
+    // Members can't moderate; moderators can, and see the image inline.
+    expect((await call('GET', '/api/moderation/photos', { token: author.token })).status).toBe(403);
+    const moderator = await signUp();
+    db.prepare(`update users set role = 'moderator' where id = ?`).run(moderator.id);
+    const queue = await call('GET', '/api/moderation/photos', { token: moderator.token });
+    expect(queue.body.photos[0]).toMatchObject({ id, gymId: 'dohertys-gym-city' });
+    expect(queue.body.photos[0].dataUrl).toMatch(/^data:image\/jpeg;base64,/);
+    expect((await call('POST', `/api/moderation/photos/${id}`, { token: moderator.token, body: { decision: 'publish' } })).status).toBe(204);
+
+    const listed = await call('GET', '/api/gyms/dohertys-gym-city/photos');
+    expect(listed.body.photos).toEqual([expect.objectContaining({ id, url: `/api/photos/${id}`, credit: expect.stringMatching(/^Lifter/) })]);
+    expect((await call('GET', '/api/photos/covers')).body.covers).toEqual({ 'dohertys-gym-city': `/api/photos/${id}` });
+    const image = await call('GET', `/api/photos/${id}`);
+    expect(image.status).toBe(200);
+    expect(image.type).toBe('image/jpeg');
+    expect((image.raw as Buffer).includes(Buffer.from('GPSLatitude'))).toBe(false);
+  });
+
+  it('refuses photos of the invented demo gyms', async () => {
+    const { token } = await signUp();
+    const demo = DEMO_GYMS[0]!.location.id;
+    const posted = await call('POST', `/api/gyms/${demo}/photos`, { token, body: { data: JPEG_WITH_GPS.toString('base64'), consent: true } });
+    expect(posted.status).toBe(400);
+  });
+
+  it('deletes a rejected photo’s file, and a rejection needs a reason', async () => {
+    const author = await signUp();
+    const posted = await call('POST', '/api/gyms/dohertys-gym-brunswick/photos', {
+      token: author.token,
+      body: { data: JPEG_WITH_GPS.toString('base64'), consent: true },
+    });
+    const id = posted.body.photo.id as string;
+    expect(readdirSync(photoDir).some((name) => name.startsWith(id))).toBe(true);
+
+    const moderator = await signUp();
+    db.prepare(`update users set role = 'moderator' where id = ?`).run(moderator.id);
+    expect((await call('POST', `/api/moderation/photos/${id}`, { token: moderator.token, body: { decision: 'reject' } })).status).toBe(400);
+    expect(
+      (await call('POST', `/api/moderation/photos/${id}`, { token: moderator.token, body: { decision: 'reject', reason: 'Not this gym.' } })).status,
+    ).toBe(204);
+    expect(readdirSync(photoDir).some((name) => name.startsWith(id))).toBe(false);
+    expect((await call('GET', `/api/photos/${id}`)).status).toBe(404);
+    const mine = await call('GET', '/api/gyms/dohertys-gym-brunswick/photos', { token: author.token });
+    expect(mine.body.mine).toEqual([expect.objectContaining({ id, status: 'rejected' })]);
+  });
+});
+
+describe('what members say a gym has', () => {
+  it('tallies each member’s latest report, apart from anything the gym publishes', async () => {
+    const gym = '/api/gyms/carlton-fitness/equipment';
+    expect((await call('GET', gym)).body).toEqual({ reporters: 0, items: [], mine: [] });
+    expect((await call('PUT', gym, { body: { items: [] } })).status).toBe(401);
+
+    const first = await signUp();
+    const second = await signUp();
+    expect(
+      (
+        await call('PUT', gym, {
+          token: first.token,
+          body: { items: [{ equipmentTypeId: 'squat_rack', presence: 'yes' }, { equipmentTypeId: 'dumbbells', presence: 'yes', maxWeightKg: 40 }] },
+        })
+      ).status,
+    ).toBe(204);
+    await call('PUT', gym, {
+      token: second.token,
+      body: { items: [{ equipmentTypeId: 'squat_rack', presence: 'no' }, { equipmentTypeId: 'dumbbells', presence: 'yes', maxWeightKg: 50 }] },
+    });
+
+    const tally = await call('GET', gym, { token: first.token });
+    expect(tally.body.reporters).toBe(2);
+    expect(tally.body.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ equipmentTypeId: 'squat_rack', yes: 1, no: 1, maxWeightKg: null }),
+        expect.objectContaining({ equipmentTypeId: 'dumbbells', yes: 2, no: 0, maxWeightKg: 50 }),
+      ]),
+    );
+    expect(tally.body.mine).toHaveLength(2);
+
+    // A new report replaces the old one: leaving an item out clears it.
+    await call('PUT', gym, { token: first.token, body: { items: [{ equipmentTypeId: 'bench', presence: 'yes' }] } });
+    const after = await call('GET', gym, { token: first.token });
+    expect(after.body.mine).toEqual([{ equipmentTypeId: 'bench', presence: 'yes', maxWeightKg: null }]);
+    expect(after.body.items.find((item: { equipmentTypeId: string }) => item.equipmentTypeId === 'squat_rack')).toMatchObject({ yes: 0, no: 1 });
+  });
+
+  it('rejects unknown equipment, bad weights and invented demo gyms', async () => {
+    const { token } = await signUp();
+    const gym = '/api/gyms/carlton-fitness/equipment';
+    expect((await call('PUT', gym, { token, body: { items: [{ equipmentTypeId: 'jacuzzi', presence: 'yes' }] } })).status).toBe(400);
+    expect((await call('PUT', gym, { token, body: { items: [{ equipmentTypeId: 'bench', presence: 'maybe' }] } })).status).toBe(400);
+    expect((await call('PUT', gym, { token, body: { items: [{ equipmentTypeId: 'bench', presence: 'yes', maxWeightKg: 30 }] } })).status).toBe(400);
+    expect((await call('PUT', gym, { token, body: { items: [{ equipmentTypeId: 'dumbbells', presence: 'yes', maxWeightKg: 900 }] } })).status).toBe(400);
+    const demo = `/api/gyms/${DEMO_GYMS[0]!.location.id}/equipment`;
+    expect((await call('PUT', demo, { token, body: { items: [{ equipmentTypeId: 'bench', presence: 'yes' }] } })).status).toBe(400);
+  });
+});
+
+describe('what members paid for a casual visit', () => {
+  const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+
+  it('gives the typical price (the median) and range, counts each member once, and never shows who', async () => {
+    const gym = '/api/gyms/carlton-fitness/prices';
+    expect((await call('GET', gym)).body).toMatchObject({ currency: 'AUD', count: 0, typicalMinor: null, mine: null });
+    expect((await call('PUT', gym, { body: { amountMinor: 2000, paidOn: day(0) } })).status).toBe(401);
+
+    const [a, b, c] = [await signUp(), await signUp(), await signUp()];
+    for (const [who, amount, when] of [[a, 2000, -3], [b, 2500, -40], [c, 9900, -1]] as const) {
+      expect((await call('PUT', gym, { token: who.token, body: { amountMinor: amount, paidOn: day(when) } })).status).toBe(204);
+    }
+    const summary = await call('GET', gym, { token: a.token });
+    // The odd A$99 report can't drag the typical price up.
+    expect(summary.body).toMatchObject({ count: 3, typicalMinor: 2500, lowMinor: 2000, highMinor: 9900, latestPaidOn: day(-1) });
+    expect(summary.body.mine).toEqual({ amountMinor: 2000, paidOn: day(-3) });
+    expect(JSON.stringify(summary.body)).not.toMatch(/Lifter|@example/);
+
+    // Reporting again replaces your report; taking it back removes it.
+    await call('PUT', gym, { token: c.token, body: { amountMinor: 2200, paidOn: day(0) } });
+    expect((await call('GET', gym)).body).toMatchObject({ count: 3, typicalMinor: 2200, highMinor: 2500 });
+    expect((await call('DELETE', gym, { token: c.token })).status).toBe(204);
+    expect((await call('GET', gym)).body).toMatchObject({ count: 2, typicalMinor: 2250 });
+  });
+
+  it('turns away amounts and dates that can’t be right, and invented demo gyms', async () => {
+    const { token } = await signUp();
+    const gym = '/api/gyms/carlton-fitness/prices';
+    for (const body of [
+      { amountMinor: 0, paidOn: day(0) },
+      { amountMinor: 50001, paidOn: day(0) },
+      { amountMinor: 19.5, paidOn: day(0) },
+      { amountMinor: 2000, paidOn: 'yesterday' },
+      { amountMinor: 2000, paidOn: day(5) },
+      { amountMinor: 2000, paidOn: day(-800) },
+    ]) {
+      expect((await call('PUT', gym, { token, body })).status).toBe(400);
+    }
+    const demo = `/api/gyms/${DEMO_GYMS[0]!.location.id}/prices`;
+    expect((await call('PUT', demo, { token, body: { amountMinor: 2000, paidOn: day(0) } })).status).toBe(400);
+  });
+
+  it('lists the typical price for every gym members have priced, in one request', async () => {
+    const all = await call('GET', '/api/prices/typical');
+    expect(all.status).toBe(200);
+    expect(all.body.typical['carlton-fitness']).toEqual({ typicalMinor: 2250, count: 2 });
+    for (const entry of Object.values(all.body.typical) as Array<{ count: number }>) expect(entry.count).toBeGreaterThan(0);
+  });
+
+  it('keeps a US gym’s reports in US dollars', async () => {
+    const { token } = await signUp();
+    const gym = `/api/gyms/${US_GYMS[0]!.location.id}/prices`;
+    await call('PUT', gym, { token, body: { amountMinor: 1500, paidOn: day(-2) } });
+    expect((await call('GET', gym)).body).toMatchObject({ currency: 'USD', count: 1, typicalMinor: 1500 });
+  });
+});
+
+describe('how getting in went for visiting members', () => {
+  const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+
+  it('counts each member’s latest visit by outcome, without names, and lets them change or remove it', async () => {
+    const gym = '/api/gyms/carlton-fitness/access';
+    expect((await call('GET', gym)).body).toMatchObject({ count: 0, walkedIn: 0, bookedFirst: 0, turnedAway: 0, latestVisitOn: null, mine: null });
+    expect((await call('PUT', gym, { body: { outcome: 'walked_in', visitedOn: day(0) } })).status).toBe(401);
+
+    const [a, b, c] = [await signUp(), await signUp(), await signUp()];
+    await call('PUT', gym, { token: a.token, body: { outcome: 'walked_in', visitedOn: day(-2) } });
+    await call('PUT', gym, { token: b.token, body: { outcome: 'walked_in', visitedOn: day(-20) } });
+    await call('PUT', gym, { token: c.token, body: { outcome: 'booked_first', visitedOn: day(-1) } });
+    const summary = await call('GET', gym, { token: c.token });
+    expect(summary.body).toMatchObject({ count: 3, walkedIn: 2, bookedFirst: 1, turnedAway: 0, latestVisitOn: day(-1) });
+    expect(summary.body.mine).toEqual({ outcome: 'booked_first', visitedOn: day(-1) });
+    expect(JSON.stringify(summary.body)).not.toMatch(/Lifter|@example/);
+
+    await call('PUT', gym, { token: c.token, body: { outcome: 'turned_away', visitedOn: day(0) } });
+    expect((await call('GET', gym)).body).toMatchObject({ count: 3, bookedFirst: 0, turnedAway: 1 });
+    expect((await call('DELETE', gym, { token: c.token })).status).toBe(204);
+    expect((await call('GET', gym)).body).toMatchObject({ count: 2, turnedAway: 0 });
+  });
+
+  it('turns away unknown outcomes, bad or stale dates, and invented demo gyms', async () => {
+    const { token } = await signUp();
+    const gym = '/api/gyms/carlton-fitness/access';
+    for (const body of [
+      { outcome: 'snuck_in', visitedOn: day(0) },
+      { outcome: 'walked_in', visitedOn: 'last week' },
+      { outcome: 'walked_in', visitedOn: day(4) },
+      { outcome: 'walked_in', visitedOn: day(-400) },
+    ]) {
+      expect((await call('PUT', gym, { token, body })).status).toBe(400);
+    }
+    const demo = `/api/gyms/${DEMO_GYMS[0]!.location.id}/access`;
+    expect((await call('PUT', demo, { token, body: { outcome: 'walked_in', visitedOn: day(0) } })).status).toBe(400);
+  });
+});
+
+describe('whether a gym has closed, from members', () => {
+  const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+
+  it('counts closed and still-open reports from the last six months, without names', async () => {
+    const gym = '/api/gyms/lincoln-square-fitness/status';
+    expect((await call('GET', gym)).status).toBe(404);
+    const real = '/api/gyms/carlton-fitness/status';
+    expect((await call('GET', real)).body).toEqual({ closed: 0, open: 0, latestClosedOn: null, latestOpenOn: null, mine: null });
+    const [a, b, c] = [await signUp(), await signUp(), await signUp()];
+    await call('PUT', real, { token: a.token, body: { status: 'closed', seenOn: day(-3) } });
+    await call('PUT', real, { token: b.token, body: { status: 'closed', seenOn: day(-1) } });
+    await call('PUT', real, { token: c.token, body: { status: 'open', seenOn: day(-10) } });
+    const summary = await call('GET', real, { token: a.token });
+    expect(summary.body).toEqual({ closed: 2, open: 1, latestClosedOn: day(-1), latestOpenOn: day(-10), mine: { status: 'closed', seenOn: day(-3) } });
+    expect(JSON.stringify(summary.body)).not.toMatch(/Lifter|@example/);
+    expect((await call('DELETE', real, { token: a.token })).status).toBe(204);
+    expect((await call('GET', real)).body).toMatchObject({ closed: 1, open: 1 });
+  });
+
+  it('turns away unknown statuses, stale or future dates, and invented demo gyms', async () => {
+    const { token } = await signUp();
+    const real = '/api/gyms/carlton-fitness/status';
+    for (const body of [{ status: 'moved', seenOn: day(0) }, { status: 'closed', seenOn: day(3) }, { status: 'closed', seenOn: day(-200) }]) {
+      expect((await call('PUT', real, { token, body })).status).toBe(400);
+    }
+    const demo = `/api/gyms/${DEMO_GYMS[0]!.location.id}/status`;
+    expect((await call('PUT', demo, { token, body: { status: 'closed', seenOn: day(0) } })).status).toBe(400);
+  });
+});
+
+describe('moderating members’ price and visit reports', () => {
+  it('shows moderators the latest reports with who sent them, and lets them remove one', async () => {
+    const day = new Date().toISOString().slice(0, 10);
+    const member = await signUp();
+    await call('PUT', '/api/gyms/prime-athletica-fitzroy/prices', { token: member.token, body: { amountMinor: 45000, paidOn: day } });
+    await call('PUT', '/api/gyms/prime-athletica-fitzroy/access', { token: member.token, body: { outcome: 'turned_away', visitedOn: day } });
+
+    // Members can't see or remove others' reports.
+    expect((await call('GET', '/api/moderation/member-reports', { token: member.token })).status).toBe(403);
+    expect((await call('DELETE', `/api/moderation/member-reports/price/prime-athletica-fitzroy/${member.id}`, { token: member.token })).status).toBe(403);
+
+    const moderator = await signUp();
+    db.prepare(`update users set role = 'moderator' where id = ?`).run(moderator.id);
+    const list = await call('GET', '/api/moderation/member-reports', { token: moderator.token });
+    expect(list.body.reports).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'price', gymId: 'prime-athletica-fitzroy', userId: member.id, amountMinor: 45000, currency: 'AUD' }),
+        expect.objectContaining({ kind: 'access', gymId: 'prime-athletica-fitzroy', userId: member.id, outcome: 'turned_away' }),
+      ]),
+    );
+
+    // The A$450 "visit" is plainly wrong: out it goes, and the summary forgets it.
+    expect((await call('DELETE', `/api/moderation/member-reports/price/prime-athletica-fitzroy/${member.id}`, { token: moderator.token })).status).toBe(204);
+    expect((await call('GET', '/api/gyms/prime-athletica-fitzroy/prices')).body.count).toBe(0);
+    expect((await call('DELETE', `/api/moderation/member-reports/price/prime-athletica-fitzroy/${member.id}`, { token: moderator.token })).status).toBe(404);
+    expect((await call('DELETE', `/api/moderation/member-reports/photos/prime-athletica-fitzroy/${member.id}`, { token: moderator.token })).status).toBe(400);
+  });
+});
+
+describe('downloading your data', () => {
+  it('gives you everything held about you, and nothing secret or anyone else’s', async () => {
+    expect((await call('GET', '/api/me/export')).status).toBe(401);
+    const me = await signUp();
+    const someoneElse = await signUp();
+    const today = new Date().toISOString().slice(0, 10);
+    expect((await call('PUT', '/api/saved/carlton-fitness', { token: me.token })).status).toBeLessThan(300);
+    await call('PUT', '/api/gyms/carlton-fitness/prices', { token: me.token, body: { amountMinor: 2000, paidOn: today } });
+    await call('PUT', '/api/gyms/carlton-fitness/access', { token: me.token, body: { outcome: 'walked_in', visitedOn: today } });
+    await call('PUT', '/api/gyms/carlton-fitness/prices', { token: someoneElse.token, body: { amountMinor: 3000, paidOn: today } });
+
+    const response = await fetch(`${base}/api/me/export`, { headers: { authorization: `Bearer ${me.token}` } });
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-disposition')).toMatch(/attachment; filename="gymgo-my-data-\d{4}-\d{2}-\d{2}\.json"/);
+    const data = (await response.json()) as Record<string, any>;
+    expect(data.account).toMatchObject({ id: me.id, displayName: expect.stringMatching(/^Lifter/) });
+    expect(data.savedGyms.map((row: { gymId: string }) => row.gymId)).toContain('carlton-fitness');
+    expect(data.priceReports).toEqual([expect.objectContaining({ gymId: 'carlton-fitness', amountMinor: 2000 })]);
+    expect(data.visitReports).toEqual([expect.objectContaining({ outcome: 'walked_in' })]);
+    expect(data.signIns.length).toBeGreaterThan(0);
+
+    const text = JSON.stringify(data);
+    const { password_hash: hash } = db.prepare('select password_hash from users where id = ?').get(me.id) as { password_hash: string };
+    expect(text).not.toContain(hash);
+    expect(text).not.toMatch(/password_?hash|token_?hash/i);
+    expect(text).not.toContain(me.token);
+    expect(text).not.toContain(someoneElse.id);
+  });
+});
+
+describe('is this Google listing the gym?', () => {
+  it('matches on a real word of the name, not on filler or the suburb', () => {
+    expect(sameName('Doherty’s Gym', 'Dohertys Gym City')).toBe(true);
+    expect(sameName('Fitness First', 'Fitness First Bondi Junction')).toBe(true);
+    expect(sameName('Snap Fitness', 'QV Melbourne')).toBe(false);
+    expect(sameName('CrossFit Fitzroy', 'CrossFit Fitzroy', ['Fitzroy', 'VIC'])).toBe(true);
+    expect(sameName('CrossFit Fitzroy', 'Fitzroy Pharmacy', ['Fitzroy', 'VIC'])).toBe(false);
+    expect(sameName('The Gym', 'The Gym')).toBe(true);
+    expect(sameName('The Gym', 'Gym Bar')).toBe(false);
+  });
+});
+
+describe('Google Maps details', () => {
+  it('matches the gym, returns live details with credits, and stores only the place ID', async () => {
+    const result = await call('GET', '/api/gyms/dohertys-gym-city/google');
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({
+      configured: true,
+      found: true,
+      place: {
+        placeId: 'ChIJ-dohertys',
+        rating: 4.6,
+        ratingCount: 812,
+        openNow: true,
+        googleMapsUri: 'https://maps.google.com/?cid=1',
+        photos: [{ uri: 'https://lh3.googleusercontent.com/p1', authors: [{ name: 'Pat', uri: 'https://maps.google.com/contrib/1' }] }],
+        reviews: [expect.objectContaining({ text: 'Open late.', author: expect.objectContaining({ name: 'Sam' }) })],
+        summary: 'Old-school gym open late.',
+        type: 'Gym',
+        phoneInternational: '+61 3 9642 0000',
+      },
+    });
+    // Only what Google says: a "no" stays a no, and nothing it didn't mention appears.
+    expect(result.body.place.details).toEqual([
+      { group: 'Accessibility', label: 'Wheelchair-accessible entrance', value: false },
+      { group: 'Payments', label: 'Credit cards', value: true },
+      { group: 'Payments', label: 'Tap to pay', value: true },
+    ]);
+    // The key never reaches the app.
+    expect(JSON.stringify(result.body)).not.toContain('test-key');
+    // Only the place ID is kept; Google's content isn't stored anywhere.
+    const stored = db.prepare('select * from google_places').all();
+    expect(stored).toEqual([expect.objectContaining({ gym_id: 'dohertys-gym-city', place_id: 'ChIJ-dohertys' })]);
+
+    // Second view: no new search, but details are fetched live again.
+    googleCalls.length = 0;
+    await call('GET', '/api/gyms/dohertys-gym-city/google');
+    expect(googleCalls.some((url) => url.endsWith('places:searchText'))).toBe(false);
+    expect(googleCalls.some((url) => url.includes('/places/ChIJ-dohertys'))).toBe(true);
+  });
+
+  it('won’t attach a listing that is too far from the gym to be it', async () => {
+    const result = await call('GET', '/api/gyms/absolute-mma-melbourne-cbd/google');
+    expect(result.body).toEqual({ configured: true, found: false, reason: 'no_match' });
+  });
+
+  it('won’t attach the café next door or the centre it’s in, and re-checks matches made by the old rule', async () => {
+    const prime = MELBOURNE_GYMS.find((gym) => gym.location.name === 'Prime Athletica')!.location.id;
+    // Matched under the old nearest-listing rule to the shopping centre:
+    db.prepare('insert or replace into google_places (gym_id, place_id, matched_at, rule) values (?, ?, ?, 1)').run(prime, 'ChIJ-mall', '2026-09-01T00:00:00Z');
+    const result = await call('GET', `/api/gyms/${prime}/google`);
+    expect(result.body).toEqual({ configured: true, found: false, reason: 'no_match' });
+    expect(db.prepare('select place_id, rule from google_places where gym_id = ?').get(prime)).toEqual({ place_id: null, rule: 2 });
+  });
+
+  it('doesn’t look up invented demo gyms', async () => {
+    const demo = DEMO_GYMS[0]!.location.id;
+    expect((await call('GET', `/api/gyms/${demo}/google`)).body).toEqual({ configured: true, found: false, reason: 'demo' });
+  });
+
+  it('is off without a key', async () => {
+    const offDb = openDb(':memory:');
+    seedGyms(offDb, MELBOURNE_GYMS);
+    const off = createServer(createApp({ db: offDb, attribution: 'test', googleKey: null, fetchImpl: fakeGoogle as typeof fetch }));
+    await new Promise<void>((resolve) => off.listen(0, '127.0.0.1', resolve));
+    const url = `http://127.0.0.1:${(off.address() as AddressInfo).port}/api/gyms/dohertys-gym-city/google`;
+    expect(await (await fetch(url)).json()).toEqual({ configured: false });
+    off.close();
+    offDb.close();
+  });
+});

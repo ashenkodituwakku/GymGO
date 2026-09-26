@@ -1,0 +1,266 @@
+/**
+ * Filters. Changes apply as you make them, and the button at the bottom says
+ * how many gyms could still work, and how many are sure things — so there is
+ * never a moment where the controls and the results disagree.
+ */
+
+import { Pressable, StyleSheet, View } from 'react-native';
+import { equipmentLabel, type Tri } from '@gymgo/domain';
+import { filtersButtonLabel, timeLabel } from '@/lib/copy';
+import {
+  BUDGET_PRESETS,
+  DUMBBELL_PRESETS,
+  QUICK_EQUIPMENT,
+  TIME_PRESETS,
+  addDays,
+  initialFilters,
+  defaultVisit,
+  nowIn,
+  type Filters,
+} from '@/lib/query';
+import { color, dropShadow, face, radius, space, themed } from '@/lib/theme';
+import { haptic } from '@/lib/haptics';
+import { localBudget, moneyLabel, radiusChoices, tracksPrices } from '@/lib/places';
+import { Chip, PrimaryButton, Txt } from './ui';
+
+export function FiltersContent({
+  filters,
+  onChange,
+  counts,
+  onDone,
+}: {
+  filters: Filters;
+  onChange: (next: Filters) => void;
+  counts: { confirmed: number; needs_confirmation: number };
+  onDone: () => void;
+}) {
+  const today = nowIn(filters.timezone).date;
+  const country = filters.countryCode;
+  const tomorrow = addDays(today, 1);
+  const set = (patch: Partial<Filters>) => onChange({ ...filters, ...patch });
+
+  const toggleEquipment = (id: string) => {
+    const has = filters.equipment.includes(id);
+    set({
+      equipment: has ? filters.equipment.filter((item) => item !== id) : [...filters.equipment, id],
+      dumbbellMinKg: id === 'dumbbells' && has ? null : filters.dumbbellMinKg,
+    });
+  };
+
+  return (
+    <View style={styles.wrap}>
+      <View style={styles.header}>
+        <Txt variant="title">Filters</Txt>
+        <Pressable
+          onPress={() => {
+            haptic.select();
+            const visit = defaultVisit(new Date(), filters.timezone);
+            onChange({
+              ...initialFilters(),
+              centre: filters.centre,
+              placeName: filters.placeName,
+              timezone: filters.timezone,
+              bbox: filters.bbox,
+              visitDate: visit.date,
+              visitMinuteOfDay: visit.minute,
+            });
+          }}
+          accessibilityRole="button"
+          hitSlop={10}
+        >
+          <Txt variant="body" color={color.brand} style={styles.reset}>
+            Reset
+          </Txt>
+        </Pressable>
+      </View>
+
+      <Group title="When are you training?">
+        <Segmented
+          options={[
+            { label: 'Today', value: today },
+            { label: 'Tomorrow', value: tomorrow },
+          ]}
+          value={filters.visitDate}
+          onChange={(visitDate) => set({ visitDate, visitPicked: true })}
+        />
+        <View style={styles.chips}>
+          {timeChoices(filters.visitMinuteOfDay).map((minute) => (
+            <Chip
+              key={minute}
+              label={timeLabel(minute)}
+              selected={filters.visitMinuteOfDay === minute}
+              onPress={() => set({ visitMinuteOfDay: minute, visitPicked: true })}
+            />
+          ))}
+        </View>
+        <Hint>We check when visitors can walk in — not when members can.</Hint>
+      </Group>
+
+      <Group title="Budget per visit">
+        {tracksPrices(country) ? (
+          <>
+            <View style={styles.chips}>
+              {BUDGET_PRESETS.map((preset) => {
+                // In the country's own sizes: A$25, but ¥2,500.
+                const budget = preset === null ? null : localBudget(preset, country);
+                return (
+                  <Chip
+                    key={String(preset)}
+                    label={budget === null ? 'Any' : `Under ${moneyLabel(budget, country)}`}
+                    selected={filters.budgetMinor === budget}
+                    onPress={() => set({ budgetMinor: budget })}
+                  />
+                );
+              })}
+            </View>
+            <Hint>What you don't get back: price, tax and any must-pay fee. Refundable deposits are shown separately.</Hint>
+          </>
+        ) : (
+          <Hint>GymGO doesn’t keep visit prices here: the exchange rate moves too much to check a price against. Every price is unknown, so ask when you call.</Hint>
+        )}
+      </Group>
+
+      <Group title="Must have">
+        <View style={styles.chips}>
+          {QUICK_EQUIPMENT.map((id) => (
+            <Chip key={id} label={equipmentLabel(id)} selected={filters.equipment.includes(id)} onPress={() => toggleEquipment(id)} />
+          ))}
+        </View>
+        {filters.equipment.includes('dumbbells') && (
+          <>
+            <Txt variant="footnote" color={color.labelSecondary} style={styles.subLabel}>
+              Heaviest dumbbells, at least
+            </Txt>
+            <View style={styles.chips}>
+              {DUMBBELL_PRESETS.map((kg) => (
+                <Chip
+                  key={String(kg)}
+                  label={kg === null ? 'Any' : `${kg} kg`}
+                  selected={filters.dumbbellMinKg === kg}
+                  onPress={() => set({ dumbbellMinKg: kg })}
+                />
+              ))}
+            </View>
+          </>
+        )}
+        <Hint>Every one has to be there. If we don't know, it doesn't count.</Hint>
+      </Group>
+
+      <Group title="Live or work nearby?">
+        <Segmented<Tri>
+          options={[
+            { label: 'Yes', value: 'yes' },
+            { label: 'No', value: 'no' },
+            { label: 'Rather not say', value: 'unknown' },
+          ]}
+          value={filters.isLocalResident}
+          onChange={(isLocalResident) => set({ isLocalResident })}
+        />
+        <Hint>Some free trials are for locals only. Telling us lets those count for or against.</Hint>
+      </Group>
+
+      <Group title="How far">
+        <View style={styles.chips}>
+          {radiusChoices(country).map((choice) => (
+            <Chip
+              key={choice.label}
+              label={choice.label}
+              selected={Math.abs(filters.radiusKm - choice.km) < 0.01}
+              onPress={() => set({ radiusKm: choice.km })}
+            />
+          ))}
+        </View>
+        <Hint>As the crow flies. We don't estimate travel time.</Hint>
+      </Group>
+
+      <View style={styles.footer}>
+        <PrimaryButton
+          label={filtersButtonLabel(counts)}
+          onPress={onDone}
+        />
+      </View>
+    </View>
+  );
+}
+
+/** The presets, plus the chosen time if it isn't one of them (e.g. 3 pm). */
+function timeChoices(current: number): number[] {
+  const presets: number[] = [...TIME_PRESETS];
+  return presets.includes(current) ? presets : [...presets, current].sort((a, b) => a - b);
+}
+
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.group}>
+      <Txt variant="headline">{title}</Txt>
+      {children}
+    </View>
+  );
+}
+
+function Hint({ children }: { children: React.ReactNode }) {
+  return (
+    <Txt variant="footnote" color={color.labelSecondary}>
+      {children}
+    </Txt>
+  );
+}
+
+/** The iOS segmented control, drawn so it looks the same on every platform. */
+function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: Array<{ label: string; value: T }>;
+  value: T;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <View style={styles.segmented} accessibilityRole="radiogroup">
+      {options.map((option) => {
+        const selected = option.value === value;
+        return (
+          <Pressable
+            key={option.value}
+            onPress={() => {
+              haptic.select();
+              onChange(option.value);
+            }}
+            accessibilityRole="radio"
+            aria-checked={selected}
+            style={[styles.segment, selected && styles.segmentSelected]}
+          >
+            <Txt variant="footnote" style={selected ? styles.segmentTextSelected : styles.segmentText}>
+              {option.label}
+            </Txt>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+const styles = themed(() => StyleSheet.create({
+  wrap: { paddingHorizontal: space[4], paddingBottom: space[8] },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: space[1] },
+  reset: face('medium'),
+  group: { marginTop: space[6], gap: space[3] },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  subLabel: { marginTop: space[1] },
+  footer: { marginTop: space[8] },
+
+  segmented: {
+    flexDirection: 'row',
+    padding: 2,
+    borderRadius: 9,
+    backgroundColor: color.fill,
+  },
+  segment: { flex: 1, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: 7 },
+  segmentSelected: {
+    backgroundColor: color.cardRaised,
+    ...dropShadow(0.1, 4, 1, 2),
+  },
+  segmentText: face('medium'),
+  segmentTextSelected: face('semibold'),
+}));

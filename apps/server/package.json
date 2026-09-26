@@ -1,0 +1,39 @@
+{
+  "name": "@gymgo/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GymGO's API: accounts, saved gyms, reviews, moderation and GymGO Pro (Stripe), on Node's built-in SQLite.",
+  "type": "module",
+  "scripts": {
+    "start": "node --no-warnings=ExperimentalWarning --import tsx src/main.ts",
+    "dev": "node --no-warnings=ExperimentalWarning --import tsx --watch src/main.ts",
+    "make-moderator": "node --no-warnings=ExperimentalWarning --import tsx src/cli.ts moderator",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "stripe:setup": "node --no-warnings=ExperimentalWarning --import tsx src/stripe-setup.ts"
+  },
+  "dependencies": {
+    "@gymgo/au-data": "workspace:*",
+    "@gymgo/demo-data": "workspace:*",
+    "@gymgo/domain": "workspace:*",
+    "@gymgo/eu-data": "workspace:*",
+    "@gymgo/melbourne-data": "workspace:*",
+    "@gymgo/osm": "workspace:*",
+    "@gymgo/usa-data": "workspace:*",
+    "@photostructure/tz-lookup": "^11.7.0",
+    "@rapideditor/country-coder": "5.6.1",
+    "nodemailer": "^7.0.13",
+    "stripe": "22.6.2",
+    "tsx": "^4.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "@types/nodemailer": "^8.0.2",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.1"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

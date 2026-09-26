@@ -1,0 +1,90 @@
+{
+  "expo": {
+    "name": "GymGO",
+    "slug": "gymgo",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "gymgo",
+    "userInterfaceStyle": "automatic",
+    "icon": "./assets/images/icon.png",
+    "primaryColor": "#5856D6",
+    "ios": {
+      "supportsTablet": false,
+      "icon": {
+        "light": "./assets/images/icon.png",
+        "dark": "./assets/images/icon-dark.png",
+        "tinted": "./assets/images/icon-tinted.png"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundImage": "./assets/images/adaptive-background.png",
+        "monochromeImage": "./assets/images/monochrome-icon.png",
+        "backgroundColor": "#5856D6"
+      },
+      "predictiveBackGestureEnabled": false,
+      "blockedPermissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "enableSceneSupport": true
+          }
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 120,
+          "resizeMode": "contain",
+          "backgroundColor": "#F2F2F7",
+          "dark": {
+            "image": "./assets/images/splash-icon-dark.png",
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "GymGO uses your precise location on this device to show gyms near you and how far away they are. It is never stored or sent anywhere.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "motionUsagePermission": false
+        }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "GymGO opens your photos only when you choose to share a picture of a gym.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

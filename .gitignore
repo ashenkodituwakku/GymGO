@@ -1,0 +1,35 @@
+node_modules/
+.next/
+.next-e2e/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+
+# End-to-end test store
+.data-e2e/
+
+# Local runtime data written by the file-backed dev store.
+# Production uses PostgreSQL/PostGIS; see docs/ARCHITECTURE.md.
+.data/
+
+# Environment files. Only .env.example is committed.
+.env
+.env.local
+.env.*.local
+
+# Test artefacts
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Native projects, generated on a Mac by scripts/gymgo-mac.sh (expo prebuild).
+apps/mobile/ios/
+apps/mobile/android/

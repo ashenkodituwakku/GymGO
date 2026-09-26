@@ -14,6 +14,7 @@
 import type { AccessVerdict, ResultTier } from '@gymgo/domain';
 import { countryInSentence } from './country';
 import { KM_PER_MILE, distanceLabel, usesMiles } from './places';
+import { THIS_AREA, YOUR_LOCATION } from './query';
 
 export interface TierCopy {
   label: string;
@@ -206,6 +207,32 @@ export function locatedNotice(
       return `Gyms around you from OpenStreetMap: map-only, so call before you go.${rough}`;
     }
   }
+}
+
+/**
+ * Reading the map around a place GymGO carries no city for: while it looks,
+ * when it couldn't, and when the map has nothing there.
+ */
+export function lookupLine(state: 'searching' | 'failed' | 'none', placeName: string): string {
+  switch (state) {
+    case 'searching':
+      return `Looking for gyms around ${placeName} on OpenStreetMap…`;
+    case 'failed':
+      return `Couldn’t read the map around ${placeName} just now.`;
+    case 'none':
+      return `OpenStreetMap has no gyms mapped around ${placeName} yet. Open the map, move it and tap Search this area to look further out.`;
+  }
+}
+
+/**
+ * No gym at all within reach of the search (not a filter's doing: the list
+ * counts every gym in range, fits or not). "5 km", "3 mi": whole units.
+ */
+export function noGymsLine(placeName: string, radiusKm: number, country: string): string {
+  if (placeName === THIS_AREA) return 'OpenStreetMap has no gyms mapped in this area yet.';
+  const reach = usesMiles(country) ? `${Math.round(radiusKm / KM_PER_MILE)} mi` : `${Math.round(radiusKm)} km`;
+  const where = placeName === YOUR_LOCATION ? 'you' : placeName;
+  return `No gyms mapped within ${reach} of ${where} yet. Open the map to look further out.`;
 }
 
 export const PLACEHOLDER = 'Where are we lifting?';

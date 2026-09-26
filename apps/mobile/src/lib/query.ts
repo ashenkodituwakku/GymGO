@@ -207,6 +207,20 @@ export function tilesAround(point: { lat: number; lng: number }): BoundingBox {
   return { south: (y - 1) / 10, north: (y + 2) / 10, west: (x - 1) / 10, east: (x + 2) / 10 };
 }
 
+/** A block of map tiles as a key, so the same place is looked up once. */
+export const tileKey = (box: BoundingBox): string => `${box.south.toFixed(1)},${box.west.toFixed(1)}`;
+
+/**
+ * Whether to read the map around where the search is, unasked: a place
+ * outside the cities GymGO carries (a country's capital, a city picked on
+ * Home) with no gym loaded within 10 km. Without it, choosing Japan opened on
+ * an empty Tokyo. "Near you" and "Search this area" read the map themselves.
+ */
+export function wantsLookup(filters: Pick<Filters, 'centre' | 'placeName' | 'bbox'>, records: readonly GymRecord[], inCarriedCity: boolean): boolean {
+  if (inCarriedCity || filters.bbox !== null || filters.placeName === YOUR_LOCATION) return false;
+  return !records.some((record) => haversineKm(filters.centre, record.location.position) <= 10);
+}
+
 /**
  * How wide to search around you: the usual 5 km, or 10 km when nothing is
  * mapped within 5 but something is within 10. No further, because the map

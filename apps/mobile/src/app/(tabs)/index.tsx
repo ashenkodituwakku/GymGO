@@ -10,7 +10,7 @@
 
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GymCard } from '@/components/GymCard';
 import { Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
@@ -18,7 +18,7 @@ import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { useActiveSession } from '@/lib/activeSession';
 import { useApp } from '@/lib/app-state';
-import { EMPTY, searchPrompt, timeLabel, visitWhen } from '@/lib/copy';
+import { lookupLine, noGymsLine, searchPrompt, timeLabel, visitWhen } from '@/lib/copy';
 import { countryInSentence } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityNear, cityPlace, moneyLabel, tracksPrices, type AppPlace } from '@/lib/places';
@@ -51,7 +51,7 @@ const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
 
 export default function Home() {
   usePageTitle(null);
-  const { data, account, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady } = useApp();
+  const { data, account, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady, lookup, retryLookup } = useApp();
   const active = useActiveSession();
   const [showAll, setShowAll] = useState<Record<string, boolean>>({});
   // Another country than yours, without Pro: no gyms listed, just the way to Pro.
@@ -244,9 +244,38 @@ export default function Home() {
               <GymCard key={result.record.location.id} result={result} index={index} />
             ))}
           </Carousel>
+        ) : lookup?.state === 'searching' ? (
+          <View style={styles.looking} aria-live="polite">
+            <ActivityIndicator size="small" color={color.brand} />
+            <Txt variant="subhead" color={color.labelSecondary} style={styles.flex}>
+              {lookupLine('searching', lookup.placeName)}
+            </Txt>
+          </View>
+        ) : lookup?.state === 'failed' ? (
+          <View style={styles.lookFailed}>
+            <Txt variant="subhead" color={color.labelSecondary}>
+              {lookupLine('failed', lookup.placeName)} {lookup.problem}
+            </Txt>
+            <Pressable
+              onPress={() => {
+                haptic.tap();
+                retryLookup();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Try looking around ${lookup.placeName} again`}
+              style={({ pressed }) => [styles.suburb, styles.retry, pressed && { opacity: 0.7 }]}
+            >
+              <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                Try again
+              </Txt>
+            </Pressable>
+          </View>
         ) : (
+          // Nothing in range at all: the list counts every gym, fits or not, so it isn't the filters.
           <Txt variant="subhead" color={color.labelSecondary}>
-            {EMPTY.results}
+            {lookup?.state === 'done' && lookup.gyms === 0
+              ? lookupLine('none', lookup.placeName)
+              : noGymsLine(filters.placeName, filters.radiusKm, filters.countryCode)}
           </Txt>
         )}
       </View>
@@ -513,6 +542,9 @@ const styles = themed(() => StyleSheet.create({
   },
   proTag: { ...face('bold'), letterSpacing: 0.6 },
   lockedText: { flex: 1, gap: 2 },
+  looking: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  lookFailed: { gap: space[3], alignItems: 'flex-start' },
+  retry: { backgroundColor: color.brandTint, ...dropShadow(0, 0, 0, 0) },
   cityChip: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   moreChip: { backgroundColor: color.brandTint, ...dropShadow(0, 0, 0, 0) },
   suburbs: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },

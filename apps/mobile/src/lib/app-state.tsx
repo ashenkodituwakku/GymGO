@@ -13,13 +13,13 @@ import { router } from 'expo-router';
 import { AppState as NativeAppState } from 'react-native';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { LIMITS, haversineKm } from '@gymgo/domain';
-import { ApiError } from './api';
+import { ApiError, problemText } from './api';
 import { FOCUS_COUNTRY, canSearchIn, openingPlace } from './country';
 import { setHapticsEnabled } from './haptics';
 import { currentFix, type Fix } from './location';
 import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, type City } from './places';
 import { locatedNotice } from './copy';
-import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, reachFor, refreshVisit, tilesAround, type Filters } from './query';
+import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, reachFor, refreshVisit, tileKey, tilesAround, wantsLookup, type Filters } from './query';
 import { useAccount } from './useAccount';
 import { useBilling } from './useBilling';
 import { useGymData } from './useGymData';
@@ -41,7 +41,7 @@ export interface ExploreRequest {
 /** What finding you produced. */
 export type Located =
   | { kind: 'here'; fix: Fix; city: City }
-  /** Outside the cities GymGO carries, but in AU or the US: the map around you was searched. */
+  /** Outside the cities GymGO carries, anywhere in the world: the map around you was searched. */
   | { kind: 'area'; fix: Fix; gyms: number; radiusKm: number; countryCode: string }
   /** Outside every city GymGO covers: the search went to the nearest one. */
   | { kind: 'nearest'; fix: Fix; city: City; km: number }
@@ -73,6 +73,21 @@ const PREFS_KEY = 'gymgo.prefs.v1';
 /** Only that GymGO has asked for location once, never where you were. */
 const ASKED_KEY = 'gymgo.location-asked.v1';
 const MAX_RECENTS = 10;
+
+/**
+ * Reading the map around a place GymGO carries no city for (a country's
+ * capital, a city picked on Home), so it doesn't open on an empty map.
+ */
+export interface Lookup {
+  /** The map tiles read: see tileKey(). */
+  key: string;
+  placeName: string;
+  state: 'searching' | 'done' | 'failed';
+  /** Gyms within reach of the place, once done. */
+  gyms: number;
+  /** Why it failed, in plain words. */
+  problem?: string;
+}
 
 /** Why the Pro screen opened, so it can say so. */
 export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress' | 'themes';
@@ -106,6 +121,10 @@ type AppState = {
   here: Fix | null;
   /** Find you and move the search there (or to the nearest city covered). */
   locate: (ask: boolean) => Promise<Located>;
+  /** The map being read around where the search is, if it is (or was, and failed). */
+  lookup: Lookup | null;
+  /** Read the map around the search again, after a failure. */
+  retryLookup: () => void;
 };
 
 const AppContext = createContext<AppState | null>(null);
@@ -291,6 +310,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const locate = useCallback((ask: boolean) => findMe(ask, false), [findMe]);
 
+  // Somewhere GymGO carries no city for (Tokyo, when you choose Japan): read
+  // the map there, as "Near you" does, instead of opening on an empty map.
+  // Each block of tiles once a session; the server keeps them for a month.
+  const [lookup, setLookup] = useState<Lookup | null>(null);
+  const [lookupRetries, setLookupRetries] = useState(0);
+  const lookedUp = useRef(new Set<string>());
+  useEffect(() => {
+    if (!prefsReady || prefs.demo || !prefs.country) return;
+    if (!canSearchIn(filters.countryCode, prefs.country, billing.isPro)) return;
+    const real = data.records.filter((record) => !record.location.isDemoData);
+    if (!wantsLookup(filters, real, cityNear(filters.centre) !== null)) return;
+    const box = tilesAround(filters.centre);
+    const key = tileKey(box);
+    if (lookedUp.current.has(key)) return;
+    lookedUp.current.add(key);
+    const { centre, placeName } = filters;
+    setLookup({ key, placeName, state: 'searching', gyms: 0 });
+    searchArea(box, prefs.country, accountApi.token)
+      .then((answer) => {
+        const reach = reachFor(answer.gyms.map((gym) => haversineKm(centre, gym.location.position)));
+        setLookup({ key, placeName, state: 'done', gyms: reach.count });
+        // Nothing within 5 km but something within 10: widen, as "Near you" does.
+        setFilters((current) => (current.centre === centre && current.radiusKm < reach.radiusKm ? { ...current, radiusKm: reach.radiusKm } : current));
+      })
+      .catch((error: unknown) => {
+        // Tried again only when asked (Try again), so a map service that's down isn't asked on every change.
+        setLookup({ key, placeName, state: 'failed', gyms: 0, problem: problemText(error, 'The map’s gym list didn’t answer.') });
+      });
+  }, [prefsReady, prefs.demo, prefs.country, billing.isPro, filters, data.records, searchArea, accountApi.token, lookupRetries]);
+  const lastLookup = useRef(lookup);
+  lastLookup.current = lookup;
+  const retryLookup = useCallback(() => {
+    if (lastLookup.current?.state === 'failed') lookedUp.current.delete(lastLookup.current.key);
+    setLookupRetries((count) => count + 1);
+  }, []);
+  // Only the look-up for where the search is now counts.
+  const lookupHere = lookup && !filters.bbox && lookup.key === tileKey(tilesAround(filters.centre)) ? lookup : null;
+
   // Open where you are. The first launch asks once; after that, only if
   // you've allowed it. The fix itself is never stored. It waits for your
   // country, which the first launch asks for first.
@@ -410,8 +467,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       prefsReady,
       here,
       locate,
+      lookup: lookupHere,
+      retryLookup,
     }),
-    [visibleData, account, filters, recents, addRecent, clearRecents, compare, toggleCompare, clearCompare, exploreRequest, requestExplore, prefs, setPref, billing, openPro, mayExplore, chooseCountry, prefsReady, here, locate],
+    [visibleData, account, filters, recents, addRecent, clearRecents, compare, toggleCompare, clearCompare, exploreRequest, requestExplore, prefs, setPref, billing, openPro, mayExplore, chooseCountry, prefsReady, here, locate, lookupHere, retryLookup],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

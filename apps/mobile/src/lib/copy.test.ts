@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accessLine, accessShort, checkedAgo, filtersButtonLabel, locatedNotice, serverOfflineLine, statusSummaryLine, ratingShort, searchPrompt, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
+import { accessLine, accessShort, checkedAgo, filtersButtonLabel, locatedNotice, lookupLine, noGymsLine, serverOfflineLine, statusSummaryLine, ratingShort, searchPrompt, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
 import { activeFilterCount, applyRelaxation, atPlace, defaultVisit, initialFilters, runSearch, toQuery } from './query';
 import { geocodePlace } from './places';
 
@@ -198,5 +198,19 @@ describe('the search box', () => {
     expect(searchPrompt('AU')).toBe('Search a suburb, city or gym');
     expect(searchPrompt('FR')).toBe('Search a town, city or gym');
     expect(searchPrompt(null)).toBe('Search a town, city or gym');
+  });
+});
+
+describe('when there are no gyms to show', () => {
+  it('says the map is being read, could not be, or has nothing there', () => {
+    expect(lookupLine('searching', 'Tokyo')).toBe('Looking for gyms around Tokyo on OpenStreetMap…');
+    expect(lookupLine('failed', 'Lima')).toMatch(/^Couldn’t read the map around Lima/);
+    expect(lookupLine('none', 'Nuuk')).toMatch(/^OpenStreetMap has no gyms mapped around Nuuk yet/);
+  });
+
+  it('never blames the filters when nothing is in range, in the local unit', () => {
+    expect(noGymsLine('Fitzroy', 5, 'AU')).toBe('No gyms mapped within 5\u00a0km of Fitzroy yet. Open the map to look further out.');
+    expect(noGymsLine('your location', 5 * 1.609344, 'US')).toBe('No gyms mapped within 5\u00a0mi of you yet. Open the map to look further out.');
+    expect(noGymsLine('this area', 5, 'GB')).toBe('OpenStreetMap has no gyms mapped in this area yet.');
   });
 });

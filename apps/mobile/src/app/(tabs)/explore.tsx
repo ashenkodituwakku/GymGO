@@ -83,7 +83,7 @@ function MapScreen() {
   // The time-zone self-check runs once; its answer can't change mid-session.
   const selfCheck = useMemo(() => checkTimeZoneSupport(), []);
 
-  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe, prefs, prefsReady, mayExplore, openPro } = useApp();
+  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe, prefs, prefsReady, mayExplore, openPro, lookup, retryLookup } = useApp();
   usePageTitle('Explore');
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
@@ -553,6 +553,8 @@ function MapScreen() {
       locked={locked}
       onSeePro={() => openPro('worldwide')}
       onGoHome={goHome}
+      lookup={lookup}
+      onRetryLookup={retryLookup}
     />
   );
 

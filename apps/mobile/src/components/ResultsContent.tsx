@@ -7,14 +7,15 @@
 
 import { useState } from 'react';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE } from './motion';
 import { explainNoMatches, haversineKm, type GymRecord, type SearchOutcome } from '@gymgo/domain';
 import { countryInSentence } from '@/lib/country';
 import { suggestGyms } from '@/lib/gymSearch';
 import { cityAt, distanceLabel, moneyLabel, placeContext, suggestPlaces, tracksPrices, type AppPlace } from '@/lib/places';
-import { EMPTY, PLACEHOLDER, TIER, searchPrompt, sessionGreeting, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
+import { EMPTY, PLACEHOLDER, TIER, lookupLine, searchPrompt, sessionGreeting, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
+import type { Lookup } from '@/lib/app-state';
 import { SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
@@ -52,6 +53,8 @@ export function ResultsContent({
   home = null,
   onSeePro,
   onGoHome,
+  lookup = null,
+  onRetryLookup,
 }: {
   outcome: SearchOutcome;
   filters: Filters;
@@ -89,6 +92,9 @@ export function ResultsContent({
   home?: string | null;
   onSeePro?: () => void;
   onGoHome?: () => void;
+  /** The map being read around a place GymGO carries no city for. */
+  lookup?: Lookup | null;
+  onRetryLookup?: () => void;
 }) {
   // The sheet-aware input throws in a browser; see TextField in ui.tsx.
   const SearchInput = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
@@ -269,6 +275,29 @@ export function ResultsContent({
           {locked ? `In ${countryInSentence(locked.country)}, with GymGO Pro` : summaryLine(total, outcome.counts.confirmed, filters.visitMinuteOfDay, visitIsLater(filters))}
         </Txt>
       </View>
+
+      {/* Reading the map around a place GymGO carries no city for ---------- */}
+      {!locked && total === 0 && lookup?.state === 'searching' && (
+        <View style={styles.notice} aria-live="polite">
+          <ActivityIndicator size="small" color={color.brand} />
+          <Txt variant="footnote" style={styles.noticeText}>
+            {lookupLine('searching', lookup.placeName)}
+          </Txt>
+        </View>
+      )}
+      {!locked && total === 0 && lookup?.state === 'failed' && (
+        <View style={styles.lookFailed}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {lookupLine('failed', lookup.placeName)} {lookup.problem}
+          </Txt>
+          {onRetryLookup && <Chip icon="refresh" label="Try again" selected={false} onPress={onRetryLookup} />}
+        </View>
+      )}
+      {!locked && total === 0 && lookup?.state === 'done' && lookup.gyms === 0 && (
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.hint}>
+          {lookupLine('none', lookup.placeName)}
+        </Txt>
+      )}
 
       {notice && (
         <Animated.View key={notice} style={styles.notice} entering={FADE_IN} exiting={FADE_OUT}>
@@ -505,6 +534,7 @@ const styles = themed(() => StyleSheet.create({
     backgroundColor: color.brandTint,
   },
   noticeText: { flex: 1 },
+  lookFailed: { gap: space[2], alignItems: 'flex-start', paddingHorizontal: space[4], marginTop: space[3] },
 
   explain: {
     marginHorizontal: space[4],

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AU_GYMS } from '@gymgo/au-data';
-import { THIS_AREA, boxAround, boxDrift, reachFor, tilesAround, inArea, initialFilters, moveTo, nameForArea, nearLabel, nextVisitAt, nowIn, refreshVisit, runSearch, visitIsLater } from './query';
+import { THIS_AREA, YOUR_LOCATION, boxAround, boxDrift, reachFor, tileKey, tilesAround, inArea, initialFilters, moveTo, nameForArea, nearLabel, nextVisitAt, nowIn, refreshVisit, runSearch, visitIsLater, wantsLookup } from './query';
 
 describe('nextVisitAt', () => {
   // 9:30 am in Melbourne on 24 September 2026 (AEST, UTC+10).
@@ -147,5 +147,26 @@ describe('reachFor', () => {
     expect(reachFor([6.5, 9.9, 30])).toEqual({ radiusKm: 10, count: 2 });
     expect(reachFor([14, 30])).toEqual({ radiusKm: 5, count: 0 });
     expect(reachFor([])).toEqual({ radiusKm: 5, count: 0 });
+  });
+});
+
+describe('wantsLookup', () => {
+  const tokyo = { centre: { lat: 35.6895, lng: 139.6917 }, placeName: 'Tokyo', bbox: null };
+  const near = { ...AU_GYMS[0]!, location: { ...AU_GYMS[0]!.location, position: { lat: 35.7, lng: 139.7 } } };
+
+  it('reads the map around a place GymGO carries no city for, once nothing is loaded within 10 km', () => {
+    expect(wantsLookup(tokyo, AU_GYMS, false)).toBe(true);
+    expect(wantsLookup(tokyo, [near], false)).toBe(false);
+  });
+
+  it('leaves carried cities, searched areas and your own position alone', () => {
+    expect(wantsLookup(tokyo, [], true)).toBe(false);
+    expect(wantsLookup({ ...tokyo, bbox: boxAround(tokyo.centre, 0.1) }, [], false)).toBe(false);
+    expect(wantsLookup({ ...tokyo, placeName: YOUR_LOCATION }, [], false)).toBe(false);
+  });
+
+  it('keys a place by its block of tiles, so nearby spots share one look-up', () => {
+    expect(tileKey(tilesAround(tokyo.centre))).toBe(tileKey(tilesAround({ lat: 35.65, lng: 139.62 })));
+    expect(tileKey(tilesAround(tokyo.centre))).not.toBe(tileKey(tilesAround({ lat: 34.69, lng: 135.5 })));
   });
 });

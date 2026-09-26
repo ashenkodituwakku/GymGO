@@ -9,6 +9,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { MemberReportQueue, ModerationQueue, PhotoQueue } from '@/components/AccountContent';
+import { AppBadge, Wordmark } from '@/components/BrandMark';
 import { Icon } from '@/components/Icon';
 import { Pressy } from '@/components/motion';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
@@ -221,6 +222,13 @@ export default function Profile() {
           {error}
         </Txt>
       )}
+
+      <View style={styles.colophon}>
+        <Wordmark height={24} />
+        <Txt variant="footnote" color={color.labelSecondary}>
+          The truthful gym finder
+        </Txt>
+      </View>
     </TabScreen>
   );
 }
@@ -244,9 +252,7 @@ function SignInCard() {
   return (
     <View style={styles.signInCard}>
       <View style={styles.signInHead}>
-        <View style={styles.badge}>
-          <Icon name="account" size={26} color={color.onBrand} />
-        </View>
+        <AppBadge size={52} />
         <View style={styles.flex}>
           <Txt variant="title2">Sign in to GymGO</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
@@ -284,6 +290,7 @@ const styles = themed(() => StyleSheet.create({
   settings: { paddingHorizontal: space[4], paddingBottom: space[4] },
   flex: { flex: 1 },
   center: { textAlign: 'center' },
+  colophon: { alignItems: 'center', gap: space[1], paddingTop: space[2], paddingBottom: space[4] },
   meCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -295,7 +302,6 @@ const styles = themed(() => StyleSheet.create({
   },
   signInCard: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
   signInHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginBottom: space[1] },
-  badge: { width: 52, height: 52, borderRadius: 15, borderCurve: 'continuous', backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
   avatar: {
     width: 60,
     height: 60,

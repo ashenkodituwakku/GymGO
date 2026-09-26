@@ -498,6 +498,23 @@ Price, visit and closed/open reports show straight away. Moderators see the
 latest 50 in Profile, with who sent each, and can remove any that are wrong
 or abusive.
 
+### GymGO's own logo
+
+The mark is a G made from a weight plate, its crossbar an arrow heading out:
+a gym, and going to it. It is one colour, so it also works as the tinted iOS
+icon and the Android themed icon. The wordmark sets "GymGO" in Inter
+ExtraBold (SIL Open Font Licence) beside it, "GO" in the app's indigo.
+
+`node apps/mobile/scripts/brand-mark.mjs` draws everything from one set of
+numbers: the SVG sources in `apps/mobile/assets/brand/` (app icon, mark,
+wordmark for light and dark backgrounds), the PNGs `app.json` uses in
+`apps/mobile/assets/images/` (iOS light, dark and tinted icons; Android
+adaptive, background and monochrome layers; the splash mark for light and
+dark; the web favicon), and `src/components/brandPaths.ts`, from which the
+app draws the icon on the sign-in screens and the wordmark at the foot of
+Profile. Change the numbers in the script and run it again; don't edit the
+outputs by hand.
+
 ### Gym logos
 
 Eighteen chains have a logo that is free to reuse, found through Wikidata (the

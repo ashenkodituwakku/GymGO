@@ -20,7 +20,7 @@
 
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { networkInterfaces, userInfo } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -62,6 +62,9 @@ export function lanAddress(interfaces = networkInterfaces()) {
 export function configFingerprint(bundleId = process.env.GYMGO_IOS_BUNDLE_ID || defaultBundleId(), team = process.env.GYMGO_APPLE_TEAM_ID || null) {
   const hash = createHash('sha256');
   for (const file of ['app.json', 'app.config.js', 'package.json']) hash.update(readFileSync(join(mobileDir, file)));
+  // The app icon and splash images are copied into the project too.
+  const images = join(mobileDir, 'assets', 'images');
+  if (existsSync(images)) for (const file of readdirSync(images).sort()) hash.update(readFileSync(join(images, file)));
   hash.update(`${bundleId}|${team ?? ''}|${process.env.GYMGO_APPLE_SIGN_IN ?? ''}|${process.env.GYMGO_GOOGLE_CLIENT_ID_IOS ?? ''}`);
   return hash.digest('hex').slice(0, 16);
 }

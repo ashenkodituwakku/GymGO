@@ -10,13 +10,14 @@ import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View, type Text
 import { serverOfflineLine } from '@/lib/copy';
 import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, rise } from '@/components/motion';
+import { AppBadge } from '@/components/BrandMark';
 import { Icon, type IconName } from '@/components/Icon';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ApiError, OfflineError } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
+import { NO_WEB_OUTLINE, color, dropShadow, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 
 type Mode = 'sign_in' | 'create';
@@ -125,7 +126,7 @@ export default function SignInScreen() {
       <Stack.Screen options={{ title: '' }} />
       <Animated.View entering={rise(0)} style={styles.hero}>
         <View style={styles.badge}>
-          <Icon name="workout" size={30} color={color.onBrand} />
+          <AppBadge size={64} />
         </View>
         <Txt variant="largeTitle" style={styles.center} accessibilityRole="header">
           {mode === 'create' ? 'Join GymGO' : 'Welcome back'}
@@ -293,16 +294,7 @@ const styles = themed(() =>
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[5], paddingBottom: space[8], gap: space[4], width: '100%', maxWidth: 460, alignSelf: 'center' },
     hero: { alignItems: 'center', gap: space[2], marginTop: space[2], marginBottom: space[1] },
-    badge: {
-      width: 64,
-      height: 64,
-      borderRadius: 18,
-      borderCurve: 'continuous',
-      backgroundColor: color.brandFill,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: space[2],
-    },
+    badge: { borderRadius: 14.4, marginBottom: space[2], ...dropShadow(0.18, 12, 6, 6) },
     center: { textAlign: 'center' },
     flex: { flex: 1 },
     form: { gap: space[3] },

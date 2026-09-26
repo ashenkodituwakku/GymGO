@@ -67,11 +67,16 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   const markers = useRef<maplibregl.Marker[]>([]);
   const handlers = useRef({ onSelect, onMapPress, onRegionChange });
   handlers.current = { onSelect, onMapPress, onRegionChange };
+  // Where a flyTo is headed, while it's under way (see the padding effect).
+  const flight = useRef<{ center: [number, number]; zoom: number } | null>(null);
+  const padded = useRef(false);
 
   useImperativeHandle(ref, () => ({
     flyTo(centre, span = 0.03) {
       const zoom = Math.log2(360 / span) - 0.6;
-      map.current?.flyTo({ center: [centre.lng, centre.lat], zoom, duration: 450 });
+      const target = { center: [centre.lng, centre.lat] as [number, number], zoom };
+      map.current?.flyTo({ ...target, duration: 450 });
+      flight.current = target;
     },
     fitTo(points) {
       const first = points[0];
@@ -99,6 +104,7 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     instance.on('click', () => handlers.current.onMapPress());
     // The area on screen, clear of the panels and sheet, whenever the map comes to rest.
     instance.on('moveend', () => {
+      flight.current = null;
       const { top = 0, bottom = 0, left = 0, right = 0 } = instance.getPadding();
       const canvas = instance.getCanvas();
       const nw = instance.unproject([left, top]);
@@ -115,7 +121,17 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   useEffect(() => {
     const instance = map.current;
     if (!instance) return;
-    instance.setPadding({ top: topInset, bottom: bottomInset, left: leftInset, right: 0 });
+    const padding = { top: topInset, bottom: bottomInset, left: leftInset, right: 0 };
+    // A sheet or panel moving eases the map with it. Mid-flight (a gym was
+    // just picked and its card is rising), the flight is re-aimed with the
+    // new padding: changing it outright would stop the map where it was.
+    const target = flight.current;
+    if (!padded.current) instance.setPadding(padding);
+    else if (target && instance.isMoving()) {
+      instance.flyTo({ ...target, padding, duration: 450 });
+      flight.current = target;
+    } else instance.easeTo({ padding, duration: 300 });
+    padded.current = true;
     const corner = instance.getContainer().querySelector<HTMLElement>('.maplibregl-ctrl-bottom-left');
     if (corner) {
       corner.style.bottom = `${Math.max(bottomInset, creditInset ?? 0) + 6}px`;
@@ -156,14 +172,17 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
 
   // MapLibre's stylesheet makes its container `position: relative`, which
   // would cancel an absolute fill — so the fill goes on a wrapper instead.
+  // The wrapper is its own stacking layer, so a pin's z-index ranks it among
+  // pins only, never over the buttons and sheets laid on the map.
   return (
-    <View style={StyleSheet.absoluteFill}>
+    <View style={styles.fill}>
       <View ref={host} style={styles.host} />
     </View>
   );
 });
 
 const styles = themed(() => StyleSheet.create({
+  fill: { ...StyleSheet.absoluteFill, zIndex: 0 },
   host: { width: '100%', height: '100%' },
 }));
 

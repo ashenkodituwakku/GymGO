@@ -1,48 +1,64 @@
 import { useBottomSheetInternal, type BottomSheetBackgroundProps } from '@gorhom/bottom-sheet';
-import type { FC } from 'react';
-import { StyleSheet, View } from 'react-native';
-import Animated, { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated';
+import type { ReactNode } from 'react';
+import { StyleSheet } from 'react-native';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { NO_TOUCH, color, dropShadow, radius, themed } from '@/lib/theme';
 import { Glass, HAS_LIQUID_GLASS } from './Glass';
 
-/** How far a floating sheet sits in from the screen's edges. */
+/** The gap between a floating sheet and the tab bar below it. */
 export const SHEET_GAP = 8;
 
 /**
- * A glass sheet that floats, the way sheets do on iOS 26: inset from the
- * sides and bottom, with every corner rounded concentrically with the
- * display's own. At its tallest detent it grows out to the screen's edges.
- *
- * The sheet lives in a layer that ends a gap above the tab bar. Below its
- * tallest detent the glass ends at the layer's bottom rather than running on
- * out of sight, so it reads as a card floating above the tab bar with all
- * four corners rounded. Fully open, it also reaches out to the sides.
- *
- * `fullIndex` is the snap-point index at which the sheet goes edge to edge.
+ * How far a floating sheet sits in from the sides of the screen: the same as
+ * the tab bar and the controls over the map, so everything lines up.
  */
-export function floatingGlassBackground(fullIndex: number): FC<BottomSheetBackgroundProps> {
-  function FloatingGlassBackground({ style, animatedIndex }: BottomSheetBackgroundProps) {
-    const { animatedPosition, animatedDetentsState } = useBottomSheetInternal();
-    const inset = useAnimatedStyle(() => {
-      const gap = interpolate(animatedIndex.value, [fullIndex - 1, fullIndex], [SHEET_GAP, 0], Extrapolation.CLAMP);
-      // The part of the sheet below the screen (or the tab bar) at this height.
-      const highest = animatedDetentsState.value.highestDetentPosition ?? animatedPosition.value;
-      const hidden = Math.max(0, animatedPosition.value - highest);
-      return { left: gap, right: gap, bottom: hidden };
-    });
+export const SHEET_SIDE = 16;
 
-    return (
-      <Animated.View style={[NO_TOUCH, style, styles.floating, inset]}>
-        <Glass kind="sheet" style={styles.glass} />
-      </Animated.View>
-    );
-  }
-  return FloatingGlassBackground;
+/**
+ * Sheets float, the way they do on iOS 26: inset from the sides (the sheet's
+ * own `style` carries the side margins) and ending a gap above the tab bar,
+ * with every corner rounded.
+ *
+ * A sheet is as tall as its tallest detent and slides down to show less, so
+ * at a lower detent part of it is out of sight below the sheet layer. The
+ * background and the content both stop where the layer does, so the card
+ * shows its rounded bottom corners and nothing inside runs past them.
+ */
+function FloatingBackground({ style, solid }: BottomSheetBackgroundProps & { solid: boolean }) {
+  const { animatedPosition, animatedDetentsState } = useBottomSheetInternal();
+  const bottom = useAnimatedStyle(() => {
+    const highest = animatedDetentsState.value.highestDetentPosition ?? animatedPosition.value;
+    return { bottom: Math.max(0, animatedPosition.value - highest) };
+  });
+  return (
+    <Animated.View style={[NO_TOUCH, style, styles.floating, solid && styles.solidFill, bottom]}>
+      {!solid && <Glass kind="sheet" style={styles.glass} />}
+    </Animated.View>
+  );
 }
 
-/** The opaque variant, for a modal that covers most of the screen. */
-export function SolidSheetBackground({ style }: BottomSheetBackgroundProps) {
-  return <View style={[NO_TOUCH, style, styles.solid]} />;
+/** Glass, for sheets over the map. */
+export function FloatingGlassBackground(props: BottomSheetBackgroundProps) {
+  return <FloatingBackground {...props} solid={false} />;
+}
+
+/** Opaque, for a sheet of controls (Filters) that shouldn't show the map through it. */
+export function FloatingSolidBackground(props: BottomSheetBackgroundProps) {
+  return <FloatingBackground {...props} solid />;
+}
+
+/**
+ * A floating sheet's content, clipped to the card: it ends where the card's
+ * background does, with the same rounded bottom corners, so rows never run
+ * past the corners or show below the card. Put the sheet's scroll view in it.
+ */
+export function SheetClip({ children }: { children: ReactNode }) {
+  const { animatedPosition, animatedDetentsState } = useBottomSheetInternal();
+  const bottom = useAnimatedStyle(() => {
+    const highest = animatedDetentsState.value.highestDetentPosition ?? animatedPosition.value;
+    return { marginBottom: Math.max(0, animatedPosition.value - highest) };
+  });
+  return <Animated.View style={[styles.clip, bottom]}>{children}</Animated.View>;
 }
 
 const styles = themed(() => StyleSheet.create({
@@ -56,11 +72,12 @@ const styles = themed(() => StyleSheet.create({
     ...StyleSheet.absoluteFill,
     borderRadius: radius.sheet,
   },
-  solid: {
-    backgroundColor: color.groupedBackground,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
+  solidFill: { backgroundColor: color.groupedBackground },
+  clip: {
+    flex: 1,
+    overflow: 'hidden',
+    borderBottomLeftRadius: radius.sheet,
+    borderBottomRightRadius: radius.sheet,
     borderCurve: 'continuous',
-    ...dropShadow(0.16, 24, -2, 16),
   },
 }));

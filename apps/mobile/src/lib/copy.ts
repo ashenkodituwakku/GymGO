@@ -52,13 +52,16 @@ export function sessionGreeting(minuteOfDay: number): string {
 }
 
 /** A little personality per verdict, as a short chip for the list. */
-/** "7 pm", "6:30 am", "12 pm". */
+/**
+ * "7 pm", "6:30 am", "12 pm". The space is a non-breaking one, so a wrapped
+ * line never leaves "7" at the end of one line and "pm" on the next.
+ */
 export function timeLabel(minuteOfDay: number): string {
   const hour24 = Math.floor(minuteOfDay / 60) % 24;
   const minute = minuteOfDay % 60;
   const suffix = hour24 < 12 ? 'am' : 'pm';
   const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
-  return minute === 0 ? `${hour12} ${suffix}` : `${hour12}:${String(minute).padStart(2, '0')} ${suffix}`;
+  return minute === 0 ? `${hour12}\u00a0${suffix}` : `${hour12}:${String(minute).padStart(2, '0')}\u00a0${suffix}`;
 }
 
 /** The headline for guest entry at the chosen time. */

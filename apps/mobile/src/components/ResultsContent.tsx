@@ -178,11 +178,15 @@ export function ResultsContent({
               <View style={styles.suggestionGlyph}>
                 <Icon name="pin" size={16} color={color.onBrand} />
               </View>
-              <Txt variant="body">{place.name}</Txt>
-              <Txt variant="footnote" color={color.labelSecondary}>
-                {placeContext(place)}
-                {place.city === 'sydney-demo' ? ' · invented demo' : ''}
-              </Txt>
+              <View style={styles.suggestionText}>
+                <Txt variant="body" numberOfLines={1}>
+                  {place.name}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                  {placeContext(place)}
+                  {place.city === 'sydney-demo' ? ' · invented demo' : ''}
+                </Txt>
+              </View>
             </Pressable>
           ))}
           {gymSuggestions.map((record) => {
@@ -201,15 +205,17 @@ export function ResultsContent({
                 <View style={[styles.suggestionGlyph, styles.gymGlyph]}>
                   <Icon name="gym" size={16} color={color.onBrand} />
                 </View>
-                <Txt variant="body">
-                  {location.name}
-                  {location.branch ? ` ${location.branch}` : ''}
-                </Txt>
-                <Txt variant="footnote" color={color.labelSecondary}>
-                  {['Gym', location.address.suburb, distanceLabel(haversineKm(filters.centre, location.position), location.address.countryCode)]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </Txt>
+                <View style={styles.suggestionText}>
+                  <Txt variant="body" numberOfLines={1}>
+                    {location.name}
+                    {location.branch ? ` ${location.branch}` : ''}
+                  </Txt>
+                  <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                    {['Gym', location.address.suburb, distanceLabel(haversineKm(filters.centre, location.position), location.address.countryCode)]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </Txt>
+                </View>
               </Pressable>
             );
           })}
@@ -479,6 +485,9 @@ const styles = themed(() => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Name over its context, as Maps lists places, so a long name never pushes
+  // the suburb off the card's edge.
+  suggestionText: { flex: 1, minWidth: 0 },
 
   chips: { gap: space[2], paddingHorizontal: space[4], paddingVertical: space[3] },
 

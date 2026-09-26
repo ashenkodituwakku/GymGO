@@ -34,7 +34,7 @@ import { enterOpensGym, placeForEnter, suggestGyms } from '@/lib/gymSearch';
 import { useBottomClearance } from '@/lib/layout';
 import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, boxAround, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
-import { CHILD_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { CHILD_TOUCH, NO_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
 import { Glass } from '@/components/Glass';
 import { GoogleModal } from '@/components/GoogleModal';
@@ -48,10 +48,10 @@ import { PhotoHero } from '@/components/PhotoHero';
 import { PlaceCard, PlaceHeader } from '@/components/PlaceCard';
 import { ResultsContent } from '@/components/ResultsContent';
 import { ReviewsSection } from '@/components/ReviewsSection';
-import { SHEET_GAP, SolidSheetBackground, floatingGlassBackground } from '@/components/SheetBackground';
+import { FloatingGlassBackground, FloatingSolidBackground, SHEET_GAP, SHEET_SIDE, SheetClip } from '@/components/SheetBackground';
 import { CloseButton, ControlCapsule, Txt } from '@/components/ui';
 import { DROP_IN, FADE_OUT, usePressScale } from '@/components/motion';
-import Animated from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { usePageTitle } from '@/lib/pageTitle';
 
 const PEEK = 150;
@@ -61,8 +61,6 @@ const PANEL_WIDTH = 390;
 const PANEL_GAP = 16;
 
 // Made once: a component identity that changes would remount the sheet.
-const ResultsBackground = floatingGlassBackground(2);
-const PlaceBackground = floatingGlassBackground(1);
 
 type Panel = 'place' | 'filters' | null;
 
@@ -396,7 +394,9 @@ function MapScreen() {
       } else {
         placeSheet.current?.present();
         if (restoreIndex.current === null) restoreIndex.current = sheetIndex.current;
-        mainSheet.current?.snapToIndex(0);
+        // The card takes the results' place, as in Maps: the list steps
+        // aside rather than showing through the card's glass.
+        mainSheet.current?.close();
       }
       map.current?.flyTo(record.location.position, 0.02);
     },
@@ -574,7 +574,7 @@ function MapScreen() {
             isDemo={selected.record.location.isDemoData}
             account={account}
             onSignIn={openAccount}
-            width={inSheet ? undefined : PANEL_WIDTH}
+            width={inSheet ? width - SHEET_SIDE * 2 : PANEL_WIDTH}
           />
         }
         memberKit={
@@ -735,7 +735,6 @@ function MapScreen() {
     <PhoneShell
       insets={insets}
       clearance={clearance}
-      sheetTop={sheetTop}
       setSheetTop={setSheetTop}
       sheetIndex={sheetIndex}
       restoreIndex={restoreIndex}
@@ -830,7 +829,6 @@ function PhoneShell(props: {
   insets: { top: number; bottom: number };
   /** Room for the tab bar (and the home indicator) under the sheets. */
   clearance: number;
-  sheetTop: number;
   setSheetTop: (value: number) => void;
   sheetIndex: React.MutableRefObject<number>;
   restoreIndex: React.MutableRefObject<number | null>;
@@ -859,6 +857,29 @@ function PhoneShell(props: {
   const snapPoints = useMemo(() => [PEEK, '48%', tallest], [tallest]);
   const placeSnaps = useMemo(() => ['56%', tallest], [tallest]);
   const tallSnaps = useMemo(() => [tallest], [tallest]);
+  // Fully open, a sheet reaches the top of the map: the pill and buttons
+  // there step aside rather than showing through its glass.
+  const [mainFull, setMainFull] = useState(false);
+  const [placeFull, setPlaceFull] = useState(false);
+  const topHidden = mainFull || placeFull;
+  const topOpacity = useSharedValue(1);
+  useEffect(() => {
+    topOpacity.value = withTiming(topHidden ? 0 : 1, { duration: 180 });
+  }, [topHidden, topOpacity]);
+  const topFade = useAnimatedStyle(() => ({ opacity: topOpacity.value }));
+  // How far up the screen each sheet reaches. The map keeps its centre, and
+  // its credit, above whichever is higher: the gym you picked stays in view
+  // over its card, not behind it.
+  const [mainTop, setMainTop] = useState(PEEK);
+  const [placeTop, setPlaceTop] = useState(0);
+  const { setSheetTop } = props;
+  useEffect(() => setSheetTop(Math.max(mainTop, placeTop)), [mainTop, placeTop, setSheetTop]);
+  const topOf = (position: number) => Math.max(0, height + clearance + SHEET_GAP - position);
+  // The same, for a detent the results sheet is about to return to.
+  const detentTop = (index: number) => {
+    const point = snapPoints[index] ?? PEEK;
+    return (typeof point === 'number' ? point : (parseFloat(point) / 100) * height) + clearance + SHEET_GAP;
+  };
 
   const backdrop = useCallback(
     (backdropProps: BottomSheetBackdropProps) => (
@@ -870,7 +891,7 @@ function PhoneShell(props: {
   return (
     <View style={styles.root}>
       {props.map}
-      {props.topBar}
+      <Animated.View style={[StyleSheet.absoluteFill, topHidden ? NO_TOUCH : CHILD_TOUCH, topFade]}>{props.topBar}</Animated.View>
       {props.banner}
 
       {/* The sheets live in a layer that stops above the tab bar, so none of
@@ -886,25 +907,33 @@ function PhoneShell(props: {
         ref={props.mainSheet}
         index={1}
         snapPoints={snapPoints}
+        enableDynamicSizing={false}
         animationConfigs={spring}
-        backgroundComponent={ResultsBackground}
+        backgroundComponent={FloatingGlassBackground}
+        style={styles.floatingSheet}
         detached
         bottomInset={bottomInset}
         handleIndicatorStyle={styles.handle}
         keyboardBehavior="extend"
         keyboardBlurBehavior="restore"
         android_keyboardInputMode="adjustResize"
-        onAnimate={(from, to) => {
+        onAnimate={(from, to, _fromPosition, toPosition) => {
           if (from !== to && to >= 0) haptic.select();
+          // Moving the map with the sheet, not after it. Stepping aside for a
+          // card waits for the card's own reach, so the map moves once.
+          if (to >= 0) setMainTop(topOf(toPosition));
         }}
         onChange={(index, position) => {
           props.sheetIndex.current = index;
-          props.setSheetTop(Math.max(0, height + clearance + SHEET_GAP - position));
+          setMainTop(index < 0 ? 0 : topOf(position));
+          setMainFull(index === snapPoints.length - 1);
         }}
       >
-        <BottomSheetScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: space[4] }}>
-          {props.results}
-        </BottomSheetScrollView>
+        <SheetClip>
+          <BottomSheetScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: space[4] }}>
+            {props.results}
+          </BottomSheetScrollView>
+        </SheetClip>
       </BottomSheet>
 
       <BottomSheetModal
@@ -912,18 +941,31 @@ function PhoneShell(props: {
         snapPoints={placeSnaps}
         animationConfigs={spring}
         enableDynamicSizing={false}
-        backgroundComponent={PlaceBackground}
+        backgroundComponent={FloatingGlassBackground}
+        style={styles.floatingSheet}
         detached
         bottomInset={bottomInset}
         handleIndicatorStyle={styles.handle}
         keyboardBehavior="extend"
+        onAnimate={(_from, to, _fromPosition, toPosition) => {
+          if (to >= 0) setPlaceTop(topOf(toPosition));
+        }}
+        onChange={(index, position) => {
+          setPlaceFull(index === placeSnaps.length - 1);
+          setPlaceTop(index < 0 ? 0 : topOf(position));
+        }}
         onDismiss={() => {
+          setPlaceFull(false);
+          setPlaceTop(0);
           props.onPlaceDismiss();
-          if (props.restoreIndex.current !== null) props.mainSheet.current?.snapToIndex(props.restoreIndex.current);
+          if (props.restoreIndex.current !== null) {
+            setMainTop(detentTop(props.restoreIndex.current));
+            props.mainSheet.current?.snapToIndex(props.restoreIndex.current);
+          }
           props.restoreIndex.current = null;
         }}
       >
-        {props.place}
+        {props.place ? <SheetClip>{props.place}</SheetClip> : null}
       </BottomSheetModal>
 
       <BottomSheetModal
@@ -931,12 +973,17 @@ function PhoneShell(props: {
         snapPoints={tallSnaps}
         animationConfigs={spring}
         enableDynamicSizing={false}
-        backgroundComponent={SolidSheetBackground}
+        backgroundComponent={FloatingSolidBackground}
+        style={styles.floatingSheet}
+        detached
+        bottomInset={bottomInset}
         handleIndicatorStyle={styles.handle}
         backdropComponent={backdrop}
         onDismiss={props.onFiltersDismiss}
       >
-        <BottomSheetScrollView contentContainerStyle={{ paddingBottom: space[4] }}>{props.filters}</BottomSheetScrollView>
+        <SheetClip>
+          <BottomSheetScrollView contentContainerStyle={{ paddingBottom: space[4] }}>{props.filters}</BottomSheetScrollView>
+        </SheetClip>
       </BottomSheetModal>
         </BottomSheetModalProvider>
       </View>
@@ -949,6 +996,7 @@ const styles = themed(() => StyleSheet.create({
   mapWaiting: { ...StyleSheet.absoluteFill, backgroundColor: color.groupedBackground },
   root: { flex: 1, backgroundColor: color.groupedBackground },
   sheetLayer: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' },
+  floatingSheet: { marginHorizontal: SHEET_SIDE },
   flex: { flex: 1 },
 
   topBar: {

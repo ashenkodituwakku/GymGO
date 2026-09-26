@@ -35,7 +35,8 @@ import { TabBarInset } from '@/lib/layout';
 import { CHILD_TOUCH, NO_TOUCH, color, currentTheme, face, themed } from '@/lib/theme';
 
 const BAR_HEIGHT = 64;
-const SIDE_MARGIN = 22;
+// The same 16 pt edge as the sheets and the controls over the map.
+const SIDE_MARGIN = 16;
 const MAX_WIDTH = 400;
 const PAD = 5;
 const LENS_INSET = 5;

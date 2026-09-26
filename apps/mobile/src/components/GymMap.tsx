@@ -102,7 +102,7 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
       }}
       mapPadding={{ top: topInset, right: 0, bottom: bottomInset, left: 0 }}
       // Apple's "Legal" link must stay visible: keep it above the sheet's edge.
-      legalLabelInsets={{ top: 0, right: 0, bottom: Math.max(bottomInset, creditInset ?? 0) + 6, left: 12 }}
+      legalLabelInsets={{ top: 0, right: 0, bottom: Math.max(bottomInset, creditInset ?? 0) + 6, left: 16 }}
       showsUserLocation={showsUserLocation}
       showsMyLocationButton={false}
       showsCompass={false}

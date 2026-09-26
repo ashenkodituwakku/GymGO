@@ -132,13 +132,13 @@ describe('places', () => {
   });
 
   it('speaks miles and dollars in the US, kilometres and A$ in Australia', () => {
-    expect(distanceLabel(0.35, 'AU')).toBe('350 m');
-    expect(distanceLabel(2.44, 'AU')).toBe('2.4 km');
-    expect(distanceLabel(1.609344, 'US')).toBe('1.0 mi');
-    expect(distanceLabel(40, 'US')).toBe('25 mi');
-    expect(distanceLabel(38.4, 'AU')).toBe('38 km');
-    expect(distanceLabel(2155.6, 'AU')).toBe('2,156 km');
-    expect(distanceLabel(4000, 'US')).toBe('2,485 mi');
+    expect(distanceLabel(0.35, 'AU')).toBe('350\u00a0m');
+    expect(distanceLabel(2.44, 'AU')).toBe('2.4\u00a0km');
+    expect(distanceLabel(1.609344, 'US')).toBe('1.0\u00a0mi');
+    expect(distanceLabel(40, 'US')).toBe('25\u00a0mi');
+    expect(distanceLabel(38.4, 'AU')).toBe('38\u00a0km');
+    expect(distanceLabel(2155.6, 'AU')).toBe('2,156\u00a0km');
+    expect(distanceLabel(4000, 'US')).toBe('2,485\u00a0mi');
     expect(moneyLabel(2500, 'AU')).toBe('A$25');
     expect(moneyLabel(2500, 'US')).toBe('$25');
     expect(moneyLabel(1250, 'US')).toBe('$12.50');
@@ -146,9 +146,9 @@ describe('places', () => {
   });
 
   it('speaks miles in the UK and kilometres in the rest of the world, and keeps prices in A$, US$, €, £ and CHF', () => {
-    expect(distanceLabel(1.609344, 'GB')).toBe('1.0 mi');
-    expect(distanceLabel(2.44, 'DE')).toBe('2.4 km');
-    expect(distanceLabel(2.44, 'JP')).toBe('2.4 km');
+    expect(distanceLabel(1.609344, 'GB')).toBe('1.0\u00a0mi');
+    expect(distanceLabel(2.44, 'DE')).toBe('2.4\u00a0km');
+    expect(distanceLabel(2.44, 'JP')).toBe('2.4\u00a0km');
     expect(radiusChoices('FR').map((choice) => choice.label)).toEqual(['2 km', '5 km', '10 km', '20 km']);
     expect([tracksPrices('AU'), tracksPrices('US'), tracksPrices('GB'), tracksPrices('FR'), tracksPrices('CH'), tracksPrices('JP'), tracksPrices('SE')]).toEqual([true, true, true, true, true, false, false]);
     expect([moneyLabel(3000, 'FR'), moneyLabel(3000, 'GB'), moneyLabel(3000, 'CH')]).toEqual(['€30', '£30', 'CHF 30']);
@@ -172,7 +172,7 @@ describe('places', () => {
       const outcome = runSearch({ ...filters, radiusKm: 3 }, { records: BUNDLED_GYMS }, asOf);
       expect(outcome.results.length).toBeGreaterThan(10);
       const first = outcome.results[0]!;
-      expect(distanceLabel(first.distanceKm!, first.record.location.address.countryCode)).toMatch(new RegExp(`${unit}$|\\d m$`));
+      expect(distanceLabel(first.distanceKm!, first.record.location.address.countryCode)).toMatch(new RegExp(`${unit}$|\\d\\u00a0m$`));
       for (const result of outcome.results) expect(result.record.offers).toEqual([]);
     }
   });

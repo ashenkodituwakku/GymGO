@@ -343,13 +343,14 @@ export const tracksPrices = (country: string) => reportCurrency(country) !== nul
 
 /** "350 m", "2.4 km"; in the US and UK, "0.2 mi", "1.5 mi". Straight-line distance. */
 export function distanceLabel(km: number, country: string): string {
+  // Joined by a non-breaking space: "0.1" never ends a line with "mi" on the next.
   if (usesMiles(country)) {
     const miles = km / KM_PER_MILE;
-    return miles < 10 ? `${miles.toFixed(1)} mi` : `${Math.round(miles).toLocaleString('en-US')} mi`;
+    return miles < 10 ? `${miles.toFixed(1)}\u00a0mi` : `${Math.round(miles).toLocaleString('en-US')}\u00a0mi`;
   }
-  if (km < 1) return `${Math.round(km * 1000)} m`;
+  if (km < 1) return `${Math.round(km * 1000)}\u00a0m`;
   // Tenths only where they mean something: "2.4 km", but "38 km", "2,156 km".
-  return km < 10 ? `${km.toFixed(1)} km` : `${Math.round(km).toLocaleString('en-AU')} km`;
+  return km < 10 ? `${km.toFixed(1)}\u00a0km` : `${Math.round(km).toLocaleString('en-AU')}\u00a0km`;
 }
 
 /** Search radius choices, in the local unit, stored as kilometres. */

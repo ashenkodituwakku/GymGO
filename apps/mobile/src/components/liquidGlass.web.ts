@@ -52,10 +52,11 @@ html[data-glass-refract] [data-glass="bar"] {
   -webkit-backdrop-filter: url(#${FILTER_ID}) blur(5px) saturate(190%) brightness(1.05);
   backdrop-filter: url(#${FILTER_ID}) blur(5px) saturate(190%) brightness(1.05);
 }
+/* Frosted enough that a pin passing under a button reads as under it. */
 [data-glass="control"] {
-  background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.3) 100%);
-  -webkit-backdrop-filter: blur(10px) saturate(190%) brightness(1.04);
-  backdrop-filter: blur(10px) saturate(190%) brightness(1.04);
+  background: linear-gradient(180deg, rgba(255,255,255,0.64) 0%, rgba(255,255,255,0.46) 100%);
+  -webkit-backdrop-filter: blur(14px) saturate(190%) brightness(1.04);
+  backdrop-filter: blur(14px) saturate(190%) brightness(1.04);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.95),
     inset 1px 0 0 rgba(255,255,255,0.45),
@@ -97,7 +98,7 @@ html[data-gg-scheme="dark"] [data-glass="bar"] {
   outline: 0.5px solid rgba(255,255,255,0.08);
 }
 html[data-gg-scheme="dark"] [data-glass="control"] {
-  background: linear-gradient(180deg, rgba(62,62,66,0.6) 0%, rgba(40,40,44,0.5) 100%);
+  background: linear-gradient(180deg, rgba(62,62,66,0.72) 0%, rgba(40,40,44,0.62) 100%);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.2),
     inset 1px 0 0 rgba(255,255,255,0.08),
@@ -116,6 +117,18 @@ html[data-gg-scheme="dark"] [data-glass="lens"] {
   background: rgba(118,118,128,0.3);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 1px rgba(0,0,0,0.2);
 }
+/* The map's credit: small and quiet, lined up with the sheets' 16 px edge. */
+.maplibregl-ctrl-bottom-left .maplibregl-ctrl { margin: 0 0 0 16px; }
+.maplibregl-ctrl-attrib {
+  font-size: 10px;
+  line-height: 14px;
+  color: rgba(60, 60, 67, 0.75);
+  background: rgba(255, 255, 255, 0.72) !important;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.maplibregl-ctrl-attrib a { color: rgba(60, 60, 67, 0.9); }
+.maplibregl-ctrl-attrib.maplibregl-compact { min-height: 20px; }
 html[data-gg-scheme="dark"] .maplibregl-ctrl-attrib {
   background: rgba(28,28,30,0.82) !important;
   color: #AEAEB2;
@@ -205,8 +218,8 @@ export function refractionFor(width: number, height: number): object {
     document.body.appendChild(svg);
     const style = document.createElement('style');
     style.textContent = `html[data-glass-refract] [data-refract="${key}"] {
-  -webkit-backdrop-filter: url(#${id}) blur(5px) saturate(190%) brightness(1.04);
-  backdrop-filter: url(#${id}) blur(5px) saturate(190%) brightness(1.04);
+  -webkit-backdrop-filter: url(#${id}) blur(9px) saturate(190%) brightness(1.04);
+  backdrop-filter: url(#${id}) blur(9px) saturate(190%) brightness(1.04);
 }`;
     document.head.appendChild(style);
   }

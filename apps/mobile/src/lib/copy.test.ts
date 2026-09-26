@@ -8,10 +8,10 @@ import { checkTimeZoneSupport } from './selfcheck';
 
 describe('voice', () => {
   it('formats times the way people say them', () => {
-    expect(timeLabel(19 * 60)).toBe('7 pm');
-    expect(timeLabel(6 * 60 + 30)).toBe('6:30 am');
-    expect(timeLabel(12 * 60)).toBe('12 pm');
-    expect(timeLabel(0)).toBe('12 am');
+    expect(timeLabel(19 * 60)).toBe('7\u00a0pm');
+    expect(timeLabel(6 * 60 + 30)).toBe('6:30\u00a0am');
+    expect(timeLabel(12 * 60)).toBe('12\u00a0pm');
+    expect(timeLabel(0)).toBe('12\u00a0am');
   });
 
   it('greets by the planned session time, covering every hour', () => {
@@ -30,14 +30,14 @@ describe('voice', () => {
   });
 
   it('never tells someone they can get in when the rules say they cannot', () => {
-    expect(accessLine('not_admitted', 19 * 60)).toBe('No guests at 7 pm');
+    expect(accessLine('not_admitted', 19 * 60)).toBe('No guests at 7\u00a0pm');
     expect(accessShort('not_admitted')).not.toMatch(/welcome/i);
     expect(accessLine('needs_confirmation', 19 * 60)).not.toMatch(/welcome/i);
     expect(accessLine('unknown', 19 * 60)).not.toMatch(/welcome/i);
   });
 
   it('only says welcome when the rules admit the visitor', () => {
-    expect(accessLine('admits_visitor', 19 * 60)).toBe('Guests welcome at 7 pm');
+    expect(accessLine('admits_visitor', 19 * 60)).toBe('Guests welcome at 7\u00a0pm');
     expect(accessShort('admits_visitor')).toBe('Welcome');
   });
 
@@ -47,10 +47,10 @@ describe('voice', () => {
   });
 
   it('does not claim a sure thing when nothing is confirmed', () => {
-    expect(summaryLine(9, 0, 19 * 60)).toBe('9 gyms nearby · none a sure thing at 7 pm');
-    expect(summaryLine(9, 3, 19 * 60)).toBe('9 gyms nearby · 3 good to go at 7 pm');
-    expect(summaryLine(1, 1, 7 * 60)).toBe('1 gym nearby · 1 good to go at 7 am');
-    expect(summaryLine(9, 0, 7 * 60, true)).toBe('9 gyms nearby · none a sure thing tomorrow at 7 am');
+    expect(summaryLine(9, 0, 19 * 60)).toBe('9 gyms nearby · none a sure thing at 7\u00a0pm');
+    expect(summaryLine(9, 3, 19 * 60)).toBe('9 gyms nearby · 3 good to go at 7\u00a0pm');
+    expect(summaryLine(1, 1, 7 * 60)).toBe('1 gym nearby · 1 good to go at 7\u00a0am');
+    expect(summaryLine(9, 0, 7 * 60, true)).toBe('9 gyms nearby · none a sure thing tomorrow at 7\u00a0am');
   });
 
   it('says what members reported about a gym being there, without "0 members"', () => {
@@ -183,7 +183,7 @@ describe('what finding you says', () => {
 
   it('when the map around you can’t be searched, says why it shows the nearest built-in city', () => {
     expect(locatedNotice({ kind: 'nearest', km: 2155.6, city: { name: 'Sydney', country: 'AU' } })).toBe(
-      "Couldn't search the map around you just now, so here's Sydney, the nearest city GymGO has built in (2,156 km away).",
+      "Couldn't search the map around you just now, so here's Sydney, the nearest city GymGO has built in (2,156\u00a0km away).",
     );
   });
 

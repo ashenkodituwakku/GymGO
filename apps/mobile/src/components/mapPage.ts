@@ -38,7 +38,8 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
   body { -webkit-tap-highlight-color: transparent; font-family: sans-serif; }
   #offline { display: none; position: absolute; inset: 0; align-items: center; justify-content: center;
     padding: 24px; text-align: center; color: ${options.dark ? '#AEAEB2' : '#6C6C70'}; font-size: 15px; }
-  .maplibregl-ctrl-attrib { font-size: 11px; }
+  .maplibregl-ctrl-attrib { font-size: 10px; line-height: 14px; }
+  .maplibregl-ctrl-bottom-left .maplibregl-ctrl { margin: 0 0 0 16px; }
 </style>
 </head>
 <body>
@@ -60,6 +61,8 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
     '<rect x="7.5" y="10.8" width="9" height="2.4"/>' +
     '<rect x="16.5" y="6" width="3" height="12" rx="1"/><rect x="19.5" y="8" width="3" height="8" rx="1"/></svg>';
 
+  // Where a flyTo is headed while it's under way, and whether padding is set yet.
+  var flight = null, padded = false;
   var map = new maplibregl.Map({
     container: 'map',
     style: CONFIG.style,
@@ -75,6 +78,7 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
   map.on('click', function () { post({ type: 'mapPress' }); });
   // The area on screen, clear of the sheet, whenever the map comes to rest.
   map.on('moveend', function () {
+    flight = null;
     var pad = map.getPadding();
     var canvas = map.getCanvas();
     var w = canvas.clientWidth, h = canvas.clientHeight;
@@ -128,7 +132,8 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
       });
     },
     flyTo: function (lat, lng, zoom) {
-      map.flyTo({ center: [lng, lat], zoom: zoom, duration: 450 });
+      flight = { center: [lng, lat], zoom: zoom };
+      map.flyTo({ center: flight.center, zoom: zoom, duration: 450 });
     },
     fitTo: function (points) {
       if (!points.length) return;
@@ -148,7 +153,15 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
       userMarker = new maplibregl.Marker({ element: halo, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
     },
     setPadding: function (top, bottom, credit) {
-      map.setPadding({ top: top, bottom: bottom, left: 0, right: 0 });
+      // Eased with the sheet; mid-flight, the flight is re-aimed instead of stopped.
+      var padding = { top: top, bottom: bottom, left: 0, right: 0 };
+      var target = flight;
+      if (!padded) map.setPadding(padding);
+      else if (target && map.isMoving()) {
+        map.flyTo({ center: target.center, zoom: target.zoom, padding: padding, duration: 450 });
+        flight = target;
+      } else map.easeTo({ padding: padding, duration: 300 });
+      padded = true;
       var corner = document.querySelector('.maplibregl-ctrl-bottom-left');
       if (corner) corner.style.bottom = ((credit || bottom) + 6) + 'px';
     }

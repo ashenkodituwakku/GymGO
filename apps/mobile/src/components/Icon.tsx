@@ -32,6 +32,7 @@ const ICONS = {
   photo: { ios: 'photo.on.rectangle', android: 'photo_library', web: 'photo_library' },
   people: { ios: 'person.2.fill', android: 'group', web: 'group' },
   chevron: { ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' },
+  chevronBack: { ios: 'chevron.left', android: 'chevron_left', web: 'chevron_left' },
   info: { ios: 'info.circle.fill', android: 'info', web: 'info' },
   sparkle: { ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' },
   pin: { ios: 'mappin.circle.fill', android: 'location_on', web: 'location_on' },

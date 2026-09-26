@@ -13,6 +13,12 @@ import { useApp } from '@/lib/app-state';
 import { color, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 
+/** A saved name ends with its gym ("Legs · Equinox"); the line under it names the gym, so the title needn't. */
+function listTitle(name: string, gymName: string | null | undefined): string {
+  const suffix = gymName ? ` · ${gymName}` : null;
+  return suffix && name.endsWith(suffix) && name.length > suffix.length ? name.slice(0, -suffix.length) : name;
+}
+
 export default function MyWorkouts() {
   usePageTitle('My workouts');
   const { account, billing, openPro } = useApp();
@@ -88,8 +94,8 @@ export default function MyWorkouts() {
                 <Icon name={workout.plan.goal === 'endurance' ? 'bolt' : 'workout'} size={18} color={color.onBrand} />
               </View>
               <View style={styles.flex}>
-                <Txt variant="headline" numberOfLines={1}>
-                  {workout.name}
+                <Txt variant="headline" numberOfLines={2}>
+                  {listTitle(workout.name, workout.plan.gymName)}
                 </Txt>
                 <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
                   {[

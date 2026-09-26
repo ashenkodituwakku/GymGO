@@ -9,7 +9,7 @@
  */
 
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GymCard } from '@/components/GymCard';
 import { Pressy } from '@/components/motion';
@@ -360,16 +360,52 @@ function Carousel({ children }: { children: React.ReactNode }) {
   // just looks cut off, so the row keeps to the column there.
   const { width } = useWindowDimensions();
   const bleed = width < COLUMN + space[4] * 2;
+  const scroller = useRef<ScrollView>(null);
+  const [view, setView] = useState({ x: 0, width: 0, content: 0 });
+  // A mouse can't swipe: in a browser's wide layout, buttons page the row
+  // along, and each shows only while there's more that way.
+  const paged = Platform.OS === 'web' && !bleed;
+  const track = (change: Partial<typeof view>) => setView((current) => ({ ...current, ...change }));
+  const page = (direction: -1 | 1) => {
+    const x = Math.max(0, Math.min(view.content - view.width, view.x + direction * view.width * 0.8));
+    scroller.current?.scrollTo({ x, animated: true });
+  };
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={bleed && styles.carousel}
-      contentContainerStyle={[styles.carouselContent, !bleed && styles.carouselInColumn]}
-      decelerationRate="fast"
+    <View>
+      <ScrollView
+        ref={scroller}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={bleed && styles.carousel}
+        contentContainerStyle={[styles.carouselContent, !bleed && styles.carouselInColumn]}
+        decelerationRate="fast"
+        scrollEventThrottle={32}
+        onScroll={paged ? (event) => track({ x: event.nativeEvent.contentOffset.x }) : undefined}
+        onLayout={paged ? (event) => track({ width: event.nativeEvent.layout.width }) : undefined}
+        onContentSizeChange={paged ? (content) => track({ content }) : undefined}
+      >
+        {children}
+      </ScrollView>
+      {paged && view.x > 4 && <PageButton side="back" onPress={() => page(-1)} />}
+      {paged && view.x + view.width < view.content - 4 && <PageButton side="forward" onPress={() => page(1)} />}
+    </View>
+  );
+}
+
+function PageButton({ side, onPress }: { side: 'back' | 'forward'; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={side === 'back' ? 'Show earlier gyms' : 'Show more gyms'}
+      style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
+        styles.pageButton,
+        side === 'back' ? styles.pageBack : styles.pageForward,
+        (pressed || hovered) && styles.pageButtonOn,
+      ]}
     >
-      {children}
-    </ScrollView>
+      <Icon name={side === 'back' ? 'chevronBack' : 'chevron'} size={16} color={color.label} />
+    </Pressable>
   );
 }
 
@@ -438,6 +474,21 @@ const styles = themed(() => StyleSheet.create({
   carousel: { marginHorizontal: -space[4] },
   carouselContent: { paddingHorizontal: space[4], paddingBottom: space[2], gap: space[3] },
   carouselInColumn: { paddingHorizontal: 0 },
+  pageButton: {
+    position: 'absolute',
+    top: '42%',
+    width: 36,
+    height: 36,
+    marginTop: -18,
+    borderRadius: 18,
+    backgroundColor: color.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...dropShadow(0.18, 10, 3, 4),
+  },
+  pageButtonOn: { backgroundColor: color.fill },
+  pageBack: { left: -18 },
+  pageForward: { right: -18 },
 
   country: { gap: space[2] },
   countryLabel: { ...face('semibold'), letterSpacing: 0.6 },

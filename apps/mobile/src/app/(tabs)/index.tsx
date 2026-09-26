@@ -51,7 +51,7 @@ const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
 
 export default function Home() {
   usePageTitle(null);
-  const { data, account, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs } = useApp();
+  const { data, account, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady } = useApp();
   const active = useActiveSession();
   const [showAll, setShowAll] = useState<Record<string, boolean>>({});
   // Another country than yours, without Pro: no gyms listed, just the way to Pro.
@@ -201,6 +201,12 @@ export default function Home() {
         <Icon name="chevron" size={14} color={color.onBrandSoft} />
       </Pressy>
 
+      {/* Everything below is about a place: it waits for your settings, so
+          it opens on your country's city rather than flashing the default. */}
+      {!prefsReady ? (
+        <View style={styles.waiting} />
+      ) : (
+      <>
       {/* Nearby ------------------------------------------------------------ */}
       <View style={styles.section}>
         <SectionHeader
@@ -349,6 +355,8 @@ export default function Home() {
           })}
         </View>
       )}
+      </>
+      )}
 
     </TabScreen>
   );
@@ -474,6 +482,8 @@ const styles = themed(() => StyleSheet.create({
   carousel: { marginHorizontal: -space[4] },
   carouselContent: { paddingHorizontal: space[4], paddingBottom: space[2], gap: space[3] },
   carouselInColumn: { paddingHorizontal: 0 },
+  // Holds the nearby row's room while settings load, so nothing jumps.
+  waiting: { height: 290 },
   pageButton: {
     position: 'absolute',
     top: '42%',

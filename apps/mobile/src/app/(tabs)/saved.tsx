@@ -21,7 +21,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 
 export default function Saved() {
   usePageTitle('Saved');
-  const { data, account, filters, compare, toggleCompare, requestExplore, billing, openPro } = useApp();
+  const { data, account, filters, compare, toggleCompare, requestExplore, billing, openPro, prefsReady } = useApp();
   const router = useRouter();
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   const byId = useMemo(() => resultsById(filters, data.records, asOf, data.ratings), [filters, data.records, asOf, data.ratings]);
@@ -46,7 +46,8 @@ export default function Saved() {
         ) : undefined
       }
     >
-      {saved.length === 0 ? (
+      {/* Distances are from the search's place, so the list waits for your settings. */}
+      {!prefsReady ? null : saved.length === 0 ? (
         <View style={styles.empty}>
           <Icon name="saved" size={44} color={color.brand} />
           <Txt variant="title2">Nothing saved yet</Txt>

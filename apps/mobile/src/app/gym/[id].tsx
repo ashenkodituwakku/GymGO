@@ -167,10 +167,16 @@ export default function GymPage() {
                     <GooglePhotos photos={place!.photos} width={cardWidth - space[4] * 2} />
                   ) : (
                     <View style={styles.streetView}>
-                      <GoogleEmbed url={googleStreetViewEmbedUrl(result.record)} height={220} />
-                      <Txt variant="caption" color={color.labelSecondary}>
-                        Google Street View outside the gym. It may not face the door.
-                      </Txt>
+                      <GoogleEmbed
+                        url={googleStreetViewEmbedUrl(result.record)}
+                        height={220}
+                        what="Street View"
+                        caption={
+                          <Txt variant="caption" color={color.labelSecondary}>
+                            Google Street View outside the gym. It may not face the door.
+                          </Txt>
+                        }
+                      />
                     </View>
                   )
                 }

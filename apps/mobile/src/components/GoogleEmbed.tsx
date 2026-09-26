@@ -11,11 +11,12 @@
  */
 
 import * as WebBrowser from 'expo-web-browser';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { color, radius, space, themed } from '@/lib/theme';
-import { Txt } from './ui';
+import { useGoogleReach } from '@/lib/googleReach';
+import { color, radius, themed } from '@/lib/theme';
+import { GoogleUnavailable } from './GoogleUnavailable';
 
 export const EMBED_WIDTH = 440;
 
@@ -29,18 +30,32 @@ function page(url: string) {
 </head><body><iframe src="${src}" title="Google Maps" allowfullscreen></iframe></body></html>`;
 }
 
-export function GoogleEmbed({ url, height }: { url: string; height: number }) {
+/**
+ * `what` names the embed when it can't load ("Street View"); `caption`
+ * shows under it only when it can, so it never describes an empty box.
+ * Google's frame failing inside the wrapper page raises no error here, so
+ * whether Google can be reached is asked first (lib/googleReach.ts).
+ */
+export function GoogleEmbed({ url, height, what = 'Google’s map', caption }: { url: string; height: number; what?: string; caption?: ReactNode }) {
+  const { reach, retry } = useGoogleReach();
   const [failed, setFailed] = useState(false);
 
+  if (reach !== 'ok' || failed) {
+    return (
+      <GoogleUnavailable
+        what={what}
+        height={height}
+        reach={failed ? 'failed' : reach === 'ok' ? 'checking' : reach}
+        onRetry={() => {
+          setFailed(false);
+          retry();
+        }}
+      />
+    );
+  }
   return (
-    <View style={[styles.frame, { height }]}>
-      {failed ? (
-        <View style={styles.failed}>
-          <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-            Google’s map didn’t load. Check the phone is online, or use the button below.
-          </Txt>
-        </View>
-      ) : (
+    <>
+      <View style={[styles.frame, { height }]}>
         <WebView
           source={{ html: page(url), baseUrl: 'https://gymgo.app/' }}
           style={styles.web}
@@ -55,16 +70,15 @@ export function GoogleEmbed({ url, height }: { url: string; height: number }) {
             return false;
           }}
           onError={() => setFailed(true)}
-          accessibilityLabel="Google Maps"
+          accessibilityLabel={what}
         />
-      )}
-    </View>
+      </View>
+      {caption}
+    </>
   );
 }
 
 const styles = themed(() => StyleSheet.create({
   frame: { borderRadius: radius.lg + 4, borderCurve: 'continuous', overflow: 'hidden', backgroundColor: color.fill },
   web: { flex: 1, backgroundColor: 'transparent' },
-  failed: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space[4] },
-  center: { textAlign: 'center' },
 }));

@@ -82,10 +82,16 @@ export function GooglePage({ record, onClose }: { record: GymRecord; onClose: ()
         <Txt variant="title2" style={styles.more}>
           Street View
         </Txt>
-        <GoogleEmbed url={googleStreetViewEmbedUrl(record)} height={260} />
-        <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-          Google’s Street View nearest the gym. Drag to look around: it may not be facing the door.
-        </Txt>
+        <GoogleEmbed
+          url={googleStreetViewEmbedUrl(record)}
+          height={260}
+          what="Street View"
+          caption={
+            <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+              Google’s Street View nearest the gym. Drag to look around: it may not be facing the door.
+            </Txt>
+          }
+        />
 
         {place && (
           <>

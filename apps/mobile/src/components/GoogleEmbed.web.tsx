@@ -7,17 +7,26 @@
  * at EMBED_WIDTH and scaled down to fit, as the phone's web view does.
  */
 
-import { createElement, useState } from 'react';
+import { createElement, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useGoogleReach } from '@/lib/googleReach';
 import { color, radius, themed } from '@/lib/theme';
+import { GoogleUnavailable } from './GoogleUnavailable';
 
 const EMBED_WIDTH = 440;
 
-export function GoogleEmbed({ url, height }: { url: string; height: number }) {
+/**
+ * `what` names the embed when it can't load ("Street View"); `caption`
+ * shows under it only when it can, so it never describes an empty box.
+ */
+export function GoogleEmbed({ url, height, what = 'Google’s map', caption }: { url: string; height: number; what?: string; caption?: ReactNode }) {
   const [width, setWidth] = useState(0);
   const scale = width > 0 && width < EMBED_WIDTH ? width / EMBED_WIDTH : 1;
+  const { reach, retry } = useGoogleReach();
 
+  if (reach !== 'ok') return <GoogleUnavailable what={what} height={height} reach={reach} onRetry={retry} />;
   return (
+    <>
     <View style={[styles.frame, { height }]} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
       {width > 0 &&
         createElement('iframe', {
@@ -37,6 +46,8 @@ export function GoogleEmbed({ url, height }: { url: string; height: number }) {
           },
         })}
     </View>
+    {caption}
+    </>
   );
 }
 

@@ -272,6 +272,10 @@ guide, so on a repeat session it's mostly ticking.
 - **Rest timer.** Ticking a set starts the rest the plan calls for (90 s,
   say), in a glass bar at the bottom with −15, +15 and Skip. The phone
   buzzes when it's up.
+- **The screen stays on** while a workout is open, so the phone doesn't
+  lock between sets.
+- **Left open overnight?** If nothing changed for over an hour, the workout
+  is logged as ending at your last change, not when you tapped Finish.
 - **Last time.** Beside each exercise: what you did the last time you
   logged it ("135 lb × 10, 10, 9").
 - **Plates.** On barbell exercises, **Plates** shows what to load on each

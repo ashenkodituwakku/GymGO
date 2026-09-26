@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AU_GYMS } from '@gymgo/au-data';
-import { THIS_AREA, boxAround, boxDrift, reachFor, tilesAround, inArea, initialFilters, moveTo, nameForArea, nearLabel, nextVisitAt, nowIn, runSearch } from './query';
+import { THIS_AREA, boxAround, boxDrift, reachFor, tilesAround, inArea, initialFilters, moveTo, nameForArea, nearLabel, nextVisitAt, nowIn, runSearch, visitIsLater } from './query';
 
 describe('nextVisitAt', () => {
   // 9:30 am in Melbourne on 24 September 2026 (AEST, UTC+10).
@@ -28,8 +28,8 @@ describe('moveTo', () => {
     expect(moved.visitMinuteOfDay).toBe(18 * 60);
   });
 
-  it('puts the same time of day on the new city’s clock, never in its past', () => {
-    const filters = { ...initialFilters(morning), visitMinuteOfDay: 18 * 60, visitDate: '2026-09-24' };
+  it('puts a time you picked on the new city’s clock, never in its past', () => {
+    const filters = { ...initialFilters(morning), visitMinuteOfDay: 18 * 60, visitDate: '2026-09-24', visitPicked: true };
     const ny = moveTo(filters, { centre: { lat: 40.75, lng: -73.98 }, placeName: 'New York', timezone: 'America/New_York', countryCode: 'US' }, morning);
     // 6 pm has passed in New York (it's 7:30 pm Wednesday), so Thursday 6 pm.
     expect(ny.timezone).toBe('America/New_York');
@@ -37,6 +37,26 @@ describe('moveTo', () => {
     expect(ny.visitMinuteOfDay).toBe(18 * 60);
     const early = moveTo({ ...filters, visitMinuteOfDay: 21 * 60 }, { centre: { lat: 40.75, lng: -73.98 }, placeName: 'New York', timezone: 'America/New_York', countryCode: 'US' }, morning);
     expect(early.visitDate).toBe('2026-09-23');
+  });
+
+  it('works the default visit out again on the new city’s clock when you haven’t picked one', () => {
+    // 12:20 pm Friday in New York is 2:20 am Saturday in Melbourne, where
+    // the next hour is too early, so the opening default there is 7 am Saturday.
+    const noon = new Date('2026-09-25T16:20:00Z');
+    const opening = initialFilters(noon);
+    expect(opening).toMatchObject({ visitDate: '2026-09-26', visitMinuteOfDay: 7 * 60, visitPicked: false });
+    const ny = moveTo(opening, { centre: { lat: 40.75, lng: -73.98 }, placeName: 'New York', timezone: 'America/New_York', countryCode: 'US' }, noon);
+    // Not "tomorrow at 7 am": the next hour in New York, today.
+    expect(ny.visitDate).toBe('2026-09-25');
+    expect(ny.visitMinuteOfDay).toBe(13 * 60);
+  });
+
+  it('knows when the visit is on a later day than today, on the city’s clock', () => {
+    // 9:30 am Thursday in Melbourne.
+    expect(visitIsLater({ visitDate: '2026-09-24', timezone: 'Australia/Melbourne' }, morning)).toBe(false);
+    expect(visitIsLater({ visitDate: '2026-09-25', timezone: 'Australia/Melbourne' }, morning)).toBe(true);
+    // Still Wednesday in New York.
+    expect(visitIsLater({ visitDate: '2026-09-24', timezone: 'America/New_York' }, morning)).toBe(true);
   });
 
   it('drops the budget in another country, since it was in the old one’s money', () => {

@@ -50,6 +50,7 @@ describe('voice', () => {
     expect(summaryLine(9, 0, 19 * 60)).toBe('9 gyms nearby · none a sure thing at 7 pm');
     expect(summaryLine(9, 3, 19 * 60)).toBe('9 gyms nearby · 3 good to go at 7 pm');
     expect(summaryLine(1, 1, 7 * 60)).toBe('1 gym nearby · 1 good to go at 7 am');
+    expect(summaryLine(9, 0, 7 * 60, true)).toBe('9 gyms nearby · none a sure thing tomorrow at 7 am');
   });
 
   it('says what members reported about a gym being there, without "0 members"', () => {

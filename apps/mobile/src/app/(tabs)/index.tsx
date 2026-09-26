@@ -18,11 +18,11 @@ import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { useActiveSession } from '@/lib/activeSession';
 import { useApp } from '@/lib/app-state';
-import { EMPTY, searchPrompt, timeLabel } from '@/lib/copy';
+import { EMPTY, searchPrompt, timeLabel, visitWhen } from '@/lib/copy';
 import { countryInSentence } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityNear, cityPlace, moneyLabel, tracksPrices, type AppPlace } from '@/lib/places';
-import { atPlace, moveTo, nearLabel, nextVisitAt, runSearch, type Filters } from '@/lib/query';
+import { atPlace, moveTo, nearLabel, nextVisitAt, runSearch, visitIsLater, type Filters } from '@/lib/query';
 import { resultsById } from '@/lib/results';
 import { color, dropShadow, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -91,7 +91,7 @@ export default function Home() {
   const goToPlace = (place: AppPlace) => pick((current) => moveTo(current, atPlace(place)));
   const visit = (minute: number) => {
     const next = nextVisitAt(minute, filters.timezone);
-    return { visitDate: next.date, visitMinuteOfDay: next.minute };
+    return { visitDate: next.date, visitMinuteOfDay: next.minute, visitPicked: true };
   };
 
   const shortcuts: Array<{ icon: IconName; title: string; onPress: () => void }> = [
@@ -210,7 +210,7 @@ export default function Home() {
           onAction={() => explore({ recentre: true })}
         />
         <Txt variant="footnote" color={color.labelSecondary}>
-          For a visit at {timeLabel(filters.visitMinuteOfDay)}
+          For a visit {visitWhen(filters.visitMinuteOfDay, visitIsLater(filters))}
           {filters.budgetMinor ? `, under ${moneyLabel(filters.budgetMinor, filters.countryCode)}` : ''}
           {filters.equipment.length ? `, with ${filters.equipment.length} must-have${filters.equipment.length > 1 ? 's' : ''}` : ''}.
           {/* The hold menu (save, share, compare) is the iPhone's own. */}

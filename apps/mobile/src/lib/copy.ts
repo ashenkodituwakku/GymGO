@@ -94,12 +94,17 @@ export function ratingShort(average: number | null): string {
   return average === null ? 'New' : `★ ${average.toFixed(1)}`;
 }
 
+/** When the visit is: "at 7 am" today, "tomorrow at 7 am" otherwise. */
+export function visitWhen(minuteOfDay: number, tomorrow: boolean): string {
+  return `${tomorrow ? 'tomorrow ' : ''}at ${timeLabel(minuteOfDay)}`;
+}
+
 /** The line under the search field. */
-export function summaryLine(total: number, confirmed: number, minuteOfDay: number): string {
+export function summaryLine(total: number, confirmed: number, minuteOfDay: number, tomorrow = false): string {
   if (total === 0) return 'No gyms here yet';
   const gyms = total === 1 ? '1 gym' : `${total} gyms`;
-  if (confirmed === 0) return `${gyms} nearby · none a sure thing at ${timeLabel(minuteOfDay)}`;
-  return `${gyms} nearby · ${confirmed} good to go at ${timeLabel(minuteOfDay)}`;
+  if (confirmed === 0) return `${gyms} nearby · none a sure thing ${visitWhen(minuteOfDay, tomorrow)}`;
+  return `${gyms} nearby · ${confirmed} good to go ${visitWhen(minuteOfDay, tomorrow)}`;
 }
 
 /**

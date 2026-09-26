@@ -14,8 +14,8 @@ import { explainNoMatches, haversineKm, type GymRecord, type SearchOutcome } fro
 import { countryInSentence } from '@/lib/country';
 import { suggestGyms } from '@/lib/gymSearch';
 import { cityAt, distanceLabel, moneyLabel, placeContext, suggestPlaces, tracksPrices, type AppPlace } from '@/lib/places';
-import { EMPTY, PLACEHOLDER, TIER, searchPrompt, sessionGreeting, summaryLine, timeLabel } from '@/lib/copy';
-import { SORTS, activeFilterCount, nearLabel, type Filters } from '@/lib/query';
+import { EMPTY, PLACEHOLDER, TIER, searchPrompt, sessionGreeting, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
+import { SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { GymRow } from './GymRow';
@@ -235,7 +235,7 @@ export function ResultsContent({
           label={timeLabel(filters.visitMinuteOfDay)}
           selected={false}
           onPress={onOpenFilters}
-          accessibilityLabel={`Visiting at ${timeLabel(filters.visitMinuteOfDay)}. Change time`}
+          accessibilityLabel={`Visiting ${visitWhen(filters.visitMinuteOfDay, visitIsLater(filters))}. Change time`}
         />
         {/* The budget that's on, set from anywhere (Home's tile, Filters); tapping it clears it. */}
         {tracksPrices(filters.countryCode) && (
@@ -260,7 +260,7 @@ export function ResultsContent({
           {nearLabel(filters.placeName)}
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
-          {locked ? `In ${countryInSentence(locked.country)}, with GymGO Pro` : summaryLine(total, outcome.counts.confirmed, filters.visitMinuteOfDay)}
+          {locked ? `In ${countryInSentence(locked.country)}, with GymGO Pro` : summaryLine(total, outcome.counts.confirmed, filters.visitMinuteOfDay, visitIsLater(filters))}
         </Txt>
       </View>
 

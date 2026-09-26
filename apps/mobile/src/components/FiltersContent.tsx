@@ -81,7 +81,7 @@ export function FiltersContent({
             { label: 'Tomorrow', value: tomorrow },
           ]}
           value={filters.visitDate}
-          onChange={(visitDate) => set({ visitDate })}
+          onChange={(visitDate) => set({ visitDate, visitPicked: true })}
         />
         <View style={styles.chips}>
           {timeChoices(filters.visitMinuteOfDay).map((minute) => (
@@ -89,7 +89,7 @@ export function FiltersContent({
               key={minute}
               label={timeLabel(minute)}
               selected={filters.visitMinuteOfDay === minute}
-              onPress={() => set({ visitMinuteOfDay: minute })}
+              onPress={() => set({ visitMinuteOfDay: minute, visitPicked: true })}
             />
           ))}
         </View>

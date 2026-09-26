@@ -12,7 +12,8 @@ import { Icon } from '@/components/Icon';
 import { PrimaryButton, TIER_COLOUR, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { distanceLabel, moneyLabel } from '@/lib/places';
-import { TIER, accessShort, timeLabel } from '@/lib/copy';
+import { TIER, accessShort, timeLabel, visitWhen } from '@/lib/copy';
+import { visitIsLater } from '@/lib/query';
 import { priceLine } from '@/lib/present';
 import { resultsById } from '@/lib/results';
 import { color, face, radius, space, themed } from '@/lib/theme';
@@ -138,7 +139,7 @@ export default function Compare() {
       />
       <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
         <Txt variant="footnote" color={color.labelSecondary}>
-          For a visit at {at}. The cheapest confirmed price is in bold.
+          For a visit {visitWhen(filters.visitMinuteOfDay, visitIsLater(filters))}. The cheapest confirmed price is in bold.
         </Txt>
         {/* Wider than the screen with four gyms: it scrolls sideways. */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tableScroll}>

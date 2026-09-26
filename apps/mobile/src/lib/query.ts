@@ -58,6 +58,12 @@ export interface Filters {
   bbox: BoundingBox | null;
   visitDate: string;
   visitMinuteOfDay: number;
+  /**
+   * You picked the visit's day or time yourself. Until you do, it's the next
+   * hour on the clock of wherever you search, so moving to a city in another
+   * time zone works it out again there instead of keeping the old clock time.
+   */
+  visitPicked?: boolean;
   budgetMinor: number | null;
   equipment: string[];
   dumbbellMinKg: number | null;
@@ -114,6 +120,11 @@ export function defaultVisit(now: Date = new Date(), timezone: string = CITIES.m
   return { date, minute: nextHour };
 }
 
+/** The visit is on a later day than today, on the searched city's clock. */
+export function visitIsLater(filters: Pick<Filters, 'visitDate' | 'timezone'>, now: Date = new Date()): boolean {
+  return filters.visitDate > nowIn(filters.timezone, now).date;
+}
+
 /**
  * The next time the clock reads `minute`: today if that is still ahead,
  * otherwise tomorrow. "Early start" picked at 9 am means tomorrow's 6 am.
@@ -145,7 +156,7 @@ export function moveTo(current: Filters, where: Whereabouts & { bbox?: BoundingB
     budgetMinor: where.countryCode === current.countryCode ? current.budgetMinor : null,
   };
   if (where.timezone === current.timezone) return next;
-  const visit = nextVisitAt(current.visitMinuteOfDay, where.timezone, now);
+  const visit = current.visitPicked ? nextVisitAt(current.visitMinuteOfDay, where.timezone, now) : defaultVisit(now, where.timezone);
   return { ...next, visitDate: visit.date, visitMinuteOfDay: visit.minute };
 }
 
@@ -246,6 +257,7 @@ export function initialFilters(now: Date = new Date(), place: AppPlace = DEFAULT
     bbox: null,
     visitDate: visit.date,
     visitMinuteOfDay: visit.minute,
+    visitPicked: false,
     budgetMinor: null,
     equipment: [],
     dumbbellMinKg: null,
@@ -304,7 +316,10 @@ export function applyRelaxation(filters: Filters, patch: Partial<SearchQuery>): 
   }
   if ('budgetMinor' in patch) next.budgetMinor = patch.budgetMinor ?? null;
   if (patch.radiusKm !== undefined) next.radiusKm = patch.radiusKm;
-  if (patch.visitMinuteOfDay !== undefined) next.visitMinuteOfDay = patch.visitMinuteOfDay;
+  if (patch.visitMinuteOfDay !== undefined) {
+    next.visitMinuteOfDay = patch.visitMinuteOfDay;
+    next.visitPicked = true;
+  }
   return next;
 }
 

@@ -224,28 +224,30 @@ export default function WorkoutScreen() {
         ) : (
           <View style={styles.result}>
             <Txt variant="title2">Your workout</Txt>
+            {/* Starting is what you came for, so it's the one big button; the
+                rest sit in a row under it that fits a phone's width. */}
+            {workout.items.length > 0 && (
+              <PrimaryButton
+                label={active ? 'Back to your workout' : 'Start workout'}
+                icon="play"
+                onPress={() => {
+                  haptic.success();
+                  // One at a time: a workout already going is picked up again, not replaced.
+                  if (!active) {
+                    startSession({
+                      name: [muscles.map(muscleLabel).slice(0, 3).join(', '), gymName].filter(Boolean).join(' · ').slice(0, 80) || 'Workout',
+                      workoutId: null,
+                      gymId: record?.location.id ?? null,
+                      gymName,
+                      unit: unitFor(prefs.country),
+                      items: workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds })),
+                    });
+                  }
+                  router.push('/train');
+                }}
+              />
+            )}
             <View style={styles.actions}>
-              {workout.items.length > 0 && (
-                <ActionPill
-                  label={active ? 'Your workout' : 'Start'}
-                  icon="play"
-                  onPress={() => {
-                    haptic.success();
-                    // One at a time: a workout already going is picked up again, not replaced.
-                    if (!active) {
-                      startSession({
-                        name: [muscles.map(muscleLabel).slice(0, 3).join(', '), gymName].filter(Boolean).join(' · ').slice(0, 80) || 'Workout',
-                        workoutId: null,
-                        gymId: record?.location.id ?? null,
-                        gymName,
-                        unit: unitFor(prefs.country),
-                        items: workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds })),
-                      });
-                    }
-                    router.push('/train');
-                  }}
-                />
-              )}
               <ActionPill
                 label="Shuffle"
                 icon="shuffle"

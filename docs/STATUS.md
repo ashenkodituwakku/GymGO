@@ -272,7 +272,7 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 | `@gymgo/eu-data` unit tests | **10 passed** |
 | `@gymgo/osm` unit tests | **25 passed** |
 | `@gymgo/server` tests (real HTTP, in-memory SQLite) | **131 passed** |
-| `@gymgo/mobile` unit tests | **131 passed** |
+| `@gymgo/mobile` unit tests | **132 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
 | `expo export` (iOS + Android) | Both compiled to Hermes bytecode |
 | `expo-doctor` | 21/21 checks passed |
@@ -313,8 +313,10 @@ name; the skip link works.
   first run there to surface something. Everything above marked "browser" was seen in the web
   build, which shares the code but not the native pieces (Apple Maps, SF
   Symbols, Liquid Glass, haptics, the share sheet, the photo picker).
-- **Store builds.** No app icon, splash screen, EAS project, store signing
-  or store listing. The bundle id is made per person, for running your own
+- **Store builds.** The app icon (iOS light, dark and tinted; Android
+  adaptive and themed), splash screen and favicon are done
+  (`apps/mobile/scripts/brand-mark.mjs`). No EAS project, store signing or
+  store listing: the bundle id is made per person, for running your own
   build from Xcode. None were asked for, and most involve an account or a fee.
 - **Hosting.** The server runs on your own computer. Nothing is deployed, so
   accounts, reviews and members' reports live in one SQLite file there.

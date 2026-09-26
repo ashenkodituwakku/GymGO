@@ -4,7 +4,7 @@
  * country too, and there this only sets where the app opens.
  */
 
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Platform, Pressable, SectionList, StyleSheet, TextInput, View } from 'react-native';
 import { Icon } from '@/components/Icon';
@@ -54,92 +54,116 @@ export default function CountryScreen() {
   };
 
   return (
-    <SectionList
-      style={styles.screen}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-      stickySectionHeadersEnabled={false}
-      sections={sections}
-      keyExtractor={(item, index) => `${item.code}-${index}`}
-      ListHeaderComponent={
-        <View style={styles.header}>
-          <Txt variant="title" accessibilityRole="header">
-            {first ? 'Where do you train?' : 'Your country'}
-          </Txt>
-          <Txt variant="subhead" color={color.labelSecondary}>
-            {billing.isPro
-              ? 'You have GymGO Pro, so every country is open to you. This sets where GymGO opens.'
-              : 'GymGO Free covers one country, with every gym in it. GymGO Pro adds every other country, for when you travel.'}
-          </Txt>
-          <View style={[styles.search, focused && styles.searchFocused]}>
-            <Icon name="search" size={16} color={color.labelSecondary} />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
-              placeholder="Search countries"
-              placeholderTextColor={color.labelTertiary}
-              autoCorrect={false}
-              autoFocus={!first && Platform.OS === 'web'}
-              style={styles.input}
-              accessibilityLabel="Search countries"
-            />
+    <>
+      {/* The first time, there's nowhere to go back to: skipping is the choice,
+          so it says so. GymGO then opens on the device's own country and asks
+          again next launch. */}
+      {first && (
+        <Stack.Screen
+          options={{
+            headerLeft: () => null,
+            headerRight: () => (
+              <Pressable
+                onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+                accessibilityRole="button"
+                hitSlop={8}
+                style={styles.notNow}
+              >
+                <Txt variant="body" color={color.brand}>
+                  Not now
+                </Txt>
+              </Pressable>
+            ),
+          }}
+        />
+      )}
+      <SectionList
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        stickySectionHeadersEnabled={false}
+        sections={sections}
+        keyExtractor={(item, index) => `${item.code}-${index}`}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Txt variant="title" accessibilityRole="header">
+              {first ? 'Where do you train?' : 'Your country'}
+            </Txt>
+            <Txt variant="subhead" color={color.labelSecondary}>
+              {billing.isPro
+                ? 'You have GymGO Pro, so every country is open to you. This sets where GymGO opens.'
+                : 'GymGO Free covers one country, with every gym in it. GymGO Pro adds every other country, for when you travel.'}
+            </Txt>
+            <View style={[styles.search, focused && styles.searchFocused]}>
+              <Icon name="search" size={16} color={color.labelSecondary} />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                placeholder="Search countries"
+                placeholderTextColor={color.labelTertiary}
+                autoCorrect={false}
+                autoFocus={!first && Platform.OS === 'web'}
+                style={styles.input}
+                accessibilityLabel="Search countries"
+              />
+            </View>
           </View>
-        </View>
-      }
-      renderSectionHeader={({ section }) =>
-        section.title ? (
-          <Txt variant="footnote" color={color.labelSecondary} style={styles.sectionTitle}>
-            {section.title.toUpperCase()}
+        }
+        renderSectionHeader={({ section }) =>
+          section.title ? (
+            <Txt variant="footnote" color={color.labelSecondary} style={styles.sectionTitle}>
+              {section.title.toUpperCase()}
+            </Txt>
+          ) : null
+        }
+        ListEmptyComponent={
+          <Txt variant="subhead" color={color.labelSecondary} style={styles.empty}>
+            No country by that name.
           </Txt>
-        ) : null
-      }
-      ListEmptyComponent={
-        <Txt variant="subhead" color={color.labelSecondary} style={styles.empty}>
-          No country by that name.
-        </Txt>
-      }
-      renderItem={({ item, index, section }) => {
-        const on = item.code === prefs.country;
-        const cities = CITY_COUNT[item.code] ?? 0;
-        const detail = cities > 0 ? `${cities} ${cities === 1 ? 'city' : 'cities'} built in` : item.capital ? `Opens on ${item.capital}` : 'Search it on the map';
-        return (
-          <Pressable
-            onPress={() => choose(item.code)}
-            accessibilityRole="button"
-            accessibilityLabel={`${item.name}${on ? ', your country' : ''}`}
-            accessibilityState={{ selected: on }}
-            style={({ pressed }) => [
-              styles.row,
-              index === 0 && styles.rowFirst,
-              index === section.data.length - 1 && styles.rowLast,
-              pressed && { backgroundColor: color.fill },
-            ]}
-          >
-            {/* Windows draws flag emoji as two letters, so the browser shows the code instead. */}
-            {Platform.OS === 'web' ? (
-              <View style={styles.code}>
-                <Txt variant="caption" color={color.brand} style={face('semibold')}>
-                  {item.code}
+        }
+        renderItem={({ item, index, section }) => {
+          const on = item.code === prefs.country;
+          const cities = CITY_COUNT[item.code] ?? 0;
+          const detail = cities > 0 ? `${cities} ${cities === 1 ? 'city' : 'cities'} built in` : item.capital ? `Opens on ${item.capital}` : 'Search it on the map';
+          return (
+            <Pressable
+              onPress={() => choose(item.code)}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.name}${on ? ', your country' : ''}`}
+              accessibilityState={{ selected: on }}
+              style={({ pressed }) => [
+                styles.row,
+                index === 0 && styles.rowFirst,
+                index === section.data.length - 1 && styles.rowLast,
+                pressed && { backgroundColor: color.fill },
+              ]}
+            >
+              {/* Windows draws flag emoji as two letters, so the browser shows the code instead. */}
+              {Platform.OS === 'web' ? (
+                <View style={styles.code}>
+                  <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                    {item.code}
+                  </Txt>
+                </View>
+              ) : (
+                <Txt variant="title2" style={styles.flag}>
+                  {flagOf(item.code)}
+                </Txt>
+              )}
+              <View style={styles.flex}>
+                <Txt variant="body">{item.name}</Txt>
+                <Txt variant="footnote" color={color.labelSecondary}>
+                  {detail}
                 </Txt>
               </View>
-            ) : (
-              <Txt variant="title2" style={styles.flag}>
-                {flagOf(item.code)}
-              </Txt>
-            )}
-            <View style={styles.flex}>
-              <Txt variant="body">{item.name}</Txt>
-              <Txt variant="footnote" color={color.labelSecondary}>
-                {detail}
-              </Txt>
-            </View>
-            {on && <Icon name="check" size={18} color={color.brand} />}
-          </Pressable>
-        );
-      }}
-    />
+              {on && <Icon name="check" size={18} color={color.brand} />}
+            </Pressable>
+          );
+        }}
+      />
+    </>
   );
 }
 
@@ -186,4 +210,5 @@ const styles = themed(() => StyleSheet.create({
   },
   flex: { flex: 1, gap: 2 },
   empty: { textAlign: 'center', marginTop: space[6] },
+  notNow: { paddingHorizontal: Platform.OS === 'web' ? space[4] : 0 },
 }));

@@ -197,6 +197,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     return () => subscription.remove();
   }, []);
+
+  // The server was away (not started yet, or the phone on another Wi-Fi):
+  // keep trying, every 20 seconds and whenever GymGO comes back to the
+  // front, until the gyms and your sign-in are live again.
+  const serverAway = data.status === 'offline' || accountApi.state === 'unreachable';
+  const { refresh: refreshData } = data;
+  const { reconnect } = accountApi;
+  useEffect(() => {
+    if (!serverAway) return;
+    const retry = () => {
+      if (data.status === 'offline') void refreshData();
+      if (accountApi.state === 'unreachable') void reconnect();
+    };
+    const timer = setInterval(retry, 20_000);
+    const subscription = NativeAppState.addEventListener('change', (next) => {
+      if (next === 'active') retry();
+    });
+    return () => {
+      clearInterval(timer);
+      subscription.remove();
+    };
+  }, [serverAway, data.status, accountApi.state, refreshData, reconnect]);
   // Past the plan's limit (Pro ended, say): keep the most recent picks. Only
   // once the plan is known, so a Pro member's picks aren't cut while it loads.
   useEffect(() => {

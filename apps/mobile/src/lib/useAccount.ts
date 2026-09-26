@@ -107,6 +107,26 @@ export function useAccount() {
     [adopt],
   );
 
+  /**
+   * Signed in, but the server was away: try again (it's back, or the phone
+   * is on the right Wi-Fi now). A 401 means the sign-in has ended meanwhile.
+   */
+  const reconnect = useCallback(async () => {
+    const stored = token.current;
+    if (!stored) return;
+    try {
+      const { account: me } = await api.me(stored);
+      await adopt(stored, me);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        token.current = null;
+        await storeToken(null);
+        setAccount(null);
+        setState('signed_out');
+      }
+    }
+  }, [adopt]);
+
   const refreshAccount = useCallback(async () => {
     const current = token.current;
     if (!current) return;
@@ -173,6 +193,7 @@ export function useAccount() {
     signIn,
     signUp,
     signInWith,
+    reconnect,
     refreshAccount,
     signOut,
     deleteAccount,

@@ -98,7 +98,7 @@ const OUTCOME_LABEL: Record<AccessOutcome | 'closed' | 'open', string> = {
 };
 
 /**
- * Members' price and visit reports show straight away, so moderators look
+ * Members' price, visit and open-or-closed reports show straight away, so moderators look
  * over the latest and remove any that are wrong or abusive.
  */
 export function MemberReportQueue({ token, records }: { token: string; records: GymRecord[] }) {
@@ -125,7 +125,7 @@ export function MemberReportQueue({ token, records }: { token: string; records: 
   return (
     <View>
       <Txt variant="headline" style={styles.heading}>
-        Latest price and visit reports {reports ? `(${reports.length})` : ''}
+        Latest member reports {reports ? `(${reports.length})` : ''}
       </Txt>
       {error && <Notice icon="info" text={error} tone="danger" />}
       {reports?.length === 0 && (

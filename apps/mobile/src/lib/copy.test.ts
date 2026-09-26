@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accessLine, accessShort, checkedAgo, filtersButtonLabel, locatedNotice, serverOfflineLine, ratingShort, searchPrompt, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
+import { accessLine, accessShort, checkedAgo, filtersButtonLabel, locatedNotice, serverOfflineLine, statusSummaryLine, ratingShort, searchPrompt, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
 import { activeFilterCount, applyRelaxation, atPlace, defaultVisit, initialFilters, runSearch, toQuery } from './query';
 import { geocodePlace } from './places';
 
@@ -50,6 +50,13 @@ describe('voice', () => {
     expect(summaryLine(9, 0, 19 * 60)).toBe('9 gyms nearby · none a sure thing at 7 pm');
     expect(summaryLine(9, 3, 19 * 60)).toBe('9 gyms nearby · 3 good to go at 7 pm');
     expect(summaryLine(1, 1, 7 * 60)).toBe('1 gym nearby · 1 good to go at 7 am');
+  });
+
+  it('says what members reported about a gym being there, without "0 members"', () => {
+    expect(statusSummaryLine(0, 0)).toBe('The map can be out of date, and no member has said yet.');
+    expect(statusSummaryLine(0, 1)).toBe('In the last six months, 1 member said it’s still open.');
+    expect(statusSummaryLine(2, 0)).toBe('In the last six months, 2 members said it has closed.');
+    expect(statusSummaryLine(1, 3)).toBe('In the last six months, 1 member said it has closed and 3 said it’s still open.');
   });
 
   it('says where to start the server, without naming a command that may not exist', () => {

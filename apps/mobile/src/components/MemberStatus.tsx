@@ -18,6 +18,7 @@ import type { AccountApi } from '@/lib/useAccount';
 import { color, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { ChoiceChip, PrimaryButton, Txt } from './ui';
+import { statusSummaryLine } from '@/lib/copy';
 import { FADE_IN, GLIDE } from './motion';
 
 // Both parts of the card read the same answer; a report refreshes both.
@@ -113,9 +114,7 @@ export function MemberStatus({ gymId, isDemo, account, onSignIn }: { gymId: stri
     <Animated.View style={styles.wrap} layout={GLIDE}>
       <Txt variant="headline">Is it still there?</Txt>
       <Txt variant="footnote" color={color.labelSecondary}>
-        {summary.closed + summary.open === 0
-          ? 'The map can be out of date, and no member has said yet.'
-          : `In the last six months, ${summary.closed} member${summary.closed === 1 ? '' : 's'} said it has closed and ${summary.open} said it’s still open.`}
+        {statusSummaryLine(summary.closed, summary.open)}
       </Txt>
       {notice && (
         <Animated.View entering={FADE_IN}>

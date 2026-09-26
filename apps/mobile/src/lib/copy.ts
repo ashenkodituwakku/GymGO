@@ -126,6 +126,15 @@ export function serverOfflineLine(platform: string): string {
     : 'Can’t reach the GymGO server. Check GymGO is running on your computer and this phone is on the same Wi-Fi, then try again.';
 }
 
+/** What members said about whether a gym is still there, in the last six months. */
+export function statusSummaryLine(closed: number, open: number): string {
+  if (closed + open === 0) return 'The map can be out of date, and no member has said yet.';
+  const members = (count: number) => (count === 1 ? '1 member' : `${count} members`);
+  if (closed === 0) return `In the last six months, ${members(open)} said it’s still open.`;
+  if (open === 0) return `In the last six months, ${members(closed)} said it has closed.`;
+  return `In the last six months, ${members(closed)} said it has closed and ${open} said it’s still open.`;
+}
+
 export const EMPTY = {
   reviews: 'No reviews yet. Train there and be the first.',
   photos: 'No photo supplied yet',

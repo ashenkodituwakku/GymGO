@@ -120,6 +120,20 @@ export function defaultVisit(now: Date = new Date(), timezone: string = CITIES.m
   return { date, minute: nextHour };
 }
 
+/**
+ * The visit moved on once it's well past (the app left open overnight, say):
+ * a default visit becomes the next hour again, and a time you picked, the
+ * next time the clock reads it. Within the hour after it, it stays, since
+ * you may be on your way. Unchanged otherwise, so callers can compare.
+ */
+export function refreshVisit(filters: Filters, now: Date = new Date()): Filters {
+  const today = nowIn(filters.timezone, now);
+  const past = filters.visitDate < today.date || (filters.visitDate === today.date && filters.visitMinuteOfDay + 60 <= today.minute);
+  if (!past) return filters;
+  const visit = filters.visitPicked ? nextVisitAt(filters.visitMinuteOfDay, filters.timezone, now) : defaultVisit(now, filters.timezone);
+  return { ...filters, visitDate: visit.date, visitMinuteOfDay: visit.minute };
+}
+
 /** The visit is on a later day than today, on the searched city's clock. */
 export function visitIsLater(filters: Pick<Filters, 'visitDate' | 'timezone'>, now: Date = new Date()): boolean {
   return filters.visitDate > nowIn(filters.timezone, now).date;

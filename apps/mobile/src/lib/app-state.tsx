@@ -10,6 +10,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { AppState as NativeAppState } from 'react-native';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { LIMITS, haversineKm } from '@gymgo/domain';
 import { ApiError } from './api';
@@ -18,7 +19,7 @@ import { setHapticsEnabled } from './haptics';
 import { currentFix, type Fix } from './location';
 import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, type City } from './places';
 import { locatedNotice } from './copy';
-import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, reachFor, tilesAround, type Filters } from './query';
+import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, reachFor, refreshVisit, tilesAround, type Filters } from './query';
 import { useAccount } from './useAccount';
 import { useBilling } from './useBilling';
 import { useGymData } from './useGymData';
@@ -188,6 +189,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (compareLoaded.current) storeJson(COMPARE_KEY, compare);
   }, [compare]);
+  // Back in front after a while (left open overnight, say): a visit that's
+  // well past moves on, so the search isn't for yesterday.
+  useEffect(() => {
+    const subscription = NativeAppState.addEventListener('change', (next) => {
+      if (next === 'active') setFilters((current) => refreshVisit(current));
+    });
+    return () => subscription.remove();
+  }, []);
   // Past the plan's limit (Pro ended, say): keep the most recent picks. Only
   // once the plan is known, so a Pro member's picks aren't cut while it loads.
   useEffect(() => {

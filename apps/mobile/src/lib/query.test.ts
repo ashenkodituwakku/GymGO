@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AU_GYMS } from '@gymgo/au-data';
-import { THIS_AREA, boxAround, boxDrift, reachFor, tilesAround, inArea, initialFilters, moveTo, nameForArea, nearLabel, nextVisitAt, nowIn, runSearch, visitIsLater } from './query';
+import { THIS_AREA, boxAround, boxDrift, reachFor, tilesAround, inArea, initialFilters, moveTo, nameForArea, nearLabel, nextVisitAt, nowIn, refreshVisit, runSearch, visitIsLater } from './query';
 
 describe('nextVisitAt', () => {
   // 9:30 am in Melbourne on 24 September 2026 (AEST, UTC+10).
@@ -49,6 +49,20 @@ describe('moveTo', () => {
     // Not "tomorrow at 7 am": the next hour in New York, today.
     expect(ny.visitDate).toBe('2026-09-25');
     expect(ny.visitMinuteOfDay).toBe(13 * 60);
+  });
+
+  it('moves a visit on once it’s well past, as when the app was left open overnight', () => {
+    // 9:30 am Thursday in Melbourne.
+    const melbourne = { ...initialFilters(morning), timezone: 'Australia/Melbourne' };
+    // Yesterday's default visit: the next hour again, today.
+    expect(refreshVisit({ ...melbourne, visitDate: '2026-09-23', visitMinuteOfDay: 18 * 60, visitPicked: false }, morning)).toMatchObject({ visitDate: '2026-09-24', visitMinuteOfDay: 10 * 60 });
+    // A picked 6 pm from yesterday: today's 6 pm.
+    expect(refreshVisit({ ...melbourne, visitDate: '2026-09-23', visitMinuteOfDay: 18 * 60, visitPicked: true }, morning)).toMatchObject({ visitDate: '2026-09-24', visitMinuteOfDay: 18 * 60 });
+    // A picked 6 am today, three hours ago: tomorrow's 6 am.
+    expect(refreshVisit({ ...melbourne, visitDate: '2026-09-24', visitMinuteOfDay: 6 * 60, visitPicked: true }, morning)).toMatchObject({ visitDate: '2026-09-25', visitMinuteOfDay: 6 * 60 });
+    // 9 am today, half an hour ago: you may be on your way, so it stays.
+    const onTheWay = { ...melbourne, visitDate: '2026-09-24', visitMinuteOfDay: 9 * 60, visitPicked: true };
+    expect(refreshVisit(onTheWay, morning)).toBe(onTheWay);
   });
 
   it('knows when the visit is on a later day than today, on the city’s clock', () => {

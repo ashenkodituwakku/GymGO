@@ -258,6 +258,7 @@ const ExerciseLog = memo(function ExerciseLog({
   onRest: (seconds: number) => void;
 }) {
   const exercise = exerciseOf(item.exerciseId);
+  const name = exercise?.name ?? item.exerciseId;
   const timed = isTimed(item);
   const bodyWeight = exercise ? exercise.needs.some((option) => option.length === 0) && !exercise.needs.some((option) => option.length > 0) : false;
   const barbell = exercise ? exercise.needs.some((option) => option.includes('barbells')) : false;
@@ -298,7 +299,7 @@ const ExerciseLog = memo(function ExerciseLog({
           </Txt>
         </View>
         <View style={styles.flex}>
-          <Txt variant="headline">{exercise?.name ?? item.exerciseId}</Txt>
+          <Txt variant="headline">{name}</Txt>
           <Txt variant="footnote" color={color.labelSecondary}>
             {timed ? exercise?.cue ?? item.reps : `${item.planned} × ${item.reps}${item.restSeconds ? ` · rest ${item.restSeconds} s` : ''}`}
           </Txt>
@@ -307,7 +308,7 @@ const ExerciseLog = memo(function ExerciseLog({
           <Pressable
             onPress={() => onPlates(item.sets.find((set) => set.weight.trim())?.weight ?? (weightGuess !== null ? String(weightGuess) : null))}
             accessibilityRole="button"
-            accessibilityLabel="Plates to load on the bar"
+            accessibilityLabel={`Plates to load on the bar for ${name}`}
             hitSlop={8}
             style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
           >
@@ -360,6 +361,8 @@ const ExerciseLog = memo(function ExerciseLog({
         </View>
       )}
 
+      {/* Each control's label names the exercise: moving from field to field,
+          a screen reader would otherwise say "Set 1 done" once per exercise. */}
       {item.sets.map((set, at) => (
         <View key={at} style={[styles.setRow, set.done && styles.setDone]}>
           <Txt variant="subhead" color={color.labelSecondary} style={[styles.setCol, face('semibold')]}>
@@ -376,7 +379,7 @@ const ExerciseLog = memo(function ExerciseLog({
                 inputMode="decimal"
                 editable={!set.done}
                 style={[styles.input, set.done && styles.inputDone]}
-                accessibilityLabel={`Set ${at + 1} weight in ${unit}${bodyWeight ? ', blank for body weight' : ''}`}
+                accessibilityLabel={`${name}, set ${at + 1} weight in ${unit}${bodyWeight ? ', blank for body weight' : ''}`}
               />
               <Txt variant="subhead" color={color.labelTertiary}>
                 ×
@@ -390,7 +393,7 @@ const ExerciseLog = memo(function ExerciseLog({
                 inputMode="numeric"
                 editable={!set.done}
                 style={[styles.input, set.done && styles.inputDone]}
-                accessibilityLabel={`Set ${at + 1} reps`}
+                accessibilityLabel={`${name}, set ${at + 1} reps`}
               />
             </>
           )}
@@ -399,7 +402,7 @@ const ExerciseLog = memo(function ExerciseLog({
             onPress={() => tick(at)}
             accessibilityRole="checkbox"
             aria-checked={set.done}
-            accessibilityLabel={`Set ${at + 1} done`}
+            accessibilityLabel={`${name}, set ${at + 1} done`}
             hitSlop={8}
           >
             <Tick done={set.done} />
@@ -422,7 +425,7 @@ const ExerciseLog = memo(function ExerciseLog({
               onChange(index, [...item.sets, { weight: previous?.weight ?? '', reps: previous?.reps ?? '', done: false }]);
             }}
             accessibilityRole="button"
-            accessibilityLabel="Add a set"
+            accessibilityLabel={`Add a set of ${name}`}
             style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
           >
             <Icon name="plus" size={13} color={color.brand} />
@@ -437,7 +440,7 @@ const ExerciseLog = memo(function ExerciseLog({
                 onChange(index, item.sets.slice(0, -1));
               }}
               accessibilityRole="button"
-              accessibilityLabel="Remove the last set"
+              accessibilityLabel={`Remove the last set of ${name}`}
               style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
             >
               <Icon name="minus" size={13} color={color.labelSecondary} />

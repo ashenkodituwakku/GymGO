@@ -6,6 +6,7 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { BarDiagram } from '@/components/BarDiagram';
 import { Input, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { color, face, radius, space, themed } from '@/lib/theme';
@@ -82,6 +83,7 @@ export default function PlatesScreen() {
           <Txt variant="eyebrow" color={color.labelSecondary}>
             EACH SIDE
           </Txt>
+          <BarDiagram plates={load.perSide} unit={unit} />
           {load.perSide.length === 0 ? (
             <Txt variant="title2">Just the bar</Txt>
           ) : (
@@ -111,6 +113,19 @@ export default function PlatesScreen() {
               That’s less than the bar itself.
             </Txt>
           )}
+        </View>
+      )}
+
+      {/* Nothing typed yet: the bare bar, and what will show here. */}
+      {text.trim() === '' && (
+        <View style={styles.card}>
+          <Txt variant="eyebrow" color={color.labelSecondary}>
+            EACH SIDE
+          </Txt>
+          <BarDiagram plates={[]} unit={unit} />
+          <Txt variant="subhead" color={color.labelSecondary}>
+            Type a total above, like {unit === 'kg' ? '100' : '225'}, and the plates for each side of a {formatWeight(bar, unit)} bar show here.
+          </Txt>
         </View>
       )}
 

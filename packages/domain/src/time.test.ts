@@ -118,7 +118,7 @@ describe('isOpenAt', () => {
 describe('summariseWeek', () => {
   it('collapses identical consecutive days into a range', () => {
     const visitor = schedule('visitor', { windows: weekdayWindows(9 * 60, 17 * 60) });
-    expect(summariseWeek(visitor)).toEqual(['Mon–Fri: 9am – 5pm', 'Sat–Sun: Closed']);
+    expect(summariseWeek(visitor)).toEqual(['Mon–Fri: 9\u00a0am – 5\u00a0pm', 'Sat–Sun: Closed']);
   });
 
   it('starts the week on Monday', () => {
@@ -129,7 +129,7 @@ describe('summariseWeek', () => {
         { day: 0, openMinute: 9 * 60, closeMinute: 16 * 60 },
       ],
     });
-    expect(summariseWeek(visitor)).toEqual(['Mon–Fri: 6am – 9pm', 'Sat: 8am – 6pm', 'Sun: 9am – 4pm']);
+    expect(summariseWeek(visitor)).toEqual(['Mon–Fri: 6\u00a0am – 9\u00a0pm', 'Sat: 8\u00a0am – 6\u00a0pm', 'Sun: 9\u00a0am – 4\u00a0pm']);
   });
 
   it('says "Not confirmed" rather than "Closed" for an unestablished schedule', () => {
@@ -143,10 +143,10 @@ describe('summariseWeek', () => {
 
 describe('formatting and parsing', () => {
   it('formats minutes of the day readably, marking an overnight close', () => {
-    expect(formatMinuteOfDay(0)).toBe('12am');
-    expect(formatMinuteOfDay(9 * 60 + 30)).toBe('9:30am');
-    expect(formatMinuteOfDay(19 * 60)).toBe('7pm');
-    expect(formatMinuteOfDay(26 * 60)).toBe('2am (next day)');
+    expect(formatMinuteOfDay(0)).toBe('12\u00a0am');
+    expect(formatMinuteOfDay(9 * 60 + 30)).toBe('9:30\u00a0am');
+    expect(formatMinuteOfDay(19 * 60)).toBe('7\u00a0pm');
+    expect(formatMinuteOfDay(26 * 60)).toBe('2\u00a0am (next day)');
   });
 
   it('parses a time of day and rejects nonsense', () => {

@@ -227,7 +227,9 @@ export function formatMinuteOfDay(minuteOfDay: number): string {
   const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
   const minuteText = minute === 0 ? '' : `:${pad2(minute)}`;
   const nextDay = minuteOfDay >= 1440 ? ' (next day)' : '';
-  return `${hour12}${minuteText}${suffix}${nextDay}`;
+  // "7 am", as the app says it everywhere, with a non-breaking space so a
+  // wrapped line never leaves "7" at the end of one line and "am" on the next.
+  return `${hour12}${minuteText}\u00a0${suffix}${nextDay}`;
 }
 
 export function formatWindow(window: OpeningWindow): string {

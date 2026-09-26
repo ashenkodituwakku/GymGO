@@ -37,7 +37,7 @@ const PAGE_WIDTH = 720;
 
 export default function GymPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data, account, filters, addRecent, requestExplore, compare, toggleCompare } = useApp();
+  const { data, account, filters, addRecent, requestExplore, compare, toggleCompare, prefsReady } = useApp();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [googleOpen, setGoogleOpen] = useState(false);
@@ -70,7 +70,9 @@ export default function GymPage() {
     };
   }, [id, known, ensureGyms]);
 
-  if (!result && looking) {
+  // Its distance and the answer for your visit are worked out from your
+  // settings, so a link opened cold waits the moment it takes to read them.
+  if (!prefsReady || (!result && looking)) {
     return (
       <View style={styles.missing}>
         <Stack.Screen options={{ title: 'Gym' }} />

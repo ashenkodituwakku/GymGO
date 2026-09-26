@@ -29,12 +29,21 @@ const tri = (value: Tri): Cell =>
 const NUMBER_WORD: Record<number, string> = { 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six' };
 export default function Compare() {
   usePageTitle('Compare');
-  const { data, filters, compare, toggleCompare, clearCompare, billing, openPro } = useApp();
+  const { data, filters, compare, toggleCompare, clearCompare, billing, openPro, prefsReady } = useApp();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   const byId = useMemo(() => resultsById(filters, data.records, asOf, data.ratings), [filters, data.records, asOf, data.ratings]);
   const gyms = compare.map((id) => byId.get(id)).filter((result): result is GymSearchResult => result !== undefined);
+
+  // Every row is worked out for your visit and place, so a cold link waits for your settings.
+  if (!prefsReady) {
+    return (
+      <View style={styles.empty}>
+        <Stack.Screen options={{ title: 'Compare' }} />
+      </View>
+    );
+  }
 
   if (gyms.length < 2) {
     return (

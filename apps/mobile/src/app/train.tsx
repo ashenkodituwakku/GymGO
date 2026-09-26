@@ -496,7 +496,9 @@ function Elapsed({ since }: { since: string }) {
 
 function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bottom: number }) {
   const now = useNow(true);
-  const left = Math.max(0, (endsAt - now) / 1000);
+  // The clock as it draws, not at the last tick: a rest started between ticks
+  // (the next set ticked, or +15) would otherwise show a second too many.
+  const left = Math.max(0, (endsAt - Math.max(now, Date.now())) / 1000);
   // The rest is over: a buzz, and the bar goes.
   useEffect(() => {
     if (now >= endsAt) {

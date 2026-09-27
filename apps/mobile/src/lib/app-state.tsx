@@ -65,6 +65,8 @@ export interface Prefs {
    * country. Null until chosen, and until then nothing is shut.
    */
   country: string | null;
+  /** Workouts a week you're aiming for (1 to 7), kept on this device; null until you pick one. */
+  weeklyGoal: number | null;
 }
 
 const RECENTS_KEY = 'gymgo.recents.v1';
@@ -90,7 +92,7 @@ export interface Lookup {
 }
 
 /** Why the Pro screen opened, so it can say so. */
-export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress' | 'themes';
+export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup';
 
 type AppState = {
   data: ReturnType<typeof useGymData>;
@@ -172,7 +174,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [compare, setCompare] = useState<string[]>([]);
   const compareLoaded = useRef(false);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
-  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, demo: false, country: null });
+  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, demo: false, country: null, weeklyGoal: null });
   const [prefsReady, setPrefsReady] = useState(false);
   // Place search reads the mode, so it must match before anything renders.
   setDemoMode(prefs.demo);
@@ -190,7 +192,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     void loadJson<Partial<Prefs>>(PREFS_KEY, {}).then((value) => {
       const country = typeof value.country === 'string' && /^[A-Z]{2}$/.test(value.country) ? value.country : null;
-      const next = { haptics: value.haptics !== false, demo: value.demo === true, country };
+      const goal = typeof value.weeklyGoal === 'number' && Number.isInteger(value.weeklyGoal) && value.weeklyGoal >= 1 && value.weeklyGoal <= 7 ? value.weeklyGoal : null;
+      const next = { haptics: value.haptics !== false, demo: value.demo === true, country, weeklyGoal: goal };
       setHapticsEnabled(next.haptics);
       setDemoMode(next.demo);
       setPrefs(next);

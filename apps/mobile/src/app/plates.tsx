@@ -1,16 +1,18 @@
 /**
- * Plates: what to load on each side of the bar for the weight you want.
- * Opened from a barbell exercise while you train, or from Progress.
+ * Plates: what to load on each side of the bar for the weight you want,
+ * and, with Pro, the warm-up sets that lead up to it. Opened from a barbell
+ * exercise while you train, or from Progress.
  */
 
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { BarDiagram } from '@/components/BarDiagram';
+import { Icon } from '@/components/Icon';
 import { Input, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { color, face, radius, space, themed } from '@/lib/theme';
-import { BAR, formatWeight, parseWeight, plateLoad, unitFor, type WeightUnit } from '@/lib/training';
+import { BAR, formatWeight, parseWeight, plateLoad, unitFor, warmUpSets, type WeightUnit } from '@/lib/training';
 import { usePageTitle } from '@/lib/pageTitle';
 
 /** The bars most gyms have: a men's Olympic bar, and the lighter women's bar. */
@@ -19,7 +21,7 @@ const BARS: Record<WeightUnit, number[]> = { kg: [20, 15], lb: [45, 35] };
 export default function PlatesScreen() {
   usePageTitle('Plates');
   const params = useLocalSearchParams<{ weight?: string; unit?: string }>();
-  const { prefs } = useApp();
+  const { prefs, billing, openPro } = useApp();
   // Your country's unit (read once your settings have loaded), until you pick one.
   const [picked, setPicked] = useState<WeightUnit | null>(params.unit === 'kg' || params.unit === 'lb' ? params.unit : null);
   const unit = picked ?? unitFor(prefs.country);
@@ -28,6 +30,9 @@ export default function PlatesScreen() {
   const bar = pickedBar ?? BAR[unit];
   const weight = parseWeight(text);
   const load = typeof weight === 'number' ? plateLoad(weight, unit, bar) : null;
+  // Worked out to what the plates actually make, so the ramp ends below the real load.
+  const ramp = load && load.total > bar ? warmUpSets(load.total, unit, bar) : [];
+  const perSide = (plates: number[]) => (plates.length ? `${plates.map((plate) => Number(plate.toFixed(2))).join(' + ')} each side` : 'just the bar');
 
   const switchUnit = (next: WeightUnit) => {
     setPicked(next);
@@ -116,6 +121,49 @@ export default function PlatesScreen() {
         </View>
       )}
 
+      {ramp.length > 0 &&
+        (billing.isPro ? (
+          <View style={styles.card}>
+            <Txt variant="eyebrow" color={color.labelSecondary}>
+              WARM-UP
+            </Txt>
+            <View>
+              {ramp.map((set, index) => (
+                <View
+                  key={set.weight}
+                  style={[styles.rampRow, index > 0 && styles.rampLine]}
+                  accessible
+                  accessibilityLabel={`${formatWeight(set.weight, unit)} for ${set.reps}: ${perSide(set.load.perSide)}`}
+                >
+                  <Txt variant="headline" style={styles.rampWeight}>
+                    {formatWeight(set.weight, unit)}
+                  </Txt>
+                  <Txt variant="subhead" color={color.labelSecondary} style={styles.rampReps}>
+                    × {set.reps}
+                  </Txt>
+                  <Txt variant="subhead" color={color.labelSecondary} style={styles.flex} numberOfLines={2}>
+                    {perSide(set.load.perSide)}
+                  </Txt>
+                </View>
+              ))}
+            </View>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              {`The empty bar, then about 40%, 60% and 80% of ${formatWeight(load!.total, unit)}, each rounded down to what the plates make. Then your working sets.`}
+            </Txt>
+          </View>
+        ) : (
+          <Pressable onPress={() => openPro('warmup')} accessibilityRole="button" style={({ pressed }) => [styles.card, styles.pro, pressed && { opacity: 0.8 }]}>
+            <Icon name="flame" size={22} color={color.brand} />
+            <View style={styles.flex}>
+              <Txt variant="headline">Warm-up sets</Txt>
+              <Txt variant="footnote" color={color.labelSecondary}>
+                {`GymGO Pro works out a warm-up to ${formatWeight(load!.total, unit)}, with the plates for each set.`}
+              </Txt>
+            </View>
+            <Icon name="chevron" size={13} color={color.labelTertiary} />
+          </Pressable>
+        ))}
+
       {/* Nothing typed yet: the bare bar, and what will show here. */}
       {text.trim() === '' && (
         <View style={styles.card}>
@@ -152,6 +200,11 @@ const styles = themed(() => StyleSheet.create({
     ...face('bold'),
   },
   card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3] },
+  pro: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  rampRow: { flexDirection: 'row', alignItems: 'baseline', gap: space[2], paddingVertical: space[2] },
+  rampLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
+  rampWeight: { minWidth: 76 },
+  rampReps: { minWidth: 34 },
   plates: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   plate: {
     minWidth: 64,

@@ -20,6 +20,7 @@ import {
   setsSummary,
   unitFor,
   volumeKg,
+  warmUpSets,
   weekStreak,
   weightFor,
   type LoggedSet,
@@ -259,5 +260,29 @@ describe('when a workout ended', () => {
   });
   it('falls back to the start when nothing was ever changed', () => {
     expect(finishedAtFor(started, undefined, new Date('2026-09-26T08:00:00.000Z'))).toBe(started);
+  });
+});
+
+describe('warmUpSets', () => {
+  it('ramps from the empty bar to about 80%, in loadable steps', () => {
+    const ramp = warmUpSets(100, 'kg');
+    expect(ramp.map((set) => [set.weight, set.reps])).toEqual([
+      [20, 10],
+      [40, 5],
+      [60, 3],
+      [80, 2],
+    ]);
+    expect(ramp[3]!.load.perSide).toEqual([25, 5]);
+  });
+
+  it('rounds down to what the plates make, in pounds too', () => {
+    expect(warmUpSets(225, 'lb').map((set) => set.weight)).toEqual([45, 90, 135, 180]);
+    expect(warmUpSets(102.5, 'kg').map((set) => set.weight)).toEqual([20, 40, 60, 80]);
+  });
+
+  it('leaves out steps that repeat the bar, and has none at or under the bar', () => {
+    expect(warmUpSets(40, 'kg').map((set) => set.weight)).toEqual([20, 22.5, 30]);
+    expect(warmUpSets(20, 'kg')).toEqual([]);
+    expect(warmUpSets(25, 'kg').map((set) => set.weight)).toEqual([20]);
   });
 });

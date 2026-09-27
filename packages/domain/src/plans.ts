@@ -71,6 +71,8 @@ export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; p
   { emoji: '💪', title: 'Workout library', free: 'Build and share', pro: 'Saved to your account' },
   { emoji: '📈', title: 'Progress charts', free: 'Records and history', pro: 'A chart per exercise' },
   { emoji: '🎯', title: 'Session targets', free: 'Last time’s numbers', pro: 'What to lift next' },
+  { emoji: '🧍', title: 'Muscle balance', free: 'Sets per workout', pro: 'Every muscle, last 4 weeks' },
+  { emoji: '🔥', title: 'Warm-up sets', free: 'Plates for any weight', pro: 'A ramp to your weight' },
   { emoji: '🎨', title: 'Colour themes', free: 'Indigo, light or dark', pro: 'Five accent colours' },
 ];
 
@@ -84,6 +86,7 @@ export const ALWAYS_FREE = [
   'Reviews, photos and members’ machine reports',
   'The workout builder',
   'Logging your workouts, with a rest timer, a plate calculator and your records',
+  'A weekly goal, your training calendar and milestones',
   'Dark mode',
 ] as const;
 

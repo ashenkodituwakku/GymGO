@@ -39,6 +39,8 @@ const FEATURE_ICON: Record<string, IconName> = {
   'Progress charts': 'chart',
   'Session targets': 'target',
   'Colour themes': 'palette',
+  'Muscle balance': 'body',
+  'Warm-up sets': 'flame',
 };
 
 const REASON: Record<ProReason, string> = {
@@ -48,6 +50,8 @@ const REASON: Record<ProReason, string> = {
   worldwide: 'GymGO Free covers the country you chose. Pro finds gyms in every country, wherever you travel.',
   progress: 'Your log and records are free. Pro draws a chart for every exercise and works out what to lift next.',
   themes: 'Dark mode is free for everyone. Pro adds four more accent colours: Ocean, Grape, Rose and Graphite.',
+  balance: 'Your log, goal and milestones are free. Pro counts your sets for every muscle and names the ones you’ve missed.',
+  warmup: 'The plate calculator is free. Pro works out your warm-up sets to any weight, with the plates for each.',
 };
 
 export default function ProScreen() {

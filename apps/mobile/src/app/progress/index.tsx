@@ -1,6 +1,7 @@
 /**
- * Progress: your streak, your records for every exercise, and every session
- * you've logged. All free; the chart for each exercise is Pro.
+ * Progress: your streak, your week against your goal, your records for every
+ * exercise, your milestones, and every session you've logged. All free; the
+ * chart for each exercise and the muscle balance are Pro.
  */
 
 import { Stack, useRouter } from 'expo-router';
@@ -9,6 +10,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { GLIDE, rise } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
+import { MilestonesCard, MuscleBalanceCard, WeekCard } from '@/components/TrainingInsights';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useActiveSession } from '@/lib/activeSession';
 import { api } from '@/lib/api';
@@ -43,7 +45,7 @@ const startTime = (iso: string) => {
 
 export default function ProgressScreen() {
   usePageTitle('Progress');
-  const { account, prefs } = useApp();
+  const { account, prefs, setPref, billing, openPro } = useApp();
   // Kept while the server is away too: loading then fails and says so,
   // where a missing token would ask a signed-in person to sign in.
   const token = account.token;
@@ -105,6 +107,23 @@ export default function ProgressScreen() {
         </Txt>
       )}
 
+      {known && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+            YOUR WEEKS
+          </Txt>
+          <Animated.View entering={rise(1)}>
+            <WeekCard sessions={log.sessions} goal={prefs.weeklyGoal} onGoal={(goal) => setPref('weeklyGoal', goal)} />
+          </Animated.View>
+        </>
+      )}
+
+      {known && log.sessions.length > 0 && (
+        <Animated.View entering={rise(1)}>
+          <MuscleBalanceCard sessions={log.sessions} isPro={billing.isPro} onPro={() => openPro('balance')} />
+        </Animated.View>
+      )}
+
       {records.length > 0 && (
         <>
           <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
@@ -135,6 +154,17 @@ export default function ProgressScreen() {
                 </Pressable>
               );
             })}
+          </Animated.View>
+        </>
+      )}
+
+      {known && log.sessions.length > 0 && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+            MILESTONES
+          </Txt>
+          <Animated.View entering={rise(2)}>
+            <MilestonesCard sessions={log.sessions} />
           </Animated.View>
         </>
       )}

@@ -250,6 +250,33 @@ export function plateLoad(total: number, unit: WeightUnit, bar = BAR[unit]): Pla
   return { bar, perSide, total: loaded, short: Math.max(0, Number((total - loaded).toFixed(2))) };
 }
 
+export interface WarmUpSet {
+  weight: number;
+  reps: number;
+  load: PlateLoad;
+}
+
+/**
+ * A warm-up ramp to a working weight on a barbell: the empty bar for 10,
+ * then about 40%, 60% and 80% for 5, 3 and 2, each rounded down to what
+ * the plates can make. Steps that would land on the bar again, or on the
+ * working weight, are left out, so a light working weight gets a short
+ * ramp rather than repeats.
+ */
+export function warmUpSets(working: number, unit: WeightUnit, bar = BAR[unit]): WarmUpSet[] {
+  if (!(working > bar)) return [];
+  // The smallest step both sides can take together.
+  const step = PLATES[unit][PLATES[unit].length - 1]! * 2;
+  const loadable = (weight: number) => bar + Math.floor((weight - bar) / step + 1e-9) * step;
+  const out: WarmUpSet[] = [{ weight: bar, reps: 10, load: plateLoad(bar, unit, bar) }];
+  for (const [share, reps] of [[0.4, 5], [0.6, 3], [0.8, 2]] as const) {
+    const weight = Number(loadable(working * share).toFixed(2));
+    if (weight <= out[out.length - 1]!.weight || weight >= working) continue;
+    out.push({ weight, reps, load: plateLoad(weight, unit, bar) });
+  }
+  return out;
+}
+
 // --- Over time -------------------------------------------------------------------
 
 /** Everything lifted in a session, in kg (weight × reps, body weight left out). */

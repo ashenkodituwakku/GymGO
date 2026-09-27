@@ -9,7 +9,7 @@
  */
 
 import { Stack, useRouter } from 'expo-router';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import type { GymRecord } from '@gymgo/domain';
@@ -20,7 +20,8 @@ import { rise } from '@/components/motion';
 import { NoPhoto, PrimaryButton, Txt } from '@/components/ui';
 import { photoUrl } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
-import { badges, collectionStats, flag, tierFor, type CollectedGym } from '@/lib/collection';
+import { shareText } from '@/lib/actions';
+import { badges, collectionShareText, collectionStats, flag, tierFor, type CollectedGym } from '@/lib/collection';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, space, themed } from '@/lib/theme';
@@ -38,6 +39,11 @@ export default function CollectionScreen() {
   const entries = useMemo(() => Object.values(gyms).sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1)), [gyms]);
   const stats = collectionStats(gyms);
   const earned = badges(stats);
+  const [shared, setShared] = useState<string | null>(null);
+  const share = async () => {
+    const outcome = await shareText(collectionShareText(gyms), 'My GymGO collection');
+    setShared(outcome === 'copied' ? 'Copied, ready to paste.' : outcome === 'failed' ? 'Sharing isn’t available here.' : null);
+  };
 
   // Gyms found by searching an area aren't in the bundled data: fetch them, for their logos.
   const { ensureGyms } = data;
@@ -121,6 +127,12 @@ export default function CollectionScreen() {
           </Animated.View>
         ))}
       </View>
+      <PrimaryButton label="Share your collection" icon="share" tone="quiet" onPress={() => void share()} />
+      {shared && (
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+          {shared}
+        </Txt>
+      )}
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
         Kept on this device. A visit counts once a day, when you check in at the gym; your location is only compared on the phone, never sent.
       </Txt>

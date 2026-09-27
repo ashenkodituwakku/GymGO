@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { badges, checkIn, cityFor, collect, collectionStats, flag, tierFor, type Collection } from './collection';
+import { badges, checkIn, cityFor, collect, collectionShareText, collectionStats, flag, tierFor, type Collection } from './collection';
 
 // Doherty's Gym, Flinders Street, Melbourne.
 const GYM = { lat: -37.81907, lng: 144.95865 };
@@ -67,5 +67,15 @@ describe('tiers and totals', () => {
   it('names the big city near a gym, or its suburb far from one', () => {
     expect(cityFor(GYM, 'AU', 'Melbourne')).toBe('Melbourne');
     expect(cityFor({ lat: -23.7, lng: 133.88 }, 'AU', 'Alice Springs')).toBe('Alice Springs');
+  });
+});
+
+describe('collectionShareText', () => {
+  it('gives the totals and the top cards by visits, with no days or times', () => {
+    const first = collect({}, doherty, new Date(2026, 8, 1, 7)).collection;
+    const text = collectionShareText(collect(first, doherty, new Date(2026, 8, 2, 7)).collection);
+    expect(text.split('\n')[0]).toBe('My GymGO collection: 1 gym in 1 city and 1 country, 2 visits.');
+    expect(text).toContain('Bronze: Doherty’s Gym, Melbourne 🇦🇺');
+    expect(text).not.toMatch(/2026|07:00/);
   });
 });

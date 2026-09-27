@@ -284,7 +284,7 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 | `@gymgo/eu-data` unit tests | **10 passed** |
 | `@gymgo/osm` unit tests | **25 passed** |
 | `@gymgo/server` tests (real HTTP, in-memory SQLite) | **149 passed** |
-| `@gymgo/mobile` unit tests | **176 passed** |
+| `@gymgo/mobile` unit tests | **177 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
 | `expo export` (iOS + Android) | Both compiled to Hermes bytecode |
 | `expo-doctor` | 21/21 checks passed |

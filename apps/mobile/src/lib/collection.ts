@@ -161,3 +161,22 @@ export function flag(countryCode: string): string {
   if (!/^[A-Z]{2}$/.test(countryCode)) return '';
   return String.fromCodePoint(...[...countryCode].map((letter) => 0x1f1e6 + letter.charCodeAt(0) - 65));
 }
+
+/**
+ * Your collection as a few lines to send a friend: the totals, then your
+ * top cards by visits. Gym names and cities only, never days or times, as
+ * a message can travel further than you meant.
+ */
+export function collectionShareText(collection: Collection): string {
+  const stats = collectionStats(collection);
+  const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+  const top = Object.values(collection)
+    .sort((a, b) => b.days.length - a.days.length || a.name.localeCompare(b.name))
+    .slice(0, 5)
+    .map((entry) => `${tierFor(entry.days.length).label}: ${entry.name}, ${entry.city} ${flag(entry.countryCode)}`.trim());
+  return [
+    `My GymGO collection: ${plural(stats.gyms, 'gym', 'gyms')} in ${plural(stats.cities, 'city', 'cities')} and ${plural(stats.countries, 'country', 'countries')}, ${plural(stats.visits, 'visit', 'visits')}.`,
+    '',
+    ...top,
+  ].join('\n');
+}

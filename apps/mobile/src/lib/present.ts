@@ -145,3 +145,32 @@ export function localDateDaysAgo(days: number, now: Date = new Date()): string {
   const date = new Date(now.getTime() - days * 86_400_000);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
+
+/**
+ * What to ask when you call: one question for each thing about a visit that
+ * GymGO hasn't confirmed, in the order it matters on the day. Only gaps
+ * become questions; a requirement GymGO knows (photo ID, say) is on the card
+ * already, and asking it again would suggest it isn't known.
+ */
+export function callQuestions(
+  result: { access: { reasons: Array<{ code: string }> }; offers: OfferSelection },
+  when: string,
+): string[] {
+  const codes = new Set<string>(result.access.reasons.map((reason) => reason.code));
+  for (const pick of [result.offers.confirmed, result.offers.unconfirmed, result.offers.bestAvailable]) {
+    for (const reason of pick?.reasons ?? []) codes.add(reason.code);
+  }
+  const questions: string[] = [];
+  if (codes.has('operating_status_unknown')) questions.push('Are you still open?');
+  if (codes.has('visitor_hours_unknown') || codes.has('visitor_hours_stale')) questions.push(`Can a visitor walk in ${when}?`);
+  if (!result.offers.confirmed || ['total_not_confirmed', 'price_stale', 'price_unchecked', 'price_conflicting'].some((code) => codes.has(code))) {
+    questions.push('How much is one visit, all in?');
+  }
+  if (codes.has('gym_floor_access_unknown')) questions.push('Does that include the gym floor?');
+  if (codes.has('booking_unknown')) questions.push('Do I need to book ahead?');
+  if (codes.has('induction_unknown')) questions.push('Is there an induction on a first visit?');
+  if (codes.has('member_accompaniment_unknown')) questions.push('Do I need a member to sign me in?');
+  if (codes.has('first_time_only_unknown')) questions.push('Is the visitor pass for first-timers only?');
+  if (codes.has('residency_unknown')) questions.push('Is it open to people who don’t live locally?');
+  return questions;
+}

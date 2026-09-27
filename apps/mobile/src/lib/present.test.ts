@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
-import { WHEN_CHOICES, addressLines, depositLine, googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl, localDateDaysAgo, parseAmount, priceLine } from './present';
+import { WHEN_CHOICES, addressLines, callQuestions, depositLine, googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl, localDateDaysAgo, parseAmount, priceLine } from './present';
 import { atPlace, initialFilters, runSearch } from './query';
 import { geocodePlace } from './places';
 
@@ -162,5 +162,23 @@ describe('a gym\'s address', () => {
     expect(at('US', { line1: '111 West 40th Street', suburb: 'New York', state: 'NY' })).toEqual(['111 West 40th Street', 'New York, NY']);
     expect(at('US', { suburb: 'Austin' })).toEqual(['Austin']);
     expect(at('FR', { suburb: 'Paris' })).toEqual(['Paris']);
+  });
+});
+
+describe('callQuestions', () => {
+  const none = { confirmed: null, unconfirmed: null, bestAvailable: null, overBudget: null } as never;
+  it('asks about each unconfirmed thing, in the order it matters, and nothing GymGO knows', () => {
+    const questions = callQuestions(
+      { access: { reasons: [{ code: 'induction_unknown' }, { code: 'visitor_hours_unknown' }, { code: 'photo_id_required' }] }, offers: none },
+      'at 8\u00a0pm',
+    );
+    expect(questions).toEqual(['Can a visitor walk in at 8\u00a0pm?', 'How much is one visit, all in?', 'Is there an induction on a first visit?']);
+  });
+
+  it('leaves out the price when a price is confirmed, and asks about its gaps when not', () => {
+    const confirmed = { confirmed: { reasons: [] }, unconfirmed: null, bestAvailable: { reasons: [] } } as never;
+    expect(callQuestions({ access: { reasons: [{ code: 'booking_unknown' }] }, offers: confirmed }, 'at 6\u00a0am')).toEqual(['Do I need to book ahead?']);
+    const floor = { confirmed: null, unconfirmed: { reasons: [{ code: 'gym_floor_access_unknown' }] }, bestAvailable: null } as never;
+    expect(callQuestions({ access: { reasons: [] }, offers: floor }, 'at 6\u00a0am')).toEqual(['How much is one visit, all in?', 'Does that include the gym floor?']);
   });
 });

@@ -25,9 +25,9 @@ import {
   type Provenance,
   type Tri,
 } from '@gymgo/domain';
-import { TIER, accessLine, checkedAgo, gymDistanceLine, ratingShort, sourceLabel } from '@/lib/copy';
+import { TIER, accessLine, checkedAgo, gymDistanceLine, ratingShort, sourceLabel, timeLabel } from '@/lib/copy';
 import { shareGym } from '@/lib/actions';
-import { addressLines, depositLine, priceLine } from '@/lib/present';
+import { addressLines, callQuestions, depositLine, priceLine } from '@/lib/present';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Icon, type IconName } from './Icon';
@@ -159,6 +159,8 @@ export function PlaceCard({
   const offers = assessAllOffers(record.offers, { visitLocalDate: visitDate, asOf });
   const longer = record.offers.filter((offer) => isMultiVisitProduct(offer) || offer.productType === 'membership');
   const reasons = result.limitations.slice(0, 3);
+  // Not for an invented demo gym: there's nobody to call. The four that matter most on the day.
+  const questions = location.isDemoData || result.tier === 'confirmed' ? [] : callQuestions(result, `at ${timeLabel(visitMinute)}`).slice(0, 4);
   const kit = record.equipment.filter((item) => item.presence === 'yes');
   const guestHours = result.access.visitorSchedule ? summariseWeek(result.access.visitorSchedule)[0] : null;
   const sources = sourcesOf(record);
@@ -280,6 +282,46 @@ export function PlaceCard({
           </View>
         )}
       </Animated.View>
+
+      {/* What to ask ---------------------------------------------------- */}
+      {questions.length > 0 && (
+        <Animated.View style={styles.ask} entering={rise(2)}>
+          <View style={styles.askHead}>
+            <Txt variant="headline" style={styles.flex}>
+              When you call, ask
+            </Txt>
+            {location.phone ? (
+              <Pressable
+                onPress={() => {
+                  haptic.tap();
+                  call();
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Call ${location.name}`}
+                hitSlop={8}
+                style={({ pressed }) => [styles.askCall, pressed && { opacity: 0.7 }]}
+              >
+                <Icon name="call" size={14} color={color.brand} />
+                <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                  Call
+                </Txt>
+              </Pressable>
+            ) : null}
+          </View>
+          {questions.map((question, index) => (
+            <View key={question} style={styles.askRow}>
+              <View style={styles.askNumber}>
+                <Txt variant="caption" color={color.brand} style={face('bold')}>
+                  {index + 1}
+                </Txt>
+              </View>
+              <Txt variant="subhead" style={styles.flex}>
+                {question}
+              </Txt>
+            </View>
+          ))}
+        </Animated.View>
+      )}
 
       {/* At a glance ---------------------------------------------------- */}
       <Animated.View style={styles.facts} entering={rise(2)}>
@@ -702,6 +744,11 @@ const styles = themed(() => StyleSheet.create({
   verdictEmoji: { fontSize: 34, lineHeight: 42 },
   verdictIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   reasons: { gap: space[2] },
+  ask: { marginTop: space[3], gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
+  askHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginBottom: 2 },
+  askCall: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
+  askRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
+  askNumber: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint, marginTop: 1 },
   reason: { flexDirection: 'row', gap: space[2], alignItems: 'flex-start' },
   bullet: { width: 5, height: 5, borderRadius: 3, marginTop: 7 },
 

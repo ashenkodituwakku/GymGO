@@ -22,6 +22,7 @@ import { MemberPrices } from '@/components/MemberPrices';
 import { MemberStatus, StatusWarning } from '@/components/MemberStatus';
 import { PhotoHero } from '@/components/PhotoHero';
 import { PlaceCard } from '@/components/PlaceCard';
+import { GymNotes } from '@/components/GymNotes';
 import { ReviewsSection } from '@/components/ReviewsSection';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { shareGym } from '@/lib/actions';
@@ -35,7 +36,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 
 export default function GymPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data, account, filters, addRecent, requestExplore, compare, toggleCompare, prefsReady } = useApp();
+  const { data, account, filters, addRecent, requestExplore, compare, toggleCompare, prefsReady, billing, openPro } = useApp();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [googleOpen, setGoogleOpen] = useState(false);
@@ -205,6 +206,7 @@ export default function GymPage() {
               />
             }
             reviews={<ReviewsSection gymId={location.id} account={account} inSheet={false} onSignIn={() => router.push('/sign-in')} />}
+            notes={location.isDemoData ? null : <GymNotes gymId={location.id} isPro={billing.isPro} inSheet={false} onPro={() => openPro('notes')} />}
           />
           <GoogleSection place={place} photosAbove={googlePhotos} />
           <View style={styles.mapButton}>

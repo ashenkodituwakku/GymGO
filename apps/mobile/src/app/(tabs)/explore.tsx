@@ -46,6 +46,7 @@ import { MemberPrices } from '@/components/MemberPrices';
 import { MemberStatus, StatusWarning } from '@/components/MemberStatus';
 import { PhotoHero } from '@/components/PhotoHero';
 import { PlaceCard, PlaceHeader } from '@/components/PlaceCard';
+import { GymNotes } from '@/components/GymNotes';
 import { ResultsContent } from '@/components/ResultsContent';
 import { ReviewsSection } from '@/components/ReviewsSection';
 import { FloatingGlassBackground, FloatingSolidBackground, SHEET_GAP, SHEET_SIDE, SheetClip } from '@/components/SheetBackground';
@@ -83,7 +84,7 @@ function MapScreen() {
   // The time-zone self-check runs once; its answer can't change mid-session.
   const selfCheck = useMemo(() => checkTimeZoneSupport(), []);
 
-  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe, prefs, prefsReady, mayExplore, openPro, lookup, retryLookup } = useApp();
+  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe, prefs, prefsReady, mayExplore, openPro, lookup, retryLookup, billing } = useApp();
   usePageTitle('Explore');
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
@@ -622,6 +623,7 @@ function MapScreen() {
           />
         }
         reviews={<ReviewsSection gymId={selected.record.location.id} account={account} inSheet={inSheet} onSignIn={openAccount} />}
+        notes={selected.record.location.isDemoData ? null : <GymNotes gymId={selected.record.location.id} isPro={billing.isPro} inSheet={inSheet} onPro={() => openPro('notes')} />}
       />
     );
 

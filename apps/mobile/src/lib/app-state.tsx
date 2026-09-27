@@ -92,7 +92,7 @@ export interface Lookup {
 }
 
 /** Why the Pro screen opened, so it can say so. */
-export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup';
+export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes';
 
 type AppState = {
   data: ReturnType<typeof useGymData>;

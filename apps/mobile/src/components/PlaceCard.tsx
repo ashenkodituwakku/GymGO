@@ -119,6 +119,7 @@ export function PlaceCard({
   statusWarning,
   memberStatus,
   reviews,
+  notes,
   saveAndShareElsewhere = false,
 }: {
   result: GymSearchResult;
@@ -147,6 +148,8 @@ export function PlaceCard({
   memberStatus?: React.ReactNode;
   /** The live reviews section, likewise. */
   reviews: React.ReactNode;
+  /** Your own notes on the gym, a fold of its own. */
+  notes?: React.ReactNode;
 }) {
   const [notice, setNotice] = useState<string | null>(null);
   const record = result.record;
@@ -570,6 +573,8 @@ export function PlaceCard({
         >
           {reviews}
         </Fold>
+
+        {notes}
 
         {sources.length > 0 && (
           <Fold icon="book" title="Where this comes from" summary={`${sources.length} source${sources.length === 1 ? '' : 's'}, all linked`}>

@@ -41,6 +41,7 @@ const FEATURE_ICON: Record<string, IconName> = {
   'Colour themes': 'palette',
   'Muscle balance': 'body',
   'Warm-up sets': 'flame',
+  'Gym notes': 'list',
 };
 
 const REASON: Record<ProReason, string> = {
@@ -52,6 +53,7 @@ const REASON: Record<ProReason, string> = {
   themes: 'Dark mode is free for everyone. Pro adds four more accent colours: Ocean, Grape, Rose and Graphite.',
   balance: 'Your log, goal and milestones are free. Pro counts your sets for every muscle and names the ones you’ve missed.',
   warmup: 'The plate calculator is free. Pro works out your warm-up sets to any weight, with the plates for each.',
+  notes: 'Pro keeps your own notes on each gym, like the door code or who to ask for. Only you see them.',
 };
 
 export default function ProScreen() {

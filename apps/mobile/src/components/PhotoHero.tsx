@@ -41,18 +41,27 @@ export function PhotoHero({
   const window = useWindowDimensions();
   const width = (panelWidth ?? window.width) - space[4] * 2;
   const [photos, setPhotos] = useState<GymPhoto[] | null>(null);
+  // The server didn't answer: then we don't know whether anyone has shared a
+  // photo, so the card mustn't say nobody has.
+  const [failed, setFailed] = useState(false);
   const [waiting, setWaiting] = useState(0);
   const [step, setStep] = useState<Step>({ kind: 'idle' });
   const token = account.state === 'signed_in' ? account.token : null;
+  // Signed in, even while the server is away: then there's nobody to ask to sign in.
+  const signedIn = account.token !== null;
 
   const load = useCallback(() => {
     api
       .photos(gymId, token)
       .then((result) => {
+        setFailed(false);
         setPhotos(result.photos);
         setWaiting(result.mine.filter((item) => item.status === 'pending').length);
       })
-      .catch(() => setPhotos([]));
+      .catch(() => {
+        setFailed(true);
+        setPhotos([]);
+      });
   }, [gymId, token]);
 
   useEffect(() => {
@@ -143,7 +152,9 @@ export function PhotoHero({
         <View style={[styles.fallback, { width }]}>
           {fallback}
           <Txt variant="footnote" color={color.labelSecondary}>
-            No GymGO member photos yet. Been here? Add the first.
+            {failed
+              ? 'Members’ photos come from the GymGO server, which isn’t reachable right now.'
+              : 'No GymGO member photos yet. Been here? Add the first.'}
           </Txt>
         </View>
       ) : (
@@ -152,13 +163,29 @@ export function PhotoHero({
           <Icon name="photo" size={20} color={color.labelTertiary} />
           <View style={styles.flex}>
             <Txt variant="subhead" style={face('semibold')}>
-              {EMPTY.photos}
+              {failed ? 'Photos didn’t load' : EMPTY.photos}
             </Txt>
             <Txt variant="caption" color={color.labelSecondary}>
-              {isDemo ? 'An invented demo gym: nothing to photograph.' : 'Been here? Yours could be the first.'}
+              {isDemo
+                ? 'An invented demo gym: nothing to photograph.'
+                : failed
+                  ? 'The GymGO server isn’t reachable right now.'
+                  : 'Been here? Yours could be the first.'}
             </Txt>
           </View>
-          {!isDemo && step.kind !== 'sending' && (
+          {!isDemo && step.kind !== 'sending' && failed ? (
+            <Pressable
+              onPress={load}
+              accessibilityRole="button"
+              accessibilityLabel="Try loading the photos again"
+              hitSlop={8}
+              style={({ pressed }) => [styles.addPill, pressed && { opacity: 0.7 }]}
+            >
+              <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                Try again
+              </Txt>
+            </Pressable>
+          ) : !isDemo && step.kind !== 'sending' && !(signedIn && !token) ? (
             <Pressable
               onPress={() => void pick()}
               accessibilityRole="button"
@@ -170,17 +197,24 @@ export function PhotoHero({
                 {token ? 'Add one' : 'Sign in to add'}
               </Txt>
             </Pressable>
-          )}
+          ) : null}
         </View>
       )}
 
-      {!emptyRow && !isDemo && step.kind !== 'sending' && (
+      {/* Signed in but the server away: no add button, as a photo couldn't be sent anyway. */}
+      {!emptyRow && !isDemo && step.kind !== 'sending' && (failed ? (
+        <Pressable onPress={load} accessibilityRole="button" style={({ pressed }) => [styles.add, pressed && { opacity: 0.7 }]}>
+          <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+            Try loading photos again
+          </Txt>
+        </Pressable>
+      ) : signedIn && !token ? null : (
         <Pressable onPress={() => void pick()} accessibilityRole="button" style={({ pressed }) => [styles.add, pressed && { opacity: 0.7 }]}>
           <Txt variant="subhead" color={color.brand} style={face('semibold')}>
             {token ? '+ Add a photo' : '+ Sign in to add a photo'}
           </Txt>
         </Pressable>
-      )}
+      ))}
       {step.kind === 'sending' && (
         <Txt variant="footnote" color={color.labelSecondary}>
           Sending your photo…

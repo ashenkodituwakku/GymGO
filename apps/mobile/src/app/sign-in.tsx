@@ -292,7 +292,7 @@ function AuthField({
 const styles = themed(() =>
   StyleSheet.create({
     page: { flex: 1, backgroundColor: color.groupedBackground },
-    content: { padding: space[5], paddingBottom: space[8], gap: space[4], width: '100%', maxWidth: 460, alignSelf: 'center' },
+    content: { padding: space[4], paddingBottom: space[8], gap: space[4], width: '100%', maxWidth: 460, alignSelf: 'center' },
     hero: { alignItems: 'center', gap: space[2], marginTop: space[2], marginBottom: space[1] },
     badge: { borderRadius: 14.4, marginBottom: space[2], ...dropShadow(0.18, 12, 6, 6) },
     center: { textAlign: 'center' },

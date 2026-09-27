@@ -19,9 +19,13 @@ export function unitFor(country: string | null | undefined): WeightUnit {
 export const toKg = (weight: number, unit: WeightUnit) => (unit === 'kg' ? weight : weight / LB_PER_KG);
 export const fromKg = (kg: number, unit: WeightUnit) => (unit === 'kg' ? kg : kg * LB_PER_KG);
 
-/** "62.5 kg", "135 lb": no trailing ".0". */
+/**
+ * "62.5 kg", "135 lb": no trailing ".0", and a non-breaking space, as for
+ * times and distances, so a wrapped line never leaves "100" at the end of
+ * one line and "kg" at the start of the next.
+ */
 export function formatWeight(weight: number, unit: WeightUnit): string {
-  return `${Number(weight.toFixed(2))} ${unit}`;
+  return `${Number(weight.toFixed(2))}\u00a0${unit}`;
 }
 
 // --- What a session is ---------------------------------------------------------

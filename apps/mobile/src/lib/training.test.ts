@@ -49,8 +49,8 @@ describe('units', () => {
     expect(unitFor('AU')).toBe('kg');
     expect(unitFor('GB')).toBe('kg');
     expect(unitFor(null)).toBe('kg');
-    expect(formatWeight(62.5, 'kg')).toBe('62.5 kg');
-    expect(formatWeight(135, 'lb')).toBe('135 lb');
+    expect(formatWeight(62.5, 'kg')).toBe('62.5\u00a0kg');
+    expect(formatWeight(135, 'lb')).toBe('135\u00a0lb');
   });
 });
 
@@ -101,9 +101,9 @@ describe('last time and next time', () => {
 
   it('finds the last session that had the exercise, and says it briefly', () => {
     const last = lastTime(history, 'bench-press')!;
-    expect(setsSummary(last.sets, last.unit)).toBe('60 kg × 10, 10, 9');
+    expect(setsSummary(last.sets, last.unit)).toBe('60\u00a0kg × 10, 10, 9');
     expect(lastTime(history, 'squat')).toBeNull();
-    expect(setsSummary([{ weight: 60, reps: 10 }, { weight: 62.5, reps: 8 }], 'kg')).toBe('60 kg × 10 · 62.5 kg × 8');
+    expect(setsSummary([{ weight: 60, reps: 10 }, { weight: 62.5, reps: 8 }], 'kg')).toBe('60\u00a0kg × 10 · 62.5\u00a0kg × 8');
     expect(setsSummary([{ weight: null, reps: 12 }], 'kg')).toBe('× 12');
   });
 

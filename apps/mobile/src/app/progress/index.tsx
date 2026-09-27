@@ -48,6 +48,7 @@ export default function ProgressScreen() {
   // where a missing token would ask a signed-in person to sign in.
   const token = account.token;
   const log = useTrainingLog(token);
+  const known = log.status === 'ready';
   const active = useActiveSession();
   const router = useRouter();
   const unit = unitFor(prefs.country);
@@ -79,9 +80,9 @@ export default function ProgressScreen() {
     <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title: 'Progress' }} />
       <Animated.View entering={rise(0)} style={styles.stats}>
-        <Stat icon="flame" tint={color.maybe} value={String(weekStreak(log.sessions))} label={weekStreak(log.sessions) === 1 ? 'week in a row' : 'weeks in a row'} />
-        <Stat icon="calendar" tint={color.brand} value={String(sessionsThisWeek(log.sessions))} label="this week" />
-        <Stat icon="workout" tint={color.good} value={String(log.sessions.length)} label={log.sessions.length === 1 ? 'workout' : 'workouts'} />
+        <Stat icon="flame" tint={color.maybe} value={known ? weekStreak(log.sessions) : null} one="week in a row" many="weeks in a row" />
+        <Stat icon="calendar" tint={color.brand} value={known ? sessionsThisWeek(log.sessions) : null} one="this week" many="this week" />
+        <Stat icon="workout" tint={color.good} value={known ? log.sessions.length : null} one="workout" many="workouts" />
       </Animated.View>
       {start}
 
@@ -175,12 +176,14 @@ export default function ProgressScreen() {
   );
 }
 
-function Stat({ icon, tint, value, label }: { icon: IconName; tint: string; value: string; label: string }) {
+/** `value` is null until the log has loaded: a dash, not a zero, so a log that didn't load doesn't read as no training. */
+function Stat({ icon, tint, value, one, many }: { icon: IconName; tint: string; value: number | null; one: string; many: string }) {
+  const label = value === 1 ? one : many;
   return (
-    <View style={styles.stat} accessible accessibilityLabel={`${value} ${label}`}>
+    <View style={styles.stat} accessible accessibilityLabel={value === null ? `${many}: not loaded` : `${value} ${label}`}>
       <Icon name={icon} size={18} color={tint} />
       <Txt variant="title" style={face('bold')}>
-        {value}
+        {value === null ? '—' : String(value)}
       </Txt>
       <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
         {label}

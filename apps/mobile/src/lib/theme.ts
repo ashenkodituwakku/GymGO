@@ -247,6 +247,14 @@ export function themed<T extends object>(make: () => T): T {
 
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32 } as const;
 
+/**
+ * How far a header's right-hand buttons sit in from the edge of their own
+ * box. A phone's navigation bar already spaces them from the screen's edge;
+ * a browser's doesn't, so without this they touch the window's edge, while
+ * the back arrow on the left sits in from it.
+ */
+export const HEADER_EDGE = Platform.OS === 'web' ? space[4] : 0;
+
 export const radius = {
   sm: 10,
   md: 14,

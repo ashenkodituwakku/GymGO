@@ -30,7 +30,7 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { gymDistanceLine } from '@/lib/copy';
 import { resultsById } from '@/lib/results';
-import { color, space, themed } from '@/lib/theme';
+import { HEADER_EDGE, color, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 
 const PAGE_WIDTH = 720;
@@ -252,7 +252,8 @@ const styles = themed(() => StyleSheet.create({
   title: { gap: 2, paddingHorizontal: space[4], paddingTop: space[2], paddingBottom: space[3] },
   streetView: { gap: space[1] },
   mapButton: { paddingHorizontal: space[4] },
-  headerButtons: { flexDirection: 'row', alignItems: 'center', gap: space[4], paddingHorizontal: space[1] },
+  // The last icon's own padding (4) plus this puts its edge where the back arrow's is on the left.
+  headerButtons: { flexDirection: 'row', alignItems: 'center', gap: space[4], paddingLeft: space[1], paddingRight: Math.max(space[1], HEADER_EDGE - 4) },
   headerButton: { padding: 4 },
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
   center: { textAlign: 'center' },

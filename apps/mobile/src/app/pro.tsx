@@ -28,7 +28,7 @@ import type { Sale } from '@/lib/useBilling';
 import { ApiError, OfflineError } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { HEADER_EDGE, color, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 
 const FEATURE_ICON: Record<string, IconName> = {
@@ -137,7 +137,7 @@ export default function ProScreen() {
         options={{
           title: '',
           headerRight: () => (
-            <Pressable onPress={close} accessibilityRole="button" hitSlop={8}>
+            <Pressable onPress={close} accessibilityRole="button" hitSlop={8} style={styles.done}>
               <Txt variant="body" color={color.brand} style={face('semibold')}>
                 Done
               </Txt>
@@ -418,6 +418,7 @@ const styles = themed(() => StyleSheet.create({
   center: { textAlign: 'center' },
   gap: { gap: space[2] },
   page: { flex: 1, backgroundColor: color.groupedBackground },
+  done: { paddingHorizontal: HEADER_EDGE },
   content: { padding: space[4], gap: space[4], paddingBottom: space[8], width: '100%', maxWidth: 560, alignSelf: 'center' },
   hero: { alignItems: 'center', gap: space[2], paddingTop: space[2] },
   badge: {

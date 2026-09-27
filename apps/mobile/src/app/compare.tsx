@@ -6,7 +6,7 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { summariseWeek, type GymSearchResult, type Tri } from '@gymgo/domain';
 import { Icon } from '@/components/Icon';
 import { PrimaryButton, TIER_COLOUR, Txt } from '@/components/ui';
@@ -16,7 +16,7 @@ import { TIER, accessShort, timeLabel, visitWhen } from '@/lib/copy';
 import { visitIsLater } from '@/lib/query';
 import { priceLine } from '@/lib/present';
 import { resultsById } from '@/lib/results';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { HEADER_EDGE, color, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 
 type Cell = { text: string; ink?: string; strong?: boolean };
@@ -234,7 +234,7 @@ const styles = themed(() => StyleSheet.create({
   flex: { flex: 1 },
   center: { textAlign: 'center' },
   // iOS and Android inset header buttons themselves; a browser doesn't.
-  clear: { paddingHorizontal: Platform.OS === 'web' ? space[4] : 0 },
+  clear: { paddingHorizontal: HEADER_EDGE },
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], width: '100%', maxWidth: 760, alignSelf: 'center', paddingBottom: space[8] },
   tableScroll: { marginHorizontal: -space[4] },

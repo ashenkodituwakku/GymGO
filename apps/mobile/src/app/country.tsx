@@ -13,7 +13,7 @@ import { useApp } from '@/lib/app-state';
 import { COUNTRIES, FOCUS_COUNTRY, builtInCountries, countryByCode, deviceCountry, flagOf, searchCountries, type Country } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { CITY_LIST } from '@/lib/places';
-import { NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
+import { HEADER_EDGE, NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 
 /** How many built-in cities each country has. */
@@ -210,5 +210,5 @@ const styles = themed(() => StyleSheet.create({
   },
   flex: { flex: 1, gap: 2 },
   empty: { textAlign: 'center', marginTop: space[6] },
-  notNow: { paddingHorizontal: Platform.OS === 'web' ? space[4] : 0 },
+  notNow: { paddingHorizontal: HEADER_EDGE },
 }));

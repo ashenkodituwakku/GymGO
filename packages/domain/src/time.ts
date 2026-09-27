@@ -220,6 +220,9 @@ export function isOpenAt(schedule: AccessSchedule, instant: Date): OpenCheck {
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function formatMinuteOfDay(minuteOfDay: number): string {
+  // A close at the end of the day: "5 am – midnight" reads at a glance, where
+  // "12 am (next day)" makes people work out which midnight is meant.
+  if (minuteOfDay === 1440) return 'midnight';
   const wrapped = minuteOfDay % 1440;
   const hour24 = Math.floor(wrapped / 60);
   const minute = wrapped % 60;

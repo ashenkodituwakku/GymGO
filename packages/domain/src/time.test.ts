@@ -10,6 +10,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatMinuteOfDay,
+  formatWindow,
   isOpenAt,
   isValidIsoDate,
   localDate,
@@ -147,6 +148,8 @@ describe('formatting and parsing', () => {
     expect(formatMinuteOfDay(9 * 60 + 30)).toBe('9:30\u00a0am');
     expect(formatMinuteOfDay(19 * 60)).toBe('7\u00a0pm');
     expect(formatMinuteOfDay(26 * 60)).toBe('2\u00a0am (next day)');
+    expect(formatMinuteOfDay(24 * 60)).toBe('midnight');
+    expect(formatWindow({ day: 1, openMinute: 5 * 60, closeMinute: 24 * 60 })).toBe('5\u00a0am \u2013 midnight');
   });
 
   it('parses a time of day and rejects nonsense', () => {

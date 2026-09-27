@@ -46,13 +46,19 @@ export default function Compare() {
   }
 
   if (gyms.length < 2) {
+    // One picked: say which, so it's clear the next pick completes the pair.
+    const only = gyms[0]?.record.location.name;
     return (
       <View style={styles.empty}>
         <Stack.Screen options={{ title: 'Compare' }} />
         <Icon name="compare" size={44} color={color.brand} />
-        <Txt variant="title2">Pick {billing.limits.compare === 2 ? 'two' : `two to ${NUMBER_WORD[billing.limits.compare] ?? billing.limits.compare}`} gyms</Txt>
+        <Txt variant="title2" style={styles.center}>
+          {only ? 'Pick one more gym' : `Pick ${billing.limits.compare === 2 ? 'two' : `two to ${NUMBER_WORD[billing.limits.compare] ?? billing.limits.compare}`} gyms`}
+        </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          Tick them in Saved, or tap the compare button on a gym’s page. On iPhone you can also press and hold a gym on Home.
+          {only
+            ? `${only} is picked. Tick another in Saved, or tap the compare button on another gym’s page.`
+            : 'Tick them in Saved, or tap the compare button on a gym’s page. On iPhone you can also press and hold a gym on Home.'}
         </Txt>
         <PrimaryButton label="Go to Saved" onPress={() => router.navigate('/saved')} />
       </View>

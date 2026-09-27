@@ -44,7 +44,9 @@ import {
   type WeightUnit,
 } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
-import { EXERCISES } from '@/lib/workout';
+import { EXERCISES, exerciseName } from '@/lib/workout';
+import { shareText } from '@/lib/actions';
+import { workoutShareText } from '@/lib/insights';
 import { usePageTitle } from '@/lib/pageTitle';
 
 /** Ticks once a second while something on screen counts. */
@@ -560,6 +562,11 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
   const { session, records } = result;
   const unit = session.unit;
   const volume = fromKg(volumeKg(session), unit);
+  const [shared, setShared] = useState<string | null>(null);
+  const share = async () => {
+    const outcome = await shareText(workoutShareText(session, records), session.name);
+    setShared(outcome === 'copied' ? 'Copied, ready to paste.' : outcome === 'failed' ? 'Sharing isn’t available here.' : null);
+  };
   return (
     <ScrollView style={styles.page} contentContainerStyle={[styles.content, styles.summary]}>
       <Stack.Screen options={{ title: '' }} />
@@ -580,7 +587,7 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
           <View key={`${record.exerciseId}-${record.kind}`} style={styles.record}>
             <Icon name="trophy" size={18} color={color.maybe} />
             <View style={styles.flex}>
-              <Txt variant="headline">{exerciseOf(record.exerciseId)?.name ?? record.exerciseId}</Txt>
+              <Txt variant="headline">{exerciseName(record.exerciseId)}</Txt>
               <Txt variant="footnote" color={color.labelSecondary}>
                 {RECORD_WORD[record.kind]} · {logged ? setsSummary(logged.sets, unit) : ''}
               </Txt>
@@ -590,6 +597,12 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
       })}
       <View style={styles.finish}>
         <PrimaryButton label="See your progress" icon="chart" onPress={onProgress} />
+        <PrimaryButton label="Share this workout" icon="share" tone="quiet" onPress={() => void share()} />
+        {shared && (
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+            {shared}
+          </Txt>
+        )}
         <PrimaryButton label="Done" tone="quiet" onPress={onClose} />
       </View>
     </ScrollView>

@@ -7,8 +7,8 @@
  * Native here, so it is unit-tested in Node.
  */
 
-import { recordsBroken, setCount, type TrainingSession } from './training';
-import { EXERCISES, MUSCLES, type Muscle } from './workout';
+import { durationLabel, fromKg, recordsBroken, setCount, setsSummary, volumeKg, type NewRecord, type TrainingSession } from './training';
+import { EXERCISES, MUSCLES, exerciseName, type Muscle } from './workout';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -210,4 +210,32 @@ export function muscleBalance(sessions: TrainingSession[], days = 28, now: Date 
     (a, b) => b.sets - a.sets || MUSCLES.findIndex((item) => item.id === a.muscle) - MUSCLES.findIndex((item) => item.id === b.muscle),
   );
   return { muscles, unknownSets, sessions: inWindow, days };
+}
+
+// --- Sharing a workout ------------------------------------------------------------------
+
+const RECORD_KIND: Record<NewRecord['kind'], string> = { heaviest: 'heaviest yet', e1rm: 'strongest set yet', reps: 'most reps yet' };
+
+/**
+ * A finished workout as a few lines of plain text to send a friend: what,
+ * how long, how much, any records, then each exercise's sets. Only what you
+ * logged; no gym, place or time of day, since a message can travel further
+ * than you meant it to.
+ */
+export function workoutShareText(session: TrainingSession, records: NewRecord[]): string {
+  const unit = session.unit;
+  const sets = setCount(session);
+  const volume = fromKg(volumeKg(session), unit);
+  const lines = [
+    [session.name, durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt)), `${sets} set${sets === 1 ? '' : 's'}`, volume > 0 ? `${Math.round(volume).toLocaleString('en')} ${unit} lifted` : null]
+      .filter(Boolean)
+      .join(' · '),
+  ];
+  if (records.length > 0) {
+    lines.push(`New record${records.length === 1 ? '' : 's'}: ${records.map((record) => `${exerciseName(record.exerciseId)} (${RECORD_KIND[record.kind]})`).join(', ')}`);
+  }
+  lines.push('');
+  for (const logged of session.exercises) lines.push(`${exerciseName(logged.exerciseId)}: ${setsSummary(logged.sets, unit)}`);
+  lines.push('', 'Logged with GymGO');
+  return lines.join('\n');
 }

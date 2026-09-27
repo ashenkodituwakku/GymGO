@@ -40,3 +40,24 @@ export async function openDirections(record: GymRecord): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Hands some text to the phone's share sheet. A browser without one copies
+ * it instead. Says what happened: shared, copied, or neither.
+ */
+export async function shareText(message: string, title: string): Promise<'shared' | 'copied' | 'failed'> {
+  try {
+    await Share.share(Platform.OS === 'ios' ? { message } : { message, title });
+    return 'shared';
+  } catch {
+    if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(message);
+        return 'copied';
+      } catch {
+        return 'failed';
+      }
+    }
+    return 'failed';
+  }
+}

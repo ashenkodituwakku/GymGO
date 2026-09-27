@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bestWeekStreak, goalStreak, milestones, muscleBalance, recordsEver, trainingCalendar } from './insights';
+import { bestWeekStreak, goalStreak, milestones, muscleBalance, recordsEver, trainingCalendar, workoutShareText } from './insights';
 import type { LoggedExercise, TrainingSession } from './training';
 
 let next = 0;
@@ -88,5 +88,21 @@ describe('muscleBalance', () => {
     expect(quads.sets).toBe(2);
     expect(balance.muscles[0]!.sets).toBeGreaterThanOrEqual(balance.muscles[1]!.sets);
     expect(balance.muscles.find((item) => item.muscle === 'biceps')!.sets).toBe(0);
+  });
+});
+
+describe('workoutShareText', () => {
+  it('says what, how long and how much, the records, then each exercise, and nothing about where', () => {
+    const done = { ...session(at(4, 14, 19), [
+      { exerciseId: 'back-squat', sets: [{ weight: 100, reps: 5 }, { weight: 100, reps: 5 }] },
+      { exerciseId: 'my-own-thing', sets: [{ weight: null, reps: 12 }] },
+    ]), startedAt: new Date(2024, 4, 14, 18, 10).toISOString(), gymId: 'dohertys-gym-city' };
+    const text = workoutShareText(done, [{ exerciseId: 'back-squat', kind: 'heaviest' }]);
+    expect(text.split('\n')[0]).toBe('Legs · 50 min · 3 sets · 1,000 kg lifted');
+    expect(text).toContain('New record: Barbell back squat (heaviest yet)');
+    expect(text).toContain('Barbell back squat: 100');
+    expect(text).toContain('My own thing: × 12');
+    expect(text).not.toContain('doherty');
+    expect(text.endsWith('Logged with GymGO')).toBe(true);
   });
 });

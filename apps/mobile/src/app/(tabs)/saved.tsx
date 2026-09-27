@@ -53,7 +53,9 @@ export default function Saved() {
           <Txt variant="title2">Nothing saved yet</Txt>
           <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
             Tap Save on any gym and it lands here.{' '}
-            {account.account ? 'It follows you between your phone and your PC.' : 'Sign in and it follows you to your PC too.'}
+            {account.state === 'signed_in' || account.state === 'unreachable'
+              ? 'It follows you between your phone and your PC.'
+              : 'Sign in and it follows you to your PC too.'}
           </Txt>
           <PrimaryButton
             label="Find a gym"
@@ -100,7 +102,11 @@ export default function Saved() {
             })}
           </View>
           <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-            {account.account ? 'Synced to your account.' : 'Saved on this device. Sign in in Profile to keep them on your PC too.'}
+            {account.state === 'signed_in'
+              ? 'Synced to your account.'
+              : account.state === 'unreachable'
+                ? 'The GymGO server isn’t reachable, so these are this device’s copy. Anything you save now joins your account when it’s back.'
+                : 'Saved on this device. Sign in in Profile to keep them on your PC too.'}
           </Txt>
         </>
       )}

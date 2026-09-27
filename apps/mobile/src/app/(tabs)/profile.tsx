@@ -92,6 +92,8 @@ export default function Profile() {
           </View>
           <Icon name="chevron" size={14} color={color.labelTertiary} />
         </Pressy>
+      ) : account.state === 'unreachable' ? (
+        <ServerAwayCard />
       ) : (
         <SignInCard />
       )}
@@ -242,6 +244,43 @@ export default function Profile() {
   );
 }
 
+/**
+ * Signed in, but the server can't be reached (it's down, or the phone is on
+ * the gym's patchy Wi-Fi). You're not signed out, so there's nothing to sign
+ * in to: just say so, and offer to try again. The app also retries by itself.
+ */
+function ServerAwayCard() {
+  const { account } = useApp();
+  const [trying, setTrying] = useState(false);
+  const [tried, setTried] = useState(false);
+  const retry = async () => {
+    setTrying(true);
+    await account.reconnect();
+    // Back: this card is gone. Still away: say so, so the tap wasn't ignored.
+    setTrying(false);
+    setTried(true);
+  };
+  return (
+    <View style={styles.signInCard}>
+      <View style={styles.signInHead}>
+        <AppBadge size={52} />
+        <View style={styles.flex}>
+          <Txt variant="title2">Can’t reach GymGO</Txt>
+          <Txt variant="subhead" color={color.labelSecondary}>
+            You’re still signed in. Your saved gyms on this device work, and the rest comes back when the server does.
+          </Txt>
+        </View>
+      </View>
+      <PrimaryButton label={trying ? 'Trying…' : 'Try again'} icon="refresh" tone="quiet" busy={trying} onPress={() => void retry()} />
+      {tried && !trying && (
+        <Txt variant="footnote" color={color.maybeInk}>
+          Still no answer. GymGO keeps trying by itself every 20 seconds.
+        </Txt>
+      )}
+    </View>
+  );
+}
+
 /** Signed out: Apple and Google where they're set up, then email. */
 function SignInCard() {
   const { account } = useApp();
@@ -269,11 +308,6 @@ function SignInCard() {
           </Txt>
         </View>
       </View>
-      {account.state === 'unreachable' && (
-        <Txt variant="footnote" color={color.maybeInk}>
-          You’re signed in, but the GymGO server isn’t reachable right now. Your saved gyms on this device still work.
-        </Txt>
-      )}
       <SocialButtons onToken={withProvider} onError={setProblem} />
       {social && <OrDivider label="or" />}
       <PrimaryButton label="Sign in with email" icon="mail" onPress={() => router.push('/sign-in')} />

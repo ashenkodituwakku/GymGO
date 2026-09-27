@@ -175,7 +175,7 @@ function GymCard({ entry, record, cover, width, onPress }: { entry: CollectedGym
         <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
           {`${flag(entry.countryCode)} ${entry.city}`.trim()}
         </Txt>
-        <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
+        <Txt variant="caption" color={color.labelSecondary} numberOfLines={2}>
           {`${visits} visit${visits === 1 ? '' : 's'} · since ${since}`}
         </Txt>
         <View style={styles.track}>

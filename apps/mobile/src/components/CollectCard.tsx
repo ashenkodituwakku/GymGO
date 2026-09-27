@@ -109,7 +109,8 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
         {!(step.kind === 'collected') && (
           <View style={styles.flex}>
             <PrimaryButton
-              label={step.kind === 'checking' ? 'Checking where you are…' : mine ? 'I’m here again' : 'I’m here'}
+              // Short, so two buttons side by side fit on a phone without wrapping.
+              label={step.kind === 'checking' ? 'Checking…' : mine ? 'Check in' : 'I’m here'}
               icon="pin"
               busy={step.kind === 'checking'}
               onPress={() => void tryCollect()}
@@ -118,7 +119,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
         )}
         {(mine || step.kind === 'collected') && (
           <View style={styles.flex}>
-            <PrimaryButton label="Your collection" icon="trophy" tone="quiet" onPress={onOpenCollection} />
+            <PrimaryButton label="Collection" icon="trophy" tone="quiet" onPress={onOpenCollection} />
           </View>
         )}
       </View>

@@ -216,8 +216,9 @@ export function Fold({
         )}
         <View style={styles.foldText}>
           <Txt variant="headline">{title}</Txt>
+          {/* Two lines: on a phone a one-line summary lost its end ("see what m…"). */}
           {summary ? (
-            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
               {summary}
             </Txt>
           ) : null}

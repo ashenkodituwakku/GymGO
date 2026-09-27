@@ -108,7 +108,12 @@ export function SectionHeader({
 }) {
   return (
     <View style={styles.sectionHeader}>
-      {icon ? <PIcon name={icon} size={26} color={color.brand} accent={color.brand} /> : null}
+      {/* The words line up on their baselines; an icon has none, so it's centred on the heading instead of sitting high. */}
+      {icon ? (
+        <View style={styles.sectionIcon}>
+          <PIcon name={icon} size={26} color={color.brand} accent={color.brand} />
+        </View>
+      ) : null}
       <Txt variant="title2" style={styles.flex}>
         {title}
       </Txt>
@@ -264,11 +269,13 @@ const styles = themed(() => StyleSheet.create({
   barTitle: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[8] + space[6] },
 
   sectionHeader: { flexDirection: 'row', alignItems: 'baseline', gap: space[2], marginBottom: -space[2] },
+  sectionIcon: { alignSelf: 'center' },
 
   group: { gap: 6 },
   groupHeader: { paddingHorizontal: space[4], letterSpacing: 0.3 },
   groupFooter: { paddingHorizontal: space[4] },
-  groupBody: { backgroundColor: color.card, borderRadius: 12, borderCurve: 'continuous', overflow: 'hidden' },
+  // The same corners as the app's other cards, so a list sits flush with the card above it.
+  groupBody: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden' },
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 16 + 29 + 12 },
 
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, minHeight: 50, paddingVertical: 8 },

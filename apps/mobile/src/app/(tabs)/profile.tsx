@@ -355,6 +355,6 @@ const styles = themed(() => StyleSheet.create({
   },
   moderation: { gap: 6 },
   caps: { paddingHorizontal: space[4], letterSpacing: 0.3 },
-  card: { backgroundColor: color.card, borderRadius: 12, padding: space[4], gap: space[4] },
+  card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[4] },
   explainer: { paddingHorizontal: 16, paddingBottom: space[3], paddingLeft: 16 + 29 + 12 },
 }));

@@ -42,6 +42,7 @@ const FEATURE_ICON: Record<string, IconName> = {
   'Muscle balance': 'body',
   'Warm-up sets': 'flame',
   'Gym notes': 'list',
+  'Your plates': 'plates',
 };
 
 const REASON: Record<ProReason, string> = {
@@ -54,6 +55,7 @@ const REASON: Record<ProReason, string> = {
   balance: 'Your log, goal and milestones are free. Pro counts your sets for every muscle and names the ones you’ve missed.',
   warmup: 'The plate calculator is free. Pro works out your warm-up sets to any weight, with the plates for each.',
   notes: 'Pro keeps your own notes on each gym, like the door code or who to ask for. Only you see them.',
+  plates: 'The plate calculator uses the usual set for free. Pro lets it use the plates your gym really has, change plates and all.',
 };
 
 export default function ProScreen() {

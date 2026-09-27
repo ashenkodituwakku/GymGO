@@ -12,7 +12,7 @@ import { Icon } from '@/components/Icon';
 import { Input, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { color, face, radius, space, themed } from '@/lib/theme';
-import { BAR, formatWeight, parseWeight, plateLoad, unitFor, warmUpSets, type WeightUnit } from '@/lib/training';
+import { BAR, PLATES, PLATE_CHOICES, formatWeight, parseWeight, plateLoad, unitFor, warmUpSets, type WeightUnit } from '@/lib/training';
 import { usePageTitle } from '@/lib/pageTitle';
 
 /** The bars most gyms have: a men's Olympic bar, and the lighter women's bar. */
@@ -21,7 +21,7 @@ const BARS: Record<WeightUnit, number[]> = { kg: [20, 15], lb: [45, 35] };
 export default function PlatesScreen() {
   usePageTitle('Plates');
   const params = useLocalSearchParams<{ weight?: string; unit?: string }>();
-  const { prefs, billing, openPro } = useApp();
+  const { prefs, setPref, billing, openPro } = useApp();
   // Your country's unit (read once your settings have loaded), until you pick one.
   const [picked, setPicked] = useState<WeightUnit | null>(params.unit === 'kg' || params.unit === 'lb' ? params.unit : null);
   const unit = picked ?? unitFor(prefs.country);
@@ -29,9 +29,20 @@ export default function PlatesScreen() {
   const [pickedBar, setBar] = useState<number | null>(null);
   const bar = pickedBar ?? BAR[unit];
   const weight = parseWeight(text);
-  const load = typeof weight === 'number' ? plateLoad(weight, unit, bar) : null;
+  // Your gym's plates with Pro, else the usual set.
+  const custom = billing.isPro ? (prefs.plates[unit] ?? null) : null;
+  const plates = custom ?? PLATES[unit];
+  const [editing, setEditing] = useState(false);
+  const togglePlate = (plate: number) => {
+    const next = plates.includes(plate) ? plates.filter((item) => item !== plate) : [...plates, plate].sort((a, b) => b - a);
+    if (next.length === 0) return; // A bar needs at least one size of plate.
+    const standard = next.length === PLATES[unit].length && next.every((item) => PLATES[unit].includes(item));
+    const { [unit]: _dropped, ...others } = prefs.plates;
+    setPref('plates', standard ? others : { ...prefs.plates, [unit]: next });
+  };
+  const load = typeof weight === 'number' ? plateLoad(weight, unit, bar, plates) : null;
   // Worked out to what the plates actually make, so the ramp ends below the real load.
-  const ramp = load && load.total > bar ? warmUpSets(load.total, unit, bar) : [];
+  const ramp = load && load.total > bar ? warmUpSets(load.total, unit, bar, plates) : [];
   const perSide = (plates: number[]) => (plates.length ? `${plates.map((plate) => Number(plate.toFixed(2))).join(' + ')} each side` : 'just the bar');
 
   const switchUnit = (next: WeightUnit) => {
@@ -110,7 +121,9 @@ export default function PlatesScreen() {
           </Txt>
           {load.short > 0 && (
             <Txt variant="footnote" color={color.maybeInk}>
-              Standard plates get to {formatWeight(load.total, unit)}, {formatWeight(load.short, unit)} short of what you typed. Some gyms have smaller change plates.
+              {custom
+                ? `Your plates get to ${formatWeight(load.total, unit)}, ${formatWeight(load.short, unit)} short of what you typed.`
+                : `Standard plates get to ${formatWeight(load.total, unit)}, ${formatWeight(load.short, unit)} short of what you typed. Some gyms have smaller change plates.`}
             </Txt>
           )}
           {weight !== null && weight !== undefined && weight < bar && (
@@ -177,9 +190,53 @@ export default function PlatesScreen() {
         </View>
       )}
 
-      <Txt variant="footnote" color={color.labelTertiary}>
-        Plates on hand: {unit === 'kg' ? '25, 20, 15, 10, 5, 2.5 and 1.25 kg' : '45, 35, 25, 10, 5 and 2.5 lb'}, the usual set. What your gym has may differ.
-      </Txt>
+      <View style={styles.card}>
+        <View style={styles.platesHead}>
+          <View style={styles.flex}>
+            <Txt variant="headline">{custom ? 'Your gym’s plates' : 'Plates on hand'}</Txt>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              {`${plates.map((plate) => Number(plate.toFixed(2))).join(', ')} ${unit}${custom ? '' : ', the usual set'}`}
+            </Txt>
+          </View>
+          <Pressable
+            onPress={() => (billing.isPro ? setEditing(!editing) : openPro('plates'))}
+            accessibilityRole="button"
+            accessibilityLabel={billing.isPro ? (editing ? 'Done choosing plates' : 'Choose your gym’s plates') : 'Choose your gym’s plates, with GymGO Pro'}
+            hitSlop={8}
+            style={({ pressed }) => [styles.editPlates, pressed && { opacity: 0.7 }]}
+          >
+            <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+              {billing.isPro ? (editing ? 'Done' : 'Change') : 'Change with Pro'}
+            </Txt>
+          </Pressable>
+        </View>
+        {editing && billing.isPro && (
+          <>
+            <View style={styles.choices}>
+              {PLATE_CHOICES[unit].map((plate) => {
+                const on = plates.includes(plate);
+                return (
+                  <Pressable
+                    key={plate}
+                    onPress={() => togglePlate(plate)}
+                    accessibilityRole="checkbox"
+                    aria-checked={on}
+                    accessibilityLabel={`${formatWeight(plate, unit)} plates`}
+                    style={({ pressed }) => [styles.choice, on && styles.choiceOn, pressed && { opacity: 0.7 }]}
+                  >
+                    <Txt variant="subhead" color={on ? color.onBrand : color.label} style={face('semibold')}>
+                      {Number(plate.toFixed(2))}
+                    </Txt>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Txt variant="caption" color={color.labelSecondary}>
+              {`Tick the ${unit} plates your gym has, pairs of each. Kept on this device; the sums and warm-ups above use them.`}
+            </Txt>
+          </>
+        )}
+      </View>
     </ScrollView>
   );
 }
@@ -201,6 +258,11 @@ const styles = themed(() => StyleSheet.create({
   },
   card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3] },
   pro: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  platesHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  editPlates: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
+  choices: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  choice: { minWidth: 52, alignItems: 'center', paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.md, backgroundColor: color.fill },
+  choiceOn: { backgroundColor: color.brandFill },
   rampRow: { flexDirection: 'row', alignItems: 'baseline', gap: space[2], paddingVertical: space[2] },
   rampLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   rampWeight: { minWidth: 76 },

@@ -20,6 +20,7 @@ import {
   setsSummary,
   unitFor,
   volumeKg,
+  cleanPlates,
   warmUpSets,
   weekStreak,
   weightFor,
@@ -284,5 +285,27 @@ describe('warmUpSets', () => {
     expect(warmUpSets(40, 'kg').map((set) => set.weight)).toEqual([20, 22.5, 30]);
     expect(warmUpSets(20, 'kg')).toEqual([]);
     expect(warmUpSets(25, 'kg').map((set) => set.weight)).toEqual([20]);
+  });
+});
+
+describe('your own plates', () => {
+  it('loads from the plates your gym has, and says how far short it falls', () => {
+    const noFifteens = plateLoad(100, 'kg', 20, [20, 10, 5, 2.5, 1.25]);
+    expect(noFifteens.perSide).toEqual([20, 20]);
+    const halfKilos = plateLoad(101, 'kg', 20, [20, 10, 5, 0.5]);
+    expect(halfKilos.perSide).toEqual([20, 20, 0.5]);
+    expect(halfKilos.short).toBe(0);
+    expect(plateLoad(101, 'kg', 20, [20, 10]).short).toBe(1);
+  });
+
+  it('ramps warm-ups with them too, never over the share asked for', () => {
+    expect(warmUpSets(100, 'kg', 20, [20, 10]).map((set) => set.weight)).toEqual([20, 40, 60, 80]);
+    expect(warmUpSets(90, 'kg', 20, [20, 10]).map((set) => set.weight)).toEqual([20, 40, 60]);
+  });
+
+  it('keeps only real plate sizes, heaviest first, and nothing when none are left', () => {
+    expect(cleanPlates([2.5, 20, 'x', 7, 20], 'kg')).toEqual([20, 2.5]);
+    expect(cleanPlates([], 'kg')).toBeNull();
+    expect(cleanPlates('nope', 'lb')).toBeNull();
   });
 });

@@ -23,6 +23,7 @@ import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, reachFor,
 import { useAccount } from './useAccount';
 import { useBilling } from './useBilling';
 import { useGymData } from './useGymData';
+import { cleanPlates, type WeightUnit } from './training';
 
 export interface ExploreRequest {
   nonce: number;
@@ -67,6 +68,8 @@ export interface Prefs {
   country: string | null;
   /** Workouts a week you're aiming for (1 to 7), kept on this device; null until you pick one. */
   weeklyGoal: number | null;
+  /** The plates your gym has, per unit (Pro); missing means the standard set. */
+  plates: Partial<Record<WeightUnit, number[]>>;
 }
 
 const RECENTS_KEY = 'gymgo.recents.v1';
@@ -92,7 +95,7 @@ export interface Lookup {
 }
 
 /** Why the Pro screen opened, so it can say so. */
-export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes';
+export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates';
 
 type AppState = {
   data: ReturnType<typeof useGymData>;
@@ -174,7 +177,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [compare, setCompare] = useState<string[]>([]);
   const compareLoaded = useRef(false);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
-  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, demo: false, country: null, weeklyGoal: null });
+  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, demo: false, country: null, weeklyGoal: null, plates: {} });
   const [prefsReady, setPrefsReady] = useState(false);
   // Place search reads the mode, so it must match before anything renders.
   setDemoMode(prefs.demo);
@@ -193,7 +196,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     void loadJson<Partial<Prefs>>(PREFS_KEY, {}).then((value) => {
       const country = typeof value.country === 'string' && /^[A-Z]{2}$/.test(value.country) ? value.country : null;
       const goal = typeof value.weeklyGoal === 'number' && Number.isInteger(value.weeklyGoal) && value.weeklyGoal >= 1 && value.weeklyGoal <= 7 ? value.weeklyGoal : null;
-      const next = { haptics: value.haptics !== false, demo: value.demo === true, country, weeklyGoal: goal };
+      const kgPlates = cleanPlates(value.plates?.kg, 'kg');
+      const lbPlates = cleanPlates(value.plates?.lb, 'lb');
+      const plates = { ...(kgPlates ? { kg: kgPlates } : {}), ...(lbPlates ? { lb: lbPlates } : {}) };
+      const next = { haptics: value.haptics !== false, demo: value.demo === true, country, weeklyGoal: goal, plates };
       setHapticsEnabled(next.haptics);
       setDemoMode(next.demo);
       setPrefs(next);

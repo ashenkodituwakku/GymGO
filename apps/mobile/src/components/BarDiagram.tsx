@@ -27,15 +27,21 @@ const SIZES: Record<WeightUnit, Record<string, { height: number; thickness: numb
     10: { height: 0.72, thickness: 10 },
     5: { height: 0.54, thickness: 8 },
     2.5: { height: 0.42, thickness: 6 },
+    2: { height: 0.4, thickness: 5 },
     1.25: { height: 0.34, thickness: 5 },
+    1: { height: 0.32, thickness: 4 },
+    0.5: { height: 0.28, thickness: 3 },
   },
   lb: {
+    55: { height: 1, thickness: 18 },
     45: { height: 1, thickness: 16 },
     35: { height: 0.9, thickness: 14 },
     25: { height: 0.78, thickness: 11 },
+    15: { height: 0.68, thickness: 10 },
     10: { height: 0.6, thickness: 9 },
     5: { height: 0.48, thickness: 7 },
     2.5: { height: 0.38, thickness: 6 },
+    1.25: { height: 0.32, thickness: 5 },
   },
 };
 

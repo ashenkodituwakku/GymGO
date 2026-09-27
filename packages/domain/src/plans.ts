@@ -73,6 +73,7 @@ export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; p
   { emoji: '🎯', title: 'Session targets', free: 'Last time’s numbers', pro: 'What to lift next' },
   { emoji: '🧍', title: 'Muscle balance', free: 'Sets per workout', pro: 'Every muscle, last 4 weeks' },
   { emoji: '🔥', title: 'Warm-up sets', free: 'Plates for any weight', pro: 'A ramp to your weight' },
+  { emoji: '🏋️', title: 'Your plates', free: 'The usual set', pro: 'The ones your gym has' },
   { emoji: '📝', title: 'Gym notes', free: '—', pro: 'Your own, on each gym' },
   { emoji: '🎨', title: 'Colour themes', free: 'Indigo, light or dark', pro: 'Five accent colours' },
 ];

@@ -230,6 +230,20 @@ export const PLATES: Record<WeightUnit, number[]> = {
 };
 export const BAR: Record<WeightUnit, number> = { kg: 20, lb: 45 };
 
+/** Every plate a gym might have, heaviest first: the standard set plus change plates. */
+export const PLATE_CHOICES: Record<WeightUnit, number[]> = {
+  kg: [25, 20, 15, 10, 5, 2.5, 2, 1.25, 1, 0.5],
+  lb: [55, 45, 35, 25, 15, 10, 5, 2.5, 1.25],
+};
+
+/** A set of plates you picked, kept to real plate sizes, heaviest first; null if nothing usable is left. */
+export function cleanPlates(plates: unknown, unit: WeightUnit): number[] | null {
+  if (!Array.isArray(plates)) return null;
+  const allowed = new Set(PLATE_CHOICES[unit]);
+  const kept = [...new Set(plates.filter((plate): plate is number => typeof plate === 'number' && allowed.has(plate)))].sort((a, b) => b - a);
+  return kept.length ? kept : null;
+}
+
 export interface PlateLoad {
   bar: number;
   /** Heaviest first, for one side of the bar. */
@@ -240,11 +254,11 @@ export interface PlateLoad {
   short: number;
 }
 
-/** The plates for each side to load a barbell to `total`. */
-export function plateLoad(total: number, unit: WeightUnit, bar = BAR[unit]): PlateLoad {
+/** The plates for each side to load a barbell to `total`, from the standard set or the ones your gym has. */
+export function plateLoad(total: number, unit: WeightUnit, bar = BAR[unit], plates: number[] = PLATES[unit]): PlateLoad {
   const perSide: number[] = [];
   let left = Math.max(0, (total - bar) / 2);
-  for (const plate of PLATES[unit]) {
+  for (const plate of [...plates].sort((a, b) => b - a)) {
     while (left + 1e-9 >= plate) {
       perSide.push(plate);
       left -= plate;
@@ -267,16 +281,15 @@ export interface WarmUpSet {
  * working weight, are left out, so a light working weight gets a short
  * ramp rather than repeats.
  */
-export function warmUpSets(working: number, unit: WeightUnit, bar = BAR[unit]): WarmUpSet[] {
-  if (!(working > bar)) return [];
-  // The smallest step both sides can take together.
-  const step = PLATES[unit][PLATES[unit].length - 1]! * 2;
-  const loadable = (weight: number) => bar + Math.floor((weight - bar) / step + 1e-9) * step;
-  const out: WarmUpSet[] = [{ weight: bar, reps: 10, load: plateLoad(bar, unit, bar) }];
+export function warmUpSets(working: number, unit: WeightUnit, bar = BAR[unit], plates: number[] = PLATES[unit]): WarmUpSet[] {
+  if (!(working > bar) || plates.length === 0) return [];
+  const out: WarmUpSet[] = [{ weight: bar, reps: 10, load: plateLoad(bar, unit, bar, plates) }];
   for (const [share, reps] of [[0.4, 5], [0.6, 3], [0.8, 2]] as const) {
-    const weight = Number(loadable(working * share).toFixed(2));
+    // What the plates actually make at or under the share, so an odd set of plates still rounds down truly.
+    const load = plateLoad(working * share, unit, bar, plates);
+    const weight = Number(load.total.toFixed(2));
     if (weight <= out[out.length - 1]!.weight || weight >= working) continue;
-    out.push({ weight, reps, load: plateLoad(weight, unit, bar) });
+    out.push({ weight, reps, load });
   }
   return out;
 }

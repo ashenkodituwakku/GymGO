@@ -776,6 +776,7 @@ saved list always opens, wherever the gym is.
 | Muscle balance | Sets per workout | Every muscle over the last four weeks, and the ones you've missed |
 | Warm-up sets | Plates for any weight | A warm-up ramp to your weight, with the plates |
 | Gym notes | — | Your own notes on each gym, on your device |
+| Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
 | Colour themes | Indigo, light or dark | Five accents, light or dark |
 
 One tier, two ways to pay, tax included:

@@ -24,7 +24,9 @@ export default function SavedWorkoutScreen() {
   const [saved, setSaved] = useState<SavedWorkout | null | 'missing'>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  const token = account.state === 'signed_in' ? account.token : null;
+  // Kept while the server is away too: loading then fails and says so,
+  // where a missing token would ask a signed-in person to sign in.
+  const token = account.token;
 
   useEffect(() => {
     if (!token) return;

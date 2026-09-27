@@ -44,7 +44,9 @@ const startTime = (iso: string) => {
 export default function ProgressScreen() {
   usePageTitle('Progress');
   const { account, prefs } = useApp();
-  const token = account.state === 'signed_in' ? account.token : null;
+  // Kept while the server is away too: loading then fails and says so,
+  // where a missing token would ask a signed-in person to sign in.
+  const token = account.token;
   const log = useTrainingLog(token);
   const active = useActiveSession();
   const router = useRouter();

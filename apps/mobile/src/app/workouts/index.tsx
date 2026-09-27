@@ -25,7 +25,9 @@ export default function MyWorkouts() {
   const router = useRouter();
   const [workouts, setWorkouts] = useState<SavedWorkout[] | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
-  const token = account.state === 'signed_in' ? account.token : null;
+  // Kept while the server is away too: loading then fails and says so,
+  // where a missing token would ask a signed-in person to sign in.
+  const token = account.token;
 
   // Reload whenever the screen shows, so a delete on the next screen is reflected.
   useFocusEffect(

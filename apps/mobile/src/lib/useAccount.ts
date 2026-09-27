@@ -188,6 +188,7 @@ export function useAccount() {
   return {
     state,
     account,
+    /** Set while signed in, and still while the server is away ('unreachable'): you haven't been signed out. */
     token: token.current,
     saved,
     signIn,

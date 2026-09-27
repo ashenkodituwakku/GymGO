@@ -91,7 +91,8 @@ export default function WorkoutScreen() {
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | string>('idle');
   useEffect(() => setSaveState('idle'), [workout]);
   const saveWorkout = async () => {
-    if (!billing.isPro || account.state !== 'signed_in' || !account.token) {
+    // Signed in but the server away still tries, and says it couldn't reach it, rather than offering Pro to a Pro member.
+    if (!billing.isPro || !account.token) {
       openPro('workouts');
       return;
     }

@@ -25,7 +25,9 @@ const dayLabel = (iso: string) => {
 export default function ExerciseProgressScreen() {
   const { exercise: exerciseId = '' } = useLocalSearchParams<{ exercise: string }>();
   const { account, prefs, billing, openPro } = useApp();
-  const token = account.state === 'signed_in' ? account.token : null;
+  // Kept while the server is away too: loading then fails and says so,
+  // where a missing token would ask a signed-in person to sign in.
+  const token = account.token;
   const log = useTrainingLog(token);
   const router = useRouter();
   const unit = unitFor(prefs.country);
@@ -95,7 +97,7 @@ export default function ExerciseProgressScreen() {
       <View style={styles.group}>
         {done.length === 0 && (
           <Txt variant="subhead" color={color.labelSecondary} style={styles.row}>
-            {log.status === 'loading' ? 'Loading…' : 'Not logged yet.'}
+            {log.status === 'loading' ? 'Loading…' : (log.error ?? 'Not logged yet.')}
           </Txt>
         )}
         {done.map((session, index) => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bestWeekStreak, goalStreak, milestones, muscleBalance, recordsEver, trainingCalendar, workoutShareText } from './insights';
+import { bestWeekStreak, goalStreak, logToCsv, milestones, muscleBalance, recordsEver, trainingCalendar, workoutShareText } from './insights';
 import type { LoggedExercise, TrainingSession } from './training';
 
 let next = 0;
@@ -104,5 +104,17 @@ describe('workoutShareText', () => {
     expect(text).toContain('My own thing: × 12');
     expect(text).not.toContain('doherty');
     expect(text.endsWith('Logged with GymGO')).toBe(true);
+  });
+});
+
+describe('logToCsv', () => {
+  it('writes a row a set, oldest first, blank weight for body weight, quoting what needs it', () => {
+    const later = session(at(4, 14, 19), [{ exerciseId: 'push-up', sets: [{ weight: null, reps: 12 }] }]);
+    const earlier = { ...session(at(4, 10, 7), [{ exerciseId: 'back-squat', sets: [{ weight: 100, reps: 5 }, { weight: 102.5, reps: 3 }] }]), name: 'Legs, heavy' };
+    const lines = logToCsv([later, earlier]).trim().split('\n');
+    expect(lines[0]).toBe('date,time,workout,exercise,set,weight,unit,reps');
+    expect(lines[1]).toBe('2024-05-10,07:00,"Legs, heavy",Barbell back squat,1,100,kg,5');
+    expect(lines[2]).toBe('2024-05-10,07:00,"Legs, heavy",Barbell back squat,2,102.5,kg,3');
+    expect(lines[3]).toBe('2024-05-14,19:00,Legs,Push-up,1,,,12');
   });
 });

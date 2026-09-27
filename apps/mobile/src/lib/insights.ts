@@ -239,3 +239,31 @@ export function workoutShareText(session: TrainingSession, records: NewRecord[])
   lines.push('', 'Logged with GymGO');
   return lines.join('\n');
 }
+
+// --- Your log as a spreadsheet ----------------------------------------------------------
+
+const csvCell = (value: string | number | null) => {
+  const text = value === null ? '' : String(value);
+  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+/**
+ * Your whole log as CSV, a row a set, oldest first, for a spreadsheet: the
+ * date and time it finished, the workout, the exercise, the set's number,
+ * weight and unit (blank for body weight, never zero) and reps.
+ */
+export function logToCsv(sessions: TrainingSession[]): string {
+  const rows: Array<Array<string | number | null>> = [['date', 'time', 'workout', 'exercise', 'set', 'weight', 'unit', 'reps']];
+  const ordered = [...sessions].sort((a, b) => (a.finishedAt < b.finishedAt ? -1 : a.finishedAt > b.finishedAt ? 1 : 0));
+  for (const session of ordered) {
+    const finished = new Date(session.finishedAt);
+    const date = `${finished.getFullYear()}-${String(finished.getMonth() + 1).padStart(2, '0')}-${String(finished.getDate()).padStart(2, '0')}`;
+    const time = `${String(finished.getHours()).padStart(2, '0')}:${String(finished.getMinutes()).padStart(2, '0')}`;
+    for (const logged of session.exercises) {
+      logged.sets.forEach((set, index) => {
+        rows.push([date, time, session.name, exerciseName(logged.exerciseId), index + 1, set.weight, set.weight === null ? null : session.unit, set.reps]);
+      });
+    }
+  }
+  return rows.map((row) => row.map(csvCell).join(',')).join('\n') + '\n';
+}

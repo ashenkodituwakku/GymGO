@@ -130,6 +130,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Pro: a chart per exercise (estimated 1RM over time) and next-session targets by double progression | ✅ | ✅ unit tests + seen in the browser as Pro (chart, aim) and as Free (Pro hint, no aim) | n/a | ❌ | n/a | ❌ the gate is the app's (your own data, worked out on the device) |
 | Weekly goal (1 to 7 a week, kept on the device), the last 12 weeks as a calendar with the weeks you met it, and milestones (workouts, best weeks in a row, records broken, sets logged), all counted from your own log; free | ✅ | ✅ 7 unit tests + seen in the browser at iPhone sizes, light and dark, on a log of 18 workouts over 11 weeks | n/a | ❌ | n/a | ❌ |
 | Share a finished workout: a few lines of text (what, how long, sets, weight lifted, records, each exercise's sets), through the phone's share sheet, or copied in a browser that has none; nothing about the gym, place or time of day | ✅ | ✅ 1 unit test + shared (copied) from the browser after finishing a workout | n/a | ❌ share sheet not seen on a phone | n/a | ❌ |
+| Export your training log as CSV from Progress (a row a set, oldest first: date, time, workout, exercise, set, weight, unit, reps; blank weight for body weight); downloads in a browser, the share sheet on a phone; free | ✅ | ✅ 1 unit test + downloaded and read back in the browser (56 sets) | n/a | ❌ share sheet not seen on a phone | n/a | ❌ |
 | Pro: muscle balance (sets per muscle over the last 4 weeks from GymGO's own exercise list, a helper muscle counting half; exercises it doesn't list are left out and counted as such; names the muscles you've missed) and warm-up sets on the plate calculator (the bar, then about 40, 60 and 80%, rounded down to what the plates make, with the plates); Free sees what each would show, linking to Pro | ✅ | ✅ 4 unit tests + seen in the browser as Pro (kg and lb) and as Free | n/a | ❌ | n/a | ❌ the gate is the app's, like the charts |
 | GymGO Pro screen, plan in Profile, Free limits, workout library | ✅ | ✅ whole loop driven in the browser against a stand-in Stripe (checkout, return, manage, cancel) | ❌ real Stripe never used | ❌ the phone's in-app browser round trip not seen | n/a | ❌ |
 | Time-zone self-check at start-up (Sydney both seasons, a New York summer, India's half-hour zone) | ✅ | ✅ unit tests | n/a | ❌ | n/a | ❌ |
@@ -281,7 +282,7 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 | `@gymgo/eu-data` unit tests | **10 passed** |
 | `@gymgo/osm` unit tests | **25 passed** |
 | `@gymgo/server` tests (real HTTP, in-memory SQLite) | **149 passed** |
-| `@gymgo/mobile` unit tests | **165 passed** |
+| `@gymgo/mobile` unit tests | **166 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
 | `expo export` (iOS + Android) | Both compiled to Hermes bytecode |
 | `expo-doctor` | 21/21 checks passed |

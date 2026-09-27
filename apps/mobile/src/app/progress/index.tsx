@@ -33,6 +33,7 @@ import {
   type TrainingSession,
 } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
+import { downloadTrainingCsv } from '@/lib/exportData';
 import { exerciseName } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 
@@ -202,6 +203,14 @@ export default function ProgressScreen() {
       )}
 
       <PrimaryButton label="Plate calculator" icon="plates" tone="quiet" onPress={() => router.push('/plates')} />
+      {known && log.sessions.length > 0 && (
+        <PrimaryButton
+          label="Export your log (CSV)"
+          icon="download"
+          tone="quiet"
+          onPress={() => void downloadTrainingCsv(log.sessions).catch(() => undefined)}
+        />
+      )}
     </ScrollView>
   );
 }

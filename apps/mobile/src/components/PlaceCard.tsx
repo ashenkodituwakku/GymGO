@@ -286,7 +286,8 @@ export function PlaceCard({
         <Fact icon="money" value={price.headline} caption={price.caption} tint={price.confirmed ? color.label : color.maybeInk} />
         <Fact
           icon="star"
-          value={result.rating.average === null ? 'New' : result.rating.average.toFixed(1)}
+          // Not "New": a gym nobody has reviewed here yet may have stood for decades.
+          value={result.rating.average === null ? '—' : result.rating.average.toFixed(1)}
           caption={result.rating.count ? `${result.rating.count} review${result.rating.count === 1 ? '' : 's'}` : 'no reviews yet'}
           tint={color.label}
         />

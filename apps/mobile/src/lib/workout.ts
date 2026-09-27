@@ -149,6 +149,18 @@ export interface Exercise {
 
 const BODY: Kit[][] = [[]];
 
+/**
+ * An exercise's name: GymGO's own, or, for an id it doesn't list (one logged
+ * under an older name, say), its words made readable: "romanian-deadlift"
+ * reads "Romanian deadlift", never the raw id.
+ */
+export function exerciseName(id: string): string {
+  const known = EXERCISES.find((exercise) => exercise.id === id);
+  if (known) return known.name;
+  const words = id.replace(/[-_]+/g, ' ').trim();
+  return words ? words[0]!.toUpperCase() + words.slice(1) : 'This exercise';
+}
+
 export const EXERCISES: Exercise[] = [
   // Chest
   { id: 'bench-press', name: 'Barbell bench press', primary: ['chest'], secondary: ['triceps', 'deltoids'], needs: [['barbells', 'bench']], compound: true, cue: 'Shoulder blades pinned back, bar to mid-chest, feet planted.' },

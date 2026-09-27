@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EQUIPMENT_TYPES } from '@gymgo/domain';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
-import { EXERCISES, MUSCLES, TYPICAL_KIT, generateWorkout, knownKit, wayToDo, type Kit } from './workout';
+import { EXERCISES, generateWorkout, type Kit, knownKit, MUSCLES, TYPICAL_KIT, wayToDo, exerciseName } from './workout';
 
 describe('the exercise library', () => {
   it('only names equipment GymGO tracks, and every muscle can be trained with typical kit', () => {
@@ -56,5 +56,13 @@ describe('knownKit', () => {
     ]);
     expect(kit.has.sort()).toEqual(['barbells', 'dumbbells', 'lifting_platform']);
     expect(kit.lacks).toEqual(['leg_press']);
+  });
+});
+
+describe('exerciseName', () => {
+  it('uses GymGO\'s name, and makes an unknown id readable rather than showing it raw', () => {
+    expect(exerciseName('back-squat')).toBe('Barbell back squat');
+    expect(exerciseName('romanian-deadlift')).toBe('Romanian deadlift');
+    expect(exerciseName('')).toBe('This exercise');
   });
 });

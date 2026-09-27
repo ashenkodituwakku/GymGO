@@ -13,7 +13,7 @@ import { useApp } from '@/lib/app-state';
 import { color, radius, space, themed } from '@/lib/theme';
 import { e1rmSeries, formatWeight, fromKg, personalRecords, setsSummary, unitFor } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
-import { EXERCISES } from '@/lib/workout';
+import { EXERCISES, exerciseName } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 
 /** "25 Sep", with the year only when it isn't this one. */
@@ -33,7 +33,7 @@ export default function ExerciseProgressScreen() {
   const unit = unitFor(prefs.country);
   const exercise = EXERCISES.find((item) => item.id === exerciseId) ?? null;
   // An id GymGO doesn't list (a mistyped link, or an exercise since renamed): its words, readably.
-  const title = exercise?.name ?? humanise(exerciseId);
+  const title = exerciseName(exerciseId);
   usePageTitle(title);
   const record = useMemo(() => personalRecords(log.sessions).get(exerciseId) ?? null, [log.sessions, exerciseId]);
   const series = useMemo(() => e1rmSeries(log.sessions, exerciseId), [log.sessions, exerciseId]);
@@ -118,12 +118,6 @@ export default function ExerciseProgressScreen() {
       <PrimaryButton label="Back to Progress" tone="quiet" onPress={() => (router.canGoBack() ? router.back() : router.replace('/progress'))} />
     </ScrollView>
   );
-}
-
-/** "barbell-back-squat" → "Barbell back squat". */
-function humanise(id: string): string {
-  const words = id.replace(/[-_]+/g, ' ').trim();
-  return words ? words[0]!.toUpperCase() + words.slice(1) : 'This exercise';
 }
 
 function Fact({ label, value }: { label: string; value: string }) {

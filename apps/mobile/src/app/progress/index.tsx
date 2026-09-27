@@ -31,10 +31,10 @@ import {
   type TrainingSession,
 } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
-import { EXERCISES } from '@/lib/workout';
+import { exerciseName } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 
-const nameOf = (id: string) => EXERCISES.find((exercise) => exercise.id === id)?.name ?? id;
+const nameOf = exerciseName;
 /** When a session started, as "6:40 pm": the day it was is the heading above it. */
 const startTime = (iso: string) => {
   const started = new Date(iso);

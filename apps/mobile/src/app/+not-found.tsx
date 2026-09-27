@@ -34,6 +34,7 @@ const styles = themed(() =>
   StyleSheet.create({
     page: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
     center: { textAlign: 'center' },
-    button: { alignSelf: 'stretch', maxWidth: 360, width: '100%', marginTop: space[2] },
+    // Centred like the words above it: stretched, a capped width sat at the left edge of a wide window.
+    button: { alignSelf: 'center', maxWidth: 360, width: '100%', marginTop: space[2] },
   }),
 );

@@ -282,6 +282,7 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 | `expo-doctor` | 21/21 checks passed |
 | `expo prebuild` (iOS + Android, on Linux) | Both generated. The iPhone asks only for location while in use, photos and the local network; Android for location, internet and vibration |
 | Phone app in a browser (Chromium, 390 / 768 / 1280 wide) | Scripted by hand, not a suite in the repo: search, filters, save, compare, review, country, sign-in, training, keyboard use, Escape, offline server, location allowed / unanswered / abroad |
+| Layout at iPhone sizes (Chromium at 375 × 667, 390 × 844, 402 × 874 and 430 × 932, with the Dynamic Island and home-bar safe areas emulated; also 768 and 1280 wide) | A script, not in the repo, measured every screen for anything past the window's edge, text cut by its box, cards off the 16-point gutter and content left under the tab bar; light and dark screenshots looked at. None past the edge or cut; long gym names wrap to two lines and can still end in "…" on the smallest phones. Never seen on a real iPhone |
 | `pnpm build` (website) | Compiled successfully; not rerun this round, the website is unchanged |
 | Playwright, old website (390 / 768 / 1440), fresh build | **99 passed**, 24 skipped (website unchanged since) |
 

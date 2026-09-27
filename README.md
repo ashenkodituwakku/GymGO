@@ -293,6 +293,16 @@ guide, so on a repeat session it's mostly ticking.
 - **Progress** (Profile → Progress): weeks in a row you've trained,
   workouts this week, your records for every exercise, and every session,
   each of which you can open or delete.
+- **Weekly goal and calendar.** Pick how many workouts a week you're aiming
+  for (kept on the device); Progress shows this week against it, the last
+  12 weeks a square a day, and a dot under each week you met it. Home shows
+  the week in one line once you've logged a workout.
+- **Milestones.** Workouts logged, your longest run of weeks in a row,
+  records broken and sets logged, each with the steps you've passed and
+  how far to the next. All counted from your own log.
+- **Share a workout.** After you finish, **Share this workout** sends a
+  few lines (what, how long, sets, weight, records) through the share sheet;
+  never the gym or the place.
 - **Pounds in the US**, kilograms elsewhere; switch before you type the
   first weight. A blank weight is body weight, never zero.
 
@@ -305,7 +315,14 @@ one-rep max over time, and while you train each exercise shows **Aim**:
 what to lift next, by double progression. Keep the weight until every set
 reaches the top of the rep range, then add the smallest jump (5 lb or
 2.5 kg) and start again at the bottom. It's worked out from your own last
-session, and says why.
+session, and says why. Pro also adds **muscle balance** to Progress (your
+sets for each muscle over the last four weeks, and the muscles you've
+missed), **warm-up sets** on the plate calculator (the bar, then about
+40%, 60% and 80%, with the plates for each), and **your own notes** on each
+gym's page, kept on the device.
+
+A gym that says **Call first** also lists **what to ask** when you call:
+one question for each thing GymGO hasn't confirmed, for free.
 
 Tap any gym to open its own page, with share, compare and save at the top.
 It opens with the gym's logo (a chain's free logo, or the icon from the
@@ -756,6 +773,9 @@ saved list always opens, wherever the gym is.
 | Workout library | Build and share | Save workouts to your account, reopen them on any device |
 | Progress charts | Your records and history | A chart for every exercise |
 | Next-session targets | Last time's numbers | What to lift next, worked out for you |
+| Muscle balance | Sets per workout | Every muscle over the last four weeks, and the ones you've missed |
+| Warm-up sets | Plates for any weight | A warm-up ramp to your weight, with the plates |
+| Gym notes | — | Your own notes on each gym, on your device |
 | Colour themes | Indigo, light or dark | Five accents, light or dark |
 
 One tier, two ways to pay, tax included:

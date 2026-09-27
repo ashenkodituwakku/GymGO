@@ -156,7 +156,8 @@ export default function Home() {
             <View style={styles.shortcutIcon}>
               <Icon name={item.icon} size={20} color={color.brand} />
             </View>
-            <Txt variant="footnote" style={[styles.center, face('medium')]} numberOfLines={1}>
+            {/* Two lines on the narrowest phones, where "Under A$25" didn't fit on one. */}
+            <Txt variant="footnote" style={[styles.center, face('medium')]} numberOfLines={2}>
               {item.title}
             </Txt>
           </Pressy>

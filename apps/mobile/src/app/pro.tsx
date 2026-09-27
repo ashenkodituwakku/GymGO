@@ -24,6 +24,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { Icon, type IconName } from '@/components/Icon';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp, type ProReason } from '@/lib/app-state';
+import type { Sale } from '@/lib/useBilling';
 import { ApiError, OfflineError } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
@@ -78,6 +79,15 @@ export default function ProScreen() {
       }
     });
   }, [params.checkout, signedIn, refresh]);
+
+  // The app couldn't ask at launch (offline then): ask now, so a blip earlier
+  // doesn't leave Pro looking unbuyable until the next restart.
+  const { sale, askSale } = billing;
+  useEffect(() => {
+    if (sale === 'unreachable') askSale();
+    // Once, on opening; the Try again button asks after that.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const monthly = proPrice('month', currency, billing.prices);
   const yearly = proPrice('year', currency, billing.prices);
@@ -233,7 +243,8 @@ export default function ProScreen() {
 
             <BuyButton
               signedIn={signedIn}
-              available={billing.available}
+              sale={billing.sale}
+              onAskAgain={billing.askSale}
               busy={busy}
               label={chosen ? `Continue · ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}` : 'Continue'}
               onSubscribe={() => void subscribe()}
@@ -276,14 +287,16 @@ export default function ProScreen() {
 
 function BuyButton({
   signedIn,
-  available,
+  sale,
+  onAskAgain,
   busy,
   label,
   onSubscribe,
   onSignIn,
 }: {
   signedIn: boolean;
-  available: boolean;
+  sale: Sale;
+  onAskAgain: () => void;
   busy: boolean;
   label: string;
   onSubscribe: () => void;
@@ -296,7 +309,19 @@ function BuyButton({
       </Txt>
     );
   }
-  if (!available) {
+  if (sale === 'asking' || sale === 'unreachable') {
+    return (
+      <View style={styles.gap}>
+        <PrimaryButton label={sale === 'asking' ? 'Checking…' : 'Try again'} icon="refresh" tone="quiet" busy={sale === 'asking'} onPress={onAskAgain} />
+        {sale === 'unreachable' && (
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+            Can’t reach the GymGO server, so Pro can’t be bought just now.
+          </Txt>
+        )}
+      </View>
+    );
+  }
+  if (sale === 'off') {
     return (
       <View style={styles.gap}>
         <PrimaryButton label="Not on sale yet" disabled onPress={() => undefined} />

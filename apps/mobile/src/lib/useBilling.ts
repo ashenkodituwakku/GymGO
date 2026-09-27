@@ -14,22 +14,34 @@ import type { AccountApi } from './useAccount';
 
 const PLAN_KEY = 'gymgo.plan.v1';
 
+/**
+ * Whether Pro can be bought through this server: still asking, couldn't ask
+ * (out of reach), or its answer. Couldn't-ask isn't "not on sale", so it's
+ * kept apart, and asked again when the Pro screen opens.
+ */
+export type Sale = 'asking' | 'unreachable' | 'on' | 'off';
+
 export function useBilling(account: AccountApi) {
-  const [offer, setOffer] = useState<{ available: boolean; prices: ProPrice[] }>({ available: false, prices: PRO_PRICES });
+  const [offer, setOffer] = useState<{ sale: Sale; prices: ProPrice[] }>({ sale: 'asking', prices: PRO_PRICES });
   const [state, setState] = useState<BillingState | null>(null);
   const [remembered, setRemembered] = useState<PlanId>('free');
   const token = account.token;
   const signedIn = account.state === 'signed_in' || account.state === 'unreachable';
 
-  useEffect(() => {
+  const askSale = useCallback(() => {
+    setOffer((current) => (current.sale === 'unreachable' ? { ...current, sale: 'asking' } : current));
     api
       .billingPlans()
-      .then((result) => setOffer({ available: result.available, prices: result.prices }))
-      .catch(() => undefined);
+      .then((result) => setOffer({ sale: result.available ? 'on' : 'off', prices: result.prices }))
+      .catch(() => setOffer((current) => (current.sale === 'asking' ? { ...current, sale: 'unreachable' } : current)));
+  }, []);
+
+  useEffect(() => {
+    askSale();
     AsyncStorage.getItem(PLAN_KEY)
       .then((value) => setRemembered(value === 'pro' ? 'pro' : 'free'))
       .catch(() => undefined);
-  }, []);
+  }, [askSale]);
 
   /** Ask the server again; `fromStripe` makes it re-read Stripe first. */
   const refresh = useCallback(
@@ -38,7 +50,7 @@ export function useBilling(account: AccountApi) {
       try {
         const next = fromStripe ? await api.syncBilling(token) : await api.billing(token);
         setState(next);
-        setOffer((current) => ({ ...current, available: next.available }));
+        setOffer((current) => ({ ...current, sale: next.available ? 'on' : 'off' }));
         setRemembered(next.plan);
         AsyncStorage.setItem(PLAN_KEY, next.plan).catch(() => undefined);
         return next;
@@ -66,8 +78,9 @@ export function useBilling(account: AccountApi) {
     planKnown: state !== null || account.state === 'signed_out',
     limits: LIMITS[plan],
     subscription: state?.subscription ?? null,
-    /** Pro can be bought through this server right now. */
-    available: offer.available,
+    /** Whether Pro can be bought through this server right now. */
+    sale: offer.sale,
+    askSale,
     prices: offer.prices,
     refresh,
   };

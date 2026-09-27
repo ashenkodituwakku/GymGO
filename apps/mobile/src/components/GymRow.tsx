@@ -41,12 +41,9 @@ export function GymRow({
   const access = accessLine(result.access.verdict, visitMinute);
   const coverUri = cover ? photoUrl(cover) : null;
   const mark = useGymMark(location);
-  const where = [
-    location.address.suburb,
-    result.distanceKm !== null ? distanceLabel(result.distanceKm, result.record.location.address.countryCode) : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const suburb = location.address.suburb || null;
+  const distance = result.distanceKm !== null ? distanceLabel(result.distanceKm, result.record.location.address.countryCode) : null;
+  const where = [suburb, distance].filter(Boolean).join(' · ');
 
   return (
     <Pressable
@@ -69,12 +66,25 @@ export function GymRow({
       )}
 
       <View style={styles.middle}>
-        <Txt variant="headline" numberOfLines={1}>
+        {/* A phone leaves this column narrow, so a long name takes a second
+            line rather than losing its end, and a long suburb gives way
+            before the distance does. */}
+        <Txt variant="headline" numberOfLines={2}>
           {location.name}
         </Txt>
-        <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-          {where}
-        </Txt>
+        <View style={styles.where}>
+          {suburb ? (
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1} style={styles.shrink}>
+              {suburb}
+            </Txt>
+          ) : null}
+          {distance ? (
+            // Non-breaking spaces: a plain one at the start of this line is dropped on the web.
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1} style={styles.keep}>
+              {suburb ? `\u00a0·\u00a0${distance}` : distance}
+            </Txt>
+          ) : null}
+        </View>
         <View style={[styles.chip, styles.chipRow, { backgroundColor: tone.tint }]}>
           <Icon name={tone.icon} size={11} color={tone.ink} />
           <Txt variant="caption" color={tone.ink} style={styles.chipText} numberOfLines={1}>
@@ -87,7 +97,7 @@ export function GymRow({
         <Txt variant="figure" color={price.confirmed ? color.label : color.labelSecondary}>
           {price.headline}
         </Txt>
-        <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
+        <Txt variant="caption" color={color.labelSecondary} numberOfLines={2} style={styles.caption}>
           {price.caption}
         </Txt>
       </View>
@@ -113,6 +123,9 @@ const styles = themed(() => StyleSheet.create({
   },
   tile: { alignItems: 'center', justifyContent: 'center' },
   middle: { flex: 1, minWidth: 0, gap: 2 },
+  where: { flexDirection: 'row', minWidth: 0 },
+  shrink: { flexShrink: 1 },
+  keep: { flexShrink: 0 },
   chipRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   chip: {
     alignSelf: 'flex-start',
@@ -122,5 +135,7 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.pill,
   },
   chipText: face('semibold'),
-  trailing: { alignItems: 'flex-end', maxWidth: 96 },
+  // Narrow, so the name gets the room: "price unknown" wraps onto two lines.
+  trailing: { alignItems: 'flex-end', maxWidth: 76 },
+  caption: { textAlign: 'right' },
 }));

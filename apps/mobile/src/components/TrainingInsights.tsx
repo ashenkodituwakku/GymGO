@@ -7,6 +7,7 @@
 
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressy } from './motion';
 import { haptic } from '@/lib/haptics';
 import {
   WEEKLY_GOALS,
@@ -17,7 +18,7 @@ import {
   type MilestoneKind,
 } from '@/lib/insights';
 import { color, face, radius, space, themed } from '@/lib/theme';
-import type { TrainingSession } from '@/lib/training';
+import { weekStreak, type TrainingSession } from '@/lib/training';
 import { Icon, type IconName } from './Icon';
 import { Txt } from './ui';
 
@@ -133,6 +134,47 @@ export function WeekCard({
         {`The last ${WEEKS} weeks, a square a day, Monday at the top.${goal ? ' A green dot marks a week you met your goal.' : ''}`}
       </Txt>
     </View>
+  );
+}
+
+/** Home's one line on your week: the count against your goal, the streak, and a dot a day. Opens Progress. */
+export function WeekStrip({ sessions, goal, onPress, now = new Date() }: { sessions: TrainingSession[]; goal: number | null; onPress: () => void; now?: Date }) {
+  const week = useMemo(() => trainingCalendar(sessions, 1, now)[0]!, [sessions, now]);
+  const streak = weekStreak(sessions, now);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const count = week.sessions;
+  const title = goal ? (count <= goal ? `${count} of ${goal} this week` : `${count} this week, goal ${goal}`) : `${count} workout${count === 1 ? '' : 's'} this week`;
+  const detail = goal && count >= goal ? 'Goal met' : streak > 1 ? `${streak} weeks in a row` : goal ? `${goal - count} to go` : 'Tap to set a weekly goal';
+  return (
+    <Pressy
+      scaleTo={0.97}
+      onPress={() => {
+        haptic.select();
+        onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}. ${detail}. Open Progress`}
+      style={styles.strip}
+    >
+      <View style={styles.stripIcon}>
+        <Icon name="flame" size={16} color={color.onBrand} />
+      </View>
+      <View style={styles.flex}>
+        <Txt variant="headline">{title}</Txt>
+        <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+          {goal && count >= goal && streak > 1 ? `Goal met · ${streak} weeks in a row` : detail}
+        </Txt>
+      </View>
+      <View style={styles.stripDays}>
+        {week.days.map((day) => (
+          <View
+            key={day.date}
+            style={[styles.stripDay, day.sessions > 0 ? styles.dayTrained : day.future ? styles.stripFuture : styles.dayRest, day.date === today && styles.stripToday]}
+          />
+        ))}
+      </View>
+      <Icon name="chevron" size={14} color={color.labelTertiary} />
+    </Pressy>
   );
 }
 
@@ -284,6 +326,12 @@ const styles = themed(() =>
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     goalRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     goalValue: { minWidth: 72, textAlign: 'center' },
+    strip: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
+    stripIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.maybe },
+    stripDays: { flexDirection: 'row', gap: 4 },
+    stripDay: { width: 10, height: 10, borderRadius: 5 },
+    stripFuture: { backgroundColor: color.fill, opacity: 0.5 },
+    stripToday: { borderWidth: 1.5, borderColor: color.brand },
     stepper: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     setGoal: { flexDirection: 'row', alignItems: 'center', gap: space[2], alignSelf: 'flex-start', paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandTint },
 

@@ -24,7 +24,7 @@ import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityNear, cityPlace, localBudget, moneyLabel, tracksPrices, worldCitiesIn, type AppPlace, type City, type WorldCity } from '@/lib/places';
 import { atPlace, atWorldCity, moveTo, nearLabel, nextVisitAt, runSearch, visitIsLater, type Filters } from '@/lib/query';
 import { resultsById } from '@/lib/results';
-import { color, dropShadow, face, radius, shadow, space, themed } from '@/lib/theme';
+import { PAGE_COLUMN, color, dropShadow, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 
 /** Melbourne suburbs worth a tap, in the order people ask about them. */
@@ -39,8 +39,6 @@ function greeting(minute: number): string {
 /** How many of a region's cities show before "N more". */
 const CITIES_SHOWN = 12;
 
-/** The page's column width on wide screens (TabScreen's maxWidth). */
-const COLUMN = 760;
 
 /** How Home groups the built-in cities. */
 const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
@@ -409,7 +407,7 @@ function Carousel({ children }: { children: React.ReactNode }) {
   // screen the page is a centred column, and running 16 points past it
   // just looks cut off, so the row keeps to the column there.
   const { width } = useWindowDimensions();
-  const bleed = width < COLUMN + space[4] * 2;
+  const bleed = width < PAGE_COLUMN + space[4] * 2;
   const scroller = useRef<ScrollView>(null);
   const [view, setView] = useState({ x: 0, width: 0, content: 0 });
   // A mouse can't swipe: in a browser's wide layout, buttons page the row

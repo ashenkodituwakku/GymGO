@@ -16,7 +16,7 @@ import { TIER, accessShort, timeLabel, visitWhen } from '@/lib/copy';
 import { visitIsLater } from '@/lib/query';
 import { priceLine } from '@/lib/present';
 import { resultsById } from '@/lib/results';
-import { HEADER_EDGE, color, face, radius, space, themed } from '@/lib/theme';
+import { HEADER_EDGE, PAGE_COLUMN, color, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 
 type Cell = { text: string; ink?: string; strong?: boolean };
@@ -236,7 +236,7 @@ const styles = themed(() => StyleSheet.create({
   // iOS and Android inset header buttons themselves; a browser doesn't.
   clear: { paddingHorizontal: HEADER_EDGE },
   page: { flex: 1, backgroundColor: color.groupedBackground },
-  content: { padding: space[4], gap: space[3], width: '100%', maxWidth: 760, alignSelf: 'center', paddingBottom: space[8] },
+  content: { padding: space[4], gap: space[3], width: '100%', maxWidth: PAGE_COLUMN, alignSelf: 'center', paddingBottom: space[8] },
   tableScroll: { marginHorizontal: -space[4] },
   table: { gap: space[3], marginHorizontal: space[4] },
   tableFits: { gap: space[3] },

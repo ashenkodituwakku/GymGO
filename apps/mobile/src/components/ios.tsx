@@ -10,7 +10,7 @@ import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useS
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance } from '@/lib/layout';
-import { NO_TOUCH, color, radius, space, themed } from '@/lib/theme';
+import { NO_TOUCH, PAGE_COLUMN, color, radius, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
@@ -263,7 +263,7 @@ export function SearchButton({ placeholder, onPress }: { placeholder: string; on
 const styles = themed(() => StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, backgroundColor: color.groupedBackground },
-  content: { paddingHorizontal: space[4], gap: space[5], width: '100%', maxWidth: 760, alignSelf: 'center' },
+  content: { paddingHorizontal: space[4], gap: space[5], width: '100%', maxWidth: PAGE_COLUMN, alignSelf: 'center' },
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space[3] },
   bar: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' },
   barTitle: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[8] + space[6] },

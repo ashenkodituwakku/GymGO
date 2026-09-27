@@ -255,6 +255,13 @@ export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32 } as const;
  */
 export const HEADER_EDGE = Platform.OS === 'web' ? space[4] : 0;
 
+/**
+ * The widest a page's column gets on a tablet or PC, gutters included: the
+ * tabs, a gym's page and Compare share it, so opening a gym from Home or
+ * Saved doesn't shift its cards in from the edges.
+ */
+export const PAGE_COLUMN = 760;
+
 export const radius = {
   sm: 10,
   md: 14,

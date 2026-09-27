@@ -30,10 +30,8 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { gymDistanceLine } from '@/lib/copy';
 import { resultsById } from '@/lib/results';
-import { HEADER_EDGE, color, space, themed } from '@/lib/theme';
+import { HEADER_EDGE, PAGE_COLUMN, color, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
-
-const PAGE_WIDTH = 720;
 
 export default function GymPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -100,7 +98,7 @@ export default function GymPage() {
   const location = result.record.location;
   const saved = account.saved.includes(location.id);
   const comparing = compare.includes(location.id);
-  const cardWidth = Math.min(width, PAGE_WIDTH);
+  const cardWidth = Math.min(width, PAGE_COLUMN);
   const subtitle = [location.address.suburb, result.distanceKm !== null ? gymDistanceLine(result.distanceKm, location.address.countryCode, filters.placeName) : null]
     .filter(Boolean)
     .join(' · ');

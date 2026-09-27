@@ -120,6 +120,7 @@ export function PlaceCard({
   memberStatus,
   reviews,
   notes,
+  collect,
   saveAndShareElsewhere = false,
 }: {
   result: GymSearchResult;
@@ -150,6 +151,8 @@ export function PlaceCard({
   reviews: React.ReactNode;
   /** Your own notes on the gym, a fold of its own. */
   notes?: React.ReactNode;
+  /** Checking in to collect the gym. */
+  collect?: React.ReactNode;
 }) {
   const [notice, setNotice] = useState<string | null>(null);
   const record = result.record;
@@ -325,6 +328,8 @@ export function PlaceCard({
           ))}
         </Animated.View>
       )}
+
+      {collect}
 
       {/* At a glance ---------------------------------------------------- */}
       <Animated.View style={styles.facts} entering={rise(2)}>

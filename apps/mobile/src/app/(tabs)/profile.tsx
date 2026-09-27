@@ -19,6 +19,7 @@ import { ApiError } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { countryName } from '@/lib/country';
 import { useThemeChoice } from '@/lib/themePrefs';
+import { useCollection } from '@/lib/useCollection';
 import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
@@ -28,6 +29,7 @@ export default function Profile() {
   usePageTitle('Profile');
   const { account, data, recents, compare, prefs, setPref, billing, openPro } = useApp();
   const themeChoice = useThemeChoice();
+  const collection = useCollection();
   const router = useRouter();
   const params = useLocalSearchParams<{ checkout?: string }>();
   const [about, setAbout] = useState<'facts' | 'sources' | 'privacy' | null>(null);
@@ -120,6 +122,7 @@ export default function Profile() {
 
       <Group header="Your gyms">
         <Row icon="saved" tile={TILE.orange} title="Saved" value={String(account.saved.length)} onPress={() => router.navigate('/saved')} />
+        <Row icon="trophy" tile={TILE.orange} title="Collection" subtitle="Gyms you’ve checked in at" value={String(Object.keys(collection.gyms).length)} onPress={() => router.push('/collection')} />
         <Row icon="history" tile={TILE.blue} title="Recently viewed" value={String(recents.length)} onPress={() => router.navigate('/')} />
         <Row
           icon="compare"

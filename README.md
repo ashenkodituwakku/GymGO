@@ -324,6 +324,15 @@ gym's page, kept on the device.
 A gym that says **Call first** also lists **what to ask** when you call:
 one question for each thing GymGO hasn't confirmed, for free.
 
+**Collect gyms.** At a gym, open its page and tap **I'm here**: GymGO
+takes one location fix, checks on the phone that you're within about 150 m
+of the gym, and adds it to your **collection** (Profile → Collection). Each
+day you check in again is a visit, and the gym's card climbs from Bronze to
+Silver (3 visits), Gold (10) and Platinum (25). The collection counts your
+gyms, cities and countries and earns badges. Home says so when you're at a
+gym you haven't checked in at today. It's all on the device: your position
+is only compared, never sent or kept.
+
 Tap any gym to open its own page, with share, compare and save at the top.
 It opens with the gym's logo (a chain's free logo, or the icon from the
 gym's own website; see below) and its photos. On an iPhone, press and hold a gym card on Home for a preview

@@ -18,6 +18,7 @@ import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { useActiveSession } from '@/lib/activeSession';
 import { WeekStrip } from '@/components/TrainingInsights';
+import { CollectionStrip, HereNudge } from '@/components/CollectCard';
 import { useTrainingLog } from '@/lib/useTraining';
 import { useApp } from '@/lib/app-state';
 import { lookupLine, noGymsLine, searchPrompt, timeLabel, visitWhen } from '@/lib/copy';
@@ -51,7 +52,7 @@ const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
 
 export default function Home() {
   usePageTitle(null);
-  const { data, account, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady, lookup, retryLookup } = useApp();
+  const { data, account, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady, lookup, retryLookup, here } = useApp();
   const active = useActiveSession();
   // Your training log, shared with Progress; the week strip shows once there's something in it.
   const log = useTrainingLog(account.token);
@@ -216,9 +217,11 @@ export default function Home() {
         <Icon name="chevron" size={14} color={color.onBrandSoft} />
       </Pressy>
 
+      <HereNudge here={here} records={data.records} onOpen={(id) => router.push({ pathname: '/gym/[id]', params: { id } })} />
       {log.status === 'ready' && log.sessions.length > 0 && (
         <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} onPress={() => router.push('/progress')} />
       )}
+      <CollectionStrip onPress={() => router.push('/collection')} />
 
       {/* Everything below is about a place: it waits for your settings, so
           it opens on your country's city rather than flashing the default. */}

@@ -23,6 +23,7 @@ import { MemberStatus, StatusWarning } from '@/components/MemberStatus';
 import { PhotoHero } from '@/components/PhotoHero';
 import { PlaceCard } from '@/components/PlaceCard';
 import { GymNotes } from '@/components/GymNotes';
+import { CollectCard } from '@/components/CollectCard';
 import { ReviewsSection } from '@/components/ReviewsSection';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { shareGym } from '@/lib/actions';
@@ -207,6 +208,7 @@ export default function GymPage() {
             }
             reviews={<ReviewsSection gymId={location.id} account={account} inSheet={false} onSignIn={() => router.push('/sign-in')} />}
             notes={location.isDemoData ? null : <GymNotes gymId={location.id} isPro={billing.isPro} inSheet={false} onPro={() => openPro('notes')} />}
+            collect={location.isDemoData ? null : <CollectCard record={result.record} onOpenCollection={() => router.push('/collection')} />}
           />
           <GoogleSection place={place} photosAbove={googlePhotos} />
           <View style={styles.mapButton}>

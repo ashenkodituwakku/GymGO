@@ -47,6 +47,7 @@ import { MemberStatus, StatusWarning } from '@/components/MemberStatus';
 import { PhotoHero } from '@/components/PhotoHero';
 import { PlaceCard, PlaceHeader } from '@/components/PlaceCard';
 import { GymNotes } from '@/components/GymNotes';
+import { CollectCard } from '@/components/CollectCard';
 import { ResultsContent } from '@/components/ResultsContent';
 import { ReviewsSection } from '@/components/ReviewsSection';
 import { FloatingGlassBackground, FloatingSolidBackground, SHEET_GAP, SHEET_SIDE, SheetClip } from '@/components/SheetBackground';
@@ -624,6 +625,7 @@ function MapScreen() {
         }
         reviews={<ReviewsSection gymId={selected.record.location.id} account={account} inSheet={inSheet} onSignIn={openAccount} />}
         notes={selected.record.location.isDemoData ? null : <GymNotes gymId={selected.record.location.id} isPro={billing.isPro} inSheet={inSheet} onPro={() => openPro('notes')} />}
+        collect={selected.record.location.isDemoData ? null : <CollectCard record={selected.record} onOpenCollection={() => router.push('/collection')} />}
       />
     );
 

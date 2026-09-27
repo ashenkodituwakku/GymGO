@@ -213,6 +213,7 @@ function ThemedStack() {
         <Stack.Screen name="train" options={{ headerShown: true, title: 'Workout', gestureEnabled: false }} />
         <Stack.Screen name="plates" options={{ ...MODAL, headerShown: true, title: 'Plates' }} />
         <Stack.Screen name="progress/index" options={{ headerShown: true, title: 'Progress' }} />
+        <Stack.Screen name="collection" options={{ headerShown: true, title: 'Collection' }} />
         <Stack.Screen name="progress/[exercise]" options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="pro" options={{ ...MODAL, headerShown: true, title: 'GymGO Pro' }} />
         <Stack.Screen name="country" options={{ ...MODAL, headerShown: true, title: 'Country' }} />

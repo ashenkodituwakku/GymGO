@@ -2,7 +2,7 @@ import { useBottomSheetInternal, type BottomSheetBackgroundProps } from '@gorhom
 import type { ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { NO_TOUCH, color, dropShadow, radius, themed } from '@/lib/theme';
+import { NO_TOUCH, color, radius, themed } from '@/lib/theme';
 import { Glass, HAS_LIQUID_GLASS } from './Glass';
 
 /** The gap between a floating sheet and the tab bar below it. */
@@ -66,7 +66,10 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.sheet,
     borderCurve: 'continuous',
     // Real Liquid Glass casts its own soft shadow; the imitation needs one.
-    ...dropShadow(HAS_LIQUID_GLASS ? 0.08 : 0.16, 24, 4, 12),
+    // A box shadow, not Android's elevation: the background sits behind the
+    // sheet's rows as their sibling, and on Android an elevated view is
+    // drawn over its siblings, which would cover the list it's meant to hold.
+    boxShadow: `0px 4px 24px rgba(0, 0, 0, ${HAS_LIQUID_GLASS ? 0.08 : 0.16})`,
   },
   glass: {
     ...StyleSheet.absoluteFill,

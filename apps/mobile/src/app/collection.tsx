@@ -11,7 +11,7 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { GemCard } from '@/components/GemCard';
 import { Icon, type IconName } from '@/components/Icon';
@@ -24,13 +24,12 @@ import { FOIL_ONE_IN, cardFor, oddsLine, rarityRank } from '@/lib/rarity';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
-import { useScreenBottom } from '@/lib/layout';
+import { PageScroll } from '@/components/PageScroll';
 
 const COLUMN = 640;
 
 export default function CollectionScreen() {
   usePageTitle('Collection');
-  const screenBottom = useScreenBottom();
   const router = useRouter();
   const { data, requestExplore } = useApp();
   const { loaded, gyms } = useCollection();
@@ -86,7 +85,7 @@ export default function CollectionScreen() {
   }
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: 'Collection' }} />
 
       <Animated.View entering={rise(0)} style={styles.stats}>
@@ -168,7 +167,7 @@ export default function CollectionScreen() {
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
         Kept on this device. A visit counts once a day, when you check in at the gym; your location is only compared on the phone, never sent.
       </Txt>
-    </ScrollView>
+    </PageScroll>
   );
 }
 

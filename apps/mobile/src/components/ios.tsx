@@ -9,7 +9,7 @@ import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
 import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from '@/lib/haptics';
-import { useBottomClearance } from '@/lib/layout';
+import { useBottomClearance, useOverhang } from '@/lib/layout';
 import { NO_TOUCH, PAGE_COLUMN, color, radius, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
@@ -40,6 +40,9 @@ const BAR = 44;
 function TabScreenInner({ title, eyebrow, right, children }: { title: string; eyebrow?: string; right?: ReactNode; children: ReactNode }) {
   const insets = useSafeAreaInsets();
   const clearance = useBottomClearance();
+  // Past the tab bar, plus any of the tab the phone has laid out below the screen.
+  const { measureRef, onLayout, overhang } = useOverhang();
+  const bottom = clearance + overhang;
   const top = insets.top + (Platform.OS === 'web' ? space[6] : space[3]);
   // Where the large title ends: once it has scrolled under the bar, the
   // compact title fades in on a strip of glass, as in iOS.
@@ -52,12 +55,17 @@ function TabScreenInner({ title, eyebrow, right, children }: { title: string; ey
     opacity: interpolate(scrollY.value, [titleBottom - insets.top - BAR - 8, titleBottom - insets.top - BAR + 12], [0, 1], 'clamp'),
   }));
   return (
-    <View style={styles.flex}>
+    <View ref={measureRef} onLayout={onLayout} style={styles.flex}>
       <Animated.ScrollView
         style={styles.screen}
         onScroll={onScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={[styles.content, { paddingTop: top, paddingBottom: clearance + space[8] }]}
+        // The page scrolls under the floating tab bar, so it makes its own room
+        // for it rather than letting iOS guess at insets.
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={[styles.content, { paddingTop: top, paddingBottom: bottom + space[8] }]}
+        // The scroll bar stops above the tab bar too.
+        scrollIndicatorInsets={{ bottom }}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.titleRow} onLayout={(event) => setTitleBottom(event.nativeEvent.layout.y + event.nativeEvent.layout.height)}>

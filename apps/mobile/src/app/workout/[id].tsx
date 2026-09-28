@@ -10,7 +10,7 @@
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BodyPicker } from '@/components/BodyPicker';
 import { Icon, type IconName } from '@/components/Icon';
 import { Chip, PrimaryButton, Segmented, Txt } from '@/components/ui';
@@ -38,7 +38,7 @@ import {
   type Muscle,
 } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
-import { useScreenBottom } from '@/lib/layout';
+import { PageScroll } from '@/components/PageScroll';
 
 type KitMode = 'gym' | 'typical';
 
@@ -47,7 +47,6 @@ const GOAL_LABEL: Record<Goal, string> = { strength: 'Strength', muscle: 'Muscle
 
 export default function WorkoutScreen() {
   usePageTitle('Build a workout');
-  const screenBottom = useScreenBottom();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, account, billing, openPro, prefs } = useApp();
   const active = useActiveSession();
@@ -151,7 +150,7 @@ export default function WorkoutScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'Workout' }} />
-      <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
+      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         <View style={styles.intro}>
           <Txt variant="largeTitle">Build a workout</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
@@ -352,7 +351,7 @@ export default function WorkoutScreen() {
         <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
           General training ideas, not medical advice. Warm up, and pick weights you can move well.
         </Txt>
-      </ScrollView>
+      </PageScroll>
     </>
   );
 }

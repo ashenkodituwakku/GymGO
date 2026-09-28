@@ -7,7 +7,7 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, rise } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
@@ -19,7 +19,7 @@ import { downloadMyData } from '@/lib/exportData';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
-import { useScreenBottom } from '@/lib/layout';
+import { PageScroll } from '@/components/PageScroll';
 
 const PROVIDER_NAME: Record<SignInProvider, string> = { google: 'Google', apple: 'Apple' };
 
@@ -31,7 +31,6 @@ function messageFor(error: unknown): string {
 
 export default function AccountScreen() {
   usePageTitle('Account');
-  const screenBottom = useScreenBottom();
   const { account, billing } = useApp();
   const router = useRouter();
   const me = account.state === 'signed_in' ? account.account : null;
@@ -93,7 +92,7 @@ export default function AccountScreen() {
   const offered = (['apple', 'google'] as const).filter((provider) => (provider === 'google' ? providers?.google : providers?.apple) || connected(provider));
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentInsetAdjustmentBehavior="automatic">
+    <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       <Stack.Screen options={{ title: 'Account' }} />
 
       <Animated.View entering={rise(0)} style={styles.head}>
@@ -238,7 +237,7 @@ export default function AccountScreen() {
           }}
         />
       </Section>
-    </ScrollView>
+    </PageScroll>
   );
 }
 

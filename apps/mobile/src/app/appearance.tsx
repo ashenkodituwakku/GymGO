@@ -4,7 +4,7 @@
  */
 
 import { Stack } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { FADE_IN } from '@/components/motion';
 import { Icon } from '@/components/Icon';
@@ -14,7 +14,7 @@ import { haptic } from '@/lib/haptics';
 import { ACCENTS, ACCENT_IDS, FREE_ACCENT, color, face, radius, space, themed, type AccentId, type AppearanceChoice } from '@/lib/theme';
 import { setThemeChoice, useThemeChoice } from '@/lib/themePrefs';
 import { usePageTitle } from '@/lib/pageTitle';
-import { useScreenBottom } from '@/lib/layout';
+import { PageScroll } from '@/components/PageScroll';
 
 const MODES: Array<{ id: AppearanceChoice; label: string }> = [
   { id: 'system', label: 'Automatic' },
@@ -30,7 +30,6 @@ const PREVIEW = {
 
 export default function AppearanceScreen() {
   usePageTitle('Appearance');
-  const screenBottom = useScreenBottom();
   const choice = useThemeChoice();
   const { billing, openPro } = useApp();
 
@@ -51,7 +50,7 @@ export default function AppearanceScreen() {
   };
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: 'Appearance' }} />
 
       <Txt variant="footnote" color={color.labelSecondary} style={styles.section}>
@@ -144,7 +143,7 @@ export default function AppearanceScreen() {
           ? 'The accent colours buttons, links and your selections. Evidence colours (green, orange, grey) never change, so they always mean the same thing.'
           : 'Indigo is everyone’s. Ocean, Grape, Rose and Graphite come with GymGO Pro. Dark mode is free for everyone.'}
       </Txt>
-    </ScrollView>
+    </PageScroll>
   );
 }
 

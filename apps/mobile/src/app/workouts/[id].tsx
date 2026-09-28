@@ -2,7 +2,7 @@
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Share, StyleSheet, View } from 'react-native';
 import { ExerciseCard } from '@/components/ExerciseCard';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useActiveSession } from '@/lib/activeSession';
@@ -14,11 +14,10 @@ import { unitFor } from '@/lib/training';
 import { color, radius, space, themed } from '@/lib/theme';
 import { GOALS, muscleLabel, workoutText, type Muscle } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
-import { useScreenBottom } from '@/lib/layout';
+import { PageScroll } from '@/components/PageScroll';
 
 export default function SavedWorkoutScreen() {
   usePageTitle('Workout');
-  const screenBottom = useScreenBottom();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { account, prefs } = useApp();
   const active = useActiveSession();
@@ -76,7 +75,7 @@ export default function SavedWorkoutScreen() {
   return (
     <>
       <Stack.Screen options={{ title: '' }} />
-      <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
+      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         <View style={styles.intro}>
           <Txt variant="largeTitle">{saved.name}</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
@@ -144,7 +143,7 @@ export default function SavedWorkoutScreen() {
             </Txt>
           )}
         </View>
-      </ScrollView>
+      </PageScroll>
     </>
   );
 }

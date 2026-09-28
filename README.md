@@ -398,10 +398,20 @@ is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
   (map-only, like the cities below). The map's copies of the researched 23
   are left out, so none shows twice.
 - **7 more Australian cities**: Sydney, Brisbane, Perth, Adelaide, Canberra,
-  the Gold Coast and Hobart, with 229 real gyms between them. Like the US
-  cities below, these are **map-only**, from OpenStreetMap: no prices, guest
+  the Gold Coast and Hobart, and the rest of Melbourne: every gym
+  OpenStreetMap has across each city's suburbs (up to 30 km out), 1,256 of
+  them. Like the US cities below, these are **map-only**: no prices, guest
   hours or machine lists yet, so every one says **Call first**. Distances are
-  in kilometres and money in A$.
+  in kilometres and money in A$. The search box knows each city's suburbs
+  too (Burwood East, Castle Hill, Joondalup and so on).
+- **Gyms from their own websites**: all 76 open **Revo Fitness** gyms (WA,
+  SA, Victoria and NSW, including those that used to be Crunch Fitness in
+  Victoria) and **T1 Fitness** in Burwood East, read from each operator's
+  own site, with the address, map position, phone and, for Revo, the 24/7
+  member hours they publish. Each links to its page, and they show as open
+  because the operator lists them. Revo gyms still to open (Knox, Busselton
+  and five more) are left out until they do. `pnpm --filter @gymgo/au-data
+  operators fetch <dir>` then `operators build <dir>` refreshes them.
 - **40 US cities**, GymGO's main market: New York, Brooklyn, Los Angeles,
   Chicago, Houston, Miami, San Francisco, Oakland, San Jose, Seattle,
   Portland, Boston, Austin, Dallas, San Antonio, Denver, Salt Lake City,
@@ -1040,9 +1050,10 @@ packages/melbourne-data/  23 real inner-Melbourne gyms, every fact linked to
                      where it was read (gym websites, OpenStreetMap).
 packages/usa-data/   1,055 real gyms in 40 US cities, map-only, from
                      OpenStreetMap. scripts/generate.ts rebuilds it.
-packages/au-data/    269 more Australian gyms the same way (Sydney,
+packages/au-data/    1,256 more Australian gyms the same way (Sydney,
                      Brisbane, Perth, Adelaide, Canberra, Gold Coast,
-                     Hobart, and Melbourne beyond the researched 23).
+                     Hobart, and Melbourne beyond the researched 23), plus
+                     Revo Fitness and T1 Fitness from their own websites.
 packages/eu-data/    600 real gyms in 15 European cities, map-only, the
                      same way (scripts/fetch.py, then scripts/generate.ts).
 packages/osm/        What counts as a gym on OpenStreetMap, and how a mapped

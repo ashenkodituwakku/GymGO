@@ -9,9 +9,15 @@
  *
  * from the Overpass API, with the time it was fetched.
  *
+ * (and the same for amenity=gym, and sports centres whose sport is fitness or
+ * lifting), from the Overpass API, with the time it was fetched.
+ *
  * What counts as a gym is decided in packages/osm, shared with
- * packages/usa-data and the server's "Search this area". Then the 40
- * nearest the city centre.
+ * packages/usa-data and the server's "Search this area". Every one that
+ * passes is kept: the city's whole area, not just its centre. A gym an
+ * operator lists on its own website (src/operators.ts) is left out here, as
+ * that record is better sourced; so is a "Crunch Fitness" in Victoria where
+ * Revo Fitness now is, as Revo took over every Crunch there.
  *
  * Usage: pnpm --filter @gymgo/au-data generate <dir with city json files>
  */
@@ -37,12 +43,15 @@ import {
   type Candidate,
   type OsmElement,
 } from '@gymgo/osm';
+import { MELBOURNE_PLACES } from '@gymgo/melbourne-data';
 import { AU_CITIES, MELBOURNE_MAP_AREA } from '../src/cities';
+import { OPERATOR_GYMS_RAW } from '../src/operators';
 import type { AuCityId, GymRow, PlaceRow } from '../src/rows';
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'data.ts');
-const PER_CITY = 40;
-const PLACES_PER_CITY = 14;
+/** Enough for any city's whole area; a safety cap, not a choice of which to show. */
+const PER_CITY = 2000;
+const PLACES_PER_CITY = 400;
 const STATES = new Set(['ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA']);
 const STATE_NAMES: Record<string, string> = {
   QUEENSLAND: 'QLD',
@@ -85,6 +94,22 @@ function sameGym(name: string, pos: [number, number], other: (typeof RESEARCHED)
   return [...a].some((word) => b.has(word)) || a.size === 0 || b.size === 0;
 }
 
+// Gyms from operators' own websites (src/operators.ts). The map's copy of one
+// is left out: a gym there within 150 metres sharing a word of its name, or
+// any Revo or Crunch within 300 metres of a Revo (Revo took over Crunch's
+// Victorian gyms, so the map's Crunch there is out of date).
+const OPERATORS = OPERATOR_GYMS_RAW.map((gym) => ({ name: gym.name, pos: [gym.lat, gym.lng] as [number, number], brand: gym.brand ?? '' }));
+function listedByOperator(name: string, pos: [number, number], state: string): boolean {
+  return OPERATORS.some((gym) => {
+    const d = km(pos, gym.pos);
+    if (gym.brand === 'Revo Fitness' && d <= 0.3 && (/\brevo\b/i.test(name) || (state === 'VIC' && /\bcrunch\b/i.test(name)))) return true;
+    if (d > 0.15) return false;
+    const a = words(name);
+    const b = words(gym.name);
+    return [...a].some((word) => b.has(word));
+  });
+}
+
 interface CityFile {
   fetchedAt: string;
   gyms: OsmElement[];
@@ -99,6 +124,7 @@ function main(src: string) {
   const stats: string[] = [];
   let parsed = 0;
   let unparsed = 0;
+  let superseded = 0;
 
   for (const city of CITIES) {
     const data = JSON.parse(readFileSync(join(src, `${city.id}.json`), 'utf8')) as CityFile;
@@ -110,6 +136,10 @@ function main(src: string) {
       const found = candidate(el);
       if (!found) continue;
       if (city.id === 'melbourne' && RESEARCHED.some((gym) => gym.osm === osmRef(el) || sameGym(found.name, found.pos, gym))) continue;
+      if (listedByOperator(found.name, found.pos, stateOf(found.tags, city.state))) {
+        superseded += 1;
+        continue;
+      }
       const key = `${found.name.toLowerCase()}|${round(found.pos[0], 4)}|${round(found.pos[1], 4)}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -151,11 +181,11 @@ function main(src: string) {
     }
 
     // Suburbs for the search box, nearest the centre first. Melbourne's
-    // come with postcodes from packages/melbourne-data instead. Australian
-    // suburbs are official names, so every place=suburb counts; smaller
+    // inner ones come with postcodes from packages/melbourne-data; the rest
+    // of its area comes from here, like every city's. Australian suburbs
+    // are official names, so every place=suburb counts; smaller
     // neighbourhoods only when they're notable (they have a Wikidata entry).
-    if (city.id === 'melbourne') continue;
-    const names = new Set<string>();
+    const names = new Set<string>(city.id === 'melbourne' ? MELBOURNE_PLACES.map((place) => place.name.toLowerCase()) : []);
     const cands: Array<{ d: number; name: string; pos: [number, number] }> = [];
     for (const el of data.places) {
       const tags = el.tags ?? {};
@@ -183,20 +213,28 @@ function main(src: string) {
     ...fetched.map(([city, at]) => `  '${city}': '${at}',`),
     '};',
     '',
-    '// prettier-ignore',
-    'export const GYM_ROWS: GymRow[] = [',
-    ...gymsOut.map((row) => `  ${pyJson(row)},`),
-    '];',
-    '',
-    '// prettier-ignore',
-    'export const PLACE_ROWS: PlaceRow[] = [',
-    ...placesOut.map((row) => `  ${pyJson(row)},`),
-    '];',
-    '',
+    // In chunks: one array literal of over a thousand rows is more than TypeScript will check.
+    ...chunked('GYMS', 'GymRow', gymsOut),
+    ...chunked('PLACES', 'PlaceRow', placesOut),
   ];
   writeFileSync(OUT, lines.join('\n'));
   for (const line of stats) console.log(line);
-  console.log('gyms', gymsOut.length, 'suburbs', placesOut.length, 'hours parsed', parsed, 'unparsed', unparsed);
+  console.log('gyms', gymsOut.length, 'suburbs', placesOut.length, 'hours parsed', parsed, 'unparsed', unparsed, 'left to operator records', superseded);
+}
+
+const CHUNK = 100;
+
+/** `const NAME_0: Type[] = [...]` for each hundred rows, then `export const NAME_ROWS` joining them. */
+function chunked(name: string, type: string, rows: object[]): string[] {
+  const lines: string[] = [];
+  const names: string[] = [];
+  for (let at = 0; at < rows.length; at += CHUNK) {
+    const part = `${name}_${at / CHUNK}`;
+    names.push(part);
+    lines.push('// prettier-ignore', `const ${part}: ${type}[] = [`, ...rows.slice(at, at + CHUNK).map((row) => `  ${pyJson(row)},`), '];', '');
+  }
+  lines.push(`export const ${name === 'GYMS' ? 'GYM' : 'PLACE'}_ROWS: ${type}[] = [${names.map((part) => `...${part}`).join(', ')}];`, '');
+  return lines;
 }
 
 const dir = process.argv[2];

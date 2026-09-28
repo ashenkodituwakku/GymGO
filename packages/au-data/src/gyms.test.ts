@@ -3,6 +3,11 @@ import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { describe, expect, it } from 'vitest';
 import { AU_CITIES, AU_GYMS, AU_PLACES, auCity } from './index';
 import { GYM_ROWS } from './data';
+import { OPERATOR_GYMS, OPERATOR_GYMS_RAW } from './operators';
+
+// The map's own records; the operator-listed ones are tested below.
+const operatorIds = new Set(OPERATOR_GYMS.map((record) => record.location.id));
+const MAP_GYMS = AU_GYMS.filter((record) => !operatorIds.has(record.location.id));
 
 const allFacts = (record: GymRecord) => [
   record.location.provenance,
@@ -16,8 +21,9 @@ const allFacts = (record: GymRecord) => [
 describe('Australian gyms from OpenStreetMap', () => {
   it('covers seven cities with real gyms, none of them demo data', () => {
     expect(AU_CITIES.map((city) => city.id)).toEqual(['sydney', 'brisbane', 'perth', 'adelaide', 'canberra', 'gold-coast', 'hobart']);
-    expect(AU_GYMS.length).toBeGreaterThanOrEqual(150);
-    for (const city of AU_CITIES) expect(GYM_ROWS.filter((row) => row.city === city.id).length).toBeGreaterThanOrEqual(5);
+    // Each city's whole area, not just the 40 gyms nearest its centre.
+    expect(MAP_GYMS.length).toBeGreaterThanOrEqual(1000);
+    for (const city of AU_CITIES) expect(GYM_ROWS.filter((row) => row.city === city.id).length).toBeGreaterThanOrEqual(20);
     for (const record of AU_GYMS) expect(record.location.isDemoData).toBe(false);
   });
 
@@ -34,7 +40,7 @@ describe('Australian gyms from OpenStreetMap', () => {
   });
 
   it('labels everything as community-reported from OpenStreetMap, with a link and a date', () => {
-    for (const record of AU_GYMS) {
+    for (const record of MAP_GYMS) {
       for (const provenance of allFacts(record)) {
         if (provenance.status === 'unknown') {
           expect(provenance.sources).toEqual([]);
@@ -50,7 +56,7 @@ describe('Australian gyms from OpenStreetMap', () => {
   });
 
   it('invents nothing: no prices, no equipment, no photos, no guest or staffed hours', () => {
-    for (const record of AU_GYMS) {
+    for (const record of MAP_GYMS) {
       expect(record.offers).toEqual([]);
       expect(record.equipment).toEqual([]);
       for (const amenity of record.amenities) {
@@ -130,5 +136,73 @@ describe('Australian gyms from OpenStreetMap', () => {
     });
     expect(outcome.results.length).toBeGreaterThan(5);
     expect(outcome.results.filter((result) => result.tier === 'confirmed')).toEqual([]);
+  });
+});
+
+describe('Australian gyms from operators’ own websites', () => {
+  const revo = OPERATOR_GYMS.filter((record) => record.location.brand === 'Revo Fitness');
+
+  it('has every open Revo Fitness branch the chain lists, and none still to open', () => {
+    expect(revo.length).toBeGreaterThanOrEqual(70);
+    const ids = new Set(revo.map((record) => record.location.id));
+    for (const open of ['revo-fitness-chadstone', 'revo-fitness-richmond', 'revo-fitness-pitt-st', 'revo-fitness-castle-hill', 'revo-fitness-northbridge']) {
+      expect(ids.has(open)).toBe(true);
+    }
+    // Listed on the site with an open date still to come (Knox: 1 December 2026).
+    expect(ids.has('revo-fitness-knox')).toBe(false);
+    expect(ids.has('revo-fitness-busselton')).toBe(false);
+  });
+
+  it('has T1 Fitness in Burwood East', () => {
+    const t1 = OPERATOR_GYMS.find((record) => record.location.id === 't1-fitness-burwood-east')!;
+    expect(t1.location.address).toMatchObject({ suburb: 'Burwood East', state: 'VIC', postcode: '3151' });
+    expect(haversineKm(t1.location.position, { lat: -37.8535, lng: 145.1625 })).toBeLessThan(0.2);
+    // Its site doesn't publish hours, so there are none.
+    expect(t1.schedules).toEqual([]);
+  });
+
+  it('cites the operator’s own page for every fact, and is open because the operator lists it', () => {
+    for (const record of OPERATOR_GYMS) {
+      expect(record.location.operatingStatus).toBe('open');
+      expect(record.location.provenance.status).toBe('owner_confirmed');
+      const [first] = record.location.provenance.sources;
+      expect(first!.sourceType).toBe('operator_website');
+      expect(first!.evidenceRef).toMatch(/^https:\/\/(revofitness\.com\.au\/gyms\/[a-z0-9-]+\/|t1fitness\.com\.au\/contact-us\/)$/);
+      for (const item of record.schedules) {
+        expect(item.audience).toBe('member');
+        expect(item.provenance.sources[0]!.sourceType).toBe('operator_website');
+      }
+      // Nothing the operators don't publish.
+      expect(record.offers).toEqual([]);
+      expect(record.equipment).toEqual([]);
+      expect(record.location.photos).toEqual([]);
+    }
+  });
+
+  it('gives each an Australian address, on its state’s clock, inside Australia', () => {
+    const clocks: Record<string, string> = { WA: 'Australia/Perth', SA: 'Australia/Adelaide', VIC: 'Australia/Melbourne', NSW: 'Australia/Sydney' };
+    for (const record of OPERATOR_GYMS) {
+      const { address, position, timezone } = record.location;
+      expect(['ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA']).toContain(address.state);
+      expect(address.postcode).toMatch(/^\d{4}$/);
+      expect(address.line1.length).toBeGreaterThan(3);
+      expect(timezone).toBe(clocks[address.state]);
+      expect(position.lat).toBeLessThan(-10);
+      expect(position.lat).toBeGreaterThan(-44);
+      expect(position.lng).toBeGreaterThan(112);
+      expect(position.lng).toBeLessThan(154);
+    }
+  });
+
+  it('leaves out the map’s copy of an operator’s gym, and any Crunch in Victoria now run by Revo', () => {
+    for (const gym of OPERATOR_GYMS_RAW) {
+      for (const row of GYM_ROWS) {
+        const km = haversineKm({ lat: gym.lat, lng: gym.lng }, { lat: row.lat, lng: row.lng });
+        if (gym.brand === 'Revo Fitness' && km <= 0.3) expect(row.name).not.toMatch(/\brevo\b/i);
+        if (gym.brand === 'Revo Fitness' && km <= 0.3 && row.state === 'VIC') expect(row.name).not.toMatch(/\bcrunch\b/i);
+      }
+    }
+    const ids = AU_GYMS.map((record) => record.location.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

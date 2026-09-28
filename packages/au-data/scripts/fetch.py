@@ -14,22 +14,23 @@ import json, os, subprocess, sys, time
 MIRROR = 'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
 UA = 'GymGO/0.1 (gym finder pilot; https://github.com/ashenkodituwakku/GymGO)'
 
-# Must match src/cities.ts: centre and radius in metres.
+# Must match src/cities.ts: centre and radius in metres. Wide enough to take
+# in each city's suburbs, not just its centre.
 CITIES = {
-    'melbourne': (-37.8142, 144.9632, 7000),
-    'sydney': (-33.8688, 151.2093, 7000),
-    'brisbane': (-27.4698, 153.0251, 7000),
-    'perth': (-31.9523, 115.8613, 7000),
-    'adelaide': (-34.9285, 138.6007, 6000),
-    'canberra': (-35.2809, 149.1300, 8000),
-    'gold-coast': (-28.0023, 153.4145, 9000),
-    'hobart': (-42.8821, 147.3272, 6000),
+    'melbourne': (-37.8142, 144.9632, 30000),
+    'sydney': (-33.8688, 151.2093, 30000),
+    'brisbane': (-27.4698, 153.0251, 25000),
+    'perth': (-31.9523, 115.8613, 30000),
+    'adelaide': (-34.9285, 138.6007, 22000),
+    'canberra': (-35.2809, 149.1300, 18000),
+    'gold-coast': (-28.0023, 153.4145, 20000),
+    'hobart': (-42.8821, 147.3272, 14000),
 }
 
 
 def overpass(query):
-    for attempt in range(6):
-        r = subprocess.run(['curl', '-sS', '--max-time', '120', '-A', UA, '-H', 'Accept: application/json', '-X', 'POST', MIRROR,
+    for attempt in range(10):
+        r = subprocess.run(['curl', '-sS', '--max-time', '200', '-A', UA, '-H', 'Accept: application/json', '-X', 'POST', MIRROR,
                             '--data-urlencode', 'data=' + query, '-w', '\n%{http_code}'], capture_output=True, text=True)
         body, _, code = r.stdout.rpartition('\n')
         if code == '200':
@@ -50,7 +51,15 @@ def main(out):
             print(city, 'already fetched')
             continue
         around = f'(around:{radius},{lat},{lng})'
-        gyms = overpass(f'[out:json][timeout:90];nwr["leisure"="fitness_centre"]["name"]{around};out center tags;')
+        # Gyms are mapped three ways: the current tag, the older amenity=gym, and
+        # sports centres whose sport is fitness or lifting.
+        gyms = overpass(
+            f'[out:json][timeout:180];('
+            f'nwr["leisure"="fitness_centre"]["name"]{around};'
+            f'nwr["amenity"="gym"]["name"]{around};'
+            f'nwr["leisure"="sports_centre"]["sport"~"fitness|weightlifting|crossfit"]["name"]{around};'
+            f');out center tags;'
+        )
         time.sleep(2)
         places = overpass(f'[out:json][timeout:90];node["place"~"^(suburb|neighbourhood|quarter)$"]["name"]{around};out;')
         fetched = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())

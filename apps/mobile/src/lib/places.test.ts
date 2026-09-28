@@ -18,7 +18,7 @@ describe('places', () => {
     expect(CITIES.sydney.demo).toBe(false);
     expect(geocodePlace('Darwin')).toEqual({ place: null, outOfArea: true });
     expect(geocodePlace('Timbuktu')).toEqual({ place: null, outOfArea: true });
-    expect(suggestPlaces('brun').map((place) => place.name)).toEqual(['Brunswick', 'Brunswick East']);
+    expect(suggestPlaces('brun').map((place) => place.name)).toEqual(['Brunswick', 'Brunswick East', 'Brunswick West']);
   });
 
   it('knows which city a point is in, and when it is in neither', () => {
@@ -93,8 +93,11 @@ describe('places', () => {
     expect(placeContext(valley)).toBe('Brisbane, QLD');
     expect(geocodePlace('Subiaco').place?.city).toBe('perth');
     expect(geocodePlace('Brissy').place?.city).toBe('brisbane');
-    // Real Paddington (Brisbane), never the demo's while demo mode is off.
-    expect(geocodePlace('Paddington').place?.city).toBe('brisbane');
+    // A real Paddington (Sydney's or Brisbane's), never the demo's while demo mode is off.
+    expect(['sydney', 'brisbane']).toContain(geocodePlace('Paddington').place?.city);
+    // Suburbs across each city's whole area, not just near its centre.
+    expect(geocodePlace('Burwood East').place?.city).toBe('melbourne');
+    expect(geocodePlace('Castle Hill').place?.city).toBe('sydney');
     // Melbourne still first, the demo still last.
     expect(CITY_LIST[0]!.id).toBe('melbourne');
     expect(CITY_LIST.at(-1)!.id).toBe('sydney-demo');

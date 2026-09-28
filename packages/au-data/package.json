@@ -2,7 +2,7 @@
   "name": "@gymgo/au-data",
   "version": "0.1.0",
   "private": true,
-  "description": "Gyms in seven more Australian cities, from OpenStreetMap (ODbL). Map-only: no prices, hours only where mapped.",
+  "description": "Gyms across eight Australian cities from OpenStreetMap (ODbL), map-only, plus branches read from operators' own websites.",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "fetch": "python3 scripts/fetch.py",
-    "generate": "tsx scripts/generate.ts"
+    "generate": "tsx scripts/generate.ts",
+    "operators": "python3 scripts/operators.py"
   },
   "dependencies": {
     "@gymgo/domain": "workspace:*",

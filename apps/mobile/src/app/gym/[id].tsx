@@ -10,6 +10,7 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { LogoPlate } from '@/components/BrandLogo';
 import { GoogleEmbed } from '@/components/GoogleEmbed';
 import { GoogleGate } from '@/components/GoogleGate';
@@ -36,8 +37,17 @@ import { resultsById } from '@/lib/results';
 import { HEADER_EDGE, PAGE_COLUMN, color, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 
+/** The pop-up growing into the page: the page rises from where the pop-up sat, still when Reduce Motion is on. */
+const EXPAND_IN =
+  Platform.OS === 'web'
+    ? FadeInDown.duration(300).reduceMotion(ReduceMotion.System)
+    : FadeInDown.springify().damping(22).stiffness(220).withInitialValues({ opacity: 0, transform: [{ translateY: 80 }] }).reduceMotion(ReduceMotion.System);
+
 export default function GymPage() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // `from=map`: opened full screen from the map's pop-up, so it opens with
+  // a zoom and its top-left button shrinks it back onto the map.
+  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
+  const fromMap = from === 'map';
   const { data, account, filters, addRecent, requestExplore, compare, toggleCompare, prefsReady, billing, openPro } = useApp();
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -111,6 +121,23 @@ export default function GymPage() {
       <Stack.Screen
         options={{
           title: '',
+          ...(fromMap
+            ? {
+                headerLeft: () => (
+                  <View style={styles.headerLeft}>
+                    <HeaderButton
+                      icon="collapse"
+                      label="Back to the map"
+                      onPress={() => {
+                        // Back to the map with this gym's pop-up open, however the page was reached.
+                        requestExplore({ gymId: location.id });
+                        router.navigate('/explore');
+                      }}
+                    />
+                  </View>
+                ),
+              }
+            : null),
           headerRight: () => (
             <View style={styles.headerButtons}>
               {!location.isDemoData && <HeaderButton icon="share" label="Share" onPress={() => void shareGym(result.record)} />}
@@ -138,7 +165,7 @@ export default function GymPage() {
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={styles.content}
       >
-        <View style={[styles.column, { width: cardWidth }]}>
+        <Animated.View entering={fromMap ? EXPAND_IN : undefined} style={[styles.column, { width: cardWidth }]}>
           <View style={styles.title}>
             <LogoPlate location={location} />
             <Txt variant="largeTitle">{location.name}</Txt>
@@ -226,7 +253,7 @@ export default function GymPage() {
               }}
             />
           </View>
-        </View>
+        </Animated.View>
       </ScrollView>
       <GoogleModal record={googleOpen ? result.record : undefined} onClose={() => setGoogleOpen(false)} />
     </>
@@ -261,6 +288,7 @@ const styles = themed(() => StyleSheet.create({
   // The last icon's own padding (4) plus this puts its edge where the back arrow's is on the left.
   headerButtons: { flexDirection: 'row', alignItems: 'center', gap: space[4], paddingLeft: space[1], paddingRight: Math.max(space[1], HEADER_EDGE - 4) },
   headerButton: { padding: 4 },
+  headerLeft: { paddingLeft: Math.max(space[1], HEADER_EDGE - 4) },
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
   center: { textAlign: 'center' },
 }));

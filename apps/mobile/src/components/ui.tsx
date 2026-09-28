@@ -349,9 +349,10 @@ export function CloseButton({ onPress }: { onPress: () => void }) {
 }
 
 /** A round glass toggle beside the close button: compare this gym, say. */
-export function RoundToggle({ icon, on, label, onPress }: { icon: IconName; on: boolean; label: string; onPress: () => void }) {
+/** A small round glass button; with `on`, a toggle that fills when on. */
+export function RoundToggle({ icon, on, label, onPress }: { icon: IconName; on?: boolean; label: string; onPress: () => void }) {
   const press = usePressScale(0.86);
-  const pop = usePop(on);
+  const pop = usePop(on === true);
   return (
     <Animated.View style={press.style}>
       <Glass style={styles.close} tint={on ? color.brandFill : undefined} interactive>
@@ -364,7 +365,7 @@ export function RoundToggle({ icon, on, label, onPress }: { icon: IconName; on: 
           onPressOut={press.onPressOut}
           accessibilityRole="button"
           accessibilityLabel={label}
-          accessibilityState={{ selected: on }}
+          accessibilityState={on === undefined ? undefined : { selected: on }}
           hitSlop={10}
           style={styles.closeHit}
         >

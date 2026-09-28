@@ -337,6 +337,9 @@ is only compared, never sent or kept. Signed in as the dev Pro account
 try the collection without going to gyms.
 
 Tap any gym to open its own page, with share, compare and save at the top.
+On the map, a gym opens in a pop-up card; its **⤢** button (top right)
+expands it to the full page, as Google Maps does, and the **⤡** button there
+shrinks it back onto the map with the gym still open.
 It opens with the gym's logo (a chain's free logo, or the icon from the
 gym's own website; see below) and its photos. On an iPhone, press and hold a gym card on Home for a preview
 and a quick menu.

@@ -33,7 +33,7 @@ import { haptic } from '@/lib/haptics';
 import { Icon, type IconName } from './Icon';
 import { StateGlyphRow } from './StateGlyphRow';
 import { useApp } from '@/lib/app-state';
-import { LogoBadge, LogoCredit } from './BrandLogo';
+import { LogoBadge, LogoCredit, useGymMark } from './BrandLogo';
 import { Glass } from './Glass';
 import { FADE_IN, FADE_OUT, Pressy, rise } from './motion';
 import { ActionButton, CloseButton, Fold, InfoRow, RoundToggle, TIER_COLOUR, Txt } from './ui';
@@ -58,11 +58,14 @@ const TRAINING: Record<string, string> = {
 export function PlaceHeader({
   result,
   onClose,
+  onExpand,
   scrolled,
   topPadding = 0,
 }: {
   result: GymSearchResult;
   onClose: () => void;
+  /** Opens the gym's full page, as Google Maps expands a place's pop-up. */
+  onExpand?: () => void;
   scrolled: boolean;
   /** Extra space above the name, inside the frosted strip. */
   topPadding?: number;
@@ -78,27 +81,49 @@ export function PlaceHeader({
     .filter(Boolean)
     .join(' · ');
 
+  const hasLogo = useGymMark(location) !== null;
+  const title = (
+    <View style={styles.headerText}>
+      <Txt variant="title" numberOfLines={2}>
+        {location.name}
+      </Txt>
+      <Txt variant="subhead" color={color.labelSecondary}>
+        {subtitle}
+      </Txt>
+    </View>
+  );
+  const buttons = (
+    <>
+      {onExpand && <RoundToggle icon="expand" label="Open full screen" onPress={onExpand} />}
+      <RoundToggle
+        icon="compare"
+        on={comparing}
+        label={comparing ? 'Remove from Compare' : 'Add to Compare'}
+        onPress={() => toggleCompare(location.id)}
+      />
+      <CloseButton onPress={onClose} />
+    </>
+  );
+
   return (
     <View style={[styles.headerBar, { paddingTop: topPadding }]}>
       {scrolled && <Glass kind="bar" style={StyleSheet.absoluteFill} />}
-      <View style={styles.header}>
-        <LogoBadge location={location} />
-        <View style={styles.headerText}>
-          <Txt variant="title" numberOfLines={2}>
-            {location.name}
-          </Txt>
-          <Txt variant="subhead" color={color.labelSecondary}>
-            {subtitle}
-          </Txt>
+      {hasLogo ? (
+        // The logo and the buttons share the top row, so the name has the full width under them.
+        <>
+          <View style={[styles.header, styles.headerTop]}>
+            <LogoBadge location={location} />
+            <View style={styles.flex} />
+            {buttons}
+          </View>
+          {title}
+        </>
+      ) : (
+        <View style={styles.header}>
+          {title}
+          {buttons}
         </View>
-        <RoundToggle
-          icon="compare"
-          on={comparing}
-          label={comparing ? 'Remove from Compare' : 'Add to Compare'}
-          onPress={() => toggleCompare(location.id)}
-        />
-        <CloseButton onPress={onClose} />
-      </View>
+      )}
     </View>
   );
 }
@@ -736,6 +761,7 @@ const styles = themed(() => StyleSheet.create({
   },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3], paddingTop: space[1] },
   headerText: { flex: 1, gap: 2 },
+  headerTop: { alignItems: 'center', marginBottom: space[2] },
 
   actions: { flexDirection: 'row', gap: space[2], marginTop: space[2] },
 

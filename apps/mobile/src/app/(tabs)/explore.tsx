@@ -578,6 +578,11 @@ function MapScreen() {
     />
   );
 
+  // The pop-up's full-screen button: the gym's own page, with a button there back to the map.
+  const expandPlace = () => {
+    if (selected) router.push({ pathname: '/gym/[id]', params: { id: selected.record.location.id, from: 'map' } });
+  };
+
   const placeCard = (inSheet: boolean) =>
     selected && (
       <PlaceCard
@@ -722,7 +727,7 @@ function MapScreen() {
                 }}
                 scrollEventThrottle={32}
               >
-                <PlaceHeader result={selected} onClose={closePlace} scrolled={cardScrolled} topPadding={space[4]} />
+                <PlaceHeader result={selected} onClose={closePlace} onExpand={expandPlace} scrolled={cardScrolled} topPadding={space[4]} />
                 {placeCard(false)}
               </ScrollView>
             ) : (
@@ -813,7 +818,7 @@ function MapScreen() {
               if (past !== cardScrolled) setCardScrolled(past);
             }}
           >
-            <PlaceHeader result={selected} onClose={closePlace} scrolled={cardScrolled} />
+            <PlaceHeader result={selected} onClose={closePlace} onExpand={expandPlace} scrolled={cardScrolled} />
             {placeCard(true)}
           </BottomSheetScrollView>
         )

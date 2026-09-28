@@ -95,11 +95,14 @@ function sameGym(name: string, pos: [number, number], other: (typeof RESEARCHED)
 }
 
 // Gyms from operators' own websites (src/operators.ts). The map's copy of one
-// is left out: a gym there within 150 metres sharing a word of its name, or
-// any Revo or Crunch within 300 metres of a Revo (Revo took over Crunch's
-// Victorian gyms, so the map's Crunch there is out of date).
+// is left out: a gym there within 150 metres sharing a word of its name, and
+// any Revo, or any Crunch in Victoria (Revo took over Crunch's Victorian gyms).
 const OPERATORS = OPERATOR_GYMS_RAW.map((gym) => ({ name: gym.name, pos: [gym.lat, gym.lng] as [number, number], brand: gym.brand ?? '' }));
 function listedByOperator(name: string, pos: [number, number], state: string): boolean {
+  // Revo lists every gym it runs, and runs every Crunch there was in Victoria:
+  // a map pin for either that Revo's list doesn't account for has moved or shut
+  // (the map still has Revo Northbridge on Parker St, which it left).
+  if (/^revo( fitness)?\b/i.test(name) || (state === 'VIC' && /^crunch( fitness)?\b/i.test(name))) return true;
   return OPERATORS.some((gym) => {
     const d = km(pos, gym.pos);
     if (gym.brand === 'Revo Fitness' && d <= 0.3 && (/\brevo\b/i.test(name) || (state === 'VIC' && /\bcrunch\b/i.test(name)))) return true;

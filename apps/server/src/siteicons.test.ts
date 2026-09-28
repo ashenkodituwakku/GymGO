@@ -2,6 +2,7 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { DEMO_GYMS } from '@gymgo/demo-data';
+import { AU_GYMS } from '@gymgo/au-data';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { createApp } from './app';
 import { openDb, seedGyms, type Db } from './db';
@@ -119,6 +120,8 @@ describe('finding the icon in a page', () => {
 const DOHERTYS = MELBOURNE_GYMS.find((gym) => gym.location.website === 'https://dohertysgym.com/')!;
 const PRIME = MELBOURNE_GYMS.find((gym) => gym.location.website?.startsWith('https://primeathletica.com.au'))!;
 const visits: string[] = [];
+// A Club Lime the map gives no website, and no branch of it names one either.
+const CLUB_LIME = AU_GYMS.find((gym) => /^club lime/i.test(gym.location.name) && !gym.location.website)!;
 
 const WEB: Record<string, Omit<Fetched, 'url'>> = {
   'https://dohertysgym.com/': { status: 200, type: 'text/html; charset=utf-8', body: Buffer.from('<link rel="apple-touch-icon" href="/touch.png">') },
@@ -130,6 +133,8 @@ const WEB: Record<string, Omit<Fetched, 'url'>> = {
     body: Buffer.from('<link rel="apple-touch-icon" href="/fake.png"><link rel="icon" sizes="16x16" href="/tiny.png">'),
   },
   'https://primeathletica.com.au/fake.png': { status: 200, type: 'image/png', body: Buffer.from('<html>not an image</html>') },
+  'https://www.clublime.com.au/': { status: 200, type: 'text/html', body: Buffer.from('<link rel="apple-touch-icon" href="/lime.png">') },
+  'https://www.clublime.com.au/lime.png': { status: 200, type: 'image/png', body: png(192, 192) },
 };
 
 let flakyUp = false;
@@ -150,7 +155,7 @@ let clock = new Date('2026-09-25T00:00:00Z');
 
 beforeAll(async () => {
   db = openDb(':memory:');
-  seedGyms(db, [...MELBOURNE_GYMS, ...DEMO_GYMS]);
+  seedGyms(db, [...MELBOURNE_GYMS, ...DEMO_GYMS, CLUB_LIME]);
   server = createServer(createApp({ db, attribution: 'test', siteIcons: { get: fakeGet } }));
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -177,6 +182,13 @@ describe('GET /api/gyms/:id/icon', () => {
     expect(branches.length).toBeGreaterThan(1);
     for (const gym of branches) expect((await fetch(`${base}/api/gyms/${gym.location.id}/icon`)).status).toBe(200);
     expect(visits.length).toBe(before);
+  });
+
+  it('takes a known chain’s icon from its own site when the branch names none', async () => {
+    expect(CLUB_LIME).toBeDefined();
+    const response = await fetch(`${base}/api/gyms/${CLUB_LIME.location.id}/icon`);
+    expect(response.status).toBe(200);
+    expect(decodeURI(response.headers.get('x-icon-source')!)).toBe('https://www.clublime.com.au/lime.png');
   });
 
   it('shows nothing rather than a fake, a tiny or a mislabelled image', async () => {

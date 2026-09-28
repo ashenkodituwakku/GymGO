@@ -725,9 +725,22 @@ fetches it the first time someone looks, keeps it for a month (a week when
 there's none, an hour when the site didn't answer), and shares it between a
 chain's branches. A branch the map gives no website borrows its chain's, but
 only when two or more branches in that country share the very same site: a
-CrossFit affiliate never shows another affiliate's icon. In the bundled
-cities that's about 240 of 769 real gyms, on top of the ten chains with
-Commons logos. It only accepts real
+CrossFit affiliate never shows another affiliate's icon. About 35 chains
+whose branches the map often lists without a website (Club Lime, Revo,
+Goodlife, Fitstop, F45, Plus Fitness, Fernwood, 9Round, Anytime Fitness and
+others) have their official site written down in
+`packages/domain/src/chainSites.ts`, each checked by hand, some only in one
+country where another business elsewhere has a similar name. And 23
+Australian independents the map gives no website had theirs found by
+`packages/au-data/scripts/websites.py`, which tries the domains a gym of that
+name would own and keeps one only when the site's title names the gym and
+the page names its suburb (or street); every one was then read by hand
+(`packages/au-data/src/websites.ts`), and the gym page cites it as found by
+GymGO, not by the gym. Of the 3,009 real gyms in the bundled cities, 323 have
+a Commons logo and about 1,700 more have a website of their own or their
+chain's to take an icon from (some of those sites have no usable icon); the
+other 974 show the plain symbol, mostly independents with no website anyone
+could confirm. It only accepts real
 PNG, JPEG, WebP or GIF images at least 64 pixels square (never a white mark
 on a transparent background, which would vanish on the white plate), and it will only
 connect to public addresses, because website addresses come from

@@ -48,6 +48,11 @@ describe('Australian gyms from OpenStreetMap', () => {
         }
         expect(provenance.status).toBe('community_reported');
         for (const source of provenance.sources) {
+          // Besides the map: a website GymGO found for a gym the map lists without one.
+          if (source.sourceType === 'independent_check') {
+            expect(source.evidenceRef).toBe(record.location.website);
+            continue;
+          }
           expect(source.evidenceRef).toMatch(/^https:\/\/www\.openstreetmap\.org\/(node|way|relation)\/\d+$/);
           expect(Number.isNaN(Date.parse(source.checkedAt))).toBe(false);
         }
@@ -195,6 +200,11 @@ describe('Australian gyms from operators’ own websites', () => {
   });
 
   it('leaves out the map’s copy of an operator’s gym, and any Crunch in Victoria now run by Revo', () => {
+    // Revo's own list is complete: no map pin for a Revo it doesn't list, nor a Victorian Crunch.
+    for (const row of GYM_ROWS) {
+      expect(row.name).not.toMatch(/^revo( fitness)?\b/i);
+      if (row.state === 'VIC') expect(row.name).not.toMatch(/^crunch( fitness)?\b/i);
+    }
     for (const gym of OPERATOR_GYMS_RAW) {
       for (const row of GYM_ROWS) {
         const km = haversineKm({ lat: gym.lat, lng: gym.lng }, { lat: row.lat, lng: row.lng });
@@ -204,5 +214,19 @@ describe('Australian gyms from operators’ own websites', () => {
     }
     const ids = AU_GYMS.map((record) => record.location.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('websites found for map gyms that list none', () => {
+  it('gives each its website, cited as found by GymGO, and only to gyms the map gave none', () => {
+    const found = AU_GYMS.filter((record) => record.location.provenance.sources.some((source) => source.sourceType === 'independent_check'));
+    expect(found.length).toBeGreaterThanOrEqual(20);
+    for (const record of found) {
+      expect(record.location.website).toMatch(/^https:\/\/[a-z0-9.-]+\/$/);
+      const row = GYM_ROWS.find((item) => item.id === record.location.id)!;
+      expect(row.website).toBeUndefined();
+    }
+    const summerHill = AU_GYMS.find((record) => record.location.id === 'summer-hill-gym-hardie-avenue-sydney')!;
+    expect(summerHill.location.website).toBe('https://summerhillgym.com.au/');
   });
 });

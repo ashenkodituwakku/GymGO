@@ -89,6 +89,7 @@ import {
   type Permission,
   type Review,
   type User,
+  chainSiteFor,
 } from '@gymgo/domain';
 import {
   AttemptLimiter,
@@ -1416,7 +1417,8 @@ export function createApp(options: AppOptions) {
       const record = gymRecord(db, decodeURIComponent(parts[2]!));
       if (!record) throw new HttpError(404, 'No gym with that id.');
       chainSite ??= chainWebsites(allGyms(db));
-      const website = record.location.website ?? chainSite(record);
+      // Its own site, else its chain's: named by other branches, or a chain GymGO knows.
+      const website = record.location.website ?? chainSite(record) ?? chainSiteFor(record.location);
       if (options.siteIcons?.enabled === false) throw new HttpError(404, 'Website icons are switched off.', 'off');
       // A missing icon is kept by the browser too, so a list doesn't ask again
       // on every visit: a day when there's no website, an hour when the site had

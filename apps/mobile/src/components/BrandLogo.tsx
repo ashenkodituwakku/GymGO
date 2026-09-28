@@ -17,7 +17,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import type { GymLocation } from '@gymgo/domain';
+import { chainSiteFor, type GymLocation } from '@gymgo/domain';
 import { apiBase } from '@/lib/api';
 import { LOGO_IMAGES } from '@/lib/brandLogoImages';
 import { BRAND_LOGOS, type BrandLogo as Logo } from '@/lib/brandLogos';
@@ -38,7 +38,7 @@ const siteIcons = new Map<string, { width: number; height: number } | null>();
 /** Where the server has the gym's website icon; a branch with no site of its own may have its chain's. */
 function siteIconUri(location: GymLocation): string | null {
   const base = apiBase();
-  const chain = location.brand || location.externalRefs.wikidataBrand;
+  const chain = location.brand || location.externalRefs.wikidataBrand || chainSiteFor(location);
   if (!base || location.isDemoData || (!location.website && !chain)) return null;
   return `${base}/api/gyms/${encodeURIComponent(location.id)}/icon`;
 }

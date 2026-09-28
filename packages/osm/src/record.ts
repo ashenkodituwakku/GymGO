@@ -9,7 +9,7 @@
  * product shows those as unknown and says to call.
  */
 
-import type { AccessSchedule, AmenityObservation, EvidenceSource, GymRecord, OpeningWindow, Provenance, TrainingType } from '@gymgo/domain';
+import { researchedWebsite, type AccessSchedule, type AmenityObservation, type EvidenceSource, type GymRecord, type OpeningWindow, type Provenance, type TrainingType } from '@gymgo/domain';
 import type { MappedAmenities, MappedHours } from './rules';
 
 export interface MapOnlyGym {
@@ -109,7 +109,8 @@ export function mapOnlyRecord(gym: MapOnlyGym, where: Whereabouts): GymRecord {
       operatingStatus: 'unknown',
       operatingStatusNote: 'On the map, but we have not confirmed with the operator that this branch is trading.',
       phone: gym.phone ?? null,
-      website: gym.website ?? null,
+      // The map's, else the gym's own site looked up by hand (packages/domain/src/websites.ts).
+      website: gym.website ?? researchedWebsite(gym.id),
       email: gym.email ?? null,
       activities: gym.activities ?? [],
       // We hold no photographs we have permission to show.

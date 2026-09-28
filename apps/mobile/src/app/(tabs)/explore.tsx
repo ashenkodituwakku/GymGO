@@ -599,6 +599,7 @@ function MapScreen() {
           <PhotoHero
             gymId={selected.record.location.id}
             isDemo={selected.record.location.isDemoData}
+            website={selected.record.location.website}
             account={account}
             onSignIn={openAccount}
             width={inSheet ? width - SHEET_SIDE * 2 : PANEL_WIDTH}

@@ -18,6 +18,7 @@ import type {
   Provenance,
   VisitOffer,
 } from '@gymgo/domain';
+import { researchedWebsite } from '@gymgo/domain';
 
 export const MELBOURNE = 'Australia/Melbourne';
 
@@ -221,7 +222,8 @@ export function location(spec: PlaceSpec): GymLocation {
       ? null
       : 'On the map, but we have not confirmed with the operator that this branch is trading.',
     phone: spec.phone ?? null,
-    website: spec.website ?? null,
+    // Its own, else the site looked up by hand (packages/domain/src/websites.ts).
+    website: spec.website ?? researchedWebsite(spec.id),
     // We hold no photographs we have permission to show.
     photos: [],
     isDemoData: false,

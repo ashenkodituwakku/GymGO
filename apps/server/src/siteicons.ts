@@ -30,7 +30,7 @@ import http from 'node:http';
 import https from 'node:https';
 import { BlockList, isIP } from 'node:net';
 import { inflateSync } from 'node:zlib';
-import type { GymRecord } from '@gymgo/domain';
+import { chainWebsite, type GymRecord } from '@gymgo/domain';
 import type { Db } from './db';
 
 const UA = 'GymGO/0.1 (site icon for a gym finder; https://github.com/ashenkodituwakku/GymGO)';
@@ -371,8 +371,166 @@ export function chainWebsites(records: GymRecord[]): (record: GymRecord) => stri
       const site = chosen.get(k);
       if (site) return site;
     }
-    return null;
+    // Failing that, the chain's official site, kept by hand (packages/domain/src/websites.ts).
+    const { name, brand, externalRefs, address, isDemoData } = record.location;
+    if (isDemoData) return null;
+    return chainWebsite({ name, brand, wikidataBrand: externalRefs.wikidataBrand ?? null, countryCode: address.countryCode });
   };
+}
+
+// --- A photo of the gym, from its own website ------------------------------------
+
+/**
+ * The website a gym's photo may come from: only its very own. Not a site
+ * other gyms in the data share (a chain's), and not a chain's home page:
+ * there the page's picture is of some other branch, or of nobody's gym.
+ */
+export function ownPhotoSites(records: GymRecord[]): (record: GymRecord) => string | null {
+  const key = (url: URL) => `${url.hostname.replace(/^www\./, '')}${url.pathname.replace(/\/+$/, '')}`.toLowerCase();
+  const counts = new Map<string, number>();
+  for (const record of records) {
+    const url = record.location.website ? allowedUrl(record.location.website) : null;
+    if (url && !record.location.isDemoData) counts.set(key(url), (counts.get(key(url)) ?? 0) + 1);
+  }
+  return (record) => {
+    const { website, isDemoData, name, brand, externalRefs, address } = record.location;
+    const url = website && !isDemoData ? allowedUrl(website) : null;
+    if (!url || (counts.get(key(url)) ?? 0) > 1) return null;
+    const chain = chainWebsite({ name, brand, wikidataBrand: externalRefs.wikidataBrand ?? null, countryCode: address.countryCode });
+    const home = url.pathname.replace(/\/+$/, '') === '';
+    if (chain && home && allowedUrl(chain)?.hostname.replace(/^www\./, '') === url.hostname.replace(/^www\./, '')) return null;
+    return url.href;
+  };
+}
+
+/** Photo candidates in a page, best first: the picture the site shares on social media, then the one it declares for search engines. */
+export function photoCandidates(html: string, pageUrl: string): URL[] {
+  const found: URL[] = [];
+  const add = (href: string | null | undefined) => {
+    if (!href || href.startsWith('data:') || /\.(svg|ico|gif)(\?|#|$)/i.test(href) || /(logo|favicon|icon|sprite|placeholder)/i.test(href)) return;
+    const url = allowedUrl(href, pageUrl);
+    if (url && !found.some((item) => item.href === url.href)) found.push(url);
+  };
+  const head = html.slice(0, PAGE_BYTES);
+  const metas = head.match(/<meta\b[^>]*>/gi) ?? [];
+  for (const wanted of ['og:image:secure_url', 'og:image', 'og:image:url', 'twitter:image', 'twitter:image:src']) {
+    for (const tag of metas) {
+      const which = (attr(tag, 'property') ?? attr(tag, 'name') ?? '').toLowerCase();
+      if (which === wanted) add(attr(tag, 'content'));
+    }
+  }
+  const visit = (node: unknown) => {
+    if (Array.isArray(node)) return node.forEach(visit);
+    if (!node || typeof node !== 'object') return;
+    const image = (node as Record<string, unknown>).image;
+    const take = (value: unknown) => {
+      if (typeof value === 'string') add(value);
+      else if (value && typeof value === 'object' && typeof (value as Record<string, unknown>).url === 'string') add((value as { url: string }).url);
+    };
+    if (Array.isArray(image)) image.forEach(take);
+    else take(image);
+    for (const value of Object.values(node)) if (value && typeof value === 'object') visit(value);
+  };
+  for (const match of head.matchAll(/<script[^>]+type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      visit(JSON.parse(match[1]!));
+    } catch {
+      // Not valid JSON: skip it.
+    }
+  }
+  return found;
+}
+
+const PHOTO_BYTES = 4 * 1024 * 1024;
+const MIN_PHOTO_WIDTH = 400;
+const MIN_PHOTO_HEIGHT = 200;
+
+/**
+ * Photos from gyms' own websites, kept by page for a month (a week when the
+ * page has none, an hour when it didn't answer), like the icons.
+ */
+export class SitePhotos {
+  private readonly inFlight = new Map<string, Promise<SiteIcon | null>>();
+
+  constructor(
+    private readonly db: Db,
+    private readonly options: { get?: SafeGet; now?: () => Date } = {},
+  ) {
+    db.exec(`create table if not exists site_photos (
+      page text primary key,
+      found integer not null,
+      mime text,
+      bytes blob,
+      width integer,
+      height integer,
+      source text,
+      fetched_at text not null
+    )`);
+  }
+
+  private now() {
+    return this.options.now?.() ?? new Date();
+  }
+
+  cached(website: string): SiteIcon | null | undefined {
+    const page = allowedUrl(website)?.href;
+    if (!page) return null;
+    const row = this.db.prepare('select found, mime, bytes, source, fetched_at from site_photos where page = ?').get(page) as
+      | { found: number; mime: string | null; bytes: Uint8Array | null; source: string | null; fetched_at: string }
+      | undefined;
+    if (!row) return undefined;
+    const days = (this.now().getTime() - Date.parse(row.fetched_at)) / 86_400_000;
+    if (days > (row.found ? FOUND_DAYS : row.source === UNREACHABLE ? UNREACHABLE_DAYS : NONE_DAYS)) return undefined;
+    return row.found && row.bytes ? { mime: row.mime!, bytes: Buffer.from(row.bytes), source: row.source ?? page } : null;
+  }
+
+  async photo(website: string): Promise<SiteIcon | null> {
+    const kept = this.cached(website);
+    if (kept !== undefined) return kept;
+    const page = allowedUrl(website);
+    if (!page) return null;
+    const pending = this.inFlight.get(page.href);
+    if (pending) return pending;
+    const job = this.fetchPhoto(page).finally(() => this.inFlight.delete(page.href));
+    this.inFlight.set(page.href, job);
+    return job;
+  }
+
+  private async fetchPhoto(page: URL): Promise<SiteIcon | null> {
+    const get = this.options.get ?? safeGet;
+    let found: (SiteIcon & { width: number; height: number }) | null = null;
+    let unreachable = false;
+    try {
+      const home = await get(page, PAGE_BYTES, 'text/html,application/xhtml+xml');
+      unreachable = home.status >= 500 || home.status === 429;
+      const html = home.status < 400 && /html/i.test(home.type) ? home.body.toString('utf8') : '';
+      for (const candidate of photoCandidates(html, home.url).slice(0, 3)) {
+        try {
+          const image = await get(candidate, PHOTO_BYTES + 1, 'image/jpeg,image/png,image/webp');
+          if (image.status >= 400 || image.body.length > PHOTO_BYTES) continue;
+          const kind = sniffImage(image.body);
+          if (!kind || kind.mime === 'image/gif' || kind.width < MIN_PHOTO_WIDTH || kind.height < MIN_PHOTO_HEIGHT) continue;
+          // A photo, not a banner or a square badge.
+          const aspect = kind.width / kind.height;
+          if (aspect < 0.75 || aspect > 3) continue;
+          found = { mime: kind.mime, bytes: image.body, source: image.url, width: kind.width, height: kind.height };
+          break;
+        } catch {
+          // Try the next one.
+        }
+      }
+    } catch {
+      unreachable = true;
+    }
+    this.db
+      .prepare(
+        `insert into site_photos (page, found, mime, bytes, width, height, source, fetched_at) values (?, ?, ?, ?, ?, ?, ?, ?)
+         on conflict(page) do update set found = excluded.found, mime = excluded.mime, bytes = excluded.bytes, width = excluded.width,
+           height = excluded.height, source = excluded.source, fetched_at = excluded.fetched_at`,
+      )
+      .run(page.href, found ? 1 : 0, found?.mime ?? null, found?.bytes ?? null, found?.width ?? null, found?.height ?? null, found?.source ?? (unreachable ? UNREACHABLE : null), this.now().toISOString());
+    return found ? { mime: found.mime, bytes: found.bytes, source: found.source } : null;
+  }
 }
 
 // --- The store ------------------------------------------------------------------

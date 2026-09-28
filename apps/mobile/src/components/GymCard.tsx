@@ -1,6 +1,7 @@
 /**
  * A gym as a card in a horizontal row on the Home and Saved screens: its
- * photo (or its logo, or "No photo supplied"), its name, where it is,
+ * photo (a member's, else its own website's; or its logo, or "No photo
+ * supplied"), its name, where it is,
  * one status chip and the price.
  *
  * On iPhone, pressing and holding shows a preview of the gym's page with a
@@ -21,6 +22,7 @@ import { haptic } from '@/lib/haptics';
 import { priceLine } from '@/lib/present';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { MarkImage, useGymMark } from './BrandLogo';
+import { useWebsitePhoto } from './PhotoHero';
 import { rise, usePressScale } from './motion';
 import { Icon } from './Icon';
 import { NoPhoto, TIER_COLOUR, Txt } from './ui';
@@ -34,7 +36,10 @@ export function GymCard({ result, width = 216, index = 0 }: { result: GymSearchR
   const tier = TIER[result.tier];
   const members = data.memberPrices[id];
   const price = priceLine(result.offers, members ? { typicalMinor: members.typicalMinor, country: location.address.countryCode } : null);
-  const cover = data.covers[id] ? photoUrl(data.covers[id]!) : null;
+  const memberCover = data.covers[id] ? photoUrl(data.covers[id]!) : null;
+  // No member's photo: the one the gym's own website shares, if it has one.
+  const siteCover = useWebsitePhoto(id, !memberCover && !location.isDemoData);
+  const cover = memberCover ?? siteCover;
   const mark = useGymMark(location);
   const press = usePressScale(0.97);
   const saved = account.saved.includes(id);

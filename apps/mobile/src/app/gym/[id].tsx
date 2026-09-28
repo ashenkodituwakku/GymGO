@@ -187,6 +187,7 @@ export default function GymPage() {
               <PhotoHero
                 gymId={location.id}
                 isDemo={location.isDemoData}
+                website={location.website}
                 account={account}
                 onSignIn={() => router.push('/sign-in')}
                 width={cardWidth}

@@ -8,20 +8,19 @@ import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { PrimaryButton, Txt } from '@/components/ui';
+import { useActiveSession } from '@/lib/activeSession';
 import { api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
-import { color, radius, space, themed } from '@/lib/theme';
+import { haptic } from '@/lib/haptics';
+import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
+import { color, face, radius, space, themed } from '@/lib/theme';
+import { unitFor } from '@/lib/training';
 import { usePageTitle } from '@/lib/pageTitle';
-
-/** A saved name ends with its gym ("Legs · Equinox"); the line under it names the gym, so the title needn't. */
-function listTitle(name: string, gymName: string | null | undefined): string {
-  const suffix = gymName ? ` · ${gymName}` : null;
-  return suffix && name.endsWith(suffix) && name.length > suffix.length ? name.slice(0, -suffix.length) : name;
-}
 
 export default function MyWorkouts() {
   usePageTitle('My workouts');
-  const { account, billing, openPro } = useApp();
+  const { account, billing, openPro, prefs } = useApp();
+  const active = useActiveSession();
   const router = useRouter();
   const [workouts, setWorkouts] = useState<SavedWorkout[] | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -55,8 +54,22 @@ export default function MyWorkouts() {
     );
   }
 
+  const details = workouts ? libraryDetails(workouts) : new Map<string, string>();
+  const start = (workout: SavedWorkout) => {
+    haptic.success();
+    startSavedWorkout(workout, unitFor(prefs.country));
+    router.push('/train');
+  };
+
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
+      {active && (
+        <Pressable onPress={() => router.push('/train')} accessibilityRole="button" style={styles.notice}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {active.name} is in progress. <Txt variant="footnote" color={color.brand}>Back to it ›</Txt>
+          </Txt>
+        </Pressable>
+      )}
       {problem && (
         <Txt variant="footnote" color={color.dangerInk}>
           {problem}
@@ -84,35 +97,55 @@ export default function MyWorkouts() {
         </View>
       )}
       {workouts !== null && workouts.length > 0 && (
-        <View style={styles.list}>
-          {workouts.map((workout, index) => (
-            <Pressable
-              key={workout.id}
-              onPress={() => router.push({ pathname: '/workouts/[id]', params: { id: workout.id } })}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
-            >
-              <View style={styles.rowIcon}>
-                <Icon name={workout.plan.goal === 'endurance' ? 'bolt' : 'workout'} size={18} color={color.onBrand} />
-              </View>
-              <View style={styles.flex}>
-                <Txt variant="headline" numberOfLines={2}>
-                  {listTitle(workout.name, workout.plan.gymName)}
-                </Txt>
-                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-                  {[
-                    `${workout.plan.items.length} exercise${workout.plan.items.length === 1 ? '' : 's'}`,
-                    workout.plan.gymName,
-                    new Date(workout.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </Txt>
-              </View>
-              <Icon name="chevron" size={14} color={color.labelTertiary} />
-            </Pressable>
-          ))}
-        </View>
+        <>
+          <View style={styles.list}>
+            {workouts.map((workout, index) => {
+              const title = libraryTitle(workout.name, workout.plan.gymName);
+              return (
+                <View key={workout.id} style={[styles.row, index > 0 && styles.rowLine]}>
+                  <Pressable
+                    onPress={() => router.push({ pathname: '/workouts/[id]', params: { id: workout.id } })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${title}, ${details.get(workout.id) ?? ''}`}
+                    style={({ pressed }) => [styles.open, pressed && styles.pressed]}
+                  >
+                    <View style={styles.rowIcon}>
+                      <Icon name={workout.plan.goal === 'endurance' ? 'bolt' : 'workout'} size={18} color={color.onBrand} />
+                    </View>
+                    <View style={styles.flex}>
+                      <Txt variant="headline" numberOfLines={2}>
+                        {title}
+                      </Txt>
+                      <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
+                        {details.get(workout.id)}
+                      </Txt>
+                    </View>
+                  </Pressable>
+                  {!active && (
+                    <Pressable
+                      onPress={() => start(workout)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Start ${title}`}
+                      hitSlop={6}
+                      style={({ pressed }) => [styles.startPill, pressed && styles.pressed]}
+                    >
+                      <Icon name="play" size={13} color={color.brand} />
+                      <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                        Start
+                      </Txt>
+                    </Pressable>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.footer}>
+            Saved to your account, so they’re on any device you sign in on. Tap one to see it, share it or delete it.
+          </Txt>
+          {billing.isPro && (
+            <PrimaryButton label="Build a workout" icon="sparkle" tone="quiet" onPress={() => router.push({ pathname: '/workout/[id]', params: { id: 'any' } })} />
+          )}
+        </>
       )}
     </ScrollView>
   );
@@ -127,7 +160,11 @@ const styles = themed(() => StyleSheet.create({
   emptyCard: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3] },
   notice: { padding: space[3], borderRadius: radius.md, backgroundColor: color.fill },
   list: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingRight: space[3] },
+  open: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingLeft: space[4], paddingRight: space[1], paddingVertical: space[3] },
+  pressed: { opacity: 0.6 },
+  startPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[3], paddingVertical: 7, borderRadius: 999, backgroundColor: color.brandTint },
+  footer: { paddingHorizontal: space[4] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
 }));

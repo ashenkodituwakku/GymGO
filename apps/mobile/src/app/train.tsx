@@ -5,7 +5,7 @@
  * any records you broke.
  */
 
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -16,7 +16,7 @@ import { Glass } from '@/components/Glass';
 import { Icon } from '@/components/Icon';
 import { Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { endSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
-import { ApiError, api } from '@/lib/api';
+import { ApiError, api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { CHILD_TOUCH, color, face, radius, space, themed } from '@/lib/theme';
@@ -36,6 +36,7 @@ import {
   setCount,
   setsSummary,
   toKg,
+  unitFor,
   volumeKg,
   weightFor,
   type NewRecord,
@@ -43,6 +44,7 @@ import {
   type TrainingSession,
   type WeightUnit,
 } from '@/lib/training';
+import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
 import { useTrainingLog } from '@/lib/useTraining';
 import { EXERCISES, exerciseName } from '@/lib/workout';
 import { shareText } from '@/lib/actions';
@@ -64,6 +66,88 @@ const exerciseOf = (id: string) => EXERCISES.find((exercise) => exercise.id === 
 /** Done for a time or a distance rather than for reps. */
 const isTimed = (item: ActiveItem) => exerciseOf(item.exerciseId)?.cardio === true || repRange(item.reps) === null;
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+
+/**
+ * With nothing in progress: build a workout, or start one you saved (your
+ * library, a Pro feature; what's saved stays startable if Pro ends).
+ */
+function NoWorkout({ token }: { token: string | null }) {
+  const router = useRouter();
+  const { prefs } = useApp();
+  const [saved, setSaved] = useState<SavedWorkout[] | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return;
+      api
+        .workouts(token)
+        .then((result) => setSaved(result.workouts))
+        .catch(() => setSaved(null));
+    }, [token]),
+  );
+  const recent = (saved ?? []).slice(0, 4);
+  const details = saved ? libraryDetails(saved) : new Map<string, string>();
+  return (
+    <ScrollView style={styles.page} contentContainerStyle={[styles.content, styles.noWorkout]}>
+      <Stack.Screen options={{ title: 'Workout' }} />
+      <View style={styles.noWorkoutHead}>
+        <Icon name="workout" size={34} color={color.brand} />
+        <Txt variant="title2">No workout in progress</Txt>
+        <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
+          {recent.length > 0 ? 'Start one you saved, or build a new one.' : 'Build one for your gym, or open one you saved, and tap Start.'}
+        </Txt>
+      </View>
+      {recent.length > 0 && (
+        <View style={styles.savedList}>
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.savedHeader}>
+            YOUR WORKOUTS
+          </Txt>
+          <View style={styles.savedCard}>
+            {recent.map((workout, index) => {
+              const title = libraryTitle(workout.name, workout.plan.gymName);
+              return (
+                <Pressable
+                  key={workout.id}
+                  onPress={() => {
+                    haptic.success();
+                    startSavedWorkout(workout, unitFor(prefs.country));
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Start ${title}, ${details.get(workout.id) ?? ''}`}
+                  style={({ pressed }) => [styles.savedRow, index > 0 && styles.savedLine, pressed && { backgroundColor: color.fill }]}
+                >
+                  <View style={styles.flex}>
+                    <Txt variant="headline" numberOfLines={1}>
+                      {title}
+                    </Txt>
+                    <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
+                      {details.get(workout.id)}
+                    </Txt>
+                  </View>
+                  <View style={styles.playDot}>
+                    <Icon name="play" size={14} color={color.onBrand} />
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+          {(saved?.length ?? 0) > recent.length && (
+            <Pressable onPress={() => router.push('/workouts')} accessibilityRole="link" hitSlop={8} style={styles.seeAll}>
+              <Txt variant="subhead" color={color.brand}>
+                All {saved!.length} workouts ›
+              </Txt>
+            </Pressable>
+          )}
+        </View>
+      )}
+      <PrimaryButton
+        label="Build a workout"
+        icon="sparkle"
+        tone={recent.length > 0 ? 'quiet' : undefined}
+        onPress={() => router.replace({ pathname: '/workout/[id]', params: { id: 'any' } })}
+      />
+    </ScrollView>
+  );
+}
 
 export default function TrainScreen() {
   usePageTitle('Workout');
@@ -102,19 +186,7 @@ export default function TrainScreen() {
 
   if (done) return <Summary result={done} onClose={close} onProgress={() => router.replace('/progress')} />;
 
-  if (!session) {
-    return (
-      <View style={styles.empty}>
-        <Stack.Screen options={{ title: 'Workout' }} />
-        <Icon name="workout" size={34} color={color.brand} />
-        <Txt variant="title2">No workout in progress</Txt>
-        <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          Build one for your gym, or open one you saved, and tap Start.
-        </Txt>
-        <PrimaryButton label="Build a workout" icon="sparkle" onPress={() => router.replace({ pathname: '/workout/[id]', params: { id: 'any' } })} />
-      </View>
-    );
-  }
+  if (!session) return <NoWorkout token={token} />;
 
   const typedAnyWeight = session.items.some((item) => item.sets.some((set) => set.weight.trim() !== ''));
   const ticked = session.items.reduce((sum, item) => sum + item.sets.filter((set) => set.done).length, 0);
@@ -615,7 +687,15 @@ const styles = themed(() => StyleSheet.create({
   intro: { gap: 2, marginBottom: space[1] },
   center: { textAlign: 'center' },
   flex: { flex: 1 },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
+  noWorkout: { flexGrow: 1, justifyContent: 'center', paddingVertical: space[8], gap: space[5] },
+  noWorkoutHead: { alignItems: 'center', gap: space[3], paddingHorizontal: space[2] },
+  savedList: { gap: space[2] },
+  savedHeader: { paddingHorizontal: space[4], letterSpacing: 0.3 },
+  savedCard: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
+  savedRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
+  savedLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
+  playDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
+  seeAll: { alignSelf: 'flex-end', paddingHorizontal: space[4] },
   unitRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   unitSwitch: { width: 140 },
   card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[2] },

@@ -20,6 +20,7 @@ import { ApiError, api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, space, themed } from '@/lib/theme';
+import { planSignature } from '@/lib/savedWorkouts';
 import { unitFor } from '@/lib/training';
 import {
   GOALS,
@@ -87,9 +88,24 @@ export default function WorkoutScreen() {
     setMuscles((current) => (current.includes(muscle) ? current.filter((item) => item !== muscle) : [...current, muscle]));
   const gymName = record?.location.name ?? null;
 
-  // Saving to the account's library is Pro. A new plan can be saved again.
+  // Saving to the account's library is Pro. A new plan can be saved again,
+  // but one already in the library shows as saved rather than saving a copy.
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | string>('idle');
   useEffect(() => setSaveState('idle'), [workout]);
+  const [library, setLibrary] = useState<Set<string>>(() => new Set());
+  const libraryToken = billing.isPro ? account.token : null;
+  useEffect(() => {
+    if (!libraryToken) return;
+    api
+      .workouts(libraryToken)
+      .then((result) => setLibrary(new Set(result.workouts.map((item) => planSignature(item.gymId, item.plan.items)))))
+      .catch(() => undefined);
+  }, [libraryToken]);
+  const signature = planSignature(
+    record?.location.id ?? null,
+    workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds })),
+  );
+  const isSaved = saveState === 'saved' || library.has(signature);
   const saveWorkout = async () => {
     // Signed in but the server away still tries, and says it couldn't reach it, rather than offering Pro to a Pro member.
     if (!billing.isPro || !account.token) {
@@ -118,6 +134,7 @@ export default function WorkoutScreen() {
         },
       });
       haptic.success();
+      setLibrary((current) => new Set(current).add(signature));
       setSaveState('saved');
     } catch (error) {
       if (error instanceof ApiError && error.code === 'pro_required') {
@@ -259,9 +276,9 @@ export default function WorkoutScreen() {
               />
               {workout.items.length > 0 && (
                 <ActionPill
-                  label={saveState === 'saved' ? 'Saved' : saveState === 'saving' ? 'Saving…' : `Save${billing.isPro ? '' : ' · Pro'}`}
-                  icon={saveState === 'saved' ? 'saved' : 'save'}
-                  disabled={saveState === 'saving' || saveState === 'saved'}
+                  label={isSaved ? 'Saved' : saveState === 'saving' ? 'Saving…' : `Save${billing.isPro ? '' : ' · Pro'}`}
+                  icon={isSaved ? 'saved' : 'save'}
+                  disabled={saveState === 'saving' || isSaved}
                   onPress={() => void saveWorkout()}
                 />
               )}
@@ -274,6 +291,13 @@ export default function WorkoutScreen() {
               )}
             </View>
 
+            {isSaved && workout.items.length > 0 && (
+              <Pressable onPress={() => router.push('/workouts')} accessibilityRole="link" style={styles.savedLink}>
+                <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                  {saveState === 'saved' ? 'Saved to My workouts ›' : 'Already in My workouts ›'}
+                </Txt>
+              </Pressable>
+            )}
             {muscles.length === 0 && (
               <Txt variant="subhead" color={color.labelSecondary}>
                 Pick at least one muscle on the body above.
@@ -303,13 +327,6 @@ export default function WorkoutScreen() {
               />
             ))}
 
-            {saveState === 'saved' && (
-              <Pressable onPress={() => router.push('/workouts')} accessibilityRole="link" style={styles.savedLink}>
-                <Txt variant="subhead" color={color.brand} style={face('semibold')}>
-                  Saved to My workouts ›
-                </Txt>
-              </Pressable>
-            )}
             {saveState !== 'idle' && saveState !== 'saving' && saveState !== 'saved' && (
               <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
                 {saveState}

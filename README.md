@@ -442,6 +442,13 @@ confirmed. Most gyms haven't published their machines, so for those it
 offers a **typical gym** plan instead and marks anything not confirmed with
 "?". It never claims a gym has a machine it hasn't been told about.
 
+With Pro, **Save** keeps a plan in **My workouts** (Profile → Training), on
+your account. A plan that's already there shows as Saved, so you don't get
+a second copy. Each saved workout has a **Start** button in the list, and
+the Workout screen, with nothing in progress, lists your latest ones to
+start in one tap. Saved workouts stay, and can still be started, if Pro
+ends.
+
 ### Accounts
 
 Tap the person icon next to the search box to create an account. Your saved

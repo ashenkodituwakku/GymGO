@@ -1,28 +1,26 @@
 /**
- * Your gym collection: every gym you've checked in at, as a card that moves
- * up a tier (Bronze, Silver, Gold, Platinum) the more days you go. Above
+ * Your gym collection: every gym you've checked in at, as a trading card.
+ * Each card has a rarity and a gem, rolled by luck (see lib/rarity.ts), and
+ * a visit tier (Bronze to Platinum) that only going back can raise. Above
  * them, how many gyms, cities and countries, and the badges they earn.
  *
  * A card shows the gym's own logo or a member's photo when there is one,
- * credited as on its page, and says "No photo supplied" when there isn't:
- * nothing is drawn in to stand for a gym.
+ * and says "No photo supplied" when there isn't: the gem frame is
+ * decoration, and nothing is drawn in to stand for a gym.
  */
 
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
-import type { GymRecord } from '@gymgo/domain';
-import { MarkImage, useGymMark } from '@/components/BrandLogo';
-import { TIER_METAL } from '@/components/CollectCard';
+import { GemCard } from '@/components/GemCard';
 import { Icon, type IconName } from '@/components/Icon';
 import { rise } from '@/components/motion';
-import { NoPhoto, PrimaryButton, Txt } from '@/components/ui';
-import { photoUrl } from '@/lib/api';
+import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { shareText } from '@/lib/actions';
-import { badges, collectionShareText, collectionStats, flag, tierFor, type CollectedGym } from '@/lib/collection';
-import { haptic } from '@/lib/haptics';
+import { badges, collectionShareText, collectionStats } from '@/lib/collection';
+import { FOIL_ONE_IN, cardFor, oddsLine, rarityRank } from '@/lib/rarity';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
@@ -36,7 +34,16 @@ export default function CollectionScreen() {
   const { loaded, gyms } = useCollection();
   const { width } = useWindowDimensions();
   const cardWidth = (Math.min(width, COLUMN) - space[4] * 2 - space[3]) / 2;
-  const entries = useMemo(() => Object.values(gyms).sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1)), [gyms]);
+  const [order, setOrder] = useState<'newest' | 'rarest' | 'visits'>('newest');
+  const entries = useMemo(() => {
+    const newest = Object.values(gyms).sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1));
+    if (order === 'rarest') {
+      const rank = new Map(newest.map((entry) => [entry.id, rarityRank(cardFor(entry).rarity) * 2 + (cardFor(entry).foil ? 1 : 0)]));
+      return [...newest].sort((a, b) => rank.get(b.id)! - rank.get(a.id)!);
+    }
+    if (order === 'visits') return [...newest].sort((a, b) => b.days.length - a.days.length);
+    return newest;
+  }, [gyms, order]);
   const stats = collectionStats(gyms);
   const earned = badges(stats);
   const [shared, setShared] = useState<string | null>(null);
@@ -62,7 +69,7 @@ export default function CollectionScreen() {
           Start your collection
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          At a gym, open its page and tap I’m here. GymGO checks your location on this phone and adds the gym to your collection. Go back on other days and its card climbs from Bronze to Platinum.
+          At a gym, open its page and tap I’m here. GymGO checks your location on this phone and gives you the gym’s card, with a rarity and a gem rolled by luck. Every day you go back rolls again, and the card climbs from Bronze to Platinum.
         </Txt>
         <PrimaryButton
           label="Find a gym"
@@ -112,12 +119,23 @@ export default function CollectionScreen() {
       </Animated.View>
 
       <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
-        YOUR GYMS
+        YOUR CARDS
       </Txt>
+      {entries.length > 1 && (
+        <Segmented
+          options={[
+            { value: 'newest', label: 'Newest' },
+            { value: 'rarest', label: 'Rarest' },
+            { value: 'visits', label: 'Most visits' },
+          ]}
+          value={order}
+          onChange={setOrder}
+        />
+      )}
       <View style={styles.grid}>
         {entries.map((entry, index) => (
           <Animated.View key={entry.id} entering={rise(Math.min(index, 6) + 2)} style={{ width: cardWidth }}>
-            <GymCard
+            <GemCard
               entry={entry}
               record={data.records.find((record) => record.location.id === entry.id) ?? null}
               cover={data.covers[entry.id] ?? null}
@@ -126,6 +144,18 @@ export default function CollectionScreen() {
             />
           </Animated.View>
         ))}
+      </View>
+      <View style={styles.how}>
+        <View style={styles.howHead}>
+          <Icon name="gem" size={16} color={color.brand} />
+          <Txt variant="headline">How cards work</Txt>
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary}>
+          {`Each day you check in at a gym rolls its card: ${oddsLine()}. The card keeps its best roll, so going back is how it gets rarer. Its gem (its colour) is picked at random when you first collect the gym, and 1 in ${FOIL_ONE_IN} cards is Foil.`}
+        </Txt>
+        <Txt variant="footnote" color={color.labelSecondary}>
+          Rarity is luck, not a rating of the gym, and it can’t be bought. The tier (Bronze to Platinum) counts your visits.
+        </Txt>
       </View>
       <PrimaryButton label="Share your collection" icon="share" tone="quiet" onPress={() => void share()} />
       {shared && (
@@ -154,68 +184,6 @@ function Stat({ value, one, many, icon }: { value: number; one: string; many: st
   );
 }
 
-function GymCard({ entry, record, cover, width, onPress }: { entry: CollectedGym; record: GymRecord | null; cover: string | null; width: number; onPress: () => void }) {
-  const visits = entry.days.length;
-  const tier = tierFor(visits);
-  const metal = TIER_METAL[tier.tier];
-  const since = new Date(entry.firstAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
-  const toNext = tier.next ? visits / (visits + tier.next.visits) : 1;
-  return (
-    <Pressable
-      onPress={() => {
-        haptic.tap();
-        onPress();
-      }}
-      accessibilityRole="button"
-      accessibilityLabel={`${entry.name}, ${entry.city}. ${tier.label}, ${visits} visit${visits === 1 ? '' : 's'}${tier.next ? `, ${tier.next.visits} more to ${tier.next.label}` : ''}`}
-      // Fills its row's height, so cards side by side line up when one name takes two lines.
-      style={({ pressed }) => [styles.card, { borderColor: metal }, pressed && { transform: [{ scale: 0.97 }] }]}
-    >
-      <View style={styles.art}>
-        <CardArt record={record} cover={cover} name={entry.name} width={width - space[2] * 2} />
-        <View style={[styles.ribbon, { backgroundColor: metal }]}>
-          <Icon name="trophy" size={10} color={color.onBrand} />
-          <Txt variant="caption" color={color.onBrand} style={[face('bold'), styles.ribbonText]}>
-            {tier.label.toUpperCase()}
-          </Txt>
-        </View>
-      </View>
-      <View style={styles.cardBody}>
-        <Txt variant="headline" numberOfLines={2}>
-          {entry.name}
-        </Txt>
-        <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-          {`${flag(entry.countryCode)} ${entry.city}`.trim()}
-        </Txt>
-        <Txt variant="caption" color={color.labelSecondary} numberOfLines={2}>
-          {`${visits} visit${visits === 1 ? '' : 's'} · since ${since}`}
-        </Txt>
-        <View style={styles.track}>
-          <View style={[styles.fill, { width: `${Math.round(toNext * 100)}%`, backgroundColor: metal }]} />
-        </View>
-      </View>
-    </Pressable>
-  );
-}
-
-/** The gym's own logo, else a member's photo, else "No photo supplied". */
-function CardArt({ record, cover, name, width }: { record: GymRecord | null; cover: string | null; name: string; width: number }) {
-  const uri = cover ? photoUrl(cover) : null;
-  if (uri) return <Image source={{ uri }} style={styles.photo} resizeMode="cover" accessibilityLabel={`A member’s photo of ${name}`} />;
-  if (record) return <Mark record={record} name={name} width={width} />;
-  return <NoPhoto style={styles.photo} />;
-}
-
-function Mark({ record, name, width }: { record: GymRecord; name: string; width: number }) {
-  const mark = useGymMark(record.location);
-  if (!mark) return <NoPhoto style={styles.photo} />;
-  return (
-    <View style={[styles.photo, styles.plate]}>
-      <MarkImage mark={mark} name={name} width={width - space[4]} height={56} area={2600} />
-    </View>
-  );
-}
-
 const styles = themed(() =>
   StyleSheet.create({
     page: { flex: 1, backgroundColor: color.groupedBackground },
@@ -230,15 +198,8 @@ const styles = themed(() =>
     badge: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.md, backgroundColor: color.fill },
     badgeOn: { backgroundColor: color.brandTint },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
-    card: { flex: 1, borderRadius: radius.lg, borderCurve: 'continuous', borderWidth: 2, backgroundColor: color.card, padding: space[2], gap: space[2] },
-    art: { borderRadius: radius.md, overflow: 'hidden' },
-    photo: { height: 96, width: '100%', borderRadius: radius.md },
-    plate: { alignItems: 'center', justifyContent: 'center', backgroundColor: color.logoPlate },
-    ribbon: { position: 'absolute', top: space[2], left: space[2], flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 7, paddingVertical: 2, borderRadius: radius.pill },
-    ribbonText: { letterSpacing: 0.5, fontSize: 10, lineHeight: 14 },
-    cardBody: { flex: 1, gap: 2, paddingHorizontal: space[1], paddingBottom: space[1] },
-    track: { height: 5, borderRadius: 3, backgroundColor: color.fill, overflow: 'hidden', marginTop: 'auto' },
-    fill: { height: '100%', borderRadius: 3 },
+    how: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
+    howHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     note: { marginTop: space[2], paddingHorizontal: space[4], textAlign: 'center' },
   }),
 );

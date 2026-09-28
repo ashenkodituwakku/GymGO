@@ -330,7 +330,19 @@ takes one location fix, checks on the phone that you're within about 150 m
 of the gym, and adds it to your **collection** (Profile → Collection). Each
 day you check in again is a visit, and the gym's card climbs from Bronze to
 Silver (3 visits), Gold (10) and Platinum (25). The collection counts your
-gyms, cities and countries and earns badges. Home says so when you're at a
+gyms, cities and countries and earns badges.
+
+Each gym is a **trading card** with a rarity rolled by luck: every day you
+check in rolls it (Common 60%, Uncommon 25%, Rare 10%, Epic 4%, Legendary
+1%) and the card keeps its best roll. Each card also has a random **gem**
+(Ruby, Sapphire, Emerald, Amethyst, Topaz, Aquamarine, Rose quartz or Onyx)
+for its colours, and 1 in 16 is **Foil**. Epic, Legendary and Foil cards
+catch the light; Legendary ones have a rainbow frame and sparkles. A new
+card, or a visit that upgrades one, is revealed full screen. The odds are
+shown in the app, which says rarity is luck, not a rating of the gym, and
+nothing about it can be bought. The frame is decoration around the gym's
+own logo or a member's photo; a gym with neither still says "No photo
+supplied". Home says so when you're at a
 gym you haven't checked in at today. It's all on the device: your position
 is only compared, never sent or kept. Signed in as the dev Pro account
 (below), the button says **Collect** and works from anywhere, so you can

@@ -12,6 +12,7 @@
 
 import { haversineKm } from '@gymgo/domain';
 import { WORLD_CITIES } from './places';
+import { cardFor, cardName, newSeed, rarityRank, RARITIES, type Rarity } from './rarity';
 
 // --- Checking in --------------------------------------------------------------------
 
@@ -46,6 +47,8 @@ export interface CollectedGym {
   days: string[];
   firstAt: string;
   lastAt: string;
+  /** The card's random seed, for its rarity, gem and foil (see rarity.ts). Missing on gyms collected before cards had them. */
+  seed?: string;
 }
 
 export type Collection = Record<string, CollectedGym>;
@@ -72,6 +75,7 @@ export function collect(
   collection: Collection,
   gym: { id: string; name: string; suburb: string; countryCode: string; brand: string | null; position: { lat: number; lng: number } },
   now: Date = new Date(),
+  random: () => number = Math.random,
 ): { collection: Collection; fresh: 'new' | 'visit' | 'again-today'; entry: CollectedGym } {
   const today = localDay(now);
   const at = now.toISOString();
@@ -89,6 +93,7 @@ export function collect(
         days: [today],
         firstAt: at,
         lastAt: at,
+        seed: newSeed(random),
       };
   return { collection: { ...collection, [gym.id]: entry }, fresh: old ? 'visit' : 'new', entry };
 }
@@ -121,6 +126,9 @@ export interface CollectionStats {
   countries: number;
   /** Your best tier anywhere. */
   topTier: Tier | null;
+  /** Your rarest card, and how many are Foil. */
+  topRarity: Rarity | null;
+  foils: number;
 }
 
 export function collectionStats(collection: Collection): CollectionStats {
@@ -132,6 +140,10 @@ export function collectionStats(collection: Collection): CollectionStats {
     cities: new Set(entries.map((entry) => `${entry.countryCode}:${entry.city}`)).size,
     countries: new Set(entries.map((entry) => entry.countryCode)).size,
     topTier: topIndex >= 0 ? TIERS[topIndex]!.tier : null,
+    topRarity: entries.length
+      ? RARITIES[Math.max(...entries.map((entry) => rarityRank(cardFor(entry).rarity)))]!.id
+      : null,
+    foils: entries.filter((entry) => cardFor(entry).foil).length,
   };
 }
 
@@ -153,6 +165,9 @@ export function badges(stats: CollectionStats): Badge[] {
     { id: 'countries', title: 'Globetrotter', detail: 'Gyms in 2 countries', earned: stats.countries >= 2 },
     { id: 'gold', title: 'Home gym', detail: 'A gym at Gold', earned: tierRank >= 2 },
     { id: 'platinum', title: 'Platinum', detail: 'A gym at Platinum', earned: tierRank >= 3 },
+    { id: 'epic', title: 'Lucky pull', detail: 'An Epic card or better', earned: stats.topRarity !== null && rarityRank(stats.topRarity) >= rarityRank('epic') },
+    { id: 'legendary', title: 'Legend', detail: 'A Legendary card', earned: stats.topRarity === 'legendary' },
+    { id: 'foil', title: 'Shiny', detail: 'A Foil card', earned: stats.foils > 0 },
   ];
 }
 
@@ -173,7 +188,7 @@ export function collectionShareText(collection: Collection): string {
   const top = Object.values(collection)
     .sort((a, b) => b.days.length - a.days.length || a.name.localeCompare(b.name))
     .slice(0, 5)
-    .map((entry) => `${tierFor(entry.days.length).label}: ${entry.name}, ${entry.city} ${flag(entry.countryCode)}`.trim());
+    .map((entry) => `${cardName(cardFor(entry))} · ${tierFor(entry.days.length).label}: ${entry.name}, ${entry.city} ${flag(entry.countryCode)}`.trim());
   return [
     `My GymGO collection: ${plural(stats.gyms, 'gym', 'gyms')} in ${plural(stats.cities, 'city', 'cities')} and ${plural(stats.countries, 'country', 'countries')}, ${plural(stats.visits, 'visit', 'visits')}.`,
     '',

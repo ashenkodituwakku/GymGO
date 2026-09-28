@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { badges, checkIn, cityFor, collect, collectionShareText, collectionStats, flag, tierFor, type Collection } from './collection';
+import { cardFor, rarityRank, type Rarity } from './rarity';
 
 // Doherty's Gym, Flinders Street, Melbourne.
 const GYM = { lat: -37.81907, lng: 144.95865 };
@@ -54,9 +55,22 @@ describe('tiers and totals', () => {
     const entry = (id: string, city: string, countryCode: string, visits: number) => ({ id, name: id, suburb: city, city, countryCode, brand: null, days: days(visits), firstAt: '', lastAt: '' });
     const collection: Collection = { a: entry('a', 'Melbourne', 'AU', 11), b: entry('b', 'Melbourne', 'AU', 1), c: entry('c', 'Sydney', 'AU', 2), d: entry('d', 'London', 'GB', 1) };
     const stats = collectionStats(collection);
-    expect(stats).toEqual({ gyms: 4, visits: 15, cities: 3, countries: 2, topTier: 'gold' });
-    const earned = badges(stats).filter((badge) => badge.earned).map((badge) => badge.id);
+    expect(stats).toMatchObject({ gyms: 4, visits: 15, cities: 3, countries: 2, topTier: 'gold' });
+    const looks = Object.values(collection).map(cardFor);
+    expect(stats.topRarity).toBe([...looks].sort((x, y) => rarityRank(y.rarity) - rarityRank(x.rarity))[0]!.rarity);
+    expect(stats.foils).toBe(looks.filter((look) => look.foil).length);
+    const luck = ['epic', 'legendary', 'foil'];
+    const earned = badges(stats).filter((badge) => badge.earned && !luck.includes(badge.id)).map((badge) => badge.id);
     expect(earned).toEqual(['first', 'cities', 'countries', 'gold']);
+  });
+
+  it('earns the luck badges from the rarest card and any Foil', () => {
+    const base = { gyms: 1, visits: 1, cities: 1, countries: 1, topTier: 'bronze' as const };
+    const earned = (topRarity: Rarity, foils: number) =>
+      badges({ ...base, topRarity, foils }).filter((badge) => badge.earned).map((badge) => badge.id);
+    expect(earned('rare', 0)).toEqual(['first']);
+    expect(earned('epic', 0)).toEqual(['first', 'epic']);
+    expect(earned('legendary', 1)).toEqual(['first', 'epic', 'legendary', 'foil']);
   });
 
   it('draws a flag from a country code, and nothing from junk', () => {
@@ -75,7 +89,7 @@ describe('collectionShareText', () => {
     const first = collect({}, doherty, new Date(2026, 8, 1, 7)).collection;
     const text = collectionShareText(collect(first, doherty, new Date(2026, 8, 2, 7)).collection);
     expect(text.split('\n')[0]).toBe('My GymGO collection: 1 gym in 1 city and 1 country, 2 visits.');
-    expect(text).toContain('Bronze: Doherty’s Gym, Melbourne 🇦🇺');
+    expect(text).toMatch(/^(Common|Uncommon|Rare|Epic|Legendary) [A-Z][a-z]+( quartz)?( foil)? · Bronze: Doherty’s Gym, Melbourne 🇦🇺$/m);
     expect(text).not.toMatch(/2026|07:00/);
   });
 });

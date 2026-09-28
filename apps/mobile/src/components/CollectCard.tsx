@@ -11,33 +11,34 @@
  */
 
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { ReduceMotion, ZoomIn } from 'react-native-reanimated';
 import type { GymRecord } from '@gymgo/domain';
 import { useApp } from '@/lib/app-state';
-import { TIERS, checkIn, collectionStats, localDay, tierFor, type Tier } from '@/lib/collection';
+import { TIERS, checkIn, collectionStats, localDay, tierFor } from '@/lib/collection';
+import { cardFor, cardName, gemInfo, rarityLabel, rarityRank, rollFor, type Rarity } from '@/lib/rarity';
 import { haptic } from '@/lib/haptics';
 import { currentFix, type Fix } from '@/lib/location';
 import { distanceLabel } from '@/lib/places';
-import { color, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
+import { CardReveal, type Pull } from './CardReveal';
+import { TIER_METAL } from './GemCard';
 import { Icon } from './Icon';
 import { Pressy } from './motion';
 import { PrimaryButton, Txt } from './ui';
 
-/** Each tier's medal: the metal it's named after. */
-export const TIER_METAL = themed(() => ({
-  bronze: '#B0713A',
-  silver: '#8E959E',
-  gold: '#C9971C',
-  platinum: '#3E9DB8',
-})) as Record<Tier, string>;
 
-type Step = { kind: 'idle' } | { kind: 'checking' } | { kind: 'problem'; text: string } | { kind: 'collected'; fresh: 'new' | 'visit' | 'again-today' };
+type Step =
+  | { kind: 'idle' }
+  | { kind: 'checking' }
+  | { kind: 'problem'; text: string }
+  | { kind: 'collected'; fresh: 'new' | 'visit' | 'again-today'; rolled: Rarity | null };
 
 export function CollectCard({ record, onOpenCollection }: { record: GymRecord; onOpenCollection: () => void }) {
   const { gyms, collect } = useCollection();
-  const { account } = useApp();
+  const { account, data } = useApp();
+  const [pull, setPull] = useState<Pull | null>(null);
   // The local dev account skips the "are you there?" check.
   const anywhere = account.account?.devTools === true;
   const [step, setStep] = useState<Step>({ kind: 'idle' });
@@ -47,6 +48,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
   const tier = visits ? tierFor(visits) : null;
 
   const add = () => {
+    const before = mine ? cardFor(mine) : null;
     const result = collect({
       id: location.id,
       name: location.name,
@@ -56,7 +58,12 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
       position: location.position,
     });
     haptic.success();
-    setStep({ kind: 'collected', fresh: result.fresh });
+    const after = cardFor(result.entry);
+    const today = result.entry.days[result.entry.days.length - 1]!;
+    setStep({ kind: 'collected', fresh: result.fresh, rolled: result.fresh === 'visit' ? rollFor(result.entry, today) : null });
+    // A new card, or a visit that rolled better than the card was: show it off.
+    if (result.fresh === 'new') setPull({ entry: result.entry, upgradedFrom: null });
+    else if (result.fresh === 'visit' && before && rarityRank(after.rarity) > rarityRank(before.rarity)) setPull({ entry: result.entry, upgradedFrom: before.rarity });
   };
 
   const tryCollect = async () => {
@@ -77,6 +84,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
   };
 
   const celebrate = step.kind === 'collected' && step.fresh !== 'again-today';
+  const look = mine ? cardFor(mine) : null;
   const title =
     step.kind === 'collected' && step.fresh === 'new'
       ? 'Collected!'
@@ -109,6 +117,29 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
         </View>
       </View>
 
+      {look && (
+        <Pressable
+          onPress={() => setPull({ entry: mine!, upgradedFrom: null })}
+          accessibilityRole="button"
+          accessibilityLabel={`Your card: ${cardName(look)}. Show it`}
+          style={styles.cardLine}
+        >
+          <View style={[styles.gemDot, { backgroundColor: gemInfo(look.gem).colors[1] }]}>
+            <Icon name="gem" size={11} color="#FFFFFF" />
+          </View>
+          <Txt variant="subhead" style={[styles.flex, face('semibold')]}>
+            {`${cardName(look)} card`}
+          </Txt>
+          <Txt variant="footnote" color={color.brand}>
+            Show
+          </Txt>
+        </Pressable>
+      )}
+      {step.kind === 'collected' && step.rolled && look && step.rolled !== look.rarity && (
+        <Txt variant="footnote" color={color.labelSecondary}>
+          {`Today’s roll: ${rarityLabel(step.rolled)}. Your card keeps its best, ${rarityLabel(look.rarity)}.`}
+        </Txt>
+      )}
       {step.kind === 'problem' && (
         <Txt variant="footnote" color={color.maybeInk}>
           {step.text}
@@ -143,6 +174,16 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
           </View>
         )}
       </View>
+      <CardReveal
+        pull={pull}
+        record={record}
+        cover={data.covers[location.id] ?? null}
+        onClose={() => setPull(null)}
+        onOpenCollection={() => {
+          setPull(null);
+          onOpenCollection();
+        }}
+      />
     </View>
   );
 }
@@ -244,5 +285,7 @@ const styles = themed(() =>
     strip: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
     stripMedal: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
     nudge: { borderWidth: 2, borderColor: color.brand },
+    cardLine: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 2 },
+    gemDot: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   }),
 );

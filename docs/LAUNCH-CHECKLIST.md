@@ -65,6 +65,15 @@ wrong or the product is.
 - [ ] Basemap licence resolved and the map path actually exercised.
 - [ ] A working support channel. `/support` currently says there is none.
 - [ ] Legal review of terms, privacy and community guidelines.
+- [ ] Register a DMCA designated agent at dmca.copyright.gov (US$6, renew
+      every three years) and set `GYMGO_DMCA_AGENT_*` so the app shows it.
+      Someone has to act on copyright notices when they arrive.
+- [ ] Turn on Stripe's customer emails (receipts, and a reminder before a
+      yearly renewal) and check each state's auto-renewal rules.
+- [ ] Before any marketing email: an unsubscribe link in each, honoured
+      within 10 business days, and a real postal address.
+- [ ] Check the age question (13 and over) still matches the law wherever
+      GymGO launches; some countries set a higher age for consent to data use.
 - [ ] A moderation rota. The queue exists; nobody is staffing it.
 - [ ] Backups, and a retention job that actually deletes ownership evidence 90
       days after a decision, as the privacy page promises.

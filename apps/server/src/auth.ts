@@ -67,7 +67,41 @@ export function publicAccount(row: AccountRow) {
 export const hasPassword = (row: AccountRow) => row.password_hash !== '';
 
 export class AuthInputError extends Error {
-  readonly status = 400;
+  readonly status: number = 400;
+}
+
+/**
+ * GymGO accounts are for people 13 and over: in the US, collecting anything
+ * from a child under 13 needs verified parental consent (COPPA), which GymGO
+ * doesn't have. Browsing needs no account and collects nothing, so it's open
+ * to everyone.
+ */
+export const MINIMUM_AGE = 13;
+
+export class TooYoungError extends AuthInputError {
+  override readonly status = 403;
+  readonly code = 'too_young';
+}
+
+/**
+ * The age check made before any account is created. It asks the month and
+ * year someone was born (a neutral question, which doesn't say what answer
+ * gets in) and counts their birthday as the last day of that month, so it
+ * never lets in anyone even a day short. The answer isn't kept; only when
+ * the check was made is.
+ */
+export function checkAge(birthMonth: unknown, now: Date): void {
+  const match = typeof birthMonth === 'string' ? /^(\d{4})-(\d{2})$/.exec(birthMonth.trim()) : null;
+  const year = match ? Number(match[1]) : NaN;
+  const month = match ? Number(match[2]) : NaN;
+  const thisYear = now.getUTCFullYear();
+  const thisMonth = now.getUTCMonth() + 1;
+  if (!match || month < 1 || month > 12 || year < thisYear - 120 || year > thisYear || (year === thisYear && month > thisMonth)) {
+    throw new AuthInputError('Enter the month and year you were born.');
+  }
+  // Whole years, counting this year's birthday only once its month is over.
+  const age = thisYear - year - (thisMonth > month ? 0 : 1);
+  if (age < MINIMUM_AGE) throw new TooYoungError(`GymGO accounts are for people ${MINIMUM_AGE} and over.`);
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -104,7 +138,11 @@ export function endOtherSessions(db: Db, userId: string, keepToken: string): voi
   db.prepare('delete from sessions where user_id = ? and token_hash != ?').run(userId, sha256(keepToken));
 }
 
-export function createAccount(db: Db, input: { email: string; password: string | null; displayName: string }, now = new Date()): AccountRow | null {
+export function createAccount(
+  db: Db,
+  input: { email: string; password: string | null; displayName: string; ageCheckedAt?: string | null },
+  now = new Date(),
+): AccountRow | null {
   const existing = db.prepare('select 1 from users where email = ?').get(input.email);
   if (existing) return null;
   const row: AccountRow = {
@@ -117,8 +155,8 @@ export function createAccount(db: Db, input: { email: string; password: string |
     created_at: now.toISOString(),
   };
   db.prepare(
-    'insert into users (id, email, display_name, password_hash, role, blocked, created_at) values (?, ?, ?, ?, ?, ?, ?)',
-  ).run(row.id, row.email, row.display_name, row.password_hash, row.role, row.blocked, row.created_at);
+    'insert into users (id, email, display_name, password_hash, role, blocked, created_at, age_checked_at) values (?, ?, ?, ?, ?, ?, ?, ?)',
+  ).run(row.id, row.email, row.display_name, row.password_hash, row.role, row.blocked, row.created_at, input.ageCheckedAt ?? null);
   return row;
 }
 

@@ -52,6 +52,22 @@ describe('the email', () => {
     expect(email.text).toContain('App: 0.1.0');
   });
 
+  it('labels a copyright notice as one, in the subject and the first line', () => {
+    const email = bugReportEmail({
+      id: 'r2',
+      topic: 'copyright',
+      description: 'My photo of the squat racks was posted without permission.',
+      replyTo: 'owner@example.com',
+      context: [],
+      reporter: null,
+      createdAt: '2026-09-28T10:00:00.000Z',
+    });
+    expect(email.subject).toBe('GymGO copyright notice: My photo of the squat racks was posted without permission.');
+    expect(email.text.startsWith('Someone sent a copyright notice through GymGO.')).toBe(true);
+    expect(cleanBugReport({ description: 'A copyright notice about a photo', topic: 'copyright' }).topic).toBe('copyright');
+    expect(cleanBugReport({ description: 'Anything else becomes a bug', topic: 'spam' }).topic).toBe('bug');
+  });
+
   it('never lets a line break into a header', () => {
     expect(headerSafe('Hello\r\nBcc: x@y.com', 100)).toBe('Hello Bcc: x@y.com');
     expect(headerSafe('a'.repeat(200), 10)).toHaveLength(10);
@@ -168,7 +184,7 @@ describe('POST /api/bug-reports', () => {
   async function signUp() {
     people += 1;
     const result = await call('POST', '/api/auth/signup', {
-      body: { email: `bugs${people}@example.com`, password: 'correct horse', displayName: `Tester ${people}` },
+      body: { email: `bugs${people}@example.com`, password: 'correct horse', displayName: `Tester ${people}`, birthMonth: '1990-01' },
     });
     return { token: result.body.token as string, id: result.body.account.id as string };
   }

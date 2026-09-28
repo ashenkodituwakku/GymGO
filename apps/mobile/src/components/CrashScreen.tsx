@@ -39,6 +39,7 @@ export function CrashScreen({ error, retry }: ErrorBoundaryProps) {
         : `${Platform.OS === 'ios' ? 'iPhone (iOS)' : 'Android'}, ${String(Platform.Version)}`;
     try {
       await api.reportBug(null, {
+        topic: 'bug',
         description: `The app crashed and showed its error screen.\n\nWhat they were doing: ${note.trim() || 'not said'}`,
         replyTo: null,
         context: [

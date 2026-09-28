@@ -15,6 +15,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ApiError, OfflineError } from '@/lib/api';
+import { accountCreationLocked, formatBirthMonthInput, lockAccountCreation, parseBirthMonth, takePendingSignIn, type PendingSignIn } from '@/lib/ageGate';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { NO_WEB_OUTLINE, color, dropShadow, face, radius, space, themed } from '@/lib/theme';
@@ -23,6 +24,11 @@ import { usePageTitle } from '@/lib/pageTitle';
 type Mode = 'sign_in' | 'create';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** What someone too young for an account is told, once, and on this device for a day after. */
+const TOO_YOUNG = 'Sorry, you can’t make a GymGO account. You can still find gyms and use everything that doesn’t need one.';
+
+const tooYoung = (error: unknown) => error instanceof ApiError && error.code === 'too_young';
 
 function messageFor(error: unknown): string {
   if (error instanceof OfflineError) return serverOfflineLine(Platform.OS);
@@ -40,6 +46,15 @@ export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  // The age question (see ageGate.ts): typed as MM / YYYY.
+  const [born, setBorn] = useState('');
+  const birthMonth = parseBirthMonth(born);
+  const [locked, setLocked] = useState(false);
+  // A Google or Apple sign-in that would make a new account, waiting on the age question.
+  const [pendingSocial, setPendingSocial] = useState<PendingSignIn | null>(() => takePendingSignIn());
+  useEffect(() => {
+    void accountCreationLocked().then(setLocked);
+  }, []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const emailRef = useRef<TextInput>(null);
@@ -80,18 +95,43 @@ export default function SignInScreen() {
   const emailOk = EMAIL.test(email.trim());
   const passwordOk = password.length >= (mode === 'create' ? 8 : 1);
   const nameOk = mode === 'sign_in' || name.trim().length > 0;
-  const ready = emailOk && passwordOk && nameOk;
+  const bornOk = mode === 'sign_in' || birthMonth !== null;
+  const ready = emailOk && passwordOk && nameOk && bornOk && !(mode === 'create' && locked);
+
+  const refuseYoung = () => {
+    void lockAccountCreation();
+    setLocked(true);
+    setPendingSocial(null);
+    fail(TOO_YOUNG);
+  };
 
   const submit = async () => {
     if (!ready || busy) return;
     setBusy(true);
     setError(null);
     try {
-      if (mode === 'create') await account.signUp(name.trim(), email.trim(), password);
+      if (mode === 'create') await account.signUp(name.trim(), email.trim(), password, birthMonth ?? '');
       else await account.signIn(email.trim(), password);
       done();
     } catch (caught) {
-      fail(messageFor(caught));
+      if (tooYoung(caught)) refuseYoung();
+      else fail(messageFor(caught));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** Finish a Google or Apple sign-in that was waiting on the age question. */
+  const finishSocial = async () => {
+    if (!pendingSocial || !birthMonth || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await account.signInWith(pendingSocial.provider, pendingSocial.idToken, pendingSocial.nonce, pendingSocial.name, birthMonth);
+      done();
+    } catch (caught) {
+      if (tooYoung(caught)) refuseYoung();
+      else fail(messageFor(caught));
     } finally {
       setBusy(false);
     }
@@ -104,7 +144,12 @@ export default function SignInScreen() {
       await account.signInWith(provider, idToken, nonce, providedName);
       done();
     } catch (caught) {
-      fail(messageFor(caught));
+      if (caught instanceof ApiError && caught.code === 'age_needed') {
+        // A new account: ask the age question first, then finish with the same sign-in.
+        if (locked) fail(TOO_YOUNG);
+        else setPendingSocial({ provider, idToken, nonce, name: providedName ?? null });
+      } else if (tooYoung(caught)) refuseYoung();
+      else fail(messageFor(caught));
     } finally {
       setBusy(false);
     }
@@ -152,6 +197,21 @@ export default function SignInScreen() {
         <SocialDivider />
       </Animated.View>
 
+      {pendingSocial ? (
+        <Animated.View entering={FADE_IN} style={[styles.form, styles.pending, shakeStyle]}>
+          <Txt variant="headline">One more thing before GymGO makes your account</Txt>
+          <BornField value={born} onChange={setBorn} onSubmit={() => void finishSocial()} autoFocus />
+          <PrimaryButton label="Continue" busy={busy} disabled={!birthMonth} onPress={() => void finishSocial()} />
+          <PrimaryButton label="Cancel" tone="quiet" onPress={() => setPendingSocial(null)} />
+        </Animated.View>
+      ) : mode === 'create' && locked ? (
+        <View style={[styles.form, styles.pending]}>
+          <Txt variant="subhead" color={color.labelSecondary}>
+            {TOO_YOUNG}
+          </Txt>
+        </View>
+      ) : (
+      <>
       <Animated.View layout={GLIDE} style={[styles.form, shakeStyle]}>
         {mode === 'create' && (
           <Animated.View entering={FADE_IN} exiting={FADE_OUT}>
@@ -222,6 +282,7 @@ export default function SignInScreen() {
             </Txt>
           </Animated.View>
         )}
+        {mode === 'create' && <BornField value={born} onChange={setBorn} onSubmit={() => void submit()} />}
       </Animated.View>
 
       {error && (
@@ -236,6 +297,8 @@ export default function SignInScreen() {
       <Animated.View layout={GLIDE}>
         <PrimaryButton label={mode === 'create' ? 'Create account' : 'Sign in'} busy={busy} disabled={!ready} onPress={() => void submit()} />
       </Animated.View>
+      </>
+      )}
 
       <Txt variant="caption" color={color.labelSecondary} style={styles.small}>
         Your account lives on the GymGO server on your own computer. Passwords are stored only as a salted hash. With Apple
@@ -248,6 +311,33 @@ export default function SignInScreen() {
 /** "or use email", only when there's something above it to be an alternative to. */
 function SocialDivider() {
   return useAnySocial() ? <OrDivider /> : null;
+}
+
+/** The age question: the month and year you were born, typed on a number pad. */
+function BornField({ value, onChange, onSubmit, autoFocus }: { value: string; onChange: (value: string) => void; onSubmit: () => void; autoFocus?: boolean }) {
+  const complete = value.replace(/\D/g, '').length === 6;
+  return (
+    <View style={styles.bornWrap}>
+      <AuthField
+        icon="calendar"
+        label="Month and year you were born"
+        value={value}
+        onChangeText={(typed) => onChange(formatBirthMonthInput(typed))}
+        placeholder="MM / YYYY"
+        keyboardType="number-pad"
+        inputMode="numeric"
+        autoComplete="off"
+        maxLength={9}
+        autoFocus={autoFocus}
+        returnKeyType="go"
+        onSubmitEditing={onSubmit}
+        problem={complete && !parseBirthMonth(value) ? 'That isn’t a month and year yet.' : null}
+      />
+      <Txt variant="caption" color={color.labelSecondary}>
+        Asked before any account is made, to check GymGO suits your age. The answer isn’t kept.
+      </Txt>
+    </View>
+  );
 }
 
 function AuthField({
@@ -316,6 +406,8 @@ const styles = themed(() =>
     // The box's border shows focus, in the accent, instead of the browser's own ring.
     fieldInput: { flex: 1, height: '100%', fontSize: 17, color: color.label, ...NO_WEB_OUTLINE, ...face('regular') },
     fieldHint: { marginLeft: space[4] },
+    pending: { gap: space[3] },
+    bornWrap: { gap: space[1] },
     rule: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginLeft: space[1] },
     error: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2], padding: space[3], borderRadius: radius.md, backgroundColor: color.dangerTint },
     small: { textAlign: 'center', marginTop: space[2] },

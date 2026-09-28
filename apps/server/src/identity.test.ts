@@ -133,8 +133,14 @@ describe('signing in with Google and Apple', () => {
     expect(providers.body).toEqual({ google: { web: 'web-client.apps.googleusercontent.com', ios: null, android: null }, apple: true });
   });
 
-  it('makes an account the first time, and signs the same person in after', async () => {
-    const first = await call('POST', '/api/auth/google', { body: { idToken: token(googleClaims()), nonce: 'n-1' } });
+  it('makes an account the first time, once it knows they’re 13 or over, and signs the same person in after', async () => {
+    const asked = await call('POST', '/api/auth/google', { body: { idToken: token(googleClaims()), nonce: 'n-1' } });
+    expect(asked.status).toBe(400);
+    expect(asked.body!.code).toBe('age_needed');
+    const young = await call('POST', '/api/auth/google', { body: { idToken: token(googleClaims()), nonce: 'n-1', birthMonth: '2020-03' } });
+    expect(young.status).toBe(403);
+    expect(young.body!.code).toBe('too_young');
+    const first = await call('POST', '/api/auth/google', { body: { idToken: token(googleClaims()), nonce: 'n-1', birthMonth: '1990-01' } });
     expect(first.status).toBe(201);
     expect(first.body!.account).toMatchObject({ email: 'alex@example.com', displayName: 'Alex Lifter', hasPassword: false });
     const again = await call('POST', '/api/auth/google', { body: { idToken: token(googleClaims({ email: 'new@example.com' })), nonce: 'n-1' } });
@@ -146,7 +152,7 @@ describe('signing in with Google and Apple', () => {
   });
 
   it('never joins a password account on email alone', async () => {
-    await call('POST', '/api/auth/signup', { body: { email: 'sam@example.com', password: 'correct horse', displayName: 'Sam' } });
+    await call('POST', '/api/auth/signup', { body: { email: 'sam@example.com', password: 'correct horse', displayName: 'Sam', birthMonth: '1990-01' } });
     const refused = await call('POST', '/api/auth/google', { body: { idToken: token(googleClaims({ sub: 'google-sam', email: 'sam@example.com' })), nonce: 'n-1' } });
     expect(refused.status).toBe(409);
     expect(refused.body!.code).toBe('connect_from_settings');
@@ -158,7 +164,7 @@ describe('signing in with Google and Apple', () => {
   });
 
   it('lets a signed-in person connect Apple, list both, and not remove the last way in', async () => {
-    const signedIn = await call('POST', '/api/auth/signup', { body: { email: 'jo@example.com', password: 'correct horse', displayName: 'Jo' } });
+    const signedIn = await call('POST', '/api/auth/signup', { body: { email: 'jo@example.com', password: 'correct horse', displayName: 'Jo', birthMonth: '1990-01' } });
     const session = signedIn.body!.token as string;
     const connected = await call('POST', '/api/me/identities/apple', { token: session, body: { idToken: appleToken(), nonce: 'apple-nonce' } });
     expect(connected.status).toBe(200);
@@ -168,13 +174,13 @@ describe('signing in with Google and Apple', () => {
     const viaApple = await call('POST', '/api/auth/apple', { body: { idToken: appleToken(), nonce: 'apple-nonce' } });
     expect(viaApple.body!.account.email).toBe('jo@example.com');
     // The same Apple account can't be connected to someone else.
-    const other = await call('POST', '/api/auth/signup', { body: { email: 'kim@example.com', password: 'correct horse', displayName: 'Kim' } });
+    const other = await call('POST', '/api/auth/signup', { body: { email: 'kim@example.com', password: 'correct horse', displayName: 'Kim', birthMonth: '1990-01' } });
     expect((await call('POST', '/api/me/identities/apple', { token: other.body!.token, body: { idToken: appleToken(), nonce: 'apple-nonce' } })).status).toBe(409);
     expect((await call('DELETE', '/api/me/identities/apple', { token: session })).status).toBe(204);
   });
 
   it('keeps Google as the way in until a password is set, which needs no old one', async () => {
-    const made = await call('POST', '/api/auth/google', { body: { idToken: token(googleClaims({ sub: 'g-only', email: 'only@example.com' })), nonce: 'n-1' } });
+    const made = await call('POST', '/api/auth/google', { body: { idToken: token(googleClaims({ sub: 'g-only', email: 'only@example.com' })), nonce: 'n-1', birthMonth: '1990-01' } });
     const session = made.body!.token as string;
     expect((await call('DELETE', '/api/me/identities/google', { token: session })).status).toBe(409);
     expect((await call('POST', '/api/me/password', { token: session, body: { currentPassword: '', newPassword: 'a new password' } })).status).toBe(204);

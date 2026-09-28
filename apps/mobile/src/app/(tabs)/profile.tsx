@@ -6,7 +6,7 @@
 
 import { formatPlanPrice } from '@gymgo/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { BugReportQueue, MemberReportQueue, ModerationQueue, PhotoQueue } from '@/components/AccountContent';
 import { AppBadge, Wordmark } from '@/components/BrandMark';
@@ -15,7 +15,9 @@ import { Pressy } from '@/components/motion';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
 import { Group, Row, TILE, TabScreen } from '@/components/ios';
 import { PrimaryButton, Txt } from '@/components/ui';
-import { ApiError } from '@/lib/api';
+import { ApiError, api } from '@/lib/api';
+import { holdPendingSignIn } from '@/lib/ageGate';
+import { setAlwaysShowGoogle, useAlwaysShowGoogle } from '@/lib/googleConsent';
 import { useApp } from '@/lib/app-state';
 import { countryName } from '@/lib/country';
 import { useThemeChoice } from '@/lib/themePrefs';
@@ -29,15 +31,16 @@ export default function Profile() {
   usePageTitle('Profile');
   const { account, data, recents, compare, prefs, setPref, billing, openPro } = useApp();
   const themeChoice = useThemeChoice();
+  const alwaysGoogle = useAlwaysShowGoogle();
   const collection = useCollection();
   const router = useRouter();
   const params = useLocalSearchParams<{ checkout?: string }>();
-  const [about, setAbout] = useState<'facts' | 'sources' | 'privacy' | null>(null);
+  const [about, setAbout] = useState<'facts' | 'sources' | 'privacy' | 'copyright' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const me = account.state === 'signed_in' ? account.account : null;
   const moderator = me?.role === 'moderator' || me?.role === 'admin';
 
-  const toggle = (key: 'facts' | 'sources' | 'privacy') => setAbout((current) => (current === key ? null : key));
+  const toggle = (key: 'facts' | 'sources' | 'privacy' | 'copyright') => setAbout((current) => (current === key ? null : key));
 
   // Back from Stripe's manage page in a browser: pick up any change.
   const { refresh } = billing;
@@ -178,6 +181,13 @@ export default function Profile() {
           toggle={{ value: prefs.haptics, onChange: (value) => setPref('haptics', value) }}
         />
         <Row
+          icon="globe"
+          tile={TILE.blue}
+          title="Google content"
+          subtitle="Show Street View and Google’s photos on a gym’s page without asking"
+          toggle={{ value: alwaysGoogle, onChange: (value) => setAlwaysShowGoogle(value) }}
+        />
+        <Row
           icon="flask"
           tile={TILE.orange}
           title="Demo mode"
@@ -219,8 +229,16 @@ export default function Profile() {
             name. If you subscribe to Pro, Stripe handles the payment:
             GymGO never sees your card, and Stripe gets your name and email for the receipt. Signed in, Download my data (below)
             gives you everything GymGO holds about you as one file.
+            {'\n\n'}
+            GymGO has no ads, no analytics and no session recording: nothing watches what you tap or type. Accounts are for
+            people 13 and over; the month and year you give when making one is checked, then not kept. The map comes from
+            OpenFreeMap (Apple Maps on iPhone), which, like any site, sees your device’s IP address. Nothing loads from Google
+            until you ask: Street View and Google’s photos wait for a tap unless you turn on Google content above. A bug
+            report sends only what its form lists.
           </Explainer>
         )}
+        <Row icon="photo" tile={TILE.grey} title="Copyright and takedowns" onPress={() => toggle('copyright')} />
+        {about === 'copyright' && <CopyrightExplainer onNotice={() => router.push({ pathname: '/report-bug', params: { topic: 'copyright', from: 'Profile' } })} />}
         <Row
           icon="bug"
           tile={TILE.red}
@@ -296,6 +314,12 @@ function SignInCard() {
       await account.signInWith(provider, idToken, nonce, name);
       haptic.success();
     } catch (caught) {
+      if (caught instanceof ApiError && caught.code === 'age_needed') {
+        // A new account: the sign-in screen asks the age question, then finishes this same sign-in.
+        holdPendingSignIn({ provider, idToken, nonce, name: name ?? null });
+        router.push({ pathname: '/sign-in', params: { mode: 'create' } });
+        return;
+      }
       haptic.warn();
       setProblem(caught instanceof ApiError ? caught.message : 'Couldn’t reach the GymGO server. Try again.');
     }
@@ -324,7 +348,42 @@ function SignInCard() {
   );
 }
 
-function Explainer({ children }: { children: string }) {
+/**
+ * How someone whose photo or words were posted here without permission gets
+ * them taken down (the US DMCA's notice and takedown), and where to send the
+ * notice: GymGO's registered agent once there is one, else Report a problem.
+ */
+function CopyrightExplainer({ onNotice }: { onNotice: () => void }) {
+  const [agent, setAgent] = useState<{ name: string; address: string | null; email: string | null } | null | undefined>(undefined);
+  useEffect(() => {
+    api
+      .legal()
+      .then((answer) => setAgent(answer.copyrightAgent))
+      .catch(() => setAgent(null));
+  }, []);
+  return (
+    <View style={styles.copyright}>
+      <Explainer>
+        Photos and reviews on GymGO are posted by members, who confirm they took or wrote them. If something here is yours and
+        was posted without your permission, send a notice. Say who you are and how to reach you; what the work is; where it is
+        on GymGO (the gym, and the photo or review); that you believe in good faith its use isn’t authorised; and that the
+        notice is accurate and, under penalty of perjury, that you own the work or act for its owner, signed with your full
+        name. GymGO takes the item down and tells the member who posted it, who can send a counter-notice. A member who
+        keeps posting other people’s work loses their account.
+      </Explainer>
+      {agent ? (
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.explainer}>
+          GymGO’s designated copyright agent: {[agent.name, agent.address, agent.email].filter(Boolean).join(', ')}.
+        </Txt>
+      ) : null}
+      <View style={styles.copyrightButton}>
+        <PrimaryButton label="Send a copyright notice" tone="quiet" icon="mail" onPress={onNotice} />
+      </View>
+    </View>
+  );
+}
+
+function Explainer({ children }: { children: ReactNode }) {
   return (
     <Txt variant="subhead" color={color.labelSecondary} style={styles.explainer}>
       {children}
@@ -336,6 +395,8 @@ const styles = themed(() => StyleSheet.create({
   settings: { paddingHorizontal: space[4], paddingBottom: space[4] },
   flex: { flex: 1 },
   center: { textAlign: 'center' },
+  copyright: { paddingBottom: space[3] },
+  copyrightButton: { paddingLeft: 16 + 29 + 12, paddingRight: 16 },
   colophon: { alignItems: 'center', gap: space[1], paddingTop: space[2], paddingBottom: space[4] },
   meCard: {
     flexDirection: 'row',

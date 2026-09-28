@@ -86,6 +86,19 @@ export const DEV_PRO_ACCOUNT = (process.env.GYMGO_DEV_PRO ?? '').trim().toLowerC
 export const SMTP_URL = process.env.GYMGO_SMTP_URL?.trim() || null;
 /** Optional. Who the report emails say they're from; by default the SMTP account itself. */
 export const MAIL_FROM = process.env.GYMGO_MAIL_FROM?.trim() || null;
+/**
+ * Optional, and needed before members' photos go public in the US: GymGO's
+ * designated copyright (DMCA) agent, as registered with the US Copyright
+ * Office (README says how). The app shows these so people know where to send
+ * a takedown notice. Without them, notices come in through Report a problem.
+ */
+export const COPYRIGHT_AGENT = process.env.GYMGO_DMCA_AGENT_NAME?.trim()
+  ? {
+      name: process.env.GYMGO_DMCA_AGENT_NAME.trim(),
+      address: process.env.GYMGO_DMCA_AGENT_ADDRESS?.trim() || null,
+      email: process.env.GYMGO_DMCA_AGENT_EMAIL?.trim() || null,
+    }
+  : null;
 /** Where bug reports are emailed, comma-separated. By default, the GymGO team. */
 export const BUG_REPORT_TO = (process.env.GYMGO_BUG_REPORT_TO ?? 'ashenkodit@gmail.com, mahogany.81926@gmail.com')
   .split(',')

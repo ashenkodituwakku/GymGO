@@ -145,7 +145,7 @@ let counter = 0;
 async function signUp() {
   counter += 1;
   const result = await call('POST', '/api/auth/signup', {
-    body: { email: `photo${counter}@example.com`, password: 'correct horse', displayName: `Lifter ${counter}` },
+    body: { email: `photo${counter}@example.com`, password: 'correct horse', displayName: `Lifter ${counter}`, birthMonth: '1990-01' },
   });
   return { token: result.body.token as string, id: result.body.account.id as string };
 }

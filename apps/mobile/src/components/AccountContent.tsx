@@ -196,6 +196,7 @@ export function BugReportQueue({ token }: { token: string }) {
           >
             <Txt variant="footnote" color={color.labelSecondary}>
               {new Date(report.createdAt).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} ·{' '}
+              {report.topic === 'copyright' ? 'Copyright notice · ' : ''}
               {report.reporter?.displayName ?? 'Not signed in'} · {BUG_STATUS[report.status]}
             </Txt>
             <Txt variant="subhead" numberOfLines={expanded ? undefined : 3}>

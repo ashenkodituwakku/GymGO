@@ -140,6 +140,8 @@ export interface GymStatusSummary {
 /** A member's price, visit or open/closed report, as moderators see it. */
 /** A bug report as the app sends it. */
 export interface BugReportDraft {
+  /** A bug, or a copyright (takedown) notice. */
+  topic: 'bug' | 'copyright';
   description: string;
   /** Where the team can reply, if the person asked for one. */
   replyTo: string | null;
@@ -150,6 +152,7 @@ export interface BugReportDraft {
 /** A bug report as moderators see it. */
 export interface BugReportItem {
   id: string;
+  topic: 'bug' | 'copyright';
   description: string;
   replyTo: string | null;
   reporter: { id: string; displayName: string | null; email: string | null } | null;
@@ -336,12 +339,12 @@ export const api = {
       { token },
     ),
 
-  signUp: (body: { email: string; password: string; displayName: string }) =>
+  signUp: (body: { email: string; password: string; displayName: string; birthMonth: string }) =>
     request<{ token: string; account: Account }>('POST', '/api/auth/signup', { body }),
   signIn: (body: { email: string; password: string }) => request<{ token: string; account: Account }>('POST', '/api/auth/login', { body }),
   providers: () => request<SignInProviders>('GET', '/api/auth/providers'),
   /** Sign in (or, the first time, sign up) with a Google or Apple ID token. */
-  signInWith: (provider: SignInProvider, body: { idToken: string; nonce: string | null; name?: string | null }) =>
+  signInWith: (provider: SignInProvider, body: { idToken: string; nonce: string | null; name?: string | null; birthMonth?: string }) =>
     request<{ token: string; account: Account; created: boolean }>('POST', `/api/auth/${provider}`, { body }),
   signInMethods: (token: string) => request<SignInMethods>('GET', '/api/me/identities', { token }),
   connect: (token: string, provider: SignInProvider, body: { idToken: string; nonce: string | null }) =>
@@ -435,6 +438,8 @@ export const api = {
     ),
   /** Send a bug report to the GymGO team. `emailed` says whether the email has gone yet (it's kept either way). */
   reportBug: (token: string | null, report: BugReportDraft) => request<{ id: string; emailed: boolean }>('POST', '/api/bug-reports', { token, body: report }),
+  /** Where to send a copyright (DMCA) notice, once the owner has registered an agent. */
+  legal: () => request<{ copyrightAgent: { name: string; address: string | null; email: string | null } | null }>('GET', '/api/legal'),
   /** Moderators: the latest bug reports, and whether this server emails them. */
   bugReports: (token: string) => request<{ emailing: boolean; reports: BugReportItem[] }>('GET', '/api/moderation/bug-reports', { token }),
   moderationQueue: (token: string) => request<{ reviews: Review[] }>('GET', '/api/moderation/reviews', { token }),

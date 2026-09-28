@@ -447,6 +447,11 @@ reviews. Accounts live only in `apps/server/data/gymgo.db` on your
 computer. Passwords are stored hashed, and no emails are sent to you (the
 only email GymGO sends is a bug report, to the team; see below).
 
+Making an account asks **the month and year you were born**, because
+accounts are for people 13 and over (see [Legal basics](#legal-basics)).
+The answer is checked and not kept; only the time of the check is. A first
+sign-in with Google or Apple asks the same before it makes the account.
+
 In Profile you can **change your name** and **change your password** (it
 asks for the current one, and signs out any other device signed in as you).
 There's no "forgot password" yet, because GymGO sends no email.
@@ -503,6 +508,71 @@ emails a day). `GYMGO_BUG_REPORT_TO` sends them elsewhere (comma-separated)
 and `GYMGO_MAIL_FROM` changes the sender. A person can send five reports an
 hour.
 
+### Legal basics
+
+A checklist of common legal traps for small apps was checked against GymGO.
+What was found, and what GymGO does now:
+
+- **Children under 13 (COPPA, in the US).** Collecting anything from a child
+  under 13 needs a parent's verified consent, which GymGO has no way to get.
+  So accounts are for 13 and over. Sign-up asks the month and year you were
+  born, as a plain question that doesn't hint at the answer (as the FTC
+  advises), and the server refuses a younger age without saving anything.
+  After a too-young answer the device won't offer sign-up again for a day, so
+  the answer can't just be changed. Finding gyms needs no account and stays
+  open to everyone.
+- **Loading things from Google (GDPR, in the EU).** Anything loaded from
+  Google shows Google the device's IP address; a German court ordered a site
+  that loaded Google Fonts that way, without asking, to pay damages. GymGO's
+  fonts are bundled with the app, and a gym's page now loads nothing from
+  Google (Street View, Google's photos, the check that Google is reachable)
+  until you tap Show or choose to always show it. Opening **See it on
+  Google** is asking, so that page loads straight away. The map tiles come
+  from OpenFreeMap (or Apple on an iPhone), which also see the IP address;
+  Profile → Privacy says so.
+- **Recording what people do.** GymGO has no analytics, advertising or
+  session recording of any kind, and Profile → Privacy says so.
+- **Subscriptions that renew (California and other states).** The renewal
+  terms now sit right under the buy button, which names the price: "Renews
+  automatically at $19.99 a year, tax included, until you cancel", how to
+  cancel, and that tapping Subscribe agrees to them. Before taking real
+  money, also turn on Stripe's customer emails (a receipt after each payment,
+  and a reminder before a yearly plan renews) in Stripe's settings, since
+  several states expect a confirmation and reminders by email. Rules vary by
+  state and change; check them before launch.
+- **Marketing email (CAN-SPAM).** GymGO sends none: the only email is a bug
+  report, to the team. If it ever sends marketing email, each one needs a
+  working unsubscribe link (honoured within 10 business days) and a real
+  postal address.
+- **Other people's photos and reviews (the DMCA, in the US).** Members post
+  photos and reviews, so someone may post work that isn't theirs. **Profile
+  → Copyright and takedowns** explains how to send a notice, and **Send a
+  copyright notice** opens a form that goes to the team like a bug report
+  but marked as a copyright notice (it needs a reply address). The team
+  should take the item down, tell the member, accept a counter-notice, and
+  close the accounts of members who keep doing it.
+
+  For the legal protection this gives (the "safe harbor"), the owner also has
+  to **register a designated agent** with the US Copyright Office. Nothing
+  has been registered. To do it:
+
+  1. Go to **dmca.copyright.gov**, make an account and register GymGO's
+     agent: a name (a person or a role, such as "Copyright agent"), a postal
+     address (a PO box is allowed), a phone number and an email address.
+  2. Pay the fee (US$6 at the time of writing).
+  3. Renew it every three years, or it lapses.
+  4. Put the same details in `apps/server/.env.local` so the app shows them
+     under Copyright and takedowns:
+
+     ```
+     GYMGO_DMCA_AGENT_NAME=Copyright agent, GymGO
+     GYMGO_DMCA_AGENT_ADDRESS=PO Box 123, City, State ZIP
+     GYMGO_DMCA_AGENT_EMAIL=copyright@example.com
+     ```
+
+None of this is legal advice, and a lawyer should look at GymGO before it
+launches: see `docs/LAUNCH-CHECKLIST.md`.
+
 ### Gym photos
 
 GymGO only shows gym photos that its own members took and chose to share. It
@@ -522,6 +592,11 @@ The top of a gym's page shows, in this order:
    a gym with no sure match simply shows no Google photos.
 3. Otherwise **Google Street View** outside the gym, labelled as such (it
    may not face the door). This is Google's free public embed.
+
+Google's photos and Street View wait for a tap: the page shows a card saying
+they come from Google, which sees your device's IP address, with **Show**
+and **Always show Google content** (also a switch in Profile). See
+[Legal basics](#legal-basics) for why.
 
 It always says when no member has shared a photo yet, and an invented demo
 gym says **No photo supplied yet**.
@@ -838,6 +913,9 @@ computer, install the Stripe CLI and run
   `customer.subscription.*`. Nothing is deployed.
 - Terms of service, a privacy policy and a refund policy, linked from the Pro
   screen and Stripe's settings.
+- Stripe's customer emails turned on: receipts, and a reminder before a
+  yearly plan renews (see [Legal basics](#legal-basics)). The renewal terms
+  are already shown under the buy button.
 - Tax: in Australia, registering for GST once turnover reaches A$75,000; in
   the US, sales tax on subscriptions varies by state. Stripe Tax can work it
   out. Prices are set tax-inclusive so what's shown is what's paid.

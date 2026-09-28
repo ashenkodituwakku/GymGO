@@ -22,7 +22,8 @@ const SCHEMA = `
     password_hash text not null,
     role text not null default 'member',
     blocked integer not null default 0,
-    created_at text not null
+    created_at text not null,
+    age_checked_at text
   );
   create table if not exists sessions (
     token_hash text primary key,
@@ -181,6 +182,7 @@ const SCHEMA = `
   create table if not exists bug_reports (
     id text primary key,
     user_id text references users(id) on delete cascade,
+    topic text not null default 'bug' check (topic in ('bug', 'copyright')),
     reply_to text,
     description text not null,
     context_json text not null,
@@ -209,6 +211,14 @@ export function openDb(path: string): Db {
  * once, keeping its rows.
  */
 function migrate(db: Db): void {
+  // When the account's age check was made (see checkAge in auth.ts); older accounts have none.
+  const userColumns = db.prepare('pragma table_info(users)').all() as Array<{ name: string }>;
+  if (!userColumns.some((column) => column.name === 'age_checked_at')) db.exec('alter table users add column age_checked_at text');
+  // Bug reports that are copyright notices, kept apart so they're dealt with first.
+  const reportColumns = db.prepare('pragma table_info(bug_reports)').all() as Array<{ name: string }>;
+  if (!reportColumns.some((column) => column.name === 'topic')) {
+    db.exec(`alter table bug_reports add column topic text not null default 'bug' check (topic in ('bug', 'copyright'))`);
+  }
   // Visit prices in every country's own currency, sized to it (¥ and ₹ as
   // well as A$ and €): the old fixed list of currencies and range go.
   const prices = db.prepare("select sql from sqlite_master where type = 'table' and name = 'price_reports'").get() as { sql: string } | undefined;

@@ -40,7 +40,11 @@ function languageAndZone(): { locale: string | null; timeZone: string | null } {
 }
 
 export default function ReportBug() {
-  usePageTitle('Report a bug');
+  const { topic: topicParam } = useLocalSearchParams<{ topic?: string }>();
+  // A copyright (takedown) notice uses the same form, asking for what a notice needs.
+  const notice = topicParam === 'copyright';
+  const title = notice ? 'Copyright notice' : 'Report a bug';
+  usePageTitle(title);
   const router = useRouter();
   const { from } = useLocalSearchParams<{ from?: string }>();
   const { account, prefs, billing } = useApp();
@@ -80,7 +84,9 @@ export default function ReportBug() {
   const typed = description.trim();
   const replyTo = signedIn ? (wantReply ? accountEmail : null) : replyEmail.trim() || null;
   const replyProblem = !signedIn && replyTo !== null && !looksLikeEmail(replyTo);
-  const ready = typed.length >= MIN_CHARS && typed.length <= MAX_CHARS && !replyProblem && !busy;
+  // A notice needs a way to reach whoever sent it.
+  const replyMissing = notice && replyTo === null;
+  const ready = typed.length >= MIN_CHARS && typed.length <= MAX_CHARS && !replyProblem && !replyMissing && !busy;
 
   const submit = async () => {
     if (!ready) return;
@@ -88,7 +94,7 @@ export default function ReportBug() {
     setProblem(null);
     try {
       const token = account.state === 'signed_in' ? account.token : null;
-      const answer = await api.reportBug(token, { description: typed, replyTo, context: includeDetails ? details : [] });
+      const answer = await api.reportBug(token, { topic: notice ? 'copyright' : 'bug', description: typed, replyTo, context: includeDetails ? details : [] });
       haptic.success();
       setSent({ emailed: answer.emailed, replyTo });
     } catch (error) {
@@ -105,7 +111,7 @@ export default function ReportBug() {
   if (sent) {
     return (
       <View style={styles.page}>
-        <Stack.Screen options={{ title: 'Report a bug' }} />
+        <Stack.Screen options={{ title }} />
         <Animated.View entering={FADE_IN} style={styles.done}>
           <View style={styles.doneIcon}>
             <Icon name="good" size={34} color={color.onBrand} />
@@ -127,23 +133,29 @@ export default function ReportBug() {
 
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
-      <Stack.Screen options={{ title: 'Report a bug' }} />
+      <Stack.Screen options={{ title }} />
       <Animated.View entering={rise(0)} style={styles.intro}>
-        <View style={styles.badge}>
-          <Icon name="bug" size={24} color={color.onBrand} />
+        <View style={[styles.badge, notice && styles.noticeBadge]}>
+          <Icon name={notice ? 'photo' : 'bug'} size={24} color={color.onBrand} />
         </View>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.introText}>
-          Something not working, or not right? Say what happened and it goes straight to the people who make GymGO.
+          {notice
+            ? 'Is a photo or review on GymGO yours, posted without your permission? Send a notice and GymGO takes it down while it’s looked into.'
+            : 'Something not working, or not right? Say what happened and it goes straight to the people who make GymGO.'}
         </Txt>
       </Animated.View>
 
       <View style={styles.card}>
         <TextField
-          label="What went wrong?"
+          label={notice ? 'Your notice' : 'What went wrong?'}
           inSheet={false}
           value={description}
           onChangeText={setDescription}
-          placeholder="What you did, what you expected, and what happened instead."
+          placeholder={
+            notice
+              ? 'Your name and postal address; the work that is yours; where it is on GymGO (the gym, and the photo or review); that you believe in good faith its use isn’t authorised; that this notice is accurate and, under penalty of perjury, you own the work or act for its owner. Type your full name as your signature.'
+              : 'What you did, what you expected, and what happened instead.'
+          }
           multiline
           maxLength={MAX_CHARS}
           autoFocus={Platform.OS !== 'web'}
@@ -181,7 +193,7 @@ export default function ReportBug() {
         </View>
       )}
 
-      <Group header="Sent with your report" footer="Never your location, your searches or your gyms.">
+      <Group header={notice ? 'Sent with your notice' : 'Sent with your report'} footer="Never your location, your searches or your gyms.">
         <Row icon="info" tile={TILE.grey} title="App and device details" toggle={{ value: includeDetails, onChange: setIncludeDetails }} />
         {includeDetails ? (
           <View style={styles.details} accessible accessibilityLabel={`Details sent: ${details.map((line) => `${line.label}, ${line.value}`).join('; ')}`}>
@@ -208,7 +220,12 @@ export default function ReportBug() {
         </View>
       )}
 
-      <PrimaryButton label={busy ? 'Sending…' : 'Send report'} icon="bug" onPress={() => void submit()} disabled={!ready} busy={busy} />
+      {replyMissing && (
+        <Txt variant="footnote" color={color.maybeInk} style={styles.center}>
+          A notice needs an email address, so GymGO can tell you what happens to it.
+        </Txt>
+      )}
+      <PrimaryButton label={busy ? 'Sending…' : notice ? 'Send notice' : 'Send report'} icon={notice ? 'mail' : 'bug'} onPress={() => void submit()} disabled={!ready} busy={busy} />
       <Txt variant="footnote" color={color.labelTertiary} style={styles.center}>
         Reports are kept on the GymGO server and emailed to the team. Please leave out passwords and card details.
       </Txt>
@@ -231,6 +248,7 @@ const styles = themed(() =>
       alignItems: 'center',
       justifyContent: 'center',
     },
+    noticeBadge: { backgroundColor: TILE.indigo },
     card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[2] },
     description: { minHeight: 150, paddingTop: space[3], paddingBottom: space[3] },
     count: { textAlign: 'right' },

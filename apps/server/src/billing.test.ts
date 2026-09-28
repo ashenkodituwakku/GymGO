@@ -189,7 +189,7 @@ let counter = 0;
 async function signUp(base = withStripe.base) {
   counter += 1;
   const result = await call(base, 'POST', '/api/auth/signup', {
-    body: { email: `pro${counter}@example.com`, password: 'correct horse', displayName: `Lifter ${counter}` },
+    body: { email: `pro${counter}@example.com`, password: 'correct horse', displayName: `Lifter ${counter}`, birthMonth: '1990-01' },
   });
   return { token: result.body.token as string, id: result.body.account.id as string };
 }

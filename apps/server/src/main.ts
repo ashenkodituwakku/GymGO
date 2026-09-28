@@ -21,6 +21,7 @@ import {
   APPLE_SIGN_IN_IDS,
   GOOGLE_SIGN_IN,
   BUG_REPORT_TO,
+  COPYRIGHT_AGENT,
   MAIL_FROM,
   SMTP_URL,
 } from './config';
@@ -61,6 +62,7 @@ const server = createServer(
     siteIcons: { enabled: SITE_ICONS },
     signIn: { google: GOOGLE_SIGN_IN, apple: APPLE_SIGN_IN_IDS },
     bugReports: { send: bugMail, to: BUG_REPORT_TO, retryEveryMs: 15 * 60_000 },
+    legal: { copyrightAgent: COPYRIGHT_AGENT },
   }),
 );
 

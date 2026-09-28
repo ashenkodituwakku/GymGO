@@ -6,11 +6,11 @@
  *   GET    /api/gyms/:gymId               one gym's record, including ones found by searching an area
  *   GET    /api/area?south&west&north&east&home  gyms on OpenStreetMap in that box, read live and kept; outside `home`, Pro only
  *   GET    /api/places?q=                 towns and suburbs in AU and the US by name (for search on submit)
- *   POST   /api/auth/signup               { email, password, displayName }
+ *   POST   /api/auth/signup               { email, password, displayName, birthMonth: 'YYYY-MM' } (13 and over)
  *   POST   /api/auth/login                { email, password }
  *   POST   /api/auth/logout
  *   GET    /api/auth/providers            which of Google and Apple sign-in are on, and Google's client ids
- *   POST   /api/auth/google               { idToken, nonce } -> signed in (the account is made the first time)
+ *   POST   /api/auth/google               { idToken, nonce, birthMonth? } -> signed in (the account is made the first time, 13 and over)
  *   POST   /api/auth/apple                { idToken, nonce, name? } -> signed in (likewise)
  *   GET    /api/me/identities             how you can sign in: password, Google, Apple
  *   POST   /api/me/identities/:provider   { idToken, nonce } -> Google or Apple connected to this account
@@ -62,7 +62,8 @@
  *   GET    /api/moderation/photos         moderators: photos waiting
  *   POST   /api/moderation/photos/:id     moderators: { decision, reason? }
  *   GET    /api/moderation/member-reports moderators: the latest price and visit reports, with who sent them
- *   POST   /api/bug-reports               anyone: { description, replyTo?, context? } -> kept, and emailed to the team
+ *   GET    /api/legal                     the designated copyright agent, once the owner has registered one
+ *   POST   /api/bug-reports               anyone: { description, topic?: 'bug' | 'copyright', replyTo?, context? } -> kept, and emailed to the team
  *   GET    /api/moderation/bug-reports    moderators: the latest bug reports, and whether each was emailed
  *   DELETE /api/moderation/member-reports/:kind/:gymId/:userId   moderators: remove one
  *
@@ -92,7 +93,9 @@ import {
 import {
   AttemptLimiter,
   AuthInputError,
+  TooYoungError,
   accountForToken,
+  checkAge,
   checkLogin,
   createAccount,
   endOtherSessions,
@@ -158,6 +161,8 @@ export interface AppOptions {
     /** How often to retry reports that didn't go (and send any kept before email was set up); off unless set. */
     retryEveryMs?: number;
   };
+  /** Legal contacts the app shows: the designated copyright (DMCA) agent, once registered. */
+  legal?: { copyrightAgent?: { name: string; address: string | null; email: string | null } | null };
 }
 
 class HttpError extends Error {
@@ -519,6 +524,9 @@ export function createApp(options: AppOptions) {
     // --- Public ---------------------------------------------------------
     if (method === 'GET' && path === '/api/health') return send(res, 200, { ok: true });
 
+    // Where to send a copyright (DMCA) notice, once the owner has registered an agent.
+    if (method === 'GET' && path === '/api/legal') return send(res, 200, { copyrightAgent: options.legal?.copyrightAgent ?? null });
+
     if (method === 'GET' && path === '/api/gyms') {
       return send(res, 200, { gyms: allGyms(db), attribution: options.attribution, generatedAt: now().toISOString() });
     }
@@ -719,11 +727,14 @@ export function createApp(options: AppOptions) {
 
     // --- Accounts --------------------------------------------------------
     if (method === 'POST' && path === '/api/auth/signup') {
-      const input = validateSignup(await readJson(req));
+      const body = (await readJson(req)) as Record<string, unknown>;
+      const input = validateSignup(body);
       if (!signupLimiter.allow(`${req.socket.remoteAddress}`, now().getTime())) {
         throw new HttpError(429, 'Too many attempts. Wait a few minutes and try again.');
       }
-      const account = createAccount(db, input, now());
+      // Nothing is kept about someone too young for an account, not even that they tried.
+      checkAge(body.birthMonth, now());
+      const account = createAccount(db, { ...input, ageCheckedAt: now().toISOString() }, now());
       if (!account) throw new HttpError(409, 'There’s already an account with that email. Try signing in.');
       return send(res, 201, { token: startSession(db, account.id, now()), account: publicAccount(account) });
     }
@@ -781,10 +792,16 @@ export function createApp(options: AppOptions) {
           // Made with the other provider, which verified the same address.
           account = existing;
         } else {
+          // A new account: the same age check as signing up with an email.
+          // The app asks, then sends the same sign-in again with the answer.
+          if (body.birthMonth === undefined || body.birthMonth === null || body.birthMonth === '') {
+            throw new HttpError(400, 'Before GymGO makes your account: which month and year were you born?', 'age_needed');
+          }
+          checkAge(body.birthMonth, now());
           const fromEmail = who.email.split('@')[0]!.replace(/[._-]+/g, ' ').trim();
           const offered = provider === 'apple' && typeof body.name === 'string' ? body.name : who.name;
           const displayName = (offered ?? '').trim().replace(/\s+/g, ' ').slice(0, 40) || fromEmail.slice(0, 40) || 'GymGO member';
-          account = createAccount(db, { email: who.email, password: null, displayName }, now())!;
+          account = createAccount(db, { email: who.email, password: null, displayName, ageCheckedAt: now().toISOString() }, now())!;
           created = true;
         }
         db.prepare('insert into identities (provider, subject, user_id, email, created_at) values (?, ?, ?, ?, ?)').run(
@@ -894,7 +911,7 @@ export function createApp(options: AppOptions) {
                   cancel_at_period_end as cancelAtPeriodEnd, updated_at as updatedAt from subscriptions where user_id = ? order by updated_at`,
         ),
         bugReports: rows(
-          `select id, description, reply_to as replyTo, context_json, status, created_at as createdAt, sent_at as emailedAt
+          `select id, topic, description, reply_to as replyTo, context_json, status, created_at as createdAt, sent_at as emailedAt
            from bug_reports where user_id = ? order by created_at`,
         ).map(({ context_json, ...report }) => ({ ...report, device: JSON.parse(String(context_json)) })),
       });
@@ -1609,7 +1626,7 @@ export function createApp(options: AppOptions) {
         return send(res, error.status, { error: error.message, ...(error.code ? { code: error.code } : {}), ...detail });
       }
       if (error instanceof AuthInputError) {
-        return send(res, error.status, { error: error.message });
+        return send(res, error.status, { error: error.message, ...(error instanceof TooYoungError ? { code: error.code } : {}) });
       }
       console.error(error);
       send(res, 500, { error: 'Something went wrong on the server.' });

@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { DEMO_GYMS } from '@gymgo/demo-data';
 import { createApp, isAllowedOrigin } from './app';
-import { hashPassword, verifyPassword } from './auth';
+import { TooYoungError, checkAge, hashPassword, verifyPassword } from './auth';
 import { openDb, seedGyms, type Db } from './db';
 
 let server: Server;
@@ -42,7 +42,7 @@ let counter = 0;
 async function signUp(name = 'Sam') {
   counter += 1;
   const email = `person${counter}@example.com`;
-  const result = await call('POST', '/api/auth/signup', { body: { email, password: 'correct horse', displayName: name } });
+  const result = await call('POST', '/api/auth/signup', { body: { email, password: 'correct horse', displayName: name, birthMonth: '1990-01' } });
   expect(result.status).toBe(201);
   return { token: result.body!.token as string, email, id: result.body!.account.id as string };
 }
@@ -155,10 +155,10 @@ describe('accounts', () => {
   });
 
   it('rejects short passwords, bad emails and duplicate accounts', async () => {
-    expect((await call('POST', '/api/auth/signup', { body: { email: 'a@b.co', password: 'short', displayName: 'A' } })).status).toBe(400);
-    expect((await call('POST', '/api/auth/signup', { body: { email: 'not-an-email', password: 'long enough', displayName: 'A' } })).status).toBe(400);
+    expect((await call('POST', '/api/auth/signup', { body: { email: 'a@b.co', password: 'short', displayName: 'A', birthMonth: '1990-01' } })).status).toBe(400);
+    expect((await call('POST', '/api/auth/signup', { body: { email: 'not-an-email', password: 'long enough', displayName: 'A', birthMonth: '1990-01' } })).status).toBe(400);
     const { email } = await signUp();
-    expect((await call('POST', '/api/auth/signup', { body: { email, password: 'long enough', displayName: 'A' } })).status).toBe(409);
+    expect((await call('POST', '/api/auth/signup', { body: { email, password: 'long enough', displayName: 'A', birthMonth: '1990-01' } })).status).toBe(409);
   });
 
   it('ends a session on sign-out', async () => {
@@ -302,3 +302,29 @@ describe('browser access', () => {
     expect(refused.headers.get('access-control-allow-origin')).toBeNull();
   });
 });
+
+describe('the age check', () => {
+  it('counts a birthday only once its month is over, so no one a day short gets in', () => {
+    const now = new Date('2026-09-28T12:00:00Z');
+    expect(() => checkAge('2013-08', now)).not.toThrow();
+    expect(() => checkAge('2013-09', now)).toThrow(TooYoungError);
+    expect(() => checkAge('2013-10', now)).toThrow(TooYoungError);
+    expect(() => checkAge('1900-01', now)).toThrow('Enter the month and year');
+  });
+
+  it('lets no one under 13 make an account, and keeps nothing about them', async () => {
+    const body = (birthMonth: unknown) => ({ email: 'young@example.com', password: 'correct horse', displayName: 'Young', birthMonth });
+    expect((await call('POST', '/api/auth/signup', { body: body(undefined) })).status).toBe(400);
+    expect((await call('POST', '/api/auth/signup', { body: body('1990-13') })).status).toBe(400);
+    expect((await call('POST', '/api/auth/signup', { body: body('2999-01') })).status).toBe(400);
+    const young = await call('POST', '/api/auth/signup', { body: body('2020-06') });
+    expect(young.status).toBe(403);
+    expect(young.body).toMatchObject({ code: 'too_young', error: 'GymGO accounts are for people 13 and over.' });
+    expect(db.prepare('select count(*) as n from users where email = ?').get('young@example.com')).toEqual({ n: 0 });
+    const adult = await call('POST', '/api/auth/signup', { body: body('1990-06') });
+    expect(adult.status).toBe(201);
+    const row = db.prepare('select age_checked_at from users where email = ?').get('young@example.com') as { age_checked_at: string | null };
+    expect(row.age_checked_at).not.toBeNull();
+  });
+});
+

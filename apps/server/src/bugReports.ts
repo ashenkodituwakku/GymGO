@@ -33,7 +33,11 @@ export class BugReportError extends Error {
   }
 }
 
+export type BugReportTopic = 'bug' | 'copyright';
+
 export interface CleanBugReport {
+  /** A bug, or a copyright (takedown) notice, which the team deals with first. */
+  topic: BugReportTopic;
   description: string;
   replyTo: string | null;
   /** What the app said about itself (version, platform, screen), each a label and its value. */
@@ -63,7 +67,8 @@ export function cleanBugReport(input: unknown): CleanBugReport {
       return label && value ? { label, value } : null;
     })
     .filter((item): item is { label: string; value: string } => item !== null);
-  return { description, replyTo, context };
+  const topic: BugReportTopic = body.topic === 'copyright' ? 'copyright' : 'bug';
+  return { topic, description, replyTo, context };
 }
 
 export interface Reporter {
@@ -74,6 +79,7 @@ export interface Reporter {
 
 interface BugReportRow {
   id: string;
+  topic: BugReportTopic;
   user_id: string | null;
   reply_to: string | null;
   description: string;
@@ -90,6 +96,7 @@ interface BugReportRow {
 /** The email for one report: plain text, everything the team needs to follow it up. */
 export function bugReportEmail(report: {
   id: string;
+  topic?: BugReportTopic;
   description: string;
   replyTo: string | null;
   context: Array<{ label: string; value: string }>;
@@ -102,10 +109,11 @@ export function bugReportEmail(report: {
     : 'Someone not signed in';
   const reply = report.replyTo ? `Reply to: ${report.replyTo} (they asked for a reply; replying to this email goes to them)` : 'They didn’t ask for a reply.';
   const device = report.context.length ? report.context.map((item) => `${item.label}: ${item.value}`).join('\n') : 'Not sent.';
+  const notice = report.topic === 'copyright';
   const text = [
-    'Someone reported a bug in GymGO.',
+    notice ? 'Someone sent a copyright notice through GymGO. Take the item down while it’s looked into.' : 'Someone reported a bug in GymGO.',
     '',
-    'WHAT WENT WRONG',
+    notice ? 'THE NOTICE' : 'WHAT WENT WRONG',
     report.description,
     '',
     'FROM',
@@ -118,7 +126,7 @@ export function bugReportEmail(report: {
     `Report ${report.id}, sent ${report.createdAt}.`,
     'It is also kept on the GymGO server, where moderators can read it in the app (Profile, Moderation).',
   ].join('\n');
-  return { subject: `GymGO bug report: ${headerSafe(firstLine, 80)}`, text };
+  return { subject: `GymGO ${notice ? 'copyright notice' : 'bug report'}: ${headerSafe(firstLine, 80)}`, text };
 }
 
 export class BugReports {
@@ -145,10 +153,10 @@ export class BugReports {
     const id = randomUUID();
     this.db
       .prepare(
-        `insert into bug_reports (id, user_id, reply_to, description, context_json, status, attempts, created_at)
-         values (?, ?, ?, ?, ?, 'pending', 0, ?)`,
+        `insert into bug_reports (id, user_id, topic, reply_to, description, context_json, status, attempts, created_at)
+         values (?, ?, ?, ?, ?, ?, 'pending', 0, ?)`,
       )
-      .run(id, reporter?.id ?? null, report.replyTo, report.description, JSON.stringify(report.context), this.options.now().toISOString());
+      .run(id, reporter?.id ?? null, report.topic, report.replyTo, report.description, JSON.stringify(report.context), this.options.now().toISOString());
     return id;
   }
 
@@ -178,6 +186,7 @@ export class BugReports {
     try {
       const email = bugReportEmail({
         id: row.id,
+        topic: row.topic,
         description: row.description,
         replyTo: row.reply_to,
         context: JSON.parse(row.context_json) as Array<{ label: string; value: string }>,
@@ -232,6 +241,7 @@ export class BugReports {
       .all(limit) as unknown as BugReportRow[];
     return rows.map((row) => ({
       id: row.id,
+      topic: row.topic,
       description: row.description,
       replyTo: row.reply_to,
       reporter: row.user_id ? { id: row.user_id, displayName: row.display_name, email: row.email } : null,

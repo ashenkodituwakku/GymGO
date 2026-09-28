@@ -90,8 +90,8 @@ export function useAccount() {
   );
 
   const signUp = useCallback(
-    async (displayName: string, email: string, password: string) => {
-      const result = await api.signUp({ displayName, email, password });
+    async (displayName: string, email: string, password: string, birthMonth: string) => {
+      const result = await api.signUp({ displayName, email, password, birthMonth });
       await adopt(result.token, result.account);
     },
     [adopt],
@@ -99,8 +99,9 @@ export function useAccount() {
 
   /** Signs in with a Google or Apple ID token; the first time, that makes the account. Returns whether it was new. */
   const signInWith = useCallback(
-    async (provider: SignInProvider, idToken: string, nonce: string | null, name?: string | null) => {
-      const result = await api.signInWith(provider, { idToken, nonce, name });
+    async (provider: SignInProvider, idToken: string, nonce: string | null, name?: string | null, birthMonth?: string) => {
+      // The answer to the age question, when a new account is being made (see ageGate.ts).
+      const result = await api.signInWith(provider, { idToken, nonce, name, ...(birthMonth ? { birthMonth } : {}) });
       await adopt(result.token, result.account);
       return result.created;
     },

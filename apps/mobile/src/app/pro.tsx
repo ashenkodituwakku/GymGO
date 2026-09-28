@@ -254,7 +254,12 @@ export default function ProScreen() {
               sale={billing.sale}
               onAskAgain={billing.askSale}
               busy={busy}
-              label={chosen ? `Continue · ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}` : 'Continue'}
+              label={chosen ? `Subscribe · ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}` : 'Subscribe'}
+              renewal={
+                chosen
+                  ? `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; Pro stays on to the end of the ${interval} you’ve paid for. Tapping Subscribe agrees to these renewal terms.`
+                  : null
+              }
               onSubscribe={() => void subscribe()}
               onSignIn={() => router.push('/sign-in')}
             />
@@ -299,6 +304,7 @@ function BuyButton({
   onAskAgain,
   busy,
   label,
+  renewal,
   onSubscribe,
   onSignIn,
 }: {
@@ -307,6 +313,8 @@ function BuyButton({
   onAskAgain: () => void;
   busy: boolean;
   label: string;
+  /** The auto-renewal terms, shown right by the button that agrees to them. */
+  renewal: string | null;
   onSubscribe: () => void;
   onSignIn: () => void;
 }) {
@@ -349,7 +357,16 @@ function BuyButton({
       </View>
     );
   }
-  return <PrimaryButton label={busy ? 'Opening Stripe…' : label} disabled={busy} onPress={onSubscribe} />;
+  return (
+    <View style={styles.gap}>
+      <PrimaryButton label={busy ? 'Opening Stripe…' : label} disabled={busy} onPress={onSubscribe} />
+      {renewal && (
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+          {renewal}
+        </Txt>
+      )}
+    </View>
+  );
 }
 
 function PlanOption({

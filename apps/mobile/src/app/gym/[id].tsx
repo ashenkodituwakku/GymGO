@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { LogoPlate } from '@/components/BrandLogo';
 import { GoogleEmbed } from '@/components/GoogleEmbed';
+import { GoogleGate } from '@/components/GoogleGate';
 import { GoogleModal } from '@/components/GoogleModal';
 import { GoogleSection, useGooglePlace } from '@/components/GoogleSection';
 import { GooglePhotos } from '@/components/GooglePage';
@@ -163,22 +164,25 @@ export default function GymPage() {
                 onSignIn={() => router.push('/sign-in')}
                 width={cardWidth}
                 fallback={
-                  googlePhotos ? (
-                    <GooglePhotos photos={place!.photos} width={cardWidth - space[4] * 2} />
-                  ) : (
-                    <View style={styles.streetView}>
-                      <GoogleEmbed
-                        url={googleStreetViewEmbedUrl(result.record)}
-                        height={220}
-                        what="Street View"
-                        caption={
-                          <Txt variant="caption" color={color.labelSecondary}>
-                            Google Street View outside the gym. It may not face the door.
-                          </Txt>
-                        }
-                      />
-                    </View>
-                  )
+                  // Nothing from Google loads until asked (see lib/googleConsent.ts).
+                  <GoogleGate what={googlePhotos ? 'Photos' : 'Street View'}>
+                    {googlePhotos ? (
+                      <GooglePhotos photos={place!.photos} width={cardWidth - space[4] * 2} />
+                    ) : (
+                      <View style={styles.streetView}>
+                        <GoogleEmbed
+                          url={googleStreetViewEmbedUrl(result.record)}
+                          height={220}
+                          what="Street View"
+                          caption={
+                            <Txt variant="caption" color={color.labelSecondary}>
+                              Google Street View outside the gym. It may not face the door.
+                            </Txt>
+                          }
+                        />
+                      </View>
+                    )}
+                  </GoogleGate>
                 }
               />
             }

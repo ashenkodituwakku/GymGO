@@ -14,9 +14,11 @@ import { unitFor } from '@/lib/training';
 import { color, radius, space, themed } from '@/lib/theme';
 import { GOALS, muscleLabel, workoutText, type Muscle } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
+import { useScreenBottom } from '@/lib/layout';
 
 export default function SavedWorkoutScreen() {
   usePageTitle('Workout');
+  const screenBottom = useScreenBottom();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { account, prefs } = useApp();
   const active = useActiveSession();
@@ -74,7 +76,7 @@ export default function SavedWorkoutScreen() {
   return (
     <>
       <Stack.Screen options={{ title: '' }} />
-      <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
+      <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
         <View style={styles.intro}>
           <Txt variant="largeTitle">{saved.name}</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>

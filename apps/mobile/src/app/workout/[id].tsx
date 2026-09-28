@@ -38,6 +38,7 @@ import {
   type Muscle,
 } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
+import { useScreenBottom } from '@/lib/layout';
 
 type KitMode = 'gym' | 'typical';
 
@@ -46,6 +47,7 @@ const GOAL_LABEL: Record<Goal, string> = { strength: 'Strength', muscle: 'Muscle
 
 export default function WorkoutScreen() {
   usePageTitle('Build a workout');
+  const screenBottom = useScreenBottom();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, account, billing, openPro, prefs } = useApp();
   const active = useActiveSession();
@@ -149,7 +151,7 @@ export default function WorkoutScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'Workout' }} />
-      <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
+      <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
         <View style={styles.intro}>
           <Txt variant="largeTitle">Build a workout</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>

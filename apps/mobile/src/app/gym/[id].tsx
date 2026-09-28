@@ -36,6 +36,7 @@ import { gymDistanceLine } from '@/lib/copy';
 import { resultsById } from '@/lib/results';
 import { HEADER_EDGE, PAGE_COLUMN, color, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
+import { useScreenBottom } from '@/lib/layout';
 
 /** The pop-up growing into the page: the page rises from where the pop-up sat, still when Reduce Motion is on. */
 const EXPAND_IN =
@@ -56,6 +57,7 @@ export default function GymPage() {
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   const result = useMemo(() => (id ? resultsById(filters, data.records, asOf, data.ratings).get(id) : undefined), [id, filters, data.records, asOf, data.ratings]);
   usePageTitle(result?.record.location.name ?? 'Gym');
+  const screenBottom = useScreenBottom();
 
   const place = useGooglePlace(result?.record);
   const googlePhotos = Boolean(place && place.photos.length > 0);
@@ -163,7 +165,7 @@ export default function GymPage() {
       <ScrollView
         style={styles.page}
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]}
       >
         <Animated.View entering={fromMap ? EXPAND_IN : undefined} style={[styles.column, { width: cardWidth }]}>
           <View style={styles.title}>

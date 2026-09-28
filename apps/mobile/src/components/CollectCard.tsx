@@ -119,7 +119,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
 
       {look && (
         <Pressable
-          onPress={() => setPull({ entry: mine!, upgradedFrom: null })}
+          onPress={() => setPull({ entry: mine!, upgradedFrom: null, viewing: true })}
           accessibilityRole="button"
           accessibilityLabel={`Your card: ${cardName(look)}. Show it`}
           style={styles.cardLine}

@@ -20,6 +20,7 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { NO_WEB_OUTLINE, color, dropShadow, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
+import { useScreenBottom } from '@/lib/layout';
 
 type Mode = 'sign_in' | 'create';
 
@@ -42,6 +43,7 @@ export default function SignInScreen() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(params.mode === 'create' ? 'create' : 'sign_in');
   usePageTitle(mode === 'create' ? 'Create an account' : 'Sign in');
+  const screenBottom = useScreenBottom();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -163,7 +165,7 @@ export default function SignInScreen() {
   return (
     <ScrollView
       style={styles.page}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]}
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets
       contentInsetAdjustmentBehavior="automatic"

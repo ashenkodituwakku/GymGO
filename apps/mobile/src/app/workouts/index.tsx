@@ -16,9 +16,11 @@ import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWork
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { unitFor } from '@/lib/training';
 import { usePageTitle } from '@/lib/pageTitle';
+import { useScreenBottom } from '@/lib/layout';
 
 export default function MyWorkouts() {
   usePageTitle('My workouts');
+  const screenBottom = useScreenBottom();
   const { account, billing, openPro, prefs } = useApp();
   const active = useActiveSession();
   const router = useRouter();
@@ -62,7 +64,7 @@ export default function MyWorkouts() {
   };
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
+    <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
       {active && (
         <Pressable onPress={() => router.push('/train')} accessibilityRole="button" style={styles.notice}>
           <Txt variant="footnote" color={color.labelSecondary}>

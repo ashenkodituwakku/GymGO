@@ -15,6 +15,7 @@ import { haptic } from '@/lib/haptics';
 import { CITY_LIST } from '@/lib/places';
 import { HEADER_EDGE, NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
+import { useScreenBottom } from '@/lib/layout';
 
 /** How many built-in cities each country has. */
 const CITY_COUNT = CITY_LIST.filter((city) => !city.demo).reduce<Record<string, number>>((counts, city) => {
@@ -24,6 +25,7 @@ const CITY_COUNT = CITY_LIST.filter((city) => !city.demo).reduce<Record<string, 
 
 export default function CountryScreen() {
   usePageTitle('Country');
+  const screenBottom = useScreenBottom();
   const params = useLocalSearchParams<{ first?: string }>();
   const first = params.first === '1';
   const router = useRouter();
@@ -79,7 +81,7 @@ export default function CountryScreen() {
       )}
       <SectionList
         style={styles.screen}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]}
         keyboardShouldPersistTaps="handled"
         stickySectionHeadersEnabled={false}
         sections={sections}
@@ -162,6 +164,7 @@ export default function CountryScreen() {
             </Pressable>
           );
         }}
+       contentInsetAdjustmentBehavior="automatic"
       />
     </>
   );

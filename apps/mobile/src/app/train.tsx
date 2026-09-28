@@ -44,6 +44,7 @@ import {
   type TrainingSession,
   type WeightUnit,
 } from '@/lib/training';
+import { useScreenBottom } from '@/lib/layout';
 import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
 import { useTrainingLog } from '@/lib/useTraining';
 import { EXERCISES, exerciseName } from '@/lib/workout';
@@ -73,6 +74,7 @@ const shortDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, {
  */
 function NoWorkout({ token }: { token: string | null }) {
   const router = useRouter();
+  const screenBottom = useScreenBottom();
   const { prefs } = useApp();
   const [saved, setSaved] = useState<SavedWorkout[] | null>(null);
   useFocusEffect(
@@ -87,7 +89,7 @@ function NoWorkout({ token }: { token: string | null }) {
   const recent = (saved ?? []).slice(0, 4);
   const details = saved ? libraryDetails(saved) : new Map<string, string>();
   return (
-    <ScrollView style={styles.page} contentContainerStyle={[styles.content, styles.noWorkout]}>
+    <ScrollView style={styles.page} contentContainerStyle={[styles.content, styles.noWorkout, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title: 'Workout' }} />
       <View style={styles.noWorkoutHead}>
         <Icon name="workout" size={34} color={color.brand} />
@@ -159,6 +161,7 @@ export default function TrainScreen() {
   const log = useTrainingLog(token);
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const screenBottom = useScreenBottom();
   const [done, setDone] = useState<{ session: TrainingSession; records: NewRecord[] } | null>(null);
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -235,7 +238,7 @@ export default function TrainScreen() {
       <StayAwake />
       <ScrollView
         style={styles.page}
-        contentContainerStyle={[styles.content, { paddingBottom: space[8] + (restEndsAt !== null ? 90 : 0) + insets.bottom }]}
+        contentContainerStyle={[styles.content, { paddingBottom: screenBottom + (restEndsAt !== null ? 90 : 0) }]}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
         contentInsetAdjustmentBehavior="automatic"
@@ -633,6 +636,7 @@ const RECORD_WORD: Record<NewRecord['kind'], string> = { heaviest: 'Heaviest yet
 function Summary({ result, onClose, onProgress }: { result: { session: TrainingSession; records: NewRecord[] }; onClose: () => void; onProgress: () => void }) {
   const { session, records } = result;
   const unit = session.unit;
+  const screenBottom = useScreenBottom();
   const volume = fromKg(volumeKg(session), unit);
   const [shared, setShared] = useState<string | null>(null);
   const share = async () => {
@@ -640,7 +644,7 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
     setShared(outcome === 'copied' ? 'Copied, ready to paste.' : outcome === 'failed' ? 'Sharing isn’t available here.' : null);
   };
   return (
-    <ScrollView style={styles.page} contentContainerStyle={[styles.content, styles.summary]}>
+    <ScrollView style={styles.page} contentContainerStyle={[styles.content, styles.summary, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title: '' }} />
       <Animated.View entering={records.length ? ZoomIn.springify().damping(12).stiffness(180).reduceMotion(ReduceMotion.System) : FADE_IN} style={styles.bigIcon}>
         <Icon name={records.length ? 'trophy' : 'done'} size={40} color={records.length ? color.maybe : color.good} />

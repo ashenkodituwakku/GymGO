@@ -23,6 +23,7 @@ import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { ACCENTS, color, radius, space, themed } from '@/lib/theme';
 import { useThemeChoice } from '@/lib/themePrefs';
+import { useScreenBottom } from '@/lib/layout';
 
 const MIN_CHARS = 10;
 const MAX_CHARS = 4000;
@@ -45,6 +46,7 @@ export default function ReportBug() {
   const notice = topicParam === 'copyright';
   const title = notice ? 'Copyright notice' : 'Report a bug';
   usePageTitle(title);
+  const screenBottom = useScreenBottom();
   const router = useRouter();
   const { from } = useLocalSearchParams<{ from?: string }>();
   const { account, prefs, billing } = useApp();
@@ -132,7 +134,7 @@ export default function ReportBug() {
   }
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+    <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title }} />
       <Animated.View entering={rise(0)} style={styles.intro}>
         <View style={[styles.badge, notice && styles.noticeBadge]}>

@@ -15,6 +15,7 @@ import { e1rmSeries, formatWeight, fromKg, personalRecords, setsSummary, unitFor
 import { useTrainingLog } from '@/lib/useTraining';
 import { EXERCISES, exerciseName } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
+import { useScreenBottom } from '@/lib/layout';
 
 /** "25 Sep", with the year only when it isn't this one. */
 const dayLabel = (iso: string) => {
@@ -35,13 +36,14 @@ export default function ExerciseProgressScreen() {
   // An id GymGO doesn't list (a mistyped link, or an exercise since renamed): its words, readably.
   const title = exerciseName(exerciseId);
   usePageTitle(title);
+  const screenBottom = useScreenBottom();
   const record = useMemo(() => personalRecords(log.sessions).get(exerciseId) ?? null, [log.sessions, exerciseId]);
   const series = useMemo(() => e1rmSeries(log.sessions, exerciseId), [log.sessions, exerciseId]);
   const done = log.sessions.filter((session) => session.exercises.some((item) => item.exerciseId === exerciseId));
 
   if (!exercise && done.length === 0 && log.status !== 'loading') {
     return (
-      <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
+      <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
         <Stack.Screen options={{ title: '' }} />
         <Txt variant="title2">No exercise by that name</Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
@@ -53,7 +55,7 @@ export default function ExerciseProgressScreen() {
   }
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
+    <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title: '' }} />
       <Txt variant="largeTitle">{title}</Txt>
 

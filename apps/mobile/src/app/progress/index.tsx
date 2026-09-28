@@ -36,6 +36,7 @@ import { useTrainingLog } from '@/lib/useTraining';
 import { downloadTrainingCsv } from '@/lib/exportData';
 import { exerciseName } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
+import { useScreenBottom } from '@/lib/layout';
 
 const nameOf = exerciseName;
 /** When a session started, as "6:40 pm": the day it was is the heading above it. */
@@ -46,6 +47,7 @@ const startTime = (iso: string) => {
 
 export default function ProgressScreen() {
   usePageTitle('Progress');
+  const screenBottom = useScreenBottom();
   const { account, prefs, setPref, billing, openPro } = useApp();
   // Kept while the server is away too: loading then fails and says so,
   // where a missing token would ask a signed-in person to sign in.
@@ -80,7 +82,7 @@ export default function ProgressScreen() {
   }
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content} contentInsetAdjustmentBehavior="automatic">
+    <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title: 'Progress' }} />
       <Animated.View entering={rise(0)} style={styles.stats}>
         <Stat icon="flame" tint={color.maybe} value={known ? weekStreak(log.sessions) : null} one="week in a row" many="weeks in a row" />

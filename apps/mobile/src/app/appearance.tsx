@@ -14,6 +14,7 @@ import { haptic } from '@/lib/haptics';
 import { ACCENTS, ACCENT_IDS, FREE_ACCENT, color, face, radius, space, themed, type AccentId, type AppearanceChoice } from '@/lib/theme';
 import { setThemeChoice, useThemeChoice } from '@/lib/themePrefs';
 import { usePageTitle } from '@/lib/pageTitle';
+import { useScreenBottom } from '@/lib/layout';
 
 const MODES: Array<{ id: AppearanceChoice; label: string }> = [
   { id: 'system', label: 'Automatic' },
@@ -29,6 +30,7 @@ const PREVIEW = {
 
 export default function AppearanceScreen() {
   usePageTitle('Appearance');
+  const screenBottom = useScreenBottom();
   const choice = useThemeChoice();
   const { billing, openPro } = useApp();
 
@@ -49,7 +51,7 @@ export default function AppearanceScreen() {
   };
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title: 'Appearance' }} />
 
       <Txt variant="footnote" color={color.labelSecondary} style={styles.section}>

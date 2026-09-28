@@ -14,12 +14,14 @@ import { useApp } from '@/lib/app-state';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { BAR, PLATES, PLATE_CHOICES, formatWeight, parseWeight, plateLoad, unitFor, warmUpSets, type WeightUnit } from '@/lib/training';
 import { usePageTitle } from '@/lib/pageTitle';
+import { useScreenBottom } from '@/lib/layout';
 
 /** The bars most gyms have: a men's Olympic bar, and the lighter women's bar. */
 const BARS: Record<WeightUnit, number[]> = { kg: [20, 15], lb: [45, 35] };
 
 export default function PlatesScreen() {
   usePageTitle('Plates');
+  const screenBottom = useScreenBottom();
   const params = useLocalSearchParams<{ weight?: string; unit?: string }>();
   const { prefs, setPref, billing, openPro } = useApp();
   // Your country's unit (read once your settings have loaded), until you pick one.
@@ -51,7 +53,7 @@ export default function PlatesScreen() {
   };
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title: 'Plates' }} />
       <Txt variant="subhead" color={color.labelSecondary}>
         Type the total you want on the bar, bar included.

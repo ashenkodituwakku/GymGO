@@ -57,7 +57,7 @@ export function CrashScreen({ error, retry }: ErrorBoundaryProps) {
   };
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic">
       <AppBadge size={56} />
       <Txt variant="title2" style={styles.center} accessibilityRole="header">
         Something went wrong

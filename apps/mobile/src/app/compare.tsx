@@ -18,6 +18,7 @@ import { priceLine } from '@/lib/present';
 import { resultsById } from '@/lib/results';
 import { HEADER_EDGE, PAGE_COLUMN, color, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
+import { useScreenBottom } from '@/lib/layout';
 
 type Cell = { text: string; ink?: string; strong?: boolean };
 
@@ -29,6 +30,7 @@ const tri = (value: Tri): Cell =>
 const NUMBER_WORD: Record<number, string> = { 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six' };
 export default function Compare() {
   usePageTitle('Compare');
+  const screenBottom = useScreenBottom();
   const { data, filters, compare, toggleCompare, clearCompare, billing, openPro, prefsReady } = useApp();
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -204,7 +206,7 @@ export default function Compare() {
       />
       <ScrollView
         style={styles.page}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]}
         contentInsetAdjustmentBehavior="automatic"
         // When every gym fits across, their names stay at the top as the rows scroll under them.
         stickyHeaderIndices={fits ? [1] : undefined}

@@ -111,6 +111,7 @@ import {
   verifyPassword,
   type AccountRow,
 } from './auth';
+import { DEV_PRO_EMAIL } from './devAccount';
 import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
 import { AreaError, AreaSearch, parseBox, whereIs } from './area';
 import { PlaceError, PlaceSearch } from './places';
@@ -163,6 +164,12 @@ export interface AppOptions {
   };
   /** Legal contacts the app shows: the designated copyright (DMCA) agent, once registered. */
   legal?: { copyrightAgent?: { name: string; address: string | null; email: string | null } | null };
+  /**
+   * True when this server made the dev Pro account (GYMGO_DEV_PRO=on, on a
+   * computer, never a hosted server; see devAccount.ts). That account, and
+   * only it, is then marked `devTools` for the app's testing shortcuts.
+   */
+  devAccount?: boolean;
 }
 
 class HttpError extends Error {
@@ -417,6 +424,8 @@ const REVIEW_SELECT = `select reviews.*, users.display_name from reviews join us
 export function createApp(options: AppOptions) {
   const { db } = options;
   const now = options.now ?? (() => new Date());
+  const accountJson = (row: Parameters<typeof publicAccount>[0]) =>
+    options.devAccount && row.email === DEV_PRO_EMAIL ? { ...publicAccount(row), devTools: true } : publicAccount(row);
   // Wrong passwords: 10 per address and email per 15 minutes.
   const loginLimiter = new AttemptLimiter(10, 15 * 60_000);
   const signupLimiter = new AttemptLimiter(options.signupsPerHour ?? 20, 60 * 60_000);
@@ -736,7 +745,7 @@ export function createApp(options: AppOptions) {
       checkAge(body.birthMonth, now());
       const account = createAccount(db, { ...input, ageCheckedAt: now().toISOString() }, now());
       if (!account) throw new HttpError(409, 'There’s already an account with that email. Try signing in.');
-      return send(res, 201, { token: startSession(db, account.id, now()), account: publicAccount(account) });
+      return send(res, 201, { token: startSession(db, account.id, now()), account: accountJson(account) });
     }
 
     if (method === 'POST' && path === '/api/auth/login') {
@@ -750,7 +759,7 @@ export function createApp(options: AppOptions) {
       const account = checkLogin(db, email, password);
       if (!account) throw new HttpError(401, 'That email and password don’t match.');
       if (account.blocked) throw new HttpError(403, 'This account has been blocked.');
-      return send(res, 200, { token: startSession(db, account.id, now()), account: publicAccount(account) });
+      return send(res, 200, { token: startSession(db, account.id, now()), account: accountJson(account) });
     }
 
     // --- Sign in with Google or Apple --------------------------------------
@@ -813,7 +822,7 @@ export function createApp(options: AppOptions) {
         );
       }
       if (account.blocked) throw new HttpError(403, 'This account has been blocked.');
-      return send(res, created ? 201 : 200, { token: startSession(db, account.id, now()), account: publicAccount(account), created });
+      return send(res, created ? 201 : 200, { token: startSession(db, account.id, now()), account: accountJson(account), created });
     }
 
     if (method === 'GET' && path === '/api/me/identities') {
@@ -936,12 +945,12 @@ export function createApp(options: AppOptions) {
 
     if (path === '/api/me') {
       const { account } = requireAccount(req);
-      if (method === 'GET') return send(res, 200, { account: publicAccount(account), plan: billing.planFor(account.id).plan });
+      if (method === 'GET') return send(res, 200, { account: accountJson(account), plan: billing.planFor(account.id).plan });
       if (method === 'PATCH') {
         const body = (await readJson(req)) as Record<string, unknown>;
         const displayName = validateDisplayName(body.displayName);
         db.prepare('update users set display_name = ? where id = ?').run(displayName, account.id);
-        return send(res, 200, { account: publicAccount({ ...account, display_name: displayName }) });
+        return send(res, 200, { account: accountJson({ ...account, display_name: displayName }) });
       }
       if (method === 'DELETE') {
         // A running subscription is cancelled first, so nobody keeps paying

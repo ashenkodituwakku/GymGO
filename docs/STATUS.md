@@ -8,7 +8,7 @@ this document could do.
 
 | | Implemented locally | Tested locally | Externally integrated | Deployed |
 |---|---|---|---|---|
-| API server (Node, built-in SQLite) | ✅ | ✅ 152 tests, most over real HTTP | n/a, runs on your PC | ❌ not hosted |
+| API server (Node, built-in SQLite) | ✅ | ✅ 153 tests, most over real HTTP | n/a, runs on your PC | ❌ not hosted |
 | Gzip for larger answers (the gym list: 1.5 MB → 0.1 MB) | ✅ | ✅ 2 server tests + measured locally | n/a | ❌ |
 | Members' visits: walked in / booked first / turned away, one per member per gym, last year only, no names | ✅ | ✅ 2 server tests + reported and shown in the browser | n/a | ❌ |
 | Members say a gym has closed or is still open (6 months); the card warns when closed outnumbers open | ✅ | ✅ 2 server tests + reported and the warning seen in the browser | n/a | ❌ |
@@ -118,7 +118,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Workout builder: tap muscles on a body, plan from the gym's machines | ✅ | ✅ 6 unit tests + driven in the browser | n/a | ❌ taps on the native SVG body never seen | n/a | ❌ |
 | Saved gyms (on the device) | ✅ | ⚠️ web preview only | n/a | ❌ | n/a | ❌ |
 | Liquid Glass (iOS 26) / blur fallbacks | ✅ | ⚠️ browser imitation only: every floating glass control (status pill, map buttons, Search this area, the card's buttons) now bends the map at its edges like the tab bar (Chrome and Edge; a blur elsewhere), seen in phone and desktop screenshots | n/a | ❌ | n/a | ❌ |
-| A ready-made Pro account for local testing (dev@gymgo.test), made by the launcher on this computer only; refused on a server with a public address or live Stripe keys; its password is put back and its Pro renewed on every start; Stripe never hears of it | ✅ | ✅ 4 server tests (signs in, is Pro, searches Paris from Australia, wrong password refused, one account however often it runs, refusals) + started for real: signed in and read "pro" from /api/billing; refused with GYMGO_PUBLIC_URL set | n/a | ❌ PowerShell launcher not run here (no PowerShell in this sandbox) | n/a | ❌ |
+| A ready-made Pro account for local testing (dev@gymgo.test), made by the launcher on this computer only; refused on a server with a public address or live Stripe keys; its password is put back and its Pro renewed on every start; Stripe never hears of it; it alone can collect gyms from anywhere (the server marks it `devTools` only when it made it) | ✅ | ✅ 5 server tests (signs in, is Pro, searches Paris from Australia, wrong password refused, one account however often it runs, refusals, and only it marked for testing shortcuts, only by a server that made it) + started for real: signed in and read "pro" from /api/billing; refused with GYMGO_PUBLIC_URL set; collected a New York gym from here in the browser | n/a | ❌ PowerShell launcher not run here (no PowerShell in this sandbox) | n/a | ❌ |
 | Compact title on frosted glass once the large title scrolls away (Home, Saved, Profile) | ✅ | ✅ scrolled in the browser at phone size | n/a | ❌ | n/a | ❌ |
 | The map's credit (OpenFreeMap/OpenStreetMap, Apple's Legal) stays above the sheet at every sheet height | ✅ | ✅ phone-size browser (it hid behind the sheet whenever the sheet was over half the screen); Android map page and Apple's label not seen | n/a | ❌ | n/a | ❌ |
 | Haptics | ✅ | ❌ | n/a | ❌ | n/a | ❌ |

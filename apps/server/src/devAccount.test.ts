@@ -64,6 +64,34 @@ describe('the dev Pro account', () => {
     expect((db.prepare("select count(*) as n from subscriptions where stripe_subscription_id = 'dev_local_pro'").get() as { n: number }).n).toBe(1);
   });
 
+  it('is marked for the app’s testing shortcuts only by a server that made it', async () => {
+    // The server above wasn't told it made the account: no mark.
+    const plain = (await (await login(DEV_PRO_PASSWORD)).json()) as { account: { devTools?: boolean } };
+    expect(plain.account.devTools).toBeUndefined();
+
+    const devServer = createServer(createApp({ db, attribution: 'test', devAccount: true }));
+    await new Promise<void>((resolve) => devServer.listen(0, '127.0.0.1', resolve));
+    const devBase = `http://127.0.0.1:${(devServer.address() as AddressInfo).port}`;
+    try {
+      const signIn = (email: string, password: string) =>
+        fetch(`${devBase}/api/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password }) });
+      const dev = (await (await signIn(DEV_PRO_EMAIL, DEV_PRO_PASSWORD)).json()) as { token: string; account: { devTools?: boolean } };
+      expect(dev.account.devTools).toBe(true);
+      const me = (await (await fetch(`${devBase}/api/me`, { headers: { authorization: `Bearer ${dev.token}` } })).json()) as { account: { devTools?: boolean } };
+      expect(me.account.devTools).toBe(true);
+      // Anyone else on the same server is a normal account.
+      const other = await fetch(`${devBase}/api/auth/signup`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'someone@example.com', password: 'correct horse', displayName: 'Someone', birthMonth: '1990-01' }),
+      });
+      expect(other.status).toBe(201);
+      expect(((await other.json()) as { account: { devTools?: boolean } }).account.devTools).toBeUndefined();
+    } finally {
+      devServer.close();
+    }
+  });
+
   it('is never made where GymGO may be hosted or real money is in play', () => {
     expect(devAccountRefusal({ publicUrl: null, stripeKey: null })).toBeNull();
     expect(devAccountRefusal({ publicUrl: null, stripeKey: 'sk_test_abc' })).toBeNull();

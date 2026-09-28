@@ -75,7 +75,8 @@ account on your computer. In the app, open Profile → Sign in, and use:
 | Password | `GymGO-dev-pro-2026` |
 
 It's for trying Pro (every country, unlimited saved gyms, comparing four,
-the workout library) on this computer only. Nobody paid for its Pro, so the
+the workout library) on this computer only. It can also collect gyms from
+anywhere, without being at them, to try the collection. Nobody paid for its Pro, so the
 server makes it only when told to (`GYMGO_DEV_PRO=on`, which the launcher
 sets) and refuses even then on a server with a public address
 (`GYMGO_PUBLIC_URL`) or live Stripe keys. Start with `gymgo -NoDevAccount`
@@ -331,7 +332,9 @@ day you check in again is a visit, and the gym's card climbs from Bronze to
 Silver (3 visits), Gold (10) and Platinum (25). The collection counts your
 gyms, cities and countries and earns badges. Home says so when you're at a
 gym you haven't checked in at today. It's all on the device: your position
-is only compared, never sent or kept.
+is only compared, never sent or kept. Signed in as the dev Pro account
+(below), the button says **Collect** and works from anywhere, so you can
+try the collection without going to gyms.
 
 Tap any gym to open its own page, with share, compare and save at the top.
 It opens with the gym's logo (a chain's free logo, or the icon from the

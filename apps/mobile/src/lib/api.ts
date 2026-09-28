@@ -259,6 +259,8 @@ export interface Account {
   createdAt: string;
   /** False for an account made with Google or Apple until a password is set. Missing from older servers. */
   hasPassword?: boolean;
+  /** Only the dev Pro account on a local server with GYMGO_DEV_PRO=on: testing shortcuts, such as collecting gyms from anywhere. */
+  devTools?: boolean;
 }
 
 export type SignInProvider = 'google' | 'apple';

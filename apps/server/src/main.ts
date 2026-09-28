@@ -34,12 +34,14 @@ seedGyms(db, GYM_RECORDS);
 
 // A ready-made Pro account for trying GymGO on this computer; never on a hosted one.
 let devAccountLine: string | null = null;
+let devAccountMade = false;
 if (DEV_PRO_ACCOUNT) {
   const refusal = devAccountRefusal({ publicUrl: PUBLIC_URL, stripeKey: STRIPE_SECRET_KEY });
   if (refusal) {
     devAccountLine = `[server] Dev Pro account: not made, because ${refusal}.`;
   } else {
     const dev = ensureDevProAccount(db);
+    devAccountMade = true;
     devAccountLine = `[server] Dev Pro account (this computer only): sign in as ${dev.email} with password ${dev.password}`;
   }
 }
@@ -63,6 +65,7 @@ const server = createServer(
     signIn: { google: GOOGLE_SIGN_IN, apple: APPLE_SIGN_IN_IDS },
     bugReports: { send: bugMail, to: BUG_REPORT_TO, retryEveryMs: 15 * 60_000 },
     legal: { copyrightAgent: COPYRIGHT_AGENT },
+    devAccount: devAccountMade,
   }),
 );
 

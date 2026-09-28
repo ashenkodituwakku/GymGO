@@ -600,14 +600,18 @@ launches: see `docs/LAUNCH-CHECKLIST.md`.
 
 ### Gym photos
 
-GymGO only shows gym photos that its own members took and chose to share. It
-never copies them from gym websites (they're copyrighted) and never shows a
-stand-in picture of some other gym.
-
-The top of a gym's page shows, in this order:
+The top of a gym's page (and its card on Home) shows, in this order:
 
 1. **Members' photos**, each with the member's name on it.
-2. If there are none, and the owner has set up the optional Google key
+2. If there are none, **the photo the gym's own website shares** (the
+   picture its home page gives social media, `og:image`), credited "From
+   franksgymperth.com". The GymGO server fetches it the first time someone
+   looks and keeps it a month, with the same guards as website icons. It is
+   taken only from a site that is that gym's alone: never a site other gyms
+   in the data share, and never a chain's home page, whose picture would be
+   of some other branch. So it is always the right gym, or nothing. These
+   photos belong to the gyms; the owner chose to show them.
+3. If there are none, and the owner has set up the optional Google key
    (below), **Google's photos** of the place, each credited to whoever took
    it, with "Google Maps" underneath. They're only ever the exact gym's: a
    Google listing is used only if it's within 150 m and shares a real word
@@ -615,7 +619,7 @@ The top of a gym's page shows, in this order:
    that, if Google calls it a gym and it's within 40 m. So the shopping
    centre a gym is in, or the café next door, never lends it their photos;
    a gym with no sure match simply shows no Google photos.
-3. Otherwise **Google Street View** outside the gym, labelled as such (it
+4. Otherwise **Google Street View** outside the gym, labelled as such (it
    may not face the door). This is Google's free public embed.
 
 Google's photos and Street View wait for a tap: the page shows a card saying
@@ -706,7 +710,22 @@ with a logo credits it and says GymGO isn't connected to or endorsed by the
 brand. A logo is still its owner's trademark: GymGO uses it only to say
 which gym this is.
 
-Every other gym with a website gets **the icon from its own website**: the
+Every other gym with a website gets **the icon from its own website**
+(below). The map gives a website for only some gyms, so the rest were looked
+up one by one (`packages/domain/src/websiteRows.ts`): the gym's name searched
+with its street or suburb, and a site kept only when its address matched
+where the gym is on the map. That found 167 more; in the Australian cities
+only 15 gyms are left with no logo source. Chains keep their official
+site per country in a table (`CHAINS` in `packages/domain/src/websites.ts`:
+Anytime Fitness, F45, Jetts, Club Lime, Zap, Plus Fitness, Goodlife, Revo,
+Fernwood, Orangetheory, Planet Fitness, PureGym, Basic-Fit and about 80
+more), so a branch with no site borrows its chain's logo, matched by the
+brand's Wikidata item as the map tags it, the brand or the name. Of 1,947
+bundled gyms, 448 still have no logo source (15 in Australia, 233 in the
+US, 200 in Europe): the session that looked them up ran out of web
+searches. To look up more, add rows to `websiteRows.ts`.
+
+The icon from a gym's own website: the
 square picture a phone puts on its home screen, or the logo the site
 declares for search engines. It's shown the way a browser or a search engine
 shows a site's icon beside its link, credited to the site ("Icon from

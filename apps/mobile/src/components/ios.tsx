@@ -10,7 +10,7 @@ import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useS
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance } from '@/lib/layout';
-import { NO_TOUCH, PAGE_COLUMN, color, radius, space, themed } from '@/lib/theme';
+import { PAGE_COLUMN, color, radius, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
@@ -75,7 +75,7 @@ function TabScreenInner({ title, eyebrow, right, children }: { title: string; ey
         </View>
         {children}
       </Animated.ScrollView>
-      <Animated.View style={[NO_TOUCH, styles.bar, { height: insets.top + BAR }, barStyle]}>
+      <Animated.View style={[styles.bar, { height: insets.top + BAR }, barStyle]} pointerEvents="none">
         <Glass kind="bar" style={StyleSheet.absoluteFill} />
         {/* The large title is the heading; this is the same words, for the eye only. */}
         <View

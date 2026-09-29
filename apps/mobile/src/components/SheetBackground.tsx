@@ -2,7 +2,7 @@ import { useBottomSheetInternal, type BottomSheetBackgroundProps } from '@gorhom
 import type { ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { NO_TOUCH, color, dropShadow, radius, themed } from '@/lib/theme';
+import { color, dropShadow, radius, themed } from '@/lib/theme';
 import { Glass, HAS_LIQUID_GLASS } from './Glass';
 
 /** The gap between a floating sheet and the tab bar below it. */
@@ -31,7 +31,7 @@ function FloatingBackground({ style, solid }: BottomSheetBackgroundProps & { sol
     return { bottom: Math.max(0, animatedPosition.value - highest) };
   });
   return (
-    <Animated.View style={[NO_TOUCH, style, styles.floating, solid && styles.solidFill, bottom]}>
+    <Animated.View style={[style, styles.floating, solid && styles.solidFill, bottom]} pointerEvents="none">
       {!solid && <Glass kind="sheet" style={styles.glass} />}
     </Animated.View>
   );

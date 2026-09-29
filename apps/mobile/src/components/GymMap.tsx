@@ -10,12 +10,14 @@
  * blur exactly the line the demo banner exists to draw.
  */
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { Platform, StyleSheet } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { Platform, StyleSheet, useWindowDimensions } from 'react-native';
+import MapView, { Marker, type Region } from 'react-native-maps';
+import type { BoundingBox, LatLng, ResultTier } from '@gymgo/domain';
+import { mapItems, sameSpot, zoomOf } from '@/lib/cluster';
 import { currentTheme } from '@/lib/theme';
 import type { GymMapHandle, GymMapProps, MapPin } from './map-types';
-import { Pin } from './Pin';
+import { ClusterBubble, Pin } from './Pin';
 
 export type { GymMapHandle, MapPin } from './map-types';
 
@@ -52,11 +54,63 @@ function GymMarker({ pin, selected, onPress }: { pin: MapPin; selected: boolean;
   );
 }
 
+/** Several gyms in one bubble; a tap zooms in to part them. */
+function ClusterMarker({
+  id,
+  position,
+  count,
+  tier,
+  onPress,
+}: {
+  id: string;
+  position: LatLng;
+  count: number;
+  tier: ResultTier;
+  onPress: () => void;
+}) {
+  const [tracking, setTracking] = useState(true);
+  useEffect(() => {
+    setTracking(true);
+    const timer = setTimeout(() => setTracking(false), 700);
+    return () => clearTimeout(timer);
+  }, [count, tier]);
+  return (
+    <Marker
+      identifier={id}
+      coordinate={{ latitude: position.lat, longitude: position.lng }}
+      anchor={{ x: 0.5, y: 0.5 }}
+      onPress={(event) => {
+        event.stopPropagation();
+        onPress();
+      }}
+      tracksViewChanges={tracking}
+      zIndex={4}
+      accessibilityLabel={`${count} gyms here. Zoom in`}
+    >
+      <ClusterBubble tier={tier} count={count} />
+    </Marker>
+  );
+}
+
+const boxOf = (region: Region): BoundingBox => ({
+  north: region.latitude + region.latitudeDelta / 2,
+  south: region.latitude - region.latitudeDelta / 2,
+  east: region.longitude + region.longitudeDelta / 2,
+  west: region.longitude - region.longitudeDelta / 2,
+});
+
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, showsUserLocation, onSelect, onMapPress, onRegionChange },
   ref,
 ) {
   const map = useRef<MapView>(null);
+  const { width } = useWindowDimensions();
+
+  // The zoom and area on screen, for grouping pins (see lib/cluster.ts).
+  const [region, setRegion] = useState<Region>(() => ({ latitude: initialCentre.lat, longitude: initialCentre.lng, latitudeDelta: 0.045, longitudeDelta: 0.045 }));
+  const items = useMemo(() => {
+    return mapItems(pins, zoomOf((360 / region.longitudeDelta) * width), boxOf(region), selectedId);
+  }, [pins, region, width, selectedId]);
 
   // On iOS a tap on a pin also reaches the map's own tap handler, in either
   // order. Treated naively, the pin opens its card and the "map" tap closes it
@@ -113,14 +167,10 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
       showsBuildings
       toolbarEnabled={false}
       pitchEnabled={Platform.OS === 'ios'}
-      onRegionChangeComplete={(region) =>
-        onRegionChange?.({
-          north: region.latitude + region.latitudeDelta / 2,
-          south: region.latitude - region.latitudeDelta / 2,
-          east: region.longitude + region.longitudeDelta / 2,
-          west: region.longitude - region.longitudeDelta / 2,
-        })
-      }
+      onRegionChangeComplete={(next) => {
+        setRegion(next);
+        onRegionChange?.(boxOf(next));
+      }}
       onPress={(event) => {
         if (event.nativeEvent.action === 'marker-press') return;
         if (pendingMapPress.current) clearTimeout(pendingMapPress.current);
@@ -130,9 +180,29 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
         }, 220);
       }}
     >
-      {pins.map((pin) => (
-        <GymMarker key={pin.id} pin={pin} selected={pin.id === selectedId} onPress={pressPin} />
-      ))}
+      {items.map((item) =>
+        item.kind === 'pin' ? (
+          <GymMarker key={item.id} pin={item.pin} selected={item.selected} onPress={pressPin} />
+        ) : (
+          <ClusterMarker
+            key={item.id}
+            id={item.id}
+            position={item.position}
+            count={item.count}
+            tier={item.tier}
+            onPress={() => {
+              lastPinPress.current = Date.now();
+              if (pendingMapPress.current) clearTimeout(pendingMapPress.current);
+              // Gyms in one building never part by zooming: open the best of them.
+              if (sameSpot(item.points)) return onSelect(item.ids[0]!);
+              map.current?.fitToCoordinates(
+                item.points.map((point) => ({ latitude: point.lat, longitude: point.lng })),
+                { edgePadding: { top: 80, right: 80, bottom: 80, left: 80 }, animated: true },
+              );
+            }}
+          />
+        ),
+      )}
     </MapView>
   );
 });

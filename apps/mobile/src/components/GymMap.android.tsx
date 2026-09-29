@@ -12,9 +12,11 @@
  * centres the map and the list on you.
  */
 
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
+import type { BoundingBox } from '@gymgo/domain';
+import { mapItems } from '@/lib/cluster';
 import { mapPageHtml, type PageMessage } from './mapPage';
 import { TIER_COLOUR } from './ui';
 import type { GymMapHandle, GymMapProps } from './map-types';
@@ -65,9 +67,12 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     [run],
   );
 
+  // The zoom and area on screen, as the page last reported them, for grouping pins.
+  const [view, setView] = useState<{ zoom: number; box: BoundingBox } | null>(null);
+  const items = useMemo(() => mapItems(pins, view?.zoom ?? 14, view?.box ?? null, selectedId), [pins, view, selectedId]);
   useEffect(() => {
-    run(`gymgo.setPins(${JSON.stringify(pins)},${JSON.stringify(selectedId)})`);
-  }, [pins, selectedId, run]);
+    run(`gymgo.setItems(${JSON.stringify(items)})`);
+  }, [items, run]);
 
   useEffect(() => {
     run(userLocation ? `gymgo.setUser(${userLocation.lat},${userLocation.lng})` : 'gymgo.setUser(null,null)');
@@ -94,6 +99,7 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
       handlers.current.onMapPress();
     } else if (message.type === 'moved') {
       handlers.current.onRegionChange?.(message.box);
+      setView({ zoom: message.zoom, box: message.view });
     } else if (message.type === 'error') {
       console.warn('[map]', message.message);
     }

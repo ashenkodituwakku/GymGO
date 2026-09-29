@@ -14,10 +14,12 @@
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibregl from 'maplibre-gl';
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import type { BoundingBox } from '@gymgo/domain';
 import { TIER_COLOUR } from './ui';
 import type { GymMapHandle, GymMapProps } from './map-types';
+import { mapItems, sameSpot, type MapItem } from '@/lib/cluster';
 import { currentTheme, themed } from '@/lib/theme';
 
 export type { GymMapHandle, MapPin } from './map-types';
@@ -30,6 +32,9 @@ const DUMBBELL_SVG =
   '<rect x="1.5" y="8" width="3" height="8" rx="1"/><rect x="4.5" y="6" width="3" height="12" rx="1"/>' +
   '<rect x="7.5" y="10.8" width="9" height="2.4"/>' +
   '<rect x="16.5" y="6" width="3" height="12" rx="1"/><rect x="19.5" y="8" width="3" height="8" rx="1"/></svg>';
+
+/** A spring, as CSS easing: quick, a touch of overshoot, settles. */
+const SPRING = 'cubic-bezier(0.34, 1.4, 0.64, 1)';
 
 function pinElement(fill: string, selected: boolean, label: string): HTMLElement {
   const size = selected ? 44 : 30;
@@ -46,7 +51,7 @@ function pinElement(fill: string, selected: boolean, label: string): HTMLElement
   disc.style.cssText =
     `width:${size}px;height:${size}px;border-radius:50%;background:${fill};` +
     `border:${selected ? 3 : 2}px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.25);` +
-    'display:flex;align-items:center;justify-content:center;transition:transform 180ms cubic-bezier(.32,.72,0,1);';
+    'display:flex;align-items:center;justify-content:center;transform-origin:50% 100%;';
   disc.innerHTML = DUMBBELL_SVG;
   wrap.appendChild(disc);
   if (selected) {
@@ -58,13 +63,59 @@ function pinElement(fill: string, selected: boolean, label: string): HTMLElement
   return wrap;
 }
 
+/** Several gyms in one bubble, with how many. */
+function bubbleElement(fill: string, count: number): HTMLElement {
+  const size = count < 10 ? 34 : count < 100 ? 40 : 46;
+  const wrap = document.createElement('button');
+  wrap.type = 'button';
+  wrap.setAttribute('aria-label', `${count} gyms here. Zoom in`);
+  wrap.tabIndex = -1;
+  wrap.style.cssText = 'display:flex;background:none;border:0;padding:0;cursor:pointer;';
+  const disc = document.createElement('div');
+  disc.style.cssText =
+    `min-width:${size}px;height:${size}px;border-radius:${size / 2}px;background:${fill};` +
+    'border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.28);box-sizing:border-box;padding:0 6px;' +
+    'display:flex;align-items:center;justify-content:center;color:#fff;' +
+    `font:600 ${count < 100 ? 15 : 13}px/1 -apple-system,system-ui,sans-serif;letter-spacing:-0.2px;`;
+  disc.textContent = String(count);
+  wrap.appendChild(disc);
+  return wrap;
+}
+
+/** The system's Reduce Motion: pins just appear and go. */
+function calm() {
+  return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** Grow in with a spring, the way a pin lands in Maps. */
+function popIn(element: HTMLElement, from = 0.4) {
+  if (calm()) return;
+  const disc = element.firstElementChild as HTMLElement | null;
+  disc?.animate?.([{ transform: `scale(${from})`, opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 320, easing: SPRING });
+}
+
+/** Shrink away, then go. */
+function popOut(element: HTMLElement, done: () => void) {
+  if (calm()) return done();
+  const disc = element.firstElementChild as HTMLElement | null;
+  const animation = disc?.animate?.([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0.5)', opacity: 0 }], { duration: 160, easing: 'ease-in' });
+  if (animation) animation.onfinish = done;
+  else done();
+}
+
+function signature(item: MapItem): string {
+  return item.kind === 'pin' ? `pin:${item.pin.tier}:${item.selected}` : `cluster:${item.count}:${item.tier}`;
+}
+
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, leftInset = 0, userLocation = null, onSelect, onMapPress, onRegionChange },
   ref,
 ) {
   const host = useRef<View>(null);
   const map = useRef<maplibregl.Map | null>(null);
-  const markers = useRef<maplibregl.Marker[]>([]);
+  const markers = useRef(new Map<string, { marker: maplibregl.Marker; signature: string }>());
+  // The zoom (256-point tile levels) and area on screen, for grouping pins.
+  const [view, setView] = useState<{ zoom: number; box: BoundingBox } | null>(null);
   const handlers = useRef({ onSelect, onMapPress, onRegionChange });
   handlers.current = { onSelect, onMapPress, onRegionChange };
   // Where a flyTo is headed, while it's under way (see the padding effect).
@@ -103,7 +154,14 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     instance.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
     instance.on('click', () => handlers.current.onMapPress());
     // The area on screen, clear of the panels and sheet, whenever the map comes to rest.
+    const noteView = () => {
+      const bounds = instance.getBounds();
+      // MapLibre's tiles are 512 pixels, so its zoom numbers are one less than Apple's.
+      setView({ zoom: instance.getZoom() + 1, box: { north: bounds.getNorth(), south: bounds.getSouth(), west: bounds.getWest(), east: bounds.getEast() } });
+    };
+    instance.on('load', noteView);
     instance.on('moveend', () => {
+      noteView();
       flight.current = null;
       const { top = 0, bottom = 0, left = 0, right = 0 } = instance.getPadding();
       const canvas = instance.getCanvas();
@@ -139,23 +197,57 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     }
   }, [bottomInset, creditInset, topInset, leftInset]);
 
+  const items = useMemo(() => mapItems(pins, view?.zoom ?? 14, view?.box ?? null, selectedId), [pins, view, selectedId]);
+
+  // Only what changed is redrawn: picking a gym touches two pins, not every one.
   useEffect(() => {
     const instance = map.current;
     if (!instance) return;
-    for (const marker of markers.current) marker.remove();
-    markers.current = pins.map((pin) => {
-      const selected = pin.id === selectedId;
-      const element = pinElement(TIER_COLOUR[pin.tier].fill, selected, pin.name);
-      element.addEventListener('click', (event) => {
-        event.stopPropagation();
-        handlers.current.onSelect(pin.id);
-      });
-      element.style.zIndex = selected ? '10' : pin.tier === 'confirmed' ? '3' : '1';
-      return new maplibregl.Marker({ element, anchor: selected ? 'bottom' : 'center' })
-        .setLngLat([pin.position.lng, pin.position.lat])
-        .addTo(instance);
-    });
-  }, [pins, selectedId]);
+    const before = markers.current;
+    const after = new Map<string, { marker: maplibregl.Marker; signature: string }>();
+    for (const item of items) {
+      const position: [number, number] = item.kind === 'pin' ? [item.pin.position.lng, item.pin.position.lat] : [item.position.lng, item.position.lat];
+      const sig = signature(item);
+      const kept = before.get(item.id);
+      if (kept && kept.signature === sig) {
+        kept.marker.setLngLat(position);
+        after.set(item.id, kept);
+        before.delete(item.id);
+        continue;
+      }
+      const wasSelected = kept?.signature.endsWith(':true') ?? false;
+      kept?.marker.remove();
+      before.delete(item.id);
+      let element: HTMLElement;
+      if (item.kind === 'pin') {
+        const { pin, selected } = item;
+        element = pinElement(TIER_COLOUR[pin.tier].fill, selected, pin.name);
+        element.addEventListener('click', (event) => {
+          event.stopPropagation();
+          handlers.current.onSelect(pin.id);
+        });
+        element.style.zIndex = selected ? '10' : pin.tier === 'confirmed' ? '3' : '1';
+      } else {
+        const { points, ids } = item;
+        element = bubbleElement(TIER_COLOUR[item.tier].fill, item.count);
+        element.style.zIndex = '4';
+        element.addEventListener('click', (event) => {
+          event.stopPropagation();
+          // Gyms in one building never part by zooming: open the best of them.
+          if (sameSpot(points)) return handlers.current.onSelect(ids[0]!);
+          const bounds = new maplibregl.LngLatBounds([points[0]!.lng, points[0]!.lat], [points[0]!.lng, points[0]!.lat]);
+          for (const point of points) bounds.extend([point.lng, point.lat]);
+          instance.fitBounds(bounds, { padding: 80, duration: 450, maxZoom: 16 });
+        });
+      }
+      const marker = new maplibregl.Marker({ element, anchor: item.kind === 'pin' && item.selected ? 'bottom' : 'center' }).setLngLat(position).addTo(instance);
+      // A picked pin grows from its small self; one let go settles back.
+      popIn(element, item.kind === 'pin' && item.selected ? 0.68 : wasSelected ? 1.3 : 0.4);
+      after.set(item.id, { marker, signature: sig });
+    }
+    for (const { marker } of before.values()) popOut(marker.getElement(), () => marker.remove());
+    markers.current = after;
+  }, [items]);
 
   // You are here: the system-style blue dot with a soft halo.
   const userMarker = useRef<maplibregl.Marker | null>(null);

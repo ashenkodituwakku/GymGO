@@ -145,7 +145,7 @@ function GlassTabBar({ bottom }: { bottom: number }) {
   if (keyboardUp) return null;
 
   const lens = (
-    <Animated.View style={[NO_TOUCH, styles.lens, { width: tabWidth }, lensStyle]}>
+    <Animated.View style={[styles.lens, { width: tabWidth }, lensStyle]} pointerEvents="none">
       <View {...glassMark('lens')} style={[StyleSheet.absoluteFill, styles.lensShape, Platform.OS !== 'web' && styles.lensNative]} />
       <Animated.View
         {...glassMark('lift')}

@@ -85,7 +85,7 @@ function MapScreen() {
   // The time-zone self-check runs once; its answer can't change mid-session.
   const selfCheck = useMemo(() => checkTimeZoneSupport(), []);
 
-  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe, prefs, prefsReady, mayExplore, openPro, lookup, retryLookup, billing } = useApp();
+  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe, prefs, prefsReady, mayExplore, openPro, lookup, retryLookup, billing, pack } = useApp();
   usePageTitle('Explore');
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
@@ -119,7 +119,18 @@ function MapScreen() {
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   // Another country than yours, without Pro: no pins or list, just the way to Pro (or home).
   const locked = mayExplore(filters.countryCode) ? null : { country: filters.countryCode, home: prefs.country ?? filters.countryCode };
-  const searchable = useMemo(() => data.records.filter((record) => mayExplore(record.location.address.countryCode)), [data.records, mayExplore]);
+  const loaded = useMemo(() => data.records.filter((record) => mayExplore(record.location.address.countryCode)), [data.records, mayExplore]);
+  // Typing a gym's name also finds it among your country's gyms kept on this device.
+  const { packNamed } = data;
+  const packMatches = useMemo(
+    () => (query.trim().length >= 2 && pack.index ? packNamed(query, filters.centre, 6) : []),
+    [query, pack.index, packNamed, filters.centre],
+  );
+  const searchable = useMemo(() => {
+    if (packMatches.length === 0) return loaded;
+    const ids = new Set(loaded.map((record) => record.location.id));
+    return [...loaded, ...packMatches.filter((record) => !ids.has(record.location.id))];
+  }, [loaded, packMatches]);
   const outcome = useMemo(() => {
     const found = runSearch(filters, { records: data.records, ratings: data.ratings }, asOf);
     return locked ? { ...found, results: [] } : found;
@@ -274,16 +285,20 @@ function MapScreen() {
     return shift > 0.6 || height > ((filters.radiusKm * 2) / 111) * 2.5;
   }, [viewBox, prefs.demo, filters.bbox, filters.centre, filters.radiusKm]);
 
-  /** Search a box for gyms; `named` when it's a place someone typed, so the list takes its name. */
+  /**
+   * Search a box for gyms; `named` when it's a place someone typed, so the
+   * list takes its name. `quiet` when the map moved and your country's gyms
+   * are kept on this device: they follow the map, with no button to press.
+   */
   const searchBox = useCallback(
-    async (box: BoundingBox, named?: FoundPlace) => {
+    async (box: BoundingBox, named?: FoundPlace, quiet = false) => {
       if (areaBusy) return;
       // Free covers the country you chose; until there is one, choose it first.
       if (!prefs.country) {
         router.push('/country');
         return;
       }
-      haptic.tap();
+      if (!quiet) haptic.tap();
       setAreaBusy(true);
       try {
         const answer = await data.searchArea(box, prefs.country, account.token);
@@ -298,14 +313,16 @@ function MapScreen() {
         );
         setSelectedId(null);
         const where = named ? `${named.name}, ${named.region}: ` : '';
-        if (inBox.length === 0) {
+        if (quiet) {
+          setNotice(inBox.length === 0 ? 'OpenStreetMap has no gyms mapped in this area yet.' : answer.truncated ? `Lots of gyms here: the ${answer.gyms.length} nearest the middle. Zoom in to see the rest.` : null);
+        } else if (inBox.length === 0) {
           haptic.warn();
           setNotice(`${where}OpenStreetMap has no gyms mapped in this area yet.`);
         } else {
           haptic.success();
           setNotice(
             answer.truncated
-              ? `${where}lots of gyms here, so these are the 200 nearest the middle. Zoom in to see the rest.`
+              ? `${where}lots of gyms here, so these are the ${answer.gyms.length} nearest the middle. Zoom in to see the rest.`
               : answer.gyms.length > 0
                 ? `${where}${answer.gyms.length} gym${answer.gyms.length === 1 ? '' : 's'} from OpenStreetMap in this area. Map-only, so call before you go.`
                 : named
@@ -315,7 +332,7 @@ function MapScreen() {
         }
         if (!wide && sheetIndex.current === 0) mainSheet.current?.snapToIndex(1);
       } catch (error) {
-        haptic.warn();
+        if (!quiet) haptic.warn();
         if (error instanceof ApiError && error.code === 'pro_required' && typeof error.detail.countryCode === 'string') {
           // Another country, without Pro: the list says what Pro adds, and the way back.
           const countryCode = error.detail.countryCode;
@@ -336,6 +353,17 @@ function MapScreen() {
     if (viewBox) void searchBox(viewBox);
   }, [viewBox, searchBox]);
 
+  // Your country's gyms kept on this device: the list follows the map as it
+  // moves, as it would in Google Maps, instead of waiting for the button.
+  const packHere = pack.index !== null && pack.index.country === prefs.country && filters.countryCode === prefs.country;
+  const followMap = packHere && offerArea && !selectedId && !areaBusy && viewBox !== null && pack.index!.covers(viewBox);
+  useEffect(() => {
+    if (!followMap || !viewBox || pendingPlace.current) return;
+    void searchBox(viewBox, undefined, true);
+    // Only when the view comes to rest somewhere new.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [followMap, viewBox]);
+
   // A typed place is searched once the map has arrived there, so the list
   // matches exactly what's on screen (or after a moment, if the map didn't move).
   // Not the view it left, nor a wide one that merely includes the place.
@@ -350,7 +378,7 @@ function MapScreen() {
     void searchBox(viewBox, pending.place);
   }, [viewBox, searchBox]);
 
-  const areaButton = (offerArea || areaBusy) && !selectedId && (
+  const areaButton = (offerArea || areaBusy) && !selectedId && !followMap && (
     <Animated.View entering={DROP_IN} exiting={FADE_OUT}>
       <Animated.View style={areaPress.style}>
         <Glass style={styles.areaButton} interactive>
@@ -387,8 +415,11 @@ function MapScreen() {
 
   const openGym = useCallback(
     (id: string) => {
-      const record = data.records.find((item) => item.location.id === id);
+      // A gym kept on this device but not loaded yet (found by name) joins the loaded ones.
+      const loadedRecord = data.records.find((item) => item.location.id === id);
+      const record = loadedRecord ?? data.packGym(id);
       if (!record) return;
+      if (!loadedRecord) void data.ensureGyms([id]);
       haptic.tap();
       Keyboard.dismiss();
       // Opened from the search box: the suggestions have done their job.
@@ -920,7 +951,10 @@ function PhoneShell(props: {
   return (
     <View style={styles.root}>
       {props.map}
-      <Animated.View style={[StyleSheet.absoluteFill, topHidden ? NO_TOUCH : CHILD_TOUCH, topFade]}>{props.topBar}</Animated.View>
+      {/* Pass-through as a prop: an animated view's styles reach the browser inline, where 'box-none' isn't understood and the layer would swallow every tap and drag on the map. */}
+      <Animated.View style={[StyleSheet.absoluteFill, topFade]} pointerEvents={topHidden ? 'none' : 'box-none'}>
+        {props.topBar}
+      </Animated.View>
       {props.banner}
 
       {/* The sheets live in a layer that stops above the tab bar, so none of

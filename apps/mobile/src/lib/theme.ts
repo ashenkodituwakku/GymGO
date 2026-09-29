@@ -377,6 +377,9 @@ export const shadow = {
 /**
  * Where touches go. Made with StyleSheet.create: in a browser only compiled
  * styles understand 'box-none' (an inline one would swallow every click).
+ * Not for an Animated.View: in a browser Reanimated writes its styles inline
+ * and these are lost, so a moving layer would swallow every click under it.
+ * Give one the pointerEvents prop instead.
  */
 const touches = StyleSheet.create({
   /** Touches pass through this view (decoration over something tappable). */

@@ -7,7 +7,7 @@ import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { createApp } from './app';
 import { openDb, seedGyms, type Db } from './db';
 import { deflateSync } from 'node:zlib';
-import { SiteIcons, allowedUrl, chainWebsites, googleIconUrl, iconCandidates, isPrivateAddress, lightOnTransparent, onDarkPlate, ownPhotoSites, photoCandidates, sniffImage, type Fetched, type SafeGet } from './siteicons';
+import { SiteIcons, SitePhotos, allowedUrl, chainWebsites, googleIconUrl, iconCandidates, isPrivateAddress, lightOnTransparent, onDarkPlate, ownPhotoSites, photoCandidates, sniffImage, type Fetched, type SafeGet } from './siteicons';
 import type { GymRecord } from '@gymgo/domain';
 
 /** A PNG header of the given size: all the checks read. */
@@ -342,5 +342,32 @@ describe('a photo of the gym from its own website', () => {
   it('has none for a site several gyms share, or for demo gyms', async () => {
     expect((await fetch(`${base}/api/gyms/${DOHERTYS.location.id}/photo`)).status).toBe(404);
     expect((await fetch(`${base}/api/gyms/${DEMO_GYMS[0]!.location.id}/photo`)).status).toBe(404);
+  });
+
+  it('never takes a chain’s stock picture for a branch’s page', async () => {
+    const site: Record<string, Omit<Fetched, 'url'>> = {
+      'https://chain.example.com/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/stock.jpg">') },
+      // A branch page with the site's stock picture only.
+      'https://chain.example.com/north/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/stock.jpg">') },
+      // Two branch pages sharing a picture that isn't the home page's, and one with its own.
+      'https://chain.example.com/east/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/team.jpg">') },
+      'https://chain.example.com/west/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/team.jpg">') },
+      'https://chain.example.com/south/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/south-floor.jpg">') },
+      'https://chain.example.com/stock.jpg': { status: 200, type: 'image/jpeg', body: jpeg(1200, 630) },
+      'https://chain.example.com/team.jpg': { status: 200, type: 'image/jpeg', body: jpeg(1200, 800) },
+      'https://chain.example.com/south-floor.jpg': { status: 200, type: 'image/jpeg', body: jpeg(1600, 900) },
+    };
+    const get: SafeGet = async (url) => {
+      const page = site[url.href];
+      return page ? { ...page, url: url.href } : { status: 404, type: 'text/html', body: Buffer.alloc(0), url: url.href };
+    };
+    const photos = new SitePhotos(openDb(':memory:'), { get });
+    expect(await photos.photo('https://chain.example.com/north/')).toBeNull();
+    expect((await photos.photo('https://chain.example.com/south/'))?.source).toBe('https://chain.example.com/south-floor.jpg');
+    // The first branch's picture looks like its own until a second branch shows the same one.
+    expect((await photos.photo('https://chain.example.com/east/'))?.source).toBe('https://chain.example.com/team.jpg');
+    expect(await photos.photo('https://chain.example.com/west/')).toBeNull();
+    expect(await photos.photo('https://chain.example.com/east/')).toBeNull();
+    expect((await photos.photo('https://chain.example.com/south/'))?.source).toBe('https://chain.example.com/south-floor.jpg');
   });
 });

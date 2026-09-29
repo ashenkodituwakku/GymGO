@@ -556,7 +556,28 @@ export class SitePhotos {
     if (!row) return undefined;
     const days = (this.now().getTime() - Date.parse(row.fetched_at)) / 86_400_000;
     if (days > (row.found ? FOUND_DAYS : row.source === UNREACHABLE ? UNREACHABLE_DAYS : NONE_DAYS)) return undefined;
-    return row.found && row.bytes ? { mime: row.mime!, bytes: Buffer.from(row.bytes), source: row.source ?? page } : null;
+    if (!row.found || !row.bytes || this.shared(page, row.source)) return null;
+    return { mime: row.mime!, bytes: Buffer.from(row.bytes), source: row.source ?? page };
+  }
+
+  /**
+   * Whether another page's photo is the very same picture: a chain's stock
+   * picture on each branch's page, which shows none of them in particular.
+   */
+  private shared(page: string, source: string | null): boolean {
+    if (!source) return false;
+    return Boolean(this.db.prepare('select 1 from site_photos where found = 1 and source = ? and page <> ? limit 1').get(source, page));
+  }
+
+  /** The pictures a site's home page shares, for telling a branch page's own photo from the site's stock one. */
+  private async homePictures(page: URL, get: SafeGet): Promise<Set<string>> {
+    try {
+      const home = await get(new URL('/', page), PAGE_BYTES, 'text/html,application/xhtml+xml');
+      const html = home.status < 400 && /html/i.test(home.type) ? home.body.toString('utf8') : '';
+      return new Set(photoCandidates(html, home.url).map((url) => url.href));
+    } catch {
+      return new Set();
+    }
   }
 
   async photo(website: string): Promise<SiteIcon | null> {
@@ -579,7 +600,13 @@ export class SitePhotos {
       const home = await get(page, PAGE_BYTES, 'text/html,application/xhtml+xml');
       unreachable = home.status >= 500 || home.status === 429;
       const html = home.status < 400 && /html/i.test(home.type) ? home.body.toString('utf8') : '';
-      for (const candidate of photoCandidates(html, home.url).slice(0, 3)) {
+      // A page deeper in a site (a branch's own page on a small chain's
+      // site) often shares the site's stock picture instead of one of its
+      // own; that picture isn't of this branch, so it's passed over.
+      const stock = page.pathname !== '/' ? await this.homePictures(page, get) : new Set<string>();
+      for (const candidate of photoCandidates(html, home.url)
+        .filter((url) => !stock.has(url.href))
+        .slice(0, 3)) {
         try {
           const image = await get(candidate, PHOTO_BYTES + 1, 'image/jpeg,image/png,image/webp');
           if (image.status >= 400 || image.body.length > PHOTO_BYTES) continue;
@@ -604,7 +631,10 @@ export class SitePhotos {
            height = excluded.height, source = excluded.source, fetched_at = excluded.fetched_at`,
       )
       .run(page.href, found ? 1 : 0, found?.mime ?? null, found?.bytes ?? null, found?.width ?? null, found?.height ?? null, found?.source ?? (unreachable ? UNREACHABLE : null), this.now().toISOString());
-    return found ? { mime: found.mime, bytes: found.bytes, source: found.source } : null;
+    // Kept either way, so a second branch showing the same stock picture
+    // turns it off for both.
+    if (!found || this.shared(page.href, found.source)) return null;
+    return { mime: found.mime, bytes: found.bytes, source: found.source };
   }
 }
 

@@ -9,7 +9,7 @@
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { LogoPlate } from '@/components/BrandLogo';
 import { GoogleEmbed } from '@/components/GoogleEmbed';
@@ -36,7 +36,7 @@ import { gymDistanceLine } from '@/lib/copy';
 import { resultsById } from '@/lib/results';
 import { HEADER_EDGE, PAGE_COLUMN, color, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
-import { useScreenBottom } from '@/lib/layout';
+import { PageScroll } from '@/components/PageScroll';
 
 /** The pop-up growing into the page: the page rises from where the pop-up sat, still when Reduce Motion is on. */
 const EXPAND_IN =
@@ -57,7 +57,6 @@ export default function GymPage() {
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   const result = useMemo(() => (id ? resultsById(filters, data.records, asOf, data.ratings).get(id) : undefined), [id, filters, data.records, asOf, data.ratings]);
   usePageTitle(result?.record.location.name ?? 'Gym');
-  const screenBottom = useScreenBottom();
 
   const place = useGooglePlace(result?.record);
   const googlePhotos = Boolean(place && place.photos.length > 0);
@@ -162,10 +161,9 @@ export default function GymPage() {
           ),
         }}
       />
-      <ScrollView
+      <PageScroll
         style={styles.page}
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]}
+        contentContainerStyle={styles.content}
       >
         <Animated.View entering={fromMap ? EXPAND_IN : undefined} style={[styles.column, { width: cardWidth }]}>
           <View style={styles.title}>
@@ -189,6 +187,7 @@ export default function GymPage() {
               <PhotoHero
                 gymId={location.id}
                 isDemo={location.isDemoData}
+                website={location.website}
                 account={account}
                 onSignIn={() => router.push('/sign-in')}
                 width={cardWidth}
@@ -256,7 +255,7 @@ export default function GymPage() {
             />
           </View>
         </Animated.View>
-      </ScrollView>
+      </PageScroll>
       <GoogleModal record={googleOpen ? result.record : undefined} onClose={() => setGoogleOpen(false)} />
     </>
   );

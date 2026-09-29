@@ -20,7 +20,7 @@ import {
 } from '@gymgo/domain';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp, type ProReason } from '@/lib/app-state';
@@ -30,7 +30,7 @@ import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
 import { HEADER_EDGE, color, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
-import { useScreenBottom } from '@/lib/layout';
+import { PageScroll } from '@/components/PageScroll';
 
 const FEATURE_ICON: Record<string, IconName> = {
   'Gyms worldwide': 'globe',
@@ -61,7 +61,6 @@ const REASON: Record<ProReason, string> = {
 
 export default function ProScreen() {
   usePageTitle('GymGO Pro');
-  const screenBottom = useScreenBottom();
   const params = useLocalSearchParams<{ reason?: string; checkout?: string }>();
   const router = useRouter();
   const { account, billing, filters, prefs } = useApp();
@@ -155,7 +154,7 @@ export default function ProScreen() {
           ),
         }}
       />
-      <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
+      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         {/* Hero ------------------------------------------------------------ */}
         <View style={styles.hero}>
           <View style={styles.badge}>
@@ -295,7 +294,7 @@ export default function ProScreen() {
           than Free allows. Payments are handled by Stripe: GymGO never sees your card, and Stripe gets your name and email for
           the receipt.
         </Txt>
-      </ScrollView>
+      </PageScroll>
     </>
   );
 }

@@ -31,7 +31,7 @@ import { glassMark, installLiquidGlass, sizeRefraction } from '@/components/liqu
 import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { TabBarInset } from '@/lib/layout';
+import { TabBarInset, tabBarBottom } from '@/lib/layout';
 import { CHILD_TOUCH, NO_TOUCH, color, currentTheme, face, themed } from '@/lib/theme';
 
 const BAR_HEIGHT = 64;
@@ -62,8 +62,9 @@ export default function TabsLayout() {
       router.push({ pathname: '/country', params: { first: '1' } });
     }, [prefsReady, prefs.country, prefs.demo]),
   );
-  // Like iOS 26, the bar floats just above the home indicator.
-  const bottom = Math.max(insets.bottom - 12, 14);
+  // Like iOS 26, the bar floats just above the home indicator; on Android,
+  // clear of the navigation bar.
+  const bottom = tabBarBottom(insets.bottom);
   return (
     <TabBarInset.Provider value={bottom + BAR_HEIGHT + 8}>
       <Tabs style={styles.root}>

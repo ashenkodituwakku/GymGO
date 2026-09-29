@@ -18,6 +18,7 @@ import type {
   Provenance,
   VisitOffer,
 } from '@gymgo/domain';
+import { researchedWebsite, researchedWebsiteEvidence } from '@gymgo/domain';
 
 export const MELBOURNE = 'Australia/Melbourne';
 
@@ -198,7 +199,10 @@ export interface PlaceSpec {
 }
 
 export function location(spec: PlaceSpec): GymLocation {
+  // Its own website, else the site looked up by hand (packages/domain/src/websites.ts), cited as that.
+  const found = spec.website ? null : researchedWebsite(spec.id);
   const sources = [osm(spec.osmElement), ...(spec.listedByOperator ? [spec.listedByOperator] : [])];
+  const provenance = cited(...sources);
   return {
     id: spec.id,
     slug: spec.id,
@@ -221,12 +225,13 @@ export function location(spec: PlaceSpec): GymLocation {
       ? null
       : 'On the map, but we have not confirmed with the operator that this branch is trading.',
     phone: spec.phone ?? null,
-    website: spec.website ?? null,
+    website: spec.website ?? found,
     // We hold no photographs we have permission to show.
     photos: [],
     isDemoData: false,
     externalRefs: { openStreetMap: spec.osmElement },
-    provenance: cited(...sources),
+    // A found website doesn't make the rest owner-confirmed, so it's cited alongside.
+    provenance: found ? { ...provenance, sources: [...provenance.sources, researchedWebsiteEvidence(spec.id, found)] } : provenance,
   };
 }
 

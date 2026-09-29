@@ -623,14 +623,18 @@ launches: see `docs/LAUNCH-CHECKLIST.md`.
 
 ### Gym photos
 
-GymGO only shows gym photos that its own members took and chose to share. It
-never copies them from gym websites (they're copyrighted) and never shows a
-stand-in picture of some other gym.
-
-The top of a gym's page shows, in this order:
+The top of a gym's page (and its card on Home) shows, in this order:
 
 1. **Members' photos**, each with the member's name on it.
-2. If there are none, and the owner has set up the optional Google key
+2. If there are none, **the photo the gym's own website shares** (the
+   picture its home page gives social media, `og:image`), credited "From
+   franksgymperth.com". The GymGO server fetches it the first time someone
+   looks and keeps it a month, with the same guards as website icons. It is
+   taken only from a site that is that gym's alone: never a site other gyms
+   in the data share, and never a chain's home page, whose picture would be
+   of some other branch. So it is always the right gym, or nothing. These
+   photos belong to the gyms; the owner chose to show them.
+3. If there are none, and the owner has set up the optional Google key
    (below), **Google's photos** of the place, each credited to whoever took
    it, with "Google Maps" underneath. They're only ever the exact gym's: a
    Google listing is used only if it's within 150 m and shares a real word
@@ -638,7 +642,7 @@ The top of a gym's page shows, in this order:
    that, if Google calls it a gym and it's within 40 m. So the shopping
    centre a gym is in, or the café next door, never lends it their photos;
    a gym with no sure match simply shows no Google photos.
-3. Otherwise **Google Street View** outside the gym, labelled as such (it
+4. Otherwise **Google Street View** outside the gym, labelled as such (it
    may not face the door). This is Google's free public embed.
 
 Google's photos and Street View wait for a tap: the page shows a card saying
@@ -729,7 +733,10 @@ with a logo credits it and says GymGO isn't connected to or endorsed by the
 brand. A logo is still its owner's trademark: GymGO uses it only to say
 which gym this is.
 
-Every other gym with a website gets **the icon from its own website**: the
+Every other gym with a website gets **the icon from its own website**
+(below).
+
+The icon from a gym's own website: the
 square picture a phone puts on its home screen, or the logo the site
 declares for search engines. It's shown the way a browser or a search engine
 shows a site's icon beside its link, credited to the site ("Icon from
@@ -760,12 +767,22 @@ name would own and keeps one only when the site's title names the gym and
 the page names its suburb (or street), and the rest by searching the web for
 each gym without one in Melbourne, Sydney and Brisbane. Every one was read
 by hand against the gym's name and suburb, and the gym page cites it as
-found by GymGO, not by the gym. (Perth, Adelaide, Canberra, the Gold Coast
-and Hobart haven't been searched yet.) Of the 3,006 real gyms in the bundled cities, 323 have
-a Commons logo and 1,905 more have a website of their own or their
-chain's to take an icon from (a few of those sites have no icon anywhere); the
-other 778 (212 of them in Australia) show the plain symbol, mostly
-independents with no website anyone could confirm. It only accepts real
+found by GymGO, not by the gym. Another 131 (45 in Australia, some in
+Perth, Adelaide, Canberra and the Gold Coast, and 86 in the US) were looked
+up the same way, by the gym's name with its street or suburb, and kept only
+when the site's address matched where the gym is on the map
+(`packages/domain/src/websiteRows.ts`, also cited as found by GymGO); for a
+branch of a small chain that's its own page on the chain's site. A bigger
+table of chains, with each one's site per country (`CHAINS` in
+`packages/domain/src/websites.ts`: about 85, among them Jetts, Zap, Orangetheory,
+Planet Fitness, PureGym, Basic-Fit and US chains such as NYSC, Youfit and
+Chuze), is asked before `chainSites.ts`, matching the brand's Wikidata item
+as the map tags it, the brand, or the name. Of the 3,006 real gyms in the
+bundled cities, 323 have a Commons logo and 2,084 more have a website of
+their own or their chain's to take an icon from (a few of those sites have
+no icon anywhere); the other 599 (170 of them in Australia, 232 in the US)
+show the plain symbol, mostly independents with no website anyone could
+confirm. It only accepts real
 PNG, JPEG, WebP or GIF images, and it will only
 connect to public addresses, because website addresses come from
 OpenStreetMap, which anyone can edit. A gym without a website, or whose site

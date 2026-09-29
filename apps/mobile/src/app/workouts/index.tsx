@@ -5,7 +5,7 @@
 
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useActiveSession } from '@/lib/activeSession';
@@ -16,11 +16,10 @@ import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWork
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { unitFor } from '@/lib/training';
 import { usePageTitle } from '@/lib/pageTitle';
-import { useScreenBottom } from '@/lib/layout';
+import { PageScroll } from '@/components/PageScroll';
 
 export default function MyWorkouts() {
   usePageTitle('My workouts');
-  const screenBottom = useScreenBottom();
   const { account, billing, openPro, prefs } = useApp();
   const active = useActiveSession();
   const router = useRouter();
@@ -64,7 +63,7 @@ export default function MyWorkouts() {
   };
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       {active && (
         <Pressable onPress={() => router.push('/train')} accessibilityRole="button" style={styles.notice}>
           <Txt variant="footnote" color={color.labelSecondary}>
@@ -149,7 +148,7 @@ export default function MyWorkouts() {
           )}
         </>
       )}
-    </ScrollView>
+    </PageScroll>
   );
 }
 

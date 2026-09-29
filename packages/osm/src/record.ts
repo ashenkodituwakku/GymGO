@@ -9,7 +9,7 @@
  * product shows those as unknown and says to call.
  */
 
-import type { AccessSchedule, AmenityObservation, EvidenceSource, GymRecord, OpeningWindow, Provenance, TrainingType } from '@gymgo/domain';
+import { researchedWebsite, researchedWebsiteEvidence, type AccessSchedule, type AmenityObservation, type EvidenceSource, type GymRecord, type OpeningWindow, type Provenance, type TrainingType } from '@gymgo/domain';
 import type { MappedAmenities, MappedHours } from './rules';
 
 export interface MapOnlyGym {
@@ -57,6 +57,8 @@ export function mapOnlyRecord(gym: MapOnlyGym, where: Whereabouts): GymRecord {
     reviewerId: null,
   };
   const fromMap = (): Provenance => ({ status: 'community_reported', sources: [evidence], conflictNote: null });
+  // The map's website, else the gym's own site looked up by hand (packages/domain/src/websites.ts), cited as that.
+  const found = gym.website ? null : researchedWebsite(gym.id);
 
   // Mapped opening hours are when the doors are open, so they're member hours.
   const schedules: AccessSchedule[] = [];
@@ -109,14 +111,14 @@ export function mapOnlyRecord(gym: MapOnlyGym, where: Whereabouts): GymRecord {
       operatingStatus: 'unknown',
       operatingStatusNote: 'On the map, but we have not confirmed with the operator that this branch is trading.',
       phone: gym.phone ?? null,
-      website: gym.website ?? null,
+      website: gym.website ?? found,
       email: gym.email ?? null,
       activities: gym.activities ?? [],
       // We hold no photographs we have permission to show.
       photos: [],
       isDemoData: false,
       externalRefs: { openStreetMap: gym.osm, ...(gym.brandWikidata ? { wikidataBrand: gym.brandWikidata } : {}) },
-      provenance: fromMap(),
+      provenance: found ? { ...fromMap(), sources: [evidence, researchedWebsiteEvidence(gym.id, found)] } : fromMap(),
     },
     equipment: [],
     amenities,

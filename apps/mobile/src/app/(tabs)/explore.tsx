@@ -31,7 +31,7 @@ import { haptic } from '@/lib/haptics';
 import { cityAt, cityNear, geocodePlace, localBudget, worldCityNamed, type AppPlace, type WorldCity } from '@/lib/places';
 import { useApp } from '@/lib/app-state';
 import { enterOpensGym, placeForEnter, suggestGyms } from '@/lib/gymSearch';
-import { useBottomClearance } from '@/lib/layout';
+import { useBottomClearance, useOverhang } from '@/lib/layout';
 import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, atWorldCity, boxAround, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
 import { CHILD_TOUCH, NO_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -630,6 +630,7 @@ function MapScreen() {
           <PhotoHero
             gymId={selected.record.location.id}
             isDemo={selected.record.location.isDemoData}
+            website={selected.record.location.website}
             account={account}
             onSignIn={openAccount}
             width={inSheet ? width - SHEET_SIDE * 2 : PANEL_WIDTH}
@@ -905,8 +906,13 @@ function PhoneShell(props: {
   onFiltersDismiss: () => void;
   google: ReactNode;
 }) {
-  const { insets, clearance } = props;
+  const { insets } = props;
   const window = useWindowDimensions();
+  // If the phone lays this tab out reaching below the screen, the sheets
+  // (which sit on its bottom edge) are lifted by as much, so none of a sheet
+  // or its last rows ends up out of sight.
+  const { measureRef, onLayout: measure, overhang } = useOverhang();
+  const clearance = props.clearance + overhang;
   // The height the sheets live in: the screen, less the tab bar and a gap.
   const [height, setHeight] = useState(window.height - clearance - SHEET_GAP);
   const bottomInset = 0;
@@ -949,7 +955,7 @@ function PhoneShell(props: {
   );
 
   return (
-    <View style={styles.root}>
+    <View ref={measureRef} onLayout={measure} style={styles.root}>
       {props.map}
       {/* Pass-through as a prop: an animated view's styles reach the browser inline, where 'box-none' isn't understood and the layer would swallow every tap and drag on the map. */}
       <Animated.View style={[StyleSheet.absoluteFill, topFade]} pointerEvents={topHidden ? 'none' : 'box-none'}>

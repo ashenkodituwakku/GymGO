@@ -10,7 +10,7 @@
 import Constants from 'expo-constants';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { Group, Row, TILE } from '@/components/ios';
@@ -23,7 +23,7 @@ import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { ACCENTS, color, radius, space, themed } from '@/lib/theme';
 import { useThemeChoice } from '@/lib/themePrefs';
-import { useScreenBottom } from '@/lib/layout';
+import { PageScroll } from '@/components/PageScroll';
 
 const MIN_CHARS = 10;
 const MAX_CHARS = 4000;
@@ -46,7 +46,6 @@ export default function ReportBug() {
   const notice = topicParam === 'copyright';
   const title = notice ? 'Copyright notice' : 'Report a bug';
   usePageTitle(title);
-  const screenBottom = useScreenBottom();
   const router = useRouter();
   const { from } = useLocalSearchParams<{ from?: string }>();
   const { account, prefs, billing } = useApp();
@@ -134,7 +133,7 @@ export default function ReportBug() {
   }
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentInsetAdjustmentBehavior="automatic">
+    <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       <Stack.Screen options={{ title }} />
       <Animated.View style={styles.intro}>
         <View style={[styles.badge, notice && styles.noticeBadge]}>
@@ -231,7 +230,7 @@ export default function ReportBug() {
       <Txt variant="footnote" color={color.labelTertiary} style={styles.center}>
         Reports are kept on the GymGO server and emailed to the team. Please leave out passwords and card details.
       </Txt>
-    </ScrollView>
+    </PageScroll>
   );
 }
 

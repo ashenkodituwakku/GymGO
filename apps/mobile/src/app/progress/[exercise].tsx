@@ -5,7 +5,7 @@
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { ProgressChart } from '@/components/ProgressChart';
 import { PrimaryButton, Txt } from '@/components/ui';
@@ -15,7 +15,7 @@ import { e1rmSeries, formatWeight, fromKg, personalRecords, setsSummary, unitFor
 import { useTrainingLog } from '@/lib/useTraining';
 import { EXERCISES, exerciseName } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
-import { useScreenBottom } from '@/lib/layout';
+import { PageScroll } from '@/components/PageScroll';
 
 /** "25 Sep", with the year only when it isn't this one. */
 const dayLabel = (iso: string) => {
@@ -36,26 +36,25 @@ export default function ExerciseProgressScreen() {
   // An id GymGO doesn't list (a mistyped link, or an exercise since renamed): its words, readably.
   const title = exerciseName(exerciseId);
   usePageTitle(title);
-  const screenBottom = useScreenBottom();
   const record = useMemo(() => personalRecords(log.sessions).get(exerciseId) ?? null, [log.sessions, exerciseId]);
   const series = useMemo(() => e1rmSeries(log.sessions, exerciseId), [log.sessions, exerciseId]);
   const done = log.sessions.filter((session) => session.exercises.some((item) => item.exerciseId === exerciseId));
 
   if (!exercise && done.length === 0 && log.status !== 'loading') {
     return (
-      <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
+      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         <Stack.Screen options={{ title: '' }} />
         <Txt variant="title2">No exercise by that name</Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
           GymGO doesn’t list “{title}”, and you haven’t logged it. Your exercises are on the Progress page.
         </Txt>
         <PrimaryButton label="Back to Progress" tone="quiet" onPress={() => (router.canGoBack() ? router.back() : router.replace('/progress'))} />
-      </ScrollView>
+      </PageScroll>
     );
   }
 
   return (
-    <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: '' }} />
       <Txt variant="largeTitle">{title}</Txt>
 
@@ -118,7 +117,7 @@ export default function ExerciseProgressScreen() {
       </View>
 
       <PrimaryButton label="Back to Progress" tone="quiet" onPress={() => (router.canGoBack() ? router.back() : router.replace('/progress'))} />
-    </ScrollView>
+    </PageScroll>
   );
 }
 

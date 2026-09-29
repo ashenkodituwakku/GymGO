@@ -8,7 +8,7 @@
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { Easing, FadeInDown, FadeOutDown, ReduceMotion, ZoomIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { FADE_IN, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,7 +44,8 @@ import {
   type TrainingSession,
   type WeightUnit,
 } from '@/lib/training';
-import { useScreenBottom } from '@/lib/layout';
+import { PageScroll } from '@/components/PageScroll';
+import { useOverhang } from '@/lib/layout';
 import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
 import { useTrainingLog } from '@/lib/useTraining';
 import { EXERCISES, exerciseName } from '@/lib/workout';
@@ -74,7 +75,6 @@ const shortDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, {
  */
 function NoWorkout({ token }: { token: string | null }) {
   const router = useRouter();
-  const screenBottom = useScreenBottom();
   const { prefs } = useApp();
   const [saved, setSaved] = useState<SavedWorkout[] | null>(null);
   useFocusEffect(
@@ -89,7 +89,7 @@ function NoWorkout({ token }: { token: string | null }) {
   const recent = (saved ?? []).slice(0, 4);
   const details = saved ? libraryDetails(saved) : new Map<string, string>();
   return (
-    <ScrollView style={styles.page} contentContainerStyle={[styles.content, styles.noWorkout, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
+    <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.noWorkout]}>
       <Stack.Screen options={{ title: 'Workout' }} />
       <View style={styles.noWorkoutHead}>
         <Icon name="workout" size={34} color={color.brand} />
@@ -147,7 +147,7 @@ function NoWorkout({ token }: { token: string | null }) {
         tone={recent.length > 0 ? 'quiet' : undefined}
         onPress={() => router.replace({ pathname: '/workout/[id]', params: { id: 'any' } })}
       />
-    </ScrollView>
+    </PageScroll>
   );
 }
 
@@ -161,7 +161,7 @@ export default function TrainScreen() {
   const log = useTrainingLog(token);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const screenBottom = useScreenBottom();
+  const page = useOverhang();
   const [done, setDone] = useState<{ session: TrainingSession; records: NewRecord[] } | null>(null);
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -233,15 +233,16 @@ export default function TrainScreen() {
 
 
   return (
-    <View style={styles.page}>
+    <View ref={page.measureRef} onLayout={page.onLayout} style={styles.page}>
       <Stack.Screen options={{ title: '' }} />
       <StayAwake />
-      <ScrollView
+      <PageScroll
         style={styles.page}
-        contentContainerStyle={[styles.content, { paddingBottom: screenBottom + (restEndsAt !== null ? 90 : 0) }]}
+        contentContainerStyle={styles.content}
+        // Room for the rest timer, so it never covers the last set.
+        extraBottom={restEndsAt !== null ? 90 : 0}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
-        contentInsetAdjustmentBehavior="automatic"
       >
         <View style={styles.intro}>
           <Txt variant="largeTitle">{session.name}</Txt>
@@ -307,9 +308,10 @@ export default function TrainScreen() {
             </Txt>
           )}
         </View>
-      </ScrollView>
+      </PageScroll>
 
-      {restEndsAt !== null && <RestBar endsAt={restEndsAt} total={session.restTotal} bottom={insets.bottom} />}
+      {/* Above the bottom of the screen, even if the page reaches past it. */}
+      {restEndsAt !== null && <RestBar endsAt={restEndsAt} total={session.restTotal} bottom={insets.bottom + page.overhang} />}
     </View>
   );
 }
@@ -636,7 +638,6 @@ const RECORD_WORD: Record<NewRecord['kind'], string> = { heaviest: 'Heaviest yet
 function Summary({ result, onClose, onProgress }: { result: { session: TrainingSession; records: NewRecord[] }; onClose: () => void; onProgress: () => void }) {
   const { session, records } = result;
   const unit = session.unit;
-  const screenBottom = useScreenBottom();
   const volume = fromKg(volumeKg(session), unit);
   const [shared, setShared] = useState<string | null>(null);
   const share = async () => {
@@ -644,7 +645,7 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
     setShared(outcome === 'copied' ? 'Copied, ready to paste.' : outcome === 'failed' ? 'Sharing isn’t available here.' : null);
   };
   return (
-    <ScrollView style={styles.page} contentContainerStyle={[styles.content, styles.summary, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
+    <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.summary]}>
       <Stack.Screen options={{ title: '' }} />
       <Animated.View entering={records.length ? ZoomIn.springify().damping(12).stiffness(180).reduceMotion(ReduceMotion.System) : FADE_IN} style={styles.bigIcon}>
         <Icon name={records.length ? 'trophy' : 'done'} size={40} color={records.length ? color.maybe : color.good} />
@@ -681,7 +682,7 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
         )}
         <PrimaryButton label="Done" tone="quiet" onPress={onClose} />
       </View>
-    </ScrollView>
+    </PageScroll>
   );
 }
 

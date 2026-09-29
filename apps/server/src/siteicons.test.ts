@@ -7,7 +7,7 @@ import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { createApp } from './app';
 import { openDb, seedGyms, type Db } from './db';
 import { deflateSync } from 'node:zlib';
-import { SiteIcons, allowedUrl, chainWebsites, googleIconUrl, iconCandidates, isPrivateAddress, lightOnTransparent, onDarkPlate, sniffImage, type Fetched, type SafeGet } from './siteicons';
+import { SiteIcons, allowedUrl, chainWebsites, googleIconUrl, iconCandidates, isPrivateAddress, lightOnTransparent, onDarkPlate, ownPhotoSites, photoCandidates, sniffImage, type Fetched, type SafeGet } from './siteicons';
 import type { GymRecord } from '@gymgo/domain';
 
 /** A PNG header of the given size: all the checks read. */
@@ -156,6 +156,22 @@ const WEB: Record<string, Omit<Fetched, 'url'>> = {
   'https://white.example.com/w.png': { status: 200, type: 'image/png', body: rgbaPng(64, (x) => (x < 32 ? [255, 255, 255, 255] : [0, 0, 0, 0])) },
 };
 
+/** A gym whose website no other gym in the data shares: its own, so its photo can be used. */
+const OWN = MELBOURNE_GYMS.find(
+  (gym) => gym.location.website && MELBOURNE_GYMS.filter((other) => other.location.website === gym.location.website).length === 1 && gym !== PRIME,
+)!;
+/** A JPEG header of the given size: all the checks read. */
+function jpeg(width: number, height: number): Buffer {
+  return Buffer.from([0xff, 0xd8, 0xff, 0xc0, 0x00, 0x11, 0x08, height >> 8, height & 255, width >> 8, width & 255, 0x03, 0, 0, 0, 0, 0, 0, 0, 0]);
+}
+WEB[OWN.location.website!] = {
+  status: 200,
+  type: 'text/html',
+  body: Buffer.from('<meta property="og:image" content="/logo-share.png"><meta property="og:image" content="/floor.jpg"><meta name="twitter:image" content="/small.jpg">'),
+};
+WEB[new URL('/floor.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: jpeg(1200, 630) };
+WEB[new URL('/small.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: jpeg(120, 80) };
+
 let flakyUp = false;
 const fakeGet: SafeGet = async (url) => {
   visits.push(url.href);
@@ -261,6 +277,7 @@ describe('a chain’s website, for branches without one', () => {
     ({
       location: {
         id,
+        name: brand ?? id,
         brand,
         website,
         isDemoData: false,
@@ -276,8 +293,8 @@ describe('a chain’s website, for branches without one', () => {
       branch('c', 'Anytime Fitness', 'https://www.anytimefitness.com/gyms/c', 'US', 'Q4778364'),
     ]);
     expect(find(branch('d', 'Anytime Fitness', null, 'AU', 'Q4778364'))).toBe('https://anytimefitness.com.au/');
-    // Only one US branch has a site: not enough to call it the chain's.
-    expect(find(branch('e', 'Anytime Fitness', null, 'US', 'Q4778364'))).toBeNull();
+    // Only one US branch has a site: not enough to call it the chain's, so the chain's own site, kept by hand.
+    expect(find(branch('e', 'Anytime Fitness', null, 'US', 'Q4778364'))).toBe('https://www.anytimefitness.com/');
     // A branch tagged with the brand's name but not its Wikidata item still finds it.
     expect(find(branch('f', 'Anytime Fitness', null, 'AU'))).toBe('https://anytimefitness.com.au/');
   });
@@ -288,5 +305,42 @@ describe('a chain’s website, for branches without one', () => {
       branch('b', 'CrossFit', 'https://persistenceathletics.com/', 'US', 'Q2072840'),
     ]);
     expect(find(branch('c', 'CrossFit', null, 'US', 'Q2072840'))).toBeNull();
+  });
+});
+
+describe('a photo of the gym from its own website', () => {
+  it('takes the picture the site shares, never a logo, an icon or a vector', () => {
+    const html =
+      '<meta property="og:image" content="https://gym.example.com/logo.png"><meta property="og:image" content="/hero.jpg">' +
+      '<meta name="twitter:image" content="/hero.jpg"><script type="application/ld+json">{"image":["/room.webp","/brand.svg"]}</script>';
+    expect(photoCandidates(html, 'https://gym.example.com/').map((url) => url.href)).toEqual(['https://gym.example.com/hero.jpg', 'https://gym.example.com/room.webp']);
+  });
+
+  it('only from a site that is the gym’s own: not one other gyms share, nor a chain’s home page', () => {
+    const gym = (id: string, name: string, website: string | null, brand: string | null = null) =>
+      ({ location: { id, name, brand, website, isDemoData: false, address: { countryCode: 'AU' }, externalRefs: {} } }) as unknown as GymRecord;
+    const own = gym('a', 'Frank’s Gym', 'https://www.franksgymperth.com/');
+    const shared1 = gym('b', 'Big Gym Richmond', 'https://biggym.example.com/');
+    const shared2 = gym('c', 'Big Gym Carlton', 'https://biggym.example.com');
+    const chainHome = gym('d', 'Anytime Fitness', 'https://www.anytimefitness.com.au/', 'Anytime Fitness');
+    const chainBranch = gym('e', 'Anytime Fitness', 'https://www.anytimefitness.com.au/gyms/docklands/', 'Anytime Fitness');
+    const site = ownPhotoSites([own, shared1, shared2, chainHome, chainBranch]);
+    expect(site(own)).toBe('https://www.franksgymperth.com/');
+    expect(site(shared1)).toBeNull();
+    expect(site(chainHome)).toBeNull();
+    expect(site(chainBranch)).toBe('https://www.anytimefitness.com.au/gyms/docklands/');
+  });
+
+  it('serves it as the image it really is, credited to the page', async () => {
+    const response = await fetch(`${base}/api/gyms/${OWN.location.id}/photo`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('image/jpeg');
+    expect(decodeURI(response.headers.get('x-photo-source')!)).toBe(new URL(OWN.location.website!).href);
+    expect(Buffer.from(await response.arrayBuffer()).equals(jpeg(1200, 630))).toBe(true);
+  });
+
+  it('has none for a site several gyms share, or for demo gyms', async () => {
+    expect((await fetch(`${base}/api/gyms/${DOHERTYS.location.id}/photo`)).status).toBe(404);
+    expect((await fetch(`${base}/api/gyms/${DEMO_GYMS[0]!.location.id}/photo`)).status).toBe(404);
   });
 });

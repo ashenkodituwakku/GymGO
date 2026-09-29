@@ -63,7 +63,9 @@ export function Glass({
         glassEffectStyle={clear ? 'clear' : 'regular'}
         tintColor={tint}
         isInteractive={interactive}
-        colorScheme="light"
+        // GymGO's own light or dark, not the phone's: it was fixed to light,
+        // which left pale glass under white text in dark mode.
+        colorScheme={dark() ? 'dark' : 'light'}
       >
         {children}
       </GlassView>

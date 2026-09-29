@@ -193,7 +193,8 @@ const styles = themed(() => StyleSheet.create({
   },
   // The field's own focus ring, in the accent, instead of the browser's box.
   searchFocused: { borderColor: color.brand },
-  input: { flex: 1, fontSize: 17, color: color.label, ...NO_WEB_OUTLINE, ...face('regular') },
+  // minWidth 0: a browser text field won't otherwise shrink below its own width.
+  input: { flex: 1, minWidth: 0, fontSize: 17, color: color.label, ...NO_WEB_OUTLINE, ...face('regular') },
   sectionTitle: { marginTop: space[5], marginBottom: space[2], marginLeft: space[4], letterSpacing: 0.4 },
   row: {
     flexDirection: 'row',

@@ -404,7 +404,8 @@ const styles = themed(() =>
     fieldFocused: { borderColor: color.brand },
     fieldProblem: { borderColor: color.maybe },
     // The box's border shows focus, in the accent, instead of the browser's own ring.
-    fieldInput: { flex: 1, height: '100%', fontSize: 17, color: color.label, ...NO_WEB_OUTLINE, ...face('regular') },
+    // minWidth 0: a browser text field won't otherwise shrink below its own width, and ran past a narrow phone's edge.
+    fieldInput: { flex: 1, minWidth: 0, height: '100%', fontSize: 17, color: color.label, ...NO_WEB_OUTLINE, ...face('regular') },
     fieldHint: { marginLeft: space[4] },
     pending: { gap: space[3] },
     bornWrap: { gap: space[1] },

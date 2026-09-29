@@ -175,7 +175,7 @@ export function searchPrompt(home: string | null): string {
 export function locatedNotice(
   result:
     | { kind: 'here'; fix: { approximate: boolean } }
-    | { kind: 'area'; fix: { approximate: boolean }; gyms: number; radiusKm: number; countryCode: string }
+    | { kind: 'area'; fix: { approximate: boolean } }
     | { kind: 'nearest'; km: number; city: { name: string; country: string } }
     | { kind: 'home'; placeName: string }
     | { kind: 'abroad'; countryCode: string; home: string }
@@ -189,38 +189,34 @@ export function locatedNotice(
     case 'unavailable':
       return `Couldn't get a fix on where you are. Search ${placeWords(home)} instead.`;
     case 'nearest':
-      return `Couldn't search the map around you just now, so here's ${result.city.name}, the nearest city GymGO has built in (${distanceLabel(result.km, result.city.country)} away).`;
+      return `Here's ${result.city.name}, the nearest city GymGO has built in (${distanceLabel(result.km, result.city.country)} away).`;
     case 'home':
-      return `Couldn't search the map around you just now, so here's ${result.placeName}.`;
+      return `Couldn't tell what time it is where you are, so here's ${result.placeName}.`;
     case 'abroad':
       return `You're in ${countryInSentence(result.countryCode)}. GymGO Free covers ${countryInSentence(result.home)}, the country you chose; gyms everywhere else are part of Pro. Here's ${countryInSentence(result.home)}.`;
     case 'here':
+    case 'area':
+      // Outside the built-in cities the lists say what's next (Search this area), so nothing more here.
       return result.fix.approximate ? EMPTY.locationApproximate : null;
-    case 'area': {
-      const rough = result.fix.approximate ? ` ${EMPTY.locationApproximate}` : '';
-      if (result.gyms === 0) return `OpenStreetMap has no gyms mapped close to you yet. Move the map and tap Search this area to look further out.${rough}`;
-      if (result.radiusKm > 5) {
-        // Whole miles: the steps are 5 and 10 km, and "3.1 mi" reads as more exact than it is.
-        const within = (km: number) => (usesMiles(result.countryCode) ? `${Math.round(km / KM_PER_MILE)} mi` : `${km} km`);
-        return `Nothing's mapped within ${within(5)} of you, so this shows ${result.gyms === 1 ? 'the gym' : `the ${result.gyms} gyms`} within ${within(result.radiusKm)}, from OpenStreetMap: map-only, so call before you go.${rough}`;
-      }
-      return `Gyms around you from OpenStreetMap: map-only, so call before you go.${rough}`;
-    }
   }
 }
 
 /**
- * Reading the map around a place GymGO carries no city for: while it looks,
- * when it couldn't, and when the map has nothing there.
+ * Reading the map around a place GymGO carries no city for: before you tap
+ * Search this area (nothing is read until you do), while it looks, when it
+ * couldn't, and when the map has nothing there.
  */
-export function lookupLine(state: 'searching' | 'failed' | 'none', placeName: string): string {
+export function lookupLine(state: 'ready' | 'searching' | 'failed' | 'none', placeName: string): string {
+  const where = placeName === YOUR_LOCATION ? 'you' : placeName;
   switch (state) {
+    case 'ready':
+      return `GymGO has no gyms built in around ${where}. Search this area to find them on OpenStreetMap.`;
     case 'searching':
-      return `Looking for gyms around ${placeName} on OpenStreetMap…`;
+      return `Looking for gyms around ${where} on OpenStreetMap…`;
     case 'failed':
-      return `Couldn’t read the map around ${placeName} just now.`;
+      return `Couldn’t read the map around ${where} just now.`;
     case 'none':
-      return `OpenStreetMap has no gyms mapped around ${placeName} yet. Open the map, move it and tap Search this area to look further out.`;
+      return `OpenStreetMap has no gyms mapped around ${where} yet. Open the map, move it and tap Search this area to look further out.`;
   }
 }
 

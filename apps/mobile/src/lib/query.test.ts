@@ -154,15 +154,16 @@ describe('wantsLookup', () => {
   const tokyo = { centre: { lat: 35.6895, lng: 139.6917 }, placeName: 'Tokyo', bbox: null };
   const near = { ...AU_GYMS[0]!, location: { ...AU_GYMS[0]!.location, position: { lat: 35.7, lng: 139.7 } } };
 
-  it('reads the map around a place GymGO carries no city for, once nothing is loaded within 10 km', () => {
+  it('offers Search this area where GymGO carries no city, while nothing is loaded within 10 km', () => {
     expect(wantsLookup(tokyo, AU_GYMS, false)).toBe(true);
+    const nearYou = { ...tokyo, placeName: YOUR_LOCATION };
+    expect(wantsLookup(nearYou, AU_GYMS, false)).toBe(true);
     expect(wantsLookup(tokyo, [near], false)).toBe(false);
   });
 
-  it('leaves carried cities, searched areas and your own position alone', () => {
+  it('leaves carried cities and searched areas alone', () => {
     expect(wantsLookup(tokyo, [], true)).toBe(false);
     expect(wantsLookup({ ...tokyo, bbox: boxAround(tokyo.centre, 0.1) }, [], false)).toBe(false);
-    expect(wantsLookup({ ...tokyo, placeName: YOUR_LOCATION }, [], false)).toBe(false);
   });
 
   it('keys a place by its block of tiles, so nearby spots share one look-up', () => {

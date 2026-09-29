@@ -479,6 +479,10 @@ const styles = themed(() => StyleSheet.create({
   },
   search: {
     flex: 1,
+    // A browser's text field has a natural width it won't shrink below
+    // (about 20 characters) unless told: on a narrow phone it ran under
+    // the Filters button.
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[2],
@@ -493,6 +497,7 @@ const styles = themed(() => StyleSheet.create({
   searchFocused: { borderColor: color.brand },
   input: {
     flex: 1,
+    minWidth: 0,
     fontSize: 17,
     ...face('regular'),
     color: color.label,

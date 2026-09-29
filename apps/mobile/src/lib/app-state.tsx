@@ -157,7 +157,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const accountApi = useAccount();
   const billing = useBilling(accountApi);
   // Your gym collection follows the account: merged in on signing in, and each check-in sent.
-  useCollectionSync(accountApi.state === 'signed_in' ? accountApi.token : null, accountApi.account?.id ?? null);
+  // Still signed in while the server is away: the collection waits for it rather than acting signed out.
+  useCollectionSync(accountApi.state === 'signed_in' || accountApi.state === 'unreachable' ? accountApi.token : null, accountApi.account?.id ?? null);
   const { limits } = billing;
 
   const openPro = useCallback((reason?: ProReason) => {

@@ -38,7 +38,10 @@ export default function CollectionScreen() {
   const router = useRouter();
   const { data, requestExplore, account } = useApp();
   const { loaded, gyms, sync, reset, retry } = useCollection();
-  const signedIn = account.state === 'signed_in';
+  // Still signed in while the server is away; until the account is known, not yet either way.
+  const signedIn = account.state === 'signed_in' || account.state === 'unreachable';
+  const accountKnown = account.state !== 'loading';
+  const retrySync = () => void (account.state === 'unreachable' ? account.reconnect() : retry());
   // The reset's warning, open or not, and how the reset went.
   const [resetStep, setResetStep] = useState<'closed' | 'warning' | 'resetting'>('closed');
   const [resetProblem, setResetProblem] = useState<string | null>(null);
@@ -187,12 +190,12 @@ export default function CollectionScreen() {
           {shared}
         </Txt>
       )}
-      <SyncLine status={sync} signedIn={signedIn} onRetry={retry} onSignIn={() => router.push('/sign-in')} />
+      {accountKnown && <SyncLine status={sync} signedIn={signedIn} onRetry={retrySync} onSignIn={() => router.push('/sign-in')} />}
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
         A visit counts once a day, when you check in at the gym; your location is only compared on the phone, never sent.
       </Txt>
 
-      {resetStep === 'closed' ? (
+      {!accountKnown ? null : resetStep === 'closed' ? (
         <PrimaryButton label="Reset collection" icon="warning" tone="danger" onPress={() => setResetStep('warning')} />
       ) : (
         <View style={styles.warning} accessibilityRole="alert">

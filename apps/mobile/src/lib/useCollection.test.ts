@@ -143,6 +143,22 @@ describe('the gym collection on your account', () => {
     expect(Object.keys(accounts.get('t1')!.gyms)).toEqual(['a']);
   });
 
+  it('waits, rather than acting signed out, while the server can’t say whose the sign-in is', async () => {
+    accounts.set('t1', { gyms: { a: entry('a', ['2026-09-01']) }, resetAt: null });
+    const phone = await device({ a: entry('a', ['2026-09-01']) });
+    // The app opened with the server away: a token, but no account yet.
+    await phone.setCollectionAccount('t1', null);
+    expect((await phone.currentCollection()).sync).toBe('offline');
+    // Resetting here alone would come undone when the account's copy came back.
+    await expect(phone.resetCollection()).rejects.toThrow();
+    expect(Object.keys((await phone.currentCollection()).gyms)).toEqual(['a']);
+    // A check-in meanwhile is kept, and sent once the account is reached.
+    phone.collectGym(gymAt('c'));
+    await phone.setCollectionAccount('t1', 'u1');
+    expect((await phone.currentCollection()).sync).toBe('synced');
+    expect(Object.keys(accounts.get('t1')!.gyms).sort()).toEqual(['a', 'c']);
+  });
+
   it('signed out, keeps the collection on this device and resets only it', async () => {
     const phone = await device({ a: entry('a', ['2026-09-01']) });
     expect((await phone.currentCollection()).sync).toBe('signed-out');

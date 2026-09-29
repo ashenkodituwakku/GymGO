@@ -38,6 +38,8 @@ type State = { loaded: boolean; gyms: Collection; sync: SyncStatus };
 let state: State = { loaded: false, gyms: {}, sync: 'signed-out' };
 let meta: SyncMeta = { userId: null, resetAt: null, dirty: false };
 let auth: { token: string; userId: string } | null = null;
+/** Signed in, but the server couldn't be reached to say as whom: nothing to sync with yet, and nothing is reset. */
+let held = false;
 let loading: Promise<void> | null = null;
 let running: Promise<void> | null = null;
 let again = false;
@@ -178,13 +180,20 @@ function sync(): Promise<void> {
   return running;
 }
 
-/** Who's signed in, for syncing; null when no one is. Resolves when the first sync with them is done. */
+/**
+ * Who's signed in, for syncing: null when no one is, and a token without a
+ * user while the server can't be reached to say whose it is. Resolves when
+ * the first sync with them is done.
+ */
 export function setCollectionAccount(token: string | null, userId: string | null): Promise<void> {
   if (!token || !userId) {
     auth = null;
-    if (state.sync !== 'signed-out') set({ sync: 'signed-out' });
+    held = token !== null;
+    const status: SyncStatus = held ? 'offline' : 'signed-out';
+    if (state.sync !== status) set({ sync: status });
     return Promise.resolve();
   }
+  held = false;
   if (auth?.token === token && auth.userId === userId) return running ?? Promise.resolve();
   auth = { token, userId };
   return sync();
@@ -215,6 +224,8 @@ export function collectGym(gym: Parameters<typeof addToCollection>[1]) {
 export async function resetCollection(): Promise<void> {
   await load();
   const signedIn = auth;
+  // Signed in, and the account not reached yet: reset here alone, its copy would bring the cards back.
+  if (!signedIn && held) throw new OfflineError('The GymGO server can’t be reached.');
   if (signedIn) {
     const answer = await api.resetCollection(signedIn.token);
     generation += 1;

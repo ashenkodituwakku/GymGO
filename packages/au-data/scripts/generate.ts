@@ -52,6 +52,8 @@ const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'data.ts'
 /** Enough for any city's whole area; a safety cap, not a choice of which to show. */
 const PER_CITY = 2000;
 const PLACES_PER_CITY = 400;
+/** A suburb point further from a gym than this says nothing about where it is. */
+const SUBURB_REACH_KM = 3;
 const STATES = new Set(['ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA']);
 const STATE_NAMES: Record<string, string> = {
   QUEENSLAND: 'QLD',
@@ -150,6 +152,29 @@ function main(src: string) {
     }
     rows.sort((a, b) => a.d - b.d);
     const kept = rows.slice(0, PER_CITY);
+
+    // A gym's suburb, when the map gives none. Most Australian gyms are
+    // mapped without an address suburb, and "Melbourne" as the address city
+    // means the metro area, not the suburb: taking either left 263 gyms
+    // across greater Melbourne saying "Melbourne", some 14 km out. So the
+    // nearest suburb is used, the centre counting as the city itself (the
+    // CBD's suburb shares its name), within SUBURB_REACH_KM.
+    const suburbs: Array<{ name: string; pos: [number, number] }> = [{ name: city.name, pos: centre }];
+    for (const el of data.places) {
+      const tags = el.tags ?? {};
+      const pos = position(el);
+      // Official suburbs only: a neighbourhood ("Greek Precinct") isn't an address.
+      if (pos && tags.place === 'suburb') suburbs.push({ name: tags['name:en'] || tags.name!, pos });
+    }
+    const nearestSuburb = (pos: [number, number]): string | null => {
+      let best: { name: string; d: number } | null = null;
+      for (const place of suburbs) {
+        const d = km(pos, place.pos);
+        if (d <= SUBURB_REACH_KM && (!best || d < best.d)) best = { name: place.name, d };
+      }
+      return best?.name ?? null;
+    };
+    const isMetro = (name: string) => [city.name, ...city.aliases].some((metro) => metro.toLowerCase() === name.trim().toLowerCase());
     stats.push(`${city.id.padEnd(12)} ${String(data.gyms.length).padStart(4)} mapped, ${String(rows.length).padStart(4)} kept after filters, ${String(kept.length).padStart(3)} used`);
 
     for (const { el, name, tags, pos } of kept) {
@@ -172,7 +197,11 @@ function main(src: string) {
         ...brandOf(tags),
         ...(branch ? { branch } : {}),
         line1: line1Of(tags),
-        suburb: tags['addr:suburb'] || tags['addr:city'] || city.name,
+        suburb:
+          tags['addr:suburb']?.trim() ||
+          (tags['addr:city'] && !isMetro(tags['addr:city']) ? tags['addr:city'].trim() : '') ||
+          nearestSuburb(pos) ||
+          city.name,
         state: stateOf(tags, city.state),
         postcode: /^\d{4}$/.test(postcode) ? postcode : '',
         lat: round(pos[0], 6),

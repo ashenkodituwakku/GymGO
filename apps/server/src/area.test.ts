@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { GymRecord } from '@gymgo/domain';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { createApp } from './app';
-import { AreaSearch, auStateForPostcode, whereIs } from './area';
+import { AreaSearch, auStateForPostcode, mapOnlyInput, whereIs } from './area';
 import { openDb, seedGyms, type Db } from './db';
 
 // --- A stand-in for the Overpass API: nothing here calls the real one. -------
@@ -109,6 +109,33 @@ describe('where a point is', () => {
     expect(auStateForPostcode('0870')).toBe('NT');
     expect(auStateForPostcode('3550')).toBe('VIC');
     expect(auStateForPostcode('')).toBe('');
+  });
+});
+
+describe('a gym’s suburb', () => {
+  const el = { type: 'node', id: 1 } as const;
+  const places = [
+    { name: 'Melbourne', pos: [-37.8136, 144.9631] as [number, number], kind: 'city' },
+    { name: 'Balwyn', pos: [-37.8093, 145.0806] as [number, number], kind: 'suburb' },
+    { name: 'Greek Precinct', pos: [-37.8117, 144.9677] as [number, number], kind: 'neighbourhood' },
+  ];
+  const au = { countryCode: 'AU', timezone: 'Australia/Melbourne' };
+
+  it('in Australia, is the nearest suburb when the address names only the metro', () => {
+    const balwyn = mapOnlyInput('Anytime Fitness', { 'addr:city': 'Melbourne' }, el, [-37.8105, 145.0772], au, places);
+    expect(balwyn.locality).toBe('Balwyn');
+    // In the CBD the city is the nearest: its suburb shares the name, and a neighbourhood isn't an address.
+    const cbd = mapOnlyInput('Fitness First', {}, el, [-37.8118, 144.9672], au, places);
+    expect(cbd.locality).toBe('Melbourne');
+    // A suburb the address gives always wins.
+    expect(mapOnlyInput('Gym', { 'addr:suburb': 'Kew' }, el, [-37.8105, 145.0772], au, places).locality).toBe('Kew');
+  });
+
+  it('elsewhere, stays the address city, as addresses there name it', () => {
+    const us = mapOnlyInput('Gym', { 'addr:city': 'Chicago' }, el, [41.9214, -87.6513], { countryCode: 'US', timezone: 'America/Chicago' }, [
+      { name: 'Lincoln Park', pos: [41.9214, -87.6513], kind: 'suburb' },
+    ]);
+    expect(us.locality).toBe('Chicago');
   });
 });
 

@@ -19,7 +19,7 @@ import { gzipSync } from 'node:zlib';
 import tzlookup from '@photostructure/tz-lookup';
 import type { GymRecord } from '@gymgo/domain';
 import { candidate, mapOnlyRecord, osmRef, type MapOnlyGym } from '@gymgo/osm';
-import { AreaError, DEFAULT_OVERPASS, askOverpass, mapOnlyInput, sameGym, splitElements } from './area';
+import { AreaError, DEFAULT_OVERPASS, RECORD_RULES_CHANGED, askOverpass, mapOnlyInput, sameGym, splitElements } from './area';
 import type { Db } from './db';
 
 /** A gym as the pack holds it: a map-only record's fields, and its clock. */
@@ -94,7 +94,8 @@ export class CountryPacks {
   }
 
   private stale(builtAt: string) {
-    return this.now().getTime() - Date.parse(builtAt) > FRESH_DAYS * 86_400_000;
+    const now = this.now();
+    return now.getTime() - Date.parse(builtAt) > FRESH_DAYS * 86_400_000 || (builtAt < RECORD_RULES_CHANGED && now.toISOString() >= RECORD_RULES_CHANGED);
   }
 
   /** Where a country's pack is at; asking starts building one that's missing or old. */

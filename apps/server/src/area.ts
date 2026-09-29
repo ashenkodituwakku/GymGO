@@ -86,6 +86,12 @@ const TILE = 10;
 const MAX_TILES = 30;
 /** A fetched tile is reused for this long. */
 const FRESH_DAYS = 30;
+/**
+ * When the way an area's gyms are written down last changed (Australian
+ * gyms' suburbs, 29 Sep 2026): anything read before then is read again the
+ * next time it's asked for, rather than keeping the old wording for a month.
+ */
+export const RECORD_RULES_CHANGED = '2026-09-29T12:00:00Z';
 /** The most gyms one answer holds, nearest the middle of the area first. */
 const MAX_GYMS = 200;
 /** Live map reads per day, across everyone. Overpass asks for under 10,000. */
@@ -253,7 +259,14 @@ export async function askOverpass(
 export interface Place {
   name: string;
   pos: [number, number];
+  /** Its place tag: suburb, town, city, neighbourhood… */
+  kind?: string;
 }
+
+/** Places an Australian address names: a neighbourhood ("Greek Precinct") isn't one. */
+const ADDRESS_PLACES = new Set(['suburb', 'town', 'village', 'city']);
+/** A suburb further from a gym than this says nothing about where it is. */
+const SUBURB_REACH_KM = 3;
 
 /**
  * A mapped gym's fields for a map-only record: its address worked out for
@@ -268,11 +281,22 @@ export function mapOnlyInput(
   where: Whereabouts,
   places: Place[],
 ): MapOnlyGym {
-  const nearest = places
-    .map((place) => ({ place, d: km(pos, place.pos) }))
-    .filter((item) => item.d <= 8)
-    .sort((a, b) => a.d - b.d)[0]?.place.name;
-  const locality = tags['addr:suburb'] || tags['addr:city'] || nearest || '';
+  const nearestWithin = (reach: number, only?: Set<string>) =>
+    places
+      .filter((place) => !only || only.has(place.kind ?? ''))
+      .map((place) => ({ place, d: km(pos, place.pos) }))
+      .filter((item) => item.d <= reach)
+      .sort((a, b) => a.d - b.d)[0]?.place.name;
+  const nearest = nearestWithin(8);
+  // Australian addresses name the suburb, and most gyms there are mapped
+  // without one; their address city is the whole metro ("Melbourne"), so
+  // the nearest suburb says more than it does.
+  const locality =
+    tags['addr:suburb'] ||
+    (where.countryCode === 'AU' ? nearestWithin(SUBURB_REACH_KM, ADDRESS_PLACES) : undefined) ||
+    tags['addr:city'] ||
+    nearest ||
+    '';
   const rawPostcode = (tags['addr:postcode'] ?? '').trim();
   let state: string;
   let postcode: string;
@@ -320,7 +344,7 @@ export function splitElements(elements: OsmElement[]): { gyms: OsmElement[]; pla
     if (tags.leisure === 'fitness_centre' || tags.amenity === 'gym' || (tags.leisure === 'sports_centre' && /fitness|weightlifting|crossfit/.test(tags.sport ?? ''))) gyms.push(el);
     else if (el.tags?.place && el.tags.name) {
       const pos = position(el);
-      if (pos) places.push({ name: el.tags['name:en'] || el.tags.name, pos });
+      if (pos) places.push({ name: el.tags['name:en'] || el.tags.name, pos, kind: el.tags.place });
     }
   }
   return { gyms, places };
@@ -355,7 +379,8 @@ export class AreaSearch {
   }
 
   private staleTiles(box: Box) {
-    const cutoff = new Date(this.now().getTime() - FRESH_DAYS * 86_400_000).toISOString();
+    const aged = new Date(this.now().getTime() - FRESH_DAYS * 86_400_000).toISOString();
+    const cutoff = aged < RECORD_RULES_CHANGED && this.now().toISOString() >= RECORD_RULES_CHANGED ? RECORD_RULES_CHANGED : aged;
     const fresh = this.db.prepare('select fetched_at from area_tiles where tile = ?');
     return tilesOf(box).filter((tile) => {
       const row = fresh.get(tile.key) as { fetched_at: string } | undefined;

@@ -23,6 +23,7 @@ import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, reachFor,
 import { useAccount } from './useAccount';
 import { useBilling } from './useBilling';
 import { useGymData } from './useGymData';
+import { useCountryPack } from './useCountryPack';
 import { cleanPlates, type WeightUnit } from './training';
 
 export interface ExploreRequest {
@@ -130,6 +131,8 @@ type AppState = {
   lookup: Lookup | null;
   /** Read the map around the search again, after a failure. */
   retryLookup: () => void;
+  /** Your country's gyms kept on this device: where that's at, and a way to ask again. */
+  pack: ReturnType<typeof useCountryPack>;
 };
 
 const AppContext = createContext<AppState | null>(null);
@@ -252,6 +255,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (billing.planKnown) setCompare((current) => (current.length > limits.compare ? current.slice(-limits.compare) : current));
   }, [billing.planKnown, limits.compare]);
+
+  // Your country's gyms, kept on this device: area searches there are answered at once.
+  const pack = useCountryPack(prefs.country, prefsReady && !prefs.demo);
+  const { setPack } = data;
+  useEffect(() => setPack(pack.index), [setPack, pack.index]);
 
   // A saved or recent gym outside the bundled cities (found by searching an
   // area, maybe on another device) is fetched by id, so its row isn't blank.
@@ -478,8 +486,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       locate,
       lookup: lookupHere,
       retryLookup,
+      pack,
     }),
-    [visibleData, account, filters, recents, addRecent, clearRecents, compare, toggleCompare, clearCompare, exploreRequest, requestExplore, prefs, setPref, billing, openPro, mayExplore, chooseCountry, prefsReady, here, locate, lookupHere, retryLookup],
+    [visibleData, account, filters, recents, addRecent, clearRecents, compare, toggleCompare, clearCompare, exploreRequest, requestExplore, prefs, setPref, billing, openPro, mayExplore, chooseCountry, prefsReady, here, locate, lookupHere, retryLookup, pack],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

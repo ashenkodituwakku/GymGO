@@ -167,6 +167,7 @@ export default function Profile() {
           subtitle={billing.isPro ? 'Every country is open with Pro' : 'GymGO Free covers this country'}
           onPress={() => router.push('/country')}
         />
+        {prefs.country && !prefs.demo && <PackRow />}
         <Row
           icon="palette"
           tile={TILE.indigo}
@@ -388,6 +389,32 @@ function Explainer({ children }: { children: ReactNode }) {
     <Txt variant="subhead" color={color.labelSecondary} style={styles.explainer}>
       {children}
     </Txt>
+  );
+}
+
+/** Your country's gyms kept on this device, for instant area searches. */
+function PackRow() {
+  const { pack, prefs } = useApp();
+  const { state } = pack;
+  const name = prefs.country ? countryName(prefs.country) : 'your country';
+  const size = state.bytes >= 1024 * 1024 ? `${(state.bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(state.bytes / 1024))} KB`;
+  const subtitle =
+    state.status === 'ready'
+      ? `All ${state.gyms.toLocaleString()} mapped gyms in ${name} beyond the built-in cities, ${size}. Searching an area there is instant, offline too.`
+      : state.status === 'building'
+        ? `GymGO is reading ${name}’s gyms from the map${state.progress && state.progress.total ? ` (${state.progress.done} of ${state.progress.total} regions)` : ''}. It saves them here when it’s done.`
+        : state.status === 'loading'
+          ? 'Checking…'
+          : 'Not saved yet: GymGO couldn’t reach its server. Tap to try again.';
+  return (
+    <Row
+      icon="download"
+      tile={TILE.green}
+      title="Offline gyms"
+      value={state.status === 'ready' ? `${state.gyms.toLocaleString()} gyms` : state.status === 'building' ? 'Saving…' : undefined}
+      subtitle={subtitle}
+      onPress={state.status === 'failed' ? pack.retry : undefined}
+    />
   );
 }
 

@@ -2,7 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { BoundingBox, GymRecord, RatingSummary } from '@gymgo/domain';
 import { ApiError, api } from './api';
+import type { PackIndex } from './countryPack';
 import { BUNDLED_GYMS } from './query';
+
+/** The most gyms one area answer from the kept pack holds, nearest the middle first. */
+const PACK_ANSWER = 400;
 
 /**
  * `live`: the records came from the server just now.
@@ -130,14 +134,39 @@ export function useGymData() {
    * records. `home` is your country (elsewhere needs Pro, so `token` says
    * who's asking). Throws when it can't, `pro_required` included.
    */
+  // Your country's gyms kept on this device, once there (lib/useCountryPack.ts).
+  const pack = useRef<PackIndex | null>(null);
+  const setPack = useCallback((index: PackIndex | null) => {
+    pack.current = index;
+  }, []);
+
   const searchArea = useCallback(
     async (box: BoundingBox, home: string, token: string | null) => {
+      // In your country, with its gyms kept here: answered at once, offline too.
+      const kept = pack.current;
+      if (kept && kept.country === home && kept.covers(box)) {
+        const local = kept.inBox(box, PACK_ANSWER);
+        addFound(local.gyms);
+        return {
+          gyms: local.gyms,
+          fetchedAt: kept.builtAt,
+          truncated: local.truncated,
+          attribution: kept.attribution,
+          where: local.timezone ? { countryCode: kept.country, timezone: local.timezone } : null,
+          fromDevice: true,
+        };
+      }
       const answer = await api.area(box, home, token);
       addFound(answer.gyms);
-      return answer;
+      return { ...answer, fromDevice: false };
     },
     [addFound],
   );
+
+  /** Gyms in the kept pack called this, nearest `near` first (for search by name). */
+  const packNamed = useCallback((text: string, near: { lat: number; lng: number }, limit: number) => pack.current?.named(text, near, limit) ?? [], []);
+  /** One gym from the kept pack, by id, or null. */
+  const packGym = useCallback((id: string) => pack.current?.byId(id) ?? null, []);
 
   // Gyms asked for by id that aren't loaded: fetched once each.
   const requested = useRef(new Set<string>());
@@ -147,6 +176,12 @@ export function useGymData() {
   const ensureGyms = useCallback(
     (ids: string[]): Promise<void> => {
       const loaded = new Set(latest.current.map((record) => record.location.id));
+      // Kept on this device: no need to ask.
+      const kept = ids.filter((id) => !loaded.has(id)).map((id) => pack.current?.byId(id) ?? null).filter((gym): gym is GymRecord => gym !== null);
+      if (kept.length) {
+        addFound(kept);
+        for (const gym of kept) loaded.add(gym.location.id);
+      }
       const missing = ids.filter((id) => !loaded.has(id) && !requested.current.has(id));
       for (const id of missing) requested.current.add(id);
       const fetchOne = (id: string) =>
@@ -166,7 +201,7 @@ export function useGymData() {
   // One object while nothing in it changes, so what's built on it (the app's
   // shared state, callbacks that use it) doesn't change on every render.
   return useMemo(
-    () => ({ records, status, covers, memberPrices, ratings, refresh, refreshCovers, refreshMemberPrices, refreshRatings, searchArea, ensureGyms }),
-    [records, status, covers, memberPrices, ratings, refresh, refreshCovers, refreshMemberPrices, refreshRatings, searchArea, ensureGyms],
+    () => ({ records, status, covers, memberPrices, ratings, refresh, refreshCovers, refreshMemberPrices, refreshRatings, searchArea, ensureGyms, setPack, packNamed, packGym }),
+    [records, status, covers, memberPrices, ratings, refresh, refreshCovers, refreshMemberPrices, refreshRatings, searchArea, ensureGyms, setPack, packNamed, packGym],
   );
 }

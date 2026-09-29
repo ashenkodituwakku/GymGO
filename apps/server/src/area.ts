@@ -39,6 +39,7 @@ import {
   position,
   slug,
   trainingType,
+  type MapOnlyGym,
   type OsmElement,
 } from '@gymgo/osm';
 import type { Db } from './db';
@@ -169,11 +170,6 @@ function tilesOf(box: Box): Array<{ key: string; box: Box }> {
 
 const inBox = (box: Box, lat: number, lng: number) => lat >= box.south && lat <= box.north && lng >= box.west && lng <= box.east;
 
-interface Place {
-  name: string;
-  pos: [number, number];
-}
-
 export interface AreaAnswer {
   gyms: GymRecord[];
   /** When the oldest part of this answer was read from the map. */
@@ -195,6 +191,138 @@ export interface AreaOptions {
   log?: (line: string) => void;
   /** The pause before asking a busy server again. */
   retryDelayMs?: number;
+}
+
+/**
+ * Ask the Overpass servers in turn; the first that answers properly wins. A
+ * slow, busy or odd one passes to the next. `preferred` (the one that
+ * answered last time) is asked first, so a server that's down, or refuses
+ * this network, costs one wait rather than one per question. A server that
+ * says it's busy (429, 504) gets one more try after a pause: a busy mirror
+ * often answers the second time, and it may be the only one that answers.
+ */
+export async function askOverpass(
+  query: string,
+  options: {
+    endpoints: string[];
+    preferred?: string | null;
+    fetchImpl: Fetch;
+    log: (line: string) => void;
+    retryDelayMs: number;
+    perServerMs: number;
+    tag: string;
+  },
+): Promise<{ elements: OsmElement[]; endpoint: string }> {
+  let busy = false;
+  const { endpoints, preferred } = options;
+  const order = preferred ? [preferred, ...endpoints.filter((endpoint) => endpoint !== preferred)] : endpoints;
+  for (const endpoint of order) {
+    const host = new URL(endpoint).host;
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      try {
+        const response = await options.fetchImpl(endpoint, {
+          method: 'POST',
+          headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+          body: new URLSearchParams({ data: query }).toString(),
+          signal: AbortSignal.timeout(options.perServerMs),
+        });
+        const saysBusy = response.status === 429 || response.status === 504;
+        if (saysBusy) busy = true;
+        const body = (await response.json().catch(() => null)) as { elements?: OsmElement[]; remark?: string } | null;
+        // A runtime error comes back as 200 with a remark and no data: not an answer.
+        if (response.ok && body && Array.isArray(body.elements) && !/error/i.test(body.remark ?? '')) {
+          return { elements: body.elements, endpoint };
+        }
+        const again = saysBusy && attempt === 1;
+        options.log(`[${options.tag}] ${host} answered ${response.status}${body?.remark ? `: ${body.remark.slice(0, 120)}` : ''}; ${again ? 'trying it again' : 'trying the next'}`);
+        if (!again) break;
+        await new Promise((resolve) => setTimeout(resolve, options.retryDelayMs));
+      } catch (error) {
+        // Timed out or unreachable: try the next.
+        options.log(`[${options.tag}] ${host} didn't answer (${error instanceof Error ? error.name : 'error'}); trying the next`);
+        break;
+      }
+    }
+  }
+  throw busy
+    ? new AreaError(503, 'The map service is busy. Try again in a minute.', 'upstream')
+    : new AreaError(502, 'The map service didn’t answer. Try again in a minute.', 'upstream');
+}
+
+export interface Place {
+  name: string;
+  pos: [number, number];
+}
+
+/**
+ * A mapped gym's fields for a map-only record: its address worked out for
+ * its country (Australia's and the US's states checked), and a suburb or
+ * town from the nearest named place when the map gives none.
+ */
+export function mapOnlyInput(
+  name: string,
+  tags: Record<string, string>,
+  el: OsmElement,
+  pos: [number, number],
+  where: Whereabouts,
+  places: Place[],
+): MapOnlyGym {
+  const nearest = places
+    .map((place) => ({ place, d: km(pos, place.pos) }))
+    .filter((item) => item.d <= 8)
+    .sort((a, b) => a.d - b.d)[0]?.place.name;
+  const locality = tags['addr:suburb'] || tags['addr:city'] || nearest || '';
+  const rawPostcode = (tags['addr:postcode'] ?? '').trim();
+  let state: string;
+  let postcode: string;
+  if (where.countryCode === 'AU') {
+    postcode = /^\d{4}$/.test(rawPostcode) ? rawPostcode : '';
+    let named = (tags['addr:state'] ?? '').trim().toUpperCase();
+    named = AU_STATE_NAMES[named] ?? named;
+    state = AU_STATES.has(named) ? named : auStateForPostcode(postcode) || AU_ZONE_STATE[where.timezone] || '';
+  } else if (where.countryCode === 'US') {
+    postcode = /^\d{5}/.test(rawPostcode) ? rawPostcode.slice(0, 5) : '';
+    const named = (tags['addr:state'] ?? '').trim().toUpperCase();
+    state = /^[A-Z]{2}$/.test(named) ? named : '';
+  } else {
+    // Elsewhere, as mapped: postcodes and regions take too many shapes to check.
+    postcode = rawPostcode.slice(0, 12);
+    state = (tags['addr:state'] || tags['addr:province'] || '').trim().slice(0, 40);
+  }
+  const branch = branchOf(tags);
+  const { hoursUnreadable: _unreadable, ...extras } = extrasOf(tags);
+  return {
+    id: `${slug(name) || 'gym'}-${el.type[0]}${el.id}`,
+    osm: osmRef(el),
+    name,
+    ...brandOf(tags),
+    ...(branch ? { branch } : {}),
+    line1: line1Of(tags, where.countryCode),
+    locality,
+    state,
+    postcode,
+    lat: Number(pos[0].toFixed(6)),
+    lng: Number(pos[1].toFixed(6)),
+    type: trainingType(name, tags),
+    ...contactOf(tags),
+    ...extras,
+  };
+}
+
+/** The places and gyms in an Overpass answer. */
+export function splitElements(elements: OsmElement[]): { gyms: OsmElement[]; places: Place[] } {
+  const places: Place[] = [];
+  const gyms: OsmElement[] = [];
+  for (const el of elements) {
+    // Gyms are mapped three ways: the current tag, the older amenity=gym, and a sports centre for fitness.
+    const tags = el.tags ?? {};
+    if (tags.leisure === 'fitness_centre' || tags.amenity === 'gym' || (tags.leisure === 'sports_centre' && /fitness|weightlifting|crossfit/.test(tags.sport ?? ''))) gyms.push(el);
+    else if (el.tags?.place && el.tags.name) {
+      const pos = position(el);
+      if (pos) places.push({ name: el.tags['name:en'] || el.tags.name, pos });
+    }
+  }
+  return { gyms, places };
 }
 
 export class AreaSearch {
@@ -291,62 +419,20 @@ export class AreaSearch {
       'nwr["leisure"="fitness_centre"]["name"];out center tags;' +
       'node["place"~"^(city|town|suburb|village|neighbourhood|quarter|hamlet)$"]["name"];out;';
 
-    // The first server that answers properly wins; a slow, busy or odd one
-    // passes to the next. The one that answered last time is asked first, so
-    // a server that's down (or refuses this network) costs one wait, not one
-    // per search.
-    let data: { elements: OsmElement[] } | null = null;
-    let busy = false;
-    const order = this.preferred ? [this.preferred, ...this.endpoints.filter((endpoint) => endpoint !== this.preferred)] : this.endpoints;
-    servers: for (const endpoint of order) {
-      const host = new URL(endpoint).host;
-      // A server that says it's busy (429, 504) gets one more try after a
-      // pause: a busy mirror often answers the second time, and it may be
-      // the only one that answers at all.
-      for (let attempt = 1; attempt <= 2; attempt += 1) {
-        try {
-          const response = await this.fetchImpl(endpoint, {
-            method: 'POST',
-            headers: { 'User-Agent': USER_AGENT, 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
-            body: new URLSearchParams({ data: query }).toString(),
-            signal: AbortSignal.timeout(PER_SERVER_MS),
-          });
-          const saysBusy = response.status === 429 || response.status === 504;
-          if (saysBusy) busy = true;
-          const body = (await response.json().catch(() => null)) as { elements?: OsmElement[]; remark?: string } | null;
-          // A runtime error comes back as 200 with a remark and no data: not an answer.
-          if (response.ok && body && Array.isArray(body.elements) && !/error/i.test(body.remark ?? '')) {
-            data = { elements: body.elements };
-            this.preferred = endpoint;
-            break servers;
-          }
-          const again = saysBusy && attempt === 1;
-          this.log(`[area] ${host} answered ${response.status}${body?.remark ? `: ${body.remark.slice(0, 120)}` : ''}; ${again ? 'trying it again' : 'trying the next'}`);
-          if (!again) break;
-          await new Promise((resolve) => setTimeout(resolve, this.retryDelayMs));
-        } catch (error) {
-          // Timed out or unreachable: try the next.
-          this.log(`[area] ${host} didn't answer (${error instanceof Error ? error.name : 'error'}); trying the next`);
-          break;
-        }
-      }
-    }
-    if (!data) {
-      throw busy
-        ? new AreaError(503, 'The map service is busy. Try again in a minute.', 'upstream')
-        : new AreaError(502, 'The map service didn’t answer. Try again in a minute.', 'upstream');
-    }
+    const answer = await askOverpass(query, {
+      endpoints: this.endpoints,
+      preferred: this.preferred,
+      fetchImpl: this.fetchImpl,
+      log: this.log,
+      retryDelayMs: this.retryDelayMs,
+      perServerMs: PER_SERVER_MS,
+      tag: 'area',
+    });
+    this.preferred = answer.endpoint;
+    const data = { elements: answer.elements };
 
     const fetchedAt = this.now().toISOString().replace(/\.\d{3}Z$/, 'Z');
-    const places: Place[] = [];
-    const gyms: OsmElement[] = [];
-    for (const el of data.elements) {
-      if (el.tags?.leisure === 'fitness_centre') gyms.push(el);
-      else if (el.tags?.place && el.tags.name) {
-        const pos = position(el);
-        if (pos) places.push({ name: el.tags['name:en'] || el.tags.name, pos });
-      }
-    }
+    const { gyms, places } = splitElements(data.elements);
 
     const known = this.options.known().filter((record) => !record.location.isDemoData);
     const knownRefs = new Set(known.map((record) => record.location.externalRefs.openStreetMap).filter(Boolean));
@@ -402,49 +488,7 @@ export class AreaSearch {
     places: Place[],
     fetchedAt: string,
   ): GymRecord {
-    const nearest = places
-      .map((place) => ({ place, d: km(pos, place.pos) }))
-      .filter((item) => item.d <= 8)
-      .sort((a, b) => a.d - b.d)[0]?.place.name;
-    const locality = tags['addr:suburb'] || tags['addr:city'] || nearest || '';
-    const rawPostcode = (tags['addr:postcode'] ?? '').trim();
-    let state: string;
-    let postcode: string;
-    if (where.countryCode === 'AU') {
-      postcode = /^\d{4}$/.test(rawPostcode) ? rawPostcode : '';
-      let named = (tags['addr:state'] ?? '').trim().toUpperCase();
-      named = AU_STATE_NAMES[named] ?? named;
-      state = AU_STATES.has(named) ? named : auStateForPostcode(postcode) || AU_ZONE_STATE[where.timezone] || '';
-    } else if (where.countryCode === 'US') {
-      postcode = /^\d{5}/.test(rawPostcode) ? rawPostcode.slice(0, 5) : '';
-      const named = (tags['addr:state'] ?? '').trim().toUpperCase();
-      state = /^[A-Z]{2}$/.test(named) ? named : '';
-    } else {
-      // Elsewhere, as mapped: postcodes and regions take too many shapes to check.
-      postcode = rawPostcode.slice(0, 12);
-      state = (tags['addr:state'] || tags['addr:province'] || '').trim().slice(0, 40);
-    }
-    const branch = branchOf(tags);
-    const { hoursUnreadable: _unreadable, ...extras } = extrasOf(tags);
-    return mapOnlyRecord(
-      {
-        id: `${slug(name) || 'gym'}-${el.type[0]}${el.id}`,
-        osm: osmRef(el),
-        name,
-        ...brandOf(tags),
-        ...(branch ? { branch } : {}),
-        line1: line1Of(tags, where.countryCode),
-        locality,
-        state,
-        postcode,
-        lat: Number(pos[0].toFixed(6)),
-        lng: Number(pos[1].toFixed(6)),
-        type: trainingType(name, tags),
-        ...contactOf(tags),
-        ...extras,
-      },
-      { ...where, fetchedAt },
-    );
+    return mapOnlyRecord(mapOnlyInput(name, tags, el, pos, where, places), { ...where, fetchedAt });
   }
 }
 
@@ -453,7 +497,7 @@ const words = (text: string) =>
   new Set([...text.toLowerCase().replaceAll('’', "'").replaceAll("'", '').matchAll(/[a-z0-9]+/g)].map((m) => m[0]).filter((w) => !IGNORED_WORDS.has(w)));
 
 /** A gym we already hold under another element: the same name within 100 metres. */
-function sameGym(name: string, pos: [number, number], record: GymRecord): boolean {
+export function sameGym(name: string, pos: [number, number], record: GymRecord): boolean {
   if (km(pos, [record.location.position.lat, record.location.position.lng]) > 0.1) return false;
   const a = words(name);
   const b = words(record.location.name);

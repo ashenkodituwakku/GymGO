@@ -5,6 +5,8 @@
  *   GET    /api/gyms                      every gym record, with its sources
  *   GET    /api/gyms/:gymId               one gym's record, including ones found by searching an area
  *   GET    /api/area?south&west&north&east&home  gyms on OpenStreetMap in that box, read live and kept; outside `home`, Pro only
+ *   GET    /api/country/:cc/pack?home     every gym in a country, gzipped, for the app to keep (202 while it's built)
+ *   GET    /api/country/:cc/pack/status?home  whether that pack is ready, and its size
  *   GET    /api/places?q=                 towns and suburbs in AU and the US by name (for search on submit)
  *   POST   /api/auth/signup               { email, password, displayName, birthMonth: 'YYYY-MM' } (13 and over)
  *   POST   /api/auth/login                { email, password }
@@ -73,7 +75,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { gzipSync } from 'node:zlib';
+import { gunzipSync, gzipSync } from 'node:zlib';
 import {
   ANONYMOUS,
   EQUIPMENT_TYPES,
@@ -115,6 +117,7 @@ import {
 import { DEV_PRO_EMAIL } from './devAccount';
 import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
 import { AreaError, AreaSearch, parseBox, whereIs } from './area';
+import { CountryPacks } from './countryPack';
 import { PlaceError, PlaceSearch } from './places';
 import { SiteIcons, chainWebsites, type SafeGet } from './siteicons';
 import { allGyms, gymCountry, gymExists, gymIsDemo, gymRecord, type Db } from './db';
@@ -144,6 +147,8 @@ export interface AppOptions {
   publicUrl?: string | null;
   /** "Search this area": which Overpass API server to ask, and a stand-in fetch for tests. */
   area?: { endpoints?: string[]; fetchImpl?: typeof fetch; retryDelayMs?: number; log?: (line: string) => void };
+  /** Country packs: the same Overpass settings as area searches, unless set. */
+  packs?: { endpoints?: string[]; fetchImpl?: typeof fetch; retryDelayMs?: number; log?: (line: string) => void };
   /** Finding a town by name: which geocoder to ask, and a stand-in fetch for tests. */
   places?: { endpoint?: string; fetchImpl?: typeof fetch };
   /** Gyms' own website icons: on unless switched off; `get` stands in for the web in tests. */
@@ -446,6 +451,7 @@ export function createApp(options: AppOptions) {
   const placeLimiter = new AttemptLimiter(60, 60 * 60_000);
   const places = new PlaceSearch(db, { endpoint: options.places?.endpoint, fetchImpl: options.places?.fetchImpl, now });
   const area = new AreaSearch(db, { ...options.area, now, known: () => allGyms(db) });
+  const packs = new CountryPacks(db, { ...options.area, ...options.packs, now, known: () => allGyms(db) });
   const photos = new PhotoStore(options.photoDir ?? null);
   const bugReports = new BugReports(db, {
     send: options.bugReports?.send ?? null,
@@ -565,6 +571,41 @@ export function createApp(options: AppOptions) {
         if (error instanceof AreaError) throw new HttpError(error.status, error.message, error.code);
         throw error;
       }
+    }
+
+    if (method === 'GET' && parts[0] === 'api' && parts[1] === 'country' && parts[3] === 'pack' && (parts.length === 4 || (parts.length === 5 && parts[4] === 'status'))) {
+      const country = decodeURIComponent(parts[2]!).toUpperCase();
+      if (!/^[A-Z]{2}$/.test(country)) throw new HttpError(400, 'Not a country code.');
+      // Your own country is free; any other is Pro, as for searching an area.
+      const home = (url.searchParams.get('home') ?? '').trim().toUpperCase();
+      if (country !== home) {
+        const { account } = caller(req);
+        if (!account || !billing.isPro(account.id)) {
+          throw new HttpError(403, 'Gyms outside the country you chose are part of GymGO Pro.', 'pro_required', { countryCode: country });
+        }
+      }
+      const status = packs.status(country);
+      if (parts.length === 5) return send(res, 200, status);
+      const pack = packs.pack(country);
+      if (!pack) {
+        if (status.state === 'failed') throw new HttpError(503, 'The map service didn’t answer. Try again later.', 'upstream');
+        return send(res, 202, status);
+      }
+      const etag = `"${pack.builtAt}"`;
+      res.setHeader('ETag', etag);
+      if (req.headers['if-none-match'] === etag) return send(res, 304, undefined, 'no-cache');
+      res.statusCode = 200;
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Vary', 'Accept-Encoding');
+      if (/\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''))) {
+        res.setHeader('Content-Encoding', 'gzip');
+        res.end(pack.gzipped);
+      } else {
+        res.end(gunzipSync(pack.gzipped));
+      }
+      return;
     }
 
     if (method === 'GET' && path === '/api/places') {

@@ -480,12 +480,39 @@ interface MapOnly {
   osmElement: string;
   trainingTypes?: GymRecord['location']['trainingTypes'];
   website?: string;
+  /** A website GymGO found by searching the web for the gym (the map gives none), checked by hand. */
+  foundWebsite?: string;
   /** Mapped as `opening_hours=24/7`. */
   mapped247?: boolean;
 }
 
+/** When the found websites were read. */
+const WEBSITES_FOUND = '2026-09-28T16:00:00.000Z';
+
 function mapOnly(spec: MapOnly): GymRecord {
-  const loc = location({ ...spec, trainingTypes: spec.trainingTypes ?? ['full_gym'] });
+  const mapped = location({ ...spec, trainingTypes: spec.trainingTypes ?? ['full_gym'] });
+  // A found website is cited as GymGO's own finding, never as the map's or the gym's.
+  const loc = spec.foundWebsite
+    ? {
+        ...mapped,
+        website: spec.foundWebsite,
+        provenance: {
+          ...mapped.provenance,
+          sources: [
+            ...mapped.provenance.sources,
+            {
+              id: `ev-found-${spec.id}`,
+              sourceType: 'independent_check' as const,
+              evidenceRef: spec.foundWebsite,
+              label: 'Website found by GymGO: a web search for the gym, checked by hand against its name and suburb',
+              observedAt: WEBSITES_FOUND,
+              checkedAt: WEBSITES_FOUND,
+              reviewerId: null,
+            },
+          ],
+        },
+      }
+    : mapped;
   return record(loc, {
     schedules: spec.mapped247
       ? [
@@ -613,6 +640,7 @@ const mapped: GymRecord[] = [
     lat: -37.80823,
     lng: 144.9862,
     osmElement: 'way/962484820',
+    foundWebsite: 'https://thestrongzone.com.au/',
     trainingTypes: ['strength_focused'],
   }),
   mapOnly({
@@ -635,6 +663,7 @@ const mapped: GymRecord[] = [
     lat: -37.8265,
     lng: 145.00277,
     osmElement: 'node/9837515522',
+    foundWebsite: 'https://www.prosport.net.au/',
   }),
   mapOnly({
     id: 'lincoln-square-fitness-carlton',
@@ -666,6 +695,7 @@ const mapped: GymRecord[] = [
     lat: -37.81804,
     lng: 145.00201,
     osmElement: 'way/1496822354',
+    foundWebsite: 'https://www.richmondboxing.com.au/',
     trainingTypes: ['functional'],
   }),
 ];

@@ -20,7 +20,7 @@ export function auRecord(row: GymRow): GymRecord {
     id: `ev-found-${row.id}`,
     sourceType: 'independent_check',
     evidenceRef: found,
-    label: 'Website found by GymGO: its title names the gym, and it names the gym’s suburb or street',
+    label: 'Website found by GymGO: its likely web address or a web search, checked by hand against the gym’s name and suburb',
     observedAt: WEBSITES_CHECKED,
     checkedAt: WEBSITES_CHECKED,
     reviewerId: null,

@@ -15,10 +15,15 @@
  *    made, so nothing private (this computer, the local network, cloud
  *    metadata addresses) can be reached, even through a redirect;
  *  - small pages and small images only, a short timeout, three redirects;
- *  - only PNG, JPEG, WebP and GIF, recognised by their bytes, at least
- *    64 pixels square; served back with the type they really are;
- *  - not a white mark on a transparent background, which would vanish on
- *    the app's white plate (the next candidate is tried instead).
+ *  - only PNG, JPEG, WebP and GIF, recognised by their bytes; served back
+ *    with the type they really are.
+ *
+ * It takes the best icon it can get: one at least 64 pixels square from the
+ * site itself, else Google's copy of the site's icon (Google's favicon
+ * service has most sites' icons, also for sites that turn automated visitors
+ * away or only offer .ico and .svg files), else a smaller one, down to 32
+ * pixels. A white mark on a transparent background, which would vanish on the
+ * app's white plate, is put on a dark square instead.
  *
  * Results are kept by website origin for a month (a week when the site has
  * no usable icon, an hour when it didn't answer), so a chain's branches
@@ -29,7 +34,7 @@ import { lookup as dnsLookup, type LookupAddress } from 'node:dns';
 import http from 'node:http';
 import https from 'node:https';
 import { BlockList, isIP } from 'node:net';
-import { inflateSync } from 'node:zlib';
+import { crc32, deflateSync, inflateSync } from 'node:zlib';
 import type { GymRecord } from '@gymgo/domain';
 import type { Db } from './db';
 
@@ -43,7 +48,19 @@ const NONE_DAYS = 7;
 /** A site that didn't answer (timed out, refused, 5xx) is asked again after an hour, not a week. */
 const UNREACHABLE_DAYS = 1 / 24;
 const UNREACHABLE = 'unreachable';
+/** An icon this big from the site itself ends the search. */
 const MIN_SIDE = 64;
+/** Smaller than this is too blurry to show. */
+const SMALL_SIDE = 32;
+/** What a white mark on a transparent background is put on. */
+const DARK_PLATE: [number, number, number] = [28, 28, 30];
+
+/** Google's copy of a site's icon, as big as it has up to 256 pixels; 404 when it has none. */
+export function googleIconUrl(origin: string): URL {
+  const url = new URL('https://t3.gstatic.com/faviconV2');
+  url.search = new URLSearchParams({ client: 'SOCIAL', type: 'FAVICON', fallback_opts: 'TYPE,SIZE,URL', url: `${origin}/`, size: '256' }).toString();
+  return url;
+}
 
 // --- Where the fetcher may go -------------------------------------------------
 
@@ -221,6 +238,8 @@ export function iconCandidates(html: string, pageUrl: string): URL[] {
     else if (rel.includes('icon') && size >= MIN_SIDE) add(attr(tag, 'href'), 500 + size);
     // No stated size: worth a try after the declared logo; the pixel check decides.
     else if (rel.includes('icon') && !attr(tag, 'sizes')) add(attr(tag, 'href'), 150);
+    // A small one, if nothing better turns up.
+    else if (rel.includes('icon') && size >= SMALL_SIDE) add(attr(tag, 'href'), 50 + size);
   }
   for (const logo of jsonLdLogos(head)) add(logo, 400);
   add('/apple-touch-icon.png', 100);
@@ -272,19 +291,17 @@ export function sniffImage(bytes: Buffer): { mime: string; width: number; height
 }
 
 /**
- * Whether a PNG is a light mark on a transparent background (a white logo
- * meant for a dark header), which would vanish on the white plate the app
- * draws. Only plain 8-bit, non-interlaced PNGs up to 1024 px are read; for
- * anything else the answer is "no".
+ * A plain 8-bit, non-interlaced PNG with an alpha channel, up to 1024 px, as
+ * RGBA pixels; null for anything else.
  */
-export function lightOnTransparent(bytes: Buffer): boolean {
+function decodeRgba(bytes: Buffer): { width: number; height: number; rgba: Buffer } | null {
   try {
     const width = bytes.readUInt32BE(16);
     const height = bytes.readUInt32BE(20);
     const depth = bytes[24];
     const type = bytes[25];
     const channels = type === 6 ? 4 : type === 4 ? 2 : 0; // Only the types with an alpha channel.
-    if (depth !== 8 || bytes[28] !== 0 || channels === 0 || width > 1024 || height > 1024) return false;
+    if (depth !== 8 || bytes[28] !== 0 || channels === 0 || width > 1024 || height > 1024) return null;
     const parts: Buffer[] = [];
     for (let offset = 8; offset + 8 <= bytes.length; ) {
       const length = bytes.readUInt32BE(offset);
@@ -314,23 +331,81 @@ export function lightOnTransparent(bytes: Buffer): boolean {
         pixels[y * stride + x] = value & 255;
       }
     }
-    let clear = 0;
-    let opaque = 0;
-    let light = 0;
+    if (channels === 4) return { width, height, rgba: pixels };
+    const rgba = Buffer.alloc(width * height * 4);
     for (let i = 0; i < width * height; i += 1) {
-      const p = i * channels;
-      if (pixels[p + channels - 1]! < 32) {
-        clear += 1;
-        continue;
-      }
-      opaque += 1;
-      const [r, g, b] = channels === 4 ? [pixels[p]!, pixels[p + 1]!, pixels[p + 2]!] : [pixels[p]!, pixels[p]!, pixels[p]!];
-      light += (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+      rgba[i * 4] = rgba[i * 4 + 1] = rgba[i * 4 + 2] = pixels[i * 2]!;
+      rgba[i * 4 + 3] = pixels[i * 2 + 1]!;
     }
-    return clear / (width * height) > 0.2 && opaque > 0 && light / opaque > 0.85;
+    return { width, height, rgba };
   } catch {
-    return false;
+    return null;
   }
+}
+
+function isLightOnClear({ width, height, rgba }: { width: number; height: number; rgba: Buffer }): boolean {
+  let clear = 0;
+  let opaque = 0;
+  let light = 0;
+  for (let i = 0; i < width * height; i += 1) {
+    const p = i * 4;
+    if (rgba[p + 3]! < 32) {
+      clear += 1;
+      continue;
+    }
+    opaque += 1;
+    light += (0.2126 * rgba[p]! + 0.7152 * rgba[p + 1]! + 0.0722 * rgba[p + 2]!) / 255;
+  }
+  return clear / (width * height) > 0.2 && opaque > 0 && light / opaque > 0.85;
+}
+
+/**
+ * Whether a PNG is a light mark on a transparent background (a white logo
+ * meant for a dark header), which would vanish on the white plate the app
+ * draws. Only plain 8-bit, non-interlaced PNGs up to 1024 px are read; for
+ * anything else the answer is "no".
+ */
+export function lightOnTransparent(bytes: Buffer): boolean {
+  const image = decodeRgba(bytes);
+  return image ? isLightOnClear(image) : false;
+}
+
+/** An RGB PNG of the pixels. */
+function encodeRgb(width: number, height: number, rgb: Buffer): Buffer {
+  const lines = Buffer.alloc(height * (1 + width * 3));
+  for (let y = 0; y < height; y += 1) rgb.copy(lines, y * (1 + width * 3) + 1, y * width * 3, (y + 1) * width * 3);
+  const chunk = (kind: string, data: Buffer) => {
+    const head = Buffer.alloc(8);
+    head.writeUInt32BE(data.length, 0);
+    head.write(kind, 4, 'latin1');
+    const tail = Buffer.alloc(4);
+    tail.writeUInt32BE(crc32(Buffer.concat([head.subarray(4), data])) >>> 0, 0);
+    return Buffer.concat([head, data, tail]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8;
+  header[9] = 2;
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', header),
+    chunk('IDAT', deflateSync(lines)),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
+}
+
+/** A white mark on a transparent background, put on a dark square so it shows on the white plate; null when it isn't one. */
+export function onDarkPlate(bytes: Buffer): Buffer | null {
+  const image = decodeRgba(bytes);
+  if (!image || !isLightOnClear(image)) return null;
+  const { width, height, rgba } = image;
+  const rgb = Buffer.alloc(width * height * 3);
+  for (let i = 0; i < width * height; i += 1) {
+    const alpha = rgba[i * 4 + 3]! / 255;
+    for (let c = 0; c < 3; c += 1) rgb[i * 3 + c] = Math.round(rgba[i * 4 + c]! * alpha + DARK_PLATE[c]! * (1 - alpha));
+  }
+  return encodeRgb(width, height, rgb);
 }
 
 // --- A chain's website, for branches the map gives none --------------------------
@@ -403,6 +478,9 @@ export class SiteIcons {
       source text,
       fetched_at text not null
     )`);
+    // Sites found to have no icon before Google's copy and small icons were
+    // taken (28 September 2026) are asked again.
+    db.prepare("delete from site_icons where found = 0 and fetched_at < '2026-09-28T16:00:00.000Z'").run();
   }
 
   private now() {
@@ -448,29 +526,45 @@ export class SiteIcons {
 
   private async fetchIcon(page: URL): Promise<SiteIcon | null> {
     const get = this.options.get ?? safeGet;
-    let found: (SiteIcon & { width: number; height: number }) | null = null;
+    type Found = SiteIcon & { width: number; height: number };
+    /** The image at `url` if it will do as an icon, a white mark put on a dark square. */
+    const take = async (url: URL): Promise<Found | null> => {
+      try {
+        const image = await get(url, IMAGE_BYTES + 1, 'image/png,image/jpeg,image/webp,image/gif');
+        if (image.status >= 400 || image.body.length > IMAGE_BYTES) return null;
+        const kind = sniffImage(image.body);
+        if (!kind || kind.width < SMALL_SIDE || kind.height < SMALL_SIDE || kind.width > 4096 || kind.height > 4096) return null;
+        if (Math.max(kind.width / kind.height, kind.height / kind.width) > 4) return null;
+        const dark = kind.mime === 'image/png' ? onDarkPlate(image.body) : null;
+        return { mime: dark ? 'image/png' : kind.mime, bytes: dark ?? image.body, source: image.url, width: kind.width, height: kind.height };
+      } catch {
+        return null;
+      }
+    };
+    const side = (icon: Found | null) => (icon ? Math.min(icon.width, icon.height) : 0);
+    let found: Found | null = null;
+    let small: Found | null = null;
     let unreachable = false;
     try {
       const home = await get(page, PAGE_BYTES, 'text/html,application/xhtml+xml');
       unreachable = home.status >= 500 || home.status === 429;
       const html = home.status < 400 && /html/i.test(home.type) ? home.body.toString('utf8') : '';
-      for (const candidate of iconCandidates(html, home.url).slice(0, 4)) {
-        try {
-          const image = await get(candidate, IMAGE_BYTES + 1, 'image/png,image/jpeg,image/webp,image/gif');
-          if (image.status >= 400 || image.body.length > IMAGE_BYTES) continue;
-          const kind = sniffImage(image.body);
-          if (!kind || kind.width < MIN_SIDE || kind.height < MIN_SIDE || kind.width > 4096 || kind.height > 4096) continue;
-          if (Math.max(kind.width / kind.height, kind.height / kind.width) > 4) continue;
-          // A white mark on nothing would vanish on the app's white plate: try the next.
-          if (kind.mime === 'image/png' && lightOnTransparent(image.body)) continue;
-          found = { mime: kind.mime, bytes: image.body, source: image.url, width: kind.width, height: kind.height };
+      for (const candidate of iconCandidates(html, home.url).slice(0, 6)) {
+        const icon = await take(candidate);
+        if (side(icon) >= MIN_SIDE) {
+          found = icon;
           break;
-        } catch {
-          // Try the next one.
         }
+        if (side(icon) > side(small)) small = icon;
       }
     } catch {
       unreachable = true;
+    }
+    if (!found) {
+      // Google's copy of the site's icon: it has most sites', also ones that turn us away.
+      const google = await take(googleIconUrl(page.origin));
+      found = side(google) >= side(small) ? (google ?? small) : small;
+      if (found) unreachable = false;
     }
     this.db
       .prepare(

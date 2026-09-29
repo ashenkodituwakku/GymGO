@@ -7,7 +7,7 @@ import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { createApp } from './app';
 import { openDb, seedGyms, type Db } from './db';
 import { deflateSync } from 'node:zlib';
-import { SiteIcons, allowedUrl, chainWebsites, iconCandidates, isPrivateAddress, lightOnTransparent, sniffImage, type Fetched, type SafeGet } from './siteicons';
+import { SiteIcons, allowedUrl, chainWebsites, googleIconUrl, iconCandidates, isPrivateAddress, lightOnTransparent, onDarkPlate, sniffImage, type Fetched, type SafeGet } from './siteicons';
 import type { GymRecord } from '@gymgo/domain';
 
 /** A PNG header of the given size: all the checks read. */
@@ -57,6 +57,15 @@ describe('icons that would vanish on a white plate', () => {
     expect(lightOnTransparent(rgbaPng(64, (x) => (x < 32 ? [20, 20, 20, 255] : [0, 0, 0, 0])))).toBe(false);
     expect(lightOnTransparent(rgbaPng(64, () => [250, 250, 250, 255]))).toBe(false);
     expect(lightOnTransparent(Buffer.from('not a png at all, just some bytes here'))).toBe(false);
+    expect(onDarkPlate(rgbaPng(64, () => [250, 250, 250, 255]))).toBeNull();
+  });
+
+  it('puts a white mark on a dark square, keeping its size', () => {
+    const plated = onDarkPlate(rgbaPng(64, (x) => (x < 32 ? [255, 255, 255, 255] : [0, 0, 0, 0])))!;
+    expect(sniffImage(plated)).toEqual({ mime: 'image/png', width: 64, height: 64 });
+    // Opaque RGB now, so it no longer counts as a mark on nothing.
+    expect(plated[25]).toBe(2);
+    expect(lightOnTransparent(plated)).toBe(false);
   });
 });
 
@@ -79,7 +88,7 @@ describe('where the icon fetcher may go', () => {
 });
 
 describe('finding the icon in a page', () => {
-  it('prefers the home-screen icon, then big icons, then the declared logo, then the usual path', () => {
+  it('prefers the home-screen icon, then big icons, then the declared logo, then the usual path, then small icons', () => {
     const html = `<html><head>
       <link rel="icon" href="/favicon.ico">
       <link rel="icon" type="image/png" href="/unsized.png">
@@ -95,6 +104,7 @@ describe('finding the icon in a page', () => {
       'https://cdn.example.com/logo.png',
       'https://gym.example.com/unsized.png',
       'https://gym.example.com/apple-touch-icon.png',
+      'https://gym.example.com/small.png',
     ]);
   });
 
@@ -135,6 +145,15 @@ const WEB: Record<string, Omit<Fetched, 'url'>> = {
   'https://primeathletica.com.au/fake.png': { status: 200, type: 'image/png', body: Buffer.from('<html>not an image</html>') },
   'https://www.clublime.com.au/': { status: 200, type: 'text/html', body: Buffer.from('<link rel="apple-touch-icon" href="/lime.png">') },
   'https://www.clublime.com.au/lime.png': { status: 200, type: 'image/png', body: png(192, 192) },
+  // A site that turns automated visitors away, whose icon Google has.
+  'https://blocked.example.com/': { status: 403, type: 'text/html', body: Buffer.from('Forbidden') },
+  [googleIconUrl('https://blocked.example.com').href]: { status: 200, type: 'image/png', body: png(256, 240) },
+  // A site with only a 32-pixel icon, and none at Google.
+  'https://small.example.com/': { status: 200, type: 'text/html', body: Buffer.from('<link rel="icon" sizes="32x32" href="/32.png">') },
+  'https://small.example.com/32.png': { status: 200, type: 'image/png', body: png(32, 32) },
+  // A site whose only icon is a white mark on nothing.
+  'https://white.example.com/': { status: 200, type: 'text/html', body: Buffer.from('<link rel="apple-touch-icon" href="/w.png">') },
+  'https://white.example.com/w.png': { status: 200, type: 'image/png', body: rgbaPng(64, (x) => (x < 32 ? [255, 255, 255, 255] : [0, 0, 0, 0])) },
 };
 
 let flakyUp = false;
@@ -189,6 +208,22 @@ describe('GET /api/gyms/:id/icon', () => {
     const response = await fetch(`${base}/api/gyms/${CLUB_LIME.location.id}/icon`);
     expect(response.status).toBe(200);
     expect(decodeURI(response.headers.get('x-icon-source')!)).toBe('https://www.clublime.com.au/lime.png');
+  });
+
+  it('takes Google’s copy of the icon when the site turns us away', async () => {
+    const icons = new SiteIcons(db, { get: fakeGet, now: () => clock });
+    const icon = await icons.icon('https://blocked.example.com/');
+    expect(icon?.source).toBe(googleIconUrl('https://blocked.example.com').href);
+    expect(sniffImage(icon!.bytes)).toEqual({ mime: 'image/png', width: 256, height: 240 });
+  });
+
+  it('takes a small icon when there’s nothing bigger, and a white mark on a dark square', async () => {
+    const icons = new SiteIcons(db, { get: fakeGet, now: () => clock });
+    expect((await icons.icon('https://small.example.com/'))?.source).toBe('https://small.example.com/32.png');
+    const white = (await icons.icon('https://white.example.com/'))!;
+    expect(white.source).toBe('https://white.example.com/w.png');
+    expect(lightOnTransparent(white.bytes)).toBe(false);
+    expect(sniffImage(white.bytes)).toEqual({ mime: 'image/png', width: 64, height: 64 });
   });
 
   it('shows nothing rather than a fake, a tiny or a mislabelled image', async () => {

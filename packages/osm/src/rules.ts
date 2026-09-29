@@ -37,6 +37,8 @@ const NOT_A_GYM = new RegExp(
     'zumba|piyo|down dog|physique 57|revolution studio|cycle|handle bar|rock gym|exhale|krav|kms\\b|' +
     'combat|mma\\b|ismma|grinning yogi|float|cryo|squash|syretch|platesculpt|boys and girls|define body|' +
     'futsal|parkour park|my first gym|muay thai|^technogym$|' +
+    // Shops a mapper tagged as gyms by mistake.
+    'nails?\\b|\\bhair|salon|barber|beauty|scissor|tanning|tattoo|' +
     // Children's programmes that call themselves junior or youth.
     '\\bjunior|\\byouth\\b',
   'i',

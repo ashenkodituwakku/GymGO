@@ -3,8 +3,9 @@
  * one, so a branch can still show its chain's own icon (the server fetches
  * it, and the app credits it as the chain's).
  *
- * Each site was checked by hand on 28 September 2026: it answered, and its
- * page title named the chain. Some are scoped to a country, where another
+ * Each site was checked by hand on 28 September 2026: it answered and its
+ * page title named the chain, or (for sites that turn automated visitors
+ * away) Google's favicon service had an icon for it. Some are scoped to a country, where another
  * country has a different business under a similar name (GoodLife Fitness in
  * Canada is not Goodlife Health Clubs in Australia).
  */
@@ -20,7 +21,7 @@ interface ChainSite {
 const CHAIN_SITES: readonly ChainSite[] = [
   { match: /^club lime\b/i, site: 'https://www.clublime.com.au/', countries: ['AU'] },
   { match: /^revo( fitness)?\b/i, site: 'https://revofitness.com.au/', countries: ['AU'] },
-  { match: /^goodlife( health clubs?)?\b/i, site: 'https://www.goodlife.com.au/', countries: ['AU'] },
+  { match: /^good ?life( health clubs?)?\b/i, site: 'https://www.goodlife.com.au/', countries: ['AU'] },
   { match: /^fitstop\b/i, site: 'https://fitstop.com/' },
   { match: /^viva ?gym\b/i, site: 'https://www.vivagym.com/' },
   { match: /^9 ?round\b/i, site: 'https://www.9round.com.au/', countries: ['AU'] },
@@ -28,7 +29,7 @@ const CHAIN_SITES: readonly ChainSite[] = [
   { match: /^anytime fitness\b/i, site: 'https://www.anytimefitness.com/' },
   { match: /^holmes place\b/i, site: 'https://www.holmesplace.com/' },
   { match: /^plus fitness\b/i, site: 'https://www.plusfitness.com.au/', countries: ['AU'] },
-  { match: /^f45\b/i, site: 'https://f45training.com/' },
+  { match: /^(f45|functional 45)\b/i, site: 'https://f45training.com/' },
   { match: /^fernwood\b/i, site: 'https://www.fernwoodfitness.com.au/', countries: ['AU'] },
   { match: /^derrimut\b/i, site: 'https://www.derrimut247.com.au/', countries: ['AU'] },
   { match: /^ubx\b/i, site: 'https://ubxtraining.com/' },
@@ -53,6 +54,28 @@ const CHAIN_SITES: readonly ChainSite[] = [
   { match: /^listen to your body\b/i, site: 'https://www.listentoyourbody.com.au/', countries: ['AU'] },
   // "Orange Theory" as the map sometimes spells Orangetheory, which has its own logo otherwise.
   { match: /^orange ?theory\b/i, site: 'https://www.orangetheory.com/' },
+  { match: /^speed ?fit\b/i, site: 'https://joinspeedfit.com/', countries: ['AU'] },
+  // 12RND is now part of UBX; its old site goes to UBX's.
+  { match: /^12 ?rnd\b/i, site: 'https://12rnd.com.au/', countries: ['AU'] },
+  { match: /^hiit republic\b/i, site: 'https://hiitrepublic.com.au/', countries: ['AU'] },
+  { match: /^south pacific health club/i, site: 'https://www.southpacifichealthclubs.com.au/', countries: ['AU'] },
+  { match: /^gymbox\b/i, site: 'https://www.gymbox.com/', countries: ['GB'] },
+  { match: /^plts\b/i, site: 'https://plts.nl/', countries: ['NL'] },
+  { match: /^friskis ?(&|och) ?svettis\b/i, site: 'https://www.friskissvettis.se/', countries: ['SE'] },
+  { match: /^madabolic\b/i, site: 'https://www.madabolic.com/', countries: ['US'] },
+  { match: /^30 minute hit\b/i, site: 'https://www.30minutehit.com/' },
+  { match: /^genesis (health|fitness)\b/i, site: 'https://www.genesisfitness.com.au/', countries: ['AU'] },
+  { match: /^core ?plus\b/i, site: 'https://www.core-plus.com/', countries: ['AU'] },
+  { match: /^conditn\b/i, site: 'https://conditn.com/', countries: ['AU'] },
+  { match: /^98 (gym|training)\b/i, site: 'https://98gym.com/', countries: ['AU'] },
+  { match: /^(team )?bodyfit\b/i, site: 'https://bodyfit.com.au/', countries: ['AU'] },
+  { match: /^lyf\b/i, site: 'https://www.lyf247.com.au/', countries: ['AU'] },
+  { match: /^bang bang (muay|my) thai\b/i, site: 'https://bangbangmt.com/', countries: ['AU'] },
+  { match: /^c3 training\b/i, site: 'https://www.c3training.com.au/', countries: ['AU'] },
+  { match: /^next ?gen(eration)?\b/i, site: 'https://www.nextgenclubs.com.au/', countries: ['AU'] },
+  { match: /^dundee[’']?s boxing\b/i, site: 'https://www.dundeesfitness.com.au/', countries: ['AU'] },
+  { match: /^fitness cartel\b/i, site: 'https://www.fitnesscartel.com.au/', countries: ['AU'] },
+  { match: /^ifeelgood\b/i, site: 'https://ifeelgood247.com.au/', countries: ['AU'] },
 ];
 
 /** The chain's own website for a branch with none of its own, or null when it isn't a known chain. */

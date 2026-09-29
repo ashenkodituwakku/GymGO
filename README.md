@@ -357,8 +357,17 @@ shown in the app, which says rarity is luck, not a rating of the gym, and
 nothing about it can be bought. The frame is decoration around the gym's
 own logo or a member's photo; a gym with neither still says "No photo
 supplied". Home says so when you're at a
-gym you haven't checked in at today. It's all on the device: your position
-is only compared, never sent or kept. Signed in as the dev Pro account
+gym you haven't checked in at today. Your position is only compared, on
+the phone, never sent or kept. **Signed in, the collection is on your
+account too**, so your cards and visits follow you to your other devices:
+each copy is merged into the other, never overwritten, so a check-in made
+offline or on another device is never lost (one made while the server
+can't be reached is sent the next time it can be). Signed out, it stays on
+the device, and signing in adds it to the account. At the foot of the
+collection, **Reset collection** clears every card, visit, roll and badge,
+on the device and on the account, after a warning that says exactly what
+goes; the account remembers the reset, so a device that was offline at the
+time drops its old visits instead of bringing them back. Signed in as the dev Pro account
 (below), the button says **Collect** and works from anywhere, so you can
 try the collection without going to gyms.
 

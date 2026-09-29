@@ -24,6 +24,7 @@ import { useAccount } from './useAccount';
 import { useBilling } from './useBilling';
 import { useGymData } from './useGymData';
 import { useCountryPack } from './useCountryPack';
+import { useCollectionSync } from './useCollection';
 import { cleanPlates, type WeightUnit } from './training';
 
 export interface ExploreRequest {
@@ -154,6 +155,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const data = useGymData();
   const accountApi = useAccount();
   const billing = useBilling(accountApi);
+  // Your gym collection follows the account: merged in on signing in, and each check-in sent.
+  useCollectionSync(accountApi.state === 'signed_in' ? accountApi.token : null, accountApi.account?.id ?? null);
   const { limits } = billing;
 
   const openPro = useCallback((reason?: ProReason) => {

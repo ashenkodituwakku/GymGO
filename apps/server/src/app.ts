@@ -60,6 +60,9 @@
  *   GET    /api/training                  the sessions you've logged, newest first
  *   POST   /api/training                  { name, unit, startedAt, finishedAt, workoutId?, gymId?, exercises } -> logged
  *   DELETE /api/training/:id
+ *   GET    /api/collection                your gym collection (gyms checked in at, and the days) and when it was last reset
+ *   PUT    /api/collection                { gyms, resetAt } -> merged into the account's (never overwritten); 409 when reset elsewhere since
+ *   DELETE /api/collection                reset: every gym and visit removed, and the reset remembered
  *   GET    /api/moderation/reviews        moderators: the queue
  *   POST   /api/moderation/reviews/:id    moderators: { decision, reason? }
  *   GET    /api/moderation/photos         moderators: photos waiting
@@ -93,6 +96,10 @@ import {
   type Review,
   type User,
   chainSiteFor,
+  COLLECTION_MAX_GYMS,
+  cleanCollectedGym,
+  mergeCollectedGym,
+  type CollectedGym,
 } from '@gymgo/domain';
 import {
   AttemptLimiter,
@@ -271,6 +278,10 @@ function cleanWorkoutPlan(input: unknown) {
 
 /** Sessions kept per account: years of training; the cap only stops a runaway script. */
 export const MAX_TRAINING_SESSIONS = 5000;
+
+/** Collected gyms sent in one request (the app sends a big collection in batches), and the room they may take. */
+export const COLLECTION_BATCH = 200;
+const COLLECTION_BODY_BYTES = 2 * 1024 * 1024;
 
 /**
  * A logged session, checked field by field. A weight left blank is body
@@ -533,6 +544,17 @@ export function createApp(options: AppOptions) {
     return { ...found, account: found.account, token: found.token };
   }
 
+  /** When the account's collection was last reset, or null. */
+  function collectionResetAt(userId: string): string | null {
+    const row = db.prepare('select reset_at from collection_resets where user_id = ?').get(userId) as { reset_at: string } | undefined;
+    return row?.reset_at ?? null;
+  }
+
+  function collectionView(userId: string): { gyms: CollectedGym[]; resetAt: string | null } {
+    const rows = db.prepare('select entry_json from collection_gyms where user_id = ? order by gym_id').all(userId) as Array<{ entry_json: string }>;
+    return { gyms: rows.map((row) => JSON.parse(row.entry_json) as CollectedGym), resetAt: collectionResetAt(userId) };
+  }
+
   function requirePermission(user: User, permission: Permission, gymId?: string) {
     if (!can(user, permission, gymId ? { gymId } : {})) throw new HttpError(403, 'You don’t have permission to do that.');
   }
@@ -782,6 +804,69 @@ export function createApp(options: AppOptions) {
       return send(res, 204);
     }
 
+    // --- Gym collection (free: your own check-ins) ------------------------------
+    // Check-ins are decided on the phone, where your position is compared with
+    // the gym's and never sent; the account keeps what they add up to, so the
+    // collection follows you between devices.
+    if (path === '/api/collection' && method === 'GET') {
+      const { account } = requireAccount(req);
+      return send(res, 200, collectionView(account.id));
+    }
+
+    if (path === '/api/collection' && method === 'PUT') {
+      const { account } = requireAccount(req);
+      const body = (await readJson(req, COLLECTION_BODY_BYTES)) as Record<string, unknown>;
+      if (!Array.isArray(body.gyms) || body.gyms.length > COLLECTION_BATCH) throw new HttpError(400, `Send up to ${COLLECTION_BATCH} gyms at a time.`);
+      // A reset on another device since this one last heard wins: it drops its
+      // older visits (lib/useCollection.ts) and sends what's left.
+      const resetAt = collectionResetAt(account.id);
+      if (resetAt && body.resetAt !== resetAt) throw new HttpError(409, 'Your collection was reset on another device.', 'collection_reset', { resetAt });
+      const incoming = body.gyms.map((entry) => cleanCollectedGym(entry, now())).filter((entry): entry is CollectedGym => entry !== null);
+      const stored = new Map(
+        (db.prepare('select gym_id, entry_json from collection_gyms where user_id = ?').all(account.id) as Array<{ gym_id: string; entry_json: string }>).map(
+          (row) => [row.gym_id, JSON.parse(row.entry_json) as CollectedGym],
+        ),
+      );
+      const fresh = new Set(incoming.map((entry) => entry.id).filter((id) => !stored.has(id)));
+      if (stored.size + fresh.size > COLLECTION_MAX_GYMS) throw new HttpError(409, `A collection holds up to ${COLLECTION_MAX_GYMS} gyms.`);
+      const at = now().toISOString();
+      const upsert = db.prepare(
+        `insert into collection_gyms (user_id, gym_id, entry_json, updated_at) values (?, ?, ?, ?)
+         on conflict (user_id, gym_id) do update set entry_json = excluded.entry_json, updated_at = excluded.updated_at`,
+      );
+      db.exec('begin');
+      try {
+        for (const entry of incoming) {
+          const kept = stored.get(entry.id);
+          // The account's copy first, so its card (its seed) stays the same everywhere.
+          upsert.run(account.id, entry.id, JSON.stringify(kept ? mergeCollectedGym(kept, entry) : entry), at);
+        }
+        db.exec('commit');
+      } catch (error) {
+        db.exec('rollback');
+        throw error;
+      }
+      return send(res, 200, collectionView(account.id));
+    }
+
+    if (path === '/api/collection' && method === 'DELETE') {
+      const { account } = requireAccount(req);
+      const resetAt = now().toISOString();
+      db.exec('begin');
+      try {
+        db.prepare('delete from collection_gyms where user_id = ?').run(account.id);
+        db.prepare('insert into collection_resets (user_id, reset_at) values (?, ?) on conflict (user_id) do update set reset_at = excluded.reset_at').run(
+          account.id,
+          resetAt,
+        );
+        db.exec('commit');
+      } catch (error) {
+        db.exec('rollback');
+        throw error;
+      }
+      return send(res, 200, { gyms: [], resetAt });
+    }
+
     // --- Accounts --------------------------------------------------------
     if (method === 'POST' && path === '/api/auth/signup') {
       const body = (await readJson(req)) as Record<string, unknown>;
@@ -959,6 +1044,8 @@ export function createApp(options: AppOptions) {
         workouts: rows('select id, name, gym_id as gymId, plan_json, created_at as createdAt from workouts where user_id = ? order by created_at').map(
           ({ plan_json, ...workout }) => ({ ...workout, plan: JSON.parse(String(plan_json)) }),
         ),
+        collection: rows('select entry_json from collection_gyms where user_id = ? order by gym_id').map(({ entry_json }) => JSON.parse(String(entry_json))),
+        collectionResetAt: rows('select reset_at from collection_resets where user_id = ?')[0]?.reset_at ?? null,
         trainingSessions: rows(
           `select id, name, unit, started_at as startedAt, finished_at as finishedAt, workout_id as workoutId, gym_id as gymId, exercises_json
            from training_sessions where user_id = ? order by finished_at`,

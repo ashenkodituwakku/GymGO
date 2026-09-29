@@ -193,6 +193,17 @@ const SCHEMA = `
     sent_at text
   );
   create index if not exists bug_reports_status on bug_reports(status, created_at);
+  create table if not exists collection_gyms (
+    user_id text not null references users(id) on delete cascade,
+    gym_id text not null,
+    entry_json text not null,
+    updated_at text not null,
+    primary key (user_id, gym_id)
+  );
+  create table if not exists collection_resets (
+    user_id text primary key references users(id) on delete cascade,
+    reset_at text not null
+  );
 `;
 
 export function openDb(path: string): Db {

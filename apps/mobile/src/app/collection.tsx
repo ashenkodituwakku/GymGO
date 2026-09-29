@@ -8,15 +8,17 @@
  * and says "No photo supplied" when there isn't: the gem frame is
  * decoration, and nothing is drawn in to stand for a gym.
  *
- * Signed in, the collection is on your account too (lib/useCollection.ts).
- * At the foot, Reset collection clears it, after a warning saying exactly
- * what goes.
+ * Signed in, the collection is on your account too (lib/useCollection.ts),
+ * which the line at the top says. At the foot, Delete all collection data
+ * clears it, after a warning saying exactly what goes
+ * (components/CollectionData.tsx, also in Account → Your data).
  */
 
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { CollectionSyncLine, useDeleteCollection } from '@/components/CollectionData';
 import { GemCard } from '@/components/GemCard';
 import { Icon, type IconName } from '@/components/Icon';
 import { GLIDE } from '@/components/motion';
@@ -27,8 +29,7 @@ import { badges, collectionShareText, collectionStats } from '@/lib/collection';
 import { FOIL_ONE_IN, cardFor, oddsLine, rarityRank } from '@/lib/rarity';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, space, themed } from '@/lib/theme';
-import { useCollection, type SyncStatus } from '@/lib/useCollection';
-import { haptic } from '@/lib/haptics';
+import { useCollection } from '@/lib/useCollection';
 import { PageScroll } from '@/components/PageScroll';
 
 const COLUMN = 640;
@@ -37,27 +38,10 @@ export default function CollectionScreen() {
   usePageTitle('Collection');
   const router = useRouter();
   const { data, requestExplore, account } = useApp();
-  const { loaded, gyms, sync, reset, retry } = useCollection();
-  // Still signed in while the server is away; until the account is known, not yet either way.
-  const signedIn = account.state === 'signed_in' || account.state === 'unreachable';
+  const { loaded, gyms } = useCollection();
+  // Until the account is known, not yet: signed in, deleting clears its copy too.
   const accountKnown = account.state !== 'loading';
-  const retrySync = () => void (account.state === 'unreachable' ? account.reconnect() : retry());
-  // The reset's warning, open or not, and how the reset went.
-  const [resetStep, setResetStep] = useState<'closed' | 'warning' | 'resetting'>('closed');
-  const [resetProblem, setResetProblem] = useState<string | null>(null);
-  const confirmReset = async () => {
-    setResetStep('resetting');
-    setResetProblem(null);
-    try {
-      await reset();
-      haptic.success();
-      setResetStep('closed');
-    } catch {
-      haptic.warn();
-      setResetStep('warning');
-      setResetProblem('Couldn’t reach the GymGO server, so nothing was reset. Try again when you’re online.');
-    }
-  };
+  const deleting = useDeleteCollection();
   const { width } = useWindowDimensions();
   const cardWidth = (Math.min(width, COLUMN) - space[4] * 2 - space[3]) / 2;
   const [order, setOrder] = useState<'newest' | 'rarest' | 'visits'>('newest');
@@ -105,6 +89,9 @@ export default function CollectionScreen() {
             router.navigate('/explore');
           }}
         />
+        <View style={styles.emptySync}>
+          <CollectionSyncLine />
+        </View>
       </View>
     );
   }
@@ -112,6 +99,7 @@ export default function CollectionScreen() {
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: 'Collection' }} />
+      <CollectionSyncLine />
 
       <Animated.View style={styles.stats}>
         <Stat value={stats.gyms} one="gym" many="gyms" icon="gym" />
@@ -190,82 +178,13 @@ export default function CollectionScreen() {
           {shared}
         </Txt>
       )}
-      {accountKnown && <SyncLine status={sync} signedIn={signedIn} onRetry={retrySync} onSignIn={() => router.push('/sign-in')} />}
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
         A visit counts once a day, when you check in at the gym; your location is only compared on the phone, never sent.
       </Txt>
 
-      {!accountKnown ? null : resetStep === 'closed' ? (
-        <PrimaryButton label="Reset collection" icon="warning" tone="danger" onPress={() => setResetStep('warning')} />
-      ) : (
-        <View style={styles.warning} accessibilityRole="alert">
-          <View style={styles.warningHead}>
-            <View style={styles.warningSign}>
-              <Icon name="warning" size={22} color={color.onBrand} />
-            </View>
-            <Txt variant="headline" color={color.dangerInk} style={styles.flex}>
-              Reset your whole collection?
-            </Txt>
-          </View>
-          <Txt variant="subhead" color={color.label}>
-            {`This deletes ${stats.gyms === 1 ? 'your card' : `all ${stats.gyms} of your cards`} and ${stats.visits === 1 ? 'its visit' : `all ${stats.visits} visits`}, with every rarity, gem and Foil rolled and every badge earned, ${
-              signedIn ? 'on this device and on your account, so on your other devices too' : 'on this device'
-            }. It can’t be undone: a gym you collect again rolls a new card.`}
-          </Txt>
-          {resetProblem && (
-            <Txt variant="footnote" color={color.dangerInk}>
-              {resetProblem}
-            </Txt>
-          )}
-          <PrimaryButton label="Reset everything" icon="trash" tone="danger" busy={resetStep === 'resetting'} onPress={() => void confirmReset()} />
-          <PrimaryButton
-            label="Keep my collection"
-            tone="quiet"
-            disabled={resetStep === 'resetting'}
-            onPress={() => {
-              setResetStep('closed');
-              setResetProblem(null);
-            }}
-          />
-        </View>
-      )}
+      {accountKnown &&
+        (deleting.warning ?? <PrimaryButton label="Delete all collection data" icon="warning" tone="danger" onPress={deleting.open} />)}
     </PageScroll>
-  );
-}
-
-/** Where the collection is kept, and whether the account's copy is up to date. */
-function SyncLine({ status, signedIn, onRetry, onSignIn }: { status: SyncStatus; signedIn: boolean; onRetry: () => void; onSignIn: () => void }) {
-  if (!signedIn || status === 'signed-out') {
-    return (
-      <View style={styles.sync}>
-        <Icon name="offline" size={16} color={color.labelSecondary} />
-        <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
-          Kept on this device only. Sign in to keep it on your account too, and see it on your other devices.
-        </Txt>
-        <PrimaryButton label="Sign in" tone="quiet" onPress={onSignIn} />
-      </View>
-    );
-  }
-  if (status === 'offline' || status === 'failed') {
-    return (
-      <View style={styles.sync}>
-        <Icon name="offline" size={16} color={color.labelSecondary} />
-        <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
-          {status === 'offline'
-            ? 'Couldn’t reach the GymGO server. Your check-ins are safe on this device and go to your account when it’s back.'
-            : 'Couldn’t sync with your account just now. Your check-ins are safe on this device.'}
-        </Txt>
-        <PrimaryButton label="Try again" icon="refresh" tone="quiet" onPress={onRetry} />
-      </View>
-    );
-  }
-  return (
-    <View style={styles.sync}>
-      <Icon name="cloud" size={16} color={color.brand} />
-      <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
-        {status === 'syncing' ? 'Syncing with your account…' : 'Synced with your account, so it’s on your other devices too.'}
-      </Txt>
-    </View>
   );
 }
 
@@ -288,6 +207,7 @@ const styles = themed(() =>
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: COLUMN, alignSelf: 'center' },
     empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
+    emptySync: { alignSelf: 'stretch', width: '100%', maxWidth: 480, marginTop: space[3] },
     emptyMedal: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: '#C9971C' },
     center: { textAlign: 'center' },
     section: { marginTop: space[2], marginLeft: space[4] },
@@ -300,10 +220,5 @@ const styles = themed(() =>
     how: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
     howHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     note: { paddingHorizontal: space[4], textAlign: 'center' },
-    flex: { flex: 1 },
-    sync: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], marginTop: space[2], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
-    warning: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, borderWidth: 1.5, borderColor: color.dangerInk },
-    warningHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-    warningSign: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.dangerInk },
   }),
 );

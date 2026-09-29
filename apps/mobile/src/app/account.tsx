@@ -1,8 +1,8 @@
 /**
  * Account: who you are to GymGO and how you sign in. Your name, your email,
  * your password (or setting one, for an account made with Google or Apple),
- * Google and Apple connected or not, your data, signing out, and deleting
- * the account.
+ * Google and Apple connected or not, your data (downloading it, deleting
+ * your gym collection), signing out, and deleting the account.
  */
 
 import { Stack, useRouter } from 'expo-router';
@@ -11,6 +11,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
+import { useDeleteCollection } from '@/components/CollectionData';
 import { GoogleMark, SocialButtons, useSignInProviders, type TokenHandler } from '@/components/SocialSignIn';
 import { Input, PrimaryButton, Txt } from '@/components/ui';
 import { ApiError, OfflineError, api, type SignInMethods, type SignInProvider } from '@/lib/api';
@@ -42,6 +43,7 @@ export default function AccountScreen() {
   const [notice, setNotice] = useState<{ text: string; good: boolean } | null>(null);
   const [exported, setExported] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const deleteCollection = useDeleteCollection();
 
   const loadMethods = useCallback(() => {
     if (!token) return;
@@ -218,8 +220,16 @@ export default function AccountScreen() {
             }
           }}
         />
+        <Line
+          icon="trophy"
+          title="Delete collection data"
+          value={deleteCollection.gyms === 0 ? 'Empty' : `${deleteCollection.gyms} card${deleteCollection.gyms === 1 ? '' : 's'}`}
+          first={false}
+          onPress={deleteCollection.gyms === 0 || deleteCollection.opened ? undefined : deleteCollection.open}
+        />
         <Line icon="signOut" title="Sign out" first={false} onPress={() => void account.signOut()} />
       </Section>
+      {deleteCollection.warning}
 
       <Section
         footer={

@@ -126,7 +126,7 @@ export default function Profile() {
 
       <Group header="Your gyms">
         <Row icon="saved" tile={TILE.orange} title="Saved" value={String(account.saved.length)} onPress={() => router.navigate('/saved')} />
-        <Row icon="trophy" tile={TILE.orange} title="Collection" subtitle="Gyms you’ve checked in at" value={String(Object.keys(collection.gyms).length)} onPress={() => router.push('/collection')} />
+        <Row icon="trophy" tile={TILE.orange} title="Collection" subtitle={me ? 'Gyms you’ve checked in at, on your account' : 'Gyms you’ve checked in at'} value={String(Object.keys(collection.gyms).length)} onPress={() => router.push('/collection')} />
         <Row icon="history" tile={TILE.blue} title="Recently viewed" value={String(recents.length)} onPress={() => router.navigate('/')} />
         <Row
           icon="compare"

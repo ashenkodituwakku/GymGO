@@ -250,6 +250,19 @@ Chrome and Edge (blur only in Safari and Firefox).
   (Photon, a free OpenStreetMap geocoder, asked only on Enter and at most
   once a second, answers kept a month), and the map flies there and
   searches it.
+  **Your country's gyms are kept on the phone.** Once you've chosen your
+  country, the app downloads one file of every gym the map knows there
+  (Australia's is a 41 KB download and 216 KB on the phone), so searching any area in it, "Near you", and
+  finding a gym by name answer at once, offline too, and the list follows
+  the map as you move it. Profile → **Offline gyms** shows how many and how
+  big (and tries again if the download failed); it refreshes itself when
+  the server's copy is rebuilt, monthly. Only the gyms are kept, not the
+  map itself: a whole country's map pictures would be gigabytes, and Apple's
+  and Google's maps may not be saved by apps anyway.
+  Gyms close together share one **bubble with a count** until you zoom in,
+  the way Apple and Google Maps do; tap one to zoom to its gyms (when
+  they're all in one building, where zooming wouldn't part them, it opens
+  the best fit among them).
 - **Saved**: your saved gyms. Tick two or three to **compare** them side by
   side: answer, price, what members paid (labelled as theirs, never the
   gym's price), guest entry, what to bring, machines, rating and distance.
@@ -720,33 +733,44 @@ Every other gym with a website gets **the icon from its own website**: the
 square picture a phone puts on its home screen, or the logo the site
 declares for search engines. It's shown the way a browser or a search engine
 shows a site's icon beside its link, credited to the site ("Icon from
-dohertysgym.com, the gym's own website"), and never altered. The server
+dohertysgym.com, the gym's own website"). The server
 fetches it the first time someone looks, keeps it for a month (a week when
 there's none, an hour when the site didn't answer), and shares it between a
-chain's branches. A branch the map gives no website borrows its chain's, but
+chain's branches. It takes whatever icon the site has: a big one when there
+is one, else a small one (down to 32 pixels, which the app draws smaller,
+not blurred). When the site has none, or refuses automated visitors (as
+Derrimut 24:7's and World Gym's do), it takes **Google's copy of the site's
+icon** instead, the same one Google shows beside the site in its results
+(Google's favicon service at `t3.gstatic.com`, which also turns `.ico` and
+`.svg` icons into PNG). A white mark on a transparent background, which
+would vanish on the white plate, is put on a dark square instead; nothing
+else about an icon is changed. A branch the map gives no website borrows its chain's, but
 only when two or more branches in that country share the very same site: a
-CrossFit affiliate never shows another affiliate's icon. About 35 chains
+CrossFit affiliate never shows another affiliate's icon. About 50 chains
 whose branches the map often lists without a website (Club Lime, Revo,
-Goodlife, Fitstop, F45, Plus Fitness, Fernwood, 9Round, Anytime Fitness and
-others) have their official site written down in
+Goodlife, Fitstop, F45, Plus Fitness, Fernwood, 9Round, Anytime Fitness,
+Genesis, CorePlus, 12RND and others) have their official site written down in
 `packages/domain/src/chainSites.ts`, each checked by hand, some only in one
-country where another business elsewhere has a similar name. And 23
-Australian independents the map gives no website had theirs found by
+country where another business elsewhere has a similar name. And 168
+Australian gyms the map gives no website had theirs found by GymGO
+(`packages/au-data/src/websites.ts`, and three in Melbourne in
+`packages/melbourne-data/src/gyms.ts`): 23 by
 `packages/au-data/scripts/websites.py`, which tries the domains a gym of that
 name would own and keeps one only when the site's title names the gym and
-the page names its suburb (or street); every one was then read by hand
-(`packages/au-data/src/websites.ts`), and the gym page cites it as found by
-GymGO, not by the gym. Of the 3,009 real gyms in the bundled cities, 323 have
-a Commons logo and about 1,700 more have a website of their own or their
-chain's to take an icon from (some of those sites have no usable icon); the
-other 974 show the plain symbol, mostly independents with no website anyone
-could confirm. It only accepts real
-PNG, JPEG, WebP or GIF images at least 64 pixels square (never a white mark
-on a transparent background, which would vanish on the white plate), and it will only
+the page names its suburb (or street), and the rest by searching the web for
+each gym without one in Melbourne, Sydney and Brisbane. Every one was read
+by hand against the gym's name and suburb, and the gym page cites it as
+found by GymGO, not by the gym. (Perth, Adelaide, Canberra, the Gold Coast
+and Hobart haven't been searched yet.) Of the 3,006 real gyms in the bundled cities, 323 have
+a Commons logo and 1,905 more have a website of their own or their
+chain's to take an icon from (a few of those sites have no icon anywhere); the
+other 778 (212 of them in Australia) show the plain symbol, mostly
+independents with no website anyone could confirm. It only accepts real
+PNG, JPEG, WebP or GIF images, and it will only
 connect to public addresses, because website addresses come from
 OpenStreetMap, which anyone can edit. A gym without a website, or whose site
-has no usable icon (or refuses automated visitors), shows a plain symbol,
-never a made-up logo. To switch website icons off, start the server with
+has no icon anywhere (Google's copy included), shows a plain symbol, never
+a made-up logo. To switch website icons off, start the server with
 `GYMGO_SITE_ICONS=off`.
 
 The Commons logos are copied into the app (`apps/mobile/assets/logos/`), so the app
@@ -830,10 +854,21 @@ free and needs no account; its operators ask for fewer than 10,000 requests
 a day, and GymGO stays far under that: one request at a time, at most 500 a
 day, 30 an hour per address, and each tenth-of-a-degree tile (about 11 km)
 fetched at most once a month. Public Overpass servers are often slow or
-refuse a given network, so GymGO tries the main one, then two public
-mirrors (kumi.systems and VK's maps.mail.ru), giving each 30 seconds. To
+refuse a given network, so GymGO tries the main one, its second instance
+(lz4), then two public mirrors (kumi.systems and VK's maps.mail.ru), giving
+each 30 seconds. To
 use your own list instead, set
 `GYMGO_OVERPASS_URL=https://…/api/interpreter,https://…/api/interpreter`.
+
+A **country's gyms in one file** (for the app to keep; see Explore above)
+come from the same servers: `GET /api/country/AU/pack` builds it the first
+time it's asked for, one state or region at a time (gyms and place names in
+separate questions, so a busy server gets through them), then keeps it a
+month and serves it gzipped. At most six are built a day, one at a time; a
+failed build is tried again after an hour. Gyms bundled with the app are
+left out of it, and the ones in it are saved like an area search's, so each
+has its own page. Your own country's is free; another country's needs Pro,
+like searching an area there.
 Looking places up by name uses Photon's public server; set
 `GYMGO_GEOCODER_URL` to use another Photon server.
 

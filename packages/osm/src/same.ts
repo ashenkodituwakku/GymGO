@@ -24,11 +24,17 @@ export function sameGym(name: string, pos: [number, number], record: GymRecord):
 /** A name with only its letters and digits, for telling the same name written two ways. */
 const bare = (text: string) => text.toLowerCase().replaceAll('’', "'").replace(/[^a-z0-9]/g, '');
 
+/** A website as the same site however it's written: no scheme, "www.", query or trailing slash. */
+const site = (url: string | null | undefined) =>
+  url ? url.trim().toLowerCase().replace(/^[a-z]+:\/\//, '').replace(/^www\./, '').replace(/[?#].*$/, '').replace(/\/+$/, '') || null : null;
+
 /**
  * One gym mapped twice (a point and a building outline, say, or an
  * operator's address and the map's): the same element, the same name within
- * 150 metres (400 when one is an operator's address), or one name the start
- * of the other within 150. Stricter than
+ * 150 metres (400 when one is an operator's address), one name the start
+ * of the other within 150, or the same website within 50 (one gym under
+ * two names: "North Melbourne Boxing and fitness centre" and "North
+ * Melbourne boxing club", a few doors apart). Stricter than
  * `sameGym`, which lets any shared word do: two gyms in one building can
  * share a suburb's name.
  */
@@ -37,6 +43,8 @@ export function twins(a: GymRecord, b: GymRecord): boolean {
   if (refA && refA === b.location.externalRefs.openStreetMap) return true;
   const d = km([a.location.position.lat, a.location.position.lng], [b.location.position.lat, b.location.position.lng]);
   if (d > 0.4) return false;
+  const web = site(a.location.website);
+  if (web && d <= 0.05 && web === site(b.location.website)) return true;
   const [x, y] = [bare(a.location.name), bare(b.location.name)];
   if (x.length < 3 || y.length < 3) return false;
   // Identical names 150 m apart are one gym; further apart they can be two

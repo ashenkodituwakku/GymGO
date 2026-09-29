@@ -52,6 +52,18 @@ describe('one gym mapped twice', () => {
     expect(withoutTwins(records).map((record) => record.location.id)).toEqual(['snap-fitness-gaffney-street-melbourne', 'revo-fitness-southland', 'vivagym-barcelona']);
   });
 
+  it('keeps one of a gym mapped twice under two names, when both give the same website a few doors apart', () => {
+    const site = (record: GymRecord, website: string): GymRecord => ({ ...record, location: { ...record.location, website } });
+    const records = [
+      site(gym('north-melbourne-boxing-and-fitness-centre', 'North Melbourne Boxing and fitness centre', -37.791931, 144.93804, 'node/40'), 'http://www.boxing-fitness.com/'),
+      site(gym('north-melbourne-boxing-club', 'North Melbourne boxing club', -37.791945, 144.937788, 'node/41'), 'https://www.boxing-fitness.com'),
+      // A chain's one website, on two branches streets apart: both kept.
+      site(gym('jetts-a', 'Jetts Carlton', -37.8000, 144.9660, 'node/42'), 'https://jetts.com.au'),
+      site(gym('jetts-b', 'Jetts Fitzroy', -37.8020, 144.9790, 'node/43'), 'https://jetts.com.au/'),
+    ];
+    expect(withoutTwins(records).map((record) => record.location.id)).toEqual(['north-melbourne-boxing-and-fitness-centre', 'jetts-a', 'jetts-b']);
+  });
+
   it('never merges two gyms in one building, or two branches of a chain streets apart', () => {
     const records = [
       gym('f45-richmond', 'F45 Training Richmond', -37.8230, 145.0010, 'node/30'),

@@ -62,7 +62,8 @@ export default function Home() {
   const router = useRouter();
 
   const asOf = useMemo(() => new Date(), [filters, data.records]);
-  const outcome = useMemo(() => runSearch(filters, { records: data.records, ratings: data.ratings }, asOf), [filters, data.records, data.ratings, asOf]);
+  // Each gym once: not the map's own copy of one GymGO carries too.
+  const outcome = useMemo(() => runSearch(filters, { records: data.listed, ratings: data.ratings }, asOf), [filters, data.listed, data.ratings, asOf]);
   const byId = useMemo(() => resultsById(filters, data.records, asOf, data.ratings), [filters, data.records, asOf, data.ratings]);
 
   const nearby = locked ? [] : outcome.results.slice(0, 10);
@@ -217,7 +218,7 @@ export default function Home() {
         <Icon name="chevron" size={14} color={color.onBrandSoft} />
       </Pressy>
 
-      <HereNudge here={here} records={data.records} onOpen={(id) => router.push({ pathname: '/gym/[id]', params: { id } })} />
+      <HereNudge here={here} records={data.listed} onOpen={(id) => router.push({ pathname: '/gym/[id]', params: { id } })} />
       {log.status === 'ready' && log.sessions.length > 0 && (
         <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} onPress={() => router.push('/progress')} />
       )}

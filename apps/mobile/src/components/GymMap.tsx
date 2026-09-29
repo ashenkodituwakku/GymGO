@@ -25,13 +25,24 @@ const HIDE_BUSINESSES = [{ featureType: 'poi.business', stylers: [{ visibility: 
 
 /** Where an empty marker slot waits: far south in the sea, see-through. */
 const PARKED = { latitude: -84, longitude: -170 };
+/**
+ * Marker slots made with the map itself, before it's on screen, so Apple's
+ * map first asks for their pictures once they have them. More are added
+ * only when more is on screen than this.
+ */
+const POOL = 48;
 
 /**
  * One marker slot (see assignSlots in lib/cluster.ts): a gym's pin, a bubble,
- * or nothing. The slot's own view never goes away, so Apple's map always has
- * a picture for it. It re-snapshots its picture briefly after it changes,
- * then stops: tracking view changes forever is the usual cause of janky
- * custom markers; never tracking them leaves the picture blank.
+ * or nothing. It re-snapshots its picture briefly after it changes, then
+ * stops: tracking view changes forever is the usual cause of janky custom
+ * markers; never tracking them leaves the picture blank.
+ *
+ * Its own view is always there, whatever it shows (collapsable={false}, so
+ * React Native never folds it away as layout-only). react-native-maps draws
+ * Apple's red balloon for a marker that has no view of its own at the moment
+ * Apple's map asks for its picture, and keeps it: an empty slot did, and
+ * went on showing the balloon when a gym moved into it.
  */
 function SlotMarker({ item, onPin, onCluster }: { item: MapItem | null; onPin: (id: string) => void; onCluster: (item: Extract<MapItem, { kind: 'cluster' }>) => void }) {
   const [tracking, setTracking] = useState(true);
@@ -59,7 +70,7 @@ function SlotMarker({ item, onPin, onCluster }: { item: MapItem | null; onPin: (
       accessibilityLabel={!item ? undefined : item.kind === 'pin' ? item.pin.name : `${item.count} gyms here. Zoom in`}
     >
       {/* Keyed inside the slot's own view, so a new gym lands with its spring. */}
-      <View>
+      <View collapsable={false} style={styles.slot}>
         {item === null ? (
           <View style={styles.empty} />
         ) : item.kind === 'pin' ? (
@@ -92,7 +103,7 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     return mapItems(pins, zoomOf((360 / region.longitudeDelta) * width), boxOf(region), selectedId);
   }, [pins, region, width, selectedId]);
   // Markers are never taken off Apple's map, only moved and redrawn (see assignSlots).
-  const slotIds = useRef<Array<string | null>>([]);
+  const slotIds = useRef<Array<string | null>>(Array.from({ length: POOL }, () => null));
   const slots = useMemo(() => {
     const next = assignSlots(slotIds.current, items);
     slotIds.current = next.map((item) => item?.id ?? null);
@@ -190,5 +201,6 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
 });
 
 const styles = StyleSheet.create({
+  slot: { alignItems: 'center' },
   empty: { width: 1, height: 1 },
 });

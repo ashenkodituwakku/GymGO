@@ -12,6 +12,7 @@ import { BugReportQueue, MemberReportQueue, ModerationQueue, PhotoQueue } from '
 import { AppBadge, Wordmark } from '@/components/BrandMark';
 import { Icon } from '@/components/Icon';
 import { Pressy } from '@/components/motion';
+import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
 import { Group, Row, TILE, TabScreen } from '@/components/ios';
 import { PrimaryButton, Txt } from '@/components/ui';
@@ -263,43 +264,6 @@ export default function Profile() {
         </Txt>
       </View>
     </TabScreen>
-  );
-}
-
-/**
- * Signed in, but the server can't be reached (it's down, or the phone is on
- * the gym's patchy Wi-Fi). You're not signed out, so there's nothing to sign
- * in to: just say so, and offer to try again. The app also retries by itself.
- */
-function ServerAwayCard() {
-  const { account } = useApp();
-  const [trying, setTrying] = useState(false);
-  const [tried, setTried] = useState(false);
-  const retry = async () => {
-    setTrying(true);
-    await account.reconnect();
-    // Back: this card is gone. Still away: say so, so the tap wasn't ignored.
-    setTrying(false);
-    setTried(true);
-  };
-  return (
-    <View style={styles.signInCard}>
-      <View style={styles.signInHead}>
-        <AppBadge size={52} />
-        <View style={styles.flex}>
-          <Txt variant="title2">Can’t reach GymGO</Txt>
-          <Txt variant="subhead" color={color.labelSecondary}>
-            You’re still signed in. Your saved gyms on this device work, and the rest comes back when the server does.
-          </Txt>
-        </View>
-      </View>
-      <PrimaryButton label={trying ? 'Trying…' : 'Try again'} icon="refresh" tone="quiet" busy={trying} onPress={() => void retry()} />
-      {tried && !trying && (
-        <Txt variant="footnote" color={color.maybeInk}>
-          Still no answer. GymGO keeps trying by itself every 20 seconds.
-        </Txt>
-      )}
-    </View>
   );
 }
 

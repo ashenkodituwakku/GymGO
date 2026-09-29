@@ -20,6 +20,7 @@ import { haptic } from '@/lib/haptics';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
+import { ServerAwayCard } from '@/components/ServerAwayCard';
 
 const PROVIDER_NAME: Record<SignInProvider, string> = { google: 'Google', apple: 'Apple' };
 
@@ -59,6 +60,11 @@ export default function AccountScreen() {
     return (
       <View style={styles.page}>
         <Stack.Screen options={{ title: 'Account' }} />
+        {account.state === 'unreachable' && (
+          <View style={styles.content}>
+            <ServerAwayCard />
+          </View>
+        )}
       </View>
     );
   }

@@ -8,7 +8,8 @@
  *
  * for the city's circle (the first 15 cities) or its bounding box (the rest,
  * which the busy mirror answers more readily), from the Overpass API, with
- * the time it was fetched. Only what's inside the circle is kept, and a gym
+ * the time it was fetched. Only what's inside the circle, and in the US, is
+ * kept (Detroit's takes in Windsor, Canada), and a gym
  * two cities' circles share (Brooklyn and New York) is listed once, under
  * the first.
  *
@@ -19,6 +20,7 @@
  * Usage: pnpm --filter @gymgo/usa-data generate <dir with city json files>
  */
 
+import { iso1A2Code } from '@rapideditor/country-coder';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -41,6 +43,9 @@ import {
 } from '@gymgo/osm';
 import { US_CITIES } from '../src/cities';
 import type { GymRow, PlaceRow, UsCityId } from '../src/rows';
+
+/** Whether a [lat, lng] is in the United States. */
+const inUs = ([lat, lng]: [number, number]) => iso1A2Code([lng, lat]) === 'US';
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'data.ts');
 const PER_CITY = 40;
@@ -77,6 +82,8 @@ function main(src: string) {
       if (!found) continue;
       // Inside the circle (with the half-kilometre a large building's centre can stray), and not another city's.
       if (km(centre, found.pos) > city.radiusKm + 0.5 || taken.has(osmRef(el))) continue;
+      // In the US: Detroit's circle takes in Windsor, Ontario, across the river.
+      if (!inUs(found.pos)) continue;
       const key = `${found.name.toLowerCase()}|${round(found.pos[0], 4)}|${round(found.pos[1], 4)}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -126,7 +133,7 @@ function main(src: string) {
       for (const el of data.places) {
         const tags = el.tags ?? {};
         const pos = position(el);
-        if (!pos || ('wikidata' in tags) !== notable || km(centre, pos) > city.radiusKm + 0.5) continue;
+        if (!pos || ('wikidata' in tags) !== notable || km(centre, pos) > city.radiusKm + 0.5 || !inUs(pos)) continue;
         const name = (tags['name:en'] || tags.name!).replace(/^\w+: /, ''); // "18b: The Arts District"
         // Heritage listings, not names people search for.
         if (/historic district|thematic/i.test(name)) continue;

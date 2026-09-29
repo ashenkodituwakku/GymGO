@@ -1,7 +1,8 @@
 import { defaultQuery, haversineKm, isOpenAt, search, zonedTimeToInstant, type GymRecord } from '@gymgo/domain';
+import { iso1A2Code } from '@rapideditor/country-coder';
 import { describe, expect, it } from 'vitest';
 import { US_CITIES, US_GYMS, US_PLACES, usCity } from './index';
-import { GYM_ROWS } from './data';
+import { GYM_ROWS, PLACE_ROWS } from './data';
 
 const allFacts = (record: GymRecord) => [
   record.location.provenance,
@@ -80,6 +81,11 @@ describe('US gyms from OpenStreetMap', () => {
       expect(record.location.address.countryCode).toBe('US');
       for (const item of record.schedules) expect(item.timezone).toBe(city.timezone);
     }
+  });
+
+  it('keeps to the US: nothing across a border inside a city’s area (Windsor, Canada, is across the river from Detroit)', () => {
+    expect(GYM_ROWS.filter((row) => iso1A2Code([row.lng, row.lat]) !== 'US').map((row) => row.id)).toEqual([]);
+    expect(PLACE_ROWS.filter((row) => iso1A2Code([row.lng, row.lat]) !== 'US').map((row) => row.name)).toEqual([]);
   });
 
   it('keeps mapped opening hours sane', () => {

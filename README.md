@@ -446,7 +446,7 @@ is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
   Phoenix, Las Vegas, Washington DC, Baltimore, Philadelphia, Pittsburgh,
   Atlanta, Charlotte, Raleigh, Nashville, Orlando, Tampa, New Orleans,
   Minneapolis, Detroit, Cleveland, Columbus, Indianapolis, Kansas City,
-  St. Louis, Sacramento, San Diego and Honolulu, with 1,055 real gyms between
+  St. Louis, Sacramento, San Diego and Honolulu, with 1,044 real gyms between
   them. Search a city, a neighborhood, a state ("Texas", "TX") or a ZIP code
   ("10001"). These are **map-only**: names, addresses, phone numbers, websites and sometimes
   opening hours, from OpenStreetMap. There are no prices, guest hours or
@@ -651,7 +651,7 @@ The top of a gym's page (and its card on Home) shows, in this order:
    not a picture that page merely repeats from the site's home page, nor
    one that another branch's page shows too: both are the chain's stock
    picture, not this branch. So it is always the right gym, or nothing.
-   1,568 of the 3,006 real gyms have such a site. These photos belong to
+   1,566 of the 2,995 real gyms have such a site. These photos belong to
    the gyms; the owner chose to show them.
 3. If there are none, and the owner has set up the optional Google key
    (below), **Google's photos** of the place, each credited to whoever took
@@ -796,10 +796,10 @@ table of chains, with each one's site per country (`CHAINS` in
 `packages/domain/src/websites.ts`: about 85, among them Jetts, Zap, Orangetheory,
 Planet Fitness, PureGym, Basic-Fit and US chains such as NYSC, Youfit and
 Chuze), is asked before `chainSites.ts`, matching the brand's Wikidata item
-as the map tags it, the brand, or the name. Of the 3,006 real gyms in the
-bundled cities, 323 have a Commons logo and 2,182 more have a website of
+as the map tags it, the brand, or the name. Of the 2,995 real gyms in the
+bundled cities, 322 have a Commons logo and 2,176 more have a website of
 their own or their chain's to take an icon from (a few of those sites have
-no icon anywhere); the other 501 (107 of them in Australia, 197 in the US)
+no icon anywhere); the other 497 (107 of them in Australia, 193 in the US)
 show the plain symbol, mostly independents with no website anyone could
 confirm. It only accepts real
 PNG, JPEG, WebP or GIF images, and it will only
@@ -1132,7 +1132,7 @@ packages/domain/     Framework-free rules. No React, no Next, no I/O.
                      here, so a pin's colour and a row's verdict can't drift.
 packages/melbourne-data/  23 real inner-Melbourne gyms, every fact linked to
                      where it was read (gym websites, OpenStreetMap).
-packages/usa-data/   1,055 real gyms in 40 US cities, map-only, from
+packages/usa-data/   1,044 real gyms in 40 US cities, map-only, from
                      OpenStreetMap. scripts/generate.ts rebuilds it.
 packages/au-data/    1,256 more Australian gyms the same way (Sydney,
                      Brisbane, Perth, Adelaide, Canberra, Gold Coast,
@@ -1191,7 +1191,7 @@ supplied by or agreed with the gyms, and none of them has been contacted.
 Prices and hours count as current for 30 days after they were checked. After
 that the app flags them as due for a recheck.
 
-The 1,055 US gyms are real places on OpenStreetMap, fetched on 24 and 25
+The 1,044 US gyms are real places on OpenStreetMap, fetched on 24 and 25
 September 2026 (© OpenStreetMap contributors, ODbL). The script keeps gyms and fitness
 studios you can walk into and drops what the map marks private, gyms inside
 hotels, apartment blocks, offices and campuses, generic "Fitness Center"

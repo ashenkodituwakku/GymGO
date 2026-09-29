@@ -222,8 +222,8 @@ describe('websites found for map gyms that list none', () => {
     const found = AU_GYMS.filter((record) => record.location.provenance.sources.some((source) => source.sourceType === 'independent_check'));
     expect(found.length).toBeGreaterThanOrEqual(20);
     for (const record of found) {
-      // A few small gyms only have a plain http site.
-      expect(record.location.website).toMatch(/^https?:\/\/[a-z0-9.-]+\/$/);
+      // A few small gyms only have a plain http site; a branch of a small chain has its own page.
+      expect(record.location.website).toMatch(/^https?:\/\/[a-z0-9.-]+\/\S*$/);
       const row = GYM_ROWS.find((item) => item.id === record.location.id)!;
       expect(row.website).toBeUndefined();
     }

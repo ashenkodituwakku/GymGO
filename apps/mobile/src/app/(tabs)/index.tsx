@@ -25,7 +25,7 @@ import { lookupLine, noGymsLine, searchPrompt, timeLabel, visitWhen } from '@/li
 import { countryInSentence, countryName } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityNear, cityPlace, localBudget, moneyLabel, tracksPrices, worldCitiesIn, type AppPlace, type City, type WorldCity } from '@/lib/places';
-import { atPlace, atWorldCity, moveTo, nearLabel, nextVisitAt, runSearch, visitIsLater, type Filters } from '@/lib/query';
+import { YOUR_LOCATION, atPlace, atWorldCity, moveTo, nearLabel, nextVisitAt, runSearch, visitIsLater, type Filters } from '@/lib/query';
 import { resultsById } from '@/lib/results';
 import { PAGE_COLUMN, color, dropShadow, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -52,7 +52,7 @@ const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
 
 export default function Home() {
   usePageTitle(null);
-  const { data, account, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady, lookup, retryLookup, here } = useApp();
+  const { data, account, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady, lookup, searchHere, here } = useApp();
   const active = useActiveSession();
   // Your training log, shared with Progress; the week strip shows once there's something in it.
   const log = useTrainingLog(account.token);
@@ -266,6 +266,28 @@ export default function Home() {
               <GymCard key={result.record.location.id} result={result} />
             ))}
           </Carousel>
+        ) : lookup?.state === 'ready' ? (
+          // Nothing built in here, and nothing is read from the map until asked.
+          <View style={styles.lookFailed}>
+            <Txt variant="subhead" color={color.labelSecondary}>
+              {lookupLine('ready', lookup.placeName)}
+            </Txt>
+            <Pressable
+              onPress={() => {
+                haptic.tap();
+                searchHere();
+              }}
+              accessibilityRole="button"
+              // 36 points tall, like the chips beside it; the slop makes it 44 to a finger.
+              hitSlop={4}
+              style={({ pressed }) => [styles.suburb, styles.retry, styles.searchHere, pressed && { opacity: 0.7 }]}
+            >
+              <Icon name="search" size={15} color={color.brand} />
+              <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                Search this area
+              </Txt>
+            </Pressable>
+          </View>
         ) : lookup?.state === 'searching' ? (
           <View style={styles.looking} aria-live="polite">
             <ActivityIndicator size="small" color={color.brand} />
@@ -281,10 +303,11 @@ export default function Home() {
             <Pressable
               onPress={() => {
                 haptic.tap();
-                retryLookup();
+                searchHere();
               }}
               accessibilityRole="button"
-              accessibilityLabel={`Try looking around ${lookup.placeName} again`}
+              accessibilityLabel={`Try looking around ${lookup.placeName === YOUR_LOCATION ? 'you' : lookup.placeName} again`}
+              hitSlop={4}
               style={({ pressed }) => [styles.suburb, styles.retry, pressed && { opacity: 0.7 }]}
             >
               <Txt variant="subhead" color={color.brand} style={face('semibold')}>
@@ -568,6 +591,7 @@ const styles = themed(() => StyleSheet.create({
   looking: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   lookFailed: { gap: space[3], alignItems: 'flex-start' },
   retry: { backgroundColor: color.brandTint, ...dropShadow(0, 0, 0, 0) },
+  searchHere: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   cityChip: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   moreChip: { backgroundColor: color.brandTint, ...dropShadow(0, 0, 0, 0) },
   suburbs: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },

@@ -6,7 +6,7 @@
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { Platform, Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 import { serverOfflineLine } from '@/lib/copy';
 import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE } from '@/components/motion';
@@ -20,7 +20,7 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { NO_WEB_OUTLINE, color, dropShadow, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
-import { useScreenBottom } from '@/lib/layout';
+import { PageScroll } from '@/components/PageScroll';
 
 type Mode = 'sign_in' | 'create';
 
@@ -43,7 +43,6 @@ export default function SignInScreen() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(params.mode === 'create' ? 'create' : 'sign_in');
   usePageTitle(mode === 'create' ? 'Create an account' : 'Sign in');
-  const screenBottom = useScreenBottom();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -163,12 +162,11 @@ export default function SignInScreen() {
   };
 
   return (
-    <ScrollView
+    <PageScroll
       style={styles.page}
-      contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]}
+      contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets
-      contentInsetAdjustmentBehavior="automatic"
     >
       <Stack.Screen options={{ title: '' }} />
       <Animated.View style={styles.hero}>
@@ -306,7 +304,7 @@ export default function SignInScreen() {
         Your account lives on the GymGO server on your own computer. Passwords are stored only as a salted hash. With Apple
         or Google, GymGO gets your name and email from them, never your password. GymGO sends no emails.
       </Txt>
-    </ScrollView>
+    </PageScroll>
   );
 }
 

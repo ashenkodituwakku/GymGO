@@ -46,6 +46,7 @@
  *   DELETE /api/gyms/:gymId/status        take back your report
  *   GET    /api/gyms/:gymId/google        live Google Maps details (only with the owner's key)
  *   GET    /api/gyms/:gymId/icon          the icon from the gym's own website, or its chain's (PNG/JPEG/WebP/GIF), or 404
+ *   GET    /api/gyms/:gymId/photo         the photo the gym's own website shares (JPEG/PNG/WebP), or 404
  *   GET    /api/billing/plans             GymGO Pro's prices, and whether it's on sale
  *   GET    /api/billing                   your plan (Free or Pro) and subscription
  *   POST   /api/billing/checkout          { interval, currency, returnUrl } -> { url } of Stripe Checkout
@@ -119,7 +120,7 @@ import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type Strip
 import { AreaError, AreaSearch, parseBox, whereIs } from './area';
 import { CountryPacks } from './countryPack';
 import { PlaceError, PlaceSearch } from './places';
-import { SiteIcons, chainWebsites, type SafeGet } from './siteicons';
+import { SiteIcons, SitePhotos, chainWebsites, ownPhotoSites, type SafeGet } from './siteicons';
 import { allGyms, gymCountry, gymExists, gymIsDemo, gymRecord, type Db } from './db';
 import { GoogleError, GooglePlaces } from './google';
 import { MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
@@ -445,8 +446,13 @@ export function createApp(options: AppOptions) {
   // Website icons not yet kept: 300 per address per hour (a results list asks for about 40).
   const iconLimiter = new AttemptLimiter(300, 60 * 60_000);
   const siteIcons = new SiteIcons(db, { get: options.siteIcons?.get, now });
+  const sitePhotos = new SitePhotos(db, { get: options.siteIcons?.get, now });
+  // Website photos not yet kept: fewer than icons, as a page shows one.
+  const sitePhotoLimiter = new AttemptLimiter(120, 60 * 60_000);
   // A chain's shared website, for branches the map gives none (worked out once, from the bundled gyms).
   let chainSite: ((record: GymRecord) => string | null) | null = null;
+  // The site a gym's photo may come from: its very own, never one other gyms share.
+  let photoSite: ((record: GymRecord) => string | null) | null = null;
   // New place questions (not already answered): 60 per address per hour.
   const placeLimiter = new AttemptLimiter(60, 60 * 60_000);
   const places = new PlaceSearch(db, { endpoint: options.places?.endpoint, fetchImpl: options.places?.fetchImpl, now });
@@ -1482,6 +1488,34 @@ export function createApp(options: AppOptions) {
       res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
       res.setHeader('X-Icon-Source', encodeURI(icon.source));
       res.end(icon.bytes);
+      return;
+    }
+
+    // --- A photo of the gym, from its own website ------------------------------
+    if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'photo' && parts.length === 4) {
+      const record = gymRecord(db, decodeURIComponent(parts[2]!));
+      if (!record) throw new HttpError(404, 'No gym with that id.');
+      if (options.siteIcons?.enabled === false) throw new HttpError(404, 'Website pictures are switched off.', 'off');
+      photoSite ??= ownPhotoSites(allGyms(db));
+      const website = photoSite(record);
+      if (!website) {
+        return send(res, 404, { error: 'This gym has no website of its own to take a photo from.', code: 'none' }, 'public, max-age=86400');
+      }
+      let photo = sitePhotos.cached(website);
+      if (photo === undefined) {
+        if (!sitePhotoLimiter.allow(`${req.socket.remoteAddress}`, now().getTime())) throw new HttpError(429, 'Too many photos at once. Try again soon.');
+        photo = await sitePhotos.photo(website);
+      }
+      if (!photo) return send(res, 404, { error: 'The gym’s website has no photo GymGO can show.', code: 'none' }, 'public, max-age=3600');
+      res.statusCode = 200;
+      res.setHeader('Content-Type', photo.mime);
+      res.setHeader('Content-Length', String(photo.bytes.length));
+      res.setHeader('Cache-Control', 'public, max-age=604800');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+      res.setHeader('X-Photo-Source', encodeURI(website));
+      res.setHeader('Access-Control-Expose-Headers', 'X-Photo-Source, X-Icon-Source');
+      res.end(photo.bytes);
       return;
     }
 

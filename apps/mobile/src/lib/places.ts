@@ -326,7 +326,7 @@ export const cityAt = (point: LatLng): City => cityNear(point) ?? nearestCity(po
 /**
  * One of a country's biggest cities that GymGO has no gyms built in for
  * (Osaka, Toronto, São Paulo): somewhere to go. Its gyms are read from
- * OpenStreetMap when you get there (see wantsLookup in query.ts).
+ * OpenStreetMap when you tap Search this area there (see wantsLookup in query.ts).
  */
 export interface WorldCity {
   name: string;
@@ -339,6 +339,26 @@ export interface WorldCity {
 export const WORLD_CITIES: WorldCity[] = WORLD_CITY_ROWS.map(([name, country, lat, lng, timezone]) => ({ name, country, centre: { lat, lng }, timezone }));
 
 const REAL_CITIES = CITY_LIST.filter((city) => !city.demo);
+
+/**
+ * The country and clock of a spot outside GymGO's built-in cities, worked
+ * out on the phone, before anything is searched there. The phone's own
+ * clock is right where you are, so the country is the nearest big city's on
+ * that same clock (a border can be closer than the city, but it rarely
+ * shares the clock); with no such city, the country you chose. Without the
+ * phone's clock, the nearest big city within 150 km. Search this area then
+ * hears the map's own answer.
+ */
+export function whereaboutsAt(point: LatLng, home: string, deviceZone: string | null): { countryCode: string; timezone: string | null } {
+  let best: { city: WorldCity; km: number } | null = null;
+  for (const city of WORLD_CITIES) {
+    if (deviceZone && city.timezone !== deviceZone) continue;
+    const km = haversineKm(point, city.centre);
+    if (!best || km < best.km) best = { city, km };
+  }
+  if (deviceZone) return { countryCode: best && best.km <= 1000 ? best.city.country : home, timezone: deviceZone };
+  return best && best.km <= 150 ? { countryCode: best.city.country, timezone: best.city.timezone } : { countryCode: home, timezone: null };
+}
 
 /** A city GymGO carries already (New York, Paris): it has its own chip and its own gyms. */
 const carried = (city: WorldCity) => {

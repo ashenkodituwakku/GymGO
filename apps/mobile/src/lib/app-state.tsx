@@ -14,10 +14,10 @@ import { AppState as NativeAppState } from 'react-native';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { LIMITS, haversineKm } from '@gymgo/domain';
 import { ApiError, problemText } from './api';
-import { FOCUS_COUNTRY, canSearchIn, openingPlace } from './country';
+import { FOCUS_COUNTRY, canSearchIn, deviceTimeZone, openingPlace } from './country';
 import { setHapticsEnabled } from './haptics';
 import { currentFix, type Fix } from './location';
-import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, type City } from './places';
+import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, whereaboutsAt, type City } from './places';
 import { locatedNotice } from './copy';
 import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, reachFor, refreshVisit, tileKey, tilesAround, wantsLookup, type Filters } from './query';
 import { useAccount } from './useAccount';
@@ -43,11 +43,11 @@ export interface ExploreRequest {
 /** What finding you produced. */
 export type Located =
   | { kind: 'here'; fix: Fix; city: City }
-  /** Outside the cities GymGO carries, anywhere in the world: the map around you was searched. */
-  | { kind: 'area'; fix: Fix; gyms: number; radiusKm: number; countryCode: string }
-  /** Outside every city GymGO covers: the search went to the nearest one. */
+  /** Outside the cities GymGO carries, anywhere in the world: the search is on you, and the map's gyms wait for Search this area. */
+  | { kind: 'area'; fix: Fix }
+  /** Outside every city GymGO covers, with no country chosen: the search went to the nearest one. */
   | { kind: 'nearest'; fix: Fix; city: City; km: number }
-  /** The map around you couldn't be searched: the search went to your country's opening place. */
+  /** Couldn't tell what time it is where you are: the search went to your country's opening place. */
   | { kind: 'home'; fix: Fix; placeName: string }
   /** In another country than the one you chose, without Pro: the search stays at home. */
   | { kind: 'abroad'; fix: Fix; countryCode: string; home: string }
@@ -82,13 +82,14 @@ const MAX_RECENTS = 10;
 
 /**
  * Reading the map around a place GymGO carries no city for (a country's
- * capital, a city picked on Home), so it doesn't open on an empty map.
+ * capital, a city picked on Home, where you are). Only ever when you tap
+ * Search this area: until then it's `ready`, and the lists offer the button.
  */
 export interface Lookup {
   /** The map tiles read: see tileKey(). */
   key: string;
   placeName: string;
-  state: 'searching' | 'done' | 'failed';
+  state: 'ready' | 'searching' | 'done' | 'failed';
   /** Gyms within reach of the place, once done. */
   gyms: number;
   /** Why it failed, in plain words. */
@@ -127,10 +128,10 @@ type AppState = {
   here: Fix | null;
   /** Find you and move the search there (or to the nearest city covered). */
   locate: (ask: boolean) => Promise<Located>;
-  /** The map being read around where the search is, if it is (or was, and failed). */
+  /** Where the search is, if it has no gyms built in: waiting for Search this area, being read, or read. */
   lookup: Lookup | null;
-  /** Read the map around the search again, after a failure. */
-  retryLookup: () => void;
+  /** Search this area: read the map around the search for gyms (again, after a failure). */
+  searchHere: () => void;
   /** Your country's gyms kept on this device: where that's at, and a way to ask again. */
   pack: ReturnType<typeof useCountryPack>;
 };
@@ -269,38 +270,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [ensureGyms, accountApi.saved, recents, compare, data.status]);
 
   // What finding you needs to know, read when it runs rather than making it anew each change.
-  const reachRef = useRef({ home: prefs.country, pro: billing.isPro, token: accountApi.token });
-  reachRef.current = { home: prefs.country, pro: billing.isPro, token: accountApi.token };
+  const reachRef = useRef({ home: prefs.country, pro: billing.isPro });
+  reachRef.current = { home: prefs.country, pro: billing.isPro };
 
-  const { searchArea } = data;
   const findMe = useCallback(async (ask: boolean, onlyIfUntouched: boolean): Promise<Located> => {
     const fix = await currentFix(ask);
     if (fix === 'denied' || fix === 'unavailable') return { kind: fix };
     setHere(fix);
-    const { home, pro, token } = reachRef.current;
+    const { home, pro } = reachRef.current;
     const city = cityNear(fix.position);
     // In a built-in city in another country, without Pro: stay at home.
     if (city && home && !canSearchIn(city.country, home, pro)) return { kind: 'abroad', fix, countryCode: city.country, home };
-    // Outside the cities GymGO carries: search the map around you, anywhere
-    // in the world, and only failing that (no server, or out at sea), go to
-    // the nearest city it carries.
-    let around: { timezone: string; countryCode: string; gyms: number; radiusKm: number } | null = null;
+    // Outside the cities GymGO carries, anywhere in the world: the search
+    // centres on you, and the map's gyms wait for Search this area. Nothing
+    // is asked of the server first: the country and clock are the phone's
+    // own (see whereaboutsAt), and the search corrects them.
+    let around: { timezone: string; countryCode: string } | null = null;
     if (!city && home) {
-      // Whole map tiles around you, never your position: see tilesAround().
-      const box = tilesAround(fix.position);
-      try {
-        const answer = await searchArea(box, home, token);
-        if (answer.where) {
-          // Distances are worked out here, on the device, from your real position.
-          const reach = reachFor(answer.gyms.map((gym) => haversineKm(fix.position, gym.location.position)));
-          around = { ...answer.where, gyms: reach.count, radiusKm: reach.radiusKm };
-        }
-      } catch (error) {
-        // Abroad without Pro: say so, and stay at home. Unreachable: see below.
-        if (error instanceof ApiError && error.code === 'pro_required' && typeof error.detail.countryCode === 'string') {
-          return { kind: 'abroad', fix, countryCode: error.detail.countryCode, home };
-        }
-      }
+      const guess = whereaboutsAt(fix.position, home, deviceTimeZone());
+      if (!canSearchIn(guess.countryCode, home, pro)) return { kind: 'abroad', fix, countryCode: guess.countryCode, home };
+      const timezone = guess.timezone ?? openingPlace(guess.countryCode)?.timezone ?? openingPlace(home)?.timezone;
+      if (timezone) around = { timezone, countryCode: guess.countryCode };
     }
     // Failing that: your country's opening place, or (no country chosen) the nearest built-in city.
     const fallback = city || around || !home ? null : openingPlace(home);
@@ -308,62 +298,82 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const where = city
       ? { centre: fix.position, placeName: YOUR_LOCATION, timezone: city.timezone, countryCode: city.country }
       : around
-        ? { centre: fix.position, placeName: YOUR_LOCATION, timezone: around.timezone, countryCode: around.countryCode }
+        ? { centre: fix.position, placeName: YOUR_LOCATION, ...around }
         : (fallback ?? atPlace(cityPlace(nearest!.city)));
-    const reach = (next: Filters) => (around ? { ...next, radiusKm: around.radiusKm } : next);
     setFilters((current) => {
-      if (!onlyIfUntouched) return reach(moveTo(current, where));
+      if (!onlyIfUntouched) return moveTo(current, where);
       // At start-up, never undo a place someone already picked; and the
       // visit time, never chosen yet, becomes the next hour on local time.
       if (current.placeName !== DEFAULT_PLACE.name) return current;
       const visit = defaultVisit(new Date(), where.timezone);
-      return reach({ ...current, ...where, visitDate: visit.date, visitMinuteOfDay: visit.minute });
+      return { ...current, ...where, visitDate: visit.date, visitMinuteOfDay: visit.minute };
     });
     if (city) return { kind: 'here', fix, city };
-    if (around) return { kind: 'area', fix, gyms: around.gyms, radiusKm: around.radiusKm, countryCode: around.countryCode };
+    if (around) return { kind: 'area', fix };
     if (fallback) return { kind: 'home', fix, placeName: fallback.placeName };
     return { kind: 'nearest', fix, city: nearest!.city, km: nearest!.km };
-  }, [searchArea]);
+  }, []);
 
   const locate = useCallback((ask: boolean) => findMe(ask, false), [findMe]);
 
-  // Somewhere GymGO carries no city for (Tokyo, when you choose Japan): read
-  // the map there, as "Near you" does, instead of opening on an empty map.
-  // Each block of tiles once a session; the server keeps them for a month.
+  // Somewhere GymGO carries no city for (Tokyo, when you choose Japan, or
+  // wherever you are): nothing is read from the map until you tap Search
+  // this area, so moving around never loads gyms by itself. Until then the
+  // lists offer the button; the server keeps what it reads for a month.
   const [lookup, setLookup] = useState<Lookup | null>(null);
-  const [lookupRetries, setLookupRetries] = useState(0);
-  const lookedUp = useRef(new Set<string>());
-  useEffect(() => {
-    if (!prefsReady || prefs.demo || !prefs.country) return;
-    if (!canSearchIn(filters.countryCode, prefs.country, billing.isPro)) return;
-    const real = data.records.filter((record) => !record.location.isDemoData);
-    if (!wantsLookup(filters, real, cityNear(filters.centre) !== null)) return;
-    const box = tilesAround(filters.centre);
-    const key = tileKey(box);
-    if (lookedUp.current.has(key)) return;
-    lookedUp.current.add(key);
-    const { centre, placeName } = filters;
+  const realRecords = useMemo(() => data.records.filter((record) => !record.location.isDemoData), [data.records]);
+  const lookupKey = tileKey(tilesAround(filters.centre));
+  const unsearched =
+    prefsReady &&
+    !prefs.demo &&
+    prefs.country !== null &&
+    canSearchIn(filters.countryCode, prefs.country, billing.isPro) &&
+    wantsLookup(filters, realRecords, cityNear(filters.centre) !== null);
+  // Only the look-up for where the search is now counts.
+  const lookupHere = useMemo<Lookup | null>(() => {
+    if (filters.bbox) return null;
+    if (lookup && lookup.key === lookupKey) return { ...lookup, placeName: filters.placeName };
+    return unsearched ? { key: lookupKey, placeName: filters.placeName, state: 'ready', gyms: 0 } : null;
+  }, [filters.bbox, filters.placeName, lookup, lookupKey, unsearched]);
+
+  const { searchArea } = data;
+  const latestSearch = useRef({ filters, home: prefs.country, token: accountApi.token, lookup: lookupHere });
+  latestSearch.current = { filters, home: prefs.country, token: accountApi.token, lookup: lookupHere };
+  const searchHere = useCallback(() => {
+    const { filters: search, home, token, lookup: current } = latestSearch.current;
+    if (!home || !current || current.state === 'searching') return;
+    const { key } = current;
+    const { centre, placeName } = search;
     setLookup({ key, placeName, state: 'searching', gyms: 0 });
-    searchArea(box, prefs.country, accountApi.token)
+    // Whole map tiles around the search, never your exact position: see tilesAround().
+    searchArea(tilesAround(centre), home, token)
       .then((answer) => {
         const reach = reachFor(answer.gyms.map((gym) => haversineKm(centre, gym.location.position)));
         setLookup({ key, placeName, state: 'done', gyms: reach.count });
-        // Nothing within 5 km but something within 10: widen, as "Near you" does.
-        setFilters((current) => (current.centre === centre && current.radiusKm < reach.radiusKm ? { ...current, radiusKm: reach.radiusKm } : current));
+        setFilters((latest) => {
+          if (latest.centre !== centre) return latest;
+          // Around you, the map's own country and clock replace the phone's guess.
+          const where = answer.where;
+          const placed =
+            where && latest.placeName === YOUR_LOCATION && (where.countryCode !== latest.countryCode || where.timezone !== latest.timezone)
+              ? moveTo(latest, { centre, placeName: YOUR_LOCATION, ...where })
+              : latest;
+          // Nothing within 5 km but something within 10: widen, as "Near you" does.
+          return placed.radiusKm < reach.radiusKm ? { ...placed, radiusKm: reach.radiusKm } : placed;
+        });
       })
       .catch((error: unknown) => {
+        // Around you, abroad without Pro: the search takes that country, and the lists say what Pro adds.
+        if (error instanceof ApiError && error.code === 'pro_required' && typeof error.detail.countryCode === 'string') {
+          const countryCode = error.detail.countryCode;
+          setLookup({ key, placeName, state: 'done', gyms: 0 });
+          setFilters((latest) => (latest.centre === centre ? { ...latest, countryCode, budgetMinor: null } : latest));
+          return;
+        }
         // Tried again only when asked (Try again), so a map service that's down isn't asked on every change.
         setLookup({ key, placeName, state: 'failed', gyms: 0, problem: problemText(error, 'The map’s gym list didn’t answer.') });
       });
-  }, [prefsReady, prefs.demo, prefs.country, billing.isPro, filters, data.records, searchArea, accountApi.token, lookupRetries]);
-  const lastLookup = useRef(lookup);
-  lastLookup.current = lookup;
-  const retryLookup = useCallback(() => {
-    if (lastLookup.current?.state === 'failed') lookedUp.current.delete(lastLookup.current.key);
-    setLookupRetries((count) => count + 1);
-  }, []);
-  // Only the look-up for where the search is now counts.
-  const lookupHere = lookup && !filters.bbox && lookup.key === tileKey(tilesAround(filters.centre)) ? lookup : null;
+  }, [searchArea]);
 
   // Open where you are. The first launch asks once; after that, only if
   // you've allowed it. The fix itself is never stored. It waits for your
@@ -485,10 +495,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       here,
       locate,
       lookup: lookupHere,
-      retryLookup,
+      searchHere,
       pack,
     }),
-    [visibleData, account, filters, recents, addRecent, clearRecents, compare, toggleCompare, clearCompare, exploreRequest, requestExplore, prefs, setPref, billing, openPro, mayExplore, chooseCountry, prefsReady, here, locate, lookupHere, retryLookup, pack],
+    [visibleData, account, filters, recents, addRecent, clearRecents, compare, toggleCompare, clearCompare, exploreRequest, requestExplore, prefs, setPref, billing, openPro, mayExplore, chooseCountry, prefsReady, here, locate, lookupHere, searchHere, pack],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

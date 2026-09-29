@@ -77,6 +77,16 @@ export function deviceCountry(): string | null {
   return countryFromLocales(locales);
 }
 
+/** The phone's own time zone ("Asia/Tokyo"), or null when it can't say. */
+export function deviceTimeZone(): string | null {
+  try {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return typeof zone === 'string' && zone.includes('/') && !zone.startsWith('Etc/') ? zone : null;
+  } catch {
+    return null;
+  }
+}
+
 /** GymGO's main market: listed first, and suggested when the device doesn't say where it is. */
 export const FOCUS_COUNTRY = 'US';
 

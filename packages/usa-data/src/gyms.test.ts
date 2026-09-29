@@ -40,6 +40,11 @@ describe('US gyms from OpenStreetMap', () => {
         }
         expect(provenance.status).toBe('community_reported');
         for (const source of provenance.sources) {
+          if (source.sourceType === 'independent_check') {
+            // A website GymGO found for a gym the map lists without one, cited as that.
+            expect(source.evidenceRef).toBe(record.location.website);
+            continue;
+          }
           expect(source.evidenceRef).toMatch(/^https:\/\/www\.openstreetmap\.org\/(node|way|relation)\/\d+$/);
           expect(Number.isNaN(Date.parse(source.checkedAt))).toBe(false);
         }

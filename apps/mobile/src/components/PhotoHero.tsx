@@ -1,23 +1,67 @@
 /**
  * A gym's photos, across the top of its card.
  *
- * Every photo here was taken by a GymGO member, checked by a moderator, and
- * is credited to them. None is borrowed from the gym's website or stands in
- * for a different gym. When there are none yet, the page can pass a labelled
- * fallback (Google's own photos of the place, or Street View outside it);
- * otherwise the card says "No photo supplied" and invites the first one.
+ * Members' photos come first: taken by a GymGO member, checked by a
+ * moderator, and credited to them. When there are none yet, the photo the
+ * gym's own website shares (fetched by the GymGO server, and only from a
+ * site that is that gym's alone, so it's never another branch), credited to
+ * the site. Failing both, the page can pass a labelled fallback (Google's own
+ * photos of the place, or Street View outside it); otherwise the card says
+ * "No photo supplied" and invites the first one.
  */
 
 import * as ImagePicker from 'expo-image-picker';
 import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { api, ApiError, OfflineError, photoUrl, type GymPhoto } from '@/lib/api';
+import { api, apiBase, ApiError, OfflineError, photoUrl, type GymPhoto } from '@/lib/api';
 import { EMPTY } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { PrimaryButton, Txt } from './ui';
+
+/** Whether each gym's website photo loaded this session: its size, or null for none. */
+const sitePhotos = new Map<string, { width: number; height: number } | null>();
+
+/** The photo the gym's own website shares, once it has loaded; null when there's none (or no server). */
+export function useWebsitePhoto(gymId: string, wanted: boolean): string | null {
+  const base = apiBase();
+  const uri = wanted && base ? `${base}/api/gyms/${encodeURIComponent(gymId)}/photo` : null;
+  const [ok, setOk] = useState(() => (uri ? Boolean(sitePhotos.get(gymId)) : false));
+  useEffect(() => {
+    if (!uri) return;
+    if (sitePhotos.has(gymId)) {
+      setOk(Boolean(sitePhotos.get(gymId)));
+      return;
+    }
+    let live = true;
+    Image.getSize(
+      uri,
+      (width, height) => {
+        sitePhotos.set(gymId, { width, height });
+        if (live) setOk(true);
+      },
+      () => {
+        sitePhotos.set(gymId, null);
+        if (live) setOk(false);
+      },
+    );
+    return () => {
+      live = false;
+    };
+  }, [uri, gymId]);
+  return uri && ok ? uri : null;
+}
+
+/** "franksgymperth.com", for the credit. */
+const hostOf = (website: string | null | undefined) => {
+  try {
+    return website ? new URL(website).hostname.replace(/^www\./, '') : null;
+  } catch {
+    return null;
+  }
+};
 
 type Step = { kind: 'idle' } | { kind: 'confirm'; uri: string; data: string } | { kind: 'sending' } | { kind: 'done'; text: string };
 
@@ -28,7 +72,10 @@ export function PhotoHero({
   onSignIn,
   width: panelWidth,
   fallback,
+  website,
 }: {
+  /** The gym's website, to credit its photo to. */
+  website?: string | null;
   /** Shown instead of "No photo supplied yet" when nobody has shared one (e.g. Street View). */
   fallback?: ReactNode;
   gymId: string;
@@ -127,8 +174,9 @@ export function PhotoHero({
   }
 
   const list = photos ?? [];
+  const sitePhoto = useWebsitePhoto(gymId, !isDemo && photos !== null && list.length === 0);
   // With nothing to show, the "No photo supplied" line carries its own add button.
-  const emptyRow = list.length === 0 && !(fallback && !isDemo && photos !== null);
+  const emptyRow = list.length === 0 && !sitePhoto && !(fallback && !isDemo && photos !== null);
   return (
     <View style={styles.wrap}>
       {list.length > 0 ? (
@@ -148,6 +196,16 @@ export function PhotoHero({
             );
           })}
         </ScrollView>
+      ) : sitePhoto ? (
+        <View style={{ width }}>
+          <Image source={{ uri: sitePhoto }} style={[styles.photo, { width }]} resizeMode="cover" accessibilityLabel="Photo from the gym’s own website" />
+          <View style={styles.credit}>
+            <Icon name="website" size={11} color={color.onBrand} />
+            <Txt variant="caption" color={color.onBrand}>
+              {hostOf(website) ? `From ${hostOf(website)}` : 'From the gym’s website'}
+            </Txt>
+          </View>
+        </View>
       ) : fallback && !isDemo && photos !== null ? (
         <View style={[styles.fallback, { width }]}>
           {fallback}

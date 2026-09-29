@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { accessLine, accessShort, checkedAgo, filtersButtonLabel, gymDistanceLine, locatedNotice, lookupLine, noGymsLine, serverOfflineLine, statusSummaryLine, ratingShort, searchPrompt, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
-import { activeFilterCount, applyRelaxation, atPlace, defaultVisit, initialFilters, runSearch, toQuery } from './query';
+import { YOUR_LOCATION, activeFilterCount, applyRelaxation, atPlace, defaultVisit, initialFilters, runSearch, toQuery } from './query';
 import { geocodePlace } from './places';
 
 const SURRY_HILLS = atPlace(geocodePlace('Surry Hills').place!);
@@ -164,15 +164,9 @@ describe('startup self-check', () => {
 });
 
 describe('what finding you says', () => {
-  it('outside the cities GymGO carries, says the gyms came from the map', () => {
-    const area = { kind: 'area' as const, fix: { approximate: false }, countryCode: 'DE' };
-    expect(locatedNotice({ ...area, gyms: 6, radiusKm: 5 })).toMatch(/OpenStreetMap: map-only, so call before you go\.$/);
-    expect(locatedNotice({ ...area, gyms: 2, radiusKm: 10 })).toMatch(/^Nothing's mapped within 5 km of you, so this shows the 2 gyms within 10 km/);
-    expect(locatedNotice({ ...area, gyms: 0, radiusKm: 5 })).toMatch(/no gyms mapped close to you yet/);
-  });
-
-  it('says how far in miles in the US and UK', () => {
-    expect(locatedNotice({ kind: 'area', fix: { approximate: false }, countryCode: 'GB', gyms: 2, radiusKm: 10 })).toMatch(/^Nothing's mapped within 3 mi of you, so this shows the 2 gyms within 6 mi/);
+  it('outside the cities GymGO carries, leaves the next step to the lists (Search this area)', () => {
+    expect(locatedNotice({ kind: 'area', fix: { approximate: false } })).toBeNull();
+    expect(locatedNotice({ kind: 'area', fix: { approximate: true } })).toMatch(/approximate/i);
   });
 
   it('when you say no, suggests typing a place in the words used at home', () => {
@@ -181,9 +175,9 @@ describe('what finding you says', () => {
     expect(locatedNotice({ kind: 'unavailable' }, 'DE')).toBe("Couldn't get a fix on where you are. Search a town or city instead.");
   });
 
-  it('when the map around you can’t be searched, says why it shows the nearest built-in city', () => {
+  it('with no country chosen, says it shows the nearest built-in city, without claiming a search', () => {
     expect(locatedNotice({ kind: 'nearest', km: 2155.6, city: { name: 'Sydney', country: 'AU' } })).toBe(
-      "Couldn't search the map around you just now, so here's Sydney, the nearest city GymGO has built in (2,156\u00a0km away).",
+      "Here's Sydney, the nearest city GymGO has built in (2,156\u00a0km away).",
     );
   });
 
@@ -203,6 +197,8 @@ describe('the search box', () => {
 
 describe('when there are no gyms to show', () => {
   it('says the map is being read, could not be, or has nothing there', () => {
+    expect(lookupLine('ready', 'Tokyo')).toBe('GymGO has no gyms built in around Tokyo. Search this area to find them on OpenStreetMap.');
+    expect(lookupLine('ready', YOUR_LOCATION)).toMatch(/^GymGO has no gyms built in around you\./);
     expect(lookupLine('searching', 'Tokyo')).toBe('Looking for gyms around Tokyo on OpenStreetMap…');
     expect(lookupLine('failed', 'Lima')).toMatch(/^Couldn’t read the map around Lima/);
     expect(lookupLine('none', 'Nuuk')).toMatch(/^OpenStreetMap has no gyms mapped around Nuuk yet/);

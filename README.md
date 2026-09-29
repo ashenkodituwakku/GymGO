@@ -234,8 +234,12 @@ Chrome and Edge (blur only in Safari and Firefox).
 - **Explore**: the map with the results sheet, filters, and sorting (best
   match, closest, cheapest, top rated). "Best match" means: gyms that meet
   everything you asked first, then, among the rest, the ones with the fewest
-  things you'd need to call about, then the nearest. Move the map anywhere in
-  the world and **Search this area** appears: it asks the server,
+  things you'd need to call about, then the nearest. GymGO never reads the
+  map for gyms by itself, however you move around: gyms from OpenStreetMap
+  load only when you tap **Search this area**. Move the map anywhere in the
+  world and it appears; somewhere GymGO has no gyms built in (a town you
+  typed, a city picked on Home, where you are) it's there straight away, on
+  the map and in the lists. It asks the server,
   which reads OpenStreetMap for the area on screen (through the free Overpass
   API), keeps what the same rules count as a gym, and remembers each area for
   a month so a busy area costs one request, not one per person. Those gyms
@@ -248,13 +252,14 @@ Chrome and Edge (blur only in Safari and Firefox).
   Type any town or suburb anywhere ("Bendigo", "Boise", "Kyoto") and
   press Enter: if it isn't one GymGO knows by heart, the server looks it up
   (Photon, a free OpenStreetMap geocoder, asked only on Enter and at most
-  once a second, answers kept a month), and the map flies there and
-  searches it.
+  once a second, answers kept a month), and the map flies there; its gyms
+  load when you tap Search this area.
   **Your country's gyms are kept on the phone.** Once you've chosen your
   country, the app downloads one file of every gym the map knows there
   (Australia's is a 41 KB download and 216 KB on the phone), so searching any area in it, "Near you", and
-  finding a gym by name answer at once, offline too, and the list follows
-  the map as you move it. Profile → **Offline gyms** shows how many and how
+  finding a gym by name answer at once, offline too. Moving the map never
+  changes the list by itself: it changes when you tap **Search this area**,
+  as it does anywhere else. Profile → **Offline gyms** shows how many and how
   big (and tries again if the download failed); it refreshes itself when
   the server's copy is rebuilt, monthly. Only the gyms are kept, not the
   map itself: a whole country's map pictures would be gigabytes, and Apple's
@@ -386,14 +391,15 @@ else. If you've only allowed approximate location (iPhone's "Precise: Off",
 or Android's "Approximate"), GymGO says so, because distances will be off.
 
 If you're outside the cities GymGO carries, anywhere in the world, it
-searches the map around you (as "Search this area" does) and opens "Near
-you" with what it finds, labelled as map data. To do that without
-sending your position, it asks the server for the whole map tiles around
-you: a block about 30 km across, exactly the same request for anyone in
-the same 11 km tile. Your precise position still never leaves the device;
-it's used there to sort by distance. Only if the map servers can't be
-reached does it take you to your country's opening city (or, before you've
-chosen a country, the nearest city it carries), and say why.
+opens "Near you" on where you are and offers **Search this area**; nothing
+is read from the map until you tap it. Until then the country and clock
+there are the phone's own (its time zone, and the nearest of the world's
+big cities on that clock), so a border nearby doesn't fool it, and the
+search then brings the map's own answer. Tapped, it asks the server for the
+whole map tiles around you, not your position: a block about 30 km across,
+exactly the same request for anyone in the same 11 km tile. Your precise
+position never leaves the device; it's used there to sort by distance.
+Before you've chosen a country, it opens on the nearest city it carries.
 
 ### Emails, classes and facilities (free)
 
@@ -446,12 +452,12 @@ is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
   Members can report what a visit cost in the local currency (€, £, CHF,
   SEK, DKK).
 - **Every other country**: choose any country and GymGO opens on its
-  capital (or where you are) and reads the gyms around it from
-  OpenStreetMap by itself ("Looking for gyms around Tokyo…"). Home lists
-  your country's biggest cities (up to twelve, from GeoNames: Osaka,
-  Toronto, São Paulo…), and the search box suggests them as you type;
-  their gyms are read from the map when you go. Like the cities above,
-  these are **map-only**.
+  capital (or where you are) with **Search this area**, which reads the
+  gyms around it from OpenStreetMap when you tap it ("Looking for gyms
+  around Tokyo…"). Home lists your country's biggest cities (up to twelve,
+  from GeoNames: Osaka, Toronto, São Paulo…), and the search box suggests
+  them as you type; their gyms are read from the map when you tap Search
+  this area there. Like the cities above, these are **map-only**.
 - **Demo mode** (Profile → Preferences, off to start): invented gyms in inner
   Sydney that show every case GymGO handles, from "Good to go" to "Not a
   fit". Turning it on hides every real gym, and turning it off hides every
@@ -623,14 +629,22 @@ launches: see `docs/LAUNCH-CHECKLIST.md`.
 
 ### Gym photos
 
-GymGO only shows gym photos that its own members took and chose to share. It
-never copies them from gym websites (they're copyrighted) and never shows a
-stand-in picture of some other gym.
-
-The top of a gym's page shows, in this order:
+The top of a gym's page (and its card on Home) shows, in this order:
 
 1. **Members' photos**, each with the member's name on it.
-2. If there are none, and the owner has set up the optional Google key
+2. If there are none, **the photo the gym's own website shares** (the
+   picture its home page gives social media, `og:image`), credited "From
+   franksgymperth.com". The GymGO server fetches it the first time someone
+   looks and keeps it a month, with the same guards as website icons. It is
+   taken only from a site that is that gym's alone: never a site other gyms
+   in the data share, and never a chain's home page, whose picture would be
+   of some other branch. A branch's own page on a chain's site counts, but
+   not a picture that page merely repeats from the site's home page, nor
+   one that another branch's page shows too: both are the chain's stock
+   picture, not this branch. So it is always the right gym, or nothing.
+   1,568 of the 3,006 real gyms have such a site. These photos belong to
+   the gyms; the owner chose to show them.
+3. If there are none, and the owner has set up the optional Google key
    (below), **Google's photos** of the place, each credited to whoever took
    it, with "Google Maps" underneath. They're only ever the exact gym's: a
    Google listing is used only if it's within 150 m and shares a real word
@@ -638,7 +652,7 @@ The top of a gym's page shows, in this order:
    that, if Google calls it a gym and it's within 40 m. So the shopping
    centre a gym is in, or the café next door, never lends it their photos;
    a gym with no sure match simply shows no Google photos.
-3. Otherwise **Google Street View** outside the gym, labelled as such (it
+4. Otherwise **Google Street View** outside the gym, labelled as such (it
    may not face the door). This is Google's free public embed.
 
 Google's photos and Street View wait for a tap: the page shows a card saying
@@ -729,7 +743,10 @@ with a logo credits it and says GymGO isn't connected to or endorsed by the
 brand. A logo is still its owner's trademark: GymGO uses it only to say
 which gym this is.
 
-Every other gym with a website gets **the icon from its own website**: the
+Every other gym with a website gets **the icon from its own website**
+(below).
+
+The icon from a gym's own website: the
 square picture a phone puts on its home screen, or the logo the site
 declares for search engines. It's shown the way a browser or a search engine
 shows a site's icon beside its link, credited to the site ("Icon from
@@ -760,12 +777,22 @@ name would own and keeps one only when the site's title names the gym and
 the page names its suburb (or street), and the rest by searching the web for
 each gym without one in Melbourne, Sydney and Brisbane. Every one was read
 by hand against the gym's name and suburb, and the gym page cites it as
-found by GymGO, not by the gym. (Perth, Adelaide, Canberra, the Gold Coast
-and Hobart haven't been searched yet.) Of the 3,006 real gyms in the bundled cities, 323 have
-a Commons logo and 1,905 more have a website of their own or their
-chain's to take an icon from (a few of those sites have no icon anywhere); the
-other 778 (212 of them in Australia) show the plain symbol, mostly
-independents with no website anyone could confirm. It only accepts real
+found by GymGO, not by the gym. Another 229 (108 in Australia, among them
+Perth, Adelaide, Canberra, the Gold Coast and Hobart, and 121 in the US) were looked
+up the same way, by the gym's name with its street or suburb, and kept only
+when the site's address matched where the gym is on the map
+(`packages/domain/src/websiteRows.ts`, also cited as found by GymGO); for a
+branch of a small chain that's its own page on the chain's site. A bigger
+table of chains, with each one's site per country (`CHAINS` in
+`packages/domain/src/websites.ts`: about 85, among them Jetts, Zap, Orangetheory,
+Planet Fitness, PureGym, Basic-Fit and US chains such as NYSC, Youfit and
+Chuze), is asked before `chainSites.ts`, matching the brand's Wikidata item
+as the map tags it, the brand, or the name. Of the 3,006 real gyms in the
+bundled cities, 323 have a Commons logo and 2,182 more have a website of
+their own or their chain's to take an icon from (a few of those sites have
+no icon anywhere); the other 501 (107 of them in Australia, 197 in the US)
+show the plain symbol, mostly independents with no website anyone could
+confirm. It only accepts real
 PNG, JPEG, WebP or GIF images, and it will only
 connect to public addresses, because website addresses come from
 OpenStreetMap, which anyone can edit. A gym without a website, or whose site

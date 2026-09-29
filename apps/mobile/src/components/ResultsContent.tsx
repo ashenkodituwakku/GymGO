@@ -55,7 +55,7 @@ export function ResultsContent({
   onSeePro,
   onGoHome,
   lookup = null,
-  onRetryLookup,
+  onSearchHere,
 }: {
   outcome: SearchOutcome;
   filters: Filters;
@@ -95,9 +95,10 @@ export function ResultsContent({
   home?: string | null;
   onSeePro?: () => void;
   onGoHome?: () => void;
-  /** The map being read around a place GymGO carries no city for. */
+  /** A place GymGO carries no city for: waiting for Search this area, being read, or read. */
   lookup?: Lookup | null;
-  onRetryLookup?: () => void;
+  /** Search this area: read the map there (again, after a failure). */
+  onSearchHere?: () => void;
 }) {
   // The sheet-aware input throws in a browser; see TextField in ui.tsx.
   const SearchInput = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
@@ -305,7 +306,15 @@ export function ResultsContent({
         </Txt>
       </View>
 
-      {/* Reading the map around a place GymGO carries no city for ---------- */}
+      {/* A place GymGO carries no city for: read only when asked ------------ */}
+      {!locked && total === 0 && lookup?.state === 'ready' && (
+        <View style={styles.lookFailed}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {lookupLine('ready', lookup.placeName)}
+          </Txt>
+          {onSearchHere && <Chip icon="search" label="Search this area" selected={false} onPress={onSearchHere} />}
+        </View>
+      )}
       {!locked && total === 0 && lookup?.state === 'searching' && (
         <View style={styles.notice} aria-live="polite">
           <ActivityIndicator size="small" color={color.brand} />
@@ -319,7 +328,7 @@ export function ResultsContent({
           <Txt variant="footnote" color={color.labelSecondary}>
             {lookupLine('failed', lookup.placeName)} {lookup.problem}
           </Txt>
-          {onRetryLookup && <Chip icon="refresh" label="Try again" selected={false} onPress={onRetryLookup} />}
+          {onSearchHere && <Chip icon="refresh" label="Try again" selected={false} onPress={onSearchHere} />}
         </View>
       )}
       {!locked && total === 0 && lookup?.state === 'done' && lookup.gyms === 0 && (

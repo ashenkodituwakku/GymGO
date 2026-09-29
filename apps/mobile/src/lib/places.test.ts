@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { haversineKm } from '@gymgo/domain';
-import { CITIES, CITY_LIST, DEFAULT_PLACE, WORLD_CITIES, activeCities, localBudget, cityAt, cityNear, distanceLabel, geocodePlace, homePlace, moneyLabel, nearestCity, placeContext, radiusChoices, setDemoMode, suggestPlaces, suggestWorldCities, tracksPrices, worldCitiesIn, worldCityNamed } from './places';
+import { CITIES, CITY_LIST, DEFAULT_PLACE, WORLD_CITIES, activeCities, localBudget, cityAt, cityNear, distanceLabel, geocodePlace, homePlace, moneyLabel, nearestCity, placeContext, radiusChoices, setDemoMode, suggestPlaces, suggestWorldCities, tracksPrices, whereaboutsAt, worldCitiesIn, worldCityNamed } from './places';
 import { COUNTRIES } from './countries';
 import { COUNTRY_CURRENCY } from '@gymgo/domain';
 import { BUNDLED_GYMS, atPlace, atWorldCity, initialFilters, moveTo, runSearch } from './query';
@@ -246,5 +246,26 @@ describe('every country\u2019s cities', () => {
     } finally {
       setDemoMode(false);
     }
+  });
+});
+
+describe('whereaboutsAt', () => {
+  // Kehl, Germany: across the Rhine from Strasbourg, far closer to it than to any big German city.
+  const KEHL = { lat: 48.5717, lng: 7.8156 };
+
+  it('takes the country from the nearest big city on the phone’s own clock, so a border city nearby doesn’t count', () => {
+    expect(whereaboutsAt(KEHL, 'DE', 'Europe/Berlin')).toEqual({ countryCode: 'DE', timezone: 'Europe/Berlin' });
+    expect(whereaboutsAt(KEHL, 'AU', 'Europe/Berlin')).toEqual({ countryCode: 'DE', timezone: 'Europe/Berlin' });
+    expect(whereaboutsAt({ lat: 35.0116, lng: 135.7681 }, 'AU', 'Asia/Tokyo')).toEqual({ countryCode: 'JP', timezone: 'Asia/Tokyo' });
+  });
+
+  it('with no big city on that clock, keeps your own country on the phone’s clock', () => {
+    // Uluru: no listed city runs on Darwin's clock.
+    expect(whereaboutsAt({ lat: -25.3444, lng: 131.0369 }, 'AU', 'Australia/Darwin')).toEqual({ countryCode: 'AU', timezone: 'Australia/Darwin' });
+  });
+
+  it('without the phone’s clock, uses a big city within 150 km, else your own country and no clock', () => {
+    expect(whereaboutsAt(KEHL, 'AU', null)).toEqual({ countryCode: 'FR', timezone: 'Europe/Paris' });
+    expect(whereaboutsAt({ lat: 0, lng: -160 }, 'AU', null)).toEqual({ countryCode: 'AU', timezone: null });
   });
 });

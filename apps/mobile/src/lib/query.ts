@@ -216,13 +216,13 @@ export function tilesAround(point: { lat: number; lng: number }): BoundingBox {
 export const tileKey = (box: BoundingBox): string => `${box.south.toFixed(1)},${box.west.toFixed(1)}`;
 
 /**
- * Whether to read the map around where the search is, unasked: a place
- * outside the cities GymGO carries (a country's capital, a city picked on
- * Home) with no gym loaded within 10 km. Without it, choosing Japan opened on
- * an empty Tokyo. "Near you" and "Search this area" read the map themselves.
+ * Whether the search is somewhere GymGO has no gyms for yet: outside the
+ * cities it carries (a country's capital, a city picked on Home, where you
+ * are) with no gym loaded within 10 km. The map there is read only when you
+ * tap Search this area, so the lists offer it instead of an empty page.
  */
-export function wantsLookup(filters: Pick<Filters, 'centre' | 'placeName' | 'bbox'>, records: readonly GymRecord[], inCarriedCity: boolean): boolean {
-  if (inCarriedCity || filters.bbox !== null || filters.placeName === YOUR_LOCATION) return false;
+export function wantsLookup(filters: Pick<Filters, 'centre' | 'bbox'>, records: readonly GymRecord[], inCarriedCity: boolean): boolean {
+  if (inCarriedCity || filters.bbox !== null) return false;
   return !records.some((record) => haversineKm(filters.centre, record.location.position) <= 10);
 }
 

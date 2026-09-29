@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MapPin } from '@/components/map-types';
-import { NO_CLUSTER_ZOOM, mapItems, sameSpot } from './cluster';
+import { NO_CLUSTER_ZOOM, assignSlots, mapItems, sameSpot } from './cluster';
 
 const pin = (id: string, lat: number, lng: number, tier: MapPin['tier'] = 'needs_confirmation'): MapPin => ({ id, name: id, position: { lat, lng }, tier });
 
@@ -45,6 +45,23 @@ describe('grouping pins into bubbles', () => {
   it('knows when a bubble’s gyms share one building', () => {
     expect(sameSpot([{ lat: -37.8136, lng: 144.9631 }, { lat: -37.81361, lng: 144.96312 }])).toBe(true);
     expect(sameSpot(PINS.map((item) => item.position))).toBe(false);
+  });
+
+  it('keeps each marker slot on its gym, reuses freed slots, and never drops one', () => {
+    const at = (ids: string[]) => mapItems(PINS.filter((item) => ids.includes(item.id)), NO_CLUSTER_ZOOM, null, null);
+    const first = assignSlots([], at(['a', 'b', 'c']));
+    expect(first.map((item) => item?.id)).toEqual(['a', 'b', 'c']);
+    // b goes, d comes: d takes b's slot; a and c stay where they were.
+    const second = assignSlots(first.map((item) => item?.id ?? null), at(['a', 'c', 'd']));
+    expect(second.map((item) => item?.id)).toEqual(['a', 'd', 'c']);
+    // Fewer to show: the spare slots stay, empty.
+    const third = assignSlots(second.map((item) => item?.id ?? null), at(['c']));
+    expect(third.map((item) => item?.id ?? null)).toEqual([null, null, 'c']);
+    // More than there are slots: new ones are added at the end.
+    const fourth = assignSlots(third.map((item) => item?.id ?? null), at(['a', 'b', 'c', 'd', 'st-kilda']));
+    expect(fourth).toHaveLength(5);
+    expect(fourth[2]?.id).toBe('c');
+    expect(new Set(fourth.map((item) => item?.id)).size).toBe(5);
   });
 
   it('keeps hundreds of gyms to a handful of bubbles when zoomed out', () => {

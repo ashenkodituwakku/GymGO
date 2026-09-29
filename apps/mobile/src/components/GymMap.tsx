@@ -11,83 +11,63 @@
  */
 
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { Platform, StyleSheet, useWindowDimensions } from 'react-native';
+import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
-import type { BoundingBox, LatLng, ResultTier } from '@gymgo/domain';
-import { mapItems, sameSpot, zoomOf } from '@/lib/cluster';
+import type { BoundingBox } from '@gymgo/domain';
+import { assignSlots, mapItems, sameSpot, zoomOf, type MapItem } from '@/lib/cluster';
 import { currentTheme } from '@/lib/theme';
-import type { GymMapHandle, GymMapProps, MapPin } from './map-types';
+import type { GymMapHandle, GymMapProps } from './map-types';
 import { ClusterBubble, Pin } from './Pin';
 
 export type { GymMapHandle, MapPin } from './map-types';
 
 const HIDE_BUSINESSES = [{ featureType: 'poi.business', stylers: [{ visibility: 'off' }] }];
 
+/** Where an empty marker slot waits: far south in the sea, see-through. */
+const PARKED = { latitude: -84, longitude: -170 };
+
 /**
- * A marker that re-snapshots its custom view briefly after it changes, then
- * stops. Tracking view changes forever is the usual cause of janky custom
- * markers; never tracking them leaves the glyph blank on first draw.
+ * One marker slot (see assignSlots in lib/cluster.ts): a gym's pin, a bubble,
+ * or nothing. The slot's own view never goes away, so Apple's map always has
+ * a picture for it. It re-snapshots its picture briefly after it changes,
+ * then stops: tracking view changes forever is the usual cause of janky
+ * custom markers; never tracking them leaves the picture blank.
  */
-function GymMarker({ pin, selected, onPress }: { pin: MapPin; selected: boolean; onPress: (id: string) => void }) {
+function SlotMarker({ item, onPin, onCluster }: { item: MapItem | null; onPin: (id: string) => void; onCluster: (item: Extract<MapItem, { kind: 'cluster' }>) => void }) {
   const [tracking, setTracking] = useState(true);
-
+  const face = item === null ? 'empty' : item.kind === 'pin' ? `pin:${item.id}:${item.pin.tier}:${item.selected}` : `cluster:${item.id}:${item.count}:${item.tier}`;
   useEffect(() => {
     setTracking(true);
     const timer = setTimeout(() => setTracking(false), 700);
     return () => clearTimeout(timer);
-  }, [selected, pin.tier]);
+  }, [face]);
 
+  const position = item === null ? null : item.kind === 'pin' ? item.pin.position : item.position;
+  const selected = item?.kind === 'pin' && item.selected;
   return (
     <Marker
-      coordinate={{ latitude: pin.position.lat, longitude: pin.position.lng }}
+      coordinate={position ? { latitude: position.lat, longitude: position.lng } : PARKED}
       anchor={{ x: 0.5, y: selected ? 0.85 : 0.5 }}
+      opacity={item ? 1 : 0}
       onPress={(event) => {
         event.stopPropagation();
-        onPress(pin.id);
+        if (item?.kind === 'pin') onPin(item.id);
+        else if (item) onCluster(item);
       }}
       tracksViewChanges={tracking}
-      zIndex={selected ? 10 : pin.tier === 'confirmed' ? 3 : pin.tier === 'needs_confirmation' ? 2 : 1}
-      accessibilityLabel={pin.name}
+      zIndex={!item ? 0 : selected ? 10 : item.kind === 'cluster' ? 4 : item.pin.tier === 'confirmed' ? 3 : item.pin.tier === 'needs_confirmation' ? 2 : 1}
+      accessibilityLabel={!item ? undefined : item.kind === 'pin' ? item.pin.name : `${item.count} gyms here. Zoom in`}
     >
-      <Pin tier={pin.tier} selected={selected} />
-    </Marker>
-  );
-}
-
-/** Several gyms in one bubble; a tap zooms in to part them. */
-function ClusterMarker({
-  id,
-  position,
-  count,
-  tier,
-  onPress,
-}: {
-  id: string;
-  position: LatLng;
-  count: number;
-  tier: ResultTier;
-  onPress: () => void;
-}) {
-  const [tracking, setTracking] = useState(true);
-  useEffect(() => {
-    setTracking(true);
-    const timer = setTimeout(() => setTracking(false), 700);
-    return () => clearTimeout(timer);
-  }, [count, tier]);
-  return (
-    <Marker
-      identifier={id}
-      coordinate={{ latitude: position.lat, longitude: position.lng }}
-      anchor={{ x: 0.5, y: 0.5 }}
-      onPress={(event) => {
-        event.stopPropagation();
-        onPress();
-      }}
-      tracksViewChanges={tracking}
-      zIndex={4}
-      accessibilityLabel={`${count} gyms here. Zoom in`}
-    >
-      <ClusterBubble tier={tier} count={count} />
+      {/* Keyed inside the slot's own view, so a new gym lands with its spring. */}
+      <View>
+        {item === null ? (
+          <View style={styles.empty} />
+        ) : item.kind === 'pin' ? (
+          <Pin key={item.id} tier={item.pin.tier} selected={item.selected} />
+        ) : (
+          <ClusterBubble key={item.id} tier={item.tier} count={item.count} />
+        )}
+      </View>
     </Marker>
   );
 }
@@ -111,6 +91,13 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   const items = useMemo(() => {
     return mapItems(pins, zoomOf((360 / region.longitudeDelta) * width), boxOf(region), selectedId);
   }, [pins, region, width, selectedId]);
+  // Markers are never taken off Apple's map, only moved and redrawn (see assignSlots).
+  const slotIds = useRef<Array<string | null>>([]);
+  const slots = useMemo(() => {
+    const next = assignSlots(slotIds.current, items);
+    slotIds.current = next.map((item) => item?.id ?? null);
+    return next;
+  }, [items]);
 
   // On iOS a tap on a pin also reaches the map's own tap handler, in either
   // order. Treated naively, the pin opens its card and the "map" tap closes it
@@ -180,29 +167,28 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
         }, 220);
       }}
     >
-      {items.map((item) =>
-        item.kind === 'pin' ? (
-          <GymMarker key={item.id} pin={item.pin} selected={item.selected} onPress={pressPin} />
-        ) : (
-          <ClusterMarker
-            key={item.id}
-            id={item.id}
-            position={item.position}
-            count={item.count}
-            tier={item.tier}
-            onPress={() => {
-              lastPinPress.current = Date.now();
-              if (pendingMapPress.current) clearTimeout(pendingMapPress.current);
-              // Gyms in one building never part by zooming: open the best of them.
-              if (sameSpot(item.points)) return onSelect(item.ids[0]!);
-              map.current?.fitToCoordinates(
-                item.points.map((point) => ({ latitude: point.lat, longitude: point.lng })),
-                { edgePadding: { top: 80, right: 80, bottom: 80, left: 80 }, animated: true },
-              );
-            }}
-          />
-        ),
-      )}
+      {slots.map((item, index) => (
+        <SlotMarker
+          // The slot is the identity here, on purpose: a marker is never taken away.
+          key={index}
+          item={item}
+          onPin={pressPin}
+          onCluster={(cluster) => {
+            lastPinPress.current = Date.now();
+            if (pendingMapPress.current) clearTimeout(pendingMapPress.current);
+            // Gyms in one building never part by zooming: open the best of them.
+            if (sameSpot(cluster.points)) return onSelect(cluster.ids[0]!);
+            map.current?.fitToCoordinates(
+              cluster.points.map((point) => ({ latitude: point.lat, longitude: point.lng })),
+              { edgePadding: { top: 80, right: 80, bottom: 80, left: 80 }, animated: true },
+            );
+          }}
+        />
+      ))}
     </MapView>
   );
+});
+
+const styles = StyleSheet.create({
+  empty: { width: 1, height: 1 },
 });

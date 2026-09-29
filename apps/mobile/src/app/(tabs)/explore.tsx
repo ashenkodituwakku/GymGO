@@ -24,7 +24,7 @@ import { ActionSheetIOS, ActivityIndicator, Keyboard, Platform, Pressable, Scrol
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isWithinBox, type BoundingBox } from '@gymgo/domain';
 import { MELBOURNE_ATTRIBUTION } from '@gymgo/melbourne-data';
-import { ApiError, api, problemText, type FoundPlace } from '@/lib/api';
+import { ApiError, api, problemText } from '@/lib/api';
 import { EMPTY, locatedNotice } from '@/lib/copy';
 import { openingPlace } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
@@ -32,7 +32,7 @@ import { cityAt, cityNear, geocodePlace, localBudget, worldCityNamed, type AppPl
 import { useApp } from '@/lib/app-state';
 import { enterOpensGym, placeForEnter, suggestGyms } from '@/lib/gymSearch';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
-import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, atWorldCity, boxAround, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
+import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, atWorldCity, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
 import { CHILD_TOUCH, NO_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
@@ -85,7 +85,7 @@ function MapScreen() {
   // The time-zone self-check runs once; its answer can't change mid-session.
   const selfCheck = useMemo(() => checkTimeZoneSupport(), []);
 
-  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe, prefs, prefsReady, mayExplore, openPro, lookup, retryLookup, billing, pack } = useApp();
+  const { data, account, filters, setFilters, addRecent, exploreRequest, here, locate: findMe, prefs, prefsReady, mayExplore, openPro, lookup, searchHere, billing, pack } = useApp();
   usePageTitle('Explore');
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
@@ -178,18 +178,17 @@ function MapScreen() {
     [],
   );
 
-  // openGym and searchBox are defined below; the search reaches them through these refs.
+  // openGym is defined below; the search reaches it through this ref.
   const openGymRef = useRef<(id: string) => void>(() => undefined);
-  const searchBoxRef = useRef<(box: BoundingBox, named?: FoundPlace) => Promise<void>>(async () => undefined);
   const mayExploreRef = useRef(mayExplore);
   mayExploreRef.current = mayExplore;
   const homeRef = useRef(prefs.country);
   homeRef.current = prefs.country;
-  /** A typed place the map is flying to, searched once it's there. `from` is the view it left. */
-  const pendingPlace = useRef<{ place: FoundPlace; span: number; from: BoundingBox | null; timer: ReturnType<typeof setTimeout> } | null>(null);
-  const viewBoxRef = useRef<BoundingBox | null>(null);
 
-  /** Anywhere in the world: ask the server's place finder, fly there and search it. */
+  /**
+   * Anywhere in the world: ask the server's place finder and go there. The
+   * map's gyms there wait for Search this area, like anywhere else.
+   */
   const findPlace = useCallback(async (text: string, orGym?: string) => {
     try {
       // Your own country's match first: "10001" is Manhattan to an American, not Cáceres.
@@ -204,24 +203,13 @@ function MapScreen() {
         return;
       }
       setQuery('');
+      // Another country, without Pro: the list says what Pro adds.
+      if (!mayExploreRef.current(found.countryCode)) haptic.warn();
+      setFilters((current) => moveTo(current, { centre: { lat: found.lat, lng: found.lng }, placeName: found.name, timezone: found.timezone, countryCode: found.countryCode }));
+      setNotice(null);
       // A town gets about 11 km of map, a suburb about 5.
-      const span = found.kind === 'city' ? 0.1 : 0.045;
-      if (!mayExploreRef.current(found.countryCode)) {
-        // Another country, without Pro: go there, and the list says what Pro adds.
-        haptic.warn();
-        setFilters((current) => moveTo(current, { centre: { lat: found.lat, lng: found.lng }, placeName: found.name, timezone: found.timezone, countryCode: found.countryCode }));
-        map.current?.flyTo({ lat: found.lat, lng: found.lng }, span);
-        return;
-      }
-      const box = boxAround(found, span);
-      if (pendingPlace.current) clearTimeout(pendingPlace.current.timer);
-      const timer = setTimeout(() => {
-        if (pendingPlace.current?.place !== found) return;
-        pendingPlace.current = null;
-        void searchBoxRef.current(box, found);
-      }, 2000);
-      pendingPlace.current = { place: found, span, from: viewBoxRef.current, timer };
-      map.current?.flyTo({ lat: found.lat, lng: found.lng }, span);
+      map.current?.flyTo({ lat: found.lat, lng: found.lng }, found.kind === 'city' ? 0.1 : 0.045);
+      mainSheet.current?.snapToIndex(1);
     } catch (error) {
       if (orGym) return openGymRef.current(orGym);
       haptic.warn();
@@ -286,13 +274,12 @@ function MapScreen() {
   }, [viewBox, prefs.demo, filters.bbox, filters.centre, filters.radiusKm]);
 
   /**
-   * Search a box for gyms; `named` when it's a place someone typed, so the
-   * list takes its name. Only ever asked for (the button, a typed place):
-   * moving the map never searches by itself, even where your country's gyms
-   * are kept on this device and the answer would be instant.
+   * Search the area on screen for gyms: only ever when Search this area is
+   * tapped, even where your country's gyms are kept on this device, so the
+   * list never changes just because the map moved.
    */
   const searchBox = useCallback(
-    async (box: BoundingBox, named?: FoundPlace) => {
+    async (box: BoundingBox) => {
       if (areaBusy) return;
       // Free covers the country you chose; until there is one, choose it first.
       if (!prefs.country) {
@@ -309,24 +296,19 @@ function MapScreen() {
         // The area's own clock and country (the server's word, else a gym's, else as before).
         const first = inBox[0]?.location;
         const area = answer.where ?? (first ? { timezone: first.timezone, countryCode: first.address.countryCode } : filters);
-        setFilters((current) =>
-          inArea(current, box, named?.name ?? nameForArea(inBox, box), { timezone: area.timezone, countryCode: area.countryCode }),
-        );
+        setFilters((current) => inArea(current, box, nameForArea(inBox, box), { timezone: area.timezone, countryCode: area.countryCode }));
         setSelectedId(null);
-        const where = named ? `${named.name}, ${named.region}: ` : '';
         if (inBox.length === 0) {
           haptic.warn();
-          setNotice(`${where}OpenStreetMap has no gyms mapped in this area yet.`);
+          setNotice('OpenStreetMap has no gyms mapped in this area yet.');
         } else {
           haptic.success();
           setNotice(
             answer.truncated
-              ? `${where}lots of gyms here, so these are the ${answer.gyms.length} nearest the middle. Zoom in to see the rest.`
+              ? `Lots of gyms here, so these are the ${answer.gyms.length} nearest the middle. Zoom in to see the rest.`
               : answer.gyms.length > 0
-                ? `${where}${answer.gyms.length} gym${answer.gyms.length === 1 ? '' : 's'} from OpenStreetMap in this area. Map-only, so call before you go.`
-                : named
-                  ? `${where}${inBox.length} gym${inBox.length === 1 ? '' : 's'} here.`
-                  : 'The map has no gyms here beyond the ones already shown.',
+                ? `${answer.gyms.length} gym${answer.gyms.length === 1 ? '' : 's'} from OpenStreetMap in this area. Map-only, so call before you go.`
+                : 'The map has no gyms here beyond the ones already shown.',
           );
         }
         if (!wide && sheetIndex.current === 0) mainSheet.current?.snapToIndex(1);
@@ -335,7 +317,7 @@ function MapScreen() {
         if (error instanceof ApiError && error.code === 'pro_required' && typeof error.detail.countryCode === 'string') {
           // Another country, without Pro: the list says what Pro adds, and the way back.
           const countryCode = error.detail.countryCode;
-          setFilters((current) => inArea(current, box, named?.name ?? THIS_AREA, { timezone: named?.timezone ?? current.timezone, countryCode }));
+          setFilters((current) => inArea(current, box, THIS_AREA, { timezone: current.timezone, countryCode }));
           setNotice(null);
         } else {
           setNotice(problemText(error, 'Couldn’t search this area. Try again?'));
@@ -346,43 +328,35 @@ function MapScreen() {
     },
     [areaBusy, data, filters, setFilters, wide, prefs.country, account.token],
   );
-  searchBoxRef.current = searchBox;
 
+  // Where the search has no gyms yet (a town with none built in, or where
+  // you are), the button shows without moving the map: nothing is read
+  // there until it's tapped. Moved away, it reads the area on screen.
+  const lookupWaiting = lookup !== null && lookup.state !== 'done' && locked === null;
+  const lookupBusy = lookup?.state === 'searching';
   const searchThisArea = useCallback(() => {
-    if (viewBox) void searchBox(viewBox);
-  }, [viewBox, searchBox]);
+    if (offerArea && viewBox) void searchBox(viewBox);
+    else searchHere();
+  }, [offerArea, viewBox, searchBox, searchHere]);
+  const searching = areaBusy || lookupBusy;
 
-  // A typed place is searched once the map has arrived there, so the list
-  // matches exactly what's on screen (or after a moment, if the map didn't move).
-  // Not the view it left, nor a wide one that merely includes the place.
-  viewBoxRef.current = viewBox;
-  useEffect(() => {
-    const pending = pendingPlace.current;
-    if (!pending || !viewBox || viewBox === pending.from) return;
-    if (!isWithinBox({ lat: pending.place.lat, lng: pending.place.lng }, viewBox)) return;
-    if (viewBox.north - viewBox.south > pending.span * 5) return;
-    clearTimeout(pending.timer);
-    pendingPlace.current = null;
-    void searchBox(viewBox, pending.place);
-  }, [viewBox, searchBox]);
-
-  const areaButton = (offerArea || areaBusy) && !selectedId && (
+  const areaButton = (offerArea || searching || lookupWaiting) && !selectedId && (
     <Animated.View entering={DROP_IN} exiting={FADE_OUT}>
       <Animated.View style={areaPress.style}>
         <Glass style={styles.areaButton} interactive>
           <Pressable
             onPressIn={areaPress.onPressIn}
             onPressOut={areaPress.onPressOut}
-            onPress={() => void searchThisArea()}
-            disabled={areaBusy}
+            onPress={searchThisArea}
+            disabled={searching}
             accessibilityRole="button"
             accessibilityLabel="Search this area"
-            aria-busy={areaBusy}
+            aria-busy={searching}
             style={styles.areaHit}
           >
-            {areaBusy ? <ActivityIndicator size="small" color={color.brand} /> : <Icon name="search" size={15} color={color.brand} />}
+            {searching ? <ActivityIndicator size="small" color={color.brand} /> : <Icon name="search" size={15} color={color.brand} />}
             <Txt variant="subhead" color={color.brand} style={face('semibold')}>
-              {areaBusy ? 'Searching the map…' : 'Search this area'}
+              {searching ? 'Searching the map…' : 'Search this area'}
             </Txt>
           </Pressable>
         </Glass>
@@ -593,7 +567,7 @@ function MapScreen() {
       onSeePro={() => openPro('worldwide')}
       onGoHome={goHome}
       lookup={lookup}
-      onRetryLookup={retryLookup}
+      onSearchHere={searchHere}
     />
   );
 
@@ -657,6 +631,7 @@ function MapScreen() {
   const googleRecord = googleFor ? data.records.find((record) => record.location.id === googleFor) : undefined;
   const googleModal = <GoogleModal record={googleRecord} onClose={() => setGoogleFor(null)} />;
 
+  const pillPlace = filters.placeName === THIS_AREA ? 'This area' : filters.placeName === YOUR_LOCATION ? 'Near you' : filters.placeName;
   const statusPill = (
     <Glass style={styles.pill}>
       <View
@@ -667,11 +642,11 @@ function MapScreen() {
       />
       <Txt variant="footnote" style={styles.pillText}>
         {locked
-          ? `${filters.placeName === THIS_AREA ? 'This area' : filters.placeName} · with GymGO Pro`
+          ? `${pillPlace} · with GymGO Pro`
           : showingDemo
           ? 'Sydney · demo gyms'
           : filters.bbox || outsideCities
-            ? `${filters.placeName === THIS_AREA ? 'This area' : filters.placeName === YOUR_LOCATION ? 'Near you' : filters.placeName} · map data`
+            ? `${pillPlace} · map data`
             : data.status === 'live'
             ? `${city.name} · live data`
             : data.status === 'offline'

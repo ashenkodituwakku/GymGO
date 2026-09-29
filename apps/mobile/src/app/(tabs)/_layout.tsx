@@ -18,7 +18,7 @@
  *    (liquidGlass.web.ts).
  */
 
-import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui';
+import { TabList, TabSlot, TabTrigger, Tabs, defaultTabsSlotRender, type TabTriggerSlotProps } from 'expo-router/ui';
 import { router, useFocusEffect, usePathname } from 'expo-router';
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
@@ -27,6 +27,7 @@ import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass, HAS_LIQUID_GLASS } from '@/components/Glass';
 import { PIcon, type PhosphorName } from '@/components/PIcon';
+import { Redrawn, useThemeVersion } from '@/components/Redrawn';
 import { glassMark, installLiquidGlass, sizeRefraction } from '@/components/liquidGlass';
 import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
@@ -51,6 +52,8 @@ const TABS: Array<{ name: string; href: '/' | '/explore' | '/saved' | '/profile'
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  // The bar is drawn again in new colours; each tab's screen redraws itself (below).
+  useThemeVersion();
   // The first time GymGO opens, it asks which country is yours: Free covers it.
   // Only once you're on a tab: a gym opened from a link shows first.
   const { prefsReady, prefs } = useApp();
@@ -70,7 +73,11 @@ export default function TabsLayout() {
       <Tabs style={styles.root}>
         {/* Its own container defaults to never shrinking, which lets a
             screen grow past the window so nothing scrolls. */}
-        <TabSlot style={styles.slot} />
+        <TabSlot
+          style={styles.slot}
+          // Drawn again when the colours change, without leaving the tab.
+          renderFn={(descriptor, options) => defaultTabsSlotRender({ ...descriptor, render: () => <Redrawn>{descriptor.render()}</Redrawn> }, options)}
+        />
         {/* Declares the routes; the visible bar is GymGO's own. */}
         <TabList style={styles.hidden}>
           {TABS.map((tab) => (

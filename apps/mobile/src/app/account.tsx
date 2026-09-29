@@ -218,7 +218,7 @@ export default function AccountScreen() {
       <Section
         footer={
           confirmDelete
-            ? `This removes your account, saved gyms, workouts, training log, reviews, photos and your reports from the server.${billing.isPro ? ' Your Pro subscription is cancelled first.' : ''}`
+            ? `This removes your account, saved gyms, gym collection, workouts, training log, reviews, photos and your reports from the server.${billing.isPro ? ' Your Pro subscription is cancelled first.' : ''}`
             : undefined
         }
       >

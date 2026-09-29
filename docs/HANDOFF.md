@@ -55,6 +55,11 @@ usa 12, eu 10, web 39, mobile 113, server 130; all passing).
   and tested), `src/lib/activeSession.ts` (the workout in progress, kept
   on the device), `src/lib/useTraining.ts` (the log), screens `train.tsx`,
   `plates.tsx`, `progress/`. Server: `/api/training` in `app.ts`.
+- Collection: `src/lib/collection.ts` (checking in, tiers, badges),
+  `src/lib/rarity.ts` (card looks from a seed), `src/lib/useCollection.ts`
+  (the store, synced with the account and reset), screen `collection.tsx`.
+  Merging and what an entry may hold: `packages/domain/src/collection.ts`,
+  shared with the server's `/api/collection` in `app.ts`.
 - Theme: `src/lib/theme.ts` has light and dark palettes and five accents
   (Indigo free, the rest Pro); `color` changes in place, and every style
   sheet is wrapped in `themed(() => StyleSheet.create(...))` so it's remade

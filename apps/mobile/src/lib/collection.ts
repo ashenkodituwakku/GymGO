@@ -4,13 +4,13 @@
  * each day you check in again counts as a visit, which moves its card up a
  * tier: Bronze, then Silver, Gold and Platinum.
  *
- * Everything is on this device. Checking in compares where you are with the
- * gym's map position here, on the phone; your position is never sent or
- * kept. The collection keeps the gym's name and place, and the days you
- * visited, nothing else.
+ * Checking in compares where you are with the gym's map position here, on
+ * the phone; your position is never sent or kept. The collection keeps the
+ * gym's name and place, and the days you visited, nothing else; signed in,
+ * your account keeps a copy of that too (lib/useCollection.ts).
  */
 
-import { haversineKm } from '@gymgo/domain';
+import { haversineKm, type CollectedGym, type Collection } from '@gymgo/domain';
 import { WORLD_CITIES } from './places';
 import { cardFor, cardName, newSeed, rarityRank, RARITIES, type Rarity } from './rarity';
 
@@ -35,23 +35,8 @@ export function checkIn(fix: { position: { lat: number; lng: number }; accuracyM
 
 // --- The collection -------------------------------------------------------------------
 
-export interface CollectedGym {
-  id: string;
-  name: string;
-  suburb: string;
-  /** The nearest big city, for counting cities; the suburb when none is near. */
-  city: string;
-  countryCode: string;
-  brand: string | null;
-  /** The local days you checked in, oldest first ("2026-09-27"). */
-  days: string[];
-  firstAt: string;
-  lastAt: string;
-  /** The card's random seed, for its rarity, gem and foil (see rarity.ts). Missing on gyms collected before cards had them. */
-  seed?: string;
-}
-
-export type Collection = Record<string, CollectedGym>;
+// The entry itself, and how two copies merge, are shared with the server (packages/domain/src/collection.ts).
+export type { CollectedGym, Collection };
 
 export const localDay = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;

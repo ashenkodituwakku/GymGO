@@ -16,7 +16,7 @@
 
 import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
-import type { BillingCurrency, BillingInterval, GymRecord, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, Review } from '@gymgo/domain';
+import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, Review } from '@gymgo/domain';
 import type { TrainingSession } from './training';
 
 const PORT = 4000;
@@ -116,6 +116,12 @@ async function request<T>(method: string, path: string, options: { token?: strin
     );
   }
   return data as T;
+}
+
+/** The account's copy of your gym collection. */
+export interface CollectionAnswer {
+  gyms: CollectedGym[];
+  resetAt: string | null;
 }
 
 export interface GymPhoto {
@@ -426,6 +432,14 @@ export const api = {
   training: (token: string) => request<{ sessions: TrainingSession[] }>('GET', '/api/training', { token }),
   logTraining: (token: string, body: Omit<TrainingSession, 'id'>) => request<{ session: TrainingSession }>('POST', '/api/training', { token, body }),
   deleteTraining: (token: string, id: string) => request<unknown>('DELETE', `/api/training/${encodeURIComponent(id)}`, { token }),
+
+  /** Your gym collection on the account, and when it was last reset. */
+  collection: (token: string) => request<CollectionAnswer>('GET', '/api/collection', { token }),
+  /** Merged into the account's (up to 200 gyms at a time); a 409 `collection_reset` when it was reset since `resetAt`. */
+  syncCollection: (token: string, gyms: CollectedGym[], resetAt: string | null) =>
+    request<CollectionAnswer>('PUT', '/api/collection', { token, body: { gyms, resetAt } }),
+  /** Every gym and visit removed from the account. */
+  resetCollection: (token: string) => request<CollectionAnswer>('DELETE', '/api/collection', { token }),
 
   rename: (token: string, displayName: string) => request<{ account: Account }>('PATCH', '/api/me', { token, body: { displayName } }),
   changePassword: (token: string, body: { currentPassword: string; newPassword: string }) =>

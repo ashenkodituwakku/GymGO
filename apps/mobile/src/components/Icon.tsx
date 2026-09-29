@@ -96,6 +96,7 @@ const ICONS = {
   lock: { ios: 'lock.fill', android: 'lock', web: 'lock' },
   person: { ios: 'person.fill', android: 'person', web: 'person' },
   key: { ios: 'key.fill', android: 'key', web: 'key' },
+  warning: { ios: 'exclamationmark.triangle.fill', android: 'warning', web: 'warning' },
 } as const;
 
 export type IconName = keyof typeof ICONS;

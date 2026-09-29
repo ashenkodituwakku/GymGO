@@ -51,6 +51,21 @@ export function systemScheme(): Scheme {
   return Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
 }
 
+/**
+ * Tell the phone, so its own parts (keyboards, menus, Liquid Glass, Apple's
+ * map) match. Done the moment the choice is made, before anything reads the
+ * phone's scheme: until it's lifted, GymGO's own Light or Dark is what the
+ * phone reports, so going back to System read the old choice as the phone's.
+ */
+function tellPhone(appearance: AppearanceChoice) {
+  if (Platform.OS === 'web') return;
+  try {
+    Appearance.setColorScheme(appearance === 'system' ? 'unspecified' : appearance);
+  } catch {
+    // An older phone without the override: its own parts follow the system.
+  }
+}
+
 let choice: ThemeChoice = DEFAULT_CHOICE;
 let loaded = false;
 const listeners = new Set<() => void>();
@@ -75,12 +90,14 @@ export async function loadThemeChoice(): Promise<ThemeChoice> {
     choice = DEFAULT_CHOICE;
   }
   loaded = true;
+  tellPhone(choice.appearance);
   applyTheme(schemeFor(choice.appearance, systemScheme()), choice.accent);
   for (const listener of listeners) listener();
   return choice;
 }
 
 export function setThemeChoice(patch: Partial<ThemeChoice>): void {
+  if (patch.appearance && patch.appearance !== choice.appearance) tellPhone(patch.appearance);
   choice = { ...choice, ...patch };
   AsyncStorage.setItem(KEY, JSON.stringify(choice)).catch(() => undefined);
   for (const listener of listeners) listener();

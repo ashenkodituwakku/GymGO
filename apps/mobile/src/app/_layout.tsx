@@ -1,12 +1,13 @@
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider, router, useNavigationContainerRef, usePathname } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, router, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { Appearance, Platform, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Platform, StyleSheet } from 'react-native';
 import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Redrawn, useThemeVersion } from '@/components/Redrawn';
 import { AppProvider, useApp } from '@/lib/app-state';
 import {
   BUNDLED_FACES,
@@ -16,8 +17,6 @@ import {
   color,
   currentTheme,
   face,
-  subscribeTheme,
-  themeVersion,
   themed,
   type AccentId,
   type Scheme,
@@ -62,6 +61,8 @@ export const unstable_settings = { initialRouteName: '(tabs)' };
 export { CrashScreen as ErrorBoundary } from '@/components/CrashScreen';
 
 export default function RootLayout() {
+  // The app's own background (behind sheets, and where a page bounces) follows the theme too.
+  useThemeVersion();
   const [loaded, error] = useFonts(FACES);
   const [themeReady, setThemeReady] = useState(Platform.OS === 'web');
   // If the faces fail to load, carry on in the system font rather than
@@ -93,11 +94,9 @@ export default function RootLayout() {
 function useWantedTheme(): { scheme: Scheme; accent: AccentId } {
   const choice = useThemeChoice();
   const { billing } = useApp();
+  // The phone's own parts (keyboards, menus, Liquid Glass) are told as soon
+  // as you choose (lib/themePrefs.ts), so this reads the phone's real scheme.
   const phone = useSystemScheme(choice.appearance === 'system');
-  // Tell the phone, so its own parts (keyboards, menus, Liquid Glass) match.
-  useEffect(() => {
-    if (Platform.OS !== 'web') Appearance.setColorScheme(choice.appearance === 'system' ? 'unspecified' : choice.appearance);
-  }, [choice.appearance]);
   // A lapsed Pro goes back to Indigo, but only once the server has said so.
   const accent = choice.accent === FREE_ACCENT || billing.isPro || !billing.planKnown ? choice.accent : FREE_ACCENT;
   return { scheme: schemeFor(choice.appearance, phone), accent };
@@ -105,27 +104,22 @@ function useWantedTheme(): { scheme: Scheme; accent: AccentId } {
 
 /**
  * The navigator, drawn in the current colours. When they change, a veil in
- * the new background fades in, the screens are drawn again underneath it
- * (in the same places: the navigation state is put back), and it fades
- * out: about a third of a second, and instant with Reduce Motion.
+ * the new background fades in, each screen's content is drawn again
+ * underneath it (see Redrawn: the navigator and where you are in it stay
+ * put), and it fades out: about a third of a second, and instant with
+ * Reduce Motion.
  */
 function ThemedStack() {
   useEscapeClosesSheets();
   const wanted = useWantedTheme();
-  const version = useSyncExternalStore(subscribeTheme, themeVersion, themeVersion);
-  const navigation = useNavigationContainerRef();
+  const version = useThemeVersion();
   const reduceMotion = useReducedMotion();
   const veil = useSharedValue(0);
   const [veilColour, setVeilColour] = useState<string | null>(null);
-  const savedState = useRef<ReturnType<typeof navigation.getRootState> | null>(null);
 
-  const switchNow = useCallback(
-    (scheme: Scheme, accent: AccentId) => {
-      savedState.current = navigation.isReady() ? navigation.getRootState() : null;
-      applyTheme(scheme, accent);
-    },
-    [navigation],
-  );
+  const switchNow = useCallback((scheme: Scheme, accent: AccentId) => {
+    applyTheme(scheme, accent);
+  }, []);
 
   useEffect(() => {
     const { scheme, accent } = currentTheme();
@@ -140,25 +134,14 @@ function ThemedStack() {
     });
   }, [wanted.scheme, wanted.accent, reduceMotion, switchNow, veil]);
 
-  // Drawn again: put the screens back where they were, then lift the veil.
+  // Drawn again: lift the veil.
   useEffect(() => {
     if (version === 0) return;
-    const state = savedState.current;
-    savedState.current = null;
-    if (state) {
-      requestAnimationFrame(() => {
-        try {
-          navigation.resetRoot(state);
-        } catch {
-          // A route that can't be restored leaves you on Home.
-        }
-      });
-    }
     veil.value = withDelay(60, withTiming(0, { duration: 240, easing: Easing.out(Easing.cubic) }, (finished) => {
       if (finished) runOnJS(setVeilColour)(null);
     }));
     if (Platform.OS === 'web' && typeof document !== 'undefined') paintPage();
-  }, [version, navigation, veil]);
+  }, [version, veil]);
 
   const veilStyle = useAnimatedStyle(() => ({ opacity: veil.value }));
   const dark = currentTheme().scheme === 'dark';
@@ -179,7 +162,10 @@ function ThemedStack() {
     <ThemeProvider value={navTheme}>
       <StatusBar style={dark ? 'light' : 'dark'} />
       <Stack
-        key={version}
+        // Each screen's content is drawn again in the new colours; the tabs
+        // redraw their own screens (app/(tabs)/_layout.tsx), so the tab
+        // you're on stays chosen.
+        screenLayout={({ route, children }) => (route.name === '(tabs)' ? children : <Redrawn>{children}</Redrawn>)}
         screenOptions={{
           headerShown: false,
           headerTintColor: color.brand,

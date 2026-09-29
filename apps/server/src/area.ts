@@ -37,6 +37,7 @@ import {
   mapOnlyRecord,
   osmRef,
   position,
+  sameGym,
   slug,
   trainingType,
   type MapOnlyGym,
@@ -492,14 +493,5 @@ export class AreaSearch {
   }
 }
 
-const IGNORED_WORDS = new Set(['the', 'gym', 'fitness', 'health', 'club', 'clubs']);
-const words = (text: string) =>
-  new Set([...text.toLowerCase().replaceAll('’', "'").replaceAll("'", '').matchAll(/[a-z0-9]+/g)].map((m) => m[0]).filter((w) => !IGNORED_WORDS.has(w)));
-
-/** A gym we already hold under another element: the same name within 100 metres. */
-export function sameGym(name: string, pos: [number, number], record: GymRecord): boolean {
-  if (km(pos, [record.location.position.lat, record.location.position.lng]) > 0.1) return false;
-  const a = words(name);
-  const b = words(record.location.name);
-  return [...a].some((word) => b.has(word)) || a.size === 0 || b.size === 0;
-}
+/** The same gym under another element (moved to @gymgo/osm, where the app uses it too). */
+export { sameGym };

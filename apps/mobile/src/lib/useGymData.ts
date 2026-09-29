@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { BoundingBox, GymRecord, RatingSummary } from '@gymgo/domain';
+import { withoutKnown } from '@gymgo/osm';
 import { ApiError, api } from './api';
 import type { PackIndex } from './countryPack';
 import { BUNDLED_GYMS } from './query';
@@ -45,6 +46,15 @@ export function useGymData() {
     const known = new Set(base.map((record) => record.location.id));
     return [...base, ...found.filter((record) => !known.has(record.location.id))];
   }, [base, found]);
+  /**
+   * The same, without the map's own copies of gyms GymGO carries (an area
+   * search's, the offline pack's, or one kept from before that city was
+   * carried): what lists and the map show, so no gym shows twice. `records`
+   * keeps them, so a gym saved or collected under the copy's id still opens.
+   */
+  const listed = useMemo(() => (found.length === 0 ? base : [...base, ...withoutKnown(found, base)]), [base, found]);
+  const baseRef = useRef(base);
+  baseRef.current = base;
 
   const addFound = useCallback((more: GymRecord[]) => {
     if (more.length === 0) return;
@@ -148,7 +158,7 @@ export function useGymData() {
         const local = kept.inBox(box, PACK_ANSWER);
         addFound(local.gyms);
         return {
-          gyms: local.gyms,
+          gyms: withoutKnown(local.gyms, baseRef.current),
           fetchedAt: kept.builtAt,
           truncated: local.truncated,
           attribution: kept.attribution,
@@ -158,7 +168,7 @@ export function useGymData() {
       }
       const answer = await api.area(box, home, token);
       addFound(answer.gyms);
-      return { ...answer, fromDevice: false };
+      return { ...answer, gyms: withoutKnown(answer.gyms, baseRef.current), fromDevice: false };
     },
     [addFound],
   );
@@ -201,7 +211,7 @@ export function useGymData() {
   // One object while nothing in it changes, so what's built on it (the app's
   // shared state, callbacks that use it) doesn't change on every render.
   return useMemo(
-    () => ({ records, status, covers, memberPrices, ratings, refresh, refreshCovers, refreshMemberPrices, refreshRatings, searchArea, ensureGyms, setPack, packNamed, packGym }),
-    [records, status, covers, memberPrices, ratings, refresh, refreshCovers, refreshMemberPrices, refreshRatings, searchArea, ensureGyms, setPack, packNamed, packGym],
+    () => ({ records, listed, status, covers, memberPrices, ratings, refresh, refreshCovers, refreshMemberPrices, refreshRatings, searchArea, ensureGyms, setPack, packNamed, packGym }),
+    [records, listed, status, covers, memberPrices, ratings, refresh, refreshCovers, refreshMemberPrices, refreshRatings, searchArea, ensureGyms, setPack, packNamed, packGym],
   );
 }

@@ -467,7 +467,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Only the gyms of the current mode: real, or (in demo mode) invented.
   const visibleData = useMemo(
-    () => ({ ...data, records: data.records.filter((record) => record.location.isDemoData === prefs.demo) }),
+    () => ({
+      ...data,
+      records: data.records.filter((record) => record.location.isDemoData === prefs.demo),
+      listed: data.listed.filter((record) => record.location.isDemoData === prefs.demo),
+    }),
     [data, prefs.demo],
   );
 

@@ -23,6 +23,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { ActionSheetIOS, ActivityIndicator, Keyboard, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions, type TextInput } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isWithinBox, type BoundingBox } from '@gymgo/domain';
+import { withoutKnown } from '@gymgo/osm';
 import { MELBOURNE_ATTRIBUTION } from '@gymgo/melbourne-data';
 import { ApiError, api, problemText } from '@/lib/api';
 import { EMPTY, locatedNotice } from '@/lib/copy';
@@ -119,7 +120,8 @@ function MapScreen() {
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   // Another country than yours, without Pro: no pins or list, just the way to Pro (or home).
   const locked = mayExplore(filters.countryCode) ? null : { country: filters.countryCode, home: prefs.country ?? filters.countryCode };
-  const loaded = useMemo(() => data.records.filter((record) => mayExplore(record.location.address.countryCode)), [data.records, mayExplore]);
+  // Each gym once: not the map's own copy of one GymGO carries too.
+  const loaded = useMemo(() => data.listed.filter((record) => mayExplore(record.location.address.countryCode)), [data.listed, mayExplore]);
   // Typing a gym's name also finds it among your country's gyms kept on this device.
   const { packNamed } = data;
   const packMatches = useMemo(
@@ -128,13 +130,12 @@ function MapScreen() {
   );
   const searchable = useMemo(() => {
     if (packMatches.length === 0) return loaded;
-    const ids = new Set(loaded.map((record) => record.location.id));
-    return [...loaded, ...packMatches.filter((record) => !ids.has(record.location.id))];
+    return [...loaded, ...withoutKnown(packMatches, loaded)];
   }, [loaded, packMatches]);
   const outcome = useMemo(() => {
-    const found = runSearch(filters, { records: data.records, ratings: data.ratings }, asOf);
+    const found = runSearch(filters, { records: data.listed, ratings: data.ratings }, asOf);
     return locked ? { ...found, results: [] } : found;
-  }, [filters, data.records, data.ratings, asOf, locked === null]);
+  }, [filters, data.listed, data.ratings, asOf, locked === null]);
   const pins: MapPin[] = useMemo(
     () =>
       outcome.results.map((result) => ({

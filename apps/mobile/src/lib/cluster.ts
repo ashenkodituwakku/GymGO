@@ -125,6 +125,31 @@ export function mapItems(pins: readonly MapPin[], zoom: number, view: BoundingBo
   return items;
 }
 
+/**
+ * Which item each of a fixed set of marker slots shows (null: nothing).
+ *
+ * Apple's map (react-native-maps on iPhone) copes badly with markers coming
+ * and going: one added while its picture isn't ready yet is drawn as Apple's
+ * own balloon pin, and one taken away isn't always taken off the map, so a
+ * gym could show twice. So markers there are never taken away: a slot keeps
+ * its item while it's still shown, freed slots take the new ones, and only
+ * when there aren't enough is a slot added. `previous` is the last answer's
+ * ids, slot by slot.
+ */
+export function assignSlots(previous: ReadonlyArray<string | null>, items: readonly MapItem[]): Array<MapItem | null> {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  const slots: Array<MapItem | null> = previous.map((id) => (id !== null ? (byId.get(id) ?? null) : null));
+  const placed = new Set(slots.filter((item): item is MapItem => item !== null).map((item) => item.id));
+  let free = 0;
+  for (const item of items) {
+    if (placed.has(item.id)) continue;
+    while (free < slots.length && slots[free] !== null) free += 1;
+    if (free < slots.length) slots[free] = item;
+    else slots.push(item);
+  }
+  return slots;
+}
+
 /** Whether a bubble's gyms are all in one spot (one building), so zooming in wouldn't part them. */
 export function sameSpot(points: readonly LatLng[]): boolean {
   const lats = points.map((point) => point.lat);

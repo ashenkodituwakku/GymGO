@@ -160,8 +160,14 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
   function popOut(marker) {
     var disc = marker.getElement().firstElementChild;
     if (!disc || !disc.animate || calm()) return marker.remove();
-    var animation = disc.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0.5)', opacity: 0 }], { duration: 160, easing: 'ease-in' });
-    animation.onfinish = function () { marker.remove(); };
+    var animation = disc.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0.5)', opacity: 0 }], { duration: 160, easing: 'ease-in', fill: 'forwards' });
+    // Gone for certain even if the animation never finishes (a paused page),
+    // so a gym can't be left on the map twice.
+    var gone = false;
+    function remove() { if (!gone) { gone = true; marker.remove(); } }
+    animation.onfinish = remove;
+    animation.oncancel = remove;
+    setTimeout(remove, 400);
   }
 
   function sameSpot(points) {

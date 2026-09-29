@@ -55,7 +55,8 @@ export function useTrainingLog(token: string | null) {
   }, [token]);
 
   const add = useCallback((session: TrainingSession) => {
-    if (state.status === 'ready') set({ ...state, sessions: [session, ...state.sessions] });
+    // Once, even if the server hands back one already here (a workout sent twice is logged once).
+    if (state.status === 'ready') set({ ...state, sessions: [session, ...state.sessions.filter((kept) => kept.id !== session.id)] });
   }, []);
   const remove = useCallback((id: string) => {
     if (state.status === 'ready') set({ ...state, sessions: state.sessions.filter((session) => session.id !== id) });

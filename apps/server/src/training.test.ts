@@ -65,6 +65,19 @@ describe('the training log', () => {
     expect(list.body!.sessions[0].exercises[0].sets[2]).toEqual({ weight: 135, reps: 0 });
   });
 
+  it('logs a workout sent twice once (its answer lost, and Finish tapped again)', async () => {
+    const token = await signUp();
+    const first = await call('POST', '/api/training', { token, body: push });
+    const again = await call('POST', '/api/training', { token, body: push });
+    expect(first.status).toBe(201);
+    expect(again.status).toBe(200);
+    expect(again.body!.session.id).toBe(first.body!.session.id);
+    expect((await call('GET', '/api/training', { token })).body!.sessions).toHaveLength(1);
+    // Another workout, started later, is its own.
+    expect((await call('POST', '/api/training', { token, body: { ...push, startedAt: '2026-09-25T09:10:00Z', finishedAt: '2026-09-25T09:40:00Z' } })).status).toBe(201);
+    expect((await call('GET', '/api/training', { token })).body!.sessions).toHaveLength(2);
+  });
+
   it('keeps each person’s sessions to themselves', async () => {
     const mine = await signUp();
     const theirs = await signUp();

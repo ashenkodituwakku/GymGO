@@ -58,7 +58,7 @@
  *   POST   /api/workouts                  Pro: { name, gymId?, plan } -> saved
  *   DELETE /api/workouts/:id
  *   GET    /api/training                  the sessions you've logged, newest first
- *   POST   /api/training                  { name, unit, startedAt, finishedAt, workoutId?, gymId?, exercises } -> logged
+ *   POST   /api/training                  { name, unit, startedAt, finishedAt, workoutId?, gymId?, exercises } -> logged (sent again: the one already logged)
  *   DELETE /api/training/:id
  *   GET    /api/collection                your gym collection (gyms checked in at, and the days) and when it was last reset
  *   PUT    /api/collection                { gyms, resetAt } -> merged into the account's (never overwritten); 409 when reset elsewhere since
@@ -776,6 +776,13 @@ export function createApp(options: AppOptions) {
     if (path === '/api/training' && method === 'POST') {
       const { account } = requireAccount(req);
       const session = cleanTrainingSession(await readJson(req), now());
+      // The same workout sent again (the answer lost on the gym's Wi-Fi, and
+      // Finish tapped again): each starts at its own moment, so it's the one
+      // already logged, not a second copy doubling the volume and the streak.
+      const again = db
+        .prepare('select id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json from training_sessions where user_id = ? and started_at = ?')
+        .get(account.id, session.startedAt) as TrainingRow | undefined;
+      if (again) return send(res, 200, { session: trainingView(again) });
       const count = (db.prepare('select count(*) as n from training_sessions where user_id = ?').get(account.id) as { n: number }).n;
       if (count >= MAX_TRAINING_SESSIONS) throw new HttpError(409, `You’ve logged ${count} sessions, the most there’s room for. Delete some old ones first.`);
       const id = randomUUID();

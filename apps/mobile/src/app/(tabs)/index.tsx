@@ -262,8 +262,8 @@ export default function Home() {
           </Pressable>
         ) : nearby.length ? (
           <Carousel>
-            {nearby.map((result, index) => (
-              <GymCard key={result.record.location.id} result={result} index={index} />
+            {nearby.map((result) => (
+              <GymCard key={result.record.location.id} result={result} />
             ))}
           </Carousel>
         ) : lookup?.state === 'searching' ? (
@@ -306,8 +306,8 @@ export default function Home() {
         <View style={styles.section}>
           <SectionHeader icon="bookmarks" title="Saved" action="See all" onAction={() => router.navigate('/saved')} />
           <Carousel>
-            {saved.map((result, index) => (
-              <GymCard key={result.record.location.id} result={result} width={176} index={index} />
+            {saved.map((result) => (
+              <GymCard key={result.record.location.id} result={result} width={176} />
             ))}
           </Carousel>
         </View>
@@ -317,8 +317,8 @@ export default function Home() {
         <View style={styles.section}>
           <SectionHeader icon="clock-counter-clockwise" title="Recently viewed" action="Clear" onAction={clearRecents} />
           <Carousel>
-            {recent.map((result, index) => (
-              <GymCard key={result.record.location.id} result={result} width={176} index={index} />
+            {recent.map((result) => (
+              <GymCard key={result.record.location.id} result={result} width={176} />
             ))}
           </Carousel>
         </View>

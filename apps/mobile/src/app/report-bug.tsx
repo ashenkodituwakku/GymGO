@@ -14,7 +14,7 @@ import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'rea
 import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { Group, Row, TILE } from '@/components/ios';
-import { FADE_IN, rise } from '@/components/motion';
+import { FADE_IN } from '@/components/motion';
 import { PrimaryButton, TextField, Txt } from '@/components/ui';
 import { api, problemText } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -136,7 +136,7 @@ export default function ReportBug() {
   return (
     <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title }} />
-      <Animated.View entering={rise(0)} style={styles.intro}>
+      <Animated.View style={styles.intro}>
         <View style={[styles.badge, notice && styles.noticeBadge]}>
           <Icon name={notice ? 'photo' : 'bug'} size={24} color={color.onBrand} />
         </View>

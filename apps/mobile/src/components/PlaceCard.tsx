@@ -35,7 +35,7 @@ import { StateGlyphRow } from './StateGlyphRow';
 import { useApp } from '@/lib/app-state';
 import { LogoBadge, LogoCredit, useGymMark } from './BrandLogo';
 import { Glass } from './Glass';
-import { FADE_IN, FADE_OUT, Pressy, rise } from './motion';
+import { FADE_IN, FADE_OUT, Pressy } from './motion';
 import { ActionButton, CloseButton, Fold, InfoRow, RoundToggle, TIER_COLOUR, Txt } from './ui';
 
 const TRAINING: Record<string, string> = {
@@ -229,7 +229,7 @@ export function PlaceCard({
       {photos}
 
       {/* Actions -------------------------------------------------------- */}
-      <Animated.View style={styles.actions} entering={rise(0)}>
+      <Animated.View style={styles.actions}>
         <ActionButton
           icon="directions"
           label="Go"
@@ -286,7 +286,7 @@ export function PlaceCard({
       {statusWarning}
 
       {/* The one answer ------------------------------------------------- */}
-      <Animated.View style={[styles.verdict, { backgroundColor: tone.tint }]} entering={rise(1)}>
+      <Animated.View style={[styles.verdict, { backgroundColor: tone.tint }]}>
         <View style={styles.verdictHead}>
           <View style={[styles.verdictIcon, { backgroundColor: tone.fill }]}>
             <Icon name={tone.icon} size={22} color={color.onBrand} />
@@ -316,7 +316,7 @@ export function PlaceCard({
 
       {/* What to ask ---------------------------------------------------- */}
       {questions.length > 0 && (
-        <Animated.View style={styles.ask} entering={rise(2)}>
+        <Animated.View style={styles.ask}>
           <View style={styles.askHead}>
             <Txt variant="headline" style={styles.flex}>
               When you call, ask
@@ -357,7 +357,7 @@ export function PlaceCard({
       {collect}
 
       {/* At a glance ---------------------------------------------------- */}
-      <Animated.View style={styles.facts} entering={rise(2)}>
+      <Animated.View style={styles.facts}>
         <Fact icon="money" value={price.headline} caption={price.caption} tint={price.confirmed ? color.label : color.maybeInk} />
         <Fact
           icon="star"
@@ -372,7 +372,6 @@ export function PlaceCard({
       {!location.isDemoData && (
         <Pressy
           scaleTo={0.98}
-          entering={rise(3)}
           onPress={() => {
             haptic.select();
             onOpenGoogle();
@@ -396,7 +395,6 @@ export function PlaceCard({
 
       <Pressy
         scaleTo={0.98}
-        entering={rise(4)}
         onPress={() => {
           haptic.select();
           onOpenWorkout();
@@ -418,7 +416,7 @@ export function PlaceCard({
       </Pressy>
 
       {/* The detail, folded away ---------------------------------------- */}
-      <Animated.View style={styles.folds} entering={rise(5)}>
+      <Animated.View style={styles.folds}>
         {address.length > 0 && <InfoRow icon="pin" title="Address" lines={address} />}
         <Fold icon="money" title="Prices" summary={price.headline === '—' ? 'Not published' : `${price.headline} · ${price.caption}`}>
           {offers

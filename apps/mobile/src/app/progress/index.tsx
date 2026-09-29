@@ -8,7 +8,7 @@ import { Stack, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { GLIDE, rise } from '@/components/motion';
+import { GLIDE } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { MilestonesCard, MuscleBalanceCard, WeekCard } from '@/components/TrainingInsights';
 import { PrimaryButton, Txt } from '@/components/ui';
@@ -84,7 +84,7 @@ export default function ProgressScreen() {
   return (
     <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title: 'Progress' }} />
-      <Animated.View entering={rise(0)} style={styles.stats}>
+      <Animated.View style={styles.stats}>
         <Stat icon="flame" tint={color.maybe} value={known ? weekStreak(log.sessions) : null} one="week in a row" many="weeks in a row" />
         <Stat icon="calendar" tint={color.brand} value={known ? sessionsThisWeek(log.sessions) : null} one="this week" many="this week" />
         <Stat icon="workout" tint={color.good} value={known ? log.sessions.length : null} one="workout" many="workouts" />
@@ -115,14 +115,14 @@ export default function ProgressScreen() {
           <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
             YOUR WEEKS
           </Txt>
-          <Animated.View entering={rise(1)}>
+          <Animated.View>
             <WeekCard sessions={log.sessions} goal={prefs.weeklyGoal} onGoal={(goal) => setPref('weeklyGoal', goal)} />
           </Animated.View>
         </>
       )}
 
       {known && log.sessions.length > 0 && (
-        <Animated.View entering={rise(1)}>
+        <Animated.View>
           <MuscleBalanceCard sessions={log.sessions} isPro={billing.isPro} onPro={() => openPro('balance')} />
         </Animated.View>
       )}
@@ -132,7 +132,7 @@ export default function ProgressScreen() {
           <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
             YOUR RECORDS
           </Txt>
-          <Animated.View entering={rise(1)} layout={GLIDE} style={styles.group}>
+          <Animated.View layout={GLIDE} style={styles.group}>
             {records.map(([exerciseId, record], index) => {
               const best = record.heaviestSet;
               return (
@@ -166,7 +166,7 @@ export default function ProgressScreen() {
           <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
             MILESTONES
           </Txt>
-          <Animated.View entering={rise(2)}>
+          <Animated.View>
             <MilestonesCard sessions={log.sessions} />
           </Animated.View>
         </>
@@ -177,7 +177,7 @@ export default function ProgressScreen() {
           <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
             HISTORY
           </Txt>
-          <Animated.View entering={rise(2)} layout={GLIDE} style={styles.days}>
+          <Animated.View layout={GLIDE} style={styles.days}>
             {days.map((day) => (
               <View key={day.key} style={styles.day}>
                 <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" style={[face('semibold'), styles.dayLabel]}>

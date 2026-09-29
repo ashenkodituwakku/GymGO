@@ -21,12 +21,11 @@ import { haptic } from '@/lib/haptics';
 import { priceLine } from '@/lib/present';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { MarkImage, useGymMark } from './BrandLogo';
-import { rise, usePressScale } from './motion';
+import { usePressScale } from './motion';
 import { Icon } from './Icon';
 import { NoPhoto, TIER_COLOUR, Txt } from './ui';
 
-/** `index`: its place in the row, so a row of cards rises into place one after another. */
-export function GymCard({ result, width = 216, index = 0 }: { result: GymSearchResult; width?: number; index?: number }) {
+export function GymCard({ result, width = 216 }: { result: GymSearchResult; width?: number }) {
   const { account, data, compare, toggleCompare } = useApp();
   const location = result.record.location;
   const id = location.id;
@@ -57,10 +56,8 @@ export function GymCard({ result, width = 216, index = 0 }: { result: GymSearchR
           style={styles.press}
         >
           {/* Sized here, not on the Pressable: on the web the link wrapper
-              replaces the Pressable's style. The entrance and the press each
-              move the card, so each has its own view and neither overwrites
-              the other's transform. */}
-          <Animated.View entering={rise(index)}>
+              replaces the Pressable's style. */}
+          <View>
             <Animated.View style={[styles.card, { width }, press.style]}>
               {cover ? (
                 <Image source={{ uri: cover }} style={styles.image} resizeMode="cover" />
@@ -91,7 +88,7 @@ export function GymCard({ result, width = 216, index = 0 }: { result: GymSearchR
                 </View>
               </View>
             </Animated.View>
-          </Animated.View>
+          </View>
         </Pressable>
       </Link.Trigger>
       <Link.Preview />

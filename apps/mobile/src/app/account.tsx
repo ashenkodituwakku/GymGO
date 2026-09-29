@@ -9,7 +9,7 @@ import { Stack, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { FADE_IN, FADE_OUT, GLIDE, rise } from '@/components/motion';
+import { FADE_IN, FADE_OUT, GLIDE } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { GoogleMark, SocialButtons, useSignInProviders, type TokenHandler } from '@/components/SocialSignIn';
 import { Input, PrimaryButton, Txt } from '@/components/ui';
@@ -96,7 +96,7 @@ export default function AccountScreen() {
     <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title: 'Account' }} />
 
-      <Animated.View entering={rise(0)} style={styles.head}>
+      <Animated.View style={styles.head}>
         <View style={styles.avatar}>
           <Txt variant="largeTitle" color={color.onBrand}>
             {me.displayName.slice(0, 1).toUpperCase()}

@@ -15,7 +15,7 @@ import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native'
 import Animated from 'react-native-reanimated';
 import { GemCard } from '@/components/GemCard';
 import { Icon, type IconName } from '@/components/Icon';
-import { rise } from '@/components/motion';
+import { GLIDE } from '@/components/motion';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { shareText } from '@/lib/actions';
@@ -89,7 +89,7 @@ export default function CollectionScreen() {
     <ScrollView style={styles.page} contentContainerStyle={[styles.content, { paddingBottom: screenBottom }]} contentInsetAdjustmentBehavior="automatic">
       <Stack.Screen options={{ title: 'Collection' }} />
 
-      <Animated.View entering={rise(0)} style={styles.stats}>
+      <Animated.View style={styles.stats}>
         <Stat value={stats.gyms} one="gym" many="gyms" icon="gym" />
         <Stat value={stats.cities} one="city" many="cities" icon="pin" />
         <Stat value={stats.countries} one="country" many="countries" icon="globe" />
@@ -99,7 +99,7 @@ export default function CollectionScreen() {
       <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
         BADGES
       </Txt>
-      <Animated.View entering={rise(1)} style={styles.badges}>
+      <Animated.View style={styles.badges}>
         {earned.map((badge) => (
           <View
             key={badge.id}
@@ -135,8 +135,9 @@ export default function CollectionScreen() {
         />
       )}
       <View style={styles.grid}>
-        {entries.map((entry, index) => (
-          <Animated.View key={entry.id} entering={rise(Math.min(index, 6) + 2)} style={{ width: cardWidth }}>
+        {entries.map((entry) => (
+          // Re-sorting slides each card to its new place rather than jumping.
+          <Animated.View key={entry.id} layout={GLIDE} style={{ width: cardWidth }}>
             <GemCard
               entry={entry}
               record={data.records.find((record) => record.location.id === entry.id) ?? null}

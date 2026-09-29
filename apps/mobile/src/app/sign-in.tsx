@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } fr
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 import { serverOfflineLine } from '@/lib/copy';
 import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
-import { FADE_IN, FADE_OUT, GLIDE, rise } from '@/components/motion';
+import { FADE_IN, FADE_OUT, GLIDE } from '@/components/motion';
 import { AppBadge } from '@/components/BrandMark';
 import { Icon, type IconName } from '@/components/Icon';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
@@ -171,7 +171,7 @@ export default function SignInScreen() {
       contentInsetAdjustmentBehavior="automatic"
     >
       <Stack.Screen options={{ title: '' }} />
-      <Animated.View entering={rise(0)} style={styles.hero}>
+      <Animated.View style={styles.hero}>
         <View style={styles.badge}>
           <AppBadge size={64} />
         </View>

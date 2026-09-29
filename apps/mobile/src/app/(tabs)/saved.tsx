@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { GymRow } from '@/components/GymRow';
-import { FADE_OUT, GLIDE, Pressy, rise, usePop } from '@/components/motion';
+import { FADE_OUT, GLIDE, Pressy, usePop } from '@/components/motion';
 import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { TabScreen } from '@/components/ios';
@@ -83,7 +83,7 @@ export default function Saved() {
               const id = result.record.location.id;
               const on = compare.includes(id);
               return (
-                <Animated.View key={id} entering={rise(index)} exiting={FADE_OUT} layout={GLIDE}>
+                <Animated.View key={id} exiting={FADE_OUT} layout={GLIDE}>
                   {index > 0 && <View style={styles.divider} />}
                   <View style={styles.row}>
                     <View style={styles.flex}>

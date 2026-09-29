@@ -2,8 +2,10 @@
  * How things move, in one place, so the whole app has one feel.
  *
  * Springs, not timed curves, as iOS uses: a press sinks quickly and comes back
- * with a little give; things that switch on (Save, Compare) pop once; cards
- * and sections rise into place in a short stagger; notices fade.
+ * with a little give; things that switch on (Save, Compare) pop once; rows
+ * make room for each other; notices fade. What's on a screen arrives with the
+ * screen (its push, or its sheet rising) and never flies in piece by piece:
+ * a staggered entrance is a slideshow's move, not an app's.
  *
  * Every animation here follows the device's Reduce Motion setting
  * (`ReduceMotion.System`): with it on, things simply appear in their final
@@ -14,8 +16,6 @@ import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from
 import { Platform, Pressable, type GestureResponderEvent, type PressableProps, type PressableStateCallbackType, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   FadeIn,
-  FadeInDown,
-  FadeInUp,
   FadeOut,
   LinearTransition,
   ReduceMotion,
@@ -23,6 +23,7 @@ import Animated, {
   useSharedValue,
   withSequence,
   withSpring,
+  withTiming,
   type WithSpringConfig,
 } from 'react-native-reanimated';
 
@@ -36,7 +37,7 @@ export const SETTLE: WithSpringConfig = { damping: 20, stiffness: 260, mass: 0.8
 /** Rows and sections making room for each other. */
 export const GLIDE = LinearTransition.springify().damping(26).stiffness(260).reduceMotion(ReduceMotion.System);
 /** A notice or small element arriving and leaving. */
-export const FADE_IN = FadeIn.duration(220).reduceMotion(ReduceMotion.System);
+export const FADE_IN = FadeIn.duration(180).reduceMotion(ReduceMotion.System);
 export const FADE_OUT = FadeOut.duration(140).reduceMotion(ReduceMotion.System);
 
 /*
@@ -46,22 +47,20 @@ export const FADE_OUT = FadeOut.duration(140).reduceMotion(ReduceMotion.System);
  * which collapses the layout around it.
  */
 
-/** Something small dropping in from above, as "Search this area" does under the top bar. */
-export const DROP_IN =
-  Platform.OS === 'web'
-    ? FadeInUp.duration(260).reduceMotion(ReduceMotion.System)
-    : FadeInUp.springify().damping(18).stiffness(220).reduceMotion(ReduceMotion.System);
-
-/** Rising into place, the `index`-th of a group a beat after the one before (capped, so long lists don't wait). */
-export function rise(index = 0) {
-  if (Platform.OS === 'web') return FadeInDown.duration(320).delay(Math.min(index, 6) * 45).reduceMotion(ReduceMotion.System);
-  return FadeInDown.springify()
-    .damping(20)
-    .stiffness(200)
-    .delay(Math.min(index, 6) * 45)
-    .withInitialValues({ opacity: 0, transform: [{ translateY: 12 }] })
-    .reduceMotion(ReduceMotion.System);
+/** Grows in from a little smaller as it fades up, the way a button or popover appears on iOS. */
+function growIn() {
+  'worklet';
+  return {
+    initialValues: { opacity: 0, transform: [{ scale: 0.86 }] },
+    animations: {
+      opacity: withTiming(1, { duration: 160, reduceMotion: ReduceMotion.System }),
+      transform: [{ scale: withSpring(1, { damping: 18, stiffness: 320, mass: 0.7, reduceMotion: ReduceMotion.System }) }],
+    },
+  };
 }
+
+/** Something small appearing over the map, as "Search this area" does. */
+export const DROP_IN = Platform.OS === 'web' ? FadeIn.duration(180).reduceMotion(ReduceMotion.System) : growIn;
 
 /** A scale that sinks on press and springs back: spread its handlers onto a Pressable, its style onto what should move. */
 export function usePressScale(to = 0.96) {

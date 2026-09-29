@@ -68,8 +68,10 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
 
   const tryCollect = async () => {
     if (anywhere) return add();
+    // Trying again after "not there yet": ask the phone anew, not the position that said so.
+    const again = step.kind === 'problem';
     setStep({ kind: 'checking' });
-    const fix = await currentFix(true);
+    const fix = await currentFix(true, again);
     if (fix === 'denied') return setStep({ kind: 'problem', text: 'Collecting needs your location, just this once, to check you’re at the gym. It never leaves your phone.' });
     if (fix === 'unavailable') return setStep({ kind: 'problem', text: 'Couldn’t find where you are just now. Step outside or by a window, then try again.' });
     const where = checkIn(fix, location.position);

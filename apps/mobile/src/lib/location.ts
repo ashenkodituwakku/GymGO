@@ -29,8 +29,12 @@ export type FixResult = Fix | 'denied' | 'unavailable';
  * `ask`: show the permission prompt if it hasn't been answered. Without it,
  * this only works when location was already allowed (used at start-up, so
  * GymGO never prompts before you've asked for anything).
+ *
+ * `fresh`: a new fix only, never a position the phone already had. For
+ * trying again after being told you're not at the gym yet: the earlier
+ * position is the one that said so, and you've likely walked in since.
  */
-export async function currentFix(ask: boolean): Promise<FixResult> {
+export async function currentFix(ask: boolean, fresh = false): Promise<FixResult> {
   let permission: Location.LocationPermissionResponse;
   try {
     permission = ask ? await Location.requestForegroundPermissionsAsync() : await Location.getForegroundPermissionsAsync();
@@ -46,7 +50,7 @@ export async function currentFix(ask: boolean): Promise<FixResult> {
   });
 
   // A good position the phone worked out a moment ago: at once.
-  const recent = await Location.getLastKnownPositionAsync({ maxAge: RECENT_MS, requiredAccuracy: 100 }).catch(() => null);
+  const recent = fresh ? null : await Location.getLastKnownPositionAsync({ maxAge: RECENT_MS, requiredAccuracy: 100 }).catch(() => null);
   if (recent) return toFix(recent);
 
   try {
@@ -54,12 +58,13 @@ export async function currentFix(ask: boolean): Promise<FixResult> {
     // after a few seconds the phone is also asked for its Wi-Fi and cell
     // tower position (tens of metres, and it works indoors), and whichever
     // answers first is used.
-    const precise = Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
-    const rough = pause(PRECISE_ALONE_MS).then(() => Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
+    const maxAge = fresh ? 0 : RECENT_MS;
+    const precise = Location.getCurrentPositionAsync(notOlderThan(maxAge, { accuracy: Location.Accuracy.Highest }));
+    const rough = pause(PRECISE_ALONE_MS).then(() => Location.getCurrentPositionAsync(notOlderThan(maxAge, { accuracy: Location.Accuracy.Balanced })));
     return toFix(await withTimeout(firstOf([precise, rough]), FIX_TIMEOUT_MS));
   } catch {
     // Location off, or no answer at all: the last position the phone knew, if not too old.
-    const last = await Location.getLastKnownPositionAsync({ maxAge: LAST_KNOWN_MS }).catch(() => null);
+    const last = fresh ? null : await Location.getLastKnownPositionAsync({ maxAge: LAST_KNOWN_MS }).catch(() => null);
     return last ? toFix(last) : 'unavailable';
   }
 }
@@ -72,6 +77,14 @@ export const PRECISE_ALONE_MS = 4_000;
 export const FIX_TIMEOUT_MS = 15_000;
 /** With no fix at all, the phone's last known position is used if it's no older than this. */
 const LAST_KNOWN_MS = 30 * 60_000;
+
+/**
+ * On the web, expo-location takes any position the browser has kept, however
+ * old, so a phone's browser would keep saying you're where GymGO was first
+ * opened. This says how old is too old; on a phone app it's ignored, as each
+ * fix there is new anyway.
+ */
+const notOlderThan = (maximumAge: number, options: Location.LocationOptions) => ({ ...options, maximumAge }) as Location.LocationOptions;
 
 const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 

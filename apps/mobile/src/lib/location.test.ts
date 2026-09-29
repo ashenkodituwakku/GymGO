@@ -39,6 +39,24 @@ describe('finding you', () => {
     expect(location.getCurrentPositionAsync).not.toHaveBeenCalled();
   });
 
+  it('asked for a fresh fix, never answers with a position the phone already had', async () => {
+    location.requestForegroundPermissionsAsync.mockResolvedValue({ granted: true });
+    location.getLastKnownPositionAsync.mockReset().mockResolvedValue({ coords: { latitude: -37.79, longitude: 144.95, accuracy: 20 } });
+    location.getCurrentPositionAsync.mockReset().mockResolvedValue({ coords: { latitude: -37.8191, longitude: 144.9626, accuracy: 12 } });
+    await expect(currentFix(true, true)).resolves.toMatchObject({ position: { lat: -37.8191, lng: 144.9626 } });
+    expect(location.getLastKnownPositionAsync).not.toHaveBeenCalled();
+    // Nor one a browser kept from before.
+    expect(location.getCurrentPositionAsync).toHaveBeenCalledWith(expect.objectContaining({ maximumAge: 0 }));
+    // And with no fix at all, it says so rather than falling back to the old one.
+    vi.useFakeTimers();
+    location.getCurrentPositionAsync.mockReset().mockReturnValue(new Promise(() => undefined));
+    const fix = currentFix(true, true);
+    await vi.advanceTimersByTimeAsync(FIX_TIMEOUT_MS);
+    await expect(fix).resolves.toBe('unavailable');
+    expect(location.getLastKnownPositionAsync).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
   it('indoors, asks Wi-Fi and cell towers when precise GPS is slow, and uses whichever answers', async () => {
     vi.useFakeTimers();
     location.requestForegroundPermissionsAsync.mockResolvedValue({ granted: true });

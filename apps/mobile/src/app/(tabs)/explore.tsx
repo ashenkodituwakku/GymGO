@@ -287,18 +287,19 @@ function MapScreen() {
 
   /**
    * Search a box for gyms; `named` when it's a place someone typed, so the
-   * list takes its name. `quiet` when the map moved and your country's gyms
-   * are kept on this device: they follow the map, with no button to press.
+   * list takes its name. Only ever asked for (the button, a typed place):
+   * moving the map never searches by itself, even where your country's gyms
+   * are kept on this device and the answer would be instant.
    */
   const searchBox = useCallback(
-    async (box: BoundingBox, named?: FoundPlace, quiet = false) => {
+    async (box: BoundingBox, named?: FoundPlace) => {
       if (areaBusy) return;
       // Free covers the country you chose; until there is one, choose it first.
       if (!prefs.country) {
         router.push('/country');
         return;
       }
-      if (!quiet) haptic.tap();
+      haptic.tap();
       setAreaBusy(true);
       try {
         const answer = await data.searchArea(box, prefs.country, account.token);
@@ -313,9 +314,7 @@ function MapScreen() {
         );
         setSelectedId(null);
         const where = named ? `${named.name}, ${named.region}: ` : '';
-        if (quiet) {
-          setNotice(inBox.length === 0 ? 'OpenStreetMap has no gyms mapped in this area yet.' : answer.truncated ? `Lots of gyms here: the ${answer.gyms.length} nearest the middle. Zoom in to see the rest.` : null);
-        } else if (inBox.length === 0) {
+        if (inBox.length === 0) {
           haptic.warn();
           setNotice(`${where}OpenStreetMap has no gyms mapped in this area yet.`);
         } else {
@@ -332,7 +331,7 @@ function MapScreen() {
         }
         if (!wide && sheetIndex.current === 0) mainSheet.current?.snapToIndex(1);
       } catch (error) {
-        if (!quiet) haptic.warn();
+        haptic.warn();
         if (error instanceof ApiError && error.code === 'pro_required' && typeof error.detail.countryCode === 'string') {
           // Another country, without Pro: the list says what Pro adds, and the way back.
           const countryCode = error.detail.countryCode;
@@ -353,17 +352,6 @@ function MapScreen() {
     if (viewBox) void searchBox(viewBox);
   }, [viewBox, searchBox]);
 
-  // Your country's gyms kept on this device: the list follows the map as it
-  // moves, as it would in Google Maps, instead of waiting for the button.
-  const packHere = pack.index !== null && pack.index.country === prefs.country && filters.countryCode === prefs.country;
-  const followMap = packHere && offerArea && !selectedId && !areaBusy && viewBox !== null && pack.index!.covers(viewBox);
-  useEffect(() => {
-    if (!followMap || !viewBox || pendingPlace.current) return;
-    void searchBox(viewBox, undefined, true);
-    // Only when the view comes to rest somewhere new.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [followMap, viewBox]);
-
   // A typed place is searched once the map has arrived there, so the list
   // matches exactly what's on screen (or after a moment, if the map didn't move).
   // Not the view it left, nor a wide one that merely includes the place.
@@ -378,7 +366,7 @@ function MapScreen() {
     void searchBox(viewBox, pending.place);
   }, [viewBox, searchBox]);
 
-  const areaButton = (offerArea || areaBusy) && !selectedId && !followMap && (
+  const areaButton = (offerArea || areaBusy) && !selectedId && (
     <Animated.View entering={DROP_IN} exiting={FADE_OUT}>
       <Animated.View style={areaPress.style}>
         <Glass style={styles.areaButton} interactive>

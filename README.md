@@ -253,8 +253,9 @@ Chrome and Edge (blur only in Safari and Firefox).
   **Your country's gyms are kept on the phone.** Once you've chosen your
   country, the app downloads one file of every gym the map knows there
   (Australia's is a 41 KB download and 216 KB on the phone), so searching any area in it, "Near you", and
-  finding a gym by name answer at once, offline too, and the list follows
-  the map as you move it. Profile → **Offline gyms** shows how many and how
+  finding a gym by name answer at once, offline too. Moving the map never
+  changes the list by itself: it changes when you tap **Search this area**,
+  as it does anywhere else. Profile → **Offline gyms** shows how many and how
   big (and tries again if the download failed); it refreshes itself when
   the server's copy is rebuilt, monthly. Only the gyms are kept, not the
   map itself: a whole country's map pictures would be gigabytes, and Apple's

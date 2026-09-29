@@ -2,4 +2,4 @@ export { activities, amenities, keep, km, parseHours, position, slug, trainingTy
 export type { MappedAmenities, MappedHours, OsmElement, Tags } from './rules';
 export { branchOf, brandOf, candidate, contactOf, extrasOf, line1Of, osmRef, pyJson, round, type Candidate, type Extras } from './fields';
 export { mapOnlyRecord, type MapOnlyGym, type Whereabouts } from './record';
-export { sameGym, withoutKnown } from './same';
+export { sameGym, twins, withoutKnown, withoutTwins } from './same';

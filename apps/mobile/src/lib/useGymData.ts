@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { BoundingBox, GymRecord, RatingSummary } from '@gymgo/domain';
-import { withoutKnown } from '@gymgo/osm';
+import { withoutKnown, withoutTwins } from '@gymgo/osm';
 import { ApiError, api } from './api';
 import type { PackIndex } from './countryPack';
 import { BUNDLED_GYMS } from './query';
@@ -52,7 +52,9 @@ export function useGymData() {
    * carried): what lists and the map show, so no gym shows twice. `records`
    * keeps them, so a gym saved or collected under the copy's id still opens.
    */
-  const listed = useMemo(() => (found.length === 0 ? base : [...base, ...withoutKnown(found, base)]), [base, found]);
+  // A gym the map has twice (a point and an outline, say) shows once too.
+  const baseListed = useMemo(() => withoutTwins(base), [base]);
+  const listed = useMemo(() => (found.length === 0 ? baseListed : withoutTwins([...baseListed, ...withoutKnown(found, base)])), [base, baseListed, found]);
   const baseRef = useRef(base);
   baseRef.current = base;
 

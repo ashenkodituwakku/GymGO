@@ -947,6 +947,8 @@ function PhoneShell(props: {
         detached
         bottomInset={bottomInset}
         handleIndicatorStyle={styles.handle}
+        enableContentPanningGesture={!SCROLL_ONLY}
+        handleStyle={SCROLL_ONLY ? styles.grabArea : undefined}
         keyboardBehavior="extend"
         keyboardBlurBehavior="restore"
         android_keyboardInputMode="adjustResize"
@@ -979,6 +981,8 @@ function PhoneShell(props: {
         detached
         bottomInset={bottomInset}
         handleIndicatorStyle={styles.handle}
+        enableContentPanningGesture={!SCROLL_ONLY}
+        handleStyle={SCROLL_ONLY ? styles.grabArea : undefined}
         keyboardBehavior="extend"
         onAnimate={(_from, to, _fromPosition, toPosition) => {
           if (to >= 0) setPlaceTop(topOf(toPosition));
@@ -1011,6 +1015,8 @@ function PhoneShell(props: {
         detached
         bottomInset={bottomInset}
         handleIndicatorStyle={styles.handle}
+        enableContentPanningGesture={!SCROLL_ONLY}
+        handleStyle={SCROLL_ONLY ? styles.grabArea : undefined}
         backdropComponent={backdrop}
         onDismiss={props.onFiltersDismiss}
       >
@@ -1024,6 +1030,16 @@ function PhoneShell(props: {
     </View>
   );
 }
+
+/**
+ * On a phone, a sheet's list only scrolls, and the sheet moves by its top
+ * edge. Letting the list drag the sheet too hands every drag to the sheet
+ * library to share out between the two, and on iPhone it could lock the
+ * list part way down (comparing positions that differ by a rounding
+ * error), so the last rows never came into view. A browser has its own
+ * version of that code, and keeps both.
+ */
+const SCROLL_ONLY = Platform.OS !== 'web';
 
 const styles = themed(() => StyleSheet.create({
   mapWaiting: { ...StyleSheet.absoluteFill, backgroundColor: color.groupedBackground },
@@ -1080,4 +1096,6 @@ const styles = themed(() => StyleSheet.create({
   },
 
   handle: { backgroundColor: color.handle, width: 36, height: 5 },
+  // Room to catch the sheet by its top edge, the one place a phone drags it from.
+  grabArea: { paddingTop: 12, paddingBottom: 14 },
 }));

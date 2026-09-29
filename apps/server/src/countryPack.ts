@@ -173,8 +173,11 @@ export class CountryPacks {
     // Its states or regions, when it has them; else the whole country at once.
     const listed = await ask(`[out:json][timeout:60];rel["ISO3166-2"~"^${country}-"]["admin_level"="4"]["boundary"="administrative"];out tags;`);
     const codes = [...new Set(listed.elements.map((el) => el.tags?.['ISO3166-2'] ?? '').filter((code) => /^[A-Z]{2}-[A-Z0-9]{1,3}$/.test(code)))].sort();
-    const parts = codes.length > 0 ? codes.map((code) => `area["ISO3166-2"="${code}"]`) : [`area["ISO3166-1"="${country}"]["admin_level"="2"]`];
+    const parts = codes.length > 0 ? codes.map((code) => ({ area: `area["ISO3166-2"="${code}"]`, code })) : [{ area: `area["ISO3166-1"="${country}"]["admin_level"="2"]`, code: '' }];
     if (this.building) this.building.total = parts.length;
+    // A gym the map gives no state keeps the one it was found in, where that
+    // code is the postal one (NSW, not a number): Australia and the US.
+    const postalStates = country === 'AU' || country === 'US';
 
     // Bundled gyms, by rough position, for leaving out their map copies quickly.
     const known = this.options.known().filter((record) => !record.location.isDemoData);
@@ -197,13 +200,14 @@ export class CountryPacks {
       // Gyms and places asked for separately: two light questions get through a
       // busy server where one heavy one times out.
       const answer = await ask(
-        `[out:json][timeout:170];${part}->.a;(` +
+        `[out:json][timeout:170];${part.area}->.a;(` +
           'nwr["leisure"="fitness_centre"]["name"](area.a);' +
           'nwr["amenity"="gym"]["name"](area.a);' +
           'nwr["leisure"="sports_centre"]["sport"~"fitness|weightlifting|crossfit"]["name"](area.a);' +
           ');out center tags;',
       );
-      const named = await ask(`[out:json][timeout:170];${part}->.a;${PLACES}`);
+      const named = await ask(`[out:json][timeout:170];${part.area}->.a;${PLACES}`);
+      const partState = postalStates ? part.code.split('-')[1] ?? '' : '';
       const { gyms: elements } = splitElements(answer.elements);
       const { places } = splitElements(named.elements);
       for (const el of elements) {
@@ -220,7 +224,8 @@ export class CountryPacks {
           continue;
         }
         if (tz.startsWith('Etc/')) continue;
-        gyms.set(osm, { ...mapOnlyInput(found.name, found.tags, el, found.pos, { countryCode: country, timezone: tz }, places), tz });
+        const gym = mapOnlyInput(found.name, found.tags, el, found.pos, { countryCode: country, timezone: tz }, places);
+        gyms.set(osm, { ...gym, state: gym.state || partState, tz });
       }
       if (this.building) this.building.done += 1;
     }

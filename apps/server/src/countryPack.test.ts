@@ -14,6 +14,7 @@ let down = false;
 
 const STATES = [
   { type: 'relation', id: 1, tags: { 'ISO3166-2': 'AU-VIC', admin_level: '4' } },
+  { type: 'relation', id: 3, tags: { 'ISO3166-2': 'AU-NSW', admin_level: '4' } },
   { type: 'relation', id: 2, tags: { 'ISO3166-2': 'AU-TAS', admin_level: '4' } },
 ];
 const VIC = [
@@ -32,6 +33,8 @@ const VIC = [
   { type: 'node', id: 99, lat: -36.7589, lon: 144.2802, tags: { place: 'city', name: 'Bendigo' } },
 ];
 const TAS = [{ type: 'node', id: 21, lat: -42.88, lon: 147.33, tags: { leisure: 'fitness_centre', name: 'Hobart Iron' } }];
+// No state or postcode, in the time zone New South Wales shares with the ACT.
+const NSW = [{ type: 'node', id: 31, lat: -34.42, lon: 150.89, tags: { amenity: 'gym', name: 'Wollongong Barbell' } }];
 
 async function fakeOverpass(_input: string | URL | Request, init?: RequestInit): Promise<Response> {
   const query = new URLSearchParams(String(init?.body)).get('data') ?? '';
@@ -43,6 +46,7 @@ async function fakeOverpass(_input: string | URL | Request, init?: RequestInit):
     elements.filter((el) => ('place' in el.tags) === query.includes('"place"'));
   if (query.includes('AU-VIC')) return Response.json({ elements: wanted(VIC) });
   if (query.includes('AU-TAS')) return Response.json({ elements: wanted(TAS) });
+  if (query.includes('AU-NSW')) return Response.json({ elements: wanted(NSW) });
   return Response.json({ elements: [] });
 }
 
@@ -75,13 +79,16 @@ describe('a country’s pack of gyms', () => {
     const packs = new CountryPacks(openDb(':memory:'), { ...overpass, now: () => clock, known: () => MELBOURNE_GYMS });
     const pack = await packs.build('AU');
     // The list of states, then gyms and places for each.
-    expect(calls).toHaveLength(5);
-    expect(calls[1]).toContain('area["ISO3166-2"="AU-TAS"]');
-    expect(calls[3]).toContain('area["ISO3166-2"="AU-VIC"]');
-    expect(pack.gyms.map((gym) => gym.name).sort()).toEqual(['Bendigo Strength Co', 'Hobart Iron', 'Snap Fitness']);
+    expect(calls).toHaveLength(7);
+    expect(calls[1]).toContain('area["ISO3166-2"="AU-NSW"]');
+    expect(calls[3]).toContain('area["ISO3166-2"="AU-TAS"]');
+    expect(calls[5]).toContain('area["ISO3166-2"="AU-VIC"]');
+    expect(pack.gyms.map((gym) => gym.name).sort()).toEqual(['Bendigo Strength Co', 'Hobart Iron', 'Snap Fitness', 'Wollongong Barbell']);
     const snap = pack.gyms.find((gym) => gym.name === 'Snap Fitness')!;
     expect(snap).toMatchObject({ osm: 'node/11', locality: 'Bendigo', state: 'VIC', tz: 'Australia/Melbourne', hours: 'always' });
     expect(pack.gyms.find((gym) => gym.name === 'Hobart Iron')!.tz).toBe('Australia/Hobart');
+    // The map gave it no state; it was found in New South Wales.
+    expect(pack.gyms.find((gym) => gym.name === 'Wollongong Barbell')).toMatchObject({ state: 'NSW', tz: 'Australia/Sydney' });
   });
 
   it('is built on first asking, then served gzipped and kept', async () => {
@@ -98,7 +105,7 @@ describe('a country’s pack of gyms', () => {
     expect(ready.status).toBe(200);
     const pack = (await ready.json()) as CountryPack;
     expect(pack.country).toBe('AU');
-    expect(pack.gyms).toHaveLength(3);
+    expect(pack.gyms).toHaveLength(4);
     // Asked again with its tag, nothing is sent.
     const again = await fetch(`${base}/api/country/AU/pack?home=AU`, { headers: { 'If-None-Match': ready.headers.get('etag')! } });
     expect(again.status).toBe(304);
@@ -108,7 +115,7 @@ describe('a country’s pack of gyms', () => {
     expect(page.status).toBe(200);
     // Well under a megabyte gzipped (a real Australia is too).
     const status = (await (await fetch(`${base}/api/country/AU/pack/status?home=AU`)).json()) as { state: string; gyms: number; bytes: number };
-    expect(status).toMatchObject({ state: 'ready', gyms: 3 });
+    expect(status).toMatchObject({ state: 'ready', gyms: 4 });
     expect(status.bytes).toBeLessThan(1024 * 1024);
     calls = [];
     await fetch(`${base}/api/country/AU/pack?home=AU`);
@@ -119,7 +126,7 @@ describe('a country’s pack of gyms', () => {
     const response = await fetch(`${base}/api/country/AU/pack?home=AU`, { headers: { 'Accept-Encoding': 'identity' } });
     expect(response.status).toBe(200);
     expect(response.headers.get('content-encoding')).toBeNull();
-    expect(((await response.json()) as CountryPack).gyms).toHaveLength(3);
+    expect(((await response.json()) as CountryPack).gyms).toHaveLength(4);
   });
 
   it('needs Pro for a country other than yours', async () => {

@@ -289,12 +289,29 @@ Chrome and Edge (blur only in Safari and Firefox).
   GymGO's facts come from. Signed out, a card to sign in with Apple, Google
   or email.
 - **Appearance**: Automatic (follows your phone), Light or Dark, for
-  everyone. With Pro, nine more accent colours besides Indigo: Cobalt,
-  Ocean, Midnight, Lagoon, Grape, Fuchsia, Rose, Slate and Graphite, picked
-  from a grid of swatches. Evidence colours (green, orange, grey) never
-  change with the accent, so they always mean the same thing. Switching
-  fades smoothly and keeps you on the screen you were on; the map, glass
-  and the phone's own keyboards and menus follow too.
+  everyone. With Pro, eleven more accents besides Indigo: Cobalt, Ocean,
+  Midnight, Lagoon, Grape, Fuchsia, Rose, Slate and Graphite, plus
+  **Rainbow** (a gradient) and **Camo** (a woodland pattern) that paint
+  filled buttons, selected chips, the tab bar and the Build a workout card,
+  picked from a grid of swatches. Pro also has four **looks** that redraw
+  the whole app, not just its colour:
+  - **8-bit**: square corners, arcade headings (Press Start 2P), a pixel
+    face for everything else (Pixelify Sans), chunky outlines with hard
+    drop shadows, on a cream or night page.
+  - **Classic**: a nineties desktop: teal backdrop, grey bevelled plates,
+    square corners.
+  - **Material**: Android's way: Roboto, rounder corners, surfaces tinted
+    by your accent, soft elevation.
+  - **Neon**: always dark, with cards, buttons and the tab bar edged in a
+    glow of your accent.
+
+  Every look swaps glass for solid plates. Evidence colours (green, orange,
+  grey) never change with the accent or the look, so they always mean the
+  same thing, and each look's text colours are adjusted until they pass
+  WCAG AA on its surfaces. The fonts are open (SIL OFL) and bundled; a
+  look's fonts load before it's shown. Switching fades smoothly and keeps
+  you on the screen you were on; the map, glass and the phone's own
+  keyboards and menus follow too.
 
 ### Training
 
@@ -1013,7 +1030,7 @@ saved list always opens, wherever the gym is.
 | Warm-up sets | Plates for any weight | A warm-up ramp to your weight, with the plates |
 | Gym notes | — | Your own notes on each gym, on your device |
 | Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
-| Colour themes | Indigo, light or dark | Ten accents, light or dark |
+| Colour themes | Indigo, light or dark | Twelve accents (Rainbow and Camo too), four looks (8-bit, Classic, Material, Neon), light or dark |
 
 One tier, two ways to pay, tax included:
 

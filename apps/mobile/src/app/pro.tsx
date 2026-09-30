@@ -52,7 +52,7 @@ const REASON: Record<ProReason, string> = {
   workouts: 'Keep your workouts in your account with Pro, and open them on any device.',
   worldwide: 'GymGO Free covers the country you chose. Pro finds gyms in every country, wherever you travel.',
   progress: 'Your log and records are free. Pro draws a chart for every exercise and works out what to lift next.',
-  themes: 'Dark mode is free for everyone. Pro adds nine more accent colours, from Midnight and Lagoon to Fuchsia and Slate.',
+  themes: 'Dark mode is free for everyone. Pro adds eleven more accents, Rainbow and Camo among them, and four looks that redraw the whole app: 8-bit, Classic, Material and Neon.',
   balance: 'Your log, goal and milestones are free. Pro counts your sets for every muscle and names the ones you’ve missed.',
   warmup: 'The plate calculator is free. Pro works out your warm-up sets to any weight, with the plates for each.',
   notes: 'Pro keeps your own notes on each gym, like the door code or who to ask for. Only you see them.',

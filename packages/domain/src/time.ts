@@ -108,6 +108,16 @@ function offsetMinutes(instant: Date, timezone: TimeZone): number {
 }
 
 /**
+ * Answers already worked out, by date, minute and zone. A search asks for
+ * the same one for every gym it weighs (the visit's time, in the search's
+ * zone), and each answer costs two passes through Intl, the slowest thing
+ * in a search: thousands of gyms made opening a gym's page take over a
+ * second on a fast computer. Bounded, and emptied when full.
+ */
+const instantCache = new Map<string, number>();
+const INSTANT_CACHE_MAX = 512;
+
+/**
  * Turn a local wall-clock time into an instant.
  *
  * Two passes, because the offset we need depends on the answer: guess with the
@@ -119,6 +129,10 @@ export function zonedTimeToInstant(
   minuteOfDay: number,
   timezone: TimeZone,
 ): Date {
+  const key = `${date}|${minuteOfDay}|${timezone}`;
+  const known = instantCache.get(key);
+  // A new Date each time, so no caller can change another's.
+  if (known !== undefined) return new Date(known);
   const [year, month, day] = date.split('-').map(Number) as [number, number, number];
   const hour = Math.floor(minuteOfDay / 60);
   const minute = minuteOfDay % 60;
@@ -130,6 +144,8 @@ export function zonedTimeToInstant(
   if (secondGuess !== firstGuess) {
     timestamp = naive - secondGuess * 60_000;
   }
+  if (instantCache.size >= INSTANT_CACHE_MAX) instantCache.clear();
+  instantCache.set(key, timestamp);
   return new Date(timestamp);
 }
 

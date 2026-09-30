@@ -56,6 +56,24 @@ describe('zonedTimeToInstant', () => {
     expect(localDate(instant, SYDNEY)).toBe('2026-09-23');
     expect(localMinuteOfDay(instant, SYDNEY)).toBe(0);
   });
+
+  it('answers a repeat from memory, the same instant in a Date of its own', () => {
+    const first = zonedTimeToInstant('2026-12-22', 19 * 60, SYDNEY);
+    const again = zonedTimeToInstant('2026-12-22', 19 * 60, SYDNEY);
+    expect(again.toISOString()).toBe('2026-12-22T08:00:00.000Z');
+    expect(again).not.toBe(first);
+    // Changing one handed out doesn't change the next.
+    first.setTime(0);
+    expect(zonedTimeToInstant('2026-12-22', 19 * 60, SYDNEY).toISOString()).toBe('2026-12-22T08:00:00.000Z');
+    // Another zone, the same wall time: its own answer.
+    expect(zonedTimeToInstant('2026-12-22', 19 * 60, 'Europe/London').toISOString()).toBe('2026-12-22T19:00:00.000Z');
+  });
+
+  it('stays right once its memory has filled and emptied', () => {
+    for (let minute = 0; minute < 600; minute += 1) zonedTimeToInstant('2026-09-22', minute, SYDNEY);
+    expect(zonedTimeToInstant('2026-09-22', 19 * 60, SYDNEY).toISOString()).toBe('2026-09-22T09:00:00.000Z');
+    expect(zonedTimeToInstant('2026-09-22', 0, SYDNEY).toISOString()).toBe('2026-09-21T14:00:00.000Z');
+  });
 });
 
 describe('isOpenAt', () => {

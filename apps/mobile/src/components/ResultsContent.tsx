@@ -22,6 +22,7 @@ import { haptic } from '@/lib/haptics';
 import { GymRow } from './GymRow';
 import { Icon } from './Icon';
 import { Chip, PrimaryButton, TIER_COLOUR, Txt } from './ui';
+import { AdSlot } from './AdSlot';
 
 /** How many result rows animate as the list changes: about a screenful. */
 const ANIMATED_ROWS = 12;
@@ -442,6 +443,9 @@ export function ResultsContent({
         ),
       )}
 
+      {/* Under the list, never between a gym and the next one. */}
+      {total > 0 && <AdSlot style={styles.ad} />}
+
       <View style={styles.footer}>
         <Txt variant="caption" color={color.labelSecondary} style={styles.footerText}>
           {dataNote}
@@ -614,6 +618,7 @@ const styles = themed(() => StyleSheet.create({
   },
   rowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 86 },
 
+  ad: { marginHorizontal: space[4], marginTop: space[4] },
   footer: { paddingHorizontal: space[6], paddingTop: space[6] },
   footerText: { textAlign: 'center' },
 }));

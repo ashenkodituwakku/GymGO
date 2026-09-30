@@ -37,6 +37,7 @@ import { LogoBadge, LogoCredit, useGymMark } from './BrandLogo';
 import { Glass } from './Glass';
 import { FADE_IN, FADE_OUT, Pressy } from './motion';
 import { ActionButton, CloseButton, Fold, InfoRow, RoundToggle, TIER_COLOUR, Txt } from './ui';
+import { JoinGym } from './JoinGym';
 
 const TRAINING: Record<string, string> = {
   full_gym: 'Gym',
@@ -188,7 +189,9 @@ export function PlaceCard({
   const deposit = depositLine(result.offers);
 
   const offers = assessAllOffers(record.offers, { visitLocalDate: visitDate, asOf });
-  const longer = record.offers.filter((offer) => isMultiVisitProduct(offer) || offer.productType === 'membership');
+  // Memberships have their own section below (Join this gym).
+  const longer = record.offers.filter((offer) => isMultiVisitProduct(offer) && offer.productType !== 'membership');
+  const visitOffers = record.offers.filter((offer) => !isMultiVisitProduct(offer) && offer.productType !== 'membership');
   const reasons = result.limitations.slice(0, 3);
   // Not for an invented demo gym: there's nobody to call. The four that matter most on the day.
   const questions = location.isDemoData || result.tier === 'confirmed' ? [] : callQuestions(result, `at ${timeLabel(visitMinute)}`).slice(0, 4);
@@ -451,7 +454,7 @@ export function PlaceCard({
                 </View>
               );
             })}
-          {record.offers.length === 0 && (
+          {visitOffers.length === 0 && (
             <Txt variant="subhead" color={color.labelSecondary}>
               This gym doesn’t publish a visit price, so we don’t show one. Ask when you call.
             </Txt>
@@ -481,6 +484,8 @@ export function PlaceCard({
           <Evidence provenance={result.offers.bestAvailable?.offer.provenance} age={result.offers.bestAvailable?.freshness.ageDays ?? null} />
           {memberPrices}
         </Fold>
+
+        <JoinGym record={record} />
 
         <Fold icon="door" title="Getting in" summary={guestHours ? `Guests ${guestHours}` : 'Guest hours not published'}>
           <Hours label="Guests" schedule={result.access.visitorSchedule} highlight />

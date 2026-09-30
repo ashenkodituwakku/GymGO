@@ -23,6 +23,7 @@ import {
   WEEKEND,
   equipment,
   hm,
+  websiteCopy,
   location,
   offer,
   on,
@@ -280,6 +281,31 @@ const asp = record(
       }),
     ],
     equipment: equipment(aspId, ['lifting_platform', 'barbells'], ASP_OFFER),
+    offers: [
+      // "FULL ACCESS ... $39.90 per week": the gym and unlimited classes, month
+      // to month, "no lock-in contract". Its casual class price wasn't on a page
+      // we could pin down, so it isn't shown.
+      offer(
+        aspId,
+        'full-access',
+        {
+          productType: 'membership',
+          label: 'Full Access',
+          baseAmountMinor: 3990,
+          validityDays: null,
+          inclusions: ['Gym floor', 'Unlimited classes'],
+          membershipTerms: {
+            billingIntervalDays: 7,
+            joiningFeeMinor: null,
+            accessCardFeeMinor: null,
+            minimumTermDays: 0,
+            cancellationNoticeDays: null,
+            notes: ['"No lock-in contract", month to month.'],
+          },
+        },
+        websiteCopy('https://trainasp.com.au/what-we-offer/', "Gym's website: what we offer"),
+      ),
+    ],
     prerequisites: prerequisites(aspId, {
       notes: ['Offers a free first visit, booked in advance.', 'Public holiday hours are posted on its social media.'],
       source: ASP_HOME,
@@ -316,6 +342,28 @@ const nextLevel = record(
         windows: [...on(MON_THU, hm(10), hm(19)), ...on([5, 6], hm(10), hm(14))],
         source: NEXT_LEVEL,
       }),
+    ],
+    offers: [
+      // "$11.95 per week via direct debit, no joining fee, no contract."
+      offer(
+        nextLevelId,
+        'weekly',
+        {
+          productType: 'membership',
+          label: 'Weekly direct debit',
+          baseAmountMinor: 1195,
+          validityDays: null,
+          membershipTerms: {
+            billingIntervalDays: 7,
+            joiningFeeMinor: 0,
+            accessCardFeeMinor: null,
+            minimumTermDays: 0,
+            cancellationNoticeDays: null,
+            notes: ['"No joining fee, no contract."', 'Pay-up-front memberships are also offered; their prices aren’t published.'],
+          },
+        },
+        websiteCopy('https://nextlevelfitness.com.au/membershipsthmelb/', "Gym's website: South Melbourne memberships"),
+      ),
     ],
     prerequisites: prerequisites(nextLevelId, {
       notes: ['Offers a free pass for you and a friend (arranged with the gym).'],
@@ -484,6 +532,8 @@ interface MapOnly {
   foundWebsite?: string;
   /** Mapped as `opening_hours=24/7`. */
   mapped247?: boolean;
+  /** Prices the gym publishes, each with its own source. */
+  offers?: GymRecord['offers'];
 }
 
 /** When the found websites were read. */
@@ -514,6 +564,7 @@ function mapOnly(spec: MapOnly): GymRecord {
       }
     : mapped;
   return record(loc, {
+    offers: spec.offers ?? [],
     schedules: spec.mapped247
       ? [
           schedule(spec.id, 'member', {
@@ -653,6 +704,32 @@ const mapped: GymRecord[] = [
     lng: 144.99714,
     osmElement: 'way/609091134',
     website: 'https://fitnessxo.com/',
+    offers: [
+      // "New members can get unlimited classes for 4 weeks ... then $215/month.
+      // Pause or cancel anytime." A class studio: whether the plan includes a
+      // gym floor isn't said. The first-month offer is a promotion, so it's left out.
+      offer(
+        'fitness-xo-northcote',
+        'unlimited',
+        {
+          productType: 'membership',
+          label: 'Unlimited classes',
+          baseAmountMinor: 21500,
+          validityDays: null,
+          grantsGymFloorAccess: 'unknown',
+          inclusions: ['Unlimited classes'],
+          membershipTerms: {
+            billingIntervalDays: 30,
+            joiningFeeMinor: null,
+            accessCardFeeMinor: null,
+            minimumTermDays: 0,
+            cancellationNoticeDays: null,
+            notes: ['"Pause or cancel anytime."', 'A lower first-month price for new members is advertised.'],
+          },
+        },
+        websiteCopy('https://fitnessxo.com/pricing-northcote/', "Gym's website: Northcote pricing"),
+      ),
+    ],
   }),
   mapOnly({
     id: 'prosport-richmond',

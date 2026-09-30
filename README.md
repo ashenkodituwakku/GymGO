@@ -773,20 +773,23 @@ or abusive.
 
 ### GymGO's own logo
 
-The mark is a G made from a weight plate, its crossbar an arrow heading out:
-a gym, and going to it. It is one colour, so it also works as the tinted iOS
-icon and the Android themed icon. The wordmark sets "GymGO" in Inter
-ExtraBold (SIL Open Font Licence) beside it, "GO" in the app's indigo.
+The logo is a white G whose crossbar turns into an arrow heading out (a
+gym, and going to it) on a blue-to-violet gradient. The original is a
+picture, `apps/mobile/assets/brand/gymgo-logo.jpg`. The wordmark sets
+"GymGO" in Inter ExtraBold (SIL Open Font Licence) beside the icon, "GO" in
+the logo's violet.
 
-`node apps/mobile/scripts/brand-mark.mjs` draws everything from one set of
-numbers: the SVG sources in `apps/mobile/assets/brand/` (app icon, mark,
-wordmark for light and dark backgrounds), the PNGs `app.json` uses in
-`apps/mobile/assets/images/` (iOS light, dark and tinted icons; Android
-adaptive, background and monochrome layers; the splash mark for light and
-dark; the web favicon), and `src/components/brandPaths.ts`, from which the
-app draws the icon on the sign-in screens and the wordmark at the foot of
-Profile. Change the numbers in the script and run it again; don't edit the
-outputs by hand.
+`node apps/mobile/scripts/brand-mark.mjs` makes everything else from that
+picture: the PNGs `app.json` uses in `apps/mobile/assets/images/` (the iOS
+icon, and its dark and tinted forms; Android's adaptive layers and themed
+icon; the splash screen; the favicon), the badge the app shows on the
+sign-in screens and at the foot of Profile, the web site's tab and
+home-screen icons in `apps/web/src/app/`, and
+`src/components/brandPaths.ts` (the wordmark's letters and the violet).
+The forms that want the G alone lift it off its background, finding the
+background by its smoothness, so the G's shaded fold stays part of the G.
+To change the logo, replace the picture and run the script again; don't
+edit the outputs by hand.
 
 ### Gym logos
 

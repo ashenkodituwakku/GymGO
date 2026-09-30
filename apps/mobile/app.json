@@ -21,7 +21,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundImage": "./assets/images/adaptive-background.png",
         "monochromeImage": "./assets/images/monochrome-icon.png",
-        "backgroundColor": "#5856D6"
+        "backgroundColor": "#5247FE"
       },
       "predictiveBackGestureEnabled": false,
       "blockedPermissions": [
@@ -54,7 +54,7 @@
           "resizeMode": "contain",
           "backgroundColor": "#F2F2F7",
           "dark": {
-            "image": "./assets/images/splash-icon-dark.png",
+            "image": "./assets/images/splash-icon.png",
             "backgroundColor": "#000000"
           }
         }

@@ -1,18 +1,7 @@
-/** Written by scripts/brand-mark.mjs: GymGO's mark and wordmark, as paths. Edit the script, not this. */
+/** Written by scripts/brand-mark.mjs: the logo's violet and GymGO's wordmark. Edit the script, not this. */
 
-/** The mark on the app icon's 1024 square: the plate (a stroke) and the arrow (a fill). */
-export const MARK = {
-  plate: 'M 574.9 315.3 A 232 232 0 1 0 684.0 512.0',
-  plateWidth: 136,
-  arrow: 'M 452 444 H 714 V 362 L 884 512 L 714 662 V 580 H 452 Z',
-  arrowRounding: 22,
-  box: { x: 152, y: 212, width: 743, height: 600 },
-  /** How much of the app icon it fills. */
-  iconScale: 0.86,
-} as const;
-
-/** The app icon's background, top to bottom. */
-export const ICON_SKY = ['#7472F2', '#4B49C4'] as const;
+/** The violet in the middle of the logo, as dark as text on white needs, and as light as text on black does. */
+export const LOGO_VIOLET = { light: '#5247FE', dark: '#7D75FE' } as const;
 
 /** "GymGO" in Inter ExtraBold at 100 px, baseline at 0. */
 export const WORDMARK = {
@@ -21,7 +10,7 @@ export const WORDMARK = {
   width: 374.32,
   cap: 72.75,
   descent: 20.8,
-  /** The mark beside it: this tall, this far from the G, centred on the capitals. */
-  markHeight: 94.58,
-  gap: 20.37,
+  /** The badge beside it: this tall, this far from the G, centred on the capitals. */
+  badge: 101.85,
+  gap: 21.82,
 } as const;

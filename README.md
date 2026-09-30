@@ -680,6 +680,21 @@ your name. The server removes the photo's hidden details (including where it
 was taken) before saving it, and it stays hidden until a moderator publishes
 it. A photo the moderator turns down is deleted. Photos live in `apps/server/data/photos/` on your computer.
 
+### Joining a gym
+
+Each gym's card and page has **Join this gym**: every membership the gym
+publishes, with its price and period, joining and card fees, minimum term
+and notice, where it was read and when. A fee the gym doesn't publish says
+"not published", never $0. **Sign up on their website** opens the gym's own
+sign-up page (or its website, or its phone): you join with the gym, and
+GymGO takes no payment. Prices were researched from gyms' own sites; see
+`docs/research/prices-2026-09-30.md` for what was found and what still
+needs a direct check.
+
+**Ads:** a marked space that says AD PLACEHOLDER sits on Home and under
+Explore's list, for a future ad partner. It loads and tracks nothing, and
+Pro members don't see it (`apps/mobile/src/components/AdSlot.tsx`).
+
 ### What a visit costs, from members
 
 Most gyms on the map don't publish a casual-visit price. So under a gym's

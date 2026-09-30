@@ -13,7 +13,6 @@
 import BottomSheet, {
   BottomSheetModal,
   BottomSheetModalProvider,
-  BottomSheetScrollView,
   type BottomSheetBackdropProps,
   BottomSheetBackdrop,
   useBottomSheetSpringConfigs,
@@ -51,7 +50,7 @@ import { GymNotes } from '@/components/GymNotes';
 import { CollectCard } from '@/components/CollectCard';
 import { ResultsContent } from '@/components/ResultsContent';
 import { ReviewsSection } from '@/components/ReviewsSection';
-import { FloatingGlassBackground, FloatingSolidBackground, SHEET_GAP, SHEET_SIDE, SheetClip } from '@/components/SheetBackground';
+import { FloatingGlassBackground, FloatingSolidBackground, SHEET_GAP, SHEET_SCROLL_ONLY, SHEET_SIDE, SheetClip, SheetOpener, SheetScrollView } from '@/components/SheetBackground';
 import { CloseButton, ControlCapsule, Txt } from '@/components/ui';
 import { DROP_IN, FADE_OUT, usePressScale } from '@/components/motion';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -806,7 +805,7 @@ function MapScreen() {
       results={results(true)}
       place={
         selected && (
-          <BottomSheetScrollView
+          <SheetScrollView
             stickyHeaderIndices={[0]}
             contentContainerStyle={{ paddingBottom: insets.bottom + space[6] }}
             onScroll={(event) => {
@@ -816,7 +815,7 @@ function MapScreen() {
           >
             <PlaceHeader result={selected} onClose={closePlace} onExpand={expandPlace} scrolled={cardScrolled} />
             {placeCard(true)}
-          </BottomSheetScrollView>
+          </SheetScrollView>
         )
       }
       onPlaceDismiss={() => {
@@ -910,6 +909,22 @@ function PhoneShell(props: {
     const point = snapPoints[index] ?? PEEK;
     return (typeof point === 'number' ? point : (parseFloat(point) / 100) * height) + clearance + SHEET_GAP;
   };
+  // On a phone, a drag in a sheet's list opens the sheet all the way first:
+  // once, going by the detent each sheet is at or on its way to, so the
+  // scrolls that follow while it opens don't start it again.
+  const mainGoing = useRef(1);
+  const placeGoing = useRef(-1);
+  const { mainSheet, placeSheet } = props;
+  const openMain = useCallback(() => {
+    if (mainGoing.current >= snapPoints.length - 1) return;
+    mainGoing.current = snapPoints.length - 1;
+    mainSheet.current?.snapToIndex(snapPoints.length - 1);
+  }, [mainSheet, snapPoints.length]);
+  const openPlace = useCallback(() => {
+    if (placeGoing.current < 0 || placeGoing.current >= placeSnaps.length - 1) return;
+    placeGoing.current = placeSnaps.length - 1;
+    placeSheet.current?.snapToIndex(placeSnaps.length - 1);
+  }, [placeSheet, placeSnaps.length]);
 
   const backdrop = useCallback(
     (backdropProps: BottomSheetBackdropProps) => (
@@ -953,6 +968,7 @@ function PhoneShell(props: {
         keyboardBlurBehavior="restore"
         android_keyboardInputMode="adjustResize"
         onAnimate={(from, to, _fromPosition, toPosition) => {
+          mainGoing.current = to;
           if (from !== to && to >= 0) haptic.select();
           // Moving the map with the sheet, not after it. Stepping aside for a
           // card waits for the card's own reach, so the map moves once.
@@ -960,15 +976,18 @@ function PhoneShell(props: {
         }}
         onChange={(index, position) => {
           props.sheetIndex.current = index;
+          mainGoing.current = index;
           setMainTop(index < 0 ? 0 : topOf(position));
           setMainFull(index === snapPoints.length - 1);
         }}
       >
-        <SheetClip>
-          <BottomSheetScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: space[4] }}>
-            {props.results}
-          </BottomSheetScrollView>
-        </SheetClip>
+        <SheetOpener.Provider value={SCROLL_ONLY ? openMain : null}>
+          <SheetClip>
+            <SheetScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: space[4] }}>
+              {props.results}
+            </SheetScrollView>
+          </SheetClip>
+        </SheetOpener.Provider>
       </BottomSheet>
 
       <BottomSheetModal
@@ -984,14 +1003,17 @@ function PhoneShell(props: {
         enableContentPanningGesture={!SCROLL_ONLY}
         handleStyle={SCROLL_ONLY ? styles.grabArea : undefined}
         keyboardBehavior="extend"
-        onAnimate={(_from, to, _fromPosition, toPosition) => {
+        onAnimate={(from, to, _fromPosition, toPosition) => {
+          placeGoing.current = to;
           if (to >= 0) setPlaceTop(topOf(toPosition));
         }}
         onChange={(index, position) => {
+          placeGoing.current = index;
           setPlaceFull(index === placeSnaps.length - 1);
           setPlaceTop(index < 0 ? 0 : topOf(position));
         }}
         onDismiss={() => {
+          placeGoing.current = -1;
           setPlaceFull(false);
           setPlaceTop(0);
           props.onPlaceDismiss();
@@ -1002,7 +1024,11 @@ function PhoneShell(props: {
           props.restoreIndex.current = null;
         }}
       >
-        {props.place ? <SheetClip>{props.place}</SheetClip> : null}
+        {props.place ? (
+          <SheetOpener.Provider value={SCROLL_ONLY ? openPlace : null}>
+            <SheetClip>{props.place}</SheetClip>
+          </SheetOpener.Provider>
+        ) : null}
       </BottomSheetModal>
 
       <BottomSheetModal
@@ -1021,7 +1047,7 @@ function PhoneShell(props: {
         onDismiss={props.onFiltersDismiss}
       >
         <SheetClip>
-          <BottomSheetScrollView contentContainerStyle={{ paddingBottom: space[4] }}>{props.filters}</BottomSheetScrollView>
+          <SheetScrollView contentContainerStyle={{ paddingBottom: space[4] }}>{props.filters}</SheetScrollView>
         </SheetClip>
       </BottomSheetModal>
         </BottomSheetModalProvider>
@@ -1032,14 +1058,12 @@ function PhoneShell(props: {
 }
 
 /**
- * On a phone, a sheet's list only scrolls, and the sheet moves by its top
- * edge. Letting the list drag the sheet too hands every drag to the sheet
- * library to share out between the two, and on iPhone it could lock the
- * list part way down (comparing positions that differ by a rounding
- * error), so the last rows never came into view. A browser has its own
- * version of that code, and keeps both.
+ * On a phone (the app, or a browser on one), a sheet's list only scrolls,
+ * and the sheet moves by its top edge (see SHEET_SCROLL_ONLY). So that a
+ * half-open sheet doesn't leave the rows a strip to scroll in, a drag in
+ * the list opens its sheet all the way first (SheetScrollView).
  */
-const SCROLL_ONLY = Platform.OS !== 'web';
+const SCROLL_ONLY = SHEET_SCROLL_ONLY;
 
 const styles = themed(() => StyleSheet.create({
   mapWaiting: { ...StyleSheet.absoluteFill, backgroundColor: color.groupedBackground },

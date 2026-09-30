@@ -283,8 +283,8 @@ Chrome and Edge (blur only in Safari and Firefox).
   gym's price), guest entry, what to bring, machines, rating and distance.
   The round compare button in a map card's header adds a gym too.
 - **Profile**: laid out like Settings. Your account card (tap it for
-  **Account**: name, email, password, Apple and Google, your data, sign out,
-  delete), Training (Progress, My workouts, Plate calculator), Pro, your
+  **Account**: profile picture, name, email, password, Apple and Google,
+  your data, sign out, delete), Training (Progress, My workouts, Plate calculator), Pro, your
   gyms, Settings (Country, **Appearance**, Haptics, Demo mode), and where
   GymGO's facts come from. Signed out, a card to sign in with Apple, Google
   or email.
@@ -550,8 +550,18 @@ In Profile you can **change your name** and **change your password** (it
 asks for the current one, and signs out any other device signed in as you).
 There's no "forgot password" yet, because GymGO sends no email.
 
+**Profile picture**: tap the circle on Account (or Profile picture) and
+pick one of your photos. It's cut to a centred square (on a phone you can
+choose the square yourself), made 400 pixels across and sent as a JPEG;
+the server removes its metadata again, as it does for gym photos, and
+deletes the old file when you change or remove it. It shows on Profile,
+the tab bar, Home and the map, only to you: it isn't shown with your
+reviews or photos, so it needs no moderator. Without one you get your
+initial, as before. On a phone this needs a build made after
+`expo-image-manipulator` was added.
+
 **Download my data** in Profile gives you everything GymGO holds about you
-as one JSON file: your account, sign-in dates, saved gyms, reviews, photo
+as one JSON file: your account (with your profile picture's id), sign-in dates, saved gyms, reviews, photo
 records, machine, price and visit reports, workouts, bug reports and
 subscription (never your password hash or sign-in tokens). In a browser it downloads; on a phone
 it opens the share sheet. **Delete account** removes all of it.

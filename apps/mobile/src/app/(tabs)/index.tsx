@@ -16,6 +16,7 @@ import { Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { AdSlot } from '@/components/AdSlot';
 import { BrandFill } from '@/components/BrandFill';
+import { Avatar } from '@/components/Avatar';
 import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { useActiveSession } from '@/lib/activeSession';
@@ -142,9 +143,7 @@ export default function Home() {
           style={[styles.avatar, account.account && styles.avatarOn]}
         >
           {account.account ? (
-            <Txt variant="headline" color={color.onBrand}>
-              {account.account.displayName.slice(0, 1).toUpperCase()}
-            </Txt>
+            <Avatar account={account.account} size={40} variant="headline" />
           ) : (
             <Icon name="account" size={22} color={color.brand} />
           )}

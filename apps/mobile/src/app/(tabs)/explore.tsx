@@ -555,7 +555,7 @@ function MapScreen() {
       onApplyRelaxation={relax}
       notice={notice}
       inSheet={inSheet}
-      accountInitial={account.account ? account.account.displayName.slice(0, 1).toUpperCase() : null}
+      me={account.account}
       onOpenAccount={openAccount}
       dataNote={dataNote}
       searchRef={searchInput}

@@ -37,7 +37,7 @@ import { LogoBadge, LogoCredit, useGymMark } from './BrandLogo';
 import { Glass } from './Glass';
 import { FADE_IN, FADE_OUT, Pressy } from './motion';
 import { ActionButton, CloseButton, Fold, InfoRow, RoundToggle, TIER_COLOUR, Txt } from './ui';
-import { JoinGym } from './JoinGym';
+import { JoinGym, MembershipBanner } from './JoinGym';
 
 const TRAINING: Record<string, string> = {
   full_gym: 'Gym',
@@ -287,6 +287,9 @@ export function PlaceCard({
       )}
 
       {statusWarning}
+
+      {/* What joining costs, centred near the top ------------------------ */}
+      <MembershipBanner record={record} />
 
       {/* The one answer ------------------------------------------------- */}
       <Animated.View style={[styles.verdict, { backgroundColor: tone.tint }]}>

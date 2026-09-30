@@ -10,8 +10,9 @@
 import * as WebBrowser from 'expo-web-browser';
 import { Linking, StyleSheet, View } from 'react-native';
 import { describeMembership, formatMoney, type GymRecord, type VisitOffer } from '@gymgo/domain';
-import { color, space, themed } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 import { Fold, PrimaryButton, Txt } from './ui';
+import { Pressy } from './motion';
 
 /** The membership offers a gym publishes, cheapest per week first. */
 export function membershipsOf(record: GymRecord): VisitOffer[] {
@@ -35,6 +36,67 @@ function feeLine(label: string, minor: number | null, currency: VisitOffer['curr
   return `${label}: ${formatMoney(minor, currency)}`;
 }
 
+/** The line a gym's disagreeing membership sources carry, if any. */
+function conflictOf(offers: VisitOffer[]): string | null {
+  return offers.find((offer) => offer.provenance.status === 'conflicting')?.provenance.conflictNote ?? null;
+}
+
+/**
+ * Membership prices, centred near the top of a gym's card: every tier the
+ * gym publishes, side by side, and the way to sign up. Nothing when the gym
+ * publishes none (Join this gym, further down, says so).
+ */
+export function MembershipBanner({ record }: { record: GymRecord }) {
+  const tiers = membershipsOf(record).filter((offer) => offer.baseAmountMinor !== null);
+  if (tiers.length === 0) return null;
+  const url = record.location.isDemoData ? null : joinUrl(record);
+  const disagree = conflictOf(tiers) !== null;
+  return (
+    <View style={styles.banner} accessibilityRole="summary">
+      <Txt variant="eyebrow" color={color.brand} style={styles.center}>
+        {tiers.length > 1 ? `MEMBERSHIP · ${tiers.length} OPTIONS` : 'MEMBERSHIP'}
+      </Txt>
+      <View style={styles.pills}>
+        {tiers.map((offer) => {
+          const view = describeMembership(offer);
+          return (
+            <View
+              key={offer.id}
+              style={styles.pill}
+              accessible
+              accessibilityLabel={`${offer.label}: ${formatMoney(offer.baseAmountMinor!, offer.currency)} ${view?.billingLabel ?? ''}`}
+            >
+              <Txt variant="caption" color={color.labelSecondary} numberOfLines={2} style={styles.center}>
+                {offer.label}
+              </Txt>
+              <Txt variant="headline" style={styles.center}>
+                {formatMoney(offer.baseAmountMinor!, offer.currency)}
+              </Txt>
+              {view && (
+                <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
+                  {view.billingLabel}
+                </Txt>
+              )}
+            </View>
+          );
+        })}
+      </View>
+      {disagree && (
+        <Txt variant="footnote" color={color.maybeInk} style={styles.center}>
+          The gym’s pages disagree on these prices. Check with the gym before you join.
+        </Txt>
+      )}
+      {url && (
+        <Pressy onPress={() => void WebBrowser.openBrowserAsync(url)} accessibilityRole="link" style={styles.signUp}>
+          <Txt variant="subhead" color={color.brand} style={styles.bold}>
+            Sign up on their website ↗
+          </Txt>
+        </Pressy>
+      )}
+    </View>
+  );
+}
+
 export function JoinGym({ record }: { record: GymRecord }) {
   const memberships = membershipsOf(record);
   const url = record.location.isDemoData ? null : joinUrl(record);
@@ -46,8 +108,14 @@ export function JoinGym({ record }: { record: GymRecord }) {
       ? `${memberships.length > 1 ? 'From ' : ''}${formatMoney(cheapest.baseAmountMinor, cheapest.currency)} ${cheapestView.billingLabel}`
       : 'Membership prices not published';
 
+  const conflict = conflictOf(memberships);
   return (
     <Fold icon="cards" title="Join this gym" summary={summary}>
+      {conflict && (
+        <Txt variant="footnote" color={color.maybeInk}>
+          Sources disagree: {conflict}
+        </Txt>
+      )}
       {memberships.map((offer) => {
         const view = describeMembership(offer);
         const terms = offer.membershipTerms;
@@ -122,6 +190,12 @@ export function JoinGym({ record }: { record: GymRecord }) {
 const styles = themed(() =>
   StyleSheet.create({
     flex: { flex: 1 },
+    center: { textAlign: 'center' },
+    bold: face('semibold'),
+    banner: { marginTop: space[3], gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, alignItems: 'center' },
+    pills: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space[2], alignSelf: 'stretch' },
+    pill: { minWidth: 92, flexGrow: 1, flexBasis: 92, maxWidth: 160, alignItems: 'center', gap: 1, paddingVertical: space[2], paddingHorizontal: space[2], borderRadius: radius.md, backgroundColor: color.brandTint },
+    signUp: { paddingVertical: space[1], paddingHorizontal: space[3] },
     plan: { gap: space[1], paddingBottom: space[3], marginBottom: space[1], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: color.separator },
     planHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
     price: { alignItems: 'flex-end' },

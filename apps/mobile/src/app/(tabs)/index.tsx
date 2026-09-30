@@ -55,7 +55,7 @@ const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
 
 export default function Home() {
   usePageTitle(null);
-  const { data, account, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady, lookup, searchHere, here } = useApp();
+  const { data, account, billing, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady, lookup, searchHere, here } = useApp();
   const active = useActiveSession();
   // Your training log, shared with Progress; the week strip shows once there's something in it.
   const log = useTrainingLog(account.token);
@@ -226,7 +226,7 @@ export default function Home() {
 
       <HereNudge here={here} records={data.listed} onOpen={(id) => router.push({ pathname: '/gym/[id]', params: { id } })} />
       {log.status === 'ready' && log.sessions.length > 0 && (
-        <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} onPress={() => router.push('/progress')} />
+        <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />
       )}
       <CollectionStrip onPress={() => router.push('/collection')} />
 

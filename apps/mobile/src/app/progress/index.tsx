@@ -17,7 +17,7 @@ import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import {
   durationLabel,
   formatWeight,
@@ -29,7 +29,7 @@ import {
   setsSummary,
   unitFor,
   volumeKg,
-  weekStreak,
+  streakOf,
   type TrainingSession,
 } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
@@ -53,6 +53,9 @@ export default function ProgressScreen() {
   const token = account.token;
   const log = useTrainingLog(token);
   const known = log.status === 'ready';
+  // Pro's streak freeze carries the run through one missed week a month; on Free, what one would have kept.
+  const streak = useMemo(() => streakOf(log.sessions, new Date(), billing.isPro), [log.sessions, billing.isPro]);
+  const couldKeep = useMemo(() => (billing.isPro ? null : streakOf(log.sessions, new Date(), true)), [log.sessions, billing.isPro]);
   const active = useActiveSession();
   const router = useRouter();
   const unit = unitFor(prefs.country);
@@ -84,10 +87,29 @@ export default function ProgressScreen() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: 'Progress' }} />
       <Animated.View style={styles.stats}>
-        <Stat icon="flame" tint={color.maybe} value={known ? weekStreak(log.sessions) : null} one="week in a row" many="weeks in a row" />
+        <Stat icon="flame" tint={color.maybe} value={known ? streak.weeks : null} one="week in a row" many="weeks in a row" />
         <Stat icon="calendar" tint={color.brand} value={known ? sessionsThisWeek(log.sessions) : null} one="this week" many="this week" />
         <Stat icon="workout" tint={color.good} value={known ? log.sessions.length : null} one="workout" many="workouts" />
       </Animated.View>
+      {known && streak.frozen.length > 0 && (
+        <View style={styles.freeze} accessible>
+          <Icon name="sparkle" size={18} color={color.brand} />
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
+            {`Streak freeze: you missed the week${streak.frozen.length > 1 ? 's' : ''} of ${streak.frozen
+              .map((monday) => new Date(monday).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }))
+              .join(' and ')}, and your run carried on. Pro covers one missed week a month.`}
+          </Txt>
+        </View>
+      )}
+      {known && couldKeep && couldKeep.weeks > streak.weeks && (
+        <Pressable onPress={() => openPro('freeze')} accessibilityRole="button" style={({ pressed }) => [styles.freeze, pressed && { opacity: 0.7 }]}>
+          <Icon name="sparkle" size={18} color={color.brand} />
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
+            {`A streak freeze would have kept your ${couldKeep.weeks}-week run going through the week you missed. GymGO Pro covers one missed week a month.`}
+          </Txt>
+          <Icon name="chevron" size={13} color={color.labelTertiary} />
+        </Pressable>
+      )}
       {start}
 
       {log.status === 'loading' && (
@@ -310,7 +332,8 @@ const styles = themed(() => StyleSheet.create({
   center: { textAlign: 'center' },
   flex: { flex: 1, gap: 2 },
   stats: { flexDirection: 'row', gap: space[2] },
-  stat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: space[3], borderRadius: radius.lg, backgroundColor: color.card },
+  stat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: space[3], borderRadius: radius.lg, backgroundColor: color.card, ...shadow.plate },
+  freeze: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.brandTint },
   problem: { gap: space[2] },
   section: { marginTop: space[3], marginLeft: space[4] },
   days: { gap: space[4] },

@@ -84,6 +84,7 @@ const ICONS = {
   trophy: { ios: 'trophy.fill', android: 'emoji_events', web: 'emoji_events' },
   flame: { ios: 'flame.fill', android: 'local_fire_department', web: 'local_fire_department' },
   play: { ios: 'play.fill', android: 'play_arrow', web: 'play_arrow' },
+  pause: { ios: 'pause.fill', android: 'pause', web: 'pause' },
   target: { ios: 'scope', android: 'track_changes', web: 'track_changes' },
   plus: { ios: 'plus', android: 'add', web: 'add' },
   minus: { ios: 'minus', android: 'remove', web: 'remove' },

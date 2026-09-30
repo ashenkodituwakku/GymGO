@@ -129,7 +129,7 @@ export default function AccountScreen() {
           accessibilityLabel={me.avatarUrl ? 'Change your profile picture' : 'Add a profile picture'}
           style={({ pressed }) => [styles.avatar, pressed && { opacity: 0.8 }]}
         >
-          <Avatar account={me} size={84} variant="largeTitle" />
+          <Avatar account={me} size={84} variant="largeTitle" ring={billing.isPro ? color.groupedBackground : undefined} />
           <View style={styles.avatarBadge}>
             <Icon name="photo" size={13} color={color.onBrand} />
           </View>

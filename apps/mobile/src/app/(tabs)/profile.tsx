@@ -80,7 +80,7 @@ export default function Profile() {
           accessibilityLabel={`${me.displayName}, ${me.email}. Account settings`}
           style={styles.meCard}
         >
-          <Avatar account={me} size={60} variant="title" />
+          <Avatar account={me} size={60} variant="title" ring={billing.isPro ? color.card : undefined} />
           <View style={styles.flex}>
             <Txt variant="title2" numberOfLines={1}>
               {me.displayName}
@@ -105,6 +105,8 @@ export default function Profile() {
         <Row icon="chart" tile={TILE.green} title="Progress" subtitle="Your log, records and streak" onPress={() => router.push('/progress')} />
         <Row icon="workout" tile={TILE.orange} title="My workouts" onPress={() => router.push('/workouts')} />
         <Row icon="plates" tile={TILE.teal} title="Plate calculator" onPress={() => router.push('/plates')} />
+        <Row icon="target" tile={TILE.blue} title="1-rep max" subtitle="From any set, and the weights to train at" onPress={() => router.push('/strength')} />
+        <Row icon="timer" tile={TILE.red} title="Interval timer" subtitle="Tabata and EMOM, or your own with Pro" onPress={() => router.push('/timer')} />
       </Group>
 
       <Group header="GymGO Pro">

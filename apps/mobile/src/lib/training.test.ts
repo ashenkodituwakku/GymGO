@@ -23,6 +23,7 @@ import {
   cleanPlates,
   warmUpSets,
   weekStreak,
+  streakOf,
   weightFor,
   type LoggedSet,
   type TrainingSession,
@@ -196,6 +197,24 @@ describe('over time', () => {
     expect(sessionsThisWeek(sessions, wednesday)).toBe(1);
   });
 
+  it('carries a streak through one missed week a month with a streak freeze', () => {
+    const wednesday = new Date(2026, 8, 23, 12);
+    const at = (y: number, m: number, d: number) => session(new Date(y, m, d, 18).toISOString(), { squat: [[100, 5]] });
+    // Trained the weeks of 21, 14 and 7 Sep and 24 Aug; missed 31 Aug.
+    const sessions = [at(2026, 8, 21), at(2026, 8, 16), at(2026, 8, 8), at(2026, 7, 25)];
+    expect(streakOf(sessions, wednesday)).toEqual({ weeks: 3, frozen: [] });
+    expect(streakOf(sessions, wednesday, true)).toEqual({ weeks: 4, frozen: [new Date(2026, 7, 31).getTime()] });
+    // Two missed weeks in a row end it, freeze or not.
+    const gap = [at(2026, 8, 21), at(2026, 8, 1)];
+    expect(streakOf(gap, wednesday, true)).toEqual({ weeks: 1, frozen: [] });
+    // One freeze a month: missing the weeks of 21 and 7 September, only the first is covered.
+    const september = [at(2026, 8, 30), at(2026, 8, 16), at(2026, 8, 1)];
+    expect(streakOf(september, new Date(2026, 8, 30, 20), true)).toEqual({ weeks: 2, frozen: [new Date(2026, 8, 21).getTime()] });
+    // A month apart, each month's freeze counts.
+    const months = [at(2026, 8, 21), at(2026, 8, 8), at(2026, 7, 25), at(2026, 7, 11)];
+    expect(streakOf(months, wednesday, true)).toEqual({ weeks: 3, frozen: [new Date(2026, 8, 14).getTime(), new Date(2026, 7, 31).getTime()] });
+  });
+
   it('groups the log by the day each session finished, newest first', () => {
     const now = new Date(2026, 8, 23, 20); // Wed 23 Sep 2026, 8 pm
     const at = (m: number, d: number, h: number, y = 2026) => session(new Date(y, m, d, h).toISOString(), { squat: [[100, 5]] });
@@ -307,5 +326,17 @@ describe('your own plates', () => {
     expect(cleanPlates([2.5, 20, 'x', 7, 20], 'kg')).toEqual([20, 2.5]);
     expect(cleanPlates([], 'kg')).toBeNull();
     expect(cleanPlates('nope', 'lb')).toBeNull();
+  });
+});
+
+describe('the 1-rep max calculator', () => {
+  it('turns a 1-rep max back into what you could do for more reps', async () => {
+    const { oneRepMax, repMax } = await import('./training');
+    const max = oneRepMax(100, 5)!;
+    expect(max).toBeCloseTo(116.67, 2);
+    expect(repMax(max, 5)).toBeCloseTo(100, 6);
+    expect(repMax(max, 1)).toBe(max);
+    expect(repMax(max, 13)).toBeNull();
+    expect(repMax(0, 3)).toBeNull();
   });
 });

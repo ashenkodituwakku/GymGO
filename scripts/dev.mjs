@@ -7,14 +7,18 @@
  *   node scripts/dev.mjs               server + app, opens the browser
  *   node scripts/dev.mjs --no-browser  same, without opening a browser
  *   node scripts/dev.mjs --tunnel      reach the app from a phone on another network
+ *   node scripts/dev.mjs --clear       start the app's bundler with an empty cache (the
+ *                                      launchers pass it after installing packages, so
+ *                                      it doesn't look for them where they used to be)
  *   node scripts/dev.mjs --xcode       on a Mac: make the Xcode project, open it, and
  *                                      serve the app's code to it (see scripts/xcode.mjs;
  *                                      also takes --team ABCDE12345 and --clean)
  *   node scripts/dev.mjs --auto-update keep this copy up to date while it runs: every
  *                                      three minutes, fetch GymGO's branch and move to it
  *                                      when nothing's been edited here. The app reloads
- *                                      itself; the server restarts; new dependencies are
- *                                      installed; a changed Xcode project is remade.
+ *                                      itself; the server restarts; a changed Xcode project
+ *                                      is remade. An update that brings new packages waits
+ *                                      for a restart instead (see checkForUpdate).
  */
 
 import { spawn, spawnSync } from 'node:child_process';
@@ -86,6 +90,7 @@ const expoArgs = ['start'];
 // With Xcode, the app on the iPhone is what you use, so no browser.
 if (!args.has('--no-browser') && !args.has('--xcode')) expoArgs.push('--web');
 if (args.has('--tunnel')) expoArgs.push('--tunnel');
+if (args.has('--clear')) expoArgs.push('--clear');
 
 if (xcodeNotes) console.log(xcodeNotes);
 const app = spawn(process.execPath, [expoCli, ...expoArgs], { cwd: mobileDir, stdio: 'inherit', env: process.env });
@@ -93,6 +98,9 @@ const app = spawn(process.execPath, [expoCli, ...expoArgs], { cwd: mobileDir, st
 // --- Keeping up to date ------------------------------------------------------------
 const git = (...gitArgs) => spawnSync('git', ['-C', root, ...gitArgs], { encoding: 'utf8' });
 let toldEdited = false;
+let toldPackages = false;
+/** Files whose change means different packages: installing them needs the app's bundler stopped and its cache cleared. */
+const touchesPackages = (file) => file === 'pnpm-lock.yaml' || file === 'pnpm-workspace.yaml' || file.startsWith('patches/') || file === 'package.json' || file.endsWith('/package.json');
 
 function checkForUpdate() {
   if (git('fetch', '--quiet', 'origin', BRANCH).status !== 0) return; // offline: try again later
@@ -106,16 +114,20 @@ function checkForUpdate() {
     return;
   }
   const changed = git('diff', '--name-only', here, there).stdout.split('\n').filter(Boolean);
+  // New packages can't be swapped in under the running bundler: it keeps
+  // looking for them where they were ("Unable to resolve …"), and on Windows
+  // files it holds open can leave the install half done. So that update
+  // waits for a restart, which installs them and starts with a clean cache.
+  if (changed.some(touchesPackages)) {
+    if (!toldPackages) say('A newer GymGO is out with new packages. Stop GymGO (Ctrl+C) and start it again to update.');
+    toldPackages = true;
+    return;
+  }
   const nativeBefore = xcode ? xcode.configFingerprint(undefined, xcodeTeam ?? process.env.GYMGO_APPLE_TEAM_ID ?? null) : null;
   if (git('merge', '--ff-only', '--quiet', `origin/${BRANCH}`).status !== 0) return;
   const subject = git('log', '-1', '--format=%s').stdout.trim();
   say(`Updated to ${there.slice(0, 7)}: ${subject}`);
 
-  if (changed.includes('pnpm-lock.yaml')) {
-    say('New dependencies: installing them…');
-    const pnpm = (process.env.GYMGO_PNPM || 'npx --yes pnpm@10.33.0').split(' ');
-    spawnSync(pnpm[0], [...pnpm.slice(1), 'install', '--frozen-lockfile'], { cwd: root, stdio: 'inherit' });
-  }
   if (changed.some((file) => file.startsWith('apps/server/') || file.startsWith('packages/'))) {
     say('Restarting the server with the new code.');
     restartServer();

@@ -94,6 +94,11 @@ After that you can run:
 
 - `gymgo` to start everything;
 - `gymgo -Update` to get the latest version first;
+- `gymgo -Repair` if the app fails to build with "Unable to resolve …"
+  (after an update that changed packages, say): it reinstalls the links
+  to GymGO's packages and starts the app with a clean cache. The launcher
+  already does this by itself when it installs new packages or finds one
+  missing, so you shouldn't often need it;
 - `gymgo -Tunnel` when the phone isn't on the same Wi-Fi;
 - `gymgo -NoBrowser` to start without opening a browser window;
 - `gymgo -NoDevAccount` to start without the ready-made Pro account.
@@ -147,9 +152,11 @@ so leave Terminal open. The first time takes a few minutes.
 **It keeps itself up to date while it runs.** Every three minutes it checks
 GitHub for a newer GymGO and moves to it (only when you haven't edited
 anything). New app code reloads in the running app by itself; new server
-code restarts the server; new dependencies are installed; and if the app's
-native parts changed, it remakes the Xcode project and says so in Terminal:
-then press Run (⌘R) in Xcode again. `--no-auto-update` turns this off.
+code restarts the server; and if the app's native parts changed, it remakes
+the Xcode project and says so in Terminal: then press Run (⌘R) in Xcode
+again. An update that brings new packages waits instead, and Terminal asks
+you to restart GymGO: installing them under the running app would leave it
+looking for them where they used to be. `--no-auto-update` turns this off.
 
 Once you have it, `bash ~/GymGO/scripts/gymgo-mac.sh --xcode` does the same.
 
@@ -194,6 +201,9 @@ Good to know:
   → Development Team once you've picked it).
 - The project is remade only when the app's settings changed. `--clean`
   remakes it from scratch.
+- "Unable to resolve …" when the app builds? Run
+  `bash ~/GymGO/scripts/gymgo-mac.sh --repair`: it reinstalls the links to
+  GymGO's packages and starts the app with a clean cache.
 - Something not working? Run `bash ~/GymGO/scripts/gymgo-mac.sh --doctor`: it
   prints your Xcode, CocoaPods, Node and GymGO versions and where things
   stand, to paste into a message. The usual fixes:

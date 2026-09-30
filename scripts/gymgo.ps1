@@ -27,7 +27,13 @@
     Do not open a browser window.
 
 .PARAMETER Update
-    Pull the latest commits before starting.
+    Pull the latest commits before starting. The launcher then carries on
+    with the version it just pulled, so a fix to it applies straight away.
+
+.PARAMETER Repair
+    Reinstall the links to GymGO's packages and start the app with a clean
+    cache. For "Unable to resolve ..." errors when the app builds, which an
+    update that changes packages can leave behind.
 
 .PARAMETER NoDevAccount
     Do not make the ready-made Pro account for trying GymGO on this
@@ -43,6 +49,7 @@
 .EXAMPLE
     gymgo
     gymgo -Update
+    gymgo -Repair
     gymgo -Tunnel
     gymgo -NoBrowser
     gymgo -NoDevAccount
@@ -54,6 +61,7 @@ param(
     [switch] $Tunnel,
     [switch] $NoBrowser,
     [switch] $Update,
+    [switch] $Repair,
     [switch] $NoDevAccount,
     [switch] $OldWebsite,
     [ValidateRange(1, 65535)]
@@ -104,9 +112,11 @@ function Test-PortOpen([int] $PortNumber) {
     }
 }
 
-Write-Host ''
-Write-Host '  GymGO' -ForegroundColor White
-Write-Host ''
+if (-not $env:GYMGO_PS_UPDATED) {
+    Write-Host ''
+    Write-Host '  GymGO' -ForegroundColor White
+    Write-Host ''
+}
 
 # --- Node --------------------------------------------------------------------
 $node = Get-Command node -ErrorAction SilentlyContinue
@@ -138,6 +148,19 @@ if (-not (Test-Path (Join-Path $Path 'package.json'))) {
     if ($LASTEXITCODE -ne 0) {
         Stop-WithError 'Could not update cleanly.' "You may have local edits in $Path. Commit or stash them, then try again."
     }
+    # Carry on with the launcher just pulled, not this older copy of it, so
+    # a fix to the launcher itself takes effect in this same run.
+    $next = @{ Path = $Path }
+    foreach ($key in $PSBoundParameters.Keys) {
+        if ($key -ne 'Update' -and $key -ne 'Path') { $next[$key] = $PSBoundParameters[$key] }
+    }
+    $env:GYMGO_PS_UPDATED = '1'
+    try {
+        & (Join-Path $Path 'scripts\gymgo.ps1') @next
+    } finally {
+        Remove-Item Env:GYMGO_PS_UPDATED -ErrorAction SilentlyContinue
+    }
+    return
 }
 Write-Done "Project at $Path"
 
@@ -178,10 +201,34 @@ try {
         ((Get-Item -LiteralPath $lockfile -Force).LastWriteTimeUtc -gt
             (Get-Item -LiteralPath $installMarker -Force).LastWriteTimeUtc)
 
-    if ($needsInstall) {
+    # After any install the app's bundler starts with a clean cache: its old
+    # one would still look for packages where they used to be ("Unable to
+    # resolve ..." as the app builds).
+    $clearCache = $false
+    if ($Repair) {
+        Write-Step 'Reinstalling the links to the packages from scratch'
+        Invoke-Pnpm install --frozen-lockfile --force
+        if ($LASTEXITCODE -ne 0) { Stop-WithError 'Reinstalling failed.' 'Scroll up for the error from pnpm.' }
+        $clearCache = $true
+    } elseif ($needsInstall) {
         Write-Step 'Installing dependencies (first run takes a minute)'
         Invoke-Pnpm install --frozen-lockfile
         if ($LASTEXITCODE -ne 0) { Stop-WithError 'Installing dependencies failed.' 'Scroll up for the error from pnpm.' }
+        $clearCache = $true
+    }
+    # pnpm trusts its own record of what it installed. Check the app can
+    # really find each package (a link left half made, by a file held open
+    # while it installed, say), and relink them if not.
+    & node (Join-Path $Path 'scripts/check-deps.mjs')
+    if ($LASTEXITCODE -ne 0) {
+        Write-Step 'Some packages are not where the app looks for them: reinstalling their links'
+        Invoke-Pnpm install --frozen-lockfile --force
+        if ($LASTEXITCODE -ne 0) { Stop-WithError 'Reinstalling failed.' 'Scroll up for the error from pnpm.' }
+        & node (Join-Path $Path 'scripts/check-deps.mjs')
+        if ($LASTEXITCODE -ne 0) {
+            Stop-WithError 'Some of the app packages are still missing.' 'Scroll up for errors from pnpm, then run: gymgo -Repair'
+        }
+        $clearCache = $true
     }
     Write-Done 'Dependencies ready'
 
@@ -223,6 +270,7 @@ try {
         $devArgs = @((Join-Path $Path 'scripts/dev.mjs'))
         if ($NoBrowser) { $devArgs += '--no-browser' }
         if ($Tunnel) { $devArgs += '--tunnel' }
+        if ($clearCache) { $devArgs += '--clear' }
         & node @devArgs
         return
     }

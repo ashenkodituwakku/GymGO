@@ -18,6 +18,8 @@
 #   --tunnel           (Expo Go) for a phone on a different network
 #   --no-browser       (Expo Go) don't open a browser window
 #   --no-dev-account   leave out the ready-made Pro account (dev@gymgo.test)
+#   --repair           reinstall the packages' links and start with a clean cache, for
+#                      "Unable to resolve …" when the app builds
 #   --doctor           print what's installed and where things stand, for troubleshooting
 #   --path DIR         where GymGO lives (default ~/GymGO)
 #
@@ -43,6 +45,7 @@ update=1
 auto_update=1
 dev_account=1
 doctor=0
+repair=0
 pass=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -51,10 +54,11 @@ while [[ $# -gt 0 ]]; do
     --no-auto-update) auto_update=0 ;;
     --no-dev-account) dev_account=0 ;;
     --doctor) doctor=1 ;;
+    --repair) repair=1 ;;
     --path) path="$2"; shift ;;
     --team) pass+=("--team" "$2"); shift ;;
     --xcode | --clean | --tunnel | --no-browser) pass+=("$1") ;;
-    -h | --help) sed -n '2,27p' "${BASH_SOURCE[0]:-$0}" 2>/dev/null || true; exit 0 ;;
+    -h | --help) sed -n '2,29p' "${BASH_SOURCE[0]:-$0}" 2>/dev/null || true; exit 0 ;;
     *) echo "Unknown option: $1 (try --help)" >&2; exit 2 ;;
   esac
   shift
@@ -147,12 +151,23 @@ export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 if command -v pnpm >/dev/null; then pnpm=(pnpm)
 elif command -v corepack >/dev/null; then pnpm=(corepack pnpm)
 else pnpm=(npx --yes "pnpm@$PNPM_VERSION"); fi
-# For dev.mjs, which reinstalls when an update brings new dependencies.
-export GYMGO_PNPM="${pnpm[*]}"
-
-if [[ ! -f node_modules/.modules.yaml || pnpm-lock.yaml -nt node_modules/.modules.yaml ]]; then
+# After any install the app's bundler starts with a clean cache (--clear):
+# its old one would still look for packages where they used to be.
+if [[ $repair -eq 1 ]]; then
+  step 'Reinstalling the packages’ links from scratch'
+  "${pnpm[@]}" install --frozen-lockfile --force || stop 'Reinstalling failed.' 'Scroll up for the error from pnpm, or run with --doctor and share what it prints.'
+  pass+=("--clear")
+elif [[ ! -f node_modules/.modules.yaml || pnpm-lock.yaml -nt node_modules/.modules.yaml ]]; then
   step 'Installing dependencies (the first time takes a minute or two)'
   "${pnpm[@]}" install --frozen-lockfile || stop 'Installing dependencies failed.' 'Scroll up for the error from pnpm, or run with --doctor and share what it prints.'
+  pass+=("--clear")
+fi
+# pnpm trusts its record of what it installed; check the app can really find each package.
+if ! node scripts/check-deps.mjs; then
+  step 'Some packages aren’t where the app looks for them: reinstalling their links'
+  "${pnpm[@]}" install --frozen-lockfile --force || stop 'Reinstalling failed.' 'Scroll up for the error from pnpm, or run with --doctor and share what it prints.'
+  node scripts/check-deps.mjs || stop 'Some of the app’s packages are still missing.' 'Scroll up for errors from pnpm, then run with --repair.'
+  [[ " ${pass[*]-} " == *" --clear "* ]] || pass+=("--clear")
 fi
 done_ 'Dependencies ready'
 

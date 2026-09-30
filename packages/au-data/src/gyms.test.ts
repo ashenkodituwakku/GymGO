@@ -13,10 +13,23 @@ const allFacts = (record: GymRecord) => [
   record.location.provenance,
   record.prerequisites.provenance,
   ...record.schedules.map((item) => item.provenance),
-  ...record.offers.map((item) => item.provenance),
   ...record.equipment.map((item) => item.provenance),
   ...record.amenities.map((item) => item.provenance),
 ];
+
+/** Chains that publish one price table for all their clubs (see chainOffers.ts). */
+const CHAIN_PAGES = /^https:\/\/(revofitness\.com\.au\/memberships\/|www\.zapfitness\.com\.au\/memberships-pricing\/|www\.derrimut247\.com\.au\/pages\/memberships)$/;
+
+/** Every price a gym shows is a chain's own published membership tier, cited to its page. */
+function onlyChainTiers(record: GymRecord) {
+  for (const offer of record.offers) {
+    expect(offer.productType).toBe('membership');
+    expect(offer.provenance.status).toBe('owner_confirmed');
+    expect(offer.provenance.sources[0]!.sourceType).toBe('operator_website');
+    expect(offer.provenance.sources[0]!.evidenceRef).toMatch(CHAIN_PAGES);
+    expect(offer.baseAmountMinor).toBeGreaterThan(0);
+  }
+}
 
 describe('Australian gyms from OpenStreetMap', () => {
   it('covers seven cities with real gyms, none of them demo data', () => {
@@ -60,9 +73,21 @@ describe('Australian gyms from OpenStreetMap', () => {
     }
   });
 
-  it('invents nothing: no prices, no equipment, no photos, no guest or staffed hours', () => {
+  it('prices only chains that publish one table for every club, by state where it differs', () => {
+    const zap = (state: string) => AU_GYMS.find((item) => item.location.brand === 'Zap Fitness' && item.location.address.state === state)!;
+    const home = (record: GymRecord) => record.offers.find((offer) => offer.label === 'Home, 12 months')!.baseAmountMinor;
+    expect(home(zap('SA'))).toBe(1039);
+    expect(home(zap('VIC'))).toBe(1199);
+    const revo = OPERATOR_GYMS.find((item) => item.location.brand === 'Revo Fitness')!;
+    expect(revo.offers.map((offer) => offer.label)).toEqual(['Level One', 'Level Two']);
+    const anytime = AU_GYMS.filter((item) => item.location.brand === 'Anytime Fitness');
+    expect(anytime.length).toBeGreaterThan(50);
+    for (const record of anytime) expect(record.offers).toEqual([]);
+  });
+
+  it('invents nothing: no prices beyond a chain’s own table, no equipment, no photos, no guest or staffed hours', () => {
     for (const record of MAP_GYMS) {
-      expect(record.offers).toEqual([]);
+      onlyChainTiers(record);
       expect(record.equipment).toEqual([]);
       for (const amenity of record.amenities) {
         expect(['yes', 'no']).toContain(amenity.present);
@@ -177,8 +202,8 @@ describe('Australian gyms from operators’ own websites', () => {
         expect(item.audience).toBe('member');
         expect(item.provenance.sources[0]!.sourceType).toBe('operator_website');
       }
-      // Nothing the operators don't publish.
-      expect(record.offers).toEqual([]);
+      // Nothing the operators don't publish: Revo's prices are its one national table.
+      onlyChainTiers(record);
       expect(record.equipment).toEqual([]);
       expect(record.location.photos).toEqual([]);
     }

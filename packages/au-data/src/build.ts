@@ -9,10 +9,13 @@ import { auCity } from './cities';
 import { FETCHED } from './data';
 import type { GymRow } from './rows';
 import { FOUND_WEBSITES, WEBSITES_CHECKED } from './websites';
+import { chainOffersFor } from './chainOffers';
 
 export function auRecord(row: GymRow): GymRecord {
   const { city, suburb, ...gym } = row;
-  const record = mapOnlyRecord({ ...gym, locality: suburb }, { countryCode: 'AU', timezone: auCity(city).timezone, fetchedAt: FETCHED[city] });
+  const mapped = mapOnlyRecord({ ...gym, locality: suburb }, { countryCode: 'AU', timezone: auCity(city).timezone, fetchedAt: FETCHED[city] });
+  // A chain that publishes one price table for all its clubs: its tiers here too.
+  const record = { ...mapped, offers: [...mapped.offers, ...chainOffersFor(row.id, row)] };
   const found = row.website ? undefined : FOUND_WEBSITES[row.id];
   if (!found) return record;
   // A website GymGO found for a gym the map lists without one, cited as that.

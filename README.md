@@ -693,7 +693,11 @@ it. A photo the moderator turns down is deleted. Photos live in `apps/server/dat
 
 ### Joining a gym
 
-Each gym's card and page has **Join this gym**: every membership the gym
+Near the top of each gym's card, a centred **Membership** panel shows
+every tier the gym publishes side by side, with a sign-up link. Chains that
+publish one price table for every club (Revo Fitness, Zap Fitness, Derrimut
+24:7) show it at each of their clubs; chains that price club by club don't.
+Further down, each gym's card and page has **Join this gym**: every membership the gym
 publishes, with its price and period, joining and card fees, minimum term
 and notice, where it was read and when. A fee the gym doesn't publish says
 "not published", never $0. **Sign up on their website** opens the gym's own

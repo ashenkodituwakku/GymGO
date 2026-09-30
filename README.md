@@ -356,7 +356,8 @@ check in rolls it (Common 60%, Uncommon 25%, Rare 10%, Epic 4%, Legendary
 (Ruby, Sapphire, Emerald, Amethyst, Topaz, Aquamarine, Rose quartz or Onyx)
 for its colours, and 1 in 16 is **Foil**. Epic, Legendary and Foil cards
 catch the light; Legendary ones have a rainbow frame and sparkles. A new
-card, or a visit that upgrades one, is revealed full screen. The odds are
+card, or a visit that upgrades one, is revealed in a pop-up over the page:
+the card flips in over a glow of its gem's colour. The odds are
 shown in the app, which says rarity is luck, not a rating of the gym, and
 nothing about it can be bought. The frame is decoration around the gym's
 own logo or a member's photo; a gym with neither still says "No photo

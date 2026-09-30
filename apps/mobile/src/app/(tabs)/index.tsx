@@ -14,6 +14,7 @@ import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View, u
 import { GymCard } from '@/components/GymCard';
 import { Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
+import { AdSlot } from '@/components/AdSlot';
 import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { useActiveSession } from '@/lib/activeSession';
@@ -325,6 +326,8 @@ export default function Home() {
           </Txt>
         )}
       </View>
+
+      <AdSlot />
 
       {saved.length > 0 && (
         <View style={styles.section}>

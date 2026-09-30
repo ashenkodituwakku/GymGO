@@ -1,7 +1,7 @@
-import { useBottomSheetInternal, type BottomSheetBackgroundProps } from '@gorhom/bottom-sheet';
+import { INITIAL_LAYOUT_VALUE, KEYBOARD_STATUS, useBottomSheetInternal, type BottomSheetBackgroundProps } from '@gorhom/bottom-sheet';
 import type { ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useDerivedValue } from 'react-native-reanimated';
 import { color, radius, themed } from '@/lib/theme';
 import { Glass, HAS_LIQUID_GLASS } from './Glass';
 
@@ -21,17 +21,32 @@ export const SHEET_SIDE = 16;
  *
  * A sheet is as tall as its tallest detent and slides down to show less, so
  * at a lower detent part of it is out of sight below the sheet layer. The
- * background and the content both stop where the layer does, so the card
- * shows its rounded bottom corners and nothing inside runs past them.
+ * card and its content both stop at the layer's bottom edge (or the top of
+ * the keyboard), so the card shows its rounded bottom corners and a list
+ * inside can always scroll its last row into view.
+ *
+ * Both are measured the same way, from the sheet's top edge down to that
+ * edge. They used to be the sheet's full height less the part below the
+ * layer, worked out from the library's detents; on iPhone that came out
+ * different for the card and for the list inside it, which ran on past the
+ * card with its last rows out of reach.
  */
-function FloatingBackground({ style, solid }: BottomSheetBackgroundProps & { solid: boolean }) {
-  const { animatedPosition, animatedDetentsState } = useBottomSheetInternal();
-  const bottom = useAnimatedStyle(() => {
-    const highest = animatedDetentsState.value.highestDetentPosition ?? animatedPosition.value;
-    return { bottom: Math.max(0, animatedPosition.value - highest) };
+function useReach() {
+  const { animatedPosition, animatedLayoutState, animatedKeyboardState } = useBottomSheetInternal();
+  return useDerivedValue(() => {
+    const { containerHeight } = animatedLayoutState.get();
+    if (containerHeight === INITIAL_LAYOUT_VALUE) return 0;
+    const keyboard = animatedKeyboardState.get();
+    const floor = containerHeight - (keyboard.status === KEYBOARD_STATUS.SHOWN ? keyboard.heightWithinContainer : 0);
+    return Math.max(0, floor - animatedPosition.get());
   });
+}
+
+function FloatingBackground({ solid }: BottomSheetBackgroundProps & { solid: boolean }) {
+  const reach = useReach();
+  const size = useAnimatedStyle(() => ({ height: reach.get() }));
   return (
-    <Animated.View style={[style, styles.floating, solid && styles.solidFill, bottom]} pointerEvents="none">
+    <Animated.View style={[styles.floating, solid && styles.solidFill, size]} pointerEvents="none">
       {!solid && <Glass kind="sheet" style={styles.glass} />}
     </Animated.View>
   );
@@ -53,16 +68,19 @@ export function FloatingSolidBackground(props: BottomSheetBackgroundProps) {
  * past the corners or show below the card. Put the sheet's scroll view in it.
  */
 export function SheetClip({ children }: { children: ReactNode }) {
-  const { animatedPosition, animatedDetentsState } = useBottomSheetInternal();
-  const bottom = useAnimatedStyle(() => {
-    const highest = animatedDetentsState.value.highestDetentPosition ?? animatedPosition.value;
-    return { marginBottom: Math.max(0, animatedPosition.value - highest) };
-  });
-  return <Animated.View style={[styles.clip, bottom]}>{children}</Animated.View>;
+  const { animatedLayoutState } = useBottomSheetInternal();
+  const reach = useReach();
+  // The content starts below the sheet's handle.
+  const size = useAnimatedStyle(() => ({ height: Math.max(0, reach.get() - Math.max(0, animatedLayoutState.get().handleHeight)) }));
+  return <Animated.View style={[styles.clip, size]}>{children}</Animated.View>;
 }
 
 const styles = themed(() => StyleSheet.create({
   floating: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     borderRadius: radius.sheet,
     borderCurve: 'continuous',
     // Real Liquid Glass casts its own soft shadow; the imitation needs one.
@@ -77,7 +95,6 @@ const styles = themed(() => StyleSheet.create({
   },
   solidFill: { backgroundColor: color.groupedBackground },
   clip: {
-    flex: 1,
     overflow: 'hidden',
     borderBottomLeftRadius: radius.sheet,
     borderBottomRightRadius: radius.sheet,

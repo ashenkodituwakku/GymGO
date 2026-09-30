@@ -15,6 +15,7 @@ import { GymCard } from '@/components/GymCard';
 import { Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { AdSlot } from '@/components/AdSlot';
+import { BrandFill } from '@/components/BrandFill';
 import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { useActiveSession } from '@/lib/activeSession';
@@ -209,6 +210,7 @@ export default function Home() {
         accessibilityLabel="Build a workout: tap the muscles you want to train"
         style={styles.workout}
       >
+        <BrandFill round={radius.xl} />
         <View style={styles.workoutIcon}>
           <Icon name="workout" size={22} color={color.onBrand} />
         </View>
@@ -545,6 +547,7 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.xl,
     borderCurve: 'continuous',
     backgroundColor: color.brandFill,
+    ...shadow.plate,
   },
   workoutIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: color.onBrandFaint, alignItems: 'center', justifyContent: 'center' },
   shortcuts: { flexDirection: 'row', gap: space[2] },
@@ -557,6 +560,7 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.lg,
     borderCurve: 'continuous',
     backgroundColor: color.card,
+    ...shadow.plate,
   },
   shortcutIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
   center: { textAlign: 'center' },
@@ -624,6 +628,7 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.lg,
     borderCurve: 'continuous',
     backgroundColor: color.card,
+    ...shadow.plate,
   },
   note: { textAlign: 'center' },
 }));

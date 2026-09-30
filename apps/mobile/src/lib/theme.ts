@@ -20,11 +20,14 @@
  */
 
 import { Platform, StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
+import { FREE_LOOK, LOOKS, STANDARD_RADIUS, readable, type LookId, type LookSpec } from './looks';
+
+export { FREE_LOOK, LOOK_IDS, LOOKS, type LookId } from './looks';
 
 export type Scheme = 'light' | 'dark';
 /** What you picked: follow the phone, or always one. */
 export type AppearanceChoice = 'system' | 'light' | 'dark';
-export type AccentId = 'indigo' | 'ocean' | 'grape' | 'rose' | 'midnight' | 'cobalt' | 'lagoon' | 'fuchsia' | 'slate' | 'graphite';
+export type AccentId = 'indigo' | 'ocean' | 'grape' | 'rose' | 'midnight' | 'cobalt' | 'lagoon' | 'fuchsia' | 'slate' | 'graphite' | 'rainbow' | 'camo';
 
 interface AccentColors {
   brand: string;
@@ -209,20 +212,59 @@ export const ACCENTS: Record<AccentId, { name: string; light: AccentColors; dark
     light: { brand: '#3A3A3C', brandPressed: '#2C2C2E', brandFill: '#3A3A3C', brandTint: 'rgba(58, 58, 60, 0.1)', brandBorder: 'rgba(58, 58, 60, 0.28)', brandWash: 'rgba(58, 58, 60, 0.05)' },
     dark: { brand: '#D1D1D6', brandPressed: '#BCBCC0', brandFill: '#48484A', brandTint: 'rgba(209, 209, 214, 0.16)', brandBorder: 'rgba(209, 209, 214, 0.36)', brandWash: 'rgba(209, 209, 214, 0.08)' },
   },
+  // Special accents: their buttons and tab bar are painted (see BrandFill);
+  // these solids are for text, and wherever a paint can't go.
+  rainbow: {
+    name: 'Rainbow',
+    light: { brand: '#7A2FE0', brandPressed: '#6824C7', brandFill: '#7A2FE0', brandTint: 'rgba(122, 47, 224, 0.12)', brandBorder: 'rgba(122, 47, 224, 0.28)', brandWash: 'rgba(122, 47, 224, 0.06)' },
+    dark: { brand: '#C39BFF', brandPressed: '#B088F0', brandFill: '#6D28D9', brandTint: 'rgba(195, 155, 255, 0.2)', brandBorder: 'rgba(195, 155, 255, 0.4)', brandWash: 'rgba(195, 155, 255, 0.1)' },
+  },
+  camo: {
+    name: 'Camo',
+    light: { brand: '#5B4A2E', brandPressed: '#4A3C25', brandFill: '#4B5320', brandTint: 'rgba(91, 74, 46, 0.12)', brandBorder: 'rgba(91, 74, 46, 0.3)', brandWash: 'rgba(91, 74, 46, 0.06)' },
+    dark: { brand: '#CDBE8E', brandPressed: '#BBAC7C', brandFill: '#4B5320', brandTint: 'rgba(205, 190, 142, 0.18)', brandBorder: 'rgba(205, 190, 142, 0.4)', brandWash: 'rgba(205, 190, 142, 0.08)' },
+  },
 };
 
 /** In the order the picker shows them: round the colour wheel, then the greys. */
-export const ACCENT_IDS: AccentId[] = ['indigo', 'cobalt', 'ocean', 'midnight', 'lagoon', 'grape', 'fuchsia', 'rose', 'slate', 'graphite'];
+export const ACCENT_IDS: AccentId[] = ['indigo', 'cobalt', 'ocean', 'midnight', 'lagoon', 'grape', 'fuchsia', 'rose', 'slate', 'graphite', 'rainbow', 'camo'];
 export const FREE_ACCENT: AccentId = 'indigo';
+
+/**
+ * What a special accent paints its buttons and tab bar with. Rainbow and Camo
+ * put colours on buttons that elsewhere mean good, maybe and no, so they're
+ * kept to those paints: text and icons use the accent's plain brand colour.
+ */
+export type AccentPaint = { kind: 'gradient'; stops: string[] } | { kind: 'camo'; colors: string[] };
+export const ACCENT_PAINTS: Partial<Record<AccentId, AccentPaint>> = {
+  rainbow: { kind: 'gradient', stops: ['#E0245E', '#F26B1D', '#D4A106', '#2FA84F', '#1D7FD8', '#7A2FE0'] },
+  camo: { kind: 'camo', colors: ['#4B5320', '#5B4A2E', '#23231A', '#6F6845'] },
+};
 
 export type Palette = { -readonly [K in keyof (typeof BASE)['light']]: string } & AccentColors;
 
-const paletteFor = (scheme: Scheme, accent: AccentId): Palette => ({ ...BASE[scheme], ...ACCENTS[accent][scheme] });
+/** Text colours kept readable on whatever surfaces a look paints. */
+const TEXT_KEYS = ['label', 'labelSecondary', 'labelTertiary', 'brand', 'goodInk', 'maybeInk', 'noInk', 'dangerInk'] as const;
+
+export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE_LOOK): Palette {
+  const palette: Palette = { ...BASE[scheme], ...ACCENTS[accent][scheme] };
+  const surfaces = LOOKS[look].surfaces?.(scheme, palette.brand);
+  if (!surfaces) return palette;
+  Object.assign(palette, surfaces);
+  const behind = [surfaces.card, surfaces.groupedBackground, surfaces.background];
+  for (const key of TEXT_KEYS) palette[key] = readable(palette[key], behind, scheme, key === 'labelTertiary' ? 3 : 4.6);
+  return palette;
+}
 
 /** The colours in use now. Changes in place with the theme; read it while drawing, not once at start-up. */
 export const color: Palette = paletteFor('light', FREE_ACCENT);
 
-let current: { scheme: Scheme; accent: AccentId } = { scheme: 'light', accent: FREE_ACCENT };
+let current: { scheme: Scheme; accent: AccentId; look: LookId } = { scheme: 'light', accent: FREE_ACCENT, look: FREE_LOOK };
+
+/** The look in use now (see looks.ts). */
+export const currentLook = (): LookSpec => LOOKS[current.look];
+/** The paint the current accent puts on buttons, if it has one. */
+export const currentPaint = (): AccentPaint | null => ACCENT_PAINTS[current.accent] ?? null;
 let version = 0;
 const listeners = new Set<() => void>();
 
@@ -234,11 +276,15 @@ export function subscribeTheme(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
-/** Switch the colours everywhere. Returns false if nothing changed. */
-export function applyTheme(scheme: Scheme, accent: AccentId): boolean {
-  if (current.scheme === scheme && current.accent === accent) return false;
-  current = { scheme, accent };
-  Object.assign(color, paletteFor(scheme, accent));
+/** Switch the colours (and the look) everywhere. Returns false if nothing changed. */
+export function applyTheme(scheme: Scheme, accent: AccentId, look: LookId = current.look): boolean {
+  if (current.scheme === scheme && current.accent === accent && current.look === look) return false;
+  current = { scheme, accent, look };
+  Object.assign(color, paletteFor(scheme, accent, look));
+  const spec = LOOKS[look];
+  Object.assign(radius, spec.radius);
+  Object.assign(shadow, spec.shadows?.(scheme, color.brand) ?? STANDARD_SHADOW);
+  Object.assign(type, typeScale());
   version += 1;
   for (const listener of listeners) listener();
   return true;
@@ -288,15 +334,11 @@ export const HEADER_EDGE = Platform.OS === 'web' ? space[4] : 0;
  */
 export const PAGE_COLUMN = 760;
 
-export const radius = {
-  sm: 10,
-  md: 14,
-  lg: 18,
-  xl: 24,
-  /** Matches the corner radius of recent iPhones, as system sheets do. */
-  sheet: 38,
-  pill: 999,
-} as const;
+/**
+ * Corner radii. `sheet` matches the corner radius of recent iPhones, as
+ * system sheets do. Changes in place with the look (8-bit is all square).
+ */
+export const radius = { ...STANDARD_RADIUS };
 
 /**
  * SF Pro, Apple's system typeface, set the way Apple sets it.
@@ -342,6 +384,9 @@ const SF_DRAWS =
 export const NEEDS_BUNDLED_FACES = !SF_DRAWS;
 
 export function face(weight: Weight = 'regular'): { fontFamily: string; fontWeight: '400' | '500' | '600' | '700' | 'normal' } {
+  // A look with its own typeface (8-bit, Material): each weight is its own file.
+  const fonts = LOOKS[current.look].fonts;
+  if (fonts) return { fontFamily: fonts.body[weight], fontWeight: 'normal' };
   if (Platform.OS === 'ios') return { fontFamily: 'System', fontWeight: NUMERIC[weight] };
   if (Platform.OS === 'web') {
     // The system font first (SF Pro on Apple devices), then SF Pro by name, then Inter.
@@ -356,32 +401,46 @@ export function face(weight: Weight = 'regular'): { fontFamily: string; fontWeig
  * (rsms.me/inter/dynmetrics): tracking = -0.0223 + 0.185 × e^(-0.1745 × size) em.
  */
 export function tracking(size: number): number {
-  if (SF_DRAWS) return 0;
+  if (SF_DRAWS || LOOKS[current.look].fonts) return 0;
   return Math.round((-0.0223 + 0.185 * Math.exp(-0.1745 * size)) * size * 100) / 100;
 }
 
 const style = (fontSize: number, lineHeight: number, weight: Weight) => ({ fontSize, lineHeight, letterSpacing: tracking(fontSize), ...face(weight) });
 
-/** Apple's iOS text styles, at the default text size. */
-export const type = {
-  /** Large Title, emphasized, as on a screen's opening heading. */
-  largeTitle: style(34, 41, 'bold'),
-  /** Title 1, emphasized. */
-  title: style(28, 34, 'bold'),
-  /** Title 2, emphasized. */
-  title2: style(22, 28, 'bold'),
-  headline: style(17, 22, 'semibold'),
-  body: style(17, 22, 'regular'),
-  callout: style(16, 21, 'regular'),
-  subhead: style(15, 20, 'regular'),
-  footnote: style(13, 18, 'regular'),
-  /** Caption 1. */
-  caption: style(12, 16, 'regular'),
-  /** Small capitals over figures, as in Maps (Caption 2 size, opened up because it's set in capitals). */
-  eyebrow: { ...style(11, 13, 'semibold'), letterSpacing: 0.6 },
-  /** Big numbers: prices, ratings (Title 3 size). */
-  figure: style(20, 25, 'bold'),
-} as const;
+/** A title or big figure: in the look's display face, if it has one (8-bit's arcade type runs large, so it's set smaller). */
+const display = (fontSize: number, lineHeight: number, weight: Weight) => {
+  const fonts = LOOKS[current.look].fonts;
+  if (!fonts?.display) return style(fontSize, lineHeight, weight);
+  const scale = fonts.displayScale ?? 1;
+  const size = Math.round(fontSize * scale);
+  return { fontSize: size, lineHeight: Math.round(size * 1.5), letterSpacing: 0, fontFamily: fonts.display, fontWeight: 'normal' as const };
+};
+
+/** Apple's iOS text styles, at the default text size, in the look's faces. */
+function typeScale() {
+  return {
+    /** Large Title, emphasized, as on a screen's opening heading. */
+    largeTitle: display(34, 41, 'bold'),
+    /** Title 1, emphasized. */
+    title: display(28, 34, 'bold'),
+    /** Title 2, emphasized. */
+    title2: display(22, 28, 'bold'),
+    headline: style(17, 22, 'semibold'),
+    body: style(17, 22, 'regular'),
+    callout: style(16, 21, 'regular'),
+    subhead: style(15, 20, 'regular'),
+    footnote: style(13, 18, 'regular'),
+    /** Caption 1. */
+    caption: style(12, 16, 'regular'),
+    /** Small capitals over figures, as in Maps (Caption 2 size, opened up because it's set in capitals). */
+    eyebrow: { ...style(11, 13, 'semibold'), letterSpacing: 0.6 },
+    /** Big numbers: prices, ratings (Title 3 size). */
+    figure: display(20, 25, 'bold'),
+  };
+}
+
+/** The text styles in use now. Change in place with the look. */
+export const type = typeScale();
 
 /**
  * A black drop shadow, `radius` blurred and `y` points down. Phones get React
@@ -393,12 +452,17 @@ export function dropShadow(opacity: number, radius: number, y: number, elevation
   return { shadowColor: '#000000', shadowOpacity: opacity, shadowRadius: radius, shadowOffset: { width: 0, height: y }, elevation };
 }
 
-export const shadow = {
+const STANDARD_SHADOW = {
   /** Floating controls over the map. */
   float: dropShadow(0.14, 14, 4, 6),
   /** Cards inside sheets. */
   card: dropShadow(0.05, 6, 1, 1),
-} as const;
+  /** Flat cards on the page: nothing in the standard look. */
+  plate: {} as ViewStyle,
+};
+
+/** Shadows in use now. Change in place with the look (hard pixel shadows, bevels, glows). */
+export const shadow: { float: ViewStyle; card: ViewStyle; plate: ViewStyle } = { ...STANDARD_SHADOW };
 
 /**
  * Where touches go. Made with StyleSheet.create: in a browser only compiled

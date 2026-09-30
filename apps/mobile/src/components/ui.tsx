@@ -10,6 +10,7 @@ import type { ResultTier } from '@gymgo/domain';
 import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { color, dropShadow, face, HIT, radius, shadow, space, themed, type, webFocusRing } from '@/lib/theme';
+import { BrandFill } from './BrandFill';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { FADE_IN, FADE_OUT, GLIDE, Pressy, SETTLE, usePop, usePressScale } from './motion';
@@ -81,6 +82,7 @@ export function ChoiceChip({ label, selected, onPress, icon }: { label: string; 
       hitSlop={4}
       style={[styles.choiceChip, selected && styles.choiceChipOn]}
     >
+      {selected && <BrandFill />}
       {icon && <Icon name={icon} size={13} color={selected ? color.onBrand : color.label} />}
       <Txt variant="footnote" color={selected ? color.onBrand : color.label} style={face('medium')}>
         {label}
@@ -115,6 +117,7 @@ export function Chip({
       hitSlop={4}
       style={[styles.chip, selected && styles.chipSelected]}
     >
+      {selected && <BrandFill />}
       {icon && <Icon name={icon} size={14} color={selected ? color.onBrand : color.label} />}
       <Txt variant="subhead" color={selected ? color.onBrand : color.label} style={styles.chipText}>
         {label}
@@ -413,6 +416,7 @@ export function ActionButton({
   return (
     <Animated.View style={[styles.actionWrap, press.style]}>
       <Glass style={styles.action} tint={primary ? color.brandFill : undefined} interactive>
+        {primary && <BrandFill round={radius.lg} />}
         <Pressable
           onPress={() => {
             haptic.tap();
@@ -545,6 +549,7 @@ export function PrimaryButton({
       aria-busy={busy}
       style={({ pressed }) => [styles.primary, { backgroundColor: fill }, pressed && { opacity: 0.9 }, disabled && !busy && { opacity: 0.45 }]}
     >
+      {tone === 'brand' && <BrandFill />}
       {busy ? <ActivityIndicator size="small" color={ink} /> : icon ? <Icon name={icon} size={17} color={ink} /> : null}
       <Txt variant="headline" color={ink}>
         {label}
@@ -563,6 +568,7 @@ const styles = themed(() => StyleSheet.create({
     paddingVertical: 6,
     borderRadius: radius.pill,
     backgroundColor: color.fill,
+    overflow: 'hidden',
   },
   choiceChipOn: { backgroundColor: color.brandFill },
   pill: {
@@ -584,6 +590,7 @@ const styles = themed(() => StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: radius.pill,
     backgroundColor: color.fill,
+    overflow: 'hidden',
   },
   chipSelected: { backgroundColor: color.brandFill },
   chipText: face('medium'),
@@ -628,6 +635,8 @@ const styles = themed(() => StyleSheet.create({
     gap: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    // A special accent's paint (BrandFill) stays inside the corners.
+    overflow: 'hidden',
   },
 
   fold: {

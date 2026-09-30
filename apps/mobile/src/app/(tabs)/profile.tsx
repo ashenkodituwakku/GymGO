@@ -24,7 +24,7 @@ import { countryName } from '@/lib/country';
 import { useThemeChoice } from '@/lib/themePrefs';
 import { useCollection } from '@/lib/useCollection';
 import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 
@@ -397,8 +397,9 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.lg,
     borderCurve: 'continuous',
     backgroundColor: color.card,
+    ...shadow.plate,
   },
-  signInCard: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
+  signInCard: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
   signInHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginBottom: space[1] },
   avatar: {
     width: 60,
@@ -410,6 +411,6 @@ const styles = themed(() => StyleSheet.create({
   },
   moderation: { gap: 6 },
   caps: { paddingHorizontal: space[4], letterSpacing: 0.3 },
-  card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[4] },
+  card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[4], ...shadow.plate },
   explainer: { paddingHorizontal: 16, paddingBottom: space[3], paddingLeft: 16 + 29 + 12 },
 }));

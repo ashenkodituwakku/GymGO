@@ -15,6 +15,9 @@
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/pixelify-sans": "^0.4.2",
+    "@expo-google-fonts/press-start-2p": "^0.4.1",
+    "@expo-google-fonts/roboto": "^0.4.3",
     "@gorhom/bottom-sheet": "^5.2.14",
     "@gymgo/au-data": "workspace:*",
     "@gymgo/demo-data": "workspace:*",

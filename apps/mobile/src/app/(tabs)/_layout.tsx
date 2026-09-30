@@ -33,7 +33,8 @@ import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { TabBarInset, tabBarBottom } from '@/lib/layout';
-import { CHILD_TOUCH, NO_TOUCH, color, currentTheme, face, themed } from '@/lib/theme';
+import { CHILD_TOUCH, NO_TOUCH, color, currentLook, currentTheme, face, radius, themed } from '@/lib/theme';
+import { BrandFill } from '@/components/BrandFill';
 
 const BAR_HEIGHT = 64;
 // The same 16 pt edge as the sheets and the controls over the map.
@@ -152,7 +153,16 @@ function GlassTabBar({ bottom }: { bottom: number }) {
 
   if (keyboardUp) return null;
 
-  const lens = (
+  // A look drawn in solid plates: a plain bar with the look's corners and
+  // shadow, and a lens tinted with the accent (painted, for Rainbow or Camo).
+  const solid = currentLook().solid;
+  const lens = solid ? (
+    <Animated.View style={[styles.lens, { width: tabWidth }, lensStyle]} pointerEvents="none">
+      <View style={[StyleSheet.absoluteFill, styles.lensShape, styles.lensSolid]}>
+        <BrandFill opacity={0.45} />
+      </View>
+    </Animated.View>
+  ) : (
     <Animated.View style={[styles.lens, { width: tabWidth }, lensStyle]} pointerEvents="none">
       <View {...glassMark('lens')} style={[StyleSheet.absoluteFill, styles.lensShape, Platform.OS !== 'web' && styles.lensNative]} />
       <Animated.View
@@ -167,7 +177,7 @@ function GlassTabBar({ bottom }: { bottom: number }) {
       <GestureDetector gesture={drag}>
         <View style={[styles.shadow, { width: barWidth }]} accessibilityRole="tablist">
           {/* The glass, clipped to the capsule… */}
-          {Platform.OS === 'web' ? (
+          {Platform.OS === 'web' && !solid ? (
             <View {...glassMark('bar')} style={[StyleSheet.absoluteFill, styles.capsule]}>
               <View {...glassMark('shine')} style={StyleSheet.absoluteFill} />
             </View>
@@ -218,6 +228,7 @@ const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
         // Your own initial for Profile, ringed when selected, as Instagram shows your photo.
         <View style={[styles.avatarRing, isFocused && styles.avatarRingOn]}>
           <View style={styles.avatar}>
+            <BrandFill />
             <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
               {initial}
             </Txt>
@@ -245,6 +256,9 @@ function useAndroidKeyboard(): boolean {
   return up;
 }
 
+/** A corner no rounder than the look allows (8-bit is square), up to a full pill. */
+const round = (size: number) => Math.min(size / 2, radius.pill);
+
 const styles = themed(() => StyleSheet.create({
   root: { flex: 1 },
   slot: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 },
@@ -252,11 +266,11 @@ const styles = themed(() => StyleSheet.create({
   dock: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   shadow: {
     height: BAR_HEIGHT,
-    borderRadius: BAR_HEIGHT / 2,
-    // Real Liquid Glass casts its own soft shadow; the imitations need one.
-    boxShadow: HAS_LIQUID_GLASS ? '0 6px 18px rgba(0, 0, 0, 0.08)' : '0 12px 30px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.07)',
+    borderRadius: round(BAR_HEIGHT),
+    // Real Liquid Glass casts its own soft shadow; the imitations need one. A solid look's plate brings its own.
+    boxShadow: currentLook().solid ? undefined : HAS_LIQUID_GLASS ? '0 6px 18px rgba(0, 0, 0, 0.08)' : '0 12px 30px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.07)',
   },
-  capsule: { borderRadius: BAR_HEIGHT / 2, overflow: 'hidden' },
+  capsule: { borderRadius: round(BAR_HEIGHT), overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', height: BAR_HEIGHT, paddingHorizontal: PAD },
   lens: {
     position: 'absolute',
@@ -264,7 +278,8 @@ const styles = themed(() => StyleSheet.create({
     top: LENS_INSET,
     height: BAR_HEIGHT - LENS_INSET * 2,
   },
-  lensShape: { borderRadius: (BAR_HEIGHT - LENS_INSET * 2) / 2, borderCurve: 'continuous' },
+  lensShape: { borderRadius: round(BAR_HEIGHT - LENS_INSET * 2), borderCurve: 'continuous' },
+  lensSolid: { backgroundColor: color.brandTint, overflow: 'hidden' },
   lensNative: {
     backgroundColor: color.fill,
     borderWidth: StyleSheet.hairlineWidth,
@@ -277,9 +292,9 @@ const styles = themed(() => StyleSheet.create({
     boxShadow: '0 6px 16px rgba(0, 0, 0, 0.14)',
   },
   // Rounded like the bar, so the keyboard's focus ring is a pill, not a box.
-  tab: { height: BAR_HEIGHT, alignItems: 'center', justifyContent: 'center', borderRadius: BAR_HEIGHT / 2 },
+  tab: { height: BAR_HEIGHT, alignItems: 'center', justifyContent: 'center', borderRadius: round(BAR_HEIGHT) },
   pressed: { transform: [{ scale: 0.9 }] },
   avatarRing: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   avatarRingOn: { borderWidth: 2, borderColor: color.label },
-  avatar: { width: 26, height: 26, borderRadius: 13, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 26, height: 26, borderRadius: round(26), backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
 }));

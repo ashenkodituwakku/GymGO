@@ -16,7 +16,7 @@ import { useApp } from '@/lib/app-state';
 import { timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { resultsById } from '@/lib/results';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 
 export default function Saved() {
@@ -134,8 +134,9 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.xl,
     borderCurve: 'continuous',
     backgroundColor: color.card,
+    ...shadow.plate,
   },
-  list: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
+  list: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
   upsell: { paddingVertical: space[2] },
   row: { flexDirection: 'row', alignItems: 'center', paddingRight: space[3] },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 86 },

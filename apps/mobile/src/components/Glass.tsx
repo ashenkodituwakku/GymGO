@@ -30,7 +30,7 @@ import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'ex
 import { useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { installLiquidGlass, refractionFor } from './liquidGlass';
-import { NO_TOUCH, color, currentTheme, themed } from '@/lib/theme';
+import { NO_TOUCH, color, currentLook, currentTheme, shadow, themed } from '@/lib/theme';
 
 /** True when the device draws Apple's real Liquid Glass. */
 export const HAS_LIQUID_GLASS =
@@ -56,6 +56,23 @@ export function Glass({
   /** The more transparent Liquid Glass variant, for controls over busy imagery. */
   clear?: boolean;
 }) {
+  // A look drawn in solid plates (8-bit, Classic, Material, Neon): no glass
+  // at all, just the card colour, the look's shadow and, for a tinted
+  // button, its tint.
+  if (currentLook().solid) {
+    return (
+      <View
+        style={[
+          styles.continuous,
+          { backgroundColor: tint ?? (kind === 'bar' ? color.background : color.card) },
+          kind === 'control' ? shadow.float : kind === 'sheet' ? shadow.card : null,
+          style,
+        ]}
+      >
+        {children}
+      </View>
+    );
+  }
   if (HAS_LIQUID_GLASS && kind !== 'bar') {
     return (
       <GlassView

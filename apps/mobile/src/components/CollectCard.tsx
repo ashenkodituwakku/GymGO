@@ -20,7 +20,7 @@ import { cardFor, cardName, gemInfo, rarityLabel, rarityRank, rollFor, type Rari
 import { haptic } from '@/lib/haptics';
 import { currentFix, type Fix } from '@/lib/location';
 import { distanceLabel } from '@/lib/places';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
 import { CardReveal, type Pull } from './CardReveal';
 import { TIER_METAL } from './GemCard';
@@ -279,12 +279,13 @@ const styles = themed(() =>
       borderWidth: 2,
       borderColor: 'transparent',
       backgroundColor: color.card,
+      ...shadow.plate,
     },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     medal: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
     flex: { flex: 1, gap: 2 },
     buttons: { flexDirection: 'row', gap: space[2] },
-    strip: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
+    strip: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
     stripMedal: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
     nudge: { borderWidth: 2, borderColor: color.brand },
     cardLine: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 2 },

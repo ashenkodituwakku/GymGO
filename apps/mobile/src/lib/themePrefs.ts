@@ -13,16 +13,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Appearance, Platform } from 'react-native';
-import { ACCENT_IDS, FREE_ACCENT, applyTheme, type AccentId, type AppearanceChoice, type Scheme } from './theme';
+import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, LOOK_IDS, LOOKS, applyTheme, type AccentId, type AppearanceChoice, type LookId, type Scheme } from './theme';
+import { loadLookFonts } from './lookFonts';
 
 const KEY = 'gymgo.theme.v1';
 
 export interface ThemeChoice {
   appearance: AppearanceChoice;
   accent: AccentId;
+  /** How the app is drawn (Pro, like the accents): see looks.ts. */
+  look: LookId;
 }
 
-export const DEFAULT_CHOICE: ThemeChoice = { appearance: 'system', accent: FREE_ACCENT };
+export const DEFAULT_CHOICE: ThemeChoice = { appearance: 'system', accent: FREE_ACCENT, look: FREE_LOOK };
 
 /** What was stored, cleaned: anything unknown falls back to the default. */
 export function parseChoice(raw: string | null | undefined): ThemeChoice {
@@ -31,6 +34,7 @@ export function parseChoice(raw: string | null | undefined): ThemeChoice {
     return {
       appearance: value.appearance === 'light' || value.appearance === 'dark' || value.appearance === 'system' ? value.appearance : 'system',
       accent: ACCENT_IDS.includes(value.accent as AccentId) ? (value.accent as AccentId) : FREE_ACCENT,
+      look: LOOK_IDS.includes(value.look as LookId) ? (value.look as LookId) : FREE_LOOK,
     };
   } catch {
     return DEFAULT_CHOICE;
@@ -38,7 +42,10 @@ export function parseChoice(raw: string | null | undefined): ThemeChoice {
 }
 
 /** Light or dark, from your choice and (for System) the phone's. */
-export function schemeFor(appearance: AppearanceChoice, system: string | null | undefined): Scheme {
+export function schemeFor(appearance: AppearanceChoice, system: string | null | undefined, look: LookId = FREE_LOOK): Scheme {
+  // A look that's only one way (Neon is always dark).
+  const only = LOOKS[look].scheme;
+  if (only) return only;
   if (appearance === 'light' || appearance === 'dark') return appearance;
   return system === 'dark' ? 'dark' : 'light';
 }
@@ -75,7 +82,9 @@ if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
   try {
     choice = parseChoice(localStorage.getItem(KEY));
     loaded = true;
-    applyTheme(schemeFor(choice.appearance, systemScheme()), choice.accent);
+    // The page falls back to the standard face until the look's own arrives.
+    applyTheme(schemeFor(choice.appearance, systemScheme(), choice.look), choice.accent, choice.look);
+    void loadLookFonts(choice.look);
   } catch {
     // Storage blocked: the defaults stand.
   }
@@ -91,7 +100,9 @@ export async function loadThemeChoice(): Promise<ThemeChoice> {
   }
   loaded = true;
   tellPhone(choice.appearance);
-  applyTheme(schemeFor(choice.appearance, systemScheme()), choice.accent);
+  // While the splash screen is up: the look's faces first, so nothing draws in a face that isn't there.
+  await loadLookFonts(choice.look);
+  applyTheme(schemeFor(choice.appearance, systemScheme(), choice.look), choice.accent, choice.look);
   for (const listener of listeners) listener();
   return choice;
 }

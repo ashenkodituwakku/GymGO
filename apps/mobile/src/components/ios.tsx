@@ -10,7 +10,7 @@ import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useS
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
-import { PAGE_COLUMN, color, radius, space, themed } from '@/lib/theme';
+import { PAGE_COLUMN, color, radius, shadow, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
@@ -283,7 +283,7 @@ const styles = themed(() => StyleSheet.create({
   groupHeader: { paddingHorizontal: space[4], letterSpacing: 0.3 },
   groupFooter: { paddingHorizontal: space[4] },
   // The same corners as the app's other cards, so a list sits flush with the card above it.
-  groupBody: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden' },
+  groupBody: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 16 + 29 + 12 },
 
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, minHeight: 50, paddingVertical: 8 },

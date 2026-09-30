@@ -12,15 +12,19 @@ import { AppProvider, useApp } from '@/lib/app-state';
 import {
   BUNDLED_FACES,
   FREE_ACCENT,
+  FREE_LOOK,
   NEEDS_BUNDLED_FACES,
   applyTheme,
+  paletteFor,
   color,
   currentTheme,
   face,
   themed,
   type AccentId,
+  type LookId,
   type Scheme,
 } from '@/lib/theme';
+import { loadLookFonts } from '@/lib/lookFonts';
 import { loadThemeChoice, schemeFor, useSystemScheme, useThemeChoice } from '@/lib/themePrefs';
 
 // Hold the splash screen until the typeface is ready, so nothing draws in the
@@ -90,8 +94,8 @@ export default function RootLayout() {
   );
 }
 
-/** The colours your choice comes to now: Pro accents only while you have Pro. */
-function useWantedTheme(): { scheme: Scheme; accent: AccentId } {
+/** The colours and look your choice comes to now: Pro accents and looks only while you have Pro. */
+function useWantedTheme(): { scheme: Scheme; accent: AccentId; look: LookId } {
   const choice = useThemeChoice();
   const { billing } = useApp();
   // The phone's own parts (keyboards, menus, Liquid Glass) are told as soon
@@ -99,7 +103,8 @@ function useWantedTheme(): { scheme: Scheme; accent: AccentId } {
   const phone = useSystemScheme(choice.appearance === 'system');
   // A lapsed Pro goes back to Indigo, but only once the server has said so.
   const accent = choice.accent === FREE_ACCENT || billing.isPro || !billing.planKnown ? choice.accent : FREE_ACCENT;
-  return { scheme: schemeFor(choice.appearance, phone), accent };
+  const look = choice.look === FREE_LOOK || billing.isPro || !billing.planKnown ? choice.look : FREE_LOOK;
+  return { scheme: schemeFor(choice.appearance, phone, look), accent, look };
 }
 
 /**
@@ -117,22 +122,30 @@ function ThemedStack() {
   const veil = useSharedValue(0);
   const [veilColour, setVeilColour] = useState<string | null>(null);
 
-  const switchNow = useCallback((scheme: Scheme, accent: AccentId) => {
-    applyTheme(scheme, accent);
+  const switchNow = useCallback((scheme: Scheme, accent: AccentId, look: LookId) => {
+    applyTheme(scheme, accent, look);
   }, []);
 
   useEffect(() => {
-    const { scheme, accent } = currentTheme();
-    if (scheme === wanted.scheme && accent === wanted.accent) return;
-    if (reduceMotion) {
-      switchNow(wanted.scheme, wanted.accent);
-      return;
-    }
-    setVeilColour(paletteBackground(wanted.scheme));
-    veil.value = withTiming(1, { duration: 140, easing: Easing.out(Easing.quad) }, (finished) => {
-      if (finished) runOnJS(switchNow)(wanted.scheme, wanted.accent);
+    const { scheme, accent, look } = currentTheme();
+    if (scheme === wanted.scheme && accent === wanted.accent && look === wanted.look) return;
+    let cancelled = false;
+    // A look's own typefaces arrive first, so no text is drawn in a face that isn't loaded.
+    void loadLookFonts(wanted.look).then(() => {
+      if (cancelled) return;
+      if (reduceMotion) {
+        switchNow(wanted.scheme, wanted.accent, wanted.look);
+        return;
+      }
+      setVeilColour(paletteFor(wanted.scheme, wanted.accent, wanted.look).groupedBackground);
+      veil.value = withTiming(1, { duration: 140, easing: Easing.out(Easing.quad) }, (finished) => {
+        if (finished) runOnJS(switchNow)(wanted.scheme, wanted.accent, wanted.look);
+      });
     });
-  }, [wanted.scheme, wanted.accent, reduceMotion, switchNow, veil]);
+    return () => {
+      cancelled = true;
+    };
+  }, [wanted.scheme, wanted.accent, wanted.look, reduceMotion, switchNow, veil]);
 
   // Drawn again: lift the veil.
   useEffect(() => {
@@ -257,7 +270,6 @@ function paintPage() {
 }
 if (Platform.OS === 'web' && typeof document !== 'undefined') paintPage();
 
-const paletteBackground = (scheme: Scheme) => (scheme === 'dark' ? '#000000' : '#F2F2F7');
 
 const styles = themed(() => StyleSheet.create({
   root: { flex: 1, backgroundColor: color.groupedBackground },

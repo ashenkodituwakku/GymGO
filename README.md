@@ -289,8 +289,9 @@ Chrome and Edge (blur only in Safari and Firefox).
   GymGO's facts come from. Signed out, a card to sign in with Apple, Google
   or email.
 - **Appearance**: Automatic (follows your phone), Light or Dark, for
-  everyone. With Pro, four more accent colours (Ocean, Grape, Rose,
-  Graphite) besides Indigo. Evidence colours (green, orange, grey) never
+  everyone. With Pro, nine more accent colours besides Indigo: Cobalt,
+  Ocean, Midnight, Lagoon, Grape, Fuchsia, Rose, Slate and Graphite, picked
+  from a grid of swatches. Evidence colours (green, orange, grey) never
   change with the accent, so they always mean the same thing. Switching
   fades smoothly and keeps you on the screen you were on; the map, glass
   and the phone's own keyboards and menus follow too.
@@ -1012,7 +1013,7 @@ saved list always opens, wherever the gym is.
 | Warm-up sets | Plates for any weight | A warm-up ramp to your weight, with the plates |
 | Gym notes | — | Your own notes on each gym, on your device |
 | Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
-| Colour themes | Indigo, light or dark | Five accents, light or dark |
+| Colour themes | Indigo, light or dark | Ten accents, light or dark |
 
 One tier, two ways to pay, tax included:
 

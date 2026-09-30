@@ -103,8 +103,9 @@ export default function AppearanceScreen() {
           </View>
         )}
       </View>
-      <View style={styles.group}>
-        {ACCENT_IDS.map((id, index) => {
+      {/* A grid of swatches, round the colour wheel. */}
+      <View style={styles.grid} accessibilityRole="radiogroup">
+        {ACCENT_IDS.map((id) => {
           const accent = ACCENTS[id];
           // The accent in use: a Pro accent kept from before shows as Indigo without Pro.
           const on = (billing.isPro || choice.accent === FREE_ACCENT ? choice.accent : FREE_ACCENT) === id;
@@ -117,23 +118,22 @@ export default function AppearanceScreen() {
               accessibilityRole="radio"
               aria-checked={on}
               accessibilityLabel={`${accent.name}${locked ? ', part of GymGO Pro' : ''}`}
-              style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.pressed }]}
+              style={({ pressed }) => [styles.tile, pressed && { opacity: 0.7 }]}
             >
-              <View style={[styles.swatch, { backgroundColor: accent[scheme].brandFill }]}>
-                {on && <Icon name="check" size={14} color={color.onBrand} />}
+              <View style={[styles.ring, on && { borderColor: accent[scheme].brand }]}>
+                <View style={[styles.swatch, { backgroundColor: accent[scheme].brandFill }]}>
+                  {on ? (
+                    <Animated.View entering={FADE_IN}>
+                      <Icon name="check" size={18} color={color.onBrand} />
+                    </Animated.View>
+                  ) : locked ? (
+                    <Icon name="crown" size={14} color={color.onBrandSoft} />
+                  ) : null}
+                </View>
               </View>
-              <Txt variant="body" style={styles.flex}>
+              <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
                 {accent.name}
               </Txt>
-              {locked ? (
-                <Icon name="crown" size={15} color={color.labelTertiary} />
-              ) : (
-                on && (
-                  <Animated.View entering={FADE_IN}>
-                    <Icon name="check" size={17} color={color.brand} />
-                  </Animated.View>
-                )
-              )}
             </Pressable>
           );
         })}
@@ -141,7 +141,7 @@ export default function AppearanceScreen() {
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
         {billing.isPro
           ? 'The accent colours buttons, links and your selections. Evidence colours (green, orange, grey) never change, so they always mean the same thing.'
-          : 'Indigo is everyone’s. Ocean, Grape, Rose and Graphite come with GymGO Pro. Dark mode is free for everyone.'}
+          : 'Indigo is everyone’s. The other nine, from Midnight and Lagoon to Fuchsia and Slate, come with GymGO Pro. Dark mode is free for everyone.'}
       </Txt>
     </PageScroll>
   );
@@ -181,10 +181,10 @@ const styles = themed(() =>
     note: { marginHorizontal: space[4], marginTop: space[2] },
     accentHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginLeft: space[4], marginTop: space[6], marginBottom: space[2] },
     proTag: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 1, borderRadius: radius.pill, backgroundColor: color.brandTint },
-    group: { borderRadius: radius.lg, backgroundColor: color.card, overflow: 'hidden' },
-    row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
-    rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
-    swatch: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.card },
+    tile: { width: '20%', minWidth: 64, alignItems: 'center', gap: space[1], paddingVertical: space[2] },
+    ring: { padding: 3, borderRadius: 30, borderWidth: 2, borderColor: 'transparent' },
+    swatch: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
     flex: { flex: 1 },
   }),
 );

@@ -75,7 +75,7 @@ export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; p
   { emoji: '🔥', title: 'Warm-up sets', free: 'Plates for any weight', pro: 'A ramp to your weight' },
   { emoji: '🏋️', title: 'Your plates', free: 'The usual set', pro: 'The ones your gym has' },
   { emoji: '📝', title: 'Gym notes', free: '—', pro: 'Your own, on each gym' },
-  { emoji: '🎨', title: 'Colour themes', free: 'Indigo, light or dark', pro: 'Five accent colours' },
+  { emoji: '🎨', title: 'Colour themes', free: 'Indigo, light or dark', pro: 'Ten accent colours' },
 ];
 
 /** Free for everyone, always. Listed on the Pro screen so nobody wonders. */

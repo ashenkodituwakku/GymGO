@@ -24,7 +24,7 @@ import { Platform, StyleSheet, type TextStyle, type ViewStyle } from 'react-nati
 export type Scheme = 'light' | 'dark';
 /** What you picked: follow the phone, or always one. */
 export type AppearanceChoice = 'system' | 'light' | 'dark';
-export type AccentId = 'indigo' | 'ocean' | 'grape' | 'rose' | 'graphite';
+export type AccentId = 'indigo' | 'ocean' | 'grape' | 'rose' | 'midnight' | 'cobalt' | 'lagoon' | 'fuchsia' | 'slate' | 'graphite';
 
 interface AccentColors {
   brand: string;
@@ -179,6 +179,31 @@ export const ACCENTS: Record<AccentId, { name: string; light: AccentColors; dark
     light: { brand: '#C2185B', brandPressed: '#A8134E', brandFill: '#C2185B', brandTint: 'rgba(194, 24, 91, 0.12)', brandBorder: 'rgba(194, 24, 91, 0.28)', brandWash: 'rgba(194, 24, 91, 0.06)' },
     dark: { brand: '#FF6B9D', brandPressed: '#F0588B', brandFill: '#C2185B', brandTint: 'rgba(255, 107, 157, 0.2)', brandBorder: 'rgba(255, 107, 157, 0.4)', brandWash: 'rgba(255, 107, 157, 0.1)' },
   },
+  midnight: {
+    name: 'Midnight',
+    light: { brand: '#1F3C88', brandPressed: '#182F6C', brandFill: '#1F3C88', brandTint: 'rgba(31, 60, 136, 0.12)', brandBorder: 'rgba(31, 60, 136, 0.28)', brandWash: 'rgba(31, 60, 136, 0.06)' },
+    dark: { brand: '#8EA6FF', brandPressed: '#7B94F0', brandFill: '#2A4AB0', brandTint: 'rgba(142, 166, 255, 0.2)', brandBorder: 'rgba(142, 166, 255, 0.4)', brandWash: 'rgba(142, 166, 255, 0.1)' },
+  },
+  cobalt: {
+    name: 'Cobalt',
+    light: { brand: '#2446D6', brandPressed: '#1D39B5', brandFill: '#2446D6', brandTint: 'rgba(36, 70, 214, 0.12)', brandBorder: 'rgba(36, 70, 214, 0.28)', brandWash: 'rgba(36, 70, 214, 0.06)' },
+    dark: { brand: '#7C95FF', brandPressed: '#6A83F0', brandFill: '#2446D6', brandTint: 'rgba(124, 149, 255, 0.2)', brandBorder: 'rgba(124, 149, 255, 0.4)', brandWash: 'rgba(124, 149, 255, 0.1)' },
+  },
+  lagoon: {
+    name: 'Lagoon',
+    light: { brand: '#00708C', brandPressed: '#005E76', brandFill: '#00708C', brandTint: 'rgba(0, 112, 140, 0.12)', brandBorder: 'rgba(0, 112, 140, 0.28)', brandWash: 'rgba(0, 112, 140, 0.06)' },
+    dark: { brand: '#4CC8E8', brandPressed: '#3AB6D6', brandFill: '#00708C', brandTint: 'rgba(76, 200, 232, 0.2)', brandBorder: 'rgba(76, 200, 232, 0.4)', brandWash: 'rgba(76, 200, 232, 0.1)' },
+  },
+  fuchsia: {
+    name: 'Fuchsia',
+    light: { brand: '#B01E9C', brandPressed: '#951984', brandFill: '#B01E9C', brandTint: 'rgba(176, 30, 156, 0.12)', brandBorder: 'rgba(176, 30, 156, 0.28)', brandWash: 'rgba(176, 30, 156, 0.06)' },
+    dark: { brand: '#F27FE3', brandPressed: '#E26CD2', brandFill: '#A11C8F', brandTint: 'rgba(242, 127, 227, 0.2)', brandBorder: 'rgba(242, 127, 227, 0.4)', brandWash: 'rgba(242, 127, 227, 0.1)' },
+  },
+  slate: {
+    name: 'Slate',
+    light: { brand: '#4A5B76', brandPressed: '#3D4C63', brandFill: '#4A5B76', brandTint: 'rgba(74, 91, 118, 0.12)', brandBorder: 'rgba(74, 91, 118, 0.28)', brandWash: 'rgba(74, 91, 118, 0.06)' },
+    dark: { brand: '#A8B7D0', brandPressed: '#96A5BE', brandFill: '#4A5B76', brandTint: 'rgba(168, 183, 208, 0.2)', brandBorder: 'rgba(168, 183, 208, 0.4)', brandWash: 'rgba(168, 183, 208, 0.1)' },
+  },
   graphite: {
     name: 'Graphite',
     light: { brand: '#3A3A3C', brandPressed: '#2C2C2E', brandFill: '#3A3A3C', brandTint: 'rgba(58, 58, 60, 0.1)', brandBorder: 'rgba(58, 58, 60, 0.28)', brandWash: 'rgba(58, 58, 60, 0.05)' },
@@ -186,7 +211,8 @@ export const ACCENTS: Record<AccentId, { name: string; light: AccentColors; dark
   },
 };
 
-export const ACCENT_IDS = Object.keys(ACCENTS) as AccentId[];
+/** In the order the picker shows them: round the colour wheel, then the greys. */
+export const ACCENT_IDS: AccentId[] = ['indigo', 'cobalt', 'ocean', 'midnight', 'lagoon', 'grape', 'fuchsia', 'rose', 'slate', 'graphite'];
 export const FREE_ACCENT: AccentId = 'indigo';
 
 export type Palette = { -readonly [K in keyof (typeof BASE)['light']]: string } & AccentColors;

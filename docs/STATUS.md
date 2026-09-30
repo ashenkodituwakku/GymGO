@@ -125,7 +125,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Haptics | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
 | Motion: spring presses on every button, chip and card; Save and Compare pop; what's on a screen arrives with the screen (its push or its sheet), with no staggered rise piece by piece; "Search this area" grows in like an iOS popover; pins land with a spring and bubbles pop in and out as you zoom; notices, icons and folds fade; the segmented pill slides; saved rows glide out and collection cards slide when re-sorted; all off under Reduce Motion (the web and Android maps' pins too) | ✅ | ⚠️ driven in the browser (a gym's card, Home and the map at phone size; pill slides; fold opens; no errors); the springier phone versions never seen on a device | n/a | ❌ | n/a | ❌ |
 | SF Pro to Apple's iOS text styles (system font on iPhone and Apple browsers; Inter, the closest free face, on Android and elsewhere) | ✅ | ⚠️ only Inter seen, in this sandbox's browser (no SF Pro installed); SF Pro itself never seen on an iPhone or Mac | n/a | ❌ | n/a | ❌ |
-| Dark mode (Automatic, Light, Dark) for everyone; accent themes (Indigo free; Ocean, Grape, Rose, Graphite with Pro); switching crossfades and keeps your place; map, glass, tab bar, headers, status bar and the phone's own UI follow | ✅ | ✅ a unit test checks every text colour against WCAG AA in every mode and accent; seen in the browser (Home, Explore, gym page, Profile, Appearance, sign-in) in both modes; switching from the Appearance screen kept the screen and Back still went to Profile | n/a | ❌ Apple Maps' and Liquid Glass's dark look unseen | n/a | ❌ the accent gate is the app's (your own setting) |
+| Dark mode (Automatic, Light, Dark) for everyone; accent themes (Indigo free; with Pro, Cobalt, Ocean, Midnight, Lagoon, Grape, Fuchsia, Rose, Slate and Graphite, from a grid of swatches); switching crossfades and keeps your place; map, glass, tab bar, headers, status bar and the phone's own UI follow | ✅ | ✅ a unit test checks every text colour against WCAG AA in every mode and accent; seen in the browser (Home, Explore, gym page, Profile, Appearance, sign-in) in both modes; switching from the Appearance screen kept the screen and Back still went to Profile | n/a | ❌ Apple Maps' and Liquid Glass's dark look unseen | n/a | ❌ the accent gate is the app's (your own setting) |
 | Sign in with Google and Apple: server checks the ID token (RS256 against the provider's keys, issuer, audience, expiry, nonce), makes the account the first time, never joins a password account on email alone; connect and disconnect from Account; a Google- or Apple-only account can set a password | ✅ | 🟡 11 server tests with locally made keys standing in for Google's and Apple's; the Google button seen in the browser with a placeholder client id; **never used with real Google or Apple accounts** (needs the owner's client ids; Apple needs a paid developer account) | ❌ | ❌ | n/a | ❌ |
 | New sign-in sheet, Account screen and Settings-style Profile | ✅ | ✅ driven in the browser: wrong password shakes and explains, right one returns to Profile; account card, password form, light and dark | n/a | ❌ | n/a | ❌ |
 | Mac launcher from any state (`curl … \| bash -s -- --xcode`), and auto-update while running | ✅ | 🟡 on Linux: an old checkout on another branch with an edit was stashed, switched and updated; a running copy picked up a new commit and restarted its server; the Xcode step with macOS tools stood in for writes the Node path Xcode needs. **Not yet run on a real Mac** | n/a | ❌ | n/a | ❌ |
@@ -295,7 +295,7 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 |---|---|
 | `pnpm typecheck` | Clean, every package |
 | `pnpm lint` | No ESLint warnings or errors (web); tsc clean elsewhere |
-| `@gymgo/domain` unit tests | **138 passed** |
+| `@gymgo/domain` unit tests | **140 passed** |
 | `@gymgo/demo-data` unit tests | **23 passed** |
 | `@gymgo/melbourne-data` unit tests | **11 passed** |
 | `@gymgo/au-data` unit tests | **18 passed** |
@@ -303,7 +303,7 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 | `@gymgo/eu-data` unit tests | **10 passed** |
 | `@gymgo/osm` unit tests | **25 passed** |
 | `@gymgo/server` tests (real HTTP, in-memory SQLite) | **176 passed** |
-| `@gymgo/mobile` unit tests | **224 passed** |
+| `@gymgo/mobile` unit tests | **227 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
 | `expo export` (iOS + Android) | Both compiled to Hermes bytecode |
 | `expo-doctor` | 21/21 checks passed |

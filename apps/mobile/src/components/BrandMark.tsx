@@ -1,7 +1,7 @@
 /**
  * GymGO's logo: a white G whose crossbar turns into an arrow heading out, on
  * a blue-to-violet gradient. scripts/brand-mark.mjs makes the badge here and
- * the app icons from the original, assets/brand/gymgo-logo.jpg.
+ * the app icons from the original, assets/brand/gymgo-logo.webp.
  *
  * `AppBadge` is the app icon itself, and `Wordmark` the icon with "GymGO".
  * Both are decoration: the text beside them says what the screen is, and the

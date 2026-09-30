@@ -1,7 +1,7 @@
 /** Written by scripts/brand-mark.mjs: the logo's violet and GymGO's wordmark. Edit the script, not this. */
 
 /** The violet in the middle of the logo, as dark as text on white needs, and as light as text on black does. */
-export const LOGO_VIOLET = { light: '#5247FE', dark: '#7D75FE' } as const;
+export const LOGO_VIOLET = { light: '#5041FD', dark: '#7C71FE' } as const;
 
 /** "GymGO" in Inter ExtraBold at 100 px, baseline at 0. */
 export const WORDMARK = {

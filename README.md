@@ -775,7 +775,7 @@ or abusive.
 
 The logo is a white G whose crossbar turns into an arrow heading out (a
 gym, and going to it) on a blue-to-violet gradient. The original is a
-picture, `apps/mobile/assets/brand/gymgo-logo.jpg`. The wordmark sets
+picture, `apps/mobile/assets/brand/gymgo-logo.webp`. The wordmark sets
 "GymGO" in Inter ExtraBold (SIL Open Font Licence) beside the icon, "GO" in
 the logo's violet.
 

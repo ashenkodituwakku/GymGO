@@ -3,7 +3,7 @@
  *
  * The logo is a white G whose crossbar turns into an arrow heading out (a
  * gym, and going to it) on a blue-to-violet gradient. The original is a
- * picture, assets/brand/gymgo-logo.jpg, and everything else is made from it:
+ * picture, assets/brand/gymgo-logo.webp, and everything else is made from it:
  * the icons that are the whole picture are it resized, and those that want
  * the G alone (iOS dark and tinted, Android's layers and themed icon) lift
  * the G off its background, which is easy, as the G is white and the
@@ -18,7 +18,7 @@
  * writes assets/images/*.png (what app.json points at, and the badge the app
  * shows), the web site's icons in apps/web/src/app, and
  * src/components/brandPaths.ts (the wordmark's letters and the logo's
- * violet). To change the logo, replace gymgo-logo.jpg and run it again;
+ * violet). To change the logo, replace gymgo-logo.webp and run it again;
  * don't edit the outputs by hand.
  */
 
@@ -28,14 +28,21 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const logoFile = join(here, '..', 'assets', 'brand', 'gymgo-logo.jpg');
+const logoFile = join(here, '..', 'assets', 'brand', 'gymgo-logo.webp');
 const imageDir = join(here, '..', 'assets', 'images');
 const webDir = join(here, '..', '..', 'web', 'src', 'app');
 const pathsFile = join(here, '..', 'src', 'components', 'brandPaths.ts');
 
-const { data: rgb, info } = await sharp(logoFile).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-const N = info.width;
-if (info.height !== N) throw new Error(`The logo should be square, not ${info.width}x${info.height}.`);
+// The picture, squared off. It came a pixel wider than it's tall, with that
+// last column half see-through, so the square is its middle, rounding left.
+const { width, height } = await sharp(logoFile).metadata();
+const N = Math.min(width, height);
+const logo = await sharp(logoFile)
+  .extract({ left: Math.floor((width - N) / 2), top: Math.floor((height - N) / 2), width: N, height: N })
+  .removeAlpha()
+  .png()
+  .toBuffer();
+const rgb = await sharp(logo).raw().toBuffer();
 const count = N * N;
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 
@@ -43,8 +50,8 @@ const clamp01 = (v) => Math.min(1, Math.max(0, v));
 
 // The lesser of a pixel's red and green is low in the saturated blue
 // background and high in the white G. It's no simple cut-off, though: the
-// background is lightest (121) in its top-left corner, and the G's fold,
-// shaded blue, is as dark as 101 in places. What sets them apart is the G's
+// background is as light as 118 in its top-left corner, and the G's fold,
+// shaded blue, is as dark as 102 in places. What sets them apart is the G's
 // sharp outline. So the background is found by spreading out from the
 // picture's edges and its darkest pixels, which only the background has, to
 // each neighbour only a little lighter or darker, never across the outline.
@@ -276,14 +283,14 @@ async function android(buffer, file) {
 /** The whole logo as a tile with rounded corners, as a home screen shows it, for places that don't round it themselves. */
 async function tile(size, file) {
   const corners = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><rect width="${size}" height="${size}" rx="${size * 0.225}"/></svg>`;
-  await png(sharp(logoFile).resize(size, size).composite([{ input: Buffer.from(corners), blend: 'dest-in' }]), file);
+  await png(sharp(logo).resize(size, size).composite([{ input: Buffer.from(corners), blend: 'dest-in' }]), file);
 }
 
 const white = [255, 255, 255];
 
 // iOS: the logo as it is; dark mode's G in the logo's own colours, lit as the
 // white one is; the tinted icon's in grey, which iOS colours.
-await png(sharp(logoFile).resize(1024, 1024), join(imageDir, 'icon.png'));
+await png(sharp(logo).resize(1024, 1024), join(imageDir, 'icon.png'));
 await square(
   lifted((i) => toward(sky(unit(i % N), unit(Math.floor(i / N))), white, 0.3).map((v) => Math.round(v * (0.72 + 0.28 * shade(i))))),
   1024,
@@ -313,12 +320,12 @@ await tile(48, join(imageDir, 'favicon.png'));
 
 // The badge the app shows (src/components/BrandMark.tsx), up to 64 points
 // across on a 3x screen; the app rounds its corners.
-await png(sharp(logoFile).resize(192, 192), join(imageDir, 'badge.png'));
+await png(sharp(logo).resize(192, 192), join(imageDir, 'badge.png'));
 
 // The web site: its tab icon, the icon an iPhone saves to its home screen
 // (iOS rounds it), and the one beside "GymGO" in its header.
 await tile(192, join(webDir, 'icon.png'));
-await png(sharp(logoFile).resize(180, 180), join(webDir, 'apple-icon.png'));
+await png(sharp(logo).resize(180, 180), join(webDir, 'apple-icon.png'));
 
 // --- The wordmark: the badge, then "GymGO" ----------------------------------------------
 

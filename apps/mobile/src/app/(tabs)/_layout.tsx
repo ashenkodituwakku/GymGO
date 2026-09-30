@@ -29,11 +29,11 @@ import { Glass, HAS_LIQUID_GLASS } from '@/components/Glass';
 import { PIcon, type PhosphorName } from '@/components/PIcon';
 import { Redrawn, useThemeVersion } from '@/components/Redrawn';
 import { glassMark, installLiquidGlass, sizeRefraction } from '@/components/liquidGlass';
-import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { TabBarInset, tabBarBottom } from '@/lib/layout';
-import { CHILD_TOUCH, NO_TOUCH, color, currentLook, currentTheme, face, radius, themed } from '@/lib/theme';
+import { CHILD_TOUCH, NO_TOUCH, color, currentLook, currentTheme, radius, themed } from '@/lib/theme';
+import { Avatar } from '@/components/Avatar';
 import { BrandFill } from '@/components/BrandFill';
 
 const BAR_HEIGHT = 64;
@@ -206,7 +206,7 @@ const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
   ref,
 ) {
   const { account } = useApp();
-  const initial = icon === 'user-circle' && account.account ? account.account.displayName.slice(0, 1).toUpperCase() : null;
+  const me = icon === 'user-circle' ? account.account : null;
   return (
     <Pressable
       ref={ref}
@@ -224,15 +224,10 @@ const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
       accessibilityLabel={label}
       style={({ pressed }) => [styles.tab, { width }, pressed && styles.pressed]}
     >
-      {initial ? (
-        // Your own initial for Profile, ringed when selected, as Instagram shows your photo.
+      {me ? (
+        // Your picture (or initial) for Profile, ringed when selected, as Instagram shows your photo.
         <View style={[styles.avatarRing, isFocused && styles.avatarRingOn]}>
-          <View style={styles.avatar}>
-            <BrandFill />
-            <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
-              {initial}
-            </Txt>
-          </View>
+          <Avatar account={me} size={26} variant="subhead" />
         </View>
       ) : (
         <PIcon name={icon} weight={isFocused ? 'fill' : 'regular'} size={isFocused ? 28 : 27} color={color.label} />
@@ -296,5 +291,4 @@ const styles = themed(() => StyleSheet.create({
   pressed: { transform: [{ scale: 0.9 }] },
   avatarRing: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   avatarRingOn: { borderWidth: 2, borderColor: color.label },
-  avatar: { width: 26, height: 26, borderRadius: round(26), backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
 }));

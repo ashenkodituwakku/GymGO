@@ -18,10 +18,12 @@ import { ApiError, OfflineError, api, type SignInMethods, type SignInProvider } 
 import { useApp } from '@/lib/app-state';
 import { downloadMyData } from '@/lib/exportData';
 import { haptic } from '@/lib/haptics';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
+import { Avatar } from '@/components/Avatar';
+import { pickAvatar } from '@/lib/avatar';
 
 const PROVIDER_NAME: Record<SignInProvider, string> = { google: 'Google', apple: 'Apple' };
 
@@ -43,6 +45,7 @@ export default function AccountScreen() {
   const [notice, setNotice] = useState<{ text: string; good: boolean } | null>(null);
   const [exported, setExported] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [picturing, setPicturing] = useState(false);
   const deleteCollection = useDeleteCollection();
 
   const loadMethods = useCallback(() => {
@@ -97,6 +100,22 @@ export default function AccountScreen() {
     }
   };
 
+  // A new profile picture, or none: from your photos, cut square and shrunk before it's sent.
+  const changePicture = async (remove = false) => {
+    if (picturing) return;
+    try {
+      const picked = remove ? null : await pickAvatar();
+      if (!remove && !picked) return;
+      setPicturing(true);
+      await account.setAvatar(picked?.data ?? null);
+      say(remove ? 'Profile picture removed.' : 'Profile picture updated.', true);
+    } catch (caught) {
+      say(caught instanceof ApiError || caught instanceof OfflineError ? messageFor(caught) : 'That picture couldn’t be opened. Try another.', false);
+    } finally {
+      setPicturing(false);
+    }
+  };
+
   const offered = (['apple', 'google'] as const).filter((provider) => (provider === 'google' ? providers?.google : providers?.apple) || connected(provider));
 
   return (
@@ -104,11 +123,17 @@ export default function AccountScreen() {
       <Stack.Screen options={{ title: 'Account' }} />
 
       <Animated.View style={styles.head}>
-        <View style={styles.avatar}>
-          <Txt variant="largeTitle" color={color.onBrand}>
-            {me.displayName.slice(0, 1).toUpperCase()}
-          </Txt>
-        </View>
+        <Pressable
+          onPress={() => void changePicture()}
+          accessibilityRole="button"
+          accessibilityLabel={me.avatarUrl ? 'Change your profile picture' : 'Add a profile picture'}
+          style={({ pressed }) => [styles.avatar, pressed && { opacity: 0.8 }]}
+        >
+          <Avatar account={me} size={84} variant="largeTitle" ring={billing.isPro ? color.groupedBackground : undefined} />
+          <View style={styles.avatarBadge}>
+            <Icon name="photo" size={13} color={color.onBrand} />
+          </View>
+        </Pressable>
         <Txt variant="title2" style={styles.center}>
           {me.displayName}
         </Txt>
@@ -134,7 +159,7 @@ export default function AccountScreen() {
         </Animated.View>
       )}
 
-      <Section title="Profile">
+      <Section title="Profile" footer="Only you see your profile picture. It isn’t shown with your reviews or photos, and its location data is removed.">
         <Line icon="person" title="Name" value={me.displayName} onPress={() => setEditing(editing === 'name' ? null : 'name')} open={editing === 'name'} />
         {editing === 'name' && (
           <NameForm
@@ -151,6 +176,14 @@ export default function AccountScreen() {
           />
         )}
         <Line icon="mail" title="Email" value={me.email} first={false} />
+        <Line
+          icon="photo"
+          title="Profile picture"
+          value={picturing ? 'Sending…' : me.avatarUrl ? 'Change' : 'Add'}
+          onPress={() => void changePicture()}
+          first={false}
+        />
+        {me.avatarUrl && !picturing && <Line icon="trash" title="Remove profile picture" destructive onPress={() => void changePicture(true)} first={false} />}
       </Section>
 
       <Section
@@ -402,7 +435,21 @@ const styles = themed(() =>
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[4], paddingBottom: space[8], gap: space[2], width: '100%', maxWidth: 560, alignSelf: 'center' },
     head: { alignItems: 'center', gap: 4, paddingVertical: space[4] },
-    avatar: { width: 84, height: 84, borderRadius: 42, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center', marginBottom: space[2] },
+    avatar: { marginBottom: space[2] },
+    // A camera-roll badge on the picture's corner, so it reads as tappable.
+    avatarBadge: {
+      position: 'absolute',
+      right: -2,
+      bottom: -2,
+      width: 28,
+      height: 28,
+      borderRadius: Math.min(14, radius.pill),
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: color.brandFill,
+      borderWidth: 2,
+      borderColor: color.groupedBackground,
+    },
     center: { textAlign: 'center' },
     pro: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: space[1], paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill, backgroundColor: color.brandTint },
     flex: { flex: 1 },
@@ -411,7 +458,7 @@ const styles = themed(() =>
     noticeBad: { backgroundColor: color.dangerTint },
     section: { marginTop: space[3] },
     sectionTitle: { marginLeft: space[4], marginBottom: space[2], letterSpacing: 0.4 },
-    group: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, overflow: 'hidden' },
+    group: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, overflow: 'hidden', ...shadow.plate },
     footer: { marginHorizontal: space[4], marginTop: space[2] },
     line: { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 48, paddingHorizontal: space[4], paddingVertical: space[3] },
     lineRule: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },

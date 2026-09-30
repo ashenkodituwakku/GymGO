@@ -45,6 +45,9 @@ export interface AccountRow {
   role: Role;
   blocked: number;
   created_at: string;
+  /** Your profile picture's file, if you've set one (null or missing: none). */
+  avatar_id?: string | null;
+  avatar_type?: 'jpeg' | 'png' | null;
 }
 
 export function toUser(row: AccountRow): User {
@@ -60,7 +63,15 @@ export function toUser(row: AccountRow): User {
 
 /** What the signed-in person sees about themselves. */
 export function publicAccount(row: AccountRow) {
-  return { id: row.id, email: row.email, displayName: row.display_name, role: row.role, createdAt: row.created_at, hasPassword: hasPassword(row) };
+  return {
+    id: row.id,
+    email: row.email,
+    displayName: row.display_name,
+    role: row.role,
+    createdAt: row.created_at,
+    hasPassword: hasPassword(row),
+    avatarUrl: row.avatar_id ? `/api/avatars/${row.avatar_id}` : null,
+  };
 }
 
 /** Accounts made with Google or Apple have no password until one is set. */

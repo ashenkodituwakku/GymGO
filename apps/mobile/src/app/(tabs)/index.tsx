@@ -16,6 +16,7 @@ import { Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { AdSlot } from '@/components/AdSlot';
 import { BrandFill } from '@/components/BrandFill';
+import { Avatar } from '@/components/Avatar';
 import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
 import { useActiveSession } from '@/lib/activeSession';
@@ -54,7 +55,7 @@ const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
 
 export default function Home() {
   usePageTitle(null);
-  const { data, account, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady, lookup, searchHere, here } = useApp();
+  const { data, account, billing, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady, lookup, searchHere, here } = useApp();
   const active = useActiveSession();
   // Your training log, shared with Progress; the week strip shows once there's something in it.
   const log = useTrainingLog(account.token);
@@ -142,9 +143,7 @@ export default function Home() {
           style={[styles.avatar, account.account && styles.avatarOn]}
         >
           {account.account ? (
-            <Txt variant="headline" color={color.onBrand}>
-              {account.account.displayName.slice(0, 1).toUpperCase()}
-            </Txt>
+            <Avatar account={account.account} size={40} variant="headline" />
           ) : (
             <Icon name="account" size={22} color={color.brand} />
           )}
@@ -227,7 +226,7 @@ export default function Home() {
 
       <HereNudge here={here} records={data.listed} onOpen={(id) => router.push({ pathname: '/gym/[id]', params: { id } })} />
       {log.status === 'ready' && log.sessions.length > 0 && (
-        <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} onPress={() => router.push('/progress')} />
+        <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />
       )}
       <CollectionStrip onPress={() => router.push('/collection')} />
 

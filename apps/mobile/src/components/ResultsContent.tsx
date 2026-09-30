@@ -23,6 +23,8 @@ import { GymRow } from './GymRow';
 import { Icon } from './Icon';
 import { Chip, PrimaryButton, TIER_COLOUR, Txt } from './ui';
 import { AdSlot } from './AdSlot';
+import { Avatar } from './Avatar';
+import type { Account } from '@/lib/api';
 
 /** How many result rows animate as the list changes: about a screenful. */
 const ANIMATED_ROWS = 12;
@@ -47,7 +49,7 @@ export function ResultsContent({
   onApplyRelaxation,
   notice,
   inSheet,
-  accountInitial,
+  me,
   onOpenAccount,
   dataNote,
   covers,
@@ -80,8 +82,8 @@ export function ResultsContent({
   notice: string | null;
   /** In a bottom sheet (phone) or a plain panel (desktop). */
   inSheet: boolean;
-  /** The signed-in person's initial, or null when signed out. */
-  accountInitial: string | null;
+  /** The signed-in person (their picture or initial), or null when signed out. */
+  me: Account | null;
   onOpenAccount: () => void;
   /** The line at the foot of the list about where the data comes from. */
   dataNote: string;
@@ -165,13 +167,11 @@ export function ResultsContent({
             onOpenAccount();
           }}
           accessibilityRole="button"
-          accessibilityLabel={accountInitial ? 'Your account' : 'Sign in'}
-          style={({ pressed }) => [styles.avatar, accountInitial ? styles.avatarSignedIn : null, pressed && { opacity: 0.7 }]}
+          accessibilityLabel={me ? 'Your account' : 'Sign in'}
+          style={({ pressed }) => [styles.avatar, me ? styles.avatarSignedIn : null, pressed && { opacity: 0.7 }]}
         >
-          {accountInitial ? (
-            <Txt variant="headline" color={color.onBrand}>
-              {accountInitial}
-            </Txt>
+          {me ? (
+            <Avatar account={me} size={40} variant="headline" />
           ) : (
             <Icon name="account" size={22} color={color.brand} />
           )}

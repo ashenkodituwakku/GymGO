@@ -87,7 +87,7 @@ async function request<T>(method: string, path: string, options: { token?: strin
   const controller = new AbortController();
   // Photos upload slowly; billing waits on Stripe; an area search may wait on the map service.
   // A bug report waits (a few seconds at most) for its email to go.
-  const slow = (method === 'POST' && (path.endsWith('/photos') || path === '/api/bug-reports')) || path.startsWith('/api/billing');
+  const slow = (method === 'POST' && (path.endsWith('/photos') || path === '/api/bug-reports')) || path === '/api/me/avatar' || path.startsWith('/api/billing');
   const timer = setTimeout(() => controller.abort(), path.startsWith('/api/area') ? 75000 : slow || path.startsWith('/api/places') ? 30000 : 8000);
   let response: Response;
   try {
@@ -265,6 +265,8 @@ export interface Account {
   createdAt: string;
   /** False for an account made with Google or Apple until a password is set. Missing from older servers. */
   hasPassword?: boolean;
+  /** Your profile picture, server-relative (pass through photoUrl()); null or missing: none. */
+  avatarUrl?: string | null;
   /** Only the dev Pro account on a local server with GYMGO_DEV_PRO=on: testing shortcuts, such as collecting gyms from anywhere. */
   devTools?: boolean;
 }
@@ -442,6 +444,9 @@ export const api = {
   resetCollection: (token: string) => request<CollectionAnswer>('DELETE', '/api/collection', { token }),
 
   rename: (token: string, displayName: string) => request<{ account: Account }>('PATCH', '/api/me', { token, body: { displayName } }),
+  /** A new profile picture (base64 JPEG or PNG, up to 2 MB). */
+  setAvatar: (token: string, data: string) => request<{ account: Account }>('PUT', '/api/me/avatar', { token, body: { data } }),
+  removeAvatar: (token: string) => request<{ account: Account }>('DELETE', '/api/me/avatar', { token }),
   changePassword: (token: string, body: { currentPassword: string; newPassword: string }) =>
     request<unknown>('POST', '/api/me/password', { token, body }),
   exportMyData: (token: string) => request<Record<string, unknown>>('GET', '/api/me/export', { token }),

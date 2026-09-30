@@ -210,6 +210,8 @@ function ThemedStack() {
         <Stack.Screen name="workouts/[id]" options={{ headerShown: true, title: 'Workout' }} />
         <Stack.Screen name="train" options={{ headerShown: true, title: 'Workout', gestureEnabled: false }} />
         <Stack.Screen name="plates" options={{ ...MODAL, headerShown: true, title: 'Plates' }} />
+        <Stack.Screen name="timer" options={{ headerShown: true, title: 'Interval timer' }} />
+        <Stack.Screen name="strength" options={{ headerShown: true, title: '1-rep max' }} />
         <Stack.Screen name="progress/index" options={{ headerShown: true, title: 'Progress' }} />
         <Stack.Screen name="collection" options={{ headerShown: true, title: 'Collection' }} />
         <Stack.Screen name="progress/[exercise]" options={{ headerShown: true, title: '' }} />

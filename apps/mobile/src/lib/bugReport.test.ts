@@ -19,6 +19,13 @@ const PHONE: DeviceFacts = {
 };
 
 describe('bug report details', () => {
+  it('names the look when it isn\u2019t the standard one', () => {
+    const line = (look?: string) => deviceDetails({ ...PHONE, look }).find((item) => item.label === 'Appearance')?.value;
+    expect(line('8-bit')).toBe('Automatic, Indigo, 8-bit look');
+    expect(line('Standard')).toBe('Automatic, Indigo');
+    expect(line()).toBe('Automatic, Indigo');
+  });
+
   it('lists what helps find a bug, in words, and nothing about where you are', () => {
     expect(deviceDetails(PHONE)).toEqual([
       { label: 'App version', value: '0.1.0 (pilot)' },

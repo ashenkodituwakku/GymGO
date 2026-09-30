@@ -28,7 +28,7 @@ import type { Sale } from '@/lib/useBilling';
 import { ApiError, OfflineError } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
-import { HEADER_EDGE, color, face, radius, space, themed } from '@/lib/theme';
+import { HEADER_EDGE, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 
@@ -44,6 +44,10 @@ const FEATURE_ICON: Record<string, IconName> = {
   'Warm-up sets': 'flame',
   'Gym notes': 'list',
   'Your plates': 'plates',
+  'Interval timer': 'timer',
+  '1-rep max': 'target',
+  'Streak freeze': 'sparkle',
+  'Profile ring': 'person',
 };
 
 const REASON: Record<ProReason, string> = {
@@ -57,6 +61,9 @@ const REASON: Record<ProReason, string> = {
   warmup: 'The plate calculator is free. Pro works out your warm-up sets to any weight, with the plates for each.',
   notes: 'Pro keeps your own notes on each gym, like the door code or who to ask for. Only you see them.',
   plates: 'The plate calculator uses the usual set for free. Pro lets it use the plates your gym really has, change plates and all.',
+  timers: 'Tabata and EMOM are free. Pro lets you set your own work, rest and rounds, and keep up to ten timers of your own.',
+  strength: 'Your estimated 1-rep max is free. Pro adds the whole percentage table, with the plates for each weight, and what you could lift for 2 to 12 reps.',
+  freeze: 'Pro’s streak freeze keeps your weekly streak going through one missed week a month.',
 };
 
 export default function ProScreen() {
@@ -457,7 +464,7 @@ const styles = themed(() => StyleSheet.create({
     justifyContent: 'center',
   },
   badgeEmoji: { fontSize: 36, lineHeight: 44 },
-  card: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3] },
+  card: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
   onPro: { borderWidth: 2, borderColor: color.brand },
   tableHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   tableRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },

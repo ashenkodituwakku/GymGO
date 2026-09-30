@@ -16,6 +16,8 @@ import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
+/** Profile pictures are small: the app sends a square of a few hundred pixels. */
+export const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 
 export type PhotoType = 'jpeg' | 'png';
 

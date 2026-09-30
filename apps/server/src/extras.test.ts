@@ -150,6 +150,49 @@ async function signUp() {
   return { token: result.body.token as string, id: result.body.account.id as string };
 }
 
+describe('profile pictures', () => {
+  it('sets one without its location, serves it, replaces it and takes it away', async () => {
+    const data = JPEG_WITH_GPS.toString('base64');
+    expect((await call('PUT', '/api/me/avatar', { body: { data } })).status).toBe(401);
+    const { token } = await signUp();
+    expect((await call('GET', '/api/me', { token })).body.account.avatarUrl).toBeNull();
+    expect((await call('PUT', '/api/me/avatar', { token, body: { data: Buffer.from('<svg/>').toString('base64') } })).status).toBe(400);
+    expect((await call('PUT', '/api/me/avatar', { token, body: {} })).status).toBe(400);
+
+    const first = await call('PUT', '/api/me/avatar', { token, body: { data: `data:image/jpeg;base64,${data}` } });
+    expect(first.status).toBe(200);
+    const url = first.body.account.avatarUrl as string;
+    expect(url).toMatch(/^\/api\/avatars\/avatar-/);
+    expect((await call('GET', '/api/me', { token })).body.account.avatarUrl).toBe(url);
+    const image = await call('GET', url);
+    expect(image.status).toBe(200);
+    expect(image.type).toBe('image/jpeg');
+    expect((image.raw as Buffer).includes(Buffer.from('GPSLatitude'))).toBe(false);
+    expect((await call('GET', '/api/me/export', { token })).body.account.profilePictureId).toBe(url.split('/').pop());
+
+    // A new picture gets a new address; the old one's file is gone.
+    const second = await call('PUT', '/api/me/avatar', { token, body: { data: PNG_WITH_TEXT.toString('base64') } });
+    const next = second.body.account.avatarUrl as string;
+    expect(next).not.toBe(url);
+    expect((await call('GET', url)).status).toBe(404);
+    expect((await call('GET', next)).type).toBe('image/png');
+    expect(readdirSync(photoDir).some((file) => file.startsWith(url.split('/').pop()!))).toBe(false);
+
+    const removed = await call('DELETE', '/api/me/avatar', { token });
+    expect(removed.body.account.avatarUrl).toBeNull();
+    expect((await call('GET', next)).status).toBe(404);
+  });
+
+  it('goes with the account', async () => {
+    const { token } = await signUp();
+    const set = await call('PUT', '/api/me/avatar', { token, body: { data: JPEG_WITH_GPS.toString('base64') } });
+    const id = (set.body.account.avatarUrl as string).split('/').pop()!;
+    expect(readdirSync(photoDir).some((file) => file.startsWith(id))).toBe(true);
+    expect((await call('DELETE', '/api/me', { token })).status).toBe(204);
+    expect(readdirSync(photoDir).some((file) => file.startsWith(id))).toBe(false);
+  });
+});
+
 describe('gym photos', () => {
   it('needs an account and explicit consent, and only takes real images', async () => {
     const data = JPEG_WITH_GPS.toString('base64');

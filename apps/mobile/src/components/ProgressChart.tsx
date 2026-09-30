@@ -37,7 +37,8 @@ export function ProgressChart({ points, unit }: { points: Array<{ date: string; 
   // Whole numbers, unless the lines are closer together than that.
   const gridLabel = (value: number) => formatWeight(span >= 4 ? Math.round(value) : Math.round(value * 10) / 10, unit);
   const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-  const change = values.length > 1 ? values[values.length - 1]! - values[0]! : 0;
+  // To a tenth, as it's shown: no change reads as that, not a green "+0".
+  const change = values.length > 1 ? Math.round((values[values.length - 1]! - values[0]!) * 10) / 10 : 0;
 
   return (
     <View
@@ -50,9 +51,8 @@ export function ProgressChart({ points, unit }: { points: Array<{ date: string; 
           Estimated 1-rep max
         </Txt>
         {values.length > 1 && (
-          <Txt variant="caption" color={change >= 0 ? color.goodInk : color.maybeInk}>
-            {change >= 0 ? '+' : '−'}
-            {formatWeight(Math.abs(Math.round(change * 10) / 10), unit)} since {day(points[0]!.date)}
+          <Txt variant="caption" color={change > 0 ? color.goodInk : change < 0 ? color.maybeInk : color.labelSecondary}>
+            {change === 0 ? `No change since ${day(points[0]!.date)}` : `${change > 0 ? '+' : '−'}${formatWeight(Math.abs(change), unit)} since ${day(points[0]!.date)}`}
           </Txt>
         )}
       </View>

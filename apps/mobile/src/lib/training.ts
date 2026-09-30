@@ -63,6 +63,16 @@ export function oneRepMax(weightKg: number, reps: number): number | null {
   return reps === 1 ? weightKg : weightKg * (1 + reps / 30);
 }
 
+/** What you could lift for `reps` (1 to 12), from a 1-rep max: the same formula turned round. */
+export function repMax(oneRm: number, reps: number): number | null {
+  if (!(oneRm > 0) || !(reps >= 1) || reps > 12) return null;
+  return reps === 1 ? oneRm : oneRm / (1 + reps / 30);
+}
+
+/** The shares of your 1-rep max the calculator lists (Pro); Free shows the three most used. */
+export const PERCENT_STEPS = [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50] as const;
+export const FREE_PERCENTS: readonly number[] = [90, 80, 70];
+
 export interface RecordSet {
   weight: number;
   reps: number;
@@ -380,21 +390,48 @@ function weekStart(date: Date): number {
   return day.getTime();
 }
 
+export interface Streak {
+  /** Weeks you trained, in a row. */
+  weeks: number;
+  /** The Mondays of missed weeks a streak freeze carried the run through, newest first. */
+  frozen: number[];
+}
+
 /**
  * Weeks in a row with at least one session. This week counts once you've
  * trained; until then the streak runs to last week, so it isn't lost on a
  * Monday morning.
+ *
+ * With `freezes` (Pro's streak freeze), a missed week doesn't end the run,
+ * once in a calendar month, as long as you trained the week before it. The
+ * frozen week keeps the run going; it doesn't add to it.
  */
-export function weekStreak(sessions: TrainingSession[], now: Date = new Date()): number {
+export function streakOf(sessions: TrainingSession[], now: Date = new Date(), freezes = false): Streak {
   const weeks = new Set(sessions.map((session) => weekStart(new Date(session.finishedAt))));
   const cursor = new Date(weekStart(now));
   if (!weeks.has(cursor.getTime())) cursor.setDate(cursor.getDate() - 7);
+  const frozen: number[] = [];
+  const months = new Set<string>();
   let streak = 0;
-  while (weeks.has(cursor.getTime())) {
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 7);
+  for (;;) {
+    if (weeks.has(cursor.getTime())) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 7);
+      continue;
+    }
+    const before = new Date(cursor);
+    before.setDate(before.getDate() - 7);
+    const month = `${cursor.getFullYear()}-${cursor.getMonth()}`;
+    if (!freezes || months.has(month) || !weeks.has(before.getTime())) break;
+    months.add(month);
+    frozen.push(cursor.getTime());
+    cursor.setTime(before.getTime());
   }
-  return streak;
+  return { weeks: streak, frozen };
+}
+
+export function weekStreak(sessions: TrainingSession[], now: Date = new Date()): number {
+  return streakOf(sessions, now).weeks;
 }
 
 export function sessionsThisWeek(sessions: TrainingSession[], now: Date = new Date()): number {

@@ -168,6 +168,14 @@ export function useAccount() {
     setAccount(result.account);
   }, []);
 
+  /** A new profile picture (base64 JPEG), or none. */
+  const setAvatar = useCallback(async (data: string | null) => {
+    const current = token.current;
+    if (!current) return;
+    const result = data === null ? await api.removeAvatar(current) : await api.setAvatar(current, data);
+    setAccount(result.account);
+  }, []);
+
   /** Changes the password; any other device signed in as you is signed out. */
   const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
     const current = token.current;
@@ -212,6 +220,7 @@ export function useAccount() {
     signOut,
     deleteAccount,
     rename,
+    setAvatar,
     changePassword,
     toggleSave,
   };

@@ -18,7 +18,7 @@ import {
   type MilestoneKind,
 } from '@/lib/insights';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
-import { weekStreak, type TrainingSession } from '@/lib/training';
+import { streakOf, type TrainingSession } from '@/lib/training';
 import { Icon, type IconName } from './Icon';
 import { Txt } from './ui';
 
@@ -138,9 +138,22 @@ export function WeekCard({
 }
 
 /** Home's one line on your week: the count against your goal, the streak, and a dot a day. Opens Progress. */
-export function WeekStrip({ sessions, goal, onPress, now = new Date() }: { sessions: TrainingSession[]; goal: number | null; onPress: () => void; now?: Date }) {
+export function WeekStrip({
+  sessions,
+  goal,
+  onPress,
+  freezes = false,
+  now = new Date(),
+}: {
+  sessions: TrainingSession[];
+  goal: number | null;
+  onPress: () => void;
+  /** Pro's streak freeze: one missed week a month doesn't end the run. */
+  freezes?: boolean;
+  now?: Date;
+}) {
   const week = useMemo(() => trainingCalendar(sessions, 1, now)[0]!, [sessions, now]);
-  const streak = weekStreak(sessions, now);
+  const streak = streakOf(sessions, now, freezes).weeks;
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const count = week.sessions;
   const title = goal ? (count <= goal ? `${count} of ${goal} this week` : `${count} this week, goal ${goal}`) : `${count} workout${count === 1 ? '' : 's'} this week`;

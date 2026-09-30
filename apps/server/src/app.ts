@@ -25,6 +25,9 @@
  *   GET    /api/me/export                 everything held about you, as a JSON file
  *   PATCH  /api/me                        { displayName } -> your account, renamed
  *   POST   /api/me/password               { currentPassword, newPassword } -> changed; other devices signed out
+ *   PUT    /api/me/avatar                 { data (base64 JPEG/PNG) } -> your account, with its new profile picture
+ *   DELETE /api/me/avatar                 your account, with no profile picture
+ *   GET    /api/avatars/:id               a profile picture (the id is random and changes with each picture)
  *   GET    /api/gyms/:gymId/reviews       published reviews, plus your own
  *   POST   /api/gyms/:gymId/reviews       { overall, body, visitedOn? } -> held for moderation
  *   GET    /api/gyms/:gymId/photos        published photos, plus your own waiting ones
@@ -130,7 +133,7 @@ import { PlaceError, PlaceSearch } from './places';
 import { SiteIcons, SitePhotos, chainWebsites, ownPhotoSites, type SafeGet } from './siteicons';
 import { allGyms, gymCountry, gymExists, gymIsDemo, gymRecord, type Db } from './db';
 import { GoogleError, GooglePlaces } from './google';
-import { MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
+import { MAX_AVATAR_BYTES, MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
 import { IdentityError, IdentityVerifier, label, type Provider, type VerifiedIdentity } from './identity';
 import { BugReportError, BugReports, cleanBugReport } from './bugReports';
 import type { SendMail } from './mail';
@@ -448,6 +451,7 @@ export function createApp(options: AppOptions) {
   const loginLimiter = new AttemptLimiter(10, 15 * 60_000);
   const signupLimiter = new AttemptLimiter(options.signupsPerHour ?? 20, 60 * 60_000);
   const photoLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
+  const avatarLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
   const equipmentLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
   const priceLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   const accessLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
@@ -1022,7 +1026,10 @@ export function createApp(options: AppOptions) {
       return send(res, 200, {
         exportedAt: now().toISOString(),
         note: 'Everything GymGO holds about you. Your password is stored only as a salted hash, which is left out; so are sign-in tokens.',
-        account: rows('select id, email, display_name as displayName, role, blocked, created_at as createdAt from users where id = ?')[0],
+        account: rows(
+          `select id, email, display_name as displayName, role, blocked, created_at as createdAt,
+                  avatar_id as profilePictureId, avatar_type as profilePictureType from users where id = ?`,
+        )[0],
         signIns: rows('select created_at as signedInAt, expires_at as expiresAt from sessions where user_id = ? order by created_at'),
         connectedSignIns: rows('select provider, email, created_at as connectedAt from identities where user_id = ? order by created_at'),
         savedGyms: rows('select gym_id as gymId, created_at as savedAt from saved_gyms where user_id = ? order by created_at'),
@@ -1085,6 +1092,43 @@ export function createApp(options: AppOptions) {
       return send(res, 204);
     }
 
+    // Your profile picture. It's shown only to you, in your own Profile and
+    // tab bar, never beside your reviews or photos, so it needs no moderator.
+    // Like a gym photo, its metadata (a phone photo's GPS location) is removed
+    // before it's kept, and the old picture's file goes when it's replaced.
+    if (path === '/api/me/avatar' && (method === 'PUT' || method === 'DELETE')) {
+      const { account } = requireAccount(req);
+      let next: { id: string; type: PhotoType } | null = null;
+      if (method === 'PUT') {
+        const body = (await readJson(req, Math.ceil(MAX_AVATAR_BYTES * 1.4) + 1024)) as Record<string, unknown>;
+        if (typeof body.data !== 'string' || body.data.length === 0) throw new HttpError(400, 'No picture was attached.');
+        const raw = Buffer.from(body.data.replace(/^data:image\/[a-z]+;base64,/, ''), 'base64');
+        if (raw.length > MAX_AVATAR_BYTES) throw new HttpError(413, 'Profile pictures can be up to 2 MB.');
+        const clean = cleanPhoto(raw);
+        if (!clean) throw new HttpError(400, 'That isn\u2019t a JPEG or PNG picture we can read.');
+        if (!avatarLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That\u2019s a lot of new pictures for one day. Try again tomorrow.');
+        next = { id: `avatar-${randomUUID()}`, type: clean.type };
+        photos.save(next.id, next.type, clean.bytes);
+      }
+      db.prepare('update users set avatar_id = ?, avatar_type = ? where id = ?').run(next?.id ?? null, next?.type ?? null, account.id);
+      if (account.avatar_id && account.avatar_type) photos.remove(account.avatar_id, account.avatar_type);
+      return send(res, 200, { account: accountJson({ ...account, avatar_id: next?.id ?? null, avatar_type: next?.type ?? null }) });
+    }
+
+    if (method === 'GET' && parts[0] === 'api' && parts[1] === 'avatars' && parts.length === 3) {
+      const id = decodeURIComponent(parts[2]!);
+      const row = db.prepare('select avatar_id, avatar_type from users where avatar_id = ?').get(id) as { avatar_id: string; avatar_type: PhotoType } | undefined;
+      const bytes = row ? photos.read(row.avatar_id, row.avatar_type) : null;
+      if (!row || !bytes) throw new HttpError(404, 'No such picture.');
+      res.statusCode = 200;
+      res.setHeader('Content-Type', row.avatar_type === 'jpeg' ? 'image/jpeg' : 'image/png');
+      // A new picture gets a new id, so this one never changes.
+      res.setHeader('Cache-Control', 'private, max-age=86400');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.end(bytes);
+      return;
+    }
+
     if (path === '/api/me') {
       const { account } = requireAccount(req);
       if (method === 'GET') return send(res, 200, { account: accountJson(account), plan: billing.planFor(account.id).plan });
@@ -1102,6 +1146,7 @@ export function createApp(options: AppOptions) {
         // keys cascade); the photo files are removed here.
         const owned = db.prepare('select id, type from photos where user_id = ?').all(account.id) as Array<{ id: string; type: PhotoType }>;
         for (const photo of owned) photos.remove(photo.id, photo.type);
+        if (account.avatar_id && account.avatar_type) photos.remove(account.avatar_id, account.avatar_type);
         db.prepare('delete from users where id = ?').run(account.id);
         return send(res, 204);
       }

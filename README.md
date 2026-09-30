@@ -283,8 +283,8 @@ Chrome and Edge (blur only in Safari and Firefox).
   gym's price), guest entry, what to bring, machines, rating and distance.
   The round compare button in a map card's header adds a gym too.
 - **Profile**: laid out like Settings. Your account card (tap it for
-  **Account**: name, email, password, Apple and Google, your data, sign out,
-  delete), Training (Progress, My workouts, Plate calculator), Pro, your
+  **Account**: profile picture, name, email, password, Apple and Google,
+  your data, sign out, delete), Training (Progress, My workouts, Plate calculator, 1-rep max, Interval timer), Pro, your
   gyms, Settings (Country, **Appearance**, Haptics, Demo mode), and where
   GymGO's facts come from. Signed out, a card to sign in with Apple, Google
   or email.
@@ -347,6 +347,16 @@ guide, so on a repeat session it's mostly ticking.
 - **Milestones.** Workouts logged, your longest run of weeks in a row,
   records broken and sets logged, each with the steps you've passed and
   how far to the next. All counted from your own log.
+- **1-rep max** (Profile → 1-rep max): type a set you've done (weight ×
+  reps) for your estimated 1-rep max, by the same formula Progress uses
+  (Epley; none past 12 reps), and 90%, 80% and 70% of it. Tap a row for the
+  plate calculator.
+- **Interval timer** (Profile → Interval timer): Tabata (20 s on, 10 s off,
+  8 rounds) and EMOM (every minute on the minute, 10 rounds), with a big
+  clock, a count-in, a buzz at each change (and a beep in a browser; a
+  phone has no sound for it yet), and the screen kept on while it runs.
+  It reads the clock rather than counting ticks, so pausing or switching
+  apps doesn't make it drift.
 - **Share a workout.** After you finish, **Share this workout** sends a
   few lines (what, how long, sets, weight, records) through the share sheet;
   never the gym or the place.
@@ -367,6 +377,21 @@ sets for each muscle over the last four weeks, and the muscles you've
 missed), **warm-up sets** on the plate calculator (the bar, then about
 40%, 60% and 80%, with the plates for each), and **your own notes** on each
 gym's page, kept on the device.
+
+Pro's extras for training:
+
+- **1-rep max**: the whole table from 100% down to 50%, each rounded to what
+  you can load and with the plates for each side (your gym's plates, if
+  you've set them), and what you could lift for 2 to 12 reps.
+- **Your own interval timers**: set the work, rest and rounds, and keep up
+  to ten on the device. On Free the settings show, locked.
+- **Streak freeze**: a missed week doesn't end your weeks-in-a-row, once a
+  calendar month, as long as you trained the week before it. Progress says
+  which week it covered; the frozen week keeps the run going but doesn't
+  add to it. On Free, Progress says when one would have kept your run.
+  Milestones' "longest run" still counts only weeks you trained.
+- **Profile ring**: your picture, or initial, ringed in your accent on
+  Profile and Account (Rainbow's and Camo's paint too).
 
 A gym that says **Call first** also lists **what to ask** when you call:
 one question for each thing GymGO hasn't confirmed, for free.
@@ -550,8 +575,18 @@ In Profile you can **change your name** and **change your password** (it
 asks for the current one, and signs out any other device signed in as you).
 There's no "forgot password" yet, because GymGO sends no email.
 
+**Profile picture**: tap the circle on Account (or Profile picture) and
+pick one of your photos. It's cut to a centred square (on a phone you can
+choose the square yourself), made 400 pixels across and sent as a JPEG;
+the server removes its metadata again, as it does for gym photos, and
+deletes the old file when you change or remove it. It shows on Profile,
+the tab bar, Home and the map, only to you: it isn't shown with your
+reviews or photos, so it needs no moderator. Without one you get your
+initial, as before. On a phone this needs a build made after
+`expo-image-manipulator` was added.
+
 **Download my data** in Profile gives you everything GymGO holds about you
-as one JSON file: your account, sign-in dates, saved gyms, reviews, photo
+as one JSON file: your account (with your profile picture's id), sign-in dates, saved gyms, reviews, photo
 records, machine, price and visit reports, workouts, bug reports and
 subscription (never your password hash or sign-in tokens). In a browser it downloads; on a phone
 it opens the share sheet. **Delete account** removes all of it.
@@ -1034,6 +1069,10 @@ saved list always opens, wherever the gym is.
 | Gym notes | — | Your own notes on each gym, on your device |
 | Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
 | Colour themes | Indigo, light or dark | Twelve accents (Rainbow and Camo too), four looks (8-bit, Classic, Material, Neon), light or dark |
+| Interval timer | Tabata and EMOM | Your own work, rest and rounds; keep up to 10 |
+| 1-rep max | Your estimated max, and 90%, 80% and 70% | Every step from 100% to 50% with plates, and what you could lift for 2 to 12 reps |
+| Streak freeze | — | One missed week a month doesn't end your streak |
+| Profile ring | Your picture | Ringed in your accent |
 
 One tier, two ways to pay, tax included:
 

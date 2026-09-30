@@ -21,7 +21,7 @@ import { useApp } from '@/lib/app-state';
 import { deviceDetails } from '@/lib/bugReport';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
-import { ACCENTS, color, radius, space, themed } from '@/lib/theme';
+import { ACCENTS, LOOKS, color, radius, shadow, space, themed } from '@/lib/theme';
 import { useThemeChoice } from '@/lib/themePrefs';
 import { PageScroll } from '@/components/PageScroll';
 
@@ -74,12 +74,13 @@ export default function ReportBug() {
         country: prefs.country,
         appearance: APPEARANCE[theme.appearance] ?? theme.appearance,
         accent: ACCENTS[theme.accent]?.name ?? theme.accent,
+        look: LOOKS[theme.look]?.name,
         demo: prefs.demo,
         signedIn,
         pro: billing.isPro,
         ...languageAndZone(),
       }),
-    [window.width, window.height, window.scale, from, prefs.country, prefs.demo, theme.appearance, theme.accent, signedIn, billing.isPro],
+    [window.width, window.height, window.scale, from, prefs.country, prefs.demo, theme.appearance, theme.accent, theme.look, signedIn, billing.isPro],
   );
 
   const typed = description.trim();
@@ -250,7 +251,7 @@ const styles = themed(() =>
       justifyContent: 'center',
     },
     noticeBadge: { backgroundColor: TILE.indigo },
-    card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[2] },
+    card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[2], ...shadow.plate },
     description: { minHeight: 150, paddingTop: space[3], paddingBottom: space[3] },
     count: { textAlign: 'right' },
     details: { paddingHorizontal: space[4], paddingBottom: space[3], gap: 6 },

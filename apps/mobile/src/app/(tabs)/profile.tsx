@@ -25,6 +25,7 @@ import { useThemeChoice } from '@/lib/themePrefs';
 import { useCollection } from '@/lib/useCollection';
 import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { Avatar } from '@/components/Avatar';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 
@@ -79,11 +80,7 @@ export default function Profile() {
           accessibilityLabel={`${me.displayName}, ${me.email}. Account settings`}
           style={styles.meCard}
         >
-          <View style={styles.avatar}>
-            <Txt variant="title" color={color.onBrand}>
-              {me.displayName.slice(0, 1).toUpperCase()}
-            </Txt>
-          </View>
+          <Avatar account={me} size={60} variant="title" ring={billing.isPro ? color.card : undefined} />
           <View style={styles.flex}>
             <Txt variant="title2" numberOfLines={1}>
               {me.displayName}
@@ -108,6 +105,8 @@ export default function Profile() {
         <Row icon="chart" tile={TILE.green} title="Progress" subtitle="Your log, records and streak" onPress={() => router.push('/progress')} />
         <Row icon="workout" tile={TILE.orange} title="My workouts" onPress={() => router.push('/workouts')} />
         <Row icon="plates" tile={TILE.teal} title="Plate calculator" onPress={() => router.push('/plates')} />
+        <Row icon="target" tile={TILE.blue} title="1-rep max" subtitle="From any set, and the weights to train at" onPress={() => router.push('/strength')} />
+        <Row icon="timer" tile={TILE.red} title="Interval timer" subtitle="Tabata and EMOM, or your own with Pro" onPress={() => router.push('/timer')} />
       </Group>
 
       <Group header="GymGO Pro">
@@ -401,14 +400,6 @@ const styles = themed(() => StyleSheet.create({
   },
   signInCard: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
   signInHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginBottom: space[1] },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: color.brandFill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   moderation: { gap: 6 },
   caps: { paddingHorizontal: space[4], letterSpacing: 0.3 },
   card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[4], ...shadow.plate },

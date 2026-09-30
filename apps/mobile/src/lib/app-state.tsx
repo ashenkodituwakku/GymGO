@@ -26,6 +26,7 @@ import { useGymData } from './useGymData';
 import { useCountryPack } from './useCountryPack';
 import { useCollectionSync } from './useCollection';
 import { cleanPlates, type WeightUnit } from './training';
+import { cleanTimers, type IntervalPlan } from './intervals';
 
 export interface ExploreRequest {
   nonce: number;
@@ -72,6 +73,8 @@ export interface Prefs {
   weeklyGoal: number | null;
   /** The plates your gym has, per unit (Pro); missing means the standard set. */
   plates: Partial<Record<WeightUnit, number[]>>;
+  /** Interval timers of your own (Pro), kept on this device. */
+  timers: IntervalPlan[];
 }
 
 const RECENTS_KEY = 'gymgo.recents.v1';
@@ -98,7 +101,7 @@ export interface Lookup {
 }
 
 /** Why the Pro screen opened, so it can say so. */
-export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates';
+export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates' | 'timers' | 'strength' | 'freeze';
 
 type AppState = {
   data: ReturnType<typeof useGymData>;
@@ -185,7 +188,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [compare, setCompare] = useState<string[]>([]);
   const compareLoaded = useRef(false);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
-  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, demo: false, country: null, weeklyGoal: null, plates: {} });
+  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, demo: false, country: null, weeklyGoal: null, plates: {}, timers: [] });
   const [prefsReady, setPrefsReady] = useState(false);
   // Place search reads the mode, so it must match before anything renders.
   setDemoMode(prefs.demo);
@@ -207,7 +210,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const kgPlates = cleanPlates(value.plates?.kg, 'kg');
       const lbPlates = cleanPlates(value.plates?.lb, 'lb');
       const plates = { ...(kgPlates ? { kg: kgPlates } : {}), ...(lbPlates ? { lb: lbPlates } : {}) };
-      const next = { haptics: value.haptics !== false, demo: value.demo === true, country, weeklyGoal: goal, plates };
+      const next = { haptics: value.haptics !== false, demo: value.demo === true, country, weeklyGoal: goal, plates, timers: cleanTimers(value.timers) };
       setHapticsEnabled(next.haptics);
       setDemoMode(next.demo);
       setPrefs(next);

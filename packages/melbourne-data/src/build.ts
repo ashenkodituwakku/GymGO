@@ -28,6 +28,13 @@ export const CHECKED = {
   openStreetMap: '2026-09-23T08:15:00.000Z',
   /** Operator websites, read between 08:16 and 08:18 UTC. */
   websites: '2026-09-23T08:17:00.000Z',
+  /**
+   * Operator websites' price pages, read through a web search's copy of each
+   * page on 30 September 2026: the pages themselves couldn't be opened from
+   * where the research ran. Only the gym's own site counts, and only figures
+   * the copy states outright. See docs/research/prices-2026-09-30.md.
+   */
+  searchCopies: '2026-09-30T02:30:00.000Z',
 } as const;
 
 export interface Cite {
@@ -36,9 +43,18 @@ export interface Cite {
   /** What the reader is told, e.g. "Gym's website: membership page". */
   label: string;
   kind: 'website' | 'osm';
+  /** When it was read, where that isn't the batch's time in CHECKED. */
+  checkedAt?: string;
 }
 
 export const website = (url: string, label = "Gym's website"): Cite => ({ url, label, kind: 'website' });
+/** A gym's own page, read through a web search's copy of it (see CHECKED.searchCopies). */
+export const websiteCopy = (url: string, label: string): Cite => ({
+  url,
+  label: `${label} (read via a web search's copy)`,
+  kind: 'website',
+  checkedAt: CHECKED.searchCopies,
+});
 export const osm = (element: string): Cite => ({
   url: `https://www.openstreetmap.org/${element}`,
   label: 'OpenStreetMap',
@@ -46,7 +62,7 @@ export const osm = (element: string): Cite => ({
 });
 
 function evidence(cite: Cite, index: number): EvidenceSource {
-  const at = cite.kind === 'osm' ? CHECKED.openStreetMap : CHECKED.websites;
+  const at = cite.checkedAt ?? (cite.kind === 'osm' ? CHECKED.openStreetMap : CHECKED.websites);
   return {
     id: `ev-${cite.kind}-${index}-${cite.url.replace(/[^a-z0-9]+/gi, '-').slice(-40)}`,
     sourceType: cite.kind === 'osm' ? 'licensed_dataset' : 'operator_website',

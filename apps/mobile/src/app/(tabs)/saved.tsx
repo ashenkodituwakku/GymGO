@@ -24,7 +24,10 @@ export default function Saved() {
   const { data, account, filters, compare, toggleCompare, requestExplore, billing, openPro, prefsReady } = useApp();
   const router = useRouter();
   const asOf = useMemo(() => new Date(), [filters, data.records]);
-  const byId = useMemo(() => resultsById(filters, data.records, asOf, data.ratings), [filters, data.records, asOf, data.ratings]);
+  const byId = useMemo(
+    () => resultsById(filters, data.records, asOf, data.ratings, [...account.saved, ...compare]),
+    [filters, data.records, asOf, data.ratings, account.saved, compare],
+  );
   const saved = account.saved.map((id) => byId.get(id)).filter((result) => result !== undefined);
   const picked = compare.filter((id) => byId.has(id));
 

@@ -33,7 +33,7 @@ import { googleStreetViewEmbedUrl } from '@/lib/present';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { gymDistanceLine } from '@/lib/copy';
-import { resultsById } from '@/lib/results';
+import { resultFor } from '@/lib/results';
 import { HEADER_EDGE, PAGE_COLUMN, color, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
@@ -55,7 +55,7 @@ export default function GymPage() {
   const [googleOpen, setGoogleOpen] = useState(false);
 
   const asOf = useMemo(() => new Date(), [filters, data.records]);
-  const result = useMemo(() => (id ? resultsById(filters, data.records, asOf, data.ratings).get(id) : undefined), [id, filters, data.records, asOf, data.ratings]);
+  const result = useMemo(() => resultFor(filters, data.records, id, asOf, data.ratings), [id, filters, data.records, asOf, data.ratings]);
   usePageTitle(result?.record.location.name ?? 'Gym');
 
   const place = useGooglePlace(result?.record);

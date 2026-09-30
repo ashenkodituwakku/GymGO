@@ -34,7 +34,7 @@ export default function Compare() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const asOf = useMemo(() => new Date(), [filters, data.records]);
-  const byId = useMemo(() => resultsById(filters, data.records, asOf, data.ratings), [filters, data.records, asOf, data.ratings]);
+  const byId = useMemo(() => resultsById(filters, data.records, asOf, data.ratings, compare), [filters, data.records, asOf, data.ratings, compare]);
   const gyms = compare.map((id) => byId.get(id)).filter((result): result is GymSearchResult => result !== undefined);
 
   // Every row is worked out for your visit and place, so a cold link waits for your settings.

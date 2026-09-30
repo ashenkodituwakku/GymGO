@@ -65,7 +65,10 @@ export default function Home() {
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   // Each gym once: not the map's own copy of one GymGO carries too.
   const outcome = useMemo(() => runSearch(filters, { records: data.listed, ratings: data.ratings }, asOf), [filters, data.listed, data.ratings, asOf]);
-  const byId = useMemo(() => resultsById(filters, data.records, asOf, data.ratings), [filters, data.records, asOf, data.ratings]);
+  const byId = useMemo(
+    () => resultsById(filters, data.records, asOf, data.ratings, [...account.saved, ...recents]),
+    [filters, data.records, asOf, data.ratings, account.saved, recents],
+  );
 
   const nearby = locked ? [] : outcome.results.slice(0, 10);
   const saved = account.saved.map((id) => byId.get(id)).filter((result) => result !== undefined);

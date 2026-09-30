@@ -194,7 +194,8 @@ const styles = themed(() =>
     bold: face('semibold'),
     banner: { marginTop: space[3], gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, alignItems: 'center' },
     pills: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space[2], alignSelf: 'stretch' },
-    pill: { minWidth: 92, flexGrow: 1, flexBasis: 92, maxWidth: 160, alignItems: 'center', gap: 1, paddingVertical: space[2], paddingHorizontal: space[2], borderRadius: radius.md, backgroundColor: color.brandTint },
+    // Contents sit at the foot of each tile, so the prices in a row line up when one plan's name takes two lines.
+    pill: { minWidth: 92, flexGrow: 1, flexBasis: 92, maxWidth: 160, alignItems: 'center', justifyContent: 'flex-end', gap: 1, paddingVertical: space[2], paddingHorizontal: space[2], borderRadius: radius.md, backgroundColor: color.brandTint },
     signUp: { paddingVertical: space[1], paddingHorizontal: space[3] },
     plan: { gap: space[1], paddingBottom: space[3], marginBottom: space[1], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: color.separator },
     planHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },

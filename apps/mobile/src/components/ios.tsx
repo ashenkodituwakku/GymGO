@@ -257,7 +257,7 @@ export function SearchButton({ placeholder, onPress }: { placeholder: string; on
         onPress();
       }}
       accessibilityRole="search"
-      accessibilityLabel={placeholder}
+      accessibilityLabel={placeholder || 'Search'}
       style={({ pressed }) => [styles.search, pressed && { opacity: 0.75 }]}
     >
       <Icon name="search" size={17} color={color.labelSecondary} />

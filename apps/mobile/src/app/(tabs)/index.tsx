@@ -150,7 +150,8 @@ export default function Home() {
         </Pressy>
       }
     >
-      <SearchButton placeholder={searchPrompt(prefs.country)} onPress={() => explore({ focusSearch: true })} />
+      {/* In your country's words once your settings are read: until then plain "Search", not another country's words swapped a moment later. */}
+      <SearchButton placeholder={prefsReady ? searchPrompt(prefs.country) : 'Search'} onPress={() => explore({ focusSearch: true })} />
 
       {/* Shortcuts --------------------------------------------------------- */}
       <View style={styles.shortcuts}>

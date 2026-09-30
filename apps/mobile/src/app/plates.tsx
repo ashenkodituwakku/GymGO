@@ -11,7 +11,7 @@ import { BarDiagram } from '@/components/BarDiagram';
 import { Icon } from '@/components/Icon';
 import { Input, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { BAR, PLATES, PLATE_CHOICES, formatWeight, parseWeight, plateLoad, unitFor, warmUpSets, type WeightUnit } from '@/lib/training';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
@@ -257,7 +257,7 @@ const styles = themed(() => StyleSheet.create({
     color: color.label,
     ...face('bold'),
   },
-  card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3] },
+  card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
   pro: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   platesHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   editPlates: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },

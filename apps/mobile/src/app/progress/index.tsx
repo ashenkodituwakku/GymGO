@@ -339,7 +339,7 @@ const styles = themed(() => StyleSheet.create({
   days: { gap: space[4] },
   day: { gap: space[2] },
   dayLabel: { marginLeft: space[4] },
-  group: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden' },
+  group: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   detail: { paddingHorizontal: space[4], paddingBottom: space[3], gap: space[1] },

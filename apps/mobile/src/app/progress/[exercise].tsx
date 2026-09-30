@@ -10,7 +10,7 @@ import { Icon } from '@/components/Icon';
 import { ProgressChart } from '@/components/ProgressChart';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
-import { color, radius, space, themed } from '@/lib/theme';
+import { color, radius, shadow, space, themed } from '@/lib/theme';
 import { e1rmSeries, formatWeight, fromKg, personalRecords, setsSummary, unitFor } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
 import { EXERCISES, exerciseName } from '@/lib/workout';
@@ -137,11 +137,11 @@ const styles = themed(() => StyleSheet.create({
   content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
   flex: { flex: 1 },
   facts: { flexDirection: 'row', gap: space[2] },
-  fact: { flex: 1, gap: 2, padding: space[3], borderRadius: radius.lg, backgroundColor: color.card },
-  card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3] },
+  fact: { flex: 1, gap: 2, padding: space[3], borderRadius: radius.lg, backgroundColor: color.card, ...shadow.plate },
+  card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
   pro: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   section: { marginTop: space[3], marginLeft: space[4] },
-  group: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden' },
+  group: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   date: { width: 80 },

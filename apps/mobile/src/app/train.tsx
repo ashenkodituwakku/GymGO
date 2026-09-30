@@ -19,7 +19,7 @@ import { endSession, updateSession, useActiveSession, type ActiveItem } from '@/
 import { ApiError, api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import {
   clockLabel,
   finishedAtFor,
@@ -701,14 +701,14 @@ const styles = themed(() => StyleSheet.create({
   noWorkoutHead: { alignItems: 'center', gap: space[3], paddingHorizontal: space[2] },
   savedList: { gap: space[2] },
   savedHeader: { paddingHorizontal: space[4], letterSpacing: 0.3 },
-  savedCard: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
+  savedCard: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
   savedRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   savedLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   playDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
   seeAll: { alignSelf: 'flex-end', paddingHorizontal: space[4] },
   unitRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   unitSwitch: { width: 140 },
-  card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[2] },
+  card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[2], ...shadow.plate },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   number: { width: 28, height: 28, borderRadius: 14, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
   platesButton: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[2], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
@@ -744,6 +744,6 @@ const styles = themed(() => StyleSheet.create({
   restButtonStrong: { backgroundColor: color.brandFill },
   summary: { alignItems: 'stretch', paddingTop: space[8] },
   bigIcon: { alignSelf: 'center', width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: color.card },
-  record: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, backgroundColor: color.card },
+  record: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, backgroundColor: color.card, ...shadow.plate },
 }));
 

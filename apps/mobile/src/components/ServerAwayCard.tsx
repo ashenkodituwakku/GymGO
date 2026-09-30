@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { AppBadge } from '@/components/BrandMark';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
-import { color, radius, space, themed } from '@/lib/theme';
+import { color, radius, shadow, space, themed } from '@/lib/theme';
 
 /**
  * Signed in, but the server can't be reached (it's down, or the phone is on
@@ -45,7 +45,7 @@ export function ServerAwayCard() {
 }
 
 const styles = themed(() => StyleSheet.create({
-  card: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
+  card: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
   head: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginBottom: space[1] },
   flex: { flex: 1 },
 }));

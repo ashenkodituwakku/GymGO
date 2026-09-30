@@ -28,7 +28,7 @@ import type { Sale } from '@/lib/useBilling';
 import { ApiError, OfflineError } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
-import { HEADER_EDGE, color, face, radius, space, themed } from '@/lib/theme';
+import { HEADER_EDGE, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 
@@ -464,7 +464,7 @@ const styles = themed(() => StyleSheet.create({
     justifyContent: 'center',
   },
   badgeEmoji: { fontSize: 36, lineHeight: 44 },
-  card: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3] },
+  card: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
   onPro: { borderWidth: 2, borderColor: color.brand },
   tableHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   tableRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },

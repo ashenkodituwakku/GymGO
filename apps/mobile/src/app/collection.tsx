@@ -28,7 +28,7 @@ import { shareText } from '@/lib/actions';
 import { badges, collectionShareText, collectionStats } from '@/lib/collection';
 import { FOIL_ONE_IN, cardFor, oddsLine, rarityRank } from '@/lib/rarity';
 import { usePageTitle } from '@/lib/pageTitle';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
 import { PageScroll } from '@/components/PageScroll';
 
@@ -212,12 +212,12 @@ const styles = themed(() =>
     center: { textAlign: 'center' },
     section: { marginTop: space[2], marginLeft: space[4] },
     stats: { flexDirection: 'row', gap: space[2] },
-    stat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
+    stat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
     badges: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     badge: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.md, backgroundColor: color.fill },
     badgeOn: { backgroundColor: color.brandTint },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
-    how: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
+    how: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
     howHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     note: { paddingHorizontal: space[4], textAlign: 'center' },
   }),

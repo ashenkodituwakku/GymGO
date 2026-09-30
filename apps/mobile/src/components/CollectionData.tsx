@@ -16,7 +16,7 @@ import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { collectionStats } from '@/lib/collection';
 import { haptic } from '@/lib/haptics';
-import { color, radius, space, themed } from '@/lib/theme';
+import { color, radius, shadow, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
 
 /** Signed in (still, while the server is away), not yet known, or signed out. */
@@ -129,8 +129,8 @@ export function useDeleteCollection(): { open: () => void; opened: boolean; warn
 const styles = themed(() =>
   StyleSheet.create({
     flex: { flex: 1 },
-    sync: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
-    warning: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, borderWidth: 1.5, borderColor: color.dangerInk },
+    sync: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
+    warning: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, borderWidth: 1.5, borderColor: color.dangerInk, ...shadow.plate },
     warningHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     warningSign: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.dangerInk },
   }),

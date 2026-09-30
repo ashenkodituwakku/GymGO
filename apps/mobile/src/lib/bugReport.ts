@@ -19,6 +19,8 @@ export interface DeviceFacts {
   country: string | null;
   appearance: string;
   accent: string;
+  /** The look the app is drawn in (8-bit, Classic…); missing or Standard isn't mentioned. */
+  look?: string;
   demo: boolean;
   signedIn: boolean;
   pro: boolean;
@@ -61,7 +63,7 @@ export function deviceDetails(facts: DeviceFacts): Array<{ label: string; value:
   if (facts.from) lines.push({ label: 'Reported from', value: facts.from });
   lines.push(
     { label: 'Country setting', value: facts.country ?? 'Not chosen' },
-    { label: 'Appearance', value: `${facts.appearance}, ${facts.accent}` },
+    { label: 'Appearance', value: [facts.appearance, facts.accent, facts.look && facts.look !== 'Standard' ? `${facts.look} look` : null].filter(Boolean).join(', ') },
     { label: 'Account', value: facts.signedIn ? (facts.pro ? 'Signed in, Pro' : 'Signed in, Free') : 'Not signed in' },
   );
   if (facts.demo) lines.push({ label: 'Demo mode', value: 'On' });

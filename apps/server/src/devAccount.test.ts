@@ -92,6 +92,24 @@ describe('the dev Pro account', () => {
     }
   });
 
+  it('signs in however a phone keyboard typed its password, on a server that made it', async () => {
+    const devServer = createServer(createApp({ db, attribution: 'test', devAccount: true }));
+    await new Promise<void>((resolve) => devServer.listen(0, '127.0.0.1', resolve));
+    const devBase = `http://127.0.0.1:${(devServer.address() as AddressInfo).port}`;
+    try {
+      const signIn = (email: string, password: string) =>
+        fetch(`${devBase}/api/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password }) });
+      for (const typed of ['GymGO–dev–pro–2026', 'gymgo-dev-pro-2026', ' GymGO-dev-pro-2026 ', 'GymGO\u2011dev\u2011pro\u20112026']) {
+        expect((await signIn('Dev@GymGO.test ', typed)).status).toBe(200);
+      }
+      expect((await signIn(DEV_PRO_EMAIL, 'GymGO-dev-pro-2025')).status).toBe(401);
+    } finally {
+      devServer.close();
+    }
+    // Where the server didn't make it, the password must be exact, like any account's.
+    expect((await login('gymgo-dev-pro-2026')).status).toBe(401);
+  });
+
   it('is never made where GymGO may be hosted or real money is in play', () => {
     expect(devAccountRefusal({ publicUrl: null, stripeKey: null })).toBeNull();
     expect(devAccountRefusal({ publicUrl: null, stripeKey: 'sk_test_abc' })).toBeNull();

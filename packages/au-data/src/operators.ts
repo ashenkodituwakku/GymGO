@@ -14,6 +14,7 @@
 
 import type { AccessSchedule, EvidenceSource, GymRecord, Provenance } from '@gymgo/domain';
 import { OPERATORS_FETCHED, REVO_ROWS } from './operatorData';
+import { chainOffersFor } from './chainOffers';
 
 export interface OperatorRow {
   id: string;
@@ -151,7 +152,7 @@ export function operatorRecord(gym: OperatorGym): GymRecord {
     },
     equipment: [],
     amenities: [],
-    offers: [],
+    offers: chainOffersFor(gym.id, gym),
     schedules,
     prerequisites: {
       gymId: gym.id,

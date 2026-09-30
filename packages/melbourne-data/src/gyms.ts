@@ -79,7 +79,51 @@ function dohertysOffers(gymId: string) {
       },
       DOHERTYS_MEMBERSHIP,
     ),
-  ];
+    // A web search's copy of the same membership page, 30 Sep: "12 Months:
+    // $19.99/week, 3 Months: $24.99/week, and FIFO 12 Months: $9.99/week.
+    // Joining fees apply." It disagrees with the weekly plan read directly on
+    // 23 Sep, so every membership here is marked as disagreeing until someone
+    // opens the live page again.
+    ...(
+      [
+        ['12-months', '12 Months', 1999, 365, []],
+        ['3-months', '3 Months', 2499, 91, []],
+        ['fifo-12-months', 'FIFO 12 Months', 999, 365, ['For fly-in fly-out workers.']],
+      ] as const
+    ).map(([key, label, cents, days, notes]) =>
+      offer(
+        gymId,
+        key,
+        {
+          productType: 'membership',
+          label,
+          baseAmountMinor: cents,
+          validityDays: null,
+          membershipTerms: {
+            billingIntervalDays: 7,
+            joiningFeeMinor: null,
+            accessCardFeeMinor: null,
+            minimumTermDays: days,
+            cancellationNoticeDays: 30,
+            notes: ['"Joining fees apply."', ...notes],
+          },
+        },
+        websiteCopy('https://dohertysgym.com/membership/', "Gym's website: membership page"),
+      ),
+    ),
+  ].map((item) =>
+    item.productType === 'membership'
+      ? {
+          ...item,
+          provenance: {
+            ...item.provenance,
+            status: 'conflicting' as const,
+            conflictNote:
+              'Read directly on 23 Sep 2026, the membership page showed a weekly direct debit of $20 with no joining fee. A search copy of the same page on 30 Sep shows 12-month, 3-month and FIFO plans with joining fees. Check with the gym.',
+          },
+        }
+      : item,
+  );
 }
 
 const dohertysCityId = 'dohertys-gym-city';

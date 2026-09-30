@@ -13,7 +13,7 @@ import { Icon } from './Icon';
 import { TIER_COLOUR, Txt } from './ui';
 
 /** A pin's spring: lands quickly with a little give, as Maps' pins do. */
-const LAND = { damping: 13, stiffness: 300, mass: 0.7, reduceMotion: ReduceMotion.System };
+const LAND = { damping: 16, stiffness: 320, mass: 0.7, reduceMotion: ReduceMotion.System };
 
 /** Scale that lands from `from` to full size whenever `key` changes (and on first draw from `first`). */
 function useLanding(key: unknown, from: () => number, first: number) {

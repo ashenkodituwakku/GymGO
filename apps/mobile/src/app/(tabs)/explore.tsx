@@ -52,7 +52,7 @@ import { ResultsContent } from '@/components/ResultsContent';
 import { ReviewsSection } from '@/components/ReviewsSection';
 import { FloatingGlassBackground, FloatingSolidBackground, SHEET_GAP, SHEET_SCROLL_ONLY, SHEET_SIDE, SheetClip, SheetOpener, SheetScrollView } from '@/components/SheetBackground';
 import { CloseButton, ControlCapsule, Txt } from '@/components/ui';
-import { DROP_IN, FADE_OUT, usePressScale } from '@/components/motion';
+import { DROP_IN, EASE_IN, EASE_OUT, FADE_OUT, usePressScale } from '@/components/motion';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { usePageTitle } from '@/lib/pageTitle';
 
@@ -881,8 +881,9 @@ function PhoneShell(props: {
   const bottomInset = 0;
   // The tallest a sheet may be: up to just under the status bar.
   const tallest = Math.max(PEEK + 80, height - bottomInset - insets.top - space[2]);
-  // iOS sheet feel: quick, settles without wobbling.
-  const spring = useBottomSheetSpringConfigs({ damping: 80, stiffness: 500, overshootClamping: true });
+  // iOS sheet feel: critically damped, so a snap (or a fling) lands crisply,
+  // without a wobble and without the long slow tail of an overdamped spring.
+  const spring = useBottomSheetSpringConfigs({ damping: 40, stiffness: 380, mass: 1, overshootClamping: true });
   const snapPoints = useMemo(() => [PEEK, '48%', tallest], [tallest]);
   const placeSnaps = useMemo(() => ['56%', tallest], [tallest]);
   const tallSnaps = useMemo(() => [tallest], [tallest]);
@@ -893,7 +894,7 @@ function PhoneShell(props: {
   const topHidden = mainFull || placeFull;
   const topOpacity = useSharedValue(1);
   useEffect(() => {
-    topOpacity.value = withTiming(topHidden ? 0 : 1, { duration: 180 });
+    topOpacity.value = withTiming(topHidden ? 0 : 1, { duration: 200, easing: topHidden ? EASE_IN : EASE_OUT });
   }, [topHidden, topOpacity]);
   const topFade = useAnimatedStyle(() => ({ opacity: topOpacity.value }));
   // How far up the screen each sheet reaches. The map keeps its centre, and

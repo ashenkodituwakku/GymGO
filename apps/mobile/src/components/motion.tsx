@@ -10,11 +10,18 @@
  * Every animation here follows the device's Reduce Motion setting
  * (`ReduceMotion.System`): with it on, things simply appear in their final
  * state.
+ *
+ * The springs are tuned by how much they settle (their damping against
+ * their stiffness): things moving into place (sheets, lists, a sliding
+ * pill) arrive without a bounce; only a press let go, or something
+ * switching on, keeps a little give. Fades ease out coming in and ease in
+ * going away, so nothing starts or stops with a jolt.
  */
 
 import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { Platform, Pressable, type GestureResponderEvent, type PressableProps, type PressableStateCallbackType, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
+  Easing,
   FadeIn,
   FadeOut,
   LinearTransition,
@@ -30,15 +37,29 @@ import Animated, {
 /** A press going down: quick and firm. */
 export const PRESS_IN: WithSpringConfig = { damping: 22, stiffness: 520, mass: 0.6, reduceMotion: ReduceMotion.System };
 /** Letting go: a touch of overshoot, so it feels springy rather than mechanical. */
-export const PRESS_OUT: WithSpringConfig = { damping: 14, stiffness: 320, mass: 0.6, reduceMotion: ReduceMotion.System };
-/** Things settling into place (a chevron turning, a pill sliding). */
-export const SETTLE: WithSpringConfig = { damping: 20, stiffness: 260, mass: 0.8, reduceMotion: ReduceMotion.System };
+export const PRESS_OUT: WithSpringConfig = { damping: 16, stiffness: 340, mass: 0.6, reduceMotion: ReduceMotion.System };
+/** Things settling into place (a chevron turning, a pill sliding): quick, and no bounce to speak of. */
+export const SETTLE: WithSpringConfig = { damping: 25, stiffness: 280, mass: 0.8, reduceMotion: ReduceMotion.System };
+/** Something arriving to be noticed (a medal, a new record): one lively pop that settles fast. */
+export const POP: WithSpringConfig = { damping: 15, stiffness: 240, mass: 0.8, reduceMotion: ReduceMotion.System };
 
-/** Rows and sections making room for each other. */
-export const GLIDE = LinearTransition.springify().damping(26).stiffness(260).reduceMotion(ReduceMotion.System);
+/** Coming in: fast at first, easing to a stop. */
+export const EASE_OUT = Easing.out(Easing.cubic);
+/** Going away: gathering pace as it leaves. */
+export const EASE_IN = Easing.in(Easing.quad);
+
+/** Rows and sections making room for each other: brisk, without the wobble of an underdamped spring. */
+export const GLIDE = LinearTransition.springify().damping(30).stiffness(280).reduceMotion(ReduceMotion.System);
+/**
+ * Whether an entering or exiting animation can take one of these curves: a
+ * browser's version of them can't (it warns and runs them linear), so
+ * there they keep their own easing.
+ */
+export const CURVES = Platform.OS !== 'web';
+
 /** A notice or small element arriving and leaving. */
-export const FADE_IN = FadeIn.duration(180).reduceMotion(ReduceMotion.System);
-export const FADE_OUT = FadeOut.duration(140).reduceMotion(ReduceMotion.System);
+export const FADE_IN = (CURVES ? FadeIn.duration(200).easing(EASE_OUT) : FadeIn.duration(200)).reduceMotion(ReduceMotion.System);
+export const FADE_OUT = (CURVES ? FadeOut.duration(150).easing(EASE_IN) : FadeOut.duration(150)).reduceMotion(ReduceMotion.System);
 
 /*
  * Entrances are springs on the phone. In the browser they're timed instead:

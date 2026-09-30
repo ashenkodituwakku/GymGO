@@ -106,7 +106,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
       <View style={styles.head}>
         <Animated.View
           key={celebrate ? 'pop' : 'still'}
-          entering={celebrate ? ZoomIn.springify().damping(10).stiffness(200).reduceMotion(ReduceMotion.System) : undefined}
+          entering={celebrate ? ZoomIn.springify().damping(16).stiffness(260).reduceMotion(ReduceMotion.System) : undefined}
           style={[styles.medal, { backgroundColor: tier ? TIER_METAL[tier.tier] : color.fill }]}
         >
           <Icon name={tier ? 'trophy' : 'pin'} size={22} color={tier ? color.onBrand : color.labelSecondary} />

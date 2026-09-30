@@ -42,7 +42,7 @@ import { PageScroll } from '@/components/PageScroll';
 const EXPAND_IN =
   Platform.OS === 'web'
     ? FadeInDown.duration(300).reduceMotion(ReduceMotion.System)
-    : FadeInDown.springify().damping(22).stiffness(220).withInitialValues({ opacity: 0, transform: [{ translateY: 80 }] }).reduceMotion(ReduceMotion.System);
+    : FadeInDown.springify().damping(28).stiffness(260).withInitialValues({ opacity: 0, transform: [{ translateY: 60 }] }).reduceMotion(ReduceMotion.System);
 
 export default function GymPage() {
   // `from=map`: opened full screen from the map's pop-up, so it opens with

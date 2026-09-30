@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE } from './motion';
 import { explainNoMatches, haversineKm, type GymRecord, type SearchOutcome } from '@gymgo/domain';
 import { countryInSentence, countryName } from '@/lib/country';
@@ -22,6 +22,9 @@ import { haptic } from '@/lib/haptics';
 import { GymRow } from './GymRow';
 import { Icon } from './Icon';
 import { Chip, PrimaryButton, TIER_COLOUR, Txt } from './ui';
+
+/** How many result rows animate as the list changes: about a screenful. */
+const ANIMATED_ROWS = 12;
 
 /** A critically-damped spring: rows glide to their new place, no bounce. */
 // Rows gliding when the list re-sorts: the app's one GLIDE (components/motion.tsx).
@@ -404,7 +407,7 @@ export function ResultsContent({
         { key: 'misses', title: TIER.ruled_out.label, list: outcome.results.filter((result) => result.tier === 'ruled_out') },
       ].map((group) =>
         group.list.length === 0 ? null : (
-          <Animated.View key={group.key} style={styles.group} entering={FadeIn.duration(220)} exiting={FadeOut.duration(140)} layout={GLIDE}>
+          <Animated.View key={group.key} style={styles.group} entering={FADE_IN} exiting={FADE_OUT} layout={GLIDE}>
             {group.title && (
               <View style={styles.groupHeader}>
                 <Txt variant="headline" color={TIER_COLOUR.ruled_out.ink}>
@@ -419,9 +422,10 @@ export function ResultsContent({
               {group.list.map((result, index) => (
                 <Animated.View
                   key={result.record.location.id}
-                  entering={FadeIn.duration(220)}
-                  exiting={FadeOut.duration(120)}
-                  layout={GLIDE}
+                  // A screenful fades and glides; animating every row of a long list at once drops frames on a phone.
+                  entering={index < ANIMATED_ROWS ? FADE_IN : undefined}
+                  exiting={index < ANIMATED_ROWS ? FADE_OUT : undefined}
+                  layout={index < ANIMATED_ROWS ? GLIDE : undefined}
                 >
                   {index > 0 && <View style={styles.rowDivider} />}
                   <GymRow

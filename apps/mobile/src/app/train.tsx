@@ -10,7 +10,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { Easing, FadeInDown, FadeOutDown, ReduceMotion, ZoomIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { FADE_IN, usePop } from '@/components/motion';
+import { CURVES, EASE_IN, EASE_OUT, FADE_IN, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
 import { Icon } from '@/components/Icon';
@@ -555,7 +555,8 @@ function Drain({ endsAt, total }: { endsAt: number; total: number }) {
     share.value = total > 0 ? Math.min(1, left / (total * 1000)) : 0;
     share.value = withTiming(0, { duration: left, easing: Easing.linear });
   }, [endsAt, total, share]);
-  const fill = useAnimatedStyle(() => ({ width: `${share.value * 100}%` }));
+  // Shrunk from its left end, not re-laid out at a new width every frame.
+  const fill = useAnimatedStyle(() => ({ transform: [{ scaleX: share.value }] }));
   return <Animated.View style={[styles.restFill, fill]} />;
 }
 
@@ -575,6 +576,10 @@ function Elapsed({ since }: { since: string }) {
 
 // --- Rest ------------------------------------------------------------------------
 
+/** The rest bar rises from the bottom as a rest starts, and sinks away when it's up. */
+const REST_IN = (CURVES ? FadeInDown.duration(300).easing(EASE_OUT) : FadeInDown.duration(300)).reduceMotion(ReduceMotion.System);
+const REST_OUT = (CURVES ? FadeOutDown.duration(200).easing(EASE_IN) : FadeOutDown.duration(200)).reduceMotion(ReduceMotion.System);
+
 function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bottom: number }) {
   const now = useNow(true);
   // The clock as it draws, not at the last tick: a rest started between ticks
@@ -589,7 +594,7 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
   }, [now, endsAt]);
   const onChange = (seconds: number) => updateSession((current) => ({ ...current, restEndsAt: seconds > 0 ? Date.now() + seconds * 1000 : null }));
   return (
-    <Animated.View entering={FadeInDown} exiting={FadeOutDown} style={[styles.restWrap, { bottom: bottom + space[3] }]} pointerEvents="box-none">
+    <Animated.View entering={REST_IN} exiting={REST_OUT} style={[styles.restWrap, { bottom: bottom + space[3] }]} pointerEvents="box-none">
       <Glass kind="control" style={styles.rest}>
         <View style={styles.restTrack}>
           <Drain endsAt={endsAt} total={total} />
@@ -647,7 +652,7 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
   return (
     <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.summary]}>
       <Stack.Screen options={{ title: '' }} />
-      <Animated.View entering={records.length ? ZoomIn.springify().damping(12).stiffness(180).reduceMotion(ReduceMotion.System) : FADE_IN} style={styles.bigIcon}>
+      <Animated.View entering={records.length ? ZoomIn.springify().damping(15).stiffness(220).reduceMotion(ReduceMotion.System) : FADE_IN} style={styles.bigIcon}>
         <Icon name={records.length ? 'trophy' : 'done'} size={40} color={records.length ? color.maybe : color.good} />
       </Animated.View>
       <Txt variant="largeTitle" style={styles.center}>
@@ -732,7 +737,7 @@ const styles = themed(() => StyleSheet.create({
   restWrap: { position: 'absolute', left: space[4], right: space[4], alignItems: 'center' },
   rest: { width: '100%', maxWidth: 520, borderRadius: radius.xl, overflow: 'hidden' },
   restTrack: { height: 3, backgroundColor: color.fill },
-  restFill: { height: 3, backgroundColor: color.brand },
+  restFill: { width: '100%', height: 3, backgroundColor: color.brand, transformOrigin: 'left' },
   restRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], paddingVertical: space[3] },
   restClock: { fontVariant: ['tabular-nums'] },
   restButton: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandTint },

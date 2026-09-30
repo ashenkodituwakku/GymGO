@@ -23,7 +23,7 @@ import { router, useFocusEffect, usePathname } from 'expo-router';
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, ReduceMotion, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass, HAS_LIQUID_GLASS } from '@/components/Glass';
 import { PIcon, type PhosphorName } from '@/components/PIcon';
@@ -41,7 +41,7 @@ const SIDE_MARGIN = 16;
 const MAX_WIDTH = 400;
 const PAD = 5;
 const LENS_INSET = 5;
-const SPRING = { damping: 18, stiffness: 210, mass: 0.7 };
+const SPRING = { damping: 20, stiffness: 260, mass: 0.7, reduceMotion: ReduceMotion.System };
 
 const TABS: Array<{ name: string; href: '/' | '/explore' | '/saved' | '/profile'; label: string; icon: PhosphorName }> = [
   { name: 'index', href: '/', label: 'Home', icon: 'house' },
@@ -130,7 +130,7 @@ function GlassTabBar({ bottom }: { bottom: number }) {
   const drag = Gesture.Pan()
     .activeOffsetX([-10, 10])
     .onBegin(() => {
-      lift.value = withTiming(1, { duration: 140 });
+      lift.value = withTiming(1, { duration: 150, easing: Easing.out(Easing.cubic) });
     })
     .onUpdate((event) => {
       x.value = Math.min(Math.max(event.x - PAD - tabWidth / 2, 0), tabWidth * last);
@@ -142,7 +142,7 @@ function GlassTabBar({ bottom }: { bottom: number }) {
       runOnJS(go)(target);
     })
     .onFinalize(() => {
-      lift.value = withTiming(0, { duration: 260 });
+      lift.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) });
     });
 
   const lensStyle = useAnimatedStyle(() => ({

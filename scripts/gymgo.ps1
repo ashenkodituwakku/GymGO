@@ -143,6 +143,14 @@ if (-not (Test-Path (Join-Path $Path 'package.json'))) {
         Stop-WithError 'The download failed.' 'Check you are signed in to GitHub and have access to the repository.'
     }
 } elseif ($Update) {
+    # Local edits (installing packages can rewrite package.json and
+    # pnpm-lock.yaml) would stop the update. They are set aside, not thrown
+    # away: git -C $Path stash pop brings them back.
+    if (& git -C $Path status --porcelain) {
+        $stamp = Get-Date -Format 'yyyy-MM-dd HH:mm'
+        & git -C $Path stash push --include-untracked --quiet -m "gymgo -update set these aside on $stamp"
+        Write-Host "  !  Local edits in $Path were set aside (git stash). Get them back with: git -C `"$Path`" stash pop" -ForegroundColor Yellow
+    }
     Write-Step 'Pulling the latest changes'
     & git -C $Path pull --ff-only
     if ($LASTEXITCODE -ne 0) {

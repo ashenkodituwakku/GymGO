@@ -51,7 +51,10 @@ export function senderFor(smtpUrl: string, from: string | null): string | null {
  * smtps://you%40gmail.com:app-password@smtp.gmail.com:465
  */
 export function smtpMailer(smtpUrl: string, from: string): SendMail {
-  const transport = nodemailer.createTransport(smtpUrl, {
+  // The timeouts go with the URL in one options object: a second argument
+  // would be defaults for each message, where they do nothing.
+  const transport = nodemailer.createTransport({
+    url: smtpUrl,
     connectionTimeout: 10_000,
     greetingTimeout: 10_000,
     socketTimeout: 20_000,

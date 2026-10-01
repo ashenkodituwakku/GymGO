@@ -233,7 +233,7 @@ function privacy(op: LegalOperator): LegalSection[] {
             'What you set up on your device (your country, appearance, saved gyms, collection, workouts and training log) is kept on that device only.',
             'If you let GymGO use your location, it’s used on your device to find gyms near you and measure how far they are. It is never sent to GymGO or anyone else. Outside the cities GymGO carries, the app asks the server for the gyms in the map squares around you (about 30 km across, the same for everyone in them), never your position.',
             'When you search an area or type a town, the server looks it up on OpenStreetMap’s services (Overpass and Photon). It sends them the area or the name, not anything about you.',
-            'Like any website, the server sees your device’s IP address with each request. It uses it to send the answer back and, for at most an hour, to slow down anyone sending too many requests. It isn’t written to the database or any log.',
+            'Like any website, the server sees your device’s IP address with each request. It uses it to send the answer back and, for about an hour at most, to slow down anyone sending too many requests. It isn’t written to the database or any log.',
           ],
         },
       ],

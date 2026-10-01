@@ -3,9 +3,9 @@
  * reports waiting for a decision. (Signing in is app/sign-in.tsx; your
  * account's settings are app/account.tsx.)
  *
- * Accounts live on the GymGO server on your own computer. Nothing is sent
- * anywhere else, and no email is sent to you: an email address here is just
- * a username that happens to be memorable.
+ * Accounts live on the GymGO server (your own computer, or wherever it's
+ * hosted). The only email an account is ever sent is a password reset link
+ * it asked for.
  */
 
 import { useEffect, useState } from 'react';

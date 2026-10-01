@@ -14,7 +14,7 @@ import { AppBadge } from '@/components/BrandMark';
 import { Icon, type IconName } from '@/components/Icon';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
-import { ApiError, OfflineError } from '@/lib/api';
+import { ApiError, OfflineError, api } from '@/lib/api';
 import { accountCreationLocked, formatBirthMonthInput, lockAccountCreation, parseBirthMonth, takePendingSignIn, type PendingSignIn } from '@/lib/ageGate';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -61,6 +61,28 @@ export default function SignInScreen() {
   }, []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // "Forgot your password?": the address a reset link went to, once asked.
+  const [resetSentTo, setResetSentTo] = useState<string | null>(null);
+  const [resetBusy, setResetBusy] = useState(false);
+
+  const forgot = async () => {
+    if (resetBusy) return;
+    if (!EMAIL.test(email.trim())) {
+      fail('Type your account’s email address above, then tap Forgot your password? again.');
+      return;
+    }
+    setResetBusy(true);
+    setError(null);
+    try {
+      await api.forgotPassword(email.trim());
+      haptic.success();
+      setResetSentTo(email.trim());
+    } catch (caught) {
+      fail(messageFor(caught));
+    } finally {
+      setResetBusy(false);
+    }
+  };
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
   const shake = useSharedValue(0);
@@ -163,6 +185,7 @@ export default function SignInScreen() {
   const switchMode = (next: Mode) => {
     setMode(next);
     setError(null);
+    setResetSentTo(null);
   };
 
   return (
@@ -303,6 +326,23 @@ export default function SignInScreen() {
       <Animated.View layout={GLIDE}>
         <PrimaryButton label={mode === 'create' ? 'Create account' : 'Sign in'} busy={busy} disabled={!ready} onPress={() => void submit()} />
       </Animated.View>
+
+      {mode === 'sign_in' &&
+        (resetSentTo ? (
+          <Animated.View entering={FADE_IN} style={styles.resetSent} accessibilityLiveRegion="polite">
+            <Icon name="mail" size={16} color={color.brand} />
+            <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
+              If there’s a GymGO account for {resetSentTo}, we’ve emailed it a link to choose a new password. It works for 30
+              minutes. Check your junk folder if it doesn’t arrive.
+            </Txt>
+          </Animated.View>
+        ) : (
+          <Pressable onPress={() => void forgot()} accessibilityRole="button" hitSlop={8} style={styles.forgot} disabled={resetBusy}>
+            <Txt variant="subhead" color={color.brand} style={face('medium')}>
+              {resetBusy ? 'Sending…' : 'Forgot your password?'}
+            </Txt>
+          </Pressable>
+        ))}
       </>
       )}
 
@@ -448,6 +488,8 @@ const styles = themed(() =>
     error: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2], padding: space[3], borderRadius: radius.md, backgroundColor: color.dangerTint },
     small: { textAlign: 'center', marginTop: space[2] },
     terms: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginLeft: space[1], marginTop: space[1] },
+    forgot: { alignSelf: 'center', paddingVertical: space[1] },
+    resetSent: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2], padding: space[3], borderRadius: radius.md, backgroundColor: color.brandWash },
     box: {
       width: 24,
       height: 24,

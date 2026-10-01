@@ -59,6 +59,14 @@ const STYLE = `
   .docs a { display: block; background: var(--card); border-radius: 16px; padding: 16px 20px; text-decoration: none; color: var(--ink); }
   .docs strong { display: block; font-size: 18px; }
   .docs small { color: var(--muted); font-size: 15px; }
+  form { display: grid; gap: 14px; margin: 4px 0 12px; }
+  label { display: grid; gap: 6px; font-size: 15px; color: var(--muted); }
+  input { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  input:focus { outline: 2px solid var(--link); outline-offset: 1px; }
+  button { font: inherit; font-weight: 600; color: #fff; background: var(--link); border: 0; border-radius: 14px; padding: 14px; cursor: pointer; }
+  .problem { color: #d70015; font-weight: 600; }
+  @media (prefers-color-scheme: dark) { .problem { color: #ff6961; } button { color: #000; } }
+  .hint { color: var(--muted); font-size: 15px; }
 `;
 
 function shell(title: string, body: string, current: LegalDocId | null): string {
@@ -79,6 +87,54 @@ ${body}
 </main>
 </body>
 </html>`;
+}
+
+/**
+ * The page a password reset email links to: a form for the new password
+ * while the link works, what to do once it doesn't, and the result. The form
+ * posts back to /reset-password; it needs no script.
+ */
+export function resetPasswordPage(state: { token: string | null; problem?: string | null; done?: boolean }): string {
+  if (state.done) {
+    return shell(
+      'Password changed',
+      `<h1>Password changed</h1><section><p>Your new password is set, and every device that was signed in to your account has been signed out. Open GymGO and sign in with it.</p></section>`,
+      null,
+    );
+  }
+  if (!state.token) {
+    const problem = state.problem
+      ? `<p class="problem">${escape(state.problem)}</p>`
+      : '<p>Links to choose a new password work once, for 30 minutes. Ask for a new one in GymGO: Sign in, then Forgot your password?</p>';
+    return shell('Link stopped working', `<h1>This link has stopped working</h1><section>${problem}</section>`, null);
+  }
+  return shell(
+    'Choose a new password',
+    `<h1>Choose a new password</h1><section>${state.problem ? `<p class="problem" role="alert">${escape(state.problem)}</p>` : ''}
+<form method="post" action="/reset-password">
+<input type="hidden" name="token" value="${escape(state.token)}">
+<label>New password<input type="password" name="password" autocomplete="new-password" minlength="8" maxlength="200" required autofocus></label>
+<label>Type it again<input type="password" name="confirm" autocomplete="new-password" minlength="8" maxlength="200" required></label>
+<button type="submit">Set new password</button>
+</form>
+<p class="hint">At least 8 characters, and not one of the commonest passwords. Every device signed in to your account will be signed out.</p></section>`,
+    null,
+  );
+}
+
+/** The email with a link to choose a new password. */
+export function resetEmail(name: string, link: string, minutes: number): string {
+  return [
+    `Hello ${name},`,
+    '',
+    `Someone (we hope you) asked to reset the password for your GymGO account. Choose a new one here, within ${minutes} minutes:`,
+    '',
+    link,
+    '',
+    'If it wasn’t you, ignore this email: your password stays as it is.',
+    '',
+    'GymGO',
+  ].join('\n');
 }
 
 /** One document as a page. */

@@ -117,6 +117,48 @@ function signature(item: MapItem): string {
   return item.kind === 'pin' ? `pin:${item.pin.tier}:${item.selected}` : `cluster:${item.count}:${item.tier}`;
 }
 
+
+/**
+ * The map's credit, as fixed text and links. MapLibre's own attribution
+ * control would put the tile server's attribution HTML on the page through
+ * its HTML sanitizer, which has a known way round it (fixed only in
+ * MapLibre 6, whose worker Metro can't bundle yet), so nothing from the
+ * tile server is ever put on the page as HTML.
+ */
+const CREDITS: Array<[string, string]> = [
+  ['OpenFreeMap', 'https://openfreemap.org'],
+  ['© OpenMapTiles', 'https://www.openmaptiles.org/'],
+  ['© OpenStreetMap contributors', 'https://www.openstreetmap.org/copyright'],
+];
+
+class MapCredit implements maplibregl.IControl {
+  private box: HTMLElement | null = null;
+
+  onAdd(): HTMLElement {
+    const box = document.createElement('div');
+    box.className = 'maplibregl-ctrl maplibregl-ctrl-attrib';
+    const inner = document.createElement('div');
+    inner.className = 'maplibregl-ctrl-attrib-inner';
+    CREDITS.forEach(([text, href], index) => {
+      if (index > 0) inner.append(' ');
+      const link = document.createElement('a');
+      link.href = href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = text;
+      inner.append(link);
+    });
+    box.append(inner);
+    this.box = box;
+    return box;
+  }
+
+  onRemove(): void {
+    this.box?.remove();
+    this.box = null;
+  }
+}
+
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, leftInset = 0, userLocation = null, onSelect, onMapPress, onRegionChange },
   ref,
@@ -161,7 +203,7 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     // The tile licence requires the credit to stay visible, so it sits just
     // above the sheet's edge (see the padding effect), where Apple Maps puts
     // its own "Legal" link.
-    instance.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+    instance.addControl(new MapCredit(), 'bottom-left');
     instance.on('click', () => handlers.current.onMapPress());
     // The area on screen, clear of the panels and sheet, whenever the map comes to rest.
     const noteView = () => {

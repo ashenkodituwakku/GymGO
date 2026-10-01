@@ -129,6 +129,37 @@ export function checkAge(birthMonth: unknown, now: Date): void {
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * The commonest passwords of 8 characters or more in public breach lists:
+ * the first ones anyone guessing tries, so GymGO turns them down (as NIST's
+ * guidance on passwords advises) rather than asking for symbols and numbers.
+ */
+const COMMON_PASSWORDS = new Set(
+  (
+    'password password1 password12 password123 password! passw0rd p@ssw0rd p@ssword password2 changeme changeme1 ' +
+    '12345678 123456789 1234567890 0123456789 87654321 987654321 11111111 00000000 88888888 99999999 999999999 ' +
+    '12341234 12121212 11223344 123123123 147258369 1q2w3e4r 1q2w3e4r5t 1qaz2wsx zaq12wsx q1w2e3r4 1234qwer 123qweasd qazwsxedc ' +
+    'qwertyui qwertyuiop qwerty123 qwerty12 qwerty1234 asdfghjk asdfghjkl zxcvbnm1 abcd1234 abc12345 abcdefgh aa123456 ' +
+    'iloveyou iloveyou1 sunshine princess football baseball basketball superman batman123 starwars whatever trustno1 ' +
+    'letmein1 letmein! welcome1 welcome123 admin123 administrator computer internet monkey123 dragon123 master123 ' +
+    'shadow123 michael1 jennifer michelle jordan23 liverpool chelsea1 arsenal1 chocolate butterfly pokemon1 minecraft ' +
+    'fortnite secret123 gymgo123 gymgogym workout1 fitness1 bodybuilding gymrat123'
+  ).split(' '),
+);
+
+/** Why a new password is too easy to guess, or null if it isn't. */
+export function weakPasswordReason(password: string, email?: string): string | null {
+  const lower = password.toLowerCase();
+  if (COMMON_PASSWORDS.has(lower)) return 'That’s one of the most common passwords, so it’s the first anyone would try. Choose another.';
+  if (/^(.)\1+$/.test(password)) return 'One character over and over is quick to guess. Choose another password.';
+  if (email) {
+    const address = email.trim().toLowerCase();
+    const name = address.split('@')[0] ?? '';
+    if (lower === address || (name.length >= 4 && lower === name)) return 'Don’t use your email address as your password.';
+  }
+  return null;
+}
+
 export function validateSignup(input: unknown): { email: string; password: string; displayName: string } {
   const body = (input ?? {}) as Record<string, unknown>;
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
@@ -138,6 +169,8 @@ export function validateSignup(input: unknown): { email: string; password: strin
   if (password.length < 8) throw new AuthInputError('Use at least 8 characters for your password.');
   if (password.length > 200) throw new AuthInputError('That password is too long.');
   if (displayName.length < 1 || displayName.length > 40) throw new AuthInputError('Add a name between 1 and 40 characters.');
+  const weak = weakPasswordReason(password, email);
+  if (weak) throw new AuthInputError(weak);
   return { email, password, displayName };
 }
 
@@ -149,10 +182,12 @@ export function validateDisplayName(input: unknown): string {
 }
 
 /** A new password, or an error saying what's wrong with it. */
-export function validateNewPassword(input: unknown): string {
+export function validateNewPassword(input: unknown, email?: string): string {
   const password = typeof input === 'string' ? input : '';
   if (password.length < 8) throw new AuthInputError('Use at least 8 characters for your password.');
   if (password.length > 200) throw new AuthInputError('That password is too long.');
+  const weak = weakPasswordReason(password, email);
+  if (weak) throw new AuthInputError(weak);
   return password;
 }
 
@@ -228,6 +263,66 @@ export function endSession(db: Db, token: string): void {
   db.prepare('delete from sessions where token_hash = ?').run(sha256(token));
 }
 
+// --- Forgotten passwords -----------------------------------------------------
+
+/** How long a link to choose a new password works. */
+export const RESET_MINUTES = 30;
+
+/**
+ * A one-time link to choose a new password, emailed to the account's
+ * address. Like sign-ins, only the token's hash is kept; asking again
+ * replaces any earlier link.
+ */
+export function startPasswordReset(db: Db, userId: string, now = new Date()): string {
+  const token = randomBytes(32).toString('base64url');
+  db.prepare('delete from password_resets where user_id = ?').run(userId);
+  db.prepare('insert into password_resets (token_hash, user_id, created_at, expires_at) values (?, ?, ?, ?)').run(
+    sha256(token),
+    userId,
+    now.toISOString(),
+    new Date(now.getTime() + RESET_MINUTES * 60_000).toISOString(),
+  );
+  return token;
+}
+
+/** The account a reset link is for, while it still works. */
+export function accountForResetToken(db: Db, token: string, now = new Date()): AccountRow | null {
+  if (!token || token.length > 200) return null;
+  const row = db
+    .prepare(
+      `select users.* from password_resets join users on users.id = password_resets.user_id
+       where password_resets.token_hash = ? and password_resets.expires_at > ?`,
+    )
+    .get(sha256(token), now.toISOString()) as AccountRow | undefined;
+  return row ?? null;
+}
+
+/**
+ * Sets the new password from a reset link, once: the link stops working,
+ * and every device signed in to the account is signed out.
+ */
+export function finishPasswordReset(db: Db, token: string, newPassword: string, now = new Date()): AccountRow | null {
+  const account = accountForResetToken(db, token, now);
+  if (!account) return null;
+  db.exec('begin');
+  try {
+    db.prepare('update users set password_hash = ? where id = ?').run(hashPassword(newPassword), account.id);
+    db.prepare('delete from password_resets where user_id = ?').run(account.id);
+    db.prepare('delete from sessions where user_id = ?').run(account.id);
+    db.exec('commit');
+  } catch (error) {
+    db.exec('rollback');
+    throw error;
+  }
+  return account;
+}
+
+/** Sign-ins and reset links past their date are only taking up room. */
+export function forgetExpired(db: Db, now = new Date()): void {
+  db.prepare('delete from sessions where expires_at <= ?').run(now.toISOString());
+  db.prepare('delete from password_resets where expires_at <= ?').run(now.toISOString());
+}
+
 export function accountForToken(db: Db, token: string, now = new Date()): AccountRow | null {
   const row = db
     .prepare(
@@ -239,19 +334,37 @@ export function accountForToken(db: Db, token: string, now = new Date()): Accoun
 }
 
 /**
- * A small in-memory limit on sign-in attempts per address and email, so a
- * password can't be guessed at speed. Resets when the server restarts, which
- * is fine for one machine; a hosted deployment would want a shared store.
+ * A small in-memory limit on attempts per key (an address, an email, an
+ * account), so a password can't be guessed at speed and nobody can flood the
+ * server. It resets when the server restarts, which is fine for one server.
+ * Keys are forgotten once their window has passed (see `sweep`), so memory
+ * stays bounded however many addresses call, and addresses aren't held
+ * longer than the privacy policy says.
  */
 export class AttemptLimiter {
   private readonly attempts = new Map<string, number[]>();
+  private lastSweep = 0;
 
   constructor(
     private readonly max = 10,
     private readonly windowMs = 15 * 60_000,
   ) {}
 
+  /** How many keys it's holding. */
+  get size(): number {
+    return this.attempts.size;
+  }
+
+  /** Forgets every key with no attempt left inside the window. */
+  sweep(now = Date.now()): void {
+    this.lastSweep = now;
+    for (const [key, times] of this.attempts) {
+      if (times.length === 0 || now - times[times.length - 1]! >= this.windowMs) this.attempts.delete(key);
+    }
+  }
+
   allow(key: string, now = Date.now()): boolean {
+    if (now - this.lastSweep >= 60_000 || this.attempts.size > 20_000) this.sweep(now);
     const recent = (this.attempts.get(key) ?? []).filter((at) => now - at < this.windowMs);
     if (recent.length >= this.max) {
       this.attempts.set(key, recent);

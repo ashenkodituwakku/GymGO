@@ -75,6 +75,8 @@
  *   GET    /terms /privacy /refunds /community /legal   the legal documents, as public pages
  *   GET    /.well-known/security.txt      where to report a security problem (once GYMGO_CONTACT_EMAIL is set)
  *   POST   /api/me/terms                  signed in: { version } -> agree to the terms as they are now
+ *   POST   /api/auth/forgot               { email } -> emails a link to choose a new password (same answer for any address)
+ *   GET    /reset-password?token=         the page that link opens; POST it to set the new password
  *   POST   /api/bug-reports               anyone: { description, topic?: 'bug' | 'copyright', replyTo?, context? } -> kept, and emailed to the team
  *   GET    /api/moderation/bug-reports    moderators: the latest bug reports, and whether each was emailed
  *   DELETE /api/moderation/member-reports/:kind/:gymId/:userId   moderators: remove one
@@ -85,6 +87,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
+import { isIP } from 'node:net';
 import { gunzipSync, gzipSync } from 'node:zlib';
 import {
   ANONYMOUS,
@@ -120,6 +123,12 @@ import {
   TooYoungError,
   accountForToken,
   checkTermsAccepted,
+  RESET_MINUTES,
+  accountForResetToken,
+  findByEmail,
+  finishPasswordReset,
+  forgetExpired,
+  startPasswordReset,
   checkAge,
   checkLogin,
   createAccount,
@@ -137,7 +146,7 @@ import {
   type AccountRow,
 } from './auth';
 import { DEV_PRO_EMAIL } from './devAccount';
-import { legalIndexPage, legalPage, securityTxt } from './legalPages';
+import { legalIndexPage, legalPage, resetEmail, resetPasswordPage, securityTxt } from './legalPages';
 import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
 import { AreaError, AreaSearch, parseBox, whereIs } from './area';
 import { CountryPacks } from './countryPack';
@@ -158,6 +167,15 @@ export interface AppOptions {
   now?: () => Date;
   /** New accounts allowed per address per hour. */
   signupsPerHour?: number;
+  /**
+   * Behind a reverse proxy (Caddy, in the hosting setup), every request
+   * comes from the proxy; when true, the caller's own address is taken from
+   * the X-Forwarded-For header the proxy sets. Only turn this on behind a
+   * proxy, or anyone could claim any address (GYMGO_TRUST_PROXY).
+   */
+  trustProxy?: boolean;
+  /** Sends account emails (password reset links); without it, passwords can't be reset by email. */
+  mail?: SendMail | null;
   /** Where photo files are kept; null keeps them in memory (tests). */
   photoDir?: string | null;
   /** The owner's Google Places key, if they chose to set one. */
@@ -462,10 +480,27 @@ export function createApp(options: AppOptions) {
   const { db } = options;
   const now = options.now ?? (() => new Date());
   const operator = options.legal?.operator ?? DEFAULT_OPERATOR;
+  /** The caller's address, for rate limits: the socket's, or behind a trusted proxy the one it passes on. */
+  const clientAddress = (req: IncomingMessage): string => {
+    const socket = req.socket.remoteAddress ?? 'unknown';
+    if (!options.trustProxy) return socket;
+    const header = req.headers['x-forwarded-for'];
+    // The proxy adds the address it saw last, so that's the one to believe.
+    const last = (Array.isArray(header) ? header.join(',') : (header ?? '')).split(',').map((part) => part.trim()).filter(Boolean).pop();
+    return last && isIP(last) ? last : socket;
+  };
+  const hsts = options.publicUrl?.startsWith('https://') ?? false;
   const accountJson = (row: Parameters<typeof publicAccount>[0]) =>
     options.devAccount && row.email === DEV_PRO_EMAIL ? { ...publicAccount(row), devTools: true } : publicAccount(row);
-  // Wrong passwords: 10 per address and email per 15 minutes.
+  // Wrong passwords: 10 per address and email per 15 minutes, and 30 an hour
+  // for one email from anywhere, against guessing spread over many addresses.
   const loginLimiter = new AttemptLimiter(10, 15 * 60_000);
+  const accountLoginLimiter = new AttemptLimiter(30, 60 * 60_000);
+  // Password reset emails: 5 an hour from one address, 3 an hour to one account.
+  const forgotLimiter = new AttemptLimiter(5, 60 * 60_000);
+  const forgotEmailLimiter = new AttemptLimiter(3, 60 * 60_000);
+  // New passwords set from reset links: 10 per address per 15 minutes.
+  const resetLimiter = new AttemptLimiter(10, 15 * 60_000);
   const signupLimiter = new AttemptLimiter(options.signupsPerHour ?? 20, 60 * 60_000);
   const photoLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
   const avatarLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
@@ -505,6 +540,17 @@ export function createApp(options: AppOptions) {
     void bugReports.deliverWaiting();
     setInterval(() => void bugReports.deliverWaiting(), retryEvery).unref();
   }
+  // Every few minutes: forget expired sign-ins and reset links, and the
+  // rate-limit keys (addresses among them) whose window has passed.
+  const limiters = [
+    loginLimiter, accountLoginLimiter, forgotLimiter, forgotEmailLimiter, resetLimiter, signupLimiter, photoLimiter, avatarLimiter,
+    equipmentLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter,
+  ];
+  setInterval(() => {
+    const at = now();
+    forgetExpired(db, at);
+    for (const limiter of limiters) limiter.sweep(at.getTime());
+  }, 5 * 60_000).unref();
   const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
   const identities = new IdentityVerifier({ fetchImpl: options.signIn?.fetchImpl, now });
   const googleIds = options.signIn?.google ?? { web: null, ios: null, android: null };
@@ -635,7 +681,7 @@ export function createApp(options: AppOptions) {
             throw new HttpError(403, 'Gyms outside the country you chose are part of GymGO Pro.', 'pro_required', { countryCode: middle.countryCode });
           }
         }
-        if (area.needsFetch(box) && !areaLimiter.allow(`${req.socket.remoteAddress}`, now().getTime())) {
+        if (area.needsFetch(box) && !areaLimiter.allow(clientAddress(req), now().getTime())) {
           throw new AreaError(429, 'That’s a lot of searching. Try again in a little while.', 'rate_limited');
         }
         const answer = await area.search(box);
@@ -684,7 +730,7 @@ export function createApp(options: AppOptions) {
     if (method === 'GET' && path === '/api/places') {
       const query = url.searchParams.get('q') ?? '';
       try {
-        if (places.cached(query) === undefined && !placeLimiter.allow(`${req.socket.remoteAddress}`, now().getTime())) {
+        if (places.cached(query) === undefined && !placeLimiter.allow(clientAddress(req), now().getTime())) {
           throw new HttpError(429, 'That’s a lot of place searches. Try again in a little while.');
         }
         return send(res, 200, { places: await places.search(query), attribution: '© OpenStreetMap contributors (ODbL), via Photon by komoot' });
@@ -928,7 +974,7 @@ export function createApp(options: AppOptions) {
     if (method === 'POST' && path === '/api/auth/signup') {
       const body = (await readJson(req)) as Record<string, unknown>;
       const input = validateSignup(body);
-      if (!signupLimiter.allow(`${req.socket.remoteAddress}`, now().getTime())) {
+      if (!signupLimiter.allow(clientAddress(req), now().getTime())) {
         throw new HttpError(429, 'Too many attempts. Wait a few minutes and try again.');
       }
       // Nothing is kept about someone too young for an account, not even that they tried.
@@ -939,13 +985,76 @@ export function createApp(options: AppOptions) {
       return send(res, 201, { token: startSession(db, account.id, now()), account: accountJson(account) });
     }
 
+    // --- Forgotten passwords -------------------------------------------------
+    if (method === 'POST' && path === '/api/auth/forgot') {
+      const body = (await readJson(req)) as Record<string, unknown>;
+      const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new HttpError(400, 'That email address doesn’t look right.');
+      // The emailed link must point at this server's own address, set by its
+      // owner, never one taken from the request, which anyone can change.
+      const mail = options.mail;
+      if (!mail || !options.publicUrl) {
+        throw new HttpError(503, 'This GymGO server can’t send email, so passwords can’t be reset by email here. Ask whoever runs it for help.', 'reset_off');
+      }
+      if (!forgotLimiter.allow(clientAddress(req), now().getTime()) || !forgotEmailLimiter.allow(email, now().getTime())) {
+        throw new HttpError(429, 'That’s a lot of reset emails. Wait an hour and try again.');
+      }
+      const account = findByEmail(db, email);
+      if (account && !account.blocked) {
+        const token = startPasswordReset(db, account.id, now());
+        const link = `${options.publicUrl}/reset-password?token=${token}`;
+        // Sent without waiting, so the answer takes as long whether or not there's an account.
+        void mail({ to: [account.email], subject: 'Choose a new GymGO password', text: resetEmail(account.display_name, link, RESET_MINUTES) }).catch(
+          (error: unknown) => console.error('[auth] password reset email failed', error),
+        );
+      }
+      // The same answer either way, so nobody can find out who has an account.
+      return send(res, 200, { sent: true, minutes: RESET_MINUTES });
+    }
+
+    if (path === '/reset-password' && (method === 'GET' || method === 'POST')) {
+      const page = (html: string, status = 200) => {
+        res.statusCode = status;
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'");
+        res.setHeader('Referrer-Policy', 'no-referrer');
+        res.end(html);
+      };
+      if (method === 'GET') {
+        const token = url.searchParams.get('token') ?? '';
+        return page(resetPasswordPage({ token: accountForResetToken(db, token, now()) ? token : null }));
+      }
+      if (!resetLimiter.allow(clientAddress(req), now().getTime())) {
+        return page(resetPasswordPage({ token: null, problem: 'Too many tries. Wait a few minutes, then open the link again.' }), 429);
+      }
+      const form = new URLSearchParams((await readRaw(req, 4096)).toString('utf8'));
+      const token = form.get('token') ?? '';
+      const account = accountForResetToken(db, token, now());
+      if (!account) return page(resetPasswordPage({ token: null }), 400);
+      const password = form.get('password') ?? '';
+      if (password !== (form.get('confirm') ?? '')) return page(resetPasswordPage({ token, problem: 'The two passwords don’t match.' }), 400);
+      let next: string;
+      try {
+        next = validateNewPassword(password, account.email);
+      } catch (error) {
+        if (error instanceof AuthInputError) return page(resetPasswordPage({ token, problem: error.message }), 400);
+        throw error;
+      }
+      finishPasswordReset(db, token, next, now());
+      return page(resetPasswordPage({ token: null, done: true }));
+    }
+
     if (method === 'POST' && path === '/api/auth/login') {
       const body = (await readJson(req)) as Record<string, unknown>;
       const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
       const password = typeof body.password === 'string' ? body.password : '';
       if (!email || !password) throw new HttpError(400, 'Enter your email and password.');
-      if (!loginLimiter.allow(`${req.socket.remoteAddress}|${email}`, now().getTime())) {
+      if (!loginLimiter.allow(`${clientAddress(req)}|${email}`, now().getTime())) {
         throw new HttpError(429, 'Too many attempts. Wait a few minutes and try again.');
+      }
+      if (!accountLoginLimiter.allow(email, now().getTime())) {
+        throw new HttpError(429, 'Too many attempts for this account. Wait a while, or reset your password.');
       }
       const account = checkLogin(db, email, password);
       if (!account) throw new HttpError(401, 'That email and password don’t match.');
@@ -963,7 +1072,7 @@ export function createApp(options: AppOptions) {
 
     if (method === 'POST' && (path === '/api/auth/google' || path === '/api/auth/apple')) {
       const provider: Provider = path.endsWith('google') ? 'google' : 'apple';
-      if (!loginLimiter.allow(`${req.socket.remoteAddress}|${provider}`, now().getTime())) {
+      if (!loginLimiter.allow(`${clientAddress(req)}|${provider}`, now().getTime())) {
         throw new HttpError(429, 'Too many attempts. Wait a few minutes and try again.');
       }
       const body = (await readJson(req)) as Record<string, unknown>;
@@ -1131,7 +1240,7 @@ export function createApp(options: AppOptions) {
       const { account } = requireAccount(req);
       const body = (await readJson(req)) as Record<string, unknown>;
       const current = typeof body.currentPassword === 'string' ? body.currentPassword : '';
-      const next = validateNewPassword(body.newPassword);
+      const next = validateNewPassword(body.newPassword, account.email);
       // Guessing the current password is as limited as guessing at sign-in.
       if (!loginLimiter.allow(`password|${account.id}`, now().getTime())) {
         throw new HttpError(429, 'Too many attempts. Wait a few minutes and try again.');
@@ -1676,7 +1785,7 @@ export function createApp(options: AppOptions) {
       }
       let icon = siteIcons.cached(website);
       if (icon === undefined) {
-        if (!iconLimiter.allow(`${req.socket.remoteAddress}`, now().getTime())) throw new HttpError(429, 'Too many icons at once. Try again soon.');
+        if (!iconLimiter.allow(clientAddress(req), now().getTime())) throw new HttpError(429, 'Too many icons at once. Try again soon.');
         icon = await siteIcons.icon(website);
       }
       if (!icon) return send(res, 404, { error: 'The gym’s website has no icon GymGO can show.', code: 'none' }, 'public, max-age=3600');
@@ -1703,7 +1812,7 @@ export function createApp(options: AppOptions) {
       }
       let photo = sitePhotos.cached(website);
       if (photo === undefined) {
-        if (!sitePhotoLimiter.allow(`${req.socket.remoteAddress}`, now().getTime())) throw new HttpError(429, 'Too many photos at once. Try again soon.');
+        if (!sitePhotoLimiter.allow(clientAddress(req), now().getTime())) throw new HttpError(429, 'Too many photos at once. Try again soon.');
         photo = await sitePhotos.photo(website);
       }
       if (!photo) return send(res, 404, { error: 'The gym’s website has no photo GymGO can show.', code: 'none' }, 'public, max-age=3600');
@@ -1761,7 +1870,7 @@ export function createApp(options: AppOptions) {
     // Kept first, then emailed to the team; the answer says whether the email went.
     if (method === 'POST' && path === '/api/bug-reports') {
       const { account } = caller(req);
-      const key = account ? `account:${account.id}` : `address:${req.socket.remoteAddress}`;
+      const key = account ? `account:${account.id}` : `address:${clientAddress(req)}`;
       if (!bugLimiter.allow(key, now().getTime())) throw new HttpError(429, 'That’s a lot of reports at once. Try again in an hour.');
       let report;
       try {
@@ -1894,6 +2003,14 @@ export function createApp(options: AppOptions) {
   }
 
   return async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    // Safe defaults for every answer; the HTML pages set their own CSP.
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    if (hsts) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     const origin = req.headers.origin;
     if (origin && isAllowedOrigin(origin, options.allowedOrigins)) {
       res.setHeader('Access-Control-Allow-Origin', origin);

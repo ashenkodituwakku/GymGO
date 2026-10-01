@@ -119,6 +119,13 @@ export const BUG_REPORT_TO = (process.env.GYMGO_BUG_REPORT_TO ?? 'ashenkodit@gma
   .split(',')
   .map((item) => item.trim())
   .filter(Boolean);
+/**
+ * On only behind a reverse proxy (the hosting setup's Caddy): rate limits
+ * then use the caller's address as the proxy passes it on, instead of the
+ * proxy's own, which every request would share. Never on without a proxy,
+ * or anyone could claim any address.
+ */
+export const TRUST_PROXY = (process.env.GYMGO_TRUST_PROXY ?? '').trim().toLowerCase() === 'on';
 export const ALLOWED_ORIGINS = (process.env.GYMGO_ALLOWED_ORIGINS ?? '').split(',').map((item) => item.trim()).filter(Boolean);
 
 /**

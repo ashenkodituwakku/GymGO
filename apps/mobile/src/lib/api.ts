@@ -354,6 +354,8 @@ export const api = {
   signUp: (body: { email: string; password: string; displayName: string; birthMonth: string; acceptTerms: true }) =>
     request<{ token: string; account: Account }>('POST', '/api/auth/signup', { body }),
   signIn: (body: { email: string; password: string }) => request<{ token: string; account: Account }>('POST', '/api/auth/login', { body }),
+  /** Emails a link to choose a new password, if there's an account for the address (the answer's the same either way). */
+  forgotPassword: (email: string) => request<{ sent: true; minutes: number }>('POST', '/api/auth/forgot', { body: { email } }),
   providers: () => request<SignInProviders>('GET', '/api/auth/providers'),
   /** Sign in (or, the first time, sign up) with a Google or Apple ID token. */
   signInWith: (

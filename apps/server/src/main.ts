@@ -23,6 +23,7 @@ import {
   BUG_REPORT_TO,
   COPYRIGHT_AGENT,
   LEGAL_OPERATOR,
+  TRUST_PROXY,
   MAIL_FROM,
   SMTP_URL,
 } from './config';
@@ -67,8 +68,16 @@ const server = createServer(
     bugReports: { send: bugMail, to: BUG_REPORT_TO, retryEveryMs: 15 * 60_000 },
     legal: { copyrightAgent: COPYRIGHT_AGENT, operator: LEGAL_OPERATOR },
     devAccount: devAccountMade,
+    trustProxy: TRUST_PROXY,
+    // Password reset links go out through the same email account as bug reports.
+    mail: bugMail,
   }),
 );
+// A caller has 30 seconds to send its headers and two minutes for the whole
+// request (a photo on a slow connection), so slow, half-sent requests can't
+// tie the server up.
+server.headersTimeout = 30_000;
+server.requestTimeout = 120_000;
 
 /** Which kind of Stripe key, never the key itself. */
 function stripeMode(key: string | null): string {
@@ -120,6 +129,12 @@ server.listen(PORT, HOST, () => {
         ? '[server] Bug reports: kept here only. GYMGO_SMTP_URL has no email address to send from; set GYMGO_MAIL_FROM (see README)'
         : '[server] Bug reports: kept here only (no GYMGO_SMTP_URL set, so nothing is emailed; see README)',
   );
+  console.log(
+    bugMail && PUBLIC_URL
+      ? '[server] Forgot password: on (reset links are emailed)'
+      : `[server] Forgot password: off (needs ${[bugMail ? null : 'GYMGO_SMTP_URL', PUBLIC_URL ? null : 'GYMGO_PUBLIC_URL'].filter(Boolean).join(' and ')}; see README)`,
+  );
+  if (TRUST_PROXY) console.log('[server] Behind a proxy: rate limits use the address in X-Forwarded-For (GYMGO_TRUST_PROXY=on)');
   console.log(
     LEGAL_OPERATOR.email
       ? `[server] Legal pages: /terms, /privacy, /refunds, /community (run by ${LEGAL_OPERATOR.name}, contact ${LEGAL_OPERATOR.email})`

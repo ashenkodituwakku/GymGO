@@ -36,6 +36,13 @@ const SCHEMA = `
     expires_at text not null
   );
   create index if not exists sessions_user on sessions(user_id);
+  create table if not exists password_resets (
+    token_hash text primary key,
+    user_id text not null references users(id) on delete cascade,
+    created_at text not null,
+    expires_at text not null
+  );
+  create index if not exists password_resets_user on password_resets(user_id);
   create table if not exists identities (
     provider text not null check (provider in ('google', 'apple')),
     subject text not null,

@@ -147,13 +147,17 @@ export function prepareXcode(options = {}) {
   // And Xcode's own build steps run Node, but Xcode doesn't see Homebrew's
   // folders, so it's told exactly which Node: without this a build stops
   // with "node: command not found".
+  // GYMGO_SERVER_URL points release builds at a hosted GymGO (README, "Put
+  // GymGO online") instead of this Mac.
   const address = lanAddress();
+  const hosted = process.env.GYMGO_SERVER_URL?.trim().replace(/\/+$/, '') || null;
+  const server = hosted ?? (address ? `http://${address}:${SERVER_PORT}` : null);
   writeFileSync(
     join(iosDir, '.xcode.env.local'),
     [
       '# Written by scripts/xcode.mjs each time GymGO starts.',
       `export NODE_BINARY=${JSON.stringify(process.execPath)}`,
-      ...(address ? [`export EXPO_PUBLIC_API_URL=http://${address}:${SERVER_PORT}`] : []),
+      ...(server ? [`export EXPO_PUBLIC_API_URL=${server}`] : []),
       '',
     ].join('\n'),
   );

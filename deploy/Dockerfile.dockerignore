@@ -1,0 +1,20 @@
+# Kept out of the image build: installed packages (each stage installs its
+# own for Linux), local data and secrets, and anything generated.
+**/node_modules
+.git
+**/.expo
+**/dist
+**/.next
+**/.next-e2e
+**/coverage
+**/test-results
+**/playwright-report
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+!**/.env.example
+apps/server/data
+apps/mobile/ios
+apps/mobile/android
+deploy/data
+deploy/.env

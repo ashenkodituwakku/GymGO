@@ -1141,6 +1141,101 @@ computer, install the Stripe CLI and run
 
 The setup refuses a live key (`sk_live_…`) unless you add `--live`.
 
+### Put GymGO online (free hosting)
+
+Everything above runs on your own computer. To have GymGO on the internet,
+for friends to use on their phones and for real Pro payments, it needs a
+server that's always on. `deploy/` has everything for one machine:
+
+- **The GymGO server** in a container, its database, members' photos and
+  backups in `deploy/data`.
+- **Caddy** in front of it, which gets and renews an HTTPS certificate by
+  itself and serves **the web version of the app** at the same address
+  (`https://your-domain`). The server's legal pages are there too
+  (`/terms`, `/privacy`, `/refunds`, `/community`).
+- **A copy of the database every day**, kept 14 days (the privacy policy
+  promises a deleted account leaves the backups within that time).
+
+**A free server: Oracle Cloud's Always Free tier.** It includes an Arm
+virtual machine of up to 4 cores and 24 GB of memory, with 200 GB of disk,
+free with no time limit (as of writing; check the current offer). Making the
+account needs a card to prove who you are; the Always Free resources aren't
+charged.
+
+1. Make an account at **cloud.oracle.com**. Pick your home region near your
+   users (Sydney or Melbourne for Australia); it can't be changed later.
+2. **Compute → Instances → Create instance.** Image: **Ubuntu 24.04**.
+   Shape: **Ampere, VM.Standard.A1.Flex**, 2 OCPUs and 12 GB (inside the
+   free allowance). Add your SSH public key (or let it make one, and save
+   it). Create. If it says it's out of capacity, try another availability
+   domain or try again later. Note the instance's **public IP address**.
+3. **Open the web ports:** on the instance's page, its subnet → its
+   **security list** → **Add ingress rules**: source `0.0.0.0/0`, TCP,
+   destination ports `80,443`. (The setup script opens them in the server's
+   own firewall.)
+4. **A name for it.** A free subdomain from **duckdns.org**: sign in, add a
+   name, and set it to the instance's IP, giving `gymgo-yourname.duckdns.org`.
+   Or point a domain you own at the IP (an `A` record).
+5. **Sign in to the server and set it up.** On your computer (PowerShell
+   on Windows, Terminal on a Mac):
+
+   ```bash
+   ssh ubuntu@YOUR.SERVER.IP
+   git clone https://github.com/ashenkodituwakku/GymGO.git
+   cd GymGO && git checkout claude/friendly-johnson-9rzxrj && cd deploy
+   bash setup.sh        # installs Docker, then makes deploy/.env
+   nano .env            # set GYMGO_DOMAIN and GYMGO_PUBLIC_URL (and the rest you use)
+   bash setup.sh        # builds and starts GymGO (a few minutes the first time)
+   ```
+
+   If the repository is private, GitHub asks for a password when cloning:
+   use a personal access token (GitHub → Settings → Developer settings →
+   Personal access tokens) with read access to it.
+6. Open `https://your-domain`: that's GymGO's web app. `https://your-domain/terms`
+   shows the terms with the details you put in `.env`.
+
+Then, as you need them:
+
+- **Phones:** build the app pointed at the hosted server. On a Mac:
+  `GYMGO_SERVER_URL=https://your-domain bash ~/GymGO/scripts/gymgo-mac.sh --xcode`.
+  For any other build, set `EXPO_PUBLIC_API_URL=https://your-domain`.
+  (Expo Go, through the launcher, keeps using the server on your computer.)
+- **Stripe:** in Stripe, **Developers → Webhooks → Add endpoint**:
+  `https://your-domain/api/billing/webhook`, with the events
+  `checkout.session.completed` and `customer.subscription.created`,
+  `.updated` and `.deleted`. Put its signing secret in `.env` as
+  `STRIPE_WEBHOOK_SECRET`, and add your Terms, Refunds and Privacy page
+  addresses in Stripe's public business details. Then
+  `sudo docker compose up -d` to restart with the new settings.
+- **Email** (password reset links and bug reports): set `GYMGO_SMTP_URL`
+  as in [Report a bug](#report-a-bug).
+- **Make yourself a moderator:**
+  `sudo docker compose exec app node --import tsx src/cli.ts moderator you@example.com`.
+- **Update** to the latest GymGO, keeping all data: `bash update.sh`.
+- **Logs:** `sudo docker compose logs -f app`.
+- **Backups off the server.** The daily copies sit on the same disk, so
+  copy the whole data folder somewhere else now and then (photos included).
+  From your computer:
+  `scp -r ubuntu@YOUR.SERVER.IP:GymGO/deploy/data ./gymgo-data-backup`.
+  To restore a copy: `sudo docker compose stop app`, copy a file from
+  `data/backups/` over `data/gymgo.db`, delete `data/gymgo.db-wal` and
+  `data/gymgo.db-shm`, then `sudo docker compose start app`.
+- **Keeping the free server.** Oracle may reclaim an Always Free instance
+  that sits almost idle (low processor, network and memory use) for a week.
+  Upgrading the account to Pay As You Go keeps the same free allowance and
+  avoids that; set a budget alert in Oracle's billing settings to be sure
+  nothing is ever charged.
+- **On a network that inspects HTTPS** (some offices), the build can't
+  download packages until it trusts that network's certificate. Give it as
+  a build secret named `extra_ca`: add `secrets: [extra_ca]` under each
+  service's `build:` in an override file, with a top-level
+  `secrets: { extra_ca: { file: /path/to/certificate.pem } }`.
+
+Other free options work too, as long as the machine keeps its disk: the
+same `deploy/` folder runs on any Linux server with Docker. Google Cloud's
+free e2-micro has only 1 GB of memory, too little to build the web app on
+it; build the images on another machine and copy them over.
+
 ### The older website
 
 The first version of GymGO was a Next.js website, and it's still in the

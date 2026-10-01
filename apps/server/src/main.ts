@@ -24,10 +24,12 @@ import {
   COPYRIGHT_AGENT,
   LEGAL_OPERATOR,
   TRUST_PROXY,
+  BACKUP_DIR,
   MAIL_FROM,
   SMTP_URL,
 } from './config';
 import { senderFor, smtpMailer } from './mail';
+import { scheduleBackups } from './backup';
 import { openDb, seedGyms } from './db';
 import { devAccountRefusal, ensureDevProAccount } from './devAccount';
 
@@ -56,7 +58,8 @@ const server = createServer(
   createApp({
     db,
     attribution: ATTRIBUTION,
-    allowedOrigins: ALLOWED_ORIGINS,
+    // The hosted web app, at the server's own address, may call it and be returned to from Stripe.
+    allowedOrigins: [...ALLOWED_ORIGINS, ...(PUBLIC_URL ? [new URL(PUBLIC_URL).origin] : [])],
     photoDir: PHOTO_DIR,
     googleKey: GOOGLE_PLACES_API_KEY,
     billing: { stripe: STRIPE_SECRET_KEY ? createStripe(STRIPE_SECRET_KEY) : null, webhookSecret: STRIPE_WEBHOOK_SECRET },
@@ -77,6 +80,7 @@ const server = createServer(
 // request (a photo on a slow connection), so slow, half-sent requests can't
 // tie the server up.
 server.headersTimeout = 30_000;
+if (BACKUP_DIR) scheduleBackups(db, BACKUP_DIR);
 server.requestTimeout = 120_000;
 
 /** Which kind of Stripe key, never the key itself. */
@@ -134,6 +138,7 @@ server.listen(PORT, HOST, () => {
       ? '[server] Forgot password: on (reset links are emailed)'
       : `[server] Forgot password: off (needs ${[bugMail ? null : 'GYMGO_SMTP_URL', PUBLIC_URL ? null : 'GYMGO_PUBLIC_URL'].filter(Boolean).join(' and ')}; see README)`,
   );
+  console.log(BACKUP_DIR ? `[server] Backups: a copy of the database every day in ${BACKUP_DIR}, kept 14 days` : '[server] Backups: off (no GYMGO_BACKUP_DIR set)');
   if (TRUST_PROXY) console.log('[server] Behind a proxy: rate limits use the address in X-Forwarded-For (GYMGO_TRUST_PROXY=on)');
   console.log(
     LEGAL_OPERATOR.email

@@ -23,11 +23,15 @@ import { distanceLabel } from '@/lib/places';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
 import { CardReveal, type Pull } from './CardReveal';
+import { GymScan, type ScanPhase } from './GymScan';
 import { TIER_METAL } from './GemCard';
 import { Icon } from './Icon';
-import { Pressy } from './motion';
+import { FADE_IN, FADE_OUT, GLIDE, Pressy } from './motion';
 import { PrimaryButton, Txt } from './ui';
 
+/** The scan stays up at least this long, so an instant answer still reads as a check. */
+const MIN_SCAN_MS = 1400;
+const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 type Step =
   | { kind: 'idle' }
@@ -42,6 +46,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
   // The local dev account skips the "are you there?" check.
   const anywhere = account.account?.devTools === true;
   const [step, setStep] = useState<Step>({ kind: 'idle' });
+  const [scan, setScan] = useState<ScanPhase | null>(null);
   const location = record.location;
   const mine = gyms[location.id];
   const visits = mine?.days.length ?? 0;
@@ -67,21 +72,35 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
   };
 
   const tryCollect = async () => {
-    if (anywhere) return add();
     // Trying again after "not there yet": ask the phone anew, not the position that said so.
     const again = step.kind === 'problem';
     setStep({ kind: 'checking' });
-    const fix = await currentFix(true, again);
-    if (fix === 'denied') return setStep({ kind: 'problem', text: 'Collecting needs your location, just this once, to check you’re at the gym. It never leaves your phone.' });
-    if (fix === 'unavailable') return setStep({ kind: 'problem', text: 'Couldn’t find where you are just now. Step outside or by a window, then try again.' });
-    const where = checkIn(fix, location.position);
-    if (where.kind === 'far') {
-      haptic.warn();
-      return setStep({ kind: 'problem', text: `You’re ${distanceLabel(where.metres / 1000, location.address.countryCode)} away. Collect it when you’re there.` });
+    setScan('locating');
+    haptic.select();
+    const started = Date.now();
+    const stop = (text: string) => {
+      setScan(null);
+      setStep({ kind: 'problem', text });
+    };
+    const fix = anywhere ? null : await currentFix(true, again);
+    await pause(MIN_SCAN_MS - (Date.now() - started));
+    if (fix === 'denied') return stop('Collecting needs your location, just this once, to check you’re at the gym. It never leaves your phone.');
+    if (fix === 'unavailable') return stop('Couldn’t find where you are just now. Step outside or by a window, then try again.');
+    setScan('checking');
+    await pause(450);
+    if (fix) {
+      const where = checkIn(fix, location.position);
+      if (where.kind === 'far') {
+        haptic.warn();
+        return stop(`You’re ${distanceLabel(where.metres / 1000, location.address.countryCode)} away. Collect it when you’re there.`);
+      }
+      if (where.kind === 'rough') {
+        return stop(`Your location is only good to about ${distanceLabel(where.accuracyM / 1000, location.address.countryCode)} here, too rough to tell you’re inside. Try again in a moment.`);
+      }
     }
-    if (where.kind === 'rough') {
-      return setStep({ kind: 'problem', text: `Your location is only good to about ${distanceLabel(where.accuracyM / 1000, location.address.countryCode)} here, too rough to tell you’re inside. Try again in a moment.` });
-    }
+    setScan('done');
+    await pause(650);
+    setScan(null);
     add();
   };
 
@@ -142,6 +161,11 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
           {`Today’s roll: ${rarityLabel(step.rolled)}. Your card keeps its best, ${rarityLabel(look.rarity)}.`}
         </Txt>
       )}
+      {scan && (
+        <Animated.View entering={FADE_IN} exiting={FADE_OUT} layout={GLIDE}>
+          <GymScan phase={scan} gymName={location.name} />
+        </Animated.View>
+      )}
       {step.kind === 'problem' && (
         <Txt variant="footnote" color={color.maybeInk}>
           {step.text}
@@ -158,8 +182,8 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
         </Txt>
       )}
 
-      <View style={styles.buttons}>
-        {!(step.kind === 'collected') && (
+      <Animated.View layout={GLIDE} style={styles.buttons}>
+        {!(step.kind === 'collected') && !scan && (
           <View style={styles.flex}>
             <PrimaryButton
               // Short, so two buttons side by side fit on a phone without wrapping.
@@ -175,7 +199,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
             <PrimaryButton label="Collection" icon="trophy" tone="quiet" onPress={onOpenCollection} />
           </View>
         )}
-      </View>
+      </Animated.View>
       <CardReveal
         pull={pull}
         record={record}

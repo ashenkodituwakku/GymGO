@@ -281,6 +281,57 @@ const SCHEMA = `
     decided_by text
   );
   create index if not exists owner_updates_status on owner_updates(status, created_at);
+  create table if not exists pro_grants (
+    id text primary key,
+    user_id text not null references users(id) on delete cascade,
+    source text not null check (source in ('gift')),
+    starts_at text not null,
+    ends_at text not null,
+    ref text,
+    created_at text not null
+  );
+  create index if not exists pro_grants_user on pro_grants(user_id, ends_at);
+  create table if not exists gift_codes (
+    code text primary key,
+    buyer_user_id text references users(id) on delete set null,
+    checkout_session_id text not null unique,
+    currency text,
+    created_at text not null,
+    redeemed_by text references users(id) on delete set null,
+    redeemed_at text
+  );
+  create table if not exists duo_members (
+    owner_user_id text primary key references users(id) on delete cascade,
+    member_user_id text not null unique references users(id) on delete cascade,
+    added_at text not null
+  );
+  create table if not exists partner_passes (
+    id text primary key,
+    gym_id text not null,
+    label text not null,
+    price_minor integer not null,
+    fee_minor integer not null,
+    currency text not null check (currency in ('aud', 'usd')),
+    active integer not null default 1,
+    created_at text not null,
+    created_by text
+  );
+  create index if not exists partner_passes_gym on partner_passes(gym_id, active);
+  create table if not exists pass_bookings (
+    id text primary key,
+    pass_id text not null references partner_passes(id),
+    user_id text not null references users(id) on delete cascade,
+    gym_id text not null,
+    for_date text not null,
+    checkout_session_id text not null unique,
+    status text not null check (status in ('pending', 'paid')),
+    code text,
+    amount_minor integer not null,
+    fee_minor integer not null,
+    currency text not null,
+    created_at text not null,
+    paid_at text
+  );
   create table if not exists leaderboard_members (
     user_id text primary key references users(id) on delete cascade,
     joined_at text not null

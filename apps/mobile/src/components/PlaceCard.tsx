@@ -149,6 +149,7 @@ export function PlaceCard({
   collect,
   busy,
   owner,
+  dayPass,
   saveAndShareElsewhere = false,
 }: {
   result: GymSearchResult;
@@ -185,6 +186,8 @@ export function PlaceCard({
   busy?: React.ReactNode;
   /** The gym's verified owner, or claiming it. */
   owner?: React.ReactNode;
+  /** A partner day pass, when GymGO has one agreed with the gym. */
+  dayPass?: React.ReactNode;
 }) {
   const [notice, setNotice] = useState<string | null>(null);
   const record = result.record;
@@ -367,6 +370,7 @@ export function PlaceCard({
       )}
 
       {collect}
+      {dayPass}
       {busy}
 
       {/* At a glance ---------------------------------------------------- */}

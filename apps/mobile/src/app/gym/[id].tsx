@@ -27,6 +27,7 @@ import { PlaceCard } from '@/components/PlaceCard';
 import { GymNotes } from '@/components/GymNotes';
 import { CollectCard } from '@/components/CollectCard';
 import { MemberBusy } from '@/components/MemberBusy';
+import { DayPass } from '@/components/DayPass';
 import { GymOwner } from '@/components/GymOwner';
 import { ReviewsSection } from '@/components/ReviewsSection';
 import { PrimaryButton, Txt } from '@/components/ui';
@@ -241,6 +242,7 @@ export default function GymPage() {
             reviews={<ReviewsSection gymId={location.id} account={account} inSheet={false} onSignIn={() => router.push('/sign-in')} />}
             notes={location.isDemoData ? null : <GymNotes gymId={location.id} isPro={billing.isPro} inSheet={false} onPro={() => openPro('notes')} />}
             collect={location.isDemoData ? null : <CollectCard record={result.record} onOpenCollection={() => router.push('/collection')} />}
+            dayPass={location.isDemoData ? null : <DayPass gymId={location.id} timezone={location.timezone} account={account} onSignIn={() => router.push('/sign-in')} />}
             busy={<MemberBusy location={location} account={account} onSignIn={() => router.push('/sign-in')} />}
             owner={<GymOwner record={result.record} account={account} onSignIn={() => router.push('/sign-in')} />}
           />

@@ -1250,6 +1250,28 @@ One tier, two ways to pay, tax included:
 The prices live in `packages/domain/src/plans.ts`; change them there and run the setup below
 again. Existing subscribers keep the price they signed up at.
 
+**Pro Duo** is the same Pro for two people: the subscriber adds one more
+person by their friend code (Pro screen → Your Duo), who has Pro for as long
+as the Duo lasts; either can end it, and nothing but Pro is shared. Planned
+at A$5.99 a month or A$44.99 a year (US$4.49 / US$29.99).
+
+**Gift Pro** is a year of Pro paid once (A$29.99 or US$19.99, a year's
+price): paying gives a code like `K7QM-2XPH-9RTA` on the Pro screen to send
+on, and whoever enters it under **Have a gift code?** gets a year of Pro (a
+second gift adds a second year). It doesn't renew. A code someone guesses
+is unlikely: 10 tries a day per account, and 31¹² possible codes.
+
+**Partner day passes**: where GymGO has an agreement with a gym, an admin
+adds a pass for it (`POST /api/admin/passes`), and the gym's page offers it:
+the pass price and GymGO's booking fee shown apart with the total, a day in
+the next week, then Stripe's checkout. Paying gives a pass code on the gym's
+page to show at reception. **No gym has a pass**: there are no agreements
+yet, and GymGO never lists one a gym hasn't made.
+
+Duo and gift prices live in `packages/domain/src/perks.ts`; the setup below
+creates them in Stripe beside Pro's. All of this is the owner's to decide,
+and is tested only against a pretend Stripe here.
+
 People pay on **Stripe's own checkout page**, so GymGO never sees a card.
 They manage or cancel on Stripe's page too (Profile → Manage subscription),
 and keep Pro to the end of what they paid for. If Pro ends, nothing they

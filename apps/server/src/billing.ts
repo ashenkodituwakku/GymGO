@@ -20,9 +20,13 @@
 
 import Stripe from 'stripe';
 import {
+  DUO_PRICES,
+  GIFT_PRICES,
   LIMITS,
   PRO_PRICES,
+  isDuoLookupKey,
   isProStatus,
+  type GiftPrice,
   type BillingCurrency,
   type BillingInterval,
   type PlanId,
@@ -60,6 +64,10 @@ export interface StripeCheckoutSession {
   customer: Expandable;
   client_reference_id: string | null;
   subscription: Expandable;
+  /** 'payment' for one-off payments (a gift, a day pass); 'subscription' for Pro. */
+  mode?: string;
+  payment_status?: string;
+  metadata?: Record<string, string> | null;
 }
 
 /** The real client satisfies this; tests pass a fake that never calls Stripe. */
@@ -118,10 +126,23 @@ export interface SubscriptionView {
   manageable: boolean;
 }
 
+/** Pro from something other than your own subscription. */
+export interface ProGrant {
+  via: 'gift' | 'duo';
+  /** When it ends: a gift's year; null while a Duo subscriber keeps paying. */
+  endsAt: string | null;
+  /** Whose Duo it is. */
+  from: string | null;
+}
+
 export interface PlanView {
   plan: PlanId;
   limits: PlanLimits;
   subscription: SubscriptionView | null;
+  /** Your own subscription is a Duo, so you can add one more person. */
+  duo: boolean;
+  /** Pro through a gift or someone's Duo, when your own subscription isn't what makes you Pro. */
+  grant: ProGrant | null;
 }
 
 interface SubscriptionRow {
@@ -131,6 +152,7 @@ interface SubscriptionRow {
   interval: string | null;
   currency: string | null;
   amount_minor: number | null;
+  price_lookup_key: string | null;
   current_period_end: string | null;
   cancel_at: string | null;
   cancel_at_period_end: number;
@@ -146,10 +168,15 @@ export interface BillingOptions {
   stripe: StripeApi | null;
   webhookSecret: string | null;
   now: () => Date;
+  /** Pro that isn't a subscription of your own (perks.ts: gifts and Duo). */
+  grantFor?: (userId: string) => ProGrant | null;
+  /** A one-off payment went through (a gift, a day pass): perks.ts fulfils it, once. */
+  onPaid?: (session: StripeCheckoutSession) => void;
 }
 
 export class Billing {
-  private priceCache: { at: number; prices: Array<ProPrice & { id: string }> } | null = null;
+  private priceCache: { at: number; prices: Array<ProPrice & { id: string; plan: 'pro' | 'duo' }> } | null = null;
+  private giftCache: { at: number; prices: Array<GiftPrice & { id: string }> } | null = null;
   private portalConfig: { id: string | null } | null = null;
 
   constructor(
@@ -175,39 +202,78 @@ export class Billing {
    * The prices on sale, read from Stripe by lookup key. Without Stripe, the
    * planned prices, marked as not on sale.
    */
-  async prices(): Promise<{ available: boolean; prices: ProPrice[] }> {
-    if (!this.enabled) return { available: false, prices: PRO_PRICES };
+  async prices(): Promise<{ available: boolean; prices: ProPrice[]; duo: ProPrice[]; gifts: GiftPrice[] }> {
+    if (!this.enabled) return { available: false, prices: PRO_PRICES, duo: DUO_PRICES, gifts: GIFT_PRICES };
     const live = await this.stripePrices();
-    return { available: live.length > 0, prices: live.map(({ id: _id, ...price }) => price) };
+    const strip = ({ id: _id, plan: _plan, ...price }: ProPrice & { id: string; plan: string }) => price;
+    return {
+      available: live.some((price) => price.plan === 'pro'),
+      prices: live.filter((price) => price.plan === 'pro').map(strip),
+      duo: live.filter((price) => price.plan === 'duo').map(strip),
+      gifts: (await this.giftPrices()).map(({ id: _id, ...price }) => price),
+    };
   }
 
-  private async stripePrices(): Promise<Array<ProPrice & { id: string }>> {
+  private async stripePrices(): Promise<Array<ProPrice & { id: string; plan: 'pro' | 'duo' }>> {
     const now = this.options.now().getTime();
     if (this.priceCache && now - this.priceCache.at < PRICE_CACHE_MS) return this.priceCache.prices;
-    const listed = await this.stripe.prices.list({ lookup_keys: PRO_PRICES.map((price) => price.lookupKey), active: true, limit: 10 });
-    const prices = listed.data.flatMap((price): Array<ProPrice & { id: string }> => {
-      const planned = PRO_PRICES.find((item) => item.lookupKey === price.lookup_key);
+    const planned = [...PRO_PRICES, ...DUO_PRICES];
+    const listed = await this.stripe.prices.list({ lookup_keys: planned.map((price) => price.lookupKey), active: true, limit: 20 });
+    const prices = listed.data.flatMap((price): Array<ProPrice & { id: string; plan: 'pro' | 'duo' }> => {
+      const known = planned.find((item) => item.lookupKey === price.lookup_key);
       const interval = price.recurring?.interval;
       const currency = price.currency;
-      if (!planned || price.unit_amount === null) return [];
+      if (!known || price.unit_amount === null) return [];
       if ((interval !== 'month' && interval !== 'year') || (currency !== 'aud' && currency !== 'usd')) return [];
-      return [{ id: price.id, lookupKey: planned.lookupKey, interval, currency, amountMinor: price.unit_amount }];
+      return [{ id: price.id, lookupKey: known.lookupKey, interval, currency, amountMinor: price.unit_amount, plan: isDuoLookupKey(known.lookupKey) ? 'duo' : 'pro' }];
     });
     this.priceCache = { at: now, prices };
     return prices;
   }
 
+  /** Gift Pro's one-off prices, read from Stripe by lookup key. */
+  private async giftPrices(): Promise<Array<GiftPrice & { id: string }>> {
+    const now = this.options.now().getTime();
+    if (this.giftCache && now - this.giftCache.at < PRICE_CACHE_MS) return this.giftCache.prices;
+    const listed = await this.stripe.prices.list({ lookup_keys: GIFT_PRICES.map((price) => price.lookupKey), active: true, limit: 10 });
+    const prices = listed.data.flatMap((price): Array<GiftPrice & { id: string }> => {
+      const known = GIFT_PRICES.find((item) => item.lookupKey === price.lookup_key);
+      if (!known || price.unit_amount === null || price.recurring !== null || (price.currency !== 'aud' && price.currency !== 'usd')) return [];
+      return [{ id: price.id, lookupKey: known.lookupKey, currency: price.currency, amountMinor: price.unit_amount }];
+    });
+    this.giftCache = { at: now, prices };
+    return prices;
+  }
+
   // --- Who is Pro --------------------------------------------------------------------
 
-  planFor(userId: string): PlanView {
+  /** The subscription that makes this account Pro, if one does (not gifts or a Duo). */
+  private currentSubscription(userId: string): { row: SubscriptionRow | null; shown: SubscriptionRow | null } {
     const rows = this.db
       .prepare('select * from subscriptions where user_id = ? order by updated_at desc')
       .all(userId) as unknown as SubscriptionRow[];
     const now = this.options.now().getTime();
     const current = rows.find((row) => isProStatus(row.status) && !this.endedLocally(row, now)) ?? null;
-    const shown = current ?? rows[0] ?? null;
-    const plan: PlanId = current ? 'pro' : 'free';
-    return { plan, limits: LIMITS[plan], subscription: shown ? this.view(shown, this.customerIdFor(userId) !== null) : null };
+    return { row: current, shown: current ?? rows[0] ?? null };
+  }
+
+  /** Pro by a subscription of your own; and whether it's a Duo. */
+  subscribed(userId: string): { pro: boolean; duo: boolean } {
+    const { row } = this.currentSubscription(userId);
+    return { pro: row !== null, duo: row !== null && isDuoLookupKey(row.price_lookup_key) };
+  }
+
+  planFor(userId: string): PlanView {
+    const { row, shown } = this.currentSubscription(userId);
+    const grant = row ? null : (this.options.grantFor?.(userId) ?? null);
+    const plan: PlanId = row || grant ? 'pro' : 'free';
+    return {
+      plan,
+      limits: LIMITS[plan],
+      subscription: shown ? this.view(shown, this.customerIdFor(userId) !== null) : null,
+      duo: this.subscribed(userId).duo,
+      grant,
+    };
   }
 
   isPro(userId: string): boolean {
@@ -238,11 +304,12 @@ export class Billing {
 
   async checkout(
     account: { id: string; email: string; display_name: string },
-    choice: { interval: BillingInterval; currency: BillingCurrency },
+    choice: { interval: BillingInterval; currency: BillingCurrency; plan?: 'pro' | 'duo' },
     urls: { success: string; cancel: string; terms?: string; refunds?: string },
   ): Promise<string> {
-    if (this.isPro(account.id)) throw new BillingError(409, 'You already have GymGO Pro.', 'already_pro');
-    const price = (await this.stripePrices()).find((item) => item.interval === choice.interval && item.currency === choice.currency);
+    if (this.subscribed(account.id).pro) throw new BillingError(409, 'You already have GymGO Pro.', 'already_pro');
+    const plan = choice.plan ?? 'pro';
+    const price = (await this.stripePrices()).find((item) => item.plan === plan && item.interval === choice.interval && item.currency === choice.currency);
     if (!price) throw new BillingError(503, 'That price isn’t on sale yet. Run the Stripe setup (see README).', 'price_missing');
     const customer = await this.customerFor(account);
     const session = await this.stripe.checkout.sessions.create({
@@ -267,6 +334,46 @@ export class Billing {
     });
     if (!session.url) throw new BillingError(502, 'Stripe didn’t return a checkout page. Try again.');
     return session.url;
+  }
+
+  /**
+   * A one-off payment through Stripe Checkout: a gift, or a day pass with
+   * its booking fee as its own line. Fulfilled when Stripe says it's paid
+   * (onPaid), never on the way out to Stripe.
+   */
+  async payOnce(
+    account: { id: string; email: string; display_name: string },
+    items: Array<{ price: string } | { name: string; amountMinor: number; currency: BillingCurrency }>,
+    metadata: Record<string, string>,
+    urls: { success: string; cancel: string; terms?: string; refunds?: string },
+  ): Promise<{ id: string; url: string }> {
+    const customer = await this.customerFor(account);
+    const session = await this.stripe.checkout.sessions.create({
+      mode: 'payment',
+      customer,
+      client_reference_id: account.id,
+      line_items: items.map((item) =>
+        'price' in item
+          ? { price: item.price, quantity: 1 }
+          : { quantity: 1, price_data: { currency: item.currency, unit_amount: item.amountMinor, product_data: { name: item.name } } },
+      ),
+      success_url: urls.success,
+      cancel_url: urls.cancel,
+      metadata: { ...metadata, gymgo_account_id: account.id },
+      payment_intent_data: { metadata: { ...metadata, gymgo_account_id: account.id } },
+      ...(urls.terms && urls.refunds
+        ? { custom_text: { submit: { message: `By paying you agree to GymGO’s Terms of Service (${urls.terms}) and its Refunds and Cancelling policy (${urls.refunds}).` } } }
+        : {}),
+    });
+    if (!session.url) throw new BillingError(502, 'Stripe didn’t return a checkout page. Try again.');
+    return { id: session.id, url: session.url };
+  }
+
+  /** Gift Pro's price id for a currency, or a 503 when it isn't on sale. */
+  async giftPriceId(currency: BillingCurrency): Promise<{ id: string; amountMinor: number }> {
+    const price = (await this.giftPrices()).find((item) => item.currency === currency);
+    if (!price) throw new BillingError(503, 'Gift Pro isn’t on sale yet. Run the Stripe setup (see README).', 'price_missing');
+    return { id: price.id, amountMinor: price.amountMinor };
   }
 
   async portal(account: { id: string }, returnUrl: string): Promise<string> {
@@ -341,6 +448,10 @@ export class Billing {
   /** After paying: ask Stripe about that checkout and record the subscription. */
   async syncCheckoutSession(sessionId: string): Promise<void> {
     const session = await this.stripe.checkout.sessions.retrieve(sessionId);
+    if (session.mode === 'payment') {
+      if (session.payment_status === 'paid') this.options.onPaid?.(session);
+      return;
+    }
     const userId = this.linkCustomer(idOf(session.customer), session.client_reference_id);
     const subscriptionId = idOf(session.subscription);
     if (!userId || !subscriptionId) return;
@@ -424,6 +535,12 @@ export class Billing {
 
   private async apply(event: { type: string; data: { object: Record<string, unknown> } }): Promise<void> {
     const object = event.data.object;
+    if ((event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') && object.mode === 'payment') {
+      // Re-read from Stripe rather than trusting the event's copy.
+      const session = await this.stripe.checkout.sessions.retrieve(String(object.id));
+      if (session.payment_status === 'paid') this.options.onPaid?.(session);
+      return;
+    }
     if (event.type === 'checkout.session.completed') {
       const userId = this.linkCustomer(idOf(object.customer as Expandable), object.client_reference_id as string | null);
       const subscriptionId = idOf(object.subscription as Expandable);

@@ -42,9 +42,23 @@ async function visit(url: string, back: string): Promise<PurchaseOutcome> {
   return checkout === 'cancelled' ? 'cancelled' : 'done';
 }
 
-export async function startCheckout(token: string, interval: BillingInterval, currency: BillingCurrency): Promise<PurchaseOutcome> {
+export async function startCheckout(token: string, interval: BillingInterval, currency: BillingCurrency, plan: 'pro' | 'duo' = 'pro'): Promise<PurchaseOutcome> {
   const back = returnUrl('pro');
-  const { url } = await api.checkout(token, { interval, currency, returnUrl: back });
+  const { url } = await api.checkout(token, { interval, currency, returnUrl: back, plan });
+  return visit(url, back);
+}
+
+/** A year of Pro as a gift code: paid once at Stripe. */
+export async function startGift(token: string, currency: BillingCurrency): Promise<PurchaseOutcome> {
+  const back = returnUrl('pro');
+  const { url } = await api.giftCheckout(token, { currency, returnUrl: back });
+  return visit(url, back);
+}
+
+/** A partner day pass for a day, paid at Stripe; back to the gym's page. */
+export async function startPassBooking(token: string, passId: string, forDate: string, gymId: string): Promise<PurchaseOutcome> {
+  const back = returnUrl(`gym/${encodeURIComponent(gymId)}`);
+  const { url } = await api.bookPass(token, passId, { forDate, returnUrl: back });
   return visit(url, back);
 }
 

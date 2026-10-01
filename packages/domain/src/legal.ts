@@ -157,6 +157,14 @@ function terms(op: LegalOperator): LegalSection[] {
             'Refunds work as [Refunds and Cancelling](refunds) explains.',
           ],
         },
+        'Pro Duo is the same subscription for two: you, and one more person you add by their friend code. Only Pro is shared, nothing else; they keep Pro while your Duo lasts, and either of you can end it.',
+        'A gift of Pro is paid once and gives a code for a year of Pro, starting when it’s redeemed. It doesn’t renew. Keep the code safe: whoever enters it first gets the year.',
+      ],
+    },
+    {
+      heading: 'Day passes',
+      blocks: [
+        'Where GymGO has an agreement with a gym, you may be able to buy a day pass through GymGO. The pass price and GymGO’s booking fee are shown apart, tax included, before you pay. The gym provides the visit and its own rules apply, as if you’d paid at reception (an induction, ID, its hours); GymGO takes the booking and the payment.',
       ],
     },
     {
@@ -252,6 +260,7 @@ function privacy(op: LegalOperator): LegalSection[] {
             'sign-ins, as tokens kept only as hashes, which expire after 30 days;',
             'what you add: saved gyms, your collection, workouts, your training log, reviews, photos (with their location data removed), and your reports of prices, visits, machines, closures and how busy a gym is;',
             'how busy you said a gym was, kept for a day; and if you claim a gym, your role there, the contact you gave and how to check it, which only GymGO’s admins see, and anything you send as its owner;',
+            'gift codes you buy and whether they’ve been used, a gifted year you redeem, who’s on your Duo (or whose you’re on), and day passes you book (the gym, the day and what you paid);',
             'your friend code, who you’re friends with or have asked, the invites to train you send and receive (the gym, the time and any note), and whether you’ve joined the public leaderboard. Trips stay on your device;',
             'bug reports and copyright notices you send, with the details the form lists, and a reply address if you give one.',
           ],
@@ -372,6 +381,8 @@ function refunds(op: LegalOperator): LegalSection[] {
             'Monthly renewals aren’t refunded once they’re charged, but you can cancel at any time so the next one isn’t.',
             'If GymGO Pro doesn’t work as it should and we can’t fix it, or we charged you by mistake, we’ll refund you whenever it happened.',
             'If we close your account for a reason other than you breaking the [Terms of Service](terms), or stop GymGO, we’ll refund the time you’ve paid for and can’t use.',
+            'A gift of Pro: we’ll refund it in full if you ask within 14 days of buying it and nobody has used the code. Once it’s been redeemed, the year belongs to whoever redeemed it.',
+            'A day pass: cancel up to the day before for a full refund, booking fee included. On the day, or if you didn’t go, it isn’t refunded, unless the gym couldn’t let you in, in which case it all is.',
           ],
         },
         'None of this limits your rights under the Australian Consumer Law or the consumer law where you live, which give you a remedy when a service has a major problem.',

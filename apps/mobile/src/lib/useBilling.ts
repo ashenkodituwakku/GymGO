@@ -7,7 +7,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LIMITS, PRO_PRICES, type PlanId, type ProPrice } from '@gymgo/domain';
+import { DUO_PRICES, GIFT_PRICES, LIMITS, PRO_PRICES, type BillingCurrency, type PlanId, type ProPrice } from '@gymgo/domain';
 import { useCallback, useEffect, useState } from 'react';
 import { api, type BillingState } from './api';
 import type { AccountApi } from './useAccount';
@@ -22,7 +22,12 @@ const PLAN_KEY = 'gymgo.plan.v1';
 export type Sale = 'asking' | 'unreachable' | 'on' | 'off';
 
 export function useBilling(account: AccountApi) {
-  const [offer, setOffer] = useState<{ sale: Sale; prices: ProPrice[] }>({ sale: 'asking', prices: PRO_PRICES });
+  const [offer, setOffer] = useState<{ sale: Sale; prices: ProPrice[]; duo: ProPrice[]; gifts: Array<{ currency: BillingCurrency; amountMinor: number }> }>({
+    sale: 'asking',
+    prices: PRO_PRICES,
+    duo: DUO_PRICES,
+    gifts: GIFT_PRICES,
+  });
   const [state, setState] = useState<BillingState | null>(null);
   const [remembered, setRemembered] = useState<PlanId>('free');
   const token = account.token;
@@ -32,7 +37,7 @@ export function useBilling(account: AccountApi) {
     setOffer((current) => (current.sale === 'unreachable' ? { ...current, sale: 'asking' } : current));
     api
       .billingPlans()
-      .then((result) => setOffer({ sale: result.available ? 'on' : 'off', prices: result.prices }))
+      .then((result) => setOffer({ sale: result.available ? 'on' : 'off', prices: result.prices, duo: result.duo ?? [], gifts: result.gifts ?? [] }))
       .catch(() => setOffer((current) => (current.sale === 'asking' ? { ...current, sale: 'unreachable' } : current)));
   }, []);
 
@@ -82,6 +87,13 @@ export function useBilling(account: AccountApi) {
     sale: offer.sale,
     askSale,
     prices: offer.prices,
+    /** Duo's prices, and a gift year's (empty when the server doesn't sell them). */
+    duoPrices: offer.duo,
+    giftPrices: offer.gifts,
+    /** Your own subscription is a Duo. */
+    duo: state?.duo === true,
+    /** Pro through a gift or someone's Duo. */
+    grant: state?.grant ?? null,
     refresh,
   };
 }

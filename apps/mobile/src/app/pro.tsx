@@ -22,7 +22,8 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
-import { PrimaryButton, Txt } from '@/components/ui';
+import { PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtras';
 import { useApp, type ProReason } from '@/lib/app-state';
 import type { Sale } from '@/lib/useBilling';
 import { ApiError, OfflineError } from '@/lib/api';
@@ -73,6 +74,8 @@ export default function ProScreen() {
   const router = useRouter();
   const { account, billing, filters, prefs } = useApp();
   const [interval, setInterval] = useState<BillingInterval>('year');
+  // Pro for you alone, or Duo: you and one more person.
+  const [plan, setPlan] = useState<'pro' | 'duo'>('pro');
   // Pro is sold in A$ and US$: A$ for Australia and New Zealand, US$ for
   // everyone else. From the country you chose, or where you're looking.
   const home = prefs.country ?? filters.countryCode;
@@ -106,8 +109,10 @@ export default function ProScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const monthly = proPrice('month', currency, billing.prices);
-  const yearly = proPrice('year', currency, billing.prices);
+  const duoOnSale = billing.duoPrices.some((price) => price.currency === currency);
+  const list = plan === 'duo' && duoOnSale ? billing.duoPrices : billing.prices;
+  const monthly = proPrice('month', currency, list);
+  const yearly = proPrice('year', currency, list);
   const saving = monthly && yearly ? annualSaving(monthly.amountMinor, yearly.amountMinor) : null;
   const chosen = interval === 'year' ? yearly : monthly;
 
@@ -118,7 +123,7 @@ export default function ProScreen() {
     setBusy(true);
     setProblem(null);
     try {
-      const outcome = await startCheckout(token, interval, currency);
+      const outcome = await startCheckout(token, interval, currency, plan === 'duo' && duoOnSale ? 'duo' : 'pro');
       if (outcome === 'left') return; // The browser is on its way to Stripe.
       const next = await billing.refresh(true);
       if (next?.plan === 'pro') {
@@ -181,9 +186,9 @@ export default function ProScreen() {
           <View style={[styles.card, styles.onPro]}>
             <Txt variant="title2">{welcome ? 'Welcome to Pro' : 'You’re on Pro'}</Txt>
             <Txt variant="subhead" color={color.labelSecondary}>
-              {describeSubscription(billing.subscription)}
+              {billing.grant ? grantLine(billing.grant) : `${billing.duo ? 'Duo: you and one more person. ' : ''}${describeSubscription(billing.subscription)}`}
             </Txt>
-            {billing.subscription?.manageable === false ? null : CAN_BUY_HERE ? (
+            {billing.grant ? null : billing.subscription?.manageable === false ? null : CAN_BUY_HERE ? (
               <PrimaryButton label={busy ? 'Opening Stripe…' : 'Manage subscription'} tone="quiet" disabled={busy} onPress={() => void manage()} />
             ) : (
               <Txt variant="footnote" color={color.labelSecondary}>
@@ -192,6 +197,8 @@ export default function ProScreen() {
             )}
           </View>
         )}
+
+        {signedIn && <DuoPartner token={token!} />}
 
         {/* Free vs Pro ------------------------------------------------------------ */}
         <View style={styles.card}>
@@ -225,6 +232,21 @@ export default function ProScreen() {
         {/* The plans ---------------------------------------------------------------- */}
         {!billing.isPro && (
           <>
+            {duoOnSale && (
+              <Segmented
+                options={[
+                  { value: 'pro', label: 'Just me' },
+                  { value: 'duo', label: 'Duo: you + 1' },
+                ]}
+                value={plan}
+                onChange={setPlan}
+              />
+            )}
+            {plan === 'duo' && duoOnSale && (
+              <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+                One subscription, two people: add one more person by their friend code after you subscribe. Only Pro is shared, nothing else.
+              </Txt>
+            )}
             <View style={styles.plans} accessibilityRole="radiogroup">
               {yearly && (
                 <PlanOption
@@ -263,7 +285,7 @@ export default function ProScreen() {
               sale={billing.sale}
               onAskAgain={billing.askSale}
               busy={busy}
-              label={chosen ? `Subscribe · ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}` : 'Subscribe'}
+              label={chosen ? `Subscribe${plan === 'duo' && duoOnSale ? ' to Duo' : ''} · ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}` : 'Subscribe'}
               renewal={
                 chosen
                   ? `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; Pro stays on to the end of the ${interval} you’ve paid for. Tapping Subscribe agrees to these renewal terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
@@ -274,6 +296,9 @@ export default function ProScreen() {
             />
           </>
         )}
+
+        {(!billing.isPro || billing.grant?.via === 'gift') && <RedeemGift token={signedIn ? token : null} billing={billing} onSignIn={() => router.push('/sign-in')} />}
+        <GiftPro token={signedIn ? token : null} billing={billing} currency={currency} onSignIn={() => router.push('/sign-in')} />
 
         {problem && (
           <View style={styles.problem}>
@@ -300,7 +325,7 @@ export default function ProScreen() {
           variant="caption"
           tint={color.labelSecondary}
           style={styles.fine}
-          text="Prices include tax. Pro renews automatically until you cancel. Cancel any time from Profile → Manage subscription, and you keep Pro until the end of what you’ve paid for. Changed your mind? Ask within 14 days of your first payment, or of a yearly renewal, for a full refund. If Pro ends, nothing you saved is deleted; you just can’t add more than Free allows. Payments are handled by Stripe: GymGO never sees your card, and Stripe gets your name and email for the receipt. [Terms of Service](terms) · [Refunds and Cancelling](refunds) · [Privacy Policy](privacy)"
+          text="Prices include tax. Pro and Duo renew automatically until you cancel; a gift year is paid once and doesn't renew. Cancel any time from Profile → Manage subscription, and you keep Pro until the end of what you’ve paid for. Changed your mind? Ask within 14 days of your first payment, or of a yearly renewal, for a full refund. If Pro ends, nothing you saved is deleted; you just can’t add more than Free allows. Payments are handled by Stripe: GymGO never sees your card, and Stripe gets your name and email for the receipt. [Terms of Service](terms) · [Refunds and Cancelling](refunds) · [Privacy Policy](privacy)"
         />
       </PageScroll>
     </>

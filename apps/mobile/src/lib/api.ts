@@ -404,6 +404,42 @@ export interface BillingState {
   subscription: SubscriptionInfo | null;
   /** Payments are connected on the server. */
   available: boolean;
+  /** Your own subscription is a Duo (missing from older servers). */
+  duo?: boolean;
+  /** Pro through a gift or someone's Duo. */
+  grant?: { via: 'gift' | 'duo'; endsAt: string | null; from: string | null } | null;
+}
+
+export interface DuoState {
+  role: 'owner' | 'member' | null;
+  partner: { displayName: string } | null;
+  canAdd: boolean;
+}
+
+export interface GiftBought {
+  code: string;
+  createdAt: string;
+  redeemed: boolean;
+  redeemedAt: string | null;
+}
+
+export interface PartnerPass {
+  id: string;
+  gymId: string;
+  label: string;
+  priceMinor: number;
+  feeMinor: number;
+  currency: BillingCurrency;
+}
+
+export interface PassBooking {
+  id: string;
+  gymId: string;
+  label: string;
+  forDate: string;
+  code: string;
+  totalMinor: number;
+  currency: BillingCurrency;
 }
 
 /** A plan kept in the account, as it was when saved. */
@@ -529,11 +565,25 @@ export const api = {
   moderatePhoto: (token: string, photoId: string, body: { decision: 'publish' | 'reject'; reason?: string }) =>
     request<unknown>('POST', `/api/moderation/photos/${encodeURIComponent(photoId)}`, { token, body }),
 
-  billingPlans: () => request<{ available: boolean; prices: ProPrice[]; limits: Record<PlanId, PlanLimits> }>('GET', '/api/billing/plans'),
+  billingPlans: () =>
+    request<{ available: boolean; prices: ProPrice[]; duo?: ProPrice[]; gifts?: Array<{ currency: BillingCurrency; amountMinor: number }>; limits: Record<PlanId, PlanLimits> }>(
+      'GET',
+      '/api/billing/plans',
+    ),
   billing: (token: string) => request<BillingState>('GET', '/api/billing', { token }),
   syncBilling: (token: string) => request<BillingState>('POST', '/api/billing/sync', { token }),
-  checkout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string }) =>
+  checkout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string; plan?: 'pro' | 'duo' }) =>
     request<{ url: string }>('POST', '/api/billing/checkout', { token, body }),
+  giftCheckout: (token: string, body: { currency: BillingCurrency; returnUrl: string }) => request<{ url: string }>('POST', '/api/billing/gift', { token, body }),
+  giftsBought: (token: string) => request<{ gifts: GiftBought[] }>('GET', '/api/billing/gifts', { token }),
+  redeemGift: (token: string, code: string) => request<BillingState>('POST', '/api/billing/redeem', { token, body: { code } }),
+  duo: (token: string) => request<DuoState>('GET', '/api/billing/duo', { token }),
+  addToDuo: (token: string, code: string) => request<DuoState>('PUT', '/api/billing/duo', { token, body: { code } }),
+  leaveDuo: (token: string) => request<DuoState>('DELETE', '/api/billing/duo', { token }),
+  gymPasses: (gymId: string) => request<{ passes: PartnerPass[]; available: boolean }>('GET', `/api/gyms/${encodeURIComponent(gymId)}/passes`),
+  bookPass: (token: string, passId: string, body: { forDate: string; returnUrl: string }) =>
+    request<{ url: string }>('POST', `/api/passes/${encodeURIComponent(passId)}/book`, { token, body }),
+  myPasses: (token: string) => request<{ bookings: PassBooking[] }>('GET', '/api/passes/mine', { token }),
   billingPortal: (token: string, returnUrl: string) => request<{ url: string }>('POST', '/api/billing/portal', { token, body: { returnUrl } }),
 
   workouts: (token: string) => request<{ workouts: SavedWorkout[] }>('GET', '/api/workouts', { token }),

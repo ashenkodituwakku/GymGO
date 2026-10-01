@@ -50,8 +50,8 @@ the branch the owner's launcher pulls.
 ## The code
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
-`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 213,
-mobile 267, domain 160 and web 39 tests, all passing.
+`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 216,
+mobile 267, domain 163 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 57, React Native 0.86, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -101,6 +101,9 @@ mobile 267, domain 160 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- Batch E: gift Pro (a code for a year), Pro Duo (a partner by friend
+  code), partner day passes (mechanics only; none listed). Stripe test mode
+  only, against a pretend Stripe.
 - Batch D: "is it busy?" from members there, verified gym owners (claim,
   admin check, moderated updates shown as from the gym), a Moderation screen.
 - Batch C: workout templates, record celebration and card, rest alert when
@@ -130,8 +133,8 @@ an item, `git fetch` and read this list on `origin/claude/friendly-johnson-9rzxr
 skip anything ticked or marked claimed, and mark what you take as claimed
 (push that first) so the other session doesn't build it too.
 
-- Batches C and D are done (session gymgo-82). **Claimed 1 Oct by session
-  gymgo-82: Batch E (money).** Check before starting anything else.
+- All five batches are done (B's sets by the other session, the rest by
+  gymgo-82). Nothing is claimed now.
 
 **Batch A: search**
 - [x] Open late (after 10 pm) and 24-hour quick filters, from published
@@ -170,7 +173,7 @@ skip anything ticked or marked claimed, and mark what you take as claimed
       `src/components/Moderation.tsx`; count on Profile).
 
 **Batch E: money** (Stripe test mode; nothing live without the owner)
-- [ ] Gift Pro: a one-off payment gives a code, which redeems a year of Pro.
-- [ ] Duo Pro: share Pro with one more account.
-- [ ] Partner day passes: discounted passes booked through Stripe with a
-      fee. The mechanics only; real gym agreements are the owner's to make.
+- [x] Gift Pro (server `perks.ts`, domain `perks.ts`, app `ProExtras.tsx`).
+- [x] Duo Pro (same files; a Duo price in Stripe, a partner by friend code).
+- [x] Partner day passes, mechanics only (`DayPass.tsx`; admins add passes).
+      No gym has one: agreements are the owner's to make.

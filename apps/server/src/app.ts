@@ -61,6 +61,17 @@
  *   GET    /api/billing                   your plan (Free or Pro) and subscription
  *   POST   /api/billing/checkout          { interval, currency, returnUrl } -> { url } of Stripe Checkout
  *   POST   /api/billing/portal            { returnUrl } -> { url } of Stripe's page to manage or cancel
+ *   POST   /api/billing/gift              { currency, returnUrl } -> { url } of Stripe Checkout for a year of Pro as a gift code
+ *   GET    /api/billing/gifts             the gift codes you bought, and whether they've been used
+ *   POST   /api/billing/redeem            { code } -> a year of Pro (after any gift still running); your plan
+ *   GET    /api/billing/duo               your Duo: who's on it, and whether you can add someone
+ *   PUT    /api/billing/duo               Duo subscribers: { code } (their friend code) -> adds or swaps your one more person
+ *   DELETE /api/billing/duo               take your person off, or leave someone's Duo
+ *   GET    /api/gyms/:gymId/passes        day passes GymGO has agreed with the gym (none until the owner adds one)
+ *   POST   /api/passes/:id/book           { forDate, returnUrl } -> { url } of Stripe Checkout: the pass and GymGO's fee
+ *   GET    /api/passes/mine               your paid day passes, with the code to show
+ *   POST   /api/admin/passes              admins: { gymId, label, priceMinor, feeMinor, currency } -> a partner day pass
+ *   DELETE /api/admin/passes/:id          admins: take a pass off sale
  *   POST   /api/billing/sync              re-read your subscription from Stripe
  *   GET    /api/billing/return            where Stripe sends people back to; forwards them into the app
  *   POST   /api/billing/webhook           Stripe's events (signature checked)
@@ -187,6 +198,7 @@ import { IdentityError, IdentityVerifier, label, type Provider, type VerifiedIde
 import { BugReportError, BugReports, cleanBugReport } from './bugReports';
 import { Social, SocialError } from './social';
 import { OwnerError, Owners } from './owners';
+import { PerkError, Perks } from './perks';
 import type { SendMail } from './mail';
 
 export interface AppOptions {
@@ -540,6 +552,8 @@ export function createApp(options: AppOptions) {
   const friendLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
   // How busy a gym is: a few gyms a day, a few times each.
   const busyLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
+  // Gift codes: enough for real use, too few to guess one.
+  const redeemLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   const priceLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   const accessLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   const statusLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
@@ -583,7 +597,7 @@ export function createApp(options: AppOptions) {
   // rate-limit keys (addresses among them) whose window has passed.
   const limiters = [
     loginLimiter, accountLoginLimiter, forgotLimiter, forgotEmailLimiter, resetLimiter, signupLimiter, photoLimiter, avatarLimiter,
-    equipmentLimiter, friendLimiter, busyLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter,
+    equipmentLimiter, friendLimiter, busyLimiter, redeemLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter,
   ];
   /** How busy a gym is matters for an hour; a member's report is kept a day at most. */
   const forgetOldBusy = (at: Date) => db.prepare('delete from busy_reports where reported_at < ?').run(new Date(at.getTime() - BUSY_KEEP_MS).toISOString());
@@ -621,11 +635,15 @@ export function createApp(options: AppOptions) {
       created_at: string;
     }>;
 
+  const perks = new Perks(db, now);
   const billing = new Billing(db, {
     stripe: options.billing?.stripe ?? null,
     webhookSecret: options.billing?.webhookSecret ?? null,
     now,
+    grantFor: (userId) => perks.grantFor(userId),
+    onPaid: (session) => perks.fulfil(session),
   });
+  perks.attach(billing);
 
   /**
    * How the caller reached this server, for the page Stripe sends people
@@ -800,8 +818,8 @@ export function createApp(options: AppOptions) {
     }
 
     if (method === 'GET' && path === '/api/billing/plans') {
-      const { available, prices } = await billing.prices();
-      return send(res, 200, { available, prices, limits: LIMITS });
+      const { available, prices, duo, gifts } = await billing.prices();
+      return send(res, 200, { available, prices, duo, gifts, limits: LIMITS });
     }
 
     if (method === 'GET' && path === '/api/billing/return') {
@@ -839,11 +857,12 @@ export function createApp(options: AppOptions) {
       const currency = body.currency;
       if (interval !== 'month' && interval !== 'year') throw new HttpError(400, 'Choose monthly or yearly.');
       if (currency !== 'aud' && currency !== 'usd') throw new HttpError(400, 'Choose A$ or US$.');
+      const plan = body.plan === 'duo' ? 'duo' : 'pro';
       const returnUrl = returnUrlFrom(body.returnUrl);
       const back = `${publicBase(req)}/api/billing/return?to=${encodeURIComponent(returnUrl)}`;
       const checkoutUrl = await billing.checkout(
         account,
-        { interval: interval as BillingInterval, currency: currency as BillingCurrency },
+        { interval: interval as BillingInterval, currency: currency as BillingCurrency, plan },
         // Stripe fills in {CHECKOUT_SESSION_ID} itself; it must stay unencoded.
         {
           success: `${back}&result=success&session_id={CHECKOUT_SESSION_ID}`,
@@ -853,6 +872,71 @@ export function createApp(options: AppOptions) {
         },
       );
       return send(res, 200, { url: checkoutUrl });
+    }
+
+    // --- Gift Pro, Duo and day passes (perks.ts) ------------------------------------
+    if ((parts[0] === 'api' && parts[1] === 'billing' && (parts[2] === 'gift' || parts[2] === 'gifts' || parts[2] === 'redeem' || parts[2] === 'duo')) || (parts[0] === 'api' && (parts[1] === 'passes' || (parts[1] === 'admin' && parts[2] === 'passes')))) {
+      const { account, user } = requireAccount(req);
+      const payBack = (returnUrl: string) => {
+        const back = `${publicBase(req)}/api/billing/return?to=${encodeURIComponent(returnUrl)}`;
+        return { success: `${back}&result=success&session_id={CHECKOUT_SESSION_ID}`, cancel: `${back}&result=cancelled`, terms: `${publicBase(req)}/terms`, refunds: `${publicBase(req)}/refunds` };
+      };
+      try {
+        if (path === '/api/billing/gift' && method === 'POST') {
+          const body = (await readJson(req)) as Record<string, unknown>;
+          const currency = body.currency;
+          if (currency !== 'aud' && currency !== 'usd') throw new HttpError(400, 'Choose A$ or US$.');
+          const price = await billing.giftPriceId(currency);
+          const checkout = await billing.payOnce(account, [{ price: price.id }], { gymgo_kind: 'gift', gymgo_currency: currency }, payBack(returnUrlFrom(body.returnUrl)));
+          return send(res, 200, { url: checkout.url });
+        }
+        if (path === '/api/billing/gifts' && method === 'GET') return send(res, 200, { gifts: perks.giftsBoughtBy(account.id) });
+        if (path === '/api/billing/redeem' && method === 'POST') {
+          if (!redeemLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That’s a lot of codes for one day. Try again tomorrow.');
+          const body = (await readJson(req)) as Record<string, unknown>;
+          perks.redeem(account.id, typeof body.code === 'string' ? body.code : '');
+          return send(res, 200, { ...billing.planFor(account.id), available: billing.enabled });
+        }
+        if (path === '/api/billing/duo') {
+          if (method === 'GET') return send(res, 200, perks.duoView(account.id));
+          if (method === 'PUT') {
+            if (!friendLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That’s a lot of codes for one day. Try again tomorrow.');
+            const body = (await readJson(req)) as Record<string, unknown>;
+            perks.addToDuo(account.id, typeof body.code === 'string' ? body.code : '');
+            return send(res, 200, perks.duoView(account.id));
+          }
+          if (method === 'DELETE') {
+            perks.leaveDuo(account.id);
+            return send(res, 200, perks.duoView(account.id));
+          }
+        }
+        if (path === '/api/passes/mine' && method === 'GET') return send(res, 200, { bookings: perks.bookingsFor(account.id) });
+        if (parts[1] === 'passes' && parts[3] === 'book' && parts.length === 4 && method === 'POST') {
+          const body = (await readJson(req)) as Record<string, unknown>;
+          const passId = decodeURIComponent(parts[2]!);
+          const gymId = (db.prepare('select gym_id from partner_passes where id = ?').get(passId) as { gym_id: string } | undefined)?.gym_id;
+          const gym = gymId ? gymRecord(db, gymId) : null;
+          return send(res, 200, await perks.bookPass(account, passId, body.forDate, gym?.location.name ?? 'the gym', payBack(returnUrlFrom(body.returnUrl))));
+        }
+        if (parts[1] === 'admin' && parts[2] === 'passes') {
+          // Partner passes are GymGO's agreements with gyms: admins only.
+          if (user.role !== 'admin' || user.blocked) throw new HttpError(403, 'Admins only.');
+          if (parts.length === 3 && method === 'POST') {
+            const body = (await readJson(req)) as Record<string, unknown>;
+            const gymId = typeof body.gymId === 'string' ? body.gymId : '';
+            if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+            return send(res, 201, perks.addPass(account.id, gymId, body));
+          }
+          if (parts.length === 4 && method === 'DELETE') {
+            perks.removePass(decodeURIComponent(parts[3]!));
+            return send(res, 204);
+          }
+        }
+      } catch (error) {
+        if (error instanceof PerkError) throw new HttpError(error.status, error.message);
+        throw error;
+      }
+      throw new HttpError(404, 'Not found.');
     }
 
     if (method === 'POST' && path === '/api/billing/portal') {
@@ -1341,6 +1425,7 @@ export function createApp(options: AppOptions) {
         ).map(({ context_json, ...report }) => ({ ...report, device: JSON.parse(String(context_json)) })),
         ...social.exportFor(id),
         ...owners.exportFor(id),
+        ...perks.exportFor(id),
       });
     }
 
@@ -1852,6 +1937,12 @@ export function createApp(options: AppOptions) {
     // Map data can be years old. Members who went by say it has closed, or
     // that it's still open; the card warns only on their word, labelled as
     // theirs. Six months of reports count.
+    if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'passes' && parts.length === 4) {
+      const gymId = decodeURIComponent(parts[2]!);
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+      return send(res, 200, { passes: perks.passesAt(gymId), available: billing.enabled });
+    }
+
     // --- Verified owners (owners.ts) ---------------------------------------------
     if (parts[0] === 'api' && parts[1] === 'gyms' && (parts[3] === 'owner' || parts[3] === 'claim' || parts[3] === 'owner-updates') && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);

@@ -34,3 +34,4 @@ export * from './cards';
 export * from './social';
 export * from './busy';
 export * from './owner';
+export * from './perks';

@@ -51,7 +51,7 @@ the branch the owner's launcher pulls.
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
 `npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 208,
-mobile 256, domain 154 and web 39 tests, all passing.
+mobile 263, domain 154 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 57, React Native 0.86, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -101,6 +101,8 @@ mobile 256, domain 154 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- Batch C: workout templates, record celebration and card, rest alert when
+  locked, CSV as a real file with the Health explanation.
 - Batch B: collection sets (another session), friends, invites to train,
   leaderboards, share cards as pictures. Card rarity now lives in the
   domain package (`cards.ts`) so the server can show friends' cards.
@@ -126,8 +128,8 @@ an item, `git fetch` and read this list on `origin/claude/friendly-johnson-9rzxr
 skip anything ticked or marked claimed, and mark what you take as claimed
 (push that first) so the other session doesn't build it too.
 
-- **Claimed 1 Oct by session gymgo-82: Batch C (training).** Take Batch D
-  or E instead.
+- Batch C is done (session gymgo-82). **Claimed 1 Oct by session
+  gymgo-82: Batch D (trust).** Take Batch E instead, or check first.
 
 **Batch A: search**
 - [x] Open late (after 10 pm) and 24-hour quick filters, from published
@@ -149,13 +151,13 @@ skip anything ticked or marked claimed, and mark what you take as claimed
       `src/app/card/[id].tsx`, Share card in the new-card pop-up).
 
 **Batch C: training**
-- [ ] Workout templates (PPL, 5×5, beginner full-body) that start a workout.
-- [ ] Personal-record celebration: confetti and a shareable card.
-- [ ] Rest timer alert while the phone is locked (local notification via
-      expo-notifications). Live Activities need a native build, so say so.
-- [ ] Apple Health / Google Fit: need a native build with HealthKit
-      entitlements, which can't run in Expo Go. Offer a CSV export of the
-      log instead and explain.
+- [x] Workout templates (`src/lib/templates.ts`, `src/app/templates.tsx`).
+- [x] Personal-record celebration (`src/components/Celebrate.tsx`,
+      `src/lib/records.ts`; in the workout summary).
+- [x] Rest timer alert while the phone is locked (`src/lib/restAlert.ts`).
+      Live Activities still need a native build.
+- [x] Apple Health / Google Fit: explained on Progress beside the CSV
+      export, which now shares a real file on phones.
 
 **Batch D: trust**
 - [ ] "Is it busy?" member reports, shown only with enough recent reports.

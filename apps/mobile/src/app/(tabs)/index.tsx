@@ -235,6 +235,12 @@ export default function Home() {
         <Icon name="chevron" size={14} color={color.onBrandSoft} />
       </Pressy>
 
+      <Pressable onPress={() => router.push('/templates')} accessibilityRole="link" hitSlop={6} style={styles.templatesLink}>
+        <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+          Or start a template: push, pull, legs · 5×5 · full body ›
+        </Txt>
+      </Pressable>
+
       {/* A trip under way or coming up, then the two finders --------------- */}
       {trip && (
         <Pressy
@@ -602,6 +608,7 @@ const styles = themed(() => StyleSheet.create({
   },
   tripIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
   finders: { flexDirection: 'row', gap: space[3] },
+  templatesLink: { alignSelf: 'center', marginTop: -space[1] },
   finder: {
     flex: 1,
     minWidth: 0,

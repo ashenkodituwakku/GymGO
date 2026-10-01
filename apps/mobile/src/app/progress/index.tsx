@@ -231,6 +231,12 @@ export default function ProgressScreen() {
           onPress={() => void downloadTrainingCsv(log.sessions).catch(() => undefined)}
         />
       )}
+      {known && log.sessions.length > 0 && (
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.healthNote}>
+          A row for every set, for Excel, Numbers or Google Sheets. Apple Health and Google Fit can only be connected from a version of GymGO built
+          for the App Store or Play Store, which Expo Go can’t run; this file is the way to take your log elsewhere until then.
+        </Txt>
+      )}
     </PageScroll>
   );
 }
@@ -323,6 +329,7 @@ function SessionRow({
 }
 
 const styles = themed(() => StyleSheet.create({
+  healthNote: { paddingHorizontal: space[4], textAlign: 'center' },
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },

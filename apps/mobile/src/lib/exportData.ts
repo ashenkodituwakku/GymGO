@@ -1,10 +1,12 @@
 /**
  * Handing someone their own data as a file: everything GymGO holds about
  * them, or their training log as a spreadsheet. In a browser it downloads;
- * on a phone it opens the share sheet, so it can go to Files, Mail or
- * anywhere else they choose.
+ * on a phone it's written as a file and handed to the share sheet, so it
+ * can go to Files, Mail, Drive or a spreadsheet app.
  */
 
+import { File, Paths } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { Platform, Share } from 'react-native';
 import { api } from './api';
 import { logToCsv } from './insights';
@@ -21,6 +23,19 @@ async function handOver(name: string, text: string, type: string): Promise<void>
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     return;
+  }
+  // A real file where the phone can share one (to Files, Mail, Drive, Numbers); the text itself where it can't.
+  try {
+    if (await Sharing.isAvailableAsync()) {
+      const file = new File(Paths.cache, name);
+      if (file.exists) file.delete();
+      file.create();
+      file.write(text);
+      await Sharing.shareAsync(file.uri, { mimeType: type, dialogTitle: name, UTI: type === 'text/csv' ? 'public.comma-separated-values-text' : 'public.json' });
+      return;
+    }
+  } catch {
+    // Fall back to sharing the text.
   }
   await Share.share({ title: name, message: text });
 }

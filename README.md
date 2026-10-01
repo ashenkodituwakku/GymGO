@@ -329,9 +329,21 @@ tap **Start**. Each exercise shows its sets as rows: type the weight and
 reps and tick the set. Last time's numbers are already filled in as a
 guide, so on a repeat session it's mostly ticking.
 
+**Templates** (Home → "Or start a template", or the Workout screen):
+three well-known plans written out with GymGO's exercises: **Beginner full
+body** (A and B), **5×5 strength** (A and B) and **Push, pull, legs**. Each
+takes turns through its days, so starting one gives you the day after the
+last you logged; any other day can be started too. They're general plans,
+not advice for anyone in particular, and the screen says to start light.
+
 - **Rest timer.** Ticking a set starts the rest the plan calls for (90 s,
   say), in a glass bar at the bottom with −15, +15 and Skip. The phone
-  buzzes when it's up.
+  buzzes when it's up. With the phone locked or GymGO in the background, a
+  notification says "Rest's up" and what's next (the phone asks once
+  whether GymGO may send notifications; it's scheduled on the phone, not
+  sent from a server). Not in a browser, and not a Live Activity on the
+  lock screen: that needs a build made for the App Store, which Expo Go
+  can't run.
 - **The screen stays on** while a workout is open, so the phone doesn't
   lock between sets.
 - **Left open overnight?** If nothing changed for over an hour, the workout
@@ -345,7 +357,15 @@ guide, so on a repeat session it's mostly ticking.
 - **Records.** Finish, and GymGO tells you which records you broke:
   heaviest weight, strongest set (by estimated one-rep max), or most reps on
   a body-weight exercise. Only against your own earlier sessions: the first
-  time you log something is a starting point, not a record.
+  time you log something is a starting point, not a record. A broken record
+  gets confetti (none with Reduce Motion on) and a **record card** to share
+  as a picture: the exercise, the set and the day.
+- **Export your log** (Progress): a CSV with a row for every set, for
+  Excel, Numbers or Google Sheets; on a phone it's a real file for the share
+  sheet. Apple Health and Google Fit can only be connected from a build made
+  for the App Store or Play Store (HealthKit needs its own entitlement),
+  which Expo Go can't run, so the CSV is the way to take your log elsewhere
+  for now.
 - **Progress** (Profile → Progress): weeks in a row you've trained,
   workouts this week, your records for every exercise, and every session,
   each of which you can open or delete.

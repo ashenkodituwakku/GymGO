@@ -7,7 +7,7 @@
 
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { Easing, FadeInDown, FadeOutDown, ReduceMotion, ZoomIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { CURVES, EASE_IN, EASE_OUT, FADE_IN, usePop } from '@/components/motion';
@@ -19,6 +19,10 @@ import { endSession, updateSession, useActiveSession, type ActiveItem } from '@/
 import { ApiError, api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
+import { cancelRestAlert, scheduleRestAlert } from '@/lib/restAlert';
+import { RECORD_WORD, bestRecord, recordLine } from '@/lib/records';
+import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
+import { Confetti, RecordCard } from '@/components/Celebrate';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import {
   clockLabel,
@@ -95,7 +99,7 @@ function NoWorkout({ token }: { token: string | null }) {
         <Icon name="workout" size={34} color={color.brand} />
         <Txt variant="title2">No workout in progress</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          {recent.length > 0 ? 'Start one you saved, or build a new one.' : 'Build one for your gym, or open one you saved, and tap Start.'}
+          {recent.length > 0 ? 'Start one you saved, build a new one, or pick a template.' : 'Build one for your gym, open one you saved, or pick a template (push, pull, legs; 5×5; full body).'}
         </Txt>
       </View>
       {recent.length > 0 && (
@@ -147,6 +151,7 @@ function NoWorkout({ token }: { token: string | null }) {
         tone={recent.length > 0 ? 'quiet' : undefined}
         onPress={() => router.replace({ pathname: '/workout/[id]', params: { id: 'any' } })}
       />
+      <PrimaryButton label="Start from a template" icon="list" tone="quiet" onPress={() => router.push('/templates')} />
     </PageScroll>
   );
 }
@@ -168,6 +173,14 @@ export default function TrainScreen() {
   const [confirmDiscard, setConfirmDiscard] = useState(false);
 
   const restEndsAt = session?.restEndsAt ?? null;
+  // The alert for a locked phone follows the rest: set when it starts or moves, gone when it's skipped or the workout ends.
+  const upNext = session?.items.find((item) => item.sets.some((set) => !set.done))?.exerciseId ?? null;
+  useEffect(() => {
+    if (restEndsAt) void scheduleRestAlert(restEndsAt, upNext ? exerciseName(upNext) : null);
+    else void cancelRestAlert();
+    // Only when the rest itself changes, not with every set typed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restEndsAt]);
   // Stable across renders, so a card only redraws when its own sets change.
   const changeSets = useCallback(
     (index: number, sets: ActiveItem['sets']) =>
@@ -638,8 +651,6 @@ function RestButton({ label, name, onPress, strong = false }: { label: string; n
 
 // --- Done ------------------------------------------------------------------------
 
-const RECORD_WORD: Record<NewRecord['kind'], string> = { heaviest: 'Heaviest yet', e1rm: 'Strongest set yet', reps: 'Most reps yet' };
-
 function Summary({ result, onClose, onProgress }: { result: { session: TrainingSession; records: NewRecord[] }; onClose: () => void; onProgress: () => void }) {
   const { session, records } = result;
   const unit = session.unit;
@@ -649,7 +660,18 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
     const outcome = await shareText(workoutShareText(session, records), session.name);
     setShared(outcome === 'copied' ? 'Copied, ready to paste.' : outcome === 'failed' ? 'Sharing isn’t available here.' : null);
   };
+  const best = bestRecord(records);
+  const card = useRef<View>(null);
+  const [sharingCard, setSharingCard] = useState(false);
+  const shareCard = async () => {
+    if (!best) return;
+    setSharingCard(true);
+    const outcome = await shareViewAsImage(card, { name: `record-${exerciseName(best.exerciseId)}`, title: 'My new personal record' });
+    setSharingCard(false);
+    setShared(imageShareLine(outcome));
+  };
   return (
+    <View style={styles.page}>
     <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.summary]}>
       <Stack.Screen options={{ title: '' }} />
       <Animated.View entering={records.length ? ZoomIn.springify().damping(15).stiffness(220).reduceMotion(ReduceMotion.System) : FADE_IN} style={styles.bigIcon}>
@@ -677,8 +699,21 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
           </View>
         );
       })}
+      {best && (
+        <View style={styles.recordCard}>
+          <RecordCard
+            ref={card}
+            exercise={exerciseName(best.exerciseId)}
+            line={recordLine(session, best)}
+            kind={best.kind}
+            date={session.finishedAt}
+            more={records.length - 1}
+          />
+        </View>
+      )}
       <View style={styles.finish}>
-        <PrimaryButton label="See your progress" icon="chart" onPress={onProgress} />
+        {best && <PrimaryButton label="Share your record" icon="share" busy={sharingCard} onPress={() => void shareCard()} />}
+        <PrimaryButton label="See your progress" icon="chart" tone={best ? 'quiet' : undefined} onPress={onProgress} />
         <PrimaryButton label="Share this workout" icon="share" tone="quiet" onPress={() => void share()} />
         {shared && (
           <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
@@ -688,6 +723,8 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
         <PrimaryButton label="Done" tone="quiet" onPress={onClose} />
       </View>
     </PageScroll>
+    {records.length > 0 && <Confetti />}
+    </View>
   );
 }
 
@@ -734,6 +771,7 @@ const styles = themed(() => StyleSheet.create({
   setButtons: { flexDirection: 'row', gap: space[3], marginTop: space[1] },
   smallButton: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: space[1] },
   finish: { gap: space[2], marginTop: space[3] },
+  recordCard: { marginTop: space[2] },
   restWrap: { position: 'absolute', left: space[4], right: space[4], alignItems: 'center' },
   rest: { width: '100%', maxWidth: 520, borderRadius: radius.xl, overflow: 'hidden' },
   restTrack: { height: 3, backgroundColor: color.fill },

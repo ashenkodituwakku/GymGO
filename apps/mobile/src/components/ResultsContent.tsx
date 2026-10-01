@@ -10,7 +10,7 @@ import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE } from './motion';
-import { explainNoMatches, haversineKm, type GymRecord, type SearchOutcome } from '@gymgo/domain';
+import { HOURS_LABELS, explainNoMatches, haversineKm, type GymRecord, type HoursNeed, type SearchOutcome } from '@gymgo/domain';
 import { countryInSentence, countryName } from '@/lib/country';
 import { suggestGyms } from '@/lib/gymSearch';
 import { cityAt, distanceLabel, localBudget, moneyLabel, placeContext, suggestPlaces, suggestWorldCities, tracksPrices, type AppPlace, type WorldCity } from '@/lib/places';
@@ -43,6 +43,7 @@ export function ResultsContent({
   onPickWorldCity,
   onSubmitSearch,
   onToggleEquipment,
+  onToggleHours,
   onToggleBudget,
   onOpenFilters,
   onSelect,
@@ -74,6 +75,8 @@ export function ResultsContent({
   onPickWorldCity: (city: WorldCity) => void;
   onSubmitSearch: () => void;
   onToggleEquipment: (id: string) => void;
+  /** Open late, or 24 hours: on, off, or switched from one to the other. */
+  onToggleHours: (need: HoursNeed) => void;
   onToggleBudget: () => void;
   onOpenFilters: () => void;
   onSelect: (id: string) => void;
@@ -292,6 +295,8 @@ export function ResultsContent({
             onPress={onToggleBudget}
           />
         )}
+        <Chip label={HOURS_LABELS.late} selected={filters.hours === 'late'} onPress={() => onToggleHours('late')} />
+        <Chip label={HOURS_LABELS.allDay} selected={filters.hours === 'allDay'} onPress={() => onToggleHours('allDay')} />
         <Chip label="Squat rack" selected={filters.equipment.includes('squat_rack')} onPress={() => onToggleEquipment('squat_rack')} />
         <Chip label="Dumbbells" selected={filters.equipment.includes('dumbbells')} onPress={() => onToggleEquipment('dumbbells')} />
         <Chip label="Cables" selected={filters.equipment.includes('cable_station')} onPress={() => onToggleEquipment('cable_station')} />

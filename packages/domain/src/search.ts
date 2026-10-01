@@ -25,6 +25,7 @@ import {
 import { summariseRatings } from './reviews';
 import { haversineKm, isWithinBox, type BoundingBox } from './geo';
 import { zonedTimeToInstant } from './time';
+import { HOURS_LABELS, hoursMeet, type HoursNeed } from './hours';
 import {
   DEFAULT_FRESHNESS_POLICY,
   type AmenityId,
@@ -69,6 +70,8 @@ export interface SearchQuery {
   requiredAmenities: AmenityId[];
   profile: VisitorProfile;
   sort: SortKey;
+  /** Only gyms whose published hours say they're open late, or open 24 hours, on the visit date. */
+  hours?: HoursNeed | null;
 }
 
 export function defaultQuery(overrides: Partial<SearchQuery> = {}): SearchQuery {
@@ -337,12 +340,17 @@ function withinArea(record: GymRecord, query: SearchQuery): boolean {
   return true;
 }
 
+/** The open-late or 24-hour filter, when one is on: only a yes from the published hours counts. */
+function meetsHours(record: GymRecord, query: SearchQuery): boolean {
+  return !query.hours || hoursMeet(record, query.hours, query.visitDate) === 'yes';
+}
+
 export function search(input: SearchInput): SearchOutcome {
   const { records, reviewsByGymId, query } = input;
   const asOf = input.asOf ?? new Date();
   const policy = input.policy ?? DEFAULT_FRESHNESS_POLICY;
 
-  const inArea = records.filter((record) => withinArea(record, query));
+  const inArea = records.filter((record) => withinArea(record, query) && meetsHours(record, query));
 
   const results = inArea
     .map((record) =>
@@ -364,7 +372,7 @@ export function search(input: SearchInput): SearchOutcome {
 
   const relaxations =
     counts.confirmed === 0
-      ? suggestRelaxations({ records: inArea, reviewsByGymId, ratingsByGymId: input.ratingsByGymId, query, asOf, policy })
+      ? suggestRelaxations({ records, reviewsByGymId, ratingsByGymId: input.ratingsByGymId, query, asOf, policy })
       : [];
 
   return { results, counts, relaxations, sortDescription: SORT_DESCRIPTIONS[query.sort] };
@@ -376,7 +384,7 @@ export function search(input: SearchInput): SearchOutcome {
 
 export interface RelaxationSuggestion {
   /** Machine-readable so the UI can apply it on an explicit click. */
-  kind: 'drop_equipment' | 'drop_amenity' | 'raise_budget' | 'widen_radius' | 'change_time';
+  kind: 'drop_equipment' | 'drop_amenity' | 'drop_hours' | 'raise_budget' | 'widen_radius' | 'change_time';
   label: string;
   /** How many confirmed results this change would produce. */
   confirmedCount: number;
@@ -387,7 +395,7 @@ export interface RelaxationSuggestion {
 function countConfirmed(input: SearchInput): number {
   let confirmed = 0;
   for (const record of input.records) {
-    if (!withinArea(record, input.query)) continue;
+    if (!withinArea(record, input.query) || !meetsHours(record, input.query)) continue;
     const result = evaluateGym(record, input.query, {
       reviews: input.reviewsByGymId[record.location.id] ?? [],
       rating: input.ratingsByGymId?.[record.location.id],
@@ -442,6 +450,14 @@ export function suggestRelaxations(input: SearchInput): RelaxationSuggestion[] {
       kind: 'drop_amenity',
       label: `Drop "${amenityId.replace(/_/g, ' ')}"`,
       patch: { requiredAmenities: query.requiredAmenities.filter((item) => item !== amenityId) },
+    });
+  }
+
+  if (query.hours) {
+    candidates.push({
+      kind: 'drop_hours',
+      label: `Drop "${HOURS_LABELS[query.hours]}"`,
+      patch: { hours: null },
     });
   }
 

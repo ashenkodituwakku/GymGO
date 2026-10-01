@@ -50,8 +50,8 @@ the branch the owner's launcher pulls.
 ## The code
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
-`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 200,
-mobile 240, domain 140 and web 39 tests, all passing.
+`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 202,
+mobile 247, domain 150 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 57, React Native 0.86, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -101,6 +101,7 @@ mobile 240, domain 140 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- Batch A: open late / 24 hours filters, Find a machine, Trips.
 - Glass equally opaque on every device (iOS 18 was see-through).
 - Sign-in, the dev account included, works on every device that opens the
   app, Expo Go through `-Tunnel` included (the server goes through the
@@ -118,13 +119,12 @@ Status is updated as each batch lands. Build them in order, one batch per
 pushed commit or a few.
 
 **Batch A: search**
-- [ ] Open late (after 10 pm) and 24-hour quick filters, from published
-      hours (domain helper plus a `hours` field in the filters and search).
-- [ ] Machine search: pick machines and a distance; gyms where the gym
-      publishes them or members report them (server tally of
-      `equipment_reports`).
-- [ ] Travel mode: trips (city plus dates) kept on the device, and a
-      shortlist of gyms that let visitors in on those days; shown on Home.
+- [x] Open late (after 10 pm) and 24-hour quick filters, from published
+      hours (`packages/domain/src/hours.ts`, `hours` in the filters).
+- [x] Machine search (`src/app/machines.tsx`, domain `machines.ts`,
+      server `GET /api/equipment/reported`).
+- [x] Travel mode (`src/app/trips/`, `src/lib/trips.ts`, domain
+      `trips.ts`); a Home card for a trip under way or within a month.
 
 **Batch B: collection and social**
 - [ ] City and suburb sets with badges and a reward card.

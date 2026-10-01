@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { hoursMeet } from '@gymgo/domain';
 import { accessLine, accessShort, checkedAgo, filtersButtonLabel, gymDistanceLine, locatedNotice, lookupLine, noGymsLine, serverOfflineLine, statusSummaryLine, ratingShort, searchPrompt, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
 import { YOUR_LOCATION, activeFilterCount, applyRelaxation, atPlace, defaultVisit, initialFilters, runSearch, toQuery } from './query';
 import { geocodePlace } from './places';
@@ -154,6 +155,20 @@ describe('query', () => {
     const filters = initialFilters(NOW);
     expect(activeFilterCount(filters)).toBe(0);
     expect(activeFilterCount({ ...filters, equipment: ['bench'], budgetMinor: 3000 })).toBe(2);
+    expect(activeFilterCount({ ...filters, hours: 'late' })).toBe(1);
+  });
+
+  it('keeps only gyms open late or round the clock when asked, and lets you drop it', () => {
+    const filters = { ...initialFilters(NOW), radiusKm: 25 };
+    expect(toQuery(filters).hours).toBeNull();
+    const all = runSearch(filters, {}, NOW);
+    const late = runSearch({ ...filters, hours: 'late' }, {}, NOW);
+    const allDay = runSearch({ ...filters, hours: 'allDay' }, {}, NOW);
+    expect(late.results.length).toBeGreaterThan(0);
+    expect(late.results.length).toBeLessThan(all.results.length);
+    expect(allDay.results.length).toBeLessThanOrEqual(late.results.length);
+    for (const result of late.results) expect(hoursMeet(result.record, 'late', filters.visitDate)).toBe('yes');
+    expect(applyRelaxation({ ...filters, hours: 'late' }, { hours: null }).hours).toBeNull();
   });
 });
 

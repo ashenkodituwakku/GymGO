@@ -315,6 +315,33 @@ describe('what members say a gym has', () => {
   });
 });
 
+describe('machine search', () => {
+  it('lists the gyms members say have the machines, in one request, without being told where you are', async () => {
+    const [first, second] = [await signUp(), await signUp()];
+    await call('PUT', '/api/gyms/goodlife-fitzroy/equipment', {
+      token: first.token,
+      body: { items: [{ equipmentTypeId: 'hack_squat', presence: 'yes' }, { equipmentTypeId: 'dumbbells', presence: 'yes', maxWeightKg: 40 }] },
+    });
+    await call('PUT', '/api/gyms/goodlife-fitzroy/equipment', { token: second.token, body: { items: [{ equipmentTypeId: 'hack_squat', presence: 'no' }] } });
+    await call('PUT', '/api/gyms/snap-fitness-fitzroy/equipment', { token: second.token, body: { items: [{ equipmentTypeId: 'leg_press', presence: 'no' }] } });
+
+    const found = await call('GET', '/api/equipment/reported?types=hack_squat,dumbbells,leg_press');
+    expect(found.status).toBe(200);
+    // (Other tests in this file report at other gyms too.)
+    expect(found.body.gyms['goodlife-fitzroy']).toEqual({ hack_squat: { yes: 1, no: 1, maxWeightKg: null }, dumbbells: { yes: 1, no: 0, maxWeightKg: 40 } });
+    expect(found.body.gyms['snap-fitness-fitzroy']).toBeUndefined();
+    // Only said-no reports: nothing to show.
+    expect((await call('GET', '/api/equipment/reported?types=leg_press')).body.gyms).toEqual({});
+  });
+
+  it('asks for equipment it tracks, a few at a time', async () => {
+    expect((await call('GET', '/api/equipment/reported')).status).toBe(400);
+    expect((await call('GET', '/api/equipment/reported?types=jacuzzi')).status).toBe(400);
+    const many = ['bench', 'rower', 'treadmill', 'leg_press', 'hack_squat', 'squat_rack', 'power_rack', 'dumbbells', 'smith_machine'];
+    expect((await call('GET', `/api/equipment/reported?types=${many.join(',')}`)).status).toBe(400);
+  });
+});
+
 describe('what members paid for a casual visit', () => {
   const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
 

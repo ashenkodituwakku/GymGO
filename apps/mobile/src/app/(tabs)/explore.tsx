@@ -21,7 +21,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useFocusEffect, useRouter } from 'expo-router';
 import { ActionSheetIOS, ActivityIndicator, Keyboard, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions, type TextInput } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { isWithinBox, type BoundingBox } from '@gymgo/domain';
+import { isWithinBox, type BoundingBox, type HoursNeed } from '@gymgo/domain';
 import { withoutKnown } from '@gymgo/osm';
 import { MELBOURNE_ATTRIBUTION } from '@gymgo/melbourne-data';
 import { ApiError, api, problemText } from '@/lib/api';
@@ -442,6 +442,10 @@ function MapScreen() {
     setFilters((current) => ({ ...current, budgetMinor: current.budgetMinor !== null ? null : localBudget(3000, current.countryCode) }));
   }, []);
 
+  const toggleHours = useCallback((need: HoursNeed) => {
+    setFilters((current) => ({ ...current, hours: current.hours === need ? null : need }));
+  }, []);
+
   const relax = useCallback(
     (index: number) => {
       const relaxation = outcome.relaxations[index];
@@ -549,6 +553,7 @@ function MapScreen() {
       onPickWorldCity={pickWorldCity}
       onSubmitSearch={submitSearch}
       onToggleEquipment={toggleEquipment}
+      onToggleHours={toggleHours}
       onToggleBudget={toggleBudget}
       onOpenFilters={openFilters}
       onSelect={openGym}

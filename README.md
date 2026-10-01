@@ -246,7 +246,8 @@ Liquid Glass takes it as its tint and the others as a wash over the blur, so
 the map never shows through more on one phone than another.
 
 - **Home**: kept short. A greeting, the search, four one-tap picks (Near
-  me, Early start, After work, Under $25), **Build a workout**, gyms near
+  me, Early start, After work, Under $25), **Build a workout**, your next
+  trip if there is one, **Machines** and **Trips** (below), gyms near
   you, your saved and recently viewed gyms, then neighbourhoods and other
   cities as chips.
 - **Explore**: the map with the results sheet, filters, and sorting (best
@@ -972,6 +973,28 @@ things, kept apart:
   know. The card then shows a tally, such as "Squat rack, 3 thumbs up", with
   how many members reported and when. You can change your report any time. Members' reports are labelled
   as theirs and never make a gym "Good to go" on their own.
+
+### Open late, Find a machine, Trips
+
+- **Open late / 24 hours**: in Filters (Opening hours) and as chips over the
+  results. Open late means still open at 10 pm on the day you picked; 24
+  hours means open round the clock that day. Both go by the hours the gym
+  publishes (visitors' hours first, then members', then staffed); a gym that
+  publishes none is left out, not guessed.
+- **Find a machine** (Home → Machines): pick the machines you need (up to
+  8) and how far you'll go. You get the gyms near your search that have
+  them, those with all of them first. Each line says where the yes comes
+  from: the gym's own record ("From the gym", "Checked by us") or members
+  ("3 members say so, 1 says no"). Members count only when more say yes
+  than no, and a gym whose record says it hasn't got one is left out. The
+  app asks the server for members' tallies of those machines in one request,
+  without saying where you are.
+- **Trips** (Home → Trips): add where you're going and when. GymGO lists the
+  gyms within 10 km there that let visitors in on those days, checked at
+  7 am, noon and 6 pm on the gym's clock, with a dot per day (green: visitors
+  in; amber: ask first; grey: not then). Trips stay on your phone. Somewhere
+  GymGO hasn't read the map yet, it sends you to Search this area first;
+  abroad without Pro, the trip is kept and the list is Pro's.
 
 ### Google info (free, nothing to set up)
 

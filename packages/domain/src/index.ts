@@ -27,3 +27,6 @@ export * from './chainSites';
 export * from './websites';
 export * from './collection';
 export * from './legal';
+export * from './hours';
+export * from './machines';
+export * from './trips';

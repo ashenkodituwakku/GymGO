@@ -36,6 +36,7 @@
  *   GET    /api/photos/:id                a published photo's image
  *   GET    /api/gyms/:gymId/equipment     what members say the gym has, tallied (plus your own)
  *   PUT    /api/gyms/:gymId/equipment     { items: [{ equipmentTypeId, presence, maxWeightKg? }] } -> your report
+ *   GET    /api/equipment/reported?types= { gymId: { typeId: { yes, no, maxWeightKg } } } for the gyms members say have any of them
  *   GET    /api/gyms/:gymId/prices        what members paid for a casual visit: count, typical, range (plus yours)
  *   PUT    /api/gyms/:gymId/prices        { amountMinor, paidOn } -> your report (replaces your last)
  *   DELETE /api/gyms/:gymId/prices        take back your report
@@ -1571,6 +1572,33 @@ export function createApp(options: AppOptions) {
       const typical: Record<string, { typicalMinor: number; count: number }> = {};
       for (const [gymId, amounts] of byGym) typical[gymId] = { typicalMinor: median(amounts), count: amounts.length };
       return send(res, 200, { typical });
+    }
+
+    // Machine search: which gyms members say have the machines asked for, in
+    // one request. No position is sent: the app keeps the gyms near the
+    // search itself, as it does with every list.
+    if (method === 'GET' && path === '/api/equipment/reported') {
+      const types = [...new Set((url.searchParams.get('types') ?? '').split(',').map((type) => type.trim()).filter(Boolean))];
+      if (types.length === 0) throw new HttpError(400, 'Say which equipment to look for.');
+      if (types.length > 8) throw new HttpError(400, 'Pick up to 8 at once.');
+      for (const type of types) {
+        if (!EQUIPMENT_TYPES.some((candidate) => candidate.id === type)) throw new HttpError(400, 'That isn\u2019t equipment we track.');
+      }
+      const rows = db
+        .prepare(
+          `select gym_id, equipment_type_id,
+                  sum(presence = 'yes') as yes,
+                  sum(presence = 'no') as no,
+                  max(case when presence = 'yes' then max_weight_kg end) as max_weight_kg
+           from equipment_reports where equipment_type_id in (${types.map(() => '?').join(', ')})
+           group by gym_id, equipment_type_id having yes > 0`,
+        )
+        .all(...types) as Array<{ gym_id: string; equipment_type_id: string; yes: number; no: number; max_weight_kg: number | null }>;
+      const gyms: Record<string, Record<string, { yes: number; no: number; maxWeightKg: number | null }>> = {};
+      for (const row of rows) {
+        (gyms[row.gym_id] ??= {})[row.equipment_type_id] = { yes: row.yes, no: row.no, maxWeightKg: row.max_weight_kg };
+      }
+      return send(res, 200, { gyms });
     }
 
     // --- Ratings from published reviews, for every gym that has any ----------

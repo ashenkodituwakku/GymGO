@@ -5,7 +5,7 @@
  */
 
 import { Pressable, StyleSheet, View } from 'react-native';
-import { equipmentLabel, type Tri } from '@gymgo/domain';
+import { HOURS_LABELS, equipmentLabel, type HoursNeed, type Tri } from '@gymgo/domain';
 import { filtersButtonLabel, timeLabel } from '@/lib/copy';
 import {
   BUDGET_PRESETS,
@@ -94,6 +94,25 @@ export function FiltersContent({
           ))}
         </View>
         <Hint>We check when visitors can walk in — not when members can.</Hint>
+      </Group>
+
+      <Group title="Opening hours">
+        <View style={styles.chips}>
+          {(Object.keys(HOURS_LABELS) as HoursNeed[]).map((need) => (
+            <Chip
+              key={need}
+              label={HOURS_LABELS[need]}
+              selected={filters.hours === need}
+              onPress={() => set({ hours: filters.hours === need ? null : need })}
+            />
+          ))}
+        </View>
+        <Hint>
+          {filters.hours === 'allDay'
+            ? 'Open round the clock on the day you picked, by the hours the gym publishes.'
+            : 'Still open at 10 pm on the day you picked, by the hours the gym publishes.'}{' '}
+          Gyms that publish no hours are left out, not guessed.
+        </Hint>
       </Group>
 
       <Group title="Budget per visit">

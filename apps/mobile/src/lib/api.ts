@@ -15,7 +15,7 @@
 
 import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
-import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, Review } from '@gymgo/domain';
+import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review } from '@gymgo/domain';
 import type { TrainingSession } from './training';
 import { pickApiBase } from './serverAddress';
 
@@ -404,6 +404,9 @@ export const api = {
   reportAccess: (token: string, gymId: string, body: { outcome: AccessOutcome; visitedOn: string }) =>
     request<unknown>('PUT', `/api/gyms/${encodeURIComponent(gymId)}/access`, { token, body }),
   deleteAccess: (token: string, gymId: string) => request<unknown>('DELETE', `/api/gyms/${encodeURIComponent(gymId)}/access`, { token }),
+  /** Machine search: the gyms members say have any of these machines, tallied per machine. */
+  reportedEquipment: (types: string[]) =>
+    request<{ gyms: ReportedEquipment }>('GET', `/api/equipment/reported?types=${types.map(encodeURIComponent).join(',')}`),
   typicalPrices: () => request<{ typical: Record<string, { typicalMinor: number; count: number }> }>('GET', '/api/prices/typical'),
   /** Every gym's rating from its published reviews, for lists and cards. */
   reviewRatings: () => request<{ ratings: Record<string, RatingSummary> }>('GET', '/api/reviews/ratings'),

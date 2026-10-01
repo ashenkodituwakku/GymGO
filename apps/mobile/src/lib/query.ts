@@ -17,6 +17,7 @@ import {
   search,
   type EquipmentRequirement,
   type GymRecord,
+  type HoursNeed,
   type LatLng,
   type RatingSummary,
   type Review,
@@ -68,6 +69,8 @@ export interface Filters {
   equipment: string[];
   dumbbellMinKg: number | null;
   isLocalResident: Tri;
+  /** Only gyms open late (10 pm) or round the clock that day, by their published hours. */
+  hours?: HoursNeed | null;
   sort: SortKey;
 }
 
@@ -295,6 +298,7 @@ export function initialFilters(now: Date = new Date(), place: AppPlace = DEFAULT
     equipment: [],
     dumbbellMinKg: null,
     isLocalResident: 'unknown',
+    hours: null,
     sort: 'best_match',
   };
 }
@@ -315,6 +319,7 @@ export function toQuery(filters: Filters): SearchQuery {
     timezone: filters.timezone,
     requiredEquipment,
     profile: { ...UNKNOWN_VISITOR, isLocalResident: filters.isLocalResident },
+    hours: filters.hours ?? null,
     sort: filters.sort,
   });
 }
@@ -348,6 +353,7 @@ export function applyRelaxation(filters: Filters, patch: Partial<SearchQuery>): 
     next.dumbbellMinKg = dumbbells?.minMaxWeightKg ?? null;
   }
   if ('budgetMinor' in patch) next.budgetMinor = patch.budgetMinor ?? null;
+  if ('hours' in patch) next.hours = patch.hours ?? null;
   if (patch.radiusKm !== undefined) next.radiusKm = patch.radiusKm;
   if (patch.visitMinuteOfDay !== undefined) {
     next.visitMinuteOfDay = patch.visitMinuteOfDay;
@@ -361,7 +367,8 @@ export function activeFilterCount(filters: Filters): number {
   return (
     filters.equipment.length +
     (filters.budgetMinor !== null ? 1 : 0) +
-    (filters.isLocalResident !== 'unknown' ? 1 : 0)
+    (filters.isLocalResident !== 'unknown' ? 1 : 0) +
+    (filters.hours ? 1 : 0)
   );
 }
 

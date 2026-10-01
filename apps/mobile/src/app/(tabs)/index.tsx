@@ -9,6 +9,7 @@
  */
 
 import { useRouter } from 'expo-router';
+import { HOURS_LABELS } from '@gymgo/domain';
 import { useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GymCard } from '@/components/GymCard';
@@ -29,7 +30,8 @@ import { lookupLine, noGymsLine, searchPrompt, timeLabel, visitWhen } from '@/li
 import { countryInSentence, countryName } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityNear, cityPlace, localBudget, moneyLabel, tracksPrices, worldCitiesIn, type AppPlace, type City, type WorldCity } from '@/lib/places';
-import { YOUR_LOCATION, atPlace, atWorldCity, moveTo, nearLabel, nextVisitAt, runSearch, visitIsLater, type Filters } from '@/lib/query';
+import { YOUR_LOCATION, atPlace, atWorldCity, moveTo, nearLabel, nextVisitAt, nowIn, runSearch, visitIsLater, type Filters } from '@/lib/query';
+import { tripDatesLabel, tripToShow, tripWhen, useTrips } from '@/lib/trips';
 import { resultsById } from '@/lib/results';
 import { PAGE_COLUMN, color, dropShadow, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -58,6 +60,7 @@ export default function Home() {
   usePageTitle(null);
   const { data, account, billing, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady, lookup, searchHere, here } = useApp();
   const active = useActiveSession();
+  const trips = useTrips(nowIn(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC').date);
   // Your training log, shared with Progress; the week strip shows once there's something in it.
   const log = useTrainingLog(account.token);
   const [showAll, setShowAll] = useState<Record<string, boolean>>({});
@@ -129,6 +132,13 @@ export default function Home() {
           onPress: () => pick((current) => ({ ...current, budgetMinor: localBudget(2500, current.countryCode) })),
         }
       : { icon: 'clock', title: 'Lunchtime', onPress: () => pick((current) => ({ ...current, ...visit(12 * 60) })) },
+  ];
+
+  const today = nowIn(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', clock).date;
+  const trip = tripToShow(trips.trips, today);
+  const finders: Array<{ icon: IconName; title: string; detail: string; label: string; onPress: () => void }> = [
+    { icon: 'target', title: 'Machines', detail: 'Who has what', label: 'Find a machine', onPress: () => router.push('/machines') },
+    { icon: 'globe', title: 'Trips', detail: trips.trips.length ? `${trips.trips.length} planned` : 'Train away', label: 'Trips', onPress: () => router.push('/trips') },
   ];
 
   return (
@@ -225,6 +235,48 @@ export default function Home() {
         <Icon name="chevron" size={14} color={color.onBrandSoft} />
       </Pressy>
 
+      {/* A trip under way or coming up, then the two finders --------------- */}
+      {trip && (
+        <Pressy
+          scaleTo={0.97}
+          onPress={() => {
+            haptic.select();
+            router.push({ pathname: '/trips/[id]', params: { id: trip.id } });
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`Trip to ${trip.placeName}, ${tripDatesLabel(trip)}, ${tripWhen(trip, today)}. See the gyms there`}
+          style={styles.trip}
+        >
+          <View style={styles.tripIcon}>
+            <Icon name="globe" size={18} color={color.onBrand} />
+          </View>
+          <View style={styles.flex}>
+            <Txt variant="headline" numberOfLines={1}>{`Trip to ${trip.placeName}`}</Txt>
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+              {`${tripWhen(trip, today)} · ${tripDatesLabel(trip)} · gyms that let visitors in`}
+            </Txt>
+          </View>
+          <Icon name="chevron" size={14} color={color.labelTertiary} />
+        </Pressy>
+      )}
+      <View style={styles.finders}>
+        {finders.map((item) => (
+          <Pressy key={item.title} scaleTo={0.95} onPress={item.onPress} accessibilityRole="button" accessibilityLabel={item.label} style={styles.finder}>
+            <View style={styles.shortcutIcon}>
+              <Icon name={item.icon} size={18} color={color.brand} />
+            </View>
+            <View style={styles.flex}>
+              <Txt variant="subhead" style={face('semibold')} numberOfLines={1}>
+                {item.title}
+              </Txt>
+              <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
+                {item.detail}
+              </Txt>
+            </View>
+          </Pressy>
+        ))}
+      </View>
+
       <HereNudge here={here} records={data.listed} onOpen={(id) => router.push({ pathname: '/gym/[id]', params: { id } })} />
       {log.status === 'ready' && log.sessions.length > 0 && (
         <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />
@@ -248,7 +300,8 @@ export default function Home() {
         <Txt variant="footnote" color={color.labelSecondary}>
           For a visit {visitWhen(filters.visitMinuteOfDay, visitIsLater(filters))}
           {filters.budgetMinor ? `, under ${moneyLabel(filters.budgetMinor, filters.countryCode)}` : ''}
-          {filters.equipment.length ? `, with ${filters.equipment.length} must-have${filters.equipment.length > 1 ? 's' : ''}` : ''}.
+          {filters.equipment.length ? `, with ${filters.equipment.length} must-have${filters.equipment.length > 1 ? 's' : ''}` : ''}
+          {filters.hours ? `, ${HOURS_LABELS[filters.hours].toLowerCase()}` : ''}.
           {/* The hold menu (save, share, compare) is the iPhone's own. */}
           {Platform.OS === 'ios' ? ' Hold a card for more.' : ''}
         </Txt>
@@ -537,6 +590,29 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.lg,
     borderCurve: 'continuous',
     backgroundColor: color.goodTint,
+  },
+  trip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    padding: space[3],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.brandTint,
+  },
+  tripIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
+  finders: { flexDirection: 'row', gap: space[3] },
+  finder: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    padding: space[3],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.card,
+    ...shadow.plate,
   },
   resumeIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.good, alignItems: 'center', justifyContent: 'center' },
   workout: {

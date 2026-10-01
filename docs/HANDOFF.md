@@ -121,6 +121,14 @@ mobile 256, domain 154 and web 39 tests, all passing.
 Status is updated as each batch lands. Build them in order, one batch per
 pushed commit or a few.
 
+**Two sessions are working through this list at once.** Before starting
+an item, `git fetch` and read this list on `origin/claude/friendly-johnson-9rzxrj`;
+skip anything ticked or marked claimed, and mark what you take as claimed
+(push that first) so the other session doesn't build it too.
+
+- **Claimed 1 Oct by session gymgo-82: Batch C (training).** Take Batch D
+  or E instead.
+
 **Batch A: search**
 - [x] Open late (after 10 pm) and 24-hour quick filters, from published
       hours (`packages/domain/src/hours.ts`, `hours` in the filters).

@@ -21,6 +21,22 @@ export const DEV_PRO_EMAIL = 'dev@gymgo.test';
 export const DEV_PRO_PASSWORD = 'GymGO-dev-pro-2026';
 const DEV_SUBSCRIPTION = 'dev_local_pro';
 
+/**
+ * Whether a typed password is the dev account's, as a phone keyboard may
+ * type it: a dash turned into – or —, a capital changed, a space added.
+ * Only for this account, whose password is printed for anyone to read;
+ * every other account needs its password exactly.
+ */
+export function matchesDevPassword(typed: string): boolean {
+  const tidy = (text: string) =>
+    text
+      .normalize('NFKC')
+      .replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-')
+      .replace(/[\s\u200B-\u200D\uFEFF]+/g, '')
+      .toLowerCase();
+  return tidy(typed) === tidy(DEV_PRO_PASSWORD);
+}
+
 /** Why the dev account can't be made here, or null when it can. */
 export function devAccountRefusal(options: { publicUrl: string | null; stripeKey: string | null }): string | null {
   if (options.publicUrl) return 'this server has a public address (GYMGO_PUBLIC_URL), so it may be hosted';

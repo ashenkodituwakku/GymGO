@@ -156,7 +156,7 @@ import {
   verifyPassword,
   type AccountRow,
 } from './auth';
-import { DEV_PRO_EMAIL } from './devAccount';
+import { DEV_PRO_EMAIL, matchesDevPassword } from './devAccount';
 import { legalIndexPage, legalPage, resetEmail, resetPasswordPage, securityTxt } from './legalPages';
 import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
 import { AreaError, AreaSearch, parseBox, whereIs } from './area';
@@ -1118,7 +1118,8 @@ export function createApp(options: AppOptions) {
 
     if (method === 'POST' && path === '/api/auth/login') {
       const body = (await readJson(req)) as Record<string, unknown>;
-      const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+      // No email has spaces in it; a phone keyboard or autofill can leave one (or an invisible one) behind.
+      const email = typeof body.email === 'string' ? body.email.replace(/[\s\u200B-\u200D\uFEFF]+/g, '').toLowerCase() : '';
       const password = typeof body.password === 'string' ? body.password : '';
       if (!email || !password) throw new HttpError(400, 'Enter your email and password.');
       if (!loginLimiter.allow(`${clientAddress(req)}|${email}`, now().getTime())) {
@@ -1127,7 +1128,13 @@ export function createApp(options: AppOptions) {
       if (!accountLoginLimiter.allow(email, now().getTime())) {
         throw new HttpError(429, 'Too many attempts for this account. Wait a while, or reset your password.');
       }
-      const account = checkLogin(db, email, password);
+      const trimmed = password.trim();
+      const account =
+        checkLogin(db, email, password) ??
+        // A space a phone keyboard or password manager added at either end.
+        (trimmed && trimmed !== password ? checkLogin(db, email, trimmed) : null) ??
+        // The local dev account's password, however a phone keyboard typed its dashes and capitals.
+        (options.devAccount && email === DEV_PRO_EMAIL && matchesDevPassword(password) ? (findByEmail(db, email) ?? null) : null);
       if (!account) throw new HttpError(401, 'That email and password don’t match.');
       if (account.blocked) throw new HttpError(403, 'This account has been blocked.');
       return send(res, 200, { token: startSession(db, account.id, now()), account: accountJson(account) });

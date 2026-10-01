@@ -23,7 +23,7 @@ import { GemCard } from '@/components/GemCard';
 import { SetProgress, SetReward } from '@/components/SetCard';
 import { CITY_SET_SIZE, collectionSets, setsDone } from '@/lib/sets';
 import { Icon, type IconName } from '@/components/Icon';
-import { GLIDE } from '@/components/motion';
+import { GLIDE, Pressy } from '@/components/motion';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { shareText } from '@/lib/actions';
@@ -35,6 +35,11 @@ import { useCollection } from '@/lib/useCollection';
 import { PageScroll } from '@/components/PageScroll';
 
 const COLUMN = 640;
+
+const SOCIAL: Array<{ path: '/friends' | '/leaderboard'; title: string; icon: IconName }> = [
+  { path: '/friends', title: 'Friends', icon: 'people' },
+  { path: '/leaderboard', title: 'Leaderboard', icon: 'trophy' },
+];
 /** Sets still going shown before "Show all": the closest to finished. */
 const SETS_SHOWN = 4;
 
@@ -109,6 +114,17 @@ export default function CollectionScreen() {
       <Stack.Screen options={{ title: 'Collection' }} />
       <CollectionSyncLine />
 
+      <View style={styles.social}>
+        {SOCIAL.map((item) => (
+          <Pressy key={item.path} scaleTo={0.96} onPress={() => router.push(item.path)} accessibilityRole="button" accessibilityLabel={item.title} style={styles.socialTile}>
+            <Icon name={item.icon} size={18} color={color.brand} />
+            <Txt variant="subhead" style={face('semibold')}>
+              {item.title}
+            </Txt>
+          </Pressy>
+        ))}
+      </View>
+
       <Animated.View style={styles.stats}>
         <Stat value={stats.gyms} one="gym" many="gyms" icon="gym" />
         <Stat value={stats.cities} one="city" many="cities" icon="pin" />
@@ -160,7 +176,16 @@ export default function CollectionScreen() {
             />
           )}
           {finished.map((set) => (
-            <SetReward key={set.key} set={set} />
+            // Opens big, to share as a picture.
+            <Pressy
+              key={set.key}
+              scaleTo={0.98}
+              onPress={() => router.push({ pathname: '/card/[id]', params: { id: `set:${set.key}` } })}
+              accessibilityRole="button"
+              accessibilityLabel={`${set.name} set complete. Open to share`}
+            >
+              <SetReward set={set} />
+            </Pressy>
           ))}
           <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
             {`A suburb set is every gym GymGO lists in a suburb you’ve collected in; a city set is ${CITY_SET_SIZE} gyms in one city, or all of them if it has fewer. Finish one for its reward card.`}
@@ -191,7 +216,7 @@ export default function CollectionScreen() {
               record={data.records.find((record) => record.location.id === entry.id) ?? null}
               cover={data.covers[entry.id] ?? null}
               width={cardWidth}
-              onPress={() => router.push({ pathname: '/gym/[id]', params: { id: entry.id } })}
+              onPress={() => router.push({ pathname: '/card/[id]', params: { id: entry.id } })}
             />
           </Animated.View>
         ))}
@@ -248,6 +273,19 @@ const styles = themed(() =>
     center: { textAlign: 'center' },
     section: { marginTop: space[2], marginLeft: space[4] },
     stats: { flexDirection: 'row', gap: space[2] },
+    social: { flexDirection: 'row', gap: space[2] },
+    socialTile: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[2],
+      paddingVertical: space[3],
+      borderRadius: radius.lg,
+      borderCurve: 'continuous',
+      backgroundColor: color.card,
+      ...shadow.plate,
+    },
     stat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
     badges: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     badge: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.md, backgroundColor: color.fill },

@@ -230,7 +230,7 @@ function privacy(op: LegalOperator): LegalSection[] {
       blocks: [
         {
           list: [
-            'What you set up on your device (your country, appearance, saved gyms, collection, workouts and training log) is kept on that device only.',
+            'What you set up on your device (your country, appearance, saved gyms, collection, workouts, training log and trips) is kept on that device only.',
             'If you let GymGO use your location, it’s used on your device to find gyms near you and measure how far they are. It is never sent to GymGO or anyone else. Outside the cities GymGO carries, the app asks the server for the gyms in the map squares around you (about 30 km across, the same for everyone in them), never your position.',
             'When you search an area or type a town, the server looks it up on OpenStreetMap’s services (Overpass and Photon). It sends them the area or the name, not anything about you.',
             'Like any website, the server sees your device’s IP address with each request. It uses it to send the answer back and, for about an hour at most, to slow down anyone sending too many requests. It isn’t written to the database or any log.',
@@ -250,6 +250,7 @@ function privacy(op: LegalOperator): LegalSection[] {
             'if you sign in with Apple or Google, which account of theirs is yours and the email address they share;',
             'sign-ins, as tokens kept only as hashes, which expire after 30 days;',
             'what you add: saved gyms, your collection, workouts, your training log, reviews, photos (with their location data removed), and your reports of prices, visits, machines and closures;',
+            'your friend code, who you’re friends with or have asked, the invites to train you send and receive (the gym, the time and any note), and whether you’ve joined the public leaderboard. Trips stay on your device;',
             'bug reports and copyright notices you send, with the details the form lists, and a reply address if you give one.',
           ],
         },
@@ -273,7 +274,8 @@ function privacy(op: LegalOperator): LegalSection[] {
       blocks: [
         {
           list: [
-            'Other people see what you post: reviews with your display name, and photos. Price reports are shown without your name. Your profile picture is shown only to you.',
+            'Other people see what you post: reviews with your display name, and photos. Price reports are shown without your name.',
+            'Friends you accept see your display name, profile picture, the cards in your collection with their visit counts, and your totals, never the days you went; and the invites between you. If you join the public leaderboard, people signed in to GymGO see your display name, profile picture and how many gyms and visits you have, until you leave it.',
             'Companies that work for us, only as needed to provide GymGO: the provider that hosts our server and its backups, our email provider, and Stripe for payments. They may not use your information for anything else.',
             'Apple or Google, if you sign in with them, and Google itself if you choose to show its map, Street View or photos on a gym’s page; nothing loads from Google until you do.',
             'Map providers (OpenFreeMap, or Apple Maps on iPhone) see your device’s IP address and the part of the map you’re looking at, as any map does.',

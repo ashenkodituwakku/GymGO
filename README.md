@@ -424,6 +424,27 @@ collector** badge. Sets are worked out from your collection and the gyms
 this device knows, so they're the same on every device with the same gyms;
 nothing extra is stored.
 
+**Share a card.** Tap a card in your collection to see it big, then
+**Share as a picture**: on a phone it goes to the share sheet (Messages,
+Instagram, Photos); in a browser it's shared where the browser can share
+files, or saved to your downloads. The new-card pop-up has **Share card**
+too, and a finished set's reward card opens and shares the same way. The
+picture shows what's on the card, never the days you went.
+
+**Friends and leaderboards** (signed in; Collection → Friends or
+Leaderboard, or Profile). Everyone has a **friend code** like `K7QM-2XPH`:
+send yours, add theirs, and once they accept you can see each other's cards
+(as their phone draws them) and totals, never the days anyone trained.
+Open a friend to **invite them to train**: pick a gym (your saved ones, then
+gyms either of you collected), a day this week and a time, and add a note;
+they answer "I'm in" or "Can't" on their Friends screen, and either of you
+can take it back. Unfriending removes the invites between you. The
+**leaderboard** ranks by gyms collected, then visits, for every gym or just
+the city you're searching. **Everyone** lists only people who switched on
+"Be on the public board", by display name; **Friends** is you and your
+friends. Adding friends is limited to 20 codes a day, so codes can't be
+guessed.
+
 Each gym is a **trading card** with a rarity rolled by luck: every day you
 check in rolls it (Common 60%, Uncommon 25%, Rare 10%, Epic 4%, Legendary
 1%) and the card keeps its best roll. Each card also has a random **gem**

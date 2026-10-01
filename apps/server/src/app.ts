@@ -67,6 +67,16 @@
  *   GET    /api/collection                your gym collection (gyms checked in at, and the days) and when it was last reset
  *   PUT    /api/collection                { gyms, resetAt } -> merged into the account's (never overwritten); 409 when reset elsewhere since
  *   DELETE /api/collection                reset: every gym and visit removed, and the reset remembered
+ *   GET    /api/friends                   your friend code, friends (with totals), requests both ways, invites to train, whether you're on the leaderboard
+ *   POST   /api/friends                   { code } -> asks them (or, if they'd asked you, you're friends)
+ *   POST   /api/friends/:id/accept        accept their request
+ *   DELETE /api/friends/:id               unfriend, turn down, or take back a request (their invites go too)
+ *   GET    /api/friends/:id/collection    a friend's cards (look and visit count, no days) and totals
+ *   POST   /api/friends/:id/invites       { gymId, gymName, at, note? } -> an invite to train
+ *   POST   /api/invites/:id               { answer: 'yes' | 'no' } -> your answer to an invite
+ *   DELETE /api/invites/:id               take back an invite you sent
+ *   PUT    /api/me/leaderboard            { join } -> on or off the public leaderboard
+ *   GET    /api/leaderboard?scope=everyone|friends&city=&country=   ranked by gyms, then visits
  *   GET    /api/moderation/reviews        moderators: the queue
  *   POST   /api/moderation/reviews/:id    moderators: { decision, reason? }
  *   GET    /api/moderation/photos         moderators: photos waiting
@@ -158,6 +168,7 @@ import { GoogleError, GooglePlaces } from './google';
 import { MAX_AVATAR_BYTES, MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
 import { IdentityError, IdentityVerifier, label, type Provider, type VerifiedIdentity } from './identity';
 import { BugReportError, BugReports, cleanBugReport } from './bugReports';
+import { Social, SocialError } from './social';
 import type { SendMail } from './mail';
 
 export interface AppOptions {
@@ -506,6 +517,8 @@ export function createApp(options: AppOptions) {
   const photoLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
   const avatarLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
   const equipmentLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
+  // Adding friends by code: plenty for real use, far too few to guess codes with.
+  const friendLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
   const priceLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   const accessLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   const statusLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
@@ -527,6 +540,7 @@ export function createApp(options: AppOptions) {
   const area = new AreaSearch(db, { ...options.area, now, known: () => allGyms(db) });
   const packs = new CountryPacks(db, { ...options.area, ...options.packs, now, known: () => allGyms(db) });
   const photos = new PhotoStore(options.photoDir ?? null);
+  const social = new Social(db, now);
   const bugReports = new BugReports(db, {
     send: options.bugReports?.send ?? null,
     to: options.bugReports?.to ?? [],
@@ -545,7 +559,7 @@ export function createApp(options: AppOptions) {
   // rate-limit keys (addresses among them) whose window has passed.
   const limiters = [
     loginLimiter, accountLoginLimiter, forgotLimiter, forgotEmailLimiter, resetLimiter, signupLimiter, photoLimiter, avatarLimiter,
-    equipmentLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter,
+    equipmentLimiter, friendLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter,
   ];
   setInterval(() => {
     const at = now();
@@ -976,6 +990,57 @@ export function createApp(options: AppOptions) {
       return send(res, 200, { gyms: [], resetAt });
     }
 
+    // --- Friends, invites to train, leaderboards (social.ts) -----------------
+    if (parts[0] === 'api' && (parts[1] === 'friends' || parts[1] === 'invites' || parts[1] === 'leaderboard' || path === '/api/me/leaderboard')) {
+      const { account } = requireAccount(req);
+      const me = account.id;
+      try {
+        if (path === '/api/friends' && method === 'GET') return send(res, 200, social.overview(me));
+        if (path === '/api/friends' && method === 'POST') {
+          if (!friendLimiter.allow(me, now().getTime())) throw new HttpError(429, 'That’s a lot of friend codes for one day. Try again tomorrow.');
+          const body = (await readJson(req)) as Record<string, unknown>;
+          return send(res, 200, social.add(me, typeof body.code === 'string' ? body.code : ''));
+        }
+        if (parts[1] === 'friends' && parts.length >= 3) {
+          const other = decodeURIComponent(parts[2]!);
+          if (parts.length === 3 && method === 'DELETE') {
+            social.remove(me, other);
+            return send(res, 204);
+          }
+          if (parts[3] === 'accept' && parts.length === 4 && method === 'POST') {
+            social.accept(me, other);
+            return send(res, 200, social.overview(me));
+          }
+          if (parts[3] === 'collection' && parts.length === 4 && method === 'GET') return send(res, 200, social.friendCollection(me, other));
+          if (parts[3] === 'invites' && parts.length === 4 && method === 'POST') {
+            return send(res, 201, social.invite(me, other, (await readJson(req)) as Record<string, unknown>));
+          }
+        }
+        if (parts[1] === 'invites' && parts.length === 3) {
+          const id = decodeURIComponent(parts[2]!);
+          if (method === 'POST') return send(res, 200, social.answerInvite(me, id, ((await readJson(req)) as Record<string, unknown>).answer));
+          if (method === 'DELETE') {
+            social.cancelInvite(me, id);
+            return send(res, 204);
+          }
+        }
+        if (path === '/api/me/leaderboard' && method === 'PUT') {
+          return send(res, 200, { leaderboard: social.setLeaderboard(me, ((await readJson(req)) as Record<string, unknown>).join) });
+        }
+        if (path === '/api/leaderboard' && method === 'GET') {
+          const scope = url.searchParams.get('scope') === 'friends' ? 'friends' : 'everyone';
+          const city = (url.searchParams.get('city') ?? '').trim().slice(0, 200);
+          const country = (url.searchParams.get('country') ?? '').trim().toUpperCase();
+          if (city && !/^[A-Z]{2}$/.test(country)) throw new HttpError(400, 'Say which country the city is in.');
+          return send(res, 200, social.board(me, scope, city ? { city, countryCode: country } : null));
+        }
+      } catch (error) {
+        if (error instanceof SocialError) throw new HttpError(error.status, error.message);
+        throw error;
+      }
+      throw new HttpError(404, 'Not found.');
+    }
+
     // --- Accounts --------------------------------------------------------
     if (method === 'POST' && path === '/api/auth/signup') {
       const body = (await readJson(req)) as Record<string, unknown>;
@@ -1239,6 +1304,7 @@ export function createApp(options: AppOptions) {
           `select id, topic, description, reply_to as replyTo, context_json, status, created_at as createdAt, sent_at as emailedAt
            from bug_reports where user_id = ? order by created_at`,
         ).map(({ context_json, ...report }) => ({ ...report, device: JSON.parse(String(context_json)) })),
+        ...social.exportFor(id),
       });
     }
 

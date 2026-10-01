@@ -18,7 +18,7 @@
  */
 
 import { BlurView } from 'expo-blur';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { Easing, ReduceMotion, runOnJS, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
@@ -30,6 +30,7 @@ import { Pressy } from './motion';
 import { PrimaryButton, Txt } from './ui';
 import type { CollectedGym } from '@/lib/collection';
 import { haptic } from '@/lib/haptics';
+import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
 import { PRISM, cardFor, gemInfo, rarityLabel, rarityRank, type Rarity } from '@/lib/rarity';
 import { face, radius, space, themed } from '@/lib/theme';
 
@@ -126,6 +127,17 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
   const maxHeight = height - insets.top - insets.bottom - space[6];
   const glow = panelWidth * 1.25;
   const close = () => leave(onClose);
+  const shot = useRef<View>(null);
+  const [sharing, setSharing] = useState(false);
+  const [shareLine, setShareLine] = useState<string | null>(null);
+  const share = async () => {
+    haptic.tap();
+    setSharing(true);
+    setShareLine(null);
+    const outcome = await shareViewAsImage(shot, { name: pull.entry.name, title: 'My GymGO card' });
+    setSharing(false);
+    setShareLine(imageShareLine(outcome));
+  };
   const openCollection = () => {
     haptic.tap();
     leave(onOpenCollection);
@@ -171,7 +183,10 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
               </Animated.View>
 
               <Animated.View style={cardStyle}>
-                <GemCard entry={pull.entry} record={record} cover={cover} width={cardWidth} big windowHeight={windowHeight} />
+                {/* Captured as it is for Share card: just the card. */}
+                <View ref={shot} collapsable={false}>
+                  <GemCard entry={pull.entry} record={record} cover={cover} width={cardWidth} big windowHeight={windowHeight} />
+                </View>
               </Animated.View>
 
               <Animated.View style={[styles.actions, wordsStyle]}>
@@ -187,6 +202,17 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
                     </Txt>
                   </Pressy>
                 </View>
+                <Pressy scaleTo={0.97} onPress={() => void share()} accessibilityRole="button" disabled={sharing} style={[styles.ghost, styles.shareButton]}>
+                  <Icon name="share" size={16} color="#FFFFFF" />
+                  <Txt variant="headline" color="#FFFFFF">
+                    {sharing ? 'Making the picture…' : 'Share card'}
+                  </Txt>
+                </Pressy>
+                {shareLine && (
+                  <Txt variant="caption" color="rgba(255, 255, 255, 0.8)" style={styles.centreText}>
+                    {shareLine}
+                  </Txt>
+                )}
                 <Txt variant="caption" color="rgba(255, 255, 255, 0.62)" style={styles.centreText}>
                   Each day you check in rolls again, and the card keeps its best. Rarity is luck, not a rating of the gym.
                 </Txt>
@@ -226,6 +252,7 @@ const styles = themed(() =>
     actions: { alignSelf: 'stretch', gap: space[3], marginTop: space[1] },
     buttons: { flexDirection: 'row', gap: space[2] },
     flex: { flex: 1 },
+    shareButton: { height: 44, alignSelf: 'stretch' },
     ghost: {
       height: 52,
       borderRadius: radius.lg,

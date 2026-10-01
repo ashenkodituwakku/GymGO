@@ -50,8 +50,8 @@ the branch the owner's launcher pulls.
 ## The code
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
-`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 202,
-mobile 254, domain 150 and web 39 tests, all passing.
+`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 208,
+mobile 256, domain 154 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 57, React Native 0.86, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -101,6 +101,9 @@ mobile 254, domain 150 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- Batch B: collection sets (another session), friends, invites to train,
+  leaderboards, share cards as pictures. Card rarity now lives in the
+  domain package (`cards.ts`) so the server can show friends' cards.
 - Batch A: open late / 24 hours filters, Find a machine, Trips.
 - Glass equally opaque on every device (iOS 18 was see-through).
 - Sign-in, the dev account included, works on every device that opens the
@@ -130,10 +133,12 @@ pushed commit or a few.
 - [x] City and suburb sets with badges and a reward card
       (`src/lib/sets.ts`, `src/components/SetCard.tsx`; on Collection and
       at check-in).
-- [ ] Leaderboards (opt-in, display name only), per city and among friends.
-- [ ] Friends: add by code, see each other's collections, invite to train.
-- [ ] Share a collected card as an image (react-native-view-shot plus
-      expo-sharing on phones; Web Share or download in a browser).
+- [x] Leaderboards (opt-in, display name only), per city and among friends
+      (`src/app/leaderboard.tsx`; server `src/social.ts`).
+- [x] Friends: add by code, see each other's collections, invite to train
+      (`src/app/friends/`; server `src/social.ts`, domain `social.ts`).
+- [x] Share a collected card as an image (`src/lib/shareImage.ts`,
+      `src/app/card/[id].tsx`, Share card in the new-card pop-up).
 
 **Batch C: training**
 - [ ] Workout templates (PPL, 5×5, beginner full-body) that start a workout.

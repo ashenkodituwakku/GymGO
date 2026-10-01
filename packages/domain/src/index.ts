@@ -30,3 +30,5 @@ export * from './legal';
 export * from './hours';
 export * from './machines';
 export * from './trips';
+export * from './cards';
+export * from './social';

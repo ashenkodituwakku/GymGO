@@ -217,6 +217,10 @@ function ThemedStack() {
         <Stack.Screen name="machines" options={{ headerShown: true, title: 'Find a machine' }} />
         <Stack.Screen name="trips/index" options={{ headerShown: true, title: 'Trips' }} />
         <Stack.Screen name="trips/[id]" options={{ headerShown: true, title: 'Trip' }} />
+        <Stack.Screen name="card/[id]" options={{ ...MODAL, headerShown: true, title: 'Card' }} />
+        <Stack.Screen name="friends/index" options={{ headerShown: true, title: 'Friends' }} />
+        <Stack.Screen name="friends/[id]" options={{ headerShown: true, title: 'Friend' }} />
+        <Stack.Screen name="leaderboard" options={{ headerShown: true, title: 'Leaderboard' }} />
         <Stack.Screen name="progress/[exercise]" options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="pro" options={{ ...MODAL, headerShown: true, title: 'GymGO Pro' }} />
         <Stack.Screen name="country" options={{ ...MODAL, headerShown: true, title: 'Country' }} />

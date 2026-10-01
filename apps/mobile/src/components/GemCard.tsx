@@ -53,6 +53,8 @@ export function GemCard({
   big = false,
   windowHeight,
   onPress,
+  look: lookOverride,
+  visits: visitsOverride,
 }: {
   entry: CollectedGym;
   record: GymRecord | null;
@@ -63,10 +65,13 @@ export function GemCard({
   /** The picture window's height, when the space calls for another. */
   windowHeight?: number;
   onPress?: () => void;
+  /** A friend's card: its look and visit count as their account worked them out, without the days. */
+  look?: CardLook;
+  visits?: number;
 }) {
-  const look = cardFor(entry);
+  const look = lookOverride ?? cardFor(entry);
   const gem = gemInfo(look.gem);
-  const visits = entry.days.length;
+  const visits = visitsOverride ?? entry.days.length;
   const tier = tierFor(visits);
   const metal = TIER_METAL[tier.tier];
   const toNext = tier.next ? visits / (visits + tier.next.visits) : 1;

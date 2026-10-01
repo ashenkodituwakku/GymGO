@@ -15,7 +15,7 @@
 
 import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
-import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review } from '@gymgo/domain';
+import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review, CollectionTotals, FriendCard } from '@gymgo/domain';
 import type { TrainingSession } from './training';
 import { pickApiBase } from './serverAddress';
 
@@ -115,6 +115,54 @@ async function request<T>(method: string, path: string, options: { token?: strin
 }
 
 /** The account's copy of your gym collection. */
+/** Someone on GymGO, as friends and boards show them: a display name, never an email. */
+export interface Person {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
+export interface FriendSummary extends Person {
+  since: string;
+  totals: CollectionTotals;
+}
+
+export interface TrainInvite {
+  id: string;
+  from: Person;
+  to: Person;
+  gymId: string;
+  gymName: string;
+  at: string;
+  note: string | null;
+  answer: 'yes' | 'no' | null;
+}
+
+export interface FriendsOverview {
+  code: string;
+  friends: FriendSummary[];
+  incoming: Person[];
+  outgoing: Person[];
+  invites: { incoming: TrainInvite[]; outgoing: TrainInvite[] };
+  leaderboard: boolean;
+}
+
+export interface BoardEntry {
+  rank: number;
+  displayName: string;
+  avatarUrl: string | null;
+  gyms: number;
+  visits: number;
+  you: boolean;
+}
+
+export interface Board {
+  joined: boolean;
+  rows: BoardEntry[];
+  you: BoardEntry | null;
+  people: number;
+}
+
 export interface CollectionAnswer {
   gyms: CollectedGym[];
   resetAt: string | null;
@@ -443,6 +491,23 @@ export const api = {
 
   /** Your gym collection on the account, and when it was last reset. */
   collection: (token: string) => request<CollectionAnswer>('GET', '/api/collection', { token }),
+  friends: (token: string) => request<FriendsOverview>('GET', '/api/friends', { token }),
+  addFriend: (token: string, code: string) => request<{ status: 'requested' | 'accepted'; friend: Person }>('POST', '/api/friends', { token, body: { code } }),
+  acceptFriend: (token: string, id: string) => request<FriendsOverview>('POST', `/api/friends/${encodeURIComponent(id)}/accept`, { token }),
+  removeFriend: (token: string, id: string) => request<unknown>('DELETE', `/api/friends/${encodeURIComponent(id)}`, { token }),
+  friendCollection: (token: string, id: string) =>
+    request<{ friend: Person; totals: CollectionTotals; cards: FriendCard[] }>('GET', `/api/friends/${encodeURIComponent(id)}/collection`, { token }),
+  invite: (token: string, id: string, body: { gymId: string; gymName: string; at: string; note?: string }) =>
+    request<TrainInvite>('POST', `/api/friends/${encodeURIComponent(id)}/invites`, { token, body }),
+  answerInvite: (token: string, id: string, answer: 'yes' | 'no') => request<TrainInvite>('POST', `/api/invites/${encodeURIComponent(id)}`, { token, body: { answer } }),
+  cancelInvite: (token: string, id: string) => request<unknown>('DELETE', `/api/invites/${encodeURIComponent(id)}`, { token }),
+  setLeaderboard: (token: string, join: boolean) => request<{ leaderboard: boolean }>('PUT', '/api/me/leaderboard', { token, body: { join } }),
+  leaderboard: (token: string, scope: 'everyone' | 'friends', city: { city: string; countryCode: string } | null) =>
+    request<Board>(
+      'GET',
+      `/api/leaderboard?scope=${scope}${city ? `&city=${encodeURIComponent(city.city)}&country=${encodeURIComponent(city.countryCode)}` : ''}`,
+      { token },
+    ),
   /** Merged into the account's (up to 200 gyms at a time); a 409 `collection_reset` when it was reset since `resetAt`. */
   syncCollection: (token: string, gyms: CollectedGym[], resetAt: string | null) =>
     request<CollectionAnswer>('PUT', '/api/collection', { token, body: { gyms, resetAt } }),

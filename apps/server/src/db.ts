@@ -215,6 +215,36 @@ const SCHEMA = `
     user_id text primary key references users(id) on delete cascade,
     reset_at text not null
   );
+  create table if not exists friend_codes (
+    user_id text primary key references users(id) on delete cascade,
+    code text not null unique,
+    created_at text not null
+  );
+  create table if not exists friend_links (
+    from_user text not null references users(id) on delete cascade,
+    to_user text not null references users(id) on delete cascade,
+    status text not null check (status in ('pending', 'accepted')),
+    created_at text not null,
+    accepted_at text,
+    primary key (from_user, to_user)
+  );
+  create index if not exists friend_links_to on friend_links(to_user);
+  create table if not exists train_invites (
+    id text primary key,
+    from_user text not null references users(id) on delete cascade,
+    to_user text not null references users(id) on delete cascade,
+    gym_id text not null,
+    gym_name text not null,
+    at text not null,
+    note text,
+    answer text check (answer in ('yes', 'no')),
+    created_at text not null
+  );
+  create index if not exists train_invites_people on train_invites(to_user, from_user, at);
+  create table if not exists leaderboard_members (
+    user_id text primary key references users(id) on delete cascade,
+    joined_at text not null
+  );
 `;
 
 export function openDb(path: string): Db {

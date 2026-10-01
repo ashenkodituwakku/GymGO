@@ -189,7 +189,7 @@ let counter = 0;
 async function signUp(base = withStripe.base) {
   counter += 1;
   const result = await call(base, 'POST', '/api/auth/signup', {
-    body: { email: `pro${counter}@example.com`, password: 'correct horse', displayName: `Lifter ${counter}`, birthMonth: '1990-01' },
+    body: { email: `pro${counter}@example.com`, password: 'correct horse', displayName: `Lifter ${counter}`, birthMonth: '1990-01', acceptTerms: true },
   });
   return { token: result.body.token as string, id: result.body.account.id as string };
 }
@@ -269,6 +269,8 @@ describe('checkout', () => {
     expect(created.success_url).toContain('session_id={CHECKOUT_SESSION_ID}');
     expect(created.success_url).toContain('/api/billing/return?to=http%3A%2F%2Flocalhost%3A8081%2Fpro');
     expect(created.cancel_url).toContain('result=cancelled');
+    // The renewal terms and links to the full terms, on Stripe's page by its button.
+    expect(created.custom_text.submit.message).toMatch(/Renews automatically until you cancel.*\/terms\).*\/refunds\)/);
     const customer = fake.calls.find((item) => item.method === 'customers.create')!;
     expect(customer.options).toEqual({ idempotencyKey: `gymgo-customer-${id}` });
   });

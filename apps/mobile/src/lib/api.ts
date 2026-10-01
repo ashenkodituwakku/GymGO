@@ -16,7 +16,7 @@
 
 import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
-import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, Review } from '@gymgo/domain';
+import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, Review } from '@gymgo/domain';
 import type { TrainingSession } from './training';
 
 const PORT = 4000;
@@ -269,6 +269,8 @@ export interface Account {
   avatarUrl?: string | null;
   /** Only the dev Pro account on a local server with GYMGO_DEV_PRO=on: testing shortcuts, such as collecting gyms from anywhere. */
   devTools?: boolean;
+  /** The version of the terms (LEGAL_VERSION) this account last agreed to; null if never. Missing from older servers. */
+  termsVersion?: string | null;
 }
 
 export type SignInProvider = 'google' | 'apple';
@@ -349,12 +351,15 @@ export const api = {
       { token },
     ),
 
-  signUp: (body: { email: string; password: string; displayName: string; birthMonth: string }) =>
+  signUp: (body: { email: string; password: string; displayName: string; birthMonth: string; acceptTerms: true }) =>
     request<{ token: string; account: Account }>('POST', '/api/auth/signup', { body }),
   signIn: (body: { email: string; password: string }) => request<{ token: string; account: Account }>('POST', '/api/auth/login', { body }),
   providers: () => request<SignInProviders>('GET', '/api/auth/providers'),
   /** Sign in (or, the first time, sign up) with a Google or Apple ID token. */
-  signInWith: (provider: SignInProvider, body: { idToken: string; nonce: string | null; name?: string | null; birthMonth?: string }) =>
+  signInWith: (
+    provider: SignInProvider,
+    body: { idToken: string; nonce: string | null; name?: string | null; birthMonth?: string; acceptTerms?: true },
+  ) =>
     request<{ token: string; account: Account; created: boolean }>('POST', `/api/auth/${provider}`, { body }),
   signInMethods: (token: string) => request<SignInMethods>('GET', '/api/me/identities', { token }),
   connect: (token: string, provider: SignInProvider, body: { idToken: string; nonce: string | null }) =>
@@ -444,6 +449,8 @@ export const api = {
   resetCollection: (token: string) => request<CollectionAnswer>('DELETE', '/api/collection', { token }),
 
   rename: (token: string, displayName: string) => request<{ account: Account }>('PATCH', '/api/me', { token, body: { displayName } }),
+  /** Agree to the terms as they are now (after they've changed). */
+  agreeToTerms: (token: string, version: string) => request<{ account: Account }>('POST', '/api/me/terms', { token, body: { version } }),
   /** A new profile picture (base64 JPEG or PNG, up to 2 MB). */
   setAvatar: (token: string, data: string) => request<{ account: Account }>('PUT', '/api/me/avatar', { token, body: { data } }),
   removeAvatar: (token: string) => request<{ account: Account }>('DELETE', '/api/me/avatar', { token }),
@@ -460,7 +467,13 @@ export const api = {
   /** Send a bug report to the GymGO team. `emailed` says whether the email has gone yet (it's kept either way). */
   reportBug: (token: string | null, report: BugReportDraft) => request<{ id: string; emailed: boolean }>('POST', '/api/bug-reports', { token, body: report }),
   /** Where to send a copyright (DMCA) notice, once the owner has registered an agent. */
-  legal: () => request<{ copyrightAgent: { name: string; address: string | null; email: string | null } | null }>('GET', '/api/legal'),
+  legal: () =>
+    request<{
+      copyrightAgent: { name: string; address: string | null; email: string | null } | null;
+      /** Who runs GymGO; missing from older servers. */
+      operator?: LegalOperator;
+      version?: string;
+    }>('GET', '/api/legal'),
   /** Moderators: the latest bug reports, and whether this server emails them. */
   bugReports: (token: string) => request<{ emailing: boolean; reports: BugReportItem[] }>('GET', '/api/moderation/bug-reports', { token }),
   moderationQueue: (token: string) => request<{ reviews: Review[] }>('GET', '/api/moderation/reviews', { token }),

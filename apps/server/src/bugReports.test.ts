@@ -184,7 +184,7 @@ describe('POST /api/bug-reports', () => {
   async function signUp() {
     people += 1;
     const result = await call('POST', '/api/auth/signup', {
-      body: { email: `bugs${people}@example.com`, password: 'correct horse', displayName: `Tester ${people}`, birthMonth: '1990-01' },
+      body: { email: `bugs${people}@example.com`, password: 'correct horse', displayName: `Tester ${people}`, birthMonth: '1990-01', acceptTerms: true },
     });
     return { token: result.body.token as string, id: result.body.account.id as string };
   }

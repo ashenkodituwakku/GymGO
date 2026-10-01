@@ -71,7 +71,10 @@
  *   GET    /api/moderation/photos         moderators: photos waiting
  *   POST   /api/moderation/photos/:id     moderators: { decision, reason? }
  *   GET    /api/moderation/member-reports moderators: the latest price and visit reports, with who sent them
- *   GET    /api/legal                     the designated copyright agent, once the owner has registered one
+ *   GET    /api/legal                     who runs GymGO, the terms' version, and the copyright agent once registered
+ *   GET    /terms /privacy /refunds /community /legal   the legal documents, as public pages
+ *   GET    /.well-known/security.txt      where to report a security problem (once GYMGO_CONTACT_EMAIL is set)
+ *   POST   /api/me/terms                  signed in: { version } -> agree to the terms as they are now
  *   POST   /api/bug-reports               anyone: { description, topic?: 'bug' | 'copyright', replyTo?, context? } -> kept, and emailed to the team
  *   GET    /api/moderation/bug-reports    moderators: the latest bug reports, and whether each was emailed
  *   DELETE /api/moderation/member-reports/:kind/:gymId/:userId   moderators: remove one
@@ -85,6 +88,12 @@ import { randomUUID } from 'node:crypto';
 import { gunzipSync, gzipSync } from 'node:zlib';
 import {
   ANONYMOUS,
+  DEFAULT_OPERATOR,
+  LEGAL_UPDATED,
+  LEGAL_VERSION,
+  isLegalDocId,
+  type LegalDocId,
+  type LegalOperator,
   EQUIPMENT_TYPES,
   LIMITS,
   can,
@@ -107,8 +116,10 @@ import {
 import {
   AttemptLimiter,
   AuthInputError,
+  TermsNeededError,
   TooYoungError,
   accountForToken,
+  checkTermsAccepted,
   checkAge,
   checkLogin,
   createAccount,
@@ -126,6 +137,7 @@ import {
   type AccountRow,
 } from './auth';
 import { DEV_PRO_EMAIL } from './devAccount';
+import { legalIndexPage, legalPage, securityTxt } from './legalPages';
 import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
 import { AreaError, AreaSearch, parseBox, whereIs } from './area';
 import { CountryPacks } from './countryPack';
@@ -180,7 +192,11 @@ export interface AppOptions {
     retryEveryMs?: number;
   };
   /** Legal contacts the app shows: the designated copyright (DMCA) agent, once registered. */
-  legal?: { copyrightAgent?: { name: string; address: string | null; email: string | null } | null };
+  legal?: {
+    copyrightAgent?: { name: string; address: string | null; email: string | null } | null;
+    /** Who runs GymGO, for the legal pages; by default "the GymGO team", with no contact address. */
+    operator?: LegalOperator;
+  };
   /**
    * True when this server made the dev Pro account (GYMGO_DEV_PRO=on, on a
    * computer, never a hosted server; see devAccount.ts). That account, and
@@ -445,6 +461,7 @@ const REVIEW_SELECT = `select reviews.*, users.display_name from reviews join us
 export function createApp(options: AppOptions) {
   const { db } = options;
   const now = options.now ?? (() => new Date());
+  const operator = options.legal?.operator ?? DEFAULT_OPERATOR;
   const accountJson = (row: Parameters<typeof publicAccount>[0]) =>
     options.devAccount && row.email === DEV_PRO_EMAIL ? { ...publicAccount(row), devTools: true } : publicAccount(row);
   // Wrong passwords: 10 per address and email per 15 minutes.
@@ -572,8 +589,32 @@ export function createApp(options: AppOptions) {
     // --- Public ---------------------------------------------------------
     if (method === 'GET' && path === '/api/health') return send(res, 200, { ok: true });
 
-    // Where to send a copyright (DMCA) notice, once the owner has registered an agent.
-    if (method === 'GET' && path === '/api/legal') return send(res, 200, { copyrightAgent: options.legal?.copyrightAgent ?? null });
+    // Who runs GymGO (for the legal documents), the terms' version, and
+    // where to send a copyright (DMCA) notice once the owner has registered an agent.
+    if (method === 'GET' && path === '/api/legal') {
+      return send(res, 200, { copyrightAgent: options.legal?.copyrightAgent ?? null, operator, version: LEGAL_VERSION, updated: LEGAL_UPDATED });
+    }
+
+    // The legal documents as public pages, for Stripe, the app stores and anyone with a link.
+    if (method === 'GET' && (path === '/legal' || isLegalDocId(parts[0]) && parts.length === 1)) {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=300');
+      res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+      res.setHeader('Referrer-Policy', 'no-referrer');
+      res.end(path === '/legal' ? legalIndexPage(operator) : legalPage(parts[0] as LegalDocId, operator));
+      return;
+    }
+
+    if (method === 'GET' && path === '/.well-known/security.txt') {
+      const body = securityTxt(operator, options.publicUrl ?? null, now());
+      if (!body) throw new HttpError(404, 'Not found.');
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.end(body);
+      return;
+    }
 
     if (method === 'GET' && path === '/api/gyms') {
       return send(res, 200, { gyms: allGyms(db), attribution: options.attribution, generatedAt: now().toISOString() });
@@ -711,7 +752,12 @@ export function createApp(options: AppOptions) {
         account,
         { interval: interval as BillingInterval, currency: currency as BillingCurrency },
         // Stripe fills in {CHECKOUT_SESSION_ID} itself; it must stay unencoded.
-        { success: `${back}&result=success&session_id={CHECKOUT_SESSION_ID}`, cancel: `${back}&result=cancelled` },
+        {
+          success: `${back}&result=success&session_id={CHECKOUT_SESSION_ID}`,
+          cancel: `${back}&result=cancelled`,
+          terms: `${publicBase(req)}/terms`,
+          refunds: `${publicBase(req)}/refunds`,
+        },
       );
       return send(res, 200, { url: checkoutUrl });
     }
@@ -887,7 +933,8 @@ export function createApp(options: AppOptions) {
       }
       // Nothing is kept about someone too young for an account, not even that they tried.
       checkAge(body.birthMonth, now());
-      const account = createAccount(db, { ...input, ageCheckedAt: now().toISOString() }, now());
+      checkTermsAccepted(body.acceptTerms);
+      const account = createAccount(db, { ...input, ageCheckedAt: now().toISOString(), termsVersion: LEGAL_VERSION }, now());
       if (!account) throw new HttpError(409, 'There’s already an account with that email. Try signing in.');
       return send(res, 201, { token: startSession(db, account.id, now()), account: accountJson(account) });
     }
@@ -951,10 +998,15 @@ export function createApp(options: AppOptions) {
             throw new HttpError(400, 'Before GymGO makes your account: which month and year were you born?', 'age_needed');
           }
           checkAge(body.birthMonth, now());
+          checkTermsAccepted(body.acceptTerms);
           const fromEmail = who.email.split('@')[0]!.replace(/[._-]+/g, ' ').trim();
           const offered = provider === 'apple' && typeof body.name === 'string' ? body.name : who.name;
           const displayName = (offered ?? '').trim().replace(/\s+/g, ' ').slice(0, 40) || fromEmail.slice(0, 40) || 'GymGO member';
-          account = createAccount(db, { email: who.email, password: null, displayName, ageCheckedAt: now().toISOString() }, now())!;
+          account = createAccount(
+            db,
+            { email: who.email, password: null, displayName, ageCheckedAt: now().toISOString(), termsVersion: LEGAL_VERSION },
+            now(),
+          )!;
           created = true;
         }
         db.prepare('insert into identities (provider, subject, user_id, email, created_at) values (?, ?, ?, ?, ?)').run(
@@ -1127,6 +1179,15 @@ export function createApp(options: AppOptions) {
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.end(bytes);
       return;
+    }
+
+    // Agreeing to the terms as they are now, after they've changed.
+    if (method === 'POST' && path === '/api/me/terms') {
+      const { account } = requireAccount(req);
+      const body = (await readJson(req)) as Record<string, unknown>;
+      if (body.version !== LEGAL_VERSION) throw new HttpError(409, 'The terms have changed again. Reopen GymGO to see them.');
+      db.prepare('update users set terms_version = ?, terms_accepted_at = ? where id = ?').run(LEGAL_VERSION, now().toISOString(), account.id);
+      return send(res, 200, { account: accountJson({ ...account, terms_version: LEGAL_VERSION }) });
     }
 
     if (path === '/api/me') {
@@ -1851,7 +1912,8 @@ export function createApp(options: AppOptions) {
         return send(res, error.status, { error: error.message, ...(error.code ? { code: error.code } : {}), ...detail });
       }
       if (error instanceof AuthInputError) {
-        return send(res, error.status, { error: error.message, ...(error instanceof TooYoungError ? { code: error.code } : {}) });
+        const code = error instanceof TooYoungError || error instanceof TermsNeededError ? error.code : undefined;
+        return send(res, error.status, { error: error.message, ...(code ? { code } : {}) });
       }
       console.error(error);
       send(res, 500, { error: 'Something went wrong on the server.' });

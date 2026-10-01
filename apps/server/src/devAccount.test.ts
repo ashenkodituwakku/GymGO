@@ -83,7 +83,7 @@ describe('the dev Pro account', () => {
       const other = await fetch(`${devBase}/api/auth/signup`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email: 'someone@example.com', password: 'correct horse', displayName: 'Someone', birthMonth: '1990-01' }),
+        body: JSON.stringify({ email: 'someone@example.com', password: 'correct horse', displayName: 'Someone', birthMonth: '1990-01', acceptTerms: true }),
       });
       expect(other.status).toBe(201);
       expect(((await other.json()) as { account: { devTools?: boolean } }).account.devTools).toBeUndefined();

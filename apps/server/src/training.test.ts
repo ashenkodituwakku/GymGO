@@ -33,7 +33,7 @@ async function call(method: string, path: string, options: { token?: string; bod
 let people = 0;
 async function signUp() {
   people += 1;
-  const result = await call('POST', '/api/auth/signup', { body: { email: `lifter${people}@example.com`, password: 'correct horse', displayName: `Lifter ${people}`, birthMonth: '1990-01' } });
+  const result = await call('POST', '/api/auth/signup', { body: { email: `lifter${people}@example.com`, password: 'correct horse', displayName: `Lifter ${people}`, birthMonth: '1990-01', acceptTerms: true } });
   expect(result.status).toBe(201);
   return result.body!.token as string;
 }

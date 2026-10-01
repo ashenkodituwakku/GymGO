@@ -6,6 +6,7 @@ import { MELBOURNE_ATTRIBUTION, MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { AU_GYMS } from '@gymgo/au-data';
 import { US_GYMS } from '@gymgo/usa-data';
 import { EU_GYMS } from '@gymgo/eu-data';
+import { DEFAULT_OPERATOR, type LegalOperator } from '@gymgo/domain';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -99,6 +100,20 @@ export const COPYRIGHT_AGENT = process.env.GYMGO_DMCA_AGENT_NAME?.trim()
       email: process.env.GYMGO_DMCA_AGENT_EMAIL?.trim() || null,
     }
   : null;
+/**
+ * Who runs GymGO, named in the Terms of Service, Privacy Policy and the
+ * other legal pages (/terms, /privacy, /refunds, /community). Set these
+ * before GymGO is public: a contact email especially, which privacy law
+ * expects. Without them the pages say "the GymGO team" and point people to
+ * Report a bug.
+ */
+export const LEGAL_OPERATOR: LegalOperator = {
+  name: process.env.GYMGO_LEGAL_NAME?.trim() || DEFAULT_OPERATOR.name,
+  email: process.env.GYMGO_CONTACT_EMAIL?.trim() || null,
+  address: process.env.GYMGO_LEGAL_ADDRESS?.trim() || null,
+  governingLaw: process.env.GYMGO_GOVERNING_LAW?.trim() || DEFAULT_OPERATOR.governingLaw,
+  hostedIn: process.env.GYMGO_HOSTED_IN?.trim() || null,
+};
 /** Where bug reports are emailed, comma-separated. By default, the GymGO team. */
 export const BUG_REPORT_TO = (process.env.GYMGO_BUG_REPORT_TO ?? 'ashenkodit@gmail.com, mahogany.81926@gmail.com')
   .split(',')

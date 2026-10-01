@@ -4,7 +4,7 @@
  * switch haptics; and read where GymGO's facts come from.
  */
 
-import { formatPlanPrice } from '@gymgo/domain';
+import { LEGAL_VERSION, formatPlanPrice, type LegalDocId } from '@gymgo/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -28,6 +28,8 @@ import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { Avatar } from '@/components/Avatar';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
+import { useLegalInfo } from '@/lib/legal';
+import { LegalText } from '@/components/LegalText';
 
 export default function Profile() {
   usePageTitle('Profile');
@@ -37,12 +39,13 @@ export default function Profile() {
   const collection = useCollection();
   const router = useRouter();
   const params = useLocalSearchParams<{ checkout?: string }>();
-  const [about, setAbout] = useState<'facts' | 'sources' | 'privacy' | 'copyright' | null>(null);
+  const [about, setAbout] = useState<'facts' | 'sources' | 'copyright' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const me = account.state === 'signed_in' ? account.account : null;
   const moderator = me?.role === 'moderator' || me?.role === 'admin';
 
-  const toggle = (key: 'facts' | 'sources' | 'privacy' | 'copyright') => setAbout((current) => (current === key ? null : key));
+  const toggle = (key: 'facts' | 'sources' | 'copyright') => setAbout((current) => (current === key ? null : key));
+  const openLegal = (doc: LegalDocId) => router.push({ pathname: '/legal/[doc]', params: { doc } });
 
   // Back from Stripe's manage page in a browser: pick up any change.
   const { refresh } = billing;
@@ -100,6 +103,8 @@ export default function Profile() {
       ) : (
         <SignInCard />
       )}
+
+      {me && me.termsVersion !== undefined && me.termsVersion !== LEGAL_VERSION && <NewTermsCard />}
 
       <Group header="Training">
         <Row icon="chart" tile={TILE.green} title="Progress" subtitle="Your log, records and streak" onPress={() => router.push('/progress')} />
@@ -218,28 +223,6 @@ export default function Profile() {
             reviews, what members paid and machine reports: GymGO members.
           </Explainer>
         )}
-        <Row icon="info" tile={TILE.grey} title="Privacy" onPress={() => toggle('privacy')} />
-        {about === 'privacy' && (
-          <Explainer>
-            Your account lives on the GymGO server on your own computer. Your precise location, if you allow it, is used on
-            this device to find gyms near you and measure distances. It is never stored or sent to GymGO or anyone else.
-            Outside the cities GymGO carries, the app asks the GymGO server for the gyms in the whole map tiles around you (a
-            block about 30 km across, the same for everyone in it), never your position. When you search an area or type a
-            town, the server is told that area or name to look up on OpenStreetMap, not who you are.
-            Photos have their location data removed before they’re saved. What you say you paid for a visit is shown without your
-            name. If you subscribe to Pro, Stripe handles the payment:
-            GymGO never sees your card, and Stripe gets your name and email for the receipt. Signed in, Download my data (below)
-            gives you everything GymGO holds about you as one file.
-            {'\n\n'}
-            GymGO has no ads, no analytics and no session recording: nothing watches what you tap or type. Accounts are for
-            people 13 and over; the month and year you give when making one is checked, then not kept. The map comes from
-            OpenFreeMap (Apple Maps on iPhone), which, like any site, sees your device’s IP address. Nothing loads from Google
-            until you ask: Street View and Google’s photos wait for a tap unless you turn on Google content above. A bug
-            report sends only what its form lists.
-          </Explainer>
-        )}
-        <Row icon="photo" tile={TILE.grey} title="Copyright and takedowns" onPress={() => toggle('copyright')} />
-        {about === 'copyright' && <CopyrightExplainer onNotice={() => router.push({ pathname: '/report-bug', params: { topic: 'copyright', from: 'Profile' } })} />}
         <Row
           icon="bug"
           tile={TILE.red}
@@ -248,6 +231,15 @@ export default function Profile() {
           onPress={() => router.push({ pathname: '/report-bug', params: { from: 'Profile' } })}
         />
         <Row icon="settings" tile={TILE.grey} title="Version" value="0.1.0 · pilot" chevron={false} />
+      </Group>
+
+      <Group header="Legal">
+        <Row icon="source" tile={TILE.grey} title="Terms of Service" onPress={() => openLegal('terms')} />
+        <Row icon="lock" tile={TILE.grey} title="Privacy Policy" subtitle="No ads, no analytics, and your location stays on your phone" onPress={() => openLegal('privacy')} />
+        <Row icon="refresh" tile={TILE.grey} title="Refunds and Cancelling" onPress={() => openLegal('refunds')} />
+        <Row icon="people" tile={TILE.grey} title="Community Guidelines" subtitle="The rules for reviews, photos and reports" onPress={() => openLegal('community')} />
+        <Row icon="photo" tile={TILE.grey} title="Copyright and takedowns" onPress={() => toggle('copyright')} />
+        {about === 'copyright' && <CopyrightExplainer onNotice={() => router.push({ pathname: '/report-bug', params: { topic: 'copyright', from: 'Profile' } })} />}
       </Group>
 
       {error && (
@@ -318,13 +310,7 @@ function SignInCard() {
  * notice: GymGO's registered agent once there is one, else Report a problem.
  */
 function CopyrightExplainer({ onNotice }: { onNotice: () => void }) {
-  const [agent, setAgent] = useState<{ name: string; address: string | null; email: string | null } | null | undefined>(undefined);
-  useEffect(() => {
-    api
-      .legal()
-      .then((answer) => setAgent(answer.copyrightAgent))
-      .catch(() => setAgent(null));
-  }, []);
+  const { copyrightAgent: agent } = useLegalInfo();
   return (
     <View style={styles.copyright}>
       <Explainer>
@@ -343,6 +329,41 @@ function CopyrightExplainer({ onNotice }: { onNotice: () => void }) {
       <View style={styles.copyrightButton}>
         <PrimaryButton label="Send a copyright notice" tone="quiet" icon="mail" onPress={onNotice} />
       </View>
+    </View>
+  );
+}
+
+/** The terms or privacy policy have changed since this account agreed to them. */
+function NewTermsCard() {
+  const { account } = useApp();
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const agree = async () => {
+    setBusy(true);
+    setProblem(null);
+    try {
+      await account.agreeToTerms(LEGAL_VERSION);
+      haptic.success();
+    } catch (caught) {
+      setProblem(caught instanceof ApiError ? caught.message : 'Couldn’t reach the GymGO server. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <View style={styles.newTerms}>
+      <Txt variant="headline">GymGO’s terms have changed</Txt>
+      <LegalText
+        variant="subhead"
+        tint={color.labelSecondary}
+        text="Have a look at the new [Terms of Service](terms) and [Privacy Policy](privacy). Agree to keep using your account; if you’d rather not, you can delete it in Account settings."
+      />
+      {problem && (
+        <Txt variant="footnote" color={color.dangerInk}>
+          {problem}
+        </Txt>
+      )}
+      <PrimaryButton label="Agree" busy={busy} onPress={() => void agree()} />
     </View>
   );
 }
@@ -398,6 +419,7 @@ const styles = themed(() => StyleSheet.create({
     backgroundColor: color.card,
     ...shadow.plate,
   },
+  newTerms: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
   signInCard: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
   signInHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginBottom: space[1] },
   moderation: { gap: 6 },

@@ -21,6 +21,7 @@ import { haptic } from '@/lib/haptics';
 import { NO_WEB_OUTLINE, color, dropShadow, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
+import { LegalText } from '@/components/LegalText';
 
 type Mode = 'sign_in' | 'create';
 
@@ -51,6 +52,8 @@ export default function SignInScreen() {
   const [born, setBorn] = useState('');
   const birthMonth = parseBirthMonth(born);
   const [locked, setLocked] = useState(false);
+  // The terms and privacy policy, agreed to before an account is made.
+  const [agreed, setAgreed] = useState(false);
   // A Google or Apple sign-in that would make a new account, waiting on the age question.
   const [pendingSocial, setPendingSocial] = useState<PendingSignIn | null>(() => takePendingSignIn());
   useEffect(() => {
@@ -97,7 +100,8 @@ export default function SignInScreen() {
   const passwordOk = password.length >= (mode === 'create' ? 8 : 1);
   const nameOk = mode === 'sign_in' || name.trim().length > 0;
   const bornOk = mode === 'sign_in' || birthMonth !== null;
-  const ready = emailOk && passwordOk && nameOk && bornOk && !(mode === 'create' && locked);
+  const agreedOk = mode === 'sign_in' || agreed;
+  const ready = emailOk && passwordOk && nameOk && bornOk && agreedOk && !(mode === 'create' && locked);
 
   const refuseYoung = () => {
     void lockAccountCreation();
@@ -124,7 +128,7 @@ export default function SignInScreen() {
 
   /** Finish a Google or Apple sign-in that was waiting on the age question. */
   const finishSocial = async () => {
-    if (!pendingSocial || !birthMonth || busy) return;
+    if (!pendingSocial || !birthMonth || !agreed || busy) return;
     setBusy(true);
     setError(null);
     try {
@@ -145,8 +149,8 @@ export default function SignInScreen() {
       await account.signInWith(provider, idToken, nonce, providedName);
       done();
     } catch (caught) {
-      if (caught instanceof ApiError && caught.code === 'age_needed') {
-        // A new account: ask the age question first, then finish with the same sign-in.
+      if (caught instanceof ApiError && (caught.code === 'age_needed' || caught.code === 'terms_needed')) {
+        // A new account: ask the age question and for the terms first, then finish with the same sign-in.
         if (locked) fail(TOO_YOUNG);
         else setPendingSocial({ provider, idToken, nonce, name: providedName ?? null });
       } else if (tooYoung(caught)) refuseYoung();
@@ -201,7 +205,8 @@ export default function SignInScreen() {
         <Animated.View entering={FADE_IN} style={[styles.form, styles.pending, shakeStyle]}>
           <Txt variant="headline">One more thing before GymGO makes your account</Txt>
           <BornField value={born} onChange={setBorn} onSubmit={() => void finishSocial()} autoFocus />
-          <PrimaryButton label="Continue" busy={busy} disabled={!birthMonth} onPress={() => void finishSocial()} />
+          <TermsBox agreed={agreed} onChange={setAgreed} />
+          <PrimaryButton label="Continue" busy={busy} disabled={!birthMonth || !agreed} onPress={() => void finishSocial()} />
           <PrimaryButton label="Cancel" tone="quiet" onPress={() => setPendingSocial(null)} />
         </Animated.View>
       ) : mode === 'create' && locked ? (
@@ -283,6 +288,7 @@ export default function SignInScreen() {
           </Animated.View>
         )}
         {mode === 'create' && <BornField value={born} onChange={setBorn} onSubmit={() => void submit()} />}
+        {mode === 'create' && <TermsBox agreed={agreed} onChange={setAgreed} />}
       </Animated.View>
 
       {error && (
@@ -300,11 +306,40 @@ export default function SignInScreen() {
       </>
       )}
 
-      <Txt variant="caption" color={color.labelSecondary} style={styles.small}>
-        Your account lives on the GymGO server on your own computer. Passwords are stored only as a salted hash. With Apple
-        or Google, GymGO gets your name and email from them, never your password. GymGO sends no emails.
-      </Txt>
+      <LegalText
+        variant="caption"
+        tint={color.labelSecondary}
+        style={styles.small}
+        text="Passwords are kept only as a salted hash, never readable. With Apple or Google, GymGO gets your name and email from them, never your password. The [Privacy Policy](privacy) says what GymGO keeps and why."
+      />
     </PageScroll>
+  );
+}
+
+/** The box ticked to agree to the terms and privacy policy, which a new account needs. */
+function TermsBox({ agreed, onChange }: { agreed: boolean; onChange: (agreed: boolean) => void }) {
+  return (
+    <View style={styles.terms}>
+      <Pressable
+        onPress={() => {
+          haptic.select();
+          onChange(!agreed);
+        }}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: agreed }}
+        accessibilityLabel="I agree to GymGO’s Terms of Service and Privacy Policy"
+        hitSlop={10}
+        style={[styles.box, agreed && styles.boxOn]}
+      >
+        {agreed ? <Icon name="check" size={15} color={color.onBrand} /> : null}
+      </Pressable>
+      <LegalText
+        variant="footnote"
+        tint={color.labelSecondary}
+        style={styles.flex}
+        text="I agree to GymGO’s [Terms of Service](terms) and [Privacy Policy](privacy)."
+      />
+    </View>
   );
 }
 
@@ -412,5 +447,17 @@ const styles = themed(() =>
     rule: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginLeft: space[1] },
     error: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2], padding: space[3], borderRadius: radius.md, backgroundColor: color.dangerTint },
     small: { textAlign: 'center', marginTop: space[2] },
+    terms: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginLeft: space[1], marginTop: space[1] },
+    box: {
+      width: 24,
+      height: 24,
+      borderRadius: 7,
+      borderCurve: 'continuous',
+      borderWidth: 1.5,
+      borderColor: color.labelTertiary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    boxOn: { backgroundColor: color.brand, borderColor: color.brand },
   }),
 );

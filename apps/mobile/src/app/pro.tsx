@@ -31,6 +31,7 @@ import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
 import { HEADER_EDGE, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
+import { LegalText } from '@/components/LegalText';
 
 const FEATURE_ICON: Record<string, IconName> = {
   'Gyms worldwide': 'globe',
@@ -265,7 +266,7 @@ export default function ProScreen() {
               label={chosen ? `Subscribe · ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}` : 'Subscribe'}
               renewal={
                 chosen
-                  ? `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; Pro stays on to the end of the ${interval} you’ve paid for. Tapping Subscribe agrees to these renewal terms.`
+                  ? `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; Pro stays on to the end of the ${interval} you’ve paid for. Tapping Subscribe agrees to these renewal terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
                   : null
               }
               onSubscribe={() => void subscribe()}
@@ -295,12 +296,12 @@ export default function ProScreen() {
           ))}
         </View>
 
-        <Txt variant="caption" color={color.labelSecondary} style={styles.fine}>
-          Prices include tax. Pro renews automatically until you cancel. Cancel any time from Profile → Manage subscription, and
-          you keep Pro until the end of what you’ve paid for. If Pro ends, nothing you saved is deleted; you just can’t add more
-          than Free allows. Payments are handled by Stripe: GymGO never sees your card, and Stripe gets your name and email for
-          the receipt.
-        </Txt>
+        <LegalText
+          variant="caption"
+          tint={color.labelSecondary}
+          style={styles.fine}
+          text="Prices include tax. Pro renews automatically until you cancel. Cancel any time from Profile → Manage subscription, and you keep Pro until the end of what you’ve paid for. Changed your mind? Ask within 14 days of your first payment, or of a yearly renewal, for a full refund. If Pro ends, nothing you saved is deleted; you just can’t add more than Free allows. Payments are handled by Stripe: GymGO never sees your card, and Stripe gets your name and email for the receipt. [Terms of Service](terms) · [Refunds and Cancelling](refunds) · [Privacy Policy](privacy)"
+        />
       </PageScroll>
     </>
   );
@@ -368,11 +369,7 @@ function BuyButton({
   return (
     <View style={styles.gap}>
       <PrimaryButton label={busy ? 'Opening Stripe…' : label} disabled={busy} onPress={onSubscribe} />
-      {renewal && (
-        <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-          {renewal}
-        </Txt>
-      )}
+      {renewal && <LegalText variant="footnote" tint={color.labelSecondary} style={styles.center} text={renewal} />}
     </View>
   );
 }

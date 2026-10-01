@@ -48,6 +48,8 @@ export interface AccountRow {
   /** Your profile picture's file, if you've set one (null or missing: none). */
   avatar_id?: string | null;
   avatar_type?: 'jpeg' | 'png' | null;
+  /** The version of the terms (LEGAL_VERSION) this account last agreed to; null for accounts made before there were any. */
+  terms_version?: string | null;
 }
 
 export function toUser(row: AccountRow): User {
@@ -71,6 +73,7 @@ export function publicAccount(row: AccountRow) {
     createdAt: row.created_at,
     hasPassword: hasPassword(row),
     avatarUrl: row.avatar_id ? `/api/avatars/${row.avatar_id}` : null,
+    termsVersion: row.terms_version ?? null,
   };
 }
 
@@ -92,6 +95,15 @@ export const MINIMUM_AGE = 13;
 export class TooYoungError extends AuthInputError {
   override readonly status = 403;
   readonly code = 'too_young';
+}
+
+export class TermsNeededError extends AuthInputError {
+  readonly code = 'terms_needed';
+}
+
+/** A new account agrees to the terms and privacy policy first: the app sends `acceptTerms: true` once the box is ticked. */
+export function checkTermsAccepted(acceptTerms: unknown): void {
+  if (acceptTerms !== true) throw new TermsNeededError('To make an account, agree to the Terms of Service and Privacy Policy.');
 }
 
 /**
@@ -151,7 +163,7 @@ export function endOtherSessions(db: Db, userId: string, keepToken: string): voi
 
 export function createAccount(
   db: Db,
-  input: { email: string; password: string | null; displayName: string; ageCheckedAt?: string | null },
+  input: { email: string; password: string | null; displayName: string; ageCheckedAt?: string | null; termsVersion?: string | null },
   now = new Date(),
 ): AccountRow | null {
   const existing = db.prepare('select 1 from users where email = ?').get(input.email);
@@ -164,10 +176,23 @@ export function createAccount(
     role: 'member',
     blocked: 0,
     created_at: now.toISOString(),
+    terms_version: input.termsVersion ?? null,
   };
   db.prepare(
-    'insert into users (id, email, display_name, password_hash, role, blocked, created_at, age_checked_at) values (?, ?, ?, ?, ?, ?, ?, ?)',
-  ).run(row.id, row.email, row.display_name, row.password_hash, row.role, row.blocked, row.created_at, input.ageCheckedAt ?? null);
+    `insert into users (id, email, display_name, password_hash, role, blocked, created_at, age_checked_at, terms_version, terms_accepted_at)
+     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
+    row.id,
+    row.email,
+    row.display_name,
+    row.password_hash,
+    row.role,
+    row.blocked,
+    row.created_at,
+    input.ageCheckedAt ?? null,
+    row.terms_version ?? null,
+    row.terms_version ? row.created_at : null,
+  );
   return row;
 }
 

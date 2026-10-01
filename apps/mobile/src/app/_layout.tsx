@@ -221,6 +221,7 @@ function ThemedStack() {
         <Stack.Screen name="sign-in" options={{ ...MODAL, headerShown: true, title: '' }} />
         <Stack.Screen name="account" options={{ headerShown: true, title: 'Account' }} />
         <Stack.Screen name="report-bug" options={{ ...MODAL, headerShown: true, title: 'Report a bug' }} />
+        <Stack.Screen name="legal/[doc]" options={{ headerShown: true, title: '' }} />
       </Stack>
       {veilColour && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle]} pointerEvents="none" />}
     </ThemeProvider>

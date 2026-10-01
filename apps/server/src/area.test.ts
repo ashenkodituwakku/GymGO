@@ -74,7 +74,7 @@ const signUp = (email: string) =>
   fetch(`${base}/api/auth/signup`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ email, password: 'correct horse', displayName: 'Lifter', birthMonth: '1990-01' }),
+    body: JSON.stringify({ email, password: 'correct horse', displayName: 'Lifter', birthMonth: '1990-01', acceptTerms: true }),
   }).then((response) => response.json() as Promise<{ token: string }>);
 
 const put = (path: string, token: string, amountMinor: number) =>
@@ -175,7 +175,7 @@ describe('Search this area', () => {
     const signup = await fetch(`${base}/api/auth/signup`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: 'area@example.com', password: 'correct horse', displayName: 'Area', birthMonth: '1990-01' }),
+      body: JSON.stringify({ email: 'area@example.com', password: 'correct horse', displayName: 'Area', birthMonth: '1990-01', acceptTerms: true }),
     }).then((response) => response.json() as Promise<{ token: string }>);
     expect((await call('PUT', '/api/saved/snap-fitness-n11', signup.token)).status).toBe(204);
     expect((await call('GET', '/api/gyms/snap-fitness-n11/prices', signup.token)).body.currency).toBe('AUD');
@@ -260,7 +260,7 @@ describe('Search this area', () => {
     const signup = await fetch(`${base}/api/auth/signup`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: 'berlin@example.com', password: 'correct horse', displayName: 'Berliner', birthMonth: '1990-01' }),
+      body: JSON.stringify({ email: 'berlin@example.com', password: 'correct horse', displayName: 'Berliner', birthMonth: '1990-01', acceptTerms: true }),
     }).then((response) => response.json() as Promise<{ token: string }>);
     const prices = '/api/gyms/kraftwerk-gym-n31/prices';
     const put = await fetch(`${base}${prices}`, {
@@ -286,7 +286,7 @@ describe('Search this area', () => {
     const signup = await fetch(`${base}/api/auth/signup`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: 'traveller@example.com', password: 'correct horse', displayName: 'Traveller', birthMonth: '1990-01' }),
+      body: JSON.stringify({ email: 'traveller@example.com', password: 'correct horse', displayName: 'Traveller', birthMonth: '1990-01', acceptTerms: true }),
     }).then((response) => response.json() as Promise<{ token: string; account: { id: string } }>);
     db.prepare(
       `insert into subscriptions (stripe_subscription_id, user_id, status, interval, currency, amount_minor, price_lookup_key, current_period_end, cancel_at, cancel_at_period_end, updated_at)

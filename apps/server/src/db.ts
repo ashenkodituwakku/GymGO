@@ -25,7 +25,9 @@ const SCHEMA = `
     created_at text not null,
     age_checked_at text,
     avatar_id text,
-    avatar_type text
+    avatar_type text,
+    terms_version text,
+    terms_accepted_at text
   );
   create table if not exists sessions (
     token_hash text primary key,
@@ -230,6 +232,9 @@ function migrate(db: Db): void {
   // Your profile picture (see /api/me/avatar in app.ts).
   if (!userColumns.some((column) => column.name === 'avatar_id')) db.exec('alter table users add column avatar_id text');
   if (!userColumns.some((column) => column.name === 'avatar_type')) db.exec('alter table users add column avatar_type text');
+  // Which version of the terms the account agreed to, and when (see LEGAL_VERSION in @gymgo/domain).
+  if (!userColumns.some((column) => column.name === 'terms_version')) db.exec('alter table users add column terms_version text');
+  if (!userColumns.some((column) => column.name === 'terms_accepted_at')) db.exec('alter table users add column terms_accepted_at text');
   // Bug reports that are copyright notices, kept apart so they're dealt with first.
   const reportColumns = db.prepare('pragma table_info(bug_reports)').all() as Array<{ name: string }>;
   if (!reportColumns.some((column) => column.name === 'topic')) {

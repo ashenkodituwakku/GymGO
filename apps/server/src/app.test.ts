@@ -42,7 +42,7 @@ let counter = 0;
 async function signUp(name = 'Sam') {
   counter += 1;
   const email = `person${counter}@example.com`;
-  const result = await call('POST', '/api/auth/signup', { body: { email, password: 'correct horse', displayName: name, birthMonth: '1990-01' } });
+  const result = await call('POST', '/api/auth/signup', { body: { email, password: 'correct horse', displayName: name, birthMonth: '1990-01', acceptTerms: true } });
   expect(result.status).toBe(201);
   return { token: result.body!.token as string, email, id: result.body!.account.id as string };
 }
@@ -155,10 +155,10 @@ describe('accounts', () => {
   });
 
   it('rejects short passwords, bad emails and duplicate accounts', async () => {
-    expect((await call('POST', '/api/auth/signup', { body: { email: 'a@b.co', password: 'short', displayName: 'A', birthMonth: '1990-01' } })).status).toBe(400);
-    expect((await call('POST', '/api/auth/signup', { body: { email: 'not-an-email', password: 'long enough', displayName: 'A', birthMonth: '1990-01' } })).status).toBe(400);
+    expect((await call('POST', '/api/auth/signup', { body: { email: 'a@b.co', password: 'short', displayName: 'A', birthMonth: '1990-01', acceptTerms: true } })).status).toBe(400);
+    expect((await call('POST', '/api/auth/signup', { body: { email: 'not-an-email', password: 'long enough', displayName: 'A', birthMonth: '1990-01', acceptTerms: true } })).status).toBe(400);
     const { email } = await signUp();
-    expect((await call('POST', '/api/auth/signup', { body: { email, password: 'long enough', displayName: 'A', birthMonth: '1990-01' } })).status).toBe(409);
+    expect((await call('POST', '/api/auth/signup', { body: { email, password: 'long enough', displayName: 'A', birthMonth: '1990-01', acceptTerms: true } })).status).toBe(409);
   });
 
   it('ends a session on sign-out', async () => {
@@ -313,7 +313,7 @@ describe('the age check', () => {
   });
 
   it('lets no one under 13 make an account, and keeps nothing about them', async () => {
-    const body = (birthMonth: unknown) => ({ email: 'young@example.com', password: 'correct horse', displayName: 'Young', birthMonth });
+    const body = (birthMonth: unknown) => ({ email: 'young@example.com', password: 'correct horse', displayName: 'Young', birthMonth, acceptTerms: true });
     expect((await call('POST', '/api/auth/signup', { body: body(undefined) })).status).toBe(400);
     expect((await call('POST', '/api/auth/signup', { body: body('1990-13') })).status).toBe(400);
     expect((await call('POST', '/api/auth/signup', { body: body('2999-01') })).status).toBe(400);

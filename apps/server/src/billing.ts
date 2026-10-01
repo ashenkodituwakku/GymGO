@@ -239,7 +239,7 @@ export class Billing {
   async checkout(
     account: { id: string; email: string; display_name: string },
     choice: { interval: BillingInterval; currency: BillingCurrency },
-    urls: { success: string; cancel: string },
+    urls: { success: string; cancel: string; terms?: string; refunds?: string },
   ): Promise<string> {
     if (this.isPro(account.id)) throw new BillingError(409, 'You already have GymGO Pro.', 'already_pro');
     const price = (await this.stripePrices()).find((item) => item.interval === choice.interval && item.currency === choice.currency);
@@ -254,6 +254,16 @@ export class Billing {
       cancel_url: urls.cancel,
       metadata: { gymgo_account_id: account.id },
       subscription_data: { metadata: { gymgo_account_id: account.id } },
+      // The renewal terms and where the full terms are, by the button that agrees to them, on Stripe's page too.
+      ...(urls.terms && urls.refunds
+        ? {
+            custom_text: {
+              submit: {
+                message: `Renews automatically until you cancel; cancel any time in GymGO (Profile → Manage subscription). By subscribing you agree to GymGO’s Terms of Service (${urls.terms}) and its Refunds and Cancelling policy (${urls.refunds}).`,
+              },
+            },
+          }
+        : {}),
     });
     if (!session.url) throw new BillingError(502, 'Stripe didn’t return a checkout page. Try again.');
     return session.url;

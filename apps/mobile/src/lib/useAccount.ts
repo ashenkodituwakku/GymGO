@@ -95,7 +95,8 @@ export function useAccount() {
 
   const signUp = useCallback(
     async (displayName: string, email: string, password: string, birthMonth: string) => {
-      const result = await api.signUp({ displayName, email, password, birthMonth });
+      // Only offered once the terms box is ticked (sign-in.tsx).
+      const result = await api.signUp({ displayName, email, password, birthMonth, acceptTerms: true });
       await adopt(result.token, result.account);
     },
     [adopt],
@@ -104,8 +105,9 @@ export function useAccount() {
   /** Signs in with a Google or Apple ID token; the first time, that makes the account. Returns whether it was new. */
   const signInWith = useCallback(
     async (provider: SignInProvider, idToken: string, nonce: string | null, name?: string | null, birthMonth?: string) => {
-      // The answer to the age question, when a new account is being made (see ageGate.ts).
-      const result = await api.signInWith(provider, { idToken, nonce, name, ...(birthMonth ? { birthMonth } : {}) });
+      // The answer to the age question when a new account is being made (see
+      // ageGate.ts), asked with the terms box, which has to be ticked to send it.
+      const result = await api.signInWith(provider, { idToken, nonce, name, ...(birthMonth ? { birthMonth, acceptTerms: true as const } : {}) });
       await adopt(result.token, result.account);
       return result.created;
     },
@@ -168,6 +170,14 @@ export function useAccount() {
     setAccount(result.account);
   }, []);
 
+  /** Agree to the terms as they are now, after they've changed. */
+  const agreeToTerms = useCallback(async (version: string) => {
+    const current = token.current;
+    if (!current) return;
+    const result = await api.agreeToTerms(current, version);
+    setAccount(result.account);
+  }, []);
+
   /** A new profile picture (base64 JPEG), or none. */
   const setAvatar = useCallback(async (data: string | null) => {
     const current = token.current;
@@ -220,6 +230,7 @@ export function useAccount() {
     signOut,
     deleteAccount,
     rename,
+    agreeToTerms,
     setAvatar,
     changePassword,
     toggleSave,

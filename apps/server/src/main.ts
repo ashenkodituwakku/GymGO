@@ -22,6 +22,7 @@ import {
   GOOGLE_SIGN_IN,
   BUG_REPORT_TO,
   COPYRIGHT_AGENT,
+  LEGAL_OPERATOR,
   MAIL_FROM,
   SMTP_URL,
 } from './config';
@@ -64,7 +65,7 @@ const server = createServer(
     siteIcons: { enabled: SITE_ICONS },
     signIn: { google: GOOGLE_SIGN_IN, apple: APPLE_SIGN_IN_IDS },
     bugReports: { send: bugMail, to: BUG_REPORT_TO, retryEveryMs: 15 * 60_000 },
-    legal: { copyrightAgent: COPYRIGHT_AGENT },
+    legal: { copyrightAgent: COPYRIGHT_AGENT, operator: LEGAL_OPERATOR },
     devAccount: devAccountMade,
   }),
 );
@@ -118,6 +119,13 @@ server.listen(PORT, HOST, () => {
       : SMTP_URL
         ? '[server] Bug reports: kept here only. GYMGO_SMTP_URL has no email address to send from; set GYMGO_MAIL_FROM (see README)'
         : '[server] Bug reports: kept here only (no GYMGO_SMTP_URL set, so nothing is emailed; see README)',
+  );
+  console.log(
+    LEGAL_OPERATOR.email
+      ? `[server] Legal pages: /terms, /privacy, /refunds, /community (run by ${LEGAL_OPERATOR.name}, contact ${LEGAL_OPERATOR.email})`
+      : PUBLIC_URL
+        ? '[server] Legal pages: /terms, /privacy, /refunds, /community. Set GYMGO_CONTACT_EMAIL (and GYMGO_LEGAL_NAME) before GymGO is public; see README'
+        : '[server] Legal pages: /terms, /privacy, /refunds, /community (no GYMGO_CONTACT_EMAIL set; they point to Report a bug)',
   );
   console.log(
     GOOGLE_PLACES_API_KEY

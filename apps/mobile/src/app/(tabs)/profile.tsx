@@ -30,6 +30,7 @@ import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { useLegalInfo } from '@/lib/legal';
 import { LegalText } from '@/components/LegalText';
+import { Bone, Skeleton } from '@/components/Skeleton';
 
 export default function Profile() {
   usePageTitle('Profile');
@@ -100,6 +101,8 @@ export default function Profile() {
         </Pressy>
       ) : account.state === 'unreachable' ? (
         <ServerAwayCard />
+      ) : account.state === 'loading' ? (
+        <MeCardSkeleton />
       ) : (
         <SignInCard />
       )}
@@ -333,6 +336,20 @@ function CopyrightExplainer({ onNotice }: { onNotice: () => void }) {
   );
 }
 
+/** Your account card's shape while the sign-in is checked, so the sign-in card doesn't flash up first. */
+function MeCardSkeleton() {
+  return (
+    <Skeleton label="Loading your account" style={styles.meCard}>
+      <Bone width={60} height={60} round={30} />
+      <View style={styles.meLines}>
+        <Bone width="55%" height={20} />
+        <Bone width="72%" height={14} />
+        <Bone width="38%" height={12} />
+      </View>
+    </Skeleton>
+  );
+}
+
 /** The terms or privacy policy have changed since this account agreed to them. */
 function NewTermsCard() {
   const { account } = useApp();
@@ -419,6 +436,7 @@ const styles = themed(() => StyleSheet.create({
     backgroundColor: color.card,
     ...shadow.plate,
   },
+  meLines: { flex: 1, gap: 8 },
   newTerms: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
   signInCard: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
   signInHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginBottom: space[1] },

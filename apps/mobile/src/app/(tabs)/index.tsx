@@ -10,8 +10,9 @@
 
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GymCard } from '@/components/GymCard';
+import { GymCardsSkeleton } from '@/components/Skeleton';
 import { Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { AdSlot } from '@/components/AdSlot';
@@ -297,10 +298,10 @@ export default function Home() {
           </View>
         ) : lookup?.state === 'searching' ? (
           <View style={styles.looking} aria-live="polite">
-            <ActivityIndicator size="small" color={color.brand} />
-            <Txt variant="subhead" color={color.labelSecondary} style={styles.flex}>
+            <Txt variant="subhead" color={color.labelSecondary}>
               {lookupLine('searching', lookup.placeName)}
             </Txt>
+            <GymCardsSkeleton count={2} label={lookupLine('searching', lookup.placeName)} />
           </View>
         ) : lookup?.state === 'failed' ? (
           <View style={styles.lookFailed}>
@@ -599,7 +600,7 @@ const styles = themed(() => StyleSheet.create({
   },
   proTag: { ...face('bold'), letterSpacing: 0.6 },
   lockedText: { flex: 1, gap: 2 },
-  looking: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  looking: { gap: space[3] },
   lookFailed: { gap: space[3], alignItems: 'flex-start' },
   retry: { backgroundColor: color.brandTint, ...dropShadow(0, 0, 0, 0) },
   searchHere: { flexDirection: 'row', alignItems: 'center', gap: space[2] },

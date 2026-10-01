@@ -8,6 +8,7 @@ import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { PrimaryButton, Txt } from '@/components/ui';
+import { ListSkeleton } from '@/components/Skeleton';
 import { useActiveSession } from '@/lib/activeSession';
 import { api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -83,11 +84,7 @@ export default function MyWorkouts() {
           </Txt>
         </Pressable>
       )}
-      {workouts === null && !problem && (
-        <Txt variant="subhead" color={color.labelSecondary}>
-          Loading…
-        </Txt>
-      )}
+      {workouts === null && !problem && <ListSkeleton rows={3} label="Loading your workouts" />}
       {workouts !== null && workouts.length === 0 && (
         <View style={styles.emptyCard}>
           <Txt variant="headline">No saved workouts yet</Txt>

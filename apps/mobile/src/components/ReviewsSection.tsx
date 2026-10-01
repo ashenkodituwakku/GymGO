@@ -15,6 +15,7 @@ import { haptic } from '@/lib/haptics';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { PrimaryButton, TextField, Txt } from './ui';
+import { ReviewsSkeleton } from './Skeleton';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; reviews: Review[]; mine: Review[] };
 
@@ -46,13 +47,7 @@ export function ReviewsSection({
     refresh();
   }, [refresh]);
 
-  if (load.state === 'loading') {
-    return (
-      <Txt variant="subhead" color={color.labelSecondary}>
-        Loading reviews…
-      </Txt>
-    );
-  }
+  if (load.state === 'loading') return <ReviewsSkeleton />;
   if (load.state === 'offline') {
     return (
       <Txt variant="subhead" color={color.labelSecondary}>

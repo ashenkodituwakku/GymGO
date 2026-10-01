@@ -12,6 +12,7 @@ import { GLIDE } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { MilestonesCard, MuscleBalanceCard, WeekCard } from '@/components/TrainingInsights';
 import { PrimaryButton, Txt } from '@/components/ui';
+import { ListSkeleton } from '@/components/Skeleton';
 import { useActiveSession } from '@/lib/activeSession';
 import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -112,11 +113,7 @@ export default function ProgressScreen() {
       )}
       {start}
 
-      {log.status === 'loading' && (
-        <Txt variant="subhead" color={color.labelSecondary}>
-          Loading your log…
-        </Txt>
-      )}
+      {log.status === 'loading' && <ListSkeleton rows={4} label="Loading your log" />}
       {log.error && (
         <View style={styles.problem}>
           <Txt variant="footnote" color={color.dangerInk}>

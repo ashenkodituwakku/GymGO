@@ -9,7 +9,7 @@
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { LogoPlate } from '@/components/BrandLogo';
 import { GoogleEmbed } from '@/components/GoogleEmbed';
@@ -28,6 +28,7 @@ import { GymNotes } from '@/components/GymNotes';
 import { CollectCard } from '@/components/CollectCard';
 import { ReviewsSection } from '@/components/ReviewsSection';
 import { PrimaryButton, Txt } from '@/components/ui';
+import { GymPageSkeleton } from '@/components/Skeleton';
 import { shareGym } from '@/lib/actions';
 import { googleStreetViewEmbedUrl } from '@/lib/present';
 import { useApp } from '@/lib/app-state';
@@ -86,13 +87,10 @@ export default function GymPage() {
   // settings, so a link opened cold waits the moment it takes to read them.
   if (!prefsReady || (!result && looking)) {
     return (
-      <View style={styles.missing}>
+      <>
         <Stack.Screen options={{ title: 'Gym' }} />
-        <ActivityIndicator color={color.brand} />
-        <Txt variant="subhead" color={color.labelSecondary}>
-          Finding this gym…
-        </Txt>
-      </View>
+        <GymPageSkeleton />
+      </>
     );
   }
 

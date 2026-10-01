@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Share, StyleSheet, View } from 'react-native';
 import { ExerciseCard } from '@/components/ExerciseCard';
 import { PrimaryButton, Txt } from '@/components/ui';
+import { LinesSkeleton, ListSkeleton } from '@/components/Skeleton';
 import { useActiveSession } from '@/lib/activeSession';
 import { api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -50,11 +51,16 @@ export default function SavedWorkoutScreen() {
     );
   }
   if (!saved) {
-    return (
+    return problem ? (
       <View style={styles.missing}>
-        <Txt variant="subhead" color={problem ? color.dangerInk : color.labelSecondary}>
-          {problem ?? 'Loading…'}
+        <Txt variant="subhead" color={color.dangerInk}>
+          {problem}
         </Txt>
+      </View>
+    ) : (
+      <View style={styles.loading}>
+        <LinesSkeleton lines={1} label="Loading this workout" />
+        <ListSkeleton rows={4} label="Loading this workout" />
       </View>
     );
   }
@@ -155,4 +161,5 @@ const styles = themed(() => StyleSheet.create({
   intro: { gap: 2, marginBottom: space[1] },
   buttons: { gap: space[2], marginTop: space[2] },
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground, borderRadius: radius.xl },
+  loading: { flex: 1, gap: space[4], padding: space[4], backgroundColor: color.groupedBackground },
 }));

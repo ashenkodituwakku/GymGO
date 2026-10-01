@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE } from './motion';
 import { explainNoMatches, haversineKm, type GymRecord, type SearchOutcome } from '@gymgo/domain';
@@ -20,6 +20,7 @@ import { SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from 
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { GymRow } from './GymRow';
+import { GymRowsSkeleton } from './Skeleton';
 import { Icon } from './Icon';
 import { Chip, PrimaryButton, TIER_COLOUR, Txt } from './ui';
 import { AdSlot } from './AdSlot';
@@ -320,11 +321,13 @@ export function ResultsContent({
         </View>
       )}
       {!locked && total === 0 && lookup?.state === 'searching' && (
-        <View style={styles.notice} aria-live="polite">
-          <ActivityIndicator size="small" color={color.brand} />
-          <Txt variant="footnote" style={styles.noticeText}>
-            {lookupLine('searching', lookup.placeName)}
-          </Txt>
+        <View style={styles.searching}>
+          <View style={styles.notice} aria-live="polite">
+            <Txt variant="footnote" style={styles.noticeText}>
+              {lookupLine('searching', lookup.placeName)}
+            </Txt>
+          </View>
+          <GymRowsSkeleton count={3} label={lookupLine('searching', lookup.placeName)} />
         </View>
       )}
       {!locked && total === 0 && lookup?.state === 'failed' && (
@@ -585,6 +588,7 @@ const styles = themed(() => StyleSheet.create({
     backgroundColor: color.brandTint,
   },
   noticeText: { flex: 1 },
+  searching: { gap: space[2] },
   lookFailed: { gap: space[2], alignItems: 'flex-start', paddingHorizontal: space[4], marginTop: space[3] },
 
   explain: {

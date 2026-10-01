@@ -9,6 +9,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { ProgressChart } from '@/components/ProgressChart';
 import { PrimaryButton, Txt } from '@/components/ui';
+import { ListSkeleton } from '@/components/Skeleton';
 import { useApp } from '@/lib/app-state';
 import { color, radius, shadow, space, themed } from '@/lib/theme';
 import { e1rmSeries, formatWeight, fromKg, personalRecords, setsSummary, unitFor } from '@/lib/training';
@@ -96,11 +97,16 @@ export default function ExerciseProgressScreen() {
         EVERY TIME
       </Txt>
       <View style={styles.group}>
-        {done.length === 0 && (
-          <Txt variant="subhead" color={color.labelSecondary} style={styles.row}>
-            {log.status === 'loading' ? 'Loading…' : (log.error ?? 'Not logged yet.')}
-          </Txt>
-        )}
+        {done.length === 0 &&
+          (log.status === 'loading' ? (
+            <View style={styles.row}>
+              <ListSkeleton rows={3} card={false} label="Loading your log" />
+            </View>
+          ) : (
+            <Txt variant="subhead" color={color.labelSecondary} style={styles.row}>
+              {log.error ?? 'Not logged yet.'}
+            </Txt>
+          ))}
         {done.map((session, index) => {
           const logged = session.exercises.find((item) => item.exerciseId === exerciseId)!;
           return (

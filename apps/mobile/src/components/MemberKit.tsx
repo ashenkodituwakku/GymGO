@@ -17,6 +17,7 @@ import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon, type IconName } from './Icon';
 import { PrimaryButton, TextField, Txt } from './ui';
+import { LinesSkeleton } from './Skeleton';
 import { FADE_IN, GLIDE } from './motion';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; reporters: number; items: EquipmentTally[]; mine: EquipmentReportItem[] };
@@ -55,13 +56,7 @@ export function MemberKit({
   }, [refresh]);
 
   if (isDemo) return null;
-  if (load.state === 'loading') {
-    return (
-      <Txt variant="footnote" color={color.labelSecondary}>
-        Checking what members say…
-      </Txt>
-    );
-  }
+  if (load.state === 'loading') return <LinesSkeleton lines={2} label="Checking what members say" />;
   if (load.state === 'offline') {
     return (
       <Txt variant="footnote" color={color.labelSecondary}>

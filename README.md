@@ -63,11 +63,16 @@ Press **Ctrl+C** in PowerShell to stop everything.
 ```
 
 This works even when the phone is on a different network, but it's slower.
-In this mode the phone shows the gyms from the app's built-in copy. Signing
-in and reviews on the phone need the same Wi-Fi as the PC.
+Everything works through it, signing in (the ready-made Pro account below
+too), syncing and reviews included: the app reaches the GymGO server through
+the same address it loads from (`/_gymgo` on the app's port, which the
+bundler passes to the server on your PC), so there's no second port for a
+network or Windows Firewall to block.
 
 **Try GymGO Pro without paying.** The launcher makes a ready-made Pro
-account on your computer. In the app, open Profile → Sign in, and use:
+account on your computer. It signs in on every device that opens GymGO from
+your PC: the browser, and phones in Expo Go on your Wi-Fi or through
+`-Tunnel`. In the app, open Profile → Sign in, and use:
 
 | | |
 |---|---|

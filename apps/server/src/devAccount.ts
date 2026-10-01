@@ -12,6 +12,7 @@
  * re-syncs or cancels it.
  */
 
+import { LEGAL_VERSION } from '@gymgo/domain';
 import { createAccount, findByEmail, hashPassword } from './auth';
 import type { Db } from './db';
 
@@ -29,13 +30,17 @@ export function devAccountRefusal(options: { publicUrl: string | null; stripeKey
 
 /**
  * Make the dev account if it's missing, put its password back if it was
- * changed, and give it Pro until 2099. Safe to run on every start.
+ * changed, mark the current terms as agreed (it's the owner's own test
+ * account, so it shouldn't stop to ask), and give it Pro until 2099. Safe to
+ * run on every start.
  */
 export function ensureDevProAccount(db: Db, now = new Date()): { email: string; password: string } {
   const account =
     findByEmail(db, DEV_PRO_EMAIL) ??
     createAccount(db, { email: DEV_PRO_EMAIL, password: DEV_PRO_PASSWORD, displayName: 'GymGO Dev (Pro)' }, now)!;
-  db.prepare('update users set password_hash = ?, blocked = 0 where id = ?').run(hashPassword(DEV_PRO_PASSWORD), account.id);
+  db.prepare(
+    'update users set password_hash = ?, blocked = 0, terms_version = ?, terms_accepted_at = coalesce(terms_accepted_at, ?) where id = ?',
+  ).run(hashPassword(DEV_PRO_PASSWORD), LEGAL_VERSION, now.toISOString(), account.id);
   db.prepare(
     `insert into subscriptions (stripe_subscription_id, user_id, status, interval, currency, amount_minor, price_lookup_key, current_period_end, cancel_at, cancel_at_period_end, updated_at)
      values (?, ?, 'active', 'year', 'usd', 0, 'dev_local', '2099-12-31T00:00:00Z', null, 0, ?)

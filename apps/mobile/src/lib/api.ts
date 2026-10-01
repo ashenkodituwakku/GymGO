@@ -2,13 +2,12 @@
  * Talking to the GymGO server (apps/server).
  *
  * Where it is:
- *  - EXPO_PUBLIC_API_URL, when set (a hosted server later on);
- *  - in the browser, the same machine that served the page, port 4000;
- *  - on a phone in Expo Go, the computer Expo is running on (its address is
- *    in the dev-server URL), port 4000;
- *  - in a debug build run from Xcode, the Mac its code was loaded from,
- *    port 4000 (a release build has no such Mac, so the Mac launcher sets
- *    EXPO_PUBLIC_API_URL for it).
+ *  - EXPO_PUBLIC_API_URL, when set (a hosted GymGO, or a release build);
+ *  - otherwise, in development, wherever the app's own code came from, at
+ *    /_gymgo: the bundler forwards that to the server on the computer it's
+ *    running on (metro.config.js). So the browser, a phone in Expo Go on the
+ *    same Wi-Fi, a phone through `gymgo -Tunnel` and a debug build from Xcode
+ *    all reach it, through the one port that already works for them.
  *
  * Every call has a timeout, and callers treat "couldn't reach the server"
  * as its own state rather than as an empty answer.
@@ -18,27 +17,24 @@ import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
 import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, Review } from '@gymgo/domain';
 import type { TrainingSession } from './training';
+import { pickApiBase } from './serverAddress';
 
-const PORT = 4000;
+export { SERVER_PREFIX, pickApiBase } from './serverAddress';
 
 export function apiBase(): string | null {
-  const configured = process.env.EXPO_PUBLIC_API_URL;
-  if (configured) return configured.replace(/\/+$/, '');
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    return `${window.location.protocol}//${window.location.hostname}:${PORT}`;
-  }
-  const hostUri = Constants.expoConfig?.hostUri ?? null;
-  const host = hostUri?.split(':')[0] || bundleHost();
-  return host ? `http://${host}:${PORT}` : null;
+  return pickApiBase({
+    configured: process.env.EXPO_PUBLIC_API_URL,
+    pageOrigin: Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : null,
+    bundleUrl: bundleUrl(),
+    hostUri: Constants.expoConfig?.hostUri ?? null,
+  });
 }
 
-/** The computer a debug build loaded its code from ("192.168.1.20", or "localhost" in the Simulator). */
-function bundleHost(): string | null {
+/** The address a debug build or Expo Go loaded its code from; a release build loads from a file inside the app. */
+function bundleUrl(): string | null {
   try {
     const source = NativeModules.SourceCode as { scriptURL?: string; getConstants?: () => { scriptURL?: string } } | undefined;
-    const url = source?.scriptURL ?? source?.getConstants?.().scriptURL;
-    // A release build loads from a file inside the app: no computer to ask.
-    return (url && /^https?:\/\/([^/:]+)/.exec(url)?.[1]) || null;
+    return source?.scriptURL ?? source?.getConstants?.().scriptURL ?? null;
   } catch {
     return null;
   }

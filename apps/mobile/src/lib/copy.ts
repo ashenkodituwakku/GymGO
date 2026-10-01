@@ -125,14 +125,14 @@ export function filtersButtonLabel(counts: { confirmed: number; needs_confirmati
 }
 
 /**
- * When the GymGO server can't be reached at sign-in. In a browser it runs on
- * the same computer; a phone also has to be on that computer's Wi-Fi (or the
- * launcher's tunnel).
+ * When the GymGO server can't be reached at sign-in. It comes through the
+ * same address as the app itself (see apiBase), so whatever loaded the app
+ * can reach it while GymGO is running on the computer.
  */
 export function serverOfflineLine(platform: string): string {
   return platform === 'web'
     ? 'Can’t reach the GymGO server. Start GymGO on this computer, then try again.'
-    : 'Can’t reach the GymGO server. Check GymGO is running on your computer and this phone is on the same Wi-Fi, then try again.';
+    : 'Can’t reach the GymGO server. Check GymGO is still running on your computer, then try again.';
 }
 
 /** What members said about whether a gym is still there, in the last six months. */

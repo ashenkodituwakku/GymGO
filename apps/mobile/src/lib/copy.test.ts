@@ -62,7 +62,7 @@ describe('voice', () => {
 
   it('says where to start the server, without naming a command that may not exist', () => {
     expect(serverOfflineLine('web')).toContain('on this computer');
-    expect(serverOfflineLine('ios')).toContain('same Wi-Fi');
+    expect(serverOfflineLine('ios')).toContain('running on your computer');
     expect(serverOfflineLine('android')).not.toContain('gymgo command');
   });
 

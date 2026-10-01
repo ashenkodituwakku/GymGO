@@ -275,6 +275,26 @@ describe('checkout', () => {
     expect(customer.options).toEqual({ idempotencyKey: `gymgo-customer-${id}` });
   });
 
+  it('comes back through the app’s bundler when that’s how the request came, and ignores a bad prefix', async () => {
+    const checkout = async (headers: Record<string, string>) => {
+      const { token } = await signUp();
+      fake.calls.length = 0;
+      const result = await call(withStripe.base, 'POST', '/api/billing/checkout', {
+        token,
+        headers,
+        body: { interval: 'month', currency: 'usd', returnUrl: 'http://localhost:8081/pro' },
+      });
+      expect(result.status).toBe(200);
+      return fake.calls.find((item) => item.method === 'checkout.sessions.create')!.params as Record<string, any>;
+    };
+    // apps/mobile/metro.config.js forwards /_gymgo/… here and says so.
+    const forwarded = await checkout({ 'x-forwarded-prefix': '/_gymgo' });
+    expect(forwarded.success_url).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/_gymgo\/api\/billing\/return\?/);
+    expect(forwarded.custom_text.submit.message).toContain('/_gymgo/terms');
+    const odd = await checkout({ 'x-forwarded-prefix': '//evil.example' });
+    expect(odd.success_url).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/api\/billing\/return\?/);
+  });
+
   it('reuses the Stripe customer on a second try', async () => {
     const { token } = await signUp();
     const body = { interval: 'month', currency: 'aud', returnUrl: 'gymgo://pro' };

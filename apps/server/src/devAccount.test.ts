@@ -1,3 +1,4 @@
+import { LEGAL_VERSION } from '@gymgo/domain';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -62,6 +63,12 @@ describe('the dev Pro account', () => {
     ensureDevProAccount(db);
     expect((db.prepare('select count(*) as n from users where email = ?').get(DEV_PRO_EMAIL) as { n: number }).n).toBe(1);
     expect((db.prepare("select count(*) as n from subscriptions where stripe_subscription_id = 'dev_local_pro'").get() as { n: number }).n).toBe(1);
+  });
+
+  it('has agreed to the current terms, so it never stops to ask', () => {
+    db.prepare("update users set terms_version = '2020-01-01' where email = ?").run(DEV_PRO_EMAIL);
+    ensureDevProAccount(db);
+    expect((db.prepare('select terms_version from users where email = ?').get(DEV_PRO_EMAIL) as { terms_version: string }).terms_version).toBe(LEGAL_VERSION);
   });
 
   it('is marked for the app’s testing shortcuts only by a server that made it', async () => {

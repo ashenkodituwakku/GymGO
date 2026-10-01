@@ -585,12 +585,17 @@ export function createApp(options: AppOptions) {
     now,
   });
 
-  /** How the caller reached this server, for the page Stripe sends people back to. */
+  /**
+   * How the caller reached this server, for the page Stripe sends people
+   * back to. Locally that can be through the app's bundler, which forwards
+   * /_gymgo/… here and says so in X-Forwarded-Prefix (apps/mobile/metro.config.js).
+   */
   function publicBase(req: IncomingMessage): string {
     if (options.publicUrl) return options.publicUrl;
     const host = req.headers.host ?? '';
     if (!/^[a-z0-9.\-]+(:\d{1,5})?$|^\[[0-9a-f:]+\](:\d{1,5})?$/i.test(host)) throw new HttpError(400, 'Unexpected Host header.');
-    return `http://${host}`;
+    const prefix = req.headers['x-forwarded-prefix'];
+    return `http://${host}${typeof prefix === 'string' && /^\/[A-Za-z0-9_-]{1,40}$/.test(prefix) ? prefix : ''}`;
   }
 
   function returnUrlFrom(value: unknown): string {

@@ -8,7 +8,11 @@ this document could do.
 
 | | Implemented locally | Tested locally | Externally integrated | Deployed |
 |---|---|---|---|---|
-| API server (Node, built-in SQLite) | ✅ | ✅ 178 tests, most over real HTTP | n/a, runs on your PC | ❌ not hosted |
+| API server (Node, built-in SQLite) | ✅ | ✅ 198 tests, most over real HTTP | n/a, runs on your PC | ⚠️ ready to host (`deploy/`): built and run here in Docker behind Caddy; not on a public server |
+| Hosting kit: server image, Caddy with automatic HTTPS serving the web app, setup and update scripts, daily database copies kept 14 days | ✅ | ✅ the whole stack built and run here: HTTPS on localhost, the web app, a sign-up through it, the first backup written; 3 backup tests | ❌ Let's Encrypt not exercised (localhost gets Caddy's own certificate); never run on Oracle Cloud | ❌ |
+| Terms of Service, Privacy Policy, Refunds and Cancelling, Community Guidelines: in the app (Profile → Legal), as public pages (`/terms` …), agreed to at sign-up with the version recorded, asked again when they change, linked by Pro and Stripe's checkout | ✅ | ✅ 7 server tests + every screen and page seen in the browser | ⚠️ who runs GymGO comes from `GYMGO_LEGAL_*`, not set yet | ❌ |
+| Forgot password: a one-time emailed link (30 minutes), a page to choose the new password, every device signed out | ✅ | ✅ server tests with a stand-in mailer, including a forged Host header | ❌ never sent to a real inbox | ❌ |
+| Security hardening: common passwords refused, 30 tries an hour per account, rate limits by the caller's address behind a proxy, limiter memory bounded, expired sign-ins deleted, security headers and HSTS, request timeouts, `/.well-known/security.txt`, nodemailer 10 | ✅ | ✅ 10 server tests | n/a | ❌ |
 | Gzip for larger answers (the gym list: 1.5 MB → 0.1 MB) | ✅ | ✅ 2 server tests + measured locally | n/a | ❌ |
 | Members' visits: walked in / booked first / turned away, one per member per gym, last year only, no names | ✅ | ✅ 2 server tests + reported and shown in the browser | n/a | ❌ |
 | Members say a gym has closed or is still open (6 months); the card warns when closed outnumbers open | ✅ | ✅ 2 server tests + reported and the warning seen in the browser | n/a | ❌ |
@@ -108,6 +112,8 @@ service, which is your decision to make. Nothing has been provisioned.
 | Map with tier-coloured pins | ✅ | ⚠️ web preview only | ⚠️ see below | ❌ | n/a | ❌ |
 | Results sheet, place card, filters sheet; on a phone (the app, or a touch-screen browser) a sheet's list only scrolls, a swipe on it opens its sheet all the way first, the sheet moves by its top edge, and the list is sized to the part of the sheet in sight so its last row can always be scrolled into view | ✅ | ⚠️ web preview only: in a touch browser at phone size, a swipe on the half-open results or a gym's card opened it and scrolled, both scrolled to their last row, and the card's top edge dragged it back down; with a mouse, the wheel scrolls the half-open list as before; the phone app's path (the list only scrolls; the sheet opens as a drag starts) checked in the browser, not on a device | n/a | ❌ Expo Go not tried from here | n/a | ❌ |
 | Directions / call / website hand-off | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
+| Skeleton loaders: a gym's page, results and Home while searching a place, reviews, member reports, Progress, workouts, the account card | ✅ | ⚠️ seen in the browser with the server's answers held back | n/a | ❌ | n/a | ❌ |
+| Legal screens, the terms box when making an account, "Forgot your password?" | ✅ | ⚠️ seen in the browser; sign-up through the hosted stack recorded the terms version | n/a | ❌ | n/a | ❌ |
 | Precise location: opens where you are, blue dot, nearest covered city when outside | ✅ | ⚠️ browser only, with simulated positions (New York, Toronto) | n/a | ❌ GPS, iPhone "Precise: Off" and Android "Approximate" never seen | n/a | ❌ |
 | 40 US cities (the main market: first in the country list and on Home; New York until you choose): search by city, neighborhood, state ("Texas", "TX") or ZIP ("10001", your own country's match first), miles and $, visit times on local clocks (Phoenix without daylight saving, Honolulu, Detroit, Indianapolis their own zones) | ✅ | ✅ unit tests + driven in the browser (New York, Seattle, Philadelphia, Chicago) | n/a | ❌ | n/a | ❌ |
 | 15 European cities (London, Paris, Berlin, Madrid, Barcelona, Rome, Milan, Amsterdam, Dublin, Lisbon, Vienna, Munich, Stockholm, Copenhagen, Zurich), map-only, 600 gyms, districts under local names, accent-free search | ✅ | ✅ 10 data tests + 2 place tests + driven in the browser (London in miles, 40 pins; Paris with Pro, 40 pins) | ✅ OpenStreetMap, fetched once by bounding box (the circle query timed out for London) | ❌ | n/a | ❌ |
@@ -353,8 +359,11 @@ name; the skip link works.
   (`apps/mobile/scripts/brand-mark.mjs`). No EAS project, store signing or
   store listing: the bundle id is made per person, for running your own
   build from Xcode. None were asked for, and most involve an account or a fee.
-- **Hosting.** The server runs on your own computer. Nothing is deployed, so
-  accounts, reviews and members' reports live in one SQLite file there.
+- **Hosting.** `deploy/` puts the server, the web app and HTTPS on any Linux
+  server with Docker, and README walks through Oracle Cloud's free tier. It
+  was built and run here, but nothing is on a public server yet, so
+  accounts, reviews and members' reports still live in one SQLite file on
+  your computer. Off-server copies of the backups are by hand.
 - **Real gym data is thin on detail.** 23 Melbourne gyms were researched fact
   by fact; the other ~1,900 in 8 Australian, 40 US and 15 European cities, and whatever
   "Search this area" finds elsewhere, are map-only (names, places, sometimes
@@ -369,11 +378,11 @@ name; the skip link works.
   from Google's favicon service when a site has none or blocks automated
   visitors (Planet Fitness and Derrimut do); that service is Google's, free
   and unofficial, and could change or stop.
-- **Almost no email.** The only email the server sends is a bug report, to
-  the team, and only once the owner gives it an SMTP account
-  (`GYMGO_SMTP_URL`; checked against a local stand-in mail server, never a
-  real inbox). Sign-up sends nothing, so there's no email check and no
-  password reset.
+- **Little email.** The server sends bug reports to the team and password
+  reset links someone asked for, and only once the owner gives it an SMTP
+  account (`GYMGO_SMTP_URL`; checked against stand-ins, never a real inbox).
+  Sign-up sends nothing, so email addresses aren't verified. There's no
+  two-step sign-in.
 - **Google's extras and Stripe** are built but have never been used with the
   owner's real keys, so Google's photos of the exact gym have been matched
   only against a stand-in for Google.
@@ -422,5 +431,7 @@ name; the skip link works.
 3. **An identity provider**, and what "account" means when browsing needs none.
 4. **A database**, and the migration from the file store.
 5. **A support and moderation rota.** The queue works; nobody is staffing it.
-6. **Legal review** of the terms and privacy pages, which are written as a
-   description of the software rather than as a reviewed document.
+6. **Legal review** of the Terms of Service, Privacy Policy, Refunds and
+   Community Guidelines (`packages/domain/src/legal.ts`). They're written to
+   match what the software does, but no lawyer has read them, and who runs
+   GymGO (`GYMGO_LEGAL_*`) isn't set.

@@ -64,7 +64,17 @@ wrong or the product is.
 - [ ] PostgreSQL/PostGIS replacing the file store.
 - [ ] Basemap licence resolved and the map path actually exercised.
 - [ ] A working support channel. `/support` currently says there is none.
-- [ ] Legal review of terms, privacy and community guidelines.
+- [ ] Put the server online (`deploy/`; README, "Put GymGO online"), with a
+      domain, and copy `deploy/data` off it regularly. Try restoring a copy
+      once.
+- [ ] Set who runs GymGO for the legal pages (`GYMGO_LEGAL_NAME`,
+      `GYMGO_CONTACT_EMAIL`, `GYMGO_LEGAL_ADDRESS`, `GYMGO_GOVERNING_LAW`,
+      `GYMGO_HOSTED_IN`).
+- [ ] Set `GYMGO_SMTP_URL`, so password reset links and bug reports are
+      emailed.
+- [ ] Legal review of the Terms of Service, Privacy Policy, Refunds and
+      Cancelling, and Community Guidelines (`packages/domain/src/legal.ts`),
+      then add their addresses to Stripe's public business details.
 - [ ] Register a DMCA designated agent at dmca.copyright.gov (US$6, renew
       every three years) and set `GYMGO_DMCA_AGENT_*` so the app shows it.
       Someone has to act on copyright notices when they arrive.

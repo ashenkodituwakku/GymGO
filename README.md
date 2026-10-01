@@ -562,9 +562,13 @@ ends.
 
 Tap the person icon next to the search box to create an account. Your saved
 gyms then follow you between your PC and your phone, and you can write
-reviews. Accounts live only in `apps/server/data/gymgo.db` on your
-computer. Passwords are stored hashed, and no emails are sent to you (the
-only email GymGO sends is a bug report, to the team; see below).
+reviews. Accounts live in the GymGO server's database:
+`apps/server/data/gymgo.db` on your computer, or `deploy/data/gymgo.db` on a
+hosted server ([Put GymGO online](#put-gymgo-online-free-hosting)).
+Passwords are stored only as a salted scrypt hash, and the commonest
+breached passwords are turned down. Making an account needs the box ticked
+for the [Terms of Service and Privacy Policy](#legal-basics); the server
+records which version you agreed to.
 
 Making an account asks **the month and year you were born**, because
 accounts are for people 13 and over (see [Legal basics](#legal-basics)).
@@ -573,7 +577,14 @@ sign-in with Google or Apple asks the same before it makes the account.
 
 In Profile you can **change your name** and **change your password** (it
 asks for the current one, and signs out any other device signed in as you).
-There's no "forgot password" yet, because GymGO sends no email.
+
+**Forgot your password?** on the sign-in screen emails a link to choose a
+new one. It works once, for 30 minutes, and setting the new password signs
+out every device. The answer is the same whether or not the address has an
+account. It needs the server to be able to send email (`GYMGO_SMTP_URL`, as
+in [Report a bug](#report-a-bug)) and to know its own public address
+(`GYMGO_PUBLIC_URL`); without them the app says passwords can't be reset by
+email on this server.
 
 **Profile picture**: tap the circle on Account (or Profile picture) and
 pick one of your photos. It's cut to a centred square (on a phone you can
@@ -669,8 +680,8 @@ What was found, and what GymGO does now:
   and a reminder before a yearly plan renews) in Stripe's settings, since
   several states expect a confirmation and reminders by email. Rules vary by
   state and change; check them before launch.
-- **Marketing email (CAN-SPAM).** GymGO sends none: the only email is a bug
-  report, to the team. If it ever sends marketing email, each one needs a
+- **Marketing email (CAN-SPAM).** GymGO sends none: the only emails are bug
+  reports, to the team, and password reset links someone asked for. If it ever sends marketing email, each one needs a
   working unsubscribe link (honoured within 10 business days) and a real
   postal address.
 - **Other people's photos and reviews (the DMCA, in the US).** Members post
@@ -699,8 +710,45 @@ What was found, and what GymGO does now:
      GYMGO_DMCA_AGENT_EMAIL=copyright@example.com
      ```
 
-None of this is legal advice, and a lawyer should look at GymGO before it
-launches: see `docs/LAUNCH-CHECKLIST.md`.
+- **Terms of Service, Privacy Policy, Refunds and Cancelling, and Community
+  Guidelines.** All four are written in plain English, once, in
+  `packages/domain/src/legal.ts`. The app shows them under **Profile →
+  Legal**, and the server serves them as public pages at `/terms`,
+  `/privacy`, `/refunds` and `/community` (with `/legal` listing them), for
+  Stripe's settings, the app stores and anyone without the app.
+  - They cover Australian Consumer Law guarantees, which can't be taken
+    away; GDPR legal bases; California's "we don't sell your data";
+    children; retention (backups within 14 days); fake reviews; and
+    photography in changing rooms.
+  - Making an account needs the box ticked for the Terms and Privacy Policy,
+    and the server records the version and when. When `LEGAL_VERSION` is
+    bumped, Profile asks each signed-in member to agree to the new version.
+  - The Pro screen links the Terms and Refunds beside its renewal terms, and
+    Stripe's checkout page repeats them.
+  - Refunds: a full refund within 14 days of a first payment or a yearly
+    renewal; monthly renewals aren't refunded, but can be cancelled at any
+    time.
+
+  Set who runs GymGO before it's public. These go in
+  `apps/server/.env.local` or, hosted, `deploy/.env`:
+
+  ```
+  GYMGO_LEGAL_NAME=Your Name or Business Pty Ltd
+  GYMGO_CONTACT_EMAIL=privacy@yourdomain.com
+  GYMGO_LEGAL_ADDRESS=PO Box 123, Melbourne VIC 3000
+  GYMGO_GOVERNING_LAW=Victoria, Australia
+  GYMGO_HOSTED_IN=Australia
+  ```
+
+  Without them the documents name "the GymGO team" and point to Report a
+  bug. The contact email also makes `/.well-known/security.txt`, which says
+  where to report security problems (see `SECURITY.md`). If the documents
+  change in a way people should see, bump `LEGAL_VERSION` and
+  `LEGAL_UPDATED` in `legal.ts`. Keep every statement about data true of
+  the code: the file's header comment says so too.
+
+None of this is legal advice, and a lawyer should look at GymGO, and these
+documents especially, before it launches: see `docs/LAUNCH-CHECKLIST.md`.
 
 ### Gym photos
 
@@ -1121,9 +1169,12 @@ computer, install the Stripe CLI and run
 
 - The server has to be hosted on a public `https://` address, with a webhook
   endpoint added in Stripe for `checkout.session.completed` and
-  `customer.subscription.*`. Nothing is deployed.
-- Terms of service, a privacy policy and a refund policy, linked from the Pro
-  screen and Stripe's settings.
+  `customer.subscription.*`. `deploy/` does the hosting
+  ([Put GymGO online](#put-gymgo-online-free-hosting)); nothing is on a
+  public server yet.
+- The Terms of Service, Privacy Policy and Refunds pages exist (`/terms`,
+  `/privacy`, `/refunds`) and the Pro screen links them; add their addresses
+  to Stripe's public business details too, and have a lawyer read them.
 - Stripe's customer emails turned on: receipts, and a reminder before a
   yearly plan renews (see [Legal basics](#legal-basics)). The renewal terms
   are already shown under the buy button.
@@ -1343,7 +1394,10 @@ apps/web/            The earlier Next.js website pilot.
   src/app/           Pages and the /api/v1 server API.
   src/server/        Config, persistence, repositories, auth, moderation.
   e2e/               Playwright specs at 390 / 768 / 1440 px.
+deploy/              GymGO online: the server and Caddy (HTTPS, the web app)
+                     in Docker, with setup and update scripts.
 docs/                Architecture, data model, API, status, launch checklist.
+SECURITY.md          Reporting problems, what's in place, running it safely.
 ```
 
 ## What is and is not done

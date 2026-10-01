@@ -147,6 +147,8 @@ export function PlaceCard({
   reviews,
   notes,
   collect,
+  busy,
+  owner,
   saveAndShareElsewhere = false,
 }: {
   result: GymSearchResult;
@@ -179,6 +181,10 @@ export function PlaceCard({
   notes?: React.ReactNode;
   /** Checking in to collect the gym. */
   collect?: React.ReactNode;
+  /** How busy members there now say it is. */
+  busy?: React.ReactNode;
+  /** The gym's verified owner, or claiming it. */
+  owner?: React.ReactNode;
 }) {
   const [notice, setNotice] = useState<string | null>(null);
   const record = result.record;
@@ -361,6 +367,7 @@ export function PlaceCard({
       )}
 
       {collect}
+      {busy}
 
       {/* At a glance ---------------------------------------------------- */}
       <Animated.View style={styles.facts}>
@@ -611,6 +618,8 @@ export function PlaceCard({
         </Fold>
 
         {notes}
+
+        {owner}
 
         {sources.length > 0 && (
           <Fold icon="book" title="Where this comes from" summary={`${sources.length} source${sources.length === 1 ? '' : 's'}, all linked`}>

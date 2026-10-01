@@ -5,10 +5,9 @@
  */
 
 import { LEGAL_VERSION, formatPlanPrice, type LegalDocId } from '@gymgo/domain';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import { BugReportQueue, MemberReportQueue, ModerationQueue, PhotoQueue } from '@/components/AccountContent';
 import { AppBadge, Wordmark } from '@/components/BrandMark';
 import { Icon } from '@/components/Icon';
 import { Pressy } from '@/components/motion';
@@ -44,6 +43,17 @@ export default function Profile() {
   const [error, setError] = useState<string | null>(null);
   const me = account.state === 'signed_in' ? account.account : null;
   const moderator = me?.role === 'moderator' || me?.role === 'admin';
+  // How much is waiting, for the Moderation row: refreshed each time Profile comes back into view.
+  const [waiting, setWaiting] = useState<number | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      if (!moderator || !account.token) return;
+      api
+        .moderationCounts(account.token)
+        .then((counts) => setWaiting(counts.reviews + counts.photos + counts.ownerUpdates + (counts.claims ?? 0)))
+        .catch(() => setWaiting(null));
+    }, [moderator, account.token]),
+  );
 
   const toggle = (key: 'facts' | 'sources' | 'copyright') => setAbout((current) => (current === key ? null : key));
   const openLegal = (doc: LegalDocId) => router.push({ pathname: '/legal/[doc]', params: { doc } });
@@ -148,17 +158,16 @@ export default function Profile() {
       </Group>
 
       {moderator && account.token && (
-        <View style={styles.moderation}>
-          <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
-            MODERATION
-          </Txt>
-          <View style={styles.card}>
-            <PhotoQueue token={account.token} records={data.records} onPublished={data.refreshCovers} />
-            <ModerationQueue token={account.token} records={data.records} onPublished={data.refreshRatings} />
-            <MemberReportQueue token={account.token} records={data.records} />
-            <BugReportQueue token={account.token} />
-          </View>
-        </View>
+        <Group header="Moderation">
+          <Row
+            icon="check"
+            tile={TILE.red}
+            title="Moderation"
+            subtitle="Reviews, photos, owners’ updates and reports"
+            value={waiting === null ? undefined : waiting === 0 ? 'All clear' : `${waiting} waiting`}
+            onPress={() => router.push('/moderation')}
+          />
+        </Group>
       )}
 
       <Group

@@ -50,8 +50,8 @@ the branch the owner's launcher pulls.
 ## The code
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
-`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 208,
-mobile 263, domain 154 and web 39 tests, all passing.
+`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 213,
+mobile 267, domain 160 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 57, React Native 0.86, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -101,6 +101,8 @@ mobile 263, domain 154 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- Batch D: "is it busy?" from members there, verified gym owners (claim,
+  admin check, moderated updates shown as from the gym), a Moderation screen.
 - Batch C: workout templates, record celebration and card, rest alert when
   locked, CSV as a real file with the Health explanation.
 - Batch B: collection sets (another session), friends, invites to train,
@@ -128,8 +130,8 @@ an item, `git fetch` and read this list on `origin/claude/friendly-johnson-9rzxr
 skip anything ticked or marked claimed, and mark what you take as claimed
 (push that first) so the other session doesn't build it too.
 
-- Batch C is done (session gymgo-82). **Claimed 1 Oct by session
-  gymgo-82: Batch D (trust).** Take Batch E instead, or check first.
+- Batches C and D are done (session gymgo-82). **Claimed 1 Oct by session
+  gymgo-82: Batch E (money).** Check before starting anything else.
 
 **Batch A: search**
 - [x] Open late (after 10 pm) and 24-hour quick filters, from published
@@ -160,11 +162,12 @@ skip anything ticked or marked claimed, and mark what you take as claimed
       export, which now shares a real file on phones.
 
 **Batch D: trust**
-- [ ] "Is it busy?" member reports, shown only with enough recent reports.
-- [ ] Verified gym owners: claim, moderator approval, owner-updated hours
-      and prices shown as from the gym.
-- [ ] Faster moderation on the phone (approve or reject in one tap, a
-      queue count on Profile).
+- [x] "Is it busy?" member reports (`src/components/MemberBusy.tsx`, domain
+      `busy.ts`, server busy routes).
+- [x] Verified gym owners (`src/components/GymOwner.tsx`, server
+      `owners.ts`, domain `owner.ts`; `make-admin` to decide claims).
+- [x] Faster moderation on the phone (`src/app/moderation.tsx`,
+      `src/components/Moderation.tsx`; count on Profile).
 
 **Batch E: money** (Stripe test mode; nothing live without the owner)
 - [ ] Gift Pro: a one-off payment gives a code, which redeems a year of Pro.

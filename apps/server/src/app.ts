@@ -48,6 +48,12 @@
  *   GET    /api/gyms/:gymId/status        whether members say it has closed: closed / still open counts
  *   PUT    /api/gyms/:gymId/status        { status: 'closed' | 'open', seenOn } -> your report (replaces your last)
  *   DELETE /api/gyms/:gymId/status        take back your report
+ *   GET    /api/gyms/:gymId/busy          how busy members at the gym say it is now: a level once 3 said so in the last hour (plus yours)
+ *   PUT    /api/gyms/:gymId/busy          { level: 'quiet' | 'steady' | 'busy' | 'packed' } -> your report (replaces your last)
+ *   DELETE /api/gyms/:gymId/busy          take back your report
+ *   GET    /api/gyms/:gymId/owner         whether a verified owner runs it, its approved updates, and (signed in) your claim and submissions
+ *   POST   /api/gyms/:gymId/claim         { roleTitle, contact, evidence } -> a claim, for an admin to check
+ *   POST   /api/gyms/:gymId/owner-updates the gym's owner: { kind: 'visitor_hours', alwaysOpen, windows } or { kind: 'casual_price', amountMinor, anyoneCanBuy, photoIdRequired } -> waits for a moderator
  *   GET    /api/gyms/:gymId/google        live Google Maps details (only with the owner's key)
  *   GET    /api/gyms/:gymId/icon          the icon from the gym's own website, or its chain's (PNG/JPEG/WebP/GIF), or 404
  *   GET    /api/gyms/:gymId/photo         the photo the gym's own website shares (JPEG/PNG/WebP), or 404
@@ -82,6 +88,11 @@
  *   GET    /api/moderation/photos         moderators: photos waiting
  *   POST   /api/moderation/photos/:id     moderators: { decision, reason? }
  *   GET    /api/moderation/member-reports moderators: the latest price and visit reports, with who sent them
+ *   GET    /api/moderation/counts         moderators: how many of each are waiting
+ *   GET    /api/moderation/claims         admins: gym claims waiting, with their evidence
+ *   POST   /api/moderation/claims/:id     admins: { decision: 'approve' | 'reject', reason? }
+ *   GET    /api/moderation/owner-updates  moderators: owners' submissions waiting
+ *   POST   /api/moderation/owner-updates/:id  moderators: { decision: 'approve' | 'reject', reason? }
  *   GET    /api/legal                     who runs GymGO, the terms' version, and the copyright agent once registered
  *   GET    /terms /privacy /refunds /community /legal   the legal documents, as public pages
  *   GET    /.well-known/security.txt      where to report a security problem (once GYMGO_CONTACT_EMAIL is set)
@@ -101,6 +112,12 @@ import { randomUUID } from 'node:crypto';
 import { isIP } from 'node:net';
 import { gunzipSync, gzipSync } from 'node:zlib';
 import {
+  applyOwnerUpdates,
+  BUSY_MINIMUM,
+  BUSY_WINDOW_MINUTES,
+  busyNow,
+  isBusyLevel,
+  type BusyLevel,
   ANONYMOUS,
   DEFAULT_OPERATOR,
   LEGAL_UPDATED,
@@ -169,6 +186,7 @@ import { MAX_AVATAR_BYTES, MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoTy
 import { IdentityError, IdentityVerifier, label, type Provider, type VerifiedIdentity } from './identity';
 import { BugReportError, BugReports, cleanBugReport } from './bugReports';
 import { Social, SocialError } from './social';
+import { OwnerError, Owners } from './owners';
 import type { SendMail } from './mail';
 
 export interface AppOptions {
@@ -330,6 +348,7 @@ export const MAX_TRAINING_SESSIONS = 5000;
 
 /** Collected gyms sent in one request (the app sends a big collection in batches), and the room they may take. */
 export const COLLECTION_BATCH = 200;
+const BUSY_KEEP_MS = 24 * 60 * 60_000;
 const COLLECTION_BODY_BYTES = 2 * 1024 * 1024;
 
 /**
@@ -519,6 +538,8 @@ export function createApp(options: AppOptions) {
   const equipmentLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
   // Adding friends by code: plenty for real use, far too few to guess codes with.
   const friendLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
+  // How busy a gym is: a few gyms a day, a few times each.
+  const busyLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
   const priceLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   const accessLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   const statusLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
@@ -541,6 +562,9 @@ export function createApp(options: AppOptions) {
   const packs = new CountryPacks(db, { ...options.area, ...options.packs, now, known: () => allGyms(db) });
   const photos = new PhotoStore(options.photoDir ?? null);
   const social = new Social(db, now);
+  const owners = new Owners(db, now);
+  /** A gym as the server sends it: with its verified owner's approved updates laid over (domain owner.ts). */
+  const withOwner = (record: GymRecord): GymRecord => applyOwnerUpdates(record, owners.approved());
   const bugReports = new BugReports(db, {
     send: options.bugReports?.send ?? null,
     to: options.bugReports?.to ?? [],
@@ -559,11 +583,14 @@ export function createApp(options: AppOptions) {
   // rate-limit keys (addresses among them) whose window has passed.
   const limiters = [
     loginLimiter, accountLoginLimiter, forgotLimiter, forgotEmailLimiter, resetLimiter, signupLimiter, photoLimiter, avatarLimiter,
-    equipmentLimiter, friendLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter,
+    equipmentLimiter, friendLimiter, busyLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter,
   ];
+  /** How busy a gym is matters for an hour; a member's report is kept a day at most. */
+  const forgetOldBusy = (at: Date) => db.prepare('delete from busy_reports where reported_at < ?').run(new Date(at.getTime() - BUSY_KEEP_MS).toISOString());
   setInterval(() => {
     const at = now();
     forgetExpired(db, at);
+    forgetOldBusy(at);
     for (const limiter of limiters) limiter.sweep(at.getTime());
   }, 5 * 60_000).unref();
   const google = new GooglePlaces(db, options.googleKey ?? null, options.fetchImpl);
@@ -622,7 +649,7 @@ export function createApp(options: AppOptions) {
   function caller(req: IncomingMessage): { account: AccountRow | null; user: User; token: string | null } {
     const token = bearer(req);
     const account = token ? accountForToken(db, token, now()) : null;
-    return { account, user: account ? toUser(account) : ANONYMOUS, token };
+    return { account, user: account ? { ...toUser(account), ownedGymIds: owners.ownedGyms(account.id) } : ANONYMOUS, token };
   }
 
   function requireAccount(req: IncomingMessage) {
@@ -683,7 +710,7 @@ export function createApp(options: AppOptions) {
     }
 
     if (method === 'GET' && path === '/api/gyms') {
-      return send(res, 200, { gyms: allGyms(db), attribution: options.attribution, generatedAt: now().toISOString() });
+      return send(res, 200, { gyms: allGyms(db).map(withOwner), attribution: options.attribution, generatedAt: now().toISOString() });
     }
 
     if (method === 'GET' && path === '/api/area') {
@@ -705,7 +732,7 @@ export function createApp(options: AppOptions) {
           throw new AreaError(429, 'That’s a lot of searching. Try again in a little while.', 'rate_limited');
         }
         const answer = await area.search(box);
-        return send(res, 200, { ...answer, attribution: '© OpenStreetMap contributors (ODbL)' });
+        return send(res, 200, { ...answer, gyms: answer.gyms.map(withOwner), attribution: '© OpenStreetMap contributors (ODbL)' });
       } catch (error) {
         if (error instanceof AreaError) throw new HttpError(error.status, error.message, error.code);
         throw error;
@@ -763,7 +790,7 @@ export function createApp(options: AppOptions) {
     if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && parts.length === 3) {
       const record = gymRecord(db, decodeURIComponent(parts[2]!));
       if (!record) throw new HttpError(404, 'No gym with that id.');
-      return send(res, 200, { gym: record });
+      return send(res, 200, { gym: withOwner(record) });
     }
 
     // --- GymGO Pro ----------------------------------------------------------
@@ -1291,6 +1318,7 @@ export function createApp(options: AppOptions) {
         gymStatusReports: rows(
           `select gym_id as gymId, status, seen_on as seenOn, reported_at as reportedAt from status_reports where user_id = ? order by reported_at`,
         ),
+        busyReports: rows(`select gym_id as gymId, level, reported_at as reportedAt from busy_reports where user_id = ? order by reported_at`),
         visitReports: rows(
           `select gym_id as gymId, outcome, visited_on as visitedOn, reported_at as reportedAt from access_reports where user_id = ? order by reported_at`,
         ),
@@ -1312,6 +1340,7 @@ export function createApp(options: AppOptions) {
            from bug_reports where user_id = ? order by created_at`,
         ).map(({ context_json, ...report }) => ({ ...report, device: JSON.parse(String(context_json)) })),
         ...social.exportFor(id),
+        ...owners.exportFor(id),
       });
     }
 
@@ -1397,6 +1426,7 @@ export function createApp(options: AppOptions) {
         for (const photo of owned) photos.remove(photo.id, photo.type);
         if (account.avatar_id && account.avatar_type) photos.remove(account.avatar_id, account.avatar_type);
         db.prepare('delete from users where id = ?').run(account.id);
+        owners.forget();
         return send(res, 204);
       }
     }
@@ -1822,6 +1852,128 @@ export function createApp(options: AppOptions) {
     // Map data can be years old. Members who went by say it has closed, or
     // that it's still open; the card warns only on their word, labelled as
     // theirs. Six months of reports count.
+    // --- Verified owners (owners.ts) ---------------------------------------------
+    if (parts[0] === 'api' && parts[1] === 'gyms' && (parts[3] === 'owner' || parts[3] === 'claim' || parts[3] === 'owner-updates') && parts.length === 4) {
+      const gymId = decodeURIComponent(parts[2]!);
+      const record = gymRecord(db, gymId);
+      if (!record) throw new HttpError(404, 'No gym with that id.');
+      try {
+        if (parts[3] === 'owner' && method === 'GET') {
+          const { account, user } = caller(req);
+          const owned = owners.isOwned(gymId);
+          return send(res, 200, {
+            verified: owned !== null,
+            since: owned?.since ?? null,
+            updates: owners.approved().filter((update) => update.gymId === gymId).map((update) => ({ kind: update.payload.kind, approvedAt: update.approvedAt })),
+            you: account
+              ? { owner: user.ownedGymIds.includes(gymId), claim: owners.claimFor(account.id, gymId), submissions: user.ownedGymIds.includes(gymId) ? owners.updatesBy(account.id, gymId) : [] }
+              : null,
+          });
+        }
+        if (parts[3] === 'claim' && method === 'POST') {
+          const { account, user } = requireAccount(req);
+          requirePermission(user, 'claim.create', gymId);
+          if (record.location.isDemoData) throw new HttpError(400, 'This is an invented demo gym; there’s no one to claim it.');
+          return send(res, 201, owners.claim(account.id, gymId, (await readJson(req)) as Record<string, unknown>));
+        }
+        if (parts[3] === 'owner-updates' && method === 'POST') {
+          const { account, user } = requireAccount(req);
+          if (!user.ownedGymIds.includes(gymId)) throw new HttpError(403, 'Only this gym’s verified owner can update it.');
+          requirePermission(user, 'gym.edit', gymId);
+          return send(res, 201, owners.submitUpdate(account.id, gymId, record.location.address.countryCode, await readJson(req)));
+        }
+      } catch (error) {
+        if (error instanceof OwnerError) throw new HttpError(error.status, error.message);
+        throw error;
+      }
+    }
+
+    if (parts[0] === 'api' && parts[1] === 'moderation' && (parts[2] === 'claims' || parts[2] === 'owner-updates' || parts[2] === 'counts')) {
+      const { user } = requireAccount(req);
+      try {
+        if (path === '/api/moderation/counts' && method === 'GET') {
+          requirePermission(user, 'moderation.view_queue');
+          const waiting = owners.counts();
+          const count = (sql: string) => (db.prepare(sql).get() as { n: number }).n;
+          return send(res, 200, {
+            reviews: count(`select count(*) as n from reviews where status = 'pending'`),
+            photos: count(`select count(*) as n from photos where status = 'pending'`),
+            ownerUpdates: waiting.ownerUpdates,
+            // Claims hold personal details: admins only.
+            claims: can(user, 'claim.moderate') ? waiting.claims : null,
+          });
+        }
+        if (parts[2] === 'claims') {
+          requirePermission(user, 'claim.moderate');
+          if (parts.length === 3 && method === 'GET') return send(res, 200, { claims: owners.claimQueue() });
+          if (parts.length === 4 && method === 'POST') {
+            const body = (await readJson(req)) as Record<string, unknown>;
+            owners.decideClaim(user.id, decodeURIComponent(parts[3]!), body.decision, body.reason);
+            return send(res, 204);
+          }
+        }
+        if (parts[2] === 'owner-updates') {
+          requirePermission(user, 'correction.moderate');
+          if (parts.length === 3 && method === 'GET') return send(res, 200, { updates: owners.updateQueue() });
+          if (parts.length === 4 && method === 'POST') {
+            const body = (await readJson(req)) as Record<string, unknown>;
+            owners.decideUpdate(user.id, decodeURIComponent(parts[3]!), body.decision, body.reason);
+            return send(res, 204);
+          }
+        }
+      } catch (error) {
+        if (error instanceof OwnerError) throw new HttpError(error.status, error.message);
+        throw error;
+      }
+      throw new HttpError(404, 'Not found.');
+    }
+
+    // --- Is it busy? From members there now -----------------------------------
+    // Each member has one report per gym, replaced by their next. A level is
+    // shown only once 3 have said so in the last hour (domain busy.ts); the
+    // app asks for it only from someone its location check puts at the gym.
+    if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'busy' && parts.length === 4) {
+      const gymId = decodeURIComponent(parts[2]!);
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+      if (method === 'GET') {
+        const { account } = caller(req);
+        forgetOldBusy(now());
+        const since = new Date(now().getTime() - BUSY_WINDOW_MINUTES * 60_000).toISOString();
+        const rows = db.prepare('select level, reported_at from busy_reports where gym_id = ? and reported_at >= ?').all(gymId, since) as Array<{
+          level: BusyLevel;
+          reported_at: string;
+        }>;
+        const mine = account
+          ? (db.prepare('select level, reported_at from busy_reports where gym_id = ? and user_id = ? and reported_at >= ?').get(gymId, account.id, since) as
+              | { level: BusyLevel; reported_at: string }
+              | undefined)
+          : undefined;
+        return send(res, 200, {
+          ...busyNow(rows.map((row) => ({ level: row.level, reportedAt: row.reported_at })), now()),
+          windowMinutes: BUSY_WINDOW_MINUTES,
+          minimum: BUSY_MINIMUM,
+          mine: mine ? { level: mine.level, reportedAt: mine.reported_at } : null,
+        });
+      }
+      if (method === 'PUT' || method === 'DELETE') {
+        const { account, user } = requireAccount(req);
+        requirePermission(user, 'correction.create', gymId);
+        if (method === 'DELETE') {
+          db.prepare('delete from busy_reports where gym_id = ? and user_id = ?').run(gymId, account.id);
+          return send(res, 204);
+        }
+        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to report.');
+        const level = ((await readJson(req)) as Record<string, unknown>).level;
+        if (!isBusyLevel(level)) throw new HttpError(400, 'Say how busy it is: quiet, steady, busy or packed.');
+        if (!busyLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That\u2019s a lot of updates for one day. Try again tomorrow.');
+        db.prepare(
+          `insert into busy_reports (gym_id, user_id, level, reported_at) values (?, ?, ?, ?)
+           on conflict (gym_id, user_id) do update set level = excluded.level, reported_at = excluded.reported_at`,
+        ).run(gymId, account.id, level, now().toISOString());
+        return send(res, 204);
+      }
+    }
+
     if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'status' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
       if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');

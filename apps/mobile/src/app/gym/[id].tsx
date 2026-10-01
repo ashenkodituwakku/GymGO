@@ -26,6 +26,8 @@ import { PhotoHero } from '@/components/PhotoHero';
 import { PlaceCard } from '@/components/PlaceCard';
 import { GymNotes } from '@/components/GymNotes';
 import { CollectCard } from '@/components/CollectCard';
+import { MemberBusy } from '@/components/MemberBusy';
+import { GymOwner } from '@/components/GymOwner';
 import { ReviewsSection } from '@/components/ReviewsSection';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { GymPageSkeleton } from '@/components/Skeleton';
@@ -239,6 +241,8 @@ export default function GymPage() {
             reviews={<ReviewsSection gymId={location.id} account={account} inSheet={false} onSignIn={() => router.push('/sign-in')} />}
             notes={location.isDemoData ? null : <GymNotes gymId={location.id} isPro={billing.isPro} inSheet={false} onPro={() => openPro('notes')} />}
             collect={location.isDemoData ? null : <CollectCard record={result.record} onOpenCollection={() => router.push('/collection')} />}
+            busy={<MemberBusy location={location} account={account} onSignIn={() => router.push('/sign-in')} />}
+            owner={<GymOwner record={result.record} account={account} onSignIn={() => router.push('/sign-in')} />}
           />
           <GoogleSection place={place} photosAbove={googlePhotos} />
           <View style={styles.mapButton}>

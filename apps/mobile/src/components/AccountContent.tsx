@@ -17,6 +17,7 @@ import { moneyLabel } from '@/lib/places';
 import type { AccountApi } from '@/lib/useAccount';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, space, themed } from '@/lib/theme';
+import { DecideButtons, PHOTO_REASONS, REVIEW_REASONS } from './Moderation';
 import { Icon } from './Icon';
 import { PrimaryButton, TextField, Txt } from './ui';
 
@@ -43,9 +44,9 @@ export function ModerationQueue({ token, records, onPublished }: { token: string
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const decide = async (review: Review, decision: 'publish' | 'reject') => {
+  const decide = async (review: Review, decision: 'publish' | 'reject', reason = 'Did not meet the review guidelines.') => {
     try {
-      await api.moderate(token, review.id, decision === 'reject' ? { decision, reason: 'Did not meet the review guidelines.' } : { decision });
+      await api.moderate(token, review.id, decision === 'reject' ? { decision, reason } : { decision });
       haptic.success();
       setQueue((current) => (current ?? []).filter((item) => item.id !== review.id));
       // A published review changes the gym's rating in lists and cards.
@@ -74,14 +75,7 @@ export function ModerationQueue({ token, records, onPublished }: { token: string
               {gym ? gym.location.name : review.gymId} · {'★'.repeat(review.overall)} · {review.authorDisplayName}
             </Txt>
             <Txt variant="subhead">{review.body}</Txt>
-            <View style={styles.queueButtons}>
-              <View style={styles.flex}>
-                <PrimaryButton label="Publish" onPress={() => void decide(review, 'publish')} />
-              </View>
-              <View style={styles.flex}>
-                <PrimaryButton label="Reject" tone="danger" onPress={() => void decide(review, 'reject')} />
-              </View>
-            </View>
+            <DecideButtons approveLabel="Publish" reasons={REVIEW_REASONS} onApprove={() => void decide(review, 'publish')} onReject={(reason) => void decide(review, 'reject', reason)} />
           </View>
         );
       })}
@@ -244,9 +238,9 @@ export function PhotoQueue({ token, records, onPublished }: { token: string; rec
       .catch((caught: unknown) => setError(messageFor(caught)));
   }, [token]);
 
-  const decide = async (photoId: string, decision: 'publish' | 'reject') => {
+  const decide = async (photoId: string, decision: 'publish' | 'reject', reason = 'Did not meet the photo guidelines.') => {
     try {
-      await api.moderatePhoto(token, photoId, decision === 'reject' ? { decision, reason: 'Did not meet the photo guidelines.' } : { decision });
+      await api.moderatePhoto(token, photoId, decision === 'reject' ? { decision, reason } : { decision });
       haptic.success();
       setQueue((current) => (current ?? []).filter((item) => item.id !== photoId));
       if (decision === 'publish') onPublished();
@@ -285,14 +279,7 @@ export function PhotoQueue({ token, records, onPublished }: { token: string; rec
             <Txt variant="footnote" color={color.labelSecondary}>
               {gym ? gym.location.name : photo.gymId} · by {photo.credit}
             </Txt>
-            <View style={styles.queueButtons}>
-              <View style={styles.flex}>
-                <PrimaryButton label="Publish" onPress={() => void decide(photo.id, 'publish')} />
-              </View>
-              <View style={styles.flex}>
-                <PrimaryButton label="Reject" tone="danger" onPress={() => void decide(photo.id, 'reject')} />
-              </View>
-            </View>
+            <DecideButtons approveLabel="Publish" reasons={PHOTO_REASONS} onApprove={() => void decide(photo.id, 'publish')} onReject={(reason) => void decide(photo.id, 'reject', reason)} />
           </View>
         );
       })}

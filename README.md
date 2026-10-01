@@ -671,8 +671,17 @@ moderator, run this in the GymGO folder:
 npx pnpm@10 --filter @gymgo/server make-moderator you@example.com
 ```
 
-Then open your account in the app to see the reviews and photos waiting for a
-decision.
+Then **Profile → Moderation** (with how many are waiting) has everything in
+one place: reviews and photos (**Posts**), owners' updates and gym claims
+(**Owners**), and members' reports and bug reports (**Reports**). Approve in
+one tap; **Reject** asks for a reason (one tap more), which the person sees.
+
+Gym claims hold personal details (the claimant's contact and evidence), so
+only an **admin** sees and decides them:
+
+```powershell
+npx pnpm@10 --filter @gymgo/server make-admin you@example.com
+```
 
 ### Report a bug
 
@@ -915,6 +924,31 @@ before you go". It's their word, labelled as theirs.
 Price, visit and closed/open reports show straight away. Moderators see the
 latest 50 in Profile, with who sent each, and can remove any that are wrong
 or abusive.
+
+### Is it busy? From members there now
+
+On a gym's page, members **at the gym** can say how busy it is: Quiet,
+Steady, Busy or Packed. Saying so takes the same one-off location check as
+collecting the gym (on the phone; the position is never sent). A level shows
+only once **3 members** have said so in the **last hour**, as the middle of
+what they said ("Busy right now: waiting for most kit, say 3 members here in
+the last hour, latest 12 min ago"); until then it says how many have, and
+nothing is estimated or predicted. Each member has one report per gym,
+replaced by their next, and reports are deleted after a day.
+
+### Verified gym owners
+
+Someone who runs a gym can claim it on its page (**The gym's owner → Claim
+this gym**): their role, a contact at the business (a work email at the
+gym's own address, or the phone it lists) and how GymGO can check. An admin
+checks and approves or turns it down with a reason; the claim's details are
+never shown publicly. A verified owner can then send the gym's **visitor
+hours** and **casual visit price** (the whole price; who can buy it; whether
+photo ID is needed). A moderator checks each against the gym's own website
+or a call before it shows, and then it's the gym's fact on GymGO, marked
+**From the gym**, and counts in searches like anything else the gym
+confirms. The gym's page says a verified owner runs it and which facts came
+from them. Owners can't remove or change reviews.
 
 ### GymGO's own logo
 

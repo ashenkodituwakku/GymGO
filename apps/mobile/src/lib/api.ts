@@ -15,7 +15,7 @@
 
 import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
-import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review, CollectionTotals, FriendCard } from '@gymgo/domain';
+import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review, CollectionTotals, FriendCard, BusyLevel, OwnerUpdatePayload } from '@gymgo/domain';
 import type { TrainingSession } from './training';
 import { pickApiBase } from './serverAddress';
 
@@ -161,6 +161,63 @@ export interface Board {
   rows: BoardEntry[];
   you: BoardEntry | null;
   people: number;
+}
+
+/** How busy members at a gym say it is now (domain busy.ts). */
+export interface BusySummary {
+  level: BusyLevel | null;
+  count: number;
+  latestAt: string | null;
+  windowMinutes: number;
+  minimum: number;
+  mine: { level: BusyLevel; reportedAt: string } | null;
+}
+
+export interface OwnerSubmission {
+  id: string;
+  payload: OwnerUpdatePayload;
+  status: 'pending' | 'approved' | 'rejected';
+  reason: string | null;
+  createdAt: string;
+}
+
+/** Whether a verified owner runs a gym, and (signed in) where you stand. */
+export interface GymOwnerView {
+  verified: boolean;
+  since: string | null;
+  updates: Array<{ kind: OwnerUpdatePayload['kind']; approvedAt: string }>;
+  you: {
+    owner: boolean;
+    claim: { id: string; status: 'pending' | 'approved' | 'rejected'; reason: string | null; createdAt: string } | null;
+    submissions: OwnerSubmission[];
+  } | null;
+}
+
+export interface ModerationCounts {
+  reviews: number;
+  photos: number;
+  ownerUpdates: number;
+  /** Admins only; null for moderators. */
+  claims: number | null;
+}
+
+export interface ClaimItem {
+  id: string;
+  gymId: string;
+  createdAt: string;
+  displayName: string;
+  email: string;
+  roleTitle: string;
+  contact: string;
+  evidence: string;
+}
+
+export interface OwnerUpdateItem {
+  id: string;
+  gymId: string;
+  displayName: string;
+  payload: OwnerUpdatePayload;
+  createdAt: string;
 }
 
 export interface CollectionAnswer {
@@ -491,6 +548,21 @@ export const api = {
 
   /** Your gym collection on the account, and when it was last reset. */
   collection: (token: string) => request<CollectionAnswer>('GET', '/api/collection', { token }),
+  busy: (gymId: string, token: string | null) => request<BusySummary>('GET', `/api/gyms/${encodeURIComponent(gymId)}/busy`, { token }),
+  reportBusy: (token: string, gymId: string, level: BusyLevel) => request<unknown>('PUT', `/api/gyms/${encodeURIComponent(gymId)}/busy`, { token, body: { level } }),
+  deleteBusy: (token: string, gymId: string) => request<unknown>('DELETE', `/api/gyms/${encodeURIComponent(gymId)}/busy`, { token }),
+  gymOwner: (gymId: string, token: string | null) => request<GymOwnerView>('GET', `/api/gyms/${encodeURIComponent(gymId)}/owner`, { token }),
+  claimGym: (token: string, gymId: string, body: { roleTitle: string; contact: string; evidence: string }) =>
+    request<unknown>('POST', `/api/gyms/${encodeURIComponent(gymId)}/claim`, { token, body }),
+  submitOwnerUpdate: (token: string, gymId: string, body: Record<string, unknown>) =>
+    request<unknown>('POST', `/api/gyms/${encodeURIComponent(gymId)}/owner-updates`, { token, body }),
+  moderationCounts: (token: string) => request<ModerationCounts>('GET', '/api/moderation/counts', { token }),
+  claimQueue: (token: string) => request<{ claims: ClaimItem[] }>('GET', '/api/moderation/claims', { token }),
+  decideClaim: (token: string, id: string, body: { decision: 'approve' | 'reject'; reason?: string }) =>
+    request<unknown>('POST', `/api/moderation/claims/${encodeURIComponent(id)}`, { token, body }),
+  ownerUpdateQueue: (token: string) => request<{ updates: OwnerUpdateItem[] }>('GET', '/api/moderation/owner-updates', { token }),
+  decideOwnerUpdate: (token: string, id: string, body: { decision: 'approve' | 'reject'; reason?: string }) =>
+    request<unknown>('POST', `/api/moderation/owner-updates/${encodeURIComponent(id)}`, { token, body }),
   friends: (token: string) => request<FriendsOverview>('GET', '/api/friends', { token }),
   addFriend: (token: string, code: string) => request<{ status: 'requested' | 'accepted'; friend: Person }>('POST', '/api/friends', { token, body: { code } }),
   acceptFriend: (token: string, id: string) => request<FriendsOverview>('POST', `/api/friends/${encodeURIComponent(id)}/accept`, { token }),

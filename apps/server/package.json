@@ -8,6 +8,7 @@
     "start": "node --no-warnings=ExperimentalWarning --import tsx src/main.ts",
     "dev": "node --no-warnings=ExperimentalWarning --import tsx --watch src/main.ts",
     "make-moderator": "node --no-warnings=ExperimentalWarning --import tsx src/cli.ts moderator",
+    "make-admin": "node --no-warnings=ExperimentalWarning --import tsx src/cli.ts admin",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",

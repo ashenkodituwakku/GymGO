@@ -123,6 +123,14 @@ const SCHEMA = `
     primary key (gym_id, user_id)
   );
   create index if not exists status_reports_gym on status_reports(gym_id);
+  create table if not exists busy_reports (
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    level text not null check (level in ('quiet', 'steady', 'busy', 'packed')),
+    reported_at text not null,
+    primary key (gym_id, user_id)
+  );
+  create index if not exists busy_reports_gym on busy_reports(gym_id, reported_at);
   create table if not exists billing_customers (
     user_id text primary key references users(id) on delete cascade,
     stripe_customer_id text not null unique,
@@ -241,6 +249,38 @@ const SCHEMA = `
     created_at text not null
   );
   create index if not exists train_invites_people on train_invites(to_user, from_user, at);
+  create table if not exists gym_claims (
+    id text primary key,
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    role_title text not null,
+    contact text not null,
+    evidence text not null,
+    status text not null check (status in ('pending', 'approved', 'rejected')),
+    reason text,
+    created_at text not null,
+    decided_at text,
+    decided_by text
+  );
+  create index if not exists gym_claims_status on gym_claims(status, created_at);
+  create table if not exists gym_owners (
+    user_id text not null references users(id) on delete cascade,
+    gym_id text not null,
+    approved_at text not null,
+    primary key (user_id, gym_id)
+  );
+  create table if not exists owner_updates (
+    id text primary key,
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    payload_json text not null,
+    status text not null check (status in ('pending', 'approved', 'rejected')),
+    reason text,
+    created_at text not null,
+    decided_at text,
+    decided_by text
+  );
+  create index if not exists owner_updates_status on owner_updates(status, created_at);
   create table if not exists leaderboard_members (
     user_id text primary key references users(id) on delete cascade,
     joined_at text not null

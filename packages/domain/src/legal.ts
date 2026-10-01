@@ -112,6 +112,7 @@ function terms(op: LegalOperator): LegalSection[] {
       blocks: [
         'GymGO shows what it can find about gyms: opening hours, prices, entry rules and equipment from gyms’ own websites, OpenStreetMap and members, each with its source and when it was checked. Gyms change things without telling anyone, so information can be out of date or wrong, and GymGO says “unknown” rather than guess.',
         'Always check with the gym before you rely on something that matters to you, such as being let in or what a visit costs. Gyms make their own decisions about who they let in and what they charge, and GymGO isn’t part of any gym unless it says so.',
+        'Someone who runs a gym can claim it. Only claim a gym you own or are allowed to speak for, and give honest details: we check before approving, and remove an owner who misleads anyone. What a verified owner sends (visitor hours, a casual price) is checked by a moderator and shown as from the gym; it doesn’t make GymGO part of that gym.',
       ],
     },
     {
@@ -124,7 +125,7 @@ function terms(op: LegalOperator): LegalSection[] {
     {
       heading: 'What you post',
       blocks: [
-        'Reviews, photos and your reports of prices, visits, machines and closures stay yours. By posting one you give us a worldwide, non-exclusive, royalty-free licence to keep it, show it in GymGO, and change its form to do that (for example making photos smaller and removing their location data), for as long as it’s in GymGO. Reports of prices are shown without your name; reviews show your display name.',
+        'Reviews, photos and your reports of prices, visits, machines, closures and how busy a gym is stay yours. By posting one you give us a worldwide, non-exclusive, royalty-free licence to keep it, show it in GymGO, and change its form to do that (for example making photos smaller and removing their location data), for as long as it’s in GymGO. Reports of prices are shown without your name; reviews show your display name.',
         'When you post, you confirm it’s first-hand and honest, that you took the photo or wrote the review, that anyone recognisable in a photo agreed to be in it, and that it follows the [Community Guidelines](community). Reviews and photos wait for a moderator, and we may decline or remove anything that breaks these terms or the law.',
       ],
     },
@@ -249,7 +250,8 @@ function privacy(op: LegalOperator): LegalSection[] {
             'when you made the account and when your age was checked (not the month and year you gave, which are checked and not kept), and which version of the terms you agreed to;',
             'if you sign in with Apple or Google, which account of theirs is yours and the email address they share;',
             'sign-ins, as tokens kept only as hashes, which expire after 30 days;',
-            'what you add: saved gyms, your collection, workouts, your training log, reviews, photos (with their location data removed), and your reports of prices, visits, machines and closures;',
+            'what you add: saved gyms, your collection, workouts, your training log, reviews, photos (with their location data removed), and your reports of prices, visits, machines, closures and how busy a gym is;',
+            'how busy you said a gym was, kept for a day; and if you claim a gym, your role there, the contact you gave and how to check it, which only GymGO’s admins see, and anything you send as its owner;',
             'your friend code, who you’re friends with or have asked, the invites to train you send and receive (the gym, the time and any note), and whether you’ve joined the public leaderboard. Trips stay on your device;',
             'bug reports and copyright notices you send, with the details the form lists, and a reply address if you give one.',
           ],
@@ -431,9 +433,9 @@ function community(op: LegalOperator): LegalSection[] {
       ],
     },
     {
-      heading: 'Prices, visits, machines and closures',
+      heading: 'Prices, visits, machines, closures and how busy it is',
       blocks: [
-        'Report what you actually paid, saw or were told, recently. If you’re not sure, leave it out: “unknown” is more useful than a guess.',
+        'Report what you actually paid, saw or were told, recently. If you’re not sure, leave it out: “unknown” is more useful than a guess. Say how busy a gym is only while you’re there.',
       ],
     },
     {

@@ -594,7 +594,7 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
   }, [now, endsAt]);
   const onChange = (seconds: number) => updateSession((current) => ({ ...current, restEndsAt: seconds > 0 ? Date.now() + seconds * 1000 : null }));
   return (
-    <Animated.View entering={REST_IN} exiting={REST_OUT} style={[styles.restWrap, { bottom: bottom + space[3] }]} pointerEvents="box-none">
+    <Animated.View entering={REST_IN} exiting={REST_OUT} style={[styles.restWrap, { bottom: bottom + space[3] }, { pointerEvents: 'box-none' }]}>
       <Glass kind="control" style={styles.rest}>
         <View style={styles.restTrack}>
           <Drain endsAt={endsAt} total={total} />

@@ -204,6 +204,12 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     // above the sheet's edge (see the padding effect), where Apple Maps puts
     // its own "Legal" link.
     instance.addControl(new MapCredit(), 'bottom-left');
+    // The map style names a few place icons (rowing, ATM, ferry…) its icon
+    // set doesn't have. Each gets an empty one, rather than a warning in the
+    // console for every icon, every time the map loads.
+    instance.on('styleimagemissing', (event: { id: string }) => {
+      if (!instance.hasImage(event.id)) instance.addImage(event.id, { width: 1, height: 1, data: new Uint8Array(4) });
+    });
     instance.on('click', () => handlers.current.onMapPress());
     // The area on screen, clear of the panels and sheet, whenever the map comes to rest.
     const noteView = () => {

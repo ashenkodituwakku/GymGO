@@ -109,7 +109,7 @@ export function GemCard({
           {look.foil && <Foil id={ids.foil} />}
           {legendary && <Sparkles big={big} />}
           {/* The rarity and the gem share one row, so on a narrow card they give way rather than overlap. */}
-          <View style={styles.topRow} pointerEvents="none">
+          <View style={[styles.topRow, { pointerEvents: 'none' }]}>
             <RarityTag look={look} />
             <GemBadge gem={look.gem} foil={look.foil} id={ids.ring} big={big} />
           </View>
@@ -258,7 +258,7 @@ function Shine({ id, width }: { id: string; width: number }) {
   const move = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { rotate: '18deg' }] }));
   if (reduceMotion) return null;
   return (
-    <Animated.View style={[styles.shine, { width: width * 0.45 }, move]} pointerEvents="none">
+    <Animated.View style={[styles.shine, { width: width * 0.45 }, move, { pointerEvents: 'none' }]}>
       <Svg width="100%" height="100%" preserveAspectRatio="none">
         <Defs>
           <LinearGradient id={id} x1="0" y1="0" x2="1" y2="0">
@@ -298,7 +298,7 @@ function Twinkle({ top, left, size, delay }: { top: `${number}%`; left: `${numbe
   }, [reduceMotion, delay, glow]);
   const style = useAnimatedStyle(() => ({ opacity: glow.value, transform: [{ scale: 0.8 + glow.value * 0.3 }] }));
   return (
-    <Animated.View style={[styles.sparkle, { top, left }, style]} pointerEvents="none">
+    <Animated.View style={[styles.sparkle, { top, left }, style, { pointerEvents: 'none' }]}>
       <Icon name="sparkle" size={size} color="#FFFFFF" />
     </Animated.View>
   );

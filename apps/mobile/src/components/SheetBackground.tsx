@@ -53,7 +53,7 @@ function FloatingBackground({ solid }: BottomSheetBackgroundProps & { solid: boo
   const reach = useReach();
   const size = useAnimatedStyle(() => ({ height: reach.get() }));
   return (
-    <Animated.View style={[styles.floating, solid && styles.solidFill, size]} pointerEvents="none">
+    <Animated.View style={[styles.floating, solid && styles.solidFill, size, { pointerEvents: 'none' }]}>
       {!solid && <Glass kind="sheet" style={styles.glass} />}
     </Animated.View>
   );

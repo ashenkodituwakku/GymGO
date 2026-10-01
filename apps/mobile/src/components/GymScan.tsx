@@ -5,8 +5,10 @@
  * bar eases most of the way while the phone looks (as long as that usually
  * takes), then fills as each step finishes.
  *
- * With Reduce Motion on, the rings hold still and the bar steps without
- * gliding.
+ * With Reduce Motion on (an iPhone setting, or "Animation effects" off in
+ * Windows, which the browser passes on), nothing grows or moves: the rings
+ * stay put and light up in turn from the pin outwards, a fade rather than
+ * motion. The bar still fills, since it's information, not decoration.
  */
 
 import { useEffect, useState } from 'react';
@@ -16,6 +18,7 @@ import Animated, {
   ReduceMotion,
   cancelAnimation,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withDelay,
   withRepeat,
@@ -35,6 +38,8 @@ const RING_MS = 2100;
 // Timing curves work everywhere (it's entering and leaving animations the web can't curve).
 const easeOut = { easing: Easing.out(Easing.cubic) };
 const motion = { reduceMotion: ReduceMotion.System };
+/** For what still runs with Reduce Motion on: fades, and the bar filling. */
+const always = { reduceMotion: ReduceMotion.Never };
 
 /** How far the bar gets in each phase, and how long it takes to get there. */
 const BAR: Record<ScanPhase, { to: number; ms: number }> = {
@@ -45,10 +50,11 @@ const BAR: Record<ScanPhase, { to: number; ms: number }> = {
 };
 
 export function GymScan({ phase, gymName }: { phase: ScanPhase; gymName: string }) {
+  const still = useReducedMotion();
   const progress = useSharedValue(0);
   useEffect(() => {
     const { to, ms } = BAR[phase];
-    progress.value = withTiming(to, { duration: ms, ...easeOut, ...motion });
+    progress.value = withTiming(to, { duration: ms, ...easeOut, ...always });
   }, [phase, progress]);
   useEffect(() => () => cancelAnimation(progress), [progress]);
 
@@ -59,9 +65,9 @@ export function GymScan({ phase, gymName }: { phase: ScanPhase; gymName: string 
   return (
     <View style={styles.wrap} accessible accessibilityRole="progressbar" accessibilityLabel={line} accessibilityLiveRegion="polite">
       <View style={styles.radar}>
-        {Array.from({ length: RINGS }, (_, index) => (
-          <Ring key={index} index={index} done={phase === 'done'} />
-        ))}
+        {Array.from({ length: RINGS }, (_, index) =>
+          still ? <StillRing key={index} index={index} done={phase === 'done'} /> : <Ring key={index} index={index} done={phase === 'done'} />,
+        )}
         <Core done={phase === 'done'} />
       </View>
       <View style={styles.track}>
@@ -93,7 +99,34 @@ function Ring({ index, done }: { index: number; done: boolean }) {
     opacity: (1 - t.value) * 0.85,
     transform: [{ scale: 0.95 + t.value * 1.95 }],
   }));
-  return <Animated.View pointerEvents="none" style={[styles.ring, done && styles.ringDone, style]} />;
+  return <Animated.View style={[styles.ring, done && styles.ringDone, style, { pointerEvents: 'none' }]} />;
+}
+
+/**
+ * With Reduce Motion: one ring at a fixed size, lighting up and dimming in
+ * turn with the others, from the pin outwards, so the scan still looks alive
+ * without anything moving. When it's done, all three glow green together.
+ */
+function StillRing({ index, done }: { index: number; done: boolean }) {
+  const glow = useSharedValue(0);
+  useEffect(() => {
+    glow.value = 0;
+    glow.value = done
+      ? withTiming(1, { duration: 250, ...always })
+      : withDelay(
+          (index * RING_MS) / RINGS / 2,
+          withRepeat(
+            withSequence(withTiming(1, { duration: RING_MS / 4, ...always }), withTiming(0, { duration: (RING_MS * 3) / 4, ...always })),
+            -1,
+            false,
+            undefined,
+            ReduceMotion.Never,
+          ),
+        );
+    return () => cancelAnimation(glow);
+  }, [done, index, glow]);
+  const style = useAnimatedStyle(() => ({ opacity: 0.18 + glow.value * 0.67 }));
+  return <Animated.View style={[styles.ring, done && styles.ringDone, { transform: [{ scale: 1.45 + index * 0.62 }] }, style, { pointerEvents: 'none' }]} />;
 }
 
 /** The pin in the middle: a slow breath while it looks, a pop when it's sure. */

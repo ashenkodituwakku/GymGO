@@ -139,11 +139,11 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
           <Pressable style={StyleSheet.absoluteFill} onPress={close} accessible={false} />
         </Animated.View>
 
-        <View style={[styles.centre, { paddingTop: insets.top + space[3], paddingBottom: insets.bottom + space[3] }]} pointerEvents="box-none">
+        <View style={[styles.centre, { paddingTop: insets.top + space[3], paddingBottom: insets.bottom + space[3] }, { pointerEvents: 'box-none' }]}>
           <Animated.View style={[styles.panel, { width: panelWidth, maxHeight }, panel]} accessibilityViewIsModal>
             <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} />
             <View style={[StyleSheet.absoluteFill, styles.tint]} />
-            <Animated.View style={[styles.glow, { width: glow, height: glow, top: -glow * 0.12, left: (panelWidth - glow) / 2 }, glowStyle]} pointerEvents="none">
+            <Animated.View style={[styles.glow, { width: glow, height: glow, top: -glow * 0.12, left: (panelWidth - glow) / 2 }, glowStyle, { pointerEvents: 'none' }]}>
               <Svg width={glow} height={glow}>
                 <Defs>
                   <RadialGradient id="pullGlow" cx="50%" cy="50%" r="50%">

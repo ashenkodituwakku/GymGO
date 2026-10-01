@@ -157,13 +157,13 @@ function GlassTabBar({ bottom }: { bottom: number }) {
   // shadow, and a lens tinted with the accent (painted, for Rainbow or Camo).
   const solid = currentLook().solid;
   const lens = solid ? (
-    <Animated.View style={[styles.lens, { width: tabWidth }, lensStyle]} pointerEvents="none">
+    <Animated.View style={[styles.lens, { width: tabWidth }, lensStyle, { pointerEvents: 'none' }]}>
       <View style={[StyleSheet.absoluteFill, styles.lensShape, styles.lensSolid]}>
         <BrandFill opacity={0.45} />
       </View>
     </Animated.View>
   ) : (
-    <Animated.View style={[styles.lens, { width: tabWidth }, lensStyle]} pointerEvents="none">
+    <Animated.View style={[styles.lens, { width: tabWidth }, lensStyle, { pointerEvents: 'none' }]}>
       <View {...glassMark('lens')} style={[StyleSheet.absoluteFill, styles.lensShape, Platform.OS !== 'web' && styles.lensNative]} />
       <Animated.View
         {...glassMark('lift')}

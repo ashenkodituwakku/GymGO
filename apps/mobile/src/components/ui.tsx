@@ -260,7 +260,7 @@ export function Segmented<T extends string | number>({
   const pill = useAnimatedStyle(() => ({ transform: [{ translateX: left.value }] }));
   return (
     <View style={styles.segmented} accessibilityRole="tablist" onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
-      {width > 0 && <Animated.View style={[styles.segmentPill, { width: slot }, pill]} pointerEvents="none" />}
+      {width > 0 && <Animated.View style={[styles.segmentPill, { width: slot }, pill, { pointerEvents: 'none' }]} />}
       {options.map((option) => {
         const on = option.value === value;
         return (

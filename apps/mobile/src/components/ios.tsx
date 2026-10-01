@@ -83,7 +83,7 @@ function TabScreenInner({ title, eyebrow, right, children }: { title: string; ey
         </View>
         {children}
       </Animated.ScrollView>
-      <Animated.View style={[styles.bar, { height: insets.top + BAR }, barStyle]} pointerEvents="none">
+      <Animated.View style={[styles.bar, { height: insets.top + BAR }, barStyle, { pointerEvents: 'none' }]}>
         <Glass kind="bar" style={StyleSheet.absoluteFill} />
         {/* The large title is the heading; this is the same words, for the eye only. */}
         <View

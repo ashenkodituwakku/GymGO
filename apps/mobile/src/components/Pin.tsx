@@ -35,7 +35,7 @@ export function Pin({ tier, selected }: { tier: ResultTier; selected: boolean })
   const landing = useLanding(selected, () => (selected ? 30 / 44 : 44 / 30), 0.4);
 
   return (
-    <Animated.View style={[styles.wrap, styles.fromBottom, landing]} pointerEvents="none">
+    <Animated.View style={[styles.wrap, styles.fromBottom, landing, { pointerEvents: 'none' }]}>
       <View
         style={[
           styles.disc,
@@ -61,8 +61,7 @@ export function ClusterBubble({ tier, count }: { tier: ResultTier; count: number
   const landing = useLanding(count, () => 0.85, 0.4);
   return (
     <Animated.View
-      style={[styles.bubble, { minWidth: size, height: size, borderRadius: size / 2, backgroundColor: TIER_COLOUR[tier].fill }, landing]}
-      pointerEvents="none"
+      style={[styles.bubble, { minWidth: size, height: size, borderRadius: size / 2, backgroundColor: TIER_COLOUR[tier].fill }, landing, { pointerEvents: 'none' }]}
     >
       <Txt variant={count < 100 ? 'subhead' : 'footnote'} color={color.onBrand} style={face('semibold')}>
         {count}

@@ -139,8 +139,8 @@ export interface Badge {
   earned: boolean;
 }
 
-/** The badges, earned or still to earn, each from a plain count of your own check-ins. */
-export function badges(stats: CollectionStats): Badge[] {
+/** The badges, earned or still to earn, each from a plain count of your own check-ins (and the sets they finish: lib/sets.ts). */
+export function badges(stats: CollectionStats, sets: { suburbs: number; cities: number } = { suburbs: 0, cities: 0 }): Badge[] {
   const tierRank = stats.topTier ? TIERS.findIndex((item) => item.tier === stats.topTier) : -1;
   return [
     { id: 'first', title: 'First gym', detail: 'Collect a gym', earned: stats.gyms >= 1 },
@@ -153,6 +153,8 @@ export function badges(stats: CollectionStats): Badge[] {
     { id: 'epic', title: 'Lucky pull', detail: 'An Epic card or better', earned: stats.topRarity !== null && rarityRank(stats.topRarity) >= rarityRank('epic') },
     { id: 'legendary', title: 'Legend', detail: 'A Legendary card', earned: stats.topRarity === 'legendary' },
     { id: 'foil', title: 'Shiny', detail: 'A Foil card', earned: stats.foils > 0 },
+    { id: 'suburb-set', title: 'Local hero', detail: 'Finish a suburb set', earned: sets.suburbs >= 1 },
+    { id: 'city-set', title: 'City collector', detail: 'Finish a city set', earned: sets.cities >= 1 },
   ];
 }
 

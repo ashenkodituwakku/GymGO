@@ -412,6 +412,18 @@ day you check in again is a visit, and the gym's card climbs from Bronze to
 Silver (3 visits), Gold (10) and Platinum (25). The collection counts your
 gyms, cities and countries and earns badges.
 
+**Sets.** Collecting in a suburb starts its **suburb set**: every gym
+GymGO lists there (2 to 15 of them; real gyms not known to have closed,
+plus any you collected before one closed). A **city set** is 10 gyms in
+one city, or all of them if GymGO lists fewer. Collection shows each set
+still going (how far, and the gyms still to collect), closest to finished
+first, and a gold-framed **reward card** for each one you finish, with the
+day you finished it. The check-in that finishes a set says so and shows
+its reward card, and finishing one earns the **Local hero** or **City
+collector** badge. Sets are worked out from your collection and the gyms
+this device knows, so they're the same on every device with the same gyms;
+nothing extra is stored.
+
 Each gym is a **trading card** with a rarity rolled by luck: every day you
 check in rolls it (Common 60%, Uncommon 25%, Rare 10%, Epic 4%, Legendary
 1%) and the card keeps its best roll. Each card also has a random **gem**

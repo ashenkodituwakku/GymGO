@@ -20,6 +20,8 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { CollectionSyncLine, useDeleteCollection } from '@/components/CollectionData';
 import { GemCard } from '@/components/GemCard';
+import { SetProgress, SetReward } from '@/components/SetCard';
+import { CITY_SET_SIZE, collectionSets, setsDone } from '@/lib/sets';
 import { Icon, type IconName } from '@/components/Icon';
 import { GLIDE } from '@/components/motion';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
@@ -33,6 +35,8 @@ import { useCollection } from '@/lib/useCollection';
 import { PageScroll } from '@/components/PageScroll';
 
 const COLUMN = 640;
+/** Sets still going shown before "Show all": the closest to finished. */
+const SETS_SHOWN = 4;
 
 export default function CollectionScreen() {
   usePageTitle('Collection');
@@ -45,6 +49,7 @@ export default function CollectionScreen() {
   const { width } = useWindowDimensions();
   const cardWidth = (Math.min(width, COLUMN) - space[4] * 2 - space[3]) / 2;
   const [order, setOrder] = useState<'newest' | 'rarest' | 'visits'>('newest');
+  const [allSets, setAllSets] = useState(false);
   const entries = useMemo(() => {
     const newest = Object.values(gyms).sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1));
     if (order === 'rarest') {
@@ -55,7 +60,10 @@ export default function CollectionScreen() {
     return newest;
   }, [gyms, order]);
   const stats = collectionStats(gyms);
-  const earned = badges(stats);
+  const sets = useMemo(() => collectionSets(gyms, data.listed), [gyms, data.listed]);
+  const earned = badges(stats, setsDone(sets));
+  const finished = sets.filter((set) => set.complete);
+  const going = sets.filter((set) => !set.complete);
   const [shared, setShared] = useState<string | null>(null);
   const share = async () => {
     const outcome = await shareText(collectionShareText(gyms), 'My GymGO collection');
@@ -131,6 +139,34 @@ export default function CollectionScreen() {
           </View>
         ))}
       </Animated.View>
+
+      {sets.length > 0 && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+            SETS
+          </Txt>
+          {going.length > 0 && (
+            <View style={styles.setGroup}>
+              {(allSets ? going : going.slice(0, SETS_SHOWN)).map((set, index) => (
+                <SetProgress key={set.key} set={set} first={index === 0} />
+              ))}
+            </View>
+          )}
+          {going.length > SETS_SHOWN && (
+            <PrimaryButton
+              label={allSets ? 'Show fewer sets' : `Show all ${going.length} sets`}
+              tone="quiet"
+              onPress={() => setAllSets((shown) => !shown)}
+            />
+          )}
+          {finished.map((set) => (
+            <SetReward key={set.key} set={set} />
+          ))}
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+            {`A suburb set is every gym GymGO lists in a suburb you’ve collected in; a city set is ${CITY_SET_SIZE} gyms in one city, or all of them if it has fewer. Finish one for its reward card.`}
+          </Txt>
+        </>
+      )}
 
       <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
         YOUR CARDS
@@ -217,6 +253,7 @@ const styles = themed(() =>
     badge: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.md, backgroundColor: color.fill },
     badgeOn: { backgroundColor: color.brandTint },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
+    setGroup: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, overflow: 'hidden', ...shadow.plate },
     how: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
     howHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     note: { paddingHorizontal: space[4], textAlign: 'center' },

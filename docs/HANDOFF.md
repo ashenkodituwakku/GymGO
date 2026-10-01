@@ -51,7 +51,7 @@ the branch the owner's launcher pulls.
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
 `npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 202,
-mobile 247, domain 150 and web 39 tests, all passing.
+mobile 254, domain 150 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 57, React Native 0.86, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -127,7 +127,9 @@ pushed commit or a few.
       `trips.ts`); a Home card for a trip under way or within a month.
 
 **Batch B: collection and social**
-- [ ] City and suburb sets with badges and a reward card.
+- [x] City and suburb sets with badges and a reward card
+      (`src/lib/sets.ts`, `src/components/SetCard.tsx`; on Collection and
+      at check-in).
 - [ ] Leaderboards (opt-in, display name only), per city and among friends.
 - [ ] Friends: add by code, see each other's collections, invite to train.
 - [ ] Share a collected card as an image (react-native-view-shot plus

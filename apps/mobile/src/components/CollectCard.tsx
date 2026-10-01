@@ -23,6 +23,8 @@ import { distanceLabel } from '@/lib/places';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
 import { CardReveal, type Pull } from './CardReveal';
+import { SetReward } from './SetCard';
+import { setsFinished, type GymSet } from '@/lib/sets';
 import { GymScan, type ScanPhase } from './GymScan';
 import { TIER_METAL } from './GemCard';
 import { Icon } from './Icon';
@@ -37,7 +39,7 @@ type Step =
   | { kind: 'idle' }
   | { kind: 'checking' }
   | { kind: 'problem'; text: string }
-  | { kind: 'collected'; fresh: 'new' | 'visit' | 'again-today'; rolled: Rarity | null };
+  | { kind: 'collected'; fresh: 'new' | 'visit' | 'again-today'; rolled: Rarity | null; finished: GymSet[] };
 
 export function CollectCard({ record, onOpenCollection }: { record: GymRecord; onOpenCollection: () => void }) {
   const { gyms, collect } = useCollection();
@@ -65,7 +67,9 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
     haptic.success();
     const after = cardFor(result.entry);
     const today = result.entry.days[result.entry.days.length - 1]!;
-    setStep({ kind: 'collected', fresh: result.fresh, rolled: result.fresh === 'visit' ? rollFor(result.entry, today) : null });
+    // A new gym can finish a suburb or city set: its reward card shows here.
+    const finished = result.fresh === 'new' ? setsFinished(gyms, result.collection, data.listed) : [];
+    setStep({ kind: 'collected', fresh: result.fresh, rolled: result.fresh === 'visit' ? rollFor(result.entry, today) : null, finished });
     // A new card, or a visit that rolled better than the card was: show it off.
     if (result.fresh === 'new') setPull({ entry: result.entry, upgradedFrom: null });
     else if (result.fresh === 'visit' && before && rarityRank(after.rarity) > rarityRank(before.rarity)) setPull({ entry: result.entry, upgradedFrom: before.rarity });
@@ -176,6 +180,15 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
           Dev account: checking in works from anywhere.
         </Txt>
       )}
+      {step.kind === 'collected' &&
+        step.finished.map((set) => (
+          <View key={set.key} style={styles.finished}>
+            <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+              {`You’ve finished the ${set.name} ${set.kind} set!`}
+            </Txt>
+            <SetReward set={set} fresh />
+          </View>
+        ))}
       {step.kind === 'collected' && step.fresh === 'again-today' && (
         <Txt variant="footnote" color={color.labelSecondary}>
           Already checked in here today. One visit a day counts.
@@ -313,6 +326,7 @@ const styles = themed(() =>
     stripMedal: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
     nudge: { borderWidth: 2, borderColor: color.brand },
     cardLine: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 2 },
+    finished: { gap: space[2] },
     gemDot: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   }),
 );

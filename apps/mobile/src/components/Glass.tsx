@@ -22,6 +22,13 @@
  *  - `bar`: a frosted strip for content scrolling under a pinned header,
  *    which is always a blur, never glass on glass.
  *
+ * Every surface is just as solid on every device: a control 80% opaque, a
+ * sheet 94%, a bar 98% (the theme's `glassWash*` colours). Real Liquid Glass
+ * takes that as its tint; the imitation lays it over its blur. Without it,
+ * an iPhone before iOS 26 showed its thinnest blur material, which over the
+ * map was almost completely clear, while Android and the browser looked
+ * solid.
+ *
  * One component, so every glass surface changes together.
  */
 
@@ -37,6 +44,10 @@ export const HAS_LIQUID_GLASS =
   Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
 
 export type GlassKind = 'control' | 'sheet' | 'bar';
+
+/** How solid a surface of each kind is, the same on every device. */
+const floor = (kind: GlassKind): string =>
+  kind === 'bar' ? color.glassWashBar : kind === 'sheet' ? color.glassWashThick : color.glassWashThin;
 
 export function Glass({
   kind = 'control',
@@ -78,7 +89,8 @@ export function Glass({
       <GlassView
         style={[styles.continuous, style]}
         glassEffectStyle={clear ? 'clear' : 'regular'}
-        tintColor={tint}
+        // As solid as everywhere else; Apple's glass still bends and glints at the edges.
+        tintColor={tint ?? floor(kind)}
         isInteractive={interactive}
         // GymGO's own light or dark, not the phone's: it was fixed to light,
         // which left pale glass under white text in dark mode.
@@ -123,30 +135,32 @@ function WebGlassControl({ style, clear, children }: { style?: StyleProp<ViewSty
   const mark = size ? refractionFor(size.width, size.height) : { dataSet: { glass: 'control' } };
   return (
     <View {...mark} onLayout={onLayout} style={[styles.clip, style, clear && styles.webClear]}>
+      <View style={[NO_TOUCH, StyleSheet.absoluteFill, cornerShape(style), styles.washThin]} />
       <View style={[NO_TOUCH, StyleSheet.absoluteFill, cornerShape(style), styles.sheen]} />
       {children}
     </View>
   );
 }
 
+/** The imitation's backdrop: a blur where it's cheap (iPhone, browser), always under the same solid wash. */
 function Backdrop({ thick, bar }: { thick: boolean; bar: boolean }) {
+  const wash = <View style={[NO_TOUCH, StyleSheet.absoluteFill, bar ? styles.washBar : thick ? styles.washThick : styles.washThin]} />;
   if (Platform.OS === 'ios') {
     return (
-      <BlurView
-        intensity={100}
-        tint={dark() ? (thick ? 'systemThickMaterialDark' : 'systemUltraThinMaterialDark') : thick ? 'systemThickMaterialLight' : 'systemUltraThinMaterialLight'}
-        style={[NO_TOUCH, StyleSheet.absoluteFill]}
-      />
+      <>
+        <BlurView intensity={100} tint={dark() ? 'systemThickMaterialDark' : 'systemThickMaterialLight'} style={[NO_TOUCH, StyleSheet.absoluteFill]} />
+        {wash}
+      </>
     );
   }
   if (Platform.OS === 'web') {
     return (
       <BlurView intensity={thick ? 70 : 45} tint={dark() ? 'dark' : 'light'} style={[NO_TOUCH, StyleSheet.absoluteFill]}>
-        <View style={[StyleSheet.absoluteFill, bar ? styles.webBar : thick ? styles.webThick : styles.webThin]} />
+        {wash}
       </BlurView>
     );
   }
-  return <View style={[NO_TOUCH, StyleSheet.absoluteFill, bar ? styles.washBar : thick ? styles.washThick : styles.washThin]} />;
+  return wash;
 }
 
 /** The corner radii of the surface, so the overlays follow its shape. */
@@ -180,12 +194,9 @@ const styles = themed(() => StyleSheet.create({
   // elsewhere.
   continuous: { borderCurve: 'continuous' },
 
-  webThin: { backgroundColor: color.glassThin },
   webClear: { opacity: 0.96 },
-  webThick: { backgroundColor: color.glassThick },
   washThin: { backgroundColor: color.glassWashThin },
   washThick: { backgroundColor: color.glassWashThick },
-  webBar: { backgroundColor: color.glassBar },
   washBar: { backgroundColor: color.glassWashBar },
 
   sheen: gradient(sheen()),

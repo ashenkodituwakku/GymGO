@@ -179,6 +179,8 @@ function GlassTabBar({ bottom }: { bottom: number }) {
           {/* The glass, clipped to the capsule… */}
           {Platform.OS === 'web' && !solid ? (
             <View {...glassMark('bar')} style={[StyleSheet.absoluteFill, styles.capsule]}>
+              {/* As solid as the bar on phones (see Glass.tsx), under the browser's glass highlights. */}
+              <View style={[StyleSheet.absoluteFill, styles.wash]} />
               <View {...glassMark('shine')} style={StyleSheet.absoluteFill} />
             </View>
           ) : (
@@ -266,6 +268,7 @@ const styles = themed(() => StyleSheet.create({
     boxShadow: currentLook().solid ? undefined : HAS_LIQUID_GLASS ? '0 6px 18px rgba(0, 0, 0, 0.08)' : '0 12px 30px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.07)',
   },
   capsule: { borderRadius: round(BAR_HEIGHT), overflow: 'hidden' },
+  wash: { backgroundColor: color.glassWashThin },
   row: { flexDirection: 'row', alignItems: 'center', height: BAR_HEIGHT, paddingHorizontal: PAD },
   lens: {
     position: 'absolute',

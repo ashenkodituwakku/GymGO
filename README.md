@@ -240,7 +240,10 @@ behind it that springs to the tab you tap. Drag the lens along the bar to
 switch tabs; it swells under your finger. It's the same bar everywhere: on
 iOS 26 it's made of Apple's own Liquid Glass material, on older iPhones and
 Android the closest blur, and in a browser a glass with real refraction in
-Chrome and Edge (blur only in Safari and Firefox).
+Chrome and Edge (blur only in Safari and Firefox). Every glass surface is
+equally solid on every device (buttons 80%, sheets 94%, pinned headers 98%):
+Liquid Glass takes it as its tint and the others as a wash over the blur, so
+the map never shows through more on one phone than another.
 
 - **Home**: kept short. A greeting, the search, four one-tap picks (Near
   me, Early start, After work, Under $25), **Build a workout**, gyms near

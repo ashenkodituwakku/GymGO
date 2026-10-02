@@ -182,6 +182,32 @@ export function ResultsContent({
         </Pressable>
       </View>
 
+      {/* Nothing on GymGO's own list: say what the search key does, and offer it as a row. */}
+      {query.trim().length >= 2 && suggestions.length === 0 && worldSuggestions.length === 0 && gymSuggestions.length === 0 && (
+        <View style={styles.suggestions}>
+          <Pressable
+            onPress={() => {
+              haptic.select();
+              onSubmitSearch();
+            }}
+            style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
+            accessibilityRole="button"
+            accessibilityLabel={`Look up ${query.trim()} on the map`}
+          >
+            <View style={[styles.suggestionGlyph, styles.lookGlyph]}>
+              <Icon name="search" size={16} color={color.brand} />
+            </View>
+            <View style={styles.suggestionText}>
+              <Txt variant="body" numberOfLines={1}>
+                {`Look up “${query.trim()}”`}
+              </Txt>
+              <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                Search the map for it
+              </Txt>
+            </View>
+          </Pressable>
+        </View>
+      )}
       {(suggestions.length > 0 || worldSuggestions.length > 0 || gymSuggestions.length > 0) && (
         <View style={styles.suggestions}>
           {suggestions.map((place) => (
@@ -557,6 +583,7 @@ const styles = themed(() => StyleSheet.create({
   badgeText: { fontSize: 10, lineHeight: 12, ...face('semibold') },
 
   suggestions: { paddingHorizontal: space[2], paddingTop: space[2] },
+  lookGlyph: { backgroundColor: color.brandTint },
   suggestion: {
     flexDirection: 'row',
     alignItems: 'center',

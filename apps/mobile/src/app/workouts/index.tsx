@@ -92,6 +92,7 @@ export default function MyWorkouts() {
             {billing.isPro ? 'Build one, then tap Save.' : 'With GymGO Pro, tap Save on any workout you build to keep it here.'}
           </Txt>
           <PrimaryButton label="Build a workout" icon="workout" onPress={() => router.push({ pathname: '/workout/[id]', params: { id: 'any' } })} />
+          <PrimaryButton label="Or start from a template" tone="quiet" onPress={() => router.push('/templates')} />
         </View>
       )}
       {workouts !== null && workouts.length > 0 && (

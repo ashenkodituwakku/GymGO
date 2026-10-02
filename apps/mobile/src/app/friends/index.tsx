@@ -286,6 +286,7 @@ function SmallButton({ label, quiet = false, onPress }: { label: string; quiet?:
         onPress();
       }}
       accessibilityRole="button"
+      hitSlop={8}
       style={({ pressed }) => [styles.small, quiet ? styles.smallQuiet : styles.smallBrand, pressed && { opacity: 0.7 }]}
     >
       <Txt variant="footnote" color={quiet ? color.brand : color.onBrand} style={face('semibold')}>

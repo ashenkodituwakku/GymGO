@@ -227,6 +227,7 @@ function OwnerTools({ record, token, view, onSent }: { record: GymRecord; token:
                   accessibilityRole="checkbox"
                   aria-checked={day.open}
                   accessibilityLabel={`${DAY_NAMES[index]}: ${day.open ? 'open to visitors' : 'closed to visitors'}`}
+                  hitSlop={8}
                   style={styles.dayName}
                 >
                   <Icon name={day.open ? 'done' : 'todo'} size={18} color={day.open ? color.brand : color.labelTertiary} />

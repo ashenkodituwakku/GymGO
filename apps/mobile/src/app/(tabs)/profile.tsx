@@ -144,8 +144,6 @@ export default function Profile() {
       <Group header="Your gyms">
         <Row icon="saved" tile={TILE.orange} title="Saved" value={String(account.saved.length)} onPress={() => router.navigate('/saved')} />
         <Row icon="trophy" tile={TILE.orange} title="Collection" subtitle={me ? 'Gyms you’ve checked in at, on your account' : 'Gyms you’ve checked in at'} value={String(Object.keys(collection.gyms).length)} onPress={() => router.push('/collection')} />
-        <Row icon="people" tile={TILE.blue} title="Friends" subtitle="Add by code, see their cards, invite to train" onPress={() => router.push('/friends')} />
-        <Row icon="trophy" tile={TILE.teal} title="Leaderboard" onPress={() => router.push('/leaderboard')} />
         <Row icon="globe" tile={TILE.blue} title="Trips" subtitle="Gyms that let visitors in where you’re going" onPress={() => router.push('/trips')} />
         <Row icon="history" tile={TILE.blue} title="Recently viewed" value={String(recents.length)} onPress={() => router.navigate('/')} />
         <Row
@@ -155,6 +153,11 @@ export default function Profile() {
           value={compare.length ? `${compare.length} picked` : 'None picked'}
           onPress={() => router.push('/compare')}
         />
+      </Group>
+
+      <Group header="Friends">
+        <Row icon="people" tile={TILE.indigo} title="Friends" subtitle="Add by code, see their cards, invite to train" onPress={() => router.push('/friends')} />
+        <Row icon="trophy" tile={TILE.teal} title="Leaderboard" subtitle="Most gyms collected, if you join" onPress={() => router.push('/leaderboard')} />
       </Group>
 
       {moderator && account.token && (
@@ -418,7 +421,9 @@ function PackRow() {
         ? `GymGO is reading ${name}’s gyms from the map${state.progress && state.progress.total ? ` (${state.progress.done} of ${state.progress.total} regions)` : ''}. It saves them here when it’s done.`
         : state.status === 'loading'
           ? 'Checking…'
-          : 'Not saved yet: GymGO couldn’t reach its server. Tap to try again.';
+          : state.failure === 'map'
+            ? 'Not saved yet: the map service didn’t answer. Try again in an hour.'
+            : 'Not saved yet: GymGO couldn’t reach its server. Tap to try again.';
   return (
     <Row
       icon="download"

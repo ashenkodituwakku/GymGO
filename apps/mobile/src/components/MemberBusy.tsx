@@ -107,6 +107,7 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
           onPress={() => void start()}
           accessibilityRole="button"
           accessibilityLabel={token ? (summary.mine ? `You said ${summary.mine.level}. Change it` : 'Here now? Say how busy it is') : 'Sign in to say how busy it is'}
+          hitSlop={8}
           style={({ pressed }) => [styles.pill, pressed && { opacity: 0.7 }]}
         >
           <Txt variant="footnote" color={color.brand} style={styles.title}>

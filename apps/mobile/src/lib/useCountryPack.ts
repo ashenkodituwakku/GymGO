@@ -21,9 +21,11 @@ export interface PackState {
   builtAt: string | null;
   /** While the server builds it: regions read so far, of how many. */
   progress: { done: number; total: number } | null;
+  /** Why it isn't saved: the server couldn't be reached, or it was but the map it reads didn't answer. */
+  failure: 'server' | 'map' | null;
 }
 
-const OFF: PackState = { status: 'off', country: null, gyms: 0, bytes: 0, builtAt: null, progress: null };
+const OFF: PackState = { status: 'off', country: null, gyms: 0, bytes: 0, builtAt: null, progress: null, failure: null };
 const POLL_MS = 30_000;
 const DOWNLOAD_MS = 120_000;
 
@@ -78,7 +80,7 @@ export function useCountryPack(country: string | null, active: boolean) {
       const made = new PackIndex(pack);
       current.current = made;
       setIndex(made);
-      setState({ status: 'ready', country, gyms: made.size, bytes: text.length, builtAt: made.builtAt, progress: null });
+      setState({ status: 'ready', country, gyms: made.size, bytes: text.length, builtAt: made.builtAt, progress: null, failure: null });
       return true;
     };
 
@@ -101,10 +103,10 @@ export function useCountryPack(country: string | null, active: boolean) {
           timer = setTimeout(() => void check(), POLL_MS);
           return;
         }
-        if (!current.current) setState({ ...OFF, status: 'failed', country });
+        if (!current.current) setState({ ...OFF, status: 'failed', country, failure: 'map' });
       } catch {
         // The server's away: what's on the device stands; tried again next launch or nudge.
-        if (live && !current.current) setState({ ...OFF, status: 'failed', country });
+        if (live && !current.current) setState({ ...OFF, status: 'failed', country, failure: 'server' });
       }
     };
 

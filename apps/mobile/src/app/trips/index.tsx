@@ -169,7 +169,7 @@ export default function TripsScreen() {
           />
           <Stepper
             label="Staying"
-            value={stay === 0 ? 'Just the day' : `${stay} night${stay === 1 ? '' : 's'}`}
+            value={stay === 0 ? 'Day trip' : `${stay} night${stay === 1 ? '' : 's'}`}
             onLess={stay > 0 ? () => setStay(stay - 1) : undefined}
             onMore={stay < MAX_NIGHTS ? () => setStay(stay + 1) : undefined}
           />
@@ -213,6 +213,7 @@ function StepButton({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: s
       accessibilityRole="button"
       accessibilityLabel={label}
       aria-disabled={!onPress}
+      hitSlop={6}
       style={({ pressed }) => [styles.step, !onPress && { opacity: 0.35 }, pressed && { opacity: 0.6 }]}
     >
       <Icon name={icon} size={16} color={color.brand} />

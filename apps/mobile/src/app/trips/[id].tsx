@@ -1,8 +1,9 @@
 /**
  * One trip: the gyms near there that let visitors in on its days (the
- * domain's tripShortlist), the most days first. Each day is a dot: green
- * when a visitor is admitted at a usual time (morning, lunch or evening),
- * amber when it needs confirming, grey when not. "Search there" moves the
+ * domain's tripShortlist), the most days first. When a gym's answer changes
+ * over the trip, each day is a dot: green when a visitor is admitted at a
+ * usual time (morning, lunch or evening), amber when it needs confirming,
+ * grey when not. "Search there" moves the
  * map to the trip's place and first day, for everything else Explore does.
  */
 
@@ -131,11 +132,13 @@ export default function TripScreen() {
               ))}
             </Card>
           )}
-          <View style={styles.legend}>
-            <Legend tone="yes" label="Visitors in" />
-            <Legend tone="maybe" label="Ask first" />
-            <Legend tone="no" label="Not then" />
-          </View>
+          {picks.slice(0, SHOWN).some(mixedDays) && (
+            <View style={styles.legend}>
+              <Legend tone="yes" label="Visitors in" />
+              <Legend tone="maybe" label="Ask first" />
+              <Legend tone="no" label="Not then" />
+            </View>
+          )}
           <Txt variant="footnote" color={color.labelSecondary}>
             Checked at 7 am, noon and 6 pm on each day, on the gym’s clock. Hours change on public holidays: check before you go.
           </Txt>
@@ -151,6 +154,9 @@ function daysLine(pick: TripPick, total: number): string {
   if (pick.admitted > 0) return `Lets visitors in ${pick.admitted} of ${total} days`;
   return pick.maybe === total ? 'Ask first, every day' : `Ask first: ${pick.maybe} of ${total} days`;
 }
+
+/** Whether a gym's answer changes from day to day over the trip. */
+const mixedDays = (pick: TripPick) => new Set(pick.days.map(tone)).size > 1;
 
 const tone = (day: TripDay): 'yes' | 'maybe' | 'no' =>
   day.verdict === 'admits_visitor' ? 'yes' : day.verdict === 'needs_confirmation' || day.verdict === 'unknown' ? 'maybe' : 'no';
@@ -188,15 +194,18 @@ function TripRow({ pick, total, last, onPress }: { pick: TripPick; total: number
           {daysLine(pick, total)}
           {first?.minute != null && first.minute !== 7 * 60 ? ` (from ${timeLabel(first.minute)})` : ''}
         </Txt>
-        <View style={styles.dots} aria-hidden>
-          {pick.days.map((day) => (
-            <View key={day.date} style={[styles.dot, styles[tone(day)]]}>
-              <Txt variant="caption" color={tone(day) === 'no' ? color.labelSecondary : color.onBrand} style={styles.dotText}>
-                {new Date(`${day.date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'narrow', timeZone: 'UTC' })}
-              </Txt>
-            </View>
-          ))}
-        </View>
+        {/* A dot a day only when the days differ: the same answer every day is the line above. */}
+        {mixedDays(pick) && (
+          <View style={styles.dots} aria-hidden>
+            {pick.days.map((day) => (
+              <View key={day.date} style={[styles.dot, styles[tone(day)]]}>
+                <Txt variant="caption" color={tone(day) === 'no' ? color.labelSecondary : color.onBrand} style={styles.dotText}>
+                  {new Date(`${day.date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'narrow', timeZone: 'UTC' })}
+                </Txt>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
       <Icon name="chevron" size={16} color={color.labelTertiary} />
     </Pressable>

@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { BUSY_LEVELS, type BusyLevel, type GymLocation } from '@gymgo/domain';
 import { api, problemText, type BusySummary } from '@/lib/api';
@@ -86,6 +86,37 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
   const ink = tone === 'good' ? color.goodInk : tone === 'maybe' ? color.maybeInk : tone === 'no' ? color.noInk : color.labelSecondary;
   const tint = tone === 'good' ? color.goodTint : tone === 'maybe' ? color.maybeTint : tone === 'no' ? color.noTint : color.fill;
 
+  // Nothing to show yet (most gyms, most of the time): one slim row, not a whole card.
+  if (!level && !picking && !notice && !checking) {
+    return (
+      <Animated.View style={[styles.wrap, styles.slim]} layout={GLIDE}>
+        <View style={[styles.badge, styles.badgeSmall, { backgroundColor: tint }]}>
+          <Icon name="people" size={15} color={ink} />
+        </View>
+        <View style={styles.flex}>
+          <Txt variant="subhead" style={styles.title}>
+            Is it busy?
+          </Txt>
+          <Txt variant="caption" color={color.labelSecondary} numberOfLines={2}>
+            {summary.count > 0
+              ? `${summary.count} member${summary.count === 1 ? ' has' : 's have'} said in the last hour; it shows once ${summary.minimum} have.`
+              : 'No one here has said in the last hour.'}
+          </Txt>
+        </View>
+        <Pressable
+          onPress={() => void start()}
+          accessibilityRole="button"
+          accessibilityLabel={token ? (summary.mine ? `You said ${summary.mine.level}. Change it` : 'Here now? Say how busy it is') : 'Sign in to say how busy it is'}
+          style={({ pressed }) => [styles.pill, pressed && { opacity: 0.7 }]}
+        >
+          <Txt variant="footnote" color={color.brand} style={styles.title}>
+            {!token ? 'Sign in' : summary.mine ? 'Change' : 'I’m here'}
+          </Txt>
+        </Pressable>
+      </Animated.View>
+    );
+  }
+
   return (
     <Animated.View style={styles.wrap} layout={GLIDE}>
       <View style={styles.head}>
@@ -138,6 +169,9 @@ const styles = themed(() =>
     wrap: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     badge: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+    slim: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3] },
+    badgeSmall: { width: 32, height: 32, borderRadius: 16 },
+    pill: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
     flex: { flex: 1, minWidth: 0, gap: 2 },
     levels: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     title: face('semibold'),

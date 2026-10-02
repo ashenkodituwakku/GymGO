@@ -17,6 +17,7 @@ import { Card, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { api, problemText, type Board, type BoardEntry } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { cityFor } from '@/lib/collection';
+import { THIS_AREA, YOUR_LOCATION } from '@/lib/query';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, space, themed } from '@/lib/theme';
@@ -34,7 +35,9 @@ export default function LeaderboardScreen() {
   const [board, setBoard] = useState<Board | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const city = cityFor(filters.centre, filters.countryCode, filters.placeName);
+  // The city being searched; none when the search has no city's name ("your location" far from any).
+  const named = cityFor(filters.centre, filters.countryCode, filters.placeName);
+  const city = named === YOUR_LOCATION || named === THIS_AREA ? null : named;
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -42,7 +45,7 @@ export default function LeaderboardScreen() {
     try {
       // Your latest check-ins first, so your own row is up to date.
       await syncCollection().catch(() => undefined);
-      setBoard(await api.leaderboard(token, scope, area === 'city' ? { city, countryCode: filters.countryCode } : null));
+      setBoard(await api.leaderboard(token, scope, area === 'city' && city ? { city, countryCode: filters.countryCode } : null));
       setProblem(null);
     } catch (error) {
       setProblem(problemText(error, 'Couldn’t load the leaderboard.'));
@@ -109,14 +112,16 @@ export default function LeaderboardScreen() {
         value={scope}
         onChange={setScope}
       />
-      <Segmented
-        options={[
-          { value: 'all', label: 'All gyms' },
-          { value: 'city', label: `In ${city}` },
-        ]}
-        value={area}
-        onChange={setArea}
-      />
+      {city && (
+        <Segmented
+          options={[
+            { value: 'all', label: 'All gyms' },
+            { value: 'city', label: `In ${city}` },
+          ]}
+          value={area}
+          onChange={setArea}
+        />
+      )}
 
       {problem && (
         <Txt variant="footnote" color={color.noInk}>
@@ -129,7 +134,7 @@ export default function LeaderboardScreen() {
         <Txt variant="subhead" color={color.labelSecondary} style={styles.centre}>
           {scope === 'friends'
             ? 'Nobody here has collected a gym yet. Check in at one to start.'
-            : area === 'city'
+            : area === 'city' && city
               ? `Nobody on the board has collected a gym in ${city} yet.`
               : 'Nobody has joined the board yet. Be the first?'}
         </Txt>

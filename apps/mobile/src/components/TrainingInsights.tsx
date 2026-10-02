@@ -172,19 +172,22 @@ export function WeekStrip({
       <View style={styles.stripIcon}>
         <Icon name="flame" size={16} color={color.onBrand} />
       </View>
+      {/* The week's dots under the words, so a narrow phone keeps the title on one line. */}
       <View style={styles.flex}>
-        <Txt variant="headline">{title}</Txt>
+        <Txt variant="headline" numberOfLines={1}>
+          {title}
+        </Txt>
         <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
           {goal && count >= goal && streak > 1 ? `Goal met · ${streak} weeks in a row` : detail}
         </Txt>
-      </View>
-      <View style={styles.stripDays}>
-        {week.days.map((day) => (
-          <View
-            key={day.date}
-            style={[styles.stripDay, day.sessions > 0 ? styles.dayTrained : day.future ? styles.stripFuture : styles.dayRest, day.date === today && styles.stripToday]}
-          />
-        ))}
+        <View style={styles.stripDays}>
+          {week.days.map((day) => (
+            <View
+              key={day.date}
+              style={[styles.stripDay, day.sessions > 0 ? styles.dayTrained : day.future ? styles.stripFuture : styles.dayRest, day.date === today && styles.stripToday]}
+            />
+          ))}
+        </View>
       </View>
       <Icon name="chevron" size={14} color={color.labelTertiary} />
     </Pressy>
@@ -341,7 +344,7 @@ const styles = themed(() =>
     goalValue: { minWidth: 72, textAlign: 'center' },
     strip: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
     stripIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.maybe },
-    stripDays: { flexDirection: 'row', gap: 4 },
+    stripDays: { flexDirection: 'row', gap: 5, marginTop: 6 },
     stripDay: { width: 10, height: 10, borderRadius: 5 },
     stripFuture: { backgroundColor: color.fill, opacity: 0.5 },
     stripToday: { borderWidth: 1.5, borderColor: color.brand },

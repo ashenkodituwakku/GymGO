@@ -11,6 +11,7 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { CollectionTotals, FriendCard } from '@gymgo/domain';
 import { GemCard } from '@/components/GemCard';
 import { PageScroll } from '@/components/PageScroll';
+import { GymCardsSkeleton } from '@/components/Skeleton';
 import { Chip, Input, PrimaryButton, Txt } from '@/components/ui';
 import { api, problemText } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -155,6 +156,7 @@ export default function FriendScreen() {
       <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
         THEIR CARDS
       </Txt>
+      {!friend && !problem && <GymCardsSkeleton count={2} width={cardWidth} label="Loading their cards" />}
       {friend && friend.cards.length === 0 && (
         <Txt variant="subhead" color={color.labelSecondary}>
           No cards yet. Invite them to train, and they can collect their first.

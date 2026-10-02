@@ -13,11 +13,11 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { EQUIPMENT_TYPES, findMachines, type EquipmentCategory, type MachineHit, type ReportedEquipment } from '@gymgo/domain';
+import { EQUIPMENT_TYPES, equipmentLabel, findMachines, type EquipmentCategory, type MachineHit, type ReportedEquipment } from '@gymgo/domain';
 import { MarkImage, useGymMark } from '@/components/BrandLogo';
 import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
-import { Card, Chip, NoPhoto, Txt } from '@/components/ui';
+import { Card, Chip, NoPhoto, PrimaryButton, Txt } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -50,6 +50,8 @@ export default function MachinesScreen() {
   // The distance the search uses, if it's one of the choices; else the nearest one above it.
   const [radiusKm, setRadiusKm] = useState(() => (choices.find((choice) => choice.km >= filters.radiusKm - 0.01) ?? choices[choices.length - 1]!).km);
   const [reports, setReports] = useState<Reports>({ state: 'ready', gyms: {} });
+  // The full list of machines, or (once some are picked and you tap Done) just those, so the gyms come up the page.
+  const [choosing, setChoosing] = useState(picked.length === 0);
 
   const key = [...picked].sort().join(',');
   useEffect(() => {
@@ -86,26 +88,68 @@ export default function MachinesScreen() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: 'Find a machine' }} />
 
-      <Card style={styles.card}>
-        <Txt variant="headline">What do you need?</Txt>
-        {GROUPS.map((group) => (
-          <View key={group.category} style={styles.group}>
-            <Txt variant="footnote" color={color.labelSecondary} style={face('semibold')}>
-              {group.label}
+      {choosing || picked.length === 0 ? (
+        <Card style={styles.card}>
+          <View style={styles.cardHead}>
+            <Txt variant="headline" style={styles.flex}>
+              What do you need?
             </Txt>
-            <View style={styles.chips}>
-              {EQUIPMENT_TYPES.filter((type) => type.category === group.category).map((type) => (
-                <Chip key={type.id} label={type.label} selected={picked.includes(type.id)} onPress={() => toggle(type.id)} />
-              ))}
-            </View>
+            {picked.length > 0 && (
+              <Pressable onPress={() => setChoosing(false)} accessibilityRole="button" hitSlop={10}>
+                <Txt variant="body" color={color.brand} style={face('semibold')}>
+                  Done
+                </Txt>
+              </Pressable>
+            )}
           </View>
-        ))}
-        {picked.length >= MAX_MACHINES && (
-          <Txt variant="footnote" color={color.labelSecondary}>
-            {`That’s ${MAX_MACHINES}, the most for one search.`}
-          </Txt>
-        )}
-      </Card>
+          {GROUPS.map((group) => (
+            <View key={group.category} style={styles.group}>
+              <Txt variant="footnote" color={color.labelSecondary} style={face('semibold')}>
+                {group.label}
+              </Txt>
+              <View style={styles.chips}>
+                {EQUIPMENT_TYPES.filter((type) => type.category === group.category).map((type) => (
+                  <Chip key={type.id} label={type.label} selected={picked.includes(type.id)} onPress={() => toggle(type.id)} />
+                ))}
+              </View>
+            </View>
+          ))}
+          {picked.length >= MAX_MACHINES && (
+            <Txt variant="footnote" color={color.labelSecondary}>
+              {`That’s ${MAX_MACHINES}, the most for one search.`}
+            </Txt>
+          )}
+          {picked.length > 0 && <PrimaryButton label={`Show the gyms (${picked.length} picked)`} onPress={() => setChoosing(false)} />}
+        </Card>
+      ) : (
+        <Card style={styles.card}>
+          <View style={styles.cardHead}>
+            <Txt variant="headline" style={styles.flex}>
+              Looking for
+            </Txt>
+            <Pressable onPress={() => setChoosing(true)} accessibilityRole="button" accessibilityLabel="Change the machines" hitSlop={10}>
+              <Txt variant="body" color={color.brand} style={face('semibold')}>
+                Change
+              </Txt>
+            </Pressable>
+          </View>
+          <View style={styles.chips}>
+            {picked.map((id) => (
+              <Chip
+                key={id}
+                label={equipmentLabel(id)}
+                icon="close"
+                accessibilityLabel={`${equipmentLabel(id)}. Remove`}
+                selected
+                onPress={() => {
+                  toggle(id);
+                  if (picked.length === 1) setChoosing(true);
+                }}
+              />
+            ))}
+          </View>
+        </Card>
+      )}
 
       <Card style={styles.card}>
         <Txt variant="headline">How far</Txt>
@@ -232,6 +276,8 @@ const styles = themed(() =>
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[4], paddingBottom: space[8], gap: space[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
     card: { gap: space[3] },
+    cardHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    flex: { flex: 1, minWidth: 0 },
     group: { gap: space[2] },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     empty: { alignItems: 'center', gap: space[3], paddingVertical: space[6], paddingHorizontal: space[4] },

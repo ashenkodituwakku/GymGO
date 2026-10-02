@@ -67,6 +67,8 @@ export default function Home() {
   // Another country than yours, without Pro: no gyms listed, just the way to Pro.
   const locked = !mayExplore(filters.countryCode);
   const router = useRouter();
+  // The narrowest phones (an iPhone SE's 320 points) stack the finders' icons over their words.
+  const narrow = useWindowDimensions().width < 360;
 
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   // Each gym once: not the map's own copy of one GymGO carries too.
@@ -235,9 +237,9 @@ export default function Home() {
         <Icon name="chevron" size={14} color={color.onBrandSoft} />
       </Pressy>
 
-      <Pressable onPress={() => router.push('/templates')} accessibilityRole="link" hitSlop={6} style={styles.templatesLink}>
-        <Txt variant="footnote" color={color.brand} style={face('semibold')}>
-          Or start a template: push, pull, legs · 5×5 · full body ›
+      <Pressable onPress={() => router.push('/templates')} accessibilityRole="link" accessibilityLabel="Or start from a template: push, pull, legs; 5×5; or full body" hitSlop={6} style={styles.templatesLink}>
+        <Txt variant="footnote" color={color.brand} style={[face('semibold'), styles.center]}>
+          Or start from a template ›
         </Txt>
       </Pressable>
 
@@ -267,15 +269,15 @@ export default function Home() {
       )}
       <View style={styles.finders}>
         {finders.map((item) => (
-          <Pressy key={item.title} scaleTo={0.95} onPress={item.onPress} accessibilityRole="button" accessibilityLabel={item.label} style={styles.finder}>
+          <Pressy key={item.title} scaleTo={0.95} onPress={item.onPress} accessibilityRole="button" accessibilityLabel={item.label} style={[styles.finder, narrow && styles.finderNarrow]}>
             <View style={styles.shortcutIcon}>
               <Icon name={item.icon} size={18} color={color.brand} />
             </View>
-            <View style={styles.flex}>
-              <Txt variant="subhead" style={face('semibold')} numberOfLines={1}>
+            <View style={narrow ? styles.finderTextNarrow : styles.flex}>
+              <Txt variant="subhead" style={[face('semibold'), narrow && styles.center]} numberOfLines={1}>
                 {item.title}
               </Txt>
-              <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
+              <Txt variant="caption" color={color.labelSecondary} style={narrow && styles.center} numberOfLines={narrow ? 2 : 1}>
                 {item.detail}
               </Txt>
             </View>
@@ -609,6 +611,8 @@ const styles = themed(() => StyleSheet.create({
   tripIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
   finders: { flexDirection: 'row', gap: space[3] },
   templatesLink: { alignSelf: 'center', marginTop: -space[1] },
+  finderNarrow: { flexDirection: 'column', gap: space[2] },
+  finderTextNarrow: { alignSelf: 'stretch' },
   finder: {
     flex: 1,
     minWidth: 0,

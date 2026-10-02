@@ -192,7 +192,7 @@ export function DuoPartner({ token }: { token: string }) {
           : 'Add one more person to your Pro: enter their friend code (it’s on their Friends screen).'}
       </Txt>
       <View style={styles.row}>
-        <Input value={code} onChangeText={setCode} placeholder="Their friend code" autoCapitalize="characters" autoCorrect={false} maxLength={12} accessibilityLabel="Their friend code" style={styles.input} />
+        <Input value={code} onChangeText={setCode} placeholder="e.g. K7QM-2XPH" autoCapitalize="characters" autoCorrect={false} maxLength={12} accessibilityLabel="Their friend code" style={styles.input} />
         <PrimaryButton label={duo.partner ? 'Swap' : 'Add'} busy={busy} disabled={!code.trim()} onPress={() => void act(() => api.addToDuo(token, code), 'Done: they have Pro now.')} />
       </View>
       {duo.partner && <PrimaryButton label={`Take ${duo.partner.displayName} off`} tone="quiet" onPress={() => void act(() => api.leaveDuo(token), 'Done. Your Duo has room for someone again.')} />}

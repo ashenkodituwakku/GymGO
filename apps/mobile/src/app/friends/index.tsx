@@ -11,6 +11,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
+import { ListSkeleton } from '@/components/Skeleton';
 import { Card, Input, PrimaryButton, Txt } from '@/components/ui';
 import { shareText } from '@/lib/actions';
 import { api, problemText, type FriendsOverview, type Person, type TrainInvite } from '@/lib/api';
@@ -124,7 +125,7 @@ export default function FriendsScreen() {
           <Input
             value={code}
             onChangeText={setCode}
-            placeholder="Their code, like K7QM-2XPH"
+            placeholder="e.g. K7QM-2XPH"
             autoCapitalize="characters"
             autoCorrect={false}
             maxLength={12}
@@ -172,6 +173,7 @@ export default function FriendsScreen() {
       )}
 
       <Section title={view ? `Friends (${view.friends.length})` : 'Friends'}>
+        {!view && !problem && <ListSkeleton rows={2} card={false} label="Loading your friends" />}
         {view && view.friends.length === 0 && (
           <Txt variant="subhead" color={color.labelSecondary}>
             No friends yet. Send your code, or add theirs above.

@@ -16,7 +16,7 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { CollectionSyncLine, useDeleteCollection } from '@/components/CollectionData';
 import { GemCard } from '@/components/GemCard';
@@ -133,10 +133,11 @@ export default function CollectionScreen() {
       </Animated.View>
 
       <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
-        BADGES
+        {`BADGES · ${earned.filter((badge) => badge.earned).length} OF ${earned.length}`}
       </Txt>
-      <Animated.View style={styles.badges}>
-        {earned.map((badge) => (
+      {/* One row to swipe through, earned first, so the cards aren't pushed down the page. */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgeRow} contentContainerStyle={styles.badges}>
+        {[...earned].sort((a, b) => Number(b.earned) - Number(a.earned)).map((badge) => (
           <View
             key={badge.id}
             style={[styles.badge, badge.earned && styles.badgeOn]}
@@ -154,7 +155,7 @@ export default function CollectionScreen() {
             </View>
           </View>
         ))}
-      </Animated.View>
+      </ScrollView>
 
       {sets.length > 0 && (
         <>
@@ -287,7 +288,8 @@ const styles = themed(() =>
       ...shadow.plate,
     },
     stat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
-    badges: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+    badgeRow: { marginHorizontal: -space[4], flexGrow: 0 },
+    badges: { flexDirection: 'row', gap: space[2], paddingHorizontal: space[4] },
     badge: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.md, backgroundColor: color.fill },
     badgeOn: { backgroundColor: color.brandTint },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },

@@ -218,14 +218,17 @@ function CardArt({ record, cover, name, width, height }: { record: GymRecord | n
   return <Plate record={record} name={name} width={width} height={height} />;
 }
 
+/** Below this, "No photo supplied" goes without its picture icon, which wouldn't fit. */
+const ROOM_FOR_ICON = 64;
+
 function Plate({ record, name, width, height }: { record: GymRecord | null; name: string; width: number; height: number }) {
-  if (!record) return <NoPhoto style={styles.noPhoto} />;
+  if (!record) return <NoPhoto compact={height < ROOM_FOR_ICON} style={styles.noPhoto} />;
   return <RecordPlate record={record} name={name} width={width} height={height} />;
 }
 
 function RecordPlate({ record, name, width, height }: { record: GymRecord; name: string; width: number; height: number }) {
   const mark = useGymMark(record.location);
-  if (!mark) return <NoPhoto style={styles.noPhoto} />;
+  if (!mark) return <NoPhoto compact={height < ROOM_FOR_ICON} style={styles.noPhoto} />;
   return (
     <View style={[styles.plate, { width, height }]}>
       <MarkImage mark={mark} name={name} width={width - space[6]} height={height - space[4]} area={width * height * 0.32} />

@@ -9,7 +9,7 @@ import type { GymSearchResult } from '@gymgo/domain';
 import { distanceLabel } from '@/lib/places';
 import { TIER, accessLine } from '@/lib/copy';
 import { photoUrl } from '@/lib/api';
-import { priceLine } from '@/lib/present';
+import { priceLine, priceText } from '@/lib/present';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { MarkImage, useGymMark } from './BrandLogo';
@@ -52,7 +52,7 @@ export function GymRow({
         onPress();
       }}
       accessibilityRole="button"
-      accessibilityLabel={`${location.name}, ${where}. ${tier.label}: ${access}. ${price.headline} ${price.caption}.`}
+      accessibilityLabel={`${location.name}, ${where}. ${tier.label}: ${access}. ${priceText(price)}.`}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.fill }]}
     >
       {coverUri ? (

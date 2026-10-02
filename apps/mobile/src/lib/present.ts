@@ -38,6 +38,13 @@ export function priceLine(offers: OfferSelection, members?: { typicalMinor: numb
   return { headline, caption: 'not for you', confirmed: false };
 }
 
+/** A price line as one phrase, for Compare and screen readers: "A$22 per visit", "A$25, to confirm", "Price unknown". */
+export function priceText(price: PriceLine): string {
+  if (price.headline === '—') return 'Price unknown';
+  if (price.headline === 'Ask') return 'Ask: fees unclear';
+  return price.confirmed ? `${price.headline} ${price.caption}` : `${price.headline}, ${price.caption}`;
+}
+
 /** "Plus a A$20 deposit — A$45 on the day." or null when there is none. */
 export function depositLine(offers: OfferSelection): string | null {
   const cost = offers.bestAvailable?.cost;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
-import { WHEN_CHOICES, addressLines, callQuestions, depositLine, googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl, localDateDaysAgo, parseAmount, priceLine } from './present';
+import { WHEN_CHOICES, addressLines, callQuestions, depositLine, googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl, localDateDaysAgo, parseAmount, priceLine, priceText } from './present';
 import { atPlace, initialFilters, runSearch } from './query';
 import { geocodePlace } from './places';
 
@@ -117,6 +117,15 @@ describe('typed prices', () => {
 
   it('refuses anything that isn’t plainly an amount', () => {
     for (const text of ['', 'free', '25 dollars', '1,00,0', '12.345', '-5', '1e3', '1.500.000']) expect(parseAmount(text)).toBeNull();
+  });
+});
+
+describe('a price as one phrase', () => {
+  it('reads as words, never a bare dash', () => {
+    expect(priceText({ headline: '—', caption: 'price unknown', confirmed: false })).toBe('Price unknown');
+    expect(priceText({ headline: 'Ask', caption: 'fees unclear', confirmed: false })).toBe('Ask: fees unclear');
+    expect(priceText({ headline: 'A$22', caption: 'per visit', confirmed: true })).toBe('A$22 per visit');
+    expect(priceText({ headline: 'A$25', caption: 'to confirm', confirmed: false })).toBe('A$25, to confirm');
   });
 });
 

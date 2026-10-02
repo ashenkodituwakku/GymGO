@@ -19,7 +19,7 @@ import { photoUrl } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
-import { priceLine } from '@/lib/present';
+import { priceLine, priceText } from '@/lib/present';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { MarkImage, useGymMark } from './BrandLogo';
 import { usePressScale } from './motion';
@@ -57,7 +57,7 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
           }}
           onPressOut={press.onPressOut}
           accessibilityRole="link"
-          accessibilityLabel={`${location.name}, ${where}. ${tier.label}. ${price.headline} ${price.caption}.`}
+          accessibilityLabel={`${location.name}, ${where}. ${tier.label}. ${priceText(price)}.`}
           style={styles.press}
         >
           {/* Sized here, not on the Pressable: on the web the link wrapper

@@ -346,12 +346,7 @@ export default function SignInScreen() {
       </>
       )}
 
-      <LegalText
-        variant="caption"
-        tint={color.labelSecondary}
-        style={styles.small}
-        text="Passwords are kept only as a salted hash, never readable. With Apple or Google, GymGO gets your name and email from them, never your password. The [Privacy Policy](privacy) says what GymGO keeps and why."
-      />
+      <PrivacyNote />
     </PageScroll>
   );
 }
@@ -388,6 +383,19 @@ function SocialDivider() {
   return useAnySocial() ? <OrDivider /> : null;
 }
 
+/** How sign-in details are kept; Apple and Google only where their buttons show. */
+function PrivacyNote() {
+  const social = useAnySocial() ? ' With Apple or Google, GymGO gets your name and email from them, never your password.' : '';
+  return (
+    <LegalText
+      variant="caption"
+      tint={color.labelSecondary}
+      style={styles.small}
+      text={`Passwords are kept only as a salted hash, never readable.${social} The [Privacy Policy](privacy) says what GymGO keeps and why.`}
+    />
+  );
+}
+
 /** The age question: the month and year you were born, typed on a number pad. */
 function BornField({ value, onChange, onSubmit, autoFocus }: { value: string; onChange: (value: string) => void; onSubmit: () => void; autoFocus?: boolean }) {
   const complete = value.replace(/\D/g, '').length === 6;
@@ -409,7 +417,7 @@ function BornField({ value, onChange, onSubmit, autoFocus }: { value: string; on
         problem={complete && !parseBirthMonth(value) ? 'That isn’t a month and year yet.' : null}
       />
       <Txt variant="caption" color={color.labelSecondary}>
-        Asked before any account is made, to check GymGO suits your age. The answer isn’t kept.
+        The month and year you were born: asked before any account is made, to check GymGO suits your age. It isn’t kept.
       </Txt>
     </View>
   );

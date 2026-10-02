@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TEMPLATES, nextTemplateDay, templateDayName } from './templates';
+import { TEMPLATES, nextTemplateDay, templateDayName, workoutTitle } from './templates';
 import { EXERCISES } from './workout';
 import { repRange, type TrainingSession } from './training';
 
@@ -40,5 +40,17 @@ describe('workout templates', () => {
     expect(nextTemplateDay(ppl, [session(push, '2026-09-28T08:00:00Z'), session('Chest day', '2026-09-30T08:00:00Z')])).toBe(1);
     expect(nextTemplateDay(ppl, [session(pull, '2026-09-29T08:00:00Z'), session(push, '2026-09-28T08:00:00Z')])).toBe(2);
     expect(nextTemplateDay(ppl, [session(legs, '2026-09-30T08:00:00Z')])).toBe(0);
+  });
+});
+
+describe('workoutTitle', () => {
+  it('splits a template day into the day and its plan', () => {
+    const ppl = TEMPLATES.find((template) => template.name === 'Push, pull, legs')!;
+    expect(workoutTitle(templateDayName(ppl, ppl.days[0]!))).toEqual({ title: 'Push', plan: 'Push, pull, legs' });
+  });
+
+  it('leaves your own names whole, dots and all', () => {
+    expect(workoutTitle('Chest day')).toEqual({ title: 'Chest day', plan: null });
+    expect(workoutTitle('Legs · heavy')).toEqual({ title: 'Legs · heavy', plan: null });
   });
 });

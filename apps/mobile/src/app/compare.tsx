@@ -14,7 +14,7 @@ import { useApp } from '@/lib/app-state';
 import { distanceLabel, moneyLabel } from '@/lib/places';
 import { TIER, accessShort, timeLabel, visitWhen } from '@/lib/copy';
 import { visitIsLater } from '@/lib/query';
-import { priceLine } from '@/lib/present';
+import { priceLine, priceText } from '@/lib/present';
 import { resultsById } from '@/lib/results';
 import { HEADER_EDGE, PAGE_COLUMN, color, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -24,7 +24,6 @@ type Cell = { text: string; ink?: string; strong?: boolean };
 
 const tri = (value: Tri): Cell =>
   value === 'yes' ? { text: 'Yes' } : value === 'no' ? { text: 'No' } : { text: 'Not known', ink: color.maybeInk };
-
 
 /** Small counts in words, as in running text ("two to four gyms"). */
 const NUMBER_WORD: Record<number, string> = { 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six' };
@@ -79,7 +78,7 @@ export default function Compare() {
       label: 'A visit costs',
       cells: gyms.map((result, index) => {
         const price = priceLine(result.offers);
-        return { text: `${price.headline} ${price.caption}`, strong: prices[index] === cheapest, ink: price.confirmed ? undefined : color.maybeInk };
+        return { text: priceText(price), strong: prices[index] === cheapest, ink: price.confirmed ? undefined : color.maybeInk };
       }),
     },
     {

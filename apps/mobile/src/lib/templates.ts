@@ -93,6 +93,13 @@ export const TEMPLATES: WorkoutTemplate[] = [
 /** What a template day's workout is called in your log: "Push · Push, pull, legs". */
 export const templateDayName = (template: WorkoutTemplate, day: TemplateDay) => `${day.name} · ${template.name}`;
 
+/** A workout's name as a title: a template day's is split into the day and, apart, its plan. */
+export function workoutTitle(name: string): { title: string; plan: string | null } {
+  const at = name.lastIndexOf(' · ');
+  const plan = at > 0 ? name.slice(at + 3) : null;
+  return plan && TEMPLATES.some((template) => template.name === plan) ? { title: name.slice(0, at), plan } : { title: name, plan: null };
+}
+
 /**
  * The day to do next: the one after the last of this template's days in
  * your log, or the first if you haven't done any.

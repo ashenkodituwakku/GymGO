@@ -22,6 +22,7 @@ import { haptic } from '@/lib/haptics';
 import { cancelRestAlert, scheduleRestAlert } from '@/lib/restAlert';
 import { RECORD_WORD, bestRecord, recordLine } from '@/lib/records';
 import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
+import { workoutTitle } from '@/lib/templates';
 import { Confetti, RecordCard } from '@/components/Celebrate';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import {
@@ -207,6 +208,7 @@ export default function TrainScreen() {
   const typedAnyWeight = session.items.some((item) => item.sets.some((set) => set.weight.trim() !== ''));
   const ticked = session.items.reduce((sum, item) => sum + item.sets.filter((set) => set.done).length, 0);
   const planned = session.items.reduce((sum, item) => sum + item.sets.length, 0);
+  const named = workoutTitle(session.name);
 
   const finish = async () => {
     setProblem(null);
@@ -258,8 +260,9 @@ export default function TrainScreen() {
         automaticallyAdjustKeyboardInsets
       >
         <View style={styles.intro}>
-          <Txt variant="largeTitle">{session.name}</Txt>
+          <Txt variant="largeTitle">{named.title}</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
+            {named.plan ? `${named.plan} · ` : ''}
             {session.gymName ? `${session.gymName} · ` : ''}
             <Elapsed since={session.startedAt} /> so far · {ticked} of {planned} sets
           </Txt>
@@ -396,7 +399,7 @@ const ExerciseLog = memo(function ExerciseLog({
         <View style={styles.flex}>
           <Txt variant="headline">{name}</Txt>
           <Txt variant="footnote" color={color.labelSecondary}>
-            {timed ? exercise?.cue ?? item.reps : `${item.planned} × ${item.reps}${item.restSeconds ? ` · rest ${item.restSeconds} s` : ''}`}
+            {timed && item.planned <= 1 ? exercise?.cue ?? item.reps : `${item.planned} × ${item.reps}${item.restSeconds ? ` · rest ${item.restSeconds} s` : ''}`}
           </Txt>
         </View>
         {barbell && (
@@ -460,8 +463,9 @@ const ExerciseLog = memo(function ExerciseLog({
           a screen reader would otherwise say "Set 1 done" once per exercise. */}
       {item.sets.map((set, at) => (
         <View key={at} style={[styles.setRow, set.done && styles.setDone]}>
-          <Txt variant="subhead" color={color.labelSecondary} style={[styles.setCol, face('semibold')]}>
-            {timed ? 'Done?' : at + 1}
+          {/* A hold or a run has nothing to type: a set of them reads "Set 2 · 30–45 s". */}
+          <Txt variant="subhead" color={color.labelSecondary} style={[timed ? styles.flex : styles.setCol, face('semibold')]}>
+            {!timed ? at + 1 : item.sets.length > 1 ? `Set ${at + 1} · ${item.reps}` : 'Done?'}
           </Txt>
           {!timed && (
             <>
@@ -492,7 +496,7 @@ const ExerciseLog = memo(function ExerciseLog({
               />
             </>
           )}
-          <View style={styles.flex} />
+          {!timed && <View style={styles.flex} />}
           <Pressable
             onPress={() => tick(at)}
             accessibilityRole="checkbox"

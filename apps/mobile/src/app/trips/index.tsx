@@ -140,7 +140,14 @@ export default function TripsScreen() {
               autoFocus
               accessibilityLabel="Where you’re going"
               style={styles.input}
+              returnKeyType="done"
+              onSubmitEditing={() => suggestions[0] && setWhere(suggestions[0].where)}
             />
+          )}
+          {!where && query.trim().length >= 2 && suggestions.length === 0 && (
+            <Txt variant="footnote" color={color.labelSecondary}>
+              No town by that name on GymGO’s list yet. Try the nearest city.
+            </Txt>
           )}
           {suggestions.map((item) => (
             <Pressable

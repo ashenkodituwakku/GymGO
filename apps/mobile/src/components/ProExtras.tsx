@@ -183,6 +183,7 @@ export function DuoPartner({ token }: { token: string }) {
       </View>
     );
   }
+  const add = () => void act(() => api.addToDuo(token, code), 'Done: they have Pro now.');
   return (
     <View style={styles.card}>
       <Txt variant="headline">Your Duo</Txt>
@@ -192,8 +193,18 @@ export function DuoPartner({ token }: { token: string }) {
           : 'Add one more person to your Pro: enter their friend code (it’s on their Friends screen).'}
       </Txt>
       <View style={styles.row}>
-        <Input value={code} onChangeText={setCode} placeholder="e.g. K7QM-2XPH" autoCapitalize="characters" autoCorrect={false} maxLength={12} accessibilityLabel="Their friend code" style={styles.input} />
-        <PrimaryButton label={duo.partner ? 'Swap' : 'Add'} busy={busy} disabled={!code.trim()} onPress={() => void act(() => api.addToDuo(token, code), 'Done: they have Pro now.')} />
+        <Input
+          value={code}
+          onChangeText={setCode}
+          placeholder="e.g. K7QM-2XPH"
+          autoCapitalize="characters"
+          autoCorrect={false}
+          maxLength={12}
+          accessibilityLabel="Their friend code"
+          style={styles.input}
+          onSubmitEditing={() => code.trim() && !busy && add()}
+        />
+        <PrimaryButton label={duo.partner ? 'Swap' : 'Add'} busy={busy} disabled={!code.trim()} onPress={add} />
       </View>
       {duo.partner && <PrimaryButton label={`Take ${duo.partner.displayName} off`} tone="quiet" onPress={() => void act(() => api.leaveDuo(token), 'Done. Your Duo has room for someone again.')} />}
       {note && (

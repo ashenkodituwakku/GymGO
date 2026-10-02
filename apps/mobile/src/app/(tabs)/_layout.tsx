@@ -25,14 +25,14 @@ import { Keyboard, Platform, Pressable, StyleSheet, View, useWindowDimensions } 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Easing, ReduceMotion, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Glass, HAS_LIQUID_GLASS } from '@/components/Glass';
+import { Glass, HAS_LIQUID_GLASS, useGlassLevel } from '@/components/Glass';
 import { PIcon, type PhosphorName } from '@/components/PIcon';
 import { Redrawn, useThemeVersion } from '@/components/Redrawn';
 import { glassMark, installLiquidGlass, sizeRefraction } from '@/components/liquidGlass';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { TabBarInset, tabBarBottom } from '@/lib/layout';
-import { CHILD_TOUCH, NO_TOUCH, color, currentLook, currentTheme, radius, themed } from '@/lib/theme';
+import { CHILD_TOUCH, NO_TOUCH, color, currentTheme, radius, solidSurfaces, themed } from '@/lib/theme';
 import { Avatar } from '@/components/Avatar';
 import { BrandFill } from '@/components/BrandFill';
 
@@ -92,6 +92,8 @@ export default function TabsLayout() {
 }
 
 function GlassTabBar({ bottom }: { bottom: number }) {
+  // Liquid Glass at 0% makes the bar solid; any other level, glass again.
+  useGlassLevel();
   const { width } = useWindowDimensions();
   const pathname = usePathname();
   const keyboardUp = useAndroidKeyboard();
@@ -153,9 +155,10 @@ function GlassTabBar({ bottom }: { bottom: number }) {
 
   if (keyboardUp) return null;
 
-  // A look drawn in solid plates: a plain bar with the look's corners and
-  // shadow, and a lens tinted with the accent (painted, for Rainbow or Camo).
-  const solid = currentLook().solid;
+  // A look drawn in solid plates, or Liquid Glass at 0%: a plain bar with
+  // the look's corners and shadow, and a lens tinted with the accent
+  // (painted, for Rainbow or Camo).
+  const solid = solidSurfaces();
   const lens = solid ? (
     <Animated.View style={[styles.lens, { width: tabWidth }, lensStyle, { pointerEvents: 'none' }]}>
       <View style={[StyleSheet.absoluteFill, styles.lensShape, styles.lensSolid]}>
@@ -265,7 +268,7 @@ const styles = themed(() => StyleSheet.create({
     height: BAR_HEIGHT,
     borderRadius: round(BAR_HEIGHT),
     // Real Liquid Glass casts its own soft shadow; the imitations need one. A solid look's plate brings its own.
-    boxShadow: currentLook().solid ? undefined : HAS_LIQUID_GLASS ? '0 6px 18px rgba(0, 0, 0, 0.08)' : '0 12px 30px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.07)',
+    boxShadow: solidSurfaces() ? undefined : HAS_LIQUID_GLASS ? '0 6px 18px rgba(0, 0, 0, 0.08)' : '0 12px 30px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.07)',
   },
   capsule: { borderRadius: round(BAR_HEIGHT), overflow: 'hidden' },
   wash: { backgroundColor: color.glassWashThin },

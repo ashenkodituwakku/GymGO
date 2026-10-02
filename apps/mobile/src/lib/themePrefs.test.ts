@@ -9,11 +9,22 @@ const { DEFAULT_CHOICE, parseChoice, schemeFor } = await import('./themePrefs');
 describe('your appearance', () => {
   it('reads what was kept, and falls back rather than trusting odd values', () => {
     // Kept before looks existed: the standard look.
-    expect(parseChoice(JSON.stringify({ appearance: 'dark', accent: 'ocean' }))).toEqual({ appearance: 'dark', accent: 'ocean', look: 'standard' });
-    expect(parseChoice(JSON.stringify({ appearance: 'light', accent: 'camo', look: 'pixel' }))).toEqual({ appearance: 'light', accent: 'camo', look: 'pixel' });
+    expect(parseChoice(JSON.stringify({ appearance: 'dark', accent: 'ocean' }))).toEqual({ appearance: 'dark', accent: 'ocean', look: 'standard', glass: 50 });
+    expect(parseChoice(JSON.stringify({ appearance: 'light', accent: 'camo', look: 'pixel', glass: 80 }))).toEqual({ appearance: 'light', accent: 'camo', look: 'pixel', glass: 80 });
     expect(parseChoice(JSON.stringify({ appearance: 'sepia', accent: 'neon', look: 'vaporwave' }))).toEqual(DEFAULT_CHOICE);
     expect(parseChoice('not json')).toEqual(DEFAULT_CHOICE);
     expect(parseChoice(null)).toEqual(DEFAULT_CHOICE);
+  });
+
+  it('keeps Liquid Glass to whole steps from 0 to 100, and the balance for anything odd', () => {
+    const glass = (value: unknown) => parseChoice(JSON.stringify({ glass: value })).glass;
+    expect(glass(0)).toBe(0);
+    expect(glass(100)).toBe(100);
+    expect(glass(73)).toBe(75);
+    expect(glass(140)).toBe(100);
+    expect(glass(-20)).toBe(0);
+    expect(glass('clear')).toBe(50);
+    expect(glass(null)).toBe(50);
   });
 
   it('follows the phone only when set to Automatic', () => {

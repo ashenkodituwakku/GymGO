@@ -1,7 +1,7 @@
 /**
  * Your appearance and accent, kept on this device.
  *
- * Appearance (System, Light or Dark) is for everyone. Accents other than
+ * Appearance (System, Light or Dark) and Liquid Glass are for everyone. Accents other than
  * Indigo are part of GymGO Pro; the choice is kept either way, and shows
  * whenever you have Pro (see ThemedStack in app/_layout.tsx).
  *
@@ -13,7 +13,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Appearance, Platform } from 'react-native';
-import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, LOOK_IDS, LOOKS, applyTheme, type AccentId, type AppearanceChoice, type LookId, type Scheme } from './theme';
+import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOK_IDS, LOOKS, applyTheme, cleanGlass, type AccentId, type AppearanceChoice, type LookId, type Scheme } from './theme';
 import { loadLookFonts } from './lookFonts';
 
 const KEY = 'gymgo.theme.v1';
@@ -23,9 +23,11 @@ export interface ThemeChoice {
   accent: AccentId;
   /** How the app is drawn (Pro, like the accents): see looks.ts. */
   look: LookId;
+  /** Liquid Glass, 0 (solid) to 100 (clearest), for everyone: see GLASS_DEFAULT in theme.ts. */
+  glass: number;
 }
 
-export const DEFAULT_CHOICE: ThemeChoice = { appearance: 'system', accent: FREE_ACCENT, look: FREE_LOOK };
+export const DEFAULT_CHOICE: ThemeChoice = { appearance: 'system', accent: FREE_ACCENT, look: FREE_LOOK, glass: GLASS_DEFAULT };
 
 /** What was stored, cleaned: anything unknown falls back to the default. */
 export function parseChoice(raw: string | null | undefined): ThemeChoice {
@@ -35,6 +37,7 @@ export function parseChoice(raw: string | null | undefined): ThemeChoice {
       appearance: value.appearance === 'light' || value.appearance === 'dark' || value.appearance === 'system' ? value.appearance : 'system',
       accent: ACCENT_IDS.includes(value.accent as AccentId) ? (value.accent as AccentId) : FREE_ACCENT,
       look: LOOK_IDS.includes(value.look as LookId) ? (value.look as LookId) : FREE_LOOK,
+      glass: cleanGlass(value.glass),
     };
   } catch {
     return DEFAULT_CHOICE;
@@ -83,7 +86,7 @@ if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
     choice = parseChoice(localStorage.getItem(KEY));
     loaded = true;
     // The page falls back to the standard face until the look's own arrives.
-    applyTheme(schemeFor(choice.appearance, systemScheme(), choice.look), choice.accent, choice.look);
+    applyTheme(schemeFor(choice.appearance, systemScheme(), choice.look), choice.accent, choice.look, choice.glass);
     void loadLookFonts(choice.look);
   } catch {
     // Storage blocked: the defaults stand.
@@ -102,7 +105,7 @@ export async function loadThemeChoice(): Promise<ThemeChoice> {
   tellPhone(choice.appearance);
   // While the splash screen is up: the look's faces first, so nothing draws in a face that isn't there.
   await loadLookFonts(choice.look);
-  applyTheme(schemeFor(choice.appearance, systemScheme(), choice.look), choice.accent, choice.look);
+  applyTheme(schemeFor(choice.appearance, systemScheme(), choice.look), choice.accent, choice.look, choice.glass);
   for (const listener of listeners) listener();
   return choice;
 }

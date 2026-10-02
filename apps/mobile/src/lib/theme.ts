@@ -246,8 +246,69 @@ export type Palette = { -readonly [K in keyof (typeof BASE)['light']]: string } 
 /** Text colours kept readable on whatever surfaces a look paints. */
 const TEXT_KEYS = ['label', 'labelSecondary', 'labelTertiary', 'brand', 'goodInk', 'maybeInk', 'noInk', 'dangerInk'] as const;
 
-export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE_LOOK): Palette {
+/**
+ * Liquid Glass, as a percentage you choose (Appearance): how see-through the
+ * things floating over the map are (controls, sheets, the tab bar). 0 is
+ * solid, no glass at all; 50, the default, is GymGO's balance; 100 is the
+ * clearest that still keeps text readable. A solid look ignores it.
+ */
+export const GLASS_DEFAULT = 50;
+export const GLASS_STEP = 5;
+export type GlassLayer = 'thin' | 'thick' | 'bar';
+
+/** Each layer's colour, in light and dark; the level sets only how solid it is. */
+const WASH: Record<Scheme, Record<GlassLayer, string>> = {
+  light: { thin: '255, 255, 255', thick: '248, 248, 251', bar: '248, 248, 251' },
+  dark: { thin: '36, 36, 40', thick: '28, 28, 30', bar: '22, 22, 24' },
+};
+/** How solid each layer is at the default, 50%. */
+const WASH_BALANCED: Record<Scheme, Record<GlassLayer, number>> = {
+  light: { thin: 0.8, thick: 0.94, bar: 0.98 },
+  dark: { thin: 0.82, thick: 0.95, bar: 0.98 },
+};
+/**
+ * And at 100%. Android draws no blur behind its glass (see Glass.tsx), so
+ * there the clearest stops sooner: past it, text over the map is hard to read.
+ */
+const WASH_CLEAREST: Record<'blur' | 'wash', Record<Scheme, Record<GlassLayer, number>>> = {
+  blur: { light: { thin: 0.28, thick: 0.52, bar: 0.74 }, dark: { thin: 0.34, thick: 0.56, bar: 0.76 } },
+  wash: { light: { thin: 0.6, thick: 0.84, bar: 0.9 }, dark: { thin: 0.64, thick: 0.86, bar: 0.92 } },
+};
+
+/** A level as kept: a whole step from 0 to 100, the default for anything else. */
+export function cleanGlass(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return GLASS_DEFAULT;
+  return Math.min(100, Math.max(0, Math.round(value / GLASS_STEP) * GLASS_STEP));
+}
+
+/** How solid a layer is at a level: 1 at 0%, the balance at 50%, the clearest at 100%. */
+export function glassAlpha(layer: GlassLayer, level: number, scheme: Scheme, platform: string = Platform.OS): number {
+  const balanced = WASH_BALANCED[scheme][layer];
+  const clearest = WASH_CLEAREST[platform === 'android' ? 'wash' : 'blur'][scheme][layer];
+  const at = cleanGlass(level);
+  const alpha = at <= GLASS_DEFAULT ? 1 - (1 - balanced) * (at / GLASS_DEFAULT) : balanced - (balanced - clearest) * ((at - GLASS_DEFAULT) / (100 - GLASS_DEFAULT));
+  return Math.round(alpha * 1000) / 1000;
+}
+
+/** A layer's colour at a level. */
+export function glassWash(layer: GlassLayer, level: number, scheme: Scheme): string {
+  return `rgba(${WASH[scheme][layer]}, ${glassAlpha(layer, level, scheme)})`;
+}
+
+/** A word for a level, beside its percentage. */
+export function glassLevelName(level: number): string {
+  const at = cleanGlass(level);
+  if (at === 0) return 'Solid';
+  if (at < 35) return 'Frosted';
+  if (at <= 65) return 'Balanced';
+  return at === 100 ? 'Clearest' : 'Clear';
+}
+
+export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE_LOOK, glass: number = GLASS_DEFAULT): Palette {
   const palette: Palette = { ...BASE[scheme], ...ACCENTS[accent][scheme] };
+  palette.glassWashThin = glassWash('thin', glass, scheme);
+  palette.glassWashThick = glassWash('thick', glass, scheme);
+  palette.glassWashBar = glassWash('bar', glass, scheme);
   const surfaces = LOOKS[look].surfaces?.(scheme, palette.brand);
   if (!surfaces) return palette;
   Object.assign(palette, surfaces);
@@ -259,34 +320,60 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
 /** The colours in use now. Changes in place with the theme; read it while drawing, not once at start-up. */
 export const color: Palette = paletteFor('light', FREE_ACCENT);
 
-let current: { scheme: Scheme; accent: AccentId; look: LookId } = { scheme: 'light', accent: FREE_ACCENT, look: FREE_LOOK };
+let current: { scheme: Scheme; accent: AccentId; look: LookId; glass: number } = { scheme: 'light', accent: FREE_ACCENT, look: FREE_LOOK, glass: GLASS_DEFAULT };
 
 /** The look in use now (see looks.ts). */
 export const currentLook = (): LookSpec => LOOKS[current.look];
+/** Floating things drawn as solid plates: a solid look, or Liquid Glass at 0%. */
+export const solidSurfaces = (): boolean => currentLook().solid || current.glass === 0;
 /** The paint the current accent puts on buttons, if it has one. */
 export const currentPaint = (): AccentPaint | null => ACCENT_PAINTS[current.accent] ?? null;
 let version = 0;
+/** Bumped by every change, Liquid Glass's included, so style sheets are made again. */
+let styleVersion = 0;
 const listeners = new Set<() => void>();
+const glassListeners = new Set<() => void>();
 
 export const currentTheme = () => current;
 export const themeVersion = () => version;
+/** Your Liquid Glass level now. */
+export const glassLevel = () => current.glass;
 
 export function subscribeTheme(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
 }
 
+/**
+ * Told when Liquid Glass changes. Only the glass is drawn again then, not
+ * whole screens as for the colours, so a screen keeps its place: you can
+ * slide the level and stay where you are.
+ */
+export function subscribeGlass(listener: () => void): () => void {
+  glassListeners.add(listener);
+  return () => glassListeners.delete(listener);
+}
+
 /** Switch the colours (and the look) everywhere. Returns false if nothing changed. */
-export function applyTheme(scheme: Scheme, accent: AccentId, look: LookId = current.look): boolean {
-  if (current.scheme === scheme && current.accent === accent && current.look === look) return false;
-  current = { scheme, accent, look };
-  Object.assign(color, paletteFor(scheme, accent, look));
+export function applyTheme(scheme: Scheme, accent: AccentId, look: LookId = current.look, glass: number = current.glass): boolean {
+  const level = cleanGlass(glass);
+  const sameColours = current.scheme === scheme && current.accent === accent && current.look === look;
+  if (sameColours && current.glass === level) return false;
+  current = { scheme, accent, look, glass: level };
+  Object.assign(color, paletteFor(scheme, accent, look, level));
+  styleVersion += 1;
+  if (sameColours) {
+    // Only the glass: its colours are in place, and the glass draws itself again.
+    for (const listener of glassListeners) listener();
+    return true;
+  }
   const spec = LOOKS[look];
   Object.assign(radius, spec.radius);
   Object.assign(shadow, spec.shadows?.(scheme, color.brand) ?? STANDARD_SHADOW);
   Object.assign(type, typeScale());
   version += 1;
   for (const listener of listeners) listener();
+  for (const listener of glassListeners) listener();
   return true;
 }
 
@@ -300,9 +387,9 @@ export function themed<T extends object>(make: () => T): T {
   let madeAt = -1;
   let made = {} as T;
   const fresh = () => {
-    if (madeAt !== version) {
+    if (madeAt !== styleVersion) {
       made = make();
-      madeAt = version;
+      madeAt = styleVersion;
     }
     return made as Record<PropertyKey, unknown>;
   };

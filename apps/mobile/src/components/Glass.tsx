@@ -22,22 +22,26 @@
  *  - `bar`: a frosted strip for content scrolling under a pinned header,
  *    which is always a blur, never glass on glass.
  *
- * Every surface is just as solid on every device: a control 80% opaque, a
- * sheet 94%, a bar 98% (the theme's `glassWash*` colours). Real Liquid Glass
- * takes that as its tint; the imitation lays it over its blur. Without it,
- * an iPhone before iOS 26 showed its thinnest blur material, which over the
- * map was almost completely clear, while Android and the browser looked
- * solid.
+ * Every surface is just as solid on every device: by default a control 80%
+ * opaque, a sheet 94%, a bar 98% (the theme's `glassWash*` colours). Real
+ * Liquid Glass takes that as its tint; the imitation lays it over its blur.
+ * Without it, an iPhone before iOS 26 showed its thinnest blur material,
+ * which over the map was almost completely clear, while Android and the
+ * browser looked solid.
+ *
+ * How solid is yours to choose: the Liquid Glass percentage in Appearance
+ * (GLASS_DEFAULT in theme.ts) moves all three together, and at 0% every
+ * surface is a solid plate, as in the solid looks.
  *
  * One component, so every glass surface changes together.
  */
 
 import { BlurView } from 'expo-blur';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
-import { useState, type ReactNode } from 'react';
+import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { installLiquidGlass, refractionFor } from './liquidGlass';
-import { NO_TOUCH, color, currentLook, currentTheme, shadow, themed } from '@/lib/theme';
+import { NO_TOUCH, color, currentLook, currentTheme, glassLevel, glassWash, shadow, solidSurfaces, subscribeGlass, themed, type GlassLayer } from '@/lib/theme';
 
 /** True when the device draws Apple's real Liquid Glass. */
 export const HAS_LIQUID_GLASS =
@@ -45,9 +49,16 @@ export const HAS_LIQUID_GLASS =
 
 export type GlassKind = 'control' | 'sheet' | 'bar';
 
-/** How solid a surface of each kind is, the same on every device. */
-const floor = (kind: GlassKind): string =>
-  kind === 'bar' ? color.glassWashBar : kind === 'sheet' ? color.glassWashThick : color.glassWashThin;
+/** Your Liquid Glass level, drawing whoever reads it again when it changes (without redrawing the screen). */
+export function useGlassLevel(): number {
+  return useSyncExternalStore(subscribeGlass, glassLevel, glassLevel);
+}
+
+const layerOf = (kind: GlassKind): GlassLayer => (kind === 'bar' ? 'bar' : kind === 'sheet' ? 'thick' : 'thin');
+
+/** How solid a surface of each kind is, the same on every device: at your level, or at one being tried. */
+const floor = (kind: GlassKind, level?: number): string =>
+  level !== undefined ? glassWash(layerOf(kind), level, currentTheme().scheme) : kind === 'bar' ? color.glassWashBar : kind === 'sheet' ? color.glassWashThick : color.glassWashThin;
 
 export function Glass({
   kind = 'control',
@@ -56,6 +67,7 @@ export function Glass({
   tint,
   interactive = false,
   clear = false,
+  level,
 }: {
   kind?: GlassKind;
   style?: StyleProp<ViewStyle>;
@@ -66,16 +78,21 @@ export function Glass({
   interactive?: boolean;
   /** The more transparent Liquid Glass variant, for controls over busy imagery. */
   clear?: boolean;
+  /** A Liquid Glass level to draw instead of yours, for a preview while you choose. */
+  level?: number;
 }) {
-  // A look drawn in solid plates (8-bit, Classic, Material, Neon): no glass
-  // at all, just the card colour, the look's shadow and, for a tinted
-  // button, its tint.
-  if (currentLook().solid) {
+  useGlassLevel();
+  // A look drawn in solid plates (8-bit, Classic, Material, Neon), or Liquid
+  // Glass at 0%: no glass at all, just the card colour, the look's shadow
+  // and, for a tinted button, its tint.
+  if (level === undefined ? solidSurfaces() : currentLook().solid || level === 0) {
+    // A solid sheet in the glass look is the page's grey, like Filters', so the white cards on it still stand out.
+    const plate = kind === 'bar' ? color.background : kind === 'sheet' && !currentLook().solid ? color.groupedBackground : color.card;
     return (
       <View
         style={[
           styles.continuous,
-          { backgroundColor: tint ?? (kind === 'bar' ? color.background : color.card) },
+          { backgroundColor: tint ?? plate },
           kind === 'control' ? shadow.float : kind === 'sheet' ? shadow.card : null,
           style,
         ]}
@@ -90,7 +107,7 @@ export function Glass({
         style={[styles.continuous, style]}
         glassEffectStyle={clear ? 'clear' : 'regular'}
         // As solid as everywhere else; Apple's glass still bends and glints at the edges.
-        tintColor={tint ?? floor(kind)}
+        tintColor={tint ?? floor(kind, level)}
         isInteractive={interactive}
         // GymGO's own light or dark, not the phone's: it was fixed to light,
         // which left pale glass under white text in dark mode.
@@ -103,7 +120,7 @@ export function Glass({
 
   // In the browser, controls get the tab bar's own glass: a blur that also
   // bends the map near the edges (Chrome and Edge), sized to each control.
-  if (Platform.OS === 'web' && kind === 'control' && !tint) {
+  if (Platform.OS === 'web' && kind === 'control' && !tint && level === undefined) {
     return (
       <WebGlassControl style={style} clear={clear}>
         {children}
@@ -116,7 +133,7 @@ export function Glass({
 
   return (
     <View style={[styles.clip, styles.continuous, style]}>
-      <Backdrop thick={thick} bar={kind === 'bar'} />
+      <Backdrop thick={thick} wash={floor(kind, level)} />
       {tint ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, { backgroundColor: tint, opacity: 0.92 }]} /> : null}
       {kind !== 'bar' ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, shape, tint ? styles.sheenOnTint : styles.sheen]} /> : null}
       {kind !== 'bar' ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, shape, styles.rim]} /> : null}
@@ -143,8 +160,8 @@ function WebGlassControl({ style, clear, children }: { style?: StyleProp<ViewSty
 }
 
 /** The imitation's backdrop: a blur where it's cheap (iPhone, browser), always under the same solid wash. */
-function Backdrop({ thick, bar }: { thick: boolean; bar: boolean }) {
-  const wash = <View style={[NO_TOUCH, StyleSheet.absoluteFill, bar ? styles.washBar : thick ? styles.washThick : styles.washThin]} />;
+function Backdrop({ thick, wash: colour }: { thick: boolean; wash: string }) {
+  const wash = <View style={[NO_TOUCH, StyleSheet.absoluteFill, { backgroundColor: colour }]} />;
   if (Platform.OS === 'ios') {
     return (
       <>
@@ -196,8 +213,6 @@ const styles = themed(() => StyleSheet.create({
 
   webClear: { opacity: 0.96 },
   washThin: { backgroundColor: color.glassWashThin },
-  washThick: { backgroundColor: color.glassWashThick },
-  washBar: { backgroundColor: color.glassWashBar },
 
   sheen: gradient(sheen()),
   sheenOnTint: gradient(SHEEN_ON_TINT),

@@ -11,6 +11,10 @@
  *  - the lift with a brighter layer and a spring, driven by the tab bar.
  *
  * Views opt in with `glassMark(kind)`, which becomes a data attribute.
+ *
+ * How solid the bar and controls are follows your Liquid Glass level
+ * (theme.ts): their washes are scaled by `--gg-glass-k`, set on the page by
+ * `setGlassLevel`.
  */
 
 const FILTER_ID = 'gymgo-refract';
@@ -35,7 +39,7 @@ function displacementMap(): string {
 
 const CSS = `
 [data-glass="bar"] {
-  background: linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.2) 100%);
+  background: linear-gradient(180deg, rgba(255,255,255,calc(0.38 * var(--gg-glass-k, 1))) 0%, rgba(255,255,255,calc(0.2 * var(--gg-glass-k, 1))) 100%);
   -webkit-backdrop-filter: blur(9px) saturate(190%) brightness(1.05);
   backdrop-filter: blur(9px) saturate(190%) brightness(1.05);
   box-shadow:
@@ -54,7 +58,7 @@ html[data-glass-refract] [data-glass="bar"] {
 }
 /* Frosted enough that a pin passing under a button reads as under it. */
 [data-glass="control"] {
-  background: linear-gradient(180deg, rgba(255,255,255,0.64) 0%, rgba(255,255,255,0.46) 100%);
+  background: linear-gradient(180deg, rgba(255,255,255,calc(0.64 * var(--gg-glass-k, 1))) 0%, rgba(255,255,255,calc(0.46 * var(--gg-glass-k, 1))) 100%);
   -webkit-backdrop-filter: blur(14px) saturate(190%) brightness(1.04);
   backdrop-filter: blur(14px) saturate(190%) brightness(1.04);
   box-shadow:
@@ -86,7 +90,7 @@ html[data-glass-refract] [data-glass="bar"] {
 
 /* Dark mode (html[data-gg-scheme="dark"], set by app/_layout.tsx): smoked glass, fainter rims. */
 html[data-gg-scheme="dark"] [data-glass="bar"] {
-  background: linear-gradient(180deg, rgba(58,58,62,0.52) 0%, rgba(36,36,40,0.44) 100%);
+  background: linear-gradient(180deg, rgba(58,58,62,calc(0.52 * var(--gg-glass-k, 1))) 0%, rgba(36,36,40,calc(0.44 * var(--gg-glass-k, 1))) 100%);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.2),
     inset 1px 0 0 rgba(255,255,255,0.08),
@@ -98,7 +102,7 @@ html[data-gg-scheme="dark"] [data-glass="bar"] {
   outline: 0.5px solid rgba(255,255,255,0.08);
 }
 html[data-gg-scheme="dark"] [data-glass="control"] {
-  background: linear-gradient(180deg, rgba(62,62,66,0.72) 0%, rgba(40,40,44,0.62) 100%);
+  background: linear-gradient(180deg, rgba(62,62,66,calc(0.72 * var(--gg-glass-k, 1))) 0%, rgba(40,40,44,calc(0.62 * var(--gg-glass-k, 1))) 100%);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.2),
     inset 1px 0 0 rgba(255,255,255,0.08),
@@ -224,4 +228,15 @@ export function refractionFor(width: number, height: number): object {
     document.head.appendChild(style);
   }
   return { dataSet: { glass: 'control', refract: key } };
+}
+
+/**
+ * Scale the bar's and controls' washes to your Liquid Glass level: as they
+ * were at the balance (50%), down to 40% of that at the clearest. At 0% they
+ * aren't glass at all (Glass.tsx), so the low end only needs to be solid.
+ */
+export function setGlassLevel(level: number): void {
+  if (typeof document === 'undefined') return;
+  const k = level <= 50 ? 1 + ((50 - level) / 50) * 0.5 : 1 - ((level - 50) / 50) * 0.6;
+  document.documentElement.style.setProperty('--gg-glass-k', k.toFixed(3));
 }

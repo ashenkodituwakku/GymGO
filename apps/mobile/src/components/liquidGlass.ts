@@ -13,3 +13,6 @@ export function glassMark(_kind: 'bar' | 'shine' | 'lens' | 'lift'): object {
 export function refractionFor(_width: number, _height: number): object {
   return {};
 }
+
+/** The web's glass follows your Liquid Glass level through CSS; phones read it from the theme. */
+export function setGlassLevel(_level: number): void {}

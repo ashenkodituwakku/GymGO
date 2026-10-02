@@ -8,6 +8,7 @@ import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useShare
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Redrawn, useThemeVersion } from '@/components/Redrawn';
+import { setGlassLevel } from '@/components/liquidGlass';
 import { AppProvider, useApp } from '@/lib/app-state';
 import {
   BUNDLED_FACES,
@@ -95,7 +96,7 @@ export default function RootLayout() {
 }
 
 /** The colours and look your choice comes to now: Pro accents and looks only while you have Pro. */
-function useWantedTheme(): { scheme: Scheme; accent: AccentId; look: LookId } {
+function useWantedTheme(): { scheme: Scheme; accent: AccentId; look: LookId; glass: number } {
   const choice = useThemeChoice();
   const { billing } = useApp();
   // The phone's own parts (keyboards, menus, Liquid Glass) are told as soon
@@ -104,7 +105,7 @@ function useWantedTheme(): { scheme: Scheme; accent: AccentId; look: LookId } {
   // A lapsed Pro goes back to Indigo, but only once the server has said so.
   const accent = choice.accent === FREE_ACCENT || billing.isPro || !billing.planKnown ? choice.accent : FREE_ACCENT;
   const look = choice.look === FREE_LOOK || billing.isPro || !billing.planKnown ? choice.look : FREE_LOOK;
-  return { scheme: schemeFor(choice.appearance, phone, look), accent, look };
+  return { scheme: schemeFor(choice.appearance, phone, look), accent, look, glass: choice.glass };
 }
 
 /**
@@ -122,30 +123,36 @@ function ThemedStack() {
   const veil = useSharedValue(0);
   const [veilColour, setVeilColour] = useState<string | null>(null);
 
-  const switchNow = useCallback((scheme: Scheme, accent: AccentId, look: LookId) => {
-    applyTheme(scheme, accent, look);
+  const switchNow = useCallback((scheme: Scheme, accent: AccentId, look: LookId, glass: number) => {
+    applyTheme(scheme, accent, look, glass);
   }, []);
 
   useEffect(() => {
-    const { scheme, accent, look } = currentTheme();
-    if (scheme === wanted.scheme && accent === wanted.accent && look === wanted.look) return;
+    const { scheme, accent, look, glass } = currentTheme();
+    if (scheme === wanted.scheme && accent === wanted.accent && look === wanted.look && glass === wanted.glass) return;
+    // Only Liquid Glass changed: no veil and no redraw; the glass draws itself again.
+    if (scheme === wanted.scheme && accent === wanted.accent && look === wanted.look) {
+      switchNow(scheme, accent, look, wanted.glass);
+      setGlassLevel(wanted.glass);
+      return;
+    }
     let cancelled = false;
     // A look's own typefaces arrive first, so no text is drawn in a face that isn't loaded.
     void loadLookFonts(wanted.look).then(() => {
       if (cancelled) return;
       if (reduceMotion) {
-        switchNow(wanted.scheme, wanted.accent, wanted.look);
+        switchNow(wanted.scheme, wanted.accent, wanted.look, wanted.glass);
         return;
       }
       setVeilColour(paletteFor(wanted.scheme, wanted.accent, wanted.look).groupedBackground);
       veil.value = withTiming(1, { duration: 140, easing: Easing.out(Easing.quad) }, (finished) => {
-        if (finished) runOnJS(switchNow)(wanted.scheme, wanted.accent, wanted.look);
+        if (finished) runOnJS(switchNow)(wanted.scheme, wanted.accent, wanted.look, wanted.glass);
       });
     });
     return () => {
       cancelled = true;
     };
-  }, [wanted.scheme, wanted.accent, wanted.look, reduceMotion, switchNow, veil]);
+  }, [wanted.scheme, wanted.accent, wanted.look, wanted.glass, reduceMotion, switchNow, veil]);
 
   // Drawn again: lift the veil.
   useEffect(() => {
@@ -279,6 +286,7 @@ function paintPage() {
   document.documentElement.style.setProperty('--gg-focus', color.brand);
   document.documentElement.style.setProperty('--gg-focus-inner', color.card);
   document.body.style.backgroundColor = color.groupedBackground;
+  setGlassLevel(currentTheme().glass);
 }
 if (Platform.OS === 'web' && typeof document !== 'undefined') paintPage();
 

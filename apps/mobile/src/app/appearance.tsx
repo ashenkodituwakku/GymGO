@@ -1,7 +1,8 @@
 /**
  * Appearance: light, dark or the phone's, for everyone; a look (how the
  * whole app is drawn: 8-bit, Classic, Material, Neon) and an accent, where
- * Standard and Indigo are everyone's and the rest are part of GymGO Pro.
+ * Standard and Indigo are everyone's and the rest are part of GymGO Pro; and
+ * Liquid Glass, how see-through the things over the map are, for everyone.
  */
 
 import { Stack } from 'expo-router';
@@ -11,7 +12,9 @@ import { BrandFill } from '@/components/BrandFill';
 import { loadAllLookFonts } from '@/lib/lookFonts';
 import Animated from 'react-native-reanimated';
 import { FADE_IN } from '@/components/motion';
+import { Glass } from '@/components/Glass';
 import { Icon } from '@/components/Icon';
+import { PercentSlider } from '@/components/PercentSlider';
 import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -21,11 +24,14 @@ import {
   ACCENT_PAINTS,
   FREE_ACCENT,
   FREE_LOOK,
+  GLASS_DEFAULT,
+  GLASS_STEP,
   LOOKS,
   LOOK_IDS,
   color,
   currentTheme,
   face,
+  glassLevelName,
   paletteFor,
   radius,
   shadow,
@@ -78,6 +84,16 @@ export default function AppearanceScreen() {
   }, []);
   const lookInUse = billing.isPro || choice.look === FREE_LOOK ? choice.look : FREE_LOOK;
   const accentInUse = billing.isPro || choice.accent === FREE_ACCENT ? choice.accent : FREE_ACCENT;
+
+  // Liquid Glass: the preview follows the finger; the app redraws once it's let go.
+  const [glass, setGlass] = useState(choice.glass);
+  useEffect(() => setGlass(choice.glass), [choice.glass]);
+  const keepGlass = (level: number) => {
+    setGlass(level);
+    if (level !== choice.glass) setThemeChoice({ glass: level });
+  };
+  const solidLook = LOOKS[lookInUse].solid;
+  const glassWords = solidLook ? 'Solid' : `${glass}%, ${glassLevelName(glass)}${glass === GLASS_DEFAULT ? ', the default' : ''}`;
 
   const pickAccent = (accent: AccentId) => {
     if (accent !== FREE_ACCENT && !billing.isPro) {
@@ -174,6 +190,48 @@ export default function AppearanceScreen() {
 
       <View style={styles.accentHead}>
         <Txt variant="footnote" color={color.labelSecondary}>
+          LIQUID GLASS
+        </Txt>
+      </View>
+      <View style={styles.glassCard}>
+        <GlassPreview level={solidLook ? 0 : glass} />
+        <View style={styles.glassHead}>
+          <Txt variant="title2" style={face('bold')}>
+            {solidLook ? 'Solid' : `${glass}%`}
+          </Txt>
+          <Txt variant="subhead" color={color.labelSecondary} style={styles.flex} numberOfLines={1}>
+            {solidLook ? `in ${LOOKS[lookInUse].name}` : `${glassLevelName(glass)}${glass === GLASS_DEFAULT ? ' · default' : ''}`}
+          </Txt>
+          {!solidLook && glass !== GLASS_DEFAULT && (
+            <Pressable onPress={() => keepGlass(GLASS_DEFAULT)} accessibilityRole="button" accessibilityLabel={`Back to the default, ${GLASS_DEFAULT}%`} hitSlop={8}>
+              <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                Default
+              </Txt>
+            </Pressable>
+          )}
+        </View>
+        <View style={styles.sliderRow}>
+          <StepButton icon="minus" label="Less glass" onPress={!solidLook && glass > 0 ? () => keepGlass(Math.max(0, glass - GLASS_STEP)) : undefined} />
+          <PercentSlider
+            value={solidLook ? 0 : glass}
+            step={GLASS_STEP}
+            onChange={setGlass}
+            onCommit={keepGlass}
+            disabled={solidLook}
+            label="Liquid Glass"
+            valueText={glassWords}
+          />
+          <StepButton icon="plus" label="More glass" onPress={!solidLook && glass < 100 ? () => keepGlass(Math.min(100, glass + GLASS_STEP)) : undefined} />
+        </View>
+      </View>
+      <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+        {solidLook
+          ? `${LOOKS[lookInUse].name} draws everything as solid plates, so there’s no glass to set. Choose Standard to use Liquid Glass.`
+          : 'How see-through the controls, sheets and tab bar over the map are. 0% makes them solid; 100% is the clearest that keeps text readable.'}
+      </Txt>
+
+      <View style={styles.accentHead}>
+        <Txt variant="footnote" color={color.labelSecondary}>
           ACCENT
         </Txt>
         {!billing.isPro && (
@@ -229,6 +287,80 @@ export default function AppearanceScreen() {
     </PageScroll>
   );
 }
+
+/** A step of the Liquid Glass slider, for a finger that wants one exact step. */
+function StepButton({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: string; onPress?: () => void }) {
+  return (
+    <Pressable
+      onPress={() => {
+        if (!onPress) return;
+        haptic.select();
+        onPress();
+      }}
+      disabled={!onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      aria-disabled={!onPress}
+      hitSlop={6}
+      style={({ pressed }) => [styles.step, !onPress && { opacity: 0.35 }, pressed && { opacity: 0.6 }]}
+    >
+      <Icon name={icon} size={16} color={color.brand} />
+    </Pressable>
+  );
+}
+
+/** Map colours for the preview: land, a park, water and roads, in light and dark. */
+const MAP = {
+  light: { land: '#ECE7DE', park: '#C5E3B4', water: '#A9D0F0', road: '#FFFFFF', minor: '#F8F5EF' },
+  dark: { land: '#26282B', park: '#1E3526', water: '#1A2B3D', road: '#46484D', minor: '#323438' },
+} as const;
+
+/**
+ * A little map with GymGO's glass over it, at the level being chosen: the
+ * search pill and the sheet, as on Explore, so you can see how much shows
+ * through before you let go.
+ */
+function GlassPreview({ level }: { level: number }) {
+  const map = MAP[currentTheme().scheme];
+  return (
+    <View style={[styles.previewMap, { backgroundColor: map.land }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <View style={[styles.park, { backgroundColor: map.park }]} />
+      <View style={[styles.water, { backgroundColor: map.water }]} />
+      <View style={[styles.road, styles.roadA, { backgroundColor: map.road }]} />
+      <View style={[styles.road, styles.roadB, { backgroundColor: map.road }]} />
+      <View style={[styles.minor, styles.minorA, { backgroundColor: map.minor }]} />
+      <View style={[styles.minor, styles.minorB, { backgroundColor: map.minor }]} />
+      {PINS.map((pin, index) => (
+        <View key={index} style={[styles.pin, { left: pin.left, top: pin.top, backgroundColor: color[pin.tone] }]} />
+      ))}
+      <Glass kind="control" level={level} style={styles.previewPill}>
+        <Icon name="search" size={13} color={color.labelSecondary} />
+        <Txt variant="caption" color={color.labelSecondary}>
+          Search
+        </Txt>
+      </Glass>
+      <Glass kind="sheet" level={level} style={styles.previewSheet}>
+        <View style={styles.previewHandle} />
+        <Txt variant="footnote" style={face('semibold')}>
+          Gyms near you
+        </Txt>
+        <View style={[styles.previewLine, { width: '62%' }]} />
+        <View style={[styles.previewLine, { width: '44%' }]} />
+      </Glass>
+    </View>
+  );
+}
+
+/** Pins on the preview map, some under the glass. */
+const PINS: Array<{ left: `${number}%`; top: number; tone: 'good' | 'maybe' | 'brandFill' }> = [
+  { left: '12%', top: 18, tone: 'maybe' },
+  { left: '30%', top: 22, tone: 'good' },
+  { left: '74%', top: 36, tone: 'brandFill' },
+  { left: '52%', top: 64, tone: 'maybe' },
+  { left: '20%', top: 104, tone: 'good' },
+  { left: '64%', top: 112, tone: 'maybe' },
+  { left: '84%', top: 128, tone: 'good' },
+];
 
 /** A tiny screen drawn in a look: its page, a card, a title in its type and a button. */
 function LookPreview({ look, accent, on }: { look: LookId; accent: AccentId; on: boolean }) {
@@ -305,5 +437,23 @@ const styles = themed(() =>
     lookButton: { height: 20, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
     lookName: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     flex: { flex: 1 },
+    glassCard: { gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.card, ...shadow.plate },
+    glassHead: { flexDirection: 'row', alignItems: 'baseline', gap: space[2], paddingHorizontal: space[1] },
+    sliderRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    step: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
+    previewMap: { height: 168, borderRadius: radius.md, borderCurve: 'continuous', overflow: 'hidden' },
+    park: { position: 'absolute', left: '-6%', top: 54, width: '46%', height: 70, borderRadius: 30, transform: [{ rotate: '-8deg' }] },
+    water: { position: 'absolute', right: '-10%', top: -20, width: '42%', height: 90, borderRadius: 46 },
+    road: { position: 'absolute', height: 9, borderRadius: 2 },
+    roadA: { left: '-10%', right: '-10%', top: 80, transform: [{ rotate: '-11deg' }] },
+    roadB: { left: '44%', width: 9, height: 240, top: -30, transform: [{ rotate: '18deg' }] },
+    minor: { position: 'absolute', height: 5, borderRadius: 2 },
+    minorA: { left: '-10%', right: '-10%', top: 134, transform: [{ rotate: '6deg' }] },
+    minorB: { left: '76%', width: 5, height: 240, top: -30, transform: [{ rotate: '-24deg' }] },
+    pin: { position: 'absolute', width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: color.pinBorder },
+    previewPill: { position: 'absolute', top: 10, left: 10, right: '34%', height: 32, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12 },
+    previewSheet: { position: 'absolute', left: 8, right: 8, bottom: -14, height: 86, borderRadius: radius.sheet, padding: 12, paddingTop: 8, gap: 6 },
+    previewHandle: { alignSelf: 'center', width: 30, height: 4, borderRadius: 2, backgroundColor: color.handle, marginBottom: 2 },
+    previewLine: { height: 6, borderRadius: 3, backgroundColor: color.fillStrong },
   }),
 );

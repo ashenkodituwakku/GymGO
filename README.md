@@ -241,9 +241,11 @@ switch tabs; it swells under your finger. It's the same bar everywhere: on
 iOS 26 it's made of Apple's own Liquid Glass material, on older iPhones and
 Android the closest blur, and in a browser a glass with real refraction in
 Chrome and Edge (blur only in Safari and Firefox). Every glass surface is
-equally solid on every device (buttons 80%, sheets 94%, pinned headers 98%):
-Liquid Glass takes it as its tint and the others as a wash over the blur, so
-the map never shows through more on one phone than another.
+equally solid on every device (by default buttons 80%, sheets 94%, pinned
+headers 98%): Liquid Glass takes it as its tint and the others as a wash over
+the blur, so the map never shows through more on one phone than another.
+How see-through is yours to set: the **Liquid Glass** percentage in
+Appearance.
 
 - **Home**: kept short. A greeting, the search, four one-tap picks (Near
   me, Early start, After work, Under $25), **Build a workout**, your next
@@ -298,7 +300,12 @@ the map never shows through more on one phone than another.
   GymGO's facts come from. Signed out, a card to sign in with Apple, Google
   or email.
 - **Appearance**: Automatic (follows your phone), Light or Dark, for
-  everyone. With Pro, eleven more accents besides Indigo: Cobalt, Ocean,
+  everyone. **Liquid Glass**, also for everyone: a percentage for how
+  see-through the controls, sheets and tab bar over the map are, with a
+  little map that shows it as you slide. 0% makes them solid plates; 50% is
+  the default; 100% is the clearest that keeps text readable (Android,
+  which draws no blur behind its glass, stops a little more solid). It
+  changes only the glass, so the screen you're on stays put. With Pro, eleven more accents besides Indigo: Cobalt, Ocean,
   Midnight, Lagoon, Grape, Fuchsia, Rose, Slate and Graphite, plus
   **Rainbow** (a gradient) and **Camo** (a woodland pattern) that paint
   filled buttons, selected chips, the tab bar and the Build a workout card,

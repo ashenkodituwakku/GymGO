@@ -1,0 +1,721 @@
+/**
+ * Home: a place to start, kept short. A greeting, the search, four
+ * shortcuts (near me, 6 am, 6 pm, under $25 or the local equivalent), the workout builder, the gyms
+ * near where you're looking, what you've saved and looked at, and places to
+ * browse. How GymGO checks its facts lives in Profile → About.
+ *
+ * Every pick just sets the search and hands over to the Explore tab, so the
+ * answers always come from the same rules as the map.
+ */
+
+import { useRouter } from 'expo-router';
+import { HOURS_LABELS } from '@gymgo/domain';
+import { useMemo, useRef, useState } from 'react';
+import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { GymCard } from '@/components/GymCard';
+import { GymCardsSkeleton } from '@/components/Skeleton';
+import { Pressable, Pressy } from '@/components/motion';
+import { Icon, type IconName } from '@/components/Icon';
+import { AdSlot } from '@/components/AdSlot';
+import { BrandFill } from '@/components/BrandFill';
+import { Avatar } from '@/components/Avatar';
+import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
+import { Txt } from '@/components/ui';
+import { useActiveSession } from '@/lib/activeSession';
+import { WeekStrip } from '@/components/TrainingInsights';
+import { CollectionStrip, HereNudge } from '@/components/CollectCard';
+import { useTrainingLog } from '@/lib/useTraining';
+import { useApp } from '@/lib/app-state';
+import { lookupLine, noGymsLine, searchPrompt, timeLabel, visitWhen } from '@/lib/copy';
+import { countryInSentence, countryName } from '@/lib/country';
+import { haptic } from '@/lib/haptics';
+import { PLACES, activeCities, cityNear, cityPlace, localBudget, moneyLabel, tracksPrices, worldCitiesIn, type AppPlace, type City, type WorldCity } from '@/lib/places';
+import { YOUR_LOCATION, atPlace, atWorldCity, moveTo, nearLabel, nextVisitAt, nowIn, runSearch, visitIsLater, type Filters } from '@/lib/query';
+import { tripDatesLabel, tripToShow, tripWhen, useTrips } from '@/lib/trips';
+import { resultsById } from '@/lib/results';
+import { PAGE_COLUMN, color, dropShadow, face, radius, shadow, space, themed } from '@/lib/theme';
+import { usePageTitle } from '@/lib/pageTitle';
+
+/** Melbourne suburbs worth a tap, in the order people ask about them. */
+const MELBOURNE_PICKS = ['Melbourne CBD', 'Fitzroy', 'Collingwood', 'Brunswick', 'Carlton', 'Richmond', 'South Melbourne', 'Northcote'];
+
+function greeting(minute: number): string {
+  if (minute < 12 * 60) return 'Good morning';
+  if (minute < 17 * 60) return 'Good afternoon';
+  return 'Good evening';
+}
+
+/** How many of a region's cities show before "N more". */
+const CITIES_SHOWN = 12;
+
+
+/** How Home groups the built-in cities. */
+const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
+  { label: 'USA', has: (country) => country === 'US' },
+  { label: 'Australia', has: (country) => country === 'AU' },
+  { label: 'Europe', has: (country) => country !== 'AU' && country !== 'US' },
+];
+
+export default function Home() {
+  usePageTitle(null);
+  const { data, account, billing, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady, lookup, searchHere, here } = useApp();
+  const active = useActiveSession();
+  const trips = useTrips(nowIn(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC').date);
+  // Your training log, shared with Progress; the week strip shows once there's something in it.
+  const log = useTrainingLog(account.token);
+  const [showAll, setShowAll] = useState<Record<string, boolean>>({});
+  // Another country than yours, without Pro: no gyms listed, just the way to Pro.
+  const locked = !mayExplore(filters.countryCode);
+  const router = useRouter();
+  // The narrowest phones (an iPhone SE's 320 points) stack the finders' icons over their words.
+  const narrow = useWindowDimensions().width < 360;
+
+  const asOf = useMemo(() => new Date(), [filters, data.records]);
+  // Each gym once: not the map's own copy of one GymGO carries too.
+  const outcome = useMemo(() => runSearch(filters, { records: data.listed, ratings: data.ratings }, asOf), [filters, data.listed, data.ratings, asOf]);
+  const byId = useMemo(
+    () => resultsById(filters, data.records, asOf, data.ratings, [...account.saved, ...recents]),
+    [filters, data.records, asOf, data.ratings, account.saved, recents],
+  );
+
+  const nearby = locked ? [] : outcome.results.slice(0, 10);
+  const saved = account.saved.map((id) => byId.get(id)).filter((result) => result !== undefined);
+  const recent = recents.map((id) => byId.get(id)).filter((result) => result !== undefined);
+  const clock = new Date();
+  const name = account.account?.displayName.split(' ')[0];
+  // The carried city the search is in; none out in the rest of the world.
+  const city = cityNear(filters.centre);
+
+  // Where to browse: this city's neighbourhoods, then the other cities.
+  const browse = !city
+    ? []
+    : city.id === 'melbourne'
+      ? MELBOURNE_PICKS.map((suburb) => PLACES.find((place) => place.name === suburb && place.city === 'melbourne')).filter((place) => place !== undefined)
+      : PLACES.filter((place) => place.city === city.id && place.name !== city.name).slice(0, 10);
+  // In demo mode there's only the demo, so no other cities.
+  const otherCities = activeCities().filter((item) => item.id !== city?.id);
+  // Your own country first: the cities GymGO carries there, then its other
+  // biggest (their gyms are read from the map when you go), bar where you are.
+  const home = prefs.country;
+  const homeCities: Array<City | WorldCity> = home
+    ? [...otherCities.filter((item) => item.country === home), ...worldCitiesIn(home).filter((item) => item.name !== filters.placeName)]
+    : [];
+  const groups = [
+    ...(home && homeCities.length ? [{ label: countryName(home), cities: homeCities }] : []),
+    ...REGIONS.map(({ label, has }) => ({ label, cities: otherCities.filter((item) => has(item.country) && item.country !== home) })),
+  ].filter((group) => group.cities.length > 0);
+
+  const explore = (request: Parameters<typeof requestExplore>[0] = {}) => {
+    requestExplore(request);
+    router.navigate('/explore');
+  };
+  const pick = (change: (current: Filters) => Filters) => {
+    haptic.select();
+    setFilters(change);
+    explore({ recentre: true });
+  };
+  const goToPlace = (place: AppPlace) => pick((current) => moveTo(current, atPlace(place)));
+  const goToCity = (item: City | WorldCity) =>
+    'id' in item ? goToPlace(cityPlace(item)) : pick((current) => moveTo(current, atWorldCity(item)));
+  const visit = (minute: number) => {
+    const next = nextVisitAt(minute, filters.timezone);
+    return { visitDate: next.date, visitMinuteOfDay: next.minute, visitPicked: true };
+  };
+
+  const shortcuts: Array<{ icon: IconName; title: string; onPress: () => void }> = [
+    { icon: 'locate', title: 'Near me', onPress: () => explore({ locate: true }) },
+    { icon: 'sunrise', title: 'Early start', onPress: () => pick((current) => ({ ...current, ...visit(6 * 60) })) },
+    { icon: 'moon', title: 'After work', onPress: () => pick((current) => ({ ...current, ...visit(18 * 60) })) },
+    // A budget only where GymGO keeps prices; elsewhere, a lunchtime visit.
+    tracksPrices(filters.countryCode)
+      ? {
+          icon: 'money',
+          title: `Under ${moneyLabel(localBudget(2500, filters.countryCode), filters.countryCode)}`,
+          onPress: () => pick((current) => ({ ...current, budgetMinor: localBudget(2500, current.countryCode) })),
+        }
+      : { icon: 'clock', title: 'Lunchtime', onPress: () => pick((current) => ({ ...current, ...visit(12 * 60) })) },
+  ];
+
+  const today = nowIn(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', clock).date;
+  const trip = tripToShow(trips.trips, today);
+  const finders: Array<{ icon: IconName; title: string; detail: string; label: string; onPress: () => void }> = [
+    { icon: 'target', title: 'Machines', detail: 'Who has what', label: 'Find a machine', onPress: () => router.push('/machines') },
+    { icon: 'globe', title: 'Trips', detail: trips.trips.length ? `${trips.trips.length} planned` : 'Train away', label: 'Trips', onPress: () => router.push('/trips') },
+  ];
+
+  return (
+    <TabScreen
+      eyebrow={clock.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
+      title={name ? `${greeting(clock.getHours() * 60)}, ${name}` : greeting(clock.getHours() * 60)}
+      right={
+        <Pressy
+          scaleTo={0.9}
+          onPress={() => router.navigate('/profile')}
+          accessibilityRole="button"
+          accessibilityLabel={account.account ? 'Your profile' : 'Sign in'}
+          style={[styles.avatar, account.account && styles.avatarOn]}
+        >
+          {account.account ? (
+            <Avatar account={account.account} size={40} variant="headline" />
+          ) : (
+            <Icon name="account" size={22} color={color.brand} />
+          )}
+        </Pressy>
+      }
+    >
+      {/* In your country's words once your settings are read: until then plain "Search", not another country's words swapped a moment later. */}
+      <SearchButton placeholder={prefsReady ? searchPrompt(prefs.country) : 'Search'} onPress={() => explore({ focusSearch: true })} />
+
+      {/* Shortcuts --------------------------------------------------------- */}
+      <View style={styles.shortcuts}>
+        {shortcuts.map((item) => (
+          <Pressy
+            key={item.title}
+            scaleTo={0.93}
+            onPress={item.onPress}
+            accessibilityRole="button"
+            accessibilityLabel={item.title}
+            style={styles.shortcut}
+          >
+            <View style={styles.shortcutIcon}>
+              <Icon name={item.icon} size={20} color={color.brand} />
+            </View>
+            {/* Two lines on the narrowest phones, where "Under A$25" didn't fit on one. */}
+            <Txt variant="footnote" style={[styles.center, face('medium')]} numberOfLines={2}>
+              {item.title}
+            </Txt>
+          </Pressy>
+        ))}
+      </View>
+
+      {/* Workout ----------------------------------------------------------- */}
+      {active && (
+        <Pressy
+          scaleTo={0.97}
+          onPress={() => {
+            haptic.select();
+            router.push('/train');
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`Back to your workout: ${active.name}`}
+          style={styles.resume}
+        >
+          <View style={styles.resumeIcon}>
+            <Icon name="play" size={16} color={color.onBrand} />
+          </View>
+          <View style={styles.flex}>
+            <Txt variant="headline">Back to your workout</Txt>
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+              {active.name} · {active.items.reduce((sum, item) => sum + item.sets.filter((set) => set.done).length, 0)} sets done
+            </Txt>
+          </View>
+          <Icon name="chevron" size={14} color={color.labelTertiary} />
+        </Pressy>
+      )}
+      <Pressy
+        scaleTo={0.97}
+        onPress={() => {
+          haptic.select();
+          router.push({ pathname: '/workout/[id]', params: { id: 'any' } });
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Build a workout: tap the muscles you want to train"
+        style={styles.workout}
+      >
+        <BrandFill round={radius.xl} />
+        <View style={styles.workoutIcon}>
+          <Icon name="workout" size={22} color={color.onBrand} />
+        </View>
+        <View style={styles.flex}>
+          <Txt variant="headline" color={color.onBrand}>
+            Build a workout
+          </Txt>
+          <Txt variant="footnote" color={color.onBrandSoft}>
+            Pick muscles, get a plan
+          </Txt>
+        </View>
+        <Icon name="chevron" size={14} color={color.onBrandSoft} />
+      </Pressy>
+
+      <Pressable onPress={() => router.push('/templates')} accessibilityRole="link" accessibilityLabel="Or start from a template: push, pull, legs; 5×5; or full body" hitSlop={6} style={styles.templatesLink}>
+        <Txt variant="footnote" color={color.brand} style={[face('semibold'), styles.center]}>
+          Or start from a template ›
+        </Txt>
+      </Pressable>
+
+      {/* A trip under way or coming up, then the two finders --------------- */}
+      {trip && (
+        <Pressy
+          scaleTo={0.97}
+          onPress={() => {
+            haptic.select();
+            router.push({ pathname: '/trips/[id]', params: { id: trip.id } });
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`Trip to ${trip.placeName}, ${tripDatesLabel(trip)}, ${tripWhen(trip, today)}. See the gyms there`}
+          style={styles.trip}
+        >
+          <View style={styles.tripIcon}>
+            <Icon name="globe" size={18} color={color.onBrand} />
+          </View>
+          <View style={styles.flex}>
+            <Txt variant="headline" numberOfLines={1}>{`Trip to ${trip.placeName}`}</Txt>
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+              {`${tripWhen(trip, today)} · ${tripDatesLabel(trip)} · gyms that let visitors in`}
+            </Txt>
+          </View>
+          <Icon name="chevron" size={14} color={color.labelTertiary} />
+        </Pressy>
+      )}
+      <View style={styles.finders}>
+        {finders.map((item) => (
+          <Pressy key={item.title} scaleTo={0.95} onPress={item.onPress} accessibilityRole="button" accessibilityLabel={item.label} style={[styles.finder, narrow && styles.finderNarrow]}>
+            <View style={styles.shortcutIcon}>
+              <Icon name={item.icon} size={18} color={color.brand} />
+            </View>
+            <View style={narrow ? styles.finderTextNarrow : styles.flex}>
+              <Txt variant="subhead" style={[face('semibold'), narrow && styles.center]} numberOfLines={1}>
+                {item.title}
+              </Txt>
+              <Txt variant="caption" color={color.labelSecondary} style={narrow && styles.center} numberOfLines={narrow ? 2 : 1}>
+                {item.detail}
+              </Txt>
+            </View>
+          </Pressy>
+        ))}
+      </View>
+
+      <HereNudge here={here} records={data.listed} onOpen={(id) => router.push({ pathname: '/gym/[id]', params: { id } })} />
+      {log.status === 'ready' && log.sessions.length > 0 && (
+        <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />
+      )}
+      <CollectionStrip onPress={() => router.push('/collection')} />
+
+      {/* Everything below is about a place: it waits for your settings, so
+          it opens on your country's city rather than flashing the default. */}
+      {!prefsReady ? (
+        <View style={styles.waiting} />
+      ) : (
+      <>
+      {/* Nearby ------------------------------------------------------------ */}
+      <View style={styles.section}>
+        <SectionHeader
+          icon="map-pin"
+          title={nearLabel(filters.placeName)}
+          action="Map"
+          onAction={() => explore({ recentre: true })}
+        />
+        <Txt variant="footnote" color={color.labelSecondary}>
+          For a visit {visitWhen(filters.visitMinuteOfDay, visitIsLater(filters))}
+          {filters.budgetMinor ? `, under ${moneyLabel(filters.budgetMinor, filters.countryCode)}` : ''}
+          {filters.equipment.length ? `, with ${filters.equipment.length} must-have${filters.equipment.length > 1 ? 's' : ''}` : ''}
+          {filters.hours ? `, ${HOURS_LABELS[filters.hours].toLowerCase()}` : ''}.
+          {/* The hold menu (save, share, compare) is the iPhone's own. */}
+          {Platform.OS === 'ios' ? ' Hold a card for more.' : ''}
+        </Txt>
+        {locked ? (
+          <Pressable
+            onPress={() => openPro('worldwide')}
+            accessibilityRole="button"
+            accessibilityLabel={`Gyms in ${countryInSentence(filters.countryCode)} are part of GymGO Pro. See GymGO Pro`}
+            style={({ pressed }) => [styles.locked, pressed && { opacity: 0.8 }]}
+          >
+            <Icon name="globe" size={22} color={color.brand} />
+            <View style={styles.lockedText}>
+              <Txt variant="headline">Gyms in {countryInSentence(filters.countryCode)} are part of GymGO Pro</Txt>
+              <Txt variant="footnote" color={color.labelSecondary}>
+                Free covers {prefs.country ? countryInSentence(prefs.country) : 'your country'}. Pro finds gyms in every country.
+              </Txt>
+            </View>
+            <Icon name="chevron" size={14} color={color.labelTertiary} />
+          </Pressable>
+        ) : nearby.length ? (
+          <Carousel>
+            {nearby.map((result) => (
+              <GymCard key={result.record.location.id} result={result} />
+            ))}
+          </Carousel>
+        ) : lookup?.state === 'ready' ? (
+          // Nothing built in here, and nothing is read from the map until asked.
+          <View style={styles.lookFailed}>
+            <Txt variant="subhead" color={color.labelSecondary}>
+              {lookupLine('ready', lookup.placeName)}
+            </Txt>
+            <Pressable
+              onPress={() => {
+                haptic.tap();
+                searchHere();
+              }}
+              accessibilityRole="button"
+              // 36 points tall, like the chips beside it; the slop makes it 44 to a finger.
+              hitSlop={4}
+              style={({ pressed }) => [styles.suburb, styles.retry, styles.searchHere, pressed && { opacity: 0.7 }]}
+            >
+              <Icon name="search" size={15} color={color.brand} />
+              <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                Search this area
+              </Txt>
+            </Pressable>
+          </View>
+        ) : lookup?.state === 'searching' ? (
+          <View style={styles.looking} aria-live="polite">
+            <Txt variant="subhead" color={color.labelSecondary}>
+              {lookupLine('searching', lookup.placeName)}
+            </Txt>
+            <GymCardsSkeleton count={2} label={lookupLine('searching', lookup.placeName)} />
+          </View>
+        ) : lookup?.state === 'failed' ? (
+          <View style={styles.lookFailed}>
+            <Txt variant="subhead" color={color.labelSecondary}>
+              {lookupLine('failed', lookup.placeName)} {lookup.problem}
+            </Txt>
+            <Pressable
+              onPress={() => {
+                haptic.tap();
+                searchHere();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Try looking around ${lookup.placeName === YOUR_LOCATION ? 'you' : lookup.placeName} again`}
+              hitSlop={4}
+              style={({ pressed }) => [styles.suburb, styles.retry, pressed && { opacity: 0.7 }]}
+            >
+              <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                Try again
+              </Txt>
+            </Pressable>
+          </View>
+        ) : (
+          // Nothing in range at all: the list counts every gym, fits or not, so it isn't the filters.
+          <Txt variant="subhead" color={color.labelSecondary}>
+            {lookup?.state === 'done' && lookup.gyms === 0
+              ? lookupLine('none', lookup.placeName)
+              : noGymsLine(filters.placeName, filters.radiusKm, filters.countryCode)}
+          </Txt>
+        )}
+      </View>
+
+      <AdSlot />
+
+      {saved.length > 0 && (
+        <View style={styles.section}>
+          <SectionHeader icon="bookmarks" title="Saved" action="See all" onAction={() => router.navigate('/saved')} />
+          <Carousel>
+            {saved.map((result) => (
+              <GymCard key={result.record.location.id} result={result} width={176} />
+            ))}
+          </Carousel>
+        </View>
+      )}
+
+      {recent.length > 0 && (
+        <View style={styles.section}>
+          <SectionHeader icon="clock-counter-clockwise" title="Recently viewed" action="Clear" onAction={clearRecents} />
+          <Carousel>
+            {recent.map((result) => (
+              <GymCard key={result.record.location.id} result={result} width={176} />
+            ))}
+          </Carousel>
+        </View>
+      )}
+
+      {/* Suburbs ----------------------------------------------------------- */}
+      {city && browse.length > 0 && (
+      <View style={styles.section}>
+        <SectionHeader icon="compass" title={`Browse ${city.name}`} />
+        <View style={styles.suburbs}>
+          {browse.map((place) => {
+            const on = filters.placeName === place.name;
+            return (
+              <Pressable
+                key={place.name}
+                onPress={() => goToPlace(place)}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.suburb, on && styles.suburbOn, pressed && { opacity: 0.7 }]}
+              >
+                <Txt variant="subhead" color={on ? color.onBrand : color.label} style={face('medium')}>
+                  {place.name}
+                </Txt>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+      )}
+
+      {/* Cities: your country's first ------------------------------------ */}
+      {groups.length > 0 && (
+        <View style={styles.section}>
+          <SectionHeader icon="globe-hemisphere-west" title={city ? 'Other cities' : 'Cities'} />
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.anywhere}>
+            Or anywhere in the world: type a town on the map, or move the map and tap Search this area.
+          </Txt>
+          {groups.map(({ label, cities }) => {
+            // A long list (the US has 40) shows its first dozen until asked for the rest.
+            const open = showAll[label] === true || cities.length <= CITIES_SHOWN + 2;
+            const list = open ? cities : cities.slice(0, CITIES_SHOWN);
+            return (
+              <View key={label} style={styles.country}>
+                <Txt variant="footnote" color={color.labelSecondary} style={styles.countryLabel}>
+                  {label.toUpperCase()}
+                </Txt>
+                <View style={styles.suburbs}>
+                  {list.map((item) => {
+                    const where = 'id' in item ? (label === 'Europe' ? item.region : countryName(item.country)) : countryName(item.country);
+                    return (
+                      <Pressable
+                        key={'id' in item ? item.id : `${item.country}:${item.name}`}
+                        onPress={() => goToCity(item)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${item.name}, ${where}${mayExplore(item.country) ? '' : ', with GymGO Pro'}`}
+                        style={({ pressed }) => [styles.suburb, styles.cityChip, pressed && { opacity: 0.7 }]}
+                      >
+                        <Txt variant="subhead" style={face('medium')}>
+                          {item.name}
+                        </Txt>
+                        {!mayExplore(item.country) && (
+                          <Txt variant="caption" color={color.brand} style={styles.proTag}>
+                            PRO
+                          </Txt>
+                        )}
+                      </Pressable>
+                    );
+                  })}
+                  {!open && (
+                    <Pressable
+                      onPress={() => {
+                        haptic.select();
+                        setShowAll((current) => ({ ...current, [label]: true }));
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${cities.length - CITIES_SHOWN} more cities in ${label}`}
+                      style={({ pressed }) => [styles.suburb, styles.moreChip, pressed && { opacity: 0.7 }]}
+                    >
+                      <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                        {cities.length - CITIES_SHOWN} more
+                      </Txt>
+                    </Pressable>
+                  )}
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+      </>
+      )}
+
+    </TabScreen>
+  );
+}
+
+function Carousel({ children }: { children: React.ReactNode }) {
+  // On a phone the row runs to the screen's edges, as in iOS. On a wide
+  // screen the page is a centred column, and running 16 points past it
+  // just looks cut off, so the row keeps to the column there.
+  const { width } = useWindowDimensions();
+  const bleed = width < PAGE_COLUMN + space[4] * 2;
+  const scroller = useRef<ScrollView>(null);
+  const [view, setView] = useState({ x: 0, width: 0, content: 0 });
+  // A mouse can't swipe: in a browser's wide layout, buttons page the row
+  // along, and each shows only while there's more that way.
+  const paged = Platform.OS === 'web' && !bleed;
+  const track = (change: Partial<typeof view>) => setView((current) => ({ ...current, ...change }));
+  const page = (direction: -1 | 1) => {
+    const x = Math.max(0, Math.min(view.content - view.width, view.x + direction * view.width * 0.8));
+    scroller.current?.scrollTo({ x, animated: true });
+  };
+  return (
+    <View>
+      <ScrollView
+        ref={scroller}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={bleed && styles.carousel}
+        contentContainerStyle={[styles.carouselContent, !bleed && styles.carouselInColumn]}
+        decelerationRate="fast"
+        scrollEventThrottle={32}
+        onScroll={paged ? (event) => track({ x: event.nativeEvent.contentOffset.x }) : undefined}
+        onLayout={paged ? (event) => track({ width: event.nativeEvent.layout.width }) : undefined}
+        onContentSizeChange={paged ? (content) => track({ content }) : undefined}
+      >
+        {children}
+      </ScrollView>
+      {paged && view.x > 4 && <PageButton side="back" onPress={() => page(-1)} />}
+      {paged && view.x + view.width < view.content - 4 && <PageButton side="forward" onPress={() => page(1)} />}
+    </View>
+  );
+}
+
+function PageButton({ side, onPress }: { side: 'back' | 'forward'; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={side === 'back' ? 'Show earlier gyms' : 'Show more gyms'}
+      style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
+        styles.pageButton,
+        side === 'back' ? styles.pageBack : styles.pageForward,
+        (pressed || hovered) && styles.pageButtonOn,
+      ]}
+    >
+      <Icon name={side === 'back' ? 'chevronBack' : 'chevron'} size={16} color={color.label} />
+    </Pressable>
+  );
+}
+
+const styles = themed(() => StyleSheet.create({
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: color.brandTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  avatarOn: { backgroundColor: color.brandFill },
+
+  picks: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
+  flex: { flex: 1 },
+  pick: {
+    flexBasis: '45%',
+    flexGrow: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    paddingHorizontal: space[3],
+    paddingVertical: space[3],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+  },
+  pickEmoji: { fontSize: 26, lineHeight: 32 },
+
+  resume: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    padding: space[3],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.goodTint,
+  },
+  trip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    padding: space[3],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.brandTint,
+  },
+  tripIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
+  finders: { flexDirection: 'row', gap: space[3] },
+  templatesLink: { alignSelf: 'center', marginTop: -space[1] },
+  finderNarrow: { flexDirection: 'column', gap: space[2] },
+  finderTextNarrow: { alignSelf: 'stretch' },
+  finder: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    padding: space[3],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.card,
+    ...shadow.plate,
+  },
+  resumeIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.good, alignItems: 'center', justifyContent: 'center' },
+  workout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    padding: space[4],
+    borderRadius: radius.xl,
+    borderCurve: 'continuous',
+    backgroundColor: color.brandFill,
+    ...shadow.plate,
+  },
+  workoutIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: color.onBrandFaint, alignItems: 'center', justifyContent: 'center' },
+  shortcuts: { flexDirection: 'row', gap: space[2] },
+  shortcut: {
+    flex: 1,
+    alignItems: 'center',
+    gap: space[2],
+    paddingVertical: space[3],
+    paddingHorizontal: space[1],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.card,
+    ...shadow.plate,
+  },
+  shortcutIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
+  center: { textAlign: 'center' },
+
+  section: { gap: space[3] },
+  carousel: { marginHorizontal: -space[4] },
+  carouselContent: { paddingHorizontal: space[4], paddingBottom: space[2], gap: space[3] },
+  carouselInColumn: { paddingHorizontal: 0 },
+  // Holds the nearby row's room while settings load, so nothing jumps.
+  waiting: { height: 290 },
+  pageButton: {
+    position: 'absolute',
+    top: '42%',
+    width: 36,
+    height: 36,
+    marginTop: -18,
+    borderRadius: 18,
+    backgroundColor: color.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...dropShadow(0.18, 10, 3, 4),
+  },
+  pageButtonOn: { backgroundColor: color.fill },
+  pageBack: { left: -18 },
+  pageForward: { right: -18 },
+
+  country: { gap: space[2] },
+  countryLabel: { ...face('semibold'), letterSpacing: 0.6 },
+  anywhere: { marginBottom: space[3] },
+  locked: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    padding: space[4],
+    borderRadius: radius.lg,
+    backgroundColor: color.brandTint,
+  },
+  proTag: { ...face('bold'), letterSpacing: 0.6 },
+  lockedText: { flex: 1, gap: 2 },
+  looking: { gap: space[3] },
+  lookFailed: { gap: space[3], alignItems: 'flex-start' },
+  retry: { backgroundColor: color.brandTint, ...dropShadow(0, 0, 0, 0) },
+  searchHere: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  cityChip: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  moreChip: { backgroundColor: color.brandTint, ...dropShadow(0, 0, 0, 0) },
+  suburbs: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  suburb: { paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.card, ...shadow.card },
+  suburbOn: { backgroundColor: color.brandFill },
+  city: {
+    width: 150,
+    gap: 2,
+    padding: space[3],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.card,
+    ...shadow.card,
+  },
+  cityFlag: { fontSize: 24, lineHeight: 30 },
+
+  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
+  stat: {
+    flexBasis: '45%',
+    flexGrow: 1,
+    padding: space[3],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.card,
+    ...shadow.plate,
+  },
+  note: { textAlign: 'center' },
+}));

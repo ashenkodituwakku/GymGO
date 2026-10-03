@@ -1,2 +1,1602 @@
 # GymGO
-GymGO
+
+**Find a gym that fits your workout, budget and visit time.**
+
+## Start GymGO
+
+GymGO is an app for iPhone, Android and your PC's browser. One command
+starts it on your computer. It opens in your browser, and you can open it on
+your phone with **Expo Go**, a free app. It also starts a small server
+on your computer that keeps accounts, saved gyms and reviews in a database
+file. Everything is free: no Mac, no Xcode, no sign-ups, no API keys. If you
+do have a Mac, you can also [run it from Xcode](#on-a-mac-in-xcode-simulator-or-your-iphone)
+on the iPhone Simulator or your own iPhone.
+
+### On Windows
+
+Open **PowerShell** (Start menu → type *PowerShell*). Then:
+
+**1. Install Node.js and Git** (skip if you have them; GymGO needs Node 22.13 or newer):
+
+```powershell
+winget install OpenJS.NodeJS.LTS Git.Git
+```
+
+Close PowerShell and open a new window.
+
+**2. Allow scripts to run** (once per computer; type `Y` if asked):
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+**3. Download GymGO:**
+
+```powershell
+git clone -b claude/friendly-johnson-9rzxrj https://github.com/ashenkodituwakku/GymGO.git "$HOME\GymGO"
+```
+
+**4. Start it:**
+
+```powershell
+& "$HOME\GymGO\scripts\gymgo.ps1"
+```
+
+The first start takes a minute or two. Then:
+
+- **On your PC:** the app opens in your browser at **http://localhost:8081**.
+  If it doesn't, open that address yourself.
+- **On your phone:** install **Expo Go** from the App Store or Google Play,
+  and join the same Wi-Fi as your PC. Then scan the QR code in PowerShell:
+  on an **iPhone** with the **Camera** app, on **Android** from inside
+  **Expo Go**.
+
+If Windows asks whether Node.js may use the network, choose **Allow**.
+Without that, your phone can't reach your PC.
+
+Press **Ctrl+C** in PowerShell to stop everything.
+
+**Phone won't connect?** Stop with **Ctrl+C** and run:
+
+```powershell
+& "$HOME\GymGO\scripts\gymgo.ps1" -Tunnel
+```
+
+This works even when the phone is on a different network, but it's slower.
+Everything works through it, signing in (the ready-made Pro account below
+too), syncing and reviews included: the app reaches the GymGO server through
+the same address it loads from (`/_gymgo` on the app's port, which the
+bundler passes to the server on your PC), so there's no second port for a
+network or Windows Firewall to block.
+
+**Try GymGO Pro without paying.** The launcher makes a ready-made Pro
+account on your computer. It signs in on every device that opens GymGO from
+your PC: the browser, and phones in Expo Go on your Wi-Fi or through
+`-Tunnel`. In the app, open Profile → Sign in, and use:
+
+| | |
+|---|---|
+| Email | `dev@gymgo.test` |
+| Password | `GymGO-dev-pro-2026` |
+
+It's for trying Pro (every country, unlimited saved gyms, comparing four,
+the workout library) on this computer only. It can also collect gyms from
+anywhere, without being at them, to try the collection. Nobody paid for its Pro, so the
+server makes it only when told to (`GYMGO_DEV_PRO=on`, which the launcher
+sets) and refuses even then on a server with a public address
+(`GYMGO_PUBLIC_URL`) or live Stripe keys. Start with `gymgo -NoDevAccount`
+to leave it out.
+
+**Optional: start it from anywhere by typing `gymgo`.** Run this once, then open
+a new PowerShell window:
+
+```powershell
+if (!(Test-Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
+Add-Content $PROFILE "`nfunction gymgo { & `"$HOME\GymGO\scripts\gymgo.ps1`" @args }"
+```
+
+After that you can run:
+
+- `gymgo` to start everything;
+- `gymgo -Update` to get the latest version first;
+- `gymgo -Repair` if the app fails to build with "Unable to resolve …"
+  (after an update that changed packages, say): it reinstalls the links
+  to GymGO's packages and starts the app with a clean cache. The launcher
+  already does this by itself when it installs new packages or finds one
+  missing, so you shouldn't often need it;
+- `gymgo -Tunnel` when the phone isn't on the same Wi-Fi;
+- `gymgo -NoBrowser` to start without opening a browser window;
+- `gymgo -NoDevAccount` to start without the ready-made Pro account.
+
+### On a Mac or Linux
+
+In Terminal, one line, whether or not you've downloaded GymGO before:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ashenkodituwakku/GymGO/claude/friendly-johnson-9rzxrj/scripts/gymgo-mac.sh | bash
+```
+
+It downloads GymGO into `~/GymGO` (or brings an existing copy up to date,
+whatever state it's in), installs what's missing, and starts the server and
+the app, like the Windows launcher. Add `-s -- --tunnel` after `bash` if the
+phone can't connect. (On Linux, `npx pnpm@10 install` then `npx pnpm@10 app`
+in `~/GymGO` does the same.)
+
+### On a Mac, in Xcode (Simulator or your iPhone)
+
+This builds GymGO as a real iPhone app: Apple Maps, SF Symbols, Liquid
+Glass and haptics, which Expo Go and the browser only approximate. It needs
+no paid Apple developer account: a free Apple ID is enough to run it on
+your own iPhone.
+
+**1. Install the tools** (once; all free):
+
+- **Xcode**, from the Mac App Store. Open it once to finish installing, and
+  if it asks, add the iOS platform (Xcode → Settings → Components).
+- **Homebrew** from [brew.sh](https://brew.sh), then in Terminal:
+
+```bash
+brew install node cocoapods
+```
+
+**2. Get GymGO and open it in Xcode** (one line; the same line updates it later):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ashenkodituwakku/GymGO/claude/friendly-johnson-9rzxrj/scripts/gymgo-mac.sh | bash -s -- --xcode
+```
+
+This works from any starting point: no copy yet, an old copy, a copy on the
+wrong branch, or one with your own edits (those are set aside with `git
+stash`, not lost; `git -C ~/GymGO stash pop` brings them back). It then runs
+the newest version of itself, installs what's needed, makes the Xcode project
+from the app's settings (`expo prebuild`, into `apps/mobile/ios`, which isn't
+kept in git), fetches its native parts with CocoaPods, and opens it in Xcode.
+It also starts the GymGO server and the bundler the app loads its code from,
+so leave Terminal open. The first time takes a few minutes.
+
+**It keeps itself up to date while it runs.** Every three minutes it checks
+GitHub for a newer GymGO and moves to it (only when you haven't edited
+anything). New app code reloads in the running app by itself; new server
+code restarts the server; and if the app's native parts changed, it remakes
+the Xcode project and says so in Terminal: then press Run (⌘R) in Xcode
+again. An update that brings new packages waits instead, and Terminal asks
+you to restart GymGO: installing them under the running app would leave it
+looking for them where they used to be. `--no-auto-update` turns this off.
+
+Once you have it, `bash ~/GymGO/scripts/gymgo-mac.sh --xcode` does the same.
+
+**Optional: start it by typing `gymgo`.** Run this once, then open a new
+Terminal window:
+
+```bash
+echo 'alias gymgo="bash ~/GymGO/scripts/gymgo-mac.sh"' >> ~/.zshrc
+```
+
+After that, `gymgo` starts everything, and `gymgo --xcode`, `gymgo --tunnel`
+and `gymgo --doctor` work as above.
+
+**3. In Xcode:**
+
+1. At the top, next to **GymGO**, pick where to run it: an **iPhone
+   Simulator**, or **your iPhone**. Plug the iPhone in with a cable the first
+   time and tap **Trust**. It then shows in **Window → Devices and
+   Simulators**, where you can also turn on connecting over Wi-Fi.
+2. Click the **GymGO** project on the left → **Signing & Capabilities** →
+   **Team**: pick your Apple ID (**Personal Team**). If it isn't listed, add
+   it in **Xcode → Settings → Accounts**.
+3. Press **Run** (⌘R).
+
+On your iPhone, the first time: turn on **Settings → Privacy & Security →
+Developer Mode** (the phone restarts), and if it says "Untrusted Developer",
+go to **Settings → General → VPN & Device Management** → your Apple ID →
+**Trust**. When GymGO asks to find devices on your local network, allow it:
+that's how it reaches the server on your Mac. The iPhone needs the same
+Wi-Fi as the Mac.
+
+Good to know:
+
+- With a free Apple ID, Apple lets an app you build run for **7 days**; after
+  that, press Run in Xcode again. A paid developer account ($99 a year) lifts
+  that, but isn't needed.
+- The app id is made from your Mac user name (`com.yourname.gymgo`), because
+  Apple wants it to be yours. Set `GYMGO_IOS_BUNDLE_ID` to choose another.
+- Pass your team to skip step 2 each time the project is remade:
+  `bash ~/GymGO/scripts/gymgo-mac.sh --xcode --team ABCDE12345` (your team
+  id is under Xcode → Settings → Accounts, or in the project's Build Settings
+  → Development Team once you've picked it).
+- The project is remade only when the app's settings changed. `--clean`
+  remakes it from scratch.
+- "Unable to resolve …" when the app builds? Run
+  `bash ~/GymGO/scripts/gymgo-mac.sh --repair`: it reinstalls the links to
+  GymGO's packages and starts the app with a clean cache.
+- Something not working? Run `bash ~/GymGO/scripts/gymgo-mac.sh --doctor`: it
+  prints your Xcode, CocoaPods, Node and GymGO versions and where things
+  stand, to paste into a message. The usual fixes:
+  - "Xcode is installed, but the Mac is set to use only its command line
+    tools": `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`.
+  - A build that stops with "node: command not found": run the launcher
+    again; it writes the exact Node into `apps/mobile/ios/.xcode.env.local`.
+  - CocoaPods errors: `pod repo update`, then the launcher with `--clean`.
+  - "Signing requires a development team": step 2 of "In Xcode" above.
+  - "No such module" or odd build errors after an update: Product → Clean
+    Build Folder (⇧⌘K) in Xcode, then Run.
+  - "Reference to type 'INIntent' broken by a context change" (Expo.swiftmodule):
+    your copy predates the fix in `patches/`. Update GymGO with the launcher
+    (it reinstalls and remakes the project), then Clean Build Folder and Run.
+- In the Simulator, set where "you" are with **Features → Location**.
+- A **Release** build (Product → Scheme → Edit Scheme → Run → Build
+  Configuration) carries its code inside the app, so it runs without the
+  bundler; it still needs the Mac's server for accounts and reviews, at the
+  address the launcher wrote into `apps/mobile/ios/.xcode.env.local`.
+- Prefer the command line? `cd ~/GymGO/apps/mobile && npx expo run:ios
+  --device` builds and installs without opening Xcode.
+
+### What's in the app
+
+Four tabs along the bottom, icons only, the way Instagram does it on iOS 26:
+a floating Liquid Glass capsule above the home indicator, the tab you're on
+filled in (your initial for Profile once you're signed in), and a glass lens
+behind it that springs to the tab you tap. Drag the lens along the bar to
+switch tabs; it swells under your finger. It's the same bar everywhere: on
+iOS 26 it's made of Apple's own Liquid Glass material, on older iPhones and
+Android the closest blur, and in a browser a glass with real refraction in
+Chrome and Edge (blur only in Safari and Firefox). Every glass surface is
+equally solid on every device (by default buttons 80%, sheets 94%, pinned
+headers 98%): Liquid Glass takes it as its tint and the others as a wash over
+the blur, so the map never shows through more on one phone than another.
+How see-through is yours to set: the **Liquid Glass** percentage in
+Appearance.
+
+- **Home**: kept short. A greeting, the search, four one-tap picks (Near
+  me, Early start, After work, Under $25), **Build a workout**, your next
+  trip if there is one, **Machines** and **Trips** (below), gyms near
+  you, your saved and recently viewed gyms, then neighbourhoods and other
+  cities as chips.
+- **Explore**: the map with the results sheet, filters, and sorting (best
+  match, closest, cheapest, top rated). "Best match" means: gyms that meet
+  everything you asked first, then, among the rest, the ones with the fewest
+  things you'd need to call about, then the nearest. GymGO never reads the
+  map for gyms by itself, however you move around: gyms from OpenStreetMap
+  load only when you tap **Search this area**. Move the map anywhere in the
+  world and it appears; somewhere GymGO has no gyms built in (a town you
+  typed, a city picked on Home, where you are) it's there straight away, on
+  the map and in the lists. It asks the server,
+  which reads OpenStreetMap for the area on screen (through the free Overpass
+  API), keeps what the same rules count as a gym, and remembers each area for
+  a month so a busy area costs one request, not one per person. Those gyms
+  are map-only like the rest: name, address, sometimes hours, "call first",
+  each on its own country's clock and in its own units (miles in the US and
+  UK). Visit prices (budgets, members' reports) are kept in each country's
+  own currency (A$, €, ¥, ₹, SEK…), never converted; only where the exchange
+  rate moves too much to check a price against (Iran, Lebanon, Venezuela and
+  a few more) is a price simply unknown, and the app says so.
+  Type any town or suburb anywhere ("Bendigo", "Boise", "Kyoto") and
+  press Enter: if it isn't one GymGO knows by heart, the server looks it up
+  (Photon, a free OpenStreetMap geocoder, asked only on Enter and at most
+  once a second, answers kept a month), and the map flies there; its gyms
+  load when you tap Search this area.
+  **Your country's gyms are kept on the phone.** Once you've chosen your
+  country, the app downloads one file of every gym the map knows there
+  (Australia's is a 41 KB download and 216 KB on the phone), so searching any area in it, "Near you", and
+  finding a gym by name answer at once, offline too. Moving the map never
+  changes the list by itself: it changes when you tap **Search this area**,
+  as it does anywhere else. Profile → **Offline gyms** shows how many and how
+  big (and tries again if the download failed); it refreshes itself when
+  the server's copy is rebuilt, monthly. Only the gyms are kept, not the
+  map itself: a whole country's map pictures would be gigabytes, and Apple's
+  and Google's maps may not be saved by apps anyway.
+  Gyms close together share one **bubble with a count** until you zoom in,
+  the way Apple and Google Maps do; tap one to zoom to its gyms (when
+  they're all in one building, where zooming wouldn't part them, it opens
+  the best fit among them).
+- **Saved**: your saved gyms. Tick two or three to **compare** them side by
+  side: answer, price, what members paid (labelled as theirs, never the
+  gym's price), guest entry, what to bring, machines, rating and distance.
+  The round compare button in a map card's header adds a gym too.
+- **Profile**: laid out like Settings. Your account card (tap it for
+  **Account**: profile picture, name, email, password, Apple and Google,
+  your data, sign out, delete), Training (Progress, My workouts, Plate calculator, 1-rep max, Interval timer), Pro, your
+  gyms, Settings (Country, **Appearance**, Haptics, Demo mode), and where
+  GymGO's facts come from. Signed out, a card to sign in with Apple, Google
+  or email.
+- **Appearance**: Automatic (follows your phone), Light or Dark, for
+  everyone. **Liquid Glass**, also for everyone: a percentage for how
+  see-through the controls, sheets and tab bar over the map are, with a
+  little map that shows it as you slide. The slider is made like iOS 26's:
+  its thumb swells into a lens of glass under your finger, magnifying the
+  track, stretches when you move it fast and wobbles back when you let go,
+  with a firmer tick at 0, 50 and 100. 0% makes them solid plates; 50% is
+  the default; 100% is the clearest that keeps text readable (Android,
+  which draws no blur behind its glass, stops a little more solid). It
+  changes only the glass, so the screen you're on stays put. With Pro, eleven more accents besides Indigo: Cobalt, Ocean,
+  Midnight, Lagoon, Grape, Fuchsia, Rose, Slate and Graphite, plus
+  **Rainbow** (a gradient) and **Camo** (a woodland pattern) that paint
+  filled buttons, selected chips, the tab bar and the Build a workout card,
+  picked from a grid of swatches. Pro also has four **looks** that redraw
+  the whole app, not just its colour:
+  - **8-bit**: square corners, arcade headings (Press Start 2P), a pixel
+    face for everything else (Pixelify Sans), chunky outlines with hard
+    drop shadows, on a cream or night page.
+  - **Classic**: a nineties desktop: teal backdrop, grey bevelled plates,
+    square corners.
+  - **Material**: Android's way: Roboto, rounder corners, surfaces tinted
+    by your accent, soft elevation.
+  - **Neon**: always dark, with cards, buttons and the tab bar edged in a
+    glow of your accent.
+
+  Every look swaps glass for solid plates. Evidence colours (green, orange,
+  grey) never change with the accent or the look, so they always mean the
+  same thing, and each look's text colours are adjusted until they pass
+  WCAG AA on its surfaces. The fonts are open (SIL OFL) and bundled; a
+  look's fonts load before it's shown. Switching fades smoothly and keeps
+  you on the screen you were on; the map, glass and the phone's own
+  keyboards and menus follow too.
+
+### Training
+
+Build a workout (Home → **Build a workout**, or from a gym's page), then
+tap **Start**. Each exercise shows its sets as rows: type the weight and
+reps and tick the set. Last time's numbers are already filled in as a
+guide, so on a repeat session it's mostly ticking.
+
+**Templates** (Home → "Or start a template", or the Workout screen):
+three well-known plans written out with GymGO's exercises: **Beginner full
+body** (A and B), **5×5 strength** (A and B) and **Push, pull, legs**. Each
+takes turns through its days, so starting one gives you the day after the
+last you logged; any other day can be started too. They're general plans,
+not advice for anyone in particular, and the screen says to start light.
+
+- **Rest timer.** Ticking a set starts the rest the plan calls for (90 s,
+  say), in a glass bar at the bottom with −15, +15 and Skip. The phone
+  buzzes when it's up. With the phone locked or GymGO in the background, a
+  notification says "Rest's up" and what's next (the phone asks once
+  whether GymGO may send notifications; it's scheduled on the phone, not
+  sent from a server). Not in a browser, and not a Live Activity on the
+  lock screen: that needs a build made for the App Store, which Expo Go
+  can't run.
+- **The screen stays on** while a workout is open, so the phone doesn't
+  lock between sets.
+- **Left open overnight?** If nothing changed for over an hour, the workout
+  is logged as ending at your last change, not when you tapped Finish.
+- **Last time.** Beside each exercise: what you did the last time you
+  logged it ("135 lb × 10, 10, 9").
+- **Plates.** On barbell exercises, **Plates** shows what to load on each
+  side of the bar for the weight you typed (45, 35, 25, 10, 5 and 2.5 lb
+  plates, or 25 down to 1.25 kg), and says if standard plates can't make it
+  exactly. Also in Progress → Plate calculator.
+- **Records.** Finish, and GymGO tells you which records you broke:
+  heaviest weight, strongest set (by estimated one-rep max), or most reps on
+  a body-weight exercise. Only against your own earlier sessions: the first
+  time you log something is a starting point, not a record. A broken record
+  gets confetti (none with Reduce Motion on) and a **record card** to share
+  as a picture: the exercise, the set and the day.
+- **Export your log** (Progress): a CSV with a row for every set, for
+  Excel, Numbers or Google Sheets; on a phone it's a real file for the share
+  sheet. Apple Health and Google Fit can only be connected from a build made
+  for the App Store or Play Store (HealthKit needs its own entitlement),
+  which Expo Go can't run, so the CSV is the way to take your log elsewhere
+  for now.
+- **Progress** (Profile → Progress): weeks in a row you've trained,
+  workouts this week, your records for every exercise, and every session,
+  each of which you can open or delete.
+- **Weekly goal and calendar.** Pick how many workouts a week you're aiming
+  for (kept on the device); Progress shows this week against it, the last
+  12 weeks a square a day, and a dot under each week you met it. Home shows
+  the week in one line once you've logged a workout.
+- **Milestones.** Workouts logged, your longest run of weeks in a row,
+  records broken and sets logged, each with the steps you've passed and
+  how far to the next. All counted from your own log.
+- **1-rep max** (Profile → 1-rep max): type a set you've done (weight ×
+  reps) for your estimated 1-rep max, by the same formula Progress uses
+  (Epley; none past 12 reps), and 90%, 80% and 70% of it. Tap a row for the
+  plate calculator.
+- **Interval timer** (Profile → Interval timer): Tabata (20 s on, 10 s off,
+  8 rounds) and EMOM (every minute on the minute, 10 rounds), with a big
+  clock, a count-in, a buzz at each change (and a beep in a browser; a
+  phone has no sound for it yet), and the screen kept on while it runs.
+  It reads the clock rather than counting ticks, so pausing or switching
+  apps doesn't make it drift.
+- **Share a workout.** After you finish, **Share this workout** sends a
+  few lines (what, how long, sets, weight, records) through the share sheet;
+  never the gym or the place.
+- **Pounds in the US**, kilograms elsewhere; switch before you type the
+  first weight. A blank weight is body weight, never zero.
+
+A workout in progress is kept on your device as you go, so closing the app
+between sets loses nothing, and Home shows **Back to your workout**. It's
+saved to your account when you finish, so logging needs a (free) account.
+
+With **Pro**, each exercise in Progress has a chart of your estimated
+one-rep max over time, and while you train each exercise shows **Aim**:
+what to lift next, by double progression. Keep the weight until every set
+reaches the top of the rep range, then add the smallest jump (5 lb or
+2.5 kg) and start again at the bottom. It's worked out from your own last
+session, and says why. Pro also adds **muscle balance** to Progress (your
+sets for each muscle over the last four weeks, and the muscles you've
+missed), **warm-up sets** on the plate calculator (the bar, then about
+40%, 60% and 80%, with the plates for each), and **your own notes** on each
+gym's page, kept on the device.
+
+Pro's extras for training:
+
+- **1-rep max**: the whole table from 100% down to 50%, each rounded to what
+  you can load and with the plates for each side (your gym's plates, if
+  you've set them), and what you could lift for 2 to 12 reps.
+- **Your own interval timers**: set the work, rest and rounds, and keep up
+  to ten on the device. On Free the settings show, locked.
+- **Streak freeze**: a missed week doesn't end your weeks-in-a-row, once a
+  calendar month, as long as you trained the week before it. Progress says
+  which week it covered; the frozen week keeps the run going but doesn't
+  add to it. On Free, Progress says when one would have kept your run.
+  Milestones' "longest run" still counts only weeks you trained.
+- **Profile ring**: your picture, or initial, ringed in your accent on
+  Profile and Account (Rainbow's and Camo's paint too).
+
+A gym that says **Call first** also lists **what to ask** when you call:
+one question for each thing GymGO hasn't confirmed, for free.
+
+**Collect gyms.** At a gym, open its page and tap **I'm here**: GymGO
+takes one location fix, checks on the phone that you're within about 150 m
+of the gym, and adds it to your **collection** (Profile → Collection). Each
+day you check in again is a visit, and the gym's card climbs from Bronze to
+Silver (3 visits), Gold (10) and Platinum (25). The collection counts your
+gyms, cities and countries and earns badges.
+
+**Sets.** Collecting in a suburb starts its **suburb set**: every gym
+GymGO lists there (2 to 15 of them; real gyms not known to have closed,
+plus any you collected before one closed). A **city set** is 10 gyms in
+one city, or all of them if GymGO lists fewer. Collection shows each set
+still going (how far, and the gyms still to collect), closest to finished
+first, and a gold-framed **reward card** for each one you finish, with the
+day you finished it. The check-in that finishes a set says so and shows
+its reward card, and finishing one earns the **Local hero** or **City
+collector** badge. Sets are worked out from your collection and the gyms
+this device knows, so they're the same on every device with the same gyms;
+nothing extra is stored.
+
+**Share a card.** Tap a card in your collection to see it big, then
+**Share as a picture**: on a phone it goes to the share sheet (Messages,
+Instagram, Photos); in a browser it's shared where the browser can share
+files, or saved to your downloads. The new-card pop-up has **Share card**
+too, and a finished set's reward card opens and shares the same way. The
+picture shows what's on the card, never the days you went.
+
+**Friends and leaderboards** (signed in; Collection → Friends or
+Leaderboard, or Profile). Everyone has a **friend code** like `K7QM-2XPH`:
+send yours, add theirs, and once they accept you can see each other's cards
+(as their phone draws them) and totals, never the days anyone trained.
+Open a friend to **invite them to train**: pick a gym (your saved ones, then
+gyms either of you collected), a day this week and a time, and add a note;
+they answer "I'm in" or "Can't" on their Friends screen, and either of you
+can take it back. Unfriending removes the invites between you. The
+**leaderboard** ranks by gyms collected, then visits, for every gym or just
+the city you're searching. **Everyone** lists only people who switched on
+"Be on the public board", by display name; **Friends** is you and your
+friends. Adding friends is limited to 20 codes a day, so codes can't be
+guessed.
+
+Each gym is a **trading card** with a rarity rolled by luck: every day you
+check in rolls it (Common 60%, Uncommon 25%, Rare 10%, Epic 4%, Legendary
+1%) and the card keeps its best roll. Each card also has a random **gem**
+(Ruby, Sapphire, Emerald, Amethyst, Topaz, Aquamarine, Rose quartz or Onyx)
+for its colours, and 1 in 16 is **Foil**. Epic, Legendary and Foil cards
+catch the light; Legendary ones have a rainbow frame and sparkles. A new
+card, or a visit that upgrades one, is revealed in a pop-up over the page:
+the card flips in over a glow of its gem's colour. The odds are
+shown in the app, which says rarity is luck, not a rating of the gym, and
+nothing about it can be bought. The frame is decoration around the gym's
+own logo or a member's photo; a gym with neither still says "No photo
+supplied". Home says so when you're at a
+gym you haven't checked in at today. Your position is only compared, on
+the phone, never sent or kept. **Signed in, the collection is on your
+account too**, so your cards and visits follow you to your other devices:
+each copy is merged into the other, never overwritten, so a check-in made
+offline or on another device is never lost (one made while the server
+can't be reached is sent the next time it can be). Signed out, it stays on
+the device, and signing in adds it to the account. The top of the
+collection says which (synced with your account, or on this device only).
+**Delete all collection data**, at the foot of the collection and in
+Account → Your data, clears every card, visit, roll and badge, on the
+device and on the account, after a warning that says exactly what goes;
+the account remembers the deletion, so a device that was offline at the
+time drops its old visits instead of bringing them back. Signed in as the dev Pro account
+(below), the button says **Collect** and works from anywhere, so you can
+try the collection without going to gyms.
+
+Tap any gym to open its own page, with share, compare and save at the top.
+On the map, a gym opens in a pop-up card; its **⤢** button (top right)
+expands it to the full page, as Google Maps does, and the **⤡** button there
+shrinks it back onto the map with the gym still open.
+It opens with the gym's logo (a chain's free logo, or the icon from the
+gym's own website; see below) and its photos. On an iPhone, press and hold a gym card on Home for a preview
+and a quick menu.
+
+Buttons and rows use proper symbols rather than emoji: Apple's SF Symbols on
+iPhone, Google's Material Symbols on Android and in the browser, and
+Phosphor's two-tone icons in the tab bar and section headings. So a phone
+button shows a handset, directions an arrow sign, and so on, drawn the way
+the rest of the phone draws them.
+
+### Where you are
+
+GymGO opens where you are. The first time, it asks for your location once;
+after that it uses it only if you allowed it. It asks for your **precise**
+position (full GPS accuracy, not rounded), so distances and the blue "you
+are here" dot are right. The position stays on your device, in memory, for
+the search: it is never saved, and never sent to the GymGO server or anyone
+else. If you've only allowed approximate location (iPhone's "Precise: Off",
+or Android's "Approximate"), GymGO says so, because distances will be off.
+
+If you're outside the cities GymGO carries, anywhere in the world, it
+opens "Near you" on where you are and offers **Search this area**; nothing
+is read from the map until you tap it. Until then the country and clock
+there are the phone's own (its time zone, and the nearest of the world's
+big cities on that clock), so a border nearby doesn't fool it, and the
+search then brings the map's own answer. Tapped, it asks the server for the
+whole map tiles around you, not your position: a block about 30 km across,
+exactly the same request for anyone in the same 11 km tile. Your precise
+position never leaves the device; it's used there to sort by distance.
+Before you've chosen a country, it opens on the nearest city it carries.
+
+### Emails, classes and facilities (free)
+
+Some gyms' OpenStreetMap entries also list an email address, sports or
+classes (yoga, swimming, boxing…) and facilities (pool, sauna, showers,
+step-free entrance). Where they do, the gym's card shows them under
+**Facilities & more**, labelled as mapped by volunteers. Anything not listed
+is unknown, never a no. So far that's 35 emails, 59 gyms with classes and
+31 with facilities, all in the US data.
+
+### Cities
+
+- **Melbourne**: 23 researched gyms, with prices and hours from each gym's
+  own website where it publishes them, plus 40 more from OpenStreetMap
+  (map-only, like the cities below). The map's copies of the researched 23
+  are left out, so none shows twice.
+- **7 more Australian cities**: Sydney, Brisbane, Perth, Adelaide, Canberra,
+  the Gold Coast and Hobart, and the rest of Melbourne: every gym
+  OpenStreetMap has across each city's suburbs (up to 30 km out), 1,256 of
+  them. Like the US cities below, these are **map-only**: no prices, guest
+  hours or machine lists yet, so every one says **Call first**. Distances are
+  in kilometres and money in A$. The search box knows each city's suburbs
+  too (Burwood East, Castle Hill, Joondalup and so on).
+- **Gyms from their own websites**: all 76 open **Revo Fitness** gyms (WA,
+  SA, Victoria and NSW, including those that used to be Crunch Fitness in
+  Victoria) and **T1 Fitness** in Burwood East, read from each operator's
+  own site, with the address, map position, phone and, for Revo, the 24/7
+  member hours they publish. Each links to its page, and they show as open
+  because the operator lists them. Revo gyms still to open (Knox, Busselton
+  and five more) are left out until they do. `pnpm --filter @gymgo/au-data
+  operators fetch <dir>` then `operators build <dir>` refreshes them.
+- **40 US cities**, GymGO's main market: New York, Brooklyn, Los Angeles,
+  Chicago, Houston, Miami, San Francisco, Oakland, San Jose, Seattle,
+  Portland, Boston, Austin, Dallas, San Antonio, Denver, Salt Lake City,
+  Phoenix, Las Vegas, Washington DC, Baltimore, Philadelphia, Pittsburgh,
+  Atlanta, Charlotte, Raleigh, Nashville, Orlando, Tampa, New Orleans,
+  Minneapolis, Detroit, Cleveland, Columbus, Indianapolis, Kansas City,
+  St. Louis, Sacramento, San Diego and Honolulu, with 1,044 real gyms between
+  them. Search a city, a neighborhood, a state ("Texas", "TX") or a ZIP code
+  ("10001"). These are **map-only**: names, addresses, phone numbers, websites and sometimes
+  opening hours, from OpenStreetMap. There are no prices, guest hours or
+  machine lists yet, so every one says **Call first**. Distances are in
+  miles and money in dollars there.
+- **15 European cities**: London, Paris, Berlin, Madrid, Barcelona, Rome,
+  Milan, Amsterdam, Dublin, Lisbon, Vienna, Munich, Stockholm, Copenhagen and
+  Zurich, with 600 real gyms between them (the 40 nearest each centre), and
+  the districts the search box knows there, under their local names.
+  **Map-only**, like the Australian and US cities: every one says **Call
+  first**. Distances are in miles in London and kilometres elsewhere.
+  Members can report what a visit cost in the local currency (€, £, CHF,
+  SEK, DKK).
+- **Every other country**: choose any country and GymGO opens on its
+  capital (or where you are) with **Search this area**, which reads the
+  gyms around it from OpenStreetMap when you tap it ("Looking for gyms
+  around Tokyo…"). Home lists your country's biggest cities (up to twelve,
+  from GeoNames: Osaka, Toronto, São Paulo…), and the search box suggests
+  them as you type; their gyms are read from the map when you tap Search
+  this area there. Like the cities above, these are **map-only**.
+- **Demo mode** (Profile → Preferences, off to start): invented gyms in inner
+  Sydney that show every case GymGO handles, from "Good to go" to "Not a
+  fit". Turning it on hides every real gym, and turning it off hides every
+  invented one, so the two never share a map: the demo gyms sit on the same
+  streets as real Sydney ones.
+
+Search a city ("Brisbane", "New York", "NYC", "Philly"), a suburb or
+neighborhood ("Fortitude Valley", "SoHo", "Capitol Hill, Seattle"), a
+Melbourne suburb or postcode, or a gym by name ("Equinox", "snap fit"):
+matching gyms are suggested nearest first, and pressing Enter on a name
+opens the closest one. Visit times are
+always on the searched city's clock.
+
+### Build a workout
+
+Tap **Build a workout** on Home, or **Build a workout here** on any gym.
+Tap the muscles you want to train on the body (front and back; there's also
+a plain list), or pick Push, Pull, Legs, Core or Full body. Choose a goal
+(strength, muscle, endurance) and a length (4, 6 or 8 exercises), and GymGO
+builds a session: compound lifts first, sets × reps, rest, and a tip for
+each. **Shuffle** for another version, **Share** to send it.
+
+From a gym's page it uses only the machines that gym publishes or that its
+members have reported, and marks each exercise ✓ where the kit is
+confirmed. Most gyms haven't published their machines, so for those it
+offers a **typical gym** plan instead and marks anything not confirmed with
+"?". It never claims a gym has a machine it hasn't been told about.
+
+With Pro, **Save** keeps a plan in **My workouts** (Profile → Training), on
+your account. A plan that's already there shows as Saved, so you don't get
+a second copy. Each saved workout has a **Start** button in the list, and
+the Workout screen, with nothing in progress, lists your latest ones to
+start in one tap. Saved workouts stay, and can still be started, if Pro
+ends.
+
+### Accounts
+
+Tap the person icon next to the search box to create an account. Your saved
+gyms then follow you between your PC and your phone, and you can write
+reviews. Accounts live in the GymGO server's database:
+`apps/server/data/gymgo.db` on your computer, or `deploy/data/gymgo.db` on a
+hosted server ([Put GymGO online](#put-gymgo-online-free-hosting)).
+Passwords are stored only as a salted scrypt hash, and the commonest
+breached passwords are turned down. Making an account needs the box ticked
+for the [Terms of Service and Privacy Policy](#legal-basics); the server
+records which version you agreed to.
+
+Making an account asks **the month and year you were born**, because
+accounts are for people 13 and over (see [Legal basics](#legal-basics)).
+The answer is checked and not kept; only the time of the check is. A first
+sign-in with Google or Apple asks the same before it makes the account.
+
+In Profile you can **change your name** and **change your password** (it
+asks for the current one, and signs out any other device signed in as you).
+
+**Forgot your password?** on the sign-in screen emails a link to choose a
+new one. It works once, for 30 minutes, and setting the new password signs
+out every device. The answer is the same whether or not the address has an
+account. It needs the server to be able to send email (`GYMGO_SMTP_URL`, as
+in [Report a bug](#report-a-bug)) and to know its own public address
+(`GYMGO_PUBLIC_URL`); without them the app says passwords can't be reset by
+email on this server.
+
+**Profile picture**: tap the circle on Account (or Profile picture) and
+pick one of your photos. It's cut to a centred square (on a phone you can
+choose the square yourself), made 400 pixels across and sent as a JPEG;
+the server removes its metadata again, as it does for gym photos, and
+deletes the old file when you change or remove it. It shows on Profile,
+the tab bar, Home and the map, only to you: it isn't shown with your
+reviews or photos, so it needs no moderator. Without one you get your
+initial, as before. On a phone this needs a build made after
+`expo-image-manipulator` was added.
+
+**Download my data** in Profile gives you everything GymGO holds about you
+as one JSON file: your account (with your profile picture's id), sign-in dates, saved gyms, reviews, photo
+records, machine, price and visit reports, workouts, bug reports and
+subscription (never your password hash or sign-in tokens). In a browser it downloads; on a phone
+it opens the share sheet. **Delete account** removes all of it.
+
+Reviews wait for a moderator before they appear. To make your own account a
+moderator, run this in the GymGO folder:
+
+```powershell
+npx pnpm@10 --filter @gymgo/server make-moderator you@example.com
+```
+
+Then **Profile → Moderation** (with how many are waiting) has everything in
+one place: reviews and photos (**Posts**), owners' updates and gym claims
+(**Owners**), and members' reports and bug reports (**Reports**). Approve in
+one tap; **Reject** asks for a reason (one tap more), which the person sees.
+
+Gym claims hold personal details (the claimant's contact and evidence), so
+only an **admin** sees and decides them:
+
+```powershell
+npx pnpm@10 --filter @gymgo/server make-admin you@example.com
+```
+
+### Report a bug
+
+**Profile → Report a bug** lets anyone, signed in or not, tell the team what
+went wrong. The form lists the app and device details that go with it (the
+app's version, the kind of device and browser, screen size, the screen it
+came from, the country and appearance settings, and whether you're signed
+in), and you can switch them off. It never sends your location, searches or
+gyms. Signed in, you can ask for a reply at your account's email; signed out,
+you can leave an address. If a screen ever breaks, the crash screen offers
+**Try again** and a one-tap report with the error attached.
+
+Every report is kept on the GymGO server first, and moderators can read them
+under Profile → Moderation. The server emails each one to
+**ashenkodit@gmail.com** and **mahogany.81926@gmail.com**, with the reporter
+as the reply-to address, once you give it an email account to send
+through. GymGO has no mail service of its own, so it uses one you already
+have. With Gmail (free):
+
+1. In your Google Account, turn on 2-Step Verification, then make an **app
+   password** (Security → 2-Step Verification → App passwords).
+2. Add this line to `apps/server/.env.local`, with your address (its `@`
+   written as `%40`) and the app password:
+
+   ```
+   GYMGO_SMTP_URL=smtps://you%40gmail.com:your-app-password@smtp.gmail.com:465
+   ```
+
+3. Restart GymGO. The server's first lines say `Bug reports: kept here and
+   emailed to …`.
+
+Reports sent before email was set up, or while the mail server was down, go
+out when it's back (checked every 15 minutes, five tries each, at most 50
+emails a day). `GYMGO_BUG_REPORT_TO` sends them elsewhere (comma-separated)
+and `GYMGO_MAIL_FROM` changes the sender. A person can send five reports an
+hour.
+
+### Legal basics
+
+A checklist of common legal traps for small apps was checked against GymGO.
+What was found, and what GymGO does now:
+
+- **Children under 13 (COPPA, in the US).** Collecting anything from a child
+  under 13 needs a parent's verified consent, which GymGO has no way to get.
+  So accounts are for 13 and over. Sign-up asks the month and year you were
+  born, as a plain question that doesn't hint at the answer (as the FTC
+  advises), and the server refuses a younger age without saving anything.
+  After a too-young answer the device won't offer sign-up again for a day, so
+  the answer can't just be changed. Finding gyms needs no account and stays
+  open to everyone.
+- **Loading things from Google (GDPR, in the EU).** Anything loaded from
+  Google shows Google the device's IP address; a German court ordered a site
+  that loaded Google Fonts that way, without asking, to pay damages. GymGO's
+  fonts are bundled with the app, and a gym's page now loads nothing from
+  Google (Street View, Google's photos, the check that Google is reachable)
+  until you tap Show or choose to always show it. Opening **See it on
+  Google** is asking, so that page loads straight away. The map tiles come
+  from OpenFreeMap (or Apple on an iPhone), which also see the IP address;
+  Profile → Privacy says so.
+- **Recording what people do.** GymGO has no analytics, advertising or
+  session recording of any kind, and Profile → Privacy says so.
+- **Subscriptions that renew (California and other states).** The renewal
+  terms now sit right under the buy button, which names the price: "Renews
+  automatically at $19.99 a year, tax included, until you cancel", how to
+  cancel, and that tapping Subscribe agrees to them. Before taking real
+  money, also turn on Stripe's customer emails (a receipt after each payment,
+  and a reminder before a yearly plan renews) in Stripe's settings, since
+  several states expect a confirmation and reminders by email. Rules vary by
+  state and change; check them before launch.
+- **Marketing email (CAN-SPAM).** GymGO sends none: the only emails are bug
+  reports, to the team, and password reset links someone asked for. If it ever sends marketing email, each one needs a
+  working unsubscribe link (honoured within 10 business days) and a real
+  postal address.
+- **Other people's photos and reviews (the DMCA, in the US).** Members post
+  photos and reviews, so someone may post work that isn't theirs. **Profile
+  → Copyright and takedowns** explains how to send a notice, and **Send a
+  copyright notice** opens a form that goes to the team like a bug report
+  but marked as a copyright notice (it needs a reply address). The team
+  should take the item down, tell the member, accept a counter-notice, and
+  close the accounts of members who keep doing it.
+
+  For the legal protection this gives (the "safe harbor"), the owner also has
+  to **register a designated agent** with the US Copyright Office. Nothing
+  has been registered. To do it:
+
+  1. Go to **dmca.copyright.gov**, make an account and register GymGO's
+     agent: a name (a person or a role, such as "Copyright agent"), a postal
+     address (a PO box is allowed), a phone number and an email address.
+  2. Pay the fee (US$6 at the time of writing).
+  3. Renew it every three years, or it lapses.
+  4. Put the same details in `apps/server/.env.local` so the app shows them
+     under Copyright and takedowns:
+
+     ```
+     GYMGO_DMCA_AGENT_NAME=Copyright agent, GymGO
+     GYMGO_DMCA_AGENT_ADDRESS=PO Box 123, City, State ZIP
+     GYMGO_DMCA_AGENT_EMAIL=copyright@example.com
+     ```
+
+- **Terms of Service, Privacy Policy, Refunds and Cancelling, and Community
+  Guidelines.** All four are written in plain English, once, in
+  `packages/domain/src/legal.ts`. The app shows them under **Profile →
+  Legal**, and the server serves them as public pages at `/terms`,
+  `/privacy`, `/refunds` and `/community` (with `/legal` listing them), for
+  Stripe's settings, the app stores and anyone without the app.
+  - They cover Australian Consumer Law guarantees, which can't be taken
+    away; GDPR legal bases; California's "we don't sell your data";
+    children; retention (backups within 14 days); fake reviews; and
+    photography in changing rooms.
+  - Making an account needs the box ticked for the Terms and Privacy Policy,
+    and the server records the version and when. When `LEGAL_VERSION` is
+    bumped, Profile asks each signed-in member to agree to the new version.
+  - The Pro screen links the Terms and Refunds beside its renewal terms, and
+    Stripe's checkout page repeats them.
+  - Refunds: a full refund within 14 days of a first payment or a yearly
+    renewal; monthly renewals aren't refunded, but can be cancelled at any
+    time.
+
+  Set who runs GymGO before it's public. These go in
+  `apps/server/.env.local` or, hosted, `deploy/.env`:
+
+  ```
+  GYMGO_LEGAL_NAME=Your Name or Business Pty Ltd
+  GYMGO_CONTACT_EMAIL=privacy@yourdomain.com
+  GYMGO_LEGAL_ADDRESS=PO Box 123, Melbourne VIC 3000
+  GYMGO_GOVERNING_LAW=Victoria, Australia
+  GYMGO_HOSTED_IN=Australia
+  ```
+
+  Without them the documents name "the GymGO team" and point to Report a
+  bug. The contact email also makes `/.well-known/security.txt`, which says
+  where to report security problems (see `SECURITY.md`). If the documents
+  change in a way people should see, bump `LEGAL_VERSION` and
+  `LEGAL_UPDATED` in `legal.ts`. Keep every statement about data true of
+  the code: the file's header comment says so too.
+
+None of this is legal advice, and a lawyer should look at GymGO, and these
+documents especially, before it launches: see `docs/LAUNCH-CHECKLIST.md`.
+
+### Gym photos
+
+The top of a gym's page (and its card on Home) shows, in this order:
+
+1. **Members' photos**, each with the member's name on it.
+2. If there are none, **the photo the gym's own website shares** (the
+   picture its home page gives social media, `og:image`), credited "From
+   franksgymperth.com". The GymGO server fetches it the first time someone
+   looks and keeps it a month, with the same guards as website icons. It is
+   taken only from a site that is that gym's alone: never a site other gyms
+   in the data share, and never a chain's home page, whose picture would be
+   of some other branch. A branch's own page on a chain's site counts, but
+   not a picture that page merely repeats from the site's home page, nor
+   one that another branch's page shows too: both are the chain's stock
+   picture, not this branch. So it is always the right gym, or nothing.
+   1,566 of the 2,995 real gyms have such a site. These photos belong to
+   the gyms; the owner chose to show them.
+3. If there are none, and the owner has set up the optional Google key
+   (below), **Google's photos** of the place, each credited to whoever took
+   it, with "Google Maps" underneath. They're only ever the exact gym's: a
+   Google listing is used only if it's within 150 m and shares a real word
+   of the gym's name (not "gym" or "fitness", and not the suburb), or, failing
+   that, if Google calls it a gym and it's within 40 m. So the shopping
+   centre a gym is in, or the café next door, never lends it their photos;
+   a gym with no sure match simply shows no Google photos.
+4. Otherwise **Google Street View** outside the gym, labelled as such (it
+   may not face the door). This is Google's free public embed.
+
+Google's photos and Street View wait for a tap: the page shows a card saying
+they come from Google, which sees your device's IP address, with **Show**
+and **Always show Google content** (also a switch in Profile). See
+[Legal basics](#legal-basics) for why.
+
+It always says when no member has shared a photo yet, and an invented demo
+gym says **No photo supplied yet**.
+
+To add one, open a gym, tap **+ Add a photo**, and pick a picture you took
+there. You're asked to confirm you took it and are happy for it to show with
+your name. The server removes the photo's hidden details (including where it
+was taken) before saving it, and it stays hidden until a moderator publishes
+it. A photo the moderator turns down is deleted. Photos live in `apps/server/data/photos/` on your computer.
+
+### Joining a gym
+
+Near the top of each gym's card, a centred **Membership** panel shows
+every tier the gym publishes side by side, with a sign-up link. Chains that
+publish one price table for every club (Revo Fitness, Zap Fitness, Derrimut
+24:7) show it at each of their clubs; chains that price club by club don't.
+Further down, each gym's card and page has **Join this gym**: every membership the gym
+publishes, with its price and period, joining and card fees, minimum term
+and notice, where it was read and when. A fee the gym doesn't publish says
+"not published", never $0. **Sign up on their website** opens the gym's own
+sign-up page (or its website, or its phone): you join with the gym, and
+GymGO takes no payment. Prices were researched from gyms' own sites; see
+`docs/research/prices-2026-09-30.md` for what was found and what still
+needs a direct check.
+
+**Ads:** a marked space that says AD PLACEHOLDER sits on Home and under
+Explore's list, for a future ad partner. It loads and tracks nothing, and
+Pro members don't see it (`apps/mobile/src/components/AdSlot.tsx`).
+
+### What a visit costs, from members
+
+Most gyms on the map don't publish a casual-visit price. So under a gym's
+**Prices**, signed-in members can say what they paid for one visit and
+roughly when (today, last week, a few months ago). Everyone then sees
+**What members paid**: the typical price (the median, so one odd report
+can't move it far), the range, how many members and when the latest paid.
+Names are never shown. It's labelled as members' reports, not checked by
+GymGO or the gym, and it never counts as the gym's own price or makes a gym
+"Good to go". Each member has one report per gym (reporting again replaces
+it, and it can be removed), reports over two years old stop counting, and
+amounts are kept in the gym's country's own currency and must be between 1
+and 500 dollars' worth, in that currency's own sizes: A$1 to A$500, ¥100 to
+¥50,000, ₹100 to ₹50,000. That range is only a check for typos; no price is
+ever converted. Budgets step the same way ("Under ¥2,500" in Japan).
+
+In lists and cards, a gym that publishes no visit price shows members'
+typical figure instead of a dash, marked as theirs: **~A$22 · members say**.
+A price the gym publishes always wins, even an unclear one.
+
+### How getting in went, from members
+
+Whether a visitor can walk in is the question GymGO exists to answer, and
+most gyms don't publish it. Under a gym's **Getting in**, signed-in members
+can say what happened when they went as a visitor: **walked in**, **had to
+book first** or **turned away**, and roughly when. Everyone sees the counts
+from the last year (door rules change), without names, labelled as members'
+visits and not the gym's rule. Like every member report, it never makes a
+gym "Good to go".
+
+### Has it closed? From members
+
+Map data can be years old, and nobody has checked that every gym is still
+trading. Under a gym's **Where this comes from**, members can say **it has
+closed** or **it's still open**, and when they saw it. When more members say
+closed than open (over the last six months), the gym's card warns at the
+top: "Members say this gym has closed", with how many and when, and "check
+before you go". It's their word, labelled as theirs.
+
+Price, visit and closed/open reports show straight away. Moderators see the
+latest 50 in Profile, with who sent each, and can remove any that are wrong
+or abusive.
+
+### Is it busy? From members there now
+
+On a gym's page, members **at the gym** can say how busy it is: Quiet,
+Steady, Busy or Packed. Saying so takes the same one-off location check as
+collecting the gym (on the phone; the position is never sent). A level shows
+only once **3 members** have said so in the **last hour**, as the middle of
+what they said ("Busy right now: waiting for most kit, say 3 members here in
+the last hour, latest 12 min ago"); until then it says how many have, and
+nothing is estimated or predicted. Each member has one report per gym,
+replaced by their next, and reports are deleted after a day.
+
+### Verified gym owners
+
+Someone who runs a gym can claim it on its page (**The gym's owner → Claim
+this gym**): their role, a contact at the business (a work email at the
+gym's own address, or the phone it lists) and how GymGO can check. An admin
+checks and approves or turns it down with a reason; the claim's details are
+never shown publicly. A verified owner can then send the gym's **visitor
+hours** and **casual visit price** (the whole price; who can buy it; whether
+photo ID is needed). A moderator checks each against the gym's own website
+or a call before it shows, and then it's the gym's fact on GymGO, marked
+**From the gym**, and counts in searches like anything else the gym
+confirms. The gym's page says a verified owner runs it and which facts came
+from them. Owners can't remove or change reviews.
+
+### GymGO's own logo
+
+The logo is a white G whose crossbar turns into an arrow heading out (a
+gym, and going to it) on a blue-to-violet gradient. The original is a
+picture, `apps/mobile/assets/brand/gymgo-logo.webp`. The wordmark sets
+"GymGO" in Inter ExtraBold (SIL Open Font Licence) beside the icon, "GO" in
+the logo's violet.
+
+`node apps/mobile/scripts/brand-mark.mjs` makes everything else from that
+picture: the PNGs `app.json` uses in `apps/mobile/assets/images/` (the iOS
+icon, and its dark and tinted forms; Android's adaptive layers and themed
+icon; the splash screen; the favicon), the badge the app shows on the
+sign-in screens and at the foot of Profile, the web site's tab and
+home-screen icons in `apps/web/src/app/`, and
+`src/components/brandPaths.ts` (the wordmark's letters and the violet).
+The forms that want the G alone lift it off its background, finding the
+background by its smoothness, so the G's shaded fold stays part of the G.
+To change the logo, replace the picture and run the script again; don't
+edit the outputs by hand.
+
+### Gym logos
+
+Eighteen chains have a logo that is free to reuse, found through Wikidata (the
+brand's "logo image") and hosted on Wikimedia Commons: 24 Hour Fitness,
+ACTIV FITNESS, CrossFit, Curves, Equinox, Fitness First, FitX, Gold's Gym,
+GoodLife Fitness, The Gym Group, John Reed Fitness, Kieser, LA Fitness,
+Life Time, Nuffield Health, Snap Fitness, SportCity and Virgin Active. Each shows at the top of that chain's gym pages, beside the name on
+its card when you tap it on the map, and on its tiles when no member has
+shared a photo. Seventeen are public domain as simple text or
+shapes; Gold's Gym's is CC BY 4.0, credited to Gold's Gym. Every gym page
+with a logo credits it and says GymGO isn't connected to or endorsed by the
+brand. A logo is still its owner's trademark: GymGO uses it only to say
+which gym this is.
+
+Every other gym with a website gets **the icon from its own website**
+(below).
+
+The icon from a gym's own website: the
+square picture a phone puts on its home screen, or the logo the site
+declares for search engines. It's shown the way a browser or a search engine
+shows a site's icon beside its link, credited to the site ("Icon from
+dohertysgym.com, the gym's own website"). The server
+fetches it the first time someone looks, keeps it for a month (a week when
+there's none, an hour when the site didn't answer), and shares it between a
+chain's branches. It takes whatever icon the site has: a big one when there
+is one, else a small one (down to 32 pixels, which the app draws smaller,
+not blurred). When the site has none, or refuses automated visitors (as
+Derrimut 24:7's and World Gym's do), it takes **Google's copy of the site's
+icon** instead, the same one Google shows beside the site in its results
+(Google's favicon service at `t3.gstatic.com`, which also turns `.ico` and
+`.svg` icons into PNG). A white mark on a transparent background, which
+would vanish on the white plate, is put on a dark square instead; nothing
+else about an icon is changed. A branch the map gives no website borrows its chain's, but
+only when two or more branches in that country share the very same site: a
+CrossFit affiliate never shows another affiliate's icon. About 50 chains
+whose branches the map often lists without a website (Club Lime, Revo,
+Goodlife, Fitstop, F45, Plus Fitness, Fernwood, 9Round, Anytime Fitness,
+Genesis, CorePlus, 12RND and others) have their official site written down in
+`packages/domain/src/chainSites.ts`, each checked by hand, some only in one
+country where another business elsewhere has a similar name. And 168
+Australian gyms the map gives no website had theirs found by GymGO
+(`packages/au-data/src/websites.ts`, and three in Melbourne in
+`packages/melbourne-data/src/gyms.ts`): 23 by
+`packages/au-data/scripts/websites.py`, which tries the domains a gym of that
+name would own and keeps one only when the site's title names the gym and
+the page names its suburb (or street), and the rest by searching the web for
+each gym without one in Melbourne, Sydney and Brisbane. Every one was read
+by hand against the gym's name and suburb, and the gym page cites it as
+found by GymGO, not by the gym. Another 229 (108 in Australia, among them
+Perth, Adelaide, Canberra, the Gold Coast and Hobart, and 121 in the US) were looked
+up the same way, by the gym's name with its street or suburb, and kept only
+when the site's address matched where the gym is on the map
+(`packages/domain/src/websiteRows.ts`, also cited as found by GymGO); for a
+branch of a small chain that's its own page on the chain's site. A bigger
+table of chains, with each one's site per country (`CHAINS` in
+`packages/domain/src/websites.ts`: about 85, among them Jetts, Zap, Orangetheory,
+Planet Fitness, PureGym, Basic-Fit and US chains such as NYSC, Youfit and
+Chuze), is asked before `chainSites.ts`, matching the brand's Wikidata item
+as the map tags it, the brand, or the name. Of the 2,995 real gyms in the
+bundled cities, 322 have a Commons logo and 2,176 more have a website of
+their own or their chain's to take an icon from (a few of those sites have
+no icon anywhere); the other 497 (107 of them in Australia, 193 in the US)
+show the plain symbol, mostly independents with no website anyone could
+confirm. It only accepts real
+PNG, JPEG, WebP or GIF images, and it will only
+connect to public addresses, because website addresses come from
+OpenStreetMap, which anyone can edit. A gym without a website, or whose site
+has no icon anywhere (Google's copy included), shows a plain symbol, never
+a made-up logo. To switch website icons off, start the server with
+`GYMGO_SITE_ICONS=off`.
+
+The Commons logos are copied into the app (`apps/mobile/assets/logos/`), so the app
+never fetches them from Wikimedia. To look for new ones after the gym data
+changes, run `node apps/mobile/scripts/brand-logos.mjs`. It keeps only logos
+under a licence GymGO can use, and goes slowly because Wikimedia limits busy
+networks.
+
+### What machines a gym has
+
+Gyms hardly ever publish their equipment. Their websites say "free weights"
+and "cardio", and Google has no equipment list either. So GymGO shows two
+things, kept apart:
+
+- **What the gym publishes**, with a link to the page it came from.
+- **What members say**: anyone signed in can open a gym's **Equipment**
+  section, tap **Trained here? Tick what they have**, and mark each machine
+  **Yes** or **No** (thumbs up or down), plus the heaviest dumbbells if they
+  know. The card then shows a tally, such as "Squat rack, 3 thumbs up", with
+  how many members reported and when. You can change your report any time. Members' reports are labelled
+  as theirs and never make a gym "Good to go" on their own.
+
+### Open late, Find a machine, Trips
+
+- **Open late / 24 hours**: in Filters (Opening hours) and as chips over the
+  results. Open late means still open at 10 pm on the day you picked; 24
+  hours means open round the clock that day. Both go by the hours the gym
+  publishes (visitors' hours first, then members', then staffed); a gym that
+  publishes none is left out, not guessed.
+- **Find a machine** (Home → Machines): pick the machines you need (up to
+  8) and how far you'll go. You get the gyms near your search that have
+  them, those with all of them first. Each line says where the yes comes
+  from: the gym's own record ("From the gym", "Checked by us") or members
+  ("3 members say so, 1 says no"). Members count only when more say yes
+  than no, and a gym whose record says it hasn't got one is left out. The
+  app asks the server for members' tallies of those machines in one request,
+  without saying where you are.
+- **Trips** (Home → Trips): add where you're going and when. GymGO lists the
+  gyms within 10 km there that let visitors in on those days, checked at
+  7 am, noon and 6 pm on the gym's clock, with a dot per day (green: visitors
+  in; amber: ask first; grey: not then). Trips stay on your phone. Somewhere
+  GymGO hasn't read the map yet, it sends you to Search this area first;
+  abroad without Pro, the trip is kept and the list is Pro's.
+
+### Google info (free, nothing to set up)
+
+Each gym has a **See it on Google** button. It opens a full-screen page with
+**Google's own map and card for the gym**: its name, address, star rating
+and number of reviews, straight from Google. Tap the ↗ on Google's card, or
+**Open in Google Maps**, to see every photo and review in Google Maps
+itself. Under that is Google's **Street View** nearest the gym, so you can
+see the building. Both use Google's public embed, so they're free, with no
+key, no account and no limit.
+
+Why not pull Google's photos and reviews into GymGO's own pages? Google's
+terms don't allow copying or storing them, and scraping them breaks those
+terms. The reviews and photos also belong to the people who posted them.
+Showing Google's own embed and linking to Google is the free way to do it
+properly.
+
+If GymGO ever becomes a business, Google asks for its official Maps Embed
+API instead of the public embed. That's also free and unlimited, but it
+needs a Google Cloud account with billing set up.
+
+#### Optional extra: Google's photos, reviews and details on every gym
+
+With your own Google Places API key, each gym's own page gets Google's
+photos at the top (when no member has shared one) and a **From Google Maps**
+section, and the Google page shows the same under the map:
+Google's photos (up to six) with each photographer credited, its rating and
+latest reviews, whether it's open now and its opening hours, phone number,
+website, Google's one-line description, and what Google knows about
+accessibility, parking and payment. It's labelled as Google's, isn't saved,
+and never changes GymGO's own answer. Google doesn't hold email addresses,
+so there are none from Google. And there's no free way to get this data out
+of Google: copying it from Google Maps pages breaks Google's terms, so GymGO
+uses Google's own API or its free embed, nothing else. **This part is not free.**
+It needs a Google Cloud account with billing turned on. Google gives a free
+allowance each month and then charges. At the time of writing that was about
+1,000 place lookups and 1,000 photos a month for the kind GymGO uses, so
+roughly 250 page opens a month are free (one lookup and up to four photos
+each). Check Google's current pricing first, and set a daily limit on the
+API in Google Cloud so it can never cost more than you've decided.
+
+Even then, GymGO never saves what Google sends (only Google's ID for each
+gym, which Google allows), credits Google and every photo and review author,
+and doesn't let Google's hours change its own answers. To switch it on, in
+Google Cloud create a project, turn on billing, enable **Places API (New)**,
+create an API key restricted to that API, then start GymGO with it:
+
+```powershell
+$env:GOOGLE_PLACES_API_KEY = "your-key-here"
+gymgo
+```
+
+On a Mac or Linux: `GOOGLE_PLACES_API_KEY=your-key-here npx pnpm@10 app`.
+The key stays on your computer; the app never sees it.
+
+### Search this area (OpenStreetMap, free, no key)
+
+"Search this area" asks the public Overpass API at `overpass-api.de`. It's
+free and needs no account; its operators ask for fewer than 10,000 requests
+a day, and GymGO stays far under that: one request at a time, at most 500 a
+day, 30 an hour per address, and each tenth-of-a-degree tile (about 11 km)
+fetched at most once a month. Public Overpass servers are often slow or
+refuse a given network, so GymGO tries the main one, its second instance
+(lz4), then two public mirrors (kumi.systems and VK's maps.mail.ru), giving
+each 30 seconds. To
+use your own list instead, set
+`GYMGO_OVERPASS_URL=https://…/api/interpreter,https://…/api/interpreter`.
+
+A **country's gyms in one file** (for the app to keep; see Explore above)
+come from the same servers: `GET /api/country/AU/pack` builds it the first
+time it's asked for, one state or region at a time (gyms and place names in
+separate questions, so a busy server gets through them), then keeps it a
+month and serves it gzipped. At most six are built a day, one at a time; a
+failed build is tried again after an hour. Gyms bundled with the app are
+left out of it, and the ones in it are saved like an area search's, so each
+has its own page. Your own country's is free; another country's needs Pro,
+like searching an area there.
+Looking places up by name uses Photon's public server; set
+`GYMGO_GEOCODER_URL` to use another Photon server.
+
+### Sign in with Google and Apple
+
+Both are built, and both are **off until you set them up**, because each
+needs you to register GymGO with Google or Apple. GymGO checks every
+sign-in on the server: the token's signature against Google's or Apple's
+published keys, that it was made for your app, that it's in date, and a
+one-time code against replay. It never learns a Google or Apple password.
+It never quietly joins a Google or Apple sign-in to an existing
+email-and-password account with the same address (GymGO doesn't check the
+emails people sign up with, so that could be someone else's account); the
+account's owner connects Google or Apple from **Account** instead.
+
+**Google** (free):
+
+1. In [Google Cloud Console](https://console.cloud.google.com), make a
+   project, then APIs & Services → OAuth consent screen: External, app name
+   GymGO, and add yourself as a test user.
+2. Credentials → Create credentials → OAuth client ID, once per place you
+   run GymGO:
+   - **Web application**, for the browser: add `http://localhost:8081` under
+     both Authorized JavaScript origins and Authorized redirect URIs.
+   - **iOS**, for the Xcode build: the bundle ID is your app id
+     (`com.yourname.gymgo`; the Mac launcher prints it).
+   - **Android**: package `app.gymgo.local` and your debug key's SHA-1.
+3. Put the client ids in `apps/server/.env.local` (make the file):
+
+   ```
+   GYMGO_GOOGLE_CLIENT_ID_WEB=1234-abc.apps.googleusercontent.com
+   GYMGO_GOOGLE_CLIENT_ID_IOS=1234-def.apps.googleusercontent.com
+   ```
+
+   Client ids aren't secrets. Start GymGO again: the server says `Sign in
+   with Google: on`, and the Mac launcher remakes the Xcode project so
+   Google can hand the sign-in back to the app.
+
+**Apple** needs a paid Apple Developer Program membership ($99 a year): a
+free Personal Team can't sign an app that has Sign in with Apple, so it's
+off by default and nothing here turns it on for you. With a paid team, add
+`GYMGO_APPLE_SIGN_IN=on` to `apps/server/.env.local` and run the Mac
+launcher with `--xcode --team YOURTEAMID`: the Xcode project gets the
+capability, and the server accepts tokens for your app id. Apple's button
+shows on iPhone only (Apple's sign-in on the web and Android needs a
+separate Services ID, not set up here).
+
+Until then, email and password work as before, and the buttons simply
+don't show.
+
+### GymGO Pro (subscriptions, through Stripe)
+
+GymGO has two plans. When it first opens it asks **which country is
+yours**; you can change it in Profile → Country. **Free** is everything that
+tells you the truth about a gym in that country: every gym and city, the
+answer for your visit and why, the source behind every fact, prices and hours
+where published, reviews, photos, members' machine reports and the workout
+builder, plus logging your workouts with the rest timer, plate calculator,
+your records and your history. A gym's page opened from a link or your
+saved list always opens, wherever the gym is.
+
+**Pro** is for going further and keeping more:
+
+| | Free | Pro |
+|---|---|---|
+| Gyms worldwide | Your country | Every country, wherever you travel |
+| Saved gyms | Up to 10 | Unlimited |
+| Compare side by side | 2 gyms | 4 gyms |
+| Workout library | Build and share | Save workouts to your account, reopen them on any device |
+| Progress charts | Your records and history | A chart for every exercise |
+| Next-session targets | Last time's numbers | What to lift next, worked out for you |
+| Muscle balance | Sets per workout | Every muscle over the last four weeks, and the ones you've missed |
+| Warm-up sets | Plates for any weight | A warm-up ramp to your weight, with the plates |
+| Gym notes | — | Your own notes on each gym, on your device |
+| Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
+| Colour themes | Indigo, light or dark | Twelve accents (Rainbow and Camo too), four looks (8-bit, Classic, Material, Neon), light or dark |
+| Interval timer | Tabata and EMOM | Your own work, rest and rounds; keep up to 10 |
+| 1-rep max | Your estimated max, and 90%, 80% and 70% | Every step from 100% to 50% with plates, and what you could lift for 2 to 12 reps |
+| Streak freeze | — | One missed week a month doesn't end your streak |
+| Profile ring | Your picture | Ringed in your accent |
+
+One tier, two ways to pay, tax included:
+
+| | Australia | United States |
+|---|---|---|
+| Monthly | A$3.99 | US$2.99 |
+| Yearly | A$29.99 (save 37%) | US$19.99 (save 44%) |
+
+The prices live in `packages/domain/src/plans.ts`; change them there and run the setup below
+again. Existing subscribers keep the price they signed up at.
+
+**Pro Duo** is the same Pro for two people: the subscriber adds one more
+person by their friend code (Pro screen → Your Duo), who has Pro for as long
+as the Duo lasts; either can end it, and nothing but Pro is shared. Planned
+at A$5.99 a month or A$44.99 a year (US$4.49 / US$29.99).
+
+**Gift Pro** is a year of Pro paid once (A$29.99 or US$19.99, a year's
+price): paying gives a code like `K7QM-2XPH-9RTA` on the Pro screen to send
+on, and whoever enters it under **Have a gift code?** gets a year of Pro (a
+second gift adds a second year). It doesn't renew. A code someone guesses
+is unlikely: 10 tries a day per account, and 31¹² possible codes.
+
+**Partner day passes**: where GymGO has an agreement with a gym, an admin
+adds a pass for it (`POST /api/admin/passes`), and the gym's page offers it:
+the pass price and GymGO's booking fee shown apart with the total, a day in
+the next week, then Stripe's checkout. Paying gives a pass code on the gym's
+page to show at reception. **No gym has a pass**: there are no agreements
+yet, and GymGO never lists one a gym hasn't made.
+
+Duo and gift prices live in `packages/domain/src/perks.ts`; the setup below
+creates them in Stripe beside Pro's. All of this is the owner's to decide,
+and is tested only against a pretend Stripe here.
+
+People pay on **Stripe's own checkout page**, so GymGO never sees a card.
+They manage or cancel on Stripe's page too (Profile → Manage subscription),
+and keep Pro to the end of what they paid for. If Pro ends, nothing they
+saved is deleted; they just can't add more than Free allows. Deleting an
+account cancels its subscription first.
+
+**Until you connect Stripe, Pro isn't on sale**: the Pro screen shows the
+planned prices and says "Not on sale yet". To connect it (test mode, no real
+money):
+
+1. Make a free account at stripe.com. Stay in **Test mode**, go to
+   Developers → API keys and copy the **Secret key** (it starts `sk_test_`).
+2. Copy `apps/server/.env.example` to `apps/server/.env.local` and put the
+   key after `STRIPE_SECRET_KEY=`. That file is git-ignored; the key stays on
+   your computer and the app never sees it.
+3. Create GymGO Pro in your Stripe account (the product, its four prices and
+   the manage-subscription page). This charges nobody:
+
+   ```bash
+   npx pnpm@10 --filter @gymgo/server stripe:setup
+   ```
+
+4. Start GymGO as usual. The server says `GymGO Pro payments (Stripe): on,
+   test mode`. Sign in, open Profile → GymGO Pro, pick a plan, and pay with
+   Stripe's test card **4242 4242 4242 4242**, any future date, any CVC.
+
+**Webhooks** (recommended): they tell GymGO about renewals, failed payments
+and cancellations as they happen. Without them Pro still turns on straight
+after checkout, and the app re-checks with Stripe now and then. On your
+computer, install the Stripe CLI and run
+`stripe listen --forward-to localhost:4000/api/billing/webhook`, then put the
+`whsec_…` it prints after `STRIPE_WEBHOOK_SECRET=`.
+
+**Taking real money** needs more than a live key, and none of it is done:
+
+- The server has to be hosted on a public `https://` address, with a webhook
+  endpoint added in Stripe for `checkout.session.completed` and
+  `customer.subscription.*`. `deploy/` does the hosting
+  ([Put GymGO online](#put-gymgo-online-free-hosting)); nothing is on a
+  public server yet.
+- The Terms of Service, Privacy Policy and Refunds pages exist (`/terms`,
+  `/privacy`, `/refunds`) and the Pro screen links them; add their addresses
+  to Stripe's public business details too, and have a lawyer read them.
+- Stripe's customer emails turned on: receipts, and a reminder before a
+  yearly plan renews (see [Legal basics](#legal-basics)). The renewal terms
+  are already shown under the buy button.
+- Tax: in Australia, registering for GST once turnover reaches A$75,000; in
+  the US, sales tax on subscriptions varies by state. Stripe Tax can work it
+  out. Prices are set tax-inclusive so what's shown is what's paid.
+- **App stores.** Apple and Google have their own rules for selling
+  subscriptions inside an app, and they differ by country and change often.
+  As of writing, Apple requires its own in-app purchase for digital
+  subscriptions except where a country's rules allow links to outside
+  payment (the US storefront allows it); Google Play has similar rules with
+  its own exceptions. Check both stores' current policies before submitting.
+  So a store build hides the buy button unless `EXPO_PUBLIC_NATIVE_CHECKOUT=on`
+  is set on purpose; in Expo Go and the browser it's always there.
+
+The setup refuses a live key (`sk_live_…`) unless you add `--live`.
+
+### Put GymGO online (free hosting)
+
+Everything above runs on your own computer. To have GymGO on the internet,
+for friends to use on their phones and for real Pro payments, it needs a
+server that's always on. `deploy/` has everything for one machine:
+
+- **The GymGO server** in a container, its database, members' photos and
+  backups in `deploy/data`.
+- **Caddy** in front of it, which gets and renews an HTTPS certificate by
+  itself and serves **the web version of the app** at the same address
+  (`https://your-domain`). The server's legal pages are there too
+  (`/terms`, `/privacy`, `/refunds`, `/community`).
+- **A copy of the database every day**, kept 14 days (the privacy policy
+  promises a deleted account leaves the backups within that time).
+
+**A free server: Oracle Cloud's Always Free tier.** It includes an Arm
+virtual machine of up to 4 cores and 24 GB of memory, with 200 GB of disk,
+free with no time limit (as of writing; check the current offer). Making the
+account needs a card to prove who you are; the Always Free resources aren't
+charged.
+
+1. Make an account at **cloud.oracle.com**. Pick your home region near your
+   users (Sydney or Melbourne for Australia); it can't be changed later.
+2. **Compute → Instances → Create instance.** Image: **Ubuntu 24.04**.
+   Shape: **Ampere, VM.Standard.A1.Flex**, 2 OCPUs and 12 GB (inside the
+   free allowance). Add your SSH public key (or let it make one, and save
+   it). Create. If it says it's out of capacity, try another availability
+   domain or try again later. Note the instance's **public IP address**.
+3. **Open the web ports:** on the instance's page, its subnet → its
+   **security list** → **Add ingress rules**: source `0.0.0.0/0`, TCP,
+   destination ports `80,443`. (The setup script opens them in the server's
+   own firewall.)
+4. **A name for it.** A free subdomain from **duckdns.org**: sign in, add a
+   name, and set it to the instance's IP, giving `gymgo-yourname.duckdns.org`.
+   Or point a domain you own at the IP (an `A` record).
+5. **Sign in to the server and set it up.** On your computer (PowerShell
+   on Windows, Terminal on a Mac):
+
+   ```bash
+   ssh ubuntu@YOUR.SERVER.IP
+   git clone https://github.com/ashenkodituwakku/GymGO.git
+   cd GymGO && git checkout claude/friendly-johnson-9rzxrj && cd deploy
+   bash setup.sh        # installs Docker, then makes deploy/.env
+   nano .env            # set GYMGO_DOMAIN and GYMGO_PUBLIC_URL (and the rest you use)
+   bash setup.sh        # builds and starts GymGO (a few minutes the first time)
+   ```
+
+   If the repository is private, GitHub asks for a password when cloning:
+   use a personal access token (GitHub → Settings → Developer settings →
+   Personal access tokens) with read access to it.
+6. Open `https://your-domain`: that's GymGO's web app. `https://your-domain/terms`
+   shows the terms with the details you put in `.env`.
+
+Then, as you need them:
+
+- **Phones:** build the app pointed at the hosted server. On a Mac:
+  `GYMGO_SERVER_URL=https://your-domain bash ~/GymGO/scripts/gymgo-mac.sh --xcode`.
+  For any other build, set `EXPO_PUBLIC_API_URL=https://your-domain`.
+  (Expo Go, through the launcher, keeps using the server on your computer.)
+- **Stripe:** in Stripe, **Developers → Webhooks → Add endpoint**:
+  `https://your-domain/api/billing/webhook`, with the events
+  `checkout.session.completed` and `customer.subscription.created`,
+  `.updated` and `.deleted`. Put its signing secret in `.env` as
+  `STRIPE_WEBHOOK_SECRET`, and add your Terms, Refunds and Privacy page
+  addresses in Stripe's public business details. Then
+  `sudo docker compose up -d` to restart with the new settings.
+- **Email** (password reset links and bug reports): set `GYMGO_SMTP_URL`
+  as in [Report a bug](#report-a-bug).
+- **Make yourself a moderator:**
+  `sudo docker compose exec app node --import tsx src/cli.ts moderator you@example.com`.
+- **Update** to the latest GymGO, keeping all data: `bash update.sh`.
+- **Logs:** `sudo docker compose logs -f app`.
+- **Backups off the server.** The daily copies sit on the same disk, so
+  copy the whole data folder somewhere else now and then (photos included).
+  From your computer:
+  `scp -r ubuntu@YOUR.SERVER.IP:GymGO/deploy/data ./gymgo-data-backup`.
+  To restore a copy: `sudo docker compose stop app`, copy a file from
+  `data/backups/` over `data/gymgo.db`, delete `data/gymgo.db-wal` and
+  `data/gymgo.db-shm`, then `sudo docker compose start app`.
+- **Keeping the free server.** Oracle may reclaim an Always Free instance
+  that sits almost idle (low processor, network and memory use) for a week.
+  Upgrading the account to Pay As You Go keeps the same free allowance and
+  avoids that; set a budget alert in Oracle's billing settings to be sure
+  nothing is ever charged.
+- **On a network that inspects HTTPS** (some offices), the build can't
+  download packages until it trusts that network's certificate. Give it as
+  a build secret named `extra_ca`: add `secrets: [extra_ca]` under each
+  service's `build:` in an override file, with a top-level
+  `secrets: { extra_ca: { file: /path/to/certificate.pem } }`.
+
+Other free options work too, as long as the machine keeps its disk: the
+same `deploy/` folder runs on any Linux server with Docker. Google Cloud's
+free e2-micro has only 1 GB of memory, too little to build the web app on
+it; build the images on another machine and copy them over.
+
+### The older website
+
+The first version of GymGO was a Next.js website, and it's still in the
+repository. Start it with `gymgo -OldWebsite` (or `pnpm dev`) and open
+**http://localhost:3000**. New work goes into the app.
+
+---
+
+A gym discovery and comparison pilot for inner Sydney. It answers three
+questions that a map pin and an "open now" badge do not: does this gym have the
+equipment I need, what will the visit actually cost, and can a visitor get in at
+the hour I want to train?
+
+The organising principle is that **"unknown" is a real answer**. A blank field is
+never a no, a missing fee is never A$0, and a fact past its recheck target stops
+counting as confirmed. Every result is one of three things, and the difference is
+always visible:
+
+| Tier | Meaning |
+|---|---|
+| **Confirmed match** | Every stated requirement is met by evidence we checked recently. |
+| **Needs confirmation** | Could work, but something is unknown, stale or conditional. |
+| **Does not match** | A stated requirement is contradicted by what we know. |
+
+## Running it
+
+Requires Node 20.9+ and pnpm. Nothing here needs an API key, a credential, or a
+paid service.
+
+```bash
+pnpm install
+
+pnpm app          # server + app: opens the browser, QR code for Expo Go
+pnpm server       # just the server (http://localhost:4000)
+pnpm dev          # website: http://localhost:3000
+pnpm build        # website production build
+pnpm start        # serve the website production build
+
+pnpm verify       # typecheck + lint + unit tests, every package
+pnpm test         # unit tests only
+pnpm test:e2e     # website: fresh build + Playwright at 3 viewports
+```
+
+Start here: [`/search?q=Surry+Hills&budget=30&date=2026-09-23&time=19:00&eq=squat_rack&eq=cable_station&eq=dumbbells&db=40&r=5`](http://localhost:3000/search?q=Surry+Hills&budget=30&date=2026-09-23&time=19:00&eq=squat_rack&eq=cable_station&eq=dumbbells&db=40&r=5)
+— the reference task: a gym near Surry Hills with a squat rack, cable station
+and dumbbells to at least 40 kg, admitting a visitor at 7pm for under A$30.
+
+### Signing in
+
+The local development adapter has no passwords: it exists so the permission
+rules can be exercised. Go to `/account` and pick an account.
+
+| Account | What it can do |
+|---|---|
+| Sam (member) | Review, suggest corrections, claim a gym |
+| Jo (gym operator) | Starts with nothing; must claim a branch and be approved |
+| Ali (moderator) | Decide corrections and reviews. Cannot see ownership evidence |
+| Robin (administrator) | Decide ownership claims and see their evidence |
+
+It is refused in a production build unless two separate environment variables
+are set deliberately, and when they are, every page carries a warning banner.
+
+### Configuration
+
+Everything is optional; see `apps/web/.env.example`. Without any of it the app
+runs with honest "not configured" states rather than fake successes.
+
+| Variable | Effect |
+|---|---|
+| `GYMGO_DATA_SOURCE` | `demo` (default outside production) or `none` |
+| `GYMGO_AUTH_ADAPTER` | `local-dev` or `disabled` (default in production) |
+| `NEXT_PUBLIC_MAP_STYLE_URL` | A MapLibre style document; without it the map says so |
+| `NEXT_PUBLIC_MAP_TILE_URL` + `NEXT_PUBLIC_MAP_ATTRIBUTION` | A raster basemap. Attribution is required, not optional |
+| `NEXT_DIST_DIR` | Build output directory, so a build does not clobber a running dev server |
+
+## Layout
+
+```
+packages/domain/     Framework-free rules. No React, no Next, no I/O.
+                     The phone and the website run the same search from
+                     here, so a pin's colour and a row's verdict can't drift.
+packages/melbourne-data/  23 real inner-Melbourne gyms, every fact linked to
+                     where it was read (gym websites, OpenStreetMap).
+packages/usa-data/   1,044 real gyms in 40 US cities, map-only, from
+                     OpenStreetMap. scripts/generate.ts rebuilds it.
+packages/au-data/    1,256 more Australian gyms the same way (Sydney,
+                     Brisbane, Perth, Adelaide, Canberra, Gold Coast,
+                     Hobart, and Melbourne beyond the researched 23), plus
+                     Revo Fitness and T1 Fitness from their own websites.
+packages/eu-data/    600 real gyms in 15 European cities, map-only, the
+                     same way (scripts/fetch.py, then scripts/generate.ts).
+packages/osm/        What counts as a gym on OpenStreetMap, and how a mapped
+                     gym becomes a map-only record: one copy, used by both
+                     generators and by the server's "Search this area".
+packages/demo-data/  17 fictional Sydney gyms covering the edge cases.
+apps/server/         The API: accounts, saved gyms, reviews, moderation, on
+                     Node's built-in SQLite. Free, local, no external services.
+apps/mobile/         The iOS and Android app (Expo, React Native).
+  src/app/           Tabs (Home, Explore, Saved, Profile), gym page,
+                     Compare and Workout.
+  src/components/    Map, pins, sheets, place card, filters, body picker.
+  src/lib/           The app's voice (copy.ts), theme, filter state,
+                     cities (places.ts), location, workout generator.
+apps/web/            The earlier Next.js website pilot.
+  src/app/           Pages and the /api/v1 server API.
+  src/server/        Config, persistence, repositories, auth, moderation.
+  e2e/               Playwright specs at 390 / 768 / 1440 px.
+deploy/              GymGO online: the server and Caddy (HTTPS, the web app)
+                     in Docker, with setup and update scripts.
+docs/                Architecture, data model, API, status, launch checklist.
+SECURITY.md          Reporting problems, what's in place, running it safely.
+```
+
+## What is and is not done
+
+`docs/STATUS.md` separates *implemented locally*, *tested locally*,
+*externally integrated*, *native-tested*, *deployed* and *store-approved*, and
+does not collapse them into "production ready". Read it before quoting any of
+this as finished.
+
+In short: the app runs on your PC in the browser, with a real local server
+and database behind it. Its iOS and Android bundles compile, but it has
+**not** been run on a real phone or simulator yet. The Melbourne gyms are
+real, with sources; most of their details are unknown because the gyms don't
+publish them. The other Australian and the US gyms are real but map-only,
+from OpenStreetMap, and nobody has checked that each one is still trading;
+members' reports are how their prices and door rules get filled in. Nothing
+is deployed, and nothing has been submitted to an app store. No gym has been
+contacted, and no customer research has been done — the whole product
+thesis is still a hypothesis.
+
+## Real data, and what "unknown" means
+
+The 23 Melbourne gyms are real. Names and map positions come from
+OpenStreetMap (© OpenStreetMap contributors, ODbL). Prices, hours and
+equipment come only from each gym's own website, read on 23 September 2026,
+and every fact in the app links to the page it came from. What a gym doesn't
+publish is shown as unknown, not guessed. That is why most of them show
+**Call first** 📞: for example, no gym states whether a first-time visitor needs
+an induction, so none can honestly be a sure thing yet. Nothing here was
+supplied by or agreed with the gyms, and none of them has been contacted.
+
+Prices and hours count as current for 30 days after they were checked. After
+that the app flags them as due for a recheck.
+
+The 1,044 US gyms are real places on OpenStreetMap, fetched on 24 and 25
+September 2026 (© OpenStreetMap contributors, ODbL). The script keeps gyms and fitness
+studios you can walk into and drops what the map marks private, gyms inside
+hotels, apartment blocks, offices and campuses, generic "Fitness Center"
+rooms, and yoga, pilates, barre, cycling, dance and climbing studios. It then
+keeps the 40 nearest each city centre. Everything from the map is labelled
+community-reported, not checked. Opening hours are used only when they're
+mapped in a simple form, and count as member hours, never guest hours. No
+US gym is called open for business on the map's word alone.
+
+## Demo data
+
+The 17 Sydney gyms in `packages/demo-data/` are invented. In the phone app,
+turn on **Demo mode** in Profile to see them (the older website shows them
+when you search a Sydney suburb such as Surry Hills). None of the names,
+addresses, prices, hours, equipment or reviews describe a real business. Every
+record is flagged `isDemoData`, the interface says so on every page, and
+production ingestion refuses records carrying the flag.

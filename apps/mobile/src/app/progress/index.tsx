@@ -1,0 +1,351 @@
+/**
+ * Progress: your streak, your week against your goal, your records for every
+ * exercise, your milestones, and every session you've logged. All free; the
+ * chart for each exercise and the muscle balance are Pro.
+ */
+
+import { Stack, useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { GLIDE, Pressable } from '@/components/motion';
+import { Icon, type IconName } from '@/components/Icon';
+import { MilestonesCard, MuscleBalanceCard, WeekCard } from '@/components/TrainingInsights';
+import { PrimaryButton, Txt } from '@/components/ui';
+import { ListSkeleton } from '@/components/Skeleton';
+import { useActiveSession } from '@/lib/activeSession';
+import { api } from '@/lib/api';
+import { useApp } from '@/lib/app-state';
+import { timeLabel } from '@/lib/copy';
+import { haptic } from '@/lib/haptics';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import {
+  durationLabel,
+  formatWeight,
+  fromKg,
+  personalRecords,
+  sessionsByDay,
+  sessionsThisWeek,
+  setCount,
+  setsSummary,
+  unitFor,
+  volumeKg,
+  streakOf,
+  type TrainingSession,
+} from '@/lib/training';
+import { useTrainingLog } from '@/lib/useTraining';
+import { downloadTrainingCsv } from '@/lib/exportData';
+import { exerciseName } from '@/lib/workout';
+import { usePageTitle } from '@/lib/pageTitle';
+import { PageScroll } from '@/components/PageScroll';
+
+const nameOf = exerciseName;
+/** When a session started, as "6:40 pm": the day it was is the heading above it. */
+const startTime = (iso: string) => {
+  const started = new Date(iso);
+  return timeLabel(started.getHours() * 60 + started.getMinutes());
+};
+
+export default function ProgressScreen() {
+  usePageTitle('Progress');
+  const { account, prefs, setPref, billing, openPro } = useApp();
+  // Kept while the server is away too: loading then fails and says so,
+  // where a missing token would ask a signed-in person to sign in.
+  const token = account.token;
+  const log = useTrainingLog(token);
+  const known = log.status === 'ready';
+  // Pro's streak freeze carries the run through one missed week a month; on Free, what one would have kept.
+  const streak = useMemo(() => streakOf(log.sessions, new Date(), billing.isPro), [log.sessions, billing.isPro]);
+  const couldKeep = useMemo(() => (billing.isPro ? null : streakOf(log.sessions, new Date(), true)), [log.sessions, billing.isPro]);
+  const active = useActiveSession();
+  const router = useRouter();
+  const unit = unitFor(prefs.country);
+  const records = useMemo(() => [...personalRecords(log.sessions)].sort((a, b) => b[1].sessions - a[1].sessions || nameOf(a[0]).localeCompare(nameOf(b[0]))), [log.sessions]);
+  const days = useMemo(() => sessionsByDay(log.sessions), [log.sessions]);
+  const [open, setOpen] = useState<string | null>(null);
+
+  const start = active ? (
+    <PrimaryButton label="Back to your workout" icon="play" onPress={() => router.push('/train')} />
+  ) : (
+    <PrimaryButton label="Start a workout" icon="play" onPress={() => router.push({ pathname: '/workout/[id]', params: { id: 'any' } })} />
+  );
+
+  if (!token) {
+    return (
+      <View style={styles.empty}>
+        <Stack.Screen options={{ title: 'Progress' }} />
+        <Icon name="chart" size={34} color={color.brand} />
+        <Txt variant="title2">Keep a training log</Txt>
+        <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
+          Sign in (it’s free) and every workout you finish is kept here, with your records and your streak.
+        </Txt>
+        <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />
+      </View>
+    );
+  }
+
+  return (
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+      <Stack.Screen options={{ title: 'Progress' }} />
+      <Animated.View style={styles.stats}>
+        <Stat icon="flame" tint={color.maybe} value={known ? streak.weeks : null} one="week in a row" many="weeks in a row" />
+        <Stat icon="calendar" tint={color.brand} value={known ? sessionsThisWeek(log.sessions) : null} one="this week" many="this week" />
+        <Stat icon="workout" tint={color.good} value={known ? log.sessions.length : null} one="workout" many="workouts" />
+      </Animated.View>
+      {known && streak.frozen.length > 0 && (
+        <View style={styles.freeze} accessible>
+          <Icon name="sparkle" size={18} color={color.brand} />
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
+            {`Streak freeze: you missed the week${streak.frozen.length > 1 ? 's' : ''} of ${streak.frozen
+              .map((monday) => new Date(monday).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }))
+              .join(' and ')}, and your run carried on. Pro covers one missed week a month.`}
+          </Txt>
+        </View>
+      )}
+      {known && couldKeep && couldKeep.weeks > streak.weeks && (
+        <Pressable onPress={() => openPro('freeze')} accessibilityRole="button" style={({ pressed }) => [styles.freeze, pressed && { opacity: 0.7 }]}>
+          <Icon name="sparkle" size={18} color={color.brand} />
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
+            {`A streak freeze would have kept your ${couldKeep.weeks}-week run going through the week you missed. GymGO Pro covers one missed week a month.`}
+          </Txt>
+          <Icon name="chevron" size={13} color={color.labelTertiary} />
+        </Pressable>
+      )}
+      {start}
+
+      {log.status === 'loading' && <ListSkeleton rows={4} label="Loading your log" />}
+      {log.error && (
+        <View style={styles.problem}>
+          <Txt variant="footnote" color={color.dangerInk}>
+            {log.error}
+          </Txt>
+          <PrimaryButton label="Try again" tone="quiet" onPress={log.reload} />
+        </View>
+      )}
+      {log.status === 'ready' && log.sessions.length === 0 && (
+        <Txt variant="subhead" color={color.labelSecondary}>
+          Nothing logged yet. Build a workout, tap Start, and tick your sets as you go.
+        </Txt>
+      )}
+
+      {known && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+            YOUR WEEKS
+          </Txt>
+          <Animated.View>
+            <WeekCard sessions={log.sessions} goal={prefs.weeklyGoal} onGoal={(goal) => setPref('weeklyGoal', goal)} />
+          </Animated.View>
+        </>
+      )}
+
+      {known && log.sessions.length > 0 && (
+        <Animated.View>
+          <MuscleBalanceCard sessions={log.sessions} isPro={billing.isPro} onPro={() => openPro('balance')} />
+        </Animated.View>
+      )}
+
+      {records.length > 0 && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+            YOUR RECORDS
+          </Txt>
+          <Animated.View layout={GLIDE} style={styles.group}>
+            {records.map(([exerciseId, record], index) => {
+              const best = record.heaviestSet;
+              return (
+                <Pressable
+                  key={exerciseId}
+                  onPress={() => router.push({ pathname: '/progress/[exercise]', params: { exercise: exerciseId } })}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
+                >
+                  <View style={styles.flex}>
+                    <Txt variant="body">{nameOf(exerciseId)}</Txt>
+                    <Txt variant="footnote" color={color.labelSecondary}>
+                      {best
+                        ? `Heaviest ${formatWeight(Number(fromKg(record.heaviestKg!, unit).toFixed(1)), unit)} × ${best.reps}`
+                        : record.mostReps !== null
+                          ? `Most reps ${record.mostReps}`
+                          : 'No sets yet'}
+                      {record.e1rmKg !== null ? ` · 1-rep max ≈ ${formatWeight(Math.round(fromKg(record.e1rmKg, unit)), unit)}` : ''}
+                    </Txt>
+                  </View>
+                  <Icon name="chevron" size={13} color={color.labelTertiary} />
+                </Pressable>
+              );
+            })}
+          </Animated.View>
+        </>
+      )}
+
+      {known && log.sessions.length > 0 && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+            MILESTONES
+          </Txt>
+          <Animated.View>
+            <MilestonesCard sessions={log.sessions} />
+          </Animated.View>
+        </>
+      )}
+
+      {log.sessions.length > 0 && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+            HISTORY
+          </Txt>
+          <Animated.View layout={GLIDE} style={styles.days}>
+            {days.map((day) => (
+              <View key={day.key} style={styles.day}>
+                <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" style={[face('semibold'), styles.dayLabel]}>
+                  {day.label}
+                </Txt>
+                <View style={styles.group}>
+                  {day.sessions.map((session, index) => (
+                    <SessionRow
+                      key={session.id}
+                      session={session}
+                      first={index === 0}
+                      open={open === session.id}
+                      onToggle={() => setOpen(open === session.id ? null : session.id)}
+                      onDelete={async () => {
+                        await api.deleteTraining(token, session.id);
+                        log.remove(session.id);
+                      }}
+                    />
+                  ))}
+                </View>
+              </View>
+            ))}
+          </Animated.View>
+        </>
+      )}
+
+      <PrimaryButton label="Plate calculator" icon="plates" tone="quiet" onPress={() => router.push('/plates')} />
+      {known && log.sessions.length > 0 && (
+        <PrimaryButton
+          label="Export your log (CSV)"
+          icon="download"
+          tone="quiet"
+          onPress={() => void downloadTrainingCsv(log.sessions).catch(() => undefined)}
+        />
+      )}
+      {known && log.sessions.length > 0 && (
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.healthNote}>
+          A row for every set, for Excel, Numbers or Google Sheets. Apple Health and Google Fit can only be connected from a version of GymGO built
+          for the App Store or Play Store, which Expo Go can’t run; this file is the way to take your log elsewhere until then.
+        </Txt>
+      )}
+    </PageScroll>
+  );
+}
+
+/** `value` is null until the log has loaded: a dash, not a zero, so a log that didn't load doesn't read as no training. */
+function Stat({ icon, tint, value, one, many }: { icon: IconName; tint: string; value: number | null; one: string; many: string }) {
+  const label = value === 1 ? one : many;
+  return (
+    <View style={styles.stat} accessible accessibilityLabel={value === null ? `${many}: not loaded` : `${value} ${label}`}>
+      <Icon name={icon} size={18} color={tint} />
+      <Txt variant="title" style={face('bold')}>
+        {value === null ? '—' : String(value)}
+      </Txt>
+      <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
+        {label}
+      </Txt>
+    </View>
+  );
+}
+
+function SessionRow({
+  session,
+  first,
+  open,
+  onToggle,
+  onDelete,
+}: {
+  session: TrainingSession;
+  first: boolean;
+  open: boolean;
+  onToggle: () => void;
+  onDelete: () => Promise<void>;
+}) {
+  const [confirm, setConfirm] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const volume = fromKg(volumeKg(session), session.unit);
+  return (
+    <View style={[!first && styles.rowLine]}>
+      <Pressable
+        onPress={() => {
+          haptic.select();
+          setConfirm(false);
+          onToggle();
+        }}
+        accessibilityRole="button"
+        aria-expanded={open}
+        style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.fill }]}
+      >
+        <View style={styles.flex}>
+          <Txt variant="body">{session.name}</Txt>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {[startTime(session.startedAt), durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt)), `${setCount(session)} set${setCount(session) === 1 ? '' : 's'}`, volume > 0 ? `${Math.round(volume).toLocaleString()} ${session.unit}` : null]
+              .filter(Boolean)
+              .join(' · ')}
+          </Txt>
+        </View>
+        <Icon name="chevron" size={13} color={color.labelTertiary} />
+      </Pressable>
+      {open && (
+        <View style={styles.detail}>
+          {session.exercises.map((logged) => (
+            <Txt key={logged.exerciseId} variant="footnote">
+              <Txt variant="footnote" style={face('semibold')}>
+                {nameOf(logged.exerciseId)}
+              </Txt>
+              {`  ${setsSummary(logged.sets, session.unit)}`}
+            </Txt>
+          ))}
+          <Pressable
+            onPress={() => {
+              if (!confirm) return setConfirm(true);
+              onDelete().catch(() => setProblem('Couldn’t delete it just now.'));
+            }}
+            accessibilityRole="button"
+            style={styles.delete}
+          >
+            <Txt variant="footnote" color={color.dangerInk} style={face('semibold')}>
+              {confirm ? 'Tap again to delete this workout' : 'Delete'}
+            </Txt>
+          </Pressable>
+          {problem && (
+            <Txt variant="footnote" color={color.dangerInk}>
+              {problem}
+            </Txt>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const styles = themed(() => StyleSheet.create({
+  healthNote: { paddingHorizontal: space[4], textAlign: 'center' },
+  page: { flex: 1, backgroundColor: color.groupedBackground },
+  content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
+  center: { textAlign: 'center' },
+  flex: { flex: 1, gap: 2 },
+  stats: { flexDirection: 'row', gap: space[2] },
+  stat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: space[3], borderRadius: radius.lg, backgroundColor: color.card, ...shadow.plate },
+  freeze: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.brandTint },
+  problem: { gap: space[2] },
+  section: { marginTop: space[3], marginLeft: space[4] },
+  days: { gap: space[4] },
+  day: { gap: space[2] },
+  dayLabel: { marginLeft: space[4] },
+  group: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
+  rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
+  detail: { paddingHorizontal: space[4], paddingBottom: space[3], gap: space[1] },
+  delete: { alignSelf: 'flex-start', paddingVertical: space[2] },
+}));

@@ -7,7 +7,8 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/motion';
 import { BugReportQueue, MemberReportQueue, ModerationQueue, PhotoQueue } from '@/components/AccountContent';
 import { ClaimQueue, OwnerUpdateQueue } from '@/components/Moderation';
 import { PageScroll } from '@/components/PageScroll';

@@ -11,8 +11,8 @@
  */
 
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { ReduceMotion, ZoomIn } from 'react-native-reanimated';
+import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import type { GymRecord } from '@gymgo/domain';
 import { useApp } from '@/lib/app-state';
 import { TIERS, checkIn, collectionStats, localDay, tierFor } from '@/lib/collection';
@@ -28,7 +28,7 @@ import { setsFinished, type GymSet } from '@/lib/sets';
 import { GymScan, type ScanPhase } from './GymScan';
 import { TIER_METAL } from './GemCard';
 import { Icon } from './Icon';
-import { FADE_IN, FADE_OUT, GLIDE, Pressy } from './motion';
+import { FADE_IN, FADE_OUT, GLIDE, POP_IN, Pressable, Pressy } from './motion';
 import { PrimaryButton, Txt } from './ui';
 
 /** The scan stays up at least this long, so an instant answer still reads as a check. */
@@ -129,7 +129,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
       <View style={styles.head}>
         <Animated.View
           key={celebrate ? 'pop' : 'still'}
-          entering={celebrate ? ZoomIn.springify().damping(16).stiffness(260).reduceMotion(ReduceMotion.System) : undefined}
+          entering={celebrate ? POP_IN : undefined}
           style={[styles.medal, { backgroundColor: tier ? TIER_METAL[tier.tier] : color.fill }]}
         >
           <Icon name={tier ? 'trophy' : 'pin'} size={22} color={tier ? color.onBrand : color.labelSecondary} />

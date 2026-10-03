@@ -8,7 +8,7 @@
 
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Platform, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import {
   EQUIPMENT_TYPES,
@@ -35,7 +35,7 @@ import { StateGlyphRow } from './StateGlyphRow';
 import { useApp } from '@/lib/app-state';
 import { LogoBadge, LogoCredit, useGymMark } from './BrandLogo';
 import { Glass } from './Glass';
-import { FADE_IN, FADE_OUT, Pressy } from './motion';
+import { FADE_IN, FADE_OUT, Pressable, Pressy } from './motion';
 import { ActionButton, CloseButton, Fold, InfoRow, RoundToggle, TIER_COLOUR, Txt } from './ui';
 import { JoinGym, MembershipBanner } from './JoinGym';
 

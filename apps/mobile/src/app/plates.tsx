@@ -6,7 +6,8 @@
 
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/motion';
 import { BarDiagram } from '@/components/BarDiagram';
 import { Icon } from '@/components/Icon';
 import { Input, Segmented, Txt } from '@/components/ui';

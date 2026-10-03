@@ -20,7 +20,8 @@
 
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Image, Linking, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Image, Linking, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable } from './motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { GymRecord } from '@gymgo/domain';
 import { api, type GoogleAuthor, type GooglePlace } from '@/lib/api';

@@ -6,9 +6,9 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { GLIDE } from '@/components/motion';
+import { GLIDE, Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { MilestonesCard, MuscleBalanceCard, WeekCard } from '@/components/TrainingInsights';
 import { PrimaryButton, Txt } from '@/components/ui';

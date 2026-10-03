@@ -12,7 +12,8 @@
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/motion';
 import { EQUIPMENT_TYPES, equipmentLabel, findMachines, type EquipmentCategory, type MachineHit, type ReportedEquipment } from '@gymgo/domain';
 import { MarkImage, useGymMark } from '@/components/BrandLogo';
 import { Icon } from '@/components/Icon';

@@ -21,9 +21,10 @@
 import { TabList, TabSlot, TabTrigger, Tabs, defaultTabsSlotRender, type TabTriggerSlotProps } from 'expo-router/ui';
 import { router, useFocusEffect, usePathname } from 'expo-router';
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
-import { Keyboard, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Keyboard, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ARRIVE, LIQUID, Pressable } from '@/components/motion';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { Easing, ReduceMotion, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass, HAS_LIQUID_GLASS, useGlassLevel } from '@/components/Glass';
 import { PIcon, type PhosphorName } from '@/components/PIcon';
@@ -42,7 +43,7 @@ const SIDE_MARGIN = 16;
 const MAX_WIDTH = 400;
 const PAD = 5;
 const LENS_INSET = 5;
-const SPRING = { damping: 20, stiffness: 260, mass: 0.7, reduceMotion: ReduceMotion.System };
+const SPRING = LIQUID;
 
 const TABS: Array<{ name: string; href: '/' | '/explore' | '/saved' | '/profile'; label: string; icon: PhosphorName }> = [
   { name: 'index', href: '/', label: 'Home', icon: 'house' },
@@ -77,7 +78,7 @@ export default function TabsLayout() {
         <TabSlot
           style={styles.slot}
           // Drawn again when the colours change, without leaving the tab.
-          renderFn={(descriptor, options) => defaultTabsSlotRender({ ...descriptor, render: () => <Redrawn>{descriptor.render()}</Redrawn> }, options)}
+          renderFn={(descriptor, options) => defaultTabsSlotRender({ ...descriptor, render: () => <Redrawn kind="tab" focused={options.isFocused}>{descriptor.render()}</Redrawn> }, options)}
         />
         {/* Declares the routes; the visible bar is GymGO's own. */}
         <TabList style={styles.hidden}>
@@ -133,7 +134,7 @@ function GlassTabBar({ bottom }: { bottom: number }) {
   const drag = Gesture.Pan()
     .activeOffsetX([-10, 10])
     .onBegin(() => {
-      lift.value = withTiming(1, { duration: 150, easing: Easing.out(Easing.cubic) });
+      lift.value = withTiming(1, { ...ARRIVE, duration: 170 });
     })
     .onUpdate((event) => {
       x.value = Math.min(Math.max(event.x - PAD - tabWidth / 2, 0), tabWidth * last);
@@ -145,7 +146,7 @@ function GlassTabBar({ bottom }: { bottom: number }) {
       runOnJS(go)(target);
     })
     .onFinalize(() => {
-      lift.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) });
+      lift.value = withTiming(0, { ...ARRIVE, duration: 320 });
     });
 
   const lensStyle = useAnimatedStyle(() => ({

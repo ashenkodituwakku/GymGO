@@ -6,8 +6,8 @@
  */
 
 import { useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { Pressy } from './motion';
+import { StyleSheet, View } from 'react-native';
+import { Pressable, Pressy } from './motion';
 import { haptic } from '@/lib/haptics';
 import {
   WEEKLY_GOALS,

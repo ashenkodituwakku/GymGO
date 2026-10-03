@@ -6,7 +6,8 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/motion';
 import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
 import { Card, Input, PrimaryButton, Txt } from '@/components/ui';

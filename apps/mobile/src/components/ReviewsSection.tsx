@@ -7,7 +7,8 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from './motion';
 import { summariseRatings, type Review } from '@gymgo/domain';
 import { api, ApiError, OfflineError } from '@/lib/api';
 import { EMPTY } from '@/lib/copy';

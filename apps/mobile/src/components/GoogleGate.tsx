@@ -4,7 +4,8 @@
  */
 
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from './motion';
 import { setAlwaysShowGoogle, useAlwaysShowGoogle } from '@/lib/googleConsent';
 import { haptic } from '@/lib/haptics';
 import { color, radius, space, themed } from '@/lib/theme';

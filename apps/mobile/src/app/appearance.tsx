@@ -7,11 +7,11 @@
 
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { BrandFill } from '@/components/BrandFill';
 import { loadAllLookFonts } from '@/lib/lookFonts';
 import Animated from 'react-native-reanimated';
-import { FADE_IN } from '@/components/motion';
+import { FADE_IN, Pressable } from '@/components/motion';
 import { Glass } from '@/components/Glass';
 import { Icon } from '@/components/Icon';
 import { PercentSlider } from '@/components/PercentSlider';

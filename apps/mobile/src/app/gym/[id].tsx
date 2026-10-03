@@ -9,7 +9,8 @@
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, damp, useArrival } from '@/components/motion';
 import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { LogoPlate } from '@/components/BrandLogo';
 import { GoogleEmbed } from '@/components/GoogleEmbed';
@@ -46,7 +47,7 @@ import { PageScroll } from '@/components/PageScroll';
 const EXPAND_IN =
   Platform.OS === 'web'
     ? FadeInDown.duration(300).reduceMotion(ReduceMotion.System)
-    : FadeInDown.springify().damping(28).stiffness(260).withInitialValues({ opacity: 0, transform: [{ translateY: 60 }] }).reduceMotion(ReduceMotion.System);
+    : FadeInDown.springify().damping(damp(1, 260, 1)).stiffness(260).withInitialValues({ opacity: 0, transform: [{ translateY: 60 }] }).reduceMotion(ReduceMotion.System);
 
 export default function GymPage() {
   // `from=map`: opened full screen from the map's pop-up, so it opens with
@@ -88,7 +89,10 @@ export default function GymPage() {
 
   // Its distance and the answer for your visit are worked out from your
   // settings, so a link opened cold waits the moment it takes to read them.
-  if (!prefsReady || (!result && looking)) {
+  const waiting = !prefsReady || (!result && looking);
+  // Once found, the page fades in where its skeleton was.
+  const arrival = useArrival(waiting);
+  if (waiting) {
     return (
       <>
         <Stack.Screen options={{ title: 'Gym' }} />
@@ -166,7 +170,7 @@ export default function GymPage() {
         style={styles.page}
         contentContainerStyle={styles.content}
       >
-        <Animated.View entering={fromMap ? EXPAND_IN : undefined} style={[styles.column, { width: cardWidth }]}>
+        <Animated.View entering={fromMap ? EXPAND_IN : arrival} style={[styles.column, { width: cardWidth }]}>
           <View style={styles.title}>
             <LogoPlate location={location} />
             <Txt variant="largeTitle">{location.name}</Txt>

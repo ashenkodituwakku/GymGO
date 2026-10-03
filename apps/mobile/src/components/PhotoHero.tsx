@@ -12,7 +12,8 @@
 
 import * as ImagePicker from 'expo-image-picker';
 import { type ReactNode, useCallback, useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Image, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable } from './motion';
 import { api, apiBase, ApiError, OfflineError, photoUrl, type GymPhoto } from '@/lib/api';
 import { EMPTY } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';

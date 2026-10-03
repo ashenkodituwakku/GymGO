@@ -9,7 +9,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Image, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Platform, StyleSheet, View } from 'react-native';
+import { Pressable } from './motion';
 import { serverOfflineLine } from '@/lib/copy';
 import { priceLabel, type GymRecord, type Review } from '@gymgo/domain';
 import { api, ApiError, OfflineError, type AccessOutcome, type BugReportItem, type MemberReport } from '@/lib/api';

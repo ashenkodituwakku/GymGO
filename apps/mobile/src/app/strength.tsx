@@ -10,7 +10,8 @@
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/motion';
 import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
 import { Input, Segmented, Txt } from '@/components/ui';

@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { EQUIPMENT_TYPES, equipmentLabel } from '@gymgo/domain';
 import { api, ApiError, OfflineError, type EquipmentReportItem, type EquipmentTally } from '@/lib/api';
@@ -18,7 +18,7 @@ import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon, type IconName } from './Icon';
 import { PrimaryButton, TextField, Txt } from './ui';
 import { LinesSkeleton } from './Skeleton';
-import { FADE_IN, GLIDE } from './motion';
+import { FADE_IN, GLIDE, Pressable } from './motion';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; reporters: number; items: EquipmentTally[]; mine: EquipmentReportItem[] };
 type Answer = 'yes' | 'no' | null;

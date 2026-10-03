@@ -10,7 +10,8 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, Switch, View } from 'react-native';
+import { Pressable } from './motion';
 import { reportCurrency, scheduleFor, type GymRecord, type OwnerUpdatePayload, type Tri } from '@gymgo/domain';
 import { api, problemText, type GymOwnerView } from '@/lib/api';
 import { haptic } from '@/lib/haptics';

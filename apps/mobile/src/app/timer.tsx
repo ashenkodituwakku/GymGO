@@ -11,7 +11,8 @@
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { Stack } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
 import { BrandFill } from '@/components/BrandFill';

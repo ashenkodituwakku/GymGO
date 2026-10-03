@@ -5,7 +5,8 @@
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/motion';
 import { Icon } from '@/components/Icon';
 import { ProgressChart } from '@/components/ProgressChart';
 import { PrimaryButton, Txt } from '@/components/ui';

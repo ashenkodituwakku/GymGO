@@ -20,7 +20,6 @@ import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  Easing,
   ReduceMotion,
   runOnJS,
   useAnimatedStyle,
@@ -33,6 +32,7 @@ import Animated, {
 import { haptic } from '@/lib/haptics';
 import { NO_TOUCH, color, themed } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
+import { EASE_OUT, damp } from './motion';
 
 const HEIGHT = 44;
 const THUMB_W = 38;
@@ -43,12 +43,12 @@ const DOT = 4;
 const DETENTS = [0, 25, 50, 75, 100];
 const FIRM = [0, 50, 100];
 
-const SNAP = { duration: 160, easing: Easing.out(Easing.cubic), reduceMotion: ReduceMotion.System };
+const SNAP = { duration: 200, easing: EASE_OUT, reduceMotion: ReduceMotion.System };
 /** Swelling into the lens: quick, a little bouncy. */
-const SWELL = { damping: 14, stiffness: 320, mass: 0.6, reduceMotion: ReduceMotion.System };
+const SWELL = { damping: damp(0.75, 320, 0.6), stiffness: 320, mass: 0.6, reduceMotion: ReduceMotion.System };
 /** Back to a capsule: looser, so it wobbles like a drop settling. */
-const WOBBLE = { damping: 9, stiffness: 260, mass: 0.6, reduceMotion: ReduceMotion.System };
-const STRETCH = { damping: 18, stiffness: 300, mass: 0.5, reduceMotion: ReduceMotion.System };
+const WOBBLE = { damping: damp(0.52, 260, 0.6), stiffness: 260, mass: 0.6, reduceMotion: ReduceMotion.System };
+const STRETCH = { damping: damp(0.95, 300, 0.5), stiffness: 300, mass: 0.5, reduceMotion: ReduceMotion.System };
 
 // Web takes CSS `backgroundImage`; React Native's own renderer takes `experimental_backgroundImage`.
 const gradient = (value: string): ViewStyle =>

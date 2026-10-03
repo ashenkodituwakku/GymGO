@@ -7,7 +7,8 @@
  */
 
 import { useState } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable } from './motion';
 import { haptic } from '@/lib/haptics';
 import { color, face, space, themed } from '@/lib/theme';
 import { MUSCLES, muscleLabel, type Muscle } from '@/lib/workout';

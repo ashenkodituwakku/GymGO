@@ -5,7 +5,7 @@
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { forwardRef, useEffect, useState, type ReactNode } from 'react';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { ActivityIndicator, Platform, Pressable, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Platform, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle } from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
 import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
@@ -13,7 +13,7 @@ import { color, dropShadow, face, HIT, radius, shadow, space, themed, type, webF
 import { BrandFill } from './BrandFill';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
-import { FADE_IN, FADE_OUT, GLIDE, Pressy, SETTLE, usePop, usePressScale } from './motion';
+import { FADE_IN, FADE_OUT, GLIDE, Pressable, Pressy, SETTLE, usePop, usePressScale } from './motion';
 
 // --- Text -------------------------------------------------------------------
 

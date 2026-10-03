@@ -7,12 +7,15 @@
  * lot), `Bone` is one shape, and the ready-made ones below are drawn to the
  * size of what they stand in for: a gym's page, rows of gyms, gym cards,
  * reviews, and list rows.
+ *
+ * When the content arrives the skeleton fades away over it, rather than
+ * vanishing, so the swap reads as one soft change.
  */
 
 import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, ReduceMotion, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
-import { CURVES } from '@/components/motion';
+import { CURVES, FADE_OUT } from '@/components/motion';
 import { color, radius, shadow, space, themed } from '@/lib/theme';
 
 export function Skeleton({ children, label = 'Loading', style }: { children: ReactNode; label?: string; style?: StyleProp<ViewStyle> }) {
@@ -28,9 +31,14 @@ export function Skeleton({ children, label = 'Loading', style }: { children: Rea
     return () => cancelAnimation(glow);
   }, [glow]);
   const pulse = useAnimatedStyle(() => ({ opacity: glow.value }));
+  // The fade away on its own view, so it and the pulse don't both drive the opacity.
+  // That view takes the skeleton's flex, so a full-page one still fills the page.
+  const flex = StyleSheet.flatten(style)?.flex;
   return (
-    <Animated.View style={[pulse, style]} accessible accessibilityRole="progressbar" accessibilityLabel={label} aria-busy>
-      {children}
+    <Animated.View exiting={FADE_OUT} style={flex !== undefined ? { flex } : undefined}>
+      <Animated.View style={[pulse, style]} accessible accessibilityRole="progressbar" accessibilityLabel={label} aria-busy>
+        {children}
+      </Animated.View>
     </Animated.View>
   );
 }

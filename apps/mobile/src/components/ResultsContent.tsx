@@ -7,9 +7,9 @@
 
 import { useState } from 'react';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { FADE_IN, FADE_OUT, GLIDE } from './motion';
+import { FADE_IN, FADE_OUT, GLIDE, Pressable } from './motion';
 import { HOURS_LABELS, explainNoMatches, haversineKm, type GymRecord, type HoursNeed, type SearchOutcome } from '@gymgo/domain';
 import { countryInSentence, countryName } from '@/lib/country';
 import { suggestGyms } from '@/lib/gymSearch';

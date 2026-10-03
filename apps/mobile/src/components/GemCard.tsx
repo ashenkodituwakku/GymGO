@@ -11,7 +11,8 @@
  */
 
 import { useEffect, useId } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
+import { Pressable } from './motion';
 import Animated, {
   Easing,
   useAnimatedStyle,

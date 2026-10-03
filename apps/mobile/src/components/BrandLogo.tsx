@@ -15,7 +15,7 @@
 
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { chainWebsite, type GymLocation } from '@gymgo/domain';
 import { apiBase } from '@/lib/api';
@@ -24,7 +24,7 @@ import { BRAND_LOGOS, type BrandLogo as Logo } from '@/lib/brandLogos';
 import { matchLogo } from '@/lib/logoMatch';
 import { color, radius, themed } from '@/lib/theme';
 import { Txt } from './ui';
-import { FADE_IN } from './motion';
+import { FADE_IN, Pressable } from './motion';
 
 export function logoFor(location: GymLocation): Logo | null {
   return matchLogo(location, BRAND_LOGOS);

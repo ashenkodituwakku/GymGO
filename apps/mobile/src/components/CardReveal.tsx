@@ -19,14 +19,14 @@
 
 import { BlurView } from 'expo-blur';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Modal, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { Easing, ReduceMotion, runOnJS, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { ReduceMotion, runOnJS, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import type { GymRecord } from '@gymgo/domain';
 import { GemCard } from './GemCard';
 import { Icon } from './Icon';
-import { Pressy } from './motion';
+import { EASE_IN, EASE_OUT, Pressable, Pressy, damp } from './motion';
 import { PrimaryButton, Txt } from './ui';
 import type { CollectedGym } from '@/lib/collection';
 import { haptic } from '@/lib/haptics';
@@ -35,12 +35,10 @@ import { PRISM, cardFor, gemInfo, rarityLabel, rarityRank, type Rarity } from '@
 import { face, radius, space, themed } from '@/lib/theme';
 
 const SYSTEM = ReduceMotion.System;
-/** The pop-up rising into place: quick, with the faintest settle. */
-const RISE = { damping: 24, stiffness: 260, mass: 0.9, reduceMotion: SYSTEM };
-/** The card turning face up: a little more give, so it lands. */
-const FLIP = { damping: 17, stiffness: 190, mass: 0.9, reduceMotion: SYSTEM };
-const EASE_OUT = Easing.out(Easing.cubic);
-const EASE_IN = Easing.in(Easing.cubic);
+/** The pop-up rising into place: quick, and it stops where it lands. */
+const RISE = { damping: damp(0.95, 260, 0.9), stiffness: 260, mass: 0.9, reduceMotion: SYSTEM };
+/** The card turning face up: a little give, so it lands. */
+const FLIP = { damping: damp(0.74, 200, 0.9), stiffness: 200, mass: 0.9, reduceMotion: SYSTEM };
 
 /**
  * How the pop-up comes and goes. `shown` drives the dimming and the panel,

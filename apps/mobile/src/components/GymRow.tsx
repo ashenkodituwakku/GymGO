@@ -4,7 +4,8 @@
  * price where the eye lands last.
  */
 
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
+import { Pressable } from './motion';
 import type { GymSearchResult } from '@gymgo/domain';
 import { distanceLabel } from '@/lib/places';
 import { TIER, accessLine } from '@/lib/copy';

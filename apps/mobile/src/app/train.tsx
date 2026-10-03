@@ -8,9 +8,9 @@
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { Easing, FadeInDown, FadeOutDown, ReduceMotion, ZoomIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { CURVES, EASE_IN, EASE_OUT, FADE_IN, usePop } from '@/components/motion';
+import { StyleSheet, View } from 'react-native';
+import Animated, { Easing, FadeInDown, FadeOutDown, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { CURVES, EASE_IN, EASE_OUT, FADE_IN, POP_IN, Pressable, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
 import { Icon } from '@/components/Icon';
@@ -678,7 +678,7 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
     <View style={styles.page}>
     <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.summary]}>
       <Stack.Screen options={{ title: '' }} />
-      <Animated.View entering={records.length ? ZoomIn.springify().damping(15).stiffness(220).reduceMotion(ReduceMotion.System) : FADE_IN} style={styles.bigIcon}>
+      <Animated.View entering={records.length ? POP_IN : FADE_IN} style={styles.bigIcon}>
         <Icon name={records.length ? 'trophy' : 'done'} size={40} color={records.length ? color.maybe : color.good} />
       </Animated.View>
       <Txt variant="largeTitle" style={styles.center}>

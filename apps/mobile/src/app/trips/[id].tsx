@@ -9,7 +9,8 @@
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/motion';
 import { tripDates, tripShortlist, type TripDay, type TripPick } from '@gymgo/domain';
 import { MarkImage, useGymMark } from '@/components/BrandLogo';
 import { Icon } from '@/components/Icon';

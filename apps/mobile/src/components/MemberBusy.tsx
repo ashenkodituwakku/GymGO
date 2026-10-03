@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { BUSY_LEVELS, type BusyLevel, type GymLocation } from '@gymgo/domain';
 import { api, problemText, type BusySummary } from '@/lib/api';
@@ -20,7 +20,7 @@ import { distanceLabel } from '@/lib/places';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
-import { FADE_IN, GLIDE } from './motion';
+import { FADE_IN, GLIDE, Pressable } from './motion';
 import { ChoiceChip, PrimaryButton, Txt } from './ui';
 
 const TONE: Record<BusyLevel, 'good' | 'maybe' | 'no'> = { quiet: 'good', steady: 'good', busy: 'maybe', packed: 'no' };

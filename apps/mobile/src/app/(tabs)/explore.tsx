@@ -19,7 +19,7 @@ import BottomSheet, {
 } from '@gorhom/bottom-sheet';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { ActionSheetIOS, ActivityIndicator, Keyboard, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions, type TextInput } from 'react-native';
+import { ActionSheetIOS, ActivityIndicator, Keyboard, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type TextInput } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isWithinBox, type BoundingBox, type HoursNeed } from '@gymgo/domain';
 import { withoutKnown } from '@gymgo/osm';
@@ -52,7 +52,7 @@ import { ResultsContent } from '@/components/ResultsContent';
 import { ReviewsSection } from '@/components/ReviewsSection';
 import { FloatingGlassBackground, FloatingSolidBackground, SHEET_GAP, SHEET_SCROLL_ONLY, SHEET_SIDE, SheetClip, SheetOpener, SheetScrollView } from '@/components/SheetBackground';
 import { CloseButton, ControlCapsule, Txt } from '@/components/ui';
-import { DROP_IN, EASE_IN, EASE_OUT, FADE_OUT, usePressScale } from '@/components/motion';
+import { ARRIVE, DROP_IN, FADE_OUT, LEAVE, Pressable, usePressScale } from '@/components/motion';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { usePageTitle } from '@/lib/pageTitle';
 
@@ -899,7 +899,7 @@ function PhoneShell(props: {
   const topHidden = mainFull || placeFull;
   const topOpacity = useSharedValue(1);
   useEffect(() => {
-    topOpacity.value = withTiming(topHidden ? 0 : 1, { duration: 200, easing: topHidden ? EASE_IN : EASE_OUT });
+    topOpacity.value = withTiming(topHidden ? 0 : 1, topHidden ? LEAVE : ARRIVE);
   }, [topHidden, topOpacity]);
   const topFade = useAnimatedStyle(() => ({ opacity: topOpacity.value }));
   // How far up the screen each sheet reaches. The map keeps its centre, and

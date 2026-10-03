@@ -6,7 +6,8 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable } from '@/components/motion';
 import { summariseWeek, type GymSearchResult, type Tri } from '@gymgo/domain';
 import { Icon } from '@/components/Icon';
 import { PrimaryButton, TIER_COLOUR, Txt } from '@/components/ui';

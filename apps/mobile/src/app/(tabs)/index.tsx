@@ -11,10 +11,10 @@
 import { useRouter } from 'expo-router';
 import { HOURS_LABELS } from '@gymgo/domain';
 import { useMemo, useRef, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GymCard } from '@/components/GymCard';
 import { GymCardsSkeleton } from '@/components/Skeleton';
-import { Pressy } from '@/components/motion';
+import { Pressable, Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { AdSlot } from '@/components/AdSlot';
 import { BrandFill } from '@/components/BrandFill';

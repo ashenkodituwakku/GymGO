@@ -19,12 +19,12 @@ import Constants from 'expo-constants';
 import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { api, type SignInProvider, type SignInProviders } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { color, currentTheme, face, radius, space, themed } from '@/lib/theme';
-import { Pressy } from './motion';
+import { Pressable, Pressy } from './motion';
 import { Txt } from './ui';
 
 // In a browser, Google's sign-in comes back into a popup, which hands the result here.

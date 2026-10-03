@@ -7,7 +7,8 @@
 
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/motion';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';

@@ -8,12 +8,13 @@
  */
 
 import { StyleSheet, View } from 'react-native';
-import Animated, { ReduceMotion, ZoomIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { flag } from '@/lib/collection';
 import type { GymSet } from '@/lib/sets';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { TIER_METAL } from './GemCard';
 import { Icon } from './Icon';
+import { POP_IN } from './motion';
 import { Txt } from './ui';
 
 const KIND: Record<GymSet['kind'], string> = { suburb: 'Suburb set', city: 'City set' };
@@ -29,7 +30,7 @@ export function SetReward({ set, fresh = false }: { set: GymSet; fresh?: boolean
   const gold = TIER_METAL.gold;
   return (
     <Animated.View
-      entering={fresh ? ZoomIn.springify().damping(15).stiffness(220).reduceMotion(ReduceMotion.System) : undefined}
+      entering={fresh ? POP_IN : undefined}
       style={[styles.reward, { borderColor: gold }]}
       accessible
       accessibilityLabel={`${set.name} ${KIND[set.kind].toLowerCase()} complete: ${set.total} gyms, finished ${dayLabel(set.completedOn!)}`}

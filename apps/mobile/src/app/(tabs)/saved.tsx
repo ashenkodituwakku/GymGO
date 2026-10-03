@@ -5,9 +5,9 @@
 
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { GymRow } from '@/components/GymRow';
-import { FADE_OUT, GLIDE, Pressy, usePop } from '@/components/motion';
+import { FADE_OUT, GLIDE, Pressable, Pressy, usePop } from '@/components/motion';
 import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { TabScreen } from '@/components/ios';

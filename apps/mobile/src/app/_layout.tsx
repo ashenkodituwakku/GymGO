@@ -4,7 +4,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { Platform, StyleSheet } from 'react-native';
-import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import { EASE_IN_OUT, EASE_OUT } from '@/components/motion';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Redrawn, useThemeVersion } from '@/components/Redrawn';
@@ -145,7 +146,7 @@ function ThemedStack() {
         return;
       }
       setVeilColour(paletteFor(wanted.scheme, wanted.accent, wanted.look).groupedBackground);
-      veil.value = withTiming(1, { duration: 140, easing: Easing.out(Easing.quad) }, (finished) => {
+      veil.value = withTiming(1, { duration: 150, easing: EASE_IN_OUT }, (finished) => {
         if (finished) runOnJS(switchNow)(wanted.scheme, wanted.accent, wanted.look, wanted.glass);
       });
     });
@@ -157,7 +158,7 @@ function ThemedStack() {
   // Drawn again: lift the veil.
   useEffect(() => {
     if (version === 0) return;
-    veil.value = withDelay(60, withTiming(0, { duration: 240, easing: Easing.out(Easing.cubic) }, (finished) => {
+    veil.value = withDelay(60, withTiming(0, { duration: 300, easing: EASE_OUT }, (finished) => {
       if (finished) runOnJS(setVeilColour)(null);
     }));
     if (Platform.OS === 'web' && typeof document !== 'undefined') paintPage();

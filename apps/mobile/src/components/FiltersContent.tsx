@@ -4,7 +4,8 @@
  * never a moment where the controls and the results disagree.
  */
 
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from './motion';
 import { HOURS_LABELS, equipmentLabel, type HoursNeed, type Tri } from '@gymgo/domain';
 import { filtersButtonLabel, timeLabel } from '@/lib/copy';
 import {

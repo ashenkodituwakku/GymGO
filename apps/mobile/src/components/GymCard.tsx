@@ -10,7 +10,7 @@
  */
 
 import { Link } from 'expo-router';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import type { GymSearchResult } from '@gymgo/domain';
 import { distanceLabel } from '@/lib/places';
@@ -22,7 +22,7 @@ import { haptic } from '@/lib/haptics';
 import { priceLine, priceText } from '@/lib/present';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { MarkImage, useGymMark } from './BrandLogo';
-import { usePressScale } from './motion';
+import { Pressable, usePressScale } from './motion';
 import { useWebsitePhoto } from './PhotoHero';
 import { Icon } from './Icon';
 import { NoPhoto, TIER_COLOUR, Txt } from './ui';

@@ -7,9 +7,9 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { FADE_IN, FADE_OUT, GLIDE } from '@/components/motion';
+import { FADE_IN, FADE_OUT, GLIDE, Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { useDeleteCollection } from '@/components/CollectionData';
 import { GoogleMark, SocialButtons, useSignInProviders, type TokenHandler } from '@/components/SocialSignIn';

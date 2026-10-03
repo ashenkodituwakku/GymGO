@@ -20,7 +20,8 @@ import {
 } from '@gymgo/domain';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
+import { Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtras';

@@ -302,7 +302,10 @@ Appearance.
 - **Appearance**: Automatic (follows your phone), Light or Dark, for
   everyone. **Liquid Glass**, also for everyone: a percentage for how
   see-through the controls, sheets and tab bar over the map are, with a
-  little map that shows it as you slide. 0% makes them solid plates; 50% is
+  little map that shows it as you slide. The slider is made like iOS 26's:
+  its thumb swells into a lens of glass under your finger, magnifying the
+  track, stretches when you move it fast and wobbles back when you let go,
+  with a firmer tick at 0, 50 and 100. 0% makes them solid plates; 50% is
   the default; 100% is the clearest that keeps text readable (Android,
   which draws no blur behind its glass, stops a little more solid). It
   changes only the glass, so the screen you're on stays put. With Pro, eleven more accents besides Indigo: Cobalt, Ocean,

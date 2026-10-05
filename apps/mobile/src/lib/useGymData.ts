@@ -33,6 +33,8 @@ export function useGymData() {
   const [base, setBase] = useState<GymRecord[]>(BUNDLED_GYMS);
   /** Gyms found by "Search this area", or fetched one by one (a saved gym outside the bundled cities). */
   const [found, setFound] = useState<GymRecord[]>([]);
+  /** Gyms the server says it doesn't have (taken off the map since they were saved, say). */
+  const [gone, setGone] = useState<ReadonlySet<string>>(() => new Set());
   const [status, setStatus] = useState<DataStatus>('loading');
   /** Each gym's newest member photo, for list thumbnails. */
   const [covers, setCovers] = useState<Record<string, string>>({});
@@ -203,6 +205,7 @@ export function useGymData() {
           .catch((error: unknown) => {
             // Couldn't reach the server: try again next time. A gym that's gone stays asked.
             if (!(error instanceof ApiError)) requested.current.delete(id);
+            else if (error.status === 404) setGone((current) => new Set(current).add(id));
             return null;
           });
       return Promise.all(missing.map(fetchOne)).then((gyms) => addFound(gyms.filter((gym): gym is GymRecord => gym !== null)));
@@ -213,7 +216,7 @@ export function useGymData() {
   // One object while nothing in it changes, so what's built on it (the app's
   // shared state, callbacks that use it) doesn't change on every render.
   return useMemo(
-    () => ({ records, listed, status, covers, memberPrices, ratings, refresh, refreshCovers, refreshMemberPrices, refreshRatings, searchArea, ensureGyms, setPack, packNamed, packGym }),
-    [records, listed, status, covers, memberPrices, ratings, refresh, refreshCovers, refreshMemberPrices, refreshRatings, searchArea, ensureGyms, setPack, packNamed, packGym],
+    () => ({ records, listed, gone, status, covers, memberPrices, ratings, refresh, refreshCovers, refreshMemberPrices, refreshRatings, searchArea, ensureGyms, setPack, packNamed, packGym }),
+    [records, listed, gone, status, covers, memberPrices, ratings, refresh, refreshCovers, refreshMemberPrices, refreshRatings, searchArea, ensureGyms, setPack, packNamed, packGym],
   );
 }

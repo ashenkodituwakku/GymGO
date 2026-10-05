@@ -31,7 +31,8 @@ export default function FriendsScreen() {
   const [problem, setProblem] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [adding, setAdding] = useState(false);
-  const [note, setNote] = useState<string | null>(null);
+  // What the last add or answer did; a problem shows in red, and typing a new code clears it.
+  const [note, setNote] = useState<{ text: string; problem: boolean } | null>(null);
 
   const load = useCallback(() => {
     if (!token) return;
@@ -48,11 +49,11 @@ export default function FriendsScreen() {
   const act = async (work: () => Promise<unknown>, done?: string) => {
     try {
       await work();
-      if (done) setNote(done);
+      if (done) setNote({ text: done, problem: false });
       load();
     } catch (error) {
       haptic.warn();
-      setNote(problemText(error));
+      setNote({ text: problemText(error), problem: true });
     }
   };
 
@@ -64,11 +65,14 @@ export default function FriendsScreen() {
       const answer = await api.addFriend(token, code);
       haptic.success();
       setCode('');
-      setNote(answer.status === 'accepted' ? `You and ${answer.friend.displayName} are friends now.` : `Asked ${answer.friend.displayName}. You’ll be friends once they accept.`);
+      setNote({
+        text: answer.status === 'accepted' ? `You and ${answer.friend.displayName} are friends now.` : `Asked ${answer.friend.displayName}. You’ll be friends once they accept.`,
+        problem: false,
+      });
       load();
     } catch (error) {
       haptic.warn();
-      setNote(problemText(error));
+      setNote({ text: problemText(error), problem: true });
     } finally {
       setAdding(false);
     }
@@ -125,7 +129,10 @@ export default function FriendsScreen() {
         <View style={styles.addRow}>
           <Input
             value={code}
-            onChangeText={setCode}
+            onChangeText={(text) => {
+              setCode(text);
+              setNote(null);
+            }}
             placeholder="e.g. K7QM-2XPH"
             autoCapitalize="characters"
             autoCorrect={false}
@@ -137,8 +144,8 @@ export default function FriendsScreen() {
           <PrimaryButton label="Add" busy={adding} disabled={!code.trim()} onPress={() => void add()} />
         </View>
         {note && (
-          <Txt variant="footnote" color={color.labelSecondary}>
-            {note}
+          <Txt variant="footnote" color={note.problem ? color.dangerInk : color.labelSecondary}>
+            {note.text}
           </Txt>
         )}
       </Card>

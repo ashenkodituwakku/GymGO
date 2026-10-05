@@ -17,7 +17,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { countryName } from '@/lib/country';
 import { placeContext, suggestPlaces, suggestWorldCities } from '@/lib/places';
 import { addDays, atPlace, atWorldCity, nowIn, type Whereabouts } from '@/lib/query';
-import { MAX_NIGHTS, tripDatesLabel, tripWhen, useTrips } from '@/lib/trips';
+import { MAX_NIGHTS, todayThere, tripDatesLabel, tripWhen, useTrips } from '@/lib/trips';
 import { color, face, radius, space, themed } from '@/lib/theme';
 
 /** Furthest ahead a trip can start: a year. */
@@ -34,6 +34,8 @@ export default function TripsScreen() {
   const [where, setWhere] = useState<Whereabouts | null>(null);
   const [from, setFrom] = useState(addDays(today, 1));
   const [stay, setStay] = useState(2);
+  // The trip whose bin was tapped once: a second tap removes it.
+  const [removing, setRemoving] = useState<string | null>(null);
 
   const suggestions = useMemo(() => {
     if (!query.trim() || where) return [];
@@ -88,7 +90,7 @@ export default function TripsScreen() {
               router.push({ pathname: '/trips/[id]', params: { id: trip.id } });
             }}
             accessibilityRole="button"
-            accessibilityLabel={`${trip.placeName}, ${tripDatesLabel(trip)}, ${tripWhen(trip, today)}`}
+            accessibilityLabel={`${trip.placeName}, ${tripDatesLabel(trip)}, ${tripWhen(trip, todayThere(trip))}`}
             style={({ pressed }) => [styles.tripMain, pressed && { opacity: 0.7 }]}
           >
             <View style={styles.tripIcon}>
@@ -99,23 +101,41 @@ export default function TripsScreen() {
                 {trip.placeName}
               </Txt>
               <Txt variant="footnote" color={color.labelSecondary}>
-                {`${tripDatesLabel(trip)} · ${tripWhen(trip, today)}`}
+                {`${tripDatesLabel(trip)} · ${tripWhen(trip, todayThere(trip))}`}
               </Txt>
             </View>
             <Icon name="chevron" size={14} color={color.labelTertiary} />
           </Pressable>
-          <Pressable
-            onPress={() => {
-              haptic.tap();
-              removeTrip(trip.id);
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={`Remove the trip to ${trip.placeName}`}
-            hitSlop={8}
-            style={({ pressed }) => [styles.remove, pressed && { opacity: 0.6 }]}
-          >
-            <Icon name="trash" size={17} color={color.labelTertiary} />
-          </Pressable>
+          {removing === trip.id ? (
+            <Pressable
+              onPress={() => {
+                haptic.warn();
+                setRemoving(null);
+                removeTrip(trip.id);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Tap again to remove the trip to ${trip.placeName}`}
+              hitSlop={8}
+              style={({ pressed }) => [styles.confirm, pressed && { opacity: 0.7 }]}
+            >
+              <Txt variant="footnote" color={color.onBrand} style={face('semibold')}>
+                Remove
+              </Txt>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => {
+                haptic.tap();
+                setRemoving(trip.id);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Remove the trip to ${trip.placeName}`}
+              hitSlop={8}
+              style={({ pressed }) => [styles.remove, pressed && { opacity: 0.6 }]}
+            >
+              <Icon name="trash" size={17} color={color.labelTertiary} />
+            </Pressable>
+          )}
         </View>
       ))}
 
@@ -248,6 +268,7 @@ const styles = themed(() =>
     tripIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     tripMain: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3] },
     remove: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 18 },
+    confirm: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.danger },
     form: { gap: space[3] },
     input: {
       height: 44,

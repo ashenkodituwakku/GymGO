@@ -179,7 +179,7 @@ export default function MachinesScreen() {
                 ? 'Looking…'
                 : hits.length === 0
                   ? 'None known yet'
-                  : `${hits.length} gym${hits.length === 1 ? '' : 's'} ${nearLabel(filters.placeName).toLowerCase()}`}
+                  : `${hits.length} gym${hits.length === 1 ? '' : 's'} ${lowerFirst(nearLabel(filters.placeName))}`}
             </Txt>
             {reports.state === 'offline' && (
               <Txt variant="footnote" color={color.maybeInk}>
@@ -220,6 +220,9 @@ function fromWhere(placeName: string): string {
   if (placeName === THIS_AREA) return 'the middle of the area you searched';
   return placeName;
 }
+
+/** "Near Melbourne CBD" to go after a count: "near Melbourne CBD", the place keeping its capitals. */
+const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1);
 
 function MachineRow({ hit, last, onPress }: { hit: MachineHit; last: boolean; onPress: () => void }) {
   const location = hit.record.location;

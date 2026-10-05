@@ -31,7 +31,7 @@ import { countryInSentence, countryName } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityNear, cityPlace, localBudget, moneyLabel, tracksPrices, worldCitiesIn, type AppPlace, type City, type WorldCity } from '@/lib/places';
 import { YOUR_LOCATION, atPlace, atWorldCity, moveTo, nearLabel, nextVisitAt, nowIn, runSearch, visitIsLater, type Filters } from '@/lib/query';
-import { tripDatesLabel, tripToShow, tripWhen, useTrips } from '@/lib/trips';
+import { todayThere, tripDatesLabel, tripToShow, tripWhen, useTrips } from '@/lib/trips';
 import { resultsById } from '@/lib/results';
 import { PAGE_COLUMN, color, dropShadow, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -252,7 +252,7 @@ export default function Home() {
             router.push({ pathname: '/trips/[id]', params: { id: trip.id } });
           }}
           accessibilityRole="button"
-          accessibilityLabel={`Trip to ${trip.placeName}, ${tripDatesLabel(trip)}, ${tripWhen(trip, today)}. See the gyms there`}
+          accessibilityLabel={`Trip to ${trip.placeName}, ${tripDatesLabel(trip)}, ${tripWhen(trip, todayThere(trip))}. See the gyms there`}
           style={styles.trip}
         >
           <View style={styles.tripIcon}>
@@ -261,7 +261,7 @@ export default function Home() {
           <View style={styles.flex}>
             <Txt variant="headline" numberOfLines={1}>{`Trip to ${trip.placeName}`}</Txt>
             <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-              {`${tripWhen(trip, today)} · ${tripDatesLabel(trip)} · gyms that let visitors in`}
+              {`${tripWhen(trip, todayThere(trip))} · ${tripDatesLabel(trip)} · gyms that let visitors in`}
             </Txt>
           </View>
           <Icon name="chevron" size={14} color={color.labelTertiary} />

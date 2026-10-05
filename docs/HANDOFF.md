@@ -51,7 +51,7 @@ the branch the owner's launcher pulls.
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
 `npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 216,
-mobile 277, domain 163 and web 39 tests, all passing.
+mobile 278, domain 163 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 57, React Native 0.86, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -101,6 +101,21 @@ mobile 277, domain 163 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- Polish round 2 (5–6 Oct): every page scrolls a box you're typing in clear
+  of the iPhone keyboard (`PageScroll` now does it for all pages; only four
+  did); trips are described by the date where they are (`todayThere` in
+  `src/lib/trips.ts`: the list said "Tomorrow" while the trip's page said
+  "Under way"), their first day reads "Today", and removing one takes a
+  second tap; "1 gym near Melbourne CBD" in Find a machine, not "near
+  melbourne cbd"; a friend code nobody has shows in red and clears as you
+  type; the leaderboard's "You" is a label that a long name can't cut off;
+  Friends and Leaderboard show "Can't reach GymGO" with Try again when the
+  server is away, not "Sign in" to a signed-in person; My workouts has Try
+  again; Profile's Offline gyms and Google content lines fit their two
+  lines. A check for text cut short on every screen at 375 and 393 points
+  finds only gym names on Home's cards and map street names. Mac trackpad
+  haptics were looked at: a web page can't drive them (Safari only reports
+  a force click), and the owner chose to leave it.
 - Polish round (5 Oct): distances in your own country's units everywhere
   (`setReaderCountry` in `src/lib/places.ts`, set from your Country); the
   server keeps one copy when the same workout plan is saved twice; proper

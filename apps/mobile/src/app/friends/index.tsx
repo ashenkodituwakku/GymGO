@@ -12,6 +12,7 @@ import { Pressable } from '@/components/motion';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
+import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Card, Input, PrimaryButton, Txt } from '@/components/ui';
 import { shareText } from '@/lib/actions';
@@ -77,6 +78,16 @@ export default function FriendsScreen() {
       setAdding(false);
     }
   };
+
+  // Signed in, but the server can't be reached: say so, rather than asking them to sign in.
+  if (account.state === 'unreachable' || account.state === 'loading') {
+    return (
+      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+        <Stack.Screen options={{ title: 'Friends' }} />
+        {account.state === 'unreachable' && <ServerAwayCard />}
+      </PageScroll>
+    );
+  }
 
   if (!token || !account.account) {
     return (

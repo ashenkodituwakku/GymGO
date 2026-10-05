@@ -12,6 +12,7 @@ import { StyleSheet, Switch, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
+import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Card, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { api, problemText, type Board, type BoardEntry } from '@/lib/api';
@@ -68,6 +69,16 @@ export default function LeaderboardScreen() {
       setSaving(false);
     }
   };
+
+  // Signed in, but the server can't be reached: say so, rather than asking them to sign in.
+  if (account.state === 'unreachable' || account.state === 'loading') {
+    return (
+      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+        <Stack.Screen options={{ title: 'Leaderboard' }} />
+        {account.state === 'unreachable' && <ServerAwayCard />}
+      </PageScroll>
+    );
+  }
 
   if (!token || !account.account) {
     return (

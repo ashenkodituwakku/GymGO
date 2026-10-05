@@ -32,18 +32,17 @@ export default function MyWorkouts() {
   const token = account.token;
 
   // Reload whenever the screen shows, so a delete on the next screen is reflected.
-  useFocusEffect(
-    useCallback(() => {
-      if (!token) return;
-      api
-        .workouts(token)
-        .then((result) => {
-          setWorkouts(result.workouts);
-          setProblem(null);
-        })
-        .catch(() => setProblem('Couldn’t reach the GymGO server to load your workouts.'));
-    }, [token]),
-  );
+  const load = useCallback(() => {
+    if (!token) return;
+    api
+      .workouts(token)
+      .then((result) => {
+        setWorkouts(result.workouts);
+        setProblem(null);
+      })
+      .catch(() => setProblem('Couldn’t reach the GymGO server to load your workouts.'));
+  }, [token]);
+  useFocusEffect(load);
 
   if (!token) {
     return (
@@ -74,9 +73,12 @@ export default function MyWorkouts() {
         </Pressable>
       )}
       {problem && (
-        <Txt variant="footnote" color={color.dangerInk}>
-          {problem}
-        </Txt>
+        <View style={styles.problem}>
+          <Txt variant="footnote" color={color.dangerInk}>
+            {problem}
+          </Txt>
+          {workouts === null && <PrimaryButton label="Try again" icon="refresh" tone="quiet" onPress={load} />}
+        </View>
       )}
       {!billing.isPro && workouts !== null && workouts.length > 0 && (
         <Pressable onPress={() => openPro('workouts')} accessibilityRole="button" style={styles.notice}>
@@ -159,6 +161,7 @@ const styles = themed(() => StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
   emptyCard: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
   notice: { padding: space[3], borderRadius: radius.md, backgroundColor: color.fill },
+  problem: { gap: space[2] },
   list: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingRight: space[3] },
   open: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingLeft: space[4], paddingRight: space[1], paddingVertical: space[3] },

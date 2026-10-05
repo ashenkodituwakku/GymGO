@@ -107,7 +107,8 @@ mobile 277, domain 163 and web 39 tests, all passing.
   empty states for a card you don't have and for Moderation; Friends' empty
   line padded like its rows; a saved gym the server no longer has shows as
   "No longer listed" with Remove (it used to be invisible but still take a
-  Free space; `gone` in `useGymData`); Saved's sign-in line is a link and
+  Free space; `gone` in `useGymData`), and a gone compare pick no longer
+  counts towards Free's two (picking another opened the Pro screen); Saved's sign-in line is a link and
   says "your other devices", not "your PC". Seen in the browser at iPhone
   and iPhone SE sizes and at 1440 wide, light and dark, signed in and out,
   with Reduce Motion on.

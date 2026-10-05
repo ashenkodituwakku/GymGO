@@ -420,17 +420,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     storeJson(RECENTS_KEY, []);
   }, []);
 
+  // A picked gym the server no longer has can't be shown, so it doesn't
+  // count towards the limit: it's dropped when you pick another.
+  const { gone } = data;
   const toggleCompare = useCallback(
     (gymId: string) => {
-      if (!compare.includes(gymId) && compare.length >= limits.compare && limits.compare < LIMITS.pro.compare) {
+      const live = compare.filter((id) => !gone.has(id));
+      if (!live.includes(gymId) && live.length >= limits.compare && limits.compare < LIMITS.pro.compare) {
         openPro('compare');
         return;
       }
-      setCompare((current) =>
-        current.includes(gymId) ? current.filter((id) => id !== gymId) : [...current, gymId].slice(-limits.compare),
-      );
+      setCompare((current) => {
+        const kept = current.filter((id) => !gone.has(id));
+        return kept.includes(gymId) ? kept.filter((id) => id !== gymId) : [...kept, gymId].slice(-limits.compare);
+      });
     },
-    [compare, limits.compare, openPro],
+    [compare, gone, limits.compare, openPro],
   );
 
   const clearCompare = useCallback(() => setCompare([]), []);

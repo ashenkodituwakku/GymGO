@@ -176,7 +176,7 @@ export default function FriendsScreen() {
       <Section title={view ? `Friends (${view.friends.length})` : 'Friends'}>
         {!view && !problem && <ListSkeleton rows={2} card={false} label="Loading your friends" />}
         {view && view.friends.length === 0 && (
-          <Txt variant="subhead" color={color.labelSecondary}>
+          <Txt variant="subhead" color={color.labelSecondary} style={styles.empty}>
             No friends yet. Send your code, or add theirs above.
           </Txt>
         )}
@@ -314,6 +314,8 @@ const styles = themed(() =>
     sectionTitle: { marginLeft: space[4] },
     sectionBody: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, overflow: 'hidden', padding: space[1] },
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.md },
+    // In line with the rows' text.
+    empty: { padding: space[3] },
     inviteRow: { alignItems: 'flex-start' },
     inviteActions: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: space[2], flexWrap: 'wrap' },
     small: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill },

@@ -8,6 +8,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GemCard } from '@/components/GemCard';
+import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
 import { SetReward } from '@/components/SetCard';
 import { PrimaryButton, Txt } from '@/components/ui';
@@ -51,9 +52,18 @@ export default function CardScreen() {
       <View style={styles.missing}>
         <Stack.Screen options={{ title: 'Card' }} />
         {loaded && (
-          <Txt variant="subhead" color={color.labelSecondary} style={styles.centre}>
-            This card isn’t in your collection.
-          </Txt>
+          <>
+            <Icon name="trophy" size={40} color={color.brand} />
+            <Txt variant="title2" style={styles.centre}>
+              Not in your collection
+            </Txt>
+            <Txt variant="subhead" color={color.labelSecondary} style={styles.centre}>
+              A gym’s card is yours once you check in there: open its page at the gym and tap I’m here.
+            </Txt>
+            <View style={styles.missingButton}>
+              <PrimaryButton label="Open Collection" icon="trophy" onPress={() => router.replace('/collection')} />
+            </View>
+          </>
         )}
       </View>
     );
@@ -102,7 +112,8 @@ const styles = themed(() =>
     content: { padding: space[4], paddingBottom: space[8], gap: space[4], alignItems: 'center' },
     shot: { padding: space[4], alignItems: 'center' },
     actions: { alignSelf: 'stretch', gap: space[3], width: '100%', maxWidth: 420, marginHorizontal: 'auto' },
-    missing: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space[6], backgroundColor: color.groupedBackground },
+    missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
+    missingButton: { alignSelf: 'center', maxWidth: 360, width: '100%', marginTop: space[2] },
     centre: { textAlign: 'center' },
   }),
 );

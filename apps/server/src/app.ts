@@ -326,6 +326,17 @@ async function readRaw(req: IncomingMessage, maxBytes: number): Promise<Buffer> 
   return Buffer.concat(chunks);
 }
 
+/** A workout's exercises in order, with their sets, reps and rest: what makes two saved plans the same one. */
+function planSteps(items: unknown): string {
+  if (!Array.isArray(items)) return '';
+  return JSON.stringify(
+    items.map((raw) => {
+      const item = (raw ?? {}) as Record<string, unknown>;
+      return [item.exerciseId, item.sets, item.reps, item.restSeconds];
+    }),
+  );
+}
+
 /** A saved workout, checked field by field: only what the app needs to show it again. */
 function cleanWorkoutPlan(input: unknown) {
   const plan = (input ?? {}) as Record<string, unknown>;
@@ -966,6 +977,18 @@ export function createApp(options: AppOptions) {
       if (name.length < 1 || name.length > 80) throw new HttpError(400, 'Give it a name of up to 80 characters.');
       const gymId = typeof body.gymId === 'string' && body.gymId.length <= 120 ? body.gymId : null;
       const plan = cleanWorkoutPlan(body.plan);
+      // The same plan for the same gym again (a second tap on Save, or a
+      // retry after a dropped reply) is the workout already kept, not a copy.
+      const same = (db.prepare('select id, name, gym_id, plan_json, created_at from workouts where user_id = ? and gym_id is ?').all(account.id, gymId) as Array<{
+        id: string;
+        name: string;
+        gym_id: string | null;
+        plan_json: string;
+        created_at: string;
+      }>).find((row) => planSteps((JSON.parse(row.plan_json) as { items?: unknown }).items) === planSteps(plan.items));
+      if (same) {
+        return send(res, 200, { workout: { id: same.id, name: same.name, gymId: same.gym_id, createdAt: same.created_at, plan: JSON.parse(same.plan_json) } });
+      }
       const count = (db.prepare('select count(*) as n from workouts where user_id = ?').get(account.id) as { n: number }).n;
       if (count >= LIMITS.pro.savedWorkouts) throw new HttpError(409, `You’ve saved ${count} workouts, the most there’s room for. Delete one first.`);
       const id = randomUUID();

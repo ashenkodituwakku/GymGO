@@ -456,6 +456,10 @@ describe('what Pro unlocks', () => {
     expect(saved.status).toBe(201);
     expect(saved.body.workout).toMatchObject({ name: 'Push day', gymId: 'dohertys-gym-city' });
     expect(saved.body.workout.plan.items).toHaveLength(2);
+    // Saving the same plan again (a double tap, a retry) keeps the one already there.
+    const again = await call(withStripe.base, 'POST', '/api/workouts', { token: pro.token, body: { name: 'Push day', gymId: 'dohertys-gym-city', plan } });
+    expect(again.status).toBe(200);
+    expect(again.body.workout.id).toBe(saved.body.workout.id);
     const bad = await call(withStripe.base, 'POST', '/api/workouts', { token: pro.token, body: { name: 'Bad', plan: { items: [{ exerciseId: 'x', sets: 99 }] } } });
     expect(bad.status).toBe(400);
 

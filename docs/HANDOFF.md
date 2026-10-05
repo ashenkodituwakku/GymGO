@@ -51,7 +51,7 @@ the branch the owner's launcher pulls.
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
 `npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 216,
-mobile 267, domain 163 and web 39 tests, all passing.
+mobile 277, domain 163 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 57, React Native 0.86, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -101,6 +101,12 @@ mobile 267, domain 163 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- Polish round (5 Oct): distances in your own country's units everywhere
+  (`setReaderCountry` in `src/lib/places.ts`, set from your Country); the
+  server keeps one copy when the same workout plan is saved twice; proper
+  empty states for a card you don't have and for Moderation; Friends' empty
+  line padded like its rows. Seen in the browser at iPhone size, light and
+  dark, as the dev account.
 - Batch E: gift Pro (a code for a year), Pro Duo (a partner by friend
   code), partner day passes (mechanics only; none listed). Stripe test mode
   only, against a pretend Stripe.

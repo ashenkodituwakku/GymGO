@@ -17,7 +17,7 @@ import { ApiError, problemText } from './api';
 import { FOCUS_COUNTRY, canSearchIn, deviceTimeZone, openingPlace } from './country';
 import { setHapticsEnabled } from './haptics';
 import { currentFix, type Fix } from './location';
-import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, whereaboutsAt, type City } from './places';
+import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, setReaderCountry, whereaboutsAt, type City } from './places';
 import { locatedNotice } from './copy';
 import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, reachFor, refreshVisit, tileKey, tilesAround, wantsLookup, type Filters } from './query';
 import { useAccount } from './useAccount';
@@ -190,8 +190,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
   const [prefs, setPrefs] = useState<Prefs>({ haptics: true, demo: false, country: null, weeklyGoal: null, plates: {}, timers: [] });
   const [prefsReady, setPrefsReady] = useState(false);
-  // Place search reads the mode, so it must match before anything renders.
+  // Place search reads the mode, and distances your country's units, so
+  // both must match before anything renders.
   setDemoMode(prefs.demo);
+  setReaderCountry(prefs.country);
   const [here, setHere] = useState<Fix | null>(null);
 
   useEffect(() => {

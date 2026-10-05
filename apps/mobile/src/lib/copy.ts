@@ -13,7 +13,7 @@
 
 import type { AccessVerdict, ResultTier } from '@gymgo/domain';
 import { countryInSentence } from './country';
-import { KM_PER_MILE, distanceLabel, usesMiles } from './places';
+import { KM_PER_MILE, distanceLabel, milesFor } from './places';
 import { THIS_AREA, YOUR_LOCATION } from './query';
 
 export interface TierCopy {
@@ -226,7 +226,7 @@ export function lookupLine(state: 'ready' | 'searching' | 'failed' | 'none', pla
  */
 export function noGymsLine(placeName: string, radiusKm: number, country: string): string {
   if (placeName === THIS_AREA) return 'OpenStreetMap has no gyms mapped in this area yet.';
-  const reach = usesMiles(country) ? `${Math.round(radiusKm / KM_PER_MILE)} mi` : `${Math.round(radiusKm)} km`;
+  const reach = milesFor(country) ? `${Math.round(radiusKm / KM_PER_MILE)} mi` : `${Math.round(radiusKm)} km`;
   const where = placeName === YOUR_LOCATION ? 'you' : placeName;
   return `No gyms mapped within ${reach} of ${where} yet. Open the map to look further out.`;
 }

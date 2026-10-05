@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { haversineKm } from '@gymgo/domain';
-import { CITIES, CITY_LIST, DEFAULT_PLACE, WORLD_CITIES, activeCities, localBudget, cityAt, cityNear, distanceLabel, geocodePlace, homePlace, moneyLabel, nearestCity, placeContext, radiusChoices, setDemoMode, suggestPlaces, suggestWorldCities, tracksPrices, whereaboutsAt, worldCitiesIn, worldCityNamed } from './places';
+import { CITIES, CITY_LIST, DEFAULT_PLACE, WORLD_CITIES, activeCities, localBudget, cityAt, cityNear, distanceLabel, geocodePlace, homePlace, moneyLabel, nearestCity, placeContext, radiusChoices, setDemoMode, setReaderCountry, suggestPlaces, suggestWorldCities, tracksPrices, whereaboutsAt, worldCitiesIn, worldCityNamed } from './places';
 import { COUNTRIES } from './countries';
 import { COUNTRY_CURRENCY } from '@gymgo/domain';
 import { BUNDLED_GYMS, atPlace, atWorldCity, initialFilters, moveTo, runSearch } from './query';
@@ -148,6 +148,23 @@ describe('places', () => {
     expect(moneyLabel(2500, 'US')).toBe('$25');
     expect(moneyLabel(1250, 'US')).toBe('$12.50');
     expect(radiusChoices('US').map((choice) => choice.label)).toEqual(['1 mi', '2 mi', '3 mi', '5 mi', '10 mi']);
+  });
+
+  it('gives distances in your units once you have a country, whichever country the gym is in', () => {
+    try {
+      setReaderCountry('AU');
+      expect(distanceLabel(16_675, 'US')).toBe('16,675\u00a0km');
+      expect(distanceLabel(0.35, 'US')).toBe('350\u00a0m');
+      expect(radiusChoices('US').map((choice) => choice.label)).toEqual(['2 km', '5 km', '10 km', '20 km']);
+      // Money stays the gym's: that's what it charges.
+      expect(moneyLabel(2500, 'US')).toBe('$25');
+      setReaderCountry('US');
+      expect(distanceLabel(0.885, 'AU')).toBe('0.5\u00a0mi');
+      expect(radiusChoices('AU').map((choice) => choice.label)).toEqual(['1 mi', '2 mi', '3 mi', '5 mi', '10 mi']);
+    } finally {
+      setReaderCountry(null);
+    }
+    expect(distanceLabel(1.609344, 'US')).toBe('1.0\u00a0mi');
   });
 
   it('speaks miles in the UK and kilometres in the rest of the world, and keeps prices in A$, US$, €, £ and CHF', () => {

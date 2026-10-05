@@ -260,7 +260,7 @@ export default function Home() {
           </View>
           <View style={styles.flex}>
             <Txt variant="headline" numberOfLines={1}>{`Trip to ${trip.placeName}`}</Txt>
-            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
               {`${tripWhen(trip, todayThere(trip))} · ${tripDatesLabel(trip)} · gyms that let visitors in`}
             </Txt>
           </View>

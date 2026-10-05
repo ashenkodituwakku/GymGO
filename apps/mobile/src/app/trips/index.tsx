@@ -66,7 +66,7 @@ export default function TripsScreen() {
   };
 
   return (
-    <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: 'Trips' }} />
 
       {loaded && trips.length === 0 && !adding && (

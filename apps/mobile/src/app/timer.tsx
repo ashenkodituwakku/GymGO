@@ -135,7 +135,7 @@ export default function TimerScreen() {
   const bigClock = { fontSize: Math.round(type.largeTitle.fontSize * 2.3), lineHeight: Math.round(type.largeTitle.fontSize * 2.3 * 1.15) };
 
   return (
-    <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: 'Interval timer' }} />
 
       <View

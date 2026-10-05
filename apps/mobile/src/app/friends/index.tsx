@@ -95,7 +95,7 @@ export default function FriendsScreen() {
   }
 
   return (
-    <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: 'Friends' }} />
       {problem && (
         <Txt variant="footnote" color={color.noInk}>

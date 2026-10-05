@@ -119,7 +119,7 @@ export default function AccountScreen() {
   const offered = (['apple', 'google'] as const).filter((provider) => (provider === 'google' ? providers?.google : providers?.apple) || connected(provider));
 
   return (
-    <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: 'Account' }} />
 
       <Animated.View style={styles.head}>

@@ -256,8 +256,6 @@ export default function TrainScreen() {
         contentContainerStyle={styles.content}
         // Room for the rest timer, so it never covers the last set.
         extraBottom={restEndsAt !== null ? 90 : 0}
-        keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
       >
         <View style={styles.intro}>
           <Txt variant="largeTitle">{named.title}</Txt>

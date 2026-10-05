@@ -192,8 +192,6 @@ export default function SignInScreen() {
     <PageScroll
       style={styles.page}
       contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-      automaticallyAdjustKeyboardInsets
     >
       <Stack.Screen options={{ title: '' }} />
       <Animated.View style={styles.hero}>

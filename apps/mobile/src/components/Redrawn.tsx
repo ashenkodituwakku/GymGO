@@ -12,19 +12,20 @@
  * what's drawn again, and PageScroll goes back there. (Choosing an accent at
  * the foot of Appearance used to land you back at its top.)
  *
- * Every screen also comes in smoothly (see ScreenIn): a tab fades up when
- * you switch to it; in a browser, whose stack has no slide of its own, a
- * page rises into place as it opens and fades back up when you return to
- * it. A phone's pages already slide in, natively, so there they're left be.
- * Outside what's drawn again, so a change of colours doesn't replay it.
+ * Every screen also comes in smoothly (see ScreenIn): a tab fades up as it
+ * lifts a little into place when you switch to it; in a browser, whose stack
+ * has no slide of its own, a page rises into place as it opens and comes back
+ * up from a little dimmed when you return to it. A phone's pages already
+ * slide in, natively, so there they're left be. Outside what's drawn again,
+ * so a change of colours doesn't replay it.
  */
 
 import { useFocusEffect } from 'expo-router';
-import { Fragment, createContext, useCallback, useEffect, useLayoutEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
-import { Platform, StyleSheet } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Fragment, createContext, useCallback, useLayoutEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
+import Animated, { ReduceMotion, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { subscribeTheme, themeVersion } from '@/lib/theme';
-import { ARRIVE } from './motion';
+import { EASE_SCREEN, EASE_SCREEN_CSS } from './motion';
 
 /** The theme's version, redrawing whoever reads it when the colours change. */
 export function useThemeVersion(): number {
@@ -49,48 +50,89 @@ export function Redrawn({ children, kind = 'page', focused }: { children: ReactN
   );
 }
 
-/** How far a page rises as it opens in a browser, in points. */
-const RISE = 18;
-/** A page returned to starts this faded, and comes back up. */
-const RETURN = 0.55;
+/**
+ * How a screen comes in: from how faded and how far below its place (in
+ * points), over how long. Small distances: the screen glides into place, it
+ * doesn't fly in.
+ */
+type Motion = { opacity: number; y: number; duration: number };
+/** A tab you switch to. */
+const TAB: Motion = { opacity: 0, y: 8, duration: 300 };
+/** A page opening, in a browser. */
+const PAGE: Motion = { opacity: 0, y: 14, duration: 380 };
+/** A page you come back to, in a browser: it waited out of sight a little dimmed. */
+const BACK: Motion = { opacity: 0.6, y: 0, duration: 240 };
 
 function ScreenIn({ kind, focused, children }: { kind: ScreenKind; focused: boolean; children: ReactNode }) {
+  if (Platform.OS === 'web') return <ScreenInBrowser kind={kind} focused={focused}>{children}</ScreenInBrowser>;
   // A phone's stack slides its pages in itself.
-  const still = kind === 'page' && Platform.OS !== 'web';
-  const shown = useSharedValue(still ? 1 : 0);
-  const rise = useSharedValue(still || kind === 'tab' ? 0 : 1);
-  const opened = useRef(false);
+  if (kind === 'page') return <>{children}</>;
+  return <TabIn focused={focused}>{children}</TabIn>;
+}
 
-  // Opening: before the first frame is painted, so it never flashes up first.
+/**
+ * In a browser, the browser itself runs the fade and the lift (the Web
+ * Animations API), off the page's own work: a screen that takes a moment to
+ * draw the first time can't stall it halfway, and it starts from the
+ * beginning on the first frame anyone sees. Nothing is left on the screen
+ * afterwards (no lasting transform under its fixed parts).
+ */
+function ScreenInBrowser({ kind, focused, children }: { kind: ScreenKind; focused: boolean; children: ReactNode }) {
+  const ref = useRef<View>(null);
+  /** Set while the screen waits dimmed under a page opened over it. */
+  const dimmed = useRef<Animation | null>(null);
+
+  const play = useCallback((motion: Motion) => {
+    const element = ref.current as unknown as HTMLElement | null;
+    if (!element || typeof element.animate !== 'function') return;
+    for (const running of element.getAnimations()) running.cancel();
+    dimmed.current = null;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    element.animate(
+      [
+        { opacity: motion.opacity, transform: `translateY(${motion.y}px)` },
+        { opacity: 1, transform: 'translateY(0)' },
+      ],
+      { duration: motion.duration, easing: EASE_SCREEN_CSS },
+    );
+  }, []);
+
+  // Opening, and a tab switched to: before the first frame is painted, so it never flashes up first.
   useLayoutEffect(() => {
-    if (still) return;
-    shown.value = withTiming(1, kind === 'tab' ? { ...ARRIVE, duration: 220 } : { ...ARRIVE, duration: 320 });
-    rise.value = withTiming(0, { ...ARRIVE, duration: 380 });
-  }, [still, kind, shown, rise]);
+    if (kind === 'page') play(PAGE);
+    else if (focused) play(TAB);
+  }, [kind, focused, play]);
 
-  // A tab you switch to: faded up from nothing (out of sight, it waits at nothing).
-  useEffect(() => {
-    if (kind !== 'tab') return;
-    shown.value = focused ? withTiming(1, { ...ARRIVE, duration: 220 }) : 0;
-  }, [kind, focused, shown]);
-
-  // In a browser, coming back to a screen (Back from a page): it fades back
-  // up. Not on a phone: there the screen underneath slides back into view
-  // natively, and dimming it as the next one began to slide in would show.
+  // Coming back from a page opened over this screen (a tab or a page): up from a little dimmed.
+  // A tab switched to has just played its own arrival, which cleared the dimming.
   useFocusEffect(
     useCallback(() => {
-      if (still || Platform.OS !== 'web') return;
-      if (opened.current) shown.value = withTiming(1, { ...ARRIVE, duration: 220 });
-      opened.current = true;
-      // Left for another page: ready to come back in (it's out of sight meanwhile).
+      if (dimmed.current) play(BACK);
+      // Left for a page over it, or another tab: it waits dimmed, out of sight, so it doesn't flash bright on the way back.
       return () => {
-        shown.value = RETURN;
+        const element = ref.current as unknown as HTMLElement | null;
+        if (element && typeof element.animate === 'function') dimmed.current = element.animate([{ opacity: BACK.opacity }], { duration: 0, fill: 'forwards' });
       };
-    }, [still, shown]),
+    }, [play]),
   );
 
-  const style = useAnimatedStyle(() => ({ opacity: shown.value, transform: [{ translateY: rise.value * RISE }] }));
-  if (still) return <>{children}</>;
+  return (
+    <View ref={ref} style={styles.fill}>
+      {children}
+    </View>
+  );
+}
+
+/** A tab on a phone: faded up and lifted into place on the UI thread; out of sight, it waits at nothing. */
+function TabIn({ focused, children }: { focused: boolean; children: ReactNode }) {
+  const shown = useSharedValue(0);
+  useLayoutEffect(() => {
+    shown.value = focused ? withTiming(1, { duration: TAB.duration, easing: EASE_SCREEN, reduceMotion: ReduceMotion.System }) : 0;
+  }, [focused, shown]);
+  const style = useAnimatedStyle(() => ({
+    opacity: interpolate(shown.value, [0, 1], [TAB.opacity, 1]),
+    transform: [{ translateY: (1 - shown.value) * TAB.y }],
+  }));
   return <Animated.View style={[styles.fill, style]}>{children}</Animated.View>;
 }
 

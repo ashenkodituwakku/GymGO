@@ -89,6 +89,14 @@ export const EASE_IN = clamped(0.4, 0, 1, 1);
 export const EASE_IN_OUT = clamped(0.65, 0, 0.35, 1);
 /** A highlight melting away: the web's own "ease", gentler at the start than EASE_OUT. */
 export const EASE_SOFT = clamped(0.25, 0.1, 0.25, 1);
+/**
+ * A whole screen arriving: it leaves gently, picks up, then glides to a stop.
+ * EASE_OUT is too steep for this: a screen fading on it is two-thirds there by
+ * its first frame, so it reads as popping up rather than fading in.
+ */
+export const EASE_SCREEN = clamped(0.2, 0, 0, 1);
+/** EASE_SCREEN, for a browser's own animations. */
+export const EASE_SCREEN_CSS = 'cubic-bezier(0.2, 0, 0, 1)';
 
 /** A fade or slide coming in. */
 export const ARRIVE: WithTimingConfig = { duration: 260, easing: EASE_OUT, reduceMotion: ReduceMotion.System };

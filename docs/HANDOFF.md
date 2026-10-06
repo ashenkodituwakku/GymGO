@@ -51,7 +51,7 @@ the branch the owner's launcher pulls.
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
 `npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 216,
-mobile 278, domain 163 and web 39 tests, all passing.
+mobile 279, domain 163 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 57, React Native 0.86, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -101,6 +101,18 @@ mobile 278, domain 163 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- Polish round 3 (6 Oct): forms. Sign in's "don't match" clears as you
+  fix the email or password; on Account, Enter saves a name or a password,
+  and a new password says how many characters it still needs; naming an
+  interval timer has Cancel and a proper box, and deleting one takes two
+  taps; a review can be cancelled ("Send review" / "Cancel"); the owner
+  claim's contact hint fits, and only Australian gyms are asked for an ABN.
+  Search: Explore now passes your country to its search box (it never had,
+  so the box was read out as "Search a town, city or gym" to everyone and
+  world cities weren't yours-first), place suggestions in Explore and
+  Trips put your country's first (`suggestPlaces(..., home)`), and "Try a
+  city or ZIP code" / "A city or neighborhood" for a US user. A scan of
+  every screen found no unnamed controls and no button label that wraps.
 - Polish round 2 (5–6 Oct): every page scrolls a box you're typing in clear
   of the iPhone keyboard (`PageScroll` now does it for all pages; only four
   did); trips are described by the date where they are (`todayThere` in

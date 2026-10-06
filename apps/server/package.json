@@ -1,6 +1,6 @@
 {
   "name": "@gymgo/server",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "GymGO's API: accounts, saved gyms, reviews, moderation and GymGO Pro (Stripe), on Node's built-in SQLite.",
   "type": "module",

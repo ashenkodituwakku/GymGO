@@ -1,6 +1,6 @@
 {
   "name": "gymgo",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Gym Information Map - find a gym that fits your workout, budget and visit time.",
   "packageManager": "pnpm@10.33.0",

@@ -45,7 +45,7 @@ export function CrashScreen({ error, retry }: ErrorBoundaryProps) {
         context: [
           { label: 'Error', value: message },
           ...(where ? [{ label: 'Where in the code', value: where }] : []),
-          { label: 'App version', value: `${Constants.expoConfig?.version ?? 'unknown'} (pilot)` },
+          { label: 'App version', value: Constants.expoConfig?.version ?? 'unknown' },
           { label: 'Device', value: device },
         ],
       });

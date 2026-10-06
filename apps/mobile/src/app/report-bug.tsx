@@ -65,7 +65,7 @@ export default function ReportBug() {
   const details = useMemo(
     () =>
       deviceDetails({
-        appVersion: `${Constants.expoConfig?.version ?? 'unknown'} (pilot)`,
+        appVersion: Constants.expoConfig?.version ?? 'unknown',
         platform: Platform.OS,
         osVersion: Platform.OS === 'web' ? null : Platform.Version,
         userAgent: Platform.OS === 'web' && typeof navigator !== 'undefined' ? navigator.userAgent : null,

@@ -4,6 +4,7 @@
  * switch haptics; and read where GymGO's facts come from.
  */
 
+import Constants from 'expo-constants';
 import { LEGAL_VERSION, formatPlanPrice, type LegalDocId } from '@gymgo/domain';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
@@ -253,7 +254,7 @@ export default function Profile() {
           subtitle="Something not working? Tell the team"
           onPress={() => router.push({ pathname: '/report-bug', params: { from: 'Profile' } })}
         />
-        <Row icon="settings" tile={TILE.grey} title="Version" value="0.1.0 · pilot" chevron={false} />
+        <Row icon="settings" tile={TILE.grey} title="Version" value={Constants.expoConfig?.version ?? '1.0.0'} chevron={false} />
       </Group>
 
       <Group header="Legal">

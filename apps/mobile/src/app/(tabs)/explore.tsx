@@ -32,6 +32,7 @@ import { cityAt, cityNear, geocodePlace, localBudget, worldCityNamed, type AppPl
 import { useApp } from '@/lib/app-state';
 import { enterOpensGym, placeForEnter, suggestGyms } from '@/lib/gymSearch';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
+import { resultFor } from '@/lib/results';
 import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, atWorldCity, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
 import { CHILD_TOUCH, NO_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -145,7 +146,16 @@ function MapScreen() {
       })),
     [outcome],
   );
-  const selected = outcome.results.find((result) => result.record.location.id === selectedId) ?? null;
+  // The gym whose card is open. If the search moves on without it (back to
+  // your location, another place, a filter that rules it out), its card
+  // stays, weighed the same way, rather than emptying out from under you.
+  const selected = useMemo(
+    () =>
+      outcome.results.find((result) => result.record.location.id === selectedId) ??
+      resultFor(filters, data.records, selectedId ?? undefined, asOf, data.ratings) ??
+      null,
+    [outcome, selectedId, filters, data.records, asOf, data.ratings],
+  );
   const showingDemo = outcome.results.some((result) => result.record.location.isDemoData);
   const city = cityAt(filters.centre);
   // Somewhere GymGO doesn't carry a city for: the gyms there came from the map.
@@ -687,7 +697,9 @@ function MapScreen() {
   // --- Desktop ----------------------------------------------------------------
 
   if (wide) {
-    const panelsWidth = PANEL_GAP + PANEL_WIDTH + (panel ? PANEL_GAP + PANEL_WIDTH : 0);
+    // Filters only when asked for, and a card only while there's a gym to show.
+    const shown = panel === 'filters' || (panel === 'place' && selected) ? panel : null;
+    const panelsWidth = PANEL_GAP + PANEL_WIDTH + (shown ? PANEL_GAP + PANEL_WIDTH : 0);
     return (
       <View style={styles.root}>
         {/* The map opens where the search is, so it waits for your country. */}
@@ -717,9 +729,9 @@ function MapScreen() {
           <ScrollView keyboardShouldPersistTaps="handled">{results(false)}</ScrollView>
         </DesktopPanel>
 
-        {panel && (
+        {shown && (
           <DesktopPanel left={PANEL_GAP * 2 + PANEL_WIDTH} bottom={PANEL_GAP + clearance}>
-            {panel === 'place' && selected ? (
+            {shown === 'place' && selected ? (
               <ScrollView
                 stickyHeaderIndices={[0]}
                 onScroll={(event) => {

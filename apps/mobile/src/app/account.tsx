@@ -6,8 +6,8 @@
  */
 
 import { Stack, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { StyleSheet, View, type TextInput } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
@@ -371,19 +371,28 @@ function Line({
 function NameForm({ current, onSave }: { current: string; onSave: (name: string) => Promise<void> }) {
   const [name, setName] = useState(current);
   const [busy, setBusy] = useState(false);
+  const ready = !!name.trim() && name.trim() !== current;
+  const save = async () => {
+    if (!ready || busy) return;
+    setBusy(true);
+    await onSave(name.trim());
+    setBusy(false);
+  };
   return (
     <Animated.View entering={FADE_IN} style={styles.form}>
-      <Input value={name} onChangeText={setName} autoFocus maxLength={40} autoComplete="name" style={styles.input} accessibilityLabel="Your name" placeholderTextColor={color.labelTertiary} />
-      <PrimaryButton
-        label="Save name"
-        busy={busy}
-        disabled={!name.trim() || name.trim() === current}
-        onPress={async () => {
-          setBusy(true);
-          await onSave(name.trim());
-          setBusy(false);
-        }}
+      <Input
+        value={name}
+        onChangeText={setName}
+        autoFocus
+        maxLength={40}
+        autoComplete="name"
+        style={styles.input}
+        accessibilityLabel="Your name"
+        placeholderTextColor={color.labelTertiary}
+        returnKeyType="done"
+        onSubmitEditing={() => void save()}
       />
+      <PrimaryButton label="Save name" busy={busy} disabled={!ready} onPress={() => void save()} />
     </Animated.View>
   );
 }
@@ -392,6 +401,14 @@ function PasswordForm({ needsCurrent, onSave }: { needsCurrent: boolean; onSave:
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [busy, setBusy] = useState(false);
+  const nextRef = useRef<TextInput>(null);
+  const ready = !(needsCurrent && !current) && next.length >= 8;
+  const save = async () => {
+    if (!ready || busy) return;
+    setBusy(true);
+    await onSave(current, next);
+    setBusy(false);
+  };
   return (
     <Animated.View entering={FADE_IN} style={styles.form}>
       {needsCurrent && (
@@ -404,9 +421,12 @@ function PasswordForm({ needsCurrent, onSave }: { needsCurrent: boolean; onSave:
           style={styles.input}
           accessibilityLabel="Current password"
           placeholderTextColor={color.labelTertiary}
+          returnKeyType="next"
+          onSubmitEditing={() => nextRef.current?.focus()}
         />
       )}
       <Input
+        ref={nextRef}
         value={next}
         onChangeText={setNext}
         secureTextEntry
@@ -415,17 +435,15 @@ function PasswordForm({ needsCurrent, onSave }: { needsCurrent: boolean; onSave:
         style={styles.input}
         accessibilityLabel="New password"
         placeholderTextColor={color.labelTertiary}
+        returnKeyType="done"
+        onSubmitEditing={() => void save()}
       />
-      <PrimaryButton
-        label={needsCurrent ? 'Change password' : 'Set password'}
-        busy={busy}
-        disabled={(needsCurrent && !current) || next.length < 8}
-        onPress={async () => {
-          setBusy(true);
-          await onSave(current, next);
-          setBusy(false);
-        }}
-      />
+      {next.length > 0 && next.length < 8 && (
+        <Txt variant="footnote" color={color.labelSecondary}>
+          {`${8 - next.length} more character${8 - next.length === 1 ? '' : 's'} to go.`}
+        </Txt>
+      )}
+      <PrimaryButton label={needsCurrent ? 'Change password' : 'Set password'} busy={busy} disabled={!ready} onPress={() => void save()} />
     </Animated.View>
   );
 }

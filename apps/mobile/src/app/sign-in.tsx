@@ -260,7 +260,11 @@ export default function SignInScreen() {
           icon="mail"
           label="Email"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            // A "don't match" from the last try is stale once either field changes.
+            setError(null);
+          }}
           placeholder="you@example.com"
           autoCapitalize="none"
           autoCorrect={false}
@@ -277,7 +281,10 @@ export default function SignInScreen() {
           icon="lock"
           label="Password"
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(text) => {
+            setPassword(text);
+            setError(null);
+          }}
           placeholder={mode === 'create' ? 'At least 8 characters' : 'Your password'}
           secureTextEntry={!showPassword}
           autoCapitalize="none"

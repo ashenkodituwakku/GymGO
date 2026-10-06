@@ -1,10 +1,11 @@
 /**
  * Sign in, or make an account: with Apple or Google where they're set up,
- * or with an email and password. Opened from Profile, and from anything
- * that needs an account.
+ * or with an email and password. GymGO needs an account, so signed out this
+ * is the first screen (and, apart from the legal pages and Report a bug,
+ * the only one); afterwards it goes to the link you opened, or Home.
  */
 
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Platform, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 import { serverOfflineLine } from '@/lib/copy';
@@ -22,13 +23,14 @@ import { NO_WEB_OUTLINE, color, dropShadow, face, radius, space, themed } from '
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { LegalText } from '@/components/LegalText';
+import { takeWanted } from '@/lib/afterSignIn';
 
 type Mode = 'sign_in' | 'create';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** What someone too young for an account is told, once, and on this device for a day after. */
-const TOO_YOUNG = 'Sorry, you can’t make a GymGO account. You can still find gyms and use everything that doesn’t need one.';
+const TOO_YOUNG = 'Sorry, you can’t make a GymGO account: accounts are for people 13 and over, and GymGO needs one.';
 
 const tooYoung = (error: unknown) => error instanceof ApiError && error.code === 'too_young';
 
@@ -42,7 +44,7 @@ export default function SignInScreen() {
   const params = useLocalSearchParams<{ mode?: string }>();
   const { account } = useApp();
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>(params.mode === 'create' ? 'create' : 'sign_in');
+  const [mode, setMode] = useState<Mode>(params.mode === 'create' || (params.mode !== 'sign_in' && account.newcomer) ? 'create' : 'sign_in');
   usePageTitle(mode === 'create' ? 'Create an account' : 'Sign in');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -94,8 +96,11 @@ export default function SignInScreen() {
     if (closed.current) return;
     closed.current = true;
     haptic.success();
-    if (router.canGoBack()) router.back();
-    else router.replace('/profile');
+    // A link opened before signing in (a gym a friend sent) goes there now.
+    const next = takeWanted();
+    if (next) router.replace(next as Href);
+    else if (router.canGoBack()) router.back();
+    else router.replace('/');
   }, [router]);
 
   // Signed in (here, or by a Google popup finishing): nothing more to do on this screen.
@@ -205,8 +210,8 @@ export default function SignInScreen() {
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           {mode === 'create'
-            ? 'Keep your saved gyms and workouts on every device, log your training, and review gyms you’ve tried.'
-            : 'Sign in to pick up your saved gyms, workouts and training log.'}
+            ? 'GymGO needs a free account. Make one to find gyms that will let you in, save them on every device, and log your training.'
+            : 'Sign in to find gyms, and pick up your saved gyms, workouts and training log.'}
         </Txt>
       </Animated.View>
 
@@ -347,6 +352,13 @@ export default function SignInScreen() {
       )}
 
       <PrivacyNote />
+      {account.gate !== 'in' && (
+        <Pressable onPress={() => router.push('/report-bug')} accessibilityRole="link" hitSlop={8} style={styles.forgot}>
+          <Txt variant="footnote" color={color.brand} style={face('medium')}>
+            Can’t get in? Report a problem
+          </Txt>
+        </Pressable>
+      )}
     </PageScroll>
   );
 }

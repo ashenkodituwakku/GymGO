@@ -77,7 +77,27 @@ export function problemText(error: unknown, fallback = 'That didn’t save. Try 
   return fallback;
 }
 
+// --- Who's asking ----------------------------------------------------------------
+
+/**
+ * GymGO needs an account for everything but signing in (the server's public
+ * routes are listed in apps/server/src/app.ts), so every request carries the
+ * signed-in session's token. lib/useAccount.ts tells this where to read it.
+ */
+let tokenSource: () => string | null = () => null;
+export function setTokenSource(source: () => string | null): void {
+  tokenSource = source;
+}
+
+/** For the few downloads made without request() (the country pack). */
+export function authHeaders(): Record<string, string> {
+  const token = tokenSource();
+  return token ? { authorization: `Bearer ${token}` } : {};
+}
+
 async function request<T>(method: string, path: string, options: { token?: string | null; body?: unknown } = {}): Promise<T> {
+  // A call made without saying whose it is goes as the signed-in account's.
+  const token = options.token ?? tokenSource();
   const base = apiBase();
   if (!base) throw new OfflineError('No server address.');
   const controller = new AbortController();
@@ -92,7 +112,7 @@ async function request<T>(method: string, path: string, options: { token?: strin
       signal: controller.signal,
       headers: {
         ...(options.body !== undefined ? { 'content-type': 'application/json' } : {}),
-        ...(options.token ? { authorization: `Bearer ${options.token}` } : {}),
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
       },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });

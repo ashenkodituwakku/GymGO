@@ -156,8 +156,8 @@ function storeJson(key: string, value: unknown) {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const data = useGymData();
   const accountApi = useAccount();
+  const data = useGymData(accountApi.gate === 'in');
   const billing = useBilling(accountApi);
   // Your gym collection follows the account: merged in on signing in, and each check-in sent.
   // Still signed in while the server is away: the collection waits for it rather than acting signed out.
@@ -265,7 +265,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [billing.planKnown, limits.compare]);
 
   // Your country's gyms, kept on this device: area searches there are answered at once.
-  const pack = useCountryPack(prefs.country, prefsReady && !prefs.demo);
+  const pack = useCountryPack(prefs.country, prefsReady && !prefs.demo && accountApi.gate === 'in');
   const { setPack } = data;
   useEffect(() => setPack(pack.index), [setPack, pack.index]);
 

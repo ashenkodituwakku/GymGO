@@ -1,17 +1,17 @@
 /**
  * The signed-in account, and saved gyms.
  *
- * Signed out, saved gyms live on this device only. Signing in sends the
- * changes made here to the account, and from then on the server holds the
- * list, so it follows you between the phone and the PC. A copy stays on
- * the device so the list still shows when the server can't be reached, and
- * a change made then is sent when it's back (lib/savedGyms.ts).
+ * GymGO needs an account: `gate` says whether to show the app or the
+ * sign-in screen. The server holds the saved gyms, so they follow you
+ * between the phone and the PC. A copy stays on the device so the list
+ * still shows when the server can't be reached, and a change made then is
+ * sent when it's back (lib/savedGyms.ts).
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, ApiError, OfflineError, type Account, type SignInProvider } from './api';
+import { api, ApiError, OfflineError, setTokenSource, type Account, type SignInProvider } from './api';
 import { forgetChanges, loadSaved, noteChange, othersWaiting, settleChange, storeSaved, syncSaved } from './savedGyms';
-import { loadToken, storeToken } from './session';
+import { loadToken, noteSignedIn, signedInBefore, storeToken } from './session';
 
 export type AccountState = 'loading' | 'signed_out' | 'signed_in' | 'unreachable';
 
@@ -21,6 +21,12 @@ export function useAccount() {
   const [saved, setSaved] = useState<string[]>([]);
   const savedNow = useRef<string[]>([]);
   const token = useRef<string | null>(null);
+  // Every request reads the token from here (lib/api.ts), so none goes without it.
+  useEffect(() => setTokenSource(() => token.current), []);
+  /** Whether this device had a sign-in kept: null until read. */
+  const [remembered, setRemembered] = useState<boolean | null>(null);
+  /** No one has signed in on this device yet. */
+  const [newcomer, setNewcomer] = useState(false);
 
   const putSaved = useCallback((ids: string[]) => {
     savedNow.current = ids;
@@ -45,6 +51,8 @@ export function useAccount() {
     async (newToken: string, newAccount: Account) => {
       token.current = newToken;
       await storeToken(newToken);
+      setNewcomer(false);
+      void noteSignedIn();
       setAccount(newAccount);
       setState('signed_in');
       await syncList(newToken);
@@ -61,16 +69,24 @@ export function useAccount() {
         setSaved(local);
       }
       const stored = await loadToken();
+      const before = stored ? true : await signedInBefore();
+      if (!cancelled) {
+        setRemembered(Boolean(stored));
+        setNewcomer(!before);
+      }
       if (!stored) {
         if (!cancelled) setState('signed_out');
         return;
       }
+      // Used at once (the app opens signed in while the server confirms it).
+      token.current = stored;
       try {
         const { account: me } = await api.me(stored);
         if (!cancelled) await adopt(stored, me);
       } catch (error) {
         if (cancelled) return;
         if (error instanceof ApiError && error.status === 401) {
+          token.current = null;
           await storeToken(null);
           setState('signed_out');
         } else {
@@ -218,7 +234,18 @@ export function useAccount() {
 
   return {
     state,
+    /**
+     * Whether to show the app, which needs an account: 'wait' for the moment
+     * this device's sign-in is read, 'in' with an account (or one being
+     * confirmed, or while the server is away), 'out' without one.
+     */
+    gate: (state === 'signed_in' || state === 'unreachable' || (state === 'loading' && remembered) ? 'in' : state === 'loading' ? 'wait' : 'out') as
+      | 'wait'
+      | 'in'
+      | 'out',
     account,
+    /** No one has signed in on this device yet: the sign-in screen opens on Create account. */
+    newcomer,
     /** Set while signed in, and still while the server is away ('unreachable'): you haven't been signed out. */
     token: token.current,
     saved,

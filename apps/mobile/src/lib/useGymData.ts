@@ -29,7 +29,8 @@ function isRecord(value: unknown): value is GymRecord {
   return typeof location?.id === 'string' && typeof location.name === 'string' && typeof location.position === 'object';
 }
 
-export function useGymData() {
+/** `signedIn`: GymGO's server answers only to an account, so the gyms are asked for once there is one. */
+export function useGymData(signedIn: boolean) {
   const [base, setBase] = useState<GymRecord[]>(BUNDLED_GYMS);
   /** Gyms found by "Search this area", or fetched one by one (a saved gym outside the bundled cities). */
   const [found, setFound] = useState<GymRecord[]>([]);
@@ -138,8 +139,9 @@ export function useGymData() {
   }, [refreshCovers, refreshMemberPrices, refreshRatings]);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    // Again on each new sign-in: another account may be on this device now.
+    if (signedIn) void refresh();
+  }, [refresh, signedIn]);
 
   /**
    * Ask the server for the gyms on the map in this box; they join the

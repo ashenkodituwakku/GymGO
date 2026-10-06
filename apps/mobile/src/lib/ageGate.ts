@@ -3,7 +3,8 @@
  *
  * GymGO accounts are for people 13 and over (in the US, collecting anything
  * from a younger child needs a parent's verified consent, which GymGO
- * doesn't have). Finding gyms needs no account, so that stays open to all.
+ * doesn't have). GymGO can't be used without an account, so a younger child
+ * can't use it at all.
  *
  * The question is neutral, as the FTC advises: it asks when you were born,
  * not "are you over 13?", and doesn't say which answers get in. After an

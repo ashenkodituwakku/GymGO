@@ -311,7 +311,7 @@ export default function ProScreen() {
 
         {/* Always free -------------------------------------------------------------------- */}
         <View style={styles.card}>
-          <Txt variant="headline">Always free, for everyone</Txt>
+          <Txt variant="headline">Always free, with a free account</Txt>
           {ALWAYS_FREE.map((line) => (
             <View key={line} style={styles.freeLine}>
               <Icon name="check" size={16} color={color.goodInk} />

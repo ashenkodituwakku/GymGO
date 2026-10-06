@@ -8,6 +8,8 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 const KEY = 'gymgo.session.v1';
+/** Not secret: only that someone has signed in on this device. */
+const BEFORE = 'gymgo.signed-in-before.v1';
 
 export async function loadToken(): Promise<string | null> {
   try {
@@ -29,5 +31,22 @@ export async function storeToken(token: string | null): Promise<void> {
     }
   } catch {
     // Storage refused: the session simply won't survive a restart.
+  }
+}
+
+/** Whether anyone has signed in on this device before. Someone new is shown Create account first. */
+export async function signedInBefore(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(BEFORE)) === '1';
+  } catch {
+    return true;
+  }
+}
+
+export async function noteSignedIn(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(BEFORE, '1');
+  } catch {
+    // Then it's Sign in first next time, which is only a tap away from Create account.
   }
 }

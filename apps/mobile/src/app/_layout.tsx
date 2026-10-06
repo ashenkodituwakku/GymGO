@@ -2,8 +2,8 @@ import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, router, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useState } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { EASE_IN_OUT, EASE_OUT } from '@/components/motion';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -28,6 +28,10 @@ import {
 } from '@/lib/theme';
 import { loadLookFonts } from '@/lib/lookFonts';
 import { loadThemeChoice, schemeFor, useSystemScheme, useThemeChoice } from '@/lib/themePrefs';
+import { rememberOpeningLink, takeWanted } from '@/lib/afterSignIn';
+
+// A link opened while signed out goes there once you've signed in (lib/afterSignIn.ts).
+void rememberOpeningLink();
 
 // Hold the splash screen until the typeface is ready, so nothing draws in the
 // wrong font first. iPhone draws in SF Pro, built in, and loads nothing.
@@ -118,6 +122,17 @@ function useWantedTheme(): { scheme: Scheme; accent: AccentId; look: LookId; gla
  */
 function ThemedStack() {
   useEscapeClosesSheets();
+  // GymGO needs an account: without one, only signing in and the legal pages are open.
+  const { account } = useApp();
+  const gate = account.gate;
+  const signedIn = gate === 'in';
+  // Opened already signed in: the link opens as it is, with nothing to come back to later.
+  const decided = useRef(false);
+  useEffect(() => {
+    if (gate === 'wait' || decided.current) return;
+    decided.current = true;
+    if (gate === 'in') takeWanted();
+  }, [gate]);
   const wanted = useWantedTheme();
   const version = useThemeVersion();
   const reduceMotion = useReducedMotion();
@@ -179,6 +194,9 @@ function ThemedStack() {
     },
   };
 
+  // The moment it takes to read this device's sign-in: the page's colour, rather than a flash of the sign-in screen.
+  if (gate === 'wait') return <View style={styles.root} />;
+
   return (
     <ThemeProvider value={navTheme}>
       <StatusBar style={dark ? 'light' : 'dark'} />
@@ -200,45 +218,49 @@ function ThemedStack() {
           animation: Platform.OS === 'android' ? 'ios_from_right' : 'default',
         }}
       >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen
-          name="gym/[id]"
-          options={{
-            headerShown: true,
-            title: '',
-            // iOS: the header is frosted glass over the photo, as in Maps.
-            headerTransparent: Platform.OS === 'ios',
-            headerBlurEffect: dark ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight',
-            headerShadowVisible: false,
-          }}
-        />
-        <Stack.Screen name="compare" options={{ ...MODAL, headerShown: true, title: 'Compare' }} />
-        <Stack.Screen name="workout/[id]" options={{ headerShown: true, title: 'Workout' }} />
-        <Stack.Screen name="workouts/index" options={{ headerShown: true, title: 'My workouts' }} />
-        <Stack.Screen name="workouts/[id]" options={{ headerShown: true, title: 'Workout' }} />
-        <Stack.Screen name="train" options={{ headerShown: true, title: 'Workout', gestureEnabled: false }} />
-        <Stack.Screen name="plates" options={{ ...MODAL, headerShown: true, title: 'Plates' }} />
-        <Stack.Screen name="timer" options={{ headerShown: true, title: 'Interval timer' }} />
-        <Stack.Screen name="strength" options={{ headerShown: true, title: '1-rep max' }} />
-        <Stack.Screen name="progress/index" options={{ headerShown: true, title: 'Progress' }} />
-        <Stack.Screen name="collection" options={{ headerShown: true, title: 'Collection' }} />
-        <Stack.Screen name="machines" options={{ headerShown: true, title: 'Find a machine' }} />
-        <Stack.Screen name="trips/index" options={{ headerShown: true, title: 'Trips' }} />
-        <Stack.Screen name="trips/[id]" options={{ headerShown: true, title: 'Trip' }} />
-        <Stack.Screen name="card/[id]" options={{ ...MODAL, headerShown: true, title: 'Card' }} />
-        <Stack.Screen name="friends/index" options={{ headerShown: true, title: 'Friends' }} />
-        <Stack.Screen name="friends/[id]" options={{ headerShown: true, title: 'Friend' }} />
-        <Stack.Screen name="leaderboard" options={{ headerShown: true, title: 'Leaderboard' }} />
-        <Stack.Screen name="templates" options={{ headerShown: true, title: 'Templates' }} />
-        <Stack.Screen name="moderation" options={{ headerShown: true, title: 'Moderation' }} />
-        <Stack.Screen name="progress/[exercise]" options={{ headerShown: true, title: '' }} />
-        <Stack.Screen name="pro" options={{ ...MODAL, headerShown: true, title: 'GymGO Pro' }} />
-        <Stack.Screen name="country" options={{ ...MODAL, headerShown: true, title: 'Country' }} />
-        <Stack.Screen name="appearance" options={{ headerShown: true, title: 'Appearance' }} />
-        <Stack.Screen name="sign-in" options={{ ...MODAL, headerShown: true, title: '' }} />
-        <Stack.Screen name="account" options={{ headerShown: true, title: 'Account' }} />
-        <Stack.Screen name="report-bug" options={{ ...MODAL, headerShown: true, title: 'Report a bug' }} />
+        <Stack.Protected guard={signedIn}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="gym/[id]"
+            options={{
+              headerShown: true,
+              title: '',
+              // iOS: the header is frosted glass over the photo, as in Maps.
+              headerTransparent: Platform.OS === 'ios',
+              headerBlurEffect: dark ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight',
+              headerShadowVisible: false,
+            }}
+          />
+          <Stack.Screen name="compare" options={{ ...MODAL, headerShown: true, title: 'Compare' }} />
+          <Stack.Screen name="workout/[id]" options={{ headerShown: true, title: 'Workout' }} />
+          <Stack.Screen name="workouts/index" options={{ headerShown: true, title: 'My workouts' }} />
+          <Stack.Screen name="workouts/[id]" options={{ headerShown: true, title: 'Workout' }} />
+          <Stack.Screen name="train" options={{ headerShown: true, title: 'Workout', gestureEnabled: false }} />
+          <Stack.Screen name="plates" options={{ ...MODAL, headerShown: true, title: 'Plates' }} />
+          <Stack.Screen name="timer" options={{ headerShown: true, title: 'Interval timer' }} />
+          <Stack.Screen name="strength" options={{ headerShown: true, title: '1-rep max' }} />
+          <Stack.Screen name="progress/index" options={{ headerShown: true, title: 'Progress' }} />
+          <Stack.Screen name="collection" options={{ headerShown: true, title: 'Collection' }} />
+          <Stack.Screen name="machines" options={{ headerShown: true, title: 'Find a machine' }} />
+          <Stack.Screen name="trips/index" options={{ headerShown: true, title: 'Trips' }} />
+          <Stack.Screen name="trips/[id]" options={{ headerShown: true, title: 'Trip' }} />
+          <Stack.Screen name="card/[id]" options={{ ...MODAL, headerShown: true, title: 'Card' }} />
+          <Stack.Screen name="friends/index" options={{ headerShown: true, title: 'Friends' }} />
+          <Stack.Screen name="friends/[id]" options={{ headerShown: true, title: 'Friend' }} />
+          <Stack.Screen name="leaderboard" options={{ headerShown: true, title: 'Leaderboard' }} />
+          <Stack.Screen name="templates" options={{ headerShown: true, title: 'Templates' }} />
+          <Stack.Screen name="moderation" options={{ headerShown: true, title: 'Moderation' }} />
+          <Stack.Screen name="progress/[exercise]" options={{ headerShown: true, title: '' }} />
+          <Stack.Screen name="pro" options={{ ...MODAL, headerShown: true, title: 'GymGO Pro' }} />
+          <Stack.Screen name="country" options={{ ...MODAL, headerShown: true, title: 'Country' }} />
+          <Stack.Screen name="appearance" options={{ headerShown: true, title: 'Appearance' }} />
+          <Stack.Screen name="account" options={{ headerShown: true, title: 'Account' }} />
+        </Stack.Protected>
+        {/* Open without an account: signing in (signed out, it's the whole app rather than a sheet over it),
+            the legal pages, and Report a bug, so someone who can't get in can still say so. */}
+        <Stack.Screen name="sign-in" options={signedIn ? { ...MODAL, headerShown: true, title: '' } : { headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="legal/[doc]" options={{ headerShown: true, title: '' }} />
+        <Stack.Screen name="report-bug" options={{ ...MODAL, headerShown: true, title: 'Report a bug' }} />
       </Stack>
       {veilColour && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle, { pointerEvents: 'none' }]} />}
     </ThemeProvider>

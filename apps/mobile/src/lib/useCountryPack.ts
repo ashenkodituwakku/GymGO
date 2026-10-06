@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import { apiBase } from './api';
+import { apiBase, authHeaders } from './api';
 import { PackIndex, parsePack } from './countryPack';
 import { readPack, removePack, writePack } from './packStore';
 
@@ -38,7 +38,7 @@ async function getJson<T>(url: string, ms: number): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, { signal: controller.signal, headers: authHeaders() });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return (await response.json()) as T;
   } finally {
@@ -50,7 +50,7 @@ async function getText(url: string, ms: number): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, { signal: controller.signal, headers: authHeaders() });
     if (response.status !== 200) throw new Error(`HTTP ${response.status}`);
     return await response.text();
   } finally {

@@ -30,6 +30,23 @@ cd apps/mobile
 rm -rf dist
 EXPO_PUBLIC_API_URL="$SITE" npx expo export --platform web --output-dir dist
 
+# Netlify leaves out any folder named node_modules, or starting with a dot,
+# when it publishes a site, and pnpm keeps the fonts and icons' files under
+# both (assets/__node_modules/.pnpm/<package>/node_modules/...). Without
+# this, the website has no icons and the wrong typeface. Rename the folders,
+# then the paths to them in the app's code.
+find dist/assets -depth -type d \( -name node_modules -o -name '.*' \) -print0 |
+  while IFS= read -r -d '' dir; do
+    base="$(basename "$dir")"
+    if [ "$base" = node_modules ]; then new=_nm; else new="_${base#.}"; fi
+    mv "$dir" "$(dirname "$dir")/$new"
+  done
+perl -pi -e 's{"/assets/__node_modules/[^"]*"}{ (my $p = $&) =~ s{/node_modules/}{/_nm/}g; $p =~ s{/\.}{/_}g; $p }ge' dist/_expo/static/js/web/*.js
+if find dist/assets -path '*/node_modules/*' -o -path '*/.*' | grep -q .; then
+  echo "Some files are still under a folder Netlify leaves out." >&2
+  exit 1
+fi
+
 # Routing: the server's own paths go to the server; any other path is a
 # screen of the app, which is always index.html.
 {

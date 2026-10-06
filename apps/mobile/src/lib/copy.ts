@@ -13,7 +13,7 @@
 
 import type { AccessVerdict, ResultTier } from '@gymgo/domain';
 import { countryInSentence } from './country';
-import { KM_PER_MILE, distanceLabel, usesMiles } from './places';
+import { KM_PER_MILE, distanceLabel, milesFor } from './places';
 import { THIS_AREA, YOUR_LOCATION } from './query';
 
 export interface TierCopy {
@@ -158,10 +158,17 @@ export const EMPTY = {
 } as const;
 
 /** A place to type, in the words people use at home: suburbs in Australia, ZIP codes in the US. */
-function placeWords(home: string | null): string {
+export function placeWords(home: string | null): string {
   if (home === 'US') return 'a city or ZIP code';
   if (home === 'AU' || home === 'NZ') return 'a suburb or city';
   return 'a town or city';
+}
+
+/** A place you're travelling to, in the words people use at home ("A city or suburb"). */
+export function tripPlaceWords(home: string | null): string {
+  if (home === 'US') return 'A city or neighborhood';
+  if (home === 'AU' || home === 'NZ') return 'A city or suburb';
+  return 'A town or city';
 }
 
 /** What the search box asks for. */
@@ -226,7 +233,7 @@ export function lookupLine(state: 'ready' | 'searching' | 'failed' | 'none', pla
  */
 export function noGymsLine(placeName: string, radiusKm: number, country: string): string {
   if (placeName === THIS_AREA) return 'OpenStreetMap has no gyms mapped in this area yet.';
-  const reach = usesMiles(country) ? `${Math.round(radiusKm / KM_PER_MILE)} mi` : `${Math.round(radiusKm)} km`;
+  const reach = milesFor(country) ? `${Math.round(radiusKm / KM_PER_MILE)} mi` : `${Math.round(radiusKm)} km`;
   const where = placeName === YOUR_LOCATION ? 'you' : placeName;
   return `No gyms mapped within ${reach} of ${where} yet. Open the map to look further out.`;
 }

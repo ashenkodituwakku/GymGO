@@ -50,8 +50,8 @@ the branch the owner's launcher pulls.
 ## The code
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
-`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 216,
-mobile 267, domain 163 and web 39 tests, all passing.
+`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 225,
+mobile 283, domain 167 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 57, React Native 0.86, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -113,6 +113,54 @@ mobile 267, domain 163 and web 39 tests, all passing.
   terms' version moved to 2026-10-06. Server tests read as a signed-in
   member (`reader`). Old signed-out branches in screens (a "Sign in"
   button) are left as harmless fallbacks.
+- Map card and web back button (6 Oct). A gym's card no longer empties
+  when the search moves on without that gym (Show gyms near me, another
+  place, a filter that rules it out): the card stays, weighed the same way
+  as a gym page. Before, on a wide window the card turned into a Filters
+  panel that its close button couldn't shut, and on a phone it left a
+  blank sheet with no close button. In a browser, every page's back
+  button is now a soft accent capsule naming the page behind ("‹ Profile",
+  "‹ Home"; untitled pages say "Back"), filled on hover, with the title
+  centred; a page opened straight from a link goes Home. iPhone and Android
+  keep their own back buttons (components/WebBack.tsx, lib/backLabel.ts).
+- Polish round 3 (6 Oct): forms. Sign in's "don't match" clears as you
+  fix the email or password; on Account, Enter saves a name or a password,
+  and a new password says how many characters it still needs; naming an
+  interval timer has Cancel and a proper box, and deleting one takes two
+  taps; a review can be cancelled ("Send review" / "Cancel"); the owner
+  claim's contact hint fits, and only Australian gyms are asked for an ABN.
+  Search: Explore now passes your country to its search box (it never had,
+  so the box was read out as "Search a town, city or gym" to everyone and
+  world cities weren't yours-first), place suggestions in Explore and
+  Trips put your country's first (`suggestPlaces(..., home)`), and "Try a
+  city or ZIP code" / "A city or neighborhood" for a US user. A scan of
+  every screen found no unnamed controls and no button label that wraps.
+- Polish round 2 (5–6 Oct): every page scrolls a box you're typing in clear
+  of the iPhone keyboard (`PageScroll` now does it for all pages; only four
+  did); trips are described by the date where they are (`todayThere` in
+  `src/lib/trips.ts`: the list said "Tomorrow" while the trip's page said
+  "Under way"), their first day reads "Today", and removing one takes a
+  second tap; "1 gym near Melbourne CBD" in Find a machine, not "near
+  melbourne cbd"; a friend code nobody has shows in red and clears as you
+  type; the leaderboard's "You" is a label that a long name can't cut off;
+  Friends and Leaderboard show "Can't reach GymGO" with Try again when the
+  server is away, not "Sign in" to a signed-in person; My workouts has Try
+  again; Profile's Offline gyms and Google content lines fit their two
+  lines. A check for text cut short on every screen at 375 and 393 points
+  finds only gym names on Home's cards and map street names. Mac trackpad
+  haptics were looked at: a web page can't drive them (Safari only reports
+  a force click), and the owner chose to leave it.
+- Polish round (5 Oct): distances in your own country's units everywhere
+  (`setReaderCountry` in `src/lib/places.ts`, set from your Country); the
+  server keeps one copy when the same workout plan is saved twice; proper
+  empty states for a card you don't have and for Moderation; Friends' empty
+  line padded like its rows; a saved gym the server no longer has shows as
+  "No longer listed" with Remove (it used to be invisible but still take a
+  Free space; `gone` in `useGymData`), and a gone compare pick no longer
+  counts towards Free's two (picking another opened the Pro screen); Saved's sign-in line is a link and
+  says "your other devices", not "your PC". Seen in the browser at iPhone
+  and iPhone SE sizes and at 1440 wide, light and dark, signed in and out,
+  with Reduce Motion on.
 - Batch E: gift Pro (a code for a year), Pro Duo (a partner by friend
   code), partner day passes (mechanics only; none listed). Stripe test mode
   only, against a pretend Stripe.

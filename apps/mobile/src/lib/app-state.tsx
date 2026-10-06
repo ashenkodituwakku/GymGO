@@ -17,7 +17,7 @@ import { ApiError, problemText } from './api';
 import { FOCUS_COUNTRY, canSearchIn, deviceTimeZone, openingPlace } from './country';
 import { setHapticsEnabled } from './haptics';
 import { currentFix, type Fix } from './location';
-import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, whereaboutsAt, type City } from './places';
+import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, setReaderCountry, whereaboutsAt, type City } from './places';
 import { locatedNotice } from './copy';
 import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, reachFor, refreshVisit, tileKey, tilesAround, wantsLookup, type Filters } from './query';
 import { useAccount } from './useAccount';
@@ -190,8 +190,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
   const [prefs, setPrefs] = useState<Prefs>({ haptics: true, demo: false, country: null, weeklyGoal: null, plates: {}, timers: [] });
   const [prefsReady, setPrefsReady] = useState(false);
-  // Place search reads the mode, so it must match before anything renders.
+  // Place search reads the mode, and distances your country's units, so
+  // both must match before anything renders.
   setDemoMode(prefs.demo);
+  setReaderCountry(prefs.country);
   const [here, setHere] = useState<Fix | null>(null);
 
   useEffect(() => {
@@ -418,17 +420,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     storeJson(RECENTS_KEY, []);
   }, []);
 
+  // A picked gym the server no longer has can't be shown, so it doesn't
+  // count towards the limit: it's dropped when you pick another.
+  const { gone } = data;
   const toggleCompare = useCallback(
     (gymId: string) => {
-      if (!compare.includes(gymId) && compare.length >= limits.compare && limits.compare < LIMITS.pro.compare) {
+      const live = compare.filter((id) => !gone.has(id));
+      if (!live.includes(gymId) && live.length >= limits.compare && limits.compare < LIMITS.pro.compare) {
         openPro('compare');
         return;
       }
-      setCompare((current) =>
-        current.includes(gymId) ? current.filter((id) => id !== gymId) : [...current, gymId].slice(-limits.compare),
-      );
+      setCompare((current) => {
+        const kept = current.filter((id) => !gone.has(id));
+        return kept.includes(gymId) ? kept.filter((id) => id !== gymId) : [...kept, gymId].slice(-limits.compare);
+      });
     },
-    [compare, limits.compare, openPro],
+    [compare, gone, limits.compare, openPro],
   );
 
   const clearCompare = useCallback(() => setCompare([]), []);

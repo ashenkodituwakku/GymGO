@@ -9,6 +9,8 @@ import { EASE_IN_OUT, EASE_OUT } from '@/components/motion';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Redrawn, useThemeVersion } from '@/components/Redrawn';
+import { WebBack } from '@/components/WebBack';
+import { backLabel } from '@/lib/backLabel';
 import { setGlassLevel } from '@/components/liquidGlass';
 import { AppProvider, useApp } from '@/lib/app-state';
 import {
@@ -205,18 +207,30 @@ function ThemedStack() {
         // redraw their own screens (app/(tabs)/_layout.tsx), so the tab
         // you're on stays chosen.
         screenLayout={({ route, children }) => (route.name === '(tabs)' ? children : <Redrawn>{children}</Redrawn>)}
-        screenOptions={{
+        screenOptions={({ route, navigation }) => ({
           headerShown: false,
           headerTintColor: color.brand,
           headerTitleStyle: { ...face('semibold'), color: color.label },
           headerStyle: { backgroundColor: color.background },
           contentStyle: { backgroundColor: color.groupedBackground },
-          headerBackTitle: 'Back',
+          // A browser: a capsule naming the page behind (components/WebBack.tsx).
+          ...(Platform.OS === 'web'
+            ? {
+                headerTitleAlign: 'center' as const,
+                headerLeft: ({ label }: { label?: string }) => (
+                  <WebBack
+                    label={backLabel(navigation.getState().routes, route.key, label)}
+                    canGoBack={navigation.canGoBack()}
+                    onPress={() => navigation.goBack()}
+                  />
+                ),
+              }
+            : { headerBackTitle: 'Back' }),
           // iPhone: swipe back from anywhere on the screen, not just the edge.
           fullScreenGestureEnabled: true,
           // Android: the same slide-over as iPhone, rather than a fade-up.
           animation: Platform.OS === 'android' ? 'ios_from_right' : 'default',
-        }}
+        })}
       >
         <Stack.Protected guard={signedIn}>
           <Stack.Screen name="(tabs)" />

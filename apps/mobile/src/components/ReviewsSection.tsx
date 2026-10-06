@@ -93,6 +93,7 @@ export function ReviewsSection({
             setWriting(false);
             refresh();
           }}
+          onCancel={() => setWriting(false)}
         />
       ) : canWrite ? (
         <PrimaryButton label="Write a review" tone="quiet" onPress={() => setWriting(true)} />
@@ -113,7 +114,7 @@ function ReviewItem({ review }: { review: Review }) {
   );
 }
 
-function ReviewForm({ gymId, token, inSheet, onDone }: { gymId: string; token: string; inSheet: boolean; onDone: () => void }) {
+function ReviewForm({ gymId, token, inSheet, onDone, onCancel }: { gymId: string; token: string; inSheet: boolean; onDone: () => void; onCancel: () => void }) {
   const [stars, setStars] = useState(0);
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
@@ -185,10 +186,17 @@ function ReviewForm({ gymId, token, inSheet, onDone }: { gymId: string; token: s
           {error}
         </Txt>
       )}
-      <PrimaryButton label={busy ? 'Sending…' : 'Send for review'} onPress={() => void submit()} disabled={busy || missing !== null} />
       <Txt variant="caption" color={color.labelSecondary}>
         {missing ?? 'A moderator reads every review before it appears.'}
       </Txt>
+      <View style={styles.buttons}>
+        <View style={styles.flex}>
+          <PrimaryButton label={busy ? 'Sending…' : 'Send review'} onPress={() => void submit()} disabled={busy || missing !== null} />
+        </View>
+        <View style={styles.flex}>
+          <PrimaryButton label="Cancel" tone="quiet" onPress={onCancel} />
+        </View>
+      </View>
     </View>
   );
 }
@@ -199,5 +207,7 @@ const styles = themed(() => StyleSheet.create({
   pending: { gap: 4, padding: space[3], borderRadius: radius.md, backgroundColor: color.maybeTint },
   form: { gap: space[3] },
   stars: { flexDirection: 'row', gap: space[2] },
+  buttons: { flexDirection: 'row', gap: space[2] },
+  flex: { flex: 1 },
   body: { height: 110, paddingTop: space[3], textAlignVertical: 'top' },
 }));

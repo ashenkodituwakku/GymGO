@@ -9,6 +9,11 @@
  *
  * When the colours change and the screen is drawn again (Redrawn), the page
  * goes back to where it was scrolled, rather than to the top.
+ *
+ * On iPhone the keyboard makes room for itself: the page can scroll a box
+ * being typed in clear of it, rather than leaving it underneath (a note on a
+ * gym's page, a friend's code). A tap on a button while typing works first
+ * time, rather than only putting the keyboard away.
  */
 
 import { forwardRef, useCallback, useContext, useRef, type ForwardedRef } from 'react';
@@ -45,6 +50,8 @@ export const PageScroll = forwardRef(function PageScroll(
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
       {...props}
       ref={setRef}
       onLayout={(event: LayoutChangeEvent) => {

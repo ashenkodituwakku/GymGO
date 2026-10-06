@@ -5,7 +5,7 @@
 
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { GymRow } from '@/components/GymRow';
 import { FADE_OUT, GLIDE, Pressable, Pressy, usePop } from '@/components/motion';
 import Animated from 'react-native-reanimated';
@@ -29,6 +29,9 @@ export default function Saved() {
     [filters, data.records, asOf, data.ratings, account.saved, compare],
   );
   const saved = account.saved.map((id) => byId.get(id)).filter((result) => result !== undefined);
+  // Saved gyms the server says it no longer has: shown so they can be
+  // removed, rather than taking a Free space nobody can see.
+  const gone = account.saved.filter((id) => !byId.has(id) && data.gone.has(id));
   const picked = compare.filter((id) => byId.has(id));
 
   return (
@@ -50,15 +53,15 @@ export default function Saved() {
       }
     >
       {/* Distances are from the search's place, so the list waits for your settings. */}
-      {!prefsReady ? null : saved.length === 0 ? (
+      {!prefsReady ? null : saved.length === 0 && gone.length === 0 ? (
         <View style={styles.empty}>
           <Icon name="saved" size={44} color={color.brand} />
           <Txt variant="title2">Nothing saved yet</Txt>
           <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
             Tap Save on any gym and it lands here.{' '}
             {account.state === 'signed_in' || account.state === 'unreachable'
-              ? 'It follows you between your phone and your PC.'
-              : 'Sign in and it follows you to your PC too.'}
+              ? 'It follows you to your other devices.'
+              : 'Sign in and it follows you to your other devices too.'}
           </Txt>
           <PrimaryButton
             label="Find a gym"
@@ -81,6 +84,7 @@ export default function Saved() {
               </Txt>
             </Pressable>
           )}
+          {saved.length > 0 && (
           <View style={styles.list}>
             {saved.map((result, index) => {
               const id = result.record.location.id;
@@ -104,12 +108,53 @@ export default function Saved() {
               );
             })}
           </View>
+          )}
+          {gone.length > 0 && (
+            <View style={styles.list}>
+              {gone.map((id, index) => (
+                <Animated.View key={id} exiting={FADE_OUT} layout={GLIDE}>
+                  {index > 0 && <View style={styles.goneDivider} />}
+                  <View style={styles.goneRow}>
+                    <Icon name="info" size={22} color={color.labelTertiary} />
+                    <View style={styles.flex}>
+                      <Txt variant="headline">No longer listed</Txt>
+                      <Txt variant="footnote" color={color.labelSecondary}>
+                        A gym you saved that the map GymGO reads doesn’t list any more.
+                      </Txt>
+                    </View>
+                    <Pressable
+                      onPress={() => {
+                        haptic.select();
+                        account.toggleSave(id);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Remove this gym from Saved"
+                      hitSlop={8}
+                      style={({ pressed }) => [styles.remove, pressed && { opacity: 0.7 }]}
+                    >
+                      <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                        Remove
+                      </Txt>
+                    </Pressable>
+                  </View>
+                </Animated.View>
+              ))}
+            </View>
+          )}
           <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
             {account.state === 'signed_in'
               ? 'Synced to your account.'
               : account.state === 'unreachable'
                 ? 'The GymGO server isn’t reachable, so these are this device’s copy. Anything you save now joins your account when it’s back.'
-                : 'Saved on this device. Sign in in Profile to keep them on your PC too.'}
+                : (
+                  <>
+                    Saved on this device.{' '}
+                    <Text style={[{ color: color.brand }, face('semibold')]} accessibilityRole="link" onPress={() => router.push('/sign-in')}>
+                      Sign in
+                    </Text>{' '}
+                    to keep them on your other devices too.
+                  </>
+                )}
           </Txt>
         </>
       )}
@@ -140,6 +185,9 @@ const styles = themed(() => StyleSheet.create({
   upsell: { paddingVertical: space[2] },
   row: { flexDirection: 'row', alignItems: 'center', paddingRight: space[3] },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 86 },
+  goneRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4] },
+  goneDivider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: space[4] + 22 + space[3] },
+  remove: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandTint },
   tick: {
     width: 26,
     height: 26,

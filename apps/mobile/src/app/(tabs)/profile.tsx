@@ -76,13 +76,18 @@ export default function Profile() {
   };
 
   const sub = billing.subscription;
+  const short = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
   const proLine = billing.isPro
-    ? sub?.endsAt
-      ? `Cancelled · Pro until ${new Date(sub.endsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
-      : sub?.amountMinor && sub.currency
-        ? `${formatPlanPrice(sub.amountMinor, sub.currency)} a ${sub.interval ?? 'period'}${sub.renewsAt ? ` · renews ${new Date(sub.renewsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : ''}`
-        : 'On for this account'
-    : `${billing.limits.savedGyms} saved gyms, compare ${billing.limits.compare}`;
+    ? sub?.trial && sub.renewsAt && !sub.endsAt
+      ? `Free trial · first payment ${short(sub.renewsAt)}`
+      : sub?.endsAt
+        ? `Cancelled · Pro until ${new Date(sub.endsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
+        : sub?.amountMinor && sub.currency
+          ? `${formatPlanPrice(sub.amountMinor, sub.currency)} a ${sub.interval ?? 'period'}${sub.renewsAt ? ` · renews ${short(sub.renewsAt)}` : ''}`
+          : 'On for this account'
+    : billing.trial
+      ? `Try Pro free for ${billing.trial.days} days`
+      : `${billing.limits.savedGyms} saved gyms, compare ${billing.limits.compare}`;
 
   return (
     <TabScreen title="Profile">
@@ -208,7 +213,7 @@ export default function Profile() {
           icon="globe"
           tile={TILE.blue}
           title="Google content"
-          subtitle="Show Street View and Google’s photos on a gym’s page without asking"
+          subtitle="Load Street View and Google’s photos without asking"
           toggle={{ value: alwaysGoogle, onChange: (value) => setAlwaysShowGoogle(value) }}
         />
         <Row
@@ -414,16 +419,17 @@ function PackRow() {
   const { state } = pack;
   const name = prefs.country ? countryName(prefs.country) : 'your country';
   const size = state.bytes >= 1024 * 1024 ? `${(state.bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(state.bytes / 1024))} KB`;
+  // Two lines at most beside the count, so each says only what matters.
   const subtitle =
     state.status === 'ready'
-      ? `All ${state.gyms.toLocaleString()} mapped gyms in ${name} beyond the built-in cities, ${size}. Searching an area there is instant, offline too.`
+      ? `Kept here, ${size}: area searches work offline`
       : state.status === 'building'
-        ? `GymGO is reading ${name}’s gyms from the map${state.progress && state.progress.total ? ` (${state.progress.done} of ${state.progress.total} regions)` : ''}. It saves them here when it’s done.`
+        ? `Reading ${name}’s gyms from the map${state.progress && state.progress.total ? ` (${state.progress.done} of ${state.progress.total})` : ''}…`
         : state.status === 'loading'
           ? 'Checking…'
           : state.failure === 'map'
-            ? 'Not saved yet: the map service didn’t answer. Try again in an hour.'
-            : 'Not saved yet: GymGO couldn’t reach its server. Tap to try again.';
+            ? 'Not saved: the map service didn’t answer. Try later.'
+            : 'Not saved: couldn’t reach GymGO. Tap to try again.';
   return (
     <Row
       icon="download"

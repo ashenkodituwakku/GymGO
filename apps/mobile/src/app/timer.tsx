@@ -39,6 +39,8 @@ export default function TimerScreen() {
   const [banked, setBanked] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const [naming, setNaming] = useState<string | null>(null);
+  // Delete was tapped once: a second tap deletes the timer.
+  const [deleting, setDeleting] = useState(false);
 
   const running = startedAt !== null;
   const elapsed = banked + (running ? (now - startedAt) / 1000 : 0);
@@ -106,12 +108,14 @@ export default function TimerScreen() {
   const choose = (next: IntervalPlan) => {
     reset();
     setNaming(null);
+    setDeleting(false);
     setPlan(next);
   };
   const adjust = (key: 'work' | 'rest' | 'rounds', by: number) => {
     if (!pro) return openPro('timers');
     haptic.select();
     reset();
+    setDeleting(false);
     // A change to a standard timer makes it your own, unsaved until you save it.
     setPlan((current) => withinLimits({ ...current, id: isOwn ? current.id : 'custom', name: isOwn ? current.name : 'Custom', [key]: current[key] + by }));
   };
@@ -123,6 +127,11 @@ export default function TimerScreen() {
     haptic.success();
   };
   const remove = () => {
+    if (!deleting) {
+      haptic.select();
+      return setDeleting(true);
+    }
+    haptic.warn();
     setPref(
       'timers',
       own.filter((item) => item.id !== plan.id),
@@ -135,7 +144,7 @@ export default function TimerScreen() {
   const bigClock = { fontSize: Math.round(type.largeTitle.fontSize * 2.3), lineHeight: Math.round(type.largeTitle.fontSize * 2.3 * 1.15) };
 
   return (
-    <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: 'Interval timer' }} />
 
       <View
@@ -220,27 +229,33 @@ export default function TimerScreen() {
               placeholderTextColor={color.labelTertiary}
               autoFocus
               maxLength={40}
+              returnKeyType="done"
               onSubmitEditing={() => save(naming)}
               accessibilityLabel="Timer name"
+              style={styles.input}
             />
             <PrimaryButton label="Save" onPress={() => save(naming)} />
+            <PrimaryButton label="Cancel" tone="quiet" onPress={() => setNaming(null)} />
           </View>
         ) : (
           <View style={styles.controls}>
-            {(plan.id === 'custom' || isOwn) && (
+            {(plan.id === 'custom' || isOwn) && !deleting && (
               <View style={styles.flex}>
                 <PrimaryButton
                   label={isOwn ? 'Rename' : 'Save as my timer'}
                   tone="quiet"
                   icon="plus"
                   disabled={!isOwn && own.length >= MAX_OWN_TIMERS}
-                  onPress={() => setNaming(isOwn ? plan.name : '')}
+                  onPress={() => {
+                    setDeleting(false);
+                    setNaming(isOwn ? plan.name : '');
+                  }}
                 />
               </View>
             )}
             {isOwn && (
               <View style={styles.flex}>
-                <PrimaryButton label="Delete" tone="danger" icon="trash" onPress={remove} />
+                <PrimaryButton label={deleting ? 'Tap again to delete' : 'Delete'} tone="danger" icon="trash" onPress={remove} />
               </View>
             )}
           </View>
@@ -344,5 +359,6 @@ const styles = themed(() =>
     step: { width: 36, height: 36, borderRadius: Math.min(18, radius.pill), alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     pro: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.md, backgroundColor: color.brandTint },
     naming: { gap: space[2] },
+    input: { height: 44, paddingHorizontal: space[3], borderRadius: radius.md, backgroundColor: color.fill, color: color.label, fontSize: 17 },
   }),
 );

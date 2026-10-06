@@ -152,6 +152,7 @@ function terms(op: LegalOperator): LegalSection[] {
           list: [
             'Pro is a subscription, paid monthly or yearly through Stripe. The price, tax included, is shown before you pay, and paying means you agree to it.',
             'It renews automatically at the end of each month or year, at the same price, until you cancel. You can cancel at any time in Profile → Manage subscription; you keep Pro until the end of the time you’ve paid for, and aren’t charged again.',
+            'A new account can try monthly Pro free for 3 days, once, in the first 30 days after it’s made. Stripe takes your card when the trial starts. When the trial ends, the monthly price is charged to that card and Pro renews every month until you cancel. Cancel before the trial ends (Profile → Manage subscription) and you aren’t charged anything; Pro stays on until the trial’s end.',
             'If we change the price, we’ll tell you at least 30 days before your next renewal, and you can cancel before it applies.',
             'When Pro ends, nothing you saved is deleted; you just can’t add more than the free plan allows.',
             'Refunds work as [Refunds and Cancelling](refunds) explains.',
@@ -370,6 +371,7 @@ function refunds(op: LegalOperator): LegalSection[] {
       heading: 'Cancelling',
       blocks: [
         'You can cancel GymGO Pro at any time in Profile → Manage subscription, which opens Stripe’s page for your subscription. You keep Pro until the end of the month or year you’ve paid for, and you aren’t charged again. Nothing you saved is deleted when Pro ends.',
+        'In a free trial, cancel before it ends and you’re never charged. Once it ends, the first monthly payment is taken and the usual refund rules below apply to it.',
       ],
     },
     {

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@react-native-async-storage/async-storage', () => ({ default: { getItem: async () => null, setItem: async () => undefined, removeItem: async () => undefined } }));
 
-import { daysToPlan, nights, parseTrips, tripDatesLabel, tripToShow, tripWhen, upcomingTrips, type Trip } from './trips';
+import { daysToPlan, nights, parseTrips, todayThere, tripDatesLabel, tripToShow, tripWhen, upcomingTrips, type Trip } from './trips';
 
 const trip = (id: string, from: string, to: string): Trip => ({
   id,
@@ -40,7 +40,16 @@ describe('trips', () => {
     expect(tripWhen({ from: '2026-10-06', to: '2026-10-09' }, TODAY)).toBe('In 5 days');
     expect(tripWhen({ from: '2026-09-29', to: '2026-10-03' }, TODAY)).toBe('Under way');
     expect(tripWhen({ from: '2026-09-29', to: TODAY }, TODAY)).toBe('Last day');
+    expect(tripWhen({ from: TODAY, to: '2026-10-03' }, TODAY)).toBe('Today');
+    expect(tripWhen({ from: TODAY, to: TODAY }, TODAY)).toBe('Today');
     expect(nights({ from: '2026-09-30', to: '2026-10-02' })).toBe(2);
+  });
+
+  it('goes by the calendar where the trip is', () => {
+    // 23:00 on 5 Oct in London is already 6 Oct in Sydney.
+    const now = new Date('2026-10-05T22:00:00Z');
+    expect(todayThere({ timezone: 'Australia/Sydney' }, now)).toBe('2026-10-06');
+    expect(todayThere({ timezone: 'Europe/London' }, now)).toBe('2026-10-05');
   });
 
   it('reads back only well-formed trips', () => {

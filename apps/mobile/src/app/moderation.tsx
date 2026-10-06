@@ -8,6 +8,7 @@
 import { Stack, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { Icon } from '@/components/Icon';
 import { Pressable } from '@/components/motion';
 import { BugReportQueue, MemberReportQueue, ModerationQueue, PhotoQueue } from '@/components/AccountContent';
 import { ClaimQueue, OwnerUpdateQueue } from '@/components/Moderation';
@@ -38,8 +39,14 @@ export default function ModerationScreen() {
     return (
       <View style={styles.none}>
         <Stack.Screen options={{ title: 'Moderation' }} />
-        <Txt variant="subhead" color={color.labelSecondary}>
-          Moderators only.
+        <Icon name="lock" size={36} color={color.labelTertiary} />
+        <Txt variant="title2" style={styles.centre}>
+          For GymGO’s moderators
+        </Txt>
+        <Txt variant="subhead" color={color.labelSecondary} style={styles.centre}>
+          {token
+            ? 'This is where moderators check reported reviews, photos and gym claims. Your account isn’t one of them.'
+            : 'This is where moderators check reported reviews, photos and gym claims. Sign in with a moderator’s account to see it.'}
         </Txt>
       </View>
     );
@@ -100,7 +107,8 @@ const styles = themed(() =>
   StyleSheet.create({
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[4], paddingBottom: space[8], gap: space[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
-    none: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: color.groupedBackground },
+    none: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
+    centre: { textAlign: 'center' },
     card: { gap: space[4], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
     note: { textAlign: 'center', paddingHorizontal: space[4] },
   }),

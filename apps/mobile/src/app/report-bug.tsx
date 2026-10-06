@@ -134,7 +134,7 @@ export default function ReportBug() {
   }
 
   return (
-    <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title }} />
       <Animated.View style={styles.intro}>
         <View style={[styles.badge, notice && styles.noticeBadge]}>

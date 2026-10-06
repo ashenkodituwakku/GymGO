@@ -273,21 +273,26 @@ export function citiesInState(query: string): City[] {
   return activeCities().filter((city) => city.country === 'US' && codes.includes(city.region));
 }
 
-export function suggestPlaces(query: string, limit = 6, prefer?: CityId): AppPlace[] {
+export function suggestPlaces(query: string, limit = 6, prefer?: CityId, home: string | null = null): AppPlace[] {
   const needle = normalise(query);
   if (!needle) return [];
+  // Your own country before others: "Hamilton" to an American isn't first a Brisbane suburb.
+  const abroad = (city: CityId) => Number(home !== null && CITIES[city].country !== home);
   const cities = [
     ...activeCities().filter((city) => [city.name, ...city.aliases].some((name) => normalise(name).startsWith(needle))),
     ...citiesInState(query),
-  ].map(cityPlace);
+  ]
+    .sort((a, b) => abroad(a.id) - abroad(b.id))
+    .map(cityPlace);
   const places = activePlaces().filter(
     (place) => normalise(place.name).includes(needle) || (place.postcode !== '' && place.postcode.startsWith(needle)),
   )
-    // Starts-with before contains; your current city first.
+    // Starts-with before contains; your current city first, then your country.
     .sort(
       (a, b) =>
         Number(!normalise(a.name).startsWith(needle)) - Number(!normalise(b.name).startsWith(needle)) ||
-        Number(a.city !== prefer) - Number(b.city !== prefer),
+        Number(a.city !== prefer) - Number(b.city !== prefer) ||
+        abroad(a.city) - abroad(b.city),
     );
   const seen = new Set<AppPlace>();
   return [...cities, ...places].filter((place) => (seen.has(place) ? false : (seen.add(place), true))).slice(0, limit);
@@ -413,6 +418,21 @@ const MILES = new Set([
 
 export const usesMiles = (country: string) => MILES.has(country);
 
+let readerCountry: string | null = null;
+
+/**
+ * Distances are in your units, not the gym's: your country's (km in
+ * Australia, miles in the US), as Maps does, so a list with gyms from two
+ * countries doesn't mix "550 m" and "10,361 mi". Set by the app from your
+ * Country setting; until you've chosen one, a gym's own country decides.
+ */
+export function setReaderCountry(country: string | null): void {
+  readerCountry = country;
+}
+
+/** Whether distances read in miles: yours if you've chosen a country, else this one's. */
+export const milesFor = (country: string) => usesMiles(readerCountry ?? country);
+
 /**
  * Where GymGO keeps visit prices (members' reports, budgets): every country,
  * in its own currency, except where the exchange rate is too unsettled to
@@ -430,10 +450,10 @@ export function localBudget(dollarsMinor: number, country: string): number {
   return currency ? Math.round(dollarsMinor * currencyScale(currency)) : dollarsMinor;
 }
 
-/** "350 m", "2.4 km"; in the US and UK, "0.2 mi", "1.5 mi". Straight-line distance. */
+/** "350 m", "2.4 km"; for the US and UK, "0.2 mi", "1.5 mi" (see milesFor). Straight-line distance. */
 export function distanceLabel(km: number, country: string): string {
   // Joined by a non-breaking space: "0.1" never ends a line with "mi" on the next.
-  if (usesMiles(country)) {
+  if (milesFor(country)) {
     const miles = km / KM_PER_MILE;
     return miles < 10 ? `${miles.toFixed(1)}\u00a0mi` : `${Math.round(miles).toLocaleString('en-US')}\u00a0mi`;
   }
@@ -442,9 +462,9 @@ export function distanceLabel(km: number, country: string): string {
   return km < 10 ? `${km.toFixed(1)}\u00a0km` : `${Math.round(km).toLocaleString('en-AU')}\u00a0km`;
 }
 
-/** Search radius choices, in the local unit, stored as kilometres. */
+/** Search radius choices, in your unit (see milesFor), stored as kilometres. */
 export function radiusChoices(country: string): Array<{ km: number; label: string }> {
-  if (usesMiles(country)) return [1, 2, 3, 5, 10].map((miles) => ({ km: miles * KM_PER_MILE, label: `${miles} mi` }));
+  if (milesFor(country)) return [1, 2, 3, 5, 10].map((miles) => ({ km: miles * KM_PER_MILE, label: `${miles} mi` }));
   return [2, 5, 10, 20].map((km) => ({ km, label: `${km} km` }));
 }
 

@@ -9,7 +9,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useState } from 'react';
 import type { LatLng } from '@gymgo/domain';
-import { addDays } from './query';
+import { addDays, nowIn } from './query';
 
 const KEY = 'gymgo.trips.v1';
 /** Enough for a year of travel; older trips drop off once they're over. */
@@ -60,9 +60,16 @@ export function tripDatesLabel(trip: Pick<Trip, 'from' | 'to'>, locale?: string)
   return `${label(trip.from, !sameMonth)} – ${label(trip.to, true)}`;
 }
 
-/** "Today", "Tomorrow", "In 5 days", "Under way". */
+/**
+ * Today's date where the trip is. A trip's days are on the place's own
+ * calendar, so this is the "today" to describe it by, wherever the phone is.
+ */
+export const todayThere = (trip: Pick<Trip, 'timezone'>, now: Date = new Date()): string => nowIn(trip.timezone, now).date;
+
+/** "Today", "Tomorrow", "In 5 days", "Under way", "Last day". */
 export function tripWhen(trip: Pick<Trip, 'from' | 'to'>, today: string): string {
-  if (trip.from <= today) return trip.to === today ? 'Last day' : 'Under way';
+  if (trip.from === today) return 'Today';
+  if (trip.from < today) return trip.to === today ? 'Last day' : 'Under way';
   const days = Math.round((day(trip.from).getTime() - day(today).getTime()) / 86_400_000);
   if (days === 1) return 'Tomorrow';
   return `In ${days} days`;

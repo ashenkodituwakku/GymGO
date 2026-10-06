@@ -23,7 +23,7 @@ import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { distanceLabel } from '@/lib/places';
 import { moveTo, nowIn } from '@/lib/query';
-import { daysToPlan, tripDatesLabel, tripWhen, useTrips } from '@/lib/trips';
+import { daysToPlan, todayThere, tripDatesLabel, tripWhen, useTrips } from '@/lib/trips';
 import { color, face, radius, space, themed } from '@/lib/theme';
 
 /** How far from the trip's place to look. */
@@ -40,7 +40,7 @@ export default function TripScreen() {
   const trip = trips.find((item) => item.id === id) ?? null;
   usePageTitle(trip ? `Trip to ${trip.placeName}` : 'Trip');
 
-  const plan = trip ? daysToPlan(trip, nowIn(trip.timezone).date) : null;
+  const plan = trip ? daysToPlan(trip, todayThere(trip)) : null;
   const asOf = useMemo(() => new Date(), [trip]);
   const picks = useMemo(
     () => (trip && plan ? tripShortlist({ records: data.records, centre: trip.centre, from: plan.from, to: plan.to, radiusKm: TRIP_RADIUS_KM, asOf }) : []),
@@ -87,7 +87,7 @@ export default function TripScreen() {
       <Stack.Screen options={{ title: trip.placeName }} />
       <View style={styles.head}>
         <Txt variant="eyebrow" color={color.brand}>
-          {tripWhen(trip, nowIn(trip.timezone).date).toUpperCase()}
+          {tripWhen(trip, todayThere(trip)).toUpperCase()}
         </Txt>
         <Txt variant="title2">{`Gyms in ${trip.placeName}`}</Txt>
         <Txt variant="subhead" color={color.labelSecondary}>

@@ -53,7 +53,7 @@ export default function PlatesScreen() {
   };
 
   return (
-    <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: 'Plates' }} />
       <Txt variant="subhead" color={color.labelSecondary}>
         Type the total you want on the bar, bar included.

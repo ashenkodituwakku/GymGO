@@ -12,6 +12,7 @@ import { StyleSheet, Switch, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
+import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Card, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { api, problemText, type Board, type BoardEntry } from '@/lib/api';
@@ -68,6 +69,16 @@ export default function LeaderboardScreen() {
       setSaving(false);
     }
   };
+
+  // Signed in, but the server can't be reached: say so, rather than asking them to sign in.
+  if (account.state === 'unreachable' || account.state === 'loading') {
+    return (
+      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+        <Stack.Screen options={{ title: 'Leaderboard' }} />
+        {account.state === 'unreachable' && <ServerAwayCard />}
+      </PageScroll>
+    );
+  }
 
   if (!token || !account.account) {
     return (
@@ -136,7 +147,9 @@ export default function LeaderboardScreen() {
             ? 'Nobody here has collected a gym yet. Check in at one to start.'
             : area === 'city' && city
               ? `Nobody on the board has collected a gym in ${city} yet.`
-              : 'Nobody has joined the board yet. Be the first?'}
+              : board.joined
+                ? 'Nobody on the board has collected a gym yet. Check in at one to be first.'
+                : 'Nobody has joined the board yet. Switch it on above to be the first.'}
         </Txt>
       ) : (
         board && (
@@ -155,7 +168,7 @@ export default function LeaderboardScreen() {
           </View>
         )
       )}
-      {board && scope === 'everyone' && !board.joined && (
+      {board && board.rows.length > 0 && scope === 'everyone' && !board.joined && (
         <Txt variant="footnote" color={color.labelSecondary} style={styles.centre}>
           You’re not on this board. Switch it on above to see your place.
         </Txt>
@@ -180,9 +193,19 @@ function Row({ row }: { row: BoardEntry }) {
         </Txt>
       </View>
       <Avatar account={{ displayName: row.displayName, avatarUrl: row.avatarUrl }} size={34} variant="subhead" />
-      <Txt variant="headline" numberOfLines={1} style={styles.flex}>
-        {row.you ? `${row.displayName} (you)` : row.displayName}
-      </Txt>
+      {/* The name gives way to a long one; "You" always shows. */}
+      <View style={styles.name}>
+        <Txt variant="headline" numberOfLines={1} style={styles.shrink}>
+          {row.displayName}
+        </Txt>
+        {row.you && (
+          <View style={styles.youPill}>
+            <Txt variant="caption" color={color.onBrand} style={face('semibold')}>
+              You
+            </Txt>
+          </View>
+        )}
+      </View>
       <View style={styles.counts}>
         <Txt variant="headline">{`${row.gyms} gym${row.gyms === 1 ? '' : 's'}`}</Txt>
         <Txt variant="caption" color={color.labelSecondary}>
@@ -200,6 +223,9 @@ const styles = themed(() =>
     signedOut: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
     centre: { textAlign: 'center' },
     flex: { flex: 1, minWidth: 0 },
+    name: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    shrink: { flexShrink: 1, minWidth: 0 },
+    youPill: { paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.brandFill },
     join: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     list: { gap: 2, borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, padding: space[1], overflow: 'hidden' },
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[2], paddingHorizontal: space[3], borderRadius: radius.md },

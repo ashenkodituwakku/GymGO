@@ -94,7 +94,7 @@ export default function FriendScreen() {
   const dayLabel = (offset: number) => (offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : inviteAt(offset, 0).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' }));
 
   return (
-    <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: friend?.name ?? name ?? 'Friend' }} />
       {problem && (
         <Txt variant="footnote" color={color.noInk}>

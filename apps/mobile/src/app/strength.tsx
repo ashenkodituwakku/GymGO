@@ -57,7 +57,7 @@ export default function StrengthScreen() {
   const openPlates = (total: number) => router.push({ pathname: '/plates', params: { weight: String(total), unit } });
 
   return (
-    <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: '1-rep max' }} />
       <Txt variant="subhead" color={color.labelSecondary}>
         Type a set you’ve done: the weight, and how many reps you got.

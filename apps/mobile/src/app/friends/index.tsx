@@ -12,6 +12,7 @@ import { Pressable } from '@/components/motion';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
+import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Card, Input, PrimaryButton, Txt } from '@/components/ui';
 import { shareText } from '@/lib/actions';
@@ -31,7 +32,8 @@ export default function FriendsScreen() {
   const [problem, setProblem] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [adding, setAdding] = useState(false);
-  const [note, setNote] = useState<string | null>(null);
+  // What the last add or answer did; a problem shows in red, and typing a new code clears it.
+  const [note, setNote] = useState<{ text: string; problem: boolean } | null>(null);
 
   const load = useCallback(() => {
     if (!token) return;
@@ -48,11 +50,11 @@ export default function FriendsScreen() {
   const act = async (work: () => Promise<unknown>, done?: string) => {
     try {
       await work();
-      if (done) setNote(done);
+      if (done) setNote({ text: done, problem: false });
       load();
     } catch (error) {
       haptic.warn();
-      setNote(problemText(error));
+      setNote({ text: problemText(error), problem: true });
     }
   };
 
@@ -64,15 +66,28 @@ export default function FriendsScreen() {
       const answer = await api.addFriend(token, code);
       haptic.success();
       setCode('');
-      setNote(answer.status === 'accepted' ? `You and ${answer.friend.displayName} are friends now.` : `Asked ${answer.friend.displayName}. You’ll be friends once they accept.`);
+      setNote({
+        text: answer.status === 'accepted' ? `You and ${answer.friend.displayName} are friends now.` : `Asked ${answer.friend.displayName}. You’ll be friends once they accept.`,
+        problem: false,
+      });
       load();
     } catch (error) {
       haptic.warn();
-      setNote(problemText(error));
+      setNote({ text: problemText(error), problem: true });
     } finally {
       setAdding(false);
     }
   };
+
+  // Signed in, but the server can't be reached: say so, rather than asking them to sign in.
+  if (account.state === 'unreachable' || account.state === 'loading') {
+    return (
+      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+        <Stack.Screen options={{ title: 'Friends' }} />
+        {account.state === 'unreachable' && <ServerAwayCard />}
+      </PageScroll>
+    );
+  }
 
   if (!token || !account.account) {
     return (
@@ -91,7 +106,7 @@ export default function FriendsScreen() {
   }
 
   return (
-    <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: 'Friends' }} />
       {problem && (
         <Txt variant="footnote" color={color.noInk}>
@@ -125,7 +140,10 @@ export default function FriendsScreen() {
         <View style={styles.addRow}>
           <Input
             value={code}
-            onChangeText={setCode}
+            onChangeText={(text) => {
+              setCode(text);
+              setNote(null);
+            }}
             placeholder="e.g. K7QM-2XPH"
             autoCapitalize="characters"
             autoCorrect={false}
@@ -137,8 +155,8 @@ export default function FriendsScreen() {
           <PrimaryButton label="Add" busy={adding} disabled={!code.trim()} onPress={() => void add()} />
         </View>
         {note && (
-          <Txt variant="footnote" color={color.labelSecondary}>
-            {note}
+          <Txt variant="footnote" color={note.problem ? color.dangerInk : color.labelSecondary}>
+            {note.text}
           </Txt>
         )}
       </Card>
@@ -176,7 +194,7 @@ export default function FriendsScreen() {
       <Section title={view ? `Friends (${view.friends.length})` : 'Friends'}>
         {!view && !problem && <ListSkeleton rows={2} card={false} label="Loading your friends" />}
         {view && view.friends.length === 0 && (
-          <Txt variant="subhead" color={color.labelSecondary}>
+          <Txt variant="subhead" color={color.labelSecondary} style={styles.empty}>
             No friends yet. Send your code, or add theirs above.
           </Txt>
         )}
@@ -314,6 +332,8 @@ const styles = themed(() =>
     sectionTitle: { marginLeft: space[4] },
     sectionBody: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, overflow: 'hidden', padding: space[1] },
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.md },
+    // In line with the rows' text.
+    empty: { padding: space[3] },
     inviteRow: { alignItems: 'flex-start' },
     inviteActions: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: space[2], flexWrap: 'wrap' },
     small: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill },

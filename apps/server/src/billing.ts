@@ -93,6 +93,10 @@ export interface StripeApi {
   prices: {
     list(params: { lookup_keys: string[]; active?: boolean; limit?: number }): Promise<{ data: StripePrice[] }>;
   };
+  /** Uploaded files: GymGO's icon for the checkout page, from the setup script. */
+  files?: {
+    list(params: { purpose: 'business_icon'; limit?: number }): Promise<{ data: Array<{ id: string; filename: string | null }> }>;
+  };
 }
 
 export function createStripe(secretKey: string): StripeApi {
@@ -173,6 +177,23 @@ const SYNC_EVERY_MS = 10 * 60_000;
  */
 const SELLER_IS_GYMGO = { managed_payments: { enabled: false } } as const;
 
+/** GymGO's icon as the setup script uploads it to Stripe (stripe-setup.ts). */
+export const CHECKOUT_ICON_NAME = 'gymgo-icon.png';
+
+/**
+ * Stripe's checkout page in GymGO's own look: its name, the app's indigo on
+ * the pay button, the grey behind its grouped lists, Inter (the app's font
+ * wherever SF Pro isn't there) and rounded corners. The icon is added once
+ * the setup script has uploaded it.
+ */
+export const CHECKOUT_LOOK = {
+  display_name: 'GymGO',
+  button_color: '#5856D6',
+  background_color: '#F2F2F7',
+  font_family: 'inter',
+  border_style: 'rounded',
+} as const;
+
 export interface BillingOptions {
   stripe: StripeApi | null;
   webhookSecret: string | null;
@@ -187,6 +208,7 @@ export class Billing {
   private priceCache: { at: number; prices: Array<ProPrice & { id: string; plan: 'pro' | 'duo' }> } | null = null;
   private giftCache: { at: number; prices: Array<GiftPrice & { id: string }> } | null = null;
   private portalConfig: { id: string | null } | null = null;
+  private iconCache: { at: number; file: string | null } | null = null;
 
   constructor(
     private readonly db: Db,
@@ -238,6 +260,40 @@ export class Billing {
     });
     this.priceCache = { at: now, prices };
     return prices;
+  }
+
+  /**
+   * Make a checkout page. The look is only a nicety: should Stripe ever
+   * refuse it (a setting it no longer takes, an icon file gone), the page is
+   * made again without it rather than the purchase failing.
+   */
+  private async createCheckout(params: Record<string, unknown>): Promise<StripeCheckoutSession> {
+    try {
+      return await this.stripe.checkout.sessions.create(params);
+    } catch (error) {
+      if (!('branding_settings' in params) || !/branding_settings/.test(error instanceof Error ? error.message : String(error))) throw error;
+      console.warn(`Stripe refused the checkout page's look, so it opened without it: ${error instanceof Error ? error.message : error}`);
+      this.iconCache = null;
+      const { branding_settings: _look, ...plain } = params;
+      return this.stripe.checkout.sessions.create(plain);
+    }
+  }
+
+  /** The checkout page's look, with GymGO's icon when the setup script has uploaded it. */
+  private async checkoutLook(): Promise<{ branding_settings: Record<string, unknown> }> {
+    const now = this.options.now().getTime();
+    if (!this.iconCache || now - this.iconCache.at >= PRICE_CACHE_MS) {
+      let file: string | null = null;
+      try {
+        const listed = await this.stripe.files?.list({ purpose: 'business_icon', limit: 100 });
+        file = listed?.data.find((item) => item.filename === CHECKOUT_ICON_NAME)?.id ?? null;
+      } catch {
+        // No icon is fine: the page still has GymGO's name and colours.
+      }
+      this.iconCache = { at: now, file };
+    }
+    const icon = this.iconCache.file ? { icon: { type: 'file', file: this.iconCache.file } } : {};
+    return { branding_settings: { ...CHECKOUT_LOOK, ...icon } };
   }
 
   /** Gift Pro's one-off prices, read from Stripe by lookup key. */
@@ -321,7 +377,7 @@ export class Billing {
     const price = (await this.stripePrices()).find((item) => item.plan === plan && item.interval === choice.interval && item.currency === choice.currency);
     if (!price) throw new BillingError(503, 'That price isn’t on sale yet. Run the Stripe setup (see README).', 'price_missing');
     const customer = await this.customerFor(account);
-    const session = await this.stripe.checkout.sessions.create({
+    const session = await this.createCheckout({
       mode: 'subscription',
       customer,
       client_reference_id: account.id,
@@ -331,6 +387,7 @@ export class Billing {
       metadata: { gymgo_account_id: account.id },
       subscription_data: { metadata: { gymgo_account_id: account.id } },
       ...SELLER_IS_GYMGO,
+      ...(await this.checkoutLook()),
       // The renewal terms and where the full terms are, by the button that agrees to them, on Stripe's page too.
       ...(urls.terms && urls.refunds
         ? {
@@ -358,7 +415,7 @@ export class Billing {
     urls: { success: string; cancel: string; terms?: string; refunds?: string },
   ): Promise<{ id: string; url: string }> {
     const customer = await this.customerFor(account);
-    const session = await this.stripe.checkout.sessions.create({
+    const session = await this.createCheckout({
       mode: 'payment',
       customer,
       client_reference_id: account.id,
@@ -372,6 +429,7 @@ export class Billing {
       metadata: { ...metadata, gymgo_account_id: account.id },
       payment_intent_data: { metadata: { ...metadata, gymgo_account_id: account.id } },
       ...SELLER_IS_GYMGO,
+      ...(await this.checkoutLook()),
       ...(urls.terms && urls.refunds
         ? { custom_text: { submit: { message: `By paying you agree to GymGO’s Terms of Service (${urls.terms}) and its Refunds and Cancelling policy (${urls.refunds}).` } } }
         : {}),

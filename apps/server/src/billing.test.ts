@@ -20,6 +20,7 @@ function makeFakeStripe() {
   const sessions = new Map<string, StripeCheckoutSession>();
   let customers = 0;
   let failRetrieve = false;
+  let refuseLook = false;
   const prices = PRO_PRICES.map((price, index) => ({
     id: `price_${index}`,
     active: true,
@@ -41,6 +42,7 @@ function makeFakeStripe() {
       sessions: {
         async create(params) {
           calls.push({ method: 'checkout.sessions.create', params });
+          if (refuseLook && 'branding_settings' in params) throw new Error('Invalid branding_settings[icon][file]: No such file');
           const id = `cs_test_${'a'.repeat(20)}${sessions.size}`;
           const session = { id, url: `https://checkout.stripe.test/${id}`, customer: params.customer as string, client_reference_id: params.client_reference_id as string, subscription: null };
           sessions.set(id, session);
@@ -87,6 +89,12 @@ function makeFakeStripe() {
         return cancelled;
       },
     },
+    files: {
+      async list(params) {
+        calls.push({ method: 'files.list', params });
+        return { data: [{ id: 'file_other', filename: 'someone-else.png' }, { id: 'file_gymgo_icon', filename: 'gymgo-icon.png' }] };
+      },
+    },
     prices: {
       async list(params) {
         calls.push({ method: 'prices.list', params });
@@ -112,6 +120,9 @@ function makeFakeStripe() {
     pay,
     set failRetrieve(value: boolean) {
       failRetrieve = value;
+    },
+    set refuseLook(value: boolean) {
+      refuseLook = value;
     },
   };
 }
@@ -273,6 +284,15 @@ describe('checkout', () => {
     expect(created.custom_text.submit.message).toMatch(/Renews automatically until you cancel.*\/terms\).*\/refunds\)/);
     // GymGO is the seller: Stripe's Managed Payments, on by default for new accounts, refuses that text.
     expect(created.managed_payments).toEqual({ enabled: false });
+    // In GymGO's look, with the icon the setup script uploaded.
+    expect(created.branding_settings).toEqual({
+      display_name: 'GymGO',
+      button_color: '#5856D6',
+      background_color: '#F2F2F7',
+      font_family: 'inter',
+      border_style: 'rounded',
+      icon: { type: 'file', file: 'file_gymgo_icon' },
+    });
     const customer = fake.calls.find((item) => item.method === 'customers.create')!;
     expect(customer.options).toEqual({ idempotencyKey: `gymgo-customer-${id}` });
   });
@@ -295,6 +315,29 @@ describe('checkout', () => {
     expect(forwarded.custom_text.submit.message).toContain('/_gymgo/terms');
     const odd = await checkout({ 'x-forwarded-prefix': '//evil.example' });
     expect(odd.success_url).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/api\/billing\/return\?/);
+  });
+
+  it('still opens checkout, without GymGO\'s look, if Stripe refuses the look', async () => {
+    const { token } = await signUp();
+    fake.calls.length = 0;
+    fake.refuseLook = true;
+    try {
+      const result = await call(withStripe.base, 'POST', '/api/billing/checkout', {
+        token,
+        body: { interval: 'year', currency: 'aud', returnUrl: 'gymgo://pro' },
+      });
+      expect(result.status).toBe(200);
+      const tries = fake.calls.filter((item) => item.method === 'checkout.sessions.create').map((item) => item.params as Record<string, any>);
+      expect(tries).toHaveLength(2);
+      expect(tries[0]!.branding_settings).toBeDefined();
+      expect(tries[1]!.branding_settings).toBeUndefined();
+      // Everything else the same: the price, the seller, the renewal terms.
+      expect(tries[1]!.line_items).toEqual(tries[0]!.line_items);
+      expect(tries[1]!.managed_payments).toEqual({ enabled: false });
+      expect(tries[1]!.custom_text).toEqual(tries[0]!.custom_text);
+    } finally {
+      fake.refuseLook = false;
+    }
   });
 
   it('reuses the Stripe customer on a second try', async () => {

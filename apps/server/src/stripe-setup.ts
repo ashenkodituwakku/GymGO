@@ -1,8 +1,8 @@
 /**
  * Set up GymGO Pro in your Stripe account: the products (Pro, Pro Duo, and
  * a year of Pro as a gift), their prices (monthly and yearly in A$ and US$;
- * the gift paid once), and the settings for Stripe's page where subscribers
- * manage or cancel. Partner day passes need nothing here: each is priced
+ * the gift paid once), GymGO's icon for the checkout page, and the settings
+ * for Stripe's page where subscribers manage or cancel. Partner day passes need nothing here: each is priced
  * when it's booked.
  *
  *   npx pnpm@10 --filter @gymgo/server stripe:setup           test mode
@@ -15,9 +15,16 @@
  * subscribers pay the new price and existing ones keep theirs.
  */
 
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import Stripe from 'stripe';
 import { DUO_PRICES, DUO_PRODUCT, GIFT_PRICES, GIFT_PRODUCT, PRO_PRICES, PRO_PRODUCT, formatPlanPrice, type ProPrice } from '@gymgo/domain';
+import { CHECKOUT_ICON_NAME } from './billing';
 import { STRIPE_SECRET_KEY } from './config';
+
+/** The app's own icon (1024 px square, under Stripe's 512 KB), shown on GymGO's checkout pages. */
+const ICON = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'mobile', 'assets', 'images', 'icon.png');
 
 async function main() {
   const key = STRIPE_SECRET_KEY;
@@ -78,6 +85,20 @@ async function main() {
   await pricesFor(duo.id, 'duo', DUO_PRICES);
   const gift = await productFor('gift', GIFT_PRODUCT);
   await pricesFor(gift.id, 'gift', GIFT_PRICES);
+
+  // GymGO's icon for the checkout page; each checkout asks for it by name (billing.ts).
+  try {
+    const icons = await stripe.files.list({ purpose: 'business_icon', limit: 100 });
+    const icon = icons.data.find((file) => file.filename === CHECKOUT_ICON_NAME);
+    if (icon) {
+      console.log(`  checkout icon ${icon.id} already there`);
+    } else {
+      const made = await stripe.files.create({ purpose: 'business_icon', file: { data: readFileSync(ICON), name: CHECKOUT_ICON_NAME, type: 'image/png' } });
+      console.log(`  uploaded GymGO's icon for the checkout page (${made.id})`);
+    }
+  } catch (error) {
+    console.log(`  couldn't upload the checkout icon (${error instanceof Error ? error.message : error}); checkout still shows GymGO's name and colours`);
+  }
 
   // The page where subscribers update their card, see invoices or cancel.
   const configurations = await stripe.billingPortal.configurations.list({ active: true, limit: 20 });

@@ -122,6 +122,8 @@ describe('gift Pro', () => {
     const checkout = await call('POST', '/api/billing/gift', { token: buyer.token, body: { currency: 'aud', returnUrl: 'gymgo://pro' } });
     expect(checkout.status).toBe(200);
     expect(created.at(-1)).toMatchObject({ mode: 'payment', line_items: [{ price: 'price_gift_0', quantity: 1 }], metadata: { gymgo_kind: 'gift' }, managed_payments: { enabled: false } });
+    // GymGO's look; no icon here, as this Stripe has none uploaded.
+    expect((created.at(-1) as Record<string, any>).branding_settings).toEqual({ display_name: 'GymGO', button_color: '#5856D6', background_color: '#F2F2F7', font_family: 'inter', border_style: 'rounded' });
     // Not paid yet: no code.
     expect((await call('GET', '/api/billing/gifts', { token: buyer.token })).body!.gifts).toEqual([]);
     const id = await pay(checkout.body!.url);

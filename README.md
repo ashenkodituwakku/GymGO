@@ -1297,8 +1297,9 @@ money):
 2. Copy `apps/server/.env.example` to `apps/server/.env.local` and put the
    key after `STRIPE_SECRET_KEY=`. That file is git-ignored; the key stays on
    your computer and the app never sees it.
-3. Create GymGO Pro in your Stripe account (the product, its four prices and
-   the manage-subscription page). This charges nobody:
+3. Create GymGO Pro in your Stripe account (the product, its four prices,
+   GymGO's icon for the checkout page and the manage-subscription page).
+   This charges nobody:
 
    ```bash
    npx pnpm@10 --filter @gymgo/server stripe:setup
@@ -1307,6 +1308,13 @@ money):
 4. Start GymGO as usual. The server says `GymGO Pro payments (Stripe): on,
    test mode`. Sign in, open Profile → GymGO Pro, pick a plan, and pay with
    Stripe's test card **4242 4242 4242 4242**, any future date, any CVC.
+
+Stripe's checkout page wears GymGO's look: its name and icon, the app's
+indigo on the pay button, its light grey background, Inter and rounded
+corners (`CHECKOUT_LOOK` in `apps/server/src/billing.ts`). GymGO sells Pro
+itself, so each checkout turns off Stripe's Managed Payments (Stripe as the
+seller), which Stripe now switches on for new accounts and which would
+refuse GymGO's renewal terms on the page.
 
 **Webhooks** (recommended): they tell GymGO about renewals, failed payments
 and cancellations as they happen. Without them Pro still turns on straight

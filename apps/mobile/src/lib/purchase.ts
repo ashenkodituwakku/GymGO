@@ -42,9 +42,10 @@ async function visit(url: string, back: string): Promise<PurchaseOutcome> {
   return checkout === 'cancelled' ? 'cancelled' : 'done';
 }
 
-export async function startCheckout(token: string, interval: BillingInterval, currency: BillingCurrency, plan: 'pro' | 'duo' = 'pro'): Promise<PurchaseOutcome> {
+/** Stripe Checkout for Pro or Duo; `trial` when the Pro screen showed the free trial (monthly Pro only). */
+export async function startCheckout(token: string, interval: BillingInterval, currency: BillingCurrency, plan: 'pro' | 'duo' = 'pro', trial = false): Promise<PurchaseOutcome> {
   const back = returnUrl('pro');
-  const { url } = await api.checkout(token, { interval, currency, returnUrl: back, plan });
+  const { url } = await api.checkout(token, { interval, currency, returnUrl: back, plan, ...(trial ? { trial } : {}) });
   return visit(url, back);
 }
 

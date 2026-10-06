@@ -15,6 +15,7 @@ import {
   annualSaving,
   formatPlanPrice,
   proPrice,
+  trialEndsAt,
   type BillingCurrency,
   type BillingInterval,
 } from '@gymgo/domain';
@@ -74,9 +75,14 @@ export default function ProScreen() {
   const params = useLocalSearchParams<{ reason?: string; checkout?: string }>();
   const router = useRouter();
   const { account, billing, filters, prefs } = useApp();
-  const [interval, setInterval] = useState<BillingInterval>('year');
   // Pro for you alone, or Duo: you and one more person.
   const [plan, setPlan] = useState<'pro' | 'duo'>('pro');
+  // A new account's free trial of monthly Pro (the server decides who gets one).
+  const trialOffer = !billing.isPro && plan === 'pro' ? billing.trial : null;
+  // Yearly unless there's a trial to start, until you pick.
+  const [intervalPick, setInterval] = useState<BillingInterval | null>(null);
+  const interval: BillingInterval = intervalPick ?? (trialOffer ? 'month' : 'year');
+  const trial = trialOffer && interval === 'month' ? trialOffer : null;
   // Pro is sold in A$ and US$: A$ for Australia and New Zealand, US$ for
   // everyone else. From the country you chose, or where you're looking.
   const home = prefs.country ?? filters.countryCode;
@@ -124,7 +130,7 @@ export default function ProScreen() {
     setBusy(true);
     setProblem(null);
     try {
-      const outcome = await startCheckout(token, interval, currency, plan === 'duo' && duoOnSale ? 'duo' : 'pro');
+      const outcome = await startCheckout(token, interval, currency, plan === 'duo' && duoOnSale ? 'duo' : 'pro', trial !== null);
       if (outcome === 'left') return; // The browser is on its way to Stripe.
       const next = await billing.refresh(true);
       if (next?.plan === 'pro') {
@@ -135,6 +141,8 @@ export default function ProScreen() {
       }
     } catch (error) {
       setProblem(messageFor(error));
+      // The trial ran out while this screen was open: show the plans as they now are.
+      if (error instanceof ApiError && error.code === 'trial_unavailable') void billing.refresh();
     } finally {
       setBusy(false);
     }
@@ -248,6 +256,14 @@ export default function ProScreen() {
                 One subscription, two people: add one more person by their friend code after you subscribe. Only Pro is shared, nothing else.
               </Txt>
             )}
+            {trialOffer && monthly && (
+              <View style={[styles.card, styles.trialCard]}>
+                <Txt variant="headline">{`New here? Try Pro free for ${trialOffer.days} days`}</Txt>
+                <Txt variant="subhead" color={color.labelSecondary}>
+                  {`Monthly Pro, free for ${trialOffer.days} days, then ${formatPlanPrice(monthly.amountMinor, currency)} a month until you cancel. Yours to start until ${dayLabel(trialOffer.offerEndsAt)}.`}
+                </Txt>
+              </View>
+            )}
             <View style={styles.plans} accessibilityRole="radiogroup">
               {yearly && (
                 <PlanOption
@@ -265,8 +281,8 @@ export default function ProScreen() {
                   onPress={() => setInterval('month')}
                   title="Monthly"
                   price={`${formatPlanPrice(monthly.amountMinor, currency)} a month`}
-                  detail="Billed every month"
-                  tag={null}
+                  detail={trialOffer ? `Free for ${trialOffer.days} days, then billed every month` : 'Billed every month'}
+                  tag={trialOffer ? `${trialOffer.days} days free` : null}
                 />
               )}
             </View>
@@ -286,11 +302,19 @@ export default function ProScreen() {
               sale={billing.sale}
               onAskAgain={billing.askSale}
               busy={busy}
-              label={chosen ? `Subscribe${plan === 'duo' && duoOnSale ? ' to Duo' : ''} · ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}` : 'Subscribe'}
+              label={
+                trial
+                  ? `Start ${trial.days}-day free trial`
+                  : chosen
+                    ? `Subscribe${plan === 'duo' && duoOnSale ? ' to Duo' : ''} · ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}`
+                    : 'Subscribe'
+              }
               renewal={
-                chosen
-                  ? `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; Pro stays on to the end of the ${interval} you’ve paid for. Tapping Subscribe agrees to these renewal terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
-                  : null
+                !chosen
+                  ? null
+                  : trial
+                    ? `Free for ${trial.days} days, then ${formatPlanPrice(chosen.amountMinor, currency)} a month, tax included, until you cancel. Stripe takes your card now; the first payment is on ${dayLabel(trialEndsAt(new Date(), trial.days).toISOString())}. Cancel before then in Profile → Manage subscription and you aren’t charged. Tapping Start agrees to these terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
+                    : `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; Pro stays on to the end of the ${interval} you’ve paid for. Tapping Subscribe agrees to these renewal terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
               }
               onSubscribe={() => void subscribe()}
               onSignIn={() => router.push('/sign-in')}
@@ -326,7 +350,7 @@ export default function ProScreen() {
           variant="caption"
           tint={color.labelSecondary}
           style={styles.fine}
-          text="Prices include tax. Pro and Duo renew automatically until you cancel; a gift year is paid once and doesn't renew. Cancel any time from Profile → Manage subscription, and you keep Pro until the end of what you’ve paid for. Changed your mind? Ask within 14 days of your first payment, or of a yearly renewal, for a full refund. If Pro ends, nothing you saved is deleted; you just can’t add more than Free allows. Payments are handled by Stripe: GymGO never sees your card, and Stripe gets your name and email for the receipt. [Terms of Service](terms) · [Refunds and Cancelling](refunds) · [Privacy Policy](privacy)"
+          text="Prices include tax. Pro and Duo renew automatically until you cancel; a gift year is paid once and doesn't renew. A new account can try monthly Pro free for 3 days, once, in its first 30 days: the monthly price is charged when the trial ends unless you cancel before then. Cancel any time from Profile → Manage subscription, and you keep Pro until the end of what you’ve paid for. Changed your mind? Ask within 14 days of your first payment, or of a yearly renewal, for a full refund. If Pro ends, nothing you saved is deleted; you just can’t add more than Free allows. Payments are handled by Stripe: GymGO never sees your card, and Stripe gets your name and email for the receipt. [Terms of Service](terms) · [Refunds and Cancelling](refunds) · [Privacy Policy](privacy)"
         />
       </PageScroll>
     </>
@@ -458,9 +482,18 @@ function describeSubscription(subscription: ReturnType<typeof useApp>['billing']
       ? `${formatPlanPrice(subscription.amountMinor, subscription.currency)} a ${subscription.interval ?? 'period'}`
       : null;
   const date = (value: string) => new Date(value).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+  if (subscription.trial && subscription.endsAt) return `Free trial, cancelled: Pro until ${date(subscription.endsAt)}, and you won’t be charged.`;
+  if (subscription.trial) {
+    return `Free trial${subscription.renewsAt ? ` until ${date(subscription.renewsAt)}` : ''}${price ? `, then ${price}` : ''}. Cancel before then in Manage subscription and you won’t be charged.`;
+  }
   if (subscription.endsAt) return [price, `Cancelled: Pro until ${date(subscription.endsAt)}`].filter(Boolean).join(' · ');
   if (subscription.status === 'past_due') return 'Your last payment didn’t go through. Stripe will try again; update your card in Manage subscription.';
   return [price, subscription.renewsAt ? `renews ${date(subscription.renewsAt)}` : null].filter(Boolean).join(' · ');
+}
+
+/** "Thu 9 Oct": a short day, in the phone's language. */
+function dayLabel(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 function messageFor(error: unknown): string {
@@ -489,6 +522,7 @@ const styles = themed(() => StyleSheet.create({
   badgeEmoji: { fontSize: 36, lineHeight: 44 },
   card: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
   onPro: { borderWidth: 2, borderColor: color.brand },
+  trialCard: { gap: space[1], backgroundColor: color.brandWash, borderWidth: 1, borderColor: color.brandBorder },
   tableHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   tableRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   featureIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },

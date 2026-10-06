@@ -349,6 +349,84 @@ describe('checkout', () => {
   });
 });
 
+describe('the free trial', () => {
+  const DAY = 86_400_000;
+  const monthly = (token: string, trial?: boolean) =>
+    call(withStripe.base, 'POST', '/api/billing/checkout', {
+      token,
+      body: { interval: 'month', currency: 'aud', returnUrl: 'gymgo://pro', ...(trial === undefined ? {} : { trial }) },
+    });
+
+  it('is offered to a new account: 3 days, until 30 days after it was made', async () => {
+    const { token } = await signUp();
+    const me = await call(withStripe.base, 'GET', '/api/billing', { token });
+    expect(me.body.trial).toEqual({ days: 3, offerEndsAt: new Date(clock.getTime() + 30 * DAY).toISOString() });
+  });
+
+  it('starts free, with a card taken now and the monthly price after 3 days', async () => {
+    const { token } = await signUp();
+    fake.calls.length = 0;
+    const result = await monthly(token, true);
+    expect(result.status).toBe(200);
+    const created = fake.calls.find((item) => item.method === 'checkout.sessions.create')!.params as Record<string, any>;
+    expect(created.subscription_data.trial_period_days).toBe(3);
+    expect(created.subscription_data.trial_settings).toEqual({ end_behavior: { missing_payment_method: 'cancel' } });
+    expect(created.payment_method_collection).toBe('always');
+    expect(created.line_items[0].price).toBe(`price_${PRO_PRICES.findIndex((p) => p.lookupKey === 'gymgo_pro_month_aud')}`);
+    expect(created.custom_text.submit.message).toMatch(/^Free for 3 days, then A\$3\.99 a month until you cancel\. Cancel before the trial ends .* you aren’t charged\./);
+  });
+
+  it('is only added when the app asked for it, having shown it', async () => {
+    const { token } = await signUp();
+    fake.calls.length = 0;
+    expect((await monthly(token)).status).toBe(200);
+    const created = fake.calls.find((item) => item.method === 'checkout.sessions.create')!.params as Record<string, any>;
+    expect(created.subscription_data.trial_period_days).toBeUndefined();
+    expect(created.payment_method_collection).toBeUndefined();
+    expect(created.custom_text.submit.message).toMatch(/^Renews automatically until you cancel/);
+  });
+
+  it('is for monthly Pro only', async () => {
+    const { token } = await signUp();
+    const yearly = await call(withStripe.base, 'POST', '/api/billing/checkout', { token, body: { interval: 'year', currency: 'aud', returnUrl: 'gymgo://pro', trial: true } });
+    expect(yearly.status).toBe(400);
+    expect(yearly.body.code).toBe('trial_monthly_only');
+    const duo = await call(withStripe.base, 'POST', '/api/billing/checkout', { token, body: { interval: 'month', currency: 'aud', returnUrl: 'gymgo://pro', plan: 'duo', trial: true } });
+    expect(duo.status).toBe(400);
+  });
+
+  it('isn’t offered after an account’s first 30 days, and checkout says so rather than charging at once', async () => {
+    const { token, id } = await signUp();
+    db.prepare('update users set created_at = ? where id = ?').run(new Date(clock.getTime() - 31 * DAY).toISOString(), id);
+    expect((await call(withStripe.base, 'GET', '/api/billing', { token })).body.trial).toBeNull();
+    fake.calls.length = 0;
+    const result = await monthly(token, true);
+    expect(result.status).toBe(409);
+    expect(result.body.code).toBe('trial_unavailable');
+    expect(fake.calls.some((item) => item.method === 'checkout.sessions.create')).toBe(false);
+  });
+
+  it('is Pro while it runs, says when the first payment is, and is only ever had once', async () => {
+    const person = await signUp();
+    const checkout = await monthly(person.token, true);
+    const sessionId = new URL(checkout.body.url).pathname.slice(1);
+    const trialEnd = Math.floor((Date.now() + 3 * DAY) / 1000);
+    fake.pay(sessionId, { status: 'trialing', trial_end: trialEnd, metadata: { gymgo_account_id: person.id } });
+    await call(withStripe.base, 'GET', `/api/billing/return?result=success&session_id=${sessionId}&to=${encodeURIComponent('gymgo://pro')}`);
+    const during = await call(withStripe.base, 'GET', '/api/billing', { token: person.token });
+    expect(during.body.plan).toBe('pro');
+    expect(during.body.subscription).toMatchObject({ status: 'trialing', trial: true, renewsAt: new Date(trialEnd * 1000).toISOString() });
+    expect(during.body.trial).toBeNull();
+    // Cancelled in the trial: Free again, and no second trial.
+    const sub = fake.subscriptions.get([...fake.subscriptions.keys()].at(-1)!)!;
+    fake.subscriptions.set(sub.id, { ...sub, status: 'canceled' });
+    const after = await call(withStripe.base, 'POST', '/api/billing/sync', { token: person.token });
+    expect(after.body.plan).toBe('free');
+    expect(after.body.trial).toBeNull();
+    expect((await monthly(person.token, true)).body.code).toBe('trial_unavailable');
+  });
+});
+
 describe('coming back from Stripe', () => {
   it('turns Pro on straight away, and forwards into the app', async () => {
     const person = await signUp();

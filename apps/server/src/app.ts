@@ -59,7 +59,7 @@
  *   GET    /api/gyms/:gymId/photo         the photo the gym's own website shares (JPEG/PNG/WebP), or 404
  *   GET    /api/billing/plans             GymGO Pro's prices, and whether it's on sale
  *   GET    /api/billing                   your plan (Free or Pro) and subscription
- *   POST   /api/billing/checkout          { interval, currency, returnUrl } -> { url } of Stripe Checkout
+ *   POST   /api/billing/checkout          { interval, currency, returnUrl, plan?, trial? } -> { url } of Stripe Checkout
  *   POST   /api/billing/portal            { returnUrl } -> { url } of Stripe's page to manage or cancel
  *   POST   /api/billing/gift              { currency, returnUrl } -> { url } of Stripe Checkout for a year of Pro as a gift code
  *   GET    /api/billing/gifts             the gift codes you bought, and whether they've been used
@@ -873,7 +873,7 @@ export function createApp(options: AppOptions) {
       const back = `${publicBase(req)}/api/billing/return?to=${encodeURIComponent(returnUrl)}`;
       const checkoutUrl = await billing.checkout(
         account,
-        { interval: interval as BillingInterval, currency: currency as BillingCurrency, plan },
+        { interval: interval as BillingInterval, currency: currency as BillingCurrency, plan, trial: body.trial === true },
         // Stripe fills in {CHECKOUT_SESSION_ID} itself; it must stay unencoded.
         {
           success: `${back}&result=success&session_id={CHECKOUT_SESSION_ID}`,

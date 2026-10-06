@@ -1309,6 +1309,17 @@ money):
    test mode`. Sign in, open Profile → GymGO Pro, pick a plan, and pay with
    Stripe's test card **4242 4242 4242 4242**, any future date, any CVC.
 
+**Free trial.** A new account can try monthly Pro free for 3 days, once, in
+its first 30 days (`TRIAL_DAYS` and `TRIAL_OFFER_DAYS` in
+`packages/domain/src/plans.ts`). The server decides who's offered it (the
+account's age, and that it has never had a subscription, a trial included);
+the Pro screen shows the offer, the date it runs out and the date of the
+first payment, and asks Stripe for the trial only when it showed one. Stripe
+takes the card at checkout and charges the monthly price when the trial
+ends, unless it's cancelled first. Card networks expect a reminder before a
+trial turns into a charge: turn on Stripe's trial-ending email in Settings →
+Billing → Subscriptions and emails (Stripe doesn't send it from a sandbox).
+
 Stripe's checkout page wears GymGO's look: its name and icon, the app's
 indigo on the pay button, its light grey background, Inter and rounded
 corners (`CHECKOUT_LOOK` in `apps/server/src/billing.ts`). GymGO sells Pro

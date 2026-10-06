@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LIMITS, PRO_PRICES, annualSaving, formatPlanPrice, isProStatus, proPrice } from './plans';
+import { LIMITS, PRO_PRICES, TRIAL_DAYS, TRIAL_OFFER_DAYS, annualSaving, formatPlanPrice, isProStatus, proPrice, trialEndsAt, trialOffer } from './plans';
 
 describe('plans', () => {
   it('gives Pro more of everything Free has', () => {
@@ -34,5 +34,25 @@ describe('plans', () => {
     for (const status of ['canceled', 'unpaid', 'incomplete', 'incomplete_expired', 'paused', null, undefined]) {
       expect(isProStatus(status)).toBe(false);
     }
+  });
+});
+
+describe('the free trial', () => {
+  const made = '2026-10-01T09:00:00.000Z';
+  it('is 3 days of monthly Pro, offered in an account\'s first 30 days', () => {
+    expect(TRIAL_DAYS).toBe(3);
+    expect(TRIAL_OFFER_DAYS).toBe(30);
+    expect(trialOffer({ createdAt: made, everSubscribed: false }, new Date('2026-10-01T09:00:00Z'))).toEqual({ days: 3, offerEndsAt: '2026-10-31T09:00:00.000Z' });
+    expect(trialOffer({ createdAt: made, everSubscribed: false }, new Date('2026-10-31T08:59:59Z'))).not.toBeNull();
+    expect(trialOffer({ createdAt: made, everSubscribed: false }, new Date('2026-10-31T09:00:00Z'))).toBeNull();
+  });
+  it('is offered once: not to an account that has ever subscribed, or trialled', () => {
+    expect(trialOffer({ createdAt: made, everSubscribed: true }, new Date('2026-10-02T00:00:00Z'))).toBeNull();
+  });
+  it('is not offered when the account\'s age is unknown', () => {
+    expect(trialOffer({ createdAt: 'not a date', everSubscribed: false }, new Date('2026-10-02T00:00:00Z'))).toBeNull();
+  });
+  it('ends, and is first charged, 3 days after it starts', () => {
+    expect(trialEndsAt(new Date('2026-10-06T10:00:00Z')).toISOString()).toBe('2026-10-09T10:00:00.000Z');
   });
 });

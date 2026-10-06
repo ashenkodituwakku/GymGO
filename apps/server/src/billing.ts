@@ -24,9 +24,13 @@ import {
   GIFT_PRICES,
   LIMITS,
   PRO_PRICES,
+  TRIAL_DAYS,
+  formatPlanPrice,
   isDuoLookupKey,
   isProStatus,
+  trialOffer,
   type GiftPrice,
+  type TrialOffer,
   type BillingCurrency,
   type BillingInterval,
   type PlanId,
@@ -56,6 +60,8 @@ export interface StripeSubscription {
   cancel_at: number | null;
   metadata: Record<string, string> | null;
   items: { data: Array<{ current_period_end: number; price: StripePrice }> };
+  /** When a free trial ends and the first payment is taken (missing from older test fakes). */
+  trial_end?: number | null;
 }
 
 export interface StripeCheckoutSession {
@@ -128,6 +134,8 @@ export interface SubscriptionView {
   endsAt: string | null;
   /** Bought through Stripe, so Stripe's page can change or cancel it. The local dev account's Pro can't be. */
   manageable: boolean;
+  /** In its free trial: `renewsAt` is when the trial ends and the first payment is taken. */
+  trial: boolean;
 }
 
 /** Pro from something other than your own subscription. */
@@ -147,6 +155,8 @@ export interface PlanView {
   duo: boolean;
   /** Pro through a gift or someone's Duo, when your own subscription isn't what makes you Pro. */
   grant: ProGrant | null;
+  /** The free trial of monthly Pro this account can start (a new account's, once), or null. */
+  trial: TrialOffer | null;
 }
 
 interface SubscriptionRow {
@@ -338,7 +348,21 @@ export class Billing {
       subscription: shown ? this.view(shown, this.customerIdFor(userId) !== null) : null,
       duo: this.subscribed(userId).duo,
       grant,
+      trial: plan === 'pro' ? null : this.trialFor(userId),
     };
+  }
+
+  /**
+   * The free trial this account can start: only while payments are on, in
+   * the account's first 30 days, and once (any subscription it has ever had,
+   * a trial included, rules it out).
+   */
+  private trialFor(userId: string): TrialOffer | null {
+    if (!this.enabled) return null;
+    const account = this.db.prepare('select created_at from users where id = ?').get(userId) as { created_at: string } | undefined;
+    if (!account) return null;
+    const everSubscribed = this.db.prepare('select 1 from subscriptions where user_id = ? limit 1').get(userId) !== undefined;
+    return trialOffer({ createdAt: account.created_at, everSubscribed }, this.options.now());
   }
 
   isPro(userId: string): boolean {
@@ -362,6 +386,7 @@ export class Billing {
       renewsAt: live && !ending ? row.current_period_end : null,
       endsAt: live ? ending : null,
       manageable,
+      trial: row.status === 'trialing',
     };
   }
 
@@ -369,11 +394,18 @@ export class Billing {
 
   async checkout(
     account: { id: string; email: string; display_name: string },
-    choice: { interval: BillingInterval; currency: BillingCurrency; plan?: 'pro' | 'duo' },
+    choice: { interval: BillingInterval; currency: BillingCurrency; plan?: 'pro' | 'duo'; trial?: boolean },
     urls: { success: string; cancel: string; terms?: string; refunds?: string },
   ): Promise<string> {
     if (this.subscribed(account.id).pro) throw new BillingError(409, 'You already have GymGO Pro.', 'already_pro');
     const plan = choice.plan ?? 'pro';
+    // Only when the app showed the trial, so nobody is charged at once expecting free days, or the other way round.
+    if (choice.trial) {
+      if (plan !== 'pro' || choice.interval !== 'month') throw new BillingError(400, 'The free trial is for monthly Pro.', 'trial_monthly_only');
+      if (!this.trialFor(account.id)) {
+        throw new BillingError(409, 'The free trial isn’t available on this account any more. You can still subscribe.', 'trial_unavailable');
+      }
+    }
     const price = (await this.stripePrices()).find((item) => item.plan === plan && item.interval === choice.interval && item.currency === choice.currency);
     if (!price) throw new BillingError(503, 'That price isn’t on sale yet. Run the Stripe setup (see README).', 'price_missing');
     const customer = await this.customerFor(account);
@@ -385,7 +417,13 @@ export class Billing {
       success_url: urls.success,
       cancel_url: urls.cancel,
       metadata: { gymgo_account_id: account.id },
-      subscription_data: { metadata: { gymgo_account_id: account.id } },
+      subscription_data: {
+        metadata: { gymgo_account_id: account.id },
+        // The trial: free for TRIAL_DAYS, then the monthly price, charged to the card given now.
+        ...(choice.trial ? { trial_period_days: TRIAL_DAYS, trial_settings: { end_behavior: { missing_payment_method: 'cancel' } } } : {}),
+      },
+      // A card even when nothing is due today: a trial bills it when it ends.
+      ...(choice.trial ? { payment_method_collection: 'always' } : {}),
       ...SELLER_IS_GYMGO,
       ...(await this.checkoutLook()),
       // The renewal terms and where the full terms are, by the button that agrees to them, on Stripe's page too.
@@ -393,7 +431,11 @@ export class Billing {
         ? {
             custom_text: {
               submit: {
-                message: `Renews automatically until you cancel; cancel any time in GymGO (Profile → Manage subscription). By subscribing you agree to GymGO’s Terms of Service (${urls.terms}) and its Refunds and Cancelling policy (${urls.refunds}).`,
+                message: `${
+                  choice.trial
+                    ? `Free for ${TRIAL_DAYS} days, then ${formatPlanPrice(price.amountMinor, price.currency)} a month until you cancel. Cancel before the trial ends (in GymGO: Profile → Manage subscription) and you aren’t charged.`
+                    : 'Renews automatically until you cancel; cancel any time in GymGO (Profile → Manage subscription).'
+                } By subscribing you agree to GymGO’s Terms of Service (${urls.terms}) and its Refunds and Cancelling policy (${urls.refunds}).`,
               },
             },
           }
@@ -566,7 +608,8 @@ export class Billing {
         price?.currency ?? null,
         price?.unit_amount ?? null,
         price?.lookup_key ?? null,
-        iso(item?.current_period_end),
+        // In a free trial, the period that matters is the trial: it ends when the first payment is taken.
+        iso(subscription.status === 'trialing' && subscription.trial_end ? subscription.trial_end : item?.current_period_end),
         iso(subscription.cancel_at),
         subscription.cancel_at_period_end ? 1 : 0,
         this.options.now().toISOString(),

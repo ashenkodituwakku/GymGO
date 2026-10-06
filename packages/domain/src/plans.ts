@@ -124,3 +124,37 @@ export function formatPlanPrice(amountMinor: number, currency: BillingCurrency):
   const symbol = currency === 'aud' ? 'A$' : '$';
   return `${symbol}${(amountMinor / 100).toFixed(2)}`;
 }
+
+// --- The free trial ------------------------------------------------------------------
+
+/** A free trial of monthly Pro: this many days, then the monthly price. */
+export const TRIAL_DAYS = 3;
+/** How long after making an account the trial is offered. */
+export const TRIAL_OFFER_DAYS = 30;
+
+const DAY_MS = 86_400_000;
+
+/** The free trial an account is offered. */
+export interface TrialOffer {
+  days: number;
+  /** When the offer to start one runs out: TRIAL_OFFER_DAYS after the account was made. */
+  offerEndsAt: string;
+}
+
+/**
+ * The free trial an account can start, or null. Monthly Pro only, in an
+ * account's first 30 days, and once: an account that has ever subscribed
+ * (a trial included) gets none.
+ */
+export function trialOffer(account: { createdAt: string; everSubscribed: boolean }, now: Date): TrialOffer | null {
+  const made = Date.parse(account.createdAt);
+  if (!Number.isFinite(made) || account.everSubscribed) return null;
+  const ends = made + TRIAL_OFFER_DAYS * DAY_MS;
+  if (now.getTime() >= ends) return null;
+  return { days: TRIAL_DAYS, offerEndsAt: new Date(ends).toISOString() };
+}
+
+/** When a trial started at `start` ends, and the first payment is taken. */
+export function trialEndsAt(start: Date, days: number = TRIAL_DAYS): Date {
+  return new Date(start.getTime() + days * DAY_MS);
+}

@@ -94,6 +94,8 @@ export function useBilling(account: AccountApi) {
     duo: state?.duo === true,
     /** Pro through a gift or someone's Duo. */
     grant: state?.grant ?? null,
+    /** The free trial of monthly Pro this account can start: new accounts, once. */
+    trial: state?.trial ?? null,
     refresh,
   };
 }

@@ -396,6 +396,8 @@ export interface SubscriptionInfo {
   endsAt: string | null;
   /** Stripe's page can change or cancel it (the local dev account's Pro can't be). Missing from older servers. */
   manageable?: boolean;
+  /** In its free trial: `renewsAt` is when it ends and the first payment is taken (missing from older servers). */
+  trial?: boolean;
 }
 
 export interface BillingState {
@@ -408,6 +410,8 @@ export interface BillingState {
   duo?: boolean;
   /** Pro through a gift or someone's Duo. */
   grant?: { via: 'gift' | 'duo'; endsAt: string | null; from: string | null } | null;
+  /** The free trial of monthly Pro this account can start (missing from older servers). */
+  trial?: { days: number; offerEndsAt: string } | null;
 }
 
 export interface DuoState {
@@ -572,7 +576,7 @@ export const api = {
     ),
   billing: (token: string) => request<BillingState>('GET', '/api/billing', { token }),
   syncBilling: (token: string) => request<BillingState>('POST', '/api/billing/sync', { token }),
-  checkout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string; plan?: 'pro' | 'duo' }) =>
+  checkout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string; plan?: 'pro' | 'duo'; trial?: boolean }) =>
     request<{ url: string }>('POST', '/api/billing/checkout', { token, body }),
   giftCheckout: (token: string, body: { currency: BillingCurrency; returnUrl: string }) => request<{ url: string }>('POST', '/api/billing/gift', { token, body }),
   giftsBought: (token: string) => request<{ gifts: GiftBought[] }>('GET', '/api/billing/gifts', { token }),

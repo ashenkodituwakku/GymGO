@@ -76,13 +76,18 @@ export default function Profile() {
   };
 
   const sub = billing.subscription;
+  const short = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
   const proLine = billing.isPro
-    ? sub?.endsAt
-      ? `Cancelled · Pro until ${new Date(sub.endsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
-      : sub?.amountMinor && sub.currency
-        ? `${formatPlanPrice(sub.amountMinor, sub.currency)} a ${sub.interval ?? 'period'}${sub.renewsAt ? ` · renews ${new Date(sub.renewsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : ''}`
-        : 'On for this account'
-    : `${billing.limits.savedGyms} saved gyms, compare ${billing.limits.compare}`;
+    ? sub?.trial && sub.renewsAt && !sub.endsAt
+      ? `Free trial · first payment ${short(sub.renewsAt)}`
+      : sub?.endsAt
+        ? `Cancelled · Pro until ${new Date(sub.endsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
+        : sub?.amountMinor && sub.currency
+          ? `${formatPlanPrice(sub.amountMinor, sub.currency)} a ${sub.interval ?? 'period'}${sub.renewsAt ? ` · renews ${short(sub.renewsAt)}` : ''}`
+          : 'On for this account'
+    : billing.trial
+      ? `Try Pro free for ${billing.trial.days} days`
+      : `${billing.limits.savedGyms} saved gyms, compare ${billing.limits.compare}`;
 
   return (
     <TabScreen title="Profile">

@@ -101,6 +101,18 @@ mobile 267, domain 163 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **GymGO needs an account now** (the owner asked for it to be usable only
+  with one). The server answers only a signed-in session apart from the
+  open list in `isPublicRoute` (`apps/server/src/app.ts`); a new route is
+  closed unless you add it there, and image files stay open because
+  `<Image>` can't send the token. In the app, `Stack.Protected` in
+  `src/app/_layout.tsx` keeps every screen behind sign-in except
+  `sign-in`, `legal/[doc]` and `report-bug`; a new screen must go inside
+  the protected group. `lib/api.ts` sends the session on every request;
+  `lib/afterSignIn.ts` brings a signed-out link back after sign-in. The
+  terms' version moved to 2026-10-06. Server tests read as a signed-in
+  member (`reader`). Old signed-out branches in screens (a "Sign in"
+  button) are left as harmless fallbacks.
 - Batch E: gift Pro (a code for a year), Pro Duo (a partner by friend
   code), partner day passes (mechanics only; none listed). Stripe test mode
   only, against a pretend Stripe.

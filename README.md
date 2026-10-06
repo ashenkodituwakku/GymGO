@@ -297,8 +297,7 @@ Appearance.
   **Account**: profile picture, name, email, password, Apple and Google,
   your data, sign out, delete), Training (Progress, My workouts, Plate calculator, 1-rep max, Interval timer), Pro, your
   gyms, Settings (Country, **Appearance**, Haptics, Demo mode), and where
-  GymGO's facts come from. Signed out, a card to sign in with Apple, Google
-  or email.
+  GymGO's facts come from.
 - **Appearance**: Automatic (follows your phone), Light or Dark, for
   everyone. **Liquid Glass**, also for everyone: a percentage for how
   see-through the controls, sheets and tab bar over the map are, with a
@@ -492,8 +491,8 @@ the phone, never sent or kept. **Signed in, the collection is on your
 account too**, so your cards and visits follow you to your other devices:
 each copy is merged into the other, never overwritten, so a check-in made
 offline or on another device is never lost (one made while the server
-can't be reached is sent the next time it can be). Signed out, it stays on
-the device, and signing in adds it to the account. The top of the
+can't be reached is sent the next time it can be). A collection from before
+GymGO needed an account is added to the account on signing in. The top of the
 collection says which (synced with your account, or on this device only).
 **Delete all collection data**, at the foot of the collection and in
 Account → Your data, clears every card, visit, roll and badge, on the
@@ -632,9 +631,20 @@ ends.
 
 ### Accounts
 
-Tap the person icon next to the search box to create an account. Your saved
-gyms then follow you between your PC and your phone, and you can write
-reviews. Accounts live in the GymGO server's database:
+**GymGO needs a free account.** Opened without one, the app shows only the
+sign-in screen (on **Create account** for someone new to the device, on
+**Sign in** for someone who has signed in there before), the legal pages and
+Report a bug, so someone who can't get in can still say so. A link opened
+while signed out, such as a gym a friend sent, opens once you're in. The
+server answers only a signed-in session, apart from a short open list in
+`isPublicRoute` (`apps/server/src/app.ts`): the health check, signing in and
+up, resetting a password, the legal pages, bug reports, Stripe's callbacks,
+Pro's prices and image files (phones and browsers load those without the
+app's sign-in; each is reached only from a signed-in screen). A route added
+later is closed unless it's put on that list.
+
+Your saved gyms follow you between your PC and your phone, and you can
+write reviews. Accounts live in the GymGO server's database:
 `apps/server/data/gymgo.db` on your computer, or `deploy/data/gymgo.db` on a
 hosted server ([Put GymGO online](#put-gymgo-online-free-hosting)).
 Passwords are stored only as a salted scrypt hash, and the commonest
@@ -700,8 +710,8 @@ went wrong. The form lists the app and device details that go with it (the
 app's version, the kind of device and browser, screen size, the screen it
 came from, the country and appearance settings, and whether you're signed
 in), and you can switch them off. It never sends your location, searches or
-gyms. Signed in, you can ask for a reply at your account's email; signed out,
-you can leave an address. If a screen ever breaks, the crash screen offers
+gyms. Signed in, you can ask for a reply at your account's email; signed out
+(say, you can't get in), you can leave an address. If a screen ever breaks, the crash screen offers
 **Try again** and a one-tap report with the error attached.
 
 Every report is kept on the GymGO server first, and moderators can read them
@@ -740,8 +750,8 @@ What was found, and what GymGO does now:
   born, as a plain question that doesn't hint at the answer (as the FTC
   advises), and the server refuses a younger age without saving anything.
   After a too-young answer the device won't offer sign-up again for a day, so
-  the answer can't just be changed. Finding gyms needs no account and stays
-  open to everyone.
+  the answer can't just be changed. GymGO needs an account, so someone
+  under 13 can't use it.
 - **Loading things from Google (GDPR, in the EU).** Anything loaded from
   Google shows Google the device's IP address; a German court ordered a site
   that loaded Google Fonts that way, without asking, to pay damages. GymGO's

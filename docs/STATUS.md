@@ -8,7 +8,7 @@ this document could do.
 
 | | Implemented locally | Tested locally | Externally integrated | Deployed |
 |---|---|---|---|---|
-| API server (Node, built-in SQLite) | ✅ | ✅ 216 tests, most over real HTTP | n/a, runs on your PC | ⚠️ ready to host (`deploy/`): built and run here in Docker behind Caddy; not on a public server |
+| API server (Node, built-in SQLite) | ✅ | ✅ 218 tests, most over real HTTP | n/a, runs on your PC | ⚠️ ready to host (`deploy/`): built and run here in Docker behind Caddy; not on a public server |
 | Hosting kit: server image, Caddy with automatic HTTPS serving the web app, setup and update scripts, daily database copies kept 14 days | ✅ | ✅ the whole stack built and run here: HTTPS on localhost, the web app, a sign-up through it, the first backup written; 3 backup tests | ❌ Let's Encrypt not exercised (localhost gets Caddy's own certificate); never run on Oracle Cloud | ❌ |
 | Terms of Service, Privacy Policy, Refunds and Cancelling, Community Guidelines: in the app (Profile → Legal), as public pages (`/terms` …), agreed to at sign-up with the version recorded, asked again when they change, linked by Pro and Stripe's checkout | ✅ | ✅ 7 server tests + every screen and page seen in the browser | ⚠️ who runs GymGO comes from `GYMGO_LEGAL_*`, not set yet | ❌ |
 | Forgot password: a one-time emailed link (30 minutes), a page to choose the new password, every device signed out | ✅ | ✅ server tests with a stand-in mailer, including a forged Host header | ❌ never sent to a real inbox | ❌ |
@@ -24,6 +24,7 @@ this document could do.
 | Moderators review and remove members' price and visit reports | ✅ | ✅ 1 server test (members refused) + the list seen in the browser | n/a | ❌ |
 | Members' visit prices: one report per member per gym, median and range, no names, 2-year window; "~A$22 · members say" in lists when the gym publishes none; kept in the gym's country's own currency, never converted, with the typo check (1 to 500 dollars' worth) and budget steps sized to it (¥100 to ¥50,000; "Under ¥2,500"); none where the exchange rate is too unsettled (Iran, Lebanon, Venezuela, Syria, Cuba, Myanmar, Yemen, Sudan, South Sudan, North Korea); older databases migrate themselves | ✅ | ✅ 7 server tests (euros in Berlin, NZ$ in Auckland, yen in Tokyo with ¥50 refused, none in Tehran) + app and domain tests (every listed country's money, labels such as "¥1,500" and "Rp500,000", typed "¥1,500" and "24,50") + both older schemas migrated + reported and shown in the browser | n/a | ❌ |
 | Sign-up, sign-in, sign-out, delete account | ✅ | ✅ tests + driven in the browser | ❌ no email verification | ❌ |
+| GymGO needs an account: the server answers only a signed-in session (401 "Sign in first."), apart from a short open list (`isPublicRoute`: health, signing in and up, password reset, legal pages, bug reports, Stripe's callbacks, Pro's prices, image files); a route added later is closed unless listed | ✅ | ✅ 2 server tests (the open list, gyms refused signed out and with a made-up token, served signed in) + every other server test now reads as a signed-in member | n/a | ❌ |
 | Saved gyms synced to the account: only the changes made on the device go to the account (saved or removed signed out, or while the server was away, sent when it's back), never the device's whole copy, so a gym removed on another device or offline stays removed | ✅ | ✅ tests (9 unit tests with a stand-in server: removed elsewhere, removed offline and sent later, kept across a restart, saved signed out, a device from before changes were kept, a refused change, sign-out, the latest change wins) + driven in the browser (removed offline then the server back; removed on a second device then this one restarted; saved signed out then sign-up) | n/a | ❌ |
 | Reviews held for moderation; moderator queue | ✅ | ✅ tests; posting driven in the browser | n/a | ❌ |
 | Real Melbourne gyms (23), every fact sourced | ✅ | ✅ 11 honesty tests | ⚠️ one-off read, 23 Sep 2026 | n/a |
@@ -114,6 +115,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | | Implemented locally | Tested locally | Externally integrated | Native-tested | Deployed | Store-approved |
 |---|---|---|---|---|---|---|
 | Search, filters, tiering on the device | ✅ | ✅ unit tests | n/a | ❌ | n/a | ❌ |
+| Account only: signed out, the app is the sign-in screen (Create account for someone new to the device, Sign in for someone who has signed in there before), the legal pages and Report a bug; a link opened signed out opens after signing in; a kept sign-in opens straight into the app; gyms and the country download are fetched only signed in | ✅ | ✅ driven in the browser: a signed-out visit to Home and to a gym's link both showed only sign-in; the terms and Report a bug opened; a new account made from a gym's link landed on that gym; a reload stayed in without showing sign-in; Sign out went back to Sign in; signing in again worked; an account on the old terms was asked to agree to the new ones | n/a | ❌ deep links on a phone not tried | n/a | ❌ |
 | Map with tier-coloured pins | ✅ | ⚠️ web preview only | ⚠️ see below | ❌ | n/a | ❌ |
 | Results sheet, place card, filters sheet; on a phone (the app, or a touch-screen browser) a sheet's list only scrolls, a swipe on it opens its sheet all the way first, the sheet moves by its top edge, and the list is sized to the part of the sheet in sight so its last row can always be scrolled into view | ✅ | ⚠️ web preview only: in a touch browser at phone size, a swipe on the half-open results or a gym's card opened it and scrolled, both scrolled to their last row, and the card's top edge dragged it back down; with a mouse, the wheel scrolls the half-open list as before; the phone app's path (the list only scrolls; the sheet opens as a drag starts) checked in the browser, not on a device | n/a | ❌ Expo Go not tried from here | n/a | ❌ |
 | Directions / call / website hand-off | ✅ | ❌ | n/a | ❌ | n/a | ❌ |
@@ -321,15 +323,15 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 |---|---|
 | `pnpm typecheck` | Clean, every package |
 | `pnpm lint` | No ESLint warnings or errors (web); tsc clean elsewhere |
-| `@gymgo/domain` unit tests | **150 passed** |
+| `@gymgo/domain` unit tests | **163 passed** |
 | `@gymgo/demo-data` unit tests | **23 passed** |
 | `@gymgo/melbourne-data` unit tests | **11 passed** |
 | `@gymgo/au-data` unit tests | **18 passed** |
 | `@gymgo/usa-data` unit tests | **12 passed** |
 | `@gymgo/eu-data` unit tests | **10 passed** |
 | `@gymgo/osm` unit tests | **25 passed** |
-| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **202 passed** |
-| `@gymgo/mobile` unit tests | **254 passed** |
+| `@gymgo/server` tests (real HTTP, in-memory SQLite) | **218 passed** |
+| `@gymgo/mobile` unit tests | **276 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
 | `expo export` (iOS + Android) | Both compiled to Hermes bytecode |
 | `expo-doctor` | 21/21 checks passed |

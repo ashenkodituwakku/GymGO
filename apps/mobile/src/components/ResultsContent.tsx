@@ -10,14 +10,14 @@ import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, Pressable } from './motion';
-import { HOURS_LABELS, explainNoMatches, haversineKm, type GymRecord, type HoursNeed, type SearchOutcome } from '@gymgo/domain';
+import { HOURS_LABELS, explainNoMatches, type HoursNeed, type SearchOutcome } from '@gymgo/domain';
 import { countryInSentence, countryName } from '@/lib/country';
-import { suggestGyms } from '@/lib/gymSearch';
-import { cityAt, distanceLabel, localBudget, moneyLabel, placeContext, suggestPlaces, suggestWorldCities, tracksPrices, type AppPlace, type WorldCity } from '@/lib/places';
+import { cityAt, distanceLabel, localBudget, moneyLabel, placeContext, tracksPrices } from '@/lib/places';
+import { MATCH, suggestionKey, title, type Suggestion } from '@/lib/suggest';
 import { EMPTY, PLACEHOLDER, TIER, lookupLine, searchPrompt, sessionGreeting, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
 import type { Lookup } from '@/lib/app-state';
 import { SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { GymRow } from './GymRow';
 import { GymRowsSkeleton } from './Skeleton';
@@ -39,15 +39,15 @@ export function ResultsContent({
   query,
   onQueryChange,
   onSearchFocus,
-  onPickPlace,
-  onPickWorldCity,
+  suggestions,
+  onPickSuggestion,
+  onLookUp,
   onSubmitSearch,
   onToggleEquipment,
   onToggleHours,
   onToggleBudget,
   onOpenFilters,
   onSelect,
-  records,
   onApplyRelaxation,
   notice,
   inSheet,
@@ -70,9 +70,11 @@ export function ResultsContent({
   query: string;
   onQueryChange: (text: string) => void;
   onSearchFocus: () => void;
-  onPickPlace: (place: AppPlace) => void;
-  /** One of a country's biggest cities GymGO has no gyms built in for. */
-  onPickWorldCity: (city: WorldCity) => void;
+  /** What the search box suggests for what's typed, best first (lib/suggest.ts). */
+  suggestions: readonly Suggestion[];
+  onPickSuggestion: (hit: Suggestion) => void;
+  /** Look what's typed up as a place anywhere in the world. */
+  onLookUp: () => void;
   onSubmitSearch: () => void;
   onToggleEquipment: (id: string) => void;
   /** Open late, or 24 hours: on, off, or switched from one to the other. */
@@ -80,8 +82,6 @@ export function ResultsContent({
   onToggleBudget: () => void;
   onOpenFilters: () => void;
   onSelect: (id: string) => void;
-  /** The gyms that can be searched by name (the current mode's). */
-  records: readonly GymRecord[];
   onApplyRelaxation: (index: number) => void;
   notice: string | null;
   /** In a bottom sheet (phone) or a plain panel (desktop). */
@@ -113,11 +113,9 @@ export function ResultsContent({
   // The sheet-aware input throws in a browser; see TextField in ui.tsx.
   const SearchInput = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
   const city = cityAt(filters.centre);
-  const suggestions = query.trim() ? suggestPlaces(query, 6, city.id, home) : [];
-  // Then the biggest cities of every country ("Osaka", "Toronto"), your own country's first.
-  const worldSuggestions = query.trim() ? suggestWorldCities(query, Math.min(3, 6 - suggestions.length), home) : [];
-  // Gyms by name too ("Equinox", "snap fit"), nearest first, after places.
-  const gymSuggestions = query.trim() ? suggestGyms(query, records, filters.centre, 4) : [];
+  const typed = query.trim();
+  // Somewhere not on GymGO's lists: offered as a last row, to look it up anywhere in the world.
+  const offerLookUp = typed.length >= 3 ? !suggestions.some((hit) => hit.match === MATCH.exact) : typed.length >= 2 && suggestions.length === 0;
   const filterCount = activeFilterCount(filters);
   const total = outcome.results.length;
   const [focused, setFocused] = useState(false);
@@ -182,113 +180,55 @@ export function ResultsContent({
         </Pressable>
       </View>
 
-      {/* Nothing on GymGO's own list: say what the search key does, and offer it as a row. */}
-      {query.trim().length >= 2 && suggestions.length === 0 && worldSuggestions.length === 0 && gymSuggestions.length === 0 && (
+      {(suggestions.length > 0 || offerLookUp) && (
         <View style={styles.suggestions}>
-          <Pressable
-            onPress={() => {
-              haptic.select();
-              onSubmitSearch();
-            }}
-            style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
-            accessibilityRole="button"
-            accessibilityLabel={`Look up ${query.trim()} on the map`}
-          >
-            <View style={[styles.suggestionGlyph, styles.lookGlyph]}>
-              <Icon name="search" size={16} color={color.brand} />
-            </View>
-            <View style={styles.suggestionText}>
-              <Txt variant="body" numberOfLines={1}>
-                {`Look up “${query.trim()}”`}
-              </Txt>
-              <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-                Search the map for it
-              </Txt>
-            </View>
-          </Pressable>
-        </View>
-      )}
-      {(suggestions.length > 0 || worldSuggestions.length > 0 || gymSuggestions.length > 0) && (
-        <View style={styles.suggestions}>
-          {suggestions.map((place) => (
-            <Pressable
-              key={`${place.city}-${place.name}`}
-              onPress={() => {
-                haptic.select();
-                onPickPlace(place);
-              }}
-              style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
-              accessibilityRole="button"
-              accessibilityLabel={`${place.name}, ${placeContext(place)}${place.city === 'sydney-demo' ? ', invented demo' : ''}`}
-            >
-              <View style={styles.suggestionGlyph}>
-                <Icon name="pin" size={16} color={color.onBrand} />
-              </View>
-              <View style={styles.suggestionText}>
-                <Txt variant="body" numberOfLines={1}>
-                  {place.name}
-                </Txt>
-                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-                  {placeContext(place)}
-                  {place.city === 'sydney-demo' ? ' · invented demo' : ''}
-                </Txt>
-              </View>
-            </Pressable>
-          ))}
-          {worldSuggestions.map((item) => (
-            <Pressable
-              key={`${item.country}:${item.name}`}
-              onPress={() => {
-                haptic.select();
-                onPickWorldCity(item);
-              }}
-              style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
-              accessibilityRole="button"
-              accessibilityLabel={`${item.name}, ${countryName(item.country)}`}
-            >
-              <View style={styles.suggestionGlyph}>
-                <Icon name="pin" size={16} color={color.onBrand} />
-              </View>
-              <View style={styles.suggestionText}>
-                <Txt variant="body" numberOfLines={1}>
-                  {item.name}
-                </Txt>
-                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-                  {countryName(item.country)}
-                </Txt>
-              </View>
-            </Pressable>
-          ))}
-          {gymSuggestions.map((record) => {
-            const location = record.location;
+          {suggestions.map((hit) => {
+            const row = suggestionRow(hit, home);
             return (
               <Pressable
-                key={location.id}
-                onPress={() => {
-                  haptic.select();
-                  onSelect(location.id);
-                }}
+                key={suggestionKey(hit)}
+                onPress={() => onPickSuggestion(hit)}
                 style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
                 accessibilityRole="button"
-                accessibilityLabel={location.address.suburb ? `${location.name}, gym in ${location.address.suburb}` : `${location.name}, gym`}
+                accessibilityLabel={`${row.title}, ${row.label}`}
               >
-                <View style={[styles.suggestionGlyph, styles.gymGlyph]}>
-                  <Icon name="gym" size={16} color={color.onBrand} />
+                <View style={[styles.suggestionGlyph, hit.kind === 'gym' && styles.gymGlyph]}>
+                  <Icon name={hit.kind === 'gym' ? 'gym' : 'pin'} size={16} color={color.onBrand} />
                 </View>
                 <View style={styles.suggestionText}>
                   <Txt variant="body" numberOfLines={1}>
-                    {location.name}
-                    {location.branch ? ` ${location.branch}` : ''}
+                    {row.title}
                   </Txt>
                   <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-                    {['Gym', location.address.suburb, distanceLabel(haversineKm(filters.centre, location.position), location.address.countryCode)]
-                      .filter(Boolean)
-                      .join(' · ')}
+                    {row.detail}
                   </Txt>
                 </View>
               </Pressable>
             );
           })}
+          {offerLookUp && (
+            <Pressable
+              onPress={() => {
+                haptic.select();
+                onLookUp();
+              }}
+              style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
+              accessibilityRole="button"
+              accessibilityLabel={`Look up ${typed} anywhere in the world`}
+            >
+              <View style={[styles.suggestionGlyph, styles.lookGlyph]}>
+                <Icon name="search" size={16} color={color.brand} />
+              </View>
+              <View style={styles.suggestionText}>
+                <Txt variant="body" numberOfLines={1}>
+                  {`Look up “${typed}”`}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                  {suggestions.length ? 'Not listed? Find it anywhere in the world' : 'Find it anywhere in the world'}
+                </Txt>
+              </View>
+            </Pressable>
+          )}
         </View>
       )}
 
@@ -491,6 +431,32 @@ export function ResultsContent({
   );
 }
 
+/** A suggestion's two lines: its name, and where it is (and for a gym or town, how far). */
+function suggestionRow(hit: Suggestion, home: string | null): { title: string; detail: string; label: string } {
+  const away = (country: string) => (hit.km >= 0.05 ? distanceLabel(hit.km, country) : null);
+  switch (hit.kind) {
+    case 'place': {
+      const demo = hit.place.city === 'sydney-demo';
+      const detail = `${placeContext(hit.place)}${demo ? ' · invented demo' : ''}`;
+      return { title: hit.place.name, detail, label: demo ? `${placeContext(hit.place)}, invented demo` : placeContext(hit.place) };
+    }
+    case 'world':
+      return { title: hit.city.name, detail: countryName(hit.city.country), label: countryName(hit.city.country) };
+    case 'town': {
+      const where = [hit.town.state, hit.town.country === home ? null : countryName(hit.town.country)].filter(Boolean).join(', ');
+      const gyms = `${hit.town.gyms} gym${hit.town.gyms === 1 ? '' : 's'}`;
+      const detail = [where, gyms, away(hit.town.country)].filter(Boolean).join(' · ');
+      return { title: hit.town.name, detail, label: detail };
+    }
+    case 'gym': {
+      const location = hit.record.location;
+      const detail = ['Gym', location.address.suburb, away(location.address.countryCode)].filter(Boolean).join(' · ');
+      const distance = away(location.address.countryCode);
+      return { title: title(hit), detail, label: [location.address.suburb ? `gym in ${location.address.suburb}` : 'gym', distance && `${distance} away`].filter(Boolean).join(', ') };
+    }
+  }
+}
+
 const styles = themed(() => StyleSheet.create({
   lock: {
     alignItems: 'center',
@@ -545,8 +511,10 @@ const styles = themed(() => StyleSheet.create({
     color: color.label,
     paddingVertical: 0,
     height: 40,
-    // The web preview's focus ring; phones draw none.
-    ...(Platform.OS === 'web' ? { outlineWidth: 0 } : null),
+    backgroundColor: 'transparent',
+    // The whole field shows focus (its accent border), so the browser draws
+    // no box of its own around the text as you type.
+    ...NO_WEB_OUTLINE,
   },
   avatar: {
     width: 40,

@@ -58,6 +58,18 @@ const fold = (text: string) =>
     .replace(/[̀-ͯ]/g, '')
     .replace(/[’']/g, '');
 
+/** A suburb or town with gyms in the pack. */
+export interface PackTown {
+  name: string;
+  /** As the map gives it: "NSW", "Texas"; empty when it doesn't. */
+  state: string;
+  country: string;
+  /** The middle of its gyms. */
+  position: LatLng;
+  gyms: number;
+  timezone: string;
+}
+
 /** A pack, indexed for finding its gyms quickly. Records are made when first asked for, and kept. */
 export class PackIndex {
   readonly country: string;
@@ -69,6 +81,7 @@ export class PackIndex {
   private readonly ids = new Map<string, PackGym>();
   private readonly made = new Map<string, GymRecord>();
   private names: string[] | null = null;
+  private townList: PackTown[] | null = null;
 
   constructor(pack: CountryPack) {
     this.country = pack.country;
@@ -148,6 +161,39 @@ export class PackIndex {
     rows.sort((a, b) => distance(a) - distance(b));
     const timezone = rows[0]?.tz ?? this.nearest(middle, 300)?.row.tz ?? null;
     return { gyms: rows.slice(0, limit).map((row) => this.record(row)), truncated: rows.length > limit, timezone };
+  }
+
+  /**
+   * Every suburb and town with a gym in the pack, once each (by name and
+   * state), in the middle of its gyms: somewhere the search box can suggest.
+   */
+  towns(): PackTown[] {
+    if (this.townList) return this.townList;
+    const byName = new Map<string, { names: Map<string, number>; state: string; lat: number; lng: number; gyms: number; tz: string }>();
+    for (const row of this.rows) {
+      const name = row.locality.trim();
+      if (!name) continue;
+      const key = `${fold(name)}|${row.state}`;
+      const town = byName.get(key);
+      if (town) {
+        town.names.set(name, (town.names.get(name) ?? 0) + 1);
+        town.lat += row.lat;
+        town.lng += row.lng;
+        town.gyms += 1;
+      } else {
+        byName.set(key, { names: new Map([[name, 1]]), state: row.state, lat: row.lat, lng: row.lng, gyms: 1, tz: row.tz });
+      }
+    }
+    this.townList = [...byName.values()].map((town) => ({
+      // The spelling most of its gyms use.
+      name: [...town.names.entries()].sort((a, b) => b[1] - a[1])[0]![0],
+      state: town.state,
+      country: this.country,
+      position: { lat: town.lat / town.gyms, lng: town.lng / town.gyms },
+      gyms: town.gyms,
+      timezone: town.tz,
+    }));
+    return this.townList;
   }
 
   /** Gyms whose name contains every word typed, nearest `near` first. */

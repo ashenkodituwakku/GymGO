@@ -270,8 +270,18 @@ Appearance.
   own currency (A$, €, ¥, ₹, SEK…), never converted; only where the exchange
   rate moves too much to check a price against (Iran, Lebanon, Venezuela and
   a few more) is a price simply unknown, and the app says so.
+  **As you type, the box suggests** gyms, suburbs, towns and cities in one
+  list, ranked by how well the name matches (all of it, its start, the start
+  of a word) and then by how near it is: a gym or suburb close by first, then
+  your own country's cities, then the rest of the world. One letter lists
+  only what's near you ("k" near Sydney is Karv, Kensington and Kirribilli,
+  not Kansas City); "fit" is the Fitness First down the road. Once your
+  country's gyms are on the phone, every suburb and town with a gym in it is
+  suggested too, with how many gyms and how far. All of this is worked out
+  on the phone (`src/lib/suggest.ts`); nothing typed is sent anywhere.
+  Enter goes to the top suggestion.
   Type any town or suburb anywhere ("Bendigo", "Boise", "Kyoto") and
-  press Enter: if it isn't one GymGO knows by heart, the server looks it up
+  press Enter (or tap **Look up**): if it isn't one GymGO knows, the server looks it up
   (Photon, a free OpenStreetMap geocoder, asked only on Enter and at most
   once a second, answers kept a month), and the map flies there; its gyms
   load when you tap Search this area.

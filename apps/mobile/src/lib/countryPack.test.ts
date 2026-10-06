@@ -75,6 +75,16 @@ describe('a country pack kept on the device', () => {
     expect(index.named('x', { lat: -36.7, lng: 144.2 }, 5)).toHaveLength(0);
   });
 
+  it('lists each suburb and town with gyms once, in the middle of them, with how many', () => {
+    const towns = new PackIndex(PACK).towns();
+    expect(towns.map((town) => [town.name, town.state, town.gyms])).toEqual([
+      ['Bendigo', 'VIC', 3],
+      ['Hobart', 'TAS', 1],
+    ]);
+    expect(towns[0]!.position.lat).toBeCloseTo((-36.757 - 36.76 - 36.8) / 3, 5);
+    expect(towns[1]).toMatchObject({ country: 'AU', timezone: 'Australia/Hobart' });
+  });
+
   it('answers a whole-country view by scanning, not cell by cell', () => {
     const index = new PackIndex(PACK);
     const all = index.inBox({ south: -44, west: 112, north: -10, east: 154 }, 100);

@@ -28,9 +28,11 @@ import { ApiError, api, problemText } from '@/lib/api';
 import { EMPTY, locatedNotice, placeWords } from '@/lib/copy';
 import { openingPlace } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
-import { cityAt, cityNear, geocodePlace, localBudget, worldCityNamed, type AppPlace, type WorldCity } from '@/lib/places';
+import { cityAt, cityNear, localBudget, type AppPlace, type WorldCity } from '@/lib/places';
 import { useApp } from '@/lib/app-state';
-import { enterOpensGym, placeForEnter, suggestGyms } from '@/lib/gymSearch';
+import { placeForEnter, suggestGyms } from '@/lib/gymSearch';
+import { suggest, suggestionForEnter, type Suggestion } from '@/lib/suggest';
+import type { PackTown } from '@/lib/countryPack';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
 import { resultFor } from '@/lib/results';
 import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, atWorldCity, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
@@ -132,6 +134,12 @@ function MapScreen() {
     if (packMatches.length === 0) return loaded;
     return [...loaded, ...withoutKnown(packMatches, loaded)];
   }, [loaded, packMatches]);
+  // What the search box suggests as you type: gyms, suburbs, towns and cities, nearest and best first (lib/suggest.ts).
+  const towns = useMemo(() => pack.index?.towns() ?? [], [pack.index]);
+  const suggestions = useMemo(
+    () => (query.trim() ? suggest(query, { centre: filters.centre, home: prefs.country ?? filters.countryCode, records: searchable, towns }) : []),
+    [query, filters.centre, filters.countryCode, prefs.country, searchable, towns],
+  );
   const outcome = useMemo(() => {
     const found = runSearch(filters, { records: data.listed, ratings: data.ratings }, asOf);
     return locked ? { ...found, results: [] } : found;
@@ -188,6 +196,19 @@ function MapScreen() {
     [],
   );
 
+  /** A suburb or town with gyms, from your country's gyms kept on the device. */
+  const pickTown = useCallback(
+    (town: PackTown) => {
+      Keyboard.dismiss();
+      setQuery('');
+      setFilters((current) => moveTo(current, { centre: town.position, placeName: town.name, timezone: town.timezone, countryCode: town.country }));
+      setNotice(null);
+      map.current?.flyTo(town.position, 0.06);
+      mainSheet.current?.snapToIndex(1);
+    },
+    [],
+  );
+
   // openGym is defined below; the search reaches it through this ref.
   const openGymRef = useRef<(id: string) => void>(() => undefined);
   const mayExploreRef = useRef(mayExplore);
@@ -227,20 +248,33 @@ function MapScreen() {
     }
   }, []);
 
-  const submitSearch = useCallback(() => {
-    const result = geocodePlace(query, cityAt(filters.centre).id);
+  /** A suggestion tapped (or the top one, on Enter): go there, or open the gym. */
+  const pickSuggestion = useCallback(
+    (hit: Suggestion) => {
+      haptic.select();
+      if (hit.kind === 'place') return pickPlace(hit.place);
+      if (hit.kind === 'world') return pickWorldCity(hit.city);
+      if (hit.kind === 'town') return pickTown(hit.town);
+      Keyboard.dismiss();
+      openGymRef.current(hit.record.location.id);
+    },
+    [pickPlace, pickWorldCity, pickTown],
+  );
+
+  /** Look the words up as a place anywhere in the world (the place finder), falling back to a gym by that name. */
+  const lookUp = useCallback(() => {
+    const text = query.trim();
+    if (!text) return;
     Keyboard.dismiss();
-    if (result.place) return pickPlace(result.place);
-    // One of a country's biggest cities, by its exact name: no need to look it up.
-    const world = worldCityNamed(query.trim(), prefs.country);
-    if (world) return pickWorldCity(world);
-    // Not a place: maybe a gym's name. Open the best match if it's nearby
-    // and the words aren't its town; otherwise look them up as a place
-    // anywhere in the world first, falling back to the gym.
-    const gym = suggestGyms(query, searchable, filters.centre, 1)[0];
-    if (gym && enterOpensGym(query, gym, filters.centre, searchable)) return openGymRef.current(gym.location.id);
-    if (result.outOfArea) void findPlace(query.trim(), gym?.location.id);
-  }, [query, pickPlace, pickWorldCity, prefs.country, filters.centre, searchable, findPlace]);
+    void findPlace(text, suggestGyms(text, searchable, filters.centre, 1)[0]?.location.id);
+  }, [query, searchable, filters.centre, findPlace]);
+
+  // Enter goes where the list's top row goes, so what you see first is what you get.
+  const submitSearch = useCallback(() => {
+    const top = suggestionForEnter(suggestions);
+    if (top) return pickSuggestion(top);
+    lookUp();
+  }, [suggestions, pickSuggestion, lookUp]);
 
   // Your precise position, used for this search on this device only.
   // While it's finding you the button spins, and another tap waits for this one.
@@ -559,8 +593,9 @@ function MapScreen() {
       query={query}
       onQueryChange={setQuery}
       onSearchFocus={() => mainSheet.current?.snapToIndex(2)}
-      onPickPlace={pickPlace}
-      onPickWorldCity={pickWorldCity}
+      suggestions={suggestions}
+      onPickSuggestion={pickSuggestion}
+      onLookUp={lookUp}
       onSubmitSearch={submitSearch}
       onToggleEquipment={toggleEquipment}
       onToggleHours={toggleHours}
@@ -577,7 +612,6 @@ function MapScreen() {
       onSort={chooseSort}
       covers={data.covers}
       memberPrices={data.memberPrices}
-      records={searchable}
       locked={locked}
       onSeePro={() => openPro('worldwide')}
       onGoHome={goHome}

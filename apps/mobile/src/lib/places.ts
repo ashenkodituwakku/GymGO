@@ -182,6 +182,9 @@ export const activeCities = (): City[] => CITY_LIST.filter((city) => city.demo =
 
 const activePlaces = (): AppPlace[] => PLACES.filter((place) => CITIES[place.city].demo === demoMode);
 
+/** The suburbs, neighbourhoods and cities the search box can suggest right now (each city is a place too). */
+export const searchablePlaces = activePlaces;
+
 /** Where the app opens: Melbourne, or the demo's first suburb in demo mode. */
 export const homePlace = (): AppPlace => (demoMode ? cityPlace(CITIES['sydney-demo']) : DEFAULT_PLACE);
 
@@ -374,6 +377,11 @@ const carried = (city: WorldCity) => {
 /** The world cities GymGO doesn't carry already, worked out once. */
 let uncarried: WorldCity[] | null = null;
 const notCarried = (): WorldCity[] => (uncarried ??= WORLD_CITIES.filter((city) => !carried(city)));
+
+/** Every country's biggest cities that GymGO doesn't carry already, biggest first in each. None in demo mode. */
+export function uncarriedWorldCities(): WorldCity[] {
+  return demoMode ? [] : notCarried();
+}
 
 /** A country's biggest cities that GymGO doesn't carry already, biggest first. None in demo mode. */
 export function worldCitiesIn(country: string): WorldCity[] {

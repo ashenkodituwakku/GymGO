@@ -15,9 +15,9 @@
  */
 
 /** Bumped whenever the terms or privacy policy change in a way people should see. */
-export const LEGAL_VERSION = '2026-10-01';
+export const LEGAL_VERSION = '2026-10-06';
 /** The same date, as the documents show it. */
-export const LEGAL_UPDATED = '1 October 2026';
+export const LEGAL_UPDATED = '6 October 2026';
 
 export type LegalDocId = 'terms' | 'privacy' | 'refunds' | 'community';
 export const LEGAL_DOC_IDS: readonly LegalDocId[] = ['terms', 'privacy', 'refunds', 'community'];
@@ -86,13 +86,13 @@ function terms(op: LegalOperator): LegalSection[] {
       heading: 'About these terms',
       blocks: [
         `GymGO is run by ${op.name} (“we”, “us”). These terms are the agreement between you and us for using GymGO: the app, its website and its server. By using GymGO or making an account you agree to them, and to the [Community Guidelines](community) when you post. Our [Privacy Policy](privacy) explains what we do with your information.`,
-        'If you don’t agree, please don’t use GymGO. Finding gyms needs no account, so you can always look before you sign up.',
+        'If you don’t agree, please don’t use GymGO. Using GymGO needs a free account, and you can read these terms, the Privacy Policy and the Community Guidelines before you make one.',
       ],
     },
     {
       heading: 'Who can use GymGO',
       blocks: [
-        'Anyone can find gyms. Accounts are for people 13 and over, and making one asks the month and year you were born. If you’re under 18, check with a parent or guardian first; to buy GymGO Pro you need to be 18 or have their permission.',
+        'GymGO needs an account, and accounts are for people 13 and over: making one asks the month and year you were born. If you’re under 18, check with a parent or guardian first; to buy GymGO Pro you need to be 18 or have their permission.',
       ],
     },
     {
@@ -222,7 +222,7 @@ function privacy(op: LegalOperator): LegalSection[] {
           list: [
             'GymGO has no ads, no analytics and no session recording, and we never sell or rent your information.',
             'Your precise location stays on your device.',
-            'Finding gyms needs no account. With one, GymGO keeps what you add to it, and you can download or delete all of it in Profile.',
+            'Using GymGO needs a free account. GymGO keeps what you add to it, and you can download or delete all of it in Profile.',
             'Payments go through Stripe: GymGO never sees your card.',
           ],
         },
@@ -235,11 +235,11 @@ function privacy(op: LegalOperator): LegalSection[] {
       ],
     },
     {
-      heading: 'Without an account',
+      heading: 'On your device, and what the server sees',
       blocks: [
         {
           list: [
-            'What you set up on your device (your country, appearance, saved gyms, collection, workouts, training log and trips) is kept on that device only.',
+            'Settings you make on a device (your country, appearance and trips, for example) are kept on that device. What your account keeps is listed under “With an account” below.',
             'If you let GymGO use your location, it’s used on your device to find gyms near you and measure how far they are. It is never sent to GymGO or anyone else. Outside the cities GymGO carries, the app asks the server for the gyms in the map squares around you (about 30 km across, the same for everyone in them), never your position.',
             'When you search an area or type a town, the server looks it up on OpenStreetMap’s services (Overpass and Photon). It sends them the area or the name, not anything about you.',
             'Like any website, the server sees your device’s IP address with each request. It uses it to send the answer back and, for about an hour at most, to slow down anyone sending too many requests. It isn’t written to the database or any log.',
@@ -340,7 +340,7 @@ function privacy(op: LegalOperator): LegalSection[] {
     {
       heading: 'Children',
       blocks: [
-        'Accounts are for people 13 and over, and making one asks the month and year you were born. Finding gyms needs no account and keeps nothing about anyone. If we learn that an account belongs to someone under 13, we delete it.',
+        'Accounts are for people 13 and over, and GymGO can’t be used without one. Making an account asks the month and year you were born; the answer is checked, not kept. If we learn that an account belongs to someone under 13, we delete it.',
       ],
     },
     {

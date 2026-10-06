@@ -4,14 +4,15 @@
  *
  * The rule that decides what goes where: nothing that tells you the truth
  * about a gym is ever behind Pro. In your own country (you choose it when
- * the app first opens) every gym, the answer and why, the source behind each
- * fact, published prices and hours, reviews, photos, members' reports and
- * the workout builder are free for everyone, and a gym page opened from a
- * link or your saved list opens wherever the gym is. Pro is for going
- * further and keeping more: finding gyms in every other country (the owner's
- * call, for people who travel), more saved gyms, bigger comparisons, a
- * library of your own workouts, and charts and targets drawn from your own
- * training log (logging itself, with your records, is free).
+ * the app first opens) every gym, the answer and why, the source behind
+ * each fact, published prices and hours, reviews, photos, members' reports
+ * and the workout builder are free for everyone with a (free) account, and
+ * a gym page opened from a link or your saved list opens wherever the gym
+ * is. Pro is for going further and keeping more: finding gyms in every
+ * other country (the owner's call, for people who travel), more saved
+ * gyms, bigger comparisons, a library of your own workouts, and charts and
+ * targets drawn from your own training log (logging itself, with your
+ * records, is free).
  *
  * Prices are what you pay, tax included. Stripe holds the real prices; these
  * are what the setup script creates there, and what the app shows when
@@ -82,7 +83,7 @@ export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; p
   { emoji: '💍', title: 'Profile ring', free: 'Your picture', pro: 'Ringed in your accent' },
 ];
 
-/** Free for everyone, always. Listed on the Pro screen so nobody wonders. */
+/** Free for everyone with a (free) account, always. Listed on the Pro screen so nobody wonders. */
 export const ALWAYS_FREE = [
   'Every gym in your country, on the map and in the list',
   'A gym’s page from a link or your saved list, wherever it is',

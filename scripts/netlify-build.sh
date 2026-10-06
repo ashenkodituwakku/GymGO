@@ -12,6 +12,8 @@
 #                     the app, and no signing in, reviews, photos or Pro.
 # netlify.toml sets EXPO_PUBLIC_ACCOUNT=optional: the website can be used
 # without an account (lib/accountRule.ts).
+# Started with sh (a build command typed into Netlify's settings, say): run again in bash.
+if [ -z "${BASH_VERSION:-}" ]; then exec bash "$0" "$@"; fi
 set -euo pipefail
 
 # With a server, the app sends its requests to the address it's served from:

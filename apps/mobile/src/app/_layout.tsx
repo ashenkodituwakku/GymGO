@@ -10,6 +10,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Redrawn, useThemeVersion } from '@/components/Redrawn';
 import { WebBack } from '@/components/WebBack';
+import { DemoBanner } from '@/components/DemoBanner';
+import { DEMO_ONLY } from '@/lib/demoOnly';
 import { backLabel } from '@/lib/backLabel';
 import { setGlassLevel } from '@/components/liquidGlass';
 import { AppProvider, useApp } from '@/lib/app-state';
@@ -202,6 +204,7 @@ function ThemedStack() {
   return (
     <ThemeProvider value={navTheme}>
       <StatusBar style={dark ? 'light' : 'dark'} />
+      {DEMO_ONLY && <DemoBanner />}
       <Stack
         // Each screen's content is drawn again in the new colours; the tabs
         // redraw their own screens (app/(tabs)/_layout.tsx), so the tab

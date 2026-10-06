@@ -31,6 +31,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { useLegalInfo } from '@/lib/legal';
 import { LegalText } from '@/components/LegalText';
 import { Bone, Skeleton } from '@/components/Skeleton';
+import { DEMO_ONLY } from '@/lib/demoOnly';
 
 export default function Profile() {
   usePageTitle('Profile');
@@ -119,6 +120,8 @@ export default function Profile() {
         <ServerAwayCard />
       ) : account.state === 'loading' ? (
         <MeCardSkeleton />
+      ) : DEMO_ONLY ? (
+        <ComingSoonCard />
       ) : (
         <SignInCard />
       )}
@@ -217,13 +220,15 @@ export default function Profile() {
           subtitle="Load Street View and Google’s photos without asking"
           toggle={{ value: alwaysGoogle, onChange: (value) => setAlwaysShowGoogle(value) }}
         />
-        <Row
-          icon="flask"
-          tile={TILE.orange}
-          title="Demo mode"
-          subtitle={prefs.demo ? 'Showing invented gyms only' : undefined}
-          toggle={{ value: prefs.demo, onChange: (value) => setPref('demo', value) }}
-        />
+        {!DEMO_ONLY && (
+          <Row
+            icon="flask"
+            tile={TILE.orange}
+            title="Demo mode"
+            subtitle={prefs.demo ? 'Showing invented gyms only' : undefined}
+            toggle={{ value: prefs.demo, onChange: (value) => setPref('demo', value) }}
+          />
+        )}
       </Group>
 
       <Group header="About GymGO">
@@ -283,6 +288,23 @@ export default function Profile() {
 }
 
 /** Signed out: Apple and Google where they're set up, then email. */
+/** On the demo-only website (lib/demoOnly.ts), in place of signing in: what this is, and what's coming. */
+function ComingSoonCard() {
+  return (
+    <View style={styles.signInCard}>
+      <View style={styles.signInHead}>
+        <AppBadge size={52} />
+        <View style={styles.flex}>
+          <Txt variant="title2">GymGO demo</Txt>
+          <Txt variant="subhead" color={color.labelSecondary}>
+            Every gym here is invented, to show what GymGO does. The full version, with real gyms and your own account, is coming soon.
+          </Txt>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function SignInCard() {
   const { account } = useApp();
   const router = useRouter();

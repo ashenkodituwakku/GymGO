@@ -1483,6 +1483,11 @@ GymGO's website is at **https://gymgo.site**, on Netlify (project
 `scripts/netlify-build.sh`, which `netlify.toml` runs. Two things differ from
 the app:
 
+- **The demo only, for now.** `netlify.toml` sets `EXPO_PUBLIC_DEMO_ONLY=on`:
+  Demo mode is on and can't be turned off, so the website shows only the
+  invented Sydney demo gyms, with a banner on every screen saying the full
+  version is coming soon (`apps/mobile/src/lib/demoOnly.ts`). Delete that
+  line to show the full app.
 - **No account needed.** `netlify.toml` sets `EXPO_PUBLIC_ACCOUNT=optional`,
   so the website can be used as a guest; signing in is only for what the
   server keeps. The app, and GymGO on your computer, still need an account

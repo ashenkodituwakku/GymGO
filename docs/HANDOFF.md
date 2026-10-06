@@ -101,6 +101,13 @@ mobile 283, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **gymgo.site shows the demo only** (6 Oct, the owner's call): the website
+  build sets `EXPO_PUBLIC_DEMO_ONLY=on` (`lib/demoOnly.ts`), which keeps
+  Demo mode on (invented Sydney gyms) and hides its switch, puts a "GymGO
+  demo · … The full version is coming soon." banner across every screen
+  (`components/DemoBanner.tsx`), and swaps Profile's sign-in card for a
+  coming-soon card. The owner has linked the GitHub repository in Netlify,
+  so a push builds the site there.
 - **The website is on Netlify** (6 Oct; the owner asked, and chose: live on
   gymgo.site now, usable without an account, server decided later). Netlify
   project `gymgowebsite`, replacing the "coming soon" page. `netlify.toml`

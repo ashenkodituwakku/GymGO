@@ -10,6 +10,7 @@ let clock = new Date('2026-10-01T18:00:00Z');
 let server: Server;
 let base: string;
 let db: Db;
+let reader: string;
 
 beforeAll(async () => {
   db = openDb(':memory:');
@@ -17,6 +18,8 @@ beforeAll(async () => {
   server = createServer(createApp({ db, attribution: 'test', signupsPerHour: 1000, now: () => clock }));
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  // Reading gyms needs an account, like everything else in GymGO.
+  reader = (await person()).token;
 });
 
 afterAll(() => {
@@ -47,7 +50,7 @@ describe('is it busy?', () => {
   const busy = '/api/gyms/carlton-fitness/busy';
 
   it('shows a level only once three members have said so in the last hour', async () => {
-    expect((await call('GET', busy)).body).toEqual({ level: null, count: 0, latestAt: null, windowMinutes: 60, minimum: 3, mine: null });
+    expect((await call('GET', busy, { token: reader })).body).toEqual({ level: null, count: 0, latestAt: null, windowMinutes: 60, minimum: 3, mine: null });
     expect((await call('PUT', busy, { body: { level: 'busy' } })).status).toBe(401);
     const [a, b, c] = [await person(), await person(), await person()];
     expect((await call('PUT', busy, { token: a.token, body: { level: 'heaving' } })).status).toBe(400);
@@ -56,17 +59,17 @@ describe('is it busy?', () => {
     const two = (await call('GET', busy, { token: a.token })).body!;
     expect(two).toMatchObject({ level: null, count: 2, mine: { level: 'packed' } });
     await call('PUT', busy, { token: c.token, body: { level: 'quiet' } });
-    expect((await call('GET', busy)).body).toMatchObject({ level: 'busy', count: 3 });
+    expect((await call('GET', busy, { token: reader })).body).toMatchObject({ level: 'busy', count: 3 });
     // Saying it again replaces your last word rather than adding to it.
     await call('PUT', busy, { token: c.token, body: { level: 'packed' } });
-    expect((await call('GET', busy)).body).toMatchObject({ level: 'packed', count: 3 });
+    expect((await call('GET', busy, { token: reader })).body).toMatchObject({ level: 'packed', count: 3 });
     // An hour on, it's old news.
     clock = new Date(clock.getTime() + 61 * 60_000);
     expect((await call('GET', busy, { token: a.token })).body).toMatchObject({ level: null, count: 0, mine: null });
     expect((await call('DELETE', busy, { token: a.token })).status).toBe(204);
     // A day on, nobody's report is kept at all.
     clock = new Date(clock.getTime() + 24 * 60 * 60_000);
-    await call('GET', busy);
+    await call('GET', busy, { token: reader });
     expect((db.prepare('select count(*) as n from busy_reports where gym_id = ?').get('carlton-fitness') as { n: number }).n).toBe(0);
   });
 
@@ -91,7 +94,7 @@ describe('verified gym owners', () => {
     role(admin.id, 'admin');
     role(moderator.id, 'moderator');
 
-    expect((await call('GET', `/api/gyms/${gym}/owner`)).body).toEqual({ verified: false, since: null, updates: [], you: null });
+    expect((await call('GET', `/api/gyms/${gym}/owner`, { token: reader })).body).toEqual({ verified: false, since: null, updates: [], you: { claim: null, owner: false, submissions: [] } });
     expect((await call('POST', `/api/gyms/${gym}/claim`, { token: owner.token, body: { roleTitle: 'Owner', contact: '', evidence: 'x' } })).status).toBe(400);
     const claim = await call('POST', `/api/gyms/${gym}/claim`, {
       token: owner.token,
@@ -116,7 +119,7 @@ describe('verified gym owners', () => {
     const view = (await call('GET', `/api/gyms/${gym}/owner`, { token: owner.token })).body!;
     expect(view).toMatchObject({ verified: true, you: { owner: true, claim: { status: 'approved' } } });
     // Nothing about who: not their name, not their contact.
-    expect(JSON.stringify((await call('GET', `/api/gyms/${gym}/owner`)).body)).not.toContain('carltonfitness.example');
+    expect(JSON.stringify((await call('GET', `/api/gyms/${gym}/owner`, { token: reader })).body)).not.toContain('carltonfitness.example');
 
     expect((await call('POST', `/api/gyms/${gym}/owner-updates`, { token: owner.token, body: { kind: 'casual_price', amountMinor: 3 } })).status).toBe(400);
     const submitted = await call('POST', `/api/gyms/${gym}/owner-updates`, {
@@ -125,7 +128,7 @@ describe('verified gym owners', () => {
     });
     expect(submitted.status).toBe(201);
     // Waiting: the gym looks as it did.
-    const before = (await call('GET', `/api/gyms/${gym}`)).body!.gym;
+    const before = (await call('GET', `/api/gyms/${gym}`, { token: reader })).body!.gym;
     expect(JSON.stringify(before)).not.toContain('owner-casual');
     // Another owner of nothing can't moderate; a member can't either.
     expect((await call('GET', '/api/moderation/owner-updates', { token: nosy.token })).status).toBe(403);
@@ -133,20 +136,20 @@ describe('verified gym owners', () => {
     expect(updates).toEqual([expect.objectContaining({ gymId: gym, payload: expect.objectContaining({ amountMinor: 1900, currency: 'AUD' }) })]);
     expect((await call('POST', `/api/moderation/owner-updates/${updates[0].id}`, { token: moderator.token, body: { decision: 'approve' } })).status).toBe(204);
 
-    const after = (await call('GET', `/api/gyms/${gym}`)).body!.gym;
+    const after = (await call('GET', `/api/gyms/${gym}`, { token: reader })).body!.gym;
     const casual = after.offers.find((offer: { productType: string }) => offer.productType === 'casual_gym_visit');
     expect(casual).toMatchObject({ baseAmountMinor: 1900, provenance: { status: 'owner_confirmed' } });
-    const listed = (await call('GET', '/api/gyms')).body!.gyms.find((record: { location: { id: string } }) => record.location.id === gym);
+    const listed = (await call('GET', '/api/gyms', { token: reader })).body!.gyms.find((record: { location: { id: string } }) => record.location.id === gym);
     expect(listed.offers.find((offer: { productType: string }) => offer.productType === 'casual_gym_visit').baseAmountMinor).toBe(1900);
-    expect((await call('GET', `/api/gyms/${gym}/owner`)).body!.updates).toEqual([{ kind: 'casual_price', approvedAt: clock.toISOString() }]);
+    expect((await call('GET', `/api/gyms/${gym}/owner`, { token: reader })).body!.updates).toEqual([{ kind: 'casual_price', approvedAt: clock.toISOString() }]);
 
     // In their data download, and gone with their account.
     const mine = (await call('GET', '/api/me/export', { token: owner.token })).body!;
     expect(mine.gymsOwned).toEqual([expect.objectContaining({ gymId: gym })]);
     expect(mine.ownerUpdates).toHaveLength(1);
     expect((await call('DELETE', '/api/me', { token: owner.token, body: { password: 'correct horse' } })).status).toBeLessThan(300);
-    expect((await call('GET', `/api/gyms/${gym}/owner`)).body).toMatchObject({ verified: false, updates: [] });
-    const gone = (await call('GET', `/api/gyms/${gym}`)).body!.gym;
+    expect((await call('GET', `/api/gyms/${gym}/owner`, { token: reader })).body).toMatchObject({ verified: false, updates: [] });
+    const gone = (await call('GET', `/api/gyms/${gym}`, { token: reader })).body!.gym;
     expect(JSON.stringify(gone)).not.toContain('owner-casual');
   });
 

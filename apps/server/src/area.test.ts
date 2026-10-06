@@ -51,6 +51,8 @@ beforeAll(async () => {
   );
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  // GymGO answers only a signed-in account: reads go as this one unless a test says otherwise.
+  reader = (await signUp('area-reader@example.com')).token;
 });
 
 afterAll(() => {
@@ -64,7 +66,8 @@ beforeEach(() => {
   overpassDown = false;
 });
 
-async function call(method: string, path: string, token?: string) {
+let reader: string;
+async function call(method: string, path: string, token: string | null = reader) {
   const response = await fetch(`${base}${path}`, { method, headers: token ? { authorization: `Bearer ${token}` } : {} });
   const text = await response.text();
   return { status: response.status, body: text ? JSON.parse(text) : null };
@@ -341,11 +344,13 @@ describe('Search this area', () => {
 
   it('re-reads an area after a month, and drops gyms gone from the map', async () => {
     clock = new Date('2026-10-30T00:00:00Z');
+    // A month on, the reader's sign-in has run out (30 days): a fresh one.
+    const token = (await signUp('area-reader-later@example.com')).token;
     mapped = bendigoElements().filter((el) => el.id !== 13);
-    const result = await call('GET', areaPath(BENDIGO));
+    const result = await call('GET', areaPath(BENDIGO), token);
     expect(overpassCalls).toHaveLength(1);
     expect(result.body.gyms.map((gym: GymRecord) => gym.location.name)).toEqual(['Snap Fitness']);
-    expect((await call('GET', '/api/gyms/bendigo-strength-co-w13')).status).toBe(404);
+    expect((await call('GET', '/api/gyms/bendigo-strength-co-w13', token)).status).toBe(404);
   });
 });
 
@@ -368,8 +373,15 @@ describe('when a map server fails', () => {
       }),
     );
     await new Promise<void>((resolve) => other.listen(0, '127.0.0.1', resolve));
-    const url = `http://127.0.0.1:${(other.address() as AddressInfo).port}${areaPath(BENDIGO)}`;
-    const answer = (await (await fetch(url)).json()) as { gyms: GymRecord[] };
+    const otherBase = `http://127.0.0.1:${(other.address() as AddressInfo).port}`;
+    const signed = (await (
+      await fetch(`${otherBase}/api/auth/signup`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'flaky@example.com', password: 'correct horse', displayName: 'Lifter', birthMonth: '1990-01', acceptTerms: true }),
+      })
+    ).json()) as { token: string };
+    const answer = (await (await fetch(`${otherBase}${areaPath(BENDIGO)}`, { headers: { authorization: `Bearer ${signed.token}` } })).json()) as { gyms: GymRecord[] };
     expect(answer.gyms.map((gym) => gym.location.name).sort()).toEqual(['Bendigo Strength Co', 'Snap Fitness']);
     expect(calls).toEqual(['https://down.test/api', 'https://odd.test/api', 'https://up.test/api']);
     other.close();

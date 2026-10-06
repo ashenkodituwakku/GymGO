@@ -54,7 +54,11 @@ describe('the legal documents', () => {
     const index = await call('GET', '/legal');
     expect(index.status).toBe(200);
     for (const id of LEGAL_DOC_IDS) expect(index.text).toContain(legalDoc(id).summary);
-    expect((await call('GET', '/legal/terms')).status).toBe(404);
+    // Nothing else is open without an account, and it isn't a page with one either.
+    expect((await call('GET', '/legal/terms')).status).toBe(401);
+    const signup = await call('POST', '/api/auth/signup', { body: { email: 'reader@example.com', password: 'correct horse', displayName: 'Reader', birthMonth: '1990-01', acceptTerms: true } });
+    const token = (JSON.parse(signup.text) as { token: string }).token;
+    expect((await call('GET', '/legal/terms', { token })).status).toBe(404);
   });
 
   it('name whoever runs GymGO, safely, and fall back to Report a bug without a contact', async () => {

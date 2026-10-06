@@ -58,6 +58,8 @@ let server: Server;
 let base: string;
 let db: Db;
 let photoDir: string;
+/** Someone signed in: GymGO needs an account to read anything, so reads go as them unless a test says otherwise. */
+let reader: string;
 const googleCalls: string[] = [];
 
 const CITY = MELBOURNE_GYMS.find((gym) => gym.location.id === 'dohertys-gym-city')!;
@@ -119,6 +121,7 @@ beforeAll(async () => {
   );
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  reader = (await signUp()).token;
 });
 
 afterAll(() => {
@@ -127,11 +130,13 @@ afterAll(() => {
   rmSync(photoDir, { recursive: true, force: true });
 });
 
-async function call(method: string, path: string, options: { token?: string; body?: unknown } = {}) {
+/** A GET with no token goes as the reader; `token: null` sends none. */
+async function call(method: string, path: string, options: { token?: string | null; body?: unknown } = {}) {
+  const token = options.token === undefined && method === 'GET' ? reader : options.token;
   const response = await fetch(`${base}${path}`, {
     method,
     headers: {
-      ...(options.token ? { authorization: `Bearer ${options.token}` } : {}),
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
       ...(options.body !== undefined ? { 'content-type': 'application/json' } : {}),
     },
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
@@ -499,7 +504,7 @@ describe('moderating members’ price and visit reports', () => {
 
 describe('downloading your data', () => {
   it('gives you everything held about you, and nothing secret or anyone else’s', async () => {
-    expect((await call('GET', '/api/me/export')).status).toBe(401);
+    expect((await call('GET', '/api/me/export', { token: null })).status).toBe(401);
     const me = await signUp();
     const someoneElse = await signUp();
     const today = new Date().toISOString().slice(0, 10);
@@ -602,8 +607,15 @@ describe('Google Maps details', () => {
     seedGyms(offDb, MELBOURNE_GYMS);
     const off = createServer(createApp({ db: offDb, attribution: 'test', googleKey: null, fetchImpl: fakeGoogle as typeof fetch }));
     await new Promise<void>((resolve) => off.listen(0, '127.0.0.1', resolve));
-    const url = `http://127.0.0.1:${(off.address() as AddressInfo).port}/api/gyms/dohertys-gym-city/google`;
-    expect(await (await fetch(url)).json()).toEqual({ configured: false });
+    const offBase = `http://127.0.0.1:${(off.address() as AddressInfo).port}`;
+    const signup = await fetch(`${offBase}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'nokey@example.com', password: 'correct horse', displayName: 'No key', birthMonth: '1990-01', acceptTerms: true }),
+    });
+    const { token } = (await signup.json()) as { token: string };
+    const answer = await fetch(`${offBase}/api/gyms/dohertys-gym-city/google`, { headers: { authorization: `Bearer ${token}` } });
+    expect(await answer.json()).toEqual({ configured: false });
     off.close();
     offDb.close();
   });

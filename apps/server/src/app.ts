@@ -265,6 +265,29 @@ export interface AppOptions {
   devAccount?: boolean;
 }
 
+/**
+ * The routes open without an account. GymGO needs one for everything else:
+ * a request without a signed-in session gets 401 "Sign in first", so a route
+ * added later is closed unless it's listed here.
+ *
+ * Open: the health check; signing in, signing up and resetting a password;
+ * the legal pages (the terms are read before an account is made); Stripe's
+ * webhook and the page it sends people back to; Pro's price list; bug
+ * reports, so someone who can't get in can still say so; and image files
+ * (a photo, a profile picture, a gym's logo), which phones and browsers load
+ * without the app's sign-in. Each of those images is reached only from a
+ * signed-in page, and a profile picture's address is random.
+ */
+export function isPublicRoute(method: string, path: string): boolean {
+  if (path === '/api/health' || path === '/api/legal' || path.startsWith('/api/auth/') || path === '/reset-password') return true;
+  if (method === 'GET' && (path === '/legal' || isLegalDocId(path.slice(1)) || path === '/.well-known/security.txt')) return true;
+  if ((method === 'POST' && path === '/api/billing/webhook') || (method === 'GET' && (path === '/api/billing/return' || path === '/api/billing/plans'))) return true;
+  if (method === 'POST' && path === '/api/bug-reports') return true;
+  if (method === 'GET' && (/^\/api\/avatars\/[^/]+$/.test(path) || (/^\/api\/photos\/[^/]+$/.test(path) && path !== '/api/photos/covers'))) return true;
+  if (method === 'GET' && /^\/api\/gyms\/[^/]+\/(icon|photo)$/.test(path)) return true;
+  return false;
+}
+
 class HttpError extends Error {
   constructor(
     readonly status: number,
@@ -696,6 +719,9 @@ export function createApp(options: AppOptions) {
     const path = url.pathname.replace(/\/+$/, '') || '/';
     const method = req.method ?? 'GET';
     const parts = path.split('/').filter(Boolean);
+
+    // GymGO needs an account: everything but the public routes (isPublicRoute) answers only a signed-in session.
+    if (!isPublicRoute(method, path)) requireAccount(req);
 
     // --- Public ---------------------------------------------------------
     if (method === 'GET' && path === '/api/health') return send(res, 200, { ok: true });

@@ -64,6 +64,7 @@ const stripe: StripeApi = {
 let server: Server;
 let base: string;
 let db: Db;
+let reader: string;
 
 beforeAll(async () => {
   db = openDb(':memory:');
@@ -71,6 +72,8 @@ beforeAll(async () => {
   server = createServer(createApp({ db, attribution: 'test', signupsPerHour: 1000, now: () => clock, billing: { stripe, webhookSecret: WEBHOOK_SECRET } }));
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  // Reading gyms needs an account, like everything else in GymGO.
+  reader = (await person('Reader')).token;
 });
 
 afterAll(() => {
@@ -199,12 +202,12 @@ describe('partner day passes', () => {
     const visitor = await person('Visitor');
     db.prepare(`update users set role = 'admin' where id = ?`).run(admin.id);
     const gym = 'carlton-fitness';
-    expect((await call('GET', `/api/gyms/${gym}/passes`)).body).toEqual({ passes: [], available: true });
+    expect((await call('GET', `/api/gyms/${gym}/passes`, { token: reader })).body).toEqual({ passes: [], available: true });
     const body = { gymId: gym, label: 'Day pass', priceMinor: 1800, feeMinor: 150, currency: 'aud' };
     expect((await call('POST', '/api/admin/passes', { token: visitor.token, body })).status).toBe(403);
     expect((await call('POST', '/api/admin/passes', { token: admin.token, body: { ...body, feeMinor: 5000 } })).status).toBe(400);
     const pass = (await call('POST', '/api/admin/passes', { token: admin.token, body })).body!;
-    expect((await call('GET', `/api/gyms/${gym}/passes`)).body!.passes).toEqual([{ id: pass.id, gymId: gym, label: 'Day pass', priceMinor: 1800, feeMinor: 150, currency: 'aud' }]);
+    expect((await call('GET', `/api/gyms/${gym}/passes`, { token: reader })).body!.passes).toEqual([{ id: pass.id, gymId: gym, label: 'Day pass', priceMinor: 1800, feeMinor: 150, currency: 'aud' }]);
 
     expect((await call('POST', `/api/passes/${pass.id}/book`, { token: visitor.token, body: { forDate: '2026-09-01', returnUrl: 'gymgo://pro' } })).status).toBe(400);
     const booked = await call('POST', `/api/passes/${pass.id}/book`, { token: visitor.token, body: { forDate: '2026-10-03', returnUrl: 'gymgo://pro' } });
@@ -223,7 +226,7 @@ describe('partner day passes', () => {
     expect(bookings[0].code).toMatch(/^[2-9A-HJKMNP-Z]{8}$/);
 
     expect((await call('DELETE', `/api/admin/passes/${pass.id}`, { token: admin.token })).status).toBe(204);
-    expect((await call('GET', `/api/gyms/${gym}/passes`)).body!.passes).toEqual([]);
+    expect((await call('GET', `/api/gyms/${gym}/passes`, { token: reader })).body!.passes).toEqual([]);
     const mine = (await call('GET', '/api/me/export', { token: visitor.token })).body!;
     expect(mine.dayPasses).toEqual([expect.objectContaining({ gymId: gym, status: 'paid' })]);
   });

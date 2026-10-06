@@ -28,12 +28,20 @@ async function fakePhoton(input: string | URL | Request, init?: RequestInit): Pr
 let server: Server;
 let base: string;
 let db: Db;
+let reader: string;
 
 beforeAll(async () => {
   db = openDb(':memory:');
   server = createServer(createApp({ db, attribution: 'test', places: { fetchImpl: fakePhoton as typeof fetch } }));
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  // Finding places needs an account, like everything else in GymGO.
+  const signup = await fetch(`${base}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: 'places@example.com', password: 'correct horse', displayName: 'Finder', birthMonth: '1990-01', acceptTerms: true }),
+  });
+  reader = ((await signup.json()) as { token: string }).token;
 });
 
 afterAll(() => {
@@ -42,7 +50,7 @@ afterAll(() => {
 });
 
 const get = async (path: string) => {
-  const response = await fetch(`${base}${path}`);
+  const response = await fetch(`${base}${path}`, { headers: { authorization: `Bearer ${reader}` } });
   return { status: response.status, body: (await response.json()) as Record<string, any> };
 };
 

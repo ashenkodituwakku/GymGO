@@ -62,7 +62,18 @@ beforeAll(async () => {
   server = createServer(createApp({ db, attribution: 'test', now: () => clock, area: overpass }));
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  // GymGO answers only a signed-in account.
+  const signup = await fetch(`${base}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: 'pack-reader@example.com', password: 'correct horse', displayName: 'Reader', birthMonth: '1990-01', acceptTerms: true }),
+  });
+  reader = ((await signup.json()) as { token: string }).token;
 });
+
+let reader: string;
+/** A GET as the signed-in reader. */
+const get = (path: string, headers: Record<string, string> = {}) => fetch(`${base}${path}`, { headers: { authorization: `Bearer ${reader}`, ...headers } });
 
 afterAll(() => {
   server.close();
@@ -92,52 +103,52 @@ describe('a country’s pack of gyms', () => {
   });
 
   it('is built on first asking, then served gzipped and kept', async () => {
-    const first = await fetch(`${base}/api/country/AU/pack?home=AU`);
+    const first = await get(`/api/country/AU/pack?home=AU`);
     expect(first.status).toBe(202);
     expect(((await first.json()) as { state: string }).state).toBe('building');
     // The build runs in the background: wait for it.
     for (let i = 0; i < 50; i += 1) {
-      const status = (await (await fetch(`${base}/api/country/AU/pack/status?home=AU`)).json()) as { state: string };
+      const status = (await (await get(`/api/country/AU/pack/status?home=AU`)).json()) as { state: string };
       if (status.state === 'ready') break;
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
-    const ready = await fetch(`${base}/api/country/AU/pack?home=AU`);
+    const ready = await get(`/api/country/AU/pack?home=AU`);
     expect(ready.status).toBe(200);
     const pack = (await ready.json()) as CountryPack;
     expect(pack.country).toBe('AU');
     expect(pack.gyms).toHaveLength(4);
     // Asked again with its tag, nothing is sent.
-    const again = await fetch(`${base}/api/country/AU/pack?home=AU`, { headers: { 'If-None-Match': ready.headers.get('etag')! } });
+    const again = await get(`/api/country/AU/pack?home=AU`, { 'If-None-Match': ready.headers.get('etag')! });
     expect(again.status).toBe(304);
     // Each gym in it has its own page, like one found by searching an area.
     const snap = pack.gyms.find((gym) => gym.name === 'Snap Fitness')!;
-    const page = await fetch(`${base}/api/gyms/${snap.id}`);
+    const page = await get(`/api/gyms/${snap.id}`);
     expect(page.status).toBe(200);
     // Well under a megabyte gzipped (a real Australia is too).
-    const status = (await (await fetch(`${base}/api/country/AU/pack/status?home=AU`)).json()) as { state: string; gyms: number; bytes: number };
+    const status = (await (await get(`/api/country/AU/pack/status?home=AU`)).json()) as { state: string; gyms: number; bytes: number };
     expect(status).toMatchObject({ state: 'ready', gyms: 4 });
     expect(status.bytes).toBeLessThan(1024 * 1024);
     calls = [];
-    await fetch(`${base}/api/country/AU/pack?home=AU`);
+    await get(`/api/country/AU/pack?home=AU`);
     expect(calls).toHaveLength(0);
   });
 
   it('is sent unzipped to a client that can’t unzip', async () => {
-    const response = await fetch(`${base}/api/country/AU/pack?home=AU`, { headers: { 'Accept-Encoding': 'identity' } });
+    const response = await get(`/api/country/AU/pack?home=AU`, { 'Accept-Encoding': 'identity' });
     expect(response.status).toBe(200);
     expect(response.headers.get('content-encoding')).toBeNull();
     expect(((await response.json()) as CountryPack).gyms).toHaveLength(4);
   });
 
   it('needs Pro for a country other than yours', async () => {
-    const response = await fetch(`${base}/api/country/NZ/pack?home=AU`);
+    const response = await get(`/api/country/NZ/pack?home=AU`);
     expect(response.status).toBe(403);
     expect(((await response.json()) as { code: string }).code).toBe('pro_required');
     expect(calls).toHaveLength(0);
   });
 
   it('refuses what isn’t a country code', async () => {
-    expect((await fetch(`${base}/api/country/AUS/pack?home=AUS`)).status).toBe(400);
+    expect((await get(`/api/country/AUS/pack?home=AUS`)).status).toBe(400);
   });
 
   it('says so when the map service is down, and tries again later', async () => {

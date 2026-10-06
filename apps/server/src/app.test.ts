@@ -3,13 +3,15 @@ import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { DEMO_GYMS } from '@gymgo/demo-data';
-import { createApp, isAllowedOrigin } from './app';
+import { createApp, isAllowedOrigin, isPublicRoute } from './app';
 import { TooYoungError, checkAge, hashPassword, verifyPassword } from './auth';
 import { openDb, seedGyms, type Db } from './db';
 
 let server: Server;
 let base: string;
 let db: Db;
+/** Someone signed in, for reading: GymGO needs an account to look at gyms. */
+let reader: string;
 
 beforeAll(async () => {
   db = openDb(':memory:');
@@ -17,6 +19,7 @@ beforeAll(async () => {
   server = createServer(createApp({ db, attribution: 'test attribution', signupsPerHour: 1000 }));
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  reader = (await signUp('Reader')).token;
 });
 
 afterAll(() => {
@@ -49,14 +52,14 @@ async function signUp(name = 'Sam') {
 
 describe('compression', () => {
   it('gzips the gym list for clients that accept it, and not for those that don’t', async () => {
-    const zipped = await fetch(`${base}/api/gyms`, { headers: { 'accept-encoding': 'gzip' } });
+    const zipped = await fetch(`${base}/api/gyms`, { headers: { 'accept-encoding': 'gzip', authorization: `Bearer ${reader}` } });
     expect(zipped.headers.get('content-encoding')).toBe('gzip');
     expect(zipped.headers.get('vary')).toContain('Accept-Encoding');
     // fetch unzips it, as phones and browsers do.
     expect(((await zipped.json()) as { gyms: unknown[] }).gyms.length).toBeGreaterThan(20);
 
     const plain = await new Promise<{ encoding: string | undefined; body: string }>((resolve, reject) => {
-      const request = httpGet(`${base}/api/gyms`, { headers: { 'accept-encoding': 'identity' } }, (response) => {
+      const request = httpGet(`${base}/api/gyms`, { headers: { 'accept-encoding': 'identity', authorization: `Bearer ${reader}` } }, (response) => {
         let body = '';
         response.setEncoding('utf8');
         response.on('data', (chunk: string) => (body += chunk));
@@ -123,7 +126,7 @@ describe('passwords', () => {
 
 describe('gyms', () => {
   it('serves every record, real Melbourne gyms with their sources', async () => {
-    const result = await call('GET', '/api/gyms');
+    const result = await call('GET', '/api/gyms', { token: reader });
     expect(result.status).toBe(200);
     expect(result.body!.gyms).toHaveLength(MELBOURNE_GYMS.length + DEMO_GYMS.length);
     const city = result.body!.gyms.find((gym: any) => gym.location.id === 'dohertys-gym-city');
@@ -233,13 +236,13 @@ describe('reviews and moderation', () => {
     expect(queue.body!.reviews.map((review: any) => review.id)).toContain(id);
     expect((await call('POST', `/api/moderation/reviews/${id}`, { token: moderator.token, body: { decision: 'publish' } })).status).toBe(204);
 
-    const published = await call('GET', '/api/gyms/prime-athletica-fitzroy/reviews');
+    const published = await call('GET', '/api/gyms/prime-athletica-fitzroy/reviews', { token: reader });
     expect(published.body!.reviews).toHaveLength(1);
     expect(published.body!.reviews[0].body).toBe('Good racks, friendly staff at the desk.');
   });
 
   it("gives every gym's rating from published reviews only, for lists and cards", async () => {
-    const before = await call('GET', '/api/reviews/ratings');
+    const before = await call('GET', '/api/reviews/ratings', { token: reader });
     expect(before.status).toBe(200);
     expect(before.body!.ratings['dohertys-gym-city']).toBeUndefined();
 
@@ -258,7 +261,7 @@ describe('reviews and moderation', () => {
     await post(4, true);
     await post(1, false); // Still waiting for a moderator: doesn't count.
 
-    const after = await call('GET', '/api/reviews/ratings');
+    const after = await call('GET', '/api/reviews/ratings', { token: reader });
     expect(after.body!.ratings['dohertys-gym-city']).toEqual({ average: 4.3, count: 3 });
   });
 
@@ -300,6 +303,58 @@ describe('browser access', () => {
     expect(allowed.headers.get('access-control-allow-origin')).toBe('http://localhost:8081');
     const refused = await call('GET', '/api/health', { origin: 'https://evil.example.com' });
     expect(refused.headers.get('access-control-allow-origin')).toBeNull();
+  });
+});
+
+describe('needing an account', () => {
+  it('opens only signing in, the legal pages, bug reports, billing callbacks and image files', () => {
+    for (const [method, path] of [
+      ['GET', '/api/health'],
+      ['POST', '/api/auth/signin'],
+      ['POST', '/api/auth/signup'],
+      ['GET', '/reset-password'],
+      ['GET', '/legal'],
+      ['GET', '/terms'],
+      ['GET', '/privacy'],
+      ['GET', '/api/legal'],
+      ['GET', '/.well-known/security.txt'],
+      ['POST', '/api/bug-reports'],
+      ['POST', '/api/billing/webhook'],
+      ['GET', '/api/billing/return'],
+      ['GET', '/api/billing/plans'],
+      ['GET', '/api/photos/abc123'],
+      ['GET', '/api/avatars/abc123'],
+      ['GET', '/api/gyms/dohertys-gym-city/icon'],
+      ['GET', '/api/gyms/dohertys-gym-city/photo'],
+    ]) expect(isPublicRoute(method!, path!), `${method} ${path}`).toBe(true);
+
+    for (const [method, path] of [
+      ['GET', '/api/gyms'],
+      ['GET', '/api/gyms/dohertys-gym-city'],
+      ['GET', '/api/gyms/dohertys-gym-city/reviews'],
+      ['GET', '/api/reviews/ratings'],
+      ['GET', '/api/photos/covers'],
+      ['GET', '/api/area'],
+      ['GET', '/api/places'],
+      ['GET', '/api/country/AU/pack'],
+      ['GET', '/api/bug-reports'],
+      ['DELETE', '/api/photos/abc123'],
+      ['GET', '/api/photos/abc123/extra'],
+      ['GET', '/legal/terms'],
+      ['GET', '/api/something-added-later'],
+    ]) expect(isPublicRoute(method!, path!), `${method} ${path}`).toBe(false);
+  });
+
+  it('answers gyms only to someone signed in, and says to sign in', async () => {
+    const anonymous = await call('GET', '/api/gyms');
+    expect(anonymous.status).toBe(401);
+    expect(anonymous.body).toEqual({ error: 'Sign in first.' });
+    expect((await call('GET', '/api/gyms/dohertys-gym-city')).status).toBe(401);
+    expect((await call('GET', '/api/gyms', { token: 'not-a-real-session' })).status).toBe(401);
+    expect((await call('GET', '/api/gyms', { token: reader })).status).toBe(200);
+    // What someone without an account still needs.
+    expect((await call('GET', '/api/health')).status).toBe(200);
+    expect((await fetch(`${base}/terms`)).status).toBe(200);
   });
 });
 

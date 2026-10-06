@@ -121,7 +121,7 @@ describe('gift Pro', () => {
 
     const checkout = await call('POST', '/api/billing/gift', { token: buyer.token, body: { currency: 'aud', returnUrl: 'gymgo://pro' } });
     expect(checkout.status).toBe(200);
-    expect(created.at(-1)).toMatchObject({ mode: 'payment', line_items: [{ price: 'price_gift_0', quantity: 1 }], metadata: { gymgo_kind: 'gift' } });
+    expect(created.at(-1)).toMatchObject({ mode: 'payment', line_items: [{ price: 'price_gift_0', quantity: 1 }], metadata: { gymgo_kind: 'gift' }, managed_payments: { enabled: false } });
     // Not paid yet: no code.
     expect((await call('GET', '/api/billing/gifts', { token: buyer.token })).body!.gifts).toEqual([]);
     const id = await pay(checkout.body!.url);

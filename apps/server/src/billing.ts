@@ -164,6 +164,15 @@ const idOf = (value: Expandable) => (value === null ? null : typeof value === 's
 const PRICE_CACHE_MS = 10 * 60_000;
 const SYNC_EVERY_MS = 10 * 60_000;
 
+/**
+ * GymGO sells Pro itself, under its own Terms and Refunds policy, so a
+ * checkout opts out of Stripe's Managed Payments (Stripe as the seller of
+ * record). Stripe now turns that on by default for new accounts, and with it
+ * on refuses a checkout carrying GymGO's own text by the pay button: the
+ * renewal terms and the links to the Terms and Refunds pages.
+ */
+const SELLER_IS_GYMGO = { managed_payments: { enabled: false } } as const;
+
 export interface BillingOptions {
   stripe: StripeApi | null;
   webhookSecret: string | null;
@@ -321,6 +330,7 @@ export class Billing {
       cancel_url: urls.cancel,
       metadata: { gymgo_account_id: account.id },
       subscription_data: { metadata: { gymgo_account_id: account.id } },
+      ...SELLER_IS_GYMGO,
       // The renewal terms and where the full terms are, by the button that agrees to them, on Stripe's page too.
       ...(urls.terms && urls.refunds
         ? {
@@ -361,6 +371,7 @@ export class Billing {
       cancel_url: urls.cancel,
       metadata: { ...metadata, gymgo_account_id: account.id },
       payment_intent_data: { metadata: { ...metadata, gymgo_account_id: account.id } },
+      ...SELLER_IS_GYMGO,
       ...(urls.terms && urls.refunds
         ? { custom_text: { submit: { message: `By paying you agree to GymGO’s Terms of Service (${urls.terms}) and its Refunds and Cancelling policy (${urls.refunds}).` } } }
         : {}),

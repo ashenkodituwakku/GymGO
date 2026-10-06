@@ -271,6 +271,8 @@ describe('checkout', () => {
     expect(created.cancel_url).toContain('result=cancelled');
     // The renewal terms and links to the full terms, on Stripe's page by its button.
     expect(created.custom_text.submit.message).toMatch(/Renews automatically until you cancel.*\/terms\).*\/refunds\)/);
+    // GymGO is the seller: Stripe's Managed Payments, on by default for new accounts, refuses that text.
+    expect(created.managed_payments).toEqual({ enabled: false });
     const customer = fake.calls.find((item) => item.method === 'customers.create')!;
     expect(customer.options).toEqual({ idempotencyKey: `gymgo-customer-${id}` });
   });

@@ -77,6 +77,9 @@ describe('places', () => {
     expect(geocodePlace('Chinatown', 'boston').place?.city).toBe('boston');
     expect(geocodePlace('Chinatown', 'washington-dc').place?.city).toBe('washington-dc');
     expect(suggestPlaces('capitol hill', 6, 'denver')[0]?.city).toBe('denver');
+    // With no current city to prefer, your own country's places come first.
+    expect(CITIES[suggestPlaces('kensington', 12)[0]!.city].country).toBe('AU');
+    expect(CITIES[suggestPlaces('kensington', 12, undefined, 'US')[0]!.city].country).toBe('US');
   });
 
   it('knows seven more Australian cities from the map, on their own clocks', () => {

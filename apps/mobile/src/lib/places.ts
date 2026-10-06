@@ -273,21 +273,26 @@ export function citiesInState(query: string): City[] {
   return activeCities().filter((city) => city.country === 'US' && codes.includes(city.region));
 }
 
-export function suggestPlaces(query: string, limit = 6, prefer?: CityId): AppPlace[] {
+export function suggestPlaces(query: string, limit = 6, prefer?: CityId, home: string | null = null): AppPlace[] {
   const needle = normalise(query);
   if (!needle) return [];
+  // Your own country before others: "Hamilton" to an American isn't first a Brisbane suburb.
+  const abroad = (city: CityId) => Number(home !== null && CITIES[city].country !== home);
   const cities = [
     ...activeCities().filter((city) => [city.name, ...city.aliases].some((name) => normalise(name).startsWith(needle))),
     ...citiesInState(query),
-  ].map(cityPlace);
+  ]
+    .sort((a, b) => abroad(a.id) - abroad(b.id))
+    .map(cityPlace);
   const places = activePlaces().filter(
     (place) => normalise(place.name).includes(needle) || (place.postcode !== '' && place.postcode.startsWith(needle)),
   )
-    // Starts-with before contains; your current city first.
+    // Starts-with before contains; your current city first, then your country.
     .sort(
       (a, b) =>
         Number(!normalise(a.name).startsWith(needle)) - Number(!normalise(b.name).startsWith(needle)) ||
-        Number(a.city !== prefer) - Number(b.city !== prefer),
+        Number(a.city !== prefer) - Number(b.city !== prefer) ||
+        abroad(a.city) - abroad(b.city),
     );
   const seen = new Set<AppPlace>();
   return [...cities, ...places].filter((place) => (seen.has(place) ? false : (seen.add(place), true))).slice(0, limit);

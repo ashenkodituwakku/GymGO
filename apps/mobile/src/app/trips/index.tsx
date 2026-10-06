@@ -14,6 +14,7 @@ import { Card, Input, PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
+import { tripPlaceWords } from '@/lib/copy';
 import { countryName } from '@/lib/country';
 import { placeContext, suggestPlaces, suggestWorldCities } from '@/lib/places';
 import { addDays, atPlace, atWorldCity, nowIn, type Whereabouts } from '@/lib/query';
@@ -39,7 +40,7 @@ export default function TripsScreen() {
 
   const suggestions = useMemo(() => {
     if (!query.trim() || where) return [];
-    const places = suggestPlaces(query, 5).map((place) => ({ key: `${place.city}:${place.name}`, title: place.name, detail: placeContext(place), where: atPlace(place) }));
+    const places = suggestPlaces(query, 5, undefined, prefs.country).map((place) => ({ key: `${place.city}:${place.name}`, title: place.name, detail: placeContext(place), where: atPlace(place) }));
     const world = suggestWorldCities(query, Math.max(0, 6 - places.length), prefs.country).map((city) => ({
       key: `${city.country}:${city.name}`,
       title: city.name,
@@ -156,7 +157,7 @@ export default function TripsScreen() {
             <Input
               value={query}
               onChangeText={setQuery}
-              placeholder="A city or suburb"
+              placeholder={tripPlaceWords(prefs.country)}
               autoCorrect={false}
               autoFocus
               accessibilityLabel="Where you’re going"

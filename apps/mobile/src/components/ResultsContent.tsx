@@ -113,7 +113,7 @@ export function ResultsContent({
   // The sheet-aware input throws in a browser; see TextField in ui.tsx.
   const SearchInput = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
   const city = cityAt(filters.centre);
-  const suggestions = query.trim() ? suggestPlaces(query, 6, city.id) : [];
+  const suggestions = query.trim() ? suggestPlaces(query, 6, city.id, home) : [];
   // Then the biggest cities of every country ("Osaka", "Toronto"), your own country's first.
   const worldSuggestions = query.trim() ? suggestWorldCities(query, Math.min(3, 6 - suggestions.length), home) : [];
   // Gyms by name too ("Equinox", "snap fit"), nearest first, after places.

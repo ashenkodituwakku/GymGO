@@ -158,10 +158,17 @@ export const EMPTY = {
 } as const;
 
 /** A place to type, in the words people use at home: suburbs in Australia, ZIP codes in the US. */
-function placeWords(home: string | null): string {
+export function placeWords(home: string | null): string {
   if (home === 'US') return 'a city or ZIP code';
   if (home === 'AU' || home === 'NZ') return 'a suburb or city';
   return 'a town or city';
+}
+
+/** A place you're travelling to, in the words people use at home ("A city or suburb"). */
+export function tripPlaceWords(home: string | null): string {
+  if (home === 'US') return 'A city or neighborhood';
+  if (home === 'AU' || home === 'NZ') return 'A city or suburb';
+  return 'A town or city';
 }
 
 /** What the search box asks for. */

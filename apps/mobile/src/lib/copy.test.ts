@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { hoursMeet } from '@gymgo/domain';
-import { accessLine, accessShort, checkedAgo, filtersButtonLabel, gymDistanceLine, locatedNotice, lookupLine, noGymsLine, serverOfflineLine, statusSummaryLine, ratingShort, searchPrompt, sessionGreeting, summaryLine, timeLabel, TIER } from './copy';
+import { accessLine, accessShort, checkedAgo, filtersButtonLabel, gymDistanceLine, locatedNotice, lookupLine, noGymsLine, serverOfflineLine, statusSummaryLine, ratingShort, searchPrompt, sessionGreeting, summaryLine, timeLabel, TIER, tripPlaceWords, placeWords } from './copy';
 import { YOUR_LOCATION, activeFilterCount, applyRelaxation, atPlace, defaultVisit, initialFilters, runSearch, toQuery } from './query';
 import { geocodePlace } from './places';
 
@@ -207,6 +207,14 @@ describe('the search box', () => {
     expect(searchPrompt('AU')).toBe('Search a suburb, city or gym');
     expect(searchPrompt('FR')).toBe('Search a town, city or gym');
     expect(searchPrompt(null)).toBe('Search a town, city or gym');
+  });
+
+  it('words a trip\'s place and a missed search the same way', () => {
+    expect(tripPlaceWords('US')).toBe('A city or neighborhood');
+    expect(tripPlaceWords('AU')).toBe('A city or suburb');
+    expect(tripPlaceWords('DE')).toBe('A town or city');
+    expect(placeWords('US')).toBe('a city or ZIP code');
+    expect(placeWords('NZ')).toBe('a suburb or city');
   });
 });
 

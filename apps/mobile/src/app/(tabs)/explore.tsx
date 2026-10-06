@@ -25,7 +25,7 @@ import { isWithinBox, type BoundingBox, type HoursNeed } from '@gymgo/domain';
 import { withoutKnown } from '@gymgo/osm';
 import { MELBOURNE_ATTRIBUTION } from '@gymgo/melbourne-data';
 import { ApiError, api, problemText } from '@/lib/api';
-import { EMPTY, locatedNotice } from '@/lib/copy';
+import { EMPTY, locatedNotice, placeWords } from '@/lib/copy';
 import { openingPlace } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { cityAt, cityNear, geocodePlace, localBudget, worldCityNamed, type AppPlace, type WorldCity } from '@/lib/places';
@@ -199,7 +199,7 @@ function MapScreen() {
       if (!found && orGym) return openGymRef.current(orGym);
       if (!found) {
         haptic.warn();
-        setNotice(`Couldn’t find a place called “${text}”. Try a suburb or town name.`);
+        setNotice(`Couldn’t find a place called “${text}”. Try ${placeWords(home)}.`);
         return;
       }
       setQuery('');
@@ -573,6 +573,7 @@ function MapScreen() {
       onGoHome={goHome}
       lookup={lookup}
       onSearchHere={searchHere}
+      home={prefs.country}
     />
   );
 

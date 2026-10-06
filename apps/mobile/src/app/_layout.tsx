@@ -222,6 +222,7 @@ function ThemedStack() {
                     label={backLabel(navigation.getState().routes, route.key, label)}
                     canGoBack={navigation.canGoBack()}
                     onPress={() => navigation.goBack()}
+                    home={signedIn ? { label: 'Home', href: '/' } : { label: 'Sign in', href: '/sign-in' }}
                   />
                 ),
               }

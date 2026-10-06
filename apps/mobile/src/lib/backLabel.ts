@@ -15,6 +15,8 @@ type StackRoute = { key: string; name: string; state?: { index?: number; routes:
 export function backLabel(routes: readonly StackRoute[], key: string, title: string | undefined): string {
   const previous = routes[routes.findIndex((route) => route.key === key) - 1];
   if (!previous) return 'Back';
+  // The sign-in screen has no title of its own.
+  if (previous.name === 'sign-in') return 'Sign in';
   if (previous.name === '(tabs)') {
     const tabs = previous.state;
     return TAB_LABELS[tabs?.routes[tabs.index ?? 0]?.name ?? 'index'] ?? 'Back';

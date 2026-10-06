@@ -4,7 +4,8 @@
  * bare arrow a browser gets by default. A phone keeps its own (iPhone's
  * chevron and the word Back, Android's arrow).
  *
- * A page opened straight from a link, with nothing behind it, goes Home.
+ * A page opened straight from a link, with nothing behind it, goes to the
+ * start: Home, or the sign-in screen when signed out (`home` names it).
  */
 
 import { router } from 'expo-router';
@@ -15,14 +16,24 @@ import { Icon } from './Icon';
 import { Pressable } from './motion';
 import { Txt } from './ui';
 
-export function WebBack({ label, canGoBack, onPress }: { label: string; canGoBack: boolean; onPress?: () => void }) {
-  const where = canGoBack ? label : 'Home';
+export function WebBack({
+  label,
+  canGoBack,
+  onPress,
+  home = { label: 'Home', href: '/' },
+}: {
+  label: string;
+  canGoBack: boolean;
+  onPress?: () => void;
+  home?: { label: string; href: '/' | '/sign-in' };
+}) {
+  const where = canGoBack ? label : home.label;
   return (
     <Pressable
       onPress={() => {
         haptic.select();
         if (canGoBack && onPress) onPress();
-        else router.replace('/');
+        else router.replace(home.href);
       }}
       accessibilityRole="button"
       accessibilityLabel={where === 'Back' ? 'Back' : `Back to ${where}`}

@@ -25,6 +25,10 @@ describe('backLabel', () => {
     expect(backLabel(routes, 'trip', '  ')).toBe('Back');
   });
 
+  it('names the sign-in screen, which has no title', () => {
+    expect(backLabel([{ key: 's', name: 'sign-in' }, { key: 't', name: 'legal/[doc]' }], 't', '')).toBe('Sign in');
+  });
+
   it('says Back with nothing behind', () => {
     expect(backLabel([{ key: 'only', name: 'trips/index' }], 'only', 'Trips')).toBe('Back');
   });

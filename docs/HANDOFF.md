@@ -112,7 +112,13 @@ mobile 283, domain 167 and web 39 tests, all passing.
   `lib/afterSignIn.ts` brings a signed-out link back after sign-in. The
   terms' version moved to 2026-10-06. Server tests read as a signed-in
   member (`reader`). Old signed-out branches in screens (a "Sign in"
-  button) are left as harmless fallbacks.
+  button) are left as harmless fallbacks. In a browser, the back capsule
+  on a page open while signed out (the legal pages, Report a bug) says
+  "‹ Sign in" and goes there, rather than "‹ Home", which needs an account.
+  Checked in the browser (6 Oct): every app page sends you to sign-in
+  signed out; a gym link opened signed out opens after signing in; a new
+  account lands on the country picker; signing out, Back and reload don't
+  get back in.
 - Map card and web back button (6 Oct). A gym's card no longer empties
   when the search moves on without that gym (Show gyms near me, another
   place, a filter that rules it out): the card stays, weighed the same way

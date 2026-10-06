@@ -17,6 +17,10 @@
   EXPO_PUBLIC_DEMO_ONLY = "on"
   # Only the tests use a browser; the build doesn't need one downloaded.
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
+  # Netlify adds its Next.js plugin to the project because the older website
+  # (apps/web) is a Next.js app. This site isn't one, and the plugin fails the
+  # build looking for Next.js output, so it's told to stand aside.
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
 
 # The same headers Caddy sends (deploy/Caddyfile).
 [[headers]]

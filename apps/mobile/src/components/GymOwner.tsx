@@ -54,12 +54,12 @@ export function GymOwner({ record, account, onSignIn }: { record: GymRecord; acc
           </Txt>
         </View>
       )}
-      {owner ? <OwnerTools record={record} token={token!} view={view} onSent={load} /> : <Claim gymName={location.name} gymId={location.id} token={token} view={view} onSignIn={onSignIn} onSent={load} />}
+      {owner ? <OwnerTools record={record} token={token!} view={view} onSent={load} /> : <Claim gymName={location.name} gymId={location.id} country={location.address.countryCode} token={token} view={view} onSignIn={onSignIn} onSent={load} />}
     </Fold>
   );
 }
 
-function Claim({ gymName, gymId, token, view, onSignIn, onSent }: { gymName: string; gymId: string; token: string | null; view: GymOwnerView; onSignIn: () => void; onSent: () => void }) {
+function Claim({ gymName, gymId, country, token, view, onSignIn, onSent }: { gymName: string; gymId: string; country: string; token: string | null; view: GymOwnerView; onSignIn: () => void; onSent: () => void }) {
   const [open, setOpen] = useState(false);
   const [roleTitle, setRoleTitle] = useState('');
   const [contact, setContact] = useState('');
@@ -111,7 +111,7 @@ function Claim({ gymName, gymId, token, view, onSignIn, onSent }: { gymName: str
           <Input
             value={contact}
             onChangeText={setContact}
-            placeholder="Work email at the gym’s address, or its listed phone"
+            placeholder="Work email or the gym’s phone"
             maxLength={160}
             autoCapitalize="none"
             accessibilityLabel="How to reach you at the gym"
@@ -120,7 +120,7 @@ function Claim({ gymName, gymId, token, view, onSignIn, onSent }: { gymName: str
           <Input
             value={evidence}
             onChangeText={setEvidence}
-            placeholder="How can we check? A staff page, ABN or company record…"
+            placeholder={`How can we check? A staff page${country === 'AU' ? ', ABN' : ''} or company record…`}
             maxLength={1000}
             multiline
             accessibilityLabel="How we can check it’s yours"

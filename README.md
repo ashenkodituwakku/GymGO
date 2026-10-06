@@ -1476,6 +1476,27 @@ same `deploy/` folder runs on any Linux server with Docker. Google Cloud's
 free e2-micro has only 1 GB of memory, too little to build the web app on
 it; build the images on another machine and copy them over.
 
+### The website on Netlify
+
+GymGO's website is at **https://gymgo.site**, on Netlify (project
+`gymgowebsite`). It's the app's own code, exported for the browser by
+`scripts/netlify-build.sh`, which `netlify.toml` runs. Two things differ from
+the app:
+
+- **No account needed.** `netlify.toml` sets `EXPO_PUBLIC_ACCOUNT=optional`,
+  so the website can be used as a guest; signing in is only for what the
+  server keeps. The app, and GymGO on your computer, still need an account
+  (`apps/mobile/src/lib/accountRule.ts`). Delete that line to lock the
+  website too.
+- **No server yet.** Without one the website works on its own: the gyms
+  built into the app, saved gyms and training kept in that browser, and no
+  signing in, reviews, members' photos or Pro. To connect a server, run it
+  somewhere public (see "Put GymGO online" above) with `GYMGO_PUBLIC_URL`
+  set to `https://gymgo.site`, then in Netlify add the environment variable
+  `GYMGO_SERVER_URL` with the server's own address and deploy again. The
+  website then passes `/api` and the legal pages on to it, as Caddy does,
+  so the browser only ever talks to gymgo.site.
+
 ### The older website
 
 The first version of GymGO was a Next.js website, and it's still in the

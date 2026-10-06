@@ -17,6 +17,8 @@ export function pickApiBase(from: {
   /** Expo's note of the bundler's host and port. */
   hostUri?: string | null;
 }): string | null {
+  // A build with no server (the website on Netlify, until one is set up): nothing is asked of one.
+  if (from.configured === 'none') return null;
   if (from.configured) return from.configured.replace(/\/+$/, '');
   if (from.pageOrigin) return `${from.pageOrigin}${SERVER_PREFIX}`;
   const origin = from.bundleUrl ? /^https?:\/\/[^/?#]+/i.exec(from.bundleUrl)?.[0] : null;

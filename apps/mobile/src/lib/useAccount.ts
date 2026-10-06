@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError, OfflineError, setTokenSource, type Account, type SignInProvider } from './api';
 import { forgetChanges, loadSaved, noteChange, othersWaiting, settleChange, storeSaved, syncSaved } from './savedGyms';
+import { ACCOUNT_OPTIONAL } from './accountRule';
 import { loadToken, noteSignedIn, signedInBefore, storeToken } from './session';
 
 export type AccountState = 'loading' | 'signed_out' | 'signed_in' | 'unreachable';
@@ -237,9 +238,10 @@ export function useAccount() {
     /**
      * Whether to show the app, which needs an account: 'wait' for the moment
      * this device's sign-in is read, 'in' with an account (or one being
-     * confirmed, or while the server is away), 'out' without one.
+     * confirmed, or while the server is away), 'out' without one. Always
+     * 'in' where an account is optional (lib/accountRule.ts).
      */
-    gate: (state === 'signed_in' || state === 'unreachable' || (state === 'loading' && remembered) ? 'in' : state === 'loading' ? 'wait' : 'out') as
+    gate: (ACCOUNT_OPTIONAL || state === 'signed_in' || state === 'unreachable' || (state === 'loading' && remembered) ? 'in' : state === 'loading' ? 'wait' : 'out') as
       | 'wait'
       | 'in'
       | 'out',

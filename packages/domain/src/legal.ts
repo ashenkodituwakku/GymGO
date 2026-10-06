@@ -86,13 +86,13 @@ function terms(op: LegalOperator): LegalSection[] {
       heading: 'About these terms',
       blocks: [
         `GymGO is run by ${op.name} (“we”, “us”). These terms are the agreement between you and us for using GymGO: the app, its website and its server. By using GymGO or making an account you agree to them, and to the [Community Guidelines](community) when you post. Our [Privacy Policy](privacy) explains what we do with your information.`,
-        'If you don’t agree, please don’t use GymGO. Using GymGO needs a free account, and you can read these terms, the Privacy Policy and the Community Guidelines before you make one.',
+        'If you don’t agree, please don’t use GymGO. The GymGO app needs a free account; GymGO’s website can be used to find gyms without one. You can read these terms, the Privacy Policy and the Community Guidelines before you make an account.',
       ],
     },
     {
       heading: 'Who can use GymGO',
       blocks: [
-        'GymGO needs an account, and accounts are for people 13 and over: making one asks the month and year you were born. If you’re under 18, check with a parent or guardian first; to buy GymGO Pro you need to be 18 or have their permission.',
+        'The GymGO app needs an account (GymGO’s website doesn’t), and accounts are for people 13 and over: making one asks the month and year you were born. If you’re under 18, check with a parent or guardian first; to buy GymGO Pro you need to be 18 or have their permission.',
       ],
     },
     {
@@ -223,7 +223,7 @@ function privacy(op: LegalOperator): LegalSection[] {
           list: [
             'GymGO has no ads, no analytics and no session recording, and we never sell or rent your information.',
             'Your precise location stays on your device.',
-            'Using GymGO needs a free account. GymGO keeps what you add to it, and you can download or delete all of it in Profile.',
+            'The GymGO app needs a free account; GymGO’s website can be used without one. GymGO keeps what you add to your account, and you can download or delete all of it in Profile.',
             'Payments go through Stripe: GymGO never sees your card.',
           ],
         },
@@ -241,6 +241,7 @@ function privacy(op: LegalOperator): LegalSection[] {
         {
           list: [
             'Settings you make on a device (your country, appearance and trips, for example) are kept on that device. What your account keeps is listed under “With an account” below.',
+            'Using GymGO’s website without an account, what you set up there (saved gyms, workouts, your training log and settings) is kept in that browser only, and GymGO keeps nothing about you.',
             'If you let GymGO use your location, it’s used on your device to find gyms near you and measure how far they are. It is never sent to GymGO or anyone else. Outside the cities GymGO carries, the app asks the server for the gyms in the map squares around you (about 30 km across, the same for everyone in them), never your position.',
             'When you search an area or type a town, the server looks it up on OpenStreetMap’s services (Overpass and Photon). It sends them the area or the name, not anything about you.',
             'Like any website, the server sees your device’s IP address with each request. It uses it to send the answer back and, for about an hour at most, to slow down anyone sending too many requests. It isn’t written to the database or any log.',
@@ -341,7 +342,7 @@ function privacy(op: LegalOperator): LegalSection[] {
     {
       heading: 'Children',
       blocks: [
-        'Accounts are for people 13 and over, and GymGO can’t be used without one. Making an account asks the month and year you were born; the answer is checked, not kept. If we learn that an account belongs to someone under 13, we delete it.',
+        'Accounts are for people 13 and over, and the GymGO app can’t be used without one; GymGO’s website can, and keeps nothing about anyone using it without an account. Making an account asks the month and year you were born; the answer is checked, not kept. If we learn that an account belongs to someone under 13, we delete it.',
       ],
     },
     {

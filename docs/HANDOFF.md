@@ -101,6 +101,18 @@ mobile 283, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **The website is on Netlify** (6 Oct; the owner asked, and chose: live on
+  gymgo.site now, usable without an account, server decided later). Netlify
+  project `gymgowebsite`, replacing the "coming soon" page. `netlify.toml`
+  runs `scripts/netlify-build.sh`, which exports the app for the browser.
+  The website build sets `EXPO_PUBLIC_ACCOUNT=optional` (guests get in;
+  `lib/accountRule.ts`); the app and the PC version still need an account.
+  With no `GYMGO_SERVER_URL` in Netlify the build sets
+  `EXPO_PUBLIC_API_URL=none` (`lib/serverAddress.ts`), so it never asks for
+  a server: built-in gyms only, "offline copy" in the status pill. With one,
+  `_redirects` passes `/api` and the legal pages to it like Caddy does. The
+  Terms and Privacy Policy now say the app needs an account and the website
+  doesn't (same version, 2026-10-06). README: "The website on Netlify".
 - **GymGO needs an account now** (the owner asked for it to be usable only
   with one). The server answers only a signed-in session apart from the
   open list in `isPublicRoute` (`apps/server/src/app.ts`); a new route is

@@ -6,6 +6,10 @@ describe('where the GymGO server is', () => {
     expect(pickApiBase({ configured: 'https://gymgo.example.com/', pageOrigin: 'http://localhost:8081' })).toBe('https://gymgo.example.com');
   });
 
+  it('is nowhere when the build says there is none', () => {
+    expect(pickApiBase({ configured: 'none', pageOrigin: 'https://gymgo.site' })).toBeNull();
+  });
+
   it('is through the bundler, on the page’s own address, in a browser', () => {
     expect(pickApiBase({ pageOrigin: 'http://localhost:8081' })).toBe('http://localhost:8081/_gymgo');
     expect(pickApiBase({ pageOrigin: 'http://192.168.0.46:8081' })).toBe('http://192.168.0.46:8081/_gymgo');

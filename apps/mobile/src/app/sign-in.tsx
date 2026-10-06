@@ -24,6 +24,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { LegalText } from '@/components/LegalText';
 import { takeWanted } from '@/lib/afterSignIn';
+import { ACCOUNT_OPTIONAL } from '@/lib/accountRule';
 
 type Mode = 'sign_in' | 'create';
 
@@ -208,8 +209,12 @@ export default function SignInScreen() {
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           {mode === 'create'
-            ? 'GymGO needs a free account. Make one to find gyms that will let you in, save them on every device, and log your training.'
-            : 'Sign in to find gyms, and pick up your saved gyms, workouts and training log.'}
+            ? ACCOUNT_OPTIONAL
+              ? 'Make a free account to save gyms on every device, write reviews and keep your training log.'
+              : 'GymGO needs a free account. Make one to find gyms that will let you in, save them on every device, and log your training.'
+            : ACCOUNT_OPTIONAL
+              ? 'Sign in to pick up your saved gyms, workouts and training log.'
+              : 'Sign in to find gyms, and pick up your saved gyms, workouts and training log.'}
         </Txt>
       </Animated.View>
 

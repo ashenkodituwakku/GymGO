@@ -101,6 +101,16 @@ mobile 279, domain 163 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- Map card and web back button (6 Oct). A gym's card no longer empties
+  when the search moves on without that gym (Show gyms near me, another
+  place, a filter that rules it out): the card stays, weighed the same way
+  as a gym page. Before, on a wide window the card turned into a Filters
+  panel that its close button couldn't shut, and on a phone it left a
+  blank sheet with no close button. In a browser, every page's back
+  button is now a soft accent capsule naming the page behind ("‹ Profile",
+  "‹ Home"; untitled pages say "Back"), filled on hover, with the title
+  centred; a page opened straight from a link goes Home. iPhone and Android
+  keep their own back buttons (components/WebBack.tsx, lib/backLabel.ts).
 - Polish round 3 (6 Oct): forms. Sign in's "don't match" clears as you
   fix the email or password; on Account, Enter saves a name or a password,
   and a new password says how many characters it still needs; naming an

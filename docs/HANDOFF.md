@@ -51,7 +51,7 @@ the branch the owner's launcher pulls.
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
 `npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 225,
-mobile 283, domain 167 and web 39 tests, all passing.
+mobile 304, domain 167 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 57, React Native 0.86, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -101,6 +101,15 @@ mobile 283, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- Owner-approved round (8 Oct): Swap one exercise (plan and workout;
+  `swapFor` in `src/lib/workout.ts`), Next to collect on Collection
+  (`nextToCollect` in `src/lib/collection.ts`), Share your week
+  (`weekRecap` in `src/lib/insights.ts`, `src/app/recap.tsx`,
+  `components/RecapCard.tsx`), a welcome tour after sign-up
+  (`src/app/welcome.tsx`, `noteNewAccount` in `lib/afterSignIn.ts`), and the
+  busy button renamed "Say how busy". Offered but not chosen: hiding the
+  AD PLACEHOLDER box for Free users, putting "can I get in?" first on gym
+  pages, and a notice when the map can't load.
 - **gymgo.site shows the demo only** (6 Oct, the owner's call): the website
   build sets `EXPO_PUBLIC_DEMO_ONLY=on` (`lib/demoOnly.ts`), which keeps
   Demo mode on (invented Sydney gyms) and hides its switch, puts a "GymGO

@@ -348,6 +348,12 @@ tap **Start**. Each exercise shows its sets as rows: type the weight and
 reps and tick the set. Last time's numbers are already filled in as a
 guide, so on a repeat session it's mostly ticking.
 
+**Share your week** (Progress): a card of the week's workouts, sets, gyms
+checked in at and records, the weight lifted, your streak and the week's
+best card, shared as a picture (downloaded in a browser). On a Monday
+morning, before anything's happened, it's last week's. Totals only, never
+which days you went.
+
 **Templates** (Home → "Or start a template", or the Workout screen):
 three well-known plans written out with GymGO's exercises: **Beginner full
 body** (A and B), **5×5 strength** (A and B) and **Push, pull, legs**. Each
@@ -449,7 +455,9 @@ takes one location fix, checks on the phone that you're within about 150 m
 of the gym, and adds it to your **collection** (Profile → Collection). Each
 day you check in again is a visit, and the gym's card climbs from Bronze to
 Silver (3 visits), Gold (10) and Platinum (25). The collection counts your
-gyms, cities and countries and earns badges.
+gyms, cities and countries and earns badges. **Next to collect** lists the
+four nearest gyms you haven't collected yet (near you, or near where the
+search is; within 50 km), so there's always a next card to go after.
 
 **Sets.** Collecting in a suburb starts its **suburb set**: every gym
 GymGO lists there (2 to 15 of them; real gyms not known to have closed,
@@ -624,7 +632,11 @@ Tap the muscles you want to train on the body (front and back; there's also
 a plain list), or pick Push, Pull, Legs, Core or Full body. Choose a goal
 (strength, muscle, endurance) and a length (4, 6 or 8 exercises), and GymGO
 builds a session: compound lifts first, sets × reps, rest, and a tip for
-each. **Shuffle** for another version, **Share** to send it.
+each. **Shuffle** for another version, **Share** to send it. Machine
+taken, or not there? **Swap** on an exercise puts in another move for the
+same muscle that the kit allows (done the same way: reps, a hold or a
+carry), not already in the plan; each tap takes the next one along. Swap is
+there in a workout too, on each exercise until you tick one of its sets.
 
 From a gym's page it uses only the machines that gym publishes or that its
 members have reported, and marks each exercise ✓ where the kit is
@@ -651,7 +663,10 @@ server answers only a signed-in session, apart from a short open list in
 up, resetting a password, the legal pages, bug reports, Stripe's callbacks,
 Pro's prices and image files (phones and browsers load those without the
 app's sign-in; each is reached only from a signed-in screen). A route added
-later is closed unless it's put on that list.
+later is closed unless it's put on that list. Straight after making an
+account there's a **welcome tour** (three pages: find a gym that lets you
+in, know what to do there, collect it; Skip any time), then on to where you
+were going.
 
 Your saved gyms follow you between your PC and your phone, and you can
 write reviews. Accounts live in the GymGO server's database:

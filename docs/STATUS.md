@@ -116,6 +116,11 @@ service, which is your decision to make. Nothing has been provisioned.
 | | Implemented locally | Tested locally | Externally integrated | Native-tested | Deployed | Store-approved |
 |---|---|---|---|---|---|---|
 | Search, filters, tiering on the device | ✅ | ✅ unit tests | n/a | ❌ | n/a | ❌ |
+| Swap one exercise: in a new plan, and in a workout until one of its sets is ticked; another move for the same muscle, kit allowed, done the same way, not already in the plan, each tap the next along (free) | ✅ | ✅ 4 unit tests (same muscle and kit, cycles through and back, holds stay holds, nothing when there's no other) + driven in the browser: a plan's first exercise swapped twice, a workout's second swapped, Swap gone once a set was ticked | n/a | ❌ | n/a | ❌ |
+| Next to collect: the four nearest gyms not collected yet (near you, else near the search; within 50 km; never demo gyms), on Collection and its empty screen (free) | ✅ | ✅ 3 unit tests + seen in the browser: an empty collection and one with Doherty's Gym collected (Doherty's left off the list), a tap opening the gym | n/a | ❌ | n/a | ❌ |
+| Share your week (Progress): workouts, sets, gyms, records, weight lifted, streak, new gyms and the best card, as a picture; last week's on a Monday before anything happens (free) | ✅ | ✅ 3 unit tests + in the browser with two logged workouts and a check-in: the card light and dark, and the picture downloaded | n/a | ❌ the phone share sheet not seen | n/a | ❌ |
+| Welcome tour after making an account (sign-up or a first Google or Apple sign-in): three pages, Skip, then on to where you were going | ✅ | ✅ in the browser: sign-up then the three pages then the country picker; a gym's link then sign-up then Skip landing on that gym; signing in to an existing account showing no tour | n/a | ❌ | n/a | ❌ |
+| A gym's page has one "I'm here" (checking in); the busy button says "Say how busy" | ✅ | ✅ seen in the browser | n/a | ❌ | n/a | ❌ |
 | Search suggestions as you type: gyms, suburbs, towns and cities in one list, by how well the name matches and then how near (one letter lists only what's near you); every suburb and town with a gym from the kept country file; Enter goes to the top row, Look up asks the place finder; the search field draws no browser box of its own | ✅ | ✅ 8 unit tests + 1 country-file test; in the browser near Sydney: "k" listed Karv, Ku-ring-gai, Kensington, Kirribilli (no Kansas City or Copenhagen); "fit" the nearby Fitness Firsts; "syd" Sydney then Sydenham; "bondi" + Enter moved the search to Bondi; the field's outline "none" while typing in Chromium | n/a | ❌ Safari not tried here; the town list never seen with a real country file in this sandbox (only in tests) | n/a | ❌ |
 | Account only: signed out, the app is the sign-in screen (Create account for someone new to the device, Sign in for someone who has signed in there before), the legal pages and Report a bug; a link opened signed out opens after signing in; a kept sign-in opens straight into the app; gyms and the country download are fetched only signed in | ✅ | ✅ driven in the browser: a signed-out visit to Home and to a gym's link both showed only sign-in; the terms and Report a bug opened; a new account made from a gym's link landed on that gym; a reload stayed in without showing sign-in; Sign out went back to Sign in; signing in again worked; an account on the old terms was asked to agree to the new ones | n/a | ❌ deep links on a phone not tried | n/a | ❌ |
 | Map with tier-coloured pins | ✅ | ⚠️ web preview only | ⚠️ see below | ❌ | n/a | ❌ |
@@ -337,7 +342,7 @@ Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:
 | `@gymgo/eu-data` unit tests | **10 passed** |
 | `@gymgo/osm` unit tests | **25 passed** |
 | `@gymgo/server` tests (real HTTP, in-memory SQLite) | **225 passed** |
-| `@gymgo/mobile` unit tests | **283 passed** |
+| `@gymgo/mobile` unit tests | **304 passed** |
 | `@gymgo/web` unit tests | **39 passed** |
 | `expo export` (iOS + Android) | Both compiled to Hermes bytecode |
 | `expo-doctor` | 21/21 checks passed |

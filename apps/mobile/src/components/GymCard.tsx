@@ -1,8 +1,8 @@
 /**
  * A gym as a card in a horizontal row on the Home and Saved screens: its
- * photo (a member's, else its own website's; or its logo, or "No photo
- * supplied"), its name, where it is,
- * one status chip and the price.
+ * photo (a member's, else its own website's; a demo gym's illustration,
+ * labelled as one; or its logo, or "No photo supplied"), its name, where it
+ * is, one status chip and the price.
  *
  * On iPhone, pressing and holding shows a preview of the gym's page with a
  * menu (save, share, directions, compare), as Maps and Photos do. Elsewhere
@@ -16,6 +16,7 @@ import type { GymSearchResult } from '@gymgo/domain';
 import { distanceLabel } from '@/lib/places';
 import { openDirections, shareGym } from '@/lib/actions';
 import { photoUrl } from '@/lib/api';
+import { demoPicture } from '@/lib/gymPicture';
 import { useApp } from '@/lib/app-state';
 import { TIER } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
@@ -25,6 +26,7 @@ import { MarkImage, useGymMark } from './BrandLogo';
 import { Pressable, usePressScale } from './motion';
 import { useWebsitePhoto } from './PhotoHero';
 import { Icon } from './Icon';
+import { Illustration } from './Illustration';
 import { NoPhoto, TIER_COLOUR, Txt } from './ui';
 
 export function GymCard({ result, width = 216 }: { result: GymSearchResult; width?: number }) {
@@ -39,6 +41,7 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
   // No member's photo: the one the gym's own website shares, if it has one.
   const siteCover = useWebsitePhoto(id, !memberCover && !location.isDemoData);
   const cover = memberCover ?? siteCover;
+  const illustration = cover ? null : demoPicture(location);
   const mark = useGymMark(location);
   const press = usePressScale(0.97);
   const saved = account.saved.includes(id);
@@ -66,6 +69,8 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
             <Animated.View style={[styles.card, { width }, press.style]}>
               {cover ? (
                 <Image source={{ uri: cover }} style={styles.image} resizeMode="cover" />
+              ) : illustration ? (
+                <Illustration picture={illustration} style={styles.image} worded />
               ) : mark ? (
                 <View style={[styles.image, styles.tile, { backgroundColor: color.logoPlate }]}>
                   <MarkImage mark={mark} name={location.name} width={width * 0.72} height={76} area={5200} />

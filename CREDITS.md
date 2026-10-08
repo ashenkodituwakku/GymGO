@@ -175,3 +175,12 @@ contributors. GymGO shows it live and does not store it.
 
 Every gym, price, review and timetable in `packages/demo-data` is invented for
 testing. None of it describes a real business.
+
+The demo gyms' pictures (`apps/mobile/assets/demo`) are illustrations drawn
+for the GymGO demo by `apps/mobile/scripts/demo-pictures.mjs`, from shapes in
+code and the Inter typeface (SIL Open Font License 1.1, see above). They are
+not photographs and show no real place; the app credits each one
+"Illustration made for the GymGO demo".
+
+The website's share preview and home-screen icons (`apps/mobile/public`) are
+made from GymGO's own app icon by `apps/mobile/scripts/site-images.mjs`.

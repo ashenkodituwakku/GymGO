@@ -1,6 +1,6 @@
 /**
- * One gym in the results list: its photo (or a friendly tile when nobody has
- * shared one), the name and how far away it is, one status chip, and the
+ * One gym in the results list: its photo (a demo gym's illustration, badged
+ * as one; or a friendly tile when nobody has shared one), the name and how far away it is, one status chip, and the
  * price where the eye lands last.
  */
 
@@ -10,11 +10,13 @@ import type { GymSearchResult } from '@gymgo/domain';
 import { distanceLabel } from '@/lib/places';
 import { TIER, accessLine } from '@/lib/copy';
 import { photoUrl } from '@/lib/api';
+import { demoPicture } from '@/lib/gymPicture';
 import { priceLine, priceText } from '@/lib/present';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { MarkImage, useGymMark } from './BrandLogo';
 import { Icon } from './Icon';
+import { Illustration } from './Illustration';
 import { NoPhoto, TIER_COLOUR, Txt } from './ui';
 
 export function GymRow({
@@ -41,6 +43,7 @@ export function GymRow({
   );
   const access = accessLine(result.access.verdict, visitMinute);
   const coverUri = cover ? photoUrl(cover) : null;
+  const illustration = coverUri ? null : demoPicture(location);
   const mark = useGymMark(location);
   const suburb = location.address.suburb || null;
   const distance = result.distanceKm !== null ? distanceLabel(result.distanceKm, result.record.location.address.countryCode) : null;
@@ -58,6 +61,8 @@ export function GymRow({
     >
       {coverUri ? (
         <Image source={{ uri: coverUri }} style={styles.thumb} resizeMode="cover" />
+      ) : illustration ? (
+        <Illustration picture={illustration} style={styles.thumb} />
       ) : mark ? (
         <View style={[styles.thumb, styles.tile, { backgroundColor: color.logoPlate }]}>
           <MarkImage mark={mark} name={location.name} width={52} height={48} area={1500} />

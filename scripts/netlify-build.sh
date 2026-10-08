@@ -49,6 +49,20 @@ if find dist/assets -path '*/node_modules/*' -o -path '*/.*' | grep -q .; then
   exit 1
 fi
 
+# The site's own address, now that it's known: the preview a shared link
+# shows needs its picture's full address, and robots.txt points search
+# engines to the sitemap (the sitemap plugin in netlify.toml writes it).
+# apps/mobile/public leaves both without one, as it ships with every build.
+if [ "${CONTEXT:-production}" = "production" ]; then
+  ADDRESS="${URL:-}"
+else
+  ADDRESS="${DEPLOY_PRIME_URL:-${URL:-}}"
+fi
+if [ -n "$ADDRESS" ]; then
+  ADDRESS="${ADDRESS%/}" perl -pi -e 's{content="/og\.png"}{content="$ENV{ADDRESS}/og.png"}g' dist/index.html
+  printf 'Sitemap: %s/sitemap.xml\n' "${ADDRESS%/}" >> dist/robots.txt
+fi
+
 # Routing: the server's own paths go to the server; any other path is a
 # screen of the app, which is always index.html.
 {

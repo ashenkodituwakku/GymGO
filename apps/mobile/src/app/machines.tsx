@@ -17,10 +17,12 @@ import { Pressable } from '@/components/motion';
 import { EQUIPMENT_TYPES, equipmentLabel, findMachines, type EquipmentCategory, type MachineHit, type ReportedEquipment } from '@gymgo/domain';
 import { MarkImage, useGymMark } from '@/components/BrandLogo';
 import { Icon } from '@/components/Icon';
+import { Illustration } from '@/components/Illustration';
 import { PageScroll } from '@/components/PageScroll';
 import { Card, Chip, NoPhoto, PrimaryButton, Txt } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
+import { demoPicture } from '@/lib/gymPicture';
 import { haptic } from '@/lib/haptics';
 import { MAX_MACHINES, evidenceLine, foundLabel } from '@/lib/machines';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -227,6 +229,7 @@ const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1
 function MachineRow({ hit, last, onPress }: { hit: MachineHit; last: boolean; onPress: () => void }) {
   const location = hit.record.location;
   const mark = useGymMark(location);
+  const illustration = demoPicture(location);
   const all = hit.found === hit.machines.length;
   const where = [location.address.suburb, distanceLabel(hit.distanceKm, location.address.countryCode)].filter(Boolean).join(' · ');
   return (
@@ -239,7 +242,9 @@ function MachineRow({ hit, last, onPress }: { hit: MachineHit; last: boolean; on
       accessibilityLabel={`${location.name}, ${where}. ${foundLabel(hit)}. ${hit.machines.map((machine) => evidenceLine(machine).text).join('. ')}`}
       style={({ pressed }) => [styles.row, !last && styles.rowRule, pressed && { backgroundColor: color.fill }]}
     >
-      {mark ? (
+      {illustration ? (
+        <Illustration picture={illustration} style={styles.thumb} />
+      ) : mark ? (
         <View style={[styles.thumb, styles.tile, { backgroundColor: color.logoPlate }]}>
           <MarkImage mark={mark} name={location.name} width={40} height={36} area={900} />
         </View>

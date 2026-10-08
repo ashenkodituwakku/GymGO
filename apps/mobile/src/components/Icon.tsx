@@ -71,6 +71,7 @@ const ICONS = {
   refresh: { ios: 'arrow.counterclockwise', android: 'restart_alt', web: 'restart_alt' },
   globe: { ios: 'globe', android: 'public', web: 'public' },
   bolt: { ios: 'bolt.fill', android: 'bolt', web: 'bolt' },
+  sound: { ios: 'speaker.wave.2.fill', android: 'volume_up', web: 'volume_up' },
   body: { ios: 'figure.arms.open', android: 'accessibility_new', web: 'accessibility_new' },
   list: { ios: 'list.bullet', android: 'list', web: 'list' },
   thumbsUp: { ios: 'hand.thumbsup.fill', android: 'thumb_up', web: 'thumb_up' },

@@ -23,6 +23,7 @@ import { distanceLabel } from '@/lib/places';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
 import { CardReveal, type Pull } from './CardReveal';
+import { playSound } from '@/lib/sounds';
 import { SetReward } from './SetCard';
 import { setsFinished, type GymSet } from '@/lib/sets';
 import { GymScan, type ScanPhase } from './GymScan';
@@ -70,6 +71,8 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
     // A new gym can finish a suburb or city set: its reward card shows here.
     const finished = result.fresh === 'new' ? setsFinished(gyms, result.collection, data.listed) : [];
     setStep({ kind: 'collected', fresh: result.fresh, rolled: result.fresh === 'visit' ? rollFor(result.entry, today) : null, finished });
+    // A finished set's fanfare, once the new card's own sound has had its moment.
+    if (finished.length > 0) playSound('set-complete', 1800);
     // A new card, or a visit that rolled better than the card was: show it off.
     if (result.fresh === 'new') setPull({ entry: result.entry, upgradedFrom: null });
     else if (result.fresh === 'visit' && before && rarityRank(after.rarity) > rarityRank(before.rarity)) setPull({ entry: result.entry, upgradedFrom: before.rarity });
@@ -81,6 +84,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
     setStep({ kind: 'checking' });
     setScan('locating');
     haptic.select();
+    playSound('scan');
     const started = Date.now();
     const stop = (text: string) => {
       setScan(null);
@@ -103,6 +107,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
       }
     }
     setScan('done');
+    playSound('checkin');
     await pause(650);
     setScan(null);
     add();

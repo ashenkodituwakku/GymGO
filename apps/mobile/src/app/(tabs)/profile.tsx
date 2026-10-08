@@ -185,7 +185,9 @@ export default function Profile() {
       <Group
         header="Settings"
         footer={[
-          Platform.OS === 'web' ? 'Haptics are the small taps you feel on a phone; a browser has none.' : null,
+          Platform.OS === 'web'
+            ? 'Haptics are the small taps you feel on a phone; a browser has none. Sounds play once you’ve tapped the page.'
+            : 'Sounds follow your phone’s silent switch, and play over your music without stopping it.',
           'Demo mode swaps every real gym for invented ones in inner Sydney, made up to show each case GymGO handles. Nothing in it is real, and real gyms come back when you turn it off.',
         ]
           .filter(Boolean)
@@ -212,6 +214,13 @@ export default function Profile() {
           tile={TILE.pink}
           title="Haptics"
           toggle={{ value: prefs.haptics, onChange: (value) => setPref('haptics', value) }}
+        />
+        <Row
+          icon="sound"
+          tile={TILE.orange}
+          title="Sounds"
+          subtitle="Taps, check-ins, card reveals, records and the timer"
+          toggle={{ value: prefs.sounds, onChange: (value) => setPref('sounds', value) }}
         />
         <Row
           icon="globe"

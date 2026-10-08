@@ -19,6 +19,7 @@ import { endSession, updateSession, useActiveSession, type ActiveItem } from '@/
 import { ApiError, api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
+import { playSound } from '@/lib/sounds';
 import { cancelRestAlert, scheduleRestAlert } from '@/lib/restAlert';
 import { RECORD_WORD, bestRecord, recordLine } from '@/lib/records';
 import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
@@ -259,6 +260,9 @@ export default function TrainScreen() {
       log.add(saved);
       endSession();
       haptic.success();
+      // The workout's fanfare, and a new record's on top of it.
+      playSound('finish');
+      if (records.length > 0) playSound('record', 700);
       setDone({ session: saved, records });
     } catch (error) {
       setProblem(error instanceof ApiError ? error.message : 'Couldn’t reach the GymGO server. Your workout is still here; try again.');
@@ -409,6 +413,7 @@ const ExerciseLog = memo(function ExerciseLog({
     if (parseWeight(weight) === undefined) return setHint(`That weight doesn’t read as a number of ${unit}.`);
     setHint(null);
     haptic.tap();
+    playSound('tick');
     setAt(at, { done: true, weight, reps });
     // Rest after every set but the exercise's last.
     if (at < item.sets.length - 1 && item.restSeconds > 0) onRest(item.restSeconds);
@@ -629,10 +634,11 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
   // The clock as it draws, not at the last tick: a rest started between ticks
   // (the next set ticked, or +15) would otherwise show a second too many.
   const left = Math.max(0, (endsAt - Math.max(now, Date.now())) / 1000);
-  // The rest is over: a buzz, and the bar goes.
+  // The rest is over: a buzz, a chime, and the bar goes.
   useEffect(() => {
     if (now >= endsAt) {
       haptic.success();
+      playSound('rest-done');
       updateSession((current) => ({ ...current, restEndsAt: null }), { activity: false });
     }
   }, [now, endsAt]);

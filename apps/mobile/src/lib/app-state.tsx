@@ -16,6 +16,7 @@ import { LIMITS, haversineKm } from '@gymgo/domain';
 import { ApiError, problemText } from './api';
 import { FOCUS_COUNTRY, canSearchIn, deviceTimeZone, openingPlace } from './country';
 import { setHapticsEnabled } from './haptics';
+import { playSound, setSoundsEnabled } from './sounds';
 import { currentFix, type Fix } from './location';
 import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, setReaderCountry, whereaboutsAt, type City } from './places';
 import { locatedNotice } from './copy';
@@ -59,6 +60,8 @@ export type Located =
 
 export interface Prefs {
   haptics: boolean;
+  /** Sound effects (lib/sounds.ts). */
+  sounds: boolean;
   /**
    * Demo mode: only the invented demo gyms, for trying every edge case.
    * Off, only real gyms show. Never both, since the demo sits on real
@@ -179,6 +182,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           openPro('saved');
           return;
         }
+        if (!accountApi.saved.includes(gymId)) playSound('save');
         accountApi.toggleSave(gymId);
       },
     }),
@@ -189,7 +193,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [compare, setCompare] = useState<string[]>([]);
   const compareLoaded = useRef(false);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
-  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, demo: DEMO_ONLY, country: null, weeklyGoal: null, plates: {}, timers: [] });
+  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, demo: DEMO_ONLY, country: null, weeklyGoal: null, plates: {}, timers: [] });
   const [prefsReady, setPrefsReady] = useState(false);
   // Place search reads the mode, and distances your country's units, so
   // both must match before anything renders.
@@ -214,8 +218,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const lbPlates = cleanPlates(value.plates?.lb, 'lb');
       const plates = { ...(kgPlates ? { kg: kgPlates } : {}), ...(lbPlates ? { lb: lbPlates } : {}) };
       // The demo-only website stays in Demo mode whatever was kept (lib/demoOnly.ts).
-      const next = { haptics: value.haptics !== false, demo: DEMO_ONLY || value.demo === true, country, weeklyGoal: goal, plates, timers: cleanTimers(value.timers) };
+      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, demo: DEMO_ONLY || value.demo === true, country, weeklyGoal: goal, plates, timers: cleanTimers(value.timers) };
       setHapticsEnabled(next.haptics);
+      setSoundsEnabled(next.sounds);
       setDemoMode(next.demo);
       setPrefs(next);
       setPrefsReady(true);
@@ -468,6 +473,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPrefs((current) => {
       const next = { ...current, [key]: value };
       if (key === 'haptics') setHapticsEnabled(Boolean(value));
+      if (key === 'sounds') setSoundsEnabled(Boolean(value));
       storeJson(PREFS_KEY, next);
       return next;
     });

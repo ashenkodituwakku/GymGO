@@ -5,7 +5,7 @@
  *
  * The time comes from the clock, not from counting ticks, so pausing, a
  * slow phone or switching apps never makes it drift. The screen stays on
- * while it runs; each change of phase buzzes (and beeps in a browser).
+ * while it runs; each change of phase buzzes and sounds (lib/sounds.ts).
  */
 
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
@@ -18,10 +18,10 @@ import { PageScroll } from '@/components/PageScroll';
 import { BrandFill } from '@/components/BrandFill';
 import { ChoiceChip, Input, PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
-import { beep, primeBeep } from '@/lib/beep';
 import { haptic } from '@/lib/haptics';
 import { LIMITS, MAX_OWN_TIMERS, STANDARD_TIMERS, describePlan, phaseAt, totalSeconds, withinLimits, type IntervalPlan, type PhaseKind } from '@/lib/intervals';
 import { usePageTitle } from '@/lib/pageTitle';
+import { playSound } from '@/lib/sounds';
 import { color, face, radius, shadow, space, themed, type } from '@/lib/theme';
 import { clockLabel } from '@/lib/training';
 
@@ -61,7 +61,7 @@ export default function TimerScreen() {
     return () => void deactivateKeepAwake(KEEP_AWAKE).catch(() => undefined);
   }, [running]);
 
-  // A buzz (and a beep) as each phase begins, and on the last three seconds of each.
+  // A buzz and a sound as each phase begins, and on the last three seconds of each.
   const last = useRef({ kind: phase.kind, round: phase.round, second: Math.ceil(phase.remaining) });
   useEffect(() => {
     const before = last.current;
@@ -71,24 +71,23 @@ export default function TimerScreen() {
     if (phase.kind !== before.kind || phase.round !== before.round) {
       if (phase.kind === 'work') {
         haptic.success();
-        beep(true);
+        playSound('timer-go');
       } else if (phase.kind === 'rest') {
         haptic.tap();
-        beep();
+        playSound('timer-count');
       } else if (phase.kind === 'done') {
         haptic.success();
-        beep(true);
+        playSound('finish');
         setBanked(totalSeconds(plan));
         setStartedAt(null);
       }
     } else if (second !== before.second && second >= 1 && second <= 3 && phase.length > 5) {
       haptic.select();
-      beep();
+      playSound('timer-count');
     }
   }, [phase.kind, phase.round, phase.remaining, phase.length, running, plan]);
 
   const start = () => {
-    primeBeep();
     haptic.tap();
     if (phase.kind === 'done') setBanked(0);
     const at = Date.now();

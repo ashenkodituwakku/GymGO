@@ -32,6 +32,7 @@ import type { CollectedGym } from '@/lib/collection';
 import { haptic } from '@/lib/haptics';
 import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
 import { PRISM, cardFor, gemInfo, rarityLabel, rarityRank, type Rarity } from '@/lib/rarity';
+import { playCardSound } from '@/lib/sounds';
 import { face, radius, space, themed } from '@/lib/theme';
 
 const SYSTEM = ReduceMotion.System;
@@ -118,6 +119,12 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
   const look = cardFor(pull.entry);
   const gem = gemInfo(look.gem);
   const legendary = look.rarity === 'legendary';
+  // A new card or an upgrade: its rarity's sound (and foil's glitter) as it turns over. Not for one you're only looking at.
+  useEffect(() => {
+    if (!pull.viewing) playCardSound(look.rarity, look.foil);
+    // Once, as it appears.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const panelWidth = Math.min(340, width - space[4] * 2);
   const cardWidth = Math.min(210, panelWidth - space[8] * 2);
   // A shorter picture window on a short screen, so it all fits without scrolling on nearly every phone.

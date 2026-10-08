@@ -23,7 +23,7 @@ import { NO_WEB_OUTLINE, color, dropShadow, face, radius, space, themed } from '
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { LegalText } from '@/components/LegalText';
-import { takeWanted } from '@/lib/afterSignIn';
+import { noteNewAccount, takeNewAccount, takeWanted } from '@/lib/afterSignIn';
 import { ACCOUNT_OPTIONAL } from '@/lib/accountRule';
 
 type Mode = 'sign_in' | 'create';
@@ -99,7 +99,9 @@ export default function SignInScreen() {
     haptic.success();
     // A link opened before signing in (a gym a friend sent) goes there now.
     const next = takeWanted();
-    if (next) router.replace(next as Href);
+    // A new account sees the welcome tour first, then goes on.
+    if (takeNewAccount()) router.replace({ pathname: '/welcome', params: next ? { next } : {} });
+    else if (next) router.replace(next as Href);
     else if (router.canGoBack()) router.back();
     else router.replace('/');
   }, [router]);
@@ -143,10 +145,13 @@ export default function SignInScreen() {
     setBusy(true);
     setError(null);
     try {
-      if (mode === 'create') await account.signUp(name.trim(), email.trim(), password, birthMonth ?? '');
-      else await account.signIn(email.trim(), password);
+      if (mode === 'create') {
+        noteNewAccount();
+        await account.signUp(name.trim(), email.trim(), password, birthMonth ?? '');
+      } else await account.signIn(email.trim(), password);
       done();
     } catch (caught) {
+      noteNewAccount(false);
       if (tooYoung(caught)) refuseYoung();
       else fail(messageFor(caught));
     } finally {
@@ -160,9 +165,11 @@ export default function SignInScreen() {
     setBusy(true);
     setError(null);
     try {
+      noteNewAccount();
       await account.signInWith(pendingSocial.provider, pendingSocial.idToken, pendingSocial.nonce, pendingSocial.name, birthMonth);
       done();
     } catch (caught) {
+      noteNewAccount(false);
       if (tooYoung(caught)) refuseYoung();
       else fail(messageFor(caught));
     } finally {
@@ -174,7 +181,7 @@ export default function SignInScreen() {
     setBusy(true);
     setError(null);
     try {
-      await account.signInWith(provider, idToken, nonce, providedName);
+      if (await account.signInWith(provider, idToken, nonce, providedName)) noteNewAccount();
       done();
     } catch (caught) {
       if (caught instanceof ApiError && (caught.code === 'age_needed' || caught.code === 'terms_needed')) {

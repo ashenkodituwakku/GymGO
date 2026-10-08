@@ -18,6 +18,20 @@ export function rememberWanted(path: string | null | undefined): void {
   wanted = path;
 }
 
+let fresh = false;
+
+/** An account was just made here (or not, after all): the welcome tour shows once you're in. */
+export function noteNewAccount(made = true): void {
+  fresh = made;
+}
+
+/** Whether an account was just made (once only). */
+export function takeNewAccount(): boolean {
+  const made = fresh;
+  fresh = false;
+  return made;
+}
+
 /** Where to go after signing in (once only), or null for Home. */
 export function takeWanted(): string | null {
   const path = wanted;

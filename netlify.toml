@@ -22,6 +22,30 @@
   # build looking for Next.js output, so it's told to stand aside.
   NETLIFY_NEXT_PLUGIN_SKIP = "true"
 
+# Build plugins. Both are in Netlify's plugin directory, so Netlify installs
+# them itself (with npm, which lets Lighthouse fetch the Chrome it audits
+# with); they aren't in package.json. The Next.js plugin stays out (above).
+
+# Lighthouse: scores the website's performance, accessibility, best practices
+# and SEO on every deploy, in the deploy log and the deploy's summary. It
+# audits the built site in the build itself (fail_deploy_on_score_thresholds
+# moves it there): a deploy's own link needs a Netlify team login here, so
+# auditing the live deploy would score the login page. With no thresholds
+# set it reports and never fails a deploy; add [plugins.inputs.thresholds]
+# to make it a gate.
+[[plugins]]
+  package = "@netlify/plugin-lighthouse"
+  [plugins.inputs]
+    fail_deploy_on_score_thresholds = "true"
+
+# Sitemap: sitemap.xml for search engines, at the site's own address, from
+# the published pages (scripts/netlify-build.sh points robots.txt to it). The
+# website is a single page, so it lists the home page.
+[[plugins]]
+  package = "@netlify/plugin-sitemap"
+  [plugins.inputs]
+    buildDir = "apps/mobile/dist"
+
 # The same headers Caddy sends (deploy/Caddyfile).
 [[headers]]
   for = "/*"

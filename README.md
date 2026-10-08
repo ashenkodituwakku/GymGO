@@ -1480,14 +1480,18 @@ it; build the images on another machine and copy them over.
 
 GymGO's website is at **https://gymgo.site**, on Netlify (project
 `gymgowebsite`). It's the app's own code, exported for the browser by
-`scripts/netlify-build.sh`, which `netlify.toml` runs. Two things differ from
-the app:
+`scripts/netlify-build.sh`, which `netlify.toml` runs. A few things differ
+from the app:
 
 - **The demo only, for now.** `netlify.toml` sets `EXPO_PUBLIC_DEMO_ONLY=on`:
   Demo mode is on and can't be turned off, so the website shows only the
   invented Sydney demo gyms, with a banner on every screen saying the full
   version is coming soon (`apps/mobile/src/lib/demoOnly.ts`). Delete that
-  line to show the full app.
+  line to show the full app. Each demo gym shows a picture: an illustration
+  drawn for the demo (`apps/mobile/scripts/demo-pictures.mjs`), labelled
+  "Illustration" on its card and credited "Illustration made for the GymGO
+  demo" on its page, never a photo. Real gyms never get one (the app's own
+  Demo mode shows the same illustrations).
 - **No account needed.** `netlify.toml` sets `EXPO_PUBLIC_ACCOUNT=optional`,
   so the website can be used as a guest; signing in is only for what the
   server keeps. The app, and GymGO on your computer, still need an account
@@ -1501,6 +1505,21 @@ the app:
   `GYMGO_SERVER_URL` with the server's own address and deploy again. The
   website then passes `/api` and the legal pages on to it, as Caddy does,
   so the browser only ever talks to gymgo.site.
+
+What else the website has:
+
+- **Build plugins** (`netlify.toml`; Netlify installs them itself).
+  *Lighthouse* scores every deploy's performance, accessibility, best
+  practices and SEO, shown in the deploy's summary; it reports and never
+  fails a deploy until you give it thresholds. *Sitemap* writes
+  `sitemap.xml` for search engines. Netlify's Next.js plugin is told to
+  stand aside, as the site isn't a Next.js one.
+- **How it looks when shared or saved.** `apps/mobile/public` holds the
+  page template (its description, and the preview a shared link shows),
+  the preview picture, the icons for adding the site to a home screen, and
+  `robots.txt`. The build adds the site's own address where one is needed.
+  To change the pictures, edit `apps/mobile/scripts/site-images.mjs` and run
+  `node scripts/site-images.mjs` in `apps/mobile`.
 
 ### The older website
 

@@ -13,6 +13,8 @@ import { Icon, type IconName } from '@/components/Icon';
 import { MilestonesCard, MuscleBalanceCard, WeekCard } from '@/components/TrainingInsights';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
+import { weekRecap } from '@/lib/insights';
+import { useCollection } from '@/lib/useCollection';
 import { useActiveSession } from '@/lib/activeSession';
 import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -60,6 +62,9 @@ export default function ProgressScreen() {
   const active = useActiveSession();
   const router = useRouter();
   const unit = unitFor(prefs.country);
+  // Your week as a picture to share: this week's, or last week's until this one has something.
+  const { gyms } = useCollection();
+  const recap = useMemo(() => weekRecap(log.sessions, gyms), [log.sessions, gyms]);
   const records = useMemo(() => [...personalRecords(log.sessions)].sort((a, b) => b[1].sessions - a[1].sessions || nameOf(a[0]).localeCompare(nameOf(b[0]))), [log.sessions]);
   const days = useMemo(() => sessionsByDay(log.sessions), [log.sessions]);
   const [open, setOpen] = useState<string | null>(null);
@@ -136,6 +141,9 @@ export default function ProgressScreen() {
           <Animated.View>
             <WeekCard sessions={log.sessions} goal={prefs.weeklyGoal} onGoal={(goal) => setPref('weeklyGoal', goal)} />
           </Animated.View>
+          {recap && (
+            <PrimaryButton label={recap.which === 'this' ? 'Share your week' : 'Share last week'} tone="quiet" icon="share" onPress={() => router.push('/recap')} />
+          )}
         </>
       )}
 

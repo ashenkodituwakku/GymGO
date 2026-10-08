@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { bestWeekStreak, goalStreak, logToCsv, milestones, muscleBalance, recordsEver, trainingCalendar, workoutShareText } from './insights';
+import { bestWeekStreak, goalStreak, logToCsv, milestones, muscleBalance, recordsEver, trainingCalendar, weekRange, weekRecap, workoutShareText } from './insights';
+import type { Collection, CollectedGym } from '@gymgo/domain';
 import type { LoggedExercise, TrainingSession } from './training';
 
 let next = 0;
@@ -116,5 +117,48 @@ describe('logToCsv', () => {
     expect(lines[1]).toBe('2024-05-10,07:00,"Legs, heavy",Barbell back squat,1,100,kg,5');
     expect(lines[2]).toBe('2024-05-10,07:00,"Legs, heavy",Barbell back squat,2,102.5,kg,3');
     expect(lines[3]).toBe('2024-05-14,19:00,Legs,Push-up,1,,,12');
+  });
+});
+
+describe('weekRecap', () => {
+  const gym = (id: string, days: string[], seed = id): CollectedGym => ({
+    id, name: id, suburb: 'Carlton', city: 'Melbourne', countryCode: 'AU', brand: null, days, firstAt: `${days[0]}T08:00:00Z`, lastAt: `${days.at(-1)}T08:00:00Z`, seed,
+  });
+
+  it('adds up this week: workouts, sets, kilos, records, gyms (and which were new) and the best card', () => {
+    const sessions = [
+      session(at(4, 6), [{ exerciseId: 'back-squat', sets: [{ weight: 60, reps: 8 }] }]), // last week
+      session(at(4, 13), [{ exerciseId: 'back-squat', sets: [{ weight: 70, reps: 8 }, { weight: 70, reps: 8 }] }]), // Monday: a record
+      session(at(4, 14), [{ exerciseId: 'back-squat', sets: [{ weight: 60, reps: 8 }] }]),
+    ];
+    const collection: Collection = {
+      a: gym('a', ['2024-05-01', '2024-05-14']), // collected before, visited again this week
+      b: gym('b', ['2024-05-13']), // new this week
+      c: gym('c', ['2024-05-02']), // not this week
+    };
+    const recap = weekRecap(sessions, collection, NOW)!;
+    expect(recap.which).toBe('this');
+    expect(recap.start).toBe(new Date(2024, 4, 13).getTime());
+    expect(recap.workouts).toBe(2);
+    expect(recap.sets).toBe(3);
+    expect(recap.volumeKg).toBe(70 * 8 * 2 + 60 * 8);
+    expect(recap.records).toBeGreaterThan(0);
+    expect(recap.gymsVisited).toBe(2);
+    expect(recap.newGyms).toBe(1);
+    expect(['a', 'b']).toContain(recap.bestCard!.id);
+    expect(recap.streakWeeks).toBe(2);
+  });
+
+  it('shows last week on a Monday morning before anything happens, and nothing when both are empty', () => {
+    const monday = new Date(2024, 4, 20, 7);
+    const last = weekRecap([session(at(4, 15))], {}, monday)!;
+    expect(last.which).toBe('last');
+    expect(last.workouts).toBe(1);
+    expect(weekRecap([session(at(3, 1))], {}, monday)).toBeNull();
+  });
+
+  it('writes the week as a short range', () => {
+    expect(weekRange(new Date(2024, 4, 13).getTime())).toBe('13–19 May');
+    expect(weekRange(new Date(2024, 3, 29).getTime())).toBe('29 Apr – 5 May');
   });
 });

@@ -7,7 +7,9 @@
  * Native here, so it is unit-tested in Node.
  */
 
-import { durationLabel, fromKg, recordsBroken, setCount, setsSummary, volumeKg, type NewRecord, type TrainingSession } from './training';
+import { durationLabel, fromKg, recordsBroken, setCount, setsSummary, streakOf, volumeKg, type NewRecord, type TrainingSession } from './training';
+import type { CollectedGym, Collection } from '@gymgo/domain';
+import { cardFor, rarityRank } from './rarity';
 import { EXERCISES, MUSCLES, exerciseName, type Muscle } from './workout';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -266,4 +268,94 @@ export function logToCsv(sessions: TrainingSession[]): string {
     }
   }
   return rows.map((row) => row.map(csvCell).join(',')).join('\n') + '\n';
+}
+
+// --- Your week, to share ------------------------------------------------------------
+
+export interface WeekRecap {
+  /** Monday of the week, local midnight. */
+  start: number;
+  /** This week, or last week while this one has nothing in it yet (a Monday morning). */
+  which: 'this' | 'last';
+  workouts: number;
+  sets: number;
+  volumeKg: number;
+  /** Time spent training, start to finish of each workout. */
+  minutes: number;
+  /** Personal records broken that week (against everything before each workout). */
+  records: number;
+  /** Weeks in a row with a workout, now. */
+  streakWeeks: number;
+  /** Gyms checked in at that week, and how many of them were new to the collection. */
+  gymsVisited: number;
+  newGyms: number;
+  /** The best card among the gyms checked in at that week: rarest, then foil, then the latest. */
+  bestCard: CollectedGym | null;
+}
+
+const localDay = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+function recapFor(monday: Date, which: 'this' | 'last', sessions: TrainingSession[], collection: Collection, now: Date): WeekRecap {
+  const start = monday.getTime();
+  const end = new Date(monday);
+  end.setDate(end.getDate() + 7);
+  const inWeek = sessions.filter((session) => {
+    const at = new Date(session.finishedAt).getTime();
+    return at >= start && at < end.getTime();
+  });
+  const days = new Set<string>();
+  for (let offset = 0; offset < 7; offset += 1) {
+    const day = new Date(monday);
+    day.setDate(day.getDate() + offset);
+    days.add(localDay(day));
+  }
+  const visited = Object.values(collection).filter((entry) => entry.days.some((day) => days.has(day)));
+  const score = (entry: CollectedGym) => {
+    const look = cardFor(entry);
+    return rarityRank(look.rarity) * 2 + (look.foil ? 1 : 0);
+  };
+  const bestCard = [...visited].sort((a, b) => score(b) - score(a) || (a.lastAt < b.lastAt ? 1 : -1))[0] ?? null;
+  return {
+    start,
+    which,
+    workouts: inWeek.length,
+    sets: inWeek.reduce((sum, session) => sum + setCount(session), 0),
+    volumeKg: inWeek.reduce((sum, session) => sum + volumeKg(session), 0),
+    minutes: Math.round(inWeek.reduce((sum, session) => sum + Math.max(0, Date.parse(session.finishedAt) - Date.parse(session.startedAt)), 0) / 60_000),
+    records: inWeek.reduce(
+      (sum, session) => sum + recordsBroken(session, sessions.filter((other) => Date.parse(other.finishedAt) < Date.parse(session.finishedAt))).length,
+      0,
+    ),
+    streakWeeks: streakOf(sessions, now).weeks,
+    gymsVisited: visited.length,
+    newGyms: visited.filter((entry) => entry.days[0] !== undefined && days.has(entry.days[0])).length,
+    bestCard,
+  };
+}
+
+/**
+ * Your week in numbers, for a picture to share: this week's, or last week's
+ * while this one is still empty. Null when neither has a workout or a
+ * check-in. Counted from your own log and collection only.
+ */
+export function weekRecap(sessions: TrainingSession[], collection: Collection, now: Date = new Date()): WeekRecap | null {
+  const thisMonday = mondayOf(now);
+  const current = recapFor(thisMonday, 'this', sessions, collection, now);
+  if (current.workouts > 0 || current.gymsVisited > 0) return current;
+  const lastMonday = new Date(thisMonday);
+  lastMonday.setDate(lastMonday.getDate() - 7);
+  const last = recapFor(lastMonday, 'last', sessions, collection, now);
+  return last.workouts > 0 || last.gymsVisited > 0 ? last : null;
+}
+
+/** "6–12 Oct", or "29 Sep – 5 Oct" across months. */
+export function weekRange(start: number): string {
+  const monday = new Date(start);
+  const sunday = new Date(start);
+  sunday.setDate(sunday.getDate() + 6);
+  const month = (date: Date) => date.toLocaleDateString('en-AU', { month: 'short' });
+  return monday.getMonth() === sunday.getMonth()
+    ? `${monday.getDate()}–${sunday.getDate()} ${month(sunday)}`
+    : `${monday.getDate()} ${month(monday)} – ${sunday.getDate()} ${month(sunday)}`;
 }

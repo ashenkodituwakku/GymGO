@@ -259,6 +259,7 @@ function ThemedStack() {
           <Stack.Screen name="strength" options={{ headerShown: true, title: '1-rep max' }} />
           <Stack.Screen name="progress/index" options={{ headerShown: true, title: 'Progress' }} />
           <Stack.Screen name="collection" options={{ headerShown: true, title: 'Collection' }} />
+          <Stack.Screen name="recap" options={{ headerShown: true, title: 'Your week' }} />
           <Stack.Screen name="machines" options={{ headerShown: true, title: 'Find a machine' }} />
           <Stack.Screen name="trips/index" options={{ headerShown: true, title: 'Trips' }} />
           <Stack.Screen name="trips/[id]" options={{ headerShown: true, title: 'Trip' }} />

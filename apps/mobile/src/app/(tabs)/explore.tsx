@@ -1022,7 +1022,9 @@ function PhoneShell(props: {
         android_keyboardInputMode="adjustResize"
         onAnimate={(from, to, _fromPosition, toPosition) => {
           mainGoing.current = to;
-          if (from !== to && to >= 0) haptic.select();
+          // A click as it moves between heights; not as it first appears (from
+          // -1), which on the web can happen more than once while it lays out.
+          if (from >= 0 && from !== to && to >= 0) haptic.select();
           // Moving the map with the sheet, not after it. Stepping aside for a
           // card waits for the card's own reach, so the map moves once.
           if (to >= 0) setMainTop(topOf(toPosition));

@@ -7,7 +7,8 @@
  *
  * The frame and shine are decoration around the gym's real picture, never a
  * stand-in for it: a gym with no logo or photo says "No photo supplied" in
- * the window. Rarity is luck (see lib/rarity.ts), not a rating of the gym.
+ * the window. (A demo gym, being invented, shows its illustration, badged as
+ * one.) Rarity is luck (see lib/rarity.ts), not a rating of the gym.
  */
 
 import { useEffect, useId } from 'react';
@@ -27,8 +28,10 @@ import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import type { GymRecord } from '@gymgo/domain';
 import { MarkImage, useGymMark } from './BrandLogo';
 import { Icon } from './Icon';
+import { Illustration } from './Illustration';
 import { NoPhoto, Txt } from './ui';
 import { photoUrl } from '@/lib/api';
+import { demoPicture } from '@/lib/gymPicture';
 import { flag, tierFor, type CollectedGym } from '@/lib/collection';
 import { haptic } from '@/lib/haptics';
 import { PRISM, cardFor, gemInfo, rarityLabel, rarityRank, type CardLook } from '@/lib/rarity';
@@ -212,10 +215,12 @@ function GemBadge({ gem, foil, id, big }: { gem: CardLook['gem']; foil: boolean;
   );
 }
 
-/** The gym's own logo on a plate, else a member's photo, else "No photo supplied". */
+/** A member's photo, else a demo gym's illustration, else the gym's own logo on a plate, else "No photo supplied". */
 function CardArt({ record, cover, name, width, height }: { record: GymRecord | null; cover: string | null; name: string; width: number; height: number }) {
   const uri = cover ? photoUrl(cover) : null;
   if (uri) return <Image source={{ uri }} style={styles.photo} resizeMode="cover" accessibilityLabel={`A member’s photo of ${name}`} />;
+  const illustration = demoPicture(record?.location);
+  if (illustration) return <Illustration picture={illustration} style={styles.photo} />;
   return <Plate record={record} name={name} width={width} height={height} />;
 }
 

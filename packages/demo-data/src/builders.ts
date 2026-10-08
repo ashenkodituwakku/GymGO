@@ -280,7 +280,9 @@ export function makeLocation(spec: LocationSpec): GymLocation {
     phone: spec.phone ?? null,
     website: spec.website ?? null,
     // No photos anywhere in the demo dataset. These are invented venues, so
-    // there is no real photograph of them and we will not generate one.
+    // there is no real photograph of them and we will not generate one. The
+    // app shows each an illustration instead, labelled as one
+    // (apps/mobile/src/lib/gymPicture.ts), never as a photo.
     photos: [],
     isDemoData: true,
     externalRefs: {},

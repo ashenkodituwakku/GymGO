@@ -8,6 +8,9 @@
  * the site. Failing both, the page can pass a labelled fallback (Google's own
  * photos of the place, or Street View outside it); otherwise the card says
  * "No photo supplied" and invites the first one.
+ *
+ * A demo gym is invented, so there's nothing real to photograph: it shows the
+ * illustration drawn for it instead, labelled as one.
  */
 
 import * as ImagePicker from 'expo-image-picker';
@@ -16,6 +19,7 @@ import { Image, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-
 import { Pressable } from './motion';
 import { api, apiBase, ApiError, OfflineError, photoUrl, type GymPhoto } from '@/lib/api';
 import { EMPTY } from '@/lib/copy';
+import { ILLUSTRATION_CREDIT, demoPicture } from '@/lib/gymPicture';
 import { haptic } from '@/lib/haptics';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space, themed } from '@/lib/theme';
@@ -155,6 +159,10 @@ export function PhotoHero({
     }
   };
 
+  const list = photos ?? [];
+  const sitePhoto = useWebsitePhoto(gymId, !isDemo && photos !== null && list.length === 0);
+  const illustration = demoPicture({ id: gymId, isDemoData: isDemo });
+
   if (step.kind === 'confirm') {
     return (
       <View style={styles.confirm}>
@@ -174,10 +182,8 @@ export function PhotoHero({
     );
   }
 
-  const list = photos ?? [];
-  const sitePhoto = useWebsitePhoto(gymId, !isDemo && photos !== null && list.length === 0);
   // With nothing to show, the "No photo supplied" line carries its own add button.
-  const emptyRow = list.length === 0 && !sitePhoto && !(fallback && !isDemo && photos !== null);
+  const emptyRow = list.length === 0 && !sitePhoto && !illustration && !(fallback && !isDemo && photos !== null);
   return (
     <View style={styles.wrap}>
       {list.length > 0 ? (
@@ -204,6 +210,16 @@ export function PhotoHero({
             <Icon name="website" size={11} color={color.onBrand} />
             <Txt variant="caption" color={color.onBrand}>
               {hostOf(website) ? `From ${hostOf(website)}` : 'From the gym’s website'}
+            </Txt>
+          </View>
+        </View>
+      ) : illustration ? (
+        <View style={{ width }}>
+          <Image source={illustration.source} style={[styles.photo, { width }]} resizeMode="cover" accessibilityLabel={illustration.alt} />
+          <View style={styles.credit}>
+            <Icon name="palette" size={11} color={color.onBrand} />
+            <Txt variant="caption" color={color.onBrand}>
+              {ILLUSTRATION_CREDIT}
             </Txt>
           </View>
         </View>

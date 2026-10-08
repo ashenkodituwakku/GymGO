@@ -14,11 +14,13 @@ import { Pressable } from '@/components/motion';
 import { tripDates, tripShortlist, type TripDay, type TripPick } from '@gymgo/domain';
 import { MarkImage, useGymMark } from '@/components/BrandLogo';
 import { Icon } from '@/components/Icon';
+import { Illustration } from '@/components/Illustration';
 import { PageScroll } from '@/components/PageScroll';
 import { Card, NoPhoto, PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { timeLabel } from '@/lib/copy';
 import { countryInSentence } from '@/lib/country';
+import { demoPicture } from '@/lib/gymPicture';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { distanceLabel } from '@/lib/places';
@@ -165,6 +167,7 @@ const tone = (day: TripDay): 'yes' | 'maybe' | 'no' =>
 function TripRow({ pick, total, last, onPress }: { pick: TripPick; total: number; last: boolean; onPress: () => void }) {
   const location = pick.record.location;
   const mark = useGymMark(location);
+  const illustration = demoPicture(location);
   const where = [location.address.suburb, distanceLabel(pick.distanceKm, location.address.countryCode)].filter(Boolean).join(' · ');
   const first = pick.days.find((day) => day.verdict === 'admits_visitor');
   return (
@@ -177,7 +180,9 @@ function TripRow({ pick, total, last, onPress }: { pick: TripPick; total: number
       accessibilityLabel={`${location.name}, ${where}. ${daysLine(pick, total)}.`}
       style={({ pressed }) => [styles.row, !last && styles.rowRule, pressed && { backgroundColor: color.fill }]}
     >
-      {mark ? (
+      {illustration ? (
+        <Illustration picture={illustration} style={styles.thumb} />
+      ) : mark ? (
         <View style={[styles.thumb, styles.tile, { backgroundColor: color.logoPlate }]}>
           <MarkImage mark={mark} name={location.name} width={40} height={36} area={900} />
         </View>

@@ -8,6 +8,10 @@
  * and says "No photo supplied" when there isn't: the gem frame is
  * decoration, and nothing is drawn in to stand for a gym.
  *
+ * "Next to collect" lists the nearest gyms not collected yet (where you
+ * are, or else where the search is), so there's always a next card to go
+ * after; it's on the empty screen too.
+ *
  * Signed in, the collection is on your account too (lib/useCollection.ts),
  * which the line at the top says. At the foot, Delete all collection data
  * clears it, after a warning saying exactly what goes
@@ -27,7 +31,10 @@ import { GLIDE, Pressy } from '@/components/motion';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { shareText } from '@/lib/actions';
-import { badges, collectionShareText, collectionStats } from '@/lib/collection';
+import { badges, collectionShareText, collectionStats, nextToCollect } from '@/lib/collection';
+import { distanceLabel } from '@/lib/places';
+import { nearLabel } from '@/lib/query';
+import type { GymRecord } from '@gymgo/domain';
 import { FOIL_ONE_IN, cardFor, oddsLine, rarityRank } from '@/lib/rarity';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -46,7 +53,7 @@ const SETS_SHOWN = 4;
 export default function CollectionScreen() {
   usePageTitle('Collection');
   const router = useRouter();
-  const { data, requestExplore, account } = useApp();
+  const { data, requestExplore, account, here, filters, prefs } = useApp();
   const { loaded, gyms } = useCollection();
   // Until the account is known, not yet: signed in, deleting clears its copy too.
   const accountKnown = account.state !== 'loading';
@@ -64,6 +71,15 @@ export default function CollectionScreen() {
     if (order === 'visits') return [...newest].sort((a, b) => b.days.length - a.days.length);
     return newest;
   }, [gyms, order]);
+  // Where to look for the next one: where you are, else where the search is.
+  const from = here?.position ?? filters.centre;
+  const near = here ? 'Near you' : nearLabel(filters.placeName);
+  const next = useMemo(
+    () => nextToCollect(data.records, gyms, from, 4),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data.records, gyms, from.lat, from.lng],
+  );
+  const openGym = (id: string) => router.push({ pathname: '/gym/[id]', params: { id } });
   const stats = collectionStats(gyms);
   const sets = useMemo(() => collectionSets(gyms, data.listed), [gyms, data.listed]);
   const earned = badges(stats, setsDone(sets));
@@ -102,6 +118,11 @@ export default function CollectionScreen() {
             router.navigate('/explore');
           }}
         />
+        {next.length > 0 && (
+          <View style={styles.emptyNext}>
+            <NextToCollect items={next} near={near} country={prefs.country} onOpen={openGym} />
+          </View>
+        )}
         <View style={styles.emptySync}>
           <CollectionSyncLine />
         </View>
@@ -131,6 +152,8 @@ export default function CollectionScreen() {
         <Stat value={stats.countries} one="country" many="countries" icon="globe" />
         <Stat value={stats.visits} one="visit" many="visits" icon="check" />
       </Animated.View>
+
+      {next.length > 0 && <NextToCollect items={next} near={near} country={prefs.country} onOpen={openGym} />}
 
       <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
         {`BADGES · ${earned.filter((badge) => badge.earned).length} OF ${earned.length}`}
@@ -250,6 +273,47 @@ export default function CollectionScreen() {
   );
 }
 
+/** The nearest gyms not collected yet: tap one for its page, and I'm here when you get there. */
+function NextToCollect({ items, near, country, onOpen }: { items: Array<{ record: GymRecord; km: number }>; near: string; country: string | null; onOpen: (id: string) => void }) {
+  return (
+    <View>
+      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+        {`NEXT TO COLLECT · ${near.toUpperCase()}`}
+      </Txt>
+      <View style={styles.nextList}>
+        {items.map(({ record, km }, index) => {
+          const { location } = record;
+          const name = location.branch ? `${location.name} ${location.branch}` : location.name;
+          const where = [location.address.suburb, distanceLabel(km, country ?? location.address.countryCode)].filter(Boolean).join(' · ');
+          return (
+            <Pressy
+              key={location.id}
+              scaleTo={0.98}
+              onPress={() => onOpen(location.id)}
+              accessibilityRole="button"
+              accessibilityLabel={`${name}, ${where}. Not collected yet`}
+              style={[styles.nextRow, index > 0 && styles.nextLine]}
+            >
+              <View style={styles.nextIcon}>
+                <Icon name="gym" size={16} color={color.brand} />
+              </View>
+              <View style={styles.flexFill}>
+                <Txt variant="headline" numberOfLines={1}>
+                  {name}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                  {where}
+                </Txt>
+              </View>
+              <Icon name="chevron" size={13} color={color.labelTertiary} />
+            </Pressy>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 function Stat({ value, one, many, icon }: { value: number; one: string; many: string; icon: IconName }) {
   return (
     <View style={styles.stat} accessible accessibilityLabel={`${value} ${value === 1 ? one : many}`}>
@@ -270,6 +334,12 @@ const styles = themed(() =>
     content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: COLUMN, alignSelf: 'center' },
     empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
     emptySync: { alignSelf: 'stretch', width: '100%', maxWidth: 480, marginTop: space[3] },
+    emptyNext: { alignSelf: 'stretch', width: '100%', maxWidth: 480, marginTop: space[2] },
+    flexFill: { flex: 1, minWidth: 0 },
+    nextList: { marginTop: space[2], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, overflow: 'hidden' },
+    nextRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], minHeight: 56 },
+    nextLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
+    nextIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
     emptyMedal: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: '#C9971C' },
     center: { textAlign: 'center' },
     section: { marginTop: space[2], marginLeft: space[4] },

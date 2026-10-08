@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { badges, checkIn, cityFor, collect, collectionShareText, collectionStats, flag, tierFor, type Collection } from './collection';
+import { badges, checkIn, cityFor, collect, collectionShareText, collectionStats, flag, nextToCollect, NEXT_WITHIN_KM, tierFor, type Collection } from './collection';
+import { BUNDLED_GYMS } from './query';
 import { cardFor, rarityRank, type Rarity } from './rarity';
 
 // Doherty's Gym, Flinders Street, Melbourne.
@@ -91,5 +92,27 @@ describe('collectionShareText', () => {
     expect(text.split('\n')[0]).toBe('My GymGO collection: 1 gym in 1 city and 1 country, 2 visits.');
     expect(text).toMatch(/^(Common|Uncommon|Rare|Epic|Legendary) [A-Z][a-z]+( quartz)?( foil)? · Bronze: Doherty’s Gym, Melbourne 🇦🇺$/m);
     expect(text).not.toMatch(/2026|07:00/);
+  });
+});
+
+describe('nextToCollect', () => {
+  const MELBOURNE = { lat: -37.8136, lng: 144.9631 };
+  const real = BUNDLED_GYMS.filter((record) => !record.location.isDemoData);
+
+  it('offers the nearest gyms not collected yet, nearest first, never a demo gym or one far off', () => {
+    const next = nextToCollect(BUNDLED_GYMS, {}, MELBOURNE, 5);
+    expect(next.length).toBe(5);
+    expect(next.every((item) => !item.record.location.isDemoData && item.km <= NEXT_WITHIN_KM)).toBe(true);
+    for (let i = 1; i < next.length; i += 1) expect(next[i]!.km).toBeGreaterThanOrEqual(next[i - 1]!.km);
+  });
+
+  it('skips gyms already in the collection', () => {
+    const nearest = nextToCollect(real, {}, MELBOURNE, 1)[0]!.record.location.id;
+    const collection = { [nearest]: { id: nearest } } as unknown as Collection;
+    expect(nextToCollect(real, collection, MELBOURNE, 3).map((item) => item.record.location.id)).not.toContain(nearest);
+  });
+
+  it('offers nothing where no gym is within reach', () => {
+    expect(nextToCollect(real, {}, { lat: -60, lng: -30 }, 3)).toEqual([]);
   });
 });

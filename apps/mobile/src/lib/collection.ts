@@ -10,7 +10,7 @@
  * your account keeps a copy of that too (lib/useCollection.ts).
  */
 
-import { haversineKm, type CollectedGym, type Collection } from '@gymgo/domain';
+import { haversineKm, type CollectedGym, type Collection, type GymRecord, type LatLng } from '@gymgo/domain';
 import { WORLD_CITIES } from './places';
 import { cardFor, cardName, newSeed, rarityRank, RARITIES, type Rarity } from './rarity';
 
@@ -181,4 +181,23 @@ export function collectionShareText(collection: Collection): string {
     '',
     ...top,
   ].join('\n');
+}
+
+/** How far to look for gyms to collect next. */
+export const NEXT_WITHIN_KM = 50;
+
+/**
+ * The nearest gyms not in your collection yet, nearest first: somewhere to
+ * go for the next card. Invented demo gyms can't be collected, so they're
+ * never offered; nor is anything further than NEXT_WITHIN_KM.
+ */
+export function nextToCollect(records: readonly GymRecord[], collection: Collection, from: LatLng, limit = 4): Array<{ record: GymRecord; km: number }> {
+  const seen = new Set<string>();
+  return records
+    .filter((record) => !record.location.isDemoData && !collection[record.location.id])
+    .map((record) => ({ record, km: haversineKm(from, record.location.position) }))
+    .filter((item) => item.km <= NEXT_WITHIN_KM)
+    .sort((a, b) => a.km - b.km)
+    .filter((item) => (seen.has(item.record.location.id) ? false : (seen.add(item.record.location.id), true)))
+    .slice(0, limit);
 }

@@ -306,8 +306,8 @@ Appearance.
 - **Profile**: laid out like Settings. Your account card (tap it for
   **Account**: profile picture, name, email, password, Apple and Google,
   your data, sign out, delete), Training (Progress, My workouts, Plate calculator, 1-rep max, Interval timer), Pro, your
-  gyms, Settings (Country, **Appearance**, Haptics, Demo mode), and where
-  GymGO's facts come from.
+  gyms, Settings (Country, **Appearance**, Haptics, **Sounds**, Demo
+  mode), and where GymGO's facts come from.
 - **Appearance**: Automatic (follows your phone), Light or Dark, for
   everyone. **Liquid Glass**, also for everyone: a percentage for how
   see-through the controls, sheets and tab bar over the map are, with a
@@ -407,8 +407,8 @@ not advice for anyone in particular, and the screen says to start light.
   plate calculator.
 - **Interval timer** (Profile → Interval timer): Tabata (20 s on, 10 s off,
   8 rounds) and EMOM (every minute on the minute, 10 rounds), with a big
-  clock, a count-in, a buzz at each change (and a beep in a browser; a
-  phone has no sound for it yet), and the screen kept on while it runs.
+  clock, a count-in, a buzz and a sound at each change and on the last
+  three seconds of each, and the screen kept on while it runs.
   It reads the clock rather than counting ticks, so pausing or switching
   apps doesn't make it drift.
 - **Share a workout.** After you finish, **Share this workout** sends a
@@ -470,6 +470,19 @@ its reward card, and finishing one earns the **Local hero** or **City
 collector** badge. Sets are worked out from your collection and the gyms
 this device knows, so they're the same on every device with the same gyms;
 nothing extra is stored.
+
+**Sounds.** GymGO has its own sound effects, made from scratch for it
+(`apps/mobile/scripts/make-sounds.mjs` writes them; nothing is sampled
+or licensed). Checking in plays a scan, then a chime as the gym is
+collected, then the card's own reveal: a richer one for each rarity, up
+to a run, a chord and a shower of sparkles for Legendary, with foil's
+glitter on top, and a fanfare when the check-in finishes a set. Ticking a
+set, the rest running out, finishing a workout, a new record, saving a
+gym and the interval timer have theirs too, and every tap, choice,
+success and refusal in the app has a quiet one. They're off with
+**Sounds** in Profile → Settings (separate from Haptics). On a phone they
+follow the silent switch and play over your music without stopping it;
+in a browser they start once you've tapped the page, as browsers require.
 
 **Share a card.** Tap a card in your collection to see it big, then
 **Share as a picture**: on a phone it goes to the share sheet (Messages,

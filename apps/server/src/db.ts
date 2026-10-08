@@ -1,0 +1,459 @@
+/**
+ * The database: one SQLite file, through Node's built-in `node:sqlite`.
+ *
+ * No server to install, nothing to pay for, and nothing to compile on
+ * Windows. The file lives in apps/server/data/ (git-ignored). Moving to a
+ * hosted Postgres later means reimplementing this module; the routes only
+ * see the functions below.
+ */
+
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
+import type { GymRecord } from '@gymgo/domain';
+
+export type Db = DatabaseSync;
+
+const SCHEMA = `
+  create table if not exists users (
+    id text primary key,
+    email text not null unique collate nocase,
+    display_name text not null,
+    password_hash text not null,
+    role text not null default 'member',
+    blocked integer not null default 0,
+    created_at text not null,
+    age_checked_at text,
+    avatar_id text,
+    avatar_type text,
+    terms_version text,
+    terms_accepted_at text
+  );
+  create table if not exists sessions (
+    token_hash text primary key,
+    user_id text not null references users(id) on delete cascade,
+    created_at text not null,
+    expires_at text not null
+  );
+  create index if not exists sessions_user on sessions(user_id);
+  create table if not exists password_resets (
+    token_hash text primary key,
+    user_id text not null references users(id) on delete cascade,
+    created_at text not null,
+    expires_at text not null
+  );
+  create index if not exists password_resets_user on password_resets(user_id);
+  create table if not exists identities (
+    provider text not null check (provider in ('google', 'apple')),
+    subject text not null,
+    user_id text not null references users(id) on delete cascade,
+    email text,
+    created_at text not null,
+    primary key (provider, subject)
+  );
+  create index if not exists identities_user on identities(user_id);
+  create table if not exists saved_gyms (
+    user_id text not null references users(id) on delete cascade,
+    gym_id text not null,
+    created_at text not null,
+    primary key (user_id, gym_id)
+  );
+  create table if not exists reviews (
+    id text primary key,
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    overall integer not null check (overall between 1 and 5),
+    body text not null,
+    visited_on text,
+    status text not null default 'pending' check (status in ('pending', 'published', 'rejected', 'removed')),
+    moderation_reason text,
+    created_at text not null,
+    moderated_at text,
+    moderated_by text
+  );
+  create index if not exists reviews_gym on reviews(gym_id, status);
+  create table if not exists photos (
+    id text primary key,
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    type text not null check (type in ('jpeg', 'png')),
+    bytes integer not null,
+    status text not null default 'pending' check (status in ('pending', 'published', 'rejected', 'removed')),
+    moderation_reason text,
+    created_at text not null,
+    moderated_at text,
+    moderated_by text
+  );
+  create index if not exists photos_gym on photos(gym_id, status);
+  create table if not exists equipment_reports (
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    equipment_type_id text not null,
+    presence text not null check (presence in ('yes', 'no')),
+    max_weight_kg integer,
+    reported_at text not null,
+    primary key (gym_id, user_id, equipment_type_id)
+  );
+  create index if not exists equipment_reports_gym on equipment_reports(gym_id);
+  create table if not exists price_reports (
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    amount_minor integer not null check (amount_minor > 0),
+    currency text not null check (length(currency) = 3),
+    paid_on text not null,
+    reported_at text not null,
+    primary key (gym_id, user_id)
+  );
+  create index if not exists price_reports_gym on price_reports(gym_id);
+  create table if not exists access_reports (
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    outcome text not null check (outcome in ('walked_in', 'booked_first', 'turned_away')),
+    visited_on text not null,
+    reported_at text not null,
+    primary key (gym_id, user_id)
+  );
+  create index if not exists access_reports_gym on access_reports(gym_id);
+  create table if not exists status_reports (
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    status text not null check (status in ('closed', 'open')),
+    seen_on text not null,
+    reported_at text not null,
+    primary key (gym_id, user_id)
+  );
+  create index if not exists status_reports_gym on status_reports(gym_id);
+  create table if not exists busy_reports (
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    level text not null check (level in ('quiet', 'steady', 'busy', 'packed')),
+    reported_at text not null,
+    primary key (gym_id, user_id)
+  );
+  create index if not exists busy_reports_gym on busy_reports(gym_id, reported_at);
+  create table if not exists billing_customers (
+    user_id text primary key references users(id) on delete cascade,
+    stripe_customer_id text not null unique,
+    created_at text not null,
+    synced_at text
+  );
+  create table if not exists subscriptions (
+    stripe_subscription_id text primary key,
+    user_id text not null references users(id) on delete cascade,
+    status text not null,
+    interval text,
+    currency text,
+    amount_minor integer,
+    price_lookup_key text,
+    current_period_end text,
+    cancel_at text,
+    cancel_at_period_end integer not null default 0,
+    updated_at text not null
+  );
+  create index if not exists subscriptions_user on subscriptions(user_id);
+  create table if not exists stripe_events (
+    id text primary key,
+    type text not null,
+    received_at text not null
+  );
+  create table if not exists workouts (
+    id text primary key,
+    user_id text not null references users(id) on delete cascade,
+    name text not null,
+    gym_id text,
+    plan_json text not null,
+    created_at text not null
+  );
+  create index if not exists workouts_user on workouts(user_id, created_at);
+  create table if not exists training_sessions (
+    id text primary key,
+    user_id text not null references users(id) on delete cascade,
+    name text not null,
+    unit text not null check (unit in ('kg', 'lb')),
+    started_at text not null,
+    finished_at text not null,
+    workout_id text,
+    gym_id text,
+    exercises_json text not null,
+    created_at text not null
+  );
+  create index if not exists training_sessions_user on training_sessions(user_id, finished_at);
+  create table if not exists gyms (
+    id text primary key,
+    record_json text not null,
+    is_demo integer not null,
+    updated_at text not null
+  );
+  create table if not exists area_gyms (
+    id text primary key,
+    osm text not null unique,
+    record_json text not null,
+    lat real not null,
+    lng real not null,
+    fetched_at text not null
+  );
+  create index if not exists area_gyms_position on area_gyms(lat, lng);
+  create table if not exists area_tiles (
+    tile text primary key,
+    fetched_at text not null,
+    gyms integer not null
+  );
+  create table if not exists bug_reports (
+    id text primary key,
+    user_id text references users(id) on delete cascade,
+    topic text not null default 'bug' check (topic in ('bug', 'copyright')),
+    reply_to text,
+    description text not null,
+    context_json text not null,
+    status text not null default 'pending' check (status in ('pending', 'sent', 'failed')),
+    attempts integer not null default 0,
+    last_error text,
+    created_at text not null,
+    sent_at text
+  );
+  create index if not exists bug_reports_status on bug_reports(status, created_at);
+  create table if not exists collection_gyms (
+    user_id text not null references users(id) on delete cascade,
+    gym_id text not null,
+    entry_json text not null,
+    updated_at text not null,
+    primary key (user_id, gym_id)
+  );
+  create table if not exists collection_resets (
+    user_id text primary key references users(id) on delete cascade,
+    reset_at text not null
+  );
+  create table if not exists friend_codes (
+    user_id text primary key references users(id) on delete cascade,
+    code text not null unique,
+    created_at text not null
+  );
+  create table if not exists friend_links (
+    from_user text not null references users(id) on delete cascade,
+    to_user text not null references users(id) on delete cascade,
+    status text not null check (status in ('pending', 'accepted')),
+    created_at text not null,
+    accepted_at text,
+    primary key (from_user, to_user)
+  );
+  create index if not exists friend_links_to on friend_links(to_user);
+  create table if not exists train_invites (
+    id text primary key,
+    from_user text not null references users(id) on delete cascade,
+    to_user text not null references users(id) on delete cascade,
+    gym_id text not null,
+    gym_name text not null,
+    at text not null,
+    note text,
+    answer text check (answer in ('yes', 'no')),
+    created_at text not null
+  );
+  create index if not exists train_invites_people on train_invites(to_user, from_user, at);
+  create table if not exists gym_claims (
+    id text primary key,
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    role_title text not null,
+    contact text not null,
+    evidence text not null,
+    status text not null check (status in ('pending', 'approved', 'rejected')),
+    reason text,
+    created_at text not null,
+    decided_at text,
+    decided_by text
+  );
+  create index if not exists gym_claims_status on gym_claims(status, created_at);
+  create table if not exists gym_owners (
+    user_id text not null references users(id) on delete cascade,
+    gym_id text not null,
+    approved_at text not null,
+    primary key (user_id, gym_id)
+  );
+  create table if not exists owner_updates (
+    id text primary key,
+    gym_id text not null,
+    user_id text not null references users(id) on delete cascade,
+    payload_json text not null,
+    status text not null check (status in ('pending', 'approved', 'rejected')),
+    reason text,
+    created_at text not null,
+    decided_at text,
+    decided_by text
+  );
+  create index if not exists owner_updates_status on owner_updates(status, created_at);
+  create table if not exists pro_grants (
+    id text primary key,
+    user_id text not null references users(id) on delete cascade,
+    source text not null check (source in ('gift')),
+    starts_at text not null,
+    ends_at text not null,
+    ref text,
+    created_at text not null
+  );
+  create index if not exists pro_grants_user on pro_grants(user_id, ends_at);
+  create table if not exists gift_codes (
+    code text primary key,
+    buyer_user_id text references users(id) on delete set null,
+    checkout_session_id text not null unique,
+    currency text,
+    created_at text not null,
+    redeemed_by text references users(id) on delete set null,
+    redeemed_at text
+  );
+  create table if not exists duo_members (
+    owner_user_id text primary key references users(id) on delete cascade,
+    member_user_id text not null unique references users(id) on delete cascade,
+    added_at text not null
+  );
+  create table if not exists partner_passes (
+    id text primary key,
+    gym_id text not null,
+    label text not null,
+    price_minor integer not null,
+    fee_minor integer not null,
+    currency text not null check (currency in ('aud', 'usd')),
+    active integer not null default 1,
+    created_at text not null,
+    created_by text
+  );
+  create index if not exists partner_passes_gym on partner_passes(gym_id, active);
+  create table if not exists pass_bookings (
+    id text primary key,
+    pass_id text not null references partner_passes(id),
+    user_id text not null references users(id) on delete cascade,
+    gym_id text not null,
+    for_date text not null,
+    checkout_session_id text not null unique,
+    status text not null check (status in ('pending', 'paid')),
+    code text,
+    amount_minor integer not null,
+    fee_minor integer not null,
+    currency text not null,
+    created_at text not null,
+    paid_at text
+  );
+  create table if not exists leaderboard_members (
+    user_id text primary key references users(id) on delete cascade,
+    joined_at text not null
+  );
+`;
+
+export function openDb(path: string): Db {
+  if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
+  const db = new DatabaseSync(path);
+  db.exec('pragma foreign_keys = on;');
+  if (path !== ':memory:') db.exec('pragma journal_mode = wal;');
+  db.exec(SCHEMA);
+  migrate(db);
+  return db;
+}
+
+/**
+ * Changes to tables made before the current schema. SQLite can't change a
+ * table's checks in place, so a table whose check has to widen is rebuilt,
+ * once, keeping its rows.
+ */
+function migrate(db: Db): void {
+  // When the account's age check was made (see checkAge in auth.ts); older accounts have none.
+  const userColumns = db.prepare('pragma table_info(users)').all() as Array<{ name: string }>;
+  if (!userColumns.some((column) => column.name === 'age_checked_at')) db.exec('alter table users add column age_checked_at text');
+  // Your profile picture (see /api/me/avatar in app.ts).
+  if (!userColumns.some((column) => column.name === 'avatar_id')) db.exec('alter table users add column avatar_id text');
+  if (!userColumns.some((column) => column.name === 'avatar_type')) db.exec('alter table users add column avatar_type text');
+  // Which version of the terms the account agreed to, and when (see LEGAL_VERSION in @gymgo/domain).
+  if (!userColumns.some((column) => column.name === 'terms_version')) db.exec('alter table users add column terms_version text');
+  if (!userColumns.some((column) => column.name === 'terms_accepted_at')) db.exec('alter table users add column terms_accepted_at text');
+  // Bug reports that are copyright notices, kept apart so they're dealt with first.
+  const reportColumns = db.prepare('pragma table_info(bug_reports)').all() as Array<{ name: string }>;
+  if (!reportColumns.some((column) => column.name === 'topic')) {
+    db.exec(`alter table bug_reports add column topic text not null default 'bug' check (topic in ('bug', 'copyright'))`);
+  }
+  // Visit prices in every country's own currency, sized to it (¥ and ₹ as
+  // well as A$ and €): the old fixed list of currencies and range go.
+  const prices = db.prepare("select sql from sqlite_master where type = 'table' and name = 'price_reports'").get() as { sql: string } | undefined;
+  if (prices && prices.sql.includes('currency in (')) {
+    db.exec('begin');
+    try {
+      db.exec(`create table price_reports_widened (
+        gym_id text not null,
+        user_id text not null references users(id) on delete cascade,
+        amount_minor integer not null check (amount_minor > 0),
+        currency text not null check (length(currency) = 3),
+        paid_on text not null,
+        reported_at text not null,
+        primary key (gym_id, user_id)
+      )`);
+      db.exec('insert into price_reports_widened (gym_id, user_id, amount_minor, currency, paid_on, reported_at) select gym_id, user_id, amount_minor, currency, paid_on, reported_at from price_reports');
+      db.exec('drop table price_reports');
+      db.exec('alter table price_reports_widened rename to price_reports');
+      db.exec('create index if not exists price_reports_gym on price_reports(gym_id)');
+      db.exec('commit');
+    } catch (error) {
+      db.exec('rollback');
+      throw error;
+    }
+  }
+}
+
+/**
+ * Load the gym records into the database.
+ *
+ * The records are maintained in code (packages/melbourne-data and
+ * packages/demo-data), with their sources, so the database copy is replaced
+ * on every start. Gyms that are no longer in the dataset are removed; saved
+ * gyms and reviews that point at them stay, and simply stop matching.
+ */
+export function seedGyms(db: Db, records: GymRecord[], now = new Date()): void {
+  const upsert = db.prepare(
+    `insert into gyms (id, record_json, is_demo, updated_at) values (?, ?, ?, ?)
+     on conflict(id) do update set record_json = excluded.record_json, is_demo = excluded.is_demo, updated_at = excluded.updated_at`,
+  );
+  db.exec('begin');
+  try {
+    const ids = new Set<string>();
+    for (const record of records) {
+      ids.add(record.location.id);
+      upsert.run(record.location.id, JSON.stringify(record), record.location.isDemoData ? 1 : 0, now.toISOString());
+    }
+    const existing = db.prepare('select id from gyms').all() as Array<{ id: string }>;
+    const remove = db.prepare('delete from gyms where id = ?');
+    for (const row of existing) if (!ids.has(row.id)) remove.run(row.id);
+    db.exec('commit');
+  } catch (error) {
+    db.exec('rollback');
+    throw error;
+  }
+}
+
+export function allGyms(db: Db): GymRecord[] {
+  const rows = db.prepare('select record_json from gyms order by is_demo, id').all() as Array<{ record_json: string }>;
+  return rows.map((row) => JSON.parse(row.record_json) as GymRecord);
+}
+
+/**
+ * Any gym by id: one of the bundled records, or one found by "Search this
+ * area" (see area.ts), which are kept in their own table.
+ */
+export function gymRecord(db: Db, gymId: string): GymRecord | null {
+  const row = (db.prepare('select record_json from gyms where id = ?').get(gymId) ??
+    db.prepare('select record_json from area_gyms where id = ?').get(gymId)) as { record_json: string } | undefined;
+  return row ? (JSON.parse(row.record_json) as GymRecord) : null;
+}
+
+export function gymExists(db: Db, gymId: string): boolean {
+  return (
+    db.prepare('select 1 from gyms where id = ?').get(gymId) !== undefined ||
+    db.prepare('select 1 from area_gyms where id = ?').get(gymId) !== undefined
+  );
+}
+
+/** The gym's country ("AU", "US"), from its stored record. */
+export function gymCountry(db: Db, gymId: string): string | null {
+  return gymRecord(db, gymId)?.location.address.countryCode ?? null;
+}
+
+/** True for the invented demo gyms, which nobody can have photographed. */
+export function gymIsDemo(db: Db, gymId: string): boolean {
+  const row = db.prepare('select is_demo from gyms where id = ?').get(gymId) as { is_demo: number } | undefined;
+  return row?.is_demo === 1;
+}

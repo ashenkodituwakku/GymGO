@@ -1,0 +1,628 @@
+/**
+ * What lives in the main sheet: search, quick filters, and the results.
+ *
+ * Mirrors Apple Maps, where the search field sits at the top of the sheet
+ * rather than over the map, so the map is never covered by more than it needs.
+ */
+
+import { useState } from 'react';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { FADE_IN, FADE_OUT, GLIDE, Pressable } from './motion';
+import { HOURS_LABELS, explainNoMatches, type HoursNeed, type SearchOutcome } from '@gymgo/domain';
+import { countryInSentence, countryName } from '@/lib/country';
+import { cityAt, distanceLabel, localBudget, moneyLabel, placeContext, tracksPrices } from '@/lib/places';
+import { MATCH, suggestionKey, title, type Suggestion } from '@/lib/suggest';
+import { EMPTY, PLACEHOLDER, TIER, lookupLine, searchPrompt, sessionGreeting, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
+import type { Lookup } from '@/lib/app-state';
+import { SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
+import { NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
+import { haptic } from '@/lib/haptics';
+import { GymRow } from './GymRow';
+import { GymRowsSkeleton } from './Skeleton';
+import { Icon } from './Icon';
+import { Chip, PrimaryButton, TIER_COLOUR, Txt } from './ui';
+import { AdSlot } from './AdSlot';
+import { Avatar } from './Avatar';
+import type { Account } from '@/lib/api';
+
+/** How many result rows animate as the list changes: about a screenful. */
+const ANIMATED_ROWS = 12;
+
+/** A critically-damped spring: rows glide to their new place, no bounce. */
+// Rows gliding when the list re-sorts: the app's one GLIDE (components/motion.tsx).
+
+export function ResultsContent({
+  outcome,
+  filters,
+  query,
+  onQueryChange,
+  onSearchFocus,
+  suggestions,
+  onPickSuggestion,
+  onLookUp,
+  onSubmitSearch,
+  onToggleEquipment,
+  onToggleHours,
+  onToggleBudget,
+  onOpenFilters,
+  onSelect,
+  onApplyRelaxation,
+  notice,
+  inSheet,
+  me,
+  onOpenAccount,
+  dataNote,
+  covers,
+  memberPrices,
+  searchRef,
+  onSort,
+  locked = null,
+  home = null,
+  onSeePro,
+  onGoHome,
+  lookup = null,
+  onSearchHere,
+}: {
+  outcome: SearchOutcome;
+  filters: Filters;
+  query: string;
+  onQueryChange: (text: string) => void;
+  onSearchFocus: () => void;
+  /** What the search box suggests for what's typed, best first (lib/suggest.ts). */
+  suggestions: readonly Suggestion[];
+  onPickSuggestion: (hit: Suggestion) => void;
+  /** Look what's typed up as a place anywhere in the world. */
+  onLookUp: () => void;
+  onSubmitSearch: () => void;
+  onToggleEquipment: (id: string) => void;
+  /** Open late, or 24 hours: on, off, or switched from one to the other. */
+  onToggleHours: (need: HoursNeed) => void;
+  onToggleBudget: () => void;
+  onOpenFilters: () => void;
+  onSelect: (id: string) => void;
+  onApplyRelaxation: (index: number) => void;
+  notice: string | null;
+  /** In a bottom sheet (phone) or a plain panel (desktop). */
+  inSheet: boolean;
+  /** The signed-in person (their picture or initial), or null when signed out. */
+  me: Account | null;
+  onOpenAccount: () => void;
+  /** The line at the foot of the list about where the data comes from. */
+  dataNote: string;
+  /** Each gym's newest member photo, by gym ID. */
+  covers: Record<string, string>;
+  /** What members typically paid, by gym. */
+  memberPrices: Record<string, { typicalMinor: number }>;
+  /** So other tabs can put the cursor in the search box. */
+  searchRef?: React.RefObject<TextInput | null>;
+  /** Choose how the list is ordered. */
+  onSort: () => void;
+  /** Searching a country GymGO Free doesn't cover: this one, and yours. */
+  locked?: { country: string; home: string } | null;
+  /** The country you chose, for the search box's wording. */
+  home?: string | null;
+  onSeePro?: () => void;
+  onGoHome?: () => void;
+  /** A place GymGO carries no city for: waiting for Search this area, being read, or read. */
+  lookup?: Lookup | null;
+  /** Search this area: read the map there (again, after a failure). */
+  onSearchHere?: () => void;
+}) {
+  // The sheet-aware input throws in a browser; see TextField in ui.tsx.
+  const SearchInput = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
+  const city = cityAt(filters.centre);
+  const typed = query.trim();
+  // Somewhere not on GymGO's lists: offered as a last row, to look it up anywhere in the world.
+  const offerLookUp = typed.length >= 3 ? !suggestions.some((hit) => hit.match === MATCH.exact) : typed.length >= 2 && suggestions.length === 0;
+  const filterCount = activeFilterCount(filters);
+  const total = outcome.results.length;
+  const [focused, setFocused] = useState(false);
+
+  return (
+    <View style={styles.wrap}>
+      {/* Search --------------------------------------------------------- */}
+      <View style={styles.searchRow}>
+        <View style={[styles.search, focused && styles.searchFocused]}>
+          <Icon name="search" size={16} color={color.labelSecondary} />
+          <SearchInput
+            ref={searchRef as never}
+            value={query}
+            onChangeText={onQueryChange}
+            onFocus={() => {
+              // In a browser, where the keyboard can land here, show it; phones draw no ring.
+              if (Platform.OS === 'web') setFocused(true);
+              onSearchFocus();
+            }}
+            onBlur={() => setFocused(false)}
+            onSubmitEditing={onSubmitSearch}
+            placeholder={PLACEHOLDER}
+            placeholderTextColor={color.labelTertiary}
+            returnKeyType="search"
+            autoCorrect={false}
+            style={styles.input}
+            accessibilityLabel={searchPrompt(home)}
+          />
+        </View>
+        <Pressable
+          onPress={() => {
+            haptic.tap();
+            onOpenFilters();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={filterCount ? `Filters, ${filterCount} on` : 'Filters'}
+          style={({ pressed }) => [styles.filterButton, pressed && { opacity: 0.7 }]}
+        >
+          <Icon name="filters" size={17} color={color.brand} />
+          {filterCount > 0 && (
+            <View style={styles.badge}>
+              <Txt variant="caption" color={color.onBrand} style={styles.badgeText}>
+                {filterCount}
+              </Txt>
+            </View>
+          )}
+        </Pressable>
+        <Pressable
+          onPress={() => {
+            haptic.tap();
+            onOpenAccount();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={me ? 'Your account' : 'Sign in'}
+          style={({ pressed }) => [styles.avatar, me ? styles.avatarSignedIn : null, pressed && { opacity: 0.7 }]}
+        >
+          {me ? (
+            <Avatar account={me} size={40} variant="headline" />
+          ) : (
+            <Icon name="account" size={22} color={color.brand} />
+          )}
+        </Pressable>
+      </View>
+
+      {(suggestions.length > 0 || offerLookUp) && (
+        <View style={styles.suggestions}>
+          {suggestions.map((hit) => {
+            const row = suggestionRow(hit, home);
+            return (
+              <Pressable
+                key={suggestionKey(hit)}
+                onPress={() => onPickSuggestion(hit)}
+                style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
+                accessibilityRole="button"
+                accessibilityLabel={`${row.title}, ${row.label}`}
+              >
+                <View style={[styles.suggestionGlyph, hit.kind === 'gym' && styles.gymGlyph]}>
+                  <Icon name={hit.kind === 'gym' ? 'gym' : 'pin'} size={16} color={color.onBrand} />
+                </View>
+                <View style={styles.suggestionText}>
+                  <Txt variant="body" numberOfLines={1}>
+                    {row.title}
+                  </Txt>
+                  <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                    {row.detail}
+                  </Txt>
+                </View>
+              </Pressable>
+            );
+          })}
+          {offerLookUp && (
+            <Pressable
+              onPress={() => {
+                haptic.select();
+                onLookUp();
+              }}
+              style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
+              accessibilityRole="button"
+              accessibilityLabel={`Look up ${typed} anywhere in the world`}
+            >
+              <View style={[styles.suggestionGlyph, styles.lookGlyph]}>
+                <Icon name="search" size={16} color={color.brand} />
+              </View>
+              <View style={styles.suggestionText}>
+                <Txt variant="body" numberOfLines={1}>
+                  {`Look up “${typed}”`}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                  {suggestions.length ? 'Not listed? Find it anywhere in the world' : 'Find it anywhere in the world'}
+                </Txt>
+              </View>
+            </Pressable>
+          )}
+        </View>
+      )}
+
+      {/* Quick filters -------------------------------------------------- */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chips}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Chip
+          icon="sort"
+          label={SORTS.find((item) => item.key === filters.sort)?.label ?? 'Best match'}
+          selected={filters.sort !== 'best_match'}
+          onPress={onSort}
+          accessibilityLabel={`Sorted by ${SORTS.find((item) => item.key === filters.sort)?.label ?? 'best match'}. Change`}
+        />
+        <Chip
+          icon="clock"
+          label={timeLabel(filters.visitMinuteOfDay)}
+          selected={false}
+          onPress={onOpenFilters}
+          accessibilityLabel={`Visiting ${visitWhen(filters.visitMinuteOfDay, visitIsLater(filters))}. Change time`}
+        />
+        {/* The budget that's on, set from anywhere (Home's tile, Filters); tapping it clears it. */}
+        {tracksPrices(filters.countryCode) && (
+          <Chip
+            label={`Under ${moneyLabel(filters.budgetMinor ?? localBudget(3000, filters.countryCode), filters.countryCode)}`}
+            selected={filters.budgetMinor !== null}
+            onPress={onToggleBudget}
+          />
+        )}
+        <Chip label={HOURS_LABELS.late} selected={filters.hours === 'late'} onPress={() => onToggleHours('late')} />
+        <Chip label={HOURS_LABELS.allDay} selected={filters.hours === 'allDay'} onPress={() => onToggleHours('allDay')} />
+        <Chip label="Squat rack" selected={filters.equipment.includes('squat_rack')} onPress={() => onToggleEquipment('squat_rack')} />
+        <Chip label="Dumbbells" selected={filters.equipment.includes('dumbbells')} onPress={() => onToggleEquipment('dumbbells')} />
+        <Chip label="Cables" selected={filters.equipment.includes('cable_station')} onPress={() => onToggleEquipment('cable_station')} />
+        <Chip label="Platform" selected={filters.equipment.includes('lifting_platform')} onPress={() => onToggleEquipment('lifting_platform')} />
+      </ScrollView>
+
+      {/* Summary -------------------------------------------------------- */}
+      <View style={styles.summary}>
+        <Txt variant="eyebrow" color={color.brand} style={styles.greeting}>
+          {sessionGreeting(filters.visitMinuteOfDay).toUpperCase()}
+        </Txt>
+        <Txt variant="title2">
+          {nearLabel(filters.placeName)}
+        </Txt>
+        <Txt variant="subhead" color={color.labelSecondary}>
+          {locked ? `In ${countryInSentence(locked.country)}, with GymGO Pro` : summaryLine(total, outcome.counts.confirmed, filters.visitMinuteOfDay, visitIsLater(filters))}
+        </Txt>
+      </View>
+
+      {/* A place GymGO carries no city for: read only when asked ------------ */}
+      {!locked && total === 0 && lookup?.state === 'ready' && (
+        <View style={styles.lookFailed}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {lookupLine('ready', lookup.placeName)}
+          </Txt>
+          {onSearchHere && <Chip icon="search" label="Search this area" selected={false} onPress={onSearchHere} />}
+        </View>
+      )}
+      {!locked && total === 0 && lookup?.state === 'searching' && (
+        <View style={styles.searching}>
+          <View style={styles.notice} aria-live="polite">
+            <Txt variant="footnote" style={styles.noticeText}>
+              {lookupLine('searching', lookup.placeName)}
+            </Txt>
+          </View>
+          <GymRowsSkeleton count={3} label={lookupLine('searching', lookup.placeName)} />
+        </View>
+      )}
+      {!locked && total === 0 && lookup?.state === 'failed' && (
+        <View style={styles.lookFailed}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {lookupLine('failed', lookup.placeName)} {lookup.problem}
+          </Txt>
+          {onSearchHere && <Chip icon="refresh" label="Try again" selected={false} onPress={onSearchHere} />}
+        </View>
+      )}
+      {!locked && total === 0 && lookup?.state === 'done' && lookup.gyms === 0 && (
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.hint}>
+          {lookupLine('none', lookup.placeName)}
+        </Txt>
+      )}
+
+      {notice && (
+        <Animated.View key={notice} style={styles.notice} entering={FADE_IN} exiting={FADE_OUT}>
+          <Icon name="info" size={16} color={color.brand} />
+          <Txt variant="footnote" style={styles.noticeText}>
+            {notice}
+          </Txt>
+        </Animated.View>
+      )}
+
+      {/* Another country, without Pro ------------------------------------- */}
+      {locked && (
+        <Animated.View style={styles.lock} entering={FADE_IN} exiting={FADE_OUT}>
+          <View style={styles.lockBadge}>
+            <Icon name="globe" size={22} color={color.brand} />
+          </View>
+          <Txt variant="headline" style={styles.lockTitle}>
+            Gyms in {countryInSentence(locked.country)} are part of GymGO Pro
+          </Txt>
+          <Txt variant="subhead" color={color.labelSecondary} style={styles.lockText}>
+            GymGO Free covers {countryInSentence(locked.home)}, the country you chose, with every gym in it. Pro finds gyms in every country,
+            wherever you travel.
+          </Txt>
+          <View style={styles.lockButtons}>
+            {onSeePro && <PrimaryButton label="See GymGO Pro" icon="sparkle" onPress={onSeePro} />}
+            {onGoHome && <PrimaryButton label={`Back to ${countryInSentence(locked.home)}`} tone="quiet" onPress={onGoHome} />}
+          </View>
+        </Animated.View>
+      )}
+
+      {/* Nothing is a sure thing ------------------------------------------ */}
+      {total > 0 && outcome.counts.confirmed === 0 && filterCount === 0 && (
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.hint}>
+          {EMPTY.unconfirmedLine}
+        </Txt>
+      )}
+      {total > 0 && outcome.counts.confirmed === 0 && filterCount > 0 && (
+        <View style={styles.explain}>
+          <Txt variant="headline">{EMPTY.results}</Txt>
+          {explainNoMatches(outcome)
+            .slice(0, 2)
+            .map((line) => (
+              <Txt key={line} variant="footnote" color={color.labelSecondary} style={styles.explainLine}>
+                {line}
+              </Txt>
+            ))}
+          {outcome.relaxations.length > 0 && (
+            <View style={styles.relaxations}>
+              {outcome.relaxations.map((relaxation, index) => (
+                <Chip
+                  key={relaxation.label}
+                  icon="sparkle"
+                  label={`${relaxation.label} (${relaxation.confirmedCount})`}
+                  selected={false}
+                  onPress={() => onApplyRelaxation(index)}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Results: one list, best first; the ones that don't fit sit apart. */}
+      {[
+        { key: 'fits', title: null, list: outcome.results.filter((result) => result.tier !== 'ruled_out') },
+        { key: 'misses', title: TIER.ruled_out.label, list: outcome.results.filter((result) => result.tier === 'ruled_out') },
+      ].map((group) =>
+        group.list.length === 0 ? null : (
+          <Animated.View key={group.key} style={styles.group} entering={FADE_IN} exiting={FADE_OUT} layout={GLIDE}>
+            {group.title && (
+              <View style={styles.groupHeader}>
+                <Txt variant="headline" color={TIER_COLOUR.ruled_out.ink}>
+                  {group.title}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary}>
+                  {group.list.length}
+                </Txt>
+              </View>
+            )}
+            <View style={styles.list}>
+              {group.list.map((result, index) => (
+                <Animated.View
+                  key={result.record.location.id}
+                  // A screenful fades and glides; animating every row of a long list at once drops frames on a phone.
+                  entering={index < ANIMATED_ROWS ? FADE_IN : undefined}
+                  exiting={index < ANIMATED_ROWS ? FADE_OUT : undefined}
+                  layout={index < ANIMATED_ROWS ? GLIDE : undefined}
+                >
+                  {index > 0 && <View style={styles.rowDivider} />}
+                  <GymRow
+                    result={result}
+                    visitMinute={filters.visitMinuteOfDay}
+                    cover={covers[result.record.location.id] ?? null}
+                    memberTypicalMinor={memberPrices[result.record.location.id]?.typicalMinor ?? null}
+                    onPress={() => onSelect(result.record.location.id)}
+                  />
+                </Animated.View>
+              ))}
+            </View>
+          </Animated.View>
+        ),
+      )}
+
+      {/* Under the list, never between a gym and the next one. */}
+      {total > 0 && <AdSlot style={styles.ad} />}
+
+      <View style={styles.footer}>
+        <Txt variant="caption" color={color.labelSecondary} style={styles.footerText}>
+          {dataNote}
+          {'\n'}
+          {EMPTY.crowd}
+        </Txt>
+      </View>
+    </View>
+  );
+}
+
+/** A suggestion's two lines: its name, and where it is (and for a gym or town, how far). */
+function suggestionRow(hit: Suggestion, home: string | null): { title: string; detail: string; label: string } {
+  const away = (country: string) => (hit.km >= 0.05 ? distanceLabel(hit.km, country) : null);
+  switch (hit.kind) {
+    case 'place': {
+      const demo = hit.place.city === 'sydney-demo';
+      const detail = `${placeContext(hit.place)}${demo ? ' · invented demo' : ''}`;
+      return { title: hit.place.name, detail, label: demo ? `${placeContext(hit.place)}, invented demo` : placeContext(hit.place) };
+    }
+    case 'world':
+      return { title: hit.city.name, detail: countryName(hit.city.country), label: countryName(hit.city.country) };
+    case 'town': {
+      const where = [hit.town.state, hit.town.country === home ? null : countryName(hit.town.country)].filter(Boolean).join(', ');
+      const gyms = `${hit.town.gyms} gym${hit.town.gyms === 1 ? '' : 's'}`;
+      const detail = [where, gyms, away(hit.town.country)].filter(Boolean).join(' · ');
+      return { title: hit.town.name, detail, label: detail };
+    }
+    case 'gym': {
+      const location = hit.record.location;
+      const detail = ['Gym', location.address.suburb, away(location.address.countryCode)].filter(Boolean).join(' · ');
+      const distance = away(location.address.countryCode);
+      return { title: title(hit), detail, label: [location.address.suburb ? `gym in ${location.address.suburb}` : 'gym', distance && `${distance} away`].filter(Boolean).join(', ') };
+    }
+  }
+}
+
+const styles = themed(() => StyleSheet.create({
+  lock: {
+    alignItems: 'center',
+    gap: space[2],
+    padding: space[5],
+    borderRadius: radius.lg,
+    backgroundColor: color.brandTint,
+  },
+  lockBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: color.card,
+  },
+  lockTitle: { textAlign: 'center' },
+  lockText: { textAlign: 'center' },
+  lockButtons: { alignSelf: 'stretch', gap: space[2], marginTop: space[2] },
+  wrap: { paddingBottom: space[8] },
+
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    paddingHorizontal: space[4],
+    paddingTop: space[1],
+  },
+  search: {
+    flex: 1,
+    // A browser's text field has a natural width it won't shrink below
+    // (about 20 characters) unless told: on a narrow phone it ran under
+    // the Filters button.
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    height: 40,
+    paddingHorizontal: space[3],
+    // iOS 26 search fields are capsules.
+    borderRadius: radius.pill,
+    backgroundColor: color.fill,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  searchFocused: { borderColor: color.brand },
+  input: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 17,
+    ...face('regular'),
+    color: color.label,
+    paddingVertical: 0,
+    height: 40,
+    backgroundColor: 'transparent',
+    // The whole field shows focus (its accent border), so the browser draws
+    // no box of its own around the text as you type.
+    ...NO_WEB_OUTLINE,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: color.brandTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gymGlyph: { backgroundColor: color.brandFill },
+  avatarSignedIn: { backgroundColor: color.brandFill },
+  filterButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: color.brandTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
+    backgroundColor: color.brandFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: color.card,
+  },
+  badgeText: { fontSize: 10, lineHeight: 12, ...face('semibold') },
+
+  suggestions: { paddingHorizontal: space[2], paddingTop: space[2] },
+  lookGlyph: { backgroundColor: color.brandTint },
+  suggestion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    paddingVertical: space[2],
+    paddingHorizontal: space[2],
+    borderRadius: radius.sm,
+  },
+  suggestionGlyph: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: color.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Name over its context, as Maps lists places, so a long name never pushes
+  // the suburb off the card's edge.
+  suggestionText: { flex: 1, minWidth: 0 },
+
+  chips: { gap: space[2], paddingHorizontal: space[4], paddingVertical: space[3] },
+
+  summary: { paddingHorizontal: space[4], paddingTop: space[1], gap: 2 },
+  greeting: { marginBottom: 2 },
+
+  notice: {
+    flexDirection: 'row',
+    gap: space[2],
+    alignItems: 'flex-start',
+    marginHorizontal: space[4],
+    marginTop: space[3],
+    padding: space[3],
+    borderRadius: radius.md,
+    backgroundColor: color.brandTint,
+  },
+  noticeText: { flex: 1 },
+  searching: { gap: space[2] },
+  lookFailed: { gap: space[2], alignItems: 'flex-start', paddingHorizontal: space[4], marginTop: space[3] },
+
+  explain: {
+    marginHorizontal: space[4],
+    marginTop: space[4],
+    padding: space[4],
+    borderRadius: radius.lg,
+    backgroundColor: color.maybeTint,
+    gap: space[1],
+  },
+  explainLine: { marginTop: 2 },
+  hint: { paddingHorizontal: space[4], marginTop: space[1] },
+  relaxations: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2], marginTop: space[3] },
+
+  group: { marginTop: space[4] },
+  groupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    paddingHorizontal: space[4],
+    marginBottom: space[2],
+  },
+  list: {
+    marginHorizontal: space[4],
+    // Concentric with the sheet's corners, and a little translucent so the
+    // glass reads through at the edges.
+    borderRadius: 26,
+    borderCurve: 'continuous',
+    backgroundColor: color.cardGlass,
+    overflow: 'hidden',
+  },
+  rowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 86 },
+
+  ad: { marginHorizontal: space[4], marginTop: space[4] },
+  footer: { paddingHorizontal: space[6], paddingTop: space[6] },
+  footerText: { textAlign: 'center' },
+}));

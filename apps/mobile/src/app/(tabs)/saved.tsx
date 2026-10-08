@@ -1,0 +1,226 @@
+/**
+ * Saved: the gyms you kept, with their answer for your current search, and
+ * a tick on each to pick gyms to compare side by side (2 on Free, 4 on Pro).
+ */
+
+import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { GymRow } from '@/components/GymRow';
+import { FADE_OUT, GLIDE, Pressable, Pressy, usePop } from '@/components/motion';
+import Animated from 'react-native-reanimated';
+import { Icon } from '@/components/Icon';
+import { TabScreen } from '@/components/ios';
+import { PrimaryButton, Txt } from '@/components/ui';
+import { useApp } from '@/lib/app-state';
+import { timeLabel } from '@/lib/copy';
+import { haptic } from '@/lib/haptics';
+import { resultsById } from '@/lib/results';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { usePageTitle } from '@/lib/pageTitle';
+
+export default function Saved() {
+  usePageTitle('Saved');
+  const { data, account, filters, compare, toggleCompare, requestExplore, billing, openPro, prefsReady } = useApp();
+  const router = useRouter();
+  const asOf = useMemo(() => new Date(), [filters, data.records]);
+  const byId = useMemo(
+    () => resultsById(filters, data.records, asOf, data.ratings, [...account.saved, ...compare]),
+    [filters, data.records, asOf, data.ratings, account.saved, compare],
+  );
+  const saved = account.saved.map((id) => byId.get(id)).filter((result) => result !== undefined);
+  // Saved gyms the server says it no longer has: shown so they can be
+  // removed, rather than taking a Free space nobody can see.
+  const gone = account.saved.filter((id) => !byId.has(id) && data.gone.has(id));
+  const picked = compare.filter((id) => byId.has(id));
+
+  return (
+    <TabScreen
+      title="Saved"
+      eyebrow={saved.length ? `${saved.length} GYM${saved.length === 1 ? '' : 'S'} · FOR ${timeLabel(filters.visitMinuteOfDay).toUpperCase()}` : undefined}
+      right={
+        picked.length >= 2 ? (
+          <Pressable
+            onPress={() => router.push('/compare')}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.compareButton, pressed && { opacity: 0.7 }]}
+          >
+            <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
+              Compare {picked.length}
+            </Txt>
+          </Pressable>
+        ) : undefined
+      }
+    >
+      {/* Distances are from the search's place, so the list waits for your settings. */}
+      {!prefsReady ? null : saved.length === 0 && gone.length === 0 ? (
+        <View style={styles.empty}>
+          <Icon name="saved" size={44} color={color.brand} />
+          <Txt variant="title2">Nothing saved yet</Txt>
+          <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
+            Tap Save on any gym and it lands here.{' '}
+            {account.state === 'signed_in' || account.state === 'unreachable'
+              ? 'It follows you to your other devices.'
+              : 'Sign in and it follows you to your other devices too.'}
+          </Txt>
+          <PrimaryButton
+            label="Find a gym"
+            onPress={() => {
+              requestExplore({ recentre: true });
+              router.navigate('/explore');
+            }}
+          />
+        </View>
+      ) : (
+        <>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            Tick up to {billing.limits.compare} to compare them side by side.
+            {billing.isPro ? '' : ` ${account.saved.length} of ${billing.limits.savedGyms} saved on Free.`}
+          </Txt>
+          {!billing.isPro && account.saved.length >= billing.limits.savedGyms - 2 && (
+            <Pressable onPress={() => openPro('saved')} accessibilityRole="button" style={styles.upsell}>
+              <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                Save as many as you like with GymGO Pro ›
+              </Txt>
+            </Pressable>
+          )}
+          {saved.length > 0 && (
+          <View style={styles.list}>
+            {saved.map((result, index) => {
+              const id = result.record.location.id;
+              const on = compare.includes(id);
+              return (
+                <Animated.View key={id} exiting={FADE_OUT} layout={GLIDE}>
+                  {index > 0 && <View style={styles.divider} />}
+                  <View style={styles.row}>
+                    <View style={styles.flex}>
+                      <GymRow
+                        result={result}
+                        visitMinute={filters.visitMinuteOfDay}
+                        cover={data.covers[id] ?? null}
+                        memberTypicalMinor={data.memberPrices[id]?.typicalMinor ?? null}
+                        onPress={() => router.push({ pathname: '/gym/[id]', params: { id } })}
+                      />
+                    </View>
+                    <CompareTick on={on} name={result.record.location.name} onPress={() => toggleCompare(id)} />
+                  </View>
+                </Animated.View>
+              );
+            })}
+          </View>
+          )}
+          {gone.length > 0 && (
+            <View style={styles.list}>
+              {gone.map((id, index) => (
+                <Animated.View key={id} exiting={FADE_OUT} layout={GLIDE}>
+                  {index > 0 && <View style={styles.goneDivider} />}
+                  <View style={styles.goneRow}>
+                    <Icon name="info" size={22} color={color.labelTertiary} />
+                    <View style={styles.flex}>
+                      <Txt variant="headline">No longer listed</Txt>
+                      <Txt variant="footnote" color={color.labelSecondary}>
+                        A gym you saved that the map GymGO reads doesn’t list any more.
+                      </Txt>
+                    </View>
+                    <Pressable
+                      onPress={() => {
+                        haptic.select();
+                        account.toggleSave(id);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Remove this gym from Saved"
+                      hitSlop={8}
+                      style={({ pressed }) => [styles.remove, pressed && { opacity: 0.7 }]}
+                    >
+                      <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                        Remove
+                      </Txt>
+                    </Pressable>
+                  </View>
+                </Animated.View>
+              ))}
+            </View>
+          )}
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+            {account.state === 'signed_in'
+              ? 'Synced to your account.'
+              : account.state === 'unreachable'
+                ? 'The GymGO server isn’t reachable, so these are this device’s copy. Anything you save now joins your account when it’s back.'
+                : (
+                  <>
+                    Saved on this device.{' '}
+                    <Text style={[{ color: color.brand }, face('semibold')]} accessibilityRole="link" onPress={() => router.push('/sign-in')}>
+                      Sign in
+                    </Text>{' '}
+                    to keep them on your other devices too.
+                  </>
+                )}
+          </Txt>
+        </>
+      )}
+    </TabScreen>
+  );
+}
+
+const styles = themed(() => StyleSheet.create({
+  flex: { flex: 1 },
+  center: { textAlign: 'center' },
+  compareButton: {
+    paddingHorizontal: space[4],
+    paddingVertical: space[2],
+    borderRadius: radius.pill,
+    backgroundColor: color.brandFill,
+    marginBottom: 4,
+  },
+  empty: {
+    alignItems: 'center',
+    gap: space[3],
+    padding: space[6],
+    borderRadius: radius.xl,
+    borderCurve: 'continuous',
+    backgroundColor: color.card,
+    ...shadow.plate,
+  },
+  list: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
+  upsell: { paddingVertical: space[2] },
+  row: { flexDirection: 'row', alignItems: 'center', paddingRight: space[3] },
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 86 },
+  goneRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4] },
+  goneDivider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: space[4] + 22 + space[3] },
+  remove: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandTint },
+  tick: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1.5,
+    borderColor: color.labelTertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tickOn: { backgroundColor: color.brandFill, borderColor: color.brand },
+}));
+
+/** The compare tick beside a saved gym: it sinks under a finger and pops when ticked. */
+function CompareTick({ on, name, onPress }: { on: boolean; name: string; onPress: () => void }) {
+  const pop = usePop(on);
+  return (
+    <Pressy
+      scaleTo={0.85}
+      onPress={() => {
+        haptic.select();
+        onPress();
+      }}
+      accessibilityRole="checkbox"
+      aria-checked={on}
+      accessibilityLabel={`Compare ${name}`}
+      hitSlop={8}
+      style={[styles.tick, on && styles.tickOn]}
+    >
+      {on && (
+        <Animated.View style={pop}>
+          <Icon name="check" size={13} color={color.onBrand} weight="bold" />
+        </Animated.View>
+      )}
+    </Pressy>
+  );
+}

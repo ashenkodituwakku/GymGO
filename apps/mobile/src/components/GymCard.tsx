@@ -1,0 +1,142 @@
+/**
+ * A gym as a card in a horizontal row on the Home and Saved screens: its
+ * photo (a member's, else its own website's; a demo gym's illustration,
+ * labelled as one; or its logo, or "No photo supplied"), its name, where it
+ * is, one status chip and the price.
+ *
+ * On iPhone, pressing and holding shows a preview of the gym's page with a
+ * menu (save, share, directions, compare), as Maps and Photos do. Elsewhere
+ * a tap simply opens the page.
+ */
+
+import { Link } from 'expo-router';
+import { Image, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
+import type { GymSearchResult } from '@gymgo/domain';
+import { distanceLabel } from '@/lib/places';
+import { openDirections, shareGym } from '@/lib/actions';
+import { photoUrl } from '@/lib/api';
+import { demoPicture } from '@/lib/gymPicture';
+import { useApp } from '@/lib/app-state';
+import { TIER } from '@/lib/copy';
+import { haptic } from '@/lib/haptics';
+import { priceLine, priceText } from '@/lib/present';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { MarkImage, useGymMark } from './BrandLogo';
+import { Pressable, usePressScale } from './motion';
+import { useWebsitePhoto } from './PhotoHero';
+import { Icon } from './Icon';
+import { Illustration } from './Illustration';
+import { NoPhoto, TIER_COLOUR, Txt } from './ui';
+
+export function GymCard({ result, width = 216 }: { result: GymSearchResult; width?: number }) {
+  const { account, data, compare, toggleCompare } = useApp();
+  const location = result.record.location;
+  const id = location.id;
+  const tone = TIER_COLOUR[result.tier];
+  const tier = TIER[result.tier];
+  const members = data.memberPrices[id];
+  const price = priceLine(result.offers, members ? { typicalMinor: members.typicalMinor, country: location.address.countryCode } : null);
+  const memberCover = data.covers[id] ? photoUrl(data.covers[id]!) : null;
+  // No member's photo: the one the gym's own website shares, if it has one.
+  const siteCover = useWebsitePhoto(id, !memberCover && !location.isDemoData);
+  const cover = memberCover ?? siteCover;
+  const illustration = cover ? null : demoPicture(location);
+  const mark = useGymMark(location);
+  const press = usePressScale(0.97);
+  const saved = account.saved.includes(id);
+  const comparing = compare.includes(id);
+  const where = [location.address.suburb, result.distanceKm !== null ? distanceLabel(result.distanceKm, result.record.location.address.countryCode) : null]
+    .filter(Boolean)
+    .join(' · ');
+
+  return (
+    <Link href={{ pathname: '/gym/[id]', params: { id } }} asChild>
+      <Link.Trigger>
+        <Pressable
+          onPressIn={() => {
+            haptic.tap();
+            press.onPressIn();
+          }}
+          onPressOut={press.onPressOut}
+          accessibilityRole="link"
+          accessibilityLabel={`${location.name}, ${where}. ${tier.label}. ${priceText(price)}.`}
+          style={styles.press}
+        >
+          {/* Sized here, not on the Pressable: on the web the link wrapper
+              replaces the Pressable's style. */}
+          <View>
+            <Animated.View style={[styles.card, { width }, press.style]}>
+              {cover ? (
+                <Image source={{ uri: cover }} style={styles.image} resizeMode="cover" />
+              ) : illustration ? (
+                <Illustration picture={illustration} style={styles.image} worded />
+              ) : mark ? (
+                <View style={[styles.image, styles.tile, { backgroundColor: color.logoPlate }]}>
+                  <MarkImage mark={mark} name={location.name} width={width * 0.72} height={76} area={5200} />
+                </View>
+              ) : (
+                <NoPhoto style={styles.image} />
+              )}
+              <View style={styles.body}>
+                <Txt variant="headline" numberOfLines={1}>
+                  {location.name}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                  {where}
+                </Txt>
+                <View style={styles.foot}>
+                  <View style={[styles.chip, styles.chipRow, { backgroundColor: tone.tint }]}>
+                    <Icon name={tone.icon} size={11} color={tone.ink} />
+                    <Txt variant="caption" color={tone.ink} style={face('semibold')} numberOfLines={1}>
+                      {tier.label}
+                    </Txt>
+                  </View>
+                  <Txt variant="subhead" color={price.confirmed ? color.label : color.labelSecondary} style={face('semibold')}>
+                    {price.headline}
+                  </Txt>
+                </View>
+              </View>
+            </Animated.View>
+          </View>
+        </Pressable>
+      </Link.Trigger>
+      <Link.Preview />
+      <Link.Menu>
+        <Link.MenuAction icon={saved ? 'bookmark.fill' : 'bookmark'} onPress={() => account.toggleSave(id)}>
+          {saved ? 'Remove from Saved' : 'Save'}
+        </Link.MenuAction>
+        <Link.MenuAction icon="square.and.arrow.up" disabled={location.isDemoData} onPress={() => void shareGym(result.record)}>
+          Share
+        </Link.MenuAction>
+        <Link.MenuAction
+          icon="arrow.triangle.turn.up.right.diamond"
+          disabled={location.isDemoData}
+          onPress={() => void openDirections(result.record)}
+        >
+          Directions
+        </Link.MenuAction>
+        <Link.MenuAction icon="rectangle.split.3x1" onPress={() => toggleCompare(id)}>
+          {comparing ? 'Remove from Compare' : 'Add to Compare'}
+        </Link.MenuAction>
+      </Link.Menu>
+    </Link>
+  );
+}
+
+const styles = themed(() => StyleSheet.create({
+  press: { borderRadius: radius.xl },
+  card: {
+    backgroundColor: color.card,
+    borderRadius: radius.xl,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+    ...shadow.card,
+  },
+  image: { width: '100%', height: 118, backgroundColor: color.fill },
+  tile: { alignItems: 'center', justifyContent: 'center' },
+  body: { padding: space[3], gap: 2 },
+  foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], marginTop: space[2] },
+  chipRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  chip: { paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill, flexShrink: 1 },
+}));

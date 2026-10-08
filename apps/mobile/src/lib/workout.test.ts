@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EQUIPMENT_TYPES } from '@gymgo/domain';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
-import { EXERCISES, generateWorkout, type Kit, knownKit, MUSCLES, TYPICAL_KIT, wayToDo, exerciseName } from './workout';
+import { EXERCISES, generateWorkout, type Kit, knownKit, MUSCLES, TYPICAL_KIT, wayToDo, exerciseName, swapFor, swapInWorkout } from './workout';
 
 describe('the exercise library', () => {
   it('only names equipment GymGO tracks, and every muscle can be trained with typical kit', () => {
@@ -64,5 +64,53 @@ describe('exerciseName', () => {
     expect(exerciseName('back-squat')).toBe('Barbell back squat');
     expect(exerciseName('romanian-deadlift')).toBe('Romanian deadlift');
     expect(exerciseName('')).toBe('This exercise');
+  });
+});
+
+describe('swapping one exercise', () => {
+  const plan = () => generateWorkout({ muscles: ['chest', 'triceps'], available: TYPICAL_KIT, confirmed: [], goal: 'muscle', length: 4, seed: 2 });
+
+  it('puts in another move for the same muscle, with the kit there and not already in the plan', () => {
+    const workout = plan();
+    const swapped = swapInWorkout(workout, 0, { available: TYPICAL_KIT, confirmed: [], goal: 'muscle' });
+    const before = workout.items[0]!;
+    const after = swapped.items[0]!;
+    expect(after.exercise.id).not.toBe(before.exercise.id);
+    expect(after.exercise.primary).toContain(before.muscle ?? before.exercise.primary[0]);
+    for (const kit of after.uses) expect(TYPICAL_KIT).toContain(kit);
+    const ids = swapped.items.map((item) => item.exercise.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    // Only that one changes, and it is dosed for the goal like the rest.
+    expect(swapped.items.slice(1)).toEqual(workout.items.slice(1));
+    expect(after.reps).toMatch(/8–10|10–15/);
+  });
+
+  it('goes through every option for the muscle, one per tap, and comes back round', () => {
+    let workout = generateWorkout({ muscles: ['chest'], available: TYPICAL_KIT, confirmed: [], goal: 'muscle', length: 4, seed: 1 });
+    const start = workout.items[0]!.exercise.id;
+    const seen: string[] = [start];
+    for (let tap = 0; tap < 30; tap += 1) {
+      workout = swapInWorkout(workout, 0, { available: TYPICAL_KIT, confirmed: [], goal: 'muscle' });
+      const id = workout.items[0]!.exercise.id;
+      if (id === start) break;
+      expect(seen).not.toContain(id);
+      seen.push(id);
+    }
+    expect(workout.items[0]!.exercise.id).toBe(start);
+    expect(seen.length).toBeGreaterThan(1);
+  });
+
+  it('keeps a hold a hold and a set of reps a set of reps', () => {
+    const items = [{ exerciseId: 'plank' }, { exerciseId: 'crunch' }];
+    const next = swapFor(items, 0, TYPICAL_KIT);
+    expect(next === null || ['side-plank', 'superman', 'copenhagen'].includes(next.id)).toBe(true);
+  });
+
+  it('has nothing to offer when no other move for the muscle fits the kit', () => {
+    // Body weight only, and the one chest move it allows already in place.
+    const bodyWeightChest = EXERCISES.filter((exercise) => exercise.primary.includes('chest') && wayToDo(exercise, new Set()));
+    expect(bodyWeightChest.length).toBeGreaterThan(0);
+    const only = bodyWeightChest.map((exercise) => ({ exerciseId: exercise.id }));
+    expect(swapFor(only, 0, [])).toBeNull();
   });
 });

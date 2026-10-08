@@ -53,7 +53,8 @@ import { PageScroll } from '@/components/PageScroll';
 import { useOverhang } from '@/lib/layout';
 import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
 import { useTrainingLog } from '@/lib/useTraining';
-import { EXERCISES, exerciseName } from '@/lib/workout';
+import { EXERCISES, TYPICAL_KIT, exerciseName, knownKit, swapFor, type Kit } from '@/lib/workout';
+import { SwapButton } from '@/components/ExerciseCard';
 import { shareText } from '@/lib/actions';
 import { workoutShareText } from '@/lib/insights';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -160,7 +161,7 @@ function NoWorkout({ token }: { token: string | null }) {
 export default function TrainScreen() {
   usePageTitle('Workout');
   const session = useActiveSession();
-  const { account, billing, openPro } = useApp();
+  const { account, billing, openPro, data } = useApp();
   // Kept while the server is away too: loading then fails and says so,
   // where a missing token would ask a signed-in person to sign in.
   const token = account.token;
@@ -191,6 +192,26 @@ export default function TrainScreen() {
   const startRest = useCallback(
     (seconds: number) => updateSession((current) => ({ ...current, restEndsAt: seconds > 0 ? Date.now() + seconds * 1000 : null, restTotal: seconds })),
     [],
+  );
+  // What a swap can use: the gym's machines when it lists enough of them, else a typical gym's (as the builder starts).
+  const gymRecord = session?.gymId ? (data.records.find((record) => record.location.id === session.gymId) ?? null) : null;
+  const available = useMemo<Kit[]>(() => {
+    const kit = knownKit(gymRecord);
+    return kit.has.length >= 3 ? kit.has : [...new Set<Kit>([...TYPICAL_KIT.filter((item) => !kit.lacks.includes(item)), ...kit.has])];
+  }, [gymRecord]);
+  const swapExercise = useCallback(
+    (index: number) => {
+      haptic.select();
+      updateSession((current) => {
+        const next = swapFor(current.items, index, available);
+        const item = current.items[index];
+        if (!next || !item || item.sets.some((set) => set.done)) return current;
+        const muscle = item.muscle ?? EXERCISES.find((exercise) => exercise.id === item.exerciseId)?.primary[0];
+        const replaced: ActiveItem = { ...item, exerciseId: next.id, ...(muscle ? { muscle } : {}), sets: item.sets.map(() => ({ weight: '', reps: '', done: false })) };
+        return { ...current, items: current.items.map((other, at) => (at === index ? replaced : other)) };
+      });
+    },
+    [available],
   );
   const unitNow = session?.unit ?? 'kg';
   const openPlates = useCallback(
@@ -296,6 +317,8 @@ export default function TrainScreen() {
             onPlates={openPlates}
             onChange={changeSets}
             onRest={startRest}
+            swapTo={item.sets.some((set) => set.done) ? null : (swapFor(session.items, index, available)?.name ?? null)}
+            onSwap={swapExercise}
           />
         ))}
 
@@ -342,6 +365,8 @@ const ExerciseLog = memo(function ExerciseLog({
   onPlates,
   onChange,
   onRest,
+  swapTo,
+  onSwap,
 }: {
   index: number;
   item: ActiveItem;
@@ -352,6 +377,9 @@ const ExerciseLog = memo(function ExerciseLog({
   onPlates: (weight: string | null) => void;
   onChange: (index: number, sets: ActiveItem['sets']) => void;
   onRest: (seconds: number) => void;
+  /** What Swap would put here: only before any of its sets is ticked. */
+  swapTo: string | null;
+  onSwap: (index: number) => void;
 }) {
   const exercise = exerciseOf(item.exerciseId);
   const name = exercise?.name ?? item.exerciseId;
@@ -400,6 +428,7 @@ const ExerciseLog = memo(function ExerciseLog({
             {timed && item.planned <= 1 ? exercise?.cue ?? item.reps : `${item.planned} × ${item.reps}${item.restSeconds ? ` · rest ${item.restSeconds} s` : ''}`}
           </Txt>
         </View>
+        {swapTo && <SwapButton name={name} swapTo={swapTo} onSwap={() => onSwap(index)} />}
         {barbell && (
           <Pressable
             onPress={() => onPlates(item.sets.find((set) => set.weight.trim())?.weight ?? (weightGuess !== null ? String(weightGuess) : null))}

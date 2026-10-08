@@ -31,12 +31,15 @@ import {
   generateWorkout,
   knownKit,
   muscleLabel,
+  swapFor,
+  swapInWorkout,
   workoutText,
   type Goal,
   type Kit,
   type KitTally,
   type Length,
   type Muscle,
+  type Workout,
 } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
@@ -79,12 +82,20 @@ export default function WorkoutScreen() {
   const [seed, setSeed] = useState(1);
   const [built, setBuilt] = useState(false);
 
-  const workout = useMemo(
+  const generated = useMemo(
     () => generateWorkout({ muscles, available, confirmed: kit.has, goal, length, seed }),
     // `available` is derived from these.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [muscles, goal, length, seed, effectiveMode, kit],
   );
+  // Exercises swapped one at a time, kept for this plan only: a new plan (or Shuffle) starts afresh.
+  const [swapped, setSwapped] = useState<{ base: Workout; workout: Workout } | null>(null);
+  const workout = swapped && swapped.base === generated ? swapped.workout : generated;
+  const swapItems = workout.items.map((item) => ({ exerciseId: item.exercise.id, muscle: item.muscle }));
+  const swap = (index: number) => {
+    haptic.select();
+    setSwapped({ base: generated, workout: swapInWorkout(workout, index, { available, confirmed: kit.has, goal }) });
+  };
 
   const toggle = (muscle: Muscle) =>
     setMuscles((current) => (current.includes(muscle) ? current.filter((item) => item !== muscle) : [...current, muscle]));
@@ -326,6 +337,8 @@ export default function WorkoutScreen() {
                 uses={item.uses}
                 confirmed={item.confirmed}
                 forGym={record !== null}
+                swapTo={swapFor(swapItems, index, available)?.name ?? null}
+                onSwap={() => swap(index)}
               />
             ))}
 

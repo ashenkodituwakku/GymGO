@@ -8,6 +8,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 import type { DraftSet, WeightUnit } from './training';
+import type { Muscle } from './workout';
 
 const KEY = 'gymgo.training.active.v1';
 
@@ -18,6 +19,8 @@ export interface ActiveItem {
   reps: string;
   restSeconds: number;
   sets: DraftSet[];
+  /** The muscle this place in the plan is for, once it's been swapped (see swapFor). */
+  muscle?: Muscle;
 }
 
 export interface ActiveSession {

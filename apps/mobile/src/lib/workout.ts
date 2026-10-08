@@ -257,6 +257,8 @@ export interface PlannedExercise {
   uses: Kit[];
   /** Every piece of that kit is confirmed at this gym. */
   confirmed: boolean;
+  /** The muscle this place in the plan was picked for: a swap keeps to it. */
+  muscle?: Muscle;
 }
 
 export interface Workout {
@@ -277,6 +279,27 @@ function random(seed: number) {
   return () => {
     state = (state * 1664525 + 1013904223) >>> 0;
     return state / 2 ** 32;
+  };
+}
+
+/** Holds done for a time, and carries done for a distance, rather than for reps. */
+const TIMED = new Set(['plank', 'side-plank', 'superman', 'copenhagen']);
+type Measure = 'reps' | 'time' | 'distance';
+const measureOf = (exercise: Exercise): Measure => (TIMED.has(exercise.id) ? 'time' : exercise.id === 'farmer-carry' ? 'distance' : 'reps');
+
+/** An exercise in a plan: how many sets of what, how long to rest, and the kit it uses. */
+function planned(exercise: Exercise, goal: Goal, available: Set<Kit>, confirmed: Set<Kit>, muscle?: Muscle): PlannedExercise {
+  const [sets, reps, restSeconds] = DOSE[goal][exercise.compound ? 'compound' : 'isolation'];
+  const uses = wayToDo(exercise, available) ?? [];
+  const measure = measureOf(exercise);
+  return {
+    exercise,
+    sets,
+    reps: measure === 'time' ? (goal === 'endurance' ? '45–60 s' : '30–45 s') : measure === 'distance' ? '30–40 m' : reps,
+    restSeconds,
+    uses,
+    confirmed: uses.every((kit) => confirmed.has(kit)),
+    ...(muscle ? { muscle } : {}),
   };
 }
 
@@ -315,6 +338,7 @@ export function generateWorkout(options: {
   };
 
   const chosen: Exercise[] = [];
+  const pickedFor = new Map<string, Muscle>();
   const uncovered: Muscle[] = [];
   // Round-robin over the picked muscles until the session is full, so each
   // gets its fair share, big compound moves first.
@@ -336,6 +360,7 @@ export function generateWorkout(options: {
       const next = queue.options.find((exercise) => !chosen.includes(exercise));
       if (next) {
         chosen.push(next);
+        pickedFor.set(next.id, queue.muscle);
         added = true;
       }
     }
@@ -345,19 +370,7 @@ export function generateWorkout(options: {
   const core = (exercise: Exercise) => exercise.primary.every((muscle) => muscle === 'abs' || muscle === 'obliques');
   chosen.sort((a, b) => Number(core(a)) - Number(core(b)) || Number(b.compound) - Number(a.compound));
 
-  const items: PlannedExercise[] = chosen.map((exercise) => {
-    const [sets, reps, restSeconds] = DOSE[goal][exercise.compound ? 'compound' : 'isolation'];
-    const uses = wayToDo(exercise, available) ?? [];
-    const timed = exercise.id === 'plank' || exercise.id === 'side-plank' || exercise.id === 'superman' || exercise.id === 'copenhagen';
-    return {
-      exercise,
-      sets,
-      reps: timed ? (goal === 'endurance' ? '45–60 s' : '30–45 s') : exercise.id === 'farmer-carry' ? '30–40 m' : reps,
-      restSeconds,
-      uses,
-      confirmed: uses.every((kit) => confirmed.has(kit)),
-    };
-  });
+  const items: PlannedExercise[] = chosen.map((exercise) => planned(exercise, goal, available, confirmed, pickedFor.get(exercise.id)));
 
   // A conditioning finisher, when there's room and a machine for it.
   if (goal === 'endurance' || length === 8) {
@@ -370,6 +383,60 @@ export function generateWorkout(options: {
   }
 
   return { items, uncovered };
+}
+
+// --- Swapping one exercise -----------------------------------------------------
+
+/**
+ * What "Swap" puts in an exercise's place (the machine's taken, or it's not
+ * there): another move for the same muscle that the kit allows, done the same
+ * way (reps, a hold or a carry) and not already in the plan. The moves for a
+ * muscle stand in a fixed order, closest first (the muscle as the main one,
+ * then the same kind of move), and each tap takes the next one along, coming
+ * back round to where it started. Null when there's no other.
+ */
+export function swapFor(
+  items: ReadonlyArray<{ exerciseId: string; muscle?: Muscle }>,
+  index: number,
+  available: Kit[],
+): Exercise | null {
+  const item = items[index];
+  const current = item ? EXERCISES.find((exercise) => exercise.id === item.exerciseId) : undefined;
+  if (!item || !current) return null;
+  const muscle = item.muscle ?? current.primary[0]!;
+  const kit = new Set(available);
+  const ring = EXERCISES.filter(
+    (exercise) =>
+      Boolean(exercise.cardio) === Boolean(current.cardio) &&
+      measureOf(exercise) === measureOf(current) &&
+      exercise.primary.includes(muscle) &&
+      (exercise.id === current.id || wayToDo(exercise, kit) !== null),
+  ).sort(
+    (a, b) =>
+      Number(b.primary[0] === muscle) - Number(a.primary[0] === muscle) ||
+      Number(b.compound === current.compound) - Number(a.compound === current.compound) ||
+      a.name.localeCompare(b.name),
+  );
+  const at = ring.findIndex((exercise) => exercise.id === current.id);
+  const taken = new Set(items.filter((_, other) => other !== index).map((other) => other.exerciseId));
+  for (let step = 1; step < ring.length; step += 1) {
+    const next = ring[(at + step) % ring.length]!;
+    if (!taken.has(next.id)) return next;
+  }
+  return null;
+}
+
+/** The plan with one exercise swapped for the next one along (see swapFor), or as it was when there's none. */
+export function swapInWorkout(workout: Workout, index: number, options: { available: Kit[]; confirmed: Kit[]; goal: Goal }): Workout {
+  const items = workout.items.map((item) => ({ exerciseId: item.exercise.id, muscle: item.muscle }));
+  const next = swapFor(items, index, options.available);
+  const item = workout.items[index];
+  if (!next || !item) return workout;
+  const muscle = item.muscle ?? item.exercise.primary[0];
+  const replacement = item.exercise.cardio
+    ? { ...item, exercise: next, uses: wayToDo(next, new Set(options.available)) ?? [], confirmed: (wayToDo(next, new Set(options.available)) ?? []).every((kit) => options.confirmed.includes(kit)) }
+    : planned(next, options.goal, new Set(options.available), new Set(options.confirmed), muscle);
+  return { ...workout, items: workout.items.map((other, at) => (at === index ? replacement : other)) };
 }
 
 /** Plain-text version for sharing. */

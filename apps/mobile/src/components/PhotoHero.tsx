@@ -318,7 +318,7 @@ export function PhotoHero({
 const styles = themed(() => StyleSheet.create({
   wrap: { gap: space[2], alignItems: 'flex-start' },
   fallback: { gap: space[3] },
-  fallbackRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[1], paddingBottom: space[1] },
+  fallbackRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[1] },
   photo: { height: 180, borderRadius: radius.xl, borderCurve: 'continuous' },
   credit: {
     position: 'absolute',

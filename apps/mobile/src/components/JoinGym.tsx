@@ -219,7 +219,7 @@ const styles = themed(() =>
     flex: { flex: 1 },
     center: { textAlign: 'center' },
     bold: face('semibold'),
-    banner: { marginTop: space[3], gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, alignItems: 'center', ...shadow.plate },
+    banner: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, alignItems: 'center', ...shadow.plate },
     pills: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space[2], alignSelf: 'stretch' },
     // Contents sit at the foot of each tile, so the prices in a row line up when one plan's name takes two lines.
     pill: { minWidth: 92, flexGrow: 1, flexBasis: 92, maxWidth: 160, alignItems: 'center', justifyContent: 'flex-end', gap: 1, paddingVertical: space[2], paddingHorizontal: space[2], borderRadius: radius.md, backgroundColor: color.brandTint },

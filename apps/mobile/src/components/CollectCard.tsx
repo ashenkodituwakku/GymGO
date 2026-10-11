@@ -313,7 +313,6 @@ export function HereNudge({ here, records, onOpen }: { here: Fix | null; records
 const styles = themed(() =>
   StyleSheet.create({
     card: {
-      marginTop: space[3],
       gap: space[3],
       padding: space[4],
       borderRadius: radius.lg,

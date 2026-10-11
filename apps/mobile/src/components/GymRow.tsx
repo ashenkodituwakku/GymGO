@@ -1,7 +1,7 @@
 /**
  * One gym in the results list: its photo (a demo gym's illustration, badged
- * as one; or a friendly tile when nobody has shared one), the name and how far away it is, one status chip, and the
- * price where the eye lands last.
+ * as one; or a friendly tile when nobody has shared one), the name and how far away it is, then one status chip and the
+ * price on the last line, where the eye lands last.
  */
 
 import { Image, StyleSheet, View } from 'react-native';
@@ -91,24 +91,26 @@ export function GymRow({
             </Txt>
           ) : null}
         </View>
-        <View style={[styles.chip, styles.chipRow, { backgroundColor: tone.tint }]}>
-          <Icon name={tone.icon} size={11} color={tone.ink} />
-          <Txt variant="caption" color={tone.ink} style={styles.chipText} numberOfLines={1}>
-            {tier.label}
-          </Txt>
+        {/* The answer and the price share the last line, so the name and suburb get the row's full width. */}
+        <View style={styles.foot}>
+          <View style={[styles.chip, styles.chipRow, { backgroundColor: tone.tint }]}>
+            <Icon name={tone.icon} size={11} color={tone.ink} />
+            <Txt variant="caption" color={tone.ink} style={styles.chipText} numberOfLines={1}>
+              {tier.label}
+            </Txt>
+          </View>
+          <View style={styles.price}>
+            {/* No price at all: just the words. */}
+            {price.headline !== '—' && (
+              <Txt variant="headline" color={price.confirmed ? color.label : color.labelSecondary}>
+                {price.headline}
+              </Txt>
+            )}
+            <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
+              {price.headline === '—' ? 'Price unknown' : price.caption}
+            </Txt>
+          </View>
         </View>
-      </View>
-
-      <View style={styles.trailing}>
-        {/* No price at all: just the words, so a list of unknowns isn't a column of dashes. */}
-        {price.headline !== '—' && (
-          <Txt variant="figure" color={price.confirmed ? color.label : color.labelSecondary}>
-            {price.headline}
-          </Txt>
-        )}
-        <Txt variant="caption" color={color.labelSecondary} numberOfLines={2} style={styles.caption}>
-          {price.caption}
-        </Txt>
       </View>
     </Pressable>
   );
@@ -137,14 +139,12 @@ const styles = themed(() => StyleSheet.create({
   keep: { flexShrink: 0 },
   chipRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   chip: {
-    alignSelf: 'flex-start',
-    marginTop: 3,
+    flexShrink: 1,
     paddingHorizontal: space[2],
     paddingVertical: 2,
     borderRadius: radius.pill,
   },
   chipText: face('semibold'),
-  // Narrow, so the name gets the room: "price unknown" wraps onto two lines.
-  trailing: { alignItems: 'flex-end', maxWidth: 76 },
-  caption: { textAlign: 'right' },
+  foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], marginTop: 4 },
+  price: { flexDirection: 'row', alignItems: 'baseline', gap: 4, flexShrink: 0 },
 }));

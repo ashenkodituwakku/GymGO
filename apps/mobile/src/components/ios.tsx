@@ -29,6 +29,8 @@ export function TabScreen(props: {
   right?: ReactNode;
   /** A soft glow of the accent behind the title (Home), fading as the page scrolls. */
   glow?: boolean;
+  /** Room between the page's blocks, when they're groups of their own (Home). */
+  gap?: number;
   children: ReactNode;
 }) {
   return (
@@ -41,7 +43,21 @@ export function TabScreen(props: {
 /** How tall the compact bar is, below the status bar. */
 const BAR = 44;
 
-function TabScreenInner({ title, eyebrow, right, glow = false, children }: { title: string; eyebrow?: string; right?: ReactNode; glow?: boolean; children: ReactNode }) {
+function TabScreenInner({
+  title,
+  eyebrow,
+  right,
+  glow = false,
+  gap,
+  children,
+}: {
+  title: string;
+  eyebrow?: string;
+  right?: ReactNode;
+  glow?: boolean;
+  gap?: number;
+  children: ReactNode;
+}) {
   const insets = useSafeAreaInsets();
   const clearance = useBottomClearance();
   // Past the tab bar, plus any of the tab the phone has laid out below the screen.
@@ -78,7 +94,7 @@ function TabScreenInner({ title, eyebrow, right, glow = false, children }: { tit
         // The page scrolls under the floating tab bar, so it makes its own room
         // for it rather than letting iOS guess at insets.
         contentInsetAdjustmentBehavior="never"
-        contentContainerStyle={[styles.content, { paddingTop: top, paddingBottom: bottom + space[8] }]}
+        contentContainerStyle={[styles.content, gap !== undefined && { gap }, { paddingTop: top, paddingBottom: bottom + space[8] }]}
         // The scroll bar stops above the tab bar too.
         scrollIndicatorInsets={{ bottom }}
         keyboardShouldPersistTaps="handled"

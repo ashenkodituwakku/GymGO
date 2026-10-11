@@ -152,6 +152,7 @@ export default function Home() {
   return (
     <TabScreen
       glow
+      gap={space[6]}
       eyebrow={clock.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
       title={name ? `${greeting(clock.getHours() * 60)}, ${name}` : greeting(clock.getHours() * 60)}
       right={
@@ -170,6 +171,8 @@ export default function Home() {
         </Pressy>
       }
     >
+      {/* Finding: the search and the four quick picks. */}
+      <View style={styles.group}>
       {/* In your country's words once your settings are read: until then plain "Search", not another country's words swapped a moment later. */}
       <SearchButton placeholder={prefsReady ? searchPrompt(prefs.country) : 'Search'} onPress={() => explore({ focusSearch: true })} />
 
@@ -195,7 +198,10 @@ export default function Home() {
         ))}
       </View>
 
+      </View>
+
       {/* Workout ----------------------------------------------------------- */}
+      <View style={styles.group}>
       {active && (
         <Pressy
           scaleTo={0.97}
@@ -291,7 +297,10 @@ export default function Home() {
         </Txt>
       </Pressable>
 
+      </View>
+
       {/* A trip under way or coming up, then the two finders --------------- */}
+      <View style={styles.group}>
       {trip && (
         <Pressy
           scaleTo={0.97}
@@ -333,11 +342,16 @@ export default function Home() {
         ))}
       </View>
 
+      </View>
+
+      {/* How you're doing: training this week, and the collection. */}
+      <View style={styles.group}>
       <HereNudge here={here} records={data.listed} onOpen={(id) => router.push({ pathname: '/gym/[id]', params: { id } })} />
       {log.status === 'ready' && log.sessions.length > 0 && (
         <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />
       )}
       <CollectionStrip onPress={() => router.push('/collection')} />
+      </View>
 
       {/* Everything below is about a place: it waits for your settings, so
           it opens on your country's city rather than flashing the default. */}
@@ -658,7 +672,7 @@ const styles = themed(() => StyleSheet.create({
   },
   tripIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
   finders: { flexDirection: 'row', gap: space[3] },
-  templatesLink: { alignSelf: 'center', marginTop: -space[1] },
+  templatesLink: { alignSelf: 'center', paddingVertical: space[1] },
   upNext: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -713,6 +727,8 @@ const styles = themed(() => StyleSheet.create({
   center: { textAlign: 'center' },
 
   section: { gap: space[3] },
+  /** Things that belong together, closer to each other than to the next group. */
+  group: { gap: space[3] },
   carousel: { marginHorizontal: -space[4] },
   carouselContent: { paddingHorizontal: space[4], paddingBottom: space[2], gap: space[3] },
   carouselInColumn: { paddingHorizontal: 0 },

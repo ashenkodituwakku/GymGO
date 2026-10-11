@@ -770,7 +770,8 @@ function Sources({ sources }: { sources: Source[] }) {
 }
 
 const styles = themed(() => StyleSheet.create({
-  wrap: { paddingHorizontal: space[4], paddingBottom: space[8] },
+  // One gap between every block on the card, so the pieces passed in (collecting, busy, a day pass) sit like the rest.
+  wrap: { paddingHorizontal: space[4], paddingBottom: space[8], gap: space[3] },
   flex: { flex: 1 },
   center: { textAlign: 'center' },
   bold: face('semibold'),
@@ -783,24 +784,23 @@ const styles = themed(() => StyleSheet.create({
   headerText: { flex: 1, gap: 2 },
   headerTop: { alignItems: 'center', marginBottom: space[2] },
 
-  actions: { flexDirection: 'row', gap: space[2], marginTop: space[2] },
+  actions: { flexDirection: 'row', gap: space[2] },
 
   notice: {
     flexDirection: 'row',
     gap: space[2],
     alignItems: 'flex-start',
-    marginTop: space[3],
     padding: space[3],
     borderRadius: radius.md,
     backgroundColor: color.brandTint,
   },
 
-  verdict: { marginTop: space[4], padding: space[4], borderRadius: radius.xl, borderCurve: 'continuous', gap: space[3] },
+  verdict: { padding: space[4], borderRadius: radius.xl, borderCurve: 'continuous', gap: space[3] },
   verdictHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   verdictEmoji: { fontSize: 34, lineHeight: 42 },
   verdictIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   reasons: { gap: space[2] },
-  ask: { marginTop: space[3], gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
+  ask: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
   askHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginBottom: 2 },
   askCall: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
   askRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
@@ -808,7 +808,7 @@ const styles = themed(() => StyleSheet.create({
   reason: { flexDirection: 'row', gap: space[2], alignItems: 'flex-start' },
   bullet: { width: 5, height: 5, borderRadius: 3, marginTop: 7 },
 
-  facts: { flexDirection: 'row', gap: space[2], marginTop: space[3] },
+  facts: { flexDirection: 'row', gap: space[2] },
   fact: {
     flex: 1,
     alignItems: 'center',
@@ -825,7 +825,6 @@ const styles = themed(() => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[3],
-    marginTop: space[3],
     paddingHorizontal: space[4],
     paddingVertical: space[3],
     borderRadius: radius.lg + 4,
@@ -836,7 +835,7 @@ const styles = themed(() => StyleSheet.create({
   mailRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
 
-  folds: { gap: space[2], marginTop: space[4] },
+  folds: { gap: space[2], marginTop: space[1] },
 
   offer: { gap: 4 },
   offerHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
@@ -871,9 +870,9 @@ const styles = themed(() => StyleSheet.create({
     backgroundColor: color.groupedBackground,
   },
 
-  demo: { textAlign: 'center', marginTop: space[6] },
+  demo: { textAlign: 'center', marginTop: space[3] },
   notes: { gap: 4, marginTop: space[3] },
   sourceRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: space[2] },
   sourceNote: { marginTop: space[2] },
-  logoCredit: { marginTop: space[3] },
+  logoCredit: {},
 }));

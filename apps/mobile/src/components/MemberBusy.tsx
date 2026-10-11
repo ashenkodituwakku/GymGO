@@ -18,7 +18,7 @@ import { haptic } from '@/lib/haptics';
 import { currentFix } from '@/lib/location';
 import { distanceLabel } from '@/lib/places';
 import type { AccountApi } from '@/lib/useAccount';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, space, themed, shadow } from '@/lib/theme';
 import { Icon } from './Icon';
 import { FADE_IN, GLIDE, Pressable } from './motion';
 import { ChoiceChip, PrimaryButton, Txt } from './ui';
@@ -167,7 +167,7 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
 
 const styles = themed(() =>
   StyleSheet.create({
-    wrap: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
+    wrap: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     badge: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
     slim: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3] },

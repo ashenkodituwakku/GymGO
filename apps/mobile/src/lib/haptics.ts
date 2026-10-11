@@ -3,8 +3,9 @@
  * changes, a tap when something opens, a success when something is kept.
  * The buzz does nothing on web, where there is nothing to feel.
  *
- * Each also plays its quiet sound (lib/sounds.ts), on every device and in a
- * browser, so the whole app has sound; the Haptics and Sounds switches are
+ * Taps and choices are felt, not heard: a sound on every touch soon grates.
+ * Something kept or refused also plays its quiet two notes (lib/sounds.ts),
+ * on every device and in a browser; the Haptics and Sounds switches are
  * separate.
  */
 
@@ -25,12 +26,10 @@ const on = () => supported && switchedOn;
 export const haptic = {
   /** A filter chip, a segment, a sheet settling at a new height. */
   select: () => {
-    playSound('select');
     if (on()) void Haptics.selectionAsync();
   },
   /** Opening a gym, tapping a pin. */
   tap: () => {
-    playSound('tap');
     if (on()) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   },
   /** Saving a gym. */

@@ -219,7 +219,7 @@ export default function Profile() {
           icon="sound"
           tile={TILE.orange}
           title="Sounds"
-          subtitle="Taps, check-ins, card reveals, records and the timer"
+          subtitle="Check-ins, card reveals, sets, records and the timer"
           toggle={{ value: prefs.sounds, onChange: (value) => setPref('sounds', value) }}
         />
         <Row

@@ -1,11 +1,12 @@
 /**
  * GymGO's sound effects, made from scratch by scripts/make-sounds.mjs
- * (assets/sounds/). Quiet ones go with every haptic, so the whole app has
- * them: a choice changing, something opening, something kept, something
- * refused (lib/haptics.ts plays them). The moments that matter have their
- * own: checking in, a card's reveal (one per rarity, with foil's glitter on
- * top), finishing a set, a new record, a workout done, a rest over, a set
- * ticked, a gym saved, and the interval timer.
+ * (assets/sounds/): soft marimba and bell tones, never a click. Taps and
+ * choices are silent (their haptic is enough, as on an iPhone); something
+ * kept or refused gets a quiet two notes (lib/haptics.ts plays them). The
+ * moments that matter have their own: checking in, a card's reveal (one per
+ * rarity, with foil's glitter on top), finishing a set, a new record, a
+ * workout done, a rest over, a set ticked, a gym saved, and the interval
+ * timer.
  *
  * A moment's own sound wins: an everyday sound played with it (the success
  * haptic beside a check-in, say) gives way rather than doubling up.
@@ -19,8 +20,6 @@ import type { Rarity } from './rarity';
 
 // Loaded when first played, so nothing here runs (or downloads) before a sound is wanted.
 const FILES = {
-  select: () => require('../../assets/sounds/select.wav'),
-  tap: () => require('../../assets/sounds/tap.wav'),
   success: () => require('../../assets/sounds/success.wav'),
   warn: () => require('../../assets/sounds/warn.wav'),
   tick: () => require('../../assets/sounds/tick.wav'),
@@ -44,7 +43,7 @@ const FILES = {
 export type Sound = keyof typeof FILES;
 
 /** The everyday ones, alongside haptics: quiet, and giving way to a moment's own sound. */
-const EVERYDAY = new Set<Sound>(['select', 'tap', 'success', 'warn']);
+const EVERYDAY = new Set<Sound>(['success', 'warn']);
 
 /** How long after a moment's own sound an everyday one stays quiet. */
 const QUIET_AFTER_MS = 400;

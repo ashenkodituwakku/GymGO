@@ -25,6 +25,7 @@ one row of actions), not from borrowing its assets.
 | [react-native-svg](https://github.com/software-mansion/react-native-svg) | Draws the body on iPhone and Android | MIT |
 | [sharp](https://sharp.pixelplumbing.com) (development only) | Trims and shrinks the brand logos when `scripts/brand-logos.mjs` fetches them. Not in the app | Apache-2.0 |
 | [expo-haptics](https://docs.expo.dev/versions/latest/sdk/haptics/), [expo-location](https://docs.expo.dev/versions/latest/sdk/location/), [AsyncStorage](https://github.com/react-native-async-storage/async-storage) | Taps you can feel, "near me", saved gyms | MIT |
+| [expo-calendar](https://docs.expo.dev/versions/latest/sdk/calendar/) | Opens the phone's own new-event screen for Add to calendar on a gym's page | MIT |
 
 SF Symbols are drawn by iOS itself and are used under Apple's terms, which
 allow them in apps running on Apple platforms. They are not copied into this

@@ -32,6 +32,7 @@ import { cityAt, cityNear, localBudget, type AppPlace, type WorldCity } from '@/
 import { useApp } from '@/lib/app-state';
 import { placeForEnter, suggestGyms } from '@/lib/gymSearch';
 import { suggest, suggestionForEnter, type Suggestion } from '@/lib/suggest';
+import { useRecentPlaces, type RecentPlace } from '@/lib/recentPlaces';
 import type { PackTown } from '@/lib/countryPack';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
 import { resultFor } from '@/lib/results';
@@ -171,16 +172,35 @@ function MapScreen() {
 
   // --- Moving around --------------------------------------------------------
 
+  const recentPlaces = useRecentPlaces();
+  const rememberPlace = recentPlaces.remember;
+
   const pickPlace = useCallback(
     (place: AppPlace) => {
       Keyboard.dismiss();
       setQuery('');
       setFilters((current) => moveTo(current, atPlace(place)));
+      rememberPlace(atPlace(place));
       setNotice(null);
       map.current?.flyTo(place.position, 0.045);
       mainSheet.current?.snapToIndex(1);
     },
-    [],
+    [rememberPlace],
+  );
+
+  /** A place searched before: back there, and to the top of the list. */
+  const pickRecentPlace = useCallback(
+    (place: RecentPlace) => {
+      haptic.select();
+      Keyboard.dismiss();
+      setQuery('');
+      setFilters((current) => moveTo(current, place));
+      rememberPlace(place);
+      setNotice(null);
+      map.current?.flyTo(place.centre, 0.06);
+      mainSheet.current?.snapToIndex(1);
+    },
+    [rememberPlace],
   );
 
   /** One of a country's biggest cities GymGO has no gyms built in for: its gyms are read from the map there. */
@@ -189,11 +209,12 @@ function MapScreen() {
       Keyboard.dismiss();
       setQuery('');
       setFilters((current) => moveTo(current, atWorldCity(city)));
+      rememberPlace(atWorldCity(city));
       setNotice(null);
       map.current?.flyTo(city.centre, 0.1);
       mainSheet.current?.snapToIndex(1);
     },
-    [],
+    [rememberPlace],
   );
 
   /** A suburb or town with gyms, from your country's gyms kept on the device. */
@@ -201,12 +222,14 @@ function MapScreen() {
     (town: PackTown) => {
       Keyboard.dismiss();
       setQuery('');
-      setFilters((current) => moveTo(current, { centre: town.position, placeName: town.name, timezone: town.timezone, countryCode: town.country }));
+      const where = { centre: town.position, placeName: town.name, timezone: town.timezone, countryCode: town.country };
+      setFilters((current) => moveTo(current, where));
+      rememberPlace(where);
       setNotice(null);
       map.current?.flyTo(town.position, 0.06);
       mainSheet.current?.snapToIndex(1);
     },
-    [],
+    [rememberPlace],
   );
 
   // openGym is defined below; the search reaches it through this ref.
@@ -236,7 +259,9 @@ function MapScreen() {
       setQuery('');
       // Another country, without Pro: the list says what Pro adds.
       if (!mayExploreRef.current(found.countryCode)) haptic.warn();
-      setFilters((current) => moveTo(current, { centre: { lat: found.lat, lng: found.lng }, placeName: found.name, timezone: found.timezone, countryCode: found.countryCode }));
+      const where = { centre: { lat: found.lat, lng: found.lng }, placeName: found.name, timezone: found.timezone, countryCode: found.countryCode };
+      setFilters((current) => moveTo(current, where));
+      rememberPlace(where);
       setNotice(null);
       // A town gets about 11 km of map, a suburb about 5.
       map.current?.flyTo({ lat: found.lat, lng: found.lng }, found.kind === 'city' ? 0.1 : 0.045);
@@ -246,7 +271,7 @@ function MapScreen() {
       haptic.warn();
       setNotice(problemText(error, EMPTY.outOfArea));
     }
-  }, []);
+  }, [rememberPlace]);
 
   /** A suggestion tapped (or the top one, on Enter): go there, or open the gym. */
   const pickSuggestion = useCallback(
@@ -529,6 +554,14 @@ function MapScreen() {
       if (Platform.OS !== 'web') return;
       const onKey = (event: KeyboardEvent) => {
         if (event.key === 'Escape' && !event.defaultPrevented && escape.current()) event.preventDefault();
+        // "/" jumps to the search box, as on most sites, unless you're already typing somewhere.
+        const target = event.target as HTMLElement | null;
+        const typing = target !== null && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+        if (event.key === '/' && !typing && !event.metaKey && !event.ctrlKey && !event.altKey) {
+          event.preventDefault();
+          mainSheet.current?.snapToIndex(2);
+          searchInput.current?.focus();
+        }
       };
       window.addEventListener('keydown', onKey);
       return () => window.removeEventListener('keydown', onKey);
@@ -595,6 +628,9 @@ function MapScreen() {
       onSearchFocus={() => mainSheet.current?.snapToIndex(2)}
       suggestions={suggestions}
       onPickSuggestion={pickSuggestion}
+      recentPlaces={recentPlaces.places}
+      onPickRecentPlace={pickRecentPlace}
+      onClearRecentPlaces={recentPlaces.clear}
       onLookUp={lookUp}
       onSubmitSearch={submitSearch}
       onToggleEquipment={toggleEquipment}

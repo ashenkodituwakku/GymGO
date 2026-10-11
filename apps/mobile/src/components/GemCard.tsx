@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useId } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from './motion';
 import Animated, {
   Easing,
@@ -228,13 +228,13 @@ function CardArt({ record, cover, name, width, height }: { record: GymRecord | n
 const ROOM_FOR_ICON = 64;
 
 function Plate({ record, name, width, height }: { record: GymRecord | null; name: string; width: number; height: number }) {
-  if (!record) return <NoPhoto compact={height < ROOM_FOR_ICON} style={styles.noPhoto} />;
+  if (!record) return <NoPhoto compact={height < ROOM_FOR_ICON} name={name} onColour style={styles.noPhoto} />;
   return <RecordPlate record={record} name={name} width={width} height={height} />;
 }
 
 function RecordPlate({ record, name, width, height }: { record: GymRecord; name: string; width: number; height: number }) {
   const mark = useGymMark(record.location);
-  if (!mark) return <NoPhoto compact={height < ROOM_FOR_ICON} style={styles.noPhoto} />;
+  if (!mark) return <NoPhoto compact={height < ROOM_FOR_ICON} name={name} onColour style={styles.noPhoto} />;
   return (
     <View style={[styles.plate, { width, height }]}>
       <MarkImage mark={mark} name={name} width={width - space[6]} height={height - space[4]} area={width * height * 0.32} />
@@ -245,7 +245,8 @@ function RecordPlate({ record, name, width, height }: { record: GymRecord; name:
 /** A Foil card's rainbow sheen over its window. */
 function Foil({ id }: { id: string }) {
   return (
-    <Svg style={[StyleSheet.absoluteFill, styles.noTouch]} width="100%" height="100%" preserveAspectRatio="none" pointerEvents="none">
+    // A browser reads pass-through from the style; the prop is for a phone's SVG view, which doesn't.
+    <Svg style={[StyleSheet.absoluteFill, styles.noTouch]} width="100%" height="100%" preserveAspectRatio="none" {...(Platform.OS === 'web' ? null : { pointerEvents: 'none' as const })}>
       <Defs>
         <LinearGradient id={id} x1="0" y1="1" x2="1" y2="0">
           {PRISM.map((stop, at) => (
@@ -329,7 +330,7 @@ const styles = themed(() =>
     window: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden', paddingTop: WINDOW_TOP, paddingHorizontal: WINDOW_SIDE, paddingBottom: WINDOW_SIDE },
     photo: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
     plate: { alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.logoPlate },
-    noPhoto: { alignSelf: 'stretch', flex: 1, borderRadius: radius.md, backgroundColor: color.card },
+    noPhoto: { alignSelf: 'stretch', flex: 1, borderRadius: radius.md },
     topRow: { position: 'absolute', top: space[2], left: space[2], right: space[2], flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space[1] },
     rarity: {
       flexShrink: 1,

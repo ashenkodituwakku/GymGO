@@ -8,6 +8,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 import { ActivityIndicator, Platform, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle } from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
 import { TIER } from '@/lib/copy';
+import { monogram } from '@/lib/monogram';
 import { haptic } from '@/lib/haptics';
 import { color, dropShadow, face, HIT, radius, shadow, space, themed, type, webFocusRing } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
@@ -507,13 +508,52 @@ function useFocus({ onFocus, onBlur }: Pick<TextInputProps, 'onFocus' | 'onBlur'
  * in words rather than filling the space with a picture of nothing.
  * Decoration only: the card's own label already names the gym.
  */
-export function NoPhoto({ compact = false, style }: { compact?: boolean; style?: StyleProp<ViewStyle> }) {
+/**
+ * Where a gym has no photo or logo. Given its name, the gym's initials on a
+ * soft wash of the accent, with "No photo supplied" under them where there's
+ * room: lettering, so it's never taken for a picture of the place. `onColour`
+ * sits it straight on a coloured ground (a collection card's window).
+ */
+export function NoPhoto({
+  compact = false,
+  style,
+  name,
+  onColour = false,
+}: {
+  compact?: boolean;
+  style?: StyleProp<ViewStyle>;
+  name?: string;
+  onColour?: boolean;
+}) {
+  const letters = name ? monogram(name) : '';
+  if (!letters) {
+    return (
+      <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.noPhoto, style]}>
+        {!compact && <Icon name="photo" size={20} color={color.labelTertiary} />}
+        <Txt variant="caption" color={color.labelSecondary} style={[styles.noPhotoText, compact && styles.noPhotoCompact]}>
+          No photo supplied
+        </Txt>
+      </View>
+    );
+  }
+  const ink = onColour ? '#FFFFFF' : color.brand;
   return (
-    <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.noPhoto, style]}>
-      {!compact && <Icon name="photo" size={20} color={color.labelTertiary} />}
-      <Txt variant="caption" color={color.labelSecondary} style={[styles.noPhotoText, compact && styles.noPhotoCompact]}>
-        No photo supplied
-      </Txt>
+    <View
+      aria-hidden
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[styles.monogram, { backgroundColor: onColour ? 'transparent' : color.brandTint }, style]}
+    >
+      <View style={[styles.halo, styles.haloBig, { backgroundColor: onColour ? 'rgba(255,255,255,0.12)' : color.brandWash }]} />
+      <View style={[styles.halo, styles.haloSmall, { backgroundColor: onColour ? 'rgba(255,255,255,0.08)' : color.brandWash }]} />
+      <Text allowFontScaling={false} numberOfLines={1} style={[compact ? styles.lettersCompact : styles.letters, { color: ink }]}>
+        {letters}
+      </Text>
+      {!compact && (
+        <Txt variant="caption" color={onColour ? 'rgba(255,255,255,0.82)' : color.labelSecondary} style={styles.noPhotoText}>
+          No photo supplied
+        </Txt>
+      )}
     </View>
   );
 }
@@ -678,6 +718,12 @@ const styles = themed(() => StyleSheet.create({
   noPhoto: { alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: color.fill, padding: space[1] },
   noPhotoText: { textAlign: 'center', ...face('medium') },
   noPhotoCompact: { fontSize: 10, lineHeight: 12 },
+  monogram: { alignItems: 'center', justifyContent: 'center', gap: 2, overflow: 'hidden', padding: space[1] },
+  halo: { position: 'absolute', borderRadius: 9999, aspectRatio: 1 },
+  haloBig: { width: '78%', top: '-38%', right: '-22%' },
+  haloSmall: { width: '46%', bottom: '-24%', left: '-12%' },
+  letters: { fontSize: 30, lineHeight: 34, letterSpacing: 0.5, ...face('bold') },
+  lettersCompact: { fontSize: 19, lineHeight: 22, letterSpacing: 0.3, ...face('bold') },
   field: { gap: 6 },
   fieldLabel: face('medium'),
   fieldInput: {

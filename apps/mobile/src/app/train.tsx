@@ -289,6 +289,7 @@ export default function TrainScreen() {
             {session.gymName ? `${session.gymName} · ` : ''}
             <Elapsed since={session.startedAt} /> so far · {ticked} of {planned} sets
           </Txt>
+          <SetsBar done={ticked} planned={planned} />
         </View>
 
         {!typedAnyWeight && (
@@ -427,27 +428,30 @@ const ExerciseLog = memo(function ExerciseLog({
             {index + 1}
           </Txt>
         </View>
+        {/* The name gets the card's full width; Swap and Plates sit on the line under it. */}
         <View style={styles.flex}>
           <Txt variant="headline">{name}</Txt>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            {timed && item.planned <= 1 ? exercise?.cue ?? item.reps : `${item.planned} × ${item.reps}${item.restSeconds ? ` · rest ${item.restSeconds} s` : ''}`}
-          </Txt>
-        </View>
-        {swapTo && <SwapButton name={name} swapTo={swapTo} onSwap={() => onSwap(index)} />}
-        {barbell && (
-          <Pressable
-            onPress={() => onPlates(item.sets.find((set) => set.weight.trim())?.weight ?? (weightGuess !== null ? String(weightGuess) : null))}
-            accessibilityRole="button"
-            accessibilityLabel={`Plates to load on the bar for ${name}`}
-            hitSlop={8}
-            style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
-          >
-            <Icon name="plates" size={15} color={color.brand} />
-            <Txt variant="caption" color={color.brand} style={face('semibold')}>
-              Plates
+          <View style={styles.metaRow}>
+            <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
+              {timed && item.planned <= 1 ? exercise?.cue ?? item.reps : `${item.planned} × ${item.reps}${item.restSeconds ? ` · rest ${item.restSeconds} s` : ''}`}
             </Txt>
-          </Pressable>
-        )}
+            {swapTo && <SwapButton name={name} swapTo={swapTo} onSwap={() => onSwap(index)} />}
+            {barbell && (
+              <Pressable
+                onPress={() => onPlates(item.sets.find((set) => set.weight.trim())?.weight ?? (weightGuess !== null ? String(weightGuess) : null))}
+                accessibilityRole="button"
+                accessibilityLabel={`Plates to load on the bar for ${name}`}
+                hitSlop={8}
+                style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
+              >
+                <Icon name="plates" size={15} color={color.brand} />
+                <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                  Plates
+                </Txt>
+              </Pressable>
+            )}
+          </View>
+        </View>
       </View>
 
       {!timed && (
@@ -765,6 +769,26 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
   );
 }
 
+/** How far through the workout's sets you are, filling as you tick them. */
+function SetsBar({ done, planned }: { done: number; planned: number }) {
+  const share = planned > 0 ? Math.min(1, done / planned) : 0;
+  const shown = useSharedValue(share);
+  useEffect(() => {
+    shown.value = withTiming(share, { duration: 420, easing: EASE_OUT, reduceMotion: ReduceMotion.System });
+  }, [share, shown]);
+  const fill = useAnimatedStyle(() => ({ width: `${shown.value * 100}%` }));
+  return (
+    <View
+      style={styles.barTrack}
+      accessibilityRole="progressbar"
+      accessibilityLabel={`${done} of ${planned} sets done`}
+      accessibilityValue={{ min: 0, max: planned, now: done }}
+    >
+      <Animated.View style={[styles.barFill, fill]} />
+    </View>
+  );
+}
+
 const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
@@ -783,7 +807,10 @@ const styles = themed(() => StyleSheet.create({
   unitRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   unitSwitch: { width: 140 },
   card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[2], ...shadow.plate },
-  cardHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: 2 },
+  barTrack: { height: 6, borderRadius: 3, backgroundColor: color.fill, overflow: 'hidden', marginTop: space[2] },
+  barFill: { height: '100%', borderRadius: 3, backgroundColor: color.brandFill },
   number: { width: 28, height: 28, borderRadius: 14, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
   platesButton: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[2], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
   guides: { gap: space[1] },

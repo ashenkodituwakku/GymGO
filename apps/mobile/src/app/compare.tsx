@@ -12,6 +12,7 @@ import { summariseWeek, type GymSearchResult, type Tri } from '@gymgo/domain';
 import { Icon } from '@/components/Icon';
 import { PrimaryButton, TIER_COLOUR, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
+import { haptic } from '@/lib/haptics';
 import { distanceLabel, moneyLabel } from '@/lib/places';
 import { TIER, accessShort, timeLabel, visitWhen } from '@/lib/copy';
 import { visitIsLater } from '@/lib/query';
@@ -30,11 +31,14 @@ const tri = (value: Tri): Cell =>
 const NUMBER_WORD: Record<number, string> = { 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six' };
 export default function Compare() {
   usePageTitle('Compare');
-  const { data, filters, compare, toggleCompare, clearCompare, billing, openPro, prefsReady } = useApp();
+  const { data, account, filters, compare, toggleCompare, clearCompare, billing, openPro, prefsReady } = useApp();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const asOf = useMemo(() => new Date(), [filters, data.records]);
-  const byId = useMemo(() => resultsById(filters, data.records, asOf, data.ratings, compare), [filters, data.records, asOf, data.ratings, compare]);
+  const byId = useMemo(
+    () => resultsById(filters, data.records, asOf, data.ratings, [...compare, ...account.saved]),
+    [filters, data.records, asOf, data.ratings, compare, account.saved],
+  );
   const gyms = compare.map((id) => byId.get(id)).filter((result): result is GymSearchResult => result !== undefined);
 
   // Every row is worked out for your visit and place, so a cold link waits for your settings.
@@ -49,6 +53,8 @@ export default function Compare() {
   if (gyms.length < 2) {
     // One picked: say which, so it's clear the next pick completes the pair.
     const only = gyms[0]?.record.location.name;
+    // Your saved gyms, to tick right here rather than going back to Saved.
+    const pickable = account.saved.map((id) => byId.get(id)).filter((result): result is GymSearchResult => result !== undefined).slice(0, 6);
     return (
       <View style={styles.empty}>
         <Stack.Screen options={{ title: 'Compare' }} />
@@ -57,11 +63,46 @@ export default function Compare() {
           {only ? 'Pick one more gym' : `Pick ${billing.limits.compare === 2 ? 'two' : `two to ${NUMBER_WORD[billing.limits.compare] ?? billing.limits.compare}`} gyms`}
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          {only
-            ? `${only} is picked. Tick another in Saved, or tap the compare button on another gym’s page.`
-            : 'Tick them in Saved, or tap the compare button on a gym’s page. On iPhone you can also press and hold a gym on Home.'}
+          {pickable.length > 0
+            ? only
+              ? `${only} is picked. Tick another of your saved gyms, or tap the compare button on another gym’s page.`
+              : 'Tick them from your saved gyms here, or tap the compare button on a gym’s page.'
+            : only
+              ? `${only} is picked. Tick another in Saved, or tap the compare button on another gym’s page.`
+              : 'Tick them in Saved, or tap the compare button on a gym’s page. On iPhone you can also press and hold a gym on Home.'}
         </Txt>
-        <PrimaryButton label="Go to Saved" onPress={() => router.navigate('/saved')} />
+        {pickable.length > 0 && (
+          <View style={styles.pickList}>
+            {pickable.map((result, index) => {
+              const id = result.record.location.id;
+              const on = compare.includes(id);
+              return (
+                <Pressable
+                  key={id}
+                  onPress={() => {
+                    haptic.select();
+                    toggleCompare(id);
+                  }}
+                  accessibilityRole="checkbox"
+                  aria-checked={on}
+                  accessibilityLabel={`Compare ${result.record.location.name}`}
+                  style={({ pressed }) => [styles.pickRow, index > 0 && styles.pickRule, pressed && { backgroundColor: color.fill }]}
+                >
+                  <View style={styles.pickText}>
+                    <Txt variant="headline" numberOfLines={1}>
+                      {result.record.location.name}
+                    </Txt>
+                    <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                      {[result.record.location.address.suburb, TIER[result.tier].label].filter(Boolean).join(' · ')}
+                    </Txt>
+                  </View>
+                  <View style={[styles.pickTick, on && styles.pickTickOn]}>{on && <Icon name="check" size={13} color={color.onBrand} weight="bold" />}</View>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+        <PrimaryButton label="Go to Saved" tone={pickable.length > 0 ? 'quiet' : 'brand'} onPress={() => router.navigate('/saved')} />
       </View>
     );
   }
@@ -277,4 +318,10 @@ const styles = themed(() => StyleSheet.create({
   cells: { flexDirection: 'row', gap: space[3] },
   cell: { flex: 1 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
+  pickList: { alignSelf: 'stretch', maxWidth: 480, width: '100%', backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
+  pickRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
+  pickRule: { borderTopWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
+  pickText: { flex: 1, minWidth: 0 },
+  pickTick: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: color.separator, alignItems: 'center', justifyContent: 'center' },
+  pickTickOn: { backgroundColor: color.brandFill, borderColor: color.brand },
 }));

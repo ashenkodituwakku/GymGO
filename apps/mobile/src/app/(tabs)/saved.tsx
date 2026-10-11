@@ -1,6 +1,8 @@
 /**
  * Saved: the gyms you kept, with their answer for your current search, and
  * a tick on each to pick gyms to compare side by side (2 on Free, 4 on Pro).
+ * With nothing saved yet, the gyms you looked at lately, each a tap from
+ * saving.
  */
 
 import { useRouter } from 'expo-router';
@@ -21,18 +23,19 @@ import { usePageTitle } from '@/lib/pageTitle';
 
 export default function Saved() {
   usePageTitle('Saved');
-  const { data, account, filters, compare, toggleCompare, requestExplore, billing, openPro, prefsReady } = useApp();
+  const { data, account, filters, compare, toggleCompare, requestExplore, billing, openPro, prefsReady, recents } = useApp();
   const router = useRouter();
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   const byId = useMemo(
-    () => resultsById(filters, data.records, asOf, data.ratings, [...account.saved, ...compare]),
-    [filters, data.records, asOf, data.ratings, account.saved, compare],
+    () => resultsById(filters, data.records, asOf, data.ratings, [...account.saved, ...compare, ...recents]),
+    [filters, data.records, asOf, data.ratings, account.saved, compare, recents],
   );
   const saved = account.saved.map((id) => byId.get(id)).filter((result) => result !== undefined);
   // Saved gyms the server says it no longer has: shown so they can be
   // removed, rather than taking a Free space nobody can see.
   const gone = account.saved.filter((id) => !byId.has(id) && data.gone.has(id));
   const picked = compare.filter((id) => byId.has(id));
+  const lately = recents.map((id) => byId.get(id)).filter((result) => result !== undefined).slice(0, 5);
 
   return (
     <TabScreen
@@ -71,7 +74,49 @@ export default function Saved() {
             }}
           />
         </View>
-      ) : (
+      ) : null}
+      {prefsReady && saved.length === 0 && gone.length === 0 && lately.length > 0 && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.latelyHead}>
+            LOOKED AT LATELY
+          </Txt>
+          <View style={styles.list}>
+            {lately.map((result, index) => {
+              const id = result.record.location.id;
+              return (
+                <View key={id}>
+                  {index > 0 && <View style={styles.divider} />}
+                  <View style={styles.row}>
+                    <View style={styles.flex}>
+                      <GymRow
+                        result={result}
+                        visitMinute={filters.visitMinuteOfDay}
+                        cover={data.covers[id] ?? null}
+                        memberTypicalMinor={data.memberPrices[id]?.typicalMinor ?? null}
+                        onPress={() => router.push({ pathname: '/gym/[id]', params: { id } })}
+                      />
+                    </View>
+                    <Pressy
+                      scaleTo={0.92}
+                      onPress={() => {
+                        haptic.success();
+                        account.toggleSave(id);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Save ${result.record.location.name}`}
+                      hitSlop={6}
+                      style={styles.saveButton}
+                    >
+                      <Icon name="save" size={16} color={color.brand} />
+                    </Pressy>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </>
+      )}
+      {!prefsReady || (saved.length === 0 && gone.length === 0) ? null : (
         <>
           <Txt variant="footnote" color={color.labelSecondary}>
             Tick up to {billing.limits.compare} to compare them side by side.
@@ -183,6 +228,8 @@ const styles = themed(() => StyleSheet.create({
   },
   list: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
   upsell: { paddingVertical: space[2] },
+  latelyHead: { marginTop: space[2], marginLeft: space[4] },
+  saveButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
   row: { flexDirection: 'row', alignItems: 'center', paddingRight: space[3] },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 86 },
   goneRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4] },

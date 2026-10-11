@@ -110,3 +110,16 @@ export function nextTemplateDay(template: WorkoutTemplate, sessions: readonly Tr
   if (!last) return 0;
   return (names.indexOf(last.name) + 1) % template.days.length;
 }
+
+/**
+ * The plan you're following and its next day: the template of the latest
+ * template workout in your log. Null until you've done one, so Home only
+ * offers "Up next" to someone already on a plan.
+ */
+export function upNext(sessions: readonly TrainingSession[]): { template: WorkoutTemplate; day: number } | null {
+  const latest = [...sessions].sort((a, b) => b.finishedAt.localeCompare(a.finishedAt)).find((session) => workoutTitle(session.name).plan !== null);
+  if (!latest) return null;
+  const plan = workoutTitle(latest.name).plan;
+  const template = TEMPLATES.find((candidate) => candidate.name === plan);
+  return template ? { template, day: nextTemplateDay(template, sessions) } : null;
+}

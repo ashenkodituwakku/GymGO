@@ -1,29 +1,26 @@
 /**
  * GymGO's sound effects, made from scratch by scripts/make-sounds.mjs
- * (assets/sounds/): soft marimba and bell tones, never a click. Taps and
- * choices are silent (their haptic is enough, as on an iPhone); something
- * kept or refused gets a quiet two notes (lib/haptics.ts plays them). The
- * moments that matter have their own: checking in, a card's reveal (one per
- * rarity, with foil's glitter on top), finishing a set, a new record, a
- * workout done, a rest over, a set ticked, a gym saved, and the interval
- * timer.
+ * (assets/sounds/): soft marimba and bell tones, never a click. Only the
+ * moments worth a little thrill have one: checking in at a gym, a card's
+ * reveal, a finished set, a new record. Buttons make no sound (their
+ * haptic is enough). The interval timer and the rest timer keep their cues,
+ * so you can train without watching the screen.
  *
- * A moment's own sound wins: an everyday sound played with it (the success
- * haptic beside a check-in, say) gives way rather than doubling up.
+ * A card's reveal is two layers: its rarity's sound (how big: two notes for
+ * Common up to a run, a chord and glitter for Legendary) and its gem's
+ * signature over it (how it sounds: a warm bell for Ruby, glass for
+ * Sapphire, a marimba trill for Emerald...), written to always agree.
+ * Foil adds its glitter on top.
  *
  * Off with the Sounds switch in Profile → Settings. On a phone they follow
  * the silent switch and play over your music without stopping it. In a
  * browser they play once the page has been tapped, as browsers require.
  */
 
-import type { Rarity } from './rarity';
+import type { Gem, Rarity } from './rarity';
 
 // Loaded when first played, so nothing here runs (or downloads) before a sound is wanted.
 const FILES = {
-  success: () => require('../../assets/sounds/success.wav'),
-  warn: () => require('../../assets/sounds/warn.wav'),
-  tick: () => require('../../assets/sounds/tick.wav'),
-  save: () => require('../../assets/sounds/save.wav'),
   scan: () => require('../../assets/sounds/scan.wav'),
   checkin: () => require('../../assets/sounds/checkin.wav'),
   'card-common': () => require('../../assets/sounds/card-common.wav'),
@@ -32,23 +29,22 @@ const FILES = {
   'card-epic': () => require('../../assets/sounds/card-epic.wav'),
   'card-legendary': () => require('../../assets/sounds/card-legendary.wav'),
   foil: () => require('../../assets/sounds/foil.wav'),
+  'gem-ruby': () => require('../../assets/sounds/gem-ruby.wav'),
+  'gem-sapphire': () => require('../../assets/sounds/gem-sapphire.wav'),
+  'gem-emerald': () => require('../../assets/sounds/gem-emerald.wav'),
+  'gem-amethyst': () => require('../../assets/sounds/gem-amethyst.wav'),
+  'gem-topaz': () => require('../../assets/sounds/gem-topaz.wav'),
+  'gem-aquamarine': () => require('../../assets/sounds/gem-aquamarine.wav'),
+  'gem-rose': () => require('../../assets/sounds/gem-rose.wav'),
+  'gem-onyx': () => require('../../assets/sounds/gem-onyx.wav'),
   'set-complete': () => require('../../assets/sounds/set-complete.wav'),
   record: () => require('../../assets/sounds/record.wav'),
-  finish: () => require('../../assets/sounds/finish.wav'),
   'rest-done': () => require('../../assets/sounds/rest-done.wav'),
   'timer-go': () => require('../../assets/sounds/timer-go.wav'),
   'timer-count': () => require('../../assets/sounds/timer-count.wav'),
 } satisfies Record<string, () => unknown>;
 
 export type Sound = keyof typeof FILES;
-
-/** The everyday ones, alongside haptics: quiet, and giving way to a moment's own sound. */
-const EVERYDAY = new Set<Sound>(['success', 'warn']);
-
-/** How long after a moment's own sound an everyday one stays quiet. */
-const QUIET_AFTER_MS = 400;
-/** An everyday sound waits this long, in case a moment's own sound comes with it. */
-const EVERYDAY_WAIT_MS = 25;
 
 let enabled = true;
 
@@ -111,40 +107,22 @@ function start(sound: Sound): void {
   }
 }
 
-let lastMoment = 0;
-let waiting: ReturnType<typeof setTimeout> | null = null;
-const lastEveryday = new Map<Sound, number>();
-
 /**
  * Play one of GymGO's sounds, unless Sounds is off. `afterMs` waits first
- * (foil's glitter after the card's own sound).
+ * (a gem's signature after its card's first notes).
  */
 export function playSound(sound: Sound, afterMs = 0): void {
   if (!enabled) return;
-  const now = Date.now();
-  if (EVERYDAY.has(sound)) {
-    if (now - lastMoment < QUIET_AFTER_MS) return;
-    // Not the same one twice in a blink (a slider, a sheet settling).
-    if (now - (lastEveryday.get(sound) ?? 0) < 70) return;
-    lastEveryday.set(sound, now);
-    if (waiting) clearTimeout(waiting);
-    waiting = setTimeout(() => {
-      waiting = null;
-      if (enabled && Date.now() - lastMoment >= QUIET_AFTER_MS) start(sound);
-    }, EVERYDAY_WAIT_MS);
-    return;
-  }
-  lastMoment = now;
-  if (waiting) {
-    clearTimeout(waiting);
-    waiting = null;
-  }
   if (afterMs > 0) setTimeout(() => enabled && start(sound), afterMs);
   else start(sound);
 }
 
-/** A card's reveal: its rarity's sound, with foil's glitter on top. */
-export function playCardSound(rarity: Rarity, foil: boolean): void {
+/** When each rarity's sound has played enough for the gem's signature to come in over it. */
+const GEM_AFTER_MS: Record<Rarity, number> = { common: 120, uncommon: 200, rare: 260, epic: 420, legendary: 560 };
+
+/** A card's reveal: its rarity's sound, its gem's signature over it, and foil's glitter on top. */
+export function playCardSound(rarity: Rarity, gem: Gem, foil: boolean): void {
   playSound(`card-${rarity}`);
-  if (foil) playSound('foil', 380);
+  playSound(`gem-${gem}`, GEM_AFTER_MS[rarity]);
+  if (foil) playSound('foil', GEM_AFTER_MS[rarity] + 220);
 }

@@ -119,9 +119,9 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
   const look = cardFor(pull.entry);
   const gem = gemInfo(look.gem);
   const legendary = look.rarity === 'legendary';
-  // A new card or an upgrade: its rarity's sound (and foil's glitter) as it turns over. Not for one you're only looking at.
+  // A new card or an upgrade: its rarity's sound, its gem's signature (and foil's glitter) as it turns over. Not for one you're only looking at.
   useEffect(() => {
-    if (!pull.viewing) playCardSound(look.rarity, look.foil);
+    if (!pull.viewing) playCardSound(look.rarity, look.gem, look.foil);
     // Once, as it appears.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

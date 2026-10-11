@@ -260,9 +260,8 @@ export default function TrainScreen() {
       log.add(saved);
       endSession();
       haptic.success();
-      // The workout's fanfare, and a new record's on top of it.
-      playSound('finish');
-      if (records.length > 0) playSound('record', 700);
+      // A new record is worth a fanfare.
+      if (records.length > 0) playSound('record', 250);
       setDone({ session: saved, records });
     } catch (error) {
       setProblem(error instanceof ApiError ? error.message : 'Couldn’t reach the GymGO server. Your workout is still here; try again.');
@@ -414,7 +413,6 @@ const ExerciseLog = memo(function ExerciseLog({
     if (parseWeight(weight) === undefined) return setHint(`That weight doesn’t read as a number of ${unit}.`);
     setHint(null);
     haptic.tap();
-    playSound('tick');
     setAt(at, { done: true, weight, reps });
     // Rest after every set but the exercise's last.
     if (at < item.sets.length - 1 && item.restSeconds > 0) onRest(item.restSeconds);

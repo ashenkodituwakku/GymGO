@@ -3,15 +3,12 @@
  * changes, a tap when something opens, a success when something is kept.
  * The buzz does nothing on web, where there is nothing to feel.
  *
- * Taps and choices are felt, not heard: a sound on every touch soon grates.
- * Something kept or refused also plays its quiet two notes (lib/sounds.ts),
- * on every device and in a browser; the Haptics and Sounds switches are
- * separate.
+ * Felt, not heard: buttons make no sound (lib/sounds.ts keeps sounds for
+ * the collection's moments).
  */
 
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
-import { playSound } from './sounds';
 
 const supported = Platform.OS === 'ios' || Platform.OS === 'android';
 let switchedOn = true;
@@ -34,12 +31,10 @@ export const haptic = {
   },
   /** Saving a gym. */
   success: () => {
-    playSound('success');
     if (on()) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   },
   /** Something the person asked for could not be done. */
   warn: () => {
-    playSound('warn');
     if (on()) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
   },
 };

@@ -16,7 +16,7 @@ import { LIMITS, haversineKm } from '@gymgo/domain';
 import { ApiError, problemText } from './api';
 import { FOCUS_COUNTRY, canSearchIn, deviceTimeZone, openingPlace } from './country';
 import { setHapticsEnabled } from './haptics';
-import { playSound, setSoundsEnabled } from './sounds';
+import { setSoundsEnabled } from './sounds';
 import { currentFix, type Fix } from './location';
 import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, setReaderCountry, whereaboutsAt, type City } from './places';
 import { locatedNotice } from './copy';
@@ -182,7 +182,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           openPro('saved');
           return;
         }
-        if (!accountApi.saved.includes(gymId)) playSound('save');
         accountApi.toggleSave(gymId);
       },
     }),

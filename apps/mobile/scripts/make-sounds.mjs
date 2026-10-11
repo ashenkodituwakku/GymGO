@@ -1,5 +1,5 @@
 // GymGO's sound effects, made from scratch: soft marimba and bell tones,
-// warm chords and a little glitter, written as 32 kHz mono WAV files in
+// warm chords and a little glitter, written as 24 kHz mono WAV files in
 // assets/sounds/. Nothing is sampled or licensed, and the same run always
 // writes the same files.
 //
@@ -8,23 +8,27 @@
 // Soft on purpose: every note swells in over a few milliseconds instead of
 // starting with a click, the brightest overtones die first, everything is
 // rounded off above a few kHz, and a small room (a short reverb) gives the
-// tails somewhere to go. Taps and choices make no sound at all (their
-// haptic is enough); these are for the moments that mean something.
+// tails somewhere to go. Buttons make no sound at all (their haptic is
+// enough); these are for the collection's moments, a new record, and the
+// timers' cues.
 //
-// Each card rarity gets a richer reveal than the last: two notes for Common,
-// up to a rising run, a warm chord and a shower of glitter for Legendary.
-// Foil adds its own glitter on top.
+// A card's reveal is two layers that always agree. Its rarity says how big:
+// two notes for Common, up to a rising run, a warm chord and a shower of
+// glitter for Legendary, all in C. Its gem says how it sounds: a short
+// signature in the gem's own voice, on C major's pentatonic notes so it
+// never clashes (a warm bell for Ruby, glass for Sapphire, a marimba trill
+// for Emerald, and so on). Foil adds its own glitter on top.
 
 import { mkdirSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const RATE = 32000;
+const RATE = 24000;
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'sounds');
 
 const NOTE = {
-  C4: 261.63, G4: 392.0, A4: 440.0, C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.0, B5: 987.77,
-  C6: 1046.5, D6: 1174.66, E6: 1318.51, G6: 1567.98,
+  C3: 130.81, C4: 261.63, G4: 392.0, A4: 440.0, C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.0, B5: 987.77,
+  C6: 1046.5, D6: 1174.66, E6: 1318.51, G6: 1567.98, A6: 1760.0,
 };
 
 /** Small seeded random, so a run always writes the same glitter. */
@@ -177,35 +181,6 @@ function wav(buf) {
 const run = (buf, at, notes, step, options) => notes.forEach((name, i) => note(buf, at + i * step, NOTE[name], options));
 
 const SOUNDS = {
-  // Something kept or done: two soft marimba notes up.
-  success() {
-    const buf = buffer(0.7);
-    note(buf, 0, NOTE.E5, { amp: 0.5, decay: 0.2 });
-    note(buf, 0.085, NOTE.B5, { amp: 0.42, decay: 0.24 });
-    return finish(room(soften(buf, 5200), { mix: 0.16 }), 0.6);
-  },
-  // Something that couldn't be done: two muted notes down.
-  warn() {
-    const buf = buffer(0.6);
-    note(buf, 0, NOTE.D5, { amp: 0.5, decay: 0.15 });
-    note(buf, 0.1, NOTE.A4, { amp: 0.5, decay: 0.18 });
-    return finish(room(soften(buf, 3000), { mix: 0.14 }), 0.6);
-  },
-  // A set ticked off in a workout: one soft wooden note, with a little body under it.
-  tick() {
-    const buf = buffer(0.45);
-    note(buf, 0, NOTE.A5, { amp: 0.5, attack: 0.005, decay: 0.11 });
-    note(buf, 0, NOTE.A4, { amp: 0.22, attack: 0.008, decay: 0.07, partials: [[1, 1, 1]] });
-    return finish(room(soften(buf, 4200), { mix: 0.12 }), 0.6);
-  },
-  // Saving a gym: a soft bloop up into a note.
-  save() {
-    const buf = buffer(0.6);
-    glide(buf, 0, 420, 640, 0.11, { amp: 0.28 });
-    note(buf, 0.05, NOTE.G5, { amp: 0.38, decay: 0.16 });
-    note(buf, 0.11, NOTE.C6, { amp: 0.42, decay: 0.22 });
-    return finish(room(soften(buf, 5000), { mix: 0.16 }), 0.6);
-  },
   // Checking where you are: an airy swell rising.
   scan() {
     const buf = buffer(0.7);
@@ -262,6 +237,64 @@ const SOUNDS = {
     glitter(buf, 0, { count: 12, spread: 0.6, seed: 51, amp: 0.1, low: 2400, high: 5200 });
     return finish(room(soften(buf, 6500), { mix: 0.3 }), 0.42);
   },
+  // Each gem's signature, played over its card's rarity sound as it turns.
+  'gem-ruby'() {
+    // Warm and deep: a low bell chord, rolled.
+    const buf = buffer(1.4);
+    for (const [i, name] of ['G4', 'C5', 'E5'].entries()) note(buf, i * 0.045, NOTE[name], { amp: 0.42, attack: 0.008, decay: 0.45, partials: BELL });
+    return finish(room(soften(buf, 3600), { mix: 0.26 }), 0.62);
+  },
+  'gem-sapphire'() {
+    // Cool and clear: two high glass notes, each a hair out of tune with itself, so they shimmer.
+    const buf = buffer(1.4);
+    for (const [at, name] of [[0, 'E6'], [0.11, 'G6']]) {
+      note(buf, at, NOTE[name], { amp: 0.32, decay: 0.42, partials: GLASS });
+      note(buf, at, NOTE[name] * 1.004, { amp: 0.24, decay: 0.42, partials: GLASS });
+    }
+    return finish(room(soften(buf, 7000), { mix: 0.34, size: 0.8 }), 0.58);
+  },
+  'gem-emerald'() {
+    // Green and woody: a quick marimba trill up.
+    const buf = buffer(1.0);
+    run(buf, 0, ['C6', 'D6', 'E6', 'G6'], 0.048, { amp: 0.42, decay: 0.13 });
+    return finish(room(soften(buf, 5000), { mix: 0.18 }), 0.6);
+  },
+  'gem-amethyst'() {
+    // Mysterious: a soft open chord that swells in, with a glint on top.
+    const buf = buffer(1.6);
+    for (const name of ['C5', 'G5', 'D6']) note(buf, 0, NOTE[name], { amp: 0.3, attack: 0.12, decay: 0.55, partials: PAD, length: 1.4 });
+    note(buf, 0.16, NOTE.A6, { amp: 0.08, attack: 0.01, decay: 0.3, partials: GLASS });
+    return finish(room(soften(buf, 5200), { mix: 0.34, size: 0.8 }), 0.58);
+  },
+  'gem-topaz'() {
+    // Golden and bright: bells tumbling up.
+    const buf = buffer(1.2);
+    run(buf, 0, ['G5', 'C6', 'E6', 'G6'], 0.05, { amp: 0.36, decay: 0.24, partials: BELL });
+    return finish(room(soften(buf, 6500), { mix: 0.22 }), 0.6);
+  },
+  'gem-aquamarine'() {
+    // Watery: three drops, each sliding up into its note.
+    const buf = buffer(1.1);
+    for (const [at, name] of [[0, 'D6'], [0.09, 'A5'], [0.18, 'E6']]) {
+      glide(buf, at, NOTE[name] * 0.72, NOTE[name], 0.05, { amp: 0.3 });
+      note(buf, at + 0.03, NOTE[name], { amp: 0.36, attack: 0.004, decay: 0.12, partials: [[1, 1, 1], [2, 0.08, 0.5]] });
+    }
+    return finish(room(soften(buf, 5500), { mix: 0.3 }), 0.58);
+  },
+  'gem-rose'() {
+    // Sweet: a few notes of a music box.
+    const buf = buffer(1.3);
+    run(buf, 0, ['C6', 'E6', 'G6', 'E6'], 0.1, { amp: 0.36, attack: 0.003, decay: 0.3, partials: [[1, 1, 1], [3, 0.05, 0.3], [5.4, 0.035, 0.18]] });
+    return finish(room(soften(buf, 6000), { mix: 0.26 }), 0.56);
+  },
+  'gem-onyx'() {
+    // Dark and solid: a low gong with a soft thump under it.
+    const buf = buffer(1.6);
+    note(buf, 0, NOTE.C3, { amp: 0.4, attack: 0.006, decay: 0.09, partials: [[1, 1, 1]] });
+    note(buf, 0.01, NOTE.C4, { amp: 0.44, attack: 0.012, decay: 0.6, partials: [[1, 1, 1], [1.48, 0.22, 0.6], [2, 0.18, 0.5], [2.76, 0.07, 0.35]] });
+    note(buf, 0.06, NOTE.G4, { amp: 0.24, attack: 0.02, decay: 0.55, partials: BELL });
+    return finish(room(soften(buf, 2600), { mix: 0.3 }), 0.64);
+  },
   // A suburb or city set finished: a chord that blooms, with glitter.
   'set-complete'() {
     const buf = buffer(2.3);
@@ -278,13 +311,6 @@ const SOUNDS = {
     note(buf, 0.3, NOTE.C6, { amp: 0.3, decay: 0.4, partials: BELL });
     glitter(buf, 0.34, { count: 10, spread: 0.7, seed: 71 });
     return finish(room(soften(buf, 5800), { mix: 0.26 }), 0.7);
-  },
-  // A workout finished: a warm chord.
-  finish() {
-    const buf = buffer(1.7);
-    for (const [i, name] of ['F5', 'A5', 'C6'].entries()) note(buf, i * 0.045, NOTE[name], { amp: 0.34, attack: 0.05, decay: 0.6, partials: PAD, length: 1.5 });
-    note(buf, 0, NOTE.F5 / 2, { amp: 0.2, attack: 0.06, decay: 0.6, partials: PAD, length: 1.4 });
-    return finish(room(soften(buf, 5000), { mix: 0.26 }), 0.66);
   },
   // A rest over, while you're on the workout screen: a gentle bell.
   'rest-done'() {
@@ -309,11 +335,26 @@ const SOUNDS = {
 // How loud each plays, written into the file (browsers on an iPhone ignore
 // a player's volume): the small ones quietly, the moments a little fuller,
 // and nothing at full blast.
-const LEVEL = { success: 0.24, warn: 0.22, tick: 0.3, save: 0.34, scan: 0.24, 'timer-count': 0.5, 'timer-go': 0.55 };
-const FULL = 0.6;
+const GEM = 0.46;
+const LEVEL = {
+  scan: 0.24,
+  foil: 0.6,
+  'timer-count': 0.5,
+  'timer-go': 0.55,
+  'gem-ruby': GEM,
+  'gem-sapphire': GEM,
+  'gem-emerald': GEM,
+  'gem-amethyst': GEM,
+  'gem-topaz': GEM,
+  'gem-aquamarine': GEM,
+  'gem-rose': GEM,
+  'gem-onyx': GEM,
+};
+// The rarity layer a touch under full, as its gem plays over it.
+const FULL = 0.56;
 
 mkdirSync(OUT, { recursive: true });
-// Sounds no longer made go (a tap and a choice have none now).
+// Sounds no longer made go (buttons have none now).
 for (const file of readdirSync(OUT)) if (file.endsWith('.wav') && !(file.slice(0, -4) in SOUNDS)) unlinkSync(join(OUT, file));
 let bytes = 0;
 for (const [name, make] of Object.entries(SOUNDS)) {

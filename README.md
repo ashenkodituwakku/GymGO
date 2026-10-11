@@ -482,16 +482,18 @@ nothing extra is stored.
 **Sounds.** GymGO has its own sound effects, made from scratch for it
 (`apps/mobile/scripts/make-sounds.mjs` writes them; nothing is sampled
 or licensed): soft marimba and bell tones and warm chords, each swelling
-in rather than starting with a click, rounded off at the top and given a
-small room to ring in. Checking in plays an airy scan, then a warm
-ding-ding as the gym is collected, then the card's own reveal: a richer
-one for each rarity, up to a run, a chord and a shower of glitter for
-Legendary, with foil's glitter on top, and a blooming chord when the
-check-in finishes a set. Ticking a set (one soft wooden note), the rest
-running out, finishing a workout, a new record, saving a gym and the
-interval timer have theirs too, and something kept or refused gets a
-quiet two notes. Taps and choices make no sound: their haptic is enough,
-as on an iPhone, since a sound on every touch soon grates. They're off with
+in rather than starting with a click. They're kept for the moments worth
+a little thrill. Checking in plays an airy scan, then a warm ding-ding as
+the gym is collected, then the card's reveal in two layers that always
+agree: its **rarity** says how big (two notes for Common, up to a run, a
+chord and a shower of glitter for Legendary) and its **gem** says how it
+sounds (a warm low bell for Ruby, shimmering glass for Sapphire, a marimba
+trill for Emerald, a swelling chord for Amethyst, golden bells for Topaz,
+water drops for Aquamarine, a music box for Rose quartz, a deep gong for
+Onyx). Foil adds glitter on top, and a check-in that finishes a set gets a
+blooming chord. A new personal record has a short fanfare, and the
+interval and rest timers keep their cues so you can train without watching
+the screen. Buttons make no sound at all: their haptic is enough. They're off with
 **Sounds** in Profile → Settings (separate from Haptics). On a phone they
 follow the silent switch and play over your music without stopping it;
 in a browser they start once you've tapped the page, as browsers require.

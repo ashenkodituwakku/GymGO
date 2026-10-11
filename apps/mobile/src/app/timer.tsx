@@ -77,7 +77,7 @@ export default function TimerScreen() {
         playSound('timer-count');
       } else if (phase.kind === 'done') {
         haptic.success();
-        playSound('finish');
+        playSound('rest-done');
         setBanked(totalSeconds(plan));
         setStartedAt(null);
       }

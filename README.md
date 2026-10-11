@@ -933,8 +933,9 @@ and notice, where it was read and when. A fee the gym doesn't publish says
 "not published", never $0. **Sign up on their website** opens the gym's own
 sign-up page (or its website, or its phone): you join with the gym, and
 GymGO takes no payment. Prices were researched from gyms' own sites; see
-`docs/research/prices-2026-09-30.md` for what was found and what still
-needs a direct check.
+`docs/research/prices-2026-09-30.md` and `docs/research/prices-2026-10-11.md`
+(the second pass, with opening hours and why no photos were added) for what
+was found and what still needs a direct check.
 
 **Ads:** a marked space that says AD PLACEHOLDER sits on Home and under
 Explore's list, for a future ad partner. It loads and tracks nothing, and

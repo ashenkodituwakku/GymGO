@@ -15,7 +15,8 @@
  * Nothing here was supplied by, or agreed with, the gyms.
  */
 
-import type { GymRecord } from '@gymgo/domain';
+import type { GymRecord, VisitOffer } from '@gymgo/domain';
+import type { Cite } from './build';
 import {
   EVERY_DAY,
   MON_FRI,
@@ -25,6 +26,7 @@ import {
   hm,
   websiteCopy,
   location,
+  octoberCopy,
   offer,
   on,
   prerequisites,
@@ -32,6 +34,26 @@ import {
   schedule,
   website,
 } from './build';
+
+/**
+ * Where a gym's own pages give different prices for the same thing, every
+ * such price is shown as disagreeing ("Check with the gym"), with what each
+ * page said.
+ */
+function disputed(offers: VisitOffer[], conflictNote: string): VisitOffer[] {
+  return offers.map((item) => ({ ...item, provenance: { ...item.provenance, status: 'conflicting' as const, conflictNote } }));
+}
+
+/** Weekly membership terms, with what the page says about them. */
+const weeklyTerms = (notes: string[], extra: Partial<NonNullable<VisitOffer['membershipTerms']>> = {}): VisitOffer['membershipTerms'] => ({
+  billingIntervalDays: 7,
+  joiningFeeMinor: null,
+  accessCardFeeMinor: null,
+  minimumTermDays: null,
+  cancellationNoticeDays: null,
+  notes,
+  ...extra,
+});
 
 // --- Doherty's Gym ---------------------------------------------------------
 
@@ -244,6 +266,32 @@ const primeAthletica = record(
     ],
     offers: [
       offer(primeId, 'casual', { productType: 'casual_gym_visit', label: 'Casual Gym Entry', baseAmountMinor: 2000 }, PRIME_MEMBERSHIPS),
+      // The memberships page's search copy, 11 Oct: gym only $35 a week, two
+      // classes a week $50, unlimited classes and gym $65; "no lock-in
+      // contracts or joining fees". Its casual class price appears twice ($35
+      // and $39), so no class price is shown.
+      ...(
+        [
+          ['gym-only', 'Gym only', 3500, ['Gym floor'], []],
+          ['two-classes', 'Two classes a week', 5000, ['Two classes a week'], ['Whether it includes the gym floor isn’t said.']],
+          ['unlimited', 'Unlimited classes and gym', 6500, ['Gym floor', 'Unlimited classes'], []],
+        ] as const
+      ).map(([key, label, cents, inclusions, notes]) =>
+        offer(
+          primeId,
+          key,
+          {
+            productType: 'membership',
+            label,
+            baseAmountMinor: cents,
+            validityDays: null,
+            grantsGymFloorAccess: (inclusions as readonly string[]).includes('Gym floor') ? 'yes' : 'unknown',
+            inclusions: [...inclusions],
+            membershipTerms: weeklyTerms(['"No lock-in contracts or joining fees."', ...notes], { joiningFeeMinor: 0, minimumTermDays: 0 }),
+          },
+          octoberCopy('https://www.primeathletica.com.au/memberships', "Gym's website: memberships"),
+        ),
+      ),
     ],
     prerequisites: prerequisites(primeId, {
       notes: ['Closed all public holidays.', 'Offers one free trial session, booked through the website.'],
@@ -289,6 +337,40 @@ const absoluteMma = record(
     // bumper weight plates and array of Olympic bars. Heavy-duty power racks,
     // benches and cable stations. Treadmill, rowing machines..."
     equipment: equipment(absoluteId, ['dumbbells', 'barbells', 'power_rack', 'cable_station', 'treadmill', 'rower'], ABSOLUTE_CBD),
+    offers: [
+      // "Free trial classes are only available to local residents. Interstate
+      // and international visitors can purchase 1-day or 7-day passes." Their
+      // prices aren't published.
+      ...(
+        [
+          ['visitor-day', 'Visitor 1-day pass', 'day_pass', 1],
+          ['visitor-week', 'Visitor 7-day pass', 'week_pass', 7],
+        ] as const
+      ).map(([key, label, productType, days]) =>
+        offer(
+          absoluteId,
+          key,
+          {
+            productType,
+            label,
+            baseAmountMinor: null,
+            validityDays: days,
+            grantsGymFloorAccess: 'unknown',
+            inclusions: [],
+            eligibility: {
+              localResidentOnly: 'no',
+              memberGuestOnly: 'no',
+              firstTimeVisitorOnly: 'no',
+              membershipRequired: 'no',
+              photoIdRequired: 'unknown',
+              minAgeYears: null,
+              notes: ['For interstate and international visitors; locals get a free trial class instead.'],
+            },
+          },
+          octoberCopy('https://absolutemma.com.au/', "Gym's website: home page"),
+        ),
+      ),
+    ],
     prerequisites: prerequisites(absoluteId, { notes: ['Closed Sundays and public holidays.'], source: ABSOLUTE_CBD }),
   },
 );
@@ -325,10 +407,12 @@ const asp = record(
       }),
     ],
     equipment: equipment(aspId, ['lifting_platform', 'barbells'], ASP_OFFER),
-    offers: [
-      // "FULL ACCESS ... $39.90 per week": the gym and unlimited classes, month
-      // to month, "no lock-in contract". Its casual class price wasn't on a page
-      // we could pin down, so it isn't shown.
+    // "FULL ACCESS ... $39.90 per week": the gym and unlimited classes, month
+    // to month, "no lock-in contract". On 11 Oct the search copy of its
+    // pricing page had the Class + Gym membership at $42.90 a week, so the
+    // price is shown as disagreeing. Its single visit ($35) was only on older
+    // pages, so it isn't shown.
+    offers: disputed([
       offer(
         aspId,
         'full-access',
@@ -349,7 +433,7 @@ const asp = record(
         },
         websiteCopy('https://trainasp.com.au/what-we-offer/', "Gym's website: what we offer"),
       ),
-    ],
+    ], 'Its what-we-offer page (30 Sep) said $39.90 a week; its pricing page (11 Oct) says $42.90 a week for Class + Gym. Check with the gym.'),
     prerequisites: prerequisites(aspId, {
       notes: ['Offers a free first visit, booked in advance.', 'Public holiday hours are posted on its social media.'],
       source: ASP_HOME,
@@ -408,7 +492,37 @@ const nextLevel = record(
         },
         websiteCopy('https://nextlevelfitness.com.au/membershipsthmelb/', "Gym's website: South Melbourne memberships"),
       ),
-    ],
+      // Another of its South Melbourne membership pages, 11 Oct: "12-month
+      // direct debit $18 a week, $79 joining fee"; no contract $21 a week.
+      offer(
+        nextLevelId,
+        '12-months',
+        {
+          productType: 'membership',
+          label: '12-month direct debit',
+          baseAmountMinor: 1800,
+          validityDays: null,
+          membershipTerms: weeklyTerms([], { joiningFeeMinor: 7900, minimumTermDays: 365 }),
+        },
+        octoberCopy('https://nextlevelfitness.com.au/membership/south-melbourne/', "Gym's website: South Melbourne membership"),
+      ),
+      offer(
+        nextLevelId,
+        'no-contract',
+        {
+          productType: 'membership',
+          label: 'No contract',
+          baseAmountMinor: 2100,
+          validityDays: null,
+          membershipTerms: weeklyTerms([], { minimumTermDays: 0 }),
+        },
+        octoberCopy('https://nextlevelfitness.com.au/membership/south-melbourne/', "Gym's website: South Melbourne membership"),
+      ),
+    ].map((item) =>
+      item.productType === 'membership'
+        ? disputed([item], 'One of its South Melbourne pages says $11.95 a week with no joining fee (30 Sep); another says $18 a week for 12 months with a $79 joining fee, or $21 a week with no contract (11 Oct). Check with the gym.')[0]!
+        : item,
+    ),
     prerequisites: prerequisites(nextLevelId, {
       notes: ['Offers a free pass for you and a friend (arranged with the gym).'],
       source: NEXT_LEVEL,
@@ -464,7 +578,7 @@ const carlton = record(
         },
         CARLTON,
       ),
-    ],
+    ].map((item) => disputed([item], 'Its own pages give three weekly prices: $18.95 (home page), $16.95 (contact page) and $17.95 with no sign-up fee (join page). Check with the gym.')[0]!),
     prerequisites: prerequisites(carltonId, { notes: ['Staff ask you to make an appointment.'], source: CARLTON }),
   },
 );
@@ -546,7 +660,10 @@ const crossfitCollingwood = record(
     ],
     prerequisites: prerequisites(crossfitId, {
       advanceBookingRequired: 'yes',
-      notes: ['Drop-ins are booked through the contact form, and are for experienced athletes.'],
+      notes: [
+        'Drop-ins are booked through the contact form, and are for experienced athletes.',
+        'Classes (its schedule page, 11 Oct): Monday to Thursday 5:30, 6:30 and 7:30 am, 12 pm, 5 and 6 pm; Friday the same until 5 pm; Saturday 8 and 9 am.',
+      ],
       source: CROSSFIT_COLLINGWOOD,
     }),
   },
@@ -578,6 +695,14 @@ interface MapOnly {
   mapped247?: boolean;
   /** Prices the gym publishes, each with its own source. */
   offers?: GymRecord['offers'];
+  phone?: string;
+  /** The operator's own page listing this branch (it's then shown as trading). */
+  listedByOperator?: Cite;
+  /** Why its trading status is in doubt, in place of the usual line. */
+  statusNote?: string;
+  /** Hours from the gym's own site; these replace a map's 24/7. */
+  schedules?: GymRecord['schedules'];
+  prerequisites?: GymRecord['prerequisites'];
 }
 
 /** When the found websites were read. */
@@ -607,9 +732,13 @@ function mapOnly(spec: MapOnly): GymRecord {
         },
       }
     : mapped;
+  if (spec.statusNote) loc.operatingStatusNote = spec.statusNote;
   return record(loc, {
     offers: spec.offers ?? [],
-    schedules: spec.mapped247
+    ...(spec.prerequisites ? { prerequisites: spec.prerequisites } : {}),
+    schedules: spec.schedules
+      ? spec.schedules
+      : spec.mapped247
       ? [
           schedule(spec.id, 'member', {
             alwaysOpen: true,
@@ -633,20 +762,35 @@ const mapped: GymRecord[] = [
     lat: -37.80424,
     lng: 144.98668,
     osmElement: 'node/9209446749',
-    website: 'https://www.anytimefitness.com.au',
-    mapped247: true,
+    // Its club page, 11 Oct: 164 Wellington Street; "the club has reopened";
+    // staffed hours are limited, so it asks you to call to book a time.
+    website: 'https://www.anytimefitness.com.au/gyms/au-1308/collingwood-vic-3066/',
+    phone: '0479 103 066',
+    listedByOperator: octoberCopy('https://www.anytimefitness.com.au/gyms/au-1308/collingwood-vic-3066/', "Anytime Fitness website: Collingwood club page"),
+    schedules: [
+      schedule('anytime-fitness-collingwood', 'member', { alwaysOpen: true, windows: on(EVERY_DAY, 0, hm(24)), source: { url: 'https://www.openstreetmap.org/node/9209446749', label: 'OpenStreetMap', kind: 'osm' } }),
+      // Its club page's staffed hours, 11 Oct.
+      schedule('anytime-fitness-collingwood', 'staffed', {
+        windows: [...on(MON_THU, hm(8), hm(20)), ...on([5], hm(10), hm(16)), ...on(WEEKEND, hm(10), hm(14))],
+        source: octoberCopy('https://www.anytimefitness.com.au/gyms/au-1308/collingwood-vic-3066/', "Anytime Fitness website: Collingwood club page"),
+      }),
+    ],
   }),
   mapOnly({
     id: 'anytime-fitness-docklands',
     name: 'Anytime Fitness',
     branch: 'Docklands',
     brand: 'Anytime Fitness',
-    line1: '747 Collins Street',
+    line1: 'Shop 9B, Collins Square, 747 Collins Street',
     suburb: 'Docklands',
     postcode: '3008',
     lat: -37.82109,
     lng: 144.94944,
     osmElement: 'node/6856256775',
+    // Its club page, 11 Oct (not the separate Melbourne CBD club at 367 Collins Street).
+    website: 'https://www.anytimefitness.com.au/gyms/au-1256/docklands-vic-3008/',
+    phone: '0427 979 997',
+    listedByOperator: octoberCopy('https://club.anytimefitness.com.au/docklands-vic', "Anytime Fitness website: Docklands club page"),
     mapped247: true,
   }),
   mapOnly({
@@ -654,13 +798,14 @@ const mapped: GymRecord[] = [
     name: 'Anytime Fitness',
     branch: 'South Melbourne',
     brand: 'Anytime Fitness',
-    line1: '105 York Street',
+    line1: 'Ground Floor, 105 York Street',
     suburb: 'South Melbourne',
     postcode: '3205',
     lat: -37.83125,
     lng: 144.95892,
     osmElement: 'node/12956407101',
-    website: 'https://anytimefitness.com.au/',
+    website: 'https://www.anytimefitness.com.au/gyms/au-1263/south-melbourne-vic-3205/',
+    listedByOperator: octoberCopy('https://www.anytimefitness.com.au/gyms/au-1263/south-melbourne-vic-3205/', "Anytime Fitness website: South Melbourne club page"),
     mapped247: true,
   }),
   mapOnly({
@@ -673,8 +818,48 @@ const mapped: GymRecord[] = [
     lat: -37.80446,
     lng: 144.94916,
     osmElement: 'node/4733654588',
-    website: 'https://www.eqhf.com.au/',
-    mapped247: true,
+    website: 'https://eqhf.com.au/north-melbourne/',
+    listedByOperator: octoberCopy('https://eqhf.com.au/north-melbourne/', "Gym's website: North Melbourne"),
+    // "Open 24/7, every day", for members. Staffed hours aren't published.
+    schedules: [schedule('equilibrium-fitness-north-melbourne', 'member', { alwaysOpen: true, windows: on(EVERY_DAY, 0, hm(24)), source: octoberCopy('https://eqhf.com.au/contact-us-north-melbourne/', "Gym's website: contact, North Melbourne") })],
+    // Its North Melbourne memberships, 11 Oct: priced by the week, debited
+    // monthly, or 12 months up front. The $20 seven-day intro is a promotion,
+    // left out. No casual visit is listed.
+    offers: [
+      ...(
+        [
+          ['freedom-gym', 'Freedom 24/7 Gym', 2195, ['Gym floor']],
+          ['freedom-classes', 'Freedom with Classes', 2495, ['Gym floor', 'Classes']],
+        ] as const
+      ).map(([key, label, cents, inclusions]) =>
+        offer(
+          'equilibrium-fitness-north-melbourne',
+          key,
+          { productType: 'membership', label, baseAmountMinor: cents, validityDays: null, inclusions: [...inclusions], membershipTerms: weeklyTerms(['Priced by the week, debited monthly.']) },
+          octoberCopy('https://eqhf.com.au/north-melbourne/', "Gym's website: North Melbourne"),
+        ),
+      ),
+      ...(
+        [
+          ['upfront-gym', '12 months up front: gym', 80000, ['Gym floor']],
+          ['upfront-classes', '12 months up front: with classes', 90000, ['Gym floor', 'Classes']],
+        ] as const
+      ).map(([key, label, cents, inclusions]) =>
+        offer(
+          'equilibrium-fitness-north-melbourne',
+          key,
+          {
+            productType: 'membership',
+            label,
+            baseAmountMinor: cents,
+            validityDays: null,
+            inclusions: [...inclusions],
+            membershipTerms: { billingIntervalDays: 365, joiningFeeMinor: null, accessCardFeeMinor: null, minimumTermDays: 365, cancellationNoticeDays: null, notes: ['Paid up front for the year.'] },
+          },
+          octoberCopy('https://eqhf.com.au/north-melbourne/', "Gym's website: North Melbourne"),
+        ),
+      ),
+    ],
   }),
   mapOnly({
     id: 'goodlife-fitzroy',
@@ -687,7 +872,17 @@ const mapped: GymRecord[] = [
     lat: -37.79786,
     lng: 144.97629,
     osmElement: 'way/227614789',
-    website: 'https://www.goodlifehealthclubs.com.au/',
+    website: 'https://www.goodlifehealthclubs.com.au/Clubs/VIC/Fitzroy/',
+    phone: '03 9915 2900',
+    listedByOperator: octoberCopy('https://www.goodlifehealthclubs.com.au/Clubs/VIC/Fitzroy/', "Gym's website: Fitzroy club page"),
+    // Its club page's opening hours, 11 Oct. Whether members have 24/7 access
+    // beyond these, and when staff are on, isn't said for Fitzroy.
+    schedules: [
+      schedule('goodlife-fitzroy', 'member', {
+        windows: [...on([1, 2, 3], hm(6), hm(22)), ...on([4], hm(6), hm(21)), ...on([5], hm(6), hm(20)), ...on([6], hm(8), hm(17)), ...on([0], hm(9), hm(17))],
+        source: octoberCopy('https://www.goodlifehealthclubs.com.au/Clubs/VIC/Fitzroy/', "Gym's website: Fitzroy club page"),
+      }),
+    ],
   }),
   mapOnly({
     id: 'l9-fitness-fitzroy-north',
@@ -713,6 +908,10 @@ const mapped: GymRecord[] = [
     lng: 144.94932,
     osmElement: 'node/7676964910',
     website: 'https://rbtgyms.com',
+    // 11 Oct: a search of RBT's own site no longer finds this branch, and a
+    // Facebook page for it reads "Permanently Closed". Neither is the operator
+    // saying so on its site, so it isn't marked closed.
+    statusNote: 'It may have closed: RBT’s own site no longer turns up this branch, and a Facebook page for it says “Permanently Closed”. Call before you go.',
   }),
   mapOnly({
     id: 'snap-fitness-fitzroy',
@@ -725,6 +924,35 @@ const mapped: GymRecord[] = [
     lat: -37.80083,
     lng: 144.97841,
     osmElement: 'way/228468292',
+    website: 'https://www.snapfitness.com/au/gyms/fitzroy',
+    phone: '0499 600 667',
+    listedByOperator: octoberCopy('https://www.snapfitness.com/au/gyms/fitzroy', "Gym's website: Fitzroy page"),
+    // "Open 24 hours to members". Its staffed hours came without their days, so they aren't shown.
+    schedules: [schedule('snap-fitness-fitzroy', 'member', { alwaysOpen: true, windows: on(EVERY_DAY, 0, hm(24)), source: octoberCopy('https://www.snapfitness.com/au/gyms/fitzroy', "Gym's website: Fitzroy page") })],
+    offers: [
+      // "Our day pass is only $20!" Bought in person while staff are in; the
+      // page doesn't give those hours.
+      offer(
+        'snap-fitness-fitzroy',
+        'day-pass',
+        {
+          productType: 'day_pass',
+          label: 'Day pass',
+          baseAmountMinor: 2000,
+          purchaseMethod: 'at_reception',
+          eligibility: {
+            localResidentOnly: 'no',
+            memberGuestOnly: 'no',
+            firstTimeVisitorOnly: 'no',
+            membershipRequired: 'no',
+            photoIdRequired: 'unknown',
+            minAgeYears: null,
+            notes: ['Arrive during staffed hours to buy one; the page doesn’t list them, so call first.'],
+          },
+        },
+        octoberCopy('https://www.snapfitness.com/au/gyms/fitzroy', "Gym's website: Fitzroy page"),
+      ),
+    ],
   }),
   mapOnly({
     id: 'the-strong-zone-collingwood',
@@ -773,6 +1001,29 @@ const mapped: GymRecord[] = [
         },
         websiteCopy('https://fitnessxo.com/pricing-northcote/', "Gym's website: Northcote pricing"),
       ),
+      // "Drop-in" single class, $29.50, to use within a month (11 Oct).
+      offer(
+        'fitness-xo-northcote',
+        'drop-in',
+        {
+          productType: 'class_only',
+          label: 'Drop-in class',
+          baseAmountMinor: 2950,
+          validityDays: 30,
+          grantsGymFloorAccess: 'unknown',
+          inclusions: ['One class'],
+          eligibility: {
+            localResidentOnly: 'no',
+            memberGuestOnly: 'no',
+            firstTimeVisitorOnly: 'no',
+            membershipRequired: 'no',
+            photoIdRequired: 'unknown',
+            minAgeYears: null,
+            notes: ['Use it within a month.'],
+          },
+        },
+        octoberCopy('https://fitnessxo.com/pricing-northcote/', "Gym's website: Northcote pricing"),
+      ),
     ],
   }),
   mapOnly({
@@ -785,6 +1036,63 @@ const mapped: GymRecord[] = [
     lng: 145.00277,
     osmElement: 'node/9837515522',
     foundWebsite: 'https://www.prosport.net.au/',
+    phone: '(03) 9913 7267',
+    // Every membership lists "24 hr gym access". Staffed hours aren't published.
+    schedules: [schedule('prosport-richmond', 'member', { alwaysOpen: true, windows: on(EVERY_DAY, 0, hm(24)), source: octoberCopy('https://www.prosport.net.au/pricing-non-alfred-health-staff', "Gym's website: pricing") })],
+    // Its site now calls it PS Fitness; "conveniently located at 344 Swan
+    // Street Richmond". Prices from its pricing page for people who aren't
+    // Alfred Health staff (11 Oct). The free trial week isn't shown.
+    offers: [
+      ...(
+        [
+          ['gold', 'Gold', 8815, ['Gym floor, 24 hours', 'Unlimited group classes', 'Two Altitude classes a week']],
+          ['silver', 'Silver', 5565, ['Gym floor, 24 hours', 'Unlimited group classes', 'One Altitude class a week']],
+          ['bronze', 'Bronze', 3465, ['Gym floor, 24 hours', 'Three group classes a week (not Altitude)']],
+        ] as const
+      ).map(([key, label, cents, inclusions]) =>
+        offer(
+          'prosport-richmond',
+          key,
+          {
+            productType: 'membership',
+            label,
+            baseAmountMinor: cents,
+            validityDays: null,
+            inclusions: [...inclusions],
+            membershipTerms: { billingIntervalDays: 14, joiningFeeMinor: null, accessCardFeeMinor: null, minimumTermDays: null, cancellationNoticeDays: null, notes: ['Billed fortnightly.'] },
+          },
+          octoberCopy('https://www.prosport.net.au/pricing-non-alfred-health-staff', "Gym's website: pricing"),
+        ),
+      ),
+      ...(
+        [
+          ['class', 'Group class', 2500],
+          ['altitude-class', 'Altitude class', 3300],
+        ] as const
+      ).map(([key, label, cents]) =>
+        offer(
+          'prosport-richmond',
+          key,
+          {
+            productType: 'class_only',
+            label,
+            baseAmountMinor: cents,
+            grantsGymFloorAccess: 'unknown',
+            inclusions: ['One class'],
+            eligibility: {
+              localResidentOnly: 'no',
+              memberGuestOnly: 'no',
+              firstTimeVisitorOnly: 'no',
+              membershipRequired: 'no',
+              photoIdRequired: 'unknown',
+              minAgeYears: null,
+              notes: [key === 'class' ? 'Also 5 for $115 or 10 for $220.' : 'Also 5 for $150 or 10 for $250.'],
+            },
+          },
+          octoberCopy('https://www.prosport.net.au/pricing-non-alfred-health-staff', "Gym's website: pricing"),
+        ),
+      ),
+    ],
   }),
   mapOnly({
     id: 'lincoln-square-fitness-carlton',
@@ -795,6 +1103,80 @@ const mapped: GymRecord[] = [
     lat: -37.80211,
     lng: 144.96186,
     osmElement: 'node/10718846595',
+    website: 'https://sport.unimelb.edu.au/fitness/fitness-facilities',
+    listedByOperator: octoberCopy('https://sport.unimelb.edu.au/about-us/opening-hours', 'MU Sport: opening hours'),
+    // MU Sport's opening hours (11 Oct): staffed at set times, otherwise 24
+    // hours for inducted fitness members. The Friday and Saturday sessions'
+    // start times differ between two of its pages; only the times both give
+    // are shown.
+    schedules: [
+      schedule('lincoln-square-fitness-carlton', 'member', { alwaysOpen: true, windows: on(EVERY_DAY, 0, hm(24)), source: octoberCopy('https://sport.unimelb.edu.au/about-us/opening-hours', 'MU Sport: opening hours') }),
+      schedule('lincoln-square-fitness-carlton', 'staffed', {
+        windows: [
+          ...on(MON_THU, hm(11, 30), hm(14, 30)),
+          ...on(MON_THU, hm(16, 30), hm(19, 30)),
+          ...on([5], hm(17, 15), hm(20)),
+          ...on([6], hm(9), hm(12)),
+        ],
+        source: [octoberCopy('https://sport.unimelb.edu.au/about-us/opening-hours', 'MU Sport: opening hours'), octoberCopy('https://sport.unimelb.edu.au/fitness/fitness-facilities', 'MU Sport: fitness facilities')],
+      }),
+    ],
+    prerequisites: prerequisites('lincoln-square-fitness-carlton', {
+      inductionRequired: 'yes',
+      notes: [
+        'Outside staffed hours, only inducted MU Sport fitness members get in.',
+        'Friday evening is a Queer Friendly session and Saturday morning Women’s Only.',
+        'Closed, unstaffed access too, over Easter and Christmas–New Year.',
+      ],
+      source: octoberCopy('https://sport.unimelb.edu.au/about-us/opening-hours', 'MU Sport: opening hours'),
+    }),
+    // Melbourne University Sport's 2026 price list (11 Oct): its fitness
+    // memberships cover every MU Sport centre, Lincoln Square Fitness among them.
+    offers: [
+      offer(
+        'lincoln-square-fitness-carlton',
+        'casual',
+        {
+          productType: 'casual_gym_visit',
+          label: 'Casual gym visit',
+          baseAmountMinor: 1800,
+          eligibility: {
+            localResidentOnly: 'no',
+            memberGuestOnly: 'no',
+            firstTimeVisitorOnly: 'no',
+            membershipRequired: 'unknown',
+            photoIdRequired: 'unknown',
+            minAgeYears: null,
+            notes: [
+              'The public price; University of Melbourne students pay $9.70, staff and alumni $13.50.',
+              '"Non-Fitness Members and non-University of Melbourne students must buy a $99 Access Card annually to receive member rates for casual visits." Ask whether this price needs the card.',
+              'Walk up; no booking.',
+            ],
+          },
+        },
+        octoberCopy('https://sport.unimelb.edu.au/pdfs/MU-Sport_Pricelist2026.pdf', 'MU Sport price list 2026'),
+      ),
+      offer(
+        'lincoln-square-fitness-carlton',
+        'fitness-membership',
+        {
+          productType: 'membership',
+          label: 'Fitness membership',
+          baseAmountMinor: 5430,
+          validityDays: null,
+          inclusions: ['Gym floor', 'Pool', 'Group fitness', 'Every MU Sport centre'],
+          membershipTerms: {
+            billingIntervalDays: 14,
+            joiningFeeMinor: 3000,
+            accessCardFeeMinor: null,
+            minimumTermDays: 56,
+            cancellationNoticeDays: null,
+            notes: ['The public price; students pay $32.60, staff and alumni $51.30 a fortnight.', 'At least 4 fortnightly payments, and a one-off $30 provider fee.'],
+          },
+        },
+        octoberCopy('https://sport.unimelb.edu.au/pdfs/MU-Sport_Pricelist2026.pdf', 'MU Sport price list 2026'),
+      ),
+    ],
   }),
   mapOnly({
     id: 'quickfit-brunswick-east',
@@ -805,7 +1187,16 @@ const mapped: GymRecord[] = [
     lat: -37.77865,
     lng: 144.97086,
     osmElement: 'node/11586244572',
-    mapped247: true,
+    // Its own Brunswick page (11 Oct) gives 8 Lygon Street, Brunswick East.
+    // Only a chain-wide "from $14.95 a week" is published, so no price.
+    website: 'https://www.quickfit.com.au/quickfit-brunswick',
+    listedByOperator: octoberCopy('https://www.quickfit.com.au/quickfit-brunswick', "Gym's website: Brunswick page"),
+    // "Opening hours: 24hrs"; staffed Monday to Thursday 5–8 pm, Saturday 10 am–12 pm.
+    schedules: [
+      schedule('quickfit-brunswick-east', 'member', { alwaysOpen: true, windows: on(EVERY_DAY, 0, hm(24)), source: octoberCopy('https://www.quickfit.com.au/quickfit-brunswick', "Gym's website: Brunswick page") }),
+      schedule('quickfit-brunswick-east', 'staffed', { windows: [...on(MON_THU, hm(17), hm(20)), ...on([6], hm(10), hm(12))], source: octoberCopy('https://www.quickfit.com.au/quickfit-brunswick', "Gym's website: Brunswick page") }),
+    ],
+    phone: '(03) 9386 3388',
   }),
   mapOnly({
     id: 'leo-berrys-gym-richmond',
@@ -818,6 +1209,38 @@ const mapped: GymRecord[] = [
     osmElement: 'way/1496822354',
     foundWebsite: 'https://www.richmondboxing.com.au/',
     trainingTypes: ['functional'],
+    phone: '0412 742 645',
+    // Its home page (11 Oct) gives 13a Gleadell Street and these sessions.
+    // Morning classes "planned for 2027" aren't shown.
+    offers: (
+      [
+        ['boxing', 'Boxing training', 500, 'Saturday 8–9:30 am and Sunday 9–11 am; beginners and competitive boxers.'],
+        ['circuit', 'Berry’s Circuit', 1000, 'Monday and Wednesday 6:30–8 pm, Saturday 8–9:30 am.'],
+        ['learn-to-box', 'Learn to Box Properly', 2000, 'Tuesdays 6:30–7:30 pm (arrive by 6:20); your first class is free.'],
+      ] as const
+    ).map(([key, label, cents, note]) =>
+      offer(
+        'leo-berrys-gym-richmond',
+        key,
+        {
+          productType: 'class_only',
+          label,
+          baseAmountMinor: cents,
+          grantsGymFloorAccess: 'unknown',
+          inclusions: ['One session'],
+          eligibility: {
+            localResidentOnly: 'no',
+            memberGuestOnly: 'no',
+            firstTimeVisitorOnly: 'no',
+            membershipRequired: 'no',
+            photoIdRequired: 'unknown',
+            minAgeYears: null,
+            notes: [note],
+          },
+        },
+        octoberCopy('https://richmondboxing.com.au/', "Gym's website: home page"),
+      ),
+    ),
   }),
 ];
 

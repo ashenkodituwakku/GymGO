@@ -35,6 +35,12 @@ export const CHECKED = {
    * the copy states outright. See docs/research/prices-2026-09-30.md.
    */
   searchCopies: '2026-09-30T02:30:00.000Z',
+  /**
+   * A second pass the same way, on 11 October 2026: every curated gym with
+   * little or no price information, each checked against its address on the
+   * gym's own site. See docs/research/prices-2026-10-11.md.
+   */
+  searchCopiesOctober: '2026-10-11T03:00:00.000Z',
 } as const;
 
 export interface Cite {
@@ -49,12 +55,14 @@ export interface Cite {
 
 export const website = (url: string, label = "Gym's website"): Cite => ({ url, label, kind: 'website' });
 /** A gym's own page, read through a web search's copy of it (see CHECKED.searchCopies). */
-export const websiteCopy = (url: string, label: string): Cite => ({
+export const websiteCopy = (url: string, label: string, checkedAt: string = CHECKED.searchCopies): Cite => ({
   url,
   label: `${label} (read via a web search's copy)`,
   kind: 'website',
-  checkedAt: CHECKED.searchCopies,
+  checkedAt,
 });
+/** The same, from the 11 October pass. */
+export const octoberCopy = (url: string, label: string): Cite => websiteCopy(url, label, CHECKED.searchCopiesOctober);
 export const osm = (element: string): Cite => ({
   url: `https://www.openstreetmap.org/${element}`,
   label: 'OpenStreetMap',

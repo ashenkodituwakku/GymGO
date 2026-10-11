@@ -10,8 +10,14 @@ import { FETCHED } from './data';
 import type { GymRow } from './rows';
 import { FOUND_WEBSITES, WEBSITES_CHECKED } from './websites';
 import { chainOffersFor } from './chainOffers';
+import { withResearch } from './researched';
 
 export function auRecord(row: GymRow): GymRecord {
+  // What GymGO found on the gym's own site, where it looked one up (researched.ts).
+  return withResearch(mappedRecord(row));
+}
+
+function mappedRecord(row: GymRow): GymRecord {
   const { city, suburb, ...gym } = row;
   const mapped = mapOnlyRecord({ ...gym, locality: suburb }, { countryCode: 'AU', timezone: auCity(city).timezone, fetchedAt: FETCHED[city] });
   // A chain that publishes one price table for all its clubs: its tiers here too.

@@ -4,10 +4,13 @@ import { describe, expect, it } from 'vitest';
 import { AU_CITIES, AU_GYMS, AU_PLACES, auCity } from './index';
 import { GYM_ROWS } from './data';
 import { OPERATOR_GYMS, OPERATOR_GYMS_RAW } from './operators';
+import { RESEARCHED_AT, RESEARCHED_IDS } from './researched';
 
-// The map's own records; the operator-listed ones are tested below.
+// The map's own records; the operator-listed ones and those GymGO looked up
+// one at a time (researched.ts) are tested below.
 const operatorIds = new Set(OPERATOR_GYMS.map((record) => record.location.id));
-const MAP_GYMS = AU_GYMS.filter((record) => !operatorIds.has(record.location.id));
+const researchedIds = new Set(RESEARCHED_IDS);
+const MAP_GYMS = AU_GYMS.filter((record) => !operatorIds.has(record.location.id) && !researchedIds.has(record.location.id));
 
 const allFacts = (record: GymRecord) => [
   record.location.provenance,
@@ -166,6 +169,49 @@ describe('Australian gyms from OpenStreetMap', () => {
     });
     expect(outcome.results.length).toBeGreaterThan(5);
     expect(outcome.results.filter((result) => result.tier === 'confirmed')).toEqual([]);
+  });
+});
+
+describe('Map gyms looked up on their own websites', () => {
+  const researched = AU_GYMS.filter((record) => researchedIds.has(record.location.id));
+
+  it('matches every looked-up gym to one on the map', () => {
+    expect(researched.map((record) => record.location.id).sort()).toEqual([...RESEARCHED_IDS].sort());
+  });
+
+  it('cites the gym’s own page, dated, for every price and every hour it adds', () => {
+    for (const record of researched) {
+      const added = [...record.offers.map((offer) => offer.provenance), ...record.schedules.filter((item) => item.provenance.status !== 'community_reported').map((item) => item.provenance)];
+      expect(added.length).toBeGreaterThan(0);
+      for (const provenance of added) {
+        expect(['owner_confirmed', 'conflicting']).toContain(provenance.status);
+        if (provenance.status === 'conflicting') expect(provenance.conflictNote).toMatch(/Check with the gym/);
+        for (const source of provenance.sources) {
+          expect(source.sourceType).toBe('operator_website');
+          expect(source.evidenceRef).toMatch(/^https:\/\//);
+          expect(source.checkedAt).toBe(RESEARCHED_AT);
+        }
+      }
+      // A price is a real amount, or not published: never $0 standing in for unknown.
+      for (const offer of record.offers) expect(offer.baseAmountMinor === null || offer.baseAmountMinor > 0).toBe(true);
+      expect(record.location.photos).toEqual([]);
+    }
+  });
+
+  it('keeps one schedule per audience, the gym’s own replacing the map’s', () => {
+    for (const record of researched) {
+      const audiences = record.schedules.map((item) => item.audience);
+      expect(new Set(audiences).size).toBe(audiences.length);
+    }
+    const cordelia = researched.find((record) => record.location.id === 'sustain-on-cordelia-cordelia-street-brisbane')!;
+    expect(cordelia.schedules.map((item) => item.audience).sort()).toEqual(['member', 'staffed']);
+    expect(cordelia.offers.find((offer) => offer.productType === 'casual_gym_visit')!.baseAmountMinor).toBe(1800);
+  });
+
+  it('takes the gym’s own address where the map’s suburb was wrong', () => {
+    const elouera = researched.find((record) => record.location.id === 'elouera-tony-mundine-gym-sydney')!;
+    expect(elouera.location.address.suburb).toBe('Redfern');
+    expect(elouera.location.address.postcode).toBe('2016');
   });
 });
 

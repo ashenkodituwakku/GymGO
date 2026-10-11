@@ -248,10 +248,11 @@ How see-through is yours to set: the **Liquid Glass** percentage in
 Appearance.
 
 - **Home**: kept short. A greeting, the search, four one-tap picks (Near
-  me, Early start, After work, Under $25), **Build a workout**, your next
-  trip if there is one, **Machines** and **Trips** (below), gyms near
-  you, your saved and recently viewed gyms, then neighbourhoods and other
-  cities as chips.
+  me, Early start, After work, Under $25), **Build a workout**, **Up next**
+  once you're on a plan (the next day of the template you did last, with a
+  Start button), your next trip if there is one, **Machines** and **Trips**
+  (below), gyms near you, your saved and recently viewed gyms, then
+  neighbourhoods and other cities as chips.
 - **Explore**: the map with the results sheet, filters, and sorting (best
   match, closest, cheapest, top rated). "Best match" means: gyms that meet
   everything you asked first, then, among the rest, the ones with the fewest
@@ -280,6 +281,10 @@ Appearance.
   suggested too, with how many gyms and how far. All of this is worked out
   on the phone (`src/lib/suggest.ts`); nothing typed is sent anywhere.
   Enter goes to the top suggestion.
+  Tap into the empty box and your **recent places** are there (the last five
+  suburbs, towns or cities you searched, newest first, with Clear), kept on
+  the device only; "Near me" is never one of them. In a browser, **/** jumps
+  to the search box.
   Type any town or suburb anywhere ("Bendigo", "Boise", "Kyoto") and
   press Enter (or tap **Look up**): if it isn't one GymGO knows, the server looks it up
   (Photon, a free OpenStreetMap geocoder, asked only on Enter and at most
@@ -302,7 +307,16 @@ Appearance.
 - **Saved**: your saved gyms. Tick two or three to **compare** them side by
   side: answer, price, what members paid (labelled as theirs, never the
   gym's price), guest entry, what to bring, machines, rating and distance.
-  The round compare button in a map card's header adds a gym too.
+  The round compare button in a map card's header adds a gym too. With
+  nothing saved yet, it lists the gyms you looked at lately, each with a
+  save button; an empty Compare lists your saved gyms to tick there.
+- **Add to calendar** (a gym's page): the visit you're searching for (the
+  day and time, on the gym's own clock) as a calendar event of 75 minutes,
+  with the address, the answer ("Call first · …") and, when it isn't
+  confirmed, what to ask when you call. A phone opens its own calendar's
+  new-event screen, filled in, to save or cancel (expo-calendar; GymGO never
+  reads your calendar); a browser downloads an .ics file any calendar opens.
+  Not for an invented demo gym.
 - **Profile**: laid out like Settings. Your account card (tap it for
   **Account**: profile picture, name, email, password, Apple and Google,
   your data, sign out, delete), Training (Progress, My workouts, Plate calculator, 1-rep max, Interval timer), Pro, your
@@ -354,7 +368,8 @@ best card, shared as a picture (downloaded in a browser). On a Monday
 morning, before anything's happened, it's last week's. Totals only, never
 which days you went.
 
-**Templates** (Home → "Or start a template", or the Workout screen):
+**Templates** (Home → "Or start a template", or the Workout screen; once
+you've done one, Home's **Up next** starts its next day in one tap):
 three well-known plans written out with GymGO's exercises: **Beginner full
 body** (A and B), **5×5 strength** (A and B) and **Push, pull, legs**. Each
 takes turns through its days, so starting one gives you the day after the
@@ -912,8 +927,12 @@ they come from Google, which sees your device's IP address, with **Show**
 and **Always show Google content** (also a switch in Profile). See
 [Legal basics](#legal-basics) for why.
 
-It always says when no member has shared a photo yet, and an invented demo
-gym says **No photo supplied yet**.
+It always says when no member has shared a photo yet. On Home's cards, in
+lists and on collection cards, a gym with no photo or logo shows its
+**initials** on a soft wash of your accent ("DG" for Doherty's Gym, "F45"
+for F45 Training), with "No photo supplied" under them where there's room:
+lettering, never a picture of the place (`src/lib/monogram.ts`). An invented
+demo gym shows its illustration, labelled as one.
 
 To add one, open a gym, tap **+ Add a photo**, and pick a picture you took
 there. You're asked to confirm you took it and are happy for it to show with

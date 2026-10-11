@@ -14,6 +14,7 @@ import { HOURS_LABELS, explainNoMatches, type HoursNeed, type SearchOutcome } fr
 import { countryInSentence, countryName } from '@/lib/country';
 import { cityAt, distanceLabel, localBudget, moneyLabel, placeContext, tracksPrices } from '@/lib/places';
 import { MATCH, suggestionKey, title, type Suggestion } from '@/lib/suggest';
+import type { RecentPlace } from '@/lib/recentPlaces';
 import { EMPTY, PLACEHOLDER, TIER, lookupLine, searchPrompt, sessionGreeting, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
 import type { Lookup } from '@/lib/app-state';
 import { SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
@@ -41,6 +42,9 @@ export function ResultsContent({
   onSearchFocus,
   suggestions,
   onPickSuggestion,
+  recentPlaces = [],
+  onPickRecentPlace,
+  onClearRecentPlaces,
   onLookUp,
   onSubmitSearch,
   onToggleEquipment,
@@ -73,6 +77,10 @@ export function ResultsContent({
   /** What the search box suggests for what's typed, best first (lib/suggest.ts). */
   suggestions: readonly Suggestion[];
   onPickSuggestion: (hit: Suggestion) => void;
+  /** Places searched before, offered while the search box is empty and in use. */
+  recentPlaces?: readonly RecentPlace[];
+  onPickRecentPlace?: (place: RecentPlace) => void;
+  onClearRecentPlaces?: () => void;
   /** Look what's typed up as a place anywhere in the world. */
   onLookUp: () => void;
   onSubmitSearch: () => void;
@@ -119,6 +127,10 @@ export function ResultsContent({
   const filterCount = activeFilterCount(filters);
   const total = outcome.results.length;
   const [focused, setFocused] = useState(false);
+  // In the search box (any device): the recent places show while it's empty. A beat after
+  // leaving it, so a tap on one of them lands before they go.
+  const [searching, setSearching] = useState(false);
+  const showRecent = searching && !typed && recentPlaces.length > 0 && onPickRecentPlace !== undefined;
 
   return (
     <View style={styles.wrap}>
@@ -133,9 +145,13 @@ export function ResultsContent({
             onFocus={() => {
               // In a browser, where the keyboard can land here, show it; phones draw no ring.
               if (Platform.OS === 'web') setFocused(true);
+              setSearching(true);
               onSearchFocus();
             }}
-            onBlur={() => setFocused(false)}
+            onBlur={() => {
+              setFocused(false);
+              setTimeout(() => setSearching(false), 250);
+            }}
             onSubmitEditing={onSubmitSearch}
             placeholder={PLACEHOLDER}
             placeholderTextColor={color.labelTertiary}
@@ -179,6 +195,50 @@ export function ResultsContent({
           )}
         </Pressable>
       </View>
+
+      {showRecent && (
+        <Animated.View entering={FADE_IN} exiting={FADE_OUT} style={styles.suggestions}>
+          <View style={styles.recentHead}>
+            <Txt variant="eyebrow" color={color.labelSecondary} style={styles.flexOne}>
+              RECENT
+            </Txt>
+            <Pressable
+              onPress={() => {
+                haptic.tap();
+                onClearRecentPlaces?.();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Clear recent places"
+              hitSlop={8}
+            >
+              <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                Clear
+              </Txt>
+            </Pressable>
+          </View>
+          {recentPlaces.map((place) => (
+            <Pressable
+              key={`${place.countryCode}:${place.placeName}`}
+              onPress={() => onPickRecentPlace?.(place)}
+              style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
+              accessibilityRole="button"
+              accessibilityLabel={`${place.placeName}, searched before`}
+            >
+              <View style={[styles.suggestionGlyph, styles.lookGlyph]}>
+                <Icon name="history" size={16} color={color.brand} />
+              </View>
+              <View style={styles.suggestionText}>
+                <Txt variant="body" numberOfLines={1}>
+                  {place.placeName}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                  {countryName(place.countryCode)}
+                </Txt>
+              </View>
+            </Pressable>
+          ))}
+        </Animated.View>
+      )}
 
       {(suggestions.length > 0 || offerLookUp) && (
         <View style={styles.suggestions}>
@@ -571,6 +631,8 @@ const styles = themed(() => StyleSheet.create({
   // Name over its context, as Maps lists places, so a long name never pushes
   // the suburb off the card's edge.
   suggestionText: { flex: 1, minWidth: 0 },
+  recentHead: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: space[2], paddingBottom: space[1] },
+  flexOne: { flex: 1 },
 
   chips: { gap: space[2], paddingHorizontal: space[4], paddingVertical: space[3] },
 

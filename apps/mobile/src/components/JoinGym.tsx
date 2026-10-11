@@ -66,9 +66,12 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
               accessible
               accessibilityLabel={`${offer.label}: ${formatMoney(offer.baseAmountMinor!, offer.currency)} ${view?.billingLabel ?? ''}`}
             >
-              <Txt variant="caption" color={color.labelSecondary} numberOfLines={2} style={styles.center}>
-                {offer.label}
-              </Txt>
+              {/* A tier called just "Membership" would only repeat the heading above it. */}
+              {!/^\s*membership\s*$/i.test(offer.label) && (
+                <Txt variant="caption" color={color.labelSecondary} numberOfLines={2} style={styles.center}>
+                  {offer.label}
+                </Txt>
+              )}
               <Txt variant="headline" style={styles.center}>
                 {formatMoney(offer.baseAmountMinor!, offer.currency)}
               </Txt>

@@ -21,7 +21,7 @@ import { BrandFill } from '@/components/BrandFill';
 import { Avatar } from '@/components/Avatar';
 import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
-import { useActiveSession } from '@/lib/activeSession';
+import { startSession, useActiveSession } from '@/lib/activeSession';
 import { WeekStrip } from '@/components/TrainingInsights';
 import { CollectionStrip, HereNudge } from '@/components/CollectCard';
 import { useTrainingLog } from '@/lib/useTraining';
@@ -35,6 +35,9 @@ import { todayThere, tripDatesLabel, tripToShow, tripWhen, useTrips } from '@/li
 import { resultsById } from '@/lib/results';
 import { PAGE_COLUMN, color, dropShadow, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
+import { templateDayName, upNext } from '@/lib/templates';
+import { unitFor } from '@/lib/training';
+import { exerciseName } from '@/lib/workout';
 
 /** Melbourne suburbs worth a tap, in the order people ask about them. */
 const MELBOURNE_PICKS = ['Melbourne CBD', 'Fitzroy', 'Collingwood', 'Brunswick', 'Carlton', 'Richmond', 'South Melbourne', 'Northcote'];
@@ -63,6 +66,9 @@ export default function Home() {
   const trips = useTrips(nowIn(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC').date);
   // Your training log, shared with Progress; the week strip shows once there's something in it.
   const log = useTrainingLog(account.token);
+  // On a plan (a template done before) and no workout going: its next day, one tap away.
+  const plan = active ? null : upNext(log.sessions);
+  const planDay = plan ? plan.template.days[plan.day]! : null;
   const [showAll, setShowAll] = useState<Record<string, boolean>>({});
   // Another country than yours, without Pro: no gyms listed, just the way to Pro.
   const locked = !mayExplore(filters.countryCode);
@@ -237,9 +243,49 @@ export default function Home() {
         <Icon name="chevron" size={14} color={color.onBrandSoft} />
       </Pressy>
 
-      <Pressable onPress={() => router.push('/templates')} accessibilityRole="link" accessibilityLabel="Or start from a template: push, pull, legs; 5×5; or full body" hitSlop={6} style={styles.templatesLink}>
+      {plan && planDay && (
+        <Pressy
+          scaleTo={0.97}
+          onPress={() => {
+            haptic.success();
+            startSession({ name: templateDayName(plan.template, planDay), workoutId: null, gymId: null, gymName: null, unit: unitFor(prefs.country), items: planDay.items });
+            router.push('/train');
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`Start ${planDay.name}, up next in ${plan.template.name}`}
+          style={styles.upNext}
+        >
+          <View style={styles.upNextIcon}>
+            <Icon name="play" size={14} color={color.brand} />
+          </View>
+          <View style={styles.flex}>
+            <Txt variant="caption" color={color.brand} style={face('semibold')} numberOfLines={1}>
+              Up next · {plan.template.name}
+            </Txt>
+            <Txt variant="headline" numberOfLines={1}>
+              {planDay.name}
+            </Txt>
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+              {planDay.items.map((item) => exerciseName(item.exerciseId)).join(', ')}
+            </Txt>
+          </View>
+          <View style={styles.startPill}>
+            <Txt variant="footnote" color={color.onBrand} style={face('semibold')}>
+              Start
+            </Txt>
+          </View>
+        </Pressy>
+      )}
+
+      <Pressable
+        onPress={() => router.push('/templates')}
+        accessibilityRole="link"
+        accessibilityLabel={plan ? 'Or pick another template' : 'Or start from a template: push, pull, legs; 5×5; or full body'}
+        hitSlop={6}
+        style={styles.templatesLink}
+      >
         <Txt variant="footnote" color={color.brand} style={[face('semibold'), styles.center]}>
-          Or start from a template ›
+          {plan ? 'Or pick another template ›' : 'Or start from a template ›'}
         </Txt>
       </Pressable>
 
@@ -611,6 +657,18 @@ const styles = themed(() => StyleSheet.create({
   tripIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
   finders: { flexDirection: 'row', gap: space[3] },
   templatesLink: { alignSelf: 'center', marginTop: -space[1] },
+  upNext: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    padding: space[3],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.card,
+    ...shadow.card,
+  },
+  upNextIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
+  startPill: { paddingHorizontal: space[3], paddingVertical: 7, borderRadius: radius.pill, backgroundColor: color.brandFill },
   finderNarrow: { flexDirection: 'column', gap: space[2] },
   finderTextNarrow: { alignSelf: 'stretch' },
   finder: {

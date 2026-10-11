@@ -68,7 +68,7 @@ export function GymRow({
           <MarkImage mark={mark} name={location.name} width={52} height={48} area={1500} />
         </View>
       ) : (
-        <NoPhoto compact style={styles.thumb} />
+        <NoPhoto compact name={location.name} style={styles.thumb} />
       )}
 
       <View style={styles.middle}>
@@ -100,9 +100,12 @@ export function GymRow({
       </View>
 
       <View style={styles.trailing}>
-        <Txt variant="figure" color={price.confirmed ? color.label : color.labelSecondary}>
-          {price.headline}
-        </Txt>
+        {/* No price at all: just the words, so a list of unknowns isn't a column of dashes. */}
+        {price.headline !== '—' && (
+          <Txt variant="figure" color={price.confirmed ? color.label : color.labelSecondary}>
+            {price.headline}
+          </Txt>
+        )}
         <Txt variant="caption" color={color.labelSecondary} numberOfLines={2} style={styles.caption}>
           {price.caption}
         </Txt>

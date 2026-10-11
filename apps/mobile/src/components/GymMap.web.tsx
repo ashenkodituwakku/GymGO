@@ -18,6 +18,7 @@ import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState }
 import { StyleSheet, View } from 'react-native';
 import type { BoundingBox } from '@gymgo/domain';
 import { TIER_COLOUR } from './ui';
+import { alpha, mix } from '@/lib/looks';
 import type { GymMapHandle, GymMapProps } from './map-types';
 import { mapItems, sameSpot, type MapItem } from '@/lib/cluster';
 import { currentTheme, themed } from '@/lib/theme';
@@ -26,59 +27,94 @@ export type { GymMapHandle, MapPin } from './map-types';
 
 import { DARK_STYLE_URL, STYLE_URL } from './mapPage';
 
-/** A dumbbell, drawn as plain shapes so the preview needs no icon font. */
-const DUMBBELL_SVG =
-  '<svg viewBox="0 0 24 24" width="60%" height="60%" fill="white" aria-hidden="true">' +
-  '<rect x="1.5" y="8" width="3" height="8" rx="1"/><rect x="4.5" y="6" width="3" height="12" rx="1"/>' +
-  '<rect x="7.5" y="10.8" width="9" height="2.4"/>' +
-  '<rect x="16.5" y="6" width="3" height="12" rx="1"/><rect x="19.5" y="8" width="3" height="8" rx="1"/></svg>';
+/** A dumbbell, drawn as plain rounded shapes so the preview needs no icon font. */
+const DUMBBELL = (size: string) =>
+  `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="#fff" aria-hidden="true">` +
+  '<rect x="2" y="8.6" width="2.6" height="6.8" rx="1.2"/><rect x="5" y="6.2" width="3.3" height="11.6" rx="1.5"/>' +
+  '<rect x="8" y="10.9" width="8" height="2.2" rx="1.1"/>' +
+  '<rect x="15.7" y="6.2" width="3.3" height="11.6" rx="1.5"/><rect x="19.4" y="8.6" width="2.6" height="6.8" rx="1.2"/></svg>';
 
 /** A spring, as CSS easing: quick, a touch of overshoot, settles. */
 const SPRING = 'cubic-bezier(0.34, 1.4, 0.64, 1)';
 
+/** The teardrop of a picked pin, its tip at the foot of a 40 × 50 box (the map point). */
+const DROP = 'M20 2C10.06 2 2 10.06 2 20c0 9.4 11.2 22.6 16.3 28.3a2.3 2.3 0 0 0 3.4 0C26.8 42.6 38 29.4 38 20 38 10.06 29.94 2 20 2z';
+
+/** Lit from above: a lighter shade of the tier's colour at the top, the colour itself below. */
+const lit = (fill: string) => `linear-gradient(180deg, ${mix(fill, '#ffffff', 0.28)} 0%, ${fill} 62%, ${mix(fill, '#000000', 0.08)} 100%)`;
+
+/** Hover lift and the press, once per page: the markers are plain elements outside React. */
+function ensurePinStyles() {
+  if (document.getElementById('gymgo-pin-styles')) return;
+  const sheet = document.createElement('style');
+  sheet.id = 'gymgo-pin-styles';
+  sheet.textContent =
+    '.gg-pin .gg-face{transition:transform 160ms cubic-bezier(0.22,1,0.36,1);}' +
+    '.gg-pin:hover .gg-face{transform:translateY(-2px) scale(1.08);}' +
+    '.gg-pin:active .gg-face{transform:scale(0.94);}' +
+    '@media (prefers-reduced-motion: reduce){.gg-pin .gg-face{transition:none;}.gg-pin:hover .gg-face{transform:none;}}';
+  document.head.appendChild(sheet);
+}
+
 function pinElement(fill: string, selected: boolean, label: string): HTMLElement {
-  const size = selected ? 44 : 30;
+  ensurePinStyles();
   const wrap = document.createElement('button');
   wrap.type = 'button';
+  wrap.className = 'gg-pin';
   wrap.setAttribute('aria-label', label);
   // Out of the Tab order: the list beside the map has every one of these
   // gyms, in order, so the keyboard reaches the search and list first
   // rather than forty pins.
   wrap.tabIndex = -1;
-  wrap.style.cssText =
-    'display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0;cursor:pointer;';
-  const disc = document.createElement('div');
-  disc.style.cssText =
-    `width:${size}px;height:${size}px;border-radius:50%;background:${fill};` +
-    `border:${selected ? 3 : 2}px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.25);` +
-    'display:flex;align-items:center;justify-content:center;transform-origin:50% 100%;';
-  disc.innerHTML = DUMBBELL_SVG;
-  wrap.appendChild(disc);
+  wrap.style.cssText = 'position:relative;display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0;cursor:pointer;';
   if (selected) {
-    const pointer = document.createElement('div');
-    pointer.style.cssText =
-      `width:0;height:0;margin-top:-2px;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid ${fill};`;
-    wrap.appendChild(pointer);
+    // One smooth teardrop (no seam where a pointer meets a disc), lit from above, with its shadow on the ground under the tip.
+    const id = `gg${Math.random().toString(36).slice(2, 8)}`;
+    const face = document.createElement('div');
+    face.className = 'gg-face';
+    face.style.cssText = 'position:relative;width:44px;height:55px;transform-origin:50% 100%;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.28)) drop-shadow(0 1px 1.5px rgba(0,0,0,0.25));';
+    face.innerHTML =
+      `<svg viewBox="0 0 40 50" width="44" height="55" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">` +
+      `<stop offset="0" stop-color="${mix(fill, '#ffffff', 0.3)}"/><stop offset="0.55" stop-color="${fill}"/><stop offset="1" stop-color="${mix(fill, '#000000', 0.1)}"/>` +
+      `</linearGradient></defs><path d="${DROP}" fill="url(#${id})" stroke="#fff" stroke-width="2.2"/>` +
+      '<circle cx="20" cy="20" r="12.5" fill="rgba(255,255,255,0.14)"/></svg>' +
+      `<div style="position:absolute;left:0;right:0;top:0;height:44px;display:flex;align-items:center;justify-content:center;">${DUMBBELL('21')}</div>`;
+    const ground = document.createElement('div');
+    ground.style.cssText = 'position:absolute;bottom:-3px;left:50%;width:16px;height:6px;margin-left:-8px;border-radius:50%;background:radial-gradient(closest-side, rgba(0,0,0,0.32), rgba(0,0,0,0));pointer-events:none;';
+    wrap.appendChild(ground);
+    wrap.appendChild(face);
+    return wrap;
   }
+  const face = document.createElement('div');
+  face.className = 'gg-face';
+  face.style.cssText =
+    `width:28px;height:28px;border-radius:50%;background:${lit(fill)};border:2px solid #fff;box-sizing:border-box;` +
+    'box-shadow:0 1px 2px rgba(0,0,0,0.28),0 4px 10px rgba(0,0,0,0.18);' +
+    'display:flex;align-items:center;justify-content:center;transform-origin:50% 50%;';
+  face.innerHTML = DUMBBELL('16');
+  wrap.appendChild(face);
   return wrap;
 }
 
-/** Several gyms in one bubble, with how many. */
+/** Several gyms in one bubble, with how many: a faint halo in its colour says there's more than one. */
 function bubbleElement(fill: string, count: number): HTMLElement {
-  const size = count < 10 ? 34 : count < 100 ? 40 : 46;
+  ensurePinStyles();
+  const size = count < 10 ? 32 : count < 100 ? 38 : 44;
   const wrap = document.createElement('button');
   wrap.type = 'button';
+  wrap.className = 'gg-pin';
   wrap.setAttribute('aria-label', `${count} gyms here. Zoom in`);
   wrap.tabIndex = -1;
   wrap.style.cssText = 'display:flex;background:none;border:0;padding:0;cursor:pointer;';
-  const disc = document.createElement('div');
-  disc.style.cssText =
-    `min-width:${size}px;height:${size}px;border-radius:${size / 2}px;background:${fill};` +
-    'border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.28);box-sizing:border-box;padding:0 6px;' +
-    'display:flex;align-items:center;justify-content:center;color:#fff;' +
-    `font:600 ${count < 100 ? 15 : 13}px/1 -apple-system,system-ui,sans-serif;letter-spacing:-0.2px;`;
-  disc.textContent = String(count);
-  wrap.appendChild(disc);
+  const face = document.createElement('div');
+  face.className = 'gg-face';
+  face.style.cssText =
+    `min-width:${size}px;height:${size}px;border-radius:${size / 2}px;background:${lit(fill)};` +
+    `border:2px solid #fff;box-shadow:0 0 0 4px ${alpha(fill, 0.22)},0 1px 2px rgba(0,0,0,0.28),0 5px 12px rgba(0,0,0,0.2);box-sizing:border-box;padding:0 7px;` +
+    'display:flex;align-items:center;justify-content:center;color:#fff;font-variant-numeric:tabular-nums;' +
+    `font:600 ${count < 100 ? 14 : 12.5}px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif;letter-spacing:-0.2px;text-shadow:0 1px 1px rgba(0,0,0,0.15);`;
+  face.textContent = String(count);
+  wrap.appendChild(face);
   return wrap;
 }
 
@@ -90,14 +126,14 @@ function calm() {
 /** Grow in with a spring, the way a pin lands in Maps. */
 function popIn(element: HTMLElement, from = 0.4) {
   if (calm()) return;
-  const disc = element.firstElementChild as HTMLElement | null;
+  const disc = element.querySelector<HTMLElement>('.gg-face');
   disc?.animate?.([{ transform: `scale(${from})`, opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 320, easing: SPRING });
 }
 
 /** Shrink away, then go. */
 function popOut(element: HTMLElement, done: () => void) {
   if (calm()) return done();
-  const disc = element.firstElementChild as HTMLElement | null;
+  const disc = element.querySelector<HTMLElement>('.gg-face');
   const animation = disc?.animate?.([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0.5)', opacity: 0 }], { duration: 160, easing: 'ease-in', fill: 'forwards' });
   if (!animation) return done();
   // Gone for certain even if the animation never finishes (a background

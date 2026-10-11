@@ -63,10 +63,32 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
 <script>
 (function () {
   if (!window.maplibregl) return;
-  var DUMBBELL = '<svg viewBox="0 0 24 24" width="60%" height="60%" fill="white" aria-hidden="true">' +
-    '<rect x="1.5" y="8" width="3" height="8" rx="1"/><rect x="4.5" y="6" width="3" height="12" rx="1"/>' +
-    '<rect x="7.5" y="10.8" width="9" height="2.4"/>' +
-    '<rect x="16.5" y="6" width="3" height="12" rx="1"/><rect x="19.5" y="8" width="3" height="8" rx="1"/></svg>';
+  // The same pins as the browser's (GymMap.web.tsx): lit from above, ringed in white, a teardrop when picked.
+  var DUMBBELL = function (size) {
+    return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="#fff" aria-hidden="true">' +
+      '<rect x="2" y="8.6" width="2.6" height="6.8" rx="1.2"/><rect x="5" y="6.2" width="3.3" height="11.6" rx="1.5"/>' +
+      '<rect x="8" y="10.9" width="8" height="2.2" rx="1.1"/>' +
+      '<rect x="15.7" y="6.2" width="3.3" height="11.6" rx="1.5"/><rect x="19.4" y="8.6" width="2.6" height="6.8" rx="1.2"/></svg>';
+  };
+  var DROP = 'M20 2C10.06 2 2 10.06 2 20c0 9.4 11.2 22.6 16.3 28.3a2.3 2.3 0 0 0 3.4 0C26.8 42.6 38 29.4 38 20 38 10.06 29.94 2 20 2z';
+  function channels(hex) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+    return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : null;
+  }
+  // Toward white (255) or black (0) by an amount.
+  function shade(hex, to, amount) {
+    var c = channels(hex);
+    if (!c) return hex;
+    return 'rgb(' + c.map(function (v) { return Math.round(v + (to - v) * amount); }).join(',') + ')';
+  }
+  function tint(hex, alpha) {
+    var c = channels(hex);
+    return c ? 'rgba(' + c.join(',') + ',' + alpha + ')' : hex;
+  }
+  function lit(fill) {
+    return 'linear-gradient(180deg, ' + shade(fill, 255, 0.28) + ' 0%, ' + fill + ' 62%, ' + shade(fill, 0, 0.08) + ' 100%)';
+  }
+  var dropIds = 0;
 
   // Where a flyTo is headed while it's under way, and whether padding is set yet.
   var flight = null, padded = false;
@@ -111,39 +133,49 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
   var SPRING = 'cubic-bezier(0.34, 1.4, 0.64, 1)';
 
   function pin(fill, selected, label) {
-    var size = selected ? 44 : 30;
     var wrap = document.createElement('button');
     wrap.type = 'button';
     wrap.setAttribute('aria-label', label);
-    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0;';
-    var disc = document.createElement('div');
-    disc.style.cssText = 'width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:' + fill + ';' +
-      'border:' + (selected ? 3 : 2) + 'px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.25);' +
-      'display:flex;align-items:center;justify-content:center;transform-origin:50% 100%;';
-    disc.innerHTML = DUMBBELL;
-    wrap.appendChild(disc);
+    wrap.style.cssText = 'position:relative;display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0;';
+    var face = document.createElement('div');
+    face.className = 'gg-face';
     if (selected) {
-      var pointer = document.createElement('div');
-      pointer.style.cssText = 'width:0;height:0;margin-top:-2px;border-left:7px solid transparent;' +
-        'border-right:7px solid transparent;border-top:9px solid ' + fill + ';';
-      wrap.appendChild(pointer);
+      // One smooth teardrop, with its shadow on the ground under the tip.
+      var id = 'gg' + (dropIds += 1);
+      face.style.cssText = 'position:relative;width:44px;height:55px;transform-origin:50% 100%;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.28)) drop-shadow(0 1px 1.5px rgba(0,0,0,0.25));';
+      face.innerHTML = '<svg viewBox="0 0 40 50" width="44" height="55" aria-hidden="true"><defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="' + shade(fill, 255, 0.3) + '"/><stop offset="0.55" stop-color="' + fill + '"/><stop offset="1" stop-color="' + shade(fill, 0, 0.1) + '"/>' +
+        '</linearGradient></defs><path d="' + DROP + '" fill="url(#' + id + ')" stroke="#fff" stroke-width="2.2"/>' +
+        '<circle cx="20" cy="20" r="12.5" fill="rgba(255,255,255,0.14)"/></svg>' +
+        '<div style="position:absolute;left:0;right:0;top:0;height:44px;display:flex;align-items:center;justify-content:center;">' + DUMBBELL(21) + '</div>';
+      var ground = document.createElement('div');
+      ground.style.cssText = 'position:absolute;bottom:-3px;left:50%;width:16px;height:6px;margin-left:-8px;border-radius:50%;background:radial-gradient(closest-side, rgba(0,0,0,0.32), rgba(0,0,0,0));pointer-events:none;';
+      wrap.appendChild(ground);
+      wrap.appendChild(face);
+      return wrap;
     }
+    face.style.cssText = 'width:28px;height:28px;border-radius:50%;background:' + lit(fill) + ';border:2px solid #fff;box-sizing:border-box;' +
+      'box-shadow:0 1px 2px rgba(0,0,0,0.28),0 4px 10px rgba(0,0,0,0.18);' +
+      'display:flex;align-items:center;justify-content:center;transform-origin:50% 50%;';
+    face.innerHTML = DUMBBELL(16);
+    wrap.appendChild(face);
     return wrap;
   }
 
   function bubble(fill, count) {
-    var size = count < 10 ? 34 : count < 100 ? 40 : 46;
+    var size = count < 10 ? 32 : count < 100 ? 38 : 44;
     var wrap = document.createElement('button');
     wrap.type = 'button';
     wrap.setAttribute('aria-label', count + ' gyms here. Zoom in');
     wrap.style.cssText = 'display:flex;background:none;border:0;padding:0;';
-    var disc = document.createElement('div');
-    disc.style.cssText = 'min-width:' + size + 'px;height:' + size + 'px;border-radius:' + (size / 2) + 'px;background:' + fill + ';' +
-      'border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.28);box-sizing:border-box;padding:0 6px;' +
-      'display:flex;align-items:center;justify-content:center;color:#fff;' +
-      'font:600 ' + (count < 100 ? 15 : 13) + 'px/1 sans-serif;';
-    disc.textContent = String(count);
-    wrap.appendChild(disc);
+    var face = document.createElement('div');
+    face.className = 'gg-face';
+    face.style.cssText = 'min-width:' + size + 'px;height:' + size + 'px;border-radius:' + (size / 2) + 'px;background:' + lit(fill) + ';' +
+      'border:2px solid #fff;box-shadow:0 0 0 4px ' + tint(fill, 0.22) + ',0 1px 2px rgba(0,0,0,0.28),0 5px 12px rgba(0,0,0,0.2);box-sizing:border-box;padding:0 7px;' +
+      'display:flex;align-items:center;justify-content:center;color:#fff;font-variant-numeric:tabular-nums;' +
+      'font:600 ' + (count < 100 ? 14 : 12.5) + 'px/1 Roboto,system-ui,sans-serif;letter-spacing:-0.2px;text-shadow:0 1px 1px rgba(0,0,0,0.15);';
+    face.textContent = String(count);
+    wrap.appendChild(face);
     return wrap;
   }
 
@@ -153,12 +185,12 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
   }
 
   function popIn(element, from) {
-    var disc = element.firstElementChild;
+    var disc = element.querySelector('.gg-face');
     if (disc && disc.animate && !calm()) disc.animate([{ transform: 'scale(' + from + ')', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 320, easing: SPRING });
   }
 
   function popOut(marker) {
-    var disc = marker.getElement().firstElementChild;
+    var disc = marker.getElement().querySelector('.gg-face');
     if (!disc || !disc.animate || calm()) return marker.remove();
     var animation = disc.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0.5)', opacity: 0 }], { duration: 160, easing: 'ease-in', fill: 'forwards' });
     // Gone for certain even if the animation never finishes (a paused page),

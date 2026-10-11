@@ -17,7 +17,7 @@ import type { BoundingBox } from '@gymgo/domain';
 import { assignSlots, mapItems, sameSpot, zoomOf, type MapItem } from '@/lib/cluster';
 import { currentTheme } from '@/lib/theme';
 import type { GymMapHandle, GymMapProps } from './map-types';
-import { ClusterBubble, Pin } from './Pin';
+import { ClusterBubble, PICKED_ANCHOR_Y, Pin } from './Pin';
 
 export type { GymMapHandle, MapPin } from './map-types';
 
@@ -58,7 +58,7 @@ function SlotMarker({ item, onPin, onCluster }: { item: MapItem | null; onPin: (
   return (
     <Marker
       coordinate={position ? { latitude: position.lat, longitude: position.lng } : PARKED}
-      anchor={{ x: 0.5, y: selected ? 0.85 : 0.5 }}
+      anchor={{ x: 0.5, y: selected ? PICKED_ANCHOR_Y : 0.5 }}
       opacity={item ? 1 : 0}
       onPress={(event) => {
         event.stopPropagation();

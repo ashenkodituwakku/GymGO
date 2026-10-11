@@ -1,5 +1,6 @@
 import { defaultQuery, haversineKm, isOpenAt, search, zonedTimeToInstant, type GymRecord } from '@gymgo/domain';
 import { iso1A2Code } from '@rapideditor/country-coder';
+import { isChainEvidence } from '@gymgo/osm';
 import { describe, expect, it } from 'vitest';
 import { US_CITIES, US_GYMS, US_PLACES, usCity } from './index';
 import { GYM_ROWS, PLACE_ROWS } from './data';
@@ -39,6 +40,8 @@ describe('US gyms from OpenStreetMap', () => {
           expect(provenance.sources).toEqual([]);
           continue;
         }
+        // What the gym's franchise publishes for every club (packages/osm/src/chains.ts).
+        if (provenance.sources.every(isChainEvidence)) continue;
         expect(provenance.status).toBe('community_reported');
         for (const source of provenance.sources) {
           if (source.sourceType === 'independent_check') {
@@ -55,7 +58,8 @@ describe('US gyms from OpenStreetMap', () => {
 
   it('invents nothing: no prices, no equipment, no photos, no guest or staffed hours', () => {
     for (const record of US_GYMS) {
-      expect(record.offers).toEqual([]);
+      // Only what the gym's franchise publishes for every club.
+      for (const offer of record.offers) expect(offer.provenance.sources.every(isChainEvidence)).toBe(true);
       expect(record.equipment).toEqual([]);
       // Facilities only where the map says yes or no, credited to the map.
       for (const amenity of record.amenities) {

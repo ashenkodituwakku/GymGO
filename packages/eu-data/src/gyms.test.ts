@@ -1,4 +1,5 @@
 import { defaultQuery, haversineKm, search, type GymRecord } from '@gymgo/domain';
+import { isChainEvidence } from '@gymgo/osm';
 import { describe, expect, it } from 'vitest';
 import { EU_CITIES, EU_GYMS, EU_PLACES, euCity } from './index';
 import { GYM_ROWS } from './data';
@@ -33,6 +34,8 @@ describe('European gyms from OpenStreetMap', () => {
           expect(provenance.sources).toEqual([]);
           continue;
         }
+        // What the gym's franchise publishes for every club (packages/osm/src/chains.ts).
+        if (provenance.sources.every(isChainEvidence)) continue;
         expect(provenance.status).toBe('community_reported');
         for (const source of provenance.sources) {
           expect(source.evidenceRef).toMatch(/^https:\/\/www\.openstreetmap\.org\/(node|way|relation)\/\d+$/);
@@ -44,7 +47,8 @@ describe('European gyms from OpenStreetMap', () => {
 
   it('invents nothing: no prices, no equipment, no photos, no guest or staffed hours', () => {
     for (const record of EU_GYMS) {
-      expect(record.offers).toEqual([]);
+      // Only what the gym's franchise publishes for every club.
+      for (const offer of record.offers) expect(offer.provenance.sources.every(isChainEvidence)).toBe(true);
       expect(record.equipment).toEqual([]);
       for (const amenity of record.amenities) {
         expect(['yes', 'no']).toContain(amenity.present);

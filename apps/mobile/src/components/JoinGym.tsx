@@ -10,6 +10,7 @@
 import * as WebBrowser from 'expo-web-browser';
 import { Linking, StyleSheet, View } from 'react-native';
 import { describeMembership, formatMoney, type GymRecord, type VisitOffer } from '@gymgo/domain';
+import { isChainEvidence } from '@gymgo/osm';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { Fold, PrimaryButton, Txt } from './ui';
 import { Pressy } from './motion';
@@ -20,9 +21,14 @@ export function membershipsOf(record: GymRecord): VisitOffer[] {
   return record.offers.filter((offer) => offer.productType === 'membership').sort((a, b) => weekly(a) - weekly(b));
 }
 
-/** Where to sign up: the page the membership price was read from, else the gym's own site. */
+/**
+ * Where to sign up: the page the membership price was read from, else the
+ * gym's own site. A franchise's price for every club was read from a page
+ * like its terms, not this club's sign-up, so that goes to the gym's site.
+ */
 export function joinUrl(record: GymRecord): string | null {
   for (const offer of membershipsOf(record)) {
+    if (offer.priceBasis || offer.provenance.sources.every(isChainEvidence)) continue;
     const page = offer.provenance.sources.find((source) => source.sourceType === 'operator_website' && source.evidenceRef?.startsWith('http'));
     if (page?.evidenceRef) return page.evidenceRef;
   }
@@ -37,6 +43,13 @@ function feeLine(label: string, minor: number | null, currency: VisitOffer['curr
 }
 
 /** The line a gym's disagreeing membership sources carry, if any. */
+/** "From " or "About " before a franchise's price that this club may not charge exactly. */
+function basisWord(offer: VisitOffer): string {
+  return offer.priceBasis === 'from' ? 'From ' : offer.priceBasis === 'recommended' ? 'About ' : '';
+}
+
+const CHAIN_NOTE = 'Prices the chain publishes for all its clubs. Each club sets its own, so this one may charge more: check before you join.';
+
 function conflictOf(offers: VisitOffer[]): string | null {
   return offers.find((offer) => offer.provenance.status === 'conflicting')?.provenance.conflictNote ?? null;
 }
@@ -64,7 +77,7 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
               key={offer.id}
               style={styles.pill}
               accessible
-              accessibilityLabel={`${offer.label}: ${formatMoney(offer.baseAmountMinor!, offer.currency)} ${view?.billingLabel ?? ''}`}
+              accessibilityLabel={`${offer.label}: ${basisWord(offer)}${formatMoney(offer.baseAmountMinor!, offer.currency)} ${view?.billingLabel ?? ''}`}
             >
               {/* A tier called just "Membership" would only repeat the heading above it. */}
               {!/^\s*membership\s*$/i.test(offer.label) && (
@@ -73,6 +86,7 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
                 </Txt>
               )}
               <Txt variant="headline" style={styles.center}>
+                {basisWord(offer)}
                 {formatMoney(offer.baseAmountMinor!, offer.currency)}
               </Txt>
               {view && (
@@ -87,6 +101,11 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
       {disagree && (
         <Txt variant="footnote" color={color.maybeInk} style={styles.center}>
           The gym’s pages disagree on these prices. Check with the gym before you join.
+        </Txt>
+      )}
+      {tiers.some((offer) => offer.priceBasis) && (
+        <Txt variant="footnote" color={color.maybeInk} style={styles.center}>
+          {CHAIN_NOTE}
         </Txt>
       )}
       {url && (
@@ -108,7 +127,7 @@ export function JoinGym({ record }: { record: GymRecord }) {
   const cheapestView = cheapest ? describeMembership(cheapest) : null;
   const summary =
     cheapest && cheapest.baseAmountMinor !== null && cheapestView
-      ? `${memberships.length > 1 ? 'From ' : ''}${formatMoney(cheapest.baseAmountMinor, cheapest.currency)} ${cheapestView.billingLabel}`
+      ? `${memberships.length > 1 || cheapest.priceBasis === 'from' ? 'From ' : basisWord(cheapest)}${formatMoney(cheapest.baseAmountMinor, cheapest.currency)} ${cheapestView.billingLabel}`
       : 'Membership prices not published';
 
   const conflict = conflictOf(memberships);
@@ -117,6 +136,11 @@ export function JoinGym({ record }: { record: GymRecord }) {
       {conflict && (
         <Txt variant="footnote" color={color.maybeInk}>
           Sources disagree: {conflict}
+        </Txt>
+      )}
+      {memberships.some((offer) => offer.priceBasis) && (
+        <Txt variant="footnote" color={color.maybeInk}>
+          {CHAIN_NOTE}
         </Txt>
       )}
       {memberships.map((offer) => {
@@ -135,7 +159,7 @@ export function JoinGym({ record }: { record: GymRecord }) {
                 )}
               </View>
               <View style={styles.price}>
-                <Txt variant="figure">{offer.baseAmountMinor === null ? 'Ask' : formatMoney(offer.baseAmountMinor, offer.currency)}</Txt>
+                <Txt variant="figure">{offer.baseAmountMinor === null ? 'Ask' : `${basisWord(offer)}${formatMoney(offer.baseAmountMinor, offer.currency)}`}</Txt>
                 {view && (
                   <Txt variant="caption" color={color.labelSecondary}>
                     {view.billingLabel}

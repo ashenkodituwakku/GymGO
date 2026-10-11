@@ -1,3 +1,4 @@
+import { isChainEvidence } from '@gymgo/osm';
 import { describe, expect, it } from 'vitest';
 import { haversineKm } from '@gymgo/domain';
 import { CITIES, CITY_LIST, DEFAULT_PLACE, WORLD_CITIES, activeCities, localBudget, cityAt, cityNear, distanceLabel, geocodePlace, homePlace, moneyLabel, nearestCity, placeContext, radiusChoices, setDemoMode, setReaderCountry, suggestPlaces, suggestWorldCities, tracksPrices, whereaboutsAt, worldCitiesIn, worldCityNamed } from './places';
@@ -203,7 +204,8 @@ describe('places', () => {
       expect(outcome.results.length).toBeGreaterThan(10);
       const first = outcome.results[0]!;
       expect(distanceLabel(first.distanceKm!, first.record.location.address.countryCode)).toMatch(new RegExp(`${unit}$|\\d\\u00a0m$`));
-      for (const result of outcome.results) expect(result.record.offers).toEqual([]);
+      // Nothing priced by the map: only what a gym's franchise publishes for every club.
+      for (const result of outcome.results) for (const offer of result.record.offers) expect(offer.provenance.sources.every(isChainEvidence)).toBe(true);
     }
   });
 
@@ -216,8 +218,8 @@ describe('places', () => {
     for (const result of outcome.results) {
       expect(result.record.location.isDemoData).toBe(false);
       expect(result.record.location.address.countryCode).toBe('US');
-      expect(result.record.offers).toEqual([]);
-      // No guest hours or price: never a sure thing.
+      for (const offer of result.record.offers) expect(offer.provenance.sources.every(isChainEvidence)).toBe(true);
+      // No guest hours or visit price: never a sure thing.
       expect(result.tier).not.toBe('confirmed');
     }
   });

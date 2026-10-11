@@ -4,12 +4,15 @@
  * Map-only means: a name, a position, and whatever else the map holds
  * (address, phone, website, opening hours). All of it is volunteer-mapped,
  * so every fact is labelled community-reported, and a gym is never called
- * open for business on the map's word alone. There are no prices, no
- * equipment and no guest hours, because the map doesn't have them; the
- * product shows those as unknown and says to call.
+ * open for business on the map's word alone. There's no equipment and no
+ * guest hours, because the map doesn't have them; the product shows those
+ * as unknown and says to call. Prices and round-the-clock member access come
+ * only from the gym's franchise, where it publishes them for every club
+ * (chains.ts).
  */
 
 import { researchedWebsite, researchedWebsiteEvidence, type AccessSchedule, type AmenityObservation, type EvidenceSource, type GymRecord, type OpeningWindow, type Provenance, type TrainingType } from '@gymgo/domain';
+import { chainFactsFor } from './chains';
 import type { MappedAmenities, MappedHours } from './rules';
 
 export interface MapOnlyGym {
@@ -80,6 +83,11 @@ export function mapOnlyRecord(gym: MapOnlyGym, where: Whereabouts): GymRecord {
     });
   }
 
+  // What the gym's franchise publishes for every club: its prices, and that
+  // members can get in round the clock (which outranks the map's hours).
+  const chain = chainFactsFor(gym, where.countryCode, where.timezone);
+  if (chain.open247) schedules.splice(0, schedules.length, chain.open247);
+
   // Pool, sauna, showers, step-free entrance: only where the map says yes or no.
   const amenities: AmenityObservation[] = Object.entries(gym.amenities ?? {}).map(([amenityId, present]) => ({
     id: `${gym.id}-${amenityId}`,
@@ -122,7 +130,7 @@ export function mapOnlyRecord(gym: MapOnlyGym, where: Whereabouts): GymRecord {
     },
     equipment: [],
     amenities,
-    offers: [],
+    offers: chain.offers,
     schedules,
     prerequisites: {
       gymId: gym.id,

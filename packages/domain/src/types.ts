@@ -299,6 +299,13 @@ export interface VisitOffer {
   availableUntil: IsoDate | null;
   /** Populated only for `membership` products. */
   membershipTerms: MembershipTerms | null;
+  /**
+   * How the amount relates to this gym, for a franchise's price shown at
+   * every branch: `from` is the chain's lowest published price (this club
+   * may charge more), `recommended` the chain's recommended price (each club
+   * sets its own). Absent: the price this gym charges.
+   */
+  priceBasis?: 'from' | 'recommended';
   provenance: Provenance;
 }
 

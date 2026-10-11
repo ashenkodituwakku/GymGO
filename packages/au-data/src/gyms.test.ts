@@ -1,5 +1,6 @@
 import { defaultQuery, haversineKm, search, type GymRecord } from '@gymgo/domain';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
+import { isChainEvidence } from '@gymgo/osm';
 import { describe, expect, it } from 'vitest';
 import { AU_CITIES, AU_GYMS, AU_PLACES, auCity } from './index';
 import { GYM_ROWS } from './data';
@@ -23,9 +24,13 @@ const allFacts = (record: GymRecord) => [
 /** Chains that publish one price table for all their clubs (see chainOffers.ts). */
 const CHAIN_PAGES = /^https:\/\/(revofitness\.com\.au\/memberships\/|www\.zapfitness\.com\.au\/memberships-pricing\/|www\.derrimut247\.com\.au\/pages\/memberships)$/;
 
-/** Every price a gym shows is a chain's own published membership tier, cited to its page. */
+/** Every price a gym shows is a chain's own published price, cited to its page. */
 function onlyChainTiers(record: GymRecord) {
   for (const offer of record.offers) {
+    if (offer.provenance.sources.every(isChainEvidence)) {
+      expect(offer.baseAmountMinor).toBeGreaterThan(0);
+      continue;
+    }
     expect(offer.productType).toBe('membership');
     expect(offer.provenance.status).toBe('owner_confirmed');
     expect(offer.provenance.sources[0]!.sourceType).toBe('operator_website');
@@ -62,6 +67,8 @@ describe('Australian gyms from OpenStreetMap', () => {
           expect(provenance.sources).toEqual([]);
           continue;
         }
+        // What the gym's franchise publishes for every club (packages/osm/src/chains.ts).
+        if (provenance.sources.every(isChainEvidence)) continue;
         expect(provenance.status).toBe('community_reported');
         for (const source of provenance.sources) {
           // Besides the map: a website GymGO found for a gym the map lists without one.
@@ -83,9 +90,13 @@ describe('Australian gyms from OpenStreetMap', () => {
     expect(home(zap('VIC'))).toBe(1199);
     const revo = OPERATOR_GYMS.find((item) => item.location.brand === 'Revo Fitness')!;
     expect(revo.offers.map((offer) => offer.label)).toEqual(['Level One', 'Level Two']);
+    // Anytime lets each club set its price: its recommended price, marked as that.
     const anytime = AU_GYMS.filter((item) => item.location.brand === 'Anytime Fitness');
     expect(anytime.length).toBeGreaterThan(50);
-    for (const record of anytime) expect(record.offers).toEqual([]);
+    for (const record of anytime) {
+      expect(record.offers.map((offer) => offer.priceBasis)).toEqual(['recommended']);
+      expect(record.schedules.map((item) => item.alwaysOpen)).toEqual([true]);
+    }
   });
 
   it('invents nothing: no prices beyond a chain’s own table, no equipment, no photos, no guest or staffed hours', () => {

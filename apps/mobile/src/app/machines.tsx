@@ -249,7 +249,7 @@ function MachineRow({ hit, last, onPress }: { hit: MachineHit; last: boolean; on
           <MarkImage mark={mark} name={location.name} width={40} height={36} area={900} />
         </View>
       ) : (
-        <NoPhoto compact style={styles.thumb} />
+        <NoPhoto compact name={location.name} style={styles.thumb} />
       )}
       <View style={styles.middle}>
         <Txt variant="headline" numberOfLines={2}>

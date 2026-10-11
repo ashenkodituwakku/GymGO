@@ -76,7 +76,7 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
                   <MarkImage mark={mark} name={location.name} width={width * 0.72} height={76} area={5200} />
                 </View>
               ) : (
-                <NoPhoto style={styles.image} />
+                <NoPhoto name={location.name} style={styles.image} />
               )}
               <View style={styles.body}>
                 <Txt variant="headline" numberOfLines={1}>

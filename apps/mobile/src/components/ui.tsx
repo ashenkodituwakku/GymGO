@@ -11,7 +11,7 @@ import { TIER } from '@/lib/copy';
 import { monogram } from '@/lib/monogram';
 import { haptic } from '@/lib/haptics';
 import { color, dropShadow, face, HIT, radius, shadow, space, themed, type, webFocusRing } from '@/lib/theme';
-import { BrandFill } from './BrandFill';
+import { BrandFill, Sheen } from './BrandFill';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { FADE_IN, FADE_OUT, GLIDE, Pressable, Pressy, SETTLE, usePop, usePressScale } from './motion';
@@ -590,6 +590,7 @@ export function PrimaryButton({
       style={({ pressed }) => [styles.primary, { backgroundColor: fill }, pressed && { opacity: 0.9 }, disabled && !busy && { opacity: 0.45 }]}
     >
       {tone === 'brand' && <BrandFill />}
+      {tone === 'brand' && <Sheen round={radius.lg} />}
       {busy ? <ActivityIndicator size="small" color={ink} /> : icon ? <Icon name={icon} size={17} color={ink} /> : null}
       <Txt variant="headline" color={ink}>
         {label}

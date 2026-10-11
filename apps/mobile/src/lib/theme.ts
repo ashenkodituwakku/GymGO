@@ -369,7 +369,7 @@ export function applyTheme(scheme: Scheme, accent: AccentId, look: LookId = curr
   }
   const spec = LOOKS[look];
   Object.assign(radius, spec.radius);
-  Object.assign(shadow, spec.shadows?.(scheme, color.brand) ?? STANDARD_SHADOW);
+  Object.assign(shadow, spec.shadows?.(scheme, color.brand) ?? standardShadows(scheme));
   Object.assign(type, typeScale());
   version += 1;
   for (const listener of listeners) listener();
@@ -548,8 +548,28 @@ const STANDARD_SHADOW = {
   plate: {} as ViewStyle,
 };
 
+/**
+ * The standard look's shadows for a scheme. In light, cards sit on the page
+ * on a soft two-layer shadow, a tight one at the edge and a wide faint one
+ * under it, so they lift without a visible outline. In dark, where a shadow
+ * can't show against black, a faint light hairline inside the edge does the
+ * same. Both drawn as box shadows, so they take no room and never replace a
+ * card's own border.
+ */
+function standardShadows(scheme: Scheme): typeof STANDARD_SHADOW {
+  if (scheme === 'dark') {
+    const edge = 'inset 0px 0px 0px 1px rgba(255, 255, 255, 0.07)';
+    return { float: { boxShadow: `0px 4px 14px rgba(0, 0, 0, 0.5), ${edge}` }, card: { boxShadow: edge }, plate: { boxShadow: edge } };
+  }
+  return {
+    float: STANDARD_SHADOW.float,
+    card: { boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.04), 0px 3px 10px rgba(0, 0, 0, 0.045)' },
+    plate: { boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.03), 0px 6px 18px rgba(20, 20, 50, 0.045)' },
+  };
+}
+
 /** Shadows in use now. Change in place with the look (hard pixel shadows, bevels, glows). */
-export const shadow: { float: ViewStyle; card: ViewStyle; plate: ViewStyle } = { ...STANDARD_SHADOW };
+export const shadow: { float: ViewStyle; card: ViewStyle; plate: ViewStyle } = { ...standardShadows('light') };
 
 /**
  * Where touches go. Made with StyleSheet.create: in a browser only compiled

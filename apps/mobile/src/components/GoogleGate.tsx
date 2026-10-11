@@ -5,12 +5,12 @@
 
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Pressable } from './motion';
+import { Pressable, Pressy } from './motion';
 import { setAlwaysShowGoogle, useAlwaysShowGoogle } from '@/lib/googleConsent';
 import { haptic } from '@/lib/haptics';
-import { color, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
-import { PrimaryButton, Txt } from './ui';
+import { Txt } from './ui';
 
 export function GoogleGate({ what, children }: { what: string; children: ReactNode }) {
   const always = useAlwaysShowGoogle();
@@ -19,37 +19,57 @@ export function GoogleGate({ what, children }: { what: string; children: ReactNo
   return (
     <View style={styles.card}>
       <View style={styles.head}>
-        <Icon name="globe" size={18} color={color.labelSecondary} />
-        <Txt variant="subhead" style={styles.flex}>
-          {what} from Google
-        </Txt>
+        <View style={styles.glyph}>
+          <Icon name="globe" size={18} color={color.brand} />
+        </View>
+        <View style={styles.flex}>
+          <Txt variant="headline">{what} from Google</Txt>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            Not loaded yet. It comes straight from Google, which sees your device’s IP address, as any website does.
+          </Txt>
+        </View>
       </View>
-      <Txt variant="footnote" color={color.labelSecondary}>
-        Not loaded yet. It comes straight from Google, which sees your device’s IP address, as any website does.
-      </Txt>
-      <PrimaryButton label={`Show ${what}`} tone="quiet" onPress={() => setShown(true)} />
-      <Pressable
-        onPress={() => {
-          haptic.select();
-          setAlwaysShowGoogle(true);
-        }}
-        accessibilityRole="button"
-        hitSlop={8}
-        style={styles.always}
-      >
-        <Txt variant="footnote" color={color.brand}>
-          Always show Google content
-        </Txt>
-      </Pressable>
+      <View style={styles.actions}>
+        <Pressy
+          scaleTo={0.96}
+          onPress={() => {
+            haptic.tap();
+            setShown(true);
+          }}
+          accessibilityRole="button"
+          style={styles.show}
+        >
+          <Icon name="eye" size={15} color={color.onBrand} />
+          <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
+            Show {what}
+          </Txt>
+        </Pressy>
+        <Pressable
+          onPress={() => {
+            haptic.select();
+            setAlwaysShowGoogle(true);
+          }}
+          accessibilityRole="button"
+          hitSlop={8}
+          style={styles.always}
+        >
+          <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+            Always show
+          </Txt>
+        </Pressable>
+      </View>
     </View>
   );
 }
 
 const styles = themed(() =>
   StyleSheet.create({
-    card: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.fill },
-    head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-    flex: { flex: 1 },
-    always: { alignSelf: 'center', paddingVertical: space[1] },
+    card: { gap: space[3], padding: space[4], borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
+    head: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
+    glyph: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+    flex: { flex: 1, gap: 2 },
+    actions: { flexDirection: 'row', alignItems: 'center', gap: space[4], paddingLeft: 36 + space[3] },
+    show: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandFill },
+    always: { paddingVertical: space[1] },
   }),
 );

@@ -4,14 +4,15 @@
  * coloured icon tile, a value and a chevron.
  */
 
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, Switch, View } from 'react-native';
 import { Pressable } from './motion';
 import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
-import { PAGE_COLUMN, color, radius, shadow, space, themed } from '@/lib/theme';
+import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
+import { LOOKS, PAGE_COLUMN, color, currentLook, currentTheme, radius, shadow, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
@@ -26,6 +27,8 @@ export function TabScreen(props: {
   title: string;
   eyebrow?: string;
   right?: ReactNode;
+  /** A soft glow of the accent behind the title (Home), fading as the page scrolls. */
+  glow?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -38,7 +41,7 @@ export function TabScreen(props: {
 /** How tall the compact bar is, below the status bar. */
 const BAR = 44;
 
-function TabScreenInner({ title, eyebrow, right, children }: { title: string; eyebrow?: string; right?: ReactNode; children: ReactNode }) {
+function TabScreenInner({ title, eyebrow, right, glow = false, children }: { title: string; eyebrow?: string; right?: ReactNode; glow?: boolean; children: ReactNode }) {
   const insets = useSafeAreaInsets();
   const clearance = useBottomClearance();
   // Past the tab bar, plus any of the tab the phone has laid out below the screen.
@@ -55,10 +58,21 @@ function TabScreenInner({ title, eyebrow, right, children }: { title: string; ey
   const barStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [titleBottom - insets.top - BAR - 8, titleBottom - insets.top - BAR + 12], [0, 1], 'clamp'),
   }));
+  // Only the standard look glows: the others have grounds of their own (pixels, bevels, tones).
+  const glowing = glow && currentLook() === LOOKS.standard;
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [0, 280], [1, 0], 'clamp'),
+    transform: [{ translateY: interpolate(scrollY.value, [0, 280], [0, -70], 'clamp') }],
+  }));
   return (
-    <View ref={measureRef} onLayout={onLayout} style={styles.flex}>
+    <View ref={measureRef} onLayout={onLayout} style={[styles.flex, glowing && styles.ground]}>
+      {glowing && (
+        <Animated.View style={[styles.glow, { height: insets.top + 440 }, glowStyle, { pointerEvents: 'none' }]} aria-hidden>
+          <HeroGlow />
+        </Animated.View>
+      )}
       <Animated.ScrollView
-        style={styles.screen}
+        style={[styles.screen, glowing && styles.clear]}
         onScroll={onScroll}
         scrollEventThrottle={16}
         // The page scrolls under the floating tab bar, so it makes its own room
@@ -99,6 +113,33 @@ function TabScreenInner({ title, eyebrow, right, children }: { title: string; ey
         </View>
       </Animated.View>
     </View>
+  );
+}
+
+/**
+ * Two soft pools of the accent, one at the top right and a fainter one at
+ * the left, fading to nothing well inside their box so no edge ever shows.
+ * Stronger in dark, where a faint one would be lost.
+ */
+function HeroGlow() {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const dark = currentTheme().scheme === 'dark';
+  return (
+    <Svg width="100%" height="100%">
+      <Defs>
+        <RadialGradient id={`gm${id}`} cx="82%" cy="6%" r="62%">
+          <Stop offset="0" stopColor={color.brand} stopOpacity={dark ? 0.34 : 0.17} />
+          <Stop offset="0.55" stopColor={color.brand} stopOpacity={dark ? 0.12 : 0.06} />
+          <Stop offset="1" stopColor={color.brand} stopOpacity={0} />
+        </RadialGradient>
+        <RadialGradient id={`gs${id}`} cx="8%" cy="30%" r="48%">
+          <Stop offset="0" stopColor={color.brand} stopOpacity={dark ? 0.16 : 0.08} />
+          <Stop offset="1" stopColor={color.brand} stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      <Rect x="0" y="0" width="100%" height="100%" fill={`url(#gm${id})`} />
+      <Rect x="0" y="0" width="100%" height="100%" fill={`url(#gs${id})`} />
+    </Svg>
   );
 }
 
@@ -272,6 +313,9 @@ export function SearchButton({ placeholder, onPress }: { placeholder: string; on
 const styles = themed(() => StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, backgroundColor: color.groupedBackground },
+  ground: { backgroundColor: color.groupedBackground },
+  clear: { backgroundColor: 'transparent' },
+  glow: { position: 'absolute', top: 0, left: 0, right: 0 },
   content: { paddingHorizontal: space[4], gap: space[5], width: '100%', maxWidth: PAGE_COLUMN, alignSelf: 'center' },
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space[3] },
   bar: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' },

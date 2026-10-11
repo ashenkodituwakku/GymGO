@@ -17,7 +17,7 @@ import { GymCardsSkeleton } from '@/components/Skeleton';
 import { Pressable, Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { AdSlot } from '@/components/AdSlot';
-import { BrandFill } from '@/components/BrandFill';
+import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { Avatar } from '@/components/Avatar';
 import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
@@ -151,6 +151,7 @@ export default function Home() {
 
   return (
     <TabScreen
+      glow
       eyebrow={clock.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
       title={name ? `${greeting(clock.getHours() * 60)}, ${name}` : greeting(clock.getHours() * 60)}
       right={
@@ -226,9 +227,10 @@ export default function Home() {
         }}
         accessibilityRole="button"
         accessibilityLabel="Build a workout: tap the muscles you want to train"
-        style={styles.workout}
+        style={[styles.workout, accentGlow(color.brandFill)]}
       >
         <BrandFill round={radius.xl} />
+        <Sheen round={radius.xl} />
         <View style={styles.workoutIcon}>
           <Icon name="workout" size={22} color={color.onBrand} />
         </View>

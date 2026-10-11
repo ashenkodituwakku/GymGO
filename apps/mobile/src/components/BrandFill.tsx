@@ -11,7 +11,8 @@
 import { useId } from 'react';
 import { Platform, StyleSheet, View, type ViewStyle } from 'react-native';
 import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
-import { NO_TOUCH, currentPaint, type AccentPaint } from '@/lib/theme';
+import { LOOKS, NO_TOUCH, currentLook, currentPaint, type AccentPaint } from '@/lib/theme';
+import { alpha } from '@/lib/looks';
 
 // Web takes CSS `backgroundImage`; React Native's own renderer takes `experimental_backgroundImage`.
 const image = (value: string): ViewStyle =>
@@ -68,6 +69,32 @@ export function BrandFill({
       </Svg>
     </View>
   );
+}
+
+/**
+ * Light falling on a hero control filled with the accent (Build a workout):
+ * a soft white wash from its top left, gone by the middle. Standard look,
+ * ordinary accents only: Rainbow and Camo are decoration enough, and the
+ * other looks have surfaces of their own.
+ */
+export function Sheen({ round }: { round: number }) {
+  if (currentLook() !== LOOKS.standard || currentPaint()) return null;
+  return (
+    <View
+      style={[
+        NO_TOUCH,
+        StyleSheet.absoluteFill,
+        { borderRadius: round, overflow: 'hidden' },
+        image('linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 42%, rgba(255, 255, 255, 0) 62%)'),
+      ]}
+    />
+  );
+}
+
+/** A glow of the accent under a hero control, in place of a grey shadow (standard look). */
+export function accentGlow(fill: string): ViewStyle | null {
+  if (currentLook() !== LOOKS.standard) return null;
+  return { boxShadow: `0px 10px 26px ${alpha(fill, 0.32)}, 0px 2px 6px ${alpha(fill, 0.22)}` } as ViewStyle;
 }
 
 const styles = StyleSheet.create({

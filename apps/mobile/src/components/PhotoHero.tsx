@@ -183,7 +183,35 @@ export function PhotoHero({
   }
 
   // With nothing to show, the "No photo supplied" line carries its own add button.
-  const emptyRow = list.length === 0 && !sitePhoto && !illustration && !(fallback && !isDemo && photos !== null);
+  const fallbackShown = list.length === 0 && !sitePhoto && !illustration && Boolean(fallback) && !isDemo && photos !== null;
+  const emptyRow = list.length === 0 && !sitePhoto && !illustration && !fallbackShown;
+  // The small button at the end of a "no photos" line: try the server again, or add the first.
+  const addPill =
+    !isDemo && step.kind !== 'sending' && failed ? (
+      <Pressable
+        onPress={load}
+        accessibilityRole="button"
+        accessibilityLabel="Try loading the photos again"
+        hitSlop={8}
+        style={({ pressed }) => [styles.addPill, pressed && { opacity: 0.7 }]}
+      >
+        <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+          Try again
+        </Txt>
+      </Pressable>
+    ) : !isDemo && step.kind !== 'sending' && !(signedIn && !token) ? (
+      <Pressable
+        onPress={() => void pick()}
+        accessibilityRole="button"
+        accessibilityLabel={token ? 'Add a photo' : 'Sign in to add a photo'}
+        hitSlop={8}
+        style={({ pressed }) => [styles.addPill, pressed && { opacity: 0.7 }]}
+      >
+        <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+          {token ? 'Add one' : 'Sign in to add'}
+        </Txt>
+      </Pressable>
+    ) : null;
   return (
     <View style={styles.wrap}>
       {list.length > 0 ? (
@@ -223,14 +251,16 @@ export function PhotoHero({
             </Txt>
           </View>
         </View>
-      ) : fallback && !isDemo && photos !== null ? (
+      ) : fallbackShown ? (
         <View style={[styles.fallback, { width }]}>
           {fallback}
-          <Txt variant="footnote" color={color.labelSecondary}>
-            {failed
-              ? 'Members’ photos come from the GymGO server, which isn’t reachable right now.'
-              : 'No GymGO member photos yet. Been here? Add the first.'}
-          </Txt>
+          <View style={styles.fallbackRow}>
+            <Icon name="photo" size={16} color={color.labelTertiary} />
+            <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
+              {failed ? 'Members’ photos didn’t load: the GymGO server isn’t reachable.' : 'No member photos yet. Been here?'}
+            </Txt>
+            {addPill}
+          </View>
         </View>
       ) : (
         // One slim row, so the gym's answer isn't pushed off the card by an empty frame.
@@ -248,36 +278,12 @@ export function PhotoHero({
                   : 'Been here? Yours could be the first.'}
             </Txt>
           </View>
-          {!isDemo && step.kind !== 'sending' && failed ? (
-            <Pressable
-              onPress={load}
-              accessibilityRole="button"
-              accessibilityLabel="Try loading the photos again"
-              hitSlop={8}
-              style={({ pressed }) => [styles.addPill, pressed && { opacity: 0.7 }]}
-            >
-              <Txt variant="footnote" color={color.brand} style={face('semibold')}>
-                Try again
-              </Txt>
-            </Pressable>
-          ) : !isDemo && step.kind !== 'sending' && !(signedIn && !token) ? (
-            <Pressable
-              onPress={() => void pick()}
-              accessibilityRole="button"
-              accessibilityLabel={token ? 'Add a photo' : 'Sign in to add a photo'}
-              hitSlop={8}
-              style={({ pressed }) => [styles.addPill, pressed && { opacity: 0.7 }]}
-            >
-              <Txt variant="footnote" color={color.brand} style={face('semibold')}>
-                {token ? 'Add one' : 'Sign in to add'}
-              </Txt>
-            </Pressable>
-          ) : null}
+          {addPill}
         </View>
       )}
 
       {/* Signed in but the server away: no add button, as a photo couldn't be sent anyway. */}
-      {!emptyRow && !isDemo && step.kind !== 'sending' && (failed ? (
+      {!emptyRow && !fallbackShown && !isDemo && step.kind !== 'sending' && (failed ? (
         <Pressable onPress={load} accessibilityRole="button" style={({ pressed }) => [styles.add, pressed && { opacity: 0.7 }]}>
           <Txt variant="subhead" color={color.brand} style={face('semibold')}>
             Try loading photos again
@@ -311,7 +317,8 @@ export function PhotoHero({
 
 const styles = themed(() => StyleSheet.create({
   wrap: { gap: space[2], alignItems: 'flex-start' },
-  fallback: { gap: space[2] },
+  fallback: { gap: space[3] },
+  fallbackRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[1], paddingBottom: space[1] },
   photo: { height: 180, borderRadius: radius.xl, borderCurve: 'continuous' },
   credit: {
     position: 'absolute',

@@ -100,7 +100,10 @@ export function evaluateVisitorAccess(
     reasons.push({
       code: 'operating_status_unknown',
       severity: 'confirm',
-      message: 'We have not confirmed that this gym is currently trading.',
+      // A specific doubt ("it may have closed: …") says so; otherwise the usual line.
+      message: record.location.operatingStatusNote?.startsWith('It may have closed')
+        ? record.location.operatingStatusNote
+        : 'We have not confirmed that this gym is currently trading.',
     });
   }
 

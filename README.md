@@ -310,13 +310,6 @@ Appearance.
   The round compare button in a map card's header adds a gym too. With
   nothing saved yet, it lists the gyms you looked at lately, each with a
   save button; an empty Compare lists your saved gyms to tick there.
-- **Add to calendar** (a gym's page): the visit you're searching for (the
-  day and time, on the gym's own clock) as a calendar event of 75 minutes,
-  with the address, the answer ("Call first · …") and, when it isn't
-  confirmed, what to ask when you call. A phone opens its own calendar's
-  new-event screen, filled in, to save or cancel (expo-calendar; GymGO never
-  reads your calendar); a browser downloads an .ics file any calendar opens.
-  Not for an invented demo gym.
 - **Profile**: laid out like Settings. Your account card (tap it for
   **Account**: profile picture, name, email, password, Apple and Google,
   your data, sign out, delete), Training (Progress, My workouts, Plate calculator, 1-rep max, Interval timer), Pro, your

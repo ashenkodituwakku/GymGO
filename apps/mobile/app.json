@@ -90,15 +90,6 @@
           "cameraPermission": false,
           "microphonePermission": false
         }
-      ],
-      [
-        "expo-calendar",
-        {
-          "calendarPermission": "GymGO opens your calendar only to add a gym visit you plan, and only when you tap Add to calendar.",
-          "writeOnlyAccess": true,
-          "writeOnlyCalendarPermission": "GymGO adds a gym visit you plan to your calendar, only when you tap Add to calendar. It never reads your calendar.",
-          "remindersPermission": false
-        }
       ]
     ],
     "experiments": {

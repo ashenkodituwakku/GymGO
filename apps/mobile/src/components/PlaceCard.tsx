@@ -28,8 +28,6 @@ import {
 import { TIER, accessLine, checkedAgo, gymDistanceLine, ratingShort, sourceLabel, timeLabel } from '@/lib/copy';
 import { shareGym } from '@/lib/actions';
 import { addressLines, callQuestions, depositLine, priceLine } from '@/lib/present';
-import { addVisitToCalendar } from '@/lib/addToCalendar';
-import { visitEvent } from '@/lib/calendar';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Icon, type IconName } from './Icon';
@@ -192,8 +190,6 @@ export function PlaceCard({
   dayPass?: React.ReactNode;
 }) {
   const [notice, setNotice] = useState<string | null>(null);
-  /** How adding the visit to a calendar went, under its row. */
-  const [calendarNote, setCalendarNote] = useState<string | null>(null);
   const record = result.record;
   const location = record.location;
   const tone = TIER_COLOUR[result.tier];
@@ -216,31 +212,6 @@ export function PlaceCard({
   // Demo listings have invented addresses and numbers. Say so, rather than
   // opening a map to nowhere or dialling a stranger.
   const demo = (what: string) => () => setNotice(`Demo listing — ${what}`);
-
-  // The visit you're looking at, on the gym's own clock: "Thu 8 Oct, 4 pm".
-  const visitWhenLabel = `${new Date(`${visitDate}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })}, ${timeLabel(visitMinute)}`;
-  const addToCalendar = async () => {
-    const event = visitEvent({
-      gymName: location.name,
-      address,
-      date: visitDate,
-      minute: visitMinute,
-      timezone: location.timezone,
-      answer: `${tier.label} · ${accessLine(result.access.verdict, visitMinute)}`,
-      questions,
-    });
-    const outcome = await addVisitToCalendar(event, { gymId: location.id, date: visitDate });
-    if (outcome === 'saved' || outcome === 'downloaded') haptic.success();
-    setCalendarNote(
-      outcome === 'downloaded'
-        ? 'Downloaded. Open the file to add it to your calendar.'
-        : outcome === 'saved'
-          ? 'In your calendar.'
-          : outcome === 'failed'
-            ? 'Couldn’t open a calendar on this device.'
-            : null,
-    );
-  };
 
   // Real listings hand off to the platform: Apple Maps on iPhone, the
   // system's maps app on Android, the dialler, and an in-app browser.
@@ -461,39 +432,6 @@ export function PlaceCard({
         <Icon name="chevron" size={14} color={color.labelTertiary} />
       </Pressy>
 
-      {/* An invented demo gym has nowhere real to go. */}
-      {!location.isDemoData && (
-        <Pressy
-          scaleTo={0.98}
-          onPress={() => {
-            haptic.select();
-            void addToCalendar();
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={`Add a visit to ${location.name} to your calendar: ${visitWhenLabel}`}
-          style={({ pressed }) => [styles.google, pressed && { opacity: 0.75 }]}
-        >
-          <View style={styles.rowIcon}>
-            <Icon name="calendar" size={18} color={color.onBrand} />
-          </View>
-          <View style={styles.flex}>
-            <Txt variant="headline">Add to calendar</Txt>
-            <Txt variant="footnote" color={color.labelSecondary}>
-              {visitWhenLabel}
-              {questions.length > 0 ? ', with what to ask' : address.length > 0 ? ', with the address' : ''}
-            </Txt>
-          </View>
-          <Icon name="chevron" size={14} color={color.labelTertiary} />
-        </Pressy>
-      )}
-      {calendarNote && (
-        <Animated.View entering={FADE_IN} exiting={FADE_OUT} style={styles.calendarNote}>
-          <Icon name="check" size={13} color={color.brand} />
-          <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
-            {calendarNote}
-          </Txt>
-        </Animated.View>
-      )}
 
       {/* The detail, folded away ---------------------------------------- */}
       <Animated.View style={styles.folds}>
@@ -897,7 +835,6 @@ const styles = themed(() => StyleSheet.create({
   googleEmoji: { fontSize: 22, lineHeight: 28, width: 30, textAlign: 'center' },
   mailRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
-  calendarNote: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], marginTop: -space[1] },
 
   folds: { gap: space[2], marginTop: space[4] },
 

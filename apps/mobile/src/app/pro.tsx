@@ -23,6 +23,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
+import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { Icon, type IconName } from '@/components/Icon';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtras';
@@ -179,7 +180,9 @@ export default function ProScreen() {
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         {/* Hero ------------------------------------------------------------ */}
         <View style={styles.hero}>
-          <View style={styles.badge}>
+          <View style={[styles.badge, accentGlow(color.brandFill)]}>
+            <BrandFill round={22} />
+            <Sheen round={22} />
             <Icon name="crown" size={36} color={color.onBrand} />
           </View>
           <Txt variant="largeTitle" style={styles.center}>

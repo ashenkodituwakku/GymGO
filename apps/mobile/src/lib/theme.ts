@@ -522,7 +522,7 @@ function typeScale() {
     /** Small capitals over figures, as in Maps (Caption 2 size, opened up because it's set in capitals). */
     eyebrow: { ...style(11, 13, 'semibold'), letterSpacing: 0.6 },
     /** Big numbers: prices, ratings (Title 3 size). */
-    figure: display(20, 25, 'bold'),
+    figure: { ...display(20, 25, 'bold'), fontVariant: ['tabular-nums'] as TextStyle['fontVariant'] },
   };
 }
 

@@ -92,7 +92,7 @@ export default function Profile() {
       : `${billing.limits.savedGyms} saved gyms, compare ${billing.limits.compare}`;
 
   return (
-    <TabScreen title="Profile">
+    <TabScreen title="Profile" glow>
       {me ? (
         <Pressy
           scaleTo={0.98}

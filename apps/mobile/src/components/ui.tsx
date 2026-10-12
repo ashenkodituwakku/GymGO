@@ -574,7 +574,8 @@ export function PrimaryButton({
   /** Working on it: a spinner in place of the icon, and no second press. */
   busy?: boolean;
 }) {
-  const fill = tone === 'brand' ? color.brandFill : tone === 'danger' ? color.dangerTint : color.fill;
+  // A quiet button is tinted with the accent (as an iPhone's secondary buttons are), not a flat grey.
+  const fill = tone === 'brand' ? color.brandFill : tone === 'danger' ? color.dangerTint : color.brandTint;
   const ink = tone === 'brand' ? color.onBrand : tone === 'danger' ? color.dangerInk : color.brand;
   return (
     <Pressy

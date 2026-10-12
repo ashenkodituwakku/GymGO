@@ -12,7 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Pressable, damp, useArrival } from '@/components/motion';
 import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
-import { LogoPlate } from '@/components/BrandLogo';
+import { LogoPlate, useGymMark } from '@/components/BrandLogo';
 import { GoogleEmbed } from '@/components/GoogleEmbed';
 import { GoogleGate } from '@/components/GoogleGate';
 import { GoogleModal } from '@/components/GoogleModal';
@@ -31,7 +31,7 @@ import { MemberBusy } from '@/components/MemberBusy';
 import { DayPass } from '@/components/DayPass';
 import { GymOwner } from '@/components/GymOwner';
 import { ReviewsSection } from '@/components/ReviewsSection';
-import { PrimaryButton, Txt } from '@/components/ui';
+import { NoPhoto, PrimaryButton, Txt } from '@/components/ui';
 import { GymPageSkeleton } from '@/components/Skeleton';
 import { shareGym } from '@/lib/actions';
 import { googleStreetViewEmbedUrl } from '@/lib/present';
@@ -39,7 +39,8 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { gymDistanceLine } from '@/lib/copy';
 import { resultFor } from '@/lib/results';
-import { HEADER_EDGE, PAGE_COLUMN, color, space, themed } from '@/lib/theme';
+import type { GymLocation } from '@gymgo/domain';
+import { HEADER_EDGE, PAGE_COLUMN, color, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 
@@ -172,7 +173,7 @@ export default function GymPage() {
       >
         <Animated.View entering={fromMap ? EXPAND_IN : arrival} style={[styles.column, { width: cardWidth }]}>
           <View style={styles.title}>
-            <LogoPlate location={location} />
+            <GymFace location={location} />
             <Txt variant="largeTitle">{location.name}</Txt>
             <Txt variant="subhead" color={color.labelSecondary}>
               {subtitle}
@@ -287,11 +288,18 @@ function HeaderButton({ icon, label, onPress, on = false }: { icon: IconName; la
   );
 }
 
+/** The gym's own logo when GymGO has it; its initials otherwise, so every gym's page has a face. */
+function GymFace({ location }: { location: GymLocation }) {
+  const mark = useGymMark(location);
+  return mark ? <LogoPlate location={location} /> : <NoPhoto compact name={location.name} style={styles.monogram} />;
+}
+
 const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { alignItems: 'center', paddingBottom: space[8] },
   column: { maxWidth: '100%' },
   title: { gap: 2, paddingHorizontal: space[4], paddingTop: space[2], paddingBottom: space[3] },
+  monogram: { width: 52, height: 52, borderRadius: radius.lg, borderCurve: 'continuous', marginBottom: space[2] },
   streetView: { gap: space[1] },
   mapButton: { paddingHorizontal: space[4] },
   // The last icon's own padding (4) plus this puts its edge where the back arrow's is on the left.

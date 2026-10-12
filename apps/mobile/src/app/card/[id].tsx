@@ -8,7 +8,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GemCard } from '@/components/GemCard';
-import { Icon } from '@/components/Icon';
+import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
 import { SetReward } from '@/components/SetCard';
 import { PrimaryButton, Txt } from '@/components/ui';
@@ -53,7 +53,7 @@ export default function CardScreen() {
         <Stack.Screen options={{ title: 'Card' }} />
         {loaded && (
           <>
-            <Icon name="trophy" size={40} color={color.brand} />
+            <HeroMark icon="trophy" />
             <Txt variant="title2" style={styles.centre}>
               Not in your collection
             </Txt>

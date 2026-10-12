@@ -11,6 +11,7 @@ import Animated from 'react-native-reanimated';
 import { GLIDE, Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { MilestonesCard, MuscleBalanceCard, WeekCard } from '@/components/TrainingInsights';
+import { CountUp } from '@/components/CountUp';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { weekRecap } from '@/lib/insights';
@@ -255,9 +256,13 @@ function Stat({ icon, tint, value, one, many }: { icon: IconName; tint: string; 
   return (
     <View style={styles.stat} accessible accessibilityLabel={value === null ? `${many}: not loaded` : `${value} ${label}`}>
       <Icon name={icon} size={18} color={tint} />
-      <Txt variant="title" style={face('bold')}>
-        {value === null ? '—' : String(value)}
-      </Txt>
+      {value === null ? (
+        <Txt variant="title" style={face('bold')}>
+          —
+        </Txt>
+      ) : (
+        <CountUp id={`progress.${many}`} value={value} style={face('bold')} />
+      )}
       <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
         {label}
       </Txt>

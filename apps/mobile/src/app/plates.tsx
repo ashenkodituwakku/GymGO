@@ -8,7 +8,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
-import { BarDiagram } from '@/components/BarDiagram';
+import { BarDiagram, plateColour } from '@/components/BarDiagram';
 import { Icon } from '@/components/Icon';
 import { Input, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
@@ -108,6 +108,7 @@ export default function PlatesScreen() {
             <View style={styles.plates}>
               {load.perSide.map((plate, index) => (
                 <View key={index} style={styles.plate}>
+                  <View style={[styles.plateDot, { backgroundColor: plateColour(plate, unit) }]} />
                   <Txt variant="headline" style={face('bold')}>
                     {Number(plate.toFixed(2))}
                   </Txt>
@@ -185,7 +186,7 @@ export default function PlatesScreen() {
           <Txt variant="eyebrow" color={color.labelSecondary}>
             EACH SIDE
           </Txt>
-          <BarDiagram plates={[]} unit={unit} />
+          <BarDiagram plates={[]} unit={unit} ghost />
           <Txt variant="subhead" color={color.labelSecondary}>
             Type a total above, like {unit === 'kg' ? '100' : '225'}, and the plates for each side of a {formatWeight(bar, unit)} bar show here.
           </Txt>
@@ -275,7 +276,19 @@ const styles = themed(() => StyleSheet.create({
     paddingHorizontal: space[3],
     paddingVertical: space[2],
     borderRadius: radius.md,
-    backgroundColor: color.brandTint,
+    borderCurve: 'continuous',
+    backgroundColor: color.fill,
     alignItems: 'center',
+  },
+  // The plate's colour, as on the bar above.
+  plateDot: {
+    position: 'absolute',
+    top: 7,
+    right: 7,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(0, 0, 0, 0.25)',
   },
 }));

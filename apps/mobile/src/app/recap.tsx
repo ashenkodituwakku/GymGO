@@ -6,7 +6,7 @@
 import { Stack, useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Icon } from '@/components/Icon';
+import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
 import { RecapCard } from '@/components/RecapCard';
 import { ListSkeleton } from '@/components/Skeleton';
@@ -46,7 +46,7 @@ export default function RecapScreen() {
       {log.status === 'loading' && <ListSkeleton rows={3} label="Adding up your week" />}
       {log.status !== 'loading' && !recap && (
         <View style={styles.empty}>
-          <Icon name="calendar" size={36} color={color.brand} />
+          <HeroMark icon="calendar" />
           <Txt variant="title2" style={styles.centre}>
             Nothing this week yet
           </Txt>

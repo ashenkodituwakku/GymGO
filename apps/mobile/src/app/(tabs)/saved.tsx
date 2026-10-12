@@ -12,6 +12,7 @@ import { GymRow } from '@/components/GymRow';
 import { FADE_OUT, GLIDE, Pressable, Pressy, usePop } from '@/components/motion';
 import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
+import { HeroMark } from '@/components/HeroMark';
 import { TabScreen } from '@/components/ios';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
@@ -58,7 +59,7 @@ export default function Saved() {
       {/* Distances are from the search's place, so the list waits for your settings. */}
       {!prefsReady ? null : saved.length === 0 && gone.length === 0 ? (
         <View style={styles.empty}>
-          <Icon name="saved" size={44} color={color.brand} />
+          <HeroMark icon="saved" />
           <Txt variant="title2">Nothing saved yet</Txt>
           <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
             Tap Save on any gym and it lands here.{' '}

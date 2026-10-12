@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { Icon } from '@/components/Icon';
+import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
 import { Card, Input, PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
@@ -72,7 +73,7 @@ export default function TripsScreen() {
 
       {loaded && trips.length === 0 && !adding && (
         <View style={styles.empty}>
-          <Icon name="globe" size={40} color={color.brand} />
+          <HeroMark icon="globe" />
           <Txt variant="title2" style={styles.center}>
             Training away from home?
           </Txt>

@@ -14,6 +14,7 @@ import { CURVES, EASE_IN, EASE_OUT, FADE_IN, POP_IN, Pressable, usePop } from '@
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
 import { Icon } from '@/components/Icon';
+import { HeroMark } from '@/components/HeroMark';
 import { Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { endSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
 import { ApiError, api, type SavedWorkout } from '@/lib/api';
@@ -99,7 +100,7 @@ function NoWorkout({ token }: { token: string | null }) {
     <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.noWorkout]}>
       <Stack.Screen options={{ title: 'Workout' }} />
       <View style={styles.noWorkoutHead}>
-        <Icon name="workout" size={34} color={color.brand} />
+        <HeroMark icon="workout" />
         <Txt variant="title2">No workout in progress</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           {recent.length > 0 ? 'Start one you saved, build a new one, or pick a template.' : 'Build one for your gym, open one you saved, or pick a template (push, pull, legs; 5×5; full body).'}

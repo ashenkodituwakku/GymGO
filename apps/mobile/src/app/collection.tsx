@@ -28,6 +28,7 @@ import { SetProgress, SetReward } from '@/components/SetCard';
 import { CITY_SET_SIZE, collectionSets, setsDone } from '@/lib/sets';
 import { Icon, type IconName } from '@/components/Icon';
 import { GLIDE, Pressy } from '@/components/motion';
+import { CountUp } from '@/components/CountUp';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { shareText } from '@/lib/actions';
@@ -318,9 +319,7 @@ function Stat({ value, one, many, icon }: { value: number; one: string; many: st
   return (
     <View style={styles.stat} accessible accessibilityLabel={`${value} ${value === 1 ? one : many}`}>
       <Icon name={icon} size={16} color={color.brand} />
-      <Txt variant="title" style={face('bold')}>
-        {value}
-      </Txt>
+      <CountUp id={`collection.${many}`} value={value} style={face('bold')} />
       <Txt variant="caption" color={color.labelSecondary}>
         {value === 1 ? one : many}
       </Txt>

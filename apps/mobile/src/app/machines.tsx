@@ -17,6 +17,7 @@ import { Pressable } from '@/components/motion';
 import { EQUIPMENT_TYPES, equipmentLabel, findMachines, type EquipmentCategory, type MachineHit, type ReportedEquipment } from '@gymgo/domain';
 import { MarkImage, useGymMark } from '@/components/BrandLogo';
 import { Icon } from '@/components/Icon';
+import { HeroMark } from '@/components/HeroMark';
 import { Illustration } from '@/components/Illustration';
 import { PageScroll } from '@/components/PageScroll';
 import { Card, Chip, NoPhoto, PrimaryButton, Txt } from '@/components/ui';
@@ -168,7 +169,7 @@ export default function MachinesScreen() {
 
       {picked.length === 0 ? (
         <View style={styles.empty}>
-          <Icon name="workout" size={36} color={color.brand} />
+          <HeroMark icon="workout" />
           <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
             Pick a machine or two, and the gyms known to have them show up here.
           </Txt>

@@ -1026,7 +1026,7 @@ function PhoneShell(props: {
     <View ref={measureRef} onLayout={measure} style={styles.root}>
       {props.map}
       {/* Pass-through as a prop: an animated view's styles reach the browser inline, where 'box-none' isn't understood and the layer would swallow every tap and drag on the map. */}
-      <Animated.View style={[StyleSheet.absoluteFill, topFade]} pointerEvents={topHidden ? 'none' : 'box-none'}>
+      <Animated.View style={[StyleSheet.absoluteFill, topFade, { pointerEvents: topHidden ? 'none' : 'box-none' }]}>
         {props.topBar}
       </Animated.View>
       {props.banner}

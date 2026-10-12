@@ -10,7 +10,7 @@ import { Stack, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
-import { Icon } from '@/components/Icon';
+import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
@@ -84,7 +84,7 @@ export default function LeaderboardScreen() {
     return (
       <View style={styles.signedOut}>
         <Stack.Screen options={{ title: 'Leaderboard' }} />
-        <Icon name="trophy" size={40} color={color.brand} />
+        <HeroMark icon="trophy" />
         <Txt variant="title2" style={styles.centre}>
           Who’s collected the most?
         </Txt>

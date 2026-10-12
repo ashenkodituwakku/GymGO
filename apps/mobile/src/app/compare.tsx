@@ -10,6 +10,7 @@ import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native'
 import { Pressable } from '@/components/motion';
 import { summariseWeek, type GymSearchResult, type Tri } from '@gymgo/domain';
 import { Icon } from '@/components/Icon';
+import { HeroMark } from '@/components/HeroMark';
 import { PrimaryButton, TIER_COLOUR, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -58,7 +59,7 @@ export default function Compare() {
     return (
       <View style={styles.empty}>
         <Stack.Screen options={{ title: 'Compare' }} />
-        <Icon name="compare" size={44} color={color.brand} />
+        <HeroMark icon="compare" />
         <Txt variant="title2" style={styles.center}>
           {only ? 'Pick one more gym' : `Pick ${billing.limits.compare === 2 ? 'two' : `two to ${NUMBER_WORD[billing.limits.compare] ?? billing.limits.compare}`} gyms`}
         </Txt>

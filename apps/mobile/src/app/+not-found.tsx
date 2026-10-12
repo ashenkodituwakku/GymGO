@@ -5,7 +5,7 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import { Icon } from '@/components/Icon';
+import { HeroMark } from '@/components/HeroMark';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, space, themed } from '@/lib/theme';
@@ -16,7 +16,7 @@ export default function NotFound() {
   return (
     <View style={styles.page}>
       <Stack.Screen options={{ headerShown: true, title: '' }} />
-      <Icon name="search" size={40} color={color.brand} />
+      <HeroMark icon="search" />
       <Txt variant="title2" style={styles.center}>
         This page isn’t in GymGO
       </Txt>

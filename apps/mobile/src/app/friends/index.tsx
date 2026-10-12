@@ -11,6 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
+import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
@@ -93,7 +94,7 @@ export default function FriendsScreen() {
     return (
       <View style={styles.signedOut}>
         <Stack.Screen options={{ title: 'Friends' }} />
-        <Icon name="people" size={40} color={color.brand} />
+        <HeroMark icon="people" />
         <Txt variant="title2" style={styles.centre}>
           Collect with friends
         </Txt>

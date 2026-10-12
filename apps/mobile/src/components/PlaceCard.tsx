@@ -375,15 +375,28 @@ export function PlaceCard({
 
       {/* At a glance ---------------------------------------------------- */}
       <Animated.View style={styles.facts}>
-        <Fact icon="money" value={price.headline} caption={price.caption} tint={price.confirmed ? color.label : color.maybeInk} />
-        <Fact
-          icon="star"
+        {/* What isn't known says so in words, rather than a bare dash or question mark. */}
+        {price.headline === '—' ? (
+          <Fact icon="money" value="Unknown" caption="price" tint={color.maybeInk} unknown />
+        ) : (
+          <Fact icon="money" value={price.headline} caption={price.caption} tint={price.confirmed ? color.label : color.maybeInk} />
+        )}
+        {result.rating.average === null ? (
           // Not "New": a gym nobody has reviewed here yet may have stood for decades.
-          value={result.rating.average === null ? '—' : result.rating.average.toFixed(1)}
-          caption={result.rating.count ? `${result.rating.count} review${result.rating.count === 1 ? '' : 's'}` : 'no reviews yet'}
-          tint={color.label}
-        />
-        <Fact icon="gym" value={kit.length ? String(kit.length) : '?'} caption={kit.length ? 'kinds of kit' : 'kit unlisted'} tint={kit.length ? color.label : color.maybeInk} />
+          <Fact icon="star" value="None yet" caption="reviews" tint={color.labelSecondary} unknown />
+        ) : (
+          <Fact
+            icon="star"
+            value={result.rating.average.toFixed(1)}
+            caption={`${result.rating.count} review${result.rating.count === 1 ? '' : 's'}`}
+            tint={color.label}
+          />
+        )}
+        {kit.length ? (
+          <Fact icon="gym" value={String(kit.length)} caption="kinds of kit" tint={color.label} />
+        ) : (
+          <Fact icon="gym" value="Unlisted" caption="kit" tint={color.maybeInk} unknown />
+        )}
       </Animated.View>
 
       {!location.isDemoData && (
@@ -648,13 +661,18 @@ export function PlaceCard({
   );
 }
 
-function Fact({ icon, value, caption, tint }: { icon: IconName; value: string; caption: string; tint: string }) {
+function Fact({ icon, value, caption, tint, unknown = false }: { icon: IconName; value: string; caption: string; tint: string; unknown?: boolean }) {
   return (
     <View style={styles.fact}>
-      <Icon name={icon} size={20} color={color.brand} />
-      <Txt variant="figure" color={tint} numberOfLines={1}>
-        {value}
-      </Txt>
+      <View style={styles.factIcon}>
+        <Icon name={icon} size={16} color={color.brand} />
+      </View>
+      {/* A word in place of a figure, as tall as one, so the three tiles line up. */}
+      <View style={styles.factValue}>
+        <Txt variant={unknown ? 'subhead' : 'figure'} color={tint} numberOfLines={1} style={unknown && face('semibold')}>
+          {value}
+        </Txt>
+      </View>
       <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
         {caption}
       </Txt>
@@ -820,6 +838,16 @@ const styles = themed(() => StyleSheet.create({
     backgroundColor: color.cardGlass,
   },
   factEmoji: { fontSize: 20, lineHeight: 26 },
+  factIcon: {
+    width: 30,
+    height: 30,
+    marginBottom: 3,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: color.brandTint,
+  },
+  factValue: { height: 25, justifyContent: 'center' },
 
   google: {
     flexDirection: 'row',

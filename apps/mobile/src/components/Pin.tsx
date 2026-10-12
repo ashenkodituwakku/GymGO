@@ -27,11 +27,22 @@ const DROP = 'M20 2C10.06 2 2 10.06 2 20c0 9.4 11.2 22.6 16.3 28.3a2.3 2.3 0 0 0
 const DISC = 28;
 const DROP_WIDTH = 44;
 
+/** The picked marker's height, and how far down it the teardrop's tip is. */
+const PICKED_HEIGHT = 58;
+const PICKED_TIP = 54.3;
+
 /**
  * Where the teardrop's tip sits down its marker, as a share of its height:
- * GymMap.tsx anchors the selected marker there.
+ * GymMap.tsx anchors the selected marker there (Google's maps).
  */
-export const PICKED_ANCHOR_Y = 54.3 / 58;
+export const PICKED_ANCHOR_Y = PICKED_TIP / PICKED_HEIGHT;
+
+/**
+ * The same for Apple Maps, which ignores `anchor` and puts a marker's centre
+ * on its spot, moved by an offset in points: up, so the tip is on the gym.
+ * Without it the picked pin pointed below its gym and slid as the map zoomed.
+ */
+export const PICKED_CENTER_OFFSET = { x: 0, y: -(PICKED_TIP - PICKED_HEIGHT / 2) };
 
 /** Scale that lands from `from` to full size whenever `key` changes (and on first draw from `first`). */
 function useLanding(key: unknown, from: () => number, first: number) {
@@ -133,7 +144,7 @@ const styles = themed(() => StyleSheet.create({
     ...dropShadow(0.24, 5, 2, 4),
   },
   // Room under the teardrop for its ground shadow; the tip is at PICKED_ANCHOR_Y.
-  dropWrap: { width: DROP_WIDTH, height: 58, alignItems: 'center' },
+  dropWrap: { width: DROP_WIDTH, height: PICKED_HEIGHT, alignItems: 'center' },
   // A picked pin grows from its tip, where it touches the map.
   fromTip: { transformOrigin: `50% ${PICKED_ANCHOR_Y * 100}%` },
   dropShape: { width: DROP_WIDTH, height: 55, ...dropShadow(0.28, 5, 3, 0) },

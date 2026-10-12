@@ -66,7 +66,11 @@ function pinElement(fill: string, selected: boolean, label: string): HTMLElement
   // gyms, in order, so the keyboard reaches the search and list first
   // rather than forty pins.
   wrap.tabIndex = -1;
-  wrap.style.cssText = 'position:relative;display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0;cursor:pointer;';
+  // No `position` of its own: MapLibre's marker class makes it absolute at the
+  // map's corner and moves it with a transform. Set to relative, every pin was
+  // laid out below the one before it, so each sat further off its gym (28 px
+  // more per pin) and slid across the map as it zoomed.
+  wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0;cursor:pointer;';
   if (selected) {
     // One smooth teardrop (no seam where a pointer meets a disc), lit from above, with its shadow on the ground under the tip.
     const id = `gg${Math.random().toString(36).slice(2, 8)}`;

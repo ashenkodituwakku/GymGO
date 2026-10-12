@@ -17,7 +17,7 @@ import type { BoundingBox } from '@gymgo/domain';
 import { assignSlots, mapItems, sameSpot, zoomOf, type MapItem } from '@/lib/cluster';
 import { currentTheme } from '@/lib/theme';
 import type { GymMapHandle, GymMapProps } from './map-types';
-import { ClusterBubble, PICKED_ANCHOR_Y, Pin } from './Pin';
+import { ClusterBubble, PICKED_ANCHOR_Y, PICKED_CENTER_OFFSET, Pin } from './Pin';
 
 export type { GymMapHandle, MapPin } from './map-types';
 
@@ -25,6 +25,7 @@ const HIDE_BUSINESSES = [{ featureType: 'poi.business', stylers: [{ visibility: 
 
 /** Where an empty marker slot waits: far south in the sea, see-through. */
 const PARKED = { latitude: -84, longitude: -170 };
+const NO_OFFSET = { x: 0, y: 0 };
 /**
  * Marker slots made with the map itself, before it's on screen, so Apple's
  * map first asks for their pictures once they have them. More are added
@@ -58,7 +59,10 @@ function SlotMarker({ item, onPin, onCluster }: { item: MapItem | null; onPin: (
   return (
     <Marker
       coordinate={position ? { latitude: position.lat, longitude: position.lng } : PARKED}
+      // The picked teardrop's tip on the gym; anything else, its middle.
+      // Google's maps take `anchor`, Apple's `centerOffset` (it ignores anchor).
       anchor={{ x: 0.5, y: selected ? PICKED_ANCHOR_Y : 0.5 }}
+      centerOffset={selected ? PICKED_CENTER_OFFSET : NO_OFFSET}
       opacity={item ? 1 : 0}
       onPress={(event) => {
         event.stopPropagation();

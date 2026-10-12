@@ -136,7 +136,8 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
     var wrap = document.createElement('button');
     wrap.type = 'button';
     wrap.setAttribute('aria-label', label);
-    wrap.style.cssText = 'position:relative;display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0;';
+    // No position of its own: MapLibre's marker class keeps it absolute (relative stacked the pins, off their gyms).
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0;';
     var face = document.createElement('div');
     face.className = 'gg-face';
     if (selected) {

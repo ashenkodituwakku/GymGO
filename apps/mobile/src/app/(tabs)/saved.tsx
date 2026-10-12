@@ -13,6 +13,7 @@ import { FADE_OUT, GLIDE, Pressable, Pressy, usePop } from '@/components/motion'
 import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
+import { ListSkeleton } from '@/components/Skeleton';
 import { TabScreen } from '@/components/ios';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
@@ -57,7 +58,9 @@ export default function Saved() {
       }
     >
       {/* Distances are from the search's place, so the list waits for your settings. */}
-      {!prefsReady ? null : saved.length === 0 && gone.length === 0 ? (
+      {/* Signed in, your list comes with your account: its shape until then, not "Nothing saved yet… Sign in". */}
+      {prefsReady && account.state === 'loading' && saved.length === 0 && <ListSkeleton rows={3} label="Loading your saved gyms" />}
+      {!prefsReady || (account.state === 'loading' && saved.length === 0) ? null : saved.length === 0 && gone.length === 0 ? (
         <View style={styles.empty}>
           <HeroMark icon="saved" />
           <Txt variant="title2">Nothing saved yet</Txt>
@@ -76,7 +79,7 @@ export default function Saved() {
           />
         </View>
       ) : null}
-      {prefsReady && saved.length === 0 && gone.length === 0 && lately.length > 0 && (
+      {prefsReady && account.state !== 'loading' && saved.length === 0 && gone.length === 0 && lately.length > 0 && (
         <>
           <Txt variant="eyebrow" color={color.labelSecondary} style={styles.latelyHead}>
             LOOKED AT LATELY

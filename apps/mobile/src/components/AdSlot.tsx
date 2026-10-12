@@ -1,6 +1,8 @@
 /**
  * Where an advertisement will go, once there's an ad partner. For now it only
- * marks the space, so the layout can be judged with it in place.
+ * marks the space, so the layout can be judged with it in place: in a
+ * development build. A published one (the website, an app build) leaves it
+ * out, rather than show visitors a box that says "AD PLACEHOLDER".
  *
  * Pro members pay, so they never see one. Nothing here loads or tracks
  * anything: it's a box with words in it.
@@ -13,7 +15,7 @@ import { Txt } from './ui';
 
 export function AdSlot({ style }: { style?: object }) {
   const { billing } = useApp();
-  if (billing.isPro) return null;
+  if (billing.isPro || !__DEV__) return null;
   return (
     <View style={[styles.slot, style]} accessibilityRole="none" accessibilityLabel="Ad placeholder">
       <Txt variant="caption" color={color.labelTertiary} style={styles.text}>

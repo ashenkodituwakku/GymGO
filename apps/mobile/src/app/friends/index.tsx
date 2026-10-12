@@ -85,7 +85,8 @@ export default function FriendsScreen() {
     return (
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         <Stack.Screen options={{ title: 'Friends' }} />
-        {account.state === 'unreachable' && <ServerAwayCard />}
+        {/* While your account is confirmed, the shape of what's coming rather than a blank page. */}
+        {account.state === 'unreachable' ? <ServerAwayCard /> : <ListSkeleton rows={2} card={false} label="Loading your friends" />}
       </PageScroll>
     );
   }

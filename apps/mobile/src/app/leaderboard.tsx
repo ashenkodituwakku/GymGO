@@ -75,7 +75,8 @@ export default function LeaderboardScreen() {
     return (
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         <Stack.Screen options={{ title: 'Leaderboard' }} />
-        {account.state === 'unreachable' && <ServerAwayCard />}
+        {/* While your account is confirmed, the shape of what's coming rather than a blank page. */}
+        {account.state === 'unreachable' ? <ServerAwayCard /> : <ListSkeleton rows={5} label="Loading the leaderboard" />}
       </PageScroll>
     );
   }

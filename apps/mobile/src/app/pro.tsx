@@ -29,7 +29,7 @@ import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtras';
 import { useApp, type ProReason } from '@/lib/app-state';
 import type { Sale } from '@/lib/useBilling';
-import { ApiError, OfflineError } from '@/lib/api';
+import { ApiError, OfflineError, apiBase } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
 import { HEADER_EDGE, color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -112,7 +112,7 @@ export default function ProScreen() {
   // doesn't leave Pro looking unbuyable until the next restart.
   const { sale, askSale } = billing;
   useEffect(() => {
-    if (sale === 'unreachable') askSale();
+    if (sale === 'unreachable' && !SERVERLESS) askSale();
     // Once, on opening; the Try again button asks after that.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -325,8 +325,9 @@ export default function ProScreen() {
           </>
         )}
 
-        {(!billing.isPro || billing.grant?.via === 'gift') && <RedeemGift token={signedIn ? token : null} billing={billing} onSignIn={() => router.push('/sign-in')} />}
-        <GiftPro token={signedIn ? token : null} billing={billing} currency={currency} onSignIn={() => router.push('/sign-in')} />
+        {/* Gift codes need the server that makes and checks them. */}
+        {!SERVERLESS && (!billing.isPro || billing.grant?.via === 'gift') && <RedeemGift token={signedIn ? token : null} billing={billing} onSignIn={() => router.push('/sign-in')} />}
+        {!SERVERLESS && <GiftPro token={signedIn ? token : null} billing={billing} currency={currency} onSignIn={() => router.push('/sign-in')} />}
 
         {problem && (
           <View style={styles.problem}>
@@ -360,6 +361,9 @@ export default function ProScreen() {
   );
 }
 
+/** Built with no GymGO server (EXPO_PUBLIC_API_URL=none): the website's demo. */
+const SERVERLESS = apiBase() === null;
+
 function BuyButton({
   signedIn,
   sale,
@@ -384,6 +388,15 @@ function BuyButton({
     return (
       <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
         Pro can’t be bought in this version of the app.
+      </Txt>
+    );
+  }
+  // A build with no server at all (the website's demo): nothing to reach, so
+  // not a "can't reach the server" with a Try again that can never work.
+  if (SERVERLESS) {
+    return (
+      <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+        Pro comes with the full version of GymGO. This demo shows what it includes.
       </Txt>
     );
   }

@@ -19,11 +19,13 @@ import { GoogleModal } from '@/components/GoogleModal';
 import { GoogleSection, useGooglePlace } from '@/components/GoogleSection';
 import { GooglePhotos } from '@/components/GooglePage';
 import { Icon, type IconName } from '@/components/Icon';
+import { HeroMark } from '@/components/HeroMark';
 import { MemberAccess } from '@/components/MemberAccess';
 import { MemberKit } from '@/components/MemberKit';
 import { MemberPrices } from '@/components/MemberPrices';
 import { MemberStatus, StatusWarning } from '@/components/MemberStatus';
 import { PhotoHero } from '@/components/PhotoHero';
+import { demoPicture } from '@/lib/gymPicture';
 import { PlaceCard } from '@/components/PlaceCard';
 import { GymNotes } from '@/components/GymNotes';
 import { CollectCard } from '@/components/CollectCard';
@@ -106,6 +108,7 @@ export default function GymPage() {
     return (
       <View style={styles.missing}>
         <Stack.Screen options={{ title: 'Gym' }} />
+        <HeroMark icon="search" />
         <Txt variant="title2">Gym not found</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           It may have been removed from GymGO. Try searching the map.
@@ -288,10 +291,16 @@ function HeaderButton({ icon, label, onPress, on = false }: { icon: IconName; la
   );
 }
 
-/** The gym's own logo when GymGO has it; its initials otherwise, so every gym's page has a face. */
+/**
+ * The gym's own logo when GymGO has it; its initials otherwise, so every
+ * gym's page has a face. A demo gym's illustration, just below, is its face
+ * already: initials over it looked like a placeholder left in.
+ */
 function GymFace({ location }: { location: GymLocation }) {
   const mark = useGymMark(location);
-  return mark ? <LogoPlate location={location} /> : <NoPhoto compact name={location.name} style={styles.monogram} />;
+  if (mark) return <LogoPlate location={location} />;
+  if (demoPicture(location)) return null;
+  return <NoPhoto compact name={location.name} style={styles.monogram} />;
 }
 
 const styles = themed(() => StyleSheet.create({

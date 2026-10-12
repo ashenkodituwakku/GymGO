@@ -27,6 +27,8 @@ import { GemCard } from '@/components/GemCard';
 import { SetProgress, SetReward } from '@/components/SetCard';
 import { CITY_SET_SIZE, collectionSets, setsDone } from '@/lib/sets';
 import { Icon, type IconName } from '@/components/Icon';
+import { HeroMark } from '@/components/HeroMark';
+import { ListSkeleton } from '@/components/Skeleton';
 import { GLIDE, Pressy } from '@/components/motion';
 import { CountUp } from '@/components/CountUp';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
@@ -55,7 +57,7 @@ export default function CollectionScreen() {
   usePageTitle('Collection');
   const router = useRouter();
   const { data, requestExplore, account, here, filters, prefs } = useApp();
-  const { loaded, gyms } = useCollection();
+  const { loaded, gyms, sync, retry } = useCollection();
   // Until the account is known, not yet: signed in, deleting clears its copy too.
   const accountKnown = account.state !== 'loading';
   const deleting = useDeleteCollection();
@@ -98,13 +100,45 @@ export default function CollectionScreen() {
     if (entries.length) void ensureGyms(entries.map((entry) => entry.id));
   }, [entries, ensureGyms]);
 
+  // Signed in, nothing on this device, and the account couldn't be reached:
+  // the collection may well be there, so not "Start your collection".
+  const signedIn = account.state === 'signed_in' || account.state === 'unreachable';
+  if (loaded && entries.length === 0 && signedIn && (sync === 'offline' || sync === 'failed')) {
+    return (
+      <View style={styles.empty}>
+        <Stack.Screen options={{ title: 'Collection' }} />
+        <HeroMark icon="offline" size={64} />
+        <Txt variant="title2" style={styles.center}>
+          Your collection is on your account
+        </Txt>
+        <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
+          GymGO couldn’t load it just now. Anything you collect meanwhile is kept on this device and joins it when it’s back.
+        </Txt>
+        <PrimaryButton
+          label="Try again"
+          icon="refresh"
+          tone="quiet"
+          onPress={() => void (account.state === 'unreachable' ? account.reconnect() : retry())}
+        />
+      </View>
+    );
+  }
+
+  // Still coming from your account (signed in, nothing on this device yet).
+  if (entries.length === 0 && (account.state === 'loading' || (signedIn && sync === 'syncing'))) {
+    return (
+      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+        <Stack.Screen options={{ title: 'Collection' }} />
+        <ListSkeleton rows={4} label="Loading your collection" />
+      </PageScroll>
+    );
+  }
+
   if (loaded && entries.length === 0) {
     return (
       <View style={styles.empty}>
         <Stack.Screen options={{ title: 'Collection' }} />
-        <View style={styles.emptyMedal}>
-          <Icon name="trophy" size={34} color={color.onBrand} />
-        </View>
+        <HeroMark icon="trophy" tint={color.maybe} size={68} />
         <Txt variant="title2" style={styles.center}>
           Start your collection
         </Txt>
@@ -339,7 +373,6 @@ const styles = themed(() =>
     nextRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], minHeight: 56 },
     nextLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
     nextIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
-    emptyMedal: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: '#C9971C' },
     center: { textAlign: 'center' },
     section: { marginTop: space[2], marginLeft: space[4] },
     stats: { flexDirection: 'row', gap: space[2] },

@@ -12,6 +12,7 @@ import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withSpring } 
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import type { ResultTier } from '@gymgo/domain';
 import { alpha, mix } from '@/lib/looks';
+import { DROP_PATH as DROP, PICKED_ANCHOR_Y, PICKED_HEIGHT } from '@/lib/pinShape';
 import { color, dropShadow, face, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { damp } from './motion';
@@ -20,29 +21,13 @@ import { TIER_COLOUR, Txt } from './ui';
 /** A pin's spring: lands quickly with a little give, as Maps' pins do. */
 const LAND = { damping: damp(0.7, 320, 0.7), stiffness: 320, mass: 0.7, reduceMotion: ReduceMotion.System };
 
-/** The teardrop, its tip at the foot of a 40 × 50 box (the map point). */
-const DROP = 'M20 2C10.06 2 2 10.06 2 20c0 9.4 11.2 22.6 16.3 28.3a2.3 2.3 0 0 0 3.4 0C26.8 42.6 38 29.4 38 20 38 10.06 29.94 2 20 2z';
 
 /** Small and picked sizes, for the landing spring between them. */
 const DISC = 28;
 const DROP_WIDTH = 44;
 
-/** The picked marker's height, and how far down it the teardrop's tip is. */
-const PICKED_HEIGHT = 58;
-const PICKED_TIP = 54.3;
-
-/**
- * Where the teardrop's tip sits down its marker, as a share of its height:
- * GymMap.tsx anchors the selected marker there (Google's maps).
- */
-export const PICKED_ANCHOR_Y = PICKED_TIP / PICKED_HEIGHT;
-
-/**
- * The same for Apple Maps, which ignores `anchor` and puts a marker's centre
- * on its spot, moved by an offset in points: up, so the tip is on the gym.
- * Without it the picked pin pointed below its gym and slid as the map zoomed.
- */
-export const PICKED_CENTER_OFFSET = { x: 0, y: -(PICKED_TIP - PICKED_HEIGHT / 2) };
+// The teardrop and where its tip is, shared with the other maps and tested: lib/pinShape.ts.
+export { PICKED_ANCHOR_Y, PICKED_CENTER_OFFSET } from '@/lib/pinShape';
 
 /** Scale that lands from `from` to full size whenever `key` changes (and on first draw from `first`). */
 function useLanding(key: unknown, from: () => number, first: number) {

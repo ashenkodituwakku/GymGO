@@ -21,6 +21,7 @@ import { Glass } from './Glass';
 import { Pressable } from './motion';
 import { TIER_COLOUR, Txt } from './ui';
 import { alpha, mix } from '@/lib/looks';
+import { DROP_PATH } from '@/lib/pinShape';
 import type { GymMapHandle, GymMapProps } from './map-types';
 import { mapItems, sameSpot, type MapItem } from '@/lib/cluster';
 import { color, currentTheme, face, radius, space, themed } from '@/lib/theme';
@@ -40,7 +41,7 @@ const DUMBBELL = (size: string) =>
 const SPRING = 'cubic-bezier(0.34, 1.4, 0.64, 1)';
 
 /** The teardrop of a picked pin, its tip at the foot of a 40 × 50 box (the map point). */
-const DROP = 'M20 2C10.06 2 2 10.06 2 20c0 9.4 11.2 22.6 16.3 28.3a2.3 2.3 0 0 0 3.4 0C26.8 42.6 38 29.4 38 20 38 10.06 29.94 2 20 2z';
+const DROP = DROP_PATH;
 
 /** Lit from above: a lighter shade of the tier's colour at the top, the colour itself below. */
 const lit = (fill: string) => `linear-gradient(180deg, ${mix(fill, '#ffffff', 0.28)} 0%, ${fill} 62%, ${mix(fill, '#000000', 0.08)} 100%)`;

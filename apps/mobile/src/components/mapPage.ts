@@ -11,6 +11,7 @@
  */
 
 import type { LatLng } from '@gymgo/domain';
+import { DROP_PATH } from '../lib/pinShape';
 
 export const MAPLIBRE_VERSION = '5.24.0';
 export const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
@@ -70,7 +71,7 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
       '<rect x="8" y="10.9" width="8" height="2.2" rx="1.1"/>' +
       '<rect x="15.7" y="6.2" width="3.3" height="11.6" rx="1.5"/><rect x="19.4" y="8.6" width="2.6" height="6.8" rx="1.2"/></svg>';
   };
-  var DROP = 'M20 2C10.06 2 2 10.06 2 20c0 9.4 11.2 22.6 16.3 28.3a2.3 2.3 0 0 0 3.4 0C26.8 42.6 38 29.4 38 20 38 10.06 29.94 2 20 2z';
+  var DROP = '${DROP_PATH}';
   function channels(hex) {
     var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
     return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : null;

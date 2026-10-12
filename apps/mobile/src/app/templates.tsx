@@ -65,7 +65,8 @@ export default function TemplatesScreen() {
 
 /** Each plan's mark: the whole body, the barbell, the three-way split. */
 const TEMPLATE_ICON: Record<string, IconName> = { 'full-body': 'body', 'five-by-five': 'plates', ppl: 'shuffle' };
-const MARK_ROUND = 13;
+/** The marks' corners, the look's own (square in 8-bit and Classic). */
+const markRound = () => Math.min(13, radius.lg);
 
 function TemplateCard({ template, next, disabled, onStart }: { template: WorkoutTemplate; next: number; disabled: boolean; onStart: (index: number) => void }) {
   const [day, setDay] = useState(next);
@@ -78,8 +79,8 @@ function TemplateCard({ template, next, disabled, onStart }: { template: Workout
     <Card style={styles.card}>
       <View style={styles.head}>
         <View style={[styles.mark, accentGlow(color.brandFill)]}>
-          <BrandFill round={MARK_ROUND} />
-          <Sheen round={MARK_ROUND} />
+          <BrandFill round={markRound()} />
+          <Sheen round={markRound()} />
           <Icon name={TEMPLATE_ICON[template.id] ?? 'workout'} size={22} color={color.onBrand} />
         </View>
         <View style={styles.flex}>
@@ -129,7 +130,7 @@ const styles = themed(() =>
     busy: { gap: space[2] },
     card: { gap: space[3] },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-    mark: { width: 46, height: 46, borderRadius: MARK_ROUND, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandFill },
+    mark: { width: 46, height: 46, borderRadius: markRound(), borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandFill },
     flex: { flex: 1, minWidth: 0 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     toggle: { flexDirection: 'row', alignItems: 'center', gap: space[1], alignSelf: 'flex-start' },

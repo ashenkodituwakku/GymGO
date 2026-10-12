@@ -183,10 +183,18 @@ export default function TripsScreen() {
               accessibilityLabel={`${item.title}, ${item.detail}`}
               style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
             >
-              <Txt variant="body">{item.title}</Txt>
-              <Txt variant="footnote" color={color.labelSecondary}>
-                {item.detail}
-              </Txt>
+              {/* A place's pin, as Explore's search lists places. */}
+              <View style={styles.suggestionGlyph}>
+                <Icon name="pin" size={16} color={color.onBrand} />
+              </View>
+              <View style={styles.suggestionText}>
+                <Txt variant="body" numberOfLines={1}>
+                  {item.title}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                  {item.detail}
+                </Txt>
+              </View>
             </Pressable>
           ))}
 
@@ -281,7 +289,9 @@ const styles = themed(() =>
       fontSize: 17,
     },
     picked: { flexDirection: 'row', alignItems: 'center', gap: space[2], padding: space[3], borderRadius: radius.md, backgroundColor: color.brandTint },
-    suggestion: { paddingVertical: space[2], paddingHorizontal: space[2], borderRadius: radius.sm },
+    suggestion: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[2], paddingHorizontal: space[2], borderRadius: radius.sm },
+    suggestionGlyph: { width: 30, height: 30, borderRadius: 15, backgroundColor: color.danger, alignItems: 'center', justifyContent: 'center' },
+    suggestionText: { flex: 1, minWidth: 0 },
     stepper: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     stepperLabel: { width: 72 },
     stepperValue: { flex: 1, textAlign: 'center' },

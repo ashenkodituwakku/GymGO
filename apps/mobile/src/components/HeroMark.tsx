@@ -16,15 +16,17 @@ const RING = 12;
 export function HeroMark({ icon, size = 64, tint }: { icon: IconName; size?: number; /** Another colour than the accent (a finished workout's green). */ tint?: string }) {
   // The look's own corners, kept in proportion to the tile (none in 8-bit).
   const round = Math.min(size * 0.3, radius.xl * 1.25);
+  // The rings follow the tile: square round a square one (8-bit, Classic).
+  const ring = (by: number) => (round === 0 ? 0 : round + by);
   const hue = tint ?? color.brand;
   return (
     <View
-      style={[styles.outer, { padding: RING, borderRadius: round + RING * 2 }, tint && { backgroundColor: alpha(hue, 0.07) }]}
+      style={[styles.outer, { padding: RING, borderRadius: ring(RING * 2) }, tint && { backgroundColor: alpha(hue, 0.07) }]}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       aria-hidden
     >
-      <View style={[styles.inner, { padding: RING / 2, borderRadius: round + RING }, tint && { backgroundColor: alpha(hue, 0.12) }]}>
+      <View style={[styles.inner, { padding: RING / 2, borderRadius: ring(RING) }, tint && { backgroundColor: alpha(hue, 0.12) }]}>
         <View style={[styles.tile, { width: size, height: size, borderRadius: round }, accentGlow(tint ?? color.brandFill), tint && { backgroundColor: tint }]}>
           {!tint && <BrandFill round={round} />}
           <Sheen round={round} />

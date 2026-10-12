@@ -7,9 +7,10 @@
 
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { Easing, FadeInDown, FadeOutDown, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Svg, { Circle } from 'react-native-svg';
+import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { CURVES, EASE_IN, EASE_OUT, FADE_IN, POP_IN, Pressable, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
@@ -26,7 +27,8 @@ import { RECORD_WORD, bestRecord, recordLine } from '@/lib/records';
 import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
 import { workoutTitle } from '@/lib/templates';
 import { Confetti, RecordCard } from '@/components/Celebrate';
-import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { alpha } from '@/lib/looks';
+import { LOOKS, color, currentLook, face, radius, shadow, space, themed } from '@/lib/theme';
 import {
   clockLabel,
   finishedAtFor,
@@ -590,26 +592,46 @@ const ExerciseLog = memo(function ExerciseLog({
 });
 
 /** The set's tick, which pops once when it's ticked. */
+const standardLook = () => currentLook() === LOOKS.standard;
+
+/** A ring to tick; ticked, a filled green disc with a white check and a little glow, popping as it lands. */
 function Tick({ done }: { done: boolean }) {
   const pop = usePop(done);
   return (
-    <Animated.View style={pop}>
-      <Icon name={done ? 'done' : 'todo'} size={30} color={done ? color.good : color.labelTertiary} />
+    <Animated.View style={[styles.tick, done ? [styles.tickDone, standardLook() && { boxShadow: `0px 3px 10px ${alpha(color.good, 0.4)}` }] : styles.tickTodo, pop]}>
+      {done && <Icon name="check" size={16} color="#FFFFFF" weight="bold" />}
     </Animated.View>
   );
 }
 
-/** The rest bar's fill, draining smoothly (not a step a second) until the rest is up. */
-function Drain({ endsAt, total }: { endsAt: number; total: number }) {
-  const share = useSharedValue(total > 0 ? Math.min(1, Math.max(0, (endsAt - Date.now()) / (total * 1000))) : 0);
-  useEffect(() => {
-    const left = Math.max(0, endsAt - Date.now());
-    share.value = total > 0 ? Math.min(1, left / (total * 1000)) : 0;
-    share.value = withTiming(0, { duration: left, easing: Easing.linear });
-  }, [endsAt, total, share]);
-  // Shrunk from its left end, not re-laid out at a new width every frame.
-  const fill = useAnimatedStyle(() => ({ transform: [{ scaleX: share.value }] }));
-  return <Animated.View style={[styles.restFill, fill]} />;
+/** What's left of the rest, as a ring round the timer that empties clockwise from the top. */
+function RestRing({ share, children }: { share: number; children: ReactNode }) {
+  const size = 38;
+  const stroke = 3;
+  const r = (size - stroke) / 2;
+  const around = 2 * Math.PI * r;
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={size} height={size} style={StyleSheet.absoluteFill} aria-hidden>
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke={color.fill} strokeWidth={stroke} fill="none" />
+        {share > 0 && (
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            stroke={color.brand}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            fill="none"
+            strokeDasharray={`${around} ${around}`}
+            strokeDashoffset={around * (1 - share)}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          />
+        )}
+      </Svg>
+      {children}
+    </View>
+  );
 }
 
 // --- Time ------------------------------------------------------------------------
@@ -649,11 +671,10 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
   return (
     <Animated.View entering={REST_IN} exiting={REST_OUT} style={[styles.restWrap, { bottom: bottom + space[3] }, { pointerEvents: 'box-none' }]}>
       <Glass kind="control" style={styles.rest}>
-        <View style={styles.restTrack}>
-          <Drain endsAt={endsAt} total={total} />
-        </View>
         <View style={styles.restRow}>
-          <Icon name="timer" size={18} color={color.brand} />
+          <RestRing share={total > 0 ? Math.min(1, left / total) : 0}>
+            <Icon name="timer" size={16} color={color.brand} />
+          </RestRing>
           <View style={styles.flex} accessibilityLiveRegion="polite">
             <Txt variant="caption" color={color.labelSecondary}>
               Rest
@@ -831,14 +852,15 @@ const styles = themed(() => StyleSheet.create({
     ...face('semibold'),
   },
   inputDone: { backgroundColor: color.goodTint, color: color.goodInk },
+  tick: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  tickTodo: { borderWidth: 2, borderColor: color.labelTertiary },
+  tickDone: { backgroundColor: color.good },
   setButtons: { flexDirection: 'row', gap: space[3], marginTop: space[1] },
   smallButton: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: space[1] },
   finish: { gap: space[2], marginTop: space[3] },
   recordCard: { marginTop: space[2] },
   restWrap: { position: 'absolute', left: space[4], right: space[4], alignItems: 'center' },
   rest: { width: '100%', maxWidth: 520, borderRadius: radius.xl, overflow: 'hidden' },
-  restTrack: { height: 3, backgroundColor: color.fill },
-  restFill: { width: '100%', height: 3, backgroundColor: color.brand, transformOrigin: 'left' },
   restRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], paddingVertical: space[3] },
   restClock: { fontVariant: ['tabular-nums'] },
   restButton: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandTint },

@@ -8,6 +8,7 @@ import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { Icon } from '@/components/Icon';
+import { HeroMark } from '@/components/HeroMark';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { useActiveSession } from '@/lib/activeSession';
@@ -90,8 +91,11 @@ export default function MyWorkouts() {
       {workouts === null && !problem && <ListSkeleton rows={3} label="Loading your workouts" />}
       {workouts !== null && workouts.length === 0 && (
         <View style={styles.emptyCard}>
-          <Txt variant="headline">No saved workouts yet</Txt>
-          <Txt variant="subhead" color={color.labelSecondary}>
+          <HeroMark icon="workout" />
+          <Txt variant="title2" style={styles.center}>
+            No saved workouts yet
+          </Txt>
+          <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
             {billing.isPro ? 'Build one, then tap Save.' : 'With GymGO Pro, tap Save on any workout you build to keep it here.'}
           </Txt>
           <PrimaryButton label="Build a workout" icon="workout" onPress={() => router.push({ pathname: '/workout/[id]', params: { id: 'any' } })} />
@@ -159,7 +163,7 @@ const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
-  emptyCard: { backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
+  emptyCard: { backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[5], paddingTop: space[6], gap: space[3], ...shadow.plate },
   notice: { padding: space[3], borderRadius: radius.md, backgroundColor: color.fill },
   problem: { gap: space[2] },
   list: { backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },

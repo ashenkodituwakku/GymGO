@@ -9,7 +9,8 @@ import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
-import { Icon } from '@/components/Icon';
+import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { Icon, type IconName } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
 import { Card, Chip, PrimaryButton, Txt } from '@/components/ui';
 import { startSession, useActiveSession } from '@/lib/activeSession';
@@ -62,6 +63,10 @@ export default function TemplatesScreen() {
   );
 }
 
+/** Each plan's mark: the whole body, the barbell, the three-way split. */
+const TEMPLATE_ICON: Record<string, IconName> = { 'full-body': 'body', 'five-by-five': 'plates', ppl: 'shuffle' };
+const MARK_ROUND = 13;
+
 function TemplateCard({ template, next, disabled, onStart }: { template: WorkoutTemplate; next: number; disabled: boolean; onStart: (index: number) => void }) {
   const [day, setDay] = useState(next);
   const [open, setOpen] = useState(false);
@@ -69,13 +74,17 @@ function TemplateCard({ template, next, disabled, onStart }: { template: Workout
   return (
     <Card style={styles.card}>
       <View style={styles.head}>
+        <View style={[styles.mark, accentGlow(color.brandFill)]}>
+          <BrandFill round={MARK_ROUND} />
+          <Sheen round={MARK_ROUND} />
+          <Icon name={TEMPLATE_ICON[template.id] ?? 'workout'} size={22} color={color.onBrand} />
+        </View>
         <View style={styles.flex}>
           <Txt variant="title2">{template.name}</Txt>
           <Txt variant="footnote" color={color.brand} style={face('semibold')}>
             {`${template.level} · ${template.perWeek}`}
           </Txt>
         </View>
-        <Icon name="list" size={20} color={color.brand} />
       </View>
       <Txt variant="subhead" color={color.labelSecondary}>
         {template.summary}
@@ -116,7 +125,8 @@ const styles = themed(() =>
     content: { padding: space[4], paddingBottom: space[8], gap: space[3], width: '100%', maxWidth: 560, alignSelf: 'center' },
     busy: { gap: space[2] },
     card: { gap: space[3] },
-    head: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
+    head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+    mark: { width: 46, height: 46, borderRadius: MARK_ROUND, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandFill },
     flex: { flex: 1, minWidth: 0 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     toggle: { flexDirection: 'row', alignItems: 'center', gap: space[1], alignSelf: 'flex-start' },

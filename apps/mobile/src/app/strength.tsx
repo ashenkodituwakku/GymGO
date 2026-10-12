@@ -196,6 +196,23 @@ export default function StrengthScreen() {
       )}
 
       {weightText.trim() === '' && (
+        // Where the estimate will be, outlined, so the page shows what it's for before anything's typed.
+        <View style={styles.ghost} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Txt variant="eyebrow" color={color.labelTertiary}>
+            ESTIMATED 1-REP MAX
+          </Txt>
+          <Txt variant="largeTitle" color={color.labelTertiary}>
+            ≈ — {unit}
+          </Txt>
+          <View style={styles.ghostLines}>
+            {[0.8, 0.62, 0.46].map((share) => (
+              <View key={share} style={[styles.ghostLine, { width: `${share * 100}%` }]} />
+            ))}
+          </View>
+        </View>
+      )}
+
+      {weightText.trim() === '' && (
         <View style={styles.card}>
           <Txt variant="eyebrow" color={color.labelSecondary}>
             HOW IT WORKS
@@ -211,6 +228,17 @@ export default function StrengthScreen() {
 
 const styles = themed(() =>
   StyleSheet.create({
+    ghost: {
+      gap: space[2],
+      padding: space[4],
+      borderRadius: radius.lg,
+      borderCurve: 'continuous',
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: color.separator,
+    },
+    ghostLines: { gap: space[2], marginTop: space[1] },
+    ghostLine: { height: 8, borderRadius: 4, backgroundColor: color.fill },
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[4], paddingBottom: space[8], gap: space[3], width: '100%', maxWidth: 560, alignSelf: 'center' },
     flex: { flex: 1 },

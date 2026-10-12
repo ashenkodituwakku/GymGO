@@ -6,19 +6,24 @@
  * your country the first time as before.
  *
  * Each page is an icon, a headline and a line: nothing drawn stands in for
- * a picture of a gym.
+ * a picture of a gym. Behind them a glow of the accent; the marks drift and
+ * settle as the pages are swiped (just swap with Reduce Motion).
  */
 
 import { Stack, useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { useId, useRef, useState, type ReactNode } from 'react';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import Animated, { interpolate, runOnJS, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon, type IconName } from '@/components/Icon';
+import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
+import { Wordmark } from '@/components/BrandMark';
+import { HeroMark } from '@/components/HeroMark';
+import type { IconName } from '@/components/Icon';
 import { Pressable } from '@/components/motion';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { LOOKS, color, currentLook, currentTheme, face, radius, space, themed } from '@/lib/theme';
 
 const PAGES: Array<{ icon: IconName; title: string; line: string }> = [
   {
@@ -44,9 +49,11 @@ export default function WelcomeScreen() {
   const { next } = useLocalSearchParams<{ next?: string }>();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const pager = useRef<ScrollView>(null);
+  const pager = useAnimatedRef<Animated.ScrollView>();
   const [page, setPage] = useState(0);
+  const pageRef = useRef(0);
   const last = page === PAGES.length - 1;
+  const scrollX = useSharedValue(0);
 
   const finish = () => {
     haptic.success();
@@ -54,18 +61,27 @@ export default function WelcomeScreen() {
   };
   const go = (to: number) => {
     haptic.select();
+    pageRef.current = to;
     setPage(to);
     pager.current?.scrollTo({ x: to * width, animated: true });
   };
-  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const at = Math.round(event.nativeEvent.contentOffset.x / Math.max(1, width));
-    if (at !== page && at >= 0 && at < PAGES.length) setPage(at);
+  const settle = (at: number) => {
+    if (at !== pageRef.current && at >= 0 && at < PAGES.length) {
+      pageRef.current = at;
+      setPage(at);
+    }
   };
+  const onScroll = useAnimatedScrollHandler((event) => {
+    scrollX.value = event.contentOffset.x;
+    runOnJS(settle)(Math.round(event.contentOffset.x / Math.max(1, width)));
+  });
 
   return (
     <View style={[styles.page, { paddingTop: insets.top + space[2], paddingBottom: insets.bottom + space[4] }]}>
       <Stack.Screen options={{ headerShown: false }} />
+      {currentLook() === LOOKS.standard && <Backdrop />}
       <View style={styles.top}>
+        <Wordmark height={22} />
         {!last && (
           <Pressable onPress={finish} accessibilityRole="button" accessibilityLabel="Skip the tour" hitSlop={10} style={({ pressed }) => [styles.skip, pressed && { opacity: 0.6 }]}>
             <Txt variant="body" color={color.brand} style={face('semibold')}>
@@ -75,29 +91,31 @@ export default function WelcomeScreen() {
         )}
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
         ref={pager}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={onScroll}
-        scrollEventThrottle={32}
+        scrollEventThrottle={16}
         style={styles.pager}
       >
         {PAGES.map((item, index) => (
           <View key={item.title} style={[styles.slide, { width }]} accessible accessibilityLabel={`${index + 1} of ${PAGES.length}. ${item.title}. ${item.line}`}>
-            <View style={styles.badge}>
-              <Icon name={item.icon} size={44} color={color.onBrand} />
-            </View>
-            <Txt variant="largeTitle" style={styles.title}>
-              {item.title}
-            </Txt>
+            <Drift index={index} width={width} scrollX={scrollX} depth={0.45}>
+              <HeroMark icon={item.icon} size={88} />
+            </Drift>
+            <Drift index={index} width={width} scrollX={scrollX} depth={0.12}>
+              <Txt variant="largeTitle" style={styles.title}>
+                {item.title}
+              </Txt>
+            </Drift>
             <Txt variant="body" color={color.labelSecondary} style={styles.line}>
               {item.line}
             </Txt>
           </View>
         ))}
-      </ScrollView>
+      </Animated.ScrollView>
 
       <View style={styles.dots} accessibilityRole="tablist">
         {PAGES.map((item, index) => (
@@ -120,22 +138,61 @@ export default function WelcomeScreen() {
   );
 }
 
+/**
+ * Moves its page's mark or headline a little faster than the page as it's
+ * swiped (by `depth` of a page more), and fades and shrinks it as it
+ * leaves, so the tour has some depth. Still with Reduce Motion.
+ */
+function Drift({ index, width, scrollX, depth, children }: { index: number; width: number; scrollX: SharedValue<number>; depth: number; children: ReactNode }) {
+  const calm = useReducedMotion();
+  const style = useAnimatedStyle(() => {
+    if (calm) return {};
+    const range = [(index - 1) * width, index * width, (index + 1) * width];
+    return {
+      opacity: interpolate(scrollX.value, range, [0.2, 1, 0.2], 'clamp'),
+      transform: [
+        // Ahead of the page: a neighbour's mark waits off the screen and sweeps in faster than its page.
+        { translateX: interpolate(scrollX.value, range, [width * depth, 0, -width * depth], 'clamp') },
+        { scale: interpolate(scrollX.value, range, [1 - depth * 0.5, 1, 1 - depth * 0.5], 'clamp') },
+      ],
+    };
+  });
+  return <Animated.View style={[styles.drift, style]}>{children}</Animated.View>;
+}
+
+/** A glow of the accent behind the tour: one pool high up behind the marks, a fainter one low at the side. */
+function Backdrop() {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const dark = currentTheme().scheme === 'dark';
+  return (
+    <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]} aria-hidden>
+      <Svg width="100%" height="100%">
+        <Defs>
+          <RadialGradient id={`wa${id}`} cx="50%" cy="34%" r="58%">
+            <Stop offset="0" stopColor={color.brand} stopOpacity={dark ? 0.36 : 0.2} />
+            <Stop offset="0.5" stopColor={color.brand} stopOpacity={dark ? 0.12 : 0.07} />
+            <Stop offset="1" stopColor={color.brand} stopOpacity={0} />
+          </RadialGradient>
+          <RadialGradient id={`wb${id}`} cx="100%" cy="96%" r="52%">
+            <Stop offset="0" stopColor={color.brand} stopOpacity={dark ? 0.2 : 0.1} />
+            <Stop offset="1" stopColor={color.brand} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Rect x="0" y="0" width="100%" height="100%" fill={`url(#wa${id})`} />
+        <Rect x="0" y="0" width="100%" height="100%" fill={`url(#wb${id})`} />
+      </Svg>
+    </View>
+  );
+}
+
 const styles = themed(() =>
   StyleSheet.create({
     page: { flex: 1, backgroundColor: color.groupedBackground },
-    top: { height: 44, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', paddingHorizontal: space[4] },
+    top: { height: 44, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: space[4] },
     skip: { paddingHorizontal: space[2], paddingVertical: space[1], borderRadius: radius.pill },
     pager: { flex: 1 },
     slide: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[4], paddingHorizontal: space[6] },
-    badge: {
-      width: 104,
-      height: 104,
-      borderRadius: 52,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: color.brandFill,
-      marginBottom: space[3],
-    },
+    drift: { alignItems: 'center', alignSelf: 'stretch' },
     title: { textAlign: 'center', maxWidth: 440 },
     line: { textAlign: 'center', maxWidth: 440 },
     dots: { flexDirection: 'row', justifyContent: 'center', gap: space[2], paddingVertical: space[4] },

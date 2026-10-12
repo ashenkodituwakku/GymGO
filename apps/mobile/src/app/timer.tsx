@@ -12,6 +12,7 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { Stack } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import { Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
@@ -140,7 +141,7 @@ export default function TimerScreen() {
 
   const working = phase.kind === 'work';
   const progress = phase.length > 0 ? 1 - phase.remaining / phase.length : 1;
-  const bigClock = { fontSize: Math.round(type.largeTitle.fontSize * 2.3), lineHeight: Math.round(type.largeTitle.fontSize * 2.3 * 1.15) };
+  const bigClock = { fontSize: Math.round(type.largeTitle.fontSize * 2), lineHeight: Math.round(type.largeTitle.fontSize * 2 * 1.15) };
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
@@ -154,12 +155,16 @@ export default function TimerScreen() {
         accessibilityLabel={`${PHASE_WORD[phase.kind]}. ${phase.kind === 'done' ? 'Finished' : `${Math.ceil(phase.remaining)} seconds`}${phase.round ? `, round ${phase.round} of ${plan.rounds}` : ''}`}
       >
         {working && <BrandFill />}
-        <Txt variant="eyebrow" color={working ? color.onBrand : color.labelSecondary}>
-          {started || running ? PHASE_WORD[phase.kind] : plan.name.toUpperCase()}
-        </Txt>
-        <Txt variant="largeTitle" color={working ? color.onBrand : color.label} style={[bigClock, styles.digits]}>
-          {phase.kind === 'done' ? clockLabel(totalSeconds(plan, 0)) : clockLabel(started ? phase.remaining : plan.work)}
-        </Txt>
+        {/* The phase's time inside a ring that fills as it runs. */}
+        <View style={styles.ring}>
+          <ProgressRing progress={started ? progress : 0} track={working ? color.onBrandFaint : color.fill} tint={working ? color.onBrand : color.brand} />
+          <Txt variant="eyebrow" color={working ? color.onBrand : color.labelSecondary}>
+            {started || running ? PHASE_WORD[phase.kind] : plan.name.toUpperCase()}
+          </Txt>
+          <Txt variant="largeTitle" color={working ? color.onBrand : color.label} style={[bigClock, styles.digits]}>
+            {phase.kind === 'done' ? clockLabel(totalSeconds(plan, 0)) : clockLabel(started ? phase.remaining : plan.work)}
+          </Txt>
+        </View>
         <Txt variant="subhead" color={working ? color.onBrandSoft : color.labelSecondary}>
           {phase.kind === 'done'
             ? `${plan.rounds} round${plan.rounds === 1 ? '' : 's'} done`
@@ -169,9 +174,6 @@ export default function TimerScreen() {
                 ? `${plan.rounds} round${plan.rounds === 1 ? '' : 's'} to go`
                 : describePlan(plan)}
         </Txt>
-        <View style={[styles.bar, working && styles.barOnBrand]}>
-          <View style={[styles.barFill, working && styles.barFillOnBrand, { width: `${Math.round(progress * 100)}%` }]} />
-        </View>
       </View>
 
       <View style={styles.controls}>
@@ -327,6 +329,36 @@ function Step({ icon, label, disabled, locked, onPress }: { icon: IconName; labe
   );
 }
 
+/** How big the timer's ring is, and how thick. */
+const RING = 236;
+const STROKE = 8;
+
+/** A ring that fills clockwise from the top as `progress` goes from 0 to 1, round-ended. */
+function ProgressRing({ progress, track, tint }: { progress: number; track: string; tint: string }) {
+  const r = (RING - STROKE) / 2;
+  const around = 2 * Math.PI * r;
+  const shown = Math.min(1, Math.max(0, progress));
+  return (
+    <Svg width={RING} height={RING} style={StyleSheet.absoluteFill} aria-hidden>
+      <Circle cx={RING / 2} cy={RING / 2} r={r} stroke={track} strokeWidth={STROKE} fill="none" />
+      {shown > 0 && (
+        <Circle
+          cx={RING / 2}
+          cy={RING / 2}
+          r={r}
+          stroke={tint}
+          strokeWidth={STROKE}
+          strokeLinecap="round"
+          fill="none"
+          strokeDasharray={`${around} ${around}`}
+          strokeDashoffset={around * (1 - shown)}
+          transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
+        />
+      )}
+    </Svg>
+  );
+}
+
 const styles = themed(() =>
   StyleSheet.create({
     page: { flex: 1, backgroundColor: color.groupedBackground },
@@ -345,10 +377,7 @@ const styles = themed(() =>
     },
     clockWork: { backgroundColor: color.brandFill },
     digits: { fontVariant: ['tabular-nums'], textAlign: 'center' },
-    bar: { alignSelf: 'stretch', height: 6, marginTop: space[2], borderRadius: 3, backgroundColor: color.fill, overflow: 'hidden' },
-    barOnBrand: { backgroundColor: color.onBrandFaint },
-    barFill: { height: '100%', borderRadius: 3, backgroundColor: color.brand },
-    barFillOnBrand: { backgroundColor: color.onBrand },
+    ring: { width: RING, height: RING, alignItems: 'center', justifyContent: 'center', marginBottom: space[1] },
     controls: { flexDirection: 'row', gap: space[3] },
     caps: { marginTop: space[2], paddingHorizontal: space[4], letterSpacing: 0.3 },
     card: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },

@@ -63,7 +63,7 @@ const styles = themed(() =>
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[4], gap: space[3], width: '100%', maxWidth: 680, alignSelf: 'center' },
     head: { gap: space[1], paddingHorizontal: space[1], paddingBottom: space[1] },
-    section: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
+    section: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     list: { gap: space[2] },
     item: { flexDirection: 'row', gap: space[2] },
     flex: { flex: 1 },

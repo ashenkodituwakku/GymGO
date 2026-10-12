@@ -129,8 +129,8 @@ export function useDeleteCollection(): { open: () => void; opened: boolean; warn
 const styles = themed(() =>
   StyleSheet.create({
     flex: { flex: 1 },
-    sync: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
-    warning: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, borderWidth: 1.5, borderColor: color.dangerInk, ...shadow.plate },
+    sync: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
+    warning: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, borderWidth: 1.5, borderColor: color.dangerInk, ...shadow.plate },
     warningHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     warningSign: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.dangerInk },
   }),

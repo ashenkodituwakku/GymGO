@@ -64,7 +64,7 @@ export function GoogleGate({ what, children }: { what: string; children: ReactNo
 
 const styles = themed(() =>
   StyleSheet.create({
-    card: { gap: space[3], padding: space[4], borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
+    card: { gap: space[3], padding: space[4], borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     head: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
     glyph: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     flex: { flex: 1, gap: 2 },

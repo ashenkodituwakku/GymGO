@@ -12,7 +12,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { LOOKS, PAGE_COLUMN, color, currentLook, currentTheme, radius, shadow, space, themed } from '@/lib/theme';
+import { LOOKS, PAGE_COLUMN, ambientGlow, color, currentLook, currentTheme, glowStrength, radius, shadow, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
@@ -74,21 +74,25 @@ function TabScreenInner({
   const barStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [titleBottom - insets.top - BAR - 8, titleBottom - insets.top - BAR + 12], [0, 1], 'clamp'),
   }));
-  // Only the standard look glows: the others have grounds of their own (pixels, bevels, tones).
-  const glowing = glow && currentLook() === LOOKS.standard;
+  // Only the glass look glows: the others have grounds of their own (pixels,
+  // bevels, tones). Behind every tab, a glow that stays put, as strong as
+  // your Liquid Glass level; behind the title (Home, Profile), a brighter one
+  // that fades as the page scrolls.
+  const ambient = currentLook() === LOOKS.standard ? ambientGlow() : null;
+  const glowing = glow && ambient !== null;
   const glowStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [0, 280], [1, 0], 'clamp'),
     transform: [{ translateY: interpolate(scrollY.value, [0, 280], [0, -70], 'clamp') }],
   }));
   return (
-    <View ref={measureRef} onLayout={onLayout} style={[styles.flex, glowing && styles.ground]}>
+    <View ref={measureRef} onLayout={onLayout} style={[styles.flex, ambient && styles.ground, ambient]}>
       {glowing && (
         <Animated.View style={[styles.glow, { height: insets.top + 440 }, glowStyle, { pointerEvents: 'none' }]} aria-hidden>
           <HeroGlow />
         </Animated.View>
       )}
       <Animated.ScrollView
-        style={[styles.screen, glowing && styles.clear]}
+        style={[styles.screen, ambient && styles.clear]}
         onScroll={onScroll}
         scrollEventThrottle={16}
         // The page scrolls under the floating tab bar, so it makes its own room
@@ -135,21 +139,24 @@ function TabScreenInner({
 /**
  * Two soft pools of the accent, one at the top right and a fainter one at
  * the left, fading to nothing well inside their box so no edge ever shows.
- * Stronger in dark, where a faint one would be lost.
+ * Stronger in dark, where a faint one would be lost, and the glassier your
+ * Liquid Glass level.
  */
 function HeroGlow() {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
   const dark = currentTheme().scheme === 'dark';
+  const k = Math.min(1.5, 0.5 + 0.5 * glowStrength());
+  const o = (value: number) => Math.round(value * k * 1000) / 1000;
   return (
     <Svg width="100%" height="100%">
       <Defs>
         <RadialGradient id={`gm${id}`} cx="82%" cy="6%" r="62%">
-          <Stop offset="0" stopColor={color.brand} stopOpacity={dark ? 0.34 : 0.17} />
-          <Stop offset="0.55" stopColor={color.brand} stopOpacity={dark ? 0.12 : 0.06} />
+          <Stop offset="0" stopColor={color.brand} stopOpacity={o(dark ? 0.3 : 0.15)} />
+          <Stop offset="0.55" stopColor={color.brand} stopOpacity={o(dark ? 0.1 : 0.05)} />
           <Stop offset="1" stopColor={color.brand} stopOpacity={0} />
         </RadialGradient>
         <RadialGradient id={`gs${id}`} cx="8%" cy="30%" r="48%">
-          <Stop offset="0" stopColor={color.brand} stopOpacity={dark ? 0.16 : 0.08} />
+          <Stop offset="0" stopColor={color.brand} stopOpacity={o(dark ? 0.14 : 0.07)} />
           <Stop offset="1" stopColor={color.brand} stopOpacity={0} />
         </RadialGradient>
       </Defs>
@@ -344,7 +351,7 @@ const styles = themed(() => StyleSheet.create({
   groupHeader: { paddingHorizontal: space[4], letterSpacing: 0.3 },
   groupFooter: { paddingHorizontal: space[4] },
   // The same corners as the app's other cards, so a list sits flush with the card above it.
-  groupBody: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
+  groupBody: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 16 + 29 + 12 },
 
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, minHeight: 50, paddingVertical: 8 },

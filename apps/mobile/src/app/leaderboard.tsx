@@ -227,7 +227,7 @@ const styles = themed(() =>
     shrink: { flexShrink: 1, minWidth: 0 },
     youPill: { paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.brandFill },
     join: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-    list: { gap: 2, borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, padding: space[1], overflow: 'hidden' },
+    list: { gap: 2, borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, padding: space[1], overflow: 'hidden' },
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[2], paddingHorizontal: space[3], borderRadius: radius.md },
     rowYou: { backgroundColor: color.brandTint },
     rank: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },

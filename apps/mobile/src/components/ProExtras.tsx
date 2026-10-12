@@ -218,7 +218,7 @@ export function DuoPartner({ token }: { token: string }) {
 
 const styles = themed(() =>
   StyleSheet.create({
-    card: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
+    card: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     flex: { flex: 1, minWidth: 0 },

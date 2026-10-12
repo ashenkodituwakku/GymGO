@@ -7,6 +7,9 @@
  * always be scrolled into view. On iPhone it also takes the system's
  * automatic insets, which keep the content clear of a see-through header.
  *
+ * Behind it, in the glass look, a glow of the accent that grows with your
+ * Liquid Glass level (ambientGlow), for its frosted cards to be seen against.
+ *
  * When the colours change and the screen is drawn again (Redrawn), the page
  * goes back to where it was scrolled, rather than to the top.
  *
@@ -20,6 +23,7 @@ import { forwardRef, useCallback, useContext, useRef, type ForwardedRef } from '
 import { ScrollView, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
 import { ScrollMemory } from '@/components/Redrawn';
 import { useOverhang, useScreenBottom, type Measurable } from '@/lib/layout';
+import { ambientGlow } from '@/lib/theme';
 
 type Props = ScrollViewProps & {
   /** Room under the last row, before the phone's own bottom edge is added. */
@@ -29,7 +33,7 @@ type Props = ScrollViewProps & {
 };
 
 export const PageScroll = forwardRef(function PageScroll(
-  { gap = 32, extraBottom = 0, contentContainerStyle, onLayout, onScroll, onContentSizeChange, scrollEventThrottle, ...props }: Props,
+  { gap = 32, extraBottom = 0, contentContainerStyle, onLayout, onScroll, onContentSizeChange, scrollEventThrottle, style, ...props }: Props,
   forwarded: ForwardedRef<ScrollView>,
 ) {
   const screenBottom = useScreenBottom(gap);
@@ -53,6 +57,8 @@ export const PageScroll = forwardRef(function PageScroll(
       automaticallyAdjustKeyboardInsets
       keyboardShouldPersistTaps="handled"
       {...props}
+      // The accent's glow behind the page, for its glass cards (Liquid Glass above 0%).
+      style={[style, ambientGlow()]}
       ref={setRef}
       onLayout={(event: LayoutChangeEvent) => {
         measure();

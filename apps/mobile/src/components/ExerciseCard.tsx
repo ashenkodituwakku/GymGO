@@ -124,7 +124,7 @@ const styles = themed(() => StyleSheet.create({
     padding: space[4],
     borderRadius: radius.xl,
     borderCurve: 'continuous',
-    backgroundColor: color.card,
+    backgroundColor: color.plate,
   },
   number: {
     width: 28,

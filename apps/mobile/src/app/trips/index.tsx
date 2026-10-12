@@ -264,7 +264,7 @@ const styles = themed(() =>
       paddingRight: space[2],
       borderRadius: radius.lg,
       borderCurve: 'continuous',
-      backgroundColor: color.card,
+      backgroundColor: color.plate,
     },
     tripIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     tripMain: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3] },

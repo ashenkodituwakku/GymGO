@@ -638,7 +638,7 @@ const styles = themed(() => StyleSheet.create({
   chipText: face('medium'),
 
   card: {
-    backgroundColor: color.card,
+    backgroundColor: color.plate,
     borderRadius: radius.lg,
     padding: space[4],
     ...shadow.card,

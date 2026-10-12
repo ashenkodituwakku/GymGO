@@ -227,7 +227,7 @@ export default function AppearanceScreen() {
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
         {solidLook
           ? `${LOOKS[lookInUse].name} draws everything as solid plates, so there’s no glass to set. Choose Standard to use Liquid Glass.`
-          : 'How see-through the controls, sheets and tab bar over the map are. 0% makes them solid; 100% is the clearest that keeps text readable.'}
+          : 'How glassy GymGO is: the controls, sheets and bars over the map, and the cards on every page, with your accent glowing through from behind. 0% makes it all solid; 100% is the clearest that keeps text readable.'}
       </Txt>
 
       <View style={styles.accentHead}>
@@ -412,7 +412,7 @@ const styles = themed(() =>
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[4], paddingBottom: space[8], width: '100%', maxWidth: 560, alignSelf: 'center' },
     section: { marginLeft: space[4], marginBottom: space[2], letterSpacing: 0.4 },
-    modes: { flexDirection: 'row', gap: space[3], padding: space[4], borderRadius: radius.lg, backgroundColor: color.card, ...shadow.plate },
+    modes: { flexDirection: 'row', gap: space[3], padding: space[4], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     mode: { flex: 1, alignItems: 'center', gap: space[2] },
     preview: { width: '100%', aspectRatio: 0.62, borderRadius: radius.md, borderWidth: 2, borderColor: 'transparent', overflow: 'hidden' },
     previewOn: { borderColor: color.brand },
@@ -424,11 +424,11 @@ const styles = themed(() =>
     note: { marginHorizontal: space[4], marginTop: space[2] },
     accentHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginLeft: space[4], marginTop: space[6], marginBottom: space[2] },
     proTag: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 1, borderRadius: radius.pill, backgroundColor: color.brandTint },
-    grid: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.card, ...shadow.plate },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     tile: { width: '20%', minWidth: 64, alignItems: 'center', gap: space[1], paddingVertical: space[2] },
     ring: { padding: 3, borderRadius: 30, borderWidth: 2, borderColor: 'transparent' },
     swatch: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-    looks: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.card, ...shadow.plate },
+    looks: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     lookTile: { width: '33.33%', alignItems: 'center', gap: space[1], paddingVertical: space[2], paddingHorizontal: space[1] },
     lookFrame: { width: '100%', maxWidth: 104, aspectRatio: 0.9, padding: 3, borderRadius: 14, borderWidth: 2, borderColor: 'transparent' },
     lookPage: { flex: 1, borderRadius: 10, overflow: 'hidden', padding: 8, gap: 8, justifyContent: 'space-between' },
@@ -437,7 +437,7 @@ const styles = themed(() =>
     lookButton: { height: 20, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
     lookName: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     flex: { flex: 1 },
-    glassCard: { gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.card, ...shadow.plate },
+    glassCard: { gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     glassHead: { flexDirection: 'row', alignItems: 'baseline', gap: space[2], paddingHorizontal: space[1] },
     sliderRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     step: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },

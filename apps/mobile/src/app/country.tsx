@@ -203,7 +203,7 @@ const styles = themed(() => StyleSheet.create({
     gap: space[3],
     paddingHorizontal: space[4],
     paddingVertical: space[3],
-    backgroundColor: color.card,
+    backgroundColor: color.plate,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: color.separator,
   },

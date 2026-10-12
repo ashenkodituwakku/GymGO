@@ -218,7 +218,7 @@ const styles = themed(() =>
     // Big, like the plate calculator's: typed at the gym, between sets.
     input: { width: 104, height: 52, borderRadius: radius.md, backgroundColor: color.card, textAlign: 'center', fontSize: 24, color: color.label, ...face('bold') },
     reps: { width: 64, height: 52, borderRadius: radius.md, backgroundColor: color.card, textAlign: 'center', fontSize: 24, color: color.label, ...face('bold') },
-    card: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
+    card: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     percentRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 44, paddingVertical: space[1] },
     line: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
     percent: { width: 44, fontVariant: ['tabular-nums'] },

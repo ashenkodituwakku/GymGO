@@ -251,7 +251,7 @@ const styles = themed(() =>
       justifyContent: 'center',
     },
     noticeBadge: { backgroundColor: TILE.indigo },
-    card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[2], ...shadow.plate },
+    card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[2], ...shadow.plate },
     description: { minHeight: 150, paddingTop: space[3], paddingBottom: space[3] },
     count: { textAlign: 'right' },
     details: { paddingHorizontal: space[4], paddingBottom: space[3], gap: 6 },

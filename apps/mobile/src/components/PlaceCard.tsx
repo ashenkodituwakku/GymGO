@@ -800,7 +800,7 @@ const styles = themed(() => StyleSheet.create({
   verdictEmoji: { fontSize: 34, lineHeight: 42 },
   verdictIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   reasons: { gap: space[2] },
-  ask: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
+  ask: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
   askHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginBottom: 2 },
   askCall: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
   askRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },

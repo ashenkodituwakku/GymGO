@@ -109,7 +109,7 @@ const styles = themed(() =>
     content: { padding: space[4], paddingBottom: space[8], gap: space[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
     none: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
     centre: { textAlign: 'center' },
-    card: { gap: space[4], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
+    card: { gap: space[4], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate },
     note: { textAlign: 'center', paddingHorizontal: space[4] },
   }),
 );

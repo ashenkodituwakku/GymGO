@@ -258,7 +258,7 @@ const styles = themed(() => StyleSheet.create({
     color: color.label,
     ...face('bold'),
   },
-  card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
+  card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
   pro: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   platesHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   editPlates: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },

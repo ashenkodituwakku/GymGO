@@ -167,7 +167,7 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
 
 const styles = themed(() =>
   StyleSheet.create({
-    wrap: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
+    wrap: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     badge: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
     slim: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3] },

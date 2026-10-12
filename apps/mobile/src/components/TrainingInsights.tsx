@@ -337,12 +337,12 @@ export function MuscleBalanceCard({ sessions, isPro, onPro, now = new Date() }: 
 const styles = themed(() =>
   StyleSheet.create({
     flex: { flex: 1, gap: 2 },
-    card: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
+    card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
     pro: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     goalRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     goalValue: { minWidth: 72, textAlign: 'center' },
-    strip: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
+    strip: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     stripIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.maybe },
     stripDays: { flexDirection: 'row', gap: 5, marginTop: 6 },
     stripDay: { width: 10, height: 10, borderRadius: 5 },
@@ -363,7 +363,7 @@ const styles = themed(() =>
     metDot: { width: 6, height: 6, borderRadius: 3, marginTop: 2 },
     metDotOn: { backgroundColor: color.good },
 
-    group: { backgroundColor: color.card, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
+    group: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
     rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
     ladder: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
     ladderIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill, marginTop: 2 },

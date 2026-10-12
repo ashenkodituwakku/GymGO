@@ -127,7 +127,7 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
 const styles = themed(() => StyleSheet.create({
   press: { borderRadius: radius.xl },
   card: {
-    backgroundColor: color.card,
+    backgroundColor: color.plate,
     borderRadius: radius.xl,
     borderCurve: 'continuous',
     overflow: 'hidden',

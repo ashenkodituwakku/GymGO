@@ -20,7 +20,7 @@
  */
 
 import { Platform, StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
-import { FREE_LOOK, LOOKS, STANDARD_RADIUS, readable, type LookId, type LookSpec } from './looks';
+import { FREE_LOOK, LOOKS, STANDARD_RADIUS, alpha, readable, type LookId, type LookSpec } from './looks';
 
 export { FREE_LOOK, LOOK_IDS, LOOKS, type LookId } from './looks';
 
@@ -52,6 +52,8 @@ const BASE = {
     background: '#FFFFFF',
     groupedBackground: '#F2F2F7',
     card: '#FFFFFF',
+    /** A card on the page, frosted to your Liquid Glass level (paletteFor). */
+    plate: '#FFFFFF',
     /** A control or card raised above a card (segment thumbs, chips). */
     cardRaised: '#FFFFFF',
     /** A card laid on glass, so the glass shows a little. */
@@ -113,6 +115,7 @@ const BASE = {
     background: '#000000',
     groupedBackground: '#000000',
     card: '#1C1C1E',
+    plate: '#1C1C1E',
     cardRaised: '#3A3A3C',
     cardGlass: 'rgba(44, 44, 46, 0.82)',
     fill: 'rgba(118, 118, 128, 0.24)',
@@ -295,6 +298,18 @@ export function glassWash(layer: GlassLayer, level: number, scheme: Scheme): str
   return `rgba(${WASH[scheme][layer]}, ${glassAlpha(layer, level, scheme)})`;
 }
 
+/**
+ * How solid a card on the page is at a level: solid at 0%, a little
+ * see-through at the default, frosted glass at 100%, the page's glow of
+ * the accent showing through it (still plenty for the text on it).
+ */
+export function plateAlpha(level: number, scheme: Scheme): number {
+  const at = cleanGlass(level);
+  const [balanced, clearest] = scheme === 'dark' ? [0.84, 0.62] : [0.82, 0.58];
+  const value = at <= GLASS_DEFAULT ? 1 - (1 - balanced) * (at / GLASS_DEFAULT) : balanced - (balanced - clearest) * ((at - GLASS_DEFAULT) / (100 - GLASS_DEFAULT));
+  return Math.round(value * 1000) / 1000;
+}
+
 /** A word for a level, beside its percentage. */
 export function glassLevelName(level: number): string {
   const at = cleanGlass(level);
@@ -310,8 +325,11 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
   palette.glassWashThick = glassWash('thick', glass, scheme);
   palette.glassWashBar = glassWash('bar', glass, scheme);
   const surfaces = LOOKS[look].surfaces?.(scheme, palette.brand);
+  // Cards on the page are glass too, in the glass look: solid at 0%, frosted as the level rises.
+  palette.plate = LOOKS[look].solid || cleanGlass(glass) === 0 ? palette.card : alpha(palette.card, plateAlpha(glass, scheme));
   if (!surfaces) return palette;
   Object.assign(palette, surfaces);
+  palette.plate = palette.card;
   const behind = [surfaces.card, surfaces.groupedBackground, surfaces.background];
   for (const key of TEXT_KEYS) palette[key] = readable(palette[key], behind, scheme, key === 'labelTertiary' ? 3 : 4.6);
   return palette;
@@ -326,6 +344,39 @@ let current: { scheme: Scheme; accent: AccentId; look: LookId; glass: number } =
 export const currentLook = (): LookSpec => LOOKS[current.look];
 /** Floating things drawn as solid plates: a solid look, or Liquid Glass at 0%. */
 export const solidSurfaces = (): boolean => currentLook().solid || current.glass === 0;
+/**
+ * How strong the glow of the accent behind the pages is: none at 0% Liquid
+ * Glass or in a solid look, soft at the default (1), richest at 100% (2).
+ * Glass needs something behind it to be seen as glass.
+ */
+export const glowStrength = (): number => (currentLook().solid ? 0 : cleanGlass(current.glass) / GLASS_DEFAULT);
+
+/**
+ * The glow of the accent behind a page, for the glass on it to be seen
+ * against: a pool at the top right, a fainter one at the left and, the
+ * glassier you go, one at the foot. It stays put as the page scrolls. None in
+ * a solid look or at 0% (null). Stronger in dark, where a faint one is lost.
+ */
+export function ambientGlow(): ViewStyle | null {
+  const strength = glowStrength();
+  if (strength === 0) return null;
+  const dark = current.scheme === 'dark';
+  const k = 0.35 + 0.65 * strength;
+  // Round pools (an ellipse takes the page's shape: a band down a tall phone),
+  // eased out over three stops so no ring shows where one ends.
+  const pool = (at: string, opacity: number, reach: number) => {
+    const o = Math.round(opacity * 1000) / 1000;
+    return `radial-gradient(circle at ${at}, ${alpha(color.brand, o)} 0%, ${alpha(color.brand, Math.round(o * 450) / 1000)} ${Math.round(reach * 45) / 100}%, ${alpha(color.brand, 0)} ${reach}%)`;
+  };
+  const layers = [
+    pool('92% 0%', Math.min(dark ? 0.44 : 0.3, (dark ? 0.26 : 0.16) * k), 36),
+    pool('0% 46%', Math.min(dark ? 0.26 : 0.18, (dark ? 0.14 : 0.09) * k), 40),
+  ];
+  if (strength > 1) layers.push(pool('100% 100%', (strength - 1) * (dark ? 0.24 : 0.15), 38));
+  const image = layers.join(', ');
+  // A browser takes CSS `backgroundImage`; React Native's own renderer, `experimental_backgroundImage`.
+  return (Platform.OS === 'web' ? { backgroundImage: image } : { experimental_backgroundImage: image }) as ViewStyle;
+}
 /** The paint the current accent puts on buttons, if it has one. */
 export const currentPaint = (): AccentPaint | null => ACCENT_PAINTS[current.accent] ?? null;
 let version = 0;
@@ -345,9 +396,8 @@ export function subscribeTheme(listener: () => void): () => void {
 }
 
 /**
- * Told when Liquid Glass changes. Only the glass is drawn again then, not
- * whole screens as for the colours, so a screen keeps its place: you can
- * slide the level and stay where you are.
+ * Told when Liquid Glass changes (and with every other change): the glass
+ * the tab bar and other bars are made of draws itself again.
  */
 export function subscribeGlass(listener: () => void): () => void {
   glassListeners.add(listener);
@@ -357,20 +407,17 @@ export function subscribeGlass(listener: () => void): () => void {
 /** Switch the colours (and the look) everywhere. Returns false if nothing changed. */
 export function applyTheme(scheme: Scheme, accent: AccentId, look: LookId = current.look, glass: number = current.glass): boolean {
   const level = cleanGlass(glass);
-  const sameColours = current.scheme === scheme && current.accent === accent && current.look === look;
-  if (sameColours && current.glass === level) return false;
+  if (current.scheme === scheme && current.accent === accent && current.look === look && current.glass === level) return false;
   current = { scheme, accent, look, glass: level };
   Object.assign(color, paletteFor(scheme, accent, look, level));
   styleVersion += 1;
-  if (sameColours) {
-    // Only the glass: its colours are in place, and the glass draws itself again.
-    for (const listener of glassListeners) listener();
-    return true;
-  }
   const spec = LOOKS[look];
   Object.assign(radius, spec.radius);
-  Object.assign(shadow, spec.shadows?.(scheme, color.brand) ?? standardShadows(scheme));
+  Object.assign(shadow, spec.shadows?.(scheme, color.brand) ?? standardShadows(scheme, level));
   Object.assign(type, typeScale());
+  // Every screen draws again, a change of Liquid Glass alone too: cards and
+  // the glow behind them follow the level. That comes once, as the slider is
+  // let go (its preview follows the finger), and Redrawn keeps each place.
   version += 1;
   for (const listener of listeners) listener();
   for (const listener of glassListeners) listener();
@@ -556,15 +603,20 @@ const STANDARD_SHADOW = {
  * same. Both drawn as box shadows, so they take no room and never replace a
  * card's own border.
  */
-function standardShadows(scheme: Scheme): typeof STANDARD_SHADOW {
+function standardShadows(scheme: Scheme, level: number = GLASS_DEFAULT): typeof STANDARD_SHADOW {
+  // Glass catches light along its top edge: a brighter rim the glassier it is.
+  const at = cleanGlass(level) / 100;
+  // In a browser a card blurs what's behind it, as glass does (a phone keeps its cards cheap to draw).
+  const frost: ViewStyle = Platform.OS === 'web' && at > 0 ? ({ backdropFilter: `blur(${Math.round(6 + at * 18)}px) saturate(${(1 + at * 0.8).toFixed(2)})` } as ViewStyle) : {};
   if (scheme === 'dark') {
-    const edge = 'inset 0px 0px 0px 1px rgba(255, 255, 255, 0.07)';
-    return { float: { boxShadow: `0px 4px 14px rgba(0, 0, 0, 0.5), ${edge}` }, card: { boxShadow: edge }, plate: { boxShadow: edge } };
+    const edge = `inset 0px 0px 0px 1px rgba(255, 255, 255, ${(0.06 + at * 0.06).toFixed(3)}), inset 0px 1px 0px rgba(255, 255, 255, ${(at * 0.14).toFixed(3)})`;
+    return { float: { boxShadow: `0px 4px 14px rgba(0, 0, 0, 0.5), ${edge}` }, card: { boxShadow: edge, ...frost }, plate: { boxShadow: edge, ...frost } };
   }
+  const rim = `inset 0px 1px 0px rgba(255, 255, 255, ${(at * 0.9).toFixed(3)}), inset 0px 0px 0px 1px rgba(255, 255, 255, ${(at * 0.45).toFixed(3)})`;
   return {
     float: STANDARD_SHADOW.float,
-    card: { boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.04), 0px 3px 10px rgba(0, 0, 0, 0.045)' },
-    plate: { boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.03), 0px 6px 18px rgba(20, 20, 50, 0.045)' },
+    card: { boxShadow: `0px 1px 2px rgba(0, 0, 0, 0.04), 0px 3px 10px rgba(0, 0, 0, 0.045), ${rim}`, ...frost },
+    plate: { boxShadow: `0px 1px 2px rgba(0, 0, 0, 0.03), 0px 6px 18px rgba(20, 20, 50, ${(0.045 + at * 0.03).toFixed(3)}), ${rim}`, ...frost },
   };
 }
 

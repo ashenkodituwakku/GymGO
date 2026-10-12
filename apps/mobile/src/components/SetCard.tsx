@@ -107,7 +107,7 @@ const styles = themed(() =>
       borderWidth: 3,
       borderRadius: radius.lg,
       borderCurve: 'continuous',
-      backgroundColor: color.card,
+      backgroundColor: color.plate,
       ...shadow.plate,
     },
     rewardHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginBottom: space[1] },

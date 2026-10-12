@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // The font files are for the app's bundler, not for Node.
 vi.mock('./fonts', () => ({ BUNDLED_FACES: {} }));
 import { StyleSheet } from 'react-native';
-import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, applyTheme, color, glassAlpha, glassLevelName, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
+import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, applyTheme, color, glassAlpha, glassLevelName, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
 
 const channel = (value: number) => (value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
 const luminance = (hex: string) => {
@@ -101,22 +101,36 @@ describe('Liquid Glass', () => {
     expect(solidSurfaces()).toBe(true);
   });
 
-  it('redraws only the glass when only the level changes, so screens keep their place', () => {
+  it('redraws screens and glass when only the level changes, as cards follow it', () => {
     const screens = vi.fn();
     const glass = vi.fn();
     const stopScreens = subscribeTheme(screens);
     const stopGlass = subscribeGlass(glass);
-    const styles = themed(() => StyleSheet.create({ wash: { backgroundColor: color.glassWashThick } }));
+    const styles = themed(() => StyleSheet.create({ wash: { backgroundColor: color.glassWashThick }, card: { backgroundColor: color.plate } }));
     const before = StyleSheet.flatten(styles.wash).backgroundColor;
+    const card = StyleSheet.flatten(styles.card).backgroundColor;
     applyTheme('light', FREE_ACCENT, FREE_LOOK, 90);
-    expect(screens).not.toHaveBeenCalled();
+    expect(screens).toHaveBeenCalledTimes(1);
     expect(glass).toHaveBeenCalledTimes(1);
     expect(StyleSheet.flatten(styles.wash).backgroundColor).not.toBe(before);
-    applyTheme('dark', FREE_ACCENT, FREE_LOOK, 90);
+    expect(StyleSheet.flatten(styles.card).backgroundColor).not.toBe(card);
+    applyTheme('light', FREE_ACCENT, FREE_LOOK, 90);
     expect(screens).toHaveBeenCalledTimes(1);
-    expect(glass).toHaveBeenCalledTimes(2);
     stopScreens();
     stopGlass();
+  });
+
+  it('frosts cards on the page with the level, and keeps them solid at 0% or in a solid look', () => {
+    expect(paletteFor('light', FREE_ACCENT, FREE_LOOK, 0).plate).toBe(paletteFor('light', FREE_ACCENT, FREE_LOOK, 0).card);
+    expect(plateAlpha(0, 'light')).toBe(1);
+    expect(plateAlpha(GLASS_DEFAULT, 'light')).toBe(0.82);
+    expect(plateAlpha(100, 'light')).toBe(0.58);
+    expect(plateAlpha(100, 'dark')).toBe(0.62);
+    expect(paletteFor('light', FREE_ACCENT, FREE_LOOK, 100).plate).not.toBe(paletteFor('light', FREE_ACCENT, FREE_LOOK, 100).card);
+    for (const look of LOOK_IDS.filter((id) => LOOKS[id].solid)) {
+      const palette = paletteFor('dark', FREE_ACCENT, look, 100);
+      expect(palette.plate).toBe(palette.card);
+    }
   });
 
   it('names each level', () => {

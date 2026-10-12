@@ -45,7 +45,7 @@ export function ServerAwayCard() {
 }
 
 const styles = themed(() => StyleSheet.create({
-  card: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, ...shadow.plate },
+  card: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
   head: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginBottom: space[1] },
   flex: { flex: 1 },
 }));

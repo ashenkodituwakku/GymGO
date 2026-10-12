@@ -245,7 +245,8 @@ equally solid on every device (by default buttons 80%, sheets 94%, pinned
 headers 98%): Liquid Glass takes it as its tint and the others as a wash over
 the blur, so the map never shows through more on one phone than another.
 How see-through is yours to set: the **Liquid Glass** percentage in
-Appearance.
+Appearance, which also frosts the cards on every page and sets how brightly
+your accent glows behind them.
 
 - **Home**: kept short. A greeting, the search, four one-tap picks (Near
   me, Early start, After work, Under $25), **Build a workout**, **Up next**
@@ -317,14 +318,18 @@ Appearance.
   mode), and where GymGO's facts come from.
 - **Appearance**: Automatic (follows your phone), Light or Dark, for
   everyone. **Liquid Glass**, also for everyone: a percentage for how
-  see-through the controls, sheets and tab bar over the map are, with a
-  little map that shows it as you slide. The slider is made like iOS 26's:
+  glassy GymGO is: the controls, sheets and tab bar over the map, and the
+  cards on every page, frosted over a glow of your accent that stays put
+  behind the page (stronger the higher you go, with a third pool at the
+  foot past 50%; the cards' top edges catch more light, and in a browser
+  they blur what's behind them). A little map shows the glass as you slide. The slider is made like iOS 26's:
   its thumb swells into a lens of glass under your finger, magnifying the
   track, stretches when you move it fast and wobbles back when you let go,
   with a firmer tick at 0, 50 and 100. 0% makes them solid plates; 50% is
   the default; 100% is the clearest that keeps text readable (Android,
-  which draws no blur behind its glass, stops a little more solid). It
-  changes only the glass, so the screen you're on stays put. With Pro, eleven more accents besides Indigo: Cobalt, Ocean,
+  which draws no blur behind its glass, stops a little more solid). The
+  screens follow when you let go, each staying where it was scrolled. 0%
+  also takes the glow away. With Pro, eleven more accents besides Indigo: Cobalt, Ocean,
   Midnight, Lagoon, Grape, Fuchsia, Rose, Slate and Graphite, plus
   **Rainbow** (a gradient) and **Camo** (a woodland pattern) that paint
   filled buttons, selected chips, the tab bar and the Build a workout card,

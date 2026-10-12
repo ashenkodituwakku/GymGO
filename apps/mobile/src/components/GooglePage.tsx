@@ -335,7 +335,7 @@ const styles = themed(() => StyleSheet.create({
     padding: space[4],
     borderRadius: radius.lg + 4,
     borderCurve: 'continuous',
-    backgroundColor: color.card,
+    backgroundColor: color.plate,
   },
   reviews: { gap: space[2] },
   reviewHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] },

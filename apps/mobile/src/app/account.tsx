@@ -476,7 +476,7 @@ const styles = themed(() =>
     noticeBad: { backgroundColor: color.dangerTint },
     section: { marginTop: space[3] },
     sectionTitle: { marginLeft: space[4], marginBottom: space[2], letterSpacing: 0.4 },
-    group: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, overflow: 'hidden', ...shadow.plate },
+    group: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', ...shadow.plate },
     footer: { marginHorizontal: space[4], marginTop: space[2] },
     line: { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 48, paddingHorizontal: space[4], paddingVertical: space[3] },
     lineRule: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },

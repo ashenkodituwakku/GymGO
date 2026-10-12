@@ -330,7 +330,7 @@ const styles = themed(() =>
     input: { flex: 1, minWidth: 0, height: 48, paddingHorizontal: space[3], borderRadius: radius.md, backgroundColor: color.fill, color: color.label, fontSize: 17 },
     section: { gap: space[2], marginTop: space[2] },
     sectionTitle: { marginLeft: space[4] },
-    sectionBody: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card, overflow: 'hidden', padding: space[1] },
+    sectionBody: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', padding: space[1] },
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.md },
     // In line with the rows' text.
     empty: { padding: space[3] },

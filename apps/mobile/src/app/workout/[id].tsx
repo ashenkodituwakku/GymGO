@@ -421,7 +421,7 @@ const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[4], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
   intro: { gap: 2 },
-  card: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
+  card: { backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
   bodyTop: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   genderSwitch: { width: 150 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
@@ -438,7 +438,7 @@ const styles = themed(() => StyleSheet.create({
     padding: space[4],
     borderRadius: radius.xl,
     borderCurve: 'continuous',
-    backgroundColor: color.card,
+    backgroundColor: color.plate,
   },
   number: {
     width: 28,

@@ -110,7 +110,7 @@ export function DayPass({ gymId, timezone, account, onSignIn }: { gymId: string;
 const styles = themed(() =>
   StyleSheet.create({
     wrap: { gap: space[2] },
-    pass: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.card },
+    pass: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     flex: { flex: 1, minWidth: 0 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },

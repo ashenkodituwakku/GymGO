@@ -133,10 +133,10 @@ export function Glass({
 
   return (
     <View style={[styles.clip, styles.continuous, style]}>
-      <Backdrop thick={thick} wash={floor(kind, level)} />
+      <Backdrop thick={thick} wash={floor(kind, level)} level={level ?? glassLevel()} />
       {tint ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, { backgroundColor: tint, opacity: 0.92 }]} /> : null}
-      {kind !== 'bar' ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, shape, tint ? styles.sheenOnTint : styles.sheen]} /> : null}
-      {kind !== 'bar' ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, shape, styles.rim]} /> : null}
+      {kind !== 'bar' ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, shape, tint ? styles.sheenOnTint : level === undefined ? styles.sheen : gradient(sheen(level))]} /> : null}
+      {kind !== 'bar' ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, shape, styles.rim, level === undefined ? null : { boxShadow: rim(level) }]} /> : null}
       {children}
     </View>
   );
@@ -160,7 +160,7 @@ function WebGlassControl({ style, clear, children }: { style?: StyleProp<ViewSty
 }
 
 /** The imitation's backdrop: a blur where it's cheap (iPhone, browser), always under the same solid wash. */
-function Backdrop({ thick, wash: colour }: { thick: boolean; wash: string }) {
+function Backdrop({ thick, wash: colour, level }: { thick: boolean; wash: string; level: number }) {
   const wash = <View style={[NO_TOUCH, StyleSheet.absoluteFill, { backgroundColor: colour }]} />;
   if (Platform.OS === 'ios') {
     return (
@@ -172,7 +172,8 @@ function Backdrop({ thick, wash: colour }: { thick: boolean; wash: string }) {
   }
   if (Platform.OS === 'web') {
     return (
-      <BlurView intensity={thick ? 70 : 45} tint={dark() ? 'dark' : 'light'} style={[NO_TOUCH, StyleSheet.absoluteFill]}>
+      // The glassier, the more it blurs (as the wash over it thins).
+      <BlurView intensity={Math.round((thick ? 50 : 30) + level * (thick ? 0.4 : 0.35))} tint={dark() ? 'dark' : 'light'} style={[NO_TOUCH, StyleSheet.absoluteFill]}>
         {wash}
       </BlurView>
     );
@@ -193,11 +194,23 @@ function cornerShape(style: StyleProp<ViewStyle>): ViewStyle {
 }
 
 const dark = () => currentTheme().scheme === 'dark';
+/** How much the light catches the glass: more the glassier it is (1 at the default level). */
+const shine = (level: number) => 0.55 + 0.9 * (level / 100);
+const a = (value: number) => Math.min(1, value).toFixed(3);
 // Light catches the top edge; on dark glass it's a fainter glint.
-const sheen = () =>
-  dark()
-    ? 'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 38%, rgba(255,255,255,0) 60%)'
-    : 'linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 38%, rgba(255,255,255,0) 60%)';
+const sheen = (level: number) => {
+  const k = shine(level);
+  return dark()
+    ? `linear-gradient(180deg, rgba(255,255,255,${a(0.16 * k)}) 0%, rgba(255,255,255,${a(0.04 * k)}) 38%, rgba(255,255,255,0) 60%)`
+    : `linear-gradient(180deg, rgba(255,255,255,${a(0.55 * k)}) 0%, rgba(255,255,255,${a(0.12 * k)}) 38%, rgba(255,255,255,0) 60%)`;
+};
+// The specular rim: a bright inner edge along the top, a faint one below.
+const rim = (level: number) => {
+  const k = shine(level);
+  return dark()
+    ? `inset 0 1px 1px rgba(255, 255, 255, ${a(0.18 * k)}), inset 0 -1px 1px rgba(0, 0, 0, 0.3)`
+    : `inset 0 1px 1px rgba(255, 255, 255, ${a(0.9 * k)}), inset 0 -1px 1px rgba(0, 0, 0, 0.05)`;
+};
 const SHEEN_ON_TINT = 'linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 55%)';
 
 // Web takes CSS `backgroundImage`; React Native's own renderer takes
@@ -214,16 +227,9 @@ const styles = themed(() => StyleSheet.create({
   webClear: { opacity: 0.96 },
   washThin: { backgroundColor: color.glassWashThin },
 
-  sheen: gradient(sheen()),
+  sheen: gradient(sheen(glassLevel())),
   sheenOnTint: gradient(SHEEN_ON_TINT),
 
-  // The specular rim: a bright inner edge along the top, a faint one below,
-  // and a hairline all round.
-  rim: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: color.glassEdge,
-    boxShadow: dark()
-      ? 'inset 0 1px 1px rgba(255, 255, 255, 0.18), inset 0 -1px 1px rgba(0, 0, 0, 0.3)'
-      : 'inset 0 1px 1px rgba(255, 255, 255, 0.9), inset 0 -1px 1px rgba(0, 0, 0, 0.05)',
-  },
+  // The rim, and a hairline all round.
+  rim: { borderWidth: StyleSheet.hairlineWidth, borderColor: color.glassEdge, boxShadow: rim(glassLevel()) },
 }));

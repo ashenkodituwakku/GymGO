@@ -212,7 +212,7 @@ const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
   ref,
 ) {
   const { account } = useApp();
-  const me = icon === 'user-circle' ? account.account : null;
+  const me = icon === 'user-circle' ? account.face : null;
   return (
     <Pressable
       ref={ref}

@@ -88,7 +88,7 @@ export default function Home() {
   const saved = account.saved.map((id) => byId.get(id)).filter((result) => result !== undefined);
   const recent = recents.map((id) => byId.get(id)).filter((result) => result !== undefined);
   const clock = new Date();
-  const name = account.account?.displayName.split(' ')[0];
+  const name = account.face?.displayName.split(' ')[0];
   // The carried city the search is in; none out in the rest of the world.
   const city = cityNear(filters.centre);
 
@@ -160,11 +160,11 @@ export default function Home() {
           scaleTo={0.9}
           onPress={() => router.navigate('/profile')}
           accessibilityRole="button"
-          accessibilityLabel={account.account ? 'Your profile' : 'Sign in'}
-          style={[styles.avatar, account.account && styles.avatarOn]}
+          accessibilityLabel={account.face ? 'Your profile' : 'Sign in'}
+          style={[styles.avatar, account.face && styles.avatarOn]}
         >
-          {account.account ? (
-            <Avatar account={account.account} size={40} variant="headline" />
+          {account.face ? (
+            <Avatar account={account.face} size={40} variant="headline" />
           ) : (
             <Icon name="account" size={22} color={color.brand} />
           )}

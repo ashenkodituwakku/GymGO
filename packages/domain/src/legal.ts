@@ -240,7 +240,7 @@ function privacy(op: LegalOperator): LegalSection[] {
       blocks: [
         {
           list: [
-            'Settings you make on a device (your country, appearance and trips, for example) are kept on that device. What your account keeps is listed under “With an account” below.',
+            'Settings you make on a device (your country, appearance and trips, for example) are kept on that device, and while you’re signed in so are your display name and profile picture, so they still show when the server can’t be reached. What your account keeps is listed under “With an account” below.',
             'Using GymGO’s website without an account, what you set up there (saved gyms, workouts, your training log and settings) is kept in that browser only, and GymGO keeps nothing about you.',
             'If you let GymGO use your location, it’s used on your device to find gyms near you and measure how far they are. It is never sent to GymGO or anyone else. Outside the cities GymGO carries, the app asks the server for the gyms in the map squares around you (about 30 km across, the same for everyone in them), never your position.',
             'When you search an area or type a town, the server looks it up on OpenStreetMap’s services (Overpass and Photon). It sends them the area or the name, not anything about you.',

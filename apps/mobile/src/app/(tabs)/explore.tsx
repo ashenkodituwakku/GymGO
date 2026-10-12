@@ -663,7 +663,7 @@ function MapScreen() {
       onApplyRelaxation={relax}
       notice={notice}
       inSheet={inSheet}
-      me={account.account}
+      me={account.face}
       onOpenAccount={openAccount}
       dataNote={dataNote}
       searchRef={searchInput}

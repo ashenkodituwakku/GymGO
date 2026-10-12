@@ -12,7 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError, OfflineError, setTokenSource, type Account, type SignInProvider } from './api';
 import { forgetChanges, loadSaved, noteChange, othersWaiting, settleChange, storeSaved, syncSaved } from './savedGyms';
 import { ACCOUNT_OPTIONAL } from './accountRule';
-import { loadToken, noteSignedIn, signedInBefore, storeToken } from './session';
+import { loadFace, loadToken, noteSignedIn, signedInBefore, storeFace, storeToken, type Face } from './session';
 
 export type AccountState = 'loading' | 'signed_out' | 'signed_in' | 'unreachable';
 
@@ -28,6 +28,22 @@ export function useAccount() {
   const [remembered, setRemembered] = useState<boolean | null>(null);
   /** No one has signed in on this device yet. */
   const [newcomer, setNewcomer] = useState(false);
+  // Your name and picture as last seen: shown while the server is away (and
+  // while it's first asked), rather than a blank profile icon.
+  const [face, setFace] = useState<Face | null>(null);
+  useEffect(() => {
+    void loadFace().then((kept) => setFace((now) => now ?? kept));
+  }, []);
+  useEffect(() => {
+    if (account) {
+      const next = { displayName: account.displayName, avatarUrl: account.avatarUrl ?? null };
+      setFace(next);
+      void storeFace(next);
+    } else if (state === 'signed_out') {
+      setFace(null);
+      void storeFace(null);
+    }
+  }, [account, state]);
 
   const putSaved = useCallback((ids: string[]) => {
     savedNow.current = ids;
@@ -235,6 +251,12 @@ export function useAccount() {
 
   return {
     state,
+    /**
+     * Who to show as signed in: your account, or while the server is away
+     * (or still being asked) your name and picture as last seen. For display
+     * only; what you can do still goes by `account`.
+     */
+    face: account ?? (state === 'unreachable' || state === 'loading' ? face : null),
     /**
      * Whether to show the app, which needs an account: 'wait' for the moment
      * this device's sign-in is read, 'in' with an account (or one being

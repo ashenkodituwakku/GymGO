@@ -95,7 +95,8 @@ export function ResultsContent({
   /** In a bottom sheet (phone) or a plain panel (desktop). */
   inSheet: boolean;
   /** The signed-in person (their picture or initial), or null when signed out. */
-  me: Account | null;
+  /** Who's signed in, to show (their name and picture as last seen while the server is away). */
+  me: Pick<Account, 'displayName' | 'avatarUrl'> | null;
   onOpenAccount: () => void;
   /** The line at the foot of the list about where the data comes from. */
   dataNote: string;

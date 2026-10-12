@@ -50,3 +50,28 @@ export async function noteSignedIn(): Promise<void> {
     // Then it's Sign in first next time, which is only a tap away from Create account.
   }
 }
+
+/** Your name and picture as last seen, so the app can show them while the server can't be reached. */
+export type Face = { displayName: string; avatarUrl?: string | null };
+const FACE = 'gymgo.face.v1';
+
+/** Only what's shown on screen is kept: never the email, role or anything that grants access. */
+export async function loadFace(): Promise<Face | null> {
+  try {
+    const raw = await AsyncStorage.getItem(FACE);
+    if (!raw) return null;
+    const face = JSON.parse(raw) as Partial<Face>;
+    return typeof face.displayName === 'string' ? { displayName: face.displayName, avatarUrl: typeof face.avatarUrl === 'string' ? face.avatarUrl : null } : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function storeFace(face: Face | null): Promise<void> {
+  try {
+    if (face) await AsyncStorage.setItem(FACE, JSON.stringify({ displayName: face.displayName, avatarUrl: face.avatarUrl ?? null }));
+    else await AsyncStorage.removeItem(FACE);
+  } catch {
+    // Then offline it's the plain profile icon, as before.
+  }
+}

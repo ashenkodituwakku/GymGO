@@ -17,11 +17,13 @@ import maplibregl from 'maplibre-gl';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { BoundingBox } from '@gymgo/domain';
-import { TIER_COLOUR } from './ui';
+import { Glass } from './Glass';
+import { Pressable } from './motion';
+import { TIER_COLOUR, Txt } from './ui';
 import { alpha, mix } from '@/lib/looks';
 import type { GymMapHandle, GymMapProps } from './map-types';
 import { mapItems, sameSpot, type MapItem } from '@/lib/cluster';
-import { currentTheme, themed } from '@/lib/theme';
+import { color, currentTheme, face, radius, space, themed } from '@/lib/theme';
 
 export type { GymMapHandle, MapPin } from './map-types';
 
@@ -213,6 +215,11 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   // Where a flyTo is headed, while it's under way (see the padding effect).
   const flight = useRef<{ center: [number, number]; zoom: number } | null>(null);
   const padded = useRef(false);
+  // The map's own pictures didn't come (offline, or a network that blocks
+  // them): say so over the blank map, rather than leave it empty, with a way
+  // to try again. The pins and the list work regardless.
+  const [failed, setFailed] = useState(false);
+  const retry = useRef<() => void>(() => {});
 
   useImperativeHandle(ref, () => ({
     flyTo(centre, span = 0.03) {
@@ -251,6 +258,37 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
       if (!instance.hasImage(event.id)) instance.addImage(event.id, { width: 1, height: 1, data: new Uint8Array(4) });
     });
     instance.on('click', () => handlers.current.onMapPress());
+    // Handled here, so MapLibre doesn't log every missing tile as an error.
+    // The style never coming, or every tile so far failing, is a failed map;
+    // the first tile to arrive clears it.
+    let styled = false;
+    let tileLoaded = false;
+    let tileErrors = 0;
+    let warned = false;
+    instance.on('style.load', () => {
+      styled = true;
+    });
+    instance.on('data', (event: { dataType?: string; tile?: unknown }) => {
+      if (event.dataType === 'source' && event.tile) {
+        tileLoaded = true;
+        setFailed(false);
+      }
+    });
+    instance.on('error', (event: { error?: Error; tile?: unknown }) => {
+      if (__DEV__ && !warned) {
+        warned = true;
+        console.warn('[map]', event.error?.message ?? 'map error');
+      }
+      if (!styled) setFailed(true);
+      else if (event.tile && !tileLoaded && ++tileErrors >= 3) setFailed(true);
+    });
+    retry.current = () => {
+      styled = false;
+      tileLoaded = false;
+      tileErrors = 0;
+      setFailed(false);
+      instance.setStyle(currentTheme().scheme === 'dark' ? DARK_STYLE_URL : STYLE_URL, { diff: false });
+    };
     // The area on screen, clear of the panels and sheet, whenever the map comes to rest.
     const noteView = () => {
       const bounds = instance.getBounds();
@@ -367,6 +405,23 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   return (
     <View style={styles.fill}>
       <View ref={host} style={styles.host} />
+      {failed && (
+        <View style={[styles.notice, { top: topInset, bottom: bottomInset, left: leftInset }, { pointerEvents: 'box-none' }]}>
+          <Glass kind="control" style={styles.noticeCard}>
+            <Txt variant="subhead" style={[face('semibold'), styles.center]}>
+              The map didn’t load
+            </Txt>
+            <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+              The gym list still works.
+            </Txt>
+            <Pressable onPress={() => retry.current()} accessibilityRole="button" style={({ pressed }) => [styles.retry, pressed && { opacity: 0.7 }]}>
+              <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                Try again
+              </Txt>
+            </Pressable>
+          </Glass>
+        </View>
+      )}
     </View>
   );
 });
@@ -374,6 +429,10 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
 const styles = themed(() => StyleSheet.create({
   fill: { ...StyleSheet.absoluteFill, zIndex: 0 },
   host: { width: '100%', height: '100%' },
+  notice: { position: 'absolute', right: 0, alignItems: 'center', justifyContent: 'center', padding: space[4] },
+  noticeCard: { alignItems: 'center', gap: 2, paddingHorizontal: space[5], paddingVertical: space[3], borderRadius: radius.xl, maxWidth: 300 },
+  center: { textAlign: 'center' },
+  retry: { marginTop: space[1], paddingHorizontal: space[3], paddingVertical: space[1], borderRadius: radius.pill, backgroundColor: color.brandTint },
 }));
 
 function userDot(): HTMLElement {

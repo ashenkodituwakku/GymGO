@@ -14,7 +14,8 @@ import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useAnimatedStyle, useS
 import { CURVES, EASE_IN, EASE_OUT, FADE_IN, POP_IN, Pressable, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
-import { Icon } from '@/components/Icon';
+import { Icon, type IconName } from '@/components/Icon';
+import { CountUp } from '@/components/CountUp';
 import { HeroMark } from '@/components/HeroMark';
 import { Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { endSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
@@ -735,17 +736,29 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
     <View style={styles.page}>
     <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.summary]}>
       <Stack.Screen options={{ title: '' }} />
-      <Animated.View entering={records.length ? POP_IN : FADE_IN} style={styles.bigIcon}>
-        <Icon name={records.length ? 'trophy' : 'done'} size={40} color={records.length ? color.maybe : color.good} />
+      <Animated.View entering={records.length ? POP_IN : FADE_IN}>
+        <HeroMark icon={records.length ? 'trophy' : 'check'} tint={records.length ? color.maybe : color.good} size={72} />
       </Animated.View>
       <Txt variant="largeTitle" style={styles.center}>
         {records.length ? `${records.length} new record${records.length === 1 ? '' : 's'}!` : 'Workout done'}
       </Txt>
       <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-        {[session.name, durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt)), `${setCount(session)} set${setCount(session) === 1 ? '' : 's'}`, volume > 0 ? `${Math.round(volume).toLocaleString()} ${unit} lifted` : null]
-          .filter(Boolean)
-          .join(' · ')}
+        {session.name}
       </Txt>
+      {/* The workout in three figures, counting up as the page arrives. */}
+      <View style={styles.summaryStats}>
+        <SummaryStat icon="timer" label="time">
+          <Txt variant="figure">{durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt))}</Txt>
+        </SummaryStat>
+        <SummaryStat icon="check" label={setCount(session) === 1 ? 'set' : 'sets'}>
+          <CountUp id={`summary.${session.id}.sets`} value={setCount(session)} variant="figure" />
+        </SummaryStat>
+        {volume > 0 && (
+          <SummaryStat icon="plates" label={`${unit} lifted`}>
+            <CountUp id={`summary.${session.id}.volume`} value={Math.round(volume)} variant="figure" />
+          </SummaryStat>
+        )}
+      </View>
       {records.map((record) => {
         const logged = session.exercises.find((item) => item.exerciseId === record.exerciseId);
         return (
@@ -785,6 +798,18 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
       </View>
     </PageScroll>
     {records.length > 0 && <Confetti />}
+    </View>
+  );
+}
+
+function SummaryStat({ icon, label, children }: { icon: IconName; label: string; children: ReactNode }) {
+  return (
+    <View style={styles.summaryStat}>
+      <Icon name={icon} size={16} color={color.brand} />
+      {children}
+      <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
+        {label}
+      </Txt>
     </View>
   );
 }
@@ -866,7 +891,17 @@ const styles = themed(() => StyleSheet.create({
   restButton: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandTint },
   restButtonStrong: { backgroundColor: color.brandFill },
   summary: { alignItems: 'stretch', paddingTop: space[8] },
-  bigIcon: { alignSelf: 'center', width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: color.card },
+  summaryStats: { flexDirection: 'row', gap: space[2], marginVertical: space[2] },
+  summaryStat: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+    paddingVertical: space[3],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.plate,
+    ...shadow.plate,
+  },
   record: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
 }));
 

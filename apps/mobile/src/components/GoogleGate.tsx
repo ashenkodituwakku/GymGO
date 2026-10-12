@@ -68,7 +68,8 @@ const styles = themed(() =>
     head: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
     glyph: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     flex: { flex: 1, gap: 2 },
-    actions: { flexDirection: 'row', alignItems: 'center', gap: space[4], paddingLeft: 36 + space[3] },
+    // Wraps on a narrow phone, where "Always show" ran off the card.
+    actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space[4], rowGap: space[2], paddingLeft: 36 + space[3] },
     show: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandFill },
     always: { paddingVertical: space[1] },
   }),

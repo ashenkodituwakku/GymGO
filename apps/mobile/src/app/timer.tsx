@@ -278,7 +278,8 @@ export default function TimerScreen() {
 
 function seconds(value: number): string {
   if (value < 60) return `${value} s`;
-  return value % 60 ? `${Math.floor(value / 60)} min ${value % 60} s` : `${value / 60} min`;
+  // Minutes and seconds as a clock reads them ("1:30"), short enough for the settings' narrow column.
+  return value % 60 ? `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}` : `${value / 60} min`;
 }
 
 function Setting({
@@ -301,7 +302,8 @@ function Setting({
   return (
     <View style={styles.setting}>
       <Icon name={icon} size={18} color={color.brand} />
-      <Txt variant="body" style={styles.flex}>
+      {/* The label gives way (to an ellipsis) before the buttons: on a narrow phone they ran off the card. */}
+      <Txt variant="body" style={styles.settingLabel} numberOfLines={1}>
         {label}
       </Txt>
       <Step icon="minus" label={`Less ${label.toLowerCase()}`} disabled={!locked && !canLess} locked={locked} onPress={() => onChange(-1)} />
@@ -382,8 +384,9 @@ const styles = themed(() =>
     caps: { marginTop: space[2], paddingHorizontal: space[4], letterSpacing: 0.3 },
     card: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-    setting: { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 44 },
-    value: { minWidth: 86, textAlign: 'center', fontVariant: ['tabular-nums'] },
+    setting: { flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: 44 },
+    settingLabel: { flex: 1, minWidth: 0, marginLeft: space[1] },
+    value: { width: 64, textAlign: 'center', fontVariant: ['tabular-nums'] },
     step: { width: 36, height: 36, borderRadius: Math.min(18, radius.pill), alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     pro: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.md, backgroundColor: color.brandTint },
     naming: { gap: space[2] },

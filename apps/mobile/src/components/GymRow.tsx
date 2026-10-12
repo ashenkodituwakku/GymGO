@@ -145,6 +145,7 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.pill,
   },
   chipText: face('semibold'),
-  foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], marginTop: 4 },
+  // The price drops under the chip when both don't fit (a narrow phone squeezed "Call first" to "C…").
+  foot: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', columnGap: space[2], rowGap: 2, marginTop: 4 },
   price: { flexDirection: 'row', alignItems: 'baseline', gap: 4, flexShrink: 0 },
 }));

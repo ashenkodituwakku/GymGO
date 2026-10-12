@@ -6,7 +6,7 @@
  */
 
 import { Stack, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
@@ -69,6 +69,9 @@ const MARK_ROUND = 13;
 
 function TemplateCard({ template, next, disabled, onStart }: { template: WorkoutTemplate; next: number; disabled: boolean; onStart: (index: number) => void }) {
   const [day, setDay] = useState(next);
+  // The next day is known only once your log has loaded (and changes after
+  // you train): follow it, or Start offered the day you did last time.
+  useEffect(() => setDay(next), [next]);
   const [open, setOpen] = useState(false);
   const shown = template.days[day]!;
   return (

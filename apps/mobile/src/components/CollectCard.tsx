@@ -202,7 +202,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
 
       <Animated.View layout={GLIDE} style={styles.buttons}>
         {!(step.kind === 'collected') && !scan && (
-          <View style={styles.flex}>
+          <View style={styles.slot}>
             <PrimaryButton
               // Short, so two buttons side by side fit on a phone without wrapping.
               label={step.kind === 'checking' ? 'Checking…' : mine ? 'Check in' : anywhere ? 'Collect' : 'I’m here'}
@@ -213,7 +213,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
           </View>
         )}
         {(mine || step.kind === 'collected') && (
-          <View style={styles.flex}>
+          <View style={styles.slot}>
             <PrimaryButton label="Collection" icon="trophy" tone="quiet" onPress={onOpenCollection} />
           </View>
         )}
@@ -325,7 +325,9 @@ const styles = themed(() =>
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     medal: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
     flex: { flex: 1, gap: 2 },
-    buttons: { flexDirection: 'row', gap: space[2] },
+    // Side by side where they fit; one above the other on a narrow phone, where "Check in" wrapped onto two lines.
+    buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+    slot: { flexGrow: 1, flexBasis: 140, gap: 2 },
     strip: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     stripMedal: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
     nudge: { borderWidth: 2, borderColor: color.brand },

@@ -70,6 +70,18 @@ const PANEL_GAP = 16;
 
 type Panel = 'place' | 'filters' | null;
 
+/**
+ * Puts the cursor in the search box. In a browser, without the browser
+ * scrolling to it: done while the sheet is still rising, that scrolled the
+ * sheet's own contents up under its top edge, cutting off the search box,
+ * and they stayed there.
+ */
+function focusQuietly(input: { focus: () => void } | null) {
+  if (!input) return;
+  if (Platform.OS === 'web') (input as unknown as HTMLElement).focus({ preventScroll: true });
+  else input.focus();
+}
+
 export default function ExploreTab() {
   // Its own safe area provider, so the sheets measure from this screen.
   return (
@@ -106,6 +118,10 @@ function MapScreen() {
   // so closing the card puts it back — as Maps does.
   const sheetIndex = useRef(1);
   const restoreIndex = useRef<number | null>(null);
+  // Phone: the results sheet was asked to open all the way (Home's search)
+  // and hasn't yet. Arriving from another tab the sheet is still rising to
+  // its first height, which wins over the ask; it opens fully once there.
+  const wantFull = useRef(false);
 
   // The area on screen, and whether "Search this area" is reading the map.
   const [viewBox, setViewBox] = useState<BoundingBox | null>(null);
@@ -560,7 +576,7 @@ function MapScreen() {
         if (event.key === '/' && !typing && !event.metaKey && !event.ctrlKey && !event.altKey) {
           event.preventDefault();
           mainSheet.current?.snapToIndex(2);
-          searchInput.current?.focus();
+          focusQuietly(searchInput.current);
         }
       };
       window.addEventListener('keydown', onKey);
@@ -606,8 +622,14 @@ function MapScreen() {
     if (exploreRequest.gymId) openGym(exploreRequest.gymId);
     if (exploreRequest.locate) void locate();
     if (exploreRequest.focusSearch) {
-      if (!wide) mainSheet.current?.snapToIndex(2);
-      setTimeout(() => searchInput.current?.focus(), 350);
+      if (!wide) {
+        // It stayed halfway when the ask came while it was still rising,
+        // with the results under where a phone's keyboard comes up.
+        // (Already open all the way, there's no change to wait for.)
+        wantFull.current = sheetIndex.current !== 2;
+        mainSheet.current?.snapToIndex(2);
+      }
+      setTimeout(() => focusQuietly(searchInput.current), 350);
     }
   }, [exploreRequest, openGym, locate, wide]);
 
@@ -850,6 +872,7 @@ function MapScreen() {
       setSheetTop={setSheetTop}
       sheetIndex={sheetIndex}
       restoreIndex={restoreIndex}
+      wantFull={wantFull}
       mainSheet={mainSheet}
       placeSheet={placeSheet}
       filterSheet={filterSheet}
@@ -944,6 +967,7 @@ function PhoneShell(props: {
   setSheetTop: (value: number) => void;
   sheetIndex: React.MutableRefObject<number>;
   restoreIndex: React.MutableRefObject<number | null>;
+  wantFull: React.MutableRefObject<boolean>;
   mainSheet: React.RefObject<BottomSheet | null>;
   placeSheet: React.RefObject<BottomSheetModal | null>;
   filterSheet: React.RefObject<BottomSheetModal | null>;
@@ -1068,6 +1092,11 @@ function PhoneShell(props: {
         onChange={(index, position) => {
           props.sheetIndex.current = index;
           mainGoing.current = index;
+          // Asked to open fully while it was still finding its first height: now it can.
+          if (props.wantFull.current && index >= 0) {
+            props.wantFull.current = false;
+            if (index !== snapPoints.length - 1) props.mainSheet.current?.snapToIndex(snapPoints.length - 1);
+          }
           setMainTop(index < 0 ? 0 : topOf(position));
           setMainFull(index === snapPoints.length - 1);
         }}

@@ -12,6 +12,7 @@ import { Pressable } from '@/components/motion';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { Icon, type IconName } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { Card, Chip, PrimaryButton, Txt } from '@/components/ui';
 import { startSession, useActiveSession } from '@/lib/activeSession';
 import { useApp } from '@/lib/app-state';
@@ -24,6 +25,7 @@ import { useTrainingLog } from '@/lib/useTraining';
 import { exerciseName } from '@/lib/workout';
 
 export default function TemplatesScreen() {
+  useGlassRedraw();
   usePageTitle('Templates');
   const router = useRouter();
   const { account, prefs } = useApp();

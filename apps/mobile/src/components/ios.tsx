@@ -12,7 +12,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { LOOKS, PAGE_COLUMN, ambientGlow, color, currentLook, currentTheme, glowStrength, radius, shadow, space, themed } from '@/lib/theme';
+import { PAGE_COLUMN, ambientGlow, color, currentTheme, glowStrength, radius, shadow, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
@@ -74,11 +74,11 @@ function TabScreenInner({
   const barStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [titleBottom - insets.top - BAR - 8, titleBottom - insets.top - BAR + 12], [0, 1], 'clamp'),
   }));
-  // Only the glass look glows: the others have grounds of their own (pixels,
-  // bevels, tones). Behind every tab, a glow that stays put, as strong as
-  // your Liquid Glass level; behind the title (Home, Profile), a brighter one
-  // that fades as the page scrolls.
-  const ambient = currentLook() === LOOKS.standard ? ambientGlow() : null;
+  // Only the glass look glows (ambientGlow is null in the others, which have
+  // grounds of their own: pixels, bevels, tones). Behind every tab, a glow
+  // that stays put, as strong as your Liquid Glass level; behind the title
+  // (Home, Profile), a brighter one that fades as the page scrolls.
+  const ambient = ambientGlow();
   const glowing = glow && ambient !== null;
   const glowStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [0, 280], [1, 0], 'clamp'),
@@ -145,7 +145,8 @@ function TabScreenInner({
 function HeroGlow() {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
   const dark = currentTheme().scheme === 'dark';
-  const k = Math.min(1.5, 0.5 + 0.5 * glowStrength());
+  // 1 at the default; 1.5 at 100%.
+  const k = 0.5 + 0.5 * glowStrength();
   const o = (value: number) => Math.round(value * k * 1000) / 1000;
   return (
     <Svg width="100%" height="100%">

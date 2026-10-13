@@ -25,6 +25,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { Icon, type IconName } from '@/components/Icon';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtras';
 import { useApp, type ProReason } from '@/lib/app-state';
@@ -73,6 +74,7 @@ const REASON: Record<ProReason, string> = {
 };
 
 export default function ProScreen() {
+  useGlassRedraw();
   usePageTitle('GymGO Pro');
   const params = useLocalSearchParams<{ reason?: string; checkout?: string }>();
   const router = useRouter();

@@ -9,6 +9,7 @@ import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { BrandFill } from '@/components/BrandFill';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { loadAllLookFonts } from '@/lib/lookFonts';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, Pressable } from '@/components/motion';
@@ -58,6 +59,7 @@ const PREVIEW = {
 } as const;
 
 export default function AppearanceScreen() {
+  useGlassRedraw();
   usePageTitle('Appearance');
   const choice = useThemeChoice();
   const { billing, openPro } = useApp();

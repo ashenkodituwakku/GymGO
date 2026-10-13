@@ -14,6 +14,7 @@ import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { Input, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -38,6 +39,7 @@ const STEP: Record<WeightUnit, number> = { kg: 2.5, lb: 5 };
 const nearest = (value: number, unit: WeightUnit) => Math.round(value / STEP[unit]) * STEP[unit];
 
 export default function StrengthScreen() {
+  useGlassRedraw();
   usePageTitle('1-rep max');
   const params = useLocalSearchParams<{ weight?: string; reps?: string; unit?: string }>();
   const router = useRouter();

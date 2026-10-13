@@ -6,11 +6,13 @@
 import { Stack, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { HeroMark } from '@/components/HeroMark';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, space, themed } from '@/lib/theme';
 
 export default function NotFound() {
+  useGlassRedraw();
   usePageTitle('Not found');
   const router = useRouter();
   return (

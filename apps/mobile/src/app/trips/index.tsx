@@ -11,6 +11,7 @@ import { Pressable } from '@/components/motion';
 import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { Card, Input, PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -26,6 +27,7 @@ import { color, face, radius, space, themed } from '@/lib/theme';
 const MAX_AHEAD_DAYS = 365;
 
 export default function TripsScreen() {
+  useGlassRedraw();
   usePageTitle('Trips');
   const router = useRouter();
   const { prefs } = useApp();

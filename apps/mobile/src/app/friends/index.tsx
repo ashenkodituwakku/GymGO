@@ -13,6 +13,7 @@ import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Card, Input, PrimaryButton, Txt } from '@/components/ui';
@@ -25,6 +26,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, space, themed } from '@/lib/theme';
 
 export default function FriendsScreen() {
+  useGlassRedraw();
   usePageTitle('Friends');
   const router = useRouter();
   const { account } = useApp();

@@ -13,6 +13,7 @@ import { HOURS_LABELS } from '@gymgo/domain';
 import { useMemo, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GymCard } from '@/components/GymCard';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { GymCardsSkeleton } from '@/components/Skeleton';
 import { Pressable, Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
@@ -60,6 +61,7 @@ const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
 ];
 
 export default function Home() {
+  useGlassRedraw();
   usePageTitle(null);
   const { data, account, billing, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady, lookup, searchHere, here } = useApp();
   const active = useActiveSession();
@@ -492,7 +494,7 @@ export default function Home() {
                 key={place.name}
                 onPress={() => goToPlace(place)}
                 accessibilityRole="button"
-                style={({ pressed }) => [styles.suburb, on && styles.suburbOn, pressed && { opacity: 0.7 }]}
+                style={({ pressed }) => [styles.suburb, on && styles.suburbOn, on && accentGlow(color.brandFill, true), pressed && { opacity: 0.7 }]}
               >
                 <Txt variant="subhead" color={on ? color.onBrand : color.label} style={face('medium')}>
                   {place.name}

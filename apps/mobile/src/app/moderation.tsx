@@ -13,6 +13,7 @@ import { Pressable } from '@/components/motion';
 import { BugReportQueue, MemberReportQueue, ModerationQueue, PhotoQueue } from '@/components/AccountContent';
 import { ClaimQueue, OwnerUpdateQueue } from '@/components/Moderation';
 import { PageScroll } from '@/components/PageScroll';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { Segmented, Txt } from '@/components/ui';
 import { api, type ModerationCounts } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -22,6 +23,7 @@ import { color, radius, space, themed } from '@/lib/theme';
 type Tab = 'waiting' | 'owners' | 'reports';
 
 export default function ModerationScreen() {
+  useGlassRedraw();
   usePageTitle('Moderation');
   const router = useRouter();
   const { account, data } = useApp();

@@ -101,9 +101,9 @@ export function ProgressChart({ points, unit }: { points: Array<{ date: string; 
             {values.length > 0 && <Circle cx={x(values.length - 1)} cy={y(values[values.length - 1]!)} r={11} fill={alpha(color.brand, 0.16)} />}
             {values.map((value, index) =>
               index === values.length - 1 ? (
-                <Circle key={index} cx={x(index)} cy={y(value)} r={5.5} fill={color.brand} stroke={color.card} strokeWidth={2.5} />
+                <Circle key={index} cx={x(index)} cy={y(value)} r={5.5} fill={color.brand} stroke={color.plateSolid} strokeWidth={2.5} />
               ) : (
-                <Circle key={index} cx={x(index)} cy={y(value)} r={3.5} fill={color.card} stroke={color.brand} strokeWidth={2} />
+                <Circle key={index} cx={x(index)} cy={y(value)} r={3.5} fill={color.plateSolid} stroke={color.brand} strokeWidth={2} />
               ),
             )}
           </Svg>

@@ -5,12 +5,14 @@
  */
 
 import { Stack, useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { summariseWeek, type GymSearchResult, type Tri } from '@gymgo/domain';
 import { Icon } from '@/components/Icon';
+import { Glass } from '@/components/Glass';
 import { HeroMark } from '@/components/HeroMark';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, TIER_COLOUR, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -19,7 +21,7 @@ import { TIER, accessShort, timeLabel, visitWhen } from '@/lib/copy';
 import { visitIsLater } from '@/lib/query';
 import { priceLine, priceText } from '@/lib/present';
 import { resultsById } from '@/lib/results';
-import { HEADER_EDGE, PAGE_COLUMN, color, face, radius, space, themed } from '@/lib/theme';
+import { HEADER_EDGE, PAGE_COLUMN, color, face, radius, solidSurfaces, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 
@@ -31,6 +33,7 @@ const tri = (value: Tri): Cell =>
 /** Small counts in words, as in running text ("two to four gyms"). */
 const NUMBER_WORD: Record<number, string> = { 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six' };
 export default function Compare() {
+  useGlassRedraw();
   usePageTitle('Compare');
   const { data, account, filters, compare, toggleCompare, clearCompare, billing, openPro, prefsReady } = useApp();
   const router = useRouter();
@@ -41,6 +44,9 @@ export default function Compare() {
     [filters, data.records, asOf, data.ratings, compare, account.saved],
   );
   const gyms = compare.map((id) => byId.get(id)).filter((result): result is GymSearchResult => result !== undefined);
+  // Whether the rows have reached the pinned names and pass under them.
+  const [stuck, setStuck] = useState(false);
+  const headAt = useRef(0);
 
   // Every row is worked out for your visit and place, so a cold link waits for your settings.
   if (!prefsReady) {
@@ -250,12 +256,17 @@ export default function Compare() {
         contentContainerStyle={styles.content}
         // When every gym fits across, their names stay at the top as the rows scroll under them.
         stickyHeaderIndices={fits ? [1] : undefined}
+        onScroll={fits ? (event) => setStuck(event.nativeEvent.contentOffset.y > headAt.current) : undefined}
       >
         <Txt variant="footnote" color={color.labelSecondary}>
           For a visit {visitWhen(filters.visitMinuteOfDay, visitIsLater(filters))}. The cheapest confirmed price is in bold.
         </Txt>
         {fits ? (
-          <View style={styles.stickyHead}>{head}</View>
+          <View style={styles.stickyHead} onLayout={(event) => (headAt.current = event.nativeEvent.layout.y)}>
+            {/* Nothing behind the names until rows pass under them (the page's glow shows), then frosted glass, or the page's grey when nothing is glass. */}
+            {stuck && (solidSurfaces() ? <View style={[styles.stickyGlass, styles.stickySolid]} /> : <Glass kind="bar" style={styles.stickyGlass} />)}
+            {head}
+          </View>
         ) : (
           // Wider than the screen (four gyms on a phone): it scrolls sideways, names and all.
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tableScroll}>
@@ -289,7 +300,9 @@ const styles = themed(() => StyleSheet.create({
   table: { gap: space[3], marginHorizontal: space[4] },
   tableFits: { gap: space[3] },
   // Covers the rows scrolling under the names, edge to edge of the column.
-  stickyHead: { backgroundColor: color.groupedBackground, paddingVertical: space[2], marginVertical: -space[2] },
+  stickyHead: { paddingVertical: space[2], marginVertical: -space[2] },
+  stickyGlass: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, borderRadius: radius.md },
+  stickySolid: { backgroundColor: color.groupedBackground },
   upsell: { alignSelf: 'center', paddingVertical: space[2] },
   headRow: { flexDirection: 'row', gap: space[3] },
   head: {

@@ -298,7 +298,7 @@ const styles = themed(() =>
     haloGlow: { borderRadius: THUMB_H / 2, backgroundColor: color.brandTint, boxShadow: `0 0 16px 4px ${color.brandBorder}` },
     thumbShadow: { boxShadow: '0 2px 7px rgba(0, 0, 0, 0.2), 0 0.5px 1.5px rgba(0, 0, 0, 0.14)' },
     thumbClip: { flex: 1, borderRadius: THUMB_H / 2, borderCurve: 'continuous', overflow: 'hidden' },
-    lensBack: { backgroundColor: color.card },
+    lensBack: { backgroundColor: color.plateSolid },
     lensTrack: { position: 'absolute', left: THUMB_W / 2, top: (THUMB_H - TRACK) / 2, height: TRACK },
     solid: { backgroundColor: '#FFFFFF', borderRadius: THUMB_H / 2 },
     // The lens: barely tinted, a bright rim, light along the top edge and a little shade below.

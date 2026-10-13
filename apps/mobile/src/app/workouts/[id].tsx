@@ -4,6 +4,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Share, StyleSheet, View } from 'react-native';
 import { ExerciseCard } from '@/components/ExerciseCard';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { LinesSkeleton, ListSkeleton } from '@/components/Skeleton';
 import { useActiveSession } from '@/lib/activeSession';
@@ -18,6 +19,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 
 export default function SavedWorkoutScreen() {
+  useGlassRedraw();
   usePageTitle('Workout');
   const { id } = useLocalSearchParams<{ id: string }>();
   const { account, prefs } = useApp();

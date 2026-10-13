@@ -24,6 +24,7 @@ import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native'
 import Animated from 'react-native-reanimated';
 import { CollectionSyncLine, useDeleteCollection } from '@/components/CollectionData';
 import { GemCard } from '@/components/GemCard';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { SetProgress, SetReward } from '@/components/SetCard';
 import { CITY_SET_SIZE, collectionSets, setsDone } from '@/lib/sets';
 import { Icon, type IconName } from '@/components/Icon';
@@ -54,6 +55,7 @@ const SOCIAL: Array<{ path: '/friends' | '/leaderboard'; title: string; icon: Ic
 const SETS_SHOWN = 4;
 
 export default function CollectionScreen() {
+  useGlassRedraw();
   usePageTitle('Collection');
   const router = useRouter();
   const { data, requestExplore, account, here, filters, prefs } = useApp();

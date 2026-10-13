@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react';
 import { Platform, SectionList, StyleSheet, TextInput, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { Icon } from '@/components/Icon';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { COUNTRIES, FOCUS_COUNTRY, builtInCountries, countryByCode, deviceCountry, flagOf, searchCountries, type Country } from '@/lib/country';
@@ -25,6 +26,7 @@ const CITY_COUNT = CITY_LIST.filter((city) => !city.demo).reduce<Record<string, 
 }, {});
 
 export default function CountryScreen() {
+  useGlassRedraw();
   usePageTitle('Country');
   const screenBottom = useScreenBottom();
   // A long list: its last countries must scroll into view on every phone.

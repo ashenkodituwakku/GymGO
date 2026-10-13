@@ -9,12 +9,14 @@ import { StyleSheet, View } from 'react-native';
 import { LEGAL_UPDATED, isLegalDocId, legalDoc } from '@gymgo/domain';
 import { LegalText } from '@/components/LegalText';
 import { PageScroll } from '@/components/PageScroll';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { Txt } from '@/components/ui';
 import { useLegalInfo } from '@/lib/legal';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, radius, shadow, space, themed } from '@/lib/theme';
 
 export default function LegalScreen() {
+  useGlassRedraw();
   const params = useLocalSearchParams<{ doc?: string }>();
   const id = isLegalDocId(params.doc) ? params.doc : 'terms';
   const { operator } = useLegalInfo();

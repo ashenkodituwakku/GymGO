@@ -87,9 +87,13 @@ export function Sheen({ round }: { round: number }) {
   );
 }
 
-/** A glow of the accent under a hero control, in place of a grey shadow (standard look). */
-export function accentGlow(fill: string): ViewStyle | null {
+/**
+ * A glow of the accent under a hero control, in place of a grey shadow and a
+ * card's white rim (standard look). Tighter under something small, a chip.
+ */
+export function accentGlow(fill: string, small = false): ViewStyle | null {
   if (currentLook() !== LOOKS.standard) return null;
+  if (small) return { boxShadow: `0px 3px 10px ${alpha(fill, 0.28)}` } as ViewStyle;
   return { boxShadow: `0px 10px 26px ${alpha(fill, 0.32)}, 0px 2px 6px ${alpha(fill, 0.22)}` } as ViewStyle;
 }
 

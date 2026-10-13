@@ -8,7 +8,9 @@
  * automatic insets, which keep the content clear of a see-through header.
  *
  * Behind it, in the glass look, a glow of the accent that grows with your
- * Liquid Glass level (ambientGlow), for its frosted cards to be seen against.
+ * Liquid Glass level (ambientGlow), for its frosted cards to be seen against:
+ * on a view of its own around the scroll view, which Android's scroll view
+ * can't draw a gradient on. The page's colour goes there too, under the glow.
  *
  * When the colours change and the screen is drawn again (Redrawn), the page
  * goes back to where it was scrolled, rather than to the top.
@@ -20,7 +22,7 @@
  */
 
 import { forwardRef, useCallback, useContext, useRef, type ForwardedRef } from 'react';
-import { ScrollView, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
+import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
 import { ScrollMemory } from '@/components/Redrawn';
 import { useOverhang, useScreenBottom, type Measurable } from '@/lib/layout';
 import { ambientGlow } from '@/lib/theme';
@@ -52,33 +54,39 @@ export const PageScroll = forwardRef(function PageScroll(
     [measureRef, forwarded],
   );
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      automaticallyAdjustKeyboardInsets
-      keyboardShouldPersistTaps="handled"
-      {...props}
-      // The accent's glow behind the page, for its glass cards (Liquid Glass above 0%).
-      style={[style, ambientGlow()]}
-      ref={setRef}
-      onLayout={(event: LayoutChangeEvent) => {
-        measure();
-        onLayout?.(event);
-      }}
-      scrollEventThrottle={scrollEventThrottle ?? 32}
-      onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        if (memory) memory.y = event.nativeEvent.contentOffset.y;
-        onScroll?.(event);
-      }}
-      onContentSizeChange={(width: number, height: number) => {
-        if (!placed.current) {
-          placed.current = true;
-          if (memory && memory.y > 0) node.current?.scrollTo({ y: memory.y, animated: false });
-        }
-        onContentSizeChange?.(width, height);
-      }}
-      contentContainerStyle={[contentContainerStyle, { paddingBottom: screenBottom + overhang + extraBottom }]}
-      // The scroll bar stops where the screen does, not below it.
-      scrollIndicatorInsets={overhang > 0 ? { bottom: overhang } : undefined}
-    />
+    <View style={[styles.fill, { backgroundColor: StyleSheet.flatten(style)?.backgroundColor }, ambientGlow()]}>
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps="handled"
+        {...props}
+        style={[style, styles.clear]}
+        ref={setRef}
+        onLayout={(event: LayoutChangeEvent) => {
+          measure();
+          onLayout?.(event);
+        }}
+        scrollEventThrottle={scrollEventThrottle ?? 32}
+        onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+          if (memory) memory.y = event.nativeEvent.contentOffset.y;
+          onScroll?.(event);
+        }}
+        onContentSizeChange={(width: number, height: number) => {
+          if (!placed.current) {
+            placed.current = true;
+            if (memory && memory.y > 0) node.current?.scrollTo({ y: memory.y, animated: false });
+          }
+          onContentSizeChange?.(width, height);
+        }}
+        contentContainerStyle={[contentContainerStyle, { paddingBottom: screenBottom + overhang + extraBottom }]}
+        // The scroll bar stops where the screen does, not below it.
+        scrollIndicatorInsets={overhang > 0 ? { bottom: overhang } : undefined}
+      />
+    </View>
   );
+});
+
+const styles = StyleSheet.create({
+  fill: { flex: 1 },
+  clear: { backgroundColor: 'transparent' },
 });

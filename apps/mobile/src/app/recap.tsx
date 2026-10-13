@@ -9,6 +9,7 @@ import { StyleSheet, View } from 'react-native';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
 import { RecapCard } from '@/components/RecapCard';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { ListSkeleton } from '@/components/Skeleton';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
@@ -21,6 +22,7 @@ import { useCollection } from '@/lib/useCollection';
 import { useTrainingLog } from '@/lib/useTraining';
 
 export default function RecapScreen() {
+  useGlassRedraw();
   usePageTitle('Your week');
   const router = useRouter();
   const { account, prefs, data } = useApp();

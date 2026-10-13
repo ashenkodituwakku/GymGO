@@ -15,6 +15,7 @@ import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { Group, Row, TILE } from '@/components/ios';
 import { FADE_IN } from '@/components/motion';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, TextField, Txt } from '@/components/ui';
 import { api, problemText } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -41,6 +42,7 @@ function languageAndZone(): { locale: string | null; timeZone: string | null } {
 }
 
 export default function ReportBug() {
+  useGlassRedraw();
   const { topic: topicParam } = useLocalSearchParams<{ topic?: string }>();
   // A copyright (takedown) notice uses the same form, asking for what a notice needs.
   const notice = topicParam === 'copyright';

@@ -8,6 +8,7 @@
 import { Stack, useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Platform, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { serverOfflineLine } from '@/lib/copy';
 import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, Pressable } from '@/components/motion';
@@ -42,6 +43,7 @@ function messageFor(error: unknown): string {
 }
 
 export default function SignInScreen() {
+  useGlassRedraw();
   const params = useLocalSearchParams<{ mode?: string }>();
   const { account } = useApp();
   const router = useRouter();

@@ -9,6 +9,7 @@ import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { useActiveSession } from '@/lib/activeSession';
@@ -22,6 +23,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 
 export default function MyWorkouts() {
+  useGlassRedraw();
   usePageTitle('My workouts');
   const { account, billing, openPro, prefs } = useApp();
   const active = useActiveSession();

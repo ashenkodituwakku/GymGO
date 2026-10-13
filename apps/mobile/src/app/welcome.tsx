@@ -20,6 +20,7 @@ import { Wordmark } from '@/components/BrandMark';
 import { HeroMark } from '@/components/HeroMark';
 import type { IconName } from '@/components/Icon';
 import { Pressable } from '@/components/motion';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -44,6 +45,7 @@ const PAGES: Array<{ icon: IconName; title: string; line: string }> = [
 ];
 
 export default function WelcomeScreen() {
+  useGlassRedraw();
   usePageTitle('Welcome');
   const router = useRouter();
   const { next } = useLocalSearchParams<{ next?: string }>();

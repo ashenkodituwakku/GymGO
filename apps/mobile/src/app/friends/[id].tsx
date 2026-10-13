@@ -11,6 +11,7 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { CollectionTotals, FriendCard } from '@gymgo/domain';
 import { GemCard } from '@/components/GemCard';
 import { PageScroll } from '@/components/PageScroll';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { GymCardsSkeleton } from '@/components/Skeleton';
 import { Chip, Input, PrimaryButton, Txt } from '@/components/ui';
 import { api, problemText } from '@/lib/api';
@@ -26,6 +27,7 @@ const COLUMN = 640;
 const DAYS = 7;
 
 export default function FriendScreen() {
+  useGlassRedraw();
   const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
   const router = useRouter();
   const { account, data } = useApp();

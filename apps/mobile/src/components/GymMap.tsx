@@ -60,7 +60,9 @@ function SlotMarker({ item, onPin, onCluster }: { item: MapItem | null; onPin: (
     <Marker
       coordinate={position ? { latitude: position.lat, longitude: position.lng } : PARKED}
       // The picked teardrop's tip on the gym; anything else, its middle.
-      // Google's maps take `anchor`, Apple's `centerOffset` (it ignores anchor).
+      // This map is Apple's (the iPhone's; Android and the browser have their
+      // own files), which ignores `anchor` and moves the marker by
+      // `centerOffset`. `anchor` only matters if it's ever Google's.
       anchor={{ x: 0.5, y: selected ? PICKED_ANCHOR_Y : 0.5 }}
       centerOffset={selected ? PICKED_CENTER_OFFSET : NO_OFFSET}
       opacity={item ? 1 : 0}

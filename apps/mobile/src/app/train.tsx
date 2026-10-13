@@ -16,6 +16,7 @@ import { Glass } from '@/components/Glass';
 import { Icon, type IconName } from '@/components/Icon';
 import { CountUp } from '@/components/CountUp';
 import { HeroMark } from '@/components/HeroMark';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { endSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
 import { ApiError, api, type SavedWorkout } from '@/lib/api';
@@ -164,6 +165,7 @@ function NoWorkout({ token }: { token: string | null }) {
 }
 
 export default function TrainScreen() {
+  useGlassRedraw();
   usePageTitle('Workout');
   const session = useActiveSession();
   const { account, billing, openPro, data } = useApp();
@@ -389,6 +391,8 @@ const ExerciseLog = memo(function ExerciseLog({
   swapTo: string | null;
   onSwap: (index: number) => void;
 }) {
+  // Memoised, so it doesn't redraw with the screen: Liquid Glass reaches its card itself.
+  useGlassRedraw();
   const exercise = exerciseOf(item.exerciseId);
   const name = exercise?.name ?? item.exerciseId;
   const timed = isTimed(item);

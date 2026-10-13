@@ -14,6 +14,7 @@ import { Share, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { BodyPicker } from '@/components/BodyPicker';
 import { Icon, type IconName } from '@/components/Icon';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { Chip, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ExerciseCard } from '@/components/ExerciseCard';
 import { startSession, useActiveSession } from '@/lib/activeSession';
@@ -50,6 +51,7 @@ type KitMode = 'gym' | 'typical';
 const GOAL_LABEL: Record<Goal, string> = { strength: 'Strength', muscle: 'Muscle', endurance: 'Endurance' };
 
 export default function WorkoutScreen() {
+  useGlassRedraw();
   usePageTitle('Build a workout');
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, account, billing, openPro, prefs } = useApp();

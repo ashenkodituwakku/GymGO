@@ -10,6 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { BarDiagram, plateColour } from '@/components/BarDiagram';
 import { Icon } from '@/components/Icon';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { Input, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -21,6 +22,7 @@ import { PageScroll } from '@/components/PageScroll';
 const BARS: Record<WeightUnit, number[]> = { kg: [20, 15], lb: [45, 35] };
 
 export default function PlatesScreen() {
+  useGlassRedraw();
   usePageTitle('Plates');
   const params = useLocalSearchParams<{ weight?: string; unit?: string }>();
   const { prefs, setPref, billing, openPro } = useApp();

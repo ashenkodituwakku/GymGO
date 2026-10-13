@@ -10,6 +10,7 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GemCard } from '@/components/GemCard';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { SetReward } from '@/components/SetCard';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
@@ -21,6 +22,7 @@ import { color, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
 
 export default function CardScreen() {
+  useGlassRedraw();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data } = useApp();

@@ -10,6 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { GLIDE, Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { MilestonesCard, MuscleBalanceCard, WeekCard } from '@/components/TrainingInsights';
 import { CountUp } from '@/components/CountUp';
 import { PrimaryButton, Txt } from '@/components/ui';
@@ -50,6 +51,7 @@ const startTime = (iso: string) => {
 };
 
 export default function ProgressScreen() {
+  useGlassRedraw();
   usePageTitle('Progress');
   const { account, prefs, setPref, billing, openPro } = useApp();
   // Kept while the server is away too: loading then fails and says so,

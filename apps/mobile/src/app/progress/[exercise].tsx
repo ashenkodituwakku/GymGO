@@ -9,6 +9,7 @@ import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { Icon } from '@/components/Icon';
 import { ProgressChart } from '@/components/ProgressChart';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { useApp } from '@/lib/app-state';
@@ -26,6 +27,7 @@ const dayLabel = (iso: string) => {
 };
 
 export default function ExerciseProgressScreen() {
+  useGlassRedraw();
   const { exercise: exerciseId = '' } = useLocalSearchParams<{ exercise: string }>();
   const { account, prefs, billing, openPro } = useApp();
   // Kept while the server is away too: loading then fails and says so,

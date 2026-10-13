@@ -3,7 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // The font files are for the app's bundler, not for Node.
 vi.mock('./fonts', () => ({ BUNDLED_FACES: {} }));
 import { StyleSheet } from 'react-native';
-import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, applyTheme, color, glassAlpha, glassLevelName, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
+import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, applyTheme, color, glassAlpha, glassLevelName, glowPools, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
+import { mix } from './looks';
 
 const channel = (value: number) => (value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
 const luminance = (hex: string) => {
@@ -39,6 +40,30 @@ describe('the colours', () => {
     }
     }
     expect(failures).toEqual([]);
+  });
+
+  it('keep text readable on see-through cards, over the brightest of the glow', () => {
+    const failures: string[] = [];
+    for (const look of LOOK_IDS.filter((id) => !LOOKS[id].solid)) {
+      for (const scheme of LOOKS[look].scheme ? [LOOKS[look].scheme!] : (['light', 'dark'] as const)) {
+        for (const accent of ACCENT_IDS) {
+          for (const level of [25, GLASS_DEFAULT, 75, 100]) {
+            applyTheme(scheme, accent, look, level);
+            const peak = Math.max(...glowPools(level, scheme).map((pool) => pool.opacity));
+            const see = Number(/rgba\(\d+, \d+, \d+, ([\d.]+)\)/.exec(color.plate)?.[1] ?? 1);
+            const behind = mix(mix(color.groupedBackground, color.brand, peak), color.card, see);
+            for (const text of ['label', 'labelSecondary', 'brand', 'goodInk', 'maybeInk', 'noInk', 'dangerInk'] as const) {
+              const ratio = contrast(color[text], behind);
+              if (ratio < 4.5) failures.push(`${look} ${scheme} ${accent} ${level}%: ${text} on a card is ${ratio.toFixed(2)}`);
+            }
+          }
+        }
+      }
+    }
+    expect(failures).toEqual([]);
+    // Still glass: as clear as asked wherever the text allows.
+    applyTheme('light', FREE_ACCENT, FREE_LOOK, 75);
+    expect(color.plate).toBe(`rgba(255, 255, 255, ${plateAlpha(75, 'light')})`);
   });
 
   it('change corners and type in place with the look, and back', () => {
@@ -101,7 +126,7 @@ describe('Liquid Glass', () => {
     expect(solidSurfaces()).toBe(true);
   });
 
-  it('redraws screens and glass when only the level changes, as cards follow it', () => {
+  it('redraws glass and cards in place when only the level changes, not screens from scratch', () => {
     const screens = vi.fn();
     const glass = vi.fn();
     const stopScreens = subscribeTheme(screens);
@@ -110,17 +135,22 @@ describe('Liquid Glass', () => {
     const before = StyleSheet.flatten(styles.wash).backgroundColor;
     const card = StyleSheet.flatten(styles.card).backgroundColor;
     applyTheme('light', FREE_ACCENT, FREE_LOOK, 90);
-    expect(screens).toHaveBeenCalledTimes(1);
+    // Starting each screen again would drop focus, scroll and what's picked:
+    // they draw again in place instead (useGlassRedraw), with the new styles.
+    expect(screens).not.toHaveBeenCalled();
     expect(glass).toHaveBeenCalledTimes(1);
     expect(StyleSheet.flatten(styles.wash).backgroundColor).not.toBe(before);
     expect(StyleSheet.flatten(styles.card).backgroundColor).not.toBe(card);
     applyTheme('light', FREE_ACCENT, FREE_LOOK, 90);
+    expect(glass).toHaveBeenCalledTimes(1);
+    // A change of colours does start them again.
+    applyTheme('dark', FREE_ACCENT, FREE_LOOK, 90);
     expect(screens).toHaveBeenCalledTimes(1);
     stopScreens();
     stopGlass();
   });
 
-  it('frosts cards on the page with the level, and keeps them solid at 0% or in a solid look', () => {
+  it('lets the glow through cards on the page with the level, and keeps them solid at 0% or in a solid look', () => {
     expect(paletteFor('light', FREE_ACCENT, FREE_LOOK, 0).plate).toBe(paletteFor('light', FREE_ACCENT, FREE_LOOK, 0).card);
     expect(plateAlpha(0, 'light')).toBe(1);
     expect(plateAlpha(GLASS_DEFAULT, 'light')).toBe(0.82);

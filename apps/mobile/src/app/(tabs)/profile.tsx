@@ -12,6 +12,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { AppBadge, Wordmark } from '@/components/BrandMark';
 import { Icon } from '@/components/Icon';
 import { Pressy } from '@/components/motion';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
 import { Group, Row, TILE, TabScreen } from '@/components/ios';
@@ -34,6 +35,7 @@ import { Bone, Skeleton } from '@/components/Skeleton';
 import { DEMO_ONLY } from '@/lib/demoOnly';
 
 export default function Profile() {
+  useGlassRedraw();
   usePageTitle('Profile');
   const { account, data, recents, compare, prefs, setPref, billing, openPro } = useApp();
   const themeChoice = useThemeChoice();
@@ -101,7 +103,7 @@ export default function Profile() {
           accessibilityLabel={`${me.displayName}, ${me.email}. Account settings`}
           style={styles.meCard}
         >
-          <Avatar account={me} size={60} variant="title" ring={billing.isPro ? color.card : undefined} />
+          <Avatar account={me} size={60} variant="title" ring={billing.isPro ? color.plateSolid : undefined} />
           <View style={styles.flex}>
             <Txt variant="title2" numberOfLines={1}>
               {me.displayName}

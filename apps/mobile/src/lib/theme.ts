@@ -20,7 +20,7 @@
  */
 
 import { Platform, StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
-import { FREE_LOOK, LOOKS, STANDARD_RADIUS, alpha, readable, type LookId, type LookSpec } from './looks';
+import { FREE_LOOK, LOOKS, STANDARD_RADIUS, alpha, contrast, mix, readable, type LookId, type LookSpec } from './looks';
 
 export { FREE_LOOK, LOOK_IDS, LOOKS, type LookId } from './looks';
 
@@ -52,8 +52,14 @@ const BASE = {
     background: '#FFFFFF',
     groupedBackground: '#F2F2F7',
     card: '#FFFFFF',
-    /** A card on the page, frosted to your Liquid Glass level (paletteFor). */
+    /** A card on the page, see-through to your Liquid Glass level (paletteFor). */
     plate: '#FFFFFF',
+    /**
+     * The same card as it looks on the page, but opaque: for something on a
+     * card that must hide what's under it yet match it (the slider's lens, a
+     * ring cut round a picture or a chart's point).
+     */
+    plateSolid: '#FFFFFF',
     /** A control or card raised above a card (segment thumbs, chips). */
     cardRaised: '#FFFFFF',
     /** A card laid on glass, so the glass shows a little. */
@@ -116,6 +122,7 @@ const BASE = {
     groupedBackground: '#000000',
     card: '#1C1C1E',
     plate: '#1C1C1E',
+    plateSolid: '#1C1C1E',
     cardRaised: '#3A3A3C',
     cardGlass: 'rgba(44, 44, 46, 0.82)',
     fill: 'rgba(118, 118, 128, 0.24)',
@@ -284,13 +291,16 @@ export function cleanGlass(value: unknown): number {
   return Math.min(100, Math.max(0, Math.round(value / GLASS_STEP) * GLASS_STEP));
 }
 
+/** How solid something is at a level: 1 at 0%, `balanced` at 50%, `clearest` at 100%, in straight lines between. */
+function levelAlpha(level: number, balanced: number, clearest: number): number {
+  const at = cleanGlass(level);
+  const value = at <= GLASS_DEFAULT ? 1 - (1 - balanced) * (at / GLASS_DEFAULT) : balanced - (balanced - clearest) * ((at - GLASS_DEFAULT) / (100 - GLASS_DEFAULT));
+  return Math.round(value * 1000) / 1000;
+}
+
 /** How solid a layer is at a level: 1 at 0%, the balance at 50%, the clearest at 100%. */
 export function glassAlpha(layer: GlassLayer, level: number, scheme: Scheme, platform: string = Platform.OS): number {
-  const balanced = WASH_BALANCED[scheme][layer];
-  const clearest = WASH_CLEAREST[platform === 'android' ? 'wash' : 'blur'][scheme][layer];
-  const at = cleanGlass(level);
-  const alpha = at <= GLASS_DEFAULT ? 1 - (1 - balanced) * (at / GLASS_DEFAULT) : balanced - (balanced - clearest) * ((at - GLASS_DEFAULT) / (100 - GLASS_DEFAULT));
-  return Math.round(alpha * 1000) / 1000;
+  return levelAlpha(level, WASH_BALANCED[scheme][layer], WASH_CLEAREST[platform === 'android' ? 'wash' : 'blur'][scheme][layer]);
 }
 
 /** A layer's colour at a level. */
@@ -300,14 +310,29 @@ export function glassWash(layer: GlassLayer, level: number, scheme: Scheme): str
 
 /**
  * How solid a card on the page is at a level: solid at 0%, a little
- * see-through at the default, frosted glass at 100%, the page's glow of
- * the accent showing through it (still plenty for the text on it).
+ * see-through at the default, clearer still at 100%, the page's glow of
+ * the accent showing through it. At most: see readablePlateAlpha.
  */
 export function plateAlpha(level: number, scheme: Scheme): number {
-  const at = cleanGlass(level);
-  const [balanced, clearest] = scheme === 'dark' ? [0.84, 0.62] : [0.82, 0.58];
-  const value = at <= GLASS_DEFAULT ? 1 - (1 - balanced) * (at / GLASS_DEFAULT) : balanced - (balanced - clearest) * ((at - GLASS_DEFAULT) / (100 - GLASS_DEFAULT));
-  return Math.round(value * 1000) / 1000;
+  return scheme === 'dark' ? levelAlpha(level, 0.84, 0.62) : levelAlpha(level, 0.82, 0.58);
+}
+
+/** The text drawn on cards, each kept at WCAG AA on them. */
+const PLATE_INKS = ['label', 'labelSecondary', 'brand', 'goodInk', 'maybeInk', 'noInk', 'dangerInk'] as const;
+
+/**
+ * How solid a card on the page is, as plateAlpha asks but never so clear
+ * that its text drops below WCAG AA over the brightest of the glow behind
+ * (a dark accent's, at 100%, took grey text under it).
+ */
+export function readablePlateAlpha(palette: Palette, level: number, scheme: Scheme): number {
+  const peak = Math.max(0, ...glowPools(level, scheme).map((pool) => pool.opacity));
+  const under = mix(palette.groupedBackground, palette.brand, peak);
+  for (let at = plateAlpha(level, scheme); at < 1; at += 0.02) {
+    const behind = mix(under, palette.card, at);
+    if (PLATE_INKS.every((ink) => contrast(palette[ink], behind) >= 4.5)) return Math.round(at * 1000) / 1000;
+  }
+  return 1;
 }
 
 /** A word for a level, beside its percentage. */
@@ -325,11 +350,14 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
   palette.glassWashThick = glassWash('thick', glass, scheme);
   palette.glassWashBar = glassWash('bar', glass, scheme);
   const surfaces = LOOKS[look].surfaces?.(scheme, palette.brand);
-  // Cards on the page are glass too, in the glass look: solid at 0%, frosted as the level rises.
-  palette.plate = LOOKS[look].solid || cleanGlass(glass) === 0 ? palette.card : alpha(palette.card, plateAlpha(glass, scheme));
+  // Cards on the page are glass too, in the glass look: solid at 0%, clearer as the level rises.
+  const see = LOOKS[look].solid || cleanGlass(glass) === 0 ? 1 : readablePlateAlpha(palette, glass, scheme);
+  palette.plate = see === 1 ? palette.card : alpha(palette.card, see);
+  palette.plateSolid = mix(palette.groupedBackground, palette.card, see);
   if (!surfaces) return palette;
   Object.assign(palette, surfaces);
   palette.plate = palette.card;
+  palette.plateSolid = palette.card;
   const behind = [surfaces.card, surfaces.groupedBackground, surfaces.background];
   for (const key of TEXT_KEYS) palette[key] = readable(palette[key], behind, scheme, key === 'labelTertiary' ? 3 : 4.6);
   return palette;
@@ -358,22 +386,37 @@ export const glowStrength = (): number => (currentLook().solid ? 0 : cleanGlass(
  * a solid look or at 0% (null). Stronger in dark, where a faint one is lost.
  */
 export function ambientGlow(): ViewStyle | null {
-  const strength = glowStrength();
-  if (strength === 0) return null;
-  const dark = current.scheme === 'dark';
+  if (glowStrength() === 0) return null;
+  // Made once per change of the theme, not each time a page draws.
+  if (glowMade.version !== styleVersion) {
+    // Round pools (an ellipse takes the page's shape: a band down a tall phone),
+    // eased out over three stops so no ring shows where one ends.
+    const layers = glowPools(current.glass, current.scheme).map(({ at, opacity: o, reach }) =>
+      `radial-gradient(circle at ${at}, ${alpha(color.brand, o)} 0%, ${alpha(color.brand, Math.round(o * 450) / 1000)} ${Math.round(reach * 45) / 100}%, ${alpha(color.brand, 0)} ${reach}%)`,
+    );
+    glowMade.version = styleVersion;
+    glowMade.style = backgroundImage(layers.join(', '));
+  }
+  return glowMade.style;
+}
+const glowMade: { version: number; style: ViewStyle | null } = { version: -1, style: null };
+
+/**
+ * The glow's pools at a level (in a look with glass): where each is centred,
+ * how strong at its heart and how far it reaches (as % of the page).
+ */
+export function glowPools(level: number, scheme: Scheme): { at: string; opacity: number; reach: number }[] {
+  const strength = cleanGlass(level) / GLASS_DEFAULT;
+  if (strength === 0) return [];
+  const dark = scheme === 'dark';
   const k = 0.35 + 0.65 * strength;
-  // Round pools (an ellipse takes the page's shape: a band down a tall phone),
-  // eased out over three stops so no ring shows where one ends.
-  const pool = (at: string, opacity: number, reach: number) => {
-    const o = Math.round(opacity * 1000) / 1000;
-    return `radial-gradient(circle at ${at}, ${alpha(color.brand, o)} 0%, ${alpha(color.brand, Math.round(o * 450) / 1000)} ${Math.round(reach * 45) / 100}%, ${alpha(color.brand, 0)} ${reach}%)`;
-  };
-  const layers = [
-    pool('92% 0%', Math.min(dark ? 0.44 : 0.3, (dark ? 0.26 : 0.16) * k), 36),
-    pool('0% 46%', Math.min(dark ? 0.26 : 0.18, (dark ? 0.14 : 0.09) * k), 40),
+  const round = (value: number) => Math.round(value * 1000) / 1000;
+  const pools = [
+    { at: '92% 0%', opacity: round(Math.min(dark ? 0.44 : 0.3, (dark ? 0.26 : 0.16) * k)), reach: 36 },
+    { at: '0% 46%', opacity: round(Math.min(dark ? 0.26 : 0.18, (dark ? 0.14 : 0.09) * k)), reach: 40 },
   ];
-  if (strength > 1) layers.push(pool('100% 100%', (strength - 1) * (dark ? 0.24 : 0.15), 38));
-  return backgroundImage(layers.join(', '));
+  if (strength > 1) pools.push({ at: '100% 100%', opacity: round((strength - 1) * (dark ? 0.24 : 0.15)), reach: 38 });
+  return pools;
 }
 
 /**
@@ -403,7 +446,8 @@ export function subscribeTheme(listener: () => void): () => void {
 
 /**
  * Told when Liquid Glass changes (and with every other change): the glass
- * the tab bar and other bars are made of draws itself again.
+ * the tab bar and other bars are made of draws itself again, and each
+ * screen's cards (useGlassRedraw, in components/Redrawn.tsx).
  */
 export function subscribeGlass(listener: () => void): () => void {
   glassListeners.add(listener);
@@ -413,7 +457,8 @@ export function subscribeGlass(listener: () => void): () => void {
 /** Switch the colours (and the look) everywhere. Returns false if nothing changed. */
 export function applyTheme(scheme: Scheme, accent: AccentId, look: LookId = current.look, glass: number = current.glass): boolean {
   const level = cleanGlass(glass);
-  if (current.scheme === scheme && current.accent === accent && current.look === look && current.glass === level) return false;
+  const sameColours = current.scheme === scheme && current.accent === accent && current.look === look;
+  if (sameColours && current.glass === level) return false;
   current = { scheme, accent, look, glass: level };
   Object.assign(color, paletteFor(scheme, accent, look, level));
   styleVersion += 1;
@@ -421,11 +466,15 @@ export function applyTheme(scheme: Scheme, accent: AccentId, look: LookId = curr
   Object.assign(radius, spec.radius);
   Object.assign(shadow, spec.shadows?.(scheme, color.brand) ?? standardShadows(scheme, level));
   Object.assign(type, typeScale());
-  // Every screen draws again, a change of Liquid Glass alone too: cards and
-  // the glow behind them follow the level. That comes once, as the slider is
-  // let go (its preview follows the finger), and Redrawn keeps each place.
-  version += 1;
-  for (const listener of listeners) listener();
+  // A change of Liquid Glass alone draws each screen again in place
+  // (useGlassRedraw), its cards and the glow behind them following the
+  // level, rather than from scratch: what has focus (the slider, from the
+  // keyboard), where a tab is scrolled and the gym picked on Explore all
+  // stay as they were.
+  if (!sameColours) {
+    version += 1;
+    for (const listener of listeners) listener();
+  }
   for (const listener of glassListeners) listener();
   return true;
 }
@@ -611,18 +660,18 @@ const STANDARD_SHADOW = {
  */
 function standardShadows(scheme: Scheme, level: number = GLASS_DEFAULT): typeof STANDARD_SHADOW {
   // Glass catches light along its top edge: a brighter rim the glassier it is.
+  // (No blur behind: a card on the page has only the smooth glow behind it,
+  // which a blur leaves as it was, at the cost of a layer per card to draw.)
   const at = cleanGlass(level) / 100;
-  // In a browser a card blurs what's behind it, as glass does (a phone keeps its cards cheap to draw).
-  const frost: ViewStyle = Platform.OS === 'web' && at > 0 ? ({ backdropFilter: `blur(${Math.round(6 + at * 18)}px) saturate(${(1 + at * 0.8).toFixed(2)})` } as ViewStyle) : {};
   if (scheme === 'dark') {
     const edge = `inset 0px 0px 0px 1px rgba(255, 255, 255, ${(0.06 + at * 0.06).toFixed(3)}), inset 0px 1px 0px rgba(255, 255, 255, ${(at * 0.14).toFixed(3)})`;
-    return { float: { boxShadow: `0px 4px 14px rgba(0, 0, 0, 0.5), ${edge}` }, card: { boxShadow: edge, ...frost }, plate: { boxShadow: edge, ...frost } };
+    return { float: { boxShadow: `0px 4px 14px rgba(0, 0, 0, 0.5), ${edge}` }, card: { boxShadow: edge }, plate: { boxShadow: edge } };
   }
   const rim = `inset 0px 1px 0px rgba(255, 255, 255, ${(at * 0.9).toFixed(3)}), inset 0px 0px 0px 1px rgba(255, 255, 255, ${(at * 0.45).toFixed(3)})`;
   return {
     float: STANDARD_SHADOW.float,
-    card: { boxShadow: `0px 1px 2px rgba(0, 0, 0, 0.04), 0px 3px 10px rgba(0, 0, 0, 0.045), ${rim}`, ...frost },
-    plate: { boxShadow: `0px 1px 2px rgba(0, 0, 0, 0.03), 0px 6px 18px rgba(20, 20, 50, ${(0.045 + at * 0.03).toFixed(3)}), ${rim}`, ...frost },
+    card: { boxShadow: `0px 1px 2px rgba(0, 0, 0, 0.04), 0px 3px 10px rgba(0, 0, 0, 0.045), ${rim}` },
+    plate: { boxShadow: `0px 1px 2px rgba(0, 0, 0, 0.03), 0px 6px 18px rgba(20, 20, 50, ${(0.045 + at * 0.03).toFixed(3)}), ${rim}` },
   };
 }
 

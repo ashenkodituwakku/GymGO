@@ -17,6 +17,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
 import { ProgressRing } from '@/components/ProgressRing';
 import { BrandFill } from '@/components/BrandFill';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { ChoiceChip, Input, PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -30,6 +31,7 @@ const PHASE_WORD: Record<PhaseKind, string> = { ready: 'GET READY', work: 'WORK'
 const KEEP_AWAKE = 'gymgo-timer';
 
 export default function TimerScreen() {
+  useGlassRedraw();
   usePageTitle('Interval timer');
   const { billing, prefs, setPref, openPro } = useApp();
   const pro = billing.isPro;

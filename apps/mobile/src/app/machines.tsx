@@ -20,6 +20,7 @@ import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
 import { Illustration } from '@/components/Illustration';
 import { PageScroll } from '@/components/PageScroll';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { Card, Chip, NoPhoto, PrimaryButton, Txt } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -43,6 +44,7 @@ const GROUPS: Array<{ category: EquipmentCategory; label: string }> = [
 type Reports = { state: 'loading' } | { state: 'ready'; gyms: ReportedEquipment } | { state: 'offline' };
 
 export default function MachinesScreen() {
+  useGlassRedraw();
   usePageTitle('Find a machine');
   const params = useLocalSearchParams<{ type?: string }>();
   const router = useRouter();

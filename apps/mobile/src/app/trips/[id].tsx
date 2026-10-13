@@ -16,6 +16,7 @@ import { MarkImage, useGymMark } from '@/components/BrandLogo';
 import { Icon } from '@/components/Icon';
 import { Illustration } from '@/components/Illustration';
 import { PageScroll } from '@/components/PageScroll';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { Card, NoPhoto, PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { timeLabel } from '@/lib/copy';
@@ -34,6 +35,7 @@ const TRIP_RADIUS_KM = 10;
 const SHOWN = 12;
 
 export default function TripScreen() {
+  useGlassRedraw();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data, setFilters, requestExplore, mayExplore, openPro } = useApp();

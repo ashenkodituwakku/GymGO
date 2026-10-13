@@ -12,6 +12,7 @@ import { StyleSheet, Switch, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Card, PrimaryButton, Segmented, Txt } from '@/components/ui';
@@ -27,6 +28,7 @@ import { syncCollection } from '@/lib/useCollection';
 const MEDAL = ['#C9971C', '#8E959E', '#B0713A'];
 
 export default function LeaderboardScreen() {
+  useGlassRedraw();
   usePageTitle('Leaderboard');
   const router = useRouter();
   const { account, filters } = useApp();

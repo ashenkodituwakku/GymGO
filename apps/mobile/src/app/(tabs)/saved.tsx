@@ -13,6 +13,7 @@ import { FADE_OUT, GLIDE, Pressable, Pressy, usePop } from '@/components/motion'
 import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { ListSkeleton } from '@/components/Skeleton';
 import { TabScreen } from '@/components/ios';
 import { PrimaryButton, Txt } from '@/components/ui';
@@ -24,6 +25,7 @@ import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 
 export default function Saved() {
+  useGlassRedraw();
   usePageTitle('Saved');
   const { data, account, filters, compare, toggleCompare, requestExplore, billing, openPro, prefsReady, recents } = useApp();
   const router = useRouter();

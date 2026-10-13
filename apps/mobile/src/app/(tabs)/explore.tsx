@@ -24,6 +24,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { isWithinBox, type BoundingBox, type HoursNeed } from '@gymgo/domain';
 import { withoutKnown } from '@gymgo/osm';
 import { MELBOURNE_ATTRIBUTION } from '@gymgo/melbourne-data';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { ApiError, api, problemText } from '@/lib/api';
 import { EMPTY, locatedNotice, placeWords } from '@/lib/copy';
 import { openingPlace } from '@/lib/country';
@@ -89,6 +90,7 @@ function focusQuietly(input: { focus: () => void } | null) {
 }
 
 export default function ExploreTab() {
+  useGlassRedraw();
   // Its own safe area provider, so the sheets measure from this screen.
   return (
     <SafeAreaProvider>

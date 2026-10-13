@@ -1,6 +1,7 @@
 /**
  * Draws a screen again from scratch when the colours change (dark mode, an
- * accent), so every style and colour on it is read afresh.
+ * accent), so every style and colour on it is read afresh. (Liquid Glass
+ * alone draws it again in place: see useGlassRedraw.)
  *
  * Only a screen's own content is drawn again, never the navigator: the
  * native screens, the stack you're in and the tab you're on stay exactly as
@@ -24,12 +25,22 @@ import { useFocusEffect } from 'expo-router';
 import { Fragment, createContext, useCallback, useLayoutEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { ReduceMotion, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { subscribeTheme, themeVersion } from '@/lib/theme';
+import { glassLevel, subscribeGlass, subscribeTheme, themeVersion } from '@/lib/theme';
 import { EASE_SCREEN, EASE_SCREEN_CSS } from './motion';
 
 /** The theme's version, redrawing whoever reads it when the colours change. */
 export function useThemeVersion(): number {
   return useSyncExternalStore(subscribeTheme, themeVersion, themeVersion);
+}
+
+/**
+ * Draws the calling screen again in place when Liquid Glass alone changes:
+ * its cards' fill and rims and the glow behind them follow the level. Every
+ * screen calls it (a test checks). Unlike a change of colours, nothing is
+ * thrown away, so focus, scroll and whatever was picked all stay.
+ */
+export function useGlassRedraw(): void {
+  useSyncExternalStore(subscribeGlass, glassLevel, glassLevel);
 }
 
 /** How far a redrawn screen's page was scrolled, kept across the redraw. */

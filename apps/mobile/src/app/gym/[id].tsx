@@ -25,6 +25,7 @@ import { MemberKit } from '@/components/MemberKit';
 import { MemberPrices } from '@/components/MemberPrices';
 import { MemberStatus, StatusWarning } from '@/components/MemberStatus';
 import { PhotoHero } from '@/components/PhotoHero';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { demoPicture } from '@/lib/gymPicture';
 import { PlaceCard } from '@/components/PlaceCard';
 import { GymNotes } from '@/components/GymNotes';
@@ -53,6 +54,7 @@ const EXPAND_IN =
     : FadeInDown.springify().damping(damp(1, 260, 1)).stiffness(260).withInitialValues({ opacity: 0, transform: [{ translateY: 60 }] }).reduceMotion(ReduceMotion.System);
 
 export default function GymPage() {
+  useGlassRedraw();
   // `from=map`: opened full screen from the map's pop-up, so it opens with
   // a zoom and its top-left button shrinks it back onto the map.
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();

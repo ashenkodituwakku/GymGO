@@ -12,6 +12,7 @@ import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { useDeleteCollection } from '@/components/CollectionData';
+import { useGlassRedraw } from '@/components/Redrawn';
 import { GoogleMark, SocialButtons, useSignInProviders, type TokenHandler } from '@/components/SocialSignIn';
 import { Input, PrimaryButton, Txt } from '@/components/ui';
 import { ApiError, OfflineError, api, type SignInMethods, type SignInProvider } from '@/lib/api';
@@ -34,6 +35,7 @@ function messageFor(error: unknown): string {
 }
 
 export default function AccountScreen() {
+  useGlassRedraw();
   usePageTitle('Account');
   const { account, billing } = useApp();
   const router = useRouter();

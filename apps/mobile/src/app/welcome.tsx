@@ -51,7 +51,9 @@ export default function WelcomeScreen() {
   const { width } = useWindowDimensions();
   const pager = useAnimatedRef<Animated.ScrollView>();
   const [page, setPage] = useState(0);
-  const pageRef = useRef(0);
+  // Where Next or a dot last sent the pager, and when: a second tap while
+  // it's still on its way counts on from there, not from the page shown.
+  const aim = useRef({ page: 0, at: 0 });
   const last = page === PAGES.length - 1;
   const scrollX = useSharedValue(0);
   // The page is wherever the pager is scrolled to, and nothing else (Next
@@ -65,14 +67,15 @@ export default function WelcomeScreen() {
     router.replace((next && next.startsWith('/') && !next.startsWith('//') ? next : '/') as Href);
   };
   const go = (to: number) => {
+    const target = Math.min(PAGES.length - 1, Math.max(0, to));
     haptic.select();
-    pager.current?.scrollTo({ x: to * width, animated: true });
+    aim.current = { page: target, at: Date.now() };
+    pager.current?.scrollTo({ x: target * width, animated: true });
   };
+  /** The page a Next counts on from: the one a scroll is still heading for, else the one shown. */
+  const from = () => (Date.now() - aim.current.at < 700 ? aim.current.page : page);
   const settle = (at: number) => {
-    if (at !== pageRef.current && at >= 0 && at < PAGES.length) {
-      pageRef.current = at;
-      setPage(at);
-    }
+    if (at >= 0 && at < PAGES.length) setPage(at);
   };
   const onScroll = useAnimatedScrollHandler((event) => {
     scrollX.value = event.contentOffset.x;
@@ -139,7 +142,7 @@ export default function WelcomeScreen() {
       </View>
 
       <View style={styles.actions}>
-        <PrimaryButton label={last ? 'Let’s go' : 'Next'} icon={last ? 'check' : undefined} onPress={() => (last ? finish() : go(page + 1))} />
+        <PrimaryButton label={last ? 'Let’s go' : 'Next'} icon={last ? 'check' : undefined} onPress={() => (last ? finish() : go(from() + 1))} />
       </View>
     </View>
   );

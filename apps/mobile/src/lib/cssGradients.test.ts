@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+// Vite's import.meta.glob, for this test only (vitest runs it; Metro, which
+// builds the app, has no such thing, so app code mustn't call it).
 declare global {
   interface ImportMeta {
     glob: (pattern: string | string[], options: { query: string; import: string; eager: true }) => Record<string, string>;
@@ -19,8 +21,9 @@ describe('the gradients drawn in CSS', () => {
     // `linear-backgroundImage(`: invalid CSS, which draws nothing and says nothing.
     const broken: string[] = [];
     for (const [file, text] of Object.entries(sources)) {
-      for (const match of text.matchAll(/\b(linear|radial|conic|repeating-linear|repeating-radial)-([A-Za-z]+)\(/g)) {
-        if (match[2] !== 'gradient') broken.push(`${file}: ${match[0]}`);
+      for (const match of text.matchAll(/\b(linear|radial|conic|repeating-linear|repeating-radial)-([A-Za-z]+)\s*\(/g)) {
+        // A space before the bracket is invalid too.
+        if (match[2] !== 'gradient' || /\s\($/.test(match[0])) broken.push(`${file}: ${match[0]}`);
       }
     }
     expect(broken).toEqual([]);

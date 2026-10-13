@@ -6,7 +6,7 @@
  */
 
 import { Stack, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
@@ -53,7 +53,15 @@ export default function TemplatesScreen() {
         </Card>
       )}
       {TEMPLATES.map((template) => (
-        <TemplateCard key={template.id} template={template} next={nextTemplateDay(template, log.sessions)} disabled={Boolean(active)} onStart={(index) => start(template, index)} />
+        <TemplateCard
+          key={template.id}
+          template={template}
+          next={nextTemplateDay(template, log.sessions)}
+          // Which workout is newest in your log: a new one means you've trained since a pick.
+          logged={log.status === 'ready' ? (log.sessions[0]?.id ?? '') : null}
+          disabled={Boolean(active)}
+          onStart={(index) => start(template, index)}
+        />
       ))}
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
         These are general plans, not advice for you. Start lighter than you think, leave a rep or two in the tank, and add weight when every set
@@ -68,12 +76,31 @@ const TEMPLATE_ICON: Record<string, IconName> = { 'full-body': 'body', 'five-by-
 /** The marks' corners, the look's own (square in 8-bit and Classic). */
 const markRound = () => Math.min(13, radius.lg);
 
-function TemplateCard({ template, next, disabled, onStart }: { template: WorkoutTemplate; next: number; disabled: boolean; onStart: (index: number) => void }) {
+function TemplateCard({
+  template,
+  next,
+  logged,
+  disabled,
+  onStart,
+}: {
+  template: WorkoutTemplate;
+  next: number;
+  /** The newest workout in your log, or null while it loads. */
+  logged: string | null;
+  disabled: boolean;
+  onStart: (index: number) => void;
+}) {
   // The day you picked, else the next one (known only once your log has
-  // loaded, so it isn't copied in at first draw). A pick lasts until you
-  // start it: after that the card offers the next day, not the one just done.
-  const [picked, setDay] = useState<number | null>(null);
-  const day = picked ?? next;
+  // loaded, so it isn't copied in at first draw). A pick lasts until a
+  // workout is logged, however it was started: then the card offers the next
+  // day, not the one just done. One started and discarded keeps it.
+  const [picked, setPicked] = useState<{ day: number; logged: string | null } | null>(null);
+  const day = picked && (picked.logged === null || picked.logged === logged) ? picked.day : next;
+  const setDay = (chosen: number) => setPicked({ day: chosen, logged });
+  // A pick made while the log loaded belongs to the log as it arrives.
+  useEffect(() => {
+    if (logged !== null) setPicked((now) => (now && now.logged === null ? { ...now, logged } : now));
+  }, [logged]);
   const [open, setOpen] = useState(false);
   const shown = template.days[day]!;
   return (
@@ -123,10 +150,7 @@ function TemplateCard({ template, next, disabled, onStart }: { template: Workout
         label={`Start ${shown.name}`}
         icon="play"
         disabled={disabled}
-        onPress={() => {
-          setDay(null);
-          onStart(day);
-        }}
+        onPress={() => onStart(day)}
       />
     </Card>
   );

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DROP_DRAWN, DROP_GLYPH_BOX, DROP_HEAD, DROP_HIGHLIGHT, DROP_PATH, PICKED_ANCHOR_Y, PICKED_CENTER_OFFSET, PICKED_HEIGHT, PICKED_TIP, dropTipY } from './pinShape';
+import { DROP_BOX, DROP_DRAWN, DROP_GLYPH_BOX, DROP_HEAD, DROP_HIGHLIGHT, DROP_PATH, PICKED_ANCHOR_Y, PICKED_CENTER_OFFSET, PICKED_HEIGHT, PICKED_TIP, dropTipY } from './pinShape';
 
 describe('the picked pin', () => {
   it('centres the highlight and the dumbbell in the head', () => {
@@ -7,7 +7,7 @@ describe('the picked pin', () => {
     expect(DROP_PATH.startsWith(`M${DROP_HEAD.cx} ${DROP_HEAD.cy - DROP_HEAD.radius}`)).toBe(true);
     expect(DROP_HIGHLIGHT).toBeLessThan(DROP_HEAD.radius);
     // The dumbbell's box is centred on the head's centre, as drawn (22 of the 55 points down).
-    expect(DROP_GLYPH_BOX / 2).toBeCloseTo(DROP_HEAD.cy * (DROP_DRAWN.height / 50), 6);
+    expect(DROP_GLYPH_BOX / 2).toBeCloseTo(DROP_HEAD.cy * (DROP_DRAWN.height / DROP_BOX.height), 6);
     expect(DROP_GLYPH_BOX).toBeCloseTo(44, 6);
   });
 

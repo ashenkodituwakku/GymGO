@@ -621,6 +621,9 @@ function Elapsed({ since }: { since: string }) {
 
 // --- Rest ------------------------------------------------------------------------
 
+/** Seconds left of a rest ending at `endsAt`, at `at` (both in ms); never below 0. */
+const timeLeft = (endsAt: number, at: number) => Math.max(0, (endsAt - at) / 1000);
+
 /** The rest bar rises from the bottom as a rest starts, and sinks away when it's up. */
 const REST_IN = (CURVES ? FadeInDown.duration(300).easing(EASE_OUT) : FadeInDown.duration(300)).reduceMotion(ReduceMotion.System);
 const REST_OUT = (CURVES ? FadeOutDown.duration(200).easing(EASE_IN) : FadeOutDown.duration(200)).reduceMotion(ReduceMotion.System);
@@ -629,28 +632,28 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
   const now = useNow(true);
   // The clock as it draws, not at the last tick: a rest started between ticks
   // (the next set ticked, or +15) would otherwise show a second too many.
-  const left = Math.max(0, (endsAt - Math.max(now, Date.now())) / 1000);
+  const left = timeLeft(endsAt, Math.max(now, Date.now()));
   // Woken exactly when the rest is up, not at the next once-a-second tick.
   const [, wake] = useState(0);
   useEffect(() => {
     const timer = setTimeout(() => wake((n) => n + 1), Math.max(0, endsAt - Date.now()) + 15);
     return () => clearTimeout(timer);
   }, [endsAt]);
-  const ended = Math.max(now, Date.now()) >= endsAt;
-  // The rest is over: a buzz, a chime, and the bar goes. Once: a tick can
-  // come before the bar has gone.
-  const over = useRef(false);
+  const ended = left === 0;
+  // The rest is over: a buzz, a chime, and the bar goes. Only this rest is
+  // cleared (a set ticked in the same moment has started the next one), and
+  // one that ended a while ago, while the phone was locked, goes quietly:
+  // the lock-screen alert has already said so.
   useEffect(() => {
-    if (!ended) over.current = false;
-    else if (!over.current) {
-      over.current = true;
+    if (!ended) return;
+    if (Date.now() - endsAt < 3000) {
       haptic.success();
       playSound('rest-done');
-      updateSession((current) => ({ ...current, restEndsAt: null }), { activity: false });
     }
-  }, [ended]);
+    updateSession((current) => (current.restEndsAt === endsAt ? { ...current, restEndsAt: null } : current), { activity: false });
+  }, [ended, endsAt]);
   // What's left as the button is pressed, not at the last tick.
-  const leftNow = () => Math.max(0, (endsAt - Date.now()) / 1000);
+  const leftNow = () => timeLeft(endsAt, Date.now());
   // +15 past the rest's length stretches it (kept with the session, so the
   // ring drains against it after leaving the screen too); −15 leaves it.
   const onChange = (seconds: number) =>
@@ -685,7 +688,7 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
  */
 function RestRing({ endsAt, total }: { endsAt: number; total: number }) {
   const now = useNow(true, 250);
-  const left = Math.max(0, (endsAt - Math.max(now, Date.now())) / 1000);
+  const left = timeLeft(endsAt, Math.max(now, Date.now()));
   return (
     <ProgressRing size={38} stroke={3} progress={total > 0 ? left / total : 0} track={color.fill} tint={color.brand}>
       <Icon name="timer" size={16} color={color.brand} />

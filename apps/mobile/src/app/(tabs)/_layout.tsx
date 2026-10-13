@@ -33,7 +33,7 @@ import { glassMark, installLiquidGlass, sizeRefraction } from '@/components/liqu
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { TabBarInset, tabBarBottom } from '@/lib/layout';
-import { CHILD_TOUCH, NO_TOUCH, color, currentTheme, radius, solidSurfaces, themed } from '@/lib/theme';
+import { CHILD_TOUCH, NO_TOUCH, color, currentTheme, radius, shadow, solidSurfaces, themed } from '@/lib/theme';
 import { Avatar } from '@/components/Avatar';
 import { BrandFill } from '@/components/BrandFill';
 
@@ -44,6 +44,8 @@ const MAX_WIDTH = 400;
 const PAD = 5;
 const LENS_INSET = 5;
 const SPRING = LIQUID;
+/** The lens following a finger: close behind it, never past it. */
+const FOLLOW = { damping: 28, stiffness: 600, mass: 0.4, overshootClamping: true };
 
 const TABS: Array<{ name: string; href: '/' | '/explore' | '/saved' | '/profile'; label: string; icon: PhosphorName }> = [
   { name: 'index', href: '/', label: 'Home', icon: 'house' },
@@ -70,8 +72,10 @@ export default function TabsLayout() {
   // Like iOS 26, the bar floats just above the home indicator; on Android,
   // clear of the navigation bar.
   const bottom = tabBarBottom(insets.bottom);
+  // With Android's keyboard up the bar steps aside, and nothing needs to clear it.
+  const keyboardUp = useAndroidKeyboard();
   return (
-    <TabBarInset.Provider value={bottom + BAR_HEIGHT + 8}>
+    <TabBarInset.Provider value={keyboardUp ? 8 : bottom + BAR_HEIGHT + 8}>
       <Tabs style={styles.root}>
         {/* Its own container defaults to never shrinking, which lets a
             screen grow past the window so nothing scrolls. */}
@@ -86,7 +90,7 @@ export default function TabsLayout() {
             <TabTrigger key={tab.name} name={tab.name} href={tab.href} />
           ))}
         </TabList>
-        <GlassTabBar bottom={bottom} />
+        {!keyboardUp && <GlassTabBar bottom={bottom} />}
       </Tabs>
     </TabBarInset.Provider>
   );
@@ -97,15 +101,18 @@ function GlassTabBar({ bottom }: { bottom: number }) {
   useGlassLevel();
   const { width } = useWindowDimensions();
   const pathname = usePathname();
-  const keyboardUp = useAndroidKeyboard();
   const barWidth = Math.min(width - SIDE_MARGIN * 2, MAX_WIDTH);
   const tabWidth = (barWidth - PAD * 2) / TABS.length;
-  const index = Math.max(
-    0,
-    TABS.findIndex((tab) => (tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href))),
-  );
+  // The tab you're on. A page or sheet opened over the tabs is on no tab's
+  // path: the lens stays where it was, rather than sliding to Home under it
+  // and springing back when you return.
+  const found = TABS.findIndex((tab) => (tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href)));
+  const onTab = useRef(Math.max(0, found));
+  if (found >= 0) onTab.current = found;
+  const index = onTab.current;
 
-  useEffect(installLiquidGlass, []);
+  // In a browser: the bar's glass styles are there for its first frame, not added after it.
+  installLiquidGlass();
   useEffect(() => sizeRefraction(barWidth, BAR_HEIGHT), [barWidth]);
 
   // The lens: where it is, and how lifted (0 resting, 1 under a finger).
@@ -129,7 +136,8 @@ function GlassTabBar({ bottom }: { bottom: number }) {
   const markDragEnd = () => {
     dragEndedAt.current = Date.now();
   };
-  const justDragged = () => Date.now() - dragEndedAt.current < 400;
+  // Only a browser's mouse follows a drag with a click; on a touch screen a tap just after a drag is a tap.
+  const justDragged = () => Platform.OS === 'web' && Date.now() - dragEndedAt.current < 400;
   const last = TABS.length - 1;
   const drag = Gesture.Pan()
     .activeOffsetX([-10, 10])
@@ -137,7 +145,8 @@ function GlassTabBar({ bottom }: { bottom: number }) {
       lift.value = withTiming(1, { ...ARRIVE, duration: 170 });
     })
     .onUpdate((event) => {
-      x.value = Math.min(Math.max(event.x - PAD - tabWidth / 2, 0), tabWidth * last);
+      // Glides after the finger: a drag begun on another tab used to jump the lens there in one frame.
+      x.value = withSpring(Math.min(Math.max(event.x - PAD - tabWidth / 2, 0), tabWidth * last), FOLLOW);
     })
     .onEnd(() => {
       const target = Math.min(Math.max(Math.round(x.value / tabWidth), 0), last);
@@ -153,8 +162,6 @@ function GlassTabBar({ bottom }: { bottom: number }) {
     transform: [{ translateX: x.value }, { scaleX: 1 + lift.value * 0.12 }, { scaleY: 1 + lift.value * 0.16 }],
   }));
   const liftStyle = useAnimatedStyle(() => ({ opacity: lift.value }));
-
-  if (keyboardUp) return null;
 
   // A look drawn in solid plates, or Liquid Glass at 0%: a plain bar with
   // the look's corners and shadow, and a lens tinted with the accent
@@ -187,6 +194,11 @@ function GlassTabBar({ bottom }: { bottom: number }) {
               <View style={[StyleSheet.absoluteFill, styles.wash]} />
               <View {...glassMark('shine')} style={StyleSheet.absoluteFill} />
             </View>
+          ) : solid ? (
+            // A plain plate: its shadow is on the view around it, as a clipped
+            // view hides its own (iPhone), and an Android elevation would
+            // have drawn it over the lens and the tabs.
+            <View style={[StyleSheet.absoluteFill, styles.capsule, styles.plate]} />
           ) : (
             <Glass kind="control" interactive style={[StyleSheet.absoluteFill, styles.capsule]} />
           )}
@@ -217,6 +229,8 @@ const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
     <Pressable
       ref={ref}
       {...props}
+      // A held tab switched silently; a tap switches (with its tick), a drag moves the lens.
+      onLongPress={undefined}
       onPress={(event) => {
         if (ignorePress()) {
           event.preventDefault();
@@ -268,9 +282,13 @@ const styles = themed(() => StyleSheet.create({
   shadow: {
     height: BAR_HEIGHT,
     borderRadius: round(BAR_HEIGHT),
-    // Real Liquid Glass casts its own soft shadow; the imitations need one. A solid look's plate brings its own.
-    boxShadow: solidSurfaces() ? undefined : HAS_LIQUID_GLASS ? '0 6px 18px rgba(0, 0, 0, 0.08)' : '0 12px 30px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.07)',
+    // Real Liquid Glass casts its own soft shadow, and a browser's glass bar
+    // has one in its CSS; the phones' imitation needs one; a solid bar takes the look's own.
+    ...(solidSurfaces()
+      ? shadow.float
+      : { boxShadow: Platform.OS === 'web' ? undefined : HAS_LIQUID_GLASS ? '0 6px 18px rgba(0, 0, 0, 0.08)' : '0 12px 30px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.07)' }),
   },
+  plate: { backgroundColor: color.card },
   capsule: { borderRadius: round(BAR_HEIGHT), overflow: 'hidden' },
   wash: { backgroundColor: color.glassWashThin },
   row: { flexDirection: 'row', alignItems: 'center', height: BAR_HEIGHT, paddingHorizontal: PAD },
@@ -296,6 +314,6 @@ const styles = themed(() => StyleSheet.create({
   // Rounded like the bar, so the keyboard's focus ring is a pill, not a box.
   tab: { height: BAR_HEIGHT, alignItems: 'center', justifyContent: 'center', borderRadius: round(BAR_HEIGHT) },
   pressed: { transform: [{ scale: 0.9 }] },
-  avatarRing: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  avatarRing: { width: 32, height: 32, borderRadius: round(32), alignItems: 'center', justifyContent: 'center' },
   avatarRingOn: { borderWidth: 2, borderColor: color.label },
 }));

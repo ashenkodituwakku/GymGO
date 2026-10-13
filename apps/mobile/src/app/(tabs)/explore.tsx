@@ -537,6 +537,28 @@ function MapScreen() {
   );
   openGymRef.current = openGym;
 
+  // A window made wider or narrower across WIDE with a gym picked: its card
+  // moves to the new layout (the side panel, or the sheet) rather than
+  // vanishing with the gym still picked, its pin lit and Search this area gone.
+  const wasWide = useRef(wide);
+  useEffect(() => {
+    if (wasWide.current === wide) return;
+    wasWide.current = wide;
+    if (!selectedId) return;
+    if (wide) {
+      setPanel('place');
+      restoreIndex.current = null;
+    } else {
+      setPanel(null);
+      // The sheet exists once this layout has drawn.
+      requestAnimationFrame(() => {
+        placeSheet.current?.present();
+        if (restoreIndex.current === null) restoreIndex.current = 1;
+        mainSheet.current?.close();
+      });
+    }
+  }, [wide, selectedId]);
+
   const closePlace = useCallback(() => {
     if (wide) {
       setPanel(null);
@@ -812,7 +834,8 @@ function MapScreen() {
   );
 
   const selfCheckBanner = !selfCheck.ok && (
-    <View style={[styles.selfCheck, { top: insets.top + 64 }]}>
+    // Under the status pill and the Search this area row (38 tall, 44 down), not over it.
+    <View style={[styles.selfCheck, { top: insets.top + space[2] + 44 + 38 + space[2] }]}>
       <Icon name="maybe" size={16} color={color.maybeInk} />
       <Txt variant="footnote" color={color.maybeInk} style={styles.flex}>
         {`This device can't work out time zones reliably, so guest-hour answers may be an hour out. (${selfCheck.detail})`}
@@ -1025,12 +1048,15 @@ function PhoneShell(props: {
   // The height the sheets live in: the screen, less the tab bar and a gap.
   const [height, setHeight] = useState(window.height - clearance - SHEET_GAP);
   const bottomInset = 0;
+  // Halfway, in points, never at or below the peek (in a short window 48%
+  // came out under it, and the sheet's snap points out of order).
+  const middle = Math.max(PEEK + 40, Math.round(height * 0.48));
   // The tallest a sheet may be: up to just under the status bar.
-  const tallest = Math.max(PEEK + 80, height - bottomInset - insets.top - space[2]);
+  const tallest = Math.max(middle + 40, height - bottomInset - insets.top - space[2]);
   // iOS sheet feel: critically damped, so a snap (or a fling) lands crisply,
   // without a wobble and without the long slow tail of an overdamped spring.
   const spring = useBottomSheetSpringConfigs({ damping: 40, stiffness: 380, mass: 1, overshootClamping: true });
-  const snapPoints = useMemo(() => [PEEK, '48%', tallest], [tallest]);
+  const snapPoints = useMemo(() => [PEEK, middle, tallest], [middle, tallest]);
   const placeSnaps = useMemo(() => ['56%', tallest], [tallest]);
   const tallSnaps = useMemo(() => [tallest], [tallest]);
   // Fully open, a sheet reaches the top of the map: the pill and buttons

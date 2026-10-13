@@ -62,7 +62,8 @@ function looks(shape: Shape, paint: Paint) {
     case 'line':
       return { fill: 'none', stroke: fill, strokeOpacity: opacity, strokeWidth: shape.w, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
     case 'box':
-      return { fill, fillOpacity: opacity, stroke: fill, strokeOpacity: opacity, strokeWidth: shape.r * 2, strokeLinejoin: 'round' as const };
+      // One opacity for the whole box: a see-through fill and stroke each faded on their own made a darker band where they overlap.
+      return { fill, stroke: fill, opacity, strokeWidth: shape.r * 2, strokeLinejoin: 'round' as const };
     case 'dot':
       return { r: shape.r, fill, fillOpacity: opacity };
     case 'ring':
@@ -84,15 +85,7 @@ function between(progress: number, count: number): [number, number] {
 }
 
 /** A shape eased between its place in each drawing of the rep. */
-function MovingShape({ frames, progress, paint }: { frames: Shape[]; progress: SharedValue<number>; paint: Paint }) {
-  const first = frames[0]!;
-  if (first.k === 'dot' || first.k === 'ring') return <MovingCircle frames={frames} progress={progress} paint={paint} />;
-  return <MovingPath frames={frames} progress={progress} paint={paint} />;
-}
-
-function MovingCircle({ frames, progress, paint }: { frames: Shape[]; progress: SharedValue<number>; paint: Paint }) {
-  const first = frames[0]!;
-  const centres = frames.map((shape) => pointsOf(shape)[0]!);
+function MovingCircle({ first, centres, progress, paint }: { first: Shape; centres: Pt[]; progress: SharedValue<number>; paint: Paint }) {
   const animatedProps = useAnimatedProps(() => {
     const [at, t] = between(progress.value, centres.length);
     const a = centres[at]!;
@@ -103,11 +96,8 @@ function MovingCircle({ frames, progress, paint }: { frames: Shape[]; progress: 
   return <AnimatedCircle cx={cx} cy={cy} {...looks(first, paint)} animatedProps={animatedProps} />;
 }
 
-function MovingPath({ frames, progress, paint }: { frames: Shape[]; progress: SharedValue<number>; paint: Paint }) {
-  const first = frames[0]!;
+function MovingPath({ first, steps, progress, paint }: { first: Shape; steps: number[][]; progress: SharedValue<number>; paint: Paint }) {
   const closed = first.k === 'box';
-  // Each drawing's points, flat: [x0, y0, x1, y1, …].
-  const steps = frames.map((shape) => pointsOf(shape).flat());
   const animatedProps = useAnimatedProps(() => {
     const [at, t] = between(progress.value, steps.length);
     const a = steps[at]!;
@@ -172,16 +162,43 @@ function Moving({ exerciseId, paint, delay }: { exerciseId: string; paint: Paint
     );
     return () => cancelAnimation(progress);
   }, [progress, delay]);
-  const frames = exerciseFrames(exerciseId);
   return (
     <>
-      {frames[0]!.map((shape, index) => {
-        const own = frames.map((frame) => frame[index]!);
-        const still = own.every((other) => JSON.stringify(other) === JSON.stringify(shape));
-        return still ? <StillShape key={index} shape={shape} paint={paint} /> : <MovingShape key={index} frames={own} progress={progress} paint={paint} />;
-      })}
+      {partsOf(exerciseId).map((part, index) =>
+        part.kind === 'still' ? (
+          <StillShape key={index} shape={part.shape} paint={paint} />
+        ) : part.kind === 'circle' ? (
+          <MovingCircle key={index} first={part.shape} centres={part.centres} progress={progress} paint={paint} />
+        ) : (
+          <MovingPath key={index} first={part.shape} steps={part.steps} progress={progress} paint={paint} />
+        ),
+      )}
     </>
   );
+}
+
+/** Each shape of an exercise's icon, and how it moves through the rep. */
+type Part = { kind: 'still'; shape: Shape } | { kind: 'circle'; shape: Shape; centres: Pt[] } | { kind: 'path'; shape: Shape; steps: number[][] };
+
+/**
+ * Worked out once per exercise, not on every draw: a card redraws with each
+ * keystroke in its boxes, and building these afresh re-made every
+ * animation and sent its points to the UI thread again each time.
+ */
+const parts = new Map<string, Part[]>();
+function partsOf(exerciseId: string): Part[] {
+  const known = parts.get(exerciseId);
+  if (known) return known;
+  const frames = exerciseFrames(exerciseId);
+  const made = frames[0]!.map((shape, index): Part => {
+    const own = frames.map((frame) => frame[index]!);
+    if (own.every((other) => JSON.stringify(other) === JSON.stringify(shape))) return { kind: 'still', shape };
+    if (shape.k === 'dot' || shape.k === 'ring') return { kind: 'circle', shape, centres: own.map((other) => pointsOf(other)[0]!) };
+    // Each drawing's points, flat: [x0, y0, x1, y1, …].
+    return { kind: 'path', shape, steps: own.map((other) => pointsOf(other).flat()) };
+  });
+  parts.set(exerciseId, made);
+  return made;
 }
 
 /** The icon on its tile. Decoration: the exercise's name is always written beside it. */

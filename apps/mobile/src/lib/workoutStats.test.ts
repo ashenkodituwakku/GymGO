@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { minutesLabel, planMinutes, planSets } from './workoutStats';
+import { minutesLabel, planMinutes, planSets, repsMeasure } from './workoutStats';
 
 describe('a plan’s summary', () => {
   it('estimates the time from the sets, the rests and the changes between exercises', () => {
@@ -24,5 +24,14 @@ describe('a plan’s summary', () => {
     expect(minutesLabel(45)).toBe('about 45 min');
     expect(minutesLabel(60)).toBe('about 1 h');
     expect(minutesLabel(75)).toBe('about 1 h 15 min');
+  });
+
+  it('names the second number by what it measures', () => {
+    expect(repsMeasure('8–12')).toEqual({ label: 'reps', spoken: '8–12 reps' });
+    expect(repsMeasure('5')).toEqual({ label: 'reps', spoken: '5 reps' });
+    expect(repsMeasure('30–45 s')).toEqual({ label: 'hold', spoken: '30–45 seconds' });
+    expect(repsMeasure('45–60 s')).toEqual({ label: 'hold', spoken: '45–60 seconds' });
+    expect(repsMeasure('30–40 m')).toEqual({ label: 'distance', spoken: '30–40 metres' });
+    expect(repsMeasure('see cue').label).toBe('reps');
   });
 });

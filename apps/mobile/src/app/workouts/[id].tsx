@@ -88,7 +88,13 @@ export default function SavedWorkoutScreen() {
         <PlanSummary
           eyebrow={`SAVED ${new Date(saved.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }).toUpperCase()}`}
           title={saved.name}
-          detail={[goal, saved.plan.gymName && !saved.name.includes(saved.plan.gymName) ? saved.plan.gymName : null, ...saved.plan.muscles.slice(0, 4).map((muscle) => muscleLabel(muscle as Muscle))]
+          detail={[
+            goal,
+            saved.plan.gymName && !saved.name.includes(saved.plan.gymName) ? saved.plan.gymName : null,
+            ...saved.plan.muscles.slice(0, 4).map((muscle) => muscleLabel(muscle as Muscle)),
+            // The rest counted, as the builder's summary does, rather than left out.
+            saved.plan.muscles.length > 4 ? `+${saved.plan.muscles.length - 4}` : null,
+          ]
             .filter(Boolean)
             .join(' · ')}
           items={workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, restSeconds: item.restSeconds, cardio: item.exercise.cardio }))}

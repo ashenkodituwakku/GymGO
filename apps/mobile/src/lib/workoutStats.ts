@@ -37,3 +37,15 @@ export function minutesLabel(minutes: number): string {
   const rest = minutes % 60;
   return `about ${hours} h${rest ? ` ${rest} min` : ''}`;
 }
+
+/**
+ * What a plan's second number is: reps, or for a hold ("30–45 s") a time and
+ * for a carry ("30–40 m") a distance, with the words a screen reader says.
+ * (A hold once read "30–45 s reps".)
+ */
+export function repsMeasure(reps: string): { label: string; spoken: string } {
+  const match = /^(.*\d)\s*(s|m)$/.exec(reps.trim());
+  if (match?.[2] === 's') return { label: 'hold', spoken: `${match[1]} seconds` };
+  if (match?.[2] === 'm') return { label: 'distance', spoken: `${match[1]} metres` };
+  return { label: 'reps', spoken: `${reps} reps` };
+}

@@ -18,6 +18,7 @@ import { CountUp } from '@/components/CountUp';
 import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { leadExercise } from '@/lib/exerciseGlyphs';
 import { endSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
 import { ApiError, api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -130,7 +131,7 @@ function NoWorkout({ token }: { token: string | null }) {
                   accessibilityLabel={`Start ${title}, ${details.get(workout.id) ?? ''}`}
                   style={({ pressed }) => [styles.savedRow, index > 0 && styles.savedLine, pressed && { backgroundColor: color.fill }]}
                 >
-                  <ExerciseTile exerciseId={workout.plan.items[0]?.exerciseId ?? ''} size={42} />
+                  <ExerciseTile exerciseId={leadExercise(workout.plan.items.map((item) => item.exerciseId))} size={42} />
                   <View style={styles.flex}>
                     <Txt variant="headline" numberOfLines={1}>
                       {title}
@@ -880,14 +881,16 @@ const styles = themed(() => StyleSheet.create({
   proHint: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingVertical: 2 },
   setHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: space[1] },
   setCol: { width: 36 },
-  inputCol: { flex: 1, maxWidth: 112, textAlign: 'center' },
+  // Never narrower than the boxes' old fixed 64 points: the spacer beside them gives way first.
+  inputCol: { flex: 1, minWidth: 64, maxWidth: 112, textAlign: 'center' },
   times: { width: 10, textAlign: 'center' },
   tickCol: { width: 30 },
   setRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 3, paddingHorizontal: space[2], marginHorizontal: -space[2], borderRadius: radius.md, borderCurve: 'continuous' },
   setDone: { backgroundColor: alpha(color.good, 0.08) },
   input: {
     flex: 1,
-    minWidth: 0,
+    // On a narrow phone they shared the room equally with the spacer and cut a weight like 102.5 short.
+    minWidth: 64,
     maxWidth: 112,
     height: 42,
     borderRadius: radius.sm,

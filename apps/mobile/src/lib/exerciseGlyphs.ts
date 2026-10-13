@@ -750,6 +750,15 @@ const FALLBACK: Draw = () => [...dumbbell([24, 24], -30, 22).map((shape) => (sha
 export const REP_FRAMES = 9;
 
 const cache = new Map<string, Shape[][]>();
+/** Whether each exercise's icon moves, worked out once with its frames. */
+const moves = new Map<string, boolean>();
+
+/**
+ * The drawing for an exercise, if GymGO has one. Its own entries only: an id
+ * like "constructor" or "toString" (any text can be saved as an exercise)
+ * found the object's built-ins, and drawing one crashed the screen.
+ */
+const drawingFor = (exerciseId: string): Draw | undefined => (Object.prototype.hasOwnProperty.call(DRAW, exerciseId) ? DRAW[exerciseId] : undefined);
 
 /**
  * One rep of an exercise, start to finish, as `REP_FRAMES` drawings of the
@@ -758,7 +767,7 @@ const cache = new Map<string, Shape[][]>();
 export function exerciseFrames(exerciseId: string): Shape[][] {
   const known = cache.get(exerciseId);
   if (known) return known;
-  const draw = DRAW[exerciseId] ?? FALLBACK;
+  const draw = drawingFor(exerciseId) ?? FALLBACK;
   const frames: Shape[][] = [];
   try {
     for (let at = 0; at < REP_FRAMES; at++) {
@@ -770,6 +779,7 @@ export function exerciseFrames(exerciseId: string): Shape[][] {
   }
   const fitted = fit(frames);
   cache.set(exerciseId, fitted);
+  moves.set(exerciseId, JSON.stringify(fitted[0]) !== JSON.stringify(fitted[fitted.length - 1]));
   return fitted;
 }
 
@@ -778,11 +788,18 @@ export const exerciseGlyph = (exerciseId: string): Shape[] => exerciseFrames(exe
 
 /** Whether the icon moves at all (a dumbbell drawn for an unknown exercise doesn't). */
 export function exerciseMoves(exerciseId: string): boolean {
-  const frames = exerciseFrames(exerciseId);
-  return JSON.stringify(frames[0]) !== JSON.stringify(frames[frames.length - 1]);
+  exerciseFrames(exerciseId);
+  return moves.get(exerciseId) ?? false;
 }
 
 /** Whether GymGO draws this exercise (rather than the plain dumbbell). */
-export const hasExerciseGlyph = (exerciseId: string) => exerciseId in DRAW;
+export const hasExerciseGlyph = (exerciseId: string) => drawingFor(exerciseId) !== undefined;
 
 export const DRAWN_EXERCISES = Object.keys(DRAW);
+
+/**
+ * The exercise a saved plan's row leads with: its first that GymGO still
+ * draws (an exercise since retired showed the plain dumbbell), or '' for the
+ * dumbbell if none.
+ */
+export const leadExercise = (exerciseIds: string[]): string => exerciseIds.find((id) => hasExerciseGlyph(id)) ?? '';

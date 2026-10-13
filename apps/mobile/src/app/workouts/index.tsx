@@ -13,6 +13,7 @@ import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
+import { leadExercise } from '@/lib/exerciseGlyphs';
 import { useActiveSession } from '@/lib/activeSession';
 import { api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -118,7 +119,7 @@ export default function MyWorkouts() {
                     accessibilityLabel={`${title}, ${details.get(workout.id) ?? ''}`}
                     style={({ pressed }) => [styles.open, pressed && styles.pressed]}
                   >
-                    <ExerciseTile exerciseId={workout.plan.items[0]?.exerciseId ?? ''} size={46} />
+                    <ExerciseTile exerciseId={leadExercise(workout.plan.items.map((item) => item.exerciseId))} size={46} />
                     <View style={styles.flex}>
                       <Txt variant="headline" numberOfLines={2}>
                         {title}

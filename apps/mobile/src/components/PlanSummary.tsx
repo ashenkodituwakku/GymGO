@@ -25,8 +25,8 @@ export function PlanSummary({
   const minutes = planMinutes(items);
   const sets = planSets(items);
   const stats = [
-    { value: String(items.length), label: items.length === 1 ? 'exercise' : 'exercises', spoken: `${items.length} exercises` },
-    { value: String(sets), label: sets === 1 ? 'set' : 'sets', spoken: `${sets} sets` },
+    { value: String(items.length), label: items.length === 1 ? 'exercise' : 'exercises', spoken: `${items.length} ${items.length === 1 ? 'exercise' : 'exercises'}` },
+    { value: String(sets), label: sets === 1 ? 'set' : 'sets', spoken: `${sets} ${sets === 1 ? 'set' : 'sets'}` },
     { value: `~${minutes}`, label: 'min', spoken: `about ${minutes} minutes` },
   ];
   return (

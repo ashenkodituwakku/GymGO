@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DRAWN_EXERCISES, GLYPH_SIZE, REP_FRAMES, bounds, exerciseFrames, exerciseGlyph, exerciseMoves, hasExerciseGlyph, type Shape } from './exerciseGlyphs';
+import { DRAWN_EXERCISES, GLYPH_SIZE, REP_FRAMES, bounds, exerciseFrames, exerciseGlyph, exerciseMoves, hasExerciseGlyph, leadExercise, type Shape } from './exerciseGlyphs';
 import { EXERCISES } from './workout';
 import { TEMPLATES } from './templates';
 
@@ -46,5 +46,22 @@ describe('exercise icons', () => {
   it('gives an exercise it doesn’t draw a plain dumbbell, not an empty tile', () => {
     expect(hasExerciseGlyph('an-older-id')).toBe(false);
     expect(exerciseGlyph('an-older-id').some((shape) => shape.tone === 'kit')).toBe(true);
+  });
+
+  it('draws the dumbbell for an id that names a built-in, rather than crashing', () => {
+    // Any text can be saved as an exercise; these once found the object's own built-ins.
+    for (const id of ['constructor', 'toString', '__proto__', 'hasOwnProperty', 'valueOf']) {
+      expect(hasExerciseGlyph(id), id).toBe(false);
+      expect(() => exerciseFrames(id), id).not.toThrow();
+      expect(exerciseGlyph(id).some((shape) => shape.tone === 'kit'), id).toBe(true);
+      expect(exerciseMoves(id), id).toBe(false);
+    }
+  });
+
+  it('leads a saved plan with its first exercise GymGO still draws', () => {
+    expect(leadExercise(['a-retired-id', 'bench-press'])).toBe('bench-press');
+    expect(leadExercise(['constructor', 'back-squat'])).toBe('back-squat');
+    expect(leadExercise(['a-retired-id'])).toBe('');
+    expect(leadExercise([])).toBe('');
   });
 });

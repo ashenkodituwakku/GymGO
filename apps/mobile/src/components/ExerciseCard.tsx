@@ -10,6 +10,7 @@ import { Icon } from './Icon';
 import { Pressable } from './motion';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { KIT_LABEL, muscleLabel, type Exercise, type Kit } from '@/lib/workout';
+import { repsMeasure } from '@/lib/workoutStats';
 import { ExerciseTile } from './ExerciseGlyph';
 import { PIcon } from './PIcon';
 import { Txt } from './ui';
@@ -75,13 +76,15 @@ export function ExerciseCard({
 
 /** Sets, reps and rest side by side, the numbers large. */
 export function Specs({ sets, reps, restSeconds }: { sets: number; reps: string; restSeconds: number }) {
+  // A hold's or a carry's second number is a time or a distance, not reps.
+  const measure = repsMeasure(reps);
   const cells = [
     { value: String(sets), label: sets === 1 ? 'set' : 'sets' },
-    { value: reps, label: 'reps' },
+    { value: reps, label: measure.label },
     { value: restSeconds ? `${restSeconds} s` : '—', label: 'rest' },
   ];
   return (
-    <View style={styles.specs} accessible accessibilityLabel={`${sets} ${cells[0]!.label} of ${reps} reps${restSeconds ? `, ${restSeconds} seconds rest` : ''}`}>
+    <View style={styles.specs} accessible accessibilityLabel={`${sets} ${cells[0]!.label} of ${measure.spoken}${restSeconds ? `, ${restSeconds} seconds rest` : ''}`}>
       {cells.map((cell, at) => (
         <View key={cell.label} style={[styles.spec, at > 0 && styles.specLine]}>
           <Txt variant="headline" style={styles.specValue} numberOfLines={1}>

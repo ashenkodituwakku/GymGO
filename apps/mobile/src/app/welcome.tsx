@@ -54,8 +54,10 @@ export default function WelcomeScreen() {
   const pageRef = useRef(0);
   const last = page === PAGES.length - 1;
   const scrollX = useSharedValue(0);
-  // The page, kept on the UI thread too: React hears only when it changes,
-  // not on every frame of a swipe.
+  // The page is wherever the pager is scrolled to, and nothing else (Next
+  // only scrolls): kept on the UI thread, React hears only when it changes,
+  // not on every frame of a swipe, and a swipe back part-way through Next's
+  // own scroll reports the page it lands on.
   const lastPage = useSharedValue(0);
 
   const finish = () => {
@@ -64,8 +66,6 @@ export default function WelcomeScreen() {
   };
   const go = (to: number) => {
     haptic.select();
-    pageRef.current = to;
-    setPage(to);
     pager.current?.scrollTo({ x: to * width, animated: true });
   };
   const settle = (at: number) => {
@@ -74,24 +74,13 @@ export default function WelcomeScreen() {
       setPage(at);
     }
   };
-  const onScroll = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollX.value = event.contentOffset.x;
-      const at = Math.round(event.contentOffset.x / Math.max(1, width));
-      if (at !== lastPage.value) {
-        lastPage.value = at;
-        runOnJS(settle)(at);
-      }
-    },
-    // Where a drag or a fling comes to rest is the page, whatever was said
-    // before: a swipe back part-way through Next's own scroll lands on the
-    // page it started from, which the change-only report above never sees.
-    onEndDrag: (event) => {
-      runOnJS(settle)(Math.round(event.contentOffset.x / Math.max(1, width)));
-    },
-    onMomentumEnd: (event) => {
-      runOnJS(settle)(Math.round(event.contentOffset.x / Math.max(1, width)));
-    },
+  const onScroll = useAnimatedScrollHandler((event) => {
+    scrollX.value = event.contentOffset.x;
+    const at = Math.round(event.contentOffset.x / Math.max(1, width));
+    if (at !== lastPage.value) {
+      lastPage.value = at;
+      runOnJS(settle)(at);
+    }
   });
 
   return (

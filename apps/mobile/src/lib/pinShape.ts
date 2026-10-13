@@ -16,7 +16,10 @@ export const DROP_OUTLINE = 2.2;
 export const DROP_HEAD = { cx: 20, cy: 20, radius: 18 };
 /** A soft lit disc inside the head, behind the dumbbell. */
 export const DROP_HIGHLIGHT = 12.5;
-/** The box the dumbbell is centred in, from the top of the drawing, in points: the head's own height. */
+/**
+ * The box the dumbbell is centred in, in points: from the top of the drawing
+ * down to twice the head's centre, so its middle is the head's centre.
+ */
 export const DROP_GLYPH_BOX = 2 * DROP_HEAD.cy * (DROP_DRAWN.height / DROP_BOX.height);
 
 /**

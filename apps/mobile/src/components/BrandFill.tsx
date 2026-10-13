@@ -14,7 +14,6 @@ import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
 import { type AccentPaint, backgroundImage, currentLook, currentPaint, LOOKS, NO_TOUCH } from '@/lib/theme';
 import { alpha } from '@/lib/looks';
 
-
 /** Woodland blobs on a 90-point tile that repeats without seams showing much. */
 const BLOBS: Array<[number, string]> = [
   [1, 'M5 10 Q20 0 35 8 Q45 18 30 26 Q15 32 8 22 Z'],

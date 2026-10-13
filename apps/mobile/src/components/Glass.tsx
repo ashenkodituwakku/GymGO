@@ -201,8 +201,8 @@ const a = (value: number) => Math.min(1, value).toFixed(3);
 const sheen = (level: number) => {
   const k = shine(level);
   return dark()
-    ? `linear-backgroundImage(180deg, rgba(255,255,255,${a(0.16 * k)}) 0%, rgba(255,255,255,${a(0.04 * k)}) 38%, rgba(255,255,255,0) 60%)`
-    : `linear-backgroundImage(180deg, rgba(255,255,255,${a(0.55 * k)}) 0%, rgba(255,255,255,${a(0.12 * k)}) 38%, rgba(255,255,255,0) 60%)`;
+    ? `linear-gradient(180deg, rgba(255,255,255,${a(0.16 * k)}) 0%, rgba(255,255,255,${a(0.04 * k)}) 38%, rgba(255,255,255,0) 60%)`
+    : `linear-gradient(180deg, rgba(255,255,255,${a(0.55 * k)}) 0%, rgba(255,255,255,${a(0.12 * k)}) 38%, rgba(255,255,255,0) 60%)`;
 };
 // The specular rim: a bright inner edge along the top, a faint one below.
 const rim = (level: number) => {
@@ -211,8 +211,7 @@ const rim = (level: number) => {
     ? `inset 0 1px 1px rgba(255, 255, 255, ${a(0.18 * k)}), inset 0 -1px 1px rgba(0, 0, 0, 0.3)`
     : `inset 0 1px 1px rgba(255, 255, 255, ${a(0.9 * k)}), inset 0 -1px 1px rgba(0, 0, 0, 0.05)`;
 };
-const SHEEN_ON_TINT = 'linear-backgroundImage(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 55%)';
-
+const SHEEN_ON_TINT = 'linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 55%)';
 
 const styles = themed(() => StyleSheet.create({
   clip: { overflow: 'hidden' },

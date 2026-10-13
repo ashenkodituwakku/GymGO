@@ -6,7 +6,8 @@ describe('the picked pin', () => {
     // The path starts at the head's top (20, 2): a circle of radius 18 centred at 20, 20.
     expect(DROP_PATH.startsWith(`M${DROP_HEAD.cx} ${DROP_HEAD.cy - DROP_HEAD.radius}`)).toBe(true);
     expect(DROP_HIGHLIGHT).toBeLessThan(DROP_HEAD.radius);
-    // The dumbbell's box is the head's height as drawn (44 of the 55 points).
+    // The dumbbell's box is centred on the head's centre, as drawn (22 of the 55 points down).
+    expect(DROP_GLYPH_BOX / 2).toBeCloseTo(DROP_HEAD.cy * (DROP_DRAWN.height / 50), 6);
     expect(DROP_GLYPH_BOX).toBeCloseTo(44, 6);
   });
 

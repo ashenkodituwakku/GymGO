@@ -630,18 +630,27 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
   // The clock as it draws, not at the last tick: a rest started between ticks
   // (the next set ticked, or +15) would otherwise show a second too many.
   const left = Math.max(0, (endsAt - Math.max(now, Date.now())) / 1000);
+  // Woken exactly when the rest is up, not at the next once-a-second tick.
+  const [, wake] = useState(0);
+  useEffect(() => {
+    const timer = setTimeout(() => wake((n) => n + 1), Math.max(0, endsAt - Date.now()) + 15);
+    return () => clearTimeout(timer);
+  }, [endsAt]);
+  const ended = Math.max(now, Date.now()) >= endsAt;
   // The rest is over: a buzz, a chime, and the bar goes. Once: a tick can
   // come before the bar has gone.
   const over = useRef(false);
   useEffect(() => {
-    if (now < endsAt) over.current = false;
+    if (!ended) over.current = false;
     else if (!over.current) {
       over.current = true;
       haptic.success();
       playSound('rest-done');
       updateSession((current) => ({ ...current, restEndsAt: null }), { activity: false });
     }
-  }, [now, endsAt]);
+  }, [ended]);
+  // What's left as the button is pressed, not at the last tick.
+  const leftNow = () => Math.max(0, (endsAt - Date.now()) / 1000);
   // +15 past the rest's length stretches it (kept with the session, so the
   // ring drains against it after leaving the screen too); −15 leaves it.
   const onChange = (seconds: number) =>
@@ -660,8 +669,8 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
               {clockLabel(left)}
             </Txt>
           </View>
-          <RestButton label="−15" onPress={() => onChange(Math.max(0, left - 15))} name="Fifteen seconds less" />
-          <RestButton label="+15" onPress={() => onChange(left + 15)} name="Fifteen seconds more" />
+          <RestButton label="−15" onPress={() => onChange(Math.max(0, leftNow() - 15))} name="Fifteen seconds less" />
+          <RestButton label="+15" onPress={() => onChange(leftNow() + 15)} name="Fifteen seconds more" />
           <RestButton label="Skip" onPress={() => onChange(0)} name="Skip the rest" strong />
         </View>
       </Glass>

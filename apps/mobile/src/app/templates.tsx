@@ -69,13 +69,11 @@ const TEMPLATE_ICON: Record<string, IconName> = { 'full-body': 'body', 'five-by-
 const markRound = () => Math.min(13, radius.lg);
 
 function TemplateCard({ template, next, disabled, onStart }: { template: WorkoutTemplate; next: number; disabled: boolean; onStart: (index: number) => void }) {
-  // The day you picked, else the next one. The next is known only once your
-  // log has loaded, and moves on after you train: a pick holds only while
-  // the next day is the one it was made against, so neither offers the day
-  // you've just done.
-  const [picked, setPicked] = useState<{ day: number; against: number } | null>(null);
-  const day = picked && picked.against === next ? picked.day : next;
-  const setDay = (chosen: number) => setPicked({ day: chosen, against: next });
+  // The day you picked, else the next one (known only once your log has
+  // loaded, so it isn't copied in at first draw). A pick lasts until you
+  // start it: after that the card offers the next day, not the one just done.
+  const [picked, setDay] = useState<number | null>(null);
+  const day = picked ?? next;
   const [open, setOpen] = useState(false);
   const shown = template.days[day]!;
   return (
@@ -121,7 +119,15 @@ function TemplateCard({ template, next, disabled, onStart }: { template: Workout
           ))}
         </View>
       )}
-      <PrimaryButton label={`Start ${shown.name}`} icon="play" disabled={disabled} onPress={() => onStart(day)} />
+      <PrimaryButton
+        label={`Start ${shown.name}`}
+        icon="play"
+        disabled={disabled}
+        onPress={() => {
+          setDay(null);
+          onStart(day);
+        }}
+      />
     </Card>
   );
 }

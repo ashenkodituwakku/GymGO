@@ -587,10 +587,9 @@ export function NoPhoto({
 }
 
 const MONOGRAM_LIGHT = (brand: string) =>
-  `linear-backgroundImage(150deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 52%, ${alpha(brand, 0.14)} 100%)`;
+  `linear-gradient(150deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 52%, ${alpha(brand, 0.14)} 100%)`;
 const MONOGRAM_DARK = (brand: string) =>
-  `linear-backgroundImage(150deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 50%, ${alpha(brand, 0.2)} 100%)`;
-
+  `linear-gradient(150deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 50%, ${alpha(brand, 0.2)} 100%)`;
 
 export function PrimaryButton({
   label,
@@ -633,7 +632,6 @@ export function PrimaryButton({
     </Pressy>
   );
 }
-
 
 const styles = themed(() => StyleSheet.create({
   choiceChip: {

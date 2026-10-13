@@ -668,11 +668,9 @@ function Fact({ icon, value, caption, tint, unknown = false }: { icon: IconName;
         <Icon name={icon} size={16} color={color.brand} />
       </View>
       {/* A word in place of a figure, as tall as one, so the three tiles line up. */}
-      <View style={styles.factValue}>
-        <Txt variant={unknown ? 'subhead' : 'figure'} color={tint} numberOfLines={1} style={unknown && [face('semibold'), styles.factWord]}>
-          {value}
-        </Txt>
-      </View>
+      <Txt variant={unknown ? 'subhead' : 'figure'} color={tint} numberOfLines={1} style={unknown && [face('semibold'), styles.factWord]}>
+        {value}
+      </Txt>
       <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
         {caption}
       </Txt>
@@ -847,7 +845,6 @@ const styles = themed(() => StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: color.brandTint,
   },
-  factValue: { justifyContent: 'center' },
   // A word as tall as a figure's line, at any text size, so the three captions line up.
   factWord: { lineHeight: type.figure.lineHeight },
 

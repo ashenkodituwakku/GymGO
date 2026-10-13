@@ -496,7 +496,7 @@ const styles = themed(() =>
     noticeGood: { backgroundColor: color.goodTint },
     noticeBad: { backgroundColor: color.dangerTint },
     section: { marginTop: space[3] },
-    sectionTitle: { marginLeft: space[4], marginBottom: space[2], letterSpacing: 0.4 },
+    sectionTitle: { marginLeft: space[4], marginBottom: space[2], letterSpacing: 0.5, ...face('semibold') },
     group: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', ...shadow.plate },
     footer: { marginHorizontal: space[4], marginTop: space[2] },
     line: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 50, paddingHorizontal: 16, paddingVertical: 10 },

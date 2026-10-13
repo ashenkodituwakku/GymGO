@@ -12,7 +12,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { LOOKS, NO_TOUCH, PAGE_COLUMN, ambientGlow, backgroundImage, color, currentLook, currentTheme, glowStrength, radius, shadow, space, themed } from '@/lib/theme';
+import { LOOKS, NO_TOUCH, PAGE_COLUMN, ambientGlow, backgroundImage, color, currentLook, currentTheme, face, glowStrength, radius, shadow, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
@@ -374,7 +374,8 @@ const styles = themed(() => StyleSheet.create({
   sectionIcon: { alignSelf: 'center' },
 
   group: { gap: 6 },
-  groupHeader: { paddingHorizontal: space[4], letterSpacing: 0.3 },
+  // Semibold and opened up a little, so a section's name reads as a heading over its card.
+  groupHeader: { paddingHorizontal: space[4], letterSpacing: 0.5, ...face('semibold') },
   groupFooter: { paddingHorizontal: space[4] },
   // The same corners as the app's other cards, so a list sits flush with the card above it.
   groupBody: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },

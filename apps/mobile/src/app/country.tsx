@@ -151,8 +151,8 @@ export default function CountryScreen() {
               >
                 {/* Windows draws flag emoji as two letters, so the browser shows the code instead. */}
                 {Platform.OS === 'web' ? (
-                  <View style={styles.code}>
-                    <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                  <View style={[styles.code, on && styles.codeOn]}>
+                    <Txt variant="caption" color={on ? color.onBrand : color.brand} style={face('semibold')}>
                       {item.code}
                     </Txt>
                   </View>
@@ -168,6 +168,8 @@ export default function CountryScreen() {
                   </Txt>
                 </View>
                 {on && <Icon name="check" size={18} color={color.brand} />}
+                {/* Inset like Settings' dividers: from the name, not the card's edge. */}
+                {index < section.data.length - 1 && <View style={styles.rule} />}
               </Pressable>
             );
           }}
@@ -198,28 +200,32 @@ const styles = themed(() => StyleSheet.create({
   searchFocused: { borderColor: color.brand },
   // minWidth 0: a browser text field won't otherwise shrink below its own width.
   input: { flex: 1, minWidth: 0, fontSize: 17, color: color.label, ...NO_WEB_OUTLINE, ...face('regular') },
-  sectionTitle: { marginTop: space[5], marginBottom: space[2], marginLeft: space[4], letterSpacing: 0.4 },
+  sectionTitle: { marginTop: space[5], marginBottom: space[2], marginLeft: space[4], letterSpacing: 0.5, ...face('semibold') },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[3],
     paddingHorizontal: space[4],
     paddingVertical: space[3],
+    minHeight: 58,
     backgroundColor: color.plate,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.separator,
   },
-  rowFirst: { borderTopLeftRadius: radius.md, borderTopRightRadius: radius.md },
-  rowLast: { borderBottomLeftRadius: radius.md, borderBottomRightRadius: radius.md, borderBottomWidth: 0 },
-  flag: { width: 32, textAlign: 'center' },
+  // The same corners as the other settings lists.
+  rowFirst: { borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, borderCurve: 'continuous' },
+  rowLast: { borderBottomLeftRadius: radius.lg, borderBottomRightRadius: radius.lg, borderCurve: 'continuous' },
+  rule: { position: 'absolute', left: space[4] + 34 + space[3], right: 0, bottom: 0, height: StyleSheet.hairlineWidth, backgroundColor: color.separator },
+  flag: { width: 34, textAlign: 'center' },
   code: {
-    width: 32,
-    height: 24,
-    borderRadius: 6,
+    width: 34,
+    height: 26,
+    borderRadius: 7,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: color.brandTint,
   },
+  // Your country's code, filled with the accent.
+  codeOn: { backgroundColor: color.brandFill },
   flex: { flex: 1, gap: 2 },
   empty: { textAlign: 'center', marginTop: space[6] },
   notNow: { paddingHorizontal: HEADER_EDGE },

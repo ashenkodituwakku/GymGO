@@ -186,14 +186,11 @@ export default function Profile() {
 
       <Group
         header="Settings"
-        footer={[
+        footer={
           Platform.OS === 'web'
-            ? 'Haptics are the small taps you feel on a phone; a browser has none. Sounds play once you’ve tapped the page.'
-            : 'Sounds follow your phone’s silent switch, and play over your music without stopping it.',
-          'Demo mode swaps every real gym for invented ones in inner Sydney, made up to show each case GymGO handles. Nothing in it is real, and real gyms come back when you turn it off.',
-        ]
-          .filter(Boolean)
-          .join(' ')}
+            ? 'Sounds play once you’ve tapped the page.'
+            : 'Sounds follow your phone’s silent switch, and play over your music without stopping it.'
+        }
       >
         <Row
           icon="globe"
@@ -215,6 +212,8 @@ export default function Profile() {
           icon="sparkle"
           tile={TILE.pink}
           title="Haptics"
+          // A browser can't tap back: say so where the switch is.
+          subtitle={Platform.OS === 'web' ? 'The small taps you feel on a phone; a browser has none' : undefined}
           toggle={{ value: prefs.haptics, onChange: (value) => setPref('haptics', value) }}
         />
         <Row
@@ -236,14 +235,18 @@ export default function Profile() {
             icon="flask"
             tile={TILE.orange}
             title="Demo mode"
-            subtitle={prefs.demo ? 'Showing invented gyms only' : undefined}
+            subtitle={
+              prefs.demo
+                ? 'Showing made-up gyms only. Turn off for real ones'
+                : 'Made-up gyms in inner Sydney, to show how GymGO works'
+            }
             toggle={{ value: prefs.demo, onChange: (value) => setPref('demo', value) }}
           />
         )}
       </Group>
 
       <Group header="About GymGO">
-        <Row icon="good" tile={TILE.green} title="How we check facts" onPress={() => toggle('facts')} />
+        <Row icon="good" tile={TILE.green} title="How we check facts" expanded={about === 'facts'} onPress={() => toggle('facts')} />
         {about === 'facts' && (
           <Explainer>
             Every price, opening hour and machine comes from a named source: the gym’s own website, OpenStreetMap, or members
@@ -251,7 +254,7 @@ export default function Profile() {
             is shown as unknown, never guessed, which is why most gyms say “Call first”.
           </Explainer>
         )}
-        <Row icon="source" tile={TILE.indigo} title="Where the data comes from" onPress={() => toggle('sources')} />
+        <Row icon="source" tile={TILE.indigo} title="Where the data comes from" expanded={about === 'sources'} onPress={() => toggle('sources')} />
         {about === 'sources' && (
           <Explainer>
             Gym names, map positions and most opening hours: © OpenStreetMap contributors (ODbL), read on 24 September 2026,
@@ -270,7 +273,7 @@ export default function Profile() {
           subtitle="Something not working? Tell the team"
           onPress={() => router.push({ pathname: '/report-bug', params: { from: 'Profile' } })}
         />
-        <Row icon="settings" tile={TILE.grey} title="Version" value={Constants.expoConfig?.version ?? '1.0.0'} chevron={false} />
+        <Row icon="info" tile={TILE.grey} title="Version" value={Constants.expoConfig?.version ?? '1.0.0'} chevron={false} />
       </Group>
 
       <Group header="Legal">
@@ -278,7 +281,7 @@ export default function Profile() {
         <Row icon="lock" tile={TILE.grey} title="Privacy Policy" subtitle="No ads, no analytics, and your location stays on your phone" onPress={() => openLegal('privacy')} />
         <Row icon="refresh" tile={TILE.grey} title="Refunds and Cancelling" onPress={() => openLegal('refunds')} />
         <Row icon="people" tile={TILE.grey} title="Community Guidelines" subtitle="The rules for reviews, photos and reports" onPress={() => openLegal('community')} />
-        <Row icon="photo" tile={TILE.grey} title="Copyright and takedowns" onPress={() => toggle('copyright')} />
+        <Row icon="photo" tile={TILE.grey} title="Copyright and takedowns" expanded={about === 'copyright'} onPress={() => toggle('copyright')} />
         {about === 'copyright' && <CopyrightExplainer onNotice={() => router.push({ pathname: '/report-bug', params: { topic: 'copyright', from: 'Profile' } })} />}
       </Group>
 

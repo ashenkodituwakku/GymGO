@@ -101,6 +101,20 @@ mobile 337, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Settings menus made more premium, and their bugs fixed** (13 Oct,
+  the owner asked). Switches on the web and Android are now the iPhone's
+  pill (`components/Toggle.tsx`; the system switch stays on iPhone): React
+  Native's stand-in had a teal Material thumb, and when off no track at
+  all. Profile's and Account's rows share one lit icon tile
+  (`SettingsTile` in `components/ios.tsx`, flat in the solid looks) and
+  the same height and inset dividers; rows that open something under them
+  turn their chevron down and tell screen readers (`expanded`); action
+  rows (Sign out, Download my data) lose their chevron. Account no longer
+  shows users "(see README)", and Profile's long Settings footer moved
+  onto the rows it explained (Haptics on the web, Demo mode).
+- **Liquid Glass review fixed** (13 Oct): a change of the level alone
+  redraws screens in place (`useGlassRedraw` in `components/Redrawn.tsx`,
+  called by every screen; a test checks), and cards stay at WCAG AA.
 - **Workout section made more premium, with GymGO's own exercise icons**
   (13 Oct, the owner asked, then asked for them to move). Every exercise
   has an icon drawn in code (`src/lib/exerciseGlyphs.ts`): one figure,

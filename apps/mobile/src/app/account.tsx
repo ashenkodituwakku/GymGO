@@ -14,6 +14,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { useDeleteCollection } from '@/components/CollectionData';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { GoogleMark, SocialButtons, useSignInProviders, type TokenHandler } from '@/components/SocialSignIn';
+import { RowChevron, SettingsTile, TILE } from '@/components/ios';
 import { Input, PrimaryButton, Txt } from '@/components/ui';
 import { ApiError, OfflineError, api, type SignInMethods, type SignInProvider } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -162,7 +163,7 @@ export default function AccountScreen() {
       )}
 
       <Section title="Profile" footer="Only you see your profile picture. It isn’t shown with your reviews or photos, and its location data is removed.">
-        <Line icon="person" title="Name" value={me.displayName} onPress={() => setEditing(editing === 'name' ? null : 'name')} open={editing === 'name'} />
+        <Line icon="person" tile={TILE.indigo} title="Name" value={me.displayName} onPress={() => setEditing(editing === 'name' ? null : 'name')} open={editing === 'name'} />
         {editing === 'name' && (
           <NameForm
             current={me.displayName}
@@ -177,9 +178,10 @@ export default function AccountScreen() {
             }}
           />
         )}
-        <Line icon="mail" title="Email" value={me.email} first={false} />
+        <Line icon="mail" tile={TILE.blue} title="Email" value={me.email} first={false} />
         <Line
           icon="photo"
+          tile={TILE.orange}
           title="Profile picture"
           value={picturing ? 'Sending…' : me.avatarUrl ? 'Change' : 'Add'}
           onPress={() => void changePicture()}
@@ -193,11 +195,12 @@ export default function AccountScreen() {
         footer={
           offered.length
             ? 'Connect Apple or Google to sign in with a tap. You can always have more than one way in, and GymGO never lets you remove the last.'
-            : 'Signing in with Apple or Google turns on when this GymGO server is set up for it (see README).'
+            : 'Signing in with Apple or Google will appear here once it’s available.'
         }
       >
         <Line
           icon="key"
+          tile={TILE.grey}
           title="Password"
           value={hasPassword ? 'Change' : 'Set a password'}
           onPress={() => setEditing(editing === 'password' ? null : 'password')}
@@ -226,7 +229,8 @@ export default function AccountScreen() {
               key={provider}
               first={false}
               icon={provider === 'apple' ? 'account' : 'google'}
-              mark={provider === 'google' ? <GoogleMark /> : undefined}
+              tile={provider === 'google' ? '#FFFFFF' : TILE.grey}
+              mark={provider === 'google' ? <GoogleMark size={17} /> : undefined}
               title={PROVIDER_NAME[provider]}
               value={link ? (link.email ?? 'Connected') : 'Not connected'}
               action={link ? { label: 'Disconnect', onPress: () => void disconnect(provider) } : undefined}
@@ -243,8 +247,10 @@ export default function AccountScreen() {
       <Section title="Your data">
         <Line
           icon="download"
+          tile={TILE.green}
           title="Download my data"
           value={exported ?? undefined}
+          chevron={false}
           onPress={async () => {
             try {
               setExported('Preparing…');
@@ -257,12 +263,14 @@ export default function AccountScreen() {
         />
         <Line
           icon="trophy"
+          tile={TILE.orange}
+          chevron={false}
           title="Delete collection data"
           value={deleteCollection.gyms === 0 ? 'Empty' : `${deleteCollection.gyms} card${deleteCollection.gyms === 1 ? '' : 's'}`}
           first={false}
           onPress={deleteCollection.gyms === 0 || deleteCollection.opened ? undefined : deleteCollection.open}
         />
-        <Line icon="signOut" title="Sign out" first={false} onPress={() => void account.signOut()} />
+        <Line icon="signOut" tile={TILE.grey} title="Sign out" first={false} chevron={false} onPress={() => void account.signOut()} />
       </Section>
       {deleteCollection.warning}
 
@@ -312,16 +320,20 @@ function Section({ title, footer, children }: { title?: string; footer?: string;
 
 function Line({
   icon,
+  tile,
   title,
   value,
   onPress,
   open,
   first = true,
   destructive = false,
+  chevron = Boolean(onPress) && !destructive,
   action,
   mark,
 }: {
   icon: IconName;
+  /** Its tile's colour, as on Profile (red for something destructive). */
+  tile?: string;
   title: string;
   value?: string;
   onPress?: () => void;
@@ -331,15 +343,21 @@ function Line({
   action?: { label: string; onPress: () => void };
   /** A brand's own mark in place of the icon. */
   mark?: ReactNode;
+  /** A chevron at the end: for a row that opens something, not one that does something there and then. */
+  chevron?: boolean;
 }) {
   const body = (
     <>
-      {mark ?? <Icon name={icon} size={18} color={destructive ? color.dangerInk : color.brand} />}
+      {/* The rule between rows starts at the text, as on Profile. */}
+      {!first && <View style={styles.rule} />}
+      <SettingsTile icon={icon} tile={tile ?? (destructive ? TILE.red : TILE.indigo)}>
+        {mark}
+      </SettingsTile>
       <Txt variant="body" color={destructive ? color.dangerInk : color.label} style={styles.flex}>
         {title}
       </Txt>
       {value !== undefined && (
-        <Txt variant="subhead" color={color.labelSecondary} numberOfLines={1} style={styles.value}>
+        <Txt variant="body" color={color.labelSecondary} numberOfLines={1} style={styles.value}>
           {value}
         </Txt>
       )}
@@ -350,10 +368,10 @@ function Line({
           </Txt>
         </Pressable>
       )}
-      {onPress && !destructive && <Icon name="chevron" size={13} color={color.labelTertiary} />}
+      {chevron && <RowChevron expanded={open} />}
     </>
   );
-  const style = [styles.line, !first && styles.lineRule];
+  const style = styles.line;
   if (!onPress) return <View style={style}>{body}</View>;
   return (
     <Pressable
@@ -362,8 +380,9 @@ function Line({
         onPress();
       }}
       accessibilityRole="button"
+      accessibilityState={open === undefined ? undefined : { expanded: open }}
       aria-expanded={open}
-      style={({ pressed }) => [...style, pressed && { backgroundColor: color.pressed }]}
+      style={({ pressed }) => [style, pressed && { backgroundColor: color.pressed }]}
     >
       {body}
     </Pressable>
@@ -480,8 +499,8 @@ const styles = themed(() =>
     sectionTitle: { marginLeft: space[4], marginBottom: space[2], letterSpacing: 0.4 },
     group: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', ...shadow.plate },
     footer: { marginHorizontal: space[4], marginTop: space[2] },
-    line: { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 48, paddingHorizontal: space[4], paddingVertical: space[3] },
-    lineRule: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
+    line: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 50, paddingHorizontal: 16, paddingVertical: 10 },
+    rule: { position: 'absolute', top: 0, right: 0, left: 16 + 29 + 12, height: StyleSheet.hairlineWidth, backgroundColor: color.separator },
     value: { maxWidth: '55%' },
     form: { gap: space[2], paddingHorizontal: space[4], paddingBottom: space[4] },
     input: {

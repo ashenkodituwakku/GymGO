@@ -8,7 +8,8 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Toggle } from '@/components/Toggle';
 import { Avatar } from '@/components/Avatar';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
@@ -109,12 +110,12 @@ export default function LeaderboardScreen() {
             {`As “${account.account.displayName}”, with your gym and visit counts. Nothing else, and you can leave any time.`}
           </Txt>
         </View>
-        <Switch
+        <Toggle
           value={board?.joined ?? false}
           disabled={!board || saving}
           onValueChange={(on) => void join(on)}
           accessibilityLabel="Be on the public leaderboard"
-          trackColor={{ true: color.brand, false: color.fill }}
+          tint={color.brand}
         />
       </Card>
 

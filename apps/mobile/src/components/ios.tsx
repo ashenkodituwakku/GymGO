@@ -5,17 +5,18 @@
  */
 
 import { useId, useState, type ReactNode } from 'react';
-import { Platform, StyleSheet, Switch, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from './motion';
 import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { PAGE_COLUMN, ambientGlow, color, currentTheme, glowStrength, radius, shadow, space, themed } from '@/lib/theme';
+import { LOOKS, NO_TOUCH, PAGE_COLUMN, ambientGlow, backgroundImage, color, currentLook, currentTheme, glowStrength, radius, shadow, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
+import { Toggle } from './Toggle';
 import { Txt } from './ui';
 
 
@@ -241,6 +242,30 @@ export const TILE = themed(() => ({
   pink: '#FF2D55',
 }));
 
+/**
+ * A settings row's icon on its coloured tile. In the glass look the tile is
+ * lit from the top and rimmed, like the iPhone's own; the solid looks keep
+ * it flat. `children` in place of the icon: a brand's own mark.
+ */
+export function SettingsTile({ icon, tile, children }: { icon?: IconName; tile: string; children?: ReactNode }) {
+  const lit = currentLook() === LOOKS.standard;
+  return (
+    <View style={[styles.tile, { backgroundColor: tile }, lit && styles.tileLit]}>
+      {lit && <View style={[NO_TOUCH, styles.tileSheen]} />}
+      {children ?? (icon ? <Icon name={icon} size={16} color={color.onBrand} /> : null)}
+    </View>
+  );
+}
+
+/** The chevron at a row's end: pointing on, or down while what it opens is open. */
+export function RowChevron({ expanded }: { expanded?: boolean }) {
+  return (
+    <View style={expanded ? styles.chevronOpen : undefined}>
+      <Icon name="chevron" size={13} color={color.labelTertiary} />
+    </View>
+  );
+}
+
 export function Row({
   icon,
   tile = TILE.indigo,
@@ -251,6 +276,7 @@ export function Row({
   chevron = Boolean(onPress),
   destructive = false,
   toggle,
+  expanded,
 }: {
   icon?: IconName;
   tile?: string;
@@ -262,14 +288,12 @@ export function Row({
   destructive?: boolean;
   /** A switch on the right instead of a value. */
   toggle?: { value: boolean; onChange: (value: boolean) => void };
+  /** For a row that opens something under it: whether it's open (its chevron turns down). */
+  expanded?: boolean;
 }) {
   const body = (
     <View style={styles.row}>
-      {icon ? (
-        <View style={[styles.tile, { backgroundColor: tile }]}>
-          <Icon name={icon} size={16} color={color.onBrand} />
-        </View>
-      ) : null}
+      {icon ? <SettingsTile icon={icon} tile={tile} /> : null}
       <View style={styles.rowText}>
         <Txt variant="body" color={destructive ? color.dangerInk : color.label} numberOfLines={1}>
           {title}
@@ -286,17 +310,16 @@ export function Row({
         </Txt>
       ) : null}
       {toggle ? (
-        <Switch
+        <Toggle
           value={toggle.value}
           onValueChange={(next) => {
             haptic.select();
             toggle.onChange(next);
           }}
-          trackColor={{ true: '#34C759', false: undefined }}
           accessibilityLabel={title}
         />
       ) : null}
-      {chevron ? <Icon name="chevron" size={13} color={color.labelTertiary} /> : null}
+      {chevron ? <RowChevron expanded={expanded} /> : null}
     </View>
   );
   if (!onPress) return body;
@@ -307,6 +330,8 @@ export function Row({
         onPress();
       }}
       accessibilityRole="button"
+      accessibilityState={expanded === undefined ? undefined : { expanded }}
+      aria-expanded={expanded}
       style={({ pressed }) => pressed && { backgroundColor: color.fill }}
     >
       {body}
@@ -356,7 +381,17 @@ const styles = themed(() => StyleSheet.create({
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 16 + 29 + 12 },
 
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, minHeight: 50, paddingVertical: 8 },
-  tile: { width: 29, height: 29, borderRadius: 7, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
+  tile: { width: 29, height: 29, borderRadius: 7, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  tileLit: { boxShadow: 'inset 0px 0.5px 0px rgba(255, 255, 255, 0.4), inset 0px -0.5px 0px rgba(0, 0, 0, 0.12), 0px 1px 2px rgba(0, 0, 0, 0.12)' },
+  tileSheen: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    ...backgroundImage('linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 60%, rgba(0, 0, 0, 0.08) 100%)'),
+  },
+  chevronOpen: { transform: [{ rotate: '90deg' }] },
   rowText: { flex: 1, gap: 1 },
   value: { maxWidth: '45%' },
 

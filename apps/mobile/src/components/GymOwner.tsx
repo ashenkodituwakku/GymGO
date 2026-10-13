@@ -10,7 +10,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Pressable } from './motion';
 import { reportCurrency, scheduleFor, type GymRecord, type OwnerUpdatePayload, type Tri } from '@gymgo/domain';
 import { api, problemText, type GymOwnerView } from '@/lib/api';
@@ -20,6 +20,7 @@ import { moneyLabel } from '@/lib/places';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
+import { Toggle } from './Toggle';
 import { ChoiceChip, Fold, Input, PrimaryButton, Txt } from './ui';
 
 const KIND_LABEL: Record<OwnerUpdatePayload['kind'], string> = { visitor_hours: 'visitor hours', casual_price: 'casual visit price' };
@@ -218,7 +219,7 @@ function OwnerTools({ record, token, view, onSent }: { record: GymRecord; token:
             <Txt variant="subhead" style={styles.flex}>
               Open to visitors round the clock
             </Txt>
-            <Switch value={allDay} onValueChange={setAllDay} accessibilityLabel="Open to visitors round the clock" trackColor={{ true: color.brand, false: color.fill }} />
+            <Toggle value={allDay} onValueChange={setAllDay} accessibilityLabel="Open to visitors round the clock" tint={color.brand} />
           </View>
           {!allDay &&
             week.map((day, index) => (

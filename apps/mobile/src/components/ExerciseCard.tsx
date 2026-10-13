@@ -44,7 +44,10 @@ export function ExerciseCard({
   return (
     <View style={styles.exercise}>
       <View style={styles.top}>
-        <ExerciseTile exerciseId={exercise.id} size={58} moving delay={(index % 4) * 450} />
+        {/* A few reps as the plan opens, then still: a long plan's every icon
+            looping on and on, off screen too, kept a phone busy for nothing.
+            In a workout, the exercise you're on keeps moving (train.tsx). */}
+        <ExerciseTile exerciseId={exercise.id} size={58} moving delay={(index % 4) * 450} reps={PLAN_REPS} />
         <View style={styles.flex}>
           <Txt variant="eyebrow" color={color.brand} numberOfLines={1}>
             {`${String(index + 1).padStart(2, '0')}  ·  ${exercise.cardio ? 'FINISHER' : muscles.toUpperCase()}`}
@@ -73,6 +76,9 @@ export function ExerciseCard({
     </View>
   );
 }
+
+/** How many reps a plan's icons show before they rest. */
+const PLAN_REPS = 3;
 
 /** Sets, reps and rest side by side, the numbers large. */
 export function Specs({ sets, reps, restSeconds }: { sets: number; reps: string; restSeconds: number }) {

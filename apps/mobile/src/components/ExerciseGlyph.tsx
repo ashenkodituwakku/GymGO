@@ -120,6 +120,7 @@ export function ExerciseGlyph({
   accent,
   moving = false,
   delay = 0,
+  reps,
 }: {
   exerciseId: string;
   size: number;
@@ -129,6 +130,8 @@ export function ExerciseGlyph({
   moving?: boolean;
   /** Milliseconds before the first rep, so a list of them doesn't move in step. */
   delay?: number;
+  /** How many reps before it rests in its first pose; on and on if not given. */
+  reps?: number;
 }) {
   const paint: Paint = {
     ink: { fill: ink, opacity: 1 },
@@ -144,7 +147,7 @@ export function ExerciseGlyph({
     <Svg width={size} height={size} viewBox={`0 0 ${GLYPH_SIZE} ${GLYPH_SIZE}`} style={NO_TOUCH}>
       {/* Keyed by exercise, so a swapped-in one starts afresh with its own shapes. */}
       {animate ? (
-        <Moving key={exerciseId} exerciseId={exerciseId} paint={paint} delay={delay} />
+        <Moving key={exerciseId} exerciseId={exerciseId} paint={paint} delay={delay} reps={reps} />
       ) : (
         exerciseFrames(exerciseId)[0]!.map((shape, index) => <StillShape key={index} shape={shape} paint={paint} />)
       )}
@@ -152,16 +155,17 @@ export function ExerciseGlyph({
   );
 }
 
-function Moving({ exerciseId, paint, delay }: { exerciseId: string; paint: Paint; delay: number }) {
+function Moving({ exerciseId, paint, delay, reps }: { exerciseId: string; paint: Paint; delay: number; reps?: number }) {
   const progress = useSharedValue(0);
   useEffect(() => {
     const ease = { duration: HALF_REP, easing: EASE_IN_OUT };
     progress.value = withDelay(
       delay,
-      withRepeat(withSequence(withTiming(1, ease), withDelay(260, withTiming(0, ease)), withDelay(700, withTiming(0, { duration: 0 }))), -1),
+      // Each rep ends back at the first pose, so a set number of them rests there.
+      withRepeat(withSequence(withTiming(1, ease), withDelay(260, withTiming(0, ease)), withDelay(700, withTiming(0, { duration: 0 }))), reps ?? -1),
     );
     return () => cancelAnimation(progress);
-  }, [progress, delay]);
+  }, [progress, delay, reps]);
   return (
     <>
       {partsOf(exerciseId).map((part, index) =>
@@ -208,12 +212,15 @@ export function ExerciseTile({
   done = false,
   moving = false,
   delay = 0,
+  reps,
 }: {
   exerciseId: string;
   size?: number;
   done?: boolean;
   moving?: boolean;
   delay?: number;
+  /** See ExerciseGlyph: a few reps, then still. */
+  reps?: number;
 }) {
   const hue = done ? color.good : color.brand;
   const dark = currentTheme().scheme === 'dark';
@@ -244,6 +251,7 @@ export function ExerciseTile({
         accent={done ? color.goodInk : color.brand}
         moving={moving && !done}
         delay={delay}
+        reps={reps}
       />
     </View>
   );

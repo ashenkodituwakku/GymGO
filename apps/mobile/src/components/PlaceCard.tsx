@@ -28,7 +28,7 @@ import {
 import { TIER, accessLine, checkedAgo, gymDistanceLine, ratingShort, sourceLabel, timeLabel } from '@/lib/copy';
 import { shareGym } from '@/lib/actions';
 import { addressLines, callQuestions, depositLine, priceLine } from '@/lib/present';
-import { color, face, radius, space, themed, type } from '@/lib/theme';
+import { color, currentLook, face, radius, shadow, space, themed, type } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Icon, type IconName } from './Icon';
 import { StateGlyphRow } from './StateGlyphRow';
@@ -817,7 +817,8 @@ const styles = themed(() => StyleSheet.create({
   verdictIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   reasons: { gap: space[2] },
   // Laid on the sheet's glass like the facts above it (and on a gym's page, the same).
-  ask: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.cardGlass },
+  // In a solid look, where it's the card colour, the look's own edge (outline, bevel, glow) marks it out.
+  ask: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.cardGlass, ...(currentLook().solid ? shadow.card : null) },
   askHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginBottom: 2 },
   askCall: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
   askRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },

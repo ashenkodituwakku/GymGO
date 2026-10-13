@@ -10,7 +10,8 @@
  * Behind it, in the glass look, a glow of the accent that grows with your
  * Liquid Glass level (ambientGlow), for its frosted cards to be seen against:
  * on a view of its own around the scroll view, which Android's scroll view
- * can't draw a gradient on. The page's colour goes there too, under the glow.
+ * can't draw a gradient on. The page's style (its colour, under the glow)
+ * goes there too.
  *
  * When the colours change and the screen is drawn again (Redrawn), the page
  * goes back to where it was scrolled, rather than to the top.
@@ -54,13 +55,14 @@ export const PageScroll = forwardRef(function PageScroll(
     [measureRef, forwarded],
   );
   return (
-    <View style={[styles.fill, { backgroundColor: StyleSheet.flatten(style)?.backgroundColor }, ambientGlow()]}>
+    <View style={[styles.fill, style, ambientGlow()]}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         automaticallyAdjustKeyboardInsets
         keyboardShouldPersistTaps="handled"
         {...props}
-        style={[style, styles.clear]}
+        // The page's own style (its colour, its size) is on the view around it.
+        style={styles.inner}
         ref={setRef}
         onLayout={(event: LayoutChangeEvent) => {
           measure();
@@ -88,5 +90,5 @@ export const PageScroll = forwardRef(function PageScroll(
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  clear: { backgroundColor: 'transparent' },
+  inner: { flex: 1, backgroundColor: 'transparent' },
 });

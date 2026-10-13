@@ -11,7 +11,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { Linking, StyleSheet, View } from 'react-native';
 import { describeMembership, formatMoney, type GymRecord, type VisitOffer } from '@gymgo/domain';
 import { isChainEvidence } from '@gymgo/osm';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, currentLook, face, radius, shadow, space, themed } from '@/lib/theme';
 import { Fold, PrimaryButton, Txt } from './ui';
 import { Pressy } from './motion';
 
@@ -220,7 +220,7 @@ const styles = themed(() =>
     center: { textAlign: 'center' },
     bold: face('semibold'),
     // On the sheet's glass, as the place card's other cards are.
-    banner: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.cardGlass, alignItems: 'center' },
+    banner: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.cardGlass, alignItems: 'center', ...(currentLook().solid ? shadow.card : null) },
     pills: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space[2], alignSelf: 'stretch' },
     // Contents sit at the foot of each tile, so the prices in a row line up when one plan's name takes two lines.
     pill: { minWidth: 92, flexGrow: 1, flexBasis: 92, maxWidth: 160, alignItems: 'center', justifyContent: 'flex-end', gap: 1, paddingVertical: space[2], paddingHorizontal: space[2], borderRadius: radius.md, backgroundColor: color.brandTint },

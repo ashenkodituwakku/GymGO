@@ -25,7 +25,8 @@ import { useFocusEffect } from 'expo-router';
 import { Fragment, createContext, useCallback, useLayoutEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { ReduceMotion, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { glassLevel, subscribeGlass, subscribeTheme, themeVersion } from '@/lib/theme';
+import { subscribeTheme, themeVersion } from '@/lib/theme';
+import { useGlassLevel } from './Glass';
 import { EASE_SCREEN, EASE_SCREEN_CSS } from './motion';
 
 /** The theme's version, redrawing whoever reads it when the colours change. */
@@ -40,7 +41,7 @@ export function useThemeVersion(): number {
  * thrown away, so focus, scroll and whatever was picked all stay.
  */
 export function useGlassRedraw(): void {
-  useSyncExternalStore(subscribeGlass, glassLevel, glassLevel);
+  useGlassLevel();
 }
 
 /** How far a redrawn screen's page was scrolled, kept across the redraw. */

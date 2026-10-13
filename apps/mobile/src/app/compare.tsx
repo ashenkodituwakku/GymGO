@@ -5,7 +5,7 @@
  */
 
 import { Stack, useRouter } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { summariseWeek, type GymSearchResult, type Tri } from '@gymgo/domain';
@@ -44,9 +44,18 @@ export default function Compare() {
     [filters, data.records, asOf, data.ratings, compare, account.saved],
   );
   const gyms = compare.map((id) => byId.get(id)).filter((result): result is GymSearchResult => result !== undefined);
-  // Whether the rows have reached the pinned names and pass under them.
+  // Room for every gym across, at 150 points each, or it scrolls sideways.
+  const room = Math.min(width, 760) - space[4] * 2;
+  const fits = gyms.length * 150 <= room;
+  const tableWidth = Math.max(room, gyms.length * 150);
+  // Whether the rows have reached the pinned names and pass under them:
+  // scrolled past the line above the names (measured there, as a browser
+  // measures a pinned header inside a wrapper of its own).
   const [stuck, setStuck] = useState(false);
   const headAt = useRef(0);
+  const scrolled = useRef(0);
+  // Whether the names pin at all can change without a scroll (a window made wider or narrower).
+  useEffect(() => setStuck(fits && scrolled.current > headAt.current), [fits]);
 
   // Every row is worked out for your visit and place, so a cold link waits for your settings.
   if (!prefsReady) {
@@ -179,10 +188,6 @@ export default function Compare() {
     },
   ];
 
-  // Room for every gym across, at 150 points each, or it scrolls sideways.
-  const room = Math.min(width, 760) - space[4] * 2;
-  const fits = gyms.length * 150 <= room;
-  const tableWidth = Math.max(room, gyms.length * 150);
 
   const head = (
     <View style={styles.headRow}>
@@ -256,16 +261,23 @@ export default function Compare() {
         contentContainerStyle={styles.content}
         // When every gym fits across, their names stay at the top as the rows scroll under them.
         stickyHeaderIndices={fits ? [1] : undefined}
-        onScroll={fits ? (event) => setStuck(event.nativeEvent.contentOffset.y > headAt.current) : undefined}
+        onScroll={(event) => {
+          scrolled.current = event.nativeEvent.contentOffset.y;
+          if (fits) setStuck(scrolled.current > headAt.current);
+        }}
       >
-        <Txt variant="footnote" color={color.labelSecondary}>
-          For a visit {visitWhen(filters.visitMinuteOfDay, visitIsLater(filters))}. The cheapest confirmed price is in bold.
-        </Txt>
+        <View onLayout={(event) => (headAt.current = event.nativeEvent.layout.y + event.nativeEvent.layout.height)}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            For a visit {visitWhen(filters.visitMinuteOfDay, visitIsLater(filters))}. The cheapest confirmed price is in bold.
+          </Txt>
+        </View>
         {fits ? (
-          <View style={styles.stickyHead} onLayout={(event) => (headAt.current = event.nativeEvent.layout.y)}>
+          // A phone moves a pinned header's own style onto a wrapper, so the
+          // padding sits inside, where the glass behind reaches it.
+          <View style={styles.stickyHead}>
             {/* Nothing behind the names until rows pass under them (the page's glow shows), then frosted glass, or the page's grey when nothing is glass. */}
             {stuck && (solidSurfaces() ? <View style={[styles.stickyGlass, styles.stickySolid]} /> : <Glass kind="bar" style={styles.stickyGlass} />)}
-            {head}
+            <View style={styles.stickyPad}>{head}</View>
           </View>
         ) : (
           // Wider than the screen (four gyms on a phone): it scrolls sideways, names and all.
@@ -300,7 +312,8 @@ const styles = themed(() => StyleSheet.create({
   table: { gap: space[3], marginHorizontal: space[4] },
   tableFits: { gap: space[3] },
   // Covers the rows scrolling under the names, edge to edge of the column.
-  stickyHead: { paddingVertical: space[2], marginVertical: -space[2] },
+  stickyHead: { marginVertical: -space[2] },
+  stickyPad: { paddingVertical: space[2] },
   stickyGlass: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, borderRadius: radius.md },
   stickySolid: { backgroundColor: color.groupedBackground },
   upsell: { alignSelf: 'center', paddingVertical: space[2] },

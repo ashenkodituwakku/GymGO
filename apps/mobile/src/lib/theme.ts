@@ -16,7 +16,9 @@
  * `color` is one object that changes in place when the theme does (see
  * `applyTheme`), and style sheets are made with `themed()`, which remakes
  * them on the next read after a change. The app then redraws its screens
- * (app/_layout.tsx), so nothing needs to import a hook to follow the theme.
+ * (app/_layout.tsx), so nothing needs to import a hook to follow the colours.
+ * A change of Liquid Glass alone draws each screen again in place instead,
+ * through the one hook every screen calls (useGlassRedraw, Redrawn.tsx).
  */
 
 import { Platform, StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
@@ -324,22 +326,55 @@ export function plateAlpha(level: number, scheme: Scheme): number {
   return scheme === 'dark' ? levelAlpha(level, 0.84, 0.62) : levelAlpha(level, 0.82, 0.58);
 }
 
-/** The text drawn on cards, each kept at WCAG AA on them. */
-const PLATE_INKS = ['label', 'labelSecondary', 'brand', 'goodInk', 'maybeInk', 'noInk', 'dangerInk'] as const;
+/**
+ * The text drawn on cards and the contrast each keeps there: WCAG AA, and
+ * 3:1 for the faintest grey (chevrons, placeholders), as the looks keep it.
+ */
+export const PLATE_INKS = [
+  ['label', 4.5],
+  ['labelSecondary', 4.5],
+  ['brand', 4.5],
+  ['goodInk', 4.5],
+  ['maybeInk', 4.5],
+  ['noInk', 4.5],
+  ['dangerInk', 4.5],
+  ['labelTertiary', 3],
+] as const;
+
+/**
+ * The most of the accent that shows behind a card at a level: the page's
+ * glow and, on Home and Profile, the brighter one behind the title over it.
+ */
+export function glowPeak(level: number, scheme: Scheme): number {
+  const page = Math.max(0, ...glowPools(level, scheme).map((pool) => pool.opacity));
+  const title = cleanGlass(level) === 0 ? 0 : heroGlowStops(level, scheme).main;
+  return 1 - (1 - page) * (1 - title);
+}
 
 /**
  * How solid a card on the page is, as plateAlpha asks but never so clear
- * that its text drops below WCAG AA over the brightest of the glow behind
- * (a dark accent's, at 100%, took grey text under it).
+ * that its text drops below its contrast over the brightest of the glow
+ * behind (a dark accent's, at 100%, took grey text under it).
  */
 export function readablePlateAlpha(palette: Palette, level: number, scheme: Scheme): number {
-  const peak = Math.max(0, ...glowPools(level, scheme).map((pool) => pool.opacity));
-  const under = mix(palette.groupedBackground, palette.brand, peak);
+  const under = mix(palette.groupedBackground, palette.brand, glowPeak(level, scheme));
   for (let at = plateAlpha(level, scheme); at < 1; at += 0.02) {
     const behind = mix(under, palette.card, at);
-    if (PLATE_INKS.every((ink) => contrast(palette[ink], behind) >= 4.5)) return Math.round(at * 1000) / 1000;
+    if (PLATE_INKS.every(([ink, least]) => contrast(palette[ink], behind) >= least)) return Math.round(at * 1000) / 1000;
   }
   return 1;
+}
+
+/**
+ * The brighter glow behind a tab's title (Home, Profile; components/ios.tsx):
+ * its main pool's strength at the heart and halfway, and the side pool's.
+ * 1× at the default level, 1.5× at 100%.
+ */
+export function heroGlowStops(level: number, scheme: Scheme): { main: number; mainMid: number; side: number } {
+  const k = 0.5 + 0.5 * (cleanGlass(level) / GLASS_DEFAULT);
+  const dark = scheme === 'dark';
+  const at = (value: number) => Math.round(value * k * 1000) / 1000;
+  return { main: at(dark ? 0.3 : 0.15), mainMid: at(dark ? 0.1 : 0.05), side: at(dark ? 0.14 : 0.07) };
 }
 
 /** A word for a level, beside its percentage. */
@@ -396,20 +431,18 @@ export const glowStrength = (): number => (currentLook().solid ? 0 : cleanGlass(
  * a solid look or at 0% (null). Stronger in dark, where a faint one is lost.
  */
 export function ambientGlow(): ViewStyle | null {
-  if (glowStrength() === 0) return null;
-  // Made once per change of the theme, not each time a page draws.
-  if (glowMade.version !== styleVersion) {
-    // Round pools (an ellipse takes the page's shape: a band down a tall phone),
-    // eased out over three stops so no ring shows where one ends.
-    const layers = glowPools(current.glass, current.scheme).map(({ at, opacity: o, reach }) =>
-      `radial-gradient(circle at ${at}, ${alpha(color.brand, o)} 0%, ${alpha(color.brand, Math.round(o * 450) / 1000)} ${Math.round(reach * 45) / 100}%, ${alpha(color.brand, 0)} ${reach}%)`,
-    );
-    glowMade.version = styleVersion;
-    glowMade.style = backgroundImage(layers.join(', '));
-  }
-  return glowMade.style;
+  return glowStrength() === 0 ? null : glow.style;
 }
-const glowMade: { version: number; style: ViewStyle | null } = { version: -1, style: null };
+/** Made once per change of the theme, not each time a page draws. */
+const glow = themed(() => ({
+  // Round pools (an ellipse takes the page's shape: a band down a tall phone),
+  // eased out over three stops so no ring shows where one ends.
+  style: backgroundImage(
+    glowPools(current.glass, current.scheme)
+      .map(({ at, opacity: o, reach }) => `radial-gradient(circle at ${at}, ${alpha(color.brand, o)} 0%, ${alpha(color.brand, Math.round(o * 450) / 1000)} ${Math.round(reach * 45) / 100}%, ${alpha(color.brand, 0)} ${reach}%)`)
+      .join(', '),
+  ),
+}));
 
 /**
  * The glow's pools at a level (in a look with glass): where each is centred,

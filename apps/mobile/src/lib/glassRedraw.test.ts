@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 // Vite's import.meta.glob (declared in cssGradients.test.ts), for this test only.
 const screens = import.meta.glob(['../app/**/*.tsx', '!../app/**/_layout.tsx'], { query: '?raw', import: 'default', eager: true });
-const sources = import.meta.glob(['../**/*.tsx', '!../**/*.test.ts'], { query: '?raw', import: 'default', eager: true });
+const sources = import.meta.glob('../**/*.tsx', { query: '?raw', import: 'default', eager: true });
 
 describe('Liquid Glass, changed on its own', () => {
   it('found the screens', () => {

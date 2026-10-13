@@ -12,7 +12,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { LOOKS, PAGE_COLUMN, ambientGlow, backgroundImage, color, currentLook, currentTheme, face, glowStrength, radius, shadow, space, themed } from '@/lib/theme';
+import { LOOKS, PAGE_COLUMN, ambientGlow, backgroundImage, color, currentLook, currentTheme, face, heroGlowStops, radius, shadow, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
@@ -145,20 +145,19 @@ function TabScreenInner({
  */
 function HeroGlow() {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const dark = currentTheme().scheme === 'dark';
-  // 1 at the default; 1.5 at 100%.
-  const k = 0.5 + 0.5 * glowStrength();
-  const o = (value: number) => Math.round(value * k * 1000) / 1000;
+  // Its strengths live in the theme, which keeps the cards over it readable (glowPeak).
+  const { scheme, glass } = currentTheme();
+  const stops = heroGlowStops(glass, scheme);
   return (
     <Svg width="100%" height="100%">
       <Defs>
         <RadialGradient id={`gm${id}`} cx="82%" cy="6%" r="62%">
-          <Stop offset="0" stopColor={color.brand} stopOpacity={o(dark ? 0.3 : 0.15)} />
-          <Stop offset="0.55" stopColor={color.brand} stopOpacity={o(dark ? 0.1 : 0.05)} />
+          <Stop offset="0" stopColor={color.brand} stopOpacity={stops.main} />
+          <Stop offset="0.55" stopColor={color.brand} stopOpacity={stops.mainMid} />
           <Stop offset="1" stopColor={color.brand} stopOpacity={0} />
         </RadialGradient>
         <RadialGradient id={`gs${id}`} cx="8%" cy="30%" r="48%">
-          <Stop offset="0" stopColor={color.brand} stopOpacity={o(dark ? 0.14 : 0.07)} />
+          <Stop offset="0" stopColor={color.brand} stopOpacity={stops.side} />
           <Stop offset="1" stopColor={color.brand} stopOpacity={0} />
         </RadialGradient>
       </Defs>

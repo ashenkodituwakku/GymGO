@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // The font files are for the app's bundler, not for Node.
 vi.mock('./fonts', () => ({ BUNDLED_FACES: {} }));
 import { StyleSheet } from 'react-native';
-import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, applyTheme, color, glassAlpha, glassLevelName, glowPools, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
+import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, color, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
 import { mix } from './looks';
 
 const channel = (value: number) => (value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
@@ -51,21 +51,33 @@ describe('the colours', () => {
         for (const accent of ACCENT_IDS) {
           for (const level of [25, GLASS_DEFAULT, 75, 100]) {
             applyTheme(scheme, accent, look, level);
-            const peak = Math.max(...glowPools(level, scheme).map((pool) => pool.opacity));
             const see = Number(/rgba\(\d+, \d+, \d+, ([\d.]+)\)/.exec(color.plate)?.[1] ?? 1);
-            const behind = mix(mix(color.groupedBackground, color.brand, peak), color.card, see);
-            for (const text of ['label', 'labelSecondary', 'brand', 'goodInk', 'maybeInk', 'noInk', 'dangerInk'] as const) {
-              const ratio = contrast(color[text], behind);
-              if (ratio < 4.5) failures.push(`${look} ${scheme} ${accent} ${level}%: ${text} on a card is ${ratio.toFixed(2)}`);
+            const behind = mix(mix(color.groupedBackground, color.brand, glowPeak(level, scheme)), color.card, see);
+            for (const [ink, least] of PLATE_INKS) {
+              const ratio = contrast(color[ink], behind);
+              if (ratio < least) failures.push(`${look} ${scheme} ${accent} ${level}%: ${ink} on a card is ${ratio.toFixed(2)}`);
             }
           }
         }
       }
     }
     expect(failures).toEqual([]);
+  });
+
+  it('counts both glows behind a card: the page’s and the brighter one behind a title', () => {
+    for (const scheme of ['light', 'dark'] as const) {
+      const page = Math.max(...glowPools(100, scheme).map((pool) => pool.opacity));
+      expect(glowPeak(100, scheme)).toBeGreaterThan(page);
+      expect(glowPeak(100, scheme)).toBeGreaterThan(heroGlowStops(100, scheme).main);
+      expect(glowPeak(0, scheme)).toBe(0);
+    }
+    // The faintest grey is held to 3:1, the rest to AA.
+    expect(PLATE_INKS.find(([ink]) => ink === 'labelTertiary')?.[1]).toBe(3);
     // Still glass: as clear as asked wherever the text allows.
-    applyTheme('light', FREE_ACCENT, FREE_LOOK, 75);
-    expect(color.plate).toBe(`rgba(255, 255, 255, ${plateAlpha(75, 'light')})`);
+    applyTheme('light', FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT);
+    expect(color.plate).toBe(`rgba(255, 255, 255, ${plateAlpha(GLASS_DEFAULT, 'light')})`);
+    applyTheme('light', FREE_ACCENT, FREE_LOOK, 100);
+    expect(color.plate).not.toBe(color.card);
   });
 
   it('change corners and type in place with the look, and back', () => {

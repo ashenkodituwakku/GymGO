@@ -24,6 +24,8 @@ import { useApp } from '@/lib/app-state';
 import { countryName } from '@/lib/country';
 import { useThemeChoice } from '@/lib/themePrefs';
 import { useCollection } from '@/lib/useCollection';
+import { useTrainingLog } from '@/lib/useTraining';
+import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { Avatar } from '@/components/Avatar';
@@ -41,6 +43,8 @@ export default function Profile() {
   const themeChoice = useThemeChoice();
   const alwaysGoogle = useAlwaysShowGoogle();
   const collection = useCollection();
+  // The same copy of your log Home and the workout screen read: no extra request.
+  const log = useTrainingLog(account.token);
   const router = useRouter();
   const params = useLocalSearchParams<{ checkout?: string }>();
   const [about, setAbout] = useState<'facts' | 'sources' | 'copyright' | null>(null);
@@ -93,6 +97,14 @@ export default function Profile() {
       ? `Try Pro free for ${billing.trial.days} days`
       : `${billing.limits.savedGyms} saved gyms, compare ${billing.limits.compare}`;
 
+  // Your numbers at a glance, on your account card: workouts once your log has loaded.
+  const workouts = log.status === 'ready' ? log.sessions.length : null;
+  const meStats = [
+    ...(workouts !== null ? [{ value: String(workouts), label: workouts === 1 ? 'workout' : 'workouts' }] : []),
+    { value: String(account.saved.length), label: 'saved' },
+    { value: String(Object.keys(collection.gyms).length), label: 'collected' },
+  ];
+
   return (
     <TabScreen title="Profile" glow>
       {me ? (
@@ -100,23 +112,35 @@ export default function Profile() {
           scaleTo={0.98}
           onPress={() => router.push('/account')}
           accessibilityRole="button"
-          accessibilityLabel={`${me.displayName}, ${me.email}. Account settings`}
+          accessibilityLabel={`${me.displayName}, ${me.email}${moderator ? ', moderator' : ''}. ${meStats.map((stat) => `${stat.value} ${stat.label}`).join(', ')}. Account settings`}
           style={styles.meCard}
         >
-          <Avatar account={me} size={60} variant="title" ring={billing.isPro ? color.plateSolid : undefined} />
-          <View style={styles.flex}>
-            <Txt variant="title2" numberOfLines={1}>
-              {me.displayName}
-            </Txt>
-            <Txt variant="subhead" color={color.labelSecondary} numberOfLines={1}>
-              {me.email}
-              {moderator ? ' · Moderator' : ''}
-            </Txt>
-            <Txt variant="footnote" color={color.brand} style={face('medium')}>
-              {billing.isPro ? 'GymGO Pro · Account settings' : 'Account settings'}
-            </Txt>
+          <View style={styles.meTop}>
+            <Avatar account={me} size={64} variant="title" ring={billing.isPro ? color.plateSolid : undefined} />
+            <View style={styles.flex}>
+              <Txt variant="title2" numberOfLines={1}>
+                {me.displayName}
+              </Txt>
+              <Txt variant="subhead" color={color.labelSecondary} numberOfLines={1}>
+                {me.email}
+              </Txt>
+              <View style={styles.badges}>
+                <Badge label={billing.isPro ? 'PRO' : 'FREE'} strong={billing.isPro} />
+                {moderator && <Badge label="MODERATOR" />}
+              </View>
+            </View>
+            <Icon name="chevron" size={14} color={color.labelTertiary} />
           </View>
-          <Icon name="chevron" size={14} color={color.labelTertiary} />
+          <View style={styles.meStats}>
+            {meStats.map((stat, at) => (
+              <View key={stat.label} style={[styles.meStat, at > 0 && styles.meStatLine]}>
+                <Txt variant="figure">{stat.value}</Txt>
+                <Txt variant="caption" color={color.labelSecondary}>
+                  {stat.label}
+                </Txt>
+              </View>
+            ))}
+          </View>
         </Pressy>
       ) : account.state === 'unreachable' ? (
         <ServerAwayCard />
@@ -138,19 +162,12 @@ export default function Profile() {
         <Row icon="timer" tile={TILE.red} title="Interval timer" subtitle="Tabata and EMOM, or your own with Pro" onPress={() => router.push('/timer')} />
       </Group>
 
-      <Group header="GymGO Pro">
-        <Row
-          icon="crown"
-          tile={TILE.indigo}
-          title={billing.isPro ? 'GymGO Pro' : 'Free plan'}
-          subtitle={proLine}
-          value={billing.isPro ? undefined : 'Upgrade'}
-          onPress={() => openPro()}
-        />
-        {billing.isPro && me && CAN_BUY_HERE && billing.subscription?.manageable !== false && (
-          <Row icon="settings" tile={TILE.grey} title="Manage subscription" onPress={() => void manage()} />
-        )}
-      </Group>
+      <ProCard isPro={billing.isPro} line={proLine} trial={Boolean(billing.trial)} onOpen={() => openPro()} />
+      {billing.isPro && me && CAN_BUY_HERE && billing.subscription?.manageable !== false && (
+        <Group>
+          <Row icon="settings" tile={TILE.grey} title="Manage subscription" subtitle="Change plan, payment or cancel" onPress={() => void manage()} />
+        </Group>
+      )}
 
       <Group header="Your gyms">
         <Row icon="saved" tile={TILE.orange} title="Saved" value={String(account.saved.length)} onPress={() => router.navigate('/saved')} />
@@ -298,6 +315,61 @@ export default function Profile() {
   );
 }
 
+/** A small capital label on your account card: your plan, or Moderator. */
+function Badge({ label, strong = false }: { label: string; strong?: boolean }) {
+  return (
+    <View style={[styles.badge, strong && styles.badgeStrong, strong && accentGlow(color.brandFill, true)]}>
+      {strong && <BrandFill round={radius.pill} />}
+      <Txt variant="eyebrow" color={strong ? color.onBrand : color.labelSecondary}>
+        {label}
+      </Txt>
+    </View>
+  );
+}
+
+/**
+ * Your plan, as a card of the accent: Pro and when it renews, or what Free
+ * covers and a way to see Pro.
+ */
+function ProCard({ isPro, line, trial, onOpen }: { isPro: boolean; line: string; trial: boolean; onOpen: () => void }) {
+  return (
+    <Pressy
+      scaleTo={0.98}
+      onPress={onOpen}
+      accessibilityRole="button"
+      accessibilityLabel={isPro ? `GymGO Pro. ${line}` : `Free plan: ${line}. See GymGO Pro`}
+      style={[styles.proCard, accentGlow(color.brandFill)]}
+    >
+      <BrandFill round={radius.lg} />
+      <Sheen round={radius.lg} />
+      <View style={styles.proTop}>
+        <View style={styles.proMark}>
+          <Icon name="crown" size={20} color={color.onBrand} />
+        </View>
+        <View style={styles.flex}>
+          <Txt variant="eyebrow" color={color.onBrandSoft}>
+            {isPro ? 'YOUR PLAN' : 'YOUR PLAN · FREE'}
+          </Txt>
+          <Txt variant="title2" color={color.onBrand} numberOfLines={1}>
+            {isPro ? 'GymGO Pro' : 'Go further with Pro'}
+          </Txt>
+        </View>
+        {isPro && <Icon name="chevron" size={14} color={color.onBrandSoft} />}
+      </View>
+      <Txt variant="subhead" color={color.onBrandSoft}>
+        {line}
+      </Txt>
+      {!isPro && (
+        <View style={styles.proCta}>
+          <Txt variant="subhead" color={color.brandFill} style={face('semibold')}>
+            {trial ? 'Start the free trial' : 'See what’s in Pro'}
+          </Txt>
+        </View>
+      )}
+    </Pressy>
+  );
+}
+
 /** Signed out: Apple and Google where they're set up, then email. */
 /** On the demo-only website (lib/demoOnly.ts), in place of signing in: what this is, and what's coming. */
 function ComingSoonCard() {
@@ -394,12 +466,15 @@ function CopyrightExplainer({ onNotice }: { onNotice: () => void }) {
 function MeCardSkeleton() {
   return (
     <Skeleton label="Loading your account" style={styles.meCard}>
-      <Bone width={60} height={60} round={30} />
-      <View style={styles.meLines}>
-        <Bone width="55%" height={20} />
-        <Bone width="72%" height={14} />
-        <Bone width="38%" height={12} />
+      <View style={styles.meTop}>
+        <Bone width={64} height={64} round={32} />
+        <View style={styles.meLines}>
+          <Bone width="55%" height={20} />
+          <Bone width="72%" height={14} />
+          <Bone width="22%" height={16} round={8} />
+        </View>
       </View>
+      <Bone width="100%" height={58} round={radius.md} />
     </Skeleton>
   );
 }
@@ -484,15 +559,24 @@ const styles = themed(() => StyleSheet.create({
   copyrightButton: { paddingLeft: 16 + 29 + 12, paddingRight: 16 },
   colophon: { alignItems: 'center', gap: space[1], paddingTop: space[2], paddingBottom: space[4] },
   meCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
+    gap: space[4],
     padding: space[4],
     borderRadius: radius.lg,
     borderCurve: 'continuous',
     backgroundColor: color.plate,
     ...shadow.plate,
   },
+  meTop: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: space[1] + 2, marginTop: space[1] + 2 },
+  badge: { paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill, backgroundColor: color.fill, overflow: 'hidden' },
+  badgeStrong: { backgroundColor: color.brandFill },
+  meStats: { flexDirection: 'row', paddingVertical: space[2] + 2, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.fill },
+  meStat: { flex: 1, alignItems: 'center', gap: 1 },
+  meStatLine: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: color.separator },
+  proCard: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.brandFill },
+  proTop: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  proMark: { width: 40, height: 40, borderRadius: Math.min(12, radius.sm + 2), borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.onBrandFaint },
+  proCta: { alignSelf: 'flex-start', marginTop: space[1], paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.onBrand },
   meLines: { flex: 1, gap: 8 },
   newTerms: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
   signInCard: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },

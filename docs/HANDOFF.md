@@ -101,6 +101,12 @@ mobile 337, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Settings menus, second pass** (13 Oct, the owner asked again):
+  Profile's account card shows workouts (from the shared training log,
+  `useTrainingLog`, so no extra request), saved and collected, with a
+  PRO/FREE badge; `ProCard` in `app/(tabs)/profile.tsx` replaces the plain
+  GymGO Pro row; `Group` headings are semibold (Account's and Country's
+  own headings match); Country's rows have inset dividers.
 - **Settings menus made more premium, and their bugs fixed** (13 Oct,
   the owner asked). Switches on the web and Android are now the iPhone's
   pill (`components/Toggle.tsx`; the system switch stays on iPhone): React

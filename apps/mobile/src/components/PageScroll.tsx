@@ -74,7 +74,8 @@ export const PageScroll = forwardRef(function PageScroll(
           onScroll?.(event);
         }}
         onContentSizeChange={(width: number, height: number) => {
-          if (!placed.current) {
+          // Once there's a page to scroll: one drawn again out of sight measures nothing at first.
+          if (!placed.current && height > 0) {
             placed.current = true;
             if (memory && memory.y > 0) node.current?.scrollTo({ y: memory.y, animated: false });
           }

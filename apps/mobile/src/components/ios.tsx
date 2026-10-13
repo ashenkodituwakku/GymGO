@@ -4,10 +4,10 @@
  * coloured icon tile, a value and a chevron.
  */
 
-import { useId, useState, type ReactNode } from 'react';
+import { Children, isValidElement, useContext, useId, useRef, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from './motion';
-import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Animated, { interpolate, runOnJS, useAnimatedReaction, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
@@ -16,6 +16,8 @@ import { LOOKS, PAGE_COLUMN, ambientGlow, backgroundImage, color, currentLook, c
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
+import { contrast } from '@/lib/looks';
+import { ScrollMemory } from './Redrawn';
 import { Toggle } from './Toggle';
 import { Txt } from './ui';
 
@@ -43,6 +45,9 @@ export function TabScreen(props: {
 
 /** How tall the compact bar is, below the status bar. */
 const BAR = 44;
+/** Where the large title ends, before it's laid out: far enough down that the bar stays hidden. */
+const UNMEASURED = 100000;
+const WEB = Platform.OS === 'web';
 
 function TabScreenInner({
   title,
@@ -66,15 +71,42 @@ function TabScreenInner({
   const bottom = clearance + overhang;
   const top = insets.top + (Platform.OS === 'web' ? space[6] : space[3]);
   // Where the large title ends: once it has scrolled under the bar, the
-  // compact title fades in on a strip of glass, as in iOS.
-  const [titleBottom, setTitleBottom] = useState(96);
+  // compact title fades in on a strip of glass, as in iOS. Unknown until
+  // the title is laid out, and the bar stays hidden till then (a guess of
+  // 96 showed it over the large title on a phone with a tall status bar).
+  const [titleBottom, setTitleBottom] = useState(UNMEASURED);
   const scrollY = useSharedValue(0);
-  const onScroll = useAnimatedScrollHandler((event) => {
-    scrollY.value = event.contentOffset.y;
+  // Where the tab was scrolled, kept across a change of colours (Redrawn
+  // draws the tab again from scratch; it used to land back at the top).
+  const memory = useContext(ScrollMemory);
+  const scroller = useAnimatedRef<Animated.ScrollView>();
+  const placed = useRef(false);
+  const remember = (y: number) => {
+    if (memory) memory.y = y;
+  };
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+      // A browser's wheel never ends a drag: keep its place as it goes (this runs on its one thread anyway).
+      if (WEB) runOnJS(remember)(event.contentOffset.y);
+    },
+    // Where it comes to rest is enough to come back to.
+    onEndDrag: (event) => runOnJS(remember)(event.contentOffset.y),
+    onMomentumEnd: (event) => runOnJS(remember)(event.contentOffset.y),
   });
   const barStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [titleBottom - insets.top - BAR - 8, titleBottom - insets.top - BAR + 12], [0, 1], 'clamp'),
   }));
+  // Shown, the bar takes its own taps, as iOS's does: they went through to
+  // the row hidden under it.
+  const [barShown, setBarShown] = useState(false);
+  useAnimatedReaction(
+    () => scrollY.value > titleBottom - insets.top - BAR,
+    (shown, before) => {
+      if (shown !== before) runOnJS(setBarShown)(shown);
+    },
+    [titleBottom, insets.top],
+  );
   // Only the glass look glows (ambientGlow is null in the others, which have
   // grounds of their own: pixels, bevels, tones). Behind every tab, a glow
   // that stays put, as strong as your Liquid Glass level; behind the title
@@ -93,15 +125,23 @@ function TabScreenInner({
         </Animated.View>
       )}
       <Animated.ScrollView
-        style={[styles.screen, ambient && styles.clear]}
+        ref={scroller}
+        style={[styles.screen, ambient && styles.clear, Platform.OS === 'web' && ({ scrollPaddingTop: insets.top + BAR } as object)]}
         onScroll={onScroll}
         scrollEventThrottle={16}
+        onContentSizeChange={(_width: number, height: number) => {
+          // Once there's a page to scroll (a tab drawn again out of sight has none at first).
+          if (placed.current || height <= 0) return;
+          placed.current = true;
+          if (memory && memory.y > 0) scroller.current?.scrollTo({ y: memory.y, animated: false });
+        }}
         // The page scrolls under the floating tab bar, so it makes its own room
         // for it rather than letting iOS guess at insets.
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={[styles.content, gap !== undefined && { gap }, { paddingTop: top, paddingBottom: bottom + space[8] }]}
-        // The scroll bar stops above the tab bar too.
+        // The scroll bar stops above the tab bar too (the clearance already counts the home indicator).
         scrollIndicatorInsets={{ bottom }}
+        automaticallyAdjustsScrollIndicatorInsets={false}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.titleRow} onLayout={(event) => setTitleBottom(event.nativeEvent.layout.y + event.nativeEvent.layout.height)}>
@@ -119,7 +159,7 @@ function TabScreenInner({
         </View>
         {children}
       </Animated.ScrollView>
-      <Animated.View style={[styles.bar, { height: insets.top + BAR }, barStyle, { pointerEvents: 'none' }]}>
+      <Animated.View style={[styles.bar, { height: insets.top + BAR }, barStyle, { pointerEvents: barShown ? 'auto' : 'none' }]}>
         <Glass kind="bar" style={StyleSheet.absoluteFill} />
         {/* The large title is the heading; this is the same words, for the eye only. */}
         <View
@@ -191,8 +231,9 @@ export function SectionHeader({
       <Txt variant="title2" style={styles.flex}>
         {title}
       </Txt>
+      {/* A full 44 points to tap, in a browser too (where hitSlop does nothing), without moving the words. */}
       {action && onAction ? (
-        <Pressable onPress={onAction} hitSlop={8} accessibilityRole="button">
+        <Pressable onPress={onAction} accessibilityRole="button" style={styles.sectionAction}>
           <Txt variant="body" color={color.brand}>
             {action}
           </Txt>
@@ -204,17 +245,21 @@ export function SectionHeader({
 
 /** An inset grouped list section, as in Settings. */
 export function Group({ header, footer, children }: { header?: string; footer?: string; children: ReactNode }) {
-  const rows = (Array.isArray(children) ? children : [children]).filter(Boolean);
+  // Each row keeps the key of where it's written, so one coming or going
+  // (Offline gyms, an explainer) doesn't start the rows after it again: the
+  // switches below flickered and lost focus when Demo mode was turned on.
+  const rows = Children.toArray(children);
   return (
     <View style={styles.group}>
       {header ? (
-        <Txt variant="footnote" color={color.labelSecondary} style={styles.groupHeader}>
-          {header.toUpperCase()}
+        // Shown in capitals, read as written (VoiceOver spelt out "GYMGO"), and a heading to jump between.
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.groupHeader} accessibilityRole="header">
+          {header}
         </Txt>
       ) : null}
       <View style={styles.groupBody}>
         {rows.map((row, index) => (
-          <View key={index}>
+          <View key={isValidElement(row) && row.key != null ? row.key : index}>
             {index > 0 && <View style={styles.separator} />}
             {row}
           </View>
@@ -248,8 +293,8 @@ export const TILE = themed(() => ({
  */
 export function SettingsTile({ icon, tile, children }: { icon?: IconName; tile: string; children?: ReactNode }) {
   const lit = currentLook() === LOOKS.standard;
-  // A white tile (Google's) on a white card needs an edge to be a tile at all.
-  const white = tile.toUpperCase() === '#FFFFFF';
+  // A tile about the card's own colour (Google's white one on a white card) needs an edge to be a tile at all.
+  const white = contrast(tile, color.plateSolid) < 1.3;
   return (
     <View style={[styles.tile, { backgroundColor: tile }, lit && styles.tileLit, white && styles.tileEdge]}>
       {children ?? (icon ? <Icon name={icon} size={16} color={color.onBrand} /> : null)}
@@ -320,8 +365,9 @@ export function Row({
         <Toggle
           value={toggle.value}
           onValueChange={(next) => {
-            haptic.select();
             toggle.onChange(next);
+            // After the change: the Haptics switch buzzed going off and was silent coming on.
+            haptic.select();
           }}
           accessibilityLabel={title}
         />
@@ -329,16 +375,19 @@ export function Row({
       {chevron ? <RowChevron expanded={expanded} /> : null}
     </View>
   );
-  if (!onPress) return body;
+  // Always the same kind of view, pressable or not: a row whose press came
+  // and went (Offline gyms, as it starts saving) was rebuilt and lost focus.
   return (
     <Pressable
+      disabled={!onPress}
       onPress={() => {
+        if (!onPress) return;
         haptic.tap();
         onPress();
       }}
-      accessibilityRole="button"
-      aria-expanded={expanded}
-      style={({ pressed }) => pressed && { backgroundColor: color.fill }}
+      accessibilityRole={onPress ? 'button' : undefined}
+      aria-expanded={onPress ? expanded : undefined}
+      style={({ pressed }) => pressed && onPress && { backgroundColor: color.fill }}
     >
       {body}
     </Pressable>
@@ -353,7 +402,8 @@ export function SearchButton({ placeholder, onPress }: { placeholder: string; on
         haptic.tap();
         onPress();
       }}
-      accessibilityRole="search"
+      // It takes you to the search: a button, not a search field to type in.
+      accessibilityRole="button"
       accessibilityLabel={placeholder || 'Search'}
       style={({ pressed }) => [styles.search, pressed && { opacity: 0.75 }]}
     >
@@ -378,10 +428,11 @@ const styles = themed(() => StyleSheet.create({
 
   sectionHeader: { flexDirection: 'row', alignItems: 'baseline', gap: space[2], marginBottom: -space[2] },
   sectionIcon: { alignSelf: 'center' },
+  sectionAction: { paddingVertical: 11, paddingHorizontal: space[2], marginVertical: -11, marginHorizontal: -space[2] },
 
   group: { gap: 6 },
   // Semibold and opened up a little, so a section's name reads as a heading over its card.
-  groupHeader: { paddingHorizontal: space[4], letterSpacing: 0.5, ...face('semibold') },
+  groupHeader: { paddingHorizontal: space[4], letterSpacing: 0.5, textTransform: 'uppercase', ...face('semibold') },
   groupFooter: { paddingHorizontal: space[4] },
   // The same corners as the app's other cards, so a list sits flush with the card above it.
   groupBody: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },

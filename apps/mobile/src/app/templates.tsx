@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon, type IconName } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -128,6 +129,13 @@ function TemplateCard({
           <Chip key={option.name} label={index === next ? `${option.name} (next)` : option.name} selected={day === index} onPress={() => setDay(index)} />
         ))}
       </View>
+      {!open && (
+        <View style={styles.strip} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+          {shown.items.map((item) => (
+            <ExerciseTile key={item.exerciseId} exerciseId={item.exerciseId} size={38} />
+          ))}
+        </View>
+      )}
       <Pressable onPress={() => setOpen(!open)} accessibilityRole="button" accessibilityLabel={open ? 'Hide the exercises' : `Show the exercises for ${shown.name}`} style={styles.toggle}>
         <Txt variant="footnote" color={color.brand} style={face('semibold')}>
           {open ? 'Hide exercises' : `${shown.items.length} exercises`}
@@ -138,7 +146,8 @@ function TemplateCard({
         <View style={styles.list}>
           {shown.items.map((item) => (
             <View key={item.exerciseId} style={styles.row}>
-              <Txt variant="subhead" style={styles.flex} numberOfLines={1}>
+              <ExerciseTile exerciseId={item.exerciseId} size={40} />
+              <Txt variant="subhead" style={styles.flex} numberOfLines={2}>
                 {exerciseName(item.exerciseId)}
               </Txt>
               <Txt variant="footnote" color={color.labelSecondary}>
@@ -169,8 +178,9 @@ const styles = themed(() =>
     flex: { flex: 1, minWidth: 0 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     toggle: { flexDirection: 'row', alignItems: 'center', gap: space[1], alignSelf: 'flex-start' },
+    strip: { flexDirection: 'row', flexWrap: 'wrap', gap: space[1] + 2 },
     list: { gap: 2, padding: space[2], borderRadius: radius.md, backgroundColor: color.fill },
-    row: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 6, paddingHorizontal: space[2] },
+    row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: 5, paddingHorizontal: space[1] },
     note: { paddingHorizontal: space[4], textAlign: 'center' },
   }),
 );

@@ -4,6 +4,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Share, StyleSheet, View } from 'react-native';
 import { ExerciseCard } from '@/components/ExerciseCard';
+import { PlanSummary } from '@/components/PlanSummary';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { LinesSkeleton, ListSkeleton } from '@/components/Skeleton';
@@ -84,19 +85,14 @@ export default function SavedWorkoutScreen() {
     <>
       <Stack.Screen options={{ title: '' }} />
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-        <View style={styles.intro}>
-          <Txt variant="largeTitle">{saved.name}</Txt>
-          <Txt variant="subhead" color={color.labelSecondary}>
-            {[goal, saved.plan.gymName && !saved.name.includes(saved.plan.gymName) ? saved.plan.gymName : null, `saved ${new Date(saved.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}`]
-              .filter(Boolean)
-              .join(' · ')}
-          </Txt>
-          {saved.plan.muscles.length > 0 && (
-            <Txt variant="footnote" color={color.labelSecondary}>
-              {saved.plan.muscles.map((muscle) => muscleLabel(muscle as Muscle)).join(' · ')}
-            </Txt>
-          )}
-        </View>
+        <PlanSummary
+          eyebrow={`SAVED ${new Date(saved.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }).toUpperCase()}`}
+          title={saved.name}
+          detail={[goal, saved.plan.gymName && !saved.name.includes(saved.plan.gymName) ? saved.plan.gymName : null, ...saved.plan.muscles.slice(0, 4).map((muscle) => muscleLabel(muscle as Muscle))]
+            .filter(Boolean)
+            .join(' · ')}
+          items={workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, restSeconds: item.restSeconds, cardio: item.exercise.cardio }))}
+        />
         {workout.items.map((item, index) => (
           <ExerciseCard
             key={`${item.exercise.id}-${index}`}
@@ -160,7 +156,6 @@ const styles = themed(() => StyleSheet.create({
   center: { textAlign: 'center' },
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
-  intro: { gap: 2, marginBottom: space[1] },
   buttons: { gap: space[2], marginTop: space[2] },
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground, borderRadius: radius.xl },
   loading: { flex: 1, gap: space[4], padding: space[4], backgroundColor: color.groupedBackground },

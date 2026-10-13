@@ -17,6 +17,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Chip, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ExerciseCard } from '@/components/ExerciseCard';
+import { PlanSummary } from '@/components/PlanSummary';
 import { startSession, useActiveSession } from '@/lib/activeSession';
 import { ApiError, api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -256,7 +257,12 @@ export default function WorkoutScreen() {
           />
         ) : (
           <View style={styles.result}>
-            <Txt variant="title2">Your workout</Txt>
+            <PlanSummary
+              eyebrow="YOUR WORKOUT"
+              title={muscles.length ? `${muscles.slice(0, 3).map(muscleLabel).join(', ')}${muscles.length > 3 ? ` +${muscles.length - 3}` : ''}` : 'No muscles picked'}
+              detail={[GOALS.find((item) => item.id === goal)?.label, gymName ?? (effectiveMode === 'typical' ? 'Typical gym' : null)].filter(Boolean).join(' · ')}
+              items={workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, restSeconds: item.restSeconds, cardio: item.exercise.cardio }))}
+            />
             {/* Starting is what you came for, so it's the one big button; the
                 rest sit in a row under it that fits a phone's width. */}
             {workout.items.length > 0 && (

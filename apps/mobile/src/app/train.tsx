@@ -61,6 +61,7 @@ import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWork
 import { useTrainingLog } from '@/lib/useTraining';
 import { EXERCISES, TYPICAL_KIT, exerciseName, knownKit, swapFor, type Kit } from '@/lib/workout';
 import { SwapButton } from '@/components/ExerciseCard';
+import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { shareText } from '@/lib/actions';
 import { workoutShareText } from '@/lib/insights';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -129,6 +130,7 @@ function NoWorkout({ token }: { token: string | null }) {
                   accessibilityLabel={`Start ${title}, ${details.get(workout.id) ?? ''}`}
                   style={({ pressed }) => [styles.savedRow, index > 0 && styles.savedLine, pressed && { backgroundColor: color.fill }]}
                 >
+                  <ExerciseTile exerciseId={workout.plan.items[0]?.exerciseId ?? ''} size={42} />
                   <View style={styles.flex}>
                     <Txt variant="headline" numberOfLines={1}>
                       {title}
@@ -183,7 +185,8 @@ export default function TrainScreen() {
 
   const restEndsAt = session?.restEndsAt ?? null;
   // The alert for a locked phone follows the rest: set when it starts or moves, gone when it's skipped or the workout ends.
-  const upNext = session?.items.find((item) => item.sets.some((set) => !set.done))?.exerciseId ?? null;
+  const upNextIndex = session?.items.findIndex((item) => item.sets.some((set) => !set.done)) ?? -1;
+  const upNext = session?.items[upNextIndex]?.exerciseId ?? null;
   useEffect(() => {
     if (restEndsAt) void scheduleRestAlert(restEndsAt, upNext ? exerciseName(upNext) : null);
     else void cancelRestAlert();
@@ -329,6 +332,7 @@ export default function TrainScreen() {
             onRest={startRest}
             swapTo={item.sets.some((set) => set.done) ? null : (swapFor(session.items, index, available)?.name ?? null)}
             onSwap={swapExercise}
+            current={index === upNextIndex}
           />
         ))}
 
@@ -377,6 +381,7 @@ const ExerciseLog = memo(function ExerciseLog({
   onRest,
   swapTo,
   onSwap,
+  current,
 }: {
   index: number;
   item: ActiveItem;
@@ -390,6 +395,8 @@ const ExerciseLog = memo(function ExerciseLog({
   /** What Swap would put here: only before any of its sets is ticked. */
   swapTo: string | null;
   onSwap: (index: number) => void;
+  /** The exercise you're on (the first with a set to tick): its icon moves. */
+  current: boolean;
 }) {
   // Memoised, so it doesn't redraw with the screen: Liquid Glass reaches its card itself.
   useGlassRedraw();
@@ -429,13 +436,13 @@ const ExerciseLog = memo(function ExerciseLog({
   return (
     <View style={styles.card}>
       <View style={styles.cardHead}>
-        <View style={styles.number}>
-          <Txt variant="footnote" color={color.brand} style={face('semibold')}>
-            {index + 1}
-          </Txt>
-        </View>
+        {/* Turns green once every set is ticked. */}
+        <ExerciseTile exerciseId={item.exerciseId} size={52} done={item.sets.length > 0 && item.sets.every((set) => set.done)} moving={current} />
         {/* The name gets the card's full width; Swap and Plates sit on the line under it. */}
         <View style={styles.flex}>
+          <Txt variant="eyebrow" color={color.brand} numberOfLines={1}>
+            {`${String(index + 1).padStart(2, '0')}  ·  ${item.sets.filter((set) => set.done).length} OF ${item.sets.length} DONE`}
+          </Txt>
           <Txt variant="headline">{name}</Txt>
           <View style={styles.metaRow}>
             <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
@@ -495,9 +502,12 @@ const ExerciseLog = memo(function ExerciseLog({
           <Txt variant="caption" color={color.labelTertiary} style={styles.inputCol}>
             {bodyWeight ? 'ADDED' : unit.toUpperCase()}
           </Txt>
+          <View style={styles.times} />
           <Txt variant="caption" color={color.labelTertiary} style={styles.inputCol}>
             REPS
           </Txt>
+          <View style={styles.flex} />
+          <View style={styles.tickCol} />
         </View>
       )}
 
@@ -522,7 +532,7 @@ const ExerciseLog = memo(function ExerciseLog({
                 style={[styles.input, set.done && styles.inputDone]}
                 accessibilityLabel={`${name}, set ${at + 1} weight in ${unit}${bodyWeight ? ', blank for body weight' : ''}`}
               />
-              <Txt variant="subhead" color={color.labelTertiary}>
+              <Txt variant="subhead" color={color.labelTertiary} style={styles.times}>
                 ×
               </Txt>
               <Input
@@ -859,24 +869,27 @@ const styles = themed(() => StyleSheet.create({
   seeAll: { alignSelf: 'flex-end', paddingHorizontal: space[4] },
   unitRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   unitSwitch: { width: 140 },
-  card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[2], ...shadow.plate },
-  cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
+  card: { backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[2], ...shadow.plate },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginBottom: space[1] },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: 2 },
   barTrack: { height: 6, borderRadius: 3, backgroundColor: color.fill, overflow: 'hidden', marginTop: space[2] },
   barFill: { height: '100%', borderRadius: 3, backgroundColor: color.brandFill },
-  number: { width: 28, height: 28, borderRadius: 14, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
   platesButton: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[2], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
   guides: { gap: space[1] },
   target: { flexDirection: 'row', alignItems: 'flex-start', gap: space[1], padding: space[2], borderRadius: radius.sm, backgroundColor: color.goodTint },
   proHint: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingVertical: 2 },
   setHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: space[1] },
-  setCol: { width: 44 },
-  inputCol: { width: 76, textAlign: 'center' },
-  setRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 2, borderRadius: radius.sm },
-  setDone: { opacity: 0.85 },
+  setCol: { width: 36 },
+  inputCol: { flex: 1, maxWidth: 112, textAlign: 'center' },
+  times: { width: 10, textAlign: 'center' },
+  tickCol: { width: 30 },
+  setRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 3, paddingHorizontal: space[2], marginHorizontal: -space[2], borderRadius: radius.md, borderCurve: 'continuous' },
+  setDone: { backgroundColor: alpha(color.good, 0.08) },
   input: {
-    width: 64,
-    height: 40,
+    flex: 1,
+    minWidth: 0,
+    maxWidth: 112,
+    height: 42,
     borderRadius: radius.sm,
     backgroundColor: color.fill,
     textAlign: 'center',

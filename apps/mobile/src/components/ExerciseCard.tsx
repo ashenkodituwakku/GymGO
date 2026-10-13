@@ -1,14 +1,16 @@
 /**
- * One exercise in a workout: what to do, how much, and whether the gym is
- * known to have the kit for it. Used by the builder and by saved workouts.
- * In the builder it has a Swap button for another move for the same muscle.
+ * One exercise in a workout: its icon, what to do and how much, and whether
+ * the gym is known to have the kit for it. Used by the builder and by saved
+ * workouts. In the builder it has a Swap button for another move for the
+ * same muscle.
  */
 
 import { StyleSheet, View } from 'react-native';
 import { Icon } from './Icon';
 import { Pressable } from './motion';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { KIT_LABEL, muscleLabel, type Exercise, type Kit } from '@/lib/workout';
+import { ExerciseTile } from './ExerciseGlyph';
 import { PIcon } from './PIcon';
 import { Txt } from './ui';
 
@@ -37,37 +39,59 @@ export function ExerciseCard({
   swapTo?: string | null;
   onSwap?: () => void;
 }) {
+  const muscles = exercise.primary.map(muscleLabel).join(' · ');
   return (
     <View style={styles.exercise}>
-      <View style={styles.number}>
-        <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
-          {index + 1}
-        </Txt>
-      </View>
-      <View style={styles.flex}>
-        <View style={styles.titleRow}>
-          <Txt variant="headline" style={styles.flex}>
-            {exercise.name}
+      <View style={styles.top}>
+        <ExerciseTile exerciseId={exercise.id} size={58} moving delay={(index % 4) * 450} />
+        <View style={styles.flex}>
+          <Txt variant="eyebrow" color={color.brand} numberOfLines={1}>
+            {`${String(index + 1).padStart(2, '0')}  ·  ${exercise.cardio ? 'FINISHER' : muscles.toUpperCase()}`}
           </Txt>
-          {onSwap && swapTo && <SwapButton name={exercise.name} swapTo={swapTo} onSwap={onSwap} />}
+          <View style={styles.titleRow}>
+            <Txt variant="headline" style={styles.flex}>
+              {exercise.name}
+            </Txt>
+            {onSwap && swapTo && <SwapButton name={exercise.name} swapTo={swapTo} onSwap={onSwap} />}
+          </View>
         </View>
-        <Txt variant="subhead" color={color.brand} style={face('semibold')}>
-          {exercise.cardio ? 'Finisher' : `${sets} × ${reps} · rest ${restSeconds} s`}
-        </Txt>
-        <Txt variant="footnote" color={color.labelSecondary}>
+      </View>
+      {exercise.cardio ? (
+        <Txt variant="subhead" color={color.label} style={[styles.finisher, face('medium')]}>
           {exercise.cue}
         </Txt>
-        <View style={styles.meta}>
-          {exercise.primary.map((muscle) => (
-            <View key={muscle} style={styles.tag}>
-              <Txt variant="caption" color={color.brand}>
-                {muscleLabel(muscle)}
-              </Txt>
-            </View>
-          ))}
-          <KitUsed uses={uses} confirmed={confirmed} forGym={forGym} />
+      ) : (
+        <>
+          <Specs sets={sets} reps={reps} restSeconds={restSeconds} />
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {exercise.cue}
+          </Txt>
+        </>
+      )}
+      <KitUsed uses={uses} confirmed={confirmed} forGym={forGym} />
+    </View>
+  );
+}
+
+/** Sets, reps and rest side by side, the numbers large. */
+export function Specs({ sets, reps, restSeconds }: { sets: number; reps: string; restSeconds: number }) {
+  const cells = [
+    { value: String(sets), label: sets === 1 ? 'set' : 'sets' },
+    { value: reps, label: 'reps' },
+    { value: restSeconds ? `${restSeconds} s` : '—', label: 'rest' },
+  ];
+  return (
+    <View style={styles.specs} accessible accessibilityLabel={`${sets} ${cells[0]!.label} of ${reps} reps${restSeconds ? `, ${restSeconds} seconds rest` : ''}`}>
+      {cells.map((cell, at) => (
+        <View key={cell.label} style={[styles.spec, at > 0 && styles.specLine]}>
+          <Txt variant="headline" style={styles.specValue} numberOfLines={1}>
+            {cell.value}
+          </Txt>
+          <Txt variant="caption" color={color.labelSecondary}>
+            {cell.label}
+          </Txt>
         </View>
-      </View>
+      ))}
     </View>
   );
 }
@@ -117,25 +141,17 @@ function KitUsed({ uses, confirmed, forGym }: { uses: Kit[]; confirmed: boolean;
 }
 
 const styles = themed(() => StyleSheet.create({
-  flex: { flex: 1 },
+  flex: { flex: 1, minWidth: 0 },
   exercise: {
-    flexDirection: 'row',
     gap: space[3],
     padding: space[4],
     borderRadius: radius.xl,
     borderCurve: 'continuous',
     backgroundColor: color.plate,
+    ...shadow.plate,
   },
-  number: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: color.brandFill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2] },
+  top: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2], marginTop: 2 },
   swap: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -145,7 +161,10 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: color.brandTint,
   },
-  meta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], marginTop: space[2] },
+  specs: { flexDirection: 'row', borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.fill, paddingVertical: space[2] },
+  spec: { flex: 1, alignItems: 'center', gap: 1, paddingHorizontal: space[1] },
+  specLine: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: color.separator },
+  specValue: { fontVariant: ['tabular-nums'] },
+  finisher: { paddingVertical: space[2], paddingHorizontal: space[3], borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.fill, overflow: 'hidden' },
   kit: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  tag: { paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.brandTint },
 }));

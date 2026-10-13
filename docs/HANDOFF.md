@@ -51,7 +51,7 @@ the branch the owner's launcher pulls.
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
 `npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 225,
-mobile 304, domain 167 and web 39 tests, all passing.
+mobile 337, domain 167 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 57, React Native 0.86, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -101,6 +101,18 @@ mobile 304, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Workout section made more premium, with GymGO's own exercise icons**
+  (13 Oct, the owner asked, then asked for them to move). Every exercise
+  has an icon drawn in code (`src/lib/exerciseGlyphs.ts`): one figure,
+  posed by limb angles, with its kit in the accent. Each pose has a `move`
+  (the other end of the rep); `exerciseFrames` draws 9 points through the
+  rep and `components/ExerciseGlyph.tsx` eases between them with
+  Reanimated on the UI thread. Icons move in plan cards and on the
+  exercise you're on in a workout, and stay still with Reduce Motion.
+  A new exercise needs an entry in `DRAW` (a test fails without one).
+  Also: `components/PlanSummary.tsx` (a plan's head card: exercises, sets,
+  about how long, from `src/lib/workoutStats.ts`), `ExerciseCard` with
+  sets, reps and rest side by side, wider set rows in a workout.
 - Owner-approved round (8 Oct): Swap one exercise (plan and workout;
   `swapFor` in `src/lib/workout.ts`), Next to collect on Collection
   (`nextToCollect` in `src/lib/collection.ts`), Share your week

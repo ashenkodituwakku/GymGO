@@ -7,6 +7,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
+import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -117,9 +118,7 @@ export default function MyWorkouts() {
                     accessibilityLabel={`${title}, ${details.get(workout.id) ?? ''}`}
                     style={({ pressed }) => [styles.open, pressed && styles.pressed]}
                   >
-                    <View style={styles.rowIcon}>
-                      <Icon name={workout.plan.goal === 'endurance' ? 'bolt' : 'workout'} size={18} color={color.onBrand} />
-                    </View>
+                    <ExerciseTile exerciseId={workout.plan.items[0]?.exerciseId ?? ''} size={46} />
                     <View style={styles.flex}>
                       <Txt variant="headline" numberOfLines={2}>
                         {title}
@@ -175,5 +174,4 @@ const styles = themed(() => StyleSheet.create({
   startPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[3], paddingVertical: 7, borderRadius: 999, backgroundColor: color.brandTint },
   footer: { paddingHorizontal: space[4] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
-  rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
 }));

@@ -89,6 +89,14 @@ function focusQuietly(input: { focus: () => void } | null) {
   box.focus({ preventScroll: true });
 }
 
+/**
+ * The last request from another tab that Explore acted on (Near me, a gym to
+ * open). Kept outside the screen: a change of colours draws it again from
+ * scratch, and it acted on the same request again (found you by GPS once
+ * more, reopened the gym).
+ */
+const handled = { nonce: 0 };
+
 export default function ExploreTab() {
   useGlassRedraw();
   // Its own safe area provider, so the sheets measure from this screen.
@@ -134,6 +142,7 @@ function MapScreen() {
   // The area on screen, and whether "Search this area" is reading the map.
   const [viewBox, setViewBox] = useState<BoundingBox | null>(null);
   const [areaBusy, setAreaBusy] = useState(false);
+  const areaAsking = useRef(false);
   const areaPress = usePressScale(0.94);
 
   const map = useRef<GymMapHandle>(null);
@@ -261,6 +270,11 @@ function MapScreen() {
   const mayExploreRef = useRef(mayExplore);
   mayExploreRef.current = mayExplore;
   const homeRef = useRef(prefs.country);
+  // The search as it is now, for an answer that comes back late: if the
+  // search moved meanwhile (you picked a place, found yourself), the answer
+  // is left, rather than taking you back to where you asked from.
+  const latestFilters = useRef(filters);
+  latestFilters.current = filters;
   homeRef.current = prefs.country;
 
   /**
@@ -268,9 +282,11 @@ function MapScreen() {
    * map's gyms there wait for Search this area, like anywhere else.
    */
   const findPlace = useCallback(async (text: string, orGym?: string) => {
+    const from = latestFilters.current.centre;
     try {
       // Your own country's match first: "10001" is Manhattan to an American, not Cáceres.
       const places = (await api.places(text)).places;
+      if (latestFilters.current.centre !== from) return;
       const home = homeRef.current;
       const ranked = [...places.filter((place) => place.countryCode === home), ...places.filter((place) => place.countryCode !== home)];
       const found = placeForEnter(text, ranked, orGym !== undefined);
@@ -280,7 +296,8 @@ function MapScreen() {
         setNotice(`Couldn’t find a place called “${text}”. Try ${placeWords(home)}.`);
         return;
       }
-      setQuery('');
+      // Only what you asked for: anything typed since stays.
+      setQuery((now) => (now === text ? '' : now));
       // Another country, without Pro: the list says what Pro adds.
       if (!mayExploreRef.current(found.countryCode)) haptic.warn();
       const where = { centre: { lat: found.lat, lng: found.lng }, placeName: found.name, timezone: found.timezone, countryCode: found.countryCode };
@@ -291,6 +308,7 @@ function MapScreen() {
       map.current?.flyTo({ lat: found.lat, lng: found.lng }, found.kind === 'city' ? 0.1 : 0.045);
       mainSheet.current?.snapToIndex(1);
     } catch (error) {
+      if (latestFilters.current.centre !== from) return;
       if (orGym) return openGymRef.current(orGym);
       haptic.warn();
       setNotice(problemText(error, EMPTY.outOfArea));
@@ -373,16 +391,20 @@ function MapScreen() {
    */
   const searchBox = useCallback(
     async (box: BoundingBox) => {
-      if (areaBusy) return;
+      // Once per tap: a second tap before the screen redraws doesn't ask again.
+      if (areaAsking.current) return;
       // Free covers the country you chose; until there is one, choose it first.
       if (!prefs.country) {
         router.push('/country');
         return;
       }
       haptic.tap();
+      areaAsking.current = true;
       setAreaBusy(true);
+      const from = latestFilters.current.centre;
       try {
         const answer = await data.searchArea(box, prefs.country, account.token);
+        if (latestFilters.current.centre !== from) return;
         // What's loaded already, plus what's new (a gym found before counts once).
         const fresh = new Set(answer.gyms.map((record) => record.location.id));
         const inBox = [...answer.gyms, ...data.records.filter((record) => !fresh.has(record.location.id) && isWithinBox(record.location.position, box))];
@@ -390,6 +412,9 @@ function MapScreen() {
         const first = inBox[0]?.location;
         const area = answer.where ?? (first ? { timezone: first.timezone, countryCode: first.address.countryCode } : filters);
         setFilters((current) => inArea(current, box, nameForArea(inBox, box), { timezone: area.timezone, countryCode: area.countryCode }));
+        // A gym's card opened while it searched goes away (rather than staying up, empty).
+        if (wide) setPanel(null);
+        else placeSheet.current?.dismiss();
         setSelectedId(null);
         if (inBox.length === 0) {
           haptic.warn();
@@ -406,6 +431,7 @@ function MapScreen() {
         }
         if (!wide && sheetIndex.current === 0) mainSheet.current?.snapToIndex(1);
       } catch (error) {
+        if (latestFilters.current.centre !== from) return;
         haptic.warn();
         if (error instanceof ApiError && error.code === 'pro_required' && typeof error.detail.countryCode === 'string') {
           // Another country, without Pro: the list says what Pro adds, and the way back.
@@ -416,10 +442,11 @@ function MapScreen() {
           setNotice(problemText(error, 'Couldn’t search this area. Try again?'));
         }
       } finally {
+        areaAsking.current = false;
         setAreaBusy(false);
       }
     },
-    [areaBusy, data, filters, setFilters, wide, prefs.country, account.token],
+    [data, filters, setFilters, wide, prefs.country, account.token],
   );
 
   // Where the search has no gyms yet (a town with none built in, or where
@@ -484,7 +511,8 @@ function MapScreen() {
         setFilters((current) =>
           moveTo(current, {
             centre: record.location.position,
-            placeName: record.location.address.suburb,
+            // A map gym can have no suburb: "this area" then, never "Near ".
+            placeName: record.location.address.suburb || THIS_AREA,
             timezone: record.location.timezone,
             countryCode: record.location.address.countryCode,
           }),
@@ -497,7 +525,8 @@ function MapScreen() {
         setPanel('place');
       } else {
         placeSheet.current?.present();
-        if (restoreIndex.current === null) restoreIndex.current = sheetIndex.current;
+        // Where the list was, to come back to: its resting height if it was still on its way back (−1).
+        if (restoreIndex.current === null) restoreIndex.current = sheetIndex.current >= 0 ? sheetIndex.current : 1;
         // The card takes the results' place, as in Maps: the list steps
         // aside rather than showing through the card's glass.
         mainSheet.current?.close();
@@ -619,12 +648,9 @@ function MapScreen() {
 
   // --- Requests from the other tabs ------------------------------------------
 
-  const latestFilters = useRef(filters);
-  latestFilters.current = filters;
-  const handledRequest = useRef(0);
   useEffect(() => {
-    if (!exploreRequest || exploreRequest.nonce === handledRequest.current) return;
-    handledRequest.current = exploreRequest.nonce;
+    if (!exploreRequest || exploreRequest.nonce === handled.nonce) return;
+    handled.nonce = exploreRequest.nonce;
     if (exploreRequest.recentre) map.current?.flyTo(latestFilters.current.centre, 0.045);
     if (exploreRequest.notice) setNotice(exploreRequest.notice);
     if (exploreRequest.gymId) openGym(exploreRequest.gymId);

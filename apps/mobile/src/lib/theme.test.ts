@@ -36,6 +36,8 @@ describe('the colours', () => {
         }
         const onFill = contrast(color.onBrand, color.brandFill);
         if (onFill < 4.5) failures.push(`${look} ${scheme} ${accent}: white on the brand fill is ${onFill.toFixed(2)}`);
+        const onSegment = contrast(color.label, color.segmentRaised);
+        if (onSegment < 4.5) failures.push(`${look} ${scheme} ${accent}: text on a chosen segment is ${onSegment.toFixed(2)}`);
       }
     }
     }

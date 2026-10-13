@@ -184,14 +184,7 @@ export default function Profile() {
         </Group>
       )}
 
-      <Group
-        header="Settings"
-        footer={
-          Platform.OS === 'web'
-            ? 'Sounds play once you’ve tapped the page.'
-            : 'Sounds follow your phone’s silent switch, and play over your music without stopping it.'
-        }
-      >
+      <Group header="Settings" footer={Platform.OS === 'web' ? undefined : 'Sounds follow your phone’s silent switch, and play over your music without stopping it.'}>
         <Row
           icon="globe"
           tile={TILE.blue}
@@ -220,7 +213,11 @@ export default function Profile() {
           icon="sound"
           tile={TILE.orange}
           title="Sounds"
-          subtitle="Card reveals, check-ins, new records and the timers"
+          subtitle={
+            Platform.OS === 'web'
+              ? 'Card reveals, check-ins, new records and the timers, once you’ve tapped the page'
+              : 'Card reveals, check-ins, new records and the timers'
+          }
           toggle={{ value: prefs.sounds, onChange: (value) => setPref('sounds', value) }}
         />
         <Row

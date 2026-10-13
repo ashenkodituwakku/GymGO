@@ -62,6 +62,12 @@ const BASE = {
     plateSolid: '#FFFFFF',
     /** A control or card raised above a card (segment thumbs, chips). */
     cardRaised: '#FFFFFF',
+    /**
+     * A segmented picker's chosen segment: the raised colour, lifted towards
+     * white in dark (as the iPhone's is), where it was hardly lighter than
+     * its track (paletteFor).
+     */
+    segmentRaised: '#FFFFFF',
     /** A card laid on glass, so the glass shows a little. */
     cardGlass: 'rgba(255, 255, 255, 0.86)',
     fill: 'rgba(118, 118, 128, 0.12)',
@@ -124,6 +130,7 @@ const BASE = {
     plate: '#1C1C1E',
     plateSolid: '#1C1C1E',
     cardRaised: '#3A3A3C',
+    segmentRaised: '#3A3A3C',
     cardGlass: 'rgba(44, 44, 46, 0.82)',
     fill: 'rgba(118, 118, 128, 0.24)',
     fillStrong: 'rgba(118, 118, 128, 0.36)',
@@ -354,10 +361,13 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
   const see = LOOKS[look].solid || cleanGlass(glass) === 0 ? 1 : readablePlateAlpha(palette, glass, scheme);
   palette.plate = see === 1 ? palette.card : alpha(palette.card, see);
   palette.plateSolid = mix(palette.groupedBackground, palette.card, see);
+  const lift = (raised: string) => (scheme === 'dark' ? mix(raised, '#FFFFFF', 0.18) : raised);
+  palette.segmentRaised = lift(palette.cardRaised);
   if (!surfaces) return palette;
   Object.assign(palette, surfaces);
   palette.plate = palette.card;
   palette.plateSolid = palette.card;
+  palette.segmentRaised = lift(palette.cardRaised);
   const behind = [surfaces.card, surfaces.groupedBackground, surfaces.background];
   for (const key of TEXT_KEYS) palette[key] = readable(palette[key], behind, scheme, key === 'labelTertiary' ? 3 : 4.6);
   return palette;

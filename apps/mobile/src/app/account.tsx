@@ -14,7 +14,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { useDeleteCollection } from '@/components/CollectionData';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { GoogleMark, SocialButtons, useSignInProviders, type TokenHandler } from '@/components/SocialSignIn';
-import { RowChevron, SettingsTile, TILE } from '@/components/ios';
+import { ROW, ROW_RULE_INSET, RowChevron, SettingsTile, TILE } from '@/components/ios';
 import { Input, PrimaryButton, Txt } from '@/components/ui';
 import { ApiError, OfflineError, api, type SignInMethods, type SignInProvider } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -263,12 +263,13 @@ export default function AccountScreen() {
         />
         <Line
           icon="trophy"
-          tile={TILE.orange}
-          chevron={false}
+          tile={TILE.red}
+          // It opens a warning below, before anything is deleted.
+          open={deleteCollection.opened}
           title="Delete collection data"
           value={deleteCollection.gyms === 0 ? 'Empty' : `${deleteCollection.gyms} card${deleteCollection.gyms === 1 ? '' : 's'}`}
           first={false}
-          onPress={deleteCollection.gyms === 0 || deleteCollection.opened ? undefined : deleteCollection.open}
+          onPress={deleteCollection.gyms === 0 ? undefined : deleteCollection.toggle}
         />
         <Line icon="signOut" tile={TILE.grey} title="Sign out" first={false} chevron={false} onPress={() => void account.signOut()} />
       </Section>
@@ -376,13 +377,12 @@ function Line({
   return (
     <Pressable
       onPress={() => {
-        haptic.select();
+        haptic.tap();
         onPress();
       }}
       accessibilityRole="button"
-      accessibilityState={open === undefined ? undefined : { expanded: open }}
       aria-expanded={open}
-      style={({ pressed }) => [style, pressed && { backgroundColor: color.pressed }]}
+      style={({ pressed }) => [style, pressed && { backgroundColor: color.fill }]}
     >
       {body}
     </Pressable>
@@ -499,8 +499,9 @@ const styles = themed(() =>
     sectionTitle: { marginLeft: space[4], marginBottom: space[2], letterSpacing: 0.4 },
     group: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', ...shadow.plate },
     footer: { marginHorizontal: space[4], marginTop: space[2] },
-    line: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 50, paddingHorizontal: 16, paddingVertical: 10 },
-    rule: { position: 'absolute', top: 0, right: 0, left: 16 + 29 + 12, height: StyleSheet.hairlineWidth, backgroundColor: color.separator },
+    // Profile's row measures (components/ios.tsx), so the two lists match.
+    line: { flexDirection: 'row', alignItems: 'center', gap: ROW.gap, minHeight: ROW.minHeight, paddingHorizontal: ROW.paddingHorizontal, paddingVertical: ROW.paddingVertical },
+    rule: { position: 'absolute', top: 0, right: 0, left: ROW_RULE_INSET, height: StyleSheet.hairlineWidth, backgroundColor: color.separator },
     value: { maxWidth: '55%' },
     form: { gap: space[2], paddingHorizontal: space[4], paddingBottom: space[4] },
     input: {

@@ -8,13 +8,16 @@
  * off, a white thumb that glides across on a spring.
  *
  * A screen reader hears a switch and whether it's on; in a browser, Space
- * and Enter flip it from the keyboard.
+ * and Enter flip it from the keyboard. Its grey when off is the look's own,
+ * and it takes taps across a full 44 points.
  */
 
 import { useEffect } from 'react';
-import { Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Switch } from 'react-native';
 import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { currentTheme } from '@/lib/theme';
+import { mix } from '@/lib/looks';
+import { switchKey } from '@/lib/switchKeys';
+import { HIT, color } from '@/lib/theme';
 import { SETTLE } from './motion';
 
 /** The iPhone's switch green, the same in every accent: on is on. */
@@ -30,14 +33,11 @@ export function Toggle({
   onValueChange,
   accessibilityLabel,
   disabled = false,
-  tint = SWITCH_ON,
 }: {
   value: boolean;
   onValueChange: (value: boolean) => void;
   accessibilityLabel: string;
   disabled?: boolean;
-  /** The track's colour when on. */
-  tint?: string;
 }) {
   if (Platform.OS === 'ios') {
     return (
@@ -45,12 +45,12 @@ export function Toggle({
         value={value}
         onValueChange={onValueChange}
         disabled={disabled}
-        trackColor={{ true: tint, false: undefined }}
+        trackColor={{ true: SWITCH_ON, false: undefined }}
         accessibilityLabel={accessibilityLabel}
       />
     );
   }
-  return <DrawnToggle value={value} onValueChange={onValueChange} accessibilityLabel={accessibilityLabel} disabled={disabled} tint={tint} />;
+  return <DrawnToggle value={value} onValueChange={onValueChange} accessibilityLabel={accessibilityLabel} disabled={disabled} />;
 }
 
 function DrawnToggle({
@@ -58,30 +58,28 @@ function DrawnToggle({
   onValueChange,
   accessibilityLabel,
   disabled,
-  tint,
 }: {
   value: boolean;
   onValueChange: (value: boolean) => void;
   accessibilityLabel: string;
   disabled: boolean;
-  tint: string;
 }) {
   const on = useSharedValue(value ? 1 : 0);
   useEffect(() => {
     on.value = withSpring(value ? 1 : 0, SETTLE);
   }, [value, on]);
-  const off = currentTheme().scheme === 'dark' ? OFF_DARK : OFF_LIGHT;
-  const track = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(on.value, [0, 1], [off, tint]) }));
+  // Off: a grey of the look's own card and text, a step darker than the card (light) or lighter (dark).
+  const off = mix(color.card, color.label, OFF_STEP);
+  const track = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(on.value, [0, 1], [off, SWITCH_ON]) }));
   const thumb = useAnimatedStyle(() => ({ transform: [{ translateX: on.value * TRAVEL }] }));
   const flip = () => {
     if (!disabled) onValueChange(!value);
   };
-  // In a browser, Enter presses it already; Space is a switch's own key.
+  // In a browser: Space flips it once per press (see lib/switchKeys.ts).
   const keys = {
-    onKeyDown: (event: { key?: string; preventDefault?: () => void }) => {
-      if (event.key !== ' ' && event.key !== 'Spacebar') return;
-      event.preventDefault?.();
-      flip();
+    onKeyDown: (event: { key?: string; repeat?: boolean; preventDefault?: () => void }) => {
+      if (event.key === ' ' || event.key === 'Spacebar') event.preventDefault?.();
+      if (switchKey(event) === 'flip') flip();
     },
   };
   return (
@@ -91,30 +89,28 @@ function DrawnToggle({
       disabled={disabled}
       role="switch"
       aria-checked={value}
-      accessibilityRole="switch"
-      accessibilityState={{ checked: value, disabled }}
+      aria-disabled={disabled}
       accessibilityLabel={accessibilityLabel}
-      hitSlop={6}
+      // A full 44-point target round the 31-point pill (hitSlop does nothing in a browser).
       style={[styles.press, disabled && styles.disabled]}
     >
       <Animated.View style={[styles.track, track]}>
-        <View style={styles.trackShade} />
         <Animated.View style={[styles.thumb, thumb]} />
       </Animated.View>
     </Pressable>
   );
 }
 
-/** The track when off: the iPhone's own greys. */
-const OFF_LIGHT = '#E3E3E8';
-const OFF_DARK = '#39393D';
+/** How far the off track is from the card towards the text colour. */
+const OFF_STEP = 0.17;
+/** Padding that makes the target 44 points tall, taken back off the layout. */
+const PAD = { v: (HIT - TRACK.height) / 2, h: 4 };
 
 const styles = StyleSheet.create({
-  press: { borderRadius: TRACK.height / 2 },
+  press: { paddingVertical: PAD.v, paddingHorizontal: PAD.h, marginVertical: -PAD.v, marginHorizontal: -PAD.h, borderRadius: HIT / 2 },
   disabled: { opacity: 0.45 },
-  track: { width: TRACK.width, height: TRACK.height, borderRadius: TRACK.height / 2, justifyContent: 'center' },
   // A faint inner shadow along the top: the track is set into the card.
-  trackShade: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, borderRadius: TRACK.height / 2, boxShadow: 'inset 0px 1px 2px rgba(0, 0, 0, 0.08)' },
+  track: { width: TRACK.width, height: TRACK.height, borderRadius: TRACK.height / 2, justifyContent: 'center', boxShadow: 'inset 0px 1px 2px rgba(0, 0, 0, 0.08)' },
   thumb: {
     position: 'absolute',
     left: INSET,

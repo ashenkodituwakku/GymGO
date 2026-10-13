@@ -219,7 +219,7 @@ function OwnerTools({ record, token, view, onSent }: { record: GymRecord; token:
             <Txt variant="subhead" style={styles.flex}>
               Open to visitors round the clock
             </Txt>
-            <Toggle value={allDay} onValueChange={setAllDay} accessibilityLabel="Open to visitors round the clock" tint={color.brand} />
+            <Toggle value={allDay} onValueChange={setAllDay} accessibilityLabel="Open to visitors round the clock" />
           </View>
           {!allDay &&
             week.map((day, index) => (

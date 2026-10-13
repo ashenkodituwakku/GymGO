@@ -73,7 +73,7 @@ export function CollectionSyncLine() {
  * Deleting the whole collection: `open` shows the warning, `warning` is the
  * warning itself (null while closed), to put where the page wants it.
  */
-export function useDeleteCollection(): { open: () => void; opened: boolean; warning: ReactElement | null; gyms: number; visits: number } {
+export function useDeleteCollection(): { open: () => void; toggle: () => void; opened: boolean; warning: ReactElement | null; gyms: number; visits: number } {
   const { gyms, reset } = useCollection();
   const { signedIn } = useSignedIn();
   const [step, setStep] = useState<'closed' | 'warning' | 'deleting'>('closed');
@@ -123,7 +123,12 @@ export function useDeleteCollection(): { open: () => void; opened: boolean; warn
         <PrimaryButton label="Keep my collection" tone="quiet" disabled={step === 'deleting'} onPress={close} />
       </View>
     );
-  return { open: () => setStep('warning'), opened: step !== 'closed', warning, gyms: stats.gyms, visits: stats.visits };
+  // Toggle: the row that opened the warning closes it again (never mid-delete).
+  const toggle = () => {
+    if (step === 'closed') setStep('warning');
+    else if (step === 'warning') close();
+  };
+  return { open: () => setStep('warning'), toggle, opened: step !== 'closed', warning, gyms: stats.gyms, visits: stats.visits };
 }
 
 const styles = themed(() =>

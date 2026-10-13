@@ -22,7 +22,7 @@ import {
 import { color, dropShadow, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { localBudget, moneyLabel, radiusChoices, tracksPrices } from '@/lib/places';
-import { Chip, PrimaryButton, Txt, segmentRaised } from './ui';
+import { Chip, PrimaryButton, Txt } from './ui';
 
 export function FiltersContent({
   filters,
@@ -278,7 +278,7 @@ const styles = themed(() => StyleSheet.create({
   },
   segment: { flex: 1, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: 7 },
   segmentSelected: {
-    backgroundColor: segmentRaised(),
+    backgroundColor: color.segmentRaised,
     ...dropShadow(0.1, 4, 1, 2),
   },
   segmentText: face('medium'),

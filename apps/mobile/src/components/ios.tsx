@@ -12,7 +12,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { LOOKS, NO_TOUCH, PAGE_COLUMN, ambientGlow, backgroundImage, color, currentLook, currentTheme, glowStrength, radius, shadow, space, themed } from '@/lib/theme';
+import { LOOKS, PAGE_COLUMN, ambientGlow, backgroundImage, color, currentLook, currentTheme, glowStrength, radius, shadow, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
@@ -249,13 +249,19 @@ export const TILE = themed(() => ({
  */
 export function SettingsTile({ icon, tile, children }: { icon?: IconName; tile: string; children?: ReactNode }) {
   const lit = currentLook() === LOOKS.standard;
+  // A white tile (Google's) on a white card needs an edge to be a tile at all.
+  const white = tile.toUpperCase() === '#FFFFFF';
   return (
-    <View style={[styles.tile, { backgroundColor: tile }, lit && styles.tileLit]}>
-      {lit && <View style={[NO_TOUCH, styles.tileSheen]} />}
+    <View style={[styles.tile, { backgroundColor: tile }, lit && styles.tileLit, white && styles.tileEdge]}>
       {children ?? (icon ? <Icon name={icon} size={16} color={color.onBrand} /> : null)}
     </View>
   );
 }
+
+/** A settings row's measures, shared by Profile's rows and Account's own. */
+export const ROW = { gap: 12, paddingHorizontal: 16, paddingVertical: 8, minHeight: 50, tile: 29 };
+/** Where the rule between rows starts: at the text, past the tile. */
+export const ROW_RULE_INSET = ROW.paddingHorizontal + ROW.tile + ROW.gap;
 
 /** The chevron at a row's end: pointing on, or down while what it opens is open. */
 export function RowChevron({ expanded }: { expanded?: boolean }) {
@@ -298,8 +304,9 @@ export function Row({
         <Txt variant="body" color={destructive ? color.dangerInk : color.label} numberOfLines={1}>
           {title}
         </Txt>
+        {/* Wraps as far as it needs: cut short, an explanation loses its point. */}
         {subtitle ? (
-          <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
+          <Txt variant="footnote" color={color.labelSecondary}>
             {subtitle}
           </Txt>
         ) : null}
@@ -330,7 +337,6 @@ export function Row({
         onPress();
       }}
       accessibilityRole="button"
-      accessibilityState={expanded === undefined ? undefined : { expanded }}
       aria-expanded={expanded}
       style={({ pressed }) => pressed && { backgroundColor: color.fill }}
     >
@@ -378,19 +384,16 @@ const styles = themed(() => StyleSheet.create({
   groupFooter: { paddingHorizontal: space[4] },
   // The same corners as the app's other cards, so a list sits flush with the card above it.
   groupBody: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 16 + 29 + 12 },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: ROW_RULE_INSET },
 
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, minHeight: 50, paddingVertical: 8 },
-  tile: { width: 29, height: 29, borderRadius: 7, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  tileLit: { boxShadow: 'inset 0px 0.5px 0px rgba(255, 255, 255, 0.4), inset 0px -0.5px 0px rgba(0, 0, 0, 0.12), 0px 1px 2px rgba(0, 0, 0, 0.12)' },
-  tileSheen: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
+  row: { flexDirection: 'row', alignItems: 'center', gap: ROW.gap, paddingHorizontal: ROW.paddingHorizontal, minHeight: ROW.minHeight, paddingVertical: ROW.paddingVertical },
+  tile: { width: ROW.tile, height: ROW.tile, borderRadius: 7, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
+  // Lit from the top (the gradient paints over the tile's colour) and rimmed.
+  tileLit: {
+    boxShadow: 'inset 0px 0.5px 0px rgba(255, 255, 255, 0.4), inset 0px -0.5px 0px rgba(0, 0, 0, 0.12), 0px 1px 2px rgba(0, 0, 0, 0.12)',
     ...backgroundImage('linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 60%, rgba(0, 0, 0, 0.08) 100%)'),
   },
+  tileEdge: { borderWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
   chevronOpen: { transform: [{ rotate: '90deg' }] },
   rowText: { flex: 1, gap: 1 },
   value: { maxWidth: '45%' },

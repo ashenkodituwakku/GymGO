@@ -115,7 +115,6 @@ export default function LeaderboardScreen() {
           disabled={!board || saving}
           onValueChange={(on) => void join(on)}
           accessibilityLabel="Be on the public leaderboard"
-          tint={color.brand}
         />
       </Card>
 

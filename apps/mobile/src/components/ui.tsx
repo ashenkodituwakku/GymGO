@@ -11,7 +11,7 @@ import { TIER } from '@/lib/copy';
 import { monogram } from '@/lib/monogram';
 import { haptic } from '@/lib/haptics';
 import { alpha } from '@/lib/looks';
-import { backgroundImage, color, currentLook, currentTheme, dropShadow, face, HIT, LOOKS, radius, shadow, space, themed, type, webFocusRing } from '@/lib/theme';
+import { backgroundImage, color, currentLook, currentTheme, dropShadow, face, HIT, LOOKS, radius, shadow, space, themed, type, webFocusRing, solidSurfaces } from '@/lib/theme';
 import { BrandFill, Sheen } from './BrandFill';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
@@ -306,7 +306,8 @@ export interface CapsuleButton {
  */
 export function ControlCapsule({ buttons }: { buttons: CapsuleButton[] }) {
   return (
-    <View style={styles.capsuleShadow}>
+    // Its shadow outside the glass, which clips its own; a solid capsule brings its own shadow, so not twice.
+    <View style={solidSurfaces() ? styles.capsuleSolid : styles.capsuleShadow}>
       <Glass style={styles.capsule} interactive>
         {buttons.map((button, index) => (
           <View key={button.icon}>
@@ -685,6 +686,7 @@ const styles = themed(() => StyleSheet.create({
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator },
 
   capsuleShadow: { borderRadius: 22, ...shadow.float },
+  capsuleSolid: { borderRadius: 22 },
   capsule: { width: HIT, borderRadius: HIT / 2, overflow: 'hidden' },
   capsuleButton: { width: HIT, height: HIT, alignItems: 'center', justifyContent: 'center' },
   capsulePressed: { backgroundColor: color.pressed },

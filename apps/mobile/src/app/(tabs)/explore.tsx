@@ -462,7 +462,8 @@ function MapScreen() {
 
   const areaButton = (offerArea || searching || lookupWaiting) && !selectedId && (
     <Animated.View entering={DROP_IN} exiting={FADE_OUT}>
-      <Animated.View style={areaPress.style}>
+      {/* The shadow outside the glass: an older iPhone's glass clips its own. */}
+      <Animated.View style={[styles.areaShadow, areaPress.style]}>
         <Glass style={styles.areaButton} interactive>
           <Pressable
             onPressIn={areaPress.onPressIn}
@@ -1286,7 +1287,8 @@ const styles = themed(() => StyleSheet.create({
   desktopControls: { position: 'absolute', right: PANEL_GAP },
 
   areaRow: { position: 'absolute', alignItems: 'center' },
-  areaButton: { height: 38, borderRadius: 19, ...shadow.float },
+  areaShadow: { borderRadius: 19, ...shadow.float },
+  areaButton: { height: 38, borderRadius: 19 },
   areaHit: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4] },
 
   selfCheck: {

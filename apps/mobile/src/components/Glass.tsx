@@ -149,7 +149,10 @@ function WebGlassControl({ style, clear, children }: { style?: StyleProp<ViewSty
     const { width, height } = event.nativeEvent.layout;
     if (!size || Math.round(size.width) !== Math.round(width) || Math.round(size.height) !== Math.round(height)) setSize({ width, height });
   };
-  const mark = size ? refractionFor(size.width, size.height) : { dataSet: { glass: 'control' } };
+  // Too small to bend (measured inside something hidden): still the plain glass, not a bare box.
+  const plain = { dataSet: { glass: 'control' } };
+  const bent = size ? refractionFor(size.width, size.height) : null;
+  const mark = bent && Object.keys(bent).length > 0 ? bent : plain;
   return (
     <View {...mark} onLayout={onLayout} style={[styles.clip, style, clear && styles.webClear]}>
       <View style={[NO_TOUCH, StyleSheet.absoluteFill, cornerShape(style), styles.washThin]} />
@@ -165,7 +168,7 @@ function Backdrop({ thick, wash: colour, level }: { thick: boolean; wash: string
   if (Platform.OS === 'ios') {
     return (
       <>
-        <BlurView intensity={100} tint={dark() ? 'systemThickMaterialDark' : 'systemThickMaterialLight'} style={[NO_TOUCH, StyleSheet.absoluteFill]} />
+        <BlurView intensity={100} tint={iosMaterial(thick, level)} style={[NO_TOUCH, StyleSheet.absoluteFill]} />
         {wash}
       </>
     );
@@ -179,6 +182,19 @@ function Backdrop({ thick, wash: colour, level }: { thick: boolean; wash: string
     );
   }
   return wash;
+}
+
+/**
+ * The system material under an older iPhone's imitation glass, thinner the
+ * glassier you've set it (a sheet a step thicker than a control). It was
+ * always the thick material, nearly opaque on its own, so the Liquid Glass
+ * level hardly changed anything on an iPhone before iOS 26.
+ */
+function iosMaterial(thick: boolean, level: number) {
+  const steps = ['systemUltraThinMaterial', 'systemThinMaterial', 'systemMaterial', 'systemThickMaterial'] as const;
+  const at = level >= 90 ? 0 : level >= 65 ? 1 : level >= 35 ? 2 : 3;
+  const material = steps[Math.min(3, at + (thick ? 1 : 0))]!;
+  return `${material}${dark() ? 'Dark' : 'Light'}` as const;
 }
 
 /** The corner radii of the surface, so the overlays follow its shape. */

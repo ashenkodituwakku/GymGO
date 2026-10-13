@@ -12,7 +12,7 @@ import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withSpring } 
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import type { ResultTier } from '@gymgo/domain';
 import { alpha, mix } from '@/lib/looks';
-import { DROP_BOX, DROP_DRAWN, DROP_OUTLINE, DROP_PATH as DROP, PICKED_ANCHOR_Y, PICKED_HEIGHT } from '@/lib/pinShape';
+import { DROP_BOX, DROP_DRAWN, DROP_GLYPH_BOX, DROP_HEAD, DROP_HIGHLIGHT, DROP_OUTLINE, DROP_PATH as DROP, PICKED_ANCHOR_Y, PICKED_HEIGHT } from '@/lib/pinShape';
 import { color, dropShadow, face, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { damp } from './motion';
@@ -81,7 +81,7 @@ export function Pin({ tier, selected }: { tier: ResultTier; selected: boolean })
               </LinearGradient>
             </Defs>
             <Path d={DROP} fill={`url(#d${id})`} stroke={color.pinBorder} strokeWidth={DROP_OUTLINE} />
-            <Circle cx={20} cy={20} r={12.5} fill="rgba(255, 255, 255, 0.14)" />
+            <Circle cx={DROP_HEAD.cx} cy={DROP_HEAD.cy} r={DROP_HIGHLIGHT} fill="rgba(255, 255, 255, 0.14)" />
           </Svg>
           <View style={styles.dropGlyph}>
             <Icon name="gym" size={21} color={color.onBrand} weight="bold" />
@@ -133,7 +133,7 @@ const styles = themed(() => StyleSheet.create({
   // A picked pin grows from its tip, where it touches the map.
   fromTip: { transformOrigin: `50% ${PICKED_ANCHOR_Y * 100}%` },
   dropShape: { width: DROP_WIDTH, height: DROP_DRAWN.height, ...dropShadow(0.28, 5, 3, 0) },
-  dropGlyph: { position: 'absolute', left: 0, right: 0, top: 0, height: DROP_WIDTH, alignItems: 'center', justifyContent: 'center' },
+  dropGlyph: { position: 'absolute', left: 0, right: 0, top: 0, height: DROP_GLYPH_BOX, alignItems: 'center', justifyContent: 'center' },
   ground: { position: 'absolute', bottom: 1, width: 16, height: 5, borderRadius: 3, backgroundColor: 'rgba(0, 0, 0, 0.14)' },
   halo: { padding: 4 },
   bubble: {

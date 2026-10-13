@@ -50,7 +50,6 @@ const SWELL = { damping: damp(0.75, 320, 0.6), stiffness: 320, mass: 0.6, reduce
 const WOBBLE = { damping: damp(0.52, 260, 0.6), stiffness: 260, mass: 0.6, reduceMotion: ReduceMotion.System };
 const STRETCH = { damping: damp(0.95, 300, 0.5), stiffness: 300, mass: 0.5, reduceMotion: ReduceMotion.System };
 
-const gradient = backgroundImage;
 
 export function PercentSlider({
   value,
@@ -288,8 +287,8 @@ const styles = themed(() =>
     },
     fill: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: color.brandFill, overflow: 'hidden' },
     // Brighter towards the thumb, and a gloss along the top: liquid catching the light.
-    fillLight: gradient('linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 55%, rgba(255,255,255,0.32) 100%)'),
-    fillGloss: gradient('linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0) 60%)'),
+    fillLight: backgroundImage('linear-backgroundImage(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 55%, rgba(255,255,255,0.32) 100%)'),
+    fillGloss: backgroundImage('linear-backgroundImage(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0) 60%)'),
     dot: { position: 'absolute', top: (TRACK - DOT) / 2, width: DOT, height: DOT, borderRadius: DOT / 2 },
     dotMiddle: { top: (TRACK - DOT - 2) / 2, width: DOT + 2, height: DOT + 2, borderRadius: (DOT + 2) / 2 },
     dotOn: { backgroundColor: 'rgba(255, 255, 255, 0.75)' },
@@ -310,7 +309,7 @@ const styles = themed(() =>
       borderColor: 'rgba(255, 255, 255, 0.95)',
       backgroundColor: 'rgba(255, 255, 255, 0.12)',
       boxShadow: 'inset 0 1.5px 1px rgba(255, 255, 255, 0.9), inset 0 -1px 2px rgba(0, 0, 0, 0.12), inset 0 0 8px rgba(255, 255, 255, 0.35)',
-      ...gradient('linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.18) 100%)'),
+      ...backgroundImage('linear-backgroundImage(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.18) 100%)'),
     },
   }),
 );

@@ -70,10 +70,12 @@ const markRound = () => Math.min(13, radius.lg);
 
 function TemplateCard({ template, next, disabled, onStart }: { template: WorkoutTemplate; next: number; disabled: boolean; onStart: (index: number) => void }) {
   // The day you picked, else the next one. The next is known only once your
-  // log has loaded (and moves on after you train), so it isn't copied in at
-  // first draw: that offered the day you did last time.
-  const [picked, setDay] = useState<number | null>(null);
-  const day = picked ?? next;
+  // log has loaded, and moves on after you train: a pick holds only while
+  // the next day is the one it was made against, so neither offers the day
+  // you've just done.
+  const [picked, setPicked] = useState<{ day: number; against: number } | null>(null);
+  const day = picked && picked.against === next ? picked.day : next;
+  const setDay = (chosen: number) => setPicked({ day: chosen, against: next });
   const [open, setOpen] = useState(false);
   const shown = template.days[day]!;
   return (

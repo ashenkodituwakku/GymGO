@@ -12,6 +12,13 @@ export const DROP_BOX = { width: 40, height: 50 };
 export const DROP_DRAWN = { width: 44, height: 55 };
 export const DROP_OUTLINE = 2.2;
 
+/** The teardrop's round head, in the box (the path's first arc: centred at 20, 20, radius 18). */
+export const DROP_HEAD = { cx: 20, cy: 20, radius: 18 };
+/** A soft lit disc inside the head, behind the dumbbell. */
+export const DROP_HIGHLIGHT = 12.5;
+/** The box the dumbbell is centred in, from the top of the drawing, in points: the head's own height. */
+export const DROP_GLYPH_BOX = 2 * DROP_HEAD.cy * (DROP_DRAWN.height / DROP_BOX.height);
+
 /**
  * The tip's geometry, as the path draws it: the sides meet at y 48.3, three
  * and a bit units apart, rounded off by an arc of radius 2.3 that dips below.

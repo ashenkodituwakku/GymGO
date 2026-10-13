@@ -28,7 +28,7 @@ import {
 import { TIER, accessLine, checkedAgo, gymDistanceLine, ratingShort, sourceLabel, timeLabel } from '@/lib/copy';
 import { shareGym } from '@/lib/actions';
 import { addressLines, callQuestions, depositLine, priceLine } from '@/lib/present';
-import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed, type } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Icon, type IconName } from './Icon';
 import { StateGlyphRow } from './StateGlyphRow';
@@ -669,7 +669,7 @@ function Fact({ icon, value, caption, tint, unknown = false }: { icon: IconName;
       </View>
       {/* A word in place of a figure, as tall as one, so the three tiles line up. */}
       <View style={styles.factValue}>
-        <Txt variant={unknown ? 'subhead' : 'figure'} color={tint} numberOfLines={1} style={unknown && face('semibold')}>
+        <Txt variant={unknown ? 'subhead' : 'figure'} color={tint} numberOfLines={1} style={unknown && [face('semibold'), styles.factWord]}>
           {value}
         </Txt>
       </View>
@@ -847,7 +847,9 @@ const styles = themed(() => StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: color.brandTint,
   },
-  factValue: { minHeight: 25, justifyContent: 'center' },
+  factValue: { justifyContent: 'center' },
+  // A word as tall as a figure's line, at any text size, so the three captions line up.
+  factWord: { lineHeight: type.figure.lineHeight },
 
   google: {
     flexDirection: 'row',

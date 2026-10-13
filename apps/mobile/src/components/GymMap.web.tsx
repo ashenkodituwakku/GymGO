@@ -21,7 +21,7 @@ import { Glass } from './Glass';
 import { Pressable } from './motion';
 import { TIER_COLOUR, Txt } from './ui';
 import { alpha, mix } from '@/lib/looks';
-import { DROP_BOX, DROP_DRAWN, DROP_OUTLINE, DROP_PATH } from '@/lib/pinShape';
+import { DROP_BOX, DROP_DRAWN, DROP_GLYPH_BOX, DROP_HEAD, DROP_HIGHLIGHT, DROP_OUTLINE, DROP_PATH } from '@/lib/pinShape';
 import type { GymMapHandle, GymMapProps } from './map-types';
 import { mapItems, sameSpot, type MapItem } from '@/lib/cluster';
 import { CHILD_TOUCH, color, currentTheme, face, radius, space, themed } from '@/lib/theme';
@@ -84,8 +84,8 @@ function pinElement(fill: string, selected: boolean, label: string): HTMLElement
       `<svg viewBox="0 0 ${DROP_BOX.width} ${DROP_BOX.height}" width="${DROP_DRAWN.width}" height="${DROP_DRAWN.height}" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">` +
       `<stop offset="0" stop-color="${mix(fill, '#ffffff', 0.3)}"/><stop offset="0.55" stop-color="${fill}"/><stop offset="1" stop-color="${mix(fill, '#000000', 0.1)}"/>` +
       `</linearGradient></defs><path d="${DROP}" fill="url(#${id})" stroke="#fff" stroke-width="${DROP_OUTLINE}"/>` +
-      '<circle cx="20" cy="20" r="12.5" fill="rgba(255,255,255,0.14)"/></svg>' +
-      `<div style="position:absolute;left:0;right:0;top:0;height:44px;display:flex;align-items:center;justify-content:center;">${DUMBBELL('21')}</div>`;
+      `<circle cx="${DROP_HEAD.cx}" cy="${DROP_HEAD.cy}" r="${DROP_HIGHLIGHT}" fill="rgba(255,255,255,0.14)"/></svg>` +
+      `<div style="position:absolute;left:0;right:0;top:0;height:${DROP_GLYPH_BOX}px;display:flex;align-items:center;justify-content:center;">${DUMBBELL('21')}</div>`;
     const ground = document.createElement('div');
     ground.style.cssText = 'position:absolute;bottom:-3px;left:50%;width:16px;height:6px;margin-left:-8px;border-radius:50%;background:radial-gradient(closest-side, rgba(0,0,0,0.32), rgba(0,0,0,0));pointer-events:none;';
     wrap.appendChild(ground);

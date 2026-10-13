@@ -135,7 +135,7 @@ export function Glass({
     <View style={[styles.clip, styles.continuous, style]}>
       <Backdrop thick={thick} wash={floor(kind, level)} level={level ?? glassLevel()} />
       {tint ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, { backgroundColor: tint, opacity: 0.92 }]} /> : null}
-      {kind !== 'bar' ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, shape, tint ? styles.sheenOnTint : level === undefined ? styles.sheen : gradient(sheen(level))]} /> : null}
+      {kind !== 'bar' ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, shape, tint ? styles.sheenOnTint : level === undefined ? styles.sheen : backgroundImage(sheen(level))]} /> : null}
       {kind !== 'bar' ? <View style={[NO_TOUCH, StyleSheet.absoluteFill, shape, styles.rim, level === undefined ? null : { boxShadow: rim(level) }]} /> : null}
       {children}
     </View>
@@ -201,8 +201,8 @@ const a = (value: number) => Math.min(1, value).toFixed(3);
 const sheen = (level: number) => {
   const k = shine(level);
   return dark()
-    ? `linear-gradient(180deg, rgba(255,255,255,${a(0.16 * k)}) 0%, rgba(255,255,255,${a(0.04 * k)}) 38%, rgba(255,255,255,0) 60%)`
-    : `linear-gradient(180deg, rgba(255,255,255,${a(0.55 * k)}) 0%, rgba(255,255,255,${a(0.12 * k)}) 38%, rgba(255,255,255,0) 60%)`;
+    ? `linear-backgroundImage(180deg, rgba(255,255,255,${a(0.16 * k)}) 0%, rgba(255,255,255,${a(0.04 * k)}) 38%, rgba(255,255,255,0) 60%)`
+    : `linear-backgroundImage(180deg, rgba(255,255,255,${a(0.55 * k)}) 0%, rgba(255,255,255,${a(0.12 * k)}) 38%, rgba(255,255,255,0) 60%)`;
 };
 // The specular rim: a bright inner edge along the top, a faint one below.
 const rim = (level: number) => {
@@ -211,9 +211,8 @@ const rim = (level: number) => {
     ? `inset 0 1px 1px rgba(255, 255, 255, ${a(0.18 * k)}), inset 0 -1px 1px rgba(0, 0, 0, 0.3)`
     : `inset 0 1px 1px rgba(255, 255, 255, ${a(0.9 * k)}), inset 0 -1px 1px rgba(0, 0, 0, 0.05)`;
 };
-const SHEEN_ON_TINT = 'linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 55%)';
+const SHEEN_ON_TINT = 'linear-backgroundImage(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 55%)';
 
-const gradient = backgroundImage;
 
 const styles = themed(() => StyleSheet.create({
   clip: { overflow: 'hidden' },
@@ -224,8 +223,8 @@ const styles = themed(() => StyleSheet.create({
   webClear: { opacity: 0.96 },
   washThin: { backgroundColor: color.glassWashThin },
 
-  sheen: gradient(sheen(glassLevel())),
-  sheenOnTint: gradient(SHEEN_ON_TINT),
+  sheen: backgroundImage(sheen(glassLevel())),
+  sheenOnTint: backgroundImage(SHEEN_ON_TINT),
 
   // The rim, and a hairline all round.
   rim: { borderWidth: StyleSheet.hairlineWidth, borderColor: color.glassEdge, boxShadow: rim(glassLevel()) },

@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { DROP_DRAWN, DROP_PATH, PICKED_ANCHOR_Y, PICKED_CENTER_OFFSET, PICKED_HEIGHT, PICKED_TIP, dropTipY } from './pinShape';
+import { DROP_DRAWN, DROP_GLYPH_BOX, DROP_HEAD, DROP_HIGHLIGHT, DROP_PATH, PICKED_ANCHOR_Y, PICKED_CENTER_OFFSET, PICKED_HEIGHT, PICKED_TIP, dropTipY } from './pinShape';
 
 describe('the picked pin', () => {
+  it('centres the highlight and the dumbbell in the head', () => {
+    // The path starts at the head's top (20, 2): a circle of radius 18 centred at 20, 20.
+    expect(DROP_PATH.startsWith(`M${DROP_HEAD.cx} ${DROP_HEAD.cy - DROP_HEAD.radius}`)).toBe(true);
+    expect(DROP_HIGHLIGHT).toBeLessThan(DROP_HEAD.radius);
+    // The dumbbell's box is the head's height as drawn (44 of the 55 points).
+    expect(DROP_GLYPH_BOX).toBeCloseTo(44, 6);
+  });
+
   it('describes the path it draws', () => {
     // The tip's numbers in pinShape.ts are read off this path: change one, change the other.
     expect(DROP_PATH).toContain('16.3 28.3a2.3 2.3 0 0 0 3.4 0');

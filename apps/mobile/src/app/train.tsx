@@ -626,15 +626,10 @@ const REST_IN = (CURVES ? FadeInDown.duration(300).easing(EASE_OUT) : FadeInDown
 const REST_OUT = (CURVES ? FadeOutDown.duration(200).easing(EASE_IN) : FadeOutDown.duration(200)).reduceMotion(ReduceMotion.System);
 
 function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bottom: number }) {
-  // Four times a second, so the ring drains in small steps rather than a jump a second.
-  const now = useNow(true, 250);
+  const now = useNow(true);
   // The clock as it draws, not at the last tick: a rest started between ticks
   // (the next set ticked, or +15) would otherwise show a second too many.
   const left = Math.max(0, (endsAt - Math.max(now, Date.now())) / 1000);
-  // The ring's whole: the rest as planned, or longer once +15 has stretched
-  // it (it was capped full, and sat still for the seconds added).
-  const span = useRef(total);
-  if (left > span.current) span.current = left;
   // The rest is over: a buzz, a chime, and the bar goes. Once: a tick can
   // come before the bar has gone.
   const over = useRef(false);
@@ -647,15 +642,16 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
       updateSession((current) => ({ ...current, restEndsAt: null }), { activity: false });
     }
   }, [now, endsAt]);
-  const onChange = (seconds: number) => updateSession((current) => ({ ...current, restEndsAt: seconds > 0 ? Date.now() + seconds * 1000 : null }));
+  // +15 past the rest's length stretches it (kept with the session, so the
+  // ring drains against it after leaving the screen too); −15 leaves it.
+  const onChange = (seconds: number) =>
+    updateSession((current) => ({ ...current, restEndsAt: seconds > 0 ? Date.now() + seconds * 1000 : null, restTotal: Math.max(current.restTotal, Math.ceil(seconds)) }));
   return (
     // The prop, not a style: inline, a browser drops 'box-none' and the full-width wrap swallowed clicks beside the card.
     <Animated.View entering={REST_IN} exiting={REST_OUT} style={[styles.restWrap, { bottom: bottom + space[3] }]} pointerEvents="box-none">
       <Glass kind="control" style={styles.rest}>
         <View style={styles.restRow}>
-          <ProgressRing size={38} stroke={3} progress={span.current > 0 ? left / span.current : 0} track={color.fill} tint={color.brand}>
-            <Icon name="timer" size={16} color={color.brand} />
-          </ProgressRing>
+          <RestRing endsAt={endsAt} total={total} />
           <View style={styles.flex} accessibilityLiveRegion="polite">
             <Txt variant="caption" color={color.labelSecondary}>
               Rest
@@ -670,6 +666,21 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
         </View>
       </Glass>
     </Animated.View>
+  );
+}
+
+/**
+ * What's left of the rest, as a ring round the timer icon. It redraws four
+ * times a second by itself, so it drains in small steps (not a jump a
+ * second) without redrawing the whole bar.
+ */
+function RestRing({ endsAt, total }: { endsAt: number; total: number }) {
+  const now = useNow(true, 250);
+  const left = Math.max(0, (endsAt - Math.max(now, Date.now())) / 1000);
+  return (
+    <ProgressRing size={38} stroke={3} progress={total > 0 ? left / total : 0} track={color.fill} tint={color.brand}>
+      <Icon name="timer" size={16} color={color.brand} />
+    </ProgressRing>
   );
 }
 

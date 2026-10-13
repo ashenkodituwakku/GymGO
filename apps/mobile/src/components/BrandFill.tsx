@@ -14,7 +14,6 @@ import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
 import { type AccentPaint, backgroundImage, currentLook, currentPaint, LOOKS, NO_TOUCH } from '@/lib/theme';
 import { alpha } from '@/lib/looks';
 
-const image = backgroundImage;
 
 /** Woodland blobs on a 90-point tile that repeats without seams showing much. */
 const BLOBS: Array<[number, string]> = [
@@ -45,7 +44,7 @@ export function BrandFill({
   if (paint.kind === 'gradient') {
     return (
       <View style={layer}>
-        <View style={[StyleSheet.absoluteFill, image(`linear-gradient(100deg, ${paint.stops.join(', ')})`)]} />
+        <View style={[StyleSheet.absoluteFill, backgroundImage(`linear-gradient(100deg, ${paint.stops.join(', ')})`)]} />
         {/* A little shade over the brightest bands (the yellow), so white text still reads. */}
         <View style={[StyleSheet.absoluteFill, styles.shade]} />
       </View>
@@ -83,7 +82,7 @@ export function Sheen({ round }: { round: number }) {
         NO_TOUCH,
         StyleSheet.absoluteFill,
         { borderRadius: round, overflow: 'hidden' },
-        image('linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 42%, rgba(255, 255, 255, 0) 62%)'),
+        backgroundImage('linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 42%, rgba(255, 255, 255, 0) 62%)'),
       ]}
     />
   );

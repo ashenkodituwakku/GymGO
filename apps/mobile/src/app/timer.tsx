@@ -142,8 +142,8 @@ export default function TimerScreen() {
   const working = phase.kind === 'work';
   const progress = phase.length > 0 ? 1 - phase.remaining / phase.length : 1;
   const clock = phase.kind === 'done' ? clockLabel(totalSeconds(plan, 0)) : clockLabel(started ? phase.remaining : plan.work);
-  // Sized for "0:20" in the ring; an hour or more ("1:05:00") shrinks to stay inside it.
-  const clockSize = Math.round(type.largeTitle.fontSize * 2 * Math.min(1, 5 / Math.max(5, clock.length)));
+  // Sized for "0:20" in the ring; anything longer ("10:00", "1:05:00") shrinks to stay inside it.
+  const clockSize = Math.round(type.largeTitle.fontSize * 2 * Math.min(1, 4.4 / Math.max(4.4, clock.length)));
   const bigClock = { fontSize: clockSize, lineHeight: Math.round(clockSize * 1.15) };
 
   return (
@@ -161,7 +161,8 @@ export default function TimerScreen() {
         {/* The phase's time inside a ring that fills as it runs. */}
         <View style={styles.ring}>
           <ProgressRing size={RING} stroke={STROKE} progress={started ? progress : 0} track={working ? color.onBrandFaint : color.fill} tint={working ? color.onBrand : color.brand}>
-            <Txt variant="eyebrow" color={working ? color.onBrand : color.labelSecondary}>
+            {/* A long timer name gives way to an ellipsis inside the ring rather than crossing it. */}
+            <Txt variant="eyebrow" color={working ? color.onBrand : color.labelSecondary} style={styles.ringLabel} numberOfLines={1} maxFontSizeMultiplier={1.15}>
               {started || running ? PHASE_WORD[phase.kind] : plan.name.toUpperCase()}
             </Txt>
             <Txt variant="largeTitle" color={working ? color.onBrand : color.label} style={[bigClock, styles.digits]} numberOfLines={1} maxFontSizeMultiplier={1.15}>
@@ -358,6 +359,7 @@ const styles = themed(() =>
     clockWork: { backgroundColor: color.brandFill },
     digits: { fontVariant: ['tabular-nums'], textAlign: 'center' },
     ring: { marginBottom: space[1] },
+    ringLabel: { maxWidth: RING * 0.62, textAlign: 'center' },
     controls: { flexDirection: 'row', gap: space[3] },
     caps: { marginTop: space[2], paddingHorizontal: space[4], letterSpacing: 0.3 },
     card: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },

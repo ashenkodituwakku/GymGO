@@ -552,7 +552,7 @@ export function NoPhoto({
       aria-hidden
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={[styles.monogram, { backgroundColor: onColour ? 'transparent' : color.brandTint }, rich && gradient(dark ? MONOGRAM_DARK(color.brand) : MONOGRAM_LIGHT(color.brand)), style]}
+      style={[styles.monogram, { backgroundColor: onColour ? 'transparent' : color.brandTint }, rich && backgroundImage(dark ? MONOGRAM_DARK(color.brand) : MONOGRAM_LIGHT(color.brand)), style]}
     >
       {rich && !compact ? (
         <>
@@ -587,11 +587,10 @@ export function NoPhoto({
 }
 
 const MONOGRAM_LIGHT = (brand: string) =>
-  `linear-gradient(150deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 52%, ${alpha(brand, 0.14)} 100%)`;
+  `linear-backgroundImage(150deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 52%, ${alpha(brand, 0.14)} 100%)`;
 const MONOGRAM_DARK = (brand: string) =>
-  `linear-gradient(150deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 50%, ${alpha(brand, 0.2)} 100%)`;
+  `linear-backgroundImage(150deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 50%, ${alpha(brand, 0.2)} 100%)`;
 
-const gradient = backgroundImage;
 
 export function PrimaryButton({
   label,

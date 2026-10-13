@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { photoUrl, type Account } from '@/lib/api';
-import { color, face, radius, themed } from '@/lib/theme';
+import { color, currentPaint, face, radius, themed } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
 import { Txt } from './ui';
 
@@ -25,12 +25,24 @@ export function Avatar({
   variant: Variant;
   /**
    * GymGO Pro's ring, in your accent (or Rainbow's or Camo's paint): pass the
-   * colour behind the circle, for the gap between ring and picture.
+   * colour behind the circle, for the gap between ring and picture (with a
+   * plain accent the gap is clear, and this only turns the ring on).
    */
   ring?: string;
 }) {
   if (ring) {
     const outer = size + 10;
+    // A plain accent: the ring is an outline, its gap really clear, so a
+    // card's glow shows through it (a gap painted the card's colour showed
+    // as a paler or darker circle on a see-through card).
+    if (!currentPaint()) {
+      return (
+        <View style={[styles.outline, { width: outer, height: outer, borderRadius: Math.min(outer / 2, radius.pill) }]}>
+          <Avatar account={account} size={size} variant={variant} />
+        </View>
+      );
+    }
+    // Rainbow's and Camo's paint can't be an outline: the gap takes the colour behind.
     return (
       <View style={[styles.ring, { width: outer, height: outer, borderRadius: Math.min(outer / 2, radius.pill) }]}>
         <BrandFill />
@@ -67,6 +79,8 @@ const styles = themed(() =>
     picture: { backgroundColor: color.fill },
     initial: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backgroundColor: color.brandFill },
     ring: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backgroundColor: color.brand },
+    // 3 points of accent, then 2 of clear gap, round the picture.
+    outline: { alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: color.brand },
     gap: { alignItems: 'center', justifyContent: 'center' },
   }),
 );

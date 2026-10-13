@@ -84,6 +84,10 @@ export default function Profile() {
   };
 
   const sub = billing.subscription;
+  // Pro can be bought from here: a build that may sell it (lib/purchase.ts), and the server selling it.
+  const canBuy = CAN_BUY_HERE && billing.sale === 'on';
+  // The plan only once the server has said (a guess said FREE to a Pro subscriber on a new phone).
+  const plan = billing.planKnown ? (billing.isPro ? 'GymGO Pro' : 'Free plan') : null;
   const short = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
   const proLine = billing.isPro
     ? sub?.trial && sub.renewsAt && !sub.endsAt
@@ -93,14 +97,15 @@ export default function Profile() {
         : sub?.amountMinor && sub.currency
           ? `${formatPlanPrice(sub.amountMinor, sub.currency)} a ${sub.interval ?? 'period'}${sub.renewsAt ? ` · renews ${short(sub.renewsAt)}` : ''}`
           : 'On for this account'
-    : billing.trial
+    : billing.trial && canBuy
       ? `Try Pro free for ${billing.trial.days} days`
       : `${billing.limits.savedGyms} saved gyms, compare ${billing.limits.compare}`;
 
-  // Your numbers at a glance, on your account card: workouts once your log has loaded.
+  // Your numbers at a glance, on your account card. Workouts show a dash until
+  // your log has loaded (or if it couldn't), so the three columns never jump.
   const workouts = log.status === 'ready' ? log.sessions.length : null;
   const meStats = [
-    ...(workouts !== null ? [{ value: String(workouts), label: workouts === 1 ? 'workout' : 'workouts' }] : []),
+    { value: workouts === null ? '–' : String(workouts), label: workouts === 1 ? 'workout' : 'workouts', spoken: workouts === null ? 'workouts not loaded' : undefined },
     { value: String(account.saved.length), label: 'saved' },
     { value: String(Object.keys(collection.gyms).length), label: 'collected' },
   ];
@@ -112,7 +117,7 @@ export default function Profile() {
           scaleTo={0.98}
           onPress={() => router.push('/account')}
           accessibilityRole="button"
-          accessibilityLabel={`${me.displayName}, ${me.email}${moderator ? ', moderator' : ''}. ${meStats.map((stat) => `${stat.value} ${stat.label}`).join(', ')}. Account settings`}
+          accessibilityLabel={`${me.displayName}, ${me.email}${plan ? `, ${plan}` : ''}${moderator ? ', moderator' : ''}. ${meStats.map((stat) => stat.spoken ?? `${stat.value} ${stat.label}`).join(', ')}. Account settings`}
           style={styles.meCard}
         >
           <View style={styles.meTop}>
@@ -125,7 +130,7 @@ export default function Profile() {
                 {me.email}
               </Txt>
               <View style={styles.badges}>
-                <Badge label={billing.isPro ? 'PRO' : 'FREE'} strong={billing.isPro} />
+                {plan && <Badge label={billing.isPro ? 'PRO' : 'FREE'} strong={billing.isPro} />}
                 {moderator && <Badge label="MODERATOR" />}
               </View>
             </View>
@@ -162,7 +167,7 @@ export default function Profile() {
         <Row icon="timer" tile={TILE.red} title="Interval timer" subtitle="Tabata and EMOM, or your own with Pro" onPress={() => router.push('/timer')} />
       </Group>
 
-      <ProCard isPro={billing.isPro} line={proLine} trial={Boolean(billing.trial)} onOpen={() => openPro()} />
+      {plan && <ProCard isPro={billing.isPro} line={proLine} trial={Boolean(billing.trial)} canBuy={canBuy} onOpen={() => openPro()} />}
       {billing.isPro && me && CAN_BUY_HERE && billing.subscription?.manageable !== false && (
         <Group>
           <Row icon="settings" tile={TILE.grey} title="Manage subscription" subtitle="Change plan, payment or cancel" onPress={() => void manage()} />
@@ -331,13 +336,17 @@ function Badge({ label, strong = false }: { label: string; strong?: boolean }) {
  * Your plan, as a card of the accent: Pro and when it renews, or what Free
  * covers and a way to see Pro.
  */
-function ProCard({ isPro, line, trial, onOpen }: { isPro: boolean; line: string; trial: boolean; onOpen: () => void }) {
+function ProCard({ isPro, line, trial, canBuy, onOpen }: { isPro: boolean; line: string; trial: boolean; canBuy: boolean; onOpen: () => void }) {
+  const title = isPro ? 'GymGO Pro' : 'Go further with Pro';
+  // A way to buy only where Pro can be bought: a store build that can't sell it offers nothing.
+  const action = isPro || !canBuy ? null : trial ? 'See the free trial' : 'See what’s in Pro';
   return (
     <Pressy
       scaleTo={0.98}
       onPress={onOpen}
       accessibilityRole="button"
-      accessibilityLabel={isPro ? `GymGO Pro. ${line}` : `Free plan: ${line}. See GymGO Pro`}
+      // The words on the card, so a voice command that names them finds it.
+      accessibilityLabel={[isPro ? 'Your plan' : 'Your plan, Free', title, line, action].filter(Boolean).join('. ')}
       style={[styles.proCard, accentGlow(color.brandFill)]}
     >
       <BrandFill round={radius.lg} />
@@ -350,19 +359,20 @@ function ProCard({ isPro, line, trial, onOpen }: { isPro: boolean; line: string;
           <Txt variant="eyebrow" color={color.onBrandSoft}>
             {isPro ? 'YOUR PLAN' : 'YOUR PLAN · FREE'}
           </Txt>
-          <Txt variant="title2" color={color.onBrand} numberOfLines={1}>
-            {isPro ? 'GymGO Pro' : 'Go further with Pro'}
+          <Txt variant="title2" color={color.onBrand} numberOfLines={2}>
+            {title}
           </Txt>
         </View>
-        {isPro && <Icon name="chevron" size={14} color={color.onBrandSoft} />}
+        {/* Something to say it opens, where there's no button doing so. */}
+        {!action && <Icon name="chevron" size={14} color={color.onBrandSoft} />}
       </View>
       <Txt variant="subhead" color={color.onBrandSoft}>
         {line}
       </Txt>
-      {!isPro && (
+      {action && (
         <View style={styles.proCta}>
           <Txt variant="subhead" color={color.brandFill} style={face('semibold')}>
-            {trial ? 'Start the free trial' : 'See what’s in Pro'}
+            {action}
           </Txt>
         </View>
       )}
@@ -464,10 +474,13 @@ function CopyrightExplainer({ onNotice }: { onNotice: () => void }) {
 
 /** Your account card's shape while the sign-in is checked, so the sign-in card doesn't flash up first. */
 function MeCardSkeleton() {
+  const { billing } = useApp();
+  // A Pro picture is 10 points bigger, for its ring: the same here, so nothing jumps.
+  const picture = billing.isPro ? 74 : 64;
   return (
     <Skeleton label="Loading your account" style={styles.meCard}>
       <View style={styles.meTop}>
-        <Bone width={64} height={64} round={32} />
+        <Bone width={picture} height={picture} round={picture / 2} />
         <View style={styles.meLines}>
           <Bone width="55%" height={20} />
           <Bone width="72%" height={14} />
@@ -568,7 +581,8 @@ const styles = themed(() => StyleSheet.create({
   },
   meTop: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: space[1] + 2, marginTop: space[1] + 2 },
-  badge: { paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill, backgroundColor: color.fill, overflow: 'hidden' },
+  // No clipping: a clipped view hides its own glow (BrandFill takes the corners itself).
+  badge: { paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill, backgroundColor: color.fill },
   badgeStrong: { backgroundColor: color.brandFill },
   meStats: { flexDirection: 'row', paddingVertical: space[2] + 2, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.fill },
   meStat: { flex: 1, alignItems: 'center', gap: 1 },

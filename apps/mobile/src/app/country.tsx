@@ -7,6 +7,7 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Platform, SectionList, StyleSheet, TextInput, View } from 'react-native';
+import { BrandFill } from '@/components/BrandFill';
 import { Pressable } from '@/components/motion';
 import { Icon } from '@/components/Icon';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -152,6 +153,8 @@ export default function CountryScreen() {
                 {/* Windows draws flag emoji as two letters, so the browser shows the code instead. */}
                 {Platform.OS === 'web' ? (
                   <View style={[styles.code, on && styles.codeOn]}>
+                    {/* Rainbow's and Camo's paint, as every other filled accent has. */}
+                    {on && <BrandFill round={7} />}
                     <Txt variant="caption" color={on ? color.onBrand : color.brand} style={face('semibold')}>
                       {item.code}
                     </Txt>
@@ -178,6 +181,9 @@ export default function CountryScreen() {
     </>
   );
 }
+
+/** The width of a country's flag, or its code in a browser. */
+const MARK = 34;
 
 const styles = themed(() => StyleSheet.create({
   fill: { flex: 1 },
@@ -213,10 +219,11 @@ const styles = themed(() => StyleSheet.create({
   // The same corners as the other settings lists.
   rowFirst: { borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, borderCurve: 'continuous' },
   rowLast: { borderBottomLeftRadius: radius.lg, borderBottomRightRadius: radius.lg, borderCurve: 'continuous' },
-  rule: { position: 'absolute', left: space[4] + 34 + space[3], right: 0, bottom: 0, height: StyleSheet.hairlineWidth, backgroundColor: color.separator },
-  flag: { width: 34, textAlign: 'center' },
+  // From the name, past the flag or code.
+  rule: { position: 'absolute', left: space[4] + MARK + space[3], right: 0, bottom: 0, height: StyleSheet.hairlineWidth, backgroundColor: color.separator },
+  flag: { width: MARK, textAlign: 'center' },
   code: {
-    width: 34,
+    width: MARK,
     height: 26,
     borderRadius: 7,
     borderCurve: 'continuous',

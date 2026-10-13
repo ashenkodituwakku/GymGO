@@ -413,7 +413,8 @@ const styles = themed(() =>
   StyleSheet.create({
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[4], paddingBottom: space[8], width: '100%', maxWidth: 560, alignSelf: 'center' },
-    section: { marginLeft: space[4], marginBottom: space[2], letterSpacing: 0.4 },
+    // As every settings list's headings (components/ios.tsx's Group).
+    section: { marginLeft: space[4], marginBottom: space[2], letterSpacing: 0.5, ...face('semibold') },
     modes: { flexDirection: 'row', gap: space[3], padding: space[4], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     mode: { flex: 1, alignItems: 'center', gap: space[2] },
     preview: { width: '100%', aspectRatio: 0.62, borderRadius: radius.md, borderWidth: 2, borderColor: 'transparent', overflow: 'hidden' },

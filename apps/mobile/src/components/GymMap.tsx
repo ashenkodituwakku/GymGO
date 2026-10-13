@@ -12,7 +12,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
-import MapView, { Marker, type Region } from 'react-native-maps';
+import MapView, { Marker, type MapMarker, type Region } from 'react-native-maps';
 import type { BoundingBox } from '@gymgo/domain';
 import { assignSlots, mapItems, sameSpot, zoomOf, type MapItem } from '@/lib/cluster';
 import { currentTheme } from '@/lib/theme';
@@ -46,6 +46,7 @@ const POOL = 48;
  * went on showing the balloon when a gym moved into it.
  */
 function SlotMarker({ item, onPin, onCluster }: { item: MapItem | null; onPin: (id: string) => void; onCluster: (item: Extract<MapItem, { kind: 'cluster' }>) => void }) {
+  const marker = useRef<MapMarker>(null);
   const [tracking, setTracking] = useState(true);
   const face = item === null ? 'empty' : item.kind === 'pin' ? `pin:${item.id}:${item.pin.tier}:${item.selected}` : `cluster:${item.id}:${item.count}:${item.tier}`;
   useEffect(() => {
@@ -58,6 +59,7 @@ function SlotMarker({ item, onPin, onCluster }: { item: MapItem | null; onPin: (
   const selected = item?.kind === 'pin' && item.selected;
   return (
     <Marker
+      ref={marker}
       coordinate={position ? { latitude: position.lat, longitude: position.lng } : PARKED}
       // The picked teardrop's tip on the gym; anything else, its middle.
       // This map is Apple's (the iPhone's; Android and the browser have their
@@ -70,10 +72,14 @@ function SlotMarker({ item, onPin, onCluster }: { item: MapItem | null; onPin: (
         event.stopPropagation();
         if (item?.kind === 'pin') onPin(item.id);
         else if (item) onCluster(item);
+        // Apple's map keeps a tapped marker "selected", drawn above the rest
+        // (the picked gym's teardrop included), and the slot keeps that when
+        // it's given to another gym. Let it go.
+        setTimeout(() => marker.current?.hideCallout(), 0);
       }}
       tracksViewChanges={tracking}
       zIndex={!item ? 0 : selected ? 10 : item.kind === 'cluster' ? 4 : item.pin.tier === 'confirmed' ? 3 : item.pin.tier === 'needs_confirmation' ? 2 : 1}
-      accessibilityLabel={!item ? undefined : item.kind === 'pin' ? item.pin.name : `${item.count} gyms here. Zoom in`}
+      accessibilityLabel={!item ? undefined : item.kind === 'pin' ? item.pin.name : sameSpot(item.points) ? `${item.count} gyms in one place. Opens the best match` : `${item.count} gyms here. Zoom in`}
     >
       {/* Keyed inside the slot's own view, so a new gym lands with its spring. */}
       <View collapsable={false} style={styles.slot}>
@@ -96,6 +102,24 @@ const boxOf = (region: Region): BoundingBox => ({
   west: region.longitude - region.longitudeDelta / 2,
 });
 
+/**
+ * The part of the map you can see: Apple's region is the whole view, under
+ * the sheet and the controls at the top too (the browser's and Android's
+ * maps already leave those out), so Search this area searched gyms hidden
+ * under the list.
+ */
+function visibleBox(region: Region, height: number, top: number, bottom: number): BoundingBox {
+  const box = boxOf(region);
+  if (height <= 0) return box;
+  const perPoint = region.latitudeDelta / height;
+  const north = box.north - Math.min(top, height / 2) * perPoint;
+  const south = box.south + Math.min(bottom, height / 2) * perPoint;
+  return north > south ? { ...box, north, south } : box;
+}
+
+/** A few gyms close together, or one: framed at about street level, not as close as Apple's map can go. */
+const CLOSEST_SPAN = 0.006;
+
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, showsUserLocation, onSelect, onMapPress, onRegionChange },
   ref,
@@ -116,19 +140,48 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     return next;
   }, [items]);
 
-  // On iOS a tap on a pin also reaches the map's own tap handler, in either
-  // order. Treated naively, the pin opens its card and the "map" tap closes it
-  // again. So a map tap waits a beat and stands down if a pin was hit.
-  const lastPinPress = useRef(0);
+  // On iOS a tap on a pin also reaches the map's own tap handler, about a
+  // third of a second later (the map waits to see if it's a double tap).
+  // Treated naively, the pin opens its card and the "map" tap closes it
+  // again. So each touch remembers whether it hit a pin, and the map's tap
+  // for that touch stands down, however late it comes.
+  const pinThisTouch = useRef(false);
   const pendingMapPress = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => {
     if (pendingMapPress.current) clearTimeout(pendingMapPress.current);
   }, []);
+  // The latest handlers, for a tap that lands after a redraw.
+  const handlers = useRef({ onMapPress, onSelect, onRegionChange });
+  handlers.current = { onMapPress, onSelect, onRegionChange };
+  // The map's height and what covers it, for the part you can see.
+  const [height, setHeight] = useState(0);
+  const cover = useRef({ top: topInset, bottom: bottomInset, height: 0 });
+  cover.current = { top: topInset, bottom: bottomInset, height };
 
-  const pressPin = (id: string) => {
-    lastPinPress.current = Date.now();
+  const hitPin = () => {
+    pinThisTouch.current = true;
     if (pendingMapPress.current) clearTimeout(pendingMapPress.current);
+  };
+  const pressPin = (id: string) => {
+    hitPin();
     onSelect(id);
+  };
+
+  /** Frame these places clear of the sheet and the controls, never closer than street level. */
+  const frame = (points: Array<{ lat: number; lng: number }>, margin: number) => {
+    if (points.length === 0) return;
+    const lats = points.map((point) => point.lat);
+    const lngs = points.map((point) => point.lng);
+    const span = Math.max(Math.max(...lats) - Math.min(...lats), Math.max(...lngs) - Math.min(...lngs));
+    if (span < CLOSEST_SPAN) {
+      const centre = { latitude: (Math.max(...lats) + Math.min(...lats)) / 2, longitude: (Math.max(...lngs) + Math.min(...lngs)) / 2 };
+      map.current?.animateToRegion({ ...centre, latitudeDelta: CLOSEST_SPAN * 1.6, longitudeDelta: CLOSEST_SPAN * 1.6 }, 450);
+      return;
+    }
+    map.current?.fitToCoordinates(
+      points.map((point) => ({ latitude: point.lat, longitude: point.lng })),
+      { edgePadding: { top: cover.current.top + margin, right: margin, bottom: cover.current.bottom + margin, left: margin }, animated: true },
+    );
   };
 
   useImperativeHandle(ref, () => ({
@@ -139,11 +192,7 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
       );
     },
     fitTo(points) {
-      if (points.length === 0) return;
-      map.current?.fitToCoordinates(
-        points.map((point) => ({ latitude: point.lat, longitude: point.lng })),
-        { edgePadding: { top: 60, right: 60, bottom: 60, left: 60 }, animated: true },
-      );
+      frame(points, 60);
     },
   }));
 
@@ -170,18 +219,45 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
       customMapStyle={Platform.OS === 'android' ? HIDE_BUSINESSES : undefined}
       showsBuildings
       toolbarEnabled={false}
-      pitchEnabled={Platform.OS === 'ios'}
+      // North stays up and the map flat, as in the browser and on Android:
+      // there's no compass to turn it back, and a turned or tilted map
+      // groups the pins and sizes the area as if zoomed out.
+      rotateEnabled={false}
+      pitchEnabled={false}
+      onLayout={(event) => setHeight(event.nativeEvent.layout.height)}
+      // Apple's map says nothing about where it starts: ask, so the area is known before the first drag.
+      onMapReady={() => {
+        void map.current
+          ?.getMapBoundaries()
+          .then(({ northEast, southWest }) => {
+            const next = {
+              latitude: (northEast.latitude + southWest.latitude) / 2,
+              longitude: (northEast.longitude + southWest.longitude) / 2,
+              latitudeDelta: Math.abs(northEast.latitude - southWest.latitude),
+              longitudeDelta: Math.abs(northEast.longitude - southWest.longitude),
+            };
+            if (!(next.latitudeDelta > 0 && next.longitudeDelta > 0)) return;
+            setRegion(next);
+            handlers.current.onRegionChange?.(visibleBox(next, cover.current.height, cover.current.top, cover.current.bottom));
+          })
+          .catch(() => {});
+      }}
       onRegionChangeComplete={(next) => {
         setRegion(next);
-        onRegionChange?.(boxOf(next));
+        onRegionChange?.(visibleBox(next, height, topInset, bottomInset));
+      }}
+      // A new touch: it hasn't hit a pin yet.
+      onTouchStart={() => {
+        pinThisTouch.current = false;
       }}
       onPress={(event) => {
-        if (event.nativeEvent.action === 'marker-press') return;
+        if (event.nativeEvent.action === 'marker-press' || pinThisTouch.current) return;
         if (pendingMapPress.current) clearTimeout(pendingMapPress.current);
+        // A beat, in case this touch's pin press is still on its way.
         pendingMapPress.current = setTimeout(() => {
           pendingMapPress.current = null;
-          if (Date.now() - lastPinPress.current > 400) onMapPress();
-        }, 220);
+          if (!pinThisTouch.current) handlers.current.onMapPress();
+        }, 80);
       }}
     >
       {slots.map((item, index) => (
@@ -191,14 +267,10 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
           item={item}
           onPin={pressPin}
           onCluster={(cluster) => {
-            lastPinPress.current = Date.now();
-            if (pendingMapPress.current) clearTimeout(pendingMapPress.current);
+            hitPin();
             // Gyms in one building never part by zooming: open the best of them.
-            if (sameSpot(cluster.points)) return onSelect(cluster.ids[0]!);
-            map.current?.fitToCoordinates(
-              cluster.points.map((point) => ({ latitude: point.lat, longitude: point.lng })),
-              { edgePadding: { top: 80, right: 80, bottom: 80, left: 80 }, animated: true },
-            );
+            if (sameSpot(cluster.points)) return handlers.current.onSelect(cluster.ids[0]!);
+            frame(cluster.points, 80);
           }}
         />
       ))}

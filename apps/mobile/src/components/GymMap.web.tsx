@@ -21,10 +21,10 @@ import { Glass } from './Glass';
 import { Pressable } from './motion';
 import { TIER_COLOUR, Txt } from './ui';
 import { alpha, mix } from '@/lib/looks';
-import { DROP_PATH } from '@/lib/pinShape';
+import { DROP_BOX, DROP_DRAWN, DROP_OUTLINE, DROP_PATH } from '@/lib/pinShape';
 import type { GymMapHandle, GymMapProps } from './map-types';
 import { mapItems, sameSpot, type MapItem } from '@/lib/cluster';
-import { color, currentTheme, face, radius, space, themed } from '@/lib/theme';
+import { CHILD_TOUCH, color, currentTheme, face, radius, space, themed } from '@/lib/theme';
 
 export type { GymMapHandle, MapPin } from './map-types';
 
@@ -79,11 +79,11 @@ function pinElement(fill: string, selected: boolean, label: string): HTMLElement
     const id = `gg${Math.random().toString(36).slice(2, 8)}`;
     const face = document.createElement('div');
     face.className = 'gg-face';
-    face.style.cssText = 'position:relative;width:44px;height:55px;transform-origin:50% 100%;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.28)) drop-shadow(0 1px 1.5px rgba(0,0,0,0.25));';
+    face.style.cssText = `position:relative;width:${DROP_DRAWN.width}px;height:${DROP_DRAWN.height}px;transform-origin:50% 100%;` + 'filter:drop-shadow(0 4px 6px rgba(0,0,0,0.28)) drop-shadow(0 1px 1.5px rgba(0,0,0,0.25));';
     face.innerHTML =
-      `<svg viewBox="0 0 40 50" width="44" height="55" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">` +
+      `<svg viewBox="0 0 ${DROP_BOX.width} ${DROP_BOX.height}" width="${DROP_DRAWN.width}" height="${DROP_DRAWN.height}" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">` +
       `<stop offset="0" stop-color="${mix(fill, '#ffffff', 0.3)}"/><stop offset="0.55" stop-color="${fill}"/><stop offset="1" stop-color="${mix(fill, '#000000', 0.1)}"/>` +
-      `</linearGradient></defs><path d="${DROP}" fill="url(#${id})" stroke="#fff" stroke-width="2.2"/>` +
+      `</linearGradient></defs><path d="${DROP}" fill="url(#${id})" stroke="#fff" stroke-width="${DROP_OUTLINE}"/>` +
       '<circle cx="20" cy="20" r="12.5" fill="rgba(255,255,255,0.14)"/></svg>' +
       `<div style="position:absolute;left:0;right:0;top:0;height:44px;display:flex;align-items:center;justify-content:center;">${DUMBBELL('21')}</div>`;
     const ground = document.createElement('div');
@@ -407,7 +407,7 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     <View style={styles.fill}>
       <View ref={host} style={styles.host} />
       {failed && (
-        <View style={[styles.notice, { top: topInset, bottom: bottomInset, left: leftInset }, { pointerEvents: 'box-none' }]}>
+        <View style={[styles.notice, { top: topInset, bottom: bottomInset, left: leftInset }, CHILD_TOUCH]}>
           <Glass kind="control" style={styles.noticeCard}>
             <Txt variant="subhead" style={[face('semibold'), styles.center]}>
               The map didn’t load

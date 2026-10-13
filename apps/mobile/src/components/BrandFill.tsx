@@ -9,14 +9,12 @@
  */
 
 import { useId } from 'react';
-import { Platform, StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
-import { LOOKS, NO_TOUCH, currentLook, currentPaint, type AccentPaint } from '@/lib/theme';
+import { type AccentPaint, backgroundImage, currentLook, currentPaint, LOOKS, NO_TOUCH } from '@/lib/theme';
 import { alpha } from '@/lib/looks';
 
-// Web takes CSS `backgroundImage`; React Native's own renderer takes `experimental_backgroundImage`.
-const image = (value: string): ViewStyle =>
-  (Platform.OS === 'web' ? { backgroundImage: value } : { experimental_backgroundImage: value }) as ViewStyle;
+const image = backgroundImage;
 
 /** Woodland blobs on a 90-point tile that repeats without seams showing much. */
 const BLOBS: Array<[number, string]> = [

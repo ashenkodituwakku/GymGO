@@ -6,7 +6,7 @@
  */
 
 import { Stack, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
@@ -69,10 +69,11 @@ const TEMPLATE_ICON: Record<string, IconName> = { 'full-body': 'body', 'five-by-
 const markRound = () => Math.min(13, radius.lg);
 
 function TemplateCard({ template, next, disabled, onStart }: { template: WorkoutTemplate; next: number; disabled: boolean; onStart: (index: number) => void }) {
-  const [day, setDay] = useState(next);
-  // The next day is known only once your log has loaded (and changes after
-  // you train): follow it, or Start offered the day you did last time.
-  useEffect(() => setDay(next), [next]);
+  // The day you picked, else the next one. The next is known only once your
+  // log has loaded (and moves on after you train), so it isn't copied in at
+  // first draw: that offered the day you did last time.
+  const [picked, setDay] = useState<number | null>(null);
+  const day = picked ?? next;
   const [open, setOpen] = useState(false);
   const shown = template.days[day]!;
   return (

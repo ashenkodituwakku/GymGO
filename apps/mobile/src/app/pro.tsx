@@ -30,6 +30,7 @@ import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtr
 import { useApp, type ProReason } from '@/lib/app-state';
 import type { Sale } from '@/lib/useBilling';
 import { ApiError, OfflineError, apiBase } from '@/lib/api';
+import { DEMO_ONLY } from '@/lib/demoOnly';
 import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
 import { HEADER_EDGE, color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -391,12 +392,12 @@ function BuyButton({
       </Txt>
     );
   }
-  // A build with no server at all (the website's demo): nothing to reach, so
-  // not a "can't reach the server" with a Try again that can never work.
+  // A build with no server at all (the website's demo, say): nothing to
+  // reach, so not a "can't reach the server" with a Try again that can never work.
   if (SERVERLESS) {
     return (
       <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-        Pro comes with the full version of GymGO. This demo shows what it includes.
+        {DEMO_ONLY ? 'Pro comes with the full version of GymGO. This demo shows what it includes.' : 'Pro can’t be bought in this version of GymGO.'}
       </Txt>
     );
   }

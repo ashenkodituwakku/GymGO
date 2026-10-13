@@ -33,7 +33,7 @@ import { haptic } from '@/lib/haptics';
 import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
 import { PRISM, cardFor, gemInfo, rarityLabel, rarityRank, type Rarity } from '@/lib/rarity';
 import { playCardSound } from '@/lib/sounds';
-import { face, radius, space, themed } from '@/lib/theme';
+import { CHILD_TOUCH, face, radius, space, themed } from '@/lib/theme';
 
 const SYSTEM = ReduceMotion.System;
 /** The pop-up rising into place: quick, and it stops where it lands. */
@@ -156,7 +156,7 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
           <Pressable style={StyleSheet.absoluteFill} onPress={close} accessible={false} />
         </Animated.View>
 
-        <View style={[styles.centre, { paddingTop: insets.top + space[3], paddingBottom: insets.bottom + space[3] }, { pointerEvents: 'box-none' }]}>
+        <View style={[styles.centre, { paddingTop: insets.top + space[3], paddingBottom: insets.bottom + space[3] }, CHILD_TOUCH]}>
           <Animated.View style={[styles.panel, { width: panelWidth, maxHeight }, panel]} accessibilityViewIsModal>
             <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} />
             <View style={[StyleSheet.absoluteFill, styles.tint]} />

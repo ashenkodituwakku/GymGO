@@ -17,7 +17,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Platform, StyleSheet, View, type LayoutChangeEvent, type ViewStyle } from 'react-native';
+import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   ReduceMotion,
@@ -30,7 +30,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { haptic } from '@/lib/haptics';
-import { NO_TOUCH, color, themed } from '@/lib/theme';
+import { backgroundImage, color, NO_TOUCH, themed } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
 import { EASE_OUT, damp } from './motion';
 
@@ -50,9 +50,7 @@ const SWELL = { damping: damp(0.75, 320, 0.6), stiffness: 320, mass: 0.6, reduce
 const WOBBLE = { damping: damp(0.52, 260, 0.6), stiffness: 260, mass: 0.6, reduceMotion: ReduceMotion.System };
 const STRETCH = { damping: damp(0.95, 300, 0.5), stiffness: 300, mass: 0.5, reduceMotion: ReduceMotion.System };
 
-// Web takes CSS `backgroundImage`; React Native's own renderer takes `experimental_backgroundImage`.
-const gradient = (value: string): ViewStyle =>
-  (Platform.OS === 'web' ? { backgroundImage: value } : { experimental_backgroundImage: value }) as ViewStyle;
+const gradient = backgroundImage;
 
 export function PercentSlider({
   value,

@@ -12,10 +12,10 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { Stack } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
 import { Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
+import { ProgressRing } from '@/components/ProgressRing';
 import { BrandFill } from '@/components/BrandFill';
 import { ChoiceChip, Input, PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
@@ -141,7 +141,10 @@ export default function TimerScreen() {
 
   const working = phase.kind === 'work';
   const progress = phase.length > 0 ? 1 - phase.remaining / phase.length : 1;
-  const bigClock = { fontSize: Math.round(type.largeTitle.fontSize * 2), lineHeight: Math.round(type.largeTitle.fontSize * 2 * 1.15) };
+  const clock = phase.kind === 'done' ? clockLabel(totalSeconds(plan, 0)) : clockLabel(started ? phase.remaining : plan.work);
+  // Sized for "0:20" in the ring; an hour or more ("1:05:00") shrinks to stay inside it.
+  const clockSize = Math.round(type.largeTitle.fontSize * 2 * Math.min(1, 5 / Math.max(5, clock.length)));
+  const bigClock = { fontSize: clockSize, lineHeight: Math.round(clockSize * 1.15) };
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
@@ -157,13 +160,14 @@ export default function TimerScreen() {
         {working && <BrandFill />}
         {/* The phase's time inside a ring that fills as it runs. */}
         <View style={styles.ring}>
-          <ProgressRing progress={started ? progress : 0} track={working ? color.onBrandFaint : color.fill} tint={working ? color.onBrand : color.brand} />
-          <Txt variant="eyebrow" color={working ? color.onBrand : color.labelSecondary}>
-            {started || running ? PHASE_WORD[phase.kind] : plan.name.toUpperCase()}
-          </Txt>
-          <Txt variant="largeTitle" color={working ? color.onBrand : color.label} style={[bigClock, styles.digits]}>
-            {phase.kind === 'done' ? clockLabel(totalSeconds(plan, 0)) : clockLabel(started ? phase.remaining : plan.work)}
-          </Txt>
+          <ProgressRing size={RING} stroke={STROKE} progress={started ? progress : 0} track={working ? color.onBrandFaint : color.fill} tint={working ? color.onBrand : color.brand}>
+            <Txt variant="eyebrow" color={working ? color.onBrand : color.labelSecondary}>
+              {started || running ? PHASE_WORD[phase.kind] : plan.name.toUpperCase()}
+            </Txt>
+            <Txt variant="largeTitle" color={working ? color.onBrand : color.label} style={[bigClock, styles.digits]} numberOfLines={1} maxFontSizeMultiplier={1.15}>
+              {clock}
+            </Txt>
+          </ProgressRing>
         </View>
         <Txt variant="subhead" color={working ? color.onBrandSoft : color.labelSecondary}>
           {phase.kind === 'done'
@@ -335,32 +339,6 @@ function Step({ icon, label, disabled, locked, onPress }: { icon: IconName; labe
 const RING = 236;
 const STROKE = 8;
 
-/** A ring that fills clockwise from the top as `progress` goes from 0 to 1, round-ended. */
-function ProgressRing({ progress, track, tint }: { progress: number; track: string; tint: string }) {
-  const r = (RING - STROKE) / 2;
-  const around = 2 * Math.PI * r;
-  const shown = Math.min(1, Math.max(0, progress));
-  return (
-    <Svg width={RING} height={RING} style={StyleSheet.absoluteFill} aria-hidden>
-      <Circle cx={RING / 2} cy={RING / 2} r={r} stroke={track} strokeWidth={STROKE} fill="none" />
-      {shown > 0 && (
-        <Circle
-          cx={RING / 2}
-          cy={RING / 2}
-          r={r}
-          stroke={tint}
-          strokeWidth={STROKE}
-          strokeLinecap="round"
-          fill="none"
-          strokeDasharray={`${around} ${around}`}
-          strokeDashoffset={around * (1 - shown)}
-          transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
-        />
-      )}
-    </Svg>
-  );
-}
-
 const styles = themed(() =>
   StyleSheet.create({
     page: { flex: 1, backgroundColor: color.groupedBackground },
@@ -379,7 +357,7 @@ const styles = themed(() =>
     },
     clockWork: { backgroundColor: color.brandFill },
     digits: { fontVariant: ['tabular-nums'], textAlign: 'center' },
-    ring: { width: RING, height: RING, alignItems: 'center', justifyContent: 'center', marginBottom: space[1] },
+    ring: { marginBottom: space[1] },
     controls: { flexDirection: 'row', gap: space[3] },
     caps: { marginTop: space[2], paddingHorizontal: space[4], letterSpacing: 0.3 },
     card: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },

@@ -71,9 +71,16 @@ export default function WelcomeScreen() {
       setPage(at);
     }
   };
+  // The page, kept on the UI thread too: React hears only when it changes,
+  // not on every frame of a swipe.
+  const lastPage = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((event) => {
     scrollX.value = event.contentOffset.x;
-    runOnJS(settle)(Math.round(event.contentOffset.x / Math.max(1, width)));
+    const at = Math.round(event.contentOffset.x / Math.max(1, width));
+    if (at !== lastPage.value) {
+      lastPage.value = at;
+      runOnJS(settle)(at);
+    }
   });
 
   return (

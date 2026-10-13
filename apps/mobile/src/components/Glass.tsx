@@ -41,7 +41,7 @@ import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'ex
 import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { installLiquidGlass, refractionFor } from './liquidGlass';
-import { NO_TOUCH, color, currentLook, currentTheme, glassLevel, glassWash, shadow, solidSurfaces, subscribeGlass, themed, type GlassLayer } from '@/lib/theme';
+import { backgroundImage, color, currentLook, currentTheme, type GlassLayer, glassLevel, glassWash, NO_TOUCH, shadow, solidSurfaces, subscribeGlass, themed } from '@/lib/theme';
 
 /** True when the device draws Apple's real Liquid Glass. */
 export const HAS_LIQUID_GLASS =
@@ -213,10 +213,7 @@ const rim = (level: number) => {
 };
 const SHEEN_ON_TINT = 'linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 55%)';
 
-// Web takes CSS `backgroundImage`; React Native's own renderer takes
-// `experimental_backgroundImage`. Same gradient either way.
-const gradient = (value: string): ViewStyle =>
-  (Platform.OS === 'web' ? { backgroundImage: value } : { experimental_backgroundImage: value }) as ViewStyle;
+const gradient = backgroundImage;
 
 const styles = themed(() => StyleSheet.create({
   clip: { overflow: 'hidden' },

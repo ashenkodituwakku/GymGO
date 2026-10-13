@@ -15,9 +15,9 @@
  */
 
 /** Bumped whenever the terms or privacy policy change in a way people should see. */
-export const LEGAL_VERSION = '2026-10-06';
+export const LEGAL_VERSION = '2026-10-12';
 /** The same date, as the documents show it. */
-export const LEGAL_UPDATED = '6 October 2026';
+export const LEGAL_UPDATED = '12 October 2026';
 
 export type LegalDocId = 'terms' | 'privacy' | 'refunds' | 'community';
 export const LEGAL_DOC_IDS: readonly LegalDocId[] = ['terms', 'privacy', 'refunds', 'community'];

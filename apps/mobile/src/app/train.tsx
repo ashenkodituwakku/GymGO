@@ -9,7 +9,6 @@ import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
 import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { CURVES, EASE_IN, EASE_OUT, FADE_IN, POP_IN, Pressable, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -55,6 +54,7 @@ import {
   type WeightUnit,
 } from '@/lib/training';
 import { PageScroll } from '@/components/PageScroll';
+import { ProgressRing } from '@/components/ProgressRing';
 import { useOverhang } from '@/lib/layout';
 import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
 import { useTrainingLog } from '@/lib/useTraining';
@@ -65,13 +65,13 @@ import { workoutShareText } from '@/lib/insights';
 import { usePageTitle } from '@/lib/pageTitle';
 
 /** Ticks once a second while something on screen counts. */
-function useNow(active: boolean): number {
+function useNow(active: boolean, every = 1000): number {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!active) return;
-    const timer = setInterval(() => setNow(Date.now()), 1000);
+    const timer = setInterval(() => setNow(Date.now()), every);
     return () => clearInterval(timer);
-  }, [active]);
+  }, [active, every]);
   return now;
 }
 
@@ -605,45 +605,15 @@ function Tick({ done }: { done: boolean }) {
   );
 }
 
-/** What's left of the rest, as a ring round the timer that empties clockwise from the top. */
-function RestRing({ share, children }: { share: number; children: ReactNode }) {
-  const size = 38;
-  const stroke = 3;
-  const r = (size - stroke) / 2;
-  const around = 2 * Math.PI * r;
-  return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={size} height={size} style={StyleSheet.absoluteFill} aria-hidden>
-        <Circle cx={size / 2} cy={size / 2} r={r} stroke={color.fill} strokeWidth={stroke} fill="none" />
-        {share > 0 && (
-          <Circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            stroke={color.brand}
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            fill="none"
-            strokeDasharray={`${around} ${around}`}
-            strokeDashoffset={around * (1 - share)}
-            transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          />
-        )}
-      </Svg>
-      {children}
-    </View>
-  );
-}
-
 // --- Time ------------------------------------------------------------------------
 
-/** "12:04", ticking by itself so the rest of the screen doesn't redraw every second. */
 /** The screen stays on while this workout is open, so it isn't locked between sets. */
 function StayAwake() {
   useKeepAwake('gymgo-workout', { suppressDeactivateWarnings: true });
   return null;
 }
 
+/** "12:04", ticking by itself so the rest of the screen doesn't redraw every second. */
 function Elapsed({ since }: { since: string }) {
   const now = useNow(true);
   return <>{clockLabel((now - Date.parse(since)) / 1000)}</>;
@@ -656,13 +626,22 @@ const REST_IN = (CURVES ? FadeInDown.duration(300).easing(EASE_OUT) : FadeInDown
 const REST_OUT = (CURVES ? FadeOutDown.duration(200).easing(EASE_IN) : FadeOutDown.duration(200)).reduceMotion(ReduceMotion.System);
 
 function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bottom: number }) {
-  const now = useNow(true);
+  // Four times a second, so the ring drains in small steps rather than a jump a second.
+  const now = useNow(true, 250);
   // The clock as it draws, not at the last tick: a rest started between ticks
   // (the next set ticked, or +15) would otherwise show a second too many.
   const left = Math.max(0, (endsAt - Math.max(now, Date.now())) / 1000);
-  // The rest is over: a buzz, a chime, and the bar goes.
+  // The ring's whole: the rest as planned, or longer once +15 has stretched
+  // it (it was capped full, and sat still for the seconds added).
+  const span = useRef(total);
+  if (left > span.current) span.current = left;
+  // The rest is over: a buzz, a chime, and the bar goes. Once: a tick can
+  // come before the bar has gone.
+  const over = useRef(false);
   useEffect(() => {
-    if (now >= endsAt) {
+    if (now < endsAt) over.current = false;
+    else if (!over.current) {
+      over.current = true;
       haptic.success();
       playSound('rest-done');
       updateSession((current) => ({ ...current, restEndsAt: null }), { activity: false });
@@ -670,12 +649,13 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
   }, [now, endsAt]);
   const onChange = (seconds: number) => updateSession((current) => ({ ...current, restEndsAt: seconds > 0 ? Date.now() + seconds * 1000 : null }));
   return (
-    <Animated.View entering={REST_IN} exiting={REST_OUT} style={[styles.restWrap, { bottom: bottom + space[3] }, { pointerEvents: 'box-none' }]}>
+    // The prop, not a style: inline, a browser drops 'box-none' and the full-width wrap swallowed clicks beside the card.
+    <Animated.View entering={REST_IN} exiting={REST_OUT} style={[styles.restWrap, { bottom: bottom + space[3] }]} pointerEvents="box-none">
       <Glass kind="control" style={styles.rest}>
         <View style={styles.restRow}>
-          <RestRing share={total > 0 ? Math.min(1, left / total) : 0}>
+          <ProgressRing size={38} stroke={3} progress={span.current > 0 ? left / span.current : 0} track={color.fill} tint={color.brand}>
             <Icon name="timer" size={16} color={color.brand} />
-          </RestRing>
+          </ProgressRing>
           <View style={styles.flex} accessibilityLiveRegion="polite">
             <Txt variant="caption" color={color.labelSecondary}>
               Rest

@@ -1,8 +1,10 @@
 /**
  * A figure that counts up to its value, quickly and easing out, the first
- * time it's shown and whenever it changes after (a check-in, a workout):
+ * time it's shown and whenever it rises after (a check-in, a workout):
  * from what this figure last showed, so coming back to a screen, or the
- * screen being drawn again for new colours, doesn't run it again. With
+ * screen being drawn again for new colours, doesn't run it again. A figure
+ * that's gone down (a reset collection, another account) just shows its
+ * number: counting down from the old total read as losing things. With
  * Reduce Motion on it's simply the number.
  */
 
@@ -33,13 +35,13 @@ export function CountUp({
 }) {
   const calm = useReducedMotion();
   const from = shown.get(id) ?? 0;
-  const [now, setNow] = useState(calm || !Number.isInteger(value) ? value : from);
+  const [now, setNow] = useState(calm || !Number.isInteger(value) || from > value ? value : from);
   const frame = useRef<number | null>(null);
 
   useEffect(() => {
     const start = shown.get(id) ?? 0;
     shown.set(id, value);
-    if (calm || start === value || !Number.isInteger(value)) {
+    if (calm || start >= value || !Number.isInteger(value)) {
       setNow(value);
       return;
     }

@@ -11,7 +11,7 @@ import { TIER } from '@/lib/copy';
 import { monogram } from '@/lib/monogram';
 import { haptic } from '@/lib/haptics';
 import { alpha } from '@/lib/looks';
-import { LOOKS, color, currentLook, currentTheme, dropShadow, face, HIT, radius, shadow, space, themed, type, webFocusRing } from '@/lib/theme';
+import { backgroundImage, color, currentLook, currentTheme, dropShadow, face, HIT, LOOKS, radius, shadow, space, themed, type, webFocusRing } from '@/lib/theme';
 import { BrandFill, Sheen } from './BrandFill';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
@@ -28,6 +28,7 @@ export function Txt({
   children,
   numberOfLines,
   accessibilityRole,
+  maxFontSizeMultiplier,
 }: {
   variant?: Variant;
   color?: string;
@@ -35,12 +36,15 @@ export function Txt({
   children: ReactNode;
   numberOfLines?: number;
   accessibilityRole?: 'header';
+  /** How far it may grow with the phone's text size, for text in a box that can't grow with it. */
+  maxFontSizeMultiplier?: number;
 }) {
   return (
     <Text
       style={[type[variant] as TextStyle, { color: tint }, style]}
       numberOfLines={numberOfLines}
       accessibilityRole={accessibilityRole}
+      maxFontSizeMultiplier={maxFontSizeMultiplier}
     >
       {children}
     </Text>
@@ -587,9 +591,7 @@ const MONOGRAM_LIGHT = (brand: string) =>
 const MONOGRAM_DARK = (brand: string) =>
   `linear-gradient(150deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 50%, ${alpha(brand, 0.2)} 100%)`;
 
-// A browser takes CSS `backgroundImage`; React Native's own renderer, `experimental_backgroundImage`.
-const gradient = (value: string): ViewStyle =>
-  (Platform.OS === 'web' ? { backgroundImage: value } : { experimental_backgroundImage: value }) as ViewStyle;
+const gradient = backgroundImage;
 
 export function PrimaryButton({
   label,

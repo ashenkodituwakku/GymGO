@@ -78,8 +78,14 @@ type Panel = 'place' | 'filters' | null;
  */
 function focusQuietly(input: { focus: () => void } | null) {
   if (!input) return;
-  if (Platform.OS === 'web') (input as unknown as HTMLElement).focus({ preventScroll: true });
-  else input.focus();
+  if (Platform.OS !== 'web') return input.focus();
+  const box = input as unknown as HTMLElement;
+  // The box is the list's first row: with the list scrolled down, bring the
+  // list back to its top (only the list, never the sheet that holds it).
+  let list = box.parentElement;
+  while (list && !/(auto|scroll)/.test(getComputedStyle(list).overflowY)) list = list.parentElement;
+  if (list && box.getBoundingClientRect().top < list.getBoundingClientRect().top) list.scrollTop = 0;
+  box.focus({ preventScroll: true });
 }
 
 export default function ExploreTab() {
@@ -1050,7 +1056,8 @@ function PhoneShell(props: {
     <View ref={measureRef} onLayout={measure} style={styles.root}>
       {props.map}
       {/* Pass-through as a prop: an animated view's styles reach the browser inline, where 'box-none' isn't understood and the layer would swallow every tap and drag on the map. */}
-      <Animated.View style={[StyleSheet.absoluteFill, topFade, { pointerEvents: topHidden ? 'none' : 'box-none' }]}>
+      {/* (React Native Web warns that the prop is deprecated; it's still the only form that works here.) */}
+      <Animated.View style={[StyleSheet.absoluteFill, topFade]} pointerEvents={topHidden ? 'none' : 'box-none'}>
         {props.topBar}
       </Animated.View>
       {props.banner}

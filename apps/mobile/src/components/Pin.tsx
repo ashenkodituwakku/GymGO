@@ -12,7 +12,7 @@ import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withSpring } 
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import type { ResultTier } from '@gymgo/domain';
 import { alpha, mix } from '@/lib/looks';
-import { DROP_PATH as DROP, PICKED_ANCHOR_Y, PICKED_HEIGHT } from '@/lib/pinShape';
+import { DROP_BOX, DROP_DRAWN, DROP_OUTLINE, DROP_PATH as DROP, PICKED_ANCHOR_Y, PICKED_HEIGHT } from '@/lib/pinShape';
 import { color, dropShadow, face, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { damp } from './motion';
@@ -24,7 +24,7 @@ const LAND = { damping: damp(0.7, 320, 0.7), stiffness: 320, mass: 0.7, reduceMo
 
 /** Small and picked sizes, for the landing spring between them. */
 const DISC = 28;
-const DROP_WIDTH = 44;
+const DROP_WIDTH = DROP_DRAWN.width;
 
 // The teardrop and where its tip is, shared with the other maps and tested: lib/pinShape.ts.
 export { PICKED_ANCHOR_Y, PICKED_CENTER_OFFSET } from '@/lib/pinShape';
@@ -72,7 +72,7 @@ export function Pin({ tier, selected }: { tier: ResultTier; selected: boolean })
         <View style={styles.ground} />
         {/* An SVG's own shape casts the shadow on iPhone, so it follows the teardrop. */}
         <View style={styles.dropShape}>
-          <Svg width={DROP_WIDTH} height={55} viewBox="0 0 40 50">
+          <Svg width={DROP_WIDTH} height={DROP_DRAWN.height} viewBox={`0 0 ${DROP_BOX.width} ${DROP_BOX.height}`}>
             <Defs>
               <LinearGradient id={`d${id}`} x1="0" y1="0" x2="0" y2="1">
                 <Stop offset="0" stopColor={mix(fill, '#FFFFFF', 0.3)} />
@@ -80,7 +80,7 @@ export function Pin({ tier, selected }: { tier: ResultTier; selected: boolean })
                 <Stop offset="1" stopColor={mix(fill, '#000000', 0.1)} />
               </LinearGradient>
             </Defs>
-            <Path d={DROP} fill={`url(#d${id})`} stroke={color.pinBorder} strokeWidth={2.2} />
+            <Path d={DROP} fill={`url(#d${id})`} stroke={color.pinBorder} strokeWidth={DROP_OUTLINE} />
             <Circle cx={20} cy={20} r={12.5} fill="rgba(255, 255, 255, 0.14)" />
           </Svg>
           <View style={styles.dropGlyph}>
@@ -132,7 +132,7 @@ const styles = themed(() => StyleSheet.create({
   dropWrap: { width: DROP_WIDTH, height: PICKED_HEIGHT, alignItems: 'center' },
   // A picked pin grows from its tip, where it touches the map.
   fromTip: { transformOrigin: `50% ${PICKED_ANCHOR_Y * 100}%` },
-  dropShape: { width: DROP_WIDTH, height: 55, ...dropShadow(0.28, 5, 3, 0) },
+  dropShape: { width: DROP_WIDTH, height: DROP_DRAWN.height, ...dropShadow(0.28, 5, 3, 0) },
   dropGlyph: { position: 'absolute', left: 0, right: 0, top: 0, height: DROP_WIDTH, alignItems: 'center', justifyContent: 'center' },
   ground: { position: 'absolute', bottom: 1, width: 16, height: 5, borderRadius: 3, backgroundColor: 'rgba(0, 0, 0, 0.14)' },
   halo: { padding: 4 },

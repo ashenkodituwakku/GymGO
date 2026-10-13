@@ -847,7 +847,7 @@ const styles = themed(() => StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: color.brandTint,
   },
-  factValue: { height: 25, justifyContent: 'center' },
+  factValue: { minHeight: 25, justifyContent: 'center' },
 
   google: {
     flexDirection: 'row',

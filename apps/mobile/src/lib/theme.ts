@@ -373,9 +373,15 @@ export function ambientGlow(): ViewStyle | null {
     pool('0% 46%', Math.min(dark ? 0.26 : 0.18, (dark ? 0.14 : 0.09) * k), 40),
   ];
   if (strength > 1) layers.push(pool('100% 100%', (strength - 1) * (dark ? 0.24 : 0.15), 38));
-  const image = layers.join(', ');
-  // A browser takes CSS `backgroundImage`; React Native's own renderer, `experimental_backgroundImage`.
-  return (Platform.OS === 'web' ? { backgroundImage: image } : { experimental_backgroundImage: image }) as ViewStyle;
+  return backgroundImage(layers.join(', '));
+}
+
+/**
+ * A CSS gradient (or several) as a background: a browser takes it as
+ * `backgroundImage`, React Native's own renderer as `experimental_backgroundImage`.
+ */
+export function backgroundImage(value: string): ViewStyle {
+  return (Platform.OS === 'web' ? { backgroundImage: value } : { experimental_backgroundImage: value }) as ViewStyle;
 }
 /** The paint the current accent puts on buttons, if it has one. */
 export const currentPaint = (): AccentPaint | null => ACCENT_PAINTS[current.accent] ?? null;

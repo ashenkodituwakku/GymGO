@@ -118,7 +118,7 @@ export default function Profile() {
           <View style={styles.meTop}>
             <Avatar account={me} size={64} variant="title" ring={billing.isPro ? color.plateSolid : undefined} />
             <View style={styles.flex}>
-              <Txt variant="title2" numberOfLines={1}>
+              <Txt variant="title2" numberOfLines={2}>
                 {me.displayName}
               </Txt>
               <Txt variant="subhead" color={color.labelSecondary} numberOfLines={1}>

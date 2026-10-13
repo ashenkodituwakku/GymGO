@@ -301,7 +301,8 @@ export function Row({
     <View style={styles.row}>
       {icon ? <SettingsTile icon={icon} tile={tile} /> : null}
       <View style={styles.rowText}>
-        <Txt variant="body" color={destructive ? color.dangerInk : color.label} numberOfLines={1}>
+        {/* Two lines before it shortens: on a narrow phone a one-line title lost its last word. */}
+        <Txt variant="body" color={destructive ? color.dangerInk : color.label} numberOfLines={2}>
           {title}
         </Txt>
         {/* Wraps as far as it needs: cut short, an explanation loses its point. */}

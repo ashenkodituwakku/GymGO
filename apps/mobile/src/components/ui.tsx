@@ -10,7 +10,7 @@ import type { ResultTier } from '@gymgo/domain';
 import { TIER } from '@/lib/copy';
 import { monogram } from '@/lib/monogram';
 import { haptic } from '@/lib/haptics';
-import { alpha } from '@/lib/looks';
+import { alpha, mix } from '@/lib/looks';
 import { backgroundImage, color, currentLook, currentTheme, dropShadow, face, HIT, LOOKS, radius, shadow, space, themed, type, webFocusRing } from '@/lib/theme';
 import { BrandFill, Sheen } from './BrandFill';
 import { Glass } from './Glass';
@@ -244,6 +244,13 @@ export function Fold({
     </Animated.View>
   );
 }
+
+/**
+ * The chosen segment's colour: the raised card colour, lifted towards white
+ * in dark (as the iPhone's own control is), where it was hardly lighter
+ * than the track and which one was chosen took a second look.
+ */
+export const segmentRaised = () => (currentTheme().scheme === 'dark' ? mix(color.cardRaised, '#FFFFFF', 0.18) : color.cardRaised);
 
 /** An iOS segmented control: a grey track with the chosen segment raised. */
 export function Segmented<T extends string | number>({
@@ -741,11 +748,11 @@ const styles = themed(() => StyleSheet.create({
     bottom: 2,
     left: 2,
     borderRadius: 7,
-    backgroundColor: color.cardRaised,
+    backgroundColor: segmentRaised(),
     ...dropShadow(0.12, 4, 2, 2),
   },
   segmentOn: {
-    backgroundColor: color.cardRaised,
+    backgroundColor: segmentRaised(),
     ...dropShadow(0.12, 4, 2, 2),
   },
 

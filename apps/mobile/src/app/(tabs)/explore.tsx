@@ -19,7 +19,7 @@ import BottomSheet, {
 } from '@gorhom/bottom-sheet';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { ActionSheetIOS, ActivityIndicator, Keyboard, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type TextInput } from 'react-native';
+import { ActionSheetIOS, ActivityIndicator, BackHandler, Keyboard, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type TextInput } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isWithinBox, type BoundingBox, type HoursNeed } from '@gymgo/domain';
 import { withoutKnown } from '@gymgo/osm';
@@ -611,9 +611,9 @@ function MapScreen() {
     }
   }, [wide]);
 
-  // In a browser, Escape closes what's on top: Filters, then a gym's card.
-  // Only while this tab is showing, and not under Google's full-screen page
-  // (which closes itself on Escape).
+  // In a browser, Escape closes what's on top: Filters, then a gym's card
+  // (and on Android, the back gesture: below). Only while this tab is
+  // showing, and not under Google's full-screen page (which closes itself).
   const escape = useRef<() => boolean>(() => false);
   escape.current = () => {
     if (googleFor) return false;
@@ -642,6 +642,15 @@ function MapScreen() {
       };
       window.addEventListener('keydown', onKey);
       return () => window.removeEventListener('keydown', onKey);
+    }, []),
+  );
+  // Android's back gesture closes the same, in the same order, before it
+  // leaves Explore: it went straight to Home, the card left open out of sight.
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== 'android') return;
+      const listener = BackHandler.addEventListener('hardwareBackPress', () => escape.current());
+      return () => listener.remove();
     }, []),
   );
 

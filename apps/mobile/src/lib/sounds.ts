@@ -101,7 +101,9 @@ function start(sound: Sound): void {
     player
       .seekTo(0)
       .catch(() => undefined)
-      .then(() => player.play());
+      .then(() => player.play())
+      // A player let go of meanwhile: no sound, rather than an unhandled rejection.
+      .catch(() => undefined);
   } catch {
     // No sound, then: the screen and the haptic still say what happened.
   }

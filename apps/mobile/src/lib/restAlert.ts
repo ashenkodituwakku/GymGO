@@ -46,7 +46,7 @@ function notifications(): Notifications | null {
         handleNotification: async () => ({ shouldShowBanner: false, shouldShowList: false, shouldPlaySound: false, shouldSetBadge: false }),
       });
       if (Platform.OS === 'android') {
-        void loaded.setNotificationChannelAsync('rest', { name: 'Rest timer', importance: loaded.AndroidImportance.HIGH, vibrationPattern: [0, 250, 150, 250] });
+        loaded.setNotificationChannelAsync('rest', { name: 'Rest timer', importance: loaded.AndroidImportance.HIGH, vibrationPattern: [0, 250, 150, 250] }).catch(() => undefined);
       }
     } catch {
       loaded = null;

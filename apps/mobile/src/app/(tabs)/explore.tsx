@@ -43,6 +43,7 @@ import { CHILD_TOUCH, NO_TOUCH, color, face, radius, shadow, space, themed } fro
 import { FiltersContent } from '@/components/FiltersContent';
 import { Glass } from '@/components/Glass';
 import { GoogleModal } from '@/components/GoogleModal';
+import { ChoiceSheet } from '@/components/ChoiceSheet';
 import { GymMap, type GymMapHandle, type MapPin } from '@/components/GymMap';
 import { Icon } from '@/components/Icon';
 import { MemberAccess } from '@/components/MemberAccess';
@@ -644,7 +645,8 @@ function MapScreen() {
     }, []),
   );
 
-  // iPhone: Apple's action sheet, in your accent and saying which order is on. Elsewhere each tap moves to the next order.
+  // iPhone: Apple's action sheet, in your accent and saying which order is on. Elsewhere GymGO's own, like it (ChoiceSheet).
+  const [sortOpen, setSortOpen] = useState(false);
   const chooseSort = useCallback(() => {
     const labels = SORTS.map((item) => item.label);
     if (Platform.OS === 'ios') {
@@ -658,10 +660,8 @@ function MapScreen() {
       );
       return;
     }
-    setFilters((current) => {
-      const next = SORTS[(SORTS.findIndex((item) => item.key === current.sort) + 1) % SORTS.length]!;
-      return { ...current, sort: next.key };
-    });
+    Keyboard.dismiss();
+    setSortOpen(true);
   }, [setFilters]);
 
   // Your account lives in the Profile tab.
@@ -795,7 +795,20 @@ function MapScreen() {
     );
 
   const googleRecord = googleFor ? data.records.find((record) => record.location.id === googleFor) : undefined;
-  const googleModal = <GoogleModal record={googleRecord} onClose={() => setGoogleFor(null)} />;
+  const googleModal = (
+    <>
+      <GoogleModal record={googleRecord} onClose={() => setGoogleFor(null)} />
+      {sortOpen && (
+        <ChoiceSheet
+          title="Sort gyms by"
+          options={SORTS}
+          selected={filters.sort}
+          onPick={(sort) => setFilters((current) => ({ ...current, sort }))}
+          onClose={() => setSortOpen(false)}
+        />
+      )}
+    </>
+  );
 
   const pillPlace = filters.placeName === THIS_AREA ? 'This area' : filters.placeName === YOUR_LOCATION ? 'Near you' : filters.placeName;
   const statusPill = (

@@ -7,13 +7,13 @@
  * was read; a fee the gym doesn't publish says "not published", never $0.
  */
 
-import * as WebBrowser from 'expo-web-browser';
 import { Linking, StyleSheet, View } from 'react-native';
 import { describeMembership, formatMoney, type GymRecord, type VisitOffer } from '@gymgo/domain';
 import { isChainEvidence } from '@gymgo/osm';
 import { color, currentLook, face, radius, shadow, space, themed } from '@/lib/theme';
 import { Fold, PrimaryButton, Txt } from './ui';
 import { Pressy } from './motion';
+import { openPage } from '@/lib/actions';
 
 /** The membership offers a gym publishes, cheapest per week first. */
 export function membershipsOf(record: GymRecord): VisitOffer[] {
@@ -109,7 +109,7 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
         </Txt>
       )}
       {url && (
-        <Pressy onPress={() => void WebBrowser.openBrowserAsync(url)} accessibilityRole="link" style={styles.signUp}>
+        <Pressy onPress={() => openPage(url)} accessibilityRole="link" style={styles.signUp}>
           <Txt variant="subhead" color={color.brand} style={styles.bold}>
             Sign up on their website ↗
           </Txt>
@@ -200,7 +200,7 @@ export function JoinGym({ record }: { record: GymRecord }) {
           label={memberships.length ? 'Sign up on their website' : 'Ask about joining on their website'}
           icon="website"
           tone={memberships.length ? 'brand' : 'quiet'}
-          onPress={() => void WebBrowser.openBrowserAsync(url)}
+          onPress={() => openPage(url)}
         />
       ) : phone ? (
         <PrimaryButton label="Call to ask about joining" icon="call" tone="quiet" onPress={() => void Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`).catch(() => undefined)} />

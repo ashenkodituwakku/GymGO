@@ -13,7 +13,6 @@
  * this is, credited, and with no claim of any partnership.
  */
 
-import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -25,6 +24,7 @@ import { matchLogo } from '@/lib/logoMatch';
 import { color, radius, themed } from '@/lib/theme';
 import { Txt } from './ui';
 import { FADE_IN, Pressable } from './motion';
+import { openPage } from '@/lib/actions';
 
 export function logoFor(location: GymLocation): Logo | null {
   return matchLogo(location, BRAND_LOGOS);
@@ -162,7 +162,7 @@ export function LogoCredit({ location }: { location: GymLocation }) {
       );
     }
     return (
-      <Pressable onPress={() => void WebBrowser.openBrowserAsync(location.website!)} accessibilityRole="link" hitSlop={6}>
+      <Pressable onPress={() => openPage(location.website!)} accessibilityRole="link" hitSlop={6}>
         <Txt variant="caption" color={color.labelSecondary}>
           Icon from {host(location.website)}, the gym’s own website. It’s their mark; GymGO isn’t connected to or endorsed by them. ↗
         </Txt>
@@ -171,7 +171,7 @@ export function LogoCredit({ location }: { location: GymLocation }) {
   }
   const { logo } = mark;
   return (
-    <Pressable onPress={() => void WebBrowser.openBrowserAsync(logo.page)} accessibilityRole="link" hitSlop={6}>
+    <Pressable onPress={() => openPage(logo.page)} accessibilityRole="link" hitSlop={6}>
       <Txt variant="caption" color={color.labelSecondary}>
         {logo.license.startsWith('Public domain')
           ? 'Logo via Wikimedia Commons (public domain). '

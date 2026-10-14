@@ -5,12 +5,12 @@
  * @gymgo/domain).
  */
 
-import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
 import { Text, type StyleProp, type TextStyle } from 'react-native';
 import { legalLinks } from '@gymgo/domain';
 import { Txt } from '@/components/ui';
 import { color, face } from '@/lib/theme';
+import { openPage } from '@/lib/actions';
 
 type Variant = Parameters<typeof Txt>[0]['variant'];
 
@@ -24,7 +24,7 @@ export function LegalText({ text, variant = 'body', tint = color.label, style }:
             {piece.text}
           </Text>
         ) : 'url' in piece ? (
-          <Text key={index} style={[{ color: color.brand }, face('medium')]} accessibilityRole="link" onPress={() => void WebBrowser.openBrowserAsync(piece.url)}>
+          <Text key={index} style={[{ color: color.brand }, face('medium')]} accessibilityRole="link" onPress={() => openPage(piece.url)}>
             {piece.text}
           </Text>
         ) : (

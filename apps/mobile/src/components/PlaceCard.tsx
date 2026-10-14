@@ -6,7 +6,6 @@
  * pin and placed the row, so the three can never disagree.
  */
 
-import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -26,7 +25,7 @@ import {
   type Tri,
 } from '@gymgo/domain';
 import { TIER, accessLine, checkedAgo, gymDistanceLine, ratingShort, sourceLabel, timeLabel } from '@/lib/copy';
-import { shareGym } from '@/lib/actions';
+import { openPage, shareGym } from '@/lib/actions';
 import { addressLines, callQuestions, depositLine, priceLine } from '@/lib/present';
 import { color, currentLook, face, radius, shadow, space, themed, type } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
@@ -233,7 +232,7 @@ export function PlaceCard({
   };
   const website = () => {
     if (!location.website) return setNotice('No website on record for this gym.');
-    void WebBrowser.openBrowserAsync(location.website);
+    openPage(location.website);
   };
 
   return (
@@ -733,7 +732,7 @@ function Evidence({ provenance, age }: { provenance: Provenance | undefined; age
     );
   }
   return (
-    <Pressable onPress={() => void WebBrowser.openBrowserAsync(url)} accessibilityRole="link" hitSlop={6}>
+    <Pressable onPress={() => openPage(url)} accessibilityRole="link" hitSlop={6}>
       <Txt variant="caption" color={color.brand}>
         {text} ↗
       </Txt>
@@ -765,7 +764,7 @@ function Sources({ sources }: { sources: Source[] }) {
       {sources.map((source) => (
         <Pressable
           key={source.evidenceRef}
-          onPress={() => void WebBrowser.openBrowserAsync(source.evidenceRef!)}
+          onPress={() => openPage(source.evidenceRef!)}
           accessibilityRole="link"
           style={styles.sourceRow}
         >

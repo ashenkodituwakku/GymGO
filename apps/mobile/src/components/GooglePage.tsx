@@ -18,7 +18,6 @@
  * gym is open, not when a visitor may come; its reviews aren't ours.
  */
 
-import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { Image, Linking, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from './motion';
@@ -29,8 +28,9 @@ import { googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl } fro
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { GoogleEmbed } from './GoogleEmbed';
 import { CloseButton, PrimaryButton, Txt } from './ui';
+import { openPage } from '@/lib/actions';
 
-const open = (url: string) => void WebBrowser.openBrowserAsync(url).catch(() => Linking.openURL(url));
+const open = openPage;
 
 export function GooglePage({ record, onClose }: { record: GymRecord; onClose: () => void }) {
   const insets = useSafeAreaInsets();
@@ -190,7 +190,7 @@ export function PlaceDetails({ place, hidePhotos = false }: { place: GooglePlace
       <View style={styles.links}>
         {place.phone && (
           <View style={styles.flex}>
-            <PrimaryButton label={place.phone} icon="call" tone="quiet" onPress={() => void Linking.openURL(`tel:${place.phone!.replace(/\s+/g, '')}`)} />
+            <PrimaryButton label={place.phone} icon="call" tone="quiet" onPress={() => void Linking.openURL(`tel:${place.phone!.replace(/\s+/g, '')}`).catch(() => undefined)} />
           </View>
         )}
         {place.website && (

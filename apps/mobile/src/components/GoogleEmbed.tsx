@@ -10,17 +10,17 @@
  * Google Maps app rather than inside this little window.
  */
 
-import * as WebBrowser from 'expo-web-browser';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useGoogleReach } from '@/lib/googleReach';
 import { color, radius, themed } from '@/lib/theme';
 import { GoogleUnavailable } from './GoogleUnavailable';
+import { openPage } from '@/lib/actions';
 
 export const EMBED_WIDTH = 440;
 
-const openOutside = (url: string) => void WebBrowser.openBrowserAsync(url).catch(() => undefined);
+const openOutside = openPage;
 
 function page(url: string) {
   const src = url.replace(/&/g, '&amp;').replace(/"/g, '&quot;');

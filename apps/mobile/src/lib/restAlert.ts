@@ -12,9 +12,19 @@
  * Not on the web (a browser tab keeps its own timer), and not a Live
  * Activity on the lock screen: that needs a build of GymGO made for the
  * App Store, which Expo Go can't run.
+ *
+ * In Expo Go: on iPhone the alert works, and the module's warnings about
+ * push notifications (sent from a server, which GymGO doesn't use) are kept
+ * out of the app: each popped up over the workout the first time a rest
+ * began. On Android, Expo Go can't load the notifications module at all
+ * (Expo took its push half out), so the alert is off there until GymGO is
+ * a real build; the timer on screen still buzzes.
  */
 
-import { Platform } from 'react-native';
+import { LogBox, Platform } from 'react-native';
+
+/** What expo-notifications says on loading in Expo Go: about push, which GymGO never uses. */
+const EXPO_GO_PUSH_WARNINGS = ['`expo-notifications` functionality is not fully supported in Expo Go', 'expo-notifications: Android Push notifications'];
 
 type Notifications = typeof import('expo-notifications');
 
@@ -27,6 +37,7 @@ let generation = 0;
 function notifications(): Notifications | null {
   if (Platform.OS === 'web') return null;
   if (loaded === undefined) {
+    LogBox.ignoreLogs(EXPO_GO_PUSH_WARNINGS);
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       loaded = require('expo-notifications') as Notifications;

@@ -17,14 +17,13 @@ import maplibregl from 'maplibre-gl';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { BoundingBox } from '@gymgo/domain';
-import { Glass } from './Glass';
-import { Pressable } from './motion';
-import { TIER_COLOUR, Txt } from './ui';
+import { MapNotice } from './MapNotice';
+import { TIER_COLOUR } from './ui';
 import { alpha, mix } from '@/lib/looks';
 import { DROP_BOX, DROP_DRAWN, DROP_GLYPH_BOX, DROP_HEAD, DROP_HIGHLIGHT, DROP_OUTLINE, DROP_PATH } from '@/lib/pinShape';
 import type { GymMapHandle, GymMapProps } from './map-types';
 import { mapItems, sameSpot, type MapItem } from '@/lib/cluster';
-import { CHILD_TOUCH, color, currentTheme, face, radius, space, themed } from '@/lib/theme';
+import { currentTheme, themed } from '@/lib/theme';
 
 export type { GymMapHandle, MapPin } from './map-types';
 
@@ -406,23 +405,7 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   return (
     <View style={styles.fill}>
       <View ref={host} style={styles.host} />
-      {failed && (
-        <View style={[styles.notice, { top: topInset, bottom: bottomInset, left: leftInset }, CHILD_TOUCH]}>
-          <Glass kind="control" style={styles.noticeCard}>
-            <Txt variant="subhead" style={[face('semibold'), styles.center]}>
-              The map didn’t load
-            </Txt>
-            <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-              The gym list still works.
-            </Txt>
-            <Pressable onPress={() => retry.current()} accessibilityRole="button" style={({ pressed }) => [styles.retry, pressed && { opacity: 0.7 }]}>
-              <Txt variant="footnote" color={color.brand} style={face('semibold')}>
-                Try again
-              </Txt>
-            </Pressable>
-          </Glass>
-        </View>
-      )}
+      {failed && <MapNotice top={topInset} bottom={bottomInset} left={leftInset} onRetry={() => retry.current()} />}
     </View>
   );
 });
@@ -430,20 +413,16 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
 const styles = themed(() => StyleSheet.create({
   fill: { ...StyleSheet.absoluteFill, zIndex: 0 },
   host: { width: '100%', height: '100%' },
-  notice: { position: 'absolute', right: 0, alignItems: 'center', justifyContent: 'center', padding: space[4] },
-  noticeCard: { alignItems: 'center', gap: 2, paddingHorizontal: space[5], paddingVertical: space[3], borderRadius: radius.xl, maxWidth: 300 },
-  center: { textAlign: 'center' },
-  retry: { marginTop: space[1], paddingHorizontal: space[3], paddingVertical: space[1], borderRadius: radius.pill, backgroundColor: color.brandTint },
 }));
 
 function userDot(): HTMLElement {
   const halo = document.createElement('div');
   halo.setAttribute('aria-label', 'You are here');
   halo.style.cssText =
-    'width:36px;height:36px;border-radius:18px;background:rgba(0,122,255,0.18);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1000;';
+    'width:36px;height:36px;border-radius:50%;background:rgba(0,122,255,0.18);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1000;';
   const dot = document.createElement('div');
   dot.style.cssText =
-    'width:16px;height:16px;border-radius:8px;background:#007AFF;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3);';
+    'width:16px;height:16px;box-sizing:content-box;border-radius:50%;background:#007AFF;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3);';
   halo.appendChild(dot);
   return halo;
 }

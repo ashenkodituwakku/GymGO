@@ -20,6 +20,10 @@ export const DARK_STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
 
 export type PageMessage =
   | { type: 'ready' }
+  /** The map's own pictures didn't come (offline, or a network that blocks them). */
+  | { type: 'failed' }
+  /** The first of them arrived: the map is showing. */
+  | { type: 'loaded' }
   | { type: 'select'; id: string }
   | { type: 'mapPress' }
   | {
@@ -29,12 +33,28 @@ export type PageMessage =
       /** All of the map on screen, and its zoom in Apple's (256-point) levels, for grouping pins. */
       view: { north: number; south: number; east: number; west: number };
       zoom: number;
+      /** Where the camera is, so a page started over opens where this one was. */
+      centre: { lat: number; lng: number };
     }
   | { type: 'error'; message: string };
 
-export function mapPageHtml(options: { centre: LatLng; colours: Record<string, string>; dark?: boolean }): string {
+/** How far in a new page opens, in MapLibre's levels (one less than Apple's). */
+export const OPENING_ZOOM = 13.2;
+
+export function mapPageHtml(options: {
+  centre: LatLng;
+  /** MapLibre's level; a page started over passes the last page's. */
+  zoom?: number;
+  colours: Record<string, string>;
+  dark?: boolean;
+}): string {
   const cdn = `https://cdn.jsdelivr.net/npm/maplibre-gl@${MAPLIBRE_VERSION}/dist`;
-  const config = JSON.stringify({ centre: options.centre, colours: options.colours, style: options.dark ? DARK_STYLE_URL : STYLE_URL });
+  const config = JSON.stringify({
+    centre: options.centre,
+    zoom: options.zoom ?? OPENING_ZOOM,
+    colours: options.colours,
+    style: options.dark ? DARK_STYLE_URL : STYLE_URL,
+  });
   return `<!doctype html>
 <html>
 <head>
@@ -43,16 +63,14 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
 <link rel="stylesheet" href="${cdn}/maplibre-gl.css">
 <style>
   html, body, #map { margin: 0; padding: 0; width: 100%; height: 100%; background: ${options.dark ? '#000000' : '#F2F2F7'}; }
-  body { -webkit-tap-highlight-color: transparent; font-family: sans-serif; }
-  #offline { display: none; position: absolute; inset: 0; align-items: center; justify-content: center;
-    padding: 24px; text-align: center; color: ${options.dark ? '#AEAEB2' : '#6C6C70'}; font-size: 15px; }
+  /* A long press picks nothing: no text selection, no copy menu over the credit. */
+  body { -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; font-family: sans-serif; }
   .maplibregl-ctrl-attrib { font-size: 10px; line-height: 14px; }
   .maplibregl-ctrl-bottom-left .maplibregl-ctrl { margin: 0 0 0 16px; }
 </style>
 </head>
 <body>
 <div id="map"></div>
-<div id="offline">The map needs an internet connection. The gym list below still works.</div>
 <script>
   var CONFIG = ${config};
   var post = function (message) {
@@ -60,7 +78,7 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
   };
   window.onerror = function (message) { post({ type: 'error', message: String(message) }); };
 </script>
-<script src="${cdn}/maplibre-gl.js" onerror="document.getElementById('offline').style.display='flex';post({type:'error',message:'map library failed to load'})"></script>
+<script src="${cdn}/maplibre-gl.js" onerror="post({type:'failed'});post({type:'error',message:'map library failed to load'})"></script>
 <script>
 (function () {
   if (!window.maplibregl) return;
@@ -97,7 +115,7 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
     container: 'map',
     style: CONFIG.style,
     center: [CONFIG.centre.lng, CONFIG.centre.lat],
-    zoom: 13.2,
+    zoom: CONFIG.zoom,
     attributionControl: false,
     dragRotate: false,
     pitchWithRotate: false
@@ -115,18 +133,38 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
     var nw = map.unproject([pad.left || 0, pad.top || 0]);
     var se = map.unproject([w - (pad.right || 0), Math.max((pad.top || 0) + 1, h - (pad.bottom || 0))]);
     var all = map.getBounds();
+    var centre = map.getCenter();
     post({
       type: 'moved',
       box: { north: nw.lat, south: se.lat, west: nw.lng, east: se.lng },
       view: { north: all.getNorth(), south: all.getSouth(), west: all.getWest(), east: all.getEast() },
       // MapLibre's tiles are 512 pixels, so its zoom numbers are one less than Apple's.
-      zoom: map.getZoom() + 1
+      zoom: map.getZoom() + 1,
+      centre: { lat: centre.lat, lng: centre.lng }
     });
   });
   map.on('load', function () { map.fire('moveend'); });
+  // The style never coming, or the first few tiles all failing, is a failed
+  // map (as in the browser's, GymMap.web.tsx); the first tile to arrive says
+  // it's showing, once.
+  var styled = false, tileLoaded = false, tileErrors = 0;
+  map.on('style.load', function () { styled = true; });
+  map.on('data', function (event) {
+    if (!tileLoaded && event.dataType === 'source' && event.tile) {
+      tileLoaded = true;
+      post({ type: 'loaded' });
+    }
+  });
   map.on('error', function (event) {
     var message = event && event.error && event.error.message ? event.error.message : 'map error';
     post({ type: 'error', message: message });
+    if (!styled) post({ type: 'failed' });
+    else if (event && event.tile && !tileLoaded && ++tileErrors >= 3) post({ type: 'failed' });
+  });
+  // The style names a few place icons (rowing, ATM, ferry...) its icon set
+  // doesn't have; each gets an empty one rather than a warning every load.
+  map.on('styleimagemissing', function (event) {
+    if (!map.hasImage(event.id)) map.addImage(event.id, { width: 1, height: 1, data: new Uint8Array(4) });
   });
 
   // What's drawn, by id, so only what changed is redrawn.
@@ -138,7 +176,9 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
     wrap.type = 'button';
     wrap.setAttribute('aria-label', label);
     // No position of its own: MapLibre's marker class keeps it absolute (relative stacked the pins, off their gyms).
-    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0;';
+    // A dot takes taps across a full 44 points round its 28 (even padding keeps it centred on its gym); the
+    // picked teardrop stands on its tip, so it gets none.
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:' + (selected ? 0 : 8) + 'px;';
     var face = document.createElement('div');
     face.className = 'gg-face';
     if (selected) {
@@ -169,7 +209,8 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
     var wrap = document.createElement('button');
     wrap.type = 'button';
     wrap.setAttribute('aria-label', count + ' gyms here. Zoom in');
-    wrap.style.cssText = 'display:flex;background:none;border:0;padding:0;';
+    // At least 44 points to tap, like a pin.
+    wrap.style.cssText = 'display:flex;background:none;border:0;padding:' + Math.max(0, (44 - size) / 2) + 'px;';
     var face = document.createElement('div');
     face.className = 'gg-face';
     face.style.cssText = 'min-width:' + size + 'px;height:' + size + 'px;border-radius:' + (size / 2) + 'px;background:' + lit(fill) + ';' +
@@ -273,9 +314,9 @@ export function mapPageHtml(options: { centre: LatLng; colours: Record<string, s
       userMarker = null;
       if (lat === null) return;
       var halo = document.createElement('div');
-      halo.style.cssText = 'width:36px;height:36px;border-radius:18px;background:rgba(0,122,255,0.18);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1000;';
+      halo.style.cssText = 'width:36px;height:36px;border-radius:50%;background:rgba(0,122,255,0.18);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1000;';
       var dot = document.createElement('div');
-      dot.style.cssText = 'width:16px;height:16px;border-radius:8px;background:#007AFF;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3);';
+      dot.style.cssText = 'width:16px;height:16px;box-sizing:content-box;border-radius:50%;background:#007AFF;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3);';
       halo.appendChild(dot);
       userMarker = new maplibregl.Marker({ element: halo, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
     },

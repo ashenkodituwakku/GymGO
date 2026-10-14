@@ -54,7 +54,9 @@ function ensurePinStyles() {
     '.gg-pin .gg-face{transition:transform 160ms cubic-bezier(0.22,1,0.36,1);}' +
     '.gg-pin:hover .gg-face{transform:translateY(-2px) scale(1.08);}' +
     '.gg-pin:active .gg-face{transform:scale(0.94);}' +
-    '@media (prefers-reduced-motion: reduce){.gg-pin .gg-face{transition:none;}.gg-pin:hover .gg-face{transform:none;}}';
+    '@media (prefers-reduced-motion: reduce){.gg-pin .gg-face{transition:none;}.gg-pin:hover .gg-face{transform:none;}}' +
+    // The map's credit over the pins (up to 10), not under them: the tile licence says it stays readable.
+    '.maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right{z-index:20;}';
   document.head.appendChild(sheet);
 }
 

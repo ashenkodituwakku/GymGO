@@ -67,6 +67,8 @@ export function mapPageHtml(options: {
   body { -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; font-family: sans-serif; }
   .maplibregl-ctrl-attrib { font-size: 10px; line-height: 14px; }
   .maplibregl-ctrl-bottom-left .maplibregl-ctrl { margin: 0 0 0 16px; }
+  /* The credit over the pins (up to 10), not under them: the tile licence says it stays readable. */
+  .maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right { z-index: 20; }
 </style>
 </head>
 <body>

@@ -147,6 +147,7 @@ export default function MachinesScreen() {
                 icon="close"
                 accessibilityLabel={`${equipmentLabel(id)}. Remove`}
                 selected
+                action
                 onPress={() => {
                   toggle(id);
                   if (picked.length === 1) setChoosing(true);

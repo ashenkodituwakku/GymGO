@@ -103,12 +103,19 @@ export function Chip({
   onPress,
   icon,
   accessibilityLabel,
+  action = false,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
   icon?: IconName;
   accessibilityLabel?: string;
+  /**
+   * Does something rather than switch something on or off (Try again, the
+   * sort order, Remove): a button to a screen reader. A chip is otherwise a
+   * checkbox, and these were read as "checkbox, not checked".
+   */
+  action?: boolean;
 }) {
   return (
     <Pressy
@@ -117,8 +124,8 @@ export function Chip({
         haptic.select();
         onPress();
       }}
-      accessibilityRole="checkbox"
-      aria-checked={selected}
+      accessibilityRole={action ? 'button' : 'checkbox'}
+      aria-checked={action ? undefined : selected}
       accessibilityLabel={accessibilityLabel ?? label}
       hitSlop={4}
       style={[styles.chip, selected && styles.chipSelected]}

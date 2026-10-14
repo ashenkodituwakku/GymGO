@@ -20,21 +20,27 @@ export function setHapticsEnabled(on: boolean) {
 
 const on = () => supported && switchedOn;
 
+/**
+ * Plays one. On Android, the system's own haptics: crisp, as on iPhone, and
+ * off when the phone's touch feedback is. The rest of expo-haptics drives
+ * Android's vibration motor, a soft 50 ms buzz for every tick that ignores
+ * that setting; it's kept only for a phone too old for the system's kind.
+ * One that can't play is dropped quietly: unanswered, a failed one was an
+ * unhandled rejection, a warning over the app while developing.
+ */
+function play(android: Haptics.AndroidHaptics, other: () => Promise<void>) {
+  if (!on()) return;
+  const played = Platform.OS === 'android' ? Haptics.performAndroidHapticsAsync(android).catch(other) : other();
+  played.catch(() => undefined);
+}
+
 export const haptic = {
   /** A filter chip, a segment, a sheet settling at a new height. */
-  select: () => {
-    if (on()) void Haptics.selectionAsync();
-  },
+  select: () => play(Haptics.AndroidHaptics.Clock_Tick, () => Haptics.selectionAsync()),
   /** Opening a gym, tapping a pin. */
-  tap: () => {
-    if (on()) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  },
+  tap: () => play(Haptics.AndroidHaptics.Context_Click, () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)),
   /** Saving a gym. */
-  success: () => {
-    if (on()) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  },
+  success: () => play(Haptics.AndroidHaptics.Confirm, () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)),
   /** Something the person asked for could not be done. */
-  warn: () => {
-    if (on()) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-  },
+  warn: () => play(Haptics.AndroidHaptics.Reject, () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)),
 };

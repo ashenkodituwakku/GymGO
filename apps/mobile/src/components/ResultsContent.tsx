@@ -305,6 +305,7 @@ export function ResultsContent({
           label={SORTS.find((item) => item.key === filters.sort)?.label ?? 'Best match'}
           selected={filters.sort !== 'best_match'}
           onPress={onSort}
+          action
           accessibilityLabel={`Sorted by ${SORTS.find((item) => item.key === filters.sort)?.label ?? 'best match'}. Change`}
         />
         <Chip
@@ -312,6 +313,7 @@ export function ResultsContent({
           label={timeLabel(filters.visitMinuteOfDay)}
           selected={false}
           onPress={onOpenFilters}
+          action
           accessibilityLabel={`Visiting ${visitWhen(filters.visitMinuteOfDay, visitIsLater(filters))}. Change time`}
         />
         {/* The budget that's on, set from anywhere (Home's tile, Filters); tapping it clears it. */}
@@ -349,7 +351,7 @@ export function ResultsContent({
           <Txt variant="footnote" color={color.labelSecondary}>
             {lookupLine('ready', lookup.placeName)}
           </Txt>
-          {onSearchHere && <Chip icon="search" label="Search this area" selected={false} onPress={onSearchHere} />}
+          {onSearchHere && <Chip icon="search" label="Search this area" selected={false} onPress={onSearchHere} action />}
         </View>
       )}
       {!locked && total === 0 && lookup?.state === 'searching' && (
@@ -367,7 +369,7 @@ export function ResultsContent({
           <Txt variant="footnote" color={color.labelSecondary}>
             {lookupLine('failed', lookup.placeName)} {lookup.problem}
           </Txt>
-          {onSearchHere && <Chip icon="refresh" label="Try again" selected={false} onPress={onSearchHere} />}
+          {onSearchHere && <Chip icon="refresh" label="Try again" selected={false} onPress={onSearchHere} action />}
         </View>
       )}
       {!locked && total === 0 && lookup?.state === 'done' && lookup.gyms === 0 && (
@@ -430,6 +432,7 @@ export function ResultsContent({
                   label={`${relaxation.label} (${relaxation.confirmedCount})`}
                   selected={false}
                   onPress={() => onApplyRelaxation(index)}
+                  action
                 />
               ))}
             </View>

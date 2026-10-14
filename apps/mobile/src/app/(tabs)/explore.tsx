@@ -644,12 +644,13 @@ function MapScreen() {
     }, []),
   );
 
-  // iPhone: Apple's action sheet. Elsewhere each tap moves to the next order.
+  // iPhone: Apple's action sheet, in your accent and saying which order is on. Elsewhere each tap moves to the next order.
   const chooseSort = useCallback(() => {
     const labels = SORTS.map((item) => item.label);
     if (Platform.OS === 'ios') {
+      const now = SORTS.find((item) => item.key === latestFilters.current.sort);
       ActionSheetIOS.showActionSheetWithOptions(
-        { title: 'Sort gyms by', options: [...labels, 'Cancel'], cancelButtonIndex: labels.length },
+        { title: 'Sort gyms by', message: now ? `Now: ${now.label}` : undefined, options: [...labels, 'Cancel'], cancelButtonIndex: labels.length, tintColor: color.brand },
         (index) => {
           const chosen = SORTS[index];
           if (chosen) setFilters((current) => ({ ...current, sort: chosen.key }));

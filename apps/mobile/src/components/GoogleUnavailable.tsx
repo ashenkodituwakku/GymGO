@@ -20,7 +20,7 @@ export function GoogleUnavailable({ what, height, reach, onRetry }: { what: stri
           <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
             {what} isn’t available right now: Google didn’t load. Check you’re online, then try again.
           </Txt>
-          <Chip icon="refresh" label="Try again" selected={false} onPress={onRetry} />
+          <Chip icon="refresh" label="Try again" selected={false} onPress={onRetry} action />
         </>
       )}
     </View>

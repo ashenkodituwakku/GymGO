@@ -200,7 +200,7 @@ export default function WorkoutScreen() {
                 onPress={() => setMuscles(preset.muscles)}
               />
             ))}
-            {muscles.length > 0 && <Chip label="Clear" selected={false} onPress={() => setMuscles([])} />}
+            {muscles.length > 0 && <Chip label="Clear" selected={false} onPress={() => setMuscles([])} action />}
           </View>
           {muscles.length > 0 && (
             <Txt variant="footnote" color={color.labelSecondary}>

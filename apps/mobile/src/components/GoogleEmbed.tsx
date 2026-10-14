@@ -70,6 +70,8 @@ export function GoogleEmbed({ url, height, what = 'Google’s map', caption }: {
             return false;
           }}
           onError={() => setFailed(true)}
+          // Android took the page away to free memory: say so, with Try again, rather than leave a blank box.
+          onRenderProcessGone={() => setFailed(true)}
           accessibilityLabel={what}
         />
       </View>

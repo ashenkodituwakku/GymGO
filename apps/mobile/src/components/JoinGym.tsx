@@ -42,7 +42,6 @@ function feeLine(label: string, minor: number | null, currency: VisitOffer['curr
   return `${label}: ${formatMoney(minor, currency)}`;
 }
 
-/** The line a gym's disagreeing membership sources carry, if any. */
 /** "From " or "About " before a franchise's price that this club may not charge exactly. */
 function basisWord(offer: VisitOffer): string {
   return offer.priceBasis === 'from' ? 'From ' : offer.priceBasis === 'recommended' ? 'About ' : '';
@@ -50,8 +49,21 @@ function basisWord(offer: VisitOffer): string {
 
 const CHAIN_NOTE = 'Prices the chain publishes for all its clubs. Each club sets its own, so this one may charge more: check before you join.';
 
-function conflictOf(offers: VisitOffer[]): string | null {
-  return offers.find((offer) => offer.provenance.status === 'conflicting')?.provenance.conflictNote ?? null;
+/**
+ * What to say when the gym's own sources disagree on a price: what the
+ * evidence found, where it says ("$18.95 on the home page, $16.95 on the
+ * contact page…"), or else that they disagree. Null when none do. (A
+ * disagreement with no note of its own used to show no warning at all.)
+ */
+function conflictOf(offers: VisitOffer[]): { text: string; found: boolean } | null {
+  const disputed = offers.find((offer) => offer.provenance.status === 'conflicting');
+  if (!disputed) return null;
+  const note = disputed.provenance.conflictNote?.trim();
+  if (note) return { text: note, found: true };
+  const text = offers.length > 1
+    ? 'The gym’s pages disagree on these prices. Check with the gym before you join.'
+    : 'The gym’s pages disagree on this price. Check with the gym before you join.';
+  return { text, found: false };
 }
 
 /**
@@ -63,7 +75,7 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
   const tiers = membershipsOf(record).filter((offer) => offer.baseAmountMinor !== null);
   if (tiers.length === 0) return null;
   const url = record.location.isDemoData ? null : joinUrl(record);
-  const disagree = conflictOf(tiers) !== null;
+  const disagree = conflictOf(tiers);
   return (
     <View style={styles.banner} accessibilityRole="summary">
       <Txt variant="eyebrow" color={color.brand} style={styles.center}>
@@ -100,7 +112,7 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
       </View>
       {disagree && (
         <Txt variant="footnote" color={color.maybeInk} style={styles.center}>
-          The gym’s pages disagree on these prices. Check with the gym before you join.
+          {disagree.text}
         </Txt>
       )}
       {tiers.some((offer) => offer.priceBasis) && (
@@ -135,7 +147,7 @@ export function JoinGym({ record }: { record: GymRecord }) {
     <Fold icon="cards" title="Join this gym" summary={summary}>
       {conflict && (
         <Txt variant="footnote" color={color.maybeInk}>
-          Sources disagree: {conflict}
+          {conflict.found ? `Sources disagree: ${conflict.text}` : conflict.text}
         </Txt>
       )}
       {memberships.some((offer) => offer.priceBasis) && (

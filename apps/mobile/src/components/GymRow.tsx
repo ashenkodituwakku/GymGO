@@ -19,6 +19,7 @@ import { MarkImage, useGymMark } from './BrandLogo';
 import { Icon } from './Icon';
 import { Illustration } from './Illustration';
 import { NoPhoto, TIER_COLOUR, Txt } from './ui';
+import { useGlassRedraw } from './Redrawn';
 
 /**
  * Drawn again only when its own gym, cover or price changes: a list of
@@ -42,6 +43,7 @@ export const GymRow = memo(function GymRow({
   /** Opens the gym; given its id. */
   onOpen: (id: string) => void;
 }) {
+  useGlassRedraw();
   const location = result.record.location;
   const tone = TIER_COLOUR[result.tier];
   const tier = TIER[result.tier];

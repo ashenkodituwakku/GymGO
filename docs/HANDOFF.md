@@ -51,7 +51,7 @@ the branch the owner's launcher pulls.
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
 `npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 225,
-mobile 337, domain 167 and web 39 tests, all passing.
+mobile 347, domain 167 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 57, React Native 0.86, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -101,6 +101,23 @@ mobile 337, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Phone-only review: Android map, Expo Go warnings, links, haptics**
+  (14 Oct, the owner said Expo Go was "heavily bugged" and hasn't yet said
+  how; these came from reading the phone-only code). Conventions to keep:
+  - Open a web page with `openPage` (`lib/actions.ts`), never
+    `WebBrowser.openBrowserAsync` directly: it treats a double tap as one
+    and falls back to the phone's browser.
+  - End every fire-and-forget library promise with `.catch(...)`: an
+    unhandled one is a warning over the app in Expo Go.
+  - A map that can't load shows `MapNotice`; the Android map
+    (`GymMap.android.tsx`) restarts its page when Android takes it away
+    (`onRenderProcessGone`) and replays the pins, dot and padding.
+  - Haptics go through `lib/haptics.ts`, which uses Android's system
+    haptics, not the vibration motor.
+  - A chip that does something, rather than switching on or off, takes
+    `action` (a button to screen readers, not a checkbox).
+  - A choice of one from a few, outside iPhone: `ChoiceSheet` (the sort
+    order uses it; iPhone keeps Apple's action sheet).
 - **Settings menus, second pass** (13 Oct, the owner asked again):
   Profile's account card shows workouts (from the shared training log,
   `useTrainingLog`, so no extra request), saved and collected, with a

@@ -4,6 +4,7 @@
  * price on the last line, where the eye lands last.
  */
 
+import { memo } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { Pressable } from './motion';
 import type { GymSearchResult } from '@gymgo/domain';
@@ -19,12 +20,18 @@ import { Icon } from './Icon';
 import { Illustration } from './Illustration';
 import { NoPhoto, TIER_COLOUR, Txt } from './ui';
 
-export function GymRow({
+/**
+ * Drawn again only when its own gym, cover or price changes: a list of
+ * seventy redrew every row each time the map came to rest or a letter was
+ * typed, which a phone feels. So `onOpen` should be a steady function (it's
+ * given the gym's id), not a new one for each row.
+ */
+export const GymRow = memo(function GymRow({
   result,
   visitMinute,
   cover,
   memberTypicalMinor = null,
-  onPress,
+  onOpen,
 }: {
   result: GymSearchResult;
   visitMinute: number;
@@ -32,7 +39,8 @@ export function GymRow({
   cover: string | null;
   /** What members typically paid, shown only when the gym publishes no price. */
   memberTypicalMinor?: number | null;
-  onPress: () => void;
+  /** Opens the gym; given its id. */
+  onOpen: (id: string) => void;
 }) {
   const location = result.record.location;
   const tone = TIER_COLOUR[result.tier];
@@ -53,7 +61,7 @@ export function GymRow({
     <Pressable
       onPress={() => {
         haptic.tap();
-        onPress();
+        onOpen(location.id);
       }}
       accessibilityRole="button"
       accessibilityLabel={`${location.name}, ${where}. ${tier.label}: ${access}. ${priceText(price)}.`}
@@ -114,7 +122,7 @@ export function GymRow({
       </View>
     </Pressable>
   );
-}
+});
 
 const styles = themed(() => StyleSheet.create({
   row: {

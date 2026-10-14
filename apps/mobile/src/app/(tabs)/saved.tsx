@@ -6,7 +6,7 @@
  */
 
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { GymRow } from '@/components/GymRow';
 import { FADE_OUT, GLIDE, Pressable, Pressy, usePop } from '@/components/motion';
@@ -29,6 +29,7 @@ export default function Saved() {
   usePageTitle('Saved');
   const { data, account, filters, compare, toggleCompare, requestExplore, billing, openPro, prefsReady, recents } = useApp();
   const router = useRouter();
+  const openGym = useCallback((id: string) => router.push({ pathname: '/gym/[id]', params: { id } }), [router]);
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   const byId = useMemo(
     () => resultsById(filters, data.records, asOf, data.ratings, [...account.saved, ...compare, ...recents]),
@@ -99,7 +100,7 @@ export default function Saved() {
                         visitMinute={filters.visitMinuteOfDay}
                         cover={data.covers[id] ?? null}
                         memberTypicalMinor={data.memberPrices[id]?.typicalMinor ?? null}
-                        onPress={() => router.push({ pathname: '/gym/[id]', params: { id } })}
+                        onOpen={openGym}
                       />
                     </View>
                     <Pressy
@@ -150,7 +151,7 @@ export default function Saved() {
                         visitMinute={filters.visitMinuteOfDay}
                         cover={data.covers[id] ?? null}
                         memberTypicalMinor={data.memberPrices[id]?.typicalMinor ?? null}
-                        onPress={() => router.push({ pathname: '/gym/[id]', params: { id } })}
+                        onOpen={openGym}
                       />
                     </View>
                     <CompareTick on={on} name={result.record.location.name} onPress={() => toggleCompare(id)} />

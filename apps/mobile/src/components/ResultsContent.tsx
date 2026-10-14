@@ -472,7 +472,7 @@ export function ResultsContent({
                     visitMinute={filters.visitMinuteOfDay}
                     cover={covers[result.record.location.id] ?? null}
                     memberTypicalMinor={memberPrices[result.record.location.id]?.typicalMinor ?? null}
-                    onPress={() => onSelect(result.record.location.id)}
+                    onOpen={onSelect}
                   />
                 </Animated.View>
               ))}

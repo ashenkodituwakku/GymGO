@@ -658,7 +658,8 @@ const styles = themed(() => StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     paddingHorizontal: 9,
-    height: 24,
+    paddingVertical: 2,
+    minHeight: 24,
     borderRadius: radius.pill,
     alignSelf: 'flex-start',
   },
@@ -668,7 +669,8 @@ const styles = themed(() => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    height: 36,
+    minHeight: 36,
+    paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: radius.pill,
     backgroundColor: color.fill,
@@ -703,13 +705,16 @@ const styles = themed(() => StyleSheet.create({
   closeHit: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   actionWrap: { flex: 1 },
-  action: { height: 58, borderRadius: radius.lg },
+  action: { minHeight: 58, borderRadius: radius.lg },
   // Rounded like its glass, so the keyboard's focus ring follows the shape.
-  actionHit: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: radius.lg },
+  actionHit: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 6, borderRadius: radius.lg },
   actionLabel: face('medium'),
 
+  // Heights here are minimums: with the phone's text set large, a label grows
+  // its button or chip rather than being cut off at the top and bottom.
   primary: {
-    height: 52,
+    minHeight: 52,
+    paddingVertical: 12,
     // Room at the ends for when a button sizes to its label (a centred column).
     paddingHorizontal: 22,
     borderRadius: radius.lg,
@@ -785,7 +790,7 @@ const styles = themed(() => StyleSheet.create({
   field: { gap: 6 },
   fieldLabel: face('medium'),
   fieldInput: {
-    height: 48,
+    minHeight: 48,
     paddingHorizontal: space[4],
     borderRadius: radius.md,
     borderCurve: 'continuous',

@@ -645,11 +645,20 @@ function MapScreen() {
     }, []),
   );
   // Android's back gesture closes the same, in the same order, before it
-  // leaves Explore: it went straight to Home, the card left open out of sight.
+  // leaves Explore: it went straight to Home, the card left open out of
+  // sight. Then the list, if it's pulled all the way up, comes down to
+  // halfway, as in Google Maps.
+  const back = useRef<() => boolean>(() => false);
+  back.current = () => {
+    if (escape.current()) return true;
+    if (wide || sheetIndex.current !== 2) return false;
+    mainSheet.current?.snapToIndex(1);
+    return true;
+  };
   useFocusEffect(
     useCallback(() => {
       if (Platform.OS !== 'android') return;
-      const listener = BackHandler.addEventListener('hardwareBackPress', () => escape.current());
+      const listener = BackHandler.addEventListener('hardwareBackPress', () => back.current());
       return () => listener.remove();
     }, []),
   );

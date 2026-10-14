@@ -637,7 +637,14 @@ export function tracking(size: number): number {
   return Math.round((-0.0223 + 0.185 * Math.exp(-0.1745 * size)) * size * 100) / 100;
 }
 
-const style = (fontSize: number, lineHeight: number, weight: Weight) => ({ fontSize, lineHeight, letterSpacing: tracking(fontSize), ...face(weight) });
+/**
+ * Android puts the font's own padding above and below each line as well as
+ * the line height; Inter's is deep, so text sat low in its pills, chips and
+ * badges. Off: the line height alone places it, as on iPhone and the web.
+ */
+const ANDROID_TEXT = Platform.OS === 'android' ? { includeFontPadding: false } : {};
+
+const style = (fontSize: number, lineHeight: number, weight: Weight) => ({ fontSize, lineHeight, letterSpacing: tracking(fontSize), ...face(weight), ...ANDROID_TEXT });
 
 /** A title or big figure: in the look's display face, if it has one (8-bit's arcade type runs large, so it's set smaller). */
 const display = (fontSize: number, lineHeight: number, weight: Weight) => {
@@ -645,7 +652,7 @@ const display = (fontSize: number, lineHeight: number, weight: Weight) => {
   if (!fonts?.display) return style(fontSize, lineHeight, weight);
   const scale = fonts.displayScale ?? 1;
   const size = Math.round(fontSize * scale);
-  return { fontSize: size, lineHeight: Math.round(size * 1.5), letterSpacing: 0, fontFamily: fonts.display, fontWeight: 'normal' as const };
+  return { fontSize: size, lineHeight: Math.round(size * 1.5), letterSpacing: 0, fontFamily: fonts.display, fontWeight: 'normal' as const, ...ANDROID_TEXT };
 };
 
 /** Apple's iOS text styles, at the default text size, in the look's faces. */

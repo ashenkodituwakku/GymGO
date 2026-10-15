@@ -20,6 +20,7 @@ import { PrimaryButton, TextField, Txt } from '@/components/ui';
 import { api, problemText } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { deviceDetails } from '@/lib/bugReport';
+import { problems } from '@/lib/problemLog';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { ACCENTS, LOOKS, color, radius, shadow, space, themed } from '@/lib/theme';
@@ -64,9 +65,11 @@ export default function ReportBug() {
   const [problem, setProblem] = useState<string | null>(null);
   const [sent, setSent] = useState<{ emailed: boolean; replyTo: string | null } | null>(null);
 
+  // What went wrong lately on this device, as the form opened: listed with the rest, left out with them.
+  const [recent] = useState(() => problems.lines(Date.now()));
   const details = useMemo(
-    () =>
-      deviceDetails({
+    () => [
+      ...deviceDetails({
         appVersion: Constants.expoConfig?.version ?? 'unknown',
         platform: Platform.OS,
         osVersion: Platform.OS === 'web' ? null : Platform.Version,
@@ -82,7 +85,9 @@ export default function ReportBug() {
         pro: billing.isPro,
         ...languageAndZone(),
       }),
-    [window.width, window.height, window.scale, from, prefs.country, prefs.demo, theme.appearance, theme.accent, theme.look, signedIn, billing.isPro],
+      ...recent,
+    ],
+    [recent, window.width, window.height, window.scale, from, prefs.country, prefs.demo, theme.appearance, theme.accent, theme.look, signedIn, billing.isPro],
   );
 
   const typed = description.trim();
@@ -258,8 +263,9 @@ const styles = themed(() =>
     count: { textAlign: 'right' },
     details: { paddingHorizontal: space[4], paddingBottom: space[3], gap: 6 },
     detail: { flexDirection: 'row', gap: space[3] },
-    detailLabel: { width: 140 },
-    detailValue: { flex: 1 },
+    // The label keeps its column; a long word in the value (a link in an error) breaks rather than squeezing it.
+    detailLabel: { width: 140, flexShrink: 0 },
+    detailValue: { flex: 1, minWidth: 0, ...(Platform.OS === 'web' ? ({ wordBreak: 'break-word' } as object) : null) },
     problem: { flexDirection: 'row', gap: space[2], alignItems: 'center', padding: space[3], borderRadius: radius.md, backgroundColor: color.dangerTint },
     flex: { flex: 1 },
     center: { textAlign: 'center' },

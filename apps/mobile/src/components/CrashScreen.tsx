@@ -17,6 +17,7 @@ import { PrimaryButton, TextField, Txt } from './ui';
 import { api, problemText } from '@/lib/api';
 import { browserName } from '@/lib/bugReport';
 import { color, radius, space, themed } from '@/lib/theme';
+import { problems } from '@/lib/problemLog';
 
 export function CrashScreen({ error, retry }: ErrorBoundaryProps) {
   const [note, setNote] = useState('');
@@ -47,6 +48,8 @@ export function CrashScreen({ error, retry }: ErrorBoundaryProps) {
           ...(where ? [{ label: 'Where in the code', value: where }] : []),
           { label: 'App version', value: Constants.expoConfig?.version ?? 'unknown' },
           { label: 'Device', value: device },
+          // What went wrong just before (lib/problemLog.ts): often what led to the crash.
+          ...problems.lines(Date.now()),
         ],
       });
       setState('sent');
@@ -78,7 +81,7 @@ export function CrashScreen({ error, retry }: ErrorBoundaryProps) {
           <>
             <Txt variant="headline">Tell the team</Txt>
             <Txt variant="footnote" color={color.labelSecondary}>
-              Sends the error, the app’s version and the kind of device. Nothing about you, where you are or your gyms.
+              Sends the error, any warnings just before it, the app’s version and the kind of device. Nothing about you, where you are or your gyms.
             </Txt>
             <TextField
               label="What were you doing? (optional)"

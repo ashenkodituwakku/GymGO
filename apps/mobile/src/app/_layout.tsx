@@ -33,6 +33,7 @@ import {
 import { loadLookFonts } from '@/lib/lookFonts';
 import { loadThemeChoice, schemeFor, useSystemScheme, useThemeChoice } from '@/lib/themePrefs';
 import { rememberOpeningLink, takeWanted } from '@/lib/afterSignIn';
+import { installProblemLog } from '@/lib/problemLog';
 
 // A link opened while signed out goes there once you've signed in (lib/afterSignIn.ts).
 void rememberOpeningLink();
@@ -40,6 +41,8 @@ void rememberOpeningLink();
 // Hold the splash screen until the typeface is ready, so nothing draws in the
 // wrong font first. iPhone draws in SF Pro, built in, and loads nothing.
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
+// The last few errors and warnings, for a bug report to list if you send one (lib/problemLog.ts).
+installProblemLog();
 
 // Browser: real weights only (never a bold faked from a regular cut), and
 // text smoothed the way macOS draws SF Pro in Apple's own pages.

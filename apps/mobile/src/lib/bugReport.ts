@@ -2,9 +2,10 @@
  * What a bug report says about the app and the device it happened on.
  *
  * Only what helps find the bug: the app's version, the kind of device, the
- * screen it came from and the settings that change what's shown. Never
- * where you are, what you searched or your gyms. The form lists every line
- * before it's sent, and you can leave them all out.
+ * screen it came from, the settings that change what's shown, and the last
+ * few errors or warnings the app ran into (lib/problemLog.ts, cleaned of
+ * anything personal). Never where you are, what you searched or your gyms.
+ * The form lists every line before it's sent, and you can leave them all out.
  */
 
 export interface DeviceFacts {

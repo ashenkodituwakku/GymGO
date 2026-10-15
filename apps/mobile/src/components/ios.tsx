@@ -126,7 +126,9 @@ function TabScreenInner({
       )}
       <Animated.ScrollView
         ref={scroller}
-        style={[styles.screen, ambient && styles.clear, Platform.OS === 'web' && ({ scrollPaddingTop: insets.top + BAR } as object)]}
+        // In a browser, what the keyboard moves to is scrolled clear of the frosted bar above and the tab bar below
+        // (it came to rest under the tab bar, hidden: Home's Map link, at a phone's width).
+        style={[styles.screen, ambient && styles.clear, Platform.OS === 'web' && ({ scrollPaddingTop: insets.top + BAR, scrollPaddingBottom: clearance + space[2] } as object)]}
         onScroll={onScroll}
         scrollEventThrottle={16}
         onContentSizeChange={(_width: number, height: number) => {

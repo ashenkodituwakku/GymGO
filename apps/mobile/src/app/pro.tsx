@@ -34,7 +34,7 @@ import { ApiError, OfflineError, apiBase } from '@/lib/api';
 import { DEMO_ONLY } from '@/lib/demoOnly';
 import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
-import { HEADER_EDGE, color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { LegalText } from '@/components/LegalText';
@@ -127,8 +127,6 @@ export default function ProScreen() {
   const saving = monthly && yearly ? annualSaving(monthly.amountMinor, yearly.amountMinor) : null;
   const chosen = interval === 'year' ? yearly : monthly;
 
-  const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
-
   const subscribe = async () => {
     if (!token || !chosen) return;
     setBusy(true);
@@ -170,14 +168,8 @@ export default function ProScreen() {
     <>
       <Stack.Screen
         options={{
+          // Done on iPhone comes with the sheet (components/SheetDone.tsx); a browser and Android have their own back.
           title: '',
-          headerRight: () => (
-            <Pressable onPress={close} accessibilityRole="button" hitSlop={8} style={styles.done}>
-              <Txt variant="body" color={color.brand} style={face('semibold')}>
-                Done
-              </Txt>
-            </Pressable>
-          ),
         }}
       />
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
@@ -526,7 +518,6 @@ const styles = themed(() => StyleSheet.create({
   center: { textAlign: 'center' },
   gap: { gap: space[2] },
   page: { flex: 1, backgroundColor: color.groupedBackground },
-  done: { paddingHorizontal: HEADER_EDGE },
   content: { padding: space[4], gap: space[4], paddingBottom: space[8], width: '100%', maxWidth: 560, alignSelf: 'center' },
   hero: { alignItems: 'center', gap: space[2], paddingTop: space[2] },
   badge: {

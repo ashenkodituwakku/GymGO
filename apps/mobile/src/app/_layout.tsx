@@ -34,6 +34,7 @@ import { loadLookFonts } from '@/lib/lookFonts';
 import { loadThemeChoice, schemeFor, useSystemScheme, useThemeChoice } from '@/lib/themePrefs';
 import { rememberOpeningLink, takeWanted } from '@/lib/afterSignIn';
 import { installProblemLog } from '@/lib/problemLog';
+import { SHEET_DONE } from '@/components/SheetDone';
 
 // A link opened while signed out goes there once you've signed in (lib/afterSignIn.ts).
 void rememberOpeningLink();
@@ -290,8 +291,8 @@ function ThemedStack() {
   );
 }
 
-/** A sheet from below, on every platform. */
-const MODAL = { presentation: 'modal', animation: Platform.OS === 'android' ? 'slide_from_bottom' : 'default' } as const;
+/** A sheet from below, on every platform; on iPhone, with Done to close it (a screen's own button there wins). */
+const MODAL = { presentation: 'modal', animation: Platform.OS === 'android' ? 'slide_from_bottom' : 'default', ...SHEET_DONE } as const;
 
 /** The screens above that open as a sheet. */
 const SHEET_PATHS = new Set(['/compare', '/plates', '/pro', '/country', '/sign-in', '/report-bug']);

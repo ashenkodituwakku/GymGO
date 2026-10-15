@@ -6,7 +6,7 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { summariseWeek, type GymSearchResult, type Tri } from '@gymgo/domain';
 import { Icon } from '@/components/Icon';
@@ -24,6 +24,7 @@ import { resultsById } from '@/lib/results';
 import { HEADER_EDGE, PAGE_COLUMN, color, face, radius, solidSurfaces, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
+import { SheetDone } from '@/components/SheetDone';
 
 type Cell = { text: string; ink?: string; strong?: boolean };
 
@@ -239,6 +240,8 @@ export default function Compare() {
       <Stack.Screen
         options={{
           title: 'Compare',
+          // Clear takes the right, where a sheet's Done goes on iPhone (components/SheetDone.tsx), so Done moves left.
+          ...(Platform.OS === 'ios' ? { headerLeft: () => <SheetDone /> } : {}),
           headerRight: () => (
             <Pressable
               onPress={() => {

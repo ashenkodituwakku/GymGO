@@ -42,6 +42,7 @@ import { downloadTrainingCsv } from '@/lib/exportData';
 import { exerciseName } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
+import { SessionNote } from '@/components/SessionNote';
 
 const nameOf = exerciseName;
 /** When a session started, as "6:40 pm": the day it was is the heading above it. */
@@ -310,8 +311,14 @@ function SessionRow({
         </View>
         <Icon name="chevron" size={13} color={color.labelTertiary} />
       </Pressable>
+      {session.note && !open && (
+        <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1} style={styles.notePeek}>
+          {session.note}
+        </Txt>
+      )}
       {open && (
         <View style={styles.detail}>
+          <SessionNote session={session} compact />
           {session.exercises.map((logged) => (
             <Txt key={logged.exerciseId} variant="footnote">
               <Txt variant="footnote" style={face('semibold')}>
@@ -360,6 +367,7 @@ const styles = themed(() => StyleSheet.create({
   dayLabel: { marginLeft: space[4] },
   group: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
+  notePeek: { paddingHorizontal: space[4], marginTop: -space[2], paddingBottom: space[3] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   detail: { paddingHorizontal: space[4], paddingBottom: space[3], gap: space[1] },
   delete: { alignSelf: 'flex-start', paddingVertical: space[2] },

@@ -252,10 +252,11 @@ const csvCell = (value: string | number | null) => {
 /**
  * Your whole log as CSV, a row a set, oldest first, for a spreadsheet: the
  * date and time it finished, the workout, the exercise, the set's number,
- * weight and unit (blank for body weight, never zero) and reps.
+ * weight and unit (blank for body weight, never zero) and reps, and your
+ * note on the workout (on each of its rows, so a sort or filter keeps it).
  */
 export function logToCsv(sessions: TrainingSession[]): string {
-  const rows: Array<Array<string | number | null>> = [['date', 'time', 'workout', 'exercise', 'set', 'weight', 'unit', 'reps']];
+  const rows: Array<Array<string | number | null>> = [['date', 'time', 'workout', 'exercise', 'set', 'weight', 'unit', 'reps', 'note']];
   const ordered = [...sessions].sort((a, b) => (a.finishedAt < b.finishedAt ? -1 : a.finishedAt > b.finishedAt ? 1 : 0));
   for (const session of ordered) {
     const finished = new Date(session.finishedAt);
@@ -263,7 +264,7 @@ export function logToCsv(sessions: TrainingSession[]): string {
     const time = `${String(finished.getHours()).padStart(2, '0')}:${String(finished.getMinutes()).padStart(2, '0')}`;
     for (const logged of session.exercises) {
       logged.sets.forEach((set, index) => {
-        rows.push([date, time, session.name, exerciseName(logged.exerciseId), index + 1, set.weight, set.weight === null ? null : session.unit, set.reps]);
+        rows.push([date, time, session.name, exerciseName(logged.exerciseId), index + 1, set.weight, set.weight === null ? null : session.unit, set.reps, session.note ?? null]);
       });
     }
   }

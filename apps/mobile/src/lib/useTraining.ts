@@ -58,6 +58,10 @@ export function useTrainingLog(token: string | null) {
     // Once, even if the server hands back one already here (a workout sent twice is logged once).
     if (state.status === 'ready') set({ ...state, sessions: [session, ...state.sessions.filter((kept) => kept.id !== session.id)] });
   }, []);
+  /** A session changed in place (its note), keeping its place in the log. */
+  const update = useCallback((session: TrainingSession) => {
+    if (state.status === 'ready') set({ ...state, sessions: state.sessions.map((kept) => (kept.id === session.id ? session : kept)) });
+  }, []);
   const remove = useCallback((id: string) => {
     if (state.status === 'ready') set({ ...state, sessions: state.sessions.filter((session) => session.id !== id) });
   }, []);
@@ -71,6 +75,7 @@ export function useTrainingLog(token: string | null) {
     status: !token ? 'signed-out' : (current?.status ?? 'loading'),
     error: current?.status === 'error' ? current.message : null,
     add,
+    update,
     remove,
     reload,
   } as const;

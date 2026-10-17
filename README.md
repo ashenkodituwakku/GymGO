@@ -407,6 +407,15 @@ not advice for anyone in particular, and the screen says to start light.
 - **Progress** (Profile → Progress): weeks in a row you've trained,
   workouts this week, your records for every exercise, and every session,
   each of which you can open or delete.
+- **Notes.** After Finish, **Add a note** under the summary ("left knee a
+  bit sore", "new shoes"); a workout in Progress shows its note's first
+  line, and opening it lets you change or clear it. Up to 500 characters,
+  kept on your account, in Download your data and in the CSV.
+- **Exercises** (Profile → Exercises): all 66 moves GymGO plans, by the
+  muscle each mainly trains, with a search by name or muscle and filters
+  for kit (body weight, dumbbells, barbell, cables, machines) and muscle.
+  Each opens its page: how to do it (its moving icon and cue), what it
+  works and needs, swaps for the same muscle, and your sets.
 - **Weekly goal and calendar.** Pick how many workouts a week you're aiming
   for (kept on the device); Progress shows this week against it, the last
   12 weeks a square a day, and a dot under each week you met it. Home shows
@@ -661,7 +670,10 @@ always on the searched city's clock.
 
 Tap **Build a workout** on Home, or **Build a workout here** on any gym.
 Tap the muscles you want to train on the body (front and back; there's also
-a plain list), or pick Push, Pull, Legs, Core or Full body. Choose a goal
+a plain list), or pick Push, Pull, Legs, Core or Full body. Once you've
+logged a workout, the muscles you pick show when you last trained each
+("Chest (yesterday)"), and **Fresh muscles** picks up to five of the big
+groups you haven't trained for two days or more. Choose a goal
 (strength, muscle, endurance) and a length (4, 6 or 8 exercises), and GymGO
 builds a session: compound lifts first, sets × reps, rest, and a tip for
 each. **Shuffle** for another version, **Share** to send it. Machine

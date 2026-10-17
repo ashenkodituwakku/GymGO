@@ -50,6 +50,8 @@ export interface TrainingSession {
   workoutId: string | null;
   gymId: string | null;
   exercises: LoggedExercise[];
+  /** Your note on how it went ("left knee sore"), added at Finish or later; absent or null when there's none. */
+  note?: string | null;
 }
 
 // --- Strength ------------------------------------------------------------------

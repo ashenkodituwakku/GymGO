@@ -1,12 +1,15 @@
 /**
- * One exercise over time: your records, every session you did it, and (Pro)
- * the chart of your estimated one-rep max and what to lift next.
+ * One exercise: how to do it, what it works and needs, swaps for the same
+ * muscle (from the exercise library, app/exercises.tsx); then your records,
+ * every session you did it, and (Pro) the chart of your estimated one-rep
+ * max and what to lift next.
  */
 
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
+import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
 import { ProgressChart } from '@/components/ProgressChart';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -16,7 +19,8 @@ import { useApp } from '@/lib/app-state';
 import { color, radius, shadow, space, themed } from '@/lib/theme';
 import { e1rmSeries, formatWeight, fromKg, personalRecords, setsSummary, unitFor } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
-import { EXERCISES, exerciseName } from '@/lib/workout';
+import { alternativesFor, kitText } from '@/lib/exerciseLibrary';
+import { EXERCISES, exerciseName, muscleLabel } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 
@@ -43,6 +47,7 @@ export default function ExerciseProgressScreen() {
   const record = useMemo(() => personalRecords(log.sessions).get(exerciseId) ?? null, [log.sessions, exerciseId]);
   const series = useMemo(() => e1rmSeries(log.sessions, exerciseId), [log.sessions, exerciseId]);
   const done = log.sessions.filter((session) => session.exercises.some((item) => item.exerciseId === exerciseId));
+  const swaps = useMemo(() => (exercise ? alternativesFor(exercise) : []), [exercise]);
 
   if (!exercise && done.length === 0 && log.status !== 'loading') {
     return (
@@ -61,6 +66,26 @@ export default function ExerciseProgressScreen() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: '' }} />
       <Txt variant="largeTitle">{title}</Txt>
+
+      {exercise && (
+        <View style={styles.card}>
+          <View style={styles.how}>
+            <ExerciseTile exerciseId={exercise.id} size={76} moving />
+            <Txt variant="body" style={styles.flex}>
+              {exercise.cue}
+            </Txt>
+          </View>
+          <Detail
+            label="Works"
+            value={
+              exercise.primary.length
+                ? [exercise.primary.map(muscleLabel).join(', '), exercise.secondary.length ? `also ${exercise.secondary.map(muscleLabel).join(', ').toLowerCase()}` : ''].filter(Boolean).join('; ')
+                : `Conditioning; ${exercise.secondary.map(muscleLabel).join(', ').toLowerCase()}`
+            }
+          />
+          <Detail label="Needs" value={kitText(exercise)} />
+        </View>
+      )}
 
       {record && (
         <View style={styles.facts}>
@@ -125,8 +150,49 @@ export default function ExerciseProgressScreen() {
         })}
       </View>
 
-      <PrimaryButton label="Back to Progress" tone="quiet" onPress={() => (router.canGoBack() ? router.back() : router.replace('/progress'))} />
+      {swaps.length > 0 && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+            SWAP FOR
+          </Txt>
+          <View style={styles.group}>
+            {swaps.map((swap, index) => (
+              <Pressable
+                key={swap.id}
+                onPress={() => router.push({ pathname: '/progress/[exercise]', params: { exercise: swap.id } })}
+                accessibilityRole="button"
+                accessibilityLabel={`${swap.name}. ${kitText(swap)}`}
+                style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
+              >
+                <ExerciseTile exerciseId={swap.id} size={40} />
+                <View style={styles.flex}>
+                  <Txt variant="body">{swap.name}</Txt>
+                  <Txt variant="footnote" color={color.labelSecondary}>
+                    {kitText(swap)}
+                  </Txt>
+                </View>
+                <Icon name="chevron" size={13} color={color.labelTertiary} />
+              </Pressable>
+            ))}
+          </View>
+        </>
+      )}
+
+      <PrimaryButton label="Back" tone="quiet" onPress={() => (router.canGoBack() ? router.back() : router.replace('/progress'))} />
     </PageScroll>
+  );
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.detail} accessible accessibilityLabel={`${label}: ${value}`}>
+      <Txt variant="footnote" color={color.labelSecondary} style={styles.detailLabel}>
+        {label}
+      </Txt>
+      <Txt variant="subhead" style={styles.flex}>
+        {value}
+      </Txt>
+    </View>
   );
 }
 
@@ -154,4 +220,7 @@ const styles = themed(() => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   date: { width: 80 },
+  how: { flexDirection: 'row', alignItems: 'center', gap: space[4] },
+  detail: { flexDirection: 'row', gap: space[3], alignItems: 'baseline' },
+  detailLabel: { width: 52 },
 }));

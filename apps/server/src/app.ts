@@ -79,7 +79,8 @@
  *   POST   /api/workouts                  Pro: { name, gymId?, plan } -> saved
  *   DELETE /api/workouts/:id
  *   GET    /api/training                  the sessions you've logged, newest first
- *   POST   /api/training                  { name, unit, startedAt, finishedAt, workoutId?, gymId?, exercises } -> logged (sent again: the one already logged)
+ *   POST   /api/training                  { name, unit, startedAt, finishedAt, workoutId?, gymId?, exercises, note? } -> logged (sent again: the one already logged)
+ *   PATCH  /api/training/:id              { note: string | null } -> the session with its note (up to 500 characters; null or blank clears it)
  *   DELETE /api/training/:id
  *   GET    /api/collection                your gym collection (gyms checked in at, and the days) and when it was last reset
  *   PUT    /api/collection                { gyms, resetAt } -> merged into the account's (never overwritten); 409 when reset elsewhere since
@@ -397,6 +398,19 @@ export const COLLECTION_BATCH = 200;
 const BUSY_KEEP_MS = 24 * 60 * 60_000;
 const COLLECTION_BODY_BYTES = 2 * 1024 * 1024;
 
+/** Longest note on a logged session. */
+export const MAX_TRAINING_NOTE = 500;
+
+/** A session's note: trimmed, at most MAX_TRAINING_NOTE characters; blank is no note. */
+export function cleanTrainingNote(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== 'string') throw new HttpError(400, 'A note is text.');
+  // Line breaks kept (a list of how it went), runs of spaces and tabs folded.
+  const note = value.replace(/\r\n?/g, '\n').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  if (note.length > MAX_TRAINING_NOTE) throw new HttpError(400, `Keep the note to ${MAX_TRAINING_NOTE} characters.`);
+  return note || null;
+}
+
 /**
  * A logged session, checked field by field. A weight left blank is body
  * weight (null), never zero; reps of 0 are a set planned but not done.
@@ -442,6 +456,7 @@ export function cleanTrainingSession(input: unknown, now: Date) {
     workoutId: id(body.workoutId, 60),
     gymId: id(body.gymId, 120),
     exercises: clean,
+    note: cleanTrainingNote(body.note),
   };
 }
 
@@ -454,6 +469,7 @@ type TrainingRow = {
   workout_id: string | null;
   gym_id: string | null;
   exercises_json: string;
+  note: string | null;
 };
 
 const trainingView = (row: TrainingRow) => ({
@@ -465,7 +481,10 @@ const trainingView = (row: TrainingRow) => ({
   workoutId: row.workout_id,
   gymId: row.gym_id,
   exercises: JSON.parse(row.exercises_json),
+  note: row.note ?? null,
 });
+
+const TRAINING_COLUMNS = 'id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json, note';
 
 /** The middle of sorted amounts (the mean of the middle two for an even count). */
 function median(sorted: number[]): number {
@@ -1043,7 +1062,7 @@ export function createApp(options: AppOptions) {
       const { account } = requireAccount(req);
       const rows = db
         .prepare(
-          'select id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json from training_sessions where user_id = ? order by finished_at desc limit ?',
+          `select ${TRAINING_COLUMNS} from training_sessions where user_id = ? order by finished_at desc limit ?`,
         )
         .all(account.id, MAX_TRAINING_SESSIONS) as TrainingRow[];
       return send(res, 200, { sessions: rows.map(trainingView) });
@@ -1056,15 +1075,15 @@ export function createApp(options: AppOptions) {
       // Finish tapped again): each starts at its own moment, so it's the one
       // already logged, not a second copy doubling the volume and the streak.
       const again = db
-        .prepare('select id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json from training_sessions where user_id = ? and started_at = ?')
+        .prepare(`select ${TRAINING_COLUMNS} from training_sessions where user_id = ? and started_at = ?`)
         .get(account.id, session.startedAt) as TrainingRow | undefined;
       if (again) return send(res, 200, { session: trainingView(again) });
       const count = (db.prepare('select count(*) as n from training_sessions where user_id = ?').get(account.id) as { n: number }).n;
       if (count >= MAX_TRAINING_SESSIONS) throw new HttpError(409, `You’ve logged ${count} sessions, the most there’s room for. Delete some old ones first.`);
       const id = randomUUID();
       db.prepare(
-        `insert into training_sessions (id, user_id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json, created_at)
-         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `insert into training_sessions (id, user_id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json, note, created_at)
+         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).run(
         id,
         account.id,
@@ -1075,9 +1094,23 @@ export function createApp(options: AppOptions) {
         session.workoutId,
         session.gymId,
         JSON.stringify(session.exercises),
+        session.note,
         now().toISOString(),
       );
       return send(res, 201, { session: { id, ...session } });
+    }
+
+    // A note on a session you logged: added after Finish, changed or cleared later.
+    if (method === 'PATCH' && parts[0] === 'api' && parts[1] === 'training' && parts.length === 3) {
+      const { account } = requireAccount(req);
+      const body = (await readJson(req)) as Record<string, unknown>;
+      if (!('note' in body)) throw new HttpError(400, 'Send the note, or null to clear it.');
+      const note = cleanTrainingNote(body.note);
+      const sessionId = decodeURIComponent(parts[2]!);
+      const changed = db.prepare('update training_sessions set note = ? where id = ? and user_id = ?').run(note, sessionId, account.id);
+      if (changed.changes === 0) throw new HttpError(404, 'No logged session with that id.');
+      const row = db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where id = ? and user_id = ?`).get(sessionId, account.id) as TrainingRow;
+      return send(res, 200, { session: trainingView(row) });
     }
 
     if (method === 'DELETE' && parts[0] === 'api' && parts[1] === 'training' && parts.length === 3) {
@@ -1461,7 +1494,7 @@ export function createApp(options: AppOptions) {
         collection: rows('select entry_json from collection_gyms where user_id = ? order by gym_id').map(({ entry_json }) => JSON.parse(String(entry_json))),
         collectionResetAt: rows('select reset_at from collection_resets where user_id = ?')[0]?.reset_at ?? null,
         trainingSessions: rows(
-          `select id, name, unit, started_at as startedAt, finished_at as finishedAt, workout_id as workoutId, gym_id as gymId, exercises_json
+          `select id, name, unit, started_at as startedAt, finished_at as finishedAt, workout_id as workoutId, gym_id as gymId, exercises_json, note
            from training_sessions where user_id = ? order by finished_at`,
         ).map(({ exercises_json, ...session }) => ({ ...session, exercises: JSON.parse(String(exercises_json)) })),
         subscriptions: rows(

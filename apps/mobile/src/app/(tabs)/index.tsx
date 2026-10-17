@@ -458,7 +458,7 @@ export default function Home() {
         )}
       </View>
 
-      <AdSlot />
+      <AdSlot place="home" />
 
       {saved.length > 0 && (
         <View style={styles.section}>

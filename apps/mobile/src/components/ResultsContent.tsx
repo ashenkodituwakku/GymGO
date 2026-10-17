@@ -482,7 +482,7 @@ export function ResultsContent({
       )}
 
       {/* Under the list, never between a gym and the next one. */}
-      {total > 0 && <AdSlot style={styles.ad} />}
+      {total > 0 && <AdSlot place="results" style={styles.ad} />}
 
       <View style={styles.footer}>
         <Txt variant="caption" color={color.labelSecondary} style={styles.footerText}>

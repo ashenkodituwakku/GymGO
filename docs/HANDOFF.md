@@ -80,6 +80,7 @@ mobile 373, domain 167 and web 39 tests, all passing.
 - `deploy/`: Docker plus Caddy hosting (README → "Put GymGO online").
   Not deployed anywhere yet.
 - `apps/web`: the older Next.js site; leave it alone unless asked.
+- Advertising: `docs/ADS.md` (what adding ads takes; nothing signed up for).
 - Logo: `apps/mobile/assets/brand/gymgo-logo.webp`, made into every icon
   by `apps/mobile/scripts/brand-mark.mjs`.
 

@@ -44,12 +44,17 @@ import {
   type Workout,
 } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
+import { agoLabel, daysAgo, freshMuscles, lastTrained } from '@/lib/exerciseLibrary';
+import { useTrainingLog } from '@/lib/useTraining';
 import { PageScroll } from '@/components/PageScroll';
 
 type KitMode = 'gym' | 'typical';
 
 /** Short, so three fit side by side on a phone. */
 const GOAL_LABEL: Record<Goal, string> = { strength: 'Strength', muscle: 'Muscle', endurance: 'Endurance' };
+
+/** The big muscle groups "Fresh muscles" picks from (not forearms or obliques on their own). */
+const MAIN_MUSCLES: Muscle[] = ['chest', 'upper-back', 'deltoids', 'quadriceps', 'hamstring', 'gluteal', 'biceps', 'triceps', 'abs', 'calves'];
 
 export default function WorkoutScreen() {
   useGlassRedraw();
@@ -98,6 +103,16 @@ export default function WorkoutScreen() {
   const swap = (index: number) => {
     haptic.select();
     setSwapped({ base: generated, workout: swapInWorkout(workout, index, { available, confirmed: kit.has, goal }) });
+  };
+
+  // When you last trained each muscle, from your log, and the big ones you
+  // haven't for two days or more: a one-tap pick.
+  const log = useTrainingLog(account.token);
+  const last = useMemo(() => lastTrained(log.sessions), [log.sessions]);
+  const fresh = useMemo(() => (last.size > 0 ? freshMuscles(MAIN_MUSCLES, last).slice(0, 5) : []), [last]);
+  const sinceLabel = (muscle: Muscle) => {
+    const at = last.get(muscle);
+    return `${muscleLabel(muscle)} (${at ? agoLabel(daysAgo(at)).toLowerCase() : 'not logged'})`;
   };
 
   const toggle = (muscle: Muscle) =>
@@ -200,11 +215,20 @@ export default function WorkoutScreen() {
                 onPress={() => setMuscles(preset.muscles)}
               />
             ))}
+            {fresh.length > 0 && (
+              <Chip
+                label="Fresh muscles"
+                icon="sparkle"
+                selected={fresh.length === muscles.length && fresh.every((muscle) => muscles.includes(muscle))}
+                onPress={() => setMuscles(fresh)}
+                accessibilityLabel={`Fresh muscles: ${fresh.map(muscleLabel).join(', ')}, which you haven’t trained for two days or more`}
+              />
+            )}
             {muscles.length > 0 && <Chip label="Clear" selected={false} onPress={() => setMuscles([])} action />}
           </View>
           {muscles.length > 0 && (
             <Txt variant="footnote" color={color.labelSecondary}>
-              {muscles.map(muscleLabel).join(' · ')}
+              {last.size > 0 ? `Last trained: ${muscles.map(sinceLabel).join(' · ')}` : muscles.map(muscleLabel).join(' · ')}
             </Txt>
           )}
         </View>

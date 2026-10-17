@@ -35,6 +35,7 @@ import { useLegalInfo } from '@/lib/legal';
 import { LegalText } from '@/components/LegalText';
 import { Bone, Skeleton } from '@/components/Skeleton';
 import { DEMO_ONLY } from '@/lib/demoOnly';
+import { loadReminders, reminderDays } from '@/lib/reminders';
 
 export default function Profile() {
   useGlassRedraw();
@@ -61,6 +62,15 @@ export default function Profile() {
         .then((counts) => setWaiting(counts.reviews + counts.photos + counts.ownerUpdates + (counts.claims ?? 0)))
         .catch(() => setWaiting(null));
     }, [moderator, account.token]),
+  );
+
+  // The Reminders row's summary, read again each time Profile comes back into view (after the Reminders page).
+  const [reminders, setReminders] = useState<string | undefined>(undefined);
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS === 'web') return;
+      void loadReminders().then((kept) => setReminders(kept.on ? reminderDays(kept.days) : 'Off'));
+    }, []),
   );
 
   const toggle = (key: 'facts' | 'sources' | 'copyright') => setAbout((current) => (current === key ? null : key));
@@ -224,6 +234,10 @@ export default function Profile() {
           value={themeChoice.appearance === 'system' ? 'Automatic' : themeChoice.appearance === 'dark' ? 'Dark' : 'Light'}
           onPress={() => router.push('/appearance')}
         />
+        {/* A browser can't wake itself to remind you. */}
+        {Platform.OS !== 'web' && (
+          <Row icon="bell" tile={TILE.red} title="Reminders" value={reminders} onPress={() => router.push('/reminders')} />
+        )}
         <Row
           icon="sparkle"
           tile={TILE.pink}

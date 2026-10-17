@@ -1,6 +1,7 @@
 /**
- * Your estimated one-rep max over time, one point per day you trained it: a
- * plain line chart of your own logged numbers. Nothing is smoothed or
+ * A weight over time (your estimated one-rep max, a point per day you
+ * trained it; or your body weight): a plain line chart of your own logged
+ * numbers. Nothing is smoothed or
  * projected. The weights sit on the gridlines at the right, as in Health.
  * The line is shaded down to the foot in the accent, fading out, and the
  * latest day's point has a soft halo.
@@ -19,7 +20,20 @@ const PAD = 10;
 /** Room at the right for the gridlines' weights. */
 const GUTTER = 58;
 
-export function ProgressChart({ points, unit }: { points: Array<{ date: string; kg: number }>; unit: WeightUnit }) {
+export function ProgressChart({
+  points,
+  unit,
+  title = 'Estimated 1-rep max',
+  legend = true,
+}: {
+  /** A workout's finish time, or a calendar date (YYYY-MM-DD). */
+  points: Array<{ date: string; kg: number }>;
+  unit: WeightUnit;
+  /** What's drawn, for its legend and screen readers. */
+  title?: string;
+  /** The title and change above the chart: off where the card above says them. */
+  legend?: boolean;
+}) {
   const [width, setWidth] = useState(0);
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
   const values = points.map((point) => fromKg(point.kg, unit));
@@ -40,7 +54,11 @@ export function ProgressChart({ points, unit }: { points: Array<{ date: string; 
   const grid = [0, 0.5, 1].map((share) => ({ at: PAD + share * (HEIGHT - PAD * 2), value: base + span * (1 - share) }));
   // Whole numbers, unless the lines are closer together than that.
   const gridLabel = (value: number) => formatWeight(span >= 4 ? Math.round(value) : Math.round(value * 10) / 10, unit);
-  const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  // A time on the phone's clock; a calendar date as written (read at midday UTC, so no time zone moves it a day).
+  const day = (iso: string) =>
+    /^\d{4}-\d{2}-\d{2}$/.test(iso)
+      ? new Date(`${iso}T12:00:00Z`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', timeZone: 'UTC' })
+      : new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
   // To a tenth, as it's shown: no change reads as that, not a green "+0".
   const change = values.length > 1 ? Math.round((values[values.length - 1]! - values[0]!) * 10) / 10 : 0;
 
@@ -48,18 +66,20 @@ export function ProgressChart({ points, unit }: { points: Array<{ date: string; 
     <View
       style={styles.wrap}
       accessible
-      accessibilityLabel={`Estimated one-rep max, ${points.length} ${points.length === 1 ? 'day' : 'days'}, from ${formatWeight(Math.round(values[0] ?? 0), unit)} to ${formatWeight(Math.round(values[values.length - 1] ?? 0), unit)}`}
+      accessibilityLabel={`${title}, ${points.length} ${points.length === 1 ? 'day' : 'days'}, from ${formatWeight(Math.round(values[0] ?? 0), unit)} to ${formatWeight(Math.round(values[values.length - 1] ?? 0), unit)}`}
     >
-      <View style={styles.legend}>
-        <Txt variant="caption" color={color.labelSecondary}>
-          Estimated 1-rep max
-        </Txt>
-        {values.length > 1 && (
-          <Txt variant="caption" color={change > 0 ? color.goodInk : change < 0 ? color.maybeInk : color.labelSecondary}>
-            {change === 0 ? `No change since ${day(points[0]!.date)}` : `${change > 0 ? '+' : '−'}${formatWeight(Math.abs(change), unit)} since ${day(points[0]!.date)}`}
+      {legend && (
+        <View style={styles.legend}>
+          <Txt variant="caption" color={color.labelSecondary}>
+            {title}
           </Txt>
-        )}
-      </View>
+          {values.length > 1 && (
+            <Txt variant="caption" color={change > 0 ? color.goodInk : change < 0 ? color.maybeInk : color.labelSecondary}>
+              {change === 0 ? `No change since ${day(points[0]!.date)}` : `${change > 0 ? '+' : '−'}${formatWeight(Math.abs(change), unit)} since ${day(points[0]!.date)}`}
+            </Txt>
+          )}
+        </View>
+      )}
       <View style={styles.chart} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
         {width > 0 && (
           <Svg width={width} height={HEIGHT}>

@@ -44,6 +44,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { SessionNote } from '@/components/SessionNote';
 import { ScreenOptions } from '@/components/ScreenOptions';
+import { BodyWeightCard } from '@/components/BodyWeightCard';
 
 const nameOf = exerciseName;
 /** When a session started, as "6:40 pm": the day it was is the heading above it. */
@@ -149,6 +150,15 @@ export default function ProgressScreen() {
           {recap && (
             <PrimaryButton label={recap.which === 'this' ? 'Share your week' : 'Share last week'} tone="quiet" icon="share" onPress={() => router.push('/recap')} />
           )}
+        </>
+      )}
+
+      {known && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+            YOUR BODY
+          </Txt>
+          <BodyWeightCard unit={unit} />
         </>
       )}
 

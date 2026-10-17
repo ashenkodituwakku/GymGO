@@ -279,6 +279,7 @@ function ThemedStack() {
           <Stack.Screen name="pro" options={{ ...MODAL, headerShown: true, title: 'GymGO Pro' }} />
           <Stack.Screen name="country" options={{ ...MODAL, headerShown: true, title: 'Country' }} />
           <Stack.Screen name="appearance" options={{ headerShown: true, title: 'Appearance' }} />
+          <Stack.Screen name="reminders" options={{ headerShown: true, title: 'Reminders' }} />
           <Stack.Screen name="account" options={{ headerShown: true, title: 'Account' }} />
         </Stack.Protected>
         {/* Open without an account: signing in (signed out, it's the whole app rather than a sheet over it),

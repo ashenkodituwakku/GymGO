@@ -17,6 +17,7 @@ const ICONS = {
   locate: { ios: 'location.fill', android: 'near_me', web: 'near_me' },
   filters: { ios: 'slider.horizontal.3', android: 'tune', web: 'tune' },
   close: { ios: 'xmark', android: 'close', web: 'close' },
+  bell: { ios: 'bell.fill', android: 'notifications', web: 'notifications' },
   directions: { ios: 'arrow.triangle.turn.up.right.diamond.fill', android: 'directions', web: 'directions' },
   call: { ios: 'phone.fill', android: 'call', web: 'call' },
   website: { ios: 'safari.fill', android: 'language', web: 'language' },

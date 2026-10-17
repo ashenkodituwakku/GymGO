@@ -273,6 +273,7 @@ function ThemedStack() {
           <Stack.Screen name="friends/[id]" options={{ headerShown: true, title: 'Friend' }} />
           <Stack.Screen name="leaderboard" options={{ headerShown: true, title: 'Leaderboard' }} />
           <Stack.Screen name="templates" options={{ headerShown: true, title: 'Templates' }} />
+          <Stack.Screen name="exercises" options={{ headerShown: true, title: 'Exercises' }} />
           <Stack.Screen name="moderation" options={{ headerShown: true, title: 'Moderation' }} />
           <Stack.Screen name="progress/[exercise]" options={{ headerShown: true, title: '' }} />
           <Stack.Screen name="pro" options={{ ...MODAL, headerShown: true, title: 'GymGO Pro' }} />

@@ -25,6 +25,7 @@ import { color, radius, themed } from '@/lib/theme';
 import { Txt } from './ui';
 import { FADE_IN, Pressable } from './motion';
 import { openPage } from '@/lib/actions';
+import { siteName } from '@/lib/siteName';
 
 export function logoFor(location: GymLocation): Logo | null {
   return matchLogo(location, BRAND_LOGOS);
@@ -140,13 +141,7 @@ export function LogoBadge({ location }: { location: GymLocation }) {
   );
 }
 
-function host(website: string): string {
-  try {
-    return new URL(website).hostname.replace(/^www\./, '');
-  } catch {
-    return website;
-  }
-}
+const host = (website: string): string => siteName(website) ?? website;
 
 /** The credit a mark needs: where it's from, its licence, and that GymGO isn't the brand. */
 export function LogoCredit({ location }: { location: GymLocation }) {

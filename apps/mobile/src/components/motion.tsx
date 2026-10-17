@@ -123,6 +123,9 @@ export const FADE_OUT = (CURVES ? FadeOut.duration(160).easing(EASE_IN) : FadeOu
  * which collapses the layout around it.
  */
 
+/** growIn's spring, worked out here: growIn runs on the UI thread, where calling damp (not a worklet) stopped the app on a phone. */
+const GROW: WithSpringConfig = { damping: damp(0.82, 320, 0.7), stiffness: 320, mass: 0.7, reduceMotion: ReduceMotion.System };
+
 /** Grows in from a little smaller as it fades up, the way a button or popover appears on iOS. */
 function growIn() {
   'worklet';
@@ -130,7 +133,7 @@ function growIn() {
     initialValues: { opacity: 0, transform: [{ scale: 0.86 }] },
     animations: {
       opacity: withTiming(1, { duration: 180, easing: EASE_OUT, reduceMotion: ReduceMotion.System }),
-      transform: [{ scale: withSpring(1, { damping: damp(0.82, 320, 0.7), stiffness: 320, mass: 0.7, reduceMotion: ReduceMotion.System }) }],
+      transform: [{ scale: withSpring(1, GROW) }],
     },
   };
 }

@@ -25,6 +25,7 @@ import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { PrimaryButton, Txt } from './ui';
 import { pickGymPhoto } from '@/lib/gymPhoto';
+import { siteName } from '@/lib/siteName';
 
 /** Whether each gym's website photo loaded this session: its size, or null for none. */
 const sitePhotos = new Map<string, { width: number; height: number } | null>();
@@ -60,13 +61,7 @@ export function useWebsitePhoto(gymId: string, wanted: boolean): string | null {
 }
 
 /** "franksgymperth.com", for the credit. */
-const hostOf = (website: string | null | undefined) => {
-  try {
-    return website ? new URL(website).hostname.replace(/^www\./, '') : null;
-  } catch {
-    return null;
-  }
-};
+const hostOf = (website: string | null | undefined) => (website ? siteName(website) : null);
 
 type Step = { kind: 'idle' } | { kind: 'confirm'; uri: string; data: string } | { kind: 'sending' } | { kind: 'done'; text: string };
 

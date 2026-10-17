@@ -59,9 +59,16 @@ export async function currentFix(ask: boolean, fresh = false): Promise<FixResult
     // tower position (tens of metres, and it works indoors), and whichever
     // answers first is used.
     const maxAge = fresh ? 0 : RECENT_MS;
+    let answered = false;
     const precise = Location.getCurrentPositionAsync(notOlderThan(maxAge, { accuracy: Location.Accuracy.Highest }));
-    const rough = pause(PRECISE_ALONE_MS).then(() => Location.getCurrentPositionAsync(notOlderThan(maxAge, { accuracy: Location.Accuracy.Balanced })));
-    return toFix(await withTimeout(firstOf([precise, rough]), FIX_TIMEOUT_MS));
+    // Only if precise GPS hasn't answered by then: otherwise the phone was asked a second time for nothing.
+    const rough = pause(PRECISE_ALONE_MS).then(() =>
+      answered ? Promise.reject(new Error('answered')) : Location.getCurrentPositionAsync(notOlderThan(maxAge, { accuracy: Location.Accuracy.Balanced })),
+    );
+    const found = await withTimeout(firstOf([precise, rough]), FIX_TIMEOUT_MS).finally(() => {
+      answered = true;
+    });
+    return toFix(found);
   } catch {
     // Location off, or no answer at all: the last position the phone knew, if not too old.
     const last = fresh ? null : await Location.getLastKnownPositionAsync({ maxAge: LAST_KNOWN_MS }).catch(() => null);

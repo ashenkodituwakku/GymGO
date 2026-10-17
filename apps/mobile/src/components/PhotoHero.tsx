@@ -13,7 +13,6 @@
  * illustration drawn for it instead, labelled as one.
  */
 
-import * as ImagePicker from 'expo-image-picker';
 import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from './motion';
@@ -25,6 +24,7 @@ import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { PrimaryButton, Txt } from './ui';
+import { pickGymPhoto } from '@/lib/gymPhoto';
 
 /** Whether each gym's website photo loaded this session: its size, or null for none. */
 const sitePhotos = new Map<string, { width: number; height: number } | null>();
@@ -123,18 +123,11 @@ export function PhotoHero({
 
   const pick = async () => {
     if (!token) return onSignIn();
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.7,
-      base64: true,
-      exif: false,
-      allowsEditing: true,
-      aspect: [4, 3],
-    });
-    const asset = result.canceled ? null : result.assets[0];
-    if (!asset?.base64) return;
+    // Made a sensible size first (lib/gymPhoto.ts): a phone's full photo was often over the server's 4 MB.
+    const photo = await pickGymPhoto().catch(() => null);
+    if (!photo) return;
     haptic.select();
-    setStep({ kind: 'confirm', uri: asset.uri, data: asset.base64 });
+    setStep({ kind: 'confirm', uri: photo.uri, data: photo.data });
   };
 
   const send = async (data: string) => {

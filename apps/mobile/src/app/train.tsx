@@ -56,6 +56,7 @@ import {
   type WeightUnit,
 } from '@/lib/training';
 import { PageScroll } from '@/components/PageScroll';
+import { SessionNote } from '@/components/SessionNote';
 import { ProgressRing } from '@/components/ProgressRing';
 import { useOverhang } from '@/lib/layout';
 import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
@@ -803,6 +804,9 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
           />
         </View>
       )}
+      <View style={styles.noteCard}>
+        <SessionNote session={session} />
+      </View>
       <View style={styles.finish}>
         {best && <PrimaryButton label="Share your record" icon="share" busy={sharingCard} onPress={() => void shareCard()} />}
         <PrimaryButton label="See your progress" icon="chart" tone={best ? 'quiet' : undefined} onPress={onProgress} />
@@ -887,6 +891,7 @@ const styles = themed(() => StyleSheet.create({
   tickCol: { width: 30 },
   setRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 3, paddingHorizontal: space[2], marginHorizontal: -space[2], borderRadius: radius.md, borderCurve: 'continuous' },
   setDone: { backgroundColor: alpha(color.good, 0.08) },
+  noteCard: { alignSelf: 'stretch', width: '100%', maxWidth: 480, marginHorizontal: 'auto' },
   input: {
     flex: 1,
     // On a narrow phone they shared the room equally with the spacer and cut a weight like 102.5 short.

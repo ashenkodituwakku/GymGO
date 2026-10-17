@@ -101,6 +101,38 @@ describe('the training log', () => {
   });
 });
 
+describe('a note on a session', () => {
+  it('comes with the workout, or is added, changed and cleared after, by its owner only', async () => {
+    const token = await signUp();
+    const other = await signUp();
+    const logged = await call('POST', '/api/training', { token, body: { ...push, note: '  Left knee a bit sore.  ' } });
+    expect(logged.body!.session.note).toBe('Left knee a bit sore.');
+    const id = logged.body!.session.id;
+    const changed = await call('PATCH', `/api/training/${id}`, { token, body: { note: 'New shoes.\n\n\n\nFelt strong.' } });
+    expect(changed.status).toBe(200);
+    expect(changed.body!.session.note).toBe('New shoes.\n\nFelt strong.');
+    expect((await call('GET', '/api/training', { token })).body!.sessions[0].note).toBe('New shoes.\n\nFelt strong.');
+    // Someone else's session, as far as they can tell, isn't there.
+    expect((await call('PATCH', `/api/training/${id}`, { token: other, body: { note: 'Hi' } })).status).toBe(404);
+    // Blank clears it; too long or not text is refused.
+    expect((await call('PATCH', `/api/training/${id}`, { token, body: { note: '   ' } })).body!.session.note).toBeNull();
+    expect((await call('PATCH', `/api/training/${id}`, { token, body: { note: 'x'.repeat(501) } })).status).toBe(400);
+    expect((await call('PATCH', `/api/training/${id}`, { token, body: { note: 42 } })).status).toBe(400);
+    expect((await call('PATCH', `/api/training/${id}`, { token, body: {} })).status).toBe(400);
+  });
+
+  it('is in Download my data', async () => {
+    const token = await signUp();
+    await call('POST', '/api/training', { token, body: { ...push, note: 'PB day' } });
+    expect((await call('GET', '/api/me/export', { token })).body!.trainingSessions[0].note).toBe('PB day');
+  });
+
+  it('is null on a session logged without one', async () => {
+    const token = await signUp();
+    expect((await call('POST', '/api/training', { token, body: push })).body!.session.note).toBeNull();
+  });
+});
+
 describe('what a session may hold', () => {
   const clean = (patch: Record<string, unknown>) => cleanTrainingSession({ ...push, ...patch }, NOW);
 

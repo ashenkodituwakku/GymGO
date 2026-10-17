@@ -364,6 +364,9 @@ function migrate(db: Db): void {
   if (!userColumns.some((column) => column.name === 'terms_version')) db.exec('alter table users add column terms_version text');
   if (!userColumns.some((column) => column.name === 'terms_accepted_at')) db.exec('alter table users add column terms_accepted_at text');
   // Bug reports that are copyright notices, kept apart so they're dealt with first.
+  // A note on a logged session (added 17 Oct 2026).
+  const trainingColumns = db.prepare('pragma table_info(training_sessions)').all() as Array<{ name: string }>;
+  if (!trainingColumns.some((column) => column.name === 'note')) db.exec('alter table training_sessions add column note text');
   const reportColumns = db.prepare('pragma table_info(bug_reports)').all() as Array<{ name: string }>;
   if (!reportColumns.some((column) => column.name === 'topic')) {
     db.exec(`alter table bug_reports add column topic text not null default 'bug' check (topic in ('bug', 'copyright'))`);

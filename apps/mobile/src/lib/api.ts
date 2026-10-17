@@ -619,6 +619,9 @@ export const api = {
   training: (token: string) => request<{ sessions: TrainingSession[] }>('GET', '/api/training', { token }),
   logTraining: (token: string, body: Omit<TrainingSession, 'id'>) => request<{ session: TrainingSession }>('POST', '/api/training', { token, body }),
   deleteTraining: (token: string, id: string) => request<unknown>('DELETE', `/api/training/${encodeURIComponent(id)}`, { token }),
+  /** Add, change or (null) clear the note on a logged session. */
+  noteTraining: (token: string, id: string, note: string | null) =>
+    request<{ session: TrainingSession }>('PATCH', `/api/training/${encodeURIComponent(id)}`, { token, body: { note } }),
 
   /** Your gym collection on the account, and when it was last reset. */
   collection: (token: string) => request<CollectionAnswer>('GET', '/api/collection', { token }),

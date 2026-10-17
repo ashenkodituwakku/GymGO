@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bestWeekStreak, goalStreak, logToCsv, milestones, muscleBalance, recordsEver, trainingCalendar, weekRange, weekRecap, workoutShareText } from './insights';
+import { bestWeekStreak, goalStreak, logToCsv, milestones, muscleBalance, recordsEver, trainingCalendar, weekAfter, weekRange, weekRecap, workoutShareText } from './insights';
 import type { Collection, CollectedGym } from '@gymgo/domain';
 import type { LoggedExercise, TrainingSession } from './training';
 
@@ -161,5 +161,33 @@ describe('weekRecap', () => {
   it('writes the week as a short range', () => {
     expect(weekRange(new Date(2024, 4, 13).getTime())).toBe('13–19 May');
     expect(weekRange(new Date(2024, 3, 29).getTime())).toBe('29 Apr – 5 May');
+  });
+});
+
+describe('weekAfter', () => {
+  // NOW is Wednesday 15 May; that week's Monday is the 13th, and the week before ran from the 6th.
+  const lastWeek = [session(at(4, 6)), session(at(4, 8)), session(at(4, 10))];
+
+  it('says when this workout is the one that meets the goal, with the streak it continues', () => {
+    const monday = session(at(4, 13));
+    const today = session(at(4, 15, 9));
+    expect(weekAfter([...lastWeek, monday], today, 2, NOW)).toEqual({ done: 2, goal: 2, justMet: true, streak: 2 });
+  });
+
+  it('counts the workout just finished once, whether or not the log has it yet', () => {
+    const today = session(at(4, 15, 9));
+    expect(weekAfter([...lastWeek, today], today, 3, NOW).done).toBe(1);
+    expect(weekAfter(lastWeek, today, 3, NOW).done).toBe(1);
+  });
+
+  it('isn’t a new moment once the goal was met earlier in the week', () => {
+    const week = [session(at(4, 13)), session(at(4, 14))];
+    const today = session(at(4, 15, 9));
+    expect(weekAfter(week, today, 2, NOW)).toMatchObject({ done: 3, justMet: false });
+  });
+
+  it('counts down to the goal before it’s met', () => {
+    const today = session(at(4, 15, 9));
+    expect(weekAfter([], today, 3, NOW)).toEqual({ done: 1, goal: 3, justMet: false, streak: 0 });
   });
 });

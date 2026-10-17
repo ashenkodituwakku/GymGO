@@ -66,7 +66,7 @@ import { SwapButton } from '@/components/ExerciseCard';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { shareText } from '@/lib/actions';
-import { workoutShareText } from '@/lib/insights';
+import { weekAfter, workoutShareText, type WeekAfter } from '@/lib/insights';
 import { usePageTitle } from '@/lib/pageTitle';
 
 /** Ticks once a second while something on screen counts. */
@@ -173,7 +173,7 @@ export default function TrainScreen() {
   useGlassRedraw();
   usePageTitle('Workout');
   const session = useActiveSession();
-  const { account, billing, openPro, data } = useApp();
+  const { account, billing, openPro, data, prefs } = useApp();
   // Kept while the server is away too: loading then fails and says so,
   // where a missing token would ask a signed-in person to sign in.
   const token = account.token;
@@ -235,7 +235,10 @@ export default function TrainScreen() {
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
-  if (done) return <Summary result={done} onClose={close} onProgress={() => router.replace('/progress')} />;
+  if (done) {
+    const week = prefs.weeklyGoal ? weekAfter(log.sessions, done.session, prefs.weeklyGoal) : null;
+    return <Summary result={done} week={week} onClose={close} onProgress={() => router.replace('/progress')} />;
+  }
 
   if (!session) return <NoWorkout token={token} />;
 
@@ -733,8 +736,21 @@ function RestButton({ label, name, onPress, strong = false }: { label: string; n
 
 // --- Done ------------------------------------------------------------------------
 
-function Summary({ result, onClose, onProgress }: { result: { session: TrainingSession; records: NewRecord[] }; onClose: () => void; onProgress: () => void }) {
+function Summary({
+  result,
+  week,
+  onClose,
+  onProgress,
+}: {
+  result: { session: TrainingSession; records: NewRecord[] };
+  /** This week against your weekly goal, when you've set one. */
+  week: WeekAfter | null;
+  onClose: () => void;
+  onProgress: () => void;
+}) {
   const { session, records } = result;
+  // Worked out as the summary opens: the log taking in this workout afterwards doesn't change what it said.
+  const [weekNow] = useState(week);
   const unit = session.unit;
   const volume = fromKg(volumeKg(session), unit);
   const [shared, setShared] = useState<string | null>(null);
@@ -779,6 +795,7 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
           </SummaryStat>
         )}
       </View>
+      {weekNow && <WeekLine week={weekNow} />}
       {records.map((record) => {
         const logged = session.exercises.find((item) => item.exerciseId === record.exerciseId);
         return (
@@ -820,7 +837,39 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
         <PrimaryButton label="Done" tone="quiet" onPress={onClose} />
       </View>
     </PageScroll>
-    {records.length > 0 && <Confetti />}
+    {(records.length > 0 || weekNow?.justMet) && <Confetti />}
+    </View>
+  );
+}
+
+/** Your week after this workout: the goal met (with the streak it continues), or how many more to go. */
+function WeekLine({ week }: { week: WeekAfter }) {
+  const met = week.done >= week.goal;
+  const title = week.justMet ? 'Weekly goal met' : met ? `${week.done} workouts this week` : `${week.done} of ${week.goal} this week`;
+  const detail = met
+    ? week.streak > 1
+      ? `${week.streak} weeks in a row at ${week.goal} a week`
+      : week.justMet
+        ? `${week.goal} workout${week.goal === 1 ? '' : 's'} this week, as you aimed`
+        : `Past your goal of ${week.goal}`
+    : `${week.goal - week.done} more to reach your goal`;
+  return (
+    <View style={[styles.record, met && styles.weekMet]} accessible accessibilityLabel={`${title}. ${detail}.`}>
+      <Icon name={met ? 'flame' : 'target'} size={18} color={met ? color.good : color.brand} />
+      <View style={styles.flex}>
+        <Txt variant="headline">{title}</Txt>
+        <Txt variant="footnote" color={color.labelSecondary}>
+          {detail}
+        </Txt>
+      </View>
+      {/* A dot a workout, up to the goal: the ones done filled. */}
+      {!met && week.goal <= 7 && (
+        <View style={styles.weekDots}>
+          {Array.from({ length: week.goal }, (_, index) => (
+            <View key={index} style={[styles.weekDot, index < week.done && styles.weekDotOn]} />
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -933,5 +982,9 @@ const styles = themed(() => StyleSheet.create({
     ...shadow.plate,
   },
   record: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
+  weekMet: { backgroundColor: color.goodTint },
+  weekDots: { flexDirection: 'row', gap: 4 },
+  weekDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: color.fill },
+  weekDotOn: { backgroundColor: color.brandFill },
 }));
 

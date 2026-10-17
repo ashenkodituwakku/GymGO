@@ -94,6 +94,26 @@ export function goalStreak(sessions: TrainingSession[], goal: number, now: Date 
   return streak;
 }
 
+/** Where a workout just finished leaves this week against your goal, for the workout's summary. */
+export interface WeekAfter {
+  /** Workouts this week, the one just finished included. */
+  done: number;
+  goal: number;
+  /** This workout is the one that met the goal. */
+  justMet: boolean;
+  /** Weeks in a row the goal's been met, this one included once it is. */
+  streak: number;
+}
+
+export function weekAfter(sessions: TrainingSession[], finished: TrainingSession, goal: number, now: Date = new Date()): WeekAfter {
+  // The log may already hold the workout just finished, or not yet.
+  const all = sessions.some((session) => session.id === finished.id) ? sessions : [...sessions, finished];
+  const monday = mondayOf(now).getTime();
+  const done = all.filter((session) => mondayOf(new Date(session.finishedAt)).getTime() === monday).length;
+  const finishedThisWeek = mondayOf(new Date(finished.finishedAt)).getTime() === monday;
+  return { done, goal, justMet: finishedThisWeek && done === goal, streak: goalStreak(all, goal, now) };
+}
+
 /** The most weeks in a row you've ever trained at least once. */
 export function bestWeekStreak(sessions: TrainingSession[]): number {
   const weeks = [...new Set(sessions.map((session) => mondayOf(new Date(session.finishedAt)).getTime()))].sort((a, b) => a - b);

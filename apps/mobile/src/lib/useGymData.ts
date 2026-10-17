@@ -57,7 +57,11 @@ export function useGymData(signedIn: boolean) {
    */
   // A gym the map has twice (a point and an outline, say) shows once too.
   const baseListed = useMemo(() => withoutTwins(base), [base]);
-  const listed = useMemo(() => (found.length === 0 ? baseListed : withoutTwins([...baseListed, ...withoutKnown(found, base)])), [base, baseListed, found]);
+  // The found gyms left after withoutKnown are no twin of any of base's, so
+  // only they need checking against each other: the same list as checking
+  // all of them together (osm's same.test.ts), without going through the
+  // few thousand base gyms again each time a search finds more.
+  const listed = useMemo(() => (found.length === 0 ? baseListed : [...baseListed, ...withoutTwins(withoutKnown(found, base))]), [base, baseListed, found]);
   const baseRef = useRef(base);
   baseRef.current = base;
 

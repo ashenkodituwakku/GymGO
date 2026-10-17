@@ -1,4 +1,4 @@
-import { reviewInputSchema } from '@gymgo/domain';
+import { reviewInputSchema } from '@gymgo/domain/schemas';
 import { getCurrentUser } from '@/server/auth';
 import { submitReview } from '@/server/contributions';
 import { coerceNumbers, coerceOptionalStrings, failure, parseWith, readBody, success } from '@/server/api';

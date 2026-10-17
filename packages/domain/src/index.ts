@@ -19,7 +19,6 @@ export * from './amenities';
 export * from './reviews';
 export * from './search';
 export * from './authz';
-export * from './schemas';
 export * from './plans';
 export * as tokens from './tokens';
 export * from './currencies';
@@ -35,3 +34,6 @@ export * from './social';
 export * from './busy';
 export * from './owner';
 export * from './perks';
+
+// The network schemas are '@gymgo/domain/schemas', not here: they need zod,
+// half a megabyte the phone app would carry without ever using it.

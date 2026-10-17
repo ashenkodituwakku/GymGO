@@ -74,3 +74,39 @@ describe('one gym mapped twice', () => {
     expect(withoutTwins(records)).toHaveLength(4);
   });
 });
+
+describe('adding found gyms to a list already without twins', () => {
+  it('gives the same list as checking them all together, so only the found ones need checking', () => {
+    const known = [
+      ...KNOWN,
+      gym('snap-fitness-gaffney-street-melbourne', 'Snap Fitness', -37.7458, 144.9632, 'node/10'),
+      gym('snap-fitness-melbourne-w355845748', 'Snap Fitness', -37.7459, 144.9633, 'way/355845748'),
+      gym('demo-dohertys', 'Doherty’s Gym', -37.8136, 144.9631, 'node/77', true),
+      // On a cell's edge: -37.81 + 0.01 rounds back into its own cell.
+      gym('edge-gym', 'Edge Gym', -37.81, 144.96, 'node/80'),
+    ];
+    const found = [
+      gym('anytime-fitness-n1', 'Anytime Fitness', -37.8003, 144.9845, 'node/1'),
+      gym('fight-club-n5', 'Fight Club', -37.8137, 144.9632, 'node/5'),
+      gym('fight-club-w6', 'Fight Club', -37.8138, 144.9633, 'way/6'),
+      gym('edge-gym-n81', 'Edge Gym', -37.8099, 144.9601, 'node/81'),
+      gym('kings-gym-n7', 'Kings Gym', -37.7999, 144.96, 'node/7'),
+      gym('kings-gym-w8', 'Kings Gym', -37.8001, 144.9601, 'way/8'),
+      gym('anytime-fitness-n6', 'Anytime Fitness Richmond', -37.8230, 145.0010, 'node/6'),
+    ];
+    const listed = withoutTwins(known);
+    const ids = (records: GymRecord[]) => records.map((record) => record.location.id);
+    const together = withoutTwins([...listed, ...withoutKnown(found, known)]);
+    expect(ids([...listed, ...withoutTwins(withoutKnown(found, known))])).toEqual(ids(together));
+    expect(ids(together)).toEqual([
+      'anytime-fitness-collingwood',
+      'dohertys-gym-city',
+      'snap-fitness-gaffney-street-melbourne',
+      'demo-dohertys',
+      'edge-gym',
+      'fight-club-n5',
+      'kings-gym-n7',
+      'anytime-fitness-n6',
+    ]);
+  });
+});

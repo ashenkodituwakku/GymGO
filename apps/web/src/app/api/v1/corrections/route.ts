@@ -1,4 +1,4 @@
-import { correctionInputSchema } from '@gymgo/domain';
+import { correctionInputSchema } from '@gymgo/domain/schemas';
 import { getCurrentUser } from '@/server/auth';
 import { submitCorrection, type StructuredCorrection } from '@/server/contributions';
 import { coerceOptionalStrings, failure, parseWith, readBody, success } from '@/server/api';

@@ -1,4 +1,4 @@
-import { ownershipClaimInputSchema } from '@gymgo/domain';
+import { ownershipClaimInputSchema } from '@gymgo/domain/schemas';
 import { getCurrentUser } from '@/server/auth';
 import { submitOwnershipClaim } from '@/server/contributions';
 import { failure, parseWith, readBody, success } from '@/server/api';

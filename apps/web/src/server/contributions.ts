@@ -21,7 +21,7 @@ import type {
   OwnerReplyInput,
   OwnershipClaimInput,
   ReviewInput,
-} from '@gymgo/domain';
+} from '@gymgo/domain/schemas';
 import { mutateStore, newId, nowIso, readStore } from './store';
 
 /** Bounds how fast one account can submit, so the queue cannot be flooded. */

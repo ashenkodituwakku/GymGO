@@ -1,4 +1,4 @@
-import { moderationDecisionSchema } from '@gymgo/domain';
+import { moderationDecisionSchema } from '@gymgo/domain/schemas';
 import { getCurrentUser } from '@/server/auth';
 import { decideOwnerReply } from '@/server/moderation';
 import { failure, parseWith, readBody, success } from '@/server/api';

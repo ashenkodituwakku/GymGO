@@ -82,19 +82,34 @@ export const SORTS: Array<{ key: SortKey; label: string }> = [
 ];
 
 /**
+ * Each time zone's clock, made once: making one is slow (on a phone most of
+ * all), and the search, the lists and the screens ask the time often (at
+ * opening, about a tenth of a second went on making them again).
+ */
+const clocks = new Map<string, Intl.DateTimeFormat>();
+function clockIn(timezone: string): Intl.DateTimeFormat {
+  let clock = clocks.get(timezone);
+  if (!clock) {
+    clock = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    clocks.set(timezone, clock);
+  }
+  return clock;
+}
+
+/**
  * Local date and minute-of-day in a city's time zone: a 6 am visit in New
  * York means 6 am New York time, wherever the phone is.
  */
 export function nowIn(timezone: string, now: Date = new Date()): { date: string; minute: number } {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: timezone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(now);
+  const parts = clockIn(timezone).formatToParts(now);
   const get = (type: string) => parts.find((part) => part.type === type)?.value ?? '0';
   return {
     date: `${get('year')}-${get('month')}-${get('day')}`,

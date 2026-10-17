@@ -1,4 +1,4 @@
-import { contentReportInputSchema } from '@gymgo/domain';
+import { contentReportInputSchema } from '@gymgo/domain/schemas';
 import { getCurrentUser } from '@/server/auth';
 import { reportContent } from '@/server/contributions';
 import { failure, parseWith, readBody, success } from '@/server/api';

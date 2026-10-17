@@ -1,4 +1,4 @@
-import { ownerReplyInputSchema } from '@gymgo/domain';
+import { ownerReplyInputSchema } from '@gymgo/domain/schemas';
 import { getCurrentUser } from '@/server/auth';
 import { submitOwnerReply } from '@/server/contributions';
 import { failure, parseWith, readBody, success } from '@/server/api';

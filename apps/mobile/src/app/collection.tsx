@@ -18,7 +18,7 @@
  * (components/CollectionData.tsx, also in Account → Your data).
  */
 
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -44,6 +44,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
 import { PageScroll } from '@/components/PageScroll';
+import { ScreenOptions } from '@/components/ScreenOptions';
 
 const COLUMN = 640;
 
@@ -108,7 +109,7 @@ export default function CollectionScreen() {
   if (loaded && entries.length === 0 && signedIn && (sync === 'offline' || sync === 'failed')) {
     return (
       <View style={styles.empty}>
-        <Stack.Screen options={{ title: 'Collection' }} />
+        <ScreenOptions options={{ title: 'Collection' }} />
         <HeroMark icon="offline" size={64} />
         <Txt variant="title2" style={styles.center}>
           Your collection is on your account
@@ -130,7 +131,7 @@ export default function CollectionScreen() {
   if (entries.length === 0 && (account.state === 'loading' || (signedIn && sync === 'syncing'))) {
     return (
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-        <Stack.Screen options={{ title: 'Collection' }} />
+        <ScreenOptions options={{ title: 'Collection' }} />
         <ListSkeleton rows={4} label="Loading your collection" />
       </PageScroll>
     );
@@ -139,7 +140,7 @@ export default function CollectionScreen() {
   if (loaded && entries.length === 0) {
     return (
       <View style={styles.empty}>
-        <Stack.Screen options={{ title: 'Collection' }} />
+        <ScreenOptions options={{ title: 'Collection' }} />
         <HeroMark icon="trophy" tint={color.maybe} size={68} />
         <Txt variant="title2" style={styles.center}>
           Start your collection
@@ -169,7 +170,7 @@ export default function CollectionScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: 'Collection' }} />
+      <ScreenOptions options={{ title: 'Collection' }} />
       <CollectionSyncLine />
 
       <View style={styles.social}>

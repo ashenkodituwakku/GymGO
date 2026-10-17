@@ -5,7 +5,6 @@
  * Liquid Glass, how see-through the things over the map are, for everyone.
  */
 
-import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { BrandFill } from '@/components/BrandFill';
@@ -45,6 +44,7 @@ import {
 import { setThemeChoice, useThemeChoice } from '@/lib/themePrefs';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
+import { ScreenOptions } from '@/components/ScreenOptions';
 
 const MODES: Array<{ id: AppearanceChoice; label: string }> = [
   { id: 'system', label: 'Automatic' },
@@ -110,7 +110,7 @@ export default function AppearanceScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: 'Appearance' }} />
+      <ScreenOptions options={{ title: 'Appearance' }} />
 
       <Txt variant="footnote" color={color.labelSecondary} style={styles.section}>
         MODE

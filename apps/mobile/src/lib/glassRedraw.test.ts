@@ -22,7 +22,7 @@ describe('Liquid Glass, changed on its own', () => {
   it('reaches memoised parts too, which the screen drawing again skips', () => {
     const missing: string[] = [];
     for (const [file, text] of Object.entries(sources)) {
-      for (const match of text.matchAll(/memo\(function (\w+)\([^]*?\) \{\n([^]*?)\n\}\);/g)) {
+      for (const match of text.matchAll(/memo\(function (\w+)\([^]*?\) \{\n([^]*?)\n\}(?:, \w+)?\);/g)) {
         if (!match[2]!.includes('useGlassRedraw()')) missing.push(`${file}: ${match[1]}`);
       }
     }

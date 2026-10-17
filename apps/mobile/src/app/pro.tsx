@@ -19,7 +19,7 @@ import {
   type BillingCurrency,
   type BillingInterval,
 } from '@gymgo/domain';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
@@ -38,6 +38,7 @@ import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { LegalText } from '@/components/LegalText';
+import { ScreenOptions } from '@/components/ScreenOptions';
 
 const FEATURE_ICON: Record<string, IconName> = {
   'Gyms worldwide': 'globe',
@@ -166,7 +167,7 @@ export default function ProScreen() {
 
   return (
     <>
-      <Stack.Screen
+      <ScreenOptions
         options={{
           // Done on iPhone comes with the sheet (components/SheetDone.tsx); a browser and Android have their own back.
           title: '',

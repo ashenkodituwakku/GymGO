@@ -14,7 +14,7 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { leadExercise } from '@/lib/exerciseGlyphs';
-import { useActiveSession } from '@/lib/activeSession';
+import { useActiveSessionGlance } from '@/lib/activeSession';
 import { api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -28,7 +28,7 @@ export default function MyWorkouts() {
   useGlassRedraw();
   usePageTitle('My workouts');
   const { account, billing, openPro, prefs } = useApp();
-  const active = useActiveSession();
+  const active = useActiveSessionGlance();
   const router = useRouter();
   const [workouts, setWorkouts] = useState<SavedWorkout[] | null>(null);
   const [problem, setProblem] = useState<string | null>(null);

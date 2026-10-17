@@ -124,3 +124,33 @@ const subscribe = (listener: () => void) => {
 export function useActiveSession(): ActiveSession | null {
   return useSyncExternalStore(subscribe, () => current, () => null);
 }
+
+/** What a screen pointing back to the workout shows: its name and how many sets are done. */
+export interface SessionGlance {
+  name: string;
+  setsDone: number;
+}
+
+let glanceCache: { key: string | null; value: SessionGlance | null } = { key: null, value: null };
+
+/** The same glance object until its name or sets done change, so React can tell nothing changed. */
+export function sessionGlance(session: ActiveSession | null): SessionGlance | null {
+  if (!session) {
+    if (glanceCache.key !== null) glanceCache = { key: null, value: null };
+    return null;
+  }
+  const setsDone = session.items.reduce((sum, item) => sum + item.sets.filter((set) => set.done).length, 0);
+  const key = `${setsDone}|${session.name}`;
+  if (key !== glanceCache.key) glanceCache = { key, value: { name: session.name, setsDone } };
+  return glanceCache.value;
+}
+
+/**
+ * For the screens that only point back to the workout (Home, Progress,
+ * Templates, My workouts, a workout's page): drawn again when it starts,
+ * ends, is renamed or a set is ticked, not with every number typed. They
+ * stay open under the workout, and each redrew with every key pressed in it.
+ */
+export function useActiveSessionGlance(): SessionGlance | null {
+  return useSyncExternalStore(subscribe, () => sessionGlance(current), () => null);
+}

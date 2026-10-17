@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AU_GYMS } from '@gymgo/au-data';
-import { THIS_AREA, YOUR_LOCATION, boxAround, boxDrift, reachFor, tileKey, tilesAround, inArea, initialFilters, moveTo, nameForArea, nearLabel, nextVisitAt, nowIn, refreshVisit, runSearch, visitIsLater, wantsLookup } from './query';
+import { THIS_AREA, YOUR_LOCATION, boxAround, boxDrift, reachFor, tileKey, tilesAround, inArea, initialFilters, moveTo, nameForArea, nearLabel, nextVisitAt, nowIn, refreshVisit, runSearch, runSearchShared, visitIsLater, wantsLookup } from './query';
 
 describe('nextVisitAt', () => {
   // 9:30 am in Melbourne on 24 September 2026 (AEST, UTC+10).
@@ -169,5 +169,27 @@ describe('wantsLookup', () => {
   it('keys a place by its block of tiles, so nearby spots share one look-up', () => {
     expect(tileKey(tilesAround(tokyo.centre))).toBe(tileKey(tilesAround({ lat: 35.65, lng: 139.62 })));
     expect(tileKey(tilesAround(tokyo.centre))).not.toBe(tileKey(tilesAround({ lat: 34.69, lng: 135.5 })));
+  });
+});
+
+describe('runSearchShared: the same search for Home and Explore, worked out once', () => {
+  it('gives the same outcome for the same filters and gyms a moment apart', () => {
+    const filters = initialFilters(new Date('2026-10-17T09:00:00+11:00'));
+    const data = { records: AU_GYMS.slice(0, 40) };
+    const now = new Date('2026-10-17T09:00:00+11:00');
+    const a = runSearchShared(filters, data, now);
+    const b = runSearchShared(filters, data, new Date(now.getTime() + 5_000));
+    expect(b).toBe(a);
+    expect(a).toEqual(runSearch(filters, data, now));
+  });
+
+  it('works it out again for other filters, other gyms, or a later moment', () => {
+    const filters = initialFilters(new Date('2026-10-17T09:00:00+11:00'));
+    const data = { records: AU_GYMS.slice(0, 40) };
+    const now = new Date('2026-10-17T09:00:00+11:00');
+    const a = runSearchShared(filters, data, now);
+    expect(runSearchShared({ ...filters, radiusKm: filters.radiusKm + 1 }, data, now)).not.toBe(a);
+    expect(runSearchShared(filters, { records: AU_GYMS.slice(0, 41) }, now)).not.toBe(a);
+    expect(runSearchShared(filters, data, new Date(now.getTime() + 120_000))).not.toBe(a);
   });
 });

@@ -3,7 +3,7 @@
  * or last week's while this one is still empty. Opened from Progress.
  */
 
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { HeroMark } from '@/components/HeroMark';
@@ -12,6 +12,7 @@ import { RecapCard } from '@/components/RecapCard';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ListSkeleton } from '@/components/Skeleton';
 import { PrimaryButton, Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { useApp } from '@/lib/app-state';
 import { weekRecap } from '@/lib/insights';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -44,7 +45,7 @@ export default function RecapScreen() {
   const best = recap?.bestCard ?? null;
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: 'Your week' }} />
+      <ScreenOptions options={{ title: 'Your week' }} />
       {log.status === 'loading' && <ListSkeleton rows={3} label="Adding up your week" />}
       {log.status !== 'loading' && !recap && (
         <View style={styles.empty}>

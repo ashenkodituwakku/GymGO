@@ -5,7 +5,7 @@
  * for admins only.
  */
 
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
@@ -15,6 +15,7 @@ import { ClaimQueue, OwnerUpdateQueue } from '@/components/Moderation';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Segmented, Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { api, type ModerationCounts } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -40,7 +41,7 @@ export default function ModerationScreen() {
   if (!token || !staff) {
     return (
       <View style={styles.none}>
-        <Stack.Screen options={{ title: 'Moderation' }} />
+        <ScreenOptions options={{ title: 'Moderation' }} />
         <Icon name="lock" size={36} color={color.labelTertiary} />
         <Txt variant="title2" style={styles.centre}>
           For GymGO’s moderators
@@ -57,7 +58,7 @@ export default function ModerationScreen() {
   const owners = (counts?.ownerUpdates ?? 0) + (counts?.claims ?? 0);
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: 'Moderation' }} />
+      <ScreenOptions options={{ title: 'Moderation' }} />
       <Segmented
         options={[
           { value: 'waiting', label: `Posts${counts ? ` (${counts.reviews + counts.photos})` : ''}` },

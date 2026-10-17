@@ -5,7 +5,7 @@
  * both collected, then theirs.
  */
 
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { CollectionTotals, FriendCard } from '@gymgo/domain';
@@ -14,6 +14,7 @@ import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { GymCardsSkeleton } from '@/components/Skeleton';
 import { Chip, Input, PrimaryButton, Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { api, problemText } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { timeLabel } from '@/lib/copy';
@@ -97,7 +98,7 @@ export default function FriendScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: friend?.name ?? name ?? 'Friend' }} />
+      <ScreenOptions options={{ title: friend?.name ?? name ?? 'Friend' }} />
       {problem && (
         <Txt variant="footnote" color={color.noInk}>
           {problem}

@@ -324,6 +324,26 @@ export function toQuery(filters: Filters): SearchQuery {
   });
 }
 
+/** The last search worked out, for runSearchShared. */
+let lastSearch: { filters: Filters; records: GymRecord[] | undefined; ratings: Record<string, RatingSummary> | undefined; at: number; outcome: SearchOutcome } | null = null;
+/** How far apart two "now"s may be and still give the same answers (a visit's time is in the filters). */
+const SAME_MOMENT_MS = 60_000;
+
+/**
+ * runSearch, worked out once for both tabs that show it. Home's Near you and
+ * Explore run the same search over every gym, and each did it again on
+ * every change of filters; the same filters and gyms (the same objects) a
+ * moment apart now give the same outcome.
+ */
+export function runSearchShared(filters: Filters, data: { records?: GymRecord[]; ratings?: Record<string, RatingSummary> }, asOf: Date = new Date()): SearchOutcome {
+  const at = asOf.getTime();
+  const last = lastSearch;
+  if (last && last.filters === filters && last.records === data.records && last.ratings === data.ratings && Math.abs(at - last.at) < SAME_MOMENT_MS) return last.outcome;
+  const outcome = runSearch(filters, data, asOf);
+  lastSearch = { filters, records: data.records, ratings: data.ratings, at, outcome };
+  return outcome;
+}
+
 export function runSearch(
   filters: Filters,
   data: { records?: GymRecord[]; reviews?: Record<string, Review[]>; ratings?: Record<string, RatingSummary> } = {},

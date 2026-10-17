@@ -10,7 +10,7 @@
  * settle as the pages are swiped (just swap with Reduce Motion).
  */
 
-import { Stack, useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useId, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { interpolate, runOnJS, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, type SharedValue } from 'react-native-reanimated';
@@ -22,6 +22,7 @@ import type { IconName } from '@/components/Icon';
 import { Pressable } from '@/components/motion';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { LOOKS, color, currentLook, currentTheme, face, radius, space, themed } from '@/lib/theme';
@@ -90,7 +91,7 @@ export default function WelcomeScreen() {
 
   return (
     <View style={[styles.page, { paddingTop: insets.top + space[2], paddingBottom: insets.bottom + space[4] }]}>
-      <Stack.Screen options={{ headerShown: false }} />
+      <ScreenOptions options={{ headerShown: false }} />
       {currentLook() === LOOKS.standard && <Backdrop />}
       <View style={styles.top}>
         <Wordmark height={22} />

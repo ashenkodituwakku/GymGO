@@ -3,11 +3,12 @@
  * offers the way home, instead of the router's developer page.
  */
 
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, space, themed } from '@/lib/theme';
 
@@ -17,7 +18,7 @@ export default function NotFound() {
   const router = useRouter();
   return (
     <View style={styles.page}>
-      <Stack.Screen options={{ headerShown: true, title: '' }} />
+      <ScreenOptions options={{ headerShown: true, title: '' }} />
       <HeroMark icon="search" />
       <Txt variant="title2" style={styles.center}>
         This page isn’t in GymGO

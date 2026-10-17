@@ -4,7 +4,7 @@
  * country too, and there this only sets where the app opens.
  */
 
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Platform, SectionList, StyleSheet, TextInput, View } from 'react-native';
 import { BrandFill } from '@/components/BrandFill';
@@ -12,6 +12,7 @@ import { Pressable } from '@/components/motion';
 import { Icon } from '@/components/Icon';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { useApp } from '@/lib/app-state';
 import { COUNTRIES, FOCUS_COUNTRY, builtInCountries, countryByCode, deviceCountry, flagOf, searchCountries, type Country } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
@@ -61,14 +62,11 @@ export default function CountryScreen() {
     else router.replace('/explore');
   };
 
-  return (
-    <>
-      {/* The first time, there's nowhere to go back to: skipping is the choice,
-          so it says so. GymGO then opens on the device's own country and asks
-          again next launch. */}
-      {first && (
-        <Stack.Screen
-          options={{
+  // Held across redraws: the list redraws with every letter of a search.
+  const notNow = useMemo(
+    () =>
+      first
+        ? {
             headerLeft: () => null,
             headerRight: () => (
               <Pressable
@@ -82,9 +80,17 @@ export default function CountryScreen() {
                 </Txt>
               </Pressable>
             ),
-          }}
-        />
-      )}
+          }
+        : null,
+    [first, router],
+  );
+
+  return (
+    <>
+      {/* The first time, there's nowhere to go back to: skipping is the choice,
+          so it says so. GymGO then opens on the device's own country and asks
+          again next launch. */}
+      {notNow && <ScreenOptions options={notNow} />}
       <View ref={measureRef} onLayout={onLayout} style={styles.fill}>
         <SectionList
           style={styles.screen}

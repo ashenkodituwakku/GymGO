@@ -9,7 +9,7 @@
  */
 
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { Stack } from 'expo-router';
+
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
@@ -19,6 +19,7 @@ import { ProgressRing } from '@/components/ProgressRing';
 import { BrandFill } from '@/components/BrandFill';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ChoiceChip, Input, PrimaryButton, Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { LIMITS, MAX_OWN_TIMERS, STANDARD_TIMERS, describePlan, phaseAt, totalSeconds, withinLimits, type IntervalPlan, type PhaseKind } from '@/lib/intervals';
@@ -150,7 +151,7 @@ export default function TimerScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: 'Interval timer' }} />
+      <ScreenOptions options={{ title: 'Interval timer' }} />
 
       <View
         style={[styles.clock, working && styles.clockWork]}

@@ -4,7 +4,7 @@
  * distance). Unknowns stay unknown here too: a blank is never a "no".
  */
 
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
@@ -25,6 +25,7 @@ import { HEADER_EDGE, PAGE_COLUMN, color, face, radius, solidSurfaces, space, th
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { SheetDone } from '@/components/SheetDone';
+import { ScreenOptions } from '@/components/ScreenOptions';
 
 type Cell = { text: string; ink?: string; strong?: boolean };
 
@@ -62,7 +63,7 @@ export default function Compare() {
   if (!prefsReady) {
     return (
       <View style={styles.empty}>
-        <Stack.Screen options={{ title: 'Compare' }} />
+        <ScreenOptions options={{ title: 'Compare' }} />
       </View>
     );
   }
@@ -74,7 +75,7 @@ export default function Compare() {
     const pickable = account.saved.map((id) => byId.get(id)).filter((result): result is GymSearchResult => result !== undefined).slice(0, 6);
     return (
       <View style={styles.empty}>
-        <Stack.Screen options={{ title: 'Compare' }} />
+        <ScreenOptions options={{ title: 'Compare' }} />
         <HeroMark icon="compare" />
         <Txt variant="title2" style={styles.center}>
           {only ? 'Pick one more gym' : `Pick ${billing.limits.compare === 2 ? 'two' : `two to ${NUMBER_WORD[billing.limits.compare] ?? billing.limits.compare}`} gyms`}
@@ -237,7 +238,7 @@ export default function Compare() {
 
   return (
     <>
-      <Stack.Screen
+      <ScreenOptions
         options={{
           title: 'Compare',
           // Clear takes the right, where a sheet's Done goes on iPhone (components/SheetDone.tsx), so Done moves left.

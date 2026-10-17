@@ -4,7 +4,7 @@
  * opens here too (`/card/set:<its key>`), so it can be shared the same way.
  */
 
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { GemCard } from '@/components/GemCard';
@@ -13,6 +13,7 @@ import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { SetReward } from '@/components/SetCard';
 import { PrimaryButton, Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { useApp } from '@/lib/app-state';
 import { usePageTitle } from '@/lib/pageTitle';
 import { cardFor, cardName } from '@/lib/rarity';
@@ -52,7 +53,7 @@ export default function CardScreen() {
   if (!entry && !set) {
     return (
       <View style={styles.missing}>
-        <Stack.Screen options={{ title: 'Card' }} />
+        <ScreenOptions options={{ title: 'Card' }} />
         {loaded && (
           <>
             <HeroMark icon="trophy" />
@@ -73,7 +74,7 @@ export default function CardScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title }} />
+      <ScreenOptions options={{ title }} />
       {/* What's captured: the card and a little room round it. */}
       <View ref={shot} collapsable={false} style={styles.shot}>
         {entry ? (

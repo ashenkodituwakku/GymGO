@@ -530,6 +530,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
+/**
+ * For a tab you're not on: the app as it was when you left, until you come
+ * back to it, when it catches up in one go. Everything on the four tabs
+ * reads this state, so each change (a filter on Explore, a switch on
+ * Profile, a set ticked in a workout) used to redraw all four, three of them
+ * out of sight: a phone felt that as a stall after every tap.
+ *
+ * Anything that sends you to a tab (requestExplore and the like) also
+ * switches to it, so it catches up before it's seen.
+ */
+export function HeldWhileAway({ here, children }: { here: boolean; children: ReactNode }) {
+  const state = useContext(AppContext);
+  const held = useRef(state);
+  if (here) held.current = state;
+  return <AppContext.Provider value={held.current}>{children}</AppContext.Provider>;
+}
+
 export function useApp(): AppState {
   const state = useContext(AppContext);
   if (!state) throw new Error('useApp must be used inside AppProvider');

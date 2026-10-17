@@ -10,7 +10,7 @@
  * here, on the phone.
  */
 
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
@@ -22,6 +22,7 @@ import { Illustration } from '@/components/Illustration';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Card, Chip, NoPhoto, PrimaryButton, Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { demoPicture } from '@/lib/gymPicture';
@@ -92,7 +93,7 @@ export default function MachinesScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: 'Find a machine' }} />
+      <ScreenOptions options={{ title: 'Find a machine' }} />
 
       {choosing || picked.length === 0 ? (
         <Card style={styles.card}>

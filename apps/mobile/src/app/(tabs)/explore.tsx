@@ -37,7 +37,7 @@ import { useRecentPlaces, type RecentPlace } from '@/lib/recentPlaces';
 import type { PackTown } from '@/lib/countryPack';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
 import { resultFor } from '@/lib/results';
-import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, atWorldCity, boxDrift, inArea, moveTo, nameForArea, runSearch } from '@/lib/query';
+import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, atWorldCity, boxDrift, inArea, moveTo, nameForArea, runSearchShared } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
 import { CHILD_TOUCH, NO_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
@@ -141,7 +141,10 @@ function MapScreen() {
   const wantFull = useRef(false);
 
   // The area on screen, and whether "Search this area" is reading the map.
-  const [viewBox, setViewBox] = useState<BoundingBox | null>(null);
+  // Where the map is: kept aside, not drawn from. It only decides whether
+  // Search this area is offered, so that answer is what's kept in state:
+  // every pan used to draw the whole of Explore again, list and all.
+  const viewBox = useRef<BoundingBox | null>(null);
   const [areaBusy, setAreaBusy] = useState(false);
   const areaAsking = useRef(false);
   const areaPress = usePressScale(0.94);
@@ -176,7 +179,7 @@ function MapScreen() {
     [query, filters.centre, filters.countryCode, prefs.country, searchable, towns],
   );
   const outcome = useMemo(() => {
-    const found = runSearch(filters, { records: data.listed, ratings: data.ratings }, asOf);
+    const found = runSearchShared(filters, { records: data.listed, ratings: data.ratings }, asOf);
     return locked ? { ...found, results: [] } : found;
   }, [filters, data.listed, data.ratings, asOf, locked === null]);
   const pins: MapPin[] = useMemo(
@@ -372,18 +375,31 @@ function MapScreen() {
 
   // Offered once the map has moved well away from what the list shows, as
   // in Apple Maps. Never in demo mode: it finds real gyms.
-  const offerArea = useMemo(() => {
-    if (!viewBox || prefs.demo) return false;
-    if (filters.bbox) return boxDrift(filters.bbox, viewBox) > 0.35;
-    const height = viewBox.north - viewBox.south;
-    const width = viewBox.east - viewBox.west;
-    const shift = Math.max(
-      Math.abs((viewBox.north + viewBox.south) / 2 - filters.centre.lat) / height,
-      Math.abs((viewBox.east + viewBox.west) / 2 - filters.centre.lng) / width,
-    );
-    // Moved more than half a screen, or zoomed well out past the search radius.
-    return shift > 0.6 || height > ((filters.radiusKm * 2) / 111) * 2.5;
-  }, [viewBox, prefs.demo, filters.bbox, filters.centre, filters.radiusKm]);
+  const areaOffered = useCallback(
+    (box: BoundingBox | null) => {
+      if (!box || prefs.demo) return false;
+      if (filters.bbox) return boxDrift(filters.bbox, box) > 0.35;
+      const height = box.north - box.south;
+      const width = box.east - box.west;
+      const shift = Math.max(
+        Math.abs((box.north + box.south) / 2 - filters.centre.lat) / height,
+        Math.abs((box.east + box.west) / 2 - filters.centre.lng) / width,
+      );
+      // Moved more than half a screen, or zoomed well out past the search radius.
+      return shift > 0.6 || height > ((filters.radiusKm * 2) / 111) * 2.5;
+    },
+    [prefs.demo, filters.bbox, filters.centre, filters.radiusKm],
+  );
+  const [offerArea, setOfferArea] = useState(false);
+  // The search moved (or demo mode changed): asked again of where the map already is.
+  useEffect(() => setOfferArea(areaOffered(viewBox.current)), [areaOffered]);
+  const areaChecker = useRef(areaOffered);
+  areaChecker.current = areaOffered;
+  /** The map came to rest: note where, and draw again only if that changes whether the button is offered. */
+  const onRegionChange = useCallback((box: BoundingBox) => {
+    viewBox.current = box;
+    setOfferArea(areaChecker.current(box));
+  }, []);
 
   /**
    * Search the area on screen for gyms: only ever when Search this area is
@@ -456,9 +472,9 @@ function MapScreen() {
   const lookupWaiting = lookup !== null && lookup.state !== 'done' && locked === null;
   const lookupBusy = lookup?.state === 'searching';
   const searchThisArea = useCallback(() => {
-    if (offerArea && viewBox) void searchBox(viewBox);
+    if (offerArea && viewBox.current) void searchBox(viewBox.current);
     else searchHere();
-  }, [offerArea, viewBox, searchBox, searchHere]);
+  }, [offerArea, searchBox, searchHere]);
   const searching = areaBusy || lookupBusy;
 
   const areaButton = (offerArea || searching || lookupWaiting) && !selectedId && (
@@ -538,6 +554,8 @@ function MapScreen() {
     [data.records, outcome, wide, addRecent, setFilters],
   );
   openGymRef.current = openGym;
+  // The same function for the life of the screen, for the list's rows: openGym changes with every search, and redrew them all.
+  const selectGym = useCallback((id: string) => openGymRef.current(id), []);
 
   // A window made wider or narrower across WIDE with a gym picked: its card
   // moves to the new layout (the side panel, or the sheet) rather than
@@ -735,7 +753,7 @@ function MapScreen() {
       onToggleHours={toggleHours}
       onToggleBudget={toggleBudget}
       onOpenFilters={openFilters}
-      onSelect={openGym}
+      onSelect={selectGym}
       onApplyRelaxation={relax}
       notice={notice}
       inSheet={inSheet}
@@ -897,7 +915,7 @@ function MapScreen() {
             showsUserLocation={here !== null}
             userLocation={here?.position ?? null}
             onSelect={openGym}
-            onRegionChange={setViewBox}
+            onRegionChange={onRegionChange}
             onMapPress={() => {
               if (panel === 'place') closePlace();
             }}
@@ -981,7 +999,7 @@ function MapScreen() {
             showsUserLocation={here !== null}
             userLocation={here?.position ?? null}
             onSelect={openGym}
-            onRegionChange={setViewBox}
+            onRegionChange={onRegionChange}
             onMapPress={() => {
               Keyboard.dismiss();
               if (selectedId) closePlace();

@@ -8,7 +8,7 @@
  */
 
 import Constants from 'expo-constants';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -26,6 +26,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { ACCENTS, LOOKS, color, radius, shadow, space, themed } from '@/lib/theme';
 import { useThemeChoice } from '@/lib/themePrefs';
 import { PageScroll } from '@/components/PageScroll';
+import { ScreenOptions } from '@/components/ScreenOptions';
 
 const MIN_CHARS = 10;
 const MAX_CHARS = 4000;
@@ -120,7 +121,7 @@ export default function ReportBug() {
   if (sent) {
     return (
       <View style={styles.page}>
-        <Stack.Screen options={{ title }} />
+        <ScreenOptions options={{ title }} />
         <Animated.View entering={FADE_IN} style={styles.done}>
           <View style={styles.doneIcon}>
             <Icon name="good" size={34} color={color.onBrand} />
@@ -142,7 +143,7 @@ export default function ReportBug() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title }} />
+      <ScreenOptions options={{ title }} />
       <Animated.View style={styles.intro}>
         <View style={[styles.badge, notice && styles.noticeBadge]}>
           <Icon name={notice ? 'photo' : 'bug'} size={24} color={color.onBrand} />

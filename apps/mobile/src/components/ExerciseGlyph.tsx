@@ -10,7 +10,7 @@
  * scroll or a keystroke. With Reduce Motion on it stays still.
  */
 
-import { useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -28,6 +28,7 @@ import { GLYPH_SIZE, exerciseFrames, exerciseMoves, type Pt, type Shape, type To
 import { alpha } from '@/lib/looks';
 import { LOOKS, NO_TOUCH, backgroundImage, color, currentLook, currentTheme, radius } from '@/lib/theme';
 import { EASE_IN_OUT } from './motion';
+import { useGlassRedraw } from './Redrawn';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -205,8 +206,12 @@ function partsOf(exerciseId: string): Part[] {
   return made;
 }
 
-/** The icon on its tile. Decoration: the exercise's name is always written beside it. */
-export function ExerciseTile({
+/**
+ * The icon on its tile. Decoration: the exercise's name is always written beside it.
+ * Drawn again only when its own props change: in a workout, every number typed
+ * in a card drew its exercise's picture again, path by path.
+ */
+export const ExerciseTile = memo(function ExerciseTile({
   exerciseId,
   size = 52,
   done = false,
@@ -222,6 +227,7 @@ export function ExerciseTile({
   /** See ExerciseGlyph: a few reps, then still. */
   reps?: number;
 }) {
+  useGlassRedraw();
   const hue = done ? color.good : color.brand;
   const dark = currentTheme().scheme === 'dark';
   // The look's own corners, in proportion to the tile (none in 8-bit).
@@ -255,7 +261,7 @@ export function ExerciseTile({
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   tile: { alignItems: 'center', justifyContent: 'center', borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },

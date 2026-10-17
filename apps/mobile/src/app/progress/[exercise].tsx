@@ -5,7 +5,7 @@
  * max and what to lift next.
  */
 
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
@@ -23,6 +23,7 @@ import { alternativesFor, kitText } from '@/lib/exerciseLibrary';
 import { EXERCISES, exerciseName, muscleLabel } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
+import { ScreenOptions } from '@/components/ScreenOptions';
 
 /** "25 Sep", with the year only when it isn't this one. */
 const dayLabel = (iso: string) => {
@@ -52,7 +53,7 @@ export default function ExerciseProgressScreen() {
   if (!exercise && done.length === 0 && log.status !== 'loading') {
     return (
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-        <Stack.Screen options={{ title: '' }} />
+        <ScreenOptions options={{ title: '' }} />
         <Txt variant="title2">No exercise by that name</Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
           GymGO doesn’t list “{title}”, and you haven’t logged it. Your exercises are on the Progress page.
@@ -64,7 +65,7 @@ export default function ExerciseProgressScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: '' }} />
+      <ScreenOptions options={{ title: '' }} />
       <Txt variant="largeTitle">{title}</Txt>
 
       {exercise && (

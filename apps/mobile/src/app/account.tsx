@@ -5,7 +5,7 @@
  * your gym collection), signing out, and deleting the account.
  */
 
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View, type TextInput } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -25,6 +25,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { Avatar } from '@/components/Avatar';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { pickAvatar } from '@/lib/avatar';
 
 const PROVIDER_NAME: Record<SignInProvider, string> = { google: 'Google', apple: 'Apple' };
@@ -67,7 +68,7 @@ export default function AccountScreen() {
   if (!me || !token) {
     return (
       <View style={styles.page}>
-        <Stack.Screen options={{ title: 'Account' }} />
+        <ScreenOptions options={{ title: 'Account' }} />
         {account.state === 'unreachable' && (
           <View style={styles.content}>
             <ServerAwayCard />
@@ -123,7 +124,7 @@ export default function AccountScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: 'Account' }} />
+      <ScreenOptions options={{ title: 'Account' }} />
 
       <Animated.View style={styles.head}>
         <Pressable

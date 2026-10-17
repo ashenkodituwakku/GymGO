@@ -8,7 +8,7 @@
  * past 12 reps there's none rather than a poor one.
  */
 
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
@@ -16,6 +16,7 @@ import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Input, Segmented, Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { useApp } from '@/lib/app-state';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -60,7 +61,7 @@ export default function StrengthScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: '1-rep max' }} />
+      <ScreenOptions options={{ title: '1-rep max' }} />
       <Txt variant="subhead" color={color.labelSecondary}>
         Type a set you’ve done: the weight, and how many reps you got.
       </Txt>

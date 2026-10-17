@@ -6,7 +6,7 @@
  * you're searching. Ranked on the server (apps/server/src/social.ts).
  */
 
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Toggle } from '@/components/Toggle';
@@ -17,6 +17,7 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Card, PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { api, problemText, type Board, type BoardEntry } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { cityFor } from '@/lib/collection';
@@ -77,7 +78,7 @@ export default function LeaderboardScreen() {
   if (account.state === 'unreachable' || account.state === 'loading') {
     return (
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-        <Stack.Screen options={{ title: 'Leaderboard' }} />
+        <ScreenOptions options={{ title: 'Leaderboard' }} />
         {/* While your account is confirmed, the shape of what's coming rather than a blank page. */}
         {account.state === 'unreachable' ? <ServerAwayCard /> : <ListSkeleton rows={5} label="Loading the leaderboard" />}
       </PageScroll>
@@ -87,7 +88,7 @@ export default function LeaderboardScreen() {
   if (!token || !account.account) {
     return (
       <View style={styles.signedOut}>
-        <Stack.Screen options={{ title: 'Leaderboard' }} />
+        <ScreenOptions options={{ title: 'Leaderboard' }} />
         <HeroMark icon="trophy" />
         <Txt variant="title2" style={styles.centre}>
           Who’s collected the most?
@@ -102,7 +103,7 @@ export default function LeaderboardScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: 'Leaderboard' }} />
+      <ScreenOptions options={{ title: 'Leaderboard' }} />
       <Card style={styles.join}>
         <View style={styles.flex}>
           <Txt variant="headline">Be on the public board</Txt>

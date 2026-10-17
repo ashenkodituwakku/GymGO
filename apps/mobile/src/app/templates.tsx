@@ -5,7 +5,7 @@
  * the workout in progress, as Build a workout does.
  */
 
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
@@ -15,7 +15,8 @@ import { Icon, type IconName } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Card, Chip, PrimaryButton, Txt } from '@/components/ui';
-import { startSession, useActiveSession } from '@/lib/activeSession';
+import { ScreenOptions } from '@/components/ScreenOptions';
+import { startSession, useActiveSessionGlance } from '@/lib/activeSession';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -31,7 +32,7 @@ export default function TemplatesScreen() {
   const router = useRouter();
   const { account, prefs } = useApp();
   const log = useTrainingLog(account.token);
-  const active = useActiveSession();
+  const active = useActiveSessionGlance();
 
   const start = (template: WorkoutTemplate, index: number) => {
     const day = template.days[index]!;
@@ -42,7 +43,7 @@ export default function TemplatesScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: 'Templates' }} />
+      <ScreenOptions options={{ title: 'Templates' }} />
       <Txt variant="subhead" color={color.labelSecondary}>
         Well-known plans, ready to go. Each takes turns through its days: start one and you get the day after the last you did.
       </Txt>

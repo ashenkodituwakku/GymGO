@@ -8,7 +8,7 @@
  * here. `id` is a gym's id, or "any" for no particular gym.
  */
 
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Share, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
@@ -18,7 +18,7 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { Chip, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ExerciseCard } from '@/components/ExerciseCard';
 import { PlanSummary } from '@/components/PlanSummary';
-import { startSession, useActiveSession } from '@/lib/activeSession';
+import { startSession, useActiveSessionGlance } from '@/lib/activeSession';
 import { ApiError, api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -47,6 +47,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { agoLabel, daysAgo, freshMuscles, lastTrained } from '@/lib/exerciseLibrary';
 import { useTrainingLog } from '@/lib/useTraining';
 import { PageScroll } from '@/components/PageScroll';
+import { ScreenOptions } from '@/components/ScreenOptions';
 
 type KitMode = 'gym' | 'typical';
 
@@ -61,7 +62,7 @@ export default function WorkoutScreen() {
   usePageTitle('Build a workout');
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, account, billing, openPro, prefs } = useApp();
-  const active = useActiveSession();
+  const active = useActiveSessionGlance();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const record = id && id !== 'any' ? (data.records.find((item) => item.location.id === id) ?? null) : null;
@@ -179,7 +180,7 @@ export default function WorkoutScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Workout' }} />
+      <ScreenOptions options={{ title: 'Workout' }} />
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         <View style={styles.intro}>
           <Txt variant="largeTitle">Build a workout</Txt>

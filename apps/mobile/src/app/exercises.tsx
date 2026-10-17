@@ -4,7 +4,7 @@
  * what it works, what it needs, swaps for the same muscle, and your sets.
  */
 
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
@@ -13,6 +13,7 @@ import { Pressable } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Chip, Input, Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { useApp } from '@/lib/app-state';
 import { KIT_FILTERS, groupLabel, kitText, libraryGroups, type KitFilter } from '@/lib/exerciseLibrary';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -37,7 +38,7 @@ export default function ExercisesScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <Stack.Screen options={{ title: 'Exercises' }} />
+      <ScreenOptions options={{ title: 'Exercises' }} />
       <View style={styles.search}>
         <Icon name="search" size={16} color={color.labelSecondary} />
         <Input

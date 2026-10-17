@@ -7,7 +7,7 @@
  * so it always agrees with the map and the lists.
  */
 
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Pressable, damp, useArrival } from '@/components/motion';
@@ -46,6 +46,7 @@ import type { GymLocation } from '@gymgo/domain';
 import { HEADER_EDGE, PAGE_COLUMN, color, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
+import { ScreenOptions } from '@/components/ScreenOptions';
 
 /** The pop-up growing into the page: the page rises from where the pop-up sat, still when Reduce Motion is on. */
 const EXPAND_IN =
@@ -100,7 +101,7 @@ export default function GymPage() {
   if (waiting) {
     return (
       <>
-        <Stack.Screen options={{ title: 'Gym' }} />
+        <ScreenOptions options={{ title: 'Gym' }} />
         <GymPageSkeleton />
       </>
     );
@@ -109,7 +110,7 @@ export default function GymPage() {
   if (!result) {
     return (
       <View style={styles.missing}>
-        <Stack.Screen options={{ title: 'Gym' }} />
+        <ScreenOptions options={{ title: 'Gym' }} />
         <HeroMark icon="search" />
         <Txt variant="title2">Gym not found</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
@@ -130,7 +131,7 @@ export default function GymPage() {
 
   return (
     <>
-      <Stack.Screen
+      <ScreenOptions
         options={{
           title: '',
           ...(fromMap

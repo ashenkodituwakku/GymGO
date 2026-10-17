@@ -4,13 +4,14 @@
  * server's public pages (/terms and the rest) for anyone without the app.
  */
 
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { LEGAL_UPDATED, isLegalDocId, legalDoc } from '@gymgo/domain';
 import { LegalText } from '@/components/LegalText';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { useLegalInfo } from '@/lib/legal';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, radius, shadow, space, themed } from '@/lib/theme';
@@ -24,7 +25,7 @@ export default function LegalScreen() {
   usePageTitle(doc.title);
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: doc.title }} />
+      <ScreenOptions options={{ title: doc.title }} />
       <View style={styles.head}>
         <Txt variant="title" accessibilityRole="header">
           {doc.title}

@@ -5,7 +5,7 @@
  * any records you broke.
  */
 
-import { Stack, useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -64,6 +64,7 @@ import { useTrainingLog } from '@/lib/useTraining';
 import { EXERCISES, TYPICAL_KIT, exerciseName, knownKit, swapFor, type Kit } from '@/lib/workout';
 import { SwapButton } from '@/components/ExerciseCard';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { shareText } from '@/lib/actions';
 import { workoutShareText } from '@/lib/insights';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -105,7 +106,7 @@ function NoWorkout({ token }: { token: string | null }) {
   const details = saved ? libraryDetails(saved) : new Map<string, string>();
   return (
     <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.noWorkout]}>
-      <Stack.Screen options={{ title: 'Workout' }} />
+      <ScreenOptions options={{ title: 'Workout' }} />
       <View style={styles.noWorkoutHead}>
         <HeroMark icon="workout" />
         <Txt variant="title2">No workout in progress</Txt>
@@ -284,7 +285,7 @@ export default function TrainScreen() {
 
   return (
     <View ref={page.measureRef} onLayout={page.onLayout} style={styles.page}>
-      <Stack.Screen options={{ title: '' }} />
+      <ScreenOptions options={{ title: '' }} />
       <StayAwake />
       <PageScroll
         style={styles.page}
@@ -754,7 +755,7 @@ function Summary({ result, onClose, onProgress }: { result: { session: TrainingS
   return (
     <View style={styles.page}>
     <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.summary]}>
-      <Stack.Screen options={{ title: '' }} />
+      <ScreenOptions options={{ title: '' }} />
       <Animated.View entering={records.length ? POP_IN : FADE_IN}>
         <HeroMark icon={records.length ? 'trophy' : 'check'} tint={records.length ? color.maybe : color.good} size={72} />
       </Animated.View>

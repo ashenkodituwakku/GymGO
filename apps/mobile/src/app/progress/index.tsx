@@ -4,7 +4,7 @@
  * chart for each exercise and the muscle balance are Pro.
  */
 
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -17,7 +17,7 @@ import { PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { weekRecap } from '@/lib/insights';
 import { useCollection } from '@/lib/useCollection';
-import { useActiveSession } from '@/lib/activeSession';
+import { useActiveSessionGlance } from '@/lib/activeSession';
 import { api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { timeLabel } from '@/lib/copy';
@@ -43,6 +43,7 @@ import { exerciseName } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { SessionNote } from '@/components/SessionNote';
+import { ScreenOptions } from '@/components/ScreenOptions';
 
 const nameOf = exerciseName;
 /** When a session started, as "6:40 pm": the day it was is the heading above it. */
@@ -63,7 +64,7 @@ export default function ProgressScreen() {
   // Pro's streak freeze carries the run through one missed week a month; on Free, what one would have kept.
   const streak = useMemo(() => streakOf(log.sessions, new Date(), billing.isPro), [log.sessions, billing.isPro]);
   const couldKeep = useMemo(() => (billing.isPro ? null : streakOf(log.sessions, new Date(), true)), [log.sessions, billing.isPro]);
-  const active = useActiveSession();
+  const active = useActiveSessionGlance();
   const router = useRouter();
   const unit = unitFor(prefs.country);
   // Your week as a picture to share: this week's, or last week's until this one has something.
@@ -82,7 +83,7 @@ export default function ProgressScreen() {
   if (!token) {
     return (
       <View style={styles.empty}>
-        <Stack.Screen options={{ title: 'Progress' }} />
+        <ScreenOptions options={{ title: 'Progress' }} />
         <Icon name="chart" size={34} color={color.brand} />
         <Txt variant="title2">Keep a training log</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
@@ -95,7 +96,7 @@ export default function ProgressScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: 'Progress' }} />
+      <ScreenOptions options={{ title: 'Progress' }} />
       <Animated.View style={styles.stats}>
         <Stat icon="flame" tint={color.maybe} value={known ? streak.weeks : null} one="week in a row" many="weeks in a row" />
         <Stat icon="calendar" tint={color.brand} value={known ? sessionsThisWeek(log.sessions) : null} one="this week" many="this week" />

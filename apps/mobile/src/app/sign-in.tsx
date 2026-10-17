@@ -5,7 +5,7 @@
  * the only one); afterwards it goes to the link you opened, or Home.
  */
 
-import { Stack, useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Platform, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -24,6 +24,7 @@ import { NO_WEB_OUTLINE, color, dropShadow, face, radius, space, themed } from '
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { LegalText } from '@/components/LegalText';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { noteNewAccount, takeNewAccount, takeWanted } from '@/lib/afterSignIn';
 import { ACCOUNT_OPTIONAL } from '@/lib/accountRule';
 
@@ -208,7 +209,7 @@ export default function SignInScreen() {
       style={styles.page}
       contentContainerStyle={styles.content}
     >
-      <Stack.Screen options={{ title: '' }} />
+      <ScreenOptions options={{ title: '' }} />
       <Animated.View style={styles.hero}>
         <View style={styles.badge}>
           <AppBadge size={64} />

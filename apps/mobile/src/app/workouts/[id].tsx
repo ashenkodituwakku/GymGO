@@ -1,6 +1,6 @@
 /** One saved workout, as it was when saved. */
 
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Share, StyleSheet, View } from 'react-native';
 import { ExerciseCard } from '@/components/ExerciseCard';
@@ -8,7 +8,7 @@ import { PlanSummary } from '@/components/PlanSummary';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { LinesSkeleton, ListSkeleton } from '@/components/Skeleton';
-import { useActiveSession } from '@/lib/activeSession';
+import { useActiveSessionGlance } from '@/lib/activeSession';
 import { api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -18,13 +18,14 @@ import { color, radius, space, themed } from '@/lib/theme';
 import { GOALS, muscleLabel, workoutText, type Muscle } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
+import { ScreenOptions } from '@/components/ScreenOptions';
 
 export default function SavedWorkoutScreen() {
   useGlassRedraw();
   usePageTitle('Workout');
   const { id } = useLocalSearchParams<{ id: string }>();
   const { account, prefs } = useApp();
-  const active = useActiveSession();
+  const active = useActiveSessionGlance();
   const router = useRouter();
   const [saved, setSaved] = useState<SavedWorkout | null | 'missing'>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -44,7 +45,7 @@ export default function SavedWorkoutScreen() {
   if (saved === 'missing' || !token) {
     return (
       <View style={styles.missing}>
-        <Stack.Screen options={{ title: 'Workout' }} />
+        <ScreenOptions options={{ title: 'Workout' }} />
         <Txt variant="title2">Not found</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           {token ? 'This workout isn’t in your account any more.' : 'Sign in to see your saved workouts.'}
@@ -83,7 +84,7 @@ export default function SavedWorkoutScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: '' }} />
+      <ScreenOptions options={{ title: '' }} />
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         <PlanSummary
           eyebrow={`SAVED ${new Date(saved.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }).toUpperCase()}`}

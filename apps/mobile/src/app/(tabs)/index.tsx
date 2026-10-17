@@ -22,7 +22,7 @@ import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { Avatar } from '@/components/Avatar';
 import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
-import { startSession, useActiveSession } from '@/lib/activeSession';
+import { startSession, useActiveSessionGlance } from '@/lib/activeSession';
 import { WeekStrip } from '@/components/TrainingInsights';
 import { CollectionStrip, HereNudge } from '@/components/CollectCard';
 import { useTrainingLog } from '@/lib/useTraining';
@@ -31,7 +31,7 @@ import { lookupLine, noGymsLine, searchPrompt, timeLabel, visitWhen } from '@/li
 import { countryInSentence, countryName } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityNear, cityPlace, localBudget, moneyLabel, tracksPrices, worldCitiesIn, type AppPlace, type City, type WorldCity } from '@/lib/places';
-import { YOUR_LOCATION, atPlace, atWorldCity, moveTo, nearLabel, nextVisitAt, nowIn, runSearch, visitIsLater, type Filters } from '@/lib/query';
+import { YOUR_LOCATION, atPlace, atWorldCity, moveTo, nearLabel, nextVisitAt, nowIn, runSearchShared, visitIsLater, type Filters } from '@/lib/query';
 import { todayThere, tripDatesLabel, tripToShow, tripWhen, useTrips } from '@/lib/trips';
 import { resultsById } from '@/lib/results';
 import { PAGE_COLUMN, color, dropShadow, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -64,7 +64,7 @@ export default function Home() {
   useGlassRedraw();
   usePageTitle(null);
   const { data, account, billing, filters, setFilters, recents, clearRecents, requestExplore, mayExplore, openPro, prefs, prefsReady, lookup, searchHere, here } = useApp();
-  const active = useActiveSession();
+  const active = useActiveSessionGlance();
   const trips = useTrips(nowIn(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC').date);
   // Your training log, shared with Progress; the week strip shows once there's something in it.
   const log = useTrainingLog(account.token);
@@ -80,7 +80,7 @@ export default function Home() {
 
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   // Each gym once: not the map's own copy of one GymGO carries too.
-  const outcome = useMemo(() => runSearch(filters, { records: data.listed, ratings: data.ratings }, asOf), [filters, data.listed, data.ratings, asOf]);
+  const outcome = useMemo(() => runSearchShared(filters, { records: data.listed, ratings: data.ratings }, asOf), [filters, data.listed, data.ratings, asOf]);
   const byId = useMemo(
     () => resultsById(filters, data.records, asOf, data.ratings, [...account.saved, ...recents]),
     [filters, data.records, asOf, data.ratings, account.saved, recents],
@@ -221,7 +221,7 @@ export default function Home() {
           <View style={styles.flex}>
             <Txt variant="headline">Back to your workout</Txt>
             <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-              {active.name} · {active.items.reduce((sum, item) => sum + item.sets.filter((set) => set.done).length, 0)} sets done
+              {active.name} · {active.setsDone} sets done
             </Txt>
           </View>
           <Icon name="chevron" size={14} color={color.labelTertiary} />

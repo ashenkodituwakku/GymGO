@@ -30,7 +30,7 @@ import { Glass, HAS_LIQUID_GLASS, useGlassLevel } from '@/components/Glass';
 import { PIcon, type PhosphorName } from '@/components/PIcon';
 import { Redrawn, useThemeVersion } from '@/components/Redrawn';
 import { glassMark, installLiquidGlass, sizeRefraction } from '@/components/liquidGlass';
-import { useApp } from '@/lib/app-state';
+import { HeldWhileAway, useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { TabBarInset, tabBarBottom } from '@/lib/layout';
 import { CHILD_TOUCH, NO_TOUCH, color, currentTheme, radius, shadow, solidSurfaces, themed } from '@/lib/theme';
@@ -81,8 +81,21 @@ export default function TabsLayout() {
             screen grow past the window so nothing scrolls. */}
         <TabSlot
           style={styles.slot}
-          // Drawn again when the colours change, without leaving the tab.
-          renderFn={(descriptor, options) => defaultTabsSlotRender({ ...descriptor, render: () => <Redrawn kind="tab" focused={options.isFocused}>{descriptor.render()}</Redrawn> }, options)}
+          // Drawn again when the colours change, without leaving the tab;
+          // a tab you're not on waits for you to come back to catch up.
+          renderFn={(descriptor, options) =>
+            defaultTabsSlotRender(
+              {
+                ...descriptor,
+                render: () => (
+                  <Redrawn kind="tab" focused={options.isFocused}>
+                    <HeldWhileAway here={options.isFocused}>{descriptor.render()}</HeldWhileAway>
+                  </Redrawn>
+                ),
+              },
+              options,
+            )
+          }
         />
         {/* Declares the routes; the visible bar is GymGO's own. */}
         <TabList style={styles.hidden}>

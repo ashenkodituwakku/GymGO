@@ -21,19 +21,7 @@ import { Illustration } from './Illustration';
 import { NoPhoto, TIER_COLOUR, Txt } from './ui';
 import { useGlassRedraw } from './Redrawn';
 
-/**
- * Drawn again only when its own gym, cover or price changes: a list of
- * seventy redrew every row each time the map came to rest or a letter was
- * typed, which a phone feels. So `onOpen` should be a steady function (it's
- * given the gym's id), not a new one for each row.
- */
-export const GymRow = memo(function GymRow({
-  result,
-  visitMinute,
-  cover,
-  memberTypicalMinor = null,
-  onOpen,
-}: {
+interface GymRowProps {
   result: GymSearchResult;
   visitMinute: number;
   /** Server path of the gym's newest member photo, if it has one. */
@@ -42,15 +30,40 @@ export const GymRow = memo(function GymRow({
   memberTypicalMinor?: number | null;
   /** Opens the gym; given its id. */
   onOpen: (id: string) => void;
-}) {
+}
+
+const memberPrice = (props: GymRowProps) =>
+  props.memberTypicalMinor == null ? null : { typicalMinor: props.memberTypicalMinor, country: props.result.record.location.address.countryCode };
+
+/**
+ * Whether a row would draw the same: by what it shows, not by its result
+ * object, which every search makes afresh for every gym (a filter that
+ * changed nothing for a gym redrew its row anyway).
+ */
+function drawsSame(a: GymRowProps, b: GymRowProps): boolean {
+  if (a.visitMinute !== b.visitMinute || a.cover !== b.cover || (a.memberTypicalMinor ?? null) !== (b.memberTypicalMinor ?? null) || a.onOpen !== b.onOpen) return false;
+  if (a.result === b.result) return true;
+  return (
+    a.result.record === b.result.record &&
+    a.result.tier === b.result.tier &&
+    a.result.distanceKm === b.result.distanceKm &&
+    accessLine(a.result.access.verdict, a.visitMinute) === accessLine(b.result.access.verdict, b.visitMinute) &&
+    JSON.stringify(priceLine(a.result.offers, memberPrice(a))) === JSON.stringify(priceLine(b.result.offers, memberPrice(b)))
+  );
+}
+
+/**
+ * Drawn again only when what it shows changes: a list of seventy redrew
+ * every row each time the map came to rest, a letter was typed or a filter
+ * changed, which a phone feels. So `onOpen` should be a steady function
+ * (it's given the gym's id), not a new one for each row or each search.
+ */
+export const GymRow = memo(function GymRow({ result, visitMinute, cover, memberTypicalMinor = null, onOpen }: GymRowProps) {
   useGlassRedraw();
   const location = result.record.location;
   const tone = TIER_COLOUR[result.tier];
   const tier = TIER[result.tier];
-  const price = priceLine(
-    result.offers,
-    memberTypicalMinor === null ? null : { typicalMinor: memberTypicalMinor, country: location.address.countryCode },
-  );
+  const price = priceLine(result.offers, memberTypicalMinor === null ? null : { typicalMinor: memberTypicalMinor, country: location.address.countryCode });
   const access = accessLine(result.access.verdict, visitMinute);
   const coverUri = cover ? photoUrl(cover) : null;
   const illustration = coverUri ? null : demoPicture(location);
@@ -124,7 +137,7 @@ export const GymRow = memo(function GymRow({
       </View>
     </Pressable>
   );
-});
+}, drawsSame);
 
 const styles = themed(() => StyleSheet.create({
   row: {

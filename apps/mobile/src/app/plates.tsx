@@ -4,7 +4,7 @@
  * exercise while you train, or from Progress.
  */
 
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
@@ -17,6 +17,7 @@ import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { BAR, PLATES, PLATE_CHOICES, formatWeight, parseWeight, plateLoad, unitFor, warmUpSets, type WeightUnit } from '@/lib/training';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
+import { ScreenOptions } from '@/components/ScreenOptions';
 
 /** The bars most gyms have: a men's Olympic bar, and the lighter women's bar. */
 const BARS: Record<WeightUnit, number[]> = { kg: [20, 15], lb: [45, 35] };
@@ -56,7 +57,7 @@ export default function PlatesScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: 'Plates' }} />
+      <ScreenOptions options={{ title: 'Plates' }} />
       <Txt variant="subhead" color={color.labelSecondary}>
         Type the total you want on the bar, bar included.
       </Txt>

@@ -7,7 +7,7 @@
  * map to the trip's place and first day, for everything else Explore does.
  */
 
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
@@ -18,6 +18,7 @@ import { Illustration } from '@/components/Illustration';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Card, NoPhoto, PrimaryButton, Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { useApp } from '@/lib/app-state';
 import { timeLabel } from '@/lib/copy';
 import { countryInSentence } from '@/lib/country';
@@ -58,7 +59,7 @@ export default function TripScreen() {
   if (!trip || !plan) {
     return (
       <View style={styles.missing}>
-        <Stack.Screen options={{ title: 'Trip' }} />
+        <ScreenOptions options={{ title: 'Trip' }} />
         {loaded && (
           <>
             <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
@@ -88,7 +89,7 @@ export default function TripScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: trip.placeName }} />
+      <ScreenOptions options={{ title: trip.placeName }} />
       <View style={styles.head}>
         <Txt variant="eyebrow" color={color.brand}>
           {tripWhen(trip, todayThere(trip)).toUpperCase()}

@@ -5,7 +5,7 @@
  * trained; see apps/server/src/social.ts.
  */
 
-import { Stack, useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
@@ -17,6 +17,7 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Card, Input, PrimaryButton, Txt } from '@/components/ui';
+import { ScreenOptions } from '@/components/ScreenOptions';
 import { shareText } from '@/lib/actions';
 import { api, problemText, type FriendsOverview, type Person, type TrainInvite } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -86,7 +87,7 @@ export default function FriendsScreen() {
   if (account.state === 'unreachable' || account.state === 'loading') {
     return (
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-        <Stack.Screen options={{ title: 'Friends' }} />
+        <ScreenOptions options={{ title: 'Friends' }} />
         {/* While your account is confirmed, the shape of what's coming rather than a blank page. */}
         {account.state === 'unreachable' ? <ServerAwayCard /> : <ListSkeleton rows={2} card={false} label="Loading your friends" />}
       </PageScroll>
@@ -96,7 +97,7 @@ export default function FriendsScreen() {
   if (!token || !account.account) {
     return (
       <View style={styles.signedOut}>
-        <Stack.Screen options={{ title: 'Friends' }} />
+        <ScreenOptions options={{ title: 'Friends' }} />
         <HeroMark icon="people" />
         <Txt variant="title2" style={styles.centre}>
           Collect with friends
@@ -111,7 +112,7 @@ export default function FriendsScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: 'Friends' }} />
+      <ScreenOptions options={{ title: 'Friends' }} />
       {problem && (
         <Txt variant="footnote" color={color.noInk}>
           {problem}

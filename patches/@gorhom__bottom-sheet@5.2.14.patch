@@ -1,0 +1,93 @@
+diff --git a/lib/commonjs/components/bottomSheet/BottomSheet.js b/lib/commonjs/components/bottomSheet/BottomSheet.js
+index a7748c0f8b934746ff35546899bae5233267ca0b..113963f1301e742c5b2b9c710c89b81918fb9b16 100644
+--- a/lib/commonjs/components/bottomSheet/BottomSheet.js
++++ b/lib/commonjs/components/bottomSheet/BottomSheet.js
+@@ -203,7 +203,7 @@ const BottomSheetComponent = /*#__PURE__*/(0, _react.forwardRef)(function Bottom
+     } = animatedLayoutState.get();
+     // extended position = container height - sheet height
+     const extendedPosition = containerHeight - animatedSheetHeight.value;
+-    if (animatedPosition.value === extendedPosition) {
++    if (Math.abs(animatedPosition.value - extendedPosition) < 0.5) {
+       return _constants.SHEET_STATE.EXTENDED;
+     }
+ 
+@@ -213,7 +213,7 @@ const BottomSheetComponent = /*#__PURE__*/(0, _react.forwardRef)(function Bottom
+     const extendedPositionWithKeyboard = Math.max(0, containerHeight - (animatedSheetHeight.value + keyboardHeightInContainer));
+ 
+     // detect if keyboard is open and the sheet is in temporary position
+-    if (keyboardBehavior === _constants.KEYBOARD_BEHAVIOR.interactive && isInTemporaryPosition.value && animatedPosition.value === extendedPositionWithKeyboard) {
++    if (keyboardBehavior === _constants.KEYBOARD_BEHAVIOR.interactive && isInTemporaryPosition.value && Math.abs(animatedPosition.value - extendedPositionWithKeyboard) < 0.5) {
+       return _constants.SHEET_STATE.EXTENDED;
+     }
+ 
+@@ -223,7 +223,7 @@ const BottomSheetComponent = /*#__PURE__*/(0, _react.forwardRef)(function Bottom
+     }
+ 
+     // detect if position is below extended point
+-    if (animatedPosition.value < extendedPosition) {
++    if (animatedPosition.value < extendedPosition - 0.5) {
+       return _constants.SHEET_STATE.OVER_EXTENDED;
+     }
+     return _constants.SHEET_STATE.OPENED;
+diff --git a/lib/module/components/bottomSheet/BottomSheet.js b/lib/module/components/bottomSheet/BottomSheet.js
+index ca4bb3ba798101bf1deb8732172435433a56267b..2fc8ddb8c0d66b776fecb35edfd3ceff87eaedcf 100644
+--- a/lib/module/components/bottomSheet/BottomSheet.js
++++ b/lib/module/components/bottomSheet/BottomSheet.js
+@@ -196,7 +196,7 @@ const BottomSheetComponent = /*#__PURE__*/forwardRef(function BottomSheet(props,
+     } = animatedLayoutState.get();
+     // extended position = container height - sheet height
+     const extendedPosition = containerHeight - animatedSheetHeight.value;
+-    if (animatedPosition.value === extendedPosition) {
++    if (Math.abs(animatedPosition.value - extendedPosition) < 0.5) {
+       return SHEET_STATE.EXTENDED;
+     }
+ 
+@@ -206,7 +206,7 @@ const BottomSheetComponent = /*#__PURE__*/forwardRef(function BottomSheet(props,
+     const extendedPositionWithKeyboard = Math.max(0, containerHeight - (animatedSheetHeight.value + keyboardHeightInContainer));
+ 
+     // detect if keyboard is open and the sheet is in temporary position
+-    if (keyboardBehavior === KEYBOARD_BEHAVIOR.interactive && isInTemporaryPosition.value && animatedPosition.value === extendedPositionWithKeyboard) {
++    if (keyboardBehavior === KEYBOARD_BEHAVIOR.interactive && isInTemporaryPosition.value && Math.abs(animatedPosition.value - extendedPositionWithKeyboard) < 0.5) {
+       return SHEET_STATE.EXTENDED;
+     }
+ 
+@@ -216,7 +216,7 @@ const BottomSheetComponent = /*#__PURE__*/forwardRef(function BottomSheet(props,
+     }
+ 
+     // detect if position is below extended point
+-    if (animatedPosition.value < extendedPosition) {
++    if (animatedPosition.value < extendedPosition - 0.5) {
+       return SHEET_STATE.OVER_EXTENDED;
+     }
+     return SHEET_STATE.OPENED;
+diff --git a/src/components/bottomSheet/BottomSheet.tsx b/src/components/bottomSheet/BottomSheet.tsx
+index fc520337115ce7a2c7aacb0f81f16b9046ce2c89..ea8978dea4fe6f5ce1e9bbcd2327c54aec7a6802 100644
+--- a/src/components/bottomSheet/BottomSheet.tsx
++++ b/src/components/bottomSheet/BottomSheet.tsx
+@@ -306,7 +306,7 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
+       const { containerHeight } = animatedLayoutState.get();
+       // extended position = container height - sheet height
+       const extendedPosition = containerHeight - animatedSheetHeight.value;
+-      if (animatedPosition.value === extendedPosition) {
++      if (Math.abs(animatedPosition.value - extendedPosition) < 0.5) {
+         return SHEET_STATE.EXTENDED;
+       }
+ 
+@@ -324,7 +324,7 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
+       if (
+         keyboardBehavior === KEYBOARD_BEHAVIOR.interactive &&
+         isInTemporaryPosition.value &&
+-        animatedPosition.value === extendedPositionWithKeyboard
++        Math.abs(animatedPosition.value - extendedPositionWithKeyboard) < 0.5
+       ) {
+         return SHEET_STATE.EXTENDED;
+       }
+@@ -335,7 +335,7 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
+       }
+ 
+       // detect if position is below extended point
+-      if (animatedPosition.value < extendedPosition) {
++      if (animatedPosition.value < extendedPosition - 0.5) {
+         return SHEET_STATE.OVER_EXTENDED;
+       }
+ 

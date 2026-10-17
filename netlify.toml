@@ -1,0 +1,69 @@
+# GymGO's website on Netlify: the app, exported for the browser
+# (scripts/netlify-build.sh). The GymGO server runs elsewhere; set
+# GYMGO_SERVER_URL in Netlify and the site passes it /api and the legal pages.
+# Until then the website works on its own, with the gyms built into the app.
+# See README, "The website on Netlify".
+
+[build]
+  command = "bash scripts/netlify-build.sh"
+  publish = "apps/mobile/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # The website can be used without an account (the app still needs one): lib/accountRule.ts.
+  EXPO_PUBLIC_ACCOUNT = "optional"
+  # For now the website is the demo only (invented gyms), with a note that the
+  # full version is coming soon: lib/demoOnly.ts. Delete this line to show the full app.
+  EXPO_PUBLIC_DEMO_ONLY = "on"
+  # Only the tests use a browser; the build doesn't need one downloaded.
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
+  # Netlify adds its Next.js plugin to the project because the older website
+  # (apps/web) is a Next.js app. This site isn't one, and the plugin fails the
+  # build looking for Next.js output, so it's told to stand aside.
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
+
+# Build plugins. Both are in Netlify's plugin directory, so Netlify installs
+# them itself (with npm, which lets Lighthouse fetch the Chrome it audits
+# with); they aren't in package.json. The Next.js plugin stays out (above).
+
+# Lighthouse: scores the website's performance, accessibility, best practices
+# and SEO on every deploy, in the deploy log and the deploy's summary. It
+# audits the built site in the build itself (fail_deploy_on_score_thresholds
+# moves it there): a deploy's own link needs a Netlify team login here, so
+# auditing the live deploy would score the login page. With no thresholds
+# set it reports and never fails a deploy; add [plugins.inputs.thresholds]
+# to make it a gate.
+[[plugins]]
+  package = "@netlify/plugin-lighthouse"
+  [plugins.inputs]
+    fail_deploy_on_score_thresholds = "true"
+
+# Sitemap: sitemap.xml for search engines, at the site's own address, from
+# the published pages (scripts/netlify-build.sh points robots.txt to it). The
+# website is a single page, so it lists the home page.
+[[plugins]]
+  package = "@netlify/plugin-sitemap"
+  [plugins.inputs]
+    buildDir = "apps/mobile/dist"
+
+# The same headers Caddy sends (deploy/Caddyfile).
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "DENY"
+    # The web app finds gyms near you, so location is allowed for this site and nothing it embeds.
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(self), payment=()"
+
+# Scripts and pictures are named for what's in them, so they keep for a year.
+[[headers]]
+  for = "/_expo/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

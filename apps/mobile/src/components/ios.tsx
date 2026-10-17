@@ -379,14 +379,21 @@ export function Row({
   );
   // Always the same kind of view, pressable or not: a row whose press came
   // and went (Offline gyms, as it starts saving) was rebuilt and lost focus.
+  // With nothing to press it is neither disabled nor one element to a screen
+  // reader: marked disabled, it made its own switch read as disabled in a
+  // browser, and on a phone it would have taken the switch into itself, out
+  // of VoiceOver's and TalkBack's reach.
   return (
     <Pressable
-      disabled={!onPress}
-      onPress={() => {
-        if (!onPress) return;
-        haptic.tap();
-        onPress();
-      }}
+      onPress={
+        onPress
+          ? () => {
+              haptic.tap();
+              onPress();
+            }
+          : undefined
+      }
+      accessible={!!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       aria-expanded={onPress ? expanded : undefined}
       style={({ pressed }) => pressed && onPress && { backgroundColor: color.fill }}

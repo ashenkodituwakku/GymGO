@@ -18,7 +18,10 @@ import { openPage } from '@/lib/actions';
 /** The membership offers a gym publishes, cheapest per week first. */
 export function membershipsOf(record: GymRecord): VisitOffer[] {
   const weekly = (offer: VisitOffer) => describeMembership(offer)?.effectiveWeeklyMinor ?? Number.POSITIVE_INFINITY;
-  return record.offers.filter((offer) => offer.productType === 'membership').sort((a, b) => weekly(a) - weekly(b));
+  // Open to everyone first, cheapest first; plans only some can buy (students, FIFO workers) after.
+  return record.offers
+    .filter((offer) => offer.productType === 'membership')
+    .sort((a, b) => Number(Boolean(a.eligibility.onlyFor)) - Number(Boolean(b.eligibility.onlyFor)) || weekly(a) - weekly(b));
 }
 
 /**
@@ -89,7 +92,7 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
               key={offer.id}
               style={styles.pill}
               accessible
-              accessibilityLabel={`${offer.label}: ${basisWord(offer)}${formatMoney(offer.baseAmountMinor!, offer.currency)} ${view?.billingLabel ?? ''}`}
+              accessibilityLabel={`${offer.label}: ${basisWord(offer)}${formatMoney(offer.baseAmountMinor!, offer.currency)} ${view?.billingLabel ?? ''}${offer.eligibility.onlyFor ? `, ${offer.eligibility.onlyFor} only` : ''}`}
             >
               {/* A tier called just "Membership" would only repeat the heading above it. */}
               {!/^\s*membership\s*$/i.test(offer.label) && (
@@ -104,6 +107,11 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
               {view && (
                 <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
                   {view.billingLabel}
+                </Txt>
+              )}
+              {offer.eligibility.onlyFor && (
+                <Txt variant="caption" color={color.maybeInk} numberOfLines={2} style={[styles.center, face('semibold')]}>
+                  {`${offer.eligibility.onlyFor} only`}
                 </Txt>
               )}
             </View>
@@ -135,11 +143,13 @@ export function JoinGym({ record }: { record: GymRecord }) {
   const memberships = membershipsOf(record);
   const url = record.location.isDemoData ? null : joinUrl(record);
   const phone = record.location.isDemoData ? null : record.location.phone;
-  const cheapest = memberships[0];
+  // The "from" price is one anyone can buy: a plan only for students or FIFO workers isn't it.
+  const open = memberships.filter((offer) => !offer.eligibility.onlyFor);
+  const cheapest = open[0] ?? memberships[0];
   const cheapestView = cheapest ? describeMembership(cheapest) : null;
   const summary =
     cheapest && cheapest.baseAmountMinor !== null && cheapestView
-      ? `${memberships.length > 1 || cheapest.priceBasis === 'from' ? 'From ' : basisWord(cheapest)}${formatMoney(cheapest.baseAmountMinor, cheapest.currency)} ${cheapestView.billingLabel}`
+      ? `${open.length > 1 || cheapest.priceBasis === 'from' ? 'From ' : basisWord(cheapest)}${formatMoney(cheapest.baseAmountMinor, cheapest.currency)} ${cheapestView.billingLabel}${cheapest.eligibility.onlyFor ? ` (${cheapest.eligibility.onlyFor.toLowerCase()} only)` : ''}`
       : 'Membership prices not published';
 
   const conflict = conflictOf(memberships);
@@ -164,6 +174,11 @@ export function JoinGym({ record }: { record: GymRecord }) {
             <View style={styles.planHead}>
               <View style={styles.flex}>
                 <Txt variant="headline">{offer.label}</Txt>
+                {offer.eligibility.onlyFor && (
+                  <Txt variant="footnote" color={color.maybeInk} style={face('semibold')}>
+                    {`${offer.eligibility.onlyFor} only`}
+                  </Txt>
+                )}
                 {offer.inclusions.some((item) => item !== offer.label) && (
                   <Txt variant="footnote" color={color.labelSecondary}>
                     {offer.inclusions.filter((item) => item !== offer.label).join(' · ')}

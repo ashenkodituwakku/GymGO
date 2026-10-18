@@ -110,7 +110,7 @@ function dohertysOffers(gymId: string) {
       [
         ['12-months', '12 Months', 1999, 365, []],
         ['3-months', '3 Months', 2499, 91, []],
-        ['fifo-12-months', 'FIFO 12 Months', 999, 365, ['For fly-in fly-out workers.']],
+        ['fifo-12-months', 'FIFO 12 Months', 999, 365, []],
       ] as const
     ).map(([key, label, cents, days, notes]) =>
       offer(
@@ -121,6 +121,20 @@ function dohertysOffers(gymId: string) {
           label,
           baseAmountMinor: cents,
           validityDays: null,
+          ...(key === 'fifo-12-months'
+            ? {
+                eligibility: {
+                  localResidentOnly: 'no',
+                  memberGuestOnly: 'no',
+                  firstTimeVisitorOnly: 'no',
+                  membershipRequired: 'no',
+                  photoIdRequired: 'unknown',
+                  minAgeYears: null,
+                  onlyFor: 'Fly-in fly-out workers',
+                  notes: [],
+                },
+              }
+            : {}),
           membershipTerms: {
             billingIntervalDays: 7,
             joiningFeeMinor: null,

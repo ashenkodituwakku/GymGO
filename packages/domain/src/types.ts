@@ -256,6 +256,12 @@ export interface OfferEligibility {
   membershipRequired: Tri;
   photoIdRequired: Tri;
   minAgeYears: number | null;
+  /**
+   * Who alone can buy it, where the gym names a group ("Fly-in fly-out
+   * workers", "Students"): shown beside its price, and never the "from"
+   * price for everyone else.
+   */
+  onlyFor?: string;
   /** Free-text conditions that do not fit the fields above. */
   notes: string[];
 }

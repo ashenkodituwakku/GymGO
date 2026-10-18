@@ -321,7 +321,10 @@ function NextToCollect({ items, near, country, onOpen }: { items: Array<{ record
       <View style={styles.nextList}>
         {items.map(({ record, km }, index) => {
           const { location } = record;
-          const name = location.branch ? `${location.name} ${location.branch}` : location.name;
+          // The branch only where it adds something: "Doherty’s Gym · City", but not
+          // "Anytime Fitness · Collingwood" above "Collingwood · 1.2 km".
+          const branch = location.branch && location.branch.toLowerCase() !== location.address.suburb.toLowerCase() ? location.branch : null;
+          const name = branch ? `${location.name} · ${branch}` : location.name;
           const where = [location.address.suburb, distanceLabel(km, country ?? location.address.countryCode)].filter(Boolean).join(' · ');
           return (
             <Pressy

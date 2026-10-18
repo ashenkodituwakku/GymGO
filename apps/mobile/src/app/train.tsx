@@ -232,6 +232,8 @@ export default function TrainScreen() {
     [router, unitNow],
   );
   const showPro = useCallback(() => openPro('progress'), [openPro]);
+  // An exercise's page: how to do it, what it works, swaps (the workout keeps going).
+  const openHowTo = useCallback((exerciseId: string) => router.push({ pathname: '/progress/[exercise]', params: { exercise: exerciseId } }), [router]);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
@@ -334,6 +336,7 @@ export default function TrainScreen() {
             isPro={billing.isPro}
             onPro={showPro}
             onPlates={openPlates}
+            onHowTo={openHowTo}
             onChange={changeSets}
             onRest={startRest}
             swapTo={item.sets.some((set) => set.done) ? null : (swapFor(session.items, index, available)?.name ?? null)}
@@ -383,6 +386,7 @@ const ExerciseLog = memo(function ExerciseLog({
   isPro,
   onPro,
   onPlates,
+  onHowTo,
   onChange,
   onRest,
   swapTo,
@@ -396,6 +400,7 @@ const ExerciseLog = memo(function ExerciseLog({
   isPro: boolean;
   onPro: () => void;
   onPlates: (weight: string | null) => void;
+  onHowTo: (exerciseId: string) => void;
   onChange: (index: number, sets: ActiveItem['sets']) => void;
   onRest: (seconds: number) => void;
   /** What Swap would put here: only before any of its sets is ticked. */
@@ -442,8 +447,16 @@ const ExerciseLog = memo(function ExerciseLog({
   return (
     <View style={styles.card}>
       <View style={styles.cardHead}>
-        {/* Turns green once every set is ticked. */}
-        <ExerciseTile exerciseId={item.exerciseId} size={52} done={item.sets.length > 0 && item.sets.every((set) => set.done)} moving={current} />
+        {/* Turns green once every set is ticked; a tap opens how to do it. */}
+        <Pressable
+          onPress={() => onHowTo(item.exerciseId)}
+          accessibilityRole="button"
+          accessibilityLabel={`How to do ${name}`}
+          hitSlop={4}
+          style={({ pressed }) => pressed && { opacity: 0.7 }}
+        >
+          <ExerciseTile exerciseId={item.exerciseId} size={52} done={item.sets.length > 0 && item.sets.every((set) => set.done)} moving={current} />
+        </Pressable>
         {/* The name gets the card's full width; Swap and Plates sit on the line under it. */}
         <View style={styles.flex}>
           <Txt variant="eyebrow" color={color.brand} numberOfLines={1}>
@@ -476,7 +489,9 @@ const ExerciseLog = memo(function ExerciseLog({
       {!timed && (
         <View style={styles.guides}>
           <Txt variant="footnote" color={color.labelSecondary}>
-            {last ? `Last time (${shortDate(last.date)}): ${setsSummary(last.sets, last.unit)}` : 'First time logging this one.'}
+            {last
+              ? `Last time (${shortDate(last.date)}): ${setsSummary(last.sets, last.unit)}`
+              : `First time logging this one.${exercise?.cue ? ` ${exercise.cue}` : ''}`}
           </Txt>
           {target ? (
             <View style={styles.target} accessible accessibilityLabel={`Next target: ${target.weight !== null ? formatWeight(target.weight, unit) + ' for ' : ''}${target.reps} reps. ${target.why}`}>

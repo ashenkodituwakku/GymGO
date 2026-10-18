@@ -139,18 +139,28 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
   );
 }
 
+/**
+ * What joining costs, in a line ("From A$19.99 per week", "About A$24.95 per
+ * week"), or null when the gym publishes no price. The "from" price is one
+ * anyone can buy: a plan only for students or FIFO workers isn't it. Used
+ * by Join this gym and by Compare, so the two always agree.
+ */
+export function membershipLine(record: GymRecord): string | null {
+  const memberships = membershipsOf(record).filter((offer) => offer.baseAmountMinor !== null);
+  const open = memberships.filter((offer) => !offer.eligibility.onlyFor);
+  const cheapest = open[0] ?? memberships[0];
+  const view = cheapest ? describeMembership(cheapest) : null;
+  if (!cheapest || !view) return null;
+  const word = open.length > 1 || cheapest.priceBasis === 'from' ? 'From ' : basisWord(cheapest);
+  const only = cheapest.eligibility.onlyFor ? ` (${cheapest.eligibility.onlyFor.toLowerCase()} only)` : '';
+  return `${word}${formatMoney(cheapest.baseAmountMinor!, cheapest.currency)} ${view.billingLabel}${only}`;
+}
+
 export function JoinGym({ record }: { record: GymRecord }) {
   const memberships = membershipsOf(record);
   const url = record.location.isDemoData ? null : joinUrl(record);
   const phone = record.location.isDemoData ? null : record.location.phone;
-  // The "from" price is one anyone can buy: a plan only for students or FIFO workers isn't it.
-  const open = memberships.filter((offer) => !offer.eligibility.onlyFor);
-  const cheapest = open[0] ?? memberships[0];
-  const cheapestView = cheapest ? describeMembership(cheapest) : null;
-  const summary =
-    cheapest && cheapest.baseAmountMinor !== null && cheapestView
-      ? `${open.length > 1 || cheapest.priceBasis === 'from' ? 'From ' : basisWord(cheapest)}${formatMoney(cheapest.baseAmountMinor, cheapest.currency)} ${cheapestView.billingLabel}${cheapest.eligibility.onlyFor ? ` (${cheapest.eligibility.onlyFor.toLowerCase()} only)` : ''}`
-      : 'Membership prices not published';
+  const summary = membershipLine(record) ?? 'Membership prices not published';
 
   const conflict = conflictOf(memberships);
   return (

@@ -10,6 +10,7 @@ import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'rea
 import { Pressable } from '@/components/motion';
 import { summariseWeek, type GymSearchResult, type Tri } from '@gymgo/domain';
 import { Icon } from '@/components/Icon';
+import { membershipLine } from '@/components/JoinGym';
 import { Glass } from '@/components/Glass';
 import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -151,6 +152,15 @@ export default function Compare() {
               text: `~${moneyLabel(Math.round(members.typicalMinor / 100) * 100, result.record.location.address.countryCode)} (${members.count} member${members.count === 1 ? '' : 's'})`,
             }
           : { text: 'No reports', ink: color.labelSecondary };
+      }),
+    },
+    {
+      // What joining costs, as the gym page's Join this gym says it; not compared in bold, as plans differ.
+      label: 'Membership',
+      cells: gyms.map((result) => {
+        const line = membershipLine(result.record);
+        const disputed = result.record.offers.some((offer) => offer.productType === 'membership' && offer.provenance.status === 'conflicting');
+        return line ? { text: disputed ? `${line} (pages disagree)` : line, ink: disputed ? color.maybeInk : undefined } : { text: 'Not published', ink: color.labelSecondary };
       }),
     },
     {

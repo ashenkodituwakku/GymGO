@@ -319,14 +319,15 @@ function SessionRow({
               .filter(Boolean)
               .join(' · ')}
           </Txt>
+          {/* The note's first line, closed; the whole note (to edit) when it's open. */}
+          {session.note && !open && (
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1} style={styles.notePeek}>
+              {session.note}
+            </Txt>
+          )}
         </View>
         <Icon name="chevron" size={13} color={color.labelTertiary} />
       </Pressable>
-      {session.note && !open && (
-        <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1} style={styles.notePeek}>
-          {session.note}
-        </Txt>
-      )}
       {open && (
         <View style={styles.detail}>
           <SessionNote session={session} compact />
@@ -378,7 +379,7 @@ const styles = themed(() => StyleSheet.create({
   dayLabel: { marginLeft: space[4] },
   group: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
-  notePeek: { paddingHorizontal: space[4], marginTop: -space[2], paddingBottom: space[3] },
+  notePeek: { fontStyle: 'italic' },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   detail: { paddingHorizontal: space[4], paddingBottom: space[3], gap: space[1] },
   delete: { alignSelf: 'flex-start', paddingVertical: space[2] },

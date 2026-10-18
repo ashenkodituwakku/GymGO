@@ -18,7 +18,7 @@ import type { AccountApi } from '@/lib/useAccount';
 import { color, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { ChoiceChip, PrimaryButton, Txt } from './ui';
-import { statusSummaryLine } from '@/lib/copy';
+import { dateLabel, statusSummaryLine } from '@/lib/copy';
 import { FADE_IN, GLIDE } from './motion';
 
 // Both parts of the card read the same answer; a report refreshes both.
@@ -47,7 +47,8 @@ function useGymStatus(gymId: string, token: string | null, skip: boolean) {
   return summary;
 }
 
-const shortDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+// The day a member saw it: a calendar date, read as written wherever the phone is.
+const shortDate = (date: string) => dateLabel(date);
 
 /** The warning at the top of the card, only when members mostly say it has closed. */
 export function StatusWarning({ gymId, isDemo, token }: { gymId: string; isDemo: boolean; token: string | null }) {

@@ -13,9 +13,10 @@ import { formatWeight, fromKg, parseWeight, toKg, type WeightUnit } from '@/lib/
 import { Icon } from './Icon';
 import { ProgressChart } from './ProgressChart';
 import { Txt } from './ui';
+import { dateLabel } from '@/lib/copy';
 
-/** "10 Sep", for a weigh-in's date (a calendar date, so read at midday UTC: no time zone moves it a day). */
-const dayLabel = (date: string) => new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', timeZone: 'UTC' });
+/** "10 Sep", for a weigh-in's date. */
+const dayLabel = (date: string) => dateLabel(date);
 
 const shown = (kg: number, unit: WeightUnit) => formatWeight(Math.round(fromKg(kg, unit) * 10) / 10, unit);
 

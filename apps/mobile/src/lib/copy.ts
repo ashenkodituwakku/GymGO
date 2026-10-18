@@ -54,6 +54,19 @@ export function sessionGreeting(minuteOfDay: number): string {
 
 /** A little personality per verdict, as a short chip for the list. */
 /**
+ * "15 Oct" (or what `options` ask for) for a date as GymGO keeps it: a
+ * calendar date (YYYY-MM-DD: the day of a visit, a report, a weigh-in) as
+ * written, wherever the phone is; a moment (a full timestamp) on the
+ * phone's own clock. `new Date('2026-10-15')` is midnight in London, which
+ * is still the 14th everywhere west of it.
+ */
+export function dateLabel(value: string, options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }): string {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? new Date(`${value}T12:00:00Z`).toLocaleDateString(undefined, { ...options, timeZone: 'UTC' })
+    : new Date(value).toLocaleDateString(undefined, options);
+}
+
+/**
  * "7 pm", "6:30 am", "12 pm". The space is a non-breaking one, so a wrapped
  * line never leaves "7" at the end of one line and "pm" on the next.
  */

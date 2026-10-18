@@ -11,7 +11,7 @@
 import { useEffect, useState } from 'react';
 import { Image, Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from './motion';
-import { serverOfflineLine } from '@/lib/copy';
+import { dateLabel, serverOfflineLine } from '@/lib/copy';
 import { priceLabel, type GymRecord, type Review } from '@gymgo/domain';
 import { api, ApiError, OfflineError, type AccessOutcome, type BugReportItem, type MemberReport } from '@/lib/api';
 import { moneyLabel } from '@/lib/places';
@@ -137,7 +137,7 @@ export function MemberReportQueue({ token, records }: { token: string; records: 
         return (
           <View key={`${report.kind}-${report.gymId}-${report.userId}`} style={styles.queueItem}>
             <Txt variant="footnote" color={color.labelSecondary}>
-              {gym ? gym.location.name : report.gymId} · {report.author} · {new Date(report.on).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+              {gym ? gym.location.name : report.gymId} · {report.author} · {dateLabel(report.on)}
             </Txt>
             <Txt variant="subhead">{what}</Txt>
             <PrimaryButton label="Remove" tone="danger" onPress={() => void remove(report)} />

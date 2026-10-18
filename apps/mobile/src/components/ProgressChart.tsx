@@ -14,6 +14,7 @@ import { alpha } from '@/lib/looks';
 import { color, space, themed } from '@/lib/theme';
 import { formatWeight, fromKg, type WeightUnit } from '@/lib/training';
 import { Txt } from './ui';
+import { dateLabel } from '@/lib/copy';
 
 const HEIGHT = 170;
 const PAD = 10;
@@ -54,11 +55,8 @@ export function ProgressChart({
   const grid = [0, 0.5, 1].map((share) => ({ at: PAD + share * (HEIGHT - PAD * 2), value: base + span * (1 - share) }));
   // Whole numbers, unless the lines are closer together than that.
   const gridLabel = (value: number) => formatWeight(span >= 4 ? Math.round(value) : Math.round(value * 10) / 10, unit);
-  // A time on the phone's clock; a calendar date as written (read at midday UTC, so no time zone moves it a day).
-  const day = (iso: string) =>
-    /^\d{4}-\d{2}-\d{2}$/.test(iso)
-      ? new Date(`${iso}T12:00:00Z`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', timeZone: 'UTC' })
-      : new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  // A time on the phone's clock; a calendar date (a weigh-in) as written.
+  const day = (iso: string) => dateLabel(iso);
   // To a tenth, as it's shown: no change reads as that, not a green "+0".
   const change = values.length > 1 ? Math.round((values[values.length - 1]! - values[0]!) * 10) / 10 : 0;
 

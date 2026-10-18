@@ -4,9 +4,9 @@
  * chart for each exercise and the muscle balance are Pro.
  */
 
-import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { GLIDE, Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
@@ -41,6 +41,7 @@ import { useTrainingLog } from '@/lib/useTraining';
 import { downloadTrainingCsv } from '@/lib/exportData';
 import { exerciseName } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
+import { loadReminders } from '@/lib/reminders';
 import { PageScroll } from '@/components/PageScroll';
 import { SessionNote } from '@/components/SessionNote';
 import { ScreenOptions } from '@/components/ScreenOptions';
@@ -68,6 +69,14 @@ export default function ProgressScreen() {
   const active = useActiveSessionGlance();
   const router = useRouter();
   const unit = unitFor(prefs.country);
+  // Whether training reminders are on, read again each time Progress comes back into view (after Reminders).
+  const [remindersOn, setRemindersOn] = useState<boolean | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS === 'web') return;
+      void loadReminders().then((kept) => setRemindersOn(kept.on));
+    }, []),
+  );
   // Your week as a picture to share: this week's, or last week's until this one has something.
   const { gyms } = useCollection();
   const recap = useMemo(() => weekRecap(log.sessions, gyms), [log.sessions, gyms]);
@@ -149,6 +158,10 @@ export default function ProgressScreen() {
           </Animated.View>
           {recap && (
             <PrimaryButton label={recap.which === 'this' ? 'Share your week' : 'Share last week'} tone="quiet" icon="share" onPress={() => router.push('/recap')} />
+          )}
+          {/* A goal is easier kept with a nudge: offered here while reminders are off (phones only). */}
+          {prefs.weeklyGoal !== null && remindersOn === false && (
+            <PrimaryButton label="Remind me on training days" tone="quiet" icon="bell" onPress={() => router.push('/reminders')} />
           )}
         </>
       )}

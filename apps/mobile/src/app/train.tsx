@@ -238,7 +238,8 @@ export default function TrainScreen() {
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
   if (done) {
-    const week = prefs.weeklyGoal ? weekAfter(log.sessions, done.session, prefs.weeklyGoal) : null;
+    // Only from the whole log: one still loading (or that couldn't load) would undercount the week.
+    const week = prefs.weeklyGoal && log.status === 'ready' ? weekAfter(log.sessions, done.session, prefs.weeklyGoal) : null;
     return <Summary result={done} week={week} onClose={close} onProgress={() => router.replace('/progress')} />;
   }
 

@@ -211,8 +211,9 @@ const styles = themed(() =>
     settings: { alignSelf: 'flex-start', marginTop: space[2], paddingVertical: space[1] },
     // As every settings list's headings (components/ios.tsx's Group).
     section: { marginLeft: space[4], marginBottom: space[2], marginTop: space[2], letterSpacing: 0.5, ...face('semibold') },
-    days: { flexDirection: 'row', justifyContent: 'space-between', padding: space[3], marginBottom: space[4], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
-    day: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
+    days: { flexDirection: 'row', justifyContent: 'space-between', gap: 4, padding: space[3], marginBottom: space[4], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
+    // Up to 40 points, smaller where seven don't fit (a 320-point phone has 264 for them).
+    day: { flex: 1, maxWidth: 40, aspectRatio: 1, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
     dayOn: { backgroundColor: color.brandFill },
     time: { gap: space[3], padding: space[4], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     clock: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

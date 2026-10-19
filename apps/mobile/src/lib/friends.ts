@@ -61,6 +61,9 @@ interface Placed {
  */
 export function placeGap(you: Placed, rows: readonly Placed[], people: number): string | null {
   if (you.rank === 1) return people > 1 ? 'Top of the board.' : 'Just you on it so far.';
+  // The board sends its top rows only; the one just before you in its order
+  // is the (you.rank - 1)th, so past that the last row listed isn't the place above.
+  if (you.rank - 1 > rows.length) return null;
   const above = rows.filter((row) => row.rank < you.rank).at(-1);
   if (!above) return null;
   const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;

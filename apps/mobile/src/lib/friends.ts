@@ -45,3 +45,25 @@ export function inviteAt(dayOffset: number, minute: number, now: Date = new Date
   at.setMinutes(minute);
   return at;
 }
+
+/** A leaderboard row, as far as places go. */
+interface Placed {
+  rank: number;
+  gyms: number;
+  visits: number;
+}
+
+/**
+ * How far you are from the place above, from the rows the board sent: "2
+ * gyms behind #3", or level on gyms and some visits behind. "Top of the
+ * board" at the top; nothing when the place above isn't in the rows sent
+ * (you're further down than the board lists).
+ */
+export function placeGap(you: Placed, rows: readonly Placed[], people: number): string | null {
+  if (you.rank === 1) return people > 1 ? 'Top of the board.' : 'Just you on it so far.';
+  const above = rows.filter((row) => row.rank < you.rank).at(-1);
+  if (!above) return null;
+  const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+  if (above.gyms > you.gyms) return `${plural(above.gyms - you.gyms, 'gym')} behind #${above.rank}.`;
+  return `Level on gyms with #${above.rank}, ${plural(above.visits - you.visits, 'visit')} behind.`;
+}

@@ -11,6 +11,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Toggle } from '@/components/Toggle';
 import { Avatar } from '@/components/Avatar';
+import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -21,10 +23,11 @@ import { ScreenOptions } from '@/components/ScreenOptions';
 import { api, problemText, type Board, type BoardEntry } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { cityFor } from '@/lib/collection';
+import { placeGap } from '@/lib/friends';
 import { THIS_AREA, YOUR_LOCATION } from '@/lib/query';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { syncCollection } from '@/lib/useCollection';
 
 const MEDAL = ['#C9971C', '#8E959E', '#B0713A'];
@@ -105,6 +108,9 @@ export default function LeaderboardScreen() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: 'Leaderboard' }} />
       <Card style={styles.join}>
+        <View style={styles.joinMark}>
+          <Icon name="trophy" size={18} color={color.brand} />
+        </View>
         <View style={styles.flex}>
           <Txt variant="headline">Be on the public board</Txt>
           <Txt variant="footnote" color={color.labelSecondary}>
@@ -143,18 +149,25 @@ export default function LeaderboardScreen() {
           {problem}
         </Txt>
       )}
+      {board?.you && <YourPlace you={board.you} board={board} where={[scope === 'friends' ? 'FRIENDS' : 'EVERYONE', area === 'city' && city ? `IN ${city.toUpperCase()}` : null]} />}
       {!board && !problem ? (
         <ListSkeleton rows={5} />
       ) : board && board.rows.length === 0 ? (
-        <Txt variant="subhead" color={color.labelSecondary} style={styles.centre}>
-          {scope === 'friends'
-            ? 'Nobody here has collected a gym yet. Check in at one to start.'
-            : area === 'city' && city
-              ? `Nobody on the board has collected a gym in ${city} yet.`
-              : board.joined
-                ? 'Nobody on the board has collected a gym yet. Check in at one to be first.'
-                : 'Nobody has joined the board yet. Switch it on above to be the first.'}
-        </Txt>
+        <View style={styles.empty}>
+          <HeroMark icon="trophy" size={52} />
+          <Txt variant="headline" style={styles.centre}>
+            No one ranked yet
+          </Txt>
+          <Txt variant="subhead" color={color.labelSecondary} style={styles.centre}>
+            {scope === 'friends'
+              ? 'Nobody here has collected a gym yet. Check in at one to start.'
+              : area === 'city' && city
+                ? `Nobody on the board has collected a gym in ${city} yet.`
+                : board.joined
+                  ? 'Nobody on the board has collected a gym yet. Check in at one to be first.'
+                  : 'Nobody has joined the board yet. Switch it on above to be the first.'}
+          </Txt>
+        </View>
       ) : (
         board && (
           <View style={styles.list}>
@@ -181,6 +194,53 @@ export default function LeaderboardScreen() {
         Ranked by gyms collected, then visits. A gym counts once you’ve checked in there; a visit, once a day.
       </Txt>
     </PageScroll>
+  );
+}
+
+/** Your place on the accent: where you are, of how many, your counts, and how far from the place above. */
+function YourPlace({ you, board, where }: { you: BoardEntry; board: Board; where: Array<string | null> }) {
+  const gap = placeGap(you, board.rows, board.people);
+  const stats = [
+    { value: String(you.gyms), label: you.gyms === 1 ? 'gym' : 'gyms' },
+    { value: String(you.visits), label: you.visits === 1 ? 'visit' : 'visits' },
+  ];
+  return (
+    <View
+      style={[styles.hero, accentGlow(color.brandFill)]}
+      accessible
+      accessibilityLabel={`Your place: ${you.rank} of ${board.people}. ${you.gyms} gyms, ${you.visits} visits.${gap ? ` ${gap}` : ''}`}
+    >
+      <BrandFill round={radius.xl} />
+      <Sheen round={radius.xl} />
+      <Txt variant="eyebrow" color={color.onBrandSoft}>
+        {['YOUR PLACE', ...where.filter(Boolean)].join(' · ')}
+      </Txt>
+      <View style={styles.place}>
+        <Txt variant="largeTitle" color={color.onBrand}>
+          {`#${you.rank}`}
+        </Txt>
+        <Txt variant="subhead" color={color.onBrandSoft}>
+          {`of ${board.people}`}
+        </Txt>
+        <View style={styles.stats}>
+          {stats.map((stat) => (
+            <View key={stat.label} style={styles.stat}>
+              <Txt variant="figure" color={color.onBrand}>
+                {stat.value}
+              </Txt>
+              <Txt variant="caption" color={color.onBrandSoft}>
+                {stat.label}
+              </Txt>
+            </View>
+          ))}
+        </View>
+      </View>
+      {gap && (
+        <Txt variant="footnote" color={color.onBrandSoft}>
+          {gap}
+        </Txt>
+      )}
+    </View>
   );
 }
 
@@ -231,7 +291,13 @@ const styles = themed(() =>
     shrink: { flexShrink: 1, minWidth: 0 },
     youPill: { paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.brandFill },
     join: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-    list: { gap: 2, borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, padding: space[1], overflow: 'hidden' },
+    joinMark: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+    hero: { gap: space[1], padding: space[4], paddingTop: space[4] + 2, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.brandFill },
+    place: { flexDirection: 'row', alignItems: 'baseline', gap: space[2] },
+    stats: { flex: 1, flexDirection: 'row', justifyContent: 'flex-end', gap: space[4] },
+    stat: { alignItems: 'flex-end' },
+    empty: { alignItems: 'center', gap: space[2], paddingVertical: space[5] },
+    list: { gap: 2, borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, padding: space[1], ...shadow.plate },
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[2], paddingHorizontal: space[3], borderRadius: radius.md },
     rowYou: { backgroundColor: color.brandTint },
     rank: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },

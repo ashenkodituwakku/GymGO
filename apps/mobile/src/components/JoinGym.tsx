@@ -90,7 +90,7 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
           return (
             <View
               key={offer.id}
-              style={styles.pill}
+              style={[styles.pill, tiers.length === 4 && styles.pillHalf]}
               accessible
               accessibilityLabel={`${offer.label}: ${basisWord(offer)}${formatMoney(offer.baseAmountMinor!, offer.currency)} ${view?.billingLabel ?? ''}${offer.eligibility.onlyFor ? `, ${offer.eligibility.onlyFor} only` : ''}`}
             >
@@ -100,6 +100,12 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
                   {offer.label}
                 </Txt>
               )}
+              {/* Who it's for under its name, so the prices still line up along the row. */}
+              {offer.eligibility.onlyFor && (
+                <Txt variant="caption" color={color.maybeInk} numberOfLines={2} style={[styles.center, face('semibold')]}>
+                  {`${offer.eligibility.onlyFor} only`}
+                </Txt>
+              )}
               <Txt variant="headline" style={styles.center}>
                 {basisWord(offer)}
                 {formatMoney(offer.baseAmountMinor!, offer.currency)}
@@ -107,11 +113,6 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
               {view && (
                 <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
                   {view.billingLabel}
-                </Txt>
-              )}
-              {offer.eligibility.onlyFor && (
-                <Txt variant="caption" color={color.maybeInk} numberOfLines={2} style={[styles.center, face('semibold')]}>
-                  {`${offer.eligibility.onlyFor} only`}
                 </Txt>
               )}
             </View>
@@ -261,6 +262,8 @@ const styles = themed(() =>
     pills: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space[2], alignSelf: 'stretch' },
     // Contents sit at the foot of each tile, so the prices in a row line up when one plan's name takes two lines.
     pill: { minWidth: 92, flexGrow: 1, flexBasis: 92, maxWidth: 160, alignItems: 'center', justifyContent: 'flex-end', gap: 1, paddingVertical: space[2], paddingHorizontal: space[2], borderRadius: radius.md, backgroundColor: color.brandTint },
+    // Four as two rows of two, rather than three and one left over.
+    pillHalf: { flexBasis: '40%', maxWidth: '100%' },
     signUp: { paddingVertical: space[1], paddingHorizontal: space[3] },
     plan: { gap: space[1], paddingBottom: space[3], marginBottom: space[1], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: color.separator },
     planHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },

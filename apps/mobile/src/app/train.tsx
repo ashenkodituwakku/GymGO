@@ -29,7 +29,7 @@ import { playSound } from '@/lib/sounds';
 import { cancelRestAlert, scheduleRestAlert } from '@/lib/restAlert';
 import { RECORD_WORD, bestRecord, recordLine } from '@/lib/records';
 import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
-import { workoutTitle } from '@/lib/templates';
+import { templateDayName, upNext, workoutTitle } from '@/lib/templates';
 import { Confetti, RecordCard } from '@/components/Celebrate';
 import { alpha } from '@/lib/looks';
 import { LOOKS, color, currentLook, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -88,6 +88,16 @@ const exerciseOf = (id: string) => EXERCISES.find((exercise) => exercise.id === 
 const isTimed = (item: ActiveItem) => exerciseOf(item.exerciseId)?.cardio === true || repRange(item.reps) === null;
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 
+/** The workout the empty Workout screen offers: a template's next day, or your last again. */
+interface NextUp {
+  eyebrow: string;
+  title: string;
+  items: ReadonlyArray<{ exerciseId: string; sets: number }>;
+  button: string;
+  icon: IconName;
+  start: () => void;
+}
+
 /**
  * With nothing in progress: build a workout, or start one you saved (your
  * library, a Pro feature; what's saved stays startable if Pro ends).
@@ -107,13 +117,35 @@ function NoWorkout({ token }: { token: string | null }) {
   );
   const recent = (saved ?? []).slice(0, 4);
   const details = saved ? libraryDetails(saved) : new Map<string, string>();
-  // Your last workout, to do again in a tap.
+  // What to do next, in a tap: on a template, its next day; otherwise your last workout again.
   const log = useTrainingLog(token);
-  const last = useMemo(() => {
+  const unit = unitFor(prefs.country);
+  const last = useMemo((): NextUp | null => {
     const latest = log.sessions.reduce<TrainingSession | null>((best, item) => (!best || item.finishedAt > best.finishedAt ? item : best), null);
-    const plan = latest ? againPlan(latest) : null;
-    return latest && plan ? { session: latest, plan } : null;
-  }, [log.sessions]);
+    if (!latest) return null;
+    const next = workoutTitle(latest.name).plan !== null ? upNext(log.sessions) : null;
+    if (next) {
+      const day = next.template.days[next.day]!;
+      return {
+        eyebrow: `UP NEXT · ${next.template.name.toUpperCase()}`,
+        title: day.name,
+        items: day.items,
+        button: `Start ${day.name}`,
+        icon: 'play',
+        start: () => startSession({ name: templateDayName(next.template, day), workoutId: null, gymId: null, gymName: null, unit, items: day.items }),
+      };
+    }
+    const plan = againPlan(latest);
+    if (!plan) return null;
+    return {
+      eyebrow: `LAST TIME · ${agoLabel(daysAgo(latest.finishedAt)).toUpperCase()}`,
+      title: latest.name,
+      items: plan.items,
+      button: 'Do it again',
+      icon: 'refresh',
+      start: () => startSession({ ...plan, gymName: null, unit: latest.unit }),
+    };
+  }, [log.sessions, unit]);
   return (
     <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.noWorkout]}>
       <ScreenOptions options={{ title: 'Workout' }} />
@@ -122,32 +154,35 @@ function NoWorkout({ token }: { token: string | null }) {
         <Txt variant="title2">No workout in progress</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           {last || recent.length > 0
-            ? 'Do your last one again, build a new one, or pick a template.'
+            ? 'Pick up where you left off, build a new one, or pick a template.'
             : 'Build one for your gym, open one you saved, or pick a template (push, pull, legs; 5×5; full body).'}
         </Txt>
       </View>
       {last && (
         <View style={styles.again}>
           <Txt variant="eyebrow" color={color.labelSecondary}>
-            {`LAST TIME · ${agoLabel(daysAgo(last.session.finishedAt)).toUpperCase()}`}
+            {last.eyebrow}
           </Txt>
           <Txt variant="title2" numberOfLines={1}>
-            {last.session.name}
+            {last.title}
           </Txt>
           <Txt variant="footnote" color={color.labelSecondary}>
-            {`${last.plan.items.length} exercise${last.plan.items.length === 1 ? '' : 's'} · ${setCount(last.session)} set${setCount(last.session) === 1 ? '' : 's'}`}
+            {(() => {
+              const sets = last.items.reduce((sum, item) => sum + item.sets, 0);
+              return `${last.items.length} exercise${last.items.length === 1 ? '' : 's'} · ${sets} set${sets === 1 ? '' : 's'}`;
+            })()}
           </Txt>
           <View style={styles.againStrip}>
-            {last.plan.items.slice(0, 8).map((item, index) => (
+            {last.items.slice(0, 8).map((item, index) => (
               <ExerciseTile key={`${item.exerciseId}-${index}`} exerciseId={item.exerciseId} size={34} />
             ))}
           </View>
           <PrimaryButton
-            label="Do it again"
-            icon="refresh"
+            label={last.button}
+            icon={last.icon}
             onPress={() => {
               haptic.success();
-              startSession({ ...last.plan, gymName: null, unit: last.session.unit });
+              last.start();
             }}
           />
         </View>
@@ -451,7 +486,7 @@ const ExerciseLog = memo(function ExerciseLog({
   // Memoised, so it doesn't redraw with the screen: Liquid Glass reaches its card itself.
   useGlassRedraw();
   const exercise = exerciseOf(item.exerciseId);
-  const name = exercise?.name ?? item.exerciseId;
+  const name = exercise?.name ?? exerciseName(item.exerciseId);
   const timed = isTimed(item);
   const bodyWeight = exercise ? exercise.needs.some((option) => option.length === 0) && !exercise.needs.some((option) => option.length > 0) : false;
   const barbell = exercise ? exercise.needs.some((option) => option.includes('barbells')) : false;

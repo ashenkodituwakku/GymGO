@@ -74,7 +74,16 @@ export default function CardScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <ScreenOptions options={{ title }} />
+      {/* A short title up top (a card's name crowds the back button); its name above it, in full. */}
+      <ScreenOptions options={{ title: 'Card' }} />
+      <View style={styles.head}>
+        <Txt variant="eyebrow" color={color.labelSecondary}>
+          {entry ? 'YOUR CARD' : 'SET REWARD'}
+        </Txt>
+        <Txt variant="title2" style={styles.centre} accessibilityRole="header">
+          {title}
+        </Txt>
+      </View>
       {/* What's captured: the card and a little room round it. */}
       <View ref={shot} collapsable={false} style={styles.shot}>
         {entry ? (
@@ -113,6 +122,7 @@ const styles = themed(() =>
   StyleSheet.create({
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[4], paddingBottom: space[8], gap: space[4], alignItems: 'center' },
+    head: { alignItems: 'center', gap: 2, marginTop: space[2] },
     shot: { padding: space[4], alignItems: 'center' },
     actions: { alignSelf: 'stretch', gap: space[3], width: '100%', maxWidth: 420, marginHorizontal: 'auto' },
     missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },

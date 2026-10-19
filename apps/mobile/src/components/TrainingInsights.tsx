@@ -20,6 +20,7 @@ import {
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { streakOf, type TrainingSession } from '@/lib/training';
 import { Icon, type IconName } from './Icon';
+import { ProOffer } from './ProOffer';
 import { Txt } from './ui';
 
 const WEEKS = 12;
@@ -270,16 +271,12 @@ export function MuscleBalanceCard({ sessions, isPro, onPro, now = new Date() }: 
   const balance = useMemo(() => muscleBalance(sessions, 28, now), [sessions, now]);
   if (!isPro) {
     return (
-      <Pressable onPress={onPro} accessibilityRole="button" style={({ pressed }) => [styles.card, styles.pro, pressed && { opacity: 0.8 }]}>
-        <Icon name="body" size={22} color={color.brand} />
-        <View style={styles.flex}>
-          <Txt variant="headline">See your muscle balance</Txt>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            GymGO Pro counts your sets for every muscle over the last four weeks, and names the ones you’ve missed.
-          </Txt>
-        </View>
-        <Icon name="chevron" size={13} color={color.labelTertiary} />
-      </Pressable>
+      <ProOffer
+        icon="body"
+        title="See your muscle balance"
+        body="GymGO Pro counts your sets for every muscle over the last four weeks, and names the ones you’ve missed."
+        onPress={onPro}
+      />
     );
   }
   const trained = balance.muscles.filter((item) => item.sets > 0);
@@ -338,7 +335,6 @@ const styles = themed(() =>
   StyleSheet.create({
     flex: { flex: 1, gap: 2 },
     card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
-    pro: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     goalRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     goalValue: { minWidth: 72, textAlign: 'center' },

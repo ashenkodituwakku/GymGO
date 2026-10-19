@@ -15,6 +15,7 @@ import { Pressable } from '@/components/motion';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
+import { ProOffer } from '@/components/ProOffer';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Input, Segmented, Txt } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
@@ -194,18 +195,12 @@ export default function StrengthScreen() {
       )}
 
       {max !== null && !pro && (
-        <Pressable onPress={() => openPro('strength')} accessibilityRole="button" style={({ pressed }) => [styles.card, styles.pro, pressed && { opacity: 0.8 }]}>
-          <View style={styles.proMark}>
-            <Icon name="crown" size={20} color={color.brand} />
-          </View>
-          <View style={styles.flex}>
-            <Txt variant="headline">Every percentage, with plates</Txt>
-            <Txt variant="footnote" color={color.labelSecondary}>
-              GymGO Pro lists 100% down to 50%, the plates for each, and what you could lift for 2 to 12 reps.
-            </Txt>
-          </View>
-          <Icon name="chevron" size={13} color={color.labelTertiary} />
-        </Pressable>
+        <ProOffer
+          icon="target"
+          title="Every percentage, with plates"
+          body="GymGO Pro lists 100% down to 50%, the plates for each, and what you could lift for 2 to 12 reps."
+          onPress={() => openPro('strength')}
+        />
       )}
 
       {weightText.trim() === '' && (
@@ -267,7 +262,5 @@ const styles = themed(() =>
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     cell: { flexBasis: '22%', flexGrow: 1, alignItems: 'center', gap: 2, paddingVertical: space[2], borderRadius: radius.md, backgroundColor: color.fill },
     hero: { gap: space[1], padding: space[4], paddingTop: space[4] + 2, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.brandFill },
-    pro: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-    proMark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
   }),
 );

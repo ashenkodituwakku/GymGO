@@ -24,6 +24,7 @@ import { alternativesFor, kitText } from '@/lib/exerciseLibrary';
 import { EXERCISES, KIT_LABEL, exerciseName, muscleLabel } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
+import { ProOffer } from '@/components/ProOffer';
 import { ScreenOptions } from '@/components/ScreenOptions';
 
 /** "25 Sep", with the year only when it isn't this one. */
@@ -135,16 +136,12 @@ export default function ExerciseProgressScreen() {
           </Txt>
         </View>
       ) : (
-        <Pressable onPress={() => openPro('progress')} accessibilityRole="button" style={({ pressed }) => [styles.card, styles.pro, pressed && { opacity: 0.8 }]}>
-          <Icon name="chart" size={22} color={color.brand} />
-          <View style={styles.flex}>
-            <Txt variant="headline">See it on a chart</Txt>
-            <Txt variant="footnote" color={color.labelSecondary}>
-              GymGO Pro draws your estimated 1-rep max for every exercise over time, and shows what to lift next while you train.
-            </Txt>
-          </View>
-          <Icon name="chevron" size={13} color={color.labelTertiary} />
-        </Pressable>
+        <ProOffer
+          icon="chart"
+          title="See it on a chart"
+          body="GymGO Pro draws your estimated 1-rep max for every exercise over time, and shows what to lift next while you train."
+          onPress={() => openPro('progress')}
+        />
       )}
 
       <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
@@ -250,7 +247,6 @@ const styles = themed(() => StyleSheet.create({
   facts: { flexDirection: 'row', gap: space[2] },
   fact: { flex: 1, gap: 2, padding: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
   card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
-  pro: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   section: { marginTop: space[3], marginLeft: space[4] },
   group: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },

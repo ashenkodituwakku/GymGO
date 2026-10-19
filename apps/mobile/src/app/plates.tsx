@@ -17,6 +17,7 @@ import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { BAR, PLATES, PLATE_CHOICES, formatWeight, parseWeight, plateLoad, unitFor, warmUpSets, type WeightUnit } from '@/lib/training';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
+import { ProOffer } from '@/components/ProOffer';
 import { ScreenOptions } from '@/components/ScreenOptions';
 
 /** The bars most gyms have: a men's Olympic bar, and the lighter women's bar. */
@@ -171,18 +172,12 @@ export default function PlatesScreen() {
             </Txt>
           </View>
         ) : (
-          <Pressable onPress={() => openPro('warmup')} accessibilityRole="button" style={({ pressed }) => [styles.card, styles.pro, pressed && { opacity: 0.8 }]}>
-            <View style={styles.proMark}>
-              <Icon name="flame" size={20} color={color.brand} />
-            </View>
-            <View style={styles.flex}>
-              <Txt variant="headline">Warm-up sets</Txt>
-              <Txt variant="footnote" color={color.labelSecondary}>
-                {`GymGO Pro works out a warm-up to ${formatWeight(load!.total, unit)}, with the plates for each set.`}
-              </Txt>
-            </View>
-            <Icon name="chevron" size={13} color={color.labelTertiary} />
-          </Pressable>
+          <ProOffer
+            icon="flame"
+            title="Warm-up sets"
+            body={`GymGO Pro works out a warm-up to ${formatWeight(load!.total, unit)}, with the plates for each set.`}
+            onPress={() => openPro('warmup')}
+          />
         ))}
 
       {/* Nothing typed yet: the bare bar, and what will show here. */}
@@ -265,8 +260,6 @@ const styles = themed(() => StyleSheet.create({
     ...face('bold'),
   },
   card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
-  pro: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-  proMark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
   platesHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   editPlates: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },

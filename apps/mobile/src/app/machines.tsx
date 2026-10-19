@@ -195,10 +195,13 @@ export default function MachinesScreen() {
             )}
           </View>
           {hits.length === 0 && reports.state !== 'loading' ? (
-            <Txt variant="subhead" color={color.labelSecondary}>
-              No gym within reach is known to have that. Try further out, or fewer machines. If your gym has it, tick it on the gym’s page so
-              the next person knows.
-            </Txt>
+            <View style={styles.empty}>
+              <HeroMark icon="search" size={52} />
+              <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
+                No gym within reach is known to have that. Try further out, or fewer machines. If your gym has it, tick it on the gym’s page so
+                the next person knows.
+              </Txt>
+            </View>
           ) : (
             <Card style={styles.list}>
               {hits.map((hit, index) => (

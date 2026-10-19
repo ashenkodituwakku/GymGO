@@ -92,9 +92,14 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
                       {tier.label}
                     </Txt>
                   </View>
-                  <Txt variant="subhead" color={price.confirmed ? color.label : color.labelSecondary} style={face('semibold')}>
-                    {price.headline}
-                  </Txt>
+                  {/* No price, nothing here (a dash could read as free, and the
+                      words don't fit beside the chip); the label above says
+                      "Price unknown", as does the gym's page. */}
+                  {price.headline !== '—' && (
+                    <Txt variant="subhead" color={price.confirmed ? color.label : color.labelSecondary} style={face('semibold')}>
+                      {price.headline}
+                    </Txt>
+                  )}
                 </View>
               </View>
             </Animated.View>

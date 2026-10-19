@@ -8,7 +8,8 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Pressable } from '@/components/motion';
+import { Pressable, Pressy } from '@/components/motion';
+import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
@@ -119,26 +120,35 @@ export default function FriendsScreen() {
         </Txt>
       )}
 
-      <Card style={styles.card}>
-        <Txt variant="headline">Your friend code</Txt>
-        <View style={styles.codeRow}>
-          <Txt variant="title" style={[face('bold'), styles.code]}>
+      {/* Your code on the accent: the one thing here to send. */}
+      <View style={[styles.hero, accentGlow(color.brandFill)]}>
+        <BrandFill round={radius.xl} />
+        <Sheen round={radius.xl} />
+        <Txt variant="eyebrow" color={color.onBrandSoft}>
+          YOUR FRIEND CODE
+        </Txt>
+        <View accessible accessibilityLabel={view ? `Your friend code: ${view.code.split('').join(' ')}` : 'Loading your friend code'}>
+          <Txt variant="largeTitle" color={color.onBrand} style={styles.code}>
             {view?.code ?? '····-····'}
           </Txt>
-          <Pressable
-            onPress={() => view && void shareText(`Add me on GymGO: my friend code is ${view.code}`, 'My GymGO friend code')}
-            accessibilityRole="button"
-            accessibilityLabel="Send your friend code"
-            hitSlop={8}
-            style={({ pressed }) => [styles.iconButton, pressed && { opacity: 0.6 }]}
-          >
-            <Icon name="share" size={18} color={color.brand} />
-          </Pressable>
         </View>
-        <Txt variant="footnote" color={color.labelSecondary}>
+        <Txt variant="footnote" color={color.onBrandSoft}>
           Send it to a friend. They add it, you accept, and you can see each other’s cards. Never the days you trained.
         </Txt>
-      </Card>
+        <Pressy
+          scaleTo={0.96}
+          disabled={!view}
+          onPress={() => view && void shareText(`Add me on GymGO: my friend code is ${view.code}`, 'My GymGO friend code')}
+          accessibilityRole="button"
+          accessibilityLabel="Send your friend code"
+          style={styles.send}
+        >
+          <Icon name="share" size={15} color={color.onBrand} />
+          <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
+            Send your code
+          </Txt>
+        </Pressy>
+      </View>
 
       <Card style={styles.card}>
         <Txt variant="headline">Add a friend</Txt>
@@ -199,9 +209,17 @@ export default function FriendsScreen() {
       <Section title={view ? `Friends (${view.friends.length})` : 'Friends'}>
         {!view && !problem && <ListSkeleton rows={2} card={false} label="Loading your friends" />}
         {view && view.friends.length === 0 && (
-          <Txt variant="subhead" color={color.labelSecondary} style={styles.empty}>
-            No friends yet. Send your code, or add theirs above.
-          </Txt>
+          <View style={styles.empty}>
+            <View style={styles.emptyMark}>
+              <Icon name="people" size={20} color={color.brand} />
+            </View>
+            <View style={styles.flex}>
+              <Txt variant="headline">No friends yet</Txt>
+              <Txt variant="footnote" color={color.labelSecondary}>
+                Send your code, or add theirs above.
+              </Txt>
+            </View>
+          </View>
         )}
         {view?.friends.map((friend) => (
           <Pressable
@@ -328,9 +346,19 @@ const styles = themed(() =>
     centre: { textAlign: 'center' },
     flex: { flex: 1, minWidth: 0 },
     card: { gap: space[2] },
-    codeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] },
-    code: { letterSpacing: 2 },
-    iconButton: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+    hero: { gap: space[2], padding: space[4], paddingTop: space[4] + 2, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.brandFill },
+    code: { letterSpacing: 3, fontVariant: ['tabular-nums'] },
+    send: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      alignSelf: 'flex-start',
+      minHeight: 40,
+      marginTop: space[1],
+      paddingHorizontal: space[4],
+      borderRadius: radius.pill,
+      backgroundColor: color.onBrandFaint,
+    },
     addRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     input: { flex: 1, minWidth: 0, height: 48, paddingHorizontal: space[3], borderRadius: radius.md, backgroundColor: color.fill, color: color.label, fontSize: 17 },
     section: { gap: space[2], marginTop: space[2] },
@@ -338,7 +366,8 @@ const styles = themed(() =>
     sectionBody: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', padding: space[1] },
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.md },
     // In line with the rows' text.
-    empty: { padding: space[3] },
+    empty: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3] },
+    emptyMark: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     inviteRow: { alignItems: 'flex-start' },
     inviteActions: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: space[2], flexWrap: 'wrap' },
     small: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill },

@@ -10,7 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import { ApiError, api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import type { TrainingSession } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
 import { Icon } from './Icon';
@@ -46,7 +46,7 @@ export function SessionNote({ session, compact = false }: { session: TrainingSes
 
   if (draft !== null) {
     return (
-      <View style={styles.editor}>
+      <View style={[styles.editor, !compact && styles.card]}>
         <Input
           value={draft}
           onChangeText={setDraft}
@@ -78,14 +78,26 @@ export function SessionNote({ session, compact = false }: { session: TrainingSes
   }
 
   return (
-    <View style={[styles.wrap, compact && styles.compactWrap]}>
-      {note && (
+    <View style={[styles.wrap, compact ? styles.compactWrap : styles.card]}>
+      {!compact && (
+        <Txt variant="eyebrow" color={color.labelSecondary}>
+          YOUR NOTE
+        </Txt>
+      )}
+      {note ? (
+        // An accent rule down the side, like a quote: your words, kept as you wrote them.
         <View style={styles.note} accessible accessibilityLabel={`Your note: ${note}`}>
-          <Icon name="list" size={14} color={color.labelSecondary} />
-          <Txt variant={compact ? 'footnote' : 'subhead'} style={styles.flex}>
+          <View style={styles.rule} />
+          <Txt variant={compact ? 'footnote' : 'body'} style={styles.flex}>
             {note}
           </Txt>
         </View>
+      ) : (
+        !compact && (
+          <Txt variant="footnote" color={color.labelSecondary}>
+            How it went, a niggle, new shoes: a line for next time.
+          </Txt>
+        )
       )}
       <Pressable
         onPress={() => {
@@ -97,6 +109,7 @@ export function SessionNote({ session, compact = false }: { session: TrainingSes
         hitSlop={8}
         style={({ pressed }) => [styles.link, pressed && { opacity: 0.6 }]}
       >
+        <Icon name={note ? 'list' : 'plus'} size={13} color={color.brand} />
         <Txt variant="footnote" color={color.brand} style={face('semibold')}>
           {note ? 'Edit note' : 'Add a note'}
         </Txt>
@@ -109,8 +122,10 @@ const styles = themed(() =>
   StyleSheet.create({
     wrap: { gap: space[2], alignSelf: 'stretch' },
     compactWrap: { gap: space[1] },
-    note: { flexDirection: 'row', gap: space[2], alignItems: 'flex-start', padding: space[3], borderRadius: radius.md, backgroundColor: color.fill },
-    link: { alignSelf: 'flex-start', minHeight: 32, justifyContent: 'center' },
+    card: { padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
+    note: { flexDirection: 'row', gap: space[3], alignItems: 'stretch' },
+    rule: { width: 3, borderRadius: 2, backgroundColor: color.brand },
+    link: { flexDirection: 'row', alignItems: 'center', gap: space[1], alignSelf: 'flex-start', minHeight: 32 },
     editor: { gap: space[2], alignSelf: 'stretch' },
     input: {
       minHeight: 96,

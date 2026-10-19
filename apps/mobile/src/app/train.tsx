@@ -19,7 +19,9 @@ import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { leadExercise } from '@/lib/exerciseGlyphs';
-import { endSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
+import { endSession, startSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
+import { againPlan } from '@/lib/again';
+import { agoLabel, daysAgo } from '@/lib/exerciseLibrary';
 import { ApiError, api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -104,6 +106,13 @@ function NoWorkout({ token }: { token: string | null }) {
   );
   const recent = (saved ?? []).slice(0, 4);
   const details = saved ? libraryDetails(saved) : new Map<string, string>();
+  // Your last workout, to do again in a tap.
+  const log = useTrainingLog(token);
+  const last = useMemo(() => {
+    const latest = log.sessions.reduce<TrainingSession | null>((best, item) => (!best || item.finishedAt > best.finishedAt ? item : best), null);
+    const plan = latest ? againPlan(latest) : null;
+    return latest && plan ? { session: latest, plan } : null;
+  }, [log.sessions]);
   return (
     <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.noWorkout]}>
       <ScreenOptions options={{ title: 'Workout' }} />
@@ -111,9 +120,37 @@ function NoWorkout({ token }: { token: string | null }) {
         <HeroMark icon="workout" />
         <Txt variant="title2">No workout in progress</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          {recent.length > 0 ? 'Start one you saved, build a new one, or pick a template.' : 'Build one for your gym, open one you saved, or pick a template (push, pull, legs; 5×5; full body).'}
+          {last || recent.length > 0
+            ? 'Do your last one again, build a new one, or pick a template.'
+            : 'Build one for your gym, open one you saved, or pick a template (push, pull, legs; 5×5; full body).'}
         </Txt>
       </View>
+      {last && (
+        <View style={styles.again}>
+          <Txt variant="eyebrow" color={color.labelSecondary}>
+            {`LAST TIME · ${agoLabel(daysAgo(last.session.finishedAt)).toUpperCase()}`}
+          </Txt>
+          <Txt variant="title2" numberOfLines={1}>
+            {last.session.name}
+          </Txt>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {`${last.plan.items.length} exercise${last.plan.items.length === 1 ? '' : 's'} · ${setCount(last.session)} set${setCount(last.session) === 1 ? '' : 's'}`}
+          </Txt>
+          <View style={styles.againStrip}>
+            {last.plan.items.slice(0, 8).map((item, index) => (
+              <ExerciseTile key={`${item.exerciseId}-${index}`} exerciseId={item.exerciseId} size={34} />
+            ))}
+          </View>
+          <PrimaryButton
+            label="Do it again"
+            icon="refresh"
+            onPress={() => {
+              haptic.success();
+              startSession({ ...last.plan, gymName: null, unit: last.session.unit });
+            }}
+          />
+        </View>
+      )}
       {recent.length > 0 && (
         <View style={styles.savedList}>
           <Txt variant="footnote" color={color.labelSecondary} style={styles.savedHeader}>
@@ -161,7 +198,7 @@ function NoWorkout({ token }: { token: string | null }) {
       <PrimaryButton
         label="Build a workout"
         icon="sparkle"
-        tone={recent.length > 0 ? 'quiet' : undefined}
+        tone={recent.length > 0 || last ? 'quiet' : undefined}
         onPress={() => router.replace({ pathname: '/workout/[id]', params: { id: 'any' } })}
       />
       <PrimaryButton label="Start from a template" icon="list" tone="quiet" onPress={() => router.push('/templates')} />
@@ -775,6 +812,7 @@ function Summary({
     setShared(outcome === 'copied' ? 'Copied, ready to paste.' : outcome === 'failed' ? 'Sharing isn’t available here.' : null);
   };
   const best = bestRecord(records);
+  const done = session.exercises.filter((logged) => logged.sets.length > 0);
   const card = useRef<View>(null);
   const [sharingCard, setSharingCard] = useState(false);
   const shareCard = async () => {
@@ -836,6 +874,27 @@ function Summary({
             date={session.finishedAt}
             more={records.length - 1}
           />
+        </View>
+      )}
+      {/* What you did, exercise by exercise, as it'll be in your log. */}
+      {done.length > 0 && (
+        <View style={styles.didCard}>
+          <Txt variant="eyebrow" color={color.labelSecondary}>
+            WHAT YOU DID
+          </Txt>
+          {done.map((logged, index) => (
+            <View key={`${logged.exerciseId}-${index}`} style={[styles.did, index > 0 && styles.didLine]}>
+              <ExerciseTile exerciseId={logged.exerciseId} size={36} done />
+              <View style={styles.flex}>
+                <Txt variant="subhead" style={face('semibold')} numberOfLines={2}>
+                  {exerciseName(logged.exerciseId)}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary}>
+                  {setsSummary(logged.sets, unit)}
+                </Txt>
+              </View>
+            </View>
+          ))}
         </View>
       )}
       <View style={styles.noteCard}>
@@ -958,6 +1017,31 @@ const styles = themed(() => StyleSheet.create({
   setRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 3, paddingHorizontal: space[2], marginHorizontal: -space[2], borderRadius: radius.md, borderCurve: 'continuous' },
   setDone: { backgroundColor: alpha(color.good, 0.08) },
   noteCard: { alignSelf: 'stretch', width: '100%', maxWidth: 480, marginHorizontal: 'auto' },
+  again: {
+    alignSelf: 'stretch',
+    gap: space[1],
+    padding: space[4],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.plate,
+    ...shadow.plate,
+  },
+  againStrip: { flexDirection: 'row', flexWrap: 'wrap', gap: space[1] + 2, marginVertical: space[2] },
+  didCard: {
+    alignSelf: 'stretch',
+    width: '100%',
+    maxWidth: 480,
+    marginHorizontal: 'auto',
+    paddingHorizontal: space[4],
+    paddingTop: space[4],
+    paddingBottom: space[2],
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.plate,
+    ...shadow.plate,
+  },
+  did: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[2] },
+  didLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   input: {
     flex: 1,
     // On a narrow phone they shared the room equally with the spacer and cut a weight like 102.5 short.

@@ -287,15 +287,21 @@ const TIMED = new Set(['plank', 'side-plank', 'superman', 'copenhagen']);
 type Measure = 'reps' | 'time' | 'distance';
 const measureOf = (exercise: Exercise): Measure => (TIMED.has(exercise.id) ? 'time' : exercise.id === 'farmer-carry' ? 'distance' : 'reps');
 
+/** Sets, reps (or a time or distance) and rest for an exercise, as the builder plans it for a goal. */
+export function doseFor(exercise: Exercise, goal: Goal): { sets: number; reps: string; restSeconds: number; measure: Measure } {
+  const [sets, reps, restSeconds] = DOSE[goal][exercise.compound ? 'compound' : 'isolation'];
+  const measure = measureOf(exercise);
+  return { sets, reps: measure === 'time' ? (goal === 'endurance' ? '45–60 s' : '30–45 s') : measure === 'distance' ? '30–40 m' : reps, restSeconds, measure };
+}
+
 /** An exercise in a plan: how many sets of what, how long to rest, and the kit it uses. */
 function planned(exercise: Exercise, goal: Goal, available: Set<Kit>, confirmed: Set<Kit>, muscle?: Muscle): PlannedExercise {
-  const [sets, reps, restSeconds] = DOSE[goal][exercise.compound ? 'compound' : 'isolation'];
+  const { sets, reps, restSeconds } = doseFor(exercise, goal);
   const uses = wayToDo(exercise, available) ?? [];
-  const measure = measureOf(exercise);
   return {
     exercise,
     sets,
-    reps: measure === 'time' ? (goal === 'endurance' ? '45–60 s' : '30–45 s') : measure === 'distance' ? '30–40 m' : reps,
+    reps,
     restSeconds,
     uses,
     confirmed: uses.every((kit) => confirmed.has(kit)),

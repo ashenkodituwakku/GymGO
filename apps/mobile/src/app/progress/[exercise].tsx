@@ -6,21 +6,22 @@
  */
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
-import { ExerciseTile } from '@/components/ExerciseGlyph';
+import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { ExerciseGlyph, ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
 import { ProgressChart } from '@/components/ProgressChart';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { useApp } from '@/lib/app-state';
-import { color, radius, shadow, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { e1rmSeries, formatWeight, fromKg, personalRecords, setsSummary, unitFor } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
 import { alternativesFor, kitText } from '@/lib/exerciseLibrary';
-import { EXERCISES, exerciseName, muscleLabel } from '@/lib/workout';
+import { EXERCISES, KIT_LABEL, exerciseName, muscleLabel } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { ScreenOptions } from '@/components/ScreenOptions';
@@ -69,23 +70,47 @@ export default function ExerciseProgressScreen() {
       <Txt variant="largeTitle">{title}</Txt>
 
       {exercise && (
-        <View style={styles.card}>
-          <View style={styles.how}>
-            <ExerciseTile exerciseId={exercise.id} size={76} moving />
-            <Txt variant="body" style={styles.flex}>
-              {exercise.cue}
+        <>
+          {/* How to do it: the move going through its rep, on the accent, and its cue. */}
+          <View style={[styles.hero, accentGlow(color.brandFill)]}>
+            <BrandFill round={radius.xl} />
+            <Sheen round={radius.xl} />
+            <Txt variant="eyebrow" color={color.onBrandSoft}>
+              {`HOW TO DO IT · ${exercise.cardio ? 'CONDITIONING' : exercise.compound ? 'COMPOUND' : 'ISOLATION'}`}
             </Txt>
+            <View style={styles.how}>
+              <View style={styles.glyph} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+                <ExerciseGlyph exerciseId={exercise.id} size={84} ink={color.onBrand} accent={color.onBrand} moving />
+              </View>
+              <Txt variant="headline" color={color.onBrand} style={styles.flex}>
+                {exercise.cue}
+              </Txt>
+            </View>
           </View>
-          <Detail
-            label="Works"
-            value={
-              exercise.primary.length
-                ? [exercise.primary.map(muscleLabel).join(', '), exercise.secondary.length ? `also ${exercise.secondary.map(muscleLabel).join(', ').toLowerCase()}` : ''].filter(Boolean).join('; ')
-                : `Conditioning; ${exercise.secondary.map(muscleLabel).join(', ').toLowerCase()}`
-            }
-          />
-          <Detail label="Needs" value={kitText(exercise)} />
-        </View>
+          <View style={styles.card}>
+            <Detail label="Works">
+              {exercise.primary.length === 0 && <Pill text="Conditioning" strong />}
+              {exercise.primary.map((muscle) => (
+                <Pill key={muscle} text={muscleLabel(muscle)} strong />
+              ))}
+              {exercise.secondary.map((muscle) => (
+                <Pill key={muscle} text={muscleLabel(muscle)} />
+              ))}
+            </Detail>
+            <Detail label="Needs">
+              {exercise.needs.map((option, index) => (
+                <View key={index} style={styles.option}>
+                  {index > 0 && (
+                    <Txt variant="caption" color={color.labelSecondary}>
+                      or
+                    </Txt>
+                  )}
+                  <Pill text={option.length === 0 ? 'Body weight' : option.map((kit) => KIT_LABEL[kit]).join(' + ')} />
+                </View>
+              ))}
+            </Detail>
+          </View>
+        </>
       )}
 
       {record && (
@@ -184,14 +209,24 @@ export default function ExerciseProgressScreen() {
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+/** A labelled row of pills: what it works, what it needs. */
+function Detail({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <View style={styles.detail} accessible accessibilityLabel={`${label}: ${value}`}>
+    <View style={styles.detail}>
       <Txt variant="footnote" color={color.labelSecondary} style={styles.detailLabel}>
         {label}
       </Txt>
-      <Txt variant="subhead" style={styles.flex}>
-        {value}
+      <View style={styles.pills}>{children}</View>
+    </View>
+  );
+}
+
+/** A muscle or a piece of kit: `strong` for the muscles it mainly works. */
+function Pill({ text, strong = false }: { text: string; strong?: boolean }) {
+  return (
+    <View style={[styles.pill, strong && styles.pillStrong]}>
+      <Txt variant="footnote" color={strong ? color.brand : color.label} style={strong ? face('semibold') : undefined}>
+        {text}
       </Txt>
     </View>
   );
@@ -221,7 +256,13 @@ const styles = themed(() => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   date: { width: 80 },
+  hero: { gap: space[3], padding: space[4], paddingTop: space[4] + 2, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.brandFill },
   how: { flexDirection: 'row', alignItems: 'center', gap: space[4] },
-  detail: { flexDirection: 'row', gap: space[3], alignItems: 'baseline' },
-  detailLabel: { width: 52 },
+  glyph: { width: 104, height: 104, alignItems: 'center', justifyContent: 'center', borderRadius: Math.min(26, radius.xl), borderCurve: 'continuous', backgroundColor: color.onBrandFaint },
+  detail: { gap: space[2] },
+  detailLabel: { textTransform: 'uppercase', letterSpacing: 0.6 },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
+  option: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  pill: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.fill },
+  pillStrong: { backgroundColor: color.brandTint },
 }));

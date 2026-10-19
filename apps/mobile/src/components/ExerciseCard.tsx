@@ -10,6 +10,7 @@ import { Icon } from './Icon';
 import { Pressable } from './motion';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { KIT_LABEL, muscleLabel, type Exercise, type Kit } from '@/lib/workout';
+import { restLabel } from '@/lib/training';
 import { repsMeasure } from '@/lib/workoutStats';
 import { ExerciseTile } from './ExerciseGlyph';
 import { PIcon } from './PIcon';
@@ -87,7 +88,7 @@ export function Specs({ sets, reps, restSeconds }: { sets: number; reps: string;
   const cells = [
     { value: String(sets), label: sets === 1 ? 'set' : 'sets' },
     { value: reps, label: measure.label },
-    { value: restSeconds ? `${restSeconds} s` : '—', label: 'rest' },
+    { value: restSeconds ? restLabel(restSeconds) : 'None', label: 'rest' },
   ];
   return (
     <View style={styles.specs} accessible accessibilityLabel={`${sets} ${cells[0]!.label} of ${measure.spoken}${restSeconds ? `, ${restSeconds} seconds rest` : ''}`}>

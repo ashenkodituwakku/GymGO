@@ -4,6 +4,7 @@ import {
   finishedAtFor,
   draftToLogged,
   durationLabel,
+  restLabel,
   e1rmSeries,
   formatWeight,
   lastTime,
@@ -235,6 +236,7 @@ describe('over time', () => {
   it('says how long, briefly', () => {
     expect(durationLabel(48 * 60_000)).toBe('48 min');
     expect(durationLabel(65 * 60_000)).toBe('1 h 5 min');
+    expect([45, 60, 90, 120, 150, 100].map(restLabel)).toEqual(['45 s', '1 min', '1½ min', '2 min', '2½ min', '1:40']);
     expect(clockLabel(90)).toBe('1:30');
     expect(clockLabel(4.2)).toBe('0:05');
     expect(clockLabel(3930)).toBe('1:05:30');

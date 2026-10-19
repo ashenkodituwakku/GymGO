@@ -447,6 +447,14 @@ export function durationLabel(ms: number): string {
   return minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${minutes % 60} min` : ''}`;
 }
 
+/** A rest, short: "45 s", "1 min", "1½ min", "2 min"; anything else as a clock ("1:40"). */
+export function restLabel(seconds: number): string {
+  if (seconds < 60) return `${seconds} s`;
+  if (seconds % 60 === 0) return `${seconds / 60} min`;
+  if (seconds % 60 === 30) return `${Math.floor(seconds / 60)}½ min`;
+  return clockLabel(seconds);
+}
+
 /** "1:30"; past an hour, "1:05:30". */
 export function clockLabel(seconds: number): string {
   const whole = Math.max(0, Math.ceil(seconds));

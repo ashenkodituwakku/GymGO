@@ -46,6 +46,7 @@ import {
   parseWeight,
   recordsBroken,
   repRange,
+  restLabel,
   setCount,
   setsSummary,
   toKg,
@@ -502,23 +503,28 @@ const ExerciseLog = memo(function ExerciseLog({
           </Txt>
           <Txt variant="headline">{name}</Txt>
           <View style={styles.metaRow}>
-            <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
-              {timed && item.planned <= 1 ? exercise?.cue ?? item.reps : `${item.planned} × ${item.reps}${item.restSeconds ? ` · rest ${item.restSeconds} s` : ''}`}
+            {/* The plan stays on one line; Swap and Plates go under it when they don't fit beside it. */}
+            <Txt variant="footnote" color={color.labelSecondary} style={styles.meta}>
+              {timed && item.planned <= 1 ? exercise?.cue ?? item.reps : `${item.planned} × ${item.reps}${item.restSeconds ? ` · ${restLabel(item.restSeconds)} rest` : ''}`}
             </Txt>
-            {swapTo && <SwapButton name={name} swapTo={swapTo} onSwap={() => onSwap(index)} />}
-            {barbell && (
-              <Pressable
-                onPress={() => onPlates(item.sets.find((set) => set.weight.trim())?.weight ?? (weightGuess !== null ? String(weightGuess) : null))}
-                accessibilityRole="button"
-                accessibilityLabel={`Plates to load on the bar for ${name}`}
-                hitSlop={8}
-                style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
-              >
-                <Icon name="plates" size={15} color={color.brand} />
-                <Txt variant="caption" color={color.brand} style={face('semibold')}>
-                  Plates
-                </Txt>
-              </Pressable>
+            {(swapTo || barbell) && (
+              <View style={styles.metaButtons}>
+                {swapTo && <SwapButton name={name} swapTo={swapTo} onSwap={() => onSwap(index)} />}
+                {barbell && (
+                  <Pressable
+                    onPress={() => onPlates(item.sets.find((set) => set.weight.trim())?.weight ?? (weightGuess !== null ? String(weightGuess) : null))}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Plates to load on the bar for ${name}`}
+                    hitSlop={8}
+                    style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
+                  >
+                    <Icon name="plates" size={15} color={color.brand} />
+                    <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                      Plates
+                    </Txt>
+                  </Pressable>
+                )}
+              </View>
             )}
           </View>
         </View>
@@ -1001,7 +1007,9 @@ const styles = themed(() => StyleSheet.create({
   unitSwitch: { width: 140 },
   card: { backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[2], ...shadow.plate },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginBottom: space[1] },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: 2 },
+  metaRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space[2], rowGap: space[1], marginTop: 2 },
+  meta: { flexGrow: 1, flexShrink: 0, maxWidth: '100%' },
+  metaButtons: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   barTrack: { height: 6, borderRadius: 3, backgroundColor: color.fill, overflow: 'hidden', marginTop: space[2] },
   barFill: { height: '100%', borderRadius: 3, backgroundColor: color.brandFill },
   platesButton: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[2], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },

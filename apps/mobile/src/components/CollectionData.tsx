@@ -29,12 +29,18 @@ function useSignedIn() {
   };
 }
 
-/** Whether the collection is on your account and up to date, or on this device only. */
-export function CollectionSyncLine() {
+/**
+ * Whether the collection is on your account and up to date, or on this device
+ * only. `when` picks one side, so a page can lead with trouble and keep "all
+ * synced" for its foot.
+ */
+export function CollectionSyncLine({ when = 'any' }: { when?: 'any' | 'trouble' | 'fine' }) {
   const router = useRouter();
   const { sync, retry } = useCollection();
   const { signedIn, known, reconnect } = useSignedIn();
   if (!known) return null;
+  const trouble = !signedIn || sync === 'signed-out' || sync === 'offline' || sync === 'failed';
+  if (when === (trouble ? 'fine' : 'trouble')) return null;
   if (!signedIn || sync === 'signed-out') {
     return (
       <View style={styles.sync}>

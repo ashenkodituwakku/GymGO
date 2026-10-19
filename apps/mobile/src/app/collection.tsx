@@ -23,6 +23,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { CollectionSyncLine, useDeleteCollection } from '@/components/CollectionData';
+import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { GemCard } from '@/components/GemCard';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { SetProgress, SetReward } from '@/components/SetCard';
@@ -171,7 +172,23 @@ export default function CollectionScreen() {
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: 'Collection' }} />
-      <CollectionSyncLine />
+      {/* Trouble first (off your account, or not synced); all well, it's said at the foot. */}
+      <CollectionSyncLine when="trouble" />
+
+      {/* Your totals on the accent, the page's head. */}
+      <View style={[styles.hero, accentGlow(color.brandFill)]}>
+        <BrandFill round={radius.xl} />
+        <Sheen round={radius.xl} />
+        <Txt variant="eyebrow" color={color.onBrandSoft}>
+          YOUR COLLECTION
+        </Txt>
+        <View style={styles.stats}>
+          <Stat first value={stats.gyms} one="gym" many="gyms" />
+          <Stat value={stats.cities} one="city" many="cities" />
+          <Stat value={stats.countries} one="country" many="countries" />
+          <Stat value={stats.visits} one="visit" many="visits" />
+        </View>
+      </View>
 
       <View style={styles.social}>
         {SOCIAL.map((item) => (
@@ -183,13 +200,6 @@ export default function CollectionScreen() {
           </Pressy>
         ))}
       </View>
-
-      <Animated.View style={styles.stats}>
-        <Stat value={stats.gyms} one="gym" many="gyms" icon="gym" />
-        <Stat value={stats.cities} one="city" many="cities" icon="pin" />
-        <Stat value={stats.countries} one="country" many="countries" icon="globe" />
-        <Stat value={stats.visits} one="visit" many="visits" icon="check" />
-      </Animated.View>
 
       {next.length > 0 && <NextToCollect items={next} near={near} country={prefs.country} onOpen={openGym} />}
 
@@ -304,6 +314,7 @@ export default function CollectionScreen() {
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
         A visit counts once a day, when you check in at the gym; your location is only compared on the phone, never sent.
       </Txt>
+      <CollectionSyncLine when="fine" />
 
       {accountKnown &&
         (deleting.warning ?? <PrimaryButton label="Delete all collection data" icon="warning" tone="danger" onPress={deleting.open} />)}
@@ -355,12 +366,11 @@ function NextToCollect({ items, near, country, onOpen }: { items: Array<{ record
   );
 }
 
-function Stat({ value, one, many, icon }: { value: number; one: string; many: string; icon: IconName }) {
+function Stat({ value, one, many, first = false }: { value: number; one: string; many: string; first?: boolean }) {
   return (
-    <View style={styles.stat} accessible accessibilityLabel={`${value} ${value === 1 ? one : many}`}>
-      <Icon name={icon} size={16} color={color.brand} />
-      <CountUp id={`collection.${many}`} value={value} style={face('bold')} />
-      <Txt variant="caption" color={color.labelSecondary}>
+    <View style={[styles.stat, !first && styles.statLine]} accessible accessibilityLabel={`${value} ${value === 1 ? one : many}`}>
+      <CountUp id={`collection.${many}`} value={value} color={color.onBrand} style={face('bold')} />
+      <Txt variant="caption" color={color.onBrandSoft}>
         {value === 1 ? one : many}
       </Txt>
     </View>
@@ -381,7 +391,8 @@ const styles = themed(() =>
     nextIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
     center: { textAlign: 'center' },
     section: { marginTop: space[2], marginLeft: space[4] },
-    stats: { flexDirection: 'row', gap: space[2] },
+    hero: { gap: space[3], padding: space[4], paddingTop: space[4] + 2, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.brandFill },
+    stats: { flexDirection: 'row' },
     social: { flexDirection: 'row', gap: space[2] },
     socialTile: {
       flex: 1,
@@ -395,7 +406,8 @@ const styles = themed(() =>
       backgroundColor: color.plate,
       ...shadow.plate,
     },
-    stat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
+    stat: { flex: 1, minWidth: 0, alignItems: 'center', gap: 2 },
+    statLine: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: color.onBrandFaint },
     badgeRow: { marginHorizontal: -space[4], flexGrow: 0 },
     badges: { flexDirection: 'row', gap: space[2], paddingHorizontal: space[4] },
     badge: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.md, backgroundColor: color.fill },

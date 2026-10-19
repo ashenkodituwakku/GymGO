@@ -46,5 +46,8 @@ describe('placeGap', () => {
     expect(placeGap(row(1, 9, 30), rows, 5)).toBe('Top of the board.');
     expect(placeGap(row(1, 1, 1), [row(1, 1, 1)], 1)).toBe('Just you on it so far.');
     expect(placeGap(row(40, 1, 1), [], 40)).toBeNull();
+    // Below the rows the board sent: its last row (#5 here) isn't the place above #8.
+    expect(placeGap(row(8, 1, 1), rows, 9)).toBeNull();
+    expect(placeGap(row(6, 3, 3), rows, 9)).toBe('1 gym behind #5.');
   });
 });

@@ -49,6 +49,8 @@ import { ScreenOptions } from '@/components/ScreenOptions';
 import { BodyWeightCard } from '@/components/BodyWeightCard';
 
 const nameOf = exerciseName;
+/** How many days of history show at first, and how many more each "Show older" adds. */
+const HISTORY_DAYS = 14;
 /** How many exercises' icons a closed workout shows before "+2". */
 const STRIP = 6;
 /** When a session started, as "6:40 pm": the day it was is the heading above it. */
@@ -85,6 +87,10 @@ export default function ProgressScreen() {
   const recap = useMemo(() => weekRecap(log.sessions, gyms), [log.sessions, gyms]);
   const records = useMemo(() => [...personalRecords(log.sessions)].sort((a, b) => b[1].sessions - a[1].sessions || nameOf(a[0]).localeCompare(nameOf(b[0]))), [log.sessions]);
   const days = useMemo(() => sessionsByDay(log.sessions), [log.sessions]);
+  // The latest days first, more on request: a year's log drawn at once (each
+  // workout with its icons) would keep a phone busy for nothing.
+  const [shownDays, setShownDays] = useState(HISTORY_DAYS);
+  const olderSessions = days.slice(shownDays).reduce((sum, day) => sum + day.sessions.length, 0);
   const [open, setOpen] = useState<string | null>(null);
 
   const start = active ? (
@@ -248,7 +254,7 @@ export default function ProgressScreen() {
             HISTORY
           </Txt>
           <Animated.View layout={GLIDE} style={styles.days}>
-            {days.map((day) => (
+            {days.slice(0, shownDays).map((day) => (
               <View key={day.key} style={styles.day}>
                 <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" style={[face('semibold'), styles.dayLabel]}>
                   {day.label}
@@ -274,6 +280,14 @@ export default function ProgressScreen() {
         </>
       )}
 
+      {olderSessions > 0 && (
+        <PrimaryButton
+          label={`Show older workouts (${olderSessions})`}
+          icon="history"
+          tone="quiet"
+          onPress={() => setShownDays((shown) => shown + HISTORY_DAYS)}
+        />
+      )}
       <PrimaryButton label="Plate calculator" icon="plates" tone="quiet" onPress={() => router.push('/plates')} />
       {known && log.sessions.length > 0 && (
         <PrimaryButton

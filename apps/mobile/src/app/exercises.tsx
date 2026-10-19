@@ -9,7 +9,7 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
-import { Pressable } from '@/components/motion';
+import { Pressable, Pressy } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Chip, Input, Txt } from '@/components/ui';
@@ -20,7 +20,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { personalRecords } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
-import { MUSCLES, type Muscle } from '@/lib/workout';
+import { EXERCISES, MUSCLES, exerciseName, type Muscle } from '@/lib/workout';
 
 export default function ExercisesScreen() {
   useGlassRedraw();
@@ -35,6 +35,18 @@ export default function ExercisesScreen() {
   const count = groups.reduce((sum, group) => sum + group.exercises.length, 0);
   // How many times you've done each, for a quiet "Done 4 times".
   const done = useMemo(() => personalRecords(log.sessions), [log.sessions]);
+  // Your most-done moves, first: a strip to jump straight back to them.
+  const yours = useMemo(
+    () =>
+      [...done]
+        .filter(([id]) => EXERCISES.some((exercise) => exercise.id === id))
+        .sort(([, a], [, b]) => b.sessions - a.sessions)
+        .slice(0, 8)
+        .map(([id, record]) => ({ id, name: exerciseName(id), sessions: record.sessions })),
+    [done],
+  );
+  const open = (id: string) => router.push({ pathname: '/progress/[exercise]', params: { exercise: id } });
+  const browsing = query.trim() === '' && muscle === null && kit === 'any';
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -58,6 +70,34 @@ export default function ExercisesScreen() {
           </Pressable>
         )}
       </View>
+
+      {browsing && yours.length > 0 && (
+        <View style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" style={styles.eyebrow}>
+            YOUR EXERCISES
+          </Txt>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.yours}>
+            {yours.map((item) => (
+              <Pressy
+                key={item.id}
+                scaleTo={0.96}
+                onPress={() => open(item.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`${item.name}, done ${item.sessions} time${item.sessions === 1 ? '' : 's'}`}
+                style={styles.yourCard}
+              >
+                <ExerciseTile exerciseId={item.id} size={48} />
+                <Txt variant="footnote" style={face('semibold')} numberOfLines={2}>
+                  {item.name}
+                </Txt>
+                <Txt variant="caption" color={color.labelSecondary}>
+                  {`${item.sessions}×`}
+                </Txt>
+              </Pressy>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} accessibilityLabel="Kit">
         {KIT_FILTERS.map((item) => (
@@ -87,7 +127,7 @@ export default function ExercisesScreen() {
       {groups.map((group) => (
         <View key={group.muscle} style={styles.section}>
           <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" style={styles.eyebrow}>
-            {groupLabel(group.muscle).toUpperCase()}
+            {`${groupLabel(group.muscle).toUpperCase()} · ${group.exercises.length}`}
           </Txt>
           <View style={styles.group}>
             {group.exercises.map((exercise, index) => {
@@ -95,7 +135,7 @@ export default function ExercisesScreen() {
               return (
                 <Pressable
                   key={exercise.id}
-                  onPress={() => router.push({ pathname: '/progress/[exercise]', params: { exercise: exercise.id } })}
+                  onPress={() => open(exercise.id)}
                   accessibilityRole="button"
                   accessibilityLabel={`${exercise.name}. ${kitText(exercise)}${times ? `. Done ${times} time${times === 1 ? '' : 's'}` : ''}`}
                   style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
@@ -107,9 +147,15 @@ export default function ExercisesScreen() {
                     </Txt>
                     <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
                       {kitText(exercise)}
-                      {times > 0 ? ` · done ${times}×` : ''}
                     </Txt>
                   </View>
+                  {times > 0 && (
+                    <View style={styles.badge}>
+                      <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                        {`${times}×`}
+                      </Txt>
+                    </View>
+                  )}
                   <Icon name="chevron" size={13} color={color.labelTertiary} />
                 </Pressable>
               );
@@ -136,6 +182,17 @@ const styles = themed(() =>
     },
     input: { flex: 1, minWidth: 0, fontSize: 17, paddingVertical: space[2], color: color.label, borderWidth: 0 },
     chips: { gap: space[2], paddingRight: space[4] },
+    yours: { gap: space[2], paddingRight: space[4], paddingBottom: space[1] },
+    yourCard: {
+      width: 116,
+      gap: space[1],
+      padding: space[3],
+      borderRadius: radius.lg,
+      borderCurve: 'continuous',
+      backgroundColor: color.plate,
+      ...shadow.plate,
+    },
+    badge: { paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill, backgroundColor: color.brandTint },
     section: { gap: space[2] },
     eyebrow: { marginTop: space[2], marginLeft: space[4] },
     group: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },

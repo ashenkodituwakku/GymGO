@@ -121,12 +121,14 @@ function dohertysOffers(gymId: string) {
           label,
           baseAmountMinor: cents,
           validityDays: null,
+          // The page names who the FIFO plan is for and nothing else, so the
+          // rest stays as unknown as on the other plans.
           ...(key === 'fifo-12-months'
             ? {
                 eligibility: {
-                  localResidentOnly: 'no',
-                  memberGuestOnly: 'no',
-                  firstTimeVisitorOnly: 'no',
+                  localResidentOnly: 'unknown',
+                  memberGuestOnly: 'unknown',
+                  firstTimeVisitorOnly: 'unknown',
                   membershipRequired: 'no',
                   photoIdRequired: 'unknown',
                   minAgeYears: null,

@@ -13,6 +13,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { MilestonesCard, MuscleBalanceCard, WeekCard } from '@/components/TrainingInsights';
 import { CountUp } from '@/components/CountUp';
+import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { weekRecap } from '@/lib/insights';
@@ -48,6 +49,8 @@ import { ScreenOptions } from '@/components/ScreenOptions';
 import { BodyWeightCard } from '@/components/BodyWeightCard';
 
 const nameOf = exerciseName;
+/** How many exercises' icons a closed workout shows before "+2". */
+const STRIP = 6;
 /** When a session started, as "6:40 pm": the day it was is the heading above it. */
 const startTime = (iso: string) => {
   const started = new Date(iso);
@@ -196,17 +199,30 @@ export default function ProgressScreen() {
                   accessibilityRole="button"
                   style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
                 >
+                  <ExerciseTile exerciseId={exerciseId} size={40} />
                   <View style={styles.flex}>
-                    <Txt variant="body">{nameOf(exerciseId)}</Txt>
+                    <Txt variant="body" style={face('medium')}>
+                      {nameOf(exerciseId)}
+                    </Txt>
                     <Txt variant="footnote" color={color.labelSecondary}>
                       {best
                         ? `Heaviest ${formatWeight(Number(fromKg(record.heaviestKg!, unit).toFixed(1)), unit)} × ${best.reps}`
                         : record.mostReps !== null
                           ? `Most reps ${record.mostReps}`
                           : 'No sets yet'}
-                      {record.e1rmKg !== null ? ` · 1-rep max ≈ ${formatWeight(Math.round(fromKg(record.e1rmKg, unit)), unit)}` : ''}
                     </Txt>
                   </View>
+                  {/* The estimated 1-rep max on the right, the figure to watch grow. */}
+                  {record.e1rmKg !== null && (
+                    <View style={styles.max} accessible accessibilityLabel={`1-rep max about ${formatWeight(Math.round(fromKg(record.e1rmKg, unit)), unit)}`}>
+                      <Txt variant="headline" style={styles.figure}>
+                        {`≈ ${formatWeight(Math.round(fromKg(record.e1rmKg, unit)), unit)}`}
+                      </Txt>
+                      <Txt variant="caption" color={color.labelSecondary}>
+                        1-rep max
+                      </Txt>
+                    </View>
+                  )}
                   <Icon name="chevron" size={13} color={color.labelTertiary} />
                 </Pressable>
               );
@@ -332,6 +348,19 @@ function SessionRow({
               .filter(Boolean)
               .join(' · ')}
           </Txt>
+          {/* What it was, at a glance: each exercise's icon, closed. */}
+          {!open && session.exercises.length > 0 && (
+            <View style={styles.strip}>
+              {session.exercises.slice(0, STRIP).map((logged, index) => (
+                <ExerciseTile key={`${logged.exerciseId}-${index}`} exerciseId={logged.exerciseId} size={26} />
+              ))}
+              {session.exercises.length > STRIP && (
+                <Txt variant="caption" color={color.labelSecondary} style={face('semibold')}>
+                  {`+${session.exercises.length - STRIP}`}
+                </Txt>
+              )}
+            </View>
+          )}
           {/* The note's first line, closed; the whole note (to edit) when it's open. */}
           {session.note && !open && (
             <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1} style={styles.notePeek}>
@@ -344,13 +373,18 @@ function SessionRow({
       {open && (
         <View style={styles.detail}>
           <SessionNote session={session} compact />
-          {session.exercises.map((logged) => (
-            <Txt key={logged.exerciseId} variant="footnote">
-              <Txt variant="footnote" style={face('semibold')}>
-                {nameOf(logged.exerciseId)}
-              </Txt>
-              {`  ${setsSummary(logged.sets, session.unit)}`}
-            </Txt>
+          {session.exercises.map((logged, index) => (
+            <View key={`${logged.exerciseId}-${index}`} style={styles.logged}>
+              <ExerciseTile exerciseId={logged.exerciseId} size={32} />
+              <View style={styles.flex}>
+                <Txt variant="footnote" style={face('semibold')}>
+                  {nameOf(logged.exerciseId)}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary}>
+                  {setsSummary(logged.sets, session.unit)}
+                </Txt>
+              </View>
+            </View>
           ))}
           <Pressable
             onPress={() => {
@@ -393,7 +427,11 @@ const styles = themed(() => StyleSheet.create({
   group: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   notePeek: { fontStyle: 'italic' },
+  max: { alignItems: 'flex-end' },
+  figure: { fontVariant: ['tabular-nums'] },
+  strip: { flexDirection: 'row', alignItems: 'center', gap: space[1], marginTop: space[1] },
+  logged: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: 2 },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
-  detail: { paddingHorizontal: space[4], paddingBottom: space[3], gap: space[1] },
+  detail: { paddingHorizontal: space[4], paddingBottom: space[3], gap: space[2] },
   delete: { alignSelf: 'flex-start', paddingVertical: space[2] },
 }));

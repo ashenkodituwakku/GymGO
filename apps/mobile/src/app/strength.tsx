@@ -12,6 +12,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
+import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -114,12 +115,17 @@ export default function StrengthScreen() {
       )}
 
       {max !== null && (
-        <View style={styles.card} accessible accessibilityLabel={`Estimated 1-rep max: about ${formatWeight(nearest(max, unit), unit)}`}>
-          <Txt variant="eyebrow" color={color.labelSecondary}>
+        // The answer on the accent: what the page is for.
+        <View style={[styles.hero, accentGlow(color.brandFill)]} accessible accessibilityLabel={`Estimated 1-rep max: about ${formatWeight(nearest(max, unit), unit)}`}>
+          <BrandFill round={radius.xl} />
+          <Sheen round={radius.xl} />
+          <Txt variant="eyebrow" color={color.onBrandSoft}>
             ESTIMATED 1-REP MAX
           </Txt>
-          <Txt variant="largeTitle">≈ {formatWeight(nearest(max, unit), unit)}</Txt>
-          <Txt variant="footnote" color={color.labelSecondary}>
+          <Txt variant="largeTitle" color={color.onBrand}>
+            ≈ {formatWeight(nearest(max, unit), unit)}
+          </Txt>
+          <Txt variant="footnote" color={color.onBrandSoft}>
             {reps === 1
               ? 'A single is your 1-rep max already.'
               : `From ${formatWeight(weight as number, unit)} × ${reps}, by Epley’s formula. An estimate: most accurate from sets of 10 reps or fewer.`}
@@ -145,9 +151,11 @@ export default function StrengthScreen() {
                   accessibilityLabel={`${percent} percent: ${formatWeight(target, unit)}. Open the plate calculator`}
                   style={({ pressed }) => [styles.percentRow, index > 0 && styles.line, pressed && { opacity: 0.6 }]}
                 >
-                  <Txt variant="subhead" color={color.labelSecondary} style={styles.percent}>
-                    {percent}%
-                  </Txt>
+                  <View style={styles.percent}>
+                    <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                      {`${percent}%`}
+                    </Txt>
+                  </View>
                   <Txt variant="headline" style={styles.weight}>
                     {formatWeight(target, unit)}
                   </Txt>
@@ -187,7 +195,9 @@ export default function StrengthScreen() {
 
       {max !== null && !pro && (
         <Pressable onPress={() => openPro('strength')} accessibilityRole="button" style={({ pressed }) => [styles.card, styles.pro, pressed && { opacity: 0.8 }]}>
-          <Icon name="crown" size={22} color={color.brand} />
+          <View style={styles.proMark}>
+            <Icon name="crown" size={20} color={color.brand} />
+          </View>
           <View style={styles.flex}>
             <Txt variant="headline">Every percentage, with plates</Txt>
             <Txt variant="footnote" color={color.labelSecondary}>
@@ -252,10 +262,12 @@ const styles = themed(() =>
     card: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     percentRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 44, paddingVertical: space[1] },
     line: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
-    percent: { width: 44, fontVariant: ['tabular-nums'] },
+    percent: { width: 52, alignItems: 'center', paddingVertical: 3, borderRadius: radius.pill, backgroundColor: color.brandTint },
     weight: { minWidth: 84, fontVariant: ['tabular-nums'] },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     cell: { flexBasis: '22%', flexGrow: 1, alignItems: 'center', gap: 2, paddingVertical: space[2], borderRadius: radius.md, backgroundColor: color.fill },
+    hero: { gap: space[1], padding: space[4], paddingTop: space[4] + 2, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.brandFill },
     pro: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+    proMark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
   }),
 );

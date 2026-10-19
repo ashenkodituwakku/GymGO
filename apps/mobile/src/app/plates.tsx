@@ -172,7 +172,9 @@ export default function PlatesScreen() {
           </View>
         ) : (
           <Pressable onPress={() => openPro('warmup')} accessibilityRole="button" style={({ pressed }) => [styles.card, styles.pro, pressed && { opacity: 0.8 }]}>
-            <Icon name="flame" size={22} color={color.brand} />
+            <View style={styles.proMark}>
+              <Icon name="flame" size={20} color={color.brand} />
+            </View>
             <View style={styles.flex}>
               <Txt variant="headline">Warm-up sets</Txt>
               <Txt variant="footnote" color={color.labelSecondary}>
@@ -264,6 +266,7 @@ const styles = themed(() => StyleSheet.create({
   },
   card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
   pro: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  proMark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
   platesHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   editPlates: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },

@@ -9,6 +9,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { CollectionTotals, FriendCard } from '@gymgo/domain';
+import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { GemCard } from '@/components/GemCard';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -105,11 +106,19 @@ export default function FriendScreen() {
         </Txt>
       )}
       {friend && (
-        <View style={styles.stats}>
-          <Stat value={friend.totals.gyms} label={friend.totals.gyms === 1 ? 'gym' : 'gyms'} />
-          <Stat value={friend.totals.cities} label={friend.totals.cities === 1 ? 'city' : 'cities'} />
-          <Stat value={friend.totals.countries} label={friend.totals.countries === 1 ? 'country' : 'countries'} />
-          <Stat value={friend.totals.visits} label={friend.totals.visits === 1 ? 'visit' : 'visits'} />
+        // Their totals on the accent, like a plan's head.
+        <View style={[styles.hero, accentGlow(color.brandFill)]}>
+          <BrandFill round={radius.xl} />
+          <Sheen round={radius.xl} />
+          <Txt variant="eyebrow" color={color.onBrandSoft} numberOfLines={1}>
+            {`${friend.name.toUpperCase()}’S COLLECTION`}
+          </Txt>
+          <View style={styles.stats}>
+            <Stat first value={friend.totals.gyms} label={friend.totals.gyms === 1 ? 'gym' : 'gyms'} />
+            <Stat value={friend.totals.cities} label={friend.totals.cities === 1 ? 'city' : 'cities'} />
+            <Stat value={friend.totals.countries} label={friend.totals.countries === 1 ? 'country' : 'countries'} />
+            <Stat value={friend.totals.visits} label={friend.totals.visits === 1 ? 'visit' : 'visits'} />
+          </View>
         </View>
       )}
 
@@ -203,13 +212,13 @@ export default function FriendScreen() {
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
+function Stat({ value, label, first = false }: { value: number; label: string; first?: boolean }) {
   return (
-    <View style={styles.stat} accessible accessibilityLabel={`${value} ${label}`}>
-      <Txt variant="title" style={face('bold')}>
+    <View style={[styles.stat, !first && styles.statLine]} accessible accessibilityLabel={`${value} ${label}`}>
+      <Txt variant="title" color={color.onBrand} style={face('bold')}>
         {value}
       </Txt>
-      <Txt variant="caption" color={color.labelSecondary}>
+      <Txt variant="caption" color={color.onBrandSoft}>
         {label}
       </Txt>
     </View>
@@ -220,8 +229,10 @@ const styles = themed(() =>
   StyleSheet.create({
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[4], paddingBottom: space[8], gap: space[3], width: '100%', maxWidth: COLUMN, alignSelf: 'center' },
-    stats: { flexDirection: 'row', gap: space[2] },
-    stat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate },
+    hero: { gap: space[3], padding: space[4], paddingTop: space[4] + 2, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.brandFill },
+    stats: { flexDirection: 'row' },
+    stat: { flex: 1, minWidth: 0, alignItems: 'center', gap: 2 },
+    statLine: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: color.onBrandFaint },
     invite: { gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     input: { height: 44, paddingHorizontal: space[3], borderRadius: radius.md, backgroundColor: color.fill, color: color.label, fontSize: 16 },

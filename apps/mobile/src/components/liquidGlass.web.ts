@@ -181,7 +181,9 @@ export function installLiquidGlass(): void {
 
 /** Fit the refraction to the bar's size, so the bend lands on its edges. */
 export function sizeRefraction(width: number, height: number): void {
-  if (typeof document === 'undefined') return;
+  // Before the window has a size the bar works out narrower than nothing
+  // (0 less its margins), which a filter can't take; it's sized once it has one.
+  if (typeof document === 'undefined' || width < 8 || height < 8) return;
   const filter = document.getElementById(FILTER_ID);
   if (!filter) return;
   for (const node of [filter, filter.querySelector('feImage')]) {

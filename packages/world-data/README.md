@@ -11,9 +11,11 @@ so the list can be fetched a few at a time.
 
 ## Fetching
 
-Overpass (overpass-api.de and its mirrors) must be reachable from where this
-runs; a Claude Code cloud session needs `overpass-api.de` in its
-environment's allowed domains.
+Overpass must be reachable from where this runs. overpass-api.de and
+lz4.overpass-api.de reset connections from cloud networks, so a Claude Code
+cloud session needs a public mirror in its environment's allowed domains:
+`overpass.kumi.systems`, `maps.mail.ru` or `overpass.private.coffee`. A
+home computer usually reaches overpass-api.de itself.
 
 ```bash
 pnpm --filter @gymgo/world-data fetch /tmp/world-osm      # about two minutes a city; skips ones already saved

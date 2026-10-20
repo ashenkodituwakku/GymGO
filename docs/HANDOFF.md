@@ -168,10 +168,14 @@ mobile 388, domain 167 and web 39 tests, all passing.
   hidden, a "GymGO limited version · Gyms in N cities, built in" banner
   (`components/LimitedBanner.tsx`), and a limited-version card on Profile.
   Server-bound parts are left out, not offered (see README, "The website on
-  Netlify"). More world cities wait on Overpass, which this cloud
-  environment's network blocks: `packages/world-data` fetches them in one
-  command once `overpass-api.de` is allowed. The owner has linked the
-  GitHub repository in Netlify, so a push builds the site there.
+  Netlify"). More world cities wait on Overpass: `packages/world-data`
+  fetches them in one command, but overpass-api.de and its lz4 instance
+  reset connections from this cloud network, so a public mirror must be
+  allowed (its README). The owner has linked the GitHub repository in
+  Netlify, so a push builds the site there, **but the Netlify account's
+  credits ran out**: every build since 11 Oct is "Skipped due to account
+  credit usage exceeded", so gymgo.site still shows the 11 Oct demo. Each
+  push to this branch is a production deploy, which is what used them up.
 - **The website is on Netlify** (6 Oct; the owner asked, and chose: live on
   gymgo.site now, usable without an account, server decided later). Netlify
   project `gymgowebsite`, replacing the "coming soon" page. `netlify.toml`

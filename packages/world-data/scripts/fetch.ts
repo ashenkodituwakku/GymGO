@@ -16,11 +16,15 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { WORLD_CITIES } from '../src/cities';
 
+// overpass-api.de and its lz4 instance reset connections from cloud
+// networks (a Claude Code session's included, 20 Oct 2026), so the public
+// mirrors are what usually answers there.
 const MIRRORS = [
   'https://overpass-api.de/api/interpreter',
   'https://lz4.overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
   'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
 ];
 const UA = 'GymGO/0.1 (gym finder; https://github.com/ashenkodituwakku/GymGO)';
 

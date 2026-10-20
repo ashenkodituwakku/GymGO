@@ -1589,6 +1589,43 @@ What else the website has:
   To change the pictures, edit `apps/mobile/scripts/site-images.mjs` and run
   `node scripts/site-images.mjs` in `apps/mobile`.
 
+### The website on GitHub Pages
+
+The same limited website can be published free on GitHub Pages, as long as
+the repository is public; use it while Netlify's credits are used up, or
+instead of Netlify. `.github/workflows/pages.yml` builds it with
+`scripts/pages-build.sh` (the limited version, no server, no account) on
+every push to `claude/friendly-johnson-9rzxrj` that changes the app, and
+publishes it to **https://ashenkodituwakku.github.io/GymGO/**.
+
+Two settings come first, once, by an owner of the repository on GitHub:
+
+1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
+2. **Settings → Environments → github-pages → Deployment branches and
+   tags:** add `claude/friendly-johnson-9rzxrj`. Pages lets only the
+   default branch publish until a branch is added here.
+
+Then push again, or open the failed run under **Actions** and choose
+**Re-run all jobs**.
+
+How it differs from Netlify:
+
+- **It lives under `/GymGO/`** until a custom domain is set. The build is
+  told the path (`GYMGO_BASE_URL`, read in `apps/mobile/app.config.js`) and
+  puts it in front of every link.
+- **No rewrites.** A gym's link opened directly (`/GymGO/gym/…`) gets
+  `404.html`, which is the app again and shows the right screen; the
+  browser sees a 404 status, so search engines list only the home page.
+- **No headers, no plugins, no server.** Pages can't send the headers in
+  `netlify.toml` or pass `/api` on to a server, and there's no Lighthouse
+  or sitemap plugin. It suits the limited version, not the full app.
+
+To put it on **gymgo.site** instead: in Settings → Pages set the custom
+domain to `gymgo.site`, and at the domain's registrar point it at GitHub
+(the four `A` records GitHub's custom-domain guide lists, or a `CNAME` for
+`www` to `ashenkodituwakku.github.io`), replacing Netlify's. The next build
+drops the `/GymGO` path by itself. Doing that takes gymgo.site off Netlify.
+
 ### The older website
 
 The first version of GymGO was a Next.js website, and it's still in the

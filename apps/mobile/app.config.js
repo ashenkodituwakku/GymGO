@@ -14,6 +14,9 @@
  *   Google can hand the sign-in back to the app (its reversed form is the
  *   app's URL scheme). The server reads the same setting.
  *
+ * - GYMGO_BASE_URL: the path a web export is served under ("/GymGO" on
+ *   GitHub Pages without a custom domain; scripts/pages-build.sh sets it).
+ *
  * None is a secret. See README → "Run it from Xcode" and "Sign in with
  * Google and Apple".
  */
@@ -22,8 +25,11 @@ const googleIos = (process.env.GYMGO_GOOGLE_CLIENT_ID_IOS || '').trim();
 /** "123-abc.apps.googleusercontent.com" → "com.googleusercontent.apps.123-abc". */
 const googleScheme = googleIos ? `com.googleusercontent.apps.${googleIos.replace(/\.apps\.googleusercontent\.com$/, '')}` : null;
 
+const baseUrl = (process.env.GYMGO_BASE_URL || '').trim().replace(/\/+$/, '');
+
 module.exports = ({ config }) => ({
   ...config,
+  ...(baseUrl ? { experiments: { ...config.experiments, baseUrl } } : {}),
   plugins: [...(config.plugins || []), ...(appleSignIn ? ['expo-apple-authentication'] : [])],
   ios: {
     ...config.ios,

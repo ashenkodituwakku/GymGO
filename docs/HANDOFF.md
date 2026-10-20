@@ -160,6 +160,22 @@ mobile 388, domain 167 and web 39 tests, all passing.
   busy button renamed "Say how busy". Offered but not chosen: hiding the
   AD PLACEHOLDER box for Free users, putting "can I get in?" first on gym
   pages, and a notice when the map can't load.
+- **The limited website can go on GitHub Pages, free** (20 Oct; the owner
+  asked for a way without buying Netlify credits and said "Yes set it up").
+  `.github/workflows/pages.yml` runs `scripts/pages-build.sh` on pushes to
+  this branch and publishes to https://ashenkodituwakku.github.io/GymGO/.
+  `GYMGO_BASE_URL` (`app.config.js`) gives Expo the `/GymGO` path; the
+  script prefixes the page's own links, writes `404.html` (Pages has no
+  rewrites) and gets the path from `actions/configure-pages`, so a custom
+  domain later needs no change here. `scripts/web-assets.sh`, shared with
+  the Netlify build, renames the folders hosts leave out. **Waiting on the
+  owner:** Settings → Pages → Source "GitHub Actions", and this branch
+  added to the `github-pages` environment's deployment branches (only the
+  default branch can deploy until then); a run fails at "configure-pages"
+  or "deploy" until both are done. Built here both ways (under `/GymGO`
+  and at the root) and driven in a browser behind a Pages-like server:
+  deep links, icons, fonts, client navigation, nothing missing. README:
+  "The website on GitHub Pages".
 - **gymgo.site is the limited version** (20 Oct, the owner asked: "instead
   of the demo version name it limited version … main cities around the
   globe … so you don't need the servers yet"). The website build sets

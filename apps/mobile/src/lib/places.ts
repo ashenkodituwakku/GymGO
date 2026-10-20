@@ -21,10 +21,11 @@ import { MELBOURNE, MELBOURNE_CENTRE, MELBOURNE_PLACES } from '@gymgo/melbourne-
 import { AU_CITIES, AU_PLACES, type AuCityId } from '@gymgo/au-data';
 import { US_CITIES, US_PLACES, type UsCityId } from '@gymgo/usa-data';
 import { EU_CITIES, EU_PLACES, type EuCityId } from '@gymgo/eu-data';
+import { WORLD_CITIES_BUILT, WORLD_PLACES, type WorldCityId } from '@gymgo/world-data';
 import { WORLD_CITY_ROWS } from './worldCities';
 import { LIMITED } from './limited';
 
-export type CityId = 'melbourne' | 'sydney-demo' | AuCityId | UsCityId | EuCityId;
+export type CityId = 'melbourne' | 'sydney-demo' | AuCityId | UsCityId | EuCityId | WorldCityId;
 
 export interface City {
   id: CityId;
@@ -122,6 +123,24 @@ export const CITIES: Record<CityId, City> = {
       } satisfies City,
     ]),
   ) as Record<EuCityId, City>),
+  // Only the world cities whose gyms have been fetched (packages/world-data).
+  ...(Object.fromEntries(
+    WORLD_CITIES_BUILT.map((city) => [
+      city.id,
+      {
+        id: city.id,
+        name: city.name,
+        region: city.countryName,
+        country: city.country,
+        timezone: city.timezone,
+        centre: city.centre,
+        reachKm: Math.max(15, city.radiusKm * 2.5),
+        aliases: city.aliases,
+        demo: false,
+        mapOnly: true,
+      } satisfies City,
+    ]),
+  ) as Record<WorldCityId, City>),
 };
 
 /** Real cities first, Melbourne leading, then Australia's others; the demo last. */
@@ -130,6 +149,7 @@ export const CITY_LIST: City[] = [
   ...AU_CITIES.map((city) => CITIES[city.id]),
   ...US_CITIES.map((city) => CITIES[city.id]),
   ...EU_CITIES.map((city) => CITIES[city.id]),
+  ...WORLD_CITIES_BUILT.map((city) => CITIES[city.id]),
   CITIES['sydney-demo'],
 ];
 
@@ -152,6 +172,9 @@ export const PLACES: AppPlace[] = [
   // Each European city by name, then its districts (local names).
   ...EU_CITIES.map((city) => ({ name: city.name, postcode: '', position: city.centre, city: city.id })),
   ...EU_PLACES.map((place) => ({ name: place.name, postcode: '', position: place.position, city: place.city })),
+  // Each world city fetched so far by name, then its districts.
+  ...WORLD_CITIES_BUILT.map((city) => ({ name: city.name, postcode: '', position: city.centre, city: city.id })),
+  ...WORLD_PLACES.map((place) => ({ name: place.name, postcode: '', position: place.position, city: place.city })),
   ...PILOT_PLACES.map((place) => ({ ...place, city: 'sydney-demo' as const })),
 ];
 

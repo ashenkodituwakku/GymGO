@@ -55,10 +55,15 @@ const CITIES_SHOWN = 12;
 
 
 /** How Home groups the built-in cities. */
-const REGIONS: Array<{ label: string; has: (country: string) => boolean }> = [
-  { label: 'USA', has: (country) => country === 'US' },
-  { label: 'Australia', has: (country) => country === 'AU' },
-  { label: 'Europe', has: (country) => country !== 'AU' && country !== 'US' },
+/** Other cities by where they are: the US and Australia on their own, the rest by continent (their clock's). */
+const REGIONS: Array<{ label: string; has: (city: City) => boolean }> = [
+  { label: 'USA', has: (city) => city.country === 'US' },
+  { label: 'Australia', has: (city) => city.country === 'AU' },
+  { label: 'Europe', has: (city) => city.timezone.startsWith('Europe/') },
+  { label: 'The Americas', has: (city) => city.timezone.startsWith('America/') && city.country !== 'US' },
+  { label: 'Asia and the Middle East', has: (city) => city.timezone.startsWith('Asia/') },
+  { label: 'Africa', has: (city) => city.timezone.startsWith('Africa/') },
+  { label: 'New Zealand and the Pacific', has: (city) => city.timezone.startsWith('Pacific/') },
 ];
 
 export default function Home() {
@@ -111,7 +116,7 @@ export default function Home() {
     : [];
   const groups = [
     ...(home && homeCities.length ? [{ label: countryName(home), cities: homeCities }] : []),
-    ...REGIONS.map(({ label, has }) => ({ label, cities: otherCities.filter((item) => has(item.country) && item.country !== home) })),
+    ...REGIONS.map(({ label, has }) => ({ label, cities: otherCities.filter((item) => has(item) && item.country !== home) })),
   ].filter((group) => group.cities.length > 0);
 
   const explore = (request: Parameters<typeof requestExplore>[0] = {}) => {

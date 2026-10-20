@@ -6,6 +6,7 @@ import { MELBOURNE_ATTRIBUTION, MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { AU_GYMS } from '@gymgo/au-data';
 import { US_GYMS } from '@gymgo/usa-data';
 import { EU_GYMS } from '@gymgo/eu-data';
+import { WORLD_GYMS } from '@gymgo/world-data';
 import { DEFAULT_OPERATOR, type LegalOperator } from '@gymgo/domain';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -134,6 +135,6 @@ export const ALLOWED_ORIGINS = (process.env.GYMGO_ALLOWED_ORIGINS ?? '').split('
  * Real Melbourne gyms first, then the map-only Australian, US and European
  * cities; the invented Sydney set stays, clearly flagged, for testing.
  */
-export const GYM_RECORDS = [...MELBOURNE_GYMS, ...AU_GYMS, ...US_GYMS, ...EU_GYMS, ...DEMO_GYMS];
+export const GYM_RECORDS = [...MELBOURNE_GYMS, ...AU_GYMS, ...US_GYMS, ...EU_GYMS, ...WORLD_GYMS, ...DEMO_GYMS];
 /** Covers every real set: every location, in every city and every searched area, is OpenStreetMap data. */
 export const ATTRIBUTION = MELBOURNE_ATTRIBUTION;

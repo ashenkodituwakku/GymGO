@@ -31,6 +31,7 @@ import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { AU_GYMS } from '@gymgo/au-data';
 import { US_GYMS } from '@gymgo/usa-data';
 import { EU_GYMS } from '@gymgo/eu-data';
+import { WORLD_GYMS } from '@gymgo/world-data';
 import { CITIES, DEFAULT_PLACE, type AppPlace, type WorldCity } from './places';
 
 /**
@@ -38,7 +39,7 @@ import { CITIES, DEFAULT_PLACE, type AppPlace, type WorldCity } from './places';
  * Australian and the US cities (map-only), then the Sydney demo. Used until the server answers, or when it
  * can't be reached.
  */
-export const BUNDLED_GYMS: GymRecord[] = [...MELBOURNE_GYMS, ...AU_GYMS, ...US_GYMS, ...EU_GYMS, ...DEMO_GYMS];
+export const BUNDLED_GYMS: GymRecord[] = [...MELBOURNE_GYMS, ...AU_GYMS, ...US_GYMS, ...EU_GYMS, ...WORLD_GYMS, ...DEMO_GYMS];
 
 export interface Filters {
   centre: LatLng;

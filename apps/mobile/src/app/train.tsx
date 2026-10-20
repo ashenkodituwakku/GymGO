@@ -71,6 +71,7 @@ import { ScreenOptions } from '@/components/ScreenOptions';
 import { shareText } from '@/lib/actions';
 import { weekAfter, workoutShareText, type WeekAfter } from '@/lib/insights';
 import { usePageTitle } from '@/lib/pageTitle';
+import { LIMITED } from '@/lib/limited';
 
 /** Ticks once a second while something on screen counts. */
 function useNow(active: boolean, every = 1000): number {
@@ -332,7 +333,7 @@ export default function TrainScreen() {
       return;
     }
     if (!token) {
-      setProblem('Sign in (it’s free) to keep your workouts. This one stays on this device until you do.');
+      setProblem(LIMITED ? 'Keeping your workouts comes with the full version of GymGO. Discard this one when you’re done.' : 'Sign in (it’s free) to keep your workouts. This one stays on this device until you do.');
       return;
     }
     setSaving(true);
@@ -426,7 +427,7 @@ export default function TrainScreen() {
               {problem}
             </Txt>
           )}
-          {problem && !token && <PrimaryButton label="Sign in" tone="quiet" onPress={() => router.push('/sign-in')} />}
+          {problem && !token && !LIMITED && <PrimaryButton label="Sign in" tone="quiet" onPress={() => router.push('/sign-in')} />}
           <PrimaryButton
             label={confirmDiscard ? 'Tap again to discard it' : 'Discard workout'}
             tone="danger"

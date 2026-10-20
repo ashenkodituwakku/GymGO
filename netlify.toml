@@ -12,9 +12,10 @@
   NODE_VERSION = "22"
   # The website can be used without an account (the app still needs one): lib/accountRule.ts.
   EXPO_PUBLIC_ACCOUNT = "optional"
-  # For now the website is the demo only (invented gyms), with a note that the
-  # full version is coming soon: lib/demoOnly.ts. Delete this line to show the full app.
-  EXPO_PUBLIC_DEMO_ONLY = "on"
+  # For now the website is the limited version: real gyms in the cities built
+  # into the app, no server, every built-in city open: lib/limited.ts. Delete
+  # this line (and set GYMGO_SERVER_URL) to show the full app.
+  EXPO_PUBLIC_LIMITED = "on"
   # Only the tests use a browser; the build doesn't need one downloaded.
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
   # Netlify adds its Next.js plugin to the project because the older website

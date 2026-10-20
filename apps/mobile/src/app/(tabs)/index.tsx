@@ -39,6 +39,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { templateDayName, upNext } from '@/lib/templates';
 import { unitFor } from '@/lib/training';
 import { exerciseName } from '@/lib/workout';
+import { LIMITED } from '@/lib/limited';
 
 /** Melbourne suburbs worth a tap, in the order people ask about them. */
 const MELBOURNE_PICKS = ['Melbourne CBD', 'Fitzroy', 'Collingwood', 'Brunswick', 'Carlton', 'Richmond', 'South Melbourne', 'Northcote'];
@@ -162,7 +163,7 @@ export default function Home() {
           scaleTo={0.9}
           onPress={() => router.navigate('/profile')}
           accessibilityRole="button"
-          accessibilityLabel={account.face ? 'Your profile' : 'Sign in'}
+          accessibilityLabel={account.face || LIMITED ? 'Your profile' : 'Sign in'}
           style={[styles.avatar, account.face && styles.avatarOn]}
         >
           {account.face ? (
@@ -511,7 +512,7 @@ export default function Home() {
         <View style={styles.section}>
           <SectionHeader icon="globe-hemisphere-west" title={city ? 'Other cities' : 'Cities'} />
           <Txt variant="footnote" color={color.labelSecondary} style={styles.anywhere}>
-            Or anywhere in the world: type a town on the map, or move the map and tap Search this area.
+            {LIMITED ? 'Every city built into this version of GymGO.' : 'Or anywhere in the world: type a town on the map, or move the map and tap Search this area.'}
           </Txt>
           {groups.map(({ label, cities }) => {
             // A long list (the US has 40) shows its first dozen until asked for the rest.

@@ -34,8 +34,12 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { useLegalInfo } from '@/lib/legal';
 import { LegalText } from '@/components/LegalText';
 import { Bone, Skeleton } from '@/components/Skeleton';
-import { DEMO_ONLY } from '@/lib/demoOnly';
+import { LIMITED } from '@/lib/limited';
+import { CITY_LIST } from '@/lib/places';
 import { loadReminders, reminderDays } from '@/lib/reminders';
+
+/** The real cities built into the app (the invented demo city aside). */
+const BUILT_IN_CITIES = CITY_LIST.filter((city) => !city.demo).length;
 
 export default function Profile() {
   useGlassRedraw();
@@ -161,8 +165,8 @@ export default function Profile() {
         <ServerAwayCard />
       ) : account.state === 'loading' ? (
         <MeCardSkeleton />
-      ) : DEMO_ONLY ? (
-        <ComingSoonCard />
+      ) : LIMITED ? (
+        <LimitedCard />
       ) : (
         <SignInCard />
       )}
@@ -178,7 +182,7 @@ export default function Profile() {
         <Row icon="timer" tile={TILE.red} title="Interval timer" subtitle="Tabata and EMOM, or your own with Pro" onPress={() => router.push('/timer')} />
       </Group>
 
-      {plan && <ProCard isPro={billing.isPro} line={proLine} trial={Boolean(billing.trial)} canBuy={canBuy} onOpen={() => openPro()} />}
+      {plan && !LIMITED && <ProCard isPro={billing.isPro} line={proLine} trial={Boolean(billing.trial)} canBuy={canBuy} onOpen={() => openPro()} />}
       {billing.isPro && me && CAN_BUY_HERE && billing.subscription?.manageable !== false && (
         <Group>
           <Row icon="settings" tile={TILE.grey} title="Manage subscription" subtitle="Change plan, payment or cancel" onPress={() => void manage()} />
@@ -199,10 +203,13 @@ export default function Profile() {
         />
       </Group>
 
-      <Group header="Friends">
-        <Row icon="people" tile={TILE.indigo} title="Friends" subtitle="Add by code, see their cards, invite to train" onPress={() => router.push('/friends')} />
-        <Row icon="trophy" tile={TILE.teal} title="Leaderboard" subtitle="Most gyms collected, if you join" onPress={() => router.push('/leaderboard')} />
-      </Group>
+      {/* Friends and leaderboards live on the server, which the limited website hasn't got. */}
+      {!LIMITED && (
+        <Group header="Friends">
+          <Row icon="people" tile={TILE.indigo} title="Friends" subtitle="Add by code, see their cards, invite to train" onPress={() => router.push('/friends')} />
+          <Row icon="trophy" tile={TILE.teal} title="Leaderboard" subtitle="Most gyms collected, if you join" onPress={() => router.push('/leaderboard')} />
+        </Group>
+      )}
 
       {moderator && account.token && (
         <Group header="Moderation">
@@ -223,10 +230,11 @@ export default function Profile() {
           tile={TILE.blue}
           title="Country"
           value={prefs.country ? countryName(prefs.country) : 'Choose'}
-          subtitle={billing.isPro ? 'Every country is open with Pro' : 'GymGO Free covers this country'}
+          subtitle={LIMITED ? 'Where GymGO opens' : billing.isPro ? 'Every country is open with Pro' : 'GymGO Free covers this country'}
           onPress={() => router.push('/country')}
         />
-        {prefs.country && !prefs.demo && <PackRow />}
+        {/* A country's gyms for offline use come from the server, which the limited website hasn't got. */}
+        {prefs.country && !prefs.demo && !LIMITED && <PackRow />}
         <Row
           icon="palette"
           tile={TILE.indigo}
@@ -264,7 +272,7 @@ export default function Profile() {
           subtitle="Load Street View and Google’s photos without asking"
           toggle={{ value: alwaysGoogle, onChange: (value) => setAlwaysShowGoogle(value) }}
         />
-        {!DEMO_ONLY && (
+        {!LIMITED && (
           <Row
             icon="flask"
             tile={TILE.orange}
@@ -300,13 +308,16 @@ export default function Profile() {
             reviews, what members paid and machine reports: GymGO members.
           </Explainer>
         )}
-        <Row
-          icon="bug"
-          tile={TILE.red}
-          title="Report a bug"
-          subtitle="Something not working? Tell the team"
-          onPress={() => router.push({ pathname: '/report-bug', params: { from: 'Profile' } })}
-        />
+        {/* A report goes to the server, which the limited website hasn't got. */}
+        {!LIMITED && (
+          <Row
+            icon="bug"
+            tile={TILE.red}
+            title="Report a bug"
+            subtitle="Something not working? Tell the team"
+            onPress={() => router.push({ pathname: '/report-bug', params: { from: 'Profile' } })}
+          />
+        )}
         <Row icon="info" tile={TILE.grey} title="Version" value={Constants.expoConfig?.version ?? '1.0.0'} chevron={false} />
       </Group>
 
@@ -315,7 +326,8 @@ export default function Profile() {
         <Row icon="lock" tile={TILE.grey} title="Privacy Policy" subtitle="No ads, no analytics, and your location stays on your phone" onPress={() => openLegal('privacy')} />
         <Row icon="refresh" tile={TILE.grey} title="Refunds and Cancelling" onPress={() => openLegal('refunds')} />
         <Row icon="people" tile={TILE.grey} title="Community Guidelines" subtitle="The rules for reviews, photos and reports" onPress={() => openLegal('community')} />
-        <Row icon="photo" tile={TILE.grey} title="Copyright and takedowns" expanded={about === 'copyright'} onPress={() => toggle('copyright')} />
+        {/* About members' photos and reviews, which the limited website has none of. */}
+        {!LIMITED && <Row icon="photo" tile={TILE.grey} title="Copyright and takedowns" expanded={about === 'copyright'} onPress={() => toggle('copyright')} />}
         {about === 'copyright' && <CopyrightExplainer onNotice={() => router.push({ pathname: '/report-bug', params: { topic: 'copyright', from: 'Profile' } })} />}
       </Group>
 
@@ -396,16 +408,16 @@ function ProCard({ isPro, line, trial, canBuy, onOpen }: { isPro: boolean; line:
 }
 
 /** Signed out: Apple and Google where they're set up, then email. */
-/** On the demo-only website (lib/demoOnly.ts), in place of signing in: what this is, and what's coming. */
-function ComingSoonCard() {
+/** On the limited website (lib/limited.ts), in place of signing in: what this version carries, and what the full one adds. */
+function LimitedCard() {
   return (
     <View style={styles.signInCard}>
       <View style={styles.signInHead}>
         <AppBadge size={52} />
         <View style={styles.flex}>
-          <Txt variant="title2">GymGO demo</Txt>
+          <Txt variant="title2">GymGO limited version</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
-            Every gym here is invented, to show what GymGO does. The full version, with real gyms and your own account, is coming soon.
+            {`Real gyms in ${BUILT_IN_CITIES} major cities, built in, from OpenStreetMap: no account needed. Your own account, reviews, members’ prices and visits, searching anywhere on the map and Pro come with the full version.`}
           </Txt>
         </View>
       </View>

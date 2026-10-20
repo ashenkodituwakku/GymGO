@@ -27,6 +27,7 @@ import { Chip, PrimaryButton, TIER_COLOUR, Txt } from './ui';
 import { AdSlot } from './AdSlot';
 import { Avatar } from './Avatar';
 import type { Account } from '@/lib/api';
+import { LIMITED } from '@/lib/limited';
 
 /** How many result rows animate as the list changes: about a screenful. */
 const ANIMATED_ROWS = 12;
@@ -186,7 +187,7 @@ export function ResultsContent({
             onOpenAccount();
           }}
           accessibilityRole="button"
-          accessibilityLabel={me ? 'Your account' : 'Sign in'}
+          accessibilityLabel={me ? 'Your account' : LIMITED ? 'Your profile' : 'Sign in'}
           style={({ pressed }) => [styles.avatar, me ? styles.avatarSignedIn : null, pressed && { opacity: 0.7 }]}
         >
           {me ? (

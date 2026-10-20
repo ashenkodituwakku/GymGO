@@ -23,6 +23,7 @@ import { haptic } from '@/lib/haptics';
 import { resultsById } from '@/lib/results';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
+import { LIMITED } from '@/lib/limited';
 
 export default function Saved() {
   useGlassRedraw();
@@ -69,9 +70,11 @@ export default function Saved() {
           <Txt variant="title2">Nothing saved yet</Txt>
           <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
             Tap Save on any gym and it lands here.{' '}
-            {account.state === 'signed_in' || account.state === 'unreachable'
-              ? 'It follows you to your other devices.'
-              : 'Sign in and it follows you to your other devices too.'}
+            {LIMITED
+              ? 'It’s kept on this device.'
+              : account.state === 'signed_in' || account.state === 'unreachable'
+                ? 'It follows you to your other devices.'
+                : 'Sign in and it follows you to your other devices too.'}
           </Txt>
           <PrimaryButton
             label="Find a gym"
@@ -194,7 +197,9 @@ export default function Saved() {
             </View>
           )}
           <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-            {account.state === 'signed_in'
+            {LIMITED
+              ? 'Saved on this device.'
+              : account.state === 'signed_in'
               ? 'Synced to your account.'
               : account.state === 'unreachable'
                 ? 'The GymGO server isn’t reachable, so these are this device’s copy. Anything you save now joins your account when it’s back.'

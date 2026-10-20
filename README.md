@@ -1547,15 +1547,19 @@ GymGO's website is at **https://gymgo.site**, on Netlify (project
 `scripts/netlify-build.sh`, which `netlify.toml` runs. A few things differ
 from the app:
 
-- **The demo only, for now.** `netlify.toml` sets `EXPO_PUBLIC_DEMO_ONLY=on`:
-  Demo mode is on and can't be turned off, so the website shows only the
-  invented Sydney demo gyms, with a banner on every screen saying the full
-  version is coming soon (`apps/mobile/src/lib/demoOnly.ts`). Delete that
-  line to show the full app. Each demo gym shows a picture: an illustration
-  drawn for the demo (`apps/mobile/scripts/demo-pictures.mjs`), labelled
-  "Illustration" on its card and credited "Illustration made for the GymGO
-  demo" on its page, never a photo. Real gyms never get one (the app's own
-  Demo mode shows the same illustrations).
+- **The limited version, for now.** `netlify.toml` sets
+  `EXPO_PUBLIC_LIMITED=on` (`apps/mobile/src/lib/limited.ts`): the website
+  runs with no GymGO server, on the real gyms built into the app (major
+  cities in the US, Australia and Europe, from OpenStreetMap), with every
+  built-in city open, since Pro can't be bought there. Demo mode is off and
+  hidden. A banner on every screen says how many cities are built in and
+  that accounts and reviews come with the full version; Profile says what
+  the full version adds. What needs the server is left out rather than
+  offered: members' photos and reports, reviews, notes, owners' claims, day
+  passes, Search this area, places with no gyms built in, friends,
+  leaderboards, saved workouts and the training log, bug reports and
+  offline country packs. Delete that line (and set `GYMGO_SERVER_URL`) to
+  show the full app. More cities: `packages/world-data` (see its README).
 - **No account needed.** `netlify.toml` sets `EXPO_PUBLIC_ACCOUNT=optional`,
   so the website can be used as a guest; signing in is only for what the
   server keeps. The app, and GymGO on your computer, still need an account

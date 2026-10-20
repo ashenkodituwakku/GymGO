@@ -10,8 +10,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Redrawn, useThemeVersion } from '@/components/Redrawn';
 import { WebBack } from '@/components/WebBack';
-import { DemoBanner } from '@/components/DemoBanner';
-import { DEMO_ONLY } from '@/lib/demoOnly';
+import { LimitedBanner } from '@/components/LimitedBanner';
+import { LIMITED } from '@/lib/limited';
 import { backLabel } from '@/lib/backLabel';
 import { setGlassLevel } from '@/components/liquidGlass';
 import { AppProvider, useApp } from '@/lib/app-state';
@@ -208,7 +208,7 @@ function ThemedStack() {
   return (
     <ThemeProvider value={navTheme}>
       <StatusBar style={dark ? 'light' : 'dark'} />
-      {DEMO_ONLY && <DemoBanner />}
+      {LIMITED && <LimitedBanner />}
       <Stack
         // Each screen's content is drawn again in the new colours; the tabs
         // redraw their own screens (app/(tabs)/_layout.tsx), so the tab
@@ -229,7 +229,7 @@ function ThemedStack() {
                     label={backLabel(navigation.getState().routes, route.key, label)}
                     canGoBack={navigation.canGoBack()}
                     onPress={() => navigation.goBack()}
-                    home={signedIn ? { label: 'Home', href: '/' } : { label: 'Sign in', href: '/sign-in' }}
+                    home={signedIn || LIMITED ? { label: 'Home', href: '/' } : { label: 'Sign in', href: '/sign-in' }}
                   />
                 ),
               }

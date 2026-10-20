@@ -59,8 +59,10 @@ import { ReviewsSection } from '@/components/ReviewsSection';
 import { FloatingGlassBackground, FloatingSolidBackground, SHEET_GAP, SHEET_SCROLL_ONLY, SHEET_SIDE, SheetClip, SheetOpener, SheetScrollView } from '@/components/SheetBackground';
 import { CloseButton, ControlCapsule, Txt } from '@/components/ui';
 import { ARRIVE, DROP_IN, FADE_OUT, LEAVE, Pressable, usePressScale } from '@/components/motion';
+import { FullVersionNote } from '@/components/FullVersionNote';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { usePageTitle } from '@/lib/pageTitle';
+import { LIMITED } from '@/lib/limited';
 
 const PEEK = 150;
 /** Below this width the phone layout is used, even in a browser. */
@@ -374,10 +376,11 @@ function MapScreen() {
   // --- Search this area -------------------------------------------------------
 
   // Offered once the map has moved well away from what the list shows, as
-  // in Apple Maps. Never in demo mode: it finds real gyms.
+  // in Apple Maps. Never in demo mode (it finds real gyms), nor on the
+  // limited website, whose gyms are all built in: the map is read by a server.
   const areaOffered = useCallback(
     (box: BoundingBox | null) => {
-      if (!box || prefs.demo) return false;
+      if (!box || prefs.demo || LIMITED) return false;
       if (filters.bbox) return boxDrift(filters.bbox, box) > 0.35;
       const height = box.north - box.south;
       const width = box.east - box.west;
@@ -768,7 +771,7 @@ function MapScreen() {
       onSeePro={() => openPro('worldwide')}
       onGoHome={goHome}
       lookup={lookup}
-      onSearchHere={searchHere}
+      onSearchHere={LIMITED ? undefined : searchHere}
       home={prefs.country}
     />
   );
@@ -790,7 +793,7 @@ function MapScreen() {
         onOpenGoogle={() => setGoogleFor(selected.record.location.id)}
         onOpenWorkout={() => router.push({ pathname: '/workout/[id]', params: { id: selected.record.location.id } })}
         asOf={asOf}
-        photos={
+        photos={LIMITED ? null : (
           <PhotoHero
             gymId={selected.record.location.id}
             isDemo={selected.record.location.isDemoData}
@@ -799,8 +802,8 @@ function MapScreen() {
             onSignIn={openAccount}
             width={inSheet ? width - SHEET_SIDE * 2 : PANEL_WIDTH}
           />
-        }
-        memberKit={
+        )}
+        memberKit={LIMITED ? null : (
           <MemberKit
             gymId={selected.record.location.id}
             isDemo={selected.record.location.isDemoData}
@@ -808,13 +811,13 @@ function MapScreen() {
             inSheet={inSheet}
             onSignIn={openAccount}
           />
-        }
-        statusWarning={<StatusWarning gymId={selected.record.location.id} isDemo={selected.record.location.isDemoData} token={account.state === 'signed_in' ? account.token : null} />}
-        memberStatus={<MemberStatus gymId={selected.record.location.id} isDemo={selected.record.location.isDemoData} account={account} onSignIn={openAccount} />}
-        memberAccess={
+        )}
+        statusWarning={LIMITED ? null : <StatusWarning gymId={selected.record.location.id} isDemo={selected.record.location.isDemoData} token={account.state === 'signed_in' ? account.token : null} />}
+        memberStatus={LIMITED ? null : <MemberStatus gymId={selected.record.location.id} isDemo={selected.record.location.isDemoData} account={account} onSignIn={openAccount} />}
+        memberAccess={LIMITED ? null : (
           <MemberAccess gymId={selected.record.location.id} isDemo={selected.record.location.isDemoData} account={account} onSignIn={openAccount} />
-        }
-        memberPrices={
+        )}
+        memberPrices={LIMITED ? null : (
           <MemberPrices
             gymId={selected.record.location.id}
             isDemo={selected.record.location.isDemoData}
@@ -823,9 +826,9 @@ function MapScreen() {
             inSheet={inSheet}
             onSignIn={openAccount}
           />
-        }
-        reviews={<ReviewsSection gymId={selected.record.location.id} account={account} inSheet={inSheet} onSignIn={openAccount} />}
-        notes={selected.record.location.isDemoData ? null : <GymNotes gymId={selected.record.location.id} isPro={billing.isPro} inSheet={inSheet} onPro={() => openPro('notes')} />}
+        )}
+        reviews={LIMITED ? <FullVersionNote what="Reviews" /> : <ReviewsSection gymId={selected.record.location.id} account={account} inSheet={inSheet} onSignIn={openAccount} />}
+        notes={LIMITED ? null : selected.record.location.isDemoData ? null : <GymNotes gymId={selected.record.location.id} isPro={billing.isPro} inSheet={inSheet} onPro={() => openPro('notes')} />}
         collect={selected.record.location.isDemoData ? null : <CollectCard record={selected.record} onOpenCollection={() => router.push('/collection')} />}
       />
     );

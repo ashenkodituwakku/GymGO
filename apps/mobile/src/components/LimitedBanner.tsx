@@ -1,23 +1,27 @@
 /**
- * Across the top of every screen on the demo-only website (lib/demoOnly.ts):
- * the gyms are invented, and the full version is coming soon.
+ * Across the top of every screen on the limited website (lib/limited.ts):
+ * what it carries (real gyms in the cities built in) and what it doesn't.
  */
 
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mix, readable } from '@/lib/looks';
+import { CITY_LIST } from '@/lib/places';
 import { color, currentTheme, face, space, themed } from '@/lib/theme';
 import { Txt } from './ui';
 
-export function DemoBanner() {
+/** The real cities built into the app (the invented demo city aside). */
+const BUILT_IN_CITIES = CITY_LIST.filter((city) => !city.demo).length;
+
+export function LimitedBanner() {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.bar, { paddingTop: insets.top + space[2] }]}>
       <Txt variant="footnote" color={ink()} style={styles.text}>
         <Txt variant="footnote" color={ink()} style={face('semibold')}>
-          GymGO demo
+          GymGO limited version
         </Txt>
-        {' · Every gym here is invented. The full version is coming soon.'}
+        {` · Gyms in ${BUILT_IN_CITIES} cities, built in. Accounts and reviews come with the full version.`}
       </Txt>
     </View>
   );

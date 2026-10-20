@@ -37,6 +37,7 @@ import { Glass } from './Glass';
 import { FADE_IN, FADE_OUT, Pressable, Pressy } from './motion';
 import { ActionButton, CloseButton, Fold, InfoRow, RoundToggle, TIER_COLOUR, Txt } from './ui';
 import { JoinGym, MembershipBanner } from './JoinGym';
+import { LIMITED } from '@/lib/limited';
 
 const TRAINING: Record<string, string> = {
   full_gym: 'Gym',
@@ -543,7 +544,9 @@ export function PlaceCard({
           summary={
             kit.length
               ? kit.slice(0, 3).map((item) => equipmentLabel(item.equipmentTypeId)).join(', ') + (kit.length > 3 ? '…' : '')
-              : 'Not published by the gym · see what members say'
+              : LIMITED
+                ? 'Not published by the gym'
+                : 'Not published by the gym · see what members say'
           }
           initiallyOpen={result.equipment.matches.length > 0}
         >
@@ -629,7 +632,7 @@ export function PlaceCard({
         <Fold
           icon="star"
           title="Reviews"
-          summary={result.rating.count ? `${ratingShort(result.rating.average)} from ${result.rating.count}` : 'None yet — be the first'}
+          summary={result.rating.count ? `${ratingShort(result.rating.average)} from ${result.rating.count}` : LIMITED ? 'With the full version' : 'None yet — be the first'}
         >
           {reviews}
         </Fold>

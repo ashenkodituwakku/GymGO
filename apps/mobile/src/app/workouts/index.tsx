@@ -23,6 +23,7 @@ import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { unitFor } from '@/lib/training';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
+import { LIMITED } from '@/lib/limited';
 
 export default function MyWorkouts() {
   useGlassRedraw();
@@ -54,9 +55,9 @@ export default function MyWorkouts() {
       <View style={styles.empty}>
         <Txt variant="title2">Your workouts</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          Sign in to see the workouts you’ve saved.
+          {LIMITED ? 'Saving workouts comes with the full version of GymGO.' : 'Sign in to see the workouts you’ve saved.'}
         </Txt>
-        <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />
+        {!LIMITED && <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />}
       </View>
     );
   }

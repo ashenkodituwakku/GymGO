@@ -28,7 +28,7 @@ import { useCountryPack } from './useCountryPack';
 import { useCollectionSync } from './useCollection';
 import { cleanPlates, type WeightUnit } from './training';
 import { cleanTimers, type IntervalPlan } from './intervals';
-import { DEMO_ONLY } from './demoOnly';
+import { LIMITED } from './limited';
 
 export interface ExploreRequest {
   nonce: number;
@@ -192,7 +192,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [compare, setCompare] = useState<string[]>([]);
   const compareLoaded = useRef(false);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
-  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, demo: DEMO_ONLY, country: null, weeklyGoal: null, plates: {}, timers: [] });
+  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, demo: false, country: null, weeklyGoal: null, plates: {}, timers: [] });
   const [prefsReady, setPrefsReady] = useState(false);
   // Place search reads the mode, and distances your country's units, so
   // both must match before anything renders.
@@ -216,8 +216,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const kgPlates = cleanPlates(value.plates?.kg, 'kg');
       const lbPlates = cleanPlates(value.plates?.lb, 'lb');
       const plates = { ...(kgPlates ? { kg: kgPlates } : {}), ...(lbPlates ? { lb: lbPlates } : {}) };
-      // The demo-only website stays in Demo mode whatever was kept (lib/demoOnly.ts).
-      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, demo: DEMO_ONLY || value.demo === true, country, weeklyGoal: goal, plates, timers: cleanTimers(value.timers) };
+      // The limited website shows real gyms only, whatever was kept (lib/limited.ts).
+      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, demo: !LIMITED && value.demo === true, country, weeklyGoal: goal, plates, timers: cleanTimers(value.timers) };
       setHapticsEnabled(next.haptics);
       setSoundsEnabled(next.sounds);
       setDemoMode(next.demo);
@@ -452,7 +452,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // The demo's gyms are invented, so where they are isn't part of Pro.
   const mayExplore = useCallback(
-    (countryCode: string) => prefs.demo || canSearchIn(countryCode, prefs.country, billing.isPro),
+    // The limited website can't sell Pro, so every city built into it is open.
+    (countryCode: string) => prefs.demo || LIMITED || canSearchIn(countryCode, prefs.country, billing.isPro),
     [prefs.demo, prefs.country, billing.isPro],
   );
 
@@ -468,7 +469,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [prefs.demo]);
 
   const setPref = useCallback(<K extends keyof Prefs>(key: K, value: Prefs[K]) => {
-    if (key === 'demo' && DEMO_ONLY) return;
+    if (key === 'demo' && LIMITED) return;
     setPrefs((current) => {
       const next = { ...current, [key]: value };
       if (key === 'haptics') setHapticsEnabled(Boolean(value));

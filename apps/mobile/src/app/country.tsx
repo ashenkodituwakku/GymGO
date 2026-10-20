@@ -20,6 +20,7 @@ import { CITY_LIST } from '@/lib/places';
 import { HEADER_EDGE, NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { useOverhang, useScreenBottom } from '@/lib/layout';
+import { LIMITED } from '@/lib/limited';
 
 /** How many built-in cities each country has. */
 const CITY_COUNT = CITY_LIST.filter((city) => !city.demo).reduce<Record<string, number>>((counts, city) => {
@@ -43,15 +44,18 @@ export default function CountryScreen() {
   const suggested = useMemo(() => deviceCountry() ?? FOCUS_COUNTRY, []);
 
   const sections = useMemo(() => {
-    if (query.trim()) return [{ title: '', data: searchCountries(query) }];
     const pick = (codes: Array<string | null | undefined>) =>
       [...new Set(codes)].map((code) => countryByCode(code)).filter((country): country is Country => country !== null);
-    const top = pick([prefs.country, suggested]);
+    // The limited website has only its built-in cities to show (lib/limited.ts): only their countries are offered.
+    const offered = LIMITED ? new Set(builtInCountries()) : null;
+    const only = (list: Country[]) => (offered ? list.filter((country) => offered.has(country.code)) : list);
+    if (query.trim()) return [{ title: '', data: only(searchCountries(query)) }];
+    const top = only(pick([prefs.country, suggested]));
     return [
       ...(top.length ? [{ title: prefs.country ? 'Yours' : 'Suggested', data: top }] : []),
       // Less the ones already on top, so the first thing you see isn't there twice.
       { title: 'With cities built in', data: pick(builtInCountries()).filter((country) => !top.includes(country)) },
-      { title: 'Every country', data: COUNTRIES },
+      ...(LIMITED ? [] : [{ title: 'Every country', data: COUNTRIES }]),
     ];
   }, [query, prefs.country, suggested]);
 
@@ -106,7 +110,9 @@ export default function CountryScreen() {
                 {first ? 'Where do you train?' : 'Your country'}
               </Txt>
               <Txt variant="subhead" color={color.labelSecondary}>
-                {billing.isPro
+                {LIMITED
+                  ? 'This sets where GymGO opens. Every city built into this version is open to you.'
+                  : billing.isPro
                   ? 'You have GymGO Pro, so every country is open to you. This sets where GymGO opens.'
                   : 'GymGO Free covers one country, with every gym in it. GymGO Pro adds every other country, for when you travel.'}
               </Txt>

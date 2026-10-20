@@ -29,6 +29,7 @@ import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { syncCollection } from '@/lib/useCollection';
+import { LIMITED } from '@/lib/limited';
 
 const MEDAL = ['#C9971C', '#8E959E', '#B0713A'];
 
@@ -97,9 +98,9 @@ export default function LeaderboardScreen() {
           Who’s collected the most?
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.centre}>
-          Sign in to see the leaderboards, and to join them if you like.
+          {LIMITED ? 'Leaderboards come with the full version of GymGO.' : 'Sign in to see the leaderboards, and to join them if you like.'}
         </Txt>
-        <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />
+        {!LIMITED && <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />}
       </View>
     );
   }

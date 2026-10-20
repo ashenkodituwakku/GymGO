@@ -47,6 +47,7 @@ import { PageScroll } from '@/components/PageScroll';
 import { SessionNote } from '@/components/SessionNote';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { BodyWeightCard } from '@/components/BodyWeightCard';
+import { LIMITED } from '@/lib/limited';
 
 const nameOf = exerciseName;
 /** How many days of history show at first, and how many more each "Show older" adds. */
@@ -106,9 +107,11 @@ export default function ProgressScreen() {
         <Icon name="chart" size={34} color={color.brand} />
         <Txt variant="title2">Keep a training log</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          Sign in (it’s free) and every workout you finish is kept here, with your records and your streak.
+          {LIMITED
+            ? 'With the full version of GymGO, every workout you finish is kept here, with your records and your streak. Workouts, templates and the timers all work in this one.'
+            : 'Sign in (it’s free) and every workout you finish is kept here, with your records and your streak.'}
         </Txt>
-        <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />
+        {!LIMITED && <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />}
       </View>
     );
   }

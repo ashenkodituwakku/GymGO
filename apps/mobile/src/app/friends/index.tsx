@@ -26,6 +26,7 @@ import { inviteWhen } from '@/lib/friends';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, space, themed } from '@/lib/theme';
+import { LIMITED } from '@/lib/limited';
 
 export default function FriendsScreen() {
   useGlassRedraw();
@@ -104,9 +105,9 @@ export default function FriendsScreen() {
           Collect with friends
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.centre}>
-          Sign in to add friends by code, see each other’s cards, and invite each other to train.
+          {LIMITED ? 'Friends come with the full version of GymGO.' : 'Sign in to add friends by code, see each other’s cards, and invite each other to train.'}
         </Txt>
-        <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />
+        {!LIMITED && <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />}
       </View>
     );
   }

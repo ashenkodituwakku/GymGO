@@ -18,6 +18,7 @@ import { collectionStats } from '@/lib/collection';
 import { haptic } from '@/lib/haptics';
 import { color, radius, shadow, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
+import { LIMITED } from '@/lib/limited';
 
 /** Signed in (still, while the server is away), not yet known, or signed out. */
 function useSignedIn() {
@@ -46,9 +47,9 @@ export function CollectionSyncLine({ when = 'any' }: { when?: 'any' | 'trouble' 
       <View style={styles.sync}>
         <Icon name="offline" size={16} color={color.labelSecondary} />
         <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
-          Kept on this device only. Sign in to keep it on your account too, and see it on your other devices.
+          {LIMITED ? 'Kept on this device.' : 'Kept on this device only. Sign in to keep it on your account too, and see it on your other devices.'}
         </Txt>
-        <PrimaryButton label="Sign in" tone="quiet" onPress={() => router.push('/sign-in')} />
+        {!LIMITED && <PrimaryButton label="Sign in" tone="quiet" onPress={() => router.push('/sign-in')} />}
       </View>
     );
   }

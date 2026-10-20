@@ -14,8 +14,8 @@ const contrast = (a: string, b: string) => {
   return (light! + 0.05) / (dark! + 0.05);
 };
 
-describe('the demo banner', () => {
-  it('reads at 4.5 : 1 in every accent, light and dark (as components/DemoBanner.tsx draws it)', () => {
+describe('the limited version’s banner', () => {
+  it('reads at 4.5 : 1 in every accent, light and dark (as components/LimitedBanner.tsx draws it)', () => {
     for (const scheme of ['light', 'dark'] as const) {
       for (const accent of ACCENT_IDS) {
         const palette = paletteFor(scheme, accent);

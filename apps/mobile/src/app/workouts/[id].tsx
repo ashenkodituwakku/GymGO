@@ -19,6 +19,7 @@ import { GOALS, muscleLabel, workoutText, type Muscle } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { ScreenOptions } from '@/components/ScreenOptions';
+import { LIMITED } from '@/lib/limited';
 
 export default function SavedWorkoutScreen() {
   useGlassRedraw();
@@ -48,7 +49,7 @@ export default function SavedWorkoutScreen() {
         <ScreenOptions options={{ title: 'Workout' }} />
         <Txt variant="title2">Not found</Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          {token ? 'This workout isn’t in your account any more.' : 'Sign in to see your saved workouts.'}
+          {token ? 'This workout isn’t in your account any more.' : LIMITED ? 'Saving workouts comes with the full version of GymGO.' : 'Sign in to see your saved workouts.'}
         </Txt>
         <PrimaryButton label="Back" tone="quiet" onPress={() => (router.canGoBack() ? router.back() : router.replace('/workouts'))} />
       </View>

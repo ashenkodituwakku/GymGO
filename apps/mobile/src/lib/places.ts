@@ -22,6 +22,7 @@ import { AU_CITIES, AU_PLACES, type AuCityId } from '@gymgo/au-data';
 import { US_CITIES, US_PLACES, type UsCityId } from '@gymgo/usa-data';
 import { EU_CITIES, EU_PLACES, type EuCityId } from '@gymgo/eu-data';
 import { WORLD_CITY_ROWS } from './worldCities';
+import { LIMITED } from './limited';
 
 export type CityId = 'melbourne' | 'sydney-demo' | AuCityId | UsCityId | EuCityId;
 
@@ -374,9 +375,13 @@ const carried = (city: WorldCity) => {
   return km <= nearest.reachKm;
 };
 
-/** The world cities GymGO doesn't carry already, worked out once. */
+/**
+ * The world cities GymGO doesn't carry already, worked out once. None on the
+ * limited website (lib/limited.ts): their gyms are read from the map by the
+ * server, and it has none.
+ */
 let uncarried: WorldCity[] | null = null;
-const notCarried = (): WorldCity[] => (uncarried ??= WORLD_CITIES.filter((city) => !carried(city)));
+const notCarried = (): WorldCity[] => (uncarried ??= LIMITED ? [] : WORLD_CITIES.filter((city) => !carried(city)));
 
 /** Every country's biggest cities that GymGO doesn't carry already, biggest first in each. None in demo mode. */
 export function uncarriedWorldCities(): WorldCity[] {

@@ -31,7 +31,7 @@ import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtr
 import { useApp, type ProReason } from '@/lib/app-state';
 import type { Sale } from '@/lib/useBilling';
 import { ApiError, OfflineError, apiBase } from '@/lib/api';
-import { DEMO_ONLY } from '@/lib/demoOnly';
+import { LIMITED } from '@/lib/limited';
 import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -392,7 +392,7 @@ function BuyButton({
   if (SERVERLESS) {
     return (
       <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-        {DEMO_ONLY ? 'Pro comes with the full version of GymGO. This demo shows what it includes.' : 'Pro can’t be bought in this version of GymGO.'}
+        {LIMITED ? 'Pro comes with the full version of GymGO. This limited version shows what it includes.' : 'Pro can’t be bought in this version of GymGO.'}
       </Txt>
     );
   }

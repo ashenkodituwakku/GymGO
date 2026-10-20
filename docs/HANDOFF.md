@@ -160,13 +160,18 @@ mobile 388, domain 167 and web 39 tests, all passing.
   busy button renamed "Say how busy". Offered but not chosen: hiding the
   AD PLACEHOLDER box for Free users, putting "can I get in?" first on gym
   pages, and a notice when the map can't load.
-- **gymgo.site shows the demo only** (6 Oct, the owner's call): the website
-  build sets `EXPO_PUBLIC_DEMO_ONLY=on` (`lib/demoOnly.ts`), which keeps
-  Demo mode on (invented Sydney gyms) and hides its switch, puts a "GymGO
-  demo · … The full version is coming soon." banner across every screen
-  (`components/DemoBanner.tsx`), and swaps Profile's sign-in card for a
-  coming-soon card. The owner has linked the GitHub repository in Netlify,
-  so a push builds the site there.
+- **gymgo.site is the limited version** (20 Oct, the owner asked: "instead
+  of the demo version name it limited version … main cities around the
+  globe … so you don't need the servers yet"). The website build sets
+  `EXPO_PUBLIC_LIMITED=on` (`lib/limited.ts`, replacing `lib/demoOnly.ts`):
+  real built-in gyms, no server, every built-in city open, Demo mode off and
+  hidden, a "GymGO limited version · Gyms in N cities, built in" banner
+  (`components/LimitedBanner.tsx`), and a limited-version card on Profile.
+  Server-bound parts are left out, not offered (see README, "The website on
+  Netlify"). More world cities wait on Overpass, which this cloud
+  environment's network blocks: `packages/world-data` fetches them in one
+  command once `overpass-api.de` is allowed. The owner has linked the
+  GitHub repository in Netlify, so a push builds the site there.
 - **The website is on Netlify** (6 Oct; the owner asked, and chose: live on
   gymgo.site now, usable without an account, server decided later). Netlify
   project `gymgowebsite`, replacing the "coming soon" page. `netlify.toml`

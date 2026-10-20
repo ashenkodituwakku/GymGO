@@ -47,6 +47,8 @@ import { HEADER_EDGE, PAGE_COLUMN, color, radius, space, themed } from '@/lib/th
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { ScreenOptions } from '@/components/ScreenOptions';
+import { FullVersionNote } from '@/components/FullVersionNote';
+import { LIMITED } from '@/lib/limited';
 
 /** The pop-up growing into the page: the page rises from where the pop-up sat, still when Reduce Motion is on. */
 const EXPAND_IN =
@@ -129,6 +131,30 @@ export default function GymPage() {
     .filter(Boolean)
     .join(' · ');
 
+  // Street View or Google's photos, behind their gate: under members' photos, or in their place
+  // where there's no server to have any (the limited website, lib/limited.ts).
+  // Nothing from Google loads until asked (see lib/googleConsent.ts).
+  const googleFallback = (
+    <GoogleGate what={googlePhotos ? 'Photos' : 'Street View'}>
+      {googlePhotos ? (
+        <GooglePhotos photos={place!.photos} width={cardWidth - space[4] * 2} />
+      ) : (
+        <View style={styles.streetView}>
+          <GoogleEmbed
+            url={googleStreetViewEmbedUrl(result.record)}
+            height={220}
+            what="Street View"
+            caption={
+              <Txt variant="caption" color={color.labelSecondary}>
+                Google Street View outside the gym. It may not face the door.
+              </Txt>
+            }
+          />
+        </View>
+      )}
+    </GoogleGate>
+  );
+
   return (
     <>
       <ScreenOptions
@@ -196,37 +222,21 @@ export default function GymPage() {
             onOpenWorkout={() => router.push({ pathname: '/workout/[id]', params: { id: location.id } })}
             asOf={asOf}
             photos={
-              <PhotoHero
-                gymId={location.id}
-                isDemo={location.isDemoData}
-                website={location.website}
-                account={account}
-                onSignIn={() => router.push('/sign-in')}
-                width={cardWidth}
-                fallback={
-                  // Nothing from Google loads until asked (see lib/googleConsent.ts).
-                  <GoogleGate what={googlePhotos ? 'Photos' : 'Street View'}>
-                    {googlePhotos ? (
-                      <GooglePhotos photos={place!.photos} width={cardWidth - space[4] * 2} />
-                    ) : (
-                      <View style={styles.streetView}>
-                        <GoogleEmbed
-                          url={googleStreetViewEmbedUrl(result.record)}
-                          height={220}
-                          what="Street View"
-                          caption={
-                            <Txt variant="caption" color={color.labelSecondary}>
-                              Google Street View outside the gym. It may not face the door.
-                            </Txt>
-                          }
-                        />
-                      </View>
-                    )}
-                  </GoogleGate>
-                }
-              />
+              LIMITED ? (
+                googleFallback
+              ) : (
+                <PhotoHero
+                  gymId={location.id}
+                  isDemo={location.isDemoData}
+                  website={location.website}
+                  account={account}
+                  onSignIn={() => router.push('/sign-in')}
+                  width={cardWidth}
+                  fallback={googleFallback}
+                />
+              )
             }
-            memberKit={
+            memberKit={LIMITED ? null : (
               <MemberKit
                 gymId={location.id}
                 isDemo={location.isDemoData}
@@ -234,13 +244,13 @@ export default function GymPage() {
                 inSheet={false}
                 onSignIn={() => router.push('/sign-in')}
               />
-            }
-            statusWarning={<StatusWarning gymId={location.id} isDemo={location.isDemoData} token={account.state === 'signed_in' ? account.token : null} />}
-            memberStatus={<MemberStatus gymId={location.id} isDemo={location.isDemoData} account={account} onSignIn={() => router.push('/sign-in')} />}
-            memberAccess={
+            )}
+            statusWarning={LIMITED ? null : <StatusWarning gymId={location.id} isDemo={location.isDemoData} token={account.state === 'signed_in' ? account.token : null} />}
+            memberStatus={LIMITED ? null : <MemberStatus gymId={location.id} isDemo={location.isDemoData} account={account} onSignIn={() => router.push('/sign-in')} />}
+            memberAccess={LIMITED ? null : (
               <MemberAccess gymId={location.id} isDemo={location.isDemoData} account={account} onSignIn={() => router.push('/sign-in')} />
-            }
-            memberPrices={
+            )}
+            memberPrices={LIMITED ? null : (
               <MemberPrices
                 gymId={location.id}
                 isDemo={location.isDemoData}
@@ -249,13 +259,13 @@ export default function GymPage() {
                 inSheet={false}
                 onSignIn={() => router.push('/sign-in')}
               />
-            }
-            reviews={<ReviewsSection gymId={location.id} account={account} inSheet={false} onSignIn={() => router.push('/sign-in')} />}
-            notes={location.isDemoData ? null : <GymNotes gymId={location.id} isPro={billing.isPro} inSheet={false} onPro={() => openPro('notes')} />}
+            )}
+            reviews={LIMITED ? <FullVersionNote what="Reviews" /> : <ReviewsSection gymId={location.id} account={account} inSheet={false} onSignIn={() => router.push('/sign-in')} />}
+            notes={LIMITED ? null : location.isDemoData ? null : <GymNotes gymId={location.id} isPro={billing.isPro} inSheet={false} onPro={() => openPro('notes')} />}
             collect={location.isDemoData ? null : <CollectCard record={result.record} onOpenCollection={() => router.push('/collection')} />}
-            dayPass={location.isDemoData ? null : <DayPass gymId={location.id} timezone={location.timezone} account={account} onSignIn={() => router.push('/sign-in')} />}
-            busy={<MemberBusy location={location} account={account} onSignIn={() => router.push('/sign-in')} />}
-            owner={<GymOwner record={result.record} account={account} onSignIn={() => router.push('/sign-in')} />}
+            dayPass={LIMITED ? null : location.isDemoData ? null : <DayPass gymId={location.id} timezone={location.timezone} account={account} onSignIn={() => router.push('/sign-in')} />}
+            busy={LIMITED ? null : <MemberBusy location={location} account={account} onSignIn={() => router.push('/sign-in')} />}
+            owner={LIMITED ? null : <GymOwner record={result.record} account={account} onSignIn={() => router.push('/sign-in')} />}
           />
           <GoogleSection place={place} photosAbove={googlePhotos} />
           <View style={styles.mapButton}>

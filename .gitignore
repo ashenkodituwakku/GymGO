@@ -34,3 +34,6 @@ __pycache__/
 apps/mobile/ios/
 apps/mobile/android/
 deploy/data/
+
+# Netlify CLI and deploy tool state (the site link), per machine
+.netlify/

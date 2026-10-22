@@ -66,6 +66,22 @@ export default function LifetimeScreen() {
     );
   }
 
+  // The log didn't load: say so, rather than that there's nothing in it.
+  if (log.error) {
+    return (
+      <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.centred]}>
+        <ScreenOptions options={{ title: 'Lifetime' }} />
+        <HeroMark icon="trophy" />
+        <Txt variant="subhead" color={color.dangerInk} style={styles.center}>
+          {log.error}
+        </Txt>
+        <View style={styles.button}>
+          <PrimaryButton label="Try again" icon="refresh" tone="quiet" onPress={log.reload} />
+        </View>
+      </PageScroll>
+    );
+  }
+
   if (!life) {
     return (
       <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.centred]}>

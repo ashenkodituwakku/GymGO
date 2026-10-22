@@ -1341,6 +1341,8 @@ saved list always opens, wherever the gym is.
 | 1-rep max | Your estimated max, and 90%, 80% and 70% | Every step from 100% to 50% with plates, and what you could lift for 2 to 12 reps |
 | Streak freeze | — | One missed week a month doesn't end your streak |
 | Profile ring | Your picture | Ringed in your accent |
+| Celebrations | Confetti for a record or a goal met | Your pick: confetti, fireworks, gold stars or emoji |
+| Lifetime stats | — | Every kilo, rep and hour added up, your favourites, and what the weight compares to |
 
 One tier, two ways to pay, tax included:
 

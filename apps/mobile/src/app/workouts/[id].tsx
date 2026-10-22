@@ -47,7 +47,9 @@ export default function SavedWorkoutScreen() {
     return (
       <View style={styles.missing}>
         <ScreenOptions options={{ title: 'Workout' }} />
-        <Txt variant="title2">Not found</Txt>
+        <Txt variant="title2" style={styles.center}>
+          Not found
+        </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           {token ? 'This workout isn’t in your account any more.' : LIMITED ? 'Saving workouts comes with the full version of GymGO.' : 'Sign in to see your saved workouts.'}
         </Txt>

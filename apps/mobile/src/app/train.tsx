@@ -152,7 +152,9 @@ function NoWorkout({ token }: { token: string | null }) {
       <ScreenOptions options={{ title: 'Workout' }} />
       <View style={styles.noWorkoutHead}>
         <HeroMark icon="workout" />
-        <Txt variant="title2">No workout in progress</Txt>
+        <Txt variant="title2" style={styles.center}>
+          No workout in progress
+        </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           {last || recent.length > 0
             ? 'Pick up where you left off, build a new one, or pick a template.'

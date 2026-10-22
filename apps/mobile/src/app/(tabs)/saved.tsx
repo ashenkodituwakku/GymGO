@@ -67,7 +67,9 @@ export default function Saved() {
       {!prefsReady || (account.state === 'loading' && saved.length === 0) ? null : saved.length === 0 && gone.length === 0 ? (
         <View style={styles.empty}>
           <HeroMark icon="saved" />
-          <Txt variant="title2">Nothing saved yet</Txt>
+          <Txt variant="title2" style={styles.center}>
+            Nothing saved yet
+          </Txt>
           <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
             Tap Save on any gym and it lands here.{' '}
             {LIMITED

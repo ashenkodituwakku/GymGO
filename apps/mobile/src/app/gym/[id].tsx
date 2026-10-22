@@ -114,7 +114,9 @@ export default function GymPage() {
       <View style={styles.missing}>
         <ScreenOptions options={{ title: 'Gym' }} />
         <HeroMark icon="search" />
-        <Txt variant="title2">Gym not found</Txt>
+        <Txt variant="title2" style={styles.center}>
+          Gym not found
+        </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           It may have been removed from GymGO. Try searching the map.
         </Txt>

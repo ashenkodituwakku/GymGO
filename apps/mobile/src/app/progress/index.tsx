@@ -50,6 +50,8 @@ import { BodyWeightCard } from '@/components/BodyWeightCard';
 import { LIMITED } from '@/lib/limited';
 
 const nameOf = exerciseName;
+/** "65 kg × 6" on one line: a narrow phone wraps before it, not inside it. */
+const keepTogether = (text: string) => text.replace(/ /g, '\u00A0');
 /** How many days of history show at first, and how many more each "Show older" adds. */
 const HISTORY_DAYS = 14;
 /** How many exercises' icons a closed workout shows before "+2". */
@@ -105,7 +107,9 @@ export default function ProgressScreen() {
       <View style={styles.empty}>
         <ScreenOptions options={{ title: 'Progress' }} />
         <Icon name="chart" size={34} color={color.brand} />
-        <Txt variant="title2">Keep a training log</Txt>
+        <Txt variant="title2" style={styles.center}>
+          Keep a training log
+        </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           {LIMITED
             ? 'With the full version of GymGO, every workout you finish is kept here, with your records and your streak. Workouts, templates and the timers all work in this one.'
@@ -215,7 +219,7 @@ export default function ProgressScreen() {
                     </Txt>
                     <Txt variant="footnote" color={color.labelSecondary}>
                       {best
-                        ? `Heaviest ${formatWeight(Number(fromKg(record.heaviestKg!, unit).toFixed(1)), unit)} × ${best.reps}`
+                        ? `Heaviest ${keepTogether(`${formatWeight(Number(fromKg(record.heaviestKg!, unit).toFixed(1)), unit)} × ${best.reps}`)}`
                         : record.mostReps !== null
                           ? `Most reps ${record.mostReps}`
                           : 'No sets yet'}

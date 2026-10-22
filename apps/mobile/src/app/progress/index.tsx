@@ -45,6 +45,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { loadReminders } from '@/lib/reminders';
 import { PageScroll } from '@/components/PageScroll';
 import { SessionNote } from '@/components/SessionNote';
+import { ProOffer } from '@/components/ProOffer';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { BodyWeightCard } from '@/components/BodyWeightCard';
 import { LIMITED } from '@/lib/limited';
@@ -90,6 +91,12 @@ export default function ProgressScreen() {
   const recap = useMemo(() => weekRecap(log.sessions, gyms), [log.sessions, gyms]);
   const records = useMemo(() => [...personalRecords(log.sessions)].sort((a, b) => b[1].sessions - a[1].sessions || nameOf(a[0]).localeCompare(nameOf(b[0]))), [log.sessions]);
   const days = useMemo(() => sessionsByDay(log.sessions), [log.sessions]);
+  // A line for the Lifetime card: workouts and weight, all told.
+  const lifetimeLine = useMemo(() => {
+    const kg = log.sessions.reduce((sum, session) => sum + volumeKg(session), 0);
+    const lifted = Math.round(fromKg(kg, unit));
+    return `${log.sessions.length.toLocaleString('en')} workout${log.sessions.length === 1 ? '' : 's'}${lifted > 0 ? ` · ${lifted.toLocaleString('en')} ${unit} lifted` : ''}`;
+  }, [log.sessions, unit]);
   // The latest days first, more on request: a year's log drawn at once (each
   // workout with its icons) would keep a phone busy for nothing.
   const [shownDays, setShownDays] = useState(HISTORY_DAYS);
@@ -252,6 +259,33 @@ export default function ProgressScreen() {
           <Animated.View>
             <MilestonesCard sessions={log.sessions} />
           </Animated.View>
+          {/* Your lifetime in numbers: a page of its own with Pro, an offer without. */}
+          {billing.isPro ? (
+            <Pressable
+              onPress={() => router.push('/lifetime')}
+              accessibilityRole="button"
+              accessibilityLabel={`Your lifetime: ${lifetimeLine}. Open`}
+              style={({ pressed }) => [styles.lifetime, pressed && { opacity: 0.8 }]}
+            >
+              <View style={styles.lifetimeMark}>
+                <Icon name="trophy" size={18} color={color.brand} />
+              </View>
+              <View style={styles.flex}>
+                <Txt variant="headline">Your lifetime</Txt>
+                <Txt variant="footnote" color={color.labelSecondary}>
+                  {lifetimeLine}
+                </Txt>
+              </View>
+              <Icon name="chevron" size={13} color={color.labelTertiary} />
+            </Pressable>
+          ) : (
+            <ProOffer
+              icon="trophy"
+              title="Your lifetime in numbers"
+              body="Every kilo, rep and hour you’ve logged added up, your favourites, and what all that weight compares to."
+              onPress={() => openPro('lifetime')}
+            />
+          )}
         </>
       )}
 
@@ -450,6 +484,8 @@ const styles = themed(() => StyleSheet.create({
   notePeek: { fontStyle: 'italic' },
   max: { alignItems: 'flex-end' },
   figure: { fontVariant: ['tabular-nums'] },
+  lifetime: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
+  lifetimeMark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
   strip: { flexDirection: 'row', alignItems: 'center', gap: space[1], marginTop: space[1] },
   logged: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: 2 },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },

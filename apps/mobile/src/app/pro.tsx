@@ -56,6 +56,8 @@ const FEATURE_ICON: Record<string, IconName> = {
   '1-rep max': 'target',
   'Streak freeze': 'sparkle',
   'Profile ring': 'person',
+  Celebrations: 'sparkle',
+  'Lifetime stats': 'trophy',
 };
 
 const REASON: Record<ProReason, string> = {
@@ -72,6 +74,8 @@ const REASON: Record<ProReason, string> = {
   timers: 'Tabata and EMOM are free. Pro lets you set your own work, rest and rounds, and keep up to ten timers of your own.',
   strength: 'Your estimated 1-rep max is free. Pro adds the whole percentage table, with the plates for each weight, and what you could lift for 2 to 12 reps.',
   freeze: 'Pro’s streak freeze keeps your weekly streak going through one missed week a month.',
+  celebrations: 'Confetti is free. Pro celebrates your records and goals your way: fireworks, gold stars or a shower of emoji.',
+  lifetime: 'Your log and records are free. Pro adds your lifetime in numbers: every kilo, rep and hour, your favourites, and what all that weight compares to.',
 };
 
 export default function ProScreen() {

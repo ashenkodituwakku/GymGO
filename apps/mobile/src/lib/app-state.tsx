@@ -8,6 +8,7 @@
  * same request twice still counts as two.
  */
 
+import { FREE_CELEBRATION, cleanCelebration, type CelebrationStyle } from './celebrations';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { AppState as NativeAppState } from 'react-native';
@@ -79,6 +80,8 @@ export interface Prefs {
   plates: Partial<Record<WeightUnit, number[]>>;
   /** Interval timers of your own (Pro), kept on this device. */
   timers: IntervalPlan[];
+  /** How records and goals are celebrated (lib/celebrations.ts): your pick plays with Pro, confetti without. */
+  celebration: CelebrationStyle;
 }
 
 const RECENTS_KEY = 'gymgo.recents.v1';
@@ -105,7 +108,7 @@ export interface Lookup {
 }
 
 /** Why the Pro screen opened, so it can say so. */
-export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates' | 'timers' | 'strength' | 'freeze';
+export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates' | 'timers' | 'strength' | 'freeze' | 'celebrations' | 'lifetime';
 
 type AppState = {
   data: ReturnType<typeof useGymData>;
@@ -192,7 +195,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [compare, setCompare] = useState<string[]>([]);
   const compareLoaded = useRef(false);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
-  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, demo: false, country: null, weeklyGoal: null, plates: {}, timers: [] });
+  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, demo: false, country: null, weeklyGoal: null, plates: {}, timers: [], celebration: FREE_CELEBRATION });
   const [prefsReady, setPrefsReady] = useState(false);
   // Place search reads the mode, and distances your country's units, so
   // both must match before anything renders.
@@ -217,7 +220,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const lbPlates = cleanPlates(value.plates?.lb, 'lb');
       const plates = { ...(kgPlates ? { kg: kgPlates } : {}), ...(lbPlates ? { lb: lbPlates } : {}) };
       // The limited website shows real gyms only, whatever was kept (lib/limited.ts).
-      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, demo: !LIMITED && value.demo === true, country, weeklyGoal: goal, plates, timers: cleanTimers(value.timers) };
+      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, demo: !LIMITED && value.demo === true, country, weeklyGoal: goal, plates, timers: cleanTimers(value.timers), celebration: cleanCelebration(value.celebration) };
       setHapticsEnabled(next.haptics);
       setSoundsEnabled(next.sounds);
       setDemoMode(next.demo);

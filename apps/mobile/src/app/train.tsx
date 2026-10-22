@@ -30,7 +30,9 @@ import { cancelRestAlert, scheduleRestAlert } from '@/lib/restAlert';
 import { RECORD_WORD, bestRecord, recordLine } from '@/lib/records';
 import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
 import { templateDayName, upNext, workoutTitle } from '@/lib/templates';
-import { Confetti, RecordCard } from '@/components/Celebrate';
+import { RecordCard } from '@/components/Celebrate';
+import { Celebration } from '@/components/Celebration';
+import { celebrationFor } from '@/lib/celebrations';
 import { alpha } from '@/lib/looks';
 import { LOOKS, color, currentLook, face, radius, shadow, space, themed } from '@/lib/theme';
 import {
@@ -846,6 +848,8 @@ function Summary({
   onProgress: () => void;
 }) {
   const { session, records } = result;
+  const { prefs, billing } = useApp();
+  const celebration = celebrationFor(prefs.celebration, billing.isPro);
   // Worked out as the summary opens: the log taking in this workout afterwards doesn't change what it said.
   const [weekNow] = useState(week);
   const unit = session.unit;
@@ -956,7 +960,7 @@ function Summary({
         <PrimaryButton label="Done" tone="quiet" onPress={onClose} />
       </View>
     </PageScroll>
-    {(records.length > 0 || weekNow?.justMet) && <Confetti />}
+    {(records.length > 0 || weekNow?.justMet) && <Celebration style={celebration} />}
     </View>
   );
 }

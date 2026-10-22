@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { BrandFill } from '@/components/BrandFill';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { loadAllLookFonts } from '@/lib/lookFonts';
@@ -16,7 +16,9 @@ import { FADE_IN, Pressable } from '@/components/motion';
 import { Glass } from '@/components/Glass';
 import { Icon } from '@/components/Icon';
 import { PercentSlider } from '@/components/PercentSlider';
-import { Txt } from '@/components/ui';
+import { PrimaryButton, Txt } from '@/components/ui';
+import { Celebration } from '@/components/Celebration';
+import { CELEBRATIONS, FREE_CELEBRATION, celebrationFor, type CelebrationStyle } from '@/lib/celebrations';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import {
@@ -63,7 +65,7 @@ export default function AppearanceScreen() {
   useGlassRedraw();
   usePageTitle('Appearance');
   const choice = useThemeChoice();
-  const { billing, openPro } = useApp();
+  const { billing, openPro, prefs, setPref } = useApp();
 
   const pickMode = (appearance: AppearanceChoice) => {
     if (appearance === choice.appearance) return;
@@ -98,6 +100,20 @@ export default function AppearanceScreen() {
   const solidLook = LOOKS[lookInUse].solid;
   const glassWords = solidLook ? 'Solid' : `${glass}%, ${glassLevelName(glass)}${glass === GLASS_DEFAULT ? ', the default' : ''}`;
 
+  // Celebrations: yours with Pro, confetti without. Picking one plays it.
+  const celebrationInUse = celebrationFor(prefs.celebration, billing.isPro);
+  const [playing, setPlaying] = useState(0);
+  const pickCelebration = (style: CelebrationStyle) => {
+    if (style !== FREE_CELEBRATION && !billing.isPro) {
+      haptic.tap();
+      openPro('celebrations');
+      return;
+    }
+    haptic.select();
+    if (style !== prefs.celebration) setPref('celebration', style);
+    setPlaying((count) => count + 1);
+  };
+
   const pickAccent = (accent: AccentId) => {
     if (accent !== FREE_ACCENT && !billing.isPro) {
       haptic.tap();
@@ -110,184 +126,233 @@ export default function AppearanceScreen() {
   };
 
   return (
-    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <ScreenOptions options={{ title: 'Appearance' }} />
+    <View style={styles.flex}>
+      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+        <ScreenOptions options={{ title: 'Appearance' }} />
 
-      <Txt variant="footnote" color={color.labelSecondary} style={styles.section}>
-        MODE
-      </Txt>
-      <View style={styles.modes}>
-        {MODES.map((mode) => {
-          const on = choice.appearance === mode.id;
-          return (
-            <Pressable
-              key={mode.id}
-              onPress={() => pickMode(mode.id)}
-              accessibilityRole="radio"
-              aria-checked={on}
-              accessibilityLabel={mode.id === 'system' ? 'Automatic: follow your phone' : mode.label}
-              style={styles.mode}
-            >
-              <View style={[styles.preview, on && styles.previewOn]}>
-                {mode.id === 'system' ? (
-                  <View style={styles.split}>
-                    <MiniScreen tone="light" />
-                    <MiniScreen tone="dark" />
-                  </View>
-                ) : (
-                  <MiniScreen tone={mode.id} />
-                )}
-              </View>
-              <Txt variant="subhead" style={on ? face('semibold') : undefined}>
-                {mode.label}
-              </Txt>
-              <Icon name={on ? 'done' : 'todo'} size={22} color={on ? color.brand : color.labelTertiary} />
-            </Pressable>
-          );
-        })}
-      </View>
-      <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-        Automatic follows your phone, so GymGO goes dark when your phone does.
-      </Txt>
-
-      <View style={styles.accentHead}>
-        <Txt variant="footnote" color={color.labelSecondary}>
-          LOOK
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.section}>
+          MODE
         </Txt>
-        {!billing.isPro && (
-          <View style={styles.proTag}>
-            <Icon name="crown" size={11} color={color.brand} />
-            <Txt variant="caption" color={color.brand} style={face('semibold')}>
-              PRO
-            </Txt>
-          </View>
-        )}
-      </View>
-      <View style={styles.looks} accessibilityRole="radiogroup">
-        {LOOK_IDS.map((id) => {
-          const on = lookInUse === id;
-          const locked = id !== FREE_LOOK && !billing.isPro;
-          return (
-            <Pressable
-              key={id}
-              onPress={() => pickLook(id)}
-              accessibilityRole="radio"
-              aria-checked={on}
-              accessibilityLabel={`${LOOKS[id].name}: ${LOOKS[id].blurb}${locked ? '. Part of GymGO Pro' : ''}`}
-              style={({ pressed }) => [styles.lookTile, pressed && { opacity: 0.75 }]}
-            >
-              <LookPreview look={id} accent={accentInUse} on={on} />
-              <View style={styles.lookName}>
-                {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
-                <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
-                  {LOOKS[id].name}
+        <View style={styles.modes}>
+          {MODES.map((mode) => {
+            const on = choice.appearance === mode.id;
+            return (
+              <Pressable
+                key={mode.id}
+                onPress={() => pickMode(mode.id)}
+                accessibilityRole="radio"
+                aria-checked={on}
+                accessibilityLabel={mode.id === 'system' ? 'Automatic: follow your phone' : mode.label}
+                style={styles.mode}
+              >
+                <View style={[styles.preview, on && styles.previewOn]}>
+                  {mode.id === 'system' ? (
+                    <View style={styles.split}>
+                      <MiniScreen tone="light" />
+                      <MiniScreen tone="dark" />
+                    </View>
+                  ) : (
+                    <MiniScreen tone={mode.id} />
+                  )}
+                </View>
+                <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                  {mode.label}
                 </Txt>
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
-      <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-        {LOOKS[lookInUse].blurb}.{LOOKS[lookInUse].scheme === 'dark' ? ` ${LOOKS[lookInUse].name} is always dark, whatever the mode above.` : ''} Evidence colours keep their meaning in every look.
-      </Txt>
-
-      <View style={styles.accentHead}>
-        <Txt variant="footnote" color={color.labelSecondary}>
-          LIQUID GLASS
+                <Icon name={on ? 'done' : 'todo'} size={22} color={on ? color.brand : color.labelTertiary} />
+              </Pressable>
+            );
+          })}
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+          Automatic follows your phone, so GymGO goes dark when your phone does.
         </Txt>
-      </View>
-      <View style={styles.glassCard}>
-        <GlassPreview level={solidLook ? 0 : glass} />
-        <View style={styles.glassHead}>
-          <Txt variant="title2" style={face('bold')}>
-            {solidLook ? 'Solid' : `${glass}%`}
+
+        <View style={styles.accentHead}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            LOOK
           </Txt>
-          <Txt variant="subhead" color={color.labelSecondary} style={styles.flex} numberOfLines={1}>
-            {solidLook ? `in ${LOOKS[lookInUse].name}` : `${glassLevelName(glass)}${glass === GLASS_DEFAULT ? ' · default' : ''}`}
-          </Txt>
-          {!solidLook && glass !== GLASS_DEFAULT && (
-            <Pressable onPress={() => keepGlass(GLASS_DEFAULT)} accessibilityRole="button" accessibilityLabel={`Back to the default, ${GLASS_DEFAULT}%`} hitSlop={8}>
-              <Txt variant="subhead" color={color.brand} style={face('semibold')}>
-                Default
+          {!billing.isPro && (
+            <View style={styles.proTag}>
+              <Icon name="crown" size={11} color={color.brand} />
+              <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                PRO
               </Txt>
-            </Pressable>
+            </View>
           )}
         </View>
-        <View style={styles.sliderRow}>
-          <StepButton icon="minus" label="Less glass" onPress={!solidLook && glass > 0 ? () => keepGlass(Math.max(0, glass - GLASS_STEP)) : undefined} />
-          <PercentSlider
-            value={solidLook ? 0 : glass}
-            step={GLASS_STEP}
-            onChange={setGlass}
-            onCommit={keepGlass}
-            disabled={solidLook}
-            label="Liquid Glass"
-            valueText={glassWords}
-          />
-          <StepButton icon="plus" label="More glass" onPress={!solidLook && glass < 100 ? () => keepGlass(Math.min(100, glass + GLASS_STEP)) : undefined} />
-        </View>
-      </View>
-      <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-        {solidLook
-          ? `${LOOKS[lookInUse].name} draws everything as solid plates, so there’s no glass to set. Choose Standard to use Liquid Glass.`
-          : 'How glassy GymGO is: the controls, sheets and bars over the map, and the cards on every page, with your accent glowing through from behind. 0% makes it all solid; 100% is the clearest that keeps text readable.'}
-      </Txt>
-
-      <View style={styles.accentHead}>
-        <Txt variant="footnote" color={color.labelSecondary}>
-          ACCENT
-        </Txt>
-        {!billing.isPro && (
-          <View style={styles.proTag}>
-            <Icon name="crown" size={11} color={color.brand} />
-            <Txt variant="caption" color={color.brand} style={face('semibold')}>
-              PRO
-            </Txt>
-          </View>
-        )}
-      </View>
-      {/* A grid of swatches, round the colour wheel. */}
-      <View style={styles.grid} accessibilityRole="radiogroup">
-        {ACCENT_IDS.map((id) => {
-          const accent = ACCENTS[id];
-          // The accent in use: a Pro accent kept from before shows as Indigo without Pro.
-          const on = (billing.isPro || choice.accent === FREE_ACCENT ? choice.accent : FREE_ACCENT) === id;
-          const locked = id !== FREE_ACCENT && !billing.isPro;
-          const scheme = color.label === '#FFFFFF' ? 'dark' : 'light';
-          return (
-            <Pressable
-              key={id}
-              onPress={() => pickAccent(id)}
-              accessibilityRole="radio"
-              aria-checked={on}
-              accessibilityLabel={`${accent.name}${locked ? ', part of GymGO Pro' : ''}`}
-              style={({ pressed }) => [styles.tile, pressed && { opacity: 0.7 }]}
-            >
-              <View style={[styles.ring, on && { borderColor: accent[scheme].brand }]}>
-                <View style={[styles.swatch, { backgroundColor: accent[scheme].brandFill }]}>
-                  {ACCENT_PAINTS[id] && <BrandFill paint={ACCENT_PAINTS[id]} />}
-                  {on ? (
-                    <Animated.View entering={FADE_IN}>
-                      <Icon name="check" size={18} color={color.onBrand} />
-                    </Animated.View>
-                  ) : locked ? (
-                    <Icon name="crown" size={14} color={color.onBrandSoft} />
-                  ) : null}
+        <View style={styles.looks} accessibilityRole="radiogroup">
+          {LOOK_IDS.map((id) => {
+            const on = lookInUse === id;
+            const locked = id !== FREE_LOOK && !billing.isPro;
+            return (
+              <Pressable
+                key={id}
+                onPress={() => pickLook(id)}
+                accessibilityRole="radio"
+                aria-checked={on}
+                accessibilityLabel={`${LOOKS[id].name}: ${LOOKS[id].blurb}${locked ? '. Part of GymGO Pro' : ''}`}
+                style={({ pressed }) => [styles.lookTile, pressed && { opacity: 0.75 }]}
+              >
+                <LookPreview look={id} accent={accentInUse} on={on} />
+                <View style={styles.lookName}>
+                  {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
+                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                    {LOOKS[id].name}
+                  </Txt>
                 </View>
-              </View>
-              <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
-                {accent.name}
+              </Pressable>
+            );
+          })}
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+          {LOOKS[lookInUse].blurb}.{LOOKS[lookInUse].scheme === 'dark' ? ` ${LOOKS[lookInUse].name} is always dark, whatever the mode above.` : ''} Evidence colours keep their meaning in every look.
+        </Txt>
+
+        <View style={styles.accentHead}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            LIQUID GLASS
+          </Txt>
+        </View>
+        <View style={styles.glassCard}>
+          <GlassPreview level={solidLook ? 0 : glass} />
+          <View style={styles.glassHead}>
+            <Txt variant="title2" style={face('bold')}>
+              {solidLook ? 'Solid' : `${glass}%`}
+            </Txt>
+            <Txt variant="subhead" color={color.labelSecondary} style={styles.flex} numberOfLines={1}>
+              {solidLook ? `in ${LOOKS[lookInUse].name}` : `${glassLevelName(glass)}${glass === GLASS_DEFAULT ? ' · default' : ''}`}
+            </Txt>
+            {!solidLook && glass !== GLASS_DEFAULT && (
+              <Pressable onPress={() => keepGlass(GLASS_DEFAULT)} accessibilityRole="button" accessibilityLabel={`Back to the default, ${GLASS_DEFAULT}%`} hitSlop={8}>
+                <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                  Default
+                </Txt>
+              </Pressable>
+            )}
+          </View>
+          <View style={styles.sliderRow}>
+            <StepButton icon="minus" label="Less glass" onPress={!solidLook && glass > 0 ? () => keepGlass(Math.max(0, glass - GLASS_STEP)) : undefined} />
+            <PercentSlider
+              value={solidLook ? 0 : glass}
+              step={GLASS_STEP}
+              onChange={setGlass}
+              onCommit={keepGlass}
+              disabled={solidLook}
+              label="Liquid Glass"
+              valueText={glassWords}
+            />
+            <StepButton icon="plus" label="More glass" onPress={!solidLook && glass < 100 ? () => keepGlass(Math.min(100, glass + GLASS_STEP)) : undefined} />
+          </View>
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+          {solidLook
+            ? `${LOOKS[lookInUse].name} draws everything as solid plates, so there’s no glass to set. Choose Standard to use Liquid Glass.`
+            : 'How glassy GymGO is: the controls, sheets and bars over the map, and the cards on every page, with your accent glowing through from behind. 0% makes it all solid; 100% is the clearest that keeps text readable.'}
+        </Txt>
+
+        <View style={styles.accentHead}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            ACCENT
+          </Txt>
+          {!billing.isPro && (
+            <View style={styles.proTag}>
+              <Icon name="crown" size={11} color={color.brand} />
+              <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                PRO
               </Txt>
-            </Pressable>
-          );
-        })}
-      </View>
-      <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-        {billing.isPro
-          ? 'The accent colours buttons, links and your selections. Evidence colours (green, orange, grey) never change, so they always mean the same thing.'
-          : 'Indigo is everyone’s. The rest, from Midnight and Lagoon to Rainbow and Camo, come with GymGO Pro, as do the looks. Dark mode is free for everyone.'}
-      </Txt>
-    </PageScroll>
+            </View>
+          )}
+        </View>
+        {/* A grid of swatches, round the colour wheel. */}
+        <View style={styles.grid} accessibilityRole="radiogroup">
+          {ACCENT_IDS.map((id) => {
+            const accent = ACCENTS[id];
+            // The accent in use: a Pro accent kept from before shows as Indigo without Pro.
+            const on = (billing.isPro || choice.accent === FREE_ACCENT ? choice.accent : FREE_ACCENT) === id;
+            const locked = id !== FREE_ACCENT && !billing.isPro;
+            const scheme = color.label === '#FFFFFF' ? 'dark' : 'light';
+            return (
+              <Pressable
+                key={id}
+                onPress={() => pickAccent(id)}
+                accessibilityRole="radio"
+                aria-checked={on}
+                accessibilityLabel={`${accent.name}${locked ? ', part of GymGO Pro' : ''}`}
+                style={({ pressed }) => [styles.tile, pressed && { opacity: 0.7 }]}
+              >
+                <View style={[styles.ring, on && { borderColor: accent[scheme].brand }]}>
+                  <View style={[styles.swatch, { backgroundColor: accent[scheme].brandFill }]}>
+                    {ACCENT_PAINTS[id] && <BrandFill paint={ACCENT_PAINTS[id]} />}
+                    {on ? (
+                      <Animated.View entering={FADE_IN}>
+                        <Icon name="check" size={18} color={color.onBrand} />
+                      </Animated.View>
+                    ) : locked ? (
+                      <Icon name="crown" size={14} color={color.onBrandSoft} />
+                    ) : null}
+                  </View>
+                </View>
+                <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                  {accent.name}
+                </Txt>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+          {billing.isPro
+            ? 'The accent colours buttons, links and your selections. Evidence colours (green, orange, grey) never change, so they always mean the same thing.'
+            : 'Indigo is everyone’s. The rest, from Midnight and Lagoon to Rainbow and Camo, come with GymGO Pro, as do the looks. Dark mode is free for everyone.'}
+        </Txt>
+
+        <View style={styles.accentHead}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            CELEBRATIONS
+          </Txt>
+          {!billing.isPro && (
+            <View style={styles.proTag}>
+              <Icon name="crown" size={11} color={color.brand} />
+              <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                PRO
+              </Txt>
+            </View>
+          )}
+        </View>
+        <View style={styles.celebrations} accessibilityRole="radiogroup">
+          {CELEBRATIONS.map((item) => {
+            const on = celebrationInUse === item.id;
+            const locked = item.id !== FREE_CELEBRATION && !billing.isPro;
+            return (
+              <Pressable
+                key={item.id}
+                onPress={() => pickCelebration(item.id)}
+                accessibilityRole="radio"
+                aria-checked={on}
+                accessibilityLabel={`${item.name}: ${item.blurb}${locked ? '. Part of GymGO Pro' : ''}`}
+                style={({ pressed }) => [styles.celebration, pressed && { opacity: 0.75 }]}
+              >
+                <View style={[styles.sampleTile, on && styles.sampleOn]}>
+                  <Text style={styles.sample}>{item.sample}</Text>
+                </View>
+                <View style={styles.lookName}>
+                  {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
+                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                    {item.name}
+                  </Txt>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+        <View style={styles.playRow}>
+          <PrimaryButton label="Play it" icon="play" tone="quiet" onPress={() => setPlaying((count) => count + 1)} />
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+          {`${CELEBRATIONS.find((item) => item.id === celebrationInUse)!.blurb}. It plays over the workout summary when you set a record or meet your weekly goal${billing.isPro ? '' : '; fireworks, gold stars and emoji come with GymGO Pro'}. Never with Reduce Motion on.`}
+        </Txt>
+      </PageScroll>
+      {playing > 0 && <Celebration key={playing} style={celebrationInUse} />}
+    </View>
   );
 }
 
@@ -440,6 +505,12 @@ const styles = themed(() =>
     lookLine: { height: 4, width: '70%', opacity: 0.5 },
     lookButton: { height: 20, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
     lookName: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    celebrations: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
+    celebration: { width: '25%', minWidth: 72, alignItems: 'center', gap: space[1], paddingVertical: space[2] },
+    sampleTile: { width: 56, height: 56, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
+    sampleOn: { borderColor: color.brand, backgroundColor: color.brandTint },
+    sample: { fontSize: 28, lineHeight: 34 },
+    playRow: { marginTop: space[3] },
     flex: { flex: 1 },
     glassCard: { gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     glassHead: { flexDirection: 'row', alignItems: 'baseline', gap: space[2], paddingHorizontal: space[1] },

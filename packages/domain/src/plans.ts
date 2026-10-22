@@ -76,11 +76,13 @@ export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; p
   { emoji: '🔥', title: 'Warm-up sets', free: 'Plates for any weight', pro: 'A ramp to your weight' },
   { emoji: '🏋️', title: 'Your plates', free: 'The usual set', pro: 'The ones your gym has' },
   { emoji: '📝', title: 'Gym notes', free: '—', pro: 'Your own, on each gym' },
-  { emoji: '🎨', title: 'Colour themes', free: 'Indigo, light or dark', pro: 'Twelve accents and four looks' },
+  { emoji: '🎨', title: 'Colour themes', free: 'Indigo, light or dark', pro: 'Twelve accents and eight looks' },
   { emoji: '⏱️', title: 'Interval timer', free: 'Tabata and EMOM', pro: 'Your own, up to 10' },
   { emoji: '🧮', title: '1-rep max', free: 'Your max, and 3 percentages', pro: 'Every percentage, with plates' },
   { emoji: '❄️', title: 'Streak freeze', free: '—', pro: 'One missed week a month' },
   { emoji: '💍', title: 'Profile ring', free: 'Your picture', pro: 'Ringed in your accent' },
+  { emoji: '🎆', title: 'Celebrations', free: 'Confetti', pro: 'Fireworks, stars or emoji' },
+  { emoji: '🏅', title: 'Lifetime stats', free: '—', pro: 'Every kilo, rep and hour' },
 ];
 
 /** Free for everyone with a (free) account, always. Listed on the Pro screen so nobody wonders. */

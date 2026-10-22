@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { hoursMeet, hoursSchedule } from './hours';
 import { search, defaultQuery } from './search';
-import { everyDayWindows, record, schedule, unknownProvenance, location } from './testing';
+import { NOW, everyDayWindows, record, schedule, unknownProvenance, location } from './testing';
 
-// 24 September 2026 is a Thursday.
+// 24 September 2026 is a Thursday. Searches run at the fixtures' clock (NOW), so
+// facts "checked a day ago" stay fresh whatever today's date is.
 const THURSDAY = '2026-09-24';
 
 describe('open late and 24 hours', () => {
@@ -41,18 +42,18 @@ describe('open late and 24 hours', () => {
     const late = record({ location: location({ id: 'late' }), schedules: [schedule('visitor', { windows: everyDayWindows(6 * 60, 23 * 60) })] });
     const early = record({ location: location({ id: 'early' }), schedules: [schedule('visitor', { windows: everyDayWindows(6 * 60, 20 * 60) })] });
     const unknown = record({ location: location({ id: 'unknown' }), schedules: [] });
-    const outcome = search({ records: [late, early, unknown], reviewsByGymId: {}, query: defaultQuery({ visitDate: THURSDAY, hours: 'late' }) });
+    const outcome = search({ records: [late, early, unknown], reviewsByGymId: {}, query: defaultQuery({ visitDate: THURSDAY, hours: 'late' }), asOf: NOW });
     expect(outcome.results.map((result) => result.record.location.id)).toEqual(['late']);
-    const all = search({ records: [late, early, unknown], reviewsByGymId: {}, query: defaultQuery({ visitDate: THURSDAY }) });
+    const all = search({ records: [late, early, unknown], reviewsByGymId: {}, query: defaultQuery({ visitDate: THURSDAY }), asOf: NOW });
     expect(all.results).toHaveLength(3);
   });
 
   it('offers to drop the filter when it leaves nothing confirmed, and never drops it itself', () => {
     const early = record({ location: location({ id: 'early' }), schedules: [schedule('visitor', { windows: everyDayWindows(6 * 60, 20 * 60) })] });
     const query = defaultQuery({ visitDate: THURSDAY, visitMinuteOfDay: 10 * 60, hours: 'late' });
-    const outcome = search({ records: [early], reviewsByGymId: {}, query });
+    const outcome = search({ records: [early], reviewsByGymId: {}, query, asOf: NOW });
     expect(outcome.results).toHaveLength(0);
-    const without = search({ records: [early], reviewsByGymId: {}, query: { ...query, hours: null } });
+    const without = search({ records: [early], reviewsByGymId: {}, query: { ...query, hours: null }, asOf: NOW });
     const drop = outcome.relaxations.find((item) => item.kind === 'drop_hours');
     expect(drop?.patch).toEqual({ hours: null });
     expect(drop?.label).toBe('Drop "Open late"');

@@ -618,7 +618,7 @@ export const NEEDS_BUNDLED_FACES = !SF_DRAWS;
 export function face(weight: Weight = 'regular'): { fontFamily: string; fontWeight: '400' | '500' | '600' | '700' | 'normal' } {
   // A look with its own typeface (8-bit, Material): each weight is its own file.
   const fonts = LOOKS[current.look].fonts;
-  if (fonts) return { fontFamily: fonts.body[weight], fontWeight: 'normal' };
+  if (fonts?.body) return { fontFamily: fonts.body[weight], fontWeight: 'normal' };
   if (Platform.OS === 'ios') return { fontFamily: 'System', fontWeight: NUMERIC[weight] };
   if (Platform.OS === 'web') {
     // The system font first (SF Pro on Apple devices), then SF Pro by name, then Inter.
@@ -633,7 +633,7 @@ export function face(weight: Weight = 'regular'): { fontFamily: string; fontWeig
  * (rsms.me/inter/dynmetrics): tracking = -0.0223 + 0.185 × e^(-0.1745 × size) em.
  */
 export function tracking(size: number): number {
-  if (SF_DRAWS || LOOKS[current.look].fonts) return 0;
+  if (SF_DRAWS || LOOKS[current.look].fonts?.body) return 0;
   return Math.round((-0.0223 + 0.185 * Math.exp(-0.1745 * size)) * size * 100) / 100;
 }
 
@@ -652,7 +652,7 @@ const display = (fontSize: number, lineHeight: number, weight: Weight) => {
   if (!fonts?.display) return style(fontSize, lineHeight, weight);
   const scale = fonts.displayScale ?? 1;
   const size = Math.round(fontSize * scale);
-  return { fontSize: size, lineHeight: Math.round(size * 1.5), letterSpacing: 0, fontFamily: fonts.display, fontWeight: 'normal' as const, ...ANDROID_TEXT };
+  return { fontSize: size, lineHeight: Math.round(size * (fonts.displayLeading ?? 1.5)), letterSpacing: 0, fontFamily: fonts.display, fontWeight: 'normal' as const, ...ANDROID_TEXT };
 };
 
 /** Apple's iOS text styles, at the default text size, in the look's faces. */

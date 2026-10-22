@@ -1,8 +1,9 @@
 /**
  * Appearance: light, dark or the phone's, for everyone; a look (how the
- * whole app is drawn: 8-bit, Classic, Material, Neon) and an accent, where
- * Standard and Indigo are everyone's and the rest are part of GymGO Pro; and
- * Liquid Glass, how see-through the things over the map are, for everyone.
+ * whole app is drawn: Soft, Paper, Material, Neon, Terminal, 8-bit, Classic,
+ * Comic) and an accent, where Standard and Indigo are everyone's and the
+ * rest are part of GymGO Pro; and Liquid Glass, how see-through the things
+ * over the map are, for everyone.
  */
 
 import { useEffect, useState } from 'react';
@@ -187,7 +188,7 @@ export default function AppearanceScreen() {
         })}
       </View>
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-        {LOOKS[lookInUse].blurb}.{LOOKS[lookInUse].scheme === 'dark' ? ' Neon is always dark, whatever the mode above.' : ''} Evidence colours keep their meaning in every look.
+        {LOOKS[lookInUse].blurb}.{LOOKS[lookInUse].scheme === 'dark' ? ` ${LOOKS[lookInUse].name} is always dark, whatever the mode above.` : ''} Evidence colours keep their meaning in every look.
       </Txt>
 
       <View style={styles.accentHead}>
@@ -371,19 +372,19 @@ function LookPreview({ look, accent, on }: { look: LookId; accent: AccentId; on:
   const palette = paletteFor(scheme, accent, look);
   const shadows = spec.shadows?.(scheme, palette.brand);
   const corner = (value: number) => Math.min(value * 0.5, 12);
-  const title = spec.fonts?.display ?? spec.fonts?.body.bold;
+  const title = spec.fonts?.display ?? spec.fonts?.body?.bold;
   return (
     <View style={[styles.lookFrame, on && { borderColor: color.brand }]}>
       <View style={[styles.lookPage, { backgroundColor: palette.groupedBackground }]}>
         <View style={[styles.lookCard, { backgroundColor: palette.card, borderRadius: corner(spec.radius.lg) }, shadows?.card]}>
-          <Txt variant="caption" color={palette.label} style={[{ fontSize: spec.fonts?.display ? 7 : 11, lineHeight: 14 }, title ? { fontFamily: title, fontWeight: 'normal' } : face('bold')]} numberOfLines={1}>
+          <Txt variant="caption" color={palette.label} style={[{ fontSize: Math.round(11 * (spec.fonts?.displayScale ?? 1)), lineHeight: 14 }, title ? { fontFamily: title, fontWeight: 'normal' } : face('bold')]} numberOfLines={1}>
             GymGO
           </Txt>
           <View style={[styles.lookLine, { backgroundColor: palette.labelSecondary, borderRadius: corner(spec.radius.sm) }]} />
         </View>
         <View style={[styles.lookButton, { backgroundColor: palette.brandFill, borderRadius: Math.min(corner(spec.radius.pill), 9) }, shadows?.float]}>
           <BrandFill paint={ACCENT_PAINTS[accent] ?? null} />
-          <Txt variant="caption" color={palette.onBrand} style={[{ fontSize: 9, lineHeight: 12 }, spec.fonts ? { fontFamily: spec.fonts.body.semibold, fontWeight: 'normal' } : face('semibold')]}>
+          <Txt variant="caption" color={palette.onBrand} style={[{ fontSize: 9, lineHeight: 12 }, spec.fonts?.body ? { fontFamily: spec.fonts.body.semibold, fontWeight: 'normal' } : face('semibold')]}>
             Go
           </Txt>
         </View>

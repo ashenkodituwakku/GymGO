@@ -46,7 +46,7 @@ export function parseChoice(raw: string | null | undefined): ThemeChoice {
 
 /** Light or dark, from your choice and (for System) the phone's. */
 export function schemeFor(appearance: AppearanceChoice, system: string | null | undefined, look: LookId = FREE_LOOK): Scheme {
-  // A look that's only one way (Neon is always dark).
+  // A look that's only one way (Neon and Terminal are always dark).
   const only = LOOKS[look].scheme;
   if (only) return only;
   if (appearance === 'light' || appearance === 'dark') return appearance;

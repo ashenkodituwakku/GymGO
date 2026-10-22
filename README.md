@@ -333,8 +333,16 @@ your accent glows behind them.
   Midnight, Lagoon, Grape, Fuchsia, Rose, Slate and Graphite, plus
   **Rainbow** (a gradient) and **Camo** (a woodland pattern) that paint
   filled buttons, selected chips, the tab bar and the Build a workout card,
-  picked from a grid of swatches. Pro also has four **looks** that redraw
+  picked from a grid of swatches. Pro also has eight **looks** that redraw
   the whole app, not just its colour:
+  - **Soft**: cards pressed out of the page itself, lit from the top left
+    with a soft shadow below, rounder corners, set in Nunito.
+  - **Paper**: cream pages (charcoal in dark), ink hairlines round cards,
+    titles in a serif (Fraunces).
+  - **Terminal**: always dark, square, every word in JetBrains Mono, cards
+    outlined in your accent.
+  - **Comic**: thick ink outlines with a hard offset shadow on a sunny page
+    (night purple in dark), titles in Bangers.
   - **8-bit**: square corners, arcade headings (Press Start 2P), a pixel
     face for everything else (Pixelify Sans), chunky outlines with hard
     drop shadows, on a cream or night page.
@@ -1328,7 +1336,7 @@ saved list always opens, wherever the gym is.
 | Warm-up sets | Plates for any weight | A warm-up ramp to your weight, with the plates |
 | Gym notes | — | Your own notes on each gym, on your device |
 | Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
-| Colour themes | Indigo, light or dark | Twelve accents (Rainbow and Camo too), four looks (8-bit, Classic, Material, Neon), light or dark |
+| Colour themes | Indigo, light or dark | Twelve accents (Rainbow and Camo too), eight looks (Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), light or dark |
 | Interval timer | Tabata and EMOM | Your own work, rest and rounds; keep up to 10 |
 | 1-rep max | Your estimated max, and 90%, 80% and 70% | Every step from 100% to 50% with plates, and what you could lift for 2 to 12 reps |
 | Streak freeze | — | One missed week a month doesn't end your streak |

@@ -15,14 +15,21 @@
  * - Material: rounded, tonal surfaces tinted by your accent, set in Roboto,
  *   the way an Android phone draws things.
  * - Neon: always dark, with cards that glow in your accent.
+ * - Soft: cards pressed out of the page itself, lit from the top left, in a
+ *   rounded face (Nunito).
+ * - Paper: cream pages and ink hairlines, titles set in a serif (Fraunces).
+ * - Terminal: always dark, square, every word in a monospaced face
+ *   (JetBrains Mono), cards outlined in your accent.
+ * - Comic: thick ink outlines with a hard offset shadow on a sunny page,
+ *   titles in a comic-book face (Bangers).
  *
  * Pure data and colour maths, with no React: theme.ts applies it.
  */
 
 import type { ViewStyle } from 'react-native';
 
-export type LookId = 'standard' | 'pixel' | 'classic' | 'material' | 'neon';
-export const LOOK_IDS: LookId[] = ['standard', 'pixel', 'classic', 'material', 'neon'];
+export type LookId = 'standard' | 'pixel' | 'classic' | 'material' | 'neon' | 'soft' | 'paper' | 'terminal' | 'comic';
+export const LOOK_IDS: LookId[] = ['standard', 'soft', 'paper', 'material', 'neon', 'terminal', 'pixel', 'classic', 'comic'];
 export const FREE_LOOK: LookId = 'standard';
 
 type Scheme = 'light' | 'dark';
@@ -38,12 +45,14 @@ export interface Radii {
 }
 
 export interface LookFonts {
-  /** The face for each weight, as registered with expo-font (see lookFonts.ts). */
-  body: Record<Weight, string>;
+  /** The face for each weight, as registered with expo-font (see lookFonts.ts); the system's if not given. */
+  body?: Record<Weight, string>;
   /** A display face for titles and big figures, if the look has one. */
   display?: string;
   /** How much smaller the display face is set (arcade faces run large). */
   displayScale?: number;
+  /** Its line height, as a multiple of its size (1.5 if not given: pixel faces want room). */
+  displayLeading?: number;
 }
 
 /** The surfaces a look can repaint. */
@@ -145,6 +154,19 @@ const ROBOTO: Record<Weight, string> = {
   bold: 'Roboto_700Bold',
 };
 
+const NUNITO: Record<Weight, string> = {
+  regular: 'Nunito_400Regular',
+  medium: 'Nunito_500Medium',
+  semibold: 'Nunito_600SemiBold',
+  bold: 'Nunito_700Bold',
+};
+const MONO: Record<Weight, string> = {
+  regular: 'JetBrainsMono_400Regular',
+  medium: 'JetBrainsMono_500Medium',
+  semibold: 'JetBrainsMono_600SemiBold',
+  bold: 'JetBrainsMono_700Bold',
+};
+
 export const LOOKS: Record<LookId, LookSpec> = {
   standard: {
     name: 'Standard',
@@ -241,5 +263,90 @@ export const LOOKS: Record<LookId, LookSpec> = {
       float: { boxShadow: `0px 0px 0px 1px ${alpha(brand, 0.8)}, 0px 0px 22px 2px ${alpha(brand, 0.55)}` },
       plate: { boxShadow: `0px 0px 0px 1px ${alpha(brand, 0.35)}, 0px 0px 12px 0px ${alpha(brand, 0.22)}` },
     }),
+  },
+  soft: {
+    name: 'Soft',
+    blurb: 'Cards pressed out of the page, soft and rounded',
+    radius: { sm: 12, md: 16, lg: 22, xl: 28, sheet: 34, pill: 999 },
+    solid: true,
+    fonts: { body: NUNITO },
+    // The card is the page's own colour: only its light and shade lift it.
+    surfaces: (scheme) =>
+      scheme === 'dark'
+        ? { groupedBackground: '#23262C', background: '#23262C', card: '#23262C', cardRaised: '#2C3037', cardGlass: '#23262C', separator: 'rgba(200, 210, 225, 0.12)', fill: 'rgba(200, 210, 225, 0.08)' }
+        : { groupedBackground: '#E4E9F0', background: '#E4E9F0', card: '#E4E9F0', cardRaised: '#EEF2F7', cardGlass: '#E4E9F0', separator: 'rgba(110, 124, 145, 0.22)', fill: 'rgba(110, 124, 145, 0.12)' },
+    shadows: (scheme) =>
+      scheme === 'dark'
+        ? {
+            card: { boxShadow: '-5px -5px 12px 0px rgba(255, 255, 255, 0.045), 6px 6px 14px 0px rgba(0, 0, 0, 0.55)' },
+            plate: { boxShadow: '-5px -5px 12px 0px rgba(255, 255, 255, 0.045), 6px 6px 14px 0px rgba(0, 0, 0, 0.55)' },
+            float: { boxShadow: '-4px -4px 10px 0px rgba(255, 255, 255, 0.05), 8px 10px 22px 0px rgba(0, 0, 0, 0.6)' },
+          }
+        : {
+            card: { boxShadow: '-6px -6px 14px 0px rgba(255, 255, 255, 0.9), 6px 6px 14px 0px rgba(148, 162, 184, 0.55)' },
+            plate: { boxShadow: '-6px -6px 14px 0px rgba(255, 255, 255, 0.9), 6px 6px 14px 0px rgba(148, 162, 184, 0.55)' },
+            float: { boxShadow: '-4px -4px 10px 0px rgba(255, 255, 255, 0.85), 8px 10px 22px 0px rgba(128, 143, 166, 0.5)' },
+          },
+  },
+  paper: {
+    name: 'Paper',
+    blurb: 'Cream pages, ink hairlines and serif titles',
+    radius: { sm: 4, md: 6, lg: 8, xl: 12, sheet: 18, pill: 999 },
+    solid: true,
+    fonts: { display: 'Fraunces_700Bold', displayLeading: 1.22 },
+    surfaces: (scheme) =>
+      scheme === 'dark'
+        ? { groupedBackground: '#1C1A17', background: '#24211D', card: '#2A2723', cardRaised: '#36322D', cardGlass: '#2A2723', separator: 'rgba(240, 228, 205, 0.18)', fill: 'rgba(240, 228, 205, 0.08)' }
+        : { groupedBackground: '#F3EDE0', background: '#FBF8F1', card: '#FFFDF8', cardRaised: '#FFFFFF', cardGlass: '#FFFDF8', separator: 'rgba(60, 50, 35, 0.22)', fill: 'rgba(60, 50, 35, 0.07)' },
+    shadows: (scheme) => {
+      const edge = scheme === 'dark' ? 'rgba(240, 228, 205, 0.16)' : 'rgba(60, 50, 35, 0.24)';
+      const lift = scheme === 'dark' ? 'rgba(0, 0, 0, 0.35)' : 'rgba(60, 50, 35, 0.08)';
+      return {
+        card: { boxShadow: `0px 0px 0px 1px ${edge}, 0px 2px 0px 0px ${lift}` },
+        plate: { boxShadow: `0px 0px 0px 1px ${edge}, 0px 2px 0px 0px ${lift}` },
+        float: { boxShadow: `0px 0px 0px 1px ${edge}, 0px 6px 16px 0px ${scheme === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(60, 50, 35, 0.18)'}` },
+      };
+    },
+  },
+  terminal: {
+    name: 'Terminal',
+    blurb: 'Black, square and monospaced, outlined in your accent',
+    radius: { sm: 2, md: 2, lg: 3, xl: 4, sheet: 6, pill: 4 },
+    solid: true,
+    fonts: { body: MONO },
+    scheme: 'dark',
+    surfaces: (_scheme, brand) => ({
+      groupedBackground: '#0A0C0D',
+      background: '#0F1214',
+      card: '#111517',
+      cardRaised: '#1A1F22',
+      cardGlass: '#111517',
+      separator: alpha(brand, 0.35),
+      fill: 'rgba(255, 255, 255, 0.07)',
+    }),
+    shadows: (_scheme, brand) => ({
+      card: { boxShadow: `0px 0px 0px 1px ${alpha(brand, 0.55)}` },
+      plate: { boxShadow: `0px 0px 0px 1px ${alpha(brand, 0.4)}` },
+      float: { boxShadow: `0px 0px 0px 1px ${alpha(brand, 0.85)}, 3px 3px 0px 0px ${alpha(brand, 0.35)}` },
+    }),
+  },
+  comic: {
+    name: 'Comic',
+    blurb: 'Bold ink outlines, a sunny page and comic-book titles',
+    radius: { sm: 10, md: 14, lg: 18, xl: 22, sheet: 28, pill: 999 },
+    solid: true,
+    fonts: { display: 'Bangers_400Regular', displayScale: 1.06, displayLeading: 1.15 },
+    surfaces: (scheme) =>
+      scheme === 'dark'
+        ? { groupedBackground: '#17141F', background: '#211D2B', card: '#241F30', cardRaised: '#2F2A3D', cardGlass: '#241F30', separator: 'rgba(242, 238, 230, 0.4)', fill: 'rgba(242, 238, 230, 0.1)' }
+        : { groupedBackground: '#FFF1BF', background: '#FFFDF5', card: '#FFFFFF', cardRaised: '#FFFFFF', cardGlass: '#FFFFFF', separator: 'rgba(20, 20, 20, 0.45)', fill: 'rgba(20, 20, 20, 0.08)' },
+    shadows: (scheme) => {
+      const ink = scheme === 'dark' ? '#F2EEE6' : '#141414';
+      return {
+        card: { boxShadow: `0px 0px 0px 2px ${ink}, 4px 5px 0px 2px ${ink}` },
+        plate: { boxShadow: `0px 0px 0px 2px ${ink}, 4px 5px 0px 2px ${ink}` },
+        float: { boxShadow: `0px 0px 0px 2px ${ink}, 5px 6px 0px 2px ${ink}` },
+      };
+    },
   },
 };

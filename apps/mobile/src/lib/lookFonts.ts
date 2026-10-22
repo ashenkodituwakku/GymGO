@@ -1,7 +1,9 @@
 /**
  * The typefaces some looks draw in, loaded only when that look is chosen
  * (all SIL Open Font Licence): Press Start 2P and Pixelify Sans for 8-bit,
- * Roboto for Material. Bundled with the app, so nothing is fetched.
+ * Roboto for Material, Nunito for Soft, Fraunces for Paper's titles,
+ * JetBrains Mono for Terminal and Bangers for Comic's titles. Bundled with
+ * the app, so nothing is fetched.
  */
 
 import * as Font from 'expo-font';
@@ -19,6 +21,24 @@ const FACES: Partial<Record<LookId, Record<string, number>>> = {
     Roboto_400Regular: require('@expo-google-fonts/roboto/400Regular').Roboto_400Regular,
     Roboto_500Medium: require('@expo-google-fonts/roboto/500Medium').Roboto_500Medium,
     Roboto_700Bold: require('@expo-google-fonts/roboto/700Bold').Roboto_700Bold,
+  },
+  soft: {
+    Nunito_400Regular: require('@expo-google-fonts/nunito/400Regular').Nunito_400Regular,
+    Nunito_500Medium: require('@expo-google-fonts/nunito/500Medium').Nunito_500Medium,
+    Nunito_600SemiBold: require('@expo-google-fonts/nunito/600SemiBold').Nunito_600SemiBold,
+    Nunito_700Bold: require('@expo-google-fonts/nunito/700Bold').Nunito_700Bold,
+  },
+  paper: {
+    Fraunces_700Bold: require('@expo-google-fonts/fraunces/700Bold').Fraunces_700Bold,
+  },
+  terminal: {
+    JetBrainsMono_400Regular: require('@expo-google-fonts/jetbrains-mono/400Regular').JetBrainsMono_400Regular,
+    JetBrainsMono_500Medium: require('@expo-google-fonts/jetbrains-mono/500Medium').JetBrainsMono_500Medium,
+    JetBrainsMono_600SemiBold: require('@expo-google-fonts/jetbrains-mono/600SemiBold').JetBrainsMono_600SemiBold,
+    JetBrainsMono_700Bold: require('@expo-google-fonts/jetbrains-mono/700Bold').JetBrainsMono_700Bold,
+  },
+  comic: {
+    Bangers_400Regular: require('@expo-google-fonts/bangers/400Regular').Bangers_400Regular,
   },
 };
 

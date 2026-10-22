@@ -8,7 +8,7 @@
  */
 
 import type { TrainingSession } from './training';
-import { EXERCISES, KIT_LABEL, MUSCLES, muscleLabel, wayToDo, type Exercise, type Kit, type Muscle } from './workout';
+import { EXERCISES, KIT_LABEL, MUSCLES, doseFor, muscleLabel, wayToDo, type Exercise, type Kit, type Muscle } from './workout';
 
 /** Kit filters, as people think of them rather than by machine. */
 export type KitFilter = 'any' | 'body' | 'dumbbells' | 'barbell' | 'cables' | 'machines';
@@ -109,6 +109,27 @@ export function alternativesFor(exercise: Exercise, limit = 4, exercises: Exerci
     .sort((a, b) => b.score - a.score || a.other.name.localeCompare(b.other.name))
     .slice(0, limit)
     .map((item) => item.other);
+}
+
+/**
+ * Exercises to add to a workout in progress: those matching what's typed,
+ * or, with nothing typed, the ones for the muscles it already trains (the
+ * closest first), then the rest. Never one already in it.
+ */
+export function addableExercises(query: string, inWorkout: readonly string[], limit = 8, exercises: Exercise[] = EXERCISES): Exercise[] {
+  const present = new Set(inWorkout);
+  const open = exercises.filter((exercise) => !present.has(exercise.id));
+  if (query.trim()) return open.filter((exercise) => matchesQuery(exercise, query)).slice(0, limit);
+  const trained = new Set(inWorkout.flatMap((id) => exercises.find((exercise) => exercise.id === id)?.primary ?? []));
+  const score = (exercise: Exercise) => exercise.primary.filter((muscle) => trained.has(muscle)).length * 2 + exercise.secondary.filter((muscle) => trained.has(muscle)).length;
+  return [...open].sort((a, b) => score(b) - score(a)).slice(0, limit);
+}
+
+/** How an added exercise is planned: the builder's usual sets, reps and rest; a finisher once, as its cue says. */
+export function addedPlan(exercise: Exercise): { sets: number; reps: string; restSeconds: number } {
+  if (exercise.cardio) return { sets: 1, reps: 'see cue', restSeconds: 0 };
+  const { sets, reps, restSeconds } = doseFor(exercise, 'muscle');
+  return { sets, reps, restSeconds };
 }
 
 /** Can it be done with the kit here (for "you can do this at this gym")? */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { agoLabel, alternativesFor, daysAgo, fitsKit, freshMuscles, groupLabel, kitText, lastTrained, libraryGroups, matchesQuery } from './exerciseLibrary';
+import { agoLabel, alternativesFor, daysAgo, fitsKit, freshMuscles, groupLabel, kitText, lastTrained, libraryGroups, matchesQuery, addableExercises, addedPlan } from './exerciseLibrary';
 import type { TrainingSession } from './training';
 import { EXERCISES } from './workout';
 
@@ -97,5 +97,28 @@ describe('when you last trained each muscle', () => {
     expect(fresh).not.toContain('chest');
     expect(fresh[0]).toBe('biceps'); // never trained
     expect(fresh).toContain('quadriceps');
+  });
+});
+
+describe('adding an exercise mid-workout', () => {
+  it('finds by name or muscle, never one already in the workout', () => {
+    const found = addableExercises('curl', ['db-curl']).map((exercise) => exercise.id);
+    expect(found.length).toBeGreaterThan(0);
+    expect(found).not.toContain('db-curl');
+    expect(addableExercises('curl', []).map((exercise) => exercise.id)).toContain('db-curl');
+  });
+
+  it('with nothing typed, suggests moves for the muscles already trained first', () => {
+    const suggested = addableExercises('', ['bench-press'], 3);
+    expect(suggested).toHaveLength(3);
+    expect(suggested.every((exercise) => exercise.primary.includes('chest') || exercise.secondary.includes('chest') || exercise.primary.includes('triceps'))).toBe(true);
+    expect(suggested.map((exercise) => exercise.id)).not.toContain('bench-press');
+  });
+
+  it('plans an added exercise as the builder would, and a finisher once', () => {
+    const bench = EXERCISES.find((exercise) => exercise.id === 'bench-press')!;
+    expect(addedPlan(bench)).toEqual({ sets: 4, reps: '8–10', restSeconds: 90 });
+    const rower = EXERCISES.find((exercise) => exercise.cardio)!;
+    expect(addedPlan(rower)).toEqual({ sets: 1, reps: 'see cue', restSeconds: 0 });
   });
 });

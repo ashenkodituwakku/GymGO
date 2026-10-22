@@ -21,7 +21,8 @@ import { Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { leadExercise } from '@/lib/exerciseGlyphs';
 import { endSession, startSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
 import { againPlan } from '@/lib/again';
-import { agoLabel, daysAgo } from '@/lib/exerciseLibrary';
+import { addedPlan, agoLabel, daysAgo } from '@/lib/exerciseLibrary';
+import { AddExercise } from '@/components/AddExercise';
 import { ApiError, api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -66,7 +67,7 @@ import { ProgressRing } from '@/components/ProgressRing';
 import { useOverhang } from '@/lib/layout';
 import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
 import { useTrainingLog } from '@/lib/useTraining';
-import { EXERCISES, TYPICAL_KIT, exerciseName, knownKit, swapFor, type Kit } from '@/lib/workout';
+import { EXERCISES, TYPICAL_KIT, exerciseName, knownKit, swapFor, type Exercise, type Kit } from '@/lib/workout';
 import { SwapButton } from '@/components/ExerciseCard';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { ScreenOptions } from '@/components/ScreenOptions';
@@ -304,6 +305,24 @@ export default function TrainScreen() {
     },
     [available],
   );
+  // Adding one mid-workout: it joins the end, planned as the builder would plan it.
+  const inWorkout = useMemo(() => session?.items.map((item) => item.exerciseId) ?? [], [session?.items]);
+  const addExercise = useCallback((exercise: Exercise) => {
+    const plan = addedPlan(exercise);
+    updateSession((current) => ({
+      ...current,
+      items: [
+        ...current.items,
+        {
+          exerciseId: exercise.id,
+          planned: plan.sets,
+          reps: plan.reps,
+          restSeconds: plan.restSeconds,
+          sets: Array.from({ length: Math.max(1, plan.sets) }, () => ({ weight: '', reps: '', done: false })),
+        },
+      ],
+    }));
+  }, []);
   const unitNow = session?.unit ?? 'kg';
   const openPlates = useCallback(
     (weight: string | null) => router.push({ pathname: '/plates', params: { weight: weight ?? '', unit: unitNow } }),
@@ -423,6 +442,8 @@ export default function TrainScreen() {
             current={index === upNextIndex}
           />
         ))}
+
+        <AddExercise inWorkout={inWorkout} onAdd={addExercise} />
 
         <View style={styles.finish}>
           <PrimaryButton label={saving ? 'Saving…' : 'Finish workout'} icon="check" disabled={saving} onPress={() => void finish()} />

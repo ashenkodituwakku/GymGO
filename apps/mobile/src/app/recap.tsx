@@ -5,10 +5,10 @@
 
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
-import { RecapCard } from '@/components/RecapCard';
+import { RECAP_WIDTH, RecapCard } from '@/components/RecapCard';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ListSkeleton } from '@/components/Skeleton';
 import { PrimaryButton, Txt } from '@/components/ui';
@@ -31,6 +31,9 @@ export default function RecapScreen() {
   const { gyms } = useCollection();
   const recap = useMemo(() => weekRecap(log.sessions, gyms), [log.sessions, gyms]);
   const shot = useRef<View>(null);
+  // The card at its size, or narrower on a small phone: the page's gutters and the picture's margin either side.
+  const { width: screen } = useWindowDimensions();
+  const cardWidth = Math.min(RECAP_WIDTH, screen - (space[4] + space[3]) * 2);
   const [busy, setBusy] = useState(false);
   const [line, setLine] = useState<string | null>(null);
 
@@ -70,6 +73,7 @@ export default function RecapScreen() {
               unit={unitFor(prefs.country)}
               record={best ? (data.records.find((record) => record.location.id === best.id) ?? null) : null}
               cover={best ? (data.covers[best.id] ?? null) : null}
+              width={cardWidth}
             />
           </View>
           <View style={styles.actions}>

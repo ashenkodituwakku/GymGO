@@ -18,11 +18,24 @@ import { Txt } from './ui';
 
 export const RECAP_WIDTH = 320;
 
-export function RecapCard({ recap, unit, record, cover }: { recap: WeekRecap; unit: WeightUnit; record: GymRecord | null; cover: string | null }) {
+export function RecapCard({
+  recap,
+  unit,
+  record,
+  cover,
+  width = RECAP_WIDTH,
+}: {
+  recap: WeekRecap;
+  unit: WeightUnit;
+  record: GymRecord | null;
+  cover: string | null;
+  /** Narrower on a small phone, so it fits with room round it; RECAP_WIDTH at most. */
+  width?: number;
+}) {
   const lifted = Math.round(fromKg(recap.volumeKg, unit) / (unit === 'kg' ? 10 : 25)) * (unit === 'kg' ? 10 : 25);
   const best = recap.bestCard;
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { width }]}>
       <Txt variant="eyebrow" color="rgba(255,255,255,0.75)">
         {recap.which === 'this' ? 'MY WEEK' : 'MY LAST WEEK'}
       </Txt>

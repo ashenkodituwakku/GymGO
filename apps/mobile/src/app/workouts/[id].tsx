@@ -142,7 +142,7 @@ export default function SavedWorkoutScreen() {
             tone="quiet"
             onPress={() => void Share.share({ message: workoutText(workout, saved.plan.gymName) }).catch(() => undefined)}
           />
-          {saved.gymId && (
+          {!!saved.gymId && (
             <PrimaryButton
               label="Open the gym"
               icon="gym"

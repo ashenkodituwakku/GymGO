@@ -607,7 +607,7 @@ export function PlaceCard({
                 Also listed: {location.activities!.join(', ')}
               </Txt>
             )}
-            {location.email && (
+            {!!location.email && (
               <Pressable
                 onPress={() => void Linking.openURL(`mailto:${location.email}`).catch(() => setNotice('No mail app to open.'))}
                 accessibilityRole="link"

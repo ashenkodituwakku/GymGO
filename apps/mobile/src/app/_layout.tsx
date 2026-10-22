@@ -289,7 +289,7 @@ function ThemedStack() {
         <Stack.Screen name="legal/[doc]" options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="report-bug" options={{ ...MODAL, headerShown: true, title: 'Report a bug' }} />
       </Stack>
-      {veilColour && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle, { pointerEvents: 'none' }]} />}
+      {!!veilColour && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle, { pointerEvents: 'none' }]} />}
     </ThemeProvider>
   );
 }

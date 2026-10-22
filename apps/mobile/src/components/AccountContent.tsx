@@ -199,7 +199,7 @@ export function BugReportQueue({ token }: { token: string }) {
             </Txt>
             {expanded && (
               <View style={styles.bugDetails}>
-                {report.replyTo && (
+                {!!report.replyTo && (
                   <Txt variant="footnote" color={color.labelSecondary}>
                     Reply to {report.replyTo}
                   </Txt>

@@ -101,7 +101,7 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
                 </Txt>
               )}
               {/* Who it's for under its name, so the prices still line up along the row. */}
-              {offer.eligibility.onlyFor && (
+              {!!offer.eligibility.onlyFor && (
                 <Txt variant="caption" color={color.maybeInk} numberOfLines={2} style={[styles.center, face('semibold')]}>
                   {`${offer.eligibility.onlyFor} only`}
                 </Txt>
@@ -185,7 +185,7 @@ export function JoinGym({ record }: { record: GymRecord }) {
             <View style={styles.planHead}>
               <View style={styles.flex}>
                 <Txt variant="headline">{offer.label}</Txt>
-                {offer.eligibility.onlyFor && (
+                {!!offer.eligibility.onlyFor && (
                   <Txt variant="footnote" color={color.maybeInk} style={face('semibold')}>
                     {`${offer.eligibility.onlyFor} only`}
                   </Txt>

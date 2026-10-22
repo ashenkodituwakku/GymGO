@@ -435,7 +435,7 @@ function BuyButton({
   return (
     <View style={styles.gap}>
       <PrimaryButton label={busy ? 'Opening Stripe…' : label} disabled={busy} onPress={onSubscribe} />
-      {renewal && <LegalText variant="footnote" tint={color.labelSecondary} style={styles.center} text={renewal} />}
+      {!!renewal && <LegalText variant="footnote" tint={color.labelSecondary} style={styles.center} text={renewal} />}
     </View>
   );
 }
@@ -470,7 +470,7 @@ function PlanOption({
       <View style={styles.flex}>
         <View style={styles.planTitle}>
           <Txt variant="headline">{title}</Txt>
-          {tag && (
+          {!!tag && (
             <View style={styles.tag}>
               <Txt variant="caption" color={color.onBrand} style={face('semibold')}>
                 {tag}

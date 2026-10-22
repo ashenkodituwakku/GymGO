@@ -311,7 +311,7 @@ function Section({ title, footer, children }: { title?: string; footer?: string;
         </Txt>
       )}
       <View style={styles.group}>{children}</View>
-      {footer && (
+      {!!footer && (
         <Txt variant="footnote" color={color.labelSecondary} style={styles.footer}>
           {footer}
         </Txt>

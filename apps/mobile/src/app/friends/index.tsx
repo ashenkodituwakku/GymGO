@@ -310,7 +310,7 @@ function InviteRow({ invite, mine, children }: { invite: TrainInvite; mine: bool
         <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
           {`${invite.gymName} · ${inviteWhen(invite.at)}`}
         </Txt>
-        {invite.note && (
+        {!!invite.note && (
           <Txt variant="footnote" numberOfLines={3}>
             {`“${invite.note}”`}
           </Txt>

@@ -163,17 +163,17 @@ export function PlaceDetails({ place, hidePhotos = false }: { place: GooglePlace
             </Txt>
           </View>
         ) : null}
-        {place.address && (
+        {!!place.address && (
           <Txt variant="subhead" color={color.labelSecondary}>
             {place.address}
           </Txt>
         )}
-        {place.type && (
+        {!!place.type && (
           <Txt variant="footnote" color={color.labelSecondary}>
             {place.type} on Google
           </Txt>
         )}
-        {place.summary && <Txt variant="subhead">“{place.summary}”</Txt>}
+        {!!place.summary && <Txt variant="subhead">“{place.summary}”</Txt>}
       </View>
 
       {!hidePhotos && place.photos.length > 0 && (
@@ -188,12 +188,12 @@ export function PlaceDetails({ place, hidePhotos = false }: { place: GooglePlace
       )}
 
       <View style={styles.links}>
-        {place.phone && (
+        {!!place.phone && (
           <View style={styles.flex}>
             <PrimaryButton label={place.phone} icon="call" tone="quiet" onPress={() => void Linking.openURL(`tel:${place.phone!.replace(/\s+/g, '')}`).catch(() => undefined)} />
           </View>
         )}
-        {place.website && (
+        {!!place.website && (
           <View style={styles.flex}>
             <PrimaryButton label="Website" icon="website" tone="quiet" onPress={() => open(place.website!)} />
           </View>
@@ -244,13 +244,13 @@ export function PlaceDetails({ place, hidePhotos = false }: { place: GooglePlace
                 <Author author={review.author} />
                 {review.rating !== null && <Txt variant="subhead">{'★'.repeat(Math.round(review.rating))}</Txt>}
               </View>
-              {review.when && (
+              {!!review.when && (
                 <Txt variant="caption" color={color.labelSecondary}>
                   {review.when}
                 </Txt>
               )}
               {review.text ? <Txt variant="subhead">{review.text}</Txt> : null}
-              {review.googleMapsUri && (
+              {!!review.googleMapsUri && (
                 <Pressable onPress={() => open(review.googleMapsUri!)} accessibilityRole="link" hitSlop={6}>
                   <Txt variant="caption" color={color.brand}>
                     See it on Google Maps ↗

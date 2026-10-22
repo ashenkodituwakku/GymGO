@@ -134,7 +134,7 @@ export default function LeaderboardScreen() {
         value={scope}
         onChange={setScope}
       />
-      {city && (
+      {!!city && (
         <Segmented
           options={[
             { value: 'all', label: 'All gyms' },

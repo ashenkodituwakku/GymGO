@@ -5,7 +5,7 @@
  * own log and nothing else.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable, Pressy } from './motion';
 import { haptic } from '@/lib/haptics';
@@ -14,11 +14,13 @@ import {
   goalStreak,
   milestones,
   muscleBalance,
+  sessionsOnDay,
   trainingCalendar,
   type MilestoneKind,
 } from '@/lib/insights';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
-import { streakOf, type TrainingSession } from '@/lib/training';
+import { durationLabel, setCount, streakOf, type TrainingSession } from '@/lib/training';
+import { ExerciseTile } from './ExerciseGlyph';
 import { Icon, type IconName } from './Icon';
 import { ProOffer } from './ProOffer';
 import { Txt } from './ui';
@@ -27,6 +29,8 @@ const WEEKS = 12;
 const GOAL_MIN = WEEKLY_GOALS[0];
 const GOAL_MAX = WEEKLY_GOALS[WEEKLY_GOALS.length - 1] ?? 7;
 const ROW_LABELS = ['M', '', 'W', '', 'F', '', 'S'];
+/** "Wednesday 14 October", for a calendar day. */
+const longDay = (date: number) => new Date(date).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 
 /** This week against your goal, and the last twelve weeks, a square a day. */
 export function WeekCard({
@@ -46,6 +50,9 @@ export function WeekCard({
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const daysTrained = weeks.reduce((sum, week) => sum + week.days.filter((day) => day.sessions > 0).length, 0);
   const weeksMet = goal ? weeks.filter((week) => week.sessions >= goal).length : 0;
+  // A trained day tapped: what you did that day, under the calendar.
+  const [picked, setPicked] = useState<number | null>(null);
+  const pickedSessions = picked === null ? [] : sessionsOnDay(sessions, picked);
 
   const status = goal
     ? thisWeek >= goal
@@ -100,11 +107,7 @@ export function WeekCard({
         </Pressable>
       )}
 
-      <View
-        style={styles.calendar}
-        accessible
-        accessibilityLabel={`The last ${WEEKS} weeks: you trained on ${daysTrained} day${daysTrained === 1 ? '' : 's'}${goal ? `, and met your goal in ${weeksMet} week${weeksMet === 1 ? '' : 's'}` : ''}.`}
-      >
+      <View style={styles.calendar}>
         <View style={styles.rowLabels}>
           {ROW_LABELS.map((label, index) => (
             <View key={index} style={styles.rowLabel}>
@@ -117,23 +120,67 @@ export function WeekCard({
         </View>
         {weeks.map((week) => (
           <View key={week.start} style={styles.week}>
-            {week.days.map((day) => (
-              <View
-                key={day.date}
-                style={[
-                  styles.day,
-                  day.future ? styles.dayFuture : day.sessions > 0 ? styles.dayTrained : styles.dayRest,
-                  day.date === today && styles.dayToday,
-                ]}
-              />
-            ))}
+            {week.days.map((day) => {
+              const look = [
+                styles.day,
+                day.future ? styles.dayFuture : day.sessions > 0 ? styles.dayTrained : styles.dayRest,
+                day.date === today && styles.dayToday,
+                day.date === picked && styles.dayPicked,
+              ];
+              // A trained day opens what you did; the rest are just squares.
+              return day.sessions > 0 ? (
+                <Pressable
+                  key={day.date}
+                  onPress={() => {
+                    haptic.select();
+                    setPicked(picked === day.date ? null : day.date);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${longDay(day.date)}: ${day.sessions} workout${day.sessions === 1 ? '' : 's'}`}
+                  aria-expanded={picked === day.date}
+                  hitSlop={2}
+                  style={({ pressed }) => [...look, pressed && { opacity: 0.7 }]}
+                />
+              ) : (
+                <View key={day.date} style={look} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
+              );
+            })}
             <View style={[styles.metDot, goal !== null && week.sessions >= goal && styles.metDotOn]} />
           </View>
         ))}
       </View>
-      <Txt variant="caption" color={color.labelSecondary}>
-        {`The last ${WEEKS} weeks, a square a day, Monday at the top.${goal ? ' A green dot marks a week you met your goal.' : ''}`}
-      </Txt>
+      {picked !== null && pickedSessions.length > 0 && (
+        <View style={styles.dayDetail}>
+          <Txt variant="footnote" color={color.labelSecondary} style={face('semibold')}>
+            {longDay(picked)}
+          </Txt>
+          {pickedSessions.map((session) => (
+            <View key={session.id} style={styles.daySession}>
+              <View style={styles.flex}>
+                <Txt variant="subhead" style={face('semibold')} numberOfLines={1}>
+                  {session.name}
+                </Txt>
+                <Txt variant="caption" color={color.labelSecondary}>
+                  {`${durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt))} · ${setCount(session)} set${setCount(session) === 1 ? '' : 's'}`}
+                </Txt>
+              </View>
+              <View style={styles.dayStrip}>
+                {session.exercises.slice(0, 4).map((logged, index) => (
+                  <ExerciseTile key={`${logged.exerciseId}-${index}`} exerciseId={logged.exerciseId} size={24} />
+                ))}
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+      <View
+        accessible
+        accessibilityLabel={`The last ${WEEKS} weeks: you trained on ${daysTrained} day${daysTrained === 1 ? '' : 's'}${goal ? `, and met your goal in ${weeksMet} week${weeksMet === 1 ? '' : 's'}` : ''}. Tap a day you trained to see what you did.`}
+      >
+        <Txt variant="caption" color={color.labelSecondary}>
+          {`The last ${WEEKS} weeks, a square a day, Monday at the top.${goal ? ' A green dot marks a week you met your goal.' : ''} Tap a day you trained to see what you did.`}
+        </Txt>
+      </View>
     </View>
   );
 }
@@ -333,7 +380,7 @@ export function MuscleBalanceCard({ sessions, isPro, onPro, now = new Date() }: 
 
 const styles = themed(() =>
   StyleSheet.create({
-    flex: { flex: 1, gap: 2 },
+    flex: { flex: 1, minWidth: 0, gap: 2 },
     card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     goalRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
@@ -356,6 +403,11 @@ const styles = themed(() =>
     dayTrained: { backgroundColor: color.brand },
     dayFuture: { backgroundColor: 'transparent' },
     dayToday: { borderWidth: 2, borderColor: color.brand },
+    // The day you tapped: ringed in the page's ink, so it shows on a filled square too.
+    dayPicked: { borderWidth: 2, borderColor: color.label },
+    dayDetail: { gap: space[2], padding: space[3], borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.fill },
+    daySession: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    dayStrip: { flexDirection: 'row', gap: 3 },
     metDot: { width: 6, height: 6, borderRadius: 3, marginTop: 2 },
     metDotOn: { backgroundColor: color.good },
 

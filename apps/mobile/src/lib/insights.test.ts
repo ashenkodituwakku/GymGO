@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bestWeekStreak, goalStreak, logToCsv, milestones, muscleBalance, recordsEver, trainingCalendar, weekAfter, weekRange, weekRecap, workoutShareText } from './insights';
+import { bestWeekStreak, goalStreak, logToCsv, milestones, muscleBalance, recordsEver, sessionsOnDay, trainingCalendar, weekAfter, weekRange, weekRecap, workoutShareText } from './insights';
 import type { Collection, CollectedGym } from '@gymgo/domain';
 import type { LoggedExercise, TrainingSession } from './training';
 
@@ -32,6 +32,17 @@ describe('trainingCalendar', () => {
     expect(thisWeek.days[3]!.future).toBe(true);
     expect(weeks[1]!.days[0]!.sessions).toBe(1);
     expect(weeks[0]!.sessions).toBe(0);
+  });
+});
+
+describe('sessionsOnDay', () => {
+  it('finds the workouts on a calendar day, earliest first, and none on a rest day', () => {
+    const evening = session(at(4, 13, 19));
+    const morning = session(at(4, 13, 7));
+    const log = [evening, morning, session(at(4, 14))];
+    const monday = trainingCalendar(log, 1, NOW)[0]!.days[0]!;
+    expect(sessionsOnDay(log, monday.date).map((item) => item.id)).toEqual([morning.id, evening.id]);
+    expect(sessionsOnDay(log, trainingCalendar(log, 1, NOW)[0]!.days[2]!.date)).toEqual([]);
   });
 });
 

@@ -74,6 +74,11 @@ export function trainingCalendar(sessions: TrainingSession[], weeks = 12, now: D
   return out;
 }
 
+/** The workouts finished on a calendar day (`date` as trainingCalendar gives it), earliest first. */
+export function sessionsOnDay(sessions: TrainingSession[], date: number): TrainingSession[] {
+  return sessions.filter((session) => dayStart(new Date(session.finishedAt)) === date).sort((a, b) => a.finishedAt.localeCompare(b.finishedAt));
+}
+
 /** The goals you can pick: sessions a week. */
 export const WEEKLY_GOALS = [1, 2, 3, 4, 5, 6, 7] as const;
 

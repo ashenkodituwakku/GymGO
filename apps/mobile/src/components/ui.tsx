@@ -1,0 +1,809 @@
+/**
+ * Small building blocks shared by every screen.
+ */
+
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
+import { forwardRef, useEffect, useState, type ReactNode, type Ref } from 'react';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { ActivityIndicator, Platform, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle } from 'react-native';
+import type { ResultTier } from '@gymgo/domain';
+import { TIER } from '@/lib/copy';
+import { monogram } from '@/lib/monogram';
+import { haptic } from '@/lib/haptics';
+import { alpha } from '@/lib/looks';
+import { backgroundImage, color, currentLook, currentTheme, dropShadow, face, HIT, LOOKS, radius, shadow, space, themed, type, webFocusRing, solidSurfaces } from '@/lib/theme';
+import { BrandFill, Sheen } from './BrandFill';
+import { Glass } from './Glass';
+import { Icon, type IconName } from './Icon';
+import { FADE_IN, FADE_OUT, GLIDE, Pressable, Pressy, SETTLE, usePop, usePressScale } from './motion';
+
+// --- Text -------------------------------------------------------------------
+
+type Variant = keyof typeof type;
+
+export function Txt({
+  variant = 'body',
+  color: tint = color.label,
+  style,
+  children,
+  numberOfLines,
+  accessibilityRole,
+  maxFontSizeMultiplier,
+}: {
+  variant?: Variant;
+  color?: string;
+  style?: StyleProp<TextStyle>;
+  children: ReactNode;
+  numberOfLines?: number;
+  accessibilityRole?: 'header';
+  /** How far it may grow with the phone's text size, for text in a box that can't grow with it. */
+  maxFontSizeMultiplier?: number;
+}) {
+  return (
+    <Text
+      style={[type[variant] as TextStyle, { color: tint }, style]}
+      numberOfLines={numberOfLines}
+      accessibilityRole={accessibilityRole}
+      maxFontSizeMultiplier={maxFontSizeMultiplier}
+    >
+      {children}
+    </Text>
+  );
+}
+
+// --- Evidence tiers ---------------------------------------------------------
+
+export const TIER_COLOUR: Record<ResultTier, { fill: string; ink: string; tint: string; icon: IconName }> = themed(() => ({
+  confirmed: { fill: color.good, ink: color.goodInk, tint: color.goodTint, icon: 'good' as IconName },
+  needs_confirmation: { fill: color.maybe, ink: color.maybeInk, tint: color.maybeTint, icon: 'call' as IconName },
+  ruled_out: { fill: color.no, ink: color.noInk, tint: color.noTint, icon: 'no' as IconName },
+}));
+
+export function TierPill({ tier }: { tier: ResultTier }) {
+  const tone = TIER_COLOUR[tier];
+  return (
+    <View style={[styles.pill, { backgroundColor: tone.tint }]}>
+      <Icon name={tone.icon} size={13} color={tone.fill} />
+      <Txt variant="caption" color={tone.ink} style={styles.pillText}>
+        {TIER[tier].label}
+      </Txt>
+    </View>
+  );
+}
+
+// --- Chips ------------------------------------------------------------------
+
+/** A small one-of-several choice ("Walked in", "Last week"), for the members' report forms. */
+export function ChoiceChip({ label, selected, onPress, icon }: { label: string; selected: boolean; onPress: () => void; icon?: IconName }) {
+  return (
+    <Pressy
+      scaleTo={0.94}
+      onPress={() => {
+        haptic.select();
+        onPress();
+      }}
+      accessibilityRole="radio"
+      aria-checked={selected}
+      accessibilityLabel={label}
+      hitSlop={4}
+      style={[styles.choiceChip, selected && styles.choiceChipOn]}
+    >
+      {selected && <BrandFill />}
+      {icon && <Icon name={icon} size={13} color={selected ? color.onBrand : color.label} />}
+      <Txt variant="footnote" color={selected ? color.onBrand : color.label} style={face('medium')}>
+        {label}
+      </Txt>
+    </Pressy>
+  );
+}
+
+export function Chip({
+  label,
+  selected,
+  onPress,
+  icon,
+  accessibilityLabel,
+  action = false,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  icon?: IconName;
+  accessibilityLabel?: string;
+  /**
+   * Does something rather than switch something on or off (Try again, the
+   * sort order, Remove): a button to a screen reader. A chip is otherwise a
+   * checkbox, and these were read as "checkbox, not checked".
+   */
+  action?: boolean;
+}) {
+  return (
+    <Pressy
+      scaleTo={0.94}
+      onPress={() => {
+        haptic.select();
+        onPress();
+      }}
+      accessibilityRole={action ? 'button' : 'checkbox'}
+      aria-checked={action ? undefined : selected}
+      accessibilityLabel={accessibilityLabel ?? label}
+      hitSlop={4}
+      style={[styles.chip, selected && styles.chipSelected]}
+    >
+      {selected && <BrandFill />}
+      {icon && <Icon name={icon} size={14} color={selected ? color.onBrand : color.label} />}
+      <Txt variant="subhead" color={selected ? color.onBrand : color.label} style={styles.chipText}>
+        {label}
+      </Txt>
+    </Pressy>
+  );
+}
+
+// --- Cards and sections ----------------------------------------------------
+
+export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  return <View style={[styles.card, style]}>{children}</View>;
+}
+
+export function SectionTitle({ children, trailing }: { children: ReactNode; trailing?: ReactNode }) {
+  return (
+    <View style={styles.sectionTitle}>
+      <Txt variant="title2">{children}</Txt>
+      {trailing}
+    </View>
+  );
+}
+
+export function Divider({ inset = 0 }: { inset?: number }) {
+  return <View style={[styles.divider, { marginLeft: inset }]} />;
+}
+
+// --- Buttons ----------------------------------------------------------------
+
+/** A fact that's short enough to show whole, in the same card as the folds (a gym's address). */
+export function InfoRow({ icon, title, lines, accessibilityLabel }: { icon: IconName; title: string; lines: string[]; accessibilityLabel?: string }) {
+  return (
+    <View style={styles.fold} accessible accessibilityLabel={accessibilityLabel ?? `${title}: ${lines.join(', ')}`}>
+      <View style={[styles.foldHead, styles.infoHead]}>
+        <View style={styles.foldIcon}>
+          <Icon name={icon} size={17} color={color.brand} />
+        </View>
+        <View style={styles.foldText}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {title}
+          </Txt>
+          {lines.map((line) => (
+            <Txt key={line} variant="body">
+              {line}
+            </Txt>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * A section that starts folded: an emoji, a title and a one-line summary.
+ * Tap to open. Keeps a gym's card short until you want the detail.
+ */
+export function Fold({
+  emoji,
+  icon,
+  title,
+  summary,
+  initiallyOpen = false,
+  children,
+}: {
+  emoji?: string;
+  /** A symbol in a tinted circle; preferred over an emoji. */
+  icon?: IconName;
+  title: string;
+  summary?: string;
+  initiallyOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(initiallyOpen);
+  const turn = useSharedValue(initiallyOpen ? 90 : 0);
+  useEffect(() => {
+    turn.value = withSpring(open ? 90 : 0, SETTLE);
+  }, [open, turn]);
+  const chevron = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.value}deg` }] }));
+  return (
+    <Animated.View style={styles.fold} layout={GLIDE}>
+      <Pressable
+        onPress={() => {
+          haptic.select();
+          setOpen(!open);
+        }}
+        accessibilityRole="button"
+        aria-expanded={open}
+        accessibilityLabel={`${title}${summary ? `, ${summary}` : ''}`}
+        style={({ pressed }) => [styles.foldHead, pressed && { opacity: 0.7 }]}
+      >
+        {icon ? (
+          <View style={styles.foldIcon}>
+            <Icon name={icon} size={17} color={color.brand} />
+          </View>
+        ) : (
+          <Txt variant="title2" style={styles.foldEmoji}>
+            {emoji}
+          </Txt>
+        )}
+        <View style={styles.foldText}>
+          <Txt variant="headline">{title}</Txt>
+          {/* Two lines: on a phone a one-line summary lost its end ("see what m…"). */}
+          {summary ? (
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
+              {summary}
+            </Txt>
+          ) : null}
+        </View>
+        <Animated.View style={chevron}>
+          <Icon name="chevron" size={14} color={color.labelTertiary} />
+        </Animated.View>
+      </Pressable>
+      {open && (
+        <Animated.View style={styles.foldBody} entering={FADE_IN} exiting={FADE_OUT}>
+          {children}
+        </Animated.View>
+      )}
+    </Animated.View>
+  );
+}
+
+/** An iOS segmented control: a grey track with the chosen segment raised. */
+export function Segmented<T extends string | number>({
+  options,
+  value,
+  onChange,
+}: {
+  options: Array<{ value: T; label: string }>;
+  value: T;
+  onChange: (value: T) => void;
+}) {
+  // The raised pill slides to the chosen segment (all segments are one width).
+  const [width, setWidth] = useState(0);
+  const index = Math.max(0, options.findIndex((option) => option.value === value));
+  const slot = options.length > 0 ? (width - 4) / options.length : 0;
+  const left = useSharedValue(index * slot);
+  useEffect(() => {
+    left.value = width > 0 ? withSpring(index * slot, SETTLE) : index * slot;
+  }, [index, slot, width, left]);
+  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: left.value }] }));
+  return (
+    <View style={styles.segmented} accessibilityRole="tablist" onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
+      {width > 0 && <Animated.View style={[styles.segmentPill, { width: slot }, pill, { pointerEvents: 'none' }]} />}
+      {options.map((option) => {
+        const on = option.value === value;
+        return (
+          <Pressable
+            key={String(option.value)}
+            onPress={() => {
+              if (on) return;
+              haptic.select();
+              onChange(option.value);
+            }}
+            accessibilityRole="tab"
+            aria-selected={on}
+            style={[styles.segment, on && width === 0 && styles.segmentOn]}
+          >
+            <Txt variant="footnote" color={color.label} style={on ? face('semibold') : face('medium')} numberOfLines={1}>
+              {option.label}
+            </Txt>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+export interface CapsuleButton {
+  icon: IconName;
+  accessibilityLabel: string;
+  onPress: () => void;
+  /** Working on it (finding you, say): a spinner, and presses wait. */
+  busy?: boolean;
+}
+
+/**
+ * The map's floating controls, stacked in one glass capsule with hairlines
+ * between them, as Maps stacks its own. Real Liquid Glass on iOS 26, which
+ * flexes under a finger.
+ */
+export function ControlCapsule({ buttons }: { buttons: CapsuleButton[] }) {
+  return (
+    // Its shadow outside the glass, which clips its own; a solid capsule brings its own shadow, so not twice.
+    <View style={solidSurfaces() ? styles.capsuleSolid : styles.capsuleShadow}>
+      <Glass style={styles.capsule} interactive>
+        {buttons.map((button, index) => (
+          <View key={button.icon}>
+            {index > 0 && <View style={styles.capsuleDivider} />}
+            <Pressy
+              scaleTo={0.86}
+              onPress={() => {
+                if (button.busy) return;
+                haptic.tap();
+                button.onPress();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={button.accessibilityLabel}
+              aria-busy={button.busy === true}
+              style={({ pressed }) => [styles.capsuleButton, pressed && styles.capsulePressed]}
+            >
+              {button.busy ? <ActivityIndicator size="small" color={color.brand} /> : <Icon name={button.icon} size={18} color={color.brand} />}
+            </Pressy>
+          </View>
+        ))}
+      </Glass>
+    </View>
+  );
+}
+
+/** The round glass close button that sits in a sheet's corner. */
+export function CloseButton({ onPress }: { onPress: () => void }) {
+  const press = usePressScale(0.86);
+  return (
+    <Animated.View style={press.style}>
+      <Glass style={styles.close} interactive>
+        <Pressable
+          onPress={() => {
+            haptic.tap();
+            onPress();
+          }}
+          onPressIn={press.onPressIn}
+          onPressOut={press.onPressOut}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+          hitSlop={10}
+          style={styles.closeHit}
+        >
+          <Icon name="close" size={13} color={color.labelSecondary} weight="bold" />
+        </Pressable>
+      </Glass>
+    </Animated.View>
+  );
+}
+
+/** A round glass toggle beside the close button: compare this gym, say. */
+/** A small round glass button; with `on`, a toggle that fills when on. */
+export function RoundToggle({ icon, on, label, onPress }: { icon: IconName; on?: boolean; label: string; onPress: () => void }) {
+  const press = usePressScale(0.86);
+  const pop = usePop(on === true);
+  return (
+    <Animated.View style={press.style}>
+      <Glass style={styles.close} tint={on ? color.brandFill : undefined} interactive>
+        <Pressable
+          onPress={() => {
+            haptic.select();
+            onPress();
+          }}
+          onPressIn={press.onPressIn}
+          onPressOut={press.onPressOut}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          accessibilityState={on === undefined ? undefined : { selected: on }}
+          hitSlop={10}
+          style={styles.closeHit}
+        >
+          <Animated.View style={pop}>
+            <Icon name={icon} size={14} color={on ? color.onBrand : color.brand} />
+          </Animated.View>
+        </Pressable>
+      </Glass>
+    </Animated.View>
+  );
+}
+
+/**
+ * The Maps action button: icon over a short label, equal widths in a row, in
+ * glass. `primary` is tinted glass in the brand colour, the way iOS 26 marks
+ * the one action that matters most.
+ */
+export function ActionButton({
+  icon,
+  label,
+  onPress,
+  primary = false,
+  accessibilityLabel,
+  on = false,
+  unavailable = false,
+}: {
+  icon: IconName;
+  label: string;
+  onPress: () => void;
+  primary?: boolean;
+  accessibilityLabel?: string;
+  /** Switched on (Saved): the symbol pops once when it turns on. */
+  on?: boolean;
+  /**
+   * Nothing to act on (no phone number on record, say). Greyed out before
+   * anyone taps it, but still pressable, so a tap can say why; not marked
+   * disabled, since it still does something. Pass an accessibilityLabel that
+   * says what's missing, for anyone who can't see the grey.
+   */
+  unavailable?: boolean;
+}) {
+  const ink = unavailable ? color.labelTertiary : primary ? color.onBrand : color.brand;
+  const press = usePressScale(0.94);
+  const pop = usePop(on);
+  return (
+    <Animated.View style={[styles.actionWrap, press.style]}>
+      <Glass style={styles.action} tint={primary ? color.brandFill : undefined} interactive>
+        {primary && <BrandFill round={radius.lg} />}
+        <Pressable
+          onPress={() => {
+            haptic.tap();
+            onPress();
+          }}
+          onPressIn={press.onPressIn}
+          onPressOut={press.onPressOut}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel ?? label}
+          style={styles.actionHit}
+        >
+          <Animated.View style={pop}>
+            <Icon name={icon} size={19} color={ink} />
+          </Animated.View>
+          <Txt variant="caption" color={ink} style={styles.actionLabel}>
+            {label}
+          </Txt>
+        </Pressable>
+      </Glass>
+    </Animated.View>
+  );
+}
+
+/**
+ * A labelled text field. Inside a bottom sheet it must be the sheet's own
+ * input, so the sheet can move out of the keyboard's way; in the desktop
+ * panels it's a plain one.
+ */
+export function TextField({
+  label,
+  inSheet,
+  ...props
+}: TextInputProps & { label: string; inSheet: boolean }) {
+  // The sheet-aware input keeps the keyboard and sheet in step on phones. In
+  // a browser it calls a phone-only API and throws, so use a plain input there.
+  const Field = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
+  const focus = useFocus(props);
+  return (
+    <View style={styles.field}>
+      <Txt variant="footnote" color={color.labelSecondary} style={styles.fieldLabel}>
+        {label}
+      </Txt>
+      <Field
+        placeholderTextColor={color.labelTertiary}
+        accessibilityLabel={label}
+        {...props}
+        {...focus.handlers}
+        style={[styles.fieldInput, props.style, webFocusRing(focus.on)]}
+      />
+    </View>
+  );
+}
+
+/** A bare text field, with focus shown the app's way in a browser. */
+export const Input = forwardRef<TextInput, TextInputProps>(function Input(props, ref) {
+  const focus = useFocus(props);
+  return (
+    <TextInput
+      ref={ref}
+      placeholderTextColor={color.labelTertiary}
+      {...props}
+      {...focus.handlers}
+      style={[props.style, webFocusRing(focus.on)]}
+    />
+  );
+});
+
+/** Whether a field has focus, keeping any focus handlers it was given. */
+function useFocus({ onFocus, onBlur }: Pick<TextInputProps, 'onFocus' | 'onBlur'>) {
+  const [on, setOn] = useState(false);
+  return {
+    on,
+    handlers: {
+      onFocus: ((event) => {
+        setOn(true);
+        onFocus?.(event);
+      }) as NonNullable<TextInputProps['onFocus']>,
+      onBlur: ((event) => {
+        setOn(false);
+        onBlur?.(event);
+      }) as NonNullable<TextInputProps['onBlur']>,
+    },
+  };
+}
+
+/**
+ * An empty photo slot. When a gym has no photo and no logo, the card says so
+ * in words rather than filling the space with a picture of nothing.
+ * Decoration only: the card's own label already names the gym.
+ */
+/**
+ * Where a gym has no photo or logo. Given its name, the gym's initials on a
+ * soft wash of the accent, with "No photo supplied" under them where there's
+ * room: lettering, so it's never taken for a picture of the place. `onColour`
+ * sits it straight on a coloured ground (a collection card's window).
+ */
+export function NoPhoto({
+  compact = false,
+  style,
+  name,
+  onColour = false,
+}: {
+  compact?: boolean;
+  style?: StyleProp<ViewStyle>;
+  name?: string;
+  onColour?: boolean;
+}) {
+  const letters = name ? monogram(name) : '';
+  if (!letters) {
+    return (
+      <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.noPhoto, style]}>
+        {!compact && <Icon name="photo" size={20} color={color.labelTertiary} />}
+        <Txt variant="caption" color={color.labelSecondary} style={[styles.noPhotoText, compact && styles.noPhotoCompact]}>
+          No photo supplied
+        </Txt>
+      </View>
+    );
+  }
+  const ink = onColour ? '#FFFFFF' : color.brand;
+  // In the glass look, on a page: the accent's tint lit from the top left,
+  // with two fine rings around the initials, like a seal. A card's own
+  // colours (onColour) and the solid looks keep the plain tint and halos.
+  const rich = !onColour && currentLook() === LOOKS.standard;
+  const dark = currentTheme().scheme === 'dark';
+  return (
+    <View
+      aria-hidden
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[styles.monogram, { backgroundColor: onColour ? 'transparent' : color.brandTint }, rich && backgroundImage(dark ? MONOGRAM_DARK(color.brand) : MONOGRAM_LIGHT(color.brand)), style]}
+    >
+      {rich && !compact ? (
+        <>
+          <View style={[styles.ring, styles.ringOuter, { borderColor: alpha(color.brand, dark ? 0.2 : 0.12) }]} />
+          <View style={[styles.ring, styles.ringInner, { borderColor: alpha(color.brand, dark ? 0.28 : 0.17) }]} />
+        </>
+      ) : (
+        <>
+          <View style={[styles.halo, styles.haloBig, { backgroundColor: onColour ? 'rgba(255,255,255,0.12)' : color.brandWash }]} />
+          <View style={[styles.halo, styles.haloSmall, { backgroundColor: onColour ? 'rgba(255,255,255,0.08)' : color.brandWash }]} />
+        </>
+      )}
+      <Text allowFontScaling={false} numberOfLines={1} style={[compact ? styles.lettersCompact : styles.letters, { color: ink }]}>
+        {letters}
+      </Text>
+      {!compact &&
+        (rich ? (
+          // Said plainly, in a small frosted tag at the foot, as the demo's "Illustration" tag is.
+          <View style={[styles.noPhotoTag, { backgroundColor: dark ? 'rgba(0, 0, 0, 0.28)' : 'rgba(255, 255, 255, 0.62)' }]}>
+            <Icon name="photo" size={11} color={color.labelSecondary} />
+            <Txt variant="caption" color={color.labelSecondary} style={face('medium')}>
+              No photo supplied
+            </Txt>
+          </View>
+        ) : (
+          <Txt variant="caption" color={onColour ? 'rgba(255,255,255,0.82)' : color.labelSecondary} style={styles.noPhotoText}>
+            No photo supplied
+          </Txt>
+        ))}
+    </View>
+  );
+}
+
+const MONOGRAM_LIGHT = (brand: string) =>
+  `linear-gradient(150deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 52%, ${alpha(brand, 0.14)} 100%)`;
+const MONOGRAM_DARK = (brand: string) =>
+  `linear-gradient(150deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 50%, ${alpha(brand, 0.2)} 100%)`;
+
+export function PrimaryButton({
+  label,
+  onPress,
+  disabled = false,
+  tone = 'brand',
+  icon,
+  busy = false,
+  focusRef,
+}: {
+  label: string;
+  icon?: IconName;
+  onPress: () => void;
+  disabled?: boolean;
+  tone?: 'brand' | 'quiet' | 'danger';
+  /** Working on it: a spinner in place of the icon, and no second press. */
+  busy?: boolean;
+  /** To put keyboard focus back on the button (after a panel it opened closes). */
+  focusRef?: Ref<View>;
+}) {
+  // A quiet button is tinted with the accent (as an iPhone's secondary buttons are), not a flat grey.
+  const fill = tone === 'brand' ? color.brandFill : tone === 'danger' ? color.dangerTint : color.brandTint;
+  const ink = tone === 'brand' ? color.onBrand : tone === 'danger' ? color.dangerInk : color.brand;
+  return (
+    <Pressy
+      ref={focusRef}
+      scaleTo={0.97}
+      disabled={disabled || busy}
+      onPress={() => {
+        haptic.tap();
+        onPress();
+      }}
+      accessibilityRole="button"
+      aria-disabled={disabled || busy}
+      aria-busy={busy}
+      style={({ pressed }) => [styles.primary, { backgroundColor: fill }, pressed && { opacity: 0.9 }, disabled && !busy && { opacity: 0.45 }]}
+    >
+      {tone === 'brand' && <BrandFill />}
+      {tone === 'brand' && <Sheen round={radius.lg} />}
+      {busy ? <ActivityIndicator size="small" color={ink} /> : icon ? <Icon name={icon} size={17} color={ink} /> : null}
+      <Txt variant="headline" color={ink}>
+        {label}
+      </Txt>
+    </Pressy>
+  );
+}
+
+const styles = themed(() => StyleSheet.create({
+  choiceChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: space[3],
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    backgroundColor: color.fill,
+    overflow: 'hidden',
+  },
+  choiceChipOn: { backgroundColor: color.brandFill },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 2,
+    minHeight: 24,
+    borderRadius: radius.pill,
+    alignSelf: 'flex-start',
+  },
+  pillText: face('semibold'),
+
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 36,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: radius.pill,
+    backgroundColor: color.fill,
+    overflow: 'hidden',
+  },
+  chipSelected: { backgroundColor: color.brandFill },
+  chipText: face('medium'),
+
+  card: {
+    backgroundColor: color.plate,
+    borderRadius: radius.lg,
+    padding: space[4],
+    ...shadow.card,
+  },
+  sectionTitle: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    marginTop: space[6],
+    marginBottom: space[2],
+  },
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator },
+
+  capsuleShadow: { borderRadius: 22, ...shadow.float },
+  capsuleSolid: { borderRadius: 22 },
+  capsule: { width: HIT, borderRadius: HIT / 2, overflow: 'hidden' },
+  capsuleButton: { width: HIT, height: HIT, alignItems: 'center', justifyContent: 'center' },
+  capsulePressed: { backgroundColor: color.pressed },
+  capsuleDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 10, backgroundColor: color.separator },
+
+  close: { width: 30, height: 30, borderRadius: 15, marginTop: 2 },
+  closeHit: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  actionWrap: { flex: 1 },
+  action: { minHeight: 58, borderRadius: radius.lg },
+  // Rounded like its glass, so the keyboard's focus ring follows the shape.
+  actionHit: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 6, borderRadius: radius.lg },
+  actionLabel: face('medium'),
+
+  // Heights here are minimums: with the phone's text set large, a label grows
+  // its button or chip rather than being cut off at the top and bottom.
+  primary: {
+    minHeight: 52,
+    paddingVertical: 12,
+    // Room at the ends for when a button sizes to its label (a centred column).
+    paddingHorizontal: 22,
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // A special accent's paint (BrandFill) stays inside the corners.
+    overflow: 'hidden',
+  },
+
+  fold: {
+    borderRadius: radius.lg + 4,
+    borderCurve: 'continuous',
+    backgroundColor: color.cardGlass,
+    overflow: 'hidden',
+  },
+  foldHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
+  foldEmoji: { width: 30, textAlign: 'center' },
+  foldIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: color.brandTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  foldText: { flex: 1, gap: 1 },
+  infoHead: { alignItems: 'flex-start' },
+  foldBody: { paddingHorizontal: space[4], paddingBottom: space[4], gap: space[3] },
+
+  segmented: { flexDirection: 'row', padding: 2, borderRadius: 9, backgroundColor: color.fill },
+  segment: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 7, paddingHorizontal: 6, borderRadius: 7 },
+  segmentPill: {
+    position: 'absolute',
+    top: 2,
+    bottom: 2,
+    left: 2,
+    borderRadius: 7,
+    backgroundColor: color.segmentRaised,
+    ...dropShadow(0.12, 4, 2, 2),
+  },
+  segmentOn: {
+    backgroundColor: color.segmentRaised,
+    ...dropShadow(0.12, 4, 2, 2),
+  },
+
+  noPhoto: { alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: color.fill, padding: space[1] },
+  noPhotoText: { textAlign: 'center', ...face('medium') },
+  noPhotoCompact: { fontSize: 10, lineHeight: 12 },
+  monogram: { alignItems: 'center', justifyContent: 'center', gap: 2, overflow: 'hidden', padding: space[1] },
+  halo: { position: 'absolute', borderRadius: 9999, aspectRatio: 1 },
+  haloBig: { width: '78%', top: '-38%', right: '-22%' },
+  haloSmall: { width: '46%', bottom: '-24%', left: '-12%' },
+  // Centred on the initials (an absolute child with no insets sits where the parent centres it).
+  ring: { position: 'absolute', aspectRatio: 1, borderRadius: 9999, borderWidth: 1 },
+  ringOuter: { height: '128%' },
+  ringInner: { height: '86%' },
+  noPhotoTag: {
+    position: 'absolute',
+    left: space[2],
+    bottom: space[2],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: space[2],
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+  },
+  letters: { fontSize: 30, lineHeight: 34, letterSpacing: 0.5, ...face('bold') },
+  lettersCompact: { fontSize: 19, lineHeight: 22, letterSpacing: 0.3, ...face('bold') },
+  field: { gap: 6 },
+  fieldLabel: face('medium'),
+  fieldInput: {
+    minHeight: 48,
+    paddingHorizontal: space[4],
+    borderRadius: radius.md,
+    borderCurve: 'continuous',
+    backgroundColor: color.cardGlass,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: color.separator,
+    fontSize: 17,
+    color: color.label,
+    ...face('regular'),
+    ...(Platform.OS === 'web' ? { outlineWidth: 0 } : null),
+  },
+}));

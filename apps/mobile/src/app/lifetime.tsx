@@ -6,14 +6,16 @@
  */
 
 import { useRouter } from 'expo-router';
-import { useMemo, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { HeroMark } from '@/components/HeroMark';
 import { Icon, type IconName } from '@/components/Icon';
+import { LifetimeCard, hoursText } from '@/components/LifetimeCard';
 import { Pressable } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
+import { RECAP_WIDTH } from '@/components/RecapCard';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
@@ -23,6 +25,7 @@ import { useApp } from '@/lib/app-state';
 import { LIMITED } from '@/lib/limited';
 import { WEEKDAYS, heavyAs, lifetimeStats } from '@/lib/lifetime';
 import { usePageTitle } from '@/lib/pageTitle';
+import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
 import { color, radius, shadow, space, themed } from '@/lib/theme';
 import { fromKg, unitFor } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
@@ -40,6 +43,19 @@ export default function LifetimeScreen() {
   const log = useTrainingLog(account.token);
   const life = useMemo(() => lifetimeStats(log.sessions), [log.sessions]);
   const unit = unitFor(prefs.country);
+  const shot = useRef<View>(null);
+  // The card at its size, or narrower on a small phone: the page's gutters and the picture's margin either side.
+  const { width: screen } = useWindowDimensions();
+  const cardWidth = Math.min(RECAP_WIDTH, screen - (space[4] + space[3]) * 2);
+  const [busy, setBusy] = useState(false);
+  const [line, setLine] = useState<string | null>(null);
+  const share = async () => {
+    setBusy(true);
+    setLine(null);
+    const outcome = await shareViewAsImage(shot, { name: 'my-lifetime', title: 'My lifetime on GymGO' });
+    setBusy(false);
+    setLine(imageShareLine(outcome));
+  };
 
   // Not known yet whether you're on Pro (no answer from the server, nothing kept from last time):
   // say the server's away, or wait, rather than offering Pro to someone who may have it.
@@ -77,7 +93,7 @@ export default function LifetimeScreen() {
           Your lifetime in numbers
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          {`Every kilo, rep and hour you’ve logged${log.sessions.length ? ` across your ${plural(log.sessions.length, 'workout')}` : ''}, your favourite exercise and day, your biggest workout, and what all that weight compares to. Part of GymGO Pro.`}
+          {`Every kilo, rep and hour you’ve logged${log.sessions.length ? ` across your ${plural(log.sessions.length, 'workout')}` : ''}, your favourite exercise and day, your biggest workout, and what all that weight compares to, as a picture to share too. Part of GymGO Pro.`}
         </Txt>
         <View style={styles.button}>
           <PrimaryButton label="See GymGO Pro" icon="crown" onPress={() => openPro('lifetime')} />
@@ -131,10 +147,9 @@ export default function LifetimeScreen() {
 
   const lifted = Math.round(fromKg(life.volumeKg, unit));
   const like = heavyAs(life.volumeKg);
-  const hours = life.minutes / 60;
   const tiles: Array<{ icon: IconName; value: string; label: string }> = [
     { icon: 'workout', value: life.workouts.toLocaleString('en'), label: life.workouts === 1 ? 'workout' : 'workouts' },
-    { icon: 'timer', value: hours < 10 ? hours.toFixed(1) : Math.round(hours).toLocaleString('en'), label: 'hours' },
+    { icon: 'timer', value: hoursText(life.minutes), label: 'hours' },
     { icon: 'check', value: life.sets.toLocaleString('en'), label: life.sets === 1 ? 'set' : 'sets' },
     { icon: 'refresh', value: life.reps.toLocaleString('en'), label: life.reps === 1 ? 'rep' : 'reps' },
     { icon: 'trophy', value: life.records.toLocaleString('en'), label: life.records === 1 ? 'record' : 'records' },
@@ -163,7 +178,7 @@ export default function LifetimeScreen() {
               {`About ${like.words}`}
             </Txt>
             <Txt variant="caption" color={color.onBrandSoft}>
-              {`Taking a ${like.thing.one} as ${Math.round(fromKg(like.thing.kg, unit)).toLocaleString('en')} ${unit}, a round, typical figure.`}
+              {`Taking ${like.thing.a} as ${Math.round(fromKg(like.thing.kg, unit)).toLocaleString('en')} ${unit}, a round, typical figure.`}
             </Txt>
           </View>
         )}
@@ -221,6 +236,23 @@ export default function LifetimeScreen() {
       </View>
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
         Added up on this phone from the workouts in your log. Weight counts every set with a weight (weight × reps); body-weight sets count as sets and reps only. A workout left running counts as four hours at most.
+      </Txt>
+
+      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+        AS A PICTURE
+      </Txt>
+      {/* What's captured: the card and a little room round it. */}
+      <View ref={shot} collapsable={false} style={styles.shot}>
+        <LifetimeCard life={life} unit={unit} width={cardWidth} />
+      </View>
+      <PrimaryButton label="Share as a picture" icon="share" busy={busy} onPress={() => void share()} />
+      {!!line && (
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+          {line}
+        </Txt>
+      )}
+      <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+        The picture shows your totals, your favourite exercise and the month you started. Never which days you went, or where.
       </Txt>
     </PageScroll>
   );
@@ -283,5 +315,6 @@ const styles = themed(() =>
     mark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     flex: { flex: 1, minWidth: 0, gap: 2 },
     note: { marginHorizontal: space[4], marginTop: space[1] },
+    shot: { padding: space[3], alignItems: 'center' },
   }),
 );

@@ -85,13 +85,13 @@ export function lifetimeStats(sessions: TrainingSession[]): Lifetime | null {
   };
 }
 
-/** Round, typical weights for the comparisons; each says what it takes one to weigh. */
-export const HEAVY_THINGS: Array<{ one: string; many: string; kg: number }> = [
-  { one: 'grand piano', many: 'grand pianos', kg: 400 },
-  { one: 'family car', many: 'family cars', kg: 1_500 },
-  { one: 'elephant', many: 'elephants', kg: 5_000 },
-  { one: 'double-decker bus', many: 'double-decker buses', kg: 12_000 },
-  { one: 'blue whale', many: 'blue whales', kg: 130_000 },
+/** Round, typical weights for the comparisons; each says what it takes one to weigh. `a` is one, with its article. */
+export const HEAVY_THINGS: Array<{ a: string; one: string; many: string; kg: number }> = [
+  { a: 'a grand piano', one: 'grand piano', many: 'grand pianos', kg: 400 },
+  { a: 'a family car', one: 'family car', many: 'family cars', kg: 1_500 },
+  { a: 'an elephant', one: 'elephant', many: 'elephants', kg: 5_000 },
+  { a: 'a double-decker bus', one: 'double-decker bus', many: 'double-decker buses', kg: 12_000 },
+  { a: 'a blue whale', one: 'blue whale', many: 'blue whales', kg: 130_000 },
 ];
 
 /**

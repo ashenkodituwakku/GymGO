@@ -3,6 +3,9 @@
  * records, the weight you moved, your streak, and the best card from the
  * gyms you checked in at. Totals only: never which days you went, or where
  * at what time.
+ *
+ * No tabular digits here: the browser's picture-maker draws each digit on
+ * its own without them, and a 1 then stands apart from its neighbour.
  */
 
 import type { GymRecord } from '@gymgo/domain';
@@ -86,7 +89,7 @@ function Tile({ icon, value, one, many }: { icon: IconName; value: number; one: 
   return (
     <View style={styles.tile} accessible accessibilityLabel={`${value} ${value === 1 ? one : many}`}>
       <Icon name={icon} size={16} color={color.onBrand} />
-      <Txt variant="title" color={color.onBrand} style={styles.number}>
+      <Txt variant="title" color={color.onBrand}>
         {String(value)}
       </Txt>
       <Txt variant="caption" color="rgba(255,255,255,0.8)">
@@ -128,7 +131,6 @@ const styles = themed(() =>
       borderCurve: 'continuous',
       backgroundColor: 'rgba(255,255,255,0.14)',
     },
-    number: { fontVariant: ['tabular-nums'] },
     lines: { gap: space[1] },
     line: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     best: {

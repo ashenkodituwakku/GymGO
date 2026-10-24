@@ -54,4 +54,9 @@ describe('heavyAs', () => {
     expect(heavyAs(2_600_000)!.words).toBe('20 blue whales');
     expect(heavyAs(399)).toBeNull();
   });
+
+  it('names one of each with the right article', () => {
+    expect(heavyAs(5_000)!.thing.a).toBe('an elephant');
+    expect(heavyAs(1_500)!.thing.a).toBe('a family car');
+  });
 });

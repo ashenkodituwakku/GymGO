@@ -82,7 +82,7 @@ export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; p
   { emoji: '❄️', title: 'Streak freeze', free: '—', pro: 'One missed week a month' },
   { emoji: '💍', title: 'Profile ring', free: 'Your picture', pro: 'Ringed in your accent' },
   { emoji: '🎆', title: 'Celebrations', free: 'Confetti', pro: 'Fireworks, stars or emoji' },
-  { emoji: '🏅', title: 'Lifetime stats', free: '—', pro: 'Every kilo, rep and hour' },
+  { emoji: '🏅', title: 'Lifetime stats', free: '—', pro: 'Every kilo, rep and hour, to share' },
 ];
 
 /** Free for everyone with a (free) account, always. Listed on the Pro screen so nobody wonders. */

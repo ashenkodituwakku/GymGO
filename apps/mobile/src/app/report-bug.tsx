@@ -78,7 +78,7 @@ export default function ReportBug() {
         screen: { width: window.width, height: window.height, scale: window.scale },
         from: typeof from === 'string' && from.length <= 40 ? from : null,
         country: prefs.country,
-        appearance: APPEARANCE[theme.appearance] ?? theme.appearance,
+        appearance: `${APPEARANCE[theme.appearance] ?? theme.appearance}${theme.dark === 'dim' ? ' (Dim)' : ''}`,
         accent: ACCENTS[theme.accent]?.name ?? theme.accent,
         look: LOOKS[theme.look]?.name,
         demo: prefs.demo,
@@ -88,7 +88,7 @@ export default function ReportBug() {
       }),
       ...recent,
     ],
-    [recent, window.width, window.height, window.scale, from, prefs.country, prefs.demo, theme.appearance, theme.accent, theme.look, signedIn, billing.isPro],
+    [recent, window.width, window.height, window.scale, from, prefs.country, prefs.demo, theme.appearance, theme.dark, theme.accent, theme.look, signedIn, billing.isPro],
   );
 
   const typed = description.trim();

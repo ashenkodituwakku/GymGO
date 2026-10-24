@@ -317,7 +317,9 @@ your accent glows behind them.
   gyms, Settings (Country, **Appearance**, Haptics, **Sounds**, Demo
   mode), and where GymGO's facts come from.
 - **Appearance**: Automatic (follows your phone), Light or Dark, for
-  everyone. **Liquid Glass**, also for everyone: a percentage for how
+  everyone, and dark in **Black** (true black, the default) or **Dim** (a
+  soft blue-grey, easier in a lit room; the Standard look's, as the other
+  looks draw dark their own way). **Liquid Glass**, also for everyone: a percentage for how
   glassy GymGO is: the controls, sheets and tab bar over the map, and the
   cards on every page, frosted over a glow of your accent that stays put
   behind the page (stronger the higher you go, with a third pool at the

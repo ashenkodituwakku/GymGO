@@ -29,6 +29,8 @@ export { FREE_LOOK, LOOK_IDS, LOOKS, type LookId } from './looks';
 export type Scheme = 'light' | 'dark';
 /** What you picked: follow the phone, or always one. */
 export type AppearanceChoice = 'system' | 'light' | 'dark';
+/** How dark is drawn in the Standard look: Apple's black, or Dim's softer grey (the other looks have their own). */
+export type DarkStyle = 'black' | 'dim';
 export type AccentId = 'indigo' | 'ocean' | 'grape' | 'rose' | 'midnight' | 'cobalt' | 'lagoon' | 'fuchsia' | 'slate' | 'graphite' | 'rainbow' | 'camo';
 
 interface AccentColors {
@@ -175,6 +177,29 @@ const BASE = {
     googleInk: '#BDC1C6',
   },
 } as const;
+
+/**
+ * Dim: dark in a soft blue-grey rather than black, easier on the eyes in a
+ * lit room. The Standard look's only: the others draw dark their own way.
+ * Text is checked against it as against a look's surfaces (paletteFor).
+ */
+const DIM = {
+  background: '#17191F',
+  groupedBackground: '#17191F',
+  card: '#23262E',
+  plate: '#23262E',
+  plateSolid: '#23262E',
+  cardRaised: '#363B46',
+  segmentRaised: '#363B46',
+  cardGlass: 'rgba(43, 47, 56, 0.82)',
+  fill: 'rgba(130, 136, 150, 0.24)',
+  fillStrong: 'rgba(130, 136, 150, 0.36)',
+  separator: 'rgba(120, 126, 140, 0.5)',
+  bodyInert: '#30343D',
+} as const;
+
+/** Whether Dim applies: dark, in a look that doesn't draw dark its own way. */
+export const dimApplies = (scheme: Scheme, look: LookId, dark: DarkStyle): boolean => scheme === 'dark' && dark === 'dim' && !LOOKS[look].surfaces;
 
 /**
  * The accents. Indigo is everyone's; the rest are part of GymGO Pro. Each
@@ -386,8 +411,10 @@ export function glassLevelName(level: number): string {
   return at === 100 ? 'Clearest' : 'Clear';
 }
 
-export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE_LOOK, glass: number = GLASS_DEFAULT): Palette {
-  const palette: Palette = { ...BASE[scheme], ...ACCENTS[accent][scheme] };
+export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE_LOOK, glass: number = GLASS_DEFAULT, dark: DarkStyle = 'black'): Palette {
+  const dim = dimApplies(scheme, look, dark);
+  const palette: Palette = { ...BASE[scheme], ...(dim ? DIM : null), ...ACCENTS[accent][scheme] };
+  if (dim) for (const key of TEXT_KEYS) palette[key] = readable(palette[key], [DIM.card, DIM.groupedBackground, DIM.cardRaised], scheme, key === 'labelTertiary' ? 3 : 4.6);
   palette.glassWashThin = glassWash('thin', glass, scheme);
   palette.glassWashThick = glassWash('thick', glass, scheme);
   palette.glassWashBar = glassWash('bar', glass, scheme);
@@ -411,7 +438,7 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
 /** The colours in use now. Changes in place with the theme; read it while drawing, not once at start-up. */
 export const color: Palette = paletteFor('light', FREE_ACCENT);
 
-let current: { scheme: Scheme; accent: AccentId; look: LookId; glass: number } = { scheme: 'light', accent: FREE_ACCENT, look: FREE_LOOK, glass: GLASS_DEFAULT };
+let current: { scheme: Scheme; accent: AccentId; look: LookId; glass: number; dark: DarkStyle } = { scheme: 'light', accent: FREE_ACCENT, look: FREE_LOOK, glass: GLASS_DEFAULT, dark: 'black' };
 
 /** The look in use now (see looks.ts). */
 export const currentLook = (): LookSpec => LOOKS[current.look];
@@ -498,12 +525,12 @@ export function subscribeGlass(listener: () => void): () => void {
 }
 
 /** Switch the colours (and the look) everywhere. Returns false if nothing changed. */
-export function applyTheme(scheme: Scheme, accent: AccentId, look: LookId = current.look, glass: number = current.glass): boolean {
+export function applyTheme(scheme: Scheme, accent: AccentId, look: LookId = current.look, glass: number = current.glass, dark: DarkStyle = current.dark): boolean {
   const level = cleanGlass(glass);
-  const sameColours = current.scheme === scheme && current.accent === accent && current.look === look;
+  const sameColours = current.scheme === scheme && current.accent === accent && current.look === look && current.dark === dark;
   if (sameColours && current.glass === level) return false;
-  current = { scheme, accent, look, glass: level };
-  Object.assign(color, paletteFor(scheme, accent, look, level));
+  current = { scheme, accent, look, glass: level, dark };
+  Object.assign(color, paletteFor(scheme, accent, look, level, dark));
   styleVersion += 1;
   const spec = LOOKS[look];
   Object.assign(radius, spec.radius);

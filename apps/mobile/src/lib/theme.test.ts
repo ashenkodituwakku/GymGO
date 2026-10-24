@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // The font files are for the app's bundler, not for Node.
 vi.mock('./fonts', () => ({ BUNDLED_FACES: {} }));
 import { StyleSheet } from 'react-native';
-import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, color, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
+import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, color, dimApplies, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
 import { mix } from './looks';
 
 const channel = (value: number) => (value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
@@ -17,8 +17,11 @@ const contrast = (a: string, b: string) => {
 };
 
 afterEach(() => {
-  applyTheme('light', FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT);
+  applyTheme('light', FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, 'black');
 });
+
+/** Black, and Dim where it applies (dark in a look with no surfaces of its own). */
+const darkStyles = (look: (typeof LOOK_IDS)[number], scheme: 'light' | 'dark') => (dimApplies(scheme, look, 'dim') ? (['black', 'dim'] as const) : (['black'] as const));
 
 describe('the colours', () => {
   it('keep text readable (WCAG AA) in every look, mode and accent', () => {
@@ -27,17 +30,20 @@ describe('the colours', () => {
     // A look that's only one way (Neon) is only checked that way.
     for (const scheme of LOOKS[look].scheme ? [LOOKS[look].scheme!] : (['light', 'dark'] as const)) {
       for (const accent of ACCENT_IDS) {
-        applyTheme(scheme, accent, look);
-        for (const background of ['card', 'groupedBackground'] as const) {
-          for (const text of ['label', 'labelSecondary', 'brand', 'goodInk', 'maybeInk', 'noInk', 'dangerInk'] as const) {
-            const ratio = contrast(color[text], color[background]);
-            if (ratio < 4.5) failures.push(`${look} ${scheme} ${accent}: ${text} on ${background} is ${ratio.toFixed(2)}`);
+        for (const dark of darkStyles(look, scheme)) {
+          applyTheme(scheme, accent, look, undefined, dark);
+          const name = `${look} ${scheme}${dark === 'dim' ? ' dim' : ''} ${accent}`;
+          for (const background of ['card', 'groupedBackground'] as const) {
+            for (const text of ['label', 'labelSecondary', 'brand', 'goodInk', 'maybeInk', 'noInk', 'dangerInk'] as const) {
+              const ratio = contrast(color[text], color[background]);
+              if (ratio < 4.5) failures.push(`${name}: ${text} on ${background} is ${ratio.toFixed(2)}`);
+            }
           }
+          const onFill = contrast(color.onBrand, color.brandFill);
+          if (onFill < 4.5) failures.push(`${name}: white on the brand fill is ${onFill.toFixed(2)}`);
+          const onSegment = contrast(color.label, color.segmentRaised);
+          if (onSegment < 4.5) failures.push(`${name}: text on a chosen segment is ${onSegment.toFixed(2)}`);
         }
-        const onFill = contrast(color.onBrand, color.brandFill);
-        if (onFill < 4.5) failures.push(`${look} ${scheme} ${accent}: white on the brand fill is ${onFill.toFixed(2)}`);
-        const onSegment = contrast(color.label, color.segmentRaised);
-        if (onSegment < 4.5) failures.push(`${look} ${scheme} ${accent}: text on a chosen segment is ${onSegment.toFixed(2)}`);
       }
     }
     }
@@ -50,18 +56,30 @@ describe('the colours', () => {
       for (const scheme of LOOKS[look].scheme ? [LOOKS[look].scheme!] : (['light', 'dark'] as const)) {
         for (const accent of ACCENT_IDS) {
           for (const level of [25, GLASS_DEFAULT, 75, 100]) {
-            applyTheme(scheme, accent, look, level);
-            const see = Number(/rgba\(\d+, \d+, \d+, ([\d.]+)\)/.exec(color.plate)?.[1] ?? 1);
-            const behind = mix(mix(color.groupedBackground, color.brand, glowPeak(level, scheme)), color.card, see);
-            for (const [ink, least] of PLATE_INKS) {
-              const ratio = contrast(color[ink], behind);
-              if (ratio < least) failures.push(`${look} ${scheme} ${accent} ${level}%: ${ink} on a card is ${ratio.toFixed(2)}`);
+            for (const dark of darkStyles(look, scheme)) {
+              applyTheme(scheme, accent, look, level, dark);
+              const see = Number(/rgba\(\d+, \d+, \d+, ([\d.]+)\)/.exec(color.plate)?.[1] ?? 1);
+              const behind = mix(mix(color.groupedBackground, color.brand, glowPeak(level, scheme)), color.card, see);
+              for (const [ink, least] of PLATE_INKS) {
+                const ratio = contrast(color[ink], behind);
+                if (ratio < least) failures.push(`${look} ${scheme}${dark === 'dim' ? ' dim' : ''} ${accent} ${level}%: ${ink} on a card is ${ratio.toFixed(2)}`);
+              }
             }
           }
         }
       }
     }
     expect(failures).toEqual([]);
+  });
+
+  it('draw Dim in the Standard look’s dark only: not in light, and not over a look’s own surfaces', () => {
+    const black = paletteFor('dark', FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, 'black');
+    const dim = paletteFor('dark', FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, 'dim');
+    expect(black.groupedBackground).toBe('#000000');
+    expect(dim.groupedBackground).not.toBe(black.groupedBackground);
+    expect(dim.card).not.toBe(black.card);
+    expect(paletteFor('light', FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, 'dim')).toEqual(paletteFor('light', FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, 'black'));
+    expect(paletteFor('dark', FREE_ACCENT, 'pixel', GLASS_DEFAULT, 'dim')).toEqual(paletteFor('dark', FREE_ACCENT, 'pixel', GLASS_DEFAULT, 'black'));
   });
 
   it('counts both glows behind a card: the page’s and the brighter one behind a title', () => {

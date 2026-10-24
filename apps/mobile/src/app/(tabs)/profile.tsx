@@ -240,7 +240,7 @@ export default function Profile() {
           icon="palette"
           tile={TILE.indigo}
           title="Appearance"
-          value={themeChoice.appearance === 'system' ? 'Automatic' : themeChoice.appearance === 'dark' ? 'Dark' : 'Light'}
+          value={themeChoice.appearance === 'system' ? 'Automatic' : themeChoice.appearance === 'light' ? 'Light' : themeChoice.dark === 'dim' && themeChoice.look === 'standard' ? 'Dim' : 'Dark'}
           onPress={() => router.push('/appearance')}
         />
         {/* A browser can't wake itself to remind you. */}

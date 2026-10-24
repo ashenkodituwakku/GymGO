@@ -1,5 +1,6 @@
 /**
- * Appearance: light, dark or the phone's, for everyone; a look (how the
+ * Appearance: light, dark or the phone's, and dark in black or Dim's soft
+ * grey, for everyone; a look (how the
  * whole app is drawn: Soft, Paper, Material, Neon, Terminal, 8-bit, Classic,
  * Comic) and an accent, where Standard and Indigo are everyone's and the
  * rest are part of GymGO Pro; and Liquid Glass, how see-through the things
@@ -33,6 +34,7 @@ import {
   LOOK_IDS,
   color,
   currentTheme,
+  dimApplies,
   face,
   glassLevelName,
   paletteFor,
@@ -42,6 +44,7 @@ import {
   themed,
   type AccentId,
   type AppearanceChoice,
+  type DarkStyle,
   type LookId,
 } from '@/lib/theme';
 import { setThemeChoice, useThemeChoice } from '@/lib/themePrefs';
@@ -55,10 +58,16 @@ const MODES: Array<{ id: AppearanceChoice; label: string }> = [
   { id: 'dark', label: 'Dark' },
 ];
 
+const DARK_STYLES: Array<{ id: DarkStyle; label: string; blurb: string }> = [
+  { id: 'black', label: 'Black', blurb: 'True black, darkest at night' },
+  { id: 'dim', label: 'Dim', blurb: 'A soft blue-grey, easier in a lit room' },
+];
+
 /** A tiny screen in each mode, drawn from the real palettes. */
 const PREVIEW = {
   light: { page: '#F2F2F7', card: '#FFFFFF', line: '#D1D1D6', text: '#000000' },
   dark: { page: '#000000', card: '#1C1C1E', line: '#3A3A3C', text: '#FFFFFF' },
+  dim: { page: '#17191F', card: '#23262E', line: '#363B46', text: '#FFFFFF' },
 } as const;
 
 export default function AppearanceScreen() {
@@ -71,6 +80,11 @@ export default function AppearanceScreen() {
     if (appearance === choice.appearance) return;
     haptic.select();
     setThemeChoice({ appearance });
+  };
+  const pickDark = (dark: DarkStyle) => {
+    if (dark === choice.dark) return;
+    haptic.select();
+    setThemeChoice({ dark });
   };
   const pickLook = (look: LookId) => {
     if (look !== FREE_LOOK && !billing.isPro) {
@@ -88,6 +102,8 @@ export default function AppearanceScreen() {
     void loadAllLookFonts().then(() => setFontsReady(true));
   }, []);
   const lookInUse = billing.isPro || choice.look === FREE_LOOK ? choice.look : FREE_LOOK;
+  // The mode previews draw dark the way it'll look: Dim's grey where it applies.
+  const darkTone = dimApplies('dark', lookInUse, choice.dark) ? 'dim' : 'dark';
   const accentInUse = billing.isPro || choice.accent === FREE_ACCENT ? choice.accent : FREE_ACCENT;
 
   // Liquid Glass: the preview follows the finger; the app redraws once it's let go.
@@ -149,10 +165,10 @@ export default function AppearanceScreen() {
                   {mode.id === 'system' ? (
                     <View style={styles.split}>
                       <MiniScreen tone="light" />
-                      <MiniScreen tone="dark" />
+                      <MiniScreen tone={darkTone} />
                     </View>
                   ) : (
-                    <MiniScreen tone={mode.id} />
+                    <MiniScreen tone={mode.id === 'dark' ? darkTone : mode.id} />
                   )}
                 </View>
                 <Txt variant="subhead" style={on ? face('semibold') : undefined}>
@@ -165,6 +181,41 @@ export default function AppearanceScreen() {
         </View>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           Automatic follows your phone, so GymGO goes dark when your phone does.
+        </Txt>
+
+        <Txt variant="footnote" color={color.labelSecondary} style={[styles.section, styles.sectionGap]}>
+          DARK MODE
+        </Txt>
+        <View style={styles.modes} accessibilityRole="radiogroup">
+          {DARK_STYLES.map((style) => {
+            const on = choice.dark === style.id;
+            return (
+              <Pressable
+                key={style.id}
+                onPress={() => pickDark(style.id)}
+                accessibilityRole="radio"
+                aria-checked={on}
+                accessibilityLabel={`${style.label}: ${style.blurb}`}
+                style={styles.darkStyle}
+              >
+                <View style={[styles.preview, styles.previewWide, on && styles.previewOn]}>
+                  <MiniScreen tone={style.id === 'dim' ? 'dim' : 'dark'} />
+                </View>
+                <View style={styles.darkText}>
+                  <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                    {style.label}
+                  </Txt>
+                  <Txt variant="caption" color={color.labelSecondary} style={styles.centred}>
+                    {style.blurb}
+                  </Txt>
+                </View>
+                <Icon name={on ? 'done' : 'todo'} size={22} color={on ? color.brand : color.labelTertiary} />
+              </Pressable>
+            );
+          })}
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+          {lookInUse === FREE_LOOK ? 'How GymGO looks whenever it’s dark.' : `${LOOKS[lookInUse].name} draws dark its own way. Dim is for the Standard look.`}
         </Txt>
 
         <View style={styles.accentHead}>
@@ -193,7 +244,7 @@ export default function AppearanceScreen() {
                 accessibilityLabel={`${LOOKS[id].name}: ${LOOKS[id].blurb}${locked ? '. Part of GymGO Pro' : ''}`}
                 style={({ pressed }) => [styles.lookTile, pressed && { opacity: 0.75 }]}
               >
-                <LookPreview look={id} accent={accentInUse} on={on} />
+                <LookPreview look={id} accent={accentInUse} dark={choice.dark} on={on} />
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
                   <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
@@ -431,10 +482,10 @@ const PINS: Array<{ left: `${number}%`; top: number; tone: 'good' | 'maybe' | 'b
 ];
 
 /** A tiny screen drawn in a look: its page, a card, a title in its type and a button. */
-function LookPreview({ look, accent, on }: { look: LookId; accent: AccentId; on: boolean }) {
+function LookPreview({ look, accent, dark, on }: { look: LookId; accent: AccentId; dark: DarkStyle; on: boolean }) {
   const spec = LOOKS[look];
   const scheme = spec.scheme ?? currentTheme().scheme;
-  const palette = paletteFor(scheme, accent, look);
+  const palette = paletteFor(scheme, accent, look, undefined, dark);
   const shadows = spec.shadows?.(scheme, palette.brand);
   const corner = (value: number) => Math.min(value * 0.5, 12);
   const title = spec.fonts?.display ?? spec.fonts?.body?.bold;
@@ -458,7 +509,7 @@ function LookPreview({ look, accent, on }: { look: LookId; accent: AccentId; on:
   );
 }
 
-function MiniScreen({ tone }: { tone: 'light' | 'dark' }) {
+function MiniScreen({ tone }: { tone: keyof typeof PREVIEW }) {
   const p = PREVIEW[tone];
   return (
     <View style={[styles.mini, { backgroundColor: p.page }]}>
@@ -485,6 +536,12 @@ const styles = themed(() =>
     mode: { flex: 1, alignItems: 'center', gap: space[2] },
     preview: { width: '100%', aspectRatio: 0.62, borderRadius: radius.md, borderWidth: 2, borderColor: 'transparent', overflow: 'hidden' },
     previewOn: { borderColor: color.brand },
+    previewWide: { aspectRatio: 1.3 },
+    sectionGap: { marginTop: space[6] },
+    darkStyle: { flex: 1, alignItems: 'center', gap: space[2] },
+    // Grows, so both radio circles sit level whichever line wraps.
+    darkText: { flexGrow: 1, alignItems: 'center', gap: 2 },
+    centred: { textAlign: 'center' },
     split: { flex: 1, flexDirection: 'row' },
     mini: { flex: 1, padding: 6, gap: 5 },
     miniBar: { height: 8, borderRadius: 4, width: '55%' },

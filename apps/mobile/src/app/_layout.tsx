@@ -24,9 +24,11 @@ import {
   paletteFor,
   color,
   currentTheme,
+  dimApplies,
   face,
   themed,
   type AccentId,
+  type DarkStyle,
   type LookId,
   type Scheme,
 } from '@/lib/theme';
@@ -109,7 +111,7 @@ export default function RootLayout() {
 }
 
 /** The colours and look your choice comes to now: Pro accents and looks only while you have Pro. */
-function useWantedTheme(): { scheme: Scheme; accent: AccentId; look: LookId; glass: number } {
+function useWantedTheme(): { scheme: Scheme; accent: AccentId; look: LookId; glass: number; dark: DarkStyle } {
   const choice = useThemeChoice();
   const { billing } = useApp();
   // The phone's own parts (keyboards, menus, Liquid Glass) are told as soon
@@ -118,7 +120,7 @@ function useWantedTheme(): { scheme: Scheme; accent: AccentId; look: LookId; gla
   // A lapsed Pro goes back to Indigo, but only once the server has said so.
   const accent = choice.accent === FREE_ACCENT || billing.isPro || !billing.planKnown ? choice.accent : FREE_ACCENT;
   const look = choice.look === FREE_LOOK || billing.isPro || !billing.planKnown ? choice.look : FREE_LOOK;
-  return { scheme: schemeFor(choice.appearance, phone, look), accent, look, glass: choice.glass };
+  return { scheme: schemeFor(choice.appearance, phone, look), accent, look, glass: choice.glass, dark: choice.dark };
 }
 
 /**
@@ -147,16 +149,18 @@ function ThemedStack() {
   const veil = useSharedValue(0);
   const [veilColour, setVeilColour] = useState<string | null>(null);
 
-  const switchNow = useCallback((scheme: Scheme, accent: AccentId, look: LookId, glass: number) => {
-    applyTheme(scheme, accent, look, glass);
+  const switchNow = useCallback((scheme: Scheme, accent: AccentId, look: LookId, glass: number, dark: DarkStyle) => {
+    applyTheme(scheme, accent, look, glass, dark);
   }, []);
 
   useEffect(() => {
-    const { scheme, accent, look, glass } = currentTheme();
-    if (scheme === wanted.scheme && accent === wanted.accent && look === wanted.look && glass === wanted.glass) return;
+    const { scheme, accent, look, glass, dark } = currentTheme();
+    // Dim is the same colours as black wherever it doesn't apply: nothing to redraw.
+    const sameDark = dark === wanted.dark || (!dimApplies(scheme, look, dark) && !dimApplies(wanted.scheme, wanted.look, wanted.dark));
+    if (scheme === wanted.scheme && accent === wanted.accent && look === wanted.look && sameDark && glass === wanted.glass) return;
     // Only Liquid Glass changed: no veil and no redraw; the glass draws itself again.
-    if (scheme === wanted.scheme && accent === wanted.accent && look === wanted.look) {
-      switchNow(scheme, accent, look, wanted.glass);
+    if (scheme === wanted.scheme && accent === wanted.accent && look === wanted.look && sameDark) {
+      switchNow(scheme, accent, look, wanted.glass, dark);
       setGlassLevel(wanted.glass);
       return;
     }
@@ -165,18 +169,18 @@ function ThemedStack() {
     void loadLookFonts(wanted.look).then(() => {
       if (cancelled) return;
       if (reduceMotion) {
-        switchNow(wanted.scheme, wanted.accent, wanted.look, wanted.glass);
+        switchNow(wanted.scheme, wanted.accent, wanted.look, wanted.glass, wanted.dark);
         return;
       }
-      setVeilColour(paletteFor(wanted.scheme, wanted.accent, wanted.look).groupedBackground);
+      setVeilColour(paletteFor(wanted.scheme, wanted.accent, wanted.look, wanted.glass, wanted.dark).groupedBackground);
       veil.value = withTiming(1, { duration: 150, easing: EASE_IN_OUT }, (finished) => {
-        if (finished) runOnJS(switchNow)(wanted.scheme, wanted.accent, wanted.look, wanted.glass);
+        if (finished) runOnJS(switchNow)(wanted.scheme, wanted.accent, wanted.look, wanted.glass, wanted.dark);
       });
     });
     return () => {
       cancelled = true;
     };
-  }, [wanted.scheme, wanted.accent, wanted.look, wanted.glass, reduceMotion, switchNow, veil]);
+  }, [wanted.scheme, wanted.accent, wanted.look, wanted.glass, wanted.dark, reduceMotion, switchNow, veil]);
 
   // Drawn again: lift the veil.
   useEffect(() => {

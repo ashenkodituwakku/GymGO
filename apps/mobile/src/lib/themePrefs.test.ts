@@ -9,8 +9,10 @@ const { DEFAULT_CHOICE, parseChoice, schemeFor } = await import('./themePrefs');
 describe('your appearance', () => {
   it('reads what was kept, and falls back rather than trusting odd values', () => {
     // Kept before looks existed: the standard look.
-    expect(parseChoice(JSON.stringify({ appearance: 'dark', accent: 'ocean' }))).toEqual({ appearance: 'dark', accent: 'ocean', look: 'standard', glass: 50 });
-    expect(parseChoice(JSON.stringify({ appearance: 'light', accent: 'camo', look: 'pixel', glass: 80 }))).toEqual({ appearance: 'light', accent: 'camo', look: 'pixel', glass: 80 });
+    expect(parseChoice(JSON.stringify({ appearance: 'dark', accent: 'ocean' }))).toEqual({ appearance: 'dark', accent: 'ocean', look: 'standard', glass: 50, dark: 'black' });
+    expect(parseChoice(JSON.stringify({ appearance: 'light', accent: 'camo', look: 'pixel', glass: 80 }))).toEqual({ appearance: 'light', accent: 'camo', look: 'pixel', glass: 80, dark: 'black' });
+    expect(parseChoice(JSON.stringify({ appearance: 'dark', dark: 'dim' })).dark).toBe('dim');
+    expect(parseChoice(JSON.stringify({ dark: 'grey' })).dark).toBe('black');
     expect(parseChoice(JSON.stringify({ appearance: 'sepia', accent: 'neon', look: 'vaporwave' }))).toEqual(DEFAULT_CHOICE);
     expect(parseChoice('not json')).toEqual(DEFAULT_CHOICE);
     expect(parseChoice(null)).toEqual(DEFAULT_CHOICE);

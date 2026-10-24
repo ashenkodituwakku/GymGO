@@ -169,7 +169,7 @@ function NoWorkout({ token }: { token: string | null }) {
           <Txt variant="eyebrow" color={color.labelSecondary}>
             {last.eyebrow}
           </Txt>
-          <Txt variant="title2" numberOfLines={1}>
+          <Txt variant="title2" numberOfLines={2}>
             {last.title}
           </Txt>
           <Txt variant="footnote" color={color.labelSecondary}>

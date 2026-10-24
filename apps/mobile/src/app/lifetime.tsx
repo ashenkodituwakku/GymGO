@@ -16,6 +16,7 @@ import { Pressable } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
+import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
@@ -38,6 +39,17 @@ export default function LifetimeScreen() {
   const log = useTrainingLog(account.token);
   const life = useMemo(() => lifetimeStats(log.sessions), [log.sessions]);
   const unit = unitFor(prefs.country);
+
+  // Not known yet whether you're on Pro (no answer from the server, nothing kept from last time):
+  // say the server's away, or wait, rather than offering Pro to someone who may have it.
+  if (!billing.isPro && !billing.planKnown) {
+    return (
+      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+        <ScreenOptions options={{ title: 'Lifetime' }} />
+        {account.state === 'unreachable' ? <ServerAwayCard /> : <ListSkeleton rows={4} label="Loading" />}
+      </PageScroll>
+    );
+  }
 
   if (!billing.isPro) {
     return (

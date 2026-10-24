@@ -8,7 +8,7 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { CURVES, EASE_IN, EASE_OUT, FADE_IN, POP_IN, Pressable, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,6 +37,7 @@ import { celebrationFor } from '@/lib/celebrations';
 import { alpha } from '@/lib/looks';
 import { LOOKS, color, currentLook, face, radius, shadow, space, themed } from '@/lib/theme';
 import {
+  bestSoFar,
   clockLabel,
   finishedAtFor,
   draftToLogged,
@@ -47,6 +48,7 @@ import {
   nextTarget,
   parseReps,
   parseWeight,
+  personalRecords,
   recordsBroken,
   repRange,
   restLabel,
@@ -517,6 +519,9 @@ const ExerciseLog = memo(function ExerciseLog({
   const bodyWeight = exercise ? exercise.needs.some((option) => option.length === 0) && !exercise.needs.some((option) => option.length > 0) : false;
   const barbell = exercise ? exercise.needs.some((option) => option.includes('barbells')) : false;
   const last = useMemo(() => lastTime(history, item.exerciseId), [history, item.exerciseId]);
+  // Your records from before this workout, to mark a set that beats them as you tick it.
+  const before = useMemo(() => personalRecords(history).get(item.exerciseId), [history, item.exerciseId]);
+  const bests = useMemo(() => (timed ? [] : bestSoFar(item.sets, unit, before)), [timed, item.sets, unit, before]);
   const target: Target | null = useMemo(() => (isPro && !timed ? nextTarget(last, item.reps, unit) : null), [isPro, timed, last, item.reps, unit]);
   const [hint, setHint] = useState<string | null>(null);
 
@@ -538,8 +543,14 @@ const ExerciseLog = memo(function ExerciseLog({
     if (!timed && (parseReps(reps) === undefined || parseReps(reps) === 0)) return setHint('Type how many reps you did.');
     if (parseWeight(weight) === undefined) return setHint(`That weight doesn’t read as a number of ${unit}.`);
     setHint(null);
-    haptic.tap();
-    setAt(at, { done: true, weight, reps });
+    const sets = item.sets.map((each, i) => (i === at ? { ...each, done: true, weight, reps } : each));
+    const best = timed ? null : bestSoFar(sets, unit, before)[at];
+    if (best) {
+      haptic.success();
+      playSound('record');
+      AccessibilityInfo.announceForAccessibility(`${RECORD_WORD[best]} on ${name}`);
+    } else haptic.tap();
+    onChange(index, sets);
     // Rest after every set but the exercise's last.
     if (at < item.sets.length - 1 && item.restSeconds > 0) onRest(item.restSeconds);
   };
@@ -640,11 +651,20 @@ const ExerciseLog = memo(function ExerciseLog({
       {/* Each control's label names the exercise: moving from field to field,
           a screen reader would otherwise say "Set 1 done" once per exercise. */}
       {item.sets.map((set, at) => (
-        <View key={at} style={[styles.setRow, set.done && styles.setDone]}>
+        <View key={at} style={[styles.setRow, set.done && styles.setDone, !!bests[at] && styles.setBest]}>
           {/* A hold or a run has nothing to type: a set of them reads "Set 2 · 30–45 s". */}
-          <Txt variant="subhead" color={color.labelSecondary} style={[timed ? styles.flex : styles.setCol, face('semibold')]}>
-            {!timed ? at + 1 : item.sets.length > 1 ? `Set ${at + 1} · ${item.reps}` : 'Done?'}
-          </Txt>
+          {timed ? (
+            <Txt variant="subhead" color={color.labelSecondary} style={[styles.flex, face('semibold')]}>
+              {item.sets.length > 1 ? `Set ${at + 1} · ${item.reps}` : 'Done?'}
+            </Txt>
+          ) : (
+            <View style={styles.setNumber}>
+              <Txt variant="subhead" color={bests[at] ? color.maybeInk : color.labelSecondary} style={face('semibold')}>
+                {String(at + 1)}
+              </Txt>
+              {!!bests[at] && <BestMark />}
+            </View>
+          )}
           {!timed && (
             <>
               <Input
@@ -679,7 +699,7 @@ const ExerciseLog = memo(function ExerciseLog({
             onPress={() => tick(at)}
             accessibilityRole="checkbox"
             aria-checked={set.done}
-            accessibilityLabel={`${name}, set ${at + 1} done`}
+            accessibilityLabel={`${name}, set ${at + 1} done${bests[at] ? `: ${RECORD_WORD[bests[at]!]}` : ''}`}
             hitSlop={8}
           >
             <Tick done={set.done} />
@@ -732,6 +752,15 @@ const ExerciseLog = memo(function ExerciseLog({
   );
 });
 
+/** Beside the number of a ticked set that beats your best so far: a gold trophy, popping in. Its tick names the record. */
+function BestMark() {
+  return (
+    <Animated.View entering={POP_IN} aria-hidden>
+      <Icon name="trophy" size={13} color={color.maybeInk} />
+    </Animated.View>
+  );
+}
+
 /** The set's tick, which pops once when it's ticked. */
 const standardLook = () => currentLook() === LOOKS.standard;
 
@@ -780,6 +809,8 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
     return () => clearTimeout(timer);
   }, [endsAt]);
   const ended = left === 0;
+  // On a small phone the buttons draw tighter, so the clock keeps its one line.
+  const compact = useWindowDimensions().width < 360;
   // The rest is over: a buzz, a chime, and the bar goes. Only this rest is
   // cleared (a set ticked in the same moment has started the next one), and
   // one that ended a while ago, while the phone was locked, goes quietly:
@@ -802,19 +833,19 @@ function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bot
     // The prop, not a style: inline, a browser drops 'box-none' and the full-width wrap swallowed clicks beside the card.
     <Animated.View entering={REST_IN} exiting={REST_OUT} style={[styles.restWrap, { bottom: bottom + space[3] }]} pointerEvents="box-none">
       <Glass kind="control" style={styles.rest}>
-        <View style={styles.restRow}>
+        <View style={[styles.restRow, compact && styles.restRowCompact]}>
           <RestRing endsAt={endsAt} total={total} />
           <View style={styles.flex} accessibilityLiveRegion="polite">
             <Txt variant="caption" color={color.labelSecondary}>
               Rest
             </Txt>
-            <Txt variant="figure" style={styles.restClock}>
+            <Txt variant="figure" style={styles.restClock} numberOfLines={1}>
               {clockLabel(left)}
             </Txt>
           </View>
-          <RestButton label="−15" onPress={() => onChange(Math.max(0, leftNow() - 15))} name="Fifteen seconds less" />
-          <RestButton label="+15" onPress={() => onChange(leftNow() + 15)} name="Fifteen seconds more" />
-          <RestButton label="Skip" onPress={() => onChange(0)} name="Skip the rest" strong />
+          <RestButton label="−15" onPress={() => onChange(Math.max(0, leftNow() - 15))} name="Fifteen seconds less" compact={compact} />
+          <RestButton label="+15" onPress={() => onChange(leftNow() + 15)} name="Fifteen seconds more" compact={compact} />
+          <RestButton label="Skip" onPress={() => onChange(0)} name="Skip the rest" strong compact={compact} />
         </View>
       </Glass>
     </Animated.View>
@@ -836,7 +867,7 @@ function RestRing({ endsAt, total }: { endsAt: number; total: number }) {
   );
 }
 
-function RestButton({ label, name, onPress, strong = false }: { label: string; name: string; onPress: () => void; strong?: boolean }) {
+function RestButton({ label, name, onPress, strong = false, compact = false }: { label: string; name: string; onPress: () => void; strong?: boolean; compact?: boolean }) {
   return (
     <Pressable
       onPress={() => {
@@ -845,7 +876,7 @@ function RestButton({ label, name, onPress, strong = false }: { label: string; n
       }}
       accessibilityRole="button"
       accessibilityLabel={name}
-      style={({ pressed }) => [styles.restButton, strong && styles.restButtonStrong, pressed && { opacity: 0.7 }]}
+      style={({ pressed }) => [styles.restButton, compact && styles.restButtonCompact, strong && styles.restButtonStrong, pressed && { opacity: 0.7 }]}
     >
       <Txt variant="subhead" color={strong ? color.onBrand : color.brand} style={face('semibold')}>
         {label}
@@ -1085,8 +1116,11 @@ const styles = themed(() => StyleSheet.create({
   inputCol: { flex: 1, minWidth: 64, maxWidth: 112, textAlign: 'center' },
   times: { width: 10, textAlign: 'center' },
   tickCol: { width: 30 },
+  setNumber: { width: 36, flexDirection: 'row', alignItems: 'center', gap: 3 },
   setRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 3, paddingHorizontal: space[2], marginHorizontal: -space[2], borderRadius: radius.md, borderCurve: 'continuous' },
   setDone: { backgroundColor: alpha(color.good, 0.08) },
+  // A set that beats your best: gold, like the records on the summary.
+  setBest: { backgroundColor: alpha(color.maybe, 0.14) },
   noteCard: { alignSelf: 'stretch', width: '100%', maxWidth: 480, marginHorizontal: 'auto' },
   again: {
     alignSelf: 'stretch',
@@ -1137,7 +1171,9 @@ const styles = themed(() => StyleSheet.create({
   restWrap: { position: 'absolute', left: space[4], right: space[4], alignItems: 'center' },
   rest: { width: '100%', maxWidth: 520, borderRadius: radius.xl, overflow: 'hidden' },
   restRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], paddingVertical: space[3] },
+  restRowCompact: { gap: 6, paddingHorizontal: space[3] },
   restClock: { fontVariant: ['tabular-nums'] },
+  restButtonCompact: { paddingHorizontal: 10 },
   restButton: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandTint },
   restButtonStrong: { backgroundColor: color.brandFill },
   summary: { alignItems: 'stretch', paddingTop: space[8] },

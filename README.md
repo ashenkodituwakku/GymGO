@@ -402,7 +402,9 @@ not advice for anyone in particular, and the screen says to start light.
   side of the bar for the weight you typed (45, 35, 25, 10, 5 and 2.5 lb
   plates, or 25 down to 1.25 kg), and says if standard plates can't make it
   exactly. Also in Progress → Plate calculator.
-- **Records.** Finish, and GymGO tells you which records you broke:
+- **Records.** A set that beats your best turns gold as you tick it, with a
+  trophy by its number, a buzz and the record sound (a screen reader says
+  which record). Finish, and GymGO tells you which records you broke:
   heaviest weight, strongest set (by estimated one-rep max), or most reps on
   a body-weight exercise. Only against your own earlier sessions: the first
   time you log something is a starting point, not a record. A broken record

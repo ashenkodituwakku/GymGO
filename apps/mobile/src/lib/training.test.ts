@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  bestSoFar,
   clockLabel,
   finishedAtFor,
   draftToLogged,
@@ -268,6 +269,19 @@ describe('a session in progress', () => {
       { exerciseId: 'squat', sets: [{ weight: 100, reps: 5 }] },
       { exerciseId: 'push-up', sets: [{ weight: null, reps: 20 }] },
     ]);
+  });
+
+  it('marks a ticked set that beats your best so far, as you go', () => {
+    const before = personalRecords([session('2024-05-01T10:00:00Z', { bench: [[80, 5], [70, 10]], 'push-up': [[null, 20]] })]);
+    const done = (weight: string, reps: string, ticked = true) => ({ weight, reps, done: ticked });
+    // 82.5 is heavier than 80; 82.5 again isn't; 75 × 12 is a stronger set than 70 × 10; unticked counts for nothing.
+    expect(bestSoFar([done('82.5', '3'), done('82.5', '3'), done('75', '12'), done('90', '1', false)], 'kg', before.get('bench'))).toEqual(['heaviest', null, 'e1rm', null]);
+    // In pounds: 180 lb is about 81.6 kg.
+    expect(bestSoFar([done('180', '1')], 'lb', before.get('bench'))).toEqual(['heaviest']);
+    expect(bestSoFar([done('', '21'), done('', '21'), done('', '25')], 'kg', before.get('push-up'))).toEqual(['reps', null, 'reps']);
+    // The first time sets a baseline; unreadable sets are no record.
+    expect(bestSoFar([done('100', '5')], 'kg', before.get('squat'))).toEqual([null]);
+    expect(bestSoFar([done('lots', '5'), done('100', '')], 'kg', before.get('bench'))).toEqual([null, null]);
   });
 });
 

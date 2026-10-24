@@ -502,6 +502,37 @@ export function parseReps(text: string): number | undefined {
   return value <= 200 ? value : undefined;
 }
 
+/**
+ * Which ticked sets of an exercise beat your best, as you tick them: each
+ * against your records from before this workout (`before`) and the sets
+ * ticked above it, so only a set that's the best so far is marked. As
+ * recordsBroken: an exercise's first time sets a baseline, not a record,
+ * and a heavier weight counts first, then a stronger set.
+ */
+export function bestSoFar(sets: DraftSet[], unit: WeightUnit, before: ExerciseRecords | undefined): Array<NewRecord['kind'] | null> {
+  if (!before || before.sessions === 0) return sets.map(() => null);
+  let { heaviestKg, e1rmKg, mostReps } = before;
+  return sets.map((set) => {
+    if (!set.done) return null;
+    const weight = parseWeight(set.weight);
+    const reps = parseReps(set.reps);
+    if (weight === undefined || reps === undefined || reps < 1) return null;
+    if (weight === null) {
+      if (mostReps === null || reps <= mostReps) return null;
+      mostReps = reps;
+      return 'reps';
+    }
+    const kg = toKg(weight, unit);
+    const e1rm = oneRepMax(kg, reps);
+    let kind: NewRecord['kind'] | null = null;
+    if (heaviestKg !== null && kg > heaviestKg + 1e-6) kind = 'heaviest';
+    else if (e1rmKg !== null && e1rm !== null && e1rm > e1rmKg + 1e-6) kind = 'e1rm';
+    if (heaviestKg !== null) heaviestKg = Math.max(heaviestKg, kg);
+    if (e1rmKg !== null && e1rm !== null) e1rmKg = Math.max(e1rmKg, e1rm);
+    return kind;
+  });
+}
+
 /** The sets you ticked, as they'll be kept. Sets left unticked, or unreadable, aren't logged. */
 export function draftToLogged(items: Array<{ exerciseId: string; sets: DraftSet[] }>): LoggedExercise[] {
   return items

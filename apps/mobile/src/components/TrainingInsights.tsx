@@ -191,6 +191,7 @@ export function WeekStrip({
   goal,
   onPress,
   freezes = false,
+  tile = false,
   now = new Date(),
 }: {
   sessions: TrainingSession[];
@@ -198,6 +199,8 @@ export function WeekStrip({
   onPress: () => void;
   /** Pro's streak freeze: one missed week a month doesn't end the run. */
   freezes?: boolean;
+  /** A half-width tile beside another (Home, beside the collection), rather than a full-width strip. */
+  tile?: boolean;
   now?: Date;
 }) {
   const week = useMemo(() => trainingCalendar(sessions, 1, now)[0]!, [sessions, now]);
@@ -206,6 +209,49 @@ export function WeekStrip({
   const count = week.sessions;
   const title = goal ? (count <= goal ? `${count} of ${goal} this week` : `${count} this week, goal ${goal}`) : `${count} workout${count === 1 ? '' : 's'} this week`;
   const detail = goal && count >= goal ? 'Goal met' : streak > 1 ? `${streak} weeks in a row` : goal ? `${goal - count} to go` : 'Tap to set a weekly goal';
+  const days = (
+    <View style={styles.stripDays}>
+      {week.days.map((day) => (
+        <View
+          key={day.date}
+          style={[styles.stripDay, day.sessions > 0 ? styles.dayTrained : day.future ? styles.stripFuture : styles.dayRest, day.date === today && styles.stripToday]}
+        />
+      ))}
+    </View>
+  );
+  if (tile) {
+    // The count big, the goal beside it, a short word on how it's going, and the week's days.
+    const short = goal && count >= goal ? (streak > 1 ? `Goal met · ${streak}-week run` : 'Goal met') : streak > 1 ? `${streak}-week run` : goal ? `${goal - count} to go` : 'Set a weekly goal';
+    return (
+      <Pressy
+        scaleTo={0.96}
+        onPress={() => {
+          haptic.select();
+          onPress();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`${title}. ${goal && count >= goal && streak > 1 ? `Goal met, ${streak} weeks in a row` : detail}. Open Progress`}
+        style={styles.tile}
+      >
+        <View style={styles.tileHead}>
+          <View style={styles.stripIcon}>
+            <Icon name="flame" size={16} color={color.onBrand} />
+          </View>
+          <Icon name="chevron" size={12} color={color.labelTertiary} />
+        </View>
+        <View style={styles.tileFigure}>
+          <Txt variant="title2">{String(count)}</Txt>
+          <Txt variant="caption" color={color.labelSecondary} numberOfLines={1} style={styles.figureWord}>
+            {goal && count <= goal ? `of ${goal} this week` : 'this week'}
+          </Txt>
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
+          {short}
+        </Txt>
+        {days}
+      </Pressy>
+    );
+  }
   return (
     <Pressy
       scaleTo={0.97}
@@ -228,14 +274,7 @@ export function WeekStrip({
         <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
           {goal && count >= goal && streak > 1 ? `Goal met · ${streak} weeks in a row` : detail}
         </Txt>
-        <View style={styles.stripDays}>
-          {week.days.map((day) => (
-            <View
-              key={day.date}
-              style={[styles.stripDay, day.sessions > 0 ? styles.dayTrained : day.future ? styles.stripFuture : styles.dayRest, day.date === today && styles.stripToday]}
-            />
-          ))}
-        </View>
+        {days}
       </View>
       <Icon name="chevron" size={14} color={color.labelTertiary} />
     </Pressy>
@@ -386,6 +425,11 @@ const styles = themed(() =>
     goalRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     goalValue: { minWidth: 72, textAlign: 'center' },
     strip: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
+    tile: { flex: 1, minWidth: 0, gap: 2, padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
+    tileHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space[1] },
+    tileFigure: { flexDirection: 'row', alignItems: 'baseline', minWidth: 0 },
+    // The words after a big figure: a margin, as a leading space between two texts is dropped in a browser.
+    figureWord: { flexShrink: 1, marginLeft: 4 },
     stripIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.maybe },
     stripDays: { flexDirection: 'row', gap: 5, marginTop: 6 },
     stripDay: { width: 10, height: 10, borderRadius: 5 },

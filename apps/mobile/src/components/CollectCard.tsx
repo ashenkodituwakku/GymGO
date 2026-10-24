@@ -233,13 +233,45 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
 }
 
 /** Home's line about your collection, once it has a gym in it. */
-export function CollectionStrip({ onPress }: { onPress: () => void }) {
+export function CollectionStrip({ onPress, tile = false }: { onPress: () => void; /** A half-width tile beside another (Home, beside your week). */ tile?: boolean }) {
   const { gyms } = useCollection();
   const stats = collectionStats(gyms);
   if (stats.gyms === 0) return null;
   const metal = stats.topTier ? TIER_METAL[stats.topTier] : color.fill;
   const best = TIERS.find((item) => item.tier === stats.topTier)?.label;
   const line = `${stats.gyms} gym${stats.gyms === 1 ? '' : 's'} · ${stats.cities} cit${stats.cities === 1 ? 'y' : 'ies'} · ${stats.countries} countr${stats.countries === 1 ? 'y' : 'ies'}`;
+  if (tile) {
+    // The gyms collected big, then the cities and countries, and the best tier.
+    const places = `${stats.cities} cit${stats.cities === 1 ? 'y' : 'ies'} · ${stats.countries} countr${stats.countries === 1 ? 'y' : 'ies'}`;
+    return (
+      <Pressy
+        scaleTo={0.96}
+        onPress={() => {
+          haptic.select();
+          onPress();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`Your collection: ${line}${best ? `, best ${best}` : ''}`}
+        style={styles.tile}
+      >
+        <View style={styles.tileHead}>
+          <View style={[styles.stripMedal, { backgroundColor: metal }]}>
+            <Icon name="trophy" size={16} color={color.onBrand} />
+          </View>
+          <Icon name="chevron" size={12} color={color.labelTertiary} />
+        </View>
+        <View style={styles.tileFigure}>
+          <Txt variant="title2">{String(stats.gyms)}</Txt>
+          <Txt variant="caption" color={color.labelSecondary} numberOfLines={1} style={styles.tileShrink}>
+            {stats.gyms === 1 ? 'gym collected' : 'gyms collected'}
+          </Txt>
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
+          {best ? `${places} · best ${best}` : places}
+        </Txt>
+      </Pressy>
+    );
+  }
   return (
     <Pressy
       scaleTo={0.97}
@@ -329,6 +361,11 @@ const styles = themed(() =>
     buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     slot: { flexGrow: 1, flexBasis: 140, gap: 2 },
     strip: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
+    tile: { flex: 1, minWidth: 0, gap: 2, padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
+    tileHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space[1] },
+    tileFigure: { flexDirection: 'row', alignItems: 'baseline', minWidth: 0 },
+    // A margin, as a leading space between two texts is dropped in a browser.
+    tileShrink: { flexShrink: 1, marginLeft: 4 },
     stripMedal: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
     nudge: { borderWidth: 2, borderColor: color.brand },
     cardLine: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 2 },

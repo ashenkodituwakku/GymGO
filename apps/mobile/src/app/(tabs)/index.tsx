@@ -26,6 +26,8 @@ import { startSession, useActiveSessionGlance } from '@/lib/activeSession';
 import { WeekStrip } from '@/components/TrainingInsights';
 import { CollectionStrip, HereNudge } from '@/components/CollectCard';
 import { useTrainingLog } from '@/lib/useTraining';
+import { useCollection } from '@/lib/useCollection';
+import { collectionStats } from '@/lib/collection';
 import { useApp } from '@/lib/app-state';
 import { lookupLine, noGymsLine, searchPrompt, timeLabel, visitWhen } from '@/lib/copy';
 import { countryInSentence, countryName } from '@/lib/country';
@@ -74,6 +76,7 @@ export default function Home() {
   const trips = useTrips(nowIn(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC').date);
   // Your training log, shared with Progress; the week strip shows once there's something in it.
   const log = useTrainingLog(account.token);
+  const collection = useCollection();
   // On a plan (a template done before) and no workout going: its next day, one tap away.
   const plan = active ? null : upNext(log.sessions);
   const planDay = plan ? plan.template.days[plan.day]! : null;
@@ -150,6 +153,8 @@ export default function Home() {
       : { icon: 'clock', title: 'Lunchtime', onPress: () => pick((current) => ({ ...current, ...visit(12 * 60) })) },
   ];
 
+  const showWeek = log.status === 'ready' && log.sessions.length > 0;
+  const collected = collectionStats(collection.gyms).gyms > 0;
   const today = nowIn(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', clock).date;
   const trip = tripToShow(trips.trips, today);
   const finders: Array<{ icon: IconName; title: string; detail: string; label: string; onPress: () => void }> = [
@@ -259,9 +264,11 @@ export default function Home() {
         <Icon name="chevron" size={14} color={color.onBrandSoft} />
       </Pressy>
 
+      {/* Up next and the other templates: one card, two actions. */}
+      <View style={styles.planCard}>
       {plan && planDay && (
         <Pressy
-          scaleTo={0.97}
+          scaleTo={0.98}
           onPress={() => {
             haptic.success();
             startSession({ name: templateDayName(plan.template, planDay), workoutId: null, gymId: null, gymName: null, unit: unitFor(prefs.country), items: planDay.items });
@@ -296,14 +303,16 @@ export default function Home() {
       <Pressable
         onPress={() => router.push('/templates')}
         accessibilityRole="link"
-        accessibilityLabel={plan ? 'Or pick another template' : 'Or start from a template: push, pull, legs; 5×5; or full body'}
-        hitSlop={6}
-        style={styles.templatesLink}
+        accessibilityLabel={plan ? 'Pick another template' : 'Start from a template: push, pull, legs; 5×5; or full body'}
+        style={({ pressed }) => [styles.templatesRow, !!plan && planDay && styles.templatesUnder, pressed && { backgroundColor: color.fill }]}
       >
-        <Txt variant="footnote" color={color.brand} style={[face('semibold'), styles.center]}>
-          {plan ? 'Or pick another template ›' : 'Or start from a template ›'}
+        <Icon name="list" size={15} color={color.brand} />
+        <Txt variant="footnote" color={color.brand} style={[face('semibold'), styles.flex]}>
+          {plan ? 'Pick another template' : 'Start from a template: push, pull, legs; 5×5; or full body'}
         </Txt>
+        <Icon name="chevron" size={12} color={color.labelTertiary} />
       </Pressable>
+      </View>
 
       </View>
 
@@ -355,10 +364,18 @@ export default function Home() {
       {/* How you're doing: training this week, and the collection. */}
       <View style={styles.group}>
       <HereNudge here={here} records={data.listed} onOpen={(id) => router.push({ pathname: '/gym/[id]', params: { id } })} />
-      {log.status === 'ready' && log.sessions.length > 0 && (
-        <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />
+      {/* Both there: two tiles side by side. One alone: a full-width strip. */}
+      {showWeek && collected ? (
+        <View style={styles.finders}>
+          <WeekStrip tile sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />
+          <CollectionStrip tile onPress={() => router.push('/collection')} />
+        </View>
+      ) : (
+        <>
+          {showWeek && <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />}
+          <CollectionStrip onPress={() => router.push('/collection')} />
+        </>
       )}
-      <CollectionStrip onPress={() => router.push('/collection')} />
       </View>
 
       {/* Everything below is about a place: it waits for your settings, so
@@ -680,17 +697,15 @@ const styles = themed(() => StyleSheet.create({
   },
   tripIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
   finders: { flexDirection: 'row', gap: space[3] },
-  templatesLink: { alignSelf: 'center', paddingVertical: space[1] },
+  planCard: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', ...shadow.card },
   upNext: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[3],
     padding: space[3],
-    borderRadius: radius.lg,
-    borderCurve: 'continuous',
-    backgroundColor: color.plate,
-    ...shadow.card,
   },
+  templatesRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: space[3] - 2, paddingHorizontal: space[3] },
+  templatesUnder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   upNextIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
   startPill: { paddingHorizontal: space[3], paddingVertical: 7, borderRadius: radius.pill, backgroundColor: color.brandFill },
   finderNarrow: { flexDirection: 'column', gap: space[2] },

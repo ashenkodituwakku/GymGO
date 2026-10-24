@@ -4,7 +4,8 @@
  * whole app is drawn: Soft, Paper, Material, Neon, Terminal, 8-bit, Classic,
  * Comic) and an accent, where Standard and Indigo are everyone's and the
  * rest are part of GymGO Pro; and Liquid Glass, how see-through the things
- * over the map are, for everyone.
+ * over the map are, for everyone. With Pro, too, how a record is celebrated
+ * and how the sounds are voiced (Marimba, or Arcade's chip tunes).
  */
 
 import { useEffect, useState } from 'react';
@@ -20,6 +21,8 @@ import { PercentSlider } from '@/components/PercentSlider';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { Celebration } from '@/components/Celebration';
 import { CELEBRATIONS, FREE_CELEBRATION, celebrationFor, type CelebrationStyle } from '@/lib/celebrations';
+import { playSound } from '@/lib/sounds';
+import { FREE_SOUND_PACK, SOUND_PACKS, soundPackFor, type SoundPack } from '@/lib/soundPacks';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import {
@@ -128,6 +131,19 @@ export default function AppearanceScreen() {
     haptic.select();
     if (style !== prefs.celebration) setPref('celebration', style);
     setPlaying((count) => count + 1);
+  };
+
+  // Sounds: Arcade with Pro, Marimba without. Picking one plays a record in it.
+  const packInUse = soundPackFor(prefs.soundPack, billing.isPro);
+  const pickSoundPack = (soundPack: SoundPack) => {
+    if (soundPack !== FREE_SOUND_PACK && !billing.isPro) {
+      haptic.tap();
+      openPro('sounds');
+      return;
+    }
+    haptic.select();
+    if (soundPack !== prefs.soundPack) setPref('soundPack', soundPack);
+    playSound('record', 0, soundPack);
   };
 
   const pickAccent = (accent: AccentId) => {
@@ -401,6 +417,54 @@ export default function AppearanceScreen() {
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {`${CELEBRATIONS.find((item) => item.id === celebrationInUse)!.blurb}. It plays over the workout summary when you set a record or meet your weekly goal${billing.isPro ? '' : '; fireworks, gold stars and emoji come with GymGO Pro'}. Never with Reduce Motion on.`}
         </Txt>
+
+        <View style={styles.accentHead}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            SOUNDS
+          </Txt>
+          {!billing.isPro && (
+            <View style={styles.proTag}>
+              <Icon name="crown" size={11} color={color.brand} />
+              <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                PRO
+              </Txt>
+            </View>
+          )}
+        </View>
+        <View style={styles.celebrations} accessibilityRole="radiogroup">
+          {SOUND_PACKS.map((item) => {
+            const on = packInUse === item.id;
+            const locked = item.id !== FREE_SOUND_PACK && !billing.isPro;
+            return (
+              <Pressable
+                key={item.id}
+                onPress={() => pickSoundPack(item.id)}
+                accessibilityRole="radio"
+                aria-checked={on}
+                accessibilityLabel={`${item.name}: ${item.blurb}${locked ? '. Part of GymGO Pro' : ''}`}
+                style={({ pressed }) => [styles.soundPack, pressed && { opacity: 0.75 }]}
+              >
+                <View style={[styles.sampleTile, on && styles.sampleOn]}>
+                  <Text style={styles.sample}>{item.sample}</Text>
+                </View>
+                <View style={styles.lookName}>
+                  {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
+                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                    {item.name}
+                  </Txt>
+                </View>
+                <Txt variant="caption" color={color.labelSecondary} style={styles.centred}>
+                  {item.blurb}
+                </Txt>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+          {prefs.sounds
+            ? `Tap one to hear a new record in it. It voices check-ins, records, sets and the timers; the cards keep their own sounds${billing.isPro ? '' : '. Arcade comes with GymGO Pro'}.`
+            : 'Sounds are off, so there’s nothing to hear: turn them on in Profile → Settings.'}
+        </Txt>
       </PageScroll>
       {playing > 0 && <Celebration key={playing} style={celebrationInUse} />}
     </View>
@@ -564,6 +628,7 @@ const styles = themed(() =>
     lookName: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     celebrations: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     celebration: { width: '25%', minWidth: 72, alignItems: 'center', gap: space[1], paddingVertical: space[2] },
+    soundPack: { flex: 1, alignItems: 'center', gap: space[1], paddingVertical: space[2], paddingHorizontal: space[2] },
     sampleTile: { width: 56, height: 56, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
     sampleOn: { borderColor: color.brand, backgroundColor: color.brandTint },
     sample: { fontSize: 28, lineHeight: 34 },

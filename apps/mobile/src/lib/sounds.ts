@@ -12,12 +12,16 @@
  * Sapphire, a marimba trill for Emerald...), written to always agree.
  * Foil adds its glitter on top.
  *
+ * Arcade (GymGO Pro, picked in Appearance) plays the workout and check-in
+ * moments as chip tunes instead (lib/soundPacks.ts).
+ *
  * Off with the Sounds switch in Profile → Settings. On a phone they follow
  * the silent switch and play over your music without stopping it. In a
  * browser they play once the page has been tapped, as browsers require.
  */
 
 import type { Gem, Rarity } from './rarity';
+import { ARCADE_SOUNDS, FREE_SOUND_PACK, voiced, type SoundPack } from './soundPacks';
 
 // Loaded when first played, so nothing here runs (or downloads) before a sound is wanted.
 const FILES = {
@@ -42,15 +46,33 @@ const FILES = {
   'rest-done': () => require('../../assets/sounds/rest-done.wav'),
   'timer-go': () => require('../../assets/sounds/timer-go.wav'),
   'timer-count': () => require('../../assets/sounds/timer-count.wav'),
+  'arcade-scan': () => require('../../assets/sounds/arcade-scan.wav'),
+  'arcade-checkin': () => require('../../assets/sounds/arcade-checkin.wav'),
+  'arcade-set-complete': () => require('../../assets/sounds/arcade-set-complete.wav'),
+  'arcade-record': () => require('../../assets/sounds/arcade-record.wav'),
+  'arcade-rest-done': () => require('../../assets/sounds/arcade-rest-done.wav'),
+  'arcade-timer-go': () => require('../../assets/sounds/arcade-timer-go.wav'),
+  'arcade-timer-count': () => require('../../assets/sounds/arcade-timer-count.wav'),
 } satisfies Record<string, () => unknown>;
 
-export type Sound = keyof typeof FILES;
+type File = keyof typeof FILES;
+/** A moment that has a sound; its pack decides which file plays. */
+export type Sound = Exclude<File, `arcade-${string}`>;
+// Every sound Arcade voices has its file here, or this doesn't compile.
+const arcadeFiles: `arcade-${(typeof ARCADE_SOUNDS)[number]}` extends File ? true : never = true;
+void arcadeFiles;
 
 let enabled = true;
+let pack: SoundPack = FREE_SOUND_PACK;
 
 /** The Sounds switch in Profile. */
 export function setSoundsEnabled(on: boolean): void {
   enabled = on;
+}
+
+/** The pack that plays (soundPackFor: yours with Pro). */
+export function setSoundPack(next: SoundPack): void {
+  pack = next;
 }
 
 // How loud each plays is in the file itself (scripts/make-sounds.mjs), as
@@ -66,7 +88,7 @@ type AudioModule = {
 };
 
 let audio: AudioModule | null | undefined;
-const players = new Map<Sound, Player>();
+const players = new Map<File, Player>();
 
 function audioModule(): AudioModule | null {
   if (audio !== undefined) return audio;
@@ -82,7 +104,7 @@ function audioModule(): AudioModule | null {
   return audio;
 }
 
-function playerFor(sound: Sound): Player | null {
+function playerFor(sound: File): Player | null {
   const module = audioModule();
   if (!module) return null;
   let player = players.get(sound);
@@ -93,9 +115,9 @@ function playerFor(sound: Sound): Player | null {
   return player;
 }
 
-function start(sound: Sound): void {
+function start(sound: Sound, voice: SoundPack): void {
   try {
-    const player = playerFor(sound);
+    const player = playerFor(voiced(sound, voice) as File);
     if (!player) return;
     // From the top, even if it played a moment ago.
     player
@@ -111,12 +133,13 @@ function start(sound: Sound): void {
 
 /**
  * Play one of GymGO's sounds, unless Sounds is off. `afterMs` waits first
- * (a gem's signature after its card's first notes).
+ * (a gem's signature after its card's first notes); `voice` plays it in
+ * another pack than yours (Appearance's previews).
  */
-export function playSound(sound: Sound, afterMs = 0): void {
+export function playSound(sound: Sound, afterMs = 0, voice: SoundPack = pack): void {
   if (!enabled) return;
-  if (afterMs > 0) setTimeout(() => enabled && start(sound), afterMs);
-  else start(sound);
+  if (afterMs > 0) setTimeout(() => enabled && start(sound, voice), afterMs);
+  else start(sound, voice);
 }
 
 /** When each rarity's sound has played enough for the gem's signature to come in over it. */

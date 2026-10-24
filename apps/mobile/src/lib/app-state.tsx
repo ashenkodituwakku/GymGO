@@ -17,7 +17,8 @@ import { LIMITS, haversineKm } from '@gymgo/domain';
 import { ApiError, problemText } from './api';
 import { FOCUS_COUNTRY, canSearchIn, deviceTimeZone, openingPlace } from './country';
 import { setHapticsEnabled } from './haptics';
-import { setSoundsEnabled } from './sounds';
+import { setSoundPack, setSoundsEnabled } from './sounds';
+import { FREE_SOUND_PACK, cleanSoundPack, soundPackFor, type SoundPack } from './soundPacks';
 import { currentFix, type Fix } from './location';
 import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, setReaderCountry, whereaboutsAt, type City } from './places';
 import { locatedNotice } from './copy';
@@ -82,6 +83,8 @@ export interface Prefs {
   timers: IntervalPlan[];
   /** How records and goals are celebrated (lib/celebrations.ts): your pick plays with Pro, confetti without. */
   celebration: CelebrationStyle;
+  /** How the sounds are voiced (lib/soundPacks.ts): your pick plays with Pro, Marimba without. */
+  soundPack: SoundPack;
 }
 
 const RECENTS_KEY = 'gymgo.recents.v1';
@@ -108,7 +111,7 @@ export interface Lookup {
 }
 
 /** Why the Pro screen opened, so it can say so. */
-export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates' | 'timers' | 'strength' | 'freeze' | 'celebrations' | 'lifetime';
+export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates' | 'timers' | 'strength' | 'freeze' | 'celebrations' | 'lifetime' | 'sounds';
 
 type AppState = {
   data: ReturnType<typeof useGymData>;
@@ -195,8 +198,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [compare, setCompare] = useState<string[]>([]);
   const compareLoaded = useRef(false);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
-  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, demo: false, country: null, weeklyGoal: null, plates: {}, timers: [], celebration: FREE_CELEBRATION });
+  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, demo: false, country: null, weeklyGoal: null, plates: {}, timers: [], celebration: FREE_CELEBRATION, soundPack: FREE_SOUND_PACK });
   const [prefsReady, setPrefsReady] = useState(false);
+  // Arcade with Pro, Marimba without: a lapsed Pro hears Marimba again, the pick kept for when it's back.
+  useEffect(() => setSoundPack(soundPackFor(prefs.soundPack, billing.isPro)), [prefs.soundPack, billing.isPro]);
   // Place search reads the mode, and distances your country's units, so
   // both must match before anything renders.
   setDemoMode(prefs.demo);
@@ -220,7 +225,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const lbPlates = cleanPlates(value.plates?.lb, 'lb');
       const plates = { ...(kgPlates ? { kg: kgPlates } : {}), ...(lbPlates ? { lb: lbPlates } : {}) };
       // The limited website shows real gyms only, whatever was kept (lib/limited.ts).
-      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, demo: !LIMITED && value.demo === true, country, weeklyGoal: goal, plates, timers: cleanTimers(value.timers), celebration: cleanCelebration(value.celebration) };
+      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, demo: !LIMITED && value.demo === true, country, weeklyGoal: goal, plates, timers: cleanTimers(value.timers), celebration: cleanCelebration(value.celebration), soundPack: cleanSoundPack(value.soundPack) };
       setHapticsEnabled(next.haptics);
       setSoundsEnabled(next.sounds);
       setDemoMode(next.demo);

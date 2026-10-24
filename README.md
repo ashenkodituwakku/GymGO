@@ -519,8 +519,12 @@ water drops for Aquamarine, a music box for Rose quartz, a deep gong for
 Onyx). Foil adds glitter on top, and a check-in that finishes a set gets a
 blooming chord. A new personal record has a short fanfare, and the
 interval and rest timers keep their cues so you can train without watching
-the screen. Buttons make no sound at all: their haptic is enough. They're off with
-**Sounds** in Profile → Settings (separate from Haptics). On a phone they
+the screen. Buttons make no sound at all: their haptic is enough. With
+Pro, **Arcade** (picked in Appearance → Sounds) plays the check-in,
+record, set and timer sounds as chip tunes instead: square waves and a
+triangle bass, as an old games console made them, but built only from
+harmonics under 5 kHz so they never fizz; the cards keep their own sounds.
+They're off with **Sounds** in Profile → Settings (separate from Haptics). On a phone they
 follow the silent switch and play over your music without stopping it;
 in a browser they start once you've tapped the page, as browsers require.
 
@@ -1340,13 +1344,14 @@ saved list always opens, wherever the gym is.
 | Warm-up sets | Plates for any weight | A warm-up ramp to your weight, with the plates |
 | Gym notes | — | Your own notes on each gym, on your device |
 | Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
-| Colour themes | Indigo, light or dark | Twelve accents (Rainbow and Camo too), eight looks (Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), light or dark |
+| Colour themes | Indigo; light, dark or Dim | Twelve accents (Rainbow and Camo too), eight looks (Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), light or dark |
 | Interval timer | Tabata and EMOM | Your own work, rest and rounds; keep up to 10 |
 | 1-rep max | Your estimated max, and 90%, 80% and 70% | Every step from 100% to 50% with plates, and what you could lift for 2 to 12 reps |
 | Streak freeze | — | One missed week a month doesn't end your streak |
 | Profile ring | Your picture | Ringed in your accent |
 | Celebrations | Confetti for a record or a goal met | Your pick: confetti, fireworks, gold stars or emoji |
 | Lifetime stats | — | Every kilo, rep and hour added up, your favourites, and what the weight compares to; shareable as a picture |
+| Arcade sounds | Marimba and bells | The workout and check-in sounds as chip tunes, picked in Appearance (the cards keep theirs) |
 
 One tier, two ways to pay, tax included:
 

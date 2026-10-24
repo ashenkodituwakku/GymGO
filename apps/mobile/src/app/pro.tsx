@@ -58,6 +58,7 @@ const FEATURE_ICON: Record<string, IconName> = {
   'Profile ring': 'person',
   Celebrations: 'sparkle',
   'Lifetime stats': 'trophy',
+  'Arcade sounds': 'sound',
 };
 
 const REASON: Record<ProReason, string> = {
@@ -76,6 +77,7 @@ const REASON: Record<ProReason, string> = {
   freeze: 'Pro’s streak freeze keeps your weekly streak going through one missed week a month.',
   celebrations: 'Confetti is free. Pro celebrates your records and goals your way: fireworks, gold stars or a shower of emoji.',
   lifetime: 'Your log and records are free. Pro adds your lifetime in numbers: every kilo, rep and hour, your favourites, and what all that weight compares to, as a picture to share too.',
+  sounds: 'Sounds are free. Pro adds Arcade: the workout and check-in sounds as chip tunes, like an old games console.',
 };
 
 export default function ProScreen() {

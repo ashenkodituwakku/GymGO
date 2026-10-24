@@ -18,6 +18,11 @@
 // signature in the gem's own voice, on C major's pentatonic notes so it
 // never clashes (a warm bell for Ruby, glass for Sapphire, a marimba trill
 // for Emerald, and so on). Foil adds its own glitter on top.
+//
+// Arcade (GymGO Pro) is the workout and check-in sounds again as chip tunes:
+// square waves for the tune and a triangle for the bass, as an old games
+// console made them, but built from their harmonics only up to about 5 kHz
+// so they never fizz or turn shrill. The cards keep their own sounds.
 
 import { mkdirSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -27,7 +32,7 @@ const RATE = 24000;
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'sounds');
 
 const NOTE = {
-  C3: 130.81, C4: 261.63, G4: 392.0, A4: 440.0, C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.0, B5: 987.77,
+  C3: 130.81, G3: 196.0, C4: 261.63, G4: 392.0, A4: 440.0, C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.0, B5: 987.77,
   C6: 1046.5, D6: 1174.66, E6: 1318.51, G6: 1567.98, A6: 1760.0,
 };
 
@@ -80,6 +85,32 @@ const MARIMBA = [[1, 1, 1], [4, 0.12, 0.2], [10, 0.025, 0.08]];
 const BELL = [[1, 1, 1], [2, 0.28, 0.6], [3, 0.1, 0.42], [4.07, 0.04, 0.28]];
 const GLASS = [[1, 1, 1], [2, 0.2, 0.6], [2.76, 0.12, 0.45], [5.4, 0.035, 0.25]];
 const PAD = [1, 2, 3, 4].map((n) => [n, 1 / n ** 1.7, 1 - n * 0.08]);
+
+/**
+ * A chip-tune note: a square wave (or a triangle, for a bass), summed from
+ * its odd harmonics below 5 kHz, so it's the old consoles' sound without
+ * their fizz. A snap of an attack, a decay, and an optional vibrato that
+ * eases in for a held note.
+ */
+function chip(buf, at, freq, { amp = 0.3, length = 0.12, decay = 0.25, wave = 'square', vibrato = 0 } = {}) {
+  const start = Math.floor(at * RATE);
+  const count = Math.min(buf.length - start, Math.floor(length * RATE));
+  const harmonics = [];
+  for (let k = 1; k * freq < 5000; k += 2) harmonics.push(k);
+  const release = Math.min(count, Math.floor(0.012 * RATE));
+  let phase = 0;
+  for (let i = 0; i < count; i += 1) {
+    const t = i / RATE;
+    phase += (2 * Math.PI * freq * (1 + vibrato * Math.sin(2 * Math.PI * 6 * t) * Math.min(1, t / 0.12))) / RATE;
+    let sample = 0;
+    // Square: 1/k for each odd harmonic. Triangle: 1/k², alternating.
+    for (const [n, k] of harmonics.entries()) sample += wave === 'square' ? Math.sin(k * phase) / k : ((n % 2 ? -1 : 1) * Math.sin(k * phase)) / (k * k);
+    const tail = i > count - release ? (count - i) / release : 1;
+    buf[start + i] += amp * swell(t, 0.003) * Math.exp(-t / decay) * tail * sample;
+  }
+}
+
+const chipRun = (buf, at, notes, step, options) => notes.forEach((name, i) => chip(buf, at + i * step, NOTE[name], options));
 
 /** A few tiny high pings, like light off foil: quiet, and never shrill. */
 function glitter(buf, at, { count = 8, spread = 0.5, seed = 3, amp = 0.07, low = 1900, high = 4300 } = {}) {
@@ -330,6 +361,57 @@ const SOUNDS = {
     note(buf, 0, NOTE.D5, { amp: 0.6, attack: 0.01, decay: 0.09, partials: [[1, 1, 1], [2, 0.12, 0.6]], length: 0.3 });
     return finish(room(soften(buf, 4000), { mix: 0.08 }), 0.58);
   },
+
+  // --- Arcade (Pro): the same moments as chip tunes ---------------------------
+  // Checking where you are: a quick run up the scale.
+  'arcade-scan'() {
+    const buf = buffer(0.5);
+    chipRun(buf, 0, ['C5', 'D5', 'E5', 'G5', 'A5', 'C6'], 0.035, { amp: 0.26, length: 0.05, decay: 0.06 });
+    return finish(room(soften(buf, 4800), { mix: 0.08 }), 0.5);
+  },
+  // "You're here!": the coin, two notes up.
+  'arcade-checkin'() {
+    const buf = buffer(0.6);
+    chip(buf, 0, NOTE.B5, { amp: 0.32, length: 0.07, decay: 0.2 });
+    chip(buf, 0.07, NOTE.E6, { amp: 0.32, length: 0.42, decay: 0.16 });
+    return finish(room(soften(buf, 4800), { mix: 0.1 }), 0.62);
+  },
+  // A set finished: a run to the top, then the chord over a bass.
+  'arcade-set-complete'() {
+    const buf = buffer(1.4);
+    chipRun(buf, 0, ['C5', 'E5', 'G5', 'C6', 'E6', 'G6'], 0.05, { amp: 0.24, length: 0.06, decay: 0.1 });
+    for (const name of ['C6', 'E6', 'G6']) chip(buf, 0.32, NOTE[name], { amp: 0.14, length: 0.8, decay: 0.35, vibrato: 0.004 });
+    chip(buf, 0.32, NOTE.C4, { amp: 0.4, length: 0.8, decay: 0.4, wave: 'triangle' });
+    return finish(room(soften(buf, 4800), { mix: 0.12 }), 0.66);
+  },
+  // A new personal record: the fanfare, three quick notes then the held one.
+  'arcade-record'() {
+    const buf = buffer(1.5);
+    for (const at of [0, 0.1, 0.2]) chip(buf, at, NOTE.G5, { amp: 0.26, length: 0.075, decay: 0.15 });
+    chip(buf, 0.3, NOTE.C6, { amp: 0.28, length: 0.85, decay: 0.5, vibrato: 0.006 });
+    chip(buf, 0.3, NOTE.E5, { amp: 0.14, length: 0.85, decay: 0.45 });
+    chip(buf, 0, NOTE.C4, { amp: 0.36, length: 0.28, decay: 0.3, wave: 'triangle' });
+    chip(buf, 0.3, NOTE.C4, { amp: 0.42, length: 0.9, decay: 0.45, wave: 'triangle' });
+    return finish(room(soften(buf, 4800), { mix: 0.12 }), 0.68);
+  },
+  // A rest over: two blips, up.
+  'arcade-rest-done'() {
+    const buf = buffer(0.6);
+    chip(buf, 0, NOTE.A5, { amp: 0.3, length: 0.1, decay: 0.2 });
+    chip(buf, 0.13, NOTE.E6, { amp: 0.3, length: 0.22, decay: 0.15 });
+    return finish(room(soften(buf, 4800), { mix: 0.1 }), 0.6);
+  },
+  // The interval timer: a high blip for "go", a lower one for the count-down.
+  'arcade-timer-go'() {
+    const buf = buffer(0.3);
+    chip(buf, 0, NOTE.A5, { amp: 0.32, length: 0.18, decay: 0.12 });
+    return finish(soften(buf, 4800), 0.6);
+  },
+  'arcade-timer-count'() {
+    const buf = buffer(0.2);
+    chip(buf, 0, NOTE.D5, { amp: 0.32, length: 0.08, decay: 0.08 });
+    return finish(soften(buf, 4500), 0.56);
+  },
 };
 
 // How loud each plays, written into the file (browsers on an iPhone ignore
@@ -338,6 +420,14 @@ const SOUNDS = {
 const GEM = 0.46;
 const LEVEL = {
   scan: 0.24,
+  // A square wave sounds louder than a bell at the same peak: Arcade sits a little lower.
+  'arcade-scan': 0.18,
+  'arcade-checkin': 0.44,
+  'arcade-set-complete': 0.4,
+  'arcade-record': 0.34,
+  'arcade-rest-done': 0.33,
+  'arcade-timer-go': 0.35,
+  'arcade-timer-count': 0.38,
   foil: 0.6,
   'timer-count': 0.5,
   'timer-go': 0.55,

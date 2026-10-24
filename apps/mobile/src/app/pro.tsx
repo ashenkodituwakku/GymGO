@@ -12,6 +12,7 @@
 import {
   ALWAYS_FREE,
   PRO_FEATURES,
+  PRO_FEATURE_GROUPS,
   annualSaving,
   formatPlanPrice,
   proPrice,
@@ -225,20 +226,28 @@ export default function ProScreen() {
               PRO
             </Txt>
           </View>
-          {PRO_FEATURES.map((feature) => (
-            <View key={feature.title} style={styles.tableRow}>
-              <View style={styles.featureIcon}>
-                <Icon name={FEATURE_ICON[feature.title] ?? 'sparkle'} size={17} color={color.brand} />
-              </View>
-              <Txt variant="subhead" style={[styles.flex, face('medium')]}>
-                {feature.title}
+          {/* In three groups, each under its heading, so the list reads in parts rather than as one long column. */}
+          {PRO_FEATURE_GROUPS.map((group) => (
+            <View key={group.id} style={styles.tableGroup}>
+              <Txt variant="eyebrow" color={color.brand} style={styles.groupTitle} accessibilityRole="header">
+                {group.title.toUpperCase()}
               </Txt>
-              <Txt variant="footnote" color={color.labelSecondary} style={styles.column}>
-                {feature.free}
-              </Txt>
-              <Txt variant="footnote" color={color.label} style={[styles.column, styles.proColumn, face('semibold')]}>
-                {feature.pro}
-              </Txt>
+              {PRO_FEATURES.filter((feature) => feature.group === group.id).map((feature) => (
+                <View key={feature.title} style={styles.tableRow}>
+                  <View style={styles.featureIcon}>
+                    <Icon name={FEATURE_ICON[feature.title] ?? 'sparkle'} size={17} color={color.brand} />
+                  </View>
+                  <Txt variant="subhead" style={[styles.flex, face('medium')]}>
+                    {feature.title}
+                  </Txt>
+                  <Txt variant="footnote" color={color.labelSecondary} style={styles.column}>
+                    {feature.free}
+                  </Txt>
+                  <Txt variant="footnote" color={color.label} style={[styles.column, styles.proColumn, face('semibold')]}>
+                    {feature.pro}
+                  </Txt>
+                </View>
+              ))}
             </View>
           ))}
         </View>
@@ -542,6 +551,8 @@ const styles = themed(() => StyleSheet.create({
   trialCard: { gap: space[1], backgroundColor: color.brandWash, borderWidth: 1, borderColor: color.brandBorder },
   tableHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   tableRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  tableGroup: { gap: space[3], paddingTop: space[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
+  groupTitle: { marginBottom: -space[1] },
   featureIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
   column: { width: 84, textAlign: 'center' },
   // Pro's column is the one being sold: room for its words on a phone.

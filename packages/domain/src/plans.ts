@@ -64,26 +64,33 @@ export const PRO_PRODUCT = {
   description: 'Gyms in every country, unlimited saved gyms, compare up to 4 gyms, and a library of your workouts on every device.',
 } as const;
 
-/** What Pro adds, with what Free gets instead. */
-export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; pro: string }> = [
-  { emoji: '🌍', title: 'Gyms worldwide', free: 'Your country', pro: 'Every country' },
-  { emoji: '🔖', title: 'Saved gyms', free: `Up to ${LIMITS.free.savedGyms}`, pro: 'Unlimited' },
-  { emoji: '⚖️', title: 'Compare side by side', free: `${LIMITS.free.compare} gyms`, pro: `${LIMITS.pro.compare} gyms` },
-  { emoji: '💪', title: 'Workout library', free: 'Build and share', pro: 'Saved to your account' },
-  { emoji: '📈', title: 'Progress charts', free: 'Records and history', pro: 'A chart per exercise' },
-  { emoji: '🎯', title: 'Session targets', free: 'Last time’s numbers', pro: 'What to lift next' },
-  { emoji: '🧍', title: 'Muscle balance', free: 'Sets per workout', pro: 'Every muscle, last 4 weeks' },
-  { emoji: '🔥', title: 'Warm-up sets', free: 'Plates for any weight', pro: 'A ramp to your weight' },
-  { emoji: '🏋️', title: 'Your plates', free: 'The usual set', pro: 'The ones your gym has' },
-  { emoji: '📝', title: 'Gym notes', free: '—', pro: 'Your own, on each gym' },
-  { emoji: '🎨', title: 'Colour themes', free: 'Indigo; light, dark or Dim', pro: 'Twelve accents and eight looks' },
-  { emoji: '⏱️', title: 'Interval timer', free: 'Tabata and EMOM', pro: 'Your own, up to 10' },
-  { emoji: '🧮', title: '1-rep max', free: 'Your max, and 3 percentages', pro: 'Every percentage, with plates' },
-  { emoji: '❄️', title: 'Streak freeze', free: '—', pro: 'One missed week a month' },
-  { emoji: '💍', title: 'Profile ring', free: 'Your picture', pro: 'Ringed in your accent' },
-  { emoji: '🎆', title: 'Celebrations', free: 'Confetti', pro: 'Fireworks, stars or emoji' },
-  { emoji: '🏅', title: 'Lifetime stats', free: '—', pro: 'Every kilo, rep and hour, to share' },
-  { emoji: '🕹️', title: 'Arcade sounds', free: 'Marimba', pro: 'Marimba or chip tunes' },
+/** The headings the Pro screen groups what Pro adds under. */
+export const PRO_FEATURE_GROUPS = [
+  { id: 'gyms', title: 'Finding gyms' },
+  { id: 'training', title: 'Training' },
+  { id: 'yours', title: 'Make it yours' },
+] as const;
+
+/** What Pro adds, with what Free gets instead, in the Pro screen's groups and order. */
+export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; pro: string; group: (typeof PRO_FEATURE_GROUPS)[number]['id'] }> = [
+  { emoji: '🌍', title: 'Gyms worldwide', free: 'Your country', pro: 'Every country', group: 'gyms' },
+  { emoji: '🔖', title: 'Saved gyms', free: `Up to ${LIMITS.free.savedGyms}`, pro: 'Unlimited', group: 'gyms' },
+  { emoji: '⚖️', title: 'Compare side by side', free: `${LIMITS.free.compare} gyms`, pro: `${LIMITS.pro.compare} gyms`, group: 'gyms' },
+  { emoji: '📝', title: 'Gym notes', free: '—', pro: 'Your own, on each gym', group: 'gyms' },
+  { emoji: '💪', title: 'Workout library', free: 'Build and share', pro: 'Saved to your account', group: 'training' },
+  { emoji: '📈', title: 'Progress charts', free: 'Records and history', pro: 'A chart per exercise', group: 'training' },
+  { emoji: '🎯', title: 'Session targets', free: 'Last time’s numbers', pro: 'What to lift next', group: 'training' },
+  { emoji: '🧍', title: 'Muscle balance', free: 'Sets per workout', pro: 'Every muscle, last 4 weeks', group: 'training' },
+  { emoji: '🔥', title: 'Warm-up sets', free: 'Plates for any weight', pro: 'A ramp to your weight', group: 'training' },
+  { emoji: '🏋️', title: 'Your plates', free: 'The usual set', pro: 'The ones your gym has', group: 'training' },
+  { emoji: '⏱️', title: 'Interval timer', free: 'Tabata and EMOM', pro: 'Your own, up to 10', group: 'training' },
+  { emoji: '🧮', title: '1-rep max', free: 'Your max, and 3 percentages', pro: 'Every percentage, with plates', group: 'training' },
+  { emoji: '❄️', title: 'Streak freeze', free: '—', pro: 'One missed week a month', group: 'training' },
+  { emoji: '🏅', title: 'Lifetime stats', free: '—', pro: 'Every kilo, rep and hour, to share', group: 'training' },
+  { emoji: '🎨', title: 'Colour themes', free: 'Indigo; light, dark or Dim', pro: 'Twelve accents and eight looks', group: 'yours' },
+  { emoji: '💍', title: 'Profile ring', free: 'Your picture', pro: 'Ringed in your accent', group: 'yours' },
+  { emoji: '🎆', title: 'Celebrations', free: 'Confetti', pro: 'Fireworks, stars or emoji', group: 'yours' },
+  { emoji: '🕹️', title: 'Arcade sounds', free: 'Marimba', pro: 'Marimba or chip tunes', group: 'yours' },
 ];
 
 /** Free for everyone with a (free) account, always. Listed on the Pro screen so nobody wonders. */

@@ -3,7 +3,7 @@
  */
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { forwardRef, useEffect, useState, type ReactNode } from 'react';
+import { forwardRef, useEffect, useState, type ReactNode, type Ref } from 'react';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ActivityIndicator, Platform, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle } from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
@@ -606,6 +606,7 @@ export function PrimaryButton({
   tone = 'brand',
   icon,
   busy = false,
+  focusRef,
 }: {
   label: string;
   icon?: IconName;
@@ -614,12 +615,15 @@ export function PrimaryButton({
   tone?: 'brand' | 'quiet' | 'danger';
   /** Working on it: a spinner in place of the icon, and no second press. */
   busy?: boolean;
+  /** To put keyboard focus back on the button (after a panel it opened closes). */
+  focusRef?: Ref<View>;
 }) {
   // A quiet button is tinted with the accent (as an iPhone's secondary buttons are), not a flat grey.
   const fill = tone === 'brand' ? color.brandFill : tone === 'danger' ? color.dangerTint : color.brandTint;
   const ink = tone === 'brand' ? color.onBrand : tone === 'danger' ? color.dangerInk : color.brand;
   return (
     <Pressy
+      ref={focusRef}
       scaleTo={0.97}
       disabled={disabled || busy}
       onPress={() => {

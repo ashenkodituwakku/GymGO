@@ -25,7 +25,7 @@
  * screen uses in place of React Native's.
  */
 
-import { forwardRef, useEffect, useRef, useState, type ComponentProps, type ForwardedRef, type ReactNode } from 'react';
+import { forwardRef, useEffect, useRef, useState, type ComponentProps, type ForwardedRef, type ReactNode, type Ref } from 'react';
 import {
   Platform,
   Pressable as NativePressable,
@@ -203,7 +203,7 @@ export function Pressy({
   exiting,
   layout,
   ...props
-}: Omit<PressableProps, 'style'> & ViewMotion & { scaleTo?: number; style?: PressyStyle; children?: ReactNode }) {
+}: Omit<PressableProps, 'style'> & ViewMotion & { scaleTo?: number; style?: PressyStyle; children?: ReactNode; ref?: Ref<View> }) {
   const press = usePressScale(scaleTo);
   const [pressed, setPressed] = useState(false);
   const resolved = typeof style === 'function' ? style({ pressed, hovered: false } as PressableStateCallbackType) : style;

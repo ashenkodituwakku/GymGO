@@ -5,7 +5,7 @@
  * of the workout, planned as the builder would plan it.
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { addableExercises, kitText } from '@/lib/exerciseLibrary';
 import { haptic } from '@/lib/haptics';
@@ -20,14 +20,18 @@ export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const found = useMemo(() => addableExercises(query, inWorkout, 8), [query, inWorkout]);
+  // Closing hands keyboard focus back to the button that opened it, rather than to the page.
+  const button = useRef<View>(null);
   const close = () => {
     setOpen(false);
     setQuery('');
+    requestAnimationFrame(() => (button.current as unknown as { focus?: () => void } | null)?.focus?.());
   };
 
   if (!open) {
     return (
       <PrimaryButton
+        focusRef={button}
         label="Add an exercise"
         icon="plus"
         tone="quiet"

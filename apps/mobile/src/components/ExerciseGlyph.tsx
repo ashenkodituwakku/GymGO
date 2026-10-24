@@ -5,14 +5,21 @@
  * lit from its top corner in the standard look; a finished exercise's tile
  * turns green.
  *
- * A `moving` icon goes through its rep, slowly and on a loop: the figure
- * eases between the rep's drawings on the UI thread, so it never holds up a
- * scroll or a keystroke. With Reduce Motion on it stays still.
+ * A `moving` icon goes through its rep on a loop, at the move's own tempo
+ * (exerciseTempo): a lift a touch quicker than the lowering, with a beat at
+ * the top; a run or a ride round and round; a hold just breathing. The
+ * figure eases between the rep's drawings on the UI thread, so it never
+ * holds up a scroll or a keystroke. With Reduce Motion on it stays still.
+ *
+ * Shapes of one see-through tone in a row (the far arm and leg, a bench's
+ * pad and legs) are drawn solid inside one faded group, so where they
+ * overlap, at a knee or a bench's corner, isn't darker.
  */
 
 import { memo, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
+  Easing,
   cancelAnimation,
   useAnimatedProps,
   useReducedMotion,
@@ -23,18 +30,33 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Circle, Path } from 'react-native-svg';
-import { GLYPH_SIZE, exerciseFrames, exerciseMoves, type Pt, type Shape, type Tone } from '@/lib/exerciseGlyphs';
+import Svg, { Circle, G, Path } from 'react-native-svg';
+import { GLYPH_SIZE, exerciseFrames, exerciseMoves, exerciseTempo, type Pt, type Shape, type Tempo, type Tone } from '@/lib/exerciseGlyphs';
 import { alpha } from '@/lib/looks';
 import { LOOKS, NO_TOUCH, backgroundImage, color, currentLook, currentTheme, radius } from '@/lib/theme';
-import { EASE_IN_OUT } from './motion';
 import { useGlassRedraw } from './Redrawn';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-/** One rep: down (or up), a beat, back, a longer beat. */
-const HALF_REP = 1100;
+/**
+ * Each tempo's rep, as [there, beat, back, beat] in milliseconds, frame 0
+ * to the rep's other end and home. A lift: up in 0.8 s, a beat at the top,
+ * down in 1.3 s, a breath. Lowering first: down slowly, a beat at the
+ * bottom, up quicker. A run, a row or a twist goes there and back with no
+ * stops; a ride turns one way, evenly, for good; a hold only breathes.
+ */
+const TEMPO: Record<Tempo, readonly [number, number, number, number]> = {
+  lift: [820, 300, 1300, 520],
+  lower: [1300, 260, 820, 560],
+  cycle: [640, 0, 640, 0],
+  spin: [1250, 0, 0, 0],
+  hold: [1700, 0, 1700, 0],
+};
+/** A rep's pull: smooth to start, smooth to stop, and quickest through the middle. */
+const STRONG = Easing.bezier(0.42, 0, 0.3, 1);
+/** A run's or a breath's: as even as a swing. */
+const SWING = Easing.inOut(Easing.sin);
 
 type Paint = Record<Tone, { fill: string; opacity: number }>;
 
@@ -44,7 +66,7 @@ type Paint = Record<Tone, { fill: string; opacity: number }>;
  * which gives the same rounded box and can move like a line.
  */
 function pointsOf(shape: Shape): Pt[] {
-  if (shape.k === 'line') return shape.pts;
+  if (shape.k === 'line' || shape.k === 'poly') return shape.pts;
   if (shape.k !== 'box') return [shape.c];
   const half = [Math.max(0, shape.w / 2 - shape.r), Math.max(0, shape.h / 2 - shape.r)] as const;
   const rad = (shape.a * Math.PI) / 180;
@@ -56,13 +78,15 @@ function pathOf(points: Pt[], closed: boolean): string {
   return points.map(([x, y], at) => `${at === 0 ? 'M' : 'L'}${x} ${y}`).join(' ') + (closed ? ' Z' : '');
 }
 
-/** The props a shape draws with, apart from where it is. */
-function looks(shape: Shape, paint: Paint) {
-  const { fill, opacity } = paint[shape.tone];
+/** The props a shape draws with, apart from where it is; solid when its group fades it. */
+function looks(shape: Shape, paint: Paint, grouped = false) {
+  const { fill } = paint[shape.tone];
+  const opacity = grouped ? 1 : paint[shape.tone].opacity;
   switch (shape.k) {
     case 'line':
       return { fill: 'none', stroke: fill, strokeOpacity: opacity, strokeWidth: shape.w, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
     case 'box':
+    case 'poly':
       // One opacity for the whole box: a see-through fill and stroke each faded on their own made a darker band where they overlap.
       return { fill, stroke: fill, opacity, strokeWidth: shape.r * 2, strokeLinejoin: 'round' as const };
     case 'dot':
@@ -72,9 +96,27 @@ function looks(shape: Shape, paint: Paint) {
   }
 }
 
-function StillShape({ shape, paint }: { shape: Shape; paint: Paint }) {
-  if (shape.k === 'dot' || shape.k === 'ring') return <Circle cx={shape.c[0]} cy={shape.c[1]} {...looks(shape, paint)} />;
-  return <Path d={pathOf(pointsOf(shape), shape.k === 'box')} {...looks(shape, paint)} />;
+const closedShape = (shape: Shape) => shape.k === 'box' || shape.k === 'poly';
+
+function StillShape({ shape, paint, grouped }: { shape: Shape; paint: Paint; grouped: boolean }) {
+  if (shape.k === 'dot' || shape.k === 'ring') return <Circle cx={shape.c[0]} cy={shape.c[1]} {...looks(shape, paint, grouped)} />;
+  return <Path d={pathOf(pointsOf(shape), closedShape(shape))} {...looks(shape, paint, grouped)} />;
+}
+
+/**
+ * Shapes in drawing order, in runs: each run of one see-through tone is one
+ * faded group (`fade`), its shapes solid inside; anything else stands alone.
+ */
+function runsOf<T>(items: T[], toneOf: (item: T) => Tone, paint: Paint): Array<{ fade: number | null; items: Array<[T, number]> }> {
+  const runs: Array<{ fade: number | null; tone: Tone | null; items: Array<[T, number]> }> = [];
+  items.forEach((item, index) => {
+    const tone = toneOf(item);
+    const fade = paint[tone].opacity < 1 ? paint[tone].opacity : null;
+    const last = runs[runs.length - 1];
+    if (fade !== null && last && last.tone === tone) last.items.push([item, index]);
+    else runs.push({ fade, tone: fade !== null ? tone : null, items: [[item, index]] });
+  });
+  return runs;
 }
 
 /** Where between two of the rep's drawings `progress` falls: which pair, and how far. */
@@ -86,7 +128,7 @@ function between(progress: number, count: number): [number, number] {
 }
 
 /** A shape eased between its place in each drawing of the rep. */
-function MovingCircle({ first, centres, progress, paint }: { first: Shape; centres: Pt[]; progress: SharedValue<number>; paint: Paint }) {
+function MovingCircle({ first, centres, progress, paint, grouped }: { first: Shape; centres: Pt[]; progress: SharedValue<number>; paint: Paint; grouped: boolean }) {
   const animatedProps = useAnimatedProps(() => {
     const [at, t] = between(progress.value, centres.length);
     const a = centres[at]!;
@@ -94,11 +136,11 @@ function MovingCircle({ first, centres, progress, paint }: { first: Shape; centr
     return { cx: a[0] + (b[0] - a[0]) * t, cy: a[1] + (b[1] - a[1]) * t };
   });
   const [cx, cy] = centres[0]!;
-  return <AnimatedCircle cx={cx} cy={cy} {...looks(first, paint)} animatedProps={animatedProps} />;
+  return <AnimatedCircle cx={cx} cy={cy} {...looks(first, paint, grouped)} animatedProps={animatedProps} />;
 }
 
-function MovingPath({ first, steps, progress, paint }: { first: Shape; steps: number[][]; progress: SharedValue<number>; paint: Paint }) {
-  const closed = first.k === 'box';
+function MovingPath({ first, steps, progress, paint, grouped }: { first: Shape; steps: number[][]; progress: SharedValue<number>; paint: Paint; grouped: boolean }) {
+  const closed = closedShape(first);
   const animatedProps = useAnimatedProps(() => {
     const [at, t] = between(progress.value, steps.length);
     const a = steps[at]!;
@@ -111,7 +153,7 @@ function MovingPath({ first, steps, progress, paint }: { first: Shape; steps: nu
     }
     return { d: closed ? `${d} Z` : d };
   });
-  return <AnimatedPath d={pathOf(pointsOf(first), closed)} {...looks(first, paint)} animatedProps={animatedProps} />;
+  return <AnimatedPath d={pathOf(pointsOf(first), closed)} {...looks(first, paint, grouped)} animatedProps={animatedProps} />;
 }
 
 export function ExerciseGlyph({
@@ -150,7 +192,17 @@ export function ExerciseGlyph({
       {animate ? (
         <Moving key={exerciseId} exerciseId={exerciseId} paint={paint} delay={delay} reps={reps} />
       ) : (
-        exerciseFrames(exerciseId)[0]!.map((shape, index) => <StillShape key={index} shape={shape} paint={paint} />)
+        runsOf(exerciseFrames(exerciseId)[0]!, (shape) => shape.tone, paint).map((run) =>
+          run.fade === null ? (
+            <StillShape key={run.items[0]![1]} shape={run.items[0]![0]} paint={paint} grouped={false} />
+          ) : (
+            <G key={run.items[0]![1]} opacity={run.fade}>
+              {run.items.map(([shape, index]) => (
+                <StillShape key={index} shape={shape} paint={paint} grouped />
+              ))}
+            </G>
+          ),
+        )
       )}
     </Svg>
   );
@@ -158,24 +210,36 @@ export function ExerciseGlyph({
 
 function Moving({ exerciseId, paint, delay, reps }: { exerciseId: string; paint: Paint; delay: number; reps?: number }) {
   const progress = useSharedValue(0);
+  const tempo = exerciseTempo(exerciseId);
   useEffect(() => {
-    const ease = { duration: HALF_REP, easing: EASE_IN_OUT };
-    progress.value = withDelay(
-      delay,
-      // Each rep ends back at the first pose, so a set number of them rests there.
-      withRepeat(withSequence(withTiming(1, ease), withDelay(260, withTiming(0, ease)), withDelay(700, withTiming(0, { duration: 0 }))), reps ?? -1),
-    );
+    const [there, top, back, rest] = TEMPO[tempo];
+    const easing = tempo === 'cycle' || tempo === 'hold' ? SWING : STRONG;
+    // Each rep ends back at the first pose, so a set number of them rests there.
+    const one =
+      tempo === 'spin'
+        ? // Round and round: the last drawing is the first, so the jump back to it doesn't show.
+          withSequence(withTiming(1, { duration: there, easing: Easing.linear }), withTiming(0, { duration: 0 }))
+        : withSequence(withTiming(1, { duration: there, easing }), withDelay(top, withTiming(0, { duration: back, easing })), withDelay(rest, withTiming(0, { duration: 0 })));
+    progress.value = withDelay(delay, withRepeat(one, reps ?? -1));
     return () => cancelAnimation(progress);
-  }, [progress, delay, reps]);
+  }, [progress, delay, reps, tempo]);
+  const draw = (part: Part, index: number, grouped: boolean) =>
+    part.kind === 'still' ? (
+      <StillShape key={index} shape={part.shape} paint={paint} grouped={grouped} />
+    ) : part.kind === 'circle' ? (
+      <MovingCircle key={index} first={part.shape} centres={part.centres} progress={progress} paint={paint} grouped={grouped} />
+    ) : (
+      <MovingPath key={index} first={part.shape} steps={part.steps} progress={progress} paint={paint} grouped={grouped} />
+    );
   return (
     <>
-      {partsOf(exerciseId).map((part, index) =>
-        part.kind === 'still' ? (
-          <StillShape key={index} shape={part.shape} paint={paint} />
-        ) : part.kind === 'circle' ? (
-          <MovingCircle key={index} first={part.shape} centres={part.centres} progress={progress} paint={paint} />
+      {runsOf(partsOf(exerciseId), (part) => part.shape.tone, paint).map((run) =>
+        run.fade === null ? (
+          draw(run.items[0]![0], run.items[0]![1], false)
         ) : (
-          <MovingPath key={index} first={part.shape} steps={part.steps} progress={progress} paint={paint} />
+          <G key={run.items[0]![1]} opacity={run.fade}>
+            {run.items.map(([part, index]) => draw(part, index, true))}
+          </G>
         ),
       )}
     </>

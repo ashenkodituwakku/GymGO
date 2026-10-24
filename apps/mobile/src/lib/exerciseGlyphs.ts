@@ -7,7 +7,11 @@
  *
  * Every figure is built from the same body: one set of limb lengths, posed by
  * the angle of each limb, so a squat and a bench press are the same person.
- * Side views face right; the far arm and leg are drawn fainter, for depth.
+ * It's drawn like a pictogram: a torso that tapers from chest to waist, a
+ * head just clear of the shoulders, limbs that taper from thigh to shin and
+ * upper arm to forearm, hands, and feet that stand flat on the floor (or
+ * point, or rise onto the toes) as the move needs. Side views face right;
+ * the far arm and leg are drawn fainter, for depth.
  *
  * Icons of movements, not pictures of any gym or of anyone in particular.
  */
@@ -26,15 +30,21 @@ export type Shape =
   | { k: 'dot'; c: Pt; r: number; tone: Tone }
   | { k: 'ring'; c: Pt; r: number; w: number; tone: Tone }
   /** A rounded box centred on `c`, turned `a` degrees. */
-  | { k: 'box'; c: Pt; w: number; h: number; r: number; a: number; tone: Tone };
+  | { k: 'box'; c: Pt; w: number; h: number; r: number; a: number; tone: Tone }
+  /** A filled outline, its corners rounded by `r` (a torso). */
+  | { k: 'poly'; pts: Pt[]; r: number; tone: Tone };
 
 export const GLYPH_SIZE = 48;
 
 // --- The body ------------------------------------------------------------------
 
-const BODY = { torso: 12, neck: 4.6, head: 4, upper: 7, fore: 6.6, thigh: 9.4, shin: 9.2, shoulder: 10.4 };
-const LIMB = 3.7;
-const TRUNK = 5.8;
+const BODY = { torso: 12, neck: 5, head: 4.2, upper: 7, fore: 6.6, thigh: 9.4, shin: 9.2, shoulder: 10.4, foot: 3.4, heel: 0.7 };
+/**
+ * How thick each part is drawn. Limbs taper away from the body; the torso
+ * is widest at the chest (side on, the chest stands out in front of the
+ * back), and seen from the front it's a V from the shoulders to the waist.
+ */
+const THICK = { chest: 6.6, waist: 4.9, frontChest: 10, frontWaist: 6.4, upper: 3.6, fore: 3, hand: 1.85, thigh: 4.6, shin: 3.5, foot: 2.5, round: 1.3 };
 
 /** A unit step at `deg` degrees: 0 points down, 90 right, 180 up, -90 left. */
 function dir(deg: number): Pt {
@@ -64,6 +74,16 @@ interface Pose {
   leg2?: Limb;
   /** Seen from the front: shoulders and hips spread, no near or far. */
   front?: boolean;
+  /**
+   * Which way each foot points, as degrees from its shin (20: pointed
+   * toes). Left out, a foot stands flat when its shin is upright and sits
+   * square to the shin otherwise (see `footAngle`).
+   */
+  toes?: number;
+  toes2?: number;
+  /** Or as an absolute direction (90 is flat, toes forward): a sole on a foot plate, a calf raise. */
+  sole?: number;
+  sole2?: number;
   /** How the pose changes over one rep (see `phase`). */
   move?: Move;
 }
@@ -82,6 +102,9 @@ interface Move {
   leg?: Limb;
   leg2?: Limb;
   lift?: number;
+  /** Degrees the soles turn (a heel rising). */
+  sole?: number;
+  sole2?: number;
 }
 
 /**
@@ -109,6 +132,19 @@ const limb = (base: Limb, change: Limb | undefined): Limb => [turned(base[0], ch
 /** The direction from one point to another, in this file's degrees. */
 const angleOf = (from: Pt, to: Pt) => (Math.atan2(to[0] - from[0], to[1] - from[1]) * 180) / Math.PI;
 
+/**
+ * A two-part limb from `from` that reaches `to` (a foot on a pedal, a hand
+ * on a handlebar): its two angles, the middle joint bending one way (`side`
+ * 1: a knee in front, for a figure facing right; -1: an elbow below). Out of
+ * reach, it stretches as far as it goes.
+ */
+function reachFor(from: Pt, to: Pt, first: number, second: number, side: 1 | -1 = 1): Limb {
+  const d = Math.min(first + second - 0.01, Math.max(Math.abs(first - second) + 0.01, Math.hypot(to[0] - from[0], to[1] - from[1])));
+  const bend = (Math.acos((first * first + d * d - second * second) / (2 * first * d)) * 180) / Math.PI;
+  const upper = angleOf(from, to) + side * bend;
+  return [upper, angleOf(at(from, upper, first), to)];
+}
+
 export interface Joints {
   hip: Pt;
   neck: Pt;
@@ -125,7 +161,34 @@ export interface Joints {
   foot: Pt;
   knee2: Pt | null;
   foot2: Pt | null;
+  /** The far end of each foot. */
+  toe: Pt;
+  toe2: Pt | null;
+  /** Each foot's back, a touch behind the ankle. */
+  heel: Pt;
+  heel2: Pt | null;
+  /** The trunk's direction, hip to neck. */
+  trunk: number;
   front: boolean;
+}
+
+/** Degrees between -180 and 180. */
+const norm = (deg: number) => ((((deg + 180) % 360) + 360) % 360) - 180;
+
+/**
+ * Which way a foot points. Seen from the front, a little out to its side.
+ * Side on: flat on the floor while the shin is upright (standing, squatting),
+ * square to the shin once it's well off upright (lying, kneeling, a foot on
+ * a plate), and turning smoothly between the two, so a moving leg never
+ * snaps its foot round.
+ */
+function footAngle(shin: number, front: boolean, near: boolean, toes: number | undefined, sole: number | undefined): number {
+  if (sole !== undefined) return sole;
+  if (toes !== undefined) return shin + toes;
+  if (front) return shin + (near ? 76 : -76);
+  const s = norm(shin);
+  const off = Math.min(1, Math.max(0, (Math.abs(s) - 30) / 30));
+  return 90 + s * off;
 }
 
 function pose(p: Pose): Joints {
@@ -154,31 +217,87 @@ function pose(p: Pose): Joints {
   const leg2 = p.leg2 ? limb(p.leg2, m.leg2) : null;
   const knee2 = leg2 ? at(hipL, leg2[0], BODY.thigh) : null;
   const foot2 = leg2 && knee2 ? at(knee2, leg2[1], BODY.shin) : null;
-  return { hip, neck, head, shoulder, elbow, hand, shoulder2, elbow2, hand2, hipL, hipR, knee, foot, knee2, foot2, front: Boolean(p.front) };
+  const front = Boolean(p.front);
+  const length = front ? BODY.foot * 0.7 : BODY.foot;
+  const sole = p.sole !== undefined ? turned(p.sole, m.sole) : undefined;
+  const sole2 = p.sole2 !== undefined ? turned(p.sole2, m.sole2) : sole;
+  const way = footAngle(leg[1], front, true, p.toes, sole);
+  const way2 = leg2 ? footAngle(leg2[1], front, false, p.toes2 ?? p.toes, sole2) : 0;
+  const toe = at(foot, way, length);
+  const heel = at(foot, way, -BODY.heel);
+  const toe2 = foot2 ? at(foot2, way2, length) : null;
+  const heel2 = foot2 ? at(foot2, way2, -BODY.heel) : null;
+  return { hip, neck, head, shoulder, elbow, hand, shoulder2, elbow2, hand2, hipL, hipR, knee, foot, knee2, foot2, toe, toe2, heel, heel2, trunk: torso, front };
 }
 
-/** The figure: far limbs, trunk, near limbs, head. */
+/** A leg: thigh, shin and foot, each a little slimmer than the last. */
+function legShapes(hip: Pt, knee: Pt, ankle: Pt, heel: Pt, toe: Pt, tone: Tone): Shape[] {
+  return [
+    { k: 'line', pts: [hip, knee], w: THICK.thigh, tone },
+    { k: 'line', pts: [knee, ankle], w: THICK.shin, tone },
+    { k: 'line', pts: [heel, toe], w: THICK.foot, tone },
+  ];
+}
+
+/** An arm: upper arm, forearm, and a hand a touch wider than the wrist. */
+function armShapes(shoulder: Pt, elbow: Pt, hand: Pt, tone: Tone): Shape[] {
+  return [
+    { k: 'line', pts: [shoulder, elbow], w: THICK.upper, tone },
+    { k: 'line', pts: [elbow, hand], w: THICK.fore, tone },
+    { k: 'dot', c: hand, r: THICK.hand, tone },
+  ];
+}
+
+/**
+ * The torso: a rounded outline from the waist up to just over the
+ * shoulders. Side on, the chest stands a little proud of the back; from
+ * the front it's a V.
+ */
+function torsoShape(j: Joints): Shape {
+  const r = THICK.round;
+  const centre = mid(j.shoulder, j.shoulder2);
+  const top = at(centre, angleOf(j.hip, centre), 1.3 - r);
+  const bottom = at(j.hip, angleOf(j.hip, centre), r * 0.5);
+  const across = angleOf(j.hip, centre) + 90;
+  if (j.front) {
+    const chest = THICK.frontChest / 2 - r;
+    const waist = THICK.frontWaist / 2 - r;
+    return { k: 'poly', pts: [at(bottom, across, waist), at(top, across, chest), at(top, across, -chest), at(bottom, across, -waist)], r, tone: 'ink' };
+  }
+  // Across + is behind (a figure facing right, upright: its back is to the left).
+  const back = THICK.chest / 2 - r - 0.4;
+  const chest = THICK.chest / 2 - r + 0.4;
+  const waist = THICK.waist / 2 - r;
+  const ribs = at(bottom, angleOf(j.hip, centre), (BODY.shoulder - 1) * 0.55);
+  return {
+    k: 'poly',
+    pts: [at(bottom, across, waist), at(ribs, across, back), at(top, across, back), at(top, across, -chest), at(ribs, across, -chest - 0.25), at(bottom, across, -waist)],
+    r,
+    tone: 'ink',
+  };
+}
+
+/** The figure: far leg and arm (fainter, side on), torso, near leg and arm, head. */
 function figure(j: Joints): Shape[] {
   const far: Tone = j.front ? 'ink' : 'far';
   const shapes: Shape[] = [];
-  if (j.knee2 && j.foot2) shapes.push({ k: 'line', pts: [j.hipL, j.knee2, j.foot2], w: LIMB, tone: far });
-  if (j.elbow2 && j.hand2) shapes.push({ k: 'line', pts: [j.shoulder2, j.elbow2, j.hand2], w: LIMB, tone: far });
-  if (j.front) {
-    shapes.push({ k: 'line', pts: [j.shoulder, j.shoulder2], w: LIMB, tone: 'ink' });
-    shapes.push({ k: 'line', pts: [j.hipL, j.hipR], w: LIMB, tone: 'ink' });
-  }
-  shapes.push({ k: 'line', pts: [j.hip, mid(j.hip, j.neck, 0.98)], w: TRUNK, tone: 'ink' });
-  shapes.push({ k: 'line', pts: [j.hipR, j.knee, j.foot], w: LIMB, tone: 'ink' });
-  shapes.push({ k: 'line', pts: [j.shoulder, j.elbow, j.hand], w: LIMB, tone: 'ink' });
+  if (j.knee2 && j.foot2 && j.toe2 && j.heel2) shapes.push(...legShapes(j.hipL, j.knee2, j.foot2, j.heel2, j.toe2, far));
+  if (j.elbow2 && j.hand2) shapes.push(...armShapes(j.shoulder2, j.elbow2, j.hand2, far));
+  shapes.push(torsoShape(j));
+  shapes.push(...legShapes(j.hipR, j.knee, j.foot, j.heel, j.toe, 'ink'));
+  shapes.push(...armShapes(j.shoulder, j.elbow, j.hand, 'ink'));
   shapes.push({ k: 'dot', c: j.head, r: BODY.head, tone: 'ink' });
   return shapes;
 }
 
 // --- The kit -------------------------------------------------------------------
 
-/** A barbell seen end on: a plate with its hole. */
+/** A barbell seen end on: a plate, its rim, and the bar's end through the middle. */
 function plate(c: Pt, r = 4.8): Shape[] {
-  return [{ k: 'ring', c, r: r * 0.64, w: r * 0.72, tone: 'kit' }];
+  return [
+    { k: 'ring', c, r: r * 0.72, w: r * 0.56, tone: 'kit' },
+    { k: 'dot', c, r: r * 0.24, tone: 'kit' },
+  ];
 }
 
 /** A barbell seen from the front: the bar and two plates each end. */
@@ -289,11 +408,12 @@ function squat(kind: 'back' | 'front' | 'smith' | 'body' | 'goblet' | 'hack'): S
     move: { hip: [5.9, -9.7], torso: rise, arm: kind === 'body' ? [0, 0] : [rise, rise], leg: [-84, 18], leg2: [-84, 18] },
   });
   const trunk = angleOf(j.hip, j.neck);
-  const back = at(j.neck, trunk - 90, 2.2);
+  // Facing right, trunk + 90 is behind: a back squat's bar sits across the upper back, just under the neck.
+  const back = at(at(j.neck, trunk, -1.6), trunk + 90, 2.6);
   const shapes: Shape[] = [];
   if (kind === 'smith') {
-    const rails = still(() => at(pose({ hip: [17, 32.6], torso: lean, arm, leg: [88, -22] }).neck, lean - 90, 2.2)[0]);
-    shapes.push(rail(rails - 6), rail(rails + 3));
+    const rails = still(() => at(at(pose({ hip: [17, 32.6], torso: lean, arm, leg: [88, -22] }).neck, lean, -1.6), lean + 90, 2.6)[0]);
+    shapes.push(rail(rails - 4.5), rail(rails + 4.5));
   }
   if (kind === 'hack') {
     const base = at(j.hip, trunk - 90, 3.2);
@@ -301,8 +421,9 @@ function squat(kind: 'back' | 'front' | 'smith' | 'body' | 'goblet' | 'hack'): S
     shapes.push({ k: 'line', pts: [[6, 44], at(base, trunk, -3)], w: 1.6, tone: 'frame' });
   }
   shapes.push(...figure(j));
-  if (kind === 'back' || kind === 'smith') shapes.push(...plate(at(back, trunk - 90, 1.6)));
-  if (kind === 'front') shapes.push(...plate(at(j.neck, trunk + 90, 3.4), 4.4));
+  if (kind === 'back' || kind === 'smith') shapes.push(...plate(at(back, trunk + 90, 1.4)));
+  // A front squat's bar rests on the front of the shoulders, the elbows high under it.
+  if (kind === 'front') shapes.push(...plate(at(at(j.neck, trunk, -1.4), trunk - 90, 3.4), 4.4));
   if (kind === 'goblet') shapes.push(...dumbbell(at(j.hand, 90, 0.4), 90, 6.6));
   shapes.push(floor(6, 42));
   return shapes;
@@ -330,7 +451,7 @@ function hinge(kind: 'deadlift' | 'rdl' | 'good-morning' | 'bb-row' | 'pull-thro
   if (kind === 'deadlift') shapes.push(...plate(plus(j.hand, 0, 2.3), 5));
   if (kind === 'rdl') shapes.push(...plate(at(j.hand, 0, 1.6), 4.6));
   if (kind === 'bb-row') shapes.push(...plate(at(j.hand, 0, 1.4), 4.4));
-  if (kind === 'good-morning') shapes.push(...plate(at(j.neck, angleOf(j.hip, j.neck) - 90, 4.2), 4.4));
+  if (kind === 'good-morning') shapes.push(...plate(at(at(j.neck, angleOf(j.hip, j.neck), -1.4), angleOf(j.hip, j.neck) + 90, 4), 4.4));
   shapes.push(floor(4, 44));
   return shapes;
 }
@@ -438,7 +559,7 @@ const DRAW: Record<string, Draw> = {
     return [{ k: 'line', pts: [[6, bar], [42, bar]], w: 2.2, tone: 'kit' }, ...figure(j)];
   },
   'hanging-knee': () => {
-    const j = pose({ hip: [22, 29], torso: 184, arm: [180, 180], leg: [90, 6], leg2: [84, 10], move: { leg: [-84, -4], leg2: [-80, -8] } });
+    const j = pose({ hip: [22, 29], torso: 184, arm: [180, 180], leg: [90, 6], leg2: [84, 10], toes: 30, move: { leg: [-84, -4], leg2: [-80, -8] } });
     return [{ k: 'line', pts: [[10, j.hand[1] - 1.4], [36, j.hand[1] - 1.4]], w: 2.2, tone: 'kit' }, ...figure(j), ...arrow([33, 40], [33, 33])];
   },
   'cable-row': () => {
@@ -481,7 +602,7 @@ const DRAW: Record<string, Draw> = {
   rdl: () => hinge('rdl'),
   'good-morning': () => hinge('good-morning'),
   superman: () => {
-    const j = pose({ hip: [26, 38], torso: -102, head: -114, arm: [-122, -124], arm2: [-118, -120], leg: [102, 104], leg2: [98, 100], move: { torso: 10, head: 18, arm: [24, 26], arm2: [24, 26], leg: [-12, -14], leg2: [-10, -12] } });
+    const j = pose({ hip: [26, 38], torso: -102, head: -114, arm: [-122, -124], arm2: [-118, -120], leg: [102, 104], leg2: [98, 100], toes: -14, move: { torso: 10, head: 18, arm: [24, 26], arm2: [24, 26], leg: [-12, -14], leg2: [-10, -12] } });
     return [...figure(j), floor(2, 46, 41)];
   },
 
@@ -495,7 +616,7 @@ const DRAW: Record<string, Draw> = {
   'leg-press': () => legPress(false),
   'leg-press-calf': () => legPress(true),
   'split-squat': () => {
-    const base: Pose = { hip: [24, 27], torso: 180, arm: [2, 0], leg: [80, 0], leg2: [-22, -112] };
+    const base: Pose = { hip: [24, 27], torso: 180, arm: [2, 0], leg: [80, 0], leg2: [-22, -112], toes2: 18 };
     const j = pose({ ...base, move: { hip: [0.5, -5.5], leg: [-50, 26], leg2: [0, 35] } });
     const rest = still(() => pose(base));
     return [...bench(1, 15, rest.foot2![1] + 1.6, rest.foot[1] + 2), ...figure(j), ...dumbbell(at(j.hand, 0, 1.3)), floor(0, 42, rest.foot[1] + 2)];
@@ -535,7 +656,8 @@ const DRAW: Record<string, Draw> = {
     return [...figure(j), floor(2, 46, still(() => pose(base)).foot[1] + 1.8)];
   },
   'calf-raise': () => {
-    const j = pose(standing({ hip: [24, 23.6], arm: [4, 0], leg: [2, -6], leg2: [-2, 2], move: { hip: [0, -2.2] } }));
+    // Up onto the toes: the heels rise as the soles tip, the toes stay put.
+    const j = pose(standing({ hip: [24, 23.6], arm: [4, 0], leg: [2, -6], leg2: [-2, 2], sole: 90, move: { hip: [0, -2.2], sole: -40 } }));
     return [
       { k: 'box', c: [26, 43], w: 10, h: 3, r: 1, a: 0, tone: 'frame' },
       ...figure(j),
@@ -545,8 +667,8 @@ const DRAW: Record<string, Draw> = {
     ];
   },
   'smith-calf': () => {
-    const base = standing({ hip: [24, 23.6], arm: [150, -120], leg: [2, -6], leg2: [-2, 2] });
-    const j = pose({ ...base, move: { hip: [0, -2.2] } });
+    const base = standing({ hip: [24, 23.6], arm: [150, -120], leg: [2, -6], leg2: [-2, 2], sole: 90 });
+    const j = pose({ ...base, move: { hip: [0, -2.2], sole: -40 } });
     const back = at(j.neck, 90, -2.6);
     const rails = still(() => at(pose(base).neck, 90, -2.6)[0]);
     return [
@@ -612,12 +734,36 @@ const DRAW: Record<string, Draw> = {
     ];
   },
   'bike-intervals': () => {
-    const j = pose({ hip: [19, 25], torso: 162, arm: [108, 96], leg: [62, -12], leg2: [104, 28], move: { torso: 4, arm: [-6, 0], leg: [42, 40], leg2: [-42, -40] } });
+    // Pedalling: one turn of the cranks a rep, each foot on its pedal and
+    // each knee where the leg's lengths put it, the trunk rocking a little.
+    const crank: Pt = [21.5, 35.5];
+    const turn = 360 * rep();
+    const pedal = at(crank, 90 + turn, 3.6);
+    const pedal2 = at(crank, 270 + turn, 3.6);
+    const hip: Pt = [17, 21.5];
+    const wave = Math.sin((turn * Math.PI) / 180);
+    const torso = 160 + 2 * wave;
+    const bar: Pt = [32.5, 14.5];
+    const arm = reachFor(at(hip, torso, BODY.shoulder), bar, BODY.upper, BODY.fore, -1);
+    const j = pose({
+      hip,
+      torso,
+      head: 150,
+      arm,
+      leg: reachFor(hip, pedal, BODY.thigh, BODY.shin),
+      leg2: reachFor(hip, pedal2, BODY.thigh, BODY.shin),
+      sole: 90 + 10 * wave,
+      sole2: 90 - 10 * wave,
+    });
     return [
       { k: 'ring', c: [36, 33], r: 7.4, w: 2.2, tone: 'kit' },
       { k: 'dot', c: [36, 33], r: 1.6, tone: 'kit' },
-      { k: 'line', pts: [[19, 27], [21, 36], [36, 33], [32, 15.6]], w: 1.8, tone: 'frame' },
+      { k: 'line', pts: [[16, 23.5], crank, [36, 33], [33.5, 16], [30.5, 14.5]], w: 1.8, tone: 'frame' },
+      { k: 'box', c: [16.5, 23], w: 6, h: 2.2, r: 1, a: 0, tone: 'frame' },
+      { k: 'line', pts: [crank, pedal2], w: 1.6, tone: 'kit' },
       ...figure(j),
+      { k: 'line', pts: [crank, pedal], w: 1.6, tone: 'kit' },
+      { k: 'dot', c: crank, r: 1.5, tone: 'kit' },
       floor(4, 46, 42),
     ];
   },
@@ -696,6 +842,11 @@ function reach(shape: Shape): Array<[number, number]> {
         [shape.c[0] + half, shape.c[1] + half],
       ];
     }
+    case 'poly':
+      return shape.pts.flatMap(([x, y]) => [
+        [x - shape.r, y - shape.r],
+        [x + shape.r, y + shape.r],
+      ]);
   }
 }
 
@@ -736,6 +887,8 @@ function fit(frames: Shape[][]): Shape[][] {
           return { ...shape, c: tidy(move(shape.c)), r: round(shape.r * scale), w: round(shape.w * scale) };
         case 'box':
           return { ...shape, c: tidy(move(shape.c)), w: round(shape.w * scale), h: round(shape.h * scale), r: round(shape.r * scale) };
+        case 'poly':
+          return { ...shape, pts: shape.pts.map((p) => tidy(move(p))), r: round(shape.r * scale) };
       }
     }),
   );
@@ -746,8 +899,38 @@ function fit(frames: Shape[][]): Shape[][] {
 /** For an exercise GymGO doesn't draw (one logged under an older id): a dumbbell. */
 const FALLBACK: Draw = () => [...dumbbell([24, 24], -30, 22).map((shape) => (shape.k === 'box' ? { ...shape, w: 7, h: 15, r: 2 } : { ...shape, w: 3.4 }))];
 
-/** How many drawings a rep is made of; the app eases between them. */
-export const REP_FRAMES = 9;
+/** How many drawings a rep is made of; the app eases between them (enough that a turning limb keeps its length). */
+export const REP_FRAMES = 13;
+
+/**
+ * How a move's rep goes, from its still drawing (frame 0) to the other end:
+ * `lift` is the effort first (a squat from the bottom up), `lower` the
+ * lowering first (a bench press from lockout down), `cycle` round and round
+ * (a run, a row, a twist), `spin` one way round for good (a ride: its last
+ * drawing is its first, so it loops without a seam) and `hold` a hold that
+ * only breathes. The app
+ * times each half to suit (components/ExerciseGlyph.tsx).
+ */
+export type Tempo = 'lift' | 'lower' | 'cycle' | 'spin' | 'hold';
+
+const LOWER_FIRST = [
+  'bench-press', 'db-bench', 'smith-bench', 'close-grip', 'incline-db', 'push-up', 'pike-push-up', 'ohp', 'db-shoulder', 'lateral-raise', 'cable-lateral',
+  'face-pull', 'db-curl', 'bb-curl', 'cable-curl', 'hammer-curl', 'pushdown', 'hanging-knee', 'cable-row', 'db-row', 'bb-row', 'superman', 'hip-thrust',
+  'glute-bridge', 'cable-kickback', 'cable-crunch', 'pallof',
+];
+const CYCLES = ['farmer-carry', 'sled-push', 'dead-bug', 'russian-twist', 'row-intervals', 'incline-walk'];
+const SPINS = ['bike-intervals'];
+const HOLDS = ['plank', 'side-plank', 'copenhagen'];
+
+/** The moves named above, by tempo (the rest are lifts), for the tests to check each is one GymGO draws. */
+export const TEMPO_NAMED: Record<Exclude<Tempo, 'lift'>, readonly string[]> = { lower: LOWER_FIRST, cycle: CYCLES, spin: SPINS, hold: HOLDS };
+
+export function exerciseTempo(exerciseId: string): Tempo {
+  if (HOLDS.includes(exerciseId)) return 'hold';
+  if (CYCLES.includes(exerciseId)) return 'cycle';
+  if (SPINS.includes(exerciseId)) return 'spin';
+  return LOWER_FIRST.includes(exerciseId) ? 'lower' : 'lift';
+}
 
 const cache = new Map<string, Shape[][]>();
 /** Whether each exercise's icon moves, worked out once with its frames. */
@@ -779,7 +962,9 @@ export function exerciseFrames(exerciseId: string): Shape[][] {
   }
   const fitted = fit(frames);
   cache.set(exerciseId, fitted);
-  moves.set(exerciseId, JSON.stringify(fitted[0]) !== JSON.stringify(fitted[fitted.length - 1]));
+  // Any drawing unlike the first (a ride's last drawing is its first again).
+  const first = JSON.stringify(fitted[0]);
+  moves.set(exerciseId, fitted.some((frame) => JSON.stringify(frame) !== first));
   return fitted;
 }
 

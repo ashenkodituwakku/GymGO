@@ -17,6 +17,7 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { useApp } from '@/lib/app-state';
+import { mix } from '@/lib/looks';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { e1rmSeries, formatWeight, fromKg, personalRecords, setsSummary, unitFor } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
@@ -81,7 +82,8 @@ export default function ExerciseProgressScreen() {
             </Txt>
             <View style={styles.how}>
               <View style={styles.glyph} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
-                <ExerciseGlyph exerciseId={exercise.id} size={84} ink={color.onBrand} accent={color.onBrand} moving />
+                {/* The kit a pale tint of the accent, so a bar across the shoulders reads apart from the figure. */}
+                <ExerciseGlyph exerciseId={exercise.id} size={84} ink={color.onBrand} accent={mix(color.brandFill, color.onBrand, 0.5)} moving />
               </View>
               <Txt variant="headline" color={color.onBrand} style={styles.flex}>
                 {exercise.cue}

@@ -20,6 +20,7 @@ import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
+import { LIMITED } from '@/lib/limited';
 import { WEEKDAYS, heavyAs, lifetimeStats } from '@/lib/lifetime';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, radius, shadow, space, themed } from '@/lib/theme';
@@ -47,6 +48,22 @@ export default function LifetimeScreen() {
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         <ScreenOptions options={{ title: 'Lifetime' }} />
         {account.state === 'unreachable' ? <ServerAwayCard /> : <ListSkeleton rows={4} label="Loading" />}
+      </PageScroll>
+    );
+  }
+
+  // The limited website keeps no log (no server): say what the full version does.
+  if (LIMITED) {
+    return (
+      <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.centred]}>
+        <ScreenOptions options={{ title: 'Lifetime' }} />
+        <HeroMark icon="trophy" />
+        <Txt variant="title2" style={styles.center}>
+          Your lifetime in numbers
+        </Txt>
+        <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
+          With the full version of GymGO and Pro, every workout you finish is added up here: the weight, sets, reps and hours, your favourites, and what it all compares to.
+        </Txt>
       </PageScroll>
     );
   }

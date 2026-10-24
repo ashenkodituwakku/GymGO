@@ -24,6 +24,7 @@ import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native'
 import Animated from 'react-native-reanimated';
 import { CollectionSyncLine, useDeleteCollection } from '@/components/CollectionData';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { MarkImage, useGymMark } from '@/components/BrandLogo';
 import { GemCard } from '@/components/GemCard';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { SetProgress, SetReward } from '@/components/SetCard';
@@ -39,7 +40,7 @@ import { shareText } from '@/lib/actions';
 import { badges, collectionShareText, collectionStats, nextToCollect } from '@/lib/collection';
 import { distanceLabel } from '@/lib/places';
 import { nearLabel } from '@/lib/query';
-import type { GymRecord } from '@gymgo/domain';
+import type { GymLocation, GymRecord } from '@gymgo/domain';
 import { FOIL_ONE_IN, cardFor, oddsLine, rarityRank } from '@/lib/rarity';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -346,9 +347,7 @@ function NextToCollect({ items, near, country, onOpen }: { items: Array<{ record
               accessibilityLabel={`${name}, ${where}. Not collected yet`}
               style={[styles.nextRow, index > 0 && styles.nextLine]}
             >
-              <View style={styles.nextIcon}>
-                <Icon name="gym" size={16} color={color.brand} />
-              </View>
+              <NextMark location={location} />
               <View style={styles.flexFill}>
                 <Txt variant="headline" numberOfLines={1}>
                   {name}
@@ -362,6 +361,23 @@ function NextToCollect({ items, near, country, onOpen }: { items: Array<{ record
           );
         })}
       </View>
+    </View>
+  );
+}
+
+/** A gym to collect's own mark on its white plate, as in a list of gyms; the gym icon where it has none. */
+function NextMark({ location }: { location: GymLocation }) {
+  const mark = useGymMark(location);
+  if (!mark) {
+    return (
+      <View style={styles.nextIcon}>
+        <Icon name="gym" size={18} color={color.brand} />
+      </View>
+    );
+  }
+  return (
+    <View style={[styles.nextIcon, styles.nextLogo]}>
+      <MarkImage mark={mark} name={location.name} width={36} height={32} area={760} />
     </View>
   );
 }
@@ -388,7 +404,8 @@ const styles = themed(() =>
     nextList: { marginTop: space[2], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden' },
     nextRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], minHeight: 56 },
     nextLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
-    nextIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
+    nextIcon: { width: 42, height: 42, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
+    nextLogo: { backgroundColor: color.logoPlate, borderWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
     center: { textAlign: 'center' },
     section: { marginTop: space[2], marginLeft: space[4] },
     hero: { gap: space[3], padding: space[4], paddingTop: space[4] + 2, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.brandFill },

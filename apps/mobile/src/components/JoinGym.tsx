@@ -11,6 +11,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { describeMembership, formatMoney, type GymRecord, type VisitOffer } from '@gymgo/domain';
 import { isChainEvidence } from '@gymgo/osm';
 import { color, currentLook, face, radius, shadow, space, themed } from '@/lib/theme';
+import { Icon } from './Icon';
 import { Fold, PrimaryButton, Txt } from './ui';
 import { Pressy } from './motion';
 import { openPage } from '@/lib/actions';
@@ -69,6 +70,18 @@ function conflictOf(offers: VisitOffer[]): { text: string; found: boolean } | nu
   return { text, found: false };
 }
 
+/** A caution about the prices above (where they came from, or that sources disagree): set apart, and read left to right. */
+function PriceNote({ text }: { text: string }) {
+  return (
+    <View style={styles.note}>
+      <Icon name="info" size={14} color={color.maybeInk} />
+      <Txt variant="footnote" color={color.maybeInk} style={styles.flex}>
+        {text}
+      </Txt>
+    </View>
+  );
+}
+
 /**
  * Membership prices, centred near the top of a gym's card: every tier the
  * gym publishes, side by side, and the way to sign up. Nothing when the gym
@@ -94,41 +107,37 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
               accessible
               accessibilityLabel={`${offer.label}: ${basisWord(offer)}${formatMoney(offer.baseAmountMinor!, offer.currency)} ${view?.billingLabel ?? ''}${offer.eligibility.onlyFor ? `, ${offer.eligibility.onlyFor} only` : ''}`}
             >
-              {/* A tier called just "Membership" would only repeat the heading above it. */}
-              {!/^\s*membership\s*$/i.test(offer.label) && (
-                <Txt variant="caption" color={color.labelSecondary} numberOfLines={2} style={styles.center}>
-                  {offer.label}
+              {/* The name (and who it's for) at the top, the price at the foot: both line up along a row. */}
+              <View style={styles.pillTop}>
+                {/* A tier called just "Membership" would only repeat the heading above it. */}
+                {!/^\s*membership\s*$/i.test(offer.label) && (
+                  <Txt variant="caption" color={color.labelSecondary} numberOfLines={2} style={styles.center}>
+                    {offer.label}
+                  </Txt>
+                )}
+                {!!offer.eligibility.onlyFor && (
+                  <Txt variant="caption" color={color.maybeInk} numberOfLines={2} style={[styles.center, face('semibold')]}>
+                    {`${offer.eligibility.onlyFor} only`}
+                  </Txt>
+                )}
+              </View>
+              <View style={styles.pillFoot}>
+                <Txt variant="headline" style={styles.center}>
+                  {basisWord(offer)}
+                  {formatMoney(offer.baseAmountMinor!, offer.currency)}
                 </Txt>
-              )}
-              {/* Who it's for under its name, so the prices still line up along the row. */}
-              {!!offer.eligibility.onlyFor && (
-                <Txt variant="caption" color={color.maybeInk} numberOfLines={2} style={[styles.center, face('semibold')]}>
-                  {`${offer.eligibility.onlyFor} only`}
-                </Txt>
-              )}
-              <Txt variant="headline" style={styles.center}>
-                {basisWord(offer)}
-                {formatMoney(offer.baseAmountMinor!, offer.currency)}
-              </Txt>
-              {view && (
-                <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
-                  {view.billingLabel}
-                </Txt>
-              )}
+                {view && (
+                  <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
+                    {view.billingLabel}
+                  </Txt>
+                )}
+              </View>
             </View>
           );
         })}
       </View>
-      {disagree && (
-        <Txt variant="footnote" color={color.maybeInk} style={styles.center}>
-          {disagree.text}
-        </Txt>
-      )}
-      {tiers.some((offer) => offer.priceBasis) && (
-        <Txt variant="footnote" color={color.maybeInk} style={styles.center}>
-          {CHAIN_NOTE}
-        </Txt>
-      )}
+      {!!disagree && <PriceNote text={disagree.text} />}
+      {tiers.some((offer) => offer.priceBasis) && <PriceNote text={CHAIN_NOTE} />}
       {url && (
         <Pressy onPress={() => openPage(url)} accessibilityRole="link" style={styles.signUp}>
           <Txt variant="subhead" color={color.brand} style={styles.bold}>
@@ -260,8 +269,11 @@ const styles = themed(() =>
     // On the sheet's glass, as the place card's other cards are.
     banner: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.cardGlass, alignItems: 'center', ...(currentLook().solid ? shadow.card : null) },
     pills: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space[2], alignSelf: 'stretch' },
-    // Contents sit at the foot of each tile, so the prices in a row line up when one plan's name takes two lines.
-    pill: { minWidth: 92, flexGrow: 1, flexBasis: 92, maxWidth: 160, alignItems: 'center', justifyContent: 'flex-end', gap: 1, paddingVertical: space[2], paddingHorizontal: space[2], borderRadius: radius.md, backgroundColor: color.brandTint },
+    // The name at the top of each tile and the price at its foot, so both line up along a row when one plan's name takes more lines.
+    pill: { minWidth: 92, flexGrow: 1, flexBasis: 92, maxWidth: 160, alignItems: 'center', justifyContent: 'space-between', gap: space[1], paddingVertical: space[2], paddingHorizontal: space[2], borderRadius: radius.md, backgroundColor: color.brandTint },
+    pillTop: { alignItems: 'center', gap: 1 },
+    pillFoot: { alignItems: 'center', gap: 1 },
+    note: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2], alignSelf: 'stretch', padding: space[3], borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.maybeTint },
     // Four as two rows of two, rather than three and one left over.
     pillHalf: { flexBasis: '40%', maxWidth: '100%' },
     signUp: { paddingVertical: space[1], paddingHorizontal: space[3] },

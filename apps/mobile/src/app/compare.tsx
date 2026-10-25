@@ -327,7 +327,7 @@ export default function Compare() {
 
 const styles = themed(() => StyleSheet.create({
   flex: { flex: 1 },
-  center: { textAlign: 'center' },
+  center: { textAlign: 'center', maxWidth: 480 },
   // iOS and Android inset header buttons themselves; a browser doesn't.
   clear: { paddingHorizontal: HEADER_EDGE },
   page: { flex: 1, backgroundColor: color.groupedBackground },
@@ -365,7 +365,7 @@ const styles = themed(() => StyleSheet.create({
   cells: { flexDirection: 'row', gap: space[3] },
   cell: { flex: 1 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
-  pickList: { alignSelf: 'stretch', maxWidth: 480, width: '100%', backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
+  pickList: { alignSelf: 'stretch', maxWidth: 480, width: '100%', marginHorizontal: 'auto', backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
   pickRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   pickRule: { borderTopWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
   pickText: { flex: 1, minWidth: 0 },

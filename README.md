@@ -928,21 +928,29 @@ documents especially, before it launches: see `docs/LAUNCH-CHECKLIST.md`.
 
 ### Gym photos
 
-The top of a gym's page (and its card on Home) shows, in this order:
+The top of a gym's page is a gallery to swipe through (dots, "2 of 5", and
+arrows for a mouse or a keyboard), each photo with its own credit. Its card
+on Home shows the first. In this order:
 
 1. **Members' photos**, each with the member's name on it.
-2. If there are none, **the photo the gym's own website shares** (the
-   picture its home page gives social media, `og:image`), credited "From
-   franksgymperth.com". The GymGO server fetches it the first time someone
-   looks and keeps it a month, with the same guards as website icons. It is
-   taken only from a site that is that gym's alone: never a site other gyms
-   in the data share, and never a chain's home page, whose picture would be
+2. Then **the photos the gym's own website shares**, up to four: every
+   picture its page gives social media and search engines (`og:image`,
+   `twitter:image`, and the images in its structured data), credited "From
+   franksgymperth.com". The first is the gym's cover where no member has
+   shared one. The GymGO server fetches them the first time someone looks
+   and keeps them a month, with the same guards as website icons. Each
+   must be a photo (big enough, not a banner, a badge, a GIF, a logo or an
+   icon, and not the same picture twice under two names). They are taken
+   only from a site that is that gym's alone: never a site other gyms in
+   the data share, and never a chain's home page, whose pictures would be
    of some other branch. A branch's own page on a chain's site counts, but
    not a picture that page merely repeats from the site's home page, nor
    one that another branch's page shows too: both are the chain's stock
-   picture, not this branch. So it is always the right gym, or nothing.
-   1,566 of the 2,995 real gyms have such a site. These photos belong to
-   the gyms; the owner chose to show them.
+   pictures, not this branch; the page's own pictures stay. So they are
+   always the right gym's, or none. 1,566 of the 2,995 real gyms have such
+   a site. These photos belong to the gyms; the owner chose to show them.
+   GymGO never copies photos found by searching the web (Google Images and
+   the like): they belong to the gyms and photographers who took them.
 3. If there are none, and the owner has set up the optional Google key
    (below), **Google's photos** of the place, each credited to whoever took
    it, with "Google Maps" underneath. They're only ever the exact gym's: a

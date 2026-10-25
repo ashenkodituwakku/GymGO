@@ -1,11 +1,12 @@
 /**
- * A gym's photos, across the top of its card.
+ * A gym's photos, across the top of its card, as a gallery to swipe through
+ * (with dots, "2 of 5", and buttons for a mouse or a keyboard).
  *
  * Members' photos come first: taken by a GymGO member, checked by a
- * moderator, and credited to them. When there are none yet, the photo the
- * gym's own website shares (fetched by the GymGO server, and only from a
- * site that is that gym's alone, so it's never another branch), credited to
- * the site. Failing both, the page can pass a labelled fallback (Google's own
+ * moderator, and credited to them. Then the photos the gym's own website
+ * shares, up to four (fetched by the GymGO server, only from a site that is
+ * that gym's alone, so never another branch's, and never a chain's stock
+ * picture), each credited to the site. Failing both, the page can pass a labelled fallback (Google's own
  * photos of the place, or Street View outside it); otherwise the card says
  * "No photo supplied" and invites the first one.
  *
@@ -13,8 +14,8 @@
  * illustration drawn for it instead, labelled as one.
  */
 
-import { type ReactNode, useCallback, useEffect, useState } from 'react';
-import { Image, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { Image, ScrollView, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { Pressable } from './motion';
 import { api, apiBase, ApiError, OfflineError, photoUrl, type GymPhoto } from '@/lib/api';
 import { EMPTY } from '@/lib/copy';
@@ -58,6 +59,121 @@ export function useWebsitePhoto(gymId: string, wanted: boolean): string | null {
     };
   }, [uri, gymId]);
   return uri && ok ? uri : null;
+}
+
+/** How many photos each gym's own website gives, once asked this session. */
+const siteCounts = new Map<string, number>();
+
+/**
+ * All the photos the gym's own website gives (up to four), once its cover
+ * has loaded: the cover's address, then the rest. Just the cover while the
+ * count is on its way, or if it can't be had.
+ */
+export function useWebsitePhotos(gymId: string, wanted: boolean): string[] {
+  const cover = useWebsitePhoto(gymId, wanted);
+  const [count, setCount] = useState(() => siteCounts.get(gymId) ?? 1);
+  useEffect(() => {
+    const base = apiBase();
+    if (!cover || !base) return;
+    const known = siteCounts.get(gymId);
+    if (known !== undefined) {
+      setCount(known);
+      return;
+    }
+    let live = true;
+    fetch(`${base}/api/gyms/${encodeURIComponent(gymId)}/site-photos`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: { count?: unknown } | null) => {
+        const found = typeof body?.count === 'number' && Number.isInteger(body.count) ? Math.max(1, Math.min(4, body.count)) : 1;
+        siteCounts.set(gymId, found);
+        if (live) setCount(found);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [cover, gymId]);
+  if (!cover) return [];
+  return Array.from({ length: count }, (_, n) => (n === 0 ? cover : `${cover}/${n}`));
+}
+
+/** One picture in the gallery: what it shows, and whose it is. */
+interface Slide {
+  key: string;
+  uri: string;
+  credit: string;
+  icon: 'photo' | 'website';
+  alt: string;
+}
+
+/**
+ * The photos side by side, a page each: swiped on a phone, or stepped
+ * through with the arrows (a mouse, a keyboard). Dots and "2 of 5" say
+ * where you are; each photo keeps its own credit.
+ */
+function Gallery({ slides, width }: { slides: Slide[]; width: number }) {
+  const scroller = useRef<ScrollView>(null);
+  const [at, setAt] = useState(0);
+  const count = slides.length;
+  const show = (index: number) => {
+    const next = Math.max(0, Math.min(count - 1, index));
+    haptic.select();
+    scroller.current?.scrollTo({ x: next * width, animated: true });
+    setAt(next);
+  };
+  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const index = Math.round(event.nativeEvent.contentOffset.x / Math.max(1, width));
+    if (index !== at && index >= 0 && index < count) setAt(index);
+  };
+  return (
+    <View style={{ width }}>
+      <ScrollView
+        ref={scroller}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={64}
+        style={{ width }}
+      >
+        {slides.map((slide) => (
+          <View key={slide.key} style={{ width }}>
+            <Image source={{ uri: slide.uri }} style={[styles.photo, { width }]} resizeMode="cover" accessibilityLabel={slide.alt} />
+            <View style={styles.credit}>
+              <Icon name={slide.icon} size={11} color={color.onBrand} />
+              <Txt variant="caption" color={color.onBrand} numberOfLines={1}>
+                {slide.credit}
+              </Txt>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+      {count > 1 && (
+        <>
+          <View style={styles.counter} accessible accessibilityLabel={`Photo ${at + 1} of ${count}`}>
+            <Txt variant="caption" color={color.onBrand} style={face('semibold')}>
+              {`${at + 1} of ${count}`}
+            </Txt>
+          </View>
+          <View style={styles.dots} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            {slides.map((slide, index) => (
+              <View key={slide.key} style={[styles.dot, index === at && styles.dotOn]} />
+            ))}
+          </View>
+          {at > 0 && (
+            <Pressable onPress={() => show(at - 1)} accessibilityRole="button" accessibilityLabel="Previous photo" hitSlop={6} style={[styles.arrow, styles.arrowLeft]}>
+              <Icon name="chevronBack" size={14} color={color.onBrand} />
+            </Pressable>
+          )}
+          {at < count - 1 && (
+            <Pressable onPress={() => show(at + 1)} accessibilityRole="button" accessibilityLabel="Next photo" hitSlop={6} style={[styles.arrow, styles.arrowRight]}>
+              <Icon name="chevron" size={14} color={color.onBrand} />
+            </Pressable>
+          )}
+        </>
+      )}
+    </View>
+  );
 }
 
 /** "franksgymperth.com", for the credit. */
@@ -148,7 +264,25 @@ export function PhotoHero({
   };
 
   const list = photos ?? [];
-  const sitePhoto = useWebsitePhoto(gymId, !isDemo && photos !== null && list.length === 0);
+  // The gym's own photos after the members': asked for once the members' are in.
+  const sitePhotoUris = useWebsitePhotos(gymId, !isDemo && photos !== null);
+  const sitePhoto = sitePhotoUris[0] ?? null;
+  const site = hostOf(website);
+  const slides: Slide[] = [
+    ...list.flatMap((photo): Slide[] => {
+      const uri = photoUrl(photo.url);
+      return uri ? [{ key: `member-${photo.id}`, uri, credit: photo.credit, icon: 'photo', alt: `Photo by ${photo.credit}` }] : [];
+    }),
+    ...sitePhotoUris.map(
+      (uri, n): Slide => ({
+        key: `site-${n}`,
+        uri,
+        credit: site ? `From ${site}` : 'From the gym’s website',
+        icon: 'website',
+        alt: `Photo ${n + 1} from the gym’s own website`,
+      }),
+    ),
+  ];
   const illustration = demoPicture({ id: gymId, isDemoData: isDemo });
 
   if (step.kind === 'confirm') {
@@ -202,33 +336,8 @@ export function PhotoHero({
     ) : null;
   return (
     <View style={styles.wrap}>
-      {list.length > 0 ? (
-        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={{ width }}>
-          {list.map((photo) => {
-            const uri = photoUrl(photo.url);
-            return (
-              <View key={photo.id} style={{ width }}>
-                {uri && <Image source={{ uri }} style={[styles.photo, { width }]} resizeMode="cover" accessibilityLabel={`Photo by ${photo.credit}`} />}
-                <View style={styles.credit}>
-                  <Icon name="photo" size={11} color={color.onBrand} />
-                  <Txt variant="caption" color={color.onBrand}>
-                    {photo.credit}
-                  </Txt>
-                </View>
-              </View>
-            );
-          })}
-        </ScrollView>
-      ) : sitePhoto ? (
-        <View style={{ width }}>
-          <Image source={{ uri: sitePhoto }} style={[styles.photo, { width }]} resizeMode="cover" accessibilityLabel="Photo from the gym’s own website" />
-          <View style={styles.credit}>
-            <Icon name="website" size={11} color={color.onBrand} />
-            <Txt variant="caption" color={color.onBrand}>
-              {hostOf(website) ? `From ${hostOf(website)}` : 'From the gym’s website'}
-            </Txt>
-          </View>
-        </View>
+      {slides.length > 0 ? (
+        <Gallery slides={slides} width={width} />
       ) : illustration ? (
         <View style={{ width }}>
           <Image source={illustration.source} style={[styles.photo, { width }]} resizeMode="cover" accessibilityLabel={illustration.alt} />
@@ -312,6 +421,7 @@ const styles = themed(() => StyleSheet.create({
     position: 'absolute',
     left: space[3],
     bottom: space[3],
+    maxWidth: '70%',
     paddingHorizontal: space[2],
     paddingVertical: 3,
     borderRadius: radius.pill,
@@ -333,6 +443,14 @@ const styles = themed(() => StyleSheet.create({
     borderColor: color.brandBorder,
     backgroundColor: color.brandWash,
   },
+  // The gallery's place: "2 of 5" at the top right, dots under the middle, arrows at the sides.
+  counter: { position: 'absolute', top: space[3], right: space[3], paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.scrim },
+  dots: { position: 'absolute', bottom: space[3] + 4, right: space[3], flexDirection: 'row', gap: 5 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' },
+  dotOn: { backgroundColor: '#FFFFFF', width: 14 },
+  arrow: { position: 'absolute', top: 90 - 16, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.scrim },
+  arrowLeft: { left: space[2] },
+  arrowRight: { right: space[2] },
   addPill: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
   add: { paddingVertical: space[1] },
   confirm: { gap: space[3] },

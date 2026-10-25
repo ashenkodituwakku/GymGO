@@ -111,7 +111,11 @@ interface Slide {
  * through with the arrows (a mouse, a keyboard). Dots and "2 of 5" say
  * where you are; each photo keeps its own credit.
  */
+/** A gallery's height for its width: half as high as wide, 180 on a phone and no more than 380 across a desktop page, so a photo isn't a thin strip. */
+export const galleryHeight = (width: number) => Math.round(Math.min(380, Math.max(180, width / 2)));
+
 function Gallery({ slides, width }: { slides: Slide[]; width: number }) {
+  const height = galleryHeight(width);
   const scroller = useRef<ScrollView>(null);
   const [at, setAt] = useState(0);
   const count = slides.length;
@@ -138,7 +142,7 @@ function Gallery({ slides, width }: { slides: Slide[]; width: number }) {
       >
         {slides.map((slide) => (
           <View key={slide.key} style={{ width }}>
-            <Image source={{ uri: slide.uri }} style={[styles.photo, { width }]} resizeMode="cover" accessibilityLabel={slide.alt} />
+            <Image source={{ uri: slide.uri }} style={[styles.photo, { width, height }]} resizeMode="cover" accessibilityLabel={slide.alt} />
             <View style={styles.credit}>
               <Icon name={slide.icon} size={11} color={color.onBrand} />
               <Txt variant="caption" color={color.onBrand} numberOfLines={1}>
@@ -160,14 +164,14 @@ function Gallery({ slides, width }: { slides: Slide[]; width: number }) {
               <View key={slide.key} style={[styles.dot, index === at && styles.dotOn]} />
             ))}
           </View>
-          <PagerArrows at={at} count={count} onShow={show} />
+          <PagerArrows at={at} count={count} onShow={show} top={height / 2 - 16} />
         </>
       )}
     </View>
   );
 }
 
-/** Previous and next over a gallery of photos 180 high, for a mouse or a keyboard: each only where there's one to go to. */
+/** Previous and next over a gallery of photos, for a mouse or a keyboard: each only where there's one to go to. `top` puts them halfway down. */
 export function PagerArrows({ at, count, onShow, top = 90 - 16 }: { at: number; count: number; onShow: (index: number) => void; top?: number }) {
   return (
     <>

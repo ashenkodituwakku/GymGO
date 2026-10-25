@@ -113,7 +113,7 @@ describe('workoutShareText', () => {
     expect(text.split('\n')[0]).toBe('Legs · 50 min · 3 sets · 1,000 kg lifted');
     expect(text).toContain('New record: Barbell back squat (heaviest yet)');
     expect(text).toContain('Barbell back squat: 100');
-    expect(text).toContain('My own thing: × 12');
+    expect(text).toContain('My own thing: 12 reps');
     expect(text).not.toContain('doherty');
     expect(text.endsWith('Logged with GymGO')).toBe(true);
   });

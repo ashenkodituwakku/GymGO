@@ -21,7 +21,7 @@ describe('a broken record, to show', () => {
     expect(recordLine(session, { exerciseId: 'bench-press', kind: 'heaviest' })).toBe('100\u00a0kg × 3');
     // 90 × 8 estimates higher than 100 × 3 (114 kg against 110).
     expect(recordLine(session, { exerciseId: 'bench-press', kind: 'e1rm' })).toBe('90\u00a0kg × 8');
-    expect(recordLine(session, { exerciseId: 'push-up', kind: 'reps' })).toBe('× 30');
+    expect(recordLine(session, { exerciseId: 'push-up', kind: 'reps' })).toBe('30 reps');
     expect(recordLine(session, { exerciseId: 'squat', kind: 'heaviest' })).toBe('');
   });
 

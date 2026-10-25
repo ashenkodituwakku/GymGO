@@ -158,7 +158,10 @@ export function lastTime(sessions: TrainingSession[], exerciseId: string): { set
   return null;
 }
 
-/** "60 kg × 10, 10, 9", "× 12, 10" for body weight, "60 kg × 10 · 62.5 kg × 8". */
+/** Reps without a weight: "12 reps", "12, 10 reps", "1 rep". */
+export const repsWords = (reps: number[]) => `${reps.join(', ')} ${reps.length === 1 && reps[0] === 1 ? 'rep' : 'reps'}`;
+
+/** "60 kg × 10, 10, 9", "12, 10 reps" for body weight, "60 kg × 10 · 62.5 kg × 8". */
 export function setsSummary(sets: LoggedSet[], unit: WeightUnit): string {
   const groups: Array<{ weight: number | null; reps: number[] }> = [];
   for (const set of sets) {
@@ -166,7 +169,7 @@ export function setsSummary(sets: LoggedSet[], unit: WeightUnit): string {
     if (last && last.weight === set.weight) last.reps.push(set.reps);
     else groups.push({ weight: set.weight, reps: [set.reps] });
   }
-  return groups.map((group) => `${group.weight ? `${formatWeight(group.weight, unit)} ` : ''}× ${group.reps.join(', ')}`).join(' · ');
+  return groups.map((group) => (group.weight ? `${formatWeight(group.weight, unit)} × ${group.reps.join(', ')}` : repsWords(group.reps))).join(' · ');
 }
 
 // --- What to aim for next ------------------------------------------------------

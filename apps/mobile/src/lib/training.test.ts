@@ -108,7 +108,10 @@ describe('last time and next time', () => {
     expect(setsSummary(last.sets, last.unit)).toBe('60\u00a0kg × 10, 10, 9');
     expect(lastTime(history, 'squat')).toBeNull();
     expect(setsSummary([{ weight: 60, reps: 10 }, { weight: 62.5, reps: 8 }], 'kg')).toBe('60\u00a0kg × 10 · 62.5\u00a0kg × 8');
-    expect(setsSummary([{ weight: null, reps: 12 }], 'kg')).toBe('× 12');
+    expect(setsSummary([{ weight: null, reps: 12 }], 'kg')).toBe('12 reps');
+    expect(setsSummary([{ weight: null, reps: 8 }, { weight: null, reps: 8 }], 'kg')).toBe('8, 8 reps');
+    expect(setsSummary([{ weight: null, reps: 1 }], 'kg')).toBe('1 rep');
+    expect(setsSummary([{ weight: 20, reps: 8 }, { weight: null, reps: 12 }], 'kg')).toBe('20\u00a0kg × 8 · 12 reps');
   });
 
   it('reads rep ranges, and leaves timed work alone', () => {

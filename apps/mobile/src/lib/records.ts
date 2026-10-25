@@ -5,7 +5,7 @@
  * No React Native imports here, so it is unit-tested in Node.
  */
 
-import { formatWeight, oneRepMax, toKg, type LoggedSet, type NewRecord, type TrainingSession } from './training';
+import { formatWeight, oneRepMax, repsWords, toKg, type LoggedSet, type NewRecord, type TrainingSession } from './training';
 
 export const RECORD_WORD: Record<NewRecord['kind'], string> = { heaviest: 'Heaviest yet', e1rm: 'Strongest set yet', reps: 'Most reps yet' };
 
@@ -29,9 +29,9 @@ export function recordSet(session: TrainingSession, record: NewRecord): LoggedSe
   return weighted.sort((a, b) => e1rm(b) - e1rm(a))[0] ?? null;
 }
 
-/** "100 kg × 5", "× 15" for body weight. */
+/** "100 kg × 5", "15 reps" for body weight. */
 export function recordLine(session: TrainingSession, record: NewRecord): string {
   const set = recordSet(session, record);
   if (!set) return '';
-  return set.weight !== null && set.weight > 0 ? `${formatWeight(set.weight, session.unit)} × ${set.reps}` : `× ${set.reps}`;
+  return set.weight !== null && set.weight > 0 ? `${formatWeight(set.weight, session.unit)} × ${set.reps}` : repsWords([set.reps]);
 }

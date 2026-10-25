@@ -34,6 +34,7 @@ import { lookup as dnsLookup, type LookupAddress } from 'node:dns';
 import http from 'node:http';
 import https from 'node:https';
 import { BlockList, isIP } from 'node:net';
+import { createHash } from 'node:crypto';
 import { crc32, deflateSync, inflateSync } from 'node:zlib';
 import { chainWebsite, type GymRecord } from '@gymgo/domain';
 import type { Db } from './db';
@@ -519,13 +520,26 @@ export function photoCandidates(html: string, pageUrl: string): URL[] {
 const PHOTO_BYTES = 4 * 1024 * 1024;
 const MIN_PHOTO_WIDTH = 400;
 const MIN_PHOTO_HEIGHT = 200;
+/** The most photos kept from one gym's website: enough to see the place, not its whole site. */
+export const MAX_SITE_PHOTOS = 4;
+/** How many of a page's pictures are tried to find them. */
+const PHOTO_TRIES = 10;
+
+type KeptPhoto = SiteIcon & { width: number; height: number };
 
 /**
- * Photos from gyms' own websites, kept by page for a month (a week when the
- * page has none, an hour when it didn't answer), like the icons.
+ * Photos from gyms' own websites: every picture a gym's page offers to
+ * share it by (to social media and search engines), up to four, kept by
+ * page for a month (a week when the page has none, an hour when it didn't
+ * answer), like the icons. The first is the gym's cover.
+ *
+ * Each must be a photo (big enough, not a banner, a badge, a GIF or the
+ * same picture twice), and its own: a picture another page in the data
+ * also shows is a chain's stock one and is dropped, as is, on a branch's
+ * page, one the site's home page shows.
  */
 export class SitePhotos {
-  private readonly inFlight = new Map<string, Promise<SiteIcon | null>>();
+  private readonly inFlight = new Map<string, Promise<SiteIcon[]>>();
 
   constructor(
     private readonly db: Db,
@@ -541,35 +555,60 @@ export class SitePhotos {
       source text,
       fetched_at text not null
     )`);
+    // Every photo a page gave, in order (the first is also site_photos' own, kept there as before).
+    db.exec(`create table if not exists site_photo_set (
+      page text not null,
+      position integer not null,
+      mime text not null,
+      bytes blob not null,
+      width integer not null,
+      height integer not null,
+      source text not null,
+      primary key (page, position)
+    )`);
   }
 
   private now() {
     return this.options.now?.() ?? new Date();
   }
 
-  cached(website: string): SiteIcon | null | undefined {
+  /** A page's photos as kept: undefined when it's to be fetched (never, too long ago, or before several were kept). */
+  cachedAll(website: string): SiteIcon[] | undefined {
     const page = allowedUrl(website)?.href;
-    if (!page) return null;
-    const row = this.db.prepare('select found, mime, bytes, source, fetched_at from site_photos where page = ?').get(page) as
-      | { found: number; mime: string | null; bytes: Uint8Array | null; source: string | null; fetched_at: string }
+    if (!page) return [];
+    const row = this.db.prepare('select found, source, fetched_at from site_photos where page = ?').get(page) as
+      | { found: number; source: string | null; fetched_at: string }
       | undefined;
     if (!row) return undefined;
     const days = (this.now().getTime() - Date.parse(row.fetched_at)) / 86_400_000;
     if (days > (row.found ? FOUND_DAYS : row.source === UNREACHABLE ? UNREACHABLE_DAYS : NONE_DAYS)) return undefined;
-    if (!row.found || !row.bytes || this.shared(page, row.source)) return null;
-    return { mime: row.mime!, bytes: Buffer.from(row.bytes), source: row.source ?? page };
+    if (!row.found) return [];
+    const kept = this.db.prepare('select mime, bytes, source from site_photo_set where page = ? order by position').all(page) as Array<{
+      mime: string;
+      bytes: Uint8Array;
+      source: string;
+    }>;
+    // Found before several photos were kept: fetched again, for the rest.
+    if (kept.length === 0) return undefined;
+    return kept.filter((photo) => !this.shared(page, photo.source)).map((photo) => ({ mime: photo.mime, bytes: Buffer.from(photo.bytes), source: photo.source }));
+  }
+
+  /** The cover alone, as kept (see cachedAll). */
+  cached(website: string): SiteIcon | null | undefined {
+    const all = this.cachedAll(website);
+    return all === undefined ? undefined : (all[0] ?? null);
   }
 
   /**
-   * Whether another page's photo is the very same picture: a chain's stock
+   * Whether another page shows the very same picture: a chain's stock
    * picture on each branch's page, which shows none of them in particular.
    */
   private shared(page: string, source: string | null): boolean {
     if (!source) return false;
-    return Boolean(this.db.prepare('select 1 from site_photos where found = 1 and source = ? and page <> ? limit 1').get(source, page));
+    return Boolean(this.db.prepare('select 1 from site_photo_set where source = ? and page <> ? limit 1').get(source, page));
   }
 
-  /** The pictures a site's home page shares, for telling a branch page's own photo from the site's stock one. */
+  /** The pictures a site's home page shares, for telling a branch page's own photos from the site's stock ones. */
   private async homePictures(page: URL, get: SafeGet): Promise<Set<string>> {
     try {
       const home = await get(new URL('/', page), PAGE_BYTES, 'text/html,application/xhtml+xml');
@@ -580,33 +619,41 @@ export class SitePhotos {
     }
   }
 
-  async photo(website: string): Promise<SiteIcon | null> {
-    const kept = this.cached(website);
+  /** Every photo the gym's own page offers, up to four, the cover first. */
+  async photos(website: string): Promise<SiteIcon[]> {
+    const kept = this.cachedAll(website);
     if (kept !== undefined) return kept;
     const page = allowedUrl(website);
-    if (!page) return null;
+    if (!page) return [];
     const pending = this.inFlight.get(page.href);
     if (pending) return pending;
-    const job = this.fetchPhoto(page).finally(() => this.inFlight.delete(page.href));
+    const job = this.fetchPhotos(page).finally(() => this.inFlight.delete(page.href));
     this.inFlight.set(page.href, job);
     return job;
   }
 
-  private async fetchPhoto(page: URL): Promise<SiteIcon | null> {
+  /** The cover alone. */
+  async photo(website: string): Promise<SiteIcon | null> {
+    return (await this.photos(website))[0] ?? null;
+  }
+
+  private async fetchPhotos(page: URL): Promise<SiteIcon[]> {
     const get = this.options.get ?? safeGet;
-    let found: (SiteIcon & { width: number; height: number }) | null = null;
+    const found: KeptPhoto[] = [];
+    const seen = new Set<string>();
     let unreachable = false;
     try {
       const home = await get(page, PAGE_BYTES, 'text/html,application/xhtml+xml');
       unreachable = home.status >= 500 || home.status === 429;
       const html = home.status < 400 && /html/i.test(home.type) ? home.body.toString('utf8') : '';
       // A page deeper in a site (a branch's own page on a small chain's
-      // site) often shares the site's stock picture instead of one of its
-      // own; that picture isn't of this branch, so it's passed over.
+      // site) often shares the site's stock picture instead of its own;
+      // that picture isn't of this branch, so it's passed over.
       const stock = page.pathname !== '/' ? await this.homePictures(page, get) : new Set<string>();
       for (const candidate of photoCandidates(html, home.url)
         .filter((url) => !stock.has(url.href))
-        .slice(0, 3)) {
+        .slice(0, PHOTO_TRIES)) {
+        if (found.length >= MAX_SITE_PHOTOS) break;
         try {
           const image = await get(candidate, PHOTO_BYTES + 1, 'image/jpeg,image/png,image/webp');
           if (image.status >= 400 || image.body.length > PHOTO_BYTES) continue;
@@ -615,8 +662,11 @@ export class SitePhotos {
           // A photo, not a banner or a square badge.
           const aspect = kind.width / kind.height;
           if (aspect < 0.75 || aspect > 3) continue;
-          found = { mime: kind.mime, bytes: image.body, source: image.url, width: kind.width, height: kind.height };
-          break;
+          // The same picture under a second address (the og: and twitter: tags often both name it) counts once.
+          const print = createHash('sha256').update(image.body).digest('hex');
+          if (seen.has(print) || found.some((photo) => photo.source === image.url)) continue;
+          seen.add(print);
+          found.push({ mime: kind.mime, bytes: image.body, source: image.url, width: kind.width, height: kind.height });
         } catch {
           // Try the next one.
         }
@@ -624,21 +674,29 @@ export class SitePhotos {
     } catch {
       unreachable = true;
     }
-    this.db
-      .prepare(
-        `insert into site_photos (page, found, mime, bytes, width, height, source, fetched_at) values (?, ?, ?, ?, ?, ?, ?, ?)
-         on conflict(page) do update set found = excluded.found, mime = excluded.mime, bytes = excluded.bytes, width = excluded.width,
-           height = excluded.height, source = excluded.source, fetched_at = excluded.fetched_at`,
-      )
-      .run(page.href, found ? 1 : 0, found?.mime ?? null, found?.bytes ?? null, found?.width ?? null, found?.height ?? null, found?.source ?? (unreachable ? UNREACHABLE : null), this.now().toISOString());
+    const first = found[0] ?? null;
+    this.db.exec('begin');
+    try {
+      this.db
+        .prepare(
+          `insert into site_photos (page, found, mime, bytes, width, height, source, fetched_at) values (?, ?, ?, ?, ?, ?, ?, ?)
+           on conflict(page) do update set found = excluded.found, mime = excluded.mime, bytes = excluded.bytes, width = excluded.width,
+             height = excluded.height, source = excluded.source, fetched_at = excluded.fetched_at`,
+        )
+        .run(page.href, first ? 1 : 0, first?.mime ?? null, first?.bytes ?? null, first?.width ?? null, first?.height ?? null, first?.source ?? (unreachable ? UNREACHABLE : null), this.now().toISOString());
+      this.db.prepare('delete from site_photo_set where page = ?').run(page.href);
+      const add = this.db.prepare('insert into site_photo_set (page, position, mime, bytes, width, height, source) values (?, ?, ?, ?, ?, ?, ?)');
+      found.forEach((photo, position) => add.run(page.href, position, photo.mime, photo.bytes, photo.width, photo.height, photo.source));
+      this.db.exec('commit');
+    } catch (error) {
+      this.db.exec('rollback');
+      throw error;
+    }
     // Kept either way, so a second branch showing the same stock picture
     // turns it off for both.
-    if (!found || this.shared(page.href, found.source)) return null;
-    return { mime: found.mime, bytes: found.bytes, source: found.source };
+    return found.filter((photo) => !this.shared(page.href, photo.source)).map(({ mime, bytes, source }) => ({ mime, bytes, source }));
   }
 }
-
-// --- The store ------------------------------------------------------------------
 
 export interface SiteIcon {
   mime: string;

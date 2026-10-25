@@ -57,6 +57,8 @@
  *   GET    /api/gyms/:gymId/google        live Google Maps details (only with the owner's key)
  *   GET    /api/gyms/:gymId/icon          the icon from the gym's own website, or its chain's (PNG/JPEG/WebP/GIF), or 404
  *   GET    /api/gyms/:gymId/photo         the photo the gym's own website shares (JPEG/PNG/WebP), or 404
+ *   GET    /api/gyms/:gymId/photo/:n      its website's photo n (0 is the one above; up to 3), or 404
+ *   GET    /api/gyms/:gymId/site-photos   { count, from }: how many photos its own website gives, and the site
  *   GET    /api/billing/plans             GymGO Pro's prices, and whether it's on sale
  *   GET    /api/billing                   your plan (Free or Pro) and subscription
  *   POST   /api/billing/checkout          { interval, currency, returnUrl, plan?, trial? } -> { url } of Stripe Checkout
@@ -285,7 +287,7 @@ export function isPublicRoute(method: string, path: string): boolean {
   if ((method === 'POST' && path === '/api/billing/webhook') || (method === 'GET' && (path === '/api/billing/return' || path === '/api/billing/plans'))) return true;
   if (method === 'POST' && path === '/api/bug-reports') return true;
   if (method === 'GET' && (/^\/api\/avatars\/[^/]+$/.test(path) || (/^\/api\/photos\/[^/]+$/.test(path) && path !== '/api/photos/covers'))) return true;
-  if (method === 'GET' && /^\/api\/gyms\/[^/]+\/(icon|photo)$/.test(path)) return true;
+  if (method === 'GET' && /^\/api\/gyms\/[^/]+\/(icon|photo|photo\/\d|site-photos)$/.test(path)) return true;
   return false;
 }
 
@@ -2231,21 +2233,30 @@ export function createApp(options: AppOptions) {
       return;
     }
 
-    // --- A photo of the gym, from its own website ------------------------------
-    if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'photo' && parts.length === 4) {
+    // --- Photos of the gym, from its own website -------------------------------
+    // /photo is the cover, /photo/1 to /photo/3 the rest, /site-photos how many there are.
+    if (
+      method === 'GET' &&
+      parts[0] === 'api' &&
+      parts[1] === 'gyms' &&
+      ((parts[3] === 'photo' && (parts.length === 4 || (parts.length === 5 && /^\d$/.test(parts[4]!)))) || (parts[3] === 'site-photos' && parts.length === 4))
+    ) {
       const record = gymRecord(db, decodeURIComponent(parts[2]!));
       if (!record) throw new HttpError(404, 'No gym with that id.');
       if (options.siteIcons?.enabled === false) throw new HttpError(404, 'Website pictures are switched off.', 'off');
       photoSite ??= ownPhotoSites(allGyms(db));
       const website = photoSite(record);
       if (!website) {
+        if (parts[3] === 'site-photos') return send(res, 200, { count: 0, from: null }, 'public, max-age=86400');
         return send(res, 404, { error: 'This gym has no website of its own to take a photo from.', code: 'none' }, 'public, max-age=86400');
       }
-      let photo = sitePhotos.cached(website);
-      if (photo === undefined) {
+      let photos = sitePhotos.cachedAll(website);
+      if (photos === undefined) {
         if (!sitePhotoLimiter.allow(clientAddress(req), now().getTime())) throw new HttpError(429, 'Too many photos at once. Try again soon.');
-        photo = await sitePhotos.photo(website);
+        photos = await sitePhotos.photos(website);
       }
+      if (parts[3] === 'site-photos') return send(res, 200, { count: photos.length, from: website }, 'public, max-age=3600');
+      const photo = photos[parts.length === 5 ? Number(parts[4]) : 0];
       if (!photo) return send(res, 404, { error: 'The gym’s website has no photo GymGO can show.', code: 'none' }, 'public, max-age=3600');
       res.statusCode = 200;
       res.setHeader('Content-Type', photo.mime);

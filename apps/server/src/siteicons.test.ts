@@ -167,10 +167,17 @@ function jpeg(width: number, height: number): Buffer {
 WEB[OWN.location.website!] = {
   status: 200,
   type: 'text/html',
-  body: Buffer.from('<meta property="og:image" content="/logo-share.png"><meta property="og:image" content="/floor.jpg"><meta name="twitter:image" content="/small.jpg">'),
+  body: Buffer.from(
+    '<meta property="og:image" content="/logo-share.png"><meta property="og:image" content="/floor.jpg"><meta name="twitter:image" content="/small.jpg">' +
+      // More pictures the page gives search engines: one, the same floor photo again under another name, and a thin banner.
+      '<script type="application/ld+json">{"@type":"ExerciseGym","image":["/changing-rooms.jpg","/floor-copy.jpg","/banner.jpg"]}</script>',
+  ),
 };
 WEB[new URL('/floor.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: jpeg(1200, 630) };
 WEB[new URL('/small.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: jpeg(120, 80) };
+WEB[new URL('/changing-rooms.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: jpeg(1600, 1067) };
+WEB[new URL('/floor-copy.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: jpeg(1200, 630) };
+WEB[new URL('/banner.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: jpeg(2400, 400) };
 
 let flakyUp = false;
 const fakeGet: SafeGet = async (url) => {
@@ -337,6 +344,63 @@ describe('a photo of the gym from its own website', () => {
     expect(response.headers.get('content-type')).toBe('image/jpeg');
     expect(decodeURI(response.headers.get('x-photo-source')!)).toBe(new URL(OWN.location.website!).href);
     expect(Buffer.from(await response.arrayBuffer()).equals(jpeg(1200, 630))).toBe(true);
+  });
+
+  it('serves every photo the page gives, each once, and says how many: never the logo, a thumbnail or a banner', async () => {
+    const list = await fetch(`${base}/api/gyms/${OWN.location.id}/site-photos`);
+    expect(list.status).toBe(200);
+    expect(await list.json()).toEqual({ count: 2, from: new URL(OWN.location.website!).href });
+    const second = await fetch(`${base}/api/gyms/${OWN.location.id}/photo/1`);
+    expect(second.status).toBe(200);
+    expect(Buffer.from(await second.arrayBuffer()).equals(jpeg(1600, 1067))).toBe(true);
+    // /photo/0 is the cover, as /photo is.
+    expect(Buffer.from(await (await fetch(`${base}/api/gyms/${OWN.location.id}/photo/0`)).arrayBuffer()).equals(jpeg(1200, 630))).toBe(true);
+    expect((await fetch(`${base}/api/gyms/${OWN.location.id}/photo/2`)).status).toBe(404);
+    // Like /photo, they load as plain images: no sign-in needed.
+    expect((await fetch(`${base}/api/gyms/${DOHERTYS.location.id}/site-photos`).then((r) => r.json()))).toEqual({ count: 0, from: null });
+  });
+
+  it('keeps four at most, and drops each picture another page shows too, keeping the page’s own', async () => {
+    const pics = ['a', 'b', 'c', 'd', 'e', 'f'];
+    const site: Record<string, Omit<Fetched, 'url'>> = {
+      'https://one.example.com/': { status: 200, type: 'text/html', body: Buffer.from(pics.map((p) => `<meta property="og:image" content="/${p}.jpg">`).join('')) },
+      'https://chain.example.com/east/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/east.jpg"><meta property="og:image" content="/team.jpg">') },
+      'https://chain.example.com/west/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/team.jpg"><meta property="og:image" content="/west.jpg">') },
+      'https://chain.example.com/': { status: 200, type: 'text/html', body: Buffer.from('') },
+      'https://chain.example.com/east.jpg': { status: 200, type: 'image/jpeg', body: jpeg(1200, 801) },
+      'https://chain.example.com/west.jpg': { status: 200, type: 'image/jpeg', body: jpeg(1200, 802) },
+      'https://chain.example.com/team.jpg': { status: 200, type: 'image/jpeg', body: jpeg(1200, 803) },
+    };
+    pics.forEach((p, i) => (site[`https://one.example.com/${p}.jpg`] = { status: 200, type: 'image/jpeg', body: jpeg(1200 + i, 800) }));
+    const get: SafeGet = async (url) => {
+      const page = site[url.href];
+      return page ? { ...page, url: url.href } : { status: 404, type: 'text/html', body: Buffer.alloc(0), url: url.href };
+    };
+    const photos = new SitePhotos(openDb(':memory:'), { get });
+    expect((await photos.photos('https://one.example.com/')).map((photo) => photo.source)).toEqual(['a', 'b', 'c', 'd'].map((p) => `https://one.example.com/${p}.jpg`));
+    expect((await photos.photos('https://chain.example.com/east/')).map((photo) => photo.source)).toEqual(['https://chain.example.com/east.jpg', 'https://chain.example.com/team.jpg']);
+    // A second branch shows the team picture too: it's the chain's, so neither keeps it, and each keeps its own.
+    expect((await photos.photos('https://chain.example.com/west/')).map((photo) => photo.source)).toEqual(['https://chain.example.com/west.jpg']);
+    expect((await photos.photos('https://chain.example.com/east/')).map((photo) => photo.source)).toEqual(['https://chain.example.com/east.jpg']);
+  });
+
+  it('fetches again a page kept before several photos were, for the rest of them', async () => {
+    const db = openDb(':memory:');
+    const get: SafeGet = async (url) =>
+      url.href === 'https://old.example.com/'
+        ? { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/1.jpg"><meta property="og:image" content="/2.jpg">'), url: url.href }
+        : { status: 200, type: 'image/jpeg', body: jpeg(url.href.endsWith('1.jpg') ? 1200 : 1300, 800), url: url.href };
+    const photos = new SitePhotos(db, { get, now: () => new Date('2026-10-25T00:00:00Z') });
+    // As an earlier server kept it: the cover only.
+    db.prepare('insert into site_photos (page, found, mime, bytes, width, height, source, fetched_at) values (?, 1, ?, ?, 1200, 800, ?, ?)').run(
+      'https://old.example.com/',
+      'image/jpeg',
+      jpeg(1200, 800),
+      'https://old.example.com/1.jpg',
+      '2026-10-24T00:00:00Z',
+    );
+    expect(photos.cachedAll('https://old.example.com/')).toBeUndefined();
+    expect((await photos.photos('https://old.example.com/')).length).toBe(2);
   });
 
   it('has none for a site several gyms share, or for demo gyms', async () => {

@@ -7,7 +7,7 @@
 
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { CURVES, EASE_IN, EASE_OUT, FADE_IN, POP_IN, Pressable, usePop } from '@/components/motion';
@@ -950,20 +950,6 @@ function Summary({
         )}
       </View>
       {weekNow && <WeekLine week={weekNow} />}
-      {records.map((record) => {
-        const logged = session.exercises.find((item) => item.exerciseId === record.exerciseId);
-        return (
-          <View key={`${record.exerciseId}-${record.kind}`} style={styles.record}>
-            <Icon name="trophy" size={18} color={color.maybe} />
-            <View style={styles.flex}>
-              <Txt variant="headline">{exerciseName(record.exerciseId)}</Txt>
-              <Txt variant="footnote" color={color.labelSecondary}>
-                {RECORD_WORD[record.kind]} · {logged ? setsSummary(logged.sets, unit) : ''}
-              </Txt>
-            </View>
-          </View>
-        );
-      })}
       {best && (
         <View style={styles.recordCard}>
           <RecordCard
@@ -983,17 +969,30 @@ function Summary({
             WHAT YOU DID
           </Txt>
           {done.map((logged, index) => (
-            <View key={`${logged.exerciseId}-${index}`} style={[styles.did, index > 0 && styles.didLine]}>
-              <ExerciseTile exerciseId={logged.exerciseId} size={36} done />
-              <View style={styles.flex}>
-                <Txt variant="subhead" style={face('semibold')} numberOfLines={2}>
-                  {exerciseName(logged.exerciseId)}
-                </Txt>
-                <Txt variant="footnote" color={color.labelSecondary}>
-                  {setsSummary(logged.sets, unit)}
-                </Txt>
+            <Fragment key={`${logged.exerciseId}-${index}`}>
+              {/* Lines start at the names, as in the app's other lists. */}
+              {index > 0 && <View style={styles.didLine} />}
+              <View style={styles.did}>
+                <ExerciseTile exerciseId={logged.exerciseId} size={36} done />
+                <View style={styles.flex}>
+                  <Txt variant="subhead" style={face('semibold')} numberOfLines={2}>
+                    {exerciseName(logged.exerciseId)}
+                  </Txt>
+                  <Txt variant="footnote" color={color.labelSecondary}>
+                    {setsSummary(logged.sets, unit)}
+                  </Txt>
+                  {/* The records it set, here rather than in a list of their own that said it all again. */}
+                  {records.some((record) => record.exerciseId === logged.exerciseId) && (
+                    <View style={styles.didRecord}>
+                      <Icon name="trophy" size={12} color={color.maybeInk} />
+                      <Txt variant="footnote" color={color.maybeInk} style={face('semibold')}>
+                        {records.filter((record) => record.exerciseId === logged.exerciseId).map((record) => RECORD_WORD[record.kind]).join(' · ')}
+                      </Txt>
+                    </View>
+                  )}
+                </View>
               </View>
-            </View>
+            </Fragment>
           ))}
         </View>
       )}
@@ -1146,7 +1145,8 @@ const styles = themed(() => StyleSheet.create({
     ...shadow.plate,
   },
   did: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[2] },
-  didLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
+  didLine: { height: StyleSheet.hairlineWidth, marginLeft: 36 + space[3], backgroundColor: color.separator },
+  didRecord: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   input: {
     flex: 1,
     // On a narrow phone they shared the room equally with the spacer and cut a weight like 102.5 short.

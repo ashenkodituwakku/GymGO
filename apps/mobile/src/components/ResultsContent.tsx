@@ -18,7 +18,7 @@ import type { RecentPlace } from '@/lib/recentPlaces';
 import { EMPTY, PLACEHOLDER, TIER, lookupLine, searchPrompt, sessionGreeting, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
 import type { Lookup } from '@/lib/app-state';
 import { SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
-import { NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
+import { NO_WEB_OUTLINE, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { MarkImage, useGymMark } from './BrandLogo';
 import { GymRow } from './GymRow';
@@ -709,6 +709,8 @@ const styles = themed(() => StyleSheet.create({
     borderCurve: 'continuous',
     backgroundColor: color.cardGlass,
     overflow: 'hidden',
+    // A card in a sheet, with the look's own edge.
+    ...shadow.card,
   },
   rowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 86 },
 

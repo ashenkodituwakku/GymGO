@@ -851,6 +851,7 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.lg + 4,
     borderCurve: 'continuous',
     backgroundColor: color.cardGlass,
+    ...shadow.plate,
   },
   factEmoji: { fontSize: 20, lineHeight: 26 },
   factIcon: {

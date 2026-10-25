@@ -22,7 +22,7 @@ import { TIER, accessShort, timeLabel, visitWhen } from '@/lib/copy';
 import { visitIsLater } from '@/lib/query';
 import { priceLine, priceText } from '@/lib/present';
 import { resultsById } from '@/lib/results';
-import { HEADER_EDGE, PAGE_COLUMN, color, face, radius, solidSurfaces, space, themed } from '@/lib/theme';
+import { HEADER_EDGE, PAGE_COLUMN, color, face, radius, shadow, solidSurfaces, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { SheetDone } from '@/components/SheetDone';
@@ -350,6 +350,7 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.lg,
     borderCurve: 'continuous',
     backgroundColor: color.plate,
+    ...shadow.plate,
   },
   remove: {
     width: 22,
@@ -359,7 +360,7 @@ const styles = themed(() => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  group: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden' },
+  group: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', ...shadow.plate },
   row: { gap: space[2], padding: space[3] },
   rule: { height: StyleSheet.hairlineWidth, marginLeft: space[3], backgroundColor: color.separator },
   cells: { flexDirection: 'row', gap: space[3] },

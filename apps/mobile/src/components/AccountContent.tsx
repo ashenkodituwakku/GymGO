@@ -17,7 +17,7 @@ import { api, ApiError, OfflineError, type AccessOutcome, type BugReportItem, ty
 import { moneyLabel } from '@/lib/places';
 import type { AccountApi } from '@/lib/useAccount';
 import { haptic } from '@/lib/haptics';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { DecideButtons, PHOTO_REASONS, REVIEW_REASONS } from './Moderation';
 import { Icon } from './Icon';
 import { PrimaryButton, TextField, Txt } from './ui';
@@ -324,6 +324,7 @@ const styles = themed(() => StyleSheet.create({
     borderCurve: 'continuous',
     backgroundColor: color.cardGlass,
     overflow: 'hidden',
+    ...shadow.plate,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   rowBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },

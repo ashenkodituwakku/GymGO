@@ -759,14 +759,16 @@ const styles = themed(() => StyleSheet.create({
     overflow: 'hidden',
   },
 
+  // The look's own card edge (Soft's raised shadow, Comic's ink outline, Classic's bevel), as every card on the page has.
   fold: {
     borderRadius: radius.lg + 4,
     borderCurve: 'continuous',
     backgroundColor: color.cardGlass,
     overflow: 'hidden',
+    ...shadow.plate,
   },
   foldHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
-  foldGroup: { borderRadius: radius.lg + 4, borderCurve: 'continuous', backgroundColor: color.cardGlass, overflow: 'hidden' },
+  foldGroup: { borderRadius: radius.lg + 4, borderCurve: 'continuous', backgroundColor: color.cardGlass, overflow: 'hidden', ...shadow.plate },
   foldGroupInner: { marginTop: -StyleSheet.hairlineWidth },
   foldInGroup: { overflow: 'hidden' },
   // Inset past the row's icon (padding 16 + icon 32 + gap 12), as iOS's lists are.

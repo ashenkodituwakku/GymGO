@@ -3,7 +3,7 @@
  */
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { forwardRef, useEffect, useState, type ReactNode, type Ref } from 'react';
+import { createContext, forwardRef, useContext, useEffect, useState, type ReactNode, type Ref } from 'react';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ActivityIndicator, Platform, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle } from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
@@ -161,9 +161,35 @@ export function Divider({ inset = 0 }: { inset?: number }) {
 // --- Buttons ----------------------------------------------------------------
 
 /** A fact that's short enough to show whole, in the same card as the folds (a gym's address). */
-export function InfoRow({ icon, title, lines, accessibilityLabel }: { icon: IconName; title: string; lines: string[]; accessibilityLabel?: string }) {
+/** Whether a Fold or an InfoRow sits in a FoldGroup: then it's a row of the group's card, not a card of its own. */
+const InGroup = createContext(false);
+
+/**
+ * Sections as the rows of one card, iOS's grouped list: each Fold or
+ * InfoRow inside drops its own card and gets a hairline above it, inset to
+ * where its words start. Far calmer than a card per section.
+ */
+export function FoldGroup({ children }: { children: ReactNode }) {
   return (
-    <View style={styles.fold} accessible accessibilityLabel={accessibilityLabel ?? `${title}: ${lines.join(', ')}`}>
+    <InGroup.Provider value>
+      <Animated.View style={styles.foldGroup} layout={GLIDE}>
+        {/* Pulled up a hairline, so the first row's line is hidden under the card's edge. */}
+        <View style={styles.foldGroupInner}>{children}</View>
+      </Animated.View>
+    </InGroup.Provider>
+  );
+}
+
+/** The hairline above a row in a FoldGroup, starting where its words do. */
+export function GroupLine() {
+  return useContext(InGroup) ? <View style={styles.groupLine} /> : null;
+}
+
+export function InfoRow({ icon, title, lines, accessibilityLabel }: { icon: IconName; title: string; lines: string[]; accessibilityLabel?: string }) {
+  const grouped = useContext(InGroup);
+  return (
+    <View style={grouped ? styles.foldInGroup : styles.fold} accessible accessibilityLabel={accessibilityLabel ?? `${title}: ${lines.join(', ')}`}>
+      <GroupLine />
       <View style={[styles.foldHead, styles.infoHead]}>
         <View style={styles.foldIcon}>
           <Icon name={icon} size={17} color={color.brand} />
@@ -209,8 +235,10 @@ export function Fold({
     turn.value = withSpring(open ? 90 : 0, SETTLE);
   }, [open, turn]);
   const chevron = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.value}deg` }] }));
+  const grouped = useContext(InGroup);
   return (
-    <Animated.View style={styles.fold} layout={GLIDE}>
+    <Animated.View style={grouped ? styles.foldInGroup : styles.fold} layout={GLIDE}>
+      <GroupLine />
       <Pressable
         onPress={() => {
           haptic.select();
@@ -738,6 +766,11 @@ const styles = themed(() => StyleSheet.create({
     overflow: 'hidden',
   },
   foldHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
+  foldGroup: { borderRadius: radius.lg + 4, borderCurve: 'continuous', backgroundColor: color.cardGlass, overflow: 'hidden' },
+  foldGroupInner: { marginTop: -StyleSheet.hairlineWidth },
+  foldInGroup: { overflow: 'hidden' },
+  // Inset past the row's icon (padding 16 + icon 32 + gap 12), as iOS's lists are.
+  groupLine: { height: StyleSheet.hairlineWidth, marginLeft: space[4] + 32 + space[3], backgroundColor: color.separator },
   foldEmoji: { width: 30, textAlign: 'center' },
   foldIcon: {
     width: 32,

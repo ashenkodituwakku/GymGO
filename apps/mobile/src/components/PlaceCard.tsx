@@ -35,7 +35,7 @@ import { useApp } from '@/lib/app-state';
 import { LogoBadge, LogoCredit, useGymMark } from './BrandLogo';
 import { Glass } from './Glass';
 import { FADE_IN, FADE_OUT, Pressable, Pressy } from './motion';
-import { ActionButton, CloseButton, Fold, InfoRow, RoundToggle, TIER_COLOUR, Txt } from './ui';
+import { ActionButton, CloseButton, Fold, FoldGroup, GroupLine, InfoRow, RoundToggle, TIER_COLOUR, Txt } from './ui';
 import { JoinGym, MembershipBanner } from './JoinGym';
 import { LIMITED } from '@/lib/limited';
 
@@ -399,7 +399,11 @@ export function PlaceCard({
         )}
       </Animated.View>
 
+      {/* The two ways onward, as one card. */}
+      <FoldGroup>
       {!location.isDemoData && (
+        <>
+        <GroupLine />
         <Pressy
           scaleTo={0.98}
           onPress={() => {
@@ -421,8 +425,10 @@ export function PlaceCard({
           </View>
           <Icon name="chevron" size={14} color={color.labelTertiary} />
         </Pressy>
+        </>
       )}
 
+      <GroupLine />
       <Pressy
         scaleTo={0.98}
         onPress={() => {
@@ -444,10 +450,13 @@ export function PlaceCard({
         </View>
         <Icon name="chevron" size={14} color={color.labelTertiary} />
       </Pressy>
+      </FoldGroup>
 
 
       {/* The detail, folded away ---------------------------------------- */}
       <Animated.View style={styles.folds}>
+        {/* The gym itself: where, what it costs, getting in, what it has. */}
+        <FoldGroup>
         {address.length > 0 && <InfoRow icon="pin" title="Address" lines={address} />}
         <Fold icon="money" title="Prices" summary={price.headline === '—' ? 'Not published' : `${price.headline} · ${price.caption}`}>
           {offers
@@ -628,7 +637,10 @@ export function PlaceCard({
             <Evidence provenance={record.amenities[0]?.provenance ?? location.provenance} />
           </Fold>
         )}
+        </FoldGroup>
 
+        {/* What people say and keep, who runs it, and where all this comes from. */}
+        <FoldGroup>
         <Fold
           icon="star"
           title="Reviews"
@@ -647,6 +659,7 @@ export function PlaceCard({
             {memberStatus}
           </Fold>
         )}
+        </FoldGroup>
       </Animated.View>
 
       {/* Wherever a brand's logo shows, its credit does too. */}
@@ -852,21 +865,19 @@ const styles = themed(() => StyleSheet.create({
   // A word as tall as a figure's line, at any text size, so the three captions line up.
   factWord: { lineHeight: type.figure.lineHeight },
 
+  // A row of the links' card (a FoldGroup).
   google: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[3],
     paddingHorizontal: space[4],
     paddingVertical: space[3],
-    borderRadius: radius.lg + 4,
-    borderCurve: 'continuous',
-    backgroundColor: color.cardGlass,
   },
   googleEmoji: { fontSize: 22, lineHeight: 28, width: 30, textAlign: 'center' },
   mailRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
 
-  folds: { gap: space[2], marginTop: space[1] },
+  folds: { gap: space[3], marginTop: space[1] },
 
   offer: { gap: 4 },
   offerHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },

@@ -214,6 +214,22 @@ WEB[new URL('/join-today.jpg', OWN.location.website!).href] = { status: 200, typ
 WEB[new URL('/coach.png', OWN.location.website!).href] = { status: 200, type: 'image/png', body: await cutOut(1000, 800) };
 WEB[new URL('/id-preview-home.png', OWN.location.website!).href] = { status: 200, type: 'image/png', body: await photo(1920, 1080) };
 
+// Doherty's Brunswick shares its site with the City branch, so nothing its pages share can be called its own; these were checked by eye.
+const DOHERTYS_BRUNSWICK = MELBOURNE_GYMS.find((gym) => gym.location.id === 'dohertys-gym-brunswick')!;
+const BRUNSWICK_FLOOR = await photo(1600, 900);
+const BRUNSWICK_RING = await photo(1200, 800);
+const CHOSEN = {
+  [DOHERTYS_BRUNSWICK.location.id]: [
+    { url: 'https://dohertysgym.com/img/brunswick-floor.jpg', page: 'https://dohertysgym.com/brunswick/' },
+    // Checked once, since swapped for a logo at the same address: not shown.
+    { url: 'https://dohertysgym.com/img/brunswick-sign.jpg', page: 'https://dohertysgym.com/brunswick/' },
+    { url: 'https://images.example-cdn.com/dohertys/ring.jpg', page: 'https://dohertysgym.com/boxing/' },
+  ],
+};
+WEB['https://dohertysgym.com/img/brunswick-floor.jpg'] = { status: 200, type: 'image/jpeg', body: BRUNSWICK_FLOOR };
+WEB['https://dohertysgym.com/img/brunswick-sign.jpg'] = { status: 200, type: 'image/jpeg', body: await card(1200, 630) };
+WEB['https://images.example-cdn.com/dohertys/ring.jpg'] = { status: 200, type: 'image/jpeg', body: BRUNSWICK_RING };
+
 let flakyUp = false;
 const fakeGet: SafeGet = async (url) => {
   visits.push(url.href);
@@ -233,7 +249,7 @@ let clock = new Date('2026-09-25T00:00:00Z');
 beforeAll(async () => {
   db = openDb(':memory:');
   seedGyms(db, [...MELBOURNE_GYMS, ...DEMO_GYMS, CLUB_LIME]);
-  server = createServer(createApp({ db, attribution: 'test', siteIcons: { get: fakeGet } }));
+  server = createServer(createApp({ db, attribution: 'test', siteIcons: { get: fakeGet, chosen: CHOSEN } }));
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
@@ -460,6 +476,38 @@ describe('a photo of the gym from its own website', () => {
     expect(photos.cachedAll('https://old.example.com/')).toBeUndefined();
     expect((await photos.photos('https://old.example.com/')).length).toBe(2);
     expect(photos.cachedAll('https://old.example.com/')?.length).toBe(2);
+  });
+
+  it('serves a gym’s chosen photos in order, each credited to its own page, even where its site is shared, never one that’s now a logo', async () => {
+    const id = DOHERTYS_BRUNSWICK.location.id;
+    expect(await (await fetch(`${base}/api/gyms/${id}/site-photos`)).json()).toEqual({ count: 2, from: 'https://dohertysgym.com/brunswick/' });
+    const cover = await fetch(`${base}/api/gyms/${id}/photo`);
+    expect(cover.status).toBe(200);
+    expect(Buffer.from(await cover.arrayBuffer()).equals(BRUNSWICK_FLOOR)).toBe(true);
+    expect(decodeURI(cover.headers.get('x-photo-source')!)).toBe('https://dohertysgym.com/brunswick/');
+    const second = await fetch(`${base}/api/gyms/${id}/photo/1`);
+    expect(Buffer.from(await second.arrayBuffer()).equals(BRUNSWICK_RING)).toBe(true);
+    expect(decodeURI(second.headers.get('x-photo-source')!)).toBe('https://dohertysgym.com/boxing/');
+    expect((await fetch(`${base}/api/gyms/${id}/photo/2`)).status).toBe(404);
+  });
+
+  it('keeps chosen photos by gym and list: a new list is fetched afresh, and a list that gave none is asked again after an hour', async () => {
+    let now = new Date('2026-10-25T00:00:00Z');
+    const pictures: Record<string, Buffer> = { 'https://a.example.com/1.jpg': await photo(1200, 800), 'https://a.example.com/2.jpg': await photo(1300, 800) };
+    let up = false;
+    const get: SafeGet = async (url) =>
+      up && pictures[url.href] ? { status: 200, type: 'image/jpeg', body: pictures[url.href]!, url: url.href } : { status: 503, type: 'text/html', body: Buffer.alloc(0), url: url.href };
+    const photos = new SitePhotos(openDb(':memory:'), { get, now: () => now });
+    const one = [{ url: 'https://a.example.com/1.jpg', page: 'https://a.example.com/' }];
+    expect(await photos.chosen('gym-a', one)).toEqual([]);
+    up = true;
+    expect(photos.cachedChosen('gym-a', one)).toEqual([]);
+    now = new Date('2026-10-25T01:01:00Z');
+    expect(photos.cachedChosen('gym-a', one)).toBeUndefined();
+    expect((await photos.chosen('gym-a', one)).map((item) => item.source)).toEqual(['https://a.example.com/1.jpg']);
+    const two = [...one, { url: 'https://a.example.com/2.jpg', page: 'https://a.example.com/' }];
+    expect(photos.cachedChosen('gym-a', two)).toBeUndefined();
+    expect((await photos.chosen('gym-a', two)).map((item) => item.source)).toEqual(['https://a.example.com/1.jpg', 'https://a.example.com/2.jpg']);
   });
 
   it('has none for a site several gyms share, or for demo gyms', async () => {

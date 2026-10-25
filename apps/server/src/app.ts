@@ -193,7 +193,8 @@ import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type Strip
 import { AreaError, AreaSearch, parseBox, whereIs } from './area';
 import { CountryPacks } from './countryPack';
 import { PlaceError, PlaceSearch } from './places';
-import { SiteIcons, SitePhotos, chainWebsites, ownPhotoSites, type SafeGet } from './siteicons';
+import { SiteIcons, SitePhotos, chainWebsites, ownPhotoSites, type ChosenPhoto, type SafeGet } from './siteicons';
+import { MELBOURNE_PHOTOS } from '@gymgo/melbourne-data';
 import { allGyms, gymCountry, gymExists, gymIsDemo, gymRecord, type Db } from './db';
 import { GoogleError, GooglePlaces } from './google';
 import { MAX_AVATAR_BYTES, MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
@@ -238,7 +239,7 @@ export interface AppOptions {
   /** Finding a town by name: which geocoder to ask, and a stand-in fetch for tests. */
   places?: { endpoint?: string; fetchImpl?: typeof fetch };
   /** Gyms' own website icons: on unless switched off; `get` stands in for the web in tests. */
-  siteIcons?: { enabled?: boolean; get?: SafeGet };
+  siteIcons?: { enabled?: boolean; get?: SafeGet; chosen?: Readonly<Record<string, readonly ChosenPhoto[]>> };
   /** Sign in with Google and Apple: the client ids each accepts, and a stand-in fetch for their keys in tests. */
   signIn?: {
     google?: { web: string | null; ios: string | null; android: string | null };
@@ -2244,27 +2245,31 @@ export function createApp(options: AppOptions) {
       const record = gymRecord(db, decodeURIComponent(parts[2]!));
       if (!record) throw new HttpError(404, 'No gym with that id.');
       if (options.siteIcons?.enabled === false) throw new HttpError(404, 'Website pictures are switched off.', 'off');
+      // Photos checked by eye on the gym's own pages come first, and stand in for what its page shares.
+      const chosen = (options.siteIcons?.chosen ?? MELBOURNE_PHOTOS)[record.location.id];
       photoSite ??= ownPhotoSites(allGyms(db));
-      const website = photoSite(record);
+      const website = chosen?.length ? chosen[0]!.page : photoSite(record);
       if (!website) {
         if (parts[3] === 'site-photos') return send(res, 200, { count: 0, from: null }, 'public, max-age=86400');
         return send(res, 404, { error: 'This gym has no website of its own to take a photo from.', code: 'none' }, 'public, max-age=86400');
       }
-      let photos = sitePhotos.cachedAll(website);
+      let photos = chosen?.length ? sitePhotos.cachedChosen(record.location.id, chosen) : sitePhotos.cachedAll(website);
       if (photos === undefined) {
         if (!sitePhotoLimiter.allow(clientAddress(req), now().getTime())) throw new HttpError(429, 'Too many photos at once. Try again soon.');
-        photos = await sitePhotos.photos(website);
+        photos = chosen?.length ? await sitePhotos.chosen(record.location.id, chosen) : await sitePhotos.photos(website);
       }
       if (parts[3] === 'site-photos') return send(res, 200, { count: photos.length, from: website }, 'public, max-age=3600');
       const photo = photos[parts.length === 5 ? Number(parts[4]) : 0];
       if (!photo) return send(res, 404, { error: 'The gym’s website has no photo GymGO can show.', code: 'none' }, 'public, max-age=3600');
+      // A chosen photo is credited to the page it's on.
+      const credit = chosen?.find((item) => item.url === photo.source)?.page ?? website;
       res.statusCode = 200;
       res.setHeader('Content-Type', photo.mime);
       res.setHeader('Content-Length', String(photo.bytes.length));
       res.setHeader('Cache-Control', 'public, max-age=604800');
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
-      res.setHeader('X-Photo-Source', encodeURI(website));
+      res.setHeader('X-Photo-Source', encodeURI(credit));
       res.setHeader('Access-Control-Expose-Headers', 'X-Photo-Source, X-Icon-Source');
       res.end(photo.bytes);
       return;

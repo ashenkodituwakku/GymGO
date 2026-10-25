@@ -954,13 +954,22 @@ on Home shows the first. In this order:
    the site's home page, nor one that another branch's page shows too
    (under any address, at any size): both are the chain's stock pictures,
    not this branch; the page's own pictures stay. Checked against the live
-   sites on 25 October 2026, that leaves one of the 23 curated Melbourne
-   gyms with a photo, GoodLife Fitzroy (its club page's own picture of its
-   floor, named for Fitzroy, where other GoodLife clubs share one stock
-   picture); the others' sites share only logos, a screenshot or the
-   chain's stock pictures, so they show none. 1,566 of the 2,995 real
-   gyms have a site of their own. These photos belong to the gyms; the
-   owner chose to show them.
+   sites on 25 October 2026, what the curated Melbourne gyms' pages share
+   is mostly logos, a screenshot or a chain's stock pictures, so for those
+   gyms there is a better source:
+   **photos checked by eye on each gym's own pages**
+   (`packages/melbourne-data/src/photos.ts`), which come first where a gym
+   has them. Each shows that gym (its floor, rooms, front or a class in its
+   own space), never a logo, poster, stock picture, portrait on its own or
+   render; on a site with several branches only a picture on that branch's
+   page, and on no other branch's, counts. Only the addresses are kept,
+   each with the page it's on (its credit), what it shows and when it was
+   checked; the server fetches them, checks each is still a photograph
+   (any shape: a wide shot of a weights room isn't a banner), and keeps
+   them a month. On 25 October 2026, 12 of the 23 have them (38 photos);
+   the file says why each of the other 11 has none. 1,566 of the 2,995
+   real gyms have a site of their own. These photos belong to the gyms;
+   the owner chose to show them.
    GymGO never copies photos found by searching the web (Google Images and
    the like): they belong to the gyms and photographers who took them.
 3. If there are none, and the owner has set up the optional Google key

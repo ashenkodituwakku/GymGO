@@ -18,7 +18,7 @@
  * gym is open, not when a visitor may come; its reviews aren't ours.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Image, Linking, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from './motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,6 +27,7 @@ import { api, type GoogleAuthor, type GooglePlace } from '@/lib/api';
 import { googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl } from '@/lib/present';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { GoogleEmbed } from './GoogleEmbed';
+import { PagerArrows } from './PhotoHero';
 import { CloseButton, PrimaryButton, Txt } from './ui';
 import { openPage } from '@/lib/actions';
 
@@ -118,9 +119,27 @@ export function GooglePage({ record, onClose }: { record: GymRecord; onClose: ()
  * took it, with Google's attribution beneath. For the top of a gym's page.
  */
 export function GooglePhotos({ photos, width }: { photos: GooglePlace['photos']; width: number }) {
+  // Swiped on a phone; the arrows step through for a mouse or a keyboard.
+  const scroller = useRef<ScrollView>(null);
+  const [at, setAt] = useState(0);
+  const show = (index: number) => {
+    scroller.current?.scrollTo({ x: index * width, animated: true });
+    setAt(index);
+  };
   return (
     <View style={styles.hero}>
-      <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={{ width }}>
+      <ScrollView
+        ref={scroller}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        style={{ width }}
+        scrollEventThrottle={64}
+        onScroll={(event) => {
+          const index = Math.round(event.nativeEvent.contentOffset.x / Math.max(1, width));
+          if (index !== at && index >= 0 && index < photos.length) setAt(index);
+        }}
+      >
         {photos.map((photo, index) => (
           <View key={`${index}-${photo.uri}`} style={{ width, gap: 4 }}>
             <Image source={{ uri: photo.uri }} style={[styles.heroPhoto, { width }]} resizeMode="cover" />
@@ -128,6 +147,7 @@ export function GooglePhotos({ photos, width }: { photos: GooglePlace['photos'];
           </View>
         ))}
       </ScrollView>
+      {photos.length > 1 && <PagerArrows at={at} count={photos.length} onShow={show} top={120 - 16} />}
       <Txt style={styles.heroAttribution}>Google Maps</Txt>
     </View>
   );

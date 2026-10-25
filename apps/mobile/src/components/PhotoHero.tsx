@@ -160,19 +160,28 @@ function Gallery({ slides, width }: { slides: Slide[]; width: number }) {
               <View key={slide.key} style={[styles.dot, index === at && styles.dotOn]} />
             ))}
           </View>
-          {at > 0 && (
-            <Pressable onPress={() => show(at - 1)} accessibilityRole="button" accessibilityLabel="Previous photo" hitSlop={6} style={[styles.arrow, styles.arrowLeft]}>
-              <Icon name="chevronBack" size={14} color={color.onBrand} />
-            </Pressable>
-          )}
-          {at < count - 1 && (
-            <Pressable onPress={() => show(at + 1)} accessibilityRole="button" accessibilityLabel="Next photo" hitSlop={6} style={[styles.arrow, styles.arrowRight]}>
-              <Icon name="chevron" size={14} color={color.onBrand} />
-            </Pressable>
-          )}
+          <PagerArrows at={at} count={count} onShow={show} />
         </>
       )}
     </View>
+  );
+}
+
+/** Previous and next over a gallery of photos 180 high, for a mouse or a keyboard: each only where there's one to go to. */
+export function PagerArrows({ at, count, onShow, top = 90 - 16 }: { at: number; count: number; onShow: (index: number) => void; top?: number }) {
+  return (
+    <>
+      {at > 0 && (
+        <Pressable onPress={() => onShow(at - 1)} accessibilityRole="button" accessibilityLabel="Previous photo" hitSlop={6} style={[styles.arrow, styles.arrowLeft, { top }]}>
+          <Icon name="chevronBack" size={14} color={color.onBrand} />
+        </Pressable>
+      )}
+      {at < count - 1 && (
+        <Pressable onPress={() => onShow(at + 1)} accessibilityRole="button" accessibilityLabel="Next photo" hitSlop={6} style={[styles.arrow, styles.arrowRight, { top }]}>
+          <Icon name="chevron" size={14} color={color.onBrand} />
+        </Pressable>
+      )}
+    </>
   );
 }
 
@@ -448,7 +457,7 @@ const styles = themed(() => StyleSheet.create({
   dots: { position: 'absolute', bottom: space[3] + 4, right: space[3], flexDirection: 'row', gap: 5 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' },
   dotOn: { backgroundColor: '#FFFFFF', width: 14 },
-  arrow: { position: 'absolute', top: 90 - 16, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.scrim },
+  arrow: { position: 'absolute', width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.scrim },
   arrowLeft: { left: space[2] },
   arrowRight: { right: space[2] },
   addPill: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },

@@ -10,7 +10,7 @@ import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, Pressable } from './motion';
-import { HOURS_LABELS, explainNoMatches, type HoursNeed, type SearchOutcome } from '@gymgo/domain';
+import { HOURS_LABELS, explainNoMatches, type GymLocation, type HoursNeed, type SearchOutcome } from '@gymgo/domain';
 import { countryInSentence, countryName } from '@/lib/country';
 import { cityAt, distanceLabel, localBudget, moneyLabel, placeContext, tracksPrices } from '@/lib/places';
 import { MATCH, suggestionKey, title, type Suggestion } from '@/lib/suggest';
@@ -20,6 +20,7 @@ import type { Lookup } from '@/lib/app-state';
 import { SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
 import { NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
+import { MarkImage, useGymMark } from './BrandLogo';
 import { GymRow } from './GymRow';
 import { GymRowsSkeleton } from './Skeleton';
 import { Icon } from './Icon';
@@ -254,9 +255,13 @@ export function ResultsContent({
                 accessibilityRole="button"
                 accessibilityLabel={`${row.title}, ${row.label}`}
               >
-                <View style={[styles.suggestionGlyph, hit.kind === 'gym' && styles.gymGlyph]}>
-                  <Icon name={hit.kind === 'gym' ? 'gym' : 'pin'} size={16} color={color.onBrand} />
-                </View>
+                {hit.kind === 'gym' ? (
+                  <GymGlyph location={hit.record.location} />
+                ) : (
+                  <View style={styles.suggestionGlyph}>
+                    <Icon name="pin" size={16} color={color.onBrand} />
+                  </View>
+                )}
                 <View style={styles.suggestionText}>
                   <Txt variant="body" numberOfLines={1}>
                     {row.title}
@@ -522,6 +527,23 @@ function suggestionRow(hit: Suggestion, home: string | null): { title: string; d
   }
 }
 
+/** A gym in the suggestions: its own mark on a white plate, as lists of gyms show it; the gym icon where it has none. */
+function GymGlyph({ location }: { location: GymLocation }) {
+  const mark = useGymMark(location);
+  if (!mark) {
+    return (
+      <View style={[styles.suggestionGlyph, styles.gymGlyph]}>
+        <Icon name="gym" size={16} color={color.onBrand} />
+      </View>
+    );
+  }
+  return (
+    <View style={[styles.suggestionGlyph, styles.logoGlyph]}>
+      <MarkImage mark={mark} name={location.name} width={26} height={24} area={500} />
+    </View>
+  );
+}
+
 const styles = themed(() => StyleSheet.create({
   lock: {
     alignItems: 'center',
@@ -590,6 +612,7 @@ const styles = themed(() => StyleSheet.create({
     justifyContent: 'center',
   },
   gymGlyph: { backgroundColor: color.brandFill },
+  logoGlyph: { borderRadius: radius.sm, borderCurve: 'continuous', backgroundColor: color.logoPlate, borderWidth: StyleSheet.hairlineWidth, borderColor: color.separator, overflow: 'hidden' },
   avatarSignedIn: { backgroundColor: color.brandFill },
   filterButton: {
     width: 40,

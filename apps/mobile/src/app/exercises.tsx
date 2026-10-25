@@ -87,7 +87,8 @@ export default function ExercisesScreen() {
                 style={styles.yourCard}
               >
                 <ExerciseTile exerciseId={item.id} size={48} />
-                <Txt variant="footnote" style={face('semibold')} numberOfLines={2}>
+                {/* Three lines and a wider card: at two, "Incline dumbbell press" lost its "press". */}
+                <Txt variant="footnote" style={face('semibold')} numberOfLines={3}>
                   {item.name}
                 </Txt>
                 <Txt variant="caption" color={color.labelSecondary}>
@@ -184,7 +185,7 @@ const styles = themed(() =>
     chips: { gap: space[2], paddingRight: space[4] },
     yours: { gap: space[2], paddingRight: space[4], paddingBottom: space[1] },
     yourCard: {
-      width: 116,
+      width: 148,
       gap: space[1],
       padding: space[3],
       borderRadius: radius.lg,

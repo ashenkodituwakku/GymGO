@@ -15,6 +15,7 @@ import { MilestonesCard, MuscleBalanceCard, WeekCard } from '@/components/Traini
 import { CountUp } from '@/components/CountUp';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { PrimaryButton, Txt } from '@/components/ui';
+import { RowChevron } from '@/components/ios';
 import { ListSkeleton } from '@/components/Skeleton';
 import { weekRecap } from '@/lib/insights';
 import { useCollection } from '@/lib/useCollection';
@@ -423,7 +424,7 @@ function SessionRow({
             </Txt>
           )}
         </View>
-        <Icon name="chevron" size={13} color={color.labelTertiary} />
+        <RowChevron expanded={open} />
       </Pressable>
       {open && (
         <View style={styles.detail}>

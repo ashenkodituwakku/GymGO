@@ -233,7 +233,7 @@ export default function FriendsScreen() {
             accessibilityLabel={`${friend.displayName}: ${friend.totals.gyms} gyms in ${friend.totals.cities} cities. See their cards`}
             style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.fill }]}
           >
-            <Avatar account={{ displayName: friend.displayName, avatarUrl: friend.avatarUrl }} size={40} variant="headline" />
+            <Avatar account={{ displayName: friend.displayName, avatarUrl: friend.avatarUrl }} size={40} variant="headline" person={friend.displayName} />
             <View style={styles.flex}>
               <Txt variant="headline" numberOfLines={1}>
                 {friend.displayName}
@@ -289,7 +289,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function PersonRow({ person, children }: { person: Person; children: React.ReactNode }) {
   return (
     <View style={styles.row}>
-      <Avatar account={{ displayName: person.displayName, avatarUrl: person.avatarUrl }} size={36} variant="subhead" />
+      <Avatar account={{ displayName: person.displayName, avatarUrl: person.avatarUrl }} size={36} variant="subhead" person={person.displayName} />
       <Txt variant="headline" numberOfLines={1} style={styles.flex}>
         {person.displayName}
       </Txt>
@@ -302,7 +302,7 @@ function InviteRow({ invite, mine, children }: { invite: TrainInvite; mine: bool
   const who = mine ? invite.to : invite.from;
   return (
     <View style={[styles.row, styles.inviteRow]}>
-      <Avatar account={{ displayName: who.displayName, avatarUrl: who.avatarUrl }} size={36} variant="subhead" />
+      <Avatar account={{ displayName: who.displayName, avatarUrl: who.avatarUrl }} size={36} variant="subhead" person={who.displayName} />
       <View style={styles.flex}>
         <Txt variant="subhead" style={face('semibold')} numberOfLines={2}>
           {mine ? `You invited ${who.displayName}` : `${who.displayName} invited you`}

@@ -257,7 +257,7 @@ function Row({ row }: { row: BoardEntry }) {
           {row.rank}
         </Txt>
       </View>
-      <Avatar account={{ displayName: row.displayName, avatarUrl: row.avatarUrl }} size={34} variant="subhead" />
+      <Avatar account={{ displayName: row.displayName, avatarUrl: row.avatarUrl }} size={34} variant="subhead" person={row.you ? undefined : row.displayName} />
       {/* The name gives way to a long one; "You" always shows. */}
       <View style={styles.name}>
         <Txt variant="headline" numberOfLines={1} style={styles.shrink}>

@@ -2,12 +2,15 @@
  * You, as a circle: your profile picture if you've set one, else your
  * initial on the accent colour (Rainbow's or Camo's paint where that's the
  * accent). The picture is your own, from your photos; nothing stands in for
- * it but the initial.
+ * it but the initial. Someone else (`person`) without a picture is their
+ * initial on a colour of their own (lib/personColour.ts), so a list of
+ * people is easy to tell apart.
  */
 
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { photoUrl, type Account } from '@/lib/api';
+import { personColour } from '@/lib/personColour';
 import { color, currentPaint, face, radius, themed } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
 import { Txt } from './ui';
@@ -19,10 +22,13 @@ export function Avatar({
   size,
   variant,
   ring,
+  person,
 }: {
   account: Pick<Account, 'displayName' | 'avatarUrl'>;
   size: number;
   variant: Variant;
+  /** Someone other than you: the name they show, for their own colour (the same in every list). */
+  person?: string;
   /**
    * GymGO Pro's ring, in your accent (or Rainbow's or Camo's paint): pass the
    * colour behind the circle, for the gap between ring and picture (with a
@@ -52,10 +58,10 @@ export function Avatar({
       </View>
     );
   }
-  return <Face account={account} size={size} variant={variant} />;
+  return <Face account={account} size={size} variant={variant} person={person} />;
 }
 
-function Face({ account, size, variant }: { account: Pick<Account, 'displayName' | 'avatarUrl'>; size: number; variant: Variant }) {
+function Face({ account, size, variant, person }: { account: Pick<Account, 'displayName' | 'avatarUrl'>; size: number; variant: Variant; person?: string }) {
   const uri = account.avatarUrl ? photoUrl(account.avatarUrl) : null;
   // A picture that won't load (the server's away) shows the initial instead.
   const [broken, setBroken] = useState<string | null>(null);
@@ -65,8 +71,8 @@ function Face({ account, size, variant }: { account: Pick<Account, 'displayName'
     return <Image source={{ uri }} style={[styles.picture, shape]} onError={() => setBroken(uri)} accessibilityIgnoresInvertColors />;
   }
   return (
-    <View style={[styles.initial, shape]}>
-      <BrandFill />
+    <View style={[styles.initial, shape, person !== undefined && { backgroundColor: personColour(person) }]}>
+      {person === undefined && <BrandFill />}
       <Txt variant={variant} color={color.onBrand} style={variant === 'subhead' ? face('semibold') : undefined}>
         {account.displayName.slice(0, 1).toUpperCase()}
       </Txt>

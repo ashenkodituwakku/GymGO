@@ -5,7 +5,7 @@
  */
 
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { summariseWeek, type GymSearchResult, type Tri } from '@gymgo/domain';
@@ -130,7 +130,8 @@ export default function Compare() {
   const prices = gyms.map((result) => result.offers.confirmed?.cost.totalNonRefundableMinor ?? null);
   const cheapest = Math.min(...prices.filter((value): value is number => value !== null));
 
-  const rows: Array<{ label: string; cells: Cell[] }> = [
+  // Two cards: getting in, then the gym itself, a line between rows (as on a gym's page), not a card a row.
+  const entry: Array<{ label: string; cells: Cell[] }> = [
     {
       label: 'Answer',
       cells: gyms.map((result) => ({ text: TIER[result.tier].label, ink: TIER_COLOUR[result.tier].ink, strong: true })),
@@ -179,6 +180,8 @@ export default function Compare() {
     { label: 'Book ahead', cells: gyms.map((result) => tri(result.record.prerequisites.advanceBookingRequired)) },
     { label: 'Induction first visit', cells: gyms.map((result) => tri(result.record.prerequisites.inductionRequired)) },
     { label: 'Photo ID', cells: gyms.map((result) => tri(result.record.prerequisites.photoIdRequired)) },
+  ];
+  const place: Array<{ label: string; cells: Cell[] }> = [
     {
       label: 'Machines the gym lists',
       cells: gyms.map((result) => {
@@ -231,18 +234,25 @@ export default function Compare() {
     </View>
   );
 
-  const body = rows.map((row) => (
-    <View key={row.label} style={styles.row}>
-      <Txt variant="eyebrow" color={color.labelSecondary}>
-        {row.label.toUpperCase()}
-      </Txt>
-      <View style={styles.cells}>
-        {row.cells.map((cell, index) => (
-          <Txt key={index} variant="subhead" color={cell.ink ?? color.label} style={[styles.cell, cell.strong && face('semibold')]}>
-            {cell.text}
-          </Txt>
-        ))}
-      </View>
+  const body = [entry, place].map((group, at) => (
+    <View key={at} style={styles.group}>
+      {group.map((row, index) => (
+        <Fragment key={row.label}>
+          {index > 0 && <View style={styles.rule} />}
+          <View style={styles.row}>
+            <Txt variant="eyebrow" color={color.labelSecondary}>
+              {row.label.toUpperCase()}
+            </Txt>
+            <View style={styles.cells}>
+              {row.cells.map((cell, column) => (
+                <Txt key={column} variant="subhead" color={cell.ink ?? color.label} style={[styles.cell, cell.strong && face('semibold')]}>
+                  {cell.text}
+                </Txt>
+              ))}
+            </View>
+          </View>
+        </Fragment>
+      ))}
     </View>
   ));
 
@@ -349,13 +359,9 @@ const styles = themed(() => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  row: {
-    gap: space[2],
-    padding: space[3],
-    borderRadius: radius.lg,
-    borderCurve: 'continuous',
-    backgroundColor: color.plate,
-  },
+  group: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden' },
+  row: { gap: space[2], padding: space[3] },
+  rule: { height: StyleSheet.hairlineWidth, marginLeft: space[3], backgroundColor: color.separator },
   cells: { flexDirection: 'row', gap: space[3] },
   cell: { flex: 1 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },

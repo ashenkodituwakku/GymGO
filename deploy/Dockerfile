@@ -34,7 +34,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --offline --froze
 RUN test -n "$GYMGO_PUBLIC_URL" || (echo "GYMGO_PUBLIC_URL is needed to build the web app (deploy/.env)" && exit 1)
 RUN cd apps/mobile && EXPO_PUBLIC_API_URL="$GYMGO_PUBLIC_URL" npx expo export --platform web --output-dir /web
 
-# --- The server, with its own packages and nothing else (about 45 MB) ----------
+# --- The server, with its own packages and nothing else (about 65 MB) ----------
 FROM pnpm AS server
 COPY . .
 # Workspace packages are copied in rather than linked (for this command

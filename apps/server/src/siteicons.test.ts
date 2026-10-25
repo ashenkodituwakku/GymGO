@@ -7,7 +7,8 @@ import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { createApp } from './app';
 import { openDb, seedGyms, type Db } from './db';
 import { deflateSync } from 'node:zlib';
-import { SiteIcons, SitePhotos, allowedUrl, chainWebsites, googleIconUrl, iconCandidates, isPrivateAddress, lightOnTransparent, onDarkPlate, ownPhotoSites, photoCandidates, sniffImage, type Fetched, type SafeGet } from './siteicons';
+import sharp from 'sharp';
+import { SiteIcons, SitePhotos, allowedUrl, chainWebsites, googleIconUrl, iconCandidates, isPrivateAddress, lightOnTransparent, namedNotAPhoto, onDarkPlate, ownPhotoSites, photoCandidates, photoLook, printsApart, sniffImage, type Fetched, type SafeGet } from './siteicons';
 import type { GymRecord } from '@gymgo/domain';
 
 /** A PNG header of the given size: all the checks read. */
@@ -46,6 +47,33 @@ function rgbaPng(size: number, pixel: (x: number, y: number) => [number, number,
     chunk('IEND', Buffer.alloc(0)),
   ]);
 }
+
+/** A photo-like picture (blotches of every colour, as a JPEG) of the given size: each one made is a different picture. */
+async function photo(width: number, height: number): Promise<Buffer> {
+  const blotches = await sharp({
+    create: { width: 64, height: Math.max(8, Math.round((64 * height) / width)), channels: 3, background: '#808080', noise: { type: 'gaussian', mean: 128, sigma: 60 } },
+  })
+    .png()
+    .toBuffer();
+  return sharp(blotches).resize(width, height, { fit: 'fill' }).jpeg({ quality: 85 }).toBuffer();
+}
+
+/** The same picture at another size and quality, as a site's second tag often names it. */
+const resized = (picture: Buffer, width: number, height: number) => sharp(picture).resize(width, height, { fit: 'fill' }).jpeg({ quality: 70 }).toBuffer();
+
+/** A lettered card or a logo on white: a few flat colours, as a JPEG, with nothing in its name to say so. */
+const card = (width: number, height: number) =>
+  sharp({ create: { width, height, channels: 3, background: '#ffffff' } })
+    .composite([{ input: { create: { width: Math.round(width / 2), height: Math.round(height / 3), channels: 3, background: '#d0021b' } }, left: Math.round(width / 4), top: Math.round(height / 3) }])
+    .jpeg()
+    .toBuffer();
+
+/** A photo on a see-through background, as a PNG: a cut-out or a badge, not a photo of the place. */
+const cutOut = async (width: number, height: number) =>
+  sharp({ create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: await photo(Math.round(width / 2), Math.round(height / 2)), left: Math.round(width / 4), top: Math.round(height / 4) }])
+    .png()
+    .toBuffer();
 
 describe('icons that would vanish on a white plate', () => {
   it('spots a white mark on a transparent background', () => {
@@ -164,20 +192,27 @@ const OWN = MELBOURNE_GYMS.find(
 function jpeg(width: number, height: number): Buffer {
   return Buffer.from([0xff, 0xd8, 0xff, 0xc0, 0x00, 0x11, 0x08, height >> 8, height & 255, width >> 8, width & 255, 0x03, 0, 0, 0, 0, 0, 0, 0, 0]);
 }
+const FLOOR = await photo(1200, 630);
+const CHANGING_ROOMS = await photo(1600, 1067);
 WEB[OWN.location.website!] = {
   status: 200,
   type: 'text/html',
   body: Buffer.from(
     '<meta property="og:image" content="/logo-share.png"><meta property="og:image" content="/floor.jpg"><meta name="twitter:image" content="/small.jpg">' +
-      // More pictures the page gives search engines: one, the same floor photo again under another name, and a thin banner.
-      '<script type="application/ld+json">{"@type":"ExerciseGym","image":["/changing-rooms.jpg","/floor-copy.jpg","/banner.jpg"]}</script>',
+      // More pictures the page gives search engines: one, the same floor photo again under another name and at another size,
+      // a thin banner, a lettered card and a cut-out on nothing (neither named for what it is), and a screenshot of the site.
+      '<script type="application/ld+json">{"@type":"ExerciseGym","image":["/changing-rooms.jpg","/floor-copy.jpg","/floor-800.jpg","/banner.jpg","/join-today.jpg","/coach.png","/id-preview-home.png"]}</script>',
   ),
 };
-WEB[new URL('/floor.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: jpeg(1200, 630) };
+WEB[new URL('/floor.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: FLOOR };
 WEB[new URL('/small.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: jpeg(120, 80) };
-WEB[new URL('/changing-rooms.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: jpeg(1600, 1067) };
-WEB[new URL('/floor-copy.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: jpeg(1200, 630) };
+WEB[new URL('/changing-rooms.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: CHANGING_ROOMS };
+WEB[new URL('/floor-copy.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: FLOOR };
+WEB[new URL('/floor-800.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: await resized(FLOOR, 800, 420) };
 WEB[new URL('/banner.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: jpeg(2400, 400) };
+WEB[new URL('/join-today.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: await card(1200, 630) };
+WEB[new URL('/coach.png', OWN.location.website!).href] = { status: 200, type: 'image/png', body: await cutOut(1000, 800) };
+WEB[new URL('/id-preview-home.png', OWN.location.website!).href] = { status: 200, type: 'image/png', body: await photo(1920, 1080) };
 
 let flakyUp = false;
 const fakeGet: SafeGet = async (url) => {
@@ -323,6 +358,24 @@ describe('a photo of the gym from its own website', () => {
     expect(photoCandidates(html, 'https://gym.example.com/').map((url) => url.href)).toEqual(['https://gym.example.com/hero.jpg', 'https://gym.example.com/room.webp']);
   });
 
+  it('judges a picture’s name by its path, not the site’s: Icon Fitness keeps its photos', () => {
+    expect(namedNotAPhoto(new URL('https://iconfitness.com.au/images/floor.jpg'))).toBe(false);
+    expect(namedNotAPhoto(new URL('https://cdn.example.com/u/Logo-White.webp'))).toBe(true);
+    expect(namedNotAPhoto(new URL('https://cdn.example.com/u/id-preview-ed603d8f.png'))).toBe(true);
+    expect(namedNotAPhoto(new URL('https://gym.example.com/brand.svg'))).toBe(true);
+  });
+
+  it('knows a photograph from a logo, a lettered card or a cut-out, and the same picture at another size', async () => {
+    const floor = await photoLook(FLOOR);
+    expect(floor?.photo).toBe(true);
+    expect((await photoLook(CHANGING_ROOMS))?.photo).toBe(true);
+    expect((await photoLook(await card(1200, 630)))?.photo).toBe(false);
+    expect((await photoLook(await cutOut(1000, 800)))?.photo).toBe(false);
+    expect(await photoLook(jpeg(1200, 630))).toBeNull();
+    expect(printsApart(floor!.print, (await photoLook(await resized(FLOOR, 800, 420)))!.print)).toBeLessThanOrEqual(6);
+    expect(printsApart(floor!.print, (await photoLook(CHANGING_ROOMS))!.print)).toBeGreaterThan(6);
+  });
+
   it('only from a site that is the gym’s own: not one other gyms share, nor a chain’s home page', () => {
     const gym = (id: string, name: string, website: string | null, brand: string | null = null) =>
       ({ location: { id, name, brand, website, isDemoData: false, address: { countryCode: 'AU' }, externalRefs: {} } }) as unknown as GymRecord;
@@ -343,18 +396,18 @@ describe('a photo of the gym from its own website', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('image/jpeg');
     expect(decodeURI(response.headers.get('x-photo-source')!)).toBe(new URL(OWN.location.website!).href);
-    expect(Buffer.from(await response.arrayBuffer()).equals(jpeg(1200, 630))).toBe(true);
+    expect(Buffer.from(await response.arrayBuffer()).equals(FLOOR)).toBe(true);
   });
 
-  it('serves every photo the page gives, each once, and says how many: never the logo, a thumbnail or a banner', async () => {
+  it('serves every photo the page gives, each once, and says how many: never a logo, a card, a cut-out, a screenshot, a thumbnail or a banner', async () => {
     const list = await fetch(`${base}/api/gyms/${OWN.location.id}/site-photos`);
     expect(list.status).toBe(200);
     expect(await list.json()).toEqual({ count: 2, from: new URL(OWN.location.website!).href });
     const second = await fetch(`${base}/api/gyms/${OWN.location.id}/photo/1`);
     expect(second.status).toBe(200);
-    expect(Buffer.from(await second.arrayBuffer()).equals(jpeg(1600, 1067))).toBe(true);
+    expect(Buffer.from(await second.arrayBuffer()).equals(CHANGING_ROOMS)).toBe(true);
     // /photo/0 is the cover, as /photo is.
-    expect(Buffer.from(await (await fetch(`${base}/api/gyms/${OWN.location.id}/photo/0`)).arrayBuffer()).equals(jpeg(1200, 630))).toBe(true);
+    expect(Buffer.from(await (await fetch(`${base}/api/gyms/${OWN.location.id}/photo/0`)).arrayBuffer()).equals(FLOOR)).toBe(true);
     expect((await fetch(`${base}/api/gyms/${OWN.location.id}/photo/2`)).status).toBe(404);
     // Like /photo, they load as plain images: no sign-in needed.
     expect((await fetch(`${base}/api/gyms/${DOHERTYS.location.id}/site-photos`).then((r) => r.json()))).toEqual({ count: 0, from: null });
@@ -367,11 +420,11 @@ describe('a photo of the gym from its own website', () => {
       'https://chain.example.com/east/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/east.jpg"><meta property="og:image" content="/team.jpg">') },
       'https://chain.example.com/west/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/team.jpg"><meta property="og:image" content="/west.jpg">') },
       'https://chain.example.com/': { status: 200, type: 'text/html', body: Buffer.from('') },
-      'https://chain.example.com/east.jpg': { status: 200, type: 'image/jpeg', body: jpeg(1200, 801) },
-      'https://chain.example.com/west.jpg': { status: 200, type: 'image/jpeg', body: jpeg(1200, 802) },
-      'https://chain.example.com/team.jpg': { status: 200, type: 'image/jpeg', body: jpeg(1200, 803) },
+      'https://chain.example.com/east.jpg': { status: 200, type: 'image/jpeg', body: await photo(1200, 801) },
+      'https://chain.example.com/west.jpg': { status: 200, type: 'image/jpeg', body: await photo(1200, 802) },
+      'https://chain.example.com/team.jpg': { status: 200, type: 'image/jpeg', body: await photo(1200, 803) },
     };
-    pics.forEach((p, i) => (site[`https://one.example.com/${p}.jpg`] = { status: 200, type: 'image/jpeg', body: jpeg(1200 + i, 800) }));
+    for (const [i, p] of pics.entries()) site[`https://one.example.com/${p}.jpg`] = { status: 200, type: 'image/jpeg', body: await photo(1200 + i, 800) };
     const get: SafeGet = async (url) => {
       const page = site[url.href];
       return page ? { ...page, url: url.href } : { status: 404, type: 'text/html', body: Buffer.alloc(0), url: url.href };
@@ -386,10 +439,11 @@ describe('a photo of the gym from its own website', () => {
 
   it('fetches again a page kept before several photos were, for the rest of them', async () => {
     const db = openDb(':memory:');
+    const pictures = { '1.jpg': await photo(1200, 800), '2.jpg': await photo(1300, 800) };
     const get: SafeGet = async (url) =>
       url.href === 'https://old.example.com/'
         ? { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/1.jpg"><meta property="og:image" content="/2.jpg">'), url: url.href }
-        : { status: 200, type: 'image/jpeg', body: jpeg(url.href.endsWith('1.jpg') ? 1200 : 1300, 800), url: url.href };
+        : { status: 200, type: 'image/jpeg', body: pictures[url.pathname.slice(1) as keyof typeof pictures], url: url.href };
     const photos = new SitePhotos(db, { get, now: () => new Date('2026-10-25T00:00:00Z') });
     // As an earlier server kept it: the cover only.
     db.prepare('insert into site_photos (page, found, mime, bytes, width, height, source, fetched_at) values (?, 1, ?, ?, 1200, 800, ?, ?)').run(
@@ -401,6 +455,11 @@ describe('a photo of the gym from its own website', () => {
     );
     expect(photos.cachedAll('https://old.example.com/')).toBeUndefined();
     expect((await photos.photos('https://old.example.com/')).length).toBe(2);
+    // Kept before each was checked to be a photograph (a logo was, as one): fetched again, though it's well within the month.
+    db.prepare('update site_photo_set set print = null where page = ? and position = 1').run('https://old.example.com/');
+    expect(photos.cachedAll('https://old.example.com/')).toBeUndefined();
+    expect((await photos.photos('https://old.example.com/')).length).toBe(2);
+    expect(photos.cachedAll('https://old.example.com/')?.length).toBe(2);
   });
 
   it('has none for a site several gyms share, or for demo gyms', async () => {
@@ -417,9 +476,9 @@ describe('a photo of the gym from its own website', () => {
       'https://chain.example.com/east/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/team.jpg">') },
       'https://chain.example.com/west/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/team.jpg">') },
       'https://chain.example.com/south/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/south-floor.jpg">') },
-      'https://chain.example.com/stock.jpg': { status: 200, type: 'image/jpeg', body: jpeg(1200, 630) },
-      'https://chain.example.com/team.jpg': { status: 200, type: 'image/jpeg', body: jpeg(1200, 800) },
-      'https://chain.example.com/south-floor.jpg': { status: 200, type: 'image/jpeg', body: jpeg(1600, 900) },
+      'https://chain.example.com/stock.jpg': { status: 200, type: 'image/jpeg', body: await photo(1200, 630) },
+      'https://chain.example.com/team.jpg': { status: 200, type: 'image/jpeg', body: await photo(1200, 800) },
+      'https://chain.example.com/south-floor.jpg': { status: 200, type: 'image/jpeg', body: await photo(1600, 900) },
     };
     const get: SafeGet = async (url) => {
       const page = site[url.href];
@@ -433,5 +492,25 @@ describe('a photo of the gym from its own website', () => {
     expect(await photos.photo('https://chain.example.com/west/')).toBeNull();
     expect(await photos.photo('https://chain.example.com/east/')).toBeNull();
     expect((await photos.photo('https://chain.example.com/south/'))?.source).toBe('https://chain.example.com/south-floor.jpg');
+  });
+
+  it('knows a chain’s stock picture under another address and at another size', async () => {
+    const stock = await photo(1200, 630);
+    const site: Record<string, Omit<Fetched, 'url'>> = {
+      'https://cdn-a.example.com/club/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="https://cdn-a.example.com/i/abc_og.jpg">') },
+      'https://cdn-b.example.com/other-club/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="https://cdn-b.example.com/x/1200w.jpg">') },
+      'https://cdn-a.example.com/': { status: 200, type: 'text/html', body: Buffer.from('') },
+      'https://cdn-b.example.com/': { status: 200, type: 'text/html', body: Buffer.from('') },
+      'https://cdn-a.example.com/i/abc_og.jpg': { status: 200, type: 'image/jpeg', body: stock },
+      'https://cdn-b.example.com/x/1200w.jpg': { status: 200, type: 'image/jpeg', body: await resized(stock, 1000, 525) },
+    };
+    const get: SafeGet = async (url) => {
+      const page = site[url.href];
+      return page ? { ...page, url: url.href } : { status: 404, type: 'text/html', body: Buffer.alloc(0), url: url.href };
+    };
+    const photos = new SitePhotos(openDb(':memory:'), { get });
+    expect(await photos.photo('https://cdn-a.example.com/club/')).not.toBeNull();
+    expect(await photos.photo('https://cdn-b.example.com/other-club/')).toBeNull();
+    expect(await photos.photo('https://cdn-a.example.com/club/')).toBeNull();
   });
 });

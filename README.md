@@ -939,16 +939,28 @@ on Home shows the first. In this order:
    franksgymperth.com". The first is the gym's cover where no member has
    shared one. The GymGO server fetches them the first time someone looks
    and keeps them a month, with the same guards as website icons. Each
-   must be a photo (big enough, not a banner, a badge, a GIF, a logo or an
-   icon, and not the same picture twice under two names). They are taken
-   only from a site that is that gym's alone: never a site other gyms in
-   the data share, and never a chain's home page, whose pictures would be
-   of some other branch. A branch's own page on a chain's site counts, but
-   not a picture that page merely repeats from the site's home page, nor
-   one that another branch's page shows too: both are the chain's stock
-   pictures, not this branch; the page's own pictures stay. So they are
-   always the right gym's, or none. 1,566 of the 2,995 real gyms have such
-   a site. These photos belong to the gyms; the owner chose to show them.
+   must be a photograph: big enough, not a banner, a GIF or a screenshot
+   of the site, nothing named a logo or an icon, and, read from its pixels
+   (with the sharp image library), not a logo, a badge or a lettered card
+   either: those are see-through, or mostly a few flat colours. The same
+   picture at another size counts once. Measured on the pictures 120
+   gyms' websites share, every logo failed that test, and so did a few
+   dark or black-and-white photos; showing none beats showing a logo as
+   the gym. Where the image library can't load, no website photo is kept.
+   They are taken only from a site that is that gym's alone: never a site
+   other gyms in the data share, and never a chain's home page, whose
+   pictures would be of some other branch. A branch's own page on a
+   chain's site counts, but not a picture that page merely repeats from
+   the site's home page, nor one that another branch's page shows too
+   (under any address, at any size): both are the chain's stock pictures,
+   not this branch; the page's own pictures stay. Checked against the live
+   sites on 25 October 2026, that leaves one of the 23 curated Melbourne
+   gyms with a photo, GoodLife Fitzroy (its club page's own picture of its
+   floor, named for Fitzroy, where other GoodLife clubs share one stock
+   picture); the others' sites share only logos, a screenshot or the
+   chain's stock pictures, so they show none. 1,566 of the 2,995 real
+   gyms have a site of their own. These photos belong to the gyms; the
+   owner chose to show them.
    GymGO never copies photos found by searching the web (Google Images and
    the like): they belong to the gyms and photographers who took them.
 3. If there are none, and the owner has set up the optional Google key

@@ -34,7 +34,6 @@ import { lookup as dnsLookup, type LookupAddress } from 'node:dns';
 import http from 'node:http';
 import https from 'node:https';
 import { BlockList, isIP } from 'node:net';
-import { createHash } from 'node:crypto';
 import { crc32, deflateSync, inflateSync } from 'node:zlib';
 import { chainWebsite, type GymRecord } from '@gymgo/domain';
 import type { Db } from './db';
@@ -479,13 +478,22 @@ export function ownPhotoSites(records: GymRecord[]): (record: GymRecord) => stri
   };
 }
 
+/**
+ * A picture whose name says it isn't a photo of the place: a logo, an icon,
+ * a vector, a GIF, or a screenshot of the website. Read from the path only:
+ * on the whole address, a gym called Icon Fitness lost every picture.
+ */
+export function namedNotAPhoto(url: URL): boolean {
+  return /\.(svg|ico|gif)$/i.test(url.pathname) || /(logo|favicon|icon|sprite|placeholder|preview|screenshot)/i.test(decodeURIComponent(url.pathname));
+}
+
 /** Photo candidates in a page, best first: the picture the site shares on social media, then the one it declares for search engines. */
 export function photoCandidates(html: string, pageUrl: string): URL[] {
   const found: URL[] = [];
   const add = (href: string | null | undefined) => {
-    if (!href || href.startsWith('data:') || /\.(svg|ico|gif)(\?|#|$)/i.test(href) || /(logo|favicon|icon|sprite|placeholder)/i.test(href)) return;
+    if (!href || href.startsWith('data:')) return;
     const url = allowedUrl(href, pageUrl);
-    if (url && !found.some((item) => item.href === url.href)) found.push(url);
+    if (url && !namedNotAPhoto(url) && !found.some((item) => item.href === url.href)) found.push(url);
   };
   const head = html.slice(0, PAGE_BYTES);
   const metas = head.match(/<meta\b[^>]*>/gi) ?? [];
@@ -517,6 +525,105 @@ export function photoCandidates(html: string, pageUrl: string): URL[] {
   return found;
 }
 
+// --- Is it a photograph? ----------------------------------------------------------
+
+type Sharp = typeof import('sharp').default;
+let imageLibraryLoad: Promise<Sharp | null> | undefined;
+
+/** sharp, the image library, loaded when first needed: null where it can't load, and then no website photo is kept at all. */
+function imageLibrary(): Promise<Sharp | null> {
+  imageLibraryLoad ??= import('sharp').then(
+    (module) => module.default,
+    (error: unknown) => {
+      console.warn(`Website photos are off: the image library didn't load (${error instanceof Error ? error.message : String(error)}).`);
+      return null;
+    },
+  );
+  return imageLibraryLoad;
+}
+
+/** Pictures bigger than this many pixels aren't opened: a small file can still unpack into a huge one. */
+const MAX_PHOTO_PIXELS = 40_000_000;
+/** Prints this close (bits of 64 that differ) are the same picture, at another size or quality. */
+const SAME_PICTURE = 6;
+
+export interface PhotoLook {
+  /** A photograph, not a logo, a badge, a poster or a block of colour. */
+  photo: boolean;
+  /** A 64-bit difference hash, in hex: the picture's print, to know it again at another size. */
+  print: string;
+}
+
+/**
+ * Whether a picture is a photograph, read from a copy 64 points across.
+ * A logo, a badge or a lettered card is see-through, or mostly a few flat
+ * colours: its three largest colours cover 70% of it or more, neighbouring
+ * points match 40% of the time or more, or fewer than 12 colours make up
+ * most of it. A photo is none of these. Measured on the pictures 120 gyms'
+ * websites share (25 Oct 2026): every logo failed, and so did a few dark or
+ * black-and-white photos; showing no photo is better than a logo as the gym.
+ * Null when it can't be read (or the image library isn't there).
+ */
+export async function photoLook(bytes: Buffer): Promise<PhotoLook | null> {
+  const sharp = await imageLibrary();
+  if (!sharp) return null;
+  try {
+    const { data, info } = await sharp(bytes, { limitInputPixels: MAX_PHOTO_PIXELS })
+      .ensureAlpha()
+      .resize(64, 64, { fit: 'inside' })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const points = info.width * info.height;
+    const colours = new Map<number, number>();
+    let clear = 0;
+    let alike = 0;
+    for (let y = 0; y < info.height; y += 1) {
+      for (let x = 0; x < info.width; x += 1) {
+        const at = (y * info.width + x) * 4;
+        if (data[at + 3]! < 250) clear += 1;
+        const colour = ((data[at]! >> 5) << 6) | ((data[at + 1]! >> 5) << 3) | (data[at + 2]! >> 5);
+        colours.set(colour, (colours.get(colour) ?? 0) + 1);
+        if (x + 1 < info.width) {
+          const next = at + 4;
+          if (Math.abs(data[at]! - data[next]!) + Math.abs(data[at + 1]! - data[next + 1]!) + Math.abs(data[at + 2]! - data[next + 2]!) <= 6) alike += 1;
+        }
+      }
+    }
+    const sizes = [...colours.values()].sort((a, b) => b - a);
+    const topThree = ((sizes[0] ?? 0) + (sizes[1] ?? 0) + (sizes[2] ?? 0)) / points;
+    const flat = alike / Math.max(1, (info.width - 1) * info.height);
+    const used = sizes.filter((size) => size / points >= 0.005).length;
+    const grey = await sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } })
+      .removeAlpha()
+      .greyscale()
+      .resize(9, 8, { fit: 'fill' })
+      .raw()
+      .toBuffer();
+    let print = 0n;
+    for (let y = 0; y < 8; y += 1) for (let x = 0; x < 8; x += 1) print = (print << 1n) | (grey[y * 9 + x]! < grey[y * 9 + x + 1]! ? 1n : 0n);
+    return { photo: clear === 0 && topThree < 0.7 && flat < 0.4 && used >= 12, print: print.toString(16).padStart(16, '0') };
+  } catch {
+    return null;
+  }
+}
+
+/** A print as its two 32-bit halves, for counting quickly. */
+const halves = (print: string): [number, number] => [parseInt(print.slice(0, 8), 16), parseInt(print.slice(8, 16), 16)];
+
+/** How many bits of a 32-bit number are set. */
+function bitsSet(value: number): number {
+  let v = value - ((value >>> 1) & 0x55555555);
+  v = (v & 0x33333333) + ((v >>> 2) & 0x33333333);
+  return (((v + (v >>> 4)) & 0x0f0f0f0f) * 0x01010101) >>> 24;
+}
+
+/** How many of two prints' 64 bits differ. */
+export function printsApart(a: string, b: string): number {
+  const [aHigh, aLow] = halves(a);
+  const [bHigh, bLow] = halves(b);
+  return bitsSet((aHigh ^ bHigh) >>> 0) + bitsSet((aLow ^ bLow) >>> 0);
+}
+
 const PHOTO_BYTES = 4 * 1024 * 1024;
 const MIN_PHOTO_WIDTH = 400;
 const MIN_PHOTO_HEIGHT = 200;
@@ -525,7 +632,7 @@ export const MAX_SITE_PHOTOS = 4;
 /** How many of a page's pictures are tried to find them. */
 const PHOTO_TRIES = 10;
 
-type KeptPhoto = SiteIcon & { width: number; height: number };
+type KeptPhoto = SiteIcon & { width: number; height: number; print: string };
 
 /**
  * Photos from gyms' own websites: every picture a gym's page offers to
@@ -533,10 +640,12 @@ type KeptPhoto = SiteIcon & { width: number; height: number };
  * page for a month (a week when the page has none, an hour when it didn't
  * answer), like the icons. The first is the gym's cover.
  *
- * Each must be a photo (big enough, not a banner, a badge, a GIF or the
- * same picture twice), and its own: a picture another page in the data
- * also shows is a chain's stock one and is dropped, as is, on a branch's
- * page, one the site's home page shows.
+ * Each must be a photograph (big enough, not a banner, and not a logo, a
+ * badge, a lettered card or a screenshot of the site: see photoLook), shown
+ * once (the same picture at another size counts once), and its own: a
+ * picture another page in the data also shows, under any address, is a
+ * chain's stock one and is dropped, as is, on a branch's page, one the
+ * site's home page shows.
  */
 export class SitePhotos {
   private readonly inFlight = new Map<string, Promise<SiteIcon[]>>();
@@ -566,6 +675,10 @@ export class SitePhotos {
       source text not null,
       primary key (page, position)
     )`);
+    // Each photo's print (photoLook), to know it again under another address. Photos kept before there were prints have none, and are fetched again.
+    const columns = db.prepare('pragma table_info(site_photo_set)').all() as Array<{ name: string }>;
+    if (!columns.some((column) => column.name === 'print')) db.exec('alter table site_photo_set add column print text');
+    db.exec('create index if not exists site_photo_set_source on site_photo_set (source)');
   }
 
   private now() {
@@ -583,14 +696,15 @@ export class SitePhotos {
     const days = (this.now().getTime() - Date.parse(row.fetched_at)) / 86_400_000;
     if (days > (row.found ? FOUND_DAYS : row.source === UNREACHABLE ? UNREACHABLE_DAYS : NONE_DAYS)) return undefined;
     if (!row.found) return [];
-    const kept = this.db.prepare('select mime, bytes, source from site_photo_set where page = ? order by position').all(page) as Array<{
+    const kept = this.db.prepare('select mime, bytes, source, print from site_photo_set where page = ? order by position').all(page) as Array<{
       mime: string;
       bytes: Uint8Array;
       source: string;
+      print: string | null;
     }>;
-    // Found before several photos were kept: fetched again, for the rest.
-    if (kept.length === 0) return undefined;
-    return kept.filter((photo) => !this.shared(page, photo.source)).map((photo) => ({ mime: photo.mime, bytes: Buffer.from(photo.bytes), source: photo.source }));
+    // Found before several photos were kept, or before each was checked to be a photograph (a logo was kept as one): fetched again.
+    if (kept.length === 0 || kept.some((photo) => photo.print === null)) return undefined;
+    return this.ownOnly(page, kept as Array<(typeof kept)[number] & { print: string }>).map((photo) => ({ mime: photo.mime, bytes: Buffer.from(photo.bytes), source: photo.source }));
   }
 
   /** The cover alone, as kept (see cachedAll). */
@@ -600,12 +714,15 @@ export class SitePhotos {
   }
 
   /**
-   * Whether another page shows the very same picture: a chain's stock
-   * picture on each branch's page, which shows none of them in particular.
+   * A page's photos less those another page shows too, from the same address
+   * or another, at any size: a chain's stock picture on each branch's page,
+   * which shows none of them in particular.
    */
-  private shared(page: string, source: string | null): boolean {
-    if (!source) return false;
-    return Boolean(this.db.prepare('select 1 from site_photo_set where source = ? and page <> ? limit 1').get(source, page));
+  private ownOnly<T extends { source: string; print: string }>(page: string, photos: T[]): T[] {
+    if (photos.length === 0) return photos;
+    const sameAddress = this.db.prepare('select 1 from site_photo_set where source = ? and page <> ? limit 1');
+    const others = (this.db.prepare('select print from site_photo_set where page <> ? and print is not null').all(page) as Array<{ print: string }>).map((row) => row.print);
+    return photos.filter((photo) => !sameAddress.get(photo.source, page) && !others.some((other) => printsApart(photo.print, other) <= SAME_PICTURE));
   }
 
   /** The pictures a site's home page shares, for telling a branch page's own photos from the site's stock ones. */
@@ -640,7 +757,6 @@ export class SitePhotos {
   private async fetchPhotos(page: URL): Promise<SiteIcon[]> {
     const get = this.options.get ?? safeGet;
     const found: KeptPhoto[] = [];
-    const seen = new Set<string>();
     let unreachable = false;
     try {
       const home = await get(page, PAGE_BYTES, 'text/html,application/xhtml+xml');
@@ -656,17 +772,19 @@ export class SitePhotos {
         if (found.length >= MAX_SITE_PHOTOS) break;
         try {
           const image = await get(candidate, PHOTO_BYTES + 1, 'image/jpeg,image/png,image/webp');
-          if (image.status >= 400 || image.body.length > PHOTO_BYTES) continue;
+          // A redirect can land on a picture whose name says what it is (a logo).
+          if (image.status >= 400 || image.body.length > PHOTO_BYTES || namedNotAPhoto(new URL(image.url))) continue;
           const kind = sniffImage(image.body);
           if (!kind || kind.mime === 'image/gif' || kind.width < MIN_PHOTO_WIDTH || kind.height < MIN_PHOTO_HEIGHT) continue;
           // A photo, not a banner or a square badge.
           const aspect = kind.width / kind.height;
           if (aspect < 0.75 || aspect > 3) continue;
-          // The same picture under a second address (the og: and twitter: tags often both name it) counts once.
-          const print = createHash('sha256').update(image.body).digest('hex');
-          if (seen.has(print) || found.some((photo) => photo.source === image.url)) continue;
-          seen.add(print);
-          found.push({ mime: kind.mime, bytes: image.body, source: image.url, width: kind.width, height: kind.height });
+          // A photograph, not a logo or a lettered card; or unreadable, and passed over.
+          const look = await photoLook(image.body);
+          if (!look?.photo) continue;
+          // The same picture under a second address, or at another size (the og: and twitter: tags often both name it), counts once.
+          if (found.some((photo) => photo.source === image.url || printsApart(photo.print, look.print) <= SAME_PICTURE)) continue;
+          found.push({ mime: kind.mime, bytes: image.body, source: image.url, width: kind.width, height: kind.height, print: look.print });
         } catch {
           // Try the next one.
         }
@@ -685,8 +803,8 @@ export class SitePhotos {
         )
         .run(page.href, first ? 1 : 0, first?.mime ?? null, first?.bytes ?? null, first?.width ?? null, first?.height ?? null, first?.source ?? (unreachable ? UNREACHABLE : null), this.now().toISOString());
       this.db.prepare('delete from site_photo_set where page = ?').run(page.href);
-      const add = this.db.prepare('insert into site_photo_set (page, position, mime, bytes, width, height, source) values (?, ?, ?, ?, ?, ?, ?)');
-      found.forEach((photo, position) => add.run(page.href, position, photo.mime, photo.bytes, photo.width, photo.height, photo.source));
+      const add = this.db.prepare('insert into site_photo_set (page, position, mime, bytes, width, height, source, print) values (?, ?, ?, ?, ?, ?, ?, ?)');
+      found.forEach((photo, position) => add.run(page.href, position, photo.mime, photo.bytes, photo.width, photo.height, photo.source, photo.print));
       this.db.exec('commit');
     } catch (error) {
       this.db.exec('rollback');
@@ -694,7 +812,7 @@ export class SitePhotos {
     }
     // Kept either way, so a second branch showing the same stock picture
     // turns it off for both.
-    return found.filter((photo) => !this.shared(page.href, photo.source)).map(({ mime, bytes, source }) => ({ mime, bytes, source }));
+    return this.ownOnly(page.href, found).map(({ mime, bytes, source }) => ({ mime, bytes, source }));
   }
 }
 

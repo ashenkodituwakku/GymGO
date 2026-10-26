@@ -30,7 +30,6 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { SetProgress, SetReward } from '@/components/SetCard';
 import { CITY_SET_SIZE, collectionSets, setsDone } from '@/lib/sets';
 import { Icon, type IconName } from '@/components/Icon';
-import { EmojiIcon } from '@/components/Emoji';
 import { HeroMark } from '@/components/HeroMark';
 import { ListSkeleton } from '@/components/Skeleton';
 import { GLIDE, Pressy } from '@/components/motion';
@@ -144,7 +143,7 @@ export default function CollectionScreen() {
     return (
       <View style={styles.empty}>
         <ScreenOptions options={{ title: 'Collection' }} />
-        <HeroMark icon="trophy" size={68} />
+        <HeroMark icon="trophy" tint={color.maybe} size={68} />
         <Txt variant="title2" style={styles.center}>
           Start your collection
         </Txt>
@@ -195,7 +194,7 @@ export default function CollectionScreen() {
       <View style={styles.social}>
         {SOCIAL.map((item) => (
           <Pressy key={item.path} scaleTo={0.96} onPress={() => router.push(item.path)} accessibilityRole="button" accessibilityLabel={item.title} style={styles.socialTile}>
-            <EmojiIcon name={item.icon} size={18} />
+            <Icon name={item.icon} size={18} color={color.brand} />
             <Txt variant="subhead" style={face('semibold')}>
               {item.title}
             </Txt>
@@ -217,7 +216,7 @@ export default function CollectionScreen() {
             accessible
             accessibilityLabel={`${badge.title}: ${badge.detail}. ${badge.earned ? 'Earned' : 'Not yet'}`}
           >
-            <EmojiIcon name={badge.earned ? 'trophy' : 'lock'} size={14} />
+            <Icon name={badge.earned ? 'trophy' : 'lock'} size={14} color={badge.earned ? color.brand : color.labelTertiary} />
             <View>
               <Txt variant="footnote" color={badge.earned ? color.label : color.labelSecondary} style={face('semibold')}>
                 {badge.title}
@@ -297,7 +296,7 @@ export default function CollectionScreen() {
       </View>
       <View style={styles.how}>
         <View style={styles.howHead}>
-          <EmojiIcon name="gem" size={16} />
+          <Icon name="gem" size={16} color={color.brand} />
           <Txt variant="headline">How cards work</Txt>
         </View>
         <Txt variant="footnote" color={color.labelSecondary}>
@@ -372,7 +371,7 @@ function NextMark({ location }: { location: GymLocation }) {
   if (!mark) {
     return (
       <View style={styles.nextIcon}>
-        <EmojiIcon name="gym" size={18} />
+        <Icon name="gym" size={18} color={color.brand} />
       </View>
     );
   }
@@ -405,7 +404,7 @@ const styles = themed(() =>
     nextList: { marginTop: space[2], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden' },
     nextRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], minHeight: 56 },
     nextLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
-    nextIcon: { width: 42, height: 42, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
+    nextIcon: { width: 42, height: 42, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
     nextLogo: { backgroundColor: color.logoPlate, borderWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
     // No wider than the list below it: across a desktop window a paragraph was one long line.
     center: { textAlign: 'center', maxWidth: 480 },

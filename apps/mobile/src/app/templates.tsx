@@ -9,12 +9,10 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
+import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon, type IconName } from '@/components/Icon';
-import { EmojiIcon } from '@/components/Emoji';
 import { PageScroll } from '@/components/PageScroll';
-import { Grid } from '@/components/Columns';
-import { useWide } from '@/lib/layout';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Card, Chip, PrimaryButton, Txt } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
@@ -33,7 +31,6 @@ export default function TemplatesScreen() {
   usePageTitle('Templates');
   const router = useRouter();
   const { account, prefs } = useApp();
-  const wide = useWide();
   const log = useTrainingLog(account.token);
   const active = useActiveSessionGlance();
 
@@ -59,20 +56,17 @@ export default function TemplatesScreen() {
           <PrimaryButton label="Back to your workout" icon="play" onPress={() => router.push('/train')} />
         </Card>
       )}
-      {/* Two to a row in the wide layout. */}
-      <Grid on={wide}>
-        {TEMPLATES.map((template) => (
-          <TemplateCard
-            key={template.id}
-            template={template}
-            next={nextTemplateDay(template, log.sessions)}
-            // Which workout is newest in your log: a new one means you've trained since a pick.
-            logged={log.status === 'ready' ? (log.sessions[0]?.id ?? '') : null}
-            disabled={Boolean(active)}
-            onStart={(index) => start(template, index)}
-          />
-        ))}
-      </Grid>
+      {TEMPLATES.map((template) => (
+        <TemplateCard
+          key={template.id}
+          template={template}
+          next={nextTemplateDay(template, log.sessions)}
+          // Which workout is newest in your log: a new one means you've trained since a pick.
+          logged={log.status === 'ready' ? (log.sessions[0]?.id ?? '') : null}
+          disabled={Boolean(active)}
+          onStart={(index) => start(template, index)}
+        />
+      ))}
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
         These are general plans, not advice for you. Start lighter than you think, leave a rep or two in the tank, and add weight when every set
         feels good. Swap anything that hurts.
@@ -116,8 +110,10 @@ function TemplateCard({
   return (
     <Card style={styles.card}>
       <View style={styles.head}>
-        <View style={styles.mark}>
-          <EmojiIcon name={TEMPLATE_ICON[template.id] ?? 'workout'} size={22} />
+        <View style={[styles.mark, accentGlow(color.brandFill)]}>
+          <BrandFill round={markRound()} />
+          <Sheen round={markRound()} />
+          <Icon name={TEMPLATE_ICON[template.id] ?? 'workout'} size={22} color={color.onBrand} />
         </View>
         <View style={styles.flex}>
           <Txt variant="title2">{template.name}</Txt>
@@ -179,7 +175,7 @@ const styles = themed(() =>
     busy: { gap: space[2] },
     card: { gap: space[3] },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-    mark: { width: 46, height: 46, borderRadius: markRound(), borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
+    mark: { width: 46, height: 46, borderRadius: markRound(), borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandFill },
     flex: { flex: 1, minWidth: 0 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     toggle: { flexDirection: 'row', alignItems: 'center', gap: space[1], alignSelf: 'flex-start' },

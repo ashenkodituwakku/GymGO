@@ -22,7 +22,6 @@ import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { durationLabel, setCount, streakOf, type TrainingSession } from '@/lib/training';
 import { ExerciseTile } from './ExerciseGlyph';
 import { Icon, type IconName } from './Icon';
-import { EmojiIcon } from './Emoji';
 import { ProOffer } from './ProOffer';
 import { Txt } from './ui';
 
@@ -101,7 +100,7 @@ export function WeekCard({
         </View>
       ) : (
         <Pressable onPress={() => change(0)} accessibilityRole="button" style={({ pressed }) => [styles.setGoal, pressed && { opacity: 0.7 }]}>
-          <EmojiIcon name="target" size={16} />
+          <Icon name="target" size={16} color={color.brand} />
           <Txt variant="subhead" color={color.brand} style={face('semibold')}>
             Aim for 3 a week
           </Txt>
@@ -293,12 +292,12 @@ function Stepper({ icon, label, disabled, onPress }: { icon: IconName; label: st
       hitSlop={6}
       style={({ pressed }) => [styles.stepper, disabled && { opacity: 0.35 }, pressed && { opacity: 0.6 }]}
     >
-      <EmojiIcon name={icon} size={14} />
+      <Icon name={icon} size={14} color={color.brand} />
     </Pressable>
   );
 }
 
-const LADDER_ICON: Record<MilestoneKind, IconName> = { workouts: 'workout', streak: 'flame', records: 'trophy', sets: 'done' };
+const LADDER_ICON: Record<MilestoneKind, IconName> = { workouts: 'workout', streak: 'flame', records: 'trophy', sets: 'check' };
 
 /** Your milestones: for each, the steps you've passed and how far to the next. */
 export function MilestonesCard({ sessions }: { sessions: TrainingSession[] }) {
@@ -315,8 +314,8 @@ export function MilestonesCard({ sessions }: { sessions: TrainingSession[] }) {
             accessible
             accessibilityLabel={`${ladder.title}: ${ladder.label}. ${ladder.next === null ? 'Every milestone reached.' : `Next milestone at ${ladder.next.toLocaleString('en')}.`}`}
           >
-            <View style={[styles.ladderIcon, ladder.reached.length === 0 && styles.ladderIconOff]}>
-              <EmojiIcon name={LADDER_ICON[ladder.kind]} size={16} />
+            <View style={[styles.ladderIcon, ladder.reached.length > 0 && styles.ladderIconOn]}>
+              <Icon name={LADDER_ICON[ladder.kind]} size={16} color={ladder.reached.length > 0 ? color.onBrand : color.labelSecondary} />
             </View>
             <View style={styles.flex}>
               <View style={styles.ladderHead}>
@@ -460,7 +459,7 @@ const styles = themed(() =>
     rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
     ladder: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
     ladderIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill, marginTop: 2 },
-    ladderIconOff: { opacity: 0.45 },
+    ladderIconOn: { backgroundColor: color.brandFill },
     ladderHead: { flexDirection: 'row', alignItems: 'baseline', gap: space[2] },
     track: { height: 6, borderRadius: 3, backgroundColor: color.fill, overflow: 'hidden', marginTop: space[1] },
     fill: { height: '100%', borderRadius: 3, backgroundColor: color.brand },

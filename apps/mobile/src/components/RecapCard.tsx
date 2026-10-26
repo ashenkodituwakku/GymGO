@@ -16,8 +16,7 @@ import { color, face, radius, space, themed } from '@/lib/theme';
 import { fromKg, type WeightUnit } from '@/lib/training';
 import { AppBadge } from './BrandMark';
 import { GemCard } from './GemCard';
-import type { IconName } from './Icon';
-import { EmojiIcon } from './Emoji';
+import { Icon, type IconName } from './Icon';
 import { Txt } from './ui';
 
 export const RECAP_WIDTH = 320;
@@ -89,7 +88,7 @@ export function RecapCard({
 function Tile({ icon, value, one, many }: { icon: IconName; value: number; one: string; many: string }) {
   return (
     <View style={styles.tile} accessible accessibilityLabel={`${value} ${value === 1 ? one : many}`}>
-      <EmojiIcon name={icon} size={16} />
+      <Icon name={icon} size={16} color={color.onBrand} />
       <Txt variant="title" color={color.onBrand}>
         {String(value)}
       </Txt>
@@ -103,7 +102,7 @@ function Tile({ icon, value, one, many }: { icon: IconName; value: number; one: 
 function Line({ icon, text }: { icon: IconName; text: string }) {
   return (
     <View style={styles.line}>
-      <EmojiIcon name={icon} size={15} />
+      <Icon name={icon} size={15} color={color.onBrand} />
       <Txt variant="subhead" color={color.onBrand} style={face('medium')}>
         {text}
       </Txt>

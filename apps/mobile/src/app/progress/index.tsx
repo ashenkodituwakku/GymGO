@@ -10,7 +10,6 @@ import { Platform, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { GLIDE, Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
-import { EmojiIcon } from '@/components/Emoji';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { MilestonesCard, MuscleBalanceCard, WeekCard } from '@/components/TrainingInsights';
 import { CountUp } from '@/components/CountUp';
@@ -115,7 +114,7 @@ export default function ProgressScreen() {
     return (
       <View style={styles.empty}>
         <ScreenOptions options={{ title: 'Progress' }} />
-        <EmojiIcon name="chart" size={34} />
+        <Icon name="chart" size={34} color={color.brand} />
         <Txt variant="title2" style={styles.center}>
           Keep a training log
         </Txt>
@@ -133,13 +132,13 @@ export default function ProgressScreen() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: 'Progress' }} />
       <Animated.View style={styles.stats}>
-        <Stat icon="flame" value={known ? streak.weeks : null} one="week in a row" many="weeks in a row" />
-        <Stat icon="calendar" value={known ? sessionsThisWeek(log.sessions) : null} one="this week" many="this week" />
-        <Stat icon="workout" value={known ? log.sessions.length : null} one="workout" many="workouts" />
+        <Stat icon="flame" tint={color.maybe} value={known ? streak.weeks : null} one="week in a row" many="weeks in a row" />
+        <Stat icon="calendar" tint={color.brand} value={known ? sessionsThisWeek(log.sessions) : null} one="this week" many="this week" />
+        <Stat icon="workout" tint={color.good} value={known ? log.sessions.length : null} one="workout" many="workouts" />
       </Animated.View>
       {known && streak.frozen.length > 0 && (
         <View style={styles.freeze} accessible>
-          <EmojiIcon name="sparkle" size={18} />
+          <Icon name="sparkle" size={18} color={color.brand} />
           <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
             {`Streak freeze: you missed the week${streak.frozen.length > 1 ? 's' : ''} of ${streak.frozen
               .map((monday) => new Date(monday).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }))
@@ -149,7 +148,7 @@ export default function ProgressScreen() {
       )}
       {known && couldKeep && couldKeep.weeks > streak.weeks && (
         <Pressable onPress={() => openPro('freeze')} accessibilityRole="button" style={({ pressed }) => [styles.freeze, pressed && { opacity: 0.7 }]}>
-          <EmojiIcon name="sparkle" size={18} />
+          <Icon name="sparkle" size={18} color={color.brand} />
           <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
             {`A streak freeze would have kept your ${couldKeep.weeks}-week run going through the week you missed. GymGO Pro covers one missed week a month.`}
           </Txt>
@@ -270,7 +269,7 @@ export default function ProgressScreen() {
               style={({ pressed }) => [styles.lifetime, pressed && { opacity: 0.8 }]}
             >
               <View style={styles.lifetimeMark}>
-                <EmojiIcon name="trophy" size={18} />
+                <Icon name="trophy" size={18} color={color.brand} />
               </View>
               <View style={styles.flex}>
                 <Txt variant="headline">Your lifetime</Txt>
@@ -351,11 +350,11 @@ export default function ProgressScreen() {
 }
 
 /** `value` is null until the log has loaded: a dash, not a zero, so a log that didn't load doesn't read as no training. */
-function Stat({ icon, value, one, many }: { icon: IconName; value: number | null; one: string; many: string }) {
+function Stat({ icon, tint, value, one, many }: { icon: IconName; tint: string; value: number | null; one: string; many: string }) {
   const label = value === 1 ? one : many;
   return (
     <View style={styles.stat} accessible accessibilityLabel={value === null ? `${many}: not loaded` : `${value} ${label}`}>
-      <EmojiIcon name={icon} size={18} />
+      <Icon name={icon} size={18} color={tint} />
       {value === null ? (
         <Txt variant="title" style={face('bold')}>
           —
@@ -487,7 +486,7 @@ const styles = themed(() => StyleSheet.create({
   max: { alignItems: 'flex-end' },
   figure: { fontVariant: ['tabular-nums'] },
   lifetime: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
-  lifetimeMark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
+  lifetimeMark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
   strip: { flexDirection: 'row', alignItems: 'center', gap: space[1], marginTop: space[1] },
   logged: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: 2 },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },

@@ -13,7 +13,7 @@ import { haptic } from '@/lib/haptics';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import type { TrainingSession } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
-import { EmojiIcon } from './Emoji';
+import { Icon } from './Icon';
 import { Pressable } from './motion';
 import { Input, PrimaryButton, Txt } from './ui';
 
@@ -109,7 +109,7 @@ export function SessionNote({ session, compact = false }: { session: TrainingSes
         hitSlop={8}
         style={({ pressed }) => [styles.link, pressed && { opacity: 0.6 }]}
       >
-        <EmojiIcon name={note ? 'list' : 'plus'} size={13} />
+        <Icon name={note ? 'list' : 'plus'} size={13} color={color.brand} />
         <Txt variant="footnote" color={color.brand} style={face('semibold')}>
           {note ? 'Edit note' : 'Add a note'}
         </Txt>

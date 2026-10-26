@@ -15,7 +15,6 @@ import { addDays, nowIn } from '@/lib/query';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
-import { EmojiIcon } from './Emoji';
 import { ChoiceChip, PrimaryButton, Txt } from './ui';
 
 const dayLabel = (date: string, today: string) =>
@@ -78,7 +77,7 @@ export function DayPass({ gymId, timezone, account, onSignIn }: { gymId: string;
       {passes.map((pass) => (
         <View key={pass.id} style={styles.pass}>
           <View style={styles.head}>
-            <EmojiIcon name="door" size={20} />
+            <Icon name="door" size={20} color={color.brand} />
             <Txt variant="headline" style={styles.flex}>{`${pass.label} through GymGO`}</Txt>
           </View>
           <Txt variant="subhead" color={color.labelSecondary}>

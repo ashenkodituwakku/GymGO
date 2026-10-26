@@ -17,9 +17,6 @@ export const CELEBRATIONS: Array<{ id: CelebrationStyle; name: string; blurb: st
 
 export const FREE_CELEBRATION: CelebrationStyle = 'confetti';
 
-/** What the emoji shower drops, in turn. */
-export const SHOWER_EMOJI = ['💪', '🔥', '🏆', '⭐', '🎉'];
-
 /** What was kept, cleaned: anything unknown is confetti. */
 export function cleanCelebration(value: unknown): CelebrationStyle {
   return CELEBRATIONS.some((item) => item.id === value) ? (value as CelebrationStyle) : FREE_CELEBRATION;

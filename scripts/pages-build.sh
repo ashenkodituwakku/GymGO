@@ -2,7 +2,7 @@
 # GymGO's website on GitHub Pages (.github/workflows/pages.yml runs this):
 # the limited version, the app exported for the browser with no GymGO server
 # behind it and the gyms built into the app (apps/mobile/src/lib/limited.ts),
-# Run after pnpm install.
+# as netlify-build.sh makes it for Netlify. Run after pnpm install.
 #
 #   BASE_PATH  where Pages serves the site: "/GymGO" on
 #              ashenkodituwakku.github.io, "" once a custom domain is set.
@@ -32,13 +32,9 @@ if [ -n "$BASE" ]; then
   BASE="$BASE" perl -pi -e 'my $b = substr($ENV{BASE}, 1); s{(href|content)="/(?!/|\Q$b\E/)}{$1="$ENV{BASE}/}g' dist/index.html
   BASE="$BASE" perl -pi -e 's{"(start_url|scope|src)": "/}{"$1": "$ENV{BASE}/}g' dist/manifest.webmanifest
 fi
-# A shared link's picture needs its full address. Search engines get a
-# sitemap (the site is one page, so it lists the home page) and robots.txt
-# points to it.
+# A shared link's picture needs its full address.
 if [ -n "$ADDRESS" ]; then
   ADDRESS="$ADDRESS" BASE="$BASE" perl -pi -e 's{content="\Q$ENV{BASE}\E/og\.png"}{content="$ENV{ADDRESS}/og.png"}g' dist/index.html
-  printf '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>%s/</loc></url>\n</urlset>\n' "$ADDRESS" > dist/sitemap.xml
-  printf 'Sitemap: %s/sitemap.xml\n' "$ADDRESS" >> dist/robots.txt
 fi
 
 # Pages has no rewrites: any other path (a gym's page opened from a link)

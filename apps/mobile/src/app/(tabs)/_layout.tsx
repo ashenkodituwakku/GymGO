@@ -16,14 +16,10 @@
  *  - Android: a bright wash with the same sheen and rim;
  *  - the web: blur, specular edges and, in Chrome and Edge, real refraction
  *    (liquidGlass.web.ts).
- *
- * In the wide layout (a laptop's browser window, lib/layout.tsx) the tabs are
- * a sidebar on the left instead, named as well as drawn, with the training
- * pages under them: the room beside a phone-width page was going spare.
  */
 
 import { TabList, TabSlot, TabTrigger, Tabs, defaultTabsSlotRender, type TabTriggerSlotProps } from 'expo-router/ui';
-import { router, useFocusEffect, usePathname, type Href } from 'expo-router';
+import { router, useFocusEffect, usePathname } from 'expo-router';
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { ARRIVE, LIQUID, Pressable } from '@/components/motion';
@@ -36,14 +32,10 @@ import { Redrawn, useThemeVersion } from '@/components/Redrawn';
 import { glassMark, installLiquidGlass, sizeRefraction } from '@/components/liquidGlass';
 import { HeldWhileAway, useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { TabBarInset, tabBarBottom, useWide } from '@/lib/layout';
-import { CHILD_TOUCH, NO_TOUCH, color, currentTheme, face, radius, shadow, solidSurfaces, space, themed } from '@/lib/theme';
+import { TabBarInset, tabBarBottom } from '@/lib/layout';
+import { CHILD_TOUCH, NO_TOUCH, color, currentTheme, radius, shadow, solidSurfaces, themed } from '@/lib/theme';
 import { Avatar } from '@/components/Avatar';
 import { BrandFill } from '@/components/BrandFill';
-import { Wordmark } from '@/components/BrandMark';
-import { EmojiIcon } from '@/components/Emoji';
-import type { IconName } from '@/components/Icon';
-import { Txt } from '@/components/ui';
 
 const BAR_HEIGHT = 64;
 // The same 16 pt edge as the sheets and the controls over the map.
@@ -54,19 +46,6 @@ const LENS_INSET = 5;
 const SPRING = LIQUID;
 /** The lens following a finger: close behind it, never past it. */
 const FOLLOW = { damping: 28, stiffness: 600, mass: 0.4, overshootClamping: true };
-
-/** How wide the sidebar is, in the wide layout. */
-const SIDEBAR = 248;
-
-/** The training pages, under the tabs in the sidebar. */
-const TRAINING: Array<{ label: string; icon: IconName; href: Href }> = [
-  { label: 'Build a workout', icon: 'workout', href: { pathname: '/workout/[id]', params: { id: 'any' } } },
-  { label: 'Templates', icon: 'list', href: '/templates' },
-  { label: 'Progress', icon: 'chart', href: '/progress' },
-  { label: 'Exercises', icon: 'book', href: '/exercises' },
-  { label: 'Interval timer', icon: 'timer', href: '/timer' },
-  { label: 'Plate calculator', icon: 'plates', href: '/plates' },
-];
 
 const TABS: Array<{ name: string; href: '/' | '/explore' | '/saved' | '/profile'; label: string; icon: PhosphorName }> = [
   { name: 'index', href: '/', label: 'Home', icon: 'house' },
@@ -95,11 +74,9 @@ export default function TabsLayout() {
   const bottom = tabBarBottom(insets.bottom);
   // With Android's keyboard up the bar steps aside, and nothing needs to clear it.
   const keyboardUp = useAndroidKeyboard();
-  const wide = useWide();
   return (
-    <TabBarInset.Provider value={wide ? 0 : keyboardUp ? 8 : bottom + BAR_HEIGHT + 8}>
-      <Tabs style={[styles.root, wide && styles.rootWide]}>
-        {wide && <SideBar />}
+    <TabBarInset.Provider value={keyboardUp ? 8 : bottom + BAR_HEIGHT + 8}>
+      <Tabs style={styles.root}>
         {/* Its own container defaults to never shrinking, which lets a
             screen grow past the window so nothing scrolls. */}
         <TabSlot
@@ -126,7 +103,7 @@ export default function TabsLayout() {
             <TabTrigger key={tab.name} name={tab.name} href={tab.href} />
           ))}
         </TabList>
-        {!keyboardUp && !wide && <GlassTabBar bottom={bottom} />}
+        {!keyboardUp && <GlassTabBar bottom={bottom} />}
       </Tabs>
     </TabBarInset.Provider>
   );
@@ -253,67 +230,6 @@ function GlassTabBar({ bottom }: { bottom: number }) {
   );
 }
 
-/** The wide layout's tabs: the logo, each tab named, then the training pages. */
-function SideBar() {
-  return (
-    <View style={styles.side} role="navigation" aria-label="GymGO">
-      <View style={styles.sideBrand}>
-        <Wordmark height={30} />
-      </View>
-      <View accessibilityRole="tablist" style={styles.sideList}>
-        {TABS.map((tab) => (
-          <TabTrigger key={tab.name} name={tab.name} asChild>
-            <SideTab icon={tab.icon} label={tab.label} />
-          </TabTrigger>
-        ))}
-      </View>
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.sideHead} accessibilityRole="header">
-        Training
-      </Txt>
-      <View style={styles.sideList}>
-        {TRAINING.map((item) => (
-          <Pressable
-            key={item.label}
-            onPress={() => router.push(item.href)}
-            accessibilityRole="link"
-            style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.sideItem, (pressed || hovered) && styles.sideItemHover]}
-          >
-            <View style={styles.sideIcon}>
-              <EmojiIcon name={item.icon} size={18} />
-            </View>
-            <Txt variant="body">{item.label}</Txt>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
-}
-
-type SideTabProps = TabTriggerSlotProps & { icon: PhosphorName; label: string };
-
-const SideTab = forwardRef<View, SideTabProps>(function SideTab({ icon, label, isFocused, onPress, ...props }, ref) {
-  const { account } = useApp();
-  const me = icon === 'user-circle' ? account.face : null;
-  return (
-    <Pressable
-      ref={ref}
-      {...props}
-      onLongPress={undefined}
-      onPress={onPress}
-      accessibilityRole="tab"
-      aria-selected={isFocused}
-      style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.sideItem, isFocused ? styles.sideItemOn : (pressed || hovered) && styles.sideItemHover]}
-    >
-      <View style={styles.sideIcon}>
-        {me ? <Avatar account={me} size={24} variant="subhead" /> : <PIcon name={icon} weight={isFocused ? 'fill' : 'regular'} size={24} color={color.label} />}
-      </View>
-      <Txt variant="body" style={isFocused && face('semibold')}>
-        {label}
-      </Txt>
-    </Pressable>
-  );
-});
-
 type TabButtonProps = TabTriggerSlotProps & { icon: PhosphorName; label: string; width: number; ignorePress: () => boolean };
 
 const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
@@ -373,23 +289,6 @@ const round = (size: number) => Math.min(size / 2, radius.pill);
 
 const styles = themed(() => StyleSheet.create({
   root: { flex: 1 },
-  rootWide: { flexDirection: 'row' },
-  side: {
-    width: SIDEBAR,
-    paddingHorizontal: space[3],
-    paddingTop: space[6],
-    gap: space[1],
-    backgroundColor: color.plate,
-    borderRightWidth: StyleSheet.hairlineWidth,
-    borderRightColor: color.separator,
-  },
-  sideBrand: { paddingHorizontal: space[3], marginBottom: space[5] },
-  sideList: { gap: 2 },
-  sideHead: { paddingHorizontal: space[3], marginTop: space[6], marginBottom: space[1] },
-  sideItem: { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 44, paddingHorizontal: space[3], borderRadius: radius.md, borderCurve: 'continuous' },
-  sideItemOn: { backgroundColor: color.fill },
-  sideItemHover: { backgroundColor: color.fill, opacity: 0.85 },
-  sideIcon: { width: 26, alignItems: 'center' },
   slot: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 },
   hidden: { display: 'none' },
   dock: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },

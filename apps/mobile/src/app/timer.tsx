@@ -14,9 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
-import { EmojiIcon } from '@/components/Emoji';
 import { PageScroll } from '@/components/PageScroll';
-import { Columns } from '@/components/Columns';
 import { ProgressRing } from '@/components/ProgressRing';
 import { BrandFill } from '@/components/BrandFill';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -155,9 +153,6 @@ export default function TimerScreen() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: 'Interval timer' }} />
 
-      {/* In the wide layout, the clock on the left and the timers and settings beside it. */}
-      <Columns>
-      <>
       <View
         style={[styles.clock, working && styles.clockWork]}
         accessible
@@ -203,8 +198,7 @@ export default function TimerScreen() {
           </View>
         )}
       </View>
-      </>
-      <>
+
       <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
         TIMERS
       </Txt>
@@ -229,7 +223,7 @@ export default function TimerScreen() {
         <Setting icon="refresh" label="Rounds" value={String(plan.rounds)} locked={!pro} canLess={plan.rounds > LIMITS.rounds.min} canMore={plan.rounds < LIMITS.rounds.max} onChange={(by) => adjust('rounds', by)} />
         {!pro ? (
           <Pressable onPress={() => openPro('timers')} accessibilityRole="button" style={({ pressed }) => [styles.pro, pressed && { opacity: 0.7 }]}>
-            <EmojiIcon name="crown" size={18} />
+            <Icon name="crown" size={18} color={color.brand} />
             <Txt variant="subhead" color={color.brand} style={[styles.flex, face('medium')]}>
               Set your own work, rest and rounds, and keep up to {MAX_OWN_TIMERS} timers, with GymGO Pro
             </Txt>
@@ -286,8 +280,6 @@ export default function TimerScreen() {
           </Txt>
         )}
       </View>
-      </>
-      </Columns>
     </PageScroll>
   );
 }
@@ -317,7 +309,7 @@ function Setting({
 }) {
   return (
     <View style={styles.setting}>
-      <EmojiIcon name={icon} size={18} />
+      <Icon name={icon} size={18} color={color.brand} />
       {/* The label gives way (to an ellipsis) before the buttons: on a narrow phone they ran off the card. */}
       <Txt variant="body" style={styles.settingLabel} numberOfLines={1}>
         {label}
@@ -342,7 +334,7 @@ function Step({ icon, label, disabled, locked, onPress }: { icon: IconName; labe
       hitSlop={6}
       style={({ pressed }) => [styles.step, (disabled || locked) && { opacity: 0.4 }, pressed && { opacity: 0.6 }]}
     >
-      <EmojiIcon name={icon} size={16} />
+      <Icon name={icon} size={16} color={color.brand} />
     </Pressable>
   );
 }

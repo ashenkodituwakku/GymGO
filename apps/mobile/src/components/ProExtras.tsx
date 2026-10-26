@@ -17,7 +17,7 @@ import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, startGift } from '@/lib/purchase';
 import type { BillingApi } from '@/lib/useBilling';
 import { color, face, radius, space, themed } from '@/lib/theme';
-import { EmojiIcon } from './Emoji';
+import { Icon } from './Icon';
 import { Input, PrimaryButton, Txt } from './ui';
 
 const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
@@ -55,7 +55,7 @@ export function GiftPro({ token, billing, currency, onSignIn }: { token: string 
   return (
     <View style={styles.card}>
       <View style={styles.head}>
-        <EmojiIcon name="sparkle" size={20} />
+        <Icon name="sparkle" size={20} color={color.brand} />
         <Txt variant="headline">Give Pro</Txt>
       </View>
       <Txt variant="subhead" color={color.labelSecondary}>

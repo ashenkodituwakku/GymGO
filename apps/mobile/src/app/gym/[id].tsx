@@ -18,8 +18,7 @@ import { GoogleGate } from '@/components/GoogleGate';
 import { GoogleModal } from '@/components/GoogleModal';
 import { GoogleSection, useGooglePlace } from '@/components/GoogleSection';
 import { GooglePhotos } from '@/components/GooglePage';
-import type { IconName } from '@/components/Icon';
-import { EmojiIcon } from '@/components/Emoji';
+import { Icon, type IconName } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
 import { MemberAccess } from '@/components/MemberAccess';
 import { MemberKit } from '@/components/MemberKit';
@@ -50,8 +49,6 @@ import { PageScroll } from '@/components/PageScroll';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { FullVersionNote } from '@/components/FullVersionNote';
 import { LIMITED } from '@/lib/limited';
-import { WIDE_COLUMN, useWide } from '@/lib/layout';
-import { COLUMN_GAP } from '@/components/Columns';
 
 /** The pop-up growing into the page: the page rises from where the pop-up sat, still when Reduce Motion is on. */
 const EXPAND_IN =
@@ -68,7 +65,6 @@ export default function GymPage() {
   const { data, account, filters, addRecent, requestExplore, compare, toggleCompare, prefsReady, billing, openPro } = useApp();
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const wide = useWide();
   const [googleOpen, setGoogleOpen] = useState(false);
 
   const asOf = useMemo(() => new Date(), [filters, data.records]);
@@ -132,9 +128,7 @@ export default function GymPage() {
   const location = result.record.location;
   const saved = account.saved.includes(location.id);
   const comparing = compare.includes(location.id);
-  // In the wide layout the page spreads out, its card in two columns with the photos in the left one.
-  const cardWidth = wide ? Math.min(width - space[8] * 2, WIDE_COLUMN) : Math.min(width, PAGE_COLUMN);
-  const photoWidth = wide ? (cardWidth - space[4] * 2 - COLUMN_GAP) / 2 + space[4] * 2 : cardWidth;
+  const cardWidth = Math.min(width, PAGE_COLUMN);
   const subtitle = [location.address.suburb, result.distanceKm !== null ? gymDistanceLine(result.distanceKm, location.address.countryCode, filters.placeName) : null]
     .filter(Boolean)
     .join(' · ');
@@ -145,7 +139,7 @@ export default function GymPage() {
   const googleFallback = (
     <GoogleGate what={googlePhotos ? 'Photos' : 'Street View'}>
       {googlePhotos ? (
-        <GooglePhotos photos={place!.photos} width={photoWidth - space[4] * 2} />
+        <GooglePhotos photos={place!.photos} width={cardWidth - space[4] * 2} />
       ) : (
         <View style={styles.streetView}>
           <GoogleEmbed
@@ -228,7 +222,6 @@ export default function GymPage() {
             saved={saved}
             onToggleSave={() => account.toggleSave(location.id)}
             saveAndShareElsewhere
-            columns={wide}
             onOpenGoogle={() => setGoogleOpen(true)}
             onOpenWorkout={() => router.push({ pathname: '/workout/[id]', params: { id: location.id } })}
             asOf={asOf}
@@ -242,7 +235,7 @@ export default function GymPage() {
                   website={location.website}
                   account={account}
                   onSignIn={() => router.push('/sign-in')}
-                  width={photoWidth}
+                  width={cardWidth}
                   fallback={googleFallback}
                 />
               )
@@ -308,9 +301,9 @@ function HeaderButton({ icon, label, onPress, on = false }: { icon: IconName; la
       accessibilityLabel={label}
       accessibilityState={{ selected: on }}
       hitSlop={8}
-      style={({ pressed }) => [styles.headerButton, on && styles.headerButtonOn, pressed && { opacity: 0.6 }]}
+      style={({ pressed }) => [styles.headerButton, pressed && { opacity: 0.6 }]}
     >
-      <EmojiIcon name={icon} size={19} />
+      <Icon name={icon} size={19} color={on ? color.brand : Platform.OS === 'ios' ? color.label : color.brand} />
     </Pressable>
   );
 }
@@ -337,9 +330,7 @@ const styles = themed(() => StyleSheet.create({
   mapButton: { paddingHorizontal: space[4] },
   // The last icon's own padding (4) plus this puts its edge where the back arrow's is on the left.
   headerButtons: { flexDirection: 'row', alignItems: 'center', gap: space[4], paddingLeft: space[1], paddingRight: Math.max(space[1], HEADER_EDGE - 4) },
-  headerButton: { padding: 4, borderRadius: radius.pill },
-  // Switched on (Saved, in Compare): a soft disc behind its emoji.
-  headerButtonOn: { backgroundColor: color.fill },
+  headerButton: { padding: 4 },
   headerLeft: { paddingLeft: Math.max(space[1], HEADER_EDGE - 4) },
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
   center: { textAlign: 'center' },

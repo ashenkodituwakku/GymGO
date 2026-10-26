@@ -12,7 +12,6 @@ import { GymRow } from '@/components/GymRow';
 import { FADE_OUT, GLIDE, Pressable, Pressy, usePop } from '@/components/motion';
 import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
-import { EmojiIcon } from '@/components/Emoji';
 import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ListSkeleton } from '@/components/Skeleton';
@@ -25,15 +24,11 @@ import { resultsById } from '@/lib/results';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { LIMITED } from '@/lib/limited';
-import { useWide } from '@/lib/layout';
 
 export default function Saved() {
   useGlassRedraw();
   usePageTitle('Saved');
   const { data, account, filters, compare, toggleCompare, requestExplore, billing, openPro, prefsReady, recents } = useApp();
-  // In the wide layout, the gyms in two columns: a row under each one only from the second line down.
-  const wide = useWide();
-  const perLine = wide ? 2 : 1;
   const router = useRouter();
   const openGym = useCallback((id: string) => router.push({ pathname: '/gym/[id]', params: { id } }), [router]);
   const asOf = useMemo(() => new Date(), [filters, data.records]);
@@ -97,12 +92,12 @@ export default function Saved() {
           <Txt variant="eyebrow" color={color.labelSecondary} style={styles.latelyHead}>
             LOOKED AT LATELY
           </Txt>
-          <View style={[styles.list, wide && styles.grid]}>
+          <View style={styles.list}>
             {lately.map((result, index) => {
               const id = result.record.location.id;
               return (
-                <View key={id} style={wide && styles.cell}>
-                  {index >= perLine && <View style={styles.divider} />}
+                <View key={id}>
+                  {index > 0 && <View style={styles.divider} />}
                   <View style={styles.row}>
                     <View style={styles.flex}>
                       <GymRow
@@ -124,7 +119,7 @@ export default function Saved() {
                       hitSlop={6}
                       style={styles.saveButton}
                     >
-                      <EmojiIcon name="save" size={16} />
+                      <Icon name="save" size={16} color={color.brand} />
                     </Pressy>
                   </View>
                 </View>
@@ -147,13 +142,13 @@ export default function Saved() {
             </Pressable>
           )}
           {saved.length > 0 && (
-          <View style={[styles.list, wide && styles.grid]}>
+          <View style={styles.list}>
             {saved.map((result, index) => {
               const id = result.record.location.id;
               const on = compare.includes(id);
               return (
-                <Animated.View key={id} exiting={FADE_OUT} layout={GLIDE} style={wide && styles.cell}>
-                  {index >= perLine && <View style={styles.divider} />}
+                <Animated.View key={id} exiting={FADE_OUT} layout={GLIDE}>
+                  {index > 0 && <View style={styles.divider} />}
                   <View style={styles.row}>
                     <View style={styles.flex}>
                       <GymRow
@@ -246,11 +241,9 @@ const styles = themed(() => StyleSheet.create({
     ...shadow.plate,
   },
   list: { backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  cell: { width: '50%' },
   upsell: { paddingVertical: space[2] },
   latelyHead: { marginTop: space[2], marginLeft: space[4] },
-  saveButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
+  saveButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
   row: { flexDirection: 'row', alignItems: 'center', paddingRight: space[3] },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: 86 },
   goneRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4] },

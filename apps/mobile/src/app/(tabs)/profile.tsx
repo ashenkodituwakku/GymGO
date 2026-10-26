@@ -11,7 +11,6 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { AppBadge, Wordmark } from '@/components/BrandMark';
 import { Icon } from '@/components/Icon';
-import { EmojiIcon } from '@/components/Emoji';
 import { Pressy } from '@/components/motion';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
@@ -29,7 +28,6 @@ import { useTrainingLog } from '@/lib/useTraining';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
-import { Columns } from '@/components/Columns';
 import { Avatar } from '@/components/Avatar';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -175,9 +173,6 @@ export default function Profile() {
 
       {me && me.termsVersion !== undefined && me.termsVersion !== LEGAL_VERSION && <NewTermsCard />}
 
-      {/* Side by side in the wide layout: what you do, then how GymGO is set up. */}
-      <Columns inner={space[5]}>
-      <>
       <Group header="Training">
         <Row icon="chart" tile={TILE.green} title="Progress" subtitle="Your log, records and streak" onPress={() => router.push('/progress')} />
         {!LIMITED && <Row icon="trophy" tile={TILE.pink} title="Lifetime" subtitle={billing.isPro ? 'Every kilo, rep and hour, added up' : 'Every kilo, rep and hour, added up, with Pro'} onPress={() => router.push('/lifetime')} />}
@@ -230,8 +225,6 @@ export default function Profile() {
         </Group>
       )}
 
-      </>
-      <>
       <Group header="Settings" footer={Platform.OS === 'web' ? undefined : 'Sounds follow your phone’s silent switch, and play over your music without stopping it.'}>
         <Row
           icon="globe"
@@ -313,8 +306,7 @@ export default function Profile() {
             researched gyms, prices, hours and equipment come from each gym’s own website, read on 23 September 2026. Logos:
             Wikimedia Commons for ten chains, otherwise the icon on the gym’s own website. Maps: Apple Maps on iPhone,
             OpenFreeMap elsewhere. The Google page shows Google’s own map and Street View, straight from Google. Photos,
-            reviews, what members paid and machine reports: GymGO members. Emoji and flags: Noto 3D by Google, under the
-            SIL Open Font License 1.1.
+            reviews, what members paid and machine reports: GymGO members.
           </Explainer>
         )}
         {/* A report goes to the server, which the limited website hasn't got. */}
@@ -339,8 +331,6 @@ export default function Profile() {
         {!LIMITED && <Row icon="photo" tile={TILE.grey} title="Copyright and takedowns" expanded={about === 'copyright'} onPress={() => toggle('copyright')} />}
         {about === 'copyright' && <CopyrightExplainer onNotice={() => router.push({ pathname: '/report-bug', params: { topic: 'copyright', from: 'Profile' } })} />}
       </Group>
-      </>
-      </Columns>
 
       {error && (
         <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
@@ -391,7 +381,7 @@ function ProCard({ isPro, line, trial, canBuy, onOpen }: { isPro: boolean; line:
       <Sheen round={radius.lg} />
       <View style={styles.proTop}>
         <View style={styles.proMark}>
-          <EmojiIcon name="crown" size={20} />
+          <Icon name="crown" size={20} color={color.onBrand} />
         </View>
         <View style={styles.flex}>
           <Txt variant="eyebrow" color={color.onBrandSoft}>

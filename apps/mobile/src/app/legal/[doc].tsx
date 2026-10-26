@@ -23,9 +23,8 @@ export default function LegalScreen() {
   const { operator } = useLegalInfo();
   const doc = legalDoc(id, operator);
   usePageTitle(doc.title);
-  // Long reading: a little wider in the wide layout, not so wide the lines are hard to follow.
   return (
-    <PageScroll style={styles.page} contentContainerStyle={styles.content} wideWidth={820}>
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: doc.title }} />
       <View style={styles.head}>
         {/* Not a heading: the bar above titles the page with the same words, and two read as one twice. */}

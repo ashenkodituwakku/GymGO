@@ -24,9 +24,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
+import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { Icon, type IconName } from '@/components/Icon';
-import { EmojiIcon } from '@/components/Emoji';
-import { Columns } from '@/components/Columns';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtras';
@@ -181,11 +180,13 @@ export default function ProScreen() {
           title: '',
         }}
       />
-      <PageScroll style={styles.page} contentContainerStyle={styles.content} wideWidth={1120}>
+      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         {/* Hero ------------------------------------------------------------ */}
         <View style={styles.hero}>
-          <View style={styles.badge}>
-            <EmojiIcon name="crown" size={54} />
+          <View style={[styles.badge, accentGlow(color.brandFill)]}>
+            <BrandFill round={22} />
+            <Sheen round={22} />
+            <Icon name="crown" size={36} color={color.onBrand} />
           </View>
           <Txt variant="largeTitle" style={styles.center} accessibilityRole="header" level={1}>
             GymGO Pro
@@ -214,9 +215,6 @@ export default function ProScreen() {
 
         {signedIn && <DuoPartner token={token!} />}
 
-        {/* In the wide layout, what Pro adds on the left and the plans beside it. */}
-        <Columns flex={[3, 2]} inner={space[4]}>
-        <>
         {/* Free vs Pro ------------------------------------------------------------ */}
         <View style={styles.card}>
           <View style={styles.tableHead}>
@@ -237,7 +235,7 @@ export default function ProScreen() {
               {PRO_FEATURES.filter((feature) => feature.group === group.id).map((feature) => (
                 <View key={feature.title} style={styles.tableRow}>
                   <View style={styles.featureIcon}>
-                    <EmojiIcon name={FEATURE_ICON[feature.title] ?? 'sparkle'} size={17} />
+                    <Icon name={FEATURE_ICON[feature.title] ?? 'sparkle'} size={17} color={color.brand} />
                   </View>
                   <Txt variant="subhead" style={[styles.flex, face('medium')]}>
                     {feature.title}
@@ -253,8 +251,6 @@ export default function ProScreen() {
             </View>
           ))}
         </View>
-        </>
-        <>
 
         {/* The plans ---------------------------------------------------------------- */}
         {!billing.isPro && (
@@ -371,8 +367,6 @@ export default function ProScreen() {
           style={styles.fine}
           text="Prices include tax. Pro and Duo renew automatically until you cancel; a gift year is paid once and doesn't renew. A new account can try monthly Pro free for 3 days, once, in its first 30 days: the monthly price is charged when the trial ends unless you cancel before then. Cancel any time from Profile → Manage subscription, and you keep Pro until the end of what you’ve paid for. Changed your mind? Ask within 14 days of your first payment, or of a yearly renewal, for a full refund. If Pro ends, nothing you saved is deleted; you just can’t add more than Free allows. Payments are handled by Stripe: GymGO never sees your card, and Stripe gets your name and email for the receipt. [Terms of Service](terms) · [Refunds and Cancelling](refunds) · [Privacy Policy](privacy)"
         />
-        </>
-        </Columns>
       </PageScroll>
     </>
   );
@@ -545,6 +539,9 @@ const styles = themed(() => StyleSheet.create({
   badge: {
     width: 72,
     height: 72,
+    borderRadius: 22,
+    borderCurve: 'continuous',
+    backgroundColor: color.brandFill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -556,7 +553,7 @@ const styles = themed(() => StyleSheet.create({
   tableRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   tableGroup: { gap: space[3], paddingTop: space[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   groupTitle: { marginBottom: -space[1] },
-  featureIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
+  featureIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
   column: { width: 84, textAlign: 'center' },
   // Pro's column is the one being sold: room for its words on a phone.
   proColumn: { width: 100 },

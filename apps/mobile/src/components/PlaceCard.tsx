@@ -30,7 +30,6 @@ import { addressLines, callQuestions, depositLine, priceLine } from '@/lib/prese
 import { color, currentLook, face, radius, shadow, space, themed, type } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Icon, type IconName } from './Icon';
-import { EmojiIcon } from './Emoji';
 import { StateGlyphRow } from './StateGlyphRow';
 import { useApp } from '@/lib/app-state';
 import { LogoBadge, LogoCredit, useGymMark } from './BrandLogo';
@@ -39,7 +38,6 @@ import { FADE_IN, FADE_OUT, Pressable, Pressy } from './motion';
 import { ActionButton, CloseButton, Fold, FoldGroup, GroupLine, InfoRow, RoundToggle, TIER_COLOUR, Txt } from './ui';
 import { JoinGym, MembershipBanner } from './JoinGym';
 import { LIMITED } from '@/lib/limited';
-import { Columns } from './Columns';
 
 const TRAINING: Record<string, string> = {
   full_gym: 'Gym',
@@ -154,7 +152,6 @@ export function PlaceCard({
   owner,
   dayPass,
   saveAndShareElsewhere = false,
-  columns = false,
 }: {
   result: GymSearchResult;
   visitMinute: number;
@@ -163,8 +160,6 @@ export function PlaceCard({
   onToggleSave: () => void;
   /** The live Google Maps page for this gym (its own screen, away from our map). */
   onOpenGoogle: () => void;
-  /** In the wide layout, the card in two columns: the answer on the left, the detail on the right (the gym page; not the map's panel). */
-  columns?: boolean;
   /** Save and Share are in the screen's own top bar (the gym page), so the action row leaves them out. */
   saveAndShareElsewhere?: boolean;
   /** The workout generator, for this gym's machines. */
@@ -244,8 +239,6 @@ export function PlaceCard({
 
   return (
     <View style={styles.wrap}>
-      <Columns on={columns}>
-      <>
       {photos}
 
       {/* Actions -------------------------------------------------------- */}
@@ -296,7 +289,7 @@ export function PlaceCard({
 
       {notice && (
         <Animated.View style={styles.notice} entering={FADE_IN} exiting={FADE_OUT}>
-          <EmojiIcon name="info" size={15} />
+          <Icon name="info" size={15} color={color.brand} />
           <Txt variant="footnote" style={styles.flex}>
             {notice}
           </Txt>
@@ -355,7 +348,7 @@ export function PlaceCard({
                 hitSlop={8}
                 style={({ pressed }) => [styles.askCall, pressed && { opacity: 0.7 }]}
               >
-                <EmojiIcon name="call" size={14} />
+                <Icon name="call" size={14} color={color.brand} />
                 <Txt variant="footnote" color={color.brand} style={face('semibold')}>
                   Call
                 </Txt>
@@ -377,8 +370,6 @@ export function PlaceCard({
         </Animated.View>
       )}
 
-      </>
-      <>
       {collect}
       {dayPass}
       {busy}
@@ -425,7 +416,7 @@ export function PlaceCard({
           style={({ pressed }) => [styles.google, pressed && { opacity: 0.75 }]}
         >
           <View style={styles.rowIcon}>
-            <EmojiIcon name="google" size={18} />
+            <Icon name="google" size={18} color={color.onBrand} />
           </View>
           <View style={styles.flex}>
             <Txt variant="headline">See it on Google</Txt>
@@ -450,7 +441,7 @@ export function PlaceCard({
         style={({ pressed }) => [styles.google, pressed && { opacity: 0.75 }]}
       >
         <View style={styles.rowIcon}>
-          <EmojiIcon name="workout" size={18} />
+          <Icon name="workout" size={18} color={color.onBrand} />
         </View>
         <View style={styles.flex}>
           <Txt variant="headline">Build a workout here</Txt>
@@ -634,7 +625,7 @@ export function PlaceCard({
                 hitSlop={6}
               >
                 <View style={styles.mailRow}>
-                  <EmojiIcon name="mail" size={15} />
+                  <Icon name="mail" size={15} color={color.brand} />
                   <Txt variant="subhead" color={color.brand}>
                     {location.email}
                   </Txt>
@@ -671,8 +662,6 @@ export function PlaceCard({
         )}
         </FoldGroup>
       </Animated.View>
-      </>
-      </Columns>
 
       {/* Wherever a brand's logo shows, its credit does too. */}
       <View style={styles.logoCredit}>
@@ -692,7 +681,7 @@ function Fact({ icon, value, caption, tint, unknown = false }: { icon: IconName;
   return (
     <View style={styles.fact}>
       <View style={styles.factIcon}>
-        <EmojiIcon name={icon} size={16} />
+        <Icon name={icon} size={16} color={color.brand} />
       </View>
       {/* A word in place of a figure, as tall as one, so the three tiles line up. */}
       <Txt variant={unknown ? 'subhead' : 'figure'} color={tint} numberOfLines={1} style={unknown && [face('semibold'), styles.factWord]}>
@@ -873,7 +862,7 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: color.fill,
+    backgroundColor: color.brandTint,
   },
   // A word as tall as a figure's line, at any text size, so the three captions line up.
   factWord: { lineHeight: type.figure.lineHeight },
@@ -888,7 +877,7 @@ const styles = themed(() => StyleSheet.create({
   },
   googleEmoji: { fontSize: 22, lineHeight: 28, width: 30, textAlign: 'center' },
   mailRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
+  rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
 
   folds: { gap: space[3], marginTop: space[1] },
 

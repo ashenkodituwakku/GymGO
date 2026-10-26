@@ -8,7 +8,7 @@ import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
-import { EmojiIcon } from '@/components/Emoji';
+import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
@@ -138,7 +138,7 @@ export default function MyWorkouts() {
                       hitSlop={6}
                       style={({ pressed }) => [styles.startPill, pressed && styles.pressed]}
                     >
-                      <EmojiIcon name="play" size={13} />
+                      <Icon name="play" size={13} color={color.brand} />
                       <Txt variant="subhead" color={color.brand} style={face('semibold')}>
                         Start
                       </Txt>

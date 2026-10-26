@@ -11,7 +11,6 @@ import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
 import { Pressable, Pressy } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
-import { useWide } from '@/lib/layout';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Chip, Input, Txt } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
@@ -28,7 +27,6 @@ export default function ExercisesScreen() {
   usePageTitle('Exercises');
   const router = useRouter();
   const { account } = useApp();
-  const wide = useWide();
   const log = useTrainingLog(account.token);
   const [query, setQuery] = useState('');
   const [muscle, setMuscle] = useState<Muscle | null>(null);
@@ -132,8 +130,7 @@ export default function ExercisesScreen() {
           <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.eyebrow}>
             {`${groupLabel(group.muscle).toUpperCase()} · ${group.exercises.length}`}
           </Txt>
-          {/* Two to a line in the wide layout, a rule above each from the second line down. */}
-          <View style={[styles.group, wide && styles.groupWide]}>
+          <View style={styles.group}>
             {group.exercises.map((exercise, index) => {
               const times = done.get(exercise.id)?.sessions ?? 0;
               return (
@@ -142,7 +139,7 @@ export default function ExercisesScreen() {
                   onPress={() => open(exercise.id)}
                   accessibilityRole="button"
                   accessibilityLabel={`${exercise.name}. ${kitText(exercise)}${times ? `. Done ${times} time${times === 1 ? '' : 's'}` : ''}`}
-                  style={({ pressed }) => [styles.row, wide && styles.rowWide, index >= (wide ? 2 : 1) && styles.rowLine, pressed && { backgroundColor: color.fill }]}
+                  style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
                 >
                   <ExerciseTile exerciseId={exercise.id} size={44} />
                   <View style={styles.flex}>
@@ -202,8 +199,6 @@ const styles = themed(() =>
     group: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[2] + 2, minHeight: 60 },
     rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
-    groupWide: { flexDirection: 'row', flexWrap: 'wrap' },
-    rowWide: { width: '50%' },
     flex: { flex: 1, minWidth: 0, gap: 2 },
     empty: { alignItems: 'center', gap: space[2], paddingVertical: space[6] },
     centre: { textAlign: 'center' },

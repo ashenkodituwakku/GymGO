@@ -20,7 +20,6 @@ import { haptic } from '@/lib/haptics';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { DecideButtons, PHOTO_REASONS, REVIEW_REASONS } from './Moderation';
 import { Icon } from './Icon';
-import { EmojiIcon } from './Emoji';
 import { PrimaryButton, TextField, Txt } from './ui';
 
 function messageFor(error: unknown): string {
@@ -292,7 +291,7 @@ export function PhotoQueue({ token, records, onPublished }: { token: string; rec
 export function Notice({ icon, text, tone = 'brand' }: { icon: 'info' | 'offline'; text: string; tone?: 'brand' | 'danger' }) {
   return (
     <View style={[styles.notice, { backgroundColor: tone === 'danger' ? color.dangerTint : color.brandTint }]}>
-      {tone === 'danger' ? <Icon name={icon} size={15} color={color.dangerInk} /> : <EmojiIcon name={icon} size={15} />}
+      <Icon name={icon} size={15} color={tone === 'danger' ? color.dangerInk : color.brand} />
       <Txt variant="footnote" style={styles.flex}>
         {text}
       </Txt>

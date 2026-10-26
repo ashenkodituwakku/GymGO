@@ -16,10 +16,6 @@ describe('your appearance', () => {
     expect(parseChoice(JSON.stringify({ appearance: 'sepia', accent: 'neon', look: 'vaporwave' }))).toEqual(DEFAULT_CHOICE);
     expect(parseChoice('not json')).toEqual(DEFAULT_CHOICE);
     expect(parseChoice(null)).toEqual(DEFAULT_CHOICE);
-    // Light until you pick otherwise; Automatic is kept once picked.
-    expect(DEFAULT_CHOICE.appearance).toBe('light');
-    expect(parseChoice(JSON.stringify({ accent: 'ocean' })).appearance).toBe('light');
-    expect(parseChoice(JSON.stringify({ appearance: 'system' })).appearance).toBe('system');
   });
 
   it('keeps Liquid Glass to whole steps from 0 to 100, and the balance for anything odd', () => {

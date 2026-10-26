@@ -9,7 +9,6 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { Icon } from '@/components/Icon';
-import { EmojiIcon } from '@/components/Emoji';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -100,7 +99,7 @@ export default function TripsScreen() {
             style={({ pressed }) => [styles.tripMain, pressed && { opacity: 0.7 }]}
           >
             <View style={styles.tripIcon}>
-              <EmojiIcon name="globe" size={20} />
+              <Icon name="globe" size={20} color={color.brand} />
             </View>
             <View style={styles.flex}>
               <Txt variant="headline" numberOfLines={1}>
@@ -150,7 +149,7 @@ export default function TripsScreen() {
           <Txt variant="headline">Where to?</Txt>
           {where ? (
             <Pressable onPress={() => setWhere(null)} accessibilityRole="button" accessibilityLabel={`${where.placeName}. Change`} style={styles.picked}>
-              <EmojiIcon name="pin" size={16} />
+              <Icon name="pin" size={16} color={color.brand} />
               <Txt variant="body" style={[styles.flex, face('semibold')]}>
                 {where.placeName}
               </Txt>
@@ -189,7 +188,7 @@ export default function TripsScreen() {
             >
               {/* A place's pin, as Explore's search lists places. */}
               <View style={styles.suggestionGlyph}>
-                <EmojiIcon name="pin" size={16} />
+                <Icon name="pin" size={16} color={color.onBrand} />
               </View>
               <View style={styles.suggestionText}>
                 <Txt variant="body" numberOfLines={1}>
@@ -258,7 +257,7 @@ function StepButton({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: s
       hitSlop={6}
       style={({ pressed }) => [styles.step, !onPress && { opacity: 0.35 }, pressed && { opacity: 0.6 }]}
     >
-      <EmojiIcon name={icon} size={16} />
+      <Icon name={icon} size={16} color={color.brand} />
     </Pressable>
   );
 }
@@ -279,7 +278,7 @@ const styles = themed(() =>
       borderCurve: 'continuous',
       backgroundColor: color.plate,
     },
-    tripIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
+    tripIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     tripMain: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3] },
     remove: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 18 },
     confirm: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.danger },
@@ -294,7 +293,7 @@ const styles = themed(() =>
     },
     picked: { flexDirection: 'row', alignItems: 'center', gap: space[2], padding: space[3], borderRadius: radius.md, backgroundColor: color.brandTint },
     suggestion: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[2], paddingHorizontal: space[2], borderRadius: radius.sm },
-    suggestionGlyph: { width: 30, height: 30, borderRadius: 15, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
+    suggestionGlyph: { width: 30, height: 30, borderRadius: 15, backgroundColor: color.danger, alignItems: 'center', justifyContent: 'center' },
     suggestionText: { flex: 1, minWidth: 0 },
     stepper: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     stepperLabel: { width: 72 },

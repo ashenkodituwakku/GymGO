@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { BrandFill } from '@/components/BrandFill';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { loadAllLookFonts } from '@/lib/lookFonts';
@@ -20,7 +20,6 @@ import { Icon } from '@/components/Icon';
 import { PercentSlider } from '@/components/PercentSlider';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { Celebration } from '@/components/Celebration';
-import { Emoji, EmojiIcon } from '@/components/Emoji';
 import { CELEBRATIONS, FREE_CELEBRATION, celebrationFor, type CelebrationStyle } from '@/lib/celebrations';
 import { playSound } from '@/lib/sounds';
 import { FREE_SOUND_PACK, SOUND_PACKS, soundPackFor, type SoundPack } from '@/lib/soundPacks';
@@ -54,8 +53,6 @@ import {
 import { setThemeChoice, useThemeChoice } from '@/lib/themePrefs';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
-import { Columns } from '@/components/Columns';
-import { useWide } from '@/lib/layout';
 import { ScreenOptions } from '@/components/ScreenOptions';
 
 const MODES: Array<{ id: AppearanceChoice; label: string }> = [
@@ -81,7 +78,6 @@ export default function AppearanceScreen() {
   usePageTitle('Appearance');
   const choice = useThemeChoice();
   const { billing, openPro, prefs, setPref } = useApp();
-  const wide = useWide();
 
   const pickMode = (appearance: AppearanceChoice) => {
     if (appearance === choice.appearance) return;
@@ -166,9 +162,6 @@ export default function AppearanceScreen() {
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         <ScreenOptions options={{ title: 'Appearance' }} />
 
-        {/* In the wide layout, how GymGO looks on the left and its accent, celebrations and sounds beside it. */}
-        <Columns inner={0}>
-        <>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.section}>
           MODE
         </Txt>
@@ -247,7 +240,7 @@ export default function AppearanceScreen() {
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
-              <EmojiIcon name="crown" size={11} />
+              <Icon name="crown" size={11} color={color.brand} />
               <Txt variant="caption" color={color.brand} style={face('semibold')}>
                 PRO
               </Txt>
@@ -324,15 +317,13 @@ export default function AppearanceScreen() {
             : 'How glassy GymGO is: the controls, sheets and bars over the map, and the cards on every page, with your accent glowing through from behind. 0% makes it all solid; 100% is the clearest that keeps text readable.'}
         </Txt>
 
-        </>
-        <>
-        <View style={[styles.accentHead, wide && styles.columnTop]}>
+        <View style={styles.accentHead}>
           <Txt variant="footnote" color={color.labelSecondary}>
             ACCENT
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
-              <EmojiIcon name="crown" size={11} />
+              <Icon name="crown" size={11} color={color.brand} />
               <Txt variant="caption" color={color.brand} style={face('semibold')}>
                 PRO
               </Txt>
@@ -387,7 +378,7 @@ export default function AppearanceScreen() {
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
-              <EmojiIcon name="crown" size={11} />
+              <Icon name="crown" size={11} color={color.brand} />
               <Txt variant="caption" color={color.brand} style={face('semibold')}>
                 PRO
               </Txt>
@@ -408,7 +399,7 @@ export default function AppearanceScreen() {
                 style={({ pressed }) => [styles.celebration, pressed && { opacity: 0.75 }]}
               >
                 <View style={[styles.sampleTile, on && styles.sampleOn]}>
-                  <Emoji char={item.sample} size={32} />
+                  <Text style={styles.sample}>{item.sample}</Text>
                 </View>
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
@@ -433,7 +424,7 @@ export default function AppearanceScreen() {
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
-              <EmojiIcon name="crown" size={11} />
+              <Icon name="crown" size={11} color={color.brand} />
               <Txt variant="caption" color={color.brand} style={face('semibold')}>
                 PRO
               </Txt>
@@ -454,7 +445,7 @@ export default function AppearanceScreen() {
                 style={({ pressed }) => [styles.soundPack, pressed && { opacity: 0.75 }]}
               >
                 <View style={[styles.sampleTile, on && styles.sampleOn]}>
-                  <Emoji char={item.sample} size={32} />
+                  <Text style={styles.sample}>{item.sample}</Text>
                 </View>
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
@@ -474,8 +465,6 @@ export default function AppearanceScreen() {
             ? `Tap one to hear a new record in it. It voices check-ins, records, sets and the timers; the cards keep their own sounds${billing.isPro ? '' : '. Arcade comes with GymGO Pro'}.`
             : 'Sounds are off, so there’s nothing to hear: turn them on in Profile → Settings.'}
         </Txt>
-        </>
-        </Columns>
       </PageScroll>
       {playing > 0 && <Celebration key={playing} style={celebrationInUse} />}
     </View>
@@ -498,7 +487,7 @@ function StepButton({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: s
       hitSlop={6}
       style={({ pressed }) => [styles.step, !onPress && { opacity: 0.35 }, pressed && { opacity: 0.6 }]}
     >
-      <EmojiIcon name={icon} size={16} />
+      <Icon name={icon} size={16} color={color.brand} />
     </Pressable>
   );
 }
@@ -624,8 +613,6 @@ const styles = themed(() =>
     miniLine: { height: 4, borderRadius: 2 },
     note: { marginHorizontal: space[4], marginTop: space[2] },
     accentHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginLeft: space[4], marginTop: space[6], marginBottom: space[2] },
-    // The first heading of the right-hand column, level with the left's.
-    columnTop: { marginTop: 0 },
     proTag: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 1, borderRadius: radius.pill, backgroundColor: color.brandTint },
     grid: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     tile: { width: '20%', minWidth: 64, alignItems: 'center', gap: space[1], paddingVertical: space[2] },
@@ -644,6 +631,7 @@ const styles = themed(() =>
     soundPack: { flex: 1, alignItems: 'center', gap: space[1], paddingVertical: space[2], paddingHorizontal: space[2] },
     sampleTile: { width: 56, height: 56, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
     sampleOn: { borderColor: color.brand, backgroundColor: color.brandTint },
+    sample: { fontSize: 28, lineHeight: 34 },
     playRow: { marginTop: space[3] },
     flex: { flex: 1 },
     glassCard: { gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },

@@ -1,7 +1,7 @@
 /**
  * Your appearance and accent, kept on this device.
  *
- * Appearance (Light, the default; Dark; or System) and Liquid Glass are for everyone. Accents other than
+ * Appearance (System, Light or Dark) and Liquid Glass are for everyone. Accents other than
  * Indigo are part of GymGO Pro; the choice is kept either way, and shows
  * whenever you have Pro (see ThemedStack in app/_layout.tsx).
  *
@@ -29,14 +29,14 @@ export interface ThemeChoice {
   dark: DarkStyle;
 }
 
-export const DEFAULT_CHOICE: ThemeChoice = { appearance: 'light', accent: FREE_ACCENT, look: FREE_LOOK, glass: GLASS_DEFAULT, dark: 'black' };
+export const DEFAULT_CHOICE: ThemeChoice = { appearance: 'system', accent: FREE_ACCENT, look: FREE_LOOK, glass: GLASS_DEFAULT, dark: 'black' };
 
 /** What was stored, cleaned: anything unknown falls back to the default. */
 export function parseChoice(raw: string | null | undefined): ThemeChoice {
   try {
     const value = raw ? (JSON.parse(raw) as Partial<ThemeChoice>) : {};
     return {
-      appearance: value.appearance === 'light' || value.appearance === 'dark' || value.appearance === 'system' ? value.appearance : 'light',
+      appearance: value.appearance === 'light' || value.appearance === 'dark' || value.appearance === 'system' ? value.appearance : 'system',
       accent: ACCENT_IDS.includes(value.accent as AccentId) ? (value.accent as AccentId) : FREE_ACCENT,
       look: LOOK_IDS.includes(value.look as LookId) ? (value.look as LookId) : FREE_LOOK,
       glass: cleanGlass(value.glass),

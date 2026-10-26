@@ -27,7 +27,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { color, face, radius, space, themed } from '@/lib/theme';
-import { EmojiIcon } from './Emoji';
+import { Icon } from './Icon';
 import { Txt } from './ui';
 
 /** Finding where you are, then comparing it with the gym, then the answer. */
@@ -141,7 +141,7 @@ function Core({ done }: { done: boolean }) {
   const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   return (
     <Animated.View style={[styles.core, done && styles.coreDone, style]}>
-      <EmojiIcon name={done ? 'done' : 'pin'} size={22} />
+      <Icon name={done ? 'check' : 'pin'} size={22} color={color.onBrand} />
     </Animated.View>
   );
 }
@@ -182,9 +182,9 @@ const styles = themed(() =>
       borderRadius: SIZE / 2,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: color.plate,
+      backgroundColor: color.brandFill,
     },
-    coreDone: { backgroundColor: color.goodTint },
+    coreDone: { backgroundColor: color.good },
     track: { height: 8, borderRadius: 4, backgroundColor: color.fill, overflow: 'hidden' },
     fill: { height: '100%', borderRadius: 4, backgroundColor: color.brand },
     fillDone: { backgroundColor: color.good },

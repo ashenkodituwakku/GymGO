@@ -7,27 +7,10 @@
  */
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Dimensions, Platform, useWindowDimensions, type View } from 'react-native';
+import { Dimensions, Platform, type View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const TabBarInset = createContext(0);
-
-/**
- * The wide layout: a browser window as wide as a laptop's or more. The tabs
- * move to a sidebar on the left, and pages spread out into columns, rather
- * than a phone's column in the middle of the screen. Phones, tablets and
- * narrower windows keep the phone layout.
- */
-export const WIDE_MIN = 1100;
-
-/** The widest a page gets in the wide layout, gutters included. */
-export const WIDE_COLUMN = 1280;
-
-/** Whether to use the wide layout; follows the window as it's resized. */
-export function useWide(): boolean {
-  const { width } = useWindowDimensions();
-  return Platform.OS === 'web' && width >= WIDE_MIN;
-}
 
 export function useBottomClearance(): number {
   const bar = useContext(TabBarInset);

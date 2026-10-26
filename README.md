@@ -316,8 +316,8 @@ your accent glows behind them.
   your data, sign out, delete), Training (Progress, My workouts, Plate calculator, 1-rep max, Interval timer), Pro, your
   gyms, Settings (Country, **Appearance**, Haptics, **Sounds**, Demo
   mode), and where GymGO's facts come from.
-- **Appearance**: Light (the default), Dark or Automatic (follows your
-  phone), for everyone, and dark in **Black** (true black, the default) or **Dim** (a
+- **Appearance**: Automatic (follows your phone), Light or Dark, for
+  everyone, and dark in **Black** (true black, the default) or **Dim** (a
   soft blue-grey, easier in a lit room; the Standard look's, as the other
   looks draw dark their own way). **Liquid Glass**, also for everyone: a percentage for how
   glassy GymGO is: the controls, sheets and tab bar over the map, and the
@@ -585,21 +585,11 @@ It opens with the gym's logo (a chain's free logo, or the icon from the
 gym's own website; see below) and its photos. On an iPhone, press and hold a gym card on Home for a preview
 and a quick menu.
 
-Section headings, settings rows, buttons, tips and the mark on an empty page
-show an emoji rather than a coloured symbol: a phone button shows 📞,
-directions 🧭, Pro 👑, and so on. Controls stay symbols, drawn the way the
-rest of the phone draws them: back, open and close, the tab bar, and the
-ticks that show what's chosen.
-
-Those emoji, the celebration and sound samples, the emoji celebration and
-every country's flag are Google's **Noto 3D** pictures, the same on every
-phone, computer and the website (Windows draws no flag emoji at all). Which
-emoji stands for which symbol is in `apps/mobile/src/lib/iconEmoji.ts`. They're in `apps/mobile/assets/emoji` and `assets/flags`, under the
-SIL Open Font License 1.1 (`assets/emoji/LICENSE.txt`), and credited on
-Profile. To add one, put it in `EMOJI` in `apps/mobile/scripts/noto-emoji.mjs`
-and run it against a clone of github.com/googlefonts/noto-emoji (the
-script says which files to check out). Emoji in text people type, and the
-rating stars and ticks, stay as text.
+Buttons and rows use proper symbols rather than emoji: Apple's SF Symbols on
+iPhone, Google's Material Symbols on Android and in the browser, and
+Phosphor's two-tone icons in the tab bar and section headings. So a phone
+button shows a handset, directions an arrow sign, and so on, drawn the way
+the rest of the phone draws them.
 
 ### Where you are
 
@@ -1598,76 +1588,91 @@ same `deploy/` folder runs on any Linux server with Docker. Google Cloud's
 free e2-micro has only 1 GB of memory, too little to build the web app on
 it; build the images on another machine and copy them over.
 
-### The website on GitHub Pages
+### The website on Netlify
 
-GymGO's website is the app's own code, exported for the browser by
-`scripts/pages-build.sh` and published free on GitHub Pages (the
-repository is public) by `.github/workflows/pages.yml`, on every push to
-`claude/friendly-johnson-9rzxrj` that changes the app. Its custom domain is
-**gymgo.site**; without one it's at
-https://ashenkodituwakku.github.io/GymGO/. (It was on Netlify until 26 Oct;
-the owner had it moved here, and the Netlify files are gone.)
+GymGO's website is at **https://gymgo.site**, on Netlify (project
+`gymgowebsite`). It's the app's own code, exported for the browser by
+`scripts/netlify-build.sh`, which `netlify.toml` runs. A few things differ
+from the app:
 
-In a browser window 1100 points wide or more (a laptop or a desktop) the
-website uses the room: the tabs become a sidebar on the left, named, with
-the training pages under them, and pages spread out into two columns (Home,
-Profile, a gym's page, Pro, the workout builder, the timer, Appearance) or
-two to a row (Saved, Templates, Exercises). Phones, tablets and narrower
-windows keep the phone layout. `useWide` in `apps/mobile/src/lib/layout.tsx`
-decides; `components/Columns.tsx` lays a page out.
+- **The limited version, for now.** `netlify.toml` sets
+  `EXPO_PUBLIC_LIMITED=on` (`apps/mobile/src/lib/limited.ts`): the website
+  runs with no GymGO server, on the real gyms built into the app (major
+  cities in the US, Australia and Europe, from OpenStreetMap), with every
+  built-in city open, since Pro can't be bought there. Demo mode is off and
+  hidden. A banner on every screen says how many cities are built in and
+  that accounts and reviews come with the full version; Profile says what
+  the full version adds. What needs the server is left out rather than
+  offered: members' photos and reports, reviews, notes, owners' claims, day
+  passes, Search this area, places with no gyms built in, friends,
+  leaderboards, saved workouts and the training log, bug reports and
+  offline country packs. Delete that line (and set `GYMGO_SERVER_URL`) to
+  show the full app. More cities: `packages/world-data` (see its README).
+- **No account needed.** `netlify.toml` sets `EXPO_PUBLIC_ACCOUNT=optional`,
+  so the website can be used as a guest; signing in is only for what the
+  server keeps. The app, and GymGO on your computer, still need an account
+  (`apps/mobile/src/lib/accountRule.ts`). Delete that line to lock the
+  website too.
+- **No server yet.** Without one the website works on its own: the gyms
+  built into the app, saved gyms and training kept in that browser, and no
+  signing in, reviews, members' photos or Pro. To connect a server, run it
+  somewhere public (see "Put GymGO online" above) with `GYMGO_PUBLIC_URL`
+  set to `https://gymgo.site`, then in Netlify add the environment variable
+  `GYMGO_SERVER_URL` with the server's own address and deploy again. The
+  website then passes `/api` and the legal pages on to it, as Caddy does,
+  so the browser only ever talks to gymgo.site.
 
-Set up once, by an owner of the repository on GitHub (done):
+What else the website has:
 
-1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
-2. **Settings → Environments → github-pages → Deployment branches and
-   tags:** `claude/friendly-johnson-9rzxrj` added (Pages lets only the
-   default branch publish until a branch is added here).
-3. **Settings → Pages → Custom domain:** `gymgo.site`.
-
-For gymgo.site to show it, the domain's DNS (at Namecheap) has to point at
-GitHub: four `A` records for `@`, `185.199.108.153`, `185.199.109.153`,
-`185.199.110.153` and `185.199.111.153`, and a `CNAME` for `www` to
-`ashenkodituwakku.github.io`, in place of Netlify's (`75.2.60.5` and
-`gymgowebsite.netlify.app`). Once GitHub sees them, tick **Enforce HTTPS**
-in Settings → Pages. The build takes the site's path from Pages (`/GymGO`,
-or the root with a custom domain), so nothing here changes either way.
-
-How the website differs from the app:
-
-- **The limited version, for now.** The build sets `EXPO_PUBLIC_LIMITED=on`
-  (`apps/mobile/src/lib/limited.ts`): the website runs with no GymGO server,
-  on the real gyms built into the app (major cities in the US, Australia
-  and Europe, from OpenStreetMap), with every built-in city open, since Pro
-  can't be bought there. Demo mode is off and hidden. A banner on every
-  screen says how many cities are built in and that accounts and reviews
-  come with the full version; Profile says what the full version adds.
-  What needs the server is left out rather than offered: members' photos
-  and reports, reviews, notes, owners' claims, day passes, Search this
-  area, places with no gyms built in, friends, leaderboards, saved workouts
-  and the training log, bug reports and offline country packs. More
-  cities: `packages/world-data` (see its README).
-- **No account needed.** The build sets `EXPO_PUBLIC_ACCOUNT=optional`, so
-  the website can be used as a guest. The app, and GymGO on your computer,
-  still need an account (`apps/mobile/src/lib/accountRule.ts`).
-- **No server yet.** To connect one (not tried yet): run it somewhere
-  public (see "Put GymGO online" above) with `GYMGO_ALLOWED_ORIGINS` set to
-  `https://gymgo.site` so it answers the website's requests, then in
-  `scripts/pages-build.sh` set `EXPO_PUBLIC_API_URL` to the server's own
-  address in place of `none` and drop `EXPO_PUBLIC_LIMITED=on`. Pages can't
-  pass `/api` on to a server, so the browser talks to the server's address
-  directly.
-- **No rewrites.** A gym's link opened directly gets `404.html`, which is
-  the app again and shows the right screen; the browser sees a 404 status,
-  so search engines list only the home page.
-- **No custom headers.** Pages can't send the security headers Caddy does
-  (`deploy/Caddyfile`), and there's no Lighthouse report on each deploy.
+- **Build plugins** (`netlify.toml`; Netlify installs them itself).
+  *Lighthouse* scores every deploy's performance, accessibility, best
+  practices and SEO, shown in the deploy's summary; it reports and never
+  fails a deploy until you give it thresholds. *Sitemap* writes
+  `sitemap.xml` for search engines. Netlify's Next.js plugin is told to
+  stand aside, as the site isn't a Next.js one.
 - **How it looks when shared or saved.** `apps/mobile/public` holds the
   page template (its description, and the preview a shared link shows),
   the preview picture, the icons for adding the site to a home screen, and
-  `robots.txt`. The build adds the site's own address where one is needed,
-  and writes `sitemap.xml`. To change the pictures, edit
-  `apps/mobile/scripts/site-images.mjs` and run
+  `robots.txt`. The build adds the site's own address where one is needed.
+  To change the pictures, edit `apps/mobile/scripts/site-images.mjs` and run
   `node scripts/site-images.mjs` in `apps/mobile`.
+
+### The website on GitHub Pages
+
+The same limited website can be published free on GitHub Pages, as long as
+the repository is public; use it while Netlify's credits are used up, or
+instead of Netlify. `.github/workflows/pages.yml` builds it with
+`scripts/pages-build.sh` (the limited version, no server, no account) on
+every push to `claude/friendly-johnson-9rzxrj` that changes the app, and
+publishes it to **https://ashenkodituwakku.github.io/GymGO/**.
+
+Two settings come first, once, by an owner of the repository on GitHub:
+
+1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
+2. **Settings → Environments → github-pages → Deployment branches and
+   tags:** add `claude/friendly-johnson-9rzxrj`. Pages lets only the
+   default branch publish until a branch is added here.
+
+Then push again, or open the failed run under **Actions** and choose
+**Re-run all jobs**.
+
+How it differs from Netlify:
+
+- **It lives under `/GymGO/`** until a custom domain is set. The build is
+  told the path (`GYMGO_BASE_URL`, read in `apps/mobile/app.config.js`) and
+  puts it in front of every link.
+- **No rewrites.** A gym's link opened directly (`/GymGO/gym/…`) gets
+  `404.html`, which is the app again and shows the right screen; the
+  browser sees a 404 status, so search engines list only the home page.
+- **No headers, no plugins, no server.** Pages can't send the headers in
+  `netlify.toml` or pass `/api` on to a server, and there's no Lighthouse
+  or sitemap plugin. It suits the limited version, not the full app.
+
+To put it on **gymgo.site** instead: in Settings → Pages set the custom
+domain to `gymgo.site`, and at the domain's registrar point it at GitHub
+(the four `A` records GitHub's custom-domain guide lists, or a `CNAME` for
+`www` to `ashenkodituwakku.github.io`), replacing Netlify's. The next build
+drops the `/GymGO` path by itself. Doing that takes gymgo.site off Netlify.
 
 ### The older website
 

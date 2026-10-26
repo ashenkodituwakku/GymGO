@@ -12,7 +12,7 @@ import { StyleSheet, View } from 'react-native';
 import { Toggle } from '@/components/Toggle';
 import { Avatar } from '@/components/Avatar';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
-import { EmojiIcon } from '@/components/Emoji';
+import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -110,7 +110,7 @@ export default function LeaderboardScreen() {
       <ScreenOptions options={{ title: 'Leaderboard' }} />
       <Card style={styles.join}>
         <View style={styles.joinMark}>
-          <EmojiIcon name="trophy" size={18} />
+          <Icon name="trophy" size={18} color={color.brand} />
         </View>
         <View style={styles.flex}>
           <Txt variant="headline">Be on the public board</Txt>
@@ -292,7 +292,7 @@ const styles = themed(() =>
     shrink: { flexShrink: 1, minWidth: 0 },
     youPill: { paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.brandFill },
     join: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-    joinMark: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
+    joinMark: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     hero: { gap: space[1], padding: space[4], paddingTop: space[4] + 2, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.brandFill },
     place: { flexDirection: 'row', alignItems: 'baseline', gap: space[2] },
     stats: { flex: 1, flexDirection: 'row', justifyContent: 'flex-end', gap: space[4] },

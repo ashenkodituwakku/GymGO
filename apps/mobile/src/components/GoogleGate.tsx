@@ -10,7 +10,6 @@ import { setAlwaysShowGoogle, useAlwaysShowGoogle } from '@/lib/googleConsent';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
-import { EmojiIcon } from './Emoji';
 import { Txt } from './ui';
 
 export function GoogleGate({ what, children }: { what: string; children: ReactNode }) {
@@ -21,7 +20,7 @@ export function GoogleGate({ what, children }: { what: string; children: ReactNo
     <View style={styles.card}>
       <View style={styles.head}>
         <View style={styles.glyph}>
-          <EmojiIcon name="globe" size={18} />
+          <Icon name="globe" size={18} color={color.brand} />
         </View>
         <View style={styles.flex}>
           <Txt variant="headline">{what} from Google</Txt>
@@ -40,7 +39,7 @@ export function GoogleGate({ what, children }: { what: string; children: ReactNo
           accessibilityRole="button"
           style={styles.show}
         >
-          <EmojiIcon name="eye" size={15} />
+          <Icon name="eye" size={15} color={color.onBrand} />
           <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
             Show {what}
           </Txt>
@@ -67,7 +66,7 @@ const styles = themed(() =>
   StyleSheet.create({
     card: { gap: space[3], padding: space[4], borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     head: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
-    glyph: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
+    glyph: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     flex: { flex: 1, gap: 2 },
     // Wraps on a narrow phone, where "Always show" ran off the card.
     actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space[4], rowGap: space[2], paddingLeft: 36 + space[3] },

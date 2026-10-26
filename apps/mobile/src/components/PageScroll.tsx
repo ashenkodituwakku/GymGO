@@ -20,41 +20,26 @@
  * being typed in clear of it, rather than leaving it underneath (a note on a
  * gym's page, a friend's code). A tap on a button while typing works first
  * time, rather than only putting the keyboard away.
- *
- * In the wide layout (a laptop's browser window, lib/layout.tsx) the page's
- * column widens to `wideWidth`, with a wider gutter: by default 1000 points
- * for a page of 560 or more, and as it was for a narrower one (a form). A
- * page laid out in columns asks for more.
  */
 
 import { forwardRef, useCallback, useContext, useRef, type ForwardedRef } from 'react';
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
 import { ScrollMemory } from '@/components/Redrawn';
-import { useOverhang, useScreenBottom, useWide, type Measurable } from '@/lib/layout';
-import { ambientGlow, space } from '@/lib/theme';
+import { useOverhang, useScreenBottom, type Measurable } from '@/lib/layout';
+import { ambientGlow } from '@/lib/theme';
 
 type Props = ScrollViewProps & {
   /** Room under the last row, before the phone's own bottom edge is added. */
   gap?: number;
   /** More room still, for something pinned over the bottom of the page (the rest timer). */
   extraBottom?: number;
-  /** How wide the page's column gets in the wide layout. */
-  wideWidth?: number;
 };
 
-/** A page's column in the wide layout, unless it says. */
-const WIDE_PAGE = 1000;
-/** Pages this narrow (forms, a single message) stay as they are. */
-const KEEP_BELOW = 560;
-
 export const PageScroll = forwardRef(function PageScroll(
-  { gap = 32, extraBottom = 0, wideWidth, contentContainerStyle, onLayout, onScroll, onContentSizeChange, scrollEventThrottle, style, ...props }: Props,
+  { gap = 32, extraBottom = 0, contentContainerStyle, onLayout, onScroll, onContentSizeChange, scrollEventThrottle, style, ...props }: Props,
   forwarded: ForwardedRef<ScrollView>,
 ) {
   const screenBottom = useScreenBottom(gap);
-  const wide = useWide();
-  const own = StyleSheet.flatten(contentContainerStyle)?.maxWidth;
-  const widen = wide && (wideWidth ?? (typeof own === 'number' && own >= KEEP_BELOW ? WIDE_PAGE : null));
   const { measureRef, onLayout: measure, overhang } = useOverhang();
   const memory = useContext(ScrollMemory);
   const node = useRef<ScrollView | null>(null);
@@ -96,11 +81,7 @@ export const PageScroll = forwardRef(function PageScroll(
           }
           onContentSizeChange?.(width, height);
         }}
-        contentContainerStyle={[
-          contentContainerStyle,
-          widen ? { maxWidth: widen, paddingHorizontal: space[8], paddingTop: space[6] } : null,
-          { paddingBottom: screenBottom + overhang + extraBottom },
-        ]}
+        contentContainerStyle={[contentContainerStyle, { paddingBottom: screenBottom + overhang + extraBottom }]}
         // The scroll bar stops where the screen does, not below it.
         scrollIndicatorInsets={overhang > 0 ? { bottom: overhang } : undefined}
       />

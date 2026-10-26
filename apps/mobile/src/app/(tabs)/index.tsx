@@ -12,7 +12,6 @@ import { useRouter } from 'expo-router';
 import { HOURS_LABELS } from '@gymgo/domain';
 import { useMemo, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { Emoji, Flag, EmojiIcon } from '@/components/Emoji';
 import { GymCard } from '@/components/GymCard';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { GymCardsSkeleton } from '@/components/Skeleton';
@@ -31,7 +30,6 @@ import { useCollection } from '@/lib/useCollection';
 import { collectionStats } from '@/lib/collection';
 import { useApp } from '@/lib/app-state';
 import { lookupLine, noGymsLine, searchPrompt, timeLabel, visitWhen } from '@/lib/copy';
-import { cityGroups } from '@/lib/cityGroups';
 import { countryInSentence, countryName } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityNear, cityPlace, localBudget, moneyLabel, tracksPrices, worldCitiesIn, type AppPlace, type City, type WorldCity } from '@/lib/places';
@@ -44,8 +42,6 @@ import { templateDayName, upNext } from '@/lib/templates';
 import { unitFor } from '@/lib/training';
 import { exerciseName } from '@/lib/workout';
 import { LIMITED } from '@/lib/limited';
-import { useWide } from '@/lib/layout';
-import { Columns } from '@/components/Columns';
 
 /** Melbourne suburbs worth a tap, in the order people ask about them. */
 const MELBOURNE_PICKS = ['Melbourne CBD', 'Fitzroy', 'Collingwood', 'Brunswick', 'Carlton', 'Richmond', 'South Melbourne', 'Northcote'];
@@ -59,6 +55,18 @@ function greeting(minute: number): string {
 /** How many of a region's cities show before "N more". */
 const CITIES_SHOWN = 12;
 
+
+/** How Home groups the built-in cities. */
+/** Other cities by where they are: the US and Australia on their own, the rest by continent (their clock's). */
+const REGIONS: Array<{ label: string; has: (city: City) => boolean }> = [
+  { label: 'USA', has: (city) => city.country === 'US' },
+  { label: 'Australia', has: (city) => city.country === 'AU' },
+  { label: 'Europe', has: (city) => city.timezone.startsWith('Europe/') },
+  { label: 'The Americas', has: (city) => city.timezone.startsWith('America/') && city.country !== 'US' },
+  { label: 'Asia and the Middle East', has: (city) => city.timezone.startsWith('Asia/') },
+  { label: 'Africa', has: (city) => city.timezone.startsWith('Africa/') },
+  { label: 'New Zealand and the Pacific', has: (city) => city.timezone.startsWith('Pacific/') },
+];
 
 export default function Home() {
   useGlassRedraw();
@@ -78,7 +86,6 @@ export default function Home() {
   const router = useRouter();
   // The narrowest phones (an iPhone SE's 320 points) stack the finders' icons over their words.
   const narrow = useWindowDimensions().width < 360;
-  const wide = useWide();
 
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   // Each gym once: not the map's own copy of one GymGO carries too.
@@ -110,8 +117,10 @@ export default function Home() {
   const homeCities: Array<City | WorldCity> = home
     ? [...otherCities.filter((item) => item.country === home), ...worldCitiesIn(home).filter((item) => item.name !== filters.placeName)]
     : [];
-  // Then the US and Australia, and the rest by continent: each city once (lib/cityGroups.ts).
-  const groups = cityGroups(home, homeCities, otherCities);
+  const groups = [
+    ...(home && homeCities.length ? [{ label: countryName(home), cities: homeCities }] : []),
+    ...REGIONS.map(({ label, has }) => ({ label, cities: otherCities.filter((item) => has(item) && item.country !== home) })),
+  ].filter((group) => group.cities.length > 0);
 
   const explore = (request: Parameters<typeof requestExplore>[0] = {}) => {
     requestExplore(request);
@@ -153,205 +162,6 @@ export default function Home() {
     { icon: 'globe', title: 'Trips', detail: trips.trips.length ? `${trips.trips.length} planned` : 'Train away', label: 'Trips', onPress: () => router.push('/trips') },
   ];
 
-  // Finding: the search and the four quick picks.
-  const finding = (
-    <View style={styles.group}>
-    {/* In your country's words once your settings are read: until then plain "Search", not another country's words swapped a moment later. */}
-    <SearchButton placeholder={prefsReady ? searchPrompt(prefs.country) : 'Search'} onPress={() => explore({ focusSearch: true })} />
-
-    {/* Shortcuts --------------------------------------------------------- */}
-    <View style={styles.shortcuts}>
-      {shortcuts.map((item) => (
-        <Pressy
-          key={item.title}
-          scaleTo={0.93}
-          onPress={item.onPress}
-          accessibilityRole="button"
-          accessibilityLabel={item.title}
-          style={styles.shortcut}
-        >
-          <View style={styles.shortcutIcon}>
-            <EmojiIcon name={item.icon} size={20} />
-          </View>
-          {/* Two lines on the narrowest phones, where "Under A$25" didn't fit on one. */}
-          <Txt variant="footnote" style={[styles.center, face('medium')]} numberOfLines={2}>
-            {item.title}
-          </Txt>
-        </Pressy>
-      ))}
-    </View>
-
-    </View>
-  );
-  // Workout -----------------------------------------------------------
-  const workout = (
-    <View style={styles.group}>
-    {active && (
-      <Pressy
-        scaleTo={0.97}
-        onPress={() => {
-          haptic.select();
-          router.push('/train');
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={`Back to your workout: ${active.name}`}
-        style={styles.resume}
-      >
-        <View style={styles.resumeIcon}>
-          <Icon name="play" size={16} color={color.onBrand} />
-        </View>
-        <View style={styles.flex}>
-          <Txt variant="headline">Back to your workout</Txt>
-          <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-            {active.name} · {active.setsDone} sets done
-          </Txt>
-        </View>
-        <Icon name="chevron" size={14} color={color.labelTertiary} />
-      </Pressy>
-    )}
-    <Pressy
-      scaleTo={0.97}
-      onPress={() => {
-        haptic.select();
-        router.push({ pathname: '/workout/[id]', params: { id: 'any' } });
-      }}
-      accessibilityRole="button"
-      accessibilityLabel="Build a workout: tap the muscles you want to train"
-      style={[styles.workout, accentGlow(color.brandFill)]}
-    >
-      <BrandFill round={radius.xl} />
-      <Sheen round={radius.xl} />
-      <View style={styles.workoutIcon}>
-        <EmojiIcon name="workout" size={22} />
-      </View>
-      <View style={styles.flex}>
-        <Txt variant="headline" color={color.onBrand}>
-          Build a workout
-        </Txt>
-        <Txt variant="footnote" color={color.onBrandSoft}>
-          Pick muscles, get a plan
-        </Txt>
-      </View>
-      <Icon name="chevron" size={14} color={color.onBrandSoft} />
-    </Pressy>
-
-    {/* Up next and the other templates: one card, two actions. */}
-    <View style={styles.planCard}>
-    {plan && planDay && (
-      <Pressy
-        scaleTo={0.98}
-        onPress={() => {
-          haptic.success();
-          startSession({ name: templateDayName(plan.template, planDay), workoutId: null, gymId: null, gymName: null, unit: unitFor(prefs.country), items: planDay.items });
-          router.push('/train');
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={`Start ${planDay.name}, up next in ${plan.template.name}`}
-        style={styles.upNext}
-      >
-        <View style={styles.upNextIcon}>
-          <EmojiIcon name="play" size={14} />
-        </View>
-        <View style={styles.flex}>
-          <Txt variant="caption" color={color.brand} style={face('semibold')} numberOfLines={1}>
-            Up next · {plan.template.name}
-          </Txt>
-          <Txt variant="headline" numberOfLines={1}>
-            {planDay.name}
-          </Txt>
-          <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-            {planDay.items.map((item) => exerciseName(item.exerciseId)).join(', ')}
-          </Txt>
-        </View>
-        <View style={styles.startPill}>
-          <Txt variant="footnote" color={color.onBrand} style={face('semibold')}>
-            Start
-          </Txt>
-        </View>
-      </Pressy>
-    )}
-
-    <Pressable
-      onPress={() => router.push('/templates')}
-      accessibilityRole="link"
-      accessibilityLabel={plan ? 'Pick another template' : 'Start from a template: push, pull, legs; 5×5; or full body'}
-      style={({ pressed }) => [styles.templatesRow, !!plan && planDay && styles.templatesUnder, pressed && { backgroundColor: color.fill }]}
-    >
-      <EmojiIcon name="list" size={15} />
-      <Txt variant="footnote" color={color.brand} style={[face('semibold'), styles.flex]}>
-        {plan ? 'Pick another template' : 'Start from a template: push, pull, legs; 5×5; or full body'}
-      </Txt>
-      <Icon name="chevron" size={12} color={color.labelTertiary} />
-    </Pressable>
-    </View>
-
-    </View>
-  );
-  // A trip under way or coming up, then the two finders ---------------
-  const findersGroup = (
-    <View style={styles.group}>
-    {trip && (
-      <Pressy
-        scaleTo={0.97}
-        onPress={() => {
-          haptic.select();
-          router.push({ pathname: '/trips/[id]', params: { id: trip.id } });
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={`Trip to ${trip.placeName}, ${tripDatesLabel(trip)}, ${tripWhen(trip, todayThere(trip))}. See the gyms there`}
-        style={styles.trip}
-      >
-        <View style={styles.tripIcon}>
-          <EmojiIcon name="globe" size={18} />
-        </View>
-        <View style={styles.flex}>
-          <Txt variant="headline" numberOfLines={1}>{`Trip to ${trip.placeName}`}</Txt>
-          <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
-            {`${tripWhen(trip, todayThere(trip))} · ${tripDatesLabel(trip)} · gyms that let visitors in`}
-          </Txt>
-        </View>
-        <Icon name="chevron" size={14} color={color.labelTertiary} />
-      </Pressy>
-    )}
-    <View style={styles.finders}>
-      {finders.map((item) => (
-        <Pressy key={item.title} scaleTo={0.95} onPress={item.onPress} accessibilityRole="button" accessibilityLabel={item.label} style={[styles.finder, narrow && styles.finderNarrow]}>
-          <View style={styles.shortcutIcon}>
-            <EmojiIcon name={item.icon} size={18} />
-          </View>
-          <View style={narrow ? styles.finderTextNarrow : styles.flex}>
-            <Txt variant="subhead" style={[face('semibold'), narrow && styles.center]} numberOfLines={1}>
-              {item.title}
-            </Txt>
-            <Txt variant="caption" color={color.labelSecondary} style={narrow && styles.center} numberOfLines={narrow ? 2 : 1}>
-              {item.detail}
-            </Txt>
-          </View>
-        </Pressy>
-      ))}
-    </View>
-
-    </View>
-  );
-  // How you're doing: training this week, and the collection.
-  const doing = (
-    <View style={styles.group}>
-    <HereNudge here={here} records={data.listed} onOpen={(id) => router.push({ pathname: '/gym/[id]', params: { id } })} />
-    {/* Both there: two tiles side by side. One alone: a full-width strip. */}
-    {showWeek && collected ? (
-      <View style={styles.finders}>
-        <WeekStrip tile sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />
-        <CollectionStrip tile onPress={() => router.push('/collection')} />
-      </View>
-    ) : (
-      <>
-        {showWeek && <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />}
-        <CollectionStrip onPress={() => router.push('/collection')} />
-      </>
-    )}
-    </View>
-  );
-
   return (
     <TabScreen
       glow
@@ -369,31 +179,204 @@ export default function Home() {
           {account.face ? (
             <Avatar account={account.face} size={40} variant="headline" />
           ) : (
-            <EmojiIcon name="account" size={22} />
+            <Icon name="account" size={22} color={color.brand} />
           )}
         </Pressy>
       }
     >
-      {/* In the wide layout, finding on the left and training on the right; on a phone, one after the other. */}
-      {wide ? (
-        <Columns inner={space[6]}>
-          <>
-            {finding}
-            {doing}
-          </>
-          <>
-            {workout}
-            {findersGroup}
-          </>
-        </Columns>
+      {/* Finding: the search and the four quick picks. */}
+      <View style={styles.group}>
+      {/* In your country's words once your settings are read: until then plain "Search", not another country's words swapped a moment later. */}
+      <SearchButton placeholder={prefsReady ? searchPrompt(prefs.country) : 'Search'} onPress={() => explore({ focusSearch: true })} />
+
+      {/* Shortcuts --------------------------------------------------------- */}
+      <View style={styles.shortcuts}>
+        {shortcuts.map((item) => (
+          <Pressy
+            key={item.title}
+            scaleTo={0.93}
+            onPress={item.onPress}
+            accessibilityRole="button"
+            accessibilityLabel={item.title}
+            style={styles.shortcut}
+          >
+            <View style={styles.shortcutIcon}>
+              <Icon name={item.icon} size={20} color={color.brand} />
+            </View>
+            {/* Two lines on the narrowest phones, where "Under A$25" didn't fit on one. */}
+            <Txt variant="footnote" style={[styles.center, face('medium')]} numberOfLines={2}>
+              {item.title}
+            </Txt>
+          </Pressy>
+        ))}
+      </View>
+
+      </View>
+
+      {/* Workout ----------------------------------------------------------- */}
+      <View style={styles.group}>
+      {active && (
+        <Pressy
+          scaleTo={0.97}
+          onPress={() => {
+            haptic.select();
+            router.push('/train');
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`Back to your workout: ${active.name}`}
+          style={styles.resume}
+        >
+          <View style={styles.resumeIcon}>
+            <Icon name="play" size={16} color={color.onBrand} />
+          </View>
+          <View style={styles.flex}>
+            <Txt variant="headline">Back to your workout</Txt>
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+              {active.name} · {active.setsDone} sets done
+            </Txt>
+          </View>
+          <Icon name="chevron" size={14} color={color.labelTertiary} />
+        </Pressy>
+      )}
+      <Pressy
+        scaleTo={0.97}
+        onPress={() => {
+          haptic.select();
+          router.push({ pathname: '/workout/[id]', params: { id: 'any' } });
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Build a workout: tap the muscles you want to train"
+        style={[styles.workout, accentGlow(color.brandFill)]}
+      >
+        <BrandFill round={radius.xl} />
+        <Sheen round={radius.xl} />
+        <View style={styles.workoutIcon}>
+          <Icon name="workout" size={22} color={color.onBrand} />
+        </View>
+        <View style={styles.flex}>
+          <Txt variant="headline" color={color.onBrand}>
+            Build a workout
+          </Txt>
+          <Txt variant="footnote" color={color.onBrandSoft}>
+            Pick muscles, get a plan
+          </Txt>
+        </View>
+        <Icon name="chevron" size={14} color={color.onBrandSoft} />
+      </Pressy>
+
+      {/* Up next and the other templates: one card, two actions. */}
+      <View style={styles.planCard}>
+      {plan && planDay && (
+        <Pressy
+          scaleTo={0.98}
+          onPress={() => {
+            haptic.success();
+            startSession({ name: templateDayName(plan.template, planDay), workoutId: null, gymId: null, gymName: null, unit: unitFor(prefs.country), items: planDay.items });
+            router.push('/train');
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`Start ${planDay.name}, up next in ${plan.template.name}`}
+          style={styles.upNext}
+        >
+          <View style={styles.upNextIcon}>
+            <Icon name="play" size={14} color={color.brand} />
+          </View>
+          <View style={styles.flex}>
+            <Txt variant="caption" color={color.brand} style={face('semibold')} numberOfLines={1}>
+              Up next · {plan.template.name}
+            </Txt>
+            <Txt variant="headline" numberOfLines={1}>
+              {planDay.name}
+            </Txt>
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+              {planDay.items.map((item) => exerciseName(item.exerciseId)).join(', ')}
+            </Txt>
+          </View>
+          <View style={styles.startPill}>
+            <Txt variant="footnote" color={color.onBrand} style={face('semibold')}>
+              Start
+            </Txt>
+          </View>
+        </Pressy>
+      )}
+
+      <Pressable
+        onPress={() => router.push('/templates')}
+        accessibilityRole="link"
+        accessibilityLabel={plan ? 'Pick another template' : 'Start from a template: push, pull, legs; 5×5; or full body'}
+        style={({ pressed }) => [styles.templatesRow, !!plan && planDay && styles.templatesUnder, pressed && { backgroundColor: color.fill }]}
+      >
+        <Icon name="list" size={15} color={color.brand} />
+        <Txt variant="footnote" color={color.brand} style={[face('semibold'), styles.flex]}>
+          {plan ? 'Pick another template' : 'Start from a template: push, pull, legs; 5×5; or full body'}
+        </Txt>
+        <Icon name="chevron" size={12} color={color.labelTertiary} />
+      </Pressable>
+      </View>
+
+      </View>
+
+      {/* A trip under way or coming up, then the two finders --------------- */}
+      <View style={styles.group}>
+      {trip && (
+        <Pressy
+          scaleTo={0.97}
+          onPress={() => {
+            haptic.select();
+            router.push({ pathname: '/trips/[id]', params: { id: trip.id } });
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`Trip to ${trip.placeName}, ${tripDatesLabel(trip)}, ${tripWhen(trip, todayThere(trip))}. See the gyms there`}
+          style={styles.trip}
+        >
+          <View style={styles.tripIcon}>
+            <Icon name="globe" size={18} color={color.onBrand} />
+          </View>
+          <View style={styles.flex}>
+            <Txt variant="headline" numberOfLines={1}>{`Trip to ${trip.placeName}`}</Txt>
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
+              {`${tripWhen(trip, todayThere(trip))} · ${tripDatesLabel(trip)} · gyms that let visitors in`}
+            </Txt>
+          </View>
+          <Icon name="chevron" size={14} color={color.labelTertiary} />
+        </Pressy>
+      )}
+      <View style={styles.finders}>
+        {finders.map((item) => (
+          <Pressy key={item.title} scaleTo={0.95} onPress={item.onPress} accessibilityRole="button" accessibilityLabel={item.label} style={[styles.finder, narrow && styles.finderNarrow]}>
+            <View style={styles.shortcutIcon}>
+              <Icon name={item.icon} size={18} color={color.brand} />
+            </View>
+            <View style={narrow ? styles.finderTextNarrow : styles.flex}>
+              <Txt variant="subhead" style={[face('semibold'), narrow && styles.center]} numberOfLines={1}>
+                {item.title}
+              </Txt>
+              <Txt variant="caption" color={color.labelSecondary} style={narrow && styles.center} numberOfLines={narrow ? 2 : 1}>
+                {item.detail}
+              </Txt>
+            </View>
+          </Pressy>
+        ))}
+      </View>
+
+      </View>
+
+      {/* How you're doing: training this week, and the collection. */}
+      <View style={styles.group}>
+      <HereNudge here={here} records={data.listed} onOpen={(id) => router.push({ pathname: '/gym/[id]', params: { id } })} />
+      {/* Both there: two tiles side by side. One alone: a full-width strip. */}
+      {showWeek && collected ? (
+        <View style={styles.finders}>
+          <WeekStrip tile sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />
+          <CollectionStrip tile onPress={() => router.push('/collection')} />
+        </View>
       ) : (
         <>
-          {finding}
-          {workout}
-          {findersGroup}
-          {doing}
+          {showWeek && <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />}
+          <CollectionStrip onPress={() => router.push('/collection')} />
         </>
       )}
+      </View>
 
       {/* Everything below is about a place: it waits for your settings, so
           it opens on your country's city rather than flashing the default. */}
@@ -424,7 +407,7 @@ export default function Home() {
             accessibilityLabel={`Gyms in ${countryInSentence(filters.countryCode)} are part of GymGO Pro. See GymGO Pro`}
             style={({ pressed }) => [styles.locked, pressed && { opacity: 0.8 }]}
           >
-            <EmojiIcon name="globe" size={22} />
+            <Icon name="globe" size={22} color={color.brand} />
             <View style={styles.lockedText}>
               <Txt variant="headline">Gyms in {countryInSentence(filters.countryCode)} are part of GymGO Pro</Txt>
               <Txt variant="footnote" color={color.labelSecondary}>
@@ -455,7 +438,7 @@ export default function Home() {
               hitSlop={4}
               style={({ pressed }) => [styles.suburb, styles.retry, styles.searchHere, pressed && { opacity: 0.7 }]}
             >
-              <EmojiIcon name="search" size={15} />
+              <Icon name="search" size={15} color={color.brand} />
               <Txt variant="subhead" color={color.brand} style={face('semibold')}>
                 Search this area
               </Txt>
@@ -553,21 +536,15 @@ export default function Home() {
           <Txt variant="footnote" color={color.labelSecondary} style={styles.anywhere}>
             {LIMITED ? 'Every city built into this version of GymGO.' : 'Or anywhere in the world: type a town on the map, or move the map and tap Search this area.'}
           </Txt>
-          {groups.map(({ label, flag, emoji, cities }) => {
+          {groups.map(({ label, cities }) => {
             // A long list (the US has 40) shows its first dozen until asked for the rest.
             const open = showAll[label] === true || cities.length <= CITIES_SHOWN + 2;
             const list = open ? cities : cities.slice(0, CITIES_SHOWN);
             return (
               <View key={label} style={styles.country}>
-                <View style={styles.countryHead}>
-                  {flag ? <Flag code={flag} size={24} /> : emoji ? <Emoji char={emoji} size={24} /> : null}
-                  <Txt variant="headline" accessibilityRole="header" level={3} style={styles.flex}>
-                    {label}
-                  </Txt>
-                  <Txt variant="footnote" color={color.labelSecondary}>
-                    {`${cities.length} ${cities.length === 1 ? 'city' : 'cities'}`}
-                  </Txt>
-                </View>
+                <Txt variant="footnote" color={color.labelSecondary} style={styles.countryLabel}>
+                  {label.toUpperCase()}
+                </Txt>
                 <View style={styles.suburbs}>
                   {list.map((item) => {
                     const where = 'id' in item ? (label === 'Europe' ? item.region : countryName(item.country)) : countryName(item.country);
@@ -579,7 +556,6 @@ export default function Home() {
                         accessibilityLabel={`${item.name}, ${where}${mayExplore(item.country) ? '' : ', with GymGO Pro'}`}
                         style={({ pressed }) => [styles.suburb, styles.cityChip, pressed && { opacity: 0.7 }]}
                       >
-                        <Flag code={item.country} size={18} />
                         <Txt variant="subhead" style={face('medium')}>
                           {item.name}
                         </Txt>
@@ -719,7 +695,7 @@ const styles = themed(() => StyleSheet.create({
     borderCurve: 'continuous',
     backgroundColor: color.brandTint,
   },
-  tripIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
+  tripIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
   finders: { flexDirection: 'row', gap: space[3] },
   planCard: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', ...shadow.card },
   upNext: {
@@ -730,7 +706,7 @@ const styles = themed(() => StyleSheet.create({
   },
   templatesRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: space[3] - 2, paddingHorizontal: space[3] },
   templatesUnder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
-  upNextIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
+  upNextIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
   startPill: { paddingHorizontal: space[3], paddingVertical: 7, borderRadius: radius.pill, backgroundColor: color.brandFill },
   finderNarrow: { flexDirection: 'column', gap: space[2] },
   finderTextNarrow: { alignSelf: 'stretch' },
@@ -770,7 +746,7 @@ const styles = themed(() => StyleSheet.create({
     backgroundColor: color.plate,
     ...shadow.plate,
   },
-  shortcutIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
+  shortcutIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
   center: { textAlign: 'center' },
 
   section: { gap: space[3] },
@@ -798,7 +774,7 @@ const styles = themed(() => StyleSheet.create({
   pageForward: { right: -18 },
 
   country: { gap: space[2] },
-  countryHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: space[1] },
+  countryLabel: { ...face('semibold'), letterSpacing: 0.6 },
   anywhere: { marginBottom: space[3] },
   locked: {
     flexDirection: 'row',

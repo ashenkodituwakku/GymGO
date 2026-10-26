@@ -12,7 +12,6 @@ import { Pressable, Pressy } from '@/components/motion';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
-import { EmojiIcon } from '@/components/Emoji';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -145,7 +144,7 @@ export default function FriendsScreen() {
           accessibilityLabel="Send your friend code"
           style={styles.send}
         >
-          <EmojiIcon name="share" size={15} />
+          <Icon name="share" size={15} color={color.onBrand} />
           <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
             Send your code
           </Txt>
@@ -213,7 +212,7 @@ export default function FriendsScreen() {
         {view && view.friends.length === 0 && (
           <View style={styles.empty}>
             <View style={styles.emptyMark}>
-              <EmojiIcon name="people" size={20} />
+              <Icon name="people" size={20} color={color.brand} />
             </View>
             <View style={styles.flex}>
               <Txt variant="headline">No friends yet</Txt>
@@ -369,7 +368,7 @@ const styles = themed(() =>
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.md },
     // In line with the rows' text.
     empty: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3] },
-    emptyMark: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
+    emptyMark: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     inviteRow: { alignItems: 'flex-start' },
     inviteActions: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: space[2], flexWrap: 'wrap' },
     small: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill },

@@ -27,13 +27,12 @@ import Animated, {
 import Svg, { Circle, Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import type { GymRecord } from '@gymgo/domain';
 import { MarkImage, useGymMark } from './BrandLogo';
-import { Flag } from './Emoji';
 import { Icon } from './Icon';
 import { Illustration } from './Illustration';
 import { NoPhoto, Txt } from './ui';
 import { photoUrl } from '@/lib/api';
 import { demoPicture } from '@/lib/gymPicture';
-import { tierFor, type CollectedGym } from '@/lib/collection';
+import { flag, tierFor, type CollectedGym } from '@/lib/collection';
 import { haptic } from '@/lib/haptics';
 import { PRISM, cardFor, gemInfo, rarityLabel, rarityRank, type CardLook } from '@/lib/rarity';
 import { color, face, radius, space, themed } from '@/lib/theme';
@@ -129,12 +128,9 @@ export function GemCard({
           <Txt variant={big ? 'title2' : 'headline'} numberOfLines={2}>
             {entry.name}
           </Txt>
-          <View style={styles.place}>
-            <Flag code={entry.countryCode} size={16} />
-            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1} style={styles.flex}>
-              {entry.city}
-            </Txt>
-          </View>
+          <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+            {`${flag(entry.countryCode)} ${entry.city}`.trim()}
+          </Txt>
           <View style={styles.tierRow}>
             <View style={[styles.metalDot, { backgroundColor: metal }]} />
             <Txt variant="caption" color={color.labelSecondary} numberOfLines={2} style={styles.flex}>
@@ -353,7 +349,6 @@ const styles = themed(() =>
     tierRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
     metalDot: { width: 8, height: 8, borderRadius: 4 },
     flex: { flex: 1 },
-    place: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     track: { height: 5, borderRadius: 3, backgroundColor: color.fill, overflow: 'hidden', marginTop: 'auto' },
     fill: { height: '100%', borderRadius: 3 },
     shine: { position: 'absolute', top: '-50%', bottom: '-50%', left: 0 },

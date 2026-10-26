@@ -8,7 +8,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { HeroMark } from '@/components/HeroMark';
 import { Icon } from '@/components/Icon';
-import { EmojiIcon } from '@/components/Emoji';
 import { Group, Row, TILE } from '@/components/ios';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -196,7 +195,7 @@ function Stepper({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: stri
       hitSlop={6}
       style={({ pressed }) => [styles.stepper, pressed && { opacity: 0.6 }]}
     >
-      <EmojiIcon name={icon} size={16} />
+      <Icon name={icon} size={16} color={color.brand} />
     </Pressable>
   );
 }

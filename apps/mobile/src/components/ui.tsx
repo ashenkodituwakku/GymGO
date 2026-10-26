@@ -13,6 +13,7 @@ import { haptic } from '@/lib/haptics';
 import { alpha } from '@/lib/looks';
 import { backgroundImage, color, currentLook, currentTheme, dropShadow, face, HIT, LOOKS, radius, shadow, space, themed, type, webFocusRing, solidSurfaces } from '@/lib/theme';
 import { BrandFill, Sheen } from './BrandFill';
+import { Emoji } from './Emoji';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { FADE_IN, FADE_OUT, GLIDE, Pressable, Pressy, SETTLE, usePop, usePressScale } from './motion';
@@ -262,9 +263,7 @@ export function Fold({
             <Icon name={icon} size={17} color={color.brand} />
           </View>
         ) : (
-          <Txt variant="title2" style={styles.foldEmoji}>
-            {emoji}
-          </Txt>
+          <View style={styles.foldEmoji}>{!!emoji && <Emoji char={emoji} size={26} />}</View>
         )}
         <View style={styles.foldText}>
           <Txt variant="headline">{title}</Txt>
@@ -781,7 +780,7 @@ const styles = themed(() => StyleSheet.create({
   foldInGroup: { overflow: 'hidden' },
   // Inset past the row's icon (padding 16 + icon 32 + gap 12), as iOS's lists are.
   groupLine: { height: StyleSheet.hairlineWidth, marginLeft: space[4] + 32 + space[3], backgroundColor: color.separator },
-  foldEmoji: { width: 30, textAlign: 'center' },
+  foldEmoji: { width: 30, alignItems: 'center' },
   foldIcon: {
     width: 32,
     height: 32,

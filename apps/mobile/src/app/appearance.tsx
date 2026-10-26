@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { BrandFill } from '@/components/BrandFill';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { loadAllLookFonts } from '@/lib/lookFonts';
@@ -20,6 +20,7 @@ import { Icon } from '@/components/Icon';
 import { PercentSlider } from '@/components/PercentSlider';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { Celebration } from '@/components/Celebration';
+import { Emoji } from '@/components/Emoji';
 import { CELEBRATIONS, FREE_CELEBRATION, celebrationFor, type CelebrationStyle } from '@/lib/celebrations';
 import { playSound } from '@/lib/sounds';
 import { FREE_SOUND_PACK, SOUND_PACKS, soundPackFor, type SoundPack } from '@/lib/soundPacks';
@@ -399,7 +400,7 @@ export default function AppearanceScreen() {
                 style={({ pressed }) => [styles.celebration, pressed && { opacity: 0.75 }]}
               >
                 <View style={[styles.sampleTile, on && styles.sampleOn]}>
-                  <Text style={styles.sample}>{item.sample}</Text>
+                  <Emoji char={item.sample} size={32} />
                 </View>
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
@@ -445,7 +446,7 @@ export default function AppearanceScreen() {
                 style={({ pressed }) => [styles.soundPack, pressed && { opacity: 0.75 }]}
               >
                 <View style={[styles.sampleTile, on && styles.sampleOn]}>
-                  <Text style={styles.sample}>{item.sample}</Text>
+                  <Emoji char={item.sample} size={32} />
                 </View>
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
@@ -631,7 +632,6 @@ const styles = themed(() =>
     soundPack: { flex: 1, alignItems: 'center', gap: space[1], paddingVertical: space[2], paddingHorizontal: space[2] },
     sampleTile: { width: 56, height: 56, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
     sampleOn: { borderColor: color.brand, backgroundColor: color.brandTint },
-    sample: { fontSize: 28, lineHeight: 34 },
     playRow: { marginTop: space[3] },
     flex: { flex: 1 },
     glassCard: { gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },

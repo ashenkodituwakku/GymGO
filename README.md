@@ -591,6 +591,16 @@ Phosphor's two-tone icons in the tab bar and section headings. So a phone
 button shows a handset, directions an arrow sign, and so on, drawn the way
 the rest of the phone draws them.
 
+The few emoji the app shows (the celebration and sound samples, the emoji
+celebration) and every country's flag are Google's **Noto 3D** pictures, the
+same on every phone, computer and the website (Windows draws no flag emoji
+at all). They're in `apps/mobile/assets/emoji` and `assets/flags`, under the
+SIL Open Font License 1.1 (`assets/emoji/LICENSE.txt`), and credited on
+Profile. To add one, put it in `EMOJI` in `apps/mobile/scripts/noto-emoji.mjs`
+and run it against a clone of github.com/googlefonts/noto-emoji (the
+script says which files to check out). Emoji in text people type, and the
+rating stars and ticks, stay as text.
+
 ### Where you are
 
 GymGO opens where you are. The first time, it asks for your location once;

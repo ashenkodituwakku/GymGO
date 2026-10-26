@@ -11,7 +11,8 @@
 import { useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
-import type { CelebrationStyle } from '@/lib/celebrations';
+import { SHOWER_EMOJI, type CelebrationStyle } from '@/lib/celebrations';
+import { Emoji } from './Emoji';
 import { PRISM } from '@/lib/rarity';
 
 const DURATION = 2600;
@@ -23,7 +24,6 @@ function seeded(index: number, salt: number): number {
 }
 
 const STAR_GOLD = ['#F5B700', '#FFD34D', '#FFC21A'];
-const EMOJI = ['💪', '🔥', '🏆', '⭐', '🎉'];
 
 export function Celebration({ style }: { style: CelebrationStyle }) {
   const still = useReducedMotion();
@@ -143,7 +143,8 @@ function Shower({ t, width, height, emoji }: Field & { emoji: boolean }) {
   const drops = useMemo(
     () =>
       Array.from({ length: emoji ? 22 : 26 }, (_, index) => ({
-        glyph: emoji ? EMOJI[index % EMOJI.length]! : '★',
+        glyph: emoji ? SHOWER_EMOJI[index % SHOWER_EMOJI.length]! : '★',
+        picture: emoji,
         color: STAR_GOLD[index % STAR_GOLD.length]!,
         x: seeded(index, 21) * (width - 30),
         y0: -40 - seeded(index, 22) * height * 0.35,
@@ -164,7 +165,7 @@ function Shower({ t, width, height, emoji }: Field & { emoji: boolean }) {
   );
 }
 
-function Drop({ t, glyph, color, x, y0, fall, sway, wave, spin, size }: { t: SharedValue<number>; glyph: string; color: string; x: number; y0: number; fall: number; sway: number; wave: number; spin: number; size: number }) {
+function Drop({ t, glyph, picture, color, x, y0, fall, sway, wave, spin, size }: { t: SharedValue<number>; glyph: string; picture: boolean; color: string; x: number; y0: number; fall: number; sway: number; wave: number; spin: number; size: number }) {
   const look = useAnimatedStyle(() => {
     const twinkle = 0.75 + 0.25 * Math.sin(t.value * Math.PI * 2 * wave * 2);
     return {
@@ -174,7 +175,8 @@ function Drop({ t, glyph, color, x, y0, fall, sway, wave, spin, size }: { t: Sha
   });
   return (
     <Animated.View style={[styles.piece, look]}>
-      <Text style={{ fontSize: size, lineHeight: size * 1.15, color }}>{glyph}</Text>
+      {/* An emoji as its Noto 3D picture; a star in gold, as text. */}
+      {picture ? <Emoji char={glyph} size={size * 1.15} /> : <Text style={{ fontSize: size, lineHeight: size * 1.15, color }}>{glyph}</Text>}
     </Animated.View>
   );
 }

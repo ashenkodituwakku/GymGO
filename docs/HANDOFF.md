@@ -160,6 +160,17 @@ mobile 388, domain 167 and web 39 tests, all passing.
   busy button renamed "Say how busy". Offered but not chosen: hiding the
   AD PLACEHOLDER box for Free users, putting "can I get in?" first on gym
   pages, and a notice when the map can't load.
+- **Emoji and flags are Google's Noto 3D pictures** (26 Oct; the owner
+  asked, after we passed on a Figma file of Apple's emoji, whose art Apple
+  allows only on its own devices). `components/Emoji.tsx` (`Emoji`, `Flag`)
+  draws them from `src/lib/emojiImages.ts`, written with the pictures by
+  `apps/mobile/scripts/noto-emoji.mjs` from a clone of
+  github.com/googlefonts/noto-emoji (`3D/png`). Used for the emoji shower,
+  the celebration and sound samples, the country list (flags on the website
+  too now), collection cards and completed sets. Licence: SIL OFL 1.1, in
+  `assets/emoji/LICENSE.txt`, credited on Profile. To add an emoji, add it
+  to `EMOJI` in the script and run it; `src/lib/emoji.test.ts` fails if the
+  app shows one without a picture.
 - **Netlify is gone; the website is on GitHub Pages** (26 Oct; the owner
   asked: "delete the netlify thing and put the website on github pages").
   `netlify.toml` and `scripts/netlify-build.sh` are deleted;

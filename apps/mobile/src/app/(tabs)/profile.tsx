@@ -306,7 +306,8 @@ export default function Profile() {
             researched gyms, prices, hours and equipment come from each gym’s own website, read on 23 September 2026. Logos:
             Wikimedia Commons for ten chains, otherwise the icon on the gym’s own website. Maps: Apple Maps on iPhone,
             OpenFreeMap elsewhere. The Google page shows Google’s own map and Street View, straight from Google. Photos,
-            reviews, what members paid and machine reports: GymGO members.
+            reviews, what members paid and machine reports: GymGO members. Emoji and flags: Noto 3D by Google, under the
+            SIL Open Font License 1.1.
           </Explainer>
         )}
         {/* A report goes to the server, which the limited website hasn't got. */}

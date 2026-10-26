@@ -8,13 +8,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Platform, SectionList, StyleSheet, TextInput, View } from 'react-native';
 import { BrandFill } from '@/components/BrandFill';
+import { Flag, hasFlag } from '@/components/Emoji';
 import { Pressable } from '@/components/motion';
 import { Icon } from '@/components/Icon';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Txt } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { useApp } from '@/lib/app-state';
-import { COUNTRIES, FOCUS_COUNTRY, builtInCountries, countryByCode, deviceCountry, flagOf, searchCountries, type Country } from '@/lib/country';
+import { COUNTRIES, FOCUS_COUNTRY, builtInCountries, countryByCode, deviceCountry, searchCountries, type Country } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { CITY_LIST } from '@/lib/places';
 import { HEADER_EDGE, NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
@@ -162,8 +163,12 @@ export default function CountryScreen() {
                   pressed && { backgroundColor: color.fill },
                 ]}
               >
-                {/* Windows draws flag emoji as two letters, so the browser shows the code instead. */}
-                {Platform.OS === 'web' ? (
+                {/* The country's Noto 3D flag, the same everywhere (Windows draws flag emoji as two letters); its code if there's no picture. */}
+                {hasFlag(item.code) ? (
+                  <View style={styles.flag}>
+                    <Flag code={item.code} size={MARK - 4} />
+                  </View>
+                ) : (
                   <View style={[styles.code, on && styles.codeOn]}>
                     {/* Rainbow's and Camo's paint, as every other filled accent has. */}
                     {on && <BrandFill round={7} />}
@@ -171,10 +176,6 @@ export default function CountryScreen() {
                       {item.code}
                     </Txt>
                   </View>
-                ) : (
-                  <Txt variant="title2" style={styles.flag}>
-                    {flagOf(item.code)}
-                  </Txt>
                 )}
                 <View style={styles.flex}>
                   <Txt variant="body">{item.name}</Txt>
@@ -194,7 +195,7 @@ export default function CountryScreen() {
   );
 }
 
-/** The width of a country's flag, or its code in a browser. */
+/** The width of a country's flag, or its code. */
 const MARK = 34;
 
 const styles = themed(() => StyleSheet.create({
@@ -233,7 +234,7 @@ const styles = themed(() => StyleSheet.create({
   rowLast: { borderBottomLeftRadius: radius.lg, borderBottomRightRadius: radius.lg, borderCurve: 'continuous' },
   // From the name, past the flag or code.
   rule: { position: 'absolute', left: space[4] + MARK + space[3], right: 0, bottom: 0, height: StyleSheet.hairlineWidth, backgroundColor: color.separator },
-  flag: { width: MARK, textAlign: 'center' },
+  flag: { width: MARK, alignItems: 'center' },
   code: {
     width: MARK,
     height: 26,

@@ -102,6 +102,16 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Undone at the owner's request (26 Oct): another session's six changes.**
+  The owner asked to undo what session `01AgUY2LAX9QWwZT9VCizKDS` did and put
+  the app back as it was. Commit `01cce83` reverts, newest first: the desktop
+  sidebar and wider pages (`45b7481`), the purple icons replaced with emoji
+  (`c977cd6`), flags on Home's cities (`40aa789`), light as the default
+  appearance (`40410b3`), Noto 3D emoji and flags (`129969b`), and Netlify's
+  removal for GitHub Pages only (`fc5490c`). The files are exactly as at
+  `c0daebd` (the end of polish round 9). Don't redo any of them unless the
+  owner asks again; each can come back by reverting its part of `01cce83`.
+
 - **Phone-only review: Android map, Expo Go warnings, links, haptics**
   (14 Oct, the owner said Expo Go was "heavily bugged" and hasn't yet said
   how; these came from reading the phone-only code). Conventions to keep:

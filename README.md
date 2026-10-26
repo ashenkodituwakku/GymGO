@@ -585,16 +585,16 @@ It opens with the gym's logo (a chain's free logo, or the icon from the
 gym's own website; see below) and its photos. On an iPhone, press and hold a gym card on Home for a preview
 and a quick menu.
 
-Buttons and rows use proper symbols rather than emoji: Apple's SF Symbols on
-iPhone, Google's Material Symbols on Android and in the browser, and
-Phosphor's two-tone icons in the tab bar and section headings. So a phone
-button shows a handset, directions an arrow sign, and so on, drawn the way
-the rest of the phone draws them.
+Section headings, settings rows, buttons, tips and the mark on an empty page
+show an emoji rather than a coloured symbol: a phone button shows 📞,
+directions 🧭, Pro 👑, and so on. Controls stay symbols, drawn the way the
+rest of the phone draws them: back, open and close, the tab bar, and the
+ticks that show what's chosen.
 
-The few emoji the app shows (the celebration and sound samples, the emoji
-celebration) and every country's flag are Google's **Noto 3D** pictures, the
-same on every phone, computer and the website (Windows draws no flag emoji
-at all). They're in `apps/mobile/assets/emoji` and `assets/flags`, under the
+Those emoji, the celebration and sound samples, the emoji celebration and
+every country's flag are Google's **Noto 3D** pictures, the same on every
+phone, computer and the website (Windows draws no flag emoji at all). Which
+emoji stands for which symbol is in `apps/mobile/src/lib/iconEmoji.ts`. They're in `apps/mobile/assets/emoji` and `assets/flags`, under the
 SIL Open Font License 1.1 (`assets/emoji/LICENSE.txt`), and credited on
 Profile. To add one, put it in `EMOJI` in `apps/mobile/scripts/noto-emoji.mjs`
 and run it against a clone of github.com/googlefonts/noto-emoji (the

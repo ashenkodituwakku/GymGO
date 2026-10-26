@@ -13,7 +13,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Share, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { BodyPicker } from '@/components/BodyPicker';
-import { Icon, type IconName } from '@/components/Icon';
+import type { IconName } from '@/components/Icon';
+import { EmojiIcon } from '@/components/Emoji';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Chip, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ExerciseCard } from '@/components/ExerciseCard';
@@ -416,7 +417,7 @@ function ActionPill({ label, icon, onPress, disabled = false }: { label: string;
       hitSlop={4}
       style={({ pressed }) => [styles.pill, pressed && { opacity: 0.7 }, disabled && { opacity: 0.6 }]}
     >
-      <Icon name={icon} size={15} color={color.brand} />
+      <EmojiIcon name={icon} size={15} />
       <Txt variant="subhead" color={color.brand} style={face('semibold')}>
         {label}
       </Txt>

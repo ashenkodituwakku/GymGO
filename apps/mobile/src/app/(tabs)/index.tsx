@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import { HOURS_LABELS } from '@gymgo/domain';
 import { useMemo, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { Emoji, Flag } from '@/components/Emoji';
+import { Emoji, Flag, EmojiIcon } from '@/components/Emoji';
 import { GymCard } from '@/components/GymCard';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { GymCardsSkeleton } from '@/components/Skeleton';
@@ -167,7 +167,7 @@ export default function Home() {
           {account.face ? (
             <Avatar account={account.face} size={40} variant="headline" />
           ) : (
-            <Icon name="account" size={22} color={color.brand} />
+            <EmojiIcon name="account" size={22} />
           )}
         </Pressy>
       }
@@ -189,7 +189,7 @@ export default function Home() {
             style={styles.shortcut}
           >
             <View style={styles.shortcutIcon}>
-              <Icon name={item.icon} size={20} color={color.brand} />
+              <EmojiIcon name={item.icon} size={20} />
             </View>
             {/* Two lines on the narrowest phones, where "Under A$25" didn't fit on one. */}
             <Txt variant="footnote" style={[styles.center, face('medium')]} numberOfLines={2}>
@@ -239,7 +239,7 @@ export default function Home() {
         <BrandFill round={radius.xl} />
         <Sheen round={radius.xl} />
         <View style={styles.workoutIcon}>
-          <Icon name="workout" size={22} color={color.onBrand} />
+          <EmojiIcon name="workout" size={22} />
         </View>
         <View style={styles.flex}>
           <Txt variant="headline" color={color.onBrand}>
@@ -267,7 +267,7 @@ export default function Home() {
           style={styles.upNext}
         >
           <View style={styles.upNextIcon}>
-            <Icon name="play" size={14} color={color.brand} />
+            <EmojiIcon name="play" size={14} />
           </View>
           <View style={styles.flex}>
             <Txt variant="caption" color={color.brand} style={face('semibold')} numberOfLines={1}>
@@ -294,7 +294,7 @@ export default function Home() {
         accessibilityLabel={plan ? 'Pick another template' : 'Start from a template: push, pull, legs; 5×5; or full body'}
         style={({ pressed }) => [styles.templatesRow, !!plan && planDay && styles.templatesUnder, pressed && { backgroundColor: color.fill }]}
       >
-        <Icon name="list" size={15} color={color.brand} />
+        <EmojiIcon name="list" size={15} />
         <Txt variant="footnote" color={color.brand} style={[face('semibold'), styles.flex]}>
           {plan ? 'Pick another template' : 'Start from a template: push, pull, legs; 5×5; or full body'}
         </Txt>
@@ -318,7 +318,7 @@ export default function Home() {
           style={styles.trip}
         >
           <View style={styles.tripIcon}>
-            <Icon name="globe" size={18} color={color.onBrand} />
+            <EmojiIcon name="globe" size={18} />
           </View>
           <View style={styles.flex}>
             <Txt variant="headline" numberOfLines={1}>{`Trip to ${trip.placeName}`}</Txt>
@@ -333,7 +333,7 @@ export default function Home() {
         {finders.map((item) => (
           <Pressy key={item.title} scaleTo={0.95} onPress={item.onPress} accessibilityRole="button" accessibilityLabel={item.label} style={[styles.finder, narrow && styles.finderNarrow]}>
             <View style={styles.shortcutIcon}>
-              <Icon name={item.icon} size={18} color={color.brand} />
+              <EmojiIcon name={item.icon} size={18} />
             </View>
             <View style={narrow ? styles.finderTextNarrow : styles.flex}>
               <Txt variant="subhead" style={[face('semibold'), narrow && styles.center]} numberOfLines={1}>
@@ -395,7 +395,7 @@ export default function Home() {
             accessibilityLabel={`Gyms in ${countryInSentence(filters.countryCode)} are part of GymGO Pro. See GymGO Pro`}
             style={({ pressed }) => [styles.locked, pressed && { opacity: 0.8 }]}
           >
-            <Icon name="globe" size={22} color={color.brand} />
+            <EmojiIcon name="globe" size={22} />
             <View style={styles.lockedText}>
               <Txt variant="headline">Gyms in {countryInSentence(filters.countryCode)} are part of GymGO Pro</Txt>
               <Txt variant="footnote" color={color.labelSecondary}>
@@ -426,7 +426,7 @@ export default function Home() {
               hitSlop={4}
               style={({ pressed }) => [styles.suburb, styles.retry, styles.searchHere, pressed && { opacity: 0.7 }]}
             >
-              <Icon name="search" size={15} color={color.brand} />
+              <EmojiIcon name="search" size={15} />
               <Txt variant="subhead" color={color.brand} style={face('semibold')}>
                 Search this area
               </Txt>
@@ -690,7 +690,7 @@ const styles = themed(() => StyleSheet.create({
     borderCurve: 'continuous',
     backgroundColor: color.brandTint,
   },
-  tripIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
+  tripIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
   finders: { flexDirection: 'row', gap: space[3] },
   planCard: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', ...shadow.card },
   upNext: {
@@ -701,7 +701,7 @@ const styles = themed(() => StyleSheet.create({
   },
   templatesRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: space[3] - 2, paddingHorizontal: space[3] },
   templatesUnder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
-  upNextIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
+  upNextIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
   startPill: { paddingHorizontal: space[3], paddingVertical: 7, borderRadius: radius.pill, backgroundColor: color.brandFill },
   finderNarrow: { flexDirection: 'column', gap: space[2] },
   finderTextNarrow: { alignSelf: 'stretch' },
@@ -741,7 +741,7 @@ const styles = themed(() => StyleSheet.create({
     backgroundColor: color.plate,
     ...shadow.plate,
   },
-  shortcutIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
+  shortcutIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
   center: { textAlign: 'center' },
 
   section: { gap: space[3] },

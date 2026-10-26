@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { AppBadge, Wordmark } from '@/components/BrandMark';
 import { Icon } from '@/components/Icon';
+import { EmojiIcon } from '@/components/Emoji';
 import { Pressy } from '@/components/motion';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
@@ -382,7 +383,7 @@ function ProCard({ isPro, line, trial, canBuy, onOpen }: { isPro: boolean; line:
       <Sheen round={radius.lg} />
       <View style={styles.proTop}>
         <View style={styles.proMark}>
-          <Icon name="crown" size={20} color={color.onBrand} />
+          <EmojiIcon name="crown" size={20} />
         </View>
         <View style={styles.flex}>
           <Txt variant="eyebrow" color={color.onBrandSoft}>

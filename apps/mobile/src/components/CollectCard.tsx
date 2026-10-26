@@ -29,6 +29,7 @@ import { setsFinished, type GymSet } from '@/lib/sets';
 import { GymScan, type ScanPhase } from './GymScan';
 import { TIER_METAL } from './GemCard';
 import { Icon } from './Icon';
+import { EmojiIcon } from './Emoji';
 import { FADE_IN, FADE_OUT, GLIDE, POP_IN, Pressable, Pressy } from './motion';
 import { PrimaryButton, Txt } from './ui';
 
@@ -137,7 +138,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
           entering={celebrate ? POP_IN : undefined}
           style={[styles.medal, { backgroundColor: tier ? TIER_METAL[tier.tier] : color.fill }]}
         >
-          <Icon name={tier ? 'trophy' : 'pin'} size={22} color={tier ? color.onBrand : color.labelSecondary} />
+          {tier ? <Icon name="trophy" size={22} color={color.onBrand} /> : <EmojiIcon name="pin" size={22} />}
         </Animated.View>
         <View style={styles.flex}>
           <Txt variant="headline">{title}</Txt>
@@ -328,8 +329,8 @@ export function HereNudge({ here, records, onOpen }: { here: Fix | null; records
       accessibilityLabel={`You're at ${location.name}. ${collected ? 'Check in for today' : 'Collect it'}`}
       style={[styles.strip, styles.nudge]}
     >
-      <View style={[styles.stripMedal, { backgroundColor: color.brandFill }]}>
-        <Icon name="pin" size={16} color={color.onBrand} />
+      <View style={[styles.stripMedal, { backgroundColor: color.fill }]}>
+        <EmojiIcon name="pin" size={16} />
       </View>
       <View style={styles.flex}>
         <Txt variant="headline" numberOfLines={1}>{`You’re at ${location.name}`}</Txt>

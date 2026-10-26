@@ -13,7 +13,7 @@ import { haptic } from '@/lib/haptics';
 import { alpha } from '@/lib/looks';
 import { backgroundImage, color, currentLook, currentTheme, dropShadow, face, HIT, LOOKS, radius, shadow, space, themed, type, webFocusRing, solidSurfaces } from '@/lib/theme';
 import { BrandFill, Sheen } from './BrandFill';
-import { Emoji } from './Emoji';
+import { Emoji, EmojiIcon } from './Emoji';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { FADE_IN, FADE_OUT, GLIDE, Pressable, Pressy, SETTLE, usePop, usePressScale } from './motion';
@@ -201,7 +201,7 @@ export function InfoRow({ icon, title, lines, accessibilityLabel }: { icon: Icon
       <GroupLine />
       <View style={[styles.foldHead, styles.infoHead]}>
         <View style={styles.foldIcon}>
-          <Icon name={icon} size={17} color={color.brand} />
+          <EmojiIcon name={icon} size={17} />
         </View>
         <View style={styles.foldText}>
           <Txt variant="footnote" color={color.labelSecondary}>
@@ -260,7 +260,7 @@ export function Fold({
       >
         {icon ? (
           <View style={styles.foldIcon}>
-            <Icon name={icon} size={17} color={color.brand} />
+            <EmojiIcon name={icon} size={17} />
           </View>
         ) : (
           <View style={styles.foldEmoji}>{!!emoji && <Emoji char={emoji} size={26} />}</View>
@@ -366,7 +366,7 @@ export function ControlCapsule({ buttons }: { buttons: CapsuleButton[] }) {
               aria-busy={button.busy === true}
               style={({ pressed }) => [styles.capsuleButton, pressed && styles.capsulePressed]}
             >
-              {button.busy ? <ActivityIndicator size="small" color={color.brand} /> : <Icon name={button.icon} size={18} color={color.brand} />}
+              {button.busy ? <ActivityIndicator size="small" color={color.brand} /> : <EmojiIcon name={button.icon} size={18} />}
             </Pressy>
           </View>
         ))}
@@ -422,7 +422,7 @@ export function RoundToggle({ icon, on, label, onPress }: { icon: IconName; on?:
           style={styles.closeHit}
         >
           <Animated.View style={pop}>
-            <Icon name={icon} size={14} color={on ? color.onBrand : color.brand} />
+            <EmojiIcon name={icon} size={14} ink={on ? color.onBrand : color.label} />
           </Animated.View>
         </Pressable>
       </Glass>
@@ -478,7 +478,9 @@ export function ActionButton({
           style={styles.actionHit}
         >
           <Animated.View style={pop}>
-            <Icon name={icon} size={19} color={ink} />
+            <View style={unavailable && styles.faded}>
+              <EmojiIcon name={icon} size={19} ink={ink} />
+            </View>
           </Animated.View>
           <Txt variant="caption" color={ink} style={styles.actionLabel}>
             {label}
@@ -672,7 +674,7 @@ export function PrimaryButton({
     >
       {tone === 'brand' && <BrandFill />}
       {tone === 'brand' && <Sheen round={radius.lg} />}
-      {busy ? <ActivityIndicator size="small" color={ink} /> : icon ? <Icon name={icon} size={17} color={ink} /> : null}
+      {busy ? <ActivityIndicator size="small" color={ink} /> : icon ? <EmojiIcon name={icon} size={17} ink={ink} /> : null}
       <Txt variant="headline" color={ink}>
         {label}
       </Txt>
@@ -746,6 +748,7 @@ const styles = themed(() => StyleSheet.create({
   actionWrap: { flex: 1 },
   action: { minHeight: 58, borderRadius: radius.lg },
   // Rounded like its glass, so the keyboard's focus ring follows the shape.
+  faded: { opacity: 0.4 },
   actionHit: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 6, borderRadius: radius.lg },
   actionLabel: face('medium'),
 
@@ -785,7 +788,7 @@ const styles = themed(() => StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: color.brandTint,
+    backgroundColor: color.fill,
     alignItems: 'center',
     justifyContent: 'center',
   },

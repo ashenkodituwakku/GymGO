@@ -14,6 +14,7 @@ import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withSequence,
 import { FADE_IN, FADE_OUT, GLIDE, Pressable } from '@/components/motion';
 import { AppBadge } from '@/components/BrandMark';
 import { Icon, type IconName } from '@/components/Icon';
+import { EmojiIcon } from '@/components/Emoji';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ApiError, OfflineError, api } from '@/lib/api';
@@ -355,7 +356,7 @@ export default function SignInScreen() {
       {mode === 'sign_in' &&
         (resetSentTo ? (
           <Animated.View entering={FADE_IN} style={styles.resetSent} accessibilityLiveRegion="polite">
-            <Icon name="mail" size={16} color={color.brand} />
+            <EmojiIcon name="mail" size={16} />
             <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
               If there’s a GymGO account for {resetSentTo}, we’ve emailed it a link to choose a new password. It works for 30
               minutes. Check your junk folder if it doesn’t arrive.
@@ -467,7 +468,7 @@ function AuthField({
   return (
     <View style={styles.field}>
       <View style={[styles.fieldBox, focused && styles.fieldFocused, problem && styles.fieldProblem]}>
-        <Icon name={icon} size={17} color={focused ? color.brand : color.labelTertiary} />
+        <EmojiIcon name={icon} size={17} />
         <TextInput
           ref={ref}
           placeholderTextColor={color.labelTertiary}

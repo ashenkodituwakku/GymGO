@@ -4,6 +4,7 @@ import { GROUP_EMOJI } from './cityGroups';
 import { COUNTRIES } from './countries';
 import { emojiKey, flagEmoji } from './emoji';
 import { EMOJI_IMAGES, FLAG_IMAGES } from './emojiImages';
+import { ICON_EMOJI } from './iconEmoji';
 import { SOUND_PACKS } from './soundPacks';
 
 describe('Noto 3D emoji', () => {
@@ -24,7 +25,7 @@ describe('Noto 3D emoji', () => {
   });
 
   it('has a picture for every emoji the app shows', () => {
-    const shown = [...SHOWER_EMOJI, ...CELEBRATIONS.map((item) => item.sample), ...SOUND_PACKS.map((item) => item.sample), ...GROUP_EMOJI];
+    const shown = [...SHOWER_EMOJI, ...CELEBRATIONS.map((item) => item.sample), ...SOUND_PACKS.map((item) => item.sample), ...GROUP_EMOJI, ...Object.values(ICON_EMOJI)];
     expect(shown.filter((emoji) => !EMOJI_IMAGES[emojiKey(emoji)])).toEqual([]);
   });
 

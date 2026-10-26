@@ -13,6 +13,7 @@ import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import type { Exercise } from '@/lib/workout';
 import { ExerciseTile } from './ExerciseGlyph';
 import { Icon } from './Icon';
+import { EmojiIcon } from './Emoji';
 import { Pressable } from './motion';
 import { Input, PrimaryButton, Txt } from './ui';
 
@@ -97,7 +98,7 @@ export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: 
                 {kitText(exercise)}
               </Txt>
             </View>
-            <Icon name="plus" size={16} color={color.brand} />
+            <EmojiIcon name="plus" size={16} />
           </Pressable>
         ))}
       </View>

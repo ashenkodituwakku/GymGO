@@ -12,6 +12,7 @@ import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { HeroMark } from '@/components/HeroMark';
 import { Icon, type IconName } from '@/components/Icon';
+import { EmojiIcon } from '@/components/Emoji';
 import { LifetimeCard, hoursText } from '@/components/LifetimeCard';
 import { Pressable } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
@@ -187,7 +188,7 @@ export default function LifetimeScreen() {
       <View style={styles.grid}>
         {tiles.map((tile) => (
           <View key={tile.label} style={styles.tile} accessible accessibilityLabel={`${tile.value} ${tile.label}`}>
-            <Icon name={tile.icon} size={16} color={color.brand} />
+            <EmojiIcon name={tile.icon} size={16} />
             <Txt variant="figure">{tile.value}</Txt>
             <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
               {tile.label}
@@ -261,7 +262,7 @@ export default function LifetimeScreen() {
 function Mark({ icon }: { icon: IconName }) {
   return (
     <View style={styles.mark}>
-      <Icon name={icon} size={18} color={color.brand} />
+      <EmojiIcon name={icon} size={18} />
     </View>
   );
 }
@@ -312,7 +313,7 @@ const styles = themed(() =>
     section: { marginTop: space[3], marginLeft: space[4] },
     group: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
     fact: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
-    mark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+    mark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
     flex: { flex: 1, minWidth: 0, gap: 2 },
     note: { marginHorizontal: space[4], marginTop: space[1] },
     shot: { padding: space[3], alignItems: 'center' },

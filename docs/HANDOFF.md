@@ -160,6 +160,17 @@ mobile 388, domain 167 and web 39 tests, all passing.
   busy button renamed "Say how busy". Offered but not chosen: hiding the
   AD PLACEHOLDER box for Free users, putting "can I get in?" first on gym
   pages, and a notice when the map can't load.
+- **Emoji instead of purple symbols** (26 Oct; the owner asked: "get rid
+  of all the purple icons and replace them with emojis"). `lib/iconEmoji.ts`
+  maps each icon name to an emoji; `EmojiIcon` (`components/Emoji.tsx`)
+  draws it, or the symbol for a control with none (back, chevrons, ticks),
+  in the text's colour. Section headings, settings rows, `PrimaryButton`,
+  `ActionButton`, `RoundToggle`, tips, `HeroMark` (now a large emoji, no
+  tile) and Pro's crown use it; the purple discs behind them are grey
+  (`color.fill`). Left alone on purpose: map pins, the tab bar, selection
+  ticks and radios, the green, orange and medal badges. A new icon needs an
+  entry in `ICON_EMOJI` and a run of `scripts/noto-emoji.mjs` (the emoji
+  test fails otherwise).
 - **Emoji and flags are Google's Noto 3D pictures** (26 Oct; the owner
   asked, after we passed on a Figma file of Apple's emoji, whose art Apple
   allows only on its own devices). `components/Emoji.tsx` (`Emoji`, `Flag`)

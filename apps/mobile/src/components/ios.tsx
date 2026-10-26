@@ -13,9 +13,11 @@ import { haptic } from '@/lib/haptics';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { LOOKS, PAGE_COLUMN, ambientGlow, backgroundImage, color, currentLook, currentTheme, face, heroGlowStops, radius, shadow, space, themed } from '@/lib/theme';
+import { Emoji } from './Emoji';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
+import { emojiFor } from '@/lib/iconEmoji';
 import { contrast } from '@/lib/looks';
 import { ScrollMemory } from './Redrawn';
 import { Toggle } from './Toggle';
@@ -227,7 +229,8 @@ export function SectionHeader({
       {/* The words line up on their baselines; an icon has none, so it's centred on the heading instead of sitting high. */}
       {icon ? (
         <View style={styles.sectionIcon}>
-          <PIcon name={icon} size={26} color={color.brand} accent={color.brand} />
+          {/* Its emoji (lib/iconEmoji.ts); the two-tone symbol only for one with none. */}
+          {emojiFor(icon) ? <Emoji char={emojiFor(icon)!} size={28} /> : <PIcon name={icon} size={26} color={color.brand} accent={color.brand} />}
         </View>
       ) : null}
       <Txt variant="title2" style={styles.flex}>
@@ -289,11 +292,20 @@ export const TILE = themed(() => ({
 }));
 
 /**
- * A settings row's icon on its coloured tile. In the glass look the tile is
- * lit from the top and rimmed, like the iPhone's own; the solid looks keep
- * it flat. `children` in place of the icon: a brand's own mark.
+ * A settings row's mark: its icon's emoji (lib/iconEmoji.ts), or, for an
+ * icon with none, the icon on its coloured tile. In the glass look the tile
+ * is lit from the top and rimmed, like the iPhone's own; the solid looks
+ * keep it flat. `children` in place of the icon: a brand's own mark.
  */
 export function SettingsTile({ icon, tile, children }: { icon?: IconName; tile: string; children?: ReactNode }) {
+  const emoji = !children && icon ? emojiFor(icon) : null;
+  if (emoji) {
+    return (
+      <View style={styles.tileEmoji}>
+        <Emoji char={emoji} size={24} />
+      </View>
+    );
+  }
   const lit = currentLook() === LOOKS.standard;
   // A tile about the card's own colour (Google's white one on a white card) needs an edge to be a tile at all.
   const white = contrast(tile, color.plateSolid) < 1.3;
@@ -448,6 +460,7 @@ const styles = themed(() => StyleSheet.create({
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginLeft: ROW_RULE_INSET },
 
   row: { flexDirection: 'row', alignItems: 'center', gap: ROW.gap, paddingHorizontal: ROW.paddingHorizontal, minHeight: ROW.minHeight, paddingVertical: ROW.paddingVertical },
+  tileEmoji: { width: ROW.tile, height: ROW.tile, alignItems: 'center', justifyContent: 'center' },
   tile: { width: ROW.tile, height: ROW.tile, borderRadius: 7, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   // Lit from the top (the gradient paints over the tile's colour) and rimmed.
   tileLit: {

@@ -18,8 +18,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
-import { BrandFill, Sheen } from './BrandFill';
 import { Icon } from './Icon';
+import { EmojiIcon } from './Emoji';
 import { Pressy } from './motion';
 import { useGlassRedraw } from './Redrawn';
 import { Txt } from './ui';
@@ -88,9 +88,7 @@ export function AdSlot({ place, style }: { place: AdPlace; style?: object }) {
         style={styles.card}
       >
         <View style={styles.badge}>
-          <BrandFill round={12} />
-          <Sheen round={12} />
-          <Icon name="crown" size={18} color={color.onBrand} />
+          <EmojiIcon name="crown" size={18} />
         </View>
         <View style={styles.words}>
           <Txt variant="eyebrow" color={color.brand}>
@@ -140,7 +138,7 @@ const styles = themed(() =>
       backgroundColor: color.plate,
       ...shadow.card,
     },
-    badge: { width: 40, height: 40, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backgroundColor: color.brandFill },
+    badge: { width: 40, height: 40, borderRadius: 12, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backgroundColor: color.fill },
     words: { flex: 1, minWidth: 0, gap: 2 },
     see: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: space[1] },
     close: { position: 'absolute', top: space[2], right: space[2], width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },

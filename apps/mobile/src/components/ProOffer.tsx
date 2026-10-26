@@ -8,6 +8,7 @@
 import { StyleSheet, View } from 'react-native';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { Icon, type IconName } from './Icon';
+import { EmojiIcon } from './Emoji';
 import { Pressable } from './motion';
 import { Txt } from './ui';
 
@@ -20,11 +21,11 @@ export function ProOffer({ icon, title, body, onPress }: { icon: IconName; title
       style={({ pressed }) => [styles.card, pressed && { opacity: 0.8 }]}
     >
       <View style={styles.mark}>
-        <Icon name={icon} size={20} color={color.brand} />
+        <EmojiIcon name={icon} size={20} />
       </View>
       <View style={styles.flex}>
         <View style={styles.tag}>
-          <Icon name="crown" size={10} color={color.brand} />
+          <EmojiIcon name="crown" size={10} />
           <Txt variant="caption" color={color.brand} style={face('bold')}>
             PRO
           </Txt>
@@ -51,7 +52,7 @@ const styles = themed(() =>
       backgroundColor: color.plate,
       ...shadow.plate,
     },
-    mark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+    mark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
     flex: { flex: 1, minWidth: 0, gap: 2 },
     tag: { alignSelf: 'flex-start', marginBottom: 2, flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.brandTint },
   }),

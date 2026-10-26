@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { useState, type ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
+import { EmojiIcon } from './Emoji';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { collectionStats } from '@/lib/collection';
@@ -68,7 +69,7 @@ export function CollectionSyncLine({ when = 'any' }: { when?: 'any' | 'trouble' 
   }
   return (
     <View style={styles.sync} accessibilityLiveRegion="polite">
-      <Icon name="cloud" size={16} color={color.brand} />
+      <EmojiIcon name="cloud" size={16} />
       <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
         {sync === 'syncing' ? 'Syncing with your account…' : 'Synced with your account, so it’s on your other devices too.'}
       </Txt>

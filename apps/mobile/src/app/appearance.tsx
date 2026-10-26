@@ -20,7 +20,7 @@ import { Icon } from '@/components/Icon';
 import { PercentSlider } from '@/components/PercentSlider';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { Celebration } from '@/components/Celebration';
-import { Emoji } from '@/components/Emoji';
+import { Emoji, EmojiIcon } from '@/components/Emoji';
 import { CELEBRATIONS, FREE_CELEBRATION, celebrationFor, type CelebrationStyle } from '@/lib/celebrations';
 import { playSound } from '@/lib/sounds';
 import { FREE_SOUND_PACK, SOUND_PACKS, soundPackFor, type SoundPack } from '@/lib/soundPacks';
@@ -241,7 +241,7 @@ export default function AppearanceScreen() {
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
-              <Icon name="crown" size={11} color={color.brand} />
+              <EmojiIcon name="crown" size={11} />
               <Txt variant="caption" color={color.brand} style={face('semibold')}>
                 PRO
               </Txt>
@@ -324,7 +324,7 @@ export default function AppearanceScreen() {
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
-              <Icon name="crown" size={11} color={color.brand} />
+              <EmojiIcon name="crown" size={11} />
               <Txt variant="caption" color={color.brand} style={face('semibold')}>
                 PRO
               </Txt>
@@ -379,7 +379,7 @@ export default function AppearanceScreen() {
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
-              <Icon name="crown" size={11} color={color.brand} />
+              <EmojiIcon name="crown" size={11} />
               <Txt variant="caption" color={color.brand} style={face('semibold')}>
                 PRO
               </Txt>
@@ -425,7 +425,7 @@ export default function AppearanceScreen() {
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
-              <Icon name="crown" size={11} color={color.brand} />
+              <EmojiIcon name="crown" size={11} />
               <Txt variant="caption" color={color.brand} style={face('semibold')}>
                 PRO
               </Txt>
@@ -488,7 +488,7 @@ function StepButton({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: s
       hitSlop={6}
       style={({ pressed }) => [styles.step, !onPress && { opacity: 0.35 }, pressed && { opacity: 0.6 }]}
     >
-      <Icon name={icon} size={16} color={color.brand} />
+      <EmojiIcon name={icon} size={16} />
     </Pressable>
   );
 }

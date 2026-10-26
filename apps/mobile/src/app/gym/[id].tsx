@@ -18,7 +18,8 @@ import { GoogleGate } from '@/components/GoogleGate';
 import { GoogleModal } from '@/components/GoogleModal';
 import { GoogleSection, useGooglePlace } from '@/components/GoogleSection';
 import { GooglePhotos } from '@/components/GooglePage';
-import { Icon, type IconName } from '@/components/Icon';
+import type { IconName } from '@/components/Icon';
+import { EmojiIcon } from '@/components/Emoji';
 import { HeroMark } from '@/components/HeroMark';
 import { MemberAccess } from '@/components/MemberAccess';
 import { MemberKit } from '@/components/MemberKit';
@@ -301,9 +302,9 @@ function HeaderButton({ icon, label, onPress, on = false }: { icon: IconName; la
       accessibilityLabel={label}
       accessibilityState={{ selected: on }}
       hitSlop={8}
-      style={({ pressed }) => [styles.headerButton, pressed && { opacity: 0.6 }]}
+      style={({ pressed }) => [styles.headerButton, on && styles.headerButtonOn, pressed && { opacity: 0.6 }]}
     >
-      <Icon name={icon} size={19} color={on ? color.brand : Platform.OS === 'ios' ? color.label : color.brand} />
+      <EmojiIcon name={icon} size={19} />
     </Pressable>
   );
 }
@@ -330,7 +331,9 @@ const styles = themed(() => StyleSheet.create({
   mapButton: { paddingHorizontal: space[4] },
   // The last icon's own padding (4) plus this puts its edge where the back arrow's is on the left.
   headerButtons: { flexDirection: 'row', alignItems: 'center', gap: space[4], paddingLeft: space[1], paddingRight: Math.max(space[1], HEADER_EDGE - 4) },
-  headerButton: { padding: 4 },
+  headerButton: { padding: 4, borderRadius: radius.pill },
+  // Switched on (Saved, in Compare): a soft disc behind its emoji.
+  headerButtonOn: { backgroundColor: color.fill },
   headerLeft: { paddingLeft: Math.max(space[1], HEADER_EDGE - 4) },
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
   center: { textAlign: 'center' },

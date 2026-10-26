@@ -46,6 +46,7 @@ import { GoogleModal } from '@/components/GoogleModal';
 import { ChoiceSheet } from '@/components/ChoiceSheet';
 import { GymMap, type GymMapHandle, type MapPin } from '@/components/GymMap';
 import { Icon } from '@/components/Icon';
+import { EmojiIcon } from '@/components/Emoji';
 import { MemberAccess } from '@/components/MemberAccess';
 import { MemberKit } from '@/components/MemberKit';
 import { MemberPrices } from '@/components/MemberPrices';
@@ -495,7 +496,7 @@ function MapScreen() {
             aria-busy={searching}
             style={styles.areaHit}
           >
-            {searching ? <ActivityIndicator size="small" color={color.brand} /> : <Icon name="search" size={15} color={color.brand} />}
+            {searching ? <ActivityIndicator size="small" color={color.brand} /> : <EmojiIcon name="search" size={15} />}
             <Txt variant="subhead" color={color.brand} style={face('semibold')}>
               {searching ? 'Searching the map…' : 'Search this area'}
             </Txt>

@@ -30,6 +30,7 @@ import { addressLines, callQuestions, depositLine, priceLine } from '@/lib/prese
 import { color, currentLook, face, radius, shadow, space, themed, type } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { Icon, type IconName } from './Icon';
+import { EmojiIcon } from './Emoji';
 import { StateGlyphRow } from './StateGlyphRow';
 import { useApp } from '@/lib/app-state';
 import { LogoBadge, LogoCredit, useGymMark } from './BrandLogo';
@@ -289,7 +290,7 @@ export function PlaceCard({
 
       {notice && (
         <Animated.View style={styles.notice} entering={FADE_IN} exiting={FADE_OUT}>
-          <Icon name="info" size={15} color={color.brand} />
+          <EmojiIcon name="info" size={15} />
           <Txt variant="footnote" style={styles.flex}>
             {notice}
           </Txt>
@@ -348,7 +349,7 @@ export function PlaceCard({
                 hitSlop={8}
                 style={({ pressed }) => [styles.askCall, pressed && { opacity: 0.7 }]}
               >
-                <Icon name="call" size={14} color={color.brand} />
+                <EmojiIcon name="call" size={14} />
                 <Txt variant="footnote" color={color.brand} style={face('semibold')}>
                   Call
                 </Txt>
@@ -416,7 +417,7 @@ export function PlaceCard({
           style={({ pressed }) => [styles.google, pressed && { opacity: 0.75 }]}
         >
           <View style={styles.rowIcon}>
-            <Icon name="google" size={18} color={color.onBrand} />
+            <EmojiIcon name="google" size={18} />
           </View>
           <View style={styles.flex}>
             <Txt variant="headline">See it on Google</Txt>
@@ -441,7 +442,7 @@ export function PlaceCard({
         style={({ pressed }) => [styles.google, pressed && { opacity: 0.75 }]}
       >
         <View style={styles.rowIcon}>
-          <Icon name="workout" size={18} color={color.onBrand} />
+          <EmojiIcon name="workout" size={18} />
         </View>
         <View style={styles.flex}>
           <Txt variant="headline">Build a workout here</Txt>
@@ -625,7 +626,7 @@ export function PlaceCard({
                 hitSlop={6}
               >
                 <View style={styles.mailRow}>
-                  <Icon name="mail" size={15} color={color.brand} />
+                  <EmojiIcon name="mail" size={15} />
                   <Txt variant="subhead" color={color.brand}>
                     {location.email}
                   </Txt>
@@ -681,7 +682,7 @@ function Fact({ icon, value, caption, tint, unknown = false }: { icon: IconName;
   return (
     <View style={styles.fact}>
       <View style={styles.factIcon}>
-        <Icon name={icon} size={16} color={color.brand} />
+        <EmojiIcon name={icon} size={16} />
       </View>
       {/* A word in place of a figure, as tall as one, so the three tiles line up. */}
       <Txt variant={unknown ? 'subhead' : 'figure'} color={tint} numberOfLines={1} style={unknown && [face('semibold'), styles.factWord]}>
@@ -862,7 +863,7 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: color.brandTint,
+    backgroundColor: color.fill,
   },
   // A word as tall as a figure's line, at any text size, so the three captions line up.
   factWord: { lineHeight: type.figure.lineHeight },
@@ -877,7 +878,7 @@ const styles = themed(() => StyleSheet.create({
   },
   googleEmoji: { fontSize: 22, lineHeight: 28, width: 30, textAlign: 'center' },
   mailRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
+  rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
 
   folds: { gap: space[3], marginTop: space[1] },
 

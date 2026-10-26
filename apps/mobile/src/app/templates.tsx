@@ -9,9 +9,9 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon, type IconName } from '@/components/Icon';
+import { EmojiIcon } from '@/components/Emoji';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Card, Chip, PrimaryButton, Txt } from '@/components/ui';
@@ -110,10 +110,8 @@ function TemplateCard({
   return (
     <Card style={styles.card}>
       <View style={styles.head}>
-        <View style={[styles.mark, accentGlow(color.brandFill)]}>
-          <BrandFill round={markRound()} />
-          <Sheen round={markRound()} />
-          <Icon name={TEMPLATE_ICON[template.id] ?? 'workout'} size={22} color={color.onBrand} />
+        <View style={styles.mark}>
+          <EmojiIcon name={TEMPLATE_ICON[template.id] ?? 'workout'} size={22} />
         </View>
         <View style={styles.flex}>
           <Txt variant="title2">{template.name}</Txt>
@@ -175,7 +173,7 @@ const styles = themed(() =>
     busy: { gap: space[2] },
     card: { gap: space[3] },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-    mark: { width: 46, height: 46, borderRadius: markRound(), borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandFill },
+    mark: { width: 46, height: 46, borderRadius: markRound(), borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
     flex: { flex: 1, minWidth: 0 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     toggle: { flexDirection: 'row', alignItems: 'center', gap: space[1], alignSelf: 'flex-start' },

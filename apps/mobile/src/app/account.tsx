@@ -11,6 +11,7 @@ import { StyleSheet, View, type TextInput } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
+import { EmojiIcon } from '@/components/Emoji';
 import { useDeleteCollection } from '@/components/CollectionData';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { GoogleMark, SocialButtons, useSignInProviders, type TokenHandler } from '@/components/SocialSignIn';
@@ -135,7 +136,7 @@ export default function AccountScreen() {
         >
           <Avatar account={me} size={84} variant="largeTitle" ring={billing.isPro ? color.groupedBackground : undefined} />
           <View style={styles.avatarBadge}>
-            <Icon name="photo" size={13} color={color.onBrand} />
+            <EmojiIcon name="photo" size={13} />
           </View>
         </Pressable>
         <Txt variant="title2" style={styles.center}>
@@ -146,7 +147,7 @@ export default function AccountScreen() {
         </Txt>
         {billing.isPro && (
           <View style={styles.pro}>
-            <Icon name="crown" size={12} color={color.brand} />
+            <EmojiIcon name="crown" size={12} />
             <Txt variant="caption" color={color.brand} style={face('semibold')}>
               GYMGO PRO
             </Txt>
@@ -486,7 +487,7 @@ const styles = themed(() =>
       borderRadius: Math.min(14, radius.pill),
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: color.brandFill,
+      backgroundColor: color.plate,
       borderWidth: 2,
       borderColor: color.groupedBackground,
     },

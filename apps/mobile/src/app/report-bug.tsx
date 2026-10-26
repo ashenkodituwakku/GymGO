@@ -13,6 +13,7 @@ import { useMemo, useState } from 'react';
 import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
+import { EmojiIcon } from '@/components/Emoji';
 import { Group, Row, TILE } from '@/components/ios';
 import { FADE_IN } from '@/components/motion';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -145,8 +146,8 @@ export default function ReportBug() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title }} />
       <Animated.View style={styles.intro}>
-        <View style={[styles.badge, notice && styles.noticeBadge]}>
-          <Icon name={notice ? 'photo' : 'bug'} size={24} color={color.onBrand} />
+        <View style={styles.badge}>
+          <EmojiIcon name={notice ? 'photo' : 'bug'} size={24} />
         </View>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.introText}>
           {notice
@@ -254,11 +255,10 @@ const styles = themed(() =>
       height: 44,
       borderRadius: 12,
       borderCurve: 'continuous',
-      backgroundColor: TILE.red,
+      backgroundColor: color.fill,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    noticeBadge: { backgroundColor: TILE.indigo },
     card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[2], ...shadow.plate },
     description: { minHeight: 150, paddingTop: space[3], paddingBottom: space[3] },
     count: { textAlign: 'right' },

@@ -24,6 +24,7 @@ import { MarkImage, useGymMark } from './BrandLogo';
 import { GymRow } from './GymRow';
 import { GymRowsSkeleton } from './Skeleton';
 import { Icon } from './Icon';
+import { EmojiIcon } from './Emoji';
 import { Chip, PrimaryButton, TIER_COLOUR, Txt } from './ui';
 import { AdSlot } from './AdSlot';
 import { Avatar } from './Avatar';
@@ -173,7 +174,7 @@ export function ResultsContent({
           accessibilityLabel={filterCount ? `Filters, ${filterCount} on` : 'Filters'}
           style={({ pressed }) => [styles.filterButton, pressed && { opacity: 0.7 }]}
         >
-          <Icon name="filters" size={17} color={color.brand} />
+          <EmojiIcon name="filters" size={17} />
           {filterCount > 0 && (
             <View style={styles.badge}>
               <Txt variant="caption" color={color.onBrand} style={styles.badgeText}>
@@ -194,7 +195,7 @@ export function ResultsContent({
           {me ? (
             <Avatar account={me} size={40} variant="headline" />
           ) : (
-            <Icon name="account" size={22} color={color.brand} />
+            <EmojiIcon name="account" size={22} />
           )}
         </Pressable>
       </View>
@@ -228,7 +229,7 @@ export function ResultsContent({
               accessibilityLabel={`${place.placeName}, searched before`}
             >
               <View style={[styles.suggestionGlyph, styles.lookGlyph]}>
-                <Icon name="history" size={16} color={color.brand} />
+                <EmojiIcon name="history" size={16} />
               </View>
               <View style={styles.suggestionText}>
                 <Txt variant="body" numberOfLines={1}>
@@ -259,7 +260,7 @@ export function ResultsContent({
                   <GymGlyph location={hit.record.location} />
                 ) : (
                   <View style={styles.suggestionGlyph}>
-                    <Icon name="pin" size={16} color={color.onBrand} />
+                    <EmojiIcon name="pin" size={16} />
                   </View>
                 )}
                 <View style={styles.suggestionText}>
@@ -284,7 +285,7 @@ export function ResultsContent({
               accessibilityLabel={`Look up ${typed} anywhere in the world`}
             >
               <View style={[styles.suggestionGlyph, styles.lookGlyph]}>
-                <Icon name="search" size={16} color={color.brand} />
+                <EmojiIcon name="search" size={16} />
               </View>
               <View style={styles.suggestionText}>
                 <Txt variant="body" numberOfLines={1}>
@@ -386,7 +387,7 @@ export function ResultsContent({
 
       {notice && (
         <Animated.View key={notice} style={styles.notice} entering={FADE_IN} exiting={FADE_OUT}>
-          <Icon name="info" size={16} color={color.brand} />
+          <EmojiIcon name="info" size={16} />
           <Txt variant="footnote" style={styles.noticeText}>
             {notice}
           </Txt>
@@ -397,7 +398,7 @@ export function ResultsContent({
       {locked && (
         <Animated.View style={styles.lock} entering={FADE_IN} exiting={FADE_OUT}>
           <View style={styles.lockBadge}>
-            <Icon name="globe" size={22} color={color.brand} />
+            <EmojiIcon name="globe" size={22} />
           </View>
           <Txt variant="headline" style={styles.lockTitle}>
             Gyms in {countryInSentence(locked.country)} are part of GymGO Pro
@@ -532,8 +533,8 @@ function GymGlyph({ location }: { location: GymLocation }) {
   const mark = useGymMark(location);
   if (!mark) {
     return (
-      <View style={[styles.suggestionGlyph, styles.gymGlyph]}>
-        <Icon name="gym" size={16} color={color.onBrand} />
+      <View style={styles.suggestionGlyph}>
+        <EmojiIcon name="gym" size={16} />
       </View>
     );
   }
@@ -611,7 +612,6 @@ const styles = themed(() => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  gymGlyph: { backgroundColor: color.brandFill },
   logoGlyph: { borderRadius: radius.sm, borderCurve: 'continuous', backgroundColor: color.logoPlate, borderWidth: StyleSheet.hairlineWidth, borderColor: color.separator, overflow: 'hidden' },
   avatarSignedIn: { backgroundColor: color.brandFill },
   filterButton: {
@@ -652,7 +652,7 @@ const styles = themed(() => StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: color.danger,
+    backgroundColor: color.fill,
     alignItems: 'center',
     justifyContent: 'center',
   },

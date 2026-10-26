@@ -14,7 +14,8 @@ import { color, face, radius, space, themed } from '@/lib/theme';
 import { fromKg, type WeightUnit } from '@/lib/training';
 import { exerciseName } from '@/lib/workout';
 import { AppBadge } from './BrandMark';
-import { Icon, type IconName } from './Icon';
+import type { IconName } from './Icon';
+import { EmojiIcon } from './Emoji';
 import { RECAP_WIDTH } from './RecapCard';
 import { Txt } from './ui';
 
@@ -80,7 +81,7 @@ export function LifetimeCard({ life, unit, width = RECAP_WIDTH }: { life: Lifeti
 function Tile({ icon, value, label }: { icon: IconName; value: string; label: string }) {
   return (
     <View style={styles.tile} accessible accessibilityLabel={`${value} ${label}`}>
-      <Icon name={icon} size={16} color={color.onBrand} />
+      <EmojiIcon name={icon} size={16} />
       <Txt variant="title" color={color.onBrand}>
         {value}
       </Txt>
@@ -94,7 +95,7 @@ function Tile({ icon, value, label }: { icon: IconName; value: string; label: st
 function Line({ icon, text }: { icon: IconName; text: string }) {
   return (
     <View style={styles.line}>
-      <Icon name={icon} size={15} color={color.onBrand} />
+      <EmojiIcon name={icon} size={15} />
       <Txt variant="subhead" color={color.onBrand} style={[styles.flex, face('medium')]}>
         {text}
       </Txt>

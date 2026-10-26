@@ -14,6 +14,7 @@ import { CURVES, EASE_IN, EASE_OUT, FADE_IN, POP_IN, Pressable, usePop } from '@
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
 import { Icon, type IconName } from '@/components/Icon';
+import { EmojiIcon } from '@/components/Emoji';
 import { CountUp } from '@/components/CountUp';
 import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -224,7 +225,7 @@ function NoWorkout({ token }: { token: string | null }) {
                     </Txt>
                   </View>
                   <View style={styles.playDot}>
-                    <Icon name="play" size={14} color={color.onBrand} />
+                    <EmojiIcon name="play" size={14} />
                   </View>
                 </Pressable>
               );
@@ -592,7 +593,7 @@ const ExerciseLog = memo(function ExerciseLog({
                     hitSlop={8}
                     style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
                   >
-                    <Icon name="plates" size={15} color={color.brand} />
+                    <EmojiIcon name="plates" size={15} />
                     <Txt variant="caption" color={color.brand} style={face('semibold')}>
                       Plates
                     </Txt>
@@ -623,7 +624,7 @@ const ExerciseLog = memo(function ExerciseLog({
             !isPro &&
             last && (
               <Pressable onPress={onPro} accessibilityRole="button" accessibilityLabel="Next-session targets are part of GymGO Pro" style={styles.proHint}>
-                <Icon name="target" size={13} color={color.brand} />
+                <EmojiIcon name="target" size={13} />
                 <Txt variant="caption" color={color.brand} style={face('semibold')}>
                   What to lift next · Pro
                 </Txt>
@@ -727,7 +728,7 @@ const ExerciseLog = memo(function ExerciseLog({
             accessibilityLabel={`Add a set of ${name}`}
             style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
           >
-            <Icon name="plus" size={13} color={color.brand} />
+            <EmojiIcon name="plus" size={13} />
             <Txt variant="footnote" color={color.brand} style={face('semibold')}>
               Add set
             </Txt>
@@ -864,7 +865,7 @@ function RestRing({ endsAt, total }: { endsAt: number; total: number }) {
   const left = timeLeft(endsAt, Math.max(now, Date.now()));
   return (
     <ProgressRing size={38} stroke={3} progress={total > 0 ? left / total : 0} track={color.fill} tint={color.brand}>
-      <Icon name="timer" size={16} color={color.brand} />
+      <EmojiIcon name="timer" size={16} />
     </ProgressRing>
   );
 }
@@ -929,7 +930,7 @@ function Summary({
     <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.summary]}>
       <ScreenOptions options={{ title: '' }} />
       <Animated.View entering={records.length ? POP_IN : FADE_IN}>
-        <HeroMark icon={records.length ? 'trophy' : 'check'} tint={records.length ? color.maybe : color.good} size={72} />
+        <HeroMark icon={records.length ? 'trophy' : 'done'} size={72} />
       </Animated.View>
       <Txt variant="largeTitle" style={styles.center} accessibilityRole="header" level={1}>
         {records.length ? `${records.length} new record${records.length === 1 ? '' : 's'}!` : 'Workout done'}
@@ -1031,7 +1032,7 @@ function WeekLine({ week }: { week: WeekAfter }) {
     : `${week.goal - week.done} more to reach your goal`;
   return (
     <View style={[styles.record, met && styles.weekMet]} accessible accessibilityLabel={`${title}. ${detail}.`}>
-      <Icon name={met ? 'flame' : 'target'} size={18} color={met ? color.good : color.brand} />
+      <EmojiIcon name={met ? 'flame' : 'target'} size={18} />
       <View style={styles.flex}>
         <Txt variant="headline">{title}</Txt>
         <Txt variant="footnote" color={color.labelSecondary}>
@@ -1054,7 +1055,7 @@ function WeekLine({ week }: { week: WeekAfter }) {
 function SummaryStat({ icon, label, spoken, children }: { icon: IconName; label: string; spoken: string; children: ReactNode }) {
   return (
     <View style={styles.summaryStat} accessible accessibilityLabel={spoken}>
-      <Icon name={icon} size={16} color={color.brand} />
+      <EmojiIcon name={icon} size={16} />
       {children}
       <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
         {label}
@@ -1096,7 +1097,7 @@ const styles = themed(() => StyleSheet.create({
   savedCard: { backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
   savedRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   savedLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
-  playDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
+  playDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
   seeAll: { alignSelf: 'flex-end', paddingHorizontal: space[4] },
   unitRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   unitSwitch: { width: 140 },

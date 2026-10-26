@@ -17,7 +17,7 @@ import type { GymRecord } from '@gymgo/domain';
 import { api, type GooglePlace } from '@/lib/api';
 import { color, face, space, themed } from '@/lib/theme';
 import { PlaceDetails } from './GooglePage';
-import { PIcon } from './PIcon';
+import { Emoji } from './Emoji';
 import { Txt } from './ui';
 
 /** The gym's Google listing, when the server has a key and Google knows the place. */
@@ -48,7 +48,7 @@ export function GoogleSection({ place, photosAbove = false }: { place: GooglePla
   return (
     <View style={styles.section}>
       <View style={styles.head}>
-        <PIcon name="globe-hemisphere-west" size={24} color={color.brand} accent={color.brand} />
+        <Emoji char="🌍" size={26} />
         <Txt variant="title2" style={styles.flex}>
           From Google Maps
         </Txt>

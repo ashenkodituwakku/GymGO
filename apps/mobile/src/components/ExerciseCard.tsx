@@ -6,14 +6,13 @@
  */
 
 import { StyleSheet, View } from 'react-native';
-import { Icon } from './Icon';
+import { Emoji, EmojiIcon } from './Emoji';
 import { Pressable } from './motion';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { KIT_LABEL, muscleLabel, type Exercise, type Kit } from '@/lib/workout';
 import { restLabel } from '@/lib/training';
 import { repsMeasure } from '@/lib/workoutStats';
 import { ExerciseTile } from './ExerciseGlyph';
-import { PIcon } from './PIcon';
 import { Txt } from './ui';
 
 export function ExerciseCard({
@@ -116,7 +115,7 @@ export function SwapButton({ name, swapTo, onSwap }: { name: string; swapTo: str
       hitSlop={8}
       style={({ pressed }) => [styles.swap, pressed && { opacity: 0.6 }]}
     >
-      <Icon name="shuffle" size={14} color={color.brand} />
+      <EmojiIcon name="shuffle" size={14} />
       <Txt variant="caption" color={color.brand} style={face('semibold')}>
         Swap
       </Txt>
@@ -136,7 +135,7 @@ function KitUsed({ uses, confirmed, forGym }: { uses: Kit[]; confirmed: boolean;
   if (!forGym) {
     return (
       <View style={styles.kit}>
-        <PIcon name="barbell" size={15} color={color.labelSecondary} accent={color.brand} />
+        <Emoji char="🏋️" size={16} />
         <Txt variant="caption" color={color.labelSecondary}>
           {names}
         </Txt>

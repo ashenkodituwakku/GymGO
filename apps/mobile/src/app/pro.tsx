@@ -24,8 +24,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { Icon, type IconName } from '@/components/Icon';
+import { EmojiIcon } from '@/components/Emoji';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtras';
@@ -183,10 +183,8 @@ export default function ProScreen() {
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         {/* Hero ------------------------------------------------------------ */}
         <View style={styles.hero}>
-          <View style={[styles.badge, accentGlow(color.brandFill)]}>
-            <BrandFill round={22} />
-            <Sheen round={22} />
-            <Icon name="crown" size={36} color={color.onBrand} />
+          <View style={styles.badge}>
+            <EmojiIcon name="crown" size={54} />
           </View>
           <Txt variant="largeTitle" style={styles.center} accessibilityRole="header" level={1}>
             GymGO Pro
@@ -235,7 +233,7 @@ export default function ProScreen() {
               {PRO_FEATURES.filter((feature) => feature.group === group.id).map((feature) => (
                 <View key={feature.title} style={styles.tableRow}>
                   <View style={styles.featureIcon}>
-                    <Icon name={FEATURE_ICON[feature.title] ?? 'sparkle'} size={17} color={color.brand} />
+                    <EmojiIcon name={FEATURE_ICON[feature.title] ?? 'sparkle'} size={17} />
                   </View>
                   <Txt variant="subhead" style={[styles.flex, face('medium')]}>
                     {feature.title}
@@ -539,9 +537,6 @@ const styles = themed(() => StyleSheet.create({
   badge: {
     width: 72,
     height: 72,
-    borderRadius: 22,
-    borderCurve: 'continuous',
-    backgroundColor: color.brandFill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -553,7 +548,7 @@ const styles = themed(() => StyleSheet.create({
   tableRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   tableGroup: { gap: space[3], paddingTop: space[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   groupTitle: { marginBottom: -space[1] },
-  featureIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
+  featureIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
   column: { width: 84, textAlign: 'center' },
   // Pro's column is the one being sold: room for its words on a phone.
   proColumn: { width: 100 },

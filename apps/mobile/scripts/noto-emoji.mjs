@@ -4,8 +4,9 @@
  * the same on every phone, computer and the website instead of each
  * system's own (Windows draws no flags at all).
  *
- * Takes Noto's 128-pixel pictures of the emoji GymGO shows (EMOJI below;
- * src/lib/emoji.test.ts checks the app asks for no others) and of every
+ * Takes Noto's 128-pixel pictures of the emoji GymGO shows (EMOJI below,
+ * and every one in src/lib/iconEmoji.ts; src/lib/emoji.test.ts checks the
+ * app asks for no others) and of every
  * country's flag in src/lib/countries.ts, saves them as WebP (emoji at
  * 128 pixels, flags at 96, about 3 KB each) in assets/emoji and
  * assets/flags, and copies the set's licence, the SIL Open Font License
@@ -48,6 +49,10 @@ const keyOf = (text) =>
     .join('_');
 const flagKey = (code) => keyOf(String.fromCodePoint(...[...code].map((letter) => 0x1f1e6 + letter.charCodeAt(0) - 65)));
 const source = (key) => join(noto, '3D', 'png', String(SIZE), `emoji_u${key}.png`);
+
+// And every emoji that stands in for an icon (src/lib/iconEmoji.ts).
+const iconEmoji = [...readFileSync(join(app, 'src', 'lib', 'iconEmoji.ts'), 'utf8').matchAll(/: '([^']+)',/g)].map((match) => match[1]);
+for (const emoji of iconEmoji) if (!EMOJI.some((known) => keyOf(known) === keyOf(emoji))) EMOJI.push(emoji);
 
 const countries = [...readFileSync(join(app, 'src', 'lib', 'countries.ts'), 'utf8').matchAll(/"code":"([A-Z]{2})"/g)].map((match) => match[1]);
 const wanted = [...EMOJI.map((emoji) => source(keyOf(emoji))), ...countries.map((code) => source(flagKey(code)))];

@@ -12,6 +12,7 @@ import { GymRow } from '@/components/GymRow';
 import { FADE_OUT, GLIDE, Pressable, Pressy, usePop } from '@/components/motion';
 import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
+import { EmojiIcon } from '@/components/Emoji';
 import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ListSkeleton } from '@/components/Skeleton';
@@ -119,7 +120,7 @@ export default function Saved() {
                       hitSlop={6}
                       style={styles.saveButton}
                     >
-                      <Icon name="save" size={16} color={color.brand} />
+                      <EmojiIcon name="save" size={16} />
                     </Pressy>
                   </View>
                 </View>

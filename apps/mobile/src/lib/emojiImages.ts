@@ -14,6 +14,9 @@ export const EMOJI_IMAGES: Record<string, ImageSourcePropType> = {
   "1f386": require('../../assets/emoji/1f386.webp'), // 🎆
   "1f3b5": require('../../assets/emoji/1f3b5.webp'), // 🎵
   "1f579": require('../../assets/emoji/1f579.webp'), // 🕹️
+  "1f30d": require('../../assets/emoji/1f30d.webp'), // 🌍
+  "1f30e": require('../../assets/emoji/1f30e.webp'), // 🌎
+  "1f30f": require('../../assets/emoji/1f30f.webp'), // 🌏
 };
 
 // prettier-ignore

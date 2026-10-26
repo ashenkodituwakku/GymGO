@@ -31,8 +31,8 @@ if (!noto || !existsSync(join(noto, 'LICENSE'))) {
   process.exit(1);
 }
 
-/** The emoji GymGO shows: celebrations and their samples, and the sound packs' samples. */
-const EMOJI = ['💪', '🔥', '🏆', '⭐', '🎉', '🎊', '🎆', '🎵', '🕹️'];
+/** The emoji GymGO shows: celebrations and their samples, the sound packs' samples, and Home's continents. */
+const EMOJI = ['💪', '🔥', '🏆', '⭐', '🎉', '🎊', '🎆', '🎵', '🕹️', '🌍', '🌎', '🌏'];
 const SIZE = 128;
 const FLAG_SIZE = 96;
 

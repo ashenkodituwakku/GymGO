@@ -160,6 +160,18 @@ mobile 388, domain 167 and web 39 tests, all passing.
   busy button renamed "Say how busy". Offered but not chosen: hiding the
   AD PLACEHOLDER box for Free users, putting "can I get in?" first on gym
   pages, and a notice when the map can't load.
+- **The website uses a wide screen** (26 Oct; the owner said the website
+  "makes bad use of space with big empty space everywhere but the middle").
+  Web only, at 1100 points or more (`useWide`, `WIDE_MIN` in
+  `lib/layout.tsx`): the tabs layout draws `SideBar` instead of the floating
+  bar; `TabScreen` and `PageScroll` widen (tabs to `WIDE_COLUMN`, 1280;
+  pages to 1000, or their own `wideWidth`; pages narrower than 560 stay).
+  `Columns` (`components/Columns.tsx`) puts its children side by side when
+  wide and renders them unchanged otherwise, so pass each column as a
+  fragment and keep the phone's order (Home builds its four groups as
+  constants because its wide order differs). `Grid` is two to a row.
+  `PlaceCard` takes `columns` (the gym page only, never the map's panel).
+  The app on phones is unchanged; tablets too, as it's web only.
 - **Emoji instead of purple symbols** (26 Oct; the owner asked: "get rid
   of all the purple icons and replace them with emojis"). `lib/iconEmoji.ts`
   maps each icon name to an emoji; `EmojiIcon` (`components/Emoji.tsx`)

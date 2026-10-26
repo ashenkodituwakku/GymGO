@@ -639,7 +639,7 @@ const styles = themed(() => StyleSheet.create({
   badgeText: { fontSize: 10, lineHeight: 12, ...face('semibold') },
 
   suggestions: { paddingHorizontal: space[2], paddingTop: space[2] },
-  lookGlyph: { backgroundColor: color.brandTint },
+  lookGlyph: { backgroundColor: color.fill },
   suggestion: {
     flexDirection: 'row',
     alignItems: 'center',

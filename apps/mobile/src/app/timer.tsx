@@ -16,6 +16,7 @@ import { Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { EmojiIcon } from '@/components/Emoji';
 import { PageScroll } from '@/components/PageScroll';
+import { Columns } from '@/components/Columns';
 import { ProgressRing } from '@/components/ProgressRing';
 import { BrandFill } from '@/components/BrandFill';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -154,6 +155,9 @@ export default function TimerScreen() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: 'Interval timer' }} />
 
+      {/* In the wide layout, the clock on the left and the timers and settings beside it. */}
+      <Columns>
+      <>
       <View
         style={[styles.clock, working && styles.clockWork]}
         accessible
@@ -199,7 +203,8 @@ export default function TimerScreen() {
           </View>
         )}
       </View>
-
+      </>
+      <>
       <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
         TIMERS
       </Txt>
@@ -281,6 +286,8 @@ export default function TimerScreen() {
           </Txt>
         )}
       </View>
+      </>
+      </Columns>
     </PageScroll>
   );
 }

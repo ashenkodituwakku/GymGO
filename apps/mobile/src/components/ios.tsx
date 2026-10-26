@@ -10,7 +10,7 @@ import { Pressable } from './motion';
 import Animated, { interpolate, runOnJS, useAnimatedReaction, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from '@/lib/haptics';
-import { useBottomClearance, useOverhang } from '@/lib/layout';
+import { WIDE_COLUMN, useBottomClearance, useOverhang, useWide } from '@/lib/layout';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { LOOKS, PAGE_COLUMN, ambientGlow, backgroundImage, color, currentLook, currentTheme, face, heroGlowStops, radius, shadow, space, themed } from '@/lib/theme';
 import { Emoji } from './Emoji';
@@ -68,6 +68,7 @@ function TabScreenInner({
 }) {
   const insets = useSafeAreaInsets();
   const clearance = useBottomClearance();
+  const wide = useWide();
   // Past the tab bar, plus any of the tab the phone has laid out below the screen.
   const { measureRef, onLayout, overhang } = useOverhang();
   const bottom = clearance + overhang;
@@ -142,7 +143,7 @@ function TabScreenInner({
         // The page scrolls under the floating tab bar, so it makes its own room
         // for it rather than letting iOS guess at insets.
         contentInsetAdjustmentBehavior="never"
-        contentContainerStyle={[styles.content, gap !== undefined && { gap }, { paddingTop: top, paddingBottom: bottom + space[8] }]}
+        contentContainerStyle={[styles.content, wide && styles.contentWide, gap !== undefined && { gap }, { paddingTop: top, paddingBottom: bottom + space[8] }]}
         // The scroll bar stops above the tab bar too (the clearance already counts the home indicator).
         scrollIndicatorInsets={{ bottom }}
         automaticallyAdjustsScrollIndicatorInsets={false}
@@ -443,6 +444,8 @@ const styles = themed(() => StyleSheet.create({
   clear: { backgroundColor: 'transparent' },
   glow: { position: 'absolute', top: 0, left: 0, right: 0 },
   content: { paddingHorizontal: space[4], gap: space[5], width: '100%', maxWidth: PAGE_COLUMN, alignSelf: 'center' },
+  // The wide layout: the room beside the sidebar, with a wider gutter.
+  contentWide: { maxWidth: WIDE_COLUMN, paddingHorizontal: space[8] },
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space[3] },
   bar: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' },
   barTitle: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[8] + space[6] },

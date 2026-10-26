@@ -29,6 +29,7 @@ import { useTrainingLog } from '@/lib/useTraining';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { Columns } from '@/components/Columns';
 import { Avatar } from '@/components/Avatar';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -174,6 +175,9 @@ export default function Profile() {
 
       {me && me.termsVersion !== undefined && me.termsVersion !== LEGAL_VERSION && <NewTermsCard />}
 
+      {/* Side by side in the wide layout: what you do, then how GymGO is set up. */}
+      <Columns inner={space[5]}>
+      <>
       <Group header="Training">
         <Row icon="chart" tile={TILE.green} title="Progress" subtitle="Your log, records and streak" onPress={() => router.push('/progress')} />
         {!LIMITED && <Row icon="trophy" tile={TILE.pink} title="Lifetime" subtitle={billing.isPro ? 'Every kilo, rep and hour, added up' : 'Every kilo, rep and hour, added up, with Pro'} onPress={() => router.push('/lifetime')} />}
@@ -226,6 +230,8 @@ export default function Profile() {
         </Group>
       )}
 
+      </>
+      <>
       <Group header="Settings" footer={Platform.OS === 'web' ? undefined : 'Sounds follow your phone’s silent switch, and play over your music without stopping it.'}>
         <Row
           icon="globe"
@@ -333,6 +339,8 @@ export default function Profile() {
         {!LIMITED && <Row icon="photo" tile={TILE.grey} title="Copyright and takedowns" expanded={about === 'copyright'} onPress={() => toggle('copyright')} />}
         {about === 'copyright' && <CopyrightExplainer onNotice={() => router.push({ pathname: '/report-bug', params: { topic: 'copyright', from: 'Profile' } })} />}
       </Group>
+      </>
+      </Columns>
 
       {error && (
         <Txt variant="footnote" color={color.dangerInk} style={styles.center}>

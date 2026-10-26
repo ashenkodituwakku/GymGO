@@ -1608,6 +1608,14 @@ repository is public) by `.github/workflows/pages.yml`, on every push to
 https://ashenkodituwakku.github.io/GymGO/. (It was on Netlify until 26 Oct;
 the owner had it moved here, and the Netlify files are gone.)
 
+In a browser window 1100 points wide or more (a laptop or a desktop) the
+website uses the room: the tabs become a sidebar on the left, named, with
+the training pages under them, and pages spread out into two columns (Home,
+Profile, a gym's page, Pro, the workout builder, the timer, Appearance) or
+two to a row (Saved, Templates, Exercises). Phones, tablets and narrower
+windows keep the phone layout. `useWide` in `apps/mobile/src/lib/layout.tsx`
+decides; `components/Columns.tsx` lays a page out.
+
 Set up once, by an owner of the repository on GitHub (done):
 
 1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**

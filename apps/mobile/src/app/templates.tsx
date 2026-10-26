@@ -13,6 +13,8 @@ import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon, type IconName } from '@/components/Icon';
 import { EmojiIcon } from '@/components/Emoji';
 import { PageScroll } from '@/components/PageScroll';
+import { Grid } from '@/components/Columns';
+import { useWide } from '@/lib/layout';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Card, Chip, PrimaryButton, Txt } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
@@ -31,6 +33,7 @@ export default function TemplatesScreen() {
   usePageTitle('Templates');
   const router = useRouter();
   const { account, prefs } = useApp();
+  const wide = useWide();
   const log = useTrainingLog(account.token);
   const active = useActiveSessionGlance();
 
@@ -56,17 +59,20 @@ export default function TemplatesScreen() {
           <PrimaryButton label="Back to your workout" icon="play" onPress={() => router.push('/train')} />
         </Card>
       )}
-      {TEMPLATES.map((template) => (
-        <TemplateCard
-          key={template.id}
-          template={template}
-          next={nextTemplateDay(template, log.sessions)}
-          // Which workout is newest in your log: a new one means you've trained since a pick.
-          logged={log.status === 'ready' ? (log.sessions[0]?.id ?? '') : null}
-          disabled={Boolean(active)}
-          onStart={(index) => start(template, index)}
-        />
-      ))}
+      {/* Two to a row in the wide layout. */}
+      <Grid on={wide}>
+        {TEMPLATES.map((template) => (
+          <TemplateCard
+            key={template.id}
+            template={template}
+            next={nextTemplateDay(template, log.sessions)}
+            // Which workout is newest in your log: a new one means you've trained since a pick.
+            logged={log.status === 'ready' ? (log.sessions[0]?.id ?? '') : null}
+            disabled={Boolean(active)}
+            onStart={(index) => start(template, index)}
+          />
+        ))}
+      </Grid>
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
         These are general plans, not advice for you. Start lighter than you think, leave a rep or two in the tank, and add weight when every set
         feels good. Swap anything that hurts.

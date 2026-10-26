@@ -39,6 +39,7 @@ import { FADE_IN, FADE_OUT, Pressable, Pressy } from './motion';
 import { ActionButton, CloseButton, Fold, FoldGroup, GroupLine, InfoRow, RoundToggle, TIER_COLOUR, Txt } from './ui';
 import { JoinGym, MembershipBanner } from './JoinGym';
 import { LIMITED } from '@/lib/limited';
+import { Columns } from './Columns';
 
 const TRAINING: Record<string, string> = {
   full_gym: 'Gym',
@@ -153,6 +154,7 @@ export function PlaceCard({
   owner,
   dayPass,
   saveAndShareElsewhere = false,
+  columns = false,
 }: {
   result: GymSearchResult;
   visitMinute: number;
@@ -161,6 +163,8 @@ export function PlaceCard({
   onToggleSave: () => void;
   /** The live Google Maps page for this gym (its own screen, away from our map). */
   onOpenGoogle: () => void;
+  /** In the wide layout, the card in two columns: the answer on the left, the detail on the right (the gym page; not the map's panel). */
+  columns?: boolean;
   /** Save and Share are in the screen's own top bar (the gym page), so the action row leaves them out. */
   saveAndShareElsewhere?: boolean;
   /** The workout generator, for this gym's machines. */
@@ -240,6 +244,8 @@ export function PlaceCard({
 
   return (
     <View style={styles.wrap}>
+      <Columns on={columns}>
+      <>
       {photos}
 
       {/* Actions -------------------------------------------------------- */}
@@ -371,6 +377,8 @@ export function PlaceCard({
         </Animated.View>
       )}
 
+      </>
+      <>
       {collect}
       {dayPass}
       {busy}
@@ -663,6 +671,8 @@ export function PlaceCard({
         )}
         </FoldGroup>
       </Animated.View>
+      </>
+      </Columns>
 
       {/* Wherever a brand's logo shows, its credit does too. */}
       <View style={styles.logoCredit}>

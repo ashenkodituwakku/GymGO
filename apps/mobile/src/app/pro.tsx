@@ -26,6 +26,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { EmojiIcon } from '@/components/Emoji';
+import { Columns } from '@/components/Columns';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtras';
@@ -180,7 +181,7 @@ export default function ProScreen() {
           title: '',
         }}
       />
-      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+      <PageScroll style={styles.page} contentContainerStyle={styles.content} wideWidth={1120}>
         {/* Hero ------------------------------------------------------------ */}
         <View style={styles.hero}>
           <View style={styles.badge}>
@@ -213,6 +214,9 @@ export default function ProScreen() {
 
         {signedIn && <DuoPartner token={token!} />}
 
+        {/* In the wide layout, what Pro adds on the left and the plans beside it. */}
+        <Columns flex={[3, 2]} inner={space[4]}>
+        <>
         {/* Free vs Pro ------------------------------------------------------------ */}
         <View style={styles.card}>
           <View style={styles.tableHead}>
@@ -249,6 +253,8 @@ export default function ProScreen() {
             </View>
           ))}
         </View>
+        </>
+        <>
 
         {/* The plans ---------------------------------------------------------------- */}
         {!billing.isPro && (
@@ -365,6 +371,8 @@ export default function ProScreen() {
           style={styles.fine}
           text="Prices include tax. Pro and Duo renew automatically until you cancel; a gift year is paid once and doesn't renew. A new account can try monthly Pro free for 3 days, once, in its first 30 days: the monthly price is charged when the trial ends unless you cancel before then. Cancel any time from Profile → Manage subscription, and you keep Pro until the end of what you’ve paid for. Changed your mind? Ask within 14 days of your first payment, or of a yearly renewal, for a full refund. If Pro ends, nothing you saved is deleted; you just can’t add more than Free allows. Payments are handled by Stripe: GymGO never sees your card, and Stripe gets your name and email for the receipt. [Terms of Service](terms) · [Refunds and Cancelling](refunds) · [Privacy Policy](privacy)"
         />
+        </>
+        </Columns>
       </PageScroll>
     </>
   );

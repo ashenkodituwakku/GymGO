@@ -49,6 +49,11 @@ import { agoLabel, daysAgo, freshMuscles, lastTrained } from '@/lib/exerciseLibr
 import { useTrainingLog } from '@/lib/useTraining';
 import { PageScroll } from '@/components/PageScroll';
 import { ScreenOptions } from '@/components/ScreenOptions';
+import { useWide } from '@/lib/layout';
+import { COLUMN_GAP, Columns } from '@/components/Columns';
+
+/** The page's width in the wide layout. */
+const WIDE_PAGE = 1120;
 
 type KitMode = 'gym' | 'typical';
 
@@ -65,7 +70,10 @@ export default function WorkoutScreen() {
   const { data, account, billing, openPro, prefs } = useApp();
   const active = useActiveSessionGlance();
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  const { width: windowWidth } = useWindowDimensions();
+  // In the wide layout the body is in the left column: sized to it, not to the window.
+  const wide = useWide();
+  const width = wide ? (Math.min(windowWidth, WIDE_PAGE) - space[8] * 2 - COLUMN_GAP) / 2 + space[4] * 2 : windowWidth;
   const record = id && id !== 'any' ? (data.records.find((item) => item.location.id === id) ?? null) : null;
   const token = account.state === 'signed_in' ? account.token : null;
 
@@ -182,7 +190,7 @@ export default function WorkoutScreen() {
   return (
     <>
       <ScreenOptions options={{ title: 'Workout' }} />
-      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+      <PageScroll style={styles.page} contentContainerStyle={styles.content} wideWidth={WIDE_PAGE}>
         <View style={styles.intro}>
           <Txt variant="largeTitle">Build a workout</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
@@ -190,6 +198,9 @@ export default function WorkoutScreen() {
           </Txt>
         </View>
 
+        {/* In the wide layout, the body on the left and the options and plan beside it. */}
+        <Columns inner={space[4]}>
+        <>
         {/* The body --------------------------------------------------------- */}
         <View style={styles.card}>
           <View style={styles.bodyTop}>
@@ -235,6 +246,8 @@ export default function WorkoutScreen() {
           )}
         </View>
 
+        </>
+        <>
         {/* Options ------------------------------------------------------------ */}
         <View style={styles.card}>
           <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
@@ -399,6 +412,8 @@ export default function WorkoutScreen() {
             )}
           </View>
         )}
+        </>
+        </Columns>
         <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
           General training ideas, not medical advice. Warm up, and pick weights you can move well.
         </Txt>

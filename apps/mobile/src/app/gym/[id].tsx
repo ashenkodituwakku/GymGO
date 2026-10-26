@@ -50,6 +50,8 @@ import { PageScroll } from '@/components/PageScroll';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { FullVersionNote } from '@/components/FullVersionNote';
 import { LIMITED } from '@/lib/limited';
+import { WIDE_COLUMN, useWide } from '@/lib/layout';
+import { COLUMN_GAP } from '@/components/Columns';
 
 /** The pop-up growing into the page: the page rises from where the pop-up sat, still when Reduce Motion is on. */
 const EXPAND_IN =
@@ -66,6 +68,7 @@ export default function GymPage() {
   const { data, account, filters, addRecent, requestExplore, compare, toggleCompare, prefsReady, billing, openPro } = useApp();
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const wide = useWide();
   const [googleOpen, setGoogleOpen] = useState(false);
 
   const asOf = useMemo(() => new Date(), [filters, data.records]);
@@ -129,7 +132,9 @@ export default function GymPage() {
   const location = result.record.location;
   const saved = account.saved.includes(location.id);
   const comparing = compare.includes(location.id);
-  const cardWidth = Math.min(width, PAGE_COLUMN);
+  // In the wide layout the page spreads out, its card in two columns with the photos in the left one.
+  const cardWidth = wide ? Math.min(width - space[8] * 2, WIDE_COLUMN) : Math.min(width, PAGE_COLUMN);
+  const photoWidth = wide ? (cardWidth - space[4] * 2 - COLUMN_GAP) / 2 + space[4] * 2 : cardWidth;
   const subtitle = [location.address.suburb, result.distanceKm !== null ? gymDistanceLine(result.distanceKm, location.address.countryCode, filters.placeName) : null]
     .filter(Boolean)
     .join(' · ');
@@ -140,7 +145,7 @@ export default function GymPage() {
   const googleFallback = (
     <GoogleGate what={googlePhotos ? 'Photos' : 'Street View'}>
       {googlePhotos ? (
-        <GooglePhotos photos={place!.photos} width={cardWidth - space[4] * 2} />
+        <GooglePhotos photos={place!.photos} width={photoWidth - space[4] * 2} />
       ) : (
         <View style={styles.streetView}>
           <GoogleEmbed
@@ -223,6 +228,7 @@ export default function GymPage() {
             saved={saved}
             onToggleSave={() => account.toggleSave(location.id)}
             saveAndShareElsewhere
+            columns={wide}
             onOpenGoogle={() => setGoogleOpen(true)}
             onOpenWorkout={() => router.push({ pathname: '/workout/[id]', params: { id: location.id } })}
             asOf={asOf}
@@ -236,7 +242,7 @@ export default function GymPage() {
                   website={location.website}
                   account={account}
                   onSignIn={() => router.push('/sign-in')}
-                  width={cardWidth}
+                  width={photoWidth}
                   fallback={googleFallback}
                 />
               )

@@ -44,6 +44,8 @@ import { templateDayName, upNext } from '@/lib/templates';
 import { unitFor } from '@/lib/training';
 import { exerciseName } from '@/lib/workout';
 import { LIMITED } from '@/lib/limited';
+import { useWide } from '@/lib/layout';
+import { Columns } from '@/components/Columns';
 
 /** Melbourne suburbs worth a tap, in the order people ask about them. */
 const MELBOURNE_PICKS = ['Melbourne CBD', 'Fitzroy', 'Collingwood', 'Brunswick', 'Carlton', 'Richmond', 'South Melbourne', 'Northcote'];
@@ -76,6 +78,7 @@ export default function Home() {
   const router = useRouter();
   // The narrowest phones (an iPhone SE's 320 points) stack the finders' icons over their words.
   const narrow = useWindowDimensions().width < 360;
+  const wide = useWide();
 
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   // Each gym once: not the map's own copy of one GymGO carries too.
@@ -150,6 +153,205 @@ export default function Home() {
     { icon: 'globe', title: 'Trips', detail: trips.trips.length ? `${trips.trips.length} planned` : 'Train away', label: 'Trips', onPress: () => router.push('/trips') },
   ];
 
+  // Finding: the search and the four quick picks.
+  const finding = (
+    <View style={styles.group}>
+    {/* In your country's words once your settings are read: until then plain "Search", not another country's words swapped a moment later. */}
+    <SearchButton placeholder={prefsReady ? searchPrompt(prefs.country) : 'Search'} onPress={() => explore({ focusSearch: true })} />
+
+    {/* Shortcuts --------------------------------------------------------- */}
+    <View style={styles.shortcuts}>
+      {shortcuts.map((item) => (
+        <Pressy
+          key={item.title}
+          scaleTo={0.93}
+          onPress={item.onPress}
+          accessibilityRole="button"
+          accessibilityLabel={item.title}
+          style={styles.shortcut}
+        >
+          <View style={styles.shortcutIcon}>
+            <EmojiIcon name={item.icon} size={20} />
+          </View>
+          {/* Two lines on the narrowest phones, where "Under A$25" didn't fit on one. */}
+          <Txt variant="footnote" style={[styles.center, face('medium')]} numberOfLines={2}>
+            {item.title}
+          </Txt>
+        </Pressy>
+      ))}
+    </View>
+
+    </View>
+  );
+  // Workout -----------------------------------------------------------
+  const workout = (
+    <View style={styles.group}>
+    {active && (
+      <Pressy
+        scaleTo={0.97}
+        onPress={() => {
+          haptic.select();
+          router.push('/train');
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`Back to your workout: ${active.name}`}
+        style={styles.resume}
+      >
+        <View style={styles.resumeIcon}>
+          <Icon name="play" size={16} color={color.onBrand} />
+        </View>
+        <View style={styles.flex}>
+          <Txt variant="headline">Back to your workout</Txt>
+          <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+            {active.name} · {active.setsDone} sets done
+          </Txt>
+        </View>
+        <Icon name="chevron" size={14} color={color.labelTertiary} />
+      </Pressy>
+    )}
+    <Pressy
+      scaleTo={0.97}
+      onPress={() => {
+        haptic.select();
+        router.push({ pathname: '/workout/[id]', params: { id: 'any' } });
+      }}
+      accessibilityRole="button"
+      accessibilityLabel="Build a workout: tap the muscles you want to train"
+      style={[styles.workout, accentGlow(color.brandFill)]}
+    >
+      <BrandFill round={radius.xl} />
+      <Sheen round={radius.xl} />
+      <View style={styles.workoutIcon}>
+        <EmojiIcon name="workout" size={22} />
+      </View>
+      <View style={styles.flex}>
+        <Txt variant="headline" color={color.onBrand}>
+          Build a workout
+        </Txt>
+        <Txt variant="footnote" color={color.onBrandSoft}>
+          Pick muscles, get a plan
+        </Txt>
+      </View>
+      <Icon name="chevron" size={14} color={color.onBrandSoft} />
+    </Pressy>
+
+    {/* Up next and the other templates: one card, two actions. */}
+    <View style={styles.planCard}>
+    {plan && planDay && (
+      <Pressy
+        scaleTo={0.98}
+        onPress={() => {
+          haptic.success();
+          startSession({ name: templateDayName(plan.template, planDay), workoutId: null, gymId: null, gymName: null, unit: unitFor(prefs.country), items: planDay.items });
+          router.push('/train');
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`Start ${planDay.name}, up next in ${plan.template.name}`}
+        style={styles.upNext}
+      >
+        <View style={styles.upNextIcon}>
+          <EmojiIcon name="play" size={14} />
+        </View>
+        <View style={styles.flex}>
+          <Txt variant="caption" color={color.brand} style={face('semibold')} numberOfLines={1}>
+            Up next · {plan.template.name}
+          </Txt>
+          <Txt variant="headline" numberOfLines={1}>
+            {planDay.name}
+          </Txt>
+          <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+            {planDay.items.map((item) => exerciseName(item.exerciseId)).join(', ')}
+          </Txt>
+        </View>
+        <View style={styles.startPill}>
+          <Txt variant="footnote" color={color.onBrand} style={face('semibold')}>
+            Start
+          </Txt>
+        </View>
+      </Pressy>
+    )}
+
+    <Pressable
+      onPress={() => router.push('/templates')}
+      accessibilityRole="link"
+      accessibilityLabel={plan ? 'Pick another template' : 'Start from a template: push, pull, legs; 5×5; or full body'}
+      style={({ pressed }) => [styles.templatesRow, !!plan && planDay && styles.templatesUnder, pressed && { backgroundColor: color.fill }]}
+    >
+      <EmojiIcon name="list" size={15} />
+      <Txt variant="footnote" color={color.brand} style={[face('semibold'), styles.flex]}>
+        {plan ? 'Pick another template' : 'Start from a template: push, pull, legs; 5×5; or full body'}
+      </Txt>
+      <Icon name="chevron" size={12} color={color.labelTertiary} />
+    </Pressable>
+    </View>
+
+    </View>
+  );
+  // A trip under way or coming up, then the two finders ---------------
+  const findersGroup = (
+    <View style={styles.group}>
+    {trip && (
+      <Pressy
+        scaleTo={0.97}
+        onPress={() => {
+          haptic.select();
+          router.push({ pathname: '/trips/[id]', params: { id: trip.id } });
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`Trip to ${trip.placeName}, ${tripDatesLabel(trip)}, ${tripWhen(trip, todayThere(trip))}. See the gyms there`}
+        style={styles.trip}
+      >
+        <View style={styles.tripIcon}>
+          <EmojiIcon name="globe" size={18} />
+        </View>
+        <View style={styles.flex}>
+          <Txt variant="headline" numberOfLines={1}>{`Trip to ${trip.placeName}`}</Txt>
+          <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
+            {`${tripWhen(trip, todayThere(trip))} · ${tripDatesLabel(trip)} · gyms that let visitors in`}
+          </Txt>
+        </View>
+        <Icon name="chevron" size={14} color={color.labelTertiary} />
+      </Pressy>
+    )}
+    <View style={styles.finders}>
+      {finders.map((item) => (
+        <Pressy key={item.title} scaleTo={0.95} onPress={item.onPress} accessibilityRole="button" accessibilityLabel={item.label} style={[styles.finder, narrow && styles.finderNarrow]}>
+          <View style={styles.shortcutIcon}>
+            <EmojiIcon name={item.icon} size={18} />
+          </View>
+          <View style={narrow ? styles.finderTextNarrow : styles.flex}>
+            <Txt variant="subhead" style={[face('semibold'), narrow && styles.center]} numberOfLines={1}>
+              {item.title}
+            </Txt>
+            <Txt variant="caption" color={color.labelSecondary} style={narrow && styles.center} numberOfLines={narrow ? 2 : 1}>
+              {item.detail}
+            </Txt>
+          </View>
+        </Pressy>
+      ))}
+    </View>
+
+    </View>
+  );
+  // How you're doing: training this week, and the collection.
+  const doing = (
+    <View style={styles.group}>
+    <HereNudge here={here} records={data.listed} onOpen={(id) => router.push({ pathname: '/gym/[id]', params: { id } })} />
+    {/* Both there: two tiles side by side. One alone: a full-width strip. */}
+    {showWeek && collected ? (
+      <View style={styles.finders}>
+        <WeekStrip tile sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />
+        <CollectionStrip tile onPress={() => router.push('/collection')} />
+      </View>
+    ) : (
+      <>
+        {showWeek && <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />}
+        <CollectionStrip onPress={() => router.push('/collection')} />
+      </>
+    )}
+    </View>
+  );
+
   return (
     <TabScreen
       glow
@@ -172,199 +374,26 @@ export default function Home() {
         </Pressy>
       }
     >
-      {/* Finding: the search and the four quick picks. */}
-      <View style={styles.group}>
-      {/* In your country's words once your settings are read: until then plain "Search", not another country's words swapped a moment later. */}
-      <SearchButton placeholder={prefsReady ? searchPrompt(prefs.country) : 'Search'} onPress={() => explore({ focusSearch: true })} />
-
-      {/* Shortcuts --------------------------------------------------------- */}
-      <View style={styles.shortcuts}>
-        {shortcuts.map((item) => (
-          <Pressy
-            key={item.title}
-            scaleTo={0.93}
-            onPress={item.onPress}
-            accessibilityRole="button"
-            accessibilityLabel={item.title}
-            style={styles.shortcut}
-          >
-            <View style={styles.shortcutIcon}>
-              <EmojiIcon name={item.icon} size={20} />
-            </View>
-            {/* Two lines on the narrowest phones, where "Under A$25" didn't fit on one. */}
-            <Txt variant="footnote" style={[styles.center, face('medium')]} numberOfLines={2}>
-              {item.title}
-            </Txt>
-          </Pressy>
-        ))}
-      </View>
-
-      </View>
-
-      {/* Workout ----------------------------------------------------------- */}
-      <View style={styles.group}>
-      {active && (
-        <Pressy
-          scaleTo={0.97}
-          onPress={() => {
-            haptic.select();
-            router.push('/train');
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={`Back to your workout: ${active.name}`}
-          style={styles.resume}
-        >
-          <View style={styles.resumeIcon}>
-            <Icon name="play" size={16} color={color.onBrand} />
-          </View>
-          <View style={styles.flex}>
-            <Txt variant="headline">Back to your workout</Txt>
-            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-              {active.name} · {active.setsDone} sets done
-            </Txt>
-          </View>
-          <Icon name="chevron" size={14} color={color.labelTertiary} />
-        </Pressy>
-      )}
-      <Pressy
-        scaleTo={0.97}
-        onPress={() => {
-          haptic.select();
-          router.push({ pathname: '/workout/[id]', params: { id: 'any' } });
-        }}
-        accessibilityRole="button"
-        accessibilityLabel="Build a workout: tap the muscles you want to train"
-        style={[styles.workout, accentGlow(color.brandFill)]}
-      >
-        <BrandFill round={radius.xl} />
-        <Sheen round={radius.xl} />
-        <View style={styles.workoutIcon}>
-          <EmojiIcon name="workout" size={22} />
-        </View>
-        <View style={styles.flex}>
-          <Txt variant="headline" color={color.onBrand}>
-            Build a workout
-          </Txt>
-          <Txt variant="footnote" color={color.onBrandSoft}>
-            Pick muscles, get a plan
-          </Txt>
-        </View>
-        <Icon name="chevron" size={14} color={color.onBrandSoft} />
-      </Pressy>
-
-      {/* Up next and the other templates: one card, two actions. */}
-      <View style={styles.planCard}>
-      {plan && planDay && (
-        <Pressy
-          scaleTo={0.98}
-          onPress={() => {
-            haptic.success();
-            startSession({ name: templateDayName(plan.template, planDay), workoutId: null, gymId: null, gymName: null, unit: unitFor(prefs.country), items: planDay.items });
-            router.push('/train');
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={`Start ${planDay.name}, up next in ${plan.template.name}`}
-          style={styles.upNext}
-        >
-          <View style={styles.upNextIcon}>
-            <EmojiIcon name="play" size={14} />
-          </View>
-          <View style={styles.flex}>
-            <Txt variant="caption" color={color.brand} style={face('semibold')} numberOfLines={1}>
-              Up next · {plan.template.name}
-            </Txt>
-            <Txt variant="headline" numberOfLines={1}>
-              {planDay.name}
-            </Txt>
-            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-              {planDay.items.map((item) => exerciseName(item.exerciseId)).join(', ')}
-            </Txt>
-          </View>
-          <View style={styles.startPill}>
-            <Txt variant="footnote" color={color.onBrand} style={face('semibold')}>
-              Start
-            </Txt>
-          </View>
-        </Pressy>
-      )}
-
-      <Pressable
-        onPress={() => router.push('/templates')}
-        accessibilityRole="link"
-        accessibilityLabel={plan ? 'Pick another template' : 'Start from a template: push, pull, legs; 5×5; or full body'}
-        style={({ pressed }) => [styles.templatesRow, !!plan && planDay && styles.templatesUnder, pressed && { backgroundColor: color.fill }]}
-      >
-        <EmojiIcon name="list" size={15} />
-        <Txt variant="footnote" color={color.brand} style={[face('semibold'), styles.flex]}>
-          {plan ? 'Pick another template' : 'Start from a template: push, pull, legs; 5×5; or full body'}
-        </Txt>
-        <Icon name="chevron" size={12} color={color.labelTertiary} />
-      </Pressable>
-      </View>
-
-      </View>
-
-      {/* A trip under way or coming up, then the two finders --------------- */}
-      <View style={styles.group}>
-      {trip && (
-        <Pressy
-          scaleTo={0.97}
-          onPress={() => {
-            haptic.select();
-            router.push({ pathname: '/trips/[id]', params: { id: trip.id } });
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={`Trip to ${trip.placeName}, ${tripDatesLabel(trip)}, ${tripWhen(trip, todayThere(trip))}. See the gyms there`}
-          style={styles.trip}
-        >
-          <View style={styles.tripIcon}>
-            <EmojiIcon name="globe" size={18} />
-          </View>
-          <View style={styles.flex}>
-            <Txt variant="headline" numberOfLines={1}>{`Trip to ${trip.placeName}`}</Txt>
-            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
-              {`${tripWhen(trip, todayThere(trip))} · ${tripDatesLabel(trip)} · gyms that let visitors in`}
-            </Txt>
-          </View>
-          <Icon name="chevron" size={14} color={color.labelTertiary} />
-        </Pressy>
-      )}
-      <View style={styles.finders}>
-        {finders.map((item) => (
-          <Pressy key={item.title} scaleTo={0.95} onPress={item.onPress} accessibilityRole="button" accessibilityLabel={item.label} style={[styles.finder, narrow && styles.finderNarrow]}>
-            <View style={styles.shortcutIcon}>
-              <EmojiIcon name={item.icon} size={18} />
-            </View>
-            <View style={narrow ? styles.finderTextNarrow : styles.flex}>
-              <Txt variant="subhead" style={[face('semibold'), narrow && styles.center]} numberOfLines={1}>
-                {item.title}
-              </Txt>
-              <Txt variant="caption" color={color.labelSecondary} style={narrow && styles.center} numberOfLines={narrow ? 2 : 1}>
-                {item.detail}
-              </Txt>
-            </View>
-          </Pressy>
-        ))}
-      </View>
-
-      </View>
-
-      {/* How you're doing: training this week, and the collection. */}
-      <View style={styles.group}>
-      <HereNudge here={here} records={data.listed} onOpen={(id) => router.push({ pathname: '/gym/[id]', params: { id } })} />
-      {/* Both there: two tiles side by side. One alone: a full-width strip. */}
-      {showWeek && collected ? (
-        <View style={styles.finders}>
-          <WeekStrip tile sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />
-          <CollectionStrip tile onPress={() => router.push('/collection')} />
-        </View>
+      {/* In the wide layout, finding on the left and training on the right; on a phone, one after the other. */}
+      {wide ? (
+        <Columns inner={space[6]}>
+          <>
+            {finding}
+            {doing}
+          </>
+          <>
+            {workout}
+            {findersGroup}
+          </>
+        </Columns>
       ) : (
         <>
-          {showWeek && <WeekStrip sessions={log.sessions} goal={prefs.weeklyGoal} freezes={billing.isPro} onPress={() => router.push('/progress')} />}
-          <CollectionStrip onPress={() => router.push('/collection')} />
+          {finding}
+          {workout}
+          {findersGroup}
+          {doing}
         </>
       )}
-      </View>
 
       {/* Everything below is about a place: it waits for your settings, so
           it opens on your country's city rather than flashing the default. */}

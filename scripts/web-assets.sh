@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Run on a web export (apps/mobile/dist) before it's published, by
-# netlify-build.sh and pages-build.sh.
+# pages-build.sh.
 #
-# Netlify leaves out any folder named node_modules, or starting with a dot,
-# when it publishes a site, and GitHub Pages' upload leaves out the dotted
-# ones; pnpm keeps the fonts and icons' files under both
+# Website hosts leave out folders starting with a dot (GitHub Pages' upload
+# does), and some any folder named node_modules too; pnpm keeps the fonts
+# and icons' files under both
 # (assets/__node_modules/.pnpm/<package>/node_modules/...). Without this, the
 # website has no icons and the wrong typeface. Rename the folders, then the
 # paths to them in the app's code (wherever the site is served from, so

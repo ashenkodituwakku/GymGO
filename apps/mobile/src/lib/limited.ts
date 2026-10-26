@@ -1,5 +1,5 @@
 /**
- * GymGO's website, for now (EXPO_PUBLIC_LIMITED=on in netlify.toml): the
+ * GymGO's website, for now (EXPO_PUBLIC_LIMITED=on in scripts/pages-build.sh): the
  * limited version. It runs with no GymGO server behind it, on the gyms built
  * into the app: real gyms in major cities around the world, from
  * OpenStreetMap. So no accounts, reviews, members' reports or Pro (they need

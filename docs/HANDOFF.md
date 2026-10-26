@@ -160,6 +160,20 @@ mobile 388, domain 167 and web 39 tests, all passing.
   busy button renamed "Say how busy". Offered but not chosen: hiding the
   AD PLACEHOLDER box for Free users, putting "can I get in?" first on gym
   pages, and a notice when the map can't load.
+- **Netlify is gone; the website is on GitHub Pages** (26 Oct; the owner
+  asked: "delete the netlify thing and put the website on github pages").
+  `netlify.toml` and `scripts/netlify-build.sh` are deleted;
+  `scripts/pages-build.sh` (run by `.github/workflows/pages.yml`) is the
+  only website build, and now writes `sitemap.xml` and its `robots.txt`
+  line too. Pages' custom domain is already `gymgo.site`, but gymgo.site's
+  DNS at Namecheap still points at Netlify (`A 75.2.60.5`, `www CNAME
+  gymgowebsite.netlify.app`), which keeps serving its 11 Oct demo. **Waiting
+  on the owner:** delete the `gymgowebsite` project in Netlify (no tool here
+  can), and at Namecheap replace those records with GitHub's four `A`
+  records (`185.199.108.153` to `185.199.111.153`) and `www CNAME
+  ashenkodituwakku.github.io`, then tick Enforce HTTPS in Settings → Pages.
+  The entries below about Netlify are history. Connecting a server later:
+  README, "The website on GitHub Pages".
 - **The limited website can go on GitHub Pages, free** (20 Oct; the owner
   asked for a way without buying Netlify credits and said "Yes set it up").
   `.github/workflows/pages.yml` runs `scripts/pages-build.sh` on pushes to

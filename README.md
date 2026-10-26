@@ -316,8 +316,8 @@ your accent glows behind them.
   your data, sign out, delete), Training (Progress, My workouts, Plate calculator, 1-rep max, Interval timer), Pro, your
   gyms, Settings (Country, **Appearance**, Haptics, **Sounds**, Demo
   mode), and where GymGO's facts come from.
-- **Appearance**: Automatic (follows your phone), Light or Dark, for
-  everyone, and dark in **Black** (true black, the default) or **Dim** (a
+- **Appearance**: Light (the default), Dark or Automatic (follows your
+  phone), for everyone, and dark in **Black** (true black, the default) or **Dim** (a
   soft blue-grey, easier in a lit room; the Standard look's, as the other
   looks draw dark their own way). **Liquid Glass**, also for everyone: a percentage for how
   glassy GymGO is: the controls, sheets and tab bar over the map, and the

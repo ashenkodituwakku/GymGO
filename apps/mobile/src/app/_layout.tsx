@@ -349,6 +349,8 @@ function paintPage() {
   document.documentElement.style.setProperty('--gg-focus', color.brand);
   document.documentElement.style.setProperty('--gg-focus-inner', color.card);
   document.body.style.backgroundColor = color.groupedBackground;
+  // The browser's own bar, in the page's colour rather than the system's light or dark.
+  for (const meta of document.querySelectorAll('meta[name="theme-color"]')) meta.setAttribute('content', color.groupedBackground);
   setGlassLevel(currentTheme().glass);
 }
 if (Platform.OS === 'web' && typeof document !== 'undefined') paintPage();

@@ -97,7 +97,9 @@ describe('behind a proxy', () => {
       status = (await call('POST', '/api/auth/login', { body: { email, password: `wrong ${attempt}` }, headers: { 'x-forwarded-for': `198.51.100.${attempt}` } })).status;
     }
     expect(status).toBe(429);
-  });
+    // 31 real password checks, each deliberately slow (scrypt): over a second on
+    // its own, so a busy machine is given time rather than failing it.
+  }, 20_000);
 });
 
 describe('passwords', () => {

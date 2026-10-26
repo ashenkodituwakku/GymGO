@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mergeCollectedGym, type CollectedGym, type Collection } from '@gymgo/domain';
 
 // Each device's storage, and the one in use.
@@ -75,6 +75,13 @@ async function device(stored: Collection = {}) {
   const mine = disk;
   return { ...store, use: () => void (disk = mine) };
 }
+
+// The store's modules loaded once first, with time to spare: each test's
+// fresh copy (device) is then quick. Loaded cold inside the first test, they
+// took nearly 2 seconds alone and, in a busy full run, past its 5.
+beforeAll(async () => {
+  await import('./useCollection');
+}, 30_000);
 
 beforeEach(() => {
   accounts.clear();

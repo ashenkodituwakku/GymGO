@@ -57,7 +57,9 @@ export default function ExerciseProgressScreen() {
     return (
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         <ScreenOptions options={{ title: '' }} />
-        <Txt variant="title2">No exercise by that name</Txt>
+        <Txt variant="title2" accessibilityRole="header" level={1}>
+          No exercise by that name
+        </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
           GymGO doesn’t list “{title}”, and you haven’t logged it. Your exercises are on the Progress page.
         </Txt>
@@ -69,7 +71,9 @@ export default function ExerciseProgressScreen() {
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: '' }} />
-      <Txt variant="largeTitle">{title}</Txt>
+      <Txt variant="largeTitle" accessibilityRole="header" level={1}>
+        {title}
+      </Txt>
 
       {exercise && (
         <>

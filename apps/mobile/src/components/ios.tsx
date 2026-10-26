@@ -255,7 +255,7 @@ export function Group({ header, footer, children }: { header?: string; footer?: 
     <View style={styles.group}>
       {header ? (
         // Shown in capitals, read as written (VoiceOver spelt out "GYMGO"), and a heading to jump between.
-        <Txt variant="footnote" color={color.labelSecondary} style={styles.groupHeader} accessibilityRole="header">
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.groupHeader} accessibilityRole="header" level={2}>
           {header}
         </Txt>
       ) : null}

@@ -73,7 +73,7 @@ export default function ExercisesScreen() {
 
       {browsing && yours.length > 0 && (
         <View style={styles.section}>
-          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" style={styles.eyebrow}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.eyebrow}>
             YOUR EXERCISES
           </Txt>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.yours}>
@@ -127,7 +127,7 @@ export default function ExercisesScreen() {
 
       {groups.map((group) => (
         <View key={group.muscle} style={styles.section}>
-          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" style={styles.eyebrow}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.eyebrow}>
             {`${groupLabel(group.muscle).toUpperCase()} · ${group.exercises.length}`}
           </Txt>
           <View style={styles.group}>

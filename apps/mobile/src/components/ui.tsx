@@ -28,6 +28,7 @@ export function Txt({
   children,
   numberOfLines,
   accessibilityRole,
+  level,
   maxFontSizeMultiplier,
 }: {
   variant?: Variant;
@@ -36,6 +37,12 @@ export function Txt({
   children: ReactNode;
   numberOfLines?: number;
   accessibilityRole?: 'header';
+  /**
+   * A heading's place in its page: 1 for the page's title, 2 for a section in
+   * it. A browser makes it h1, h2 (a screen reader moves by these); a phone
+   * has headings without levels. Left out, a heading is 1.
+   */
+  level?: 1 | 2 | 3;
   /** How far it may grow with the phone's text size, for text in a box that can't grow with it. */
   maxFontSizeMultiplier?: number;
 }) {
@@ -44,6 +51,7 @@ export function Txt({
       style={[type[variant] as TextStyle, { color: tint }, style]}
       numberOfLines={numberOfLines}
       accessibilityRole={accessibilityRole}
+      {...(Platform.OS === 'web' && accessibilityRole === 'header' && level ? ({ 'aria-level': level } as object) : null)}
       maxFontSizeMultiplier={maxFontSizeMultiplier}
     >
       {children}

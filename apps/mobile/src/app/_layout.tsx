@@ -11,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Redrawn, useThemeVersion } from '@/components/Redrawn';
 import { WebBack } from '@/components/WebBack';
 import { LimitedBanner } from '@/components/LimitedBanner';
+import { Txt } from '@/components/ui';
 import { LIMITED } from '@/lib/limited';
 import { backLabel } from '@/lib/backLabel';
 import { setGlassLevel } from '@/components/liquidGlass';
@@ -228,6 +229,14 @@ function ThemedStack() {
           ...(Platform.OS === 'web'
             ? {
                 headerTitleAlign: 'center' as const,
+                // The page's title as its heading; none at all when a page draws its own big title
+                // (a gym, a workout), which is its heading instead: an empty one read as nothing.
+                headerTitle: ({ children }: { children: string }) =>
+                  children ? (
+                    <Txt variant="headline" accessibilityRole="header" level={1} numberOfLines={1}>
+                      {children}
+                    </Txt>
+                  ) : null,
                 headerLeft: ({ label }: { label?: string }) => (
                   <WebBack
                     label={backLabel(navigation.getState().routes, route.key, label)}

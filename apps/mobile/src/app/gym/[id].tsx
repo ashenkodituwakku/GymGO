@@ -208,7 +208,9 @@ export default function GymPage() {
         <Animated.View entering={fromMap ? EXPAND_IN : arrival} style={[styles.column, { width: cardWidth }]}>
           <View style={styles.title}>
             <GymFace location={location} />
-            <Txt variant="largeTitle">{location.name}</Txt>
+            <Txt variant="largeTitle" accessibilityRole="header" level={1}>
+              {location.name}
+            </Txt>
             <Txt variant="subhead" color={color.labelSecondary}>
               {subtitle}
             </Txt>

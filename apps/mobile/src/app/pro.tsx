@@ -188,7 +188,7 @@ export default function ProScreen() {
             <Sheen round={22} />
             <Icon name="crown" size={36} color={color.onBrand} />
           </View>
-          <Txt variant="largeTitle" style={styles.center}>
+          <Txt variant="largeTitle" style={styles.center} accessibilityRole="header" level={1}>
             GymGO Pro
           </Txt>
           <Txt variant="body" color={color.labelSecondary} style={styles.center}>
@@ -229,7 +229,7 @@ export default function ProScreen() {
           {/* In three groups, each under its heading, so the list reads in parts rather than as one long column. */}
           {PRO_FEATURE_GROUPS.map((group) => (
             <View key={group.id} style={styles.tableGroup}>
-              <Txt variant="eyebrow" color={color.brand} style={styles.groupTitle} accessibilityRole="header">
+              <Txt variant="eyebrow" color={color.brand} style={styles.groupTitle} accessibilityRole="header" level={2}>
                 {group.title.toUpperCase()}
               </Txt>
               {PRO_FEATURES.filter((feature) => feature.group === group.id).map((feature) => (

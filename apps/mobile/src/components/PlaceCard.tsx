@@ -85,7 +85,8 @@ export function PlaceHeader({
   const hasLogo = useGymMark(location) !== null;
   const title = (
     <View style={styles.headerText}>
-      <Txt variant="title" numberOfLines={2}>
+      {/* A section of the map's page (the gym's own page has its own title). */}
+      <Txt variant="title" numberOfLines={2} accessibilityRole="header" level={2}>
         {location.name}
       </Txt>
       <Txt variant="subhead" color={color.labelSecondary}>

@@ -16,9 +16,12 @@ export function PlanSummary({
   title,
   detail,
   items,
+  level = 2,
 }: {
   eyebrow: string;
   title: string;
+  /** Its title's heading level: 2 under a page's own title, 1 when it is the page's title (a saved workout). */
+  level?: 1 | 2;
   detail?: string | null;
   items: Array<PlanLine & { exerciseId: string }>;
 }) {
@@ -36,7 +39,7 @@ export function PlanSummary({
       <Txt variant="eyebrow" color={color.onBrandSoft}>
         {eyebrow}
       </Txt>
-      <Txt variant="title2" color={color.onBrand} numberOfLines={2}>
+      <Txt variant="title2" color={color.onBrand} numberOfLines={2} accessibilityRole="header" level={level}>
         {title}
       </Txt>
       {detail ? (

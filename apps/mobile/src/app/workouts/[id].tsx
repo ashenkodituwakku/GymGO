@@ -92,6 +92,7 @@ export default function SavedWorkoutScreen() {
         <PlanSummary
           eyebrow={`SAVED ${new Date(saved.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }).toUpperCase()}`}
           title={saved.name}
+          level={1}
           detail={[
             goal,
             saved.plan.gymName && !saved.name.includes(saved.plan.gymName) ? saved.plan.gymName : null,

@@ -27,7 +27,8 @@ export default function LegalScreen() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: doc.title }} />
       <View style={styles.head}>
-        <Txt variant="title" accessibilityRole="header">
+        {/* Not a heading: the bar above titles the page with the same words, and two read as one twice. */}
+        <Txt variant="title">
           {doc.title}
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
@@ -36,7 +37,7 @@ export default function LegalScreen() {
       </View>
       {doc.sections.map((section) => (
         <View key={section.heading} style={styles.section}>
-          <Txt variant="headline" accessibilityRole="header">
+          <Txt variant="headline" accessibilityRole="header" level={2}>
             {section.heading}
           </Txt>
           {section.blocks.map((block, index) =>

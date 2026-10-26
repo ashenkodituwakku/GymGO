@@ -399,7 +399,9 @@ export default function TrainScreen() {
         extraBottom={restEndsAt !== null ? 90 : 0}
       >
         <View style={styles.intro}>
-          <Txt variant="largeTitle">{named.title}</Txt>
+          <Txt variant="largeTitle" accessibilityRole="header" level={1}>
+            {named.title}
+          </Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
             {named.plan ? `${named.plan} · ` : ''}
             {session.gymName ? `${session.gymName} · ` : ''}
@@ -929,7 +931,7 @@ function Summary({
       <Animated.View entering={records.length ? POP_IN : FADE_IN}>
         <HeroMark icon={records.length ? 'trophy' : 'check'} tint={records.length ? color.maybe : color.good} size={72} />
       </Animated.View>
-      <Txt variant="largeTitle" style={styles.center}>
+      <Txt variant="largeTitle" style={styles.center} accessibilityRole="header" level={1}>
         {records.length ? `${records.length} new record${records.length === 1 ? '' : 's'}!` : 'Workout done'}
       </Txt>
       <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>

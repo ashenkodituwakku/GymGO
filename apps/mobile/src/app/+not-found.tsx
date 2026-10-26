@@ -20,7 +20,7 @@ export default function NotFound() {
     <View style={styles.page}>
       <ScreenOptions options={{ headerShown: true, title: '' }} />
       <HeroMark icon="search" />
-      <Txt variant="title2" style={styles.center}>
+      <Txt variant="title2" style={styles.center} accessibilityRole="header" level={1}>
         This page isn’t in GymGO
       </Txt>
       <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>

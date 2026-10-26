@@ -298,7 +298,7 @@ export default function ProgressScreen() {
           <Animated.View layout={GLIDE} style={styles.days}>
             {days.slice(0, shownDays).map((day) => (
               <View key={day.key} style={styles.day}>
-                <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" style={[face('semibold'), styles.dayLabel]}>
+                <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={[face('semibold'), styles.dayLabel]}>
                   {day.label}
                 </Txt>
                 <View style={styles.group}>

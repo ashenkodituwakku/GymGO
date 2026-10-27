@@ -17,6 +17,7 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { GymCardsSkeleton } from '@/components/Skeleton';
 import { Pressable, Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
+import { Flag } from '@/components/Flag';
 import { AdSlot } from '@/components/AdSlot';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { Avatar } from '@/components/Avatar';
@@ -58,9 +59,9 @@ const CITIES_SHOWN = 12;
 
 /** How Home groups the built-in cities. */
 /** Other cities by where they are: the US and Australia on their own, the rest by continent (their clock's). */
-const REGIONS: Array<{ label: string; has: (city: City) => boolean }> = [
-  { label: 'USA', has: (city) => city.country === 'US' },
-  { label: 'Australia', has: (city) => city.country === 'AU' },
+const REGIONS: Array<{ label: string; country?: string; has: (city: City) => boolean }> = [
+  { label: 'USA', country: 'US', has: (city) => city.country === 'US' },
+  { label: 'Australia', country: 'AU', has: (city) => city.country === 'AU' },
   { label: 'Europe', has: (city) => city.timezone.startsWith('Europe/') },
   { label: 'The Americas', has: (city) => city.timezone.startsWith('America/') && city.country !== 'US' },
   { label: 'Asia and the Middle East', has: (city) => city.timezone.startsWith('Asia/') },
@@ -118,8 +119,8 @@ export default function Home() {
     ? [...otherCities.filter((item) => item.country === home), ...worldCitiesIn(home).filter((item) => item.name !== filters.placeName)]
     : [];
   const groups = [
-    ...(home && homeCities.length ? [{ label: countryName(home), cities: homeCities }] : []),
-    ...REGIONS.map(({ label, has }) => ({ label, cities: otherCities.filter((item) => has(item) && item.country !== home) })),
+    ...(home && homeCities.length ? [{ label: countryName(home), country: home, cities: homeCities }] : []),
+    ...REGIONS.map(({ label, country, has }) => ({ label, country, cities: otherCities.filter((item) => has(item) && item.country !== home) })),
   ].filter((group) => group.cities.length > 0);
 
   const explore = (request: Parameters<typeof requestExplore>[0] = {}) => {
@@ -536,15 +537,19 @@ export default function Home() {
           <Txt variant="footnote" color={color.labelSecondary} style={styles.anywhere}>
             {LIMITED ? 'Every city built into this version of GymGO.' : 'Or anywhere in the world: type a town on the map, or move the map and tap Search this area.'}
           </Txt>
-          {groups.map(({ label, cities }) => {
+          {groups.map(({ label, country, cities }) => {
             // A long list (the US has 40) shows its first dozen until asked for the rest.
             const open = showAll[label] === true || cities.length <= CITIES_SHOWN + 2;
             const list = open ? cities : cities.slice(0, CITIES_SHOWN);
             return (
               <View key={label} style={styles.country}>
-                <Txt variant="footnote" color={color.labelSecondary} style={styles.countryLabel}>
-                  {label.toUpperCase()}
-                </Txt>
+                {/* A country's group under its flag; a continent's under its name alone. */}
+                <View style={styles.countryHead}>
+                  {country && <Flag code={country} size={18} />}
+                  <Txt variant="footnote" color={color.labelSecondary} style={styles.countryLabel}>
+                    {label.toUpperCase()}
+                  </Txt>
+                </View>
                 <View style={styles.suburbs}>
                   {list.map((item) => {
                     const where = 'id' in item ? (label === 'Europe' ? item.region : countryName(item.country)) : countryName(item.country);
@@ -556,6 +561,7 @@ export default function Home() {
                         accessibilityLabel={`${item.name}, ${where}${mayExplore(item.country) ? '' : ', with GymGO Pro'}`}
                         style={({ pressed }) => [styles.suburb, styles.cityChip, pressed && { opacity: 0.7 }]}
                       >
+                        <Flag code={item.country} size={18} />
                         <Txt variant="subhead" style={face('medium')}>
                           {item.name}
                         </Txt>
@@ -775,6 +781,7 @@ const styles = themed(() => StyleSheet.create({
 
   country: { gap: space[2] },
   countryLabel: { ...face('semibold'), letterSpacing: 0.6 },
+  countryHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   anywhere: { marginBottom: space[3] },
   locked: {
     flexDirection: 'row',

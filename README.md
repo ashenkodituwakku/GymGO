@@ -591,6 +591,15 @@ Phosphor's two-tone icons in the tab bar and section headings. So a phone
 button shows a handset, directions an arrow sign, and so on, drawn the way
 the rest of the phone draws them.
 
+Country flags are Google's **Noto 3D** pictures, the same on every phone,
+computer and the website (Windows draws flag emoji as two letters): in the
+country list, on each city button on Home and its country headings, on
+collection cards and on completed sets. They're in
+`apps/mobile/assets/flags`, under the SIL Open Font License 1.1
+(`assets/flags/LICENSE.txt`), and credited on Profile. To make them again,
+run `node scripts/noto-flags.mjs path/to/noto-emoji` in `apps/mobile`
+against a clone of github.com/googlefonts/noto-emoji.
+
 ### Where you are
 
 GymGO opens where you are. The first time, it asks for your location once;

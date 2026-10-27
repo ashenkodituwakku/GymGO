@@ -9,7 +9,7 @@
 
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { flag } from '@/lib/collection';
+import { Flag } from './Flag';
 import type { GymSet } from '@/lib/sets';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { TIER_METAL } from './GemCard';
@@ -42,7 +42,7 @@ export function SetReward({ set, fresh = false }: { set: GymSet; fresh?: boolean
         <Txt variant="eyebrow" color={color.labelSecondary} style={styles.flex}>
           {`${KIND[set.kind].toUpperCase()} COMPLETE`}
         </Txt>
-        <Txt variant="headline">{flag(set.countryCode)}</Txt>
+        <Flag code={set.countryCode} size={24} />
       </View>
       <Txt variant="title2" numberOfLines={2}>
         {set.name}

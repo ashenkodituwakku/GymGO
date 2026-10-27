@@ -102,6 +102,16 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Country flags back, and only the flags** (27 Oct). After the undo below,
+  the owner asked session `01AgUY2LAX9QWwZT9VCizKDS` for the flag emoji back,
+  and said plainly: just the flags, not the other emoji. `components/Flag.tsx`
+  (`Flag`, `hasFlag`) draws a country's Noto 3D flag from
+  `src/lib/flagImages.ts`, written with the pictures by
+  `apps/mobile/scripts/noto-flags.mjs`; used in the country list, Home's city
+  buttons and country headings, `GemCard` and `SetCard`. Licence: SIL OFL 1.1
+  in `assets/flags/LICENSE.txt`, credited on Profile. `src/lib/flags.test.ts`
+  fails if a country has no flag. The icons, celebrations and everything else
+  the undo put back stay as they are.
 - **Undone at the owner's request (26 Oct): another session's six changes.**
   The owner asked to undo what session `01AgUY2LAX9QWwZT9VCizKDS` did and put
   the app back as it was. Commit `01cce83` reverts, newest first: the desktop

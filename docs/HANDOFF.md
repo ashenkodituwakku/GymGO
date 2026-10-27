@@ -102,6 +102,22 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Verity, the AI assistant** (27 Oct). The owner asked for a free
+  chatbot in the bottom-right corner called Verity, greeting "Hi! I'm Verity
+  your personal assistant, ask me anything!", smiling and blinking, and to
+  have it know the app thoroughly. The name and look went back and forth
+  (GymBud; no yellow circle; its own logo); where it ended, asked last with
+  the picture attached: **Verity**, with the owner's yellow smiley as its
+  face, blinking and grinning from its own eyes and mouth
+  (`apps/mobile/src/components/Verity.tsx`, mounted in `app/_layout.tsx`;
+  the layers from `apps/mobile/scripts/verity-face.mjs`).
+  The server relays chats to OpenRouter (`apps/server/src/verity.ts`), only
+  ever to `:free` models, with Verity's guide to the app
+  (`verityGuide.ts`) as its instructions: keep that guide true of the app.
+  The owner hasn't set a key yet; never ask for it in chat (their rule).
+  Tested only against a stand-in for OpenRouter. Free models allow 50
+  questions a day for the whole account. Terms and Privacy Policy updated
+  (`LEGAL_VERSION` 2026-10-27).
 - **Country flags back, and only the flags** (27 Oct). After the undo below,
   the owner asked session `01AgUY2LAX9QWwZT9VCizKDS` for the flag emoji back,
   and said plainly: just the flags, not the other emoji. `components/Flag.tsx`

@@ -15,9 +15,9 @@
  */
 
 /** Bumped whenever the terms or privacy policy change in a way people should see. */
-export const LEGAL_VERSION = '2026-10-12';
+export const LEGAL_VERSION = '2026-10-27';
 /** The same date, as the documents show it. */
-export const LEGAL_UPDATED = '12 October 2026';
+export const LEGAL_UPDATED = '27 October 2026';
 
 export type LegalDocId = 'terms' | 'privacy' | 'refunds' | 'community';
 export const LEGAL_DOC_IDS: readonly LegalDocId[] = ['terms', 'privacy', 'refunds', 'community'];
@@ -112,6 +112,7 @@ function terms(op: LegalOperator): LegalSection[] {
       blocks: [
         'GymGO shows what it can find about gyms: opening hours, prices, entry rules and equipment from gyms’ own websites, OpenStreetMap and members, each with its source and when it was checked. Gyms change things without telling anyone, so information can be out of date or wrong, and GymGO says “unknown” rather than guess.',
         'Always check with the gym before you rely on something that matters to you, such as being let in or what a visit costs. Gyms make their own decisions about who they let in and what they charge, and GymGO isn’t part of any gym unless it says so.',
+        'Verity, the assistant in the corner of the app, answers with AI. It can be wrong, and what it says isn’t medical, legal or financial advice: a gym’s own page in GymGO shows what GymGO knows about it, with where each fact came from.',
         'Someone who runs a gym can claim it. Only claim a gym you own or are allowed to speak for, and give honest details: we check before approving, and remove an owner who misleads anyone. What a verified owner sends (visitor hours, a casual price) is checked by a moderator and shown as from the gym; it doesn’t make GymGO part of that gym.',
       ],
     },
@@ -171,7 +172,7 @@ function terms(op: LegalOperator): LegalSection[] {
     {
       heading: 'Other services',
       blocks: [
-        'GymGO uses other companies’ services, whose own terms also apply when you use them through GymGO: Stripe for payments, Apple and Google if you sign in with them, Google’s map, Street View and photos when you choose to show them, and OpenStreetMap, OpenFreeMap and Apple Maps for maps and place data. We aren’t responsible for those services or for websites GymGO links to, such as gyms’ own.',
+        'GymGO uses other companies’ services, whose own terms also apply when you use them through GymGO: Stripe for payments, Apple and Google if you sign in with them, Google’s map, Street View and photos when you choose to show them, OpenStreetMap, OpenFreeMap and Apple Maps for maps and place data, and OpenRouter and the AI model providers it uses to answer what you ask Verity. We aren’t responsible for those services or for websites GymGO links to, such as gyms’ own.',
       ],
     },
     {
@@ -244,6 +245,7 @@ function privacy(op: LegalOperator): LegalSection[] {
             'Using GymGO’s website without an account, what you set up there (saved gyms, workouts, your training log and settings) is kept in that browser only, and GymGO keeps nothing about you.',
             'If you let GymGO use your location, it’s used on your device to find gyms near you and measure how far they are. It is never sent to GymGO or anyone else. Outside the cities GymGO carries, the app asks the server for the gyms in the map squares around you (about 30 km across, the same for everyone in them), never your position.',
             'When you search an area or type a town, the server looks it up on OpenStreetMap’s services (Overpass and Photon). It sends them the area or the name, not anything about you.',
+            'If you chat with Verity, the assistant, what you type and the chat so far go through GymGO’s server to OpenRouter (openrouter.ai) and the provider of the AI model that answers. GymGO doesn’t keep the chat: it’s gone when you close the app or tap Start over. OpenRouter and the model’s provider may keep what you type under their own policies, and providers of free AI models may use it to improve them, so leave out personal details.',
             'Like any website, the server sees your device’s IP address with each request. It uses it to send the answer back and, for about an hour at most, to slow down anyone sending too many requests. It isn’t written to the database or any log.',
           ],
         },
@@ -291,6 +293,7 @@ function privacy(op: LegalOperator): LegalSection[] {
             'Friends you accept see your display name, profile picture, the cards in your collection with their visit counts, and your totals, never the days you went; and the invites between you. If you join the public leaderboard, people signed in to GymGO see your display name, profile picture and how many gyms and visits you have, until you leave it.',
             'Companies that work for us, only as needed to provide GymGO: the provider that hosts our server and its backups, our email provider, and Stripe for payments. They may not use your information for anything else.',
             'Apple or Google, if you sign in with them, and Google itself if you choose to show its map, Street View or photos on a gym’s page; nothing loads from Google until you do.',
+            'OpenRouter and the AI model’s provider, for what you type to Verity, as above.',
             'Map providers (OpenFreeMap, or Apple Maps on iPhone) see your device’s IP address and the part of the map you’re looking at, as any map does.',
             'Anyone the law requires us to tell, or when it’s needed to protect someone’s safety or GymGO from fraud or attack.',
           ],

@@ -11,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Redrawn, useThemeVersion } from '@/components/Redrawn';
 import { WebBack } from '@/components/WebBack';
 import { LimitedBanner } from '@/components/LimitedBanner';
+import { Verity } from '@/components/Verity';
 import { Txt } from '@/components/ui';
 import { LIMITED } from '@/lib/limited';
 import { backLabel } from '@/lib/backLabel';
@@ -302,6 +303,8 @@ function ThemedStack() {
         <Stack.Screen name="legal/[doc]" options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="report-bug" options={{ ...MODAL, headerShown: true, title: 'Report a bug' }} />
       </Stack>
+      {/* Verity, the AI assistant, in the corner of every signed-in screen (it needs the server, so not on the limited website). */}
+      {signedIn && !LIMITED && <Verity />}
       {!!veilColour && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle, { pointerEvents: 'none' }]} />}
     </ThemeProvider>
   );

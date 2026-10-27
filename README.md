@@ -797,6 +797,70 @@ only an **admin** sees and decides them:
 npx pnpm@10 --filter @gymgo/server make-admin you@example.com
 ```
 
+### Verity, the AI assistant (free)
+
+Verity's face, the yellow smiley the owner chose, sits in the bottom-right
+corner of every signed-in screen (above the tab bar on the tabs; not during a workout, on the
+welcome tour or on screens that open as sheets). Tap it and a chat opens,
+always starting with "Hi! I'm Verity your personal assistant, ask me
+anything!". It answers questions about the app (where things are, what
+the labels mean, what Pro adds) and general training questions. The face
+blinks every few seconds and grins as the chat opens and with each answer,
+and keeps still with Reduce Motion. It's the owner's picture
+(`apps/mobile/assets/verity/verity.png`), cut into three layers so its own
+eyes and mouth can move: `node scripts/verity-face.mjs` in `apps/mobile`
+makes them again from it.
+The chat stays while the app is open, **Start over** clears it, and nothing
+of it is stored, on the phone or the server.
+
+Answers come from a free AI model on **OpenRouter** (openrouter.ai), through
+the GymGO server. A model can't be taught the app once and for all, so the
+server sends Verity's guide to GymGO with every question
+(`apps/server/src/verityGuide.ts`, written from this README and the screens):
+change it there when the app changes. The guide also holds the rules GymGO
+lives by: Verity never states or guesses a real gym's prices, hours, entry
+rules, machines, reviews or busyness, and sends people to the gym's page,
+where each fact has its source; unknown is never "no"; it never invents
+deals or partnerships; and it gives general training ideas, not medical
+advice. The chat says Verity is AI and can be wrong.
+
+To switch it on (free, no card):
+
+1. Make an account at **openrouter.ai**, then **Keys → Create key**.
+2. Add it to `apps/server/.env.local` (git-ignored, so it never reaches
+   GitHub). Don't paste it anywhere else:
+
+   ```
+   OPENROUTER_API_KEY=your-key
+   ```
+
+3. Restart GymGO. The server's first lines say `Verity: on, free models
+   only (…)`. Without a key, Verity's chat says it isn't switched on yet.
+
+**It can't cost money.** The server only ever asks models whose OpenRouter
+id ends in `:free`, and OpenRouter bills a fallback at the price of the
+model that answered, so a list of free ones stays free. By default
+it asks `google/gemma-4-31b-it:free`, then
+`thinkingmachines/inkling-small:free`, then `google/gemma-4-26b-a4b-it:free`
+(free on OpenRouter's list on 27 October 2026; free models come and go).
+`GYMGO_VERITY_MODELS` sets others, comma-separated; any that isn't free is
+left out, and the server says so. There's no free ChatGPT: every OpenAI
+model on OpenRouter is paid.
+
+**Limits.** OpenRouter's free models allow 20 questions a minute and **50 a
+day for the whole account**, shared by everyone using your GymGO (1,000 a
+day once $10 of credit has ever been bought there, which is yours to
+decide). Past that, Verity says it's had a lot of questions. GymGO also
+limits each person to 6 questions a minute and 30 a day.
+
+**Privacy.** What someone types, and the chat so far, goes to OpenRouter
+and the model's provider to be answered; free models' providers may keep
+it and use it to improve their models. GymGO keeps none of it. The chat
+asks people to leave out personal details, and the Privacy Policy and Terms
+say all of this (version 2026-10-27, so Profile shows existing accounts a
+card asking them to agree to the new version).
+Verity needs the server, so it isn't on the limited website.
+
 ### Report a bug
 
 **Profile → Report a bug** lets anyone, signed in or not, tell the team what

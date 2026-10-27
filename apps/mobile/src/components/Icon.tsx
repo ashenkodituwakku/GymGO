@@ -36,6 +36,7 @@ const ICONS = {
   chevronBack: { ios: 'chevron.left', android: 'chevron_left', web: 'chevron_left' },
   info: { ios: 'info.circle.fill', android: 'info', web: 'info' },
   sparkle: { ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' },
+  send: { ios: 'arrow.up', android: 'arrow_upward', web: 'arrow_upward' },
   pin: { ios: 'mappin.circle.fill', android: 'location_on', web: 'location_on' },
   fit: { ios: 'arrow.up.left.and.arrow.down.right', android: 'fit_screen', web: 'fit_screen' },
   expand: { ios: 'arrow.up.left.and.arrow.down.right', android: 'open_in_full', web: 'open_in_full' },

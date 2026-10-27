@@ -104,7 +104,9 @@ async function request<T>(method: string, path: string, options: { token?: strin
   // Photos upload slowly; billing waits on Stripe; an area search may wait on the map service.
   // A bug report waits (a few seconds at most) for its email to go.
   const slow = (method === 'POST' && (path.endsWith('/photos') || path === '/api/bug-reports')) || path === '/api/me/avatar' || path.startsWith('/api/billing');
-  const timer = setTimeout(() => controller.abort(), path.startsWith('/api/area') ? 75000 : slow || path.startsWith('/api/places') ? 30000 : 8000);
+  // Verity's answer comes from a free AI model, which can take a while (the server gives it 45 seconds).
+  const thinking = method === 'POST' && path === '/api/verity';
+  const timer = setTimeout(() => controller.abort(), path.startsWith('/api/area') ? 75000 : thinking ? 50000 : slow || path.startsWith('/api/places') ? 30000 : 8000);
   let response: Response;
   try {
     response = await fetch(`${base}${path}`, {
@@ -694,4 +696,14 @@ export const api = {
   moderationQueue: (token: string) => request<{ reviews: Review[] }>('GET', '/api/moderation/reviews', { token }),
   moderate: (token: string, reviewId: string, body: { decision: 'publish' | 'reject'; reason?: string }) =>
     request<unknown>('POST', `/api/moderation/reviews/${encodeURIComponent(reviewId)}`, { token, body }),
+  /** Whether Verity, the chat, can answer on this server (it needs the owner's OpenRouter key). */
+  verity: () => request<{ on: boolean }>('GET', '/api/verity'),
+  /** Verity's answer to the last question in the conversation (the latest 20 messages). */
+  askVerity: (messages: ChatTurn[]) => request<{ reply: string }>('POST', '/api/verity', { body: { messages } }),
 };
+
+/** One message in a chat with Verity. */
+export interface ChatTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}

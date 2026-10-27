@@ -32,6 +32,18 @@ export const BACKUP_DIR = process.env.GYMGO_BACKUP_DIR?.trim() || null;
  */
 export const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY?.trim() || null;
 /**
+ * Optional. The owner's OpenRouter API key (openrouter.ai, free to make),
+ * for Verity, the chat in the app's corner. It holds a secret: keep it in
+ * .env.local, never in git. Without it, the chat says Verity isn’t switched on.
+ */
+export const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY?.trim() || null;
+/**
+ * Optional. Which models Verity asks, comma-separated OpenRouter ids, tried
+ * in turn. Only free ones (ending ":free") are ever used; any other is left
+ * out, so Verity can't cost money. By default, three free ones (verity.ts).
+ */
+export const VERITY_MODELS = (process.env.GYMGO_VERITY_MODELS ?? '').split(',').map((item) => item.trim()).filter(Boolean);
+/**
  * Optional. Stripe, for GymGO Pro. Use test-mode keys (sk_test_…) until
  * you're ready to take real money. Without a key, Pro shows as "not on sale".
  */

@@ -835,7 +835,12 @@ To switch it on (free, no card):
    ```
 
 3. Restart GymGO. The server's first lines say `Verity: on, free models
-   only (…)`. Without a key, Verity's chat says it isn't switched on yet.
+   only (…)`.
+
+Until then, Verity is there all the same, and answers every question with
+"Sorry, we're waiting for Verity to be set up. Check back soon!", sending
+nothing anywhere. Each question first asks the server again, so once the
+key is in, the next one gets a real answer, with no reload.
 
 **It can't cost money.** The server only ever asks models whose OpenRouter
 id ends in `:free`, and OpenRouter bills a fallback at the price of the
@@ -859,7 +864,10 @@ it and use it to improve their models. GymGO keeps none of it. The chat
 asks people to leave out personal details, and the Privacy Policy and Terms
 say all of this (version 2026-10-27, so Profile shows existing accounts a
 card asking them to agree to the new version).
-Verity needs the server, so it isn't on the limited website.
+On the website, which has no server behind it yet, Verity always gives
+that apology; once the website is pointed at a GymGO server with the key
+(`GYMGO_SERVER_URL`, in The website on Netlify), it answers there too,
+for people signed in.
 
 ### Report a bug
 

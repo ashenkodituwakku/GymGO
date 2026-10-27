@@ -303,8 +303,8 @@ function ThemedStack() {
         <Stack.Screen name="legal/[doc]" options={{ headerShown: true, title: '' }} />
         <Stack.Screen name="report-bug" options={{ ...MODAL, headerShown: true, title: 'Report a bug' }} />
       </Stack>
-      {/* Verity, the AI assistant, in the corner of every signed-in screen (it needs the server, so not on the limited website). */}
-      {signedIn && !LIMITED && <Verity />}
+      {/* Verity, the AI assistant, in the corner of every signed-in screen, and the website's (which waits to be set up). */}
+      {signedIn && <Verity />}
       {!!veilColour && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle, { pointerEvents: 'none' }]} />}
     </ThemeProvider>
   );

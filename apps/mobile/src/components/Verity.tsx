@@ -11,8 +11,10 @@
  *
  * Answers come from a free AI model through the GymGO server
  * (apps/server/src/verity.ts), which hands the model Verity's guide to the
- * app and the rules about real gyms' facts. A server without the owner's
- * OpenRouter key says Verity isn't switched on, rather than pretending.
+ * app and the rules about real gyms' facts. Until it can answer (the
+ * website, with no server behind it, or a server without the owner's
+ * OpenRouter key), each question gets Verity's apology that it's still
+ * being set up; once the key is in, the next question goes through.
  *
  * Kept out of the way where the corner is busy: a workout in progress (its
  * rest timer sits there), the welcome tour, and the screens that open as
@@ -49,7 +51,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ApiError, OfflineError, api, problemText, type ChatTurn } from '@/lib/api';
+import { ApiError, OfflineError, api, apiBase, problemText, type ChatTurn } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { tabBarBottom } from '@/lib/layout';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -82,9 +84,13 @@ const MOUTH = require('../../assets/verity/mouth.png');
 const EYES_AT = '49.8% 41.8%';
 const MOUTH_AT = '49.6% 62.8%';
 
-type Line = ChatTurn & { id: number };
-/** Whether Verity can answer here: not asked yet, yes, switched off on this server, or the server can't be reached. */
+/** A message; `waited` marks a question answered only with WAITING, and that answer, which are never sent on. */
+type Line = ChatTurn & { id: number; waited?: boolean };
+/** Whether Verity can answer here: not asked yet, yes, not set up (no server, or no key on it), or the server can't be reached. */
 type State = 'unknown' | 'on' | 'off' | 'away';
+
+/** Verity's answer while it isn't set up. */
+export const WAITING = 'Sorry, we’re waiting for Verity to be set up. Check back soon!';
 
 let nextId = 1;
 
@@ -99,12 +105,32 @@ export function Verity() {
   const [problem, setProblem] = useState<string | null>(null);
   const [state, setState] = useState<State>('unknown');
 
-  const check = useCallback(async () => {
-    try {
-      setState((await api.verity()).on ? 'on' : 'off');
-    } catch (error) {
-      setState(error instanceof OfflineError ? 'away' : 'off');
+  /** Whether Verity can answer now: the website with no server behind it can't, and a server says whether it has the key. */
+  const check = useCallback(async (): Promise<State> => {
+    let next: State;
+    if (!apiBase()) next = 'off';
+    else {
+      try {
+        next = (await api.verity()).on ? 'on' : 'off';
+      } catch (error) {
+        next = error instanceof OfflineError ? 'away' : 'off';
+      }
     }
+    setState(next);
+    return next;
+  }, []);
+
+  /** Verity's apology for not being set up yet, after a moment's typing, as an answer to the question `id`. */
+  const waitingFor = useCallback((id: number) => {
+    setPending(true);
+    setTimeout(() => {
+      setLines((now) => [
+        ...now.map((line) => (line.id === id ? { ...line, waited: true } : line)),
+        { id: nextId++, role: 'assistant' as const, content: WAITING, waited: true },
+      ]);
+      setPending(false);
+      AccessibilityInfo.announceForAccessibility(`Verity: ${WAITING}`);
+    }, 700);
   }, []);
 
   // Asked each time it opens until it's known to be on: a key set since, or the server back.
@@ -113,31 +139,46 @@ export function Verity() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const ask = useCallback(async (conversation: Line[]) => {
-    setPending(true);
-    setProblem(null);
-    try {
-      const { reply } = await api.askVerity(conversation.slice(-KEEP).map(({ role, content }) => ({ role, content })));
-      setLines((now) => [...now, { id: nextId++, role: 'assistant', content: reply }]);
-      AccessibilityInfo.announceForAccessibility(`Verity: ${plain(reply)}`);
-    } catch (error) {
-      if (error instanceof ApiError && error.code === 'verity_off') setState('off');
-      haptic.warn();
-      setProblem(problemText(error, 'Verity couldn’t answer. Try again?'));
-    } finally {
-      setPending(false);
-    }
-  }, []);
+  const ask = useCallback(
+    async (conversation: Line[]) => {
+      setPending(true);
+      setProblem(null);
+      try {
+        const sent = conversation.filter((line) => !line.waited).slice(-KEEP);
+        const { reply } = await api.askVerity(sent.map(({ role, content }) => ({ role, content })));
+        setLines((now) => [...now, { id: nextId++, role: 'assistant', content: reply }]);
+        setPending(false);
+        AccessibilityInfo.announceForAccessibility(`Verity: ${plain(reply)}`);
+      } catch (error) {
+        // The key was taken away since: back to waiting.
+        if (error instanceof ApiError && error.code === 'verity_off') {
+          setState('off');
+          waitingFor(conversation.at(-1)!.id);
+          return;
+        }
+        setPending(false);
+        haptic.warn();
+        setProblem(error instanceof ApiError && error.status === 401 ? 'Sign in to chat with Verity.' : problemText(error, 'Verity couldn’t answer. Try again?'));
+      }
+    },
+    [waitingFor],
+  );
 
-  const send = useCallback(() => {
+  const send = useCallback(async () => {
     const question = draft.trim();
-    if (!question || pending || state === 'off') return;
+    if (!question || pending) return;
     haptic.tap();
-    const next: Line[] = [...lines, { id: nextId++, role: 'user', content: question }];
+    const asked: Line = { id: nextId++, role: 'user', content: question };
+    const next = [...lines, asked];
     setLines(next);
     setDraft('');
-    void ask(next);
-  }, [ask, draft, lines, pending, state]);
+    setProblem(null);
+    // Not known to be on yet: ask again first, so a key put in since works straight away.
+    setPending(true);
+    const now = state === 'on' ? 'on' : await check();
+    if (now === 'off') waitingFor(asked.id);
+    else void ask(next);
+  }, [ask, check, draft, lines, pending, state, waitingFor]);
 
   const startOver = () => {
     haptic.select();
@@ -166,7 +207,7 @@ export function Verity() {
           pending={pending}
           problem={problem}
           state={state}
-          onSend={send}
+          onSend={() => void send()}
           onRetry={() => (state === 'on' ? void ask(lines) : void check())}
           onStartOver={startOver}
           onClose={() => setOpen(false)}
@@ -272,7 +313,7 @@ function Chat({
   const { height } = useWindowDimensions();
   const scroll = useRef<ScrollView>(null);
   const [focused, setFocused] = useState(false);
-  const canSend = draft.trim().length > 0 && !pending && state !== 'off';
+  const canSend = draft.trim().length > 0 && !pending;
   // A grin as it opens, and one with each answer.
   const answers = lines.filter((line) => line.role === 'assistant').length;
 
@@ -308,7 +349,7 @@ function Chat({
                 Verity
               </Txt>
               <Txt variant="caption" color={color.labelSecondary}>
-                {state === 'off' ? 'Not switched on yet' : state === 'away' ? 'Can’t reach GymGO' : 'Your personal assistant'}
+                {state === 'off' ? 'Being set up' : state === 'away' ? 'Can’t reach GymGO' : 'Your personal assistant'}
               </Txt>
             </View>
             {lines.length > 0 && (
@@ -349,45 +390,39 @@ function Chat({
             )}
           </ScrollView>
 
-          {state === 'off' ? (
-            <View style={styles.note}>
-              <Txt variant="footnote" color={color.labelSecondary}>
-                Verity isn’t switched on for this GymGO server yet. It needs the owner’s free OpenRouter key.
-              </Txt>
-            </View>
-          ) : (
-            <View style={[styles.composer, focused && styles.composerFocused]}>
-              <TextInput
-                value={draft}
-                onChangeText={setDraft}
-                onKeyPress={onKeyPress}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                placeholder="Ask Verity anything"
-                placeholderTextColor={color.labelTertiary}
-                accessibilityLabel="Ask Verity"
-                multiline
-                numberOfLines={1}
-                maxLength={MAX_QUESTION}
-                autoFocus={Platform.OS === 'web'}
-                style={styles.input}
-              />
-              <Pressable
-                onPress={onSend}
-                disabled={!canSend}
-                accessibilityRole="button"
-                accessibilityLabel="Send"
-                accessibilityState={{ disabled: !canSend }}
-                style={[styles.send, !canSend && styles.sendOff]}
-              >
-                {canSend && <BrandFill round={18} />}
-                <Icon name="send" size={18} color={canSend ? color.onBrand : color.labelTertiary} weight="bold" />
-              </Pressable>
-            </View>
-          )}
+          <View style={[styles.composer, focused && styles.composerFocused]}>
+            <TextInput
+              value={draft}
+              onChangeText={setDraft}
+              onKeyPress={onKeyPress}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              placeholder="Ask Verity anything"
+              placeholderTextColor={color.labelTertiary}
+              accessibilityLabel="Ask Verity"
+              multiline
+              numberOfLines={1}
+              maxLength={MAX_QUESTION}
+              autoFocus={Platform.OS === 'web'}
+              style={styles.input}
+            />
+            <Pressable
+              onPress={onSend}
+              disabled={!canSend}
+              accessibilityRole="button"
+              accessibilityLabel="Send"
+              accessibilityState={{ disabled: !canSend }}
+              style={[styles.send, !canSend && styles.sendOff]}
+            >
+              {canSend && <BrandFill round={18} />}
+              <Icon name="send" size={18} color={canSend ? color.onBrand : color.labelTertiary} weight="bold" />
+            </Pressable>
+          </View>
           <Txt variant="caption" color={color.labelTertiary} style={styles.small}>
-            Verity is AI and can be wrong; a gym’s own page has its facts. Chats go to OpenRouter, an AI service, so leave out personal details. Not
-            medical advice.
+            {/* OpenRouter only once something is sent there. */}
+            {state === 'off'
+              ? 'Verity is AI and can be wrong; a gym’s own page has its facts. Not medical advice.'
+              : 'Verity is AI and can be wrong; a gym’s own page has its facts. Chats go to OpenRouter, an AI service, so leave out personal details. Not medical advice.'}
           </Txt>
         </KeyboardAvoidingView>
       </Animated.View>
@@ -509,7 +544,6 @@ const styles = themed(() =>
     typing: { flexDirection: 'row', gap: 5, paddingVertical: space[3] + 2 },
     dot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: color.labelSecondary },
     problem: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[1] },
-    note: { marginHorizontal: space[4], padding: space[3], borderRadius: radius.md, backgroundColor: color.fill },
     composer: {
       flexDirection: 'row',
       alignItems: 'flex-end',

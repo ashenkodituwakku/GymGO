@@ -115,6 +115,8 @@ mobile 388, domain 167 and web 39 tests, all passing.
   ever to `:free` models, with Verity's guide to the app
   (`verityGuide.ts`) as its instructions: keep that guide true of the app.
   The owner hasn't set a key yet; never ask for it in chat (their rule).
+  Until it's set up, and on the website (no server), Verity answers every
+  question with an apology that it's waiting to be set up (`WAITING`).
   Tested only against a stand-in for OpenRouter. Free models allow 50
   questions a day for the whole account. Terms and Privacy Policy updated
   (`LEGAL_VERSION` 2026-10-27).

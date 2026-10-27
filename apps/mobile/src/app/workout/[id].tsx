@@ -11,13 +11,15 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Share, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { Pressable } from '@/components/motion';
+import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
+import { CURVES, EASE_OUT, Pressable } from '@/components/motion';
 import { BodyPicker } from '@/components/BodyPicker';
 import { Icon, type IconName } from '@/components/Icon';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Chip, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ExerciseCard } from '@/components/ExerciseCard';
 import { PlanSummary } from '@/components/PlanSummary';
+import { BuildingBar } from '@/components/BuildingBar';
 import { startSession, useActiveSessionGlance } from '@/lib/activeSession';
 import { ApiError, api } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -57,6 +59,9 @@ const GOAL_LABEL: Record<Goal, string> = { strength: 'Strength', muscle: 'Muscle
 /** The big muscle groups "Fresh muscles" picks from (not forearms or obliques on their own). */
 const MAIN_MUSCLES: Muscle[] = ['chest', 'upper-back', 'deltoids', 'quadriceps', 'hamstring', 'gluteal', 'biceps', 'triceps', 'abs', 'calves'];
 
+/** The plan, once the bar has filled: rising into place as it fades in. */
+const PLAN_IN = (CURVES ? FadeInDown.duration(420).easing(EASE_OUT) : FadeInDown.duration(380)).reduceMotion(ReduceMotion.System);
+
 export default function WorkoutScreen() {
   useGlassRedraw();
   usePageTitle('Build a workout');
@@ -90,6 +95,8 @@ export default function WorkoutScreen() {
   const [length, setLength] = useState<Length>(6);
   const [seed, setSeed] = useState(1);
   const [built, setBuilt] = useState(false);
+  // Between the tap and the plan: the bar filling (components/BuildingBar.tsx).
+  const [building, setBuilding] = useState(false);
 
   const generated = useMemo(
     () => generateWorkout({ muscles, available, confirmed: kit.has, goal, length, seed }),
@@ -270,18 +277,26 @@ export default function WorkoutScreen() {
           <KitNote mode={effectiveMode} has={kit.has} gymName={gymName} />
         </View>
 
-        {!built ? (
+        {building ? (
+          <BuildingBar
+            onDone={() => {
+              haptic.success();
+              setBuilding(false);
+              setBuilt(true);
+            }}
+          />
+        ) : !built ? (
           <PrimaryButton
             label={muscles.length ? 'Build my workout' : 'Pick at least one muscle'}
             icon={muscles.length ? 'sparkle' : undefined}
             disabled={muscles.length === 0}
             onPress={() => {
-              haptic.success();
-              setBuilt(true);
+              haptic.select();
+              setBuilding(true);
             }}
           />
         ) : (
-          <View style={styles.result}>
+          <Animated.View style={styles.result} entering={PLAN_IN}>
             {/* Nothing to sum up when nothing matched: "0 exercises · ~0 min" said nothing. */}
             {workout.items.length > 0 && (
               <PlanSummary
@@ -396,7 +411,7 @@ export default function WorkoutScreen() {
                 onPress={() => (router.canGoBack() ? router.back() : router.push({ pathname: '/gym/[id]', params: { id: record.location.id } }))}
               />
             )}
-          </View>
+          </Animated.View>
         )}
         <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
           General training ideas, not medical advice. Warm up, and pick weights you can move well.

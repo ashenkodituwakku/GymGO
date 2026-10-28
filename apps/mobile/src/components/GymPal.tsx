@@ -1,19 +1,20 @@
 /**
- * Verity, GymGO's AI assistant: its face in the bottom-right corner of
- * every signed-in screen, which opens a chat. It always opens on Verity's
+ * GymPal, GymGO's AI assistant: his face in the bottom-right corner of
+ * every signed-in screen, which opens a chat. It always opens on GymPal's
  * greeting. The conversation stays while the app is open (Start over
  * clears it) and is never stored anywhere.
  *
- * The face is the owner's own smiley (assets/verity), in three layers made
- * from it (scripts/verity-face.mjs): it blinks every few seconds, sometimes
- * twice, its own eyes squashed shut, and grins, its own mouth widened, as
- * the chat opens and with each answer. Still with Reduce Motion.
+ * His face is his logo, assets/gympal/gympal.svg: a kettlebell in a
+ * sweatband on GymGO's blue-violet, in three layers (lib/gymPalArt.ts, from
+ * scripts/gympal-logo.mjs). He blinks every few seconds, sometimes twice,
+ * and grins as the chat opens and with each answer. Still with Reduce
+ * Motion.
  *
  * Answers come from a free AI model through the GymGO server
- * (apps/server/src/verity.ts), which hands the model Verity's guide to the
+ * (apps/server/src/gymPal.ts), which hands the model GymPal's guide to the
  * app and the rules about real gyms' facts. Until it can answer (the
  * website, with no server behind it, or a server without the owner's
- * OpenRouter key), each question gets Verity's apology that it's still
+ * OpenRouter key), each question gets GymPal's apology that it's still
  * being set up; once the key is in, the next question goes through.
  *
  * Kept out of the way where the corner is busy: a workout in progress (its
@@ -25,7 +26,6 @@ import { usePathname } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
-  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -51,7 +51,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SvgXml } from 'react-native-svg';
 import { ApiError, OfflineError, api, apiBase, problemText, type ChatTurn } from '@/lib/api';
+import { GYMPAL_BODY, GYMPAL_EYES, GYMPAL_MOUTH } from '@/lib/gymPalArt';
 import { haptic } from '@/lib/haptics';
 import { tabBarBottom } from '@/lib/layout';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -60,7 +62,7 @@ import { Icon } from './Icon';
 import { POP_IN, Pressable, usePressScale } from './motion';
 import { CloseButton, Txt } from './ui';
 
-export const GREETING = 'Hi! I’m Verity your personal assistant, ask me anything!';
+export const GREETING = 'Hi! I’m GymPal your personal assistant, ask me anything!';
 
 /** What the server takes: the latest 20 messages, each question under 1,000 characters. */
 const KEEP = 20;
@@ -77,24 +79,21 @@ const TABS = new Set(['/', '/explore', '/saved', '/profile']);
 /** Where the corner is someone else's. */
 const HIDDEN = new Set(['/train', '/welcome', '/compare', '/plates', '/pro', '/country', '/sign-in', '/report-bug']);
 
-/** The face's layers, and where its eyes and mouth are, as shares of the picture (printed by scripts/verity-face.mjs). */
-const FACE = require('../../assets/verity/face.png');
-const EYES = require('../../assets/verity/eyes.png');
-const MOUTH = require('../../assets/verity/mouth.png');
-const EYES_AT = '49.8% 41.8%';
-const MOUTH_AT = '49.6% 62.8%';
+/** Where his eyes and mouth are, as shares of the logo (assets/gympal/gympal.svg's 100-unit box): what they blink and grin about. */
+const EYES_AT = '50% 58%';
+const MOUTH_AT = '50% 69.5%';
 
 /** A message; `waited` marks a question answered only with WAITING, and that answer, which are never sent on. */
 type Line = ChatTurn & { id: number; waited?: boolean };
-/** Whether Verity can answer here: not asked yet, yes, not set up (no server, or no key on it), or the server can't be reached. */
+/** Whether GymPal can answer here: not asked yet, yes, not set up (no server, or no key on it), or the server can't be reached. */
 type State = 'unknown' | 'on' | 'off' | 'away';
 
-/** Verity's answer while it isn't set up. */
-export const WAITING = 'Sorry, we’re waiting for Verity to be set up. Check back soon!';
+/** GymPal's answer while it isn't set up. */
+export const WAITING = 'Sorry, we’re waiting for GymPal to be set up. Check back soon!';
 
 let nextId = 1;
 
-export function Verity() {
+export function GymPal() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -105,13 +104,13 @@ export function Verity() {
   const [problem, setProblem] = useState<string | null>(null);
   const [state, setState] = useState<State>('unknown');
 
-  /** Whether Verity can answer now: the website with no server behind it can't, and a server says whether it has the key. */
+  /** Whether GymPal can answer now: the website with no server behind it can't, and a server says whether it has the key. */
   const check = useCallback(async (): Promise<State> => {
     let next: State;
     if (!apiBase()) next = 'off';
     else {
       try {
-        next = (await api.verity()).on ? 'on' : 'off';
+        next = (await api.gymPal()).on ? 'on' : 'off';
       } catch (error) {
         next = error instanceof OfflineError ? 'away' : 'off';
       }
@@ -120,7 +119,7 @@ export function Verity() {
     return next;
   }, []);
 
-  /** Verity's apology for not being set up yet, after a moment's typing, as an answer to the question `id`. */
+  /** GymPal's apology for not being set up yet, after a moment's typing, as an answer to the question `id`. */
   const waitingFor = useCallback((id: number) => {
     setPending(true);
     setTimeout(() => {
@@ -129,7 +128,7 @@ export function Verity() {
         { id: nextId++, role: 'assistant' as const, content: WAITING, waited: true },
       ]);
       setPending(false);
-      AccessibilityInfo.announceForAccessibility(`Verity: ${WAITING}`);
+      AccessibilityInfo.announceForAccessibility(`GymPal: ${WAITING}`);
     }, 700);
   }, []);
 
@@ -145,20 +144,20 @@ export function Verity() {
       setProblem(null);
       try {
         const sent = conversation.filter((line) => !line.waited).slice(-KEEP);
-        const { reply } = await api.askVerity(sent.map(({ role, content }) => ({ role, content })));
+        const { reply } = await api.askGymPal(sent.map(({ role, content }) => ({ role, content })));
         setLines((now) => [...now, { id: nextId++, role: 'assistant', content: reply }]);
         setPending(false);
-        AccessibilityInfo.announceForAccessibility(`Verity: ${plain(reply)}`);
+        AccessibilityInfo.announceForAccessibility(`GymPal: ${plain(reply)}`);
       } catch (error) {
         // The key was taken away since: back to waiting.
-        if (error instanceof ApiError && error.code === 'verity_off') {
+        if (error instanceof ApiError && error.code === 'gympal_off') {
           setState('off');
           waitingFor(conversation.at(-1)!.id);
           return;
         }
         setPending(false);
         haptic.warn();
-        setProblem(error instanceof ApiError && error.status === 401 ? 'Sign in to chat with Verity.' : problemText(error, 'Verity couldn’t answer. Try again?'));
+        setProblem(error instanceof ApiError && error.status === 401 ? 'Sign in to chat with GymPal.' : problemText(error, 'GymPal couldn’t answer. Try again?'));
       }
     },
     [waitingFor],
@@ -218,9 +217,9 @@ export function Verity() {
 }
 
 /**
- * Verity's face, from the owner's picture: blinking now and then, sometimes
- * twice, and grinning each time `cheer` goes up. Decoration: what it stands
- * for is in the label of the button or heading it's on.
+ * GymPal's face, his logo: blinking now and then, sometimes twice, and
+ * grinning each time `cheer` goes up. Decoration: what it stands for is in
+ * the label of the button or heading it's on.
  */
 function Face({ size, cheer = 0 }: { size: number; cheer?: number }) {
   const calm = useReducedMotion();
@@ -252,9 +251,13 @@ function Face({ size, cheer = 0 }: { size: number; cheer?: number }) {
   const box = { width: size, height: size };
   return (
     <View style={box} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Image source={FACE} style={box} />
-      <Animated.Image source={MOUTH} style={[StyleSheet.absoluteFill, box, { transformOrigin: MOUTH_AT }, mouth]} />
-      <Animated.Image source={EYES} style={[StyleSheet.absoluteFill, box, { transformOrigin: EYES_AT }, eyes]} />
+      <SvgXml xml={GYMPAL_BODY} width={size} height={size} />
+      <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: MOUTH_AT }, mouth]}>
+        <SvgXml xml={GYMPAL_MOUTH} width={size} height={size} />
+      </Animated.View>
+      <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: EYES_AT }, eyes]}>
+        <SvgXml xml={GYMPAL_EYES} width={size} height={size} />
+      </Animated.View>
     </View>
   );
 }
@@ -273,7 +276,7 @@ function Launcher({ bottom, right, onPress }: { bottom: number; right: number; o
           onPressIn={press.onPressIn}
           onPressOut={press.onPressOut}
           accessibilityRole="button"
-          accessibilityLabel="Ask Verity"
+          accessibilityLabel="Ask GymPal"
           accessibilityHint="Opens a chat with GymGO’s AI assistant"
           style={styles.launcherHit}
         >
@@ -346,7 +349,7 @@ function Chat({
             <Face size={44} cheer={answers + 1} />
             <View style={styles.flex}>
               <Txt variant="headline" accessibilityRole="header">
-                Verity
+                GymPal
               </Txt>
               <Txt variant="caption" color={color.labelSecondary}>
                 {state === 'off' ? 'Being set up' : state === 'away' ? 'Can’t reach GymGO' : 'Your personal assistant'}
@@ -397,9 +400,9 @@ function Chat({
               onKeyPress={onKeyPress}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
-              placeholder="Ask Verity anything"
+              placeholder="Ask GymPal anything"
               placeholderTextColor={color.labelTertiary}
-              accessibilityLabel="Ask Verity"
+              accessibilityLabel="Ask GymPal"
               multiline
               numberOfLines={1}
               maxLength={MAX_QUESTION}
@@ -421,8 +424,8 @@ function Chat({
           <Txt variant="caption" color={color.labelTertiary} style={styles.small}>
             {/* OpenRouter only once something is sent there. */}
             {state === 'off'
-              ? 'Verity is AI and can be wrong; a gym’s own page has its facts. Not medical advice.'
-              : 'Verity is AI and can be wrong; a gym’s own page has its facts. Chats go to OpenRouter, an AI service, so leave out personal details. Not medical advice.'}
+              ? 'GymPal is AI and can be wrong; a gym’s own page has its facts. Not medical advice.'
+              : 'GymPal is AI and can be wrong; a gym’s own page has its facts. Chats go to OpenRouter, an AI service, so leave out personal details. Not medical advice.'}
           </Txt>
         </KeyboardAvoidingView>
       </Animated.View>
@@ -433,7 +436,7 @@ function Chat({
 function Bubble({ line }: { line: Line }) {
   const mine = line.role === 'user';
   return (
-    <View style={[styles.bubble, mine ? styles.mine : styles.theirs]} accessible accessibilityLabel={`${mine ? 'You' : 'Verity'}: ${plain(line.content)}`}>
+    <View style={[styles.bubble, mine ? styles.mine : styles.theirs]} accessible accessibilityLabel={`${mine ? 'You' : 'GymPal'}: ${plain(line.content)}`}>
       {mine && <BrandFill round={radius.lg} />}
       <Txt variant="callout" color={mine ? color.onBrand : color.label}>
         {mine ? line.content : <Rich text={line.content} />}
@@ -472,11 +475,11 @@ function Rich({ text }: { text: string }) {
 /** What a screen reader says: the words, without the stars. */
 const plain = (text: string) => text.replace(/\*\*/g, '').replace(/^#{1,6}\s+/gm, '');
 
-/** Three dots while Verity thinks; still ones with Reduce Motion. */
+/** Three dots while GymPal thinks; still ones with Reduce Motion. */
 function Typing() {
   const calm = useReducedMotion();
   return (
-    <View style={[styles.bubble, styles.theirs, styles.typing]} accessible accessibilityLabel="Verity is typing">
+    <View style={[styles.bubble, styles.theirs, styles.typing]} accessible accessibilityLabel="GymPal is typing">
       {[0, 1, 2].map((index) => (
         <Dot key={index} index={index} calm={calm} />
       ))}

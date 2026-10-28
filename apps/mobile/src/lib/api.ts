@@ -104,8 +104,8 @@ async function request<T>(method: string, path: string, options: { token?: strin
   // Photos upload slowly; billing waits on Stripe; an area search may wait on the map service.
   // A bug report waits (a few seconds at most) for its email to go.
   const slow = (method === 'POST' && (path.endsWith('/photos') || path === '/api/bug-reports')) || path === '/api/me/avatar' || path.startsWith('/api/billing');
-  // Verity's answer comes from a free AI model, which can take a while (the server gives it 45 seconds).
-  const thinking = method === 'POST' && path === '/api/verity';
+  // GymPal's answer comes from a free AI model, which can take a while (the server gives it 45 seconds).
+  const thinking = method === 'POST' && path === '/api/gympal';
   const timer = setTimeout(() => controller.abort(), path.startsWith('/api/area') ? 75000 : thinking ? 50000 : slow || path.startsWith('/api/places') ? 30000 : 8000);
   let response: Response;
   try {
@@ -696,13 +696,13 @@ export const api = {
   moderationQueue: (token: string) => request<{ reviews: Review[] }>('GET', '/api/moderation/reviews', { token }),
   moderate: (token: string, reviewId: string, body: { decision: 'publish' | 'reject'; reason?: string }) =>
     request<unknown>('POST', `/api/moderation/reviews/${encodeURIComponent(reviewId)}`, { token, body }),
-  /** Whether Verity, the chat, can answer on this server (it needs the owner's OpenRouter key). */
-  verity: () => request<{ on: boolean }>('GET', '/api/verity'),
-  /** Verity's answer to the last question in the conversation (the latest 20 messages). */
-  askVerity: (messages: ChatTurn[]) => request<{ reply: string }>('POST', '/api/verity', { body: { messages } }),
+  /** Whether GymPal, the chat, can answer on this server (it needs the owner's OpenRouter key). */
+  gymPal: () => request<{ on: boolean }>('GET', '/api/gympal'),
+  /** GymPal's answer to the last question in the conversation (the latest 20 messages). */
+  askGymPal: (messages: ChatTurn[]) => request<{ reply: string }>('POST', '/api/gympal', { body: { messages } }),
 };
 
-/** One message in a chat with Verity. */
+/** One message in a chat with GymPal. */
 export interface ChatTurn {
   role: 'user' | 'assistant';
   content: string;

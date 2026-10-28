@@ -102,6 +102,20 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Verity is now GymPal, with his own logo** (28 Oct; the owner asked:
+  "Change the Verity ChatBot to GymPal and create a logo for him"). The
+  logo is `apps/mobile/assets/gympal/gympal.svg` (a kettlebell in a pink
+  sweatband on GymGO's blue-violet; `gympal.png` beside it at 512 px). Its
+  groups `body`, `eyes` and `mouth` become `src/lib/gymPalArt.ts` through
+  `scripts/gympal-logo.mjs`, and `components/GymPal.tsx` lays them over one
+  another with `SvgXml` to blink and grin. The owner's smiley and
+  `scripts/verity-face.mjs` are gone. Renamed: `Verity.tsx` →
+  `GymPal.tsx`, the server's `verity.ts`/`verityGuide.ts` →
+  `gymPal.ts`/`gymPalGuide.ts`, `/api/verity` → `/api/gympal`, the error
+  codes `gympal_off`/`gympal_busy`, `GYMGO_VERITY_MODELS` →
+  `GYMGO_GYMPAL_MODELS` (`OPENROUTER_API_KEY` unchanged). The Terms and
+  Privacy Policy now say GymPal, so `LEGAL_VERSION` is 2026-10-28. The
+  entry below describes him as Verity.
 - **Verity, the AI assistant** (27 Oct). The owner asked for a free
   chatbot in the bottom-right corner called Verity, greeting "Hi! I'm Verity
   your personal assistant, ask me anything!", smiling and blinking, and to

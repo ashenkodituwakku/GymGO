@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- GymPal, GymGO's assistant: a kettlebell in a sweatband, on GymGO's blue-violet.
+       Three layers, so the app can blink his eyes and widen his grin
+       (scripts/gympal-logo.mjs; components/GymPal.tsx). -->
+  <defs>
+    <linearGradient id="gympal-ground" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6F8DFB"/>
+      <stop offset="0.5" stop-color="#5041FD"/>
+      <stop offset="1" stop-color="#2A18C8"/>
+    </linearGradient>
+    <radialGradient id="gympal-bell" cx="0.38" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.65" stop-color="#F2F3FF"/>
+      <stop offset="1" stop-color="#D6D9F6"/>
+    </radialGradient>
+    <clipPath id="gympal-body"><circle cx="50" cy="60" r="25"/></clipPath>
+  </defs>
+  <g id="body">
+    <circle cx="50" cy="50" r="50" fill="url(#gympal-ground)"/>
+    <path d="M31.5 50 C29.5 36 36 25.5 50 25.5 C64 25.5 70.5 36 68.5 50" fill="none" stroke="#EEF0FF" stroke-width="8.5" stroke-linecap="round"/>
+    <ellipse cx="50" cy="86.5" rx="15" ry="2.6" fill="#1B0F8F" opacity="0.35"/>
+    <circle cx="50" cy="60" r="25" fill="url(#gympal-bell)"/>
+    <path d="M68.5 41.5 L77.5 36.5 L76.5 44.5 Z" fill="#FF5C7A"/>
+    <path d="M68.5 45.5 L78 47.5 L73.5 53 Z" fill="#E8476A"/>
+    <g clip-path="url(#gympal-body)">
+      <rect x="20" y="40" width="60" height="8" fill="#FF5C7A"/>
+      <rect x="20" y="43.2" width="60" height="1.6" fill="#FFFFFF" opacity="0.7"/>
+    </g>
+    <circle cx="35.5" cy="66.5" r="3.6" fill="#FF8FB1" opacity="0.55"/>
+    <circle cx="64.5" cy="66.5" r="3.6" fill="#FF8FB1" opacity="0.55"/>
+  </g>
+  <g id="eyes">
+    <ellipse cx="41" cy="58" rx="3.4" ry="4.4" fill="#1F1A4D"/>
+    <ellipse cx="59" cy="58" rx="3.4" ry="4.4" fill="#1F1A4D"/>
+    <circle cx="42.2" cy="56.4" r="1.15" fill="#FFFFFF"/>
+    <circle cx="60.2" cy="56.4" r="1.15" fill="#FFFFFF"/>
+  </g>
+  <g id="mouth">
+    <path d="M42 67.5 Q50 75.5 58 67.5" fill="none" stroke="#1F1A4D" stroke-width="3.2" stroke-linecap="round"/>
+  </g>
+</svg>

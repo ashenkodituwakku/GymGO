@@ -115,8 +115,8 @@
  *   GET    /reset-password?token=         the page that link opens; POST it to set the new password
  *   POST   /api/bug-reports               anyone: { description, topic?: 'bug' | 'copyright', replyTo?, context? } -> kept, and emailed to the team
  *   GET    /api/moderation/bug-reports    moderators: the latest bug reports, and whether each was emailed
- *   GET    /api/verity                    { on }: whether Verity, the chat, can answer on this server
- *   POST   /api/verity                    { messages: [{ role: 'user' | 'assistant', content }] } -> { reply }, from a free model through OpenRouter
+ *   GET    /api/gympal                    { on }: whether GymPal, the chat, can answer on this server
+ *   POST   /api/gympal                    { messages: [{ role: 'user' | 'assistant', content }] } -> { reply }, from a free model through OpenRouter
  *   DELETE /api/moderation/member-reports/:kind/:gymId/:userId   moderators: remove one
  *
  * Every route that changes something re-checks permission here with the
@@ -202,7 +202,7 @@ import { GoogleError, GooglePlaces } from './google';
 import { MAX_AVATAR_BYTES, MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
 import { IdentityError, IdentityVerifier, label, type Provider, type VerifiedIdentity } from './identity';
 import { BugReportError, BugReports, cleanBugReport } from './bugReports';
-import { Verity, VerityError, cleanChat } from './verity';
+import { GymPal, GymPalError, cleanChat } from './gymPal';
 import { Social, SocialError } from './social';
 import { OwnerError, Owners } from './owners';
 import { PerkError, Perks } from './perks';
@@ -258,8 +258,8 @@ export interface AppOptions {
     /** How often to retry reports that didn't go (and send any kept before email was set up); off unless set. */
     retryEveryMs?: number;
   };
-  /** Verity, the chat: the owner's OpenRouter key (none: off), the free models to ask, and a stand-in fetch for tests. */
-  verity?: { key: string | null; models?: string[]; fetchImpl?: typeof fetch; log?: (line: string) => void };
+  /** GymPal, the chat: the owner's OpenRouter key (none: off), the free models to ask, and a stand-in fetch for tests. */
+  gymPal?: { key: string | null; models?: string[]; fetchImpl?: typeof fetch; log?: (line: string) => void };
   /** Legal contacts the app shows: the designated copyright (DMCA) agent, once registered. */
   legal?: {
     copyrightAgent?: { name: string; address: string | null; email: string | null } | null;
@@ -649,10 +649,10 @@ export function createApp(options: AppOptions) {
   });
   // Bug reports: 5 an hour from one account, or from one address when signed out.
   const bugLimiter = new AttemptLimiter(5, 60 * 60_000);
-  const verity = new Verity({ key: options.verity?.key ?? null, models: options.verity?.models, fetchImpl: options.verity?.fetchImpl, referer: options.publicUrl ?? null, log: options.verity?.log });
-  // Verity: plenty for real questions, and few enough that one person can't use up the free models' day for everyone.
-  const verityMinuteLimiter = new AttemptLimiter(6, 60_000);
-  const verityDayLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
+  const gymPal = new GymPal({ key: options.gymPal?.key ?? null, models: options.gymPal?.models, fetchImpl: options.gymPal?.fetchImpl, referer: options.publicUrl ?? null, log: options.gymPal?.log });
+  // GymPal: plenty for real questions, and few enough that one person can't use up the free models' day for everyone.
+  const gymPalMinuteLimiter = new AttemptLimiter(6, 60_000);
+  const gymPalDayLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
   const retryEvery = options.bugReports?.retryEveryMs ?? 0;
   if (bugReports.emailing && retryEvery > 0) {
     void bugReports.deliverWaiting();
@@ -663,7 +663,7 @@ export function createApp(options: AppOptions) {
   const limiters = [
     loginLimiter, accountLoginLimiter, forgotLimiter, forgotEmailLimiter, resetLimiter, signupLimiter, photoLimiter, avatarLimiter,
     equipmentLimiter, friendLimiter, busyLimiter, redeemLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter,
-    verityMinuteLimiter, verityDayLimiter,
+    gymPalMinuteLimiter, gymPalDayLimiter,
   ];
   /** How busy a gym is matters for an hour; a member's report is kept a day at most. */
   const forgetOldBusy = (at: Date) => db.prepare('delete from busy_reports where reported_at < ?').run(new Date(at.getTime() - BUSY_KEEP_MS).toISOString());
@@ -2343,26 +2343,26 @@ export function createApp(options: AppOptions) {
       return send(res, 201, { id, emailed });
     }
 
-    // --- Verity -----------------------------------------------------------------
-    // The chat in the app's corner (verity.ts): nothing said is kept here.
-    if (method === 'GET' && path === '/api/verity') {
+    // --- GymPal -----------------------------------------------------------------
+    // The chat in the app's corner (gymPal.ts): nothing said is kept here.
+    if (method === 'GET' && path === '/api/gympal') {
       requireAccount(req);
-      return send(res, 200, { on: verity.on });
+      return send(res, 200, { on: gymPal.on });
     }
 
-    if (method === 'POST' && path === '/api/verity') {
+    if (method === 'POST' && path === '/api/gympal') {
       const { account } = requireAccount(req);
       // Off, nothing is counted against anyone.
-      if (!verity.on) throw new HttpError(503, 'Verity isn’t switched on for this server yet.', 'verity_off');
+      if (!gymPal.on) throw new HttpError(503, 'GymPal isn’t switched on for this server yet.', 'gympal_off');
       const at = now().getTime();
-      if (!verityMinuteLimiter.allow(account.id, at)) throw new HttpError(429, 'That’s a lot of questions at once. Give Verity a minute.');
-      if (!verityDayLimiter.allow(account.id, at)) throw new HttpError(429, 'That’s a lot of questions for one day. Try again tomorrow.');
+      if (!gymPalMinuteLimiter.allow(account.id, at)) throw new HttpError(429, 'That’s a lot of questions at once. Give GymPal a minute.');
+      if (!gymPalDayLimiter.allow(account.id, at)) throw new HttpError(429, 'That’s a lot of questions for one day. Try again tomorrow.');
       try {
-        // A conversation can be longer than most requests: 20 messages, Verity's answers among them.
+        // A conversation can be longer than most requests: 20 messages, GymPal's answers among them.
         const messages = cleanChat(await readJson(req, 64 * 1024));
-        return send(res, 200, { reply: await verity.ask(messages) });
+        return send(res, 200, { reply: await gymPal.ask(messages) });
       } catch (error) {
-        if (error instanceof VerityError) throw new HttpError(error.status, error.message, error.code);
+        if (error instanceof GymPalError) throw new HttpError(error.status, error.message, error.code);
         throw error;
       }
     }

@@ -28,13 +28,13 @@ import {
   MAIL_FROM,
   SMTP_URL,
   OPENROUTER_API_KEY,
-  VERITY_MODELS,
+  GYMPAL_MODELS,
 } from './config';
 import { senderFor, smtpMailer } from './mail';
 import { scheduleBackups } from './backup';
 import { openDb, seedGyms } from './db';
 import { devAccountRefusal, ensureDevProAccount } from './devAccount';
-import { DEFAULT_MODELS, freeModels } from './verity';
+import { DEFAULT_MODELS, freeModels } from './gymPal';
 
 const db = openDb(DB_PATH);
 seedGyms(db, GYM_RECORDS);
@@ -73,7 +73,7 @@ const server = createServer(
     signIn: { google: GOOGLE_SIGN_IN, apple: APPLE_SIGN_IN_IDS },
     bugReports: { send: bugMail, to: BUG_REPORT_TO, retryEveryMs: 15 * 60_000 },
     legal: { copyrightAgent: COPYRIGHT_AGENT, operator: LEGAL_OPERATOR },
-    verity: { key: OPENROUTER_API_KEY, models: VERITY_MODELS },
+    gymPal: { key: OPENROUTER_API_KEY, models: GYMPAL_MODELS },
     devAccount: devAccountMade,
     trustProxy: TRUST_PROXY,
     // Password reset links go out through the same email account as bug reports.
@@ -152,13 +152,13 @@ server.listen(PORT, HOST, () => {
         : '[server] Legal pages: /terms, /privacy, /refunds, /community (no GYMGO_CONTACT_EMAIL set; they point to Report a bug)',
   );
   // Which models, never the key; and any that aren't free, which are never asked.
-  const chat = freeModels(VERITY_MODELS.length ? VERITY_MODELS : DEFAULT_MODELS);
+  const chat = freeModels(GYMPAL_MODELS.length ? GYMPAL_MODELS : DEFAULT_MODELS);
   console.log(
     OPENROUTER_API_KEY
-      ? `[server] Verity: on, free models only (${(chat.models.length ? chat.models : DEFAULT_MODELS).join(', ')})`
-      : '[server] Verity: off (no OPENROUTER_API_KEY set; see README)',
+      ? `[server] GymPal: on, free models only (${(chat.models.length ? chat.models : DEFAULT_MODELS).join(', ')})`
+      : '[server] GymPal: off (no OPENROUTER_API_KEY set; see README)',
   );
-  if (chat.ignored.length) console.log(`[server] Verity: left out ${chat.ignored.join(', ')}, as they aren't free (only ids ending :free are used)`);
+  if (chat.ignored.length) console.log(`[server] GymPal: left out ${chat.ignored.join(', ')}, as they aren't free (only ids ending :free are used)`);
   console.log(
     GOOGLE_PLACES_API_KEY
       ? '[server] Google Maps details: on (using your GOOGLE_PLACES_API_KEY; Google may bill your account)'

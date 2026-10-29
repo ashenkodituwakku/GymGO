@@ -696,10 +696,18 @@ export const api = {
   moderationQueue: (token: string) => request<{ reviews: Review[] }>('GET', '/api/moderation/reviews', { token }),
   moderate: (token: string, reviewId: string, body: { decision: 'publish' | 'reject'; reason?: string }) =>
     request<unknown>('POST', `/api/moderation/reviews/${encodeURIComponent(reviewId)}`, { token, body }),
-  /** Whether GymPal, the chat, can answer on this server (it needs the owner's OpenRouter key). */
-  gymPal: () => request<{ on: boolean }>('GET', '/api/gympal'),
-  /** GymPal's answer to the last question in the conversation (the latest 20 messages). */
-  askGymPal: (messages: ChatTurn[]) => request<{ reply: string }>('POST', '/api/gympal', { body: { messages } }),
+  /**
+   * Whether GymPal, the chat, can answer on this server (it needs the owner's
+   * OpenRouter key), and your plan's questions a day (missing from older servers).
+   */
+  gymPal: () => request<{ on: boolean; pro?: boolean; perDay?: number }>('GET', '/api/gympal'),
+  /**
+   * GymPal's answer to the last question in the conversation (the latest 10,
+   * or 30 with Pro), with what the screen shows, and, for Pro with the switch
+   * on, a summary of your own training log the server makes.
+   */
+  askGymPal: (messages: ChatTurn[], extra: { context?: string | null; useLog?: boolean } = {}) =>
+    request<{ reply: string }>('POST', '/api/gympal', { body: { messages, ...(extra.context ? { context: extra.context } : {}), ...(extra.useLog ? { useLog: true } : {}) } }),
 };
 
 /** One message in a chat with GymPal. */

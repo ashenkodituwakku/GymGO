@@ -320,6 +320,7 @@ export function RowChevron({ expanded }: { expanded?: boolean }) {
 
 export function Row({
   icon,
+  leading,
   tile = TILE.indigo,
   title,
   subtitle,
@@ -331,6 +332,8 @@ export function Row({
   expanded,
 }: {
   icon?: IconName;
+  /** In place of the icon's tile: GymPal's face, say, at the tile's size (ROW.tile). */
+  leading?: ReactNode;
   tile?: string;
   title: string;
   subtitle?: string;
@@ -345,7 +348,7 @@ export function Row({
 }) {
   const body = (
     <View style={styles.row}>
-      {icon ? <SettingsTile icon={icon} tile={tile} /> : null}
+      {leading ?? (icon ? <SettingsTile icon={icon} tile={tile} /> : null)}
       <View style={styles.rowText}>
         {/* Two lines before it shortens: on a narrow phone a one-line title lost its last word. */}
         <Txt variant="body" color={destructive ? color.dangerInk : color.label} numberOfLines={2}>

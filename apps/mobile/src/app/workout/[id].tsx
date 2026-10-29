@@ -18,6 +18,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Chip, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ExerciseCard } from '@/components/ExerciseCard';
+import { AskGymPal } from '@/components/AskGymPal';
 import { PlanSummary } from '@/components/PlanSummary';
 import { BuildingBar } from '@/components/BuildingBar';
 import { startSession, useActiveSessionGlance } from '@/lib/activeSession';
@@ -354,6 +355,19 @@ export default function WorkoutScreen() {
                 />
               )}
             </View>
+
+            {workout.items.length > 0 && (
+              <AskGymPal
+                title="Ask GymPal about this plan"
+                detail="How to do it, what it trains, what to change"
+                request={{
+                  question: 'Can you talk me through this workout?',
+                  about: 'this workout',
+                  // The plan as it would be shared, without the gym: GymPal needs the exercises, not the place.
+                  context: `Their workout plan, goal: ${GOALS.find((item) => item.id === goal)?.label ?? goal}.\n${workoutText(workout, null)}`,
+                }}
+              />
+            )}
 
             {isSaved && workout.items.length > 0 && (
               <Pressable onPress={() => router.push('/workouts')} accessibilityRole="link" style={styles.savedLink}>

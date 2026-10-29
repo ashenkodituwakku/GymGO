@@ -12,6 +12,7 @@ import { Pressable } from '@/components/motion';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon, type IconName } from '@/components/Icon';
+import { AskGymPal } from '@/components/AskGymPal';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Card, Chip, PrimaryButton, Txt } from '@/components/ui';
@@ -67,6 +68,17 @@ export default function TemplatesScreen() {
           onStart={(index) => start(template, index)}
         />
       ))}
+      <AskGymPal
+        title="Not sure which? Ask GymPal"
+        detail="Which suits you, and how to start"
+        request={{
+          question: 'Which of these templates should I start with?',
+          about: 'the templates',
+          context: TEMPLATES.map(
+            (template) => `${template.name} (${template.level}, ${template.perWeek}): ${template.summary} Days: ${template.days.map((day) => day.name).join(', ')}.`,
+          ).join('\n'),
+        }}
+      />
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
         These are general plans, not advice for you. Start lighter than you think, leave a rep or two in the tank, and add weight when every set
         feels good. Swap anything that hurts.

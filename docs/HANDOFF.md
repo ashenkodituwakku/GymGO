@@ -102,6 +102,15 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **GymPal in more features, and more of him with Pro** (29 Oct). Asked:
+  include GymPal in many features, and extended use for Pro. Any screen opens
+  him with `openGymPal({ question, context, about })` (`lib/gymPalBus.ts`), or
+  the `AskGymPal` row; the chat shows what he was told and offers questions
+  for the screen (`lib/gymPalSuggestions.ts`). Context about a real gym must
+  only ever be what GymGO shows as unknown (the call questions), never a fact
+  passed on. Pro limits and the training-log summary are on the server
+  (`GYMPAL_PLANS`, `trainingSummary` in `apps/server/src/gymPal.ts`); the log
+  leaves only when a Pro member switches it on, never gyms or notes.
 - **Verity is now GymPal, with his own logo** (28 Oct; the owner asked:
   "Change the Verity ChatBot to GymPal and create a logo for him"). The
   logo is `apps/mobile/assets/gympal/gympal.svg` (a kettlebell in a pink

@@ -36,6 +36,7 @@ import { LogoBadge, LogoCredit, useGymMark } from './BrandLogo';
 import { Glass } from './Glass';
 import { FADE_IN, FADE_OUT, Pressable, Pressy } from './motion';
 import { ActionButton, CloseButton, Fold, FoldGroup, GroupLine, InfoRow, RoundToggle, TIER_COLOUR, Txt } from './ui';
+import { AskGymPal } from './AskGymPal';
 import { JoinGym, MembershipBanner } from './JoinGym';
 import { LIMITED } from '@/lib/limited';
 
@@ -367,6 +368,17 @@ export function PlaceCard({
               </Txt>
             </View>
           ))}
+          <AskGymPal
+            flat
+            title="Ask GymPal to help with the call"
+            detail="What to say, and what each answer means for your visit"
+            request={{
+              question: `Help me call ${location.name}. How should I ask these, and what should I listen for?`,
+              about: `calling ${location.name}`,
+              // Only the questions: what GymGO hasn't confirmed, so nothing about the gym is passed on as fact.
+              context: `The gym: ${location.name}. GymGO hasn't confirmed these for a visit at ${timeLabel(visitMinute)}, so they're questions for the gym (unknown, not no):\n${questions.map((question, index) => `${index + 1}. ${question}`).join('\n')}`,
+            }}
+          />
         </Animated.View>
       )}
 

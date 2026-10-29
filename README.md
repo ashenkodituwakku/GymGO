@@ -859,14 +859,34 @@ model on OpenRouter is paid.
 day for the whole account**, shared by everyone using your GymGO (1,000 a
 day once $10 of credit has ever been bought there, which is yours to
 decide). Past that, GymPal says he's had a lot of questions. GymGO also
-limits each person to 6 questions a minute and 30 a day.
+limits each person: 20 questions a day and 6 a minute on Free, 100 a day and
+10 a minute with Pro (`GYMPAL_PLANS` in `apps/server/src/gymPal.ts`).
+
+**In the app's features.** The chat opens with two or three questions that
+fit the screen it opened on (`apps/mobile/src/lib/gymPalSuggestions.ts`):
+"What is Tabata?" on the interval timer, "What should I ask a gym before I
+visit?" on a gym's page. And **Ask GymPal** rows open it with a question and
+a few lines about that screen, named in the chat ("About: this workout",
+with ✕ to take it back): on the workout you built (its exercises, sets,
+reps and rest, never the gym), each exercise's page (its cue, muscles and
+kit), a gym's "When you call, ask" list (only the questions GymGO hasn't
+confirmed, so no fact about the gym is passed on), the templates, the Pro
+screen and Profile.
+
+**With Pro.** 100 questions a day instead of 20, a longer memory (the last
+30 messages, not 10), longer answers, and **Use my training log**: a switch
+in the chat, off to start, that lets GymPal see a summary the server makes
+of your latest 10 workouts (exercises, sets, reps, weights and how long ago;
+never their gyms or notes), so he can answer "What should I train today?"
+and "How is my training going?". On Free the switch shows locked and opens
+the Pro screen.
 
 **Privacy.** What someone types, and the chat so far, goes to OpenRouter
 and the model's provider to be answered; free models' providers may keep
 it and use it to improve their models. GymGO keeps none of it. The chat
 asks people to leave out personal details, and the Privacy Policy and Terms
-say all of this (version 2026-10-28, with his new name, so Profile shows existing accounts a
-card asking them to agree to the new version).
+say all of this, the training log included (version 2026-10-29, so Profile
+shows existing accounts a card asking them to agree to the new version).
 On the website, which has no server behind it yet, GymPal always gives
 that apology; once the website is pointed at a GymGO server with the key
 (`GYMGO_SERVER_URL`, in The website on Netlify), it answers there too,
@@ -1465,6 +1485,7 @@ saved list always opens, wherever the gym is.
 | Celebrations | Confetti for a record or a goal met | Your pick: confetti, fireworks, gold stars or emoji |
 | Lifetime stats | — | Every kilo, rep and hour added up, your favourites, and what the weight compares to; shareable as a picture |
 | Arcade sounds | Marimba and bells | The workout and check-in sounds as chip tunes, picked in Appearance (the cards keep theirs) |
+| GymPal, the AI assistant | 20 questions a day | 100 a day, longer chats and answers, and (switched on in the chat) answers that know your training |
 
 One tier, two ways to pay, tax included:
 

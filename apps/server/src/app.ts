@@ -115,7 +115,7 @@
  *   GET    /reset-password?token=         the page that link opens; POST it to set the new password
  *   POST   /api/bug-reports               anyone: { description, topic?: 'bug' | 'copyright', replyTo?, context? } -> kept, and emailed to the team
  *   GET    /api/moderation/bug-reports    moderators: the latest bug reports, and whether each was emailed
- *   GET    /api/gympal                    { on }: whether GymPal, the chat, can answer on this server
+ *   GET    /api/gympal                    { on, pro, perDay }: whether GymPal, the chat, can answer on this server, and your plan's questions a day
  *   POST   /api/gympal                    { messages: [{ role: 'user' | 'assistant', content }] } -> { reply }, from a free model through OpenRouter
  *   DELETE /api/moderation/member-reports/:kind/:gymId/:userId   moderators: remove one
  *
@@ -202,7 +202,7 @@ import { GoogleError, GooglePlaces } from './google';
 import { MAX_AVATAR_BYTES, MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
 import { IdentityError, IdentityVerifier, label, type Provider, type VerifiedIdentity } from './identity';
 import { BugReportError, BugReports, cleanBugReport } from './bugReports';
-import { GymPal, GymPalError, cleanChat } from './gymPal';
+import { GYMPAL_PLANS, GymPal, GymPalError, cleanChat, cleanContext, trainingSummary, type LoggedSession } from './gymPal';
 import { Social, SocialError } from './social';
 import { OwnerError, Owners } from './owners';
 import { PerkError, Perks } from './perks';
@@ -650,9 +650,12 @@ export function createApp(options: AppOptions) {
   // Bug reports: 5 an hour from one account, or from one address when signed out.
   const bugLimiter = new AttemptLimiter(5, 60 * 60_000);
   const gymPal = new GymPal({ key: options.gymPal?.key ?? null, models: options.gymPal?.models, fetchImpl: options.gymPal?.fetchImpl, referer: options.publicUrl ?? null, log: options.gymPal?.log });
-  // GymPal: plenty for real questions, and few enough that one person can't use up the free models' day for everyone.
-  const gymPalMinuteLimiter = new AttemptLimiter(6, 60_000);
-  const gymPalDayLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
+  // GymPal: plenty for real questions, and few enough that one person can't use up the free models' day for
+  // everyone; more with Pro (gymPal.ts, GYMPAL_PLANS).
+  const gymPalLimiters = {
+    free: { minute: new AttemptLimiter(GYMPAL_PLANS.free.perMinute, 60_000), day: new AttemptLimiter(GYMPAL_PLANS.free.perDay, 24 * 60 * 60_000) },
+    pro: { minute: new AttemptLimiter(GYMPAL_PLANS.pro.perMinute, 60_000), day: new AttemptLimiter(GYMPAL_PLANS.pro.perDay, 24 * 60 * 60_000) },
+  };
   const retryEvery = options.bugReports?.retryEveryMs ?? 0;
   if (bugReports.emailing && retryEvery > 0) {
     void bugReports.deliverWaiting();
@@ -663,7 +666,7 @@ export function createApp(options: AppOptions) {
   const limiters = [
     loginLimiter, accountLoginLimiter, forgotLimiter, forgotEmailLimiter, resetLimiter, signupLimiter, photoLimiter, avatarLimiter,
     equipmentLimiter, friendLimiter, busyLimiter, redeemLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter,
-    gymPalMinuteLimiter, gymPalDayLimiter,
+    gymPalLimiters.free.minute, gymPalLimiters.free.day, gymPalLimiters.pro.minute, gymPalLimiters.pro.day,
   ];
   /** How busy a gym is matters for an hour; a member's report is kept a day at most. */
   const forgetOldBusy = (at: Date) => db.prepare('delete from busy_reports where reported_at < ?').run(new Date(at.getTime() - BUSY_KEEP_MS).toISOString());
@@ -2346,21 +2349,42 @@ export function createApp(options: AppOptions) {
     // --- GymPal -----------------------------------------------------------------
     // The chat in the app's corner (gymPal.ts): nothing said is kept here.
     if (method === 'GET' && path === '/api/gympal') {
-      requireAccount(req);
-      return send(res, 200, { on: gymPal.on });
+      const { account } = requireAccount(req);
+      const pro = billing.isPro(account.id);
+      return send(res, 200, { on: gymPal.on, pro, perDay: GYMPAL_PLANS[pro ? 'pro' : 'free'].perDay });
     }
 
     if (method === 'POST' && path === '/api/gympal') {
       const { account } = requireAccount(req);
       // Off, nothing is counted against anyone.
       if (!gymPal.on) throw new HttpError(503, 'GymPal isn’t switched on for this server yet.', 'gympal_off');
-      const at = now().getTime();
-      if (!gymPalMinuteLimiter.allow(account.id, at)) throw new HttpError(429, 'That’s a lot of questions at once. Give GymPal a minute.');
-      if (!gymPalDayLimiter.allow(account.id, at)) throw new HttpError(429, 'That’s a lot of questions for one day. Try again tomorrow.');
+      const pro = billing.isPro(account.id);
+      const plan = GYMPAL_PLANS[pro ? 'pro' : 'free'];
       try {
-        // A conversation can be longer than most requests: 20 messages, GymPal's answers among them.
-        const messages = cleanChat(await readJson(req, 64 * 1024));
-        return send(res, 200, { reply: await gymPal.ask(messages) });
+        // A conversation can be longer than most requests: Pro's 30 messages, GymPal's answers among them.
+        const body = (await readJson(req, 128 * 1024)) as Record<string, unknown> | null;
+        const messages = cleanChat(body, plan);
+        const context = cleanContext(body);
+        const useLog = body?.useLog === true;
+        if (useLog && !pro) throw new HttpError(403, 'Answers that know your training are part of GymGO Pro.', 'pro_required');
+        const at = now().getTime();
+        const limits = gymPalLimiters[pro ? 'pro' : 'free'];
+        if (!limits.minute.allow(account.id, at)) throw new HttpError(429, 'That’s a lot of questions at once. Give GymPal a minute.');
+        if (!limits.day.allow(account.id, at)) {
+          throw pro
+            ? new HttpError(429, `That’s ${plan.perDay} questions today, the most there is. Try again tomorrow.`)
+            : new HttpError(429, `That’s your ${plan.perDay} questions for today. GymGO Pro has ${GYMPAL_PLANS.pro.perDay} a day.`, 'gympal_limit');
+        }
+        // Their latest sessions, only when they've said GymPal may see them.
+        const log = useLog
+          ? trainingSummary(
+              (db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where user_id = ? order by finished_at desc limit 12`).all(account.id) as TrainingRow[]).map(
+                (row) => trainingView(row) as LoggedSession,
+              ),
+              now(),
+            )
+          : null;
+        return send(res, 200, { reply: await gymPal.ask(messages, { context, log, replyTokens: plan.replyTokens }) });
       } catch (error) {
         if (error instanceof GymPalError) throw new HttpError(error.status, error.message, error.code);
         throw error;

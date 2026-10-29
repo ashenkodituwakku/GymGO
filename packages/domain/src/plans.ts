@@ -87,6 +87,7 @@ export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; p
   { emoji: '🧮', title: '1-rep max', free: 'Your max, and 3 percentages', pro: 'Every percentage, with plates', group: 'training' },
   { emoji: '❄️', title: 'Streak freeze', free: '—', pro: 'One missed week a month', group: 'training' },
   { emoji: '🏅', title: 'Lifetime stats', free: '—', pro: 'Every kilo, rep and hour, to share', group: 'training' },
+  { emoji: '💬', title: 'GymPal', free: '20 questions a day', pro: '100 a day, and answers that know your training', group: 'training' },
   { emoji: '🎨', title: 'Colour themes', free: 'Indigo; light, dark or Dim', pro: 'Twelve accents and eight looks', group: 'yours' },
   { emoji: '💍', title: 'Profile ring', free: 'Your picture', pro: 'Ringed in your accent', group: 'yours' },
   { emoji: '🎆', title: 'Celebrations', free: 'Confetti', pro: 'Fireworks, stars or emoji', group: 'yours' },

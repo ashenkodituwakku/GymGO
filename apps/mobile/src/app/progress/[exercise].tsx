@@ -12,6 +12,7 @@ import { Pressable } from '@/components/motion';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { ExerciseGlyph, ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
+import { AskGymPal } from '@/components/AskGymPal';
 import { ProgressChart } from '@/components/ProgressChart';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
@@ -117,6 +118,20 @@ export default function ExerciseProgressScreen() {
               ))}
             </Detail>
           </View>
+          <AskGymPal
+            title="Ask GymPal about this exercise"
+            detail="Form, common mistakes, what to swap in"
+            request={{
+              question: `How do I do ${exercise.name.toLowerCase()} well?`,
+              about: exercise.name,
+              context: [
+                `Exercise: ${exercise.name} (${exercise.cardio ? 'conditioning' : exercise.compound ? 'compound' : 'isolation'}).`,
+                `GymGO's cue: ${exercise.cue}`,
+                `Works: ${[...exercise.primary, ...exercise.secondary].map(muscleLabel).join(', ') || 'conditioning'}.`,
+                `Needs: ${exercise.needs.map((option) => (option.length === 0 ? 'body weight' : option.map((kit) => KIT_LABEL[kit]).join(' + '))).join(', or ')}.`,
+              ].join('\n'),
+            }}
+          />
         </>
       )}
 

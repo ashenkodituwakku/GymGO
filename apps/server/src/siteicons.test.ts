@@ -1,0 +1,564 @@
+import { createServer, type Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { DEMO_GYMS } from '@gymgo/demo-data';
+import { AU_GYMS } from '@gymgo/au-data';
+import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
+import { createApp } from './app';
+import { openDb, seedGyms, type Db } from './db';
+import { deflateSync } from 'node:zlib';
+import sharp from 'sharp';
+import { SiteIcons, SitePhotos, allowedUrl, chainWebsites, googleIconUrl, iconCandidates, isPrivateAddress, lightOnTransparent, namedNotAPhoto, onDarkPlate, ownPhotoSites, photoCandidates, photoLook, printsApart, sniffImage, type Fetched, type SafeGet } from './siteicons';
+import type { GymRecord } from '@gymgo/domain';
+
+/** A PNG header of the given size: all the checks read. */
+function png(width: number, height: number): Buffer {
+  const head = Buffer.alloc(33);
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(head, 0);
+  head.writeUInt32BE(13, 8);
+  head.write('IHDR', 12, 'latin1');
+  head.writeUInt32BE(width, 16);
+  head.writeUInt32BE(height, 20);
+  return head;
+}
+
+/** A real RGBA PNG: `pixel(x, y)` gives [r, g, b, a]. */
+function rgbaPng(size: number, pixel: (x: number, y: number) => [number, number, number, number]): Buffer {
+  const lines: Buffer[] = [];
+  for (let y = 0; y < size; y += 1) {
+    const line = Buffer.alloc(1 + size * 4);
+    for (let x = 0; x < size; x += 1) Buffer.from(pixel(x, y)).copy(line, 1 + x * 4);
+    lines.push(line);
+  }
+  const chunk = (kind: string, data: Buffer) => {
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    return Buffer.concat([length, Buffer.from(kind, 'latin1'), data, Buffer.alloc(4)]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(size, 0);
+  header.writeUInt32BE(size, 4);
+  header[8] = 8;
+  header[9] = 6;
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', header),
+    chunk('IDAT', deflateSync(Buffer.concat(lines))),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
+}
+
+/** A photo-like picture (blotches of every colour, as a JPEG) of the given size: each one made is a different picture. */
+async function photo(width: number, height: number): Promise<Buffer> {
+  const blotches = await sharp({
+    create: { width: 64, height: Math.max(8, Math.round((64 * height) / width)), channels: 3, background: '#808080', noise: { type: 'gaussian', mean: 128, sigma: 60 } },
+  })
+    .png()
+    .toBuffer();
+  return sharp(blotches).resize(width, height, { fit: 'fill' }).jpeg({ quality: 85 }).toBuffer();
+}
+
+/** The same picture at another size and quality, as a site's second tag often names it. */
+const resized = (picture: Buffer, width: number, height: number) => sharp(picture).resize(width, height, { fit: 'fill' }).jpeg({ quality: 70 }).toBuffer();
+
+/** A lettered card or a logo on white: a few flat colours, as a JPEG, with nothing in its name to say so. */
+const card = (width: number, height: number) =>
+  sharp({ create: { width, height, channels: 3, background: '#ffffff' } })
+    .composite([{ input: { create: { width: Math.round(width / 2), height: Math.round(height / 3), channels: 3, background: '#d0021b' } }, left: Math.round(width / 4), top: Math.round(height / 3) }])
+    .jpeg()
+    .toBuffer();
+
+/** A photo on a see-through background, as a PNG: a cut-out or a badge, not a photo of the place. */
+const cutOut = async (width: number, height: number) =>
+  sharp({ create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: await photo(Math.round(width / 2), Math.round(height / 2)), left: Math.round(width / 4), top: Math.round(height / 4) }])
+    .png()
+    .toBuffer();
+
+describe('icons that would vanish on a white plate', () => {
+  it('spots a white mark on a transparent background', () => {
+    const whiteOnClear = rgbaPng(64, (x) => (x < 32 ? [255, 255, 255, 255] : [0, 0, 0, 0]));
+    expect(lightOnTransparent(whiteOnClear)).toBe(true);
+  });
+
+  it('keeps dark marks, and opaque icons whatever their colour', () => {
+    expect(lightOnTransparent(rgbaPng(64, (x) => (x < 32 ? [20, 20, 20, 255] : [0, 0, 0, 0])))).toBe(false);
+    expect(lightOnTransparent(rgbaPng(64, () => [250, 250, 250, 255]))).toBe(false);
+    expect(lightOnTransparent(Buffer.from('not a png at all, just some bytes here'))).toBe(false);
+    expect(onDarkPlate(rgbaPng(64, () => [250, 250, 250, 255]))).toBeNull();
+  });
+
+  it('puts a white mark on a dark square, keeping its size', () => {
+    const plated = onDarkPlate(rgbaPng(64, (x) => (x < 32 ? [255, 255, 255, 255] : [0, 0, 0, 0])))!;
+    expect(sniffImage(plated)).toEqual({ mime: 'image/png', width: 64, height: 64 });
+    // Opaque RGB now, so it no longer counts as a mark on nothing.
+    expect(plated[25]).toBe(2);
+    expect(lightOnTransparent(plated)).toBe(false);
+  });
+});
+
+describe('where the icon fetcher may go', () => {
+  it('refuses private, loopback, link-local and metadata addresses', () => {
+    for (const address of ['127.0.0.1', '10.1.2.3', '172.20.0.1', '192.168.1.1', '169.254.169.254', '100.64.0.1', '0.0.0.0', '::1', 'fe80::1', 'fd00::1', '::ffff:127.0.0.1']) {
+      expect(isPrivateAddress(address), address).toBe(true);
+    }
+    expect(isPrivateAddress('93.184.216.34')).toBe(false);
+    expect(isPrivateAddress('2606:4700::6810:84e5')).toBe(false);
+  });
+
+  it('allows only plain public web addresses', () => {
+    expect(allowedUrl('https://gym.example.com/')?.href).toBe('https://gym.example.com/');
+    expect(allowedUrl('/icon.png', 'https://gym.example.com/a/')?.href).toBe('https://gym.example.com/icon.png');
+    for (const bad of ['ftp://gym.example.com/', 'file:///etc/passwd', 'http://127.0.0.1/', 'http://[::1]/', 'http://169.254.169.254/latest/', 'https://gym.example.com:8443/', 'https://user:pw@gym.example.com/', 'http://localhost/', 'javascript:alert(1)']) {
+      expect(allowedUrl(bad), bad).toBeNull();
+    }
+  });
+});
+
+describe('finding the icon in a page', () => {
+  it('prefers the home-screen icon, then big icons, then the declared logo, then the usual path, then small icons', () => {
+    const html = `<html><head>
+      <link rel="icon" href="/favicon.ico">
+      <link rel="icon" type="image/png" href="/unsized.png">
+      <link rel="icon" type="image/svg+xml" href="/icon.svg">
+      <link rel="icon" sizes="32x32" href="/small.png">
+      <link rel="icon" sizes="192x192" href="/android.png">
+      <link rel="apple-touch-icon" sizes="180x180" href="/touch.png?v=2&amp;x=1">
+      <script type="application/ld+json">{"@type":"ExerciseGym","logo":{"url":"https://cdn.example.com/logo.png"}}</script>
+    </head></html>`;
+    expect(iconCandidates(html, 'https://gym.example.com/').map((url) => url.href)).toEqual([
+      'https://gym.example.com/touch.png?v=2&x=1',
+      'https://gym.example.com/android.png',
+      'https://cdn.example.com/logo.png',
+      'https://gym.example.com/unsized.png',
+      'https://gym.example.com/apple-touch-icon.png',
+      'https://gym.example.com/small.png',
+    ]);
+  });
+
+  it('never follows an icon to a private address', () => {
+    const html = '<link rel="apple-touch-icon" href="http://192.168.0.1/touch.png">';
+    expect(iconCandidates(html, 'https://gym.example.com/').map((url) => url.href)).toEqual(['https://gym.example.com/apple-touch-icon.png']);
+  });
+
+  it('knows an image by its bytes, whatever it is called', () => {
+    expect(sniffImage(png(180, 180))).toEqual({ mime: 'image/png', width: 180, height: 180 });
+    expect(sniffImage(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'))).toBeNull();
+    expect(sniffImage(Buffer.from('<html><script>alert(1)</script>'))).toBeNull();
+    const gif = Buffer.alloc(13);
+    gif.write('GIF89a', 0, 'latin1');
+    gif.writeUInt16LE(96, 6);
+    gif.writeUInt16LE(96, 8);
+    expect(sniffImage(gif)).toEqual({ mime: 'image/gif', width: 96, height: 96 });
+  });
+});
+
+// --- The route, with a stand-in for the web ---------------------------------
+
+const DOHERTYS = MELBOURNE_GYMS.find((gym) => gym.location.website === 'https://dohertysgym.com/')!;
+const PRIME = MELBOURNE_GYMS.find((gym) => gym.location.website?.startsWith('https://primeathletica.com.au'))!;
+const visits: string[] = [];
+// A Club Lime the map gives no website, and no branch of it names one either.
+const CLUB_LIME = AU_GYMS.find((gym) => /^club lime/i.test(gym.location.name) && !gym.location.website)!;
+
+const WEB: Record<string, Omit<Fetched, 'url'>> = {
+  'https://dohertysgym.com/': { status: 200, type: 'text/html; charset=utf-8', body: Buffer.from('<link rel="apple-touch-icon" href="/touch.png">') },
+  'https://dohertysgym.com/touch.png': { status: 200, type: 'image/png', body: png(180, 180) },
+  // Prime's site offers only a tiny icon and a file that says it's a PNG but isn't.
+  'https://primeathletica.com.au/': {
+    status: 200,
+    type: 'text/html',
+    body: Buffer.from('<link rel="apple-touch-icon" href="/fake.png"><link rel="icon" sizes="16x16" href="/tiny.png">'),
+  },
+  'https://primeathletica.com.au/fake.png': { status: 200, type: 'image/png', body: Buffer.from('<html>not an image</html>') },
+  'https://www.clublime.com.au/': { status: 200, type: 'text/html', body: Buffer.from('<link rel="apple-touch-icon" href="/lime.png">') },
+  'https://www.clublime.com.au/lime.png': { status: 200, type: 'image/png', body: png(192, 192) },
+  // A site that turns automated visitors away, whose icon Google has.
+  'https://blocked.example.com/': { status: 403, type: 'text/html', body: Buffer.from('Forbidden') },
+  [googleIconUrl('https://blocked.example.com').href]: { status: 200, type: 'image/png', body: png(256, 240) },
+  // A site with only a 32-pixel icon, and none at Google.
+  'https://small.example.com/': { status: 200, type: 'text/html', body: Buffer.from('<link rel="icon" sizes="32x32" href="/32.png">') },
+  'https://small.example.com/32.png': { status: 200, type: 'image/png', body: png(32, 32) },
+  // A site whose only icon is a white mark on nothing.
+  'https://white.example.com/': { status: 200, type: 'text/html', body: Buffer.from('<link rel="apple-touch-icon" href="/w.png">') },
+  'https://white.example.com/w.png': { status: 200, type: 'image/png', body: rgbaPng(64, (x) => (x < 32 ? [255, 255, 255, 255] : [0, 0, 0, 0])) },
+};
+
+/** A gym whose website no other gym in the data shares: its own, so its photo can be used. */
+const OWN = MELBOURNE_GYMS.find(
+  (gym) => gym.location.website && MELBOURNE_GYMS.filter((other) => other.location.website === gym.location.website).length === 1 && gym !== PRIME,
+)!;
+/** A JPEG header of the given size: all the checks read. */
+function jpeg(width: number, height: number): Buffer {
+  return Buffer.from([0xff, 0xd8, 0xff, 0xc0, 0x00, 0x11, 0x08, height >> 8, height & 255, width >> 8, width & 255, 0x03, 0, 0, 0, 0, 0, 0, 0, 0]);
+}
+const FLOOR = await photo(1200, 630);
+const CHANGING_ROOMS = await photo(1600, 1067);
+WEB[OWN.location.website!] = {
+  status: 200,
+  type: 'text/html',
+  body: Buffer.from(
+    '<meta property="og:image" content="/logo-share.png"><meta property="og:image" content="/floor.jpg"><meta name="twitter:image" content="/small.jpg">' +
+      // More pictures the page gives search engines: one, the same floor photo again under another name and at another size,
+      // a thin banner, a lettered card and a cut-out on nothing (neither named for what it is), and a screenshot of the site.
+      '<script type="application/ld+json">{"@type":"ExerciseGym","image":["/changing-rooms.jpg","/floor-copy.jpg","/floor-800.jpg","/banner.jpg","/join-today.jpg","/coach.png","/id-preview-home.png"]}</script>',
+  ),
+};
+WEB[new URL('/floor.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: FLOOR };
+WEB[new URL('/small.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: jpeg(120, 80) };
+WEB[new URL('/changing-rooms.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: CHANGING_ROOMS };
+WEB[new URL('/floor-copy.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: FLOOR };
+WEB[new URL('/floor-800.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: await resized(FLOOR, 800, 420) };
+WEB[new URL('/banner.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: jpeg(2400, 400) };
+WEB[new URL('/join-today.jpg', OWN.location.website!).href] = { status: 200, type: 'image/jpeg', body: await card(1200, 630) };
+WEB[new URL('/coach.png', OWN.location.website!).href] = { status: 200, type: 'image/png', body: await cutOut(1000, 800) };
+WEB[new URL('/id-preview-home.png', OWN.location.website!).href] = { status: 200, type: 'image/png', body: await photo(1920, 1080) };
+
+// Doherty's Brunswick shares its site with the City branch, so nothing its pages share can be called its own; these were checked by eye.
+const DOHERTYS_BRUNSWICK = MELBOURNE_GYMS.find((gym) => gym.location.id === 'dohertys-gym-brunswick')!;
+const BRUNSWICK_FLOOR = await photo(1600, 900);
+const BRUNSWICK_RING = await photo(1200, 800);
+const CHOSEN = {
+  [DOHERTYS_BRUNSWICK.location.id]: [
+    { url: 'https://dohertysgym.com/img/brunswick-floor.jpg', page: 'https://dohertysgym.com/brunswick/' },
+    // Checked once, since swapped for a logo at the same address: not shown.
+    { url: 'https://dohertysgym.com/img/brunswick-sign.jpg', page: 'https://dohertysgym.com/brunswick/' },
+    { url: 'https://images.example-cdn.com/dohertys/ring.jpg', page: 'https://dohertysgym.com/boxing/' },
+  ],
+};
+WEB['https://dohertysgym.com/img/brunswick-floor.jpg'] = { status: 200, type: 'image/jpeg', body: BRUNSWICK_FLOOR };
+WEB['https://dohertysgym.com/img/brunswick-sign.jpg'] = { status: 200, type: 'image/jpeg', body: await card(1200, 630) };
+WEB['https://images.example-cdn.com/dohertys/ring.jpg'] = { status: 200, type: 'image/jpeg', body: BRUNSWICK_RING };
+
+let flakyUp = false;
+const fakeGet: SafeGet = async (url) => {
+  visits.push(url.href);
+  // A site that's down the first time and fine later.
+  if (url.href === 'https://flaky.example.com/' && !flakyUp) throw new Error('timed out');
+  if (url.href === 'https://flaky.example.com/') return { status: 200, type: 'text/html', body: Buffer.from('<link rel="apple-touch-icon" href="/t.png">'), url: url.href };
+  if (url.href === 'https://flaky.example.com/t.png') return { status: 200, type: 'image/png', body: png(120, 120), url: url.href };
+  const page = WEB[url.href];
+  return page ? { ...page, url: url.href } : { status: 404, type: 'text/html', body: Buffer.alloc(0), url: url.href };
+};
+
+let server: Server;
+let base: string;
+let db: Db;
+let clock = new Date('2026-09-25T00:00:00Z');
+
+beforeAll(async () => {
+  db = openDb(':memory:');
+  seedGyms(db, [...MELBOURNE_GYMS, ...DEMO_GYMS, CLUB_LIME]);
+  server = createServer(createApp({ db, attribution: 'test', siteIcons: { get: fakeGet, chosen: CHOSEN } }));
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+});
+
+afterAll(() => {
+  server.close();
+  db.close();
+});
+
+describe('GET /api/gyms/:id/icon', () => {
+  it('serves the gym’s own icon as the image it really is', async () => {
+    const response = await fetch(`${base}/api/gyms/${DOHERTYS.location.id}/icon`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('image/png');
+    expect(response.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(decodeURI(response.headers.get('x-icon-source')!)).toBe('https://dohertysgym.com/touch.png');
+    expect(Buffer.from(await response.arrayBuffer()).equals(png(180, 180))).toBe(true);
+  });
+
+  it('visits each website once, and branches of the same site share it', async () => {
+    const before = visits.length;
+    const branches = MELBOURNE_GYMS.filter((gym) => gym.location.website === 'https://dohertysgym.com/');
+    expect(branches.length).toBeGreaterThan(1);
+    for (const gym of branches) expect((await fetch(`${base}/api/gyms/${gym.location.id}/icon`)).status).toBe(200);
+    expect(visits.length).toBe(before);
+  });
+
+  it('takes a known chain’s icon from its own site when the branch names none', async () => {
+    expect(CLUB_LIME).toBeDefined();
+    const response = await fetch(`${base}/api/gyms/${CLUB_LIME.location.id}/icon`);
+    expect(response.status).toBe(200);
+    expect(decodeURI(response.headers.get('x-icon-source')!)).toBe('https://www.clublime.com.au/lime.png');
+  });
+
+  it('takes Google’s copy of the icon when the site turns us away', async () => {
+    const icons = new SiteIcons(db, { get: fakeGet, now: () => clock });
+    const icon = await icons.icon('https://blocked.example.com/');
+    expect(icon?.source).toBe(googleIconUrl('https://blocked.example.com').href);
+    expect(sniffImage(icon!.bytes)).toEqual({ mime: 'image/png', width: 256, height: 240 });
+  });
+
+  it('takes a small icon when there’s nothing bigger, and a white mark on a dark square', async () => {
+    const icons = new SiteIcons(db, { get: fakeGet, now: () => clock });
+    expect((await icons.icon('https://small.example.com/'))?.source).toBe('https://small.example.com/32.png');
+    const white = (await icons.icon('https://white.example.com/'))!;
+    expect(white.source).toBe('https://white.example.com/w.png');
+    expect(lightOnTransparent(white.bytes)).toBe(false);
+    expect(sniffImage(white.bytes)).toEqual({ mime: 'image/png', width: 64, height: 64 });
+  });
+
+  it('shows nothing rather than a fake, a tiny or a mislabelled image', async () => {
+    const response = await fetch(`${base}/api/gyms/${PRIME.location.id}/icon`);
+    expect(response.status).toBe(404);
+    expect(((await response.json()) as { code: string }).code).toBe('none');
+    // Kept by the browser for an hour: the server asks a site again after an hour at the soonest.
+    expect(response.headers.get('cache-control')).toBe('public, max-age=3600');
+  });
+
+  it('asks a site that didn’t answer again after an hour, not a week', async () => {
+    const icons = new SiteIcons(db, { get: fakeGet, now: () => clock });
+    expect(await icons.icon('https://flaky.example.com/')).toBeNull();
+    flakyUp = true;
+    expect(icons.cached('https://flaky.example.com/')).toBeNull(); // still remembered within the hour
+    clock = new Date(clock.getTime() + 61 * 60_000);
+    expect(icons.cached('https://flaky.example.com/')).toBeUndefined();
+    expect((await icons.icon('https://flaky.example.com/'))?.mime).toBe('image/png');
+  });
+
+  it('has nothing for invented demo gyms or unknown ids', async () => {
+    const demo = await fetch(`${base}/api/gyms/${DEMO_GYMS[0]!.location.id}/icon`);
+    expect(demo.status).toBe(404);
+    // The browser keeps a known absence for a day, so a list doesn't ask on every visit.
+    expect(demo.headers.get('cache-control')).toBe('public, max-age=86400');
+    const unknown = await fetch(`${base}/api/gyms/no-such-gym/icon`);
+    expect(unknown.status).toBe(404);
+    // An unknown id might be a gym not loaded yet: never kept.
+    expect(unknown.headers.get('cache-control')).toBe('no-store');
+  });
+});
+
+describe('a chain’s website, for branches without one', () => {
+  const branch = (id: string, brand: string | null, website: string | null, country = 'AU', wikidataBrand?: string): GymRecord =>
+    ({
+      location: {
+        id,
+        name: brand ?? id,
+        brand,
+        website,
+        isDemoData: false,
+        address: { countryCode: country },
+        externalRefs: wikidataBrand ? { wikidataBrand } : {},
+      },
+    }) as unknown as GymRecord;
+
+  it('uses the site two or more branches share, in the same country', () => {
+    const find = chainWebsites([
+      branch('a', 'Anytime Fitness', 'https://www.anytimefitness.com.au/gyms/a', 'AU', 'Q4778364'),
+      branch('b', 'Anytime Fitness', 'https://anytimefitness.com.au/gyms/b', 'AU', 'Q4778364'),
+      branch('c', 'Anytime Fitness', 'https://www.anytimefitness.com/gyms/c', 'US', 'Q4778364'),
+    ]);
+    expect(find(branch('d', 'Anytime Fitness', null, 'AU', 'Q4778364'))).toBe('https://anytimefitness.com.au/');
+    // Only one US branch has a site: not enough to call it the chain's, so the chain's own site, kept by hand.
+    expect(find(branch('e', 'Anytime Fitness', null, 'US', 'Q4778364'))).toBe('https://www.anytimefitness.com/');
+    // A branch tagged with the brand's name but not its Wikidata item still finds it.
+    expect(find(branch('f', 'Anytime Fitness', null, 'AU'))).toBe('https://anytimefitness.com.au/');
+  });
+
+  it('never lends one independent affiliate’s site to another', () => {
+    const find = chainWebsites([
+      branch('a', 'CrossFit', 'https://www.k2crossfit.com/', 'US', 'Q2072840'),
+      branch('b', 'CrossFit', 'https://persistenceathletics.com/', 'US', 'Q2072840'),
+    ]);
+    expect(find(branch('c', 'CrossFit', null, 'US', 'Q2072840'))).toBeNull();
+  });
+});
+
+describe('a photo of the gym from its own website', () => {
+  it('takes the picture the site shares, never a logo, an icon or a vector', () => {
+    const html =
+      '<meta property="og:image" content="https://gym.example.com/logo.png"><meta property="og:image" content="/hero.jpg">' +
+      '<meta name="twitter:image" content="/hero.jpg"><script type="application/ld+json">{"image":["/room.webp","/brand.svg"]}</script>';
+    expect(photoCandidates(html, 'https://gym.example.com/').map((url) => url.href)).toEqual(['https://gym.example.com/hero.jpg', 'https://gym.example.com/room.webp']);
+  });
+
+  it('judges a picture’s name by its path, not the site’s: Icon Fitness keeps its photos', () => {
+    expect(namedNotAPhoto(new URL('https://iconfitness.com.au/images/floor.jpg'))).toBe(false);
+    expect(namedNotAPhoto(new URL('https://cdn.example.com/u/Logo-White.webp'))).toBe(true);
+    expect(namedNotAPhoto(new URL('https://cdn.example.com/u/id-preview-ed603d8f.png'))).toBe(true);
+    expect(namedNotAPhoto(new URL('https://gym.example.com/brand.svg'))).toBe(true);
+  });
+
+  it('knows a photograph from a logo, a lettered card or a cut-out, and the same picture at another size', async () => {
+    const floor = await photoLook(FLOOR);
+    expect(floor?.photo).toBe(true);
+    expect((await photoLook(CHANGING_ROOMS))?.photo).toBe(true);
+    expect((await photoLook(await card(1200, 630)))?.photo).toBe(false);
+    expect((await photoLook(await cutOut(1000, 800)))?.photo).toBe(false);
+    expect(await photoLook(jpeg(1200, 630))).toBeNull();
+    expect(printsApart(floor!.print, (await photoLook(await resized(FLOOR, 800, 420)))!.print)).toBeLessThanOrEqual(6);
+    expect(printsApart(floor!.print, (await photoLook(CHANGING_ROOMS))!.print)).toBeGreaterThan(6);
+  });
+
+  it('only from a site that is the gym’s own: not one other gyms share, nor a chain’s home page', () => {
+    const gym = (id: string, name: string, website: string | null, brand: string | null = null) =>
+      ({ location: { id, name, brand, website, isDemoData: false, address: { countryCode: 'AU' }, externalRefs: {} } }) as unknown as GymRecord;
+    const own = gym('a', 'Frank’s Gym', 'https://www.franksgymperth.com/');
+    const shared1 = gym('b', 'Big Gym Richmond', 'https://biggym.example.com/');
+    const shared2 = gym('c', 'Big Gym Carlton', 'https://biggym.example.com');
+    const chainHome = gym('d', 'Anytime Fitness', 'https://www.anytimefitness.com.au/', 'Anytime Fitness');
+    const chainBranch = gym('e', 'Anytime Fitness', 'https://www.anytimefitness.com.au/gyms/docklands/', 'Anytime Fitness');
+    const site = ownPhotoSites([own, shared1, shared2, chainHome, chainBranch]);
+    expect(site(own)).toBe('https://www.franksgymperth.com/');
+    expect(site(shared1)).toBeNull();
+    expect(site(chainHome)).toBeNull();
+    expect(site(chainBranch)).toBe('https://www.anytimefitness.com.au/gyms/docklands/');
+  });
+
+  it('serves it as the image it really is, credited to the page', async () => {
+    const response = await fetch(`${base}/api/gyms/${OWN.location.id}/photo`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('image/jpeg');
+    expect(decodeURI(response.headers.get('x-photo-source')!)).toBe(new URL(OWN.location.website!).href);
+    expect(Buffer.from(await response.arrayBuffer()).equals(FLOOR)).toBe(true);
+  });
+
+  it('serves every photo the page gives, each once, and says how many: never a logo, a card, a cut-out, a screenshot, a thumbnail or a banner', async () => {
+    const list = await fetch(`${base}/api/gyms/${OWN.location.id}/site-photos`);
+    expect(list.status).toBe(200);
+    expect(await list.json()).toEqual({ count: 2, from: new URL(OWN.location.website!).href });
+    const second = await fetch(`${base}/api/gyms/${OWN.location.id}/photo/1`);
+    expect(second.status).toBe(200);
+    expect(Buffer.from(await second.arrayBuffer()).equals(CHANGING_ROOMS)).toBe(true);
+    // /photo/0 is the cover, as /photo is.
+    expect(Buffer.from(await (await fetch(`${base}/api/gyms/${OWN.location.id}/photo/0`)).arrayBuffer()).equals(FLOOR)).toBe(true);
+    expect((await fetch(`${base}/api/gyms/${OWN.location.id}/photo/2`)).status).toBe(404);
+    // Like /photo, they load as plain images: no sign-in needed.
+    expect((await fetch(`${base}/api/gyms/${DOHERTYS.location.id}/site-photos`).then((r) => r.json()))).toEqual({ count: 0, from: null });
+  });
+
+  it('keeps four at most, and drops each picture another page shows too, keeping the page’s own', async () => {
+    const pics = ['a', 'b', 'c', 'd', 'e', 'f'];
+    const site: Record<string, Omit<Fetched, 'url'>> = {
+      'https://one.example.com/': { status: 200, type: 'text/html', body: Buffer.from(pics.map((p) => `<meta property="og:image" content="/${p}.jpg">`).join('')) },
+      'https://chain.example.com/east/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/east.jpg"><meta property="og:image" content="/team.jpg">') },
+      'https://chain.example.com/west/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/team.jpg"><meta property="og:image" content="/west.jpg">') },
+      'https://chain.example.com/': { status: 200, type: 'text/html', body: Buffer.from('') },
+      'https://chain.example.com/east.jpg': { status: 200, type: 'image/jpeg', body: await photo(1200, 801) },
+      'https://chain.example.com/west.jpg': { status: 200, type: 'image/jpeg', body: await photo(1200, 802) },
+      'https://chain.example.com/team.jpg': { status: 200, type: 'image/jpeg', body: await photo(1200, 803) },
+    };
+    for (const [i, p] of pics.entries()) site[`https://one.example.com/${p}.jpg`] = { status: 200, type: 'image/jpeg', body: await photo(1200 + i, 800) };
+    const get: SafeGet = async (url) => {
+      const page = site[url.href];
+      return page ? { ...page, url: url.href } : { status: 404, type: 'text/html', body: Buffer.alloc(0), url: url.href };
+    };
+    const photos = new SitePhotos(openDb(':memory:'), { get });
+    expect((await photos.photos('https://one.example.com/')).map((photo) => photo.source)).toEqual(['a', 'b', 'c', 'd'].map((p) => `https://one.example.com/${p}.jpg`));
+    expect((await photos.photos('https://chain.example.com/east/')).map((photo) => photo.source)).toEqual(['https://chain.example.com/east.jpg', 'https://chain.example.com/team.jpg']);
+    // A second branch shows the team picture too: it's the chain's, so neither keeps it, and each keeps its own.
+    expect((await photos.photos('https://chain.example.com/west/')).map((photo) => photo.source)).toEqual(['https://chain.example.com/west.jpg']);
+    expect((await photos.photos('https://chain.example.com/east/')).map((photo) => photo.source)).toEqual(['https://chain.example.com/east.jpg']);
+  });
+
+  it('fetches again a page kept before several photos were, for the rest of them', async () => {
+    const db = openDb(':memory:');
+    const pictures = { '1.jpg': await photo(1200, 800), '2.jpg': await photo(1300, 800) };
+    const get: SafeGet = async (url) =>
+      url.href === 'https://old.example.com/'
+        ? { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/1.jpg"><meta property="og:image" content="/2.jpg">'), url: url.href }
+        : { status: 200, type: 'image/jpeg', body: pictures[url.pathname.slice(1) as keyof typeof pictures], url: url.href };
+    const photos = new SitePhotos(db, { get, now: () => new Date('2026-10-25T00:00:00Z') });
+    // As an earlier server kept it: the cover only.
+    db.prepare('insert into site_photos (page, found, mime, bytes, width, height, source, fetched_at) values (?, 1, ?, ?, 1200, 800, ?, ?)').run(
+      'https://old.example.com/',
+      'image/jpeg',
+      jpeg(1200, 800),
+      'https://old.example.com/1.jpg',
+      '2026-10-24T00:00:00Z',
+    );
+    expect(photos.cachedAll('https://old.example.com/')).toBeUndefined();
+    expect((await photos.photos('https://old.example.com/')).length).toBe(2);
+    // Kept before each was checked to be a photograph (a logo was, as one): fetched again, though it's well within the month.
+    db.prepare('update site_photo_set set print = null where page = ? and position = 1').run('https://old.example.com/');
+    expect(photos.cachedAll('https://old.example.com/')).toBeUndefined();
+    expect((await photos.photos('https://old.example.com/')).length).toBe(2);
+    expect(photos.cachedAll('https://old.example.com/')?.length).toBe(2);
+  });
+
+  it('serves a gym’s chosen photos in order, each credited to its own page, even where its site is shared, never one that’s now a logo', async () => {
+    const id = DOHERTYS_BRUNSWICK.location.id;
+    expect(await (await fetch(`${base}/api/gyms/${id}/site-photos`)).json()).toEqual({ count: 2, from: 'https://dohertysgym.com/brunswick/' });
+    const cover = await fetch(`${base}/api/gyms/${id}/photo`);
+    expect(cover.status).toBe(200);
+    expect(Buffer.from(await cover.arrayBuffer()).equals(BRUNSWICK_FLOOR)).toBe(true);
+    expect(decodeURI(cover.headers.get('x-photo-source')!)).toBe('https://dohertysgym.com/brunswick/');
+    const second = await fetch(`${base}/api/gyms/${id}/photo/1`);
+    expect(Buffer.from(await second.arrayBuffer()).equals(BRUNSWICK_RING)).toBe(true);
+    expect(decodeURI(second.headers.get('x-photo-source')!)).toBe('https://dohertysgym.com/boxing/');
+    expect((await fetch(`${base}/api/gyms/${id}/photo/2`)).status).toBe(404);
+  });
+
+  it('keeps chosen photos by gym and list: a new list is fetched afresh, and a list that gave none is asked again after an hour', async () => {
+    let now = new Date('2026-10-25T00:00:00Z');
+    const pictures: Record<string, Buffer> = { 'https://a.example.com/1.jpg': await photo(1200, 800), 'https://a.example.com/2.jpg': await photo(1300, 800) };
+    let up = false;
+    const get: SafeGet = async (url) =>
+      up && pictures[url.href] ? { status: 200, type: 'image/jpeg', body: pictures[url.href]!, url: url.href } : { status: 503, type: 'text/html', body: Buffer.alloc(0), url: url.href };
+    const photos = new SitePhotos(openDb(':memory:'), { get, now: () => now });
+    const one = [{ url: 'https://a.example.com/1.jpg', page: 'https://a.example.com/' }];
+    expect(await photos.chosen('gym-a', one)).toEqual([]);
+    up = true;
+    expect(photos.cachedChosen('gym-a', one)).toEqual([]);
+    now = new Date('2026-10-25T01:01:00Z');
+    expect(photos.cachedChosen('gym-a', one)).toBeUndefined();
+    expect((await photos.chosen('gym-a', one)).map((item) => item.source)).toEqual(['https://a.example.com/1.jpg']);
+    const two = [...one, { url: 'https://a.example.com/2.jpg', page: 'https://a.example.com/' }];
+    expect(photos.cachedChosen('gym-a', two)).toBeUndefined();
+    expect((await photos.chosen('gym-a', two)).map((item) => item.source)).toEqual(['https://a.example.com/1.jpg', 'https://a.example.com/2.jpg']);
+  });
+
+  it('has none for a site several gyms share, or for demo gyms', async () => {
+    expect((await fetch(`${base}/api/gyms/${DOHERTYS.location.id}/photo`)).status).toBe(404);
+    expect((await fetch(`${base}/api/gyms/${DEMO_GYMS[0]!.location.id}/photo`)).status).toBe(404);
+  });
+
+  it('never takes a chain’s stock picture for a branch’s page', async () => {
+    const site: Record<string, Omit<Fetched, 'url'>> = {
+      'https://chain.example.com/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/stock.jpg">') },
+      // A branch page with the site's stock picture only.
+      'https://chain.example.com/north/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/stock.jpg">') },
+      // Two branch pages sharing a picture that isn't the home page's, and one with its own.
+      'https://chain.example.com/east/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/team.jpg">') },
+      'https://chain.example.com/west/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/team.jpg">') },
+      'https://chain.example.com/south/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="/south-floor.jpg">') },
+      'https://chain.example.com/stock.jpg': { status: 200, type: 'image/jpeg', body: await photo(1200, 630) },
+      'https://chain.example.com/team.jpg': { status: 200, type: 'image/jpeg', body: await photo(1200, 800) },
+      'https://chain.example.com/south-floor.jpg': { status: 200, type: 'image/jpeg', body: await photo(1600, 900) },
+    };
+    const get: SafeGet = async (url) => {
+      const page = site[url.href];
+      return page ? { ...page, url: url.href } : { status: 404, type: 'text/html', body: Buffer.alloc(0), url: url.href };
+    };
+    const photos = new SitePhotos(openDb(':memory:'), { get });
+    expect(await photos.photo('https://chain.example.com/north/')).toBeNull();
+    expect((await photos.photo('https://chain.example.com/south/'))?.source).toBe('https://chain.example.com/south-floor.jpg');
+    // The first branch's picture looks like its own until a second branch shows the same one.
+    expect((await photos.photo('https://chain.example.com/east/'))?.source).toBe('https://chain.example.com/team.jpg');
+    expect(await photos.photo('https://chain.example.com/west/')).toBeNull();
+    expect(await photos.photo('https://chain.example.com/east/')).toBeNull();
+    expect((await photos.photo('https://chain.example.com/south/'))?.source).toBe('https://chain.example.com/south-floor.jpg');
+  });
+
+  it('knows a chain’s stock picture under another address and at another size', async () => {
+    const stock = await photo(1200, 630);
+    const site: Record<string, Omit<Fetched, 'url'>> = {
+      'https://cdn-a.example.com/club/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="https://cdn-a.example.com/i/abc_og.jpg">') },
+      'https://cdn-b.example.com/other-club/': { status: 200, type: 'text/html', body: Buffer.from('<meta property="og:image" content="https://cdn-b.example.com/x/1200w.jpg">') },
+      'https://cdn-a.example.com/': { status: 200, type: 'text/html', body: Buffer.from('') },
+      'https://cdn-b.example.com/': { status: 200, type: 'text/html', body: Buffer.from('') },
+      'https://cdn-a.example.com/i/abc_og.jpg': { status: 200, type: 'image/jpeg', body: stock },
+      'https://cdn-b.example.com/x/1200w.jpg': { status: 200, type: 'image/jpeg', body: await resized(stock, 1000, 525) },
+    };
+    const get: SafeGet = async (url) => {
+      const page = site[url.href];
+      return page ? { ...page, url: url.href } : { status: 404, type: 'text/html', body: Buffer.alloc(0), url: url.href };
+    };
+    const photos = new SitePhotos(openDb(':memory:'), { get });
+    expect(await photos.photo('https://cdn-a.example.com/club/')).not.toBeNull();
+    expect(await photos.photo('https://cdn-b.example.com/other-club/')).toBeNull();
+    expect(await photos.photo('https://cdn-a.example.com/club/')).toBeNull();
+  });
+});

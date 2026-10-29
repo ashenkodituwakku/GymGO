@@ -1,0 +1,33 @@
+# GymGO at GYMGO_DOMAIN, over HTTPS. Caddy gets and renews the certificate
+# from Let's Encrypt by itself, once the domain points at this server and
+# ports 80 and 443 are open.
+
+{$GYMGO_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		# The web app finds gyms near you, so location is allowed for this site and nothing it embeds.
+		Permissions-Policy "camera=(), microphone=(), geolocation=(self), payment=()"
+		-Server
+	}
+
+	# The server: its API, the legal pages and the password reset page.
+	@server path /api/* /terms /privacy /refunds /community /legal /reset-password /.well-known/security.txt
+	handle @server {
+		reverse_proxy app:4000
+	}
+
+	# Everything else is the web app. Its screens are all index.html, and its
+	# scripts and pictures are named for what's in them, so they keep for a year.
+	handle {
+		root * /srv/web
+		@hashed path /_expo/* /assets/*
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+		try_files {path} /index.html
+		file_server
+	}
+}

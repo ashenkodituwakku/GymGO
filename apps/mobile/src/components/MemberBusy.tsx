@@ -60,6 +60,7 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
     const fix = await currentFix(true, true);
     setChecking(false);
     if (fix === 'denied') return setNotice('Saying how busy it is needs your location, just this once, to check you’re there. It never leaves your phone.');
+    if (fix === 'off') return setNotice('Saying how busy it is needs your location, just this once, to check you’re there. Location is off in Profile → Settings.');
     if (fix === 'unavailable') return setNotice('Couldn’t find where you are just now. Try again in a moment.');
     const where = checkIn(fix, location.position);
     if (where.kind === 'far') return setNotice(`You’re ${distanceLabel(where.metres / 1000, location.address.countryCode)} away. Say how busy it is when you’re there.`);

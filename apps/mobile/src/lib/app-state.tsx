@@ -19,7 +19,7 @@ import { FOCUS_COUNTRY, canSearchIn, deviceTimeZone, openingPlace } from './coun
 import { setHapticsEnabled } from './haptics';
 import { setSoundPack, setSoundsEnabled } from './sounds';
 import { FREE_SOUND_PACK, cleanSoundPack, soundPackFor, type SoundPack } from './soundPacks';
-import { currentFix, type Fix } from './location';
+import { currentFix, setLocationAllowed, type Fix } from './location';
 import { DEFAULT_PLACE, cityNear, cityPlace, homePlace, nearestCity, setDemoMode, setReaderCountry, whereaboutsAt, type City } from './places';
 import { locatedNotice } from './copy';
 import { YOUR_LOCATION, atPlace, defaultVisit, initialFilters, moveTo, reachFor, refreshVisit, tileKey, tilesAround, wantsLookup, type Filters } from './query';
@@ -58,12 +58,18 @@ export type Located =
   /** In another country than the one you chose, without Pro: the search stays at home. */
   | { kind: 'abroad'; fix: Fix; countryCode: string; home: string }
   | { kind: 'denied' }
-  | { kind: 'unavailable' };
+  | { kind: 'unavailable' }
+  /** Location is off in GymGO's settings: nothing was asked. */
+  | { kind: 'off' };
 
 export interface Prefs {
   haptics: boolean;
   /** Sound effects (lib/sounds.ts). */
   sounds: boolean;
+  /** Where you are, for gyms near you, checking in and saying how busy a gym is (lib/location.ts). Off: GymGO never asks. */
+  location: boolean;
+  /** GymPal, the AI assistant: his button in the corner and the Ask GymPal rows (components/GymPal.tsx). */
+  gymPal: boolean;
   /**
    * Demo mode: only the invented demo gyms, for trying every edge case.
    * Off, only real gyms show. Never both, since the demo sits on real
@@ -198,7 +204,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [compare, setCompare] = useState<string[]>([]);
   const compareLoaded = useRef(false);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
-  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, demo: false, country: null, weeklyGoal: null, plates: {}, timers: [], celebration: FREE_CELEBRATION, soundPack: FREE_SOUND_PACK });
+  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, location: true, gymPal: true, demo: false, country: null, weeklyGoal: null, plates: {}, timers: [], celebration: FREE_CELEBRATION, soundPack: FREE_SOUND_PACK });
   const [prefsReady, setPrefsReady] = useState(false);
   // Arcade with Pro, Marimba without: a lapsed Pro hears Marimba again, the pick kept for when it's back.
   useEffect(() => setSoundPack(soundPackFor(prefs.soundPack, billing.isPro)), [prefs.soundPack, billing.isPro]);
@@ -225,9 +231,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const lbPlates = cleanPlates(value.plates?.lb, 'lb');
       const plates = { ...(kgPlates ? { kg: kgPlates } : {}), ...(lbPlates ? { lb: lbPlates } : {}) };
       // The limited website shows real gyms only, whatever was kept (lib/limited.ts).
-      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, demo: !LIMITED && value.demo === true, country, weeklyGoal: goal, plates, timers: cleanTimers(value.timers), celebration: cleanCelebration(value.celebration), soundPack: cleanSoundPack(value.soundPack) };
+      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, location: value.location !== false, gymPal: value.gymPal !== false, demo: !LIMITED && value.demo === true, country, weeklyGoal: goal, plates, timers: cleanTimers(value.timers), celebration: cleanCelebration(value.celebration), soundPack: cleanSoundPack(value.soundPack) };
       setHapticsEnabled(next.haptics);
       setSoundsEnabled(next.sounds);
+      setLocationAllowed(next.location);
       setDemoMode(next.demo);
       setPrefs(next);
       setPrefsReady(true);
@@ -298,7 +305,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const findMe = useCallback(async (ask: boolean, onlyIfUntouched: boolean): Promise<Located> => {
     const fix = await currentFix(ask);
-    if (fix === 'denied' || fix === 'unavailable') return { kind: fix };
+    if (fix === 'denied' || fix === 'unavailable' || fix === 'off') return { kind: fix };
     setHere(fix);
     const { home, pro } = reachRef.current;
     const city = cityNear(fix.position);
@@ -411,7 +418,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       if (!asked) storeJson(ASKED_KEY, true);
       const result = await findMe(!asked, true);
-      if (!cancelled && result.kind !== 'denied' && result.kind !== 'unavailable') {
+      if (!cancelled && result.kind !== 'denied' && result.kind !== 'unavailable' && result.kind !== 'off') {
         const notice = locatedNotice(result, reachRef.current.home) ?? undefined;
         setExploreRequest((current) => ({ recentre: true, notice, nonce: (current?.nonce ?? 0) + 1 }));
       }
@@ -482,9 +489,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const next = { ...current, [key]: value };
       if (key === 'haptics') setHapticsEnabled(Boolean(value));
       if (key === 'sounds') setSoundsEnabled(Boolean(value));
+      if (key === 'location') setLocationAllowed(Boolean(value));
       storeJson(PREFS_KEY, next);
       return next;
     });
+    // Off: forget where you were, too (it was only ever in memory).
+    if (key === 'location' && !value) setHere(null);
     if (key === 'demo') {
       // Switching worlds: search from the new one's home (the demo's, or
       // your country's), and let go of gyms picked in the other.

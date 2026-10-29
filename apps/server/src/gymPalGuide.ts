@@ -82,7 +82,7 @@ Check in with **I'm here** at a gym to add it to your **Collection** (Profile). 
 - **Trips** (Home): add where you're going and when, and see gyms there that let visitors in on those days.
 - **Appearance** (Profile): Automatic, Light or Dark, Black or Dim dark, and how glassy the app is. Pro adds more accent colours and looks.
 - **Country** (Profile): your country, which Free covers.
-- **Haptics**, **Sounds** and **Demo mode** (invented gyms for trying the app) are in Profile's settings.
+- **Haptics**, **Sounds**, **Location** (off: GymGO never asks where you are; you search a place instead, and checking in needs it on), **GymPal** (off: you're gone from the app until it's switched back on) and **Demo mode** (invented gyms for trying the app) are in Profile's settings.
 
 # Free and Pro
 Free covers everything about gyms in your country: every gym and city there, the answer for your visit and why, the source behind every fact, prices and hours where published, reviews, photos, members' reports, the workout builder, and logging workouts with the rest timer, plate calculator, records and history. Free saves up to 10 gyms and compares 2.

@@ -314,8 +314,8 @@ your accent glows behind them.
 - **Profile**: laid out like Settings. Your account card (tap it for
   **Account**: profile picture, name, email, password, Apple and Google,
   your data, sign out, delete), Training (Progress, My workouts, Plate calculator, 1-rep max, Interval timer), Pro, your
-  gyms, Settings (Country, **Appearance**, Haptics, **Sounds**, Demo
-  mode), and where GymGO's facts come from.
+  gyms, Settings (Country, **Appearance**, Haptics, **Sounds**, **Location**,
+  **GymPal**, Demo mode), and where GymGO's facts come from.
 - **Appearance**: Automatic (follows your phone), Light or Dark, for
   everyone, and dark in **Black** (true black, the default) or **Dim** (a
   soft blue-grey, easier in a lit room; the Standard look's, as the other
@@ -610,6 +610,12 @@ the search: it is never saved, and never sent to the GymGO server or anyone
 else. If you've only allowed approximate location (iPhone's "Precise: Off",
 or Android's "Approximate"), GymGO says so, because distances will be off.
 
+**Location can be switched off** in Profile → Settings. Then GymGO never
+asks the phone where you are, not even whether it's allowed, and forgets
+the position it had: you search a place instead, and Near me, checking in
+and saying how busy a gym is say that location is off and where to turn it
+back on. It stays off on that device until you switch it on again.
+
 If you're outside the cities GymGO carries, anywhere in the world, it
 opens "Near you" on where you are and offers **Search this area**; nothing
 is read from the map until you tap it. Until then the country and clock
@@ -861,6 +867,10 @@ day once $10 of credit has ever been bought there, which is yours to
 decide). Past that, GymPal says he's had a lot of questions. GymGO also
 limits each person: 20 questions a day and 6 a minute on Free, 100 a day and
 10 a minute with Pro (`GYMPAL_PLANS` in `apps/server/src/gymPal.ts`).
+
+**Switching him off.** Profile → Settings → **GymPal** takes him out of the
+app on that device: no button in the corner and no Ask GymPal rows,
+until it's switched on again.
 
 **In the app's features.** The chat opens with two or three questions that
 fit the screen it opened on (`apps/mobile/src/lib/gymPalSuggestions.ts`):

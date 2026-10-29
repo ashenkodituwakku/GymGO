@@ -182,6 +182,8 @@ describe('what finding you says', () => {
   it('outside the cities GymGO carries, leaves the next step to the lists (Search this area)', () => {
     expect(locatedNotice({ kind: 'area', fix: { approximate: false } })).toBeNull();
     expect(locatedNotice({ kind: 'area', fix: { approximate: true } })).toMatch(/approximate/i);
+    // Switched off in Settings: say where it's switched off, and offer the search instead.
+    expect(locatedNotice({ kind: 'off' }, 'AU')).toBe('Location is off in Profile → Settings. Search a suburb or city instead.');
   });
 
   it('when you say no, suggests typing a place in the words used at home', () => {

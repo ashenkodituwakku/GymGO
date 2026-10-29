@@ -93,6 +93,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
     const fix = anywhere ? null : await currentFix(true, again);
     await pause(MIN_SCAN_MS - (Date.now() - started));
     if (fix === 'denied') return stop('Collecting needs your location, just this once, to check you’re at the gym. It never leaves your phone.');
+    if (fix === 'off') return stop('Collecting needs your location, just this once, to check you’re at the gym. Location is off in Profile → Settings.');
     if (fix === 'unavailable') return stop('Couldn’t find where you are just now. Step outside or by a window, then try again.');
     setScan('checking');
     await pause(450);

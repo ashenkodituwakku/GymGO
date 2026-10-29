@@ -9,9 +9,24 @@ const location = vi.hoisted(() => ({
 }));
 vi.mock('expo-location', () => location);
 
-import { FIX_TIMEOUT_MS, PRECISE_ALONE_MS, currentFix, firstOf, withTimeout } from './location';
+import { FIX_TIMEOUT_MS, PRECISE_ALONE_MS, currentFix, firstOf, setLocationAllowed, withTimeout } from './location';
 
 describe('finding you', () => {
+  it('asks the phone nothing at all while Location is off in Settings', async () => {
+    for (const fn of [location.requestForegroundPermissionsAsync, location.getForegroundPermissionsAsync, location.getCurrentPositionAsync, location.getLastKnownPositionAsync]) fn.mockClear();
+    setLocationAllowed(false);
+    try {
+      await expect(currentFix(true)).resolves.toBe('off');
+      await expect(currentFix(false, true)).resolves.toBe('off');
+      expect(location.requestForegroundPermissionsAsync).not.toHaveBeenCalled();
+      expect(location.getForegroundPermissionsAsync).not.toHaveBeenCalled();
+      expect(location.getCurrentPositionAsync).not.toHaveBeenCalled();
+      expect(location.getLastKnownPositionAsync).not.toHaveBeenCalled();
+    } finally {
+      setLocationAllowed(true);
+    }
+  });
+
   it('gives up on a promise that never settles', async () => {
     vi.useFakeTimers();
     const never = withTimeout(new Promise<number>(() => undefined), 1000);

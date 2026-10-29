@@ -200,10 +200,13 @@ export function locatedNotice(
     | { kind: 'home'; placeName: string }
     | { kind: 'abroad'; countryCode: string; home: string }
     | { kind: 'denied' }
-    | { kind: 'unavailable' },
+    | { kind: 'unavailable' }
+    | { kind: 'off' },
   home: string | null = null,
 ): string | null {
   switch (result.kind) {
+    case 'off':
+      return `Location is off in Profile → Settings. Search ${placeWords(home)} instead.`;
     case 'denied':
       return `No worries — search ${placeWords(home)} instead.`;
     case 'unavailable':

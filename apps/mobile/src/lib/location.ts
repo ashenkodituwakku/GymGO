@@ -10,6 +10,9 @@
  * If you've only allowed approximate location (Android's "Approximate", or
  * iOS's "Precise: Off"), GymGO says so, because distances will be off by a
  * kilometre or more.
+ *
+ * Location can be switched off in Profile → Settings. Then nothing here asks
+ * the phone anything, not even whether it's allowed: every fix is 'off'.
  */
 
 import * as Location from 'expo-location';
@@ -23,7 +26,13 @@ export interface Fix {
   approximate: boolean;
 }
 
-export type FixResult = Fix | 'denied' | 'unavailable';
+export type FixResult = Fix | 'denied' | 'unavailable' | 'off';
+
+/** Location in GymGO's own settings (Profile → Settings); on to start. */
+let allowed = true;
+export function setLocationAllowed(on: boolean): void {
+  allowed = on;
+}
 
 /**
  * `ask`: show the permission prompt if it hasn't been answered. Without it,
@@ -35,6 +44,7 @@ export type FixResult = Fix | 'denied' | 'unavailable';
  * position is the one that said so, and you've likely walked in since.
  */
 export async function currentFix(ask: boolean, fresh = false): Promise<FixResult> {
+  if (!allowed) return 'off';
   let permission: Location.LocationPermissionResponse;
   try {
     permission = ask ? await Location.requestForegroundPermissionsAsync() : await Location.getForegroundPermissionsAsync();

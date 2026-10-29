@@ -7,6 +7,7 @@
  */
 
 import { StyleSheet, View } from 'react-native';
+import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { openGymPal, type GymPalRequest } from '@/lib/gymPalBus';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -30,6 +31,9 @@ export function AskGymPal({
   /** Before the chat opens: a sheet closing itself, say. */
   onOpen?: () => void;
 }) {
+  const { prefs } = useApp();
+  // Switched off in Settings: nowhere to ask.
+  if (!prefs.gymPal) return null;
   return (
     <Pressable
       onPress={() => {

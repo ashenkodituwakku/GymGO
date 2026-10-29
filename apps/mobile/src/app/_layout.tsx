@@ -135,7 +135,7 @@ function useWantedTheme(): { scheme: Scheme; accent: AccentId; look: LookId; gla
 function ThemedStack() {
   useEscapeClosesSheets();
   // GymGO needs an account: without one, only signing in and the legal pages are open.
-  const { account } = useApp();
+  const { account, prefs } = useApp();
   const gate = account.gate;
   const signedIn = gate === 'in';
   // Opened already signed in: the link opens as it is, with nothing to come back to later.
@@ -304,7 +304,7 @@ function ThemedStack() {
         <Stack.Screen name="report-bug" options={{ ...MODAL, headerShown: true, title: 'Report a bug' }} />
       </Stack>
       {/* GymPal, the AI assistant, in the corner of every signed-in screen, and the website's (which waits to be set up). */}
-      {signedIn && <GymPal />}
+      {signedIn && prefs.gymPal && <GymPal />}
       {!!veilColour && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle, { pointerEvents: 'none' }]} />}
     </ThemeProvider>
   );

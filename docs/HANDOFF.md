@@ -102,6 +102,11 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Location and GymPal switches** (29 Oct), in Profile → Settings, kept
+  in prefs (`location`, `gymPal`). Anything new that reads where you are
+  must go through `currentFix` (lib/location.ts), which returns 'off' when
+  the switch is off; anything new that opens GymPal should use `AskGymPal`,
+  which hides itself when he's off.
 - **GymPal in more features, and more of him with Pro** (29 Oct). Asked:
   include GymPal in many features, and extended use for Pro. Any screen opens
   him with `openGymPal({ question, context, about })` (`lib/gymPalBus.ts`), or

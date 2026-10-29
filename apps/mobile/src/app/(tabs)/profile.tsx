@@ -269,6 +269,23 @@ export default function Profile() {
           toggle={{ value: prefs.sounds, onChange: (value) => setPref('sounds', value) }}
         />
         <Row
+          icon="locate"
+          tile={TILE.blue}
+          title="Location"
+          subtitle={
+            prefs.location
+              ? 'For gyms near you, checking in and saying how busy a gym is. It never leaves your device'
+              : 'Off: GymGO never asks where you are. Search a place instead'
+          }
+          toggle={{ value: prefs.location, onChange: (value) => setPref('location', value) }}
+        />
+        <Row
+          leading={<GymPalFace size={ROW.tile} still />}
+          title="GymPal"
+          subtitle={prefs.gymPal ? 'The AI assistant in the corner, and Ask GymPal on screens' : 'Off: no GymPal anywhere in the app'}
+          toggle={{ value: prefs.gymPal, onChange: (value) => setPref('gymPal', value) }}
+        />
+        <Row
           icon="globe"
           tile={TILE.blue}
           title="Google content"
@@ -312,12 +329,14 @@ export default function Profile() {
             Font License 1.1.
           </Explainer>
         )}
-        <Row
-          leading={<GymPalFace size={ROW.tile} still />}
-          title="Ask GymPal"
-          subtitle="Questions about GymGO, workouts or training"
-          onPress={() => openGymPal()}
-        />
+        {prefs.gymPal && (
+          <Row
+            leading={<GymPalFace size={ROW.tile} still />}
+            title="Ask GymPal"
+            subtitle="Questions about GymGO, workouts or training"
+            onPress={() => openGymPal()}
+          />
+        )}
         {/* A report goes to the server, which the limited website hasn't got. */}
         {!LIMITED && (
           <Row

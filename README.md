@@ -1643,16 +1643,27 @@ has a public address, so it never makes the ready-made Pro test account and
 signing it out everywhere; rate limits go by each visitor's own address.
 Before you tell people about it, set who runs GymGO for the legal pages
 (`GYMGO_LEGAL_NAME`, `GYMGO_CONTACT_EMAIL`), and, for "Forgot password",
-`GYMGO_SMTP_URL`, all in `apps/server/.env.local`. gymgo.site stays the
-limited website (GitHub Pages) meanwhile.
+`GYMGO_SMTP_URL`, all in `apps/server/.env.local`.
+
+**gymgo.site follows it.** The website asks `https://app.gymgo.site` as each
+page opens: while your PC answers there, gymgo.site is the full GymGO
+(accounts, reviews, members' photos, GymPal), talking to your PC; while it
+doesn't, gymgo.site is the limited version. So it needs the fixed address
+below: a quick tunnel's address is new each time, and gymgo.site can't find
+it, so with one gymgo.site stays the limited version. See "One website, two
+versions" under "The website on GitHub Pages".
 
 **An address that stays the same** (`app.gymgo.site`): the quick tunnel's
 address is new each start. For your own, all free:
 
 1. Make a Cloudflare account, **Add a site**: `gymgo.site`, Free plan.
-   Cloudflare copies your DNS records; then in Namecheap (Domain List →
-   gymgo.site → Nameservers → Custom DNS) put the two nameservers
-   Cloudflare shows. The website keeps working throughout.
+   Cloudflare copies your DNS records. Check the four `A` records for
+   `gymgo.site` (GitHub's, `185.199.108-111.153`) and any `www` record are
+   there, and set each to **DNS only** (the grey cloud, not orange):
+   GitHub Pages keeps the website's https certificate itself. Then in
+   Namecheap (Domain List → gymgo.site → Nameservers → Custom DNS) put the
+   two nameservers Cloudflare shows. The website keeps working throughout;
+   the switch takes from minutes to a day.
 2. In Cloudflare: **Zero Trust → Networks → Tunnels → Create a tunnel**,
    type Cloudflared, name it `gymgo`. Copy the token from the install
    command it shows (the long text after `install`); don't run that
@@ -1667,7 +1678,8 @@ address is new each start. For your own, all free:
    GYMGO_PUBLIC_URL=https://app.gymgo.site
    ```
 
-5. Run `-Online` again: GymGO is at **https://app.gymgo.site**, every time.
+5. Run `-Online` again: GymGO is at **https://app.gymgo.site**, every
+   time, and gymgo.site is the full GymGO whenever it's running.
 
 ### Put GymGO online (free hosting)
 
@@ -1815,12 +1827,13 @@ What else the website has:
 
 ### The website on GitHub Pages
 
-The same limited website can be published free on GitHub Pages, as long as
-the repository is public; use it while Netlify's credits are used up, or
+The website can be published free on GitHub Pages, as long as the
+repository is public; use it while Netlify's credits are used up, or
 instead of Netlify. `.github/workflows/pages.yml` builds it with
-`scripts/pages-build.sh` (the limited version, no server, no account) on
-every push to `claude/friendly-johnson-9rzxrj` that changes the app, and
-publishes it to **https://ashenkodituwakku.github.io/GymGO/**.
+`scripts/pages-build.sh` on every push to `claude/friendly-johnson-9rzxrj`
+that changes the app, and publishes it to
+**https://ashenkodituwakku.github.io/GymGO/** (gymgo.site now: see the end
+of this section).
 
 Two settings come first, once, by an owner of the repository on GitHub:
 
@@ -1840,9 +1853,35 @@ How it differs from Netlify:
 - **No rewrites.** A gym's link opened directly (`/GymGO/gym/…`) gets
   `404.html`, which is the app again and shows the right screen; the
   browser sees a 404 status, so search engines list only the home page.
-- **No headers, no plugins, no server.** Pages can't send the headers in
-  `netlify.toml` or pass `/api` on to a server, and there's no Lighthouse
-  or sitemap plugin. It suits the limited version, not the full app.
+- **No headers, no plugins, no server of its own.** Pages can't send the
+  headers in `netlify.toml` or pass `/api` on to a server, and there's no
+  Lighthouse or sitemap plugin. The full version talks to the server at
+  its own address instead (below).
+
+**One website, two versions.** As a page opens, it asks the GymGO server
+whether it's on (`GET /api/health`, started in the page itself so the
+answer is ready by the time the app has downloaded; up to 3 seconds):
+
+- **It answers:** the full GymGO, talking to that server: accounts,
+  reviews, members' photos, Pro, GymPal. An account is optional, as on
+  Netlify: anyone can look around, and sign in for what the server keeps.
+- **It doesn't** (off, asleep, or no answer in time): the limited version,
+  with the gyms built in and its banner, asking the server nothing more. A
+  sign-in made in the full version is kept, untouched, for when it's back.
+- **It changes while a page is open:** the page asks again when you come
+  back to its tab, every five minutes while it's in view, and when the full
+  version can't reach the server. A bar across the top then offers the
+  other version (**Switch** opens the page again); it never swaps by
+  itself, in case you're in the middle of something.
+
+The server is your PC with GymGO online at **https://app.gymgo.site** (see
+"GymGO online from your PC"; `scripts/online.mjs` lets gymgo.site talk to
+it). Until that address exists, every visit gets the limited version, as
+before. For a different address, set the repository variable
+`GYMGO_SERVER_URL` (Settings → Secrets and variables → Actions →
+Variables) and push again, or set it to `none` for the limited version only.
+gymgo.site is built from the latest push and your PC runs what `-Update`
+last fetched, so keep them in step: start it with `-Update -Online`.
 
 To put it on **gymgo.site** instead: in Settings → Pages set the custom
 domain to `gymgo.site`, and at the domain's registrar point it at GitHub

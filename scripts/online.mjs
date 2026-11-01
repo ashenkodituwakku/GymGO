@@ -19,6 +19,12 @@
  *    apps/server/.env.local as CLOUDFLARE_TUNNEL_TOKEN and GYMGO_PUBLIC_URL.
  *    README, "GymGO online from your PC", says how.
  *
+ * gymgo.site, the website on GitHub Pages, asks https://app.gymgo.site as
+ * it opens (scripts/pages-build.sh): with your tunnel at that address, the
+ * website is the full GymGO while this runs and the limited version when it
+ * doesn't. A quick tunnel's address can't be known in advance, so then
+ * gymgo.site stays the limited version.
+ *
  * With a public address the server never makes the ready-made Pro test
  * account, and switches off one made earlier (its password is published).
  * Needs cloudflared, Cloudflare's free tunnel program: the script says how to
@@ -40,6 +46,10 @@ const serverDir = join(root, 'apps', 'server');
 const webDir = join(mobileDir, 'dist-online');
 const stampFile = join(webDir, '.gymgo-build');
 const PORT = 4000;
+/** GymGO's website, which talks to this server while it's on (scripts/pages-build.sh). */
+const WEBSITE_ORIGINS = ['https://gymgo.site', 'https://www.gymgo.site'];
+/** The address the website asks, unless the repository variable GYMGO_SERVER_URL says otherwise. */
+const WEBSITE_ASKS = 'https://app.gymgo.site';
 const args = new Set(process.argv.slice(2));
 const cloudflared = process.env.GYMGO_CLOUDFLARED || 'cloudflared';
 
@@ -53,7 +63,7 @@ function stop(message, fix) {
 }
 
 // --- Settings ----------------------------------------------------------------
-// Only the two this script needs; the server reads the rest of .env.local itself.
+// Only the ones this script needs; the server reads the rest of .env.local itself.
 const envFile = join(serverDir, '.env.local');
 const local = existsSync(envFile) ? parseEnv(readFileSync(envFile, 'utf8')) : {};
 const token = (process.env.CLOUDFLARE_TUNNEL_TOKEN ?? local.CLOUDFLARE_TUNNEL_TOKEN ?? '').trim();
@@ -103,7 +113,9 @@ if (built && !args.has('--rebuild')) {
   // The full app, not the limited website, and accounts as the app has them.
   delete env.EXPO_PUBLIC_LIMITED;
   delete env.EXPO_PUBLIC_ACCOUNT;
-  const build = spawnSync(process.execPath, [expoCli, 'export', '--platform', 'web', '--output-dir', 'dist-online'], { cwd: mobileDir, stdio: 'inherit', env });
+  // --clear: a build writes these settings into each file, and the bundler's cache doesn't notice when
+  // only a setting changes, so a file left as it was could keep another build's (the website's, say).
+  const build = spawnSync(process.execPath, [expoCli, 'export', '--platform', 'web', '--output-dir', 'dist-online', '--clear'], { cwd: mobileDir, stdio: 'inherit', env });
   if (build.status !== 0 || !existsSync(join(webDir, 'index.html'))) stop('Building the web app failed.', 'Scroll up for the error, then try: gymgo -Repair, and then -Online again.');
   mkdirSync(webDir, { recursive: true });
   writeFileSync(stampFile, fingerprint);
@@ -160,6 +172,10 @@ const serverEnv = {
   GYMGO_TRUST_PROXY: 'on',
   // Never the ready-made Pro account online (the server also refuses, having a public address).
   GYMGO_DEV_PRO: '',
+  // gymgo.site may talk to it, besides any you've allowed yourself.
+  GYMGO_ALLOWED_ORIGINS: [
+    ...new Set([...(process.env.GYMGO_ALLOWED_ORIGINS ?? local.GYMGO_ALLOWED_ORIGINS ?? '').split(','), ...WEBSITE_ORIGINS].map((item) => item.trim()).filter(Boolean)),
+  ].join(','),
 };
 delete serverEnv.CLOUDFLARE_TUNNEL_TOKEN;
 step('Starting the GymGO server');
@@ -201,8 +217,17 @@ console.log('');
 console.log('  Anyone with that link can use GymGO while this window stays open');
 console.log('  and this computer is awake. Ctrl+C takes it offline.');
 if (!token) {
-  console.log('  The address is new each time. For one that stays (app.gymgo.site, say),');
-  console.log('  see README, "GymGO online from your PC".');
+  console.log('  The address is new each time, so gymgo.site can\'t find it and stays');
+  console.log('  the limited version. Give GymGO its own address, app.gymgo.site, and');
+  console.log('  gymgo.site is the full GymGO whenever this runs: README, "GymGO online');
+  console.log('  from your PC".');
+} else if (url === WEBSITE_ASKS) {
+  console.log('  gymgo.site is the full GymGO while this runs, and the limited version');
+  console.log('  again once it stops.');
+} else {
+  console.log(`  gymgo.site asks ${WEBSITE_ASKS}, not this address, so it stays the limited`);
+  console.log('  version. To have it ask this one, set the repository variable');
+  console.log('  GYMGO_SERVER_URL to it (README, "GymGO online from your PC").');
 }
 console.log('  Accounts, photos and workouts are kept on this computer.');
 console.log('');

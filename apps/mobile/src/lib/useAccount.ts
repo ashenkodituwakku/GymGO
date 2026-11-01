@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError, OfflineError, setTokenSource, type Account, type SignInProvider } from './api';
 import { forgetChanges, loadSaved, noteChange, othersWaiting, settleChange, storeSaved, syncSaved } from './savedGyms';
 import { ACCOUNT_OPTIONAL } from './accountRule';
+import { LIMITED } from './limited';
 import { loadFace, loadToken, noteSignedIn, signedInBefore, storeFace, storeToken, type Face } from './session';
 
 export type AccountState = 'loading' | 'signed_out' | 'signed_in' | 'unreachable';
@@ -39,7 +40,7 @@ export function useAccount() {
       const next = { displayName: account.displayName, avatarUrl: account.avatarUrl ?? null };
       setFace(next);
       void storeFace(next);
-    } else if (state === 'signed_out') {
+    } else if (state === 'signed_out' && !LIMITED) {
       setFace(null);
       void storeFace(null);
     }
@@ -85,7 +86,9 @@ export function useAccount() {
         savedNow.current = local;
         setSaved(local);
       }
-      const stored = await loadToken();
+      // The limited version has no accounts: a sign-in kept from the full one waits, untouched, until the
+      // full version is back (the website that picks its version, lib/website.ts).
+      const stored = LIMITED ? null : await loadToken();
       const before = stored ? true : await signedInBefore();
       if (!cancelled) {
         setRemembered(Boolean(stored));

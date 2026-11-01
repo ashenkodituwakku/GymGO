@@ -18,12 +18,15 @@ import { NativeModules, Platform } from 'react-native';
 import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review, CollectionTotals, FriendCard, BusyLevel, OwnerUpdatePayload } from '@gymgo/domain';
 import type { TrainingSession } from './training';
 import { pickApiBase } from './serverAddress';
+import { LIMITED } from './limited';
+import { WEBSITE_AUTO, serverMissed } from './website';
 
 export { SERVER_PREFIX, pickApiBase } from './serverAddress';
 
 export function apiBase(): string | null {
   return pickApiBase({
-    configured: process.env.EXPO_PUBLIC_API_URL,
+    // The website that picks its version, being the limited one: its server didn't answer, so nothing is asked of it.
+    configured: WEBSITE_AUTO && LIMITED ? 'none' : process.env.EXPO_PUBLIC_API_URL,
     pageOrigin: Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : null,
     bundleUrl: bundleUrl(),
     hostUri: Constants.expoConfig?.hostUri ?? null,
@@ -119,6 +122,8 @@ async function request<T>(method: string, path: string, options: { token?: strin
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
   } catch {
+    // On the website, maybe its server has just gone off (lib/website.ts).
+    serverMissed();
     throw new OfflineError('Couldn’t reach the GymGO server.');
   } finally {
     clearTimeout(timer);

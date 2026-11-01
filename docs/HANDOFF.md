@@ -102,6 +102,28 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **gymgo.site follows the owner's server** (1 Nov). Asked: "when the
+  server is turned off it shows the limited edition of the website and when
+  the server is on it shows the normal version". One Pages build
+  (`EXPO_PUBLIC_LIMITED=auto`, `EXPO_PUBLIC_API_URL=https://app.gymgo.site`
+  unless the repository variable `GYMGO_SERVER_URL` says otherwise, `none`
+  for limited only). The page asks `/api/health` from a script that
+  pages-build.sh puts in index.html; the app's new entry (apps/mobile/
+  index.ts, `main` in package.json) waits for that answer (3 s at most)
+  before requiring `expo-router/entry`, so `LIMITED` (lib/limited.ts) stays
+  a constant read once. Phones start at once, as before. In the limited
+  version apiBase is null and the kept sign-in isn't read or cleared
+  (useAccount). WebsiteBanner (components/LimitedBanner.tsx) offers the
+  other version when a later answer differs; it never reloads by itself.
+  online.mjs adds gymgo.site and www to `GYMGO_ALLOWED_ORIGINS` and says
+  whether gymgo.site will follow. Found on the way: `expo export` reuses
+  cached files with old `EXPO_PUBLIC_*` values baked in when only a setting
+  changed, so pages-build.sh and online.mjs now pass `--clear`
+  (netlify-build.sh doesn't; CI starts with no cache anyway). It works only
+  once app.gymgo.site exists: the owner moves gymgo.site's DNS to
+  Cloudflare (keeping GitHub's records DNS only) and makes the named
+  tunnel (README, "GymGO online from your PC"). Not tried against the real
+  address from here.
 - **GymGO online from the owner's PC** (1 Nov). Asked: a server at
   absolutely no cost; Oracle's free servers were out of capacity, Cloudflare
   Workers' free plan allows 10 ms of CPU a request (one scrypt check is about

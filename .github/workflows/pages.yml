@@ -1,5 +1,9 @@
-# GymGO's website on GitHub Pages: the limited version (scripts/pages-build.sh),
-# built and published on every push to this branch that changes the app.
+# GymGO's website on GitHub Pages (scripts/pages-build.sh): the full GymGO
+# while its server (GymGO online from the owner's computer) answers, the
+# limited version while it doesn't. Built and published on every push to this
+# branch that changes the app. The server's address is https://app.gymgo.site
+# unless the repository variable GYMGO_SERVER_URL says otherwise ("none":
+# the limited version only).
 # Free for a public repository. See README, "The website on GitHub Pages".
 #
 # Once, in the repository's Settings (an owner's job):
@@ -54,6 +58,7 @@ jobs:
         env:
           BASE_PATH: ${{ steps.pages.outputs.base_path }}
           SITE_URL: ${{ steps.pages.outputs.base_url }}
+          SERVER_URL: ${{ vars.GYMGO_SERVER_URL }}
       - uses: actions/upload-pages-artifact@v5
         with:
           path: apps/mobile/dist

@@ -102,6 +102,15 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **GymGO online from the owner's PC** (1 Nov). Asked: a server at
+  absolutely no cost; Oracle's free servers were out of capacity, Cloudflare
+  Workers' free plan allows 10 ms of CPU a request (one scrypt check is about
+  40 ms here), and the owner chose their PC "for now". `gymgo -Online`
+  (scripts/online.mjs): the server serves the web app itself (web.ts,
+  `GYMGO_WEB_DIR`) behind a Cloudflare Tunnel; the app finds the server at
+  its own address (`same-origin`). A public address switches the published
+  dev Pro account off (`retireDevProAccount`). Never open a real tunnel
+  from a cloud session: test with a stand-in cloudflared (`GYMGO_CLOUDFLARED`).
 - **Location and GymPal switches** (29 Oct), in Profile → Settings, kept
   in prefs (`location`, `gymPal`). Anything new that reads where you are
   must go through `currentFix` (lib/location.ts), which returns 'off' when

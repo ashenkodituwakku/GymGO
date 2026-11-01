@@ -19,6 +19,9 @@ export function pickApiBase(from: {
 }): string | null {
   // A build with no server (the website on Netlify, until one is set up): nothing is asked of one.
   if (from.configured === 'none') return null;
+  // A build its own server serves (GymGO online from one computer, scripts/online.mjs): the page's
+  // own address, whatever the tunnel in front of it is called today.
+  if (from.configured === 'same-origin') return from.pageOrigin ?? null;
   if (from.configured) return from.configured.replace(/\/+$/, '');
   if (from.pageOrigin) return `${from.pageOrigin}${SERVER_PREFIX}`;
   const origin = from.bundleUrl ? /^https?:\/\/[^/?#]+/i.exec(from.bundleUrl)?.[0] : null;

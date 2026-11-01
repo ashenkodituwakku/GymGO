@@ -40,6 +40,13 @@
     computer (dev@gymgo.test). It is made by default, only on this
     computer's own database, and never on a hosted server.
 
+.PARAMETER Online
+    Put GymGO on the internet from this computer, free: the server serves
+    the web app itself, and a Cloudflare Tunnel gives it a public https
+    address (new each time, or your own: see README, "GymGO online from your
+    PC"). Online while the window stays open and the PC is awake. Needs
+    cloudflared: winget install --id Cloudflare.cloudflared
+
 .PARAMETER OldWebsite
     Start the older Next.js website instead of the app.
 
@@ -53,6 +60,7 @@
     gymgo -Tunnel
     gymgo -NoBrowser
     gymgo -NoDevAccount
+    gymgo -Online
     gymgo -OldWebsite
 #>
 [CmdletBinding()]
@@ -63,6 +71,7 @@ param(
     [switch] $Update,
     [switch] $Repair,
     [switch] $NoDevAccount,
+    [switch] $Online,
     [switch] $OldWebsite,
     [ValidateRange(1, 65535)]
     [int] $Port = 3000
@@ -239,6 +248,19 @@ try {
         $clearCache = $true
     }
     Write-Done 'Dependencies ready'
+
+    # --- Online: this computer as GymGO's server, through a Cloudflare tunnel ---
+    if ($Online) {
+        Write-Host ''
+        Write-Host '  Putting GymGO online from this computer' -ForegroundColor White
+        Write-Host '  Keep this window open and the PC awake. Ctrl+C takes it offline.' -ForegroundColor DarkGray
+        Write-Host ''
+        $onlineArgs = @((Join-Path $Path 'scripts/online.mjs'))
+        # A repair also builds the web app again from scratch.
+        if ($Repair) { $onlineArgs += '--rebuild' }
+        & node @onlineArgs
+        return
+    }
 
     # --- The app and its server ----------------------------------------------
     if (-not $OldWebsite) {

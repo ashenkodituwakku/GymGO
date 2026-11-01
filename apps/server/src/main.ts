@@ -29,28 +29,30 @@ import {
   SMTP_URL,
   OPENROUTER_API_KEY,
   GYMPAL_MODELS,
+  WEB_DIR,
 } from './config';
 import { senderFor, smtpMailer } from './mail';
 import { scheduleBackups } from './backup';
 import { openDb, seedGyms } from './db';
-import { devAccountRefusal, ensureDevProAccount } from './devAccount';
+import { devAccountRefusal, ensureDevProAccount, retireDevProAccount } from './devAccount';
 import { DEFAULT_MODELS, freeModels } from './gymPal';
 
 const db = openDb(DB_PATH);
 seedGyms(db, GYM_RECORDS);
 
 // A ready-made Pro account for trying GymGO on this computer; never on a hosted one.
+// Its password is published, so on a server that may be public (a public
+// address, or live Stripe keys) one made here earlier is switched off too.
 let devAccountLine: string | null = null;
 let devAccountMade = false;
-if (DEV_PRO_ACCOUNT) {
-  const refusal = devAccountRefusal({ publicUrl: PUBLIC_URL, stripeKey: STRIPE_SECRET_KEY });
-  if (refusal) {
-    devAccountLine = `[server] Dev Pro account: not made, because ${refusal}.`;
-  } else {
-    const dev = ensureDevProAccount(db);
-    devAccountMade = true;
-    devAccountLine = `[server] Dev Pro account (this computer only): sign in as ${dev.email} with password ${dev.password}`;
-  }
+const devRefusal = devAccountRefusal({ publicUrl: PUBLIC_URL, stripeKey: STRIPE_SECRET_KEY });
+if (devRefusal) {
+  if (retireDevProAccount(db)) devAccountLine = `[server] Dev Pro account: switched off and signed out, because ${devRefusal}.`;
+  else if (DEV_PRO_ACCOUNT) devAccountLine = `[server] Dev Pro account: not made, because ${devRefusal}.`;
+} else if (DEV_PRO_ACCOUNT) {
+  const dev = ensureDevProAccount(db);
+  devAccountMade = true;
+  devAccountLine = `[server] Dev Pro account (this computer only): sign in as ${dev.email} with password ${dev.password}`;
 }
 
 // Bug reports are emailed through the owner's own SMTP account, when there is one.
@@ -74,6 +76,7 @@ const server = createServer(
     bugReports: { send: bugMail, to: BUG_REPORT_TO, retryEveryMs: 15 * 60_000 },
     legal: { copyrightAgent: COPYRIGHT_AGENT, operator: LEGAL_OPERATOR },
     gymPal: { key: OPENROUTER_API_KEY, models: GYMPAL_MODELS },
+    webDir: WEB_DIR,
     devAccount: devAccountMade,
     trustProxy: TRUST_PROXY,
     // Password reset links go out through the same email account as bug reports.
@@ -112,6 +115,7 @@ server.listen(PORT, HOST, () => {
   if (lan.length > 0) console.log(`[server] Phones on your Wi-Fi reach it at ${lan.join(' or ')}`);
   console.log(`[server] GymGO Pro payments (Stripe): ${stripeMode(STRIPE_SECRET_KEY)}`);
   if (devAccountLine) console.log(devAccountLine);
+  if (WEB_DIR) console.log(`[server] Serving the web app from ${WEB_DIR} at ${PUBLIC_URL ?? `http://localhost:${PORT}`}`);
   if (STRIPE_SECRET_KEY) {
     console.log(
       STRIPE_WEBHOOK_SECRET

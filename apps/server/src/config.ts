@@ -141,6 +141,12 @@ export const BUG_REPORT_TO = (process.env.GYMGO_BUG_REPORT_TO ?? 'ashenkodit@gma
  * or anyone could claim any address.
  */
 export const TRUST_PROXY = (process.env.GYMGO_TRUST_PROXY ?? '').trim().toLowerCase() === 'on';
+/**
+ * Optional. The web app's exported files, for this server to serve itself at
+ * its own address (GymGO online from one computer: scripts/online.mjs sets
+ * it). Without it, the server answers its API only, as behind Caddy.
+ */
+export const WEB_DIR = process.env.GYMGO_WEB_DIR?.trim() || null;
 export const ALLOWED_ORIGINS = (process.env.GYMGO_ALLOWED_ORIGINS ?? '').split(',').map((item) => item.trim()).filter(Boolean);
 
 /**

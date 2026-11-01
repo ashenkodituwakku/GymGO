@@ -202,6 +202,7 @@ import { GoogleError, GooglePlaces } from './google';
 import { MAX_AVATAR_BYTES, MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
 import { IdentityError, IdentityVerifier, label, type Provider, type VerifiedIdentity } from './identity';
 import { BugReportError, BugReports, cleanBugReport } from './bugReports';
+import { serveWeb } from './web';
 import { GYMPAL_PLANS, GymPal, GymPalError, cleanChat, cleanContext, trainingSummary, type LoggedSession } from './gymPal';
 import { Social, SocialError } from './social';
 import { OwnerError, Owners } from './owners';
@@ -258,6 +259,12 @@ export interface AppOptions {
     /** How often to retry reports that didn't go (and send any kept before email was set up); off unless set. */
     retryEveryMs?: number;
   };
+  /**
+   * The web app's exported files (GYMGO_WEB_DIR), served for every address
+   * that isn't the server's own: GymGO online from one computer, with no
+   * Caddy in front (web.ts, scripts/online.mjs). None: the API only.
+   */
+  webDir?: string | null;
   /** GymPal, the chat: the owner's OpenRouter key (none: off), the free models to ask, and a stand-in fetch for tests. */
   gymPal?: { key: string | null; models?: string[]; fetchImpl?: typeof fetch; log?: (line: string) => void };
   /** Legal contacts the app shows: the designated copyright (DMCA) agent, once registered. */
@@ -2525,6 +2532,8 @@ export function createApp(options: AppOptions) {
       res.setHeader('Access-Control-Max-Age', '600');
     }
     if (req.method === 'OPTIONS') return send(res, 204);
+    // The web app itself, where this server is all there is (online from one computer).
+    if (options.webDir && serveWeb(options.webDir, req, res, hsts)) return;
 
     try {
       await route(req, res);

@@ -10,6 +10,13 @@ describe('where the GymGO server is', () => {
     expect(pickApiBase({ configured: 'none', pageOrigin: 'https://gymgo.site' })).toBeNull();
   });
 
+  it('is the page’s own address when the server serves the app itself, whatever the tunnel is called', () => {
+    expect(pickApiBase({ configured: 'same-origin', pageOrigin: 'https://quiet-river-1234.trycloudflare.com' })).toBe('https://quiet-river-1234.trycloudflare.com');
+    expect(pickApiBase({ configured: 'same-origin', pageOrigin: 'https://app.gymgo.site' })).toBe('https://app.gymgo.site');
+    // No page (a phone app built that way by mistake): nowhere, rather than a made-up address.
+    expect(pickApiBase({ configured: 'same-origin', pageOrigin: null })).toBeNull();
+  });
+
   it('is through the bundler, on the page’s own address, in a browser', () => {
     expect(pickApiBase({ pageOrigin: 'http://localhost:8081' })).toBe('http://localhost:8081/_gymgo');
     expect(pickApiBase({ pageOrigin: 'http://192.168.0.46:8081' })).toBe('http://192.168.0.46:8081/_gymgo');

@@ -1608,6 +1608,67 @@ computer, install the Stripe CLI and run
 
 The setup refuses a live key (`sk_live_…`) unless you add `--live`.
 
+### GymGO online from your PC (free, no card)
+
+Your PC can be GymGO's server for everyone: the GymGO server serves the web
+app itself, and a free **Cloudflare Tunnel** gives it a public https
+address. Nothing to open on your router, no account needed to start, no
+card. It's online while the window stays open and the PC is awake; members'
+accounts, photos and workouts are kept on your PC.
+
+1. **Install Cloudflare's tunnel program** (once), then open a new PowerShell:
+
+   ```powershell
+   winget install --id Cloudflare.cloudflared
+   ```
+
+2. **Go online** (the first time builds the web app, a few minutes):
+
+   ```powershell
+   & "$HOME\GymGO\scripts\gymgo.ps1" -Update -Online
+   ```
+
+   It prints **GymGO is online at https://…trycloudflare.com**: send that
+   link to anyone. Ctrl+C takes GymGO offline. Don't run the normal
+   launcher at the same time (both use port 4000).
+
+3. **Keep the PC awake** while it's online: Settings → System → Power →
+   Screen and sleep, "When plugged in, put my device to sleep after":
+   Never.
+
+What changes when it's online (`scripts/online.mjs`): the web app is the
+full GymGO, not the limited website, and asks for an account; the server
+has a public address, so it never makes the ready-made Pro test account and
+**switches off one made earlier** (its password is printed in this README),
+signing it out everywhere; rate limits go by each visitor's own address.
+Before you tell people about it, set who runs GymGO for the legal pages
+(`GYMGO_LEGAL_NAME`, `GYMGO_CONTACT_EMAIL`), and, for "Forgot password",
+`GYMGO_SMTP_URL`, all in `apps/server/.env.local`. gymgo.site stays the
+limited website (GitHub Pages) meanwhile.
+
+**An address that stays the same** (`app.gymgo.site`): the quick tunnel's
+address is new each start. For your own, all free:
+
+1. Make a Cloudflare account, **Add a site**: `gymgo.site`, Free plan.
+   Cloudflare copies your DNS records; then in Namecheap (Domain List →
+   gymgo.site → Nameservers → Custom DNS) put the two nameservers
+   Cloudflare shows. The website keeps working throughout.
+2. In Cloudflare: **Zero Trust → Networks → Tunnels → Create a tunnel**,
+   type Cloudflared, name it `gymgo`. Copy the token from the install
+   command it shows (the long text after `install`); don't run that
+   command.
+3. On the tunnel, **Public hostname → Add**: subdomain `app`, domain
+   `gymgo.site`, service **HTTP** `localhost:4000`.
+4. Add to `apps/server/.env.local` (it holds a secret: never share it or
+   commit it):
+
+   ```
+   CLOUDFLARE_TUNNEL_TOKEN=the-token
+   GYMGO_PUBLIC_URL=https://app.gymgo.site
+   ```
+
+5. Run `-Online` again: GymGO is at **https://app.gymgo.site**, every time.
+
 ### Put GymGO online (free hosting)
 
 Everything above runs on your own computer. To have GymGO on the internet,

@@ -4,7 +4,7 @@ import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from './app';
 import { openDb, type Db } from './db';
-import { DEV_PRO_EMAIL, DEV_PRO_PASSWORD, devAccountRefusal, ensureDevProAccount } from './devAccount';
+import { DEV_PRO_EMAIL, DEV_PRO_PASSWORD, devAccountRefusal, ensureDevProAccount, retireDevProAccount } from './devAccount';
 
 let server: Server;
 let base: string;
@@ -69,6 +69,22 @@ describe('the dev Pro account', () => {
     db.prepare("update users set terms_version = '2020-01-01' where email = ?").run(DEV_PRO_EMAIL);
     ensureDevProAccount(db);
     expect((db.prepare('select terms_version from users where email = ?').get(DEV_PRO_EMAIL) as { terms_version: string }).terms_version).toBe(LEGAL_VERSION);
+  });
+
+  it('is switched off where the server may be public: its published password opens nothing, and it’s signed out', async () => {
+    const before = (await (await login(DEV_PRO_PASSWORD)).json()) as { token: string };
+    expect(retireDevProAccount(db)).toBe(true);
+    expect((await login(DEV_PRO_PASSWORD)).status).toBe(403);
+    // The sign-in it had is gone too, and so is its free Pro.
+    expect((await fetch(`${base}/api/me`, { headers: { authorization: `Bearer ${before.token}` } })).status).toBe(401);
+    expect((db.prepare("select status from subscriptions where stripe_subscription_id = 'dev_local_pro'").get() as { status: string }).status).toBe('canceled');
+    // Back on this computer with it on, it's whole again.
+    ensureDevProAccount(db);
+    expect((await login(DEV_PRO_PASSWORD)).status).toBe(200);
+    // Nothing to switch off where it was never made.
+    const empty = openDb(':memory:');
+    expect(retireDevProAccount(empty)).toBe(false);
+    empty.close();
   });
 
   it('is marked for the app’s testing shortcuts only by a server that made it', async () => {

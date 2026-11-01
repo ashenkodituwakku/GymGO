@@ -45,6 +45,23 @@ export function devAccountRefusal(options: { publicUrl: string | null; stripeKey
 }
 
 /**
+ * The dev account switched off, on a server that may be public: blocked (so
+ * its published password opens nothing), signed out everywhere, and its free
+ * Pro ended. Its password is in the README for anyone to read, so a copy
+ * made on this computer before GymGO went online must not work there. The
+ * next local start with it on makes it whole again. Says whether there was
+ * one to switch off.
+ */
+export function retireDevProAccount(db: Db, now = new Date()): boolean {
+  const account = findByEmail(db, DEV_PRO_EMAIL);
+  if (!account) return false;
+  db.prepare('update users set blocked = 1 where id = ?').run(account.id);
+  db.prepare('delete from sessions where user_id = ?').run(account.id);
+  db.prepare("update subscriptions set status = 'canceled', updated_at = ? where stripe_subscription_id = ?").run(now.toISOString(), DEV_SUBSCRIPTION);
+  return true;
+}
+
+/**
  * Make the dev account if it's missing, put its password back if it was
  * changed, mark the current terms as agreed (it's the owner's own test
  * account, so it shouldn't stop to ask), and give it Pro until 2099. Safe to

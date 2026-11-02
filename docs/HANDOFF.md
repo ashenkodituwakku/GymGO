@@ -102,6 +102,17 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Round 1 of the owner's 11: "Can I do my workout here?" and supersets**
+  (2 Nov). A gym's page has a fold that checks a saved workout against
+  `knownKit` (the gym's list plus members' tallies): there / missing /
+  not known, with `swapFor` swaps from the known kit and **Start it here**
+  (lib/workoutFit.ts, components/WorkoutFit.tsx, PlaceCard `workoutFit`).
+  Supersets and circuits are a shared `group` letter on neighbouring items
+  (lib/supersets.ts: tidyGroups, linkWithNext, unlink, restAfter, nextUp),
+  in the builder (ExerciseCard) and the logger (train.tsx), with the rest
+  timer and "up next" following the group; saved plans keep `group`
+  (server cleanWorkoutPlan, A–L only) and a regrouped plan saves as new.
+  GymPal's guide covers both.
 - **gymgo.site follows the owner's server** (1 Nov). Asked: "when the
   server is turned off it shows the limited edition of the website and when
   the server is on it shows the normal version". One Pages build
@@ -395,10 +406,10 @@ Claimed by this session (session_01T19nwfpA683gnbhSJ8YpPV), built in this
 order and pushed round by round; tick each as it lands. Another session:
 `git fetch` first and leave these alone.
 
-- [ ] "Can I do this workout here?" on a gym's page: the workout you built
+- [x] "Can I do this workout here?" on a gym's page: the workout you built
       against members' equipment reports (there / missing / not known yet),
       with a swap for what's missing.
-- [ ] Supersets and circuits in the workout builder and logger, one rest
+- [x] Supersets and circuits in the workout builder and logger, one rest
       timer for the group.
 - [ ] Training programmes: a goal and days a week planned over weeks,
       weight added when every rep is hit, an easier week now and then;

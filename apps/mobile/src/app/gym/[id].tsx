@@ -34,6 +34,7 @@ import { MemberBusy } from '@/components/MemberBusy';
 import { DayPass } from '@/components/DayPass';
 import { GymOwner } from '@/components/GymOwner';
 import { ReviewsSection } from '@/components/ReviewsSection';
+import { WorkoutFit } from '@/components/WorkoutFit';
 import { NoPhoto, PrimaryButton, Txt } from '@/components/ui';
 import { GymPageSkeleton } from '@/components/Skeleton';
 import { shareGym } from '@/lib/actions';
@@ -249,6 +250,7 @@ export default function GymPage() {
                 onSignIn={() => router.push('/sign-in')}
               />
             )}
+            workoutFit={LIMITED || location.isDemoData ? null : <WorkoutFit record={result.record} account={account} onSignIn={() => router.push('/sign-in')} />}
             statusWarning={LIMITED ? null : <StatusWarning gymId={location.id} isDemo={location.isDemoData} token={account.state === 'signed_in' ? account.token : null} />}
             memberStatus={LIMITED ? null : <MemberStatus gymId={location.id} isDemo={location.isDemoData} account={account} onSignIn={() => router.push('/sign-in')} />}
             memberAccess={LIMITED ? null : (

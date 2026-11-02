@@ -598,6 +598,25 @@ describe('what Pro unlocks', () => {
     expect((await call(withStripe.base, 'POST', '/api/workouts', { token: pro.token, body: { name: 'Pull', plan } })).status).toBe(403);
     expect((await call(withStripe.base, 'DELETE', `/api/workouts/${saved.body.workout.id}`, { token: pro.token })).status).toBe(204);
   });
+
+  it('keeps supersets: a letter per group, anything else dropped, and a regrouped plan is a new one', async () => {
+    const pro = await proAccount();
+    const items = [
+      { ...plan.items[0]!, group: 'A' },
+      { ...plan.items[1]!, group: 'A' },
+      { exerciseId: 'pushdown', sets: 3, reps: '10–15', restSeconds: 60, uses: ['cable_station'], confirmed: false, group: 'not a letter' },
+    ];
+    const grouped = await call(withStripe.base, 'POST', '/api/workouts', { token: pro.token, body: { name: 'Push supersets', plan: { ...plan, items } } });
+    expect(grouped.status).toBe(201);
+    expect(grouped.body.workout.plan.items.map((item: { group?: string }) => item.group ?? null)).toEqual(['A', 'A', null]);
+    // The same exercises without the superset: a different plan, kept as well.
+    const plain = await call(withStripe.base, 'POST', '/api/workouts', {
+      token: pro.token,
+      body: { name: 'Push straight', plan: { ...plan, items: items.map(({ group: _group, ...item }) => item) } },
+    });
+    expect(plain.status).toBe(201);
+    expect(plain.body.workout.id).not.toBe(grouped.body.workout.id);
+  });
 });
 
 describe('deleting an account', () => {

@@ -12,7 +12,7 @@ export function workoutFromSaved(plan: SavedWorkoutPlan): { workout: Workout; mi
   const items = plan.items.flatMap((item) => {
     const exercise = EXERCISES.find((candidate) => candidate.id === item.exerciseId);
     if (!exercise) return [];
-    return [{ exercise, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds, uses: item.uses as Kit[], confirmed: item.confirmed }];
+    return [{ exercise, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds, uses: item.uses as Kit[], confirmed: item.confirmed, ...(item.group ? { group: item.group } : {}) }];
   });
   return { workout: { items, uncovered: plan.uncovered as Muscle[] }, missing: plan.items.length - items.length };
 }
@@ -26,7 +26,7 @@ export function startSavedWorkout(saved: SavedWorkout, unit: WeightUnit): void {
     gymId: saved.gymId,
     gymName: saved.plan.gymName,
     unit,
-    items: workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds })),
+    items: workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds, group: item.group })),
   });
 }
 
@@ -34,8 +34,8 @@ export function startSavedWorkout(saved: SavedWorkout, unit: WeightUnit): void {
  * What makes two plans the same: the gym, and each exercise with its sets,
  * reps and rest. The builder uses it so Save doesn't keep a second copy.
  */
-export function planSignature(gymId: string | null, items: ReadonlyArray<{ exerciseId: string; sets: number; reps: string; restSeconds: number }>): string {
-  return `${gymId ?? ''}|${items.map((item) => `${item.exerciseId}:${item.sets}:${item.reps}:${item.restSeconds}`).join(',')}`;
+export function planSignature(gymId: string | null, items: ReadonlyArray<{ exerciseId: string; sets: number; reps: string; restSeconds: number; group?: string }>): string {
+  return `${gymId ?? ''}|${items.map((item) => `${item.exerciseId}:${item.sets}:${item.reps}:${item.restSeconds}${item.group ? `:${item.group}` : ''}`).join(',')}`;
 }
 
 /** A saved name ends with its gym ("Legs · Equinox"); the line under it names the gym, so the title needn't. */

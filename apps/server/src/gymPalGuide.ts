@@ -58,11 +58,13 @@ Photos (members' first, then the gym's own website's), the answer for your visit
 - **+ Add a photo**: a photo you took there; a moderator checks it first. Reviews are checked by a moderator too.
 - **See it on Google**: Google's own map, card and Street View for the gym (it asks before loading Google content).
 - **Build a workout here**: a plan using that gym's known machines.
+- **Can I do my workout here?** (signed in): picks one of their saved workouts and checks each exercise against what the gym is known to have, from its own list and members' equipment reports: **there** (green), **missing** (members say what it needs isn't there) or **not known** (nobody has said). Not known is never "no". For one that isn't there it offers a **Swap** the known kit allows; **Start it here** starts the workout at that gym with the swaps they chose.
 - Gym owners can claim their gym (**The gym's owner → Claim this gym**).
 - With Pro, **your own notes** on each gym, kept on your device.
 
 # Workouts
 - **Build a workout** (Home, or a gym's page): tap muscles on the body (front and back, or a plain list) or pick Push, Pull, Legs, Core or Full body; choose a goal (strength, muscle, endurance) and length (4, 6 or 8 exercises); tap **Build my workout**. **Shuffle** for another version, **Swap** to change one exercise, **Share** to send it, and with Pro **Save** keeps it in **My workouts**. **Fresh muscles** picks muscles you haven't trained for two days or more.
+- **Supersets and circuits**: in the builder or during a workout, **Superset with the next** joins an exercise with the one after it (two together are a superset, three or more a circuit, marked "Superset A (1/2)"); **Add the next to this group** grows it, **Take out of Superset A** splits it. They do one set of each in turn, and the rest timer starts only once each has had its set, using the longest of their rests, with none after the last round. Saved workouts keep their supersets.
 - **Start workout**: each exercise shows its sets; type weight and reps and tick each set. Last time's numbers are filled in. Ticking a set starts the rest timer (with −15, +15 and Skip). The screen stays on. A set that beats your best is a record and turns gold. **Plates** shows what to load on each side of the bar. Finish to save it to your account; you can add a note afterwards and share it.
 - **Templates**: Beginner full body, 5×5 strength, and Push, pull, legs. Each takes turns through its days.
 - **Exercises** (Profile): every move GymGO plans, with how to do it, what it works and needs, and swaps.

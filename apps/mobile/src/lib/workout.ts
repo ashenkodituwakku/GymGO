@@ -259,6 +259,8 @@ export interface PlannedExercise {
   confirmed: boolean;
   /** The muscle this place in the plan was picked for: a swap keeps to it. */
   muscle?: Muscle;
+  /** Its superset or circuit: neighbours sharing a letter (lib/supersets.ts). */
+  group?: string;
 }
 
 export interface Workout {
@@ -441,7 +443,7 @@ export function swapInWorkout(workout: Workout, index: number, options: { availa
   const muscle = item.muscle ?? item.exercise.primary[0];
   const replacement = item.exercise.cardio
     ? { ...item, exercise: next, uses: wayToDo(next, new Set(options.available)) ?? [], confirmed: (wayToDo(next, new Set(options.available)) ?? []).every((kit) => options.confirmed.includes(kit)) }
-    : planned(next, options.goal, new Set(options.available), new Set(options.confirmed), muscle);
+    : { ...planned(next, options.goal, new Set(options.available), new Set(options.confirmed), muscle), ...(item.group ? { group: item.group } : {}) };
   return { ...workout, items: workout.items.map((other, at) => (at === index ? replacement : other)) };
 }
 

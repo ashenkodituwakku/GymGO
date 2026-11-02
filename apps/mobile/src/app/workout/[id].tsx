@@ -8,6 +8,8 @@
  * here. `id` is a gym's id, or "any" for no particular gym.
  */
 
+import { groupOf, linkWithNext, unlink } from '@/lib/supersets';
+import { joinableNext } from '@/components/GroupControls';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Share, StyleSheet, View, useWindowDimensions } from 'react-native';
@@ -113,6 +115,8 @@ export default function WorkoutScreen() {
     haptic.select();
     setSwapped({ base: generated, workout: swapInWorkout(workout, index, { available, confirmed: kit.has, goal }) });
   };
+  // Supersets and circuits (lib/supersets.ts), kept with this plan like a swap.
+  const regroup = (items: Workout['items']) => setSwapped({ base: generated, workout: { ...workout, items } });
 
   // When you last trained each muscle, from your log, and the big ones you
   // haven't for two days or more: a one-tap pick.
@@ -143,7 +147,7 @@ export default function WorkoutScreen() {
   }, [libraryToken]);
   const signature = planSignature(
     record?.location.id ?? null,
-    workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds })),
+    workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds, group: item.group })),
   );
   const isSaved = saveState === 'saved' || library.has(signature);
   const saveWorkout = async () => {
@@ -169,6 +173,7 @@ export default function WorkoutScreen() {
             restSeconds: item.restSeconds,
             uses: item.uses,
             confirmed: item.confirmed,
+            ...(item.group ? { group: item.group } : {}),
           })),
           uncovered: workout.uncovered,
         },
@@ -323,7 +328,7 @@ export default function WorkoutScreen() {
                       gymId: record?.location.id ?? null,
                       gymName,
                       unit: unitFor(prefs.country),
-                      items: workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds })),
+                      items: workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds, group: item.group })),
                     });
                   }
                   router.push('/train');
@@ -404,6 +409,10 @@ export default function WorkoutScreen() {
                 forGym={record !== null}
                 swapTo={swapFor(swapItems, index, available)?.name ?? null}
                 onSwap={() => swap(index)}
+                group={groupOf(workout.items, index)}
+                nextName={joinableNext(workout.items, index, (at) => workout.items[at]!.exercise.name)}
+                onLink={() => regroup(linkWithNext(workout.items, index))}
+                onUnlink={() => regroup(unlink(workout.items, index))}
               />
             ))}
 

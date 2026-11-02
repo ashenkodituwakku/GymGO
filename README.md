@@ -384,6 +384,19 @@ takes turns through its days, so starting one gives you the day after the
 last you logged; any other day can be started too. They're general plans,
 not advice for anyone in particular, and the screen says to start light.
 
+- **Supersets and circuits.** In the builder or during a workout,
+  **Superset with the next** joins an exercise with the one after it; **Add
+  the next to this group** makes it a circuit (three or more), and **Take
+  out of Superset A** splits it. You do one set of each in turn: the rest
+  timer starts only once each has had its set, for the longest of their
+  rests, and not after the last round. Saved workouts keep them.
+- **Can I do my workout here?** (a gym's page, signed in): one of your
+  saved workouts checked against what the gym is known to have, from its
+  own list and members' equipment reports. Each exercise is **there**,
+  **missing** (members say what it needs isn't there) or **not known**
+  (nobody has said; never counted as "no"). For one that isn't there, a
+  **Swap** the known kit allows; **Start it here** starts the workout at
+  that gym with the swaps you chose.
 - **Rest timer.** Ticking a set starts the rest the plan calls for (90 s,
   say), in a glass bar at the bottom with −15, +15 and Skip. The phone
   buzzes when it's up. With the phone locked or GymGO in the background, a

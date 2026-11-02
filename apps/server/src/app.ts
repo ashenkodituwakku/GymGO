@@ -371,7 +371,7 @@ function planSteps(items: unknown): string {
   return JSON.stringify(
     items.map((raw) => {
       const item = (raw ?? {}) as Record<string, unknown>;
-      return [item.exerciseId, item.sets, item.reps, item.restSeconds];
+      return [item.exerciseId, item.sets, item.reps, item.restSeconds, ...(typeof item.group === 'string' ? [item.group] : [])];
     }),
   );
 }
@@ -393,7 +393,9 @@ function cleanWorkoutPlan(input: unknown) {
     const reps = text(item.reps, 20);
     const restSeconds = int(item.restSeconds, 0, 600);
     if (!exerciseId || sets === null || !reps || restSeconds === null) throw new HttpError(400, 'That workout isn’t in a shape GymGO can save.');
-    return { exerciseId, sets, reps, restSeconds, uses: texts(item.uses, 4, 40), confirmed: item.confirmed === true };
+    // Its superset or circuit: a letter shared with its neighbours (the app's lib/supersets.ts).
+    const group = typeof item.group === 'string' && /^[A-L]$/.test(item.group) ? item.group : null;
+    return { exerciseId, sets, reps, restSeconds, uses: texts(item.uses, 4, 40), confirmed: item.confirmed === true, ...(group ? { group } : {}) };
   });
   return {
     version: 1,

@@ -70,6 +70,8 @@ import { useOverhang } from '@/lib/layout';
 import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
 import { useTrainingLog } from '@/lib/useTraining';
 import { EXERCISES, TYPICAL_KIT, exerciseName, knownKit, swapFor, type Exercise, type Kit } from '@/lib/workout';
+import { groupOf, linkWithNext, nextUp, restAfter, unlink, type GroupInfo } from '@/lib/supersets';
+import { GroupControls, groupTag, joinableNext } from '@/components/GroupControls';
 import { SwapButton } from '@/components/ExerciseCard';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { ScreenOptions } from '@/components/ScreenOptions';
@@ -269,7 +271,8 @@ export default function TrainScreen() {
 
   const restEndsAt = session?.restEndsAt ?? null;
   // The alert for a locked phone follows the rest: set when it starts or moves, gone when it's skipped or the workout ends.
-  const upNextIndex = session?.items.findIndex((item) => item.sets.some((set) => !set.done)) ?? -1;
+  // In a superset or circuit, round the group before the next set of the first (lib/supersets.ts).
+  const upNextIndex = session ? nextUp(session.items) : -1;
   const upNext = session?.items[upNextIndex]?.exerciseId ?? null;
   useEffect(() => {
     if (restEndsAt) void scheduleRestAlert(restEndsAt, upNext ? exerciseName(upNext) : null);
@@ -287,6 +290,28 @@ export default function TrainScreen() {
     (seconds: number) => updateSession((current) => ({ ...current, restEndsAt: seconds > 0 ? Date.now() + seconds * 1000 : null, restTotal: seconds })),
     [],
   );
+  // After a set is ticked: its own rest, or, in a superset or circuit, the group's once the round is done.
+  const restAfterTick = useCallback(
+    (index: number, at: number) =>
+      updateSession((current) => {
+        const seconds = restAfter(current.items, index, at);
+        return seconds > 0 ? { ...current, restEndsAt: Date.now() + seconds * 1000, restTotal: seconds } : current;
+      }),
+    [],
+  );
+  // Each card's group, worked out again only when the grouping changes, so a card still redraws only with its own sets.
+  const groupKey = session?.items.map((item) => item.group ?? '').join(',') ?? '';
+  const groupInfos = useMemo(
+    () => (session ? session.items.map((_, index) => groupOf(session.items, index)) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [groupKey],
+  );
+  const linkNext = useCallback((index: number) => {
+    updateSession((current) => ({ ...current, items: linkWithNext(current.items, index) }));
+  }, []);
+  const unlinkOne = useCallback((index: number) => {
+    updateSession((current) => ({ ...current, items: unlink(current.items, index) }));
+  }, []);
   // What a swap can use: the gym's machines when it lists enough of them, else a typical gym's (as the builder starts).
   const gymRecord = session?.gymId ? (data.records.find((record) => record.location.id === session.gymId) ?? null) : null;
   const available = useMemo<Kit[]>(() => {
@@ -440,7 +465,11 @@ export default function TrainScreen() {
             onPlates={openPlates}
             onHowTo={openHowTo}
             onChange={changeSets}
-            onRest={startRest}
+            onRest={restAfterTick}
+            group={groupInfos[index] ?? null}
+            nextName={joinableNext(session.items, index, (at) => exerciseName(session.items[at]!.exerciseId))}
+            onLink={linkNext}
+            onUnlink={unlinkOne}
             swapTo={item.sets.some((set) => set.done) ? null : (swapFor(session.items, index, available)?.name ?? null)}
             onSwap={swapExercise}
             current={index === upNextIndex}
@@ -493,6 +522,10 @@ const ExerciseLog = memo(function ExerciseLog({
   onHowTo,
   onChange,
   onRest,
+  group,
+  nextName,
+  onLink,
+  onUnlink,
   swapTo,
   onSwap,
   current,
@@ -506,7 +539,14 @@ const ExerciseLog = memo(function ExerciseLog({
   onPlates: (weight: string | null) => void;
   onHowTo: (exerciseId: string) => void;
   onChange: (index: number, sets: ActiveItem['sets']) => void;
-  onRest: (seconds: number) => void;
+  /** A set was ticked: the screen starts the right rest (lib/supersets.ts). */
+  onRest: (index: number, at: number) => void;
+  /** Its superset or circuit, if it's in one. */
+  group: GroupInfo | null;
+  /** The next exercise, when it could be paired with this one. */
+  nextName: string | null;
+  onLink: (index: number) => void;
+  onUnlink: (index: number) => void;
   /** What Swap would put here: only before any of its sets is ticked. */
   swapTo: string | null;
   onSwap: (index: number) => void;
@@ -553,8 +593,8 @@ const ExerciseLog = memo(function ExerciseLog({
       AccessibilityInfo.announceForAccessibility(`${RECORD_WORD[best]} on ${name}`);
     } else haptic.tap();
     onChange(index, sets);
-    // Rest after every set but the exercise's last.
-    if (at < item.sets.length - 1 && item.restSeconds > 0) onRest(item.restSeconds);
+    // Rest after every set but the exercise's last; in a superset or circuit, once the round is done.
+    onRest(index, at);
   };
 
   return (
@@ -573,7 +613,7 @@ const ExerciseLog = memo(function ExerciseLog({
         {/* The name gets the card's full width; Swap and Plates sit on the line under it. */}
         <View style={styles.flex}>
           <Txt variant="eyebrow" color={color.brand} numberOfLines={1}>
-            {`${String(index + 1).padStart(2, '0')}  ·  ${item.sets.filter((set) => set.done).length} OF ${item.sets.length} DONE`}
+            {`${String(index + 1).padStart(2, '0')}  ·  ${group ? `${groupTag(group).toUpperCase()}  ·  ` : ''}${item.sets.filter((set) => set.done).length} OF ${item.sets.length} DONE`}
           </Txt>
           <Txt variant="headline">{name}</Txt>
           <View style={styles.metaRow}>
@@ -750,6 +790,8 @@ const ExerciseLog = memo(function ExerciseLog({
           )}
         </View>
       )}
+
+      <GroupControls name={name} group={group} nextName={nextName} onLink={() => onLink(index)} onUnlink={() => onUnlink(index)} />
     </View>
   );
 });

@@ -142,6 +142,7 @@ export function PlaceCard({
   asOf,
   photos,
   memberKit,
+  workoutFit,
   memberPrices,
   memberAccess,
   statusWarning,
@@ -170,6 +171,8 @@ export function PlaceCard({
   photos: React.ReactNode;
   /** What members say the gym has, likewise. */
   memberKit: React.ReactNode;
+  /** "Can I do this workout here?": a saved workout checked against what's known to be here (components/WorkoutFit.tsx). */
+  workoutFit?: React.ReactNode;
   /** What members paid for a visit, under the gym's own prices. */
   memberPrices?: React.ReactNode;
   /** How getting in went for visiting members, under the gym's own rules. */
@@ -610,6 +613,12 @@ export function PlaceCard({
           {record.equipment[0] && <Evidence provenance={record.equipment[0].provenance} />}
           {memberKit}
         </Fold>
+
+        {workoutFit ? (
+          <Fold icon="workout" title="Can I do my workout here?" summary="A workout you saved, checked against what’s known to be here">
+            {workoutFit}
+          </Fold>
+        ) : null}
 
         {(record.amenities.length > 0 || (location.activities?.length ?? 0) > 0 || location.email) && (
           <Fold icon="facilities" title="Facilities & more" summary={facilitiesSummary(record)}>

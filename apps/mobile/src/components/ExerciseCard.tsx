@@ -5,6 +5,8 @@
  * same muscle.
  */
 
+import type { GroupInfo } from '@/lib/supersets';
+import { GroupControls, groupTag } from './GroupControls';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from './Icon';
 import { Pressable } from './motion';
@@ -27,6 +29,10 @@ export function ExerciseCard({
   forGym,
   swapTo,
   onSwap,
+  group = null,
+  nextName = null,
+  onLink,
+  onUnlink,
 }: {
   index: number;
   exercise: Exercise;
@@ -40,6 +46,11 @@ export function ExerciseCard({
   /** What Swap would put here instead; no button without one. */
   swapTo?: string | null;
   onSwap?: () => void;
+  /** Its superset or circuit (lib/supersets.ts), and the next exercise when it could join it. */
+  group?: GroupInfo | null;
+  nextName?: string | null;
+  onLink?: () => void;
+  onUnlink?: () => void;
 }) {
   const muscles = exercise.primary.map(muscleLabel).join(' · ');
   return (
@@ -51,7 +62,7 @@ export function ExerciseCard({
         <ExerciseTile exerciseId={exercise.id} size={58} moving delay={(index % 4) * 450} reps={PLAN_REPS} />
         <View style={styles.flex}>
           <Txt variant="eyebrow" color={color.brand} numberOfLines={1}>
-            {`${String(index + 1).padStart(2, '0')}  ·  ${exercise.cardio ? 'FINISHER' : muscles.toUpperCase()}`}
+            {`${String(index + 1).padStart(2, '0')}  ·  ${group ? `${groupTag(group).toUpperCase()}  ·  ` : ''}${exercise.cardio ? 'FINISHER' : muscles.toUpperCase()}`}
           </Txt>
           <View style={styles.titleRow}>
             <Txt variant="headline" style={styles.flex}>
@@ -74,6 +85,7 @@ export function ExerciseCard({
         </>
       )}
       <KitUsed uses={uses} confirmed={confirmed} forGym={forGym} />
+      {onLink && onUnlink && <GroupControls name={exercise.name} group={group} nextName={nextName} onLink={onLink} onUnlink={onUnlink} />}
     </View>
   );
 }

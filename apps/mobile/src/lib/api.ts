@@ -479,7 +479,8 @@ export interface SavedWorkoutPlan {
   muscles: string[];
   goal: string | null;
   gymName: string | null;
-  items: Array<{ exerciseId: string; sets: number; reps: string; restSeconds: number; uses: string[]; confirmed: boolean }>;
+  /** `group`: its superset or circuit, a letter shared with its neighbours (lib/supersets.ts). */
+  items: Array<{ exerciseId: string; sets: number; reps: string; restSeconds: number; uses: string[]; confirmed: boolean; group?: string }>;
   uncovered: string[];
 }
 

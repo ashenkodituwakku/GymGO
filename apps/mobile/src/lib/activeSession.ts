@@ -21,6 +21,8 @@ export interface ActiveItem {
   sets: DraftSet[];
   /** The muscle this place in the plan is for, once it's been swapped (see swapFor). */
   muscle?: Muscle;
+  /** Its superset or circuit: neighbours sharing a letter (lib/supersets.ts). */
+  group?: string;
 }
 
 export interface ActiveSession {
@@ -75,7 +77,7 @@ export function startSession(plan: {
   gymId: string | null;
   gymName: string | null;
   unit: WeightUnit;
-  items: Array<{ exerciseId: string; sets: number; reps: string; restSeconds: number }>;
+  items: Array<{ exerciseId: string; sets: number; reps: string; restSeconds: number; group?: string }>;
 }): void {
   loaded = true;
   current = {
@@ -90,6 +92,7 @@ export function startSession(plan: {
       planned: item.sets,
       reps: item.reps,
       restSeconds: item.restSeconds,
+      ...(item.group ? { group: item.group } : {}),
       sets: Array.from({ length: Math.max(1, item.sets) }, () => ({ weight: '', reps: '', done: false })),
     })),
     restEndsAt: null,

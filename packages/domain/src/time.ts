@@ -235,13 +235,29 @@ export function isOpenAt(schedule: AccessSchedule, instant: Date): OpenCheck {
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+let twentyFourHour = false;
+
+/**
+ * The clock times are written in: 12-hour ("7 pm") unless the app's
+ * Appearance screen picks 24-hour ("19:00"). The server never sets it.
+ */
+export function setTwentyFourHour(on: boolean): void {
+  twentyFourHour = on;
+}
+export const usesTwentyFourHour = (): boolean => twentyFourHour;
+
 export function formatMinuteOfDay(minuteOfDay: number): string {
-  // A close at the end of the day: "5 am – midnight" reads at a glance, where
-  // "12 am (next day)" makes people work out which midnight is meant.
-  if (minuteOfDay === 1440) return 'midnight';
   const wrapped = minuteOfDay % 1440;
   const hour24 = Math.floor(wrapped / 60);
   const minute = wrapped % 60;
+  if (twentyFourHour) {
+    // The end of the day is 24:00, as 24-hour timetables write it.
+    if (minuteOfDay === 1440) return '24:00';
+    return `${pad2(hour24)}:${pad2(minute)}${minuteOfDay >= 1440 ? ' (next day)' : ''}`;
+  }
+  // A close at the end of the day: "5 am – midnight" reads at a glance, where
+  // "12 am (next day)" makes people work out which midnight is meant.
+  if (minuteOfDay === 1440) return 'midnight';
   const suffix = hour24 < 12 ? 'am' : 'pm';
   const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
   const minuteText = minute === 0 ? '' : `:${pad2(minute)}`;

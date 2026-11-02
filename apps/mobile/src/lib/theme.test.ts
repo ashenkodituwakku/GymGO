@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // The font files are for the app's bundler, not for Node.
 vi.mock('./fonts', () => ({ BUNDLED_FACES: {} }));
 import { StyleSheet } from 'react-native';
-import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, color, dimApplies, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
-import { mix } from './looks';
+import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, applyTweaks, color, cornersFor, customAccent, dimApplies, face, hslHex, DEFAULT_TWEAKS, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
+import { mix, STANDARD_RADIUS } from './looks';
 
 const channel = (value: number) => (value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
 const luminance = (hex: string) => {
@@ -197,5 +197,70 @@ describe('Liquid Glass', () => {
 
   it('names each level', () => {
     expect([0, 20, 50, 70, 100].map(glassLevelName)).toEqual(['Solid', 'Frosted', 'Balanced', 'Clear', 'Clearest']);
+  });
+});
+
+describe('your adjustments', () => {
+  afterEach(() => {
+    applyTweaks(DEFAULT_TWEAKS);
+  });
+
+  it('makes your own accent readable at every hue, in light and dark', () => {
+    expect(hslHex(0, 100, 50)).toBe('#FF0000');
+    expect(hslHex(120, 100, 25)).toBe('#008000');
+    for (let hue = 0; hue < 360; hue += 15) {
+      const accent = customAccent(hue);
+      // Text in the accent on the page, and white text on its buttons.
+      expect(contrast(accent.light.brand, '#FFFFFF'), `light text, hue ${hue}`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(accent.light.brandFill, '#FFFFFF'), `button, hue ${hue}`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(accent.dark.brand, '#1C1C1E'), `dark text, hue ${hue}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('rounds or sharpens corners, but never a pill, the sheet or a square look', () => {
+    const round = cornersFor(STANDARD_RADIUS, 'round');
+    const sharp = cornersFor(STANDARD_RADIUS, 'sharp');
+    expect(round.lg).toBeGreaterThan(STANDARD_RADIUS.lg);
+    expect(sharp.lg).toBeLessThan(STANDARD_RADIUS.lg);
+    expect(cornersFor(STANDARD_RADIUS, 'standard')).toEqual(STANDARD_RADIUS);
+    expect([round.pill, round.sheet, sharp.pill, sharp.sheet]).toEqual([STANDARD_RADIUS.pill, STANDARD_RADIUS.sheet, STANDARD_RADIUS.pill, STANDARD_RADIUS.sheet]);
+    const square = { ...STANDARD_RADIUS, sm: 0, md: 0, lg: 0, xl: 0 };
+    expect(cornersFor(square, 'round')).toEqual(square);
+  });
+
+  it('scales the text, makes it bolder, and draws everything again', () => {
+    let told = 0;
+    const stop = subscribeTheme(() => (told += 1));
+    const body = type.body.fontSize;
+    expect(applyTweaks({ textSize: 'larger' })).toBe(true);
+    expect(type.body.fontSize).toBeGreaterThan(body);
+    expect(applyTweaks({ textSize: 'larger' })).toBe(false);
+    const regular = face('regular').fontWeight;
+    applyTweaks({ bold: true });
+    expect(face('regular').fontWeight).not.toBe(regular);
+    applyTweaks({ corners: 'sharp' });
+    expect(radius.lg).toBeLessThan(STANDARD_RADIUS.lg);
+    expect(told).toBe(3);
+    stop();
+  });
+
+  it('changes your hue in place, without drawing every screen from scratch', () => {
+    let screens = 0;
+    let inPlace = 0;
+    const stopScreens = subscribeTheme(() => (screens += 1));
+    const stopInPlace = subscribeGlass(() => (inPlace += 1));
+    applyTweaks({ customHue: 40 });
+    expect([screens, inPlace]).toEqual([0, 1]);
+    stopScreens();
+    stopInPlace();
+  });
+
+  it('draws your own accent from your hue', () => {
+    applyTheme('light', 'custom', FREE_LOOK);
+    applyTweaks({ customHue: 0 });
+    expect(color.brand).toBe(customAccent(0).light.brand);
+    applyTweaks({ customHue: 200 });
+    expect(color.brand).toBe(customAccent(200).light.brand);
+    applyTheme('light', FREE_ACCENT, FREE_LOOK);
   });
 });

@@ -183,3 +183,20 @@ describe('formatting and parsing', () => {
     expect(isValidIsoDate('22/09/2026')).toBe(false);
   });
 });
+
+describe('the 24-hour clock', () => {
+  it('writes times as 19:00 when chosen, and as 7 pm otherwise', async () => {
+    const { formatMinuteOfDay, setTwentyFourHour } = await import('./time');
+    try {
+      expect(formatMinuteOfDay(19 * 60)).toBe('7 pm');
+      setTwentyFourHour(true);
+      expect(formatMinuteOfDay(19 * 60)).toBe('19:00');
+      expect(formatMinuteOfDay(6 * 60 + 30)).toBe('06:30');
+      expect(formatMinuteOfDay(1440)).toBe('24:00');
+      expect(formatMinuteOfDay(1440 + 120)).toBe('02:00 (next day)');
+    } finally {
+      setTwentyFourHour(false);
+    }
+    expect(formatMinuteOfDay(1440)).toBe('midnight');
+  });
+});

@@ -5,6 +5,7 @@
  * No React Native imports here, so it is unit-tested in Node.
  */
 
+import { usesTwentyFourHour } from '@gymgo/domain';
 import type { FriendCard } from '@gymgo/domain';
 import type { CollectedGym } from './collection';
 import type { CardLook } from './rarity';
@@ -31,7 +32,7 @@ export function friendCardProps(card: FriendCard): { entry: CollectedGym; look: 
 /** "Sat 3 Oct, 7:00 am", in the phone's own words. */
 export function inviteWhen(at: string, locale?: string): string {
   const date = new Date(at);
-  return `${date.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })}, ${date.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })}`;
+  return `${date.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })}, ${date.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', ...(usesTwentyFourHour() ? { hour12: false } : {}) })}`;
 }
 
 /** The times offered for an invite: early, morning, lunch, after work, evening. */

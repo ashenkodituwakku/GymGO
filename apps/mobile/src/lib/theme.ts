@@ -22,7 +22,7 @@
  */
 
 import { Platform, StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
-import { FREE_LOOK, LOOKS, STANDARD_RADIUS, alpha, contrast, mix, readable, type LookId, type LookSpec } from './looks';
+import { FREE_LOOK, LOOKS, STANDARD_RADIUS, alpha, contrast, mix, readable, type LookId, type LookSpec, type Radii } from './looks';
 
 export { FREE_LOOK, LOOK_IDS, LOOKS, type LookId } from './looks';
 
@@ -31,7 +31,7 @@ export type Scheme = 'light' | 'dark';
 export type AppearanceChoice = 'system' | 'light' | 'dark';
 /** How dark is drawn in the Standard look: Apple's black, or Dim's softer grey (the other looks have their own). */
 export type DarkStyle = 'black' | 'dim';
-export type AccentId = 'indigo' | 'ocean' | 'grape' | 'rose' | 'midnight' | 'cobalt' | 'lagoon' | 'fuchsia' | 'slate' | 'graphite' | 'rainbow' | 'camo';
+export type AccentId = 'indigo' | 'ocean' | 'grape' | 'rose' | 'midnight' | 'cobalt' | 'lagoon' | 'fuchsia' | 'slate' | 'graphite' | 'rainbow' | 'camo' | 'custom';
 
 interface AccentColors {
   brand: string;
@@ -205,7 +205,45 @@ export const dimApplies = (scheme: Scheme, look: LookId, dark: DarkStyle): boole
  * The accents. Indigo is everyone's; the rest are part of GymGO Pro. Each
  * passes AA as text on its mode's cards, and white on its fill passes AA.
  */
+/** "#RRGGBB" for a hue (0–360), saturation and lightness (0–100). */
+export function hslHex(hue: number, saturation: number, lightness: number): string {
+  const s = saturation / 100;
+  const l = lightness / 100;
+  const k = (n: number) => (n + hue / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return `#${[f(0), f(8), f(4)].map((x) => Math.round(x * 255).toString(16).padStart(2, '0')).join('').toUpperCase()}`;
+}
+
+/**
+ * Your own accent (Pro): any hue round the wheel, its shades worked out so
+ * text in it stays readable on the page and white text stays readable on
+ * its buttons, in light and dark, as the made-up accents keep.
+ */
+export function customAccent(hue: number): { name: string; light: AccentColors; dark: AccentColors } {
+  const h = ((Math.round(hue) % 360) + 360) % 360;
+  const vivid = hslHex(h, 72, 50);
+  // Buttons: dark enough that white on them reads (4.5 : 1).
+  const fill = readable(vivid, ['#FFFFFF'], 'light', 4.6);
+  const lightBrand = readable(vivid, ['#FFFFFF', '#F2F2F7'], 'light', 4.6);
+  const darkBrand = readable(hslHex(h, 80, 62), ['#1C1C1E', '#000000', '#2C2C2E'], 'dark', 4.6);
+  const tones = (brand: string, scheme: Scheme): AccentColors => ({
+    brand,
+    brandPressed: mix(brand, '#000000', 0.12),
+    brandFill: fill,
+    brandTint: alpha(brand, scheme === 'dark' ? 0.2 : 0.12),
+    brandBorder: alpha(brand, scheme === 'dark' ? 0.4 : 0.28),
+    brandWash: alpha(brand, scheme === 'dark' ? 0.1 : 0.06),
+  });
+  return { name: 'Your own', light: tones(lightBrand, 'light'), dark: tones(darkBrand, 'dark') };
+}
+
+/** Where your own accent starts: a teal no preset has. */
+export const CUSTOM_HUE_DEFAULT = 168;
+
 export const ACCENTS: Record<AccentId, { name: string; light: AccentColors; dark: AccentColors }> = {
+  /** Your own (Pro), made again from your hue by applyTweaks. */
+  custom: customAccent(CUSTOM_HUE_DEFAULT),
   indigo: {
     name: 'Indigo',
     light: { brand: '#5856D6', brandPressed: '#4B49C4', brandFill: '#5856D6', brandTint: 'rgba(88, 86, 214, 0.12)', brandBorder: 'rgba(88, 86, 214, 0.28)', brandWash: 'rgba(88, 86, 214, 0.06)' },
@@ -440,6 +478,70 @@ export const color: Palette = paletteFor('light', FREE_ACCENT);
 
 let current: { scheme: Scheme; accent: AccentId; look: LookId; glass: number; dark: DarkStyle } = { scheme: 'light', accent: FREE_ACCENT, look: FREE_LOOK, glass: GLASS_DEFAULT, dark: 'black' };
 
+// --- Your adjustments: text size, bold text, corners, your own accent -------------
+
+export type TextSize = 'small' | 'default' | 'large' | 'larger';
+export const TEXT_SIZES: Array<{ id: TextSize; label: string; scale: number }> = [
+  { id: 'small', label: 'Smaller', scale: 0.9 },
+  { id: 'default', label: 'Default', scale: 1 },
+  { id: 'large', label: 'Larger', scale: 1.12 },
+  { id: 'larger', label: 'Largest', scale: 1.25 },
+];
+
+export type CornerStyle = 'round' | 'standard' | 'sharp';
+export const CORNER_STYLES: Array<{ id: CornerStyle; label: string; blurb: string; scale: number }> = [
+  { id: 'round', label: 'Rounder', blurb: 'Softer, rounder corners', scale: 1.4 },
+  { id: 'standard', label: 'Standard', blurb: 'As the look draws them', scale: 1 },
+  { id: 'sharp', label: 'Sharper', blurb: 'Tighter corners, more squared off', scale: 0.45 },
+];
+
+export interface Tweaks {
+  textSize: TextSize;
+  bold: boolean;
+  corners: CornerStyle;
+  customHue: number;
+  clock24: boolean;
+}
+
+export const DEFAULT_TWEAKS: Tweaks = { textSize: 'default', bold: false, corners: 'standard', customHue: CUSTOM_HUE_DEFAULT, clock24: false };
+
+let tweaks: Tweaks = DEFAULT_TWEAKS;
+export const currentTweaks = () => tweaks;
+const textScale = () => TEXT_SIZES.find((size) => size.id === tweaks.textSize)?.scale ?? 1;
+
+/** The look's corners, rounder or sharper; a pill stays a pill, a phone-shaped sheet stays the phone's shape, a square look stays square. */
+export function cornersFor(base: Radii, corners: CornerStyle): Radii {
+  const scale = CORNER_STYLES.find((style) => style.id === corners)?.scale ?? 1;
+  const out = { ...base };
+  for (const key of ['sm', 'md', 'lg', 'xl'] as const) out[key] = base[key] === 0 ? 0 : Math.round(Math.min(base[key] * scale, key === 'sm' ? 16 : key === 'md' ? 22 : key === 'lg' ? 28 : 34));
+  return out;
+}
+
+/**
+ * Your adjustments, applied over the look: text size and weight, corners,
+ * your own accent's hue, and the clock. Everything is drawn again with them.
+ * Returns false if nothing changed.
+ */
+export function applyTweaks(next: Partial<Tweaks>): boolean {
+  const merged = { ...tweaks, ...next };
+  if (JSON.stringify(merged) === JSON.stringify(tweaks)) return false;
+  const hueChanged = merged.customHue !== tweaks.customHue;
+  // Only your colour's hue: drawn again in place, as Liquid Glass is, so the slider keeps the keyboard's focus.
+  const onlyHue = hueChanged && JSON.stringify({ ...merged, customHue: 0 }) === JSON.stringify({ ...tweaks, customHue: 0 });
+  tweaks = merged;
+  if (hueChanged) ACCENTS.custom = customAccent(tweaks.customHue);
+  Object.assign(color, paletteFor(current.scheme, current.accent, current.look, current.glass, current.dark));
+  Object.assign(radius, cornersFor(LOOKS[current.look].radius, tweaks.corners));
+  Object.assign(type, typeScale());
+  styleVersion += 1;
+  if (!onlyHue) {
+    version += 1;
+    for (const listener of listeners) listener();
+  }
+  for (const listener of glassListeners) listener();
+  return true;
+}
+
 /** The look in use now (see looks.ts). */
 export const currentLook = (): LookSpec => LOOKS[current.look];
 /** Floating things drawn as solid plates: a solid look, or Liquid Glass at 0%. */
@@ -533,7 +635,7 @@ export function applyTheme(scheme: Scheme, accent: AccentId, look: LookId = curr
   Object.assign(color, paletteFor(scheme, accent, look, level, dark));
   styleVersion += 1;
   const spec = LOOKS[look];
-  Object.assign(radius, spec.radius);
+  Object.assign(radius, cornersFor(spec.radius, tweaks.corners));
   Object.assign(shadow, spec.shadows?.(scheme, color.brand) ?? standardShadows(scheme, level));
   Object.assign(type, typeScale());
   // A change of Liquid Glass alone draws each screen again in place
@@ -642,7 +744,11 @@ const SF_DRAWS =
 /** True where the app must load the bundled faces (Inter) before drawing text: never where SF Pro draws. */
 export const NEEDS_BUNDLED_FACES = !SF_DRAWS;
 
-export function face(weight: Weight = 'regular'): { fontFamily: string; fontWeight: '400' | '500' | '600' | '700' | 'normal' } {
+/** Bold text: each weight one step heavier. */
+const BOLDER: Record<Weight, Weight> = { regular: 'medium', medium: 'semibold', semibold: 'bold', bold: 'bold' };
+
+export function face(asked: Weight = 'regular'): { fontFamily: string; fontWeight: '400' | '500' | '600' | '700' | 'normal' } {
+  const weight = tweaks.bold ? BOLDER[asked] : asked;
   // A look with its own typeface (8-bit, Material): each weight is its own file.
   const fonts = LOOKS[current.look].fonts;
   if (fonts?.body) return { fontFamily: fonts.body[weight], fontWeight: 'normal' };
@@ -671,13 +777,18 @@ export function tracking(size: number): number {
  */
 const ANDROID_TEXT = Platform.OS === 'android' ? { includeFontPadding: false } : {};
 
-const style = (fontSize: number, lineHeight: number, weight: Weight) => ({ fontSize, lineHeight, letterSpacing: tracking(fontSize), ...face(weight), ...ANDROID_TEXT });
+const style = (base: number, baseLine: number, weight: Weight) => {
+  // Your text size, on top of the phone's own.
+  const fontSize = Math.round(base * textScale() * 2) / 2;
+  const lineHeight = Math.round(baseLine * textScale());
+  return { fontSize, lineHeight, letterSpacing: tracking(fontSize), ...face(weight), ...ANDROID_TEXT };
+};
 
 /** A title or big figure: in the look's display face, if it has one (8-bit's arcade type runs large, so it's set smaller). */
 const display = (fontSize: number, lineHeight: number, weight: Weight) => {
   const fonts = LOOKS[current.look].fonts;
   if (!fonts?.display) return style(fontSize, lineHeight, weight);
-  const scale = fonts.displayScale ?? 1;
+  const scale = (fonts.displayScale ?? 1) * textScale();
   const size = Math.round(fontSize * scale);
   return { fontSize: size, lineHeight: Math.round(size * (fonts.displayLeading ?? 1.5)), letterSpacing: 0, fontFamily: fonts.display, fontWeight: 'normal' as const, ...ANDROID_TEXT };
 };

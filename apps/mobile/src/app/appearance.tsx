@@ -18,7 +18,9 @@ import { FADE_IN, Pressable } from '@/components/motion';
 import { Glass } from '@/components/Glass';
 import { Icon } from '@/components/Icon';
 import { PercentSlider } from '@/components/PercentSlider';
-import { PrimaryButton, Txt } from '@/components/ui';
+import { PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { Toggle } from '@/components/Toggle';
+import { timeLabel } from '@/lib/copy';
 import { Celebration } from '@/components/Celebration';
 import { CELEBRATIONS, FREE_CELEBRATION, celebrationFor, type CelebrationStyle } from '@/lib/celebrations';
 import { playSound } from '@/lib/sounds';
@@ -29,13 +31,17 @@ import {
   ACCENTS,
   ACCENT_IDS,
   ACCENT_PAINTS,
+  CORNER_STYLES,
   FREE_ACCENT,
   FREE_LOOK,
   GLASS_DEFAULT,
   GLASS_STEP,
   LOOKS,
   LOOK_IDS,
+  TEXT_SIZES,
   color,
+  cornersFor,
+  customAccent,
   currentTheme,
   dimApplies,
   face,
@@ -47,8 +53,10 @@ import {
   themed,
   type AccentId,
   type AppearanceChoice,
+  type CornerStyle,
   type DarkStyle,
   type LookId,
+  type TextSize,
 } from '@/lib/theme';
 import { setThemeChoice, useThemeChoice } from '@/lib/themePrefs';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -146,6 +154,27 @@ export default function AppearanceScreen() {
     playSound('record', 0, soundPack);
   };
 
+  // Corners: rounder or sharper than the look's, with Pro (like the looks).
+  const cornersInUse = billing.isPro ? choice.corners : 'standard';
+  const squareLook = LOOKS[lookInUse].radius.md === 0;
+  const pickCorners = (corners: CornerStyle) => {
+    if (corners !== 'standard' && !billing.isPro) {
+      haptic.tap();
+      openPro('themes');
+      return;
+    }
+    haptic.select();
+    if (corners !== choice.corners) setThemeChoice({ corners });
+  };
+
+  // Your own accent: the preview follows the finger; the app takes it once it's let go.
+  const [hue, setHue] = useState(choice.customHue);
+  useEffect(() => setHue(choice.customHue), [choice.customHue]);
+  const keepHue = (next: number) => {
+    setHue(next);
+    if (next !== choice.customHue) setThemeChoice({ customHue: next });
+  };
+
   const pickAccent = (accent: AccentId) => {
     if (accent !== FREE_ACCENT && !billing.isPro) {
       haptic.tap();
@@ -236,6 +265,47 @@ export default function AppearanceScreen() {
 
         <View style={styles.accentHead}>
           <Txt variant="footnote" color={color.labelSecondary}>
+            TEXT
+          </Txt>
+        </View>
+        <View style={styles.glassCard}>
+          <View style={styles.textSample} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+            <Txt variant="headline">Doherty’s Gym</Txt>
+            <Txt variant="subhead" color={color.labelSecondary}>
+              {`Visitors welcome until ${timeLabel(21 * 60)} · Casual visit A$20`}
+            </Txt>
+          </View>
+          <Segmented
+            options={TEXT_SIZES.map((size) => ({ value: size.id, label: size.label }))}
+            value={choice.textSize}
+            onChange={(textSize: TextSize) => {
+              haptic.select();
+              setThemeChoice({ textSize });
+            }}
+          />
+          <View style={styles.toggleRow}>
+            <View style={styles.flex}>
+              <Txt variant="body">Bold text</Txt>
+              <Txt variant="footnote" color={color.labelSecondary}>
+                Every word a step heavier
+              </Txt>
+            </View>
+            <Toggle
+              value={choice.bold}
+              onValueChange={(bold) => {
+                haptic.select();
+                setThemeChoice({ bold });
+              }}
+              accessibilityLabel="Bold text"
+            />
+          </View>
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+          On top of your phone’s own text size. Free for everyone.
+        </Txt>
+
+        <View style={styles.accentHead}>
+          <Txt variant="footnote" color={color.labelSecondary}>
             LOOK
           </Txt>
           {!billing.isPro && (
@@ -273,6 +343,53 @@ export default function AppearanceScreen() {
         </View>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {LOOKS[lookInUse].blurb}.{LOOKS[lookInUse].scheme === 'dark' ? ` ${LOOKS[lookInUse].name} is always dark, whatever the mode above.` : ''} Evidence colours keep their meaning in every look.
+        </Txt>
+
+        <View style={styles.accentHead}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            CORNERS
+          </Txt>
+          {!billing.isPro && (
+            <View style={styles.proTag}>
+              <Icon name="crown" size={11} color={color.brand} />
+              <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                PRO
+              </Txt>
+            </View>
+          )}
+        </View>
+        <View style={styles.modes} accessibilityRole="radiogroup">
+          {CORNER_STYLES.map((style) => {
+            const on = cornersInUse === style.id;
+            const locked = style.id !== 'standard' && !billing.isPro;
+            const corner = cornersFor(LOOKS[lookInUse].radius, style.id).lg;
+            return (
+              <Pressable
+                key={style.id}
+                onPress={() => pickCorners(style.id)}
+                accessibilityRole="radio"
+                aria-checked={on}
+                accessibilityLabel={`${style.label}: ${style.blurb}${locked ? '. Part of GymGO Pro' : ''}`}
+                style={styles.darkStyle}
+              >
+                <View style={[styles.cornerPreview, { borderRadius: corner }, on && styles.cornerOn]}>
+                  <View style={[styles.cornerButton, { borderRadius: Math.min(corner, 14) }]} />
+                </View>
+                <View style={styles.lookName}>
+                  {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
+                  <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                    {style.label}
+                  </Txt>
+                </View>
+                <Icon name={on ? 'done' : 'todo'} size={22} color={on ? color.brand : color.labelTertiary} />
+              </Pressable>
+            );
+          })}
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+          {squareLook
+            ? `${LOOKS[lookInUse].name} is square by design, so its corners stay square.`
+            : `${CORNER_STYLES.find((style) => style.id === cornersInUse)!.blurb}, on cards, buttons and sheets. Round buttons and pills stay round.`}
         </Txt>
 
         <View style={styles.accentHead}>
@@ -365,7 +482,37 @@ export default function AppearanceScreen() {
               </Pressable>
             );
           })}
+          <CustomTile hue={hue} on={accentInUse === 'custom'} locked={!billing.isPro} onPress={() => pickAccent('custom')} />
         </View>
+        {accentInUse === 'custom' && (
+          <View style={[styles.glassCard, styles.hueCard]}>
+            <View style={styles.glassHead}>
+              <View style={[styles.hueDot, { backgroundColor: customAccent(hue)[color.label === '#FFFFFF' ? 'dark' : 'light'].brand }]} />
+              <Txt variant="subhead" color={color.labelSecondary} style={styles.flex}>
+                Slide to pick your colour
+              </Txt>
+            </View>
+            <View style={styles.hueTrack} aria-hidden>
+              {Array.from({ length: 24 }, (_, index) => (
+                <View key={index} style={[styles.hueStop, { backgroundColor: customAccent(index * 15).light.brandFill }]} />
+              ))}
+            </View>
+            {/* In a row, as the glass slider is: its flex: 1 would leave it no height in a column. */}
+            <View style={styles.sliderRow}>
+              <PercentSlider
+                value={Math.round((hue / 359) * 100)}
+                step={1}
+                onChange={(percent) => setHue(Math.round((percent / 100) * 359))}
+                onCommit={(percent) => keepHue(Math.round((percent / 100) * 359))}
+                label="Your own accent colour"
+                valueText={`Hue ${hue} degrees`}
+              />
+            </View>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              GymGO shades it so text in it, and on its buttons, stays easy to read in light and dark.
+            </Txt>
+          </View>
+        )}
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {billing.isPro
             ? 'The accent colours buttons, links and your selections. Evidence colours (green, orange, grey) never change, so they always mean the same thing.'
@@ -465,9 +612,81 @@ export default function AppearanceScreen() {
             ? `Tap one to hear a new record in it. It voices check-ins, records, sets and the timers; the cards keep their own sounds${billing.isPro ? '' : '. Arcade comes with GymGO Pro'}.`
             : 'Sounds are off, so there’s nothing to hear: turn them on in Profile → Settings.'}
         </Txt>
+
+        <View style={styles.accentHead}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            CLOCK
+          </Txt>
+        </View>
+        <View style={styles.glassCard}>
+          <Segmented
+            options={[
+              { value: '12', label: '12-hour' },
+              { value: '24', label: '24-hour' },
+            ]}
+            value={choice.clock24 ? '24' : '12'}
+            onChange={(value: string) => {
+              haptic.select();
+              setThemeChoice({ clock24: value === '24' });
+            }}
+          />
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+          {`Times read like ${timeLabel(19 * 60)}, for opening hours, visit times and reminders.`}
+        </Txt>
+
+        {prefs.gymPal && (
+          <>
+            <View style={styles.accentHead}>
+              <Txt variant="footnote" color={color.labelSecondary}>
+                GYMPAL’S BUTTON
+              </Txt>
+            </View>
+            <View style={styles.glassCard}>
+              <Segmented
+                options={[
+                  { value: 'left', label: 'Bottom left' },
+                  { value: 'right', label: 'Bottom right' },
+                ]}
+                value={choice.gymPalSide}
+                onChange={(gymPalSide: 'left' | 'right') => {
+                  haptic.select();
+                  setThemeChoice({ gymPalSide });
+                }}
+              />
+            </View>
+            <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+              Which corner GymPal waits in. To hide him altogether, switch GymPal off in Profile → Settings.
+            </Txt>
+          </>
+        )}
       </PageScroll>
       {playing > 0 && <Celebration key={playing} style={celebrationInUse} />}
     </View>
+  );
+}
+
+/** "Your own" among the accents: the colour you picked, or a rainbow ring before you have. */
+function CustomTile({ hue, on, locked, onPress }: { hue: number; on: boolean; locked: boolean; onPress: () => void }) {
+  const scheme = color.label === '#FFFFFF' ? 'dark' : 'light';
+  const mine = customAccent(hue);
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="radio"
+      aria-checked={on}
+      accessibilityLabel={`Your own colour${locked ? ', part of GymGO Pro' : ''}`}
+      style={({ pressed }) => [styles.tile, pressed && { opacity: 0.7 }]}
+    >
+      <View style={[styles.ring, on && { borderColor: mine[scheme].brand }]}>
+        <View style={[styles.swatch, { backgroundColor: mine[scheme].brandFill }]}>
+          {on ? <Icon name="check" size={18} color={color.onBrand} /> : locked ? <Icon name="crown" size={14} color={color.onBrandSoft} /> : <Icon name="plus" size={16} color={color.onBrand} />}
+        </View>
+      </View>
+      <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+        Your own
+      </Txt>
+    </Pressable>
   );
 }
 
@@ -634,6 +853,15 @@ const styles = themed(() =>
     sample: { fontSize: 28, lineHeight: 34 },
     playRow: { marginTop: space[3] },
     flex: { flex: 1 },
+    textSample: { gap: 2, padding: space[3], borderRadius: radius.md, backgroundColor: color.fill },
+    toggleRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[1] },
+    cornerPreview: { width: '100%', aspectRatio: 1.25, padding: 10, justifyContent: 'flex-end', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
+    cornerOn: { borderColor: color.brand },
+    cornerButton: { height: 18, backgroundColor: color.brandFill },
+    hueCard: { marginTop: space[3] },
+    hueDot: { width: 18, height: 18, borderRadius: 9 },
+    hueTrack: { flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden' },
+    hueStop: { flex: 1 },
     glassCard: { gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     glassHead: { flexDirection: 'row', alignItems: 'baseline', gap: space[2], paddingHorizontal: space[1] },
     sliderRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },

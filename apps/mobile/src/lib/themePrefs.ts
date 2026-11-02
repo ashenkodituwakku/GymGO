@@ -13,7 +13,28 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Appearance, Platform } from 'react-native';
-import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOK_IDS, LOOKS, applyTheme, cleanGlass, type AccentId, type AppearanceChoice, type DarkStyle, type LookId, type Scheme } from './theme';
+import { setTwentyFourHour } from '@gymgo/domain';
+import {
+  ACCENT_IDS,
+  CORNER_STYLES,
+  CUSTOM_HUE_DEFAULT,
+  FREE_ACCENT,
+  FREE_LOOK,
+  GLASS_DEFAULT,
+  LOOK_IDS,
+  LOOKS,
+  TEXT_SIZES,
+  applyTheme,
+  applyTweaks,
+  cleanGlass,
+  type AccentId,
+  type AppearanceChoice,
+  type CornerStyle,
+  type DarkStyle,
+  type LookId,
+  type Scheme,
+  type TextSize,
+} from './theme';
 import { loadLookFonts } from './lookFonts';
 
 const KEY = 'gymgo.theme.v1';
@@ -27,9 +48,33 @@ export interface ThemeChoice {
   glass: number;
   /** Dark in black or Dim's soft grey, for everyone, in the Standard look: see DIM in theme.ts. */
   dark: DarkStyle;
+  /** Text size, for everyone, on top of the phone's own. */
+  textSize: TextSize;
+  /** Every weight one step heavier, for everyone. */
+  bold: boolean;
+  /** Rounder or sharper corners than the look's (Pro, like the looks). */
+  corners: CornerStyle;
+  /** Your own accent's hue, 0–359 (Pro, like the accents): accent 'custom'. */
+  customHue: number;
+  /** Times as 19:00 rather than 7 pm, for everyone. */
+  clock24: boolean;
+  /** Which bottom corner GymPal's button sits in, for everyone. */
+  gymPalSide: 'right' | 'left';
 }
 
-export const DEFAULT_CHOICE: ThemeChoice = { appearance: 'system', accent: FREE_ACCENT, look: FREE_LOOK, glass: GLASS_DEFAULT, dark: 'black' };
+export const DEFAULT_CHOICE: ThemeChoice = {
+  appearance: 'system',
+  accent: FREE_ACCENT,
+  look: FREE_LOOK,
+  glass: GLASS_DEFAULT,
+  dark: 'black',
+  textSize: 'default',
+  bold: false,
+  corners: 'standard',
+  customHue: CUSTOM_HUE_DEFAULT,
+  clock24: false,
+  gymPalSide: 'right',
+};
 
 /** What was stored, cleaned: anything unknown falls back to the default. */
 export function parseChoice(raw: string | null | undefined): ThemeChoice {
@@ -37,10 +82,16 @@ export function parseChoice(raw: string | null | undefined): ThemeChoice {
     const value = raw ? (JSON.parse(raw) as Partial<ThemeChoice>) : {};
     return {
       appearance: value.appearance === 'light' || value.appearance === 'dark' || value.appearance === 'system' ? value.appearance : 'system',
-      accent: ACCENT_IDS.includes(value.accent as AccentId) ? (value.accent as AccentId) : FREE_ACCENT,
+      accent: ACCENT_IDS.includes(value.accent as AccentId) || value.accent === 'custom' ? (value.accent as AccentId) : FREE_ACCENT,
       look: LOOK_IDS.includes(value.look as LookId) ? (value.look as LookId) : FREE_LOOK,
       glass: cleanGlass(value.glass),
       dark: value.dark === 'dim' ? 'dim' : 'black',
+      textSize: TEXT_SIZES.some((size) => size.id === value.textSize) ? (value.textSize as TextSize) : 'default',
+      bold: value.bold === true,
+      corners: CORNER_STYLES.some((style) => style.id === value.corners) ? (value.corners as CornerStyle) : 'standard',
+      customHue: typeof value.customHue === 'number' && Number.isFinite(value.customHue) ? Math.round(((value.customHue % 360) + 360) % 360) : CUSTOM_HUE_DEFAULT,
+      clock24: value.clock24 === true,
+      gymPalSide: value.gymPalSide === 'left' ? 'left' : 'right',
     };
   } catch {
     return DEFAULT_CHOICE;
@@ -80,6 +131,22 @@ function tellPhone(appearance: AppearanceChoice) {
 }
 
 let choice: ThemeChoice = DEFAULT_CHOICE;
+
+/** Whether your corner style shows: Pro, like the looks (the layout says, once the plan is known). */
+let cornersAllowed = true;
+
+/** Text size, bold text, corners, your own accent and the clock: drawn into everything (theme.ts applyTweaks). */
+function applyChoiceTweaks(next: ThemeChoice): void {
+  setTwentyFourHour(next.clock24);
+  applyTweaks({ textSize: next.textSize, bold: next.bold, corners: cornersAllowed ? next.corners : 'standard', customHue: next.customHue, clock24: next.clock24 });
+}
+
+/** Set by the layout from your plan: without Pro, the look's own corners. */
+export function allowCorners(allowed: boolean): void {
+  if (allowed === cornersAllowed) return;
+  cornersAllowed = allowed;
+  applyChoiceTweaks(choice);
+}
 let loaded = false;
 const listeners = new Set<() => void>();
 
@@ -88,6 +155,7 @@ if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
   try {
     choice = parseChoice(localStorage.getItem(KEY));
     loaded = true;
+    applyChoiceTweaks(choice);
     // The page falls back to the standard face until the look's own arrives.
     applyTheme(schemeFor(choice.appearance, systemScheme(), choice.look), choice.accent, choice.look, choice.glass, choice.dark);
     void loadLookFonts(choice.look);
@@ -108,6 +176,7 @@ export async function loadThemeChoice(): Promise<ThemeChoice> {
   tellPhone(choice.appearance);
   // While the splash screen is up: the look's faces first, so nothing draws in a face that isn't there.
   await loadLookFonts(choice.look);
+  applyChoiceTweaks(choice);
   applyTheme(schemeFor(choice.appearance, systemScheme(), choice.look), choice.accent, choice.look, choice.glass, choice.dark);
   for (const listener of listeners) listener();
   return choice;
@@ -117,6 +186,7 @@ export function setThemeChoice(patch: Partial<ThemeChoice>): void {
   if (patch.appearance && patch.appearance !== choice.appearance) tellPhone(patch.appearance);
   choice = { ...choice, ...patch };
   AsyncStorage.setItem(KEY, JSON.stringify(choice)).catch(() => undefined);
+  applyChoiceTweaks(choice);
   for (const listener of listeners) listener();
 }
 

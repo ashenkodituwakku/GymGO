@@ -102,6 +102,21 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Appearance: more to customise** (2 Nov, the owner asked for more
+  customisation in Appearance). Everyone: Text (Smaller to Largest, 0.9×
+  to 1.25×, and Bold text one weight heavier), Clock (12- or 24-hour;
+  domain `setTwentyFourHour` drives `formatMinuteOfDay`, and copy.ts
+  `timeLabel`, savedWorkouts and friends follow), GymPal's button (bottom
+  left or right; the wide panel follows). Pro: Corners (Round 1.4×,
+  Standard, Sharp 0.45×; `cornersFor` caps them and leaves 0, pill and
+  sheet alone) and Your own colour (accent `'custom'`, `customAccent(hue)`
+  pushes brand and fill to 4.6:1). All in `gymgo.theme.v1` via
+  themePrefs.ts; theme.ts `applyTweaks` applies them, and a hue-only
+  change redraws in place (glass listeners) rather than every screen, so
+  the slider keeps focus. `useProTweaks` in _layout.tsx turns corners off
+  when the plan says not Pro; the accent already fell back to Indigo.
+  plans.ts and the GymPal guide describe it. Verified in the browser
+  (13 checks), not on a phone.
 - **Round 7 of the owner's 11: home-screen widgets, the part that can be
   done here** (2 Nov). lib/widgetSnapshot.ts: next workout (programme day
   first, else a template's), weeks in a row, this week against the goal,

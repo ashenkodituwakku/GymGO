@@ -244,3 +244,18 @@ describe('when there are no gyms to show', () => {
     expect(gymDistanceLine(654, 'AU', 'this area')).toBeNull();
   });
 });
+
+describe('the clock you chose', () => {
+  it('writes times as 19:00 with the 24-hour clock', async () => {
+    const { setTwentyFourHour } = await import('@gymgo/domain');
+    const { timeLabel } = await import('./copy');
+    try {
+      setTwentyFourHour(true);
+      expect(timeLabel(19 * 60)).toBe('19:00');
+      expect(timeLabel(6 * 60 + 5)).toBe('06:05');
+    } finally {
+      setTwentyFourHour(false);
+    }
+    expect(timeLabel(19 * 60)).toBe('7 pm');
+  });
+});

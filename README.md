@@ -363,6 +363,28 @@ your accent glows behind them.
   you on the screen you were on; the map, glass and the phone's own
   keyboards and menus follow too.
 
+  More of it is yours to set, kept on the device with the rest:
+  - **Text** (everyone): Smaller, Default, Larger or Largest (90%, 100%,
+    112% and 125% of every text style, in every look), and **Bold text**,
+    which sets each weight one step heavier. A sample card (a gym's name
+    and hours) shows it as you choose.
+  - **Clock** (everyone): 12-hour or 24-hour, for opening hours, visit
+    times, workout times and reminders ("19:00"; a late close reads
+    "02:00 (next day)").
+  - **GymPal's button** (everyone, while GymPal is on): bottom right or
+    bottom left; his chat panel opens on the same side on a wide screen.
+  - **Corners** (Pro): Round, Standard or Sharp, scaling the corners of
+    cards, buttons and sheets (pills stay pills, and the square looks stay
+    square, as the page says).
+  - **Your own colour** (Pro): a thirteenth accent tile with a hue slider.
+    GymGO shades whatever hue you pick so the accent, as text and as a
+    button with white text on it, keeps at least 4.6:1 contrast in light
+    and dark (WCAG AA is 4.5:1). Moving it redraws the colours in place,
+    so the slider keeps the keyboard's focus.
+
+  Corners and your own colour drop back to Standard and Indigo when Pro
+  ends; the choice is kept for when it's back.
+
 ### Access needs, and class timetables
 
 **Filters → Access**: Step-free entrance, Accessible bathroom and
@@ -1597,7 +1619,7 @@ saved list always opens, wherever the gym is.
 | Warm-up sets | Plates for any weight | A warm-up ramp to your weight, with the plates |
 | Gym notes | — | Your own notes on each gym, on your device |
 | Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
-| Colour themes | Indigo; light, dark or Dim | Twelve accents (Rainbow and Camo too), eight looks (Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), light or dark |
+| Colour themes | Indigo; light, dark or Dim; text size, bold text, 12- or 24-hour clock, GymPal's side | Twelve accents (Rainbow and Camo too) or your own colour, eight looks (Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles |
 | Interval timer | Tabata and EMOM | Your own work, rest and rounds; keep up to 10 |
 | 1-rep max | Your estimated max, and 90%, 80% and 70% | Every step from 100% to 50% with plates, and what you could lift for 2 to 12 reps |
 | Streak freeze | — | One missed week a month doesn't end your streak |

@@ -11,7 +11,7 @@
  * Pure functions, so every mapping is unit-tested (copy.test.ts).
  */
 
-import type { AccessVerdict, ResultTier } from '@gymgo/domain';
+import { usesTwentyFourHour, type AccessVerdict, type ResultTier } from '@gymgo/domain';
 import { countryInSentence } from './country';
 import { KM_PER_MILE, distanceLabel, milesFor } from './places';
 import { THIS_AREA, YOUR_LOCATION } from './query';
@@ -73,6 +73,8 @@ export function dateLabel(value: string, options: Intl.DateTimeFormatOptions = {
 export function timeLabel(minuteOfDay: number): string {
   const hour24 = Math.floor(minuteOfDay / 60) % 24;
   const minute = minuteOfDay % 60;
+  // 24-hour, if you chose it in Appearance: "19:00".
+  if (usesTwentyFourHour()) return `${String(hour24).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
   const suffix = hour24 < 12 ? 'am' : 'pm';
   const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
   return minute === 0 ? `${hour12}\u00a0${suffix}` : `${hour12}:${String(minute).padStart(2, '0')}\u00a0${suffix}`;

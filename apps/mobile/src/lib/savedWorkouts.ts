@@ -3,6 +3,7 @@
  * no longer has is left out, and counted, rather than shown as something else.
  */
 
+import { usesTwentyFourHour } from '@gymgo/domain';
 import { startSession } from './activeSession';
 import type { SavedWorkout, SavedWorkoutPlan } from './api';
 import type { WeightUnit } from './training';
@@ -63,7 +64,7 @@ export function libraryDetails(workouts: SavedWorkout[], locale?: string): Map<s
     const twin = (seen.get(`${libraryTitle(workout.name, workout.plan.gymName)}|${day(workout)}`) ?? 0) > 1;
     const when = twin
       ? // The time kept on one line ("5:07 PM", not "5:07" then "PM").
-        `${day(workout)}, ${new Date(workout.createdAt).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' }).replace(/\s/g, '\u00a0')}`
+        `${day(workout)}, ${new Date(workout.createdAt).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', ...(usesTwentyFourHour() ? { hour12: false } : {}) }).replace(/\s/g, '\u00a0')}`
       : day(workout);
     lines.set(
       workout.id,

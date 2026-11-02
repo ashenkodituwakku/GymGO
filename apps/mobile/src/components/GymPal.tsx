@@ -1,6 +1,7 @@
 /**
- * GymPal, GymGO's AI assistant: his face in the bottom-right corner of
- * every signed-in screen, which opens a chat. It always opens on GymPal's
+ * GymPal, GymGO's AI assistant: his face in a bottom corner of every
+ * signed-in screen (the right, or the left if you choose it in Appearance),
+ * which opens a chat. It always opens on GymPal's
  * greeting, with two or three questions to start from that fit the screen
  * (lib/gymPalSuggestions.ts). The conversation stays while the app is open
  * (Start over clears it) and is never stored anywhere.
@@ -71,6 +72,7 @@ import { GYMPAL_BODY, GYMPAL_EYES, GYMPAL_MOUTH } from '@/lib/gymPalArt';
 import { suggestionsFor } from '@/lib/gymPalSuggestions';
 import { haptic } from '@/lib/haptics';
 import { tabBarBottom } from '@/lib/layout';
+import { useThemeChoice } from '@/lib/themePrefs';
 import { LIMITED } from '@/lib/limited';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
@@ -119,6 +121,8 @@ let nextId = 1;
 export function GymPal() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
+  // Which corner its button sits in (Appearance).
+  const side = useThemeChoice().gymPalSide;
   const { width } = useWindowDimensions();
   const { billing, openPro } = useApp();
   const pro = billing.isPro;
@@ -257,7 +261,7 @@ export function GymPal() {
 
   return (
     <>
-      {!open && !hidden && <Launcher bottom={bottom} right={insets.right + EDGE} onPress={() => setOpen(true)} />}
+      {!open && !hidden && <Launcher bottom={bottom} side={side} edge={(side === 'left' ? insets.left : insets.right) + EDGE} onPress={() => setOpen(true)} />}
       <Modal visible={open} transparent animationType="none" onRequestClose={close} statusBarTranslucent>
         <Chat
           wide={width >= PANEL_FROM}
@@ -341,10 +345,10 @@ export function GymPalFace({ size, cheer = 0, still = false }: { size: number; c
 }
 
 /** The face in the corner, as a button. */
-function Launcher({ bottom, right, onPress }: { bottom: number; right: number; onPress: () => void }) {
+function Launcher({ bottom, side, edge, onPress }: { bottom: number; side: 'right' | 'left'; edge: number; onPress: () => void }) {
   const press = usePressScale(0.9);
   return (
-    <Animated.View entering={POP_IN} style={[styles.launcher, { bottom, right }]}>
+    <Animated.View entering={POP_IN} style={[styles.launcher, side === 'left' ? { bottom, left: edge } : { bottom, right: edge }]}>
       <Animated.View style={press.style}>
         <Pressable
           onPress={() => {
@@ -404,6 +408,7 @@ function Chat({
   onClose: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const side = useThemeChoice().gymPalSide;
   const { height } = useWindowDimensions();
   const scroll = useRef<ScrollView>(null);
   const [focused, setFocused] = useState(false);
@@ -420,7 +425,11 @@ function Chat({
   };
 
   const placed = wide
-    ? [styles.panel, { right: insets.right + space[6], bottom: insets.bottom + space[6], height: Math.min(680, height - insets.top - insets.bottom - 2 * space[6]) }]
+    ? [
+        styles.panel,
+        side === 'left' ? { left: insets.left + space[6] } : { right: insets.right + space[6] },
+        { bottom: insets.bottom + space[6], height: Math.min(680, height - insets.top - insets.bottom - 2 * space[6]) },
+      ]
     : [styles.sheet, { top: insets.top + space[3], paddingBottom: insets.bottom }];
 
   return (

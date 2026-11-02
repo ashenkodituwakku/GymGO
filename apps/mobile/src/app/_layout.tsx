@@ -35,7 +35,7 @@ import {
   type Scheme,
 } from '@/lib/theme';
 import { loadLookFonts } from '@/lib/lookFonts';
-import { loadThemeChoice, schemeFor, useSystemScheme, useThemeChoice } from '@/lib/themePrefs';
+import { allowCorners, loadThemeChoice, schemeFor, useSystemScheme, useThemeChoice } from '@/lib/themePrefs';
 import { rememberOpeningLink, takeWanted } from '@/lib/afterSignIn';
 import { installProblemLog } from '@/lib/problemLog';
 import { SHEET_DONE } from '@/components/SheetDone';
@@ -125,6 +125,13 @@ function useWantedTheme(): { scheme: Scheme; accent: AccentId; look: LookId; gla
   return { scheme: schemeFor(choice.appearance, phone, look), accent, look, glass: choice.glass, dark: choice.dark };
 }
 
+/** Corners are Pro, like the looks: without it, the look's own, once the server has said so. */
+function useProTweaks() {
+  const { billing } = useApp();
+  const allowed = billing.isPro || !billing.planKnown;
+  useEffect(() => allowCorners(allowed), [allowed]);
+}
+
 /**
  * The navigator, drawn in the current colours. When they change, a veil in
  * the new background fades in, each screen's content is drawn again
@@ -134,6 +141,7 @@ function useWantedTheme(): { scheme: Scheme; accent: AccentId; look: LookId; gla
  */
 function ThemedStack() {
   useEscapeClosesSheets();
+  useProTweaks();
   // GymGO needs an account: without one, only signing in and the legal pages are open.
   const { account, prefs } = useApp();
   const gate = account.gate;

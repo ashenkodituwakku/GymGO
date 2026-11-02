@@ -473,6 +473,15 @@ export interface PassBooking {
   currency: BillingCurrency;
 }
 
+/** A month's challenge: yours, your friends' who joined (their count and target only), and the cards you've earned. */
+export interface ChallengeView {
+  month: string;
+  targets: number[];
+  mine: { target: number; days: number; finished: boolean } | null;
+  friends: Array<{ displayName: string; avatarUrl: string | null; target: number; days: number; finished: boolean; you: boolean }>;
+  cards: Array<{ month: string; target: number; finishedAt: string }>;
+}
+
 /** A plan kept in the account, as it was when saved. */
 export interface SavedWorkoutPlan {
   version: number;
@@ -658,6 +667,11 @@ export const api = {
     request<TrainInvite>('POST', `/api/friends/${encodeURIComponent(id)}/invites`, { token, body }),
   answerInvite: (token: string, id: string, answer: 'yes' | 'no') => request<TrainInvite>('POST', `/api/invites/${encodeURIComponent(id)}`, { token, body: { answer } }),
   cancelInvite: (token: string, id: string) => request<unknown>('DELETE', `/api/invites/${encodeURIComponent(id)}`, { token }),
+  /** This month's challenge as your time zone sees it (server challenges.ts). */
+  challenges: (token: string, timeZone: string) => request<ChallengeView>('GET', `/api/challenges?tz=${encodeURIComponent(timeZone)}`, { token }),
+  joinChallenge: (token: string, month: string, target: number, timeZone: string) =>
+    request<ChallengeView>('PUT', `/api/challenges/${encodeURIComponent(month)}`, { token, body: { target, timeZone } }),
+  leaveChallenge: (token: string, month: string) => request<unknown>('DELETE', `/api/challenges/${encodeURIComponent(month)}`, { token }),
   setLeaderboard: (token: string, join: boolean) => request<{ leaderboard: boolean }>('PUT', '/api/me/leaderboard', { token, body: { join } }),
   leaderboard: (token: string, scope: 'everyone' | 'friends', city: { city: string; countryCode: string } | null) =>
     request<Board>(

@@ -336,6 +336,15 @@ const SCHEMA = `
     user_id text primary key references users(id) on delete cascade,
     joined_at text not null
   );
+  create table if not exists challenge_members (
+    user_id text not null references users(id) on delete cascade,
+    month text not null,
+    target integer not null,
+    time_zone text not null,
+    joined_at text not null,
+    finished_at text,
+    primary key (user_id, month)
+  );
 `;
 
 export function openDb(path: string): Db {

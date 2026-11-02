@@ -291,6 +291,7 @@ function ThemedStack() {
           <Stack.Screen name="programme" options={{ headerShown: true, title: 'Programme' }} />
           <Stack.Screen name="spend" options={{ headerShown: true, title: 'What you pay' }} />
           <Stack.Screen name="photos" options={{ headerShown: true, title: 'Progress photos' }} />
+          <Stack.Screen name="challenges" options={{ headerShown: true, title: 'Monthly challenge' }} />
           <Stack.Screen name="exercises" options={{ headerShown: true, title: 'Exercises' }} />
           <Stack.Screen name="moderation" options={{ headerShown: true, title: 'Moderation' }} />
           <Stack.Screen name="progress/[exercise]" options={{ headerShown: true, title: '' }} />

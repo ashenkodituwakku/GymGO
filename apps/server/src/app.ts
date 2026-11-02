@@ -123,6 +123,7 @@
  * shared domain rules. The app hiding a button is not access control.
  */
 
+import { ChallengeError, Challenges } from './challenges';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { isIP } from 'node:net';
@@ -646,6 +647,7 @@ export function createApp(options: AppOptions) {
   const packs = new CountryPacks(db, { ...options.area, ...options.packs, now, known: () => allGyms(db) });
   const photos = new PhotoStore(options.photoDir ?? null);
   const social = new Social(db, now);
+  const challenges = new Challenges(db, social, now);
   const owners = new Owners(db, now);
   /** A gym as the server sends it: with its verified owner's approved updates laid over (domain owner.ts). */
   const withOwner = (record: GymRecord): GymRecord => applyOwnerUpdates(record, owners.approved());
@@ -1208,6 +1210,27 @@ export function createApp(options: AppOptions) {
       return send(res, 200, { gyms: [], resetAt });
     }
 
+    // --- Monthly challenges with friends (challenges.ts) ---------------------
+    if (parts[0] === 'api' && parts[1] === 'challenges') {
+      const { account } = requireAccount(req);
+      try {
+        if (path === '/api/challenges' && method === 'GET') return send(res, 200, challenges.view(account.id, url.searchParams.get('tz')));
+        if (parts.length === 3 && method === 'PUT') {
+          const body = (await readJson(req)) as Record<string, unknown>;
+          challenges.join(account.id, parts[2], body);
+          return send(res, 200, challenges.view(account.id, body.timeZone));
+        }
+        if (parts.length === 3 && method === 'DELETE') {
+          challenges.leave(account.id, parts[2]);
+          return send(res, 204);
+        }
+      } catch (error) {
+        if (error instanceof ChallengeError) throw new HttpError(error.status, error.message);
+        throw error;
+      }
+      throw new HttpError(404, 'Not found.');
+    }
+
     // --- Friends, invites to train, leaderboards (social.ts) -----------------
     if (parts[0] === 'api' && (parts[1] === 'friends' || parts[1] === 'invites' || parts[1] === 'leaderboard' || path === '/api/me/leaderboard')) {
       const { account } = requireAccount(req);
@@ -1531,6 +1554,7 @@ export function createApp(options: AppOptions) {
            from bug_reports where user_id = ? order by created_at`,
         ).map(({ context_json, ...report }) => ({ ...report, device: JSON.parse(String(context_json)) })),
         ...social.exportFor(id),
+        challenges: challenges.exportFor(id),
         ...owners.exportFor(id),
         ...perks.exportFor(id),
       });

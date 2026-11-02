@@ -148,7 +148,7 @@ export class Social {
     return this.link(a, b)?.status === 'accepted';
   }
 
-  private friendIds(userId: string): string[] {
+  friendIds(userId: string): string[] {
     return (
       this.db
         .prepare(

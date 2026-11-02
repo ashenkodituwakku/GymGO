@@ -378,6 +378,17 @@ times and name), checked by a moderator before it shows, and labelled as
 from the gym with the day it was approved. Whether a class needs booking, a
 membership or a fee isn't part of it, so the page says to ask.
 
+### Monthly challenge
+
+**Monthly challenge** (Profile → Training, or Friends): pick how many days
+you'll train this month (8, 12, 16 or 20) and join. A day counts once you
+log a workout on it, on your own calendar; two workouts on one day count
+once. Friends who joined the same month see each other's count and target,
+never which days or what. Reaching it earns the month's card, kept on the
+screen and shareable. Nobody is in a challenge, or seen in one, until they
+join; leaving takes that month's card too. It's in your data download
+(`apps/server/src/challenges.ts`, `packages/domain/src/challenges.ts`).
+
 ### What you pay, and price changes
 
 **What you pay** (Profile → Training): enter a membership (and how often

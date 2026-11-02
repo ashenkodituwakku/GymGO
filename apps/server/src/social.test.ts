@@ -210,3 +210,61 @@ describe('your data', () => {
     expect(maxs.invites.incoming).toEqual([]);
   });
 });
+
+describe('monthly challenges', () => {
+  const TZ = 'Australia/Melbourne';
+  const workout = (token: string, finishedAt: string) =>
+    call('POST', '/api/training', {
+      token,
+      body: { name: 'W', unit: 'kg', startedAt: finishedAt, finishedAt, workoutId: null, gymId: null, exercises: [{ exerciseId: 'push-up', sets: [{ weight: null, reps: 10 }] }] },
+    });
+
+  it('are opt-in, count training days on your calendar, and show friends who joined only their count', async () => {
+    expect((await call('GET', `/api/challenges?tz=${TZ}`)).status).toBe(401);
+    const cat = await person('Cat');
+    const dev = await person('Dev');
+    const stranger = await person('Stranger');
+    await call('POST', '/api/friends', { token: cat.token, body: { code: dev.code } });
+    await call('POST', `/api/friends/${cat.id}/accept`, { token: dev.token });
+
+    // Not in it until you join; September in Melbourne (the clock is 29 Sep).
+    const empty = (await call('GET', `/api/challenges?tz=${encodeURIComponent(TZ)}`, { token: cat.token })).body!;
+    expect(empty).toMatchObject({ month: '2026-09', mine: null, friends: [], cards: [], targets: [8, 12, 16, 20] });
+    expect((await call('GET', '/api/challenges?tz=Nowhere/Else', { token: cat.token })).status).toBe(400);
+
+    expect((await call('PUT', '/api/challenges/2026-09', { token: cat.token, body: { target: 13, timeZone: TZ } })).status).toBe(400);
+    expect((await call('PUT', '/api/challenges/2026-10', { token: cat.token, body: { target: 8, timeZone: TZ } })).status).toBe(400);
+    const joined = await call('PUT', '/api/challenges/2026-09', { token: cat.token, body: { target: 8, timeZone: TZ } });
+    expect(joined.status).toBe(200);
+    expect(joined.body!.mine).toEqual({ target: 8, days: 0, finished: false });
+
+    // Two workouts on one day count once; one late on 30 Sep UTC is 1 Oct in Melbourne and doesn't count.
+    await workout(cat.token, '2026-09-10T08:00:00Z');
+    await workout(cat.token, '2026-09-10T09:00:00Z');
+    await workout(cat.token, '2026-09-12T08:00:00Z');
+    await workout(cat.token, '2026-09-30T15:00:00Z');
+    expect((await call('GET', `/api/challenges?tz=${TZ}`, { token: cat.token })).body!.mine).toMatchObject({ days: 2 });
+
+    // Dev sees nobody until Dev or Cat... Cat joined, so Dev sees Cat; Dev isn't shown until Dev joins.
+    const devView = (await call('GET', `/api/challenges?tz=${TZ}`, { token: dev.token })).body!;
+    expect(devView.friends).toEqual([{ displayName: 'Cat', avatarUrl: null, target: 8, days: 2, finished: false, you: false }]);
+    // Only the count and target: no dates.
+    expect(JSON.stringify(devView)).not.toContain('2026-09-10');
+    // A stranger sees nothing of Cat.
+    expect((await call('GET', `/api/challenges?tz=${TZ}`, { token: stranger.token })).body!.friends).toEqual([]);
+
+    // Reaching the target keeps the card, even after another workout or a lower day count is impossible.
+    for (const day of ['13', '14', '15', '16', '17', '18']) await workout(cat.token, `2026-09-${day}T08:00:00Z`);
+    const done = (await call('GET', `/api/challenges?tz=${TZ}`, { token: cat.token })).body!;
+    expect(done.mine).toEqual({ target: 8, days: 8, finished: true });
+    expect(done.cards).toEqual([{ month: '2026-09', target: 8, finishedAt: NOW.toISOString() }]);
+    expect((await call('PUT', '/api/challenges/2026-09', { token: cat.token, body: { target: 12, timeZone: TZ } })).status).toBe(409);
+
+    // In the data download; leaving takes it away.
+    expect((await call('GET', '/api/me/export', { token: cat.token })).body!.challenges).toEqual([
+      expect.objectContaining({ month: '2026-09', target: 8, timeZone: TZ }),
+    ]);
+    expect((await call('DELETE', '/api/challenges/2026-09', { token: cat.token })).status).toBe(204);
+    expect((await call('GET', `/api/challenges?tz=${TZ}`, { token: dev.token })).body!.friends).toEqual([]);
+  });
+});

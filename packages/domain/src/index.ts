@@ -31,6 +31,7 @@ export * from './machines';
 export * from './trips';
 export * from './cards';
 export * from './social';
+export * from './challenges';
 export * from './busy';
 export * from './owner';
 export * from './perks';

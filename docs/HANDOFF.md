@@ -102,6 +102,16 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Round 6 of the owner's 11: monthly challenges** (2 Nov). Domain
+  challenges.ts (targets 8/12/16/20, month keys, time zones, training days
+  counted per local day). Server challenges.ts with a `challenge_members`
+  table (user, month, target, time zone, finished_at kept once reached),
+  routes GET /api/challenges?tz=, PUT/DELETE /api/challenges/:month (this
+  month only), friends who joined listed with count and target only, in
+  the data export, deleted with the account. Screen app/challenges.tsx
+  (from Profile and Friends; not in the limited version) with the month's
+  card. Watch out: the web dev server here sometimes misses edits; restart
+  it before trusting a browser check.
 - **Round 5 of the owner's 11: access filter and class timetables** (2
   Nov). Filters gained `access` (AmenityId[]) → the domain's existing
   `requiredAmenities`: confirmed / needs_confirmation (no record, kept) /
@@ -472,7 +482,7 @@ order and pushed round by round; tick each as it lands. Another session:
 - [x] Accessibility filter from OpenStreetMap's wheelchair data; gyms
       without it shown as "not known", not hidden.
 - [x] Class timetables from verified gym owners only, dated.
-- [ ] Monthly challenges with friends, opt-in, a card for finishing.
+- [x] Monthly challenges with friends, opt-in, a card for finishing.
 - [ ] Home-screen widgets (next workout, streak): need a native build.
 
 ## Earlier: the owner asked for all 22 of these

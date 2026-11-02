@@ -81,6 +81,9 @@ Photos (members' first, then the gym's own website's), the answer for your visit
 # Collecting gyms
 Check in with **I'm here** at a gym to add it to your **Collection** (Profile). Each gym is a trading card with a rarity rolled by luck each day you check in (Common, Uncommon, Rare, Epic, Legendary), a gem, and sometimes Foil. Cards go Bronze, Silver (3 visits), Gold (10) and Platinum (25). Suburb and city sets earn reward cards and badges. Rarity is luck, not a rating of the gym, and nothing can be bought. Your position is only compared on the phone, never sent.
 
+# Monthly challenge
+**Monthly challenge** (Profile → Training, or Friends): they pick how many days they'll train this month (8, 12, 16 or 20) and join. A day counts once they log a workout on it, on their own calendar (two workouts on one day count once). Friends who joined the same month see each other's count and target only, never which days or what. Reaching the target earns that month's card (kept on the screen, and shareable). Nobody is in it or seen in it until they join; leaving takes their card for that month too.
+
 # Friends
 **Friends** (Profile, or Collection): share your friend code, add theirs, see each other's cards and totals, and invite a friend to train at a gym on a day and time. **Leaderboard** ranks by gyms collected; you're on the public board only if you switch it on.
 

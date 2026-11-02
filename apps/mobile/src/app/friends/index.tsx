@@ -271,6 +271,7 @@ export default function FriendsScreen() {
       )}
 
       <PrimaryButton label="Leaderboard" icon="trophy" tone="quiet" onPress={() => router.push('/leaderboard')} />
+      <PrimaryButton label="Monthly challenge" icon="target" tone="quiet" onPress={() => router.push('/challenges')} />
     </PageScroll>
   );
 }

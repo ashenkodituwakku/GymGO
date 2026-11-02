@@ -102,6 +102,14 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Round 7 of the owner's 11: home-screen widgets, the part that can be
+  done here** (2 Nov). lib/widgetSnapshot.ts: next workout (programme day
+  first, else a template's), weeks in a row, this week against the goal,
+  this month's challenge, and the small widget's line. Not done: the
+  widget. Expo's `expo-widgets` (57.0.x exists) needs an App Group
+  (`groupIdentifier`), which free Personal Team signing doesn't allow, and
+  its native module would compile into every iPhone build once installed;
+  nothing native was added. README "Home-screen widgets" says what it takes.
 - **Round 6 of the owner's 11: monthly challenges** (2 Nov). Domain
   challenges.ts (targets 8/12/16/20, month keys, time zones, training days
   counted per local day). Server challenges.ts with a `challenge_members`
@@ -483,7 +491,9 @@ order and pushed round by round; tick each as it lands. Another session:
       without it shown as "not known", not hidden.
 - [x] Class timetables from verified gym owners only, dated.
 - [x] Monthly challenges with friends, opt-in, a card for finishing.
-- [ ] Home-screen widgets (next workout, streak): need a native build.
+- [~] Home-screen widgets (next workout, streak): what they show is built and
+      tested (lib/widgetSnapshot.ts); the widget itself waits on the owner
+      (a paid Apple Developer account for the App Group, and a Mac build).
 
 ## Earlier: the owner asked for all 22 of these
 

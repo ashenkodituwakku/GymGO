@@ -378,6 +378,30 @@ times and name), checked by a moderator before it shows, and labelled as
 from the gym with the day it was approved. Whether a class needs booking, a
 membership or a fee isn't part of it, so the page says to ask.
 
+### Home-screen widgets (not in the app yet)
+
+What the widgets would show is worked out and tested
+(`apps/mobile/src/lib/widgetSnapshot.ts`): the workout up next (a training
+programme's next day, else a template's), weeks in a row, this week's
+workouts against your goal, and this month's challenge. The widget itself
+isn't built, for two reasons:
+
+- **On iPhone it needs a paid Apple Developer account** (US$99 a year).
+  Expo's widgets package (`expo-widgets`, for SDK 57) shares the app's data
+  with the widget through an App Group, which, as far as we know, Apple
+  doesn't give to free Personal Team accounts. GymGO's iPhone builds use a
+  free team (`scripts/gymgo-mac.sh`).
+- **It can't be built or tried here**: it's native iPhone code, so it
+  needs Xcode on a Mac.
+
+With a paid account: `npx expo install expo-widgets` in `apps/mobile`, add
+its plugin to `app.config.js` with an App Group id
+(`group.<your bundle id>`) and the widgets, lay them out with Expo UI, and
+call each widget's `updateSnapshot` with `widgetSnapshot(...)` whenever a
+workout is logged. Android widgets are possible without paying, through
+the same package's experimental Android support, but GymGO has no Android
+build set up yet.
+
 ### Monthly challenge
 
 **Monthly challenge** (Profile → Training, or Friends): pick how many days

@@ -181,6 +181,7 @@ export default function Profile() {
         <Row icon="workout" tile={TILE.orange} title="My workouts" onPress={() => router.push('/workouts')} />
         <Row icon="calendar" tile={TILE.blue} title="Training programme" subtitle="Weeks planned for you, with easier weeks" onPress={() => router.push('/programme')} />
         <Row icon="money" tile={TILE.green} title="What you pay" subtitle="What each visit really costs" onPress={() => router.push('/spend')} />
+        <Row icon="photo" tile={TILE.pink} title="Progress photos" subtitle="Kept on this device only" onPress={() => router.push('/photos')} />
         <Row icon="book" tile={TILE.indigo} title="Exercises" subtitle="How to do each one, what it works and what it needs" onPress={() => router.push('/exercises')} />
         <Row icon="plates" tile={TILE.teal} title="Plate calculator" onPress={() => router.push('/plates')} />
         <Row icon="target" tile={TILE.blue} title="1-rep max" subtitle="From any set, and the weights to train at" onPress={() => router.push('/strength')} />

@@ -405,6 +405,19 @@ takes turns through its days, so starting one gives you the day after the
 last you logged; any other day can be started too. They're general plans,
 not advice for anyone in particular, and the screen says to start light.
 
+**Recovery map** (Progress): the body, front and back, each muscle shaded
+by how long since you last trained it as a main muscle (today, yesterday,
+2–3 days, 4 or more, not in your log), with the same as a list. It shows
+what you've trained, not whether a muscle has recovered.
+
+**Progress photos** (Progress, or Profile → Training): pictures of
+yourself kept on the device only (files in the app's documents folder on a
+phone, the browser's Cache Storage on the web), never uploaded, not in your
+account, not shown to GymPal. Each is made 1,200 pixels across at most and
+saved afresh as a JPEG, without the original's details of where and on
+what it was taken. Hidden each time the screen opens until you tap **Show
+them**; **Then and now** puts the first beside the latest.
+
 **Training programme** (Templates, Home or Profile → Training): pick a
 goal (Strength, Build muscle or General fitness), 2, 3 or 4 days a week
 and 6, 8 or 12 weeks, and GymGO plans them, taking turns through the

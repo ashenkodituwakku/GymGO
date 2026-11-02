@@ -102,6 +102,15 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Round 4 of the owner's 11: recovery map and progress photos** (2 Nov).
+  lib/recovery.ts bands lastTrained (main muscles only) into today /
+  yesterday / 2–3 days / 4+ / not in the log; components/RecoveryMap.tsx
+  shades the existing BodyFigure and lists the same, on Progress, with no
+  claim about recovery. Progress photos: lib/progressPhotos.ts (picker,
+  resize to 1,200 px, re-encoded JPEG, list in a device store) with files
+  in lib/photoVault.ts (documents folder) / photoVault.web.ts (Cache
+  Storage), app/photos.tsx (hidden until Show them, Then and now, notes,
+  delete removes the file). Nothing is uploaded; GymPal can't see them.
 - **Round 3 of the owner's 11: what you pay, and price changes** (2 Nov).
   lib/visitCost.ts: spends you enter (membership by the day it ran, or
   paid once), visits from collection days plus workouts logged at the gym,
@@ -444,9 +453,9 @@ order and pushed round by round; tick each as it lands. Another session:
       and when a membership beats day passes. Unknown prices stay unknown.
 - [x] Price-change notes for saved gyms: old and new published price,
       source and date checked.
-- [ ] Recovery map: the body figure shaded by days since each muscle was
+- [x] Recovery map: the body figure shaded by days since each muscle was
       trained, from the log. No health claims.
-- [ ] Private progress photos, kept on the device only.
+- [x] Private progress photos, kept on the device only.
 - [ ] Accessibility filter from OpenStreetMap's wheelchair data; gyms
       without it shown as "not known", not hidden.
 - [ ] Class timetables from verified gym owners only, dated.

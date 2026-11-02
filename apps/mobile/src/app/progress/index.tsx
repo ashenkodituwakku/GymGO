@@ -49,6 +49,7 @@ import { SessionNote } from '@/components/SessionNote';
 import { ProOffer } from '@/components/ProOffer';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { BodyWeightCard } from '@/components/BodyWeightCard';
+import { RecoveryMap } from '@/components/RecoveryMap';
 import { LIMITED } from '@/lib/limited';
 
 const nameOf = exerciseName;
@@ -201,9 +202,31 @@ export default function ProgressScreen() {
 
       {known && log.sessions.length > 0 && (
         <Animated.View>
+          <RecoveryMap sessions={log.sessions} />
+        </Animated.View>
+      )}
+
+      {known && log.sessions.length > 0 && (
+        <Animated.View>
           <MuscleBalanceCard sessions={log.sessions} isPro={billing.isPro} onPro={() => openPro('balance')} />
         </Animated.View>
       )}
+
+      <Pressable
+        onPress={() => router.push('/photos')}
+        accessibilityRole="link"
+        accessibilityLabel="Progress photos, kept on this device only"
+        style={({ pressed }) => [styles.photosRow, pressed && { opacity: 0.8 }]}
+      >
+        <Icon name="photo" size={18} color={color.brand} />
+        <View style={styles.photosText}>
+          <Txt variant="headline">Progress photos</Txt>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            Kept on this device only, never uploaded
+          </Txt>
+        </View>
+        <Icon name="chevron" size={13} color={color.labelTertiary} />
+      </Pressable>
 
       {records.length > 0 && (
         <>
@@ -467,6 +490,8 @@ function SessionRow({
 
 const styles = themed(() => StyleSheet.create({
   healthNote: { paddingHorizontal: space[4], textAlign: 'center' },
+  photosRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
+  photosText: { flex: 1, minWidth: 0, gap: 2 },
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },

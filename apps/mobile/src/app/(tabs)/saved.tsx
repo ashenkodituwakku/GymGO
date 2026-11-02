@@ -5,6 +5,7 @@
  * saving.
  */
 
+import { PriceChanges } from '@/components/PriceChanges';
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -63,6 +64,8 @@ export default function Saved() {
     >
       {/* Distances are from the search's place, so the list waits for your settings. */}
       {/* Signed in, your list comes with your account: its shape until then, not "Nothing saved yet… Sign in". */}
+      {/* Price changes at your saved gyms since you last looked (components/PriceChanges.tsx). */}
+      <PriceChanges saved={account.saved} records={data.records} loaded={prefsReady && data.status !== 'loading' && account.state !== 'loading'} />
       {prefsReady && account.state === 'loading' && saved.length === 0 && <ListSkeleton rows={3} label="Loading your saved gyms" />}
       {!prefsReady || (account.state === 'loading' && saved.length === 0) ? null : saved.length === 0 && gone.length === 0 ? (
         <View style={styles.empty}>

@@ -102,6 +102,18 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Round 3 of the owner's 11: what you pay, and price changes** (2 Nov).
+  lib/visitCost.ts: spends you enter (membership by the day it ran, or
+  paid once), visits from collection days plus workouts logged at the gym,
+  per currency (never added across), and `visitPrice`, the gym's own
+  cheapest one-visit price for the gym floor with every part of its cost
+  known (no chain "from"/recommended price, no trial, not expired, status
+  not unknown; stale ones say "to confirm"), for the break-even line.
+  Screen app/spend.tsx (Profile). lib/priceWatch.ts compares saved gyms'
+  published offers with the ones last seen (first sight: remembered only;
+  a gym not loaded keeps its last; an unsaved one is forgotten); notes on
+  Saved (components/PriceChanges.tsx). Both kept on the device through a
+  shared lib/deviceStore.ts. GymPal's guide covers both.
 - **Round 2 of the owner's 11: training programmes** (2 Nov). Goal ×
   2/3/4 days × 6/8/12 weeks (lib/programmes.ts): Strength uses 5×5 or a
   new upper/lower split, Build muscle full body / PPL / upper-lower,
@@ -428,9 +440,9 @@ order and pushed round by round; tick each as it lands. Another session:
 - [x] Training programmes: a goal and days a week planned over weeks,
       weight added when every rep is hit, an easier week now and then;
       with Pro, GymPal can adjust it from the training log.
-- [ ] Cost per visit: what you pay (entered by you) over your check-ins,
+- [x] Cost per visit: what you pay (entered by you) over your check-ins,
       and when a membership beats day passes. Unknown prices stay unknown.
-- [ ] Price-change notes for saved gyms: old and new published price,
+- [x] Price-change notes for saved gyms: old and new published price,
       source and date checked.
 - [ ] Recovery map: the body figure shaded by days since each muscle was
       trained, from the log. No health claims.

@@ -43,7 +43,7 @@ GymGO needs a free account: create one or sign in with email, Google or Apple. A
 # The four tabs (along the bottom)
 - **Home**: a greeting, the search box, quick picks (Near me, Early start, After work, Under $25), **Build a workout**, **Up next** once you're on a template, **Back to your workout** if one is in progress, your next trip, **Machines** and **Trips**, gyms near you, saved and recently viewed gyms, and other neighbourhoods and cities.
 - **Explore**: the map with the results list, **Filters** (including opening hours: Open late, 24 hours) and sorting (best match, closest, cheapest, top rated). Gyms from OpenStreetMap load only when you tap **Search this area**. On the map a gym opens as a card; its expand button opens the full page.
-- **Saved**: your saved gyms. Tick two or more to **compare** them side by side.
+- **Saved**: your saved gyms. Tick two or more to **compare** them side by side. When a saved gym's published price changes, a note at the top says the old and new price, where the gym publishes it and when that was checked; a price no longer published says so (not known, never free). **Got it** clears the notes. The prices seen are kept on the device.
 - **Profile**: your account, Training, Pro, your gyms, settings, and where GymGO's facts come from.
 
 # Searching
@@ -82,6 +82,7 @@ Check in with **I'm here** at a gym to add it to your **Collection** (Profile). 
 
 # Other tools
 - **Machines** (Home): find gyms near your search that have the machines you need.
+- **What you pay** (Profile → Training): they enter a membership (with how often it's charged) or something paid once, for one of their gyms or any gym; GymGO shows what each visit costs over 30 or 90 days or a year, using their check-ins and workouts logged at that gym as the visits. For a membership at a gym that publishes a day-pass or casual price, it says from how many visits a month the membership pays off and how the last 30 days went. Only their own amounts and the gym's published prices are used; a gym that publishes no visit price gets no comparison. What they enter stays on the device. You don't see their amounts unless they tell you.
 - **Trips** (Home): add where you're going and when, and see gyms there that let visitors in on those days.
 - **Appearance** (Profile): Automatic, Light or Dark, Black or Dim dark, and how glassy the app is. Pro adds more accent colours and looks.
 - **Country** (Profile): your country, which Free covers.

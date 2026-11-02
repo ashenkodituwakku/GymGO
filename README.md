@@ -363,6 +363,27 @@ your accent glows behind them.
   you on the screen you were on; the map, glass and the phone's own
   keyboards and menus follow too.
 
+### What you pay, and price changes
+
+**What you pay** (Profile → Training): enter a membership (and how often
+it's charged) or something paid once, for one of your gyms or any gym.
+GymGO shows what each visit really costs over 30 or 90 days or a year,
+counting the days you checked in or logged a workout at that gym. For a
+membership at a gym that publishes a day-pass or casual price, it says
+from how many visits a month the membership pays off, and how the last 30
+days went, naming the price's source and when it was checked ("to confirm"
+when that's getting old). Only your own amounts and the gym's published
+prices are used: a gym that publishes no visit price gets no comparison,
+never a $0 one. What you enter stays on the device
+(`apps/mobile/src/lib/visitCost.ts`).
+
+**Price changes** (Saved): when a saved gym's published price changes, a
+note says the old and new price, where the gym publishes it and when that
+was checked. A price no longer published says so (not known, not free); a
+new one is "newly published". **Got it** clears them. The prices seen are
+kept on the device (`apps/mobile/src/lib/priceWatch.ts`); the first time a
+gym is seen there's nothing to compare, so no note.
+
 ### Training
 
 Build a workout (Home → **Build a workout**, or from a gym's page), then

@@ -389,7 +389,34 @@ mobile 388, domain 167 and web 39 tests, all passing.
 - New logo everywhere; collection synced to the account; card popup and
   animations.
 
-## Next up: the owner asked for all 22 of these
+## Next up: the owner asked for all 11 of these (2 Nov)
+
+Claimed by this session (session_01T19nwfpA683gnbhSJ8YpPV), built in this
+order and pushed round by round; tick each as it lands. Another session:
+`git fetch` first and leave these alone.
+
+- [ ] "Can I do this workout here?" on a gym's page: the workout you built
+      against members' equipment reports (there / missing / not known yet),
+      with a swap for what's missing.
+- [ ] Supersets and circuits in the workout builder and logger, one rest
+      timer for the group.
+- [ ] Training programmes: a goal and days a week planned over weeks,
+      weight added when every rep is hit, an easier week now and then;
+      with Pro, GymPal can adjust it from the training log.
+- [ ] Cost per visit: what you pay (entered by you) over your check-ins,
+      and when a membership beats day passes. Unknown prices stay unknown.
+- [ ] Price-change notes for saved gyms: old and new published price,
+      source and date checked.
+- [ ] Recovery map: the body figure shaded by days since each muscle was
+      trained, from the log. No health claims.
+- [ ] Private progress photos, kept on the device only.
+- [ ] Accessibility filter from OpenStreetMap's wheelchair data; gyms
+      without it shown as "not known", not hidden.
+- [ ] Class timetables from verified gym owners only, dated.
+- [ ] Monthly challenges with friends, opt-in, a card for finishing.
+- [ ] Home-screen widgets (next workout, streak): need a native build.
+
+## Earlier: the owner asked for all 22 of these
 
 Status is updated as each batch lands. Build them in order, one batch per
 pushed commit or a few.

@@ -143,14 +143,28 @@ describe('verified gym owners', () => {
     expect(listed.offers.find((offer: { productType: string }) => offer.productType === 'casual_gym_visit').baseAmountMinor).toBe(1900);
     expect((await call('GET', `/api/gyms/${gym}/owner`, { token: reader })).body!.updates).toEqual([{ kind: 'casual_price', approvedAt: clock.toISOString() }]);
 
+    // A class timetable: checked, waits for a moderator, then shows on the gym as from the gym.
+    expect((await call('POST', `/api/gyms/${gym}/owner-updates`, { token: owner.token, body: { kind: 'class_timetable', classes: [] } })).status).toBe(400);
+    const timetable = await call('POST', `/api/gyms/${gym}/owner-updates`, {
+      token: owner.token,
+      body: { kind: 'class_timetable', classes: [{ day: 2, startMinute: 18 * 60, endMinute: 18 * 60 + 45, name: 'Spin' }] },
+    });
+    expect(timetable.status).toBe(201);
+    expect((await call('GET', `/api/gyms/${gym}`, { token: reader })).body!.gym.classes).toBeUndefined();
+    const waitingClasses = (await call('GET', '/api/moderation/owner-updates', { token: moderator.token })).body!.updates;
+    expect((await call('POST', `/api/moderation/owner-updates/${waitingClasses[0].id}`, { token: moderator.token, body: { decision: 'approve' } })).status).toBe(204);
+    const withClasses = (await call('GET', `/api/gyms/${gym}`, { token: reader })).body!.gym;
+    expect(withClasses.classes).toMatchObject({ classes: [{ day: 2, startMinute: 1080, endMinute: 1125, name: 'Spin' }], provenance: { status: 'owner_confirmed' } });
+
     // In their data download, and gone with their account.
     const mine = (await call('GET', '/api/me/export', { token: owner.token })).body!;
     expect(mine.gymsOwned).toEqual([expect.objectContaining({ gymId: gym })]);
-    expect(mine.ownerUpdates).toHaveLength(1);
+    expect(mine.ownerUpdates).toHaveLength(2);
     expect((await call('DELETE', '/api/me', { token: owner.token, body: { password: 'correct horse' } })).status).toBeLessThan(300);
     expect((await call('GET', `/api/gyms/${gym}/owner`, { token: reader })).body).toMatchObject({ verified: false, updates: [] });
     const gone = (await call('GET', `/api/gyms/${gym}`, { token: reader })).body!.gym;
     expect(JSON.stringify(gone)).not.toContain('owner-casual');
+    expect(gone.classes).toBeUndefined();
   });
 
   it('isn’t open to invented demo gyms, and a turned-down claim says why', async () => {

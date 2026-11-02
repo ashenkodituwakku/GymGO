@@ -13,7 +13,7 @@
  */
 
 import { evaluateVisitorAccess, type AccessReason, type VisitorAccessResult } from './access';
-import { matchAmenities, type AmenityMatchResult } from './amenities';
+import { amenityLabel, matchAmenities, type AmenityMatchResult } from './amenities';
 import { matchEquipment, type EquipmentMatchResult, type EquipmentRequirement } from './equipment';
 import { formatMoney } from './money';
 import {
@@ -245,7 +245,7 @@ export function evaluateGym(
       limitations.push({
         code: `amenity_${match.state}`,
         severity: match.state === 'missing' ? 'blocking' : 'confirm',
-        message: `${match.amenityId.replace(/_/g, ' ')}: ${match.detail}`,
+        message: `${amenityLabel(match.amenityId)}: ${match.detail}`,
       });
     }
   }
@@ -448,7 +448,7 @@ export function suggestRelaxations(input: SearchInput): RelaxationSuggestion[] {
   for (const amenityId of query.requiredAmenities) {
     candidates.push({
       kind: 'drop_amenity',
-      label: `Drop "${amenityId.replace(/_/g, ' ')}"`,
+      label: `Drop "${amenityLabel(amenityId)}"`,
       patch: { requiredAmenities: query.requiredAmenities.filter((item) => item !== amenityId) },
     });
   }

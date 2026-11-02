@@ -6,7 +6,7 @@
 
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from './motion';
-import { HOURS_LABELS, equipmentLabel, type HoursNeed, type Tri } from '@gymgo/domain';
+import { AMENITIES, HOURS_LABELS, equipmentLabel, type AmenityId, type HoursNeed, type Tri } from '@gymgo/domain';
 import { filtersButtonLabel, timeLabel } from '@/lib/copy';
 import {
   BUDGET_PRESETS,
@@ -23,6 +23,9 @@ import { color, dropShadow, face, radius, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { localBudget, moneyLabel, radiusChoices, tracksPrices } from '@/lib/places';
 import { Chip, PrimaryButton, Txt } from './ui';
+
+/** Access needs, each its own fact (domain amenities.ts). */
+const ACCESS: Array<{ id: AmenityId; label: string }> = AMENITIES.filter((amenity) => amenity.group === 'accessibility').map((amenity) => ({ id: amenity.id, label: amenity.label }));
 
 export function FiltersContent({
   filters,
@@ -116,6 +119,25 @@ export function FiltersContent({
         </Hint>
       </Group>
 
+      <Group title="Access">
+        <View style={styles.chips}>
+          {ACCESS.map((amenity) => {
+            const on = filters.access?.includes(amenity.id) ?? false;
+            return (
+              <Chip
+                key={amenity.id}
+                label={amenity.label}
+                selected={on}
+                onPress={() => set({ access: on ? (filters.access ?? []).filter((item) => item !== amenity.id) : [...(filters.access ?? []), amenity.id] })}
+              />
+            );
+          })}
+        </View>
+        <Hint>
+          From OpenStreetMap and what gyms publish, each one separately: an entrance says nothing about bathrooms. A gym with no record is shown as not
+          known, never left out; one recorded without it is ruled out.
+        </Hint>
+      </Group>
       <Group title="Budget per visit">
         {tracksPrices(country) ? (
           <>

@@ -363,6 +363,21 @@ your accent glows behind them.
   you on the screen you were on; the map, glass and the phone's own
   keyboards and menus follow too.
 
+### Access needs, and class timetables
+
+**Filters → Access**: Step-free entrance, Accessible bathroom and
+Accessible change room, each a separate fact (an entrance says nothing
+about bathrooms), from OpenStreetMap's `wheelchair` tag and what gyms
+publish. A gym recorded as having it counts as a sure thing; one with no
+record stays in the results as "to confirm", never left out; one recorded
+without it is ruled out.
+
+**Classes** (a gym's page): its weekly timetable, only ever from its
+verified owner (The gym's owner → **Class timetable**: each class's day,
+times and name), checked by a moderator before it shows, and labelled as
+from the gym with the day it was approved. Whether a class needs booking, a
+membership or a fee isn't part of it, so the page says to ask.
+
 ### What you pay, and price changes
 
 **What you pay** (Profile → Training): enter a membership (and how often

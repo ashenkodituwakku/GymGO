@@ -66,6 +66,10 @@ export function describeUpdate(payload: OwnerUpdatePayload): string {
     const who = payload.anyoneCanBuy === 'yes' ? 'anyone can buy' : payload.anyoneCanBuy === 'no' ? 'not open to everyone' : 'who can buy not said';
     return `Casual visit ${priceLabel(payload.amountMinor, payload.currency)} · ${who} · photo ID ${payload.photoIdRequired === 'unknown' ? 'not said' : payload.photoIdRequired}`;
   }
+  if (payload.kind === 'class_timetable') {
+    const shown = payload.classes.slice(0, 4).map((item) => `${DAY_NAMES[item.day]!.slice(0, 3)} ${timeLabel(item.startMinute)} ${item.name}`);
+    return `Class timetable: ${payload.classes.length} class${payload.classes.length === 1 ? '' : 'es'} a week (${shown.join(', ')}${payload.classes.length > 4 ? '…' : ''})`;
+  }
   if (payload.alwaysOpen) return 'Visitor hours: round the clock';
   return `Visitor hours: ${payload.windows.map((window) => `${DAY_NAMES[window.day]!.slice(0, 3)} ${timeLabel(window.openMinute)}–${timeLabel(window.closeMinute % 1440)}`).join(', ')}`;
 }

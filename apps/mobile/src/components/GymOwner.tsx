@@ -12,10 +12,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from './motion';
-import { reportCurrency, scheduleFor, type GymRecord, type OwnerUpdatePayload, type Tri } from '@gymgo/domain';
+import { MAX_CLASSES, reportCurrency, scheduleFor, type GymRecord, type OwnerUpdatePayload, type Tri } from '@gymgo/domain';
 import { api, problemText, type GymOwnerView } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
-import { DAY_NAMES, parsePrice, weekFrom, windowsFrom, type DayHours } from '@/lib/ownerForm';
+import { DAY_NAMES, classesFrom, parsePrice, rowsFrom, weekFrom, windowsFrom, type ClassRow, type DayHours } from '@/lib/ownerForm';
 import { moneyLabel } from '@/lib/places';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space, themed } from '@/lib/theme';
@@ -23,7 +23,7 @@ import { Icon } from './Icon';
 import { Toggle } from './Toggle';
 import { ChoiceChip, Fold, Input, PrimaryButton, Txt } from './ui';
 
-const KIND_LABEL: Record<OwnerUpdatePayload['kind'], string> = { visitor_hours: 'visitor hours', casual_price: 'casual visit price' };
+const KIND_LABEL: Record<OwnerUpdatePayload['kind'], string> = { visitor_hours: 'visitor hours', casual_price: 'casual visit price', class_timetable: 'class timetable' };
 const month = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
 export function GymOwner({ record, account, onSignIn }: { record: GymRecord; account: AccountApi; onSignIn: () => void }) {
@@ -50,7 +50,7 @@ export function GymOwner({ record, account, onSignIn }: { record: GymRecord; acc
           <Txt variant="subhead" style={styles.flex}>
             {`A verified owner has run this listing since ${month(view.since!)}.`}
             {view.updates.length
-              ? ` Its ${view.updates.map((update) => KIND_LABEL[update.kind]).join(' and ')} came from them, checked by GymGO before showing.`
+              ? ` Its ${andList([...new Set(view.updates.map((update) => KIND_LABEL[update.kind]))])} came from them, checked by GymGO before showing.`
               : ' Nothing on the page has come from them yet.'}
           </Txt>
         </View>
@@ -140,6 +140,9 @@ function Claim({ gymName, gymId, country, token, view, onSignIn, onSent }: { gym
   );
 }
 
+/** "a", "a and b", "a, b and c". */
+const andList = (items: string[]) => (items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`);
+
 const TRI: Array<{ value: Tri; label: string }> = [
   { value: 'yes', label: 'Yes' },
   { value: 'no', label: 'No' },
@@ -149,7 +152,8 @@ const TRI: Array<{ value: Tri; label: string }> = [
 function OwnerTools({ record, token, view, onSent }: { record: GymRecord; token: string; view: GymOwnerView; onSent: () => void }) {
   const location = record.location;
   const country = location.address.countryCode;
-  const [part, setPart] = useState<'hours' | 'price' | null>(null);
+  const [part, setPart] = useState<'hours' | 'price' | 'classes' | null>(null);
+  const [rows, setRows] = useState<ClassRow[]>(() => rowsFrom(record.classes));
   const [week, setWeek] = useState<DayHours[]>(() => weekFrom(scheduleFor(record, 'visitor')));
   const [allDay, setAllDay] = useState(scheduleFor(record, 'visitor')?.alwaysOpen === true);
   const [price, setPrice] = useState('');
@@ -180,6 +184,12 @@ function OwnerTools({ record, token, view, onSent }: { record: GymRecord; token:
     if ('problem' in result) return setNotice(result.problem);
     void send({ kind: 'visitor_hours', alwaysOpen: false, windows: result.windows });
   };
+  const sendClasses = () => {
+    const result = classesFrom(rows);
+    if ('problem' in result) return setNotice(result.problem);
+    void send({ kind: 'class_timetable', classes: result.classes });
+  };
+  const setRow = (index: number, patch: Partial<ClassRow>) => setRows(rows.map((row, at) => (at === index ? { ...row, ...patch } : row)));
   const sendPrice = () => {
     const amountMinor = parsePrice(price);
     if (amountMinor === null) return setNotice('Write the price like 25 or 12.50.');
@@ -189,7 +199,7 @@ function OwnerTools({ record, token, view, onSent }: { record: GymRecord; token:
   return (
     <View style={styles.form}>
       <Txt variant="footnote" color={color.labelSecondary}>
-        You’re this gym’s verified owner. Keep its visitor hours and casual price up to date: each is checked by a moderator, then shown as from the gym.
+        You’re this gym’s verified owner. Keep its visitor hours, casual price and class timetable up to date: each is checked by a moderator, then shown as from the gym.
       </Txt>
       {view.you!.submissions.slice(0, 4).map((item) => (
         <Txt key={item.id} variant="caption" color={item.status === 'rejected' ? color.noInk : color.labelSecondary}>
@@ -211,6 +221,37 @@ function OwnerTools({ record, token, view, onSent }: { record: GymRecord; token:
               <PrimaryButton label="Casual price" icon="money" tone="quiet" onPress={() => setPart('price')} />
             </View>
           )}
+        </View>
+      )}
+      {part === null && <PrimaryButton label="Class timetable" icon="calendar" tone="quiet" onPress={() => setPart('classes')} />}
+      {part === 'classes' && (
+        <View style={styles.form}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            Each week’s classes: the day, start and end (like 18:00 and 18:45) and what you call it. It replaces the timetable showing now.
+          </Txt>
+          {rows.map((row, index) => (
+            <View key={index} style={styles.classRow}>
+              <View style={styles.chips}>
+                {DAY_NAMES.map((name, day) => (
+                  <ChoiceChip key={name} label={name.slice(0, 3)} selected={row.day === day} onPress={() => setRow(index, { day })} />
+                ))}
+              </View>
+              <View style={styles.day}>
+                <Input value={row.from} onChangeText={(from) => setRow(index, { from })} accessibilityLabel={`Class ${index + 1} starts`} style={styles.time} maxLength={5} />
+                <Txt variant="footnote" color={color.labelSecondary}>
+                  to
+                </Txt>
+                <Input value={row.to} onChangeText={(to) => setRow(index, { to })} accessibilityLabel={`Class ${index + 1} ends`} style={styles.time} maxLength={5} />
+                <Input value={row.name} onChangeText={(name) => setRow(index, { name })} accessibilityLabel={`Class ${index + 1} name`} placeholder="Spin" style={[styles.input, styles.flex]} maxLength={60} />
+              </View>
+              {rows.length > 1 && <PrimaryButton label="Remove this class" tone="quiet" onPress={() => setRows(rows.filter((_, at) => at !== index))} />}
+            </View>
+          ))}
+          {rows.length < MAX_CLASSES && (
+            <PrimaryButton label="Add a class" icon="plus" tone="quiet" onPress={() => setRows([...rows, { ...(rows[rows.length - 1] ?? { day: 1, from: '06:00', to: '06:45' }), name: '' }])} />
+          )}
+          <PrimaryButton label="Send the timetable" busy={sending} onPress={sendClasses} />
+          <PrimaryButton label="Cancel" tone="quiet" onPress={() => setPart(null)} />
         </View>
       )}
       {part === 'hours' && (
@@ -296,6 +337,7 @@ const styles = themed(() =>
     tall: { minHeight: 80, textAlignVertical: 'top' },
     day: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     dayName: { flexDirection: 'row', alignItems: 'center', gap: 6, width: 72 },
+    classRow: { gap: space[2], paddingVertical: space[2], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: color.separator },
     time: { width: 72, height: 40, paddingHorizontal: space[2], borderRadius: radius.sm, backgroundColor: color.fill, color: color.label, fontSize: 16, textAlign: 'center' },
   }),
 );

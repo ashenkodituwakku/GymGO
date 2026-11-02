@@ -1,6 +1,8 @@
 /**
- * Verified gym owners' updates: the gym's visitor hours and its casual
- * visit price, from someone a GymGO admin has checked runs the gym.
+ * Verified gym owners' updates: the gym's visitor hours, its casual visit
+ * price and its weekly class timetable, from someone a GymGO admin has
+ * checked runs the gym. A timetable comes only from here: GymGO never
+ * gathers one from elsewhere.
  *
  * An update is a submission: a moderator approves it before anyone sees it
  * (authz.ts: "edit" means submit a change for review, never write-through).
@@ -11,9 +13,9 @@
  */
 
 import { reportCurrency, visitPriceRange } from './money';
-import type { AccessSchedule, GymRecord, OpeningWindow, Provenance, Tri, VisitOffer } from './types';
+import type { AccessSchedule, GymClass, GymRecord, OpeningWindow, Provenance, Tri, VisitOffer } from './types';
 
-export type OwnerUpdateKind = 'visitor_hours' | 'casual_price';
+export type OwnerUpdateKind = 'visitor_hours' | 'casual_price' | 'class_timetable';
 
 export interface VisitorHoursUpdate {
   kind: 'visitor_hours';
@@ -33,7 +35,16 @@ export interface CasualPriceUpdate {
   photoIdRequired: Tri;
 }
 
-export type OwnerUpdatePayload = VisitorHoursUpdate | CasualPriceUpdate;
+export interface ClassTimetableUpdate {
+  kind: 'class_timetable';
+  /** The week's classes, by day and start. */
+  classes: GymClass[];
+}
+
+/** The most classes a week's timetable holds. */
+export const MAX_CLASSES = 80;
+
+export type OwnerUpdatePayload = VisitorHoursUpdate | CasualPriceUpdate | ClassTimetableUpdate;
 
 export interface ApprovedOwnerUpdate {
   id: string;
@@ -81,7 +92,27 @@ export function cleanOwnerUpdate(input: unknown, countryCode: string): OwnerUpda
     if (!Number.isInteger(amountMinor) || amountMinor < range.minMinor || amountMinor > range.maxMinor) throw new OwnerUpdateError('That price doesn’t look like one visit’s.');
     return { kind: 'casual_price', amountMinor, currency, anyoneCanBuy: tri(body.anyoneCanBuy), photoIdRequired: tri(body.photoIdRequired) };
   }
-  throw new OwnerUpdateError('Say what you’re updating: visitor hours or the casual visit price.');
+  if (body.kind === 'class_timetable') {
+    const raw = Array.isArray(body.classes) ? body.classes : [];
+    if (raw.length === 0) throw new OwnerUpdateError('Add at least one class.');
+    if (raw.length > MAX_CLASSES) throw new OwnerUpdateError(`Up to ${MAX_CLASSES} classes a week.`);
+    const classes: GymClass[] = raw.map((item) => {
+      const entry = (item ?? {}) as Record<string, unknown>;
+      const day = Number(entry.day);
+      const startMinute = Number(entry.startMinute);
+      const endMinute = Number(entry.endMinute);
+      // A name as the gym writes it: no control characters, trimmed, short.
+      const name = typeof entry.name === 'string' ? entry.name.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim() : '';
+      if (![day, startMinute, endMinute].every(Number.isInteger) || day < 0 || day > 6) throw new OwnerUpdateError('Each class needs a day and its times.');
+      if (startMinute < 0 || startMinute >= 1440 || endMinute <= startMinute || endMinute > 1440 || endMinute - startMinute > 360) {
+        throw new OwnerUpdateError('Each class has to end after it starts, the same day, within six hours.');
+      }
+      if (name.length < 2 || name.length > 60) throw new OwnerUpdateError('Give each class a name of up to 60 characters.');
+      return { day, startMinute, endMinute, name };
+    });
+    return { kind: 'class_timetable', classes: classes.sort((a, b) => a.day - b.day || a.startMinute - b.startMinute || a.name.localeCompare(b.name)) };
+  }
+  throw new OwnerUpdateError('Say what you’re updating: visitor hours, the casual visit price or the class timetable.');
 }
 
 function fromTheGym(update: ApprovedOwnerUpdate, label: string): Provenance {
@@ -156,6 +187,10 @@ export function applyOwnerUpdates(record: GymRecord, updates: readonly ApprovedO
       provenance: fromTheGym(price, 'Casual visit price from the gym (verified owner)'),
     };
     next = { ...next, offers: [...next.offers.filter((item) => item.productType !== 'casual_gym_visit'), offer] };
+  }
+  const timetable = mine.filter((update) => update.payload.kind === 'class_timetable').at(-1);
+  if (timetable && timetable.payload.kind === 'class_timetable') {
+    next = { ...next, classes: { classes: timetable.payload.classes, provenance: fromTheGym(timetable, 'Class timetable from the gym (verified owner)') } };
   }
   return next;
 }

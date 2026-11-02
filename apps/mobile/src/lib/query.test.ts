@@ -193,3 +193,32 @@ describe('runSearchShared: the same search for Home and Explore, worked out once
     expect(runSearchShared(filters, data, new Date(now.getTime() + 120_000))).not.toBe(a);
   });
 });
+
+describe('access needs', () => {
+  const gymWith = (present: 'yes' | 'no' | null) => {
+    const base = AU_GYMS[0]!;
+    return {
+      ...base,
+      location: { ...base.location, id: `access-${present ?? 'none'}` },
+      amenities: present
+        ? [{ id: `access-${present}`, gymId: `access-${present}`, amenityId: 'step_free_entrance' as const, present, note: null, provenance: { status: 'community_reported' as const, sources: [{ id: 'osm', sourceType: 'licensed_dataset' as const, evidenceRef: null, label: 'OpenStreetMap', observedAt: new Date().toISOString(), checkedAt: new Date().toISOString(), reviewerId: null }] } }]
+        : [],
+    };
+  };
+
+  it('keeps a gym with no record as not known, and rules out one recorded without', async () => {
+    const { activeFilterCount, applyRelaxation, toQuery } = await import('./query');
+    const filters = { ...initialFilters(), centre: AU_GYMS[0]!.location.position, radiusKm: 50, access: ['step_free_entrance' as const] };
+    expect(toQuery(filters).requiredAmenities).toEqual(['step_free_entrance']);
+    expect(activeFilterCount(filters)).toBe(1);
+    const outcome = runSearch(filters, { records: [gymWith('yes'), gymWith(null), gymWith('no')] });
+    const tierOf = (id: string) => outcome.results.find((result) => result.record.location.id === id)?.tier;
+    expect(tierOf('access-yes')).not.toBe('ruled_out');
+    expect(tierOf('access-none')).toBe('needs_confirmation');
+    expect(tierOf('access-no') ?? 'ruled_out').toBe('ruled_out');
+    const unknown = outcome.results.find((result) => result.record.location.id === 'access-none')!;
+    expect(unknown.limitations.some((reason) => reason.message === 'Step-free entrance: No record of step-free entrance either way.')).toBe(true);
+    // Dropping it from a suggestion clears it.
+    expect(applyRelaxation(filters, { requiredAmenities: [] }).access).toEqual([]);
+  });
+});

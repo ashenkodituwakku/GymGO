@@ -39,3 +39,22 @@ describe('the owner’s forms', () => {
     expect(parsePrice('free')).toBeNull();
   });
 });
+
+describe('the class timetable form', () => {
+  it('starts from the timetable showing, or one class to fill in', async () => {
+    const { rowsFrom } = await import('./ownerForm');
+    expect(rowsFrom(undefined)).toEqual([{ day: 1, from: '06:00', to: '06:45', name: '' }]);
+    expect(rowsFrom({ classes: [{ day: 3, startMinute: 1080, endMinute: 1125, name: 'Spin' }], provenance: { status: 'owner_confirmed', sources: [] } })).toEqual([
+      { day: 3, from: '18:00', to: '18:45', name: 'Spin' },
+    ]);
+  });
+
+  it('turns rows into classes, or says which one is wrong', async () => {
+    const { classesFrom } = await import('./ownerForm');
+    expect(classesFrom([{ day: 3, from: '18:00', to: '18:45', name: ' Spin ' }])).toEqual({ classes: [{ day: 3, startMinute: 1080, endMinute: 1125, name: 'Spin' }] });
+    expect(classesFrom([{ day: 3, from: '6pm', to: '18:45', name: 'Spin' }])).toEqual({ problem: 'Spin (Wednesday): write the times like 06:00 and 06:45.' });
+    expect(classesFrom([{ day: 3, from: '18:00', to: '17:00', name: 'Spin' }])).toEqual({ problem: 'Spin (Wednesday): it has to end after it starts, the same day.' });
+    expect(classesFrom([{ day: 1, from: '06:00', to: '07:00', name: '' }])).toEqual({ problem: 'Class 1: give it a name.' });
+    expect(classesFrom([])).toEqual({ problem: 'Add at least one class.' });
+  });
+});

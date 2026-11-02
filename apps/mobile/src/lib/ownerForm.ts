@@ -1,12 +1,13 @@
 /**
  * The verified owner's update forms, in and out of the shapes the server
  * takes (domain owner.ts): times typed as "06:00", prices as "25" or
- * "12.50" in the gym country's money.
+ * "12.50" in the gym country's money, a class timetable as rows of day,
+ * times and name.
  *
  * No React Native imports here, so it is unit-tested in Node.
  */
 
-import type { AccessSchedule, OpeningWindow } from '@gymgo/domain';
+import type { AccessSchedule, ClassTimetable, GymClass, OpeningWindow } from '@gymgo/domain';
 
 export const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
 
@@ -59,4 +60,37 @@ export function parsePrice(text: string): number | null {
   const normal = /^\d{1,3}(,\d{3})+$/.test(clean) ? clean.replace(/,/g, '') : clean.replace(',', '.');
   if (!/^\d+(\.\d{1,2})?$/.test(normal)) return null;
   return Math.round(Number(normal) * 100);
+}
+
+// --- Class timetable ----------------------------------------------------------
+
+export interface ClassRow {
+  /** 0 = Sunday. */
+  day: number;
+  from: string;
+  to: string;
+  name: string;
+}
+
+/** The rows to start the form from: the timetable showing now, else one class to fill in. */
+export function rowsFrom(timetable: ClassTimetable | undefined): ClassRow[] {
+  if (!timetable || timetable.classes.length === 0) return [{ day: 1, from: '06:00', to: '06:45', name: '' }];
+  return timetable.classes.map((item) => ({ day: item.day, from: clock(item.startMinute), to: clock(item.endMinute), name: item.name }));
+}
+
+/** The form's rows as classes, or the first that doesn't make sense. */
+export function classesFrom(rows: readonly ClassRow[]): { classes: GymClass[] } | { problem: string } {
+  const classes: GymClass[] = [];
+  for (const [index, row] of rows.entries()) {
+    const which = row.name.trim() ? `${row.name.trim()} (${DAY_NAMES[row.day]})` : `Class ${index + 1}`;
+    const start = parseClock(row.from);
+    const end = parseClock(row.to);
+    if (start === null || end === null || start >= 1440) return { problem: `${which}: write the times like 06:00 and 06:45.` };
+    if (end <= start) return { problem: `${which}: it has to end after it starts, the same day.` };
+    if (end - start > 360) return { problem: `${which}: a class of more than six hours? Check the times.` };
+    if (row.name.trim().length < 2) return { problem: `${which}: give it a name.` };
+    classes.push({ day: row.day, startMinute: start, endMinute: end, name: row.name.trim().slice(0, 60) });
+  }
+  if (classes.length === 0) return { problem: 'Add at least one class.' };
+  return { classes };
 }

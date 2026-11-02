@@ -55,4 +55,45 @@ describe('verified owners’ updates', () => {
     const outcome = search({ records: [updated], reviewsByGymId: {}, query: defaultQuery({ visitDate: '2026-10-01', visitMinuteOfDay: 19 * 60 }), asOf: new Date(APPROVED) });
     expect(outcome.results[0]!.offers.confirmed?.cost.totalNonRefundableMinor).toBe(2200);
   });
+
+  it('take a week’s class timetable, checked class by class and put in order', () => {
+    const cleaned = cleanOwnerUpdate(
+      {
+        kind: 'class_timetable',
+        classes: [
+          { day: 3, startMinute: 18 * 60, endMinute: 18 * 60 + 45, name: '  Spin\u0007  class ' },
+          { day: 1, startMinute: 6 * 60, endMinute: 7 * 60, name: 'Beginners’ lifting' },
+        ],
+      },
+      'AU',
+    );
+    expect(cleaned).toEqual({
+      kind: 'class_timetable',
+      classes: [
+        { day: 1, startMinute: 360, endMinute: 420, name: 'Beginners’ lifting' },
+        { day: 3, startMinute: 1080, endMinute: 1125, name: 'Spin class' },
+      ],
+    });
+    const bad = (classes: unknown) => () => cleanOwnerUpdate({ kind: 'class_timetable', classes }, 'AU');
+    expect(bad([])).toThrow(OwnerUpdateError);
+    expect(bad([{ day: 7, startMinute: 60, endMinute: 120, name: 'Spin' }])).toThrow('Each class needs a day');
+    expect(bad([{ day: 1, startMinute: 600, endMinute: 540, name: 'Spin' }])).toThrow('end after it starts');
+    expect(bad([{ day: 1, startMinute: 60, endMinute: 60 + 361, name: 'Spin' }])).toThrow('within six hours');
+    expect(bad([{ day: 1, startMinute: 60, endMinute: 120, name: 'x' }])).toThrow('name');
+    expect(bad(Array.from({ length: 81 }, () => ({ day: 1, startMinute: 60, endMinute: 120, name: 'Spin' })))).toThrow('Up to 80');
+  });
+
+  it('show the newest approved timetable, marked as from the gym', () => {
+    const gym = record({ location: location({ id: 'g' }) });
+    expect(gym.classes).toBeUndefined();
+    const timetable = (id: string, approvedAt: string, name: string) => ({
+      id,
+      gymId: 'g',
+      approvedAt,
+      payload: cleanOwnerUpdate({ kind: 'class_timetable', classes: [{ day: 2, startMinute: 600, endMinute: 660, name }] }, 'AU'),
+    });
+    const updated = applyOwnerUpdates(gym, [timetable('t2', APPROVED, 'Yoga'), timetable('t1', '2026-09-01T00:00:00.000Z', 'Pilates')]);
+    expect(updated.classes?.classes.map((item) => item.name)).toEqual(['Yoga']);
+    expect(updated.classes?.provenance).toMatchObject({ status: 'owner_confirmed', sources: [{ sourceType: 'owner_submission', checkedAt: APPROVED, label: 'Class timetable from the gym (verified owner)' }] });
+  });
 });

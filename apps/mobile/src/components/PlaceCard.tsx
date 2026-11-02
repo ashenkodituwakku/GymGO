@@ -143,6 +143,7 @@ export function PlaceCard({
   photos,
   memberKit,
   workoutFit,
+  classes,
   memberPrices,
   memberAccess,
   statusWarning,
@@ -173,6 +174,8 @@ export function PlaceCard({
   memberKit: React.ReactNode;
   /** "Can I do this workout here?": a saved workout checked against what's known to be here (components/WorkoutFit.tsx). */
   workoutFit?: React.ReactNode;
+  /** The gym's weekly classes, from its verified owner (components/ClassTimetable.tsx). */
+  classes?: { node: React.ReactNode; summary: string } | null;
   /** What members paid for a visit, under the gym's own prices. */
   memberPrices?: React.ReactNode;
   /** How getting in went for visiting members, under the gym's own rules. */
@@ -613,6 +616,12 @@ export function PlaceCard({
           {record.equipment[0] && <Evidence provenance={record.equipment[0].provenance} />}
           {memberKit}
         </Fold>
+
+        {classes ? (
+          <Fold icon="calendar" title="Classes" summary={classes.summary}>
+            {classes.node}
+          </Fold>
+        ) : null}
 
         {workoutFit ? (
           <Fold icon="workout" title="Can I do my workout here?" summary="A workout you saved, checked against what’s known to be here">

@@ -35,6 +35,7 @@ import { DayPass } from '@/components/DayPass';
 import { GymOwner } from '@/components/GymOwner';
 import { ReviewsSection } from '@/components/ReviewsSection';
 import { WorkoutFit } from '@/components/WorkoutFit';
+import { ClassTimetable } from '@/components/ClassTimetable';
 import { NoPhoto, PrimaryButton, Txt } from '@/components/ui';
 import { GymPageSkeleton } from '@/components/Skeleton';
 import { shareGym } from '@/lib/actions';
@@ -250,6 +251,14 @@ export default function GymPage() {
                 onSignIn={() => router.push('/sign-in')}
               />
             )}
+            classes={
+              result.record.classes && result.record.classes.classes.length > 0
+                ? {
+                    node: <ClassTimetable timetable={result.record.classes} today={new Date().getDay()} />,
+                    summary: `${result.record.classes.classes.length} a week, from the gym`,
+                  }
+                : null
+            }
             workoutFit={LIMITED || location.isDemoData ? null : <WorkoutFit record={result.record} account={account} onSignIn={() => router.push('/sign-in')} />}
             statusWarning={LIMITED ? null : <StatusWarning gymId={location.id} isDemo={location.isDemoData} token={account.state === 'signed_in' ? account.token : null} />}
             memberStatus={LIMITED ? null : <MemberStatus gymId={location.id} isDemo={location.isDemoData} account={account} onSignIn={() => router.push('/sign-in')} />}

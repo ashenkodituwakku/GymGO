@@ -102,6 +102,19 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Round 5 of the owner's 11: access filter and class timetables** (2
+  Nov). Filters gained `access` (AmenityId[]) → the domain's existing
+  `requiredAmenities`: confirmed / needs_confirmation (no record, kept) /
+  ruled_out (recorded no); the sheet's Access group offers the three
+  accessibility amenities; the domain's messages now use amenity labels.
+  Class timetables are a third owner update kind, `class_timetable`
+  (domain owner.ts: up to 80 classes, day, start/end the same day within
+  six hours, a 2–60 character name with control characters removed),
+  applied as `GymRecord.classes` with owner_confirmed provenance; owner
+  form in GymOwner.tsx (lib/ownerForm.ts rowsFrom/classesFrom), moderation
+  summary, and a Classes fold on the gym page (components/ClassTimetable.tsx).
+  Locally the test account was made admin and owner of Doherty's in a
+  scratch database only.
 - **Round 4 of the owner's 11: recovery map and progress photos** (2 Nov).
   lib/recovery.ts bands lastTrained (main muscles only) into today /
   yesterday / 2–3 days / 4+ / not in the log; components/RecoveryMap.tsx
@@ -456,9 +469,9 @@ order and pushed round by round; tick each as it lands. Another session:
 - [x] Recovery map: the body figure shaded by days since each muscle was
       trained, from the log. No health claims.
 - [x] Private progress photos, kept on the device only.
-- [ ] Accessibility filter from OpenStreetMap's wheelchair data; gyms
+- [x] Accessibility filter from OpenStreetMap's wheelchair data; gyms
       without it shown as "not known", not hidden.
-- [ ] Class timetables from verified gym owners only, dated.
+- [x] Class timetables from verified gym owners only, dated.
 - [ ] Monthly challenges with friends, opt-in, a card for finishing.
 - [ ] Home-screen widgets (next workout, streak): need a native build.
 

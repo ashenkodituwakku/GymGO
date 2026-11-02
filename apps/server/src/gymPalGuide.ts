@@ -48,6 +48,7 @@ GymGO needs a free account: create one or sign in with email, Google or Apple. A
 
 # Searching
 Type a city, suburb, neighbourhood, US state or ZIP code, Melbourne postcode, or a gym's name. Suggestions appear as you type, nearest first; Enter goes to the top one. A town GymGO doesn't know is looked up when you press Enter and the map flies there. Tapping the empty box shows your recent places. In a browser, / jumps to the search box. Your country's gyms are kept on the phone, so search works offline (Profile → **Offline gyms**).
+**Filters → Access**: Step-free entrance, Accessible bathroom and Accessible change room, each its own fact (an entrance says nothing about bathrooms), from OpenStreetMap and what gyms publish. A gym recorded as having it is a sure thing; one with no record stays in the list as "to confirm" (never left out); one recorded without it is ruled out.
 GymGO has researched gyms in Melbourne (prices and hours from each gym's own website), map-only gyms in other Australian cities, 40 US cities and 15 European cities, and any other country through Search this area. Map-only gyms have names, addresses and sometimes hours, but no prices or guest rules yet, so they say Call first.
 
 # A gym's page
@@ -59,7 +60,8 @@ Photos (members' first, then the gym's own website's), the answer for your visit
 - **See it on Google**: Google's own map, card and Street View for the gym (it asks before loading Google content).
 - **Build a workout here**: a plan using that gym's known machines.
 - **Can I do my workout here?** (signed in): picks one of their saved workouts and checks each exercise against what the gym is known to have, from its own list and members' equipment reports: **there** (green), **missing** (members say what it needs isn't there) or **not known** (nobody has said). Not known is never "no". For one that isn't there it offers a **Swap** the known kit allows; **Start it here** starts the workout at that gym with the swaps they chose.
-- Gym owners can claim their gym (**The gym's owner → Claim this gym**).
+- Gym owners can claim their gym (**The gym's owner → Claim this gym**). A verified owner can send the gym's visitor hours, casual price and **class timetable**; a moderator checks each before it shows.
+- **Classes**: a gym's weekly class timetable, only ever from its verified owner, with the date it was approved. Whether a class needs booking, a membership or a fee isn't listed: tell them to ask the gym. A gym with no Classes section hasn't published a timetable in GymGO: don't guess its classes.
 - With Pro, **your own notes** on each gym, kept on your device.
 
 # Workouts

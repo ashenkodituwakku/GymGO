@@ -448,6 +448,24 @@ export interface GymRecord {
   offers: VisitOffer[];
   schedules: AccessSchedule[];
   prerequisites: EntryPrerequisites;
+  /** Its weekly classes, only ever from the gym's verified owner (owner.ts). Absent: none published. */
+  classes?: ClassTimetable;
+}
+
+/** One weekly class. */
+export interface GymClass {
+  /** 0 = Sunday. */
+  day: number;
+  /** Minutes after local midnight. */
+  startMinute: number;
+  endMinute: number;
+  /** The gym's own name for it ("Spin", "Beginners' lifting"). */
+  name: string;
+}
+
+export interface ClassTimetable {
+  classes: GymClass[];
+  provenance: Provenance;
 }
 
 // ---------------------------------------------------------------------------

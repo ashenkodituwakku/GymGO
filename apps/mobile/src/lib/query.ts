@@ -12,6 +12,7 @@
 import {
   UNKNOWN_VISITOR,
   defaultQuery,
+  type AmenityId,
   haversineKm,
   type BoundingBox,
   search,
@@ -72,6 +73,12 @@ export interface Filters {
   isLocalResident: Tri;
   /** Only gyms open late (10 pm) or round the clock that day, by their published hours. */
   hours?: HoursNeed | null;
+  /**
+   * Access needs: a step-free entrance, an accessible bathroom or change
+   * room. A gym recorded as having it is a sure thing, one with no record is
+   * kept as not known (never left out), and one recorded without it is ruled out.
+   */
+  access?: AmenityId[];
   sort: SortKey;
 }
 
@@ -336,6 +343,7 @@ export function toQuery(filters: Filters): SearchQuery {
     requiredEquipment,
     profile: { ...UNKNOWN_VISITOR, isLocalResident: filters.isLocalResident },
     hours: filters.hours ?? null,
+    requiredAmenities: filters.access ?? [],
     sort: filters.sort,
   });
 }
@@ -390,6 +398,7 @@ export function applyRelaxation(filters: Filters, patch: Partial<SearchQuery>): 
   }
   if ('budgetMinor' in patch) next.budgetMinor = patch.budgetMinor ?? null;
   if ('hours' in patch) next.hours = patch.hours ?? null;
+  if (patch.requiredAmenities) next.access = patch.requiredAmenities;
   if (patch.radiusKm !== undefined) next.radiusKm = patch.radiusKm;
   if (patch.visitMinuteOfDay !== undefined) {
     next.visitMinuteOfDay = patch.visitMinuteOfDay;
@@ -404,7 +413,8 @@ export function activeFilterCount(filters: Filters): number {
     filters.equipment.length +
     (filters.budgetMinor !== null ? 1 : 0) +
     (filters.isLocalResident !== 'unknown' ? 1 : 0) +
-    (filters.hours ? 1 : 0)
+    (filters.hours ? 1 : 0) +
+    (filters.access?.length ?? 0)
   );
 }
 

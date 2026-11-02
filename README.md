@@ -384,6 +384,19 @@ takes turns through its days, so starting one gives you the day after the
 last you logged; any other day can be started too. They're general plans,
 not advice for anyone in particular, and the screen says to start light.
 
+**Training programme** (Templates, Home or Profile → Training): pick a
+goal (Strength, Build muscle or General fitness), 2, 3 or 4 days a week
+and 6, 8 or 12 weeks, and GymGO plans them, taking turns through the
+programme's days (`apps/mobile/src/lib/programmes.ts`). It shows the week
+("Week 3 of 8"), this week's workouts done and the next day, which Home
+offers as **Up next**. Every fourth week is easier: half the sets, about
+10% lighter. The rule for weight is shown to everyone (when every set
+reaches the top of its range, add 2.5 kg or 5 lb); with Pro, each exercise
+shows exactly what to lift next, as in a workout, and **Ask GymPal to
+adjust it** answers from your training log. **Swap** changes an exercise
+for the rest of the programme. The programme is kept on the device; its
+workouts go to your log.
+
 - **Supersets and circuits.** In the builder or during a workout,
   **Superset with the next** joins an exercise with the one after it; **Add
   the next to this group** makes it a circuit (three or more), and **Take

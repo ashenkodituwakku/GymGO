@@ -18,6 +18,8 @@ export interface TemplateItem {
   /** "5", "8–10". */
   reps: string;
   restSeconds: number;
+  /** Its superset or circuit: a letter shared with its neighbours (lib/supersets.ts). */
+  group?: string;
 }
 
 export interface TemplateDay {
@@ -90,6 +92,9 @@ export const TEMPLATES: WorkoutTemplate[] = [
   },
 ];
 
+/** Training programmes' names (lib/programmes.ts, which checks they match), for telling their workouts apart in the log. */
+export const PROGRAMME_TITLES = ['Strength programme', 'Muscle programme', 'Fitness programme'];
+
 /** What a template day's workout is called in your log: "Push · Push, pull, legs". */
 export const templateDayName = (template: WorkoutTemplate, day: TemplateDay) => `${day.name} · ${template.name}`;
 
@@ -97,7 +102,7 @@ export const templateDayName = (template: WorkoutTemplate, day: TemplateDay) => 
 export function workoutTitle(name: string): { title: string; plan: string | null } {
   const at = name.lastIndexOf(' · ');
   const plan = at > 0 ? name.slice(at + 3) : null;
-  return plan && TEMPLATES.some((template) => template.name === plan) ? { title: name.slice(0, at), plan } : { title: name, plan: null };
+  return plan && (TEMPLATES.some((template) => template.name === plan) || PROGRAMME_TITLES.includes(plan)) ? { title: name.slice(0, at), plan } : { title: name, plan: null };
 }
 
 /**
@@ -117,7 +122,13 @@ export function nextTemplateDay(template: WorkoutTemplate, sessions: readonly Tr
  * offers "Up next" to someone already on a plan.
  */
 export function upNext(sessions: readonly TrainingSession[]): { template: WorkoutTemplate; day: number } | null {
-  const latest = [...sessions].sort((a, b) => b.finishedAt.localeCompare(a.finishedAt)).find((session) => workoutTitle(session.name).plan !== null);
+  // A template's workout, not a training programme's (Home shows a programme's next day itself).
+  const latest = [...sessions]
+    .sort((a, b) => b.finishedAt.localeCompare(a.finishedAt))
+    .find((session) => {
+      const plan = workoutTitle(session.name).plan;
+      return plan !== null && TEMPLATES.some((template) => template.name === plan);
+    });
   if (!latest) return null;
   const plan = workoutTitle(latest.name).plan;
   const template = TEMPLATES.find((candidate) => candidate.name === plan);

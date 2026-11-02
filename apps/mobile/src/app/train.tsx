@@ -5,6 +5,8 @@
  * any records you broke.
  */
 
+import { programmeProgress, programmeTarget, programmeTitle } from '@/lib/programmes';
+import { useProgramme } from '@/lib/programmeStore';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -299,6 +301,14 @@ export default function TrainScreen() {
       }),
     [],
   );
+  // A training programme's workout in one of its easier weeks.
+  const programme = useProgramme();
+  const easierWeek = Boolean(
+    programme &&
+      session &&
+      workoutTitle(session.name).plan === programmeTitle(programme.goal) &&
+      programmeProgress(programme, log.sessions, new Date()).easier,
+  );
   // Each card's group, worked out again only when the grouping changes, so a card still redraws only with its own sets.
   const groupKey = session?.items.map((item) => item.group ?? '').join(',') ?? '';
   const groupInfos = useMemo(
@@ -466,6 +476,7 @@ export default function TrainScreen() {
             onHowTo={openHowTo}
             onChange={changeSets}
             onRest={restAfterTick}
+            easier={easierWeek}
             group={groupInfos[index] ?? null}
             nextName={joinableNext(session.items, index, (at) => exerciseName(session.items[at]!.exerciseId))}
             onLink={linkNext}
@@ -522,6 +533,7 @@ const ExerciseLog = memo(function ExerciseLog({
   onHowTo,
   onChange,
   onRest,
+  easier,
   group,
   nextName,
   onLink,
@@ -539,6 +551,8 @@ const ExerciseLog = memo(function ExerciseLog({
   onPlates: (weight: string | null) => void;
   onHowTo: (exerciseId: string) => void;
   onChange: (index: number, sets: ActiveItem['sets']) => void;
+  /** A training programme's easier week: Pro's target goes about 10% lighter (lib/programmes.ts). */
+  easier: boolean;
   /** A set was ticked: the screen starts the right rest (lib/supersets.ts). */
   onRest: (index: number, at: number) => void;
   /** Its superset or circuit, if it's in one. */
@@ -564,7 +578,7 @@ const ExerciseLog = memo(function ExerciseLog({
   // Your records from before this workout, to mark a set that beats them as you tick it.
   const before = useMemo(() => personalRecords(history).get(item.exerciseId), [history, item.exerciseId]);
   const bests = useMemo(() => (timed ? [] : bestSoFar(item.sets, unit, before)), [timed, item.sets, unit, before]);
-  const target: Target | null = useMemo(() => (isPro && !timed ? nextTarget(last, item.reps, unit) : null), [isPro, timed, last, item.reps, unit]);
+  const target: Target | null = useMemo(() => (isPro && !timed ? programmeTarget(last, item.reps, unit, easier) : null), [isPro, timed, last, item.reps, unit, easier]);
   const [hint, setHint] = useState<string | null>(null);
 
   // What to show until you type: the target, else last time, else the plan.

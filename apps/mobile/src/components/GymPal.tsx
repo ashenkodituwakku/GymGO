@@ -204,7 +204,7 @@ export function GymPal() {
 
   /** Asks `text`, with what a screen told GymPal (this question's, or the conversation's). */
   const submit = useCallback(
-    async (text: string, about: Topic | null = topic) => {
+    async (text: string, about: Topic | null = topic, withLog?: boolean) => {
       const question = text.trim().slice(0, MAX_QUESTION);
       if (!question || pending) return;
       haptic.tap();
@@ -217,7 +217,7 @@ export function GymPal() {
       setPending(true);
       const now = state === 'on' ? 'on' : await check();
       if (now === 'off') waitingFor(asked.id);
-      else void ask(next, about, useLog && pro);
+      else void ask(next, about, (withLog ?? useLog) && pro);
     },
     [ask, check, lines, pending, pro, state, topic, useLog, waitingFor],
   );
@@ -231,7 +231,9 @@ export function GymPal() {
         setOpen(true);
         const about = request.context ? { label: request.about ?? 'this screen', text: request.context } : null;
         if (about) setTopic(about);
-        if (request.question) void latest.current(request.question, about ?? undefined);
+        // A screen asking about their training (with Pro): the log switch goes on for this question and after.
+        if (request.withLog) setUseLog(true);
+        if (request.question) void latest.current(request.question, about ?? undefined, request.withLog);
       }),
     [],
   );

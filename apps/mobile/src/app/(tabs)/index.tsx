@@ -8,6 +8,9 @@
  * answers always come from the same rules as the map.
  */
 
+import { dayPlan, nextProgrammeDay, programmeDayName, programmeDays, programmeProgress, programmeTitle, type Programme } from '@/lib/programmes';
+import { useProgramme } from '@/lib/programmeStore';
+import type { TemplateItem } from '@/lib/templates';
 import { useRouter } from 'expo-router';
 import { HOURS_LABELS } from '@gymgo/domain';
 import { useMemo, useRef, useState } from 'react';
@@ -79,7 +82,11 @@ export default function Home() {
   const log = useTrainingLog(account.token);
   const collection = useCollection();
   // On a plan (a template done before) and no workout going: its next day, one tap away.
-  const plan = active ? null : upNext(log.sessions);
+  // On a training programme (lib/programmes.ts): its next day comes first.
+  const programme = useProgramme();
+  const programmeNow = programme && !active ? programmeProgress(programme, log.sessions, new Date()) : null;
+  const onProgramme = programme && programmeNow && !programmeNow.finished ? { programme, progress: programmeNow, day: nextProgrammeDay(programme, log.sessions) } : null;
+  const plan = active || onProgramme ? null : upNext(log.sessions);
   const planDay = plan ? plan.template.days[plan.day]! : null;
   const [showAll, setShowAll] = useState<Record<string, boolean>>({});
   // Another country than yours, without Pro: no gyms listed, just the way to Pro.
@@ -267,6 +274,20 @@ export default function Home() {
 
       {/* Up next and the other templates: one card, two actions. */}
       <View style={styles.planCard}>
+      {onProgramme && (
+        <ProgrammeUpNext
+          programme={onProgramme.programme}
+          dayIndex={onProgramme.day}
+          week={onProgramme.progress.week}
+          easier={onProgramme.progress.easier}
+          onStart={(name, items) => {
+            haptic.success();
+            startSession({ name, workoutId: null, gymId: null, gymName: null, unit: unitFor(prefs.country), items });
+            router.push('/train');
+          }}
+          onOpen={() => router.push('/programme')}
+        />
+      )}
       {plan && planDay && (
         <Pressy
           scaleTo={0.98}
@@ -304,12 +325,12 @@ export default function Home() {
       <Pressable
         onPress={() => router.push('/templates')}
         accessibilityRole="link"
-        accessibilityLabel={plan ? 'Pick another template' : 'Start from a template: push, pull, legs; 5×5; or full body'}
-        style={({ pressed }) => [styles.templatesRow, !!plan && planDay && styles.templatesUnder, pressed && { backgroundColor: color.fill }]}
+        accessibilityLabel={plan || onProgramme ? 'Templates and programmes' : 'Start from a template or a training programme'}
+        style={({ pressed }) => [styles.templatesRow, ((!!plan && planDay) || !!onProgramme) && styles.templatesUnder, pressed && { backgroundColor: color.fill }]}
       >
         <Icon name="list" size={15} color={color.brand} />
         <Txt variant="footnote" color={color.brand} style={[face('semibold'), styles.flex]}>
-          {plan ? 'Pick another template' : 'Start from a template: push, pull, legs; 5×5; or full body'}
+          {plan || onProgramme ? 'Templates and programmes' : 'Start from a template, or a programme planned over weeks'}
         </Txt>
         <Icon name="chevron" size={12} color={color.labelTertiary} />
       </Pressable>
@@ -598,6 +619,70 @@ export default function Home() {
       )}
 
     </TabScreen>
+  );
+}
+
+/** Home's Up next on a training programme: its next day, in one tap, and the way to the programme. */
+function ProgrammeUpNext({
+  programme,
+  dayIndex,
+  week,
+  easier,
+  onStart,
+  onOpen,
+}: {
+  programme: Programme;
+  dayIndex: number;
+  week: number;
+  easier: boolean;
+  onStart: (name: string, items: TemplateItem[]) => void;
+  onOpen: () => void;
+}) {
+  const day = programmeDays(programme.goal, programme.days)[dayIndex]!;
+  const items = dayPlan(programme, dayIndex, easier);
+  const caption = `Week ${week} of ${programme.weeks}${easier ? ', easier' : ''} · ${programmeTitle(programme.goal)}`;
+  return (
+    <View>
+      <Pressy
+        scaleTo={0.98}
+        onPress={() => onStart(programmeDayName(programme, day), items)}
+        accessibilityRole="button"
+        accessibilityLabel={`Start ${day.name}, up next in your ${programmeTitle(programme.goal)}, ${caption}`}
+        style={styles.upNext}
+      >
+        <View style={styles.upNextIcon}>
+          <Icon name="play" size={14} color={color.brand} />
+        </View>
+        <View style={styles.flex}>
+          <Txt variant="caption" color={color.brand} style={face('semibold')} numberOfLines={1}>
+            {caption}
+          </Txt>
+          <Txt variant="headline" numberOfLines={1}>
+            {day.name}
+          </Txt>
+          <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+            {items.map((item) => exerciseName(item.exerciseId)).join(', ')}
+          </Txt>
+        </View>
+        <View style={styles.startPill}>
+          <Txt variant="footnote" color={color.onBrand} style={face('semibold')}>
+            Start
+          </Txt>
+        </View>
+      </Pressy>
+      <Pressable
+        onPress={onOpen}
+        accessibilityRole="link"
+        accessibilityLabel={`Your ${programmeTitle(programme.goal)}: its weeks and what to lift`}
+        style={({ pressed }) => [styles.templatesRow, styles.templatesUnder, pressed && { backgroundColor: color.fill }]}
+      >
+        <Icon name="workout" size={15} color={color.brand} />
+        <Txt variant="footnote" color={color.brand} style={[face('semibold'), styles.flex]}>
+          Your programme
+        </Txt>
+        <Icon name="chevron" size={12} color={color.labelTertiary} />
+      </Pressable>
+    </View>
   );
 }
 

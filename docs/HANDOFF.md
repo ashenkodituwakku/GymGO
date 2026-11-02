@@ -102,6 +102,20 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Round 2 of the owner's 11: training programmes** (2 Nov). Goal ×
+  2/3/4 days × 6/8/12 weeks (lib/programmes.ts): Strength uses 5×5 or a
+  new upper/lower split, Build muscle full body / PPL / upper-lower,
+  General fitness whole-body supersets. Week from the start day, every
+  fourth easier (half the sets; Pro's target 10% under last time),
+  rotation from the programme's own logged workouts ("Upper A · Strength
+  programme", recognised by workoutTitle; template Up next ignores them).
+  Kept on the device (lib/programmeStore.ts, `gymgo.programme.v1`, read
+  field by field). Screen app/programme.tsx; Home's Up next shows its next
+  day first; links from Templates and Profile. Exact weights are Pro, as
+  "What to lift next" already is (the rule in words is for everyone); the
+  workout screen's Pro target follows easier weeks. GymPal: `withLog` on a
+  screen's request turns the Pro log switch on; its guide covers
+  programmes.
 - **Round 1 of the owner's 11: "Can I do my workout here?" and supersets**
   (2 Nov). A gym's page has a fold that checks a saved workout against
   `knownKit` (the gym's list plus members' tallies): there / missing /
@@ -411,7 +425,7 @@ order and pushed round by round; tick each as it lands. Another session:
       with a swap for what's missing.
 - [x] Supersets and circuits in the workout builder and logger, one rest
       timer for the group.
-- [ ] Training programmes: a goal and days a week planned over weeks,
+- [x] Training programmes: a goal and days a week planned over weeks,
       weight added when every rep is hit, an easier week now and then;
       with Pro, GymPal can adjust it from the training log.
 - [ ] Cost per visit: what you pay (entered by you) over your check-ins,

@@ -15,6 +15,7 @@ const BY_SCREEN: Array<[RegExp, string[]]> = [
   [/^\/progress/, ['What counts as a record?', 'How does the weekly goal work?', 'How do I share my week?']],
   [/^\/exercises/, ['Which exercises suit a beginner?', 'What’s the difference between compound and isolation moves?']],
   [/^\/templates/, ['Which template should a beginner start with?', 'What is 5×5 training?', 'How does Push, pull, legs work?']],
+  [/^\/programme/, ['Which programme suits a beginner?', 'Why is every fourth week easier?', 'When should I add weight?']],
   [/^\/timer/, ['What is Tabata?', 'What is EMOM?', 'How hard should intervals feel?']],
   [/^\/strength/, ['What is a 1-rep max?', 'How heavy should I go for 8 reps?']],
   [/^\/plates/, ['How do I load plates on a bar?', 'How much does a barbell weigh?']],

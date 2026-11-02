@@ -5,6 +5,8 @@
  * the workout in progress, as Build a workout does.
  */
 
+import { programmeTitle } from '@/lib/programmes';
+import { useProgramme } from '@/lib/programmeStore';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -34,6 +36,7 @@ export default function TemplatesScreen() {
   const { account, prefs } = useApp();
   const log = useTrainingLog(account.token);
   const active = useActiveSessionGlance();
+  const programme = useProgramme();
 
   const start = (template: WorkoutTemplate, index: number) => {
     const day = template.days[index]!;
@@ -57,6 +60,21 @@ export default function TemplatesScreen() {
           <PrimaryButton label="Back to your workout" icon="play" onPress={() => router.push('/train')} />
         </Card>
       )}
+      <Pressable
+        onPress={() => router.push('/programme')}
+        accessibilityRole="link"
+        accessibilityLabel={programme ? `Your ${programmeTitle(programme.goal)}` : 'Training programme: weeks planned for you, with easier weeks'}
+        style={({ pressed }) => [styles.programme, pressed && { opacity: 0.8 }]}
+      >
+        <Icon name="workout" size={18} color={color.brand} />
+        <View style={styles.flex}>
+          <Txt variant="headline">{programme ? `Your ${programmeTitle(programme.goal).toLowerCase()}` : 'Training programme'}</Txt>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {programme ? 'Its week, its next day and what to lift' : 'A goal and days a week, planned over 6 to 12 weeks, with an easier week every fourth'}
+          </Txt>
+        </View>
+        <Icon name="chevron" size={13} color={color.labelTertiary} />
+      </Pressable>
       {TEMPLATES.map((template) => (
         <TemplateCard
           key={template.id}
@@ -195,5 +213,6 @@ const styles = themed(() =>
     list: { gap: 2, padding: space[2], borderRadius: radius.md, backgroundColor: color.fill },
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: 5, paddingHorizontal: space[1] },
     note: { paddingHorizontal: space[4], textAlign: 'center' },
+    programme: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate },
   }),
 );

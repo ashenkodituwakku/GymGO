@@ -14,6 +14,8 @@ export interface GymPalRequest {
   question?: string;
   context?: string;
   about?: string;
+  /** Ask with their training log, when they have Pro (a training programme, say). */
+  withLog?: boolean;
 }
 
 type Listener = (request: GymPalRequest) => void;

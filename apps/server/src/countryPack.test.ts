@@ -1,4 +1,5 @@
 import { createServer, type Server } from 'node:http';
+import { mapOnlyRecord } from '@gymgo/osm';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
@@ -100,6 +101,24 @@ describe('a country’s pack of gyms', () => {
     expect(pack.gyms.find((gym) => gym.name === 'Hobart Iron')!.tz).toBe('Australia/Hobart');
     // The map gave it no state; it was found in New South Wales.
     expect(pack.gyms.find((gym) => gym.name === 'Wollongong Barbell')).toMatchObject({ state: 'NSW', tz: 'Australia/Sydney' });
+  });
+
+  it('carries a gym’s kept Apple Maps listing, cited to Apple on the phone, and keeps the map’s own record as the map has it', async () => {
+    const db = openDb(':memory:');
+    const listing = { muid: '42', link: 'https://maps.apple.com/place?auid=42', title: 'Hobart Iron', phone: '(03) 6000 0000', website: null, hours: null, checkedAt: '2026-11-03T10:00:00.000Z' };
+    const packs = new CountryPacks(db, { ...overpass, now: () => clock, known: () => [], apple: (id) => (id.includes('hobart') ? listing : null) });
+    const pack = await packs.build('AU');
+    const hobart = pack.gyms.find((gym) => gym.name === 'Hobart Iron')!;
+    expect(hobart.apple).toEqual(listing);
+    expect(pack.gyms.find((gym) => gym.name === 'Snap Fitness')!.apple).toBeUndefined();
+    // On the phone, the pack's gym becomes a record with the listing's phone, cited to Apple Maps.
+    const { tz, ...input } = hobart;
+    const record = mapOnlyRecord(input, { countryCode: 'AU', timezone: tz, fetchedAt: pack.builtAt });
+    expect(record.location.phone).toBe('(03) 6000 0000');
+    expect(record.location.provenance.sources.map((source) => source.label)).toEqual(['OpenStreetMap', 'Apple Maps listing, via SerpApi (phone)']);
+    // Kept on the server as the map has it; the listing is added when it's served.
+    const kept = db.prepare('select record_json from area_gyms where id = ?').get(hobart.id) as { record_json: string };
+    expect(JSON.parse(kept.record_json).location.phone).toBeNull();
   });
 
   it('is built on first asking, then served gzipped and kept', async () => {

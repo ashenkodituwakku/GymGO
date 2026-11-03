@@ -38,6 +38,18 @@ export const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY?.trim() |
  */
 export const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY?.trim() || null;
 /**
+ * Optional. The owner's own SerpApi key (serpapi.com), for gyms' Apple Maps
+ * listings (appleMaps.ts): a phone, website or hours a gym is missing. Each
+ * lookup is one SerpApi search on the owner's plan. Keep it in .env.local,
+ * never in git. Without it, nothing is looked up.
+ */
+export const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY?.trim() || null;
+/** Optional. Apple Maps searches a day at most (8 unless set; 0 stops them). */
+export const SERPAPI_DAILY_LIMIT = (() => {
+  const raw = Number(process.env.SERPAPI_DAILY_LIMIT);
+  return Number.isInteger(raw) && raw >= 0 ? raw : undefined;
+})();
+/**
  * Optional. Which models GymPal asks, comma-separated OpenRouter ids, tried
  * in turn. Only free ones (ending ":free") are ever used; any other is left
  * out, so GymPal can't cost money. By default, three free ones (gymPal.ts).

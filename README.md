@@ -1536,6 +1536,44 @@ things, kept apart:
   GymGO hasn't read the map yet, it sends you to Search this area first;
   abroad without Pro, the trip is kept and the list is Pro's.
 
+### Gym details from Apple Maps (SerpApi, optional)
+
+A gym GymGO has no phone, website or opening hours for can get them from
+its **Apple Maps listing**, read through SerpApi's Apple Maps search
+(serpapi.com/apple-maps-api). Nothing on screen changes: the facts arrive
+in the gym's own record, where the app already shows a phone, website and
+hours, and each is cited as **"Apple Maps listing, via SerpApi"** with the
+day it was looked up, beside OpenStreetMap or whatever else the gym's facts
+came from.
+
+- **Only gaps are filled.** A phone, website or hours GymGO already holds
+  is never overwritten, and a verified owner's updates still win.
+- **Hours are member hours** (when the doors are open), as OpenStreetMap's
+  are; never staffed or visitor hours. Hours that can't be read are left
+  out: unknown, not closed.
+- **A listing has to be the gym**: within 250 m of where GymGO has it, with
+  a name sharing a word with the gym's or its brand's.
+- **Not taken**: ratings and reviews (Apple shows Yelp's, under Yelp's
+  terms), photos and prices.
+
+It's off until you set **`SERPAPI_API_KEY`** in `apps/server/.env.local`
+(your own key, from your SerpApi account; never in git). Every lookup is one
+SerpApi search on your plan, so GymGO keeps the count down: only gyms
+missing something are looked up, each at most once in 90 days (one without a
+listing too), at most **`SERPAPI_DAILY_LIMIT`** a day (8 unless set; 0
+stops them), and what's found is kept on the server. Lookups happen in the
+background after an area search, a few at a time, or in bulk:
+
+```
+pnpm --filter @gymgo/server apple-maps         # up to the day's limit
+pnpm --filter @gymgo/server apple-maps -- 20   # at most 20 now
+```
+
+A country pack carries the listings found when it's next built. The
+server's log says whether it's on and how many a day, never the key.
+Before GymGO is public, check that SerpApi's terms, and Apple's for what
+Apple Maps shows, allow keeping and showing these facts.
+
 ### Google info (free, nothing to set up)
 
 Each gym has a **See it on Google** button. It opens a full-screen page with

@@ -102,6 +102,21 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Gym details from Apple Maps, through SerpApi** (3 Nov; the owner gave
+  serpapi.com/apple-maps-places-api, "import it into gymgo but dont change
+  ui"). That API looks places up by Apple's id only, so the search engine
+  (`apple_maps`) finds each gym and carries the same fields.
+  packages/domain/src/appleMaps.ts (pure: `readAppleResults`,
+  `readWeeklyHours`, `withAppleListing` filling gaps, cited);
+  packages/osm `MapOnlyGym.apple` so a pack's gym is cited to Apple on the
+  phone; apps/server/src/appleMaps.ts (`AppleMaps`: `apple_listings`
+  table, `lookUp`, `enrich`, `decorate`, the daily limit) merged in
+  `withOwner` (Apple first, the owner's updates over it), background
+  lookups after /api/area, appleMapsCli.ts (`apple-maps` script),
+  `SERPAPI_API_KEY` / `SERPAPI_DAILY_LIMIT` in config.ts and both
+  .env.example files. Never run against SerpApi: no key here, by the
+  owner's rules; tests use SerpApi's documented shape with an invented gym.
+  Terms (SerpApi's, Apple's) to check before going public.
 - **Sidebar layout** (3 Nov; the owner: "a sidebar menu mode in the
   appearance ... make the normal one default"). ThemeChoice `layout`
   ('tabs' default | 'sidebar'); lib/navLayout.ts (`navMode` → 'tabs',

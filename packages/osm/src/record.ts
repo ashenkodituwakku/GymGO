@@ -11,7 +11,7 @@
  * (chains.ts).
  */
 
-import { researchedWebsite, researchedWebsiteEvidence, type AccessSchedule, type AmenityObservation, type EvidenceSource, type GymRecord, type OpeningWindow, type Provenance, type TrainingType } from '@gymgo/domain';
+import { researchedWebsite, researchedWebsiteEvidence, withAppleListing, type AppleListing, type AccessSchedule, type AmenityObservation, type EvidenceSource, type GymRecord, type OpeningWindow, type Provenance, type TrainingType } from '@gymgo/domain';
 import { chainFactsFor } from './chains';
 import type { MappedAmenities, MappedHours } from './rules';
 
@@ -37,6 +37,12 @@ export interface MapOnlyGym {
   website?: string;
   email?: string;
   activities?: string[];
+  /**
+   * The gym's Apple Maps listing, when the server has looked it up (a
+   * country pack carries it): fills in a phone, website or hours the map
+   * hasn't got, cited to Apple Maps, never to OpenStreetMap.
+   */
+  apple?: AppleListing;
   amenities?: MappedAmenities;
   hours?: MappedHours;
 }
@@ -98,7 +104,7 @@ export function mapOnlyRecord(gym: MapOnlyGym, where: Whereabouts): GymRecord {
     provenance: fromMap(),
   }));
 
-  return {
+  const record: GymRecord = {
     location: {
       id: gym.id,
       slug: gym.id,
@@ -146,4 +152,5 @@ export function mapOnlyRecord(gym: MapOnlyGym, where: Whereabouts): GymRecord {
       provenance: { status: 'unknown', sources: [], conflictNote: null },
     },
   };
+  return gym.apple ? withAppleListing(record, gym.apple) : record;
 }

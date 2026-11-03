@@ -17,7 +17,7 @@
 
 import { gzipSync } from 'node:zlib';
 import tzlookup from '@photostructure/tz-lookup';
-import type { GymRecord } from '@gymgo/domain';
+import type { AppleListing, GymRecord } from '@gymgo/domain';
 import { candidate, mapOnlyRecord, osmRef, type MapOnlyGym } from '@gymgo/osm';
 import { AreaError, DEFAULT_OVERPASS, RECORD_RULES_CHANGED, askOverpass, mapOnlyInput, sameGym, splitElements } from './area';
 import type { Db } from './db';
@@ -58,6 +58,8 @@ export interface PackOptions {
   now?: () => Date;
   /** Gyms bundled with the app; the pack leaves them out. */
   known: () => GymRecord[];
+  /** A gym's kept Apple Maps listing (appleMaps.ts), sent with it so the phone can cite it. */
+  apple?: (gymId: string) => AppleListing | null;
   log?: (line: string) => void;
   retryDelayMs?: number;
 }
@@ -226,7 +228,8 @@ export class CountryPacks {
         }
         if (tz.startsWith('Etc/')) continue;
         const gym = mapOnlyInput(found.name, found.tags, el, found.pos, { countryCode: country, timezone: tz }, places);
-        gyms.set(osm, { ...gym, state: gym.state || partState, tz });
+        const listing = this.options.apple?.(gym.id) ?? null;
+        gyms.set(osm, { ...gym, state: gym.state || partState, tz, ...(listing ? { apple: listing } : {}) });
       }
       if (this.building) this.building.done += 1;
     }
@@ -240,7 +243,8 @@ export class CountryPacks {
     this.db.exec('begin');
     try {
       // Saved like an area search's gyms, so each one's own page, saves and reviews work.
-      for (const { tz, ...gym } of pack.gyms) {
+      // Kept as the map has it: a listing is added when it's served, so a newer one is never shadowed.
+      for (const { tz, apple: _listing, ...gym } of pack.gyms) {
         const record = mapOnlyRecord(gym, { countryCode: country, timezone: tz, fetchedAt: builtAt });
         upsert.run(record.location.id, gym.osm, JSON.stringify(record), gym.lat, gym.lng, builtAt);
       }

@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { DEFAULT_DAILY_LIMIT } from './appleMaps';
 import { networkInterfaces } from 'node:os';
 import { createApp } from './app';
 import { createStripe } from './billing';
@@ -28,6 +29,8 @@ import {
   MAIL_FROM,
   SMTP_URL,
   OPENROUTER_API_KEY,
+  SERPAPI_API_KEY,
+  SERPAPI_DAILY_LIMIT,
   GYMPAL_MODELS,
   WEB_DIR,
 } from './config';
@@ -76,6 +79,7 @@ const server = createServer(
     bugReports: { send: bugMail, to: BUG_REPORT_TO, retryEveryMs: 15 * 60_000 },
     legal: { copyrightAgent: COPYRIGHT_AGENT, operator: LEGAL_OPERATOR },
     gymPal: { key: OPENROUTER_API_KEY, models: GYMPAL_MODELS },
+    appleMaps: { key: SERPAPI_API_KEY, perDay: SERPAPI_DAILY_LIMIT },
     webDir: WEB_DIR,
     devAccount: devAccountMade,
     trustProxy: TRUST_PROXY,
@@ -167,6 +171,12 @@ server.listen(PORT, HOST, () => {
     GOOGLE_PLACES_API_KEY
       ? '[server] Google Maps details: on (using your GOOGLE_PLACES_API_KEY; Google may bill your account)'
       : '[server] Google Maps details: off (no GOOGLE_PLACES_API_KEY set; see README)',
+  );
+  // Whether, and how many a day; never the key.
+  console.log(
+    SERPAPI_API_KEY
+      ? `[server] Apple Maps listings: on, through your SerpApi plan, at most ${SERPAPI_DAILY_LIMIT ?? DEFAULT_DAILY_LIMIT} searches a day`
+      : '[server] Apple Maps listings: off (no SERPAPI_API_KEY set; see README)',
   );
 });
 

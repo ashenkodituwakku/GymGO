@@ -198,6 +198,7 @@ import { CountryPacks } from './countryPack';
 import { PlaceError, PlaceSearch } from './places';
 import { SiteIcons, SitePhotos, chainWebsites, ownPhotoSites, type ChosenPhoto, type SafeGet } from './siteicons';
 import { MELBOURNE_PHOTOS } from '@gymgo/melbourne-data';
+import { AppleMaps, type AppleMapsOptions } from './appleMaps';
 import { allGyms, gymCountry, gymExists, gymIsDemo, gymRecord, type Db } from './db';
 import { GoogleError, GooglePlaces } from './google';
 import { MAX_AVATAR_BYTES, MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
@@ -268,6 +269,8 @@ export interface AppOptions {
   webDir?: string | null;
   /** GymPal, the chat: the owner's OpenRouter key (none: off), the free models to ask, and a stand-in fetch for tests. */
   gymPal?: { key: string | null; models?: string[]; fetchImpl?: typeof fetch; log?: (line: string) => void };
+  /** Gyms' Apple Maps listings through SerpApi (appleMaps.ts): off without a key. */
+  appleMaps?: AppleMapsOptions;
   /** Legal contacts the app shows: the designated copyright (DMCA) agent, once registered. */
   legal?: {
     copyrightAgent?: { name: string; address: string | null; email: string | null } | null;
@@ -655,13 +658,16 @@ export function createApp(options: AppOptions) {
   const placeLimiter = new AttemptLimiter(60, 60 * 60_000);
   const places = new PlaceSearch(db, { endpoint: options.places?.endpoint, fetchImpl: options.places?.fetchImpl, now });
   const area = new AreaSearch(db, { ...options.area, now, known: () => allGyms(db) });
-  const packs = new CountryPacks(db, { ...options.area, ...options.packs, now, known: () => allGyms(db) });
+  // Apple Maps listings fill gaps in a gym's phone, website and hours, cited (appleMaps.ts).
+  const apple = new AppleMaps(db, { key: null, ...options.appleMaps, now: options.appleMaps?.now ?? now });
+  const packs = new CountryPacks(db, { ...options.area, ...options.packs, now, known: () => allGyms(db), apple: (id) => apple.listing(id) });
   const photos = new PhotoStore(options.photoDir ?? null);
   const social = new Social(db, now);
   const challenges = new Challenges(db, social, now);
   const owners = new Owners(db, now);
   /** A gym as the server sends it: with its verified owner's approved updates laid over (domain owner.ts). */
-  const withOwner = (record: GymRecord): GymRecord => applyOwnerUpdates(record, owners.approved());
+  // A gym as served: what its Apple Maps listing adds where GymGO has nothing, then its verified owner's updates, which win.
+  const withOwner = (record: GymRecord): GymRecord => applyOwnerUpdates(apple.decorate(record), owners.approved());
   const bugReports = new BugReports(db, {
     send: options.bugReports?.send ?? null,
     to: options.bugReports?.to ?? [],
@@ -844,6 +850,8 @@ export function createApp(options: AppOptions) {
           throw new AreaError(429, 'That’s a lot of searching. Try again in a little while.', 'rate_limited');
         }
         const answer = await area.search(box);
+        // A few of these gyms' Apple Maps listings looked up in the background, for next time (within the day's searches).
+        if (apple.configured()) void apple.enrich(answer.gyms, 3).catch(() => undefined);
         return send(res, 200, { ...answer, gyms: answer.gyms.map(withOwner), attribution: '© OpenStreetMap contributors (ODbL)' });
       } catch (error) {
         if (error instanceof AreaError) throw new HttpError(error.status, error.message, error.code);

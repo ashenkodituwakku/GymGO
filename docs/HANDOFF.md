@@ -102,6 +102,16 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Ideas from Hevy, round 3: edit a logged workout** (3 Nov). Server
+  `PATCH /api/training/:id` takes name, unit, startedAt, finishedAt and
+  exercises besides the note: merged over the stored row and run through
+  `cleanTrainingSession`; the note is checked first so nothing half-saves.
+  App: lib/sessionEdit.ts (`draftsOf`, `checkEdits`, `finishFor`,
+  `minutesOf`), app/session-edit.tsx (reached from Edit on an opened
+  workout in Progress), `api.editTraining`, and components/SetKinds.tsx,
+  where the set-kind choices, `askSetKindNatively` and `RpePicker` now
+  live for both the workout and the editor. The day and start time
+  aren't editable (no date picker in the app yet).
 - **Ideas from Hevy, round 2: more records and charts** (3 Nov).
   training.ts: ExerciseRecords gains `setVolumeKg`/`setVolumeSet` and
   `sessionVolumeKg`/`sessionVolumeDate`; NewRecord kind `'volume'`

@@ -73,7 +73,7 @@ Photos (members' first, then the gym's own website's), the answer for your visit
 - **Exercises** (Profile): every move GymGO plans, with how to do it, what it works and needs, and swaps.
 - **Recovery map** (Progress): the body, front and back, each muscle shaded by how long since they last trained it as a main muscle, from their log (today, yesterday, 2–3 days, 4 or more, not in the log), with the same as a list. It shows what they've trained, not whether a muscle has recovered: never tell them a muscle is or isn't recovered or ready.
 - **Progress photos** (Progress or Profile → Training): pictures of themselves kept on the device only, never uploaded, not in their account; you can't see them. Hidden each time the screen opens until they tap **Show them**; **Then and now** puts the first beside the latest; each can have a note, or be deleted.
-- **Progress** (Profile): weeks in a row, this week's workouts against your weekly goal, records, every session, milestones, **Share your week** and **Export your log** (a CSV).
+- **Progress** (Profile): weeks in a row, this week's workouts against your weekly goal, records, every session (open one to **Edit** it: name, minutes, kg or lb, and every set, with sets and exercises added or removed; records follow), milestones, **Share your week** and **Export your log** (a CSV).
 - **Plate calculator**, **1-rep max** and **Interval timer** (Tabata and EMOM) are in Profile under Training.
 - **Reminders** (Profile): training reminders on the days and time you choose.
 - Weights are in pounds in the US and kilograms elsewhere. A blank weight means body weight.

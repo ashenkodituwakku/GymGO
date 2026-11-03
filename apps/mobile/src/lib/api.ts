@@ -636,6 +636,9 @@ export const api = {
   training: (token: string) => request<{ sessions: TrainingSession[] }>('GET', '/api/training', { token }),
   logTraining: (token: string, body: Omit<TrainingSession, 'id'>) => request<{ session: TrainingSession }>('POST', '/api/training', { token, body }),
   deleteTraining: (token: string, id: string) => request<unknown>('DELETE', `/api/training/${encodeURIComponent(id)}`, { token }),
+  /** Change what a logged session was: its name, unit, when it finished and its sets (checked as a new one is). */
+  editTraining: (token: string, id: string, changes: Partial<Pick<TrainingSession, 'name' | 'unit' | 'startedAt' | 'finishedAt' | 'exercises'>>) =>
+    request<{ session: TrainingSession }>('PATCH', `/api/training/${encodeURIComponent(id)}`, { token, body: changes }),
   /** Add, change or (null) clear the note on a logged session. */
   noteTraining: (token: string, id: string, note: string | null) =>
     request<{ session: TrainingSession }>('PATCH', `/api/training/${encodeURIComponent(id)}`, { token, body: { note } }),

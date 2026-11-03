@@ -407,6 +407,7 @@ function SessionRow({
 }) {
   const [confirm, setConfirm] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const router = useRouter();
   const volume = fromKg(volumeKg(session), session.unit);
   return (
     <View style={[!first && styles.rowLine]}>
@@ -465,18 +466,31 @@ function SessionRow({
               </View>
             </View>
           ))}
-          <Pressable
-            onPress={() => {
-              if (!confirm) return setConfirm(true);
-              onDelete().catch(() => setProblem('Couldn’t delete it just now.'));
-            }}
-            accessibilityRole="button"
-            style={styles.delete}
-          >
-            <Txt variant="footnote" color={color.dangerInk} style={face('semibold')}>
-              {confirm ? 'Tap again to delete this workout' : 'Delete'}
-            </Txt>
-          </Pressable>
+          <View style={styles.rowActions}>
+            {/* A typo, a set forgotten, the wrong unit: changed in place, records and totals following. */}
+            <Pressable
+              onPress={() => router.push({ pathname: '/session-edit', params: { id: session.id } })}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit ${session.name}`}
+              style={styles.delete}
+            >
+              <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                Edit
+              </Txt>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                if (!confirm) return setConfirm(true);
+                onDelete().catch(() => setProblem('Couldn’t delete it just now.'));
+              }}
+              accessibilityRole="button"
+              style={styles.delete}
+            >
+              <Txt variant="footnote" color={color.dangerInk} style={face('semibold')}>
+                {confirm ? 'Tap again to delete this workout' : 'Delete'}
+              </Txt>
+            </Pressable>
+          </View>
           {problem && (
             <Txt variant="footnote" color={color.dangerInk}>
               {problem}
@@ -517,4 +531,5 @@ const styles = themed(() => StyleSheet.create({
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   detail: { paddingHorizontal: space[4], paddingBottom: space[3], gap: space[2] },
   delete: { alignSelf: 'flex-start', paddingVertical: space[2] },
+  rowActions: { flexDirection: 'row', gap: space[5] },
 }));

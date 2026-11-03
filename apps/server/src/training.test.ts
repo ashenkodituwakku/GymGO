@@ -121,6 +121,26 @@ describe('a note on a session', () => {
     expect((await call('PATCH', `/api/training/${id}`, { token, body: {} })).status).toBe(400);
   });
 
+  it('changes what was logged, checked as a new one is, by its owner only', async () => {
+    const token = await signUp();
+    const other = await signUp();
+    const id = (await call('POST', '/api/training', { token, body: { ...push, note: 'Kept' } })).body!.session.id;
+    const exercises = [
+      { exerciseId: 'bench-press', sets: [{ weight: 95, reps: 10, kind: 'warmup' }, { weight: 145, reps: 8, rpe: 9 }] },
+      { exerciseId: 'dumbbell-row', sets: [{ weight: 60, reps: 12 }] },
+    ];
+    const edited = await call('PATCH', `/api/training/${id}`, { token, body: { name: '  Push,   heavy ', unit: 'kg', finishedAt: '2026-09-25T09:30:00Z', exercises } });
+    expect(edited.status).toBe(200);
+    expect(edited.body!.session).toMatchObject({ name: 'Push, heavy', unit: 'kg', startedAt: '2026-09-25T08:00:00.000Z', finishedAt: '2026-09-25T09:30:00.000Z', gymId: 'equinox-new-york', note: 'Kept', exercises });
+    expect((await call('GET', '/api/training', { token })).body!.sessions[0]).toMatchObject({ name: 'Push, heavy', exercises });
+    // Not someone else's; nothing that a new session couldn't be; nothing changed by a refused edit.
+    expect((await call('PATCH', `/api/training/${id}`, { token: other, body: { name: 'Mine now' } })).status).toBe(404);
+    expect((await call('PATCH', `/api/training/${id}`, { token, body: { finishedAt: '2026-09-26T09:00:00Z' } })).status).toBe(400);
+    expect((await call('PATCH', `/api/training/${id}`, { token, body: { exercises: [{ exerciseId: 'bench-press', sets: [{ weight: 60, reps: 5, kind: 'warmup' }] }] } })).status).toBe(400);
+    expect((await call('PATCH', `/api/training/${id}`, { token, body: { name: 'Fine', note: 42 } })).status).toBe(400);
+    expect((await call('GET', '/api/training', { token })).body!.sessions[0]).toMatchObject({ name: 'Push, heavy', finishedAt: '2026-09-25T09:30:00.000Z', note: 'Kept' });
+  });
+
   it('is in Download my data', async () => {
     const token = await signUp();
     await call('POST', '/api/training', { token, body: { ...push, note: 'PB day' } });

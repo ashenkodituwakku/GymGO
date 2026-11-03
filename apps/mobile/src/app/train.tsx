@@ -10,7 +10,7 @@ import { useProgramme } from '@/lib/programmeStore';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, ActionSheetIOS, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { AccessibilityInfo, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { CURVES, EASE_IN, EASE_OUT, FADE_IN, POP_IN, Pressable, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,8 +19,9 @@ import { Icon, type IconName } from '@/components/Icon';
 import { CountUp } from '@/components/CountUp';
 import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
-import { Chip, Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ChoiceSheet } from '@/components/ChoiceSheet';
+import { KIND_INK, KIND_MESSAGE, KIND_OPTIONS, RpePicker, askSetKindNatively } from '@/components/SetKinds';
 import { leadExercise } from '@/lib/exerciseGlyphs';
 import { endSession, startSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
 import { againPlan } from '@/lib/again';
@@ -42,8 +43,6 @@ import { LOOKS, color, currentLook, face, radius, shadow, space, themed } from '
 import {
   BAR,
   PLATES,
-  RPE_VALUES,
-  SET_KIND_WORDS,
   bestSoFar,
   clockLabel,
   finishedAtFor,
@@ -627,19 +626,9 @@ const ExerciseLog = memo(function ExerciseLog({
       }),
     );
   };
-  /** iPhone: Apple's action sheet. Elsewhere GymGO's own (ChoiceSheet). */
+  /** iPhone: Apple's action sheet. Elsewhere GymGO's own (ChoiceSheet, below). */
   const pickKind = (at: number) => {
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        { title: `${name}, ${tags[at]!.spoken}`, message: KIND_MESSAGE, options: [...KIND_OPTIONS.map((option) => option.label), 'Cancel'], cancelButtonIndex: KIND_OPTIONS.length, tintColor: color.brand },
-        (chosen) => {
-          const option = KIND_OPTIONS[chosen];
-          if (option) setKind(at, option.key);
-        },
-      );
-      return;
-    }
-    setTyping(at);
+    if (!askSetKindNatively(`${name}, ${tags[at]!.spoken}`, (kind) => setKind(at, kind))) setTyping(at);
   };
   const setRpe = (at: number, rpe: number | null) => {
     const { rpe: _old, ...rest } = item.sets[at]!;
@@ -934,34 +923,6 @@ const ExerciseLog = memo(function ExerciseLog({
     </View>
   );
 });
-
-/** The kinds of set, as the picker lists them. */
-const KIND_OPTIONS: ReadonlyArray<{ key: SetKind | 'normal'; label: string }> = [
-  { key: 'normal', label: 'Ordinary set' },
-  { key: 'warmup', label: `${SET_KIND_WORDS.warmup.letter} · ${SET_KIND_WORDS.warmup.label}` },
-  { key: 'drop', label: `${SET_KIND_WORDS.drop.letter} · ${SET_KIND_WORDS.drop.label}` },
-  { key: 'failure', label: `${SET_KIND_WORDS.failure.letter} · ${SET_KIND_WORDS.failure.label}` },
-];
-const KIND_MESSAGE = 'Warm-ups are left out of records and totals. A drop set follows the set before with no rest.';
-/** Each kind's letter in an ink that reads on the card. */
-const KIND_INK: Record<SetKind, () => string> = { warmup: () => color.maybeInk, drop: () => color.brand, failure: () => color.dangerInk };
-
-/** How hard a set was, 6 to 10, in a row of chips under it: one tap picks, and closes it. */
-function RpePicker({ label, value, onPick, onClose }: { label: string; value: number | null; onPick: (rpe: number | null) => void; onClose: () => void }) {
-  return (
-    <View style={styles.rpePicker} accessibilityLabel={`${label}: how hard was it?`} role="group">
-      <Txt variant="caption" color={color.labelSecondary}>
-        {value !== null ? `RPE ${value}: ${rpeMeaning(value)}` : 'How hard was it? 10 is nothing left, 8 two more reps'}
-      </Txt>
-      <View style={styles.rpeChips}>
-        {RPE_VALUES.map((rpe) => (
-          <Chip key={rpe} label={String(rpe)} selected={value === rpe} accessibilityLabel={`RPE ${rpe}: ${rpeMeaning(rpe)}`} onPress={() => onPick(rpe)} />
-        ))}
-        {value !== null ? <Chip label="Clear" action selected={false} onPress={() => onPick(null)} /> : <Chip label="Skip" action selected={false} onPress={onClose} />}
-      </View>
-    </View>
-  );
-}
 
 /** Beside the number of a ticked set that beats your best so far: a gold trophy, popping in. Its tick names the record. */
 function BestMark() {
@@ -1330,8 +1291,6 @@ const styles = themed(() => StyleSheet.create({
   setTag: { minWidth: 22, height: 24, alignItems: 'center', justifyContent: 'center', borderRadius: 6 },
   setTagKind: { backgroundColor: color.fill },
   rpeLine: { alignSelf: 'flex-start', marginLeft: 36 + space[2], marginTop: -2, paddingVertical: 2 },
-  rpePicker: { gap: space[2], paddingVertical: space[2], paddingLeft: 36 + space[2] },
-  rpeChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   setRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 3, paddingHorizontal: space[2], marginHorizontal: -space[2], borderRadius: radius.md, borderCurve: 'continuous' },
   setDone: { backgroundColor: alpha(color.good, 0.08) },
   // A set that beats your best: gold, like the records on the summary.

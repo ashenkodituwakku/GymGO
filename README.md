@@ -573,7 +573,13 @@ workouts go to your log.
   for now.
 - **Progress** (Profile → Progress): weeks in a row you've trained,
   workouts this week, your records for every exercise, and every session,
-  each of which you can open or delete.
+  each of which you can open, **edit** or delete. Edit changes a logged
+  workout in place: its name, how many minutes it took, kg or lb, and
+  every set (weight, reps, kind, RPE), with sets and exercises added or
+  removed. A set left blank is named rather than dropped, at least one set
+  that isn't a warm-up has to stay, and the server checks the change as it
+  checks a new workout. Records, totals and charts follow, since they're
+  worked out from the log; the day and the time it started stay as logged.
 - **Notes.** After Finish, **Add a note** under the summary ("left knee a
   bit sore", "new shoes"); a workout in Progress shows its note's first
   line, and opening it lets you change or clear it. Up to 500 characters,

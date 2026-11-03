@@ -1138,15 +1138,37 @@ export function createApp(options: AppOptions) {
       return send(res, 201, { session: { id, ...session } });
     }
 
-    // A note on a session you logged: added after Finish, changed or cleared later.
+    // A session you logged, changed afterwards: its note (added after Finish,
+    // changed or cleared later), or what it was: its name, unit, times and
+    // sets (a typo fixed, a set forgotten). What's sent is checked as a new
+    // session is, merged over what's kept; the gym and saved workout stay.
     if (method === 'PATCH' && parts[0] === 'api' && parts[1] === 'training' && parts.length === 3) {
       const { account } = requireAccount(req);
       const body = (await readJson(req)) as Record<string, unknown>;
-      if (!('note' in body)) throw new HttpError(400, 'Send the note, or null to clear it.');
-      const note = cleanTrainingNote(body.note);
+      const editable = ['name', 'unit', 'startedAt', 'finishedAt', 'exercises'] as const;
+      const edits = editable.filter((key) => key in body);
+      if (!('note' in body) && edits.length === 0) throw new HttpError(400, 'Send the note (or null to clear it), or what to change.');
       const sessionId = decodeURIComponent(parts[2]!);
-      const changed = db.prepare('update training_sessions set note = ? where id = ? and user_id = ?').run(note, sessionId, account.id);
-      if (changed.changes === 0) throw new HttpError(404, 'No logged session with that id.');
+      const kept = db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where id = ? and user_id = ?`).get(sessionId, account.id) as TrainingRow | undefined;
+      if (!kept) throw new HttpError(404, 'No logged session with that id.');
+      // Checked before anything's saved, so a bad note can't leave half an edit.
+      const note = 'note' in body ? cleanTrainingNote(body.note) : undefined;
+      if (edits.length > 0) {
+        const before = trainingView(kept);
+        const merged = { ...before, ...Object.fromEntries(edits.map((key) => [key, body[key]])), note: null };
+        // Checked against the time it was logged, as well as now: an edit can't move it into the future either.
+        const clean = cleanTrainingSession(merged, now());
+        db.prepare('update training_sessions set name = ?, unit = ?, started_at = ?, finished_at = ?, exercises_json = ? where id = ? and user_id = ?').run(
+          clean.name,
+          clean.unit,
+          clean.startedAt,
+          clean.finishedAt,
+          JSON.stringify(clean.exercises),
+          sessionId,
+          account.id,
+        );
+      }
+      if (note !== undefined) db.prepare('update training_sessions set note = ? where id = ? and user_id = ?').run(note, sessionId, account.id);
       const row = db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where id = ? and user_id = ?`).get(sessionId, account.id) as TrainingRow;
       return send(res, 200, { session: trainingView(row) });
     }

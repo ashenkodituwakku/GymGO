@@ -14,6 +14,7 @@ import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { ExerciseGlyph, ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
 import { AskGymPal } from '@/components/AskGymPal';
+import { ExerciseNote } from '@/components/ExerciseNote';
 import { ProgressChart } from '@/components/ProgressChart';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Chip, PrimaryButton, Txt } from '@/components/ui';
@@ -52,6 +53,7 @@ export default function ExerciseProgressScreen() {
   usePageTitle(title);
   const record = useMemo(() => personalRecords(log.sessions).get(exerciseId) ?? null, [log.sessions, exerciseId]);
   const [metric, setMetric] = useState<ExerciseMetric>('e1rm');
+  const [noting, setNoting] = useState(false);
   const series = useMemo(() => exerciseSeries(log.sessions, exerciseId, metric), [log.sessions, exerciseId, metric]);
   const shownMetric = EXERCISE_METRICS.find((item) => item.id === metric)!;
   const reps = useMemo(() => repRecords(log.sessions, exerciseId), [log.sessions, exerciseId]);
@@ -142,6 +144,14 @@ export default function ExerciseProgressScreen() {
           />
         </>
       )}
+
+      {/* Your note on it, pinned in every workout with it too; kept on this device. */}
+      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+        YOUR NOTE
+      </Txt>
+      <View style={styles.card}>
+        <ExerciseNote exerciseId={exerciseId} name={title} editing={noting} onEditing={setNoting} showAdd />
+      </View>
 
       {record && (
         <View style={styles.facts}>

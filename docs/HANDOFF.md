@@ -102,6 +102,14 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Ideas from Hevy, round 4: exercise notes and rest per exercise** (3
+  Nov). lib/exerciseNotes.ts (a `deviceStore` at `gymgo.exercise-notes.v1`,
+  `tidyNote`, `setExerciseNote`, `useExerciseNote`) and
+  components/ExerciseNote.tsx (pinned box; a draft kept on Done or blur,
+  so other cards don't redraw per key). train.tsx: Rest beside Swap and
+  Plates opens `REST_CHOICES` chips that set the item's `restSeconds`
+  (`changeRest`); a Note button in the set buttons; `metaButtons` wraps.
+  progress/[exercise].tsx: a YOUR NOTE card.
 - **Ideas from Hevy, round 3: edit a logged workout** (3 Nov). Server
   `PATCH /api/training/:id` takes name, unit, startedAt, finishedAt and
   exercises besides the note: merged over the stored row and run through

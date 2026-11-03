@@ -19,9 +19,11 @@ import { Icon, type IconName } from '@/components/Icon';
 import { CountUp } from '@/components/CountUp';
 import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
-import { Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { Chip, Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ChoiceSheet } from '@/components/ChoiceSheet';
 import { KIND_INK, KIND_MESSAGE, KIND_OPTIONS, RpePicker, askSetKindNatively } from '@/components/SetKinds';
+import { ExerciseNote } from '@/components/ExerciseNote';
+import { useExerciseNote } from '@/lib/exerciseNotes';
 import { leadExercise } from '@/lib/exerciseGlyphs';
 import { endSession, startSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
 import { againPlan } from '@/lib/again';
@@ -105,6 +107,8 @@ function useNow(active: boolean, every = 1000): number {
 const exerciseOf = (id: string) => EXERCISES.find((exercise) => exercise.id === id) ?? null;
 /** Done for a time or a distance rather than for reps. */
 const isTimed = (item: ActiveItem) => exerciseOf(item.exerciseId)?.cardio === true || repRange(item.reps) === null;
+/** Rests to pick from mid-workout: none, or 30 seconds to 5 minutes. */
+const REST_CHOICES = [0, 30, 45, 60, 90, 120, 180, 240, 300];
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 
 /** The workout the empty Workout screen offers: a template's next day, or your last again. */
@@ -325,6 +329,10 @@ export default function TrainScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [groupKey],
   );
+  // An exercise's rest, changed for this workout (the plan's was a guess).
+  const changeRest = useCallback((index: number, restSeconds: number) => {
+    updateSession((current) => ({ ...current, items: current.items.map((other, at) => (at === index ? { ...other, restSeconds } : other)) }));
+  }, []);
   const linkNext = useCallback((index: number) => {
     updateSession((current) => ({ ...current, items: linkWithNext(current.items, index) }));
   }, []);
@@ -489,6 +497,7 @@ export default function TrainScreen() {
             onHowTo={openHowTo}
             onChange={changeSets}
             onRest={restAfterTick}
+            onRestChange={changeRest}
             easier={easierWeek}
             group={groupInfos[index] ?? null}
             nextName={joinableNext(session.items, index, (at) => exerciseName(session.items[at]!.exerciseId))}
@@ -549,6 +558,7 @@ const ExerciseLog = memo(function ExerciseLog({
   onHowTo,
   onChange,
   onRest,
+  onRestChange,
   easier,
   group,
   nextName,
@@ -577,6 +587,8 @@ const ExerciseLog = memo(function ExerciseLog({
   easier: boolean;
   /** A set was ticked: the screen starts the right rest (lib/supersets.ts). */
   onRest: (index: number, at: number) => void;
+  /** Its rest, changed for this workout. */
+  onRestChange: (index: number, restSeconds: number) => void;
   /** Its superset or circuit, if it's in one. */
   group: GroupInfo | null;
   /** The next exercise, when it could be paired with this one. */
@@ -605,6 +617,10 @@ const ExerciseLog = memo(function ExerciseLog({
   // The set whose type is being picked (a sheet), and the set asking how hard it was (a row of chips under it).
   const [typing, setTyping] = useState<number | null>(null);
   const [rating, setRating] = useState<number | null>(null);
+  // Your note on it (kept on the device), being written; and its rest, being changed.
+  const note = useExerciseNote(item.exerciseId);
+  const [noting, setNoting] = useState(false);
+  const [resting, setResting] = useState(false);
   const tags = useMemo(() => setTags(item.sets), [item.sets]);
 
   // What to show until you type: the target, else last time, else the plan.
@@ -700,9 +716,27 @@ const ExerciseLog = memo(function ExerciseLog({
             <Txt variant="footnote" color={color.labelSecondary} style={styles.meta}>
               {timed && item.planned <= 1 ? exercise?.cue ?? item.reps : `${item.planned} × ${item.reps}${item.restSeconds ? ` · ${restLabel(item.restSeconds)} rest` : ''}`}
             </Txt>
-            {(swapTo || barbell) && (
+            {(swapTo || barbell || !timed) && (
               <View style={styles.metaButtons}>
                 {swapTo && <SwapButton name={name} swapTo={swapTo} onSwap={() => onSwap(index)} />}
+                {!timed && (
+                  <Pressable
+                    onPress={() => {
+                      haptic.select();
+                      setResting((open) => !open);
+                    }}
+                    accessibilityRole="button"
+                    aria-expanded={resting}
+                    accessibilityLabel={`Rest after each set of ${name}: ${item.restSeconds ? restLabel(item.restSeconds) : 'none'}. Change it`}
+                    hitSlop={8}
+                    style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
+                  >
+                    <Icon name="timer" size={15} color={color.brand} />
+                    <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                      Rest
+                    </Txt>
+                  </Pressable>
+                )}
                 {barbell && (
                   <Pressable
                     onPress={() => onPlates(item.sets.find((set) => set.weight.trim())?.weight ?? (weightGuess !== null ? String(weightGuess) : null))}
@@ -722,6 +756,30 @@ const ExerciseLog = memo(function ExerciseLog({
           </View>
         </View>
       </View>
+
+      {resting && !timed && (
+        <View style={styles.restPicker} role="radiogroup" accessibilityLabel={`Rest after each set of ${name}`}>
+          <Txt variant="caption" color={color.labelSecondary}>
+            Rest after each set, for this workout
+          </Txt>
+          <View style={styles.restChips}>
+            {REST_CHOICES.map((seconds) => (
+              <Chip
+                key={seconds}
+                label={seconds === 0 ? 'Off' : restLabel(seconds)}
+                selected={item.restSeconds === seconds}
+                accessibilityLabel={seconds === 0 ? 'No rest timer' : `${restLabel(seconds)} rest`}
+                onPress={() => {
+                  onRestChange(index, seconds);
+                  setResting(false);
+                }}
+              />
+            ))}
+          </View>
+        </View>
+      )}
+
+      <ExerciseNote exerciseId={item.exerciseId} name={name} editing={noting} onEditing={setNoting} />
 
       {!timed && (
         <View style={styles.guides}>
@@ -887,6 +945,22 @@ const ExerciseLog = memo(function ExerciseLog({
               <Icon name="sunrise" size={13} color={color.brand} />
               <Txt variant="footnote" color={color.brand} style={face('semibold')}>
                 {isPro ? 'Warm-ups' : 'Warm-ups · Pro'}
+              </Txt>
+            </Pressable>
+          )}
+          {!note && !noting && (
+            <Pressable
+              onPress={() => {
+                haptic.select();
+                setNoting(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Add a note on ${name}, shown each time you do it`}
+              style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
+            >
+              <Icon name="pin" size={13} color={color.brand} />
+              <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                Note
               </Txt>
             </Pressable>
           )}
@@ -1274,7 +1348,7 @@ const styles = themed(() => StyleSheet.create({
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginBottom: space[1] },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space[2], rowGap: space[1], marginTop: 2 },
   meta: { flexGrow: 1, flexShrink: 0, maxWidth: '100%' },
-  metaButtons: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  metaButtons: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], maxWidth: '100%' },
   barTrack: { height: 6, borderRadius: 3, backgroundColor: color.fill, overflow: 'hidden', marginTop: space[2] },
   barFill: { height: '100%', borderRadius: 3, backgroundColor: color.brandFill },
   platesButton: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[2], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
@@ -1339,7 +1413,9 @@ const styles = themed(() => StyleSheet.create({
   tick: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   tickTodo: { borderWidth: 2, borderColor: color.labelTertiary },
   tickDone: { backgroundColor: color.good },
-  setButtons: { flexDirection: 'row', gap: space[3], marginTop: space[1] },
+  setButtons: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space[3], marginTop: space[1] },
+  restPicker: { gap: space[2] },
+  restChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   smallButton: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: space[1] },
   finish: { gap: space[2], marginTop: space[3] },
   recordCard: { marginTop: space[2] },

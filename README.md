@@ -533,6 +533,14 @@ workouts go to your log.
   said in reps you had left (10 is nothing left, 8 is two more). Tap the
   line under a set to change or clear it. Kept with the set, in the CSV and
   in what GymPal sees when you let him use your log.
+- **Notes on an exercise** (free): **Note** under an exercise in a
+  workout, or **Add a note** on its page, pins a line or two to it ("seat
+  on 4, grip just outside the rings"), shown in a tinted box each time you
+  do it and on its page; tap it to change it, blank removes it. Up to 200
+  characters, kept on this device only, like your gym notes.
+- **Rest per exercise.** **Rest** beside an exercise in a workout picks its
+  rest for this workout: off, or 30 s to 5 min. The plan line and the
+  timer follow; a superset still rests for the longest of its exercises.
 - **Rest timer.** Ticking a set starts the rest the plan calls for (90 s,
   say), in a glass bar at the bottom with −15, +15 and Skip. The phone
   buzzes when it's up. With the phone locked or GymGO in the background, a

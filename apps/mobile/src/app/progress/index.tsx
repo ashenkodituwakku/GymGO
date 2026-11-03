@@ -197,6 +197,21 @@ export default function ProgressScreen() {
             YOUR BODY
           </Txt>
           <BodyWeightCard unit={unit} />
+          <Pressable
+            onPress={() => router.push('/measurements')}
+            accessibilityRole="link"
+            accessibilityLabel="Body measurements: waist, chest, arms and more, kept on this device only"
+            style={({ pressed }) => [styles.photosRow, pressed && { opacity: 0.8 }]}
+          >
+            <Icon name="body" size={18} color={color.brand} />
+            <View style={styles.photosText}>
+              <Txt variant="headline">Body measurements</Txt>
+              <Txt variant="footnote" color={color.labelSecondary}>
+                Waist, chest, arms and more, on this device only
+              </Txt>
+            </View>
+            <Icon name="chevron" size={13} color={color.labelTertiary} />
+          </Pressable>
         </>
       )}
 

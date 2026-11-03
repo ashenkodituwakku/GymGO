@@ -499,6 +499,17 @@ saved afresh as a JPEG, without the original's details of where and on
 what it was taken. Hidden each time the screen opens until you tap **Show
 them**; **Then and now** puts the first beside the latest.
 
+**Body weight and measurements** (Progress → Your body, free): a weigh-in a
+day, and **Body measurements**: waist, chest, hips, neck, shoulders, upper
+arm, forearm, thigh and calf (in centimetres, or inches where weights are in
+pounds) and body fat %, each with where to put the tape. Type any of them
+for today (the latest of each shows as a guide; measuring one again today
+replaces it); the latest of each shows with how it's changed over about a
+month, said as it is and never as better or worse; tap one to chart it;
+every day you measured is listed, to delete one. Values no body measures
+(a waist of 8 cm) are refused with the range. Kept on this device only,
+like your weight and photos: never uploaded, not in your account.
+
 **Training programme** (Templates, Home or Profile → Training): pick a
 goal (Strength, Build muscle or General fitness), 2, 3 or 4 days a week
 and 6, 8 or 12 weeks, and GymGO plans them, taking turns through the

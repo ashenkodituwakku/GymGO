@@ -31,7 +31,7 @@ export function ProgressChart({
   /** A workout's finish time, or a calendar date (YYYY-MM-DD). `kg` is the value: a count when `count` is given. */
   points: Array<{ date: string; kg: number }>;
   unit: WeightUnit;
-  /** A count rather than a weight ("reps"): drawn as it is, never converted to pounds. */
+  /** A count or a length rather than a weight ("reps", "cm"): drawn as it is, to a tenth, never converted to pounds. */
   count?: string;
   /** What's drawn, for its legend and screen readers. */
   title?: string;
@@ -69,7 +69,7 @@ export function ProgressChart({
     <View
       style={styles.wrap}
       accessible
-      accessibilityLabel={`${title}, ${points.length} ${points.length === 1 ? 'day' : 'days'}, from ${show(Math.round(values[0] ?? 0))} to ${show(Math.round(values[values.length - 1] ?? 0))}`}
+      accessibilityLabel={`${title}, ${points.length} ${points.length === 1 ? 'day' : 'days'}, from ${show(count ? (values[0] ?? 0) : Math.round(values[0] ?? 0))} to ${show(count ? (values[values.length - 1] ?? 0) : Math.round(values[values.length - 1] ?? 0))}`}
     >
       {legend && (
         <View style={styles.legend}>

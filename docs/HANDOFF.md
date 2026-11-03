@@ -102,6 +102,17 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Ideas from Hevy, round 6: body measurements** (3 Nov), the last of
+  the six. lib/bodyMeasures.ts (`MEASURES` with ranges in cm or %,
+  `keptValue`/`shownValue`/`valueLabel` for cm and inches,
+  `withMeasures`, `withoutDay`, `latestOf`, `seriesOf`, a `deviceStore`
+  at `gymgo.body-measures.v1`) and app/measurements.tsx, linked under the
+  body weight card on Progress. ProgressChart's `count` now also draws
+  lengths. Not done from Hevy, on purpose: a public feed of others'
+  workouts, likes and comments (GymGO never shows the days anyone
+  trained); the Watch app, Live Activity and Apple Health / Google Fit
+  (App Store builds); custom exercises (would need their definitions on
+  the account and every exercise list to take them) and routine folders.
 - **Ideas from Hevy, round 5: monthly report** (3 Nov). lib/monthReport.ts
   (`monthKeyOf`, `shiftMonth`, `monthsWithTraining`, `reportMonth`,
   `monthReport`, `changeWord`, `monthShareText`) and app/month.tsx

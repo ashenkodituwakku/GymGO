@@ -15,7 +15,7 @@
 
 import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
-import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review, CollectionTotals, FriendCard, BusyLevel, OwnerUpdatePayload } from '@gymgo/domain';
+import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review, CollectionTotals, FriendCard, BusyLevel, OwnerUpdatePayload, OwnExercise, OwnExerciseFields, Split, SplitFields } from '@gymgo/domain';
 import type { TrainingSession } from './training';
 import { pickApiBase } from './serverAddress';
 import { LIMITED } from './limited';
@@ -631,6 +631,20 @@ export const api = {
   saveWorkout: (token: string, body: { name: string; gymId: string | null; plan: Omit<SavedWorkoutPlan, 'version'> }) =>
     request<{ workout: SavedWorkout }>('POST', '/api/workouts', { token, body }),
   deleteWorkout: (token: string, id: string) => request<unknown>('DELETE', `/api/workouts/${encodeURIComponent(id)}`, { token }),
+  /** Pro: a saved workout's name and plan, changed in place. */
+  editWorkout: (token: string, id: string, body: { name: string; plan: Omit<SavedWorkoutPlan, 'version'> }) =>
+    request<{ workout: SavedWorkout }>('PATCH', `/api/workouts/${encodeURIComponent(id)}`, { token, body }),
+
+  /** Exercises and splits of your own (making or changing them is Pro). */
+  ownExercises: (token: string) => request<{ exercises: OwnExercise[] }>('GET', '/api/own-exercises', { token }),
+  addOwnExercise: (token: string, body: OwnExerciseFields) => request<{ exercise: OwnExercise }>('POST', '/api/own-exercises', { token, body }),
+  changeOwnExercise: (token: string, id: string, body: OwnExerciseFields) =>
+    request<{ exercise: OwnExercise }>('PATCH', `/api/own-exercises/${encodeURIComponent(id)}`, { token, body }),
+  deleteOwnExercise: (token: string, id: string) => request<unknown>('DELETE', `/api/own-exercises/${encodeURIComponent(id)}`, { token }),
+  splits: (token: string) => request<{ splits: Split[] }>('GET', '/api/splits', { token }),
+  addSplit: (token: string, body: SplitFields) => request<{ split: Split }>('POST', '/api/splits', { token, body }),
+  changeSplit: (token: string, id: string, body: SplitFields) => request<{ split: Split }>('PATCH', `/api/splits/${encodeURIComponent(id)}`, { token, body }),
+  deleteSplit: (token: string, id: string) => request<unknown>('DELETE', `/api/splits/${encodeURIComponent(id)}`, { token }),
 
   /** Your training log, newest first. */
   training: (token: string) => request<{ sessions: TrainingSession[] }>('GET', '/api/training', { token }),

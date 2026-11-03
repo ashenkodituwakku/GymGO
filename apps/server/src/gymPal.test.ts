@@ -178,6 +178,9 @@ describe('a Pro member’s training, for GymPal', () => {
       exercises: [{ exerciseId: 'back-squat', sets: [{ weight: 60, reps: 5, kind: 'warmup' as const }, { weight: 100, reps: 5, rpe: 8.5 }, { weight: 80, reps: 9, kind: 'drop' as const }, { weight: null, reps: 20, kind: 'failure' as const, rpe: 10 }] }],
     };
     expect(trainingSummary([typed], now)).toContain('back squat: 60 kg × 5 (warm-up), 100 kg × 5 at RPE 8.5, 80 kg × 9 (drop set), body weight × 20 (to failure) at RPE 10');
+    // An exercise of their own by its name, not its id.
+    const own = { ...typed, exercises: [{ exerciseId: 'mine-a1b2c3d4e5', sets: [{ weight: 30, reps: 10 }] }] };
+    expect(trainingSummary([own], now, new Map([['mine-a1b2c3d4e5', 'Landmine press']]))).toContain('Landmine press: 30 kg × 10');
   });
 
   it('says so when there’s nothing recent, and stays short', () => {

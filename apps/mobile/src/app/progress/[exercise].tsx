@@ -23,9 +23,10 @@ import { useApp } from '@/lib/app-state';
 import { mix } from '@/lib/looks';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { EXERCISE_METRICS, exerciseSeries, formatWeight, fromKg, personalRecords, repRecords, repsWords, setsSummary, unitFor, type ExerciseMetric } from '@/lib/training';
+import { useOwnTraining } from '@/lib/ownTraining';
 import { useTrainingLog } from '@/lib/useTraining';
 import { alternativesFor, kitText } from '@/lib/exerciseLibrary';
-import { EXERCISES, KIT_LABEL, exerciseName, muscleLabel } from '@/lib/workout';
+import { KIT_LABEL, exerciseName, muscleLabel, exerciseById } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { ProOffer } from '@/components/ProOffer';
@@ -41,13 +42,15 @@ export default function ExerciseProgressScreen() {
   useGlassRedraw();
   const { exercise: exerciseId = '' } = useLocalSearchParams<{ exercise: string }>();
   const { account, prefs, billing, openPro } = useApp();
+  // Your own exercises, so one changed or deleted shows as it is now.
+  useOwnTraining();
   // Kept while the server is away too: loading then fails and says so,
   // where a missing token would ask a signed-in person to sign in.
   const token = account.token;
   const log = useTrainingLog(token);
   const router = useRouter();
   const unit = unitFor(prefs.country);
-  const exercise = EXERCISES.find((item) => item.id === exerciseId) ?? null;
+  const exercise = exerciseById(exerciseId) ?? null;
   // An id GymGO doesn't list (a mistyped link, or an exercise since renamed): its words, readably.
   const title = exerciseName(exerciseId);
   usePageTitle(title);
@@ -93,7 +96,7 @@ export default function ExerciseProgressScreen() {
             <BrandFill round={radius.xl} />
             <Sheen round={radius.xl} />
             <Txt variant="eyebrow" color={color.onBrandSoft}>
-              {`HOW TO DO IT · ${exercise.cardio ? 'CONDITIONING' : exercise.compound ? 'COMPOUND' : 'ISOLATION'}`}
+              {exercise.own ? 'YOUR OWN EXERCISE' : `HOW TO DO IT · ${exercise.cardio ? 'CONDITIONING' : exercise.compound ? 'COMPOUND' : 'ISOLATION'}`}
             </Txt>
             <View style={styles.how}>
               <View style={styles.glyph} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
@@ -101,7 +104,7 @@ export default function ExerciseProgressScreen() {
                 <ExerciseGlyph exerciseId={exercise.id} size={84} ink={color.onBrand} accent={mix(color.brandFill, color.onBrand, 0.5)} moving />
               </View>
               <Txt variant="headline" color={color.onBrand} style={styles.flex}>
-                {exercise.cue}
+                {exercise.cue || (exercise.own ? 'Say how to do it when you change it.' : '')}
               </Txt>
             </View>
           </View>
@@ -127,7 +130,25 @@ export default function ExerciseProgressScreen() {
                 </View>
               ))}
             </Detail>
+            {exercise.timed && (
+              <Detail label="Counted">
+                <Pill text="For a time" />
+              </Detail>
+            )}
           </View>
+          {exercise.own && !exercise.own.archived && (
+            <PrimaryButton
+              label={billing.isPro ? 'Change this exercise' : 'Change this exercise · Pro'}
+              icon="settings"
+              tone="quiet"
+              onPress={() => (billing.isPro ? router.push({ pathname: '/exercise-edit', params: { id: exercise.id } }) : openPro('exercises'))}
+            />
+          )}
+          {exercise.own?.archived && (
+            <Txt variant="footnote" color={color.labelSecondary}>
+              You deleted this exercise: it’s no longer offered, and kept here for the workouts you logged with it.
+            </Txt>
+          )}
           <AskGymPal
             title="Ask GymPal about this exercise"
             detail="Form, common mistakes, what to swap in"

@@ -106,6 +106,28 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Your own workouts, splits and exercises** (3 Nov; the owner: "make sure
+  the user can make their own splits and workouts and make custom
+  exercises (only for pro users)"). Read as: making and starting a workout
+  of your own is free (the builder always was; "Workout library: Build and
+  share" free), keeping one is Pro (as before), splits and custom exercises
+  are Pro. If the owner meant all of it Pro, gate app/workout-edit.tsx's
+  Start. Rules in packages/domain/src/ownTraining.ts (`cleanOwnExercise`,
+  `cleanSplit`, `cleanPlanItems`, `cleanReps`, `OWN_LIMITS`); server
+  apps/server/src/ownTraining.ts (`own_exercises`, archived not deleted;
+  `own_splits`) with routes in app.ts and PATCH /api/workouts/:id. App:
+  lib/workout.ts `exerciseById` (GymGO's, then yours: use it, never
+  `EXERCISES.find`), `fromOwn`, `setOwnExercises`, `ownExercises`;
+  lib/exerciseGlyphs.ts `setGlyphAliases` (drawn as); lib/templates.ts
+  `templateOfSplit`, `setOwnTemplates`, `allTemplates`; lib/ownRegistry.ts
+  puts them all in place; lib/ownTraining.ts keeps them in step with the
+  account (device copy first, `useOwnTrainingSync` in AppProvider,
+  `useOwnTraining` to redraw). Screens: components/PlanEditor.tsx (with
+  lib/planEdit.ts), app/workout-edit.tsx (lib/planDraft.ts hands it the
+  builder's plan), app/split-edit.tsx, app/exercise-edit.tsx; entry points
+  on the builder, My workouts, a saved workout, Templates, Exercises, an
+  exercise's page and the add-exercise picker. The dev server serves stale
+  code after new files: restart Metro with --clear.
 - **Hevy features polished** (3 Nov; the owner: "make them better and
   more professional and just reliable and cleaner"). components/SetKinds.tsx
   `RpeHead` and `RpeCell` (the column, `RPE_COLUMN` 32 pt; rows with it use

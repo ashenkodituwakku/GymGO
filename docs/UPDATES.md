@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 67 · Your own workouts, splits and exercises
+
+*3 Nov 2026 · the commit "Your own workouts, splits and exercises"*
+
+- Make your own workout from scratch: pick the exercises, then each one's sets, reps and rest, put them in order and make supersets. Starting it is free; keeping it in My workouts is Pro, as before, and a kept one can now be changed.
+- A plan from the builder can be changed the same way before you start it.
+- Your own splits (Pro): up to seven days of your own, listed above GymGO's templates and taking turns like them.
+- Your own exercises (Pro): a name, the muscles, the kit, reps or a time, how to do it, and a GymGO icon it borrows. They show up everywhere you pick an exercise, with their own records and history.
+- Deleting an exercise of yours keeps its name on the workouts you logged with it.
+- Not yet seen on a phone: the editors with a phone's keyboard, and the iPhone's own "Discard" alert.
+
 ## Update 66 · The Hevy features, polished
 
-*3 Nov 2026 · the commit "The Hevy features, polished"*
+*3 Nov 2026 · `6314dcd`*
 
 - RPE has its own column beside the reps, in a workout and when editing one, instead of a line under every set; it still fits a 320-point phone.
 - Edit workout asks "Discard your changes?" before you leave with changes not saved (Cancel, back, a swipe or closing the tab); Save doesn't.

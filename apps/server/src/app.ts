@@ -80,6 +80,15 @@
  *   GET    /api/workouts                  your saved workouts
  *   POST   /api/workouts                  Pro: { name, gymId?, plan } -> saved
  *   DELETE /api/workouts/:id
+ *   PATCH  /api/workouts/:id              Pro: { name, plan } -> the saved workout, changed
+ *   GET    /api/own-exercises             { exercises }: the exercises you made, archived ones too (for your history's names)
+ *   POST   /api/own-exercises             Pro: { name, primary, secondary, kit, timed, cue, drawnAs } -> { exercise }
+ *   PATCH  /api/own-exercises/:id         Pro: the same -> { exercise }
+ *   DELETE /api/own-exercises/:id         archived: no longer offered, still named in what you logged
+ *   GET    /api/splits                    { splits }: the splits you made
+ *   POST   /api/splits                    Pro: { name, days: [{ name, items: [{ exerciseId, sets, reps, restSeconds, group? }] }] } -> { split }
+ *   PATCH  /api/splits/:id                Pro: the same -> { split }
+ *   DELETE /api/splits/:id
  *   GET    /api/training                  the sessions you've logged, newest first
  *   POST   /api/training                  { name, unit, startedAt, finishedAt, workoutId?, gymId?, exercises, note? } -> logged (sent again: the one already logged)
  *   PATCH  /api/training/:id              { note: string | null } -> the session with its note (up to 500 characters; null or blank clears it)
@@ -209,6 +218,7 @@ import { GYMPAL_PLANS, GymPal, GymPalError, cleanChat, cleanContext, trainingSum
 import { Social, SocialError } from './social';
 import { OwnerError, Owners } from './owners';
 import { PerkError, Perks } from './perks';
+import { OwnTraining, OwnTrainingError } from './ownTraining';
 import type { SendMail } from './mail';
 
 export interface AppOptions {
@@ -733,6 +743,7 @@ export function createApp(options: AppOptions) {
     }>;
 
   const perks = new Perks(db, now);
+  const own = new OwnTraining(db, now);
   const billing = new Billing(db, {
     stripe: options.billing?.stripe ?? null,
     webhookSecret: options.billing?.webhookSecret ?? null,
@@ -1101,6 +1112,65 @@ export function createApp(options: AppOptions) {
       const removed = db.prepare('delete from workouts where id = ? and user_id = ?').run(decodeURIComponent(parts[2]!), account.id);
       if (removed.changes === 0) throw new HttpError(404, 'No saved workout with that id.');
       return send(res, 204);
+    }
+
+    // A saved workout changed in place (Pro): its name and plan; its gym and the day it was saved stay.
+    if (method === 'PATCH' && parts[0] === 'api' && parts[1] === 'workouts' && parts.length === 3) {
+      const { account } = requireAccount(req);
+      if (!billing.isPro(account.id)) throw new HttpError(403, 'Changing saved workouts is part of GymGO Pro.', 'pro_required');
+      const id = decodeURIComponent(parts[2]!);
+      const row = db.prepare('select id, gym_id, created_at from workouts where id = ? and user_id = ?').get(id, account.id) as { id: string; gym_id: string | null; created_at: string } | undefined;
+      if (!row) throw new HttpError(404, 'No saved workout with that id.');
+      const body = (await readJson(req)) as Record<string, unknown>;
+      const name = typeof body.name === 'string' ? body.name.trim().replace(/\s+/g, ' ') : '';
+      if (name.length < 1 || name.length > 80) throw new HttpError(400, 'Give it a name of up to 80 characters.');
+      const plan = cleanWorkoutPlan(body.plan);
+      db.prepare('update workouts set name = ?, plan_json = ? where id = ?').run(name, JSON.stringify(plan), id);
+      return send(res, 200, { workout: { id, name, gymId: row.gym_id, createdAt: row.created_at, plan } });
+    }
+
+    // --- Exercises and splits of your own (ownTraining.ts): making or changing them is Pro ---
+    if (parts[0] === 'api' && (parts[1] === 'own-exercises' || parts[1] === 'splits') && parts.length <= 3) {
+      const { account } = requireAccount(req);
+      const id = parts[2] ? decodeURIComponent(parts[2]) : null;
+      const proOnly = (what: string) => {
+        if (!billing.isPro(account.id)) throw new HttpError(403, `${what} is part of GymGO Pro.`, 'pro_required');
+      };
+      try {
+        if (parts[1] === 'own-exercises') {
+          if (!id && method === 'GET') return send(res, 200, { exercises: own.exercises(account.id) });
+          if (!id && method === 'POST') {
+            proOnly('Making your own exercises');
+            return send(res, 201, { exercise: own.addExercise(account.id, await readJson(req)) });
+          }
+          if (id && method === 'PATCH') {
+            proOnly('Changing your own exercises');
+            return send(res, 200, { exercise: own.changeExercise(account.id, id, await readJson(req)) });
+          }
+          if (id && method === 'DELETE') {
+            own.archiveExercise(account.id, id);
+            return send(res, 204);
+          }
+        } else {
+          if (!id && method === 'GET') return send(res, 200, { splits: own.splits(account.id) });
+          if (!id && method === 'POST') {
+            proOnly('Making your own splits');
+            return send(res, 201, { split: own.addSplit(account.id, await readJson(req)) });
+          }
+          if (id && method === 'PATCH') {
+            proOnly('Changing your own splits');
+            return send(res, 200, { split: own.changeSplit(account.id, id, await readJson(req)) });
+          }
+          if (id && method === 'DELETE') {
+            own.removeSplit(account.id, id);
+            return send(res, 204);
+          }
+        }
+      } catch (error) {
+        if (error instanceof OwnTrainingError) throw new HttpError(error.status, error.message);
+        throw error;
+      }
+      throw new HttpError(404, 'Not found.');
     }
 
     // --- Training log (free: it's your own numbers) ---------------------------
@@ -1598,6 +1668,7 @@ export function createApp(options: AppOptions) {
         challenges: challenges.exportFor(id),
         ...owners.exportFor(id),
         ...perks.exportFor(id),
+        ...own.exportFor(id),
       });
     }
 
@@ -2456,6 +2527,7 @@ export function createApp(options: AppOptions) {
                 (row) => trainingView(row) as LoggedSession,
               ),
               now(),
+              new Map(own.exercises(account.id).map((exercise) => [exercise.id, exercise.name])),
             )
           : null;
         return send(res, 200, { reply: await gymPal.ask(messages, { context, log, replyTokens: plan.replyTokens }) });

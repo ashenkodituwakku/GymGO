@@ -31,7 +31,7 @@ import { checkEdits, draftsOf, finishFor, minutesOf, type EditedExercise } from 
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { setTags, type DraftSet, type SetKind, type WeightUnit } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
-import { EXERCISES, exerciseName } from '@/lib/workout';
+import { exerciseName, exerciseById } from '@/lib/workout';
 
 interface Draft {
   name: string;
@@ -44,7 +44,7 @@ type SetAt = { exercise: number; set: number };
 
 /** Body-weight only: its weight column is weight added (a vest, a belt), blank for none. */
 const bodyWeightOnly = (exerciseId: string) => {
-  const exercise = EXERCISES.find((item) => item.id === exerciseId);
+  const exercise = exerciseById(exerciseId);
   return exercise ? exercise.needs.some((option) => option.length === 0) && !exercise.needs.some((option) => option.length > 0) : false;
 };
 

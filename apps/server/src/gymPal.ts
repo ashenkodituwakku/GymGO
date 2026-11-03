@@ -145,9 +145,10 @@ export interface LoggedSession {
  * A Pro member's own training, for GymPal, when they've said he may see it:
  * their latest sessions, newest first, each with how long ago, how long it
  * took, and every exercise's sets. Never the gym it was at or a note: what
- * leaves GymGO is only what advice needs.
+ * leaves GymGO is only what advice needs. `names` names the exercises they
+ * made themselves.
  */
-export function trainingSummary(sessions: readonly LoggedSession[], now: Date): string {
+export function trainingSummary(sessions: readonly LoggedSession[], now: Date, names: ReadonlyMap<string, string> = new Map()): string {
   const day = 24 * 60 * 60_000;
   const recent = sessions.filter((session) => now.getTime() - Date.parse(session.finishedAt) < 8 * 7 * day).slice(0, 10);
   if (recent.length === 0) return 'They haven’t logged a workout in the last 8 weeks.';
@@ -168,7 +169,8 @@ export function trainingSummary(sessions: readonly LoggedSession[], now: Date): 
           const kind = set.kind === 'warmup' ? ' (warm-up)' : set.kind === 'drop' ? ' (drop set)' : set.kind === 'failure' ? ' (to failure)' : '';
           return `${done}${kind}${set.rpe !== undefined ? ` at RPE ${set.rpe}` : ''}`;
         });
-      return `${exercise.exerciseId.replace(/-/g, ' ')}: ${sets.join(', ') || 'no sets done'}`;
+      // An exercise of their own by the name they gave it, never its id.
+      return `${names.get(exercise.exerciseId) ?? exercise.exerciseId.replace(/-/g, ' ')}: ${sets.join(', ') || 'no sets done'}`;
     });
     return `- ${ago(session.finishedAt)}, ${session.name}, ${minutes} min. ${exercises.join('; ')}`;
   });

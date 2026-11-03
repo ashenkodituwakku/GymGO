@@ -81,7 +81,7 @@ import { ProgressRing } from '@/components/ProgressRing';
 import { useOverhang } from '@/lib/layout';
 import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
 import { useTrainingLog } from '@/lib/useTraining';
-import { EXERCISES, TYPICAL_KIT, exerciseName, knownKit, swapFor, type Exercise, type Kit } from '@/lib/workout';
+import { TYPICAL_KIT, exerciseName, knownKit, swapFor, type Exercise, type Kit, exerciseById } from '@/lib/workout';
 import { groupOf, linkWithNext, nextUp, restAfter, unlink, type GroupInfo } from '@/lib/supersets';
 import { GroupControls, groupTag, joinableNext } from '@/components/GroupControls';
 import { SwapButton } from '@/components/ExerciseCard';
@@ -103,7 +103,7 @@ function useNow(active: boolean, every = 1000): number {
   return now;
 }
 
-const exerciseOf = (id: string) => EXERCISES.find((exercise) => exercise.id === id) ?? null;
+const exerciseOf = (id: string) => exerciseById(id) ?? null;
 /** Done for a time or a distance rather than for reps. */
 const isTimed = (item: ActiveItem) => exerciseOf(item.exerciseId)?.cardio === true || repRange(item.reps) === null;
 /** Rests to pick from mid-workout: none, or 30 seconds to 5 minutes. */
@@ -351,7 +351,7 @@ export default function TrainScreen() {
         const next = swapFor(current.items, index, available);
         const item = current.items[index];
         if (!next || !item || item.sets.some((set) => set.done)) return current;
-        const muscle = item.muscle ?? EXERCISES.find((exercise) => exercise.id === item.exerciseId)?.primary[0];
+        const muscle = item.muscle ?? exerciseById(item.exerciseId)?.primary[0];
         const replaced: ActiveItem = { ...item, exerciseId: next.id, ...(muscle ? { muscle } : {}), sets: item.sets.map(() => ({ weight: '', reps: '', done: false })) };
         return { ...current, items: current.items.map((other, at) => (at === index ? replaced : other)) };
       });

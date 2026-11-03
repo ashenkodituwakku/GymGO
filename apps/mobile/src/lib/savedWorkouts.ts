@@ -7,11 +7,11 @@ import { usesTwentyFourHour } from '@gymgo/domain';
 import { startSession } from './activeSession';
 import type { SavedWorkout, SavedWorkoutPlan } from './api';
 import type { WeightUnit } from './training';
-import { EXERCISES, type Kit, type Muscle, type Workout } from './workout';
+import { type Kit, type Muscle, type Workout, exerciseById } from './workout';
 
 export function workoutFromSaved(plan: SavedWorkoutPlan): { workout: Workout; missing: number } {
   const items = plan.items.flatMap((item) => {
-    const exercise = EXERCISES.find((candidate) => candidate.id === item.exerciseId);
+    const exercise = exerciseById(item.exerciseId);
     if (!exercise) return [];
     return [{ exercise, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds, uses: item.uses as Kit[], confirmed: item.confirmed, ...(item.group ? { group: item.group } : {}) }];
   });

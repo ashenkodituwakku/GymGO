@@ -8,7 +8,7 @@
  */
 
 import { workingSets, type TrainingSession } from './training';
-import { EXERCISES, doseFor } from './workout';
+import { doseFor, exerciseById } from './workout';
 
 export interface AgainPlan {
   name: string;
@@ -17,7 +17,6 @@ export interface AgainPlan {
   items: Array<{ exerciseId: string; sets: number; reps: string; restSeconds: number }>;
 }
 
-const BY_ID = new Map(EXERCISES.map((exercise) => [exercise.id, exercise]));
 
 /** Rest for an exercise GymGO doesn't know (one you named yourself). */
 const OWN_REST = 60;
@@ -27,7 +26,7 @@ export function againPlan(session: TrainingSession): AgainPlan | null {
     // Warm-ups are done before the plan, not part of it.
     .filter((logged) => workingSets(logged.sets).length > 0)
     .map((logged) => {
-      const exercise = BY_ID.get(logged.exerciseId);
+      const exercise = exerciseById(logged.exerciseId);
       const sets = workingSets(logged.sets).length;
       // A finisher (rower, bike) is done as its cue says, once.
       if (exercise?.cardio) return { exerciseId: logged.exerciseId, sets: 1, reps: 'see cue', restSeconds: 0 };

@@ -6,6 +6,10 @@
  * When that's too little to go on (most gyms publish nothing), it offers a
  * "typical gym" plan instead and says plainly that the kit isn't confirmed
  * here. `id` is a gym's id, or "any" for no particular gym.
+ *
+ * Or make your own: "Make your own" opens the editor empty, and "Change"
+ * on a built plan opens it with that plan, to add, take out and set
+ * exercises yourself (app/workout-edit.tsx).
  */
 
 import { groupOf, linkWithNext, unlink } from '@/lib/supersets';
@@ -29,6 +33,7 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { planSignature } from '@/lib/savedWorkouts';
+import { handPlan } from '@/lib/planDraft';
 import { unitFor } from '@/lib/training';
 import {
   GOALS,
@@ -201,6 +206,27 @@ export default function WorkoutScreen() {
             {gymName ? `For ${gymName}. ` : ''}Tap the muscles you want to train.
           </Txt>
         </View>
+        <Pressable
+          onPress={() => {
+            haptic.select();
+            handPlan({ name: '', gymId: record?.location.id ?? null, gymName, items: [] });
+            router.push('/workout-edit');
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Make your own workout: pick each exercise, its sets, reps and rest"
+          style={({ pressed }) => [styles.ownLink, pressed && { opacity: 0.75 }]}
+        >
+          <Icon name="list" size={18} color={color.brand} />
+          <View style={styles.flex}>
+            <Txt variant="headline" color={color.brand}>
+              Make your own
+            </Txt>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              Pick each exercise, its sets, reps and rest
+            </Txt>
+          </View>
+          <Icon name="chevron" size={13} color={color.labelTertiary} />
+        </Pressable>
 
         {/* The body --------------------------------------------------------- */}
         <View style={styles.card}>
@@ -354,6 +380,22 @@ export default function WorkoutScreen() {
               )}
               {workout.items.length > 0 && (
                 <ActionPill
+                  label="Change"
+                  icon="settings"
+                  onPress={() => {
+                    haptic.select();
+                    handPlan({
+                      name: [muscles.map(muscleLabel).slice(0, 3).join(', '), gymName].filter(Boolean).join(' · ').slice(0, 80),
+                      gymId: record?.location.id ?? null,
+                      gymName,
+                      items: workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds, ...(item.group ? { group: item.group } : {}) })),
+                    });
+                    router.push('/workout-edit');
+                  }}
+                />
+              )}
+              {workout.items.length > 0 && (
+                <ActionPill
                   label="Share"
                   icon="share"
                   onPress={() => void Share.share({ message: workoutText(workout, gymName) }).catch(() => undefined)}
@@ -495,6 +537,7 @@ const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[4], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
   intro: { gap: 2 },
+  ownLink: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
   card: { backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
   bodyTop: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   genderSwitch: { width: 150 },

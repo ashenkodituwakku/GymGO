@@ -10,6 +10,7 @@
  * No React Native imports here, so it is unit-tested in Node.
  */
 
+import type { Split } from '@gymgo/domain';
 import type { TrainingSession } from './training';
 
 export interface TemplateItem {
@@ -30,8 +31,8 @@ export interface TemplateDay {
 export interface WorkoutTemplate {
   id: string;
   name: string;
-  /** Who it suits, in a few words. */
-  level: 'Beginner' | 'Intermediate';
+  /** Who it suits, in a few words; a split you made is your own. */
+  level: 'Beginner' | 'Intermediate' | 'Your own';
   /** Days a week it's meant for. */
   perWeek: string;
   summary: string;
@@ -212,6 +213,28 @@ export const TEMPLATES: WorkoutTemplate[] = [
   },
 ];
 
+// --- Splits of your own (Pro) ----------------------------------------------------
+
+/** A split you made as a template: it takes turns through its days like GymGO's own. */
+export function templateOfSplit(split: Split): WorkoutTemplate {
+  return {
+    id: `own-${split.id}`,
+    name: split.name,
+    level: 'Your own',
+    perWeek: `${split.days.length} day${split.days.length === 1 ? '' : 's'}`,
+    summary: '',
+    days: split.days.map((day) => ({ name: day.name, items: day.items.map((each) => ({ ...each })) })),
+  };
+}
+
+/** Your splits (lib/ownTraining.ts keeps them in step with your account), looked through before GymGO's own. */
+let OWN_TEMPLATES: WorkoutTemplate[] = [];
+export function setOwnTemplates(list: readonly WorkoutTemplate[]): void {
+  OWN_TEMPLATES = [...list];
+}
+/** Your splits, then GymGO's templates: a split of yours with a template's name is yours. */
+export const allTemplates = (): WorkoutTemplate[] => [...OWN_TEMPLATES, ...TEMPLATES];
+
 /** Training programmes' names (lib/programmes.ts, which checks they match), for telling their workouts apart in the log. */
 export const PROGRAMME_TITLES = ['Strength programme', 'Muscle programme', 'Fitness programme'];
 
@@ -222,7 +245,7 @@ export const templateDayName = (template: WorkoutTemplate, day: TemplateDay) => 
 export function workoutTitle(name: string): { title: string; plan: string | null } {
   const at = name.lastIndexOf(' · ');
   const plan = at > 0 ? name.slice(at + 3) : null;
-  return plan && (TEMPLATES.some((template) => template.name === plan) || PROGRAMME_TITLES.includes(plan)) ? { title: name.slice(0, at), plan } : { title: name, plan: null };
+  return plan && (allTemplates().some((template) => template.name === plan) || PROGRAMME_TITLES.includes(plan)) ? { title: name.slice(0, at), plan } : { title: name, plan: null };
 }
 
 /**
@@ -247,10 +270,10 @@ export function upNext(sessions: readonly TrainingSession[]): { template: Workou
     .sort((a, b) => b.finishedAt.localeCompare(a.finishedAt))
     .find((session) => {
       const plan = workoutTitle(session.name).plan;
-      return plan !== null && TEMPLATES.some((template) => template.name === plan);
+      return plan !== null && allTemplates().some((template) => template.name === plan);
     });
   if (!latest) return null;
   const plan = workoutTitle(latest.name).plan;
-  const template = TEMPLATES.find((candidate) => candidate.name === plan);
+  const template = allTemplates().find((candidate) => candidate.name === plan);
   return template ? { template, day: nextTemplateDay(template, sessions) } : null;
 }

@@ -2,15 +2,19 @@
  * Adding an exercise to a workout in progress: a search by name or muscle,
  * or, with nothing typed, moves for the muscles the workout already trains
  * (lib/exerciseLibrary.ts addableExercises). The one picked joins the end
- * of the workout, planned as the builder would plan it.
+ * of the workout, planned as the builder would plan it. Your own exercises
+ * (Pro) are offered with GymGO's; at the foot, a way to make one.
  */
 
+import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type ViewInstance } from 'react-native';
 import { addableExercises, kitText } from '@/lib/exerciseLibrary';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
-import type { Exercise } from '@/lib/workout';
+import { useApp } from '@/lib/app-state';
+import { useOwnTraining } from '@/lib/ownTraining';
+import { EXERCISES, ownExercises, type Exercise } from '@/lib/workout';
 import { ExerciseTile } from './ExerciseGlyph';
 import { Icon } from './Icon';
 import { Pressable } from './motion';
@@ -19,7 +23,12 @@ import { Input, PrimaryButton, Txt } from './ui';
 export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: (exercise: Exercise) => void }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const found = useMemo(() => addableExercises(query, inWorkout, 8), [query, inWorkout]);
+  const router = useRouter();
+  const { billing, openPro } = useApp();
+  // Yours first, then GymGO's; read again when yours change.
+  const own = useOwnTraining();
+  const pool = useMemo(() => [...ownExercises(), ...EXERCISES], [own]);
+  const found = useMemo(() => addableExercises(query, inWorkout, 8, pool), [query, inWorkout, pool]);
   // Closing hands keyboard focus back to the button that opened it, rather than to the page.
   const button = useRef<ViewInstance>(null);
   const close = () => {
@@ -101,6 +110,21 @@ export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: 
           </Pressable>
         ))}
       </View>
+      <Pressable
+        onPress={() => {
+          haptic.select();
+          if (!billing.isPro) return openPro('exercises');
+          router.push('/exercise-edit');
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={billing.isPro ? 'Make an exercise of your own' : 'Making your own exercises is part of GymGO Pro'}
+        style={({ pressed }) => [styles.make, pressed && { opacity: 0.6 }]}
+      >
+        <Icon name="plus" size={13} color={color.brand} />
+        <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+          {billing.isPro ? 'Not here? Make your own exercise' : 'Not here? Make your own exercise · Pro'}
+        </Txt>
+      </Pressable>
     </View>
   );
 }
@@ -115,5 +139,6 @@ const styles = themed(() =>
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[2], paddingHorizontal: space[1], borderRadius: radius.md },
     line: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
     flex: { flex: 1, minWidth: 0 },
+    make: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingVertical: space[1] },
   }),
 );

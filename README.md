@@ -642,7 +642,9 @@ workouts go to your log.
   muscle each mainly trains, with a search by name or muscle and filters
   for kit (body weight, dumbbells, barbell, cables, machines) and muscle.
   Each opens its page: how to do it (its moving icon and cue), what it
-  works and needs, swaps for the same muscle, and your sets.
+  works and needs, swaps for the same muscle, and your sets. **Your own**
+  heads the list (Pro: see "Your own exercises" above), and **Done most**
+  shows the ones you do most.
 - **Weekly goal and calendar.** Pick how many workouts a week you're aiming
   for (kept on the device); Progress shows this week against it, the last
   12 weeks a square a day, and a dot under each week you met it. Home shows
@@ -942,6 +944,33 @@ a second copy. Each saved workout has a **Start** button in the list, and
 the Workout screen, with nothing in progress, lists your latest ones to
 start in one tap. Saved workouts stay, and can still be started, if Pro
 ends.
+
+**Make your own** (the builder, or My workouts): a workout from scratch.
+Name it, add exercises with the picker (GymGO's and your own), then set
+each one's sets (− and +), reps ("8", "8–10" or "30 s"; anything else is
+said under it) and rest, move them up and down, and make supersets. A
+built plan's **Change** opens it there to do the same. **Start workout**
+is free, like the builder; **Keep in My workouts** is Pro, and a kept
+workout has **Change this workout** to change it in place. Leaving with
+changes not kept asks first.
+
+**Your own splits** (Templates → Make your own split, Pro): a name and up
+to seven days, each a workout made as above. Kept on your account, listed
+under **Your splits** above GymGO's templates, and taking turns the same
+way: each offers the day after the one you did last, Home's Up next
+follows it, and its workouts read "Push · My split" in your log. **Change**
+on its card opens it again to change or delete it. A split can't take a
+template's name, and the server checks each day as it checks a workout.
+
+**Your own exercises** (Exercises → Make your own exercise, or "Not here?"
+in the picker; Pro): a name, the one or two muscles it mainly works and up
+to four it works second, what it needs (none is body weight), whether
+it's counted in reps or for a time, how to do it, and which of GymGO's
+moving icons it borrows (or a plain one). It's offered beside GymGO's
+wherever you pick an exercise, has its own page with records and history,
+counts in your muscle balance, recovery map and monthly report, and GymPal
+calls it by its name. Deleting one keeps its name on workouts you logged
+with it. It can't take one of GymGO's names.
 
 ### Accounts
 

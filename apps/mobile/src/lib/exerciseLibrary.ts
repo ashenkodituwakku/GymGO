@@ -8,7 +8,7 @@
  */
 
 import { workingSets, type TrainingSession } from './training';
-import { EXERCISES, KIT_LABEL, MUSCLES, doseFor, muscleLabel, wayToDo, type Exercise, type Kit, type Muscle } from './workout';
+import { EXERCISES, KIT_LABEL, MUSCLES, doseFor, muscleLabel, wayToDo, type Exercise, type Kit, type Muscle, exerciseById } from './workout';
 
 /** Kit filters, as people think of them rather than by machine. */
 export type KitFilter = 'any' | 'body' | 'dumbbells' | 'barbell' | 'cables' | 'machines';
@@ -137,7 +137,6 @@ export const doableWith = (exercise: Exercise, kit: Kit[]) => wayToDo(exercise, 
 
 // --- When you last trained each muscle ---------------------------------------
 
-const BY_ID = new Map(EXERCISES.map((exercise) => [exercise.id, exercise]));
 
 /**
  * When you last trained each muscle as a main muscle, from logged sessions
@@ -150,7 +149,7 @@ export function lastTrained(sessions: TrainingSession[]): Map<Muscle, string> {
     for (const item of session.exercises) {
       // Warm-ups alone don't train a muscle.
       if (workingSets(item.sets).length === 0) continue;
-      for (const muscle of BY_ID.get(item.exerciseId)?.primary ?? []) {
+      for (const muscle of exerciseById(item.exerciseId)?.primary ?? []) {
         const before = last.get(muscle);
         if (!before || before < session.finishedAt) last.set(muscle, session.finishedAt);
       }

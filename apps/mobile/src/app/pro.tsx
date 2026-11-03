@@ -47,6 +47,8 @@ const FEATURE_ICON: Record<string, IconName> = {
   'Saved gyms': 'saved',
   'Compare side by side': 'compare',
   'Workout library': 'workout',
+  'Your own exercises': 'plus',
+  'Your own splits': 'calendar',
   'Progress charts': 'chart',
   'Session targets': 'target',
   'Colour themes': 'palette',
@@ -65,6 +67,8 @@ const FEATURE_ICON: Record<string, IconName> = {
 };
 
 const REASON: Record<ProReason, string> = {
+  exercises: 'Make exercises of your own: they’re offered beside GymGO’s, with your records and history.',
+  splits: 'Make splits of your own: days that take turns, like the templates, saved to your account.',
   saved: 'You’ve saved as many gyms as Free keeps. Pro saves as many as you like.',
   compare: 'Free compares two gyms at a time. Pro lines up four.',
   workouts: 'Keep your workouts in your account with Pro, and open them on any device.',

@@ -10,7 +10,7 @@
 import { durationLabel, fromKg, recordsBroken, setCount, setsSummary, streakOf, volumeKg, workingSets, type NewRecord, type TrainingSession } from './training';
 import type { CollectedGym, Collection } from '@gymgo/domain';
 import { cardFor, rarityRank } from './rarity';
-import { EXERCISES, MUSCLES, exerciseName, type Muscle } from './workout';
+import { MUSCLES, exerciseName, type Muscle, exerciseById } from './workout';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -224,7 +224,7 @@ export function muscleBalance(sessions: TrainingSession[], days = 28, now: Date 
     for (const logged of session.exercises) {
       const sets = workingSets(logged.sets).length;
       if (sets === 0) continue;
-      const exercise = EXERCISES.find((item) => item.id === logged.exerciseId);
+      const exercise = exerciseById(logged.exerciseId);
       if (!exercise) {
         unknownSets += sets;
         continue;

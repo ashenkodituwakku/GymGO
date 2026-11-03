@@ -8,7 +8,7 @@
  * count. No React Native here, so it is unit-tested in Node.
  */
 
-import { exerciseName, EXERCISES, MUSCLES, type Muscle } from './workout';
+import { exerciseName, MUSCLES, type Muscle, exerciseById } from './workout';
 import { recordsBroken, setCount, volumeKg, workingSets, type NewRecord, type TrainingSession } from './training';
 
 /** "2026-10": the month a moment falls in, on this device's calendar. */
@@ -82,14 +82,13 @@ function totalsOf(sessions: readonly TrainingSession[]): MonthTotals {
   };
 }
 
-const BY_ID = new Map(EXERCISES.map((exercise) => [exercise.id, exercise]));
 
 function muscleSets(sessions: readonly TrainingSession[]): Map<Muscle, number> {
   const counts = new Map<Muscle, number>();
   for (const session of sessions) {
     for (const logged of session.exercises) {
       const sets = workingSets(logged.sets).length;
-      const exercise = BY_ID.get(logged.exerciseId);
+      const exercise = exerciseById(logged.exerciseId);
       if (!sets || !exercise) continue;
       for (const muscle of exercise.primary) counts.set(muscle, (counts.get(muscle) ?? 0) + sets);
       for (const muscle of exercise.secondary) counts.set(muscle, (counts.get(muscle) ?? 0) + sets / 2);

@@ -14,7 +14,7 @@
  * No React Native here, so it is unit-tested in Node.
  */
 
-import { EXERCISES, swapFor, wayToDo, type Exercise, type Kit, type Muscle } from './workout';
+import { swapFor, wayToDo, type Exercise, type Kit, type Muscle, exerciseById } from './workout';
 
 export type FitState = 'there' | 'missing' | 'unknown';
 
@@ -44,7 +44,7 @@ export function checkWorkout(
   const lacks = new Set(known.lacks);
   const counts: Record<FitState, number> = { there: 0, missing: 0, unknown: 0 };
   const checked = items.map((item, index): FitItem => {
-    const exercise = EXERCISES.find((candidate) => candidate.id === item.exerciseId);
+    const exercise = exerciseById(item.exerciseId);
     if (!exercise) {
       counts.unknown += 1;
       return { exerciseId: item.exerciseId, state: 'unknown', kit: [], swap: null };

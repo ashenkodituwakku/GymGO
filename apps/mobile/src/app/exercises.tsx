@@ -2,6 +2,8 @@
  * Exercises: every move GymGO plans, found by name or muscle and by the kit
  * you have (lib/exerciseLibrary.ts). Each opens its own page: how to do it,
  * what it works, what it needs, swaps for the same muscle, and your sets.
+ * Your own exercises (Pro) head the list, with a way to make one; a search
+ * or filter finds them among GymGO's.
  */
 
 import { useRouter } from 'expo-router';
@@ -20,18 +22,23 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { personalRecords } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
-import { EXERCISES, MUSCLES, exerciseName, type Muscle } from '@/lib/workout';
+import { useOwnTraining } from '@/lib/ownTraining';
+import { EXERCISES, MUSCLES, exerciseById, exerciseName, ownExercises, type Muscle } from '@/lib/workout';
 
 export default function ExercisesScreen() {
   useGlassRedraw();
   usePageTitle('Exercises');
   const router = useRouter();
-  const { account } = useApp();
+  const { account, billing, openPro } = useApp();
   const log = useTrainingLog(account.token);
   const [query, setQuery] = useState('');
   const [muscle, setMuscle] = useState<Muscle | null>(null);
   const [kit, setKit] = useState<KitFilter>('any');
-  const groups = useMemo(() => libraryGroups({ query, muscle, kit }), [query, muscle, kit]);
+  const browsing = query.trim() === '' && muscle === null && kit === 'any';
+  // Yours: listed at the top while browsing, found among GymGO's by a search or filter.
+  const ownState = useOwnTraining();
+  const mine = useMemo(() => ownExercises(), [ownState]);
+  const groups = useMemo(() => libraryGroups({ query, muscle, kit }, browsing ? EXERCISES : [...mine, ...EXERCISES]), [query, muscle, kit, browsing, mine]);
   const count = groups.reduce((sum, group) => sum + group.exercises.length, 0);
   // How many times you've done each, for a quiet "Done 4 times".
   const done = useMemo(() => personalRecords(log.sessions), [log.sessions]);
@@ -39,14 +46,15 @@ export default function ExercisesScreen() {
   const yours = useMemo(
     () =>
       [...done]
-        .filter(([id]) => EXERCISES.some((exercise) => exercise.id === id))
+        // GymGO's exercises and yours (a deleted one of yours no longer offered).
+        .filter(([id]) => { const exercise = exerciseById(id); return exercise !== undefined && !exercise.own?.archived; })
         .sort(([, a], [, b]) => b.sessions - a.sessions)
         .slice(0, 8)
         .map(([id, record]) => ({ id, name: exerciseName(id), sessions: record.sessions })),
     [done],
   );
   const open = (id: string) => router.push({ pathname: '/progress/[exercise]', params: { exercise: id } });
-  const browsing = query.trim() === '' && muscle === null && kit === 'any';
+  const makeOwn = () => (billing.isPro ? router.push('/exercise-edit') : openPro('exercises'));
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -74,7 +82,7 @@ export default function ExercisesScreen() {
       {browsing && yours.length > 0 && (
         <View style={styles.section}>
           <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.eyebrow}>
-            YOUR EXERCISES
+            DONE MOST
           </Txt>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.yours}>
             {yours.map((item) => (
@@ -97,6 +105,54 @@ export default function ExercisesScreen() {
               </Pressy>
             ))}
           </ScrollView>
+        </View>
+      )}
+
+      {browsing && (
+        <View style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.eyebrow}>
+            {mine.length > 0 ? `YOUR OWN · ${mine.length}` : 'YOUR OWN'}
+          </Txt>
+          <View style={styles.group}>
+            {mine.map((exercise, index) => (
+              <Pressable
+                key={exercise.id}
+                onPress={() => open(exercise.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`${exercise.name}, your own. ${kitText(exercise)}`}
+                style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
+              >
+                <ExerciseTile exerciseId={exercise.id} size={44} />
+                <View style={styles.flex}>
+                  <Txt variant="body" style={face('medium')} numberOfLines={2}>
+                    {exercise.name}
+                  </Txt>
+                  <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
+                    {kitText(exercise)}
+                  </Txt>
+                </View>
+                <Icon name="chevron" size={13} color={color.labelTertiary} />
+              </Pressable>
+            ))}
+            <Pressable
+              onPress={makeOwn}
+              accessibilityRole="button"
+              accessibilityLabel={billing.isPro ? 'Make an exercise of your own' : 'Making your own exercises is part of GymGO Pro'}
+              style={({ pressed }) => [styles.row, mine.length > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
+            >
+              <View style={styles.plus}>
+                <Icon name="plus" size={18} color={color.brand} />
+              </View>
+              <View style={styles.flex}>
+                <Txt variant="body" color={color.brand} style={face('semibold')}>
+                  {billing.isPro ? 'Make your own exercise' : 'Make your own exercise · Pro'}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary}>
+                  For a move GymGO doesn’t list, with its own records and history
+                </Txt>
+              </View>
+            </Pressable>
+          </View>
         </View>
       )}
 
@@ -194,6 +250,7 @@ const styles = themed(() =>
       ...shadow.plate,
     },
     badge: { paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill, backgroundColor: color.brandTint },
+    plus: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     section: { gap: space[2] },
     eyebrow: { marginTop: space[2], marginLeft: space[4] },
     group: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },

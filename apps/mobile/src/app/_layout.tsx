@@ -303,6 +303,9 @@ function ThemedStack() {
           <Stack.Screen name="month" options={{ headerShown: true, title: 'Monthly report' }} />
           <Stack.Screen name="measurements" options={{ headerShown: true, title: 'Body measurements' }} />
           <Stack.Screen name="session-edit" options={{ headerShown: true, title: 'Edit workout' }} />
+          <Stack.Screen name="workout-edit" options={{ headerShown: true, title: 'Your own workout' }} />
+          <Stack.Screen name="split-edit" options={{ headerShown: true, title: 'Your own split' }} />
+          <Stack.Screen name="exercise-edit" options={{ headerShown: true, title: 'Your own exercise' }} />
           <Stack.Screen name="challenges" options={{ headerShown: true, title: 'Monthly challenge' }} />
           <Stack.Screen name="exercises" options={{ headerShown: true, title: 'Exercises' }} />
           <Stack.Screen name="moderation" options={{ headerShown: true, title: 'Moderation' }} />

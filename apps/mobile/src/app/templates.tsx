@@ -8,7 +8,7 @@
 import { programmeTitle } from '@/lib/programmes';
 import { useProgramme } from '@/lib/programmeStore';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
@@ -23,7 +23,8 @@ import { startSession, useActiveSessionGlance } from '@/lib/activeSession';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
-import { TEMPLATES, nextTemplateDay, templateDayName, type WorkoutTemplate } from '@/lib/templates';
+import { TEMPLATES, nextTemplateDay, templateDayName, templateOfSplit, type WorkoutTemplate } from '@/lib/templates';
+import { useOwnTraining } from '@/lib/ownTraining';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { unitFor } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
@@ -34,7 +35,10 @@ export default function TemplatesScreen() {
   useGlassRedraw();
   usePageTitle('Templates');
   const router = useRouter();
-  const { account, prefs } = useApp();
+  const { account, prefs, billing, openPro } = useApp();
+  // Your own splits (Pro), above GymGO's, taking turns the same way.
+  const own = useOwnTraining();
+  const mine = useMemo(() => own.splits.map(templateOfSplit), [own.splits]);
   const log = useTrainingLog(account.token);
   const active = useActiveSessionGlance();
   const programme = useProgramme();
@@ -78,6 +82,38 @@ export default function TemplatesScreen() {
         </View>
         <Icon name="chevron" size={13} color={color.labelTertiary} />
       </Pressable>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.eyebrow}>
+        {mine.length > 0 ? `YOUR SPLITS · ${mine.length}` : 'YOUR SPLITS'}
+      </Txt>
+      {mine.map((template) => (
+        <TemplateCard
+          key={template.id}
+          template={template}
+          next={nextTemplateDay(template, log.sessions)}
+          logged={log.status === 'ready' ? (log.sessions[0]?.id ?? '') : null}
+          disabled={Boolean(active)}
+          onStart={(index) => start(template, index)}
+          onChange={() => (billing.isPro ? router.push({ pathname: '/split-edit', params: { id: template.id.slice('own-'.length) } }) : openPro('splits'))}
+        />
+      ))}
+      <Pressable
+        onPress={() => (billing.isPro ? router.push('/split-edit') : openPro('splits'))}
+        accessibilityRole="button"
+        accessibilityLabel={billing.isPro ? 'Make a split of your own' : 'Making your own splits is part of GymGO Pro'}
+        style={({ pressed }) => [styles.programme, pressed && { opacity: 0.8 }]}
+      >
+        <Icon name="plus" size={18} color={color.brand} />
+        <View style={styles.flex}>
+          <Txt variant="headline">{billing.isPro ? 'Make your own split' : 'Make your own split · Pro'}</Txt>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            Your days and exercises, taking turns like the templates below
+          </Txt>
+        </View>
+        <Icon name="chevron" size={13} color={color.labelTertiary} />
+      </Pressable>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.eyebrow}>
+        GYMGO’S TEMPLATES
+      </Txt>
       <View style={styles.levels} accessibilityLabel="Level">
         {([null, 'Beginner', 'Intermediate'] as const).map((each) => (
           <Chip
@@ -139,8 +175,11 @@ function TemplateCard({
   logged,
   disabled,
   onStart,
+  onChange,
 }: {
   template: WorkoutTemplate;
+  /** One of yours: a way to change it. */
+  onChange?: () => void;
   next: number;
   /** The newest workout in your log, or null while it loads. */
   logged: string | null;
@@ -159,7 +198,9 @@ function TemplateCard({
     if (logged !== null) setPicked((now) => (now && now.logged === null ? { ...now, logged } : now));
   }, [logged]);
   const [open, setOpen] = useState(false);
-  const shown = template.days[day]!;
+  // A split of yours can lose a day while a later one was picked.
+  const at = Math.min(day, template.days.length - 1);
+  const shown = template.days[at]!;
   return (
     <Card style={styles.card}>
       <View style={styles.head}>
@@ -174,13 +215,22 @@ function TemplateCard({
             {`${template.level} · ${template.perWeek}`}
           </Txt>
         </View>
+        {onChange && (
+          <Pressable onPress={onChange} accessibilityRole="button" accessibilityLabel={`Change ${template.name}`} hitSlop={8} style={({ pressed }) => [styles.change, pressed && { opacity: 0.6 }]}>
+            <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+              Change
+            </Txt>
+          </Pressable>
+        )}
       </View>
-      <Txt variant="subhead" color={color.labelSecondary}>
-        {template.summary}
-      </Txt>
+      {template.summary !== '' && (
+        <Txt variant="subhead" color={color.labelSecondary}>
+          {template.summary}
+        </Txt>
+      )}
       <View style={styles.chips}>
         {template.days.map((option, index) => (
-          <Chip key={option.name} label={index === next ? `${option.name} (next)` : option.name} selected={day === index} onPress={() => setDay(index)} />
+          <Chip key={option.name} label={index === next ? `${option.name} (next)` : option.name} selected={at === index} onPress={() => setDay(index)} />
         ))}
       </View>
       {!open && (
@@ -225,7 +275,7 @@ function TemplateCard({
         label={`Start ${shown.name}`}
         icon="play"
         disabled={disabled}
-        onPress={() => onStart(day)}
+        onPress={() => onStart(at)}
       />
     </Card>
   );
@@ -249,6 +299,8 @@ const styles = themed(() =>
     grouped: { borderLeftWidth: 3, borderLeftColor: color.brand, paddingLeft: space[2] },
     groupStart: { marginTop: space[1] },
     levels: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+    eyebrow: { marginTop: space[2], marginLeft: space[4] },
+    change: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
     note: { paddingHorizontal: space[4], textAlign: 'center' },
     programme: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate },
   }),

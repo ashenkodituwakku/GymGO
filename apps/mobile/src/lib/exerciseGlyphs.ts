@@ -1133,7 +1133,8 @@ const HOLDS = ['plank', 'side-plank', 'copenhagen', 'wall-sit', 'hollow-hold'];
 /** The moves named above, by tempo (the rest are lifts), for the tests to check each is one GymGO draws. */
 export const TEMPO_NAMED: Record<Exclude<Tempo, 'lift'>, readonly string[]> = { lower: LOWER_FIRST, cycle: CYCLES, spin: SPINS, hold: HOLDS };
 
-export function exerciseTempo(exerciseId: string): Tempo {
+export function exerciseTempo(given: string): Tempo {
+  const exerciseId = ALIAS.get(given) ?? given;
   if (HOLDS.includes(exerciseId)) return 'hold';
   if (CYCLES.includes(exerciseId)) return 'cycle';
   if (SPINS.includes(exerciseId)) return 'spin';
@@ -1149,7 +1150,27 @@ const moves = new Map<string, boolean>();
  * like "constructor" or "toString" (any text can be saved as an exercise)
  * found the object's built-ins, and drawing one crashed the screen.
  */
-const drawingFor = (exerciseId: string): Draw | undefined => (Object.prototype.hasOwnProperty.call(DRAW, exerciseId) ? DRAW[exerciseId] : undefined);
+const drawingFor = (given: string): Draw | undefined => {
+  const exerciseId = ALIAS.get(given) ?? given;
+  return Object.prototype.hasOwnProperty.call(DRAW, exerciseId) ? DRAW[exerciseId] : undefined;
+};
+
+/**
+ * Exercises of your own drawn as one of GymGO's (its id → the one it
+ * borrows): set from your exercises (lib/ownExercises.ts). One that borrows
+ * none keeps the plain dumbbell.
+ */
+const ALIAS = new Map<string, string>();
+export function setGlyphAliases(aliases: ReadonlyMap<string, string>): void {
+  // What was drawn for an id whose drawing changes is drawn afresh.
+  for (const id of new Set([...ALIAS.keys(), ...aliases.keys()])) {
+    if (ALIAS.get(id) === aliases.get(id)) continue;
+    cache.delete(id);
+    moves.delete(id);
+  }
+  ALIAS.clear();
+  for (const [id, to] of aliases) if (Object.prototype.hasOwnProperty.call(DRAW, to)) ALIAS.set(id, to);
+}
 
 /**
  * One rep of an exercise, start to finish, as `REP_FRAMES` drawings of the

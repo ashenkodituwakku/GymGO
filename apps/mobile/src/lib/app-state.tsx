@@ -28,6 +28,7 @@ import { useBilling } from './useBilling';
 import { useGymData } from './useGymData';
 import { useCountryPack } from './useCountryPack';
 import { useCollectionSync } from './useCollection';
+import { useOwnTrainingSync } from './ownTraining';
 import { cleanPlates, type WeightUnit } from './training';
 import { cleanTimers, type IntervalPlan } from './intervals';
 import { LIMITED } from './limited';
@@ -119,7 +120,7 @@ export interface Lookup {
 }
 
 /** Why the Pro screen opened, so it can say so. */
-export type ProReason = 'saved' | 'compare' | 'workouts' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates' | 'timers' | 'strength' | 'freeze' | 'celebrations' | 'lifetime' | 'sounds' | 'gympal';
+export type ProReason = 'saved' | 'compare' | 'workouts' | 'exercises' | 'splits' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates' | 'timers' | 'strength' | 'freeze' | 'celebrations' | 'lifetime' | 'sounds' | 'gympal';
 
 type AppState = {
   data: ReturnType<typeof useGymData>;
@@ -180,6 +181,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Your gym collection follows the account: merged in on signing in, and each check-in sent.
   // Still signed in while the server is away: the collection waits for it rather than acting signed out.
   useCollectionSync(accountApi.state === 'signed_in' || accountApi.state === 'unreachable' ? accountApi.token : null, accountApi.account?.id ?? null);
+  // Exercises and splits of your own: from this device at once, then from your account.
+  useOwnTrainingSync(accountApi.state === 'signed_in' ? accountApi.token : null, accountApi.account?.id ?? null);
   const { limits } = billing;
 
   const openPro = useCallback((reason?: ProReason) => {

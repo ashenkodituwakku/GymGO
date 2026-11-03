@@ -11,6 +11,7 @@ import { LinesSkeleton, ListSkeleton } from '@/components/Skeleton';
 import { useActiveSessionGlance } from '@/lib/activeSession';
 import { api, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
+import { useOwnTraining } from '@/lib/ownTraining';
 import { haptic } from '@/lib/haptics';
 import { startSavedWorkout, workoutFromSaved } from '@/lib/savedWorkouts';
 import { unitFor } from '@/lib/training';
@@ -25,7 +26,9 @@ export default function SavedWorkoutScreen() {
   useGlassRedraw();
   usePageTitle('Workout');
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { account, prefs } = useApp();
+  const { account, prefs, billing, openPro } = useApp();
+  // Your own exercises in it, named as they arrive.
+  useOwnTraining();
   const active = useActiveSessionGlance();
   const router = useRouter();
   const [saved, setSaved] = useState<SavedWorkout | null | 'missing'>(null);
@@ -136,6 +139,12 @@ export default function SavedWorkoutScreen() {
               if (!active) startSavedWorkout(saved, unitFor(prefs.country));
               router.push('/train');
             }}
+          />
+          <PrimaryButton
+            label={billing.isPro ? 'Change this workout' : 'Change this workout · Pro'}
+            icon="settings"
+            tone="quiet"
+            onPress={() => (billing.isPro ? router.push({ pathname: '/workout-edit', params: { id: saved.id } }) : openPro('workouts'))}
           />
           <PrimaryButton
             label="Share"

@@ -10,7 +10,7 @@
  * No React Native here, so it is unit-tested in Node.
  */
 
-import type { GymRecord } from '@gymgo/domain';
+import type { GymRecord, OwnExercise } from '@gymgo/domain';
 
 // --- Muscles -----------------------------------------------------------------
 
@@ -145,6 +145,10 @@ export interface Exercise {
   cue: string;
   /** A conditioning finisher rather than a strength move. */
   cardio?: boolean;
+  /** Done for a time rather than counted in reps: one of yours says so (GymGO's own are listed in TIMED). */
+  timed?: boolean;
+  /** One you made (Pro): the GymGO exercise whose icon it borrows (null for a plain one), and whether you've deleted it. */
+  own?: { drawnAs: string | null; archived: boolean };
 }
 
 const BODY: Kit[][] = [[]];
@@ -155,8 +159,9 @@ const BODY: Kit[][] = [[]];
  * reads "Romanian deadlift", never the raw id.
  */
 export function exerciseName(id: string): string {
-  const known = EXERCISES.find((exercise) => exercise.id === id);
+  const known = exerciseById(id);
   if (known) return known.name;
+  if (/^mine-[a-z0-9]{10}$/.test(id)) return 'Your exercise';
   const words = id.replace(/[-_]+/g, ' ').trim();
   return words ? words[0]!.toUpperCase() + words.slice(1) : 'This exercise';
 }
@@ -267,6 +272,40 @@ export const EXERCISES: Exercise[] = [
   { id: 'incline-walk', name: 'Incline treadmill walk', primary: [], secondary: ['calves', 'gluteal'], needs: [['treadmill']], compound: false, cardio: true, cue: '10 minutes at a steep incline, brisk pace.' },
 ];
 
+const BUILT_IN = new Map(EXERCISES.map((exercise) => [exercise.id, exercise]));
+
+// --- Exercises of your own (Pro) -----------------------------------------------
+
+/** The exercises you made (lib/ownExercises.ts keeps them in step with your account), by id. */
+const OWN = new Map<string, Exercise>();
+
+/** An exercise of yours as the app uses it: its kit as its one way to do it, compound when it works three or more muscles. */
+export function fromOwn(own: OwnExercise): Exercise {
+  return {
+    id: own.id,
+    name: own.name,
+    primary: own.primary as Muscle[],
+    secondary: own.secondary as Muscle[],
+    needs: [own.kit as Kit[]],
+    compound: own.primary.length + own.secondary.length >= 3,
+    cue: own.cue,
+    timed: own.timed,
+    own: { drawnAs: own.drawnAs, archived: own.archived },
+  };
+}
+
+/** Puts your exercises beside GymGO's: every lookup by id then finds them. */
+export function setOwnExercises(list: readonly Exercise[]): void {
+  OWN.clear();
+  for (const exercise of list) if (!BUILT_IN.has(exercise.id)) OWN.set(exercise.id, exercise);
+}
+
+/** An exercise by id: GymGO's own, else one of yours (a deleted one too, so your history still names it). */
+export const exerciseById = (id: string): Exercise | undefined => BUILT_IN.get(id) ?? OWN.get(id);
+
+/** The exercises you made that you can still pick (not deleted), by name. */
+export const ownExercises = (): Exercise[] => [...OWN.values()].filter((exercise) => !exercise.own?.archived).sort((a, b) => a.name.localeCompare(b.name));
+
 // --- Generating --------------------------------------------------------------
 
 export type Goal = 'strength' | 'muscle' | 'endurance';
@@ -317,7 +356,7 @@ function random(seed: number) {
 /** Holds done for a time, and carries done for a distance, rather than for reps. */
 const TIMED = new Set(['plank', 'side-plank', 'superman', 'copenhagen', 'wall-sit', 'hollow-hold', 'mountain-climber']);
 type Measure = 'reps' | 'time' | 'distance';
-const measureOf = (exercise: Exercise): Measure => (TIMED.has(exercise.id) ? 'time' : exercise.id === 'farmer-carry' ? 'distance' : 'reps');
+const measureOf = (exercise: Exercise): Measure => (TIMED.has(exercise.id) || exercise.timed ? 'time' : exercise.id === 'farmer-carry' ? 'distance' : 'reps');
 
 /** Sets, reps (or a time or distance) and rest for an exercise, as the builder plans it for a goal. */
 export function doseFor(exercise: Exercise, goal: Goal): { sets: number; reps: string; restSeconds: number; measure: Measure } {
@@ -439,7 +478,7 @@ export function swapFor(
   available: Kit[],
 ): Exercise | null {
   const item = items[index];
-  const current = item ? EXERCISES.find((exercise) => exercise.id === item.exerciseId) : undefined;
+  const current = item ? exerciseById(item.exerciseId) : undefined;
   if (!item || !current) return null;
   const muscle = item.muscle ?? current.primary[0]!;
   const kit = new Set(available);

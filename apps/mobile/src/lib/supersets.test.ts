@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { groupName, groupOf, linkWithNext, nextUp, restAfter, tidyGroups, unlink } from './supersets';
 
-type Item = { id: string; group?: string; restSeconds: number; sets: Array<{ done: boolean }> };
+type Item = { id: string; group?: string; restSeconds: number; sets: Array<{ done: boolean; kind?: string }> };
 const item = (id: string, sets: number, restSeconds = 60, group?: string, done = 0): Item => ({
   id,
   restSeconds,
@@ -62,6 +62,19 @@ describe('rest', () => {
     expect(restAfter(halfway, 0, 0)).toBe(0);
     const round = [item('a', 3, 60, 'A', 1), item('b', 3, 90, 'A', 1)];
     expect(restAfter(round, 1, 0)).toBe(90);
+  });
+
+  it('never before a drop set: it follows straight on', () => {
+    const plan = [{ ...item('a', 3, 90, undefined, 1), sets: [{ done: true }, { done: false, kind: 'drop' }, { done: false }] }];
+    expect(restAfter(plan, 0, 0)).toBe(0);
+    expect(restAfter(plan, 0, 1)).toBe(90);
+  });
+
+  it('a minute at most after a warm-up', () => {
+    const plan = [{ ...item('a', 3, 180, undefined, 1), sets: [{ done: true, kind: 'warmup' }, { done: false }, { done: false }] }];
+    expect(restAfter(plan, 0, 0)).toBe(60);
+    const short = [{ ...item('a', 2, 45, undefined, 1), sets: [{ done: true, kind: 'warmup' }, { done: false }] }];
+    expect(restAfter(short, 0, 0)).toBe(45);
   });
 
   it('none after the last round, even with uneven sets', () => {

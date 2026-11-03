@@ -7,7 +7,7 @@
  * Native here, so it is unit-tested in Node.
  */
 
-import { durationLabel, fromKg, recordsBroken, setCount, setsSummary, streakOf, volumeKg, type NewRecord, type TrainingSession } from './training';
+import { durationLabel, fromKg, recordsBroken, setCount, setsSummary, streakOf, volumeKg, workingSets, type NewRecord, type TrainingSession } from './training';
 import type { CollectedGym, Collection } from '@gymgo/domain';
 import { cardFor, rarityRank } from './rarity';
 import { EXERCISES, MUSCLES, exerciseName, type Muscle } from './workout';
@@ -222,7 +222,7 @@ export function muscleBalance(sessions: TrainingSession[], days = 28, now: Date 
     if (Date.parse(session.finishedAt) < since) continue;
     inWindow += 1;
     for (const logged of session.exercises) {
-      const sets = logged.sets.filter((set) => set.reps > 0).length;
+      const sets = workingSets(logged.sets).length;
       if (sets === 0) continue;
       const exercise = EXERCISES.find((item) => item.id === logged.exerciseId);
       if (!exercise) {
@@ -281,7 +281,7 @@ const csvCell = (value: string | number | null) => {
  * note on the workout (on each of its rows, so a sort or filter keeps it).
  */
 export function logToCsv(sessions: TrainingSession[]): string {
-  const rows: Array<Array<string | number | null>> = [['date', 'time', 'workout', 'exercise', 'set', 'weight', 'unit', 'reps', 'note']];
+  const rows: Array<Array<string | number | null>> = [['date', 'time', 'workout', 'exercise', 'set', 'weight', 'unit', 'reps', 'type', 'rpe', 'note']];
   const ordered = [...sessions].sort((a, b) => (a.finishedAt < b.finishedAt ? -1 : a.finishedAt > b.finishedAt ? 1 : 0));
   for (const session of ordered) {
     const finished = new Date(session.finishedAt);
@@ -289,7 +289,8 @@ export function logToCsv(sessions: TrainingSession[]): string {
     const time = `${String(finished.getHours()).padStart(2, '0')}:${String(finished.getMinutes()).padStart(2, '0')}`;
     for (const logged of session.exercises) {
       logged.sets.forEach((set, index) => {
-        rows.push([date, time, session.name, exerciseName(logged.exerciseId), index + 1, set.weight, set.weight === null ? null : session.unit, set.reps, session.note ?? null]);
+        const type = set.kind === 'warmup' ? 'warm-up' : set.kind === 'drop' ? 'drop set' : set.kind === 'failure' ? 'failure' : 'normal';
+        rows.push([date, time, session.name, exerciseName(logged.exerciseId), index + 1, set.weight, set.weight === null ? null : session.unit, set.reps, type, set.rpe ?? null, session.note ?? null]);
       });
     }
   }

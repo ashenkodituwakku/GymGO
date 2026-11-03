@@ -7,7 +7,7 @@
  * No React Native here, so it is unit-tested in Node.
  */
 
-import type { TrainingSession } from './training';
+import { workingSets, type TrainingSession } from './training';
 import { EXERCISES, KIT_LABEL, MUSCLES, doseFor, muscleLabel, wayToDo, type Exercise, type Kit, type Muscle } from './workout';
 
 /** Kit filters, as people think of them rather than by machine. */
@@ -148,7 +148,8 @@ export function lastTrained(sessions: TrainingSession[]): Map<Muscle, string> {
   const last = new Map<Muscle, string>();
   for (const session of sessions) {
     for (const item of session.exercises) {
-      if (item.sets.length === 0) continue;
+      // Warm-ups alone don't train a muscle.
+      if (workingSets(item.sets).length === 0) continue;
       for (const muscle of BY_ID.get(item.exerciseId)?.primary ?? []) {
         const before = last.get(muscle);
         if (!before || before < session.finishedAt) last.set(muscle, session.finishedAt);

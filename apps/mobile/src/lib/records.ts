@@ -5,7 +5,7 @@
  * No React Native imports here, so it is unit-tested in Node.
  */
 
-import { formatWeight, oneRepMax, repsWords, toKg, type LoggedSet, type NewRecord, type TrainingSession } from './training';
+import { formatWeight, oneRepMax, repsWords, toKg, workingSets, type LoggedSet, type NewRecord, type TrainingSession } from './training';
 
 export const RECORD_WORD: Record<NewRecord['kind'], string> = { heaviest: 'Heaviest yet', e1rm: 'Strongest set yet', reps: 'Most reps yet' };
 
@@ -18,7 +18,7 @@ export function bestRecord(records: readonly NewRecord[]): NewRecord | null {
 
 /** The set in this session that made the record. */
 export function recordSet(session: TrainingSession, record: NewRecord): LoggedSet | null {
-  const sets = session.exercises.find((item) => item.exerciseId === record.exerciseId)?.sets.filter((set) => set.reps > 0) ?? [];
+  const sets = workingSets(session.exercises.find((item) => item.exerciseId === record.exerciseId)?.sets ?? []);
   const weighted = sets.filter((set) => set.weight !== null && set.weight > 0);
   if (record.kind === 'reps') {
     const bodyweight = sets.filter((set) => set.weight === null || set.weight <= 0);

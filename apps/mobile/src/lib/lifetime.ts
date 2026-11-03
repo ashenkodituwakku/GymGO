@@ -11,7 +11,7 @@
  */
 
 import { bestWeekStreak, recordsEver } from './insights';
-import { setCount, volumeKg, type TrainingSession } from './training';
+import { setCount, volumeKg, workingSets, type TrainingSession } from './training';
 
 /** A workout longer than this was most likely left running: it counts as this long. */
 const LONGEST_MINUTES = 240;
@@ -53,8 +53,9 @@ export function lifetimeStats(sessions: TrainingSession[]): Lifetime | null {
     minutes += Math.min(LONGEST_MINUTES, Math.max(0, Number.isFinite(length) ? length : 0));
     sets += setCount(session);
     for (const logged of session.exercises) {
-      for (const set of logged.sets) if (set.reps > 0) reps += set.reps;
-      if (logged.sets.some((set) => set.reps > 0)) byExercise.set(logged.exerciseId, (byExercise.get(logged.exerciseId) ?? 0) + 1);
+      const working = workingSets(logged.sets);
+      for (const set of working) reps += set.reps;
+      if (working.length) byExercise.set(logged.exerciseId, (byExercise.get(logged.exerciseId) ?? 0) + 1);
     }
     const volume = volumeKg(session);
     total += volume;

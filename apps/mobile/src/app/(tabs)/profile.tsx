@@ -273,6 +273,13 @@ export default function Profile() {
           toggle={{ value: prefs.sounds, onChange: (value) => setPref('sounds', value) }}
         />
         <Row
+          icon="flame"
+          tile={TILE.orange}
+          title="RPE on sets"
+          subtitle={prefs.rpe ? 'Each set asks how hard it was, 6 to 10: how many reps you had left' : 'Off: sets don’t ask how hard they were'}
+          toggle={{ value: prefs.rpe, onChange: (value) => setPref('rpe', value) }}
+        />
+        <Row
           icon="locate"
           tile={TILE.blue}
           title="Location"

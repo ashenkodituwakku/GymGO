@@ -148,6 +148,19 @@ describe('what a session may hold', () => {
     expect(() => clean({ exercises: [{ exerciseId: '<script>', sets: [{ weight: 100, reps: 5 }] }] })).toThrow();
   });
 
+  it('keeps a set’s type and RPE, and refuses ones that aren’t real', () => {
+    const sets = clean({
+      exercises: [{ exerciseId: 'squat', sets: [{ weight: 60, reps: 5, kind: 'warmup' }, { weight: 100, reps: 5, rpe: 8.5 }, { weight: 80, reps: 8, kind: 'drop', rpe: 10 }, { weight: 100, reps: 3 }] }],
+    }).exercises[0]!.sets;
+    expect(sets).toEqual([{ weight: 60, reps: 5, kind: 'warmup' }, { weight: 100, reps: 5, rpe: 8.5 }, { weight: 80, reps: 8, kind: 'drop', rpe: 10 }, { weight: 100, reps: 3 }]);
+    expect(() => clean({ exercises: [{ exerciseId: 'squat', sets: [{ weight: 100, reps: 5, kind: 'superset' }] }] })).toThrow();
+    expect(() => clean({ exercises: [{ exerciseId: 'squat', sets: [{ weight: 100, reps: 5, rpe: 11 }] }] })).toThrow();
+    expect(() => clean({ exercises: [{ exerciseId: 'squat', sets: [{ weight: 100, reps: 5, rpe: 7.3 }] }] })).toThrow();
+    expect(() => clean({ exercises: [{ exerciseId: 'squat', sets: [{ weight: 100, reps: 5, rpe: '8' }] }] })).toThrow();
+    // Warm-ups alone aren't a workout.
+    expect(() => clean({ exercises: [{ exerciseId: 'squat', sets: [{ weight: 60, reps: 5, kind: 'warmup' }] }] })).toThrow(/at least one set/);
+  });
+
   it('needs at least one set done, and times that make sense', () => {
     expect(() => clean({ exercises: [{ exerciseId: 'squat', sets: [{ weight: 100, reps: 0 }] }] })).toThrow(/at least one set/);
     expect(() => clean({ finishedAt: '2026-09-25T12:00:00Z' })).toThrow(/future/);

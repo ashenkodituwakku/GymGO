@@ -81,7 +81,7 @@ export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; p
   { emoji: '📈', title: 'Progress charts', free: 'Records and history', pro: 'A chart per exercise', group: 'training' },
   { emoji: '🎯', title: 'Session targets', free: 'Last time’s numbers', pro: 'What to lift next', group: 'training' },
   { emoji: '🧍', title: 'Muscle balance', free: 'Sets per workout', pro: 'Every muscle, last 4 weeks', group: 'training' },
-  { emoji: '🔥', title: 'Warm-up sets', free: 'Plates for any weight', pro: 'A ramp to your weight', group: 'training' },
+  { emoji: '🔥', title: 'Warm-up sets', free: 'Mark any set as a warm-up', pro: 'A ramp to your weight, added to your workout', group: 'training' },
   { emoji: '🏋️', title: 'Your plates', free: 'The usual set', pro: 'The ones your gym has', group: 'training' },
   { emoji: '⏱️', title: 'Interval timer', free: 'Tabata and EMOM', pro: 'Your own, up to 10', group: 'training' },
   { emoji: '🧮', title: '1-rep max', free: 'Your max, and 3 percentages', pro: 'Every percentage, with plates', group: 'training' },

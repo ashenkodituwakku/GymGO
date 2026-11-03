@@ -138,7 +138,7 @@ export interface LoggedSession {
   unit: 'kg' | 'lb';
   startedAt: string;
   finishedAt: string;
-  exercises: Array<{ exerciseId: string; sets: Array<{ weight: number | null; reps: number }> }>;
+  exercises: Array<{ exerciseId: string; sets: Array<{ weight: number | null; reps: number; kind?: 'warmup' | 'drop' | 'failure'; rpe?: number }> }>;
 }
 
 /**
@@ -162,7 +162,12 @@ export function trainingSummary(sessions: readonly LoggedSession[], now: Date): 
       const sets = exercise.sets
         .filter((set) => set.reps > 0)
         .slice(0, 8)
-        .map((set) => (set.weight === null ? `body weight × ${set.reps}` : `${set.weight} ${session.unit} × ${set.reps}`));
+        .map((set) => {
+          const done = set.weight === null ? `body weight × ${set.reps}` : `${set.weight} ${session.unit} × ${set.reps}`;
+          // Its type and RPE, when given: a warm-up isn't a working set, and RPE says how hard it was.
+          const kind = set.kind === 'warmup' ? ' (warm-up)' : set.kind === 'drop' ? ' (drop set)' : set.kind === 'failure' ? ' (to failure)' : '';
+          return `${done}${kind}${set.rpe !== undefined ? ` at RPE ${set.rpe}` : ''}`;
+        });
       return `${exercise.exerciseId.replace(/-/g, ' ')}: ${sets.join(', ') || 'no sets done'}`;
     });
     return `- ${ago(session.finishedAt)}, ${session.name}, ${minutes} min. ${exercises.join('; ')}`;

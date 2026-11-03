@@ -429,6 +429,8 @@ export function cleanTrainingNote(value: unknown): string | null {
   return note || null;
 }
 
+const SET_KINDS = new Set(['warmup', 'drop', 'failure']);
+
 /**
  * A logged session, checked field by field. A weight left blank is body
  * weight (null), never zero; reps of 0 are a set planned but not done.
@@ -461,11 +463,20 @@ export function cleanTrainingSession(input: unknown, now: Date) {
         const weight = set.weight === null ? null : typeof set.weight === 'number' && Number.isFinite(set.weight) && set.weight > 0 && set.weight <= 1500 ? Math.round(set.weight * 100) / 100 : undefined;
         const reps = typeof set.reps === 'number' && Number.isInteger(set.reps) && set.reps >= 0 && set.reps <= 200 ? set.reps : undefined;
         if (weight === undefined || reps === undefined) throw bad();
-        return { weight, reps };
+        // A warm-up, drop set or set to failure (the app's lib/training.ts); none for an ordinary set.
+        if (set.kind !== undefined && set.kind !== null && !SET_KINDS.has(set.kind as string)) throw bad();
+        // How hard it was (RPE), 6 to 10 in half steps, when given.
+        if (set.rpe !== undefined && set.rpe !== null && !(typeof set.rpe === 'number' && set.rpe >= 6 && set.rpe <= 10 && Number.isInteger(set.rpe * 2))) throw bad();
+        return {
+          weight,
+          reps,
+          ...(typeof set.kind === 'string' ? { kind: set.kind as 'warmup' | 'drop' | 'failure' } : {}),
+          ...(typeof set.rpe === 'number' ? { rpe: set.rpe } : {}),
+        };
       }),
     };
   });
-  if (!clean.some((item) => item.sets.some((set) => set.reps > 0))) throw new HttpError(400, 'Log at least one set before finishing.');
+  if (!clean.some((item) => item.sets.some((set) => set.reps > 0 && set.kind !== 'warmup'))) throw new HttpError(400, 'Log at least one set before finishing (warm-ups on their own don’t count).');
   return {
     name,
     unit,

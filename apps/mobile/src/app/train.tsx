@@ -10,7 +10,7 @@ import { useProgramme } from '@/lib/programmeStore';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { AccessibilityInfo, ActionSheetIOS, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { CURVES, EASE_IN, EASE_OUT, FADE_IN, POP_IN, Pressable, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,7 +19,8 @@ import { Icon, type IconName } from '@/components/Icon';
 import { CountUp } from '@/components/CountUp';
 import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
-import { Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { Chip, Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { ChoiceSheet } from '@/components/ChoiceSheet';
 import { leadExercise } from '@/lib/exerciseGlyphs';
 import { endSession, startSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
 import { againPlan } from '@/lib/again';
@@ -39,6 +40,10 @@ import { celebrationFor } from '@/lib/celebrations';
 import { alpha } from '@/lib/looks';
 import { LOOKS, color, currentLook, face, radius, shadow, space, themed } from '@/lib/theme';
 import {
+  BAR,
+  PLATES,
+  RPE_VALUES,
+  SET_KIND_WORDS,
   bestSoFar,
   clockLabel,
   finishedAtFor,
@@ -54,13 +59,18 @@ import {
   recordsBroken,
   repRange,
   restLabel,
+  rpeMeaning,
   setCount,
+  setTags,
   setsSummary,
   toKg,
   unitFor,
   volumeKg,
+  warmUpSets,
   weightFor,
+  withWarmUps,
   type NewRecord,
+  type SetKind,
   type Target,
   type TrainingSession,
   type WeightUnit,
@@ -366,6 +376,7 @@ export default function TrainScreen() {
     [router, unitNow],
   );
   const showPro = useCallback(() => openPro('progress'), [openPro]);
+  const showWarmUpPro = useCallback(() => openPro('warmup'), [openPro]);
   // An exercise's page: how to do it, what it works, swaps (the workout keeps going).
   const openHowTo = useCallback((exerciseId: string) => router.push({ pathname: '/progress/[exercise]', params: { exercise: exerciseId } }), [router]);
 
@@ -472,6 +483,9 @@ export default function TrainScreen() {
             history={log.sessions}
             isPro={billing.isPro}
             onPro={showPro}
+            onWarmUpPro={showWarmUpPro}
+            rpeOn={prefs.rpe}
+            plates={billing.isPro ? (prefs.plates[session.unit] ?? null) : null}
             onPlates={openPlates}
             onHowTo={openHowTo}
             onChange={changeSets}
@@ -529,6 +543,9 @@ const ExerciseLog = memo(function ExerciseLog({
   history,
   isPro,
   onPro,
+  onWarmUpPro,
+  rpeOn,
+  plates,
   onPlates,
   onHowTo,
   onChange,
@@ -548,6 +565,12 @@ const ExerciseLog = memo(function ExerciseLog({
   history: TrainingSession[];
   isPro: boolean;
   onPro: () => void;
+  /** Warm-up sets are Pro's, as on the plate calculator. */
+  onWarmUpPro: () => void;
+  /** Each set asks how hard it was (Profile → Settings → RPE on sets). */
+  rpeOn: boolean;
+  /** Your gym's plates (Pro), for the warm-ups; null for the standard set. */
+  plates: number[] | null;
   onPlates: (weight: string | null) => void;
   onHowTo: (exerciseId: string) => void;
   onChange: (index: number, sets: ActiveItem['sets']) => void;
@@ -580,6 +603,10 @@ const ExerciseLog = memo(function ExerciseLog({
   const bests = useMemo(() => (timed ? [] : bestSoFar(item.sets, unit, before)), [timed, item.sets, unit, before]);
   const target: Target | null = useMemo(() => (isPro && !timed ? programmeTarget(last, item.reps, unit, easier) : null), [isPro, timed, last, item.reps, unit, easier]);
   const [hint, setHint] = useState<string | null>(null);
+  // The set whose type is being picked (a sheet), and the set asking how hard it was (a row of chips under it).
+  const [typing, setTyping] = useState<number | null>(null);
+  const [rating, setRating] = useState<number | null>(null);
+  const tags = useMemo(() => setTags(item.sets), [item.sets]);
 
   // What to show until you type: the target, else last time, else the plan.
   const lastWeight = last?.sets.find((set) => set.weight)?.weight ?? null;
@@ -587,6 +614,53 @@ const ExerciseLog = memo(function ExerciseLog({
   const repsGuess = target?.reps ?? repRange(item.reps)?.low ?? null;
 
   const setAt = (at: number, patch: Partial<ActiveItem['sets'][number]>) => onChange(index, item.sets.map((set, i) => (i === at ? { ...set, ...patch } : set)));
+
+  /** A set made a warm-up, drop set or set to failure, or back to an ordinary one. */
+  const setKind = (at: number, kind: SetKind | 'normal') => {
+    haptic.select();
+    onChange(
+      index,
+      item.sets.map((set, i) => {
+        if (i !== at) return set;
+        const { kind: _old, ...rest } = set;
+        return kind === 'normal' ? rest : { ...rest, kind };
+      }),
+    );
+  };
+  /** iPhone: Apple's action sheet. Elsewhere GymGO's own (ChoiceSheet). */
+  const pickKind = (at: number) => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { title: `${name}, ${tags[at]!.spoken}`, message: KIND_MESSAGE, options: [...KIND_OPTIONS.map((option) => option.label), 'Cancel'], cancelButtonIndex: KIND_OPTIONS.length, tintColor: color.brand },
+        (chosen) => {
+          const option = KIND_OPTIONS[chosen];
+          if (option) setKind(at, option.key);
+        },
+      );
+      return;
+    }
+    setTyping(at);
+  };
+  const setRpe = (at: number, rpe: number | null) => {
+    const { rpe: _old, ...rest } = item.sets[at]!;
+    onChange(index, item.sets.map((set, i) => (i === at ? (rpe === null ? rest : { ...rest, rpe }) : set)));
+    setRating(null);
+  };
+
+  // Warm-ups (Pro): the bar, then about 40%, 60% and 80% of your working weight, before the first working set.
+  const addWarmUps = () => {
+    if (!isPro) return onWarmUpPro();
+    const typed = item.sets.find((set) => set.kind !== 'warmup' && set.weight.trim())?.weight;
+    const working = typed ? parseWeight(typed) : weightGuess;
+    const ramp = typeof working === 'number' ? warmUpSets(working, unit, BAR[unit], plates ?? PLATES[unit]) : [];
+    if (ramp.length === 0) return setHint(`Type your working weight first (over the ${formatWeight(BAR[unit], unit)} bar): the warm-ups build up to it.`);
+    setHint(null);
+    // The sets move down: an RPE row open under one would end up under another.
+    setRating(null);
+    haptic.select();
+    onChange(index, withWarmUps(item.sets, ramp));
+    AccessibilityInfo.announceForAccessibility(`${ramp.length} warm-up sets added to ${name}`);
+  };
 
   const tick = (at: number) => {
     const set = item.sets[at]!;
@@ -609,6 +683,8 @@ const ExerciseLog = memo(function ExerciseLog({
     onChange(index, sets);
     // Rest after every set but the exercise's last; in a superset or circuit, once the round is done.
     onRest(index, at);
+    // With RPE on, the set asks how hard it was (not a warm-up: it's meant to be easy).
+    if (rpeOn && !timed && set.kind !== 'warmup') setRating(at);
   };
 
   return (
@@ -707,19 +783,29 @@ const ExerciseLog = memo(function ExerciseLog({
       {/* Each control's label names the exercise: moving from field to field,
           a screen reader would otherwise say "Set 1 done" once per exercise. */}
       {item.sets.map((set, at) => (
-        <View key={at} style={[styles.setRow, set.done && styles.setDone, !!bests[at] && styles.setBest]}>
+        <Fragment key={at}>
+        <View style={[styles.setRow, set.done && styles.setDone, !!bests[at] && styles.setBest]}>
           {/* A hold or a run has nothing to type: a set of them reads "Set 2 · 30–45 s". */}
           {timed ? (
             <Txt variant="subhead" color={color.labelSecondary} style={[styles.flex, face('semibold')]}>
               {item.sets.length > 1 ? `Set ${at + 1} · ${item.reps}` : 'Done?'}
             </Txt>
           ) : (
-            <View style={styles.setNumber}>
-              <Txt variant="subhead" color={bests[at] ? color.maybeInk : color.labelSecondary} style={face('semibold')}>
-                {String(at + 1)}
-              </Txt>
+            // The set's number, or W, D or F: a tap picks what kind of set it is.
+            <Pressable
+              onPress={() => pickKind(at)}
+              accessibilityRole="button"
+              accessibilityLabel={`${name}, ${tags[at]!.spoken}${set.kind ? '' : ', an ordinary set'}. Change the kind of set`}
+              hitSlop={6}
+              style={({ pressed }) => [styles.setNumber, pressed && { opacity: 0.6 }]}
+            >
+              <View style={[styles.setTag, set.kind && styles.setTagKind]}>
+                <Txt variant="subhead" color={bests[at] ? color.maybeInk : set.kind ? KIND_INK[set.kind]() : color.labelSecondary} style={face('semibold')}>
+                  {tags[at]!.tag}
+                </Txt>
+              </View>
               {!!bests[at] && <BestMark />}
-            </View>
+            </Pressable>
           )}
           {!timed && (
             <>
@@ -732,7 +818,7 @@ const ExerciseLog = memo(function ExerciseLog({
                 inputMode="decimal"
                 editable={!set.done}
                 style={[styles.input, set.done && styles.inputDone]}
-                accessibilityLabel={`${name}, set ${at + 1} weight in ${unit}${bodyWeight ? ', blank for body weight' : ''}`}
+                accessibilityLabel={`${name}, ${tags[at]!.spoken} weight in ${unit}${bodyWeight ? ', blank for body weight' : ''}`}
               />
               <Txt variant="subhead" color={color.labelTertiary} style={styles.times}>
                 ×
@@ -746,7 +832,7 @@ const ExerciseLog = memo(function ExerciseLog({
                 inputMode="numeric"
                 editable={!set.done}
                 style={[styles.input, set.done && styles.inputDone]}
-                accessibilityLabel={`${name}, set ${at + 1} reps`}
+                accessibilityLabel={`${name}, ${tags[at]!.spoken} reps`}
               />
             </>
           )}
@@ -755,12 +841,28 @@ const ExerciseLog = memo(function ExerciseLog({
             onPress={() => tick(at)}
             accessibilityRole="checkbox"
             aria-checked={set.done}
-            accessibilityLabel={`${name}, set ${at + 1} done${bests[at] ? `: ${RECORD_WORD[bests[at]!]}` : ''}`}
+            accessibilityLabel={`${name}, ${tags[at]!.spoken} done${bests[at] ? `: ${RECORD_WORD[bests[at]!]}` : ''}`}
             hitSlop={8}
           >
             <Tick done={set.done} />
           </Pressable>
         </View>
+        {/* With RPE on: how hard a ticked set was, asked as it's ticked and changeable after. */}
+        {rpeOn && !timed && set.done && set.kind !== 'warmup' && rating !== at && (
+          <Pressable
+            onPress={() => setRating(at)}
+            accessibilityRole="button"
+            accessibilityLabel={set.rpe !== undefined ? `${name}, ${tags[at]!.spoken}: RPE ${set.rpe}, ${rpeMeaning(set.rpe)}. Change it` : `${name}, ${tags[at]!.spoken}: add how hard it was (RPE)`}
+            hitSlop={4}
+            style={({ pressed }) => [styles.rpeLine, pressed && { opacity: 0.6 }]}
+          >
+            <Txt variant="caption" color={set.rpe !== undefined ? color.labelSecondary : color.brand} style={set.rpe === undefined && face('semibold')}>
+              {set.rpe !== undefined ? `RPE ${set.rpe} · ${rpeMeaning(set.rpe)}` : 'How hard? Add RPE'}
+            </Txt>
+          </Pressable>
+        )}
+        {rpeOn && !timed && rating === at && <RpePicker label={`${name}, ${tags[at]!.spoken}`} value={set.rpe ?? null} onPick={(rpe) => setRpe(at, rpe)} onClose={() => setRating(null)} />}
+        </Fragment>
       ))}
 
       {hint && (
@@ -786,6 +888,19 @@ const ExerciseLog = memo(function ExerciseLog({
               Add set
             </Txt>
           </Pressable>
+          {barbell && (
+            <Pressable
+              onPress={addWarmUps}
+              accessibilityRole="button"
+              accessibilityLabel={isPro ? `Add warm-up sets before ${name}` : `Warm-up sets for ${name} are part of GymGO Pro`}
+              style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
+            >
+              <Icon name="sunrise" size={13} color={color.brand} />
+              <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                {isPro ? 'Warm-ups' : 'Warm-ups · Pro'}
+              </Txt>
+            </Pressable>
+          )}
           {item.sets.length > 1 && !item.sets[item.sets.length - 1]!.done && (
             <Pressable
               onPress={() => {
@@ -806,9 +921,47 @@ const ExerciseLog = memo(function ExerciseLog({
       )}
 
       <GroupControls name={name} group={group} nextName={nextName} onLink={() => onLink(index)} onUnlink={() => onUnlink(index)} />
+      {typing !== null && item.sets[typing] && (
+        <ChoiceSheet
+          title={`${name}, ${tags[typing]!.spoken}`}
+          message={KIND_MESSAGE}
+          options={KIND_OPTIONS}
+          selected={item.sets[typing]!.kind ?? 'normal'}
+          onPick={(kind) => setKind(typing, kind)}
+          onClose={() => setTyping(null)}
+        />
+      )}
     </View>
   );
 });
+
+/** The kinds of set, as the picker lists them. */
+const KIND_OPTIONS: ReadonlyArray<{ key: SetKind | 'normal'; label: string }> = [
+  { key: 'normal', label: 'Ordinary set' },
+  { key: 'warmup', label: `${SET_KIND_WORDS.warmup.letter} · ${SET_KIND_WORDS.warmup.label}` },
+  { key: 'drop', label: `${SET_KIND_WORDS.drop.letter} · ${SET_KIND_WORDS.drop.label}` },
+  { key: 'failure', label: `${SET_KIND_WORDS.failure.letter} · ${SET_KIND_WORDS.failure.label}` },
+];
+const KIND_MESSAGE = 'Warm-ups are left out of records and totals. A drop set follows the set before with no rest.';
+/** Each kind's letter in an ink that reads on the card. */
+const KIND_INK: Record<SetKind, () => string> = { warmup: () => color.maybeInk, drop: () => color.brand, failure: () => color.dangerInk };
+
+/** How hard a set was, 6 to 10, in a row of chips under it: one tap picks, and closes it. */
+function RpePicker({ label, value, onPick, onClose }: { label: string; value: number | null; onPick: (rpe: number | null) => void; onClose: () => void }) {
+  return (
+    <View style={styles.rpePicker} accessibilityLabel={`${label}: how hard was it?`} role="group">
+      <Txt variant="caption" color={color.labelSecondary}>
+        {value !== null ? `RPE ${value}: ${rpeMeaning(value)}` : 'How hard was it? 10 is nothing left, 8 two more reps'}
+      </Txt>
+      <View style={styles.rpeChips}>
+        {RPE_VALUES.map((rpe) => (
+          <Chip key={rpe} label={String(rpe)} selected={value === rpe} accessibilityLabel={`RPE ${rpe}: ${rpeMeaning(rpe)}`} onPress={() => onPick(rpe)} />
+        ))}
+        {value !== null ? <Chip label="Clear" action selected={false} onPress={() => onPick(null)} /> : <Chip label="Skip" action selected={false} onPress={onClose} />}
+      </View>
+    </View>
+  );
+}
 
 /** Beside the number of a ticked set that beats your best so far: a gold trophy, popping in. Its tick names the record. */
 function BestMark() {
@@ -1173,7 +1326,12 @@ const styles = themed(() => StyleSheet.create({
   inputCol: { flex: 1, minWidth: 64, maxWidth: 112, textAlign: 'center' },
   times: { width: 10, textAlign: 'center' },
   tickCol: { width: 30 },
-  setNumber: { width: 36, flexDirection: 'row', alignItems: 'center', gap: 3 },
+  setNumber: { width: 36, minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 3 },
+  setTag: { minWidth: 22, height: 24, alignItems: 'center', justifyContent: 'center', borderRadius: 6 },
+  setTagKind: { backgroundColor: color.fill },
+  rpeLine: { alignSelf: 'flex-start', marginLeft: 36 + space[2], marginTop: -2, paddingVertical: 2 },
+  rpePicker: { gap: space[2], paddingVertical: space[2], paddingLeft: 36 + space[2] },
+  rpeChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   setRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 3, paddingHorizontal: space[2], marginHorizontal: -space[2], borderRadius: radius.md, borderCurve: 'continuous' },
   setDone: { backgroundColor: alpha(color.good, 0.08) },
   // A set that beats your best: gold, like the records on the summary.

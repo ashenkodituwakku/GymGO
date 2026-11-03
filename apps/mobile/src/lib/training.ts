@@ -30,11 +30,88 @@ export function formatWeight(weight: number, unit: WeightUnit): string {
 
 // --- What a session is ---------------------------------------------------------
 
+/**
+ * A set that isn't an ordinary working set: a warm-up (left out of records,
+ * totals and set counts), a drop set (straight after the set before, lighter,
+ * with no rest between) or a set taken to failure. An ordinary set has none.
+ */
+export type SetKind = 'warmup' | 'drop' | 'failure';
+export const SET_KINDS: readonly SetKind[] = ['warmup', 'drop', 'failure'];
+export const isSetKind = (value: unknown): value is SetKind => SET_KINDS.includes(value as SetKind);
+
+/** How each type of set is shown and explained. */
+export const SET_KIND_WORDS: Record<SetKind, { letter: string; label: string; spoken: string; about: string }> = {
+  warmup: { letter: 'W', label: 'Warm-up', spoken: 'warm-up set', about: 'Lighter, before your working sets. Left out of records, totals and set counts.' },
+  drop: { letter: 'D', label: 'Drop set', spoken: 'drop set', about: 'Straight after the set before, with less weight: no rest before it.' },
+  failure: { letter: 'F', label: 'To failure', spoken: 'failure set', about: 'As many reps as you could do.' },
+};
+
+/**
+ * What each set is called: on screen "W", "1", "2", "D" (ordinary sets
+ * numbered among themselves), and to a screen reader "warm-up set 1",
+ * "set 2", "drop set 1".
+ */
+export function setTags(sets: ReadonlyArray<{ kind?: SetKind }>): Array<{ tag: string; spoken: string }> {
+  const counts: Record<SetKind | 'normal', number> = { normal: 0, warmup: 0, drop: 0, failure: 0 };
+  return sets.map((set) => {
+    const kind = set.kind ?? 'normal';
+    counts[kind] += 1;
+    if (kind === 'normal') return { tag: String(counts.normal), spoken: `set ${counts.normal}` };
+    return { tag: SET_KIND_WORDS[kind].letter, spoken: `${SET_KIND_WORDS[kind].spoken} ${counts[kind]}` };
+  });
+}
+
+/**
+ * The sets with a warm-up ramp put before the first working set. Warm-ups
+ * not yet done are replaced rather than added to, so asking twice (after
+ * changing the working weight) doesn't double them.
+ */
+export function withWarmUps(sets: readonly DraftSet[], ramp: ReadonlyArray<{ weight: number; reps: number }>): DraftSet[] {
+  const kept = sets.filter((set) => !(set.kind === 'warmup' && !set.done));
+  const firstWork = kept.findIndex((set) => set.kind !== 'warmup');
+  const at = firstWork < 0 ? kept.length : firstWork;
+  const added: DraftSet[] = ramp.map((step) => ({ weight: String(Number(step.weight.toFixed(2))), reps: String(step.reps), done: false, kind: 'warmup' }));
+  return [...kept.slice(0, at), ...added, ...kept.slice(at)];
+}
+
+/** Rate of perceived exertion, 6 to 10 in half steps: 10 is nothing left, 9 one more rep, 8 two more. */
+export const RPE_VALUES: readonly number[] = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
+export const isRpe = (value: unknown): value is number => typeof value === 'number' && RPE_VALUES.includes(value);
+
+const RPE_MEANS: Record<string, string> = {
+  '10': 'Nothing left',
+  '9.5': 'Maybe one more rep',
+  '9': 'One more rep left',
+  '8.5': 'One or two more',
+  '8': 'Two more reps left',
+  '7.5': 'Two or three more',
+  '7': 'Three more reps left',
+  '6.5': 'Three or four more',
+  '6': 'Four or more left',
+};
+/** What an RPE means, in reps you had left: 8 is "Two more reps left". */
+export const rpeMeaning = (rpe: number) => RPE_MEANS[String(rpe)] ?? '';
+
 export interface LoggedSet {
   /** In the session's unit; null is body weight (a push-up), not zero. */
   weight: number | null;
   reps: number;
+  /** Absent for an ordinary working set. */
+  kind?: SetKind;
+  /** How hard it was (RPE), when you chose to say. */
+  rpe?: number;
 }
+
+/**
+ * The sets that count: done (reps above 0) and not warm-ups. Records,
+ * totals, set counts, muscle balance and "last time" use only these.
+ */
+export function workingSets<T extends { reps: number; kind?: SetKind }>(sets: readonly T[]): T[] {
+  return sets.filter((set) => set.reps > 0 && set.kind !== 'warmup');
+}
+
+/** How many warm-up sets were done. */
+export const warmUpCount = (sets: ReadonlyArray<{ reps: number; kind?: SetKind }>) => sets.filter((set) => set.reps > 0 && set.kind === 'warmup').length;
 
 export interface LoggedExercise {
   exerciseId: string;
@@ -100,9 +177,9 @@ export function personalRecords(sessions: TrainingSession[]): Map<string, Exerci
   for (const session of [...sessions].sort(byDate)) {
     for (const logged of session.exercises) {
       const record = records.get(logged.exerciseId) ?? { e1rmKg: null, e1rmSet: null, heaviestKg: null, heaviestSet: null, mostReps: null, sessions: 0 };
-      if (logged.sets.some((set) => set.reps > 0)) record.sessions += 1;
-      for (const set of logged.sets) {
-        if (set.reps < 1) continue;
+      const working = workingSets(logged.sets);
+      if (working.length) record.sessions += 1;
+      for (const set of working) {
         if (set.weight === null || set.weight <= 0) {
           if (record.mostReps === null || set.reps > record.mostReps) record.mostReps = set.reps;
           continue;
@@ -152,7 +229,7 @@ export function recordsBroken(session: TrainingSession, earlier: TrainingSession
 export function lastTime(sessions: TrainingSession[], exerciseId: string): { sets: LoggedSet[]; unit: WeightUnit; date: string } | null {
   for (const session of [...sessions].sort(byDate).reverse()) {
     const logged = session.exercises.find((item) => item.exerciseId === exerciseId);
-    const sets = logged?.sets.filter((set) => set.reps > 0) ?? [];
+    const sets = logged ? workingSets(logged.sets) : [];
     if (sets.length) return { sets, unit: session.unit, date: session.finishedAt };
   }
   return null;
@@ -161,15 +238,29 @@ export function lastTime(sessions: TrainingSession[], exerciseId: string): { set
 /** Reps without a weight: "12 reps", "12, 10 reps", "1 rep". */
 export const repsWords = (reps: number[]) => `${reps.join(', ')} ${reps.length === 1 && reps[0] === 1 ? 'rep' : 'reps'}`;
 
-/** "60 kg × 10, 10, 9", "12, 10 reps" for body weight, "60 kg × 10 · 62.5 kg × 8". */
+/** One set's reps as a summary says them: "8", "7 to failure", "10 (drop)". */
+const repsOf = (set: LoggedSet) => (set.kind === 'failure' ? `${set.reps} to failure` : set.kind === 'drop' ? `${set.reps} (drop)` : String(set.reps));
+
+/**
+ * "60 kg × 10, 10, 9", "12, 10 reps" for body weight, "60 kg × 10 · 62.5 kg
+ * × 8". The working sets, saying which went to failure or were drop sets,
+ * and how many warm-ups came first ("· 2 warm-ups").
+ */
 export function setsSummary(sets: LoggedSet[], unit: WeightUnit): string {
-  const groups: Array<{ weight: number | null; reps: number[] }> = [];
-  for (const set of sets) {
+  const groups: Array<{ weight: number | null; sets: LoggedSet[] }> = [];
+  for (const set of workingSets(sets)) {
     const last = groups[groups.length - 1];
-    if (last && last.weight === set.weight) last.reps.push(set.reps);
-    else groups.push({ weight: set.weight, reps: [set.reps] });
+    if (last && last.weight === set.weight) last.sets.push(set);
+    else groups.push({ weight: set.weight, sets: [set] });
   }
-  return groups.map((group) => (group.weight ? `${formatWeight(group.weight, unit)} × ${group.reps.join(', ')}` : repsWords(group.reps))).join(' · ');
+  const parts = groups.map((group) => {
+    if (group.weight) return `${formatWeight(group.weight, unit)} × ${group.sets.map(repsOf).join(', ')}`;
+    const plain = group.sets.every((set) => !set.kind);
+    return plain ? repsWords(group.sets.map((set) => set.reps)) : `${group.sets.map(repsOf).join(', ')} reps`;
+  });
+  const warmUps = warmUpCount(sets);
+  if (warmUps) parts.push(`${warmUps} warm-up${warmUps === 1 ? '' : 's'}`);
+  return parts.join(' · ');
 }
 
 // --- What to aim for next ------------------------------------------------------
@@ -180,8 +271,11 @@ export function setsSummary(sets: LoggedSet[], unit: WeightUnit): string {
  * last time's). Blank when there's nothing to go on. Without the earlier set,
  * typing 22.5 for set 1 and ticking set 2 logged set 2 with no weight at all.
  */
-export function weightFor(sets: ReadonlyArray<{ weight: string }>, at: number, guess: number | null): string {
+export function weightFor(sets: ReadonlyArray<{ weight: string; kind?: SetKind }>, at: number, guess: number | null): string {
+  // A working set never takes a warm-up's (lighter) weight.
+  const working = sets[at]?.kind !== 'warmup';
   for (let earlier = at - 1; earlier >= 0; earlier--) {
+    if (working && sets[earlier]?.kind === 'warmup') continue;
     const typed = sets[earlier]?.weight.trim();
     if (typed) return typed;
   }
@@ -314,11 +408,12 @@ export function warmUpSets(working: number, unit: WeightUnit, bar = BAR[unit], p
 /** Everything lifted in a session, in kg (weight × reps, body weight left out). */
 export function volumeKg(session: TrainingSession): number {
   let sum = 0;
-  for (const logged of session.exercises) for (const set of logged.sets) if (set.weight && set.reps > 0) sum += toKg(set.weight, session.unit) * set.reps;
+  for (const logged of session.exercises) for (const set of workingSets(logged.sets)) if (set.weight) sum += toKg(set.weight, session.unit) * set.reps;
   return sum;
 }
 
-export const setCount = (session: TrainingSession) => session.exercises.reduce((sum, logged) => sum + logged.sets.filter((set) => set.reps > 0).length, 0);
+/** Working sets in a session: warm-ups aren't counted. */
+export const setCount = (session: TrainingSession) => session.exercises.reduce((sum, logged) => sum + workingSets(logged.sets).length, 0);
 
 /**
  * Your best estimated one-rep max on each day you did the exercise, oldest
@@ -331,7 +426,7 @@ export function e1rmSeries(sessions: TrainingSession[], exerciseId: string): Arr
   for (const session of [...sessions].sort(byDate)) {
     const logged = session.exercises.find((item) => item.exerciseId === exerciseId);
     if (!logged) continue;
-    const best = Math.max(...logged.sets.map((set) => (set.weight ? (oneRepMax(toKg(set.weight, session.unit), set.reps) ?? 0) : 0)), 0);
+    const best = Math.max(...workingSets(logged.sets).map((set) => (set.weight ? (oneRepMax(toKg(set.weight, session.unit), set.reps) ?? 0) : 0)), 0);
     if (best <= 0) continue;
     const day = dayKey(new Date(session.finishedAt));
     const previous = points[points.length - 1];
@@ -486,6 +581,9 @@ export interface DraftSet {
   weight: string;
   reps: string;
   done: boolean;
+  /** Absent for an ordinary set. */
+  kind?: SetKind;
+  rpe?: number;
 }
 
 /** "62.5", "62,5" or " 135 " → the number; blank → null (body weight); anything else → undefined. */
@@ -516,7 +614,8 @@ export function bestSoFar(sets: DraftSet[], unit: WeightUnit, before: ExerciseRe
   if (!before || before.sessions === 0) return sets.map(() => null);
   let { heaviestKg, e1rmKg, mostReps } = before;
   return sets.map((set) => {
-    if (!set.done) return null;
+    // A warm-up is never a record.
+    if (!set.done || set.kind === 'warmup') return null;
     const weight = parseWeight(set.weight);
     const reps = parseReps(set.reps);
     if (weight === undefined || reps === undefined || reps < 1) return null;
@@ -545,7 +644,8 @@ export function draftToLogged(items: Array<{ exerciseId: string; sets: DraftSet[
         if (!set.done) return [];
         const weight = parseWeight(set.weight);
         const reps = parseReps(set.reps);
-        return weight === undefined || reps === undefined || reps === 0 ? [] : [{ weight, reps }];
+        if (weight === undefined || reps === undefined || reps === 0) return [];
+        return [{ weight, reps, ...(set.kind ? { kind: set.kind } : {}), ...(set.rpe !== undefined && isRpe(set.rpe) ? { rpe: set.rpe } : {}) }];
       }),
     }))
     .filter((item) => item.sets.length > 0);

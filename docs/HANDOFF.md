@@ -102,6 +102,24 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Ideas from Hevy, round 1: kinds of set and RPE** (3 Nov; the owner
+  asked to research Hevy's features and build them; the plan is six
+  rounds: kinds of set and RPE; more records and charts; editing a
+  finished workout; exercise notes and rest per exercise; a monthly
+  report; body measurements. Left out on purpose: a public feed of
+  workouts (GymGO never shows the days anyone trained), and the Watch,
+  Live Activity and Health parts, which need App Store builds).
+  training.ts: `SetKind` ('warmup' | 'drop' | 'failure', absent for an
+  ordinary set) and `rpe` on LoggedSet and DraftSet; `workingSets()` is
+  what records, volume, set counts, muscle balance, lifetime, the record
+  card, lastTrained and Do it again count; `setTags`, `withWarmUps`,
+  `rpeMeaning`. supersets.ts `restAfter`: none before a drop set, at most
+  `WARM_UP_REST` (60 s) after a warm-up. train.tsx: the set number is a
+  button (ChoiceSheet, now with a `message`; ActionSheetIOS on iPhone), an
+  RPE row of chips under a ticked set when `prefs.rpe` is on, and Pro's
+  Warm-ups button on barbell exercises. Server `cleanTrainingSession`
+  checks `kind` and `rpe` (in the JSON column; no migration) and needs a
+  set that isn't a warm-up; GymPal's training summary marks them.
 - **Appearance: more to customise** (2 Nov, the owner asked for more
   customisation in Appearance). Everyone: Text (Smaller to Largest, 0.9×
   to 1.25×, and Bold text one weight heavier), Clock (12- or 24-hour;

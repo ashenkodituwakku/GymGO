@@ -27,6 +27,10 @@ import {
   weekStreak,
   streakOf,
   weightFor,
+  withWarmUps,
+  setTags,
+  rpeMeaning,
+  RPE_VALUES,
   type LoggedSet,
   type TrainingSession,
   type WeightUnit,
@@ -357,5 +361,81 @@ describe('the 1-rep max calculator', () => {
     expect(repMax(max, 1)).toBe(max);
     expect(repMax(max, 13)).toBeNull();
     expect(repMax(0, 3)).toBeNull();
+  });
+});
+
+describe('set types and RPE', () => {
+  const typed = (finishedAt: string, sets: LoggedSet[]): TrainingSession => ({ ...session(finishedAt, {}), exercises: [{ exerciseId: 'back-squat', sets }] });
+  const warmUp = (weight: number, reps: number): LoggedSet => ({ weight, reps, kind: 'warmup' });
+
+  it('leaves warm-ups out of records, totals, set counts and last time', () => {
+    const first = typed('2026-10-01T10:00:00Z', [warmUp(140, 1), { weight: 100, reps: 5 }]);
+    expect(personalRecords([first]).get('back-squat')).toMatchObject({ heaviestKg: 100, sessions: 1 });
+    expect(volumeKg(first)).toBe(500);
+    expect(setsSummary(first.exercises[0]!.sets, 'kg')).toBe('100 kg × 5 · 1 warm-up');
+    expect(lastTime([first], 'back-squat')!.sets).toEqual([{ weight: 100, reps: 5 }]);
+    // A session of warm-ups only isn't a session of that exercise.
+    expect(personalRecords([typed('2026-10-02T10:00:00Z', [warmUp(60, 5)])]).get('back-squat')?.sessions ?? 0).toBe(0);
+    // And a heavy warm-up never breaks a record.
+    expect(recordsBroken(typed('2026-10-03T10:00:00Z', [warmUp(150, 1), { weight: 100, reps: 5 }]), [first])).toEqual([]);
+  });
+
+  it('says which sets were drop sets or to failure', () => {
+    expect(setsSummary([{ weight: 100, reps: 8 }, { weight: 100, reps: 7, kind: 'failure' }, { weight: 80, reps: 10, kind: 'drop' }], 'kg')).toBe('100 kg × 8, 7 to failure · 80 kg × 10 (drop)');
+    expect(setsSummary([{ weight: null, reps: 12 }, { weight: null, reps: 9, kind: 'failure' }], 'kg')).toBe('12, 9 to failure reps');
+  });
+
+  it('marks no warm-up as a record while ticking, and keeps types and RPE when logging', () => {
+    const before = personalRecords([typed('2026-10-01T10:00:00Z', [{ weight: 100, reps: 5 }])]).get('back-squat');
+    const drafts = [
+      { weight: '120', reps: '1', done: true, kind: 'warmup' as const },
+      { weight: '105', reps: '5', done: true, rpe: 9 },
+    ];
+    expect(bestSoFar(drafts, 'kg', before)).toEqual([null, 'heaviest']);
+    expect(draftToLogged([{ exerciseId: 'back-squat', sets: [...drafts, { weight: '80', reps: '8', done: true, kind: 'drop' as const, rpe: 12 }] }])[0]!.sets).toEqual([
+      { weight: 120, reps: 1, kind: 'warmup' },
+      { weight: 105, reps: 5, rpe: 9 },
+      // An RPE that isn't on the scale is dropped, not logged.
+      { weight: 80, reps: 8, kind: 'drop' },
+    ]);
+  });
+
+  it('never guesses a working set’s weight from a warm-up', () => {
+    const sets = [
+      { weight: '20', reps: '10', kind: 'warmup' as const },
+      { weight: '60', reps: '3', kind: 'warmup' as const },
+      { weight: '', reps: '' },
+    ];
+    expect(weightFor(sets, 2, 100)).toBe('100');
+    expect(weightFor(sets, 1, 100)).toBe('20');
+  });
+
+  it('names each set, numbering ordinary ones among themselves', () => {
+    expect(setTags([{ kind: 'warmup' }, { kind: 'warmup' }, {}, {}, { kind: 'failure' }, { kind: 'drop' }])).toEqual([
+      { tag: 'W', spoken: 'warm-up set 1' },
+      { tag: 'W', spoken: 'warm-up set 2' },
+      { tag: '1', spoken: 'set 1' },
+      { tag: '2', spoken: 'set 2' },
+      { tag: 'F', spoken: 'failure set 1' },
+      { tag: 'D', spoken: 'drop set 1' },
+    ]);
+  });
+
+  it('puts warm-ups before the first working set, replacing ones not yet done', () => {
+    const work = { weight: '100', reps: '5', done: false };
+    const once = withWarmUps([work, work], [{ weight: 20, reps: 10 }, { weight: 60, reps: 3 }]);
+    expect(once.map((set) => `${set.kind ?? 'work'}:${set.weight}`)).toEqual(['warmup:20', 'warmup:60', 'work:100', 'work:100']);
+    const again = withWarmUps(once, [{ weight: 20, reps: 10 }, { weight: 40, reps: 5 }, { weight: 70, reps: 2 }]);
+    expect(again.map((set) => `${set.kind ?? 'work'}:${set.weight}`)).toEqual(['warmup:20', 'warmup:40', 'warmup:70', 'work:100', 'work:100']);
+    // One already done stays.
+    const started = withWarmUps([{ ...once[0]!, done: true }, ...once.slice(1)], [{ weight: 60, reps: 3 }]);
+    expect(started.map((set) => `${set.kind ?? 'work'}:${set.weight}:${set.done}`)).toEqual(['warmup:20:true', 'warmup:60:false', 'work:100:false', 'work:100:false']);
+  });
+
+  it('explains each RPE in reps left', () => {
+    expect(RPE_VALUES).toEqual([6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]);
+    expect(rpeMeaning(10)).toBe('Nothing left');
+    expect(rpeMeaning(8)).toBe('Two more reps left');
+    expect(rpeMeaning(6.5)).toBe('Three or four more');
   });
 });

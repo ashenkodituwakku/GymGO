@@ -7,7 +7,7 @@
  * No React Native here, so it is unit-tested in Node.
  */
 
-import type { TrainingSession } from './training';
+import { workingSets, type TrainingSession } from './training';
 import { EXERCISES, doseFor } from './workout';
 
 export interface AgainPlan {
@@ -24,16 +24,17 @@ const OWN_REST = 60;
 
 export function againPlan(session: TrainingSession): AgainPlan | null {
   const items = session.exercises
-    .filter((logged) => logged.sets.length > 0)
+    // Warm-ups are done before the plan, not part of it.
+    .filter((logged) => workingSets(logged.sets).length > 0)
     .map((logged) => {
       const exercise = BY_ID.get(logged.exerciseId);
-      const sets = logged.sets.length;
+      const sets = workingSets(logged.sets).length;
       // A finisher (rower, bike) is done as its cue says, once.
       if (exercise?.cardio) return { exerciseId: logged.exerciseId, sets: 1, reps: 'see cue', restSeconds: 0 };
       const dose = exercise ? doseFor(exercise, 'muscle') : null;
       // A hold or a carry keeps its time or distance; reps are what you got.
       if (dose && dose.measure !== 'reps') return { exerciseId: logged.exerciseId, sets, reps: dose.reps, restSeconds: dose.restSeconds };
-      const got = logged.sets.map((set) => set.reps).filter((reps) => reps > 0);
+      const got = workingSets(logged.sets).map((set) => set.reps);
       const low = Math.min(...got);
       const high = Math.max(...got);
       const reps = got.length === 0 ? (dose?.reps ?? '8–10') : low === high ? String(low) : `${low}–${high}`;

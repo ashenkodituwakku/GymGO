@@ -22,12 +22,15 @@ import { Txt } from './ui';
 
 export function ChoiceSheet<K extends string>({
   title,
+  message,
   options,
   selected,
   onPick,
   onClose,
 }: {
   title: string;
+  /** A line under the title, as iPhone's sheet has: what the choice does. */
+  message?: string;
   options: ReadonlyArray<{ key: K; label: string }>;
   selected: K;
   onPick: (key: K) => void;
@@ -71,9 +74,16 @@ export function ChoiceSheet<K extends string>({
         </Animated.View>
         <Animated.View style={[styles.column, { paddingBottom: insets.bottom + space[2] }, rise]} accessibilityViewIsModal>
           <View style={styles.group} role="radiogroup" accessibilityLabel={title}>
-            <Txt variant="footnote" color={color.labelSecondary} style={styles.title}>
-              {title}
-            </Txt>
+            <View style={styles.title}>
+              <Txt variant="footnote" color={color.labelSecondary} style={[styles.center, !!message && face('semibold')]}>
+                {title}
+              </Txt>
+              {!!message && (
+                <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+                  {message}
+                </Txt>
+              )}
+            </View>
             {options.map((option) => {
               const on = option.key === selected;
               return (
@@ -113,7 +123,8 @@ const styles = themed(() => StyleSheet.create({
   column: { width: '100%', maxWidth: 440, alignSelf: 'center', paddingHorizontal: SHEET_SIDE, gap: space[2] },
   // No shadow: the page is dimmed behind it, as behind iPhone's own (and an iPhone clips a shadow to these corners).
   group: { backgroundColor: color.card, borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
-  title: { textAlign: 'center', paddingHorizontal: space[4], paddingVertical: space[3] },
+  title: { gap: 2, paddingHorizontal: space[4], paddingVertical: space[3] },
+  center: { textAlign: 'center' },
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator },
   row: { minHeight: HIT + 12, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[5] },
   label: { flex: 1 },

@@ -516,6 +516,23 @@ workouts go to your log.
   (nobody has said; never counted as "no"). For one that isn't there, a
   **Swap** the known kit allows; **Start it here** starts the workout at
   that gym with the swaps you chose.
+- **Kinds of set.** Tap a set's number to make it a **warm-up** (W), a
+  **drop set** (D) or a set **to failure** (F), or back to an ordinary one.
+  Warm-ups are left out of records, the weight lifted, set counts, muscle
+  balance, the recovery map and "last time", rest a minute at most after
+  them, and never ask for an RPE; a drop set follows the set before with
+  no rest. Ordinary sets are numbered among themselves (W, W, 1, 2, D).
+  Summaries say which sets went to failure or were drops and how many
+  warm-ups came first ("100 kg × 5, 5 · 80 kg × 8 (drop) · 4 warm-ups").
+  With Pro, **Warm-ups** on a barbell exercise adds the bar for 10, then
+  about 40%, 60% and 80% of your working weight for 5, 3 and 2 (your gym's
+  plates, if you've set them), before the first working set; asking again
+  replaces the ones not done yet.
+- **RPE** (Profile → Settings → **RPE on sets**, off until you switch it
+  on): a ticked set asks how hard it was, 6 to 10 in half steps, each
+  said in reps you had left (10 is nothing left, 8 is two more). Tap the
+  line under a set to change or clear it. Kept with the set, in the CSV and
+  in what GymPal sees when you let him use your log.
 - **Rest timer.** Ticking a set starts the rest the plan calls for (90 s,
   say), in a glass bar at the bottom with −15, +15 and Skip. The phone
   buzzes when it's up. With the phone locked or GymGO in the background, a
@@ -542,7 +559,8 @@ workouts go to your log.
   time you log something is a starting point, not a record. A broken record
   gets confetti (none with Reduce Motion on) and a **record card** to share
   as a picture: the exercise, the set and the day.
-- **Export your log** (Progress): a CSV with a row for every set, for
+- **Export your log** (Progress): a CSV with a row for every set (its
+  type, ordinary, warm-up, drop set or failure, and its RPE), for
   Excel, Numbers or Google Sheets; on a phone it's a real file for the share
   sheet. Apple Health and Google Fit can only be connected from a build made
   for the App Store or Play Store (HealthKit needs its own entitlement),
@@ -1616,7 +1634,7 @@ saved list always opens, wherever the gym is.
 | Progress charts | Your records and history | A chart for every exercise |
 | Next-session targets | Last time's numbers | What to lift next, worked out for you |
 | Muscle balance | Sets per workout | Every muscle over the last four weeks, and the ones you've missed |
-| Warm-up sets | Plates for any weight | A warm-up ramp to your weight, with the plates |
+| Warm-up sets | Mark any set as a warm-up; plates for any weight | A warm-up ramp to your weight, with the plates, on the plate calculator or added to a workout |
 | Gym notes | — | Your own notes on each gym, on your device |
 | Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
 | Colour themes | Indigo; light, dark or Dim; text size, bold text, 12- or 24-hour clock, GymPal's side | Twelve accents (Rainbow and Camo too) or your own colour, eight looks (Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles |

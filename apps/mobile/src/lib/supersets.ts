@@ -18,10 +18,13 @@ export interface Groupable {
 
 interface Tickable extends Groupable {
   restSeconds: number;
-  sets: ReadonlyArray<{ done: boolean }>;
+  /** A drop set (`kind: 'drop'`) follows the set before it with no rest. */
+  sets: ReadonlyArray<{ done: boolean; kind?: string }>;
 }
 
 const LETTERS = 'ABCDEFGHIJKL';
+/** The most rest after a warm-up set: it's light, so there's little to recover from. */
+export const WARM_UP_REST = 60;
 
 /**
  * Letters in order of appearance (A, B, C…), a group always one run of
@@ -115,11 +118,14 @@ export const groupName = (group: GroupInfo) => `${group.kind === 'superset' ? 'S
  * How long to rest after set `at` of exercise `index` was ticked (the items
  * as they are with it ticked). On its own: its rest after every set but its
  * last. In a group: nothing until every member has done this round, then the
- * longest of their rests, and nothing after the last round.
+ * longest of their rests, and nothing after the last round. Never before a
+ * drop set: it's done straight after. After a warm-up, a minute at most.
  */
 export function restAfter(items: ReadonlyArray<Tickable>, index: number, at: number): number {
   const item = items[index];
   if (!item) return 0;
+  if (item.sets[at + 1]?.kind === 'drop') return 0;
+  if (item.sets[at]?.kind === 'warmup') return Math.min(item.restSeconds, WARM_UP_REST);
   const group = groupOf(items, index);
   if (!group) return at < item.sets.length - 1 ? item.restSeconds : 0;
   const members = group.members.map((member) => items[member]!);

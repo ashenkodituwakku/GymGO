@@ -172,6 +172,14 @@ describe('a Pro member’s training, for GymPal', () => {
     expect(text).toContain('40 days ago, Old one');
   });
 
+  it('says which sets were warm-ups, drop sets or to failure, and their RPE', () => {
+    const typed = {
+      ...session(0, 'Legs'),
+      exercises: [{ exerciseId: 'back-squat', sets: [{ weight: 60, reps: 5, kind: 'warmup' as const }, { weight: 100, reps: 5, rpe: 8.5 }, { weight: 80, reps: 9, kind: 'drop' as const }, { weight: null, reps: 20, kind: 'failure' as const, rpe: 10 }] }],
+    };
+    expect(trainingSummary([typed], now)).toContain('back squat: 60 kg × 5 (warm-up), 100 kg × 5 at RPE 8.5, 80 kg × 9 (drop set), body weight × 20 (to failure) at RPE 10');
+  });
+
   it('says so when there’s nothing recent, and stays short', () => {
     expect(trainingSummary([session(70, 'Long ago')], now)).toBe('They haven’t logged a workout in the last 8 weeks.');
     const many = Array.from({ length: 30 }, (_, i) => session(i, `Session ${i}`));

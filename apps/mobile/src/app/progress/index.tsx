@@ -212,6 +212,24 @@ export default function ProgressScreen() {
         </Animated.View>
       )}
 
+      {log.sessions.length > 0 && (
+        <Pressable
+          onPress={() => router.push('/month')}
+          accessibilityRole="link"
+          accessibilityLabel="Monthly report: your months of training, each against the month before"
+          style={({ pressed }) => [styles.photosRow, pressed && { opacity: 0.8 }]}
+        >
+          <Icon name="calendar" size={18} color={color.brand} />
+          <View style={styles.photosText}>
+            <Txt variant="headline">Monthly report</Txt>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              Each month against the one before: workouts, sets, records, muscles
+            </Txt>
+          </View>
+          <Icon name="chevron" size={13} color={color.labelTertiary} />
+        </Pressable>
+      )}
+
       <Pressable
         onPress={() => router.push('/photos')}
         accessibilityRole="link"

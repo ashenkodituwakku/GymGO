@@ -477,6 +477,15 @@ takes turns through its days, so starting one gives you the day after the
 last you logged; any other day can be started too. They're general plans,
 not advice for anyone in particular, and the screen says to start light.
 
+**Monthly report** (Progress, free): a month of training against the
+month before: workouts, days trained, time, working sets, weight lifted and
+reps; the records broken that month; the exercises you did most; your sets
+for each muscle (a half for a muscle worked second) with the month before
+as a lighter bar; and the biggest workout. It opens on the last finished
+month you trained in, and ‹ › step through the months with a workout.
+**Share this month** sends the totals in a few lines, never which days you
+went. Warm-ups never count; months are by this device's calendar.
+
 **Recovery map** (Progress): the body, front and back, each muscle shaded
 by how long since you last trained it as a main muscle (today, yesterday,
 2–3 days, 4 or more, not in your log), with the same as a list. It shows

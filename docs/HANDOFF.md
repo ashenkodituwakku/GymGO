@@ -102,6 +102,12 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Ideas from Hevy, round 5: monthly report** (3 Nov). lib/monthReport.ts
+  (`monthKeyOf`, `shiftMonth`, `monthsWithTraining`, `reportMonth`,
+  `monthReport`, `changeWord`, `monthShareText`) and app/month.tsx
+  (`/month?m=YYYY-MM`), linked from Progress once there's a workout. By
+  the device's calendar; any month with a workout can be opened (Hevy
+  shows only last month's).
 - **Ideas from Hevy, round 4: exercise notes and rest per exercise** (3
   Nov). lib/exerciseNotes.ts (a `deviceStore` at `gymgo.exercise-notes.v1`,
   `tidyNote`, `setExerciseNote`, `useExerciseNote`) and

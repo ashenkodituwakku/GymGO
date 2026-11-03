@@ -394,7 +394,7 @@ function standingCurl(kind: 'dumbbell' | 'bar' | 'cable' | 'hammer'): Shape[] {
 }
 
 /** At the bottom of the squat, then standing; the feet stay put. */
-function squat(kind: 'back' | 'front' | 'smith' | 'body' | 'goblet' | 'hack'): Shape[] {
+function squat(kind: 'back' | 'front' | 'smith' | 'body' | 'goblet' | 'hack' | 'box'): Shape[] {
   const lean = kind === 'front' || kind === 'goblet' ? 155 : kind === 'hack' ? 160 : 140;
   const rise = 176 - lean;
   const arm: Limb = kind === 'body' ? [92, 92] : kind === 'front' ? [80, -150] : kind === 'goblet' ? [30, 160] : kind === 'hack' ? [70, -120] : [60, -140];
@@ -415,13 +415,18 @@ function squat(kind: 'back' | 'front' | 'smith' | 'body' | 'goblet' | 'hack'): S
     const rails = still(() => at(at(pose({ hip: [17, 32.6], torso: lean, arm, leg: [88, -22] }).neck, lean, -1.6), lean + 90, 2.6)[0]);
     shapes.push(rail(rails - 4.5), rail(rails + 4.5));
   }
+  if (kind === 'box') {
+    // The box (a bench, end on) the hips sit back to at the bottom.
+    const seat = still(() => pose({ hip: [17, 32.6], torso: lean, arm, leg: [88, -22] }).hip);
+    shapes.push({ k: 'box', c: [seat[0] - 1, seat[1] + 6.2], w: 11, h: 9, r: 1.2, a: 0, tone: 'frame' });
+  }
   if (kind === 'hack') {
     const base = at(j.hip, trunk - 90, 3.2);
     shapes.push({ k: 'line', pts: [at(base, trunk, -3), at(base, trunk, 15)], w: 3, tone: 'frame' });
     shapes.push({ k: 'line', pts: [[6, 44], at(base, trunk, -3)], w: 1.6, tone: 'frame' });
   }
   shapes.push(...figure(j));
-  if (kind === 'back' || kind === 'smith') shapes.push(...plate(at(back, trunk + 90, 1.4)));
+  if (kind === 'back' || kind === 'smith' || kind === 'box') shapes.push(...plate(at(back, trunk + 90, 1.4)));
   // A front squat's bar rests on the front of the shoulders, the elbows high under it.
   if (kind === 'front') shapes.push(...plate(at(at(j.neck, trunk, -1.4), trunk - 90, 3.4), 4.4));
   if (kind === 'goblet') shapes.push(...dumbbell(at(j.hand, 90, 0.4), 90, 6.6));
@@ -775,6 +780,208 @@ const DRAW: Record<string, Draw> = {
       ...figure(j),
     ];
   },
+
+  // --- Added with the second set of exercises -------------------------------------
+
+  'incline-bench': () => {
+    const j = pose({ hip: [28, 32], torso: -122, head: -128, arm: [176, 184], leg: [72, 6], leg2: [66, 0], move: { arm: [-100, -8] } });
+    const seat = at(j.hip, -32, 2.6);
+    return [
+      { k: 'line', pts: [seat, at(seat, -122, 16)], w: 3, tone: 'frame' },
+      { k: 'line', pts: [plus(j.hip, 0, 3), [j.hip[0], 44]], w: 1.6, tone: 'frame' },
+      { k: 'line', pts: [at(seat, -122, 12), [17, 44]], w: 1.6, tone: 'frame' },
+      ...figure(j),
+      ...plate(at(j.hand, 180, 1.5), 4.4),
+      floor(5, 43),
+    ];
+  },
+  'decline-push-up': () => {
+    // Feet up on the bench, hands planted: the body tips forward and down, the arms bend.
+    const hip = plus([21, 28.6], 1.2 * rep(), 4.2 * rep());
+    const torso = 80 - 12 * rep();
+    const shoulder = at(hip, torso, BODY.shoulder);
+    const hand = still(() => at(at([21, 28.6], 80, BODY.shoulder), 0, BODY.upper + BODY.fore - 0.2));
+    const foot: Pt = [2.6, 25.2];
+    const j = pose({ hip, torso, head: torso + 4, arm: reachFor(shoulder, hand, BODY.upper, BODY.fore, 1), leg: reachFor(hip, foot, BODY.thigh, BODY.shin), toes: 30 });
+    return [...bench(0, 11, 27.4), ...figure(j), floor(0, 46, hand[1] + 1.6)];
+  },
+  'db-pullover': () => {
+    // Arms straight over the chest, then lowered behind the head.
+    const j = pose({ hip: [29, 30], torso: -90, head: -96, arm: [180, 182], arm2: [184, 186], leg: [70, 4], leg2: [64, -2], move: { arm: [74, 76], arm2: [74, 76] } });
+    const reach = angleOf(j.elbow, j.hand);
+    return [...bench(8, 33, 32.2), ...figure(j), ...dumbbell(at(j.hand, reach, 1.8), reach, 6.2), floor(5, 43)];
+  },
+  'arnold-press': () => {
+    // Pressed overhead, then down to the chin with the elbows in front.
+    const j = pose({ hip: [20, 32], torso: 180, arm: [172, 182], arm2: [176, 186], leg: [90, 0], move: { arm: [-112, -2], arm2: [-112, -2] } });
+    return [...bench(8, 26, 34), ...figure(j), ...dumbbell(at(j.hand, 180, 1.4)), floor(5, 40)];
+  },
+  'front-raise': () => {
+    const j = pose(standing({ arm: [4, 2], arm2: [-4, -2], move: { arm: [84, 84] } }));
+    return [...figure(j), ...dumbbell(at(j.hand, angleOf(j.elbow, j.hand), 1), 90, 6), floor(12, 40)];
+  },
+  'rear-delt-fly': () => {
+    const j = pose({ hip: [15, 26], torso: 104, head: 108, arm: [2, 8], arm2: [6, 10], leg: [14, -8], leg2: [8, -2], move: { arm: [-92, -94], arm2: [-90, -92] } });
+    return [...figure(j), ...dumbbell(at(j.hand, angleOf(j.elbow, j.hand), 1), 90, 6), floor(4, 44)];
+  },
+  'upright-row': () => {
+    const j = pose(standing({ front: true, arm: [8, 0], arm2: [-8, 0], leg: [4, 0], leg2: [-4, 0], move: { arm: [78, -114], arm2: [-78, 114] } }));
+    return [...figure(j), ...barbell([24, mid(j.hand, j.hand2!)[1] + 0.8], 17), floor(10, 38)];
+  },
+  'skull-crusher': () => {
+    // Lowered from straight up to just over the forehead, the upper arms still.
+    const j = pose({ hip: [29, 30], torso: -90, head: -96, arm: [176, 180], leg: [70, 4], leg2: [64, -2], move: { arm: [12, 82] } });
+    return [...bench(8, 33, 32.2), ...figure(j), ...plate(at(j.hand, angleOf(j.elbow, j.hand), 1.4), 4.2), floor(5, 43)];
+  },
+  'cable-overhead-ext': () => {
+    // Facing away from the pulley, elbows by the head: straightened forward and up.
+    const j = pose(standing({ hip: [22, 25.4], torso: 162, head: 158, arm: [150, 300], arm2: [146, 296], leg: [16, -4], leg2: [-18, 6], move: { arm: [0, -148], arm2: [0, -148] } }));
+    return [...cable([3, 9], j.hand), ...figure(j), floor(4, 44)];
+  },
+  'incline-curl': () => {
+    const j = pose({ hip: [28, 32], torso: -122, head: -128, arm: [-6, -4], leg: [72, 6], leg2: [66, 0], move: { arm: [0, 140] } });
+    const seat = at(j.hip, -32, 2.6);
+    return [
+      { k: 'line', pts: [seat, at(seat, -122, 16)], w: 3, tone: 'frame' },
+      { k: 'line', pts: [plus(j.hip, 0, 3), [j.hip[0], 44]], w: 1.6, tone: 'frame' },
+      { k: 'line', pts: [at(seat, -122, 12), [17, 44]], w: 1.6, tone: 'frame' },
+      ...figure(j),
+      ...dumbbell(at(j.hand, angleOf(j.elbow, j.hand), 1), 0, 6),
+      floor(5, 43),
+    ];
+  },
+  'concentration-curl': () => {
+    const j = pose({ hip: [14, 31], torso: 150, head: 140, arm: [8, 0], leg: [90, 0], leg2: [84, 6], move: { arm: [0, 150] } });
+    return [...bench(3, 20, 33.2), ...figure(j), ...dumbbell(at(j.hand, angleOf(j.elbow, j.hand), 1), 90, 6), floor(2, 42)];
+  },
+  'chin-up': () => {
+    // Palms facing: hands stay on the bar, the body rises until the chin clears it.
+    const hip: Pt = [22, 30 - 7.2 * rep()];
+    const shoulder = at(hip, 180, BODY.shoulder);
+    const bar: Pt = [25, 30 - BODY.shoulder - BODY.upper - BODY.fore + 0.4];
+    const arm = reachFor(shoulder, bar, BODY.upper, BODY.fore, -1);
+    const j = pose({ hip, torso: 180, arm, arm2: [arm[0] + 3, arm[1] + 3], leg: [8, -18], leg2: [2, -12], toes: 24 });
+    return [{ k: 'line', pts: [[8, bar[1] - 1.3], [40, bar[1] - 1.3]], w: 2.2, tone: 'kit' }, ...figure(j)];
+  },
+  'chest-supported-row': () => {
+    // Rowed up (the elbows high behind), then lowered to hang.
+    const j = pose({ hip: [16, 26.6], torso: 128, head: 120, arm: [-110, 2], arm2: [-106, 4], leg: [-30, -8], leg2: [-24, -2], move: { arm: [112, -2], arm2: [112, -2] } });
+    const pad = (p: Pt) => at(p, 38, 5.2);
+    const low = still(() => pose({ hip: [16, 26.6], torso: 128, arm: [2, 0], leg: [-30, -8] }));
+    return [
+      { k: 'line', pts: [pad(low.hip), pad(low.neck)], w: 3, tone: 'frame' },
+      { k: 'line', pts: [pad(low.hip), [pad(low.hip)[0], 44]], w: 1.6, tone: 'frame' },
+      ...figure(j),
+      ...dumbbell(at(j.hand, 0, 1.2), 0),
+      floor(2, 44),
+    ];
+  },
+  'straight-arm-pulldown': () => {
+    const j = pose(standing({ torso: 166, head: 164, arm: [150, 150], arm2: [146, 146], leg: [10, -6], leg2: [-8, 4], move: { arm: [-138, -138], arm2: [-138, -138] } }));
+    const bar = at(j.hand, angleOf(j.elbow, j.hand), 1.2);
+    return [
+      ...cable([43, 3], bar, false),
+      { k: 'line', pts: [at(bar, angleOf(j.elbow, j.hand) + 90, -3), at(bar, angleOf(j.elbow, j.hand) + 90, 3)], w: 1.8, tone: 'kit' },
+      ...figure(j),
+      floor(8, 40),
+    ];
+  },
+  'step-up': () => {
+    // One foot up on the bench, then standing on it, the other leg following.
+    const start: Pt = [19, 27.6];
+    const top: Pt = [29.6, 19.4];
+    const hip = mid(start, top, rep());
+    const step: Pt = [30.4, 37.4];
+    const floorFoot: Pt = [15, 43.4];
+    const leg = reachFor(hip, step, BODY.thigh, BODY.shin);
+    const first = still(() => reachFor(start, floorFoot, BODY.thigh, BODY.shin));
+    const leg2: Limb = [first[0] + (-14 - first[0]) * rep(), first[1] + (-58 - first[1]) * rep()];
+    const j = pose({ hip, torso: 176 + 4 * rep(), arm: [4, 0], arm2: [-2, -2], leg, leg2 });
+    return [{ k: 'box', c: [33, 40.9], w: 16, h: 6.2, r: 1.2, a: 0, tone: 'frame' }, ...figure(j), ...dumbbell(at(j.hand, 0, 1.3)), floor(4, 44)];
+  },
+  'single-leg-rdl': () => {
+    // Hinged on one leg, the other reaching back; then standing tall.
+    const j = pose({ hip: [20, 25.6], torso: 98, head: 102, arm: [0, 0], arm2: [4, 2], leg: [4, -4], leg2: [-84, -86], toes: 20, move: { hip: [0.6, -0.4], torso: 82, head: 78, leg2: [78, 90] } });
+    return [...figure(j), ...dumbbell(at(j.hand, 0, 1.3)), floor(6, 42)];
+  },
+  'sumo-deadlift': () => {
+    // Wide stance, hands inside the knees: the bar from the floor to standing.
+    const hip: Pt = [24, 33.2 - 7.4 * rep()];
+    const hipR: Pt = [hip[0] + 2.4, hip[1]];
+    const hipL: Pt = [hip[0] - 2.4, hip[1]];
+    const footR: Pt = [35, 42.6];
+    const footL: Pt = [13, 42.6];
+    const j = pose({ hip, torso: 180, front: true, arm: [4, 0], arm2: [-4, 0], leg: reachFor(hipR, footR, BODY.thigh, BODY.shin, -1), leg2: reachFor(hipL, footL, BODY.thigh, BODY.shin, 1) });
+    return [...figure(j), ...barbell([24, j.hand[1] + 0.8], 17), floor(4, 44)];
+  },
+  'box-squat': () => squat('box'),
+  'wall-sit': () => {
+    const j = pose({ hip: [16, 34.2], torso: 180, arm: [4, 0], arm2: [-2, -2], leg: [90, 0], leg2: [86, 4], move: { hip: [0, 0.6], torso: -1 } });
+    return [rail(11.6, 4, 44), ...figure(j), floor(8, 40)];
+  },
+  'seated-calf': () => {
+    // Heels rising off the floor, the dumbbell on the knees going up with them.
+    const base: Pose = { hip: [15, 30], torso: 180, arm: [40, 120], leg: [90, 0], leg2: [86, 4], sole: 90, sole2: 90 };
+    const j = pose({ ...base, move: { leg: [-8, 4], leg2: [-8, 4], sole: -34, sole2: -34 } });
+    const weight = at(j.knee, 180, 2.8);
+    const arm = reachFor(j.shoulder, plus(weight, -1, 0), BODY.upper, BODY.fore, -1);
+    const k = pose({ ...base, arm, move: { leg: [-8, 4], leg2: [-8, 4], sole: -34, sole2: -34 } });
+    return [...bench(3, 19, 32.4), { k: 'box', c: [k.toe[0] - 0.4, 43.6], w: 7, h: 2.4, r: 0.8, a: 0, tone: 'frame' }, ...figure(k), ...dumbbell(weight, 0, 7), ...arrow([37, 40], [37, 33]), floor(2, 44, 44.8)];
+  },
+  'cable-abduction': () => {
+    // Facing you, holding on: the strapped leg sweeps out to the side and back.
+    const j = pose(standing({ front: true, arm: [6, 0], arm2: [-56, -20], leg: [2, 0], leg2: [-4, 0], move: { leg: [38, 38] } }));
+    return [rail(8, 8, 44), ...cable([8, 42], at(j.foot, 0, 0.4), false), { k: 'dot', c: at(j.foot, 180, 1.4), r: 1.6, tone: 'kit' }, ...figure(j), floor(4, 44)];
+  },
+  'db-swing': () => {
+    // Hinged with the dumbbell back between the legs, then the hips snap forward and it floats up.
+    const j = pose({ hip: [16, 26], torso: 122, head: 116, arm: [-26, -26], leg: [20, -10], leg2: [14, -4], move: { hip: [2.6, -0.8], torso: 58, head: 64, arm: [116, 116], leg: [-16, 10], leg2: [-16, 10] } });
+    const reach = angleOf(j.elbow, j.hand);
+    return [...figure(j), ...dumbbell(at(j.hand, reach, 2), reach, 6.4), floor(4, 44)];
+  },
+  'hanging-leg-raise': () => {
+    const j = pose({ hip: [22, 29], torso: 184, arm: [180, 180], leg: [90, 90], leg2: [84, 84], toes: 10, move: { leg: [-86, -86], leg2: [-82, -82] } });
+    return [{ k: 'line', pts: [[10, j.hand[1] - 1.4], [36, j.hand[1] - 1.4]], w: 2.2, tone: 'kit' }, ...figure(j), ...arrow([38, 36], [38, 28])];
+  },
+  'mountain-climber': () => {
+    // Hands planted; the knees drive in, one after the other.
+    const j = pose({ hip: [19, 33.4], torso: 118, head: 112, arm: [2, -2], leg: [-62, -62], leg2: [30, -54], move: { hip: [0, -0.8], leg: [92, 8], leg2: [-92, -8] } });
+    return [...figure(j), floor(2, 46)];
+  },
+  'bicycle-crunch': () => {
+    // Shoulders up, hands by the head: one knee in as the other leg reaches long, then the other.
+    const base: Pose = { hip: [28, 38], torso: -114, head: -124, arm: [0, 0], leg: [-150, 100], leg2: [96, 92], move: { leg: [-114, -8], leg2: [114, 8] } };
+    const open = pose(base);
+    // The hand behind the head, the elbow out towards the knees.
+    const arm = reachFor(open.shoulder, at(open.head, 70, 2.6), BODY.upper, BODY.fore, -1);
+    const j = pose({ ...base, arm });
+    return [...figure(j), floor(2, 46, 41.4)];
+  },
+  'hollow-hold': () => {
+    const j = pose({ hip: [24, 37.4], torso: -100, head: -108, arm: [-112, -114], arm2: [-110, -112], leg: [100, 100], leg2: [98, 98], move: { hip: [0, 0.5], torso: -2, leg: [2, 2], leg2: [2, 2] } });
+    return [...figure(j), floor(2, 46, 41.4)];
+  },
+  'bird-dog': () => {
+    // On hands and knees: the far arm reaches forward as the near leg reaches back.
+    const j = pose({ hip: [15, 32.2], torso: 100, head: 104, arm: [0, 0], arm2: [0, 0], leg: [0, -90], leg2: [4, -88], move: { arm2: [98, 98], leg: [-84, 0] } });
+    return [...figure(j), floor(2, 46, 43.6)];
+  },
+  'side-bend': () => {
+    const j = pose(standing({ front: true, arm: [4, 0], arm2: [-10, -2], leg: [6, 0], leg2: [-6, 0], move: { torso: -16, arm2: [-6, -6] } }));
+    return [...figure(j), ...dumbbell(at(j.hand, 0, 1.4), 90, 6), floor(10, 38)];
+  },
+  'treadmill-sprints': () => {
+    const j = pose({ hip: [21, 23.6], torso: 172, head: 170, arm: [-40, 56], arm2: [44, 130], leg: [40, -36], leg2: [-34, -24], toes: 10, move: { arm: [84, 74], arm2: [-84, -74], leg: [-74, 12], leg2: [74, -12] } });
+    return [
+      { k: 'line', pts: [[5, 43], [43, 43]], w: 2.2, tone: 'kit' },
+      { k: 'line', pts: [[42, 43], [42, 15], [37, 14]], w: 1.8, tone: 'frame' },
+      ...figure(j),
+    ];
+  },
+  'jumping-jack': () => {
+    const j = pose(standing({ front: true, arm: [14, 4], arm2: [-14, -4], leg: [4, 0], leg2: [-4, 0], move: { hip: [0, 0.8], arm: [140, 150], arm2: [-140, -150], leg: [18, 18], leg2: [-18, -18] } }));
+    return [...figure(j), floor(6, 42)];
+  },
 };
 
 /** Reclined on the seat, pushing the sled up its rails at 45°. */
@@ -917,10 +1124,11 @@ const LOWER_FIRST = [
   'bench-press', 'db-bench', 'smith-bench', 'close-grip', 'incline-db', 'push-up', 'pike-push-up', 'ohp', 'db-shoulder', 'lateral-raise', 'cable-lateral',
   'face-pull', 'db-curl', 'bb-curl', 'cable-curl', 'hammer-curl', 'pushdown', 'hanging-knee', 'cable-row', 'db-row', 'bb-row', 'superman', 'hip-thrust',
   'glute-bridge', 'cable-kickback', 'cable-crunch', 'pallof',
+  'incline-bench', 'decline-push-up', 'db-pullover', 'arnold-press', 'skull-crusher', 'hanging-leg-raise', 'side-bend', 'chest-supported-row',
 ];
-const CYCLES = ['farmer-carry', 'sled-push', 'dead-bug', 'russian-twist', 'row-intervals', 'incline-walk'];
+const CYCLES = ['farmer-carry', 'sled-push', 'dead-bug', 'russian-twist', 'row-intervals', 'incline-walk', 'mountain-climber', 'bicycle-crunch', 'treadmill-sprints', 'jumping-jack'];
 const SPINS = ['bike-intervals'];
-const HOLDS = ['plank', 'side-plank', 'copenhagen'];
+const HOLDS = ['plank', 'side-plank', 'copenhagen', 'wall-sit', 'hollow-hold'];
 
 /** The moves named above, by tempo (the rest are lifts), for the tests to check each is one GymGO draws. */
 export const TEMPO_NAMED: Record<Exclude<Tempo, 'lift'>, readonly string[]> = { lower: LOWER_FIRST, cycle: CYCLES, spin: SPINS, hold: HOLDS };

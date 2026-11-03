@@ -27,6 +27,7 @@ import { TEMPLATES, nextTemplateDay, templateDayName, type WorkoutTemplate } fro
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { unitFor } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
+import { groupName, groupOf } from '@/lib/supersets';
 import { exerciseName } from '@/lib/workout';
 
 export default function TemplatesScreen() {
@@ -37,6 +38,8 @@ export default function TemplatesScreen() {
   const log = useTrainingLog(account.token);
   const active = useActiveSessionGlance();
   const programme = useProgramme();
+  const [level, setLevel] = useState<WorkoutTemplate['level'] | null>(null);
+  const shown = TEMPLATES.filter((template) => level === null || template.level === level);
 
   const start = (template: WorkoutTemplate, index: number) => {
     const day = template.days[index]!;
@@ -75,7 +78,18 @@ export default function TemplatesScreen() {
         </View>
         <Icon name="chevron" size={13} color={color.labelTertiary} />
       </Pressable>
-      {TEMPLATES.map((template) => (
+      <View style={styles.levels} accessibilityLabel="Level">
+        {([null, 'Beginner', 'Intermediate'] as const).map((each) => (
+          <Chip
+            key={each ?? 'all'}
+            label={`${each ?? 'All'} ${TEMPLATES.filter((template) => each === null || template.level === each).length}`}
+            accessibilityLabel={`${each ?? 'All levels'}, ${TEMPLATES.filter((template) => each === null || template.level === each).length} templates`}
+            selected={level === each}
+            onPress={() => setLevel(each)}
+          />
+        ))}
+      </View>
+      {shown.map((template) => (
         <TemplateCard
           key={template.id}
           template={template}
@@ -105,8 +119,17 @@ export default function TemplatesScreen() {
   );
 }
 
-/** Each plan's mark: the whole body, the barbell, the three-way split. */
-const TEMPLATE_ICON: Record<string, IconName> = { 'full-body': 'body', 'five-by-five': 'plates', ppl: 'shuffle' };
+/** Each plan's mark: what sets it apart at a glance. */
+const TEMPLATE_ICON: Record<string, IconName> = {
+  'full-body': 'body',
+  'full-body-3': 'calendar',
+  'five-by-five': 'plates',
+  'body-weight': 'person',
+  ppl: 'shuffle',
+  'upper-lower': 'sort',
+  arnold: 'trophy',
+  'body-part': 'target',
+};
 /** The marks' corners, the look's own (square in 8-bit and Classic). */
 const markRound = () => Math.min(13, radius.lg);
 
@@ -175,17 +198,27 @@ function TemplateCard({
       </Pressable>
       {open && (
         <View style={styles.list}>
-          {shown.items.map((item) => (
-            <View key={item.exerciseId} style={styles.row}>
-              <ExerciseTile exerciseId={item.exerciseId} size={40} />
-              <Txt variant="subhead" style={styles.flex} numberOfLines={2}>
-                {exerciseName(item.exerciseId)}
-              </Txt>
-              <Txt variant="footnote" color={color.labelSecondary}>
-                {`${item.sets} × ${item.reps}`}
-              </Txt>
-            </View>
-          ))}
+          {shown.items.map((item, index) => {
+            const group = groupOf(shown.items, index);
+            return (
+              <View key={item.exerciseId} style={[styles.row, group && styles.grouped, group?.position === 1 && styles.groupStart]}>
+                <ExerciseTile exerciseId={item.exerciseId} size={40} />
+                <View style={styles.flex}>
+                  <Txt variant="subhead" numberOfLines={2}>
+                    {exerciseName(item.exerciseId)}
+                  </Txt>
+                  {group && (
+                    <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                      {`${groupName(group)} · ${group.position} of ${group.members.length}`}
+                    </Txt>
+                  )}
+                </View>
+                <Txt variant="footnote" color={color.labelSecondary}>
+                  {`${item.sets} × ${item.reps}`}
+                </Txt>
+              </View>
+            );
+          })}
         </View>
       )}
       <PrimaryButton
@@ -212,6 +245,10 @@ const styles = themed(() =>
     strip: { flexDirection: 'row', flexWrap: 'wrap', gap: space[1] + 2 },
     list: { gap: 2, padding: space[2], borderRadius: radius.md, backgroundColor: color.fill },
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: 5, paddingHorizontal: space[1] },
+    // A superset's exercises share a bar down their left, as in a workout.
+    grouped: { borderLeftWidth: 3, borderLeftColor: color.brand, paddingLeft: space[2] },
+    groupStart: { marginTop: space[1] },
+    levels: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     note: { paddingHorizontal: space[4], textAlign: 'center' },
     programme: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate },
   }),

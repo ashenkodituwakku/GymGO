@@ -102,6 +102,17 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **30 more exercises and five more splits** (3 Nov; the owner: "find
+  more exercises and workout splits and make animated icons for them").
+  lib/workout.ts `EXERCISES` (96; `TIMED` adds wall-sit, hollow-hold,
+  mountain-climber); lib/exerciseGlyphs.ts a drawing for each (squat kind
+  'box'; the tempo lists `LOWER_FIRST`, `CYCLES`, `HOLDS` extended);
+  lib/templates.ts `together(letter, ...items)` for supersets and five
+  templates (full-body-3, body-weight, upper-lower, arnold, body-part),
+  beginners first; app/templates.tsx a level filter, a mark per template,
+  superset labels. The icons were checked by eye in the preview renders
+  (scratchpad tool, not in the repo); the Templates screen is not yet
+  seen in the browser.
 - **Gym details from Apple Maps, through SerpApi** (3 Nov; the owner gave
   serpapi.com/apple-maps-places-api, "import it into gymgo but dont change
   ui"). That API looks places up by Apple's id only, so the search engine

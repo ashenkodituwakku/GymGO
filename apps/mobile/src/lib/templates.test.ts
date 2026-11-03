@@ -30,6 +30,30 @@ describe('workout templates', () => {
     }
   });
 
+  it('have names and day names that tell them apart, and keep a superset’s exercises side by side', () => {
+    const names = TEMPLATES.map((template) => template.name);
+    expect(new Set(names).size).toBe(names.length);
+    expect(new Set(TEMPLATES.map((template) => template.id)).size).toBe(TEMPLATES.length);
+    for (const template of TEMPLATES) {
+      // A day's workout is named "Day · Plan"; a plan name with " · " in it would split wrongly.
+      expect(template.name.includes(' · ')).toBe(false);
+      expect(new Set(template.days.map((day) => day.name)).size).toBe(template.days.length);
+      for (const day of template.days) {
+        const ids = day.items.map((each) => each.exerciseId);
+        expect(new Set(ids).size, `${template.id}: ${day.name} repeats an exercise`).toBe(ids.length);
+        const letters = day.items.map((each) => each.group ?? '');
+        for (const letter of new Set(letters.filter(Boolean))) {
+          const first = letters.indexOf(letter);
+          const last = letters.lastIndexOf(letter);
+          expect(letters.slice(first, last + 1).every((each) => each === letter), `${template.id}: ${day.name} superset ${letter}`).toBe(true);
+          expect(last - first).toBeGreaterThan(0);
+        }
+      }
+    }
+    // Every template's day name reads back as its plan.
+    for (const template of TEMPLATES) expect(workoutTitle(templateDayName(template, template.days[0]!)).plan).toBe(template.name);
+  });
+
   it('take turns: the day after the last one done, from the start when none is', () => {
     const ppl = TEMPLATES.find((template) => template.id === 'ppl')!;
     expect(nextTemplateDay(ppl, [])).toBe(0);

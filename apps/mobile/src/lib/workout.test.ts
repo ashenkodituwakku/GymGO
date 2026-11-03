@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EQUIPMENT_TYPES } from '@gymgo/domain';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
-import { EXERCISES, generateWorkout, type Kit, knownKit, MUSCLES, TYPICAL_KIT, wayToDo, exerciseName, swapFor, swapInWorkout } from './workout';
+import { EXERCISES, generateWorkout, type Kit, knownKit, MUSCLES, TYPICAL_KIT, wayToDo, exerciseName, swapFor, swapInWorkout, doseFor } from './workout';
 
 describe('the exercise library', () => {
   it('only names equipment GymGO tracks, and every muscle can be trained with typical kit', () => {
@@ -103,7 +103,12 @@ describe('swapping one exercise', () => {
   it('keeps a hold a hold and a set of reps a set of reps', () => {
     const items = [{ exerciseId: 'plank' }, { exerciseId: 'crunch' }];
     const next = swapFor(items, 0, TYPICAL_KIT);
-    expect(next === null || ['side-plank', 'superman', 'copenhagen'].includes(next.id)).toBe(true);
+    // Another hold, timed rather than counted (a hollow hold, a side plank…).
+    expect(next).not.toBeNull();
+    expect(doseFor(next!, 'muscle').measure).toBe('time');
+    // And a set of reps swaps to another set of reps.
+    const crunch = swapFor([{ exerciseId: 'cable-crunch' }], 0, TYPICAL_KIT);
+    expect(crunch && doseFor(crunch, 'muscle').measure).toBe('reps');
   });
 
   it('has nothing to offer when no other move for the muscle fits the kit', () => {

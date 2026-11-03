@@ -480,10 +480,15 @@ which days you went.
 
 **Templates** (Home → "Or start a template", or the Workout screen; once
 you've done one, Home's **Up next** starts its next day in one tap):
-three well-known plans written out with GymGO's exercises: **Beginner full
-body** (A and B), **5×5 strength** (A and B) and **Push, pull, legs**. Each
-takes turns through its days, so starting one gives you the day after the
-last you logged; any other day can be started too. They're general plans,
+eight well-known plans written out with GymGO's exercises, beginners'
+first, with a filter for Beginner or Intermediate: **Beginner full body**
+(A and B), **Full body, 3 days** (A, B and C), **5×5 strength** (A and B),
+**Body weight, anywhere** (no equipment), **Push, pull, legs**, **Upper /
+lower** (4 days), the **Arnold split** (chest and back, shoulders and arms,
+legs) and a **Body-part split** (a muscle group a day, 5 days). A
+superset's exercises are marked "Superset A · 1 of 2" with a bar down their
+side. Each takes turns through its days, so starting one gives you the day
+after the last you logged; any other day can be started too. They're general plans,
 not advice for anyone in particular, and the screen says to start light.
 
 **Monthly report** (Progress, free): a month of training against the
@@ -621,7 +626,7 @@ workouts go to your log.
   bit sore", "new shoes"); a workout in Progress shows its note's first
   line, and opening it lets you change or clear it. Up to 500 characters,
   kept on your account, in Download your data and in the CSV.
-- **Exercises** (Profile → Exercises): all 66 moves GymGO plans, by the
+- **Exercises** (Profile → Exercises): all 96 moves GymGO plans, by the
   muscle each mainly trains, with a search by name or muscle and filters
   for kit (body weight, dumbbells, barbell, cables, machines) and muscle.
   Each opens its page: how to do it (its moving icon and cue), what it

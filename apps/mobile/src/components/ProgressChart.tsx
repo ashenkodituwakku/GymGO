@@ -26,10 +26,13 @@ export function ProgressChart({
   unit,
   title = 'Estimated 1-rep max',
   legend = true,
+  count,
 }: {
-  /** A workout's finish time, or a calendar date (YYYY-MM-DD). */
+  /** A workout's finish time, or a calendar date (YYYY-MM-DD). `kg` is the value: a count when `count` is given. */
   points: Array<{ date: string; kg: number }>;
   unit: WeightUnit;
+  /** A count rather than a weight ("reps"): drawn as it is, never converted to pounds. */
+  count?: string;
   /** What's drawn, for its legend and screen readers. */
   title?: string;
   /** The title and change above the chart: off where the card above says them. */
@@ -37,7 +40,9 @@ export function ProgressChart({
 }) {
   const [width, setWidth] = useState(0);
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const values = points.map((point) => fromKg(point.kg, unit));
+  const values = points.map((point) => (count ? point.kg : fromKg(point.kg, unit)));
+  /** A value as it's written: "102.5 kg", "36 reps". */
+  const show = (value: number) => (count ? `${Number(value.toFixed(1))} ${count}` : formatWeight(value, unit));
   const low = Math.min(...values);
   const high = Math.max(...values);
   // A flat line sits in the middle rather than on an edge.
@@ -54,7 +59,7 @@ export function ProgressChart({
   // The gridlines, top to bottom, and the weight each marks.
   const grid = [0, 0.5, 1].map((share) => ({ at: PAD + share * (HEIGHT - PAD * 2), value: base + span * (1 - share) }));
   // Whole numbers, unless the lines are closer together than that.
-  const gridLabel = (value: number) => formatWeight(span >= 4 ? Math.round(value) : Math.round(value * 10) / 10, unit);
+  const gridLabel = (value: number) => show(span >= 4 ? Math.round(value) : Math.round(value * 10) / 10);
   // A time on the phone's clock; a calendar date (a weigh-in) as written.
   const day = (iso: string) => dateLabel(iso);
   // To a tenth, as it's shown: no change reads as that, not a green "+0".
@@ -64,7 +69,7 @@ export function ProgressChart({
     <View
       style={styles.wrap}
       accessible
-      accessibilityLabel={`${title}, ${points.length} ${points.length === 1 ? 'day' : 'days'}, from ${formatWeight(Math.round(values[0] ?? 0), unit)} to ${formatWeight(Math.round(values[values.length - 1] ?? 0), unit)}`}
+      accessibilityLabel={`${title}, ${points.length} ${points.length === 1 ? 'day' : 'days'}, from ${show(Math.round(values[0] ?? 0))} to ${show(Math.round(values[values.length - 1] ?? 0))}`}
     >
       {legend && (
         <View style={styles.legend}>
@@ -73,7 +78,7 @@ export function ProgressChart({
           </Txt>
           {values.length > 1 && (
             <Txt variant="caption" color={change > 0 ? color.goodInk : change < 0 ? color.maybeInk : color.labelSecondary}>
-              {change === 0 ? `No change since ${day(points[0]!.date)}` : `${change > 0 ? '+' : '−'}${formatWeight(Math.abs(change), unit)} since ${day(points[0]!.date)}`}
+              {change === 0 ? `No change since ${day(points[0]!.date)}` : `${change > 0 ? '+' : '−'}${show(Math.abs(change))} since ${day(points[0]!.date)}`}
             </Txt>
           )}
         </View>

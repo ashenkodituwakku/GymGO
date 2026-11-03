@@ -168,6 +168,12 @@ export interface ExerciseRecords {
   heaviestSet: RecordSet | null;
   /** The most reps in one body-weight set. */
   mostReps: number | null;
+  /** The biggest single set by volume (weight × reps), in kg, and the set. */
+  setVolumeKg: number | null;
+  setVolumeSet: RecordSet | null;
+  /** The most lifted in one session (every working set's weight × reps), in kg, and when. */
+  sessionVolumeKg: number | null;
+  sessionVolumeDate: string | null;
   sessions: number;
 }
 
@@ -176,9 +182,12 @@ export function personalRecords(sessions: TrainingSession[]): Map<string, Exerci
   const records = new Map<string, ExerciseRecords>();
   for (const session of [...sessions].sort(byDate)) {
     for (const logged of session.exercises) {
-      const record = records.get(logged.exerciseId) ?? { e1rmKg: null, e1rmSet: null, heaviestKg: null, heaviestSet: null, mostReps: null, sessions: 0 };
+      const record =
+        records.get(logged.exerciseId) ??
+        ({ e1rmKg: null, e1rmSet: null, heaviestKg: null, heaviestSet: null, mostReps: null, setVolumeKg: null, setVolumeSet: null, sessionVolumeKg: null, sessionVolumeDate: null, sessions: 0 } satisfies ExerciseRecords);
       const working = workingSets(logged.sets);
       if (working.length) record.sessions += 1;
+      let sessionKg = 0;
       for (const set of working) {
         if (set.weight === null || set.weight <= 0) {
           if (record.mostReps === null || set.reps > record.mostReps) record.mostReps = set.reps;
@@ -195,6 +204,16 @@ export function personalRecords(sessions: TrainingSession[]): Map<string, Exerci
           record.e1rmKg = e1rm;
           record.e1rmSet = at;
         }
+        const volume = kg * set.reps;
+        sessionKg += volume;
+        if (record.setVolumeKg === null || volume > record.setVolumeKg + 1e-9) {
+          record.setVolumeKg = volume;
+          record.setVolumeSet = at;
+        }
+      }
+      if (sessionKg > 0 && (record.sessionVolumeKg === null || sessionKg > record.sessionVolumeKg + 1e-9)) {
+        record.sessionVolumeKg = sessionKg;
+        record.sessionVolumeDate = session.finishedAt;
       }
       records.set(logged.exerciseId, record);
     }
@@ -204,7 +223,8 @@ export function personalRecords(sessions: TrainingSession[]): Map<string, Exerci
 
 export interface NewRecord {
   exerciseId: string;
-  kind: 'heaviest' | 'e1rm' | 'reps';
+  /** Heaviest weight; strongest set (estimated 1-rep max); biggest set (weight × reps); most reps at body weight. */
+  kind: 'heaviest' | 'e1rm' | 'volume' | 'reps';
 }
 
 /**
@@ -218,8 +238,10 @@ export function recordsBroken(session: TrainingSession, earlier: TrainingSession
   for (const [exerciseId, mine] of now) {
     const old = before.get(exerciseId);
     if (!old || old.sessions === 0) continue;
+    // One weighted record an exercise: the heaviest lift says the most, then the strongest set, then the biggest.
     if (mine.heaviestKg !== null && old.heaviestKg !== null && mine.heaviestKg > old.heaviestKg + 1e-6) broken.push({ exerciseId, kind: 'heaviest' });
     else if (mine.e1rmKg !== null && old.e1rmKg !== null && mine.e1rmKg > old.e1rmKg + 1e-6) broken.push({ exerciseId, kind: 'e1rm' });
+    else if (mine.setVolumeKg !== null && old.setVolumeKg !== null && mine.setVolumeKg > old.setVolumeKg + 1e-6) broken.push({ exerciseId, kind: 'volume' });
     if (mine.mostReps !== null && old.mostReps !== null && mine.mostReps > old.mostReps) broken.push({ exerciseId, kind: 'reps' });
   }
   return broken;
@@ -415,26 +437,90 @@ export function volumeKg(session: TrainingSession): number {
 /** Working sets in a session: warm-ups aren't counted. */
 export const setCount = (session: TrainingSession) => session.exercises.reduce((sum, logged) => sum + workingSets(logged.sets).length, 0);
 
+/** What an exercise's chart can follow over time. */
+export type ExerciseMetric = 'e1rm' | 'heaviest' | 'setVolume' | 'sessionVolume' | 'reps';
+
+export const EXERCISE_METRICS: ReadonlyArray<{ id: ExerciseMetric; label: string; title: string; about: string }> = [
+  { id: 'e1rm', label: '1-rep max', title: 'Estimated 1-rep max', about: 'Each point is your best set that day, as an estimated 1-rep max (sets of 12 reps or fewer).' },
+  { id: 'heaviest', label: 'Heaviest', title: 'Heaviest weight', about: 'Each point is the heaviest weight you lifted that day, for any reps.' },
+  { id: 'setVolume', label: 'Best set', title: 'Best set (weight × reps)', about: 'Each point is your biggest single set that day: its weight times its reps.' },
+  { id: 'sessionVolume', label: 'Volume', title: 'Weight lifted that day', about: 'Each point is every working set that day added up: weight times reps.' },
+  { id: 'reps', label: 'Reps', title: 'Reps that day', about: 'Each point is every working rep you did that day.' },
+];
+
+/** One session's value for a metric, in kg (or reps); 0 when it has none (a body-weight set has no weight). */
+function sessionValue(sets: LoggedSet[], unit: WeightUnit, metric: ExerciseMetric): number {
+  const working = workingSets(sets);
+  const kgOf = (set: LoggedSet) => (set.weight && set.weight > 0 ? toKg(set.weight, unit) : 0);
+  switch (metric) {
+    case 'e1rm':
+      return Math.max(0, ...working.map((set) => (kgOf(set) ? (oneRepMax(kgOf(set), set.reps) ?? 0) : 0)));
+    case 'heaviest':
+      return Math.max(0, ...working.map(kgOf));
+    case 'setVolume':
+      return Math.max(0, ...working.map((set) => kgOf(set) * set.reps));
+    case 'sessionVolume':
+      return working.reduce((sum, set) => sum + kgOf(set) * set.reps, 0);
+    case 'reps':
+      return working.reduce((sum, set) => sum + set.reps, 0);
+  }
+}
+
 /**
- * Your best estimated one-rep max on each day you did the exercise, oldest
- * first: the line on a progress chart. Two sessions on one day (a morning
- * and an evening) make one point, the day's best, so the line never doubles
- * back on itself.
+ * A metric on each day you did the exercise, oldest first: the line on its
+ * chart. Two sessions on one day (a morning and an evening) make one point,
+ * so the line never doubles back on itself: the day's best for a best
+ * (1-rep max, heaviest, best set), the two added up for a total (volume,
+ * reps). A day with nothing to count (no weight, for a weight) is left out.
  */
-export function e1rmSeries(sessions: TrainingSession[], exerciseId: string): Array<{ date: string; kg: number }> {
+export function exerciseSeries(sessions: TrainingSession[], exerciseId: string, metric: ExerciseMetric = 'e1rm'): Array<{ date: string; kg: number }> {
+  const total = metric === 'sessionVolume' || metric === 'reps';
   const points: Array<{ date: string; kg: number; day: string }> = [];
   for (const session of [...sessions].sort(byDate)) {
     const logged = session.exercises.find((item) => item.exerciseId === exerciseId);
     if (!logged) continue;
-    const best = Math.max(...workingSets(logged.sets).map((set) => (set.weight ? (oneRepMax(toKg(set.weight, session.unit), set.reps) ?? 0) : 0)), 0);
-    if (best <= 0) continue;
+    const value = sessionValue(logged.sets, session.unit, metric);
+    if (value <= 0) continue;
     const day = dayKey(new Date(session.finishedAt));
     const previous = points[points.length - 1];
     if (previous?.day === day) {
-      if (best > previous.kg) Object.assign(previous, { kg: best, date: session.finishedAt });
-    } else points.push({ date: session.finishedAt, kg: best, day });
+      if (total) Object.assign(previous, { kg: previous.kg + value, date: session.finishedAt });
+      else if (value > previous.kg) Object.assign(previous, { kg: value, date: session.finishedAt });
+    } else points.push({ date: session.finishedAt, kg: value, day });
   }
   return points.map(({ date, kg }) => ({ date, kg }));
+}
+
+/** Your best estimated one-rep max on each day you did the exercise, oldest first (`exerciseSeries`'s first chart). */
+export const e1rmSeries = (sessions: TrainingSession[], exerciseId: string) => exerciseSeries(sessions, exerciseId, 'e1rm');
+
+export interface RepRecord {
+  reps: number;
+  kg: number;
+  set: RecordSet;
+}
+
+/**
+ * The heaviest you've lifted for each number of reps (1 to 20), fewest
+ * reps first: your rep records. A heavier set for more reps also beats the
+ * fewer, so a row only shows when nothing heavier was done for more reps
+ * (100 kg × 5 makes 95 kg × 3 no record at all).
+ */
+export function repRecords(sessions: TrainingSession[], exerciseId: string): RepRecord[] {
+  const best = new Map<number, RepRecord>();
+  for (const session of [...sessions].sort(byDate)) {
+    for (const logged of session.exercises) {
+      if (logged.exerciseId !== exerciseId) continue;
+      for (const set of workingSets(logged.sets)) {
+        if (!set.weight || set.weight <= 0 || set.reps > 20) continue;
+        const kg = toKg(set.weight, session.unit);
+        const now = best.get(set.reps);
+        if (!now || kg > now.kg + 1e-9) best.set(set.reps, { reps: set.reps, kg, set: { weight: set.weight, reps: set.reps, unit: session.unit, date: session.finishedAt } });
+      }
+    }
+  }
+  const rows = [...best.values()].sort((a, b) => a.reps - b.reps);
+  return rows.filter((row) => !rows.some((other) => other.reps > row.reps && other.kg >= row.kg - 1e-9));
 }
 
 /** The local calendar day a moment falls on, as a key that sessions on the same day share. */
@@ -612,7 +698,7 @@ export function parseReps(text: string): number | undefined {
  */
 export function bestSoFar(sets: DraftSet[], unit: WeightUnit, before: ExerciseRecords | undefined): Array<NewRecord['kind'] | null> {
   if (!before || before.sessions === 0) return sets.map(() => null);
-  let { heaviestKg, e1rmKg, mostReps } = before;
+  let { heaviestKg, e1rmKg, mostReps, setVolumeKg } = before;
   return sets.map((set) => {
     // A warm-up is never a record.
     if (!set.done || set.kind === 'warmup') return null;
@@ -626,11 +712,14 @@ export function bestSoFar(sets: DraftSet[], unit: WeightUnit, before: ExerciseRe
     }
     const kg = toKg(weight, unit);
     const e1rm = oneRepMax(kg, reps);
+    const volume = kg * reps;
     let kind: NewRecord['kind'] | null = null;
     if (heaviestKg !== null && kg > heaviestKg + 1e-6) kind = 'heaviest';
     else if (e1rmKg !== null && e1rm !== null && e1rm > e1rmKg + 1e-6) kind = 'e1rm';
+    else if (setVolumeKg !== null && volume > setVolumeKg + 1e-6) kind = 'volume';
     if (heaviestKg !== null) heaviestKg = Math.max(heaviestKg, kg);
     if (e1rmKg !== null && e1rm !== null) e1rmKg = Math.max(e1rmKg, e1rm);
+    if (setVolumeKg !== null) setVolumeKg = Math.max(setVolumeKg, volume);
     return kind;
   });
 }

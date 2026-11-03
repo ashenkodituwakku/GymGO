@@ -1,12 +1,13 @@
 /**
  * One exercise: how to do it, what it works and needs, swaps for the same
- * muscle (from the exercise library, app/exercises.tsx); then your records,
- * every session you did it, and (Pro) the chart of your estimated one-rep
- * max and what to lift next.
+ * muscle (from the exercise library, app/exercises.tsx); then your records
+ * (heaviest, strongest, biggest set, most in a session, and the heaviest for
+ * each number of reps), every session you did it, and (Pro) a chart of any
+ * of them over time.
  */
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
@@ -15,12 +16,12 @@ import { Icon } from '@/components/Icon';
 import { AskGymPal } from '@/components/AskGymPal';
 import { ProgressChart } from '@/components/ProgressChart';
 import { useGlassRedraw } from '@/components/Redrawn';
-import { PrimaryButton, Txt } from '@/components/ui';
+import { Chip, PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { useApp } from '@/lib/app-state';
 import { mix } from '@/lib/looks';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
-import { e1rmSeries, formatWeight, fromKg, personalRecords, setsSummary, unitFor } from '@/lib/training';
+import { EXERCISE_METRICS, exerciseSeries, formatWeight, fromKg, personalRecords, repRecords, repsWords, setsSummary, unitFor, type ExerciseMetric } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
 import { alternativesFor, kitText } from '@/lib/exerciseLibrary';
 import { EXERCISES, KIT_LABEL, exerciseName, muscleLabel } from '@/lib/workout';
@@ -50,7 +51,14 @@ export default function ExerciseProgressScreen() {
   const title = exerciseName(exerciseId);
   usePageTitle(title);
   const record = useMemo(() => personalRecords(log.sessions).get(exerciseId) ?? null, [log.sessions, exerciseId]);
-  const series = useMemo(() => e1rmSeries(log.sessions, exerciseId), [log.sessions, exerciseId]);
+  const [metric, setMetric] = useState<ExerciseMetric>('e1rm');
+  const series = useMemo(() => exerciseSeries(log.sessions, exerciseId, metric), [log.sessions, exerciseId, metric]);
+  const shownMetric = EXERCISE_METRICS.find((item) => item.id === metric)!;
+  const reps = useMemo(() => repRecords(log.sessions, exerciseId), [log.sessions, exerciseId]);
+  /** A big weight with its thousands marked, in your unit: "4,250 kg". */
+  const tonnage = (kg: number) => `${Math.round(fromKg(kg, unit)).toLocaleString()}\u00a0${unit}`;
+  /** A weight from a record, in your unit, to a tenth. */
+  const weightOf = (kg: number) => formatWeight(Number(fromKg(kg, unit).toFixed(1)), unit);
   const done = log.sessions.filter((session) => session.exercises.some((item) => item.exerciseId === exerciseId));
   const swaps = useMemo(() => (exercise ? alternativesFor(exercise) : []), [exercise]);
 
@@ -143,24 +151,90 @@ export default function ExerciseProgressScreen() {
         </View>
       )}
 
+      {record && (record.setVolumeSet || record.sessionVolumeKg !== null || record.mostReps !== null) && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+            RECORDS
+          </Txt>
+          <View style={styles.group}>
+            {[
+              record.setVolumeSet && record.setVolumeKg !== null
+                ? { label: 'Biggest set', value: `${formatWeight(record.setVolumeSet.weight, record.setVolumeSet.unit)} × ${record.setVolumeSet.reps}`, detail: `${tonnage(record.setVolumeKg)} in one set · ${dayLabel(record.setVolumeSet.date)}` }
+                : null,
+              record.sessionVolumeKg !== null && record.sessionVolumeDate
+                ? { label: 'Most in a session', value: tonnage(record.sessionVolumeKg), detail: `Every working set added up · ${dayLabel(record.sessionVolumeDate)}` }
+                : null,
+              record.mostReps !== null ? { label: 'Most reps', value: repsWords([record.mostReps]), detail: 'In one set at body weight' } : null,
+            ]
+              .filter((row): row is { label: string; value: string; detail: string } => row !== null)
+              .map((row, index) => (
+                <View key={row.label} style={[styles.row, index > 0 && styles.rowLine]} accessible accessibilityLabel={`${row.label}: ${row.value}. ${row.detail}`}>
+                  <View style={styles.flex}>
+                    <Txt variant="body">{row.label}</Txt>
+                    <Txt variant="footnote" color={color.labelSecondary}>
+                      {row.detail}
+                    </Txt>
+                  </View>
+                  <Txt variant="headline">{row.value}</Txt>
+                </View>
+              ))}
+          </View>
+        </>
+      )}
+
+      {reps.length > 0 && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+            REP RECORDS
+          </Txt>
+          <View style={styles.group}>
+            {reps.map((row, index) => (
+              <View
+                key={row.reps}
+                style={[styles.row, index > 0 && styles.rowLine]}
+                accessible
+                accessibilityLabel={`${repsWords([row.reps])}: ${weightOf(row.kg)}, ${dayLabel(row.set.date)}`}
+              >
+                <Txt variant="body" style={styles.repCount}>
+                  {repsWords([row.reps])}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
+                  {dayLabel(row.set.date)}
+                </Txt>
+                <Txt variant="headline">{weightOf(row.kg)}</Txt>
+              </View>
+            ))}
+          </View>
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+            The heaviest you’ve lifted for each number of reps, up to 20. One beaten by a heavier set for more reps isn’t listed.
+          </Txt>
+        </>
+      )}
+
       {billing.isPro ? (
         <View style={styles.card}>
+          {/* What the chart follows: the estimated 1-rep max, the heaviest weight, the biggest set, the day's volume or reps. */}
+          <View style={styles.metrics} role="radiogroup" accessibilityLabel="What the chart shows">
+            {EXERCISE_METRICS.map((item) => (
+              <Chip key={item.id} label={item.label} selected={metric === item.id} accessibilityLabel={item.title} onPress={() => setMetric(item.id)} />
+            ))}
+          </View>
           {series.length > 0 ? (
-            <ProgressChart points={series} unit={unit} />
+            <ProgressChart points={series} unit={unit} title={shownMetric.title} count={metric === 'reps' ? 'reps' : undefined} />
           ) : (
             <Txt variant="subhead" color={color.labelSecondary}>
-              The chart needs a weighted set of 12 reps or fewer.
+              {metric === 'e1rm' ? 'This chart needs a weighted set of 12 reps or fewer.' : metric === 'reps' ? 'Nothing logged yet.' : 'This chart needs a set with a weight on it.'}
             </Txt>
           )}
           <Txt variant="footnote" color={color.labelSecondary}>
-            Each point is your best set that day, as an estimated 1-rep max. Your next target shows beside the exercise when you start a workout.
+            {`${shownMetric.about} Your next target shows beside the exercise when you start a workout.`}
           </Txt>
         </View>
       ) : (
         <ProOffer
           icon="chart"
           title="See it on a chart"
-          body="GymGO Pro draws your estimated 1-rep max for every exercise over time, and shows what to lift next while you train."
+          body="GymGO Pro draws every exercise over time (your estimated 1-rep max, heaviest weight, biggest set, volume or reps) and shows what to lift next while you train."
           onPress={() => openPro('progress')}
         />
       )}
@@ -273,6 +347,9 @@ const styles = themed(() => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   date: { width: 80 },
+  repCount: { width: 76 },
+  note: { marginHorizontal: space[4] },
+  metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   hero: { gap: space[3], padding: space[4], paddingTop: space[4] + 2, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.brandFill },
   how: { flexDirection: 'row', alignItems: 'center', gap: space[4] },
   glyph: { width: 104, height: 104, alignItems: 'center', justifyContent: 'center', borderRadius: Math.min(26, radius.xl), borderCurve: 'continuous', backgroundColor: color.onBrandFaint },

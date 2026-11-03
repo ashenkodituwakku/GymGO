@@ -241,7 +241,7 @@ export function muscleBalance(sessions: TrainingSession[], days = 28, now: Date 
 
 // --- Sharing a workout ------------------------------------------------------------------
 
-const RECORD_KIND: Record<NewRecord['kind'], string> = { heaviest: 'heaviest yet', e1rm: 'strongest set yet', reps: 'most reps yet' };
+const RECORD_KIND: Record<NewRecord['kind'], string> = { heaviest: 'heaviest yet', e1rm: 'strongest set yet', volume: 'biggest set yet', reps: 'most reps yet' };
 
 /**
  * A finished workout as a few lines of plain text to send a friend: what,

@@ -29,6 +29,8 @@ import {
   weightFor,
   withWarmUps,
   setTags,
+  exerciseSeries,
+  repRecords,
   rpeMeaning,
   RPE_VALUES,
   type LoggedSet,
@@ -437,5 +439,53 @@ describe('set types and RPE', () => {
     expect(rpeMeaning(10)).toBe('Nothing left');
     expect(rpeMeaning(8)).toBe('Two more reps left');
     expect(rpeMeaning(6.5)).toBe('Three or four more');
+  });
+});
+
+describe('more records, and charts of them', () => {
+  const at = (finishedAt: string, sets: LoggedSet[], unit: WeightUnit = 'kg'): TrainingSession => ({ ...session(finishedAt, {}, unit), exercises: [{ exerciseId: 'bench-press', sets }] });
+
+  it('keeps the biggest set and the most in one session, warm-ups aside', () => {
+    const one = at('2026-10-01T10:00:00Z', [{ weight: 60, reps: 10, kind: 'warmup' }, { weight: 100, reps: 5 }, { weight: 100, reps: 5 }]);
+    const two = at('2026-10-08T10:00:00Z', [{ weight: 80, reps: 12 }, { weight: 80, reps: 10 }]);
+    const record = personalRecords([one, two]).get('bench-press')!;
+    expect(record.setVolumeKg).toBe(960);
+    expect(record.setVolumeSet).toMatchObject({ weight: 80, reps: 12 });
+    // 80 × 12 + 80 × 10 = 1,760 beats 100 × 5 twice (1,000); the warm-up never counts.
+    expect(record.sessionVolumeKg).toBe(1760);
+    expect(record.sessionVolumeDate).toBe('2026-10-08T10:00:00Z');
+  });
+
+  it('counts a bigger set as a record when it isn’t heavier or stronger', () => {
+    const before = at('2026-10-01T10:00:00Z', [{ weight: 100, reps: 5 }]);
+    // 80 × 12: lighter, a lower estimated max (112 against 117), but 960 kg against 500.
+    expect(recordsBroken(at('2026-10-08T10:00:00Z', [{ weight: 80, reps: 12 }]), [before])).toEqual([{ exerciseId: 'bench-press', kind: 'volume' }]);
+    // Heavier still says heaviest, once.
+    expect(recordsBroken(at('2026-10-09T10:00:00Z', [{ weight: 105, reps: 5 }]), [before])).toEqual([{ exerciseId: 'bench-press', kind: 'heaviest' }]);
+    const records = personalRecords([before]).get('bench-press');
+    expect(bestSoFar([{ weight: '80', reps: '12', done: true }], 'kg', records)).toEqual(['volume']);
+  });
+
+  it('charts each metric a point a day: the best for bests, the sum for totals', () => {
+    const morning = at('2026-10-01T07:00:00Z', [{ weight: 100, reps: 5 }, { weight: 90, reps: 8 }]);
+    const evening = at('2026-10-01T19:00:00Z', [{ weight: 110, reps: 1 }]);
+    const later = at('2026-10-05T07:00:00Z', [{ weight: 100, reps: 6 }, { weight: 60, reps: 10, kind: 'warmup' }]);
+    const log = [later, evening, morning];
+    expect(exerciseSeries(log, 'bench-press', 'heaviest').map((point) => point.kg)).toEqual([110, 100]);
+    expect(exerciseSeries(log, 'bench-press', 'setVolume').map((point) => point.kg)).toEqual([720, 600]);
+    expect(exerciseSeries(log, 'bench-press', 'sessionVolume').map((point) => point.kg)).toEqual([500 + 720 + 110, 600]);
+    expect(exerciseSeries(log, 'bench-press', 'reps').map((point) => point.kg)).toEqual([14, 6]);
+    expect(exerciseSeries(log, 'bench-press', 'e1rm')).toEqual(e1rmSeries(log, 'bench-press'));
+    // Pounds become kilograms, so a chart in either unit is the same line.
+    expect(exerciseSeries([at('2026-10-01T07:00:00Z', [{ weight: 225, reps: 1 }], 'lb')], 'bench-press', 'heaviest')[0]!.kg).toBeCloseTo(102.06, 1);
+  });
+
+  it('lists rep records, leaving out any beaten by a heavier set for more reps', () => {
+    const log = [
+      at('2026-10-01T10:00:00Z', [{ weight: 95, reps: 3 }, { weight: 120, reps: 1 }, { weight: 60, reps: 30 }]),
+      at('2026-10-08T10:00:00Z', [{ weight: 100, reps: 5 }, { weight: 80, reps: 10 }, { weight: 130, reps: 1, kind: 'warmup' }]),
+    ];
+    // 95 × 3 is beaten by 100 × 5; 60 × 30 is past 20 reps; the warm-up never counts.
+    expect(repRecords(log, 'bench-press').map((row) => `${row.reps}:${row.set.weight}`)).toEqual(['1:120', '5:100', '10:80']);
   });
 });

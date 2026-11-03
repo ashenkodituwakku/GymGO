@@ -102,6 +102,14 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Ideas from Hevy, round 2: more records and charts** (3 Nov).
+  training.ts: ExerciseRecords gains `setVolumeKg`/`setVolumeSet` and
+  `sessionVolumeKg`/`sessionVolumeDate`; NewRecord kind `'volume'`
+  ("Biggest set yet"), checked after heaviest and e1rm, live in
+  `bestSoFar` too; `exerciseSeries(sessions, id, metric)` with
+  `EXERCISE_METRICS` (`e1rmSeries` is its first); `repRecords`.
+  ProgressChart takes `count` to draw reps. progress/[exercise].tsx: the
+  Records and Rep records lists, and the metric chips on Pro's chart.
 - **Ideas from Hevy, round 1: kinds of set and RPE** (3 Nov; the owner
   asked to research Hevy's features and build them; the plan is six
   rounds: kinds of set and RPE; more records and charts; editing a

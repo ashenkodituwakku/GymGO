@@ -22,11 +22,14 @@ describe('a broken record, to show', () => {
     // 90 × 8 estimates higher than 100 × 3 (114 kg against 110).
     expect(recordLine(session, { exerciseId: 'bench-press', kind: 'e1rm' })).toBe('90\u00a0kg × 8');
     expect(recordLine(session, { exerciseId: 'push-up', kind: 'reps' })).toBe('30 reps');
+    // The biggest set: 90 × 8 is 720 kg, against 300 for 100 × 3.
+    expect(recordLine(session, { exerciseId: 'bench-press', kind: 'volume' })).toBe('90\u00a0kg × 8');
     expect(recordLine(session, { exerciseId: 'squat', kind: 'heaviest' })).toBe('');
   });
 
   it('puts the heaviest lift on the card first', () => {
     expect(bestRecord([{ exerciseId: 'a', kind: 'reps' }, { exerciseId: 'b', kind: 'e1rm' }, { exerciseId: 'c', kind: 'heaviest' }])).toEqual({ exerciseId: 'c', kind: 'heaviest' });
+    expect(bestRecord([{ exerciseId: 'a', kind: 'reps' }, { exerciseId: 'b', kind: 'volume' }])).toEqual({ exerciseId: 'b', kind: 'volume' });
     expect(bestRecord([])).toBeNull();
   });
 });

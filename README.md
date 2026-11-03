@@ -554,8 +554,13 @@ workouts go to your log.
 - **Records.** A set that beats your best turns gold as you tick it, with a
   trophy by its number, a buzz and the record sound (a screen reader says
   which record). Finish, and GymGO tells you which records you broke:
-  heaviest weight, strongest set (by estimated one-rep max), or most reps on
-  a body-weight exercise. Only against your own earlier sessions: the first
+  heaviest weight, strongest set (by estimated one-rep max), biggest set
+  (weight × reps: 80 kg × 12 beats 100 kg × 5), or most reps on a
+  body-weight exercise. Each exercise's page also lists **Records** (the
+  biggest set, the most in one session, every working set added up, and
+  the most reps at body weight) and **Rep records**: the heaviest you've
+  lifted for each number of reps up to 20, leaving out any a heavier set
+  for more reps has beaten (100 kg × 5 makes 95 kg × 3 no record). Only against your own earlier sessions: the first
   time you log something is a starting point, not a record. A broken record
   gets confetti (none with Reduce Motion on) and a **record card** to share
   as a picture: the exercise, the set and the day.
@@ -605,8 +610,10 @@ A workout in progress is kept on your device as you go, so closing the app
 between sets loses nothing, and Home shows **Back to your workout**. It's
 saved to your account when you finish, so logging needs a (free) account.
 
-With **Pro**, each exercise in Progress has a chart of your estimated
-one-rep max over time, and while you train each exercise shows **Aim**:
+With **Pro**, each exercise in Progress has a chart over time of your
+estimated one-rep max, heaviest weight, best set (weight × reps), the
+weight lifted that day or the reps that day (a point a day: the day's best
+for a best, the day's total for a total), and while you train each exercise shows **Aim**:
 what to lift next, by double progression. Keep the weight until every set
 reaches the top of the rep range, then add the smallest jump (5 lb or
 2.5 kg) and start again at the bottom. It's worked out from your own last
@@ -1631,7 +1638,7 @@ saved list always opens, wherever the gym is.
 | Saved gyms | Up to 10 | Unlimited |
 | Compare side by side | 2 gyms | 4 gyms |
 | Workout library | Build and share | Save workouts to your account, reopen them on any device |
-| Progress charts | Your records and history | A chart for every exercise |
+| Progress charts | Your records, rep records and history | A chart for every exercise: 1-rep max, heaviest, best set, volume or reps |
 | Next-session targets | Last time's numbers | What to lift next, worked out for you |
 | Muscle balance | Sets per workout | Every muscle over the last four weeks, and the ones you've missed |
 | Warm-up sets | Mark any set as a warm-up; plates for any weight | A warm-up ramp to your weight, with the plates, on the plate calculator or added to a workout |

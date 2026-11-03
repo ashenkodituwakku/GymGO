@@ -78,7 +78,7 @@ export const PRO_FEATURES: Array<{ emoji: string; title: string; free: string; p
   { emoji: '⚖️', title: 'Compare side by side', free: `${LIMITS.free.compare} gyms`, pro: `${LIMITS.pro.compare} gyms`, group: 'gyms' },
   { emoji: '📝', title: 'Gym notes', free: '—', pro: 'Your own, on each gym', group: 'gyms' },
   { emoji: '💪', title: 'Workout library', free: 'Build and share', pro: 'Saved to your account', group: 'training' },
-  { emoji: '📈', title: 'Progress charts', free: 'Records and history', pro: 'A chart per exercise', group: 'training' },
+  { emoji: '📈', title: 'Progress charts', free: 'Records, rep records and history', pro: 'Charts per exercise: 1-rep max, heaviest, best set, volume, reps', group: 'training' },
   { emoji: '🎯', title: 'Session targets', free: 'Last time’s numbers', pro: 'What to lift next', group: 'training' },
   { emoji: '🧍', title: 'Muscle balance', free: 'Sets per workout', pro: 'Every muscle, last 4 weeks', group: 'training' },
   { emoji: '🔥', title: 'Warm-up sets', free: 'Mark any set as a warm-up', pro: 'A ramp to your weight, added to your workout', group: 'training' },

@@ -7,10 +7,10 @@
 
 import { formatWeight, oneRepMax, repsWords, toKg, workingSets, type LoggedSet, type NewRecord, type TrainingSession } from './training';
 
-export const RECORD_WORD: Record<NewRecord['kind'], string> = { heaviest: 'Heaviest yet', e1rm: 'Strongest set yet', reps: 'Most reps yet' };
+export const RECORD_WORD: Record<NewRecord['kind'], string> = { heaviest: 'Heaviest yet', e1rm: 'Strongest set yet', volume: 'Biggest set yet', reps: 'Most reps yet' };
 
 /** Which record to put on the card when there are several: a heavier lift first. */
-const RANK: Record<NewRecord['kind'], number> = { heaviest: 0, e1rm: 1, reps: 2 };
+const RANK: Record<NewRecord['kind'], number> = { heaviest: 0, e1rm: 1, volume: 2, reps: 3 };
 
 export function bestRecord(records: readonly NewRecord[]): NewRecord | null {
   return [...records].sort((a, b) => RANK[a.kind] - RANK[b.kind])[0] ?? null;
@@ -25,6 +25,7 @@ export function recordSet(session: TrainingSession, record: NewRecord): LoggedSe
     return bodyweight.sort((a, b) => b.reps - a.reps)[0] ?? null;
   }
   if (record.kind === 'heaviest') return weighted.sort((a, b) => b.weight! - a.weight! || b.reps - a.reps)[0] ?? null;
+  if (record.kind === 'volume') return weighted.sort((a, b) => b.weight! * b.reps - a.weight! * a.reps)[0] ?? null;
   const e1rm = (set: LoggedSet) => oneRepMax(toKg(set.weight!, session.unit), set.reps) ?? 0;
   return weighted.sort((a, b) => e1rm(b) - e1rm(a))[0] ?? null;
 }

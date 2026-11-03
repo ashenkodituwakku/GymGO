@@ -41,6 +41,10 @@ the branch the owner's launcher pulls.
   look at the change in the browser with Playwright, and update
   `docs/STATUS.md` honestly: say what was seen, and what wasn't (nothing
   has run on a real iPhone from the sandbox). Report failures as failures.
+- **Number every update** (the owner asked, 3 Nov). Each piece of work
+  the owner asks for adds the next "Update N" at the top of
+  `docs/UPDATES.md` in the same push: a title, the date and its commits,
+  and a few plain lines on what changed (and anything not yet seen working).
 - **The Windows launcher** `scripts/gymgo.ps1` must stay ASCII-only
   (`apps/web/src/launcher.test.ts` checks it).
 - **Speak plainly to the owner.** They test on a Windows PC (browser, with

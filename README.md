@@ -2245,11 +2245,14 @@ apps/web/            The earlier Next.js website pilot.
   e2e/               Playwright specs at 390 / 768 / 1440 px.
 deploy/              GymGO online: the server and Caddy (HTTPS, the web app)
                      in Docker, with setup and update scripts.
-docs/                Architecture, data model, API, status, launch checklist.
+docs/                Architecture, data model, API, status, launch checklist,
+                     and UPDATES.md: every update, numbered.
 SECURITY.md          Reporting problems, what's in place, running it safely.
 ```
 
 ## What is and is not done
+
+Every update so far, numbered from the first, is in `docs/UPDATES.md`.
 
 `docs/STATUS.md` separates *implemented locally*, *tested locally*,
 *externally integrated*, *native-tested*, *deployed* and *store-approved*, and

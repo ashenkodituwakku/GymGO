@@ -8,6 +8,10 @@
  * switch, the way iOS 26's tab bars work; it swells while your finger is on
  * it.
  *
+ * With Appearance → Layout → Sidebar, a menu down the left instead
+ * (components/Sidebar.tsx): beside the page on a wide screen, or slid in
+ * from a Menu button at the foot on a phone. The tab bar is the default.
+ *
  * The same bar on every platform, so it looks the same whatever iOS version
  * the phone runs:
  *  - iOS 26: Apple's own Liquid Glass material (UIGlassEffect), which bends
@@ -36,6 +40,9 @@ import { TabBarInset, tabBarBottom } from '@/lib/layout';
 import { CHILD_TOUCH, NO_TOUCH, color, currentTheme, radius, shadow, solidSurfaces, themed } from '@/lib/theme';
 import { Avatar } from '@/components/Avatar';
 import { BrandFill } from '@/components/BrandFill';
+import { DockedSidebar, MenuButton, SidebarDrawer } from '@/components/Sidebar';
+import { MENU_BUTTON, navMode } from '@/lib/navLayout';
+import { useThemeChoice } from '@/lib/themePrefs';
 
 const BAR_HEIGHT = 64;
 // The same 16 pt edge as the sheets and the controls over the map.
@@ -74,9 +81,19 @@ export default function TabsLayout() {
   const bottom = tabBarBottom(insets.bottom);
   // With Android's keyboard up the bar steps aside, and nothing needs to clear it.
   const keyboardUp = useAndroidKeyboard();
+  // The tab bar, or the sidebar: docked beside the page on a wide screen, behind a Menu button on a phone.
+  const { width } = useWindowDimensions();
+  const mode = navMode(useThemeChoice().layout, width);
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    if (mode !== 'drawer') setMenuOpen(false);
+  }, [mode]);
+  // What a screen leaves clear at its foot: the bar, the Menu button, or just the phone's edge.
+  const clearance = keyboardUp ? 8 : mode === 'tabs' ? bottom + BAR_HEIGHT + 8 : mode === 'drawer' ? bottom + MENU_BUTTON + 8 : insets.bottom + 8;
   return (
-    <TabBarInset.Provider value={keyboardUp ? 8 : bottom + BAR_HEIGHT + 8}>
-      <Tabs style={styles.root}>
+    <TabBarInset.Provider value={clearance}>
+      <Tabs style={[styles.root, mode === 'docked' && styles.rootDocked]}>
+        {mode === 'docked' && <DockedSidebar />}
         {/* Its own container defaults to never shrinking, which lets a
             screen grow past the window so nothing scrolls. */}
         <TabSlot
@@ -103,7 +120,9 @@ export default function TabsLayout() {
             <TabTrigger key={tab.name} name={tab.name} href={tab.href} />
           ))}
         </TabList>
-        {!keyboardUp && <GlassTabBar bottom={bottom} />}
+        {mode === 'tabs' && !keyboardUp && <GlassTabBar bottom={bottom} />}
+        {mode === 'drawer' && !keyboardUp && !menuOpen && <MenuButton bottom={bottom} onPress={() => setMenuOpen(true)} />}
+        {mode === 'drawer' && menuOpen && <SidebarDrawer onClose={() => setMenuOpen(false)} />}
       </Tabs>
     </TabBarInset.Provider>
   );
@@ -289,6 +308,7 @@ const round = (size: number) => Math.min(size / 2, radius.pill);
 
 const styles = themed(() => StyleSheet.create({
   root: { flex: 1 },
+  rootDocked: { flexDirection: 'row' },
   slot: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 },
   hidden: { display: 'none' },
   dock: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },

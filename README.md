@@ -371,6 +371,15 @@ your accent glows behind them.
   - **Clock** (everyone): 12-hour or 24-hour, for opening hours, visit
     times, workout times and reminders ("19:00"; a late close reads
     "02:00 (next day)").
+  - **Layout** (everyone): **Tab bar**, the default (the four tabs float at
+    the foot of the screen), or **Sidebar**: a menu down the left with the
+    tabs, then Training (Workout, Progress, My workouts, Programme) and You
+    (Collection, Friends, Appearance). From 960 points wide it stays open
+    beside the page; on a phone, **Menu** at the foot (naming the tab you're
+    on) slides it in over the page, and choosing a place, a tap beside it,
+    its close button, Escape or Android's back closes it. A page that isn't
+    a tab opens over the tabs with its back button, as it does from the tab
+    bar. GymPal's button moves beside Menu, or clear of the docked sidebar.
   - **GymPal's button** (everyone, while GymPal is on): bottom right or
     bottom left; his chat panel opens on the same side on a wide screen.
   - **Corners** (Pro): Round, Standard or Sharp, scaling the corners of

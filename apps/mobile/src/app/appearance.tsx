@@ -59,6 +59,7 @@ import {
   type TextSize,
 } from '@/lib/theme';
 import { setThemeChoice, useThemeChoice } from '@/lib/themePrefs';
+import type { NavLayout } from '@/lib/navLayout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { ScreenOptions } from '@/components/ScreenOptions';
@@ -261,6 +262,31 @@ export default function AppearanceScreen() {
         </View>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {lookInUse === FREE_LOOK ? 'How GymGO looks whenever it’s dark.' : `${LOOKS[lookInUse].name} draws dark its own way. Dim is for the Standard look.`}
+        </Txt>
+
+        {/* How you get around: the floating tab bar (the default) or a sidebar menu (lib/navLayout.ts). */}
+        <View style={styles.accentHead}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            LAYOUT
+          </Txt>
+        </View>
+        <View style={styles.glassCard}>
+          <Segmented
+            options={[
+              { value: 'tabs', label: 'Tab bar' },
+              { value: 'sidebar', label: 'Sidebar' },
+            ]}
+            value={choice.layout}
+            onChange={(layout: NavLayout) => {
+              haptic.select();
+              setThemeChoice({ layout });
+            }}
+          />
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+          {choice.layout === 'sidebar'
+            ? 'A menu down the left with the tabs, your training and you. On a wide screen it stays open beside the page; on a phone, Menu at the foot slides it in.'
+            : 'The four tabs float at the foot of the screen. This is the default; Sidebar puts them, with your training, in a menu down the left.'}
         </Txt>
 
         <View style={styles.accentHead}>

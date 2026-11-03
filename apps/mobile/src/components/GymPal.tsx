@@ -73,6 +73,7 @@ import { suggestionsFor } from '@/lib/gymPalSuggestions';
 import { haptic } from '@/lib/haptics';
 import { tabBarBottom } from '@/lib/layout';
 import { useThemeChoice } from '@/lib/themePrefs';
+import { MENU_BUTTON, SIDEBAR_WIDTH, navMode } from '@/lib/navLayout';
 import { LIMITED } from '@/lib/limited';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
@@ -121,9 +122,10 @@ let nextId = 1;
 export function GymPal() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  // Which corner its button sits in (Appearance).
-  const side = useThemeChoice().gymPalSide;
+  // Which corner its button sits in, and the layout (Appearance).
+  const { gymPalSide: side, layout } = useThemeChoice();
   const { width } = useWindowDimensions();
+  const mode = navMode(layout, width);
   const { billing, openPro } = useApp();
   const pro = billing.isPro;
   const [open, setOpen] = useState(false);
@@ -255,13 +257,19 @@ export function GymPal() {
 
   // On a tab, above the tab bar; or, where the screen's wide enough, beside it.
   const besideBar = width >= TAB_BAR_MAX + 2 * (BUTTON + 2 * EDGE);
-  const bottom = TABS.has(pathname)
-    ? tabBarBottom(insets.bottom) + (besideBar ? (TAB_BAR - BUTTON) / 2 : TAB_BAR + 12)
-    : insets.bottom + EDGE;
+  // With the sidebar: beside the Menu button on a phone (it's narrow, in the middle); clear of the docked sidebar.
+  const bottom = !TABS.has(pathname)
+    ? insets.bottom + EDGE
+    : mode === 'drawer'
+      ? tabBarBottom(insets.bottom) + (MENU_BUTTON - BUTTON) / 2
+      : mode === 'docked'
+        ? insets.bottom + EDGE
+        : tabBarBottom(insets.bottom) + (besideBar ? (TAB_BAR - BUTTON) / 2 : TAB_BAR + 12);
+  const sideEdge = (side === 'left' ? insets.left + (mode === 'docked' && TABS.has(pathname) ? SIDEBAR_WIDTH : 0) : insets.right) + EDGE;
 
   return (
     <>
-      {!open && !hidden && <Launcher bottom={bottom} side={side} edge={(side === 'left' ? insets.left : insets.right) + EDGE} onPress={() => setOpen(true)} />}
+      {!open && !hidden && <Launcher bottom={bottom} side={side} edge={sideEdge} onPress={() => setOpen(true)} />}
       <Modal visible={open} transparent animationType="none" onRequestClose={close} statusBarTranslucent>
         <Chat
           wide={width >= PANEL_FROM}

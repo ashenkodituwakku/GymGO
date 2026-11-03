@@ -10,6 +10,7 @@
  * splash screen is still up.
  */
 
+import type { NavLayout } from './navLayout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Appearance, Platform } from 'react-native';
@@ -60,6 +61,8 @@ export interface ThemeChoice {
   clock24: boolean;
   /** Which bottom corner GymPal's button sits in, for everyone. */
   gymPalSide: 'right' | 'left';
+  /** How you get around (lib/navLayout.ts): the floating tab bar, the default, or a sidebar menu. For everyone. */
+  layout: NavLayout;
 }
 
 export const DEFAULT_CHOICE: ThemeChoice = {
@@ -74,6 +77,7 @@ export const DEFAULT_CHOICE: ThemeChoice = {
   customHue: CUSTOM_HUE_DEFAULT,
   clock24: false,
   gymPalSide: 'right',
+  layout: 'tabs',
 };
 
 /** What was stored, cleaned: anything unknown falls back to the default. */
@@ -92,6 +96,7 @@ export function parseChoice(raw: string | null | undefined): ThemeChoice {
       customHue: typeof value.customHue === 'number' && Number.isFinite(value.customHue) ? Math.round(((value.customHue % 360) + 360) % 360) : CUSTOM_HUE_DEFAULT,
       clock24: value.clock24 === true,
       gymPalSide: value.gymPalSide === 'left' ? 'left' : 'right',
+      layout: value.layout === 'sidebar' ? 'sidebar' : 'tabs',
     };
   } catch {
     return DEFAULT_CHOICE;

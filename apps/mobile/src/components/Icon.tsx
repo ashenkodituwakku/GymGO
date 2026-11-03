@@ -76,6 +76,7 @@ const ICONS = {
   sound: { ios: 'speaker.wave.2.fill', android: 'volume_up', web: 'volume_up' },
   body: { ios: 'figure.arms.open', android: 'accessibility_new', web: 'accessibility_new' },
   list: { ios: 'list.bullet', android: 'list', web: 'list' },
+  menu: { ios: 'line.3.horizontal', android: 'menu', web: 'menu' },
   thumbsUp: { ios: 'hand.thumbsup.fill', android: 'thumb_up', web: 'thumb_up' },
   flask: { ios: 'flask.fill', android: 'science', web: 'science' },
   calendar: { ios: 'calendar', android: 'event', web: 'event' },

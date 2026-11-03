@@ -102,6 +102,14 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Sidebar layout** (3 Nov; the owner: "a sidebar menu mode in the
+  appearance ... make the normal one default"). ThemeChoice `layout`
+  ('tabs' default | 'sidebar'); lib/navLayout.ts (`navMode` → 'tabs',
+  'docked' from `SIDEBAR_WIDE` = 960 pt, or 'drawer'; the items; `tabFor`);
+  components/Sidebar.tsx (`DockedSidebar`, `MenuButton`, `SidebarDrawer`);
+  (tabs)/_layout.tsx picks one and sets `TabBarInset` to match; GymPal.tsx
+  places its button by the mode. Tabs switch with `router.navigate`, other
+  places `router.push` (their own back). Appearance → LAYOUT.
 - **Back buttons on every screen** (3 Nov; the owner: "there isnt a back
   button for some of the mini pop up screens"). Monthly report, Body
   measurements and Edit workout weren't registered in the root Stack

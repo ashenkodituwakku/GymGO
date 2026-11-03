@@ -102,6 +102,14 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Back buttons on every screen** (3 Nov; the owner: "there isnt a back
+  button for some of the mini pop up screens"). Monthly report, Body
+  measurements and Edit workout weren't registered in the root Stack
+  (app/_layout.tsx), so they opened with no header and no way back; now
+  they are. A sweep in the browser of every screen and sheet reachable
+  from Profile and Settings found each with its back (sheets: Done on
+  iPhone, the back capsule in a browser, Android's arrow). A new screen
+  needs its `<Stack.Screen>` line, or it has no header.
 - **Ideas from Hevy, round 6: body measurements** (3 Nov), the last of
   the six. lib/bodyMeasures.ts (`MEASURES` with ranges in cm or %,
   `keptValue`/`shownValue`/`valueLabel` for cm and inches,

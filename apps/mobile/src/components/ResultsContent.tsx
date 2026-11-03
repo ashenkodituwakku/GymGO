@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, Pressable } from './motion';
 import { HOURS_LABELS, explainNoMatches, type GymLocation, type HoursNeed, type SearchOutcome } from '@gymgo/domain';
@@ -107,7 +107,7 @@ export function ResultsContent({
   /** What members typically paid, by gym. */
   memberPrices: Record<string, { typicalMinor: number }>;
   /** So other tabs can put the cursor in the search box. */
-  searchRef?: React.RefObject<TextInput | null>;
+  searchRef?: React.RefObject<TextInputInstance | null>;
   /** Choose how the list is ordered. */
   onSort: () => void;
   /** Searching a country GymGO Free doesn't cover: this one, and yours. */

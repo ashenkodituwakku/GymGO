@@ -47,8 +47,8 @@ import {
   TextInput,
   View,
   useWindowDimensions,
-  type NativeSyntheticEvent,
-  type TextInputKeyPressEventData,
+  type TextInputKeyPressEvent,
+  type ScrollViewInstance,
 } from 'react-native';
 import Animated, {
   FadeIn,
@@ -418,15 +418,15 @@ function Chat({
   const insets = useSafeAreaInsets();
   const side = useThemeChoice().gymPalSide;
   const { height } = useWindowDimensions();
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
   const [focused, setFocused] = useState(false);
   const canSend = draft.trim().length > 0 && !pending;
   // A grin as it opens, and one with each answer.
   const answers = lines.filter((line) => line.role === 'assistant').length;
 
   // A browser: Enter sends, Shift+Enter starts a new line.
-  const onKeyPress = (event: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
-    const key = event.nativeEvent as TextInputKeyPressEventData & { shiftKey?: boolean };
+  const onKeyPress = (event: TextInputKeyPressEvent) => {
+    const key = event.nativeEvent as TextInputKeyPressEvent['nativeEvent'] & { shiftKey?: boolean };
     if (Platform.OS !== 'web' || key.key !== 'Enter' || key.shiftKey) return;
     event.preventDefault();
     onSend();

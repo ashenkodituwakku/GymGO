@@ -12,7 +12,7 @@ type StackRoute = { key: string; name: string; state?: { index?: number; routes:
  * What the page behind this one is called: the tab you came from, or the
  * page's own title. Untitled pages (a gym's, say) are just "Back".
  */
-export function backLabel(routes: readonly StackRoute[], key: string, title: string | undefined): string {
+export function backLabel(routes: readonly StackRoute[], key: string | undefined, title: string | undefined): string {
   const previous = routes[routes.findIndex((route) => route.key === key) - 1];
   if (!previous) return 'Back';
   // The sign-in screen has no title of its own.

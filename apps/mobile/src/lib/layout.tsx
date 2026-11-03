@@ -7,7 +7,7 @@
  */
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Dimensions, Platform, type View } from 'react-native';
+import { Dimensions, Platform, type View, type ViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const TabBarInset = createContext(0);
@@ -120,4 +120,4 @@ export function useOverhang(): { measureRef: (node: Measurable | null) => void; 
 }
 
 /** Anything on screen that can say where it is: a view, a scroll view. */
-export type Measurable = Pick<View, 'measureInWindow'>;
+export type Measurable = Pick<ViewInstance, 'measureInWindow'>;

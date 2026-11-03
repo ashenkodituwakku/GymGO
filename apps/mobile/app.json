@@ -37,6 +37,11 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "expo-asset",
+      "expo-font",
+      "expo-sharing",
+      "expo-status-bar",
+      "expo-web-browser",
       [
         "expo-router",
         {
@@ -50,14 +55,6 @@
           "recordAudioAndroid": false,
           "enableBackgroundPlayback": false,
           "enableBackgroundRecording": false
-        }
-      ],
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "enableSceneSupport": true
-          }
         }
       ],
       [

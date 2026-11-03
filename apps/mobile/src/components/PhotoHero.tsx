@@ -15,7 +15,7 @@
  */
 
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { Image, ScrollView, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { Image, ScrollView, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
 import { Pressable } from './motion';
 import { api, apiBase, ApiError, OfflineError, photoUrl, type GymPhoto } from '@/lib/api';
 import { EMPTY } from '@/lib/copy';
@@ -116,7 +116,7 @@ export const galleryHeight = (width: number) => Math.round(Math.min(380, Math.ma
 
 function Gallery({ slides, width }: { slides: Slide[]; width: number }) {
   const height = galleryHeight(width);
-  const scroller = useRef<ScrollView>(null);
+  const scroller = useRef<ScrollViewInstance>(null);
   const [at, setAt] = useState(0);
   const count = slides.length;
   const show = (index: number) => {

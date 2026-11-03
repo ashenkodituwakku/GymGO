@@ -10,7 +10,7 @@ import { useProgramme } from '@/lib/programmeStore';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { AccessibilityInfo, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { CURVES, EASE_IN, EASE_OUT, FADE_IN, POP_IN, Pressable, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -1159,7 +1159,7 @@ function Summary({
   };
   const best = bestRecord(records);
   const done = session.exercises.filter((logged) => logged.sets.length > 0);
-  const card = useRef<View>(null);
+  const card = useRef<ViewInstance>(null);
   const [sharingCard, setSharingCard] = useState(false);
   const shareCard = async () => {
     if (!best) return;

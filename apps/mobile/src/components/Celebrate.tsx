@@ -5,7 +5,7 @@
  */
 
 import { forwardRef, useId } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type ViewInstance } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { RECORD_WORD } from '@/lib/records';
 import type { NewRecord } from '@/lib/training';
@@ -20,7 +20,7 @@ export function Confetti() {
 }
 
 /** The record as a card to share: the exercise, the set and the day. */
-export const RecordCard = forwardRef<View, { exercise: string; line: string; kind: NewRecord['kind']; date: string; more: number }>(function RecordCard(
+export const RecordCard = forwardRef<ViewInstance, { exercise: string; line: string; kind: NewRecord['kind']; date: string; more: number }>(function RecordCard(
   { exercise, line, kind, date, more },
   ref,
 ) {

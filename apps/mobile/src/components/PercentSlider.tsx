@@ -186,8 +186,9 @@ export function PercentSlider({
     Platform.OS === 'web' && !disabled
       ? {
           focusable: true,
-          onKeyDown: (event: { key: string; preventDefault: () => void }) => {
-            const by = { ArrowRight: step, ArrowUp: step, ArrowLeft: -step, ArrowDown: -step, PageUp: step * 4, PageDown: -step * 4, Home: -100, End: 100 }[event.key];
+          // A browser's key event (React Native's own types it as a native one, with `key` under nativeEvent).
+          onKeyDown: (event: { key?: string; preventDefault: () => void }) => {
+            const by = event.key ? { ArrowRight: step, ArrowUp: step, ArrowLeft: -step, ArrowDown: -step, PageUp: step * 4, PageDown: -step * 4, Home: -100, End: 100 }[event.key] : undefined;
             if (by === undefined) return;
             event.preventDefault();
             nudge(by);

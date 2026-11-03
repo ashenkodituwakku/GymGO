@@ -6,7 +6,7 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import { GemCard } from '@/components/GemCard';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
@@ -29,7 +29,7 @@ export default function CardScreen() {
   const { data } = useApp();
   const { loaded, gyms } = useCollection();
   const { width } = useWindowDimensions();
-  const shot = useRef<View>(null);
+  const shot = useRef<ViewInstance>(null);
   const [busy, setBusy] = useState(false);
   const [line, setLine] = useState<string | null>(null);
   const cardWidth = Math.min(300, width - space[4] * 4);

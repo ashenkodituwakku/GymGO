@@ -101,22 +101,22 @@ describe('the colours', () => {
   it('change corners and type in place with the look, and back', () => {
     const styles = themed(() => StyleSheet.create({ card: { borderRadius: radius.lg } }));
     applyTheme('light', FREE_ACCENT, 'pixel');
-    expect(StyleSheet.flatten(styles.card).borderRadius).toBe(0);
+    expect(StyleSheet.flatten(styles.card)?.borderRadius).toBe(0);
     expect(type.largeTitle.fontFamily).toBe('PressStart2P_400Regular');
     expect(type.body.fontFamily).toBe('PixelifySans_400Regular');
     applyTheme('light', FREE_ACCENT, 'material');
-    expect(StyleSheet.flatten(styles.card).borderRadius).toBe(16);
+    expect(StyleSheet.flatten(styles.card)?.borderRadius).toBe(16);
     expect(type.headline.fontFamily).toBe('Roboto_500Medium');
     applyTheme('light', FREE_ACCENT, FREE_LOOK);
-    expect(StyleSheet.flatten(styles.card).borderRadius).toBe(18);
+    expect(StyleSheet.flatten(styles.card)?.borderRadius).toBe(18);
     expect(type.largeTitle.fontFamily).not.toBe('PressStart2P_400Regular');
   });
 
   it('change in place, and style sheets follow on their next read', () => {
     const styles = themed(() => StyleSheet.create({ page: { backgroundColor: color.card } }));
-    expect(StyleSheet.flatten(styles.page).backgroundColor).toBe('#FFFFFF');
+    expect(StyleSheet.flatten(styles.page)?.backgroundColor).toBe('#FFFFFF');
     expect(applyTheme('dark', 'ocean')).toBe(true);
-    expect(StyleSheet.flatten(styles.page).backgroundColor).toBe('#1C1C1E');
+    expect(StyleSheet.flatten(styles.page)?.backgroundColor).toBe('#1C1C1E');
     expect(color.brand).toBe('#409CFF');
     expect(applyTheme('dark', 'ocean')).toBe(false);
     expect(Object.keys(styles)).toEqual(['page']);
@@ -164,15 +164,15 @@ describe('Liquid Glass', () => {
     const stopScreens = subscribeTheme(screens);
     const stopGlass = subscribeGlass(glass);
     const styles = themed(() => StyleSheet.create({ wash: { backgroundColor: color.glassWashThick }, card: { backgroundColor: color.plate } }));
-    const before = StyleSheet.flatten(styles.wash).backgroundColor;
-    const card = StyleSheet.flatten(styles.card).backgroundColor;
+    const before = StyleSheet.flatten(styles.wash)?.backgroundColor;
+    const card = StyleSheet.flatten(styles.card)?.backgroundColor;
     applyTheme('light', FREE_ACCENT, FREE_LOOK, 90);
     // Starting each screen again would drop focus, scroll and what's picked:
     // they draw again in place instead (useGlassRedraw), with the new styles.
     expect(screens).not.toHaveBeenCalled();
     expect(glass).toHaveBeenCalledTimes(1);
-    expect(StyleSheet.flatten(styles.wash).backgroundColor).not.toBe(before);
-    expect(StyleSheet.flatten(styles.card).backgroundColor).not.toBe(card);
+    expect(StyleSheet.flatten(styles.wash)?.backgroundColor).not.toBe(before);
+    expect(StyleSheet.flatten(styles.card)?.backgroundColor).not.toBe(card);
     applyTheme('light', FREE_ACCENT, FREE_LOOK, 90);
     expect(glass).toHaveBeenCalledTimes(1);
     // A change of colours does start them again.

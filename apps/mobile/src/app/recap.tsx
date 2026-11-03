@@ -5,7 +5,7 @@
 
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
 import { RECAP_WIDTH, RecapCard } from '@/components/RecapCard';
@@ -30,7 +30,7 @@ export default function RecapScreen() {
   const log = useTrainingLog(account.token);
   const { gyms } = useCollection();
   const recap = useMemo(() => weekRecap(log.sessions, gyms), [log.sessions, gyms]);
-  const shot = useRef<View>(null);
+  const shot = useRef<ViewInstance>(null);
   // The card at its size, or narrower on a small phone: the page's gutters and the picture's margin either side.
   const { width: screen } = useWindowDimensions();
   const cardWidth = Math.min(RECAP_WIDTH, screen - (space[4] + space[3]) * 2);

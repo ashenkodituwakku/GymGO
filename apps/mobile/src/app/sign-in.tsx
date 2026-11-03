@@ -7,7 +7,7 @@
 
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
-import { Platform, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { Platform, StyleSheet, TextInput, View, type TextInputProps, type TextInputInstance } from 'react-native';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { serverOfflineLine } from '@/lib/copy';
 import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
@@ -89,8 +89,8 @@ export default function SignInScreen() {
       setResetBusy(false);
     }
   };
-  const emailRef = useRef<TextInput>(null);
-  const passwordRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInputInstance>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
   const shake = useSharedValue(0);
   const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: shake.value }] }));
 
@@ -462,7 +462,7 @@ function AuthField({
   accessory,
   problem = null,
   ...props
-}: TextInputProps & { ref?: Ref<TextInput>; icon: IconName; label: string; accessory?: ReactNode; problem?: string | null }) {
+}: TextInputProps & { ref?: Ref<TextInputInstance>; icon: IconName; label: string; accessory?: ReactNode; problem?: string | null }) {
   const [focused, setFocused] = useState(false);
   return (
     <View style={styles.field}>

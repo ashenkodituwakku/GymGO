@@ -19,7 +19,7 @@
 
 import { BlurView } from 'expo-blur';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Modal, ScrollView, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { ReduceMotion, runOnJS, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
@@ -132,7 +132,7 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
   const maxHeight = height - insets.top - insets.bottom - space[6];
   const glow = panelWidth * 1.25;
   const close = () => leave(onClose);
-  const shot = useRef<View>(null);
+  const shot = useRef<ViewInstance>(null);
   const [sharing, setSharing] = useState(false);
   const [shareLine, setShareLine] = useState<string | null>(null);
   const share = async () => {

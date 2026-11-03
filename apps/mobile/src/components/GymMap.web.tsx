@@ -15,7 +15,7 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibregl from 'maplibre-gl';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type ViewInstance } from 'react-native';
 import type { BoundingBox } from '@gymgo/domain';
 import { MapNotice } from './MapNotice';
 import { TIER_COLOUR } from './ui';
@@ -207,7 +207,7 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, leftInset = 0, userLocation = null, onSelect, onMapPress, onRegionChange },
   ref,
 ) {
-  const host = useRef<View>(null);
+  const host = useRef<ViewInstance>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const markers = useRef(new Map<string, { marker: maplibregl.Marker; signature: string }>());
   // The zoom (256-point tile levels) and area on screen, for grouping pins.

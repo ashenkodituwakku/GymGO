@@ -7,7 +7,7 @@
 
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { StyleSheet, View, type TextInput } from 'react-native';
+import { StyleSheet, View, type TextInputInstance } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
@@ -423,7 +423,7 @@ function PasswordForm({ needsCurrent, onSave }: { needsCurrent: boolean; onSave:
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [busy, setBusy] = useState(false);
-  const nextRef = useRef<TextInput>(null);
+  const nextRef = useRef<TextInputInstance>(null);
   const ready = !(needsCurrent && !current) && next.length >= 8;
   const save = async () => {
     if (!ready || busy) return;

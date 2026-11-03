@@ -53,7 +53,7 @@ pnpm monorepo, Node 22+. `pnpm install`, then per package:
 `npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 228,
 mobile 388, domain 167 and web 39 tests, all passing.
 
-- `apps/mobile`: the app (Expo SDK 57, React Native 0.86, expo-router,
+- `apps/mobile`: the app (Expo SDK 58, React Native 0.88, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
   logic in `src/lib`.
   - `src/lib/api.ts` is the server client. In development the app reaches
@@ -102,6 +102,21 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Expo SDK 58** (3 Nov; the owner: "upgrade GymGO to expo sdk 58").
+  `expo install expo@^58.0.0 --fix`, then: app.json lists the plugins SDK
+  58 asked for and drops expo-build-properties' `enableSceneSupport`
+  (built in); `@expo/dom-webview` is a direct dependency only so pnpm stops
+  resolving the old 57 one; `patches/expo@58.0.22.patch` is the 57.0.25
+  patch on the delegates' new paths (`ios/Expo/`), keyed in
+  pnpm-workspace.yaml (bump both with expo). Code: refs typed as React
+  Native's `*Instance` types, `unstable_settings.anchor`, awaited
+  `File.write`, `backLabel` taking an undefined key (router 58's route keys
+  can be), GymMap.android's `WebView<object>` ref (webview 14 defaults its
+  props parameter to `undefined`, which makes them `never`). Left for
+  later: Gesture Handler 3 deprecates the `Gesture.Pan()` builder used in
+  (tabs)/_layout.tsx and PercentSlider (move to `usePanGesture` /
+  `useTapGesture`); R8 in Android release builds (keep rules may be
+  needed); Expo Go for SDK 58 in the stores, not confirmed on 3 Nov.
 - **30 more exercises and five more splits** (3 Nov; the owner: "find
   more exercises and workout splits and make animated icons for them").
   lib/workout.ts `EXERCISES` (96; `TIMED` adds wall-sit, hollow-hold,
@@ -111,8 +126,8 @@ mobile 388, domain 167 and web 39 tests, all passing.
   templates (full-body-3, body-weight, upper-lower, arnold, body-part),
   beginners first; app/templates.tsx a level filter, a mark per template,
   superset labels. The icons were checked by eye in the preview renders
-  (scratchpad tool, not in the repo); the Templates screen is not yet
-  seen in the browser.
+  (scratchpad tool, not in the repo); the Templates screen was driven in
+  the browser after the SDK 58 upgrade.
 - **Gym details from Apple Maps, through SerpApi** (3 Nov; the owner gave
   serpapi.com/apple-maps-places-api, "import it into gymgo but dont change
   ui"). That API looks places up by Apple's id only, so the search engine

@@ -21,7 +21,7 @@ export async function writePack(country: string, text: string): Promise<void> {
   try {
     const file = fileFor(country);
     if (!file.exists) file.create();
-    file.write(text);
+    await file.write(text);
   } catch {
     // Not kept: it's downloaded again next time.
   }

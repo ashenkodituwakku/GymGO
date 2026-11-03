@@ -76,8 +76,9 @@ const FACES = NEEDS_BUNDLED_FACES ? BUNDLED_FACES : {};
  * Settings → Appearance (the phone's, to start).
  */
 // A page opened straight from a link (a shared gym, say) sits on top of the
-// tabs, so it has a way back rather than being the whole app.
-export const unstable_settings = { initialRouteName: '(tabs)' };
+// tabs, so it has a way back rather than being the whole app. (`anchor`:
+// Expo Router 58 removed `initialRouteName`.)
+export const unstable_settings = { anchor: '(tabs)' };
 
 // If drawing any screen throws, this shows instead of a blank or developer page.
 export { CrashScreen as ErrorBoundary } from '@/components/CrashScreen';

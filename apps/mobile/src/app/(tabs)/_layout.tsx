@@ -25,7 +25,7 @@
 import { TabList, TabSlot, TabTrigger, Tabs, defaultTabsSlotRender, type TabTriggerSlotProps } from 'expo-router/ui';
 import { router, useFocusEffect, usePathname } from 'expo-router';
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
-import { Keyboard, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Keyboard, Platform, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import { ARRIVE, LIQUID, Pressable } from '@/components/motion';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -251,7 +251,7 @@ function GlassTabBar({ bottom }: { bottom: number }) {
 
 type TabButtonProps = TabTriggerSlotProps & { icon: PhosphorName; label: string; width: number; ignorePress: () => boolean };
 
-const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
+const TabButton = forwardRef<ViewInstance, TabButtonProps>(function TabButton(
   { icon, label, width, ignorePress, isFocused, onPress, ...props },
   ref,
 ) {

@@ -23,7 +23,7 @@
 
 import { useFocusEffect } from 'expo-router';
 import { Fragment, createContext, useCallback, useLayoutEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, type ViewInstance } from 'react-native';
 import Animated, { ReduceMotion, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { subscribeTheme, themeVersion } from '@/lib/theme';
 import { useGlassLevel } from './Glass';
@@ -90,7 +90,7 @@ function ScreenIn({ kind, focused, children }: { kind: ScreenKind; focused: bool
  * afterwards (no lasting transform under its fixed parts).
  */
 function ScreenInBrowser({ kind, focused, children }: { kind: ScreenKind; focused: boolean; children: ReactNode }) {
-  const ref = useRef<View>(null);
+  const ref = useRef<ViewInstance>(null);
   /** Set while the screen waits dimmed under a page opened over it. */
   const dimmed = useRef<Animation | null>(null);
 

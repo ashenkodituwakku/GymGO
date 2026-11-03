@@ -19,7 +19,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { Image, Linking, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Image, Linking, ScrollView, StyleSheet, View, useWindowDimensions, type ScrollViewInstance } from 'react-native';
 import { Pressable } from './motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { GymRecord } from '@gymgo/domain';
@@ -120,7 +120,7 @@ export function GooglePage({ record, onClose }: { record: GymRecord; onClose: ()
  */
 export function GooglePhotos({ photos, width }: { photos: GooglePlace['photos']; width: number }) {
   // Swiped on a phone; the arrows step through for a mouse or a keyboard.
-  const scroller = useRef<ScrollView>(null);
+  const scroller = useRef<ScrollViewInstance>(null);
   const [at, setAt] = useState(0);
   const show = (index: number) => {
     scroller.current?.scrollTo({ x: index * width, animated: true });

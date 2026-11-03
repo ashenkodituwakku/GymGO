@@ -7,7 +7,7 @@
 
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { HeroMark } from '@/components/HeroMark';
@@ -43,7 +43,7 @@ export default function LifetimeScreen() {
   const log = useTrainingLog(account.token);
   const life = useMemo(() => lifetimeStats(log.sessions), [log.sessions]);
   const unit = unitFor(prefs.country);
-  const shot = useRef<View>(null);
+  const shot = useRef<ViewInstance>(null);
   // The card at its size, or narrower on a small phone: the page's gutters and the picture's margin either side.
   const { width: screen } = useWindowDimensions();
   const cardWidth = Math.min(RECAP_WIDTH, screen - (space[4] + space[3]) * 2);

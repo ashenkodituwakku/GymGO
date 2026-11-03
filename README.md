@@ -50,6 +50,10 @@ The first start takes a minute or two. Then:
   and join the same Wi-Fi as your PC. Then scan the QR code in PowerShell:
   on an **iPhone** with the **Camera** app, on **Android** from inside
   **Expo Go**.
+  GymGO is on **Expo SDK 58**, so it needs the Expo Go that runs SDK 58.
+  If Expo Go says the project needs a newer version, update Expo Go from
+  the store; Expo said the SDK 58 one would reach the stores in the weeks
+  after 15 October 2026. Until it has, use GymGO in your PC's browser.
 
 If Windows asks whether Node.js may use the network, choose **Allow**.
 Without that, your phone can't reach your PC.
@@ -418,7 +422,7 @@ workouts against your goal, and this month's challenge. The widget itself
 isn't built, for two reasons:
 
 - **On iPhone it needs a paid Apple Developer account** (US$99 a year).
-  Expo's widgets package (`expo-widgets`, for SDK 57) shares the app's data
+  Expo's widgets package (`expo-widgets`, from SDK 57) shares the app's data
   with the widget through an App Group, which, as far as we know, Apple
   doesn't give to free Personal Team accounts. GymGO's iPhone builds use a
   free team (`scripts/gymgo-mac.sh`).

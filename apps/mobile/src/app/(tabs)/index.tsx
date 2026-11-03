@@ -14,7 +14,7 @@ import type { TemplateItem } from '@/lib/templates';
 import { useRouter } from 'expo-router';
 import { HOURS_LABELS } from '@gymgo/domain';
 import { useMemo, useRef, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View, useWindowDimensions, type ScrollViewInstance } from 'react-native';
 import { GymCard } from '@/components/GymCard';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { GymCardsSkeleton } from '@/components/Skeleton';
@@ -692,7 +692,7 @@ function Carousel({ children }: { children: React.ReactNode }) {
   // just looks cut off, so the row keeps to the column there.
   const { width } = useWindowDimensions();
   const bleed = width < PAGE_COLUMN + space[4] * 2;
-  const scroller = useRef<ScrollView>(null);
+  const scroller = useRef<ScrollViewInstance>(null);
   const [view, setView] = useState({ x: 0, width: 0, content: 0 });
   // A mouse can't swipe: in a browser's wide layout, buttons page the row
   // along, and each shows only while there's more that way.

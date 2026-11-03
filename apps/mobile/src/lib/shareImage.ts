@@ -13,7 +13,7 @@
 
 import * as Sharing from 'expo-sharing';
 import type { RefObject } from 'react';
-import { Platform, type View } from 'react-native';
+import { Platform, type ViewInstance } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
 export type ImageShareOutcome = 'shared' | 'downloaded' | 'cancelled' | 'failed';
@@ -54,7 +54,7 @@ async function shareOnWeb(target: unknown, fileName: string, title: string): Pro
 }
 
 /** Capture the view and share it as a picture. */
-export async function shareViewAsImage(view: RefObject<View | null>, options: { name: string; title: string }): Promise<ImageShareOutcome> {
+export async function shareViewAsImage(view: RefObject<ViewInstance | null>, options: { name: string; title: string }): Promise<ImageShareOutcome> {
   const target = view.current;
   if (!target) return 'failed';
   const fileName = imageFileName(options.name);

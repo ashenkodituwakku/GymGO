@@ -23,7 +23,7 @@
  */
 
 import { forwardRef, useCallback, useContext, useRef, type ForwardedRef } from 'react';
-import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps } from 'react-native';
+import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps, type ScrollViewInstance } from 'react-native';
 import { ScrollMemory } from '@/components/Redrawn';
 import { useOverhang, useScreenBottom, type Measurable } from '@/lib/layout';
 import { ambientGlow } from '@/lib/theme';
@@ -37,16 +37,16 @@ type Props = ScrollViewProps & {
 
 export const PageScroll = forwardRef(function PageScroll(
   { gap = 32, extraBottom = 0, contentContainerStyle, onLayout, onScroll, onContentSizeChange, scrollEventThrottle, style, ...props }: Props,
-  forwarded: ForwardedRef<ScrollView>,
+  forwarded: ForwardedRef<ScrollViewInstance>,
 ) {
   const screenBottom = useScreenBottom(gap);
   const { measureRef, onLayout: measure, overhang } = useOverhang();
   const memory = useContext(ScrollMemory);
-  const node = useRef<ScrollView | null>(null);
+  const node = useRef<ScrollViewInstance | null>(null);
   // Only the first time the content is laid out: back to where the page was before a redraw.
   const placed = useRef(false);
   const setRef = useCallback(
-    (next: ScrollView | null) => {
+    (next: ScrollViewInstance | null) => {
       node.current = next;
       measureRef(next as unknown as Measurable | null);
       if (typeof forwarded === 'function') forwarded(next);

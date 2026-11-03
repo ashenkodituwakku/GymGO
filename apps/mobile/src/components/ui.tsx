@@ -5,7 +5,7 @@
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { createContext, forwardRef, useContext, useEffect, useState, type ReactNode, type Ref } from 'react';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { ActivityIndicator, Platform, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Platform, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle, type TextInputInstance, type ViewInstance } from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
 import { TIER } from '@/lib/copy';
 import { monogram } from '@/lib/monogram';
@@ -521,7 +521,7 @@ export function TextField({
 }
 
 /** A bare text field, with focus shown the app's way in a browser. */
-export const Input = forwardRef<TextInput, TextInputProps>(function Input(props, ref) {
+export const Input = forwardRef<TextInputInstance, TextInputProps>(function Input(props, ref) {
   const focus = useFocus(props);
   return (
     <TextInput
@@ -652,7 +652,7 @@ export function PrimaryButton({
   /** Working on it: a spinner in place of the icon, and no second press. */
   busy?: boolean;
   /** To put keyboard focus back on the button (after a panel it opened closes). */
-  focusRef?: Ref<View>;
+  focusRef?: Ref<ViewInstance>;
 }) {
   // A quiet button is tinted with the accent (as an iPhone's secondary buttons are), not a flat grey.
   const fill = tone === 'brand' ? color.brandFill : tone === 'danger' ? color.dangerTint : color.brandTint;

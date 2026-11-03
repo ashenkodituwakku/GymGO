@@ -36,6 +36,7 @@ import {
   type PressableStateCallbackType,
   type StyleProp,
   type ViewStyle,
+  type ViewInstance,
 } from 'react-native';
 import Animated, {
   Easing,
@@ -203,7 +204,7 @@ export function Pressy({
   exiting,
   layout,
   ...props
-}: Omit<PressableProps, 'style'> & ViewMotion & { scaleTo?: number; style?: PressyStyle; children?: ReactNode; ref?: Ref<View> }) {
+}: Omit<PressableProps, 'style'> & ViewMotion & { scaleTo?: number; style?: PressyStyle; children?: ReactNode; ref?: Ref<ViewInstance> }) {
   const press = usePressScale(scaleTo);
   const [pressed, setPressed] = useState(false);
   const resolved = typeof style === 'function' ? style({ pressed, hovered: false } as PressableStateCallbackType) : style;
@@ -254,7 +255,7 @@ function scaleOf(transform: ViewStyle['transform']): number | null {
  */
 export const Pressable = forwardRef(function Pressable(
   { style, onPressIn, onPressOut, onHoverIn, onHoverOut, ...props }: PressableProps,
-  ref: ForwardedRef<View>,
+  ref: ForwardedRef<ViewInstance>,
 ) {
   const [pressed, setPressed] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -276,7 +277,8 @@ export const Pressable = forwardRef(function Pressable(
   const scales = restScale !== null && downScale !== null && restScale !== downScale;
 
   const feedback = useAnimatedStyle(() => {
-    const out: ViewStyle = {};
+    // React Native's styles are read-only; this one is built up here.
+    const out: { -readonly [K in keyof ViewStyle]: ViewStyle[K] } = {};
     if (fadesOpacity) out.opacity = restOpacity + (downOpacity - restOpacity) * highlight.value;
     if (fadesColor) out.backgroundColor = interpolateColor(highlight.value, [0, 1], [restColor, downColor]) as string;
     if (scales) out.transform = [{ scale: restScale! + (downScale! - restScale!) * shrink.value }];

@@ -40,7 +40,9 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, userLocation = null, onSelect, onMapPress, onRegionChange },
   ref,
 ) {
-  const web = useRef<WebView>(null);
+  // `WebView<object>`: react-native-webview 14 defaults its props parameter to
+  // `undefined`, and `WebViewProps & undefined` is `never`.
+  const web = useRef<WebView<object>>(null);
   const ready = useRef(false);
   const kept = useRef<Partial<Record<Kept, string>>>({});
   /** A camera move asked for before the page was ready: only the latest matters. */

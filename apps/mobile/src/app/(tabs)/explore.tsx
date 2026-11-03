@@ -19,7 +19,7 @@ import BottomSheet, {
 } from '@gorhom/bottom-sheet';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { ActionSheetIOS, ActivityIndicator, BackHandler, Keyboard, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type TextInput } from 'react-native';
+import { ActionSheetIOS, ActivityIndicator, BackHandler, Keyboard, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type TextInputInstance } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isWithinBox, type BoundingBox, type HoursNeed } from '@gymgo/domain';
 import { withoutKnown } from '@gymgo/osm';
@@ -155,7 +155,7 @@ function MapScreen() {
   const mainSheet = useRef<BottomSheet>(null);
   const placeSheet = useRef<BottomSheetModal>(null);
   const filterSheet = useRef<BottomSheetModal>(null);
-  const searchInput = useRef<TextInput>(null);
+  const searchInput = useRef<TextInputInstance>(null);
 
   // "As of" is fixed per render pass so the list and the card agree on
   // freshness; it moves on whenever the filters or data do.

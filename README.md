@@ -497,9 +497,11 @@ not advice for anyone in particular, and the screen says to start light.
 
 **Monthly report** (Progress, free): a month of training against the
 month before: workouts, days trained, time, working sets, weight lifted and
-reps; the records broken that month; the exercises you did most; your sets
-for each muscle (a half for a muscle worked second) with the month before
-as a lighter bar; and the biggest workout. It opens on the last finished
+reps (time's change in hours and minutes); the records broken that month;
+the exercises you did most; your sets for each muscle (a half for a muscle
+worked second) with the month before as a lighter bar; and the biggest
+workout. When the month before had no workouts there's nothing to compare
+with, and it says so once rather than "+10,605 kg" on every total. It opens on the last finished
 month you trained in, and ‹ › step through the months with a workout.
 **Share this month** sends the totals in a few lines, never which days you
 went. Warm-ups never count; months are by this device's calendar.
@@ -520,8 +522,9 @@ them**; **Then and now** puts the first beside the latest.
 **Body weight and measurements** (Progress → Your body, free): a weigh-in a
 day, and **Body measurements**: waist, chest, hips, neck, shoulders, upper
 arm, forearm, thigh and calf (in centimetres, or inches where weights are in
-pounds) and body fat %, each with where to put the tape. Type any of them
-for today (the latest of each shows as a guide; measuring one again today
+pounds) and body fat %, each with where to put the tape. The form shows the
+ones you take (waist, chest, upper arm and body fat to start), with the
+rest a tap away (**6 more measurements**). Type any of them for today (the latest of each shows as a guide; measuring one again today
 replaces it); the latest of each shows with how it's changed over about a
 month, said as it is and never as better or worse; tap one to chart it;
 every day you measured is listed, to delete one. Values no body measures
@@ -568,14 +571,17 @@ workouts go to your log.
   replaces the ones not done yet.
 - **RPE** (Profile → Settings → **RPE on sets**, off until you switch it
   on): a ticked set asks how hard it was, 6 to 10 in half steps, each
-  said in reps you had left (10 is nothing left, 8 is two more). Tap the
-  line under a set to change or clear it. Kept with the set, in the CSV and
-  in what GymPal sees when you let him use your log.
+  said in reps you had left (10 is nothing left, 8 is two more). It shows
+  in its own **RPE** column beside the reps, as a number, or a dash on a
+  done set without one; tap it to change or clear it. A warm-up has none
+  (making a rated set a warm-up drops it). Kept with the set, in the CSV
+  and in what GymPal sees when you let him use your log.
 - **Notes on an exercise** (free): **Note** under an exercise in a
   workout, or **Add a note** on its page, pins a line or two to it ("seat
   on 4, grip just outside the rings"), shown in a tinted box each time you
   do it and on its page; tap it to change it, blank removes it. Up to 200
-  characters, kept on this device only, like your gym notes.
+  characters (the last 50 counted down as you type), kept on this device
+  only, like your gym notes.
 - **Rest per exercise.** **Rest** beside an exercise in a workout picks its
   rest for this workout: off, or 30 s to 5 min. The plan line and the
   timer follow; a superset still rests for the longest of its exercises.
@@ -626,6 +632,8 @@ workouts go to your log.
   that isn't a warm-up has to stay, and the server checks the change as it
   checks a new workout. Records, totals and charts follow, since they're
   worked out from the log; the day and the time it started stay as logged.
+  Leaving with changes not saved (Cancel, back, a swipe, closing the tab)
+  asks **Discard your changes?** first; Save doesn't.
 - **Notes.** After Finish, **Add a note** under the summary ("left knee a
   bit sore", "new shoes"); a workout in Progress shows its note's first
   line, and opening it lets you change or clear it. Up to 500 characters,

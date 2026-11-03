@@ -21,7 +21,7 @@ import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Chip, Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ChoiceSheet } from '@/components/ChoiceSheet';
-import { KIND_INK, KIND_MESSAGE, KIND_OPTIONS, RpePicker, askSetKindNatively } from '@/components/SetKinds';
+import { KIND_INK, KIND_MESSAGE, KIND_OPTIONS, RpePicker, askSetKindNatively, RpeCell, RpeHead } from '@/components/SetKinds';
 import { ExerciseNote } from '@/components/ExerciseNote';
 import { useExerciseNote } from '@/lib/exerciseNotes';
 import { leadExercise } from '@/lib/exerciseGlyphs';
@@ -60,7 +60,6 @@ import {
   recordsBroken,
   repRange,
   restLabel,
-  rpeMeaning,
   setCount,
   setTags,
   setsSummary,
@@ -622,6 +621,8 @@ const ExerciseLog = memo(function ExerciseLog({
   const [noting, setNoting] = useState(false);
   const [resting, setResting] = useState(false);
   const tags = useMemo(() => setTags(item.sets), [item.sets]);
+  // With RPE on, its own column in each set's row: closer gaps and fields so it fits a 320-point phone.
+  const rpeColumn = rpeOn && !timed;
 
   // What to show until you type: the target, else last time, else the plan.
   const lastWeight = last?.sets.find((set) => set.weight)?.weight ?? null;
@@ -637,10 +638,13 @@ const ExerciseLog = memo(function ExerciseLog({
       index,
       item.sets.map((set, i) => {
         if (i !== at) return set;
-        const { kind: _old, ...rest } = set;
-        return kind === 'normal' ? rest : { ...rest, kind };
+        // A warm-up is meant to be easy, so it has no RPE: one given before goes.
+        const { kind: _old, rpe, ...rest } = set;
+        if (kind === 'normal') return { ...rest, ...(rpe !== undefined ? { rpe } : {}) };
+        return { ...rest, kind, ...(rpe !== undefined && kind !== 'warmup' ? { rpe } : {}) };
       }),
     );
+    if (kind === 'warmup' && rating === at) setRating(null);
   };
   /** iPhone: Apple's action sheet. Elsewhere GymGO's own (ChoiceSheet, below). */
   const pickKind = (at: number) => {
@@ -811,18 +815,19 @@ const ExerciseLog = memo(function ExerciseLog({
       )}
 
       {!timed && (
-        <View style={styles.setHead}>
+        <View style={[styles.setHead, rpeColumn && styles.tight]}>
           <Txt variant="caption" color={color.labelTertiary} style={styles.setCol}>
             SET
           </Txt>
-          <Txt variant="caption" color={color.labelTertiary} style={styles.inputCol}>
+          <Txt variant="caption" color={color.labelTertiary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
             {bodyWeight ? 'ADDED' : unit.toUpperCase()}
           </Txt>
           <View style={styles.times} />
-          <Txt variant="caption" color={color.labelTertiary} style={styles.inputCol}>
+          <Txt variant="caption" color={color.labelTertiary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
             REPS
           </Txt>
           <View style={styles.flex} />
+          {rpeColumn && <RpeHead />}
           <View style={styles.tickCol} />
         </View>
       )}
@@ -831,7 +836,7 @@ const ExerciseLog = memo(function ExerciseLog({
           a screen reader would otherwise say "Set 1 done" once per exercise. */}
       {item.sets.map((set, at) => (
         <Fragment key={at}>
-        <View style={[styles.setRow, set.done && styles.setDone, !!bests[at] && styles.setBest]}>
+        <View style={[styles.setRow, rpeColumn && styles.tight, set.done && styles.setDone, !!bests[at] && styles.setBest]}>
           {/* A hold or a run has nothing to type: a set of them reads "Set 2 · 30–45 s". */}
           {timed ? (
             <Txt variant="subhead" color={color.labelSecondary} style={[styles.flex, face('semibold')]}>
@@ -864,7 +869,7 @@ const ExerciseLog = memo(function ExerciseLog({
                 keyboardType="decimal-pad"
                 inputMode="decimal"
                 editable={!set.done}
-                style={[styles.input, set.done && styles.inputDone]}
+                style={[styles.input, rpeColumn && styles.narrow, set.done && styles.inputDone]}
                 accessibilityLabel={`${name}, ${tags[at]!.spoken} weight in ${unit}${bodyWeight ? ', blank for body weight' : ''}`}
               />
               <Txt variant="subhead" color={color.labelTertiary} style={styles.times}>
@@ -878,12 +883,21 @@ const ExerciseLog = memo(function ExerciseLog({
                 keyboardType="number-pad"
                 inputMode="numeric"
                 editable={!set.done}
-                style={[styles.input, set.done && styles.inputDone]}
+                style={[styles.input, rpeColumn && styles.narrow, set.done && styles.inputDone]}
                 accessibilityLabel={`${name}, ${tags[at]!.spoken} reps`}
               />
             </>
           )}
           {!timed && <View style={styles.flex} />}
+          {/* How hard it was, once it's done (not a warm-up: it's meant to be easy). */}
+          {rpeColumn && (
+            <RpeCell
+              value={set.rpe}
+              label={`${name}, ${tags[at]!.spoken}`}
+              open={rating === at}
+              onPress={set.done && set.kind !== 'warmup' ? () => setRating(rating === at ? null : at) : null}
+            />
+          )}
           <Pressable
             onPress={() => tick(at)}
             accessibilityRole="checkbox"
@@ -894,21 +908,8 @@ const ExerciseLog = memo(function ExerciseLog({
             <Tick done={set.done} />
           </Pressable>
         </View>
-        {/* With RPE on: how hard a ticked set was, asked as it's ticked and changeable after. */}
-        {rpeOn && !timed && set.done && set.kind !== 'warmup' && rating !== at && (
-          <Pressable
-            onPress={() => setRating(at)}
-            accessibilityRole="button"
-            accessibilityLabel={set.rpe !== undefined ? `${name}, ${tags[at]!.spoken}: RPE ${set.rpe}, ${rpeMeaning(set.rpe)}. Change it` : `${name}, ${tags[at]!.spoken}: add how hard it was (RPE)`}
-            hitSlop={4}
-            style={({ pressed }) => [styles.rpeLine, pressed && { opacity: 0.6 }]}
-          >
-            <Txt variant="caption" color={set.rpe !== undefined ? color.labelSecondary : color.brand} style={set.rpe === undefined && face('semibold')}>
-              {set.rpe !== undefined ? `RPE ${set.rpe} · ${rpeMeaning(set.rpe)}` : 'How hard? Add RPE'}
-            </Txt>
-          </Pressable>
-        )}
-        {rpeOn && !timed && rating === at && <RpePicker label={`${name}, ${tags[at]!.spoken}`} value={set.rpe ?? null} onPick={(rpe) => setRpe(at, rpe)} onClose={() => setRating(null)} />}
+        {/* With RPE on: how hard a ticked set was, asked as it's ticked; its cell in the row changes it after. */}
+        {rpeColumn && rating === at && <RpePicker label={`${name}, ${tags[at]!.spoken}`} value={set.rpe ?? null} onPick={(rpe) => setRpe(at, rpe)} onClose={() => setRating(null)} />}
         </Fragment>
       ))}
 
@@ -1364,7 +1365,9 @@ const styles = themed(() => StyleSheet.create({
   setNumber: { width: 36, minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 3 },
   setTag: { minWidth: 22, height: 24, alignItems: 'center', justifyContent: 'center', borderRadius: 6 },
   setTagKind: { backgroundColor: color.fill },
-  rpeLine: { alignSelf: 'flex-start', marginLeft: 36 + space[2], marginTop: -2, paddingVertical: 2 },
+  // With RPE's column: the row's gaps and fields close up to fit a 320-point phone.
+  tight: { gap: 6 },
+  narrow: { minWidth: 56 },
   setRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 3, paddingHorizontal: space[2], marginHorizontal: -space[2], borderRadius: radius.md, borderCurve: 'continuous' },
   setDone: { backgroundColor: alpha(color.good, 0.08) },
   // A set that beats your best: gold, like the records on the summary.

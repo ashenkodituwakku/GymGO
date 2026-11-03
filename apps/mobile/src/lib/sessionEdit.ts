@@ -50,7 +50,8 @@ export function checkEdits(drafts: readonly EditedExercise[], unit: WeightUnit):
       if (reps === undefined || reps === 0) return { ok: false, problem: `${where}: type how many reps, or remove the set.` };
       const weight = parseWeight(set.weight);
       if (weight === undefined) return { ok: false, problem: `${where}: that weight doesn’t read as a number of ${unit}.` };
-      sets.push({ weight, reps, ...(set.kind ? { kind: set.kind } : {}), ...(set.rpe !== undefined ? { rpe: set.rpe } : {}) });
+      // A warm-up carries no RPE (one given before it was made a warm-up is dropped).
+      sets.push({ weight, reps, ...(set.kind ? { kind: set.kind } : {}), ...(set.rpe !== undefined && set.kind !== 'warmup' ? { rpe: set.rpe } : {}) });
     }
     if (sets.length > 0) exercises.push({ exerciseId: draft.exerciseId, sets });
   }

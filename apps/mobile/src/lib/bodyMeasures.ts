@@ -136,4 +136,14 @@ export function latestOf(days: readonly MeasureDay[], id: MeasureId): { value: n
   return { value: latest.value, date: latest.date, change };
 }
 
+/** What people measure first: the form starts with these until you've measured something. */
+export const STARTER_MEASURES: readonly MeasureId[] = ['waist', 'chest', 'upperArm', 'bodyFat'];
+
+/** The measures the form shows: the ones you've measured before, in the usual order; the starter four if none. */
+export function formMeasures(days: readonly MeasureDay[]): MeasureId[] {
+  const used = new Set(days.flatMap((day) => Object.keys(day.values)));
+  const ids = MEASURES.map((measure) => measure.id).filter((id) => used.has(id));
+  return ids.length > 0 ? ids : [...STARTER_MEASURES];
+}
+
 export const measureDays = deviceStore<MeasureDay[]>('gymgo.body-measures.v1', cleanMeasureDays, []);

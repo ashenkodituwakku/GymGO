@@ -4,10 +4,11 @@
  * RPE, sets added or removed, exercises added or removed. Saved to your
  * account (PATCH /api/training/:id), checked as a new workout is, and your
  * records and totals follow, since they're worked out from the log. The day
- * and the time it started stay as logged.
+ * and the time it started stay as logged. Leaving with changes not saved
+ * (back, a swipe, Cancel, closing the tab) asks first.
  */
 
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, usePreventRemove, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { AddExercise } from '@/components/AddExercise';
@@ -18,16 +19,17 @@ import { Pressable } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
-import { KIND_INK, KIND_MESSAGE, KIND_OPTIONS, RpePicker, askSetKindNatively } from '@/components/SetKinds';
+import { KIND_INK, KIND_MESSAGE, KIND_OPTIONS, RpeCell, RpeHead, RpePicker, askSetKindNatively } from '@/components/SetKinds';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Input, PrimaryButton, Segmented, TextField, Txt } from '@/components/ui';
 import { ApiError, api } from '@/lib/api';
+import { askToDiscard } from '@/lib/askToDiscard';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { checkEdits, draftsOf, finishFor, minutesOf, type EditedExercise } from '@/lib/sessionEdit';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
-import { rpeMeaning, setTags, type DraftSet, type SetKind, type WeightUnit } from '@/lib/training';
+import { setTags, type DraftSet, type SetKind, type WeightUnit } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
 import { EXERCISES, exerciseName } from '@/lib/workout';
 
@@ -60,11 +62,28 @@ export default function SessionEditScreen() {
   const [saving, setSaving] = useState(false);
   const [typing, setTyping] = useState<SetAt | null>(null);
   const [rating, setRating] = useState<SetAt | null>(null);
+  // The workout as it was logged, to tell whether anything's been changed.
+  const [original, setOriginal] = useState<string | null>(null);
+  // Saved, or discarded on purpose: leaving no longer asks.
+  const [leaving, setLeaving] = useState(false);
 
   // Filled from the log once it's there; never again, so typing isn't undone by a reload.
   useEffect(() => {
-    if (session && !draft) setDraft({ name: session.name, unit: session.unit, minutes: String(minutesOf(session)), exercises: draftsOf(session) });
+    if (session && !draft) {
+      const filled = { name: session.name, unit: session.unit, minutes: String(minutesOf(session)), exercises: draftsOf(session) };
+      setDraft(filled);
+      setOriginal(JSON.stringify(filled));
+    }
   }, [session, draft]);
+
+  const changed = draft !== null && original !== null && JSON.stringify(draft) !== original;
+  // Back, a swipe, Cancel or closing the tab with changes not saved: ask before they're lost.
+  const stopAsking = usePreventRemove(changed && !leaving, ({ repeat }) =>
+    askToDiscard('this workout', () => {
+      setLeaving(true);
+      repeat();
+    }),
+  );
 
   const inWorkout = useMemo(() => draft?.exercises.map((item) => item.exerciseId) ?? [], [draft?.exercises]);
   const close = () => (router.canGoBack() ? router.back() : router.replace('/progress'));
@@ -108,11 +127,15 @@ export default function SessionEditScreen() {
       where.exercise,
       draft.exercises[where.exercise]!.sets.map((set, at) => (at === where.set ? patch(set) : set)),
     );
-  const setKind = (where: SetAt, kind: SetKind | 'normal') =>
+  const setKind = (where: SetAt, kind: SetKind | 'normal') => {
     changeSet(where, (set) => {
-      const { kind: _old, ...rest } = set;
-      return kind === 'normal' ? rest : { ...rest, kind };
+      // A warm-up is meant to be easy, so it has no RPE: one given before goes.
+      const { kind: _old, rpe, ...rest } = set;
+      if (kind === 'normal') return { ...rest, ...(rpe !== undefined ? { rpe } : {}) };
+      return { ...rest, kind, ...(rpe !== undefined && kind !== 'warmup' ? { rpe } : {}) };
     });
+    if (kind === 'warmup' && rating?.exercise === where.exercise && rating.set === where.set) setRating(null);
+  };
   const setRpe = (where: SetAt, rpe: number | null) => {
     changeSet(where, (set) => {
       const { rpe: _old, ...rest } = set;
@@ -137,6 +160,9 @@ export default function SessionEditScreen() {
       const { session: saved } = await api.editTraining(token, session.id, { name, unit: draft.unit, finishedAt, exercises: checked.exercises });
       log.update(saved);
       haptic.success();
+      // Saved: nothing to lose, so leaving doesn't ask.
+      setLeaving(true);
+      stopAsking();
       close();
     } catch (error) {
       setProblem(error instanceof ApiError ? error.message : 'Couldn’t reach the GymGO server. Your changes are still here; try again.');
@@ -194,6 +220,8 @@ export default function SessionEditScreen() {
         const name = exerciseName(item.exerciseId);
         const tags = setTags(item.sets);
         const bodyWeight = bodyWeightOnly(item.exerciseId);
+        // RPE's column: with it switched on, or for an exercise with a set that has one.
+        const rpeColumn = prefs.rpe || item.sets.some((set) => set.rpe !== undefined);
         return (
           <View key={`${item.exerciseId}-${exerciseAt}`} style={styles.card}>
             <View style={styles.head}>
@@ -218,18 +246,19 @@ export default function SessionEditScreen() {
               </Pressable>
             </View>
             {item.sets.length > 0 && (
-              <View style={styles.setHead}>
+              <View style={[styles.setHead, rpeColumn && styles.tight]}>
                 <Txt variant="caption" color={color.labelTertiary} style={styles.setCol}>
                   SET
                 </Txt>
-                <Txt variant="caption" color={color.labelTertiary} style={styles.inputCol}>
+                <Txt variant="caption" color={color.labelTertiary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
                   {bodyWeight ? 'ADDED' : draft.unit.toUpperCase()}
                 </Txt>
                 <View style={styles.times} />
-                <Txt variant="caption" color={color.labelTertiary} style={styles.inputCol}>
+                <Txt variant="caption" color={color.labelTertiary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
                   REPS
                 </Txt>
                 <View style={styles.flex} />
+                {rpeColumn && <RpeHead />}
                 <View style={styles.removeCol} />
               </View>
             )}
@@ -239,7 +268,7 @@ export default function SessionEditScreen() {
               const rated = rating?.exercise === exerciseAt && rating.set === at;
               return (
                 <View key={at}>
-                  <View style={styles.setRow}>
+                  <View style={[styles.setRow, rpeColumn && styles.tight]}>
                     <Pressable
                       onPress={() => pickKind(where, spoken)}
                       accessibilityRole="button"
@@ -259,7 +288,7 @@ export default function SessionEditScreen() {
                       placeholder={bodyWeight ? 'BW' : '—'}
                       keyboardType="decimal-pad"
                       inputMode="decimal"
-                      style={styles.input}
+                      style={[styles.input, rpeColumn && styles.narrow]}
                       accessibilityLabel={`${spoken} weight in ${draft.unit}${bodyWeight ? ', blank for body weight' : ''}`}
                     />
                     <Txt variant="subhead" color={color.labelTertiary} style={styles.times}>
@@ -271,10 +300,13 @@ export default function SessionEditScreen() {
                       placeholder="—"
                       keyboardType="number-pad"
                       inputMode="numeric"
-                      style={styles.input}
+                      style={[styles.input, rpeColumn && styles.narrow]}
                       accessibilityLabel={`${spoken} reps`}
                     />
                     <View style={styles.flex} />
+                    {rpeColumn && (
+                      <RpeCell value={set.rpe} label={spoken} open={rated} onPress={set.kind !== 'warmup' ? () => setRating(rated ? null : where) : null} />
+                    )}
                     <Pressable
                       onPress={() => {
                         haptic.select();
@@ -289,20 +321,6 @@ export default function SessionEditScreen() {
                       <Icon name="minus" size={16} color={color.dangerInk} />
                     </Pressable>
                   </View>
-                  {/* RPE, as when logging: with it switched on, or on a set that has one. */}
-                  {(prefs.rpe || set.rpe !== undefined) && set.kind !== 'warmup' && !rated && (
-                    <Pressable
-                      onPress={() => setRating(where)}
-                      accessibilityRole="button"
-                      accessibilityLabel={set.rpe !== undefined ? `${spoken}: RPE ${set.rpe}, ${rpeMeaning(set.rpe)}. Change it` : `${spoken}: add how hard it was (RPE)`}
-                      hitSlop={4}
-                      style={({ pressed }) => [styles.rpeLine, pressed && { opacity: 0.6 }]}
-                    >
-                      <Txt variant="caption" color={set.rpe !== undefined ? color.labelSecondary : color.brand} style={set.rpe === undefined && face('semibold')}>
-                        {set.rpe !== undefined ? `RPE ${set.rpe} · ${rpeMeaning(set.rpe)}` : 'Add RPE'}
-                      </Txt>
-                    </Pressable>
-                  )}
                   {rated && <RpePicker label={spoken} value={set.rpe ?? null} onPick={(rpe) => setRpe(where, rpe)} onClose={() => setRating(null)} />}
                 </View>
               );
@@ -389,7 +407,9 @@ const styles = themed(() =>
       color: color.label,
       ...face('semibold'),
     },
-    rpeLine: { alignSelf: 'flex-start', marginLeft: 36 + space[2], paddingVertical: 2 },
+    // With RPE's column: the row's gaps and fields close up to fit a 320-point phone.
+    tight: { gap: 6 },
+    narrow: { minWidth: 56 },
     actions: { gap: space[2], marginTop: space[2] },
     center: { textAlign: 'center' },
   }),

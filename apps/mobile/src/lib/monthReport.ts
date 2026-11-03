@@ -137,6 +137,17 @@ export function changeWord(now: number, before: number): string {
   return difference === 0 ? 'same' : `${difference > 0 ? '+' : '−'}${Math.abs(difference).toLocaleString()}`;
 }
 
+/** "+1 h 5 min", "−40 min", "same": time against the month before, in whole minutes, as the Time tile shows it. */
+export function timeChangeWord(nowMinutes: number, beforeMinutes: number): string {
+  const difference = Math.round(nowMinutes) - Math.round(beforeMinutes);
+  if (difference === 0) return 'same';
+  const size = Math.abs(difference);
+  const hours = Math.floor(size / 60);
+  const minutes = size % 60;
+  const words = hours === 0 ? `${minutes} min` : minutes === 0 ? `${hours} h` : `${hours} h ${minutes} min`;
+  return `${difference > 0 ? '+' : '−'}${words}`;
+}
+
 /**
  * The month in a few lines to send: totals only, never which days you
  * went, as Your week does.

@@ -1,13 +1,15 @@
 /**
  * Kinds of set and RPE, for logging a workout (app/train.tsx) and changing
  * one after (app/session-edit.tsx): the choices for a set's kind (an
- * ordinary set, a warm-up, a drop set, one to failure), each kind's ink, and
- * the row of chips asking how hard a set was.
+ * ordinary set, a warm-up, a drop set, one to failure), each kind's ink,
+ * RPE's column in a set's row, and the row of chips asking how hard a set
+ * was.
  */
 
 import { ActionSheetIOS, Platform, StyleSheet, View } from 'react-native';
 import { RPE_VALUES, SET_KIND_WORDS, rpeMeaning, type SetKind } from '@/lib/training';
-import { color, space, themed } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
+import { Pressable } from './motion';
 import { Chip, Txt } from './ui';
 
 /** The kinds of set, as the picker lists them. */
@@ -39,6 +41,39 @@ export function askSetKindNatively(title: string, onPick: (kind: SetKind | 'norm
   return true;
 }
 
+/** RPE's column heading, over the cells below. */
+export function RpeHead() {
+  return (
+    <Txt variant="caption" color={color.labelTertiary} style={styles.head}>
+      RPE
+    </Txt>
+  );
+}
+
+/**
+ * A set's RPE in its own column of the row, as Hevy and Strong show it: the
+ * number, a dash to add one, or an empty space where it doesn't apply (a
+ * warm-up, or a set not done yet). A tap opens the chips under the row.
+ */
+export function RpeCell({ value, label, open, onPress }: { value: number | undefined; label: string; open: boolean; onPress: (() => void) | null }) {
+  if (!onPress) return <View style={styles.cell} />;
+  const rated = value !== undefined;
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      aria-expanded={open}
+      accessibilityLabel={rated ? `${label}: RPE ${value}, ${rpeMeaning(value)}. Change it` : `${label}: add how hard it was (RPE)`}
+      hitSlop={6}
+      style={({ pressed }) => [styles.cell, rated ? styles.cellRated : styles.cellEmpty, open && styles.cellOpen, pressed && { opacity: 0.6 }]}
+    >
+      <Txt variant="footnote" color={rated ? color.label : color.labelTertiary} style={face('semibold')} numberOfLines={1}>
+        {rated ? String(value) : '–'}
+      </Txt>
+    </Pressable>
+  );
+}
+
 /** How hard a set was, 6 to 10, in a row of chips under it: one tap picks, and closes it. */
 export function RpePicker({ label, value, onPick, onClose }: { label: string; value: number | null; onPick: (rpe: number | null) => void; onClose: () => void }) {
   return (
@@ -56,10 +91,18 @@ export function RpePicker({ label, value, onPick, onClose }: { label: string; va
   );
 }
 
+/** RPE's column: "9.5" fits; with it, a row's gaps and fields close up a little to fit a 320-point phone. */
+export const RPE_COLUMN = 32;
+
 const styles = themed(() =>
   StyleSheet.create({
     // In line with the set's numbers, under its number column.
     picker: { gap: space[2], paddingVertical: space[2], paddingLeft: 36 + space[2] },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    head: { width: RPE_COLUMN, textAlign: 'center' },
+    cell: { width: RPE_COLUMN, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm, borderCurve: 'continuous' },
+    cellRated: { backgroundColor: color.fill },
+    cellEmpty: { borderWidth: StyleSheet.hairlineWidth * 2, borderColor: color.separator },
+    cellOpen: { borderWidth: 2, borderColor: color.brand },
   }),
 );

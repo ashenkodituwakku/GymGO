@@ -734,7 +734,8 @@ export function draftToLogged(items: Array<{ exerciseId: string; sets: DraftSet[
         const weight = parseWeight(set.weight);
         const reps = parseReps(set.reps);
         if (weight === undefined || reps === undefined || reps === 0) return [];
-        return [{ weight, reps, ...(set.kind ? { kind: set.kind } : {}), ...(set.rpe !== undefined && isRpe(set.rpe) ? { rpe: set.rpe } : {}) }];
+        // A warm-up is meant to be easy: no RPE, even one given before it was made a warm-up.
+        return [{ weight, reps, ...(set.kind ? { kind: set.kind } : {}), ...(set.rpe !== undefined && isRpe(set.rpe) && set.kind !== 'warmup' ? { rpe: set.rpe } : {}) }];
       }),
     }))
     .filter((item) => item.sets.length > 0);

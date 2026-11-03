@@ -26,6 +26,12 @@ describe('editing a logged workout', () => {
     expect(drafts[1]!.sets).toEqual([{ weight: '', reps: '20', done: true }]);
     const back = checkEdits(drafts, 'kg');
     expect(back).toEqual({ ok: true, exercises: [{ exerciseId: 'bench-press', sets: [{ weight: 60, reps: 10, kind: 'warmup' }, { weight: 100, reps: 5, rpe: 8 }] }, { exerciseId: 'push-up', sets: [{ weight: null, reps: 20 }] }] });
+    // A rated set made a warm-up keeps no RPE.
+    const warmed = draftsOf(session);
+    warmed[0]!.sets[1] = { ...warmed[0]!.sets[1]!, kind: 'warmup' };
+    warmed[0]!.sets.push({ weight: '100', reps: '5', done: true });
+    const saved = checkEdits(warmed, 'kg');
+    expect(saved.ok && saved.exercises[0]!.sets[1]).toEqual({ weight: 100, reps: 5, kind: 'warmup' });
   });
 
   it('says what’s wrong, naming the exercise and set, rather than dropping it', () => {

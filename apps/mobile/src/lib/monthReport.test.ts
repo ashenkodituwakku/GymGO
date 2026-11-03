@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { changeWord, monthKeyOf, monthReport, monthShareText, monthsWithTraining, reportMonth, shiftMonth } from './monthReport';
+import { changeWord, monthKeyOf, monthReport, monthShareText, monthsWithTraining, reportMonth, shiftMonth, timeChangeWord } from './monthReport';
 import type { LoggedSet, TrainingSession } from './training';
 
 let next = 0;
@@ -69,5 +69,12 @@ describe('a month’s report', () => {
     expect(changeWord(2.4, 2)).toBe('same');
     const text = monthShareText(report, 'October 2026', '2,850 kg');
     expect(text).toBe('October 2026 on GymGO\n3 workouts · 2 h 20 min · 8 sets · 2,850 kg lifted\n3 personal records\nMost done: Barbell back squat');
+  });
+
+  it('says a change in time in hours and minutes, as the Time tile says the total', () => {
+    expect(timeChangeWord(375, 0)).toBe('+6 h 15 min');
+    expect(timeChangeWord(60, 180)).toBe('−2 h');
+    expect(timeChangeWord(100, 140)).toBe('−40 min');
+    expect(timeChangeWord(90.4, 90)).toBe('same');
   });
 });

@@ -4,7 +4,7 @@ vi.mock('@react-native-async-storage/async-storage', () => ({
   default: { getItem: async () => null, setItem: async () => undefined, removeItem: async () => undefined },
 }));
 
-const { cleanMeasureDays, keptValue, latestOf, lengthUnitFor, seriesOf, shownValue, valueLabel, withMeasures, withoutDay } = await import('./bodyMeasures');
+const { STARTER_MEASURES, cleanMeasureDays, formMeasures, keptValue, latestOf, lengthUnitFor, seriesOf, shownValue, valueLabel, withMeasures, withoutDay } = await import('./bodyMeasures');
 
 describe('body measurements', () => {
   it('reads what’s typed in cm, inches or %, and refuses what no body measures', () => {
@@ -54,5 +54,15 @@ describe('body measurements', () => {
     // Less than a week apart: nothing to say yet.
     expect(latestOf([{ date: '2026-10-25', values: { neck: 38 } }, { date: '2026-10-28', values: { neck: 38.5 } }], 'neck')!.change).toBeNull();
     expect(seriesOf(days, 'chest')).toEqual([{ date: '2026-09-20', value: 101 }, { date: '2026-10-28', value: 102 }]);
+  });
+
+  it('starts the form with four common measures, then shows the ones you measure, in the usual order', () => {
+    expect(formMeasures([])).toEqual(['waist', 'chest', 'upperArm', 'bodyFat']);
+    expect(STARTER_MEASURES).toHaveLength(4);
+    const days = [
+      { date: '2026-09-20', values: { calf: 38, waist: 86 } },
+      { date: '2026-10-20', values: { neck: 39, waist: 85 } },
+    ];
+    expect(formMeasures(days)).toEqual(['waist', 'neck', 'calf']);
   });
 });

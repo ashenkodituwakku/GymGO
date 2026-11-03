@@ -57,7 +57,8 @@ export function ExerciseNote({
         />
         <View style={styles.editFoot}>
           <Txt variant="caption" color={color.labelSecondary} style={styles.flex}>
-            Shown each time you do it. Only on this device.
+            {/* Near the limit, how much room is left; clearing it removes the note. */}
+            {`Shown each time you do it. Only on this device.${EXERCISE_NOTE_LIMIT - draft.length <= 50 ? ` ${EXERCISE_NOTE_LIMIT - draft.length} left.` : ''}`}
           </Txt>
           <Pressable onPress={keep} accessibilityRole="button" accessibilityLabel={`Done with the note on ${name}`} hitSlop={8} style={({ pressed }) => pressed && { opacity: 0.6 }}>
             <Txt variant="footnote" color={color.brand} style={face('semibold')}>

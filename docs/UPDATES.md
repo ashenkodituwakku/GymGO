@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 66 · The Hevy features, polished
+
+*3 Nov 2026 · the commit "The Hevy features, polished"*
+
+- RPE has its own column beside the reps, in a workout and when editing one, instead of a line under every set; it still fits a 320-point phone.
+- Edit workout asks "Discard your changes?" before you leave with changes not saved (Cancel, back, a swipe or closing the tab); Save doesn't.
+- The monthly report no longer compares with an empty month ("+10,605 kg on Sep"), and says a change in time in hours and minutes.
+- Body measurements shows the measures you take, with the rest a tap away; the privacy note is a quiet line.
+- Fixed: a set rated and then made a warm-up kept its RPE out of sight and saved it.
+- Not yet seen on a phone: the iPhone's own "Discard" alert and its swipe-back being held.
+
 ## Update 65 · This update log
 
-*3 Nov 2026 · this commit*
+*3 Nov 2026 · `9a5a441`*
 
 - Every update numbered from the first, in docs/UPDATES.md; each new one adds an entry here.
 

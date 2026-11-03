@@ -20,7 +20,7 @@ import { ScreenOptions } from '@/components/ScreenOptions';
 import { Input, PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { localToday } from '@/lib/bodyWeight';
-import { MEASURES, keptValue, latestOf, lengthUnitFor, measureDays, seriesOf, shownValue, unitOf, valueLabel, withMeasures, withoutDay, type MeasureId } from '@/lib/bodyMeasures';
+import { MEASURES, formMeasures, keptValue, latestOf, lengthUnitFor, measureDays, seriesOf, shownValue, unitOf, valueLabel, withMeasures, withoutDay, type MeasureId } from '@/lib/bodyMeasures';
 import { dateLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -38,6 +38,11 @@ export default function MeasurementsScreen() {
   const [kept, setKept] = useState(false);
   const [charted, setCharted] = useState<MeasureId | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  // The form: the measures you take (four common ones to start), and the rest a tap away.
+  const [all, setAll] = useState(false);
+  const usual = useMemo(() => formMeasures(days), [days]);
+  const fields = all ? MEASURES : MEASURES.filter((measure) => usual.includes(measure.id) || !!typed[measure.id]?.trim());
+  const more = MEASURES.length - fields.length;
   const today = localToday();
   const latest = useMemo(() => MEASURES.map((measure) => ({ measure, latest: latestOf(days, measure.id) })).filter((row) => row.latest !== null), [days]);
   const shownChart = charted ?? latest[0]?.measure.id ?? null;
@@ -74,12 +79,9 @@ export default function MeasurementsScreen() {
         <Txt variant="largeTitle" accessibilityRole="header" level={1}>
           Body measurements
         </Txt>
-        <View style={styles.privacy}>
-          <Icon name="lock" size={15} color={color.goodInk} />
-          <Txt variant="footnote" color={color.goodInk} style={styles.flex}>
-            {`Only on this ${Platform.OS === 'web' ? 'computer, in this browser' : 'phone'}: never uploaded and not in your account. Measure at the same time of day, relaxed, for numbers you can compare.`}
-          </Txt>
-        </View>
+        <Txt variant="subhead" color={color.labelSecondary}>
+          Measure at the same time of day, relaxed, for numbers you can compare.
+        </Txt>
       </View>
 
       {latest.length > 0 && (
@@ -140,7 +142,7 @@ export default function MeasurementsScreen() {
         {`MEASURE TODAY · ${unitOf('waist', length).toUpperCase()}`}
       </Txt>
       <View style={styles.card}>
-        {MEASURES.map((measure, index) => {
+        {fields.map((measure, index) => {
           const now = latestOf(days, measure.id);
           return (
             <View key={measure.id} style={[styles.field, index > 0 && styles.fieldLine]}>
@@ -169,6 +171,23 @@ export default function MeasurementsScreen() {
             </View>
           );
         })}
+        {(more > 0 || (all && usual.length < MEASURES.length)) && (
+          <Pressable
+            onPress={() => {
+              haptic.select();
+              setAll(!all);
+            }}
+            accessibilityRole="button"
+            aria-expanded={all}
+            accessibilityLabel={all ? 'Show only the measurements you take' : `Show ${more} more measurements: ${MEASURES.filter((measure) => !fields.includes(measure)).map((measure) => measure.label.toLowerCase()).join(', ')}`}
+            style={({ pressed }) => [styles.more, pressed && { opacity: 0.6 }]}
+          >
+            <Icon name={all ? 'collapse' : 'expand'} size={14} color={color.brand} />
+            <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+              {all ? 'Fewer measurements' : `${more} more measurements`}
+            </Txt>
+          </Pressable>
+        )}
         {problem && (
           <Txt variant="footnote" color={color.dangerInk}>
             {problem}
@@ -180,6 +199,12 @@ export default function MeasurementsScreen() {
           </Txt>
         )}
         <PrimaryButton label="Keep today’s" icon="check" onPress={save} />
+        <View style={styles.privacy}>
+          <Icon name="lock" size={12} color={color.labelTertiary} />
+          <Txt variant="caption" color={color.labelSecondary} style={styles.flex}>
+            {`Only ${Platform.OS === 'web' ? 'in this browser' : 'on this phone'}: never uploaded, not in your account.`}
+          </Txt>
+        </View>
       </View>
 
       {days.length > 0 && (
@@ -227,7 +252,8 @@ const styles = themed(() =>
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[4], paddingBottom: space[8], gap: space[3], width: '100%', maxWidth: 560, alignSelf: 'center' },
     intro: { gap: space[2] },
-    privacy: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2], padding: space[3], borderRadius: radius.md, backgroundColor: color.goodTint },
+    privacy: { flexDirection: 'row', alignItems: 'center', gap: space[1], justifyContent: 'center' },
+    more: { flexDirection: 'row', alignItems: 'center', gap: space[1], alignSelf: 'flex-start', paddingVertical: space[2] },
     flex: { flex: 1, minWidth: 0 },
     section: { marginTop: space[3], marginLeft: space[4] },
     group: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },

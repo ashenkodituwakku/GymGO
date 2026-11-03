@@ -21,7 +21,7 @@ import { PrimaryButton, Txt } from '@/components/ui';
 import { shareText } from '@/lib/actions';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { changeWord, monthReport, monthShareText, monthsWithTraining, reportMonth, shiftMonth } from '@/lib/monthReport';
+import { changeWord, monthReport, monthShareText, monthsWithTraining, reportMonth, shiftMonth, timeChangeWord } from '@/lib/monthReport';
 import { usePageTitle } from '@/lib/pageTitle';
 import { RECORD_WORD } from '@/lib/records';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -85,10 +85,12 @@ export default function MonthScreen() {
   const older = at >= 0 && at < months.length - 1 ? months[at + 1]! : null;
   const weight = (kg: number) => `${Math.round(fromKg(kg, unit)).toLocaleString()} ${unit}`;
   const { totals } = report;
+  // Nothing logged the month before: nothing to compare with, so no "+10,605 kg on Sep" or "0 before".
+  const compared = report.before.workouts > 0;
   const tiles: Array<{ label: string; value: string; change: string }> = [
     { label: 'Workouts', value: String(totals.workouts), change: changeWord(totals.workouts, report.before.workouts) },
     { label: 'Days trained', value: String(totals.days), change: changeWord(totals.days, report.before.days) },
-    { label: 'Time', value: totals.minutes > 0 ? durationLabel(totals.minutes * 60_000) : '—', change: changeWord(totals.minutes, report.before.minutes) + (totals.minutes !== report.before.minutes ? ' min' : '') },
+    { label: 'Time', value: totals.minutes > 0 ? durationLabel(totals.minutes * 60_000) : '—', change: timeChangeWord(totals.minutes, report.before.minutes) },
     { label: 'Sets', value: totals.sets.toLocaleString(), change: changeWord(totals.sets, report.before.sets) },
     { label: 'Lifted', value: weight(totals.volumeKg), change: changeWord(fromKg(totals.volumeKg, unit), fromKg(report.before.volumeKg, unit)) + (Math.round(totals.volumeKg) !== Math.round(report.before.volumeKg) ? `\u00a0${unit}` : '') },
     { label: 'Reps', value: totals.reps.toLocaleString(), change: changeWord(totals.reps, report.before.reps) },
@@ -136,19 +138,31 @@ export default function MonthScreen() {
 
       <View style={styles.tiles}>
         {tiles.map((tile) => (
-          <View key={tile.label} style={styles.tile} accessible accessibilityLabel={`${tile.label}: ${tile.value}, ${tile.change === 'same' ? `the same as ${before}` : `${tile.change} on ${before}`}`}>
+          <View
+            key={tile.label}
+            style={styles.tile}
+            accessible
+            accessibilityLabel={`${tile.label}: ${tile.value}${compared ? `, ${tile.change === 'same' ? `the same as ${before}` : `${tile.change} on ${before}`}` : ''}`}
+          >
             <Txt variant="caption" color={color.labelSecondary}>
               {tile.label}
             </Txt>
             <Txt variant="headline" numberOfLines={1}>
               {tile.value}
             </Txt>
-            <Txt variant="caption" color={tile.change.startsWith('+') ? color.goodInk : color.labelSecondary} numberOfLines={2}>
-              {tile.change === 'same' ? `Same as ${beforeShort}` : `${tile.change} on ${beforeShort}`}
-            </Txt>
+            {compared && (
+              <Txt variant="caption" color={tile.change.startsWith('+') ? color.goodInk : color.labelSecondary} numberOfLines={2}>
+                {tile.change === 'same' ? `Same as ${beforeShort}` : `${tile.change} on ${beforeShort}`}
+              </Txt>
+            )}
           </View>
         ))}
       </View>
+      {!compared && (
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.noCompare}>
+          {`No workouts in ${before} to compare with.`}
+        </Txt>
+      )}
 
       {report.records.length > 0 && (
         <>
@@ -210,26 +224,28 @@ export default function MonthScreen() {
                 key={entry.muscle}
                 style={styles.muscle}
                 accessible
-                accessibilityLabel={`${entry.label}: ${formatSets(entry.sets)} sets, ${formatSets(entry.before)} in ${before}`}
+                accessibilityLabel={`${entry.label}: ${formatSets(entry.sets)} sets${compared ? `, ${formatSets(entry.before)} in ${before}` : ''}`}
               >
                 <View style={styles.muscleHead}>
                   <Txt variant="subhead" style={styles.flex}>
                     {entry.label}
                   </Txt>
                   <Txt variant="footnote" color={color.labelSecondary}>
-                    {`${formatSets(entry.sets)} · ${formatSets(entry.before)} before`}
+                    {compared ? `${formatSets(entry.sets)} · ${formatSets(entry.before)} before` : `${formatSets(entry.sets)} sets`}
                   </Txt>
                 </View>
                 <View style={styles.track} aria-hidden>
                   <View style={[styles.fill, { width: `${Math.round((entry.sets / most) * 100)}%` }]} />
                 </View>
-                <View style={styles.trackBefore} aria-hidden>
-                  <View style={[styles.fillBefore, { width: `${Math.round((entry.before / most) * 100)}%` }]} />
-                </View>
+                {compared && (
+                  <View style={styles.trackBefore} aria-hidden>
+                    <View style={[styles.fillBefore, { width: `${Math.round((entry.before / most) * 100)}%` }]} />
+                  </View>
+                )}
               </View>
             ))}
             <Txt variant="caption" color={color.labelSecondary}>
-              {`Working sets, a half for a muscle an exercise works second. The lighter bar is ${before}.`}
+              {`Working sets, a half for a muscle an exercise works second.${compared ? ` The lighter bar is ${before}.` : ''}`}
             </Txt>
           </View>
         </>
@@ -282,6 +298,7 @@ const styles = themed(() =>
     step: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     stepOff: { backgroundColor: color.fill },
     tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+    noCompare: { marginTop: -space[1], paddingHorizontal: space[1] },
     tile: { flexGrow: 1, flexBasis: '30%', minWidth: 96, gap: 2, padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     section: { marginTop: space[3], marginLeft: space[4] },
     group: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },

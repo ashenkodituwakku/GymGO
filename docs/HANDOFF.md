@@ -106,6 +106,19 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Hevy features polished** (3 Nov; the owner: "make them better and
+  more professional and just reliable and cleaner"). components/SetKinds.tsx
+  `RpeHead` and `RpeCell` (the column, `RPE_COLUMN` 32 pt; rows with it use
+  `tight` gaps and `narrow` fields), used by app/train.tsx and
+  app/session-edit.tsx; both `setKind`s drop a warm-up's RPE, as do
+  `draftToLogged` and `checkEdits`. session-edit.tsx keeps the draft it
+  started from and holds leaving with `usePreventRemove` while they differ,
+  asking through lib/askToDiscard.ts; Save calls the hook's
+  `disablePrevention` first. lib/monthReport.ts `timeChangeWord`;
+  month.tsx `compared` (the month before had a workout).
+  lib/bodyMeasures.ts `formMeasures`, `STARTER_MEASURES`. The dev server
+  served stale code twice this round: restart Metro (`--clear`) before
+  trusting a browser check.
 - **Expo SDK 58** (3 Nov; the owner: "upgrade GymGO to expo sdk 58").
   `expo install expo@^58.0.0 --fix`, then: app.json lists the plugins SDK
   58 asked for and drops expo-build-properties' `enableSceneSupport`

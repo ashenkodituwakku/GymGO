@@ -400,6 +400,8 @@ describe('set types and RPE', () => {
       // An RPE that isn't on the scale is dropped, not logged.
       { weight: 80, reps: 8, kind: 'drop' },
     ]);
+    // A set rated, then made a warm-up: a warm-up carries no RPE.
+    expect(draftToLogged([{ exerciseId: 'back-squat', sets: [{ weight: '60', reps: '5', done: true, kind: 'warmup', rpe: 7 }] }])[0]!.sets).toEqual([{ weight: 60, reps: 5, kind: 'warmup' }]);
   });
 
   it('never guesses a working set’s weight from a warm-up', () => {

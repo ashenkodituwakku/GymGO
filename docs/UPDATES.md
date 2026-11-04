@@ -9,9 +9,21 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 74 · Collection cards: a shape for each rarity, the gym's own colour
+
+*4 Nov 2026 · the commit "Collection cards: a shape for each rarity, the gym's own colour"*
+
+- Each rarity has its own card shape and metal: rounded steel (Common), cut green corners (Uncommon), notched blue (Rare), scooped purple with a second line (Epic), and gold with a raised crest, a crown, studs and a rainbow line (Legendary).
+- A card takes the colour of the gym's own logo or website icon: red for Snap Fitness and Fitness First, blue for Kieser. When the logo is black, white or grey, the card keeps its gem's colour.
+- The gym's logo or photo sits in a framed box under the rarity and gem, so the tag never covers it. Rare and above glow in their metal.
+- Each card shows how many visits to the next tier ("5 to Gold").
+- Collection can show one rarity at a time, with how many of each you have.
+- A card's own page says its rarity, gem, where its colour came from, and the visit that rolled it.
+- Not yet seen on a phone.
+
 ## Update 73 · Customise Home, smoothed
 
-*4 Nov 2026 · the commit "Customise Home, smoothed: More widgets, native motion, nothing jumps"*
+*4 Nov 2026 · `ffcad52`*
 
 - While customising, **More widgets** under your widgets shows every one that isn't on Home, as it would look; tap one to add it.
 - Smoother: the jiggle and the widgets sliding out of the way are run by the browser or phone itself, and a widget you let go of glides into its place.

@@ -16,10 +16,15 @@ import { PrimaryButton, Txt } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { useApp } from '@/lib/app-state';
 import { usePageTitle } from '@/lib/pageTitle';
-import { cardFor, cardName } from '@/lib/rarity';
+import { cardFor, cardName, gemInfo, rarityLabel } from '@/lib/rarity';
+import { CARD_FRAMES } from '@/lib/cardShape';
+import { dateLabel } from '@/lib/copy';
+import type { CollectedGym } from '@/lib/collection';
+import { cardPalette, type GymRecord } from '@gymgo/domain';
+import { logoFor, useBrandColour } from '@/components/BrandLogo';
 import { collectionSets } from '@/lib/sets';
 import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
-import { color, space, themed } from '@/lib/theme';
+import { color, radius, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
 
 export default function CardScreen() {
@@ -100,6 +105,7 @@ export default function CardScreen() {
           </View>
         )}
       </View>
+      {entry && <CardFacts entry={entry} record={data.records.find((record) => record.location.id === entry.id) ?? null} />}
       <View style={styles.actions}>
         <PrimaryButton label="Share as a picture" icon="share" busy={busy} onPress={() => void share()} />
         {entry && <PrimaryButton label="Open the gym" tone="quiet" icon="gym" onPress={() => router.push({ pathname: '/gym/[id]', params: { id: entry.id } })} />}
@@ -118,6 +124,45 @@ export default function CardScreen() {
   );
 }
 
+/** What the card is and where its look comes from. */
+function CardFacts({ entry, record }: { entry: CollectedGym; record: GymRecord | null }) {
+  const look = cardFor(entry);
+  const gem = gemInfo(look.gem);
+  const brand = useBrandColour(record?.location ?? null);
+  const logo = record ? logoFor(record.location) : null;
+  const [, base] = CARD_FRAMES[look.rarity].metal;
+  const colour = brand
+    ? logo
+      ? `From the ${logo.brand} logo`
+      : 'From the gym’s website icon'
+    : logo
+      ? `Its gem’s: the ${logo.brand} logo has no colour to take`
+      : 'Its gem’s: no logo or icon colour to take';
+  const rows: Array<{ label: string; value: string; swatch?: string }> = [
+    { label: 'Rarity', value: `${rarityLabel(look.rarity)}${look.foil ? ' · Foil' : ''}`, swatch: base },
+    { label: 'Gem', value: gem.label, swatch: gem.colors[1] },
+    { label: 'Colour', value: colour, swatch: (brand ? cardPalette(brand)?.[1] : null) ?? gem.colors[1] },
+    ...(look.bestDay ? [{ label: 'Best roll', value: `Your visit on ${dateLabel(look.bestDay, { day: 'numeric', month: 'long', year: 'numeric' })}` }] : []),
+  ];
+  return (
+    <View style={styles.facts}>
+      {rows.map((row, at) => (
+        <View key={row.label} style={[styles.fact, at > 0 && styles.factLine]} accessible accessibilityLabel={`${row.label}: ${row.value}`}>
+          <Txt variant="subhead" color={color.labelSecondary} style={styles.factLabel}>
+            {row.label}
+          </Txt>
+          <View style={styles.factValue}>
+            {row.swatch && <View style={[styles.swatch, { backgroundColor: row.swatch }]} />}
+            <Txt variant="subhead" style={styles.flex}>
+              {row.value}
+            </Txt>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = themed(() =>
   StyleSheet.create({
     page: { flex: 1, backgroundColor: color.groupedBackground },
@@ -128,5 +173,12 @@ const styles = themed(() =>
     missing: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
     missingButton: { alignSelf: 'center', maxWidth: 360, width: '100%', marginTop: space[2] },
     centre: { textAlign: 'center' },
+    facts: { alignSelf: 'stretch', width: '100%', maxWidth: 420, marginHorizontal: 'auto', borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden' },
+    fact: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
+    factLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
+    factLabel: { width: 78 },
+    factValue: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    swatch: { width: 12, height: 12, borderRadius: 6 },
+    flex: { flex: 1 },
   }),
 );

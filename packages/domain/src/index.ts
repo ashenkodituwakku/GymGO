@@ -41,3 +41,4 @@ export * from './perks';
 export * from './appleMaps';
 export * from './ownTraining';
 export * from './weather';
+export * from './cardColour';

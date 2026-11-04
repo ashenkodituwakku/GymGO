@@ -8,7 +8,7 @@ import { createApp } from './app';
 import { openDb, seedGyms, type Db } from './db';
 import { deflateSync } from 'node:zlib';
 import sharp from 'sharp';
-import { SiteIcons, SitePhotos, allowedUrl, chainWebsites, googleIconUrl, iconCandidates, isPrivateAddress, lightOnTransparent, namedNotAPhoto, onDarkPlate, ownPhotoSites, photoCandidates, photoLook, printsApart, sniffImage, type Fetched, type SafeGet } from './siteicons';
+import { SiteIcons, SitePhotos, allowedUrl, iconColour, chainWebsites, googleIconUrl, iconCandidates, isPrivateAddress, lightOnTransparent, namedNotAPhoto, onDarkPlate, ownPhotoSites, photoCandidates, photoLook, printsApart, sniffImage, type Fetched, type SafeGet } from './siteicons';
 import type { GymRecord } from '@gymgo/domain';
 
 /** A PNG header of the given size: all the checks read. */
@@ -172,7 +172,15 @@ const WEB: Record<string, Omit<Fetched, 'url'>> = {
   },
   'https://primeathletica.com.au/fake.png': { status: 200, type: 'image/png', body: Buffer.from('<html>not an image</html>') },
   'https://www.clublime.com.au/': { status: 200, type: 'text/html', body: Buffer.from('<link rel="apple-touch-icon" href="/lime.png">') },
-  'https://www.clublime.com.au/lime.png': { status: 200, type: 'image/png', body: png(192, 192) },
+  // Club Lime's icon: lime green, with white lettering.
+  'https://www.clublime.com.au/lime.png': {
+    status: 200,
+    type: 'image/png',
+    body: await sharp({ create: { width: 192, height: 192, channels: 4, background: { r: 140, g: 198, b: 63, alpha: 1 } } })
+      .composite([{ input: { create: { width: 120, height: 40, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } } }, left: 36, top: 76 }])
+      .png()
+      .toBuffer(),
+  },
   // A site that turns automated visitors away, whose icon Google has.
   'https://blocked.example.com/': { status: 403, type: 'text/html', body: Buffer.from('Forbidden') },
   [googleIconUrl('https://blocked.example.com').href]: { status: 200, type: 'image/png', body: png(256, 240) },
@@ -327,6 +335,36 @@ describe('GET /api/gyms/:id/icon', () => {
     expect(unknown.status).toBe(404);
     // An unknown id might be a gym not loaded yet: never kept.
     expect(unknown.headers.get('cache-control')).toBe('no-store');
+  });
+});
+
+describe('GET /api/gyms/:id/icon-colour', () => {
+  it('gives the icon’s own colour, for the gym’s card, and keeps it a week', async () => {
+    const response = await fetch(`${base}/api/gyms/${CLUB_LIME.location.id}/icon-colour`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('public, max-age=604800');
+    const body = (await response.json()) as { colour: string; from: string };
+    expect(body.from).toBe('https://www.clublime.com.au/lime.png');
+    // Lime green (#8CC63F, give or take the shrinking), not the white lettering.
+    const [r, g, b] = [1, 3, 5].map((at) => Number.parseInt(body.colour.slice(at, at + 2), 16));
+    expect(Math.abs(r! - 140) + Math.abs(g! - 198) + Math.abs(b! - 63)).toBeLessThan(12);
+  });
+
+  it('has no colour for an icon it can’t read, nor for a gym with no icon', async () => {
+    // Doherty's stand-in icon is only a PNG's header.
+    const unreadable = await fetch(`${base}/api/gyms/${DOHERTYS.location.id}/icon-colour`);
+    expect(unreadable.status).toBe(200);
+    expect(((await unreadable.json()) as { colour: string | null }).colour).toBeNull();
+    expect((await fetch(`${base}/api/gyms/${PRIME.location.id}/icon-colour`)).status).toBe(404);
+    expect((await fetch(`${base}/api/gyms/${DEMO_GYMS[0]!.location.id}/icon-colour`)).status).toBe(404);
+  });
+
+  it('reads black, white and grey icons as having no colour', async () => {
+    const grey = await sharp({ create: { width: 64, height: 64, channels: 3, background: '#777777' } }).png().toBuffer();
+    expect(await iconColour(grey)).toBeNull();
+    const blue = await sharp({ create: { width: 64, height: 64, channels: 3, background: '#0A64C8' } }).webp().toBuffer();
+    expect(await iconColour(blue)).toMatch(/^#0[0-9A-F]6[0-9A-F]C[0-9A-F]$/);
+    expect(await iconColour(Buffer.from('not an image'))).toBeNull();
   });
 });
 

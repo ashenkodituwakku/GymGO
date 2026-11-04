@@ -36,7 +36,7 @@ import https from 'node:https';
 import { BlockList, isIP } from 'node:net';
 import { createHash } from 'node:crypto';
 import { crc32, deflateSync, inflateSync } from 'node:zlib';
-import { chainWebsite, type GymRecord } from '@gymgo/domain';
+import { chainWebsite, logoColour, type GymRecord } from '@gymgo/domain';
 import type { Db } from './db';
 
 const UA = 'GymGO/0.1 (site icon for a gym finder; https://github.com/ashenkodituwakku/GymGO)';
@@ -875,6 +875,27 @@ export interface ChosenPhoto {
 /** Where a gym's chosen photos are kept: by gym and by list, so a changed list is fetched afresh. */
 function chosenKey(gymId: string, photos: readonly ChosenPhoto[]): string {
   return `chosen:${gymId}:${createHash('sha256').update(photos.map((photo) => photo.url).join('\n')).digest('hex').slice(0, 16)}`;
+}
+
+/**
+ * A website icon's own colour, for that gym's collection card: read with the
+ * same rule as the app's bundled brand logos (packages/domain cardColour.ts),
+ * from the icon shrunk to 64 pixels. Null for a black, white or grey icon, or
+ * where the image library can't load or read it.
+ */
+export async function iconColour(bytes: Buffer): Promise<string | null> {
+  const sharp = await imageLibrary();
+  if (!sharp) return null;
+  try {
+    const { data } = await sharp(bytes, { limitInputPixels: MAX_PHOTO_PIXELS, animated: false })
+      .resize(64, 64, { fit: 'inside' })
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    return logoColour(data, 4);
+  } catch {
+    return null;
+  }
 }
 
 export interface SiteIcon {

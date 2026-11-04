@@ -128,7 +128,8 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
   const panelWidth = Math.min(340, width - space[4] * 2);
   const cardWidth = Math.min(210, panelWidth - space[8] * 2);
   // A shorter picture window on a short screen, so it all fits without scrolling on nearly every phone.
-  const windowHeight = height < 700 ? 92 : 116;
+  // The picture's box: the card's rarity and gem sit above it.
+  const windowHeight = height < 700 ? 76 : 104;
   const maxHeight = height - insets.top - insets.bottom - space[6];
   const glow = panelWidth * 1.25;
   const close = () => leave(onClose);

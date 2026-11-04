@@ -56,6 +56,7 @@
  *   POST   /api/gyms/:gymId/owner-updates the gym's owner: { kind: 'visitor_hours', alwaysOpen, windows } or { kind: 'casual_price', amountMinor, anyoneCanBuy, photoIdRequired } -> waits for a moderator
  *   GET    /api/gyms/:gymId/google        live Google Maps details (only with the owner's key)
  *   GET    /api/gyms/:gymId/icon          the icon from the gym's own website, or its chain's (PNG/JPEG/WebP/GIF), or 404
+ *   GET    /api/gyms/:gymId/icon-colour   { colour: '#RRGGBB' | null, from }: that icon's own colour, for the gym's collection card; or 404
  *   GET    /api/gyms/:gymId/photo         the photo the gym's own website shares (JPEG/PNG/WebP), or 404
  *   GET    /api/gyms/:gymId/photo/:n      its website's photo n (0 is the one above; up to 3), or 404
  *   GET    /api/gyms/:gymId/site-photos   { count, from }: how many photos its own website gives, and the site
@@ -206,7 +207,7 @@ import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type Strip
 import { AreaError, AreaSearch, parseBox, whereIs } from './area';
 import { CountryPacks } from './countryPack';
 import { PlaceError, PlaceSearch } from './places';
-import { SiteIcons, SitePhotos, chainWebsites, ownPhotoSites, type ChosenPhoto, type SafeGet } from './siteicons';
+import { SiteIcons, SitePhotos, chainWebsites, iconColour, ownPhotoSites, type ChosenPhoto, type SafeGet } from './siteicons';
 import { MELBOURNE_PHOTOS } from '@gymgo/melbourne-data';
 import { AppleMaps, type AppleMapsOptions } from './appleMaps';
 import { WeatherError, WeatherService, parseBlock, weatherUserAgent, type WeatherOptions } from './weather';
@@ -318,7 +319,7 @@ export function isPublicRoute(method: string, path: string): boolean {
   if ((method === 'POST' && path === '/api/billing/webhook') || (method === 'GET' && (path === '/api/billing/return' || path === '/api/billing/plans'))) return true;
   if (method === 'POST' && path === '/api/bug-reports') return true;
   if (method === 'GET' && (/^\/api\/avatars\/[^/]+$/.test(path) || (/^\/api\/photos\/[^/]+$/.test(path) && path !== '/api/photos/covers'))) return true;
-  if (method === 'GET' && /^\/api\/gyms\/[^/]+\/(icon|photo|photo\/\d|site-photos)$/.test(path)) return true;
+  if (method === 'GET' && /^\/api\/gyms\/[^/]+\/(icon|icon-colour|photo|photo\/\d|site-photos)$/.test(path)) return true;
   return false;
 }
 
@@ -661,6 +662,8 @@ export function createApp(options: AppOptions) {
   // Website icons not yet kept: 300 per address per hour (a results list asks for about 40).
   const iconLimiter = new AttemptLimiter(300, 60 * 60_000);
   const siteIcons = new SiteIcons(db, { get: options.siteIcons?.get, now });
+  /** Each website icon's colour once read, by where it's from and its size (a changed icon is read again). */
+  const iconColours = new Map<string, string | null>();
   const sitePhotos = new SitePhotos(db, { get: options.siteIcons?.get, now });
   // Website photos not yet kept: fewer than icons, as a page shows one.
   const sitePhotoLimiter = new AttemptLimiter(120, 60 * 60_000);
@@ -2372,7 +2375,8 @@ export function createApp(options: AppOptions) {
     }
 
     // --- The gym's own website icon -------------------------------------------
-    if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'icon' && parts.length === 4) {
+    // /icon is the picture; /icon-colour its own colour, for the gym's collection card.
+    if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && (parts[3] === 'icon' || parts[3] === 'icon-colour') && parts.length === 4) {
       const record = gymRecord(db, decodeURIComponent(parts[2]!));
       if (!record) throw new HttpError(404, 'No gym with that id.');
       chainSite ??= chainWebsites(allGyms(db));
@@ -2392,6 +2396,17 @@ export function createApp(options: AppOptions) {
         icon = await siteIcons.icon(website);
       }
       if (!icon) return send(res, 404, { error: 'The gym’s website has no icon GymGO can show.', code: 'none' }, 'public, max-age=3600');
+      if (parts[3] === 'icon-colour') {
+        const key = `${icon.source} ${icon.bytes.length}`;
+        let colour = iconColours.get(key);
+        if (colour === undefined) {
+          colour = await iconColour(icon.bytes);
+          if (iconColours.size >= 5000) iconColours.delete(iconColours.keys().next().value!);
+          iconColours.set(key, colour);
+        }
+        // Null for a black, white or grey icon: the card keeps its gem's colour.
+        return send(res, 200, { colour, from: icon.source }, 'public, max-age=604800');
+      }
       res.statusCode = 200;
       res.setHeader('Content-Type', icon.mime);
       res.setHeader('Content-Length', String(icon.bytes.length));

@@ -106,6 +106,25 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Collection cards: shapes and the gym's own colour** (4 Nov).
+  lib/cardShape.ts has the silhouettes: `CARD_FRAMES` (frame width,
+  corners round/cut/scoop, side notches, Legendary's crest, the metal,
+  glow), `cardPath(rarity, w, h, inset, x, y)` (the face is the same path
+  inset by the frame, corners parallel) and `cardPadding`. GemCard measures
+  itself (onLayout) and draws `CardFrame` behind its content in an SVG
+  `GLOW_ROOM` bigger (the glow is the outline stroked wide and faint, so it
+  follows the shape); the picture is in a rounded box, with the Shine,
+  Foil and Sparkles inside it. Colour: packages/domain cardColour.ts
+  (`logoColour(pixels, channels)` picks the busiest vivid hue, null for
+  mono logos; `cardPalette(hex)` gives light/base/deep).
+  `scripts/brand-colours.mts` (tsx) writes lib/brandColours.ts from
+  assets/logos; the server's `GET /api/gyms/:id/icon-colour` reads the
+  stored website icon with sharp (`iconColour`, cached in memory by source
+  and size; public, like /icon). BrandLogo's `useBrandColour(location)`:
+  bundled colour, else the server's, else null (the gem's colours).
+  Collection's `RarityFilter` (radio pills with a `ShapeSwatch` and
+  counts); card/[id]'s `CardFacts`. Small cards drop the rarity pips so
+  "LEGENDARY" fits at 320 pt.
 - **Customise Home, smoothed** (4 Nov). components/HomeEditor.tsx was
   rewritten: each widget is three layers (making room: a CSS transition
   from React state `held`/`hover`; following the finger: a shared value;

@@ -20,7 +20,8 @@
 
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import Animated from 'react-native-reanimated';
 import { CollectionSyncLine, useDeleteCollection } from '@/components/CollectionData';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
@@ -41,7 +42,9 @@ import { badges, collectionShareText, collectionStats, nextToCollect } from '@/l
 import { distanceLabel } from '@/lib/places';
 import { nearLabel } from '@/lib/query';
 import type { GymLocation, GymRecord } from '@gymgo/domain';
-import { FOIL_ONE_IN, cardFor, oddsLine, rarityRank } from '@/lib/rarity';
+import { FOIL_ONE_IN, RARITIES, cardFor, oddsLine, rarityRank, type Rarity } from '@/lib/rarity';
+import { CARD_FRAMES, cardPath } from '@/lib/cardShape';
+import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
@@ -70,7 +73,8 @@ export default function CollectionScreen() {
   const cardWidth = (Math.min(width, COLUMN) - space[4] * 2 - space[3]) / 2;
   const [order, setOrder] = useState<'newest' | 'rarest' | 'visits'>('newest');
   const [allSets, setAllSets] = useState(false);
-  const entries = useMemo(() => {
+  const [only, setOnly] = useState<Rarity | null>(null);
+  const sorted = useMemo(() => {
     const newest = Object.values(gyms).sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1));
     if (order === 'rarest') {
       const rank = new Map(newest.map((entry) => [entry.id, rarityRank(cardFor(entry).rarity) * 2 + (cardFor(entry).foil ? 1 : 0)]));
@@ -79,6 +83,15 @@ export default function CollectionScreen() {
     if (order === 'visits') return [...newest].sort((a, b) => b.days.length - a.days.length);
     return newest;
   }, [gyms, order]);
+  // How many of each rarity you have, for the filter.
+  const counts = useMemo(() => {
+    const out = new Map<Rarity, number>();
+    for (const entry of sorted) out.set(cardFor(entry).rarity, (out.get(cardFor(entry).rarity) ?? 0) + 1);
+    return out;
+  }, [sorted]);
+  // A rarity you no longer have a card of shows them all again.
+  const showing = only && counts.get(only) ? only : null;
+  const entries = useMemo(() => (showing ? sorted.filter((entry) => cardFor(entry).rarity === showing) : sorted), [sorted, showing]);
   // Where to look for the next one: where you are, else where the search is.
   const from = here?.position ?? filters.centre;
   const near = here ? 'Near you' : nearLabel(filters.placeName);
@@ -269,7 +282,7 @@ export default function CollectionScreen() {
       <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
         YOUR CARDS
       </Txt>
-      {entries.length > 1 && (
+      {sorted.length > 1 && (
         <Segmented
           options={[
             { value: 'newest', label: 'Newest' },
@@ -280,6 +293,7 @@ export default function CollectionScreen() {
           onChange={setOrder}
         />
       )}
+      {counts.size > 1 && <RarityFilter counts={counts} total={sorted.length} value={showing} onChange={setOnly} />}
       <View style={styles.grid}>
         {entries.map((entry) => (
           // Re-sorting slides each card to its new place rather than jumping.
@@ -300,7 +314,10 @@ export default function CollectionScreen() {
           <Txt variant="headline">How cards work</Txt>
         </View>
         <Txt variant="footnote" color={color.labelSecondary}>
-          {`Each day you check in at a gym rolls its card: ${oddsLine()}. The card keeps its best roll, so going back is how it gets rarer. Its gem (its colour) is picked at random when you first collect the gym, and 1 in ${FOIL_ONE_IN} cards is Foil.`}
+          {`Each day you check in at a gym rolls its card: ${oddsLine()}. The card keeps its best roll, so going back is how it gets rarer. Its gem is picked at random when you first collect the gym, and 1 in ${FOIL_ONE_IN} cards is Foil.`}
+        </Txt>
+        <Txt variant="footnote" color={color.labelSecondary}>
+          Each rarity has its own shape and metal: rounded steel, cut green corners, notched blue, scooped purple, and a gold crest with a crown for Legendary. The card takes the colour of the gym’s own logo or website icon, or its gem’s when the logo is black, white or grey.
         </Txt>
         <Txt variant="footnote" color={color.labelSecondary}>
           Rarity is luck, not a rating of the gym, and it can’t be bought. The tier (Bronze to Platinum) counts your visits.
@@ -320,6 +337,65 @@ export default function CollectionScreen() {
       {accountKnown &&
         (deleting.warning ?? <PrimaryButton label="Delete all collection data" icon="warning" tone="danger" onPress={deleting.open} />)}
     </PageScroll>
+  );
+}
+
+/**
+ * Show one rarity's cards, or all: each with its card's shape in its metal
+ * and how many you have. Only the rarities you have a card of.
+ */
+function RarityFilter({ counts, total, value, onChange }: { counts: Map<Rarity, number>; total: number; value: Rarity | null; onChange: (rarity: Rarity | null) => void }) {
+  const rarities = [...RARITIES].reverse().filter((rarity) => counts.get(rarity.id));
+  const pill = (key: Rarity | null, label: string, count: number) => {
+    const selected = value === key;
+    const metal = key ? CARD_FRAMES[key].metal : null;
+    return (
+      <Pressy
+        key={key ?? 'all'}
+        scaleTo={0.94}
+        onPress={() => {
+          haptic.select();
+          onChange(key);
+        }}
+        // One of a set, only one on: a radio button, so a screen reader says which is showing.
+        accessibilityRole="radio"
+        aria-checked={selected}
+        accessibilityLabel={key ? `${label}: ${count} card${count === 1 ? '' : 's'}` : `All ${count} cards`}
+        style={[styles.rarityPill, selected && { backgroundColor: metal ? metal[2] : color.label, borderColor: metal ? metal[1] : color.label }]}
+      >
+        {key && <ShapeSwatch rarity={key} />}
+        <Txt variant="footnote" color={selected ? (metal ? '#FFFFFF' : color.background) : color.label} style={face('semibold')}>
+          {label}
+        </Txt>
+        <Txt variant="footnote" color={selected ? (metal ? 'rgba(255, 255, 255, 0.8)' : color.background) : color.labelSecondary}>
+          {count}
+        </Txt>
+      </Pressy>
+    );
+  };
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rarityRow} style={styles.rarityScroll} accessibilityLabel="Show cards of one rarity">
+      {pill(null, 'All', total)}
+      {rarities.map((rarity) => pill(rarity.id, rarity.label, counts.get(rarity.id)!))}
+    </ScrollView>
+  );
+}
+
+/** A rarity's card shape, small, in its metal. */
+function ShapeSwatch({ rarity }: { rarity: Rarity }) {
+  const [light, base, deep] = CARD_FRAMES[rarity].metal;
+  const id = `swatch-${rarity}`;
+  return (
+    <Svg width={13} height={17} viewBox="0 0 120 160" {...(Platform.OS === 'web' ? null : { pointerEvents: 'none' as const })}>
+      <Defs>
+        <LinearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={light} />
+          <Stop offset="0.5" stopColor={base} />
+          <Stop offset="1" stopColor={deep} />
+        </LinearGradient>
+      </Defs>
+      <Path d={cardPath(rarity, 120, 160)} fill={`url(#${id})`} stroke={deep} strokeWidth={6} />
+    </Svg>
   );
 }
 
@@ -431,6 +507,20 @@ const styles = themed(() =>
     badge: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.md, backgroundColor: color.fill },
     badgeOn: { backgroundColor: color.brandTint },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
+    // Runs to the page's edges when it scrolls, so a pill isn't cut off at the margin.
+    rarityScroll: { marginHorizontal: -space[4], flexGrow: 0 },
+    rarityRow: { gap: space[2], paddingHorizontal: space[4] },
+    rarityPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: space[3],
+      paddingVertical: 7,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: color.separator,
+      backgroundColor: color.plate,
+    },
     setGroup: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', ...shadow.plate },
     how: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     howHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },

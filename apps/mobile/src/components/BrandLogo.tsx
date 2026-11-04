@@ -19,6 +19,7 @@ import Animated from 'react-native-reanimated';
 import { chainWebsite, type GymLocation } from '@gymgo/domain';
 import { apiBase } from '@/lib/api';
 import { LOGO_IMAGES } from '@/lib/brandLogoImages';
+import { BRAND_COLOURS } from '@/lib/brandColours';
 import { BRAND_LOGOS, type BrandLogo as Logo } from '@/lib/brandLogos';
 import { matchLogo } from '@/lib/logoMatch';
 import { color, radius, themed } from '@/lib/theme';
@@ -74,6 +75,47 @@ function useSiteIcon(location: GymLocation, wanted: boolean): { uri: string; asp
     };
   }, [uri, location.id]);
   return uri && size ? { uri, aspect: size.width / size.height } : null;
+}
+
+// --- The brand's colour, for its collection card --------------------------------
+
+/** Each gym's website icon colour this session: '#RRGGBB', or null for none. */
+const iconColours = new Map<string, string | null>();
+
+/**
+ * The colour of the gym's own mark, for its collection card: its bundled
+ * logo's (read when the logos were bundled, lib/brandColours.ts), else its
+ * website icon's (read by the server, GET /api/gyms/:id/icon-colour); null
+ * when the mark is black, white or grey, or it has none. Never one picked
+ * for it.
+ */
+export function useBrandColour(location: GymLocation | null): string | null {
+  const logo = location ? logoFor(location) : null;
+  const uri = location && !logo ? siteIconUri(location) : null;
+  const id = location?.id ?? '';
+  const [colour, setColour] = useState<string | null>(() => (uri ? (iconColours.get(id) ?? null) : null));
+  useEffect(() => {
+    if (!uri) return;
+    if (iconColours.has(id)) {
+      setColour(iconColours.get(id) ?? null);
+      return;
+    }
+    let live = true;
+    fetch(`${uri}-colour`)
+      .then(async (response) => (response.ok ? ((await response.json()) as { colour?: unknown }).colour : null))
+      .then((found) => {
+        const hex = typeof found === 'string' && /^#[0-9A-F]{6}$/i.test(found) ? found : null;
+        iconColours.set(id, hex);
+        if (live) setColour(hex);
+      })
+      // Offline or switched off: no colour this time, asked again next session.
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [uri, id]);
+  if (logo) return BRAND_COLOURS[logo.slug] ?? null;
+  return uri ? colour : null;
 }
 
 type Mark = { kind: 'brand'; logo: Logo } | { kind: 'site'; uri: string; aspect: number };

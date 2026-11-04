@@ -778,8 +778,16 @@ Each gym is a **trading card** with a rarity rolled by luck: every day you
 check in rolls it (Common 60%, Uncommon 25%, Rare 10%, Epic 4%, Legendary
 1%) and the card keeps its best roll. Each card also has a random **gem**
 (Ruby, Sapphire, Emerald, Amethyst, Topaz, Aquamarine, Rose quartz or Onyx)
-for its colours, and 1 in 16 is **Foil**. Epic, Legendary and Foil cards
-catch the light; Legendary ones have a rainbow frame and sparkles. A new
+for its badge, and 1 in 16 is **Foil**. Each rarity has its own card
+shape and metal: rounded steel for Common, cut green corners for Uncommon,
+notched blue for Rare, scooped purple with a second line for Epic, and for
+Legendary scooped gold with a raised crest, a crown, studs and a rainbow
+line. The card's face and picture box take the colour of the gym's own logo
+or website icon (read from its pixels, never picked for it), or the gem's
+when the logo is black, white or grey. Epic, Legendary and Foil cards
+catch the light; Legendary ones sparkle. Collection can show one rarity at
+a time, with how many of each you have, and a card's own page says where
+its colour came from. A new
 card, or a visit that upgrades one, is revealed in a pop-up over the page:
 the card flips in over a glow of its gem's colour. The odds are
 shown in the app, which says rarity is luck, not a rating of the gym, and
@@ -1556,7 +1564,11 @@ The Commons logos are copied into the app (`apps/mobile/assets/logos/`), so the 
 never fetches them from Wikimedia. To look for new ones after the gym data
 changes, run `node apps/mobile/scripts/brand-logos.mjs`. It keeps only logos
 under a licence GymGO can use, and goes slowly because Wikimedia limits busy
-networks.
+networks. Then run `node_modules/.bin/tsx scripts/brand-colours.mts` (in
+`apps/mobile`) to read each logo's own colour for its collection cards
+(`src/lib/brandColours.ts`). A website icon's colour is read by the server
+(`GET /api/gyms/:id/icon-colour`) by the same rule
+(`packages/domain/src/cardColour.ts`).
 
 ### What machines a gym has
 

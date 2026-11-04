@@ -1711,14 +1711,47 @@ like searching an area there.
 Looking places up by name uses Photon's public server; set
 `GYMGO_GEOCODER_URL` to use another Photon server.
 
+### Customise Home
+
+At the foot of Home, **Customise Home** chooses what Home shows and in what
+order: move each widget up or down, take it off, or add one (it goes to the
+top, where you'll see it); **Put Home back as it came** undoes it all. It's
+kept on the device. The search, a workout under way and the gym you're at
+aren't widgets: they always come first.
+
+Seventeen widgets, in four kinds:
+
+- **Finding a gym**: Quick searches, Gyms near you, Machines and trips,
+  Saved gyms, Recently viewed, Browse suburbs, Other cities.
+- **Training**: Workout (build one, and Up next), **Last workout** (what,
+  when, how much, and Again), This week, **This month** (workouts, time,
+  weight lifted and records, as the monthly report counts them), **Muscles
+  trained** (when you last trained each, from your log: not whether one's
+  ready), **Tools** (interval timer, plates, 1-rep max, exercises).
+- **Weather**: Weather (one line) and **Weather by the hour**.
+- **You**: Collection, **Body weight** (your latest weigh-in and the change,
+  on the device only).
+
+Home starts as it was, with the weather in one line. Each widget says plainly
+when there's nothing in it yet, and the limited website leaves out the ones
+that need GymGO's server. The list is `apps/mobile/src/lib/homeWidgets.ts`.
+
 ### Weather (MET Norway, free, no key)
 
-Home has a weather card for where you're searching: the temperature and
-weather now, the next six hours, and "Weather data from MET Norway ·
-forecast made 8:17 pm". The map has a small circle under its buttons with
+Home has the weather for where you're searching, in one line: the
+temperature and weather now, the area, and when MET Norway made the forecast
+("MET Norway, 8:17 pm"). The map has a small circle under its buttons with
 the symbol and the temperature; tap it for the words and the source. °C,
-or °F in the United States. The symbols are the phone's own (SF Symbols on
-iPhone, Material Symbols elsewhere), day and night.
+or °F in the United States. On Home it's a widget: **Weather** (one line) or
+**Weather by the hour** (the next six hours).
+
+The symbols are MET Norway's own for its forecast (from Yr's set, © 2015–2017
+Yr, MIT licence: `apps/mobile/assets/weather/LICENSE.txt`), one for each of
+its 83 symbol codes, made into 144-pixel WebP pictures by
+`node scripts/weather-icons.mjs` (in `apps/mobile`). In dark mode they sit on
+a pale disc, as they're drawn for a white page. The map's circle is always
+there: with no forecast it shows a thermometer and a dash, and a tap says why
+(loading, MET Norway unreachable, or the weather switched off).
 
 It's MET Norway's forecast (Norway's national weather service,
 Locationforecast 2.0 at `api.met.no`): free for any use, including an app

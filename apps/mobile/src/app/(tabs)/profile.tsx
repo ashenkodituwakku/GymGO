@@ -337,7 +337,8 @@ export default function Profile() {
             Wikimedia Commons for ten chains, otherwise the icon on the gym’s own website. Maps: Apple Maps on iPhone,
             OpenFreeMap elsewhere. The Google page shows Google’s own map and Street View, straight from Google. Photos,
             reviews, what members paid and machine reports: GymGO members. Flags: Noto 3D by Google, under the SIL Open
-            Font License 1.1.
+            Font License 1.1. Weather: MET Norway’s forecast (CC BY 4.0), with its symbols, © 2015–2017 Yr, under the
+            MIT License.
           </Explainer>
         )}
         {prefs.gymPal && (

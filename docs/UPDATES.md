@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 71 · Customise Home, more widgets, better weather symbols
+
+*4 Nov 2026 · the commit "Customise Home with 17 widgets, and MET Norway's weather symbols"*
+
+- **Customise Home**, at the foot of Home: move widgets up or down, take them off, add new ones, or put Home back as it came. Kept on this device.
+- Six new widgets: Last workout (with Again), This month, Muscles trained, Body weight, Tools and Weather by the hour; 17 in all.
+- The weather on Home is now one small line; Weather by the hour is its own widget.
+- Clearer weather symbols: MET Norway's own, made for its forecast, readable in light and dark mode.
+- The map's weather circle is always there; with no forecast it shows a thermometer and says why.
+- Not yet seen on a phone.
+
 ## Update 70 · Weather on Home and the map
 
-*4 Nov 2026 · the commit "Weather on Home and the map, from MET Norway by map square"*
+*4 Nov 2026 · `a7e0c4c`*
 
 - Home has a weather card for where you're searching: the temperature and weather now, the next six hours, and whose forecast it is and when it was made.
 - The map has a small circle with a weather symbol and the degrees; tap it for the words and the source.

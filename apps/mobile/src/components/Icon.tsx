@@ -102,19 +102,9 @@ const ICONS = {
   person: { ios: 'person.fill', android: 'person', web: 'person' },
   key: { ios: 'key.fill', android: 'key', web: 'key' },
   warning: { ios: 'exclamationmark.triangle.fill', android: 'warning', web: 'warning' },
-  // The weather (components/Weather.tsx), one for each kind MET Norway's symbols come to.
-  weatherSun: { ios: 'sun.max.fill', android: 'clear_day', web: 'clear_day' },
-  weatherMoon: { ios: 'moon.stars.fill', android: 'nightlight', web: 'nightlight' },
-  weatherPartly: { ios: 'cloud.sun.fill', android: 'partly_cloudy_day', web: 'partly_cloudy_day' },
-  weatherPartlyNight: { ios: 'cloud.moon.fill', android: 'partly_cloudy_night', web: 'partly_cloudy_night' },
-  weatherCloud: { ios: 'cloud.fill', android: 'cloud', web: 'cloud' },
-  weatherFog: { ios: 'cloud.fog.fill', android: 'foggy', web: 'foggy' },
-  weatherDrizzle: { ios: 'cloud.drizzle.fill', android: 'rainy_light', web: 'rainy_light' },
-  weatherRain: { ios: 'cloud.rain.fill', android: 'rainy', web: 'rainy' },
-  weatherHeavyRain: { ios: 'cloud.heavyrain.fill', android: 'rainy_heavy', web: 'rainy_heavy' },
-  weatherSleet: { ios: 'cloud.sleet.fill', android: 'weather_mix', web: 'weather_mix' },
-  weatherSnow: { ios: 'cloud.snow.fill', android: 'weather_snowy', web: 'weather_snowy' },
-  weatherThunder: { ios: 'cloud.bolt.rain.fill', android: 'thunderstorm', web: 'thunderstorm' },
+  // The weather's stand-in while there's no forecast (components/Weather.tsx draws MET Norway's own symbols).
+  thermometer: { ios: 'thermometer.medium', android: 'thermostat', web: 'thermostat' },
+  customise: { ios: 'square.grid.2x2', android: 'dashboard_customize', web: 'dashboard_customize' },
 } as const;
 
 export type IconName = keyof typeof ICONS;

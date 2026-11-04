@@ -55,7 +55,7 @@ the branch the owner's launcher pulls.
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
 `npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 292,
-mobile 544, domain 191 and web 39 tests, all passing.
+mobile 549, domain 191 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 58, React Native 0.88, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -106,6 +106,18 @@ mobile 544, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Customise Home, 17 widgets, MET Norway's weather symbols** (4 Nov).
+  lib/homeWidgets.ts lists every widget (`HOME_WIDGETS`, `DEFAULT_HOME`,
+  `cleanHome`, `moveWidget`, `addWidget`, `removeWidget`, `shownWidgets`);
+  lib/homeLayout.ts keeps the order on the device (`useHomeWidgets`,
+  `homeLayout`); app/(tabs)/index.tsx draws them through `widget(id)` (a
+  new widget: add it to the list and a case there); app/home-edit.tsx is
+  Customise Home. New widgets in components/HomeWidgets.tsx. Weather
+  symbols: assets/weather/svg (MET Norway's, MIT) made into
+  assets/weather/icons/*.webp and src/lib/weatherArt.ts by
+  `node scripts/weather-icons.mjs`; components/Weather.tsx `WeatherSymbol`,
+  `WeatherCompact`, `WeatherHours`, `WeatherBadge` (always shown; lib/weather.ts
+  says why when there's no forecast).
 - **Weather on Home and the map** (4 Nov). MET Norway's Locationforecast
   2.0, free for any use with credit. Rules in
   packages/domain/src/weather.ts (`fromMetForecast`, `weatherKind`,

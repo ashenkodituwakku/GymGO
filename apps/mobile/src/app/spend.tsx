@@ -25,6 +25,7 @@ import { color, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
 import { useTrainingLog } from '@/lib/useTraining';
 import { EVERY, compareLine, localDay, spendReports, totals, visitDays, visitPrice, addDays, type Every, type Spend } from '@/lib/visitCost';
+import { useTapAgain } from '@/lib/tapAgain';
 
 const PERIODS = [
   { value: 30, label: '30 days' },
@@ -107,7 +108,7 @@ export default function SpendScreen() {
 
 function SpendCard({ report, line, onOpenGym }: { report: ReturnType<typeof spendReports>[number]; line: string | null; onOpenGym: (() => void) | null }) {
   const { spend } = report;
-  const [confirm, setConfirm] = useState(false);
+  const [confirm, setConfirm] = useTapAgain();
   const every = EVERY.find((entry) => entry.id === spend.every);
   const today = localDay(new Date().toISOString());
   return (

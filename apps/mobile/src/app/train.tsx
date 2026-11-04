@@ -91,6 +91,7 @@ import { shareText } from '@/lib/actions';
 import { weekAfter, workoutShareText, type WeekAfter } from '@/lib/insights';
 import { usePageTitle } from '@/lib/pageTitle';
 import { LIMITED } from '@/lib/limited';
+import { useTapAgain } from '@/lib/tapAgain';
 
 /** Ticks once a second while something on screen counts. */
 function useNow(active: boolean, every = 1000): number {
@@ -178,8 +179,8 @@ function NoWorkout({ token }: { token: string | null }) {
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           {last || recent.length > 0
-            ? 'Pick up where you left off, build a new one, or pick a template.'
-            : 'Build one for your gym, open one you saved, or pick a template (push, pull, legs; 5×5; full body).'}
+            ? 'Pick up where you left off, build or make a new one, or pick a template.'
+            : 'Build one for your gym, make your own, or pick a template (push, pull, legs; 5×5; full body).'}
         </Txt>
       </View>
       {last && (
@@ -261,6 +262,8 @@ function NoWorkout({ token }: { token: string | null }) {
         tone={recent.length > 0 || last ? 'quiet' : undefined}
         onPress={() => router.replace({ pathname: '/workout/[id]', params: { id: 'any' } })}
       />
+      {/* In place of this page, as the builder is: starting it comes back here with the workout. */}
+      <PrimaryButton label="Make your own" icon="plus" tone="quiet" onPress={() => router.replace('/workout-edit')} />
       <PrimaryButton label="Start from a template" icon="list" tone="quiet" onPress={() => router.push('/templates')} />
     </PageScroll>
   );
@@ -281,7 +284,11 @@ export default function TrainScreen() {
   const [done, setDone] = useState<{ session: TrainingSession; records: NewRecord[] } | null>(null);
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useTapAgain();
+  // Finishing with sets not ticked asks once: they won't be logged. Ticking another asks afresh.
+  const [finishAnyway, setFinishAnyway] = useTapAgain();
+  const tickedNow = session?.items.reduce((sum, item) => sum + item.sets.filter((set) => set.done).length, 0) ?? 0;
+  useEffect(() => setFinishAnyway(false), [tickedNow, setFinishAnyway]);
 
   const restEndsAt = session?.restEndsAt ?? null;
   // The alert for a locked phone follows the rest: set when it starts or moves, gone when it's skipped or the workout ends.
@@ -399,6 +406,8 @@ export default function TrainScreen() {
   const typedAnyWeight = session.items.some((item) => item.sets.some((set) => set.weight.trim() !== ''));
   const ticked = session.items.reduce((sum, item) => sum + item.sets.filter((set) => set.done).length, 0);
   const planned = session.items.reduce((sum, item) => sum + item.sets.length, 0);
+  // Timed work isn't logged as sets anyway, so it doesn't count as left undone.
+  const unticked = session.items.filter((item) => !isTimed(item)).reduce((sum, item) => sum + item.sets.filter((set) => !set.done).length, 0);
   const named = workoutTitle(session.name);
 
   const finish = async () => {
@@ -411,6 +420,11 @@ export default function TrainScreen() {
     }
     if (!token) {
       setProblem(LIMITED ? 'Keeping your workouts comes with the full version of GymGO. Discard this one when you’re done.' : 'Sign in (it’s free) to keep your workouts. This one stays on this device until you do.');
+      return;
+    }
+    if (unticked > 0 && !finishAnyway) {
+      haptic.warn();
+      setFinishAnyway(true);
       return;
     }
     setSaving(true);
@@ -511,7 +525,17 @@ export default function TrainScreen() {
         <AddExercise inWorkout={inWorkout} onAdd={addExercise} />
 
         <View style={styles.finish}>
-          <PrimaryButton label={saving ? 'Saving…' : 'Finish workout'} icon="check" disabled={saving} onPress={() => void finish()} />
+          {finishAnyway && unticked > 0 && (
+            <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+              {`${unticked} set${unticked === 1 ? ' isn’t' : 's aren’t'} ticked, so ${unticked === 1 ? 'it won’t' : 'they won’t'} be logged. Tick the ones you did, or finish anyway.`}
+            </Txt>
+          )}
+          <PrimaryButton
+            label={saving ? 'Saving…' : finishAnyway && unticked > 0 ? 'Finish anyway' : 'Finish workout'}
+            icon="check"
+            disabled={saving}
+            onPress={() => void finish()}
+          />
           {problem && (
             <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
               {problem}

@@ -19,6 +19,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { photoUri } from '@/lib/photoVault';
 import { MAX_PROGRESS_PHOTOS, addProgressPhoto, newestFirst, progressPhotos, removeProgressPhoto, setPhotoNote, thenAndNow, type ProgressPhoto } from '@/lib/progressPhotos';
 import { color, radius, space, themed } from '@/lib/theme';
+import { useTapAgain } from '@/lib/tapAgain';
 
 export default function PhotosScreen() {
   useGlassRedraw();
@@ -168,7 +169,7 @@ function Photo({ id, width, label }: { id: string; width: number; label: string 
 }
 
 function DeleteButton({ onDelete }: { onDelete: () => void }) {
-  const [sure, setSure] = useState(false);
+  const [sure, setSure] = useTapAgain();
   return <PrimaryButton label={sure ? 'Tap again to delete it' : 'Delete this photo'} tone="danger" onPress={() => (sure ? onDelete() : setSure(true))} />;
 }
 

@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 68 · Polish: Finish asks, Tap again resets
+
+*4 Nov 2026 · the commit "Polish: Finish asks about sets not ticked, Tap again resets"*
+
+- Finish with sets not ticked says how many won't be logged and becomes "Finish anyway", so a stray tap doesn't end a workout half done.
+- Every "Tap again to delete it" button goes back to normal after 8 seconds (Delete account after 20), so a tap much later can't delete something.
+- Make your own is on the Workout page when no workout is going; My workouts says you can change one.
+- Profile's My workouts and Plate calculator say what they are; the empty Monthly report says what it will show, with Start a workout.
+- Not yet seen on a phone.
+
 ## Update 67 · Your own workouts, splits and exercises
 
-*3 Nov 2026 · the commit "Your own workouts, splits and exercises"*
+*3 Nov 2026 · `b918dee`*
 
 - Make your own workout from scratch: pick the exercises, then each one's sets, reps and rest, put them in order and make supersets. Starting it is free; keeping it in My workouts is Pro, as before, and a kept one can now be changed.
 - A plan from the builder can be changed the same way before you start it.

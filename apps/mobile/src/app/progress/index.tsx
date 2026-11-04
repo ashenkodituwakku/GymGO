@@ -51,6 +51,7 @@ import { ScreenOptions } from '@/components/ScreenOptions';
 import { BodyWeightCard } from '@/components/BodyWeightCard';
 import { RecoveryMap } from '@/components/RecoveryMap';
 import { LIMITED } from '@/lib/limited';
+import { useTapAgain } from '@/lib/tapAgain';
 
 const nameOf = exerciseName;
 /** "65 kg × 6" on one line: a narrow phone wraps before it, not inside it. */
@@ -438,7 +439,7 @@ function SessionRow({
   onToggle: () => void;
   onDelete: () => Promise<void>;
 }) {
-  const [confirm, setConfirm] = useState(false);
+  const [confirm, setConfirm] = useTapAgain();
   const [problem, setProblem] = useState<string | null>(null);
   const router = useRouter();
   const volume = fromKg(volumeKg(session), session.unit);

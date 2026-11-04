@@ -23,6 +23,7 @@ import { placeContext, suggestPlaces, suggestWorldCities } from '@/lib/places';
 import { addDays, atPlace, atWorldCity, nowIn, type Whereabouts } from '@/lib/query';
 import { MAX_NIGHTS, todayThere, tripDatesLabel, tripWhen, useTrips } from '@/lib/trips';
 import { color, face, radius, space, themed } from '@/lib/theme';
+import { useTapAgainOn } from '@/lib/tapAgain';
 
 /** Furthest ahead a trip can start: a year. */
 const MAX_AHEAD_DAYS = 365;
@@ -40,7 +41,7 @@ export default function TripsScreen() {
   const [from, setFrom] = useState(addDays(today, 1));
   const [stay, setStay] = useState(2);
   // The trip whose bin was tapped once: a second tap removes it.
-  const [removing, setRemoving] = useState<string | null>(null);
+  const [removing, setRemoving] = useTapAgainOn<string>();
 
   const suggestions = useMemo(() => {
     if (!query.trim() || where) return [];

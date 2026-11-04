@@ -27,6 +27,7 @@ import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { Avatar } from '@/components/Avatar';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { pickAvatar } from '@/lib/avatar';
+import { useTapAgain } from '@/lib/tapAgain';
 
 const PROVIDER_NAME: Record<SignInProvider, string> = { google: 'Google', apple: 'Apple' };
 
@@ -48,7 +49,8 @@ export default function AccountScreen() {
   const [editing, setEditing] = useState<'name' | 'password' | null>(null);
   const [notice, setNotice] = useState<{ text: string; good: boolean } | null>(null);
   const [exported, setExported] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  // Longer to read what deleting takes with it.
+  const [confirmDelete, setConfirmDelete] = useTapAgain(20000);
   const [picturing, setPicturing] = useState(false);
   const deleteCollection = useDeleteCollection();
 

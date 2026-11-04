@@ -23,6 +23,7 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, space, themed } from '@/lib/theme';
+import { useTapAgain } from '@/lib/tapAgain';
 
 const timeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
@@ -43,7 +44,7 @@ export default function ChallengesScreen() {
   const [problem, setProblem] = useState<string | null>(null);
   const [target, setTarget] = useState(12);
   const [busy, setBusy] = useState(false);
-  const [leaving, setLeaving] = useState(false);
+  const [leaving, setLeaving] = useTapAgain();
 
   const load = useCallback(() => {
     if (!token) return;

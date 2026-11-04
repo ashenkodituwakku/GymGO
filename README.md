@@ -597,6 +597,8 @@ workouts go to your log.
   lock between sets.
 - **Left open overnight?** If nothing changed for over an hour, the workout
   is logged as ending at your last change, not when you tapped Finish.
+- **Sets not ticked?** Finish says how many won't be logged; tick the ones
+  you did, or tap **Finish anyway** to save what you ticked.
 - **Last time.** Beside each exercise: what you did the last time you
   logged it ("135 lb × 10, 10, 9").
 - **Plates.** On barbell exercises, **Plates** shows what to load on each

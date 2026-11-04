@@ -11,6 +11,7 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { monthLabel } from '@gymgo/domain';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
+import { HeroMark } from '@/components/HeroMark';
 import { Icon } from '@/components/Icon';
 import { Pressable } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
@@ -47,28 +48,47 @@ export default function MonthScreen() {
 
   if (!account.token) {
     return (
-      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+      <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.centred]}>
         <ScreenOptions options={{ title: '' }} />
-        <Txt variant="subhead" color={color.labelSecondary}>
-          Sign in to see your months of training.
+        <HeroMark icon="calendar" />
+        <Txt variant="title2" accessibilityRole="header" level={1} style={styles.center}>
+          Monthly report
         </Txt>
-        <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />
+        <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
+          Sign in to see your months of training: workouts, time, weight lifted, records and what you did most.
+        </Txt>
+        <View style={styles.button}>
+          <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />
+        </View>
       </PageScroll>
     );
   }
   if (!report || !month) {
+    if (log.status === 'loading') {
+      return (
+        <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+          <ScreenOptions options={{ title: '' }} />
+          <Txt variant="largeTitle" accessibilityRole="header" level={1}>
+            Monthly report
+          </Txt>
+          <ListSkeleton rows={3} label="Loading your log" />
+        </PageScroll>
+      );
+    }
     return (
-      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+      <PageScroll style={styles.page} contentContainerStyle={[styles.content, styles.centred]}>
         <ScreenOptions options={{ title: '' }} />
-        <Txt variant="largeTitle" accessibilityRole="header" level={1}>
+        <HeroMark icon="calendar" />
+        <Txt variant="title2" accessibilityRole="header" level={1} style={styles.center}>
           Monthly report
         </Txt>
-        {log.status === 'loading' ? (
-          <ListSkeleton rows={3} label="Loading your log" />
-        ) : (
-          <Txt variant="subhead" color={color.labelSecondary}>
-            {log.error ?? 'Log a workout, and each month gets its report here.'}
-          </Txt>
+        <Txt variant="subhead" color={log.error ? color.dangerInk : color.labelSecondary} style={styles.center}>
+          {log.error ?? 'Each month you train gets its report here: workouts, time, weight lifted, records and what you did most.'}
+        </Txt>
+        {!log.error && (
+          <View style={styles.button}>
+            <PrimaryButton label="Start a workout" icon="play" onPress={() => router.push('/train')} />
+          </View>
         )}
       </PageScroll>
     );
@@ -294,6 +314,8 @@ const styles = themed(() =>
     content: { padding: space[4], paddingBottom: space[8], gap: space[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
     flex: { flex: 1, minWidth: 0 },
     center: { textAlign: 'center' },
+    centred: { alignItems: 'center', paddingTop: space[8] },
+    button: { alignSelf: 'stretch', marginTop: space[2] },
     headRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     step: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     stepOff: { backgroundColor: color.fill },

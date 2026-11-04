@@ -27,6 +27,7 @@ import { addOwnExercise, changeOwnExercise, deleteOwnExercise, useOwnTraining } 
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { EXERCISES, KIT_LABEL, MUSCLES, type Kit } from '@/lib/workout';
+import { useTapAgain } from '@/lib/tapAgain';
 
 /** The kit to pick from, the usual first. */
 const KIT_ORDER: Kit[] = ['dumbbells', 'barbells', 'bench', 'cable_station', 'squat_rack', 'power_rack', 'smith_machine', 'lat_pulldown', 'leg_press', 'hack_squat', 'lifting_platform', 'treadmill', 'rower', 'assault_bike', 'turf_sled'];
@@ -48,7 +49,7 @@ export default function ExerciseEditScreen() {
   const [problem, setProblem] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [deleting, setDeleting] = useTapAgain();
 
   useEffect(() => {
     if (draft) return;

@@ -103,7 +103,7 @@ export default function MyWorkouts() {
           <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
             {billing.isPro ? 'Make one of your own, or build one and tap Save.' : 'With GymGO Pro, the workouts you make or build are kept here.'}
           </Txt>
-          <PrimaryButton label="Make your own" icon="list" onPress={() => router.push('/workout-edit')} />
+          <PrimaryButton label="Make your own" icon="plus" onPress={() => router.push('/workout-edit')} />
           <PrimaryButton label="Build one from muscles" icon="workout" tone="quiet" onPress={() => router.push({ pathname: '/workout/[id]', params: { id: 'any' } })} />
           <PrimaryButton label="Or start from a template" tone="quiet" onPress={() => router.push('/templates')} />
         </View>
@@ -150,11 +150,11 @@ export default function MyWorkouts() {
             })}
           </View>
           <Txt variant="footnote" color={color.labelSecondary} style={styles.footer}>
-            Saved to your account, so they’re on any device you sign in on. Tap one to see it, share it or delete it.
+            Saved to your account, so they’re on any device you sign in on. Tap one to see it, change it, share it or delete it.
           </Txt>
           {billing.isPro && (
             <View style={styles.more}>
-              <PrimaryButton label="Make your own" icon="list" tone="quiet" onPress={() => router.push('/workout-edit')} />
+              <PrimaryButton label="Make your own" icon="plus" tone="quiet" onPress={() => router.push('/workout-edit')} />
               <PrimaryButton label="Build one from muscles" icon="sparkle" tone="quiet" onPress={() => router.push({ pathname: '/workout/[id]', params: { id: 'any' } })} />
             </View>
           )}

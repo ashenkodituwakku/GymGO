@@ -25,6 +25,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import type { PlanItem } from '@/lib/planEdit';
 import { TEMPLATES } from '@/lib/templates';
 import { color, face, radius, space, themed } from '@/lib/theme';
+import { useTapAgain } from '@/lib/tapAgain';
 import { Icon, type IconName } from '@/components/Icon';
 import { Pressable } from '@/components/motion';
 
@@ -58,7 +59,7 @@ export default function SplitEditScreen() {
   const [problem, setProblem] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [deleting, setDeleting] = useTapAgain();
 
   // A new one starts with two days to fill; one you made, as you made it.
   useEffect(() => {

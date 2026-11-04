@@ -54,8 +54,8 @@ the branch the owner's launcher pulls.
 ## The code
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
-`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 228,
-mobile 388, domain 167 and web 39 tests, all passing.
+`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 286,
+mobile 544, domain 184 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 58, React Native 0.88, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -106,6 +106,13 @@ mobile 388, domain 167 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Polish** (4 Nov; the owner: "Keep polishing the app"). app/train.tsx:
+  Finish asks once when sets aren't ticked (`finishAnyway`, reset by any
+  new tick; timed items don't count). lib/tapAgain.ts `useTapAgain(ms)` and
+  `useTapAgainOn<T>()` hold every "Tap again to…" state and disarm after
+  8 s (Delete account 20 s): use them for any new tap-again button, not
+  `useState`. Make your own on the No workout page (replaces the page, as
+  the builder does); Profile subtitles; the empty Monthly report.
 - **Your own workouts, splits and exercises** (3 Nov; the owner: "make sure
   the user can make their own splits and workouts and make custom
   exercises (only for pro users)"). Read as: making and starting a workout

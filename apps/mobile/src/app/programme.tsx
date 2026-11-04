@@ -51,6 +51,7 @@ import { color, face, radius, space, themed } from '@/lib/theme';
 import { formatWeight, lastTime, setsSummary, unitFor } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
 import { TYPICAL_KIT, exerciseName, swapFor } from '@/lib/workout';
+import { useTapAgain } from '@/lib/tapAgain';
 
 export default function ProgrammeScreen() {
   useGlassRedraw();
@@ -167,7 +168,7 @@ function Running({ programme }: { programme: Programme }) {
   const dayIndex = picked ?? next;
   const day = plan[dayIndex]!;
   const items = dayPlan(programme, dayIndex, progress.easier);
-  const [ending, setEnding] = useState(false);
+  const [ending, setEnding] = useTapAgain();
   const title = programmeTitle(programme.goal);
 
   const start = () => {

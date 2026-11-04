@@ -21,6 +21,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { LIMITED } from '@/lib/limited';
+import { useTapAgain } from '@/lib/tapAgain';
 
 export default function SavedWorkoutScreen() {
   useGlassRedraw();
@@ -32,7 +33,7 @@ export default function SavedWorkoutScreen() {
   const active = useActiveSessionGlance();
   const router = useRouter();
   const [saved, setSaved] = useState<SavedWorkout | null | 'missing'>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useTapAgain();
   const [problem, setProblem] = useState<string | null>(null);
   // Kept while the server is away too: loading then fails and says so,
   // where a missing token would ask a signed-in person to sign in.

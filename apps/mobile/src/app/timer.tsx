@@ -27,6 +27,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { playSound } from '@/lib/sounds';
 import { color, face, radius, shadow, space, themed, type } from '@/lib/theme';
 import { clockLabel } from '@/lib/training';
+import { useTapAgain } from '@/lib/tapAgain';
 
 const PHASE_WORD: Record<PhaseKind, string> = { ready: 'GET READY', work: 'WORK', rest: 'REST', done: 'DONE' };
 const KEEP_AWAKE = 'gymgo-timer';
@@ -44,7 +45,7 @@ export default function TimerScreen() {
   const [now, setNow] = useState(() => Date.now());
   const [naming, setNaming] = useState<string | null>(null);
   // Delete was tapped once: a second tap deletes the timer.
-  const [deleting, setDeleting] = useState(false);
+  const [deleting, setDeleting] = useTapAgain();
 
   const running = startedAt !== null;
   const elapsed = banked + (running ? (now - startedAt) / 1000 : 0);

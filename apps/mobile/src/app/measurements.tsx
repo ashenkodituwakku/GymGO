@@ -26,6 +26,7 @@ import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { unitFor } from '@/lib/training';
+import { useTapAgainOn } from '@/lib/tapAgain';
 
 export default function MeasurementsScreen() {
   useGlassRedraw();
@@ -37,7 +38,7 @@ export default function MeasurementsScreen() {
   const [problem, setProblem] = useState<string | null>(null);
   const [kept, setKept] = useState(false);
   const [charted, setCharted] = useState<MeasureId | null>(null);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleting, setDeleting] = useTapAgainOn<string>();
   // The form: the measures you take (four common ones to start), and the rest a tap away.
   const [all, setAll] = useState(false);
   const usual = useMemo(() => formMeasures(days), [days]);

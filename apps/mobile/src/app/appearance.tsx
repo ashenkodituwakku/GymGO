@@ -9,13 +9,14 @@
  */
 
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { BrandFill } from '@/components/BrandFill';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { loadAllLookFonts } from '@/lib/lookFonts';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, Pressable } from '@/components/motion';
 import { Glass } from '@/components/Glass';
+import { GYMPAL_KEYS } from '@/components/GymPal';
 import { Icon } from '@/components/Icon';
 import { PercentSlider } from '@/components/PercentSlider';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
@@ -58,7 +59,7 @@ import {
   type LookId,
   type TextSize,
 } from '@/lib/theme';
-import { setThemeChoice, useThemeChoice } from '@/lib/themePrefs';
+import { setThemeChoice, useThemeChoice, type GymPalButton } from '@/lib/themePrefs';
 import type { NavLayout } from '@/lib/navLayout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
@@ -668,11 +669,23 @@ export default function AppearanceScreen() {
                 GYMPAL’S BUTTON
               </Txt>
             </View>
-            <View style={styles.glassCard}>
+            <View style={[styles.glassCard, styles.gymPalCard]}>
               <Segmented
                 options={[
-                  { value: 'left', label: 'Bottom left' },
-                  { value: 'right', label: 'Bottom right' },
+                  { value: 'tab', label: 'Edge tab' },
+                  { value: 'corner', label: 'Corner' },
+                  { value: 'hidden', label: 'Hidden' },
+                ]}
+                value={choice.gymPalButton}
+                onChange={(gymPalButton: GymPalButton) => {
+                  haptic.select();
+                  setThemeChoice({ gymPalButton });
+                }}
+              />
+              <Segmented
+                options={[
+                  { value: 'left', label: 'Left side' },
+                  { value: 'right', label: 'Right side' },
                 ]}
                 value={choice.gymPalSide}
                 onChange={(gymPalSide: 'left' | 'right') => {
@@ -682,7 +695,7 @@ export default function AppearanceScreen() {
               />
             </View>
             <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-              Which corner GymPal waits in. To hide him altogether, switch GymPal off in Profile → Settings.
+              {gymPalHow(choice.gymPalButton, choice.gymPalSide)}
             </Txt>
           </>
         )}
@@ -690,6 +703,15 @@ export default function AppearanceScreen() {
       {playing > 0 && <Celebration key={playing} style={celebrationInUse} />}
     </View>
   );
+}
+
+/** What each way of keeping GymPal does, and the other ways in. */
+function gymPalHow(button: GymPalButton, side: 'left' | 'right'): string {
+  const keys = Platform.OS === 'web' ? ` On a computer, ${GYMPAL_KEYS} opens him too.` : '';
+  const off = ' To have no GymPal at all, switch him off in Profile → Settings.';
+  if (button === 'tab') return `A small tab on the ${side} edge of the screen, low down: tap it, or pull it in.${keys}${off}`;
+  if (button === 'corner') return `His button in the bottom ${side} corner.${keys}${off}`;
+  return `Nothing on screen.${Platform.OS === 'web' ? ` ${GYMPAL_KEYS} opens him` : ` Swipe in from the ${side} edge, near the bottom, to open him`}, or Profile → Ask GymPal and the Ask GymPal buttons.${off}`;
 }
 
 /** "Your own" among the accents: the colour you picked, or a rainbow ring before you have. */
@@ -889,6 +911,7 @@ const styles = themed(() =>
     hueTrack: { flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden' },
     hueStop: { flex: 1 },
     glassCard: { gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
+    gymPalCard: { gap: space[2] },
     glassHead: { flexDirection: 'row', alignItems: 'baseline', gap: space[2], paddingHorizontal: space[1] },
     sliderRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     step: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },

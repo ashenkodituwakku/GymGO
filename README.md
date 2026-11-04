@@ -384,8 +384,12 @@ your accent glows behind them.
     its close button, Escape or Android's back closes it. A page that isn't
     a tab opens over the tabs with its back button, as it does from the tab
     bar. GymPal's button moves beside Menu, or clear of the docked sidebar.
-  - **GymPal's button** (everyone, while GymPal is on): bottom right or
-    bottom left; his chat panel opens on the same side on a wide screen.
+  - **GymPal's button** (everyone, while GymPal is on): **Edge tab** (the
+    default: a small tab flush with the screen's edge, low down; tap it or
+    pull it in), **Corner** (his button in the bottom corner) or **Hidden**
+    (nothing on screen: on a phone, swipe in from that edge near the
+    bottom; on a computer, Ctrl + / or ⌘ /), on the right or the left. His
+    chat panel opens on the same side on a wide screen.
   - **Corners** (Pro): Round, Standard or Sharp, scaling the corners of
     cards, buttons and sheets (pills stay pills, and the square looks stay
     square, as the page says).
@@ -1053,20 +1057,27 @@ npx pnpm@10 --filter @gymgo/server make-admin you@example.com
 
 ### GymPal, the AI assistant (free)
 
-GymPal (called Verity until 28 October 2026) sits in the bottom-right
-corner of every signed-in screen (above the tab bar on the tabs; not during a workout, on the
-welcome tour or on screens that open as sheets). Tap it and a chat opens,
+GymPal (called Verity until 28 October 2026) waits as a small tab on the
+right edge of every signed-in screen, low down (above the tab bar on the
+tabs; not during a workout, on the welcome tour or on screens that open as
+sheets). His logo is a speech bubble holding a dumbbell (redrawn 4
+November 2026). Tap the tab, or pull it in from the edge, and a chat opens;
+on a computer, **Ctrl + /** (⌘ / on a Mac) opens and closes it from
+anywhere, and Esc closes it. Appearance → **GymPal's button** puts him on
+the left, back in the corner as a button, or out of sight (a swipe in from
+the edge on a phone). The chat opens
 always starting with "Hi! I'm GymPal your personal assistant, ask me
 anything!". He answers questions about the app (where things are, what
 the labels mean, what Pro adds) and general training questions.
 
-His face is his logo, `apps/mobile/assets/gympal/gympal.svg`: a friendly
-kettlebell in a pink sweatband, on GymGO's blue-violet (with a 512-pixel
-`gympal.png` beside it for anywhere an SVG won't do). He blinks every few
-seconds and grins as the chat opens and with each answer, and keeps still
-with Reduce Motion. The app lays the logo's three parts (body, eyes, mouth)
-over one another to move them: after changing the SVG, run
-`node scripts/gympal-logo.mjs` in `apps/mobile` to make them again.
+His logo is `apps/mobile/assets/gympal/gympal.svg`: a white speech bubble
+holding a dumbbell, on a rounded tile of GymGO's blue-violet (with a
+512-pixel `gympal.png` beside it for anywhere an SVG won't do). The dumbbell
+lifts once as his tab appears, and in the chat as it opens and with each
+answer; otherwise nothing moves, and it keeps still with Reduce Motion. The
+app lays the logo's two parts (body, dumbbell) over each other to move the
+dumbbell: after changing the SVG, run `node scripts/gympal-logo.mjs` in
+`apps/mobile` to make them again.
 The chat stays while the app is open, **Start over** clears it, and nothing
 of it is stored, on the phone or the server.
 
@@ -1117,7 +1128,7 @@ limits each person: 20 questions a day and 6 a minute on Free, 100 a day and
 10 a minute with Pro (`GYMPAL_PLANS` in `apps/server/src/gymPal.ts`).
 
 **Switching him off.** Profile → Settings → **GymPal** takes him out of the
-app on that device: no button in the corner and no Ask GymPal rows,
+app on that device: no tab or button and no Ask GymPal rows,
 until it's switched on again.
 
 **In the app's features.** The chat opens with two or three questions that
@@ -1773,7 +1784,7 @@ saved list always opens, wherever the gym is.
 | Warm-up sets | Mark any set as a warm-up; plates for any weight | A warm-up ramp to your weight, with the plates, on the plate calculator or added to a workout |
 | Gym notes | — | Your own notes on each gym, on your device |
 | Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
-| Colour themes | Indigo; light, dark or Dim; text size, bold text, 12- or 24-hour clock, GymPal's side | Twelve accents (Rainbow and Camo too) or your own colour, eight looks (Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles |
+| Colour themes | Indigo; light, dark or Dim; text size, bold text, 12- or 24-hour clock, GymPal's button and side | Twelve accents (Rainbow and Camo too) or your own colour, eight looks (Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles |
 | Interval timer | Tabata and EMOM | Your own work, rest and rounds; keep up to 10 |
 | 1-rep max | Your estimated max, and 90%, 80% and 70% | Every step from 100% to 50% with plates, and what you could lift for 2 to 12 reps |
 | Streak freeze | — | One missed week a month doesn't end your streak |

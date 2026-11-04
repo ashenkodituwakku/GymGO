@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 69 · GymPal's new logo and a quieter button
+
+*4 Nov 2026 · the commit "GymPal: a new logo, and a small tab on the edge instead of a big button"*
+
+- A new logo: a speech bubble holding a dumbbell, on GymGO's blue-violet. The dumbbell lifts when the chat opens and with each answer, and otherwise keeps still.
+- GymPal now waits as a small tab on the edge of the screen instead of a big round button: tap it, or pull it in from the edge.
+- On a computer, Ctrl + / (⌘ / on a Mac) opens and closes GymPal from anywhere; Esc closes it.
+- Appearance → GymPal's button: Edge tab (the default), Corner (a smaller button than before) or Hidden (a swipe in from the edge on a phone), on the left or right.
+- Not yet seen on a phone: pulling the tab and the Hidden swipe. On Android with gesture navigation, a swipe from the edge may go back instead; tapping the tab still works.
+
 ## Update 68 · Polish: Finish asks, Tap again resets
 
-*4 Nov 2026 · the commit "Polish: Finish asks about sets not ticked, Tap again resets"*
+*4 Nov 2026 · `a2a3ade`*
 
 - Finish with sets not ticked says how many won't be logged and becomes "Finish anyway", so a stray tap doesn't end a workout half done.
 - Every "Tap again to delete it" button goes back to normal after 8 seconds (Delete account after 20), so a tap much later can't delete something.

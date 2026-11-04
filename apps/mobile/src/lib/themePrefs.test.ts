@@ -46,10 +46,10 @@ describe('your appearance', () => {
 
 describe('your adjustments', () => {
   it('keeps text size, bold text, corners, your own colour, the clock and GymPal’s side, and falls back for anything odd', () => {
-    const kept = parseChoice(JSON.stringify({ accent: 'custom', textSize: 'larger', bold: true, corners: 'round', customHue: 725, clock24: true, gymPalSide: 'left' }));
-    expect(kept).toMatchObject({ accent: 'custom', textSize: 'larger', bold: true, corners: 'round', customHue: 5, clock24: true, gymPalSide: 'left' });
-    const odd = parseChoice(JSON.stringify({ textSize: 'huge', bold: 'yes', corners: 'wavy', customHue: 'red', clock24: 1, gymPalSide: 'top' }));
-    expect(odd).toMatchObject({ textSize: 'default', bold: false, corners: 'standard', customHue: DEFAULT_CHOICE.customHue, clock24: false, gymPalSide: 'right' });
+    const kept = parseChoice(JSON.stringify({ accent: 'custom', textSize: 'larger', bold: true, corners: 'round', customHue: 725, clock24: true, gymPalSide: 'left', gymPalButton: 'hidden' }));
+    expect(kept).toMatchObject({ accent: 'custom', textSize: 'larger', bold: true, corners: 'round', customHue: 5, clock24: true, gymPalSide: 'left', gymPalButton: 'hidden' });
+    const odd = parseChoice(JSON.stringify({ textSize: 'huge', bold: 'yes', corners: 'wavy', customHue: 'red', clock24: 1, gymPalSide: 'top', gymPalButton: 'floating' }));
+    expect(odd).toMatchObject({ textSize: 'default', bold: false, corners: 'standard', customHue: DEFAULT_CHOICE.customHue, clock24: false, gymPalSide: 'right', gymPalButton: 'tab' });
     expect(parseChoice(JSON.stringify({ customHue: -30 })).customHue).toBe(330);
   });
 });

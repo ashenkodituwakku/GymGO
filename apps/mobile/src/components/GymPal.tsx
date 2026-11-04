@@ -1,7 +1,14 @@
 /**
- * GymPal, GymGO's AI assistant: his face in a bottom corner of every
- * signed-in screen (the right, or the left if you choose it in Appearance),
- * which opens a chat. It always opens on GymPal's
+ * GymPal, GymGO's AI assistant, a tap away on every signed-in screen, which
+ * opens a chat. How he waits is yours to choose in Appearance (lib/themePrefs.ts
+ * `gymPalButton`, `gymPalSide`), and none of it covers what you're reading:
+ *  - **Edge tab** (the default): a small tab flush with the screen's right
+ *    (or left) edge, low down where a thumb reaches; tap it, or pull it in.
+ *  - **Corner**: his button in the bottom corner, as he started.
+ *  - **Hidden**: nothing to see; on a phone, swipe in from that edge near
+ *    the bottom (a strip a fingertip wide), or Profile → Ask GymPal.
+ * In a browser, Ctrl+/ (⌘/ on a Mac) opens and closes him from anywhere,
+ * whichever you chose. It always opens on GymPal's
  * greeting, with two or three questions to start from that fit the screen
  * (lib/gymPalSuggestions.ts). The conversation stays while the app is open
  * (Start over clears it) and is never stored anywhere.
@@ -17,11 +24,11 @@
  * your latest sessions, never their gyms or notes. Off to start; on Free
  * it shows locked and opens the Pro screen.
  *
- * His face is his logo, assets/gympal/gympal.svg: a kettlebell in a
- * sweatband on GymGO's blue-violet, in three layers (lib/gymPalArt.ts, from
- * scripts/gympal-logo.mjs). He blinks every few seconds, sometimes twice,
- * and grins as the chat opens and with each answer. Still with Reduce
- * Motion.
+ * His logo, assets/gympal/gympal.svg: a speech bubble holding a dumbbell,
+ * on a tile of GymGO's blue-violet, in two layers (lib/gymPalArt.ts, from
+ * scripts/gympal-logo.mjs). The dumbbell lifts once as his tab appears, and
+ * in the chat as it opens and with each answer; otherwise it keeps still, so
+ * nothing in the corner of your eye moves. Still with Reduce Motion.
  *
  * Answers come from a free AI model through the GymGO server
  * (apps/server/src/gymPal.ts), which hands the model GymPal's guide to the
@@ -30,8 +37,8 @@
  * OpenRouter key), each question gets GymPal's apology that it's still
  * being set up; once the key is in, the next question goes through.
  *
- * His button keeps out of the way where the corner is busy: a workout in
- * progress (its rest timer sits there), the welcome tour, and the screens
+ * His tab or button keeps out of the way where the corner is busy: a workout
+ * in progress (its rest timer sits there), the welcome tour, and the screens
  * that open as sheets. The chat itself opens from any of them.
  */
 
@@ -50,17 +57,20 @@ import {
   type TextInputKeyPressEvent,
   type ScrollViewInstance,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   FadeIn,
   FadeInDown,
   ReduceMotion,
   cancelAnimation,
+  runOnJS,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withDelay,
   withRepeat,
   withSequence,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -68,7 +78,7 @@ import { SvgXml } from 'react-native-svg';
 import { ApiError, OfflineError, api, apiBase, problemText, type ChatTurn } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { onGymPalRequest } from '@/lib/gymPalBus';
-import { GYMPAL_BODY, GYMPAL_EYES, GYMPAL_MOUTH } from '@/lib/gymPalArt';
+import { GYMPAL_BODY, GYMPAL_DUMBBELL } from '@/lib/gymPalArt';
 import { suggestionsFor } from '@/lib/gymPalSuggestions';
 import { haptic } from '@/lib/haptics';
 import { tabBarBottom } from '@/lib/layout';
@@ -87,7 +97,12 @@ export const GREETING = 'Hi! I’m GymPal your personal assistant, ask me anythi
 /** What the server takes: the latest 10 messages, or 30 with Pro, each question under 1,000 characters. */
 const KEEP = { free: 10, pro: 30 };
 const MAX_QUESTION = 1000;
-const BUTTON = 60;
+/** The corner button, and the tab on the edge: how far it sticks out and how tall it is. */
+const BUTTON = 52;
+const TAB = { wide: 34, tall: 52, mark: 24 };
+/** How far a pull on the tab (or the hidden strip) must go to open him, and how wide the strip is. */
+const PULL_OPENS = 28;
+const STRIP = 14;
 const EDGE = 16;
 /** The tab bar's height and widest (app/(tabs)/_layout.tsx). */
 const TAB_BAR = 64;
@@ -99,9 +114,12 @@ const TABS = new Set(['/', '/explore', '/saved', '/profile']);
 /** Where the corner is someone else's: no button there, though screens there can still open the chat. */
 const HIDDEN = new Set(['/train', '/welcome', '/compare', '/plates', '/pro', '/country', '/sign-in', '/report-bug']);
 
-/** Where his eyes and mouth are, as shares of the logo (assets/gympal/gympal.svg's 100-unit box): what they blink and grin about. */
-const EYES_AT = '50% 58%';
-const MOUTH_AT = '50% 69.5%';
+/** Where the dumbbell's middle is, as shares of the logo (assets/gympal/gympal.svg's 100-unit box): what it lifts about. */
+const DUMBBELL_AT = '50% 48%';
+
+/** The keys that open and close him in a browser. */
+const ON_MAC = Platform.OS === 'web' && typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent);
+export const GYMPAL_KEYS = ON_MAC ? '⌘ /' : 'Ctrl + /';
 
 /**
  * A message. `waited` marks a question answered only with WAITING, and that
@@ -122,8 +140,8 @@ let nextId = 1;
 export function GymPal() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  // Which corner its button sits in, and the layout (Appearance).
-  const { gymPalSide: side, layout } = useThemeChoice();
+  // How and on which side he waits, and the layout (Appearance).
+  const { gymPalSide: side, gymPalButton: button, layout } = useThemeChoice();
   const { width } = useWindowDimensions();
   const mode = navMode(layout, width);
   const { billing, openPro } = useApp();
@@ -244,6 +262,18 @@ export function GymPal() {
     [],
   );
 
+  // A browser: Ctrl+/ (⌘/ on a Mac) opens and closes him from anywhere, a text box included.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const onKey = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || (event.key !== '/' && event.code !== 'Slash')) return;
+      event.preventDefault();
+      setOpen((now) => !now);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   const startOver = () => {
     haptic.select();
     setLines([]);
@@ -265,11 +295,16 @@ export function GymPal() {
       : mode === 'docked'
         ? insets.bottom + EDGE
         : tabBarBottom(insets.bottom) + (besideBar ? (TAB_BAR - BUTTON) / 2 : TAB_BAR + 12);
-  const sideEdge = (side === 'left' ? insets.left + (mode === 'docked' && TABS.has(pathname) ? SIDEBAR_WIDTH : 0) : insets.right) + EDGE;
+  // The screen's edge on that side (beside a docked sidebar on the left), and the corner button's place in from it.
+  const flush = side === 'left' ? insets.left + (mode === 'docked' && TABS.has(pathname) ? SIDEBAR_WIDTH : 0) : insets.right;
+  const show = () => setOpen(true);
 
   return (
     <>
-      {!open && !hidden && <Launcher bottom={bottom} side={side} edge={sideEdge} onPress={() => setOpen(true)} />}
+      {!open && !hidden && button === 'corner' && <Launcher bottom={bottom} side={side} edge={flush + EDGE} onPress={show} />}
+      {!open && !hidden && button === 'tab' && <EdgeTab bottom={bottom + (BUTTON - TAB.tall) / 2} side={side} edge={flush} onOpen={show} />}
+      {/* Hidden: only the swipe, on a touch screen; a browser has its keys. */}
+      {!open && !hidden && button === 'hidden' && Platform.OS !== 'web' && <EdgeStrip bottom={bottom - 40} side={side} edge={flush} onOpen={show} />}
       <Modal visible={open} transparent animationType="none" onRequestClose={close} statusBarTranslucent>
         <Chat
           wide={width >= PANEL_FROM}
@@ -306,53 +341,36 @@ export function GymPal() {
 }
 
 /**
- * GymPal's face, his logo: blinking now and then, sometimes twice, and
- * grinning each time `cheer` goes up; `still` for a small one beside a
- * screen's own text. Decoration: what it stands for is in the label of the
- * button or heading it's on.
+ * GymPal's logo, the dumbbell in its bubble lifting now and then: once,
+ * soon after it appears, and each time `cheer` goes up (the chat opening,
+ * each answer); `still` for one beside a screen's own text. Decoration:
+ * what it stands for is in the label of the button or heading it's on.
  */
-export function GymPalFace({ size, cheer = 0, still = false }: { size: number; cheer?: number; still?: boolean }) {
+export function GymPalMark({ size, cheer = 0, still = false }: { size: number; cheer?: number; still?: boolean }) {
   const calm = useReducedMotion() || still;
-  const lid = useSharedValue(1);
-  const smile = useSharedValue(0);
+  const lift = useSharedValue(0);
 
   useEffect(() => {
     if (calm) return;
-    let timer: ReturnType<typeof setTimeout>;
-    const blink = () => {
-      const shut = withSequence(withTiming(0.1, { duration: 70 }), withTiming(1, { duration: 120 }));
-      lid.value = Math.random() < 0.25 ? withSequence(shut, withDelay(90, shut)) : shut;
-      timer = setTimeout(blink, 2600 + Math.random() * 3400);
-    };
-    timer = setTimeout(blink, 1200 + Math.random() * 1500);
-    return () => {
-      clearTimeout(timer);
-      cancelAnimation(lid);
-    };
-  }, [calm, lid]);
+    const rep = () => withSequence(withTiming(1, { duration: 240 }), withDelay(110, withTiming(0, { duration: 300 })));
+    // One lift to say hello, then still: nothing at the edge of your eye keeps moving.
+    lift.value = cheer === 0 ? withDelay(1400, rep()) : withSequence(rep(), rep());
+    return () => cancelAnimation(lift);
+  }, [calm, cheer, lift]);
 
-  useEffect(() => {
-    if (calm || cheer === 0) return;
-    smile.value = withSequence(withTiming(1, { duration: 220 }), withDelay(600, withTiming(0, { duration: 420 })));
-  }, [calm, cheer, smile]);
-
-  const eyes = useAnimatedStyle(() => ({ transform: [{ scaleY: lid.value }] }));
-  const mouth = useAnimatedStyle(() => ({ transform: [{ scaleX: 1 + smile.value * 0.08 }, { scaleY: 1 + smile.value * 0.28 }] }));
+  const dumbbell = useAnimatedStyle(() => ({ transform: [{ translateY: -lift.value * size * 0.07 }, { rotate: `${-lift.value * 6}deg` }] }));
   const box = { width: size, height: size };
   return (
     <View style={box} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <SvgXml xml={GYMPAL_BODY} width={size} height={size} />
-      <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: MOUTH_AT }, mouth]}>
-        <SvgXml xml={GYMPAL_MOUTH} width={size} height={size} />
-      </Animated.View>
-      <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: EYES_AT }, eyes]}>
-        <SvgXml xml={GYMPAL_EYES} width={size} height={size} />
+      <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: DUMBBELL_AT }, dumbbell]}>
+        <SvgXml xml={GYMPAL_DUMBBELL} width={size} height={size} />
       </Animated.View>
     </View>
   );
 }
 
-/** The face in the corner, as a button. */
+/** The logo in the corner, as a button. */
 function Launcher({ bottom, side, edge, onPress }: { bottom: number; side: 'right' | 'left'; edge: number; onPress: () => void }) {
   const press = usePressScale(0.9);
   return (
@@ -367,13 +385,100 @@ function Launcher({ bottom, side, edge, onPress }: { bottom: number; side: 'righ
           onPressOut={press.onPressOut}
           accessibilityRole="button"
           accessibilityLabel="Ask GymPal"
-          accessibilityHint="Opens a chat with GymGO’s AI assistant"
+          accessibilityHint={Platform.OS === 'web' ? `Opens a chat with GymGO’s AI assistant. ${GYMPAL_KEYS} opens it too` : 'Opens a chat with GymGO’s AI assistant'}
           style={styles.launcherHit}
         >
-          <GymPalFace size={BUTTON} />
+          <GymPalMark size={BUTTON} />
         </Pressable>
       </Animated.View>
     </Animated.View>
+  );
+}
+
+/**
+ * A pull in from the screen's edge: how far (0 at rest, past 1 when it's
+ * gone far enough), and `opened` once it has, on letting go or flicked.
+ * Only inward counts; a press that hardly moves is left to a tap, and
+ * `dragged` says when a drag ended, short or not, so the click a browser's
+ * mouse sends after it isn't taken for one.
+ */
+function usePullIn(side: 'right' | 'left', opened: () => void, dragged: () => void = () => {}) {
+  const pull = useSharedValue(0);
+  const inward = side === 'right' ? -1 : 1;
+  const gesture = Gesture.Pan()
+    .activeOffsetX([-8, 8])
+    .failOffsetY([-24, 24])
+    .onUpdate((event) => {
+      pull.value = Math.max(0, (event.translationX * inward) / PULL_OPENS);
+    })
+    .onEnd((event) => {
+      runOnJS(dragged)();
+      if (event.translationX * inward >= PULL_OPENS || event.velocityX * inward > 600) runOnJS(opened)();
+    })
+    .onFinalize(() => {
+      pull.value = withSpring(0, { damping: 18, stiffness: 260 });
+    });
+  return { pull, gesture, inward };
+}
+
+/** His tab on the screen's edge: tap it, or pull it in. */
+function EdgeTab({ bottom, side, edge, onOpen }: { bottom: number; side: 'right' | 'left'; edge: number; onOpen: () => void }) {
+  // A browser's mouse follows a drag with a click: that click mustn't open him a second time.
+  const pulledAt = useRef(0);
+  const dragged = useCallback(() => {
+    pulledAt.current = Date.now();
+  }, []);
+  const opened = useCallback(() => {
+    haptic.tap();
+    onOpen();
+  }, [onOpen]);
+  const { pull, gesture, inward } = usePullIn(side, opened, dragged);
+  // Follows the finger in a little, then holds: it's a handle, not a drawer.
+  const follow = useAnimatedStyle(() => ({ transform: [{ translateX: inward * Math.min(pull.value, 1.4) * 14 }] }));
+  const right = side === 'right';
+  return (
+    <Animated.View
+      entering={FadeIn.duration(240).reduceMotion(ReduceMotion.System)}
+      style={[styles.edgeTab, right ? [styles.edgeTabRight, { right: edge }] : [styles.edgeTabLeft, { left: edge }], { bottom }, follow]}
+    >
+      <GestureDetector gesture={gesture}>
+        <View style={styles.edgeTabInner}>
+          <Pressable
+            onPress={() => {
+              if (Date.now() - pulledAt.current < 500) return;
+              haptic.tap();
+              onOpen();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Ask GymPal"
+            accessibilityHint={Platform.OS === 'web' ? `Opens a chat with GymGO’s AI assistant. ${GYMPAL_KEYS} opens it too` : 'Opens a chat with GymGO’s AI assistant'}
+            hitSlop={{ top: 6, bottom: 6, left: right ? 10 : 0, right: right ? 0 : 10 }}
+            style={({ pressed }) => [styles.edgeTabHit, right ? styles.edgeTabHitRight : styles.edgeTabHitLeft, pressed && styles.pressed]}
+          >
+            <GymPalMark size={TAB.mark} />
+          </Pressable>
+        </View>
+      </GestureDetector>
+    </Animated.View>
+  );
+}
+
+/**
+ * Hidden: nothing to see, only a fingertip-wide strip on the edge, low
+ * down, that a swipe in from the edge opens him from. Taps go through it
+ * to nothing (it's in the screen's margin); a screen reader has Profile →
+ * Ask GymPal and the Ask GymPal buttons instead.
+ */
+function EdgeStrip({ bottom, side, edge, onOpen }: { bottom: number; side: 'right' | 'left'; edge: number; onOpen: () => void }) {
+  const opened = useCallback(() => {
+    haptic.tap();
+    onOpen();
+  }, [onOpen]);
+  const { gesture } = usePullIn(side, opened);
+  return (
+    <GestureDetector gesture={gesture}>
+      <View style={[styles.strip, side === 'right' ? { right: edge } : { left: edge }, { bottom }]} accessible={false} importantForAccessibility="no-hide-descendants" />
+    </GestureDetector>
   );
 }
 
@@ -454,7 +559,7 @@ function Chat({
       >
         <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={insets.top + space[3]}>
           <View style={styles.head}>
-            <GymPalFace size={44} cheer={answers + 1} />
+            <GymPalMark size={44} cheer={answers + 1} />
             <View style={styles.flex}>
               <Txt variant="headline" accessibilityRole="header">
                 GymPal
@@ -683,8 +788,24 @@ function Dot({ index, calm }: { index: number; calm: boolean }) {
 const styles = themed(() =>
   StyleSheet.create({
     flex: { flex: 1, minWidth: 0 },
-    launcher: { position: 'absolute', width: BUTTON, height: BUTTON, borderRadius: BUTTON / 2, ...shadow.float },
-    launcherHit: { width: BUTTON, height: BUTTON, borderRadius: BUTTON / 2 },
+    // The logo's own corners (26 of its 100), so the shadow follows them.
+    launcher: { position: 'absolute', width: BUTTON, height: BUTTON, borderRadius: BUTTON * 0.26, borderCurve: 'continuous', ...shadow.float },
+    launcherHit: { width: BUTTON, height: BUTTON, borderRadius: BUTTON * 0.26, overflow: 'hidden' },
+    // Flat against the edge, round on the side facing in; the glass of a plate, so it sits quietly on any screen.
+    edgeTab: { position: 'absolute', width: TAB.wide, height: TAB.tall, ...shadow.plate },
+    edgeTabRight: { borderTopLeftRadius: TAB.tall / 2, borderBottomLeftRadius: TAB.tall / 2 },
+    edgeTabLeft: { borderTopRightRadius: TAB.tall / 2, borderBottomRightRadius: TAB.tall / 2 },
+    edgeTabInner: { flex: 1 },
+    edgeTabHit: {
+      flex: 1,
+      justifyContent: 'center',
+      backgroundColor: color.plate,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: color.separator,
+    },
+    edgeTabHitRight: { alignItems: 'flex-end', paddingRight: 4, borderRightWidth: 0, borderTopLeftRadius: TAB.tall / 2, borderBottomLeftRadius: TAB.tall / 2 },
+    edgeTabHitLeft: { alignItems: 'flex-start', paddingLeft: 4, borderLeftWidth: 0, borderTopRightRadius: TAB.tall / 2, borderBottomRightRadius: TAB.tall / 2 },
+    strip: { position: 'absolute', width: STRIP, height: 140 },
     scrim: { backgroundColor: color.scrim },
     scrimLight: { opacity: 0.5 },
     sheet: {

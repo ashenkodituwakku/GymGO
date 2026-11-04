@@ -59,11 +59,15 @@ export interface ThemeChoice {
   customHue: number;
   /** Times as 19:00 rather than 7 pm, for everyone. */
   clock24: boolean;
-  /** Which bottom corner GymPal's button sits in, for everyone. */
+  /** Which side GymPal's button sits on, for everyone. */
   gymPalSide: 'right' | 'left';
+  /** How GymPal waits (components/GymPal.tsx): a small tab on the screen's edge (the default), his button in the corner, or nothing to see. For everyone. */
+  gymPalButton: GymPalButton;
   /** How you get around (lib/navLayout.ts): the floating tab bar, the default, or a sidebar menu. For everyone. */
   layout: NavLayout;
 }
+
+export type GymPalButton = 'tab' | 'corner' | 'hidden';
 
 export const DEFAULT_CHOICE: ThemeChoice = {
   appearance: 'system',
@@ -77,6 +81,7 @@ export const DEFAULT_CHOICE: ThemeChoice = {
   customHue: CUSTOM_HUE_DEFAULT,
   clock24: false,
   gymPalSide: 'right',
+  gymPalButton: 'tab',
   layout: 'tabs',
 };
 
@@ -96,6 +101,7 @@ export function parseChoice(raw: string | null | undefined): ThemeChoice {
       customHue: typeof value.customHue === 'number' && Number.isFinite(value.customHue) ? Math.round(((value.customHue % 360) + 360) % 360) : CUSTOM_HUE_DEFAULT,
       clock24: value.clock24 === true,
       gymPalSide: value.gymPalSide === 'left' ? 'left' : 'right',
+      gymPalButton: value.gymPalButton === 'corner' || value.gymPalButton === 'hidden' ? value.gymPalButton : 'tab',
       layout: value.layout === 'sidebar' ? 'sidebar' : 'tabs',
     };
   } catch {

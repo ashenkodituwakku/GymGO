@@ -106,6 +106,17 @@ mobile 544, domain 184 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **GymPal's new logo and a quieter button** (4 Nov; the owner said
+  "GymBud", meaning GymPal: the name stayed). Logo:
+  `apps/mobile/assets/gympal/gympal.svg`, groups `body` and `dumbbell`, made
+  into `src/lib/gymPalArt.ts` (`GYMPAL_BODY`, `GYMPAL_DUMBBELL`) and the PNG
+  by `node scripts/gympal-logo.mjs`; `GymPalMark` (was `GymPalFace`) lifts
+  the dumbbell once and on `cheer`. Button: lib/themePrefs.ts
+  `gymPalButton` ('tab' default, 'corner', 'hidden') with `gymPalSide`;
+  components/GymPal.tsx `EdgeTab`, `Launcher`, `EdgeStrip` (native only)
+  and `usePullIn` (RNGH Pan; `dragged` swallows a browser's click after a
+  drag); Ctrl+/ / ⌘/ in a window keydown listener. Appearance has the
+  choice and says how each opens. Unseen on a phone: the pull and the strip.
 - **Polish** (4 Nov; the owner: "Keep polishing the app"). app/train.tsx:
   Finish asks once when sets aren't ticked (`finishAnyway`, reset by any
   new tick; timed items don't count). lib/tapAgain.ts `useTapAgain(ms)` and

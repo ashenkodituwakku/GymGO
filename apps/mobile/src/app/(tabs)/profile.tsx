@@ -16,7 +16,7 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
 import { Group, ROW, Row, TILE, TabScreen } from '@/components/ios';
-import { GymPalFace } from '@/components/GymPal';
+import { GymPalMark } from '@/components/GymPal';
 import { openGymPal } from '@/lib/gymPalBus';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { ApiError, api } from '@/lib/api';
@@ -291,9 +291,9 @@ export default function Profile() {
           toggle={{ value: prefs.location, onChange: (value) => setPref('location', value) }}
         />
         <Row
-          leading={<GymPalFace size={ROW.tile} still />}
+          leading={<GymPalMark size={ROW.tile} still />}
           title="GymPal"
-          subtitle={prefs.gymPal ? 'The AI assistant in the corner, and Ask GymPal on screens' : 'Off: no GymPal anywhere in the app'}
+          subtitle={prefs.gymPal ? 'GymGO’s AI assistant, and Ask GymPal on screens' : 'Off: no GymPal anywhere in the app'}
           toggle={{ value: prefs.gymPal, onChange: (value) => setPref('gymPal', value) }}
         />
         <Row
@@ -342,7 +342,7 @@ export default function Profile() {
         )}
         {prefs.gymPal && (
           <Row
-            leading={<GymPalFace size={ROW.tile} still />}
+            leading={<GymPalMark size={ROW.tile} still />}
             title="Ask GymPal"
             subtitle="Questions about GymGO, workouts or training"
             onPress={() => openGymPal()}

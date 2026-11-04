@@ -11,7 +11,7 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { openGymPal, type GymPalRequest } from '@/lib/gymPalBus';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
-import { GymPalFace } from './GymPal';
+import { GymPalMark } from './GymPal';
 import { Icon } from './Icon';
 import { Pressable } from './motion';
 import { Txt } from './ui';
@@ -46,7 +46,7 @@ export function AskGymPal({
       accessibilityHint={detail ? `${detail}. Opens a chat with GymPal, GymGO’s AI assistant.` : 'Opens a chat with GymPal, GymGO’s AI assistant.'}
       style={({ pressed }) => [styles.row, flat ? styles.flat : styles.plate, pressed && styles.pressed]}
     >
-      <GymPalFace size={36} still />
+      <GymPalMark size={36} still />
       <View style={styles.flex}>
         <Txt variant="subhead" color={color.brand} style={face('semibold')}>
           {title}

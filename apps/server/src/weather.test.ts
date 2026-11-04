@@ -39,6 +39,8 @@ describe('the weather, from MET Norway by map square', () => {
     const first = await service.forBlock(-38, 144.8);
     expect(met.asked[0]!.url).toBe('https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=-37.85&lon=144.95');
     expect(met.asked[0]!.headers['user-agent']).toBe('GymGO/1.0 https://gymgo.site');
+    // No Accept header: asking for application/json got a cut-off copy back.
+    expect(met.asked[0]!.headers.accept).toBeUndefined();
     expect(first).toMatchObject({ area: { lat: -37.85, lng: 144.95 }, updatedAt: '2026-11-04T09:17:28.000Z', hours: [{ tempC: 14.4, symbol: 'partlycloudy_day' }, { tempC: 13.7, symbol: 'rain' }] });
     // Within its Expires: no second request, for anyone in the square.
     clock += 20 * 60_000;
@@ -78,6 +80,10 @@ describe('the weather, from MET Norway by map square', () => {
     // Something that isn't a forecast is no better.
     met.answers.push(met.json({ hello: 'world' }));
     await expect(service.forBlock(10, 10)).rejects.toMatchObject({ code: 'weather_unavailable' });
+    // Nor is one cut off partway, which says so where the owner will see it.
+    met.answers.push(() => new Response('{"type":"Feature","properties":{"meta":', { status: 200, headers: { 'content-type': 'application/json' } }));
+    await expect(service.forBlock(11, 11)).rejects.toMatchObject({ code: 'weather_unavailable' });
+    expect(lines.some((line) => line.includes('wasn’t JSON (application/json, 39 characters'))).toBe(true);
     expect(lines.some((line) => line.includes('handing out the last forecast'))).toBe(true);
   });
 

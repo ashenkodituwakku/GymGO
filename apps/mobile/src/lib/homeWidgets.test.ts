@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_HOME, HOME_GROUPS, HOME_WIDGETS, addWidget, availableWidgets, cleanHome, moveWidget, removeWidget, shownWidgets } from './homeWidgets';
+import { DEFAULT_HOME, HOME_GROUPS, HOME_WIDGETS, addWidget, availableWidgets, cleanHome, moveWidget, moveWidgetTo, removeWidget, shownWidgets } from './homeWidgets';
 
 describe('Home’s widgets', () => {
   it('starts as Home was, with the weather in a line, and every widget known once', () => {
@@ -25,6 +25,16 @@ describe('Home’s widgets', () => {
     expect(moveWidget(list, 'shortcuts', -1)).toEqual(list);
     expect(moveWidget(list, 'nearby', 1)).toEqual(list);
     expect(moveWidget(list, 'tools', 1)).toEqual(list);
+  });
+
+  it('drops a dragged widget where it’s let go', () => {
+    const list = ['shortcuts', 'weather', 'nearby', 'tools'] as const;
+    expect(moveWidgetTo(list, 'tools', 0)).toEqual(['tools', 'shortcuts', 'weather', 'nearby']);
+    expect(moveWidgetTo(list, 'shortcuts', 2)).toEqual(['weather', 'nearby', 'shortcuts', 'tools']);
+    expect(moveWidgetTo(list, 'shortcuts', 3)).toEqual(['weather', 'nearby', 'tools', 'shortcuts']);
+    expect(moveWidgetTo(list, 'weather', 1)).toEqual(list);
+    expect(moveWidgetTo(list, 'weather', 99)).toEqual(['shortcuts', 'nearby', 'tools', 'weather']);
+    expect(moveWidgetTo(list, 'recent', 0)).toEqual(list);
   });
 
   it('adds at the top once, and removes', () => {

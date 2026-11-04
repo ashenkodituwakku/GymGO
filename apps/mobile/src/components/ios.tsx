@@ -4,10 +4,10 @@
  * coloured icon tile, a value and a chevron.
  */
 
-import { Children, isValidElement, useContext, useId, useRef, useState, type ReactNode } from 'react';
+import { Children, createContext, isValidElement, useContext, useId, useRef, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from './motion';
-import Animated, { interpolate, runOnJS, useAnimatedReaction, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Animated, { interpolate, runOnJS, useAnimatedReaction, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, type AnimatedRef, type SharedValue } from 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
@@ -23,8 +23,25 @@ import { Txt } from './ui';
 
 
 /**
+ * The tab's scrolling page, for what's on it to move it: Home's edit mode
+ * scrolls it while a widget is dragged near an edge (components/HomeEditor.tsx).
+ */
+export interface TabScroll {
+  scroller: AnimatedRef<Animated.ScrollView>;
+  /** How far it's scrolled, on the UI thread. */
+  scrollY: SharedValue<number>;
+  /** The room at the top (status bar) and the bottom (tab bar), where dragging scrolls it. */
+  insetTop: number;
+  insetBottom: number;
+}
+export const TabScrollContext = createContext<TabScroll | null>(null);
+export const useTabScroll = () => useContext(TabScrollContext);
+
+/**
  * A tab's screen: its own safe area (so the tab bar counts), a scrolling
- * page on the grouped background, and a large title at the top.
+ * page on the grouped background, and a large title at the top. `overlay`
+ * floats over it (Home's + and Done while editing); `scrollEnabled` false
+ * holds it still under a finger that's dragging something.
  */
 export function TabScreen(props: {
   title: string;
@@ -34,6 +51,10 @@ export function TabScreen(props: {
   glow?: boolean;
   /** Room between the page's blocks, when they're groups of their own (Home). */
   gap?: number;
+  overlay?: ReactNode;
+  /** Room above the title for the overlay's buttons (Home's + and Done). */
+  topExtra?: number;
+  scrollEnabled?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -55,6 +76,9 @@ function TabScreenInner({
   right,
   glow = false,
   gap,
+  overlay,
+  topExtra = 0,
+  scrollEnabled = true,
   children,
 }: {
   title: string;
@@ -62,6 +86,9 @@ function TabScreenInner({
   right?: ReactNode;
   glow?: boolean;
   gap?: number;
+  overlay?: ReactNode;
+  topExtra?: number;
+  scrollEnabled?: boolean;
   children: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
@@ -69,7 +96,7 @@ function TabScreenInner({
   // Past the tab bar, plus any of the tab the phone has laid out below the screen.
   const { measureRef, onLayout, overhang } = useOverhang();
   const bottom = clearance + overhang;
-  const top = insets.top + (Platform.OS === 'web' ? space[6] : space[3]);
+  const top = insets.top + (Platform.OS === 'web' ? space[6] : space[3]) + topExtra;
   // Where the large title ends: once it has scrolled under the bar, the
   // compact title fades in on a strip of glass, as in iOS. Unknown until
   // the title is laid out, and the bar stays hidden till then (a guess of
@@ -131,6 +158,7 @@ function TabScreenInner({
         style={[styles.screen, ambient && styles.clear, Platform.OS === 'web' && ({ scrollPaddingTop: insets.top + BAR, scrollPaddingBottom: clearance + space[2] } as object)]}
         onScroll={onScroll}
         scrollEventThrottle={16}
+        scrollEnabled={scrollEnabled}
         onContentSizeChange={(_width: number, height: number) => {
           // Once there's a page to scroll (a tab drawn again out of sight has none at first).
           if (placed.current || height <= 0) return;
@@ -159,7 +187,7 @@ function TabScreenInner({
           </View>
           {right}
         </View>
-        {children}
+        <TabScrollContext.Provider value={{ scroller, scrollY, insetTop: insets.top + BAR, insetBottom: bottom }}>{children}</TabScrollContext.Provider>
       </Animated.ScrollView>
       <Animated.View style={[styles.bar, { height: insets.top + BAR }, barStyle, { pointerEvents: barShown ? 'auto' : 'none' }]}>
         <Glass kind="bar" style={StyleSheet.absoluteFill} />
@@ -175,6 +203,7 @@ function TabScreenInner({
           </Txt>
         </View>
       </Animated.View>
+      {overlay}
     </View>
   );
 }

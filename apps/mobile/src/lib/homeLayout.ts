@@ -1,11 +1,11 @@
 /**
  * Your Home's widgets and their order (lib/homeWidgets.ts has what they
- * are), kept on this device: Customise Home (app/home-edit.tsx) changes
- * them, Home (app/(tabs)/index.tsx) draws them.
+ * are), kept on this device: Customise Home (Home's edit mode,
+ * components/HomeEditor.tsx) changes them, Home (app/(tabs)/index.tsx) draws them.
  */
 
 import { deviceStore } from './deviceStore';
-import { DEFAULT_HOME, addWidget, cleanHome, moveWidget, removeWidget, type HomeWidgetId } from './homeWidgets';
+import { DEFAULT_HOME, addWidget, cleanHome, moveWidget, moveWidgetTo, removeWidget, type HomeWidgetId } from './homeWidgets';
 
 interface HomeLayout {
   widgets: HomeWidgetId[];
@@ -22,5 +22,7 @@ export const homeLayout = {
   add: (id: HomeWidgetId) => change((list) => addWidget(list, id)),
   remove: (id: HomeWidgetId) => change((list) => removeWidget(list, id)),
   move: (id: HomeWidgetId, by: -1 | 1) => change((list) => moveWidget(list, id, by)),
+  /** Dropped at place `to`, as you drag it on Home. */
+  moveTo: (id: HomeWidgetId, to: number) => change((list) => moveWidgetTo(list, id, to)),
   reset: () => store.set({ widgets: [...DEFAULT_HOME] }),
 };

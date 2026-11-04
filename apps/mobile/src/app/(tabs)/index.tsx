@@ -11,9 +11,9 @@
 import { dayPlan, nextProgrammeDay, programmeDayName, programmeDays, programmeProgress, programmeTitle, type Programme } from '@/lib/programmes';
 import { useProgramme } from '@/lib/programmeStore';
 import type { TemplateItem } from '@/lib/templates';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { HOURS_LABELS } from '@gymgo/domain';
-import { Fragment, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, View, useWindowDimensions, type ScrollViewInstance } from 'react-native';
 import { GymCard } from '@/components/GymCard';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -31,8 +31,9 @@ import { WeekStrip } from '@/components/TrainingInsights';
 import { CollectionStrip, HereNudge } from '@/components/CollectCard';
 import { WeatherCompact, WeatherHours } from '@/components/Weather';
 import { BodyWeightWidget, LastWorkoutWidget, MonthWidget, RecoveryWidget, ToolsWidget } from '@/components/HomeWidgets';
-import { useHomeWidgets } from '@/lib/homeLayout';
-import { shownWidgets, type HomeWidgetId } from '@/lib/homeWidgets';
+import { homeLayout, useHomeWidgets } from '@/lib/homeLayout';
+import { availableWidgets, shownWidgets, type HomeWidgetId } from '@/lib/homeWidgets';
+import { EditBar, EditableWidgets, EmptyWidget, WidgetGallery } from '@/components/HomeEditor';
 import { useTrainingLog } from '@/lib/useTraining';
 import { useCollection } from '@/lib/useCollection';
 import { collectionStats } from '@/lib/collection';
@@ -94,6 +95,21 @@ export default function Home() {
   const planDay = plan ? plan.template.days[plan.day]! : null;
   const [showAll, setShowAll] = useState<Record<string, boolean>>({});
   const homeWidgets = useHomeWidgets();
+  // Customise Home: Home itself in edit mode, the widget gallery over it, and a widget being dragged.
+  const [editing, setEditing] = useState(false);
+  const [gallery, setGallery] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  // Leaving Home ends editing, as on an iPhone.
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        setEditing(false);
+        setGallery(false);
+        setDragging(false);
+      },
+      [],
+    ),
+  );
   // Another country than yours, without Pro: no gyms listed, just the way to Pro.
   const locked = !mayExplore(filters.countryCode);
   const router = useRouter();
@@ -615,10 +631,26 @@ export default function Home() {
     if (view) blocks.push(<Fragment key={id}>{view}</Fragment>);
   }
 
+  /** Whether a widget has anything to show now: one that doesn't still has a place while editing, to move or take off. */
+  const hasContent = (id: HomeWidgetId): boolean => {
+    if (!prefsReady && ['nearby', 'saved', 'recent', 'browse', 'cities'].includes(id)) return false;
+    if (id === 'week') return showWeek;
+    if (id === 'saved') return saved.length > 0;
+    if (id === 'recent') return recent.length > 0;
+    if (id === 'browse') return Boolean(city) && browse.length > 0;
+    if (id === 'cities') return groups.length > 0;
+    return true;
+  };
+  const shownWhileEditing = (id: HomeWidgetId): ReactNode => (hasContent(id) ? widget(id) : <EmptyWidget id={id} />);
+
   return (
     <TabScreen
       glow
       gap={space[6]}
+      // Editing: + and Done over the top, and the page held still under a widget being dragged.
+      overlay={editing ? <EditBar onAdd={() => setGallery(true)} onDone={() => setEditing(false)} /> : null}
+      topExtra={editing ? 44 : 0}
+      scrollEnabled={!dragging}
       eyebrow={clock.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
       title={name ? `${greeting(clock.getHours() * 60)}, ${name}` : greeting(clock.getHours() * 60)}
       right={
@@ -637,11 +669,16 @@ export default function Home() {
         </Pressy>
       }
     >
-      {/* The search, a workout under way and the gym you're at: always first, whatever else Home has. */}
-      <View style={styles.group}>
+      {/* The search, a workout under way and the gym you're at: always first, whatever else Home has (resting while you edit). */}
+      <View style={[styles.group, editing && styles.resting]}>
       <SearchButton placeholder={prefsReady ? searchPrompt(prefs.country) : 'Search'} onPress={() => explore({ focusSearch: true })} />
-      {shortcutsFirst && shortcutsView}
+      {shortcutsFirst && !editing && shortcutsView}
       </View>
+      {editing && (
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+          Hold a widget and drag it to move it. Tap − to take it off, or + to add one.
+        </Txt>
+      )}
       {active && (
         <Pressy
           scaleTo={0.97}
@@ -667,32 +704,50 @@ export default function Home() {
       )}
       <HereNudge here={here} records={data.listed} onOpen={(id) => router.push({ pathname: '/gym/[id]', params: { id } })} />
 
-      {/* Your widgets, in your order (Customise Home). */}
-      {blocks}
+      {/* Your widgets, in your order; editing, as an iPhone's Home Screen is (components/HomeEditor.tsx). */}
+      {editing ? (
+        <EditableWidgets ids={chosen} render={shownWhileEditing} onRemove={(id) => homeLayout.remove(id)} onMove={(id, to) => homeLayout.moveTo(id, to)} onDragging={setDragging} />
+      ) : (
+        blocks
+      )}
 
       {/* At the foot, once you've scrolled down: change what Home shows. */}
       <View style={styles.customise}>
         {chosen.length === 0 && (
           <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-            Your Home has nothing on it yet. Add what you'd like to see.
+            {editing ? 'Nothing on Home: tap + to add a widget.' : 'Your Home has nothing on it yet. Add what you’d like to see.'}
           </Txt>
         )}
         <Pressable
           onPress={() => {
             haptic.select();
-            router.push('/home-edit');
+            setEditing(!editing);
           }}
           accessibilityRole="button"
-          accessibilityHint="Choose what Home shows, and in what order"
-          style={({ pressed }) => [styles.customiseButton, pressed && { opacity: 0.7 }]}
+          accessibilityHint={editing ? undefined : 'Move, take off and add the widgets on Home'}
+          style={({ pressed }) => [styles.customiseButton, editing && styles.customiseDone, pressed && { opacity: 0.7 }]}
         >
-          <Icon name="customise" size={16} color={color.brand} />
-          <Txt variant="subhead" color={color.brand} style={face('semibold')}>
-            Customise Home
+          <Icon name={editing ? 'check' : 'customise'} size={16} color={editing ? color.onBrand : color.brand} />
+          <Txt variant="subhead" color={editing ? color.onBrand : color.brand} style={face('semibold')}>
+            {editing ? 'Done' : 'Customise Home'}
           </Txt>
         </Pressable>
       </View>
 
+      <WidgetGallery
+        visible={gallery}
+        widgets={availableWidgets(LIMITED).filter((each) => !chosen.includes(each.id))}
+        render={shownWhileEditing}
+        onAdd={(id) => {
+          homeLayout.add(id);
+          setGallery(false);
+        }}
+        onReset={() => {
+          homeLayout.reset();
+          setGallery(false);
+        }}
+        onClose={() => setGallery(false)}
+      />
     </TabScreen>
   );
 }
@@ -924,6 +979,8 @@ const styles = themed(() => StyleSheet.create({
   // Holds the nearby row's room while settings load, so nothing jumps.
   waiting: { height: 290 },
   customise: { alignItems: 'center', gap: space[2], paddingTop: space[2] },
+  resting: { opacity: 0.45, pointerEvents: 'none' },
+  customiseDone: { backgroundColor: color.brandFill },
   customiseButton: {
     flexDirection: 'row',
     alignItems: 'center',

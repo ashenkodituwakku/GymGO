@@ -1713,11 +1713,18 @@ Looking places up by name uses Photon's public server; set
 
 ### Customise Home
 
-At the foot of Home, **Customise Home** chooses what Home shows and in what
-order: move each widget up or down, take it off, or add one (it goes to the
-top, where you'll see it); **Put Home back as it came** undoes it all. It's
-kept on the device. The search, a workout under way and the gym you're at
-aren't widgets: they always come first.
+At the foot of Home, **Customise Home** puts Home into edit mode, as an
+iPhone's Home Screen is edited: the widgets jiggle (not with Reduce Motion),
+each with a **−** badge to take it off. **Hold a widget and drag it** to
+move it; the others make room, and the page scrolls when you near the top
+or the bottom (a quick swipe still scrolls). **+** at the top opens the
+widget gallery, with each widget shown as it would look, to add one at the
+top (and, at its foot, **Put Home back as it came**); **Done** (top right,
+or at the foot) ends it, as does leaving Home.
+It's kept on the device. The search, a workout under way and the gym you're
+at aren't widgets: they always come first. A screen reader moves and
+removes widgets with each one's actions (Move up, Move down, Take off
+Home).
 
 Seventeen widgets, in four kinds:
 

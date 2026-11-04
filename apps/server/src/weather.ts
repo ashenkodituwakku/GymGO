@@ -27,7 +27,8 @@ const KEEP_AT_MOST = 2 * 60 * 60_000;
 const STALE_FOR = 6 * 60 * 60_000;
 /** Squares remembered at once: the busiest are kept. */
 const MOST_SQUARES = 2000;
-const TIMEOUT_MS = 8000;
+/** For the whole answer, body included: a slow link timed out partway through one at 8 seconds. */
+const TIMEOUT_MS = 12_000;
 
 export class WeatherError extends Error {
   constructor(
@@ -109,7 +110,8 @@ export class WeatherService {
   private async fetchFor(key: string, point: { lat: number; lng: number }, kept: Kept | undefined): Promise<Weather> {
     const at = this.now().getTime();
     const url = `${this.endpoint}?lat=${point.lat.toFixed(2)}&lon=${point.lng.toFixed(2)}`;
-    const headers: Record<string, string> = { 'user-agent': this.options.userAgent, accept: 'application/json' };
+    // No Accept header: asked for application/json, a copy cut off partway was handed back (seen 4 Nov 2026); the default gets it whole.
+    const headers: Record<string, string> = { 'user-agent': this.options.userAgent };
     if (kept?.lastModified) headers['if-modified-since'] = kept.lastModified;
     let response: Response;
     try {
@@ -128,12 +130,20 @@ export class WeatherService {
     }
     // 203: the product is to be retired; it still answers, so say so where the owner will see it.
     if (response.status === 203) this.options.log?.('[weather] MET Norway says Locationforecast 2.0 is deprecated: see https://api.met.no');
-    let weather: Weather | null = null;
+    let text: string;
     try {
-      weather = fromMetForecast(await response.json(), point);
-    } catch {
-      weather = null;
+      text = await response.text();
+    } catch (error) {
+      const slow = error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
+      return this.fallBack(kept, at, slow ? 'MET Norway’s answer took too long to arrive' : 'MET Norway’s answer was cut off');
     }
+    let body: unknown;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      return this.fallBack(kept, at, `MET Norway’s answer wasn’t JSON (${response.headers.get('content-type') ?? 'no type'}, ${text.length} characters: ${JSON.stringify(text.slice(0, 60))})`);
+    }
+    const weather = fromMetForecast(body, point);
     if (!weather) return this.fallBack(kept, at, 'MET Norway’s answer wasn’t a forecast');
     this.remember(key, { weather, freshUntil: freshUntil(response.headers.get('expires'), at), fetchedAt: at, lastModified: response.headers.get('last-modified') });
     return weather;

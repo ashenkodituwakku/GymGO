@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 72 · Customise Home like an iPhone
+
+*4 Nov 2026 · the commit "Customise Home like an iPhone: jiggle, drag, − and + on Home itself"*
+
+- Customise Home now edits Home itself, as on an iPhone: the widgets jiggle, each with a − to take it off.
+- Hold a widget and drag it to move it; the others make room, and the page scrolls when you near the top or bottom.
+- + opens a widget gallery that shows each widget as it would look; Add puts it at the top. Done finishes.
+- The list with up and down buttons is gone.
+- The weather comes through more reliably: a cut-off answer from MET Norway is no longer asked for.
+- Not yet seen on a phone.
+
 ## Update 71 · Customise Home, more widgets, better weather symbols
 
-*4 Nov 2026 · the commit "Customise Home with 17 widgets, and MET Norway's weather symbols"*
+*4 Nov 2026 · `a4b67d0`*
 
 - **Customise Home**, at the foot of Home: move widgets up or down, take them off, add new ones, or put Home back as it came. Kept on this device.
 - Six new widgets: Last workout (with Again), This month, Muscles trained, Body weight, Tools and Weather by the hour; 17 in all.

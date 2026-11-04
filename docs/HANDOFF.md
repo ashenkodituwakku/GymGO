@@ -55,7 +55,7 @@ the branch the owner's launcher pulls.
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
 `npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 292,
-mobile 549, domain 191 and web 39 tests, all passing.
+mobile 550, domain 191 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 58, React Native 0.88, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -106,13 +106,23 @@ mobile 549, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Customise Home as on an iPhone** (4 Nov). components/HomeEditor.tsx:
+  `EditableWidgets` (jiggle, − badge, hold-and-drag through a Gesture
+  Handler pan, positions worked out from heights because a browser's
+  onLayout doesn't report a move, auto-scroll near the edges through
+  ios.tsx's new `useTabScroll`), `EditBar` (+ and Done, in TabScreen's new
+  `overlay`, with `topExtra` room), `WidgetGallery` (live previews),
+  `EmptyWidget`. Home keeps `editing`, `gallery`, `dragging`;
+  `shownWhileEditing` gives empty widgets a stand-in. app/home-edit.tsx is
+  gone. Playwright: the jiggle never settles, so click badges with
+  `force: true`.
 - **Customise Home, 17 widgets, MET Norway's weather symbols** (4 Nov).
   lib/homeWidgets.ts lists every widget (`HOME_WIDGETS`, `DEFAULT_HOME`,
   `cleanHome`, `moveWidget`, `addWidget`, `removeWidget`, `shownWidgets`);
   lib/homeLayout.ts keeps the order on the device (`useHomeWidgets`,
   `homeLayout`); app/(tabs)/index.tsx draws them through `widget(id)` (a
-  new widget: add it to the list and a case there); app/home-edit.tsx is
-  Customise Home. New widgets in components/HomeWidgets.tsx. Weather
+  new widget: add it to the list and a case there); app/home-edit.tsx was
+  Customise Home (now Home's own edit mode, above). New widgets in components/HomeWidgets.tsx. Weather
   symbols: assets/weather/svg (MET Norway's, MIT) made into
   assets/weather/icons/*.webp and src/lib/weatherArt.ts by
   `node scripts/weather-icons.mjs`; components/Weather.tsx `WeatherSymbol`,

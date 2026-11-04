@@ -1,6 +1,6 @@
 /**
  * Home's widgets: what each is, the order Home starts in, and the rules for
- * changing it (app/home-edit.tsx, Customise Home). Kept on the device
+ * changing it (Customise Home: Home's own edit mode, components/HomeEditor.tsx). Kept on the device
  * (lib/homeLayout.ts). The search, a workout under way and the gym you're
  * at aren't widgets: they always come first.
  *
@@ -88,6 +88,15 @@ export function moveWidget(list: readonly HomeWidgetId[], id: HomeWidgetId, by: 
   if (at < 0 || to < 0 || to >= list.length) return [...list];
   const next = [...list];
   [next[at], next[to]] = [next[to]!, next[at]!];
+  return next;
+}
+
+/** Dragged to place `to` (counted as the list is now); as it was if it isn't there. */
+export function moveWidgetTo(list: readonly HomeWidgetId[], id: HomeWidgetId, to: number): HomeWidgetId[] {
+  const at = list.indexOf(id);
+  if (at < 0) return [...list];
+  const next = list.filter((each) => each !== id);
+  next.splice(Math.min(Math.max(to, 0), next.length), 0, id);
   return next;
 }
 

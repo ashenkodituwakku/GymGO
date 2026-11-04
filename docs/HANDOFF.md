@@ -54,8 +54,8 @@ the branch the owner's launcher pulls.
 ## The code
 
 pnpm monorepo, Node 22+. `pnpm install`, then per package:
-`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 286,
-mobile 544, domain 184 and web 39 tests, all passing.
+`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 292,
+mobile 544, domain 191 and web 39 tests, all passing.
 
 - `apps/mobile`: the app (Expo SDK 58, React Native 0.88, expo-router,
   Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
@@ -106,6 +106,18 @@ mobile 544, domain 184 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Weather on Home and the map** (4 Nov). MET Norway's Locationforecast
+  2.0, free for any use with credit. Rules in
+  packages/domain/src/weather.ts (`fromMetForecast`, `weatherKind`,
+  `weatherWords`, `tempLabel`, `tempUnitFor`, `weatherPoint`, `hoursFrom`);
+  server apps/server/src/weather.ts (`WeatherService`: Expires,
+  If-Modified-Since, one request per square, six hours of stale; User-Agent
+  from `GYMGO_PUBLIC_URL` and `GYMGO_CONTACT_EMAIL`), GET /api/weather?south=&west=
+  (whole tenths only), `GYMGO_WEATHER=off`. App: lib/weather.ts `useWeather`
+  (by `tilesAround(filters.centre)`, the gym lookup's block: never send a
+  position), components/Weather.tsx (`WeatherCard` on Home, `WeatherBadge`
+  under the map's buttons), weather icons in components/Icon.tsx. The
+  Privacy Policy names MET Norway: LEGAL_VERSION 2026-11-04.
 - **GymPal's new logo and a quieter button** (4 Nov; the owner said
   "GymBud", meaning GymPal: the name stayed). Logo:
   `apps/mobile/assets/gympal/gympal.svg`, groups `body` and `dumbbell`, made

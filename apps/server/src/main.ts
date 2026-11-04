@@ -31,6 +31,7 @@ import {
   OPENROUTER_API_KEY,
   SERPAPI_API_KEY,
   SERPAPI_DAILY_LIMIT,
+  WEATHER,
   GYMPAL_MODELS,
   WEB_DIR,
 } from './config';
@@ -80,6 +81,7 @@ const server = createServer(
     legal: { copyrightAgent: COPYRIGHT_AGENT, operator: LEGAL_OPERATOR },
     gymPal: { key: OPENROUTER_API_KEY, models: GYMPAL_MODELS },
     appleMaps: { key: SERPAPI_API_KEY, perDay: SERPAPI_DAILY_LIMIT },
+    weather: { on: WEATHER, log: (line) => console.log(line) },
     webDir: WEB_DIR,
     devAccount: devAccountMade,
     trustProxy: TRUST_PROXY,
@@ -178,6 +180,7 @@ server.listen(PORT, HOST, () => {
       ? `[server] Apple Maps listings: on, through your SerpApi plan, at most ${SERPAPI_DAILY_LIMIT ?? DEFAULT_DAILY_LIMIT} searches a day`
       : '[server] Apple Maps listings: off (no SERPAPI_API_KEY set; see README)',
   );
+  console.log(WEATHER ? '[server] Weather: on, from MET Norway (api.met.no), by map square' : '[server] Weather: off (GYMGO_WEATHER=off)');
 });
 
 const stop = () => {

@@ -1154,8 +1154,7 @@ the Pro screen.
 and the model's provider to be answered; free models' providers may keep
 it and use it to improve their models. GymGO keeps none of it. The chat
 asks people to leave out personal details, and the Privacy Policy and Terms
-say all of this, the training log included (version 2026-10-29, so Profile
-shows existing accounts a card asking them to agree to the new version).
+say all of this, the training log included (since version 2026-10-29; each new version, such as 2026-11-04's for the weather, shows existing accounts a card on Profile asking them to agree to it).
 On the website, which has no server behind it yet, GymPal always gives
 that apology; once the website is pointed at a GymGO server with the key
 (`GYMGO_SERVER_URL`, in The website on Netlify), it answers there too,
@@ -1711,6 +1710,36 @@ has its own page. Your own country's is free; another country's needs Pro,
 like searching an area there.
 Looking places up by name uses Photon's public server; set
 `GYMGO_GEOCODER_URL` to use another Photon server.
+
+### Weather (MET Norway, free, no key)
+
+Home has a weather card for where you're searching: the temperature and
+weather now, the next six hours, and "Weather data from MET Norway ·
+forecast made 8:17 pm". The map has a small circle under its buttons with
+the symbol and the temperature; tap it for the words and the source. °C,
+or °F in the United States. The symbols are the phone's own (SF Symbols on
+iPhone, Material Symbols elsewhere), day and night.
+
+It's MET Norway's forecast (Norway's national weather service,
+Locationforecast 2.0 at `api.met.no`): free for any use, including an app
+that sells a subscription, with credit (CC BY 4.0), which the card and the
+circle give. GymGO keeps to its terms: the server says who it is in the
+User-Agent (`GymGO/1.0` and `GYMGO_PUBLIC_URL`, or `https://gymgo.site`,
+plus `GYMGO_CONTACT_EMAIL` when set), keeps each forecast until its
+Expires, asks again with If-Modified-Since, and asks once per map square
+for everyone in it.
+
+**Your location stays on your device.** The app sends the server the same
+block of map squares it uses to ask for gyms (about 30 km across, the same
+for everyone in it), and the forecast is for the middle of your own square
+(about 11 km across), so it's called "the Melbourne CBD area", never your
+spot. MET Norway sees GymGO's server and that point, not you. The Privacy
+Policy says so (version 2026-11-04).
+
+Nothing shows while it loads, if MET Norway can't be reached and there's
+no forecast from the last six hours, without an account, or on the website
+with no server; never a made-up temperature. To switch it off on a server,
+set `GYMGO_WEATHER=off`.
 
 ### Sign in with Google and Apple
 

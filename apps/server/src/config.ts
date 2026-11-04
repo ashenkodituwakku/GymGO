@@ -83,6 +83,13 @@ export const GEOCODER_URL = process.env.GYMGO_GEOCODER_URL?.trim() || undefined;
  * GYMGO_SITE_ICONS=off to never fetch from gyms' websites.
  */
 export const SITE_ICONS = (process.env.GYMGO_SITE_ICONS ?? 'on').trim().toLowerCase() !== 'off';
+
+/**
+ * GYMGO_WEATHER=off to never ask MET Norway for the weather on Home and the
+ * map (weather.ts). On by default: it's free, needs no key, and is asked
+ * for by map square, never anyone's position.
+ */
+export const WEATHER = (process.env.GYMGO_WEATHER ?? 'on').trim().toLowerCase() !== 'off';
 /**
  * Local testing only: a ready-made Pro account (see devAccount.ts). The
  * launcher (scripts/gymgo.ps1) turns it on; a hosted server never makes it.

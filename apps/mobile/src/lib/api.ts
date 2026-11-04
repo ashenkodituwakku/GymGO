@@ -15,7 +15,7 @@
 
 import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
-import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review, CollectionTotals, FriendCard, BusyLevel, OwnerUpdatePayload, OwnExercise, OwnExerciseFields, Split, SplitFields } from '@gymgo/domain';
+import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review, CollectionTotals, FriendCard, BusyLevel, OwnerUpdatePayload, OwnExercise, OwnExerciseFields, Split, SplitFields, Weather } from '@gymgo/domain';
 import type { TrainingSession } from './training';
 import { pickApiBase } from './serverAddress';
 import { LIMITED } from './limited';
@@ -636,6 +636,9 @@ export const api = {
     request<{ workout: SavedWorkout }>('PATCH', `/api/workouts/${encodeURIComponent(id)}`, { token, body }),
 
   /** Exercises and splits of your own (making or changing them is Pro). */
+  /** MET Norway's forecast for the middle of your own map square: the block's south-west corner, as the gym lookup sends it (lib/weather.ts). */
+  weather: (token: string, block: { south: number; west: number }) =>
+    request<{ weather: Weather }>('GET', `/api/weather?south=${block.south.toFixed(1)}&west=${block.west.toFixed(1)}`, { token }),
   ownExercises: (token: string) => request<{ exercises: OwnExercise[] }>('GET', '/api/own-exercises', { token }),
   addOwnExercise: (token: string, body: OwnExerciseFields) => request<{ exercise: OwnExercise }>('POST', '/api/own-exercises', { token, body }),
   changeOwnExercise: (token: string, id: string, body: OwnExerciseFields) =>

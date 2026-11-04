@@ -124,6 +124,7 @@
  *   GET    /reset-password?token=         the page that link opens; POST it to set the new password
  *   POST   /api/bug-reports               anyone: { description, topic?: 'bug' | 'copyright', replyTo?, context? } -> kept, and emailed to the team
  *   GET    /api/moderation/bug-reports    moderators: the latest bug reports, and whether each was emailed
+ *   GET    /api/weather?south=&west=      { weather }: MET Norway's forecast for the middle of that block's own map square (weather.ts), the next 12 hours
  *   GET    /api/gympal                    { on, pro, perDay }: whether GymPal, the chat, can answer on this server, and your plan's questions a day
  *   POST   /api/gympal                    { messages: [{ role: 'user' | 'assistant', content }] } -> { reply }, from a free model through OpenRouter
  *   DELETE /api/moderation/member-reports/:kind/:gymId/:userId   moderators: remove one
@@ -208,6 +209,7 @@ import { PlaceError, PlaceSearch } from './places';
 import { SiteIcons, SitePhotos, chainWebsites, ownPhotoSites, type ChosenPhoto, type SafeGet } from './siteicons';
 import { MELBOURNE_PHOTOS } from '@gymgo/melbourne-data';
 import { AppleMaps, type AppleMapsOptions } from './appleMaps';
+import { WeatherError, WeatherService, parseBlock, weatherUserAgent, type WeatherOptions } from './weather';
 import { allGyms, gymCountry, gymExists, gymIsDemo, gymRecord, type Db } from './db';
 import { GoogleError, GooglePlaces } from './google';
 import { MAX_AVATAR_BYTES, MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoType } from './photos';
@@ -281,6 +283,8 @@ export interface AppOptions {
   gymPal?: { key: string | null; models?: string[]; fetchImpl?: typeof fetch; log?: (line: string) => void };
   /** Gyms' Apple Maps listings through SerpApi (appleMaps.ts): off without a key. */
   appleMaps?: AppleMapsOptions;
+  /** The weather on Home and the map, from MET Norway (weather.ts): on unless `on: false`. */
+  weather?: Partial<WeatherOptions>;
   /** Legal contacts the app shows: the designated copyright (DMCA) agent, once registered. */
   legal?: {
     copyrightAgent?: { name: string; address: string | null; email: string | null } | null;
@@ -687,6 +691,13 @@ export function createApp(options: AppOptions) {
   });
   // Bug reports: 5 an hour from one account, or from one address when signed out.
   const bugLimiter = new AttemptLimiter(5, 60 * 60_000);
+  // The weather: a forecast asked of MET Norway is shared by a whole square, so this only stops one account asking for square after square.
+  const weatherLimiter = new AttemptLimiter(60, 60 * 60_000);
+  const weather = new WeatherService({
+    userAgent: weatherUserAgent(options.publicUrl, options.legal?.operator?.email ?? null),
+    now,
+    ...options.weather,
+  });
   const gymPal = new GymPal({ key: options.gymPal?.key ?? null, models: options.gymPal?.models, fetchImpl: options.gymPal?.fetchImpl, referer: options.publicUrl ?? null, log: options.gymPal?.log });
   // GymPal: plenty for real questions, and few enough that one person can't use up the free models' day for
   // everyone; more with Pro (gymPal.ts, GYMPAL_PLANS).
@@ -703,7 +714,7 @@ export function createApp(options: AppOptions) {
   // rate-limit keys (addresses among them) whose window has passed.
   const limiters = [
     loginLimiter, accountLoginLimiter, forgotLimiter, forgotEmailLimiter, resetLimiter, signupLimiter, photoLimiter, avatarLimiter,
-    equipmentLimiter, friendLimiter, busyLimiter, redeemLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter,
+    equipmentLimiter, friendLimiter, busyLimiter, redeemLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter, weatherLimiter,
     gymPalLimiters.free.minute, gymPalLimiters.free.day, gymPalLimiters.pro.minute, gymPalLimiters.pro.day,
   ];
   /** How busy a gym is matters for an hour; a member's report is kept a day at most. */
@@ -2489,6 +2500,22 @@ export function createApp(options: AppOptions) {
       // the answer goes back and the email carries on.
       const emailed = await bugReports.deliverWithin(id, 8000);
       return send(res, 201, { id, emailed });
+    }
+
+    // --- Weather ----------------------------------------------------------------
+    // By map square, never a position (weather.ts); asked of MET Norway at most once per square per forecast.
+    if (method === 'GET' && path === '/api/weather') {
+      const { account } = requireAccount(req);
+      try {
+        const { south, west } = parseBlock(url.searchParams);
+        if (weather.on && weather.needsFetch(south, west) && !weatherLimiter.allow(account.id, now().getTime())) {
+          throw new HttpError(429, 'That’s a lot of weather. Try again in a little while.', 'rate_limited');
+        }
+        return send(res, 200, { weather: await weather.forBlock(south, west) });
+      } catch (error) {
+        if (error instanceof WeatherError) throw new HttpError(error.status, error.message, error.code);
+        throw error;
+      }
     }
 
     // --- GymPal -----------------------------------------------------------------

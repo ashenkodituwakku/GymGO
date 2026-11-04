@@ -60,6 +60,7 @@ import { FloatingGlassBackground, FloatingSolidBackground, SHEET_GAP, SHEET_SCRO
 import { CloseButton, ControlCapsule, Txt } from '@/components/ui';
 import { ARRIVE, DROP_IN, FADE_OUT, LEAVE, Pressable, usePressScale } from '@/components/motion';
 import { FullVersionNote } from '@/components/FullVersionNote';
+import { WeatherBadge } from '@/components/Weather';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { usePageTitle } from '@/lib/pageTitle';
 import { LIMITED } from '@/lib/limited';
@@ -875,16 +876,20 @@ function MapScreen() {
   );
 
   const controls = (
-    <ControlCapsule
-      buttons={[
-        {
-          icon: 'fit',
-          accessibilityLabel: 'Show every gym in the list',
-          onPress: () => map.current?.fitTo(pins.map((pin) => pin.position)),
-        },
-        { icon: 'locate', accessibilityLabel: locating ? 'Finding you' : 'Show gyms near me', onPress: () => void locate(), busy: locating },
-      ]}
-    />
+    <View style={styles.controlColumn}>
+      <ControlCapsule
+        buttons={[
+          {
+            icon: 'fit',
+            accessibilityLabel: 'Show every gym in the list',
+            onPress: () => map.current?.fitTo(pins.map((pin) => pin.position)),
+          },
+          { icon: 'locate', accessibilityLabel: locating ? 'Finding you' : 'Show gyms near me', onPress: () => void locate(), busy: locating },
+        ]}
+      />
+      {/* The weather where you're searching, under the buttons; nothing until there's a forecast. */}
+      {prefsReady && <WeatherBadge />}
+    </View>
   );
 
   const selfCheckBanner = !selfCheck.ok && (
@@ -1338,6 +1343,7 @@ const styles = themed(() => StyleSheet.create({
   panelTop: { paddingHorizontal: space[4], paddingTop: space[4], paddingBottom: space[2] },
   panelClose: { alignItems: 'flex-end', paddingHorizontal: space[4], paddingTop: space[4] },
   desktopControls: { position: 'absolute', right: PANEL_GAP },
+  controlColumn: { alignItems: 'flex-end', gap: space[2] },
 
   areaRow: { position: 'absolute', alignItems: 'center' },
   areaShadow: { borderRadius: 19, ...shadow.float },

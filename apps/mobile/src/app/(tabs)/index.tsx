@@ -29,6 +29,7 @@ import { Txt } from '@/components/ui';
 import { startSession, useActiveSessionGlance } from '@/lib/activeSession';
 import { WeekStrip } from '@/components/TrainingInsights';
 import { CollectionStrip, HereNudge } from '@/components/CollectCard';
+import { WeatherCard } from '@/components/Weather';
 import { useTrainingLog } from '@/lib/useTraining';
 import { useCollection } from '@/lib/useCollection';
 import { collectionStats } from '@/lib/collection';
@@ -382,6 +383,9 @@ export default function Home() {
       </View>
 
       </View>
+
+      {/* The weather where you're searching (MET Norway's forecast, by map square): nothing until there is one. */}
+      {prefsReady && <WeatherCard />}
 
       {/* How you're doing: training this week, and the collection. */}
       <View style={styles.group}>

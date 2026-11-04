@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 70 · Weather on Home and the map
+
+*4 Nov 2026 · the commit "Weather on Home and the map, from MET Norway by map square"*
+
+- Home has a weather card for where you're searching: the temperature and weather now, the next six hours, and whose forecast it is and when it was made.
+- The map has a small circle with a weather symbol and the degrees; tap it for the words and the source.
+- °C, or °F in the United States; the phone's own weather symbols, day and night.
+- It's MET Norway's forecast (Norway's national weather service: free, no key), asked for by map square, so your exact location still never leaves your phone. The Privacy Policy says so, so accounts are asked to agree to the new version.
+- Nothing shows if there's no forecast to show; never a made-up temperature.
+- Not yet seen on a phone.
+
 ## Update 69 · GymPal's new logo and a quieter button
 
-*4 Nov 2026 · the commit "GymPal: a new logo, and a small tab on the edge instead of a big button"*
+*4 Nov 2026 · `0d649eb`*
 
 - A new logo: a speech bubble holding a dumbbell, on GymGO's blue-violet. The dumbbell lifts when the chat opens and with each answer, and otherwise keeps still.
 - GymPal now waits as a small tab on the edge of the screen instead of a big round button: tap it, or pull it in from the edge.

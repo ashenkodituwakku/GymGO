@@ -15,9 +15,9 @@
  */
 
 /** Bumped whenever the terms or privacy policy change in a way people should see. */
-export const LEGAL_VERSION = '2026-10-29';
+export const LEGAL_VERSION = '2026-11-04';
 /** The same date, as the documents show it. */
-export const LEGAL_UPDATED = '29 October 2026';
+export const LEGAL_UPDATED = '4 November 2026';
 
 export type LegalDocId = 'terms' | 'privacy' | 'refunds' | 'community';
 export const LEGAL_DOC_IDS: readonly LegalDocId[] = ['terms', 'privacy', 'refunds', 'community'];
@@ -172,7 +172,7 @@ function terms(op: LegalOperator): LegalSection[] {
     {
       heading: 'Other services',
       blocks: [
-        'GymGO uses other companies’ services, whose own terms also apply when you use them through GymGO: Stripe for payments, Apple and Google if you sign in with them, Google’s map, Street View and photos when you choose to show them, OpenStreetMap, OpenFreeMap and Apple Maps for maps and place data, and OpenRouter and the AI model providers it uses to answer what you ask GymPal. We aren’t responsible for those services or for websites GymGO links to, such as gyms’ own.',
+        'GymGO uses other companies’ services, whose own terms also apply when you use them through GymGO: Stripe for payments, Apple and Google if you sign in with them, Google’s map, Street View and photos when you choose to show them, OpenStreetMap, OpenFreeMap and Apple Maps for maps and place data, MET Norway for the weather, and OpenRouter and the AI model providers it uses to answer what you ask GymPal. We aren’t responsible for those services or for websites GymGO links to, such as gyms’ own.',
       ],
     },
     {
@@ -245,6 +245,7 @@ function privacy(op: LegalOperator): LegalSection[] {
             'Using GymGO’s website without an account, what you set up there (saved gyms, workouts, your training log and settings) is kept in that browser only, and GymGO keeps nothing about you.',
             'If you let GymGO use your location, it’s used on your device to find gyms near you and measure how far they are. It is never sent to GymGO or anyone else. Outside the cities GymGO carries, the app asks the server for the gyms in the map squares around you (about 30 km across, the same for everyone in them), never your position.',
             'When you search an area or type a town, the server looks it up on OpenStreetMap’s services (Overpass and Photon). It sends them the area or the name, not anything about you.',
+            'The weather on Home and the map is asked for the same way: the app asks the server for the weather of the map squares around where you’re searching (the same for everyone in them, never your position), and the server asks MET Norway, Norway’s national weather service (api.met.no), for the forecast at the middle of your square. MET Norway sees GymGO’s server and that point, not you.',
             'If you chat with GymPal, the assistant, what you type and the chat so far go through GymGO’s server to OpenRouter (openrouter.ai) and the provider of the AI model that answers. When you ask GymPal from a screen (Ask GymPal on a workout, an exercise, a gym’s questions to ask), a few lines about what that screen shows go too, and the chat says what he was told. With GymGO Pro, if you switch on Use my training log, a summary of your latest workouts goes as well: the exercises, sets, reps and weights, and when; never the gyms they were at or your notes. It’s off until you switch it on. GymGO doesn’t keep the chat: it’s gone when you close the app or tap Start over. OpenRouter and the model’s provider may keep what you send under their own policies, and providers of free AI models may use it to improve them, so leave out personal details.',
             'Like any website, the server sees your device’s IP address with each request. It uses it to send the answer back and, for about an hour at most, to slow down anyone sending too many requests. It isn’t written to the database or any log.',
           ],
@@ -295,6 +296,7 @@ function privacy(op: LegalOperator): LegalSection[] {
             'Apple or Google, if you sign in with them, and Google itself if you choose to show its map, Street View or photos on a gym’s page; nothing loads from Google until you do.',
             'OpenRouter and the AI model’s provider, for what you send GymPal (your questions, what a screen shows, and with Pro your training log if you switch it on), as above.',
             'Map providers (OpenFreeMap, or Apple Maps on iPhone) see your device’s IP address and the part of the map you’re looking at, as any map does.',
+            'MET Norway, for the weather: only the middle of a map square, from GymGO’s server, as above.',
             'Anyone the law requires us to tell, or when it’s needed to protect someone’s safety or GymGO from fraud or attack.',
           ],
         },

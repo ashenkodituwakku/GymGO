@@ -40,3 +40,4 @@ export * from './perks';
 // half a megabyte the phone app would carry without ever using it.
 export * from './appleMaps';
 export * from './ownTraining';
+export * from './weather';

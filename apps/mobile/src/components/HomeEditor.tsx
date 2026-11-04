@@ -2,63 +2,79 @@
  * Customise Home, as an iPhone's Home Screen is edited: Home itself goes
  * into edit mode (Customise Home at its foot). Its widgets jiggle, each
  * with a − badge to take it off; hold one and drag it to move it, the
- * others making room, the page scrolling when you near an edge; + at the
- * top opens the widget gallery, with each widget shown as it would look,
- * to add one at the top; Done ends it. Kept on this device
- * (lib/homeLayout.ts).
+ * others sliding to make room and the page scrolling when you near an
+ * edge; let go and it glides into its place. Under them, More widgets
+ * shows every widget not on Home, to add with a tap; + on the editing bar
+ * opens the gallery, Done ends it. Kept on this device (lib/homeLayout.ts).
  *
- * Reduce Motion: no jiggle. A screen reader moves and removes them with
- * each widget's actions (Move up, Move down, Take off Home).
+ * The motion is the browser's or the phone's own (Reanimated's CSS
+ * animations and transitions): the jiggle, the making room. Only the held
+ * widget follows the finger frame by frame. Reduce Motion: no jiggle.
+ * A screen reader moves and removes widgets with each one's actions
+ * (Move up, Move down, Take off Home).
  */
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Modal, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  FadeIn,
-  ReduceMotion,
-  cancelAnimation,
   runOnJS,
   scrollTo,
   useAnimatedStyle,
   useFrameCallback,
   useReducedMotion,
   useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
   withTiming,
+  type CSSAnimationKeyframes,
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { haptic } from '@/lib/haptics';
-import { useTapAgain } from '@/lib/tapAgain';
 import { HOME_GROUPS, homeWidget, type HomeWidget, type HomeWidgetId } from '@/lib/homeWidgets';
-import { PAGE_COLUMN, color, currentTheme, face, radius, shadow, space, themed } from '@/lib/theme';
+import { useBottomClearance } from '@/lib/layout';
+import { useTapAgain } from '@/lib/tapAgain';
+import { CHILD_TOUCH, PAGE_COLUMN, color, currentTheme, face, radius, shadow, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon } from './Icon';
 import { useTabScroll } from './ios';
 import { Pressable } from './motion';
 import { CloseButton, Txt } from './ui';
 
-/** Room between widgets while editing, and the tallest a widget shows (the rest is cut off till Done). */
-const GAP = space[5];
-const CLIP = 230;
-/** How close to an edge a dragged widget scrolls the page, and how fast at most (points a frame). */
-const EDGE = 70;
-const FASTEST = 14;
+/** Room between widgets: Home's own, so nothing moves when editing starts. */
+export const WIDGET_GAP = space[6];
+/** The tallest a section (gyms near you, cities) shows while editing, and a preview in the tray or gallery. */
+const CLIP = 300;
+const PREVIEW = 190;
+/** How close to an edge a held widget scrolls the page, how fast at most (points a frame), and how far it must move first. */
+const EDGE = 64;
+const FASTEST = 20;
+const MOVED = 12;
+/** How the others make room, and how the held one settles into its place. */
+const MAKE_ROOM_MS = 200;
+const SETTLE_MS = 170;
+
+/** The jiggle: a small tilt one way and the other, as on an iPhone. */
+const JIGGLE: CSSAnimationKeyframes = {
+  '0%': { transform: [{ rotate: '-0.5deg' }] },
+  '50%': { transform: [{ rotate: '0.5deg' }] },
+  '100%': { transform: [{ rotate: '-0.5deg' }] },
+};
 
 interface Drag {
+  /** The held widget's id, '' for none; where it was and where it would go; its height. */
   id: SharedValue<string>;
   from: SharedValue<number>;
   to: SharedValue<number>;
-  /** The dragged widget's height, so the others move by it. */
   h: SharedValue<number>;
-  /** The finger's own travel, the page's since the drag began, and where it is on the screen. */
+  /** The finger's own travel, the held widget's offset (the page's scroll since included), where the finger is on the screen. */
   ty: SharedValue<number>;
   y: SharedValue<number>;
   absY: SharedValue<number>;
   startScroll: SharedValue<number>;
+  lift: SharedValue<number>;
+  /** Let go: nothing follows the finger or scrolls the page while it glides into its place. */
+  released: SharedValue<boolean>;
 }
 
 /** A widget with nothing to show yet, as it waits on Home while editing and in the gallery. */
@@ -81,24 +97,62 @@ export function EmptyWidget({ id }: { id: HomeWidgetId }) {
   );
 }
 
-/** Home's widgets in edit mode. `render` draws one as Home shows it (or EmptyWidget). */
+/** The foot of something cut off: it fades into `colour` rather than stopping dead. */
+function Fade({ colour }: { colour: string }) {
+  const id = `fade${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  return (
+    <View style={[styles.fade, { pointerEvents: 'none' }]}>
+      <Svg width="100%" height="100%">
+        <Defs>
+          <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={colour} stopOpacity={0} />
+            <Stop offset="1" stopColor={colour} stopOpacity={1} />
+          </LinearGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill={`url(#${id})`} />
+      </Svg>
+    </View>
+  );
+}
+
+/** Something to look at, not use: at most `max` tall, fading out if there's more. */
+function Clipped({ max, fadeTo, children }: { max: number; fadeTo: string; children: ReactNode }) {
+  const [tall, setTall] = useState(false);
+  return (
+    <View style={[styles.clip, { maxHeight: max }]}>
+      <View style={{ pointerEvents: 'none' }} onLayout={(event) => setTall(event.nativeEvent.layout.height > max + 1)}>
+        {children}
+      </View>
+      {tall && <Fade colour={fadeTo} />}
+    </View>
+  );
+}
+
+/** Home's widgets in edit mode, and those not on Home under them. `render` draws one as Home shows it (or EmptyWidget). */
 export function EditableWidgets({
   ids,
+  spare,
   render,
   onRemove,
   onMove,
+  onAdd,
   onDragging,
 }: {
   ids: HomeWidgetId[];
+  /** The widgets not on Home, for More widgets. */
+  spare: HomeWidget[];
   render: (id: HomeWidgetId) => ReactNode;
   onRemove: (id: HomeWidgetId) => void;
   onMove: (id: HomeWidgetId, to: number) => void;
+  /** From More widgets: it joins the end of Home, just above. */
+  onAdd: (id: HomeWidgetId) => void;
   /** While a widget's held, the page shouldn't scroll under the finger. */
   onDragging: (dragging: boolean) => void;
 }) {
   const scroll = useTabScroll();
+  const scrollY = scroll?.scrollY;
   const { height: windowHeight } = useWindowDimensions();
-  const layouts = useSharedValue<Record<string, { y: number; h: number }>>({});
+  const heights = useSharedValue<Record<string, number>>({});
   const order = useSharedValue<string[]>(ids);
   const drag: Drag = {
     id: useSharedValue(''),
@@ -109,26 +163,24 @@ export function EditableWidgets({
     y: useSharedValue(0),
     absY: useSharedValue(0),
     startScroll: useSharedValue(0),
+    lift: useSharedValue(1),
+    released: useSharedValue(false),
   };
-  const scrollY = scroll?.scrollY;
+  // What React draws from: the held widget and the place it would drop in (the others make room for it), and
+  // whether the next frame moves without easing (the moment the new order takes over).
+  const [held, setHeld] = useState<{ id: HomeWidgetId; from: number; h: number } | null>(null);
+  const [hover, setHover] = useState<number | null>(null);
+  const [instant, setInstant] = useState(false);
 
   useEffect(() => {
     order.value = ids;
   }, [ids, order]);
 
-  // A widget just added goes to the top: the page goes there too, to show it.
-  const before = useRef(ids);
-  useEffect(() => {
-    const added = ids[0] && !before.current.includes(ids[0]);
-    before.current = ids;
-    if (added) scroll?.scroller.current?.scrollTo({ y: 0, animated: true });
-  }, [ids, scroll]);
-
   /**
-   * Where the dragged widget is, and the place it would drop in. Where each
-   * widget starts is worked out from their heights (they're a stack, GAP
-   * apart): a browser reports a widget's size when it changes, but not its
-   * place when one above it grows.
+   * Where the held widget is, and the place it would drop in. Where each
+   * widget starts is worked out from the heights (they're a stack,
+   * WIDGET_GAP apart): a browser reports a widget's size when it changes,
+   * not its place when one above it grows.
    */
   const place = () => {
     'worklet';
@@ -138,25 +190,26 @@ export function EditableWidgets({
     let top = 0;
     for (const each of order.value) {
       tops[each] = top;
-      top += (layouts.value[each]?.h ?? 0) + GAP;
+      top += (heights.value[each] ?? 0) + WIDGET_GAP;
     }
-    const mineTop = tops[drag.id.value];
-    if (mineTop === undefined) return;
-    const centre = mineTop + drag.h.value / 2 + drag.y.value;
+    const mine = tops[drag.id.value];
+    if (mine === undefined) return;
+    const centre = mine + drag.h.value / 2 + drag.y.value;
     let to = 0;
     for (const other of order.value) {
       if (other === drag.id.value) continue;
-      if (tops[other]! + (layouts.value[other]?.h ?? 0) / 2 < centre) to += 1;
+      if (tops[other]! + (heights.value[other] ?? 0) / 2 < centre) to += 1;
     }
     if (to !== drag.to.value) {
       drag.to.value = to;
+      runOnJS(setHover)(to);
       runOnJS(haptic.select)();
     }
   };
 
-  // Near the top or the bottom, the page scrolls, faster the closer the finger.
+  // Near the top or the bottom, once the finger's moving, the page scrolls: faster the closer it is.
   useFrameCallback(() => {
-    if (!scroll || drag.id.value === '') return;
+    if (!scroll || drag.id.value === '' || drag.released.value || Math.abs(drag.ty.value) < MOVED) return;
     const top = scroll.insetTop + EDGE;
     const bottom = windowHeight - scroll.insetBottom - EDGE;
     const at = drag.absY.value;
@@ -166,58 +219,133 @@ export function EditableWidgets({
     place();
   });
 
-  // Let go: the new order is laid out, then the widgets lose their shifts, so nothing jumps back first.
+  // The new order is laid out, then the held widget loses its offset: in the same frame, so nothing jumps.
   const settle = useRef(false);
-  const reset = () => {
-    drag.id.value = '';
-    drag.from.value = -1;
-    drag.to.value = -1;
-    drag.y.value = 0;
-  };
   useLayoutEffect(() => {
     if (!settle.current) return;
     settle.current = false;
-    reset();
+    drag.id.value = '';
+    drag.y.value = 0;
+    drag.lift.value = 1;
+    // Easing back on once the frame with the new order is drawn.
+    const frame = requestAnimationFrame(() => requestAnimationFrame(() => setInstant(false)));
+    return () => cancelAnimationFrame(frame);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ids]);
-  const started = () => {
+
+  const started = (id: HomeWidgetId, from: number, h: number) => {
     haptic.tap();
+    setHeld({ id, from, h });
+    setHover(from);
     onDragging(true);
   };
-  const dropped = (id: string, from: number, to: number) => {
-    onDragging(false);
-    if (from === to || to < 0) {
-      reset();
-      return;
-    }
-    haptic.success();
+  const commit = (id: HomeWidgetId, to: number) => {
+    setInstant(true);
     settle.current = true;
-    onMove(id as HomeWidgetId, to);
+    setHeld(null);
+    setHover(null);
+    onMove(id, to);
+  };
+  const putBack = () => {
+    drag.id.value = '';
+    setHeld(null);
+    setHover(null);
+  };
+  /** Let go: it glides to its new place (or back to its old), then the order is kept. */
+  const dropped = (id: HomeWidgetId, from: number, to: number) => {
+    onDragging(false);
+    const list = order.value;
+    let offset = 0;
+    if (to > from) for (let at = from + 1; at <= to; at += 1) offset += (heights.value[list[at]!] ?? 0) + WIDGET_GAP;
+    else for (let at = to; at < from; at += 1) offset -= (heights.value[list[at]!] ?? 0) + WIDGET_GAP;
+    drag.lift.value = withTiming(1, { duration: SETTLE_MS });
+    drag.y.value = withTiming(to === from ? 0 : offset, { duration: SETTLE_MS }, (finished) => {
+      if (!finished) return;
+      if (to === from) runOnJS(putBack)();
+      else runOnJS(commit)(id, to);
+    });
+    if (to !== from) haptic.success();
   };
 
   return (
     <View style={styles.list}>
-      {ids.map((id, index) => (
-        <EditItem
-          key={id}
-          id={id}
-          index={index}
-          last={index === ids.length - 1}
-          drag={drag}
-          layouts={layouts}
-          scrollY={scrollY}
-          place={place}
-          onLayout={(y, h) => {
-            layouts.value = { ...layouts.value, [id]: { y, h } };
-          }}
-          onStart={started}
-          onDrop={dropped}
-          onRemove={() => onRemove(id)}
-          onStep={(by) => onMove(id, Math.max(0, index + by))}
-        >
-          {render(id)}
-        </EditItem>
-      ))}
+      {ids.map((id, index) => {
+        // Making room: the ones between where it was and where it's going move by its height.
+        let shift = 0;
+        if (held && hover !== null && held.id !== id) {
+          const step = held.h + WIDGET_GAP;
+          if (held.from < hover && index > held.from && index <= hover) shift = -step;
+          else if (held.from > hover && index >= hover && index < held.from) shift = step;
+        }
+        return (
+          <EditItem
+            key={id}
+            id={id}
+            index={index}
+            last={index === ids.length - 1}
+            shift={shift}
+            instant={instant}
+            holding={held?.id === id}
+            drag={drag}
+            heights={heights}
+            scrollY={scrollY}
+            place={place}
+            onStart={started}
+            onDrop={dropped}
+            onRemove={() => onRemove(id)}
+            onStep={(by) => onMove(id, Math.max(0, index + by))}
+          >
+            {render(id)}
+          </EditItem>
+        );
+      })}
+
+      {spare.length > 0 && (
+        <View style={styles.tray}>
+          <View style={styles.trayHead}>
+            <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2}>
+              MORE WIDGETS
+            </Txt>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              Not on your Home. Tap one to add it.
+            </Txt>
+          </View>
+          {spare.map((widget) => (
+            <View key={widget.id} style={styles.spare}>
+              {/* The heading is the button: the preview under it has buttons of its own, and a button can't hold another. */}
+              <Pressable
+                onPress={() => {
+                  haptic.success();
+                  onAdd(widget.id);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Add ${widget.title} to Home: ${widget.detail}`}
+                style={({ pressed }) => [styles.spareHead, pressed && styles.pressed]}
+              >
+                <View style={styles.addBadge}>
+                  <Icon name="plus" size={13} color="#FFFFFF" weight="bold" />
+                </View>
+                <View style={styles.flex}>
+                  <Txt variant="subhead" style={face('semibold')}>
+                    {widget.title}
+                  </Txt>
+                  <Txt variant="caption" color={color.labelSecondary} numberOfLines={2}>
+                    {widget.detail}
+                  </Txt>
+                </View>
+                <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                  Add
+                </Txt>
+              </Pressable>
+              <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                <Clipped max={PREVIEW} fadeTo={color.fill}>
+                  {render(widget.id)}
+                </Clipped>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -226,11 +354,13 @@ function EditItem({
   id,
   index,
   last,
+  shift,
+  instant,
+  holding,
   drag,
-  layouts,
+  heights,
   scrollY,
   place,
-  onLayout,
   onStart,
   onDrop,
   onRemove,
@@ -240,127 +370,131 @@ function EditItem({
   id: HomeWidgetId;
   index: number;
   last: boolean;
+  shift: number;
+  instant: boolean;
+  holding: boolean;
   drag: Drag;
-  layouts: SharedValue<Record<string, { y: number; h: number }>>;
+  heights: SharedValue<Record<string, number>>;
   scrollY: SharedValue<number> | undefined;
   place: () => void;
-  onLayout: (y: number, h: number) => void;
-  onStart: () => void;
-  onDrop: (id: string, from: number, to: number) => void;
+  onStart: (id: HomeWidgetId, from: number, h: number) => void;
+  onDrop: (id: HomeWidgetId, from: number, to: number) => void;
   onRemove: () => void;
   onStep: (by: -1 | 1) => void;
   children: ReactNode;
 }) {
   const widget = homeWidget(id);
   const calm = useReducedMotion();
-  const wiggle = useSharedValue(0);
-
-  // The jiggle: each a little out of step with its neighbours, as on an iPhone.
-  useEffect(() => {
-    if (calm) return;
-    const half = 120 + (index % 3) * 14;
-    wiggle.value = withDelay((index * 53) % 150, withRepeat(withSequence(withTiming(1, { duration: half }), withTiming(-1, { duration: half })), -1, true));
-    return () => {
-      cancelAnimation(wiggle);
-      wiggle.value = 0;
-    };
-  }, [calm, index, wiggle]);
 
   // Hold, then drag: a quick swipe still scrolls the page.
   const pan = Gesture.Pan()
     .activateAfterLongPress(220)
     .onStart((event) => {
+      const h = heights.value[id] ?? 0;
       drag.id.value = id;
       drag.from.value = index;
       drag.to.value = index;
-      drag.h.value = layouts.value[id]?.h ?? 0;
+      drag.h.value = h;
       drag.ty.value = 0;
       drag.y.value = 0;
       drag.absY.value = event.absoluteY;
       drag.startScroll.value = scrollY ? scrollY.value : 0;
-      runOnJS(onStart)();
+      drag.lift.value = withTiming(1.035, { duration: 140 });
+      drag.released.value = false;
+      runOnJS(onStart)(id, index, h);
     })
     .onUpdate((event) => {
+      if (drag.released.value) return;
       drag.ty.value = event.translationY;
       drag.absY.value = event.absoluteY;
       place();
     })
     .onFinalize(() => {
-      if (drag.id.value === id) runOnJS(onDrop)(id, drag.from.value, drag.to.value);
+      if (drag.id.value !== id || drag.released.value) return;
+      drag.released.value = true;
+      runOnJS(onDrop)(id, drag.from.value, drag.to.value);
     });
 
-  const style = useAnimatedStyle(() => {
-    const active = drag.id.value;
-    const mine = active === id;
-    let shift = 0;
-    if (active !== '' && !mine) {
-      const from = drag.from.value;
-      const to = drag.to.value;
-      const step = drag.h.value + GAP;
-      if (from < to && index > from && index <= to) shift = -step;
-      else if (from > to && index >= to && index < from) shift = step;
-    }
-    return {
-      zIndex: mine ? 20 : 1,
-      transform: [
-        { translateY: mine ? drag.y.value : active === '' ? 0 : withTiming(shift, { duration: 170 }) },
-        { scale: withTiming(mine ? 1.04 : 1, { duration: 140 }) },
-        { rotate: `${mine ? 0 : wiggle.value * 0.7}deg` },
-      ],
-    };
-  }, [id, index]);
+  // Only the held one follows the finger, frame by frame.
+  const follow = useAnimatedStyle(() => {
+    const mine = drag.id.value === id;
+    return { transform: [{ translateY: mine ? drag.y.value : 0 }, { scale: mine ? drag.lift.value : 1 }] };
+  }, [id]);
 
+  const framed = widget.bare === true;
   return (
     <Animated.View
-      entering={FadeIn.duration(180).reduceMotion(ReduceMotion.System)}
-      style={[styles.item, style]}
+      // Making room, as the browser or phone animates it (none at the moment the new order takes over).
+      style={[
+        styles.item,
+        { zIndex: holding ? 20 : 1, transform: [{ translateY: shift }], transitionProperty: 'transform', transitionDuration: instant ? 0 : MAKE_ROOM_MS, transitionTimingFunction: 'ease-out' },
+      ]}
       onLayout={(event) => {
-        const { y, height } = event.nativeEvent.layout;
-        onLayout(y, height);
+        heights.value = { ...heights.value, [id]: event.nativeEvent.layout.height };
       }}
     >
-      <GestureDetector gesture={pan}>
-        <View
-          accessible
-          accessibilityLabel={`${widget.title}. Hold and drag to move it.`}
-          accessibilityActions={[
-            ...(index > 0 ? [{ name: 'moveUp', label: 'Move up' }] : []),
-            ...(!last ? [{ name: 'moveDown', label: 'Move down' }] : []),
-            { name: 'remove', label: 'Take off Home' },
-          ]}
-          onAccessibilityAction={(event) => {
-            if (event.nativeEvent.actionName === 'moveUp') onStep(-1);
-            else if (event.nativeEvent.actionName === 'moveDown') onStep(1);
-            else if (event.nativeEvent.actionName === 'remove') onRemove();
-          }}
-          // The widget is for looking at while editing: its own buttons wait till Done.
-          style={styles.body}
+      <Animated.View style={[follow, holding && styles.lifted]}>
+        <Animated.View
+          style={
+            calm || holding
+              ? null
+              : { animationName: JIGGLE, animationDuration: 300 + (index % 3) * 20, animationDelay: (index * 70) % 300, animationIterationCount: 'infinite', animationTimingFunction: 'ease-in-out' }
+          }
         >
-          <View style={[styles.clip, { pointerEvents: 'none' }]}>{children}</View>
-        </View>
-      </GestureDetector>
-      <Pressable
-        onPress={() => {
-          haptic.select();
-          onRemove();
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={`Take ${widget.title} off Home`}
-        hitSlop={10}
-        style={({ pressed }) => [styles.remove, pressed && styles.pressed]}
-      >
-        <Icon name="minus" size={13} color="#FFFFFF" weight="bold" />
-      </Pressable>
+          <GestureDetector gesture={pan}>
+            <View
+              accessible
+              accessibilityLabel={`${widget.title}. Hold and drag to move it.`}
+              accessibilityActions={[
+                ...(index > 0 ? [{ name: 'moveUp', label: 'Move up' }] : []),
+                ...(!last ? [{ name: 'moveDown', label: 'Move down' }] : []),
+                { name: 'remove', label: 'Take off Home' },
+              ]}
+              onAccessibilityAction={(event) => {
+                if (event.nativeEvent.actionName === 'moveUp') onStep(-1);
+                else if (event.nativeEvent.actionName === 'moveDown') onStep(1);
+                else if (event.nativeEvent.actionName === 'remove') onRemove();
+              }}
+              style={framed ? styles.frame : undefined}
+            >
+              {/* For looking at while editing: its own buttons wait till Done. */}
+              {framed ? (
+                <Clipped max={CLIP} fadeTo={color.plate}>
+                  {children}
+                </Clipped>
+              ) : (
+                <View style={{ pointerEvents: 'none' }}>{children}</View>
+              )}
+            </View>
+          </GestureDetector>
+          <Pressable
+            onPress={() => {
+              haptic.select();
+              onRemove();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`Take ${widget.title} off Home`}
+            hitSlop={10}
+            style={({ pressed }) => [styles.remove, pressed && styles.pressed]}
+          >
+            <Icon name="minus" size={13} color="#FFFFFF" weight="bold" />
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
     </Animated.View>
   );
 }
 
-/** Over the top of Home while editing: + for the gallery, Done to finish. */
+/**
+ * The editing bar, floating above the tab bar where a thumb reaches: + for
+ * the gallery, how to move a widget, and Done. Nothing at the top of Home
+ * moves to make room for it.
+ */
 export function EditBar({ onAdd, onDone }: { onAdd: () => void; onDone: () => void }) {
-  const insets = useSafeAreaInsets();
+  const clearance = useBottomClearance();
   return (
-    <View style={[styles.bar, { top: insets.top + space[2] }]} pointerEvents="box-none">
-      <View style={styles.barRow} pointerEvents="box-none">
+    <View style={[CHILD_TOUCH, styles.bar, { bottom: clearance + space[2] }]}>
+      <Glass style={styles.barGlass}>
         <Pressable
           onPress={() => {
             haptic.select();
@@ -368,12 +502,14 @@ export function EditBar({ onAdd, onDone }: { onAdd: () => void; onDone: () => vo
           }}
           accessibilityRole="button"
           accessibilityLabel="Add a widget"
-          style={({ pressed }) => [pressed && styles.pressed]}
+          hitSlop={6}
+          style={({ pressed }) => [styles.plus, pressed && styles.pressed]}
         >
-          <Glass style={styles.plus} interactive>
-            <Icon name="plus" size={18} color={color.label} weight="bold" />
-          </Glass>
+          <Icon name="plus" size={18} color={color.brand} weight="bold" />
         </Pressable>
+        <Txt variant="caption" color={color.labelSecondary} style={styles.flex} numberOfLines={2}>
+          Hold a widget to move it. − takes it off.
+        </Txt>
         <Pressable
           onPress={() => {
             haptic.success();
@@ -387,7 +523,7 @@ export function EditBar({ onAdd, onDone }: { onAdd: () => void; onDone: () => vo
             Done
           </Txt>
         </Pressable>
-      </View>
+      </Glass>
     </View>
   );
 }
@@ -410,8 +546,8 @@ export function WidgetGallery({
   onClose: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  const [resetting, setResetting] = useTapAgain();
   const { height } = useWindowDimensions();
+  const [resetting, setResetting] = useTapAgain();
   // An explicit height: a browser let the sheet grow to all its widgets, and then it couldn't scroll.
   const top = insets.top + space[6];
   return (
@@ -447,8 +583,10 @@ export function WidgetGallery({
                   {here.map((widget) => (
                     <View key={widget.id} style={styles.galleryItem}>
                       {/* As it would look on Home, for looking at only. */}
-                      <View style={[styles.preview, { pointerEvents: 'none' }]} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                        {render(widget.id)}
+                      <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                        <Clipped max={PREVIEW} fadeTo={color.fill}>
+                          {render(widget.id)}
+                        </Clipped>
                       </View>
                       <View style={styles.galleryWords}>
                         <View style={styles.flex}>
@@ -508,18 +646,22 @@ const styles = themed(() => {
     flex: { flex: 1, minWidth: 0 },
     flexFill: { flex: 1 },
     center: { textAlign: 'center' },
-    list: { gap: GAP, paddingTop: space[2] },
+    // A mouse held and dragged would select the words under it as it goes.
+    list: { gap: WIDGET_GAP, userSelect: 'none' },
     item: { position: 'relative' },
-    body: { borderRadius: radius.lg },
-    clip: { maxHeight: CLIP, overflow: 'hidden', borderRadius: radius.lg },
-    // iOS's badge: grey, with a white minus, at the widget's top left.
+    lifted: { ...shadow.float },
+    // A section of the page, framed while editing so it has edges to hold.
+    frame: { padding: space[3], borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', ...shadow.plate },
+    clip: { overflow: 'hidden' },
+    fade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 56 },
+    // iOS's badges: grey with a white minus to take off, green with a white plus to add.
     remove: {
       position: 'absolute',
-      top: -9,
-      left: -9,
-      width: 26,
-      height: 26,
-      borderRadius: 13,
+      top: -8,
+      left: -8,
+      width: 24,
+      height: 24,
+      borderRadius: 12,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: dark ? '#636366' : '#8E8E93',
@@ -527,19 +669,34 @@ const styles = themed(() => {
       borderColor: color.groupedBackground,
       zIndex: 30,
     },
+    addBadge: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#34C759' },
     pressed: { opacity: 0.6 },
     empty: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3] + 2, borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     tile: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
-    bar: { position: 'absolute', left: 0, right: 0, paddingHorizontal: space[4], zIndex: 40 },
-    barRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: PAGE_COLUMN, alignSelf: 'center' },
-    plus: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-    done: { paddingHorizontal: space[4], height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandFill, ...shadow.plate },
+    tray: { gap: space[3], marginTop: space[2] },
+    trayHead: { gap: 2, marginLeft: space[1] },
+    spare: { gap: space[3], padding: space[3], borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.fill },
+    spareHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+    bar: { position: 'absolute', left: space[4], right: space[4], alignItems: 'center', zIndex: 40 },
+    barGlass: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+      width: '100%',
+      maxWidth: 440,
+      paddingLeft: space[2],
+      paddingRight: space[2],
+      paddingVertical: space[2],
+      borderRadius: 28,
+      ...shadow.float,
+    },
+    plus: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+    done: { paddingHorizontal: space[4], height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandFill },
     scrim: { backgroundColor: color.scrim },
     sheet: {
       position: 'absolute',
       left: 0,
       right: 0,
-      bottom: 0,
       width: '100%',
       maxWidth: PAGE_COLUMN,
       alignSelf: 'center',
@@ -554,7 +711,6 @@ const styles = themed(() => {
     sheetBody: { paddingHorizontal: space[4], gap: space[6] },
     galleryGroup: { gap: space[3] },
     galleryItem: { gap: space[3], padding: space[3], borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.fill },
-    preview: { maxHeight: 190, overflow: 'hidden', borderRadius: radius.lg },
     galleryWords: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     reset: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], height: 44, borderRadius: 22, backgroundColor: color.brandTint },
     add: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[4], height: 38, borderRadius: 19, backgroundColor: color.brandFill },

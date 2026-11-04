@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 73 · Customise Home, smoothed
+
+*4 Nov 2026 · the commit "Customise Home, smoothed: More widgets, native motion, nothing jumps"*
+
+- While customising, **More widgets** under your widgets shows every one that isn't on Home, as it would look; tap one to add it.
+- Smoother: the jiggle and the widgets sliding out of the way are run by the browser or phone itself, and a widget you let go of glides into its place.
+- Nothing jumps when editing starts: the + and Done bar now floats above the tab bar, and the spacing stays as Home's.
+- Fixed: empty widgets left gaps with a lone − badge; the page could keep scrolling and lose a widget you'd dropped; text was selected while dragging with a mouse.
+- Not yet seen on a phone.
+
 ## Update 72 · Customise Home like an iPhone
 
-*4 Nov 2026 · the commit "Customise Home like an iPhone: jiggle, drag, − and + on Home itself"*
+*4 Nov 2026 · `db47096`*
 
 - Customise Home now edits Home itself, as on an iPhone: the widgets jiggle, each with a − to take it off.
 - Hold a widget and drag it to move it; the others make room, and the page scrolls when you near the top or bottom.

@@ -1714,13 +1714,18 @@ Looking places up by name uses Photon's public server; set
 ### Customise Home
 
 At the foot of Home, **Customise Home** puts Home into edit mode, as an
-iPhone's Home Screen is edited: the widgets jiggle (not with Reduce Motion),
-each with a **−** badge to take it off. **Hold a widget and drag it** to
-move it; the others make room, and the page scrolls when you near the top
-or the bottom (a quick swipe still scrolls). **+** at the top opens the
-widget gallery, with each widget shown as it would look, to add one at the
-top (and, at its foot, **Put Home back as it came**); **Done** (top right,
-or at the foot) ends it, as does leaving Home.
+iPhone's Home Screen is edited, without anything on it moving: the widgets
+jiggle (not with Reduce Motion), each with a **−** badge to take it off.
+**Hold a widget and drag it** to move it; the others slide out of its way,
+the page scrolls when you near the top or the bottom (a quick swipe still
+scrolls), and when you let go it glides into its place. Under your widgets,
+**More widgets** shows every one that isn't on Home, as it would look, with
+a green **+**: tap one and it joins the end of Home. The editing bar, above
+the tab bar, has **+** (the widget gallery, which adds at the top and has
+**Put Home back as it came** at its foot) and **Done**; leaving Home ends
+it too. Sections of the page (gyms near you, saved, suburbs, cities) are
+framed while editing, cut off with a fade if they're tall; a widget with
+nothing in it yet shows a card saying when it will.
 It's kept on the device. The search, a workout under way and the gym you're
 at aren't widgets: they always come first. A screen reader moves and
 removes widgets with each one's actions (Move up, Move down, Take off

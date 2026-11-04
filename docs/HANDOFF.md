@@ -106,6 +106,16 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Customise Home, smoothed** (4 Nov). components/HomeEditor.tsx was
+  rewritten: each widget is three layers (making room: a CSS transition
+  from React state `held`/`hover`; following the finger: a shared value;
+  the jiggle: a CSS animation), `dropped` glides it with `withTiming`
+  before `commit` keeps the order, and `drag.released` stops the frame
+  callback once let go. More widgets is the tray under the list (`spare`,
+  `onAdd` at the end); `EditBar` floats above the tab bar (TabScreen's
+  `bottomExtra`; `topExtra` is gone); lib/homeEditing.ts hides GymPal's
+  tab while editing; `bare` widgets get a frame and `Clipped` with an SVG
+  `Fade`.
 - **Customise Home as on an iPhone** (4 Nov). components/HomeEditor.tsx:
   `EditableWidgets` (jiggle, − badge, hold-and-drag through a Gesture
   Handler pan, positions worked out from heights because a browser's

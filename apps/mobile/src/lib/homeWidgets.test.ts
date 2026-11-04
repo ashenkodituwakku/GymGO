@@ -40,6 +40,7 @@ describe('Home’s widgets', () => {
   it('adds at the top once, and removes', () => {
     expect(addWidget(['nearby'], 'tools')).toEqual(['tools', 'nearby']);
     expect(addWidget(['tools', 'nearby'], 'tools')).toEqual(['tools', 'nearby']);
+    expect(addWidget(['nearby'], 'tools', 'end')).toEqual(['nearby', 'tools']);
     expect(removeWidget(['tools', 'nearby'], 'tools')).toEqual(['nearby']);
   });
 

@@ -78,6 +78,7 @@ import { SvgXml } from 'react-native-svg';
 import { ApiError, OfflineError, api, apiBase, problemText, type ChatTurn } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { onGymPalRequest } from '@/lib/gymPalBus';
+import { useHomeEditing } from '@/lib/homeEditing';
 import { GYMPAL_BODY, GYMPAL_DUMBBELL } from '@/lib/gymPalArt';
 import { suggestionsFor } from '@/lib/gymPalSuggestions';
 import { haptic } from '@/lib/haptics';
@@ -283,7 +284,9 @@ export function GymPal() {
   };
 
   const close = () => setOpen(false);
-  const hidden = HIDDEN.has(pathname) || pathname.startsWith('/card/');
+  // Customising Home: its editing bar sits where the tab does.
+  const editingHome = useHomeEditing();
+  const hidden = HIDDEN.has(pathname) || pathname.startsWith('/card/') || (editingHome && TABS.has(pathname));
 
   // On a tab, above the tab bar; or, where the screen's wide enough, beside it.
   const besideBar = width >= TAB_BAR_MAX + 2 * (BUTTON + 2 * EDGE);

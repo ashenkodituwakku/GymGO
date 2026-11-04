@@ -52,8 +52,8 @@ export function TabScreen(props: {
   /** Room between the page's blocks, when they're groups of their own (Home). */
   gap?: number;
   overlay?: ReactNode;
-  /** Room above the title for the overlay's buttons (Home's + and Done). */
-  topExtra?: number;
+  /** Room under the page for the overlay (Home's editing bar). */
+  bottomExtra?: number;
   scrollEnabled?: boolean;
   children: ReactNode;
 }) {
@@ -77,7 +77,7 @@ function TabScreenInner({
   glow = false,
   gap,
   overlay,
-  topExtra = 0,
+  bottomExtra = 0,
   scrollEnabled = true,
   children,
 }: {
@@ -87,7 +87,7 @@ function TabScreenInner({
   glow?: boolean;
   gap?: number;
   overlay?: ReactNode;
-  topExtra?: number;
+  bottomExtra?: number;
   scrollEnabled?: boolean;
   children: ReactNode;
 }) {
@@ -96,7 +96,7 @@ function TabScreenInner({
   // Past the tab bar, plus any of the tab the phone has laid out below the screen.
   const { measureRef, onLayout, overhang } = useOverhang();
   const bottom = clearance + overhang;
-  const top = insets.top + (Platform.OS === 'web' ? space[6] : space[3]) + topExtra;
+  const top = insets.top + (Platform.OS === 'web' ? space[6] : space[3]);
   // Where the large title ends: once it has scrolled under the bar, the
   // compact title fades in on a strip of glass, as in iOS. Unknown until
   // the title is laid out, and the bar stays hidden till then (a guess of
@@ -168,7 +168,7 @@ function TabScreenInner({
         // The page scrolls under the floating tab bar, so it makes its own room
         // for it rather than letting iOS guess at insets.
         contentInsetAdjustmentBehavior="never"
-        contentContainerStyle={[styles.content, gap !== undefined && { gap }, { paddingTop: top, paddingBottom: bottom + space[8] }]}
+        contentContainerStyle={[styles.content, gap !== undefined && { gap }, { paddingTop: top, paddingBottom: bottom + space[8] + bottomExtra }]}
         // The scroll bar stops above the tab bar too (the clearance already counts the home indicator).
         scrollIndicatorInsets={{ bottom }}
         automaticallyAdjustsScrollIndicatorInsets={false}

@@ -41,16 +41,18 @@ export interface HomeWidget {
   whenThere?: string;
   /** It needs GymGO's server (an account, the weather), so the limited website has none. */
   needsServer?: boolean;
+  /** A section of the page rather than a card of its own: framed while editing, so it has edges to hold. */
+  bare?: boolean;
 }
 
 export const HOME_WIDGETS: readonly HomeWidget[] = [
   { id: 'shortcuts', title: 'Quick searches', detail: 'Near me, early start, after work and under a price', icon: 'search', group: 'Finding a gym' },
-  { id: 'nearby', title: 'Gyms near you', detail: 'The gyms where you’re searching, for your visit time', icon: 'pin', group: 'Finding a gym' },
+  { id: 'nearby', title: 'Gyms near you', detail: 'The gyms where you’re searching, for your visit time', icon: 'pin', group: 'Finding a gym', bare: true },
   { id: 'finders', title: 'Machines and trips', detail: 'Who has the machine you want, and gyms where you’re going', icon: 'target', group: 'Finding a gym' },
-  { id: 'saved', title: 'Saved gyms', detail: 'The gyms you saved', icon: 'saved', group: 'Finding a gym', whenThere: 'Shows once you’ve saved a gym.' },
-  { id: 'recent', title: 'Recently viewed', detail: 'Gyms you looked at lately', icon: 'history', group: 'Finding a gym', whenThere: 'Shows once you’ve opened a gym.' },
-  { id: 'browse', title: 'Browse suburbs', detail: 'Neighbourhoods of the city you’re in', icon: 'map', group: 'Finding a gym' },
-  { id: 'cities', title: 'Other cities', detail: 'Cities GymGO knows, your country’s first', icon: 'globe', group: 'Finding a gym' },
+  { id: 'saved', title: 'Saved gyms', detail: 'The gyms you saved', icon: 'saved', group: 'Finding a gym', whenThere: 'Shows once you’ve saved a gym.', bare: true },
+  { id: 'recent', title: 'Recently viewed', detail: 'Gyms you looked at lately', icon: 'history', group: 'Finding a gym', whenThere: 'Shows once you’ve opened a gym.', bare: true },
+  { id: 'browse', title: 'Browse suburbs', detail: 'Neighbourhoods of the city you’re in', icon: 'map', group: 'Finding a gym', bare: true },
+  { id: 'cities', title: 'Other cities', detail: 'Cities GymGO knows, your country’s first', icon: 'globe', group: 'Finding a gym', bare: true },
   { id: 'workout', title: 'Workout', detail: 'Build a workout, and what’s up next on your plan', icon: 'workout', group: 'Training' },
   { id: 'lastWorkout', title: 'Last workout', detail: 'What you did last time, and Do it again', icon: 'refresh', group: 'Training', needsServer: true },
   { id: 'week', title: 'This week', detail: 'Workouts this week and your streak', icon: 'flame', group: 'Training', needsServer: true, whenThere: 'Shows once you’ve logged a workout.' },
@@ -59,7 +61,7 @@ export const HOME_WIDGETS: readonly HomeWidget[] = [
   { id: 'tools', title: 'Tools', detail: 'Interval timer, plate calculator, 1-rep max and exercises', icon: 'timer', group: 'Training' },
   { id: 'weather', title: 'Weather', detail: 'The weather where you’re searching, in one line', icon: 'thermometer', group: 'Weather', needsServer: true },
   { id: 'weatherHours', title: 'Weather by the hour', detail: 'Now and the next six hours', icon: 'clock', group: 'Weather', needsServer: true },
-  { id: 'collection', title: 'Collection', detail: 'The gyms you’ve checked in at', icon: 'trophy', group: 'You', needsServer: true },
+  { id: 'collection', title: 'Collection', detail: 'The gyms you’ve checked in at', icon: 'trophy', group: 'You', needsServer: true, whenThere: 'Shows once you’ve checked in at a gym.' },
   { id: 'bodyWeight', title: 'Body weight', detail: 'Your latest weigh-in and how it’s changed', icon: 'body', group: 'You' },
 ];
 
@@ -100,9 +102,10 @@ export function moveWidgetTo(list: readonly HomeWidgetId[], id: HomeWidgetId, to
   return next;
 }
 
-/** Added at the top, where you'll see it; once only. */
-export function addWidget(list: readonly HomeWidgetId[], id: HomeWidgetId): HomeWidgetId[] {
-  return list.includes(id) ? [...list] : [id, ...list];
+/** Added at the top, where you'll see it (the gallery), or at the end (the tray under Home's widgets); once only. */
+export function addWidget(list: readonly HomeWidgetId[], id: HomeWidgetId, at: 'top' | 'end' = 'top'): HomeWidgetId[] {
+  if (list.includes(id)) return [...list];
+  return at === 'top' ? [id, ...list] : [...list, id];
 }
 
 export const removeWidget = (list: readonly HomeWidgetId[], id: HomeWidgetId): HomeWidgetId[] => list.filter((each) => each !== id);

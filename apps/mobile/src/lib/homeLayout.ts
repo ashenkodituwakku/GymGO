@@ -19,7 +19,7 @@ export const useHomeWidgets = (): HomeWidgetId[] => store.use().widgets;
 const change = (next: (list: HomeWidgetId[]) => HomeWidgetId[]) => store.update((now) => ({ widgets: next(now.widgets) }));
 
 export const homeLayout = {
-  add: (id: HomeWidgetId) => change((list) => addWidget(list, id)),
+  add: (id: HomeWidgetId, at: 'top' | 'end' = 'top') => change((list) => addWidget(list, id, at)),
   remove: (id: HomeWidgetId) => change((list) => removeWidget(list, id)),
   move: (id: HomeWidgetId, by: -1 | 1) => change((list) => moveWidget(list, id, by)),
   /** Dropped at place `to`, as you drag it on Home. */

@@ -8,7 +8,7 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { ExerciseGlyph, ExerciseTile } from '@/components/ExerciseGlyph';
@@ -28,6 +28,7 @@ import { useTrainingLog } from '@/lib/useTraining';
 import { alternativesFor, kitText } from '@/lib/exerciseLibrary';
 import { KIT_LABEL, exerciseName, muscleLabel, exerciseById } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
+import { MuscleFigures } from '@/components/MuscleFigures';
 import { PageScroll } from '@/components/PageScroll';
 import { ProOffer } from '@/components/ProOffer';
 import { ScreenOptions } from '@/components/ScreenOptions';
@@ -40,6 +41,7 @@ const dayLabel = (iso: string) => {
 
 export default function ExerciseProgressScreen() {
   useGlassRedraw();
+  const window = useWindowDimensions();
   const { exercise: exerciseId = '' } = useLocalSearchParams<{ exercise: string }>();
   const { account, prefs, billing, openPro } = useApp();
   // Your own exercises, so one changed or deleted shows as it is now.
@@ -108,7 +110,8 @@ export default function ExerciseProgressScreen() {
               </Txt>
             </View>
           </View>
-          <View style={styles.card}>
+          <View style={[styles.card, styles.cardRow]}>
+            <View style={styles.cardText}>
             <Detail label="Works">
               {exercise.primary.length === 0 && <Pill text="Conditioning" strong />}
               {exercise.primary.map((muscle) => (
@@ -134,6 +137,11 @@ export default function ExerciseProgressScreen() {
               <Detail label="Counted">
                 <Pill text="For a time" />
               </Detail>
+            )}
+            </View>
+            {/* What it works, on the body: the main muscles in the accent, the rest lighter. */}
+            {exercise.primary.length + exercise.secondary.length > 0 && (
+              <MuscleFigures primary={exercise.primary} secondary={exercise.secondary} width={window.width < 360 ? 38 : 46} />
             )}
           </View>
           {exercise.own && !exercise.own.archived && (
@@ -388,6 +396,8 @@ const styles = themed(() => StyleSheet.create({
   facts: { flexDirection: 'row', gap: space[2] },
   fact: { flex: 1, gap: 2, padding: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
   card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
+  cardRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  cardText: { flex: 1, minWidth: 0, gap: space[3] },
   section: { marginTop: space[3], marginLeft: space[4] },
   group: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },

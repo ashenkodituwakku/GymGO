@@ -19,6 +19,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Share, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { CURVES, EASE_OUT, Pressable } from '@/components/motion';
+import { useBodyGender, setBodyGender } from '@/lib/bodyGender';
 import { BodyPicker } from '@/components/BodyPicker';
 import { Icon, type IconName } from '@/components/Icon';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -98,7 +99,9 @@ export default function WorkoutScreen() {
     effectiveMode === 'gym' ? kit.has : [...new Set<Kit>([...TYPICAL_KIT.filter((item) => !kit.lacks.includes(item)), ...kit.has])];
 
   const [muscles, setMuscles] = useState<Muscle[]>([]);
-  const [gender, setGender] = useState<'male' | 'female'>('male');
+  // Kept on the device, and the same on the recovery map and an exercise's page.
+  const gender = useBodyGender();
+  const setGender = setBodyGender;
   const [goal, setGoal] = useState<Goal>('muscle');
   const [length, setLength] = useState<Length>(6);
   const [seed, setSeed] = useState(1);

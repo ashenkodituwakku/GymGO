@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 88 · The body on each exercise, and your choice of figure kept
+
+*5 Nov 2026 · the commit "The body on each exercise, and the figure you chose kept"*
+
+- An exercise's page shows the muscles it works on a small body, front and back, beside the Works list: what it mainly works in the accent colour, what it also works in a paler tint, the rest of the body grey. It's only a picture of the list next to it, so a screen reader skips it.
+- Male or female, picked in the workout builder, is kept on this device and used wherever the body is drawn: the builder, the recovery map and each exercise's page. It went back to male each time you opened the builder, and the recovery map was always male.
+- Not yet seen on a phone.
+
 ## Update 87 · A better-looking body figure
 
-*5 Nov 2026 · the commit "A better-looking body figure: depth, a glow for picked muscles, a heat scale for recovery"*
+*5 Nov 2026 · `d6f40b1`, `a5562f8`, `4cc096c`*
 
 - The body in the workout builder and on the recovery map is drawn with depth instead of as a flat grey chart: the body shows between the muscles (as creases, not the white card), each muscle is shaded from its top so it looks rounded, and a soft shadow sits under the feet. Male and female, front and back, light and dark, every look.
 - A muscle you pick glows in its colour, with a fine light edge. On the website, the muscle under the mouse tints towards the accent in the builder (as picking it would), and on the recovery map its own heat colour lifts instead of turning grey.

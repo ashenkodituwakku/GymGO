@@ -14,6 +14,7 @@ import { color, currentTheme, radius, shadow, space, themed } from '@/lib/theme'
 import type { TrainingSession } from '@/lib/training';
 import { MUSCLES, type Muscle } from '@/lib/workout';
 import { BodyFigure } from './body/BodyFigure';
+import { useBodyGender } from '@/lib/bodyGender';
 import { Pressable } from './motion';
 import { Txt } from './ui';
 
@@ -47,6 +48,7 @@ export function RecoveryMap({ sessions, maxWidth }: { sessions: TrainingSession[
   const map = useMemo(() => recoveryMap(sessions), [sessions]);
   const byMuscle = useMemo(() => new Map(map.map((rest) => [rest.muscle, rest])), [map]);
   const [picked, setPicked] = useState<Muscle | null>(null);
+  const gender = useBodyGender();
   const room = Math.min(maxWidth ?? window.width, 560) - space[4] * 4;
   const figureWidth = Math.max(110, Math.min(200, room / 2));
   const pickedRest = picked ? byMuscle.get(picked) : null;
@@ -62,7 +64,7 @@ export function RecoveryMap({ sessions, maxWidth }: { sessions: TrainingSession[
         {(['front', 'back'] as const).map((side) => (
           <BodyFigure
             key={side}
-            gender="male"
+            gender={gender}
             side={side}
             width={figureWidth}
             height={figureWidth * 2}

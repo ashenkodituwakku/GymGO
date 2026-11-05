@@ -106,6 +106,15 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **The body on each exercise, the figure kept** (5 Nov, following the
+  owner's "make the muscle guy ... look better"). New
+  components/MuscleFigures.tsx: a front and back `BodyFigure`, not
+  pickable and hidden from screen readers, filled brand for an exercise's
+  `primary`, `mix(bodyIdle, brand, 0.4)` for `secondary`; on
+  progress/[exercise].tsx beside Works (38 wide under 360 points, else 46).
+  New lib/bodyGender.ts (`deviceStore` 'gymgo.body.v1', male by default):
+  `useBodyGender()`/`setBodyGender()` used by workout/[id].tsx (replacing
+  its own state), RecoveryMap and MuscleFigures.
 - **A better-looking body figure** (5 Nov, the owner: "make the muscle guy
   for building workout and checking what muscles are fatigued look
   better"). components/body/BodyFigure(.web).tsx: a `LinearGradient` per

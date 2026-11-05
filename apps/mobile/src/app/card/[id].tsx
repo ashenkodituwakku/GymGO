@@ -9,6 +9,7 @@ import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import { GemCard } from '@/components/GemCard';
 import { TiltCard } from '@/components/TiltCard';
+import { CardShapeIcon } from '@/components/CardShapeIcon';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -18,7 +19,6 @@ import { ScreenOptions } from '@/components/ScreenOptions';
 import { useApp } from '@/lib/app-state';
 import { usePageTitle } from '@/lib/pageTitle';
 import { cardFor, cardName, gemInfo, rarityLabel } from '@/lib/rarity';
-import { CARD_FRAMES } from '@/lib/cardShape';
 import { dateLabel } from '@/lib/copy';
 import type { CollectedGym } from '@/lib/collection';
 import { cardPalette, type GymRecord } from '@gymgo/domain';
@@ -133,7 +133,6 @@ function CardFacts({ entry, record }: { entry: CollectedGym; record: GymRecord |
   const gem = gemInfo(look.gem);
   const brand = useBrandColour(record?.location ?? null);
   const logo = record ? logoFor(record.location) : null;
-  const [, base] = CARD_FRAMES[look.rarity].metal;
   const colour = brand
     ? logo
       ? `From the ${logo.brand} logo`
@@ -141,8 +140,8 @@ function CardFacts({ entry, record }: { entry: CollectedGym; record: GymRecord |
     : logo
       ? `Its gem’s: the ${logo.brand} logo has no colour to take`
       : 'Its gem’s: no logo or icon colour to take';
-  const rows: Array<{ label: string; value: string; swatch?: string }> = [
-    { label: 'Rarity', value: `${rarityLabel(look.rarity)}${look.foil ? ' · Foil' : ''}`, swatch: base },
+  const rows: Array<{ label: string; value: string; swatch?: string; shape?: boolean }> = [
+    { label: 'Rarity', value: `${rarityLabel(look.rarity)}${look.foil ? ' · Foil' : ''}`, shape: true },
     { label: 'Gem', value: gem.label, swatch: gem.colors[1] },
     { label: 'Colour', value: colour, swatch: (brand ? cardPalette(brand)?.[1] : null) ?? gem.colors[1] },
     ...(look.bestDay ? [{ label: 'Best roll', value: `Your visit on ${dateLabel(look.bestDay, { day: 'numeric', month: 'long', year: 'numeric' })}` }] : []),
@@ -155,6 +154,7 @@ function CardFacts({ entry, record }: { entry: CollectedGym; record: GymRecord |
             {row.label}
           </Txt>
           <View style={styles.factValue}>
+            {row.shape && <CardShapeIcon rarity={look.rarity} height={16} />}
             {row.swatch && <View style={[styles.swatch, { backgroundColor: row.swatch }]} />}
             <Txt variant="subhead" style={styles.flex}>
               {row.value}

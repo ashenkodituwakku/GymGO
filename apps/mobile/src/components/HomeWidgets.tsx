@@ -9,7 +9,7 @@
 import { monthLabel } from '@gymgo/domain';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { startSession } from '@/lib/activeSession';
 import { againPlan } from '@/lib/again';
 import { localToday, useBodyWeight, weightChange } from '@/lib/bodyWeight';
@@ -18,6 +18,7 @@ import { haptic } from '@/lib/haptics';
 import { monthKeyOf, monthReport } from '@/lib/monthReport';
 import { recoveryMap, type MuscleRest } from '@/lib/recovery';
 import { heatShade } from './RecoveryMap';
+import { SmallFigures } from './MuscleFigures';
 import { workoutTitle } from '@/lib/templates';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { durationLabel, fromKg, volumeKg, type TrainingSession, type WeightUnit } from '@/lib/training';
@@ -217,6 +218,7 @@ export function MonthWidget({ log, unit }: { log: LogState; unit: WeightUnit }) 
 /** When you last trained each muscle, from the log: the latest, and the longest ago. Not whether one's ready. */
 export function RecoveryWidget({ log }: { log: LogState }) {
   const router = useRouter();
+  const window = useWindowDimensions();
   const map = useMemo(() => recoveryMap(log.sessions), [log.sessions]);
   const trained = map.filter((rest) => rest.days !== null);
   if (trained.length === 0) {
@@ -228,6 +230,7 @@ export function RecoveryWidget({ log }: { log: LogState }) {
   }
   const latest = trained.slice(0, 3);
   const longest = [...map].reverse().filter((rest) => !latest.includes(rest)).slice(0, 3);
+  const bands = new Map(map.map((rest) => [rest.muscle, rest.band]));
   const chip = (rest: MuscleRest) => `${rest.label} · ${rest.days === null ? 'not logged' : rest.days === 0 ? 'today' : rest.days === 1 ? 'yesterday' : `${rest.days} days`}`;
   return (
     <Frame
@@ -236,27 +239,33 @@ export function RecoveryWidget({ log }: { log: LogState }) {
       onPress={() => router.push('/progress')}
       label={`Muscles trained. Lately: ${latest.map(chip).join(', ')}. Longest ago: ${longest.map(chip).join(', ')}. See your progress`}
     >
-      {[
-        { label: 'Lately', list: latest },
-        { label: 'Longest ago', list: longest },
-      ].map(({ label, list }) => (
-        <View key={label} style={styles.restRow}>
-          <Txt variant="caption" color={color.labelSecondary} style={styles.restLabel}>
-            {label}
-          </Txt>
-          <View style={styles.chips}>
-            {list.map((rest) => (
-              <View key={rest.muscle} style={[styles.chip, styles.heatChip]}>
-                {/* The recovery map's own colour for it, so the two read alike. */}
-                <View style={[styles.heatDot, { backgroundColor: heatShade(rest.band) }]} />
-                <Txt variant="caption" style={face('medium')} numberOfLines={1}>
-                  {chip(rest)}
-                </Txt>
+      <View style={styles.restBody}>
+        <View style={styles.restLists}>
+          {[
+            { label: 'Lately', list: latest },
+            { label: 'Longest ago', list: longest },
+          ].map(({ label, list }) => (
+            <View key={label} style={styles.restRow}>
+              <Txt variant="caption" color={color.labelSecondary} style={styles.restLabel}>
+                {label}
+              </Txt>
+              <View style={styles.chips}>
+                {list.map((rest) => (
+                  <View key={rest.muscle} style={[styles.chip, styles.heatChip]}>
+                    {/* The recovery map's own colour for it, so the two read alike. */}
+                    <View style={[styles.heatDot, { backgroundColor: heatShade(rest.band) }]} />
+                    <Txt variant="caption" style={face('medium')} numberOfLines={1}>
+                      {chip(rest)}
+                    </Txt>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
+            </View>
+          ))}
         </View>
-      ))}
+        {/* The recovery map in small, for a glance at the whole body. */}
+        <SmallFigures width={window.width < 360 ? 30 : 38} fillFor={(muscle) => heatShade(bands.get(muscle) ?? 'never')} />
+      </View>
       <Txt variant="caption" color={color.labelTertiary}>
         From your log: when, not whether a muscle is ready.
       </Txt>
@@ -358,6 +367,8 @@ const styles = themed(() =>
     tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
     stats: { flexDirection: 'row', gap: space[2] },
     stat: { flex: 1, minWidth: 0, gap: 1, paddingVertical: space[2], paddingHorizontal: space[2], borderRadius: radius.md, backgroundColor: color.fill },
+    restBody: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+    restLists: { flex: 1, minWidth: 0, gap: space[2] },
     restRow: { gap: 4 },
     restLabel: { textTransform: 'none' },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },

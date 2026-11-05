@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 89 · The whole body at a glance on Home
+
+*5 Nov 2026 · the commit "Muscles trained on Home: the recovery map in small"*
+
+- Home's Muscles trained widget shows the recovery map in small beside its lists, front and back, in the same heat colours, so you see the whole body at a glance as well as the muscles it names. Your male or female choice applies here too.
+- Checked the body in the looks that paint their own cards (Classic light and dark, Paper, Material): it reads on each. And a sweep of 13 screens at 1024 wide in dark: no errors, nothing cut off or overflowing.
+- Not yet seen on a phone.
+
 ## Update 88 · The body on each exercise, and your choice of figure kept
 
-*5 Nov 2026 · `2955b49`, and the commit "Body figure: the male or female choice on the recovery map, and hair that reads as hair"*
+*5 Nov 2026 · `2955b49`, `f67981b`*
 
 - An exercise's page shows the muscles it works on a small body, front and back, beside the Works list: what it mainly works in the accent colour, what it also works in a paler tint, the rest of the body grey. It's only a picture of the list next to it, so a screen reader skips it.
 - Male or female, picked in the workout builder, is kept on this device and used wherever the body is drawn: the builder, the recovery map and each exercise's page. It went back to male each time you opened the builder, and the recovery map was always male.

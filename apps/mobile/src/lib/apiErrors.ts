@@ -35,7 +35,8 @@ export function readBody(status: number, text: string): Record<string, unknown> 
   } catch {
     // Not JSON: below.
   }
-  if (status === 502 || status === 503 || status === 504) {
+  // A proxy's or tunnel's own page (Caddy, a Cloudflare tunnel's 502 or 530) for a server that isn't answering.
+  if (status === 502 || status === 503 || status === 504 || (status >= 520 && status <= 530)) {
     serverMissed();
     throw new OfflineError('The GymGO server isn’t answering.');
   }
@@ -43,15 +44,17 @@ export function readBody(status: number, text: string): Record<string, unknown> 
 }
 
 /**
- * The error for an answer that isn't a success. A 502 or 504, or a 503
- * with no reason of the server's own (its 503s say why: `weather_off`…),
- * came from a proxy in front of a server that isn't answering: said as
- * the server being unreachable.
+ * The error for an answer that isn't a success. The server's own failures
+ * always say what went wrong (`error`, usually a `code`), its 502s and 503s
+ * included (the place finder busy, the weather switched off). Something in
+ * front of a server that isn't answering says nothing of the kind: a 502,
+ * 503 or 504 with no message (Caddy), or the dev server's proxy, which says
+ * `server_down`. Only those are the server being unreachable.
  */
 export function failure(status: number, data: Record<string, unknown>): ApiError | OfflineError {
   const code = typeof data.code === 'string' ? data.code : null;
   const said = typeof data.error === 'string' ? data.error : null;
-  if (status === 502 || status === 504 || (status === 503 && !code)) {
+  if (code === 'server_down' || ((status === 502 || status === 503 || status === 504) && !said && !code)) {
     serverMissed();
     return new OfflineError(said ?? 'The GymGO server isn’t answering.');
   }

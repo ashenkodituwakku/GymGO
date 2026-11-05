@@ -153,9 +153,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 - **Saying truly what's down** (5 Nov). lib/apiErrors.ts now holds
   `ApiError`, `OfflineError` (re-exported by lib/api.ts), `readBody` (a
   body that isn't JSON: 502/503/504 is `OfflineError`, else `ApiError`
-  with code `not_json`) and `failure` (502, 504, or a 503 with no code of
-  the server's own, is `OfflineError`: a proxy saying the server's off;
-  the dev server's proxy answers 502 with its own JSON). lib/weather.ts's
+  with code `not_json`; a tunnel's 520–530 counts too) and `failure` (a
+  502/503/504 with no `error` and no `code`, as from Caddy, or the dev
+  proxy's `server_down` (metro.config.js), is `OfflineError`; the server's
+  own 502s and 503s always carry `error`, so they stay `ApiError` with
+  their words: the place finder busy, a friend code not made). lib/weather.ts's
   `none` state has a `cause` ('server' | 'met' | 'other'). Tested in
   apiBody.test.ts.
 - **Small phones, tidied** (5 Nov). Found with two browser scans worth

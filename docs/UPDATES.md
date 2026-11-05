@@ -73,7 +73,7 @@ Every text field's hint was measured against its field on a 320-point phone:
 *5 Nov 2026 · `3e13d11`*
 
 - With GymGO's server down, Home's weather said MET Norway couldn't be reached. It now says GymGO's server can't be, and says MET Norway only when it's MET Norway.
-- When something in front of the server (the website's proxy, a tunnel) answers for it because the server is off, the app now says it can't reach the server everywhere, instead of a vague "couldn't load" or, for a page that isn't GymGO's answer, an error from reading it.
+- When something in front of the server (the website's proxy, a tunnel) answers for it because the server is off, the app now says it can't reach the server everywhere, instead of a vague "couldn't load" or, for a page that isn't GymGO's answer, an error from reading it. (Corrected the same day: the server's own busy messages, such as the place finder being busy, keep their own words.)
 - Not yet seen on a phone.
 
 ## Update 77 · Small phones, tidied

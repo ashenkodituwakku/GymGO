@@ -38,7 +38,8 @@ function forward(req, res) {
   upstream.on('error', () => {
     if (res.headersSent) return res.destroy();
     res.writeHead(502, { 'content-type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify({ error: 'The GymGO server isn’t running on this computer. Start GymGO with the launcher.' }));
+    // `server_down` tells the app it's the server that isn't there (lib/apiErrors.ts), not a failure of the server's own.
+    res.end(JSON.stringify({ error: 'The GymGO server isn’t running on this computer. Start GymGO with the launcher.', code: 'server_down' }));
   });
   req.pipe(upstream);
 }

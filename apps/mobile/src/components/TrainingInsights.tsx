@@ -138,9 +138,12 @@ export function WeekCard({
                   accessibilityRole="button"
                   accessibilityLabel={`${longDay(day.date)}: ${day.sessions} workout${day.sessions === 1 ? '' : 's'}`}
                   aria-expanded={picked === day.date}
-                  hitSlop={2}
-                  style={({ pressed }) => [...look, pressed && { opacity: 0.7 }]}
-                />
+                  // A target a little bigger than the 22-point square (at least 24 points, WCAG 2.2), with a
+                  // negative margin so the calendar's spacing doesn't change; hitSlop doesn't reach a browser.
+                  style={({ pressed }) => [styles.dayTarget, pressed && { opacity: 0.7 }]}
+                >
+                  <View style={look} />
+                </Pressable>
               ) : (
                 <View key={day.date} style={look} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
               );
@@ -443,6 +446,7 @@ const styles = themed(() =>
     rowLabel: { flex: 1, aspectRatio: 1, maxHeight: 22, justifyContent: 'center' },
     week: { flex: 1, gap: 4, alignItems: 'center' },
     day: { width: '100%', aspectRatio: 1, maxWidth: 22, borderRadius: 5, borderCurve: 'continuous' },
+    dayTarget: { width: 26, height: 26, margin: -2, alignItems: 'center', justifyContent: 'center' },
     dayRest: { backgroundColor: color.fill },
     dayTrained: { backgroundColor: color.brand },
     dayFuture: { backgroundColor: 'transparent' },

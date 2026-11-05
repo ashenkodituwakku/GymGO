@@ -16,6 +16,7 @@ next number here as part of the update itself.
 - On the website on a small phone (under 360 points), the back button is its chevron alone, as on an iPhone when the title needs the room: "Monthly challenge", "Find a machine" and "Progress photos" ran into "‹ Home". A screen reader still hears where it goes.
 - Monthly challenge: the four targets are one row of equal choices, like the programme's days a week, instead of chips with "20 days" alone on a second line.
 - A shared card is always pictured lying flat, even while you're tilting it.
+- Progress: a trained day on the calendar is an easier target to tap (26 points around its 22-point square), with the calendar looking just as it did.
 - Not yet seen on a phone.
 
 ## Update 85 · The whole card in a shared picture

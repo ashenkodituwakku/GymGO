@@ -149,7 +149,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
   to flat; in a browser, the mouse is read from `onPointerMove` and
   `onPointerLeave` on an outer View that doesn't tilt (Gesture Handler's
   Hover didn't fire on the web). The maths is lib/tilt.ts (`tiltFor`, a
-  worklet, tested); MOST_TILT is 14°. Off with Reduce Motion.
+  worklet, tested); MOST_TILT is 14°. Off with Reduce Motion. `still`
+  lays it flat at once: card/[id] sets it while sharing and waits two
+  frames before the capture, so the picture is flat even mid-tilt.
 - **Saying truly what's down** (5 Nov). lib/apiErrors.ts now holds
   `ApiError`, `OfflineError` (re-exported by lib/api.ts), `readBody` (a
   body that isn't JSON: 502/503/504 is `OfflineError`, else `ApiError`

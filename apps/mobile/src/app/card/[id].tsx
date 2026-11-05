@@ -51,6 +51,8 @@ export default function CardScreen() {
   const share = async () => {
     setBusy(true);
     setLine(null);
+    // Two frames, so the card has been laid flat (TiltCard's `still`) before it's pictured.
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     const outcome = await shareViewAsImage(shot, { name: entry?.name ?? set?.name ?? 'card', title: 'My GymGO card' });
     setBusy(false);
     setLine(imageShareLine(outcome));
@@ -93,7 +95,7 @@ export default function CardScreen() {
       {/* What's captured: the card and a little room round it. */}
       <View ref={shot} collapsable={false} style={styles.shot}>
         {entry ? (
-          <TiltCard>
+          <TiltCard still={busy}>
             <GemCard
               entry={entry}
               record={data.records.find((record) => record.location.id === entry.id) ?? null}

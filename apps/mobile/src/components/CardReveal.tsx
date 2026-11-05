@@ -1,8 +1,8 @@
 /**
  * The moment a card is pulled: when you collect a gym, or a visit rolls
  * better than its card had. A pop-up rises in the middle of the screen,
- * the page still there behind it, dimmed; the card flips in over a glow of
- * its gem's colour, its rarity above it. It's sized to its content (a
+ * the page still there behind it, dimmed; the card flips in over a glow in
+ * its rarity's metal (lib/cardShape.ts), its rarity above it. It's sized to its content (a
  * smaller card, the buttons side by side), so on a phone it takes part of
  * the screen rather than all of it, and scrolls inside itself on the
  * smallest.
@@ -25,13 +25,14 @@ import Animated, { ReduceMotion, runOnJS, useAnimatedStyle, useSharedValue, with
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import type { GymRecord } from '@gymgo/domain';
 import { GemCard } from './GemCard';
+import { CARD_FRAMES } from '@/lib/cardShape';
 import { Icon } from './Icon';
 import { EASE_IN, EASE_OUT, Pressable, Pressy, damp } from './motion';
 import { PrimaryButton, Txt } from './ui';
 import type { CollectedGym } from '@/lib/collection';
 import { haptic } from '@/lib/haptics';
 import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
-import { PRISM, cardFor, gemInfo, rarityLabel, rarityRank, type Rarity } from '@/lib/rarity';
+import { cardFor, gemInfo, rarityLabel, rarityRank, type Rarity } from '@/lib/rarity';
 import { playCardSound } from '@/lib/sounds';
 import { CHILD_TOUCH, face, radius, space, themed } from '@/lib/theme';
 
@@ -118,7 +119,8 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
   const { leave, dim, panel, cardStyle, wordsStyle, glowStyle } = useChoreography();
   const look = cardFor(pull.entry);
   const gem = gemInfo(look.gem);
-  const legendary = look.rarity === 'legendary';
+  // The glow and the heading in the card's own metal, as its frame is.
+  const metal = CARD_FRAMES[look.rarity].metal;
   // A new card or an upgrade: its rarity's sound, its gem's signature (and foil's glitter) as it turns over. Not for one you're only looking at.
   useEffect(() => {
     if (!pull.viewing) playCardSound(look.rarity, look.gem, look.foil);
@@ -165,9 +167,9 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
               <Svg width={glow} height={glow}>
                 <Defs>
                   <RadialGradient id="pullGlow" cx="50%" cy="50%" r="50%">
-                    <Stop offset="0" stopColor={legendary ? PRISM[1] : gem.colors[0]} stopOpacity={0.7} />
-                    <Stop offset="0.45" stopColor={legendary ? PRISM[5] : gem.colors[1]} stopOpacity={0.3} />
-                    <Stop offset="1" stopColor={gem.colors[2]} stopOpacity={0} />
+                    <Stop offset="0" stopColor={metal[0]} stopOpacity={0.7} />
+                    <Stop offset="0.45" stopColor={metal[1]} stopOpacity={0.3} />
+                    <Stop offset="1" stopColor={metal[2]} stopOpacity={0} />
                   </RadialGradient>
                 </Defs>
                 <Circle cx={glow / 2} cy={glow / 2} r={glow / 2} fill="url(#pullGlow)" />
@@ -179,7 +181,7 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
                 <Txt variant="caption" color="rgba(255, 255, 255, 0.72)" style={[face('bold'), styles.eyebrow]}>
                   {pull.viewing ? 'YOUR CARD' : pull.upgradedFrom ? `UPGRADED FROM ${rarityLabel(pull.upgradedFrom).toUpperCase()}` : 'NEW CARD'}
                 </Txt>
-                <Txt variant="title" color={legendary ? PRISM[1] : gem.colors[0]} style={styles.centreText}>
+                <Txt variant="title" color={metal[0]} style={styles.centreText}>
                   {/* Only a rare pull gets the exclamation mark. */}
                   {rarityRank(look.rarity) >= rarityRank('rare') ? `${rarityLabel(look.rarity)}!` : `${rarityLabel(look.rarity)} card`}
                 </Txt>

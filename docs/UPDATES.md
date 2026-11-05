@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 75 · The new cards everywhere
+
+*5 Nov 2026 · the commit "The new cards everywhere: shape icons on a gym's page and Home, the reveal in the rarity's metal"*
+
+- A gym's page shows your card as a small card in its rarity's shape and metal, not a gem dot.
+- Home's Collection tile shows your best card's shape and rarity on its own line, instead of "best Silver" wrapping.
+- The card reveal glows in the rarity's metal, the same as the card's frame (green for Uncommon, gold for Legendary).
+- Not yet seen on a phone.
+
 ## Update 74 · Collection cards: a shape for each rarity, the gym's own colour
 
-*4 Nov 2026 · the commit "Collection cards: a shape for each rarity, the gym's own colour"*
+*4 Nov 2026 · `c8bc8f2`*
 
 - Each rarity has its own card shape and metal: rounded steel (Common), cut green corners (Uncommon), notched blue (Rare), scooped purple with a second line (Epic), and gold with a raised crest, a crown, studs and a rainbow line (Legendary).
 - A card takes the colour of the gym's own logo or website icon: red for Snap Fitness and Fitness First, blue for Kieser. When the logo is black, white or grey, the card keeps its gem's colour.

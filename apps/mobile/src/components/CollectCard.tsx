@@ -16,7 +16,7 @@ import Animated from 'react-native-reanimated';
 import type { GymRecord } from '@gymgo/domain';
 import { useApp } from '@/lib/app-state';
 import { TIERS, checkIn, collectionStats, localDay, tierFor } from '@/lib/collection';
-import { cardFor, cardName, gemInfo, rarityLabel, rarityRank, rollFor, type Rarity } from '@/lib/rarity';
+import { cardFor, cardName, rarityLabel, rarityRank, rollFor, type Rarity } from '@/lib/rarity';
 import { haptic } from '@/lib/haptics';
 import { currentFix, type Fix } from '@/lib/location';
 import { distanceLabel } from '@/lib/places';
@@ -29,6 +29,7 @@ import { setsFinished, type GymSet } from '@/lib/sets';
 import { GymScan, type ScanPhase } from './GymScan';
 import { TIER_METAL } from './GemCard';
 import { Icon } from './Icon';
+import { CardShapeIcon } from './CardShapeIcon';
 import { FADE_IN, FADE_OUT, GLIDE, POP_IN, Pressable, Pressy } from './motion';
 import { PrimaryButton, Txt } from './ui';
 
@@ -155,9 +156,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
           accessibilityLabel={`Your card: ${cardName(look)}. Show it`}
           style={styles.cardLine}
         >
-          <View style={[styles.gemDot, { backgroundColor: gemInfo(look.gem).colors[1] }]}>
-            <Icon name="gem" size={11} color="#FFFFFF" />
-          </View>
+          <CardShapeIcon rarity={look.rarity} height={22} />
           <Txt variant="subhead" style={[styles.flex, face('semibold')]}>
             {`${cardName(look)} card`}
           </Txt>
@@ -241,8 +240,12 @@ export function CollectionStrip({ onPress, tile = false }: { onPress: () => void
   const metal = stats.topTier ? TIER_METAL[stats.topTier] : color.fill;
   const best = TIERS.find((item) => item.tier === stats.topTier)?.label;
   const line = `${stats.gyms} gym${stats.gyms === 1 ? '' : 's'} · ${stats.cities} cit${stats.cities === 1 ? 'y' : 'ies'} · ${stats.countries} countr${stats.countries === 1 ? 'y' : 'ies'}`;
+  const rarest = Object.values(gyms).reduce<Rarity | null>((top, entry) => {
+    const rarity = cardFor(entry).rarity;
+    return !top || rarityRank(rarity) > rarityRank(top) ? rarity : top;
+  }, null);
   if (tile) {
-    // The gyms collected big, then the cities and countries, and the best tier.
+    // The gyms collected big, then the cities and countries, and your rarest card; the medal's metal is the best tier.
     const places = `${stats.cities} cit${stats.cities === 1 ? 'y' : 'ies'} · ${stats.countries} countr${stats.countries === 1 ? 'y' : 'ies'}`;
     return (
       <Pressy
@@ -252,7 +255,7 @@ export function CollectionStrip({ onPress, tile = false }: { onPress: () => void
           onPress();
         }}
         accessibilityRole="button"
-        accessibilityLabel={`Your collection: ${line}${best ? `, best ${best}` : ''}`}
+        accessibilityLabel={`Your collection: ${line}${best ? `, best tier ${best}` : ''}${rarest ? `, best card ${rarityLabel(rarest)}` : ''}`}
         style={styles.tile}
       >
         <View style={styles.tileHead}>
@@ -267,9 +270,18 @@ export function CollectionStrip({ onPress, tile = false }: { onPress: () => void
             {stats.gyms === 1 ? 'gym collected' : 'gyms collected'}
           </Txt>
         </View>
-        <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
-          {best ? `${places} · best ${best}` : places}
+        <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+          {places}
         </Txt>
+        {rarest && (
+          <View style={styles.tileBest}>
+            <CardShapeIcon rarity={rarest} height={14} />
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1} style={styles.tileShrink}>
+              {/* The card's shape beside it says it's your best card (the label says so in words). */}
+              {rarityLabel(rarest)}
+            </Txt>
+          </View>
+        )}
       </Pressy>
     );
   }
@@ -367,10 +379,10 @@ const styles = themed(() =>
     tileFigure: { flexDirection: 'row', alignItems: 'baseline', minWidth: 0 },
     // A margin, as a leading space between two texts is dropped in a browser.
     tileShrink: { flexShrink: 1, marginLeft: 4 },
+    tileBest: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
     stripMedal: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
     nudge: { borderWidth: 2, borderColor: color.brand },
     cardLine: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 2 },
     finished: { gap: space[2] },
-    gemDot: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   }),
 );

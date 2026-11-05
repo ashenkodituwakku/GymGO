@@ -106,6 +106,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **The new cards everywhere** (5 Nov). components/CardShapeIcon.tsx
+  (a rarity's `cardPath` in its metal, any height, its own gradient id)
+  replaces the gem dot on a gym page's CollectCard line and the filter's
+  swatch; Home's CollectionStrip tile shows the rarest card's icon and
+  rarity (medal metal is still the best tier); CardReveal's glow and
+  heading use `CARD_FRAMES[rarity].metal`.
 - **Collection cards: shapes and the gym's own colour** (4 Nov).
   lib/cardShape.ts has the silhouettes: `CARD_FRAMES` (frame width,
   corners round/cut/scoop, side notches, Legendary's crest, the metal,

@@ -20,8 +20,7 @@
 
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { CollectionSyncLine, useDeleteCollection } from '@/components/CollectionData';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
@@ -43,7 +42,8 @@ import { distanceLabel } from '@/lib/places';
 import { nearLabel } from '@/lib/query';
 import type { GymLocation, GymRecord } from '@gymgo/domain';
 import { FOIL_ONE_IN, RARITIES, cardFor, oddsLine, rarityRank, type Rarity } from '@/lib/rarity';
-import { CARD_FRAMES, cardPath } from '@/lib/cardShape';
+import { CARD_FRAMES } from '@/lib/cardShape';
+import { CardShapeIcon } from '@/components/CardShapeIcon';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -341,7 +341,7 @@ export default function CollectionScreen() {
 }
 
 /**
- * Show one rarity's cards, or all: each with its card's shape in its metal
+ * Show one rarity's cards, or all: each with its card's shape in its metal (CardShapeIcon)
  * and how many you have. Only the rarities you have a card of.
  */
 function RarityFilter({ counts, total, value, onChange }: { counts: Map<Rarity, number>; total: number; value: Rarity | null; onChange: (rarity: Rarity | null) => void }) {
@@ -363,7 +363,7 @@ function RarityFilter({ counts, total, value, onChange }: { counts: Map<Rarity, 
         accessibilityLabel={key ? `${label}: ${count} card${count === 1 ? '' : 's'}` : `All ${count} cards`}
         style={[styles.rarityPill, selected && { backgroundColor: metal ? metal[2] : color.label, borderColor: metal ? metal[1] : color.label }]}
       >
-        {key && <ShapeSwatch rarity={key} />}
+        {key && <CardShapeIcon rarity={key} />}
         <Txt variant="footnote" color={selected ? (metal ? '#FFFFFF' : color.background) : color.label} style={face('semibold')}>
           {label}
         </Txt>
@@ -378,24 +378,6 @@ function RarityFilter({ counts, total, value, onChange }: { counts: Map<Rarity, 
       {pill(null, 'All', total)}
       {rarities.map((rarity) => pill(rarity.id, rarity.label, counts.get(rarity.id)!))}
     </ScrollView>
-  );
-}
-
-/** A rarity's card shape, small, in its metal. */
-function ShapeSwatch({ rarity }: { rarity: Rarity }) {
-  const [light, base, deep] = CARD_FRAMES[rarity].metal;
-  const id = `swatch-${rarity}`;
-  return (
-    <Svg width={13} height={17} viewBox="0 0 120 160" {...(Platform.OS === 'web' ? null : { pointerEvents: 'none' as const })}>
-      <Defs>
-        <LinearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor={light} />
-          <Stop offset="0.5" stopColor={base} />
-          <Stop offset="1" stopColor={deep} />
-        </LinearGradient>
-      </Defs>
-      <Path d={cardPath(rarity, 120, 160)} fill={`url(#${id})`} stroke={deep} strokeWidth={6} />
-    </Svg>
   );
 }
 

@@ -8,12 +8,13 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { monthLabel } from '@gymgo/domain';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { HeroMark } from '@/components/HeroMark';
 import { Icon } from '@/components/Icon';
 import { Pressable } from '@/components/motion';
+import { SmallFigures } from '@/components/MuscleFigures';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
@@ -22,13 +23,14 @@ import { PrimaryButton, Txt } from '@/components/ui';
 import { shareText } from '@/lib/actions';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
+import { mix } from '@/lib/looks';
 import { changeWord, monthReport, monthShareText, monthsWithTraining, reportMonth, shiftMonth, timeChangeWord } from '@/lib/monthReport';
 import { usePageTitle } from '@/lib/pageTitle';
 import { RECORD_WORD } from '@/lib/records';
 import { color, radius, shadow, space, themed } from '@/lib/theme';
 import { durationLabel, fromKg, unitFor } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
-import { exerciseName } from '@/lib/workout';
+import { exerciseName, type Muscle } from '@/lib/workout';
 
 const dayOf = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 
@@ -36,6 +38,7 @@ export default function MonthScreen() {
   useGlassRedraw();
   usePageTitle('Monthly report');
   const router = useRouter();
+  const window = useWindowDimensions();
   const { m } = useLocalSearchParams<{ m?: string }>();
   const { account, prefs } = useApp();
   const log = useTrainingLog(account.token);
@@ -116,6 +119,13 @@ export default function MonthScreen() {
     { label: 'Reps', value: totals.reps.toLocaleString(), change: changeWord(totals.reps, report.before.reps) },
   ];
   const most = Math.max(1, ...report.muscles.map((entry) => Math.max(entry.sets, entry.before)));
+  // On the body: each muscle deeper in the accent the more sets it had this month.
+  const mostNow = Math.max(1, ...report.muscles.map((entry) => entry.sets));
+  const setsOf = new Map(report.muscles.map((entry) => [entry.muscle, entry.sets]));
+  const shadeOf = (muscle: Muscle) => {
+    const sets = setsOf.get(muscle) ?? 0;
+    return sets > 0 ? mix(color.bodyIdle, color.brand, 0.2 + 0.8 * (sets / mostNow)) : undefined;
+  };
   const go = (next: string) => {
     haptic.select();
     setPicked(next);
@@ -239,6 +249,11 @@ export default function MonthScreen() {
             SETS FOR EACH MUSCLE
           </Txt>
           <View style={styles.card}>
+            {report.muscles.some((entry) => entry.sets > 0) && (
+              <View style={styles.figures}>
+                <SmallFigures width={window.width < 360 ? 56 : 66} fillFor={shadeOf} />
+              </View>
+            )}
             {report.muscles.map((entry) => (
               <View
                 key={entry.muscle}
@@ -265,7 +280,7 @@ export default function MonthScreen() {
               </View>
             ))}
             <Txt variant="caption" color={color.labelSecondary}>
-              {`Working sets, a half for a muscle an exercise works second.${compared ? ` The lighter bar is ${before}.` : ''}`}
+              {`Working sets, a half for a muscle an exercise works second.${compared ? ` The lighter bar is ${before}.` : ''} On the body, the deeper the colour, the more sets.`}
             </Txt>
           </View>
         </>
@@ -327,6 +342,7 @@ const styles = themed(() =>
     card: { gap: space[3], padding: space[4], backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', ...shadow.plate },
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
     rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
+    figures: { alignItems: 'center', paddingBottom: space[1] },
     muscle: { gap: 4 },
     muscleHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     track: { height: 8, borderRadius: 4, backgroundColor: color.fill, overflow: 'hidden' },

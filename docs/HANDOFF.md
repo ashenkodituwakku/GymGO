@@ -110,7 +110,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
   now has `SmallFigures({ fillFor, width })` (any colour per muscle; the
   idle grey for none), which `MuscleFigures` uses; HomeWidgets'
   `RecoveryWidget` puts one beside its two lists (`restBody` row, 30 wide
-  under 360 points, else 38), coloured by `heatShade(band)`.
+  under 360 points, else 38), coloured by `heatShade(band)`. month.tsx
+  puts one (56/66 wide) at the top of Sets for each muscle, each muscle
+  `mix(bodyIdle, brand, 0.2 + 0.8 * sets / most)`.
 - **The body on each exercise, the figure kept** (5 Nov, following the
   owner's "make the muscle guy ... look better"). New
   components/MuscleFigures.tsx: a front and back `BodyFigure`, not

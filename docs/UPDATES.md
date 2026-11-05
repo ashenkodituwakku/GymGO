@@ -11,9 +11,10 @@ next number here as part of the update itself.
 
 ## Update 89 · The whole body at a glance on Home
 
-*5 Nov 2026 · the commit "Muscles trained on Home: the recovery map in small"*
+*5 Nov 2026 · `24aaff1`, and the commit "Monthly report: sets for each muscle on the body"*
 
 - Home's Muscles trained widget shows the recovery map in small beside its lists, front and back, in the same heat colours, so you see the whole body at a glance as well as the muscles it names. Your male or female choice applies here too.
+- The monthly report's Sets for each muscle shows the body above its bars: each muscle you trained that month in the accent, deeper the more sets it had, so a month heavy on chest and light on legs shows at a glance.
 - Checked the body in the looks that paint their own cards (Classic light and dark, Paper, Material): it reads on each. And a sweep of 13 screens at 1024 wide in dark: no errors, nothing cut off or overflowing.
 - Not yet seen on a phone.
 

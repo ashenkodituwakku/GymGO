@@ -13,7 +13,7 @@ next number here as part of the update itself.
 
 *5 Nov 2026 · the commit "Collection on a tablet or a computer: three cards a row, every badge in sight"*
 
-- Where the page is wide enough (a tablet, a computer), your cards are three to a row instead of two very large ones.
+- Where the page is wide enough (a tablet, a computer), your cards are three to a row instead of two very large ones, and so are a friend's.
 - There, the badges and the rarity filter wrap onto more lines, so all of them show; they used to be one row cut off mid-badge at the page's edge. On a phone they're still one row to swipe.
 - Also tidied this round, with no change you'd see: unused code removed across the app and the server's tests.
 - Not yet seen on a tablet.

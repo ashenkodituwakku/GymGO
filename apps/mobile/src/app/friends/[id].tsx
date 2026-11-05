@@ -36,7 +36,9 @@ export default function FriendScreen() {
   const mine = useCollection().gyms;
   const token = account.token;
   const { width } = useWindowDimensions();
-  const cardWidth = (Math.min(width, COLUMN) - space[4] * 2 - space[3]) / 2;
+  // As in your own collection: two cards a row on a phone, three where the page is wide enough.
+  const columns = Math.min(width, COLUMN) >= 560 ? 3 : 2;
+  const cardWidth = (Math.min(width, COLUMN) - space[4] * 2 - space[3] * (columns - 1)) / columns;
   const [friend, setFriend] = useState<{ name: string; totals: CollectionTotals; cards: FriendCard[] } | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   usePageTitle(friend?.name ?? name ?? 'Friend');

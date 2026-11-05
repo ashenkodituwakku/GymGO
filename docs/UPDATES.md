@@ -9,9 +9,23 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 77 · Small phones, tidied
+
+*5 Nov 2026 · the commit "Small phones, tidied: nothing cut short at 320 points"*
+
+Found by measuring every screen at 320 points (the smallest phones) for text cut short and buttons too small to tap:
+
+- An exercise's page: its three figures no longer break mid-way ("85 kg ×" / "6"); each is the figure with what it's of under it ("85 kg", "for 6 reps").
+- Lifetime: the streak tile reads "5 wk, best streak" instead of a cut-off "weeks, best …".
+- A gym's "Is it busy?": on a small phone the button goes under the words, which it had squeezed to a few.
+- My workouts: on a small phone Start is a round ▷, as on Workout, so a workout's name and details aren't cut short.
+- A gym's "Can I do my workout here?" summary is shorter, so it fits.
+- Templates: "5 exercises" is a bigger target to tap.
+- Not yet seen on a phone.
+
 ## Update 76 · A clearer start to the collection
 
-*5 Nov 2026 · the commit "A clearer start to the collection: the five card shapes, branches told apart in sets"*
+*5 Nov 2026 · `5f0a75d`*
 
 - An empty Collection shows the five card shapes, Common to Legendary, so you can see what there is to get.
 - In a set, two branches of one chain in the same suburb are told apart by their street ("Anytime Fitness (12 Smith Street)"), not listed twice under one name.

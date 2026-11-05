@@ -624,7 +624,7 @@ export function PlaceCard({
         ) : null}
 
         {workoutFit ? (
-          <Fold icon="workout" title="Can I do my workout here?" summary="A workout you saved, checked against what’s known to be here">
+          <Fold icon="workout" title="Can I do my workout here?" summary="Your saved workouts, against the kit known here">
             {workoutFit}
           </Fold>
         ) : null}

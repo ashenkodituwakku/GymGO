@@ -106,6 +106,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Small phones, tidied** (5 Nov). Found with two browser scans worth
+  rerunning (in the session's scratchpad, not the repo): text cut short
+  (`text-overflow: ellipsis` with scrollWidth > clientWidth, or a line
+  clamp with scrollHeight > clientHeight) and controls with no name or
+  under 28 px. progress/[exercise].tsx's `Fact` takes `detail` and
+  `spoken`; lifetime.tsx's tiles take `spoken`; MemberBusy and
+  workouts/index.tsx check `useWindowDimensions().width < 360`; the
+  templates toggle has `minHeight: 28` with a negative margin.
 - **A clearer start to the collection** (5 Nov). collection.tsx's empty
   state has a row of `CardShapeIcon`s with "Common to Legendary" (one
   caption: five labels didn't fit at 320 pt). lib/sets.ts adds the street

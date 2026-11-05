@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { BUSY_LEVELS, type BusyLevel, type GymLocation } from '@gymgo/domain';
 import { api, problemText, type BusySummary } from '@/lib/api';
@@ -33,6 +33,7 @@ export function minutesAgo(iso: string, now: number = Date.now()): string {
 
 export function MemberBusy({ location, account, onSignIn }: { location: GymLocation; account: AccountApi; onSignIn: () => void }) {
   const token = account.state === 'signed_in' ? account.token : null;
+  const narrow = useWindowDimensions().width < 360;
   const anywhere = account.account?.devTools === true;
   const [summary, setSummary] = useState<BusySummary | null>(null);
   const [picking, setPicking] = useState(false);
@@ -89,6 +90,19 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
 
   // Nothing to show yet (most gyms, most of the time): one slim row, not a whole card.
   if (!level && !picking && !notice && !checking) {
+    const say = (
+      <Pressable
+        onPress={() => void start()}
+        accessibilityRole="button"
+        accessibilityLabel={token ? (summary.mine ? `You said ${summary.mine.level}. Change it` : 'Here now? Say how busy it is') : 'Sign in to say how busy it is'}
+        hitSlop={8}
+        style={({ pressed }) => [styles.pill, narrow && styles.pillUnder, pressed && { opacity: 0.7 }]}
+      >
+        <Txt variant="footnote" color={color.brand} style={styles.title}>
+          {!token ? 'Sign in' : summary.mine ? 'Change' : 'Say how busy'}
+        </Txt>
+      </Pressable>
+    );
     return (
       <Animated.View style={[styles.wrap, styles.slim]} layout={GLIDE}>
         <View style={[styles.badge, styles.badgeSmall, { backgroundColor: tint }]}>
@@ -98,23 +112,15 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
           <Txt variant="subhead" style={styles.title}>
             Is it busy?
           </Txt>
-          <Txt variant="caption" color={color.labelSecondary} numberOfLines={2}>
+          <Txt variant="caption" color={color.labelSecondary} numberOfLines={narrow ? 3 : 2}>
             {summary.count > 0
               ? `${summary.count} member${summary.count === 1 ? ' has' : 's have'} said in the last hour; it shows once ${summary.minimum} have.`
               : 'No one here has said in the last hour.'}
           </Txt>
+          {/* On a 320-point phone the button goes under the words, which it squeezed to a few. */}
+          {narrow && say}
         </View>
-        <Pressable
-          onPress={() => void start()}
-          accessibilityRole="button"
-          accessibilityLabel={token ? (summary.mine ? `You said ${summary.mine.level}. Change it` : 'Here now? Say how busy it is') : 'Sign in to say how busy it is'}
-          hitSlop={8}
-          style={({ pressed }) => [styles.pill, pressed && { opacity: 0.7 }]}
-        >
-          <Txt variant="footnote" color={color.brand} style={styles.title}>
-            {!token ? 'Sign in' : summary.mine ? 'Change' : 'Say how busy'}
-          </Txt>
-        </Pressable>
+        {!narrow && say}
       </Animated.View>
     );
   }
@@ -174,6 +180,7 @@ const styles = themed(() =>
     slim: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3] },
     badgeSmall: { width: 32, height: 32, borderRadius: 16 },
     pill: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
+    pillUnder: { alignSelf: 'flex-start', marginTop: space[2] },
     flex: { flex: 1, minWidth: 0, gap: 2 },
     levels: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     title: face('semibold'),

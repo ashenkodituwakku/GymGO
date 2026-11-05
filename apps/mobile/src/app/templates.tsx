@@ -291,7 +291,8 @@ const styles = themed(() =>
     mark: { width: 46, height: 46, borderRadius: markRound(), borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandFill },
     flex: { flex: 1, minWidth: 0 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-    toggle: { flexDirection: 'row', alignItems: 'center', gap: space[1], alignSelf: 'flex-start' },
+    // At least 28 points tall, so it's an easy target on a phone and in a browser (hitSlop doesn't reach a browser); the negative margin keeps the spacing as it was.
+    toggle: { flexDirection: 'row', alignItems: 'center', gap: space[1], alignSelf: 'flex-start', minHeight: 28, marginVertical: -5 },
     strip: { flexDirection: 'row', flexWrap: 'wrap', gap: space[1] + 2 },
     list: { gap: 2, padding: space[2], borderRadius: radius.md, backgroundColor: color.fill },
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: 5, paddingHorizontal: space[1] },

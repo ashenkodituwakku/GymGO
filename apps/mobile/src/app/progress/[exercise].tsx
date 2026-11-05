@@ -176,9 +176,19 @@ export default function ExerciseProgressScreen() {
 
       {record && (
         <View style={styles.facts}>
-          <Fact label="Heaviest" value={record.heaviestKg !== null ? `${formatWeight(Number(fromKg(record.heaviestKg, unit).toFixed(1)), unit)} × ${record.heaviestSet!.reps}` : '—'} />
-          <Fact label="1-rep max (est.)" value={record.e1rmKg !== null ? `≈ ${formatWeight(Math.round(fromKg(record.e1rmKg, unit)), unit)}` : '—'} />
-          <Fact label="Sessions" value={String(record.sessions)} />
+          {/* The figure alone on its line, what it's of under it: on a 320-point phone "85 kg × 6" broke after the ×. */}
+          <Fact
+            label="Heaviest"
+            value={record.heaviestKg !== null ? formatWeight(Number(fromKg(record.heaviestKg, unit).toFixed(1)), unit) : '—'}
+            detail={record.heaviestSet ? `for ${record.heaviestSet.reps} rep${record.heaviestSet.reps === 1 ? '' : 's'}` : undefined}
+            spoken={record.heaviestKg !== null && record.heaviestSet ? `Heaviest: ${formatWeight(Number(fromKg(record.heaviestKg, unit).toFixed(1)), unit)} for ${record.heaviestSet.reps} reps` : undefined}
+          />
+          <Fact
+            label="1-rep max"
+            value={record.e1rmKg !== null ? formatWeight(Math.round(fromKg(record.e1rmKg, unit)), unit) : '—'}
+            detail={record.e1rmKg !== null ? 'estimated' : undefined}
+          />
+          <Fact label="Sessions" value={String(record.sessions)} detail={record.sessions > 0 ? 'logged' : undefined} />
         </View>
       )}
 
@@ -355,13 +365,18 @@ function Pill({ text, strong = false }: { text: string; strong?: boolean }) {
   );
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
+function Fact({ label, value, detail, spoken }: { label: string; value: string; detail?: string; spoken?: string }) {
   return (
-    <View style={styles.fact}>
-      <Txt variant="caption" color={color.labelSecondary}>
+    <View style={styles.fact} accessible accessibilityLabel={spoken ?? `${label}: ${value}${detail ? `, ${detail}` : ''}`}>
+      <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
         {label}
       </Txt>
       <Txt variant="headline">{value}</Txt>
+      {detail && (
+        <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
+          {detail}
+        </Txt>
+      )}
     </View>
   );
 }

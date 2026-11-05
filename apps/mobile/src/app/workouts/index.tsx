@@ -5,7 +5,7 @@
 
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
@@ -30,6 +30,8 @@ export default function MyWorkouts() {
   usePageTitle('My workouts');
   const { account, billing, openPro, prefs } = useApp();
   const active = useActiveSessionGlance();
+  // A 320-point phone: the Start button goes round, to give the workout's name the room.
+  const narrow = useWindowDimensions().width < 360;
   const router = useRouter();
   const [workouts, setWorkouts] = useState<SavedWorkout[] | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -137,12 +139,15 @@ export default function MyWorkouts() {
                       accessibilityRole="button"
                       accessibilityLabel={`Start ${title}`}
                       hitSlop={6}
-                      style={({ pressed }) => [styles.startPill, pressed && styles.pressed]}
+                      style={({ pressed }) => [styles.startPill, narrow && styles.startRound, pressed && styles.pressed]}
                     >
                       <Icon name="play" size={13} color={color.brand} />
-                      <Txt variant="subhead" color={color.brand} style={face('semibold')}>
-                        Start
-                      </Txt>
+                      {/* On a narrow phone the button is its ▷ alone, as on Workout, so the name has the room. */}
+                      {!narrow && (
+                        <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                          Start
+                        </Txt>
+                      )}
                     </Pressable>
                   )}
                 </View>
@@ -178,6 +183,7 @@ const styles = themed(() => StyleSheet.create({
   open: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingLeft: space[4], paddingRight: space[1], paddingVertical: space[3] },
   pressed: { opacity: 0.6 },
   startPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[3], paddingVertical: 7, borderRadius: 999, backgroundColor: color.brandTint },
+  startRound: { width: 36, height: 36, paddingHorizontal: 0, paddingVertical: 0, justifyContent: 'center' },
   footer: { paddingHorizontal: space[4] },
   more: { gap: space[2] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },

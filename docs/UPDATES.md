@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 84 · Collection on a tablet or a computer
+
+*5 Nov 2026 · the commit "Collection on a tablet or a computer: three cards a row, every badge in sight"*
+
+- Where the page is wide enough (a tablet, a computer), your cards are three to a row instead of two very large ones.
+- There, the badges and the rarity filter wrap onto more lines, so all of them show; they used to be one row cut off mid-badge at the page's edge. On a phone they're still one row to swipe.
+- Also tidied this round, with no change you'd see: unused code removed across the app and the server's tests.
+- Not yet seen on a tablet.
+
 ## Update 83 · A friend code or a gift, copied and said so
 
-*5 Nov 2026 · the commit "A friend code or a gift, copied and said so"*
+*5 Nov 2026 · `b0bf865`*
 
 - Friends: on a computer, Send your code copies "Add me on GymGO: my friend code is …" and the button says "Copied, ready to paste" (before, nothing showed whether anything happened).
 - A Pro gift code's Send button says "Copied", with a tick, when it was copied rather than shared.

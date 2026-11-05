@@ -19,7 +19,7 @@
  */
 
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { CollectionSyncLine, useDeleteCollection } from '@/components/CollectionData';
@@ -70,7 +70,9 @@ export default function CollectionScreen() {
   const accountKnown = account.state !== 'loading';
   const deleting = useDeleteCollection();
   const { width } = useWindowDimensions();
-  const cardWidth = (Math.min(width, COLUMN) - space[4] * 2 - space[3]) / 2;
+  // Two cards a row on a phone, three where the page is wide enough (a tablet, a computer).
+  const columns = Math.min(width, COLUMN) >= 560 ? 3 : 2;
+  const cardWidth = (Math.min(width, COLUMN) - space[4] * 2 - space[3] * (columns - 1)) / columns;
   const [order, setOrder] = useState<'newest' | 'rarest' | 'visits'>('newest');
   const [allSets, setAllSets] = useState(false);
   const [only, setOnly] = useState<Rarity | null>(null);
@@ -231,8 +233,10 @@ export default function CollectionScreen() {
       <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
         {`BADGES · ${earned.filter((badge) => badge.earned).length} OF ${earned.length}`}
       </Txt>
-      {/* One row to swipe through, earned first, so the cards aren't pushed down the page. */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgeRow} contentContainerStyle={styles.badges}>
+      {/* On a phone, one row to swipe through, earned first, so the cards aren't pushed down the page;
+          where the page is narrower than the screen (a tablet, a computer), all of them, wrapped, rather
+          than a row cut off at the page's edge. */}
+      <BadgeShelf wrap={width >= COLUMN + space[4] * 2}>
         {[...earned].sort((a, b) => Number(b.earned) - Number(a.earned)).map((badge) => (
           <View
             key={badge.id}
@@ -251,7 +255,7 @@ export default function CollectionScreen() {
             </View>
           </View>
         ))}
-      </ScrollView>
+      </BadgeShelf>
 
       {sets.length > 0 && (
         <>
@@ -304,7 +308,7 @@ export default function CollectionScreen() {
           onChange={setOrder}
         />
       )}
-      {counts.size > 1 && <RarityFilter counts={counts} total={sorted.length} value={showing} onChange={setOnly} />}
+      {counts.size > 1 && <RarityFilter counts={counts} total={sorted.length} value={showing} onChange={setOnly} wrap={width >= COLUMN + space[4] * 2} />}
       <View style={styles.grid}>
         {entries.map((entry) => (
           // Re-sorting slides each card to its new place rather than jumping.
@@ -351,11 +355,34 @@ export default function CollectionScreen() {
   );
 }
 
+/** The badges: a row to swipe on a phone, wrapped where there's room to show them all. */
+function BadgeShelf({ wrap, children }: { wrap: boolean; children: ReactNode }) {
+  if (wrap) return <View style={styles.badgesWrapped}>{children}</View>;
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgeRow} contentContainerStyle={styles.badges}>
+      {children}
+    </ScrollView>
+  );
+}
+
 /**
  * Show one rarity's cards, or all: each with its card's shape in its metal (CardShapeIcon)
  * and how many you have. Only the rarities you have a card of.
  */
-function RarityFilter({ counts, total, value, onChange }: { counts: Map<Rarity, number>; total: number; value: Rarity | null; onChange: (rarity: Rarity | null) => void }) {
+function RarityFilter({
+  counts,
+  total,
+  value,
+  onChange,
+  wrap,
+}: {
+  counts: Map<Rarity, number>;
+  total: number;
+  value: Rarity | null;
+  onChange: (rarity: Rarity | null) => void;
+  /** Where the page is narrower than the screen: wrapped, not a row cut off at the page's edge. */
+  wrap: boolean;
+}) {
   const rarities = [...RARITIES].reverse().filter((rarity) => counts.get(rarity.id));
   const pill = (key: Rarity | null, label: string, count: number) => {
     const selected = value === key;
@@ -384,10 +411,17 @@ function RarityFilter({ counts, total, value, onChange }: { counts: Map<Rarity, 
       </Pressy>
     );
   };
+  const pills = [pill(null, 'All', total), ...rarities.map((rarity) => pill(rarity.id, rarity.label, counts.get(rarity.id)!))];
+  if (wrap) {
+    return (
+      <View style={styles.rarityWrapped} accessibilityLabel="Show cards of one rarity">
+        {pills}
+      </View>
+    );
+  }
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rarityRow} style={styles.rarityScroll} accessibilityLabel="Show cards of one rarity">
-      {pill(null, 'All', total)}
-      {rarities.map((rarity) => pill(rarity.id, rarity.label, counts.get(rarity.id)!))}
+      {pills}
     </ScrollView>
   );
 }
@@ -497,6 +531,7 @@ const styles = themed(() =>
     statLine: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: color.onBrandFaint },
     badgeRow: { marginHorizontal: -space[4], flexGrow: 0 },
     badges: { flexDirection: 'row', gap: space[2], paddingHorizontal: space[4] },
+    badgesWrapped: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     badge: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.md, backgroundColor: color.fill },
     badgeOn: { backgroundColor: color.brandTint },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
@@ -505,6 +540,7 @@ const styles = themed(() =>
     // Runs to the page's edges when it scrolls, so a pill isn't cut off at the margin.
     rarityScroll: { marginHorizontal: -space[4], flexGrow: 0 },
     rarityRow: { gap: space[2], paddingHorizontal: space[4] },
+    rarityWrapped: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     rarityPill: {
       flexDirection: 'row',
       alignItems: 'center',

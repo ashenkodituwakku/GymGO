@@ -106,6 +106,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Collection on a tablet or a computer** (5 Nov). collection.tsx:
+  `columns` is 3 when the page (`min(width, COLUMN)`) is at least 560
+  wide; `BadgeShelf` and `RarityFilter` wrap (`wrap` when `width >=
+  COLUMN + 32`) instead of scrolling sideways. Also: `tsc --noUnusedLocals`
+  is clean in apps/mobile, apps/server and packages/domain, except
+  au-data's `GYM247_MEMBERSHIPS`, left as data. The map's one console
+  warning ("Expected value to be of type number, but found null") comes
+  from OpenFreeMap's own style, not GymGO's code.
 - **A friend code or a gift, copied and said so** (5 Nov). friends/index's
   `sent` and ProExtras' `copied` hold what `shareText` did when it wasn't a
   share sheet, so the button's words say it.

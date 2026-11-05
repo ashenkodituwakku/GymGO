@@ -14,7 +14,7 @@ next number here as part of the update itself.
 *5 Nov 2026 · the commit "A better-looking body figure: depth, a glow for picked muscles, a heat scale for recovery"*
 
 - The body in the workout builder and on the recovery map is drawn with depth instead of as a flat grey chart: the body shows between the muscles (as creases, not the white card), each muscle is shaded from its top so it looks rounded, and a soft shadow sits under the feet. Male and female, front and back, light and dark, every look.
-- A muscle you pick glows in its colour, with a fine light edge.
+- A muscle you pick glows in its colour, with a fine light edge. On the website, the muscle under the mouse tints towards the accent in the builder (as picking it would), and on the recovery map its own heat colour lifts instead of turning grey.
 - The recovery map is a heat scale: deep red for a muscle trained today, orange yesterday, amber 2–3 days ago, a faint warmth for 4 days or more, the body's grey if it's not in your log. The four purples it used were hard to tell apart. No green, as GymGO can't know a muscle is ready.
 - Home's Muscles trained widget shows each muscle with the same heat dot as the map.
 - Not yet seen on a phone.

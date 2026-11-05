@@ -9,10 +9,10 @@
 
 import { useId, useState, type KeyboardEvent } from 'react';
 import { VIEWBOX, footing, outlineFor, shadeId, shadeStops, shapesFor, type FigureProps } from './shapes';
-import { alpha } from '@/lib/looks';
+import { alpha, mix } from '@/lib/looks';
 import { color } from '@/lib/theme';
 
-export function BodyFigure({ gender, side, width, height, fillFor, pickable, selected, labelFor, onPress }: FigureProps) {
+export function BodyFigure({ gender, side, width, height, fillFor, pickable, selected, labelFor, onPress, hoverFor }: FigureProps) {
   const figure = `b${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const [hovered, setHovered] = useState<string | null>(null);
   const [focused, setFocused] = useState<string | null>(null);
@@ -41,8 +41,10 @@ export function BodyFigure({ gender, side, width, height, fillFor, pickable, sel
       parts.push({ slug: shape.slug, pieces: first });
     }
   }
-  // A gradient for every colour in use, the hover colour among them.
-  const fills = [...new Set([...shapes.map((shape) => fillFor(shape.slug)), color.bodyHover])];
+  // Under the mouse: the muscle's colour tinted towards the accent, unless the page says otherwise.
+  const hoverOf = (slug: string) => (hoverFor ? hoverFor(slug) : mix(fillFor(slug), color.brand, 0.35));
+  // A gradient for every colour in use, the hover colours among them.
+  const fills = [...new Set([...shapes.map((shape) => fillFor(shape.slug)), ...[...groups.keys()].map(hoverOf)])];
   const fillOf = (value: string) => `url(#${shadeId(figure, value)})`;
   const foot = footing(gender, side);
   const [bodyTop, , bodyFoot] = shadeStops(color.bodyBase);
@@ -101,7 +103,7 @@ export function BodyFigure({ gender, side, width, height, fillFor, pickable, sel
               <path
                 key={piece.key}
                 d={piece.d}
-                fill={!on && hovered === slug ? fillOf(color.bodyHover) : fillOf(fill)}
+                fill={!on && hovered === slug ? fillOf(hoverOf(slug)) : fillOf(fill)}
                 // Keyboard focus: the muscle's outline in the accent colour. A picked muscle: a fine light edge.
                 stroke={focused === slug ? (on ? color.label : color.brand) : on ? 'rgba(255, 255, 255, 0.55)' : 'none'}
                 strokeWidth={focused === slug ? 2.5 : on ? 1.5 : 0}

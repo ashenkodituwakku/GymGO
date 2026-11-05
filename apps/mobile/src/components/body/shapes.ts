@@ -33,6 +33,8 @@ export interface FigureProps {
   selected: (slug: string) => boolean;
   labelFor: (slug: string) => string;
   onPress: (slug: string) => void;
+  /** Under the mouse, in a browser: by default the muscle's colour tinted towards the accent, as picking it would. */
+  hoverFor?: (slug: string) => string;
 }
 
 export const VIEWBOX: Record<Gender, Record<Side, string>> = {

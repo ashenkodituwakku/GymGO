@@ -13,7 +13,7 @@ import { haptic } from '@/lib/haptics';
 import { color, face, space, themed } from '@/lib/theme';
 import { MUSCLES, muscleLabel, type Muscle } from '@/lib/workout';
 import { BodyFigure } from './body/BodyFigure';
-import type { Gender } from './body/shapes';
+import { inertFill, type Gender } from './body/shapes';
 import { Chip, Txt } from './ui';
 
 const isMuscle = (slug: string): slug is Muscle => MUSCLES.some((muscle) => muscle.id === slug);
@@ -52,7 +52,7 @@ export function BodyPicker({
               side={side}
               width={figureWidth}
               height={figureWidth * 2}
-              fillFor={(slug) => (!isMuscle(slug) ? color.bodyInert : isSelected(slug) ? color.brand : color.bodyIdle)}
+              fillFor={(slug) => (!isMuscle(slug) ? inertFill(slug) : isSelected(slug) ? color.brand : color.bodyIdle)}
               pickable={isMuscle}
               selected={isSelected}
               labelFor={(slug) => (isMuscle(slug) ? muscleLabel(slug) : slug)}

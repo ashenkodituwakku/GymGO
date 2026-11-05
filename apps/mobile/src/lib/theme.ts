@@ -114,8 +114,10 @@ const BASE = {
 
     // The body diagram.
     bodyIdle: '#D5D5DB',
-    bodyInert: '#ECECEF',
-    bodyBorder: '#C4C4CA',
+    bodyInert: '#E1E1E6',
+    /** Hair on the female figure: a shade off the head, so it reads as hair. */
+    bodyHair: '#C8C8D0',
+    bodyBorder: '#BABAC2',
     bodyHover: '#B4B4BE',
     /** The body under the muscles: the creases between them. */
     bodyBase: '#B9B9C3',
@@ -174,6 +176,7 @@ const BASE = {
 
     bodyIdle: '#48484A',
     bodyInert: '#2C2C2E',
+    bodyHair: '#3E3E42',
     bodyBorder: '#636366',
     bodyHover: '#636366',
     bodyBase: '#1F1F22',
@@ -199,6 +202,7 @@ const DIM = {
   fillStrong: 'rgba(130, 136, 150, 0.36)',
   separator: 'rgba(120, 126, 140, 0.5)',
   bodyInert: '#30343D',
+  bodyHair: '#424754',
   bodyBase: '#22252C',
 } as const;
 

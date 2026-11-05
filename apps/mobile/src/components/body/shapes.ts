@@ -12,6 +12,7 @@ import { bodyFemaleFront } from 'react-native-body-highlighter/dist/assets/bodyF
 import { bodyFront } from 'react-native-body-highlighter/dist/assets/bodyFront';
 import { OUTLINE } from './outline';
 import { mix } from '@/lib/looks';
+import { color } from '@/lib/theme';
 
 export type Gender = 'male' | 'female';
 export type Side = 'front' | 'back';
@@ -86,3 +87,6 @@ export function footing(gender: Gender, side: Side): { cx: number; cy: number; r
   const [x, y, w, h] = VIEWBOX[gender][side].split(' ').map(Number) as [number, number, number, number];
   return { cx: x + w / 2, cy: y + h - h * 0.045, rx: w * 0.24 };
 }
+
+/** The parts that aren't muscles (head, hands, feet, knees): the body's quiet grey, hair a shade off it. */
+export const inertFill = (slug: string) => (slug === 'hair' ? color.bodyHair : color.bodyInert);

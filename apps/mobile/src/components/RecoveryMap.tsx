@@ -14,9 +14,10 @@ import { color, currentTheme, radius, shadow, space, themed } from '@/lib/theme'
 import type { TrainingSession } from '@/lib/training';
 import { MUSCLES, type Muscle } from '@/lib/workout';
 import { BodyFigure } from './body/BodyFigure';
-import { useBodyGender } from '@/lib/bodyGender';
+import { inertFill } from './body/shapes';
+import { setBodyGender, useBodyGender } from '@/lib/bodyGender';
 import { Pressable } from './motion';
-import { Txt } from './ui';
+import { Segmented, Txt } from './ui';
 
 const isMuscle = (slug: string): slug is Muscle => MUSCLES.some((muscle) => muscle.id === slug);
 
@@ -68,7 +69,7 @@ export function RecoveryMap({ sessions, maxWidth }: { sessions: TrainingSession[
             side={side}
             width={figureWidth}
             height={figureWidth * 2}
-            fillFor={(slug) => (isMuscle(slug) ? heatShade(byMuscle.get(slug)?.band ?? 'never') : color.bodyInert)}
+            fillFor={(slug) => (isMuscle(slug) ? heatShade(byMuscle.get(slug)?.band ?? 'never') : inertFill(slug))}
             // Under the mouse, its own colour lifted, so the heat stays readable.
             hoverFor={(slug) => mix(heatShade(byMuscle.get(slug as Muscle)?.band ?? 'never'), currentTheme().scheme === 'dark' ? '#FFFFFF' : '#000000', 0.14)}
             pickable={isMuscle}
@@ -80,6 +81,17 @@ export function RecoveryMap({ sessions, maxWidth }: { sessions: TrainingSession[
             onPress={(slug) => setPicked(isMuscle(slug) && slug !== picked ? slug : null)}
           />
         ))}
+      </View>
+      {/* The same choice as in the workout builder, kept for both. */}
+      <View style={styles.genderSwitch}>
+        <Segmented
+          options={[
+            { value: 'male', label: 'Male' },
+            { value: 'female', label: 'Female' },
+          ]}
+          value={gender}
+          onChange={setBodyGender}
+        />
       </View>
       {pickedRest && (
         <Txt variant="subhead" style={styles.center} aria-live="polite">
@@ -118,6 +130,7 @@ const styles = themed(() =>
     card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
     figures: { flexDirection: 'row', justifyContent: 'center', gap: space[2] },
     center: { textAlign: 'center' },
+    genderSwitch: { width: 160, alignSelf: 'center' },
     legend: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3], justifyContent: 'center' },
     key: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     swatch: { width: 14, height: 14, borderRadius: 4, borderWidth: StyleSheet.hairlineWidth, borderColor: color.separator },

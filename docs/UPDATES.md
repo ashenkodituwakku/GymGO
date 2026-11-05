@@ -11,10 +11,12 @@ next number here as part of the update itself.
 
 ## Update 88 · The body on each exercise, and your choice of figure kept
 
-*5 Nov 2026 · the commit "The body on each exercise, and the figure you chose kept"*
+*5 Nov 2026 · `2955b49`, and the commit "Body figure: the male or female choice on the recovery map, and hair that reads as hair"*
 
 - An exercise's page shows the muscles it works on a small body, front and back, beside the Works list: what it mainly works in the accent colour, what it also works in a paler tint, the rest of the body grey. It's only a picture of the list next to it, so a screen reader skips it.
 - Male or female, picked in the workout builder, is kept on this device and used wherever the body is drawn: the builder, the recovery map and each exercise's page. It went back to male each time you opened the builder, and the recovery map was always male.
+- The recovery map has the same Male / Female switch under the body, so you can choose there without opening the builder.
+- In light mode the head, hands and feet are a shade darker, so they stand out from the white card, and the female figure's hair is a shade off her head (it was the same grey, so it read as one blob).
 - Not yet seen on a phone.
 
 ## Update 87 · A better-looking body figure

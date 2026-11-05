@@ -7,6 +7,7 @@
 
 import { View, StyleSheet } from 'react-native';
 import { BodyFigure } from './body/BodyFigure';
+import { inertFill } from './body/shapes';
 import { useBodyGender } from '@/lib/bodyGender';
 import { mix } from '@/lib/looks';
 import { color } from '@/lib/theme';
@@ -17,7 +18,7 @@ const isMuscle = (slug: string): slug is Muscle => MUSCLES.some((muscle) => musc
 export function MuscleFigures({ primary, secondary, width = 48 }: { primary: readonly Muscle[]; secondary: readonly Muscle[]; width?: number }) {
   const gender = useBodyGender();
   const fillFor = (slug: string) =>
-    !isMuscle(slug) ? color.bodyInert : primary.includes(slug) ? color.brand : secondary.includes(slug) ? mix(color.bodyIdle, color.brand, 0.4) : color.bodyIdle;
+    !isMuscle(slug) ? inertFill(slug) : primary.includes(slug) ? color.brand : secondary.includes(slug) ? mix(color.bodyIdle, color.brand, 0.4) : color.bodyIdle;
   return (
     <View style={styles.row} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {(['front', 'back'] as const).map((side) => (

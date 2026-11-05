@@ -114,7 +114,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
   progress/[exercise].tsx beside Works (38 wide under 360 points, else 46).
   New lib/bodyGender.ts (`deviceStore` 'gymgo.body.v1', male by default):
   `useBodyGender()`/`setBodyGender()` used by workout/[id].tsx (replacing
-  its own state), RecoveryMap and MuscleFigures.
+  its own state), RecoveryMap (which has its own Male/Female `Segmented`
+  under the figures) and MuscleFigures. `inertFill(slug)` in body/shapes.ts
+  fills the non-muscle parts: the new `bodyHair` token for `hair`,
+  `bodyInert` for the rest (light `bodyInert` #E1E1E6, `bodyBorder`
+  #BABAC2, a little darker than before).
 - **A better-looking body figure** (5 Nov, the owner: "make the muscle guy
   for building workout and checking what muscles are fatigued look
   better"). components/body/BodyFigure(.web).tsx: a `LinearGradient` per

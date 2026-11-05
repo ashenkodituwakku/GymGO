@@ -37,7 +37,7 @@ import { glassMark, installLiquidGlass, sizeRefraction } from '@/components/liqu
 import { HeldWhileAway, useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { TabBarInset, tabBarBottom } from '@/lib/layout';
-import { CHILD_TOUCH, NO_TOUCH, color, currentTheme, radius, shadow, solidSurfaces, themed } from '@/lib/theme';
+import { CHILD_TOUCH, color, currentTheme, radius, shadow, solidSurfaces, themed } from '@/lib/theme';
 import { Avatar } from '@/components/Avatar';
 import { BrandFill } from '@/components/BrandFill';
 import { DockedSidebar, MenuButton, SidebarDrawer } from '@/components/Sidebar';

@@ -46,7 +46,7 @@ const BUILT_IN_CITIES = CITY_LIST.filter((city) => !city.demo).length;
 export default function Profile() {
   useGlassRedraw();
   usePageTitle('Profile');
-  const { account, data, recents, compare, prefs, setPref, billing, openPro } = useApp();
+  const { account, recents, compare, prefs, setPref, billing, openPro } = useApp();
   const themeChoice = useThemeChoice();
   const alwaysGoogle = useAlwaysShowGoogle();
   const collection = useCollection();

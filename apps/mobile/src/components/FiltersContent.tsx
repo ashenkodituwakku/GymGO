@@ -19,7 +19,7 @@ import {
   nowIn,
   type Filters,
 } from '@/lib/query';
-import { color, dropShadow, face, radius, space, themed } from '@/lib/theme';
+import { color, dropShadow, face, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { localBudget, moneyLabel, radiusChoices, tracksPrices } from '@/lib/places';
 import { Chip, PrimaryButton, Txt } from './ui';

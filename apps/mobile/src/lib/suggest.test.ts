@@ -5,7 +5,6 @@ import { MATCH, matchScore, suggest, suggestionForEnter, title, type Suggestion 
 
 const real = BUNDLED_GYMS.filter((record) => !record.location.isDemoData);
 const SYDNEY = { lat: -33.8818, lng: 151.2067 };
-const MELBOURNE = { lat: -37.8142, lng: 144.9632 };
 const NEW_YORK = { lat: 40.7549, lng: -73.984 };
 
 const titles = (hits: Suggestion[]) => hits.map(title);

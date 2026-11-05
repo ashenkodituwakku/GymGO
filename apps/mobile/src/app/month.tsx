@@ -25,7 +25,7 @@ import { haptic } from '@/lib/haptics';
 import { changeWord, monthReport, monthShareText, monthsWithTraining, reportMonth, shiftMonth, timeChangeWord } from '@/lib/monthReport';
 import { usePageTitle } from '@/lib/pageTitle';
 import { RECORD_WORD } from '@/lib/records';
-import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { color, radius, shadow, space, themed } from '@/lib/theme';
 import { durationLabel, fromKg, unitFor } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
 import { exerciseName } from '@/lib/workout';

@@ -15,12 +15,11 @@ import { dateLabel, serverOfflineLine } from '@/lib/copy';
 import { priceLabel, type GymRecord, type Review } from '@gymgo/domain';
 import { api, ApiError, OfflineError, type AccessOutcome, type BugReportItem, type MemberReport } from '@/lib/api';
 import { moneyLabel } from '@/lib/places';
-import type { AccountApi } from '@/lib/useAccount';
 import { haptic } from '@/lib/haptics';
-import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { color, radius, shadow, space, themed } from '@/lib/theme';
 import { DecideButtons, PHOTO_REASONS, REVIEW_REASONS } from './Moderation';
 import { Icon } from './Icon';
-import { PrimaryButton, TextField, Txt } from './ui';
+import { PrimaryButton, Txt } from './ui';
 
 function messageFor(error: unknown): string {
   if (error instanceof OfflineError) {

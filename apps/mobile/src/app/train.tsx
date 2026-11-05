@@ -53,7 +53,6 @@ import {
   formatWeight,
   fromKg,
   lastTime,
-  nextTarget,
   parseReps,
   parseWeight,
   personalRecords,
@@ -305,10 +304,6 @@ export default function TrainScreen() {
   const changeSets = useCallback(
     (index: number, sets: ActiveItem['sets']) =>
       updateSession((current) => ({ ...current, items: current.items.map((other, at) => (at === index ? { ...other, sets } : other)) })),
-    [],
-  );
-  const startRest = useCallback(
-    (seconds: number) => updateSession((current) => ({ ...current, restEndsAt: seconds > 0 ? Date.now() + seconds * 1000 : null, restTotal: seconds })),
     [],
   );
   // After a set is ticked: its own rest, or, in a superset or circuit, the group's once the round is done.

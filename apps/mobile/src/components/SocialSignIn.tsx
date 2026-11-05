@@ -24,7 +24,7 @@ import Svg, { Path } from 'react-native-svg';
 import { api, type SignInProvider, type SignInProviders } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { color, currentTheme, face, radius, space, themed } from '@/lib/theme';
-import { Pressable, Pressy } from './motion';
+import { Pressy } from './motion';
 import { Txt } from './ui';
 
 // In a browser, Google's sign-in comes back into a popup, which hands the result here.

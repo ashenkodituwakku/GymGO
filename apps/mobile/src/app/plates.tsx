@@ -9,7 +9,6 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { BarDiagram, plateColour } from '@/components/BarDiagram';
-import { Icon } from '@/components/Icon';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Input, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';

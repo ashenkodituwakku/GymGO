@@ -30,7 +30,6 @@ import {
   Platform,
   Pressable as NativePressable,
   StyleSheet,
-  View,
   type GestureResponderEvent,
   type PressableProps,
   type PressableStateCallbackType,

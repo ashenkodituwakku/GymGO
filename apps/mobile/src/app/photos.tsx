@@ -17,7 +17,7 @@ import { dateLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { photoUri } from '@/lib/photoVault';
-import { MAX_PROGRESS_PHOTOS, addProgressPhoto, newestFirst, progressPhotos, removeProgressPhoto, setPhotoNote, thenAndNow, type ProgressPhoto } from '@/lib/progressPhotos';
+import { MAX_PROGRESS_PHOTOS, addProgressPhoto, newestFirst, progressPhotos, removeProgressPhoto, setPhotoNote, thenAndNow } from '@/lib/progressPhotos';
 import { color, radius, space, themed } from '@/lib/theme';
 import { useTapAgain } from '@/lib/tapAgain';
 

@@ -39,7 +39,7 @@ import { useBottomClearance, useOverhang } from '@/lib/layout';
 import { resultFor } from '@/lib/results';
 import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, atWorldCity, boxDrift, inArea, moveTo, nameForArea, runSearchShared } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
-import { CHILD_TOUCH, NO_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { CHILD_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
 import { Glass } from '@/components/Glass';
 import { GoogleModal } from '@/components/GoogleModal';

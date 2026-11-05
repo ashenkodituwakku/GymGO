@@ -7,7 +7,7 @@
  */
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Dimensions, Platform, type View, type ViewInstance } from 'react-native';
+import { Dimensions, Platform, type ViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const TabBarInset = createContext(0);

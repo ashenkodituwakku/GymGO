@@ -39,7 +39,7 @@ import { useTrainingLog } from '@/lib/useTraining';
 import { useCollection } from '@/lib/useCollection';
 import { collectionStats } from '@/lib/collection';
 import { useApp } from '@/lib/app-state';
-import { lookupLine, noGymsLine, searchPrompt, timeLabel, visitWhen } from '@/lib/copy';
+import { lookupLine, noGymsLine, searchPrompt, visitWhen } from '@/lib/copy';
 import { countryInSentence, countryName } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityNear, cityPlace, localBudget, moneyLabel, tracksPrices, worldCitiesIn, type AppPlace, type City, type WorldCity } from '@/lib/places';

@@ -1,0 +1,174 @@
+/**
+ * One gym in the results list: its photo (a demo gym's illustration, badged
+ * as one; or a friendly tile when nobody has shared one), the name and how far away it is, then one status chip and the
+ * price on the last line, where the eye lands last.
+ */
+
+import { memo } from 'react';
+import { Image, StyleSheet, View } from 'react-native';
+import { Pressable } from './motion';
+import type { GymSearchResult } from '@gymgo/domain';
+import { distanceLabel } from '@/lib/places';
+import { TIER, accessLine } from '@/lib/copy';
+import { photoUrl } from '@/lib/api';
+import { demoPicture } from '@/lib/gymPicture';
+import { priceLine, priceText } from '@/lib/present';
+import { color, face, radius, space, themed } from '@/lib/theme';
+import { haptic } from '@/lib/haptics';
+import { MarkImage, useGymMark } from './BrandLogo';
+import { Icon } from './Icon';
+import { Illustration } from './Illustration';
+import { NoPhoto, TIER_COLOUR, Txt } from './ui';
+import { useGlassRedraw } from './Redrawn';
+
+interface GymRowProps {
+  result: GymSearchResult;
+  visitMinute: number;
+  /** Server path of the gym's newest member photo, if it has one. */
+  cover: string | null;
+  /** What members typically paid, shown only when the gym publishes no price. */
+  memberTypicalMinor?: number | null;
+  /** Opens the gym; given its id. */
+  onOpen: (id: string) => void;
+}
+
+const memberPrice = (props: GymRowProps) =>
+  props.memberTypicalMinor == null ? null : { typicalMinor: props.memberTypicalMinor, country: props.result.record.location.address.countryCode };
+
+/**
+ * Whether a row would draw the same: by what it shows, not by its result
+ * object, which every search makes afresh for every gym (a filter that
+ * changed nothing for a gym redrew its row anyway).
+ */
+function drawsSame(a: GymRowProps, b: GymRowProps): boolean {
+  if (a.visitMinute !== b.visitMinute || a.cover !== b.cover || (a.memberTypicalMinor ?? null) !== (b.memberTypicalMinor ?? null) || a.onOpen !== b.onOpen) return false;
+  if (a.result === b.result) return true;
+  return (
+    a.result.record === b.result.record &&
+    a.result.tier === b.result.tier &&
+    a.result.distanceKm === b.result.distanceKm &&
+    accessLine(a.result.access.verdict, a.visitMinute) === accessLine(b.result.access.verdict, b.visitMinute) &&
+    JSON.stringify(priceLine(a.result.offers, memberPrice(a))) === JSON.stringify(priceLine(b.result.offers, memberPrice(b)))
+  );
+}
+
+/**
+ * Drawn again only when what it shows changes: a list of seventy redrew
+ * every row each time the map came to rest, a letter was typed or a filter
+ * changed, which a phone feels. So `onOpen` should be a steady function
+ * (it's given the gym's id), not a new one for each row or each search.
+ */
+export const GymRow = memo(function GymRow({ result, visitMinute, cover, memberTypicalMinor = null, onOpen }: GymRowProps) {
+  useGlassRedraw();
+  const location = result.record.location;
+  const tone = TIER_COLOUR[result.tier];
+  const tier = TIER[result.tier];
+  const price = priceLine(result.offers, memberTypicalMinor === null ? null : { typicalMinor: memberTypicalMinor, country: location.address.countryCode });
+  const access = accessLine(result.access.verdict, visitMinute);
+  const coverUri = cover ? photoUrl(cover) : null;
+  const illustration = coverUri ? null : demoPicture(location);
+  const mark = useGymMark(location);
+  const suburb = location.address.suburb || null;
+  const distance = result.distanceKm !== null ? distanceLabel(result.distanceKm, result.record.location.address.countryCode) : null;
+  const where = [suburb, distance].filter(Boolean).join(' · ');
+
+  return (
+    <Pressable
+      onPress={() => {
+        haptic.tap();
+        onOpen(location.id);
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={`${location.name}, ${where}. ${tier.label}: ${access}. ${priceText(price)}.`}
+      style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.fill }]}
+    >
+      {coverUri ? (
+        <Image source={{ uri: coverUri }} style={styles.thumb} resizeMode="cover" />
+      ) : illustration ? (
+        <Illustration picture={illustration} style={styles.thumb} />
+      ) : mark ? (
+        <View style={[styles.thumb, styles.tile, { backgroundColor: color.logoPlate }]}>
+          <MarkImage mark={mark} name={location.name} width={52} height={48} area={1500} />
+        </View>
+      ) : (
+        <NoPhoto compact name={location.name} style={styles.thumb} />
+      )}
+
+      <View style={styles.middle}>
+        {/* A phone leaves this column narrow, so a long name takes a second
+            line rather than losing its end, and a long suburb gives way
+            before the distance does. */}
+        <Txt variant="headline" numberOfLines={2}>
+          {location.name}
+        </Txt>
+        <View style={styles.where}>
+          {suburb ? (
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1} style={styles.shrink}>
+              {suburb}
+            </Txt>
+          ) : null}
+          {distance ? (
+            // Non-breaking spaces: a plain one at the start of this line is dropped on the web.
+            <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1} style={styles.keep}>
+              {suburb ? `\u00a0·\u00a0${distance}` : distance}
+            </Txt>
+          ) : null}
+        </View>
+        {/* The answer and the price share the last line, so the name and suburb get the row's full width. */}
+        <View style={styles.foot}>
+          <View style={[styles.chip, styles.chipRow, { backgroundColor: tone.tint }]}>
+            <Icon name={tone.icon} size={11} color={tone.ink} />
+            <Txt variant="caption" color={tone.ink} style={styles.chipText} numberOfLines={1}>
+              {tier.label}
+            </Txt>
+          </View>
+          <View style={styles.price}>
+            {/* No price at all: just the words. */}
+            {price.headline !== '—' && (
+              <Txt variant="headline" color={price.confirmed ? color.label : color.labelSecondary}>
+                {price.headline}
+              </Txt>
+            )}
+            <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
+              {price.headline === '—' ? 'Price unknown' : price.caption}
+            </Txt>
+          </View>
+        </View>
+      </View>
+    </Pressable>
+  );
+}, drawsSame);
+
+const styles = themed(() => StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    paddingVertical: space[3],
+    paddingHorizontal: space[3],
+    borderRadius: 18,
+  },
+  thumb: {
+    width: 62,
+    height: 62,
+    borderRadius: radius.lg,
+    borderCurve: 'continuous',
+    backgroundColor: color.fill,
+  },
+  tile: { alignItems: 'center', justifyContent: 'center' },
+  middle: { flex: 1, minWidth: 0, gap: 2 },
+  where: { flexDirection: 'row', minWidth: 0 },
+  shrink: { flexShrink: 1 },
+  keep: { flexShrink: 0 },
+  chipRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  chip: {
+    flexShrink: 1,
+    paddingHorizontal: space[2],
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+  },
+  chipText: face('semibold'),
+  // The price drops under the chip when both don't fit (a narrow phone squeezed "Call first" to "C…").
+  foot: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', columnGap: space[2], rowGap: 2, marginTop: 4 },
+  price: { flexDirection: 'row', alignItems: 'baseline', gap: 4, flexShrink: 0 },
+}));

@@ -1,0 +1,51 @@
+# GymGO online: the server, and Caddy in front of it for HTTPS and the web
+# app. Settings come from deploy/.env (copy .env.example). From this folder:
+#
+#   docker compose up -d --build
+#
+# See README, "Put GymGO online".
+
+name: gymgo
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      target: app
+    env_file: .env
+    environment:
+      # Every request reaches the server through Caddy.
+      GYMGO_TRUST_PROXY: "on"
+    volumes:
+      # The database, members' photos and the daily backups, on this machine.
+      - ./data:/data
+    restart: unless-stopped
+    # Only Caddy can reach it; it isn't published to the internet.
+    expose:
+      - "4000"
+
+  caddy:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      target: proxy
+      args:
+        GYMGO_PUBLIC_URL: ${GYMGO_PUBLIC_URL:?Set GYMGO_PUBLIC_URL in deploy/.env}
+    environment:
+      GYMGO_DOMAIN: ${GYMGO_DOMAIN:?Set GYMGO_DOMAIN in deploy/.env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      # Caddy's certificates, kept between restarts.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

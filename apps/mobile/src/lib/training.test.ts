@@ -1,0 +1,493 @@
+import { describe, expect, it } from 'vitest';
+import {
+  bestSoFar,
+  clockLabel,
+  finishedAtFor,
+  draftToLogged,
+  durationLabel,
+  restLabel,
+  e1rmSeries,
+  formatWeight,
+  lastTime,
+  nextTarget,
+  oneRepMax,
+  parseReps,
+  parseWeight,
+  personalRecords,
+  plateLoad,
+  recordsBroken,
+  repRange,
+  sessionsByDay,
+  sessionsThisWeek,
+  setsSummary,
+  unitFor,
+  volumeKg,
+  cleanPlates,
+  warmUpSets,
+  weekStreak,
+  streakOf,
+  weightFor,
+  withWarmUps,
+  setTags,
+  exerciseSeries,
+  repRecords,
+  rpeMeaning,
+  RPE_VALUES,
+  type LoggedSet,
+  type TrainingSession,
+  type WeightUnit,
+} from './training';
+
+let next = 0;
+function session(finishedAt: string, exercises: Record<string, Array<[number | null, number]>>, unit: WeightUnit = 'kg'): TrainingSession {
+  next += 1;
+  return {
+    id: `s${next}`,
+    name: 'Push',
+    unit,
+    startedAt: finishedAt,
+    finishedAt,
+    workoutId: null,
+    gymId: null,
+    exercises: Object.entries(exercises).map(([exerciseId, sets]) => ({ exerciseId, sets: sets.map(([weight, reps]) => ({ weight, reps })) })),
+  };
+}
+
+describe('units', () => {
+  it('uses pounds in the US and kilograms elsewhere', () => {
+    expect(unitFor('US')).toBe('lb');
+    expect(unitFor('AU')).toBe('kg');
+    expect(unitFor('GB')).toBe('kg');
+    expect(unitFor(null)).toBe('kg');
+    expect(formatWeight(62.5, 'kg')).toBe('62.5\u00a0kg');
+    expect(formatWeight(135, 'lb')).toBe('135\u00a0lb');
+  });
+});
+
+describe('strength', () => {
+  it('estimates a one-rep max from low-rep sets only', () => {
+    expect(oneRepMax(100, 1)).toBe(100);
+    expect(oneRepMax(100, 5)).toBeCloseTo(116.67, 2);
+    expect(oneRepMax(100, 15)).toBeNull();
+    expect(oneRepMax(0, 5)).toBeNull();
+  });
+
+  it('keeps the heaviest lift, the best estimate and body-weight reps apart', () => {
+    const records = personalRecords([
+      session('2026-09-01T10:00:00Z', { 'bench-press': [[80, 5], [85, 2]], 'push-up': [[null, 20]] }),
+      session('2026-09-08T10:00:00Z', { 'bench-press': [[82.5, 5]], 'push-up': [[null, 25]] }),
+    ]);
+    const bench = records.get('bench-press')!;
+    expect(bench.heaviestSet).toMatchObject({ weight: 85, reps: 2 });
+    expect(bench.e1rmSet).toMatchObject({ weight: 82.5, reps: 5 });
+    expect(bench.sessions).toBe(2);
+    expect(records.get('push-up')!.mostReps).toBe(25);
+    expect(records.get('push-up')!.heaviestKg).toBeNull();
+  });
+
+  it('compares pounds and kilograms as the same weight', () => {
+    const records = personalRecords([session('2026-09-01T10:00:00Z', { deadlift: [[140, 3]] }), session('2026-09-02T10:00:00Z', { deadlift: [[315, 3]] }, 'lb')]);
+    // 315 lb is 142.9 kg: heavier.
+    expect(records.get('deadlift')!.heaviestSet).toMatchObject({ weight: 315, unit: 'lb' });
+  });
+
+  it('counts a record only when it beats what came before', () => {
+    const first = session('2026-09-01T10:00:00Z', { squat: [[100, 5]] });
+    expect(recordsBroken(first, [])).toEqual([]);
+    const better = session('2026-09-08T10:00:00Z', { squat: [[105, 5]], lunge: [[20, 10]] });
+    expect(recordsBroken(better, [first])).toEqual([{ exerciseId: 'squat', kind: 'heaviest' }]);
+    const moreReps = session('2026-09-15T10:00:00Z', { squat: [[105, 7]] });
+    expect(recordsBroken(moreReps, [first, better])).toEqual([{ exerciseId: 'squat', kind: 'e1rm' }]);
+    const same = session('2026-09-22T10:00:00Z', { squat: [[100, 5]] });
+    expect(recordsBroken(same, [first, better, moreReps])).toEqual([]);
+  });
+});
+
+describe('last time and next time', () => {
+  const history = [
+    session('2026-09-01T10:00:00Z', { 'bench-press': [[60, 10], [60, 10], [60, 9]] }),
+    session('2026-09-08T10:00:00Z', { 'db-curl': [[12, 12]] }),
+  ];
+
+  it('finds the last session that had the exercise, and says it briefly', () => {
+    const last = lastTime(history, 'bench-press')!;
+    expect(setsSummary(last.sets, last.unit)).toBe('60\u00a0kg × 10, 10, 9');
+    expect(lastTime(history, 'squat')).toBeNull();
+    expect(setsSummary([{ weight: 60, reps: 10 }, { weight: 62.5, reps: 8 }], 'kg')).toBe('60\u00a0kg × 10 · 62.5\u00a0kg × 8');
+    expect(setsSummary([{ weight: null, reps: 12 }], 'kg')).toBe('12 reps');
+    expect(setsSummary([{ weight: null, reps: 8 }, { weight: null, reps: 8 }], 'kg')).toBe('8, 8 reps');
+    expect(setsSummary([{ weight: null, reps: 1 }], 'kg')).toBe('1 rep');
+    expect(setsSummary([{ weight: 20, reps: 8 }, { weight: null, reps: 12 }], 'kg')).toBe('20\u00a0kg × 8 · 12 reps');
+  });
+
+  it('reads rep ranges, and leaves timed work alone', () => {
+    expect(repRange('8–10')).toEqual({ low: 8, high: 10 });
+    expect(repRange('5')).toEqual({ low: 5, high: 5 });
+    expect(repRange('30–45 s')).toBeNull();
+    expect(repRange('see cue')).toBeNull();
+  });
+
+  it('keeps the weight until every set reaches the top of the range', () => {
+    const last = lastTime(history, 'bench-press')!;
+    expect(nextTarget(last, '8–10', 'kg')).toMatchObject({ weight: 60, reps: 10 });
+  });
+
+  it('then adds the smallest jump and goes back to the bottom', () => {
+    const all: LoggedSet[] = [{ weight: 60, reps: 10 }, { weight: 60, reps: 10 }];
+    expect(nextTarget({ sets: all, unit: 'kg' }, '8–10', 'kg')).toMatchObject({ weight: 62.5, reps: 8 });
+    expect(nextTarget({ sets: [{ weight: 135, reps: 5 }], unit: 'lb' }, '5', 'lb')).toMatchObject({ weight: 140, reps: 5 });
+  });
+
+  it('asks for one more rep on body-weight work, and nothing for timed work', () => {
+    expect(nextTarget({ sets: [{ weight: null, reps: 15 }, { weight: null, reps: 12 }], unit: 'kg' }, '10–15', 'kg')).toMatchObject({ weight: null, reps: 16 });
+    expect(nextTarget({ sets: [{ weight: null, reps: 1 }], unit: 'kg' }, '30–45 s', 'kg')).toBeNull();
+    expect(nextTarget(null, '8–10', 'kg')).toBeNull();
+  });
+
+  it('converts when you switch units', () => {
+    const target = nextTarget({ sets: [{ weight: 100, reps: 5 }], unit: 'kg' }, '5', 'lb')!;
+    expect(target.weight).toBe(225.5); // 220.5 lb, plus 5
+  });
+});
+
+describe('an untyped set', () => {
+  it('stands for the weight of the set before it, else the guess', () => {
+    const sets = [{ weight: '22.5' }, { weight: '' }, { weight: ' ' }, { weight: '25' }, { weight: '' }];
+    expect(weightFor(sets, 1, 20)).toBe('22.5');
+    expect(weightFor(sets, 2, 20)).toBe('22.5'); // skips a blank one
+    expect(weightFor(sets, 4, 20)).toBe('25'); // the nearest, not the first
+    expect(weightFor(sets, 0, 20)).toBe('20');
+    expect(weightFor([{ weight: '' }, { weight: '' }], 1, null)).toBe('');
+  });
+});
+
+describe('plates', () => {
+  it('loads a bar per side, heaviest first', () => {
+    expect(plateLoad(100, 'kg')).toEqual({ bar: 20, perSide: [25, 15], total: 100, short: 0 });
+    expect(plateLoad(225, 'lb')).toEqual({ bar: 45, perSide: [45, 45], total: 225, short: 0 });
+    expect(plateLoad(62.5, 'kg').perSide).toEqual([20, 1.25]);
+  });
+
+  it('says when the plates can’t make it exactly', () => {
+    expect(plateLoad(101, 'kg')).toMatchObject({ total: 100, short: 1 });
+    expect(plateLoad(15, 'kg')).toMatchObject({ perSide: [], total: 20, short: 0 });
+  });
+});
+
+describe('over time', () => {
+  it('adds up what was lifted, leaving body weight out', () => {
+    expect(volumeKg(session('2026-09-01T10:00:00Z', { squat: [[100, 5], [100, 5]], 'push-up': [[null, 20]] }))).toBe(1000);
+  });
+
+  it('draws one point per day: its best estimate', () => {
+    const series = e1rmSeries(
+      [session('2026-09-08T10:00:00Z', { squat: [[105, 5]] }), session('2026-09-01T10:00:00Z', { squat: [[100, 5], [90, 8]] }), session('2026-09-04T10:00:00Z', { lunge: [[20, 10]] })],
+      'squat',
+    );
+    expect(series.map((point) => point.date)).toEqual(['2026-09-01T10:00:00Z', '2026-09-08T10:00:00Z']);
+    expect(series[0]!.kg).toBeCloseTo(116.67, 2);
+  });
+
+  it('makes one point of two sessions on the same day: the better one', () => {
+    const morning = new Date(2026, 8, 8, 7).toISOString();
+    const evening = new Date(2026, 8, 8, 19).toISOString();
+    const nextDay = new Date(2026, 8, 9, 7).toISOString();
+    const series = e1rmSeries([session(morning, { squat: [[110, 5]] }), session(evening, { squat: [[100, 5]] }), session(nextDay, { squat: [[105, 5]] })], 'squat');
+    expect(series.map((point) => point.date)).toEqual([morning, nextDay]);
+    expect(series[0]!.kg).toBeCloseTo(128.33, 2);
+  });
+
+  it('counts weeks in a row, without losing the streak on a Monday morning', () => {
+    const wednesday = new Date(2026, 8, 23, 12); // Wed 23 Sep 2026
+    const at = (y: number, m: number, d: number) => session(new Date(y, m, d, 18).toISOString(), { squat: [[100, 5]] });
+    const sessions = [at(2026, 8, 21), at(2026, 8, 16), at(2026, 8, 8), at(2026, 7, 25)];
+    expect(weekStreak(sessions, wednesday)).toBe(3); // this week, last week, the week before; then a gap
+    const nextMonday = new Date(2026, 8, 28, 7);
+    expect(weekStreak(sessions, nextMonday)).toBe(3);
+    expect(weekStreak(sessions, new Date(2026, 9, 6))).toBe(0);
+    expect(sessionsThisWeek(sessions, wednesday)).toBe(1);
+  });
+
+  it('carries a streak through one missed week a month with a streak freeze', () => {
+    const wednesday = new Date(2026, 8, 23, 12);
+    const at = (y: number, m: number, d: number) => session(new Date(y, m, d, 18).toISOString(), { squat: [[100, 5]] });
+    // Trained the weeks of 21, 14 and 7 Sep and 24 Aug; missed 31 Aug.
+    const sessions = [at(2026, 8, 21), at(2026, 8, 16), at(2026, 8, 8), at(2026, 7, 25)];
+    expect(streakOf(sessions, wednesday)).toEqual({ weeks: 3, frozen: [] });
+    expect(streakOf(sessions, wednesday, true)).toEqual({ weeks: 4, frozen: [new Date(2026, 7, 31).getTime()] });
+    // Two missed weeks in a row end it, freeze or not.
+    const gap = [at(2026, 8, 21), at(2026, 8, 1)];
+    expect(streakOf(gap, wednesday, true)).toEqual({ weeks: 1, frozen: [] });
+    // One freeze a month: missing the weeks of 21 and 7 September, only the first is covered.
+    const september = [at(2026, 8, 30), at(2026, 8, 16), at(2026, 8, 1)];
+    expect(streakOf(september, new Date(2026, 8, 30, 20), true)).toEqual({ weeks: 2, frozen: [new Date(2026, 8, 21).getTime()] });
+    // A month apart, each month's freeze counts.
+    const months = [at(2026, 8, 21), at(2026, 8, 8), at(2026, 7, 25), at(2026, 7, 11)];
+    expect(streakOf(months, wednesday, true)).toEqual({ weeks: 3, frozen: [new Date(2026, 8, 14).getTime(), new Date(2026, 7, 31).getTime()] });
+  });
+
+  it('groups the log by the day each session finished, newest first', () => {
+    const now = new Date(2026, 8, 23, 20); // Wed 23 Sep 2026, 8 pm
+    const at = (m: number, d: number, h: number, y = 2026) => session(new Date(y, m, d, h).toISOString(), { squat: [[100, 5]] });
+    const evening = at(8, 23, 18);
+    const morning = at(8, 23, 7);
+    const lateLastNight = at(8, 22, 23);
+    const sunday = at(8, 20, 10);
+    const lastYear = at(11, 30, 9, 2025);
+    const days = sessionsByDay([evening, morning, lateLastNight, sunday, lastYear], now);
+    expect(days.map((day) => day.sessions.map((logged) => logged.id))).toEqual([[evening.id, morning.id], [lateLastNight.id], [sunday.id], [lastYear.id]]);
+    expect(days[0]!.label).toBe('Today');
+    expect(days[1]!.label).toBe('Yesterday');
+    expect(days[2]!.label).not.toMatch(/2026/); // this year's dates leave the year off
+    expect(days[3]!.label).toMatch(/2025/);
+    expect(sessionsByDay([], now)).toEqual([]);
+  });
+
+  it('says how long, briefly', () => {
+    expect(durationLabel(48 * 60_000)).toBe('48 min');
+    expect(durationLabel(65 * 60_000)).toBe('1 h 5 min');
+    expect([45, 60, 90, 120, 150, 100].map(restLabel)).toEqual(['45 s', '1 min', '1½ min', '2 min', '2½ min', '1:40']);
+    expect(clockLabel(90)).toBe('1:30');
+    expect(clockLabel(4.2)).toBe('0:05');
+    expect(clockLabel(3930)).toBe('1:05:30');
+    expect(clockLabel(14 * 3600)).toBe('14:00:00');
+  });
+});
+
+describe('a session in progress', () => {
+  it('reads what was typed, forgivingly but never guessing', () => {
+    expect(parseWeight('62.5')).toBe(62.5);
+    expect(parseWeight('62,5')).toBe(62.5);
+    expect(parseWeight('  ')).toBeNull();
+    expect(parseWeight('0')).toBeNull();
+    expect(parseWeight('abc')).toBeUndefined();
+    expect(parseWeight('-5')).toBeUndefined();
+    expect(parseReps('8')).toBe(8);
+    expect(parseReps('8.5')).toBeUndefined();
+    expect(parseReps('')).toBeUndefined();
+  });
+
+  it('keeps only the sets you ticked', () => {
+    expect(
+      draftToLogged([
+        { exerciseId: 'squat', sets: [{ weight: '100', reps: '5', done: true }, { weight: '100', reps: '5', done: false }, { weight: 'x', reps: '5', done: true }] },
+        { exerciseId: 'push-up', sets: [{ weight: '', reps: '20', done: true }] },
+        { exerciseId: 'plank', sets: [{ weight: '', reps: '', done: false }] },
+      ]),
+    ).toEqual([
+      { exerciseId: 'squat', sets: [{ weight: 100, reps: 5 }] },
+      { exerciseId: 'push-up', sets: [{ weight: null, reps: 20 }] },
+    ]);
+  });
+
+  it('marks a ticked set that beats your best so far, as you go', () => {
+    const before = personalRecords([session('2024-05-01T10:00:00Z', { bench: [[80, 5], [70, 10]], 'push-up': [[null, 20]] })]);
+    const done = (weight: string, reps: string, ticked = true) => ({ weight, reps, done: ticked });
+    // 82.5 is heavier than 80; 82.5 again isn't; 75 × 12 is a stronger set than 70 × 10; unticked counts for nothing.
+    expect(bestSoFar([done('82.5', '3'), done('82.5', '3'), done('75', '12'), done('90', '1', false)], 'kg', before.get('bench'))).toEqual(['heaviest', null, 'e1rm', null]);
+    // In pounds: 180 lb is about 81.6 kg.
+    expect(bestSoFar([done('180', '1')], 'lb', before.get('bench'))).toEqual(['heaviest']);
+    expect(bestSoFar([done('', '21'), done('', '21'), done('', '25')], 'kg', before.get('push-up'))).toEqual(['reps', null, 'reps']);
+    // The first time sets a baseline; unreadable sets are no record.
+    expect(bestSoFar([done('100', '5')], 'kg', before.get('squat'))).toEqual([null]);
+    expect(bestSoFar([done('lots', '5'), done('100', '')], 'kg', before.get('bench'))).toEqual([null, null]);
+  });
+});
+
+describe('when a workout ended', () => {
+  const started = '2026-09-25T18:00:00.000Z';
+  it('is now, while you are still at it', () => {
+    const now = new Date('2026-09-25T19:10:00.000Z');
+    expect(finishedAtFor(started, '2026-09-25T18:55:00.000Z', now)).toBe(now.toISOString());
+  });
+  it('is your last change when it was left open for hours', () => {
+    expect(finishedAtFor(started, '2026-09-25T18:52:00.000Z', new Date('2026-09-26T08:00:00.000Z'))).toBe('2026-09-25T18:52:00.000Z');
+  });
+  it('falls back to the start when nothing was ever changed', () => {
+    expect(finishedAtFor(started, undefined, new Date('2026-09-26T08:00:00.000Z'))).toBe(started);
+  });
+});
+
+describe('warmUpSets', () => {
+  it('ramps from the empty bar to about 80%, in loadable steps', () => {
+    const ramp = warmUpSets(100, 'kg');
+    expect(ramp.map((set) => [set.weight, set.reps])).toEqual([
+      [20, 10],
+      [40, 5],
+      [60, 3],
+      [80, 2],
+    ]);
+    expect(ramp[3]!.load.perSide).toEqual([25, 5]);
+  });
+
+  it('rounds down to what the plates make, in pounds too', () => {
+    expect(warmUpSets(225, 'lb').map((set) => set.weight)).toEqual([45, 90, 135, 180]);
+    expect(warmUpSets(102.5, 'kg').map((set) => set.weight)).toEqual([20, 40, 60, 80]);
+  });
+
+  it('leaves out steps that repeat the bar, and has none at or under the bar', () => {
+    expect(warmUpSets(40, 'kg').map((set) => set.weight)).toEqual([20, 22.5, 30]);
+    expect(warmUpSets(20, 'kg')).toEqual([]);
+    expect(warmUpSets(25, 'kg').map((set) => set.weight)).toEqual([20]);
+  });
+});
+
+describe('your own plates', () => {
+  it('loads from the plates your gym has, and says how far short it falls', () => {
+    const noFifteens = plateLoad(100, 'kg', 20, [20, 10, 5, 2.5, 1.25]);
+    expect(noFifteens.perSide).toEqual([20, 20]);
+    const halfKilos = plateLoad(101, 'kg', 20, [20, 10, 5, 0.5]);
+    expect(halfKilos.perSide).toEqual([20, 20, 0.5]);
+    expect(halfKilos.short).toBe(0);
+    expect(plateLoad(101, 'kg', 20, [20, 10]).short).toBe(1);
+  });
+
+  it('ramps warm-ups with them too, never over the share asked for', () => {
+    expect(warmUpSets(100, 'kg', 20, [20, 10]).map((set) => set.weight)).toEqual([20, 40, 60, 80]);
+    expect(warmUpSets(90, 'kg', 20, [20, 10]).map((set) => set.weight)).toEqual([20, 40, 60]);
+  });
+
+  it('keeps only real plate sizes, heaviest first, and nothing when none are left', () => {
+    expect(cleanPlates([2.5, 20, 'x', 7, 20], 'kg')).toEqual([20, 2.5]);
+    expect(cleanPlates([], 'kg')).toBeNull();
+    expect(cleanPlates('nope', 'lb')).toBeNull();
+  });
+});
+
+describe('the 1-rep max calculator', () => {
+  it('turns a 1-rep max back into what you could do for more reps', async () => {
+    const { oneRepMax, repMax } = await import('./training');
+    const max = oneRepMax(100, 5)!;
+    expect(max).toBeCloseTo(116.67, 2);
+    expect(repMax(max, 5)).toBeCloseTo(100, 6);
+    expect(repMax(max, 1)).toBe(max);
+    expect(repMax(max, 13)).toBeNull();
+    expect(repMax(0, 3)).toBeNull();
+  });
+});
+
+describe('set types and RPE', () => {
+  const typed = (finishedAt: string, sets: LoggedSet[]): TrainingSession => ({ ...session(finishedAt, {}), exercises: [{ exerciseId: 'back-squat', sets }] });
+  const warmUp = (weight: number, reps: number): LoggedSet => ({ weight, reps, kind: 'warmup' });
+
+  it('leaves warm-ups out of records, totals, set counts and last time', () => {
+    const first = typed('2026-10-01T10:00:00Z', [warmUp(140, 1), { weight: 100, reps: 5 }]);
+    expect(personalRecords([first]).get('back-squat')).toMatchObject({ heaviestKg: 100, sessions: 1 });
+    expect(volumeKg(first)).toBe(500);
+    expect(setsSummary(first.exercises[0]!.sets, 'kg')).toBe('100 kg × 5 · 1 warm-up');
+    expect(lastTime([first], 'back-squat')!.sets).toEqual([{ weight: 100, reps: 5 }]);
+    // A session of warm-ups only isn't a session of that exercise.
+    expect(personalRecords([typed('2026-10-02T10:00:00Z', [warmUp(60, 5)])]).get('back-squat')?.sessions ?? 0).toBe(0);
+    // And a heavy warm-up never breaks a record.
+    expect(recordsBroken(typed('2026-10-03T10:00:00Z', [warmUp(150, 1), { weight: 100, reps: 5 }]), [first])).toEqual([]);
+  });
+
+  it('says which sets were drop sets or to failure', () => {
+    expect(setsSummary([{ weight: 100, reps: 8 }, { weight: 100, reps: 7, kind: 'failure' }, { weight: 80, reps: 10, kind: 'drop' }], 'kg')).toBe('100 kg × 8, 7 to failure · 80 kg × 10 (drop)');
+    expect(setsSummary([{ weight: null, reps: 12 }, { weight: null, reps: 9, kind: 'failure' }], 'kg')).toBe('12, 9 to failure reps');
+  });
+
+  it('marks no warm-up as a record while ticking, and keeps types and RPE when logging', () => {
+    const before = personalRecords([typed('2026-10-01T10:00:00Z', [{ weight: 100, reps: 5 }])]).get('back-squat');
+    const drafts = [
+      { weight: '120', reps: '1', done: true, kind: 'warmup' as const },
+      { weight: '105', reps: '5', done: true, rpe: 9 },
+    ];
+    expect(bestSoFar(drafts, 'kg', before)).toEqual([null, 'heaviest']);
+    expect(draftToLogged([{ exerciseId: 'back-squat', sets: [...drafts, { weight: '80', reps: '8', done: true, kind: 'drop' as const, rpe: 12 }] }])[0]!.sets).toEqual([
+      { weight: 120, reps: 1, kind: 'warmup' },
+      { weight: 105, reps: 5, rpe: 9 },
+      // An RPE that isn't on the scale is dropped, not logged.
+      { weight: 80, reps: 8, kind: 'drop' },
+    ]);
+    // A set rated, then made a warm-up: a warm-up carries no RPE.
+    expect(draftToLogged([{ exerciseId: 'back-squat', sets: [{ weight: '60', reps: '5', done: true, kind: 'warmup', rpe: 7 }] }])[0]!.sets).toEqual([{ weight: 60, reps: 5, kind: 'warmup' }]);
+  });
+
+  it('never guesses a working set’s weight from a warm-up', () => {
+    const sets = [
+      { weight: '20', reps: '10', kind: 'warmup' as const },
+      { weight: '60', reps: '3', kind: 'warmup' as const },
+      { weight: '', reps: '' },
+    ];
+    expect(weightFor(sets, 2, 100)).toBe('100');
+    expect(weightFor(sets, 1, 100)).toBe('20');
+  });
+
+  it('names each set, numbering ordinary ones among themselves', () => {
+    expect(setTags([{ kind: 'warmup' }, { kind: 'warmup' }, {}, {}, { kind: 'failure' }, { kind: 'drop' }])).toEqual([
+      { tag: 'W', spoken: 'warm-up set 1' },
+      { tag: 'W', spoken: 'warm-up set 2' },
+      { tag: '1', spoken: 'set 1' },
+      { tag: '2', spoken: 'set 2' },
+      { tag: 'F', spoken: 'failure set 1' },
+      { tag: 'D', spoken: 'drop set 1' },
+    ]);
+  });
+
+  it('puts warm-ups before the first working set, replacing ones not yet done', () => {
+    const work = { weight: '100', reps: '5', done: false };
+    const once = withWarmUps([work, work], [{ weight: 20, reps: 10 }, { weight: 60, reps: 3 }]);
+    expect(once.map((set) => `${set.kind ?? 'work'}:${set.weight}`)).toEqual(['warmup:20', 'warmup:60', 'work:100', 'work:100']);
+    const again = withWarmUps(once, [{ weight: 20, reps: 10 }, { weight: 40, reps: 5 }, { weight: 70, reps: 2 }]);
+    expect(again.map((set) => `${set.kind ?? 'work'}:${set.weight}`)).toEqual(['warmup:20', 'warmup:40', 'warmup:70', 'work:100', 'work:100']);
+    // One already done stays.
+    const started = withWarmUps([{ ...once[0]!, done: true }, ...once.slice(1)], [{ weight: 60, reps: 3 }]);
+    expect(started.map((set) => `${set.kind ?? 'work'}:${set.weight}:${set.done}`)).toEqual(['warmup:20:true', 'warmup:60:false', 'work:100:false', 'work:100:false']);
+  });
+
+  it('explains each RPE in reps left', () => {
+    expect(RPE_VALUES).toEqual([6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]);
+    expect(rpeMeaning(10)).toBe('Nothing left');
+    expect(rpeMeaning(8)).toBe('Two more reps left');
+    expect(rpeMeaning(6.5)).toBe('Three or four more');
+  });
+});
+
+describe('more records, and charts of them', () => {
+  const at = (finishedAt: string, sets: LoggedSet[], unit: WeightUnit = 'kg'): TrainingSession => ({ ...session(finishedAt, {}, unit), exercises: [{ exerciseId: 'bench-press', sets }] });
+
+  it('keeps the biggest set and the most in one session, warm-ups aside', () => {
+    const one = at('2026-10-01T10:00:00Z', [{ weight: 60, reps: 10, kind: 'warmup' }, { weight: 100, reps: 5 }, { weight: 100, reps: 5 }]);
+    const two = at('2026-10-08T10:00:00Z', [{ weight: 80, reps: 12 }, { weight: 80, reps: 10 }]);
+    const record = personalRecords([one, two]).get('bench-press')!;
+    expect(record.setVolumeKg).toBe(960);
+    expect(record.setVolumeSet).toMatchObject({ weight: 80, reps: 12 });
+    // 80 × 12 + 80 × 10 = 1,760 beats 100 × 5 twice (1,000); the warm-up never counts.
+    expect(record.sessionVolumeKg).toBe(1760);
+    expect(record.sessionVolumeDate).toBe('2026-10-08T10:00:00Z');
+  });
+
+  it('counts a bigger set as a record when it isn’t heavier or stronger', () => {
+    const before = at('2026-10-01T10:00:00Z', [{ weight: 100, reps: 5 }]);
+    // 80 × 12: lighter, a lower estimated max (112 against 117), but 960 kg against 500.
+    expect(recordsBroken(at('2026-10-08T10:00:00Z', [{ weight: 80, reps: 12 }]), [before])).toEqual([{ exerciseId: 'bench-press', kind: 'volume' }]);
+    // Heavier still says heaviest, once.
+    expect(recordsBroken(at('2026-10-09T10:00:00Z', [{ weight: 105, reps: 5 }]), [before])).toEqual([{ exerciseId: 'bench-press', kind: 'heaviest' }]);
+    const records = personalRecords([before]).get('bench-press');
+    expect(bestSoFar([{ weight: '80', reps: '12', done: true }], 'kg', records)).toEqual(['volume']);
+  });
+
+  it('charts each metric a point a day: the best for bests, the sum for totals', () => {
+    const morning = at('2026-10-01T07:00:00Z', [{ weight: 100, reps: 5 }, { weight: 90, reps: 8 }]);
+    const evening = at('2026-10-01T19:00:00Z', [{ weight: 110, reps: 1 }]);
+    const later = at('2026-10-05T07:00:00Z', [{ weight: 100, reps: 6 }, { weight: 60, reps: 10, kind: 'warmup' }]);
+    const log = [later, evening, morning];
+    expect(exerciseSeries(log, 'bench-press', 'heaviest').map((point) => point.kg)).toEqual([110, 100]);
+    expect(exerciseSeries(log, 'bench-press', 'setVolume').map((point) => point.kg)).toEqual([720, 600]);
+    expect(exerciseSeries(log, 'bench-press', 'sessionVolume').map((point) => point.kg)).toEqual([500 + 720 + 110, 600]);
+    expect(exerciseSeries(log, 'bench-press', 'reps').map((point) => point.kg)).toEqual([14, 6]);
+    expect(exerciseSeries(log, 'bench-press', 'e1rm')).toEqual(e1rmSeries(log, 'bench-press'));
+    // Pounds become kilograms, so a chart in either unit is the same line.
+    expect(exerciseSeries([at('2026-10-01T07:00:00Z', [{ weight: 225, reps: 1 }], 'lb')], 'bench-press', 'heaviest')[0]!.kg).toBeCloseTo(102.06, 1);
+  });
+
+  it('lists rep records, leaving out any beaten by a heavier set for more reps', () => {
+    const log = [
+      at('2026-10-01T10:00:00Z', [{ weight: 95, reps: 3 }, { weight: 120, reps: 1 }, { weight: 60, reps: 30 }]),
+      at('2026-10-08T10:00:00Z', [{ weight: 100, reps: 5 }, { weight: 80, reps: 10 }, { weight: 130, reps: 1, kind: 'warmup' }]),
+    ];
+    // 95 × 3 is beaten by 100 × 5; 60 × 30 is past 20 reps; the warm-up never counts.
+    expect(repRecords(log, 'bench-press').map((row) => `${row.reps}:${row.set.weight}`)).toEqual(['1:120', '5:100', '10:80']);
+  });
+});

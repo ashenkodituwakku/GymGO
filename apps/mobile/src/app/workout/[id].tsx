@@ -15,9 +15,9 @@
 import { groupOf, linkWithNext, unlink } from '@/lib/supersets';
 import { joinableNext } from '@/components/GroupControls';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { Share, StyleSheet, View, useWindowDimensions } from 'react-native';
-import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Share, StyleSheet, View, useWindowDimensions, type ScrollViewInstance } from 'react-native';
+import Animated, { FadeInDown, ReduceMotion, useReducedMotion } from 'react-native-reanimated';
 import { CURVES, EASE_OUT, Pressable } from '@/components/motion';
 import { useBodyGender, setBodyGender } from '@/lib/bodyGender';
 import { BodyPicker } from '@/components/BodyPicker';
@@ -106,6 +106,10 @@ export default function WorkoutScreen() {
   const [length, setLength] = useState<Length>(6);
   const [seed, setSeed] = useState(1);
   const [built, setBuilt] = useState(false);
+  // Once a plan is built, the page brings it into view: it's drawn under the options, below the fold.
+  const page = useRef<ScrollViewInstance | null>(null);
+  const showPlan = useRef(false);
+  const reduceMotion = useReducedMotion();
   // Between the tap and the plan: the bar filling (components/BuildingBar.tsx).
   const [building, setBuilding] = useState(false);
 
@@ -202,7 +206,7 @@ export default function WorkoutScreen() {
   return (
     <>
       <ScreenOptions options={{ title: 'Workout' }} />
-      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+      <PageScroll ref={page} style={styles.page} contentContainerStyle={styles.content}>
         <View style={styles.intro}>
           <Txt variant="largeTitle">Build a workout</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
@@ -318,6 +322,7 @@ export default function WorkoutScreen() {
               haptic.success();
               setBuilding(false);
               setBuilt(true);
+              showPlan.current = true;
             }}
           />
         ) : !built ? (
@@ -331,7 +336,16 @@ export default function WorkoutScreen() {
             }}
           />
         ) : (
-          <Animated.View style={styles.result} entering={PLAN_IN}>
+          <Animated.View
+            style={styles.result}
+            entering={PLAN_IN}
+            onLayout={(event) => {
+              if (!showPlan.current) return;
+              showPlan.current = false;
+              // A little short of its top, so a header over the page can't cover it.
+              page.current?.scrollTo({ y: Math.max(0, event.nativeEvent.layout.y - 96), animated: !reduceMotion });
+            }}
+          >
             {/* Nothing to sum up when nothing matched: "0 exercises · ~0 min" said nothing. */}
             {workout.items.length > 0 && (
               <PlanSummary

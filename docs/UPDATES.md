@@ -9,9 +9,16 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 91 · Your built workout comes into view
+
+*5 Nov 2026 · the commit "Workout builder: the built plan scrolls into view"*
+
+- After Build my workout, the page brings the plan up to where you can see it (its summary, Start workout and the first exercise). It used to stay put, with the plan just peeking in at the bottom of the screen under the options. With Reduce Motion it moves there at once instead of scrolling.
+- Not yet seen on a phone.
+
 ## Update 90 · Icons that say what they are
 
-*5 Nov 2026 · `d36ae90`, and the commit "Collection: a stack of cards for its icon, not a trophy"*
+*5 Nov 2026 · `d36ae90`, `db8bd50`*
 
 - Note during a workout, Add a note on an exercise's page and the note itself show a note's icon. They showed a map pin, which reads as a place (and is what an address shows).
 - The collection's icon is a stack of cards (Profile's Collection row, Home's collection tile and widget, the Collection button after a check-in) instead of the trophy that Lifetime and the Leaderboard also use. A gym's tier medal keeps its trophy.

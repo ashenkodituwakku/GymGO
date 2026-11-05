@@ -106,6 +106,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **The built plan comes into view** (5 Nov, polishing). workout/[id].tsx
+  passes a ref to `PageScroll`; `BuildingBar`'s `onDone` sets
+  `showPlan.current`, and the plan's `onLayout` then calls
+  `scrollTo({ y: layout.y - 96, animated: !reduceMotion })` once (96 so a
+  header over the page can't cover it). The plan appears about 3 s after
+  the tap (the building bar), so a browser check has to wait for it.
 - **A note looks like a note** (5 Nov, polishing). Icon.tsx has `note`
   (SF `note.text`, Material `sticky_note_2`, which is in expo-symbols'
   web set); ExerciseNote.tsx and train.tsx's Note button use it instead of

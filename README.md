@@ -670,7 +670,9 @@ workouts go to your log.
   apps doesn't make it drift.
 - **Share a workout.** After you finish, **Share this workout** sends a
   few lines (what, how long, sets, weight, records) through the share sheet;
-  never the gym or the place.
+  never the gym or the place. In a browser with no share sheet (most on a
+  computer) they're copied to paste anywhere, and it says so. Sharing a
+  gym, your collection or your friend code works the same way.
 - **Pounds in the US**, kilograms elsewhere; switch before you type the
   first weight. A blank weight is body weight, never zero.
 
@@ -756,7 +758,9 @@ in a browser they start once you've tapped the page, as browsers require.
 **Share a card.** Tap a card in your collection to see it big, then
 **Share as a picture**: on a phone it goes to the share sheet (Messages,
 Instagram, Photos); in a browser it's shared where the browser can share
-files, or saved to your downloads. The new-card pop-up has **Share card**
+files, or saved to your downloads, on the page's own background (a dark
+card isn't put on white). On a card's own page you can also tilt the card:
+drag across it, or move the mouse over it. The new-card pop-up has **Share card**
 too, and a finished set's reward card opens and shares the same way. The
 picture shows what's on the card, never the days you went.
 

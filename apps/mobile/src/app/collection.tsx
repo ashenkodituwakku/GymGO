@@ -36,7 +36,7 @@ import { GLIDE, Pressy } from '@/components/motion';
 import { CountUp } from '@/components/CountUp';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
-import { shareText } from '@/lib/actions';
+import { shareLine, shareText } from '@/lib/actions';
 import { badges, collectionShareText, collectionStats, nextToCollect } from '@/lib/collection';
 import { distanceLabel } from '@/lib/places';
 import { nearLabel } from '@/lib/query';
@@ -109,7 +109,7 @@ export default function CollectionScreen() {
   const [shared, setShared] = useState<string | null>(null);
   const share = async () => {
     const outcome = await shareText(collectionShareText(gyms), 'My GymGO collection');
-    setShared(outcome === 'copied' ? 'Copied, ready to paste.' : outcome === 'failed' ? 'Sharing isn’t available here.' : null);
+    setShared(shareLine(outcome));
   };
 
   // Gyms found by searching an area aren't in the bundled data: fetch them, for their logos.

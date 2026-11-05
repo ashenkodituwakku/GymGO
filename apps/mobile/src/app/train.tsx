@@ -87,7 +87,7 @@ import { GroupControls, groupTag, joinableNext } from '@/components/GroupControl
 import { SwapButton } from '@/components/ExerciseCard';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { ScreenOptions } from '@/components/ScreenOptions';
-import { shareText } from '@/lib/actions';
+import { shareLine, shareText } from '@/lib/actions';
 import { weekAfter, workoutShareText, type WeekAfter } from '@/lib/insights';
 import { usePageTitle } from '@/lib/pageTitle';
 import { LIMITED } from '@/lib/limited';
@@ -1180,7 +1180,7 @@ function Summary({
   const [shared, setShared] = useState<string | null>(null);
   const share = async () => {
     const outcome = await shareText(workoutShareText(session, records), session.name);
-    setShared(outcome === 'copied' ? 'Copied, ready to paste.' : outcome === 'failed' ? 'Sharing isn’t available here.' : null);
+    setShared(shareLine(outcome));
   };
   const best = bestRecord(records);
   const done = session.exercises.filter((logged) => logged.sets.length > 0);

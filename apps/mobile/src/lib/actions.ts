@@ -9,18 +9,19 @@ import { Linking, Platform, Share } from 'react-native';
 import type { GymRecord } from '@gymgo/domain';
 import { googleMapsSearchUrl } from './present';
 
-export async function shareGym(record: GymRecord): Promise<boolean> {
+export async function shareGym(record: GymRecord): Promise<ShareOutcome> {
   const { name, address, website, isDemoData } = record.location;
-  if (isDemoData) return false;
+  if (isDemoData) return 'failed';
   const where = [address.line1, address.suburb].filter(Boolean).join(', ');
   const link = website ?? googleMapsSearchUrl(record);
   try {
     await Share.share(
       Platform.OS === 'ios' ? { message: `${name}, ${where}`, url: link } : { message: `${name}, ${where}\n${link}`, title: name },
     );
-    return true;
+    return 'shared';
   } catch {
-    return false;
+    // A browser with no share sheet (most on a computer): copied, to paste anywhere.
+    return (await copyOnWeb(`${name}, ${where}\n${link}`)) ? 'copied' : 'failed';
   }
 }
 
@@ -66,23 +67,55 @@ export async function openDirections(record: GymRecord): Promise<boolean> {
   }
 }
 
+/** What sharing did: handed to a share sheet, copied for pasting, or neither. */
+export type ShareOutcome = 'shared' | 'copied' | 'failed';
+
+/**
+ * Copies text in a browser: the clipboard API where the page may use it,
+ * else the older copy command (an address without https, older Safari).
+ */
+async function copyOnWeb(message: string): Promise<boolean> {
+  if (Platform.OS !== 'web' || typeof document === 'undefined') return false;
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(message);
+      return true;
+    }
+  } catch {
+    // Not allowed here: the older way below.
+  }
+  try {
+    const box = document.createElement('textarea');
+    box.value = message;
+    box.setAttribute('readonly', '');
+    box.style.position = 'fixed';
+    box.style.opacity = '0';
+    document.body.appendChild(box);
+    box.select();
+    const done = document.execCommand('copy');
+    box.remove();
+    return done;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Hands some text to the phone's share sheet. A browser without one copies
  * it instead. Says what happened: shared, copied, or neither.
  */
-export async function shareText(message: string, title: string): Promise<'shared' | 'copied' | 'failed'> {
+export async function shareText(message: string, title: string): Promise<ShareOutcome> {
   try {
     await Share.share(Platform.OS === 'ios' ? { message } : { message, title });
     return 'shared';
   } catch {
-    if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
-      try {
-        await navigator.clipboard.writeText(message);
-        return 'copied';
-      } catch {
-        return 'failed';
-      }
-    }
-    return 'failed';
+    return (await copyOnWeb(message)) ? 'copied' : 'failed';
   }
+}
+
+/** What to say after sharing, if anything. */
+export function shareLine(outcome: ShareOutcome): string | null {
+  if (outcome === 'copied') return 'Copied, ready to paste.';
+  if (outcome === 'failed') return 'Sharing isn’t available here.';
+  return null;
 }

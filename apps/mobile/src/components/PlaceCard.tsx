@@ -25,7 +25,7 @@ import {
   type Tri,
 } from '@gymgo/domain';
 import { TIER, accessLine, checkedAgo, gymDistanceLine, ratingShort, sourceLabel, timeLabel } from '@/lib/copy';
-import { openPage, shareGym } from '@/lib/actions';
+import { openPage, shareGym, shareLine } from '@/lib/actions';
 import { addressLines, callQuestions, depositLine, priceLine } from '@/lib/present';
 import { color, currentLook, face, radius, shadow, space, themed, type } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
@@ -287,7 +287,7 @@ export function PlaceCard({
               onPress={
                 location.isDemoData
                   ? demo("it's invented, so there's nothing real to share.")
-                  : () => void shareGym(record).then((ok) => !ok && setNotice('Sharing isn’t available here.'))
+                  : () => void shareGym(record).then((outcome) => setNotice(shareLine(outcome)))
               }
             />
           </>

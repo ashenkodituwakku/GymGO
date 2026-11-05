@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 82 · Sharing on a computer copies instead
+
+*5 Nov 2026 · the commit "Sharing on a computer copies instead: a gym, a workout, your collection"*
+
+- On the website on a computer (no share sheet), sharing a gym now copies its name, address and website to paste anywhere, and says so; it used to say "Sharing isn't available here". The Share button at the top of a gym's page shows a tick and "Copied" for a moment.
+- Every share falls back to copying in more browsers: where the page can't use the clipboard directly (an address without https, older Safari), it copies the older way.
+- Not yet seen on a phone (phones use their share sheet, unchanged).
+
 ## Update 81 · Every field's hint fits
 
-*5 Nov 2026 · the commit "Every field's hint fits: shorter hints on the smallest phones"*
+*5 Nov 2026 · `69bab57`*
 
 Every text field's hint was measured against its field on a 320-point phone:
 

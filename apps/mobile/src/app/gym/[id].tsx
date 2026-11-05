@@ -44,7 +44,7 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { gymDistanceLine } from '@/lib/copy';
 import { resultFor } from '@/lib/results';
-import type { GymLocation } from '@gymgo/domain';
+import type { GymLocation, GymRecord } from '@gymgo/domain';
 import { HEADER_EDGE, PAGE_COLUMN, color, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
@@ -183,7 +183,7 @@ export default function GymPage() {
             : null),
           headerRight: () => (
             <View style={styles.headerButtons}>
-              {!location.isDemoData && <HeaderButton icon="share" label="Share" onPress={() => void shareGym(result.record)} />}
+              {!location.isDemoData && <ShareButton record={result.record} />}
               <HeaderButton
                 icon="compare"
                 label={comparing ? 'Remove from Compare' : 'Add to Compare'}
@@ -316,6 +316,31 @@ function HeaderButton({ icon, label, onPress, on = false }: { icon: IconName; la
     >
       <Icon name={icon} size={19} color={on ? color.brand : Platform.OS === 'ios' ? color.label : color.brand} />
     </Pressable>
+  );
+}
+
+/**
+ * Share, in the header. In a browser with no share sheet (most on a
+ * computer) the gym is copied instead, and the button says so for a moment
+ * with a tick, as there's nowhere else on the page to say it.
+ */
+function ShareButton({ record }: { record: GymRecord }) {
+  const [said, setSaid] = useState<'copied' | 'failed' | null>(null);
+  useEffect(() => {
+    if (!said) return;
+    const timer = setTimeout(() => setSaid(null), 2500);
+    return () => clearTimeout(timer);
+  }, [said]);
+  return (
+    <HeaderButton
+      icon={said === 'copied' ? 'check' : 'share'}
+      label={said === 'copied' ? 'Copied, ready to paste' : said === 'failed' ? 'Sharing isn’t available here' : 'Share'}
+      onPress={() =>
+        void shareGym(record).then((outcome) => {
+          if (outcome !== 'shared') setSaid(outcome);
+        })
+      }
+    />
   );
 }
 

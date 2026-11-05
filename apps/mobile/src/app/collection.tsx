@@ -452,7 +452,7 @@ function NextToCollect({ items, near, country, onOpen }: { items: Array<{ record
             >
               <NextMark location={location} />
               <View style={styles.flexFill}>
-                <Txt variant="headline" numberOfLines={1}>
+                <Txt variant="headline" numberOfLines={2}>
                   {name}
                 </Txt>
                 <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>

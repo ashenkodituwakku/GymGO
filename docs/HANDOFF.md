@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **A note looks like a note** (5 Nov, polishing). Icon.tsx has `note`
+  (SF `note.text`, Material `sticky_note_2`, which is in expo-symbols'
+  web set); ExerciseNote.tsx and train.tsx's Note button use it instead of
+  `pin` (kept for places: addresses, trips, "near me").
 - **The recovery map in small on Home** (5 Nov, polishing). MuscleFigures.tsx
   now has `SmallFigures({ fillFor, width })` (any colour per muscle; the
   idle grey for none), which `MuscleFigures` uses; HomeWidgets'

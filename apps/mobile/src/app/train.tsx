@@ -978,7 +978,7 @@ const ExerciseLog = memo(function ExerciseLog({
               accessibilityLabel={`Add a note on ${name}, shown each time you do it`}
               style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
             >
-              <Icon name="pin" size={13} color={color.brand} />
+              <Icon name="note" size={13} color={color.brand} />
               <Txt variant="footnote" color={color.brand} style={face('semibold')}>
                 Note
               </Txt>

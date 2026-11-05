@@ -81,7 +81,7 @@ export function ExerciseNote({
         accessibilityLabel={`Add a note on ${name}`}
         style={({ pressed }) => [styles.add, pressed && { opacity: 0.6 }]}
       >
-        <Icon name="pin" size={13} color={color.brand} />
+        <Icon name="note" size={13} color={color.brand} />
         <Txt variant="footnote" color={color.brand} style={face('semibold')}>
           Add a note
         </Txt>
@@ -98,7 +98,7 @@ export function ExerciseNote({
       accessibilityLabel={`Your note on ${name}: ${note}. Change it`}
       style={({ pressed }) => [styles.pinned, pressed && { opacity: 0.75 }]}
     >
-      <Icon name="pin" size={14} color={color.brand} />
+      <Icon name="note" size={14} color={color.brand} />
       <Txt variant="footnote" style={styles.flex}>
         {note}
       </Txt>

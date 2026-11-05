@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 90 · A note looks like a note
+
+*5 Nov 2026 · the commit "Note buttons: a note's icon, not a map pin"*
+
+- Note during a workout, Add a note on an exercise's page and the note itself show a note's icon. They showed a map pin, which reads as a place (and is what an address shows).
+- Swept 19 less-visited screens at 320 points in dark (plate calculator, 1-rep max, timer, reminders, what you pay, compare, leaderboard, your week, programme, templates, progress photos, Pro, account, machines, trips, report a bug, and the three editors): no errors, nothing cut off or overflowing. The screens changed today pass the check for unnamed buttons.
+- Not yet seen on a phone.
+
 ## Update 89 · The whole body at a glance on Home
 
-*5 Nov 2026 · `24aaff1`, and the commit "Monthly report: sets for each muscle on the body"*
+*5 Nov 2026 · `24aaff1`, `7b289c4`*
 
 - Home's Muscles trained widget shows the recovery map in small beside its lists, front and back, in the same heat colours, so you see the whole body at a glance as well as the muscles it names. Your male or female choice applies here too.
 - The monthly report's Sets for each muscle shows the body above its bars: each muscle you trained that month in the accent, deeper the more sets it had, so a month heavy on chest and light on legs shows at a glance.

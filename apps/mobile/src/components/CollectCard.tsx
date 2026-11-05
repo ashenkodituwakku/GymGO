@@ -214,7 +214,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
         )}
         {(mine || step.kind === 'collected') && (
           <View style={styles.slot}>
-            <PrimaryButton label="Collection" icon="trophy" tone="quiet" onPress={onOpenCollection} />
+            <PrimaryButton label="Collection" icon="cards" tone="quiet" onPress={onOpenCollection} />
           </View>
         )}
       </Animated.View>
@@ -260,7 +260,7 @@ export function CollectionStrip({ onPress, tile = false }: { onPress: () => void
       >
         <View style={styles.tileHead}>
           <View style={[styles.stripMedal, { backgroundColor: metal }]}>
-            <Icon name="trophy" size={16} color={color.onBrand} />
+            <Icon name="cards" size={16} color={color.onBrand} />
           </View>
           <Icon name="chevron" size={12} color={color.labelTertiary} />
         </View>
@@ -297,7 +297,7 @@ export function CollectionStrip({ onPress, tile = false }: { onPress: () => void
       style={styles.strip}
     >
       <View style={[styles.stripMedal, { backgroundColor: metal }]}>
-        <Icon name="trophy" size={16} color={color.onBrand} />
+        <Icon name="cards" size={16} color={color.onBrand} />
       </View>
       <View style={styles.flex}>
         <Txt variant="headline">Your collection</Txt>

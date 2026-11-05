@@ -9,11 +9,12 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
-## Update 90 · A note looks like a note
+## Update 90 · Icons that say what they are
 
-*5 Nov 2026 · the commit "Note buttons: a note's icon, not a map pin"*
+*5 Nov 2026 · `d36ae90`, and the commit "Collection: a stack of cards for its icon, not a trophy"*
 
 - Note during a workout, Add a note on an exercise's page and the note itself show a note's icon. They showed a map pin, which reads as a place (and is what an address shows).
+- The collection's icon is a stack of cards (Profile's Collection row, Home's collection tile and widget, the Collection button after a check-in) instead of the trophy that Lifetime and the Leaderboard also use. A gym's tier medal keeps its trophy.
 - Swept 19 less-visited screens at 320 points in dark (plate calculator, 1-rep max, timer, reminders, what you pay, compare, leaderboard, your week, programme, templates, progress photos, Pro, account, machines, trips, report a bug, and the three editors): no errors, nothing cut off or overflowing. The screens changed today pass the check for unnamed buttons.
 - Not yet seen on a phone.
 

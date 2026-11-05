@@ -61,7 +61,7 @@ export const HOME_WIDGETS: readonly HomeWidget[] = [
   { id: 'tools', title: 'Tools', detail: 'Interval timer, plate calculator, 1-rep max and exercises', icon: 'timer', group: 'Training' },
   { id: 'weather', title: 'Weather', detail: 'The weather where you’re searching, in one line', icon: 'thermometer', group: 'Weather', needsServer: true },
   { id: 'weatherHours', title: 'Weather by the hour', detail: 'Now and the next six hours', icon: 'clock', group: 'Weather', needsServer: true },
-  { id: 'collection', title: 'Collection', detail: 'The gyms you’ve checked in at', icon: 'trophy', group: 'You', needsServer: true, whenThere: 'Shows once you’ve checked in at a gym.' },
+  { id: 'collection', title: 'Collection', detail: 'The gyms you’ve checked in at', icon: 'cards', group: 'You', needsServer: true, whenThere: 'Shows once you’ve checked in at a gym.' },
   { id: 'bodyWeight', title: 'Body weight', detail: 'Your latest weigh-in and how it’s changed', icon: 'body', group: 'You' },
 ];
 

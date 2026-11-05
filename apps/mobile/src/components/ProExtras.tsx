@@ -32,6 +32,8 @@ export function GiftPro({ token, billing, currency, onSignIn }: { token: string 
   const [gifts, setGifts] = useState<GiftBought[]>([]);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  /** The gift code just copied, on a computer, so its button says so. */
+  const [copied, setCopied] = useState<string | null>(null);
   const price = billing.giftPrices.find((item) => item.currency === currency) ?? null;
   const load = useCallback(() => {
     if (token) api.giftsBought(token).then((answer) => setGifts(answer.gifts)).catch(() => undefined);
@@ -87,10 +89,14 @@ export function GiftPro({ token, billing, currency, onSignIn }: { token: string 
           </View>
           {!gift.redeemed && (
             <PrimaryButton
-              label="Send"
-              icon="share"
+              label={copied === gift.code ? 'Copied' : 'Send'}
+              icon={copied === gift.code ? 'check' : 'share'}
               tone="quiet"
-              onPress={() => void shareText(`A year of GymGO Pro, from me. Open GymGO → Profile → GymGO Pro → Redeem, and enter ${gift.code}`, 'GymGO Pro, a gift')}
+              onPress={() =>
+                void shareText(`A year of GymGO Pro, from me. Open GymGO → Profile → GymGO Pro → Redeem, and enter ${gift.code}`, 'GymGO Pro, a gift').then((outcome) =>
+                  setCopied(outcome === 'copied' ? gift.code : null),
+                )
+              }
             />
           )}
         </View>

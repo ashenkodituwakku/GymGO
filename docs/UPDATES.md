@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 83 · A friend code or a gift, copied and said so
+
+*5 Nov 2026 · the commit "A friend code or a gift, copied and said so"*
+
+- Friends: on a computer, Send your code copies "Add me on GymGO: my friend code is …" and the button says "Copied, ready to paste" (before, nothing showed whether anything happened).
+- A Pro gift code's Send button says "Copied", with a tick, when it was copied rather than shared.
+- Not yet seen on a phone (phones use their share sheet, unchanged).
+
 ## Update 82 · Sharing on a computer copies instead
 
-*5 Nov 2026 · the commit "Sharing on a computer copies instead: a gym, a workout, your collection"*
+*5 Nov 2026 · `2c8d698`*
 
 - On the website on a computer (no share sheet), sharing a gym now copies its name, address and website to paste anywhere, and says so; it used to say "Sharing isn't available here". The Share button at the top of a gym's page shows a tick and "Copied" for a moment.
 - Every share falls back to copying in more browsers: where the page can't use the clipboard directly (an address without https, older Safari), it copies the older way.

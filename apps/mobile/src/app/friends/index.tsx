@@ -38,6 +38,8 @@ export default function FriendsScreen() {
   const [problem, setProblem] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [adding, setAdding] = useState(false);
+  /** What sending your code did, when it wasn't a share sheet: copied (on a computer), or neither. */
+  const [sent, setSent] = useState<'copied' | 'failed' | null>(null);
   // What the last add or answer did; a problem shows in red, and typing a new code clears it.
   const [note, setNote] = useState<{ text: string; problem: boolean } | null>(null);
 
@@ -139,14 +141,15 @@ export default function FriendsScreen() {
         <Pressy
           scaleTo={0.96}
           disabled={!view}
-          onPress={() => view && void shareText(`Add me on GymGO: my friend code is ${view.code}`, 'My GymGO friend code')}
+          onPress={() => view && void shareText(`Add me on GymGO: my friend code is ${view.code}`, 'My GymGO friend code').then((outcome) => setSent(outcome === 'shared' ? null : outcome))}
           accessibilityRole="button"
           accessibilityLabel="Send your friend code"
           style={styles.send}
         >
           <Icon name="share" size={15} color={color.onBrand} />
+          {/* On a computer it's copied instead, and the button says so. */}
           <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
-            Send your code
+            {sent === 'copied' ? 'Copied, ready to paste' : sent === 'failed' ? 'Couldn’t share it' : 'Send your code'}
           </Txt>
         </Pressy>
       </View>

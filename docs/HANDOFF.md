@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **A friend code or a gift, copied and said so** (5 Nov). friends/index's
+  `sent` and ProExtras' `copied` hold what `shareText` did when it wasn't a
+  share sheet, so the button's words say it.
 - **Sharing on a computer copies instead** (5 Nov). lib/actions.ts:
   `copyOnWeb` (the clipboard API, else a hidden textarea and
   `document.execCommand('copy')`), `ShareOutcome`, `shareLine(outcome)`

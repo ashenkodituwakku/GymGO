@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Titles clear of the back button** (5 Nov). components/WebBack.tsx is
+  the chevron alone under 360 points wide (`round` style), found with a
+  browser check measuring the gap between the header's title text and the
+  back button on 28 screens; challenges.tsx uses `Segmented` for targets.
 - **The whole card in a shared picture** (5 Nov). The card's frame is drawn
   `GLOW_ROOM` past its box; CardReveal's capture view now has
   `padding: GLOW_ROOM, margin: -GLOW_ROOM` so the picture holds it all

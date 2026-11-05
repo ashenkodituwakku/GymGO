@@ -6,10 +6,14 @@
  *
  * A page opened straight from a link, with nothing behind it, goes to the
  * start: Home, or the sign-in screen when signed out (`home` names it).
+ *
+ * On a phone-sized window under 360 points wide it's the chevron alone, as
+ * iPhone's is when the title needs the room ("Monthly challenge" ran into
+ * "‹ Home" at 320); a screen reader still hears where it goes.
  */
 
 import { router } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, useWindowDimensions } from 'react-native';
 import { haptic } from '@/lib/haptics';
 import { HEADER_EDGE, color, face, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
@@ -28,6 +32,7 @@ export function WebBack({
   home?: { label: string; href: '/' | '/sign-in' };
 }) {
   const where = canGoBack ? label : home.label;
+  const narrow = useWindowDimensions().width < 360;
   return (
     <Pressable
       onPress={() => {
@@ -39,12 +44,14 @@ export function WebBack({
       accessibilityLabel={where === 'Back' ? 'Back' : `Back to ${where}`}
       hitSlop={6}
       // Hover fills it; a press dims it (kept apart, so the press's fade never holds the colour).
-      style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.pill, hovered && styles.pillOn, pressed && styles.pillDown]}
+      style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.pill, narrow && styles.round, hovered && styles.pillOn, pressed && styles.pillDown]}
     >
       <Icon name="chevronBack" size={20} color={color.brand} />
-      <Txt variant="subhead" color={color.brand} numberOfLines={1} style={styles.label}>
-        {where}
-      </Txt>
+      {!narrow && (
+        <Txt variant="subhead" color={color.brand} numberOfLines={1} style={styles.label}>
+          {where}
+        </Txt>
+      )}
     </Pressable>
   );
 }
@@ -62,6 +69,7 @@ const styles = themed(() => StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.brandTint,
   },
+  round: { width: 34, paddingLeft: 0, paddingRight: 0, justifyContent: 'center' },
   pillOn: { backgroundColor: color.brandTint },
   pillDown: { opacity: 0.6 },
   label: { ...face('semibold'), maxWidth: 180 },

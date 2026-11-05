@@ -17,7 +17,7 @@ import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { ListSkeleton } from '@/components/Skeleton';
-import { Card, Chip, PrimaryButton, Txt } from '@/components/ui';
+import { Card, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { ApiError, api, type ChallengeView } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -125,11 +125,8 @@ export default function ChallengesScreen() {
       {view && !mine?.finished && (
         <Card style={styles.card}>
           <Txt variant="headline">{mine ? 'Change your target' : `Train on how many days in ${label.split(' ')[0]}?`}</Txt>
-          <View style={styles.chips}>
-            {view.targets.map((option) => (
-              <Chip key={option} label={`${option} days`} selected={target === option} onPress={() => setTarget(option)} />
-            ))}
-          </View>
+          {/* One row of equal choices, as the programme's days a week (as chips, 20 days sat alone on a second line). */}
+          <Segmented options={view.targets.map((option) => ({ value: option, label: `${option} days` }))} value={target} onChange={setTarget} />
           <PrimaryButton label={mine ? (mine.target === target ? 'Keep it' : `Make it ${target} days`) : `Join: ${target} days`} icon="target" busy={busy} disabled={mine?.target === target} onPress={() => void join()} />
         </Card>
       )}
@@ -227,7 +224,6 @@ const styles = themed(() =>
     content: { padding: space[4], paddingBottom: space[8], gap: space[3], width: '100%', maxWidth: 560, alignSelf: 'center' },
     intro: { gap: space[1] },
     card: { gap: space[3] },
-    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     flex: { flex: 1, minWidth: 0 },
     friend: { gap: 6 },
     friendHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },

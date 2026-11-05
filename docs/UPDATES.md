@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 86 · Titles clear of the back button
+
+*5 Nov 2026 · the commit "Titles clear of the back button on small screens; one row of challenge targets"*
+
+- On the website on a small phone (under 360 points), the back button is its chevron alone, as on an iPhone when the title needs the room: "Monthly challenge", "Find a machine" and "Progress photos" ran into "‹ Home". A screen reader still hears where it goes.
+- Monthly challenge: the four targets are one row of equal choices, like the programme's days a week, instead of chips with "20 days" alone on a second line.
+- A shared card is always pictured lying flat, even while you're tilting it.
+- Not yet seen on a phone.
+
 ## Update 85 · The whole card in a shared picture
 
-*5 Nov 2026 · the commit "The whole card in a shared picture from the new-card pop-up; names on Next to collect"*
+*5 Nov 2026 · `40a0eb3`*
 
 - Share card in the new-card pop-up now takes the whole card: its frame's glow and corners were cut off at the picture's edges.
 - Next to collect shows a gym's full name on two lines when it needs them ("Absolute MMA · Melbourne CBD" was cut short on a small phone).

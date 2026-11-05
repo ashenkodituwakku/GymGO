@@ -106,6 +106,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Sharing a picture works again on the website** (5 Nov). Since the SDK
+  58 upgrade (react-native-view-shot 6.1.1), view-shot's web capture needs
+  its optional peer `html2canvas-pro`, which wasn't installed, so every
+  web share failed ("Couldn't make the picture here"). Added it to
+  apps/mobile (2.5.0 exactly, MIT; CREDITS.md: later releases ask for Node 24, the repo runs on 22). lib/shareImage.ts's
+  `pictureOnWeb` calls it directly, with `backgroundColor:
+  color.groupedBackground` and `scale` at least 2; phones still use
+  view-shot's `captureRef`.
 - **Tilt your card** (5 Nov). components/TiltCard.tsx wraps the card on
   card/[id]: a Gesture Handler pan (`activeOffsetX([-8, 8])`,
   `failOffsetY([-14, 14])`, so vertical drags scroll) springs

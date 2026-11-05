@@ -15,6 +15,7 @@ import * as Sharing from 'expo-sharing';
 import type { RefObject } from 'react';
 import { Platform, type ViewInstance } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
+import { color } from './theme';
 
 export type ImageShareOutcome = 'shared' | 'downloaded' | 'cancelled' | 'failed';
 
@@ -30,9 +31,24 @@ export function imageFileName(name: string): string {
   return `gymgo-${slug || 'card'}.png`;
 }
 
+/**
+ * The picture, in a browser: drawn by html2canvas-pro (the library
+ * react-native-view-shot uses on the web, called here so the picture can
+ * have the page's own background, not white behind a dark-mode card, and be
+ * sharp on any screen).
+ */
+async function pictureOnWeb(target: unknown): Promise<Blob> {
+  const html2canvas = (await import('html2canvas-pro')).default;
+  const canvas = await html2canvas(target as HTMLElement, {
+    useCORS: true,
+    backgroundColor: color.groupedBackground,
+    scale: Math.max(2, typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1),
+  });
+  return new Promise<Blob>((resolve, reject) => canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('No picture'))), 'image/png'));
+}
+
 async function shareOnWeb(target: unknown, fileName: string, title: string): Promise<ImageShareOutcome> {
-  const dataUri = await captureRef(target as never, { format: 'png', result: 'data-uri' });
-  const blob = await (await fetch(dataUri)).blob();
+  const blob = await pictureOnWeb(target);
   const file = new File([blob], fileName, { type: 'image/png' });
   const nav = typeof navigator !== 'undefined' ? (navigator as Navigator & { canShare?: (data: ShareData) => boolean }) : null;
   if (nav?.share && nav.canShare?.({ files: [file] })) {

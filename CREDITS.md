@@ -23,6 +23,7 @@ one row of actions), not from borrowing its assets.
 | [stripe-node](https://github.com/stripe/stripe-node) (server only) | Talks to Stripe for GymGO Pro: checkout, the customer portal, webhook signatures | MIT |
 | [Phosphor Icons](https://phosphoricons.com) (© Phosphor Icons) | The tab bar's icons and the two-tone icons around the app. The icons used are copied as path data into `apps/mobile/src/components/phosphor.ts` by `scripts/phosphor-icons.mjs` | MIT |
 | [react-native-svg](https://github.com/software-mansion/react-native-svg) | Draws the body on iPhone and Android | MIT |
+| [react-native-view-shot](https://github.com/gre/react-native-view-shot) and [html2canvas-pro](https://github.com/yorickshan/html2canvas-pro) (© Niklas von Hertzen, yorickshan) | Sharing a card, a set or your week as a picture: view-shot on a phone, html2canvas-pro in a browser | MIT |
 | [sharp](https://sharp.pixelplumbing.com) (development only) | Trims and shrinks the brand logos when `scripts/brand-logos.mjs` fetches them. Not in the app | Apache-2.0 |
 | [expo-haptics](https://docs.expo.dev/versions/latest/sdk/haptics/), [expo-location](https://docs.expo.dev/versions/latest/sdk/location/), [AsyncStorage](https://github.com/react-native-async-storage/async-storage) | Taps you can feel, "near me", saved gyms | MIT |
 

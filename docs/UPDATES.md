@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 80 · Sharing a picture works again on the website
+
+*5 Nov 2026 · the commit "Sharing a picture works again on the website, on the page's own background"*
+
+- Fixed: on the website, "Share as a picture" (a card, a finished set, your week, Lifetime) always said "Couldn't make the picture here". The picture library's newer version, which came with the SDK 58 upgrade, needs a companion package for browsers that wasn't installed (html2canvas-pro, MIT).
+- The picture now has the page's own background, so a dark-mode card isn't on white, and it's drawn at least twice as sharp.
+- Not yet tried on a phone (phones use a different path, unchanged).
+
 ## Update 79 · Tilt your card
 
-*5 Nov 2026 · the commit "Tilt your card: a card's page leans it towards your finger or mouse"*
+*5 Nov 2026 · `fbd5aaf`*
 
 - On a card's own page, drag across the card (or move the mouse over it on the website) and it leans towards you in 3D, as you'd turn a trading card to catch the light; let go and it springs back flat.
 - Only sideways drags tilt it, so the page still scrolls from on top of it. It stays still with Reduce Motion, and a shared picture is always of the card lying flat.

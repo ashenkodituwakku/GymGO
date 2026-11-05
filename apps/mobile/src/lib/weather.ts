@@ -17,7 +17,7 @@
 
 import type { Weather } from '@gymgo/domain';
 import { useEffect, useState } from 'react';
-import { ApiError, api } from './api';
+import { ApiError, OfflineError, api } from './api';
 import { useApp } from './app-state';
 import { LIMITED } from './limited';
 import { tileKey, tilesAround } from './query';
@@ -31,7 +31,10 @@ const asking = new Map<string, Promise<Weather | null>>();
 let switchedOff = false;
 
 export type WeatherOff = 'signedOut' | 'noServer' | 'switchedOff';
-export type WeatherState = { status: 'off'; why: WeatherOff } | { status: 'loading' } | { status: 'none' } | { status: 'ready'; weather: Weather };
+/** Why the last ask got no forecast: GymGO's server didn't answer, MET Norway didn't, or something else. */
+export type WeatherMissing = 'server' | 'met' | 'other';
+export type WeatherState = { status: 'off'; why: WeatherOff } | { status: 'loading' } | { status: 'none'; cause: WeatherMissing } | { status: 'ready'; weather: Weather };
+const missed = new Map<string, WeatherMissing>();
 
 async function fetchFor(token: string, key: string, block: { south: number; west: number }): Promise<Weather | null> {
   const already = asking.get(key);
@@ -45,6 +48,8 @@ async function fetchFor(token: string, key: string, block: { south: number; west
     })
     .catch((error: unknown) => {
       if (error instanceof ApiError && error.code === 'weather_off') switchedOff = true;
+      // Said truly: with GymGO's own server down, it isn't MET Norway that couldn't be reached.
+      missed.set(key, error instanceof OfflineError ? 'server' : error instanceof ApiError && error.code === 'weather_unavailable' ? 'met' : 'other');
       return null;
     })
     .finally(() => asking.delete(key));
@@ -86,7 +91,7 @@ export function useWeather(point: { lat: number; lng: number } | null): WeatherS
       if (held && Date.now() - held.at < FRESH_MS) return;
       // Failed a moment ago: wait a little before asking again.
       if (!held && Date.now() - (tried.get(key) ?? 0) < RETRY_MS && !asking.has(key)) {
-        setState({ status: 'none' });
+        setState({ status: 'none', cause: missed.get(key) ?? 'other' });
         return;
       }
       if (!held) setState((now) => (now.status === 'none' ? now : { status: 'loading' }));
@@ -94,7 +99,7 @@ export function useWeather(point: { lat: number; lng: number } | null): WeatherS
         if (!live) return;
         if (weather) setState({ status: 'ready', weather });
         // Kept from before, still shown (it says when it was made); none at all: say so.
-        else if (!kept.get(key)) setState(switchedOff ? { status: 'off', why: 'switchedOff' } : { status: 'none' });
+        else if (!kept.get(key)) setState(switchedOff ? { status: 'off', why: 'switchedOff' } : { status: 'none', cause: missed.get(key) ?? 'other' });
       });
     };
     refresh();

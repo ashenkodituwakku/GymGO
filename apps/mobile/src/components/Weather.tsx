@@ -76,7 +76,11 @@ function madeLine(weather: Weather, timezone: string): string {
 function missingLine(state: WeatherState): string {
   if (state.status === 'ready') return 'No forecast for this hour yet.';
   if (state.status === 'loading') return 'Getting the forecast…';
-  if (state.status === 'none') return 'No forecast just now: MET Norway couldn’t be reached. GymGO tries again in a few minutes.';
+  if (state.status === 'none') {
+    if (state.cause === 'server') return 'No forecast just now: GymGO’s server can’t be reached. It tries again in a few minutes.';
+    if (state.cause === 'met') return 'No forecast just now: MET Norway couldn’t be reached. GymGO tries again in a few minutes.';
+    return 'No forecast just now. GymGO tries again in a few minutes.';
+  }
   if (state.why === 'signedOut') return 'Sign in (it’s free) to see the weather here.';
   if (state.why === 'noServer') return 'The weather comes through GymGO’s server, which this website doesn’t have yet.';
   return 'The weather is switched off on this GymGO server.';

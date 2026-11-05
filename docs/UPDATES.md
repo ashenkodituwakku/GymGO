@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 78 · Saying truly what's down
+
+*5 Nov 2026 · the commit "Saying truly what's down: the server, not MET Norway, and never a parse error"*
+
+- With GymGO's server down, Home's weather said MET Norway couldn't be reached. It now says GymGO's server can't be, and says MET Norway only when it's MET Norway.
+- When something in front of the server (the website's proxy, a tunnel) answers for it because the server is off, the app now says it can't reach the server everywhere, instead of a vague "couldn't load" or, for a page that isn't GymGO's answer, an error from reading it.
+- Not yet seen on a phone.
+
 ## Update 77 · Small phones, tidied
 
-*5 Nov 2026 · the commit "Small phones, tidied: nothing cut short at 320 points"*
+*5 Nov 2026 · `bebbcc5`*
 
 Found by measuring every screen at 320 points (the smallest phones) for text cut short and buttons too small to tap:
 

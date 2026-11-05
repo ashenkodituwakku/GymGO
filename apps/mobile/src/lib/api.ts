@@ -20,6 +20,9 @@ import type { TrainingSession } from './training';
 import { pickApiBase } from './serverAddress';
 import { LIMITED } from './limited';
 import { WEBSITE_AUTO, serverMissed } from './website';
+import { ApiError, OfflineError, failure, readBody } from './apiErrors';
+
+export { ApiError, OfflineError, readBody };
 
 export { SERVER_PREFIX, pickApiBase } from './serverAddress';
 
@@ -43,19 +46,6 @@ function bundleUrl(): string | null {
   }
 }
 
-export class ApiError extends Error {
-  constructor(
-    readonly status: number,
-    message: string,
-    /** The server's reason, when it gives one: `pro_required`, `billing_off`… */
-    readonly code: string | null = null,
-    /** Anything else the server said, e.g. `countryCode` for an area that needs Pro. */
-    readonly detail: Record<string, unknown> = {},
-  ) {
-    super(message);
-  }
-}
-
 /** A town or suburb the server's place finder found. */
 export interface FoundPlace {
   name: string;
@@ -70,8 +60,6 @@ export interface FoundPlace {
   timezone: string;
 }
 
-/** The server couldn't be reached at all. */
-export class OfflineError extends Error {}
 
 /** What to tell someone when a request to the GymGO server failed. */
 export function problemText(error: unknown, fallback = 'That didn’t save. Try again?'): string {
@@ -129,15 +117,8 @@ async function request<T>(method: string, path: string, options: { token?: strin
     clearTimeout(timer);
   }
   const text = await response.text();
-  const data = text ? (JSON.parse(text) as Record<string, unknown>) : {};
-  if (!response.ok) {
-    throw new ApiError(
-      response.status,
-      typeof data.error === 'string' ? data.error : 'Something went wrong.',
-      typeof data.code === 'string' ? data.code : null,
-      data,
-    );
-  }
+  const data = readBody(response.status, text);
+  if (!response.ok) throw failure(response.status, data);
   return data as T;
 }
 

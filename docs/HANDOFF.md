@@ -106,6 +106,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Saying truly what's down** (5 Nov). lib/apiErrors.ts now holds
+  `ApiError`, `OfflineError` (re-exported by lib/api.ts), `readBody` (a
+  body that isn't JSON: 502/503/504 is `OfflineError`, else `ApiError`
+  with code `not_json`) and `failure` (502, 504, or a 503 with no code of
+  the server's own, is `OfflineError`: a proxy saying the server's off;
+  the dev server's proxy answers 502 with its own JSON). lib/weather.ts's
+  `none` state has a `cause` ('server' | 'met' | 'other'). Tested in
+  apiBody.test.ts.
 - **Small phones, tidied** (5 Nov). Found with two browser scans worth
   rerunning (in the session's scratchpad, not the repo): text cut short
   (`text-overflow: ellipsis` with scrollWidth > clientWidth, or a line

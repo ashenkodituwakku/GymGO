@@ -9,10 +9,11 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
-## Update 91 · Your built workout comes into view
+## Update 91 · What you just made comes into view
 
-*5 Nov 2026 · the commit "Workout builder: the built plan scrolls into view"*
+*5 Nov 2026 · `6b0a67b`, and the commit "Training programme: starting one shows it from the top"*
 
+- Starting a training programme shows it from the top (its name, the week and your progress). The page stayed scrolled down where the Start button was, so it opened on the middle of the programme. Ending it, or picking another, goes back to the top of the choices too.
 - After Build my workout, the page brings the plan up to where you can see it (its summary, Start workout and the first exercise). It used to stay put, with the plan just peeking in at the bottom of the screen under the options. With Reduce Motion it moves there at once instead of scrolling.
 - Not yet seen on a phone.
 

@@ -11,8 +11,8 @@
  */
 
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { AskGymPal } from '@/components/AskGymPal';
 import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
@@ -57,8 +57,18 @@ export default function ProgrammeScreen() {
   useGlassRedraw();
   usePageTitle('Training programme');
   const programme = useProgramme();
+  // Starting a programme, or going back to pick another, puts a different page here: show it from its top,
+  // not from wherever the button was.
+  const page = useRef<ScrollViewInstance | null>(null);
+  const running = programme !== null;
+  const wasRunning = useRef(running);
+  useEffect(() => {
+    if (wasRunning.current === running) return;
+    wasRunning.current = running;
+    page.current?.scrollTo({ y: 0, animated: false });
+  }, [running]);
   return (
-    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+    <PageScroll ref={page} style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: 'Programme' }} />
       {programme ? <Running programme={programme} /> : <Chooser />}
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>

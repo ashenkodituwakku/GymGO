@@ -11,6 +11,7 @@ import { bodyFemaleBack } from 'react-native-body-highlighter/dist/assets/bodyFe
 import { bodyFemaleFront } from 'react-native-body-highlighter/dist/assets/bodyFemaleFront';
 import { bodyFront } from 'react-native-body-highlighter/dist/assets/bodyFront';
 import { OUTLINE } from './outline';
+import { mix } from '@/lib/looks';
 
 export type Gender = 'male' | 'female';
 export type Side = 'front' | 'back';
@@ -62,3 +63,24 @@ export function shapesFor(gender: Gender, side: Side): Shape[] {
 }
 
 export const outlineFor = (gender: Gender, side: Side) => OUTLINE[gender][side];
+
+/**
+ * A muscle's colour as three stops, lit from the top: a little lighter at
+ * its top, the colour itself through the middle, a little deeper at its
+ * foot. Each muscle gets its own (the gradient is in the muscle's own box),
+ * so the figure looks rounded rather than flat. A colour that isn't #RRGGBB
+ * is used as it is.
+ */
+export function shadeStops(fill: string): [string, string, string] {
+  if (!/^#[0-9a-f]{6}$/i.test(fill)) return [fill, fill, fill];
+  return [mix(fill, '#FFFFFF', 0.22), fill, mix(fill, '#000000', 0.16)];
+}
+
+/** An id for a colour's gradient in one figure: safe inside url(#…). */
+export const shadeId = (figure: string, fill: string) => `${figure}${fill.replace(/[^a-z0-9]/gi, '')}`;
+
+/** Where the figure stands, in its view box: the middle and the foot of the drawing, for its shadow. */
+export function footing(gender: Gender, side: Side): { cx: number; cy: number; rx: number } {
+  const [x, y, w, h] = VIEWBOX[gender][side].split(' ').map(Number) as [number, number, number, number];
+  return { cx: x + w / 2, cy: y + h - h * 0.045, rx: w * 0.24 };
+}

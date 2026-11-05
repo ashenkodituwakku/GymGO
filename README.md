@@ -510,10 +510,14 @@ month you trained in, and ‹ › step through the months with a workout.
 **Share this month** sends the totals in a few lines, never which days you
 went. Warm-ups never count; months are by this device's calendar.
 
-**Recovery map** (Progress): the body, front and back, each muscle shaded
-by how long since you last trained it as a main muscle (today, yesterday,
-2–3 days, 4 or more, not in your log), with the same as a list. It shows
-what you've trained, not whether a muscle has recovered.
+**Recovery map** (Progress): the body, front and back, each muscle in a
+heat colour for how long since you last trained it as a main muscle (deep
+red today, orange yesterday, amber 2–3 days, a faint warmth for 4 or more,
+the body's grey if it's not in your log), with the same as a list. Warm
+colours only, no green: it shows what you've trained, not whether a muscle
+has recovered. The body figure here and in the workout builder is drawn
+with depth: the body under the muscles, each muscle shaded from its top, a
+shadow under the feet, and a picked muscle glowing.
 
 **Progress photos** (Progress, or Profile → Training): pictures of
 yourself kept on the device only (files in the app's documents folder on a

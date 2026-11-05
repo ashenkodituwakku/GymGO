@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 87 · A better-looking body figure
+
+*5 Nov 2026 · the commit "A better-looking body figure: depth, a glow for picked muscles, a heat scale for recovery"*
+
+- The body in the workout builder and on the recovery map is drawn with depth instead of as a flat grey chart: the body shows between the muscles (as creases, not the white card), each muscle is shaded from its top so it looks rounded, and a soft shadow sits under the feet. Male and female, front and back, light and dark, every look.
+- A muscle you pick glows in its colour, with a fine light edge.
+- The recovery map is a heat scale: deep red for a muscle trained today, orange yesterday, amber 2–3 days ago, a faint warmth for 4 days or more, the body's grey if it's not in your log. The four purples it used were hard to tell apart. No green, as GymGO can't know a muscle is ready.
+- Not yet seen on a phone.
+
 ## Update 86 · Titles clear of the back button
 
-*5 Nov 2026 · the commit "Titles clear of the back button on small screens; one row of challenge targets"*
+*5 Nov 2026 · `472142b`*
 
 - On the website on a small phone (under 360 points), the back button is its chevron alone, as on an iPhone when the title needs the room: "Monthly challenge", "Find a machine" and "Progress photos" ran into "‹ Home". A screen reader still hears where it goes.
 - Monthly challenge: the four targets are one row of equal choices, like the programme's days a week, instead of chips with "20 days" alone on a second line.

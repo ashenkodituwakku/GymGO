@@ -106,6 +106,16 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **A better-looking body figure** (5 Nov, the owner: "make the muscle guy
+  for building workout and checking what muscles are fatigued look
+  better"). components/body/BodyFigure(.web).tsx: a `LinearGradient` per
+  fill colour (`shadeStops` in body/shapes.ts: 22% lighter at the top,
+  16% deeper at the foot, in each muscle's own box), the silhouette filled
+  with the new `bodyBase` token (light, dark, Dim), a radial floor shadow
+  at `footing()`; a picked muscle gets a light edge, and on the web a CSS
+  `drop-shadow` glow. RecoveryMap's `HEAT` (today #E5484D, yesterday
+  #F76B15, 2–3 days #F5A524, 4+ mixed into the body grey); the legend and
+  list dots use the same `shade()`.
 - **Titles clear of the back button** (5 Nov). components/WebBack.tsx is
   the chevron alone under 360 points wide (`round` style), found with a
   browser check measuring the gap between the header's title text and the

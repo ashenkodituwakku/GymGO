@@ -1,7 +1,7 @@
 /**
  * On Progress: the recovery map (lib/recovery.ts). The body, front and
- * back, each muscle shaded by how long since you last trained it as a main
- * muscle, from your log; the same as a list underneath, so nothing rests on
+ * back, each muscle in a heat colour for how long since you last trained it
+ * as a main muscle, from your log (hottest for today); the same as a list underneath, so nothing rests on
  * colour alone. It shows what you've trained, not whether a muscle is
  * recovered: GymGO can't know that.
  */
@@ -19,17 +19,24 @@ import { Txt } from './ui';
 
 const isMuscle = (slug: string): slug is Muscle => MUSCLES.some((muscle) => muscle.id === slug);
 
-/** Strongest for today, fading with the days; muscles never logged stay plain. */
+/**
+ * A heat scale, hottest for today: deep red, then orange, then amber, then
+ * a faint warmth for four days or more; muscles never logged stay the
+ * body's own grey. Warm colours only: green would read as "ready", which
+ * GymGO can't know (the list below says it in words, so nothing rests on
+ * colour alone).
+ */
+export const HEAT = { today: '#E5484D', yesterday: '#F76B15', days: '#F5A524' } as const;
 const shade = (band: RestBand) => {
   switch (band) {
     case 'today':
-      return color.brand;
+      return HEAT.today;
     case 'yesterday':
-      return mix(color.bodyIdle, color.brand, 0.7);
+      return HEAT.yesterday;
     case 'days':
-      return mix(color.bodyIdle, color.brand, 0.42);
+      return HEAT.days;
     case 'longer':
-      return mix(color.bodyIdle, color.brand, 0.18);
+      return mix(color.bodyIdle, HEAT.days, 0.38);
     case 'never':
       return color.bodyIdle;
   }

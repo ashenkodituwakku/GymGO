@@ -117,6 +117,8 @@ const BASE = {
     bodyInert: '#ECECEF',
     bodyBorder: '#C4C4CA',
     bodyHover: '#B4B4BE',
+    /** The body under the muscles: the creases between them. */
+    bodyBase: '#B9B9C3',
     /** Google's own grey, for its attribution. */
     googleInk: '#5F6368',
   },
@@ -174,6 +176,7 @@ const BASE = {
     bodyInert: '#2C2C2E',
     bodyBorder: '#636366',
     bodyHover: '#636366',
+    bodyBase: '#1F1F22',
     googleInk: '#BDC1C6',
   },
 } as const;
@@ -196,6 +199,7 @@ const DIM = {
   fillStrong: 'rgba(130, 136, 150, 0.36)',
   separator: 'rgba(120, 126, 140, 0.5)',
   bodyInert: '#30343D',
+  bodyBase: '#22252C',
 } as const;
 
 /** Whether Dim applies: dark, in a look that doesn't draw dark its own way. */

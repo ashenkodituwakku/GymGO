@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 79 · Tilt your card
+
+*5 Nov 2026 · the commit "Tilt your card: a card's page leans it towards your finger or mouse"*
+
+- On a card's own page, drag across the card (or move the mouse over it on the website) and it leans towards you in 3D, as you'd turn a trading card to catch the light; let go and it springs back flat.
+- Only sideways drags tilt it, so the page still scrolls from on top of it. It stays still with Reduce Motion, and a shared picture is always of the card lying flat.
+- Not yet seen on a phone.
+
 ## Update 78 · Saying truly what's down
 
-*5 Nov 2026 · the commit "Saying truly what's down: the server, not MET Norway, and never a parse error"*
+*5 Nov 2026 · `3e13d11`*
 
 - With GymGO's server down, Home's weather said MET Norway couldn't be reached. It now says GymGO's server can't be, and says MET Norway only when it's MET Norway.
 - When something in front of the server (the website's proxy, a tunnel) answers for it because the server is off, the app now says it can't reach the server everywhere, instead of a vague "couldn't load" or, for a page that isn't GymGO's answer, an error from reading it.

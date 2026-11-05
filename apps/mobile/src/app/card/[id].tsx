@@ -8,6 +8,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import { GemCard } from '@/components/GemCard';
+import { TiltCard } from '@/components/TiltCard';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -92,13 +93,15 @@ export default function CardScreen() {
       {/* What's captured: the card and a little room round it. */}
       <View ref={shot} collapsable={false} style={styles.shot}>
         {entry ? (
-          <GemCard
-            entry={entry}
-            record={data.records.find((record) => record.location.id === entry.id) ?? null}
-            cover={data.covers[entry.id] ?? null}
-            width={cardWidth}
-            big
-          />
+          <TiltCard>
+            <GemCard
+              entry={entry}
+              record={data.records.find((record) => record.location.id === entry.id) ?? null}
+              cover={data.covers[entry.id] ?? null}
+              width={cardWidth}
+              big
+            />
+          </TiltCard>
         ) : (
           <View style={{ width: Math.max(cardWidth, 280) }}>
             <SetReward set={set!} />

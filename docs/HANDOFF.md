@@ -106,6 +106,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Tilt your card** (5 Nov). components/TiltCard.tsx wraps the card on
+  card/[id]: a Gesture Handler pan (`activeOffsetX([-8, 8])`,
+  `failOffsetY([-14, 14])`, so vertical drags scroll) springs
+  `rotateX`/`rotateY` (with `perspective: 900`) towards the touch and back
+  to flat; in a browser, the mouse is read from `onPointerMove` and
+  `onPointerLeave` on an outer View that doesn't tilt (Gesture Handler's
+  Hover didn't fire on the web). The maths is lib/tilt.ts (`tiltFor`, a
+  worklet, tested); MOST_TILT is 14°. Off with Reduce Motion.
 - **Saying truly what's down** (5 Nov). lib/apiErrors.ts now holds
   `ApiError`, `OfflineError` (re-exported by lib/api.ts), `readBody` (a
   body that isn't JSON: 502/503/504 is `OfflineError`, else `ApiError`

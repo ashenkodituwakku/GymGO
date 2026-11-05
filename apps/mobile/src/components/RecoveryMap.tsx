@@ -27,7 +27,7 @@ const isMuscle = (slug: string): slug is Muscle => MUSCLES.some((muscle) => musc
  * colour alone).
  */
 export const HEAT = { today: '#E5484D', yesterday: '#F76B15', days: '#F5A524' } as const;
-const shade = (band: RestBand) => {
+export const heatShade = (band: RestBand) => {
   switch (band) {
     case 'today':
       return HEAT.today;
@@ -66,7 +66,7 @@ export function RecoveryMap({ sessions, maxWidth }: { sessions: TrainingSession[
             side={side}
             width={figureWidth}
             height={figureWidth * 2}
-            fillFor={(slug) => (isMuscle(slug) ? shade(byMuscle.get(slug)?.band ?? 'never') : color.bodyInert)}
+            fillFor={(slug) => (isMuscle(slug) ? heatShade(byMuscle.get(slug)?.band ?? 'never') : color.bodyInert)}
             pickable={isMuscle}
             selected={(slug) => slug === picked}
             labelFor={(slug) => {
@@ -85,7 +85,7 @@ export function RecoveryMap({ sessions, maxWidth }: { sessions: TrainingSession[
       <View style={styles.legend} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
         {BANDS.map((band) => (
           <View key={band.id} style={styles.key}>
-            <View style={[styles.swatch, { backgroundColor: shade(band.id) }]} />
+            <View style={[styles.swatch, { backgroundColor: heatShade(band.id) }]} />
             <Txt variant="caption" color={color.labelSecondary}>
               {band.label}
             </Txt>
@@ -97,7 +97,7 @@ export function RecoveryMap({ sessions, maxWidth }: { sessions: TrainingSession[
           .filter((rest) => rest.days !== null)
           .map((rest) => (
             <Pressable key={rest.muscle} onPress={() => setPicked(rest.muscle === picked ? null : rest.muscle)} accessibilityRole="button" accessibilityLabel={restLine(rest)} style={[styles.chip, rest.muscle === picked && styles.chipOn]}>
-              <View style={[styles.dot, { backgroundColor: shade(rest.band) }]} />
+              <View style={[styles.dot, { backgroundColor: heatShade(rest.band) }]} />
               <Txt variant="footnote">{restLine(rest)}</Txt>
             </Pressable>
           ))}

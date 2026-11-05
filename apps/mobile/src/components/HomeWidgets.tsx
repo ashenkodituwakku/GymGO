@@ -17,6 +17,7 @@ import { agoLabel, daysAgo } from '@/lib/exerciseLibrary';
 import { haptic } from '@/lib/haptics';
 import { monthKeyOf, monthReport } from '@/lib/monthReport';
 import { recoveryMap, type MuscleRest } from '@/lib/recovery';
+import { heatShade } from './RecoveryMap';
 import { workoutTitle } from '@/lib/templates';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { durationLabel, fromKg, volumeKg, type TrainingSession, type WeightUnit } from '@/lib/training';
@@ -245,7 +246,9 @@ export function RecoveryWidget({ log }: { log: LogState }) {
           </Txt>
           <View style={styles.chips}>
             {list.map((rest) => (
-              <View key={rest.muscle} style={styles.chip}>
+              <View key={rest.muscle} style={[styles.chip, styles.heatChip]}>
+                {/* The recovery map's own colour for it, so the two read alike. */}
+                <View style={[styles.heatDot, { backgroundColor: heatShade(rest.band) }]} />
                 <Txt variant="caption" style={face('medium')} numberOfLines={1}>
                   {chip(rest)}
                 </Txt>
@@ -359,6 +362,8 @@ const styles = themed(() =>
     restLabel: { textTransform: 'none' },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
     chip: { paddingHorizontal: space[2], paddingVertical: 4, borderRadius: radius.pill, backgroundColor: color.fill },
+    heatChip: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    heatDot: { width: 8, height: 8, borderRadius: 4 },
     toolRow: { flexDirection: 'row', gap: space[2] },
     tool: { flex: 1, minWidth: 0, alignItems: 'center', gap: 6, paddingVertical: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     toolIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },

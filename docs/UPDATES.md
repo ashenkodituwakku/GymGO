@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 81 · Every field's hint fits
+
+*5 Nov 2026 · the commit "Every field's hint fits: shorter hints on the smallest phones"*
+
+Every text field's hint was measured against its field on a 320-point phone:
+
+- Create account: the name field's hint is "Name shown on reviews" (it was cut off at "…as reviewers see").
+- The map's search says "Where to?" on the smallest phones, where "Where are we lifting?" didn't fit beside the filters and your picture.
+- Not yet seen on a phone.
+
 ## Update 80 · Sharing a picture works again on the website
 
-*5 Nov 2026 · the commit "Sharing a picture works again on the website, on the page's own background"*
+*5 Nov 2026 · `68790e4`*
 
 - Fixed: on the website, "Share as a picture" (a card, a finished set, your week, Lifetime) always said "Couldn't make the picture here". The picture library's newer version, which came with the SDK 58 upgrade, needs a companion package for browsers that wasn't installed (html2canvas-pro, MIT).
 - The picture now has the page's own background, so a dark-mode card isn't on white, and it's drawn at least twice as sharp.

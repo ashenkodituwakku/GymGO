@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Every field's hint fits** (5 Nov). A browser scan measured each
+  input's placeholder (canvas `measureText` in its own font) against its
+  width at 320 pt over 20 screens. sign-in.tsx's name hint is shorter;
+  ResultsContent uses `PLACEHOLDER_SHORT` (lib/copy.ts) under 360 pt wide.
 - **Sharing a picture works again on the website** (5 Nov). Since the SDK
   58 upgrade (react-native-view-shot 6.1.1), view-shot's web capture needs
   its optional peer `html2canvas-pro`, which wasn't installed, so every

@@ -266,7 +266,7 @@ export default function SignInScreen() {
               label="Your name"
               value={name}
               onChangeText={setName}
-              placeholder="Your name, as reviewers see it"
+              placeholder="Name shown on reviews"
               autoComplete="name"
               textContentType="name"
               maxLength={40}

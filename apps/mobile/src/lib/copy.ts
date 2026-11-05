@@ -272,6 +272,8 @@ export function gymDistanceLine(km: number, country: string, placeName: string):
 }
 
 export const PLACEHOLDER = 'Where are we lifting?';
+/** The same, for a field too narrow for it (a 320-point phone, beside the filters and your picture). */
+export const PLACEHOLDER_SHORT = 'Where to?';
 
 /** Sources, in plain words. */
 export function sourceLabel(status: string): string {

@@ -25,7 +25,7 @@ import Animated, { ReduceMotion, runOnJS, useAnimatedStyle, useSharedValue, with
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import type { GymRecord } from '@gymgo/domain';
 import { GemCard } from './GemCard';
-import { CARD_FRAMES } from '@/lib/cardShape';
+import { CARD_FRAMES, GLOW_ROOM } from '@/lib/cardShape';
 import { Icon } from './Icon';
 import { EASE_IN, EASE_OUT, Pressable, Pressy, damp } from './motion';
 import { PrimaryButton, Txt } from './ui';
@@ -192,7 +192,9 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
 
               <Animated.View style={cardStyle}>
                 {/* Captured as it is for Share card: just the card. */}
-                <View ref={shot} collapsable={false}>
+                {/* With room round the card for its frame's glow and corners, which reach past its edge; the
+                    negative margin keeps the pop-up's layout as it was. */}
+                <View ref={shot} collapsable={false} style={styles.shot}>
                   <GemCard entry={pull.entry} record={record} cover={cover} width={cardWidth} big windowHeight={windowHeight} />
                 </View>
               </Animated.View>
@@ -252,6 +254,7 @@ const styles = themed(() =>
     },
     tint: { backgroundColor: 'rgba(16, 16, 26, 0.78)' },
     glow: { position: 'absolute' },
+    shot: { padding: GLOW_ROOM, margin: -GLOW_ROOM },
     scroll: { flexGrow: 0 },
     content: { alignItems: 'center', gap: space[3], paddingHorizontal: space[5], paddingTop: space[6], paddingBottom: space[5] },
     heading: { alignItems: 'center', gap: 2, paddingHorizontal: space[4] },

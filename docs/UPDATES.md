@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 85 · The whole card in a shared picture
+
+*5 Nov 2026 · the commit "The whole card in a shared picture from the new-card pop-up; names on Next to collect"*
+
+- Share card in the new-card pop-up now takes the whole card: its frame's glow and corners were cut off at the picture's edges.
+- Next to collect shows a gym's full name on two lines when it needs them ("Absolute MMA · Melbourne CBD" was cut short on a small phone).
+- Not yet seen on a phone.
+
 ## Update 84 · Collection on a tablet or a computer
 
-*5 Nov 2026 · the commit "Collection on a tablet or a computer: three cards a row, every badge in sight"*
+*5 Nov 2026 · `4b7b962`*
 
 - Where the page is wide enough (a tablet, a computer), your cards are three to a row instead of two very large ones, and so are a friend's.
 - There, the badges and the rarity filter wrap onto more lines, so all of them show; they used to be one row cut off mid-badge at the page's edge. On a phone they're still one row to swipe.

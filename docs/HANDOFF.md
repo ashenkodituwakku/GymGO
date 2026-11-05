@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **The whole card in a shared picture** (5 Nov). The card's frame is drawn
+  `GLOW_ROOM` past its box; CardReveal's capture view now has
+  `padding: GLOW_ROOM, margin: -GLOW_ROOM` so the picture holds it all
+  without moving the pop-up (card/[id] already had padding round its shot).
 - **Collection on a tablet or a computer** (5 Nov). collection.tsx:
   `columns` is 3 when the page (`min(width, COLUMN)`) is at least 560
   wide; `BadgeShelf` and `RarityFilter` wrap (`wrap` when `width >=

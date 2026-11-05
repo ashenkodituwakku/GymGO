@@ -62,7 +62,6 @@ let photoDir: string;
 let reader: string;
 const googleCalls: string[] = [];
 
-const CITY = MELBOURNE_GYMS.find((gym) => gym.location.id === 'dohertys-gym-city')!;
 
 async function fakeGoogle(input: string | URL | Request, init?: RequestInit): Promise<Response> {
   const url = String(input);

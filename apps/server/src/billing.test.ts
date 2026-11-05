@@ -12,7 +12,6 @@ import { openDb, seedGyms, type Db } from './db';
 // --- A pretend Stripe: records what GymGO asks for; never touches the network. ---
 
 const WEBHOOK_SECRET = 'whsec_test_gymgo';
-const DAY = 24 * 60 * 60;
 
 function makeFakeStripe() {
   const calls: Array<{ method: string; params: unknown; options?: unknown }> = [];

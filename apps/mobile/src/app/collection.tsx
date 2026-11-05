@@ -163,6 +163,17 @@ export default function CollectionScreen() {
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           At a gym, open its page and tap I’m here. GymGO checks your location on this phone and gives you the gym’s card, with a rarity and a gem rolled by luck. Every day you go back rolls again, and the card climbs from Bronze to Platinum.
         </Txt>
+        {/* The five cards there are to get, each in its shape and metal. */}
+        <View style={styles.shapesBox} accessible accessibilityLabel={`Cards come in five rarities: ${RARITIES.map((rarity) => rarity.label).join(', ')}`}>
+          <View style={styles.shapes}>
+            {RARITIES.map((rarity) => (
+              <CardShapeIcon key={rarity.id} rarity={rarity.id} height={34} />
+            ))}
+          </View>
+          <Txt variant="caption" color={color.labelSecondary}>
+            {`${RARITIES[0]!.label} to ${RARITIES[RARITIES.length - 1]!.label}`}
+          </Txt>
+        </View>
         <PrimaryButton
           label="Find a gym"
           icon="map"
@@ -489,6 +500,8 @@ const styles = themed(() =>
     badge: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.md, backgroundColor: color.fill },
     badgeOn: { backgroundColor: color.brandTint },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
+    shapesBox: { alignItems: 'center', gap: 6 },
+    shapes: { flexDirection: 'row', alignItems: 'flex-end', gap: space[3] },
     // Runs to the page's edges when it scrolls, so a pill isn't cut off at the margin.
     rarityScroll: { marginHorizontal: -space[4], flexGrow: 0 },
     rarityRow: { gap: space[2], paddingHorizontal: space[4] },

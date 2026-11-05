@@ -106,6 +106,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **A clearer start to the collection** (5 Nov). collection.tsx's empty
+  state has a row of `CardShapeIcon`s with "Common to Legendary" (one
+  caption: five labels didn't fit at 320 pt). lib/sets.ts adds the street
+  (`address.line1`) to a missing gym's name when two gyms in the set share
+  it; a test covers it.
 - **The new cards everywhere** (5 Nov). components/CardShapeIcon.tsx
   (a rarity's `cardPath` in its metal, any height, its own gradient id)
   replaces the gem dot on a gym page's CollectCard line and the filter's

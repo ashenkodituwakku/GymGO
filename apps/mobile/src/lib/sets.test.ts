@@ -43,6 +43,17 @@ describe('collection sets', () => {
     expect(sets.some((set) => set.name === 'Collingwood' || set.name === 'Carlton')).toBe(false);
   });
 
+  it('tells two branches of one chain apart by their street', () => {
+    const branch = (id: string, line1: string) => {
+      const made = record(id, 'Anytime Fitness', 'Fitzroy');
+      (made.location.address as { line1?: string }).line1 = line1;
+      return made;
+    };
+    const listed = [...LISTED, branch('x', '12 Smith Street'), branch('y', '300 Brunswick Street')];
+    const fitzroy = collectionSets(collectAll(['a']), listed).find((set) => set.name === 'Fitzroy')!;
+    expect(fitzroy.missing.map((gym) => gym.name)).toEqual(['Anytime Fitness (12 Smith Street)', 'Anytime Fitness (300 Brunswick Street)', 'Beta Fitness']);
+  });
+
   it('finishes a set on the day its last gym was collected, and says so once', () => {
     const before = collectAll(['a']);
     const after = collect(before, gymOf('b'), new Date(2026, 8, 5, 18)).collection;

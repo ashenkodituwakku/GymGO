@@ -103,7 +103,15 @@ export function collectionSets(collection: Collection, listed: GymRecord[]): Gym
     const gyms = new Map(suburbGyms.get(key) ?? []);
     for (const entry of mine) gyms.set(entry.id, entry.name);
     if (gyms.size < SMALLEST_SET || gyms.size > BIGGEST_SUBURB_SET) continue;
-    const missing = [...gyms].filter(([id]) => !collection[id]).map(([id, name]) => ({ id, name }));
+    // Two branches of one chain in a suburb are told apart by their street.
+    const named = new Map<string, number>();
+    for (const name of gyms.values()) named.set(name, (named.get(name) ?? 0) + 1);
+    const missing = [...gyms]
+      .filter(([id]) => !collection[id])
+      .map(([id, name]) => {
+        const street = byId.get(id)?.location.address.line1?.trim();
+        return { id, name: named.get(name)! > 1 && street ? `${name} (${street})` : name };
+      });
     const complete = missing.length === 0;
     sets.push({
       key,

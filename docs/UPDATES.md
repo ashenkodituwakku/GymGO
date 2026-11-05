@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 76 · A clearer start to the collection
+
+*5 Nov 2026 · the commit "A clearer start to the collection: the five card shapes, branches told apart in sets"*
+
+- An empty Collection shows the five card shapes, Common to Legendary, so you can see what there is to get.
+- In a set, two branches of one chain in the same suburb are told apart by their street ("Anytime Fitness (12 Smith Street)"), not listed twice under one name.
+- Not yet seen on a phone.
+
 ## Update 75 · The new cards everywhere
 
-*5 Nov 2026 · the commit "The new cards everywhere: shape icons on a gym's page and Home, the reveal in the rarity's metal"*
+*5 Nov 2026 · `f01fddb`*
 
 - A gym's page shows your card as a small card in its rarity's shape and metal, not a gem dot.
 - Home's Collection tile shows your best card's shape and rarity on its own line, instead of "best Silver" wrapping.

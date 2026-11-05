@@ -12,7 +12,7 @@ import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, Pressable } from './motion';
 import { HOURS_LABELS, explainNoMatches, type GymLocation, type HoursNeed, type SearchOutcome } from '@gymgo/domain';
 import { countryInSentence, countryName } from '@/lib/country';
-import { cityAt, distanceLabel, localBudget, moneyLabel, placeContext, tracksPrices } from '@/lib/places';
+import { distanceLabel, localBudget, moneyLabel, placeContext, tracksPrices } from '@/lib/places';
 import { MATCH, suggestionKey, title, type Suggestion } from '@/lib/suggest';
 import type { RecentPlace } from '@/lib/recentPlaces';
 import { EMPTY, PLACEHOLDER, PLACEHOLDER_SHORT, TIER, lookupLine, searchPrompt, sessionGreeting, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
@@ -125,7 +125,6 @@ export function ResultsContent({
   const SearchInput = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
   // "Where are we lifting?" doesn't fit beside the filters and your picture on a 320-point phone.
   const narrow = useWindowDimensions().width < 360;
-  const city = cityAt(filters.centre);
   const typed = query.trim();
   // Somewhere not on GymGO's lists: offered as a last row, to look it up anywhere in the world.
   const offerLookUp = typed.length >= 3 ? !suggestions.some((hit) => hit.match === MATCH.exact) : typed.length >= 2 && suggestions.length === 0;

@@ -17,7 +17,7 @@ import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { PIcon, type PhosphorName } from './PIcon';
 import { contrast } from '@/lib/looks';
-import { ScrollMemory } from './Redrawn';
+import { ScrollMemory, startingY } from './Redrawn';
 import { Toggle } from './Toggle';
 import { Txt } from './ui';
 
@@ -163,7 +163,8 @@ function TabScreenInner({
           // Once there's a page to scroll (a tab drawn again out of sight has none at first).
           if (placed.current || height <= 0) return;
           placed.current = true;
-          if (memory && memory.y > 0) scroller.current?.scrollTo({ y: memory.y, animated: false });
+          const y = startingY(memory);
+          if (y > 0) scroller.current?.scrollTo({ y, animated: false });
         }}
         // The page scrolls under the floating tab bar, so it makes its own room
         // for it rather than letting iOS guess at insets.

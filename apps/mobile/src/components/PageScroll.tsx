@@ -14,7 +14,9 @@
  * goes there too.
  *
  * When the colours change and the screen is drawn again (Redrawn), the page
- * goes back to where it was scrolled, rather than to the top.
+ * goes back to where it was scrolled, rather than to the top. A page that's
+ * new to the screen (a workout's summary in place of the workout) starts at
+ * its top.
  *
  * On iPhone the keyboard makes room for itself: the page can scroll a box
  * being typed in clear of it, rather than leaving it underneath (a note on a
@@ -24,7 +26,7 @@
 
 import { forwardRef, useCallback, useContext, useRef, type ForwardedRef } from 'react';
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps, type ScrollViewInstance } from 'react-native';
-import { ScrollMemory } from '@/components/Redrawn';
+import { ScrollMemory, startingY } from '@/components/Redrawn';
 import { useOverhang, useScreenBottom, type Measurable } from '@/lib/layout';
 import { ambientGlow } from '@/lib/theme';
 
@@ -77,7 +79,8 @@ export const PageScroll = forwardRef(function PageScroll(
           // Once there's a page to scroll: one drawn again out of sight measures nothing at first.
           if (!placed.current && height > 0) {
             placed.current = true;
-            if (memory && memory.y > 0) node.current?.scrollTo({ y: memory.y, animated: false });
+            const y = startingY(memory);
+            if (y > 0) node.current?.scrollTo({ y, animated: false });
           }
           onContentSizeChange?.(width, height);
         }}

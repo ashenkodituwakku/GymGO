@@ -106,6 +106,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **A new page starts at its top** (7 Nov, polishing). Redrawn's
+  `ScrollMemory` is now a `ScrollPlace` `{ y, restore }`; `restore` is set
+  only when the theme version changes (a redraw), and `startingY(memory)`
+  (Redrawn.tsx) gives a newly drawn PageScroll or TabScreen its start: the
+  kept place after a redraw, else 0. train.tsx's summary had been taking
+  the workout page's place (331 down).
 - **The built plan comes into view** (5 Nov, polishing). workout/[id].tsx
   passes a ref to `PageScroll`; `BuildingBar`'s `onDone` sets
   `showPlan.current`, and the plan's `onLayout` then calls

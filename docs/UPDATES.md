@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 92 · A finished workout's summary opens at its top
+
+*7 Nov 2026 · the commit "A new page on the same screen starts at its top"*
+
+- Finishing a workout from the bottom of the page opened its summary part way down, with its heading and totals off the top of the screen. The summary now opens at its top. The same goes for any screen that swaps one page for another in place.
+- Changing the colours (an accent, dark mode) still keeps the page where it was scrolled, as before.
+- Not yet seen on a phone.
+
 ## Update 91 · What you just made comes into view
 
-*5 Nov 2026 · `6b0a67b`, and the commit "Training programme: starting one shows it from the top"*
+*5 Nov 2026 · `6b0a67b`, `9c6b521`*
 
 - Starting a training programme shows it from the top (its name, the week and your progress). The page stayed scrolled down where the Start button was, so it opened on the middle of the programme. Ending it, or picking another, goes back to the top of the choices too.
 - After Build my workout, the page brings the plan up to where you can see it (its summary, Start workout and the first exercise). It used to stay put, with the plan just peeking in at the bottom of the screen under the options. With Reduce Motion it moves there at once instead of scrolling.

@@ -44,15 +44,39 @@ export function useGlassRedraw(): void {
   useGlassLevel();
 }
 
-/** How far a redrawn screen's page was scrolled, kept across the redraw. */
-export const ScrollMemory = createContext<{ y: number } | null>(null);
+/**
+ * How far a screen's page is scrolled, kept across a redraw. `restore` is
+ * set only by a redraw: a page that's new to the screen (a workout's summary
+ * in place of the workout, a programme in place of its choices) starts at
+ * its top, not at the old page's place.
+ */
+export interface ScrollPlace {
+  y: number;
+  restore: boolean;
+}
+export const ScrollMemory = createContext<ScrollPlace | null>(null);
+
+/** Where a scroll view drawn just now starts: the page's place after a redraw, else the top (remembered from now on). */
+export function startingY(memory: ScrollPlace | null): number {
+  if (!memory) return 0;
+  const y = memory.restore ? memory.y : 0;
+  memory.restore = false;
+  memory.y = y;
+  return y;
+}
 
 /** How a screen comes in: a tab, or a page of the stack. */
 export type ScreenKind = 'tab' | 'page';
 
 export function Redrawn({ children, kind = 'page', focused }: { children: ReactNode; kind?: ScreenKind; focused?: boolean }) {
   const version = useThemeVersion();
-  const memory = useRef({ y: 0 }).current;
+  const memory = useRef<ScrollPlace>({ y: 0, restore: false }).current;
+  // Drawn again for new colours: the page that comes back goes back to its place.
+  const drawn = useRef(version);
+  if (drawn.current !== version) {
+    drawn.current = version;
+    memory.restore = true;
+  }
   return (
     <ScrollMemory.Provider value={memory}>
       <ScreenIn kind={kind} focused={focused !== false}>

@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Numbers without ornaments** (8 Nov, "less vibecoded"). progress/index's
+  `Stat` takes no `icon`/`tint`; lifetime.tsx's tiles have no `icon`;
+  lifetime's `mark` and pro.tsx's `featureIcon` have no background.
 - **Plainer headings** (8 Nov, the owner's "less vibecoded"). New `label`
   text style (13 pt semibold, sentence case) for a card's own small heading;
   `eyebrow` (spaced capitals) is left for section headings over lists and

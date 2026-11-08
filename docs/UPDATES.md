@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 95 · Numbers without ornaments
+
+*8 Nov 2026 · the commit "Numbers without ornaments: no icons over figures, no tinted circles behind list icons"*
+
+- Progress's three figures at the top (weeks in a row, this week, workouts) and Lifetime's six (workouts, hours, sets, reps, records, best streak) are the number and its word, without a small coloured icon over each.
+- Lifetime's favourites and Pro's comparison table show their icons on their own, not in tinted squares and circles.
+- Not yet seen on a phone.
+
 ## Update 94 · Plainer words and headings
 
-*8 Nov 2026 · the commit "Plainer headings: sentence case in cards, no icons on section titles, a plain stand-in for a missing photo"*
+*8 Nov 2026 · `aa20c07`*
 
 More of the same clean-up, in the type and the headings:
 

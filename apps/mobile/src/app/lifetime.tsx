@@ -147,15 +147,14 @@ export default function LifetimeScreen() {
 
   const lifted = Math.round(fromKg(life.volumeKg, unit));
   const like = heavyAs(life.volumeKg);
-  const tiles: Array<{ icon: IconName; value: string; label: string; spoken?: string }> = [
-    { icon: 'workout', value: life.workouts.toLocaleString('en'), label: life.workouts === 1 ? 'workout' : 'workouts' },
-    { icon: 'timer', value: hoursText(life.minutes), label: 'hours' },
-    { icon: 'check', value: life.sets.toLocaleString('en'), label: life.sets === 1 ? 'set' : 'sets' },
-    { icon: 'refresh', value: life.reps.toLocaleString('en'), label: life.reps === 1 ? 'rep' : 'reps' },
-    { icon: 'trophy', value: life.records.toLocaleString('en'), label: life.records === 1 ? 'record' : 'records' },
+  const tiles: Array<{ value: string; label: string; spoken?: string }> = [
+    { value: life.workouts.toLocaleString('en'), label: life.workouts === 1 ? 'workout' : 'workouts' },
+    { value: hoursText(life.minutes), label: 'hours' },
+    { value: life.sets.toLocaleString('en'), label: life.sets === 1 ? 'set' : 'sets' },
+    { value: life.reps.toLocaleString('en'), label: life.reps === 1 ? 'rep' : 'reps' },
+    { value: life.records.toLocaleString('en'), label: life.records === 1 ? 'record' : 'records' },
     // Short enough for a tile on a 320-point phone ("weeks, best run" was cut off); said in full to a screen reader.
     {
-      icon: 'flame',
       value: `${life.longestStreakWeeks}\u00a0wk`,
       label: 'best streak',
       spoken: `Best streak: ${life.longestStreakWeeks} week${life.longestStreakWeeks === 1 ? '' : 's'} in a row`,
@@ -192,7 +191,6 @@ export default function LifetimeScreen() {
       <View style={styles.grid}>
         {tiles.map((tile) => (
           <View key={tile.label} style={styles.tile} accessible accessibilityLabel={tile.spoken ?? `${tile.value} ${tile.label}`}>
-            <Icon name={tile.icon} size={16} color={color.brand} />
             <Txt variant="figure">{tile.value}</Txt>
             <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
               {tile.label}
@@ -317,7 +315,7 @@ const styles = themed(() =>
     section: { marginTop: space[3], marginLeft: space[4] },
     group: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
     fact: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
-    mark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+    mark: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
     flex: { flex: 1, minWidth: 0, gap: 2 },
     note: { marginHorizontal: space[4], marginTop: space[1] },
     shot: { padding: space[3], alignItems: 'center' },

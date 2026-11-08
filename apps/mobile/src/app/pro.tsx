@@ -565,7 +565,7 @@ const styles = themed(() => StyleSheet.create({
   tableRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   tableGroup: { gap: space[3], paddingTop: space[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   groupTitle: { marginBottom: -space[1] },
-  featureIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
+  featureIcon: { width: 24, alignItems: 'center', justifyContent: 'center' },
   column: { width: 84, textAlign: 'center' },
   // Pro's column is the one being sold: room for its words on a phone.
   proColumn: { width: 100 },

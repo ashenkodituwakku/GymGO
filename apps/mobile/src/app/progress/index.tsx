@@ -9,7 +9,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { GLIDE, Pressable } from '@/components/motion';
-import { Icon, type IconName } from '@/components/Icon';
+import { Icon } from '@/components/Icon';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { MilestonesCard, MuscleBalanceCard, WeekCard } from '@/components/TrainingInsights';
 import { CountUp } from '@/components/CountUp';
@@ -134,9 +134,9 @@ export default function ProgressScreen() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: 'Progress' }} />
       <Animated.View style={styles.stats}>
-        <Stat icon="flame" tint={color.maybe} value={known ? streak.weeks : null} one="week in a row" many="weeks in a row" />
-        <Stat icon="calendar" tint={color.brand} value={known ? sessionsThisWeek(log.sessions) : null} one="this week" many="this week" />
-        <Stat icon="workout" tint={color.good} value={known ? log.sessions.length : null} one="workout" many="workouts" />
+        <Stat value={known ? streak.weeks : null} one="week in a row" many="weeks in a row" />
+        <Stat value={known ? sessionsThisWeek(log.sessions) : null} one="this week" many="this week" />
+        <Stat value={known ? log.sessions.length : null} one="workout" many="workouts" />
       </Animated.View>
       {known && streak.frozen.length > 0 && (
         <View style={styles.freeze} accessible>
@@ -407,11 +407,10 @@ export default function ProgressScreen() {
 }
 
 /** `value` is null until the log has loaded: a dash, not a zero, so a log that didn't load doesn't read as no training. */
-function Stat({ icon, tint, value, one, many }: { icon: IconName; tint: string; value: number | null; one: string; many: string }) {
+function Stat({ value, one, many }: { value: number | null; one: string; many: string }) {
   const label = value === 1 ? one : many;
   return (
     <View style={styles.stat} accessible accessibilityLabel={value === null ? `${many}: not loaded` : `${value} ${label}`}>
-      <Icon name={icon} size={18} color={tint} />
       {value === null ? (
         <Txt variant="title" style={face('bold')}>
           —

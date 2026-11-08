@@ -106,6 +106,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Console clean** (8 Nov). With a 14-screen walk in the browser the only
+  console warning is the map's "Expected value to be of type number, but
+  found null instead." (×3): it's OpenFreeMap's own liberty style, the same
+  warnings on a bare page with nothing but that style (checked with a
+  stand-alone MapLibre page), so nothing in GymGO to fix.
 - **Search suggestions as Maps draws them** (8 Nov). ResultsContent's
   `lookGlyph` is `color.fill` with `labelSecondary` icons (look up, recent);
   places keep the red pin circle, gyms their logo or the brand circle.

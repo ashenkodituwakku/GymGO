@@ -9,11 +9,13 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
-## Update 105 · This month's figures fit a small phone
+## Update 105 · Figures and names that fit a small phone
 
-*8 Nov 2026 · the commit "This month widget: the unit goes with the word, so the figure fits"*
+*8 Nov 2026 · `bf77524`, and the commit "Workout: a saved workout's name gets two lines"*
 
 - Home's This month widget showed "11,563 kg" cut off on a 320-point phone. The figure is now the number and its word says the unit ("11,563 · kg lifted"), as a finished workout's summary does; a screen reader hears "11,563 kg lifted".
+- Workout: a saved workout's name gets two lines on a small phone; "Chest, Shoulders, Triceps" was cut short.
+- Checked: 20 screens at 320 for cut-off text; only the Exercises list's longest kit lines are cut (two lines in a narrow column), and each exercise's page lists them in full.
 - Checked: every widget on Home at once, at 320 dark and 390 light, with nothing cut off apart from the last workout's exercise list, which is meant to end in "…".
 - Not yet seen on a phone.
 

@@ -232,7 +232,7 @@ function NoWorkout({ token }: { token: string | null }) {
                 >
                   <ExerciseTile exerciseId={leadExercise(workout.plan.items.map((item) => item.exerciseId))} size={42} />
                   <View style={styles.flex}>
-                    <Txt variant="headline" numberOfLines={1}>
+                    <Txt variant="headline" numberOfLines={2}>
                       {title}
                     </Txt>
                     <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>

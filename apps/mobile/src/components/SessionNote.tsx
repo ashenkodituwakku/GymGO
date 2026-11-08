@@ -80,8 +80,8 @@ export function SessionNote({ session, compact = false }: { session: TrainingSes
   return (
     <View style={[styles.wrap, compact ? styles.compactWrap : styles.card]}>
       {!compact && (
-        <Txt variant="eyebrow" color={color.labelSecondary}>
-          YOUR NOTE
+        <Txt variant="label" color={color.labelSecondary}>
+          Your note
         </Txt>
       )}
       {note ? (

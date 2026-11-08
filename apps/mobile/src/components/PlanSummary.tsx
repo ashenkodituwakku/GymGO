@@ -35,7 +35,7 @@ export function PlanSummary({
   return (
     <View style={styles.hero}>
       <BrandFill round={radius.xl} />
-      <Txt variant="eyebrow" color={color.onBrandSoft}>
+      <Txt variant="label" color={color.onBrandSoft}>
         {eyebrow}
       </Txt>
       <Txt variant="title2" color={color.onBrand} numberOfLines={2} accessibilityRole="header" level={level}>

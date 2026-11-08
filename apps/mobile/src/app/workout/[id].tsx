@@ -348,7 +348,7 @@ export default function WorkoutScreen() {
             {/* Nothing to sum up when nothing matched: "0 exercises · ~0 min" said nothing. */}
             {workout.items.length > 0 && (
               <PlanSummary
-                eyebrow="YOUR WORKOUT"
+                eyebrow="Your workout"
                 title={muscles.length ? `${muscles.slice(0, 3).map(muscleLabel).join(', ')}${muscles.length > 3 ? ` +${muscles.length - 3}` : ''}` : 'No muscles picked'}
                 detail={[GOALS.find((item) => item.id === goal)?.label, gymName ?? (effectiveMode === 'typical' ? 'Typical gym' : null)].filter(Boolean).join(' · ')}
                 items={workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, restSeconds: item.restSeconds, cardio: item.exercise.cardio }))}

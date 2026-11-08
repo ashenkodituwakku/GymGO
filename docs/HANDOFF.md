@@ -106,6 +106,15 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Plainer headings** (8 Nov, the owner's "less vibecoded"). New `label`
+  text style (13 pt semibold, sentence case) for a card's own small heading;
+  `eyebrow` (spaced capitals) is left for section headings over lists and
+  share cards. HomeWidgets' Frame title, ExerciseCard, train.tsx's set
+  count, PlanEditor ("Exercise N"), PlanSummary, the exercise page's hero,
+  SessionNote, What you did, Collection and Leaderboard heroes use `label`.
+  ios.tsx's `SectionHeader` has no `icon` any more. ui.tsx's `NoPhoto`
+  monogram is the initials (`labelSecondary`) on `color.fill` with the
+  tag; its rings, halos and gradient are gone.
 - **Less decoration** (8 Nov, the owner: "try make the app look less
   vibecoded"). BrandFill.tsx's `Sheen` and `accentGlow` are gone, with
   their 17 and 19 uses: accent-filled surfaces are flat. theme.ts's

@@ -150,7 +150,7 @@ export default function LeaderboardScreen() {
           {problem}
         </Txt>
       )}
-      {board?.you && <YourPlace you={board.you} board={board} where={[scope === 'friends' ? 'FRIENDS' : 'EVERYONE', area === 'city' && city ? `IN ${city.toUpperCase()}` : null]} />}
+      {board?.you && <YourPlace you={board.you} board={board} where={[scope === 'friends' ? 'Friends' : 'Everyone', area === 'city' && city ? `in ${city}` : null]} />}
       {!board && !problem ? (
         <ListSkeleton rows={5} />
       ) : board && board.rows.length === 0 ? (
@@ -212,8 +212,8 @@ function YourPlace({ you, board, where }: { you: BoardEntry; board: Board; where
       accessibilityLabel={`Your place: ${you.rank} of ${board.people}. ${you.gyms} gyms, ${you.visits} visits.${gap ? ` ${gap}` : ''}`}
     >
       <BrandFill round={radius.xl} />
-      <Txt variant="eyebrow" color={color.onBrandSoft}>
-        {['YOUR PLACE', ...where.filter(Boolean)].join(' · ')}
+      <Txt variant="label" color={color.onBrandSoft}>
+        {['Your place', ...where.filter(Boolean)].join(' · ')}
       </Txt>
       <View style={styles.place}>
         <Txt variant="largeTitle" color={color.onBrand}>

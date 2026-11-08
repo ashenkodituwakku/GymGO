@@ -386,7 +386,6 @@ export default function Home() {
           <>
                   <View style={styles.section}>
                     <SectionHeader
-                      icon="map-pin"
                       title={nearLabel(filters.placeName)}
                       action="Map"
                       onAction={() => explore({ recentre: true })}
@@ -487,7 +486,7 @@ export default function Home() {
           <>
                   {saved.length > 0 && (
                     <View style={styles.section}>
-                      <SectionHeader icon="bookmarks" title="Saved" action="See all" onAction={() => router.navigate('/saved')} />
+                      <SectionHeader title="Saved" action="See all" onAction={() => router.navigate('/saved')} />
                       <Carousel>
                         {saved.map((result) => (
                           <GymCard key={result.record.location.id} result={result} width={176} />
@@ -502,7 +501,7 @@ export default function Home() {
           <>
                   {recent.length > 0 && (
                     <View style={styles.section}>
-                      <SectionHeader icon="clock-counter-clockwise" title="Recently viewed" action="Clear" onAction={clearRecents} />
+                      <SectionHeader title="Recently viewed" action="Clear" onAction={clearRecents} />
                       <Carousel>
                         {recent.map((result) => (
                           <GymCard key={result.record.location.id} result={result} width={176} />
@@ -517,7 +516,7 @@ export default function Home() {
           <>
                   {city && browse.length > 0 && (
                   <View style={styles.section}>
-                    <SectionHeader icon="compass" title={`Browse ${city.name}`} />
+                    <SectionHeader title={`Browse ${city.name}`} />
                     <View style={styles.suburbs}>
                       {browse.map((place) => {
                         const on = filters.placeName === place.name;
@@ -544,7 +543,7 @@ export default function Home() {
           <>
                   {groups.length > 0 && (
                     <View style={styles.section}>
-                      <SectionHeader icon="globe-hemisphere-west" title={city ? 'Other cities' : 'Cities'} />
+                      <SectionHeader title={city ? 'Other cities' : 'Cities'} />
                       <Txt variant="footnote" color={color.labelSecondary} style={styles.anywhere}>
                         {LIMITED ? 'Every city built into this version of GymGO.' : 'Or anywhere in the world: type a town on the map, or move the map and tap Search this area.'}
                       </Txt>

@@ -15,7 +15,6 @@ import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { LOOKS, PAGE_COLUMN, ambientGlow, backgroundImage, color, currentLook, currentTheme, face, heroGlowStops, radius, shadow, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
-import { PIcon, type PhosphorName } from './PIcon';
 import { contrast } from '@/lib/looks';
 import { ScrollMemory, startingY } from './Redrawn';
 import { Toggle } from './Toggle';
@@ -240,26 +239,9 @@ function HeroGlow() {
 }
 
 /** A section heading with an optional action on the right ("See all"). */
-export function SectionHeader({
-  title,
-  action,
-  onAction,
-  icon,
-}: {
-  title: string;
-  action?: string;
-  onAction?: () => void;
-  /** A two-tone Phosphor icon before the title. */
-  icon?: PhosphorName;
-}) {
+export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
     <View style={styles.sectionHeader}>
-      {/* The words line up on their baselines; an icon has none, so it's centred on the heading instead of sitting high. */}
-      {icon ? (
-        <View style={styles.sectionIcon}>
-          <PIcon name={icon} size={26} color={color.brand} accent={color.brand} />
-        </View>
-      ) : null}
       <Txt variant="title2" style={styles.flex}>
         {title}
       </Txt>
@@ -469,7 +451,6 @@ const styles = themed(() => StyleSheet.create({
   barTitle: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[8] + space[6] },
 
   sectionHeader: { flexDirection: 'row', alignItems: 'baseline', gap: space[2], marginBottom: -space[2] },
-  sectionIcon: { alignSelf: 'center' },
   sectionAction: { paddingVertical: 11, paddingHorizontal: space[2], marginVertical: -11, marginHorizontal: -space[2] },
 
   group: { gap: 6 },

@@ -52,8 +52,8 @@ export function PlanEditor({ items, onChange, where }: { items: PlanItem[]; onCh
             <View style={styles.head}>
               <ExerciseTile exerciseId={item.exerciseId} size={44} />
               <View style={styles.flex}>
-                <Txt variant="eyebrow" color={color.brand} numberOfLines={1}>
-                  {`${String(index + 1).padStart(2, '0')}${group ? `  ·  ${groupName(group).toUpperCase()}` : ''}`}
+                <Txt variant="label" color={color.brand} numberOfLines={1}>
+                  {`Exercise ${index + 1}${group ? ` · ${groupName(group)}` : ''}`}
                 </Txt>
                 <Txt variant="headline" numberOfLines={2}>
                   {name}

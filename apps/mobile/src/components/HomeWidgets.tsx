@@ -57,8 +57,8 @@ function Frame({
     <>
       <View style={styles.head}>
         <Icon name={icon} size={14} color={color.brand} />
-        <Txt variant="eyebrow" color={color.labelSecondary} style={styles.flex} numberOfLines={1}>
-          {title.toUpperCase()}
+        <Txt variant="label" color={color.labelSecondary} style={styles.flex} numberOfLines={1}>
+          {title}
         </Txt>
         {onPress && <Icon name="chevron" size={12} color={color.labelTertiary} />}
         {link && (

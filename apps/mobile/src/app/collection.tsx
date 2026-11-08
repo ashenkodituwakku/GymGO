@@ -205,8 +205,8 @@ export default function CollectionScreen() {
       {/* Your totals on the accent, the page's head. */}
       <View style={styles.hero}>
         <BrandFill round={radius.xl} />
-        <Txt variant="eyebrow" color={color.onBrandSoft}>
-          YOUR COLLECTION
+        <Txt variant="label" color={color.onBrandSoft}>
+          Your collection
         </Txt>
         <View style={styles.stats}>
           <Stat first value={stats.gyms} one="gym" many="gyms" />

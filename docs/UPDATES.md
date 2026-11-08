@@ -9,9 +9,21 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 94 · Plainer words and headings
+
+*8 Nov 2026 · the commit "Plainer headings: sentence case in cards, no icons on section titles, a plain stand-in for a missing photo"*
+
+More of the same clean-up, in the type and the headings:
+
+- Small headings inside cards are in sentence case instead of spaced-out capitals: Home's widgets ("Muscles trained"), an exercise's how-to card ("How to do it · Compound"), a plan's summary ("Your workout", "Saved 3 November"), Up next and Last time on Workout, What you did and Your note after a workout, Your collection, and Your place on the leaderboard. Section headings over lists stay in small capitals, as iOS's own do, and so does the date over Home's title.
+- An exercise's place in a plan or a workout no longer has a zero-padded number in front ("01 · CHEST"): a workout says "0 of 3 sets done", a plan the muscles it works, and the workout editor "Exercise 1".
+- Home's section titles (Near …, Saved, Recently viewed, Browse …, Other cities) are plain bold titles, without a two-tone icon in front of each.
+- A gym with no photo or logo shows its initials on a plain grey surface with the "No photo supplied" tag, instead of on a tinted gradient with rings and halos drawn round them.
+- Not yet seen on a phone.
+
 ## Update 93 · Less decoration
 
-*8 Nov 2026 · the commit "Less decoration: flat accent surfaces, quiet empty pages, icons that say what they are"*
+*8 Nov 2026 · `5c5748d`*
 
 You asked for the app to look less "vibe coded". This round takes away the effects that made it look generated rather than designed:
 

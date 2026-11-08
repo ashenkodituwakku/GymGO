@@ -149,7 +149,7 @@ function NoWorkout({ token }: { token: string | null }) {
     if (next) {
       const day = next.template.days[next.day]!;
       return {
-        eyebrow: `UP NEXT · ${next.template.name.toUpperCase()}`,
+        eyebrow: `Up next · ${next.template.name}`,
         title: day.name,
         items: day.items,
         button: `Start ${day.name}`,
@@ -160,7 +160,7 @@ function NoWorkout({ token }: { token: string | null }) {
     const plan = againPlan(latest);
     if (!plan) return null;
     return {
-      eyebrow: `LAST TIME · ${agoLabel(daysAgo(latest.finishedAt)).toUpperCase()}`,
+      eyebrow: `Last time · ${agoLabel(daysAgo(latest.finishedAt))}`,
       title: latest.name,
       items: plan.items,
       button: 'Do it again',
@@ -184,7 +184,7 @@ function NoWorkout({ token }: { token: string | null }) {
       </View>
       {last && (
         <View style={styles.again}>
-          <Txt variant="eyebrow" color={color.labelSecondary}>
+          <Txt variant="label" color={color.labelSecondary}>
             {last.eyebrow}
           </Txt>
           <Txt variant="title2" numberOfLines={2}>
@@ -753,8 +753,8 @@ const ExerciseLog = memo(function ExerciseLog({
         </Pressable>
         {/* The name gets the card's full width; Swap and Plates sit on the line under it. */}
         <View style={styles.flex}>
-          <Txt variant="eyebrow" color={color.brand} numberOfLines={1}>
-            {`${String(index + 1).padStart(2, '0')}  ·  ${group ? `${groupTag(group).toUpperCase()}  ·  ` : ''}${item.sets.filter((set) => set.done).length} OF ${item.sets.length} DONE`}
+          <Txt variant="label" color={color.brand} numberOfLines={1}>
+            {`${group ? `${groupTag(group)} · ` : ''}${item.sets.filter((set) => set.done).length} of ${item.sets.length} sets done`}
           </Txt>
           <Txt variant="headline">{name}</Txt>
           <View style={styles.metaRow}>
@@ -1254,8 +1254,8 @@ function Summary({
       {/* What you did, exercise by exercise, as it'll be in your log. */}
       {done.length > 0 && (
         <View style={styles.didCard}>
-          <Txt variant="eyebrow" color={color.labelSecondary}>
-            WHAT YOU DID
+          <Txt variant="label" color={color.labelSecondary}>
+            What you did
           </Txt>
           {done.map((logged, index) => (
             <Fragment key={`${logged.exerciseId}-${index}`}>

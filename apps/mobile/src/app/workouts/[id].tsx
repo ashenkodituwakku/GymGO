@@ -94,7 +94,7 @@ export default function SavedWorkoutScreen() {
       <ScreenOptions options={{ title: '' }} />
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         <PlanSummary
-          eyebrow={`SAVED ${new Date(saved.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }).toUpperCase()}`}
+          eyebrow={`Saved ${new Date(saved.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}`}
           title={saved.name}
           level={1}
           detail={[

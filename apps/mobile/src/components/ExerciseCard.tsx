@@ -61,8 +61,8 @@ export function ExerciseCard({
             In a workout, the exercise you're on keeps moving (train.tsx). */}
         <ExerciseTile exerciseId={exercise.id} size={58} moving delay={(index % 4) * 450} reps={PLAN_REPS} />
         <View style={styles.flex}>
-          <Txt variant="eyebrow" color={color.brand} numberOfLines={1}>
-            {`${String(index + 1).padStart(2, '0')}  ·  ${group ? `${groupTag(group).toUpperCase()}  ·  ` : ''}${exercise.cardio ? 'FINISHER' : muscles.toUpperCase()}`}
+          <Txt variant="label" color={color.brand} numberOfLines={1}>
+            {`${group ? `${groupTag(group)} · ` : ''}${exercise.cardio ? 'Finisher' : muscles}`}
           </Txt>
           <View style={styles.titleRow}>
             <Txt variant="headline" style={styles.flex}>

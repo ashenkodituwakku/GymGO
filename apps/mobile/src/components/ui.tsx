@@ -10,8 +10,7 @@ import type { ResultTier } from '@gymgo/domain';
 import { TIER } from '@/lib/copy';
 import { monogram } from '@/lib/monogram';
 import { haptic } from '@/lib/haptics';
-import { alpha } from '@/lib/looks';
-import { backgroundImage, color, currentLook, currentTheme, dropShadow, face, HIT, LOOKS, radius, shadow, space, themed, type, webFocusRing, solidSurfaces } from '@/lib/theme';
+import { color, currentTheme, dropShadow, face, HIT, radius, shadow, space, themed, type, webFocusRing, solidSurfaces } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
@@ -559,8 +558,8 @@ function useFocus({ onFocus, onBlur }: Pick<TextInputProps, 'onFocus' | 'onBlur'
  */
 /**
  * Where a gym has no photo or logo. Given its name, the gym's initials on a
- * soft wash of the accent, with "No photo supplied" under them where there's
- * room: lettering, so it's never taken for a picture of the place. `onColour`
+ * plain surface, with "No photo supplied" where there's room: lettering, so
+ * it's never taken for a picture of the place. `onColour`
  * sits it straight on a coloured ground (a collection card's window).
  */
 export function NoPhoto({
@@ -585,55 +584,35 @@ export function NoPhoto({
       </View>
     );
   }
-  const ink = onColour ? '#FFFFFF' : color.brand;
-  // In the glass look, on a page: the accent's tint lit from the top left,
-  // with two fine rings around the initials, like a seal. A card's own
-  // colours (onColour) and the solid looks keep the plain tint and halos.
-  const rich = !onColour && currentLook() === LOOKS.standard;
   const dark = currentTheme().scheme === 'dark';
+  // The initials on a plain surface, as a contact without a photo is shown: nothing drawn round them.
   return (
     <View
       aria-hidden
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={[styles.monogram, { backgroundColor: onColour ? 'transparent' : color.brandTint }, rich && backgroundImage(dark ? MONOGRAM_DARK(color.brand) : MONOGRAM_LIGHT(color.brand)), style]}
+      style={[styles.monogram, { backgroundColor: onColour ? 'transparent' : color.fill }, style]}
     >
-      {rich && !compact ? (
-        <>
-          <View style={[styles.ring, styles.ringOuter, { borderColor: alpha(color.brand, dark ? 0.2 : 0.12) }]} />
-          <View style={[styles.ring, styles.ringInner, { borderColor: alpha(color.brand, dark ? 0.28 : 0.17) }]} />
-        </>
-      ) : (
-        <>
-          <View style={[styles.halo, styles.haloBig, { backgroundColor: onColour ? 'rgba(255,255,255,0.12)' : color.brandWash }]} />
-          <View style={[styles.halo, styles.haloSmall, { backgroundColor: onColour ? 'rgba(255,255,255,0.08)' : color.brandWash }]} />
-        </>
-      )}
-      <Text allowFontScaling={false} numberOfLines={1} style={[compact ? styles.lettersCompact : styles.letters, { color: ink }]}>
+      <Text allowFontScaling={false} numberOfLines={1} style={[compact ? styles.lettersCompact : styles.letters, { color: onColour ? '#FFFFFF' : color.labelSecondary }]}>
         {letters}
       </Text>
       {!compact &&
-        (rich ? (
-          // Said plainly, in a small frosted tag at the foot, as the demo's "Illustration" tag is.
+        (onColour ? (
+          <Txt variant="caption" color="rgba(255,255,255,0.82)" style={styles.noPhotoText}>
+            No photo supplied
+          </Txt>
+        ) : (
+          // Said plainly, in a small tag at the foot, as the demo's "Illustration" tag is.
           <View style={[styles.noPhotoTag, { backgroundColor: dark ? 'rgba(0, 0, 0, 0.28)' : 'rgba(255, 255, 255, 0.62)' }]}>
             <Icon name="photo" size={11} color={color.labelSecondary} />
             <Txt variant="caption" color={color.labelSecondary} style={face('medium')}>
               No photo supplied
             </Txt>
           </View>
-        ) : (
-          <Txt variant="caption" color={onColour ? 'rgba(255,255,255,0.82)' : color.labelSecondary} style={styles.noPhotoText}>
-            No photo supplied
-          </Txt>
         ))}
     </View>
   );
 }
-
-const MONOGRAM_LIGHT = (brand: string) =>
-  `linear-gradient(150deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 52%, ${alpha(brand, 0.14)} 100%)`;
-const MONOGRAM_DARK = (brand: string) =>
-  `linear-gradient(150deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 50%, ${alpha(brand, 0.2)} 100%)`;
 
 export function PrimaryButton({
   label,
@@ -813,13 +792,6 @@ const styles = themed(() => StyleSheet.create({
   noPhotoText: { textAlign: 'center', ...face('medium') },
   noPhotoCompact: { fontSize: 10, lineHeight: 12 },
   monogram: { alignItems: 'center', justifyContent: 'center', gap: 2, overflow: 'hidden', padding: space[1] },
-  halo: { position: 'absolute', borderRadius: 9999, aspectRatio: 1 },
-  haloBig: { width: '78%', top: '-38%', right: '-22%' },
-  haloSmall: { width: '46%', bottom: '-24%', left: '-12%' },
-  // Centred on the initials (an absolute child with no insets sits where the parent centres it).
-  ring: { position: 'absolute', aspectRatio: 1, borderRadius: 9999, borderWidth: 1 },
-  ringOuter: { height: '128%' },
-  ringInner: { height: '86%' },
   noPhotoTag: {
     position: 'absolute',
     left: space[2],

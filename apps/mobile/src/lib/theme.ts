@@ -819,6 +819,8 @@ function typeScale() {
     footnote: style(13, 18, 'regular'),
     /** Caption 1. */
     caption: style(12, 16, 'regular'),
+    /** A card's own small heading, in sentence case (Footnote size, semibold): what a widget is, an exercise's place in a plan. */
+    label: style(13, 18, 'semibold'),
     /** Small capitals over figures, as in Maps (Caption 2 size, opened up because it's set in capitals). */
     eyebrow: { ...style(11, 13, 'semibold'), letterSpacing: 0.6 },
     /** Big numbers: prices, ratings (Title 3 size). */

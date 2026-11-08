@@ -96,8 +96,8 @@ export default function ExerciseProgressScreen() {
           {/* How to do it: the move going through its rep, on the accent, and its cue. */}
           <View style={styles.hero}>
             <BrandFill round={radius.xl} />
-            <Txt variant="eyebrow" color={color.onBrandSoft}>
-              {exercise.own ? 'YOUR OWN EXERCISE' : `HOW TO DO IT · ${exercise.cardio ? 'CONDITIONING' : exercise.compound ? 'COMPOUND' : 'ISOLATION'}`}
+            <Txt variant="label" color={color.onBrandSoft}>
+              {exercise.own ? 'Your own exercise' : `How to do it · ${exercise.cardio ? 'Conditioning' : exercise.compound ? 'Compound' : 'Isolation'}`}
             </Txt>
             <View style={styles.how}>
               <View style={styles.glyph} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>

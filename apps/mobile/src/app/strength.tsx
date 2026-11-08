@@ -12,7 +12,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { BrandFill } from '@/components/BrandFill';
 import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
 import { ProOffer } from '@/components/ProOffer';
@@ -117,9 +117,8 @@ export default function StrengthScreen() {
 
       {max !== null && (
         // The answer on the accent: what the page is for.
-        <View style={[styles.hero, accentGlow(color.brandFill)]} accessible accessibilityLabel={`Estimated 1-rep max: about ${formatWeight(nearest(max, unit), unit)}`}>
+        <View style={styles.hero} accessible accessibilityLabel={`Estimated 1-rep max: about ${formatWeight(nearest(max, unit), unit)}`}>
           <BrandFill round={radius.xl} />
-          <Sheen round={radius.xl} />
           <Txt variant="eyebrow" color={color.onBrandSoft}>
             ESTIMATED 1-REP MAX
           </Txt>

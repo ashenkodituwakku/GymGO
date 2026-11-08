@@ -9,10 +9,9 @@
  */
 
 import { useId } from 'react';
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
-import { type AccentPaint, backgroundImage, currentLook, currentPaint, LOOKS, NO_TOUCH } from '@/lib/theme';
-import { alpha } from '@/lib/looks';
+import { type AccentPaint, backgroundImage, currentPaint, NO_TOUCH } from '@/lib/theme';
 
 /** Woodland blobs on a 90-point tile that repeats without seams showing much. */
 const BLOBS: Array<[number, string]> = [
@@ -65,36 +64,6 @@ export function BrandFill({
       </Svg>
     </View>
   );
-}
-
-/**
- * Light falling on a hero control filled with the accent (Build a workout):
- * a soft white wash from its top left, gone by the middle. Standard look,
- * ordinary accents only: Rainbow and Camo are decoration enough, and the
- * other looks have surfaces of their own.
- */
-export function Sheen({ round }: { round: number }) {
-  if (currentLook() !== LOOKS.standard || currentPaint()) return null;
-  return (
-    <View
-      style={[
-        NO_TOUCH,
-        StyleSheet.absoluteFill,
-        { borderRadius: round, overflow: 'hidden' },
-        backgroundImage('linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 42%, rgba(255, 255, 255, 0) 62%)'),
-      ]}
-    />
-  );
-}
-
-/**
- * A glow of the accent under a hero control, in place of a grey shadow and a
- * card's white rim (standard look). Tighter under something small, a chip.
- */
-export function accentGlow(fill: string, small = false): ViewStyle | null {
-  if (currentLook() !== LOOKS.standard) return null;
-  if (small) return { boxShadow: `0px 3px 10px ${alpha(fill, 0.28)}` } as ViewStyle;
-  return { boxShadow: `0px 10px 26px ${alpha(fill, 0.32)}, 0px 2px 6px ${alpha(fill, 0.22)}` } as ViewStyle;
 }
 
 const styles = StyleSheet.create({

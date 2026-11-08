@@ -10,7 +10,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { BrandFill } from '@/components/BrandFill';
 import { ExerciseGlyph, ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
 import { AskGymPal } from '@/components/AskGymPal';
@@ -94,9 +94,8 @@ export default function ExerciseProgressScreen() {
       {exercise && (
         <>
           {/* How to do it: the move going through its rep, on the accent, and its cue. */}
-          <View style={[styles.hero, accentGlow(color.brandFill)]}>
+          <View style={styles.hero}>
             <BrandFill round={radius.xl} />
-            <Sheen round={radius.xl} />
             <Txt variant="eyebrow" color={color.onBrandSoft}>
               {exercise.own ? 'YOUR OWN EXERCISE' : `HOW TO DO IT · ${exercise.cardio ? 'CONDITIONING' : exercise.compound ? 'COMPOUND' : 'ISOLATION'}`}
             </Txt>

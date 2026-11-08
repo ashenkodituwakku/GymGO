@@ -445,7 +445,7 @@ export function heroGlowStops(level: number, scheme: Scheme): { main: number; ma
   const k = 0.5 + 0.5 * (cleanGlass(level) / GLASS_DEFAULT);
   const dark = scheme === 'dark';
   const at = (value: number) => Math.round(value * k * 1000) / 1000;
-  return { main: at(dark ? 0.3 : 0.15), mainMid: at(dark ? 0.1 : 0.05), side: at(dark ? 0.14 : 0.07) };
+  return { main: at(dark ? 0.15 : 0.075), mainMid: at(dark ? 0.05 : 0.025), side: at(dark ? 0.07 : 0.035) };
 }
 
 /** A word for a level, beside its percentage. */
@@ -556,7 +556,9 @@ export const currentLook = (): LookSpec => LOOKS[current.look];
 export const solidSurfaces = (): boolean => currentLook().solid || current.glass === 0;
 /**
  * How strong the glow of the accent behind the pages is: none at 0% Liquid
- * Glass or in a solid look, soft at the default (1), richest at 100% (2).
+ * Glass or in a solid look, a faint tint at the default (1), richest at 100%
+ * (2). Kept faint: a strong pool of the accent behind every page read as
+ * decoration for its own sake.
  * Glass needs something behind it to be seen as glass.
  */
 export const glowStrength = (): number => (currentLook().solid ? 0 : cleanGlass(current.glass) / GLASS_DEFAULT);
@@ -592,10 +594,10 @@ export function glowPools(level: number, scheme: Scheme): { at: string; opacity:
   const k = 0.35 + 0.65 * strength;
   const round = (value: number) => Math.round(value * 1000) / 1000;
   const pools = [
-    { at: '92% 0%', opacity: round(Math.min(dark ? 0.44 : 0.3, (dark ? 0.26 : 0.16) * k)), reach: 36 },
-    { at: '0% 46%', opacity: round(Math.min(dark ? 0.26 : 0.18, (dark ? 0.14 : 0.09) * k)), reach: 40 },
+    { at: '92% 0%', opacity: round(Math.min(dark ? 0.24 : 0.16, (dark ? 0.13 : 0.08) * k)), reach: 36 },
+    { at: '0% 46%', opacity: round(Math.min(dark ? 0.14 : 0.1, (dark ? 0.07 : 0.045) * k)), reach: 40 },
   ];
-  if (strength > 1) pools.push({ at: '100% 100%', opacity: round((strength - 1) * (dark ? 0.24 : 0.15)), reach: 38 });
+  if (strength > 1) pools.push({ at: '100% 100%', opacity: round((strength - 1) * (dark ? 0.12 : 0.08)), reach: 38 });
   return pools;
 }
 

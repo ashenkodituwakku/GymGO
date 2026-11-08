@@ -22,7 +22,7 @@ import { Pressable, Pressy } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
 import { Flag } from '@/components/Flag';
 import { AdSlot } from '@/components/AdSlot';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { BrandFill } from '@/components/BrandFill';
 import { Avatar } from '@/components/Avatar';
 import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
 import { Txt } from '@/components/ui';
@@ -215,9 +215,7 @@ export default function Home() {
               accessibilityLabel={item.title}
               style={styles.shortcut}
             >
-              <View style={styles.shortcutIcon}>
-                <Icon name={item.icon} size={20} color={color.brand} />
-              </View>
+              <Icon name={item.icon} size={22} color={color.brand} />
               {/* Two lines on the narrowest phones, where "Under A$25" didn't fit on one. */}
               <Txt variant="footnote" style={[styles.center, face('medium')]} numberOfLines={2}>
                 {item.title}
@@ -243,10 +241,9 @@ export default function Home() {
                   }}
                   accessibilityRole="button"
                   accessibilityLabel="Build a workout: tap the muscles you want to train"
-                  style={[styles.workout, accentGlow(color.brandFill)]}
+                  style={styles.workout}
                 >
                   <BrandFill round={radius.xl} />
-                  <Sheen round={radius.xl} />
                   <View style={styles.workoutIcon}>
                     <Icon name="workout" size={22} color={color.onBrand} />
                   </View>
@@ -288,9 +285,6 @@ export default function Home() {
                     accessibilityLabel={`Start ${planDay.name}, up next in ${plan.template.name}`}
                     style={styles.upNext}
                   >
-                    <View style={styles.upNextIcon}>
-                      <Icon name="play" size={14} color={color.brand} />
-                    </View>
                     <View style={styles.flex}>
                       <Txt variant="caption" color={color.brand} style={face('semibold')} numberOfLines={1}>
                         Up next · {plan.template.name}
@@ -354,9 +348,7 @@ export default function Home() {
                 <View style={styles.finders}>
                   {finders.map((item) => (
                     <Pressy key={item.title} scaleTo={0.95} onPress={item.onPress} accessibilityRole="button" accessibilityLabel={item.label} style={[styles.finder, narrow && styles.finderNarrow]}>
-                      <View style={styles.shortcutIcon}>
-                        <Icon name={item.icon} size={18} color={color.brand} />
-                      </View>
+                      <Icon name={item.icon} size={20} color={color.brand} />
                       <View style={narrow ? styles.finderTextNarrow : styles.flex}>
                         <Txt variant="subhead" style={[face('semibold'), narrow && styles.center]} numberOfLines={1}>
                           {item.title}
@@ -534,7 +526,7 @@ export default function Home() {
                             key={place.name}
                             onPress={() => goToPlace(place)}
                             accessibilityRole="button"
-                            style={({ pressed }) => [styles.suburb, on && styles.suburbOn, on && accentGlow(color.brandFill, true), pressed && { opacity: 0.7 }]}
+                            style={({ pressed }) => [styles.suburb, on && styles.suburbOn, pressed && { opacity: 0.7 }]}
                           >
                             <Txt variant="subhead" color={on ? color.onBrand : color.label} style={face('medium')}>
                               {place.name}
@@ -798,9 +790,6 @@ function ProgrammeUpNext({
         accessibilityLabel={`Start ${day.name}, up next in your ${programmeTitle(programme.goal)}, ${caption}`}
         style={styles.upNext}
       >
-        <View style={styles.upNextIcon}>
-          <Icon name="play" size={14} color={color.brand} />
-        </View>
         <View style={styles.flex}>
           <Txt variant="caption" color={color.brand} style={face('semibold')} numberOfLines={1}>
             {caption}
@@ -945,7 +934,6 @@ const styles = themed(() => StyleSheet.create({
   },
   templatesRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: space[3] - 2, paddingHorizontal: space[3] },
   templatesUnder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
-  upNextIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
   startPill: { paddingHorizontal: space[3], paddingVertical: 7, borderRadius: radius.pill, backgroundColor: color.brandFill },
   finderNarrow: { flexDirection: 'column', gap: space[2] },
   finderTextNarrow: { alignSelf: 'stretch' },
@@ -985,7 +973,6 @@ const styles = themed(() => StyleSheet.create({
     backgroundColor: color.plate,
     ...shadow.plate,
   },
-  shortcutIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
   center: { textAlign: 'center' },
 
   section: { gap: space[3] },

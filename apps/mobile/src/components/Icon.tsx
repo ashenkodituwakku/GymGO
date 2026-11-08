@@ -105,6 +105,7 @@ const ICONS = {
   // The weather's stand-in while there's no forecast (components/Weather.tsx draws MET Norway's own symbols).
   thermometer: { ios: 'thermometer.medium', android: 'thermostat', web: 'thermostat' },
   customise: { ios: 'square.grid.2x2', android: 'dashboard_customize', web: 'dashboard_customize' },
+  haptics: { ios: 'iphone.radiowaves.left.and.right', android: 'vibration', web: 'vibration' },
   // A note you keep on an exercise or a workout (a pin would read as a place).
   note: { ios: 'note.text', android: 'sticky_note_2', web: 'sticky_note_2' },
 } as const;

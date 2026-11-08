@@ -9,7 +9,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable, Pressy } from '@/components/motion';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { BrandFill } from '@/components/BrandFill';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
@@ -124,9 +124,8 @@ export default function FriendsScreen() {
       )}
 
       {/* Your code on the accent: the one thing here to send. */}
-      <View style={[styles.hero, accentGlow(color.brandFill)]}>
+      <View style={styles.hero}>
         <BrandFill round={radius.xl} />
-        <Sheen round={radius.xl} />
         <Txt variant="eyebrow" color={color.onBrandSoft}>
           YOUR FRIEND CODE
         </Txt>

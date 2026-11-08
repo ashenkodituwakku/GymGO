@@ -24,7 +24,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { BrandFill } from '@/components/BrandFill';
 import { Icon, type IconName } from '@/components/Icon';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
@@ -58,9 +58,9 @@ const FEATURE_ICON: Record<string, IconName> = {
   'Your plates': 'plates',
   'Interval timer': 'timer',
   '1-rep max': 'target',
-  'Streak freeze': 'sparkle',
+  'Streak freeze': 'flame',
   'Profile ring': 'person',
-  Celebrations: 'sparkle',
+  Celebrations: 'star',
   'Lifetime stats': 'trophy',
   'Arcade sounds': 'sound',
   GymPal: 'send',
@@ -190,9 +190,8 @@ export default function ProScreen() {
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         {/* Hero ------------------------------------------------------------ */}
         <View style={styles.hero}>
-          <View style={[styles.badge, accentGlow(color.brandFill)]}>
+          <View style={styles.badge}>
             <BrandFill round={22} />
-            <Sheen round={22} />
             <Icon name="crown" size={36} color={color.onBrand} />
           </View>
           <Txt variant="largeTitle" style={styles.center} accessibilityRole="header" level={1}>
@@ -242,7 +241,7 @@ export default function ProScreen() {
               {PRO_FEATURES.filter((feature) => feature.group === group.id).map((feature) => (
                 <View key={feature.title} style={styles.tableRow}>
                   <View style={styles.featureIcon}>
-                    <Icon name={FEATURE_ICON[feature.title] ?? 'sparkle'} size={17} color={color.brand} />
+                    <Icon name={FEATURE_ICON[feature.title] ?? 'star'} size={17} color={color.brand} />
                   </View>
                   <Txt variant="subhead" style={[styles.flex, face('medium')]}>
                     {feature.title}

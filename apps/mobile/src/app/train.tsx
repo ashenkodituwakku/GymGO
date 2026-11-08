@@ -255,15 +255,38 @@ function NoWorkout({ token }: { token: string | null }) {
           )}
         </View>
       )}
-      <PrimaryButton
-        label="Build a workout"
-        icon="sparkle"
-        tone={recent.length > 0 || last ? 'quiet' : undefined}
-        onPress={() => router.replace({ pathname: '/workout/[id]', params: { id: 'any' } })}
-      />
-      {/* In place of this page, as the builder is: starting it comes back here with the workout. */}
-      <PrimaryButton label="Make your own" icon="plus" tone="quiet" onPress={() => router.replace('/workout-edit')} />
-      <PrimaryButton label="Start from a template" icon="list" tone="quiet" onPress={() => router.push('/templates')} />
+      {/* Nothing to pick up yet: building one is the way in, so it's the one button. */}
+      {!last && recent.length === 0 && (
+        <PrimaryButton label="Build a workout" icon="body" onPress={() => router.replace({ pathname: '/workout/[id]', params: { id: 'any' } })} />
+      )}
+      <View style={styles.savedList}>
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.savedHeader}>
+          {last || recent.length > 0 ? 'START ANOTHER WAY' : 'OR'}
+        </Txt>
+        <View style={styles.savedCard}>
+          {[
+            ...(last || recent.length > 0
+              ? [{ icon: 'body' as IconName, title: 'Build from muscles', go: () => router.replace({ pathname: '/workout/[id]', params: { id: 'any' } }) }]
+              : []),
+            // In place of this page, as the builder is: starting it comes back here with the workout.
+            { icon: 'plus' as IconName, title: 'Make your own', go: () => router.replace('/workout-edit') },
+            { icon: 'list' as IconName, title: 'From a template', go: () => router.push('/templates') },
+          ].map((row, index) => (
+            <Pressable
+              key={row.title}
+              onPress={row.go}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.savedRow, index > 0 && styles.savedLine, pressed && { backgroundColor: color.fill }]}
+            >
+              <Icon name={row.icon} size={20} color={color.brand} />
+              <Txt variant="body" style={styles.flex}>
+                {row.title}
+              </Txt>
+              <Icon name="chevron" size={13} color={color.labelTertiary} />
+            </Pressable>
+          ))}
+        </View>
+      </View>
     </PageScroll>
   );
 }

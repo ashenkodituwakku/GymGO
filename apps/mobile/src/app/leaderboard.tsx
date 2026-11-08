@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Toggle } from '@/components/Toggle';
 import { Avatar } from '@/components/Avatar';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { BrandFill } from '@/components/BrandFill';
 import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
 import { PageScroll } from '@/components/PageScroll';
@@ -207,12 +207,11 @@ function YourPlace({ you, board, where }: { you: BoardEntry; board: Board; where
   ];
   return (
     <View
-      style={[styles.hero, accentGlow(color.brandFill)]}
+      style={styles.hero}
       accessible
       accessibilityLabel={`Your place: ${you.rank} of ${board.people}. ${you.gyms} gyms, ${you.visits} visits.${gap ? ` ${gap}` : ''}`}
     >
       <BrandFill round={radius.xl} />
-      <Sheen round={radius.xl} />
       <Txt variant="eyebrow" color={color.onBrandSoft}>
         {['YOUR PLACE', ...where.filter(Boolean)].join(' · ')}
       </Txt>

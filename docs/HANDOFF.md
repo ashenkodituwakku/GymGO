@@ -106,6 +106,18 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Less decoration** (8 Nov, the owner: "try make the app look less
+  vibecoded"). BrandFill.tsx's `Sheen` and `accentGlow` are gone, with
+  their 17 and 19 uses: accent-filled surfaces are flat. theme.ts's
+  `glowPools` and `heroGlowStops` are about half as strong at
+  `GLASS_DEFAULT`. HeroMark.tsx is now just the symbol (`labelTertiary`,
+  `weight="regular"`, 78% of `size`; `tint` colours it). No `sparkle`
+  icon outside GemCard's Legendary twinkle; new `haptics` icon. train.tsx's
+  no-workout page lists Build from muscles / Make your own / From a
+  template in a grouped card (`savedCard` styles). Home's
+  `shortcutIcon`/`upNextIcon` circles and HomeWidgets' tinted `toolIcon`
+  are gone. Avoid bringing back: coloured glows, glossy gradients,
+  sparkles, icons in tinted circles, stacks of equal tinted buttons.
 - **A new page starts at its top** (7 Nov, polishing). Redrawn's
   `ScrollMemory` is now a `ScrollPlace` `{ y, restore }`; `restore` is set
   only when the theme version changes (a redraw), and `startingY(memory)`

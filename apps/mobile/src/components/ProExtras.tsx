@@ -57,7 +57,7 @@ export function GiftPro({ token, billing, currency, onSignIn }: { token: string 
   return (
     <View style={styles.card}>
       <View style={styles.head}>
-        <Icon name="sparkle" size={20} color={color.brand} />
+        <Icon name="crown" size={20} color={color.brand} />
         <Txt variant="headline">Give Pro</Txt>
       </View>
       <Txt variant="subhead" color={color.labelSecondary}>
@@ -66,7 +66,7 @@ export function GiftPro({ token, billing, currency, onSignIn }: { token: string 
       {CAN_BUY_HERE && (
         <PrimaryButton
           label={billing.sale !== 'on' || !price ? 'Not on sale yet' : busy ? 'Opening Stripe…' : token ? 'Buy a gift code' : 'Sign in to buy a gift'}
-          icon="sparkle"
+          icon="crown"
           tone="quiet"
           disabled={billing.sale !== 'on' || !price || busy}
           onPress={() => void buy()}

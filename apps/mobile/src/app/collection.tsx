@@ -23,7 +23,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { CollectionSyncLine, useDeleteCollection } from '@/components/CollectionData';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { BrandFill } from '@/components/BrandFill';
 import { MarkImage, useGymMark } from '@/components/BrandLogo';
 import { GemCard } from '@/components/GemCard';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -203,9 +203,8 @@ export default function CollectionScreen() {
       <CollectionSyncLine when="trouble" />
 
       {/* Your totals on the accent, the page's head. */}
-      <View style={[styles.hero, accentGlow(color.brandFill)]}>
+      <View style={styles.hero}>
         <BrandFill round={radius.xl} />
-        <Sheen round={radius.xl} />
         <Txt variant="eyebrow" color={color.onBrandSoft}>
           YOUR COLLECTION
         </Txt>

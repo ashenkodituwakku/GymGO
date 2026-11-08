@@ -10,7 +10,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Share, StyleSheet, View } from 'react-native';
 import { monthLabel } from '@gymgo/domain';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { BrandFill } from '@/components/BrandFill';
 import { Icon } from '@/components/Icon';
 import { Pressable } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
@@ -185,9 +185,8 @@ function Bar({ value, of }: { value: number; of: number }) {
 function ChallengeCard({ month, target, small = false }: { month: string; target: number; small?: boolean }) {
   const label = monthLabel(month);
   return (
-    <View style={[styles.prize, small && styles.prizeSmall, accentGlow(color.brandFill)]}>
+    <View style={[styles.prize, small && styles.prizeSmall]}>
       <BrandFill round={radius.xl} />
-      <Sheen round={radius.xl} />
       {/* The words as one, read out together; the Share button stays its own. */}
       <View style={styles.prizeWords} accessible accessibilityLabel={`Challenge card: ${label}, trained on ${target} days`}>
         <View style={styles.prizeTop}>

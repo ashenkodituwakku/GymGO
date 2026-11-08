@@ -57,7 +57,7 @@ export function RecapCard({
         <View style={styles.lines}>
           {lifted > 0 && <Line icon="bolt" text={`${lifted.toLocaleString('en-AU')} ${unit} lifted`} />}
           {recap.streakWeeks > 1 && <Line icon="flame" text={`${recap.streakWeeks}-week streak`} />}
-          {recap.newGyms > 0 && <Line icon="sparkle" text={`${recap.newGyms} new gym${recap.newGyms === 1 ? '' : 's'} collected`} />}
+          {recap.newGyms > 0 && <Line icon="cards" text={`${recap.newGyms} new gym${recap.newGyms === 1 ? '' : 's'} collected`} />}
         </View>
       )}
 

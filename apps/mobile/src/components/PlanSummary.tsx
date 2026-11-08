@@ -7,7 +7,7 @@
 import { StyleSheet, View } from 'react-native';
 import { color, radius, space, themed } from '@/lib/theme';
 import { planMinutes, planSets, type PlanLine } from '@/lib/workoutStats';
-import { BrandFill, Sheen, accentGlow } from './BrandFill';
+import { BrandFill } from './BrandFill';
 import { ExerciseGlyph } from './ExerciseGlyph';
 import { Txt } from './ui';
 
@@ -33,9 +33,8 @@ export function PlanSummary({
     { value: `~${minutes}`, label: 'min', spoken: `about ${minutes} minutes` },
   ];
   return (
-    <View style={[styles.hero, accentGlow(color.brandFill)]}>
+    <View style={styles.hero}>
       <BrandFill round={radius.xl} />
-      <Sheen round={radius.xl} />
       <Txt variant="eyebrow" color={color.onBrandSoft}>
         {eyebrow}
       </Txt>

@@ -116,7 +116,7 @@ export default function WelcomeScreen() {
         {PAGES.map((item, index) => (
           <View key={item.title} style={[styles.slide, { width }]} accessible accessibilityLabel={`${index + 1} of ${PAGES.length}. ${item.title}. ${item.line}`}>
             <Drift index={index} width={width} scrollX={scrollX} depth={0.45}>
-              <HeroMark icon={item.icon} size={88} />
+              <HeroMark icon={item.icon} size={88} tint={color.brand} />
             </Drift>
             <Drift index={index} width={width} scrollX={scrollX} depth={0.12}>
               <Txt variant="largeTitle" style={styles.title}>

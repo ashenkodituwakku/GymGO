@@ -18,7 +18,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
-import { BrandFill, Sheen } from './BrandFill';
+import { BrandFill } from './BrandFill';
 import { Icon } from './Icon';
 import { Pressy } from './motion';
 import { useGlassRedraw } from './Redrawn';
@@ -89,7 +89,6 @@ export function AdSlot({ place, style }: { place: AdPlace; style?: object }) {
       >
         <View style={styles.badge}>
           <BrandFill round={12} />
-          <Sheen round={12} />
           <Icon name="crown" size={18} color={color.onBrand} />
         </View>
         <View style={styles.words}>

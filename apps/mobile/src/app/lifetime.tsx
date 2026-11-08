@@ -8,7 +8,7 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { BrandFill } from '@/components/BrandFill';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { HeroMark } from '@/components/HeroMark';
 import { Icon, type IconName } from '@/components/Icon';
@@ -166,9 +166,8 @@ export default function LifetimeScreen() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: 'Lifetime' }} />
       {/* The headline figure on the accent: everything you've lifted. */}
-      <View style={[styles.hero, accentGlow(color.brandFill)]} accessible accessibilityLabel={`Since ${monthYear(life.since)}: ${lifted.toLocaleString('en')} ${unit} lifted.${like ? ` About ${like.words}.` : ''}`}>
+      <View style={styles.hero} accessible accessibilityLabel={`Since ${monthYear(life.since)}: ${lifted.toLocaleString('en')} ${unit} lifted.${like ? ` About ${like.words}.` : ''}`}>
         <BrandFill round={radius.xl} />
-        <Sheen round={radius.xl} />
         <Txt variant="eyebrow" color={color.onBrandSoft}>
           {`SINCE ${monthYear(life.since).toUpperCase()}`}
         </Txt>

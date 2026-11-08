@@ -9,9 +9,23 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 93 · Less decoration
+
+*8 Nov 2026 · the commit "Less decoration: flat accent surfaces, quiet empty pages, icons that say what they are"*
+
+You asked for the app to look less "vibe coded". This round takes away the effects that made it look generated rather than designed:
+
+- Buttons and cards filled with the accent are flat: no coloured glow under them and no glossy white wash across them (Start workout, Build a workout on Home, the exercise page's how-to card, a plan's summary, the 1-rep max, Lifetime, Collection, Friends, Leaderboard, Pro and the rest).
+- The accent's haze behind every page is half as strong at the usual Liquid Glass level, a faint tint rather than a purple bloom. Turning Liquid Glass up still deepens it.
+- An empty page (no workout in progress, nothing saved, no trips, no friends yet, not found) shows its symbol large and quiet in grey, as iOS does, instead of a glowing tile of the accent in a pool of colour. The welcome pages keep the accent; a finished workout keeps its green or gold.
+- No more sparkles, the stock "magic" icon. Pro shows its crown, a streak freeze its flame, building from muscles a body, a new gym collected a card, loosening search filters the filters icon, Haptics a vibrating phone; the Fresh muscles chip has no icon, like the chips beside it. (A Legendary card still twinkles: that's the card, not decoration.)
+- Workout, with nothing in progress: the three big tinted buttons stacked one on another are a list, Start another way: Build from muscles, Make your own, From a template. Someone with nothing logged yet still gets one solid Build a workout button first.
+- Home: the shortcuts, Machines, Trips and Tools show their icons on their own instead of in tinted circles, and Up next drops its play circle (its Start button already says it).
+- Not yet seen on a phone.
+
 ## Update 92 · A finished workout's summary opens at its top
 
-*7 Nov 2026 · the commit "A new page on the same screen starts at its top"*
+*7 Nov 2026 · `147a943`*
 
 - Finishing a workout from the bottom of the page opened its summary part way down, with its heading and totals off the top of the screen. The summary now opens at its top. The same goes for any screen that swaps one page for another in place.
 - Changing the colours (an accent, dark mode) still keeps the page where it was scrolled, as before.

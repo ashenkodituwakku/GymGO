@@ -408,7 +408,7 @@ export function ResultsContent({
             wherever you travel.
           </Txt>
           <View style={styles.lockButtons}>
-            {onSeePro && <PrimaryButton label="See GymGO Pro" icon="sparkle" onPress={onSeePro} />}
+            {onSeePro && <PrimaryButton label="See GymGO Pro" icon="crown" onPress={onSeePro} />}
             {onGoHome && <PrimaryButton label={`Back to ${countryInSentence(locked.home)}`} tone="quiet" onPress={onGoHome} />}
           </View>
         </Animated.View>
@@ -435,7 +435,7 @@ export function ResultsContent({
               {outcome.relaxations.map((relaxation, index) => (
                 <Chip
                   key={relaxation.label}
-                  icon="sparkle"
+                  icon="filters"
                   label={`${relaxation.label} (${relaxation.confirmedCount})`}
                   selected={false}
                   onPress={() => onApplyRelaxation(index)}

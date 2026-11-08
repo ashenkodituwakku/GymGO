@@ -27,7 +27,7 @@ import { countryName } from '@/lib/country';
 import { useThemeChoice } from '@/lib/themePrefs';
 import { useCollection } from '@/lib/useCollection';
 import { useTrainingLog } from '@/lib/useTraining';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { BrandFill } from '@/components/BrandFill';
 import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { Avatar } from '@/components/Avatar';
@@ -254,7 +254,7 @@ export default function Profile() {
           <Row icon="bell" tile={TILE.red} title="Reminders" value={reminders} onPress={() => router.push('/reminders')} />
         )}
         <Row
-          icon="sparkle"
+          icon="haptics"
           tile={TILE.pink}
           title="Haptics"
           // A browser can't tap back: say so where the switch is.
@@ -391,7 +391,7 @@ export default function Profile() {
 /** A small capital label on your account card: your plan, or Moderator. */
 function Badge({ label, strong = false }: { label: string; strong?: boolean }) {
   return (
-    <View style={[styles.badge, strong && styles.badgeStrong, strong && accentGlow(color.brandFill, true)]}>
+    <View style={[styles.badge, strong && styles.badgeStrong]}>
       {strong && <BrandFill round={radius.pill} />}
       <Txt variant="eyebrow" color={strong ? color.onBrand : color.labelSecondary}>
         {label}
@@ -415,10 +415,9 @@ function ProCard({ isPro, line, trial, canBuy, onOpen }: { isPro: boolean; line:
       accessibilityRole="button"
       // The words on the card, so a voice command that names them finds it.
       accessibilityLabel={[isPro ? 'Your plan' : 'Your plan, Free', title, line, action].filter(Boolean).join('. ')}
-      style={[styles.proCard, accentGlow(color.brandFill)]}
+      style={styles.proCard}
     >
       <BrandFill round={radius.lg} />
-      <Sheen round={radius.lg} />
       <View style={styles.proTop}>
         <View style={styles.proMark}>
           <Icon name="crown" size={20} color={color.onBrand} />

@@ -265,7 +265,6 @@ export default function WorkoutScreen() {
             {fresh.length > 0 && (
               <Chip
                 label="Fresh muscles"
-                icon="sparkle"
                 selected={fresh.length === muscles.length && fresh.every((muscle) => muscles.includes(muscle))}
                 onPress={() => setMuscles(fresh)}
                 accessibilityLabel={`Fresh muscles: ${fresh.map(muscleLabel).join(', ')}, which you haven’t trained for two days or more`}
@@ -328,7 +327,7 @@ export default function WorkoutScreen() {
         ) : !built ? (
           <PrimaryButton
             label={muscles.length ? 'Build my workout' : 'Pick at least one muscle'}
-            icon={muscles.length ? 'sparkle' : undefined}
+            icon={muscles.length ? 'workout' : undefined}
             disabled={muscles.length === 0}
             onPress={() => {
               haptic.select();

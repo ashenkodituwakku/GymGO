@@ -377,6 +377,6 @@ const styles = themed(() =>
     heatDot: { width: 8, height: 8, borderRadius: 4 },
     toolRow: { flexDirection: 'row', gap: space[2] },
     tool: { flex: 1, minWidth: 0, alignItems: 'center', gap: 6, paddingVertical: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
-    toolIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+    toolIcon: { width: 24, alignItems: 'center', justifyContent: 'center' },
   }),
 );

@@ -11,7 +11,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { BrandFill } from '@/components/BrandFill';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon, type IconName } from '@/components/Icon';
 import { AskGymPal } from '@/components/AskGymPal';
@@ -204,9 +204,8 @@ function TemplateCard({
   return (
     <Card style={styles.card}>
       <View style={styles.head}>
-        <View style={[styles.mark, accentGlow(color.brandFill)]}>
+        <View style={styles.mark}>
           <BrandFill round={markRound()} />
-          <Sheen round={markRound()} />
           <Icon name={TEMPLATE_ICON[template.id] ?? 'workout'} size={22} color={color.onBrand} />
         </View>
         <View style={styles.flex}>

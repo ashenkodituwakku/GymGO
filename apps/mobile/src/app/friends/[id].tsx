@@ -9,7 +9,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { CollectionTotals, FriendCard } from '@gymgo/domain';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { BrandFill } from '@/components/BrandFill';
 import { GemCard } from '@/components/GemCard';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -109,9 +109,8 @@ export default function FriendScreen() {
       )}
       {friend && (
         // Their totals on the accent, like a plan's head.
-        <View style={[styles.hero, accentGlow(color.brandFill)]}>
+        <View style={styles.hero}>
           <BrandFill round={radius.xl} />
-          <Sheen round={radius.xl} />
           <Txt variant="eyebrow" color={color.onBrandSoft} numberOfLines={1}>
             {`${friend.name.toUpperCase()}’S COLLECTION`}
           </Txt>

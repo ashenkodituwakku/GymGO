@@ -140,7 +140,7 @@ export default function ProgressScreen() {
       </Animated.View>
       {known && streak.frozen.length > 0 && (
         <View style={styles.freeze} accessible>
-          <Icon name="sparkle" size={18} color={color.brand} />
+          <Icon name="flame" size={18} color={color.brand} />
           <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
             {`Streak freeze: you missed the week${streak.frozen.length > 1 ? 's' : ''} of ${streak.frozen
               .map((monday) => new Date(monday).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }))
@@ -150,7 +150,7 @@ export default function ProgressScreen() {
       )}
       {known && couldKeep && couldKeep.weeks > streak.weeks && (
         <Pressable onPress={() => openPro('freeze')} accessibilityRole="button" style={({ pressed }) => [styles.freeze, pressed && { opacity: 0.7 }]}>
-          <Icon name="sparkle" size={18} color={color.brand} />
+          <Icon name="flame" size={18} color={color.brand} />
           <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
             {`A streak freeze would have kept your ${couldKeep.weeks}-week run going through the week you missed. GymGO Pro covers one missed week a month.`}
           </Txt>

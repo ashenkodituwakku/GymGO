@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { AskGymPal } from '@/components/AskGymPal';
-import { BrandFill, Sheen, accentGlow } from '@/components/BrandFill';
+import { BrandFill } from '@/components/BrandFill';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
 import { Pressable } from '@/components/motion';
@@ -206,9 +206,8 @@ function Running({ programme }: { programme: Programme }) {
     <>
       <Card style={styles.card}>
         <View style={styles.head}>
-          <View style={[styles.mark, accentGlow(color.brandFill)]}>
+          <View style={styles.mark}>
             <BrandFill round={13} />
-            <Sheen round={13} />
             <Icon name="workout" size={22} color={color.onBrand} />
           </View>
           <View style={styles.flex}>

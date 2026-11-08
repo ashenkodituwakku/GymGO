@@ -23,7 +23,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
-import { BrandFill, accentGlow } from './BrandFill';
+import { BrandFill } from './BrandFill';
 import { Icon } from './Icon';
 import { Txt } from './ui';
 
@@ -87,7 +87,7 @@ export function BuildingBar({ onDone }: { onDone: () => void }) {
       aria-valuenow={percent}
     >
       <View style={styles.head}>
-        <Animated.View style={[styles.tile, accentGlow(color.brandFill, true), tile]}>
+        <Animated.View style={[styles.tile, tile]}>
           <BrandFill round={radius.md} />
           <Icon name="workout" size={22} color={color.onBrand} />
         </Animated.View>

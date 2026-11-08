@@ -198,7 +198,7 @@ export default function ProScreen() {
             GymGO Pro
           </Txt>
           <Txt variant="body" color={color.labelSecondary} style={styles.center}>
-            {billing.isPro ? 'Thanks for backing GymGO.' : reason ? REASON[reason] : 'Keep more of what you find.'}
+            {billing.isPro ? 'Thanks for backing GymGO.' : reason ? REASON[reason] : 'What Free covers, and what Pro adds.'}
           </Txt>
         </View>
 

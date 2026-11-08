@@ -11,10 +11,11 @@ next number here as part of the update itself.
 
 ## Update 111 · Pro said plainly
 
-*8 Nov 2026 · `7d357b0`, and the commit "Profile: the free plan card says the plan, not a slogan"*
+*8 Nov 2026 · `7d357b0`, `c569926`, and the commit "Pro page: a plain line under its title, not a tagline"*
 
 - On GymGO Free, Home's Other cities put "PRO" on every city outside your country (more than 30 of them). Now each group that's all Pro says it once beside its name ("USA · with GymGO Pro"), and the cities show just their flag and name. A screen reader still hears "with GymGO Pro" on each city, and a group mixing free and Pro cities keeps the tag on the Pro ones.
 - Profile's plan card on Free says what you're on, GymGO Free, and what it covers ("Up to 10 saved gyms, and 2 side by side to compare"), instead of the slogan "Go further with Pro". Its button to see Pro is unchanged.
+- The Pro page, opened from Profile, says "What Free covers, and what Pro adds." under its title instead of the tagline "Keep more of what you find." (Opened from a locked feature, it still says what that feature does with Pro.)
 - Also looked at: Compare with two gyms, Appearance and Profile for a free account, and five screens at 1280 wide; no other changes needed.
 - Not yet seen on a phone.
 

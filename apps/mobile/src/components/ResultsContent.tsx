@@ -229,7 +229,7 @@ export function ResultsContent({
               accessibilityLabel={`${place.placeName}, searched before`}
             >
               <View style={[styles.suggestionGlyph, styles.lookGlyph]}>
-                <Icon name="history" size={16} color={color.brand} />
+                <Icon name="history" size={16} color={color.labelSecondary} />
               </View>
               <View style={styles.suggestionText}>
                 <Txt variant="body" numberOfLines={1}>
@@ -285,7 +285,7 @@ export function ResultsContent({
               accessibilityLabel={`Look up ${typed} anywhere in the world`}
             >
               <View style={[styles.suggestionGlyph, styles.lookGlyph]}>
-                <Icon name="search" size={16} color={color.brand} />
+                <Icon name="search" size={16} color={color.labelSecondary} />
               </View>
               <View style={styles.suggestionText}>
                 <Txt variant="body" numberOfLines={1}>
@@ -637,7 +637,8 @@ const styles = themed(() => StyleSheet.create({
   badgeText: { fontSize: 10, lineHeight: 12, ...face('semibold') },
 
   suggestions: { paddingHorizontal: space[2], paddingTop: space[2] },
-  lookGlyph: { backgroundColor: color.brandTint },
+  // Grey, as Maps draws a search or a recent one: the coloured circles are for places.
+  lookGlyph: { backgroundColor: color.fill },
   suggestion: {
     flexDirection: 'row',
     alignItems: 'center',

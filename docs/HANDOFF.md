@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Search suggestions as Maps draws them** (8 Nov). ResultsContent's
+  `lookGlyph` is `color.fill` with `labelSecondary` icons (look up, recent);
+  places keep the red pin circle, gyms their logo or the brand circle.
 - **Icons on the accent cards** (8 Nov). (tabs)/index.tsx `workoutIcon` and
   profile.tsx `proMark` have no `onBrandFaint` square; icons are 26 pt.
 - **Pro said once** (8 Nov). (tabs)/index.tsx's Other cities: `groupPro`

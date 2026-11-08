@@ -9,6 +9,14 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 113 · Search suggestions as Maps draws them
+
+*8 Nov 2026 · the commit "Map search: look-up and recent rows on grey, as Maps draws them"*
+
+- In the map's search suggestions, "Look up …" and places you searched before show their icon on a grey circle, as Apple Maps draws a search or a recent one, instead of a tint of the accent. The coloured circles are left for places and gyms.
+- Also looked at: Progress's records, milestones and history, and Find a machine with a machine picked; no changes needed.
+- Not yet seen on a phone.
+
 ## Update 112 · Icons on the accent cards on their own
 
 *8 Nov 2026 · the commit "Home and Profile: the accent cards' icons without their faint squares"*

@@ -371,7 +371,7 @@ const styles = themed(() =>
     row: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.md },
     // In line with the rows' text.
     empty: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3] },
-    emptyMark: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+    emptyMark: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
     inviteRow: { alignItems: 'flex-start' },
     inviteActions: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: space[2], flexWrap: 'wrap' },
     small: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill },

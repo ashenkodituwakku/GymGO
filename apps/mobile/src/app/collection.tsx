@@ -34,7 +34,7 @@ import { HeroMark } from '@/components/HeroMark';
 import { ListSkeleton } from '@/components/Skeleton';
 import { GLIDE, Pressy } from '@/components/motion';
 import { CountUp } from '@/components/CountUp';
-import { PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { NoPhoto, PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { shareLine, shareText } from '@/lib/actions';
 import { badges, collectionShareText, collectionStats, nextToCollect } from '@/lib/collection';
@@ -471,11 +471,8 @@ function NextToCollect({ items, near, country, onOpen }: { items: Array<{ record
 function NextMark({ location }: { location: GymLocation }) {
   const mark = useGymMark(location);
   if (!mark) {
-    return (
-      <View style={styles.nextIcon}>
-        <Icon name="gym" size={18} color={color.brand} />
-      </View>
-    );
+    // No logo: its initials, as a gym card shows them.
+    return <NoPhoto compact name={location.name} style={styles.nextIcon} />;
   }
   return (
     <View style={[styles.nextIcon, styles.nextLogo]}>
@@ -506,7 +503,7 @@ const styles = themed(() =>
     nextList: { marginTop: space[2], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden' },
     nextRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], minHeight: 56 },
     nextLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
-    nextIcon: { width: 42, height: 42, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.brandTint, alignItems: 'center', justifyContent: 'center' },
+    nextIcon: { width: 42, height: 42, borderRadius: radius.md, borderCurve: 'continuous', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
     nextLogo: { backgroundColor: color.logoPlate, borderWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
     // No wider than the list below it: across a desktop window a paragraph was one long line.
     center: { textAlign: 'center', maxWidth: 480 },

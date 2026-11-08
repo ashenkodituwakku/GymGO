@@ -66,7 +66,7 @@ const styles = themed(() =>
   StyleSheet.create({
     card: { gap: space[3], padding: space[4], borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     head: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
-    glyph: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+    glyph: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
     flex: { flex: 1, gap: 2 },
     // Wraps on a narrow phone, where "Always show" ran off the card.
     actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space[4], rowGap: space[2], paddingLeft: 36 + space[3] },

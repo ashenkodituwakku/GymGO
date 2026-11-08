@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 96 · The last tinted circles
+
+*8 Nov 2026 · the commit "The last decorative tinted circles go; a gym with no logo shows its initials"*
+
+- The rest of the decorative icons in tinted circles and squares show on their own: Trips, the Pro offer, the Google gate, the Leaderboard's join card, Friends' empty card and Progress's Lifetime row. Tinted round buttons you press (the steppers, add and save) keep their circles: those are controls.
+- Collection's Next to collect: a gym with no logo shows its initials in a plain tile, as a gym card does, instead of the same dumbbell on every row. Three-character initials (F45, 24/7) fit the small tile; they were cut to "F…".
+- Not yet seen on a phone.
+
 ## Update 95 · Numbers without ornaments
 
-*8 Nov 2026 · the commit "Numbers without ornaments: no icons over figures, no tinted circles behind list icons"*
+*8 Nov 2026 · `03c0d24`*
 
 - Progress's three figures at the top (weeks in a row, this week, workouts) and Lifetime's six (workouts, hours, sets, reps, records, best streak) are the number and its word, without a small coloured icon over each.
 - Lifetime's favourites and Pro's comparison table show their icons on their own, not in tinted squares and circles.

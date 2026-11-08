@@ -106,6 +106,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **The last tinted circles** (8 Nov, "less vibecoded"). No background on
+  ProOffer `mark`, GoogleGate `glyph`, leaderboard `joinMark`, trips
+  `tripIcon`, friends `emptyMark`, progress `lifetimeMark`; tinted
+  buttons (steppers, plus, save) unchanged. collection.tsx's no-logo
+  fallback is `<NoPhoto compact name=… />` in the rounded `nextIcon`; ui.tsx
+  `lettersCompactLong` (15 pt) for three-character initials.
 - **Numbers without ornaments** (8 Nov, "less vibecoded"). progress/index's
   `Stat` takes no `icon`/`tint`; lifetime.tsx's tiles have no `icon`;
   lifetime's `mark` and pro.tsx's `featureIcon` have no background.

@@ -51,7 +51,7 @@ const styles = themed(() =>
       backgroundColor: color.plate,
       ...shadow.plate,
     },
-    mark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+    mark: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
     flex: { flex: 1, minWidth: 0, gap: 2 },
     tag: { alignSelf: 'flex-start', marginBottom: 2, flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.brandTint },
   }),

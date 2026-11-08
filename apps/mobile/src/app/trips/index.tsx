@@ -279,7 +279,7 @@ const styles = themed(() =>
       borderCurve: 'continuous',
       backgroundColor: color.plate,
     },
-    tripIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+    tripIcon: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
     tripMain: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3] },
     remove: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 18 },
     confirm: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.danger },

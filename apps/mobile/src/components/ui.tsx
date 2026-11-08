@@ -593,7 +593,7 @@ export function NoPhoto({
       importantForAccessibility="no-hide-descendants"
       style={[styles.monogram, { backgroundColor: onColour ? 'transparent' : color.fill }, style]}
     >
-      <Text allowFontScaling={false} numberOfLines={1} style={[compact ? styles.lettersCompact : styles.letters, { color: onColour ? '#FFFFFF' : color.labelSecondary }]}>
+      <Text allowFontScaling={false} numberOfLines={1} style={[compact ? styles.lettersCompact : styles.letters, compact && letters.length > 2 && styles.lettersCompactLong, { color: onColour ? '#FFFFFF' : color.labelSecondary }]}>
         {letters}
       </Text>
       {!compact &&
@@ -805,6 +805,8 @@ const styles = themed(() => StyleSheet.create({
   },
   letters: { fontSize: 30, lineHeight: 34, letterSpacing: 0.5, ...face('bold') },
   lettersCompact: { fontSize: 19, lineHeight: 22, letterSpacing: 0.3, ...face('bold') },
+  // Three characters (F45, 24/7) fit a small tile at a smaller size; they were cut to "F…".
+  lettersCompactLong: { fontSize: 15, lineHeight: 18, letterSpacing: 0 },
   field: { gap: 6 },
   fieldLabel: face('medium'),
   fieldInput: {

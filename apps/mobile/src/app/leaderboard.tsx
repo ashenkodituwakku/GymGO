@@ -291,7 +291,7 @@ const styles = themed(() =>
     shrink: { flexShrink: 1, minWidth: 0 },
     youPill: { paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.brandFill },
     join: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-    joinMark: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+    joinMark: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
     hero: { gap: space[1], padding: space[4], paddingTop: space[4] + 2, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.brandFill },
     place: { flexDirection: 'row', alignItems: 'baseline', gap: space[2] },
     stats: { flex: 1, flexDirection: 'row', justifyContent: 'flex-end', gap: space[4] },

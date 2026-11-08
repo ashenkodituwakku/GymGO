@@ -558,7 +558,7 @@ const styles = themed(() => StyleSheet.create({
   max: { alignItems: 'flex-end' },
   figure: { fontVariant: ['tabular-nums'] },
   lifetime: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
-  lifetimeMark: { width: 40, height: 40, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+  lifetimeMark: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   strip: { flexDirection: 'row', alignItems: 'center', gap: space[1], marginTop: space[1] },
   logged: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: 2 },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },

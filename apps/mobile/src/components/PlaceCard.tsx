@@ -634,9 +634,15 @@ export function PlaceCard({
             {record.amenities.length > 0 && (
               <View style={styles.kitGrid}>
                 {record.amenities.map((amenity) => (
-                  <View key={amenity.id} style={[styles.kitChip, { backgroundColor: amenity.present === 'yes' ? color.goodTint : color.noTint }]}>
+                  <View
+                    key={amenity.id}
+                    style={[styles.kitChip, styles.markChip, { backgroundColor: amenity.present === 'yes' ? color.goodTint : color.noTint }]}
+                    accessible
+                    accessibilityLabel={`${amenityLabel(amenity.amenityId)}: ${amenity.present === 'yes' ? 'yes' : 'no'}`}
+                  >
+                    <Icon name={amenity.present === 'yes' ? 'check' : 'close'} size={12} color={amenity.present === 'yes' ? color.goodInk : color.noInk} />
                     <Txt variant="footnote" color={amenity.present === 'yes' ? color.goodInk : color.noInk}>
-                      {amenity.present === 'yes' ? '✓' : '✗'} {amenityLabel(amenity.amenityId)}
+                      {amenityLabel(amenity.amenityId)}
                     </Txt>
                   </View>
                 ))}
@@ -935,6 +941,7 @@ const styles = themed(() => StyleSheet.create({
 
   kitAsked: { gap: space[2], paddingBottom: space[3], borderBottomWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
   kitGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  markChip: { alignItems: 'center', gap: 4 },
   kitChip: {
     flexDirection: 'row',
     gap: 5,

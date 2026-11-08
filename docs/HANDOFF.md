@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **A gym's page as a plain list** (8 Nov, "less vibecoded"). ui.tsx's
+  `Fold` icon is 20 pt in a 32-wide box with no background (`foldIcon`).
+  PlaceCard's amenity chips (`markChip`) and GooglePage's `detailChip`
+  use `Icon` check/close with an accessibility label ending ": yes"/": no".
 - **The last tinted circles** (8 Nov, "less vibecoded"). No background on
   ProOffer `mark`, GoogleGate `glyph`, leaderboard `joinMark`, trips
   `tripIcon`, friends `emptyMark`, progress `lifetimeMark`; tinted

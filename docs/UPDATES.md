@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 97 · A gym's page as a plain list
+
+*8 Nov 2026 · the commit "Gym page: row icons on their own; facilities ticked and crossed with icons"*
+
+- A gym's page lists its sections (Prices, Join this gym, Getting in, Equipment, Facilities, Reviews, Your notes, the owner…) with each icon on its own, a little larger, instead of in a tinted circle; the titles still line up. Any other folding list in the app looks the same.
+- Facilities, and the yes-or-no details on Google's page, show a tick or a cross icon rather than typed ✓ and ✗ characters; a screen reader says "yes" or "no" after each.
+- Not yet seen on a phone.
+
 ## Update 96 · The last tinted circles
 
-*8 Nov 2026 · the commit "The last decorative tinted circles go; a gym with no logo shows its initials"*
+*8 Nov 2026 · `63f11c5`*
 
 - The rest of the decorative icons in tinted circles and squares show on their own: Trips, the Pro offer, the Google gate, the Leaderboard's join card, Friends' empty card and Progress's Lifetime row. Tinted round buttons you press (the steppers, add and save) keep their circles: those are controls.
 - Collection's Next to collect: a gym with no logo shows its initials in a plain tile, as a gym card does, instead of the same dumbbell on every row. Three-character initials (F45, 24/7) fit the small tile; they were cut to "F…".

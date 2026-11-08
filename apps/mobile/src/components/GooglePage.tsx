@@ -27,6 +27,7 @@ import { api, type GoogleAuthor, type GooglePlace } from '@/lib/api';
 import { googleMapsEmbedUrl, googleMapsSearchUrl, googleStreetViewEmbedUrl } from '@/lib/present';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { GoogleEmbed } from './GoogleEmbed';
+import { Icon } from './Icon';
 import { PagerArrows } from './PhotoHero';
 import { CloseButton, PrimaryButton, Txt } from './ui';
 import { openPage } from '@/lib/actions';
@@ -230,9 +231,15 @@ export function PlaceDetails({ place, hidePhotos = false }: { place: GooglePlace
             </Txt>
             <View style={styles.detailChips}>
               {items.map((item) => (
-                <View key={item.label} style={[styles.detailChip, { backgroundColor: item.value ? color.goodTint : color.noTint }]}>
+                <View
+                  key={item.label}
+                  style={[styles.detailChip, { backgroundColor: item.value ? color.goodTint : color.noTint }]}
+                  accessible
+                  accessibilityLabel={`${item.label}: ${item.value ? 'yes' : 'no'}`}
+                >
+                  <Icon name={item.value ? 'check' : 'close'} size={12} color={item.value ? color.goodInk : color.noInk} />
                   <Txt variant="footnote" color={item.value ? color.goodInk : color.noInk}>
-                    {item.value ? '✓' : '✗'} {item.label}
+                    {item.label}
                   </Txt>
                 </View>
               ))}
@@ -349,7 +356,7 @@ const styles = themed(() => StyleSheet.create({
   credit: { flexDirection: 'row', flexWrap: 'wrap' },
   links: { flexDirection: 'row', gap: space[2] },
   detailChips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2], marginTop: space[1] },
-  detailChip: { paddingHorizontal: space[3], paddingVertical: 4, borderRadius: radius.pill },
+  detailChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[3], paddingVertical: 4, borderRadius: radius.pill },
   card: {
     gap: space[1],
     padding: space[4],

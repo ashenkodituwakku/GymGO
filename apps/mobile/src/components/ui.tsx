@@ -229,7 +229,7 @@ export function Fold({
   children,
 }: {
   emoji?: string;
-  /** A symbol in a tinted circle; preferred over an emoji. */
+  /** A symbol before the title; preferred over an emoji. */
   icon?: IconName;
   title: string;
   summary?: string;
@@ -258,7 +258,7 @@ export function Fold({
       >
         {icon ? (
           <View style={styles.foldIcon}>
-            <Icon name={icon} size={17} color={color.brand} />
+            <Icon name={icon} size={20} color={color.brand} />
           </View>
         ) : (
           <Txt variant="title2" style={styles.foldEmoji}>
@@ -760,14 +760,8 @@ const styles = themed(() => StyleSheet.create({
   // Inset past the row's icon (padding 16 + icon 32 + gap 12), as iOS's lists are.
   groupLine: { height: StyleSheet.hairlineWidth, marginLeft: space[4] + 32 + space[3], backgroundColor: color.separator },
   foldEmoji: { width: 30, textAlign: 'center' },
-  foldIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: color.brandTint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  // The symbol on its own, in a box as wide as the old circle, so the titles still line up.
+  foldIcon: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   foldText: { flex: 1, gap: 1 },
   infoHead: { alignItems: 'flex-start' },
   foldBody: { paddingHorizontal: space[4], paddingBottom: space[4], gap: space[3] },

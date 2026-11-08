@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 100 · The map says what it does
+
+*8 Nov 2026 · the commit "Map: no time-of-day quip over the results; a plain search prompt"*
+
+- The map's results no longer open with a time-of-day quip in capitals ("LUNCH-BREAK PUMP?", "CAN'T SLEEP? SAME."): the line under the heading already says the time you're looking for ("none a sure thing at 1 pm").
+- Its search box asks for what it takes, as Home's does: "Suburb, city or gym" (a city or ZIP code in the US, a town elsewhere), and "Search" on the smallest phones, instead of "Where are we lifting?" and "Where to?".
+- (GymPal's greeting stays word for word as you wrote it.)
+- Also checked: the 16 screens changed in this clean-up at 320 points in dark, with no errors and nothing overflowing.
+- Not yet seen on a phone.
+
 ## Update 99 · How to do it, as a card like the rest
 
-*8 Nov 2026 · the commit "Exercise page: how to do it as a plain card; exercise tiles without the gloss"*
+*8 Nov 2026 · `f6afa8f`*
 
 - An exercise's How to do it is a card like the ones under it, with the moving figure on its usual tile beside the cue, instead of a block of the accent. The accent is kept for your own numbers (Lifetime, the 1-rep max, Collection).
 - Exercise tiles everywhere (lists, plans, a workout, the monthly report) lose the white gloss drawn across their top corner.

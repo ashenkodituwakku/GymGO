@@ -15,7 +15,7 @@ import { countryInSentence, countryName } from '@/lib/country';
 import { distanceLabel, localBudget, moneyLabel, placeContext, tracksPrices } from '@/lib/places';
 import { MATCH, suggestionKey, title, type Suggestion } from '@/lib/suggest';
 import type { RecentPlace } from '@/lib/recentPlaces';
-import { EMPTY, PLACEHOLDER, PLACEHOLDER_SHORT, TIER, lookupLine, searchPrompt, sessionGreeting, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
+import { EMPTY, PLACEHOLDER_SHORT, mapPrompt, TIER, lookupLine, searchPrompt, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
 import type { Lookup } from '@/lib/app-state';
 import { SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
 import { NO_WEB_OUTLINE, color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -123,7 +123,7 @@ export function ResultsContent({
 }) {
   // The sheet-aware input throws in a browser; see TextField in ui.tsx.
   const SearchInput = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
-  // "Where are we lifting?" doesn't fit beside the filters and your picture on a 320-point phone.
+  // "Suburb, city or gym" doesn't fit beside the filters and your picture on a 320-point phone.
   const narrow = useWindowDimensions().width < 360;
   const typed = query.trim();
   // Somewhere not on GymGO's lists: offered as a last row, to look it up anywhere in the world.
@@ -157,7 +157,7 @@ export function ResultsContent({
               setTimeout(() => setSearching(false), 250);
             }}
             onSubmitEditing={onSubmitSearch}
-            placeholder={narrow ? PLACEHOLDER_SHORT : PLACEHOLDER}
+            placeholder={narrow ? PLACEHOLDER_SHORT : mapPrompt(home)}
             placeholderTextColor={color.labelTertiary}
             returnKeyType="search"
             autoCorrect={false}
@@ -341,9 +341,6 @@ export function ResultsContent({
 
       {/* Summary -------------------------------------------------------- */}
       <View style={styles.summary}>
-        <Txt variant="eyebrow" color={color.brand} style={styles.greeting}>
-          {sessionGreeting(filters.visitMinuteOfDay).toUpperCase()}
-        </Txt>
         <Txt variant="title2">
           {nearLabel(filters.placeName)}
         </Txt>
@@ -666,7 +663,6 @@ const styles = themed(() => StyleSheet.create({
   chips: { gap: space[2], paddingHorizontal: space[4], paddingVertical: space[3] },
 
   summary: { paddingHorizontal: space[4], paddingTop: space[1], gap: 2 },
-  greeting: { marginBottom: 2 },
 
   notice: {
     flexDirection: 'row',

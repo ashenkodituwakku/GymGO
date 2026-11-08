@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { hoursMeet } from '@gymgo/domain';
-import { accessLine, accessShort, checkedAgo, filtersButtonLabel, gymDistanceLine, locatedNotice, lookupLine, noGymsLine, serverOfflineLine, statusSummaryLine, ratingShort, searchPrompt, sessionGreeting, summaryLine, timeLabel, TIER, tripPlaceWords, placeWords } from './copy';
+import { accessLine, accessShort, checkedAgo, filtersButtonLabel, gymDistanceLine, locatedNotice, lookupLine, noGymsLine, serverOfflineLine, statusSummaryLine, ratingShort, searchPrompt, mapPrompt, summaryLine, timeLabel, TIER, tripPlaceWords, placeWords } from './copy';
 import { YOUR_LOCATION, activeFilterCount, applyRelaxation, atPlace, defaultVisit, initialFilters, runSearch, toQuery } from './query';
 import { geocodePlace } from './places';
 
@@ -15,12 +15,10 @@ describe('voice', () => {
     expect(timeLabel(0)).toBe('12\u00a0am');
   });
 
-  it('greets by the planned session time, covering every hour', () => {
-    expect(sessionGreeting(6 * 60)).toBe('Early one?');
-    expect(sessionGreeting(12 * 60 + 30)).toBe('Lunch-break pump?');
-    expect(sessionGreeting(18 * 60)).toBe('After-work session?');
-    expect(sessionGreeting(21 * 60)).toBe('Late one?');
-    for (let minute = 0; minute < 24 * 60; minute += 30) expect(sessionGreeting(minute).length).toBeGreaterThan(0);
+  it('words the map search box in the words people use at home', () => {
+    expect(mapPrompt('AU')).toBe('Suburb, city or gym');
+    expect(mapPrompt('US')).toBe('City, ZIP code or gym');
+    expect(mapPrompt(null)).toBe('Town, city or gym');
   });
 
   it('gives every tier a label and a line', () => {

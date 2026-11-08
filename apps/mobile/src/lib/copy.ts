@@ -41,17 +41,6 @@ export const TIER: Record<ResultTier, TierCopy> = {
  * not to the clock, so planning tomorrow's 6 am from the couch at 9 pm still
  * reads "Early one?".
  */
-export function sessionGreeting(minuteOfDay: number): string {
-  const hour = Math.floor(minuteOfDay / 60) % 24;
-  if (hour < 5) return 'Can’t sleep? Same.';
-  if (hour < 9) return 'Early one?';
-  if (hour < 11) return 'Morning session?';
-  if (hour < 14) return 'Lunch-break pump?';
-  if (hour < 17) return 'Afternoon session?';
-  if (hour < 20) return 'After-work session?';
-  return 'Late one?';
-}
-
 /** A little personality per verdict, as a short chip for the list. */
 /**
  * "15 Oct" (or what `options` ask for) for a date as GymGO keeps it: a
@@ -271,9 +260,14 @@ export function gymDistanceLine(km: number, country: string, placeName: string):
   return `${distanceLabel(km, country)} from ${placeName === YOUR_LOCATION ? 'you' : placeName}`;
 }
 
-export const PLACEHOLDER = 'Where are we lifting?';
+/** The map's search box, beside the filters (it shows a magnifying glass, so no "Search"). */
+export function mapPrompt(home: string | null): string {
+  if (home === 'US') return 'City, ZIP code or gym';
+  if (home === 'AU' || home === 'NZ') return 'Suburb, city or gym';
+  return 'Town, city or gym';
+}
 /** The same, for a field too narrow for it (a 320-point phone, beside the filters and your picture). */
-export const PLACEHOLDER_SHORT = 'Where to?';
+export const PLACEHOLDER_SHORT = 'Search';
 
 /** Sources, in plain words. */
 export function sourceLabel(status: string): string {

@@ -97,7 +97,7 @@ export function FiltersContent({
             />
           ))}
         </View>
-        <Hint>We check when visitors can walk in — not when members can.</Hint>
+        <Hint>The hours visitors can walk in, not members’ hours.</Hint>
       </Group>
 
       <Group title="Opening hours">

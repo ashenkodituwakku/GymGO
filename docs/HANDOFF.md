@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Plainer sentences** (8 Nov). No "word — word" asides left in the app's
+  visible strings (copy.ts `filtersButtonLabel`, `locatedNotice` denied,
+  `EMPTY.crowd`; PlaceCard's Reviews summary; FiltersContent's hint).
 - **A plain photo slot** (8 Nov). PhotoHero.tsx's `empty` style is
   `color.fill` with no dashed `brandBorder`/`brandWash`.
 - **The builder's options fit** (8 Nov). workout/[id].tsx's length

@@ -66,7 +66,7 @@ describe('voice', () => {
   });
 
   it("counts only gyms that could work on the Filters button, and says how sure", () => {
-    expect(filtersButtonLabel({ confirmed: 0, needs_confirmation: 0 })).toBe('No gyms — loosen something');
+    expect(filtersButtonLabel({ confirmed: 0, needs_confirmation: 0 })).toBe('No gyms: loosen a filter');
     expect(filtersButtonLabel({ confirmed: 0, needs_confirmation: 40 })).toBe('Show 40 gyms · none a sure thing');
     expect(filtersButtonLabel({ confirmed: 3, needs_confirmation: 5 })).toBe('Show 8 gyms · 3 good to go');
     expect(filtersButtonLabel({ confirmed: 1, needs_confirmation: 0 })).toBe('Show 1 gym');
@@ -185,8 +185,8 @@ describe('what finding you says', () => {
   });
 
   it('when you say no, suggests typing a place in the words used at home', () => {
-    expect(locatedNotice({ kind: 'denied' }, 'US')).toBe('No worries — search a city or ZIP code instead.');
-    expect(locatedNotice({ kind: 'denied' }, 'AU')).toBe('No worries — search a suburb or city instead.');
+    expect(locatedNotice({ kind: 'denied' }, 'US')).toBe('Location is off for GymGO. Search a city or ZIP code instead.');
+    expect(locatedNotice({ kind: 'denied' }, 'AU')).toBe('Location is off for GymGO. Search a suburb or city instead.');
     expect(locatedNotice({ kind: 'unavailable' }, 'DE')).toBe("Couldn't get a fix on where you are. Search a town or city instead.");
   });
 

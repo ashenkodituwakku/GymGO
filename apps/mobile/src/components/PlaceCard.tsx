@@ -681,7 +681,7 @@ export function PlaceCard({
         <Fold
           icon="star"
           title="Reviews"
-          summary={result.rating.count ? `${ratingShort(result.rating.average)} from ${result.rating.count}` : LIMITED ? 'With the full version' : 'None yet — be the first'}
+          summary={result.rating.count ? `${ratingShort(result.rating.average)} from ${result.rating.count}` : LIMITED ? 'With the full version' : 'None yet'}
         >
           {reviews}
         </Fold>

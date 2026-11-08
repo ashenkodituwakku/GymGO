@@ -121,7 +121,7 @@ export function summaryLine(total: number, confirmed: number, minuteOfDay: numbe
  */
 export function filtersButtonLabel(counts: { confirmed: number; needs_confirmation: number }): string {
   const possible = counts.confirmed + counts.needs_confirmation;
-  if (possible === 0) return 'No gyms — loosen something';
+  if (possible === 0) return 'No gyms: loosen a filter';
   const gyms = `Show ${possible === 1 ? '1 gym' : `${possible} gyms`}`;
   if (counts.confirmed === possible) return gyms;
   if (counts.confirmed === 0) return `${gyms} · none a sure thing`;
@@ -158,7 +158,7 @@ export const EMPTY = {
   outOfArea: "Couldn't look that place up just now. Try again, or move the map there and tap Search this area.",
   locationApproximate:
     'Your phone is only sharing your approximate location, so distances may be well off. Turn on Precise Location for GymGO in Settings.',
-  crowd: "Live crowd info isn't something we have — so we won't guess.",
+  crowd: "GymGO doesn't have live crowd info, so it won't guess.",
 } as const;
 
 /** A place to type, in the words people use at home: suburbs in Australia, ZIP codes in the US. */
@@ -199,7 +199,7 @@ export function locatedNotice(
     case 'off':
       return `Location is off in Profile → Settings. Search ${placeWords(home)} instead.`;
     case 'denied':
-      return `No worries — search ${placeWords(home)} instead.`;
+      return `Location is off for GymGO. Search ${placeWords(home)} instead.`;
     case 'unavailable':
       return `Couldn't get a fix on where you are. Search ${placeWords(home)} instead.`;
     case 'nearest':

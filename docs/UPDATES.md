@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 119 · Programme and trips, plainly
+
+*8 Nov 2026 · the commit "Programme and Home's trip: no icon squares or circles"*
+
+- Your programme's page starts with its name ("Strength programme") instead of an icon on an accent square, as the templates now do.
+- Home's card for a trip coming up shows its globe on its own, like Machines and Trips beneath it, instead of white on a circle.
+- Also looked at, with nothing to change: the search suggestions' place pins (as Apple Maps marks a place), the rows with a coloured tile (as Settings draws them), the monthly challenge card (a picture to share) and a gym page's answer.
+- Not yet seen on a phone.
+
 ## Update 118 · Home's week and collection without their circles
 
-*8 Nov 2026 · the commit "Home, Country and Report a bug: plain icons, one title"*
+*8 Nov 2026 · `8712672`*
 
 - Home's This week and Your collection widgets show their icon on its own (an orange flame; the cards in the metal of your best tier) instead of white on a coloured circle, as a tile and as a full-width row, like Machines and Trips beside them. The nudge that you're at a gym does the same.
 - Your country leaves the bar empty under its own title (it said "Country" over "Your country"), and Report a bug starts with its line of text, without the red bug square beside it.

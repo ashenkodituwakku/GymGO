@@ -14,7 +14,6 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { AskGymPal } from '@/components/AskGymPal';
-import { BrandFill } from '@/components/BrandFill';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
 import { Pressable } from '@/components/motion';
@@ -206,10 +205,6 @@ function Running({ programme }: { programme: Programme }) {
     <>
       <Card style={styles.card}>
         <View style={styles.head}>
-          <View style={styles.mark}>
-            <BrandFill round={13} />
-            <Icon name="workout" size={22} color={color.onBrand} />
-          </View>
           <View style={styles.flex}>
             <Txt variant="title2" accessibilityRole="header" level={1}>
               {title}
@@ -404,7 +399,6 @@ const styles = themed(() =>
     intro: { gap: space[1] },
     card: { gap: space[3] },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-    mark: { width: 46, height: 46, borderRadius: 13, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandFill },
     flex: { flex: 1, minWidth: 0 },
     goals: { gap: space[2] },
     goal: { gap: 2, padding: space[3], borderRadius: radius.md, borderWidth: 1.5, borderColor: color.separator, backgroundColor: color.background },

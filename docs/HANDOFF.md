@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Programme and trips, plainly** (8 Nov). programme.tsx's `mark`
+  (BrandFill square) and Home's `tripIcon` circle removed (a 22pt brand
+  globe). Checked with a trip and a programme put in the test browser's
+  storage only.
 - **Plain widget icons** (8 Nov). TrainingInsights' `stripIcon` and
   CollectCard's `stripMedal` circles removed: a 20pt (tile) or 22pt (row)
   glyph, flame in `color.maybe`, cards in `TIER_METAL` (labelSecondary

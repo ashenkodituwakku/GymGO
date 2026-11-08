@@ -333,9 +333,7 @@ export default function Home() {
                     accessibilityLabel={`Trip to ${trip.placeName}, ${tripDatesLabel(trip)}, ${tripWhen(trip, todayThere(trip))}. See the gyms there`}
                     style={styles.trip}
                   >
-                    <View style={styles.tripIcon}>
-                      <Icon name="globe" size={18} color={color.onBrand} />
-                    </View>
+                    <Icon name="globe" size={22} color={color.brand} />
                     <View style={styles.flex}>
                       <Txt variant="headline" numberOfLines={1}>{`Trip to ${trip.placeName}`}</Txt>
                       <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
@@ -929,7 +927,6 @@ const styles = themed(() => StyleSheet.create({
     borderCurve: 'continuous',
     backgroundColor: color.brandTint,
   },
-  tripIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
   finders: { flexDirection: 'row', gap: space[3] },
   planCard: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', ...shadow.card },
   upNext: {

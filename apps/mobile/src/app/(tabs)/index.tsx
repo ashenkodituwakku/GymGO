@@ -551,6 +551,8 @@ export default function Home() {
                         // A long list (the US has 40) shows its first dozen until asked for the rest.
                         const open = showAll[label] === true || cities.length <= CITIES_SHOWN + 2;
                         const list = open ? cities : cities.slice(0, CITIES_SHOWN);
+                        // Said once over the group when it's all Pro, rather than "PRO" on every city.
+                        const groupPro = cities.every((item) => !mayExplore(item.country));
                         return (
                           <View key={label} style={styles.country}>
                             {/* A country's group under its flag; a continent's under its name alone. */}
@@ -559,6 +561,11 @@ export default function Home() {
                               <Txt variant="footnote" color={color.labelSecondary} style={styles.countryLabel}>
                                 {label.toUpperCase()}
                               </Txt>
+                              {groupPro && (
+                                <Txt variant="footnote" color={color.labelSecondary}>
+                                  · with GymGO Pro
+                                </Txt>
+                              )}
                             </View>
                             <View style={styles.suburbs}>
                               {list.map((item) => {
@@ -575,7 +582,7 @@ export default function Home() {
                                     <Txt variant="subhead" style={face('medium')}>
                                       {item.name}
                                     </Txt>
-                                    {!mayExplore(item.country) && (
+                                    {!groupPro && !mayExplore(item.country) && (
                                       <Txt variant="caption" color={color.brand} style={styles.proTag}>
                                         PRO
                                       </Txt>

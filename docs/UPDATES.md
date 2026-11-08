@@ -9,9 +9,16 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 111 · Pro said once, not on every city
+
+*8 Nov 2026 · the commit "Home: one Pro note per group of cities, not PRO on each"*
+
+- On GymGO Free, Home's Other cities put "PRO" on every city outside your country (more than 30 of them). Now each group that's all Pro says it once beside its name ("USA · with GymGO Pro"), and the cities show just their flag and name. A screen reader still hears "with GymGO Pro" on each city, and a group mixing free and Pro cities keeps the tag on the Pro ones.
+- Not yet seen on a phone.
+
 ## Update 110 · Plainer sentences
 
-*8 Nov 2026 · the commit "Copy: the last dashed asides said plainly"*
+*8 Nov 2026 · `422b9fd`*
 
 - The few lines that leaned on a dash for effect say it plainly: the filters button with nothing left reads "No gyms: loosen a filter"; with location turned down, "Location is off for GymGO. Search a suburb or city instead." (it said "No worries —"); "GymGO doesn't have live crowd info, so it won't guess."; Reviews with none says "None yet" (it said "None yet — be the first"); and the filters' hint says "The hours visitors can walk in, not members' hours."
 - Not yet seen on a phone.

@@ -126,8 +126,8 @@ export default function FriendsScreen() {
       {/* Your code on the accent: the one thing here to send. */}
       <View style={styles.hero}>
         <BrandFill round={radius.xl} />
-        <Txt variant="eyebrow" color={color.onBrandSoft}>
-          YOUR FRIEND CODE
+        <Txt variant="label" color={color.onBrandSoft}>
+          Your friend code
         </Txt>
         <View accessible accessibilityLabel={view ? `Your friend code: ${view.code.split('').join(' ')}` : 'Loading your friend code'}>
           <Txt variant="largeTitle" color={color.onBrand} style={styles.code}>

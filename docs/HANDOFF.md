@@ -106,6 +106,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **The last capitals in cards** (8 Nov, "less vibecoded"). `label` on the
+  heroes of profile.tsx (plan), friends/index (code), friends/[id],
+  challenges.tsx, strength.tsx and lifetime.tsx; share cards (RecapCard,
+  LifetimeCard, SetCard) keep `eyebrow`. strength.tsx's empty `ghost` card
+  has no `ghostLines`.
 - **The map says what it does** (8 Nov, "less vibecoded"). copy.ts's
   `sessionGreeting` (the time-of-day quips) is gone with its eyebrow in
   ResultsContent; `PLACEHOLDER` gave way to `mapPrompt(home)`

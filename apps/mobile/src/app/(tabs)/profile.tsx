@@ -423,8 +423,8 @@ function ProCard({ isPro, line, trial, canBuy, onOpen }: { isPro: boolean; line:
           <Icon name="crown" size={20} color={color.onBrand} />
         </View>
         <View style={styles.flex}>
-          <Txt variant="eyebrow" color={color.onBrandSoft}>
-            {isPro ? 'YOUR PLAN' : 'YOUR PLAN · FREE'}
+          <Txt variant="label" color={color.onBrandSoft}>
+            {isPro ? 'Your plan' : 'Your plan · Free'}
           </Txt>
           <Txt variant="title2" color={color.onBrand} numberOfLines={2}>
             {title}

@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 101 · The last capitals in cards, and no fake text
+
+*8 Nov 2026 · the commit "Sentence case on the accent cards; 1-rep max's empty card without fake text bars"*
+
+- The headings on the accent cards are in sentence case too: Your plan (Profile), Your friend code, a friend's collection, Monthly challenge, Estimated 1-rep max and Since October 2026 (Lifetime). The shareable pictures (your week, your lifetime, a record) keep their capitals: they're designed as images to post.
+- 1-rep max, before you type anything: the outlined card showing where the estimate will go no longer has grey bars standing in for text (they looked like something still loading); How it works is in sentence case.
+- Not yet seen on a phone.
+
 ## Update 100 · The map says what it does
 
-*8 Nov 2026 · `1372572`, and the commit "Plain button words: Done after a new card, Get started at the end of the tour"*
+*8 Nov 2026 · `1372572`, `bdb5488`*
 
 - The map's results no longer open with a time-of-day quip in capitals ("LUNCH-BREAK PUMP?", "CAN'T SLEEP? SAME."): the line under the heading already says the time you're looking for ("none a sure thing at 1 pm").
 - Its search box asks for what it takes, as Home's does: "Suburb, city or gym" (a city or ZIP code in the US, a town elsewhere), and "Search" on the smallest phones, instead of "Where are we lifting?" and "Where to?".

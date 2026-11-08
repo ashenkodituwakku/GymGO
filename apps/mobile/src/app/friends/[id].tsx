@@ -111,8 +111,8 @@ export default function FriendScreen() {
         // Their totals on the accent, like a plan's head.
         <View style={styles.hero}>
           <BrandFill round={radius.xl} />
-          <Txt variant="eyebrow" color={color.onBrandSoft} numberOfLines={1}>
-            {`${friend.name.toUpperCase()}’S COLLECTION`}
+          <Txt variant="label" color={color.onBrandSoft} numberOfLines={1}>
+            {`${friend.name}’s collection`}
           </Txt>
           <View style={styles.stats}>
             <Stat first value={friend.totals.gyms} label={friend.totals.gyms === 1 ? 'gym' : 'gyms'} />

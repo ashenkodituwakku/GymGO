@@ -119,8 +119,8 @@ export default function StrengthScreen() {
         // The answer on the accent: what the page is for.
         <View style={styles.hero} accessible accessibilityLabel={`Estimated 1-rep max: about ${formatWeight(nearest(max, unit), unit)}`}>
           <BrandFill round={radius.xl} />
-          <Txt variant="eyebrow" color={color.onBrandSoft}>
-            ESTIMATED 1-REP MAX
+          <Txt variant="label" color={color.onBrandSoft}>
+            Estimated 1-rep max
           </Txt>
           <Txt variant="largeTitle" color={color.onBrand}>
             ≈ {formatWeight(nearest(max, unit), unit)}
@@ -205,24 +205,19 @@ export default function StrengthScreen() {
       {weightText.trim() === '' && (
         // Where the estimate will be, outlined, so the page shows what it's for before anything's typed.
         <View style={styles.ghost} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <Txt variant="eyebrow" color={color.labelTertiary}>
-            ESTIMATED 1-REP MAX
+          <Txt variant="label" color={color.labelTertiary}>
+            Estimated 1-rep max
           </Txt>
           <Txt variant="largeTitle" color={color.labelTertiary}>
             ≈ — {unit}
           </Txt>
-          <View style={styles.ghostLines}>
-            {[0.8, 0.62, 0.46].map((share) => (
-              <View key={share} style={[styles.ghostLine, { width: `${share * 100}%` }]} />
-            ))}
-          </View>
         </View>
       )}
 
       {weightText.trim() === '' && (
         <View style={styles.card}>
-          <Txt variant="eyebrow" color={color.labelSecondary}>
-            HOW IT WORKS
+          <Txt variant="label" color={color.labelSecondary}>
+            How it works
           </Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
             {`Say you got ${unit === 'kg' ? '100 kg' : '225 lb'} for 5. That puts your 1-rep max near ${formatWeight(nearest((unit === 'kg' ? 100 : 225) * (1 + 5 / 30), unit), unit)}, without having to test it. Programs often ask for a share of it, like 5 sets at 80%.`}
@@ -244,8 +239,6 @@ const styles = themed(() =>
       borderStyle: 'dashed',
       borderColor: color.separator,
     },
-    ghostLines: { gap: space[2], marginTop: space[1] },
-    ghostLine: { height: 8, borderRadius: 4, backgroundColor: color.fill },
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[4], paddingBottom: space[8], gap: space[3], width: '100%', maxWidth: 560, alignSelf: 'center' },
     flex: { flex: 1 },

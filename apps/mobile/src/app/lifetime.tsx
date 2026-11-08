@@ -167,8 +167,8 @@ export default function LifetimeScreen() {
       {/* The headline figure on the accent: everything you've lifted. */}
       <View style={styles.hero} accessible accessibilityLabel={`Since ${monthYear(life.since)}: ${lifted.toLocaleString('en')} ${unit} lifted.${like ? ` About ${like.words}.` : ''}`}>
         <BrandFill round={radius.xl} />
-        <Txt variant="eyebrow" color={color.onBrandSoft}>
-          {`SINCE ${monthYear(life.since).toUpperCase()}`}
+        <Txt variant="label" color={color.onBrandSoft}>
+          {`Since ${monthYear(life.since)}`}
         </Txt>
         <Txt variant="largeTitle" color={color.onBrand}>
           {`${lifted.toLocaleString('en')} ${unit}`}

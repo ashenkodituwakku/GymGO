@@ -191,8 +191,8 @@ function ChallengeCard({ month, target, small = false }: { month: string; target
       <View style={styles.prizeWords} accessible accessibilityLabel={`Challenge card: ${label}, trained on ${target} days`}>
         <View style={styles.prizeTop}>
           <Icon name="trophy" size={small ? 22 : 30} color={color.onBrand} />
-          <Txt variant="eyebrow" color={color.onBrandSoft}>
-            MONTHLY CHALLENGE
+          <Txt variant="label" color={color.onBrandSoft}>
+            Monthly challenge
           </Txt>
         </View>
         <Txt variant={small ? 'title2' : 'largeTitle'} color={color.onBrand}>

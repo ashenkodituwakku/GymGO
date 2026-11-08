@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 105 · This month's figures fit a small phone
+
+*8 Nov 2026 · the commit "This month widget: the unit goes with the word, so the figure fits"*
+
+- Home's This month widget showed "11,563 kg" cut off on a 320-point phone. The figure is now the number and its word says the unit ("11,563 · kg lifted"), as a finished workout's summary does; a screen reader hears "11,563 kg lifted".
+- Checked: every widget on Home at once, at 320 dark and 390 light, with nothing cut off apart from the last workout's exercise list, which is meant to end in "…".
+- Not yet seen on a phone.
+
 ## Update 104 · Tidying behind the scenes
 
-*8 Nov 2026 · the commit "Remove code the clean-up left unused"*
+*8 Nov 2026 · `51ec148`*
 
 - No change you can see. Code nothing used any more is gone: three old interface pieces (a tier pill, a section title and a divider), four unused helpers and a colour for hovering over the body figure that the figure no longer reads. The app's code now has no unused locals (checked with the compiler's own check), apart from one researched figure kept in the Australian data.
 - Checked: every package's tests, and Home, the map, a gym page, Exercises, Workout and Progress load with no errors.

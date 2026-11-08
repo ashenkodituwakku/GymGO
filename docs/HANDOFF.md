@@ -106,6 +106,8 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **This month's figures fit** (8 Nov). HomeWidgets' month stats carry a
+  `spoken` each; Lifted shows the number with the label `${unit} lifted`.
 - **Tidying** (8 Nov). Removed unused ui.tsx `TierPill`/`SectionTitle`/
   `Divider` (and their styles), theme `currentTweaks` and `bodyHover`,
   exerciseLibrary `doableWith`, training `isSetKind`, places `isDemoMode`.

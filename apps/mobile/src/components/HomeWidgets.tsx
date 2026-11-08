@@ -183,10 +183,12 @@ export function MonthWidget({ log, unit }: { log: LogState; unit: WeightUnit }) 
       </Frame>
     );
   }
+  const lifted = Math.round(fromKg(totals.volumeKg, unit)).toLocaleString();
   const stats = [
-    { label: 'Workouts', value: totals.workouts.toLocaleString() },
-    { label: 'Time', value: totals.minutes > 0 ? durationLabel(totals.minutes * 60_000) : '—' },
-    { label: 'Lifted', value: weightText(totals.volumeKg, unit) },
+    { label: 'Workouts', value: totals.workouts.toLocaleString(), spoken: plural(totals.workouts, 'workout') },
+    { label: 'Time', value: totals.minutes > 0 ? durationLabel(totals.minutes * 60_000) : '—', spoken: `time ${totals.minutes > 0 ? durationLabel(totals.minutes * 60_000) : 'none'}` },
+    // The unit with the word, so the figure fits a third of a 320-point phone ("11,563 kg" was cut off).
+    { label: `${unit} lifted`, value: lifted, spoken: `${lifted} ${unit} lifted` },
   ];
   const records = report.records.length;
   return (
@@ -194,7 +196,7 @@ export function MonthWidget({ log, unit }: { log: LogState; unit: WeightUnit }) 
       icon="calendar"
       title={title}
       onPress={() => router.push({ pathname: '/month', params: { m: month } })}
-      label={`This month: ${stats.map((stat) => `${stat.label} ${stat.value}`).join(', ')}, ${plural(records, 'record')}. Open the monthly report`}
+      label={`This month: ${stats.map((stat) => stat.spoken).join(', ')}, ${plural(records, 'record')}. Open the monthly report`}
     >
       <View style={styles.stats}>
         {stats.map((stat) => (

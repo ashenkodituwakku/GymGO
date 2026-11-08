@@ -49,7 +49,7 @@ export default function PhotosScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <ScreenOptions options={{ title: 'Progress photos' }} />
+      <ScreenOptions options={{ title: '' }} />
       <View style={styles.intro}>
         <Txt variant="largeTitle" accessibilityRole="header" level={1}>
           Progress photos

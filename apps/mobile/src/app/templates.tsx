@@ -11,9 +11,8 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
-import { BrandFill } from '@/components/BrandFill';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
-import { Icon, type IconName } from '@/components/Icon';
+import { Icon } from '@/components/Icon';
 import { AskGymPal } from '@/components/AskGymPal';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -155,20 +154,6 @@ export default function TemplatesScreen() {
   );
 }
 
-/** Each plan's mark: what sets it apart at a glance. */
-const TEMPLATE_ICON: Record<string, IconName> = {
-  'full-body': 'body',
-  'full-body-3': 'calendar',
-  'five-by-five': 'plates',
-  'body-weight': 'person',
-  ppl: 'shuffle',
-  'upper-lower': 'sort',
-  arnold: 'trophy',
-  'body-part': 'target',
-};
-/** The marks' corners, the look's own (square in 8-bit and Classic). */
-const markRound = () => Math.min(13, radius.lg);
-
 function TemplateCard({
   template,
   next,
@@ -204,10 +189,6 @@ function TemplateCard({
   return (
     <Card style={styles.card}>
       <View style={styles.head}>
-        <View style={styles.mark}>
-          <BrandFill round={markRound()} />
-          <Icon name={TEMPLATE_ICON[template.id] ?? 'workout'} size={22} color={color.onBrand} />
-        </View>
         <View style={styles.flex}>
           <Txt variant="title2">{template.name}</Txt>
           <Txt variant="footnote" color={color.brand} style={face('semibold')}>
@@ -287,7 +268,6 @@ const styles = themed(() =>
     busy: { gap: space[2] },
     card: { gap: space[3] },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-    mark: { width: 46, height: 46, borderRadius: markRound(), borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandFill },
     flex: { flex: 1, minWidth: 0 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     // At least 28 points tall, so it's an easy target on a phone and in a browser (hitSlop doesn't reach a browser); the negative margin keeps the spacing as it was.

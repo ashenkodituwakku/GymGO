@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **One title per page** (8 Nov). templates.tsx's `TEMPLATE_ICON`/`mark`
+  (BrandFill square) removed; photos.tsx and spend.tsx set the bar title
+  to '' since each has its own largeTitle (as measurements.tsx, pro.tsx).
 - **Icons, not emoji** (8 Nov). `CELEBRATIONS`/`SOUND_PACKS` carry an
   `icon: IconName` (new Icon names confetti, fireworks, smile, music,
   arcade; Material has no fireworks, so `flare`) in place of an emoji

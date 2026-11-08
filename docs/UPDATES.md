@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 117 · One title per page, and plain template cards
+
+*8 Nov 2026 · the commit "Templates, Photos and Spend: plain template cards, one title per page"*
+
+- Templates' cards start with the plan's name instead of an icon on an accent square; the strip of exercise icons below already shows what each plan is.
+- Progress photos and What each visit costs no longer put a second title in the bar above their own big one ("Progress photos" twice, "What you pay" over "What each visit costs"), as Body measurements already did.
+- Also looked at, with nothing to change: Your week, the interval timer, Trips, Reminders, Body measurements, Find a machine and GymGO Pro.
+- Not yet seen on a phone.
+
 ## Update 116 · Icons, not emoji, and fewer exclamation marks
 
-*8 Nov 2026 · the commit "Appearance and messages: icons in place of emoji, thanks without exclamation marks"*
+*8 Nov 2026 · `ade25a4`*
 
 - Appearance's Celebrations and Sounds show the app's own icons (a party popper, fireworks, a star, a smiling face; a note and a game controller) in place of emoji, so they match every other icon in GymGO. The Emoji celebration itself still rains emoji.
 - The slider in Appearance (how glassy GymGO is) no longer glows in the accent under your finger: the glass lens is enough, as on iOS.

@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Compare rows** (8 Nov). compare.tsx row labels use `variant="label"`
+  as written, not `eyebrow` + toUpperCase. Checked with two gyms put in
+  the test browser's `gymgo.compare.v1` only.
 - **Map label** (8 Nov). explore.tsx's city pill is `city.name` with no
   dot when the data is live from GymGO's server; the dot and words stay
   for locked, demo, bbox/outside-cities and offline.

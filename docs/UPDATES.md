@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 128 · Compare's rows in plain words
+
+*8 Nov 2026 · the commit "Compare: row names in sentence case, not spaced capitals"*
+
+- Compare names each row as the app's other cards do ("A visit costs", "Guest hours", "Photo ID"), in sentence case, instead of spaced capitals ("A VISIT COSTS").
+- Also looked at, with nothing to change: GymPal's panel (its greeting is the owner's own words) and Profile. Capitals stay where they head a list (Profile's TRAINING, Country's YOURS) or a column of numbers (a set's KG).
+- Not yet seen on a phone.
+
 ## Update 127 · "Melbourne", not "Melbourne · live data"
 
-*8 Nov 2026 · the commit "Map: the city's name alone when its gyms are GymGO's own"*
+*8 Nov 2026 · `3f316dc`*
 
 - The map's label in the corner says just the city's name when it shows GymGO's own gyms, instead of "Melbourne · live data" with a green dot: "live" read as if GymGO knew how busy gyms are now, which it doesn't. Anything out of the ordinary keeps its dot and its words: demo gyms, an offline copy, map data outside the cities, or a country that's part of Pro.
 - Also looked at, with nothing to change: Saved.

@@ -240,8 +240,9 @@ export default function Compare() {
         <Fragment key={row.label}>
           {index > 0 && <View style={styles.rule} />}
           <View style={styles.row}>
-            <Txt variant="eyebrow" color={color.labelSecondary}>
-              {row.label.toUpperCase()}
+            {/* A heading inside a card: sentence case, as the app's other cards. */}
+            <Txt variant="label" color={color.labelSecondary}>
+              {row.label}
             </Txt>
             <View style={styles.cells}>
               {row.cells.map((cell, column) => (

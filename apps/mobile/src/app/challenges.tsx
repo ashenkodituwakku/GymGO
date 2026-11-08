@@ -127,7 +127,10 @@ export default function ChallengesScreen() {
           <Txt variant="headline">{mine ? 'Change your target' : `Train on how many days in ${label.split(' ')[0]}?`}</Txt>
           {/* One row of equal choices, as the programme's days a week (as chips, 20 days sat alone on a second line). */}
           <Segmented options={view.targets.map((option) => ({ value: option, label: `${option} days` }))} value={target} onChange={setTarget} />
-          <PrimaryButton label={mine ? (mine.target === target ? 'Keep it' : `Make it ${target} days`) : `Join: ${target} days`} icon="target" busy={busy} disabled={mine?.target === target} onPress={() => void join()} />
+          {/* Your target is already picked above: the button comes when you pick another. */}
+          {mine?.target !== target && (
+            <PrimaryButton label={mine ? `Make it ${target} days` : `Join: ${target} days`} icon="target" busy={busy} onPress={() => void join()} />
+          )}
         </Card>
       )}
       {view && view.friends.length > 0 && (

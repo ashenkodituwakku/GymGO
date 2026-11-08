@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 126 · No greyed-out "Keep it"
+
+*8 Nov 2026 · the commit "Monthly challenge: the change button only once you pick another target"*
+
+- In the monthly challenge, Change your target no longer shows a greyed-out "Keep it" button under the target you already have. The button ("Make it 12 days") comes when you pick another.
+- Also checked after this run of changes: 24 screens at 320 points in dark with no errors and nothing wider than the screen; 10 screens with no cut-off words (bar Home's list of exercises, cut on purpose) and no unnamed buttons.
+- Not yet seen on a phone.
+
 ## Update 125 · Milestones with plain icons
 
-*8 Nov 2026 · the commit "Progress: milestone icons on their own"*
+*8 Nov 2026 · `ddfb583`*
 
 - Progress's milestones (workouts, weeks in a row, records broken, sets logged) show their icon on its own, in the accent once you've reached the first step and grey before, instead of white on a filled circle.
 - Also looked at: the round buttons for steppers, close, send and play, which stay round, as buttons do.

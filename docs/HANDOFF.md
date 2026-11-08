@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **No greyed-out Keep it** (8 Nov). challenges.tsx renders the target
+  button only when `mine?.target !== target` (Join when not in). Sweep
+  after Updates 115–125: 24 screens at 320 dark clean; clip and a11y
+  clean on 10.
 - **Milestone icons** (8 Nov). TrainingInsights' `ladderIcon` is a 24pt box
   with no fill (`ladderIconOn` removed); the icon is brand once reached,
   labelTertiary before.

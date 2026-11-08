@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 123 · Rows to open, not stacks of buttons
+
+*8 Nov 2026 · the commit "Friends, Progress and My workouts: rows to open, not stacked buttons"*
+
+- Friends lists Leaderboard and Monthly challenge as two rows with a line of what each is, as Profile lists them, instead of two big buttons one on top of the other.
+- Progress ends with Plate calculator and Export your log as rows (the note on what the export is sits under them), and My workouts ends with Make your own and Build one from muscles the same way.
+- Not yet seen on a phone.
+
 ## Update 122 · Fewer pats on the back
 
-*8 Nov 2026 · the commit "Copy: records, sets and goals said plainly"*
+*8 Nov 2026 · `865b3b1`*
 
 - Progress says "Goal of 3 met this week" instead of "Goal of 3 met. Nice work.", a workout's summary says "2 new records" without an exclamation mark, and finishing a set of cards says "You've finished the (name) set" plainly.
 - Kept as they are: a rare card's reveal ("Epic!"), which only a rare pull gets, and GymPal's greeting, which is the owner's own wording. The 3-second Build my workout bar also stays: the owner asked for it.

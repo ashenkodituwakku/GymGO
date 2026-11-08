@@ -10,6 +10,7 @@ import { Pressable } from '@/components/motion';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
+import { Group, Row, TILE } from '@/components/ios';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
@@ -162,10 +163,10 @@ export default function MyWorkouts() {
             Saved to your account, so they’re on any device you sign in on. Tap one to see it, change it, share it or delete it.
           </Txt>
           {billing.isPro && (
-            <View style={styles.more}>
-              <PrimaryButton label="Make your own" icon="plus" tone="quiet" onPress={() => router.push('/workout-edit')} />
-              <PrimaryButton label="Build one from muscles" icon="body" tone="quiet" onPress={() => router.push({ pathname: '/workout/[id]', params: { id: 'any' } })} />
-            </View>
+            <Group>
+              <Row icon="plus" title="Make your own" subtitle="Your exercises, sets and rest" onPress={() => router.push('/workout-edit')} />
+              <Row icon="body" tile={TILE.green} title="Build one from muscles" subtitle="Pick muscles, get a plan" onPress={() => router.push({ pathname: '/workout/[id]', params: { id: 'any' } })} />
+            </Group>
           )}
         </>
       )}
@@ -191,6 +192,5 @@ const styles = themed(() => StyleSheet.create({
   startPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[3], paddingVertical: 7, borderRadius: 999, backgroundColor: color.brandTint },
   startRound: { width: 36, height: 36, paddingHorizontal: 0, paddingVertical: 0, justifyContent: 'center' },
   footer: { paddingHorizontal: space[4] },
-  more: { gap: space[2] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
 }));

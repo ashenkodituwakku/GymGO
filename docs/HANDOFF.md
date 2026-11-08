@@ -106,6 +106,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Rows, not stacked buttons** (8 Nov). friends/index.tsx, progress/index.tsx
+  and workouts/index.tsx use ios.tsx's `Group`/`Row` (tiles as Profile's
+  rows) for their closing links; Progress's export note is the Group's
+  footer. Primary + quiet button pairs (sign in / create, invite /
+  cancel) are left as they are.
 - **Fewer pats on the back** (8 Nov). TrainingInsights' goal line, train.tsx's
   summary title and CollectCard's finished-set line lose "Nice work." and
   "!". CardReveal's rare "!" and GymPal's `GREETING`/`WAITING` (the

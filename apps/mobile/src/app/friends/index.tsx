@@ -13,6 +13,7 @@ import { BrandFill } from '@/components/BrandFill';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
+import { Group, Row, TILE } from '@/components/ios';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
@@ -272,8 +273,11 @@ export default function FriendsScreen() {
         </Section>
       )}
 
-      <PrimaryButton label="Leaderboard" icon="trophy" tone="quiet" onPress={() => router.push('/leaderboard')} />
-      <PrimaryButton label="Monthly challenge" icon="target" tone="quiet" onPress={() => router.push('/challenges')} />
+      {/* As Profile lists them: rows to open, not a stack of buttons. */}
+      <Group>
+        <Row icon="trophy" tile={TILE.teal} title="Leaderboard" subtitle="Most gyms collected, if you join" onPress={() => router.push('/leaderboard')} />
+        <Row icon="target" tile={TILE.red} title="Monthly challenge" subtitle="Training days this month, with friends" onPress={() => router.push('/challenges')} />
+      </Group>
     </PageScroll>
   );
 }

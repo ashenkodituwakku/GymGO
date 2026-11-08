@@ -15,7 +15,7 @@ import { MilestonesCard, MuscleBalanceCard, WeekCard } from '@/components/Traini
 import { CountUp } from '@/components/CountUp';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { PrimaryButton, Txt } from '@/components/ui';
-import { RowChevron } from '@/components/ios';
+import { Group, Row, RowChevron, TILE } from '@/components/ios';
 import { ListSkeleton } from '@/components/Skeleton';
 import { weekRecap } from '@/lib/insights';
 import { useCollection } from '@/lib/useCollection';
@@ -387,21 +387,19 @@ export default function ProgressScreen() {
           onPress={() => setShownDays((shown) => shown + HISTORY_DAYS)}
         />
       )}
-      <PrimaryButton label="Plate calculator" icon="plates" tone="quiet" onPress={() => router.push('/plates')} />
-      {known && log.sessions.length > 0 && (
-        <PrimaryButton
-          label="Export your log (CSV)"
-          icon="download"
-          tone="quiet"
-          onPress={() => void downloadTrainingCsv(log.sessions).catch(() => undefined)}
-        />
-      )}
-      {known && log.sessions.length > 0 && (
-        <Txt variant="footnote" color={color.labelSecondary} style={styles.healthNote}>
-          A row for every set, for Excel, Numbers or Google Sheets. Apple Health and Google Fit can only be connected from a version of GymGO built
-          for the App Store or Play Store, which Expo Go can’t run; this file is the way to take your log elsewhere until then.
-        </Txt>
-      )}
+      {/* Tools, as rows to open (Profile lists them the same way), not a stack of buttons. */}
+      <Group
+        footer={
+          known && log.sessions.length > 0
+            ? 'The export has a row for every set, for Excel, Numbers or Google Sheets. Apple Health and Google Fit can only be connected from a version of GymGO built for the App Store or Play Store, which Expo Go can’t run; this file is the way to take your log elsewhere until then.'
+            : undefined
+        }
+      >
+        <Row icon="plates" tile={TILE.teal} title="Plate calculator" subtitle="What to put on each side of the bar" onPress={() => router.push('/plates')} />
+        {known && log.sessions.length > 0 && (
+          <Row icon="download" tile={TILE.blue} title="Export your log" subtitle="A CSV file of every set" onPress={() => void downloadTrainingCsv(log.sessions).catch(() => undefined)} />
+        )}
+      </Group>
     </PageScroll>
   );
 }
@@ -536,7 +534,6 @@ function SessionRow({
 }
 
 const styles = themed(() => StyleSheet.create({
-  healthNote: { paddingHorizontal: space[4], textAlign: 'center' },
   photosRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
   photosText: { flex: 1, minWidth: 0, gap: 2 },
   page: { flex: 1, backgroundColor: color.groupedBackground },

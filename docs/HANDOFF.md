@@ -106,6 +106,8 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **A plain photo slot** (8 Nov). PhotoHero.tsx's `empty` style is
+  `color.fill` with no dashed `brandBorder`/`brandWash`.
 - **The builder's options fit** (8 Nov). workout/[id].tsx's length
   `Segmented` labels drop " · N" under 360 points; Goal/Length/Machines use
   `label`.

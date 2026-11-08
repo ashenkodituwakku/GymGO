@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 109 · A plain slot where a photo would be
+
+*8 Nov 2026 · the commit "Gym card: the empty photo slot plain grey"*
+
+- On a gym's card, "No photo supplied yet" sits in a plain grey slot, instead of a tint of the accent with a dashed accent border. Its Add one button is unchanged.
+- Also checked: Tab reaches Workout's new list rows in a browser, each showing a clear accent focus ring.
+- Not yet seen on a phone.
+
 ## Update 108 · The builder's options fit a small phone
 
-*8 Nov 2026 · the commit "Workout builder: length options fit at 320; its headings in sentence case"*
+*8 Nov 2026 · `e1d4ffe`*
 
 - The workout builder's length choice said "Standard…" on a 320-point phone; there it reads Quick, Standard and Long, with the number of exercises (· 4, · 6, · 8) where there's room. The built plan still says how many exercises it has.
 - Its Goal, Length and Machines headings, inside their card, are in sentence case.

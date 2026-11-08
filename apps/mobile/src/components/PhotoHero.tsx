@@ -451,10 +451,8 @@ const styles = themed(() => StyleSheet.create({
     paddingHorizontal: space[4],
     borderRadius: radius.lg,
     borderCurve: 'continuous',
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: color.brandBorder,
-    backgroundColor: color.brandWash,
+    // A plain grey slot, as an empty place should be: not a tint and dashes of the accent.
+    backgroundColor: color.fill,
   },
   // The gallery's place: "2 of 5" at the top right, dots under the middle, arrows at the sides.
   counter: { position: 'absolute', top: space[3], right: space[3], paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.scrim },

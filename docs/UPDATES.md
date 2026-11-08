@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 124 · A gym's facts without their circles
+
+*8 Nov 2026 · the commit "Gym page: price, reviews, kit and busy with plain icons"*
+
+- On a gym's page, the three tiles for price, reviews and kit show their icon on its own instead of in a tinted circle, like the rows of facts beneath them.
+- "Is it busy?" shows its people icon on its own, in the colour of how busy members say it is, instead of on a coloured circle.
+- Tidied away: styles for emoji the app no longer draws, and a gym page section's old emoji option, now that every one has an icon.
+- Not yet seen on a phone.
+
 ## Update 123 · Rows to open, not stacks of buttons
 
-*8 Nov 2026 · the commit "Friends, Progress and My workouts: rows to open, not stacked buttons"*
+*8 Nov 2026 · `76dad14`*
 
 - Friends lists Leaderboard and Monthly challenge as two rows with a line of what each is, as Profile lists them, instead of two big buttons one on top of the other.
 - Progress ends with Plate calculator and Export your log as rows (the note on what the export is sits under them), and My workouts ends with Make your own and Build one from muscles the same way.

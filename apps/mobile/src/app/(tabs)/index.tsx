@@ -907,7 +907,6 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.lg,
     borderCurve: 'continuous',
   },
-  pickEmoji: { fontSize: 26, lineHeight: 32 },
 
   resume: {
     flexDirection: 'row',

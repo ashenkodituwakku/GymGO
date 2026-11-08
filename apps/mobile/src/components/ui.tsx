@@ -195,16 +195,14 @@ export function InfoRow({ icon, title, lines, accessibilityLabel }: { icon: Icon
  * Tap to open. Keeps a gym's card short until you want the detail.
  */
 export function Fold({
-  emoji,
   icon,
   title,
   summary,
   initiallyOpen = false,
   children,
 }: {
-  emoji?: string;
-  /** A symbol before the title; preferred over an emoji. */
-  icon?: IconName;
+  /** The symbol before the title. */
+  icon: IconName;
   title: string;
   summary?: string;
   initiallyOpen?: boolean;
@@ -230,15 +228,9 @@ export function Fold({
         accessibilityLabel={`${title}${summary ? `, ${summary}` : ''}`}
         style={({ pressed }) => [styles.foldHead, pressed && { opacity: 0.7 }]}
       >
-        {icon ? (
-          <View style={styles.foldIcon}>
-            <Icon name={icon} size={20} color={color.brand} />
-          </View>
-        ) : (
-          <Txt variant="title2" style={styles.foldEmoji}>
-            {emoji}
-          </Txt>
-        )}
+        <View style={styles.foldIcon}>
+          <Icon name={icon} size={20} color={color.brand} />
+        </View>
         <View style={styles.foldText}>
           <Txt variant="headline">{title}</Txt>
           {/* Two lines: on a phone a one-line summary lost its end ("see what m…"). */}
@@ -714,7 +706,6 @@ const styles = themed(() => StyleSheet.create({
   foldInGroup: { overflow: 'hidden' },
   // Inset past the row's icon (padding 16 + icon 32 + gap 12), as iOS's lists are.
   groupLine: { height: StyleSheet.hairlineWidth, marginLeft: space[4] + 32 + space[3], backgroundColor: color.separator },
-  foldEmoji: { width: 30, textAlign: 'center' },
   // The symbol on its own, in a box as wide as the old circle, so the titles still line up.
   foldIcon: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   foldText: { flex: 1, gap: 1 },

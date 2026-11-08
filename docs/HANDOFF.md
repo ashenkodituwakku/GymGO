@@ -106,6 +106,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Gym facts without circles** (8 Nov). PlaceCard's `factIcon` has no
+  brandTint circle; MemberBusy's `badge` is the people icon in `ink` with
+  no tint (the `tint` const went). `Fold` now requires `icon` (its emoji
+  fallback and `foldEmoji` removed), and unused `verdictEmoji`,
+  `factEmoji`, `googleEmoji`, `pickEmoji` styles are gone.
 - **Rows, not stacked buttons** (8 Nov). friends/index.tsx, progress/index.tsx
   and workouts/index.tsx use ios.tsx's `Group`/`Row` (tiles as Profile's
   rows) for their closing links; Progress's export note is the Group's

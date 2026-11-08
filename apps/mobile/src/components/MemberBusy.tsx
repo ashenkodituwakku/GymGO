@@ -86,7 +86,6 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
   const level = summary.level ? BUSY_LEVELS.find((item) => item.id === summary.level)! : null;
   const tone = summary.level ? TONE[summary.level] : null;
   const ink = tone === 'good' ? color.goodInk : tone === 'maybe' ? color.maybeInk : tone === 'no' ? color.noInk : color.labelSecondary;
-  const tint = tone === 'good' ? color.goodTint : tone === 'maybe' ? color.maybeTint : tone === 'no' ? color.noTint : color.fill;
 
   // Nothing to show yet (most gyms, most of the time): one slim row, not a whole card.
   if (!level && !picking && !notice && !checking) {
@@ -105,8 +104,8 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
     );
     return (
       <Animated.View style={[styles.wrap, styles.slim]} layout={GLIDE}>
-        <View style={[styles.badge, styles.badgeSmall, { backgroundColor: tint }]}>
-          <Icon name="people" size={15} color={ink} />
+        <View style={[styles.badge, styles.badgeSmall]}>
+          <Icon name="people" size={20} color={ink} />
         </View>
         <View style={styles.flex}>
           <Txt variant="subhead" style={styles.title}>
@@ -128,8 +127,8 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
   return (
     <Animated.View style={styles.wrap} layout={GLIDE}>
       <View style={styles.head}>
-        <View style={[styles.badge, { backgroundColor: tint }]}>
-          <Icon name="people" size={18} color={ink} />
+        <View style={styles.badge}>
+          <Icon name="people" size={22} color={ink} />
         </View>
         <View style={styles.flex}>
           <Txt variant="headline">{level ? `${level.label} right now` : 'Is it busy?'}</Txt>
@@ -176,9 +175,10 @@ const styles = themed(() =>
   StyleSheet.create({
     wrap: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-    badge: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+    // The icon alone, in the colour of how busy it is (as the words say).
+    badge: { width: 28, alignItems: 'center', justifyContent: 'center' },
     slim: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3] },
-    badgeSmall: { width: 32, height: 32, borderRadius: 16 },
+    badgeSmall: { width: 24 },
     pill: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
     pillUnder: { alignSelf: 'flex-start', marginTop: space[2] },
     flex: { flex: 1, minWidth: 0, gap: 2 },

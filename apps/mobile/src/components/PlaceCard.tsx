@@ -717,7 +717,7 @@ function Fact({ icon, value, caption, tint, unknown = false }: { icon: IconName;
   return (
     <View style={styles.fact}>
       <View style={styles.factIcon}>
-        <Icon name={icon} size={16} color={color.brand} />
+        <Icon name={icon} size={18} color={color.brand} />
       </View>
       {/* A word in place of a figure, as tall as one, so the three tiles line up. */}
       <Txt variant={unknown ? 'subhead' : 'figure'} color={tint} numberOfLines={1} style={unknown && [face('semibold'), styles.factWord]}>
@@ -865,7 +865,6 @@ const styles = themed(() => StyleSheet.create({
 
   verdict: { padding: space[4], borderRadius: radius.xl, borderCurve: 'continuous', gap: space[3] },
   verdictHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-  verdictEmoji: { fontSize: 34, lineHeight: 42 },
   verdictIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   reasons: { gap: space[2] },
   // Laid on the sheet's glass like the facts above it (and on a gym's page, the same).
@@ -890,16 +889,7 @@ const styles = themed(() => StyleSheet.create({
     backgroundColor: color.cardGlass,
     ...shadow.plate,
   },
-  factEmoji: { fontSize: 20, lineHeight: 26 },
-  factIcon: {
-    width: 30,
-    height: 30,
-    marginBottom: 3,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: color.brandTint,
-  },
+  factIcon: { height: 24, marginBottom: 3, alignItems: 'center', justifyContent: 'center' },
   // A word as tall as a figure's line, at any text size, so the three captions line up.
   factWord: { lineHeight: type.figure.lineHeight },
 
@@ -911,7 +901,6 @@ const styles = themed(() => StyleSheet.create({
     paddingHorizontal: space[4],
     paddingVertical: space[3],
   },
-  googleEmoji: { fontSize: 22, lineHeight: 28, width: 30, textAlign: 'center' },
   mailRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   rowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: color.brandFill, alignItems: 'center', justifyContent: 'center' },
 

@@ -106,6 +106,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Tidying** (8 Nov). Removed unused ui.tsx `TierPill`/`SectionTitle`/
+  `Divider` (and their styles), theme `currentTweaks` and `bodyHover`,
+  exerciseLibrary `doableWith`, training `isSetKind`, places `isDemoMode`.
+  `npx tsc --noEmit --noUnusedLocals` in apps/mobile reports only
+  au-data's `GYM247_MEMBERSHIPS` (research kept on purpose).
 - **Works, Needs, Membership** (8 Nov, "less vibecoded"). `label` for
   progress/[exercise]'s `Detail` (its `detailLabel` uppercase style gone),
   JoinGym's banner and GooglePage's heading. The only `textTransform:

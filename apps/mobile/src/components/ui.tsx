@@ -7,7 +7,6 @@ import { createContext, forwardRef, useContext, useEffect, useState, type ReactN
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ActivityIndicator, Platform, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle, type TextInputInstance, type ViewInstance } from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
-import { TIER } from '@/lib/copy';
 import { monogram } from '@/lib/monogram';
 import { haptic } from '@/lib/haptics';
 import { color, currentTheme, dropShadow, face, HIT, radius, shadow, space, themed, type, webFocusRing, solidSurfaces } from '@/lib/theme';
@@ -65,18 +64,6 @@ export const TIER_COLOUR: Record<ResultTier, { fill: string; ink: string; tint: 
   needs_confirmation: { fill: color.maybe, ink: color.maybeInk, tint: color.maybeTint, icon: 'call' as IconName },
   ruled_out: { fill: color.no, ink: color.noInk, tint: color.noTint, icon: 'no' as IconName },
 }));
-
-export function TierPill({ tier }: { tier: ResultTier }) {
-  const tone = TIER_COLOUR[tier];
-  return (
-    <View style={[styles.pill, { backgroundColor: tone.tint }]}>
-      <Icon name={tone.icon} size={13} color={tone.fill} />
-      <Txt variant="caption" color={tone.ink} style={styles.pillText}>
-        {TIER[tier].label}
-      </Txt>
-    </View>
-  );
-}
 
 // --- Chips ------------------------------------------------------------------
 
@@ -150,19 +137,6 @@ export function Chip({
 
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   return <View style={[styles.card, style]}>{children}</View>;
-}
-
-export function SectionTitle({ children, trailing }: { children: ReactNode; trailing?: ReactNode }) {
-  return (
-    <View style={styles.sectionTitle}>
-      <Txt variant="title2">{children}</Txt>
-      {trailing}
-    </View>
-  );
-}
-
-export function Divider({ inset = 0 }: { inset?: number }) {
-  return <View style={[styles.divider, { marginLeft: inset }]} />;
 }
 
 // --- Buttons ----------------------------------------------------------------
@@ -671,17 +645,6 @@ const styles = themed(() => StyleSheet.create({
     overflow: 'hidden',
   },
   choiceChipOn: { backgroundColor: color.brandFill },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 2,
-    minHeight: 24,
-    borderRadius: radius.pill,
-    alignSelf: 'flex-start',
-  },
-  pillText: face('semibold'),
 
   chip: {
     flexDirection: 'row',
@@ -703,14 +666,6 @@ const styles = themed(() => StyleSheet.create({
     padding: space[4],
     ...shadow.card,
   },
-  sectionTitle: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    marginTop: space[6],
-    marginBottom: space[2],
-  },
-  divider: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator },
 
   capsuleShadow: { borderRadius: 22, ...shadow.float },
   capsuleSolid: { borderRadius: 22 },

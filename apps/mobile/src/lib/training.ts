@@ -37,8 +37,6 @@ export function formatWeight(weight: number, unit: WeightUnit): string {
  */
 export type SetKind = 'warmup' | 'drop' | 'failure';
 export const SET_KINDS: readonly SetKind[] = ['warmup', 'drop', 'failure'];
-export const isSetKind = (value: unknown): value is SetKind => SET_KINDS.includes(value as SetKind);
-
 /** How each type of set is shown and explained. */
 export const SET_KIND_WORDS: Record<SetKind, { letter: string; label: string; spoken: string; about: string }> = {
   warmup: { letter: 'W', label: 'Warm-up', spoken: 'warm-up set', about: 'Lighter, before your working sets. Left out of records, totals and set counts.' },

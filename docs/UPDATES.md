@@ -9,9 +9,16 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 104 · Tidying behind the scenes
+
+*8 Nov 2026 · the commit "Remove code the clean-up left unused"*
+
+- No change you can see. Code nothing used any more is gone: three old interface pieces (a tier pill, a section title and a divider), four unused helpers and a colour for hovering over the body figure that the figure no longer reads. The app's code now has no unused locals (checked with the compiler's own check), apart from one researched figure kept in the Australian data.
+- Checked: every package's tests, and Home, the map, a gym page, Exercises, Workout and Progress load with no errors.
+
 ## Update 103 · Works, Needs, Membership
 
-*8 Nov 2026 · `14d63b7`, and the commit "Workout summary: its three figures without icons over them"*
+*8 Nov 2026 · `14d63b7`, `344b0b2`*
 
 - An exercise's Works, Needs and Counted, a gym's Membership banner and Google's page heading (On Google Maps) are in sentence case like the other small headings inside cards. Nothing in the app is forced into capitals now except the section headings over lists, as iOS does.
 - A finished workout's three figures (time, sets, lifted) are the number and its word, without an icon over each, as on Progress and Lifetime.

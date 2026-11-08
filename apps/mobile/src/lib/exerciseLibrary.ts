@@ -8,7 +8,7 @@
  */
 
 import { workingSets, type TrainingSession } from './training';
-import { EXERCISES, KIT_LABEL, MUSCLES, doseFor, muscleLabel, wayToDo, type Exercise, type Kit, type Muscle, exerciseById } from './workout';
+import { EXERCISES, KIT_LABEL, MUSCLES, doseFor, muscleLabel, type Exercise, type Kit, type Muscle, exerciseById } from './workout';
 
 /** Kit filters, as people think of them rather than by machine. */
 export type KitFilter = 'any' | 'body' | 'dumbbells' | 'barbell' | 'cables' | 'machines';
@@ -131,9 +131,6 @@ export function addedPlan(exercise: Exercise): { sets: number; reps: string; res
   const { sets, reps, restSeconds } = doseFor(exercise, 'muscle');
   return { sets, reps, restSeconds };
 }
-
-/** Can it be done with the kit here (for "you can do this at this gym")? */
-export const doableWith = (exercise: Exercise, kit: Kit[]) => wayToDo(exercise, new Set(kit)) !== null;
 
 // --- When you last trained each muscle ---------------------------------------
 

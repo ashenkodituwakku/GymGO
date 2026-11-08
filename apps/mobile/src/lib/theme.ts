@@ -118,7 +118,6 @@ const BASE = {
     /** Hair on the female figure: a shade off the head, so it reads as hair. */
     bodyHair: '#C8C8D0',
     bodyBorder: '#BABAC2',
-    bodyHover: '#B4B4BE',
     /** The body under the muscles: the creases between them. */
     bodyBase: '#B9B9C3',
     /** Google's own grey, for its attribution. */
@@ -178,7 +177,6 @@ const BASE = {
     bodyInert: '#2C2C2E',
     bodyHair: '#3E3E42',
     bodyBorder: '#636366',
-    bodyHover: '#636366',
     bodyBase: '#1F1F22',
     googleInk: '#BDC1C6',
   },
@@ -514,7 +512,6 @@ export interface Tweaks {
 export const DEFAULT_TWEAKS: Tweaks = { textSize: 'default', bold: false, corners: 'standard', customHue: CUSTOM_HUE_DEFAULT, clock24: false };
 
 let tweaks: Tweaks = DEFAULT_TWEAKS;
-export const currentTweaks = () => tweaks;
 const textScale = () => TEXT_SIZES.find((size) => size.id === tweaks.textSize)?.scale ?? 1;
 
 /** The look's corners, rounder or sharper; a pill stays a pill, a phone-shaped sheet stays the phone's shape, a square look stays square. */

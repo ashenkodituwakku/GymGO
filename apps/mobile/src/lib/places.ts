@@ -199,8 +199,6 @@ export function setDemoMode(on: boolean): void {
   demoMode = on;
 }
 
-export const isDemoMode = (): boolean => demoMode;
-
 /** The cities you can search and browse right now. */
 export const activeCities = (): City[] => CITY_LIST.filter((city) => city.demo === demoMode);
 

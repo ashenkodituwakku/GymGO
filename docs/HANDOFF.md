@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **The builder's options fit** (8 Nov). workout/[id].tsx's length
+  `Segmented` labels drop " · N" under 360 points; Goal/Length/Machines use
+  `label`.
 - **Kit in fewer words** (8 Nov). exerciseLibrary.ts `kitShort(exercise)`
   (one differing slot becomes "A or B"; a one-extra-item pair becomes "X,
   Y optional"; else `kitText`), tested never longer than `kitText`. Used

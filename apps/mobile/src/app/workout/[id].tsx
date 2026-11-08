@@ -281,26 +281,27 @@ export default function WorkoutScreen() {
 
         {/* Options ------------------------------------------------------------ */}
         <View style={styles.card}>
-          <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
-            GOAL
+          <Txt variant="label" color={color.labelSecondary} style={styles.caps}>
+            Goal
           </Txt>
           <Segmented options={GOALS.map((item) => ({ value: item.id, label: GOAL_LABEL[item.id] }))} value={goal} onChange={setGoal} />
-          <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
-            LENGTH
+          <Txt variant="label" color={color.labelSecondary} style={styles.caps}>
+            Length
           </Txt>
           <Segmented
             options={[
-              { value: 4 as Length, label: 'Quick · 4' },
-              { value: 6 as Length, label: 'Standard · 6' },
-              { value: 8 as Length, label: 'Long · 8' },
+              // The number of exercises too, where there's room ("Standard · 6" doesn't fit a 320-point phone).
+              { value: 4 as Length, label: width < 360 ? 'Quick' : 'Quick · 4' },
+              { value: 6 as Length, label: width < 360 ? 'Standard' : 'Standard · 6' },
+              { value: 8 as Length, label: width < 360 ? 'Long' : 'Long · 8' },
             ]}
             value={length}
             onChange={setLength}
           />
           {record && (
             <>
-              <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
-                MACHINES
+              <Txt variant="label" color={color.labelSecondary} style={styles.caps}>
+                Machines
               </Txt>
               <Segmented
                 options={[
@@ -558,7 +559,7 @@ const styles = themed(() => StyleSheet.create({
   bodyTop: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   genderSwitch: { width: 150 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  caps: { letterSpacing: 0.3, marginBottom: -space[1] },
+  caps: { marginBottom: -space[1] },
   warn: { padding: space[3], borderRadius: radius.md, backgroundColor: color.maybeTint },
   result: { gap: space[3] },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },

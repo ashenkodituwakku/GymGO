@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 108 · The builder's options fit a small phone
+
+*8 Nov 2026 · the commit "Workout builder: length options fit at 320; its headings in sentence case"*
+
+- The workout builder's length choice said "Standard…" on a 320-point phone; there it reads Quick, Standard and Long, with the number of exercises (· 4, · 6, · 8) where there's room. The built plan still says how many exercises it has.
+- Its Goal, Length and Machines headings, inside their card, are in sentence case.
+- Checked: the screens not looked at before (Saved, Trips, Reminders, Account, Appearance, Compare, Machines, Your week, Progress photos, Pro, the welcome tour, the builder, the three editors, a card's page) at 320 for cut-off text. Only Account's Name row shortens a long name, as iOS's Settings does, with the whole name large above it.
+- Not yet seen on a phone.
+
 ## Update 107 · Kit in fewer words
 
-*8 Nov 2026 · the commit "Exercise lists: the kit in fewer words"*
+*8 Nov 2026 · `ccc2682`*
 
 - The Exercises list and Add exercise say what an exercise needs in fewer words, so the line fits on a small phone (the longest were cut off at 320 points):
   - where the ways to do it differ by one piece of kit, that piece is the choice: "Barbell + Squat rack or Power rack", not "Barbell + Squat rack, or Barbell + Power rack";

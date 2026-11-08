@@ -110,6 +110,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
   train.tsx's `Summary` lists Share your record / Share this workout / See
   your progress in a `savedCard` (rows keyed by id; the record row shows
   "Making the picture…" while `sharingCard`), then a brand Done.
+  workouts/index.tsx's empty card: template choice is a `textLink`
+  (44 tall). Other runs of buttons left are side-by-side pairs or
+  confirm/cancel forms, which are fine.
 - **The last capitals in cards** (8 Nov, "less vibecoded"). `label` on the
   heroes of profile.tsx (plan), friends/index (code), friends/[id],
   challenges.tsx, strength.tsx and lifetime.tsx; share cards (RecapCard,

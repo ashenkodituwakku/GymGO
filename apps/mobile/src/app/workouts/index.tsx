@@ -107,7 +107,11 @@ export default function MyWorkouts() {
           </Txt>
           <PrimaryButton label="Make your own" icon="plus" onPress={() => router.push('/workout-edit')} />
           <PrimaryButton label="Build one from muscles" icon="body" tone="quiet" onPress={() => router.push({ pathname: '/workout/[id]', params: { id: 'any' } })} />
-          <PrimaryButton label="Or start from a template" tone="quiet" onPress={() => router.push('/templates')} />
+          <Pressable onPress={() => router.push('/templates')} accessibilityRole="link" style={styles.textLink}>
+            <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+              Or start from a template
+            </Txt>
+          </Pressable>
         </View>
       )}
       {workouts !== null && workouts.length > 0 && (
@@ -175,6 +179,8 @@ const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
+  // A plain link, a step down from the two buttons over it; 44 points tall to tap.
+  textLink: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: space[2] },
   emptyCard: { backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[5], paddingTop: space[6], gap: space[3], ...shadow.plate },
   notice: { padding: space[3], borderRadius: radius.md, backgroundColor: color.fill },
   problem: { gap: space[2] },

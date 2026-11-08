@@ -11,9 +11,10 @@ next number here as part of the update itself.
 
 ## Update 102 · A workout's summary ends with one button
 
-*8 Nov 2026 · the commit "Workout summary: the other actions as a list, Done the one button"*
+*8 Nov 2026 · `b50c5b7`, and the commit "My workouts, empty: two buttons and a link"*
 
 - After a workout, the summary's four full-width buttons stacked one on another are a short list (Share your record when you set one, Share this workout, See your progress) and one solid Done. While the record's picture is being made, its row says "Making the picture…" and can't be tapped twice.
+- My workouts with nothing saved: Make your own and Build one from muscles as the two buttons, and Or start from a template as a plain link under them, instead of three full-width buttons.
 - Google's rating line on a gym page has an ordinary separator ("4.3 · 120 Google reviews"), not one padded with double spaces.
 - Not yet seen on a phone.
 

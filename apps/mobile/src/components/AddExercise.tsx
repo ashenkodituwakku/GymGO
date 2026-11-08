@@ -9,7 +9,7 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type ViewInstance } from 'react-native';
-import { addableExercises, kitText } from '@/lib/exerciseLibrary';
+import { addableExercises, kitShort, kitText } from '@/lib/exerciseLibrary';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { useApp } from '@/lib/app-state';
@@ -103,7 +103,7 @@ export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: 
                 {exercise.name}
               </Txt>
               <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
-                {kitText(exercise)}
+                {kitShort(exercise)}
               </Txt>
             </View>
             <Icon name="plus" size={16} color={color.brand} />

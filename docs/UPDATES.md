@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 107 · Kit in fewer words
+
+*8 Nov 2026 · the commit "Exercise lists: the kit in fewer words"*
+
+- The Exercises list and Add exercise say what an exercise needs in fewer words, so the line fits on a small phone (the longest were cut off at 320 points):
+  - where the ways to do it differ by one piece of kit, that piece is the choice: "Barbell + Squat rack or Power rack", not "Barbell + Squat rack, or Barbell + Power rack";
+  - where one way is the other with one thing more, that thing is optional: "Dumbbells, Bench optional".
+- Anything else is said in full as before, an exercise's own page always lists every way in full, and a screen reader hears the full wording.
+- Not yet seen on a phone.
+
 ## Update 106 · Headings inside the tools' cards
 
-*8 Nov 2026 · the commit "Sentence case for headings inside the tools' cards"*
+*8 Nov 2026 · `8580111`*
 
 - The plate calculator's Each side and Warm-up, 1-rep max's Percent of your max and What you could do for, and the monthly report's switcher title (Monthly report, over the month) are in sentence case, like the other headings inside cards. Section headings over lists (Records, Done most, Latest…) keep their small capitals.
 - Not yet seen on a phone.

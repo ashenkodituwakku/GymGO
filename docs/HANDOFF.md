@@ -106,6 +106,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Kit in fewer words** (8 Nov). exerciseLibrary.ts `kitShort(exercise)`
+  (one differing slot becomes "A or B"; a one-extra-item pair becomes "X,
+  Y optional"; else `kitText`), tested never longer than `kitText`. Used
+  for the shown line in exercises.tsx and AddExercise.tsx; their
+  accessibility labels keep `kitText`.
 - **Headings inside the tools' cards** (8 Nov). `label` in plates.tsx
   (Each side ×2, Warm-up), strength.tsx (Percent of your max, What you could
   do for) and month.tsx's switcher. Rule of thumb now: `label` for a

@@ -17,7 +17,7 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { Chip, Input, Txt } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { useApp } from '@/lib/app-state';
-import { KIT_FILTERS, groupLabel, kitText, libraryGroups, type KitFilter } from '@/lib/exerciseLibrary';
+import { KIT_FILTERS, groupLabel, kitShort, kitText, libraryGroups, type KitFilter } from '@/lib/exerciseLibrary';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { personalRecords } from '@/lib/training';
@@ -128,7 +128,7 @@ export default function ExercisesScreen() {
                     {exercise.name}
                   </Txt>
                   <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
-                    {kitText(exercise)}
+                    {kitShort(exercise)}
                   </Txt>
                 </View>
                 <Icon name="chevron" size={13} color={color.labelTertiary} />
@@ -203,7 +203,7 @@ export default function ExercisesScreen() {
                       {exercise.name}
                     </Txt>
                     <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
-                      {kitText(exercise)}
+                      {kitShort(exercise)}
                     </Txt>
                   </View>
                   {times > 0 && (

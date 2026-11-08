@@ -96,6 +96,30 @@ export function kitText(exercise: Exercise): string {
   return exercise.needs.map((option) => (option.length === 0 ? 'Body weight' : option.map((kit) => KIT_LABEL[kit]).join(' + '))).join(', or ');
 }
 
+/**
+ * The same, shorter, for a list's line: where the ways differ in one piece
+ * of kit only, that piece is the choice ("Barbell + Squat rack or Power rack
+ * + Bench", not the whole set twice). Anything else is said as kitText does.
+ */
+export function kitShort(exercise: Exercise): string {
+  const options = exercise.needs;
+  const first = options[0];
+  // Two ways, one the other with one thing more: that thing is optional ("Dumbbells, Bench optional").
+  if (options.length === 2) {
+    const [small, big] = [...options].sort((a, b) => a.length - b.length) as [Kit[], Kit[]];
+    const extra = big.filter((kit) => !small.includes(kit));
+    if (small.length > 0 && big.length === small.length + 1 && extra.length === 1 && small.every((kit) => big.includes(kit))) {
+      return `${small.map((kit) => KIT_LABEL[kit]).join(' + ')}, ${KIT_LABEL[extra[0]!]} optional`;
+    }
+  }
+  if (options.length < 2 || !first || first.length === 0 || options.some((option) => option.length !== first.length)) return kitText(exercise);
+  const differs = first.map((_, slot) => options.some((option) => option[slot] !== first[slot]));
+  if (differs.filter(Boolean).length !== 1) return kitText(exercise);
+  return first
+    .map((kit, slot) => (differs[slot] ? [...new Set(options.map((option) => KIT_LABEL[option[slot]!]))].join(' or ') : KIT_LABEL[kit]))
+    .join(' + ');
+}
+
 /** Other moves for the same main muscle, the closest first (shared muscles, then the same kind of move). */
 export function alternativesFor(exercise: Exercise, limit = 4, exercises: Exercise[] = EXERCISES): Exercise[] {
   const main = exercise.primary[0];

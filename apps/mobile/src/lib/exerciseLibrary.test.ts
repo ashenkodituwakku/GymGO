@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { agoLabel, alternativesFor, daysAgo, fitsKit, freshMuscles, groupLabel, kitText, lastTrained, libraryGroups, matchesQuery, addableExercises, addedPlan } from './exerciseLibrary';
+import { agoLabel, alternativesFor, daysAgo, fitsKit, freshMuscles, groupLabel, kitShort, kitText, lastTrained, libraryGroups, matchesQuery, addableExercises, addedPlan } from './exerciseLibrary';
 import type { TrainingSession } from './training';
 import { EXERCISES } from './workout';
 
@@ -58,6 +58,15 @@ describe('exercise library', () => {
     expect(kitText(byId('push-up'))).toBe('Body weight');
     expect(kitText(byId('db-bench'))).toBe('Dumbbells + Bench');
     expect(kitText(byId('ohp'))).toBe('Barbell + Squat rack, or Barbell + Power rack');
+  });
+
+  it('says it shorter for a list where the ways differ in one piece of kit', () => {
+    expect(kitShort(byId('ohp'))).toBe('Barbell + Squat rack or Power rack');
+    expect(kitShort(byId('db-bench'))).toBe('Dumbbells + Bench');
+    expect(kitShort(byId('push-up'))).toBe('Body weight');
+    expect(kitShort({ ...byId('db-bench'), needs: [['dumbbells', 'bench'], ['dumbbells']] })).toBe('Dumbbells, Bench optional');
+    // Every exercise: never longer than saying each way in full.
+    for (const exercise of EXERCISES) expect(kitShort(exercise).length).toBeLessThanOrEqual(kitText(exercise).length);
   });
 
   it('offers swaps for the same main muscle, never itself', () => {

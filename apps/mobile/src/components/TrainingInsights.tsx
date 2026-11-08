@@ -237,9 +237,7 @@ export function WeekStrip({
         style={styles.tile}
       >
         <View style={styles.tileHead}>
-          <View style={styles.stripIcon}>
-            <Icon name="flame" size={16} color={color.onBrand} />
-          </View>
+          <Icon name="flame" size={20} color={color.maybe} />
           <Icon name="chevron" size={12} color={color.labelTertiary} />
         </View>
         <View style={styles.tileFigure}>
@@ -266,9 +264,7 @@ export function WeekStrip({
       accessibilityLabel={`${title}. ${detail}. Open Progress`}
       style={styles.strip}
     >
-      <View style={styles.stripIcon}>
-        <Icon name="flame" size={16} color={color.onBrand} />
-      </View>
+      <Icon name="flame" size={22} color={color.maybe} />
       {/* The week's dots under the words, so a narrow phone keeps the title on one line. */}
       <View style={styles.flex}>
         <Txt variant="headline" numberOfLines={1}>
@@ -433,7 +429,6 @@ const styles = themed(() =>
     tileFigure: { flexDirection: 'row', alignItems: 'baseline', minWidth: 0 },
     // The words after a big figure: a margin, as a leading space between two texts is dropped in a browser.
     figureWord: { flexShrink: 1, marginLeft: 4 },
-    stripIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.maybe },
     stripDays: { flexDirection: 'row', gap: 5, marginTop: 6 },
     stripDay: { width: 10, height: 10, borderRadius: 5 },
     stripFuture: { backgroundColor: color.fill, opacity: 0.5 },

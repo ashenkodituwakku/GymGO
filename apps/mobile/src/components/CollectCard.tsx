@@ -237,7 +237,7 @@ export function CollectionStrip({ onPress, tile = false }: { onPress: () => void
   const { gyms } = useCollection();
   const stats = collectionStats(gyms);
   if (stats.gyms === 0) return null;
-  const metal = stats.topTier ? TIER_METAL[stats.topTier] : color.fill;
+  const metal = stats.topTier ? TIER_METAL[stats.topTier] : color.labelSecondary;
   const best = TIERS.find((item) => item.tier === stats.topTier)?.label;
   const line = `${stats.gyms} gym${stats.gyms === 1 ? '' : 's'} · ${stats.cities} cit${stats.cities === 1 ? 'y' : 'ies'} · ${stats.countries} countr${stats.countries === 1 ? 'y' : 'ies'}`;
   const rarest = Object.values(gyms).reduce<Rarity | null>((top, entry) => {
@@ -245,7 +245,7 @@ export function CollectionStrip({ onPress, tile = false }: { onPress: () => void
     return !top || rarityRank(rarity) > rarityRank(top) ? rarity : top;
   }, null);
   if (tile) {
-    // The gyms collected big, then the cities and countries, and your rarest card; the medal's metal is the best tier.
+    // The gyms collected big, then the cities and countries, and your rarest card; the icon is the best tier's metal.
     const places = `${stats.cities} cit${stats.cities === 1 ? 'y' : 'ies'} · ${stats.countries} countr${stats.countries === 1 ? 'y' : 'ies'}`;
     return (
       <Pressy
@@ -259,9 +259,7 @@ export function CollectionStrip({ onPress, tile = false }: { onPress: () => void
         style={styles.tile}
       >
         <View style={styles.tileHead}>
-          <View style={[styles.stripMedal, { backgroundColor: metal }]}>
-            <Icon name="cards" size={16} color={color.onBrand} />
-          </View>
+          <Icon name="cards" size={20} color={metal} />
           <Icon name="chevron" size={12} color={color.labelTertiary} />
         </View>
         <View style={styles.tileFigure}>
@@ -296,9 +294,7 @@ export function CollectionStrip({ onPress, tile = false }: { onPress: () => void
       accessibilityLabel={`Your collection: ${line}${best ? `, best ${best}` : ''}`}
       style={styles.strip}
     >
-      <View style={[styles.stripMedal, { backgroundColor: metal }]}>
-        <Icon name="cards" size={16} color={color.onBrand} />
-      </View>
+      <Icon name="cards" size={22} color={metal} />
       <View style={styles.flex}>
         <Txt variant="headline">Your collection</Txt>
         <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
@@ -341,9 +337,7 @@ export function HereNudge({ here, records, onOpen }: { here: Fix | null; records
       accessibilityLabel={`You're at ${location.name}. ${collected ? 'Check in for today' : 'Collect it'}`}
       style={[styles.strip, styles.nudge]}
     >
-      <View style={[styles.stripMedal, { backgroundColor: color.brandFill }]}>
-        <Icon name="pin" size={16} color={color.onBrand} />
-      </View>
+      <Icon name="pin" size={22} color={color.brand} />
       <View style={styles.flex}>
         <Txt variant="headline" numberOfLines={1}>{`You’re at ${location.name}`}</Txt>
         <Txt variant="footnote" color={color.labelSecondary}>
@@ -380,7 +374,6 @@ const styles = themed(() =>
     // A margin, as a leading space between two texts is dropped in a browser.
     tileShrink: { flexShrink: 1, marginLeft: 4 },
     tileBest: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
-    stripMedal: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
     nudge: { borderWidth: 2, borderColor: color.brand },
     cardLine: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: 2 },
     finished: { gap: space[2] },

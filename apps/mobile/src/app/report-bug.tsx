@@ -145,9 +145,6 @@ export default function ReportBug() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title }} />
       <Animated.View style={styles.intro}>
-        <View style={[styles.badge, notice && styles.noticeBadge]}>
-          <Icon name={notice ? 'photo' : 'bug'} size={24} color={color.onBrand} />
-        </View>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.introText}>
           {notice
             ? 'Is a photo or review on GymGO yours, posted without your permission? Send a notice and GymGO takes it down while it’s looked into.'
@@ -249,16 +246,6 @@ const styles = themed(() =>
     content: { padding: space[4], paddingBottom: space[8], gap: space[4], width: '100%', maxWidth: 560, alignSelf: 'center' },
     intro: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     introText: { flex: 1 },
-    badge: {
-      width: 44,
-      height: 44,
-      borderRadius: 12,
-      borderCurve: 'continuous',
-      backgroundColor: TILE.red,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    noticeBadge: { backgroundColor: TILE.indigo },
     card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[2], ...shadow.plate },
     description: { minHeight: 150, paddingTop: space[3], paddingBottom: space[3] },
     count: { textAlign: 'right' },

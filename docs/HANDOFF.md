@@ -106,6 +106,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Plain widget icons** (8 Nov). TrainingInsights' `stripIcon` and
+  CollectCard's `stripMedal` circles removed: a 20pt (tile) or 22pt (row)
+  glyph, flame in `color.maybe`, cards in `TIER_METAL` (labelSecondary
+  before any tier), HereNudge's pin in brand. country's Stack title and
+  report-bug's `badge` removed.
 - **One title per page** (8 Nov). templates.tsx's `TEMPLATE_ICON`/`mark`
   (BrandFill square) removed; photos.tsx and spend.tsx set the bar title
   to '' since each has its own largeTitle (as measurements.tsx, pro.tsx).

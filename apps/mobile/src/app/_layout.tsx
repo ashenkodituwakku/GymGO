@@ -311,7 +311,7 @@ function ThemedStack() {
           <Stack.Screen name="moderation" options={{ headerShown: true, title: 'Moderation' }} />
           <Stack.Screen name="progress/[exercise]" options={{ headerShown: true, title: '' }} />
           <Stack.Screen name="pro" options={{ ...MODAL, headerShown: true, title: 'GymGO Pro' }} />
-          <Stack.Screen name="country" options={{ ...MODAL, headerShown: true, title: 'Country' }} />
+          <Stack.Screen name="country" options={{ ...MODAL, headerShown: true, title: '' }} />
           <Stack.Screen name="appearance" options={{ headerShown: true, title: 'Appearance' }} />
           <Stack.Screen name="reminders" options={{ headerShown: true, title: 'Reminders' }} />
           <Stack.Screen name="account" options={{ headerShown: true, title: 'Account' }} />

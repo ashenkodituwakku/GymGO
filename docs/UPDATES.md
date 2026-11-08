@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 118 · Home's week and collection without their circles
+
+*8 Nov 2026 · the commit "Home, Country and Report a bug: plain icons, one title"*
+
+- Home's This week and Your collection widgets show their icon on its own (an orange flame; the cards in the metal of your best tier) instead of white on a coloured circle, as a tile and as a full-width row, like Machines and Trips beside them. The nudge that you're at a gym does the same.
+- Your country leaves the bar empty under its own title (it said "Country" over "Your country"), and Report a bug starts with its line of text, without the red bug square beside it.
+- Also looked at, with nothing to change: Account, Exercises, Compare, Home from top to bottom. The weather symbol keeps its pale disc in dark mode, where MET Norway's dark moon and cloud outlines would otherwise be lost.
+- Not yet seen on a phone.
+
 ## Update 117 · One title per page, and plain template cards
 
-*8 Nov 2026 · the commit "Templates, Photos and Spend: plain template cards, one title per page"*
+*8 Nov 2026 · `4ac4f7d`*
 
 - Templates' cards start with the plan's name instead of an icon on an accent square; the strip of exercise icons below already shows what each plan is.
 - Progress photos and What each visit costs no longer put a second title in the bar above their own big one ("Progress photos" twice, "What you pay" over "What each visit costs"), as Body measurements already did.

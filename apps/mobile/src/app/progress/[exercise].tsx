@@ -347,7 +347,7 @@ export default function ExerciseProgressScreen() {
 function Detail({ label, children }: { label: string; children: ReactNode }) {
   return (
     <View style={styles.detail}>
-      <Txt variant="footnote" color={color.labelSecondary} style={styles.detailLabel}>
+      <Txt variant="label" color={color.labelSecondary}>
         {label}
       </Txt>
       <View style={styles.pills}>{children}</View>
@@ -401,7 +401,6 @@ const styles = themed(() => StyleSheet.create({
   metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   how: { flexDirection: 'row', alignItems: 'center', gap: space[4] },
   detail: { gap: space[2] },
-  detailLabel: { textTransform: 'uppercase', letterSpacing: 0.6 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
   option: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   pill: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.fill },

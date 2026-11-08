@@ -94,8 +94,8 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
   const disagree = conflictOf(tiers);
   return (
     <View style={styles.banner} accessibilityRole="summary">
-      <Txt variant="eyebrow" color={color.brand} style={styles.center}>
-        {tiers.length > 1 ? `MEMBERSHIP · ${tiers.length} OPTIONS` : 'MEMBERSHIP'}
+      <Txt variant="label" color={color.brand} style={styles.center}>
+        {tiers.length > 1 ? `Membership · ${tiers.length} options` : 'Membership'}
       </Txt>
       <View style={styles.pills}>
         {tiers.map((offer) => {

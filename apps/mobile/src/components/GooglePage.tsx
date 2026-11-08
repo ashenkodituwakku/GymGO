@@ -60,8 +60,8 @@ export function GooglePage({ record, onClose }: { record: GymRecord; onClose: ()
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <View style={styles.flex}>
-          <Txt variant="eyebrow" color={color.labelSecondary}>
-            ON GOOGLE MAPS
+          <Txt variant="label" color={color.labelSecondary}>
+            On Google Maps
           </Txt>
           <Txt variant="title" numberOfLines={2}>
             {record.location.name}

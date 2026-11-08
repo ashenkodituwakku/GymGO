@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Works, Needs, Membership** (8 Nov, "less vibecoded"). `label` for
+  progress/[exercise]'s `Detail` (its `detailLabel` uppercase style gone),
+  JoinGym's banner and GooglePage's heading. The only `textTransform:
+  'uppercase'` left is ios.tsx's `groupHeader`.
 - **A summary that ends with one button** (8 Nov, "less vibecoded").
   train.tsx's `Summary` lists Share your record / Share this workout / See
   your progress in a `savedCard` (rows keyed by id; the record row shows

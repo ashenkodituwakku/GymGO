@@ -9,9 +9,16 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 103 · Works, Needs, Membership
+
+*8 Nov 2026 · the commit "Sentence case for the last headings inside cards: Works, Needs, Membership, On Google Maps"*
+
+- An exercise's Works, Needs and Counted, a gym's Membership banner and Google's page heading (On Google Maps) are in sentence case like the other small headings inside cards. Nothing in the app is forced into capitals now except the section headings over lists, as iOS does.
+- Not yet seen on a phone.
+
 ## Update 102 · A workout's summary ends with one button
 
-*8 Nov 2026 · `b50c5b7`, and the commit "My workouts, empty: two buttons and a link"*
+*8 Nov 2026 · `b50c5b7`, `9f00aea`*
 
 - After a workout, the summary's four full-width buttons stacked one on another are a short list (Share your record when you set one, Share this workout, See your progress) and one solid Done. While the record's picture is being made, its row says "Making the picture…" and can't be tapped twice.
 - My workouts with nothing saved: Make your own and Build one from muscles as the two buttons, and Or start from a template as a plain link under them, instead of three full-width buttons.

@@ -115,7 +115,7 @@ export default function Profile() {
           : 'On for this account'
     : billing.trial && canBuy
       ? `Try Pro free for ${billing.trial.days} days`
-      : `${billing.limits.savedGyms} saved gyms, compare ${billing.limits.compare}`;
+      : `Up to ${billing.limits.savedGyms} saved gyms, and ${billing.limits.compare} side by side to compare`;
 
   // Your numbers at a glance, on your account card. Workouts show a dash until
   // your log has loaded (or if it couldn't), so the three columns never jump.
@@ -405,7 +405,7 @@ function Badge({ label, strong = false }: { label: string; strong?: boolean }) {
  * covers and a way to see Pro.
  */
 function ProCard({ isPro, line, trial, canBuy, onOpen }: { isPro: boolean; line: string; trial: boolean; canBuy: boolean; onOpen: () => void }) {
-  const title = isPro ? 'GymGO Pro' : 'Go further with Pro';
+  const title = isPro ? 'GymGO Pro' : 'GymGO Free';
   // A way to buy only where Pro can be bought: a store build that can't sell it offers nothing.
   const action = isPro || !canBuy ? null : trial ? 'See the free trial' : 'See what’s in Pro';
   return (
@@ -414,7 +414,7 @@ function ProCard({ isPro, line, trial, canBuy, onOpen }: { isPro: boolean; line:
       onPress={onOpen}
       accessibilityRole="button"
       // The words on the card, so a voice command that names them finds it.
-      accessibilityLabel={[isPro ? 'Your plan' : 'Your plan, Free', title, line, action].filter(Boolean).join('. ')}
+      accessibilityLabel={['Your plan', title, line, action].filter(Boolean).join('. ')}
       style={styles.proCard}
     >
       <BrandFill round={radius.lg} />
@@ -424,7 +424,7 @@ function ProCard({ isPro, line, trial, canBuy, onOpen }: { isPro: boolean; line:
         </View>
         <View style={styles.flex}>
           <Txt variant="label" color={color.onBrandSoft}>
-            {isPro ? 'Your plan' : 'Your plan · Free'}
+            Your plan
           </Txt>
           <Txt variant="title2" color={color.onBrand} numberOfLines={2}>
             {title}

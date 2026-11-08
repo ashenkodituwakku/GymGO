@@ -109,6 +109,8 @@ mobile 550, domain 191 and web 39 tests, all passing.
 - **Pro said once** (8 Nov). (tabs)/index.tsx's Other cities: `groupPro`
   (every city in the group outside `mayExplore`) shows "· with GymGO Pro"
   by the group's name; the per-chip `proTag` only when a group is mixed.
+  profile.tsx's `ProCard` title on Free is "GymGO Free" with the limits as
+  its line (was "Go further with Pro").
 - **Plainer sentences** (8 Nov). No "word — word" asides left in the app's
   visible strings (copy.ts `filtersButtonLabel`, `locatedNotice` denied,
   `EMPTY.crowd`; PlaceCard's Reviews summary; FiltersContent's hint).

@@ -245,7 +245,7 @@ export default function Home() {
                 >
                   <BrandFill round={radius.xl} />
                   <View style={styles.workoutIcon}>
-                    <Icon name="workout" size={22} color={color.onBrand} />
+                    <Icon name="workout" size={26} color={color.onBrand} />
                   </View>
                   <View style={styles.flex}>
                     <Txt variant="headline" color={color.onBrand}>
@@ -966,7 +966,7 @@ const styles = themed(() => StyleSheet.create({
     backgroundColor: color.brandFill,
     ...shadow.plate,
   },
-  workoutIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: color.onBrandFaint, alignItems: 'center', justifyContent: 'center' },
+  workoutIcon: { width: 32, height: 40, alignItems: 'center', justifyContent: 'center' },
   shortcuts: { flexDirection: 'row', gap: space[2] },
   shortcut: {
     flex: 1,

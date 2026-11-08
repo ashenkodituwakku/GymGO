@@ -420,7 +420,7 @@ function ProCard({ isPro, line, trial, canBuy, onOpen }: { isPro: boolean; line:
       <BrandFill round={radius.lg} />
       <View style={styles.proTop}>
         <View style={styles.proMark}>
-          <Icon name="crown" size={20} color={color.onBrand} />
+          <Icon name="crown" size={26} color={color.onBrand} />
         </View>
         <View style={styles.flex}>
           <Txt variant="label" color={color.onBrandSoft}>
@@ -656,7 +656,7 @@ const styles = themed(() => StyleSheet.create({
   meStatLine: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: color.separator },
   proCard: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.brandFill },
   proTop: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-  proMark: { width: 40, height: 40, borderRadius: Math.min(12, radius.sm + 2), borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.onBrandFaint },
+  proMark: { width: 32, height: 40, alignItems: 'center', justifyContent: 'center' },
   proCta: { alignSelf: 'flex-start', marginTop: space[1], paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.onBrand },
   meLines: { flex: 1, gap: 8 },
   newTerms: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },

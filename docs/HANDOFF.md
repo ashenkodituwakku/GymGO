@@ -106,6 +106,8 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Icons on the accent cards** (8 Nov). (tabs)/index.tsx `workoutIcon` and
+  profile.tsx `proMark` have no `onBrandFaint` square; icons are 26 pt.
 - **Pro said once** (8 Nov). (tabs)/index.tsx's Other cities: `groupPro`
   (every city in the group outside `mayExplore`) shows "· with GymGO Pro"
   by the group's name; the per-chip `proTag` only when a group is mixed.

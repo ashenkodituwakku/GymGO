@@ -9,9 +9,16 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 113 · Icons on the accent cards on their own
+
+*8 Nov 2026 · the commit "Home and Profile: the accent cards' icons without their faint squares"*
+
+- Home's Build a workout and Profile's plan card show their icon on its own, a little larger, instead of in a faint white square, as the plain cards' icons already do.
+- Not yet seen on a phone.
+
 ## Update 111 · Pro said plainly
 
-*8 Nov 2026 · `7d357b0`, `c569926`, and the commit "Pro page: a plain line under its title, not a tagline"*
+*8 Nov 2026 · `7d357b0`, `c569926`, `77fa886`*
 
 - On GymGO Free, Home's Other cities put "PRO" on every city outside your country (more than 30 of them). Now each group that's all Pro says it once beside its name ("USA · with GymGO Pro"), and the cities show just their flag and name. A screen reader still hears "with GymGO Pro" on each city, and a group mixing free and Pro cities keeps the tag on the Pro ones.
 - Profile's plan card on Free says what you're on, GymGO Free, and what it covers ("Up to 10 saved gyms, and 2 side by side to compare"), instead of the slogan "Go further with Pro". Its button to see Pro is unchanged.

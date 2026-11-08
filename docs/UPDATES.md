@@ -11,9 +11,10 @@ next number here as part of the update itself.
 
 ## Update 103 · Works, Needs, Membership
 
-*8 Nov 2026 · the commit "Sentence case for the last headings inside cards: Works, Needs, Membership, On Google Maps"*
+*8 Nov 2026 · `14d63b7`, and the commit "Workout summary: its three figures without icons over them"*
 
 - An exercise's Works, Needs and Counted, a gym's Membership banner and Google's page heading (On Google Maps) are in sentence case like the other small headings inside cards. Nothing in the app is forced into capitals now except the section headings over lists, as iOS does.
+- A finished workout's three figures (time, sets, lifted) are the number and its word, without an icon over each, as on Progress and Lifetime.
 - Not yet seen on a phone.
 
 ## Update 102 · A workout's summary ends with one button

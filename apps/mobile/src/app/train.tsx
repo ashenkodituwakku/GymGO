@@ -1226,14 +1226,14 @@ function Summary({
       </Txt>
       {/* The workout in three figures, counting up as the page arrives. */}
       <View style={styles.summaryStats}>
-        <SummaryStat icon="timer" label="time" spoken={`Time, ${durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt))}`}>
+        <SummaryStat label="time" spoken={`Time, ${durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt))}`}>
           <Txt variant="figure">{durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt))}</Txt>
         </SummaryStat>
-        <SummaryStat icon="check" label={setCount(session) === 1 ? 'set' : 'sets'} spoken={`${setCount(session)} ${setCount(session) === 1 ? 'set' : 'sets'}`}>
+        <SummaryStat label={setCount(session) === 1 ? 'set' : 'sets'} spoken={`${setCount(session)} ${setCount(session) === 1 ? 'set' : 'sets'}`}>
           <CountUp id={`summary.${session.id}.sets`} value={setCount(session)} variant="figure" />
         </SummaryStat>
         {volume > 0 && (
-          <SummaryStat icon="plates" label={`${unit} lifted`} spoken={`${Math.round(volume).toLocaleString()} ${unit} lifted`}>
+          <SummaryStat label={`${unit} lifted`} spoken={`${Math.round(volume).toLocaleString()} ${unit} lifted`}>
             <CountUp id={`summary.${session.id}.volume`} value={Math.round(volume)} variant="figure" />
           </SummaryStat>
         )}
@@ -1357,10 +1357,9 @@ function WeekLine({ week }: { week: WeekAfter }) {
 }
 
 /** One of the summary's figures. Read out whole and final (`spoken`), not as it counts up. */
-function SummaryStat({ icon, label, spoken, children }: { icon: IconName; label: string; spoken: string; children: ReactNode }) {
+function SummaryStat({ label, spoken, children }: { label: string; spoken: string; children: ReactNode }) {
   return (
     <View style={styles.summaryStat} accessible accessibilityLabel={spoken}>
-      <Icon name={icon} size={16} color={color.brand} />
       {children}
       <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
         {label}

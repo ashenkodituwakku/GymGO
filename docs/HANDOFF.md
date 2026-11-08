@@ -106,6 +106,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Headings inside the tools' cards** (8 Nov). `label` in plates.tsx
+  (Each side ×2, Warm-up), strength.tsx (Percent of your max, What you could
+  do for) and month.tsx's switcher. Rule of thumb now: `label` for a
+  heading inside a card, `eyebrow` (capitals) for a heading over a list or
+  on a share picture.
 - **This month's figures fit** (8 Nov). HomeWidgets' month stats carry a
   `spoken` each; Lifted shows the number with the label `${unit} lifted`.
 - **Tidying** (8 Nov). Removed unused ui.tsx `TierPill`/`SectionTitle`/

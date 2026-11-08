@@ -101,8 +101,8 @@ export default function PlatesScreen() {
 
       {load && (
         <View style={styles.card} accessible accessibilityLabel={`Each side: ${load.perSide.length ? load.perSide.map((plate) => formatWeight(plate, unit)).join(', ') : 'nothing, just the bar'}`}>
-          <Txt variant="eyebrow" color={color.labelSecondary}>
-            EACH SIDE
+          <Txt variant="label" color={color.labelSecondary}>
+            Each side
           </Txt>
           <BarDiagram plates={load.perSide} unit={unit} />
           {load.perSide.length === 0 ? (
@@ -143,8 +143,8 @@ export default function PlatesScreen() {
       {ramp.length > 0 &&
         (billing.isPro ? (
           <View style={styles.card}>
-            <Txt variant="eyebrow" color={color.labelSecondary}>
-              WARM-UP
+            <Txt variant="label" color={color.labelSecondary}>
+              Warm-up
             </Txt>
             <View>
               {ramp.map((set, index) => (
@@ -182,8 +182,8 @@ export default function PlatesScreen() {
       {/* Nothing typed yet: the bare bar, and what will show here. */}
       {text.trim() === '' && (
         <View style={styles.card}>
-          <Txt variant="eyebrow" color={color.labelSecondary}>
-            EACH SIDE
+          <Txt variant="label" color={color.labelSecondary}>
+            Each side
           </Txt>
           <BarDiagram plates={[]} unit={unit} ghost />
           <Txt variant="subhead" color={color.labelSecondary}>

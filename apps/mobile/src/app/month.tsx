@@ -147,8 +147,8 @@ export default function MonthScreen() {
           <Icon name="chevronBack" size={16} color={older ? color.brand : color.labelTertiary} />
         </Pressable>
         <View style={styles.flex}>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.center}>
-            MONTHLY REPORT
+          <Txt variant="label" color={color.labelSecondary} style={styles.center}>
+            Monthly report
           </Txt>
           <Txt variant="title2" accessibilityRole="header" level={1} style={styles.center}>
             {label}

@@ -135,8 +135,8 @@ export default function StrengthScreen() {
 
       {max !== null && (
         <View style={styles.card}>
-          <Txt variant="eyebrow" color={color.labelSecondary}>
-            PERCENT OF YOUR MAX
+          <Txt variant="label" color={color.labelSecondary}>
+            Percent of your max
           </Txt>
           <View>
             {percents.map((percent, index) => {
@@ -177,8 +177,8 @@ export default function StrengthScreen() {
 
       {max !== null && pro && (
         <View style={styles.card}>
-          <Txt variant="eyebrow" color={color.labelSecondary}>
-            WHAT YOU COULD DO FOR
+          <Txt variant="label" color={color.labelSecondary}>
+            What you could do for
           </Txt>
           <View style={styles.grid}>
             {[2, 3, 4, 5, 6, 8, 10, 12].map((count) => (

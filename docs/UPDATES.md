@@ -9,9 +9,16 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 106 · Headings inside the tools' cards
+
+*8 Nov 2026 · the commit "Sentence case for headings inside the tools' cards"*
+
+- The plate calculator's Each side and Warm-up, 1-rep max's Percent of your max and What you could do for, and the monthly report's switcher title (Monthly report, over the month) are in sentence case, like the other headings inside cards. Section headings over lists (Records, Done most, Latest…) keep their small capitals.
+- Not yet seen on a phone.
+
 ## Update 105 · Figures and names that fit a small phone
 
-*8 Nov 2026 · `bf77524`, and the commit "Workout: a saved workout's name gets two lines"*
+*8 Nov 2026 · `bf77524`, `7b3c822`*
 
 - Home's This month widget showed "11,563 kg" cut off on a 320-point phone. The figure is now the number and its word says the unit ("11,563 · kg lifted"), as a finished workout's summary does; a screen reader hears "11,563 kg lifted".
 - Workout: a saved workout's name gets two lines on a small phone; "Chest, Shoulders, Triceps" was cut short.

@@ -140,9 +140,12 @@ function KitUsed({ uses, confirmed, forGym }: { uses: Kit[]; confirmed: boolean;
   const names = uses.map((kit) => KIT_LABEL[kit] ?? kit).join(' + ');
   if (uses.length === 0) {
     return (
-      <Txt variant="caption" color={color.goodInk}>
-        ✓ Body weight
-      </Txt>
+      <View style={styles.kit}>
+        <Icon name="good" size={13} color={color.goodInk} />
+        <Txt variant="caption" color={color.goodInk}>
+          Body weight
+        </Txt>
+      </View>
     );
   }
   if (!forGym) {
@@ -155,10 +158,14 @@ function KitUsed({ uses, confirmed, forGym }: { uses: Kit[]; confirmed: boolean;
       </View>
     );
   }
+  // A tick for kit the gym is known to have; the words say it for a screen reader.
   return (
-    <Txt variant="caption" color={confirmed ? color.goodInk : color.maybeInk}>
-      {confirmed ? `✓ ${names}` : `? ${names} (not confirmed here)`}
-    </Txt>
+    <View style={styles.kit} accessible accessibilityLabel={confirmed ? `${names}, confirmed at this gym` : `${names}, not confirmed here`}>
+      <Icon name={confirmed ? 'good' : 'maybe'} size={13} color={confirmed ? color.goodInk : color.maybeInk} />
+      <Txt variant="caption" color={confirmed ? color.goodInk : color.maybeInk} style={styles.kitWords}>
+        {confirmed ? names : `${names} (not confirmed here)`}
+      </Txt>
+    </View>
   );
 }
 
@@ -189,4 +196,5 @@ const styles = themed(() => StyleSheet.create({
   specValue: { fontVariant: ['tabular-nums'] },
   finisher: { paddingVertical: space[2], paddingHorizontal: space[3], borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.fill, overflow: 'hidden' },
   kit: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  kitWords: { flexShrink: 1 },
 }));

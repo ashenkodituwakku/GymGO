@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 120 · Ticks as icons, not typed marks
+
+*8 Nov 2026 · the commit "Workouts: kit marks as icons, not typed ticks and question marks"*
+
+- In a workout built for a gym, each exercise's kit shows the app's green tick or orange mark in front of it, instead of a typed "✓" or "?", as a gym's page already shows what it has. A screen reader hears "confirmed at this gym" or "not confirmed here".
+- "Uses only what (the gym) lists or members report" has the same tick, and a saved workout's note says what the tick and the orange mark mean in words.
+- Not yet seen on a phone.
+
 ## Update 119 · Programme and trips, plainly
 
-*8 Nov 2026 · the commit "Programme and Home's trip: no icon squares or circles"*
+*8 Nov 2026 · `4c59ae9`*
 
 - Your programme's page starts with its name ("Strength programme") instead of an icon on an accent square, as the templates now do.
 - Home's card for a trip coming up shows its globe on its own, like Machines and Trips beneath it, instead of white on a circle.

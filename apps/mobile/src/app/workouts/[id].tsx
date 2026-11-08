@@ -128,7 +128,7 @@ export default function SavedWorkoutScreen() {
         )}
         {saved.gymId !== null && (
           <Txt variant="footnote" color={color.labelSecondary}>
-            ✓ and ? show what was confirmed at the gym when you saved it.
+            A tick marks kit the gym was known to have when you saved it; an orange mark, kit that wasn’t confirmed.
           </Txt>
         )}
         <View style={styles.buttons}>

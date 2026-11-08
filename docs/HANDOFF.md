@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Ticks as icons** (8 Nov). ExerciseCard's `KitUsed` and the builder's
+  `KitNote` draw `good`/`maybe` icons instead of "✓"/"?" text; the
+  confirmed state is in the row's accessibilityLabel. No "✓" is left in
+  the app's text.
 - **Programme and trips, plainly** (8 Nov). programme.tsx's `mark`
   (BrandFill square) and Home's `tripIcon` circle removed (a 22pt brand
   globe). Checked with a trip and a programme put in the test browser's

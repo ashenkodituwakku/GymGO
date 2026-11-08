@@ -531,9 +531,12 @@ function KitNote({ mode, has, gymName }: { mode: KitMode; has: Kit[]; gymName: s
   }
   if (mode === 'gym') {
     return (
-      <Txt variant="footnote" color={color.goodInk}>
-        ✓ Uses only what {gymName} lists or members report: {has.map((kit) => KIT_LABEL[kit]).join(', ') || 'body weight'}.
-      </Txt>
+      <View style={styles.onlyHere}>
+        <Icon name="good" size={15} color={color.goodInk} />
+        <Txt variant="footnote" color={color.goodInk} style={styles.flex}>
+          Uses only what {gymName} lists or members report: {has.map((kit) => KIT_LABEL[kit]).join(', ') || 'body weight'}.
+        </Txt>
+      </View>
     );
   }
   return (
@@ -561,6 +564,7 @@ const styles = themed(() => StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   caps: { marginBottom: -space[1] },
   warn: { padding: space[3], borderRadius: radius.md, backgroundColor: color.maybeTint },
+  onlyHere: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
   result: { gap: space[3] },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandTint },

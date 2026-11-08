@@ -9,9 +9,16 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 115 · Room for GymPal's button
+
+*8 Nov 2026 · the commit "Pages: the last row scrolls clear of GymPal's button"*
+
+- A full page's last line no longer ends under GymPal's round button in the bottom corner: pages leave a little more room at their foot, so the last row scrolls up clear of it (the workout builder's "Warm up, and pick weights you can move well." at 320 points was half hidden). With GymPal's button hidden in Appearance, pages end as before.
+- Not yet seen on a phone.
+
 ## Update 114 · A ticked set, settled
 
-*8 Nov 2026 · the commit "Workout: a ticked set's numbers sit plainly in its row"*
+*8 Nov 2026 · `1e6fe7d`*
 
 - In a workout, a ticked set's weight and reps sit plainly in their row instead of in green boxes: the row's faint tint (green, or gold for a record) and the green tick already say it's done, so it no longer stacks three colours on one line. The numbers can still be tapped to change.
 - Also checked: the rest timer bar in light and dark, and a walk through 14 screens for console warnings (the only one is from the map's own style, OpenFreeMap's, not GymGO); Reduce Motion is still fully respected.
@@ -27,7 +34,7 @@ next number here as part of the update itself.
 
 ## Update 112 · Icons on the accent cards on their own
 
-*8 Nov 2026 · the commit "Home and Profile: the accent cards' icons without their faint squares"*
+*8 Nov 2026 · `ffed9e9`, `7cd854d`*
 
 - Home's Build a workout and Profile's plan card show their icon on its own, a little larger, instead of in a faint white square, as the plain cards' icons already do.
 - Not yet seen on a phone.

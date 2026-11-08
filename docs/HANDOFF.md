@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Room for GymPal's button** (8 Nov). PageScroll's bottom padding is at
+  least `PAL_ROOM` (52 + 16 + 12, GymPal.tsx's BUTTON and EDGE plus air)
+  unless `gymPalButton` is 'hidden', so a page's last row clears the
+  corner or edge button.
 - **A ticked set, settled** (8 Nov). train.tsx `inputDone` is transparent
   with `color.label` (was goodTint/goodInk); `setDone`/`setBest` row tints
   unchanged.

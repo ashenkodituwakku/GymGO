@@ -28,7 +28,11 @@ import { forwardRef, useCallback, useContext, useRef, type ForwardedRef } from '
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewProps, type ScrollViewInstance } from 'react-native';
 import { ScrollMemory, startingY } from '@/components/Redrawn';
 import { useOverhang, useScreenBottom, type Measurable } from '@/lib/layout';
+import { useThemeChoice } from '@/lib/themePrefs';
 import { ambientGlow } from '@/lib/theme';
+
+/** GymPal's button on a page (GymPal.tsx: BUTTON 52, EDGE 16) and a little air over it. */
+const PAL_ROOM = 52 + 16 + 12;
 
 type Props = ScrollViewProps & {
   /** Room under the last row, before the phone's own bottom edge is added. */
@@ -41,7 +45,10 @@ export const PageScroll = forwardRef(function PageScroll(
   { gap = 32, extraBottom = 0, contentContainerStyle, onLayout, onScroll, onContentSizeChange, scrollEventThrottle, style, ...props }: Props,
   forwarded: ForwardedRef<ScrollViewInstance>,
 ) {
-  const screenBottom = useScreenBottom(gap);
+  // GymPal's button (the tab on the edge, or the corner one) sits over a page's bottom corner,
+  // 52 points tall and 16 up: the last row scrolls clear of it rather than ending under it.
+  const palButton = useThemeChoice().gymPalButton !== 'hidden';
+  const screenBottom = useScreenBottom(palButton ? Math.max(gap, PAL_ROOM) : gap);
   const { measureRef, onLayout: measure, overhang } = useOverhang();
   const memory = useContext(ScrollMemory);
   const node = useRef<ScrollViewInstance | null>(null);

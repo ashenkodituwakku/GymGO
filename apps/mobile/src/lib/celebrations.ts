@@ -6,13 +6,15 @@
  * No React Native here, so it is unit-tested in Node.
  */
 
+import type { IconName } from '@/components/Icon';
+
 export type CelebrationStyle = 'confetti' | 'fireworks' | 'stars' | 'emoji';
 
-export const CELEBRATIONS: Array<{ id: CelebrationStyle; name: string; blurb: string; sample: string }> = [
-  { id: 'confetti', name: 'Confetti', blurb: 'A burst of colour from the top', sample: '🎊' },
-  { id: 'fireworks', name: 'Fireworks', blurb: 'Three bursts across the screen', sample: '🎆' },
-  { id: 'stars', name: 'Gold stars', blurb: 'Stars drifting down, twinkling', sample: '⭐' },
-  { id: 'emoji', name: 'Emoji', blurb: 'A shower of muscles, fire and trophies', sample: '💪' },
+export const CELEBRATIONS: Array<{ id: CelebrationStyle; name: string; blurb: string; icon: IconName }> = [
+  { id: 'confetti', name: 'Confetti', blurb: 'A burst of colour from the top', icon: 'confetti' },
+  { id: 'fireworks', name: 'Fireworks', blurb: 'Three bursts across the screen', icon: 'fireworks' },
+  { id: 'stars', name: 'Gold stars', blurb: 'Stars drifting down, twinkling', icon: 'star' },
+  { id: 'emoji', name: 'Emoji', blurb: 'A shower of muscles, fire and trophies', icon: 'smile' },
 ];
 
 export const FREE_CELEBRATION: CelebrationStyle = 'confetti';

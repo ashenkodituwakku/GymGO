@@ -119,7 +119,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
   const look = mine ? cardFor(mine) : null;
   const title =
     step.kind === 'collected' && step.fresh === 'new'
-      ? 'Collected!'
+      ? 'Collected'
       : step.kind === 'collected' && step.fresh === 'visit'
         ? `Visit ${visits} logged`
         : mine

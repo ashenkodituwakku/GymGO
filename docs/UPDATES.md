@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 116 · Icons, not emoji, and fewer exclamation marks
+
+*8 Nov 2026 · the commit "Appearance and messages: icons in place of emoji, thanks without exclamation marks"*
+
+- Appearance's Celebrations and Sounds show the app's own icons (a party popper, fireworks, a star, a smiling face; a note and a game controller) in place of emoji, so they match every other icon in GymGO. The Emoji celebration itself still rains emoji.
+- The slider in Appearance (how glassy GymGO is) no longer glows in the accent under your finger: the glass lens is enough, as on iOS.
+- Messages say thanks plainly: "Thanks." after a member report or a photo, "Collected" for a new card, and "You're at (the gym)" once a check-in finds you, instead of "Thanks!", "Collected!" and "You're here!".
+- The page Stripe sends you back to after paying has no 🎉, 👋 or ✅ above its title, says "Thanks for subscribing.", and only says it's taking you back to GymGO when it is.
+- Not yet seen on a phone.
+
 ## Update 115 · Room for GymPal's button
 
-*8 Nov 2026 · the commit "Pages: the last row scrolls clear of GymPal's button"*
+*8 Nov 2026 · `7b3b5cf`*
 
 - A full page's last line no longer ends under GymPal's round button in the bottom corner: pages leave a little more room at their foot, so the last row scrolls up clear of it (the workout builder's "Warm up, and pick weights you can move well." at 320 points was half hidden). With GymPal's button hidden in Appearance, pages end as before.
 - Not yet seen on a phone.

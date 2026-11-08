@@ -75,7 +75,7 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
       await api.reportBusy(token, location.id, level);
       haptic.success();
       setPicking(false);
-      setNotice('Thanks! It counts for the next hour, alongside other members’.');
+      setNotice('Thanks. It counts for the next hour, alongside other members’.');
       load();
     } catch (error) {
       haptic.warn();

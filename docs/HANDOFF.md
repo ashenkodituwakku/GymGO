@@ -106,6 +106,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Icons, not emoji** (8 Nov). `CELEBRATIONS`/`SOUND_PACKS` carry an
+  `icon: IconName` (new Icon names confetti, fireworks, smile, music,
+  arcade; Material has no fireworks, so `flare`) in place of an emoji
+  `sample`; PercentSlider's accent halo removed; "Thanks!" etc. made
+  plain; billing.ts `returnPage` has no emoji and says "Taking you back"
+  only with a destination (tested).
 - **Room for GymPal's button** (8 Nov). PageScroll's bottom padding is at
   least `PAL_ROOM` (52 + 16 + 12, GymPal.tsx's BUTTON and EDGE plus air)
   unless `gymPalButton` is 'hidden', so a page's last row clears the

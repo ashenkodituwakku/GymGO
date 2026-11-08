@@ -130,7 +130,7 @@ export function MemberAccess({
               await api.reportAccess(token, gymId, { outcome, visitedOn });
               haptic.success();
               setEditing(false);
-              setNotice('Thanks! It shows as one member’s visit, next to anyone else’s.');
+              setNotice('Thanks. It shows as one member’s visit, next to anyone else’s.');
               refresh();
             } catch (error) {
               fail(error);

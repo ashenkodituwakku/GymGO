@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { BrandFill } from '@/components/BrandFill';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { loadAllLookFonts } from '@/lib/lookFonts';
@@ -573,7 +573,7 @@ export default function AppearanceScreen() {
                 style={({ pressed }) => [styles.celebration, pressed && { opacity: 0.75 }]}
               >
                 <View style={[styles.sampleTile, on && styles.sampleOn]}>
-                  <Text style={styles.sample}>{item.sample}</Text>
+                  <Icon name={item.icon} size={26} color={on ? color.brand : color.labelSecondary} weight="regular" />
                 </View>
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
@@ -619,7 +619,7 @@ export default function AppearanceScreen() {
                 style={({ pressed }) => [styles.soundPack, pressed && { opacity: 0.75 }]}
               >
                 <View style={[styles.sampleTile, on && styles.sampleOn]}>
-                  <Text style={styles.sample}>{item.sample}</Text>
+                  <Icon name={item.icon} size={26} color={on ? color.brand : color.labelSecondary} weight="regular" />
                 </View>
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
@@ -898,7 +898,6 @@ const styles = themed(() =>
     soundPack: { flex: 1, alignItems: 'center', gap: space[1], paddingVertical: space[2], paddingHorizontal: space[2] },
     sampleTile: { width: 56, height: 56, borderRadius: radius.md, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
     sampleOn: { borderColor: color.brand, backgroundColor: color.brandTint },
-    sample: { fontSize: 28, lineHeight: 34 },
     playRow: { marginTop: space[3] },
     flex: { flex: 1 },
     textSample: { gap: 2, padding: space[3], borderRadius: radius.md, backgroundColor: color.fill },

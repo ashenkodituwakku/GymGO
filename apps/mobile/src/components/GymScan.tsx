@@ -60,7 +60,7 @@ export function GymScan({ phase, gymName }: { phase: ScanPhase; gymName: string 
 
   const bar = useAnimatedStyle(() => ({ width: `${progress.value * 100}%` }));
   const line =
-    phase === 'locating' ? 'Finding where you are…' : phase === 'checking' ? `Checking you’re at ${gymName}…` : 'You’re here!';
+    phase === 'locating' ? 'Finding where you are…' : phase === 'checking' ? `Checking you’re at ${gymName}…` : `You’re at ${gymName}`;
 
   return (
     <View style={styles.wrap} accessible accessibilityRole="progressbar" accessibilityLabel={line} accessibilityLiveRegion="polite">

@@ -141,7 +141,7 @@ export function MemberPrices({
               await api.reportPrice(token, gymId, { amountMinor, paidOn });
               haptic.success();
               setEditing(false);
-              setNotice('Thanks! It shows as one member’s report, next to anyone else’s.');
+              setNotice('Thanks. It shows as one member’s report, next to anyone else’s.');
               refresh();
               data.refreshMemberPrices();
             } catch (error) {

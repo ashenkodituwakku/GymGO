@@ -437,6 +437,7 @@ describe('coming back from Stripe', () => {
     expect(page.status).toBe(200);
     expect(page.text).toContain('You’re on GymGO Pro');
     expect(page.text).toContain('exp://192.168.1.20:8081/--/pro?checkout=success');
+    expect(page.text).toContain('Taking you back to GymGO');
     const me = await call(withStripe.base, 'GET', '/api/billing', { token: person.token });
     expect(me.body.plan).toBe('pro');
     expect(me.body.limits).toEqual(LIMITS.pro);
@@ -447,6 +448,9 @@ describe('coming back from Stripe', () => {
     const page = await call(withStripe.base, 'GET', `/api/billing/return?result=cancelled&to=${encodeURIComponent('https://evil.example')}`);
     expect(page.text).toContain('No charge made');
     expect(page.text).not.toContain('evil.example');
+    // With nowhere to go, it doesn't promise to take you back.
+    expect(page.text).not.toContain('Taking you back');
+    expect(page.text).toContain('You can close this page');
   });
 
   it('won’t start a second subscription for someone already on Pro', async () => {

@@ -7,11 +7,13 @@
  * No React Native here, so it is unit-tested in Node.
  */
 
+import type { IconName } from '@/components/Icon';
+
 export type SoundPack = 'marimba' | 'arcade';
 
-export const SOUND_PACKS: Array<{ id: SoundPack; name: string; blurb: string; sample: string }> = [
-  { id: 'marimba', name: 'Marimba', blurb: 'Soft marimba and bells', sample: '🎵' },
-  { id: 'arcade', name: 'Arcade', blurb: 'Chip tunes, like an old games console', sample: '🕹️' },
+export const SOUND_PACKS: Array<{ id: SoundPack; name: string; blurb: string; icon: IconName }> = [
+  { id: 'marimba', name: 'Marimba', blurb: 'Soft marimba and bells', icon: 'music' },
+  { id: 'arcade', name: 'Arcade', blurb: 'Chip tunes, like an old games console', icon: 'arcade' },
 ];
 
 export const FREE_SOUND_PACK: SoundPack = 'marimba';

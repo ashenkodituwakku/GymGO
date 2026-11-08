@@ -91,7 +91,7 @@ export function MemberStatus({ gymId, isDemo, account, onSignIn }: { gymId: stri
       await api.reportGymStatus(token, gymId, { status, seenOn: localDateDaysAgo(WHEN_CHOICES[when]!.days) });
       haptic.success();
       setEditing(false);
-      setNotice('Thanks! It shows as one member’s report, next to anyone else’s.');
+      setNotice('Thanks. It shows as one member’s report, next to anyone else’s.');
       changed(gymId);
     } catch (error) {
       fail(error);

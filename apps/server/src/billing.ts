@@ -728,12 +728,12 @@ const escapeHtml = (text: string) =>
 /** The page Stripe sends people to: a word of thanks, then straight back into GymGO. */
 export function returnPage(result: 'success' | 'cancelled' | 'portal', destination: string | null): string {
   const copy = {
-    success: { emoji: '🎉', title: 'You’re on GymGO Pro', body: 'Thanks! Taking you back to GymGO…' },
-    cancelled: { emoji: '👋', title: 'No charge made', body: 'You didn’t subscribe. Taking you back to GymGO…' },
-    portal: { emoji: '✅', title: 'All set', body: 'Taking you back to GymGO…' },
+    success: { title: 'You’re on GymGO Pro', body: 'Thanks for subscribing.' },
+    cancelled: { title: 'No charge made', body: 'You didn’t subscribe.' },
+    portal: { title: 'All set', body: '' },
   }[result];
   const go = destination
-    ? `<p><a class="button" href="${escapeHtml(destination)}">Back to GymGO</a></p>
+    ? `<p>Taking you back to GymGO…</p><p><a class="button" href="${escapeHtml(destination)}">Back to GymGO</a></p>
        <script>setTimeout(function () { location.replace(${JSON.stringify(destination).replace(/</g, '\\u003c')}); }, 600);</script>`
     : '<p>You can close this page and go back to GymGO.</p>';
   return `<!doctype html>
@@ -743,9 +743,9 @@ export function returnPage(result: 'success' | 'cancelled' | 'portal', destinati
   body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f2f2f7; color: #1c1c1e;
          font: 17px/1.4 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif; }
   main { max-width: 340px; padding: 32px 24px; text-align: center; background: #fff; border-radius: 24px; margin: 16px; }
-  .emoji { font-size: 44px; } h1 { font-size: 22px; margin: 8px 0; } p { color: #636366; margin: 8px 0; }
+  h1 { font-size: 22px; margin: 0 0 8px; } p { color: #636366; margin: 8px 0; }
   .button { display: inline-block; margin-top: 12px; padding: 12px 22px; border-radius: 999px; background: #5856d6;
             color: #fff; text-decoration: none; font-weight: 600; }
 </style></head>
-<body><main><div class="emoji">${copy.emoji}</div><h1>${copy.title}</h1><p>${copy.body}</p>${go}</main></body></html>`;
+<body><main><h1>${copy.title}</h1>${copy.body ? `<p>${copy.body}</p>` : ''}${go}</main></body></html>`;
 }

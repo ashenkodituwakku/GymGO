@@ -168,7 +168,6 @@ export function PercentSlider({
   const trackStyle = useAnimatedStyle(() => ({ transform: [{ scaleY: 1 + press.value * 0.25 }] }));
   const solidStyle = useAnimatedStyle(() => ({ opacity: 1 - press.value * 0.92 }));
   const lensStyle = useAnimatedStyle(() => ({ opacity: press.value }));
-  const haloStyle = useAnimatedStyle(() => ({ opacity: press.value * 0.55, transform: [{ scale: 0.8 + press.value * 0.5 }] }));
   // Inside the lens, the track lined up with the real one: the lens's swell magnifies it.
   const lensTrackStyle = useAnimatedStyle(() => ({ transform: [{ translateX: -x.value }] }));
 
@@ -220,11 +219,6 @@ export function PercentSlider({
       >
         <Animated.View style={[styles.track, trackStyle]}>
           <TrackBody x={x} value={value} travel={travel} />
-        </Animated.View>
-
-        {/* A soft glow of the accent round the lens. */}
-        <Animated.View style={[styles.thumbBox, styles.halo, thumbStyle, { pointerEvents: 'none' }]}>
-          <Animated.View style={[StyleSheet.absoluteFill, styles.haloGlow, haloStyle]} />
         </Animated.View>
 
         <Animated.View style={[styles.thumbBox, styles.thumbShadow, thumbStyle, { pointerEvents: 'none' }]}>
@@ -295,8 +289,6 @@ const styles = themed(() =>
     dotOff: { backgroundColor: color.labelTertiary, opacity: 0.55 },
 
     thumbBox: { position: 'absolute', left: 0, top: (HEIGHT - THUMB_H) / 2, width: THUMB_W, height: THUMB_H, borderRadius: THUMB_H / 2 },
-    halo: { borderCurve: 'continuous' },
-    haloGlow: { borderRadius: THUMB_H / 2, backgroundColor: color.brandTint, boxShadow: `0 0 16px 4px ${color.brandBorder}` },
     thumbShadow: { boxShadow: '0 2px 7px rgba(0, 0, 0, 0.2), 0 0.5px 1.5px rgba(0, 0, 0, 0.14)' },
     thumbClip: { flex: 1, borderRadius: THUMB_H / 2, borderCurve: 'continuous', overflow: 'hidden' },
     lensBack: { backgroundColor: color.plateSolid },

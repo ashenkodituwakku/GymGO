@@ -108,6 +108,12 @@ const ICONS = {
   haptics: { ios: 'iphone.radiowaves.left.and.right', android: 'vibration', web: 'vibration' },
   // A note you keep on an exercise or a workout (a pin would read as a place).
   note: { ios: 'note.text', android: 'sticky_note_2', web: 'sticky_note_2' },
+  // Appearance's celebrations and sounds (Material has no fireworks: a flare stands in).
+  confetti: { ios: 'party.popper.fill', android: 'celebration', web: 'celebration' },
+  fireworks: { ios: 'fireworks', android: 'flare', web: 'flare' },
+  smile: { ios: 'face.smiling', android: 'mood', web: 'mood' },
+  music: { ios: 'music.note', android: 'music_note', web: 'music_note' },
+  arcade: { ios: 'gamecontroller.fill', android: 'sports_esports', web: 'sports_esports' },
 } as const;
 
 export type IconName = keyof typeof ICONS;

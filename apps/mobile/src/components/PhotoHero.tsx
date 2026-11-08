@@ -260,7 +260,7 @@ export function PhotoHero({
     try {
       await api.uploadPhoto(token, gymId, data);
       haptic.success();
-      setStep({ kind: 'done', text: 'Thanks! A moderator will check it, then it shows here with your name on it.' });
+      setStep({ kind: 'done', text: 'Thanks. A moderator will check it, then it shows here with your name on it.' });
       load();
     } catch (error) {
       haptic.warn();

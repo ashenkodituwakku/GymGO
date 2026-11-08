@@ -128,7 +128,7 @@ export function MemberKit({
               await api.reportEquipment(token, gymId, items);
               haptic.success();
               setEditing(false);
-              setNotice('Thanks! Your report is in. It shows as one member’s view, next to anyone else’s.');
+              setNotice('Thanks. Your report is in. It shows as one member’s view, next to anyone else’s.');
               refresh();
             } catch (error) {
               haptic.warn();

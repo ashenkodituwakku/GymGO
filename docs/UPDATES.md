@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 99 · How to do it, as a card like the rest
+
+*8 Nov 2026 · the commit "Exercise page: how to do it as a plain card; exercise tiles without the gloss"*
+
+- An exercise's How to do it is a card like the ones under it, with the moving figure on its usual tile beside the cue, instead of a block of the accent. The accent is kept for your own numbers (Lifetime, the 1-rep max, Collection).
+- Exercise tiles everywhere (lists, plans, a workout, the monthly report) lose the white gloss drawn across their top corner.
+- Not yet seen on a phone.
+
 ## Update 98 · The welcome tour on a plain page
 
-*8 Nov 2026 · the commit "Welcome tour: on the plain page, without the accent's glow"*
+*8 Nov 2026 · `561c9f5`*
 
 - The three welcome pages after making an account sit on the plain page, without the large glow of the accent behind them. Each page's symbol, in the accent, is enough.
 - (A gym page's Go, Call and Website buttons keep their Liquid Glass: that's the material you chose for controls, as in iOS, not decoration.)

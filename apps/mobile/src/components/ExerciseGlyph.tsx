@@ -33,7 +33,7 @@ import Animated, {
 import Svg, { Circle, G, Path } from 'react-native-svg';
 import { GLYPH_SIZE, exerciseFrames, exerciseMoves, exerciseTempo, type Pt, type Shape, type Tempo, type Tone } from '@/lib/exerciseGlyphs';
 import { alpha } from '@/lib/looks';
-import { LOOKS, NO_TOUCH, backgroundImage, color, currentLook, currentTheme, radius } from '@/lib/theme';
+import { NO_TOUCH, color, currentTheme, radius } from '@/lib/theme';
 import { useGlassRedraw } from './Redrawn';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -296,7 +296,6 @@ export const ExerciseTile = memo(function ExerciseTile({
   const dark = currentTheme().scheme === 'dark';
   // The look's own corners, in proportion to the tile (none in 8-bit).
   const round = Math.min(size * 0.28, radius.lg * 1.4);
-  const lit = currentLook() === LOOKS.standard;
   return (
     <View
       style={[styles.tile, { width: size, height: size, borderRadius: round, backgroundColor: alpha(hue, dark ? 0.2 : 0.11), borderColor: alpha(hue, dark ? 0.3 : 0.16) }]}
@@ -304,16 +303,6 @@ export const ExerciseTile = memo(function ExerciseTile({
       importantForAccessibility="no-hide-descendants"
       aria-hidden
     >
-      {lit && (
-        <View
-          style={[
-            NO_TOUCH,
-            StyleSheet.absoluteFill,
-            { borderRadius: round },
-            backgroundImage(`linear-gradient(150deg, rgba(255, 255, 255, ${dark ? 0.1 : 0.55}) 0%, rgba(255, 255, 255, 0) 58%)`),
-          ]}
-        />
-      )}
       <ExerciseGlyph
         exerciseId={exerciseId}
         size={size * 0.98}

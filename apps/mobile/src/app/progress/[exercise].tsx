@@ -10,8 +10,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
-import { BrandFill } from '@/components/BrandFill';
-import { ExerciseGlyph, ExerciseTile } from '@/components/ExerciseGlyph';
+import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
 import { AskGymPal } from '@/components/AskGymPal';
 import { ExerciseNote } from '@/components/ExerciseNote';
@@ -20,7 +19,6 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { Chip, PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { useApp } from '@/lib/app-state';
-import { mix } from '@/lib/looks';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { EXERCISE_METRICS, exerciseSeries, formatWeight, fromKg, personalRecords, repRecords, repsWords, setsSummary, unitFor, type ExerciseMetric } from '@/lib/training';
 import { useOwnTraining } from '@/lib/ownTraining';
@@ -93,18 +91,14 @@ export default function ExerciseProgressScreen() {
 
       {exercise && (
         <>
-          {/* How to do it: the move going through its rep, on the accent, and its cue. */}
-          <View style={styles.hero}>
-            <BrandFill round={radius.xl} />
-            <Txt variant="label" color={color.onBrandSoft}>
+          {/* How to do it: the move going through its rep, and its cue. */}
+          <View style={styles.card}>
+            <Txt variant="label" color={color.labelSecondary}>
               {exercise.own ? 'Your own exercise' : `How to do it · ${exercise.cardio ? 'Conditioning' : exercise.compound ? 'Compound' : 'Isolation'}`}
             </Txt>
             <View style={styles.how}>
-              <View style={styles.glyph} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
-                {/* The kit a pale tint of the accent, so a bar across the shoulders reads apart from the figure. */}
-                <ExerciseGlyph exerciseId={exercise.id} size={84} ink={color.onBrand} accent={mix(color.brandFill, color.onBrand, 0.5)} moving />
-              </View>
-              <Txt variant="headline" color={color.onBrand} style={styles.flex}>
+              <ExerciseTile exerciseId={exercise.id} size={96} moving />
+              <Txt variant="headline" style={styles.flex}>
                 {exercise.cue || (exercise.own ? 'Say how to do it when you change it.' : '')}
               </Txt>
             </View>
@@ -405,9 +399,7 @@ const styles = themed(() => StyleSheet.create({
   repCount: { width: 76 },
   note: { marginHorizontal: space[4] },
   metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  hero: { gap: space[3], padding: space[4], paddingTop: space[4] + 2, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.brandFill },
   how: { flexDirection: 'row', alignItems: 'center', gap: space[4] },
-  glyph: { width: 104, height: 104, alignItems: 'center', justifyContent: 'center', borderRadius: Math.min(26, radius.xl), borderCurve: 'continuous', backgroundColor: color.onBrandFaint },
   detail: { gap: space[2] },
   detailLabel: { textTransform: 'uppercase', letterSpacing: 0.6 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },

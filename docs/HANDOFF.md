@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **How to do it, as a card** (8 Nov, "less vibecoded").
+  progress/[exercise].tsx's how-to is `styles.card` with an
+  `ExerciseTile` (96, moving); its `hero`/`glyph` styles are gone.
+  ExerciseGlyph.tsx's `ExerciseTile` has no `lit` gloss.
 - **The welcome tour on a plain page** (8 Nov, "less vibecoded").
   welcome.tsx's `Backdrop` (two radial glows of the accent) is gone.
 - **A gym's page as a plain list** (8 Nov, "less vibecoded"). ui.tsx's

@@ -9,9 +9,16 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 121 · GymGO's own icon on the Pro page
+
+*8 Nov 2026 · the commit "Pro page: the app's own icon above its title"*
+
+- The GymGO Pro page starts with GymGO's app icon, as a subscription page in the App Store shows the app's own icon, instead of a crown on an accent square.
+- Not yet seen on a phone.
+
 ## Update 120 · Ticks as icons, not typed marks
 
-*8 Nov 2026 · the commit "Workouts: kit marks as icons, not typed ticks and question marks"*
+*8 Nov 2026 · `bcfddb2`*
 
 - In a workout built for a gym, each exercise's kit shows the app's green tick or orange mark in front of it, instead of a typed "✓" or "?", as a gym's page already shows what it has. A screen reader hears "confirmed at this gym" or "not confirmed here".
 - "Uses only what (the gym) lists or members report" has the same tick, and a saved workout's note says what the tick and the orange mark mean in words.

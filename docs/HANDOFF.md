@@ -106,6 +106,8 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Pro page icon** (8 Nov). pro.tsx's hero is `AppBadge size={72}`
+  (BrandMark.tsx) in place of the BrandFill square with a crown.
 - **Ticks as icons** (8 Nov). ExerciseCard's `KitUsed` and the builder's
   `KitNote` draw `good`/`maybe` icons instead of "✓"/"?" text; the
   confirmed state is in the row's accessibilityLabel. No "✓" is left in

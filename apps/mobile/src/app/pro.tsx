@@ -24,7 +24,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
-import { BrandFill } from '@/components/BrandFill';
+import { AppBadge } from '@/components/BrandMark';
 import { Icon, type IconName } from '@/components/Icon';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
@@ -190,10 +190,7 @@ export default function ProScreen() {
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         {/* Hero ------------------------------------------------------------ */}
         <View style={styles.hero}>
-          <View style={styles.badge}>
-            <BrandFill round={22} />
-            <Icon name="crown" size={36} color={color.onBrand} />
-          </View>
+          <AppBadge size={72} />
           <Txt variant="largeTitle" style={styles.center} accessibilityRole="header" level={1}>
             GymGO Pro
           </Txt>
@@ -548,16 +545,6 @@ const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[4], paddingBottom: space[8], width: '100%', maxWidth: 560, alignSelf: 'center' },
   hero: { alignItems: 'center', gap: space[2], paddingTop: space[2] },
-  badge: {
-    width: 72,
-    height: 72,
-    borderRadius: 22,
-    borderCurve: 'continuous',
-    backgroundColor: color.brandFill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeEmoji: { fontSize: 36, lineHeight: 44 },
   card: { backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
   onPro: { borderWidth: 2, borderColor: color.brand },
   trialCard: { gap: space[1], backgroundColor: color.brandWash, borderWidth: 1, borderColor: color.brandBorder },

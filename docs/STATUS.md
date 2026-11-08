@@ -402,6 +402,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Gym facts without circles (8 Nov, "less vibecoded"): a gym page's price, reviews and kit tiles and "Is it busy?" with plain icons | ✅ | ✅ in the browser at 390, light and dark: Fitness First's page; app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 | Milestone icons (8 Nov, "less vibecoded"): Progress's milestones with plain icons (accent once reached), not white on a circle | ✅ | ✅ in the browser at 390, light and dark; app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 | No greyed-out Keep it (8 Nov): the challenge's change-target button shows only once another target is picked | ✅ | ✅ in the browser at 390: no button on the current target, "Make it 12 days" on 12 (not saved); a sweep of 24 screens at 320 dark (no errors, no overflow), cut text and unnamed controls on 10; app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
+| Map label (8 Nov, "less vibecoded"): the map's corner label is the city's name alone for GymGO's own gyms ("live data" read like live crowds); other states keep their dot and words | ✅ | ✅ in the browser at 390, light and dark: Explore over Melbourne, no page errors; app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 
 **What "tested locally" means for the phone app, exactly:**
 

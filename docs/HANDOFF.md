@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Map label** (8 Nov). explore.tsx's city pill is `city.name` with no
+  dot when the data is live from GymGO's server; the dot and words stay
+  for locked, demo, bbox/outside-cities and offline.
 - **No greyed-out Keep it** (8 Nov). challenges.tsx renders the target
   button only when `mine?.target !== target` (Join when not in). Sweep
   after Updates 115–125: 24 screens at 320 dark clean; clip and a11y

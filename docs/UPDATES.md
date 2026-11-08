@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 127 · "Melbourne", not "Melbourne · live data"
+
+*8 Nov 2026 · the commit "Map: the city's name alone when its gyms are GymGO's own"*
+
+- The map's label in the corner says just the city's name when it shows GymGO's own gyms, instead of "Melbourne · live data" with a green dot: "live" read as if GymGO knew how busy gyms are now, which it doesn't. Anything out of the ordinary keeps its dot and its words: demo gyms, an offline copy, map data outside the cities, or a country that's part of Pro.
+- Also looked at, with nothing to change: Saved.
+- Not yet seen on a phone.
+
 ## Update 126 · No greyed-out "Keep it"
 
-*8 Nov 2026 · the commit "Monthly challenge: the change button only once you pick another target"*
+*8 Nov 2026 · `c005205`*
 
 - In the monthly challenge, Change your target no longer shows a greyed-out "Keep it" button under the target you already have. The button ("Make it 12 days") comes when you pick another.
 - Also checked after this run of changes: 24 screens at 320 points in dark with no errors and nothing wider than the screen; 10 screens with no cut-off words (bar Home's list of exercises, cut on purpose) and no unnamed buttons.

@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 98 · The welcome tour on a plain page
+
+*8 Nov 2026 · the commit "Welcome tour: on the plain page, without the accent's glow"*
+
+- The three welcome pages after making an account sit on the plain page, without the large glow of the accent behind them. Each page's symbol, in the accent, is enough.
+- (A gym page's Go, Call and Website buttons keep their Liquid Glass: that's the material you chose for controls, as in iOS, not decoration.)
+- Not yet seen on a phone.
+
 ## Update 97 · A gym's page as a plain list
 
-*8 Nov 2026 · the commit "Gym page: row icons on their own; facilities ticked and crossed with icons"*
+*8 Nov 2026 · `9cda0fc`*
 
 - A gym's page lists its sections (Prices, Join this gym, Getting in, Equipment, Facilities, Reviews, Your notes, the owner…) with each icon on its own, a little larger, instead of in a tinted circle; the titles still line up. Any other folding list in the app looks the same.
 - Facilities, and the yes-or-no details on Google's page, show a tick or a cross icon rather than typed ✓ and ✗ characters; a screen reader says "yes" or "no" after each.

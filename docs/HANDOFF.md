@@ -106,6 +106,8 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **The welcome tour on a plain page** (8 Nov, "less vibecoded").
+  welcome.tsx's `Backdrop` (two radial glows of the accent) is gone.
 - **A gym's page as a plain list** (8 Nov, "less vibecoded"). ui.tsx's
   `Fold` icon is 20 pt in a 32-wide box with no background (`foldIcon`).
   PlaceCard's amenity chips (`markChip`) and GooglePage's `detailChip`

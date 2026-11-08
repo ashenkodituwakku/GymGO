@@ -6,16 +6,15 @@
  * your country the first time as before.
  *
  * Each page is an icon, a headline and a line: nothing drawn stands in for
- * a picture of a gym. Behind them a glow of the accent; the marks drift and
- * settle as the pages are swiped (just swap with Reduce Motion).
+ * a picture of a gym, on the plain page. The marks drift and settle as the
+ * pages are swiped (just swap with Reduce Motion).
  */
 
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useId, useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { interpolate, runOnJS, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { Wordmark } from '@/components/BrandMark';
 import { HeroMark } from '@/components/HeroMark';
 import type { IconName } from '@/components/Icon';
@@ -25,7 +24,7 @@ import { PrimaryButton, Txt } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
-import { LOOKS, color, currentLook, currentTheme, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, space, themed } from '@/lib/theme';
 
 const PAGES: Array<{ icon: IconName; title: string; line: string }> = [
   {
@@ -92,7 +91,6 @@ export default function WelcomeScreen() {
   return (
     <View style={[styles.page, { paddingTop: insets.top + space[2], paddingBottom: insets.bottom + space[4] }]}>
       <ScreenOptions options={{ headerShown: false }} />
-      {currentLook() === LOOKS.standard && <Backdrop />}
       <View style={styles.top}>
         <Wordmark height={22} />
         {!last && (
@@ -173,30 +171,6 @@ function Drift({ index, width, scrollX, depth, children }: { index: number; widt
   return <Animated.View style={[styles.drift, style]}>{children}</Animated.View>;
 }
 
-/** A glow of the accent behind the tour: one pool high up behind the marks, a fainter one low at the side. */
-function Backdrop() {
-  const id = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const dark = currentTheme().scheme === 'dark';
-  return (
-    <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]} aria-hidden>
-      <Svg width="100%" height="100%">
-        <Defs>
-          <RadialGradient id={`wa${id}`} cx="50%" cy="34%" r="58%">
-            <Stop offset="0" stopColor={color.brand} stopOpacity={dark ? 0.36 : 0.2} />
-            <Stop offset="0.5" stopColor={color.brand} stopOpacity={dark ? 0.12 : 0.07} />
-            <Stop offset="1" stopColor={color.brand} stopOpacity={0} />
-          </RadialGradient>
-          <RadialGradient id={`wb${id}`} cx="100%" cy="96%" r="52%">
-            <Stop offset="0" stopColor={color.brand} stopOpacity={dark ? 0.2 : 0.1} />
-            <Stop offset="1" stopColor={color.brand} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Rect x="0" y="0" width="100%" height="100%" fill={`url(#wa${id})`} />
-        <Rect x="0" y="0" width="100%" height="100%" fill={`url(#wb${id})`} />
-      </Svg>
-    </View>
-  );
-}
 
 const styles = themed(() =>
   StyleSheet.create({

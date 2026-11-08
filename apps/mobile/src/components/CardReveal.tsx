@@ -202,11 +202,11 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
               <Animated.View style={[styles.actions, wordsStyle]}>
                 <View style={styles.buttons}>
                   <View style={styles.flex}>
-                    <PrimaryButton label={pull.viewing ? 'Done' : 'Nice!'} onPress={close} />
+                    <PrimaryButton label="Done" onPress={close} />
                   </View>
                   {/* White on glass, not the brand colour, which is too dark to read here. */}
                   <Pressy scaleTo={0.97} onPress={openCollection} accessibilityRole="button" style={[styles.flex, styles.ghost]}>
-                    <Icon name="trophy" size={16} color="#FFFFFF" />
+                    <Icon name="cards" size={16} color="#FFFFFF" />
                     <Txt variant="headline" color="#FFFFFF">
                       Collection
                     </Txt>

@@ -111,6 +111,8 @@ mobile 550, domain 191 and web 39 tests, all passing.
   ResultsContent; `PLACEHOLDER` gave way to `mapPrompt(home)`
   ("Suburb, city or gym"), and `PLACEHOLDER_SHORT` is "Search" (under 360
   points). GymPal's `GREETING` is the owner's own wording: leave it.
+  CardReveal's button is "Done" (was "Nice!"), its Collection button
+  `cards`; welcome.tsx's last button "Get started", its third page `cards`.
 - **How to do it, as a card** (8 Nov, "less vibecoded").
   progress/[exercise].tsx's how-to is `styles.card` with an
   `ExerciseTile` (96, moving); its `hero`/`glyph` styles are gone.

@@ -38,7 +38,7 @@ const PAGES: Array<{ icon: IconName; title: string; line: string }> = [
     line: 'Tap the muscles you want to train for a plan that fits the kit, then tick off your sets. The rest timer, plate maths and your records come free.',
   },
   {
-    icon: 'trophy',
+    icon: 'cards',
     title: 'Collect every gym you visit',
     line: 'Check in at a gym for its card. Every visit rolls a rarity, cards climb from Bronze to Platinum, and every gym in a suburb completes a set.',
   },
@@ -143,7 +143,7 @@ export default function WelcomeScreen() {
       </View>
 
       <View style={styles.actions}>
-        <PrimaryButton label={last ? 'Let’s go' : 'Next'} icon={last ? 'check' : undefined} onPress={() => (last ? finish() : go(from() + 1))} />
+        <PrimaryButton label={last ? 'Get started' : 'Next'} icon={last ? 'check' : undefined} onPress={() => (last ? finish() : go(from() + 1))} />
       </View>
     </View>
   );

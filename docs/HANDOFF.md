@@ -106,6 +106,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Fewer pats on the back** (8 Nov). TrainingInsights' goal line, train.tsx's
+  summary title and CollectCard's finished-set line lose "Nice work." and
+  "!". CardReveal's rare "!" and GymPal's `GREETING`/`WAITING` (the
+  owner's wording) are kept on purpose, as is BuildingBar (the owner
+  asked for a 3-second bar with an animation).
 - **Pro page icon** (8 Nov). pro.tsx's hero is `AppBadge size={72}`
   (BrandMark.tsx) in place of the BrandFill square with a crown.
 - **Ticks as icons** (8 Nov). ExerciseCard's `KitUsed` and the builder's

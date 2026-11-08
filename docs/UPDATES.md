@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 122 · Fewer pats on the back
+
+*8 Nov 2026 · the commit "Copy: records, sets and goals said plainly"*
+
+- Progress says "Goal of 3 met this week" instead of "Goal of 3 met. Nice work.", a workout's summary says "2 new records" without an exclamation mark, and finishing a set of cards says "You've finished the (name) set" plainly.
+- Kept as they are: a rare card's reveal ("Epic!"), which only a rare pull gets, and GymPal's greeting, which is the owner's own wording. The 3-second Build my workout bar also stays: the owner asked for it.
+- Not yet seen on a phone, and these lines weren't seen in the browser either (they need a new record, a first goal week or a finished set): a change of words only.
+
 ## Update 121 · GymGO's own icon on the Pro page
 
-*8 Nov 2026 · the commit "Pro page: the app's own icon above its title"*
+*8 Nov 2026 · `784ff87`*
 
 - The GymGO Pro page starts with GymGO's app icon, as a subscription page in the App Store shows the app's own icon, instead of a crown on an accent square.
 - Not yet seen on a phone.

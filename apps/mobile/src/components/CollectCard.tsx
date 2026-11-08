@@ -189,7 +189,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
         step.finished.map((set) => (
           <View key={set.key} style={styles.finished}>
             <Txt variant="subhead" color={color.brand} style={face('semibold')}>
-              {`You’ve finished the ${set.name} ${set.kind} set!`}
+              {`You’ve finished the ${set.name} ${set.kind} set`}
             </Txt>
             <SetReward set={set} fresh />
           </View>

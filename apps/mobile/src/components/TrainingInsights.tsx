@@ -58,7 +58,7 @@ export function WeekCard({
     ? thisWeek >= goal
       ? streak > 1
         ? `Goal of ${goal} met, ${streak} weeks in a row`
-        : `Goal of ${goal} met. Nice work.`
+        : `Goal of ${goal} met this week`
       : `${goal - thisWeek} more to reach your goal`
     : 'Set a goal to aim for each week';
 

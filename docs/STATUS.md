@@ -397,6 +397,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Programme and trips, plainly (8 Nov, "less vibecoded"): the programme page without its accent icon square; Home's coming trip with a plain globe | ✅ | ✅ in the browser at 390, light and dark, with a trip and a programme in the test browser: Home, the programme page; app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 | Ticks as icons (8 Nov, "less vibecoded"): a gym workout's kit marks as the app's tick and orange mark, not typed ✓ and ?, with the state spoken | ✅ | ✅ in the browser at 390: a Chest plan for Fitness First on a typical gym's kit (six cards' marks and spoken labels); app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 | Pro page icon (8 Nov, "less vibecoded"): GymGO's app icon over the Pro page's title, not a crown on an accent square | ✅ | ✅ in the browser at 390, light and dark; app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
+| Fewer pats on the back (8 Nov, "less vibecoded"): the goal line, the summary's records title and a finished card set said without "Nice work." or "!" | ✅ | ✅ app 564 tests, typecheck; not seen in the browser (the lines need a new record, a first goal week or a finished set) | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 
 **What "tested locally" means for the phone app, exactly:**
 

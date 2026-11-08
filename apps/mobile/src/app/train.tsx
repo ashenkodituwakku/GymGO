@@ -1219,7 +1219,7 @@ function Summary({
         <HeroMark icon={records.length ? 'trophy' : 'check'} tint={records.length ? color.maybe : color.good} size={72} />
       </Animated.View>
       <Txt variant="largeTitle" style={styles.center} accessibilityRole="header" level={1}>
-        {records.length ? `${records.length} new record${records.length === 1 ? '' : 's'}!` : 'Workout done'}
+        {records.length ? `${records.length} new record${records.length === 1 ? '' : 's'}` : 'Workout done'}
       </Txt>
       <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
         {session.name}

@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 102 · A workout's summary ends with one button
+
+*8 Nov 2026 · the commit "Workout summary: the other actions as a list, Done the one button"*
+
+- After a workout, the summary's four full-width buttons stacked one on another are a short list (Share your record when you set one, Share this workout, See your progress) and one solid Done. While the record's picture is being made, its row says "Making the picture…" and can't be tapped twice.
+- Google's rating line on a gym page has an ordinary separator ("4.3 · 120 Google reviews"), not one padded with double spaces.
+- Not yet seen on a phone.
+
 ## Update 101 · The last capitals in cards, and no fake text
 
-*8 Nov 2026 · the commit "Sentence case on the accent cards; 1-rep max's empty card without fake text bars"*
+*8 Nov 2026 · `0151410`*
 
 - The headings on the accent cards are in sentence case too: Your plan (Profile), Your friend code, a friend's collection, Monthly challenge, Estimated 1-rep max and Since October 2026 (Lifetime). The shareable pictures (your week, your lifetime, a record) keep their capitals: they're designed as images to post.
 - 1-rep max, before you type anything: the outlined card showing where the estimate will go no longer has grey bars standing in for text (they looked like something still loading); How it works is in sentence case.

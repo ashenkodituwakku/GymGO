@@ -1289,15 +1289,34 @@ function Summary({
         <SessionNote session={session} />
       </View>
       <View style={styles.finish}>
-        {best && <PrimaryButton label="Share your record" icon="share" busy={sharingCard} onPress={() => void shareCard()} />}
-        <PrimaryButton label="See your progress" icon="chart" tone={best ? 'quiet' : undefined} onPress={onProgress} />
-        <PrimaryButton label="Share this workout" icon="share" tone="quiet" onPress={() => void share()} />
+        {/* The other things to do from here, as a list; Done is the one button. */}
+        <View style={styles.savedCard}>
+          {[
+            ...(best ? [{ id: 'record', icon: 'share' as IconName, title: sharingCard ? 'Making the picture…' : 'Share your record', go: () => void shareCard(), busy: sharingCard }] : []),
+            { id: 'workout', icon: 'share' as IconName, title: 'Share this workout', go: () => void share(), busy: false },
+            { id: 'progress', icon: 'chart' as IconName, title: 'See your progress', go: onProgress, busy: false },
+          ].map((row, index) => (
+            <Pressable
+              key={row.id}
+              onPress={row.busy ? undefined : row.go}
+              accessibilityRole="button"
+              accessibilityState={{ busy: row.busy }}
+              style={({ pressed }) => [styles.savedRow, index > 0 && styles.savedLine, pressed && { backgroundColor: color.fill }]}
+            >
+              <Icon name={row.icon} size={20} color={color.brand} />
+              <Txt variant="body" style={styles.flex}>
+                {row.title}
+              </Txt>
+              <Icon name="chevron" size={13} color={color.labelTertiary} />
+            </Pressable>
+          ))}
+        </View>
         {shared && (
           <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
             {shared}
           </Txt>
         )}
-        <PrimaryButton label="Done" tone="quiet" onPress={onClose} />
+        <PrimaryButton label="Done" onPress={onClose} />
       </View>
     </PageScroll>
     {(records.length > 0 || weekNow?.justMet) && <Celebration style={celebration} />}

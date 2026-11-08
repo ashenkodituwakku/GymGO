@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **A summary that ends with one button** (8 Nov, "less vibecoded").
+  train.tsx's `Summary` lists Share your record / Share this workout / See
+  your progress in a `savedCard` (rows keyed by id; the record row shows
+  "Making the picture…" while `sharingCard`), then a brand Done.
 - **The last capitals in cards** (8 Nov, "less vibecoded"). `label` on the
   heroes of profile.tsx (plan), friends/index (code), friends/[id],
   challenges.tsx, strength.tsx and lifetime.tsx; share cards (RecapCard,

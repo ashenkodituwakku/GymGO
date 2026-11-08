@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Milestone icons** (8 Nov). TrainingInsights' `ladderIcon` is a 24pt box
+  with no fill (`ladderIconOn` removed); the icon is brand once reached,
+  labelTertiary before.
 - **Gym facts without circles** (8 Nov). PlaceCard's `factIcon` has no
   brandTint circle; MemberBusy's `badge` is the people icon in `ink` with
   no tint (the `tint` const went). `Fold` now requires `icon` (its emoji

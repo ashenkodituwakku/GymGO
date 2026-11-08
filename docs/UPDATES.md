@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 125 · Milestones with plain icons
+
+*8 Nov 2026 · the commit "Progress: milestone icons on their own"*
+
+- Progress's milestones (workouts, weeks in a row, records broken, sets logged) show their icon on its own, in the accent once you've reached the first step and grey before, instead of white on a filled circle.
+- Also looked at: the round buttons for steppers, close, send and play, which stay round, as buttons do.
+- Not yet seen on a phone.
+
 ## Update 124 · A gym's facts without their circles
 
-*8 Nov 2026 · the commit "Gym page: price, reviews, kit and busy with plain icons"*
+*8 Nov 2026 · `a6b0ac9`*
 
 - On a gym's page, the three tiles for price, reviews and kit show their icon on its own instead of in a tinted circle, like the rows of facts beneath them.
 - "Is it busy?" shows its people icon on its own, in the colour of how busy members say it is, instead of on a coloured circle.

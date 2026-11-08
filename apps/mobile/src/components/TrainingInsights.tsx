@@ -313,8 +313,9 @@ export function MilestonesCard({ sessions }: { sessions: TrainingSession[] }) {
             accessible
             accessibilityLabel={`${ladder.title}: ${ladder.label}. ${ladder.next === null ? 'Every milestone reached.' : `Next milestone at ${ladder.next.toLocaleString('en')}.`}`}
           >
-            <View style={[styles.ladderIcon, ladder.reached.length > 0 && styles.ladderIconOn]}>
-              <Icon name={LADDER_ICON[ladder.kind]} size={16} color={ladder.reached.length > 0 ? color.onBrand : color.labelSecondary} />
+            {/* In the accent once a milestone is reached, grey before. */}
+            <View style={styles.ladderIcon}>
+              <Icon name={LADDER_ICON[ladder.kind]} size={20} color={ladder.reached.length > 0 ? color.brand : color.labelTertiary} />
             </View>
             <View style={styles.flex}>
               <View style={styles.ladderHead}>
@@ -457,8 +458,7 @@ const styles = themed(() =>
     group: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', overflow: 'hidden', ...shadow.plate },
     rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
     ladder: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
-    ladderIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill, marginTop: 2 },
-    ladderIconOn: { backgroundColor: color.brandFill },
+    ladderIcon: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
     ladderHead: { flexDirection: 'row', alignItems: 'baseline', gap: space[2] },
     track: { height: 6, borderRadius: 3, backgroundColor: color.fill, overflow: 'hidden', marginTop: space[1] },
     fill: { height: '100%', borderRadius: 3, backgroundColor: color.brand },

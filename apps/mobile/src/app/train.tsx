@@ -1472,7 +1472,8 @@ const styles = themed(() => StyleSheet.create({
     color: color.label,
     ...face('semibold'),
   },
-  inputDone: { backgroundColor: color.goodTint, color: color.goodInk },
+  // A done set's numbers sit plainly in its row (the row's tint and the tick already say it's done), still editable.
+  inputDone: { backgroundColor: 'transparent', color: color.label },
   tick: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   tickTodo: { borderWidth: 2, borderColor: color.labelTertiary },
   tickDone: { backgroundColor: color.good },

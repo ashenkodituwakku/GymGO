@@ -389,6 +389,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Pro said plainly (8 Nov, "less vibecoded"): Home's Other cities on Free say "with GymGO Pro" once per group instead of PRO on each city; Profile's plan card on Free says "GymGO Free" and its limits, not a slogan | ✅ | ✅ in the browser at 390 light with a free account (USA, Europe, NZ and the Pacific each noted once; Australia's cities untagged; the plan card); app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 | Icons on the accent cards on their own (8 Nov, "less vibecoded"): Home's Build a workout and Profile's plan card without the faint white icon square | ✅ | ✅ in the browser at 390: Home (light and dark), Profile's plan card on Free; app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 | Search suggestions as Maps draws them (8 Nov, "less vibecoded"): look-up and recent rows on grey circles | ✅ | ✅ in the browser at 390 light: a search with no match (the look-up row); app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
+| A ticked set, settled (8 Nov, "less vibecoded"): a ticked set's numbers plain in their row, not green boxes on a tinted row | ✅ | ✅ in the browser at 390, light and dark: a set ticked (a record, gold row); Reduce Motion check; console warnings walk; app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 
 **What "tested locally" means for the phone app, exactly:**
 

@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **A ticked set, settled** (8 Nov). train.tsx `inputDone` is transparent
+  with `color.label` (was goodTint/goodInk); `setDone`/`setBest` row tints
+  unchanged.
 - **Console clean** (8 Nov). With a 14-screen walk in the browser the only
   console warning is the map's "Expected value to be of type number, but
   found null instead." (×3): it's OpenFreeMap's own liberty style, the same

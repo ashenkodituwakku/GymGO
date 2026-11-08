@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 114 · A ticked set, settled
+
+*8 Nov 2026 · the commit "Workout: a ticked set's numbers sit plainly in its row"*
+
+- In a workout, a ticked set's weight and reps sit plainly in their row instead of in green boxes: the row's faint tint (green, or gold for a record) and the green tick already say it's done, so it no longer stacks three colours on one line. The numbers can still be tapped to change.
+- Also checked: the rest timer bar in light and dark, and a walk through 14 screens for console warnings (the only one is from the map's own style, OpenFreeMap's, not GymGO); Reduce Motion is still fully respected.
+- Not yet seen on a phone.
+
 ## Update 113 · Search suggestions as Maps draws them
 
-*8 Nov 2026 · the commit "Map search: look-up and recent rows on grey, as Maps draws them"*
+*8 Nov 2026 · `ece976d`*
 
 - In the map's search suggestions, "Look up …" and places you searched before show their icon on a grey circle, as Apple Maps draws a search or a recent one, instead of a tint of the accent. The coloured circles are left for places and gyms.
 - Also looked at: Progress's records, milestones and history, and Find a machine with a machine picked; no changes needed.

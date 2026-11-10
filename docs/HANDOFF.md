@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **"Check you’re online"** (10 Nov). serverAddress.ts `serverIsHosted`,
+  api.ts `serverHosted()`, copy.ts `serverOfflineLine(platform, hosted)`;
+  sign-in, Account, AccountContent and Pro use it. 2 new serverAddress
+  tests (app 571, total 1,226; school report and README updated).
 - **Server pages** (10 Nov). legalPages.ts: the Legal list has no second row
   of links (`shell(…, 'index')`); the reset form's rule sits above the button
   with `aria-describedby`; `h1 + section` spacing. legal.test checks each

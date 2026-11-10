@@ -63,6 +63,9 @@ describe('voice', () => {
     expect(serverOfflineLine('web')).toContain('on this computer');
     expect(serverOfflineLine('ios')).toContain('running on your computer');
     expect(serverOfflineLine('android')).not.toContain('gymgo command');
+    // A hosted GymGO isn't yours to start: check the connection instead.
+    expect(serverOfflineLine('web', true)).toBe('Can’t reach GymGO. Check you’re online, then try again.');
+    expect(serverOfflineLine('ios', true)).not.toContain('computer');
   });
 
   it("counts only gyms that could work on the Filters button, and says how sure", () => {

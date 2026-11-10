@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 144 · "Check you’re online"
+
+*10 Nov 2026 · the commit "Offline: a hosted GymGO says check you're online, not start it"*
+
+- When the server couldn't be reached, sign-in said "Start GymGO on this computer, then try again". That's right while you run GymGO yourself, but GymGO online (or a release build with its own server) would have told a visitor to start a server they don't have. A hosted GymGO now says "Can’t reach GymGO. Check you’re online, then try again."
+- Hosted means the build names a server on the internet: not localhost, a .local name or a home-network address (192.168…, 10…, 172.16 to 31…). GymGO online counts as hosted unless it's opened at localhost.
+- Sign-in, Account, Account's member tools and Pro now share that one line; Account had "just now" and Pro "Check it’s running", each its own way. Pro's "Manage it from GymGO on your computer" (on a phone build that can't open Stripe) says "on GymGO’s website" when the server is hosted.
+- Seen in the browser at 390 wide with the server stopped: sign-in in development shows the computer wording; a build pointed at an address that can't exist shows "Check you’re online". App tests 571 (2 new), typecheck; the school report and README now say 1,226 tests.
+
 ## Update 143 · The server's own pages
 
-*10 Nov 2026 · the commit "Server pages: one set of legal links, the password rule above its button"*
+*10 Nov 2026 · `f09baaa`*
 
 - The Legal page listed the four documents as cards and then again as a row of links underneath. The row is gone there; each document still links to the others.
 - Choosing a new password: the rule ("At least 8 characters…") was under the button, after you'd pressed it. It now sits above it, and the screen reader reads it with the first field. The heading on the reset pages has room under it, as on the legal pages.

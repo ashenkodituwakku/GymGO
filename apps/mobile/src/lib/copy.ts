@@ -129,11 +129,13 @@ export function filtersButtonLabel(counts: { confirmed: number; needs_confirmati
 }
 
 /**
- * When the GymGO server can't be reached at sign-in. It comes through the
- * same address as the app itself (see apiBase), so whatever loaded the app
- * can reach it while GymGO is running on the computer.
+ * When the GymGO server can't be reached. A hosted one (serverHosted in
+ * api.ts) is most likely out of reach of your connection. One on your own
+ * computer comes through the same address as the app itself (see apiBase),
+ * so whatever loaded the app can reach it while GymGO is running there.
  */
-export function serverOfflineLine(platform: string): string {
+export function serverOfflineLine(platform: string, hosted = false): string {
+  if (hosted) return 'Can’t reach GymGO. Check you’re online, then try again.';
   return platform === 'web'
     ? 'Can’t reach the GymGO server. Start GymGO on this computer, then try again.'
     : 'Can’t reach the GymGO server. Check GymGO is still running on your computer, then try again.';

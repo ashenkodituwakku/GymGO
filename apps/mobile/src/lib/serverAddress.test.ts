@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pickApiBase } from './serverAddress';
+import { pickApiBase, serverIsHosted } from './serverAddress';
 
 describe('where the GymGO server is', () => {
   it('is the hosted address when the build names one', () => {
@@ -36,5 +36,24 @@ describe('where the GymGO server is', () => {
     expect(pickApiBase({ bundleUrl: null, hostUri: '10.0.0.5:8081' })).toBe('http://10.0.0.5:8081/_gymgo');
     expect(pickApiBase({ bundleUrl: 'file:///var/containers/Bundle/main.jsbundle' })).toBeNull();
     expect(pickApiBase({})).toBeNull();
+  });
+});
+
+describe('whether the server is hosted or on your own computer', () => {
+  it('is hosted when the build names an address on the internet', () => {
+    expect(serverIsHosted('https://api.gymgo.example')).toBe(true);
+    expect(serverIsHosted('same-origin', 'https://gymgo.site')).toBe(true);
+    expect(serverIsHosted('same-origin', null)).toBe(true);
+  });
+
+  it('is your own computer in development, on your network or with no address at all', () => {
+    expect(serverIsHosted(undefined)).toBe(false);
+    expect(serverIsHosted('none')).toBe(false);
+    expect(serverIsHosted('same-origin', 'http://localhost:4000')).toBe(false);
+    for (const address of ['http://127.0.0.1:4000', 'http://192.168.1.20:4000', 'http://10.0.0.5:4000', 'http://172.20.1.2:4000', 'http://my-pc.local:4000', 'http://[::1]:4000']) {
+      expect(serverIsHosted(address)).toBe(false);
+    }
+    expect(serverIsHosted('http://172.32.0.1')).toBe(true);
+    expect(serverIsHosted('not an address')).toBe(false);
   });
 });

@@ -17,7 +17,7 @@ import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
 import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review, CollectionTotals, FriendCard, BusyLevel, OwnerUpdatePayload, OwnExercise, OwnExerciseFields, Split, SplitFields, Weather } from '@gymgo/domain';
 import type { TrainingSession } from './training';
-import { pickApiBase } from './serverAddress';
+import { pickApiBase, serverIsHosted } from './serverAddress';
 import { LIMITED } from './limited';
 import { WEBSITE_AUTO, serverMissed } from './website';
 import { ApiError, OfflineError, failure, readBody } from './apiErrors';
@@ -34,6 +34,12 @@ export function apiBase(): string | null {
     bundleUrl: bundleUrl(),
     hostUri: Constants.expoConfig?.hostUri ?? null,
   });
+}
+
+/** Whether the server is a hosted GymGO rather than one on your own computer (serverIsHosted). */
+export function serverHosted(): boolean {
+  if (WEBSITE_AUTO && LIMITED) return false;
+  return serverIsHosted(process.env.EXPO_PUBLIC_API_URL, Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : null);
 }
 
 /** The address a debug build or Expo Go loaded its code from; a release build loads from a file inside the app. */

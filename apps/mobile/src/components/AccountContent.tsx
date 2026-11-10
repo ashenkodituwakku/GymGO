@@ -13,7 +13,7 @@ import { Image, Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from './motion';
 import { dateLabel, serverOfflineLine } from '@/lib/copy';
 import { priceLabel, type GymRecord, type Review } from '@gymgo/domain';
-import { api, ApiError, OfflineError, type AccessOutcome, type BugReportItem, type MemberReport } from '@/lib/api';
+import { api, ApiError, OfflineError, serverHosted, type AccessOutcome, type BugReportItem, type MemberReport } from '@/lib/api';
 import { moneyLabel } from '@/lib/places';
 import { haptic } from '@/lib/haptics';
 import { color, radius, shadow, space, themed } from '@/lib/theme';
@@ -23,7 +23,7 @@ import { PrimaryButton, Txt } from './ui';
 
 function messageFor(error: unknown): string {
   if (error instanceof OfflineError) {
-    return serverOfflineLine(Platform.OS);
+    return serverOfflineLine(Platform.OS, serverHosted());
   }
   if (error instanceof ApiError) return error.message;
   return 'Something went wrong. Try again.';

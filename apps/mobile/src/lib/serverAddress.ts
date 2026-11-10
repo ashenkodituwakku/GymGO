@@ -29,3 +29,29 @@ export function pickApiBase(from: {
   if (from.hostUri) return `http://${from.hostUri}${SERVER_PREFIX}`;
   return null;
 }
+
+/**
+ * Whether the server is a hosted GymGO, reached over the internet, rather
+ * than GymGO running on your own computer (in development, or a build
+ * pointed at a computer on your network). It decides what to suggest when
+ * the server can't be reached: check you're online, or check GymGO is running.
+ */
+export function serverIsHosted(configured: string | null | undefined, pageOrigin: string | null = null): boolean {
+  if (!configured || configured === 'none') return false;
+  const address = configured === 'same-origin' ? pageOrigin : configured;
+  // Served from wherever the page is, with no page to go by: a hosted GymGO is likelier.
+  if (!address) return configured === 'same-origin';
+  let host: string;
+  try {
+    host = new URL(address).hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  } catch {
+    return false;
+  }
+  if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') || host === '::1') return false;
+  const ip = /^(\d+)\.(\d+)\.\d+\.\d+$/.exec(host);
+  if (ip) {
+    const [a, b] = [Number(ip[1]), Number(ip[2])];
+    if (a === 127 || a === 10 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31) || (a === 169 && b === 254)) return false;
+  }
+  return true;
+}

@@ -7,7 +7,7 @@
 
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { StyleSheet, View, type TextInputInstance } from 'react-native';
+import { Platform, StyleSheet, View, type TextInputInstance } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, FADE_OUT, GLIDE, Pressable } from '@/components/motion';
 import { Icon, type IconName } from '@/components/Icon';
@@ -16,8 +16,9 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { GoogleMark, SocialButtons, useSignInProviders, type TokenHandler } from '@/components/SocialSignIn';
 import { ROW, ROW_RULE_INSET, RowChevron, SettingsTile, TILE } from '@/components/ios';
 import { Input, PrimaryButton, Txt } from '@/components/ui';
-import { ApiError, OfflineError, api, type SignInMethods, type SignInProvider } from '@/lib/api';
+import { ApiError, OfflineError, api, serverHosted, type SignInMethods, type SignInProvider } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
+import { serverOfflineLine } from '@/lib/copy';
 import { downloadMyData } from '@/lib/exportData';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -32,7 +33,7 @@ import { useTapAgain } from '@/lib/tapAgain';
 const PROVIDER_NAME: Record<SignInProvider, string> = { google: 'Google', apple: 'Apple' };
 
 function messageFor(error: unknown): string {
-  if (error instanceof OfflineError) return 'Can’t reach the GymGO server just now.';
+  if (error instanceof OfflineError) return serverOfflineLine(Platform.OS, serverHosted());
   if (error instanceof ApiError) return error.message;
   return 'Something went wrong. Try again.';
 }

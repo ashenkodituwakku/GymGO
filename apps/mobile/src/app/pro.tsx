@@ -32,7 +32,8 @@ import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtr
 import { AskGymPal } from '@/components/AskGymPal';
 import { useApp, type ProReason } from '@/lib/app-state';
 import type { Sale } from '@/lib/useBilling';
-import { ApiError, OfflineError, apiBase } from '@/lib/api';
+import { ApiError, OfflineError, apiBase, serverHosted } from '@/lib/api';
+import { serverOfflineLine } from '@/lib/copy';
 import { LIMITED } from '@/lib/limited';
 import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
@@ -210,7 +211,7 @@ export default function ProScreen() {
               <PrimaryButton label={busy ? 'Opening Stripe…' : 'Manage subscription'} tone="quiet" disabled={busy} onPress={() => void manage()} />
             ) : (
               <Txt variant="footnote" color={color.labelSecondary}>
-                Manage it from GymGO on your computer.
+                {serverHosted() ? 'Manage it on GymGO’s website.' : 'Manage it from GymGO on your computer.'}
               </Txt>
             )}
           </View>
@@ -533,7 +534,7 @@ function dayLabel(iso: string): string {
 }
 
 function messageFor(error: unknown): string {
-  if (error instanceof OfflineError) return 'Couldn’t reach the GymGO server. Check it’s running, then try again.';
+  if (error instanceof OfflineError) return serverOfflineLine(Platform.OS, serverHosted());
   if (error instanceof ApiError) return error.message;
   return Platform.OS === 'web' ? 'Something went wrong opening Stripe. Try again.' : 'Something went wrong. Try again.';
 }

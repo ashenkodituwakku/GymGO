@@ -16,7 +16,7 @@ import { AppBadge } from '@/components/BrandMark';
 import { Icon, type IconName } from '@/components/Icon';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
 import { PrimaryButton, Segmented, Txt } from '@/components/ui';
-import { ApiError, OfflineError, api } from '@/lib/api';
+import { ApiError, OfflineError, api, serverHosted } from '@/lib/api';
 import { accountCreationLocked, formatBirthMonthInput, lockAccountCreation, parseBirthMonth, takePendingSignIn, type PendingSignIn } from '@/lib/ageGate';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -38,7 +38,7 @@ const TOO_YOUNG = 'Sorry, you can’t make a GymGO account: accounts are for peo
 const tooYoung = (error: unknown) => error instanceof ApiError && error.code === 'too_young';
 
 function messageFor(error: unknown): string {
-  if (error instanceof OfflineError) return serverOfflineLine(Platform.OS);
+  if (error instanceof OfflineError) return serverOfflineLine(Platform.OS, serverHosted());
   if (error instanceof ApiError) return error.message;
   return 'Something went wrong. Try again.';
 }

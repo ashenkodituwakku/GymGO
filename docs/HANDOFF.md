@@ -106,6 +106,8 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **"you can’t use"** (10 Nov). present.ts `priceLine`'s ineligible caption
+  and `priceText`'s spoken form; 3 new present tests (app 569).
 - **Ask for the total** (10 Nov). present.ts `priceLine`'s unknown-fee
   caption is "for the total" and `priceText` "Ask for the total: some fees
   aren’t published" (test updated); PlaceCard's Prices summary matches.

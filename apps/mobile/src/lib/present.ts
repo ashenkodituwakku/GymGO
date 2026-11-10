@@ -36,13 +36,15 @@ export function priceLine(offers: OfferSelection, members?: { typicalMinor: numb
   if (offers.confirmed) return { headline, caption: 'per visit', confirmed: true };
   if (offers.overBudget) return { headline, caption: 'over budget', confirmed: false };
   if (offers.unconfirmed) return { headline, caption: 'to confirm', confirmed: false };
-  return { headline, caption: 'not for you', confirmed: false };
+  // A price there is, but one you can't use (locals only, say): read together, "A$20 you can’t use".
+  return { headline, caption: 'you can’t use', confirmed: false };
 }
 
 /** A price line as one phrase, for Compare and screen readers: "A$22 per visit", "A$25, to confirm", "Price unknown". */
 export function priceText(price: PriceLine): string {
   if (price.headline === '—') return 'Price unknown';
   if (price.headline === 'Ask') return 'Ask for the total: some fees aren’t published';
+  if (price.caption === 'you can’t use') return `${price.headline}, which you can’t use`;
   return price.confirmed ? `${price.headline} ${price.caption}` : `${price.headline}, ${price.caption}`;
 }
 

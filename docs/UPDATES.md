@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 142 · "A$20 you can’t use"
+
+*10 Nov 2026 · the commit "Prices: a price you can't use says so as one phrase"*
+
+- A price a gym has but you can't use (locals only, say) showed "A$20" over "not for you". It now reads "A$20" over "you can’t use", together "A$20 you can’t use", and a screen reader hears "A$20, which you can’t use".
+- Tests cover both price phrases (this one and "Ask for the total"); the demo gyms show "Ask for the total" in Explore's list.
+- Not yet seen on a phone.
+
 ## Update 141 · "Ask for the total"
 
-*10 Nov 2026 · the commit "Prices: "Ask for the total" where some fees aren't published"*
+*10 Nov 2026 · `2e0e424`*
 
 - A gym whose single-visit price is known but some must-pay fee isn't showed "Ask" over "fees unclear", which read as one muddled phrase. It now reads "Ask" over "for the total", together "Ask for the total"; the Prices row says the same, and a screen reader hears "Ask for the total: some fees aren’t published".
 - Also checked: GymGO Free's compare limit end to end (two gyms join Compare; the third opens GymGO Pro, which says "Free compares two gyms at a time. Pro lines up four.").

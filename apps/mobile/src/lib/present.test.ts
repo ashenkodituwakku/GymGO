@@ -26,6 +26,15 @@ describe('priceLine', () => {
     expect(line.confirmed).toBe(false);
   });
 
+  it('says "for the total" with "Ask", to read as one phrase', () => {
+    expect(priceLine(resultFor('Tallow Street Gym').offers).caption).toBe('for the total');
+  });
+
+  it('shows a price you can’t use (locals only, say) as one you can’t use, not as yours', () => {
+    const offers = { bestAvailable: { cost: { known: true, totalNonRefundableMinor: 2000, currency: 'AUD' } }, confirmed: null, unconfirmed: null, overBudget: null };
+    expect(priceLine(offers as unknown as Parameters<typeof priceLine>[0])).toEqual({ headline: 'A$20', caption: 'you can’t use', confirmed: false });
+  });
+
   it('shows a confirmed price as a price per visit', () => {
     expect(priceLine(resultFor('Quarry Lane Barbell').offers)).toEqual({
       headline: 'A$25',
@@ -124,6 +133,7 @@ describe('a price as one phrase', () => {
   it('reads as words, never a bare dash', () => {
     expect(priceText({ headline: '—', caption: 'price unknown', confirmed: false })).toBe('Price unknown');
     expect(priceText({ headline: 'Ask', caption: 'for the total', confirmed: false })).toBe('Ask for the total: some fees aren’t published');
+    expect(priceText({ headline: 'A$20', caption: 'you can’t use', confirmed: false })).toBe('A$20, which you can’t use');
     expect(priceText({ headline: 'A$22', caption: 'per visit', confirmed: true })).toBe('A$22 per visit');
     expect(priceText({ headline: 'A$25', caption: 'to confirm', confirmed: false })).toBe('A$25, to confirm');
   });

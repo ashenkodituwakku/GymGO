@@ -108,7 +108,7 @@ Each peer gets about 10 minutes with no help from us. We ask them to find a gym 
 | 2. [name] | | | | |
 | 3. [name] | | | | |
 
-We also ran 1,233 automated tests (all passing) and checked 24 screens at 320 px wide with no errors. GymGO hasn't been tried on a real phone yet, only in the browser.
+We also ran 1,235 automated tests (all passing) and checked 24 screens at 320 px wide with no errors. GymGO hasn't been tried on a real phone yet, only in the browser.
 
 ## Evaluation matrix
 

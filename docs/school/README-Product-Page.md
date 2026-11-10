@@ -44,7 +44,7 @@ On a phone, install Expo Go (the version for Expo SDK 58), join the same Wi-Fi a
 
 To try GymGO Pro, sign in with the local test account: `dev@gymgo.test`, password `GymGO-dev-pro-2026`. It only exists on your own computer.
 
-`npx pnpm@10 verify` runs the type checks and all 1,233 automated tests.
+`npx pnpm@10 verify` runs the type checks and all 1,235 automated tests.
 
 ## Known issues
 

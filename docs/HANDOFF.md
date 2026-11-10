@@ -106,6 +106,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Screens fetched ahead on the web** (10 Nov). `useScreensFetchedAhead()`
+  in app/(tabs)/_layout.tsx imports Explore, Saved, Profile, gym/[id] and
+  train when idle (web only; `mayPrefetch` in lib/prefetch.ts skips
+  save-data and 2G). The same chunks the router asks for, so nothing is
+  fetched twice. App 576 tests (total 1,235).
 - **Fonts start early on the web** (10 Nov). apps/mobile/index.ts calls
   `startFonts()` (lib/earlyFonts.web.ts; a no-op in lib/earlyFonts.ts for
   phones) before anything else: Inter where `NEEDS_BUNDLED_FACES`, and the

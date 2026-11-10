@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 150 · Tabs open at once on the website
+
+*10 Nov 2026 · the commit "Website: fetch the likeliest next screens ahead, when idle"*
+
+- On the website, a screen's code is fetched the first time it's opened. Tapping Explore, Saved or Profile for the first time left the page empty, with only the tab bar, until it arrived: 1.3 seconds for Explore on a fast 4G phone.
+- Once the first screen has settled, GymGO now fetches the code for the screens people go to next (Explore, Saved, Profile, a gym's page and Build a workout), one at a time while the browser is idle. Nothing is drawn ahead, only fetched. A first tap then shows the screen with nothing to wait for: Explore in 0.8 seconds (the map being drawn), Saved in 0.2, Profile in 0.3.
+- It holds back for anyone who has asked their browser to save data, and on a very slow (2G) connection. The phone apps are unchanged: every screen is inside them already.
+- Measured in Chromium on a production build at fast 4G and quarter processor speed, timed inside the page from the tap to the new screen's words. App tests 576 (2 new); the school report and README say 1,235 tests.
+- Not yet seen on a phone.
+
 ## Update 149 · Fonts fetched while the app starts
 
-*10 Nov 2026 · the commit "Website: ask for the fonts as the code starts running"*
+*10 Nov 2026 · `35e47f5`*
 
 - In a browser the app's typeface (Inter, where the device has no SF Pro) and its icon font are downloads. The app asked for them only when its first screen was being put together, over a second after its code had arrived, and held that screen until Inter came. It now asks the moment its code starts to run, so they download through that second.
 - On a fast 4G phone the website is usable at about 4.4 seconds, from 4.9 (and 10.2 before Update 148). Icons are there with the first screen; they used to appear about half a second after it.

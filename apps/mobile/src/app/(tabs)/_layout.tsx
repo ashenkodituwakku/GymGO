@@ -42,6 +42,7 @@ import { Avatar } from '@/components/Avatar';
 import { BrandFill } from '@/components/BrandFill';
 import { DockedSidebar, MenuButton, SidebarDrawer } from '@/components/Sidebar';
 import { MENU_BUTTON, navMode } from '@/lib/navLayout';
+import { mayPrefetch, type ConnectionHint } from '@/lib/prefetch';
 import { useThemeChoice } from '@/lib/themePrefs';
 
 const BAR_HEIGHT = 64;
@@ -61,8 +62,49 @@ const TABS: Array<{ name: string; href: '/' | '/explore' | '/saved' | '/profile'
   { name: 'profile', href: '/profile', label: 'Profile', icon: 'user-circle' },
 ];
 
+/**
+ * In a browser, a screen's code is fetched the first time it's opened, and
+ * the page is empty until it arrives: over a second for Explore on a phone
+ * connection. Once the first screen has settled, the likeliest next ones
+ * are fetched ahead, one at a time in the browser's idle moments, so a tap
+ * on a tab or a gym shows it at once. Their code is only fetched and read,
+ * nothing is drawn. Phones have every screen inside the app already.
+ */
+const AHEAD: Array<() => Promise<unknown>> = [
+  () => import('./explore'),
+  () => import('./saved'),
+  () => import('./profile'),
+  () => import('../gym/[id]'),
+  () => import('../train'),
+];
+
+function useScreensFetchedAhead() {
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    if (!mayPrefetch((navigator as { connection?: ConnectionHint }).connection)) return;
+    let stopped = false;
+    const whenIdle = (run: () => void) => {
+      if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(run, { timeout: 4000 });
+      else setTimeout(run, 1000);
+    };
+    const fetchFrom = (index: number) => {
+      const load = AHEAD[index];
+      if (stopped || !load) return;
+      // A failure is nothing to act on: the screen fetches its own code when it's opened, as before.
+      whenIdle(() => void load().then(() => fetchFrom(index + 1), () => fetchFrom(index + 1)));
+    };
+    // After the first screen's own pictures and requests have had their turn.
+    const start = setTimeout(() => fetchFrom(0), 1500);
+    return () => {
+      stopped = true;
+      clearTimeout(start);
+    };
+  }, []);
+}
+
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  useScreensFetchedAhead();
   // The bar is drawn again in new colours; each tab's screen redraws itself (below).
   useThemeVersion();
   // The first time GymGO opens, it asks which country is yours: Free covers it.

@@ -155,7 +155,7 @@ export function FiltersContent({
                 );
               })}
             </View>
-            <Hint>What you don't get back: price, tax and any must-pay fee. Refundable deposits are shown separately.</Hint>
+            <Hint>What you don’t get back: price, tax and any must-pay fee. Refundable deposits are shown separately.</Hint>
           </>
         ) : (
           <Hint>GymGO doesn’t keep visit prices here: the exchange rate moves too much to check a price against. Every price is unknown, so ask when you call.</Hint>
@@ -185,7 +185,7 @@ export function FiltersContent({
             </View>
           </>
         )}
-        <Hint>Every one has to be there. If we don't know, it doesn't count.</Hint>
+        <Hint>Every one has to be there. If we don’t know, it doesn’t count.</Hint>
       </Group>
 
       <Group title="Live or work nearby?">
@@ -212,7 +212,7 @@ export function FiltersContent({
             />
           ))}
         </View>
-        <Hint>As the crow flies. We don't estimate travel time.</Hint>
+        <Hint>As the crow flies. We don’t estimate travel time.</Hint>
       </Group>
 
       <View style={styles.footer}>

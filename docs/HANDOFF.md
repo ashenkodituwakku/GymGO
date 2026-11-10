@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Curly apostrophes** (10 Nov). Visible copy uses ’ (copy.ts, PlaceCard,
+  FiltersContent, explore, pro, workout.ts cue; copy tests updated).
+  Comments, GymPal's prompts and dataset place names keep '.
 - **Programme counts its own weeks** (10 Nov). programmes.ts
   `programmeProgress` filters `programmeSessions` to before startedOn +
   weeks × 7 days (new test; it failed on the old code). programme.tsx and

@@ -28,11 +28,11 @@ export const TIER: Record<ResultTier, TierCopy> = {
   },
   needs_confirmation: {
     label: 'Call first',
-    line: "Could work — a few things we couldn't confirm.",
+    line: 'Could work: a few things couldn’t be confirmed.',
   },
   ruled_out: {
     label: 'Not a fit',
-    line: "Something you need isn't there.",
+    line: 'Something you need isn’t there.',
   },
 };
 
@@ -155,10 +155,10 @@ export const EMPTY = {
   /** No filters are on: what's missing is information, not a looser search. */
   unconfirmedLine: 'Gyms rarely publish everything we check, so each card says exactly what to ask.',
   /** When looking a typed place up failed (not when it wasn't found). */
-  outOfArea: "Couldn't look that place up just now. Try again, or move the map there and tap Search this area.",
+  outOfArea: "Couldn’t look that place up just now. Try again, or move the map there and tap Search this area.",
   locationApproximate:
     'Your phone is only sharing your approximate location, so distances may be well off. Turn on Precise Location for GymGO in Settings.',
-  crowd: "GymGO doesn't have live crowd info, so it won't guess.",
+  crowd: 'GymGO doesn’t have live crowd info, so it won’t guess.',
 } as const;
 
 /** A place to type, in the words people use at home: suburbs in Australia, ZIP codes in the US. */
@@ -201,13 +201,13 @@ export function locatedNotice(
     case 'denied':
       return `Location is off for GymGO. Search ${placeWords(home)} instead.`;
     case 'unavailable':
-      return `Couldn't get a fix on where you are. Search ${placeWords(home)} instead.`;
+      return `Couldn’t get a fix on where you are. Search ${placeWords(home)} instead.`;
     case 'nearest':
-      return `Here's ${result.city.name}, the nearest city GymGO has built in (${distanceLabel(result.km, result.city.country)} away).`;
+      return `Here’s ${result.city.name}, the nearest city GymGO has built in (${distanceLabel(result.km, result.city.country)} away).`;
     case 'home':
-      return `Couldn't tell what time it is where you are, so here's ${result.placeName}.`;
+      return `Couldn’t tell what time it is where you are, so here’s ${result.placeName}.`;
     case 'abroad':
-      return `You're in ${countryInSentence(result.countryCode)}. GymGO Free covers ${countryInSentence(result.home)}, the country you chose; gyms everywhere else are part of Pro. Here's ${countryInSentence(result.home)}.`;
+      return `You’re in ${countryInSentence(result.countryCode)}. GymGO Free covers ${countryInSentence(result.home)}, the country you chose; gyms everywhere else are part of Pro. Here’s ${countryInSentence(result.home)}.`;
     case 'here':
     case 'area':
       // Outside the built-in cities the lists say what's next (Search this area), so nothing more here.

@@ -187,12 +187,12 @@ describe('what finding you says', () => {
   it('when you say no, suggests typing a place in the words used at home', () => {
     expect(locatedNotice({ kind: 'denied' }, 'US')).toBe('Location is off for GymGO. Search a city or ZIP code instead.');
     expect(locatedNotice({ kind: 'denied' }, 'AU')).toBe('Location is off for GymGO. Search a suburb or city instead.');
-    expect(locatedNotice({ kind: 'unavailable' }, 'DE')).toBe("Couldn't get a fix on where you are. Search a town or city instead.");
+    expect(locatedNotice({ kind: 'unavailable' }, 'DE')).toBe('Couldn’t get a fix on where you are. Search a town or city instead.');
   });
 
   it('with no country chosen, says it shows the nearest built-in city, without claiming a search', () => {
     expect(locatedNotice({ kind: 'nearest', km: 2155.6, city: { name: 'Sydney', country: 'AU' } })).toBe(
-      "Here's Sydney, the nearest city GymGO has built in (2,156\u00a0km away).",
+      'Here’s Sydney, the nearest city GymGO has built in (2,156\u00a0km away).',
     );
   });
 

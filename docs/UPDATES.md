@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 133 · One kind of apostrophe
+
+*10 Nov 2026 · the commit "Copy: curly apostrophes throughout, as the rest of the app"*
+
+- A few lines used a straight apostrophe (don't) where the rest of the app uses a curly one (don’t): three of the Filters' hints, the gym page's demo and "can't make calls" notices, the location notices ("Couldn't get a fix…", "Here's Sydney…"), the crowd line, the Pro page's small print, the time-zone warning and the leg press cue. They now match. Place names from the map data (St. John's) are left as their sources spell them.
+- Checked by reading what 12 screens and the Filters sheet show: no straight apostrophe left on them.
+- Not yet seen on a phone.
+
 ## Update 132 · A programme counts only its own weeks
 
-*10 Nov 2026 · the commit "Programme: count only workouts in its own weeks; plain words for nothing yet"*
+*10 Nov 2026 · `10ce3ad`, `d85f7e4`*
 
 - A training programme's total ("Done: 3 workouts in 8 weeks") counted every later workout with the programme's name, even after its weeks were over: one from November counted towards a programme that ran in January and February. It now counts only the workouts within its own weeks (tested).
 - A programme whose weeks ran out with nothing logged says so ("Its 6 weeks are over, with no workouts logged."), not "Done: 0 workouts".

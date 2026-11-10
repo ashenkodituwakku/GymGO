@@ -231,12 +231,12 @@ export function PlaceCard({
       android: `geo:${lat},${lng}?q=${lat},${lng}(${label})`,
       default: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
     });
-    void Linking.openURL(url).catch(() => setNotice("Couldn't open a maps app on this device."));
+    void Linking.openURL(url).catch(() => setNotice("Couldn’t open a maps app on this device."));
   };
   const call = () => {
     if (!location.phone) return setNotice('No phone number on record for this gym.');
     void Linking.openURL(`tel:${location.phone.replace(/\s+/g, '')}`).catch(() =>
-      setNotice("This device can't make calls."),
+      setNotice("This device can’t make calls."),
     );
   };
   const website = () => {
@@ -254,21 +254,21 @@ export function PlaceCard({
           icon="directions"
           label="Go"
           primary
-          onPress={location.isDemoData ? demo("this gym doesn't exist, so there's nowhere to route to.") : directions}
+          onPress={location.isDemoData ? demo("this gym doesn’t exist, so there’s nowhere to route to.") : directions}
         />
         <ActionButton
           icon="call"
           label="Call"
           unavailable={!location.isDemoData && !location.phone}
           accessibilityLabel={!location.isDemoData && !location.phone ? 'Call: no phone number on record' : undefined}
-          onPress={location.isDemoData ? demo("that number isn't real, so we haven't dialled it.") : call}
+          onPress={location.isDemoData ? demo("that number isn’t real, so we haven’t dialled it.") : call}
         />
         <ActionButton
           icon="website"
           label="Website"
           unavailable={!location.isDemoData && !location.website}
           accessibilityLabel={!location.isDemoData && !location.website ? 'Website: none on record' : undefined}
-          onPress={location.isDemoData ? demo("there's no real website to open.") : website}
+          onPress={location.isDemoData ? demo("there’s no real website to open.") : website}
         />
         {!saveAndShareElsewhere && (
           <>
@@ -286,7 +286,7 @@ export function PlaceCard({
               label="Share"
               onPress={
                 location.isDemoData
-                  ? demo("it's invented, so there's nothing real to share.")
+                  ? demo("it’s invented, so there’s nothing real to share.")
                   : () => void shareGym(record).then((outcome) => setNotice(shareLine(outcome)))
               }
             />

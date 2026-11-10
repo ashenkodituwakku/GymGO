@@ -737,7 +737,7 @@ function MapScreen() {
     ? 'The Sydney gyms are invented demo data, for testing.'
     : city.mapOnly || filters.bbox || outsideCities
       ? `Real gyms from OpenStreetMap: names, addresses and sometimes opening hours, mapped by volunteers. Prices, guest hours and machines are unknown until a gym publishes them, so call first. ${MELBOURNE_ATTRIBUTION}.`
-      : `Real gyms. Tap a fact to see where we read it; anything a gym doesn't publish is unknown. ${MELBOURNE_ATTRIBUTION}.`;
+      : `Real gyms. Tap a fact to see where we read it; anything a gym doesn’t publish is unknown. ${MELBOURNE_ATTRIBUTION}.`;
 
   const results = (inSheet: boolean) => (
     <ResultsContent
@@ -895,7 +895,7 @@ function MapScreen() {
     <View style={[styles.selfCheck, { top: insets.top + space[2] + 44 + 38 + space[2] }]}>
       <Icon name="maybe" size={16} color={color.maybeInk} />
       <Txt variant="footnote" color={color.maybeInk} style={styles.flex}>
-        {`This device can't work out time zones reliably, so guest-hour answers may be an hour out. (${selfCheck.detail})`}
+        {`This device can’t work out time zones reliably, so guest-hour answers may be an hour out. (${selfCheck.detail})`}
       </Txt>
     </View>
   );

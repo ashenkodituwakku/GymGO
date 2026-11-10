@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 141 · "Ask for the total"
+
+*10 Nov 2026 · the commit "Prices: "Ask for the total" where some fees aren't published"*
+
+- A gym whose single-visit price is known but some must-pay fee isn't showed "Ask" over "fees unclear", which read as one muddled phrase. It now reads "Ask" over "for the total", together "Ask for the total"; the Prices row says the same, and a screen reader hears "Ask for the total: some fees aren’t published".
+- Also checked: GymGO Free's compare limit end to end (two gyms join Compare; the third opens GymGO Pro, which says "Free compares two gyms at a time. Pro lines up four.").
+- Not yet seen on a phone.
+
 ## Update 140 · A deposit said plainly
 
-*10 Nov 2026 · the commit "Prices: a deposit said plainly; the demo notices without a dash"*
+*10 Nov 2026 · `3adec77`*
 
 - A gym's deposit read "Plus a A$20 refundable deposit — A$45 on the day." It now reads "Plus a refundable deposit of A$20, so A$45 on the day." (no "a A$", no dashed aside).
 - A demo gym's notices read "Demo listing: that number isn’t real…" rather than with a dash. A scan of every string in the app finds no other dashed aside.

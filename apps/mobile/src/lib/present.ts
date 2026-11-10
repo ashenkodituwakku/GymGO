@@ -28,7 +28,8 @@ export function priceLine(offers: OfferSelection, members?: { typicalMinor: numb
 
   const total = chosen.cost.totalNonRefundableMinor;
   if (!chosen.cost.known || total === null) {
-    return { headline: 'Ask', caption: 'fees unclear', confirmed: false };
+    // Read together, as the row shows them: "Ask for the total".
+    return { headline: 'Ask', caption: 'for the total', confirmed: false };
   }
 
   const headline = total === 0 ? 'Free' : formatMoney(total, chosen.cost.currency);
@@ -41,7 +42,7 @@ export function priceLine(offers: OfferSelection, members?: { typicalMinor: numb
 /** A price line as one phrase, for Compare and screen readers: "A$22 per visit", "A$25, to confirm", "Price unknown". */
 export function priceText(price: PriceLine): string {
   if (price.headline === '—') return 'Price unknown';
-  if (price.headline === 'Ask') return 'Ask: fees unclear';
+  if (price.headline === 'Ask') return 'Ask for the total: some fees aren’t published';
   return price.confirmed ? `${price.headline} ${price.caption}` : `${price.headline}, ${price.caption}`;
 }
 

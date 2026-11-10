@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Ask for the total** (10 Nov). present.ts `priceLine`'s unknown-fee
+  caption is "for the total" and `priceText` "Ask for the total: some fees
+  aren’t published" (test updated); PlaceCard's Prices summary matches.
 - **By design, not a bug: 404s for gym photos and icons** (10 Nov). A gym
   with no website photo or icon answers 404 (cached a day by the browser,
   `public, max-age=86400`; an unknown id `no-store`; siteicons.test.ts),

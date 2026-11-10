@@ -477,7 +477,7 @@ export function PlaceCard({
         {/* The gym itself: where, what it costs, getting in, what it has. */}
         <FoldGroup>
         {address.length > 0 && <InfoRow icon="pin" title="Address" lines={address} />}
-        <Fold icon="money" title="Prices" summary={price.headline === '—' ? 'Not published' : `${price.headline} · ${price.caption}`}>
+        <Fold icon="money" title="Prices" summary={price.headline === '—' ? 'Not published' : price.headline === 'Ask' ? 'Ask for the total' : `${price.headline} · ${price.caption}`}>
           {offers
             .filter((assessment) => !isMultiVisitProduct(assessment.offer) && assessment.offer.productType !== 'membership')
             .map((assessment) => {

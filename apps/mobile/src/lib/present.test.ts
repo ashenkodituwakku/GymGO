@@ -123,7 +123,7 @@ describe('typed prices', () => {
 describe('a price as one phrase', () => {
   it('reads as words, never a bare dash', () => {
     expect(priceText({ headline: '—', caption: 'price unknown', confirmed: false })).toBe('Price unknown');
-    expect(priceText({ headline: 'Ask', caption: 'fees unclear', confirmed: false })).toBe('Ask: fees unclear');
+    expect(priceText({ headline: 'Ask', caption: 'for the total', confirmed: false })).toBe('Ask for the total: some fees aren’t published');
     expect(priceText({ headline: 'A$22', caption: 'per visit', confirmed: true })).toBe('A$22 per visit');
     expect(priceText({ headline: 'A$25', caption: 'to confirm', confirmed: false })).toBe('A$25, to confirm');
   });

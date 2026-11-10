@@ -15,6 +15,8 @@ import BottomSheet, {
   BottomSheetModalProvider,
   type BottomSheetBackdropProps,
   BottomSheetBackdrop,
+  BottomSheetHandle,
+  type BottomSheetHandleProps,
   useBottomSheetSpringConfigs,
 } from '@gorhom/bottom-sheet';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -1185,8 +1187,14 @@ function PhoneShell(props: {
       >
         <BottomSheetModalProvider>
 
+      {/* Not one "adjustable" control called Bottom Sheet (the library's default), which hides what's
+          inside from VoiceOver and reads as a broken slider in a browser: the search box, the filters
+          and the gyms are each reached as themselves. The same on the two sheets below. */}
       <BottomSheet
         ref={props.mainSheet}
+        accessible={false}
+        accessibilityRole={null}
+        accessibilityLabel={null}
         index={1}
         snapPoints={snapPoints}
         enableDynamicSizing={false}
@@ -1195,6 +1203,7 @@ function PhoneShell(props: {
         style={styles.floatingSheet}
         detached
         bottomInset={bottomInset}
+        handleComponent={WebSheetHandle}
         handleIndicatorStyle={styles.handle}
         enableContentPanningGesture={!SCROLL_ONLY}
         handleStyle={SCROLL_ONLY ? styles.grabArea : undefined}
@@ -1233,6 +1242,9 @@ function PhoneShell(props: {
 
       <BottomSheetModal
         ref={props.placeSheet}
+        accessible={false}
+        accessibilityRole={null}
+        accessibilityLabel={null}
         snapPoints={placeSnaps}
         animationConfigs={spring}
         enableDynamicSizing={false}
@@ -1240,6 +1252,7 @@ function PhoneShell(props: {
         style={styles.floatingSheet}
         detached
         bottomInset={bottomInset}
+        handleComponent={WebSheetHandle}
         handleIndicatorStyle={styles.handle}
         enableContentPanningGesture={!SCROLL_ONLY}
         handleStyle={SCROLL_ONLY ? styles.grabArea : undefined}
@@ -1274,6 +1287,9 @@ function PhoneShell(props: {
 
       <BottomSheetModal
         ref={props.filterSheet}
+        accessible={false}
+        accessibilityRole={null}
+        accessibilityLabel={null}
         snapPoints={tallSnaps}
         animationConfigs={spring}
         enableDynamicSizing={false}
@@ -1281,6 +1297,7 @@ function PhoneShell(props: {
         style={styles.floatingSheet}
         detached
         bottomInset={bottomInset}
+        handleComponent={WebSheetHandle}
         handleIndicatorStyle={styles.handle}
         enableContentPanningGesture={!SCROLL_ONLY}
         handleStyle={SCROLL_ONLY ? styles.grabArea : undefined}
@@ -1305,6 +1322,19 @@ function PhoneShell(props: {
  * the list opens its sheet all the way first (SheetScrollView).
  */
 const SCROLL_ONLY = SHEET_SCROLL_ONLY;
+
+/**
+ * A sheet's grab handle in a browser. The library's own says it is an
+ * "adjustable" control, which a browser calls a slider, with no value and
+ * no way to move it from the keyboard: nothing a screen reader can use, and
+ * a tab stop that does nothing. So there it's the mark it looks like, and
+ * the sheet's contents are reached and scrolled as themselves. Phones keep
+ * the library's handle.
+ */
+const WebSheetHandle =
+  Platform.OS === 'web'
+    ? (props: BottomSheetHandleProps) => <BottomSheetHandle {...props} accessible={false} accessibilityRole={null} accessibilityLabel={null} accessibilityHint={null} />
+    : undefined;
 
 const styles = themed(() => StyleSheet.create({
   mapWaiting: { ...StyleSheet.absoluteFill, backgroundColor: color.groupedBackground },

@@ -139,7 +139,8 @@ export default function RootLayout() {
   if (!ready) return null;
 
   return (
-    <GestureHandlerRootView style={styles.root}>
+    // In a browser the app is the page's main landmark, so a screen reader finds everything inside one.
+    <GestureHandlerRootView style={styles.root} {...(Platform.OS === 'web' ? { role: 'main' as const } : null)}>
       <SafeAreaProvider>
         <AppProvider>
           <ThemedStack />

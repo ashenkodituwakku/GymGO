@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // The font files are for the app's bundler, not for Node.
 vi.mock('./fonts', () => ({ BUNDLED_FACES: {} }));
 import { StyleSheet } from 'react-native';
-import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, applyTweaks, color, cornersFor, customAccent, dimApplies, face, hslHex, DEFAULT_TWEAKS, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
+import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, applyTweaks, color, cornersFor, customAccent, dimApplies, face, hslHex, DEFAULT_TWEAKS, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, tintOver, type } from './theme';
 import { mix, STANDARD_RADIUS } from './looks';
 
 const channel = (value: number) => (value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
@@ -43,6 +43,11 @@ describe('the colours', () => {
           if (onFill < 4.5) failures.push(`${name}: white on the brand fill is ${onFill.toFixed(2)}`);
           const onSegment = contrast(color.label, color.segmentRaised);
           if (onSegment < 4.5) failures.push(`${name}: text on a chosen segment is ${onSegment.toFixed(2)}`);
+          // A quiet button: the accent's words on its own tint, on the page and on a card.
+          for (const ground of ['card', 'groupedBackground'] as const) {
+            const onTint = contrast(color.brandOnTint, tintOver(color[ground], color, scheme));
+            if (onTint < 4.5) failures.push(`${name}: a quiet button's words on ${ground} are ${onTint.toFixed(2)}`);
+          }
         }
       }
     }

@@ -20,7 +20,7 @@
 
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { CollectionSyncLine, useDeleteCollection } from '@/components/CollectionData';
 import { BrandFill } from '@/components/BrandFill';
@@ -358,7 +358,15 @@ export default function CollectionScreen() {
 function BadgeShelf({ wrap, children }: { wrap: boolean; children: ReactNode }) {
   if (wrap) return <View style={styles.badgesWrapped}>{children}</View>;
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgeRow} contentContainerStyle={styles.badges}>
+    // In a browser the row takes keyboard focus, so the arrow keys can bring the badges past its edge into view:
+    // nothing in it is a control, so otherwise only a mouse or a finger could.
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.badgeRow}
+      contentContainerStyle={styles.badges}
+      {...(Platform.OS === 'web' ? { tabIndex: 0 as const, role: 'group' as const, 'aria-label': 'Badges' } : null)}
+    >
       {children}
     </ScrollView>
   );

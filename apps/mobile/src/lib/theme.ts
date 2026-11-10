@@ -330,7 +330,10 @@ export const ACCENT_PAINTS: Partial<Record<AccentId, AccentPaint>> = {
   camo: { kind: 'camo', colors: ['#4B5320', '#5B4A2E', '#23231A', '#6F6845'] },
 };
 
-export type Palette = { -readonly [K in keyof (typeof BASE)['light']]: string } & AccentColors;
+export type Palette = { -readonly [K in keyof (typeof BASE)['light']]: string } & AccentColors & {
+    /** The accent as words or an icon on its own tint (a quiet button): the accent, a step stronger where it alone would read under 4.5:1 there. */
+    brandOnTint: string;
+  };
 
 /** Text colours kept readable on whatever surfaces a look paints. */
 const TEXT_KEYS = ['label', 'labelSecondary', 'labelTertiary', 'brand', 'goodInk', 'maybeInk', 'noInk', 'dangerInk'] as const;
@@ -456,9 +459,19 @@ export function glassLevelName(level: number): string {
   return at === 100 ? 'Clearest' : 'Clear';
 }
 
+/** The accent's tint as it comes out over a ground: the ground with the tint's share of the accent in it. */
+export function tintOver(ground: string, palette: Pick<Palette, 'brand' | 'brandTint'>, scheme: Scheme): string {
+  const share = Number(/,\s*([\d.]+)\s*\)$/.exec(palette.brandTint)?.[1] ?? (scheme === 'dark' ? 0.2 : 0.12));
+  return mix(ground, palette.brand, share);
+}
+
+/** The accent for words on its own tint, over the page's ground and over a card (a see-through card is skipped: readable() leaves it out). */
+const inkOnTint = (palette: Palette, scheme: Scheme) =>
+  readable(palette.brand, [tintOver(palette.groupedBackground, palette, scheme), tintOver(palette.card, palette, scheme)], scheme, 4.6);
+
 export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE_LOOK, glass: number = GLASS_DEFAULT, dark: DarkStyle = 'black'): Palette {
   const dim = dimApplies(scheme, look, dark);
-  const palette: Palette = { ...BASE[scheme], ...(dim ? DIM : null), ...ACCENTS[accent][scheme] };
+  const palette: Palette = { ...BASE[scheme], ...(dim ? DIM : null), ...ACCENTS[accent][scheme], brandOnTint: '' };
   if (dim) for (const key of TEXT_KEYS) palette[key] = readable(palette[key], [DIM.card, DIM.groupedBackground, DIM.cardRaised], scheme, key === 'labelTertiary' ? 3 : 4.6);
   palette.glassWashThin = glassWash('thin', glass, scheme);
   palette.glassWashThick = glassWash('thick', glass, scheme);
@@ -470,6 +483,7 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
   palette.plateSolid = mix(palette.groupedBackground, palette.card, see);
   const lift = (raised: string) => (scheme === 'dark' ? mix(raised, '#FFFFFF', 0.18) : raised);
   palette.segmentRaised = lift(palette.cardRaised);
+  palette.brandOnTint = inkOnTint(palette, scheme);
   if (!surfaces) return palette;
   Object.assign(palette, surfaces);
   palette.plate = palette.card;
@@ -477,6 +491,7 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
   palette.segmentRaised = lift(palette.cardRaised);
   const behind = [surfaces.card, surfaces.groupedBackground, surfaces.background];
   for (const key of TEXT_KEYS) palette[key] = readable(palette[key], behind, scheme, key === 'labelTertiary' ? 3 : 4.6);
+  palette.brandOnTint = inkOnTint(palette, scheme);
   return palette;
 }
 

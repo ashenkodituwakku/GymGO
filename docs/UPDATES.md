@@ -9,9 +9,22 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 151 · An accessibility audit, and what it found
+
+*10 Nov 2026 · the commit "Accessibility: sheets read as their contents, a main landmark, contrast fixes"*
+
+GymGO's own checks look for controls with no name and for contrast on a few screens. This round ran axe, the standard set of accessibility rules, over 32 screens in the browser, light and dark. What it found, now fixed:
+
+- **Explore's sheets.** The results sheet, the gym sheet and Filters each told a screen reader they were one "adjustable" control called "Bottom Sheet" (the sheet library's default). In a browser that reads as a slider with no value; on an iPhone it can hide everything inside from VoiceOver. They're now read as what's in them: the search box, the filters, each gym. Their grab handles, a slider that couldn't be moved from the keyboard, are plain marks in a browser.
+- **Landmarks.** No screen had one, so a screen reader had nothing to jump to. In a browser the app is now the page's main landmark.
+- **Contrast.** A quiet button's accent-coloured words on its tint came to 4.3:1 on the page's grey (4.5 is the minimum). The theme has a new colour for words on the tint, a step stronger only where needed, and the test that checks every look, mode and accent now checks it too. "Send your code" on Friends and "Share it" on a finished challenge were white on a faint white wash (3.8:1): they're white pills with the accent's words. A gym's initials on their grey tile were 4.43:1 and are a step darker.
+- **Collection's badges.** The row scrolls sideways and nothing in it is a control, so the keyboard couldn't reach the badges past its edge. In a browser the row takes focus and the arrow keys scroll it.
+
+All 32 screens come back clean, light and dark. App tests 576, typecheck. Not yet tried with VoiceOver or TalkBack on a phone, which is where the sheet change matters most.
+
 ## Update 150 · Tabs open at once on the website
 
-*10 Nov 2026 · the commit "Website: fetch the likeliest next screens ahead, when idle"*
+*10 Nov 2026 · `75b9c63`*
 
 - On the website, a screen's code is fetched the first time it's opened. Tapping Explore, Saved or Profile for the first time left the page empty, with only the tab bar, until it arrived: 1.3 seconds for Explore on a fast 4G phone.
 - Once the first screen has settled, GymGO now fetches the code for the screens people go to next (Explore, Saved, Profile, a gym's page and Build a workout), one at a time while the browser is idle. Nothing is drawn ahead, only fetched. A first tap then shows the screen with nothing to wait for: Explore in 0.8 seconds (the map being drawn), Saved in 0.2, Profile in 0.3.

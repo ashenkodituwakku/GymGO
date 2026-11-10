@@ -146,9 +146,10 @@ export default function FriendsScreen() {
           accessibilityLabel="Send your friend code"
           style={styles.send}
         >
-          <Icon name="share" size={15} color={color.onBrand} />
+          {/* The accent on white: white words on a faint wash of white read at under 4.5:1 here. */}
+          <Icon name="share" size={15} color={color.brandFill} />
           {/* On a computer it's copied instead, and the button says so. */}
-          <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
+          <Txt variant="subhead" color={color.brandFill} style={face('semibold')}>
             {sent === 'copied' ? 'Copied, ready to paste' : sent === 'failed' ? 'Couldn’t share it' : 'Send your code'}
           </Txt>
         </Pressy>
@@ -367,7 +368,7 @@ const styles = themed(() =>
       marginTop: space[1],
       paddingHorizontal: space[4],
       borderRadius: radius.pill,
-      backgroundColor: color.onBrandFaint,
+      backgroundColor: color.onBrand,
     },
     addRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     input: { flex: 1, minWidth: 0, height: 48, paddingHorizontal: space[3], borderRadius: radius.md, backgroundColor: color.fill, color: color.label, fontSize: 17 },

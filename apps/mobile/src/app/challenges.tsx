@@ -210,8 +210,9 @@ function ChallengeCard({ month, target, small = false }: { month: string; target
           accessibilityLabel={`Share your ${label} card`}
           style={({ pressed }) => [styles.share, pressed && { opacity: 0.8 }]}
         >
-          <Icon name="share" size={15} color={color.onBrand} />
-          <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
+          {/* The accent on white: white words on a faint wash of white read at under 4.5:1 here. */}
+          <Icon name="share" size={15} color={color.brandFill} />
+          <Txt variant="subhead" color={color.brandFill} style={face('semibold')}>
             Share it
           </Txt>
         </Pressable>
@@ -244,7 +245,7 @@ const styles = themed(() =>
       minHeight: 40,
       paddingHorizontal: space[4],
       borderRadius: radius.pill,
-      backgroundColor: color.onBrandFaint,
+      backgroundColor: color.onBrand,
     },
   }),
 );

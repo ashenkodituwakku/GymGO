@@ -106,6 +106,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **axe audit** (10 Nov). explore.tsx: the three sheets get
+  `accessible={false}` with role and label null, and `WebSheetHandle` on
+  the web; app/_layout.tsx: `role="main"` on the root in a browser;
+  theme.ts: `color.brandOnTint` and `tintOver()` (quiet PrimaryButton uses
+  it, theme.test checks it); friends/index.tsx and challenges.tsx share
+  pills are white with `brandFill` words; ui.tsx NoPhoto initials a step
+  darker; collection.tsx BadgeShelf focusable on the web. Use
+  `brandOnTint`, not `brand`, for new text on `brandTint` over the page.
 - **Screens fetched ahead on the web** (10 Nov). `useScreensFetchedAhead()`
   in app/(tabs)/_layout.tsx imports Explore, Saved, Profile, gym/[id] and
   train when idle (web only; `mayPrefetch` in lib/prefetch.ts skips

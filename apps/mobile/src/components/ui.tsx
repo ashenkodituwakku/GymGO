@@ -9,6 +9,7 @@ import { ActivityIndicator, Platform, type StyleProp, StyleSheet, Text, TextInpu
 import type { ResultTier } from '@gymgo/domain';
 import { monogram } from '@/lib/monogram';
 import { haptic } from '@/lib/haptics';
+import { mix } from '@/lib/looks';
 import { color, currentTheme, dropShadow, face, HIT, radius, shadow, space, themed, type, webFocusRing, solidSurfaces } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
 import { Glass } from './Glass';
@@ -551,6 +552,8 @@ export function NoPhoto({
     );
   }
   const dark = currentTheme().scheme === 'dark';
+  // The secondary ink a step nearer the main one: on the tile's grey, the secondary alone fell just short of 4.5:1.
+  const ink = mix(color.labelSecondary, color.label, 0.25);
   // The initials on a plain surface, as a contact without a photo is shown: nothing drawn round them.
   return (
     <View
@@ -559,7 +562,7 @@ export function NoPhoto({
       importantForAccessibility="no-hide-descendants"
       style={[styles.monogram, { backgroundColor: onColour ? 'transparent' : color.fill }, style]}
     >
-      <Text allowFontScaling={false} numberOfLines={1} style={[compact ? styles.lettersCompact : styles.letters, compact && letters.length > 2 && styles.lettersCompactLong, { color: onColour ? '#FFFFFF' : color.labelSecondary }]}>
+      <Text allowFontScaling={false} numberOfLines={1} style={[compact ? styles.lettersCompact : styles.letters, compact && letters.length > 2 && styles.lettersCompactLong, { color: onColour ? '#FFFFFF' : ink }]}>
         {letters}
       </Text>
       {!compact &&
@@ -601,7 +604,7 @@ export function PrimaryButton({
 }) {
   // A quiet button is tinted with the accent (as an iPhone's secondary buttons are), not a flat grey.
   const fill = tone === 'brand' ? color.brandFill : tone === 'danger' ? color.dangerTint : color.brandTint;
-  const ink = tone === 'brand' ? color.onBrand : tone === 'danger' ? color.dangerInk : color.brand;
+  const ink = tone === 'brand' ? color.onBrand : tone === 'danger' ? color.dangerInk : color.brandOnTint;
   return (
     <Pressy
       ref={focusRef}

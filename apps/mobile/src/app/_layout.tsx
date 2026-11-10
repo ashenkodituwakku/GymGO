@@ -71,6 +71,40 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
 const FACES = NEEDS_BUNDLED_FACES ? BUNDLED_FACES : {};
 
 /**
+ * The website's loading screen (public/index.html: the splash picture on the
+ * page's colour) goes once the app has drawn something to read, not merely
+ * started: a screen's own code may still be on its way. Ten seconds at most,
+ * so a screen with no words can't leave it up.
+ */
+function dropBootScreen() {
+  if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+  const boot = document.getElementById('boot');
+  const root = document.getElementById('root');
+  if (!boot) return;
+  let watcher: MutationObserver | null = null;
+  let waiting = false;
+  const drop = () => {
+    watcher?.disconnect();
+    clearTimeout(limit);
+    boot.remove();
+  };
+  const limit = setTimeout(drop, 10_000);
+  const look = () => {
+    waiting = false;
+    if ((root?.innerText ?? '').trim().length > 0) drop();
+  };
+  if (!root || typeof MutationObserver === 'undefined') return drop();
+  // Once a frame at most: reading the words makes the browser lay the page out.
+  watcher = new MutationObserver(() => {
+    if (waiting) return;
+    waiting = true;
+    requestAnimationFrame(look);
+  });
+  watcher.observe(root, { childList: true, subtree: true, characterData: true });
+  look();
+}
+
+/**
  * Four tabs (Home, Explore, Saved, Profile), with a gym's own page pushed on
  * top of them and Compare as a sheet. Light or dark follows your choice in
  * Settings → Appearance (the phone's, to start).
@@ -97,7 +131,9 @@ export default function RootLayout() {
   }, [themeReady]);
 
   useEffect(() => {
-    if (ready) SplashScreen.hideAsync().catch(() => undefined);
+    if (!ready) return;
+    SplashScreen.hideAsync().catch(() => undefined);
+    dropBootScreen();
   }, [ready]);
 
   if (!ready) return null;

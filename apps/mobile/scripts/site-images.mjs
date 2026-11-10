@@ -1,7 +1,8 @@
 /**
  * The website's own pictures, from the app icon (assets/images/icon.png):
- * the preview a link to the site shows when it's shared (og.png), and the
- * icons a phone or browser uses when the site is added to a home screen.
+ * the preview a link to the site shows when it's shared (og.png), the
+ * icons a phone or browser uses when the site is added to a home screen,
+ * and the picture on the loading screen (from assets/images/splash-icon.png).
  *
  *   node scripts/site-images.mjs
  *
@@ -88,5 +89,10 @@ for (const [name, size] of [
 ]) {
   await sharp(ICON).resize(size, size).png({ compressionLevel: 9 }).toFile(join(OUT, 'icons', name));
 }
+
+// --- The loading screen: the app's own splash picture (app.json), at twice the size it's shown
+// (public/index.html shows it while the app's code downloads).
+
+await sharp(join(root, 'assets', 'images', 'splash-icon.png')).resize(240, 240).png({ compressionLevel: 9 }).toFile(join(OUT, 'icons', 'splash.png'));
 
 console.log('Wrote public/og.png and public/icons/');

@@ -12,11 +12,19 @@
  * so the app behaves the same either way: location allowed for this site
  * (the app finds gyms near you), framing refused, and no policy that would
  * stop the app's own scripts.
+ *
+ * Text is sent compressed, as Caddy does (`encode`): the app's scripts are a
+ * few megabytes as written and about a quarter of that compressed, which is
+ * most of how long a first visit takes on a phone. Each file is compressed
+ * once and kept, for as long as the file on disk stays the same.
  */
 
 import { createReadStream, statSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { extname, join, resolve, sep } from 'node:path';
+import { promisify } from 'node:util';
+import { brotliCompress, constants as zlib, gzip } from 'node:zlib';
 
 /** What the server answers itself, as Caddy passes them on. */
 export function isServerPath(path: string): boolean {
@@ -75,6 +83,54 @@ export function webFile(root: string, path: string): string | null {
 /** Names that say what's in them: the app's scripts and pictures. */
 const HASHED = /^\/(_expo|assets)\//;
 
+// --- Compression ---------------------------------------------------------------
+
+/** What shrinks: text, and fonts that aren't packed already. Pictures, sound and WOFF fonts are. */
+const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.map', '.txt', '.xml', '.webmanifest', '.svg', '.ttf', '.otf']);
+/** Under this, the saving isn't worth the header. */
+const SMALLEST_WORTH_IT = 1024;
+
+export type Encoding = 'br' | 'gzip';
+
+/** The best way to send text that this browser takes: Brotli, else gzip, else as it is. */
+export function pickEncoding(acceptEncoding: string | string[] | undefined): Encoding | null {
+  const header = Array.isArray(acceptEncoding) ? acceptEncoding.join(',') : (acceptEncoding ?? '');
+  const taken = new Set<string>();
+  for (const part of header.split(',')) {
+    const [name, ...params] = part.trim().toLowerCase().split(';');
+    if (!name) continue;
+    // "br;q=0" is a refusal.
+    const quality = params.map((param) => /^\s*q\s*=\s*([0-9.]+)\s*$/.exec(param)?.[1]).find((value) => value !== undefined);
+    if (quality !== undefined && Number(quality) === 0) continue;
+    taken.add(name);
+  }
+  if (taken.has('br')) return 'br';
+  if (taken.has('gzip')) return 'gzip';
+  return null;
+}
+
+const squeeze: Record<Encoding, (data: Buffer) => Promise<Buffer>> = {
+  // Quality 9 of 11: nearly as small as the slowest setting, in about a second for the biggest script, once.
+  br: (data) => promisify(brotliCompress)(data, { params: { [zlib.BROTLI_PARAM_QUALITY]: 9, [zlib.BROTLI_PARAM_SIZE_HINT]: data.length } }),
+  gzip: (data) => promisify(gzip)(data, { level: 9 }),
+};
+
+/** A file as compressed, kept while the file on disk is the one it was made from. */
+const kept = new Map<string, { stamp: string; data: Promise<Buffer> }>();
+
+function compressed(file: string, encoding: Encoding, stamp: string): Promise<Buffer> {
+  const key = `${encoding}:${file}`;
+  const had = kept.get(key);
+  if (had?.stamp === stamp) return had.data;
+  const data = readFile(file).then(squeeze[encoding]);
+  kept.set(key, { stamp, data });
+  // A failure isn't kept: the next request tries again.
+  data.catch(() => {
+    if (kept.get(key)?.data === data) kept.delete(key);
+  });
+  return data;
+}
+
 /**
  * Answers a GET or HEAD for the app, or says it's not the app's (false) so
  * the server's own routes answer it.
@@ -100,14 +156,40 @@ export function serveWeb(root: string, req: IncomingMessage, res: ServerResponse
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=()');
   if (https) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  res.setHeader('Content-Type', TYPES[extname(file).toLowerCase()] ?? 'application/octet-stream');
+  const kind = extname(file).toLowerCase();
+  res.setHeader('Content-Type', TYPES[kind] ?? 'application/octet-stream');
   res.setHeader('Cache-Control', !page && HASHED.test(path) ? 'public, max-age=31536000, immutable' : 'no-cache');
-  res.setHeader('Content-Length', String(statSync(file).size));
-  res.writeHead(200);
-  if (req.method === 'HEAD') {
-    res.end();
+  const stat = statSync(file);
+  const sendAsIs = () => {
+    res.setHeader('Content-Length', String(stat.size));
+    res.writeHead(200);
+    if (req.method === 'HEAD') return void res.end();
+    // A file that goes missing halfway ends the answer, rather than the server.
+    createReadStream(file!)
+      .on('error', () => res.destroy())
+      .pipe(res);
+  };
+
+  if (!COMPRESSIBLE.has(kind)) {
+    sendAsIs();
     return true;
   }
-  createReadStream(file).pipe(res);
+  // Whatever is sent, it depends on what the browser said it takes: a cache in between mustn't mix them up.
+  res.setHeader('Vary', 'Accept-Encoding');
+  const encoding = stat.size >= SMALLEST_WORTH_IT ? pickEncoding(req.headers['accept-encoding']) : null;
+  if (!encoding) {
+    sendAsIs();
+    return true;
+  }
+  compressed(file, encoding, `${stat.mtimeMs}:${stat.size}`).then(
+    (data) => {
+      res.setHeader('Content-Encoding', encoding);
+      res.setHeader('Content-Length', String(data.length));
+      res.writeHead(200);
+      res.end(req.method === 'HEAD' ? undefined : data);
+    },
+    // Couldn't be read or compressed just now: as it is, which says so itself if the file has gone.
+    () => sendAsIs(),
+  );
   return true;
 }

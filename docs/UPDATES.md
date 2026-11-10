@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 148 · A faster first visit to the website
+
+*10 Nov 2026 · the commit "Website: a loading screen, and the server sends its files compressed"*
+
+- Opening the website for the first time showed an empty page until all of the app's code had arrived and run: 7.3 seconds on a fast 4G phone. It now shows GymGO's splash picture on the page's own colour straight away (0.5 s), as the phone app does, and the app takes over once it has drawn. If it's taking long, a line under the picture says so after 6 seconds.
+- The loading screen is light or dark as the device is, or as chosen in GymGO's Appearance settings (Dim included), so there's no flash of the wrong colour.
+- GymGO's own server (GymGO online from one computer) sent the app's code as written: 7.3 MB on a first visit. It now sends text and fonts compressed (Brotli, or gzip for older browsers), each file compressed once and kept: 2.2 MB. On that same phone the app is usable in 4.9 seconds, down from 10.2. Caddy, Cloudflare, Netlify and GitHub Pages already compressed on their own, so there the gain is the loading screen.
+- Measured in Chromium on a production build, with the network held to fast 4G and the processor to a quarter speed, light and dark. Server tests 299 (4 new); the school report and README say 1,233 tests.
+- Not yet seen on a phone.
+
 ## Update 147 · A shorter school report
 
-*10 Nov 2026 · the commit "School report: shorter and plainer, team Ashen and Liam, no Gantt"*
+*10 Nov 2026 · `73c5755`*
 
 - The project report is about 7 pages instead of 13: 12 functional and 8 non-functional requirements, shorter constraints, the flowchart, the same four tests, and an evaluation matrix to match. It reads more plainly, with fewer bold lead-ins, and the pseudocode appendix is gone.
 - The team is Ashen and Liam, in the report, the README and the Gantt spreadsheet (owners Ashen, Liam or Both).

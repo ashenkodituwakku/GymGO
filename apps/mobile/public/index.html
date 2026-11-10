@@ -43,6 +43,83 @@
         flex: 1;
       }
     </style>
+    <!-- The loading screen: what shows while the app's code downloads, as the phone app's splash
+         screen does (app.json): its picture on the page's own colour, light or dark. The app takes
+         it away once it's drawn (src/app/_layout.tsx). The picture is public/icons/splash.png
+         (scripts/site-images.mjs). -->
+    <style id="gymgo-boot-style">
+      body {
+        margin: 0;
+        background: #f2f2f7;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #000;
+        }
+      }
+      html[data-boot='light'] body {
+        background: #f2f2f7;
+      }
+      html[data-boot='dark'] body {
+        background: #000;
+      }
+      html[data-boot='dim'] body {
+        background: #17191f;
+      }
+      #boot {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        pointer-events: none;
+        z-index: 1;
+        font: 15px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        color: #6c6c70;
+      }
+      @media (prefers-color-scheme: dark) {
+        #boot {
+          color: #a1a1a6;
+        }
+      }
+      html[data-boot='light'] #boot {
+        color: #6c6c70;
+      }
+      html[data-boot='dark'] #boot,
+      html[data-boot='dim'] #boot {
+        color: #a1a1a6;
+      }
+      #boot img {
+        width: 120px;
+        height: 120px;
+      }
+      /* Only said if it's taking a while: nothing for a quick load to flash. */
+      #boot p {
+        margin: 0;
+        padding: 0 32px;
+        max-width: 320px;
+        text-align: center;
+        opacity: 0;
+        animation: gymgo-boot-late 0.4s ease 6s forwards;
+      }
+      @keyframes gymgo-boot-late {
+        to {
+          opacity: 1;
+        }
+      }
+    </style>
+    <script>
+      // Light or dark as chosen in GymGO's own Appearance settings, when that isn't the device's.
+      try {
+        var saved = JSON.parse(localStorage.getItem('gymgo.theme.v1') || 'null');
+        var boot = saved && saved.appearance === 'light' ? 'light' : saved && saved.appearance === 'dark' ? 'dark' : null;
+        var dim = saved && saved.dark === 'dim';
+        if (dim && (boot === 'dark' || (!boot && matchMedia('(prefers-color-scheme: dark)').matches))) boot = 'dim';
+        if (boot) document.documentElement.setAttribute('data-boot', boot);
+      } catch (e) {}
+    </script>
   </head>
 
   <body>
@@ -51,5 +128,9 @@
     </noscript>
     <!-- The root element for your Expo app. -->
     <div id="root"></div>
+    <div id="boot" role="status">
+      <img src="/icons/splash.png" alt="Loading GymGO" width="120" height="120" />
+      <p>Still loading. The first visit can take a little while on a slow connection.</p>
+    </div>
   </body>
 </html>

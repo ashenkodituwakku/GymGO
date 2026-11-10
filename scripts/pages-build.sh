@@ -47,11 +47,11 @@ GYMGO_BASE_URL="$BASE" EXPO_PUBLIC_API_URL="$SERVER" EXPO_PUBLIC_LIMITED="$LIMIT
 bash ../../scripts/web-assets.sh dist
 
 # The page's own links (the manifest, the home-screen icon, the share
-# picture) and the manifest's paths are written from the site's root; under
-# /GymGO they need it in front. Expo's own (its scripts, styles and the
-# favicon) already have it, so those are left as they are.
+# picture, the loading screen's picture) and the manifest's paths are written
+# from the site's root; under /GymGO they need it in front. Expo's own (its
+# scripts, styles and the favicon) already have it, so those are left as they are.
 if [ -n "$BASE" ]; then
-  BASE="$BASE" perl -pi -e 'my $b = substr($ENV{BASE}, 1); s{(href|content)="/(?!/|\Q$b\E/)}{$1="$ENV{BASE}/}g' dist/index.html
+  BASE="$BASE" perl -pi -e 'my $b = substr($ENV{BASE}, 1); s{(href|content|src)="/(?!/|\Q$b\E/)}{$1="$ENV{BASE}/}g' dist/index.html
   BASE="$BASE" perl -pi -e 's{"(start_url|scope|src)": "/}{"$1": "$ENV{BASE}/}g' dist/manifest.webmanifest
 fi
 # A shared link's picture needs its full address.

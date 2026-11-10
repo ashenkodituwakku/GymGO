@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 138 · One title on the legal pages
+
+*10 Nov 2026 · the commit "Legal pages: one title, the page's own heading"*
+
+- The Terms of Service, Privacy Policy and Community Guidelines no longer say their name twice (in the bar and above the page): the bar is empty and the page's own title is its heading, which a screen reader now hears as one, as on the other pages with a big title.
+- Also looked at, with nothing to change: an exercise's page, Moderation, and the editors for your own workout and exercise.
+- Not yet seen on a phone.
+
 ## Update 137 · The password rule said once
 
-*10 Nov 2026 · the commit "Create account: the password rule said once, by its live check"*
+*10 Nov 2026 · `288d492`*
 
 - Creating an account, the password box said "At least 8 characters" right above a check saying "8 characters or more" that ticks as you type. The box now just says "A new password", and the rule is said once, by the check.
 - Also checked: the unnamed-controls scan on 18 more screens (all named; only the map's credit links are small, as the map draws them), and colour contrast on 8 screens in light and dark (all pass).

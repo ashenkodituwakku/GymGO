@@ -25,10 +25,10 @@ export default function LegalScreen() {
   usePageTitle(doc.title);
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <ScreenOptions options={{ title: doc.title }} />
+      {/* The page's own title is its heading; the bar above stays empty rather than say it twice. */}
+      <ScreenOptions options={{ title: '' }} />
       <View style={styles.head}>
-        {/* Not a heading: the bar above titles the page with the same words, and two read as one twice. */}
-        <Txt variant="title">
+        <Txt variant="title" accessibilityRole="header" level={1}>
           {doc.title}
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>

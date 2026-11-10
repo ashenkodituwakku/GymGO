@@ -106,6 +106,8 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Legal pages, one title** (10 Nov). legal/[doc].tsx: bar title '' and
+  the page title is `accessibilityRole="header" level={1}`.
 - **Password rule once** (10 Nov). sign-in.tsx's create-mode placeholder
   is "A new password"; the rule stays in the live check below it.
 - **Desktop panel label** (10 Nov). explore.tsx `pillNotable`; the

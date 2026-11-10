@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 132 · A programme counts only its own weeks
+
+*10 Nov 2026 · the commit "Programme: count only workouts in its own weeks; plain words for nothing yet"*
+
+- A training programme's total ("Done: 3 workouts in 8 weeks") counted every later workout with the programme's name, even after its weeks were over: one from November counted towards a programme that ran in January and February. It now counts only the workouts within its own weeks (tested).
+- A programme whose weeks ran out with nothing logged says so ("Its 6 weeks are over, with no workouts logged."), not "Done: 0 workouts".
+- On Friends, a friend who hasn't collected anything says "No gyms collected yet" rather than "0 gyms · 0 cities · 0 visits".
+- Not yet seen on a phone.
+
 ## Update 131 · The map names the place you searched
 
-*10 Nov 2026 · the commit "Map and What you pay: the searched place on the map, no "over 0 visits""*
+*10 Nov 2026 · `88b8bab`*
 
 - After you search a suburb, the map's corner label names it ("Fitzroy"), as the list's heading does ("Near Fitzroy"), instead of the city ("Melbourne"). Demo gyms, an offline copy, map data and Pro-only places still say so with a dot.
 - What each visit costs no longer says "A$150 over 0 visits" under "No visits yet": it says "A$150 paid in this time".

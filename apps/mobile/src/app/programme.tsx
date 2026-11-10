@@ -215,7 +215,11 @@ function Running({ programme }: { programme: Programme }) {
           </View>
         </View>
         {progress.finished ? (
-          <Txt variant="headline">{`Done: ${progress.doneInAll} workout${progress.doneInAll === 1 ? '' : 's'} in ${programme.weeks} weeks.`}</Txt>
+          <Txt variant="headline">
+            {progress.doneInAll === 0
+              ? `Its ${programme.weeks} weeks are over, with no workouts logged.`
+              : `Done: ${progress.doneInAll} workout${progress.doneInAll === 1 ? '' : 's'} in ${programme.weeks} weeks.`}
+          </Txt>
         ) : (
           <>
             <Txt variant="headline">{`Week ${progress.week} of ${programme.weeks}`}</Txt>

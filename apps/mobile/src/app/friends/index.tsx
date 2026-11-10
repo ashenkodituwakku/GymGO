@@ -242,7 +242,9 @@ export default function FriendsScreen() {
                 {friend.displayName}
               </Txt>
               <Txt variant="footnote" color={color.labelSecondary}>
-                {`${friend.totals.gyms} gym${friend.totals.gyms === 1 ? '' : 's'} · ${friend.totals.cities} cit${friend.totals.cities === 1 ? 'y' : 'ies'} · ${friend.totals.visits} visit${friend.totals.visits === 1 ? '' : 's'}`}
+                {friend.totals.gyms === 0
+                  ? 'No gyms collected yet'
+                  : `${friend.totals.gyms} gym${friend.totals.gyms === 1 ? '' : 's'} · ${friend.totals.cities} cit${friend.totals.cities === 1 ? 'y' : 'ies'} · ${friend.totals.visits} visit${friend.totals.visits === 1 ? '' : 's'}`}
               </Txt>
             </View>
             <Icon name="chevron" size={14} color={color.labelTertiary} />

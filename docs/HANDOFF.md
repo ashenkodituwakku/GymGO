@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Programme counts its own weeks** (10 Nov). programmes.ts
+  `programmeProgress` filters `programmeSessions` to before startedOn +
+  weeks × 7 days (new test; it failed on the old code). programme.tsx and
+  friends/index.tsx have zero wordings.
 - **Map names the searched place** (10 Nov). explore.tsx's pill shows
   `pillPlace || city.name` when live; spend.tsx's summary line says "paid
   in this time" when `sum.visits === 0`. Checked with a test payment put in

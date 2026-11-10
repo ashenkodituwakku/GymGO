@@ -100,6 +100,15 @@ describe('progress', () => {
     expect(programmeProgress(p, log, new Date(2026, 10, 24))).toMatchObject({ week: 4, easier: true, doneThisWeek: 0 });
     expect(programmeProgress(p, log, new Date(2026, 11, 30))).toMatchObject({ week: 8, finished: true, easier: false });
   });
+
+  it('counts only the workouts in its own weeks, not ones of the same name after it ended', () => {
+    const later = [
+      session('5×5 A · Strength programme', '2026-11-03T08:00:00Z'),
+      // Long after its weeks were over.
+      session('5×5 B · Strength programme', '2027-03-01T08:00:00Z'),
+    ];
+    expect(programmeProgress(p, later, new Date(2027, 2, 2))).toMatchObject({ finished: true, doneInAll: 1 });
+  });
 });
 
 describe('targets', () => {

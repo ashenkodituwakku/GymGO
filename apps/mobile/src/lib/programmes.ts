@@ -153,7 +153,9 @@ export interface ProgrammeProgress {
 
 export function programmeProgress(programme: Programme, sessions: readonly TrainingSession[], now: Date): ProgrammeProgress {
   const week = weekOf(programme, now);
-  const done = programmeSessions(programme, sessions);
+  // Its own weeks only: a workout of the same name after they're over isn't part of it.
+  const ends = fromKey(programme.startedOn).getTime() + programme.weeks * 7 * DAY_MS;
+  const done = programmeSessions(programme, sessions).filter((session) => new Date(session.finishedAt).getTime() < ends);
   const weekStart = fromKey(programme.startedOn).getTime() + (Math.min(week, programme.weeks) - 1) * 7 * DAY_MS;
   return {
     week: Math.min(week, programme.weeks),

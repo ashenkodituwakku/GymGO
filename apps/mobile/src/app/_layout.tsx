@@ -63,7 +63,8 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   css.textContent =
     '*{font-synthesis:none}body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}' +
     ':not(input):not(textarea):focus-visible{outline:none}' +
-    ':not(input):not(textarea):focus-visible::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:10;' +
+    // Not round a container that only holds focus for what's in it (a sheet as it opens: components/SheetBackground.tsx).
+    ':not(input):not(textarea):not([data-quiet-focus]):focus-visible::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:10;' +
     'box-shadow:inset 0 0 0 2px var(--gg-focus),inset 0 0 0 4px var(--gg-focus-inner)}';
   document.head.appendChild(css);
 }

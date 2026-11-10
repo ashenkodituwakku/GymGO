@@ -1280,7 +1280,7 @@ function PhoneShell(props: {
       >
         {props.place ? (
           <SheetOpener.Provider value={SCROLL_ONLY ? openPlace : null}>
-            <SheetClip>{props.place}</SheetClip>
+            <SheetClip takesFocus>{props.place}</SheetClip>
           </SheetOpener.Provider>
         ) : null}
       </BottomSheetModal>
@@ -1304,7 +1304,7 @@ function PhoneShell(props: {
         backdropComponent={backdrop}
         onDismiss={props.onFiltersDismiss}
       >
-        <SheetClip>
+        <SheetClip takesFocus>
           <SheetScrollView contentContainerStyle={{ paddingBottom: space[4] }}>{props.filters}</SheetScrollView>
         </SheetClip>
       </BottomSheetModal>

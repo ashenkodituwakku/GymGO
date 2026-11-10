@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 153 · Sheets take the keyboard
+
+*10 Nov 2026 · the commit "Keyboard: a sheet that opens takes focus, and gives it back"*
+
+- On the website, opening Filters or a gym from the keyboard left focus on the button behind the sheet, and Tab walked through the page underneath before it reached anything in the sheet. A sheet that opens now takes focus: the next Tab is its first control (Reset, then Today, Tomorrow, the times).
+- When the sheet closes (Escape, or its own button), focus goes back to what opened it: the Filters button, or the gym's card.
+- No ring is drawn round the whole sheet while it holds focus: it's the sheet, not a control. With a mouse or a finger nothing looks different.
+- Tried in the browser with the keyboard only, on Filters and a gym's sheet; GymPal already did this. The opened-state audit is still clean. App tests 577. Phones are unchanged.
+
 ## Update 152 · The audit, with things open
 
-*10 Nov 2026 · the commit "Accessibility: dialogs have names, GymPal's starters are a group, grey-on-grey text"*
+*10 Nov 2026 · `0b06b6c`*
 
 Update 151 audited screens as they load. This one opened things first: Filters, a gym's sheet, GymPal, a workout before and after Start, and the Home widget gallery.
 

@@ -106,6 +106,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Sheets take focus on the web** (10 Nov). SheetBackground.tsx
+  `SheetClip takesFocus` wraps its children in `FocusedWhileOpen` (web
+  only): focuses itself on mount, restores the opener on unmount, marks
+  itself `data-quiet-focus` from code (React Native for Web drops the
+  prop), which app/_layout.tsx's focus-ring CSS leaves out. Used by
+  Explore's gym and Filters sheets.
 - **axe on opened states** (10 Nov). lib/dialogName.ts `useDialogName(name)`
   gives a React Native Modal its name in a browser (GymPal, ChoiceSheet,
   CardReveal, HomeEditor's gallery, GoogleModal): use it on any new Modal.

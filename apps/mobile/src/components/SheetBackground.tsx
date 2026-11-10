@@ -6,8 +6,8 @@ import {
   type BottomSheetBackgroundProps,
   type BottomSheetScrollViewMethods,
 } from '@gorhom/bottom-sheet';
-import { createContext, forwardRef, useContext, type ComponentProps, type ReactNode } from 'react';
-import { Platform, StyleSheet, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { createContext, forwardRef, useContext, useEffect, useRef, type ComponentProps, type ReactNode } from 'react';
+import { Platform, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type ViewInstance } from 'react-native';
 import Animated, { useAnimatedStyle, useDerivedValue } from 'react-native-reanimated';
 import { color, radius, themed } from '@/lib/theme';
 import { Glass, HAS_LIQUID_GLASS } from './Glass';
@@ -74,12 +74,40 @@ export function FloatingSolidBackground(props: BottomSheetBackgroundProps) {
  * background does, with the same rounded bottom corners, so rows never run
  * past the corners or show below the card. Put the sheet's scroll view in it.
  */
-export function SheetClip({ children }: { children: ReactNode }) {
+export function SheetClip({ children, takesFocus = false }: { children: ReactNode; takesFocus?: boolean }) {
   const { animatedLayoutState } = useBottomSheetInternal();
   const reach = useReach();
   // The content starts below the sheet's handle.
   const size = useAnimatedStyle(() => ({ height: Math.max(0, reach.get() - Math.max(0, animatedLayoutState.get().handleHeight)) }));
-  return <Animated.View style={[styles.clip, size]}>{children}</Animated.View>;
+  return <Animated.View style={[styles.clip, size]}>{takesFocus && Platform.OS === 'web' ? <FocusedWhileOpen>{children}</FocusedWhileOpen> : children}</Animated.View>;
+}
+
+/**
+ * In a browser, a sheet that opens over the page (Filters, a gym) takes the
+ * keyboard's focus, so Tab goes on through what's in it. Left where it was,
+ * focus stayed on the button behind the sheet and Tab walked the page
+ * underneath first. When the sheet closes, focus goes back to what opened it.
+ */
+function FocusedWhileOpen({ children }: { children: ReactNode }) {
+  const here = useRef<ViewInstance>(null);
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const opener = document.activeElement as { focus?: (options?: { preventScroll?: boolean }) => void; isConnected?: boolean } | null;
+    const sheet = here.current as unknown as { focus?: (options?: { preventScroll?: boolean }) => void; setAttribute?: (name: string, value: string) => void } | null;
+    // No focus ring round the whole sheet (app/_layout.tsx leaves this mark out): it's the sheet, not a control.
+    sheet?.setAttribute?.('data-quiet-focus', '');
+    // Without scrolling: the sheet is still on its way up.
+    sheet?.focus?.({ preventScroll: true });
+    return () => {
+      if (opener && opener !== document.body && opener.isConnected) opener.focus?.({ preventScroll: true });
+    };
+  }, []);
+  // Focusable from code only, never a Tab stop of its own.
+  return (
+    <View ref={here} tabIndex={-1} style={styles.focused}>
+      {children}
+    </View>
+  );
 }
 
 /**
@@ -144,6 +172,7 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.sheet,
   },
   solidFill: { backgroundColor: color.groupedBackground },
+  focused: { flex: 1, minHeight: 0, ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null) },
   clip: {
     overflow: 'hidden',
     borderBottomLeftRadius: radius.sheet,

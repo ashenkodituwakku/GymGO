@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 147 · A shorter school report
+
+*10 Nov 2026 · the commit "School report: shorter and plainer, team Ashen and Liam, no Gantt"*
+
+- The project report is about 7 pages instead of 13: 12 functional and 8 non-functional requirements, shorter constraints, the flowchart, the same four tests, and an evaluation matrix to match. It reads more plainly, with fewer bold lead-ins, and the pseudocode appendix is gone.
+- The team is Ashen and Liam, in the report, the README and the Gantt spreadsheet (owners Ashen, Liam or Both).
+- The Gantt chart is no longer in the report, as asked; GymGO-Gantt.xlsx is still in the ZIP on its own.
+- The README / product page is about half as long.
+
 ## Update 146 · Exercises done at body weight
 
-*10 Nov 2026 · the commit "Exercise page: body-weight work shows its reps, not empty weight tiles"*
+*10 Nov 2026 · `123546d`*
 
 - An exercise logged without weights (push-ups, say) showed "Heaviest —" and "1-rep max —" at the top, read aloud as dashes. It now shows "Most reps 10, in one set" beside Sessions, and the Records list doesn't repeat it.
 - Its chart opened on 1-rep max, which said it needed a weighted set; it opens on Reps, which has the data. Weighted exercises still open on 1-rep max.

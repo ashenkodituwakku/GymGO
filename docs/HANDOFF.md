@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **School report rewrite** (10 Nov). docs/school: report and README cut
+  down and plainer; team Ashen, Liam; the Gantt is out of the report but
+  GymGO-Gantt.xlsx/.png stay (owners Ashen, Liam, Both). The scratchpad
+  build scripts aren't in the repo; pandoc builds the .docx from the .md.
 - **Body-weight exercises** (10 Nov). progress/[exercise].tsx: Most reps
   tile instead of empty Heaviest/1-rep max, chart opens on Reps; new
   lib/chartScale.ts (whole-number bands) used by ProgressChart; Compare

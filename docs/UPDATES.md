@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 130 · The school project report
+
+*10 Nov 2026 · the commit "Docs: the school project report, Gantt chart, flowchart and product page"*
+
+- `docs/school/` holds GymGO written up for the class's Interactive Digital Solution task: the report (`GymGO-Project-Report.docx`, also as Markdown) with 21 functional and 12 non-functional requirements, the constraints, a test plan, the evaluation matrix and the verdict rule as pseudocode; the Gantt chart (`GymGO-Gantt.xlsx` and a picture); the flowchart of the main user journey; the README / product page; and screenshots from the four tests.
+- The four tests were run in the browser on 10 November 2026 and all passed (search for Fitzroy in 1.2 s; 101Fitness's price shown as unknown, never $0; a Chest and Triceps plan in 3.4 s; five screens at 320 points with no sideways scrolling). The peer user-testing tables are left empty for the team's real sessions, and team names are placeholders.
+- No change to the app.
+
 ## Update 129 · What each visit costs, in plain words
 
-*10 Nov 2026 · the commit "What you pay: the summary card's heading in sentence case"*
+*10 Nov 2026 · `5eecfac`*
 
 - What each visit costs heads its summary card "Last 30 days" (or "Last year") in sentence case, as the app's other cards do, instead of "LAST 30 DAYS".
 - Not yet seen on a phone, and not seen in the browser (the card needs something entered as paid): a change of words and style only.

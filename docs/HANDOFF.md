@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **School project report** (10 Nov). `docs/school/`: report (.docx built
+  from the .md by pandoc + python-docx), Gantt (.xlsx by openpyxl, .png via
+  LibreOffice), flowchart (.svg/.png), README-Product-Page.md and
+  test-evidence screenshots. Peer testing and names are left for the team.
 - **Spend card label** (10 Nov). spend.tsx's summary card heading is
   `variant="label"` in sentence case, not an eyebrow.
 - **Compare rows** (8 Nov). compare.tsx row labels use `variant="label"`

@@ -122,7 +122,8 @@ export function collectionStats(collection: Collection): CollectionStats {
   return {
     gyms: entries.length,
     visits: entries.reduce((sum, entry) => sum + entry.days.length, 0),
-    cities: new Set(entries.map((entry) => `${entry.countryCode}:${entry.city}`)).size,
+    // A gym with no city or suburb on the map isn't a city of its own.
+    cities: new Set(entries.filter((entry) => entry.city.trim() !== '').map((entry) => `${entry.countryCode}:${entry.city.toLowerCase()}`)).size,
     countries: new Set(entries.map((entry) => entry.countryCode)).size,
     topTier: topIndex >= 0 ? TIERS[topIndex]!.tier : null,
     topRarity: entries.length

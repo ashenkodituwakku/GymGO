@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 135 · Cities counted the same way everywhere
+
+*10 Nov 2026 · the commit "Collection: cities counted alike for you and your friends, never a blank one"*
+
+- Your collection and a friend's totals now count cities the same way: the same name in any capitals is one city ("melbourne" and "Melbourne"), and a gym collected far from any known city, with no suburb on the map, no longer counts as a city of its own. Before, the app counted capitals apart and the server counted the blank.
+- Tests cover both (each failed before the fix).
+- A change you'd only see in those rare cases; not seen on a phone.
+
 ## Update 134 · A visit counted once in what you pay
 
-*10 Nov 2026 · the commit "What you pay: a visit counts once in the total, however many things you pay cover it"*
+*10 Nov 2026 · `bd46320`*
 
 - What each visit costs added up each payment's visits, so a visit covered by two of them (a membership at a gym and a pass for any gym, say) was counted twice, and the cost per visit came out at half what it was. The total now counts each day you went once: two passes over the same 3 visits now say "A$180 over 3 visits, A$60 a visit", where they said 6 visits and A$30. Each payment's own line is unchanged.
 - A test covers it (it failed before the fix).

@@ -89,7 +89,8 @@ export function collectionTotals(
   return {
     gyms: kept.length,
     visits: kept.reduce((sum, entry) => sum + entry.visits, 0),
-    cities: new Set(kept.map((entry) => `${entry.countryCode}:${entry.city.toLowerCase()}`)).size,
+    // A gym with no city or suburb on the map isn't a city of its own.
+    cities: new Set(kept.filter((entry) => entry.city.trim() !== '').map((entry) => `${entry.countryCode}:${entry.city.toLowerCase()}`)).size,
     countries: new Set(kept.map((entry) => entry.countryCode)).size,
   };
 }

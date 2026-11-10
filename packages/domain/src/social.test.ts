@@ -45,6 +45,8 @@ describe('a friend’s cards', () => {
     );
     expect(collectionTotals(entries)).toEqual({ gyms: 3, visits: 4, cities: 2, countries: 2 });
     expect(collectionTotals(entries, { city: 'melbourne', countryCode: 'AU' })).toEqual({ gyms: 2, visits: 3, cities: 1, countries: 1 });
+    // A gym with no city or suburb isn't a city of its own.
+    expect(collectionTotals([...entries, { city: '', countryCode: 'AU', visits: 1 }])).toMatchObject({ gyms: 4, cities: 2 });
   });
 });
 

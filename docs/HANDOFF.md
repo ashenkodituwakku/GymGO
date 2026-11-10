@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Cities counted alike** (10 Nov). collection.ts `collectionStats` and
+  domain social.ts `collectionTotals` both skip blank cities and compare
+  lower-cased names.
 - **Visits counted once** (10 Nov). visitCost.ts `SpendReport` carries
   `visitDays`; `totals` counts the union of days per currency instead of
   summing `visits`. New test (failed on the old code).

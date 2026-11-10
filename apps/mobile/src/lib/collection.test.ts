@@ -65,6 +65,11 @@ describe('tiers and totals', () => {
     expect(earned).toEqual(['first', 'cities', 'countries', 'gold']);
   });
 
+  it('doesn’t count a gym with no city or suburb as a city of its own', () => {
+    const entry = (id: string, city: string) => ({ id, name: id, suburb: city, city, countryCode: 'AU', brand: null, days: ['2026-01-01'], firstAt: '', lastAt: '' });
+    expect(collectionStats({ a: entry('a', 'Melbourne'), b: entry('b', '') })).toMatchObject({ gyms: 2, cities: 1, countries: 1 });
+  });
+
   it('earns the luck badges from the rarest card and any Foil', () => {
     const base = { gyms: 1, visits: 1, cities: 1, countries: 1, topTier: 'bronze' as const };
     const earned = (topRarity: Rarity, foils: number) =>

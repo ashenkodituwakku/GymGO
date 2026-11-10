@@ -198,7 +198,7 @@ export default function Compare() {
     {
       label: 'Distance',
       cells: gyms.map((result) => ({
-        text: result.distanceKm === null ? '—' : distanceLabel(result.distanceKm, result.record.location.address.countryCode),
+        text: result.distanceKm === null ? 'Unknown' : distanceLabel(result.distanceKm, result.record.location.address.countryCode),
       })),
     },
   ];

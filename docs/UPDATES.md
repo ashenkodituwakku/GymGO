@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 146 · Exercises done at body weight
+
+*10 Nov 2026 · the commit "Exercise page: body-weight work shows its reps, not empty weight tiles"*
+
+- An exercise logged without weights (push-ups, say) showed "Heaviest —" and "1-rep max —" at the top, read aloud as dashes. It now shows "Most reps 10, in one set" beside Sessions, and the Records list doesn't repeat it.
+- Its chart opened on 1-rep max, which said it needed a weighted set; it opens on Reps, which has the data. Weighted exercises still open on 1-rep max.
+- A flat line of whole numbers (10 reps every time) had gridlines at 9.5 and 10.5 reps, the top one cut to "10.5 re…". Whole numbers now get whole gridlines: 9, 10 and 11. The rule is in lib/chartScale.ts, with tests.
+- Compare's distance says "Unknown" rather than "—" when it isn't known.
+- Seen in the browser at 320 and 390: push-ups (Most reps, opens on Reps, 11 / 10 reps) and bench press (unchanged). App tests 574 (3 new), typecheck.
+
 ## Update 145 · Pro's table in plain words
 
-*10 Nov 2026 · the commit "Pro: the Free and Pro table in sentence case, Not included for a dash"*
+*10 Nov 2026 · `88f1b97`*
 
 - Pro's table of what Free and Pro get had its headings in small spaced capitals ("FINDING GYMS", "FREE", "PRO") inside the card. They're now "Finding gyms", "Free" and "Pro", as card headings are everywhere else.
 - Gym notes, Streak freeze and Lifetime stats showed a bare "—" for Free, which a screen reader reads as a dash. They say "Not included".

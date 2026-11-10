@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Body-weight exercises** (10 Nov). progress/[exercise].tsx: Most reps
+  tile instead of empty Heaviest/1-rep max, chart opens on Reps; new
+  lib/chartScale.ts (whole-number bands) used by ProgressChart; Compare
+  distance "Unknown". App 574 (total 1,229; school docs updated).
 - **Pro's table** (10 Nov). pro.tsx table headings in sentence case (`label`
   variant, no `toUpperCase`); packages/domain plans.ts `PRO_FEATURES` lost its
   unused `emoji` field and says "Not included" for Free instead of "—".

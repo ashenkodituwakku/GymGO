@@ -55,7 +55,9 @@ export default function ExerciseProgressScreen() {
   const title = exerciseName(exerciseId);
   usePageTitle(title);
   const record = useMemo(() => personalRecords(log.sessions).get(exerciseId) ?? null, [log.sessions, exerciseId]);
-  const [metric, setMetric] = useState<ExerciseMetric>('e1rm');
+  const [picked, setPicked] = useState<ExerciseMetric | null>(null);
+  // Until you pick one, the 1-rep max; for an exercise you've only done at body weight, the reps, as the rest have nothing to show.
+  const metric: ExerciseMetric = picked ?? (record && record.heaviestKg === null && record.mostReps !== null ? 'reps' : 'e1rm');
   const [noting, setNoting] = useState(false);
   const series = useMemo(() => exerciseSeries(log.sessions, exerciseId, metric), [log.sessions, exerciseId, metric]);
   const shownMetric = EXERCISE_METRICS.find((item) => item.id === metric)!;
@@ -178,22 +180,24 @@ export default function ExerciseProgressScreen() {
       {record && (
         <View style={styles.facts}>
           {/* The figure alone on its line, what it's of under it: on a 320-point phone "85 kg × 6" broke after the ×. */}
-          <Fact
-            label="Heaviest"
-            value={record.heaviestKg !== null ? formatWeight(Number(fromKg(record.heaviestKg, unit).toFixed(1)), unit) : '—'}
-            detail={record.heaviestSet ? `for ${record.heaviestSet.reps} rep${record.heaviestSet.reps === 1 ? '' : 's'}` : undefined}
-            spoken={record.heaviestKg !== null && record.heaviestSet ? `Heaviest: ${formatWeight(Number(fromKg(record.heaviestKg, unit).toFixed(1)), unit)} for ${record.heaviestSet.reps} reps` : undefined}
-          />
-          <Fact
-            label="1-rep max"
-            value={record.e1rmKg !== null ? formatWeight(Math.round(fromKg(record.e1rmKg, unit)), unit) : '—'}
-            detail={record.e1rmKg !== null ? 'estimated' : undefined}
-          />
+          {record.heaviestKg !== null ? (
+            <Fact
+              label="Heaviest"
+              value={formatWeight(Number(fromKg(record.heaviestKg, unit).toFixed(1)), unit)}
+              detail={record.heaviestSet ? `for ${record.heaviestSet.reps} rep${record.heaviestSet.reps === 1 ? '' : 's'}` : undefined}
+              spoken={record.heaviestSet ? `Heaviest: ${formatWeight(Number(fromKg(record.heaviestKg, unit).toFixed(1)), unit)} for ${record.heaviestSet.reps} reps` : undefined}
+            />
+          ) : (
+            // Done at body weight (push-ups, say): there's no heaviest or 1-rep max, so its best set instead.
+            record.mostReps !== null && <Fact label="Most reps" value={String(record.mostReps)} detail="in one set" />
+          )}
+          {record.e1rmKg !== null && <Fact label="1-rep max" value={formatWeight(Math.round(fromKg(record.e1rmKg, unit)), unit)} detail="estimated" />}
           <Fact label="Sessions" value={String(record.sessions)} detail={record.sessions > 0 ? 'logged' : undefined} />
         </View>
       )}
 
-      {record && (record.setVolumeSet || record.sessionVolumeKg !== null || record.mostReps !== null) && (
+      {/* Most reps is a tile above when nothing was lifted with a weight, so not again here. */}
+      {record && (record.setVolumeSet || record.sessionVolumeKg !== null || (record.mostReps !== null && record.heaviestKg !== null)) && (
         <>
           <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
             RECORDS
@@ -206,7 +210,7 @@ export default function ExerciseProgressScreen() {
               record.sessionVolumeKg !== null && record.sessionVolumeDate
                 ? { label: 'Most in a session', value: tonnage(record.sessionVolumeKg), detail: `Every working set added up · ${dayLabel(record.sessionVolumeDate)}` }
                 : null,
-              record.mostReps !== null ? { label: 'Most reps', value: repsWords([record.mostReps]), detail: 'In one set at body weight' } : null,
+              record.mostReps !== null && record.heaviestKg !== null ? { label: 'Most reps', value: repsWords([record.mostReps]), detail: 'In one set at body weight' } : null,
             ]
               .filter((row): row is { label: string; value: string; detail: string } => row !== null)
               .map((row, index) => (
@@ -258,7 +262,7 @@ export default function ExerciseProgressScreen() {
           {/* What the chart follows: the estimated 1-rep max, the heaviest weight, the biggest set, the day's volume or reps. */}
           <View style={styles.metrics} role="radiogroup" accessibilityLabel="What the chart shows">
             {EXERCISE_METRICS.map((item) => (
-              <Chip key={item.id} label={item.label} selected={metric === item.id} accessibilityLabel={item.title} onPress={() => setMetric(item.id)} />
+              <Chip key={item.id} label={item.label} selected={metric === item.id} accessibilityLabel={item.title} onPress={() => setPicked(item.id)} />
             ))}
           </View>
           {series.length > 0 ? (

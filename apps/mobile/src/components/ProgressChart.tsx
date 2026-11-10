@@ -10,6 +10,7 @@
 import { useId, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Polyline, Stop } from 'react-native-svg';
+import { chartScale } from '@/lib/chartScale';
 import { alpha } from '@/lib/looks';
 import { color, space, themed } from '@/lib/theme';
 import { formatWeight, fromKg, type WeightUnit } from '@/lib/training';
@@ -43,11 +44,7 @@ export function ProgressChart({
   const values = points.map((point) => (count ? point.kg : fromKg(point.kg, unit)));
   /** A value as it's written: "102.5 kg", "36 reps". */
   const show = (value: number) => (count ? `${Number(value.toFixed(1))} ${count}` : formatWeight(value, unit));
-  const low = Math.min(...values);
-  const high = Math.max(...values);
-  // A flat line sits in the middle rather than on an edge.
-  const span = high - low || Math.max(1, high * 0.1);
-  const base = high - low ? low : low - span / 2;
+  const { base, span } = chartScale(values);
   const first = Date.parse(points[0]?.date ?? '');
   const last = Date.parse(points[points.length - 1]?.date ?? '');
   const x = (index: number) => {

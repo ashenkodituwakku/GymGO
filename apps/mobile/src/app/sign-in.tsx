@@ -305,7 +305,8 @@ export default function SignInScreen() {
             setPassword(text);
             setError(null);
           }}
-          placeholder={mode === 'create' ? 'At least 8 characters' : 'Your password'}
+          // The rule is the live check under it ("8 characters or more"), not said twice.
+          placeholder={mode === 'create' ? 'A new password' : 'Your password'}
           secureTextEntry={!showPassword}
           autoCapitalize="none"
           autoCorrect={false}

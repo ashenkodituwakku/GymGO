@@ -106,6 +106,8 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Password rule once** (10 Nov). sign-in.tsx's create-mode placeholder
+  is "A new password"; the rule stays in the live check below it.
 - **Desktop panel label** (10 Nov). explore.tsx `pillNotable`; the
   DesktopPanel's `panelTop` renders only when it's true; the phone's top
   bar always shows the pill.

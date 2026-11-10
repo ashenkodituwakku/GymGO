@@ -411,6 +411,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Visits counted once (10 Nov): What you pay's total counts each visit day once when two payments cover it, so the cost per visit isn't halved | ✅ | ✅ new unit test (fails on the old code, passes now); in the browser at 390 with two any-gym passes (test browser only): "A$180 over 3 visits", A$60 a visit; app 566 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 | Cities counted alike (10 Nov): your collection and friends' totals count cities the same way, case-insensitive, and never a blank city | ✅ | ✅ unit tests in the app and the shared rules (each failed before); app 567, domain 197, server 295 tests | n/a | ❌ not on a phone | ⚠️ the website and server get it with the next publish |
 | Desktop panel label (10 Nov): on a computer, Explore's panel shows the place label only when it says more than the heading | ✅ | ✅ in the browser at 1280 (panel opens on the search) and 390 dark (label still on the map); app 567 tests, typecheck | n/a | n/a | ⚠️ the website gets it with the next publish |
+| Password rule once (10 Nov): the create-account password box says "A new password"; the 8-character rule is its live check | ✅ | ✅ in the browser, signed out (placeholders read back); a11y scan of 18 screens, contrast on 8 in light and dark; app 567 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 
 **What "tested locally" means for the phone app, exactly:**
 

@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 137 · The password rule said once
+
+*10 Nov 2026 · the commit "Create account: the password rule said once, by its live check"*
+
+- Creating an account, the password box said "At least 8 characters" right above a check saying "8 characters or more" that ticks as you type. The box now just says "A new password", and the rule is said once, by the check.
+- Also checked: the unnamed-controls scan on 18 more screens (all named; only the map's credit links are small, as the map draws them), and colour contrast on 8 screens in light and dark (all pass).
+- Not yet seen on a phone.
+
 ## Update 136 · No repeated place name on a computer
 
-*10 Nov 2026 · the commit "Explore on a computer: no place label repeating the panel's heading"*
+*10 Nov 2026 · `69e8790`*
 
 - On a computer, Explore's panel opened with a label naming the place ("Melbourne CBD") right above its heading saying the same ("Near Melbourne CBD"). The label now shows there only when it has more to say (demo gyms, an offline copy, map data, a place that's part of Pro). On a phone it stays on the map, where it names the place while the list is pulled down.
 - Also checked at 1280 points: Friends (its new rows), Templates in dark, a gym's page.

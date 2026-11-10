@@ -106,6 +106,8 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Spend card label** (10 Nov). spend.tsx's summary card heading is
+  `variant="label"` in sentence case, not an eyebrow.
 - **Compare rows** (8 Nov). compare.tsx row labels use `variant="label"`
   as written, not `eyebrow` + toUpperCase. Checked with two gyms put in
   the test browser's `gymgo.compare.v1` only.

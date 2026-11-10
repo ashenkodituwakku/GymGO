@@ -64,8 +64,8 @@ export default function SpendScreen() {
           <Segmented options={PERIODS} value={days} onChange={(value: number) => setDays(value)} />
           {sums.map((sum) => (
             <Card key={sum.currency} style={styles.card}>
-              <Txt variant="eyebrow" color={color.labelSecondary}>
-                {`LAST ${days === 365 ? 'YEAR' : `${days} DAYS`}${sums.length > 1 ? ` · ${sum.currency}` : ''}`}
+              <Txt variant="label" color={color.labelSecondary}>
+                {`Last ${days === 365 ? 'year' : `${days} days`}${sums.length > 1 ? ` · ${sum.currency}` : ''}`}
               </Txt>
               <Txt variant="largeTitle">{sum.perVisitMinor !== null ? `${priceLabel(sum.perVisitMinor, sum.currency)} a visit` : 'No visits yet'}</Txt>
               <Txt variant="subhead" color={color.labelSecondary}>

@@ -9,9 +9,16 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 129 · What each visit costs, in plain words
+
+*10 Nov 2026 · the commit "What you pay: the summary card's heading in sentence case"*
+
+- What each visit costs heads its summary card "Last 30 days" (or "Last year") in sentence case, as the app's other cards do, instead of "LAST 30 DAYS".
+- Not yet seen on a phone, and not seen in the browser (the card needs something entered as paid): a change of words and style only.
+
 ## Update 128 · Compare's rows in plain words
 
-*8 Nov 2026 · the commit "Compare: row names in sentence case, not spaced capitals"*
+*8 Nov 2026 · `55f61be`*
 
 - Compare names each row as the app's other cards do ("A visit costs", "Guest hours", "Photo ID"), in sentence case, instead of spaced capitals ("A VISIT COSTS").
 - Also looked at, with nothing to change: GymPal's panel (its greeting is the owner's own words) and Profile. Capitals stay where they head a list (Profile's TRAINING, Country's YOURS) or a column of numbers (a set's KG).

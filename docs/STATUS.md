@@ -404,6 +404,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | No greyed-out Keep it (8 Nov): the challenge's change-target button shows only once another target is picked | ✅ | ✅ in the browser at 390: no button on the current target, "Make it 12 days" on 12 (not saved); a sweep of 24 screens at 320 dark (no errors, no overflow), cut text and unnamed controls on 10; app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 | Map label (8 Nov, "less vibecoded"): the map's corner label is the city's name alone for GymGO's own gyms ("live data" read like live crowds); other states keep their dot and words | ✅ | ✅ in the browser at 390, light and dark: Explore over Melbourne, no page errors; app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 | Compare rows (8 Nov, "less vibecoded"): Compare's row names in sentence case, as the other cards' headings | ✅ | ✅ in the browser at 390, light and dark, with Fitness First and 101Fitness picked; app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
+| Spend card label (10 Nov, "less vibecoded"): What each visit costs' summary card headed in sentence case | ✅ | ✅ app 564 tests, typecheck; not seen in the browser (needs a payment entered) | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 
 **What "tested locally" means for the phone app, exactly:**
 

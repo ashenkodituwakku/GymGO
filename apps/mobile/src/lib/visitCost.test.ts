@@ -81,6 +81,14 @@ describe('what it cost', () => {
     expect(spendReports([membership()], {}, [], '2026-10-30', 28)[0]!.perVisitMinor).toBeNull();
   });
 
+  it('counts a visit once in the totals, even when two things you pay cover it', () => {
+    // A membership at the gym, and a pass that covers any gym: the same two visits, not four.
+    const pass = membership({ id: 'p', gymId: null, gymName: null, kind: 'once', label: '10-visit pass', amountMinor: 15000, every: null, startedOn: '2026-10-10' });
+    const reports = spendReports([membership(), pass], collection(['2026-10-25', '2026-10-28']), [], '2026-10-30', 28);
+    expect(reports.map((report) => report.visits)).toEqual([2, 2]);
+    expect(totals(reports)[0]).toMatchObject({ currency: 'AUD', visits: 2, spentMinor: 8000 + 15000, perVisitMinor: 11500 });
+  });
+
   it('never adds different currencies together', () => {
     const reports = spendReports([membership(), membership({ id: 'n', currency: 'USD', gymId: 'g2' })], collection(['2026-10-30']), [], '2026-10-30', 7);
     expect(totals(reports).map((total) => total.currency)).toEqual(['AUD', 'USD']);

@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 134 · A visit counted once in what you pay
+
+*10 Nov 2026 · the commit "What you pay: a visit counts once in the total, however many things you pay cover it"*
+
+- What each visit costs added up each payment's visits, so a visit covered by two of them (a membership at a gym and a pass for any gym, say) was counted twice, and the cost per visit came out at half what it was. The total now counts each day you went once: two passes over the same 3 visits now say "A$180 over 3 visits, A$60 a visit", where they said 6 visits and A$30. Each payment's own line is unchanged.
+- A test covers it (it failed before the fix).
+- Not yet seen on a phone.
+
 ## Update 133 · One kind of apostrophe
 
-*10 Nov 2026 · the commit "Copy: curly apostrophes throughout, as the rest of the app"*
+*10 Nov 2026 · `da429d0`*
 
 - A few lines used a straight apostrophe (don't) where the rest of the app uses a curly one (don’t): three of the Filters' hints, the gym page's demo and "can't make calls" notices, the location notices ("Couldn't get a fix…", "Here's Sydney…"), the crowd line, the Pro page's small print, the time-zone warning and the leg press cue. They now match. Place names from the map data (St. John's) are left as their sources spell them.
 - Checked by reading what 12 screens and the Filters sheet show: no straight apostrophe left on them.

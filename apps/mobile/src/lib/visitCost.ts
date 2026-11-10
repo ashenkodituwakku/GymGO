@@ -88,6 +88,8 @@ export interface SpendReport {
   spend: Spend;
   spentMinor: number;
   visits: number;
+  /** The days of those visits, so a total can count a day once when two spends cover it. */
+  visitDays: string[];
   /** Null with no visits yet. */
   perVisitMinor: number | null;
 }
@@ -100,19 +102,27 @@ export function spendReports(spends: readonly Spend[], collection: Collection, s
     // Visits while it applied: from when it started (in the period), to when it ended. A one-off covers visits after it was paid.
     const start = spend.startedOn > from ? spend.startedOn : from;
     const end = spend.kind === 'membership' && spend.endedOn && spend.endedOn < today ? spend.endedOn : today;
-    const visits = visitDays(collection, sessions, spend.gymId).filter((day) => day >= start && day <= end).length;
-    return { spend, spentMinor, visits, perVisitMinor: visits > 0 && spentMinor > 0 ? Math.round(spentMinor / visits) : null };
+    const days = visitDays(collection, sessions, spend.gymId).filter((day) => day >= start && day <= end);
+    const visits = days.length;
+    return { spend, spentMinor, visits, visitDays: days, perVisitMinor: visits > 0 && spentMinor > 0 ? Math.round(spentMinor / visits) : null };
   });
 }
 
-/** Per currency (prices in different currencies are never added together): spent, visits and per visit. */
+/**
+ * Per currency (prices in different currencies are never added together): spent, visits and per visit.
+ * A day you went counts once, even when two things you pay cover it (a membership and an any-gym pass).
+ */
 export function totals(reports: readonly SpendReport[]): Array<{ currency: string; spentMinor: number; visits: number; perVisitMinor: number | null }> {
-  const byCurrency = new Map<string, { spentMinor: number; visits: number }>();
+  const byCurrency = new Map<string, { spentMinor: number; days: Set<string> }>();
   for (const report of reports) {
-    const now = byCurrency.get(report.spend.currency) ?? { spentMinor: 0, visits: 0 };
-    byCurrency.set(report.spend.currency, { spentMinor: now.spentMinor + report.spentMinor, visits: now.visits + report.visits });
+    const now = byCurrency.get(report.spend.currency) ?? { spentMinor: 0, days: new Set<string>() };
+    for (const day of report.visitDays) now.days.add(day);
+    byCurrency.set(report.spend.currency, { spentMinor: now.spentMinor + report.spentMinor, days: now.days });
   }
-  return [...byCurrency].map(([currency, sum]) => ({ currency, ...sum, perVisitMinor: sum.visits > 0 && sum.spentMinor > 0 ? Math.round(sum.spentMinor / sum.visits) : null }));
+  return [...byCurrency].map(([currency, sum]) => {
+    const visits = sum.days.size;
+    return { currency, spentMinor: sum.spentMinor, visits, perVisitMinor: visits > 0 && sum.spentMinor > 0 ? Math.round(sum.spentMinor / visits) : null };
+  });
 }
 
 // --- Against paying per visit -----------------------------------------------------

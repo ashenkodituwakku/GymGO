@@ -417,6 +417,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Deposit line (10 Nov): "Plus a refundable deposit of A$20, so A$45 on the day."; demo notices with a colon | ✅ | ✅ in the browser with Demo mode (test browser only): Quarry Lane Barbell's Prices and its Call notice; app 567 tests (1 updated), typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 | Ask for the total (10 Nov): a price with unpublished fees reads "Ask for the total", spoken with the reason | ✅ | ✅ in the browser: Absolute MMA's tile, Prices row and spoken label; Free's compare limit opening Pro; app 567 tests (1 updated), typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 | "you can’t use" (10 Nov): a price you can't use reads "A$20 you can’t use" | ✅ | ✅ unit tests for both price phrases; Explore's demo list in the browser shows "Ask for the total" (no demo gym reaches this case); app 569 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
+| Server pages (10 Nov): the Legal list without a repeated row of links; the password rule above "Set new password"; "Forgot your password?" set off as a button name | ✅ | ✅ in the browser at 390, light and dark: Legal, Terms, the stopped link, the reset form (with a problem too) and Password changed; server 295 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website's legal pages come from the server, so they change when it does |
 
 **What "tested locally" means for the phone app, exactly:**
 

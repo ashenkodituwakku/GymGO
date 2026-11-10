@@ -54,6 +54,8 @@ describe('the legal documents', () => {
     const index = await call('GET', '/legal');
     expect(index.status).toBe(200);
     for (const id of LEGAL_DOC_IDS) expect(index.text).toContain(legalDoc(id).summary);
+    // Each document once: the list is the links, with no second row of them under it.
+    for (const id of LEGAL_DOC_IDS) expect(index.text.split(`href="/${id}"`).length - 1).toBe(1);
     // Nothing else is open without an account, and it isn't a page with one either.
     expect((await call('GET', '/legal/terms')).status).toBe(401);
     const signup = await call('POST', '/api/auth/signup', { body: { email: 'reader@example.com', password: 'correct horse', displayName: 'Reader', birthMonth: '1990-01', acceptTerms: true } });

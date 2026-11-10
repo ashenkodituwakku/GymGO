@@ -74,7 +74,7 @@ export default function SignInScreen() {
   const forgot = async () => {
     if (resetBusy) return;
     if (!EMAIL.test(email.trim())) {
-      fail('Type your account’s email address above, then tap Forgot your password? again.');
+      fail('Type your account’s email address above, then tap “Forgot your password?” again.');
       return;
     }
     setResetBusy(true);

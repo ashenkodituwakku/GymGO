@@ -45,6 +45,7 @@ const STYLE = `
   header a span { color: var(--link); }
   h1 { font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 6px; }
   .updated { color: var(--muted); margin: 0 0 28px; font-size: 15px; }
+  h1 + section { margin-top: 22px; }
   section { background: var(--card); border-radius: 16px; padding: 18px 20px; margin: 0 0 14px; }
   h2 { font-size: 19px; margin: 0 0 8px; letter-spacing: -0.01em; }
   p { margin: 0 0 10px; }
@@ -59,7 +60,8 @@ const STYLE = `
   .docs a { display: block; background: var(--card); border-radius: 16px; padding: 16px 20px; text-decoration: none; color: var(--ink); }
   .docs strong { display: block; font-size: 18px; }
   .docs small { color: var(--muted); font-size: 15px; }
-  form { display: grid; gap: 14px; margin: 4px 0 12px; }
+  form { display: grid; gap: 14px; margin: 4px 0 0; }
+  form .hint { margin: 0; }
   label { display: grid; gap: 6px; font-size: 15px; color: var(--muted); }
   input { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
   input:focus { outline: 2px solid var(--link); outline-offset: 1px; }
@@ -69,8 +71,9 @@ const STYLE = `
   .hint { color: var(--muted); font-size: 15px; }
 `;
 
-function shell(title: string, body: string, current: LegalDocId | null): string {
-  const nav = LEGAL_DOC_IDS.map((id) => (id === current ? `<span>${LEGAL_TITLES[id]}</span>` : `<a href="/${id}">${LEGAL_TITLES[id]}</a>`)).join('');
+/** `current` is the document shown, null for another page, or 'index' for the list of documents (which needs no links under it). */
+function shell(title: string, body: string, current: LegalDocId | 'index' | null): string {
+  const nav = current === 'index' ? '' : LEGAL_DOC_IDS.map((id) => (id === current ? `<span>${LEGAL_TITLES[id]}</span>` : `<a href="/${id}">${LEGAL_TITLES[id]}</a>`)).join('');
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -83,7 +86,7 @@ function shell(title: string, body: string, current: LegalDocId | null): string 
 <main>
 <header><a href="/legal">Gym<span>GO</span></a></header>
 ${body}
-<nav aria-label="Legal documents">${nav}</nav>
+${nav ? `<nav aria-label="Legal documents">${nav}</nav>` : ''}
 </main>
 </body>
 </html>`;
@@ -105,7 +108,7 @@ export function resetPasswordPage(state: { token: string | null; problem?: strin
   if (!state.token) {
     const problem = state.problem
       ? `<p class="problem">${escape(state.problem)}</p>`
-      : '<p>Links to choose a new password work once, for 30 minutes. Ask for a new one in GymGO: Sign in, then Forgot your password?</p>';
+      : '<p>Links to choose a new password work once, for 30 minutes. Ask for a new one in GymGO: on Sign in, tap <strong>Forgot your password?</strong></p>';
     return shell('Link stopped working', `<h1>This link has stopped working</h1><section>${problem}</section>`, null);
   }
   return shell(
@@ -113,11 +116,11 @@ export function resetPasswordPage(state: { token: string | null; problem?: strin
     `<h1>Choose a new password</h1><section>${state.problem ? `<p class="problem" role="alert">${escape(state.problem)}</p>` : ''}
 <form method="post" action="/reset-password">
 <input type="hidden" name="token" value="${escape(state.token)}">
-<label>New password<input type="password" name="password" autocomplete="new-password" minlength="8" maxlength="200" required autofocus></label>
+<label>New password<input type="password" name="password" autocomplete="new-password" minlength="8" maxlength="200" required autofocus aria-describedby="password-rule"></label>
 <label>Type it again<input type="password" name="confirm" autocomplete="new-password" minlength="8" maxlength="200" required></label>
+<p class="hint" id="password-rule">At least 8 characters, and not one of the commonest passwords. Every device signed in to your account will be signed out.</p>
 <button type="submit">Set new password</button>
-</form>
-<p class="hint">At least 8 characters, and not one of the commonest passwords. Every device signed in to your account will be signed out.</p></section>`,
+</form></section>`,
     null,
   );
 }
@@ -157,7 +160,7 @@ export function legalIndexPage(operator: LegalOperator): string {
     const doc = legalDoc(id, operator);
     return `<li><a href="/${id}"><strong>${escape(doc.title)}</strong><small>${escape(doc.summary)}</small></a></li>`;
   }).join('');
-  return shell('Legal', `<h1>Legal</h1><p class="updated">Last updated ${LEGAL_UPDATED}</p><ul class="docs">${items}</ul>`, null);
+  return shell('Legal', `<h1>Legal</h1><p class="updated">Last updated ${LEGAL_UPDATED}</p><ul class="docs">${items}</ul>`, 'index');
 }
 
 /** Where to report a security problem (RFC 9116), or null with no way to reach anyone. */

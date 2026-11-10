@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 143 · The server's own pages
+
+*10 Nov 2026 · the commit "Server pages: one set of legal links, the password rule above its button"*
+
+- The Legal page listed the four documents as cards and then again as a row of links underneath. The row is gone there; each document still links to the others.
+- Choosing a new password: the rule ("At least 8 characters…") was under the button, after you'd pressed it. It now sits above it, and the screen reader reads it with the first field. The heading on the reset pages has room under it, as on the legal pages.
+- "This link has stopped working" says where to ask for a new one as "on Sign in, tap **Forgot your password?**", and the app's own hint puts the button's name in quotes, so the question mark doesn't end the sentence by accident.
+- Seen in the browser at 390 wide, light and dark: Legal, Terms, the reset link that has stopped working, the reset form with and without a problem, and Password changed. Server tests 295 (one more check), typecheck.
+
 ## Update 142 · "A$20 you can’t use"
 
-*10 Nov 2026 · the commit "Prices: a price you can't use says so as one phrase"*
+*10 Nov 2026 · `4a7d777`*
 
 - A price a gym has but you can't use (locals only, say) showed "A$20" over "not for you". It now reads "A$20" over "you can’t use", together "A$20 you can’t use", and a screen reader hears "A$20, which you can’t use".
 - Tests cover both price phrases (this one and "Ask for the total"); the demo gyms show "Ask for the total" in Explore's list.

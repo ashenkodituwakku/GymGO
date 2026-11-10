@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Server pages** (10 Nov). legalPages.ts: the Legal list has no second row
+  of links (`shell(…, 'index')`); the reset form's rule sits above the button
+  with `aria-describedby`; `h1 + section` spacing. legal.test checks each
+  document is linked once on /legal.
 - **"you can’t use"** (10 Nov). present.ts `priceLine`'s ineligible caption
   and `priceText`'s spoken form; 3 new present tests (app 569).
 - **Ask for the total** (10 Nov). present.ts `priceLine`'s unknown-fee

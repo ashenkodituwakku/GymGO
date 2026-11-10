@@ -219,7 +219,7 @@ export function PlaceCard({
 
   // Demo listings have invented addresses and numbers. Say so, rather than
   // opening a map to nowhere or dialling a stranger.
-  const demo = (what: string) => () => setNotice(`Demo listing — ${what}`);
+  const demo = (what: string) => () => setNotice(`Demo listing: ${what}`);
 
   // Real listings hand off to the platform: Apple Maps on iPhone, the
   // system's maps app on Android, the dialler, and an in-app browser.

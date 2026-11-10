@@ -106,6 +106,8 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Deposit line** (10 Nov). present.ts `depositLine` reworded (test
+  updated); PlaceCard's demo notice uses a colon.
 - **One quick budget** (10 Nov). query.ts `QUICK_BUDGET = 3000`, used by
   Home's shortcut, Explore's toggle and ResultsContent's chip label.
 - **Legal pages, one title** (10 Nov). legal/[doc].tsx: bar title '' and

@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 140 · A deposit said plainly
+
+*10 Nov 2026 · the commit "Prices: a deposit said plainly; the demo notices without a dash"*
+
+- A gym's deposit read "Plus a A$20 refundable deposit — A$45 on the day." It now reads "Plus a refundable deposit of A$20, so A$45 on the day." (no "a A$", no dashed aside).
+- A demo gym's notices read "Demo listing: that number isn’t real…" rather than with a dash. A scan of every string in the app finds no other dashed aside.
+- Not yet seen on a phone.
+
 ## Update 139 · One quick budget
 
-*10 Nov 2026 · the commit "Budget: Home's shortcut and Explore's chip set the same amount"*
+*10 Nov 2026 · `70d11a0`*
 
 - Home's budget shortcut said "Under A$25" while Explore's budget chip offered "Under A$30", so one tap set a different budget depending on where you were. Both now set the same, A$30 (in each country's own sizes, so not A$30 in Japan). Filters still offers A$15 to A$40.
 - Also checked: 24 screens at 390 in light with no errors and nothing wider than the screen.

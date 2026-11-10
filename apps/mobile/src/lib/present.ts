@@ -45,14 +45,14 @@ export function priceText(price: PriceLine): string {
   return price.confirmed ? `${price.headline} ${price.caption}` : `${price.headline}, ${price.caption}`;
 }
 
-/** "Plus a A$20 deposit — A$45 on the day." or null when there is none. */
+/** "Plus a refundable deposit of A$20, so A$45 on the day." or null when there is none. */
 export function depositLine(offers: OfferSelection): string | null {
   const cost = offers.bestAvailable?.cost;
   if (!cost || cost.depositsMinor === 0) return null;
   if (cost.depositsMinor === null) return 'Plus a refundable deposit of an unconfirmed amount.';
   const deposit = formatMoney(cost.depositsMinor, cost.currency);
-  if (cost.cashNeededTodayMinor === null) return `Plus a ${deposit} refundable deposit.`;
-  return `Plus a ${deposit} refundable deposit — ${formatMoney(cost.cashNeededTodayMinor, cost.currency)} on the day.`;
+  if (cost.cashNeededTodayMinor === null) return `Plus a refundable deposit of ${deposit}.`;
+  return `Plus a refundable deposit of ${deposit}, so ${formatMoney(cost.cashNeededTodayMinor, cost.currency)} on the day.`;
 }
 
 /**

@@ -52,7 +52,7 @@ describe('priceLine', () => {
 describe('depositLine', () => {
   it('shows the deposit and the cash needed on the day', () => {
     expect(depositLine(resultFor('Quarry Lane Barbell').offers)).toBe(
-      'Plus a A$20 refundable deposit — A$45 on the day.',
+      'Plus a refundable deposit of A$20, so A$45 on the day.',
     );
   });
 

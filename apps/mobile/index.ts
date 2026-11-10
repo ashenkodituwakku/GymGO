@@ -9,7 +9,11 @@
  * A phone always starts at once: it must have the app ready when it asks.
  */
 
+import { startFonts } from './src/lib/earlyFonts';
 import { decideWebsite } from './src/lib/website';
+
+// In a browser, the fonts start downloading now, while the rest of the app gets going (lib/earlyFonts.web.ts).
+startFonts();
 
 function start(): void {
   require('expo-router/entry');

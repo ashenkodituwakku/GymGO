@@ -106,6 +106,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Fonts start early on the web** (10 Nov). apps/mobile/index.ts calls
+  `startFonts()` (lib/earlyFonts.web.ts; a no-op in lib/earlyFonts.ts for
+  phones) before anything else: Inter where `NEEDS_BUNDLED_FACES`, and the
+  icon font under expo-symbols' own name. `SF_DRAWS` moved to
+  lib/typeface.ts so the entry point imports nothing that reads
+  lib/limited.ts. Don't add a `<link rel=preload>` for fonts: measured, no gain.
 - **Website first visit** (10 Nov). public/index.html has a loading screen
   (`#boot`, picture public/icons/splash.png from scripts/site-images.mjs;
   `data-boot` from the saved appearance); `dropBootScreen()` in

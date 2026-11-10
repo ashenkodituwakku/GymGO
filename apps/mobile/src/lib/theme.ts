@@ -22,6 +22,7 @@
  */
 
 import { Platform, StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
+import { NEEDS_BUNDLED_FACES, SF_DRAWS } from './typeface';
 import { FREE_LOOK, LOOKS, STANDARD_RADIUS, alpha, contrast, mix, readable, type LookId, type LookSpec, type Radii } from './looks';
 
 export { FREE_LOOK, LOOK_IDS, LOOKS, type LookId } from './looks';
@@ -744,12 +745,8 @@ const INTER: Record<Weight, string> = {
   bold: 'Inter_700Bold',
 };
 
-/** Where SF Pro is what actually draws: iPhone, and browsers on Apple devices. */
-const SF_DRAWS =
-  Platform.OS === 'ios' || (Platform.OS === 'web' && typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent));
-
-/** True where the app must load the bundled faces (Inter) before drawing text: never where SF Pro draws. */
-export const NEEDS_BUNDLED_FACES = !SF_DRAWS;
+// Where SF Pro draws, and so whether Inter has to be loaded: lib/typeface.ts.
+export { NEEDS_BUNDLED_FACES };
 
 /** Bold text: each weight one step heavier. */
 const BOLDER: Record<Weight, Weight> = { regular: 'medium', medium: 'semibold', semibold: 'bold', bold: 'bold' };

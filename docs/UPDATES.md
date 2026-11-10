@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 149 · Fonts fetched while the app starts
+
+*10 Nov 2026 · the commit "Website: ask for the fonts as the code starts running"*
+
+- In a browser the app's typeface (Inter, where the device has no SF Pro) and its icon font are downloads. The app asked for them only when its first screen was being put together, over a second after its code had arrived, and held that screen until Inter came. It now asks the moment its code starts to run, so they download through that second.
+- On a fast 4G phone the website is usable at about 4.4 seconds, from 4.9 (and 10.2 before Update 148). Icons are there with the first screen; they used to appear about half a second after it.
+- Apple devices still fetch only the icon font, as they draw in SF Pro. The phone apps are unchanged: their fonts are inside the app.
+- A hint in the page to fetch the fonts from the very start was tried first and dropped: on a phone connection they only took bandwidth from the code, with nothing gained.
+- Measured in Chromium on a production build at fast 4G and quarter processor speed, as an iPhone and as an Android phone. App tests 574, typecheck.
+
 ## Update 148 · A faster first visit to the website
 
-*10 Nov 2026 · the commit "Website: a loading screen, and the server sends its files compressed"*
+*10 Nov 2026 · `0cbe7d2`*
 
 - Opening the website for the first time showed an empty page until all of the app's code had arrived and run: 7.3 seconds on a fast 4G phone. It now shows GymGO's splash picture on the page's own colour straight away (0.5 s), as the phone app does, and the app takes over once it has drawn. If it's taking long, a line under the picture says so after 6 seconds.
 - The loading screen is light or dark as the device is, or as chosen in GymGO's Appearance settings (Dim included), so there's no flash of the wrong colour.

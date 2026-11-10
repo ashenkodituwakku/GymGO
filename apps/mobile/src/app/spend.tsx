@@ -69,7 +69,10 @@ export default function SpendScreen() {
               </Txt>
               <Txt variant="largeTitle">{sum.perVisitMinor !== null ? `${priceLabel(sum.perVisitMinor, sum.currency)} a visit` : 'No visits yet'}</Txt>
               <Txt variant="subhead" color={color.labelSecondary}>
-                {`${priceLabel(sum.spentMinor, sum.currency)} over ${sum.visits} visit${sum.visits === 1 ? '' : 's'}`}
+                {/* "No visits yet" is the title above, so not "over 0 visits" here. */}
+                {sum.visits === 0
+                  ? `${priceLabel(sum.spentMinor, sum.currency)} paid in this time`
+                  : `${priceLabel(sum.spentMinor, sum.currency)} over ${sum.visits} visit${sum.visits === 1 ? '' : 's'}`}
               </Txt>
             </Card>
           ))}

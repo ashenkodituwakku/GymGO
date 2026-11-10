@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 131 · The map names the place you searched
+
+*10 Nov 2026 · the commit "Map and What you pay: the searched place on the map, no "over 0 visits""*
+
+- After you search a suburb, the map's corner label names it ("Fitzroy"), as the list's heading does ("Near Fitzroy"), instead of the city ("Melbourne"). Demo gyms, an offline copy, map data and Pro-only places still say so with a dot.
+- What each visit costs no longer says "A$150 over 0 visits" under "No visits yet": it says "A$150 paid in this time".
+- The school report (Update 130) notes the map label as found in test T1 and fixed after it, and its README no longer lists it as a known issue.
+- Not yet seen on a phone.
+
 ## Update 130 · The school project report
 
-*10 Nov 2026 · the commit "Docs: the school project report, Gantt chart, flowchart and product page"*
+*10 Nov 2026 · `0a28b25`*
 
 - `docs/school/` holds GymGO written up for the class's Interactive Digital Solution task: the report (`GymGO-Project-Report.docx`, also as Markdown) with 21 functional and 12 non-functional requirements, the constraints, a test plan, the evaluation matrix and the verdict rule as pseudocode; the Gantt chart (`GymGO-Gantt.xlsx` and a picture); the flowchart of the main user journey; the README / product page; and screenshots from the four tests.
 - The four tests were run in the browser on 10 November 2026 and all passed (search for Fitzroy in 1.2 s; 101Fitness's price shown as unknown, never $0; a Chest and Triceps plan in 3.4 s; five screens at 320 points with no sideways scrolling). The peer user-testing tables are left empty for the team's real sessions, and team names are placeholders.

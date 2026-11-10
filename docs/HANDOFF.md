@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Map names the searched place** (10 Nov). explore.tsx's pill shows
+  `pillPlace || city.name` when live; spend.tsx's summary line says "paid
+  in this time" when `sum.visits === 0`. Checked with a test payment put in
+  the test browser's `gymgo.spend.v1` only.
 - **School project report** (10 Nov). `docs/school/`: report (.docx built
   from the .md by pandoc + python-docx), Gantt (.xlsx by openpyxl, .png via
   LibreOffice), flowchart (.svg/.png), README-Product-Page.md and

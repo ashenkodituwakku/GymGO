@@ -405,6 +405,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Map label (8 Nov, "less vibecoded"): the map's corner label is the city's name alone for GymGO's own gyms ("live data" read like live crowds); other states keep their dot and words | ✅ | ✅ in the browser at 390, light and dark: Explore over Melbourne, no page errors; app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 | Compare rows (8 Nov, "less vibecoded"): Compare's row names in sentence case, as the other cards' headings | ✅ | ✅ in the browser at 390, light and dark, with Fitness First and 101Fitness picked; app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 | Spend card label (10 Nov, "less vibecoded"): What each visit costs' summary card headed in sentence case | ✅ | ✅ app 564 tests, typecheck; not seen in the browser (needs a payment entered) | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
+| Map names the searched place (10 Nov): the map's corner label is the place searched ("Fitzroy"), as the list heading; What each visit costs says "paid in this time" instead of "over 0 visits"; the Spend label of Update 129 now seen | ✅ | ✅ in the browser at 390: a Fitzroy search (label "Fitzroy"); What you pay with a test payment, with 0, 1 and 3 visits ("Last 30 days" heading); app 564 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 
 **What "tested locally" means for the phone app, exactly:**
 

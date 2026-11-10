@@ -853,7 +853,7 @@ function MapScreen() {
   const pillPlace = filters.placeName === THIS_AREA ? 'This area' : filters.placeName === YOUR_LOCATION ? 'Near you' : filters.placeName;
   const statusPill = (
     <Glass style={styles.pill}>
-      {/* GymGO's own gyms, as normal, are just the city's name ("live" read like live crowds); a dot marks anything else. */}
+      {/* GymGO's own gyms, as normal, are just the place you searched, as the list says ("live" read like live crowds); a dot marks anything else. */}
       {(locked || showingDemo || filters.bbox || outsideCities || data.status !== 'live') && (
         <View style={[styles.pillDot, { backgroundColor: locked ? color.brand : showingDemo ? color.maybe : data.status === 'live' ? color.good : color.no }]} />
       )}
@@ -865,7 +865,7 @@ function MapScreen() {
           : filters.bbox || outsideCities
             ? `${pillPlace} · map data`
             : data.status === 'live'
-            ? city.name
+            ? pillPlace || city.name
             : data.status === 'offline'
               ? `${city.name} · offline copy`
               : city.name}

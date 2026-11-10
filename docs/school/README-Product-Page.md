@@ -74,7 +74,6 @@ GymGO needs **Node.js 22.13 or newer** and an internet connection the first time
 - **GymPal needs an API key** on the server. Until one is added, it only says it is being set up.
 - **No payments.** GymGO Pro can only be tried with the local test account; real subscriptions aren't set up.
 - **No App Store listing or home-screen widget**, because those need a paid Apple Developer membership. **Apple Health and Google Fit aren't connected**, because Expo Go can't use them.
-- After a suburb search, the map's corner label shows the city (for example "Melbourne") rather than the suburb.
 - In the browser's developer console, the map can print a warning ("Expected value to be of type number…"). It comes from the free map style itself, and doesn't affect GymGO.
 
 ## Credits

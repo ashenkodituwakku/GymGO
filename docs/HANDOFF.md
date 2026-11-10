@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Pro's table** (10 Nov). pro.tsx table headings in sentence case (`label`
+  variant, no `toUpperCase`); packages/domain plans.ts `PRO_FEATURES` lost its
+  unused `emoji` field and says "Not included" for Free instead of "—".
 - **"Check you’re online"** (10 Nov). serverAddress.ts `serverIsHosted`,
   api.ts `serverHosted()`, copy.ts `serverOfflineLine(platform, hosted)`;
   sign-in, Account, AccountContent and Pro use it. 2 new serverAddress

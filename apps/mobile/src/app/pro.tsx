@@ -223,18 +223,18 @@ export default function ProScreen() {
         <View style={styles.card}>
           <View style={styles.tableHead}>
             <View style={styles.flex} />
-            <Txt variant="footnote" color={color.labelSecondary} style={styles.column}>
-              FREE
+            <Txt variant="footnote" color={color.labelSecondary} style={[styles.column, face('semibold')]}>
+              Free
             </Txt>
             <Txt variant="footnote" color={color.brand} style={[styles.column, styles.proColumn, face('semibold')]}>
-              PRO
+              Pro
             </Txt>
           </View>
           {/* In three groups, each under its heading, so the list reads in parts rather than as one long column. */}
           {PRO_FEATURE_GROUPS.map((group) => (
             <View key={group.id} style={styles.tableGroup}>
-              <Txt variant="eyebrow" color={color.brand} style={styles.groupTitle} accessibilityRole="header" level={2}>
-                {group.title.toUpperCase()}
+              <Txt variant="label" color={color.brand} style={styles.groupTitle} accessibilityRole="header" level={2}>
+                {group.title}
               </Txt>
               {PRO_FEATURES.filter((feature) => feature.group === group.id).map((feature) => (
                 <View key={feature.title} style={styles.tableRow}>

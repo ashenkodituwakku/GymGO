@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 145 · Pro's table in plain words
+
+*10 Nov 2026 · the commit "Pro: the Free and Pro table in sentence case, Not included for a dash"*
+
+- Pro's table of what Free and Pro get had its headings in small spaced capitals ("FINDING GYMS", "FREE", "PRO") inside the card. They're now "Finding gyms", "Free" and "Pro", as card headings are everywhere else.
+- Gym notes, Streak freeze and Lifetime stats showed a bare "—" for Free, which a screen reader reads as a dash. They say "Not included".
+- Each row in the shared list carried an emoji the screen never showed (it draws its own icons); gone.
+- Also swept 16 screens at tablet width (768): no errors, nothing past the edge, columns held to a readable width where they should be.
+- Seen in the browser at 390 wide, light and dark, as the free account. Tests: app 571, server 295, shared rules 197; typecheck.
+
 ## Update 144 · "Check you’re online"
 
-*10 Nov 2026 · the commit "Offline: a hosted GymGO says check you're online, not start it"*
+*10 Nov 2026 · `6965de2`*
 
 - When the server couldn't be reached, sign-in said "Start GymGO on this computer, then try again". That's right while you run GymGO yourself, but GymGO online (or a release build with its own server) would have told a visitor to start a server they don't have. A hosted GymGO now says "Can’t reach GymGO. Check you’re online, then try again."
 - Hosted means the build names a server on the internet: not localhost, a .local name or a home-network address (192.168…, 10…, 172.16 to 31…). GymGO online counts as hosted unless it's opened at localhost.

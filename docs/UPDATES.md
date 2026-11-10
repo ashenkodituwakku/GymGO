@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 154 · Checks on this session's website work (no change to the app)
+
+*10 Nov 2026 · the commit "Docs: the Pages build tried both ways, real gym pages audited, region data measured"*
+
+- **The GitHub Pages build**, which Updates 148 to 150 changed the page and the entry point of, was run here as Pages runs it and opened both ways. With its server off it comes up as the limited version; with it on, as the full one. Either way the loading screen goes and there are no errors. It hasn't been published from here.
+- **A correction to Update 151.** The gym address in that audit wasn't a real gym's, so what was checked there was the "Gym not found" page (and, in Update 152, a gym's sheet inside Explore). Four real gym pages have now been audited in light and dark, two of them with every row opened: all clean.
+- **A production build of all of it** opens 20 main screens with no errors, one main landmark each, and no loading screen left behind.
+- **Loading only your region's gyms** was measured and left alone. Fetching the US and European gyms later would save about 100 KB of a 2.2 MB first visit, roughly a tenth of a second on fast 4G. Every screen reads the built-in gyms directly and the limited website has nothing else, so the rework isn't worth what it could break.
+
 ## Update 153 · Sheets take the keyboard
 
-*10 Nov 2026 · the commit "Keyboard: a sheet that opens takes focus, and gives it back"*
+*10 Nov 2026 · `9d31c5a`*
 
 - On the website, opening Filters or a gym from the keyboard left focus on the button behind the sheet, and Tab walked through the page underneath before it reached anything in the sheet. A sheet that opens now takes focus: the next Tab is its first control (Reset, then Today, Tomorrow, the times).
 - When the sheet closes (Escape, or its own button), focus goes back to what opened it: the Filters button, or the gym's card.

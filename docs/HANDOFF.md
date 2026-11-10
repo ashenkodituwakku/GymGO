@@ -106,6 +106,13 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Checks, no code** (10 Nov). scripts/pages-build.sh run locally
+  (SERVER_URL a local server) and opened with the server off (limited)
+  and on (full): both fine. Real gym ids for browser checks:
+  `anytime-fitness-collingwood`, `101fitness-melbourne`,
+  `dohertys-gym-brunswick` (`melbourne-1` is not a gym). Measured and
+  declined: lazy-loading usa-data and eu-data saves about 100 KB sent of
+  2.2 MB; lib/query.ts `BUNDLED_GYMS` is read synchronously everywhere.
 - **Sheets take focus on the web** (10 Nov). SheetBackground.tsx
   `SheetClip takesFocus` wraps its children in `FocusedWhileOpen` (web
   only): focuses itself on mount, restores the opener on unmount, marks

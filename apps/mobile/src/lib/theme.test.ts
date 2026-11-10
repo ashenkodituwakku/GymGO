@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // The font files are for the app's bundler, not for Node.
 vi.mock('./fonts', () => ({ BUNDLED_FACES: {} }));
 import { StyleSheet } from 'react-native';
-import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, applyTweaks, color, cornersFor, customAccent, dimApplies, face, hslHex, DEFAULT_TWEAKS, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, tintOver, type } from './theme';
-import { mix, STANDARD_RADIUS } from './looks';
+import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, applyTweaks, color, cornersFor, customAccent, dimApplies, face, hslHex, DEFAULT_TWEAKS, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
+import { mix, over, STANDARD_RADIUS } from './looks';
 
 const channel = (value: number) => (value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
 const luminance = (hex: string) => {
@@ -44,9 +44,12 @@ describe('the colours', () => {
           const onSegment = contrast(color.label, color.segmentRaised);
           if (onSegment < 4.5) failures.push(`${name}: text on a chosen segment is ${onSegment.toFixed(2)}`);
           // A quiet button: the accent's words on its own tint, on the page and on a card.
+          // And secondary words on the grey fill (a tile), the same two ways.
           for (const ground of ['card', 'groupedBackground'] as const) {
-            const onTint = contrast(color.brandOnTint, tintOver(color[ground], color, scheme));
+            const onTint = contrast(color.brandOnTint, over(color[ground], color.brandTint));
             if (onTint < 4.5) failures.push(`${name}: a quiet button's words on ${ground} are ${onTint.toFixed(2)}`);
+            const onFill = contrast(color.labelSecondaryOnFill, over(color[ground], color.fill));
+            if (onFill < 4.5) failures.push(`${name}: secondary words on a fill tile on ${ground} are ${onFill.toFixed(2)}`);
           }
         }
       }
@@ -208,6 +211,15 @@ describe('Liquid Glass', () => {
 describe('your adjustments', () => {
   afterEach(() => {
     applyTweaks(DEFAULT_TWEAKS);
+  });
+
+  it('works out a see-through colour over a solid ground', () => {
+    // 12% of the accent over white, and over the page's grey.
+    expect(over('#FFFFFF', 'rgba(88, 86, 214, 0.12)')).toBe('#EBEBFA');
+    expect(over('#F2F2F7', 'rgba(88, 86, 214, 0.12)')).toBe('#E0DFF3');
+    // A solid colour is itself; a ground that can't be read comes back as it was.
+    expect(over('#FFFFFF', '#101010')).toBe('#101010');
+    expect(over('rgba(255, 255, 255, 0.5)', 'rgba(0, 0, 0, 0.1)')).toBe('rgba(255, 255, 255, 0.5)');
   });
 
   it('makes your own accent readable at every hue, in light and dark', () => {

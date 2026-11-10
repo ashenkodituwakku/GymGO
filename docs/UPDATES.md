@@ -9,9 +9,22 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 152 · The audit, with things open
+
+*10 Nov 2026 · the commit "Accessibility: dialogs have names, GymPal's starters are a group, grey-on-grey text"*
+
+Update 151 audited screens as they load. This one opened things first: Filters, a gym's sheet, GymPal, a workout before and after Start, and the Home widget gallery.
+
+- **Dialogs had no name.** In a browser GymPal, a choice sheet, a new card, the widget gallery and a gym's Google page each open as a dialog, and a screen reader said only "dialog". Each now says what it is: "GymPal", the sheet's own title ("Sort gyms by"), "New card", "Widgets", "Doherty's Gym on Google". GymPal, the sort sheet and the gallery were opened and checked; the new-card pop-up and the Google page use the same code and weren't opened here.
+- **GymPal's starter questions** were marked as a list holding buttons, which is an error to a screen reader. They're a named group.
+- **Membership prices** on a gym's sheet were a "region" with no name; now a group called "Membership prices".
+- **Grey words on grey tiles.** The widget gallery's descriptions (4.1:1) and the small captions under This month's figures (4.3:1) were under the 4.5 minimum where the tile sits on the page's grey. The theme has a colour for secondary words on the grey fill, checked in every look, mode and accent by the same test as the rest; the gym initials tile from Update 151 uses it too.
+
+All six opened states are clean in light and dark, and the screens audited before still are. App tests 577 (1 new); the school report and README say 1,236 tests. Not yet tried with a screen reader on a phone.
+
 ## Update 151 · An accessibility audit, and what it found
 
-*10 Nov 2026 · the commit "Accessibility: sheets read as their contents, a main landmark, contrast fixes"*
+*10 Nov 2026 · `bdf9f22`*
 
 GymGO's own checks look for controls with no name and for contrast on a few screens. This round ran axe, the standard set of accessibility rules, over 32 screens in the browser, light and dark. What it found, now fixed:
 

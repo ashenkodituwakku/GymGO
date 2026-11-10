@@ -93,7 +93,8 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
   const url = record.location.isDemoData ? null : joinUrl(record);
   const disagree = conflictOf(tiers);
   return (
-    <View style={styles.banner} accessibilityRole="summary">
+    // A named group in a browser: "summary" came out there as a region with no name, which says nothing.
+    <View style={styles.banner} role="group" aria-label="Membership prices">
       <Txt variant="label" color={color.brand} style={styles.center}>
         {tiers.length > 1 ? `Membership · ${tiers.length} options` : 'Membership'}
       </Txt>

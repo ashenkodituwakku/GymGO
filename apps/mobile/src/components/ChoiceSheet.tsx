@@ -13,6 +13,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDialogName } from '@/lib/dialogName';
 import { haptic } from '@/lib/haptics';
 import { HIT, color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
@@ -63,12 +64,13 @@ export function ChoiceSheet<K extends string>({
     });
   };
 
+  const dialogName = useDialogName(title);
   const dim = useAnimatedStyle(() => ({ opacity: shown.value }));
   const rise = useAnimatedStyle(() => ({ opacity: Math.min(1, shown.value * 1.6), transform: [{ translateY: (1 - shown.value) * 48 }] }));
 
   return (
     <Modal visible transparent animationType="none" onRequestClose={close} statusBarTranslucent navigationBarTranslucent>
-      <View style={styles.root}>
+      <View style={styles.root} ref={dialogName}>
         <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dim]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={close} accessible={false} />
         </Animated.View>

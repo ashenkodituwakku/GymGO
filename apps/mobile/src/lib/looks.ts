@@ -104,6 +104,20 @@ export function mix(a: string, b: string, amount: number): string {
   return toHex(x.map((c, i) => c + (y[i]! - c) * amount));
 }
 
+/**
+ * A see-through colour ("rgba(r, g, b, a)") as it comes out over a solid
+ * ground. A solid colour comes back as it is; where either can't be read
+ * (a see-through ground, say), the ground does.
+ */
+export function over(ground: string, wash: string): string {
+  if (hex(wash)) return wash;
+  const parts = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/.exec(wash);
+  const under = hex(ground);
+  if (!parts || !under) return ground;
+  const share = Number(parts[4]);
+  return toHex(under.map((c, i) => c + (Number(parts[i + 1]) - c) * share));
+}
+
 /** The colour with an alpha, as rgba(). */
 export function alpha(value: string, opacity: number): string {
   const x = hex(value);

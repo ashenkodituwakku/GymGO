@@ -204,7 +204,7 @@ export function MonthWidget({ log, unit }: { log: LogState; unit: WeightUnit }) 
             <Txt variant="subhead" style={face('bold')} numberOfLines={1}>
               {stat.value}
             </Txt>
-            <Txt variant="caption" color={color.labelSecondary}>
+            <Txt variant="caption" color={color.labelSecondaryOnFill}>
               {stat.label}
             </Txt>
           </View>

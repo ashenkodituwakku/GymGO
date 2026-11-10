@@ -81,6 +81,7 @@ import { onGymPalRequest } from '@/lib/gymPalBus';
 import { useHomeEditing } from '@/lib/homeEditing';
 import { GYMPAL_BODY, GYMPAL_DUMBBELL } from '@/lib/gymPalArt';
 import { suggestionsFor } from '@/lib/gymPalSuggestions';
+import { useDialogName } from '@/lib/dialogName';
 import { haptic } from '@/lib/haptics';
 import { tabBarBottom } from '@/lib/layout';
 import { useThemeChoice } from '@/lib/themePrefs';
@@ -524,6 +525,7 @@ function Chat({
   onClose: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const dialogName = useDialogName('GymPal');
   const side = useThemeChoice().gymPalSide;
   const { height } = useWindowDimensions();
   const scroll = useRef<ScrollViewInstance>(null);
@@ -549,7 +551,7 @@ function Chat({
     : [styles.sheet, { top: insets.top + space[3], paddingBottom: insets.bottom }];
 
   return (
-    <View style={StyleSheet.absoluteFill}>
+    <View style={StyleSheet.absoluteFill} ref={dialogName}>
       {/* Tapping outside closes it, as any sheet; a screen reader closes it with Close. */}
       <Animated.View entering={FadeIn.duration(180).reduceMotion(ReduceMotion.System)} style={StyleSheet.absoluteFill}>
         <Pressable style={[StyleSheet.absoluteFill, styles.scrim, wide && styles.scrimLight]} onPress={onClose} accessible={false} importantForAccessibility="no" />
@@ -601,9 +603,10 @@ function Chat({
             onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}
           >
             <Bubble line={{ id: 0, role: 'assistant', content: GREETING }} />
-            {/* Somewhere to start, for this screen: one tap asks it. */}
+            {/* Somewhere to start, for this screen: one tap asks it. A named group, not a list: its
+                buttons aren't list items, and a list of anything else is an error to a screen reader. */}
             {lines.length === 0 && !pending && (
-              <View style={styles.suggestions} accessibilityRole="list" aria-label="Questions to start with">
+              <View style={styles.suggestions} role="group" aria-label="Questions to start with">
                 {suggestions.map((question) => (
                   <Pressable
                     key={question}

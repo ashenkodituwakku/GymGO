@@ -30,6 +30,7 @@ import { Icon } from './Icon';
 import { EASE_IN, EASE_OUT, Pressable, Pressy, damp } from './motion';
 import { PrimaryButton, Txt } from './ui';
 import type { CollectedGym } from '@/lib/collection';
+import { useDialogName } from '@/lib/dialogName';
 import { haptic } from '@/lib/haptics';
 import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
 import { cardFor, gemInfo, rarityLabel, rarityRank, type Rarity } from '@/lib/rarity';
@@ -116,6 +117,7 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
 }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const dialogName = useDialogName(pull.viewing ? 'Your card' : 'New card');
   const { leave, dim, panel, cardStyle, wordsStyle, glowStyle } = useChoreography();
   const look = cardFor(pull.entry);
   const gem = gemInfo(look.gem);
@@ -153,7 +155,7 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
 
   return (
     <Modal visible transparent animationType="none" onRequestClose={close} statusBarTranslucent navigationBarTranslucent>
-      <View style={styles.root}>
+      <View style={styles.root} ref={dialogName}>
         {/* The page stays in view behind, dimmed; a tap on it closes the pop-up. */}
         <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dim]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={close} accessible={false} />

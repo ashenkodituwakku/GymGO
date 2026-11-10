@@ -106,6 +106,13 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **axe on opened states** (10 Nov). lib/dialogName.ts `useDialogName(name)`
+  gives a React Native Modal its name in a browser (GymPal, ChoiceSheet,
+  CardReveal, HomeEditor's gallery, GoogleModal): use it on any new Modal.
+  GymPal's starters and JoinGym's MembershipBanner are `role="group"`.
+  theme.ts: `color.labelSecondaryOnFill` for secondary text on `color.fill`
+  (HomeEditor gallery, HomeWidgets stat captions, NoPhoto initials);
+  looks.ts `over(ground, wash)`. App 577 tests (total 1,236).
 - **axe audit** (10 Nov). explore.tsx: the three sheets get
   `accessible={false}` with role and label null, and `WebSheetHandle` on
   the web; app/_layout.tsx: `role="main"` on the root in a browser;

@@ -30,6 +30,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import { useDialogName } from '@/lib/dialogName';
 import { haptic } from '@/lib/haptics';
 import { HOME_GROUPS, homeWidget, type HomeWidget, type HomeWidgetId } from '@/lib/homeWidgets';
 import { useBottomClearance } from '@/lib/layout';
@@ -548,11 +549,12 @@ export function WidgetGallery({
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const [resetting, setResetting] = useTapAgain();
+  const dialogName = useDialogName('Widgets');
   // An explicit height: a browser let the sheet grow to all its widgets, and then it couldn't scroll.
   const top = insets.top + space[6];
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <View style={StyleSheet.absoluteFill}>
+      <View style={StyleSheet.absoluteFill} ref={dialogName}>
         <Pressable style={[StyleSheet.absoluteFill, styles.scrim]} onPress={onClose} accessible={false} importantForAccessibility="no" />
         <View style={[styles.sheet, { top, height: height - top }]} accessibilityViewIsModal>
           <View style={styles.sheetHead}>
@@ -591,7 +593,7 @@ export function WidgetGallery({
                       <View style={styles.galleryWords}>
                         <View style={styles.flex}>
                           <Txt variant="headline">{widget.title}</Txt>
-                          <Txt variant="footnote" color={color.labelSecondary}>
+                          <Txt variant="footnote" color={color.labelSecondaryOnFill}>
                             {widget.detail}
                           </Txt>
                         </View>

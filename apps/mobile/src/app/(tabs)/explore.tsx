@@ -851,10 +851,12 @@ function MapScreen() {
   );
 
   const pillPlace = filters.placeName === THIS_AREA ? 'This area' : filters.placeName === YOUR_LOCATION ? 'Near you' : filters.placeName;
+  // Anything but GymGO's own gyms as normal: demo, offline, map data or a Pro place.
+  const pillNotable = Boolean(locked || showingDemo || filters.bbox || outsideCities || data.status !== 'live');
   const statusPill = (
     <Glass style={styles.pill}>
       {/* GymGO's own gyms, as normal, are just the place you searched, as the list says ("live" read like live crowds); a dot marks anything else. */}
-      {(locked || showingDemo || filters.bbox || outsideCities || data.status !== 'live') && (
+      {pillNotable && (
         <View style={[styles.pillDot, { backgroundColor: locked ? color.brand : showingDemo ? color.maybe : data.status === 'live' ? color.good : color.no }]} />
       )}
       <Txt variant="footnote" style={styles.pillText}>
@@ -931,7 +933,8 @@ function MapScreen() {
         )}
 
         <DesktopPanel left={PANEL_GAP} bottom={PANEL_GAP + clearance}>
-          <View style={styles.panelTop}>{statusPill}</View>
+          {/* The panel's own heading names the place; the pill comes only to say something more. */}
+          {pillNotable && <View style={styles.panelTop}>{statusPill}</View>}
           <ScrollView keyboardShouldPersistTaps="handled">{results(false)}</ScrollView>
         </DesktopPanel>
 

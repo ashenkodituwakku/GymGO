@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 136 · No repeated place name on a computer
+
+*10 Nov 2026 · the commit "Explore on a computer: no place label repeating the panel's heading"*
+
+- On a computer, Explore's panel opened with a label naming the place ("Melbourne CBD") right above its heading saying the same ("Near Melbourne CBD"). The label now shows there only when it has more to say (demo gyms, an offline copy, map data, a place that's part of Pro). On a phone it stays on the map, where it names the place while the list is pulled down.
+- Also checked at 1280 points: Friends (its new rows), Templates in dark, a gym's page.
+- Not yet seen on a phone.
+
 ## Update 135 · Cities counted the same way everywhere
 
-*10 Nov 2026 · the commit "Collection: cities counted alike for you and your friends, never a blank one"*
+*10 Nov 2026 · `02820db`*
 
 - Your collection and a friend's totals now count cities the same way: the same name in any capitals is one city ("melbourne" and "Melbourne"), and a gym collected far from any known city, with no suburb on the map, no longer counts as a city of its own. Before, the app counted capitals apart and the server counted the blank.
 - Tests cover both (each failed before the fix).

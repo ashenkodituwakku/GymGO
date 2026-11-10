@@ -106,6 +106,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Desktop panel label** (10 Nov). explore.tsx `pillNotable`; the
+  DesktopPanel's `panelTop` renders only when it's true; the phone's top
+  bar always shows the pill.
 - **Cities counted alike** (10 Nov). collection.ts `collectionStats` and
   domain social.ts `collectionTotals` both skip blank cities and compare
   lower-cased names.

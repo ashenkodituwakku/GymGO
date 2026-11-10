@@ -17,7 +17,7 @@ import { MATCH, suggestionKey, title, type Suggestion } from '@/lib/suggest';
 import type { RecentPlace } from '@/lib/recentPlaces';
 import { EMPTY, PLACEHOLDER_SHORT, mapPrompt, TIER, lookupLine, searchPrompt, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
 import type { Lookup } from '@/lib/app-state';
-import { SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
+import { QUICK_BUDGET, SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
 import { NO_WEB_OUTLINE, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { MarkImage, useGymMark } from './BrandLogo';
@@ -326,7 +326,7 @@ export function ResultsContent({
         {/* The budget that's on, set from anywhere (Home's tile, Filters); tapping it clears it. */}
         {tracksPrices(filters.countryCode) && (
           <Chip
-            label={`Under ${moneyLabel(filters.budgetMinor ?? localBudget(3000, filters.countryCode), filters.countryCode)}`}
+            label={`Under ${moneyLabel(filters.budgetMinor ?? localBudget(QUICK_BUDGET, filters.countryCode), filters.countryCode)}`}
             selected={filters.budgetMinor !== null}
             onPress={onToggleBudget}
           />

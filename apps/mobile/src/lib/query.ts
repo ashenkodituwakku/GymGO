@@ -422,6 +422,8 @@ export function activeFilterCount(filters: Filters): number {
 
 export const TIME_PRESETS = [6 * 60, 9 * 60, 12 * 60, 17 * 60, 19 * 60, 21 * 60] as const;
 export const BUDGET_PRESETS = [null, 1500, 2000, 2500, 3000, 4000] as const;
+/** The budget one tap sets, from Home's shortcut or Explore's chip: the same in both (in the country's own sizes, by localBudget). */
+export const QUICK_BUDGET = 3000;
 export const DUMBBELL_PRESETS = [null, 20, 30, 40, 50] as const;
 
 /** The equipment offered as quick chips, most-asked first. */

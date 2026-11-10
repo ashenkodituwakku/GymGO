@@ -37,7 +37,7 @@ import { useRecentPlaces, type RecentPlace } from '@/lib/recentPlaces';
 import type { PackTown } from '@/lib/countryPack';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
 import { resultFor } from '@/lib/results';
-import { SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, atWorldCity, boxDrift, inArea, moveTo, nameForArea, runSearchShared } from '@/lib/query';
+import { QUICK_BUDGET, SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, atWorldCity, boxDrift, inArea, moveTo, nameForArea, runSearchShared } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
 import { CHILD_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
@@ -607,7 +607,7 @@ function MapScreen() {
 
   const toggleBudget = useCallback(() => {
     // In the country's own sizes: A$30, but ¥3,000.
-    setFilters((current) => ({ ...current, budgetMinor: current.budgetMinor !== null ? null : localBudget(3000, current.countryCode) }));
+    setFilters((current) => ({ ...current, budgetMinor: current.budgetMinor !== null ? null : localBudget(QUICK_BUDGET, current.countryCode) }));
   }, []);
 
   const toggleHours = useCallback((need: HoursNeed) => {

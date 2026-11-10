@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 139 · One quick budget
+
+*10 Nov 2026 · the commit "Budget: Home's shortcut and Explore's chip set the same amount"*
+
+- Home's budget shortcut said "Under A$25" while Explore's budget chip offered "Under A$30", so one tap set a different budget depending on where you were. Both now set the same, A$30 (in each country's own sizes, so not A$30 in Japan). Filters still offers A$15 to A$40.
+- Also checked: 24 screens at 390 in light with no errors and nothing wider than the screen.
+- Not yet seen on a phone.
+
 ## Update 138 · One title on the legal pages
 
-*10 Nov 2026 · the commit "Legal pages: one title, the page's own heading"*
+*10 Nov 2026 · `42b466e`*
 
 - The Terms of Service, Privacy Policy and Community Guidelines no longer say their name twice (in the bar and above the page): the bar is empty and the page's own title is its heading, which a screen reader now hears as one, as on the other pages with a big title.
 - Also looked at, with nothing to change: an exercise's page, Moderation, and the editors for your own workout and exercise.

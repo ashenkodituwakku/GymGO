@@ -43,7 +43,7 @@ import { lookupLine, noGymsLine, searchPrompt, visitWhen } from '@/lib/copy';
 import { countryInSentence, countryName } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { PLACES, activeCities, cityNear, cityPlace, localBudget, moneyLabel, tracksPrices, worldCitiesIn, type AppPlace, type City, type WorldCity } from '@/lib/places';
-import { YOUR_LOCATION, atPlace, atWorldCity, moveTo, nearLabel, nextVisitAt, nowIn, runSearchShared, visitIsLater, type Filters } from '@/lib/query';
+import { QUICK_BUDGET, YOUR_LOCATION, atPlace, atWorldCity, moveTo, nearLabel, nextVisitAt, nowIn, runSearchShared, visitIsLater, type Filters } from '@/lib/query';
 import { todayThere, tripDatesLabel, tripToShow, tripWhen, useTrips } from '@/lib/trips';
 import { resultsById } from '@/lib/results';
 import { PAGE_COLUMN, color, dropShadow, face, radius, shadow, space, themed } from '@/lib/theme';
@@ -182,8 +182,8 @@ export default function Home() {
     tracksPrices(filters.countryCode)
       ? {
           icon: 'money',
-          title: `Under ${moneyLabel(localBudget(2500, filters.countryCode), filters.countryCode)}`,
-          onPress: () => pick((current) => ({ ...current, budgetMinor: localBudget(2500, current.countryCode) })),
+          title: `Under ${moneyLabel(localBudget(QUICK_BUDGET, filters.countryCode), filters.countryCode)}`,
+          onPress: () => pick((current) => ({ ...current, budgetMinor: localBudget(QUICK_BUDGET, current.countryCode) })),
         }
       : { icon: 'clock', title: 'Lunchtime', onPress: () => pick((current) => ({ ...current, ...visit(12 * 60) })) },
   ];

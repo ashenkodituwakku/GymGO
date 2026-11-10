@@ -413,6 +413,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Desktop panel label (10 Nov): on a computer, Explore's panel shows the place label only when it says more than the heading | ✅ | ✅ in the browser at 1280 (panel opens on the search) and 390 dark (label still on the map); app 567 tests, typecheck | n/a | n/a | ⚠️ the website gets it with the next publish |
 | Password rule once (10 Nov): the create-account password box says "A new password"; the 8-character rule is its live check | ✅ | ✅ in the browser, signed out (placeholders read back); a11y scan of 18 screens, contrast on 8 in light and dark; app 567 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 | Legal pages, one title (10 Nov): the legal pages' name shown once, as the page's heading | ✅ | ✅ in the browser at 390, Terms and Privacy, light and dark; app 567 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
+| One quick budget (10 Nov): Home's budget shortcut and Explore's chip both set A$30 (local sizes elsewhere) | ✅ | ✅ in the browser: Home shows "Under A$30" and tapping it turns on Explore's "Under A$30" chip; 24-screen sweep at 390 light; app 567 tests, typecheck | n/a | ❌ not on a phone | ⚠️ the website gets it with the next publish |
 
 **What "tested locally" means for the phone app, exactly:**
 

@@ -65,7 +65,7 @@ GymGO needs **Node.js 22.13 or newer** and an internet connection the first time
 
 **Trying GymGO Pro:** the launcher makes a test account on your own computer only. In the app, go to Profile → Sign in, then use email `dev@gymgo.test` and password `GymGO-dev-pro-2026`.
 
-**Checking the code:** `npx pnpm@10 verify` runs the type checks, lint and all 1,222 automated tests.
+**Checking the code:** `npx pnpm@10 verify` runs the type checks, lint and all 1,224 automated tests.
 
 ## Known issues
 

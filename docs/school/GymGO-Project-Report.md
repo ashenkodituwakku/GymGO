@@ -120,7 +120,7 @@ Screenshots from these tests are in the `test-evidence` folder.
 | Maps | MapLibre with OpenFreeMap map tiles; Apple MapKit on iPhone |
 | Server and database | Node.js with its built-in SQLite database |
 | Gym data | 23 Melbourne gyms researched from their own websites (with sources), plus about 3,000 more from OpenStreetMap |
-| Automated tests | Vitest (1,222 tests across 11 packages, all passing on 10 November 2026) |
+| Automated tests | Vitest (1,224 tests across 11 packages, all passing on 10 November 2026) |
 | Browser testing | Playwright (screens checked at 320, 390 and 1280 points wide, light and dark) |
 | Version control | Git and GitHub |
 
@@ -165,7 +165,7 @@ Screenshots from these tests are in the `test-evidence` folder.
 
 ## Developer testing already done
 
-- **Automated tests:** 1,222 tests across all 11 packages, all passing (app 567, server 295, shared rules 197, website 39, gym data 124).
+- **Automated tests:** 1,224 tests across all 11 packages, all passing (app 569, server 295, shared rules 197, website 39, gym data 124).
 - **Every screen:** 24 screens opened at 320 points wide in dark mode, with no page errors and no sideways scrolling.
 - **Accessibility:** no unnamed buttons on 10 key screens; the colour contrast check passes; animations stop with Reduce Motion on.
 - **Not yet done:** GymGO hasn't been run on a real iPhone or Android phone, only in the browser and in automated checks.
@@ -205,7 +205,7 @@ Screenshots from these tests are in the `test-evidence` folder.
 | NFR08 | Met | T2, plus automated tests that unknown prices are never treated as $0. |
 | NFR09 | Met | |
 | NFR10 | Met | Passwords are hashed with scrypt; progress photos stay on the device; searches are rate-limited. |
-| NFR11 | Met | 1,222 tests passing. |
+| NFR11 | Met | 1,224 tests passing. |
 | NFR12 | Met | Runs on free services. Paid extras (GymGO Pro payments) are optional and switched off. |
 
 **Reflection.** GymGO meets most of its requirements in the browser. The gaps are mainly things that need a real phone (NFR04, NFR06, FR17, FR19) or information from outside the team: gyms publishing their details (FR06) and an API key for GymPal (FR21). Next we would test it on real phones in Expo Go, run the user tests with peers, and add facts as gyms or members supply them, without guessing.

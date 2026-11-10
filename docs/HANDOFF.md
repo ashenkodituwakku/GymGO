@@ -106,6 +106,16 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **By design, not a bug: 404s for gym photos and icons** (10 Nov). A gym
+  with no website photo or icon answers 404 (cached a day by the browser,
+  `public, max-age=86400`; an unknown id `no-store`; siteicons.test.ts),
+  and the app shows "No photo supplied" or the initials. In a local run
+  with `GYMGO_SITE_ICONS=off` every icon is a 404, so the browser console
+  lists many; that's the test setting, not a fault. Also checked on 10
+  Nov: a workout in progress at 320 and 390 (real exercise history, rest
+  bar clear of Finish), the free account's empty Saved, Progress and
+  Collection ("I’m here" is the real users' button; only the dev account,
+  which collects from anywhere, sees "Collect"), and a trip's page.
 - **Deposit line** (10 Nov). present.ts `depositLine` reworded (test
   updated); PlaceCard's demo notice uses a colon.
 - **One quick budget** (10 Nov). query.ts `QUICK_BUDGET = 3000`, used by

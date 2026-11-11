@@ -9,9 +9,16 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 158 · The keyboard run, finished (no change to the app)
+
+*11 Nov 2026 · the commit "Docs: a workout finished from the keyboard, end to end"*
+
+- Update 155 said a workout could be logged and finished from the keyboard alone. When that was written, Finish workout had only been shown to be a named button that takes focus; it hadn't been tabbed to and pressed. It now has been: start the suggested workout, type a weight and reps, tick the set, Tab to Finish workout, Enter, then Enter again on "Finish anyway" (focus is put on it, under the line saying the unticked sets won't be logged). The app shows "Workout done" and the account's log has one more workout.
+- Finish workout is the last but one stop on the page, after every set of every exercise, so it is a long way by Tab on a six-exercise workout. Nothing was changed for that.
+
 ## Update 157 · Moderation shows that it's loading
 
-*11 Nov 2026 · the commit "Moderation: rows stand in while a queue loads"*
+*11 Nov 2026 · `3971b69`*
 
 - This round held each screen's own request for six seconds, as a slow connection would, on Friends, the monthly challenge, My workouts, the leaderboard, Collection, Moderation, the monthly report and Progress. All but one showed rows standing in for what was coming.
 - Moderation showed its headings ("Photos waiting", "Reviews waiting") with nothing under them and no sign anything was on its way. Its five lists (photos, reviews, owners' updates, gym claims, member reports) now show the same stand-in rows as the rest, each named for a screen reader, until the list arrives.

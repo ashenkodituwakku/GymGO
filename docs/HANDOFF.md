@@ -106,6 +106,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Moderation loading rows** (11 Nov). AccountContent.tsx (reviews,
+  photos, member reports) and Moderation.tsx (owners' updates, gym
+  claims) render `LinesSkeleton` while their list is null and there's
+  no error.
 - **Server errors passed on** (11 Nov). lib/apiErrors.ts
   `failureText(error, unreached)`: an ApiError's own message, else the
   "couldn't reach" line. Used by workouts/index.tsx, workouts/[id].tsx and

@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 157 · Moderation shows that it's loading
+
+*11 Nov 2026 · the commit "Moderation: rows stand in while a queue loads"*
+
+- This round held each screen's own request for six seconds, as a slow connection would, on Friends, the monthly challenge, My workouts, the leaderboard, Collection, Moderation, the monthly report and Progress. All but one showed rows standing in for what was coming.
+- Moderation showed its headings ("Photos waiting", "Reviews waiting") with nothing under them and no sign anything was on its way. Its five lists (photos, reviews, owners' updates, gym claims, member reports) now show the same stand-in rows as the rest, each named for a screen reader, until the list arrives.
+- Tried in the browser on all three Moderation tabs, with the requests held and after they arrive. App tests 578.
+
 ## Update 156 · Two more "couldn't reach the server" that weren't
 
-*11 Nov 2026 · the commit "Account and Collection: a server error isn't called unreachable"*
+*11 Nov 2026 · `dcd2940`*
 
 - **Download my data** (Account) said "Couldn't reach the server" for any failure. When the server answers but can't do it, the row now says "Couldn't prepare it".
 - **Deleting your collection** said it couldn't reach the server, and to try again when you're online, for any failure. If the server answered, its own words are shown, followed by "Nothing was deleted."

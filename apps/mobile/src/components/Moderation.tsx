@@ -13,6 +13,7 @@ import { haptic } from '@/lib/haptics';
 import { timeLabel } from '@/lib/copy';
 import { priceLabel, type GymRecord, type OwnerUpdatePayload } from '@gymgo/domain';
 import { color, face, radius, space, themed } from '@/lib/theme';
+import { LinesSkeleton } from './Skeleton';
 import { ChoiceChip, PrimaryButton, Txt } from './ui';
 
 /** Approve in one tap; Reject opens the reasons, and a reason sends it. */
@@ -101,6 +102,7 @@ export function OwnerUpdateQueue({ token, records, onChanged }: { token: string;
           {error}
         </Txt>
       )}
+      {queue === null && !error && <LinesSkeleton lines={2} label="Loading the owners’ updates waiting" />}
       {queue?.length === 0 && (
         <Txt variant="subhead" color={color.labelSecondary}>
           Nothing to check.
@@ -151,6 +153,7 @@ export function ClaimQueue({ token, records }: { token: string; records: GymReco
           {error}
         </Txt>
       )}
+      {queue === null && !error && <LinesSkeleton lines={2} label="Loading the gym claims waiting" />}
       {queue?.length === 0 && (
         <Txt variant="subhead" color={color.labelSecondary}>
           Nothing to check.

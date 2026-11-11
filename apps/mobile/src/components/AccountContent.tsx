@@ -19,6 +19,7 @@ import { haptic } from '@/lib/haptics';
 import { color, radius, shadow, space, themed } from '@/lib/theme';
 import { DecideButtons, PHOTO_REASONS, REVIEW_REASONS } from './Moderation';
 import { Icon } from './Icon';
+import { LinesSkeleton } from './Skeleton';
 import { PrimaryButton, Txt } from './ui';
 
 function messageFor(error: unknown): string {
@@ -62,6 +63,8 @@ export function ModerationQueue({ token, records, onPublished }: { token: string
         Reviews waiting {queue ? `(${queue.length})` : ''}
       </Txt>
       {error && <Notice icon="info" text={error} tone="danger" />}
+      {/* Still on its way: rows standing in, not a heading with nothing under it. */}
+      {queue === null && !error && <LinesSkeleton lines={2} label="Loading the reviews waiting" />}
       {queue?.length === 0 && (
         <Txt variant="subhead" color={color.labelSecondary}>
           Nothing to moderate.
@@ -122,6 +125,7 @@ export function MemberReportQueue({ token, records }: { token: string; records: 
         Latest member reports {reports ? `(${reports.length})` : ''}
       </Txt>
       {error && <Notice icon="info" text={error} tone="danger" />}
+      {reports === null && !error && <LinesSkeleton lines={2} label="Loading the latest member reports" />}
       {reports?.length === 0 && (
         <Txt variant="subhead" color={color.labelSecondary}>
           No reports yet.
@@ -255,6 +259,7 @@ export function PhotoQueue({ token, records, onPublished }: { token: string; rec
         Photos waiting {queue ? `(${queue.length})` : ''}
       </Txt>
       {error && <Notice icon="info" text={error} tone="danger" />}
+      {queue === null && !error && <LinesSkeleton lines={2} label="Loading the photos waiting" />}
       {queue?.length === 0 && (
         <Txt variant="subhead" color={color.labelSecondary}>
           Nothing to check.

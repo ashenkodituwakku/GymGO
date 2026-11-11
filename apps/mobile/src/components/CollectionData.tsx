@@ -13,6 +13,7 @@ import { useState, type ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { PrimaryButton, Txt } from '@/components/ui';
+import { ApiError } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { collectionStats } from '@/lib/collection';
 import { haptic } from '@/lib/haptics';
@@ -97,10 +98,11 @@ export function useDeleteCollection(): { open: () => void; toggle: () => void; o
       await reset();
       haptic.success();
       setStep('closed');
-    } catch {
+    } catch (error) {
       haptic.warn();
       setStep('warning');
-      setProblem('Couldn’t reach the GymGO server, so nothing was deleted. Try again when you’re online.');
+      // The server's own words if it answered; either way nothing has gone.
+      setProblem(error instanceof ApiError ? `${error.message} Nothing was deleted.` : 'Couldn’t reach the GymGO server, so nothing was deleted. Try again when you’re online.');
     }
   };
   const cards = stats.gyms === 1 ? 'your card' : `all ${stats.gyms} of your cards`;

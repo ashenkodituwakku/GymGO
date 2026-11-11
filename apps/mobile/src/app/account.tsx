@@ -260,8 +260,9 @@ export default function AccountScreen() {
               setExported('Preparing…');
               await downloadMyData(token);
               setExported('Saved');
-            } catch {
-              setExported('Couldn’t reach the server');
+            } catch (error) {
+              // A server that answered but couldn't do it isn't out of reach.
+              setExported(error instanceof ApiError ? 'Couldn’t prepare it' : 'Couldn’t reach the server');
             }
           }}
         />

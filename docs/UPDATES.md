@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 156 · Two more "couldn't reach the server" that weren't
+
+*11 Nov 2026 · the commit "Account and Collection: a server error isn't called unreachable"*
+
+- **Download my data** (Account) said "Couldn't reach the server" for any failure. When the server answers but can't do it, the row now says "Couldn't prepare it".
+- **Deleting your collection** said it couldn't reach the server, and to try again when you're online, for any failure. If the server answered, its own words are shown, followed by "Nothing was deleted."
+- Download my data was tried in the browser both ways. The collection one wasn't, as trying it risks the test account's collection; it's the same one-line change, type-checked.
+- A search of the app found no others. App tests 578.
+
 ## Update 155 · When the server says no, say what it said
 
-*11 Nov 2026 · the commit "Workouts: a server error is passed on, not called unreachable"*
+*11 Nov 2026 · `eec191b`*
 
 - This round broke each screen's own request two ways (the server answering with an error, and not answering at all) on Friends, the monthly challenge, My workouts, the leaderboard, Collection, a gym's page and the moderation queue. Every one stayed up and said something sensible, with no stray text.
 - One was wrong: My workouts, a saved workout's page and its editor said they "couldn't reach the GymGO server" for any failure, including when the server had answered with an error or said the workout no longer exists. They now pass on what the server said, and keep "couldn't reach" for when that's true.

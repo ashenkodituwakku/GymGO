@@ -20,9 +20,9 @@ import type { TrainingSession } from './training';
 import { pickApiBase, serverIsHosted } from './serverAddress';
 import { LIMITED } from './limited';
 import { WEBSITE_AUTO, serverMissed } from './website';
-import { ApiError, OfflineError, failure, readBody } from './apiErrors';
+import { ApiError, OfflineError, failure, failureText, readBody } from './apiErrors';
 
-export { ApiError, OfflineError, readBody };
+export { ApiError, OfflineError, failureText, readBody };
 
 export { SERVER_PREFIX, pickApiBase } from './serverAddress';
 

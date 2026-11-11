@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError, OfflineError, failure, readBody } from './apiErrors';
+import { ApiError, OfflineError, failure, failureText, readBody } from './apiErrors';
 
 describe('reading what the server answered', () => {
   it('reads its JSON, and nothing as nothing', () => {
@@ -54,5 +54,13 @@ describe('a failed answer', () => {
     expect(failure(503, { error: 'Couldn’t make a friend code just now. Try again?' })).toBeInstanceOf(ApiError);
     expect(failure(401, { error: 'Sign in.' })).toMatchObject({ status: 401, code: null });
     expect(failure(500, {})).toBeInstanceOf(ApiError);
+  });
+
+  it('tells someone what the server said, and only says it couldn’t be reached when it couldn’t', () => {
+    const unreached = 'Couldn’t reach the GymGO server to load your workouts.';
+    expect(failureText(failure(500, { error: 'The server had a problem.' }), unreached)).toBe('The server had a problem.');
+    expect(failureText(failure(404, { error: 'No workout with that id.' }), unreached)).toBe('No workout with that id.');
+    expect(failureText(new OfflineError('The GymGO server isn’t answering.'), unreached)).toBe(unreached);
+    expect(failureText(new TypeError('Failed to fetch'), unreached)).toBe(unreached);
   });
 });

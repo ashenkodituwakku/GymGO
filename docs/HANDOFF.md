@@ -106,6 +106,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Server errors passed on** (11 Nov). lib/apiErrors.ts
+  `failureText(error, unreached)`: an ApiError's own message, else the
+  "couldn't reach" line. Used by workouts/index.tsx, workouts/[id].tsx and
+  workout-edit.tsx, which called every failure unreachable. Use it for
+  new `.catch` handlers. App 578 tests (total 1,237).
 - **Checks, no code** (10 Nov). scripts/pages-build.sh run locally
   (SERVER_URL a local server) and opened with the server off (limited)
   and on (full): both fine. Real gym ids for browser checks:

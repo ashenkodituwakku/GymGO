@@ -19,7 +19,7 @@ import { ScreenOptions } from '@/components/ScreenOptions';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Card, PrimaryButton, TextField, Txt } from '@/components/ui';
 import { startSession, useActiveSessionGlance } from '@/lib/activeSession';
-import { ApiError, api, type SavedWorkout } from '@/lib/api';
+import { ApiError, api, failureText, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { askToDiscard } from '@/lib/askToDiscard';
 import { haptic } from '@/lib/haptics';
@@ -68,7 +68,7 @@ export default function WorkoutEditScreen() {
           setDraft(filled);
           setOriginal(JSON.stringify(filled));
         })
-        .catch(() => setProblem('Couldn’t reach the GymGO server to load this workout.'));
+        .catch((error: unknown) => setProblem(failureText(error, 'Couldn’t reach the GymGO server to load this workout.')));
       return;
     }
     const handed = takePlan();

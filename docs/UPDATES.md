@@ -9,6 +9,15 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 155 · When the server says no, say what it said
+
+*11 Nov 2026 · the commit "Workouts: a server error is passed on, not called unreachable"*
+
+- This round broke each screen's own request two ways (the server answering with an error, and not answering at all) on Friends, the monthly challenge, My workouts, the leaderboard, Collection, a gym's page and the moderation queue. Every one stayed up and said something sensible, with no stray text.
+- One was wrong: My workouts, a saved workout's page and its editor said they "couldn't reach the GymGO server" for any failure, including when the server had answered with an error or said the workout no longer exists. They now pass on what the server said, and keep "couldn't reach" for when that's true.
+- Also tried from the keyboard alone, and needing no change: building a workout (the body figure's muscles take focus and have names; the list underneath works too), entering a set, ticking it, and reaching Finish workout.
+- App tests 578 (1 new); the school report and README say 1,237 tests.
+
 ## Update 154 · Checks on this session's website work (no change to the app)
 
 *10 Nov 2026 · `97ba715`, and the note after it*

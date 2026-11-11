@@ -60,3 +60,13 @@ export function failure(status: number, data: Record<string, unknown>): ApiError
   }
   return new ApiError(status, said ?? 'Something went wrong.', code, data);
 }
+
+/**
+ * What to say when a request failed. A server that answered has said what
+ * went wrong, and that's passed on; `unreached` is for when it couldn't be
+ * reached at all, so nobody is told the server is unreachable when it has
+ * just refused or failed.
+ */
+export function failureText(error: unknown, unreached: string): string {
+  return error instanceof ApiError ? error.message : unreached;
+}

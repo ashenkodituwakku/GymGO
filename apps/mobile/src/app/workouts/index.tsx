@@ -16,7 +16,7 @@ import { PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { leadExercise } from '@/lib/exerciseGlyphs';
 import { useActiveSessionGlance } from '@/lib/activeSession';
-import { api, type SavedWorkout } from '@/lib/api';
+import { api, failureText, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
@@ -49,7 +49,7 @@ export default function MyWorkouts() {
         setWorkouts(result.workouts);
         setProblem(null);
       })
-      .catch(() => setProblem('Couldn’t reach the GymGO server to load your workouts.'));
+      .catch((error: unknown) => setProblem(failureText(error, 'Couldn’t reach the GymGO server to load your workouts.')));
   }, [token]);
   useFocusEffect(load);
 

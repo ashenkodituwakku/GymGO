@@ -9,7 +9,7 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt } from '@/components/ui';
 import { LinesSkeleton, ListSkeleton } from '@/components/Skeleton';
 import { useActiveSessionGlance } from '@/lib/activeSession';
-import { api, type SavedWorkout } from '@/lib/api';
+import { api, failureText, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { useOwnTraining } from '@/lib/ownTraining';
 import { haptic } from '@/lib/haptics';
@@ -44,7 +44,7 @@ export default function SavedWorkoutScreen() {
     api
       .workouts(token)
       .then((result) => setSaved(result.workouts.find((item) => item.id === id) ?? 'missing'))
-      .catch(() => setProblem('Couldn’t reach the GymGO server to load this workout.'));
+      .catch((error: unknown) => setProblem(failureText(error, 'Couldn’t reach the GymGO server to load this workout.')));
   }, [token, id]);
 
   if (saved === 'missing' || !token) {

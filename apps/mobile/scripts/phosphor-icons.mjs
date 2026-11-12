@@ -29,7 +29,8 @@ const ICONS = {
   'globe-hemisphere-west': ['duotone'],
   'seal-check': ['duotone'],
   'question': ['duotone'],
-  barbell: ['duotone'],
+  // The sidebar: outline, filled when it's the page you're on (Workout's barbell is also two-tone elsewhere).
+  barbell: ['regular', 'fill', 'duotone'],
   'person-simple-run': ['duotone'],
   lightning: ['duotone'],
   fire: ['duotone'],
@@ -54,6 +55,13 @@ const ICONS = {
   'phone-call': ['duotone'],
   'shuffle-angular': ['duotone'],
   'share-network': ['duotone'],
+  // The sidebar's other places.
+  'chart-line-up': ['regular', 'fill'],
+  'clipboard-text': ['regular', 'fill'],
+  'calendar-dots': ['regular', 'fill'],
+  cards: ['regular', 'fill'],
+  'users-three': ['regular', 'fill'],
+  palette: ['regular', 'fill'],
 };
 
 const suffix = { regular: '', fill: '-fill', duotone: '-duotone' };

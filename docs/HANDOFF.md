@@ -106,6 +106,20 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Sidebar in Liquid Glass** (12 Nov). components/Sidebar.tsx `Pane`:
+  web is `panelRefraction(w, h)` (liquidGlass.web.ts: `data-glass="panel"`,
+  a bend only in an 18 pt band along the rim, sized in 8 pt steps) with the
+  tab bar's `glassWashThin` wash and `glassMark('panel-shine')`; phones use
+  `Glass kind="control"`; `solidSurfaces()` gets the look's plate. The
+  selected row is `glassMark('pill')` on `brandTint`. Every row's icon is
+  Phosphor (scripts/phosphor-icons.mjs: barbell, chart-line-up,
+  clipboard-text, calendar-dots, cards, users-three, palette, regular and
+  fill). The docked sidebar is now rendered by app/_layout.tsx's
+  ThemedStack beside the Stack (`dockedBeside(mode, pathname, signedIn)`
+  in lib/navLayout.ts: not on /welcome or signed out), not by the tabs
+  layout, so it stays beside pushed pages; GymPal's left offset uses the
+  same rule. Headless Chromium here doesn't blur the app's page under any
+  of its glass (the tab bar's either), though it blurs a plain test page.
 - **Moderation loading rows** (11 Nov). AccountContent.tsx (reviews,
   photos, member reports) and Moderation.tsx (owners' updates, gym
   claims) render `LinesSkeleton` while their list is null and there's

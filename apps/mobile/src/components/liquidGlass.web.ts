@@ -11,6 +11,8 @@
  *  - the lift with a brighter layer and a spring, driven by the tab bar.
  *
  * Views opt in with `glassMark(kind)`, which becomes a data attribute.
+ * `panel` is the sidebar's: the tab bar's glass, drawn as a tall floating
+ * pane, with a bend only along its rim (`panelRefraction`).
  *
  * How solid the bar and controls are follows your Liquid Glass level
  * (theme.ts): their washes are scaled by `--gg-glass-k`, set on the page by
@@ -23,13 +25,14 @@ let installed = false;
 /**
  * The displacement map: red shifts sideways, green up and down, 128 means
  * "stay put". Neutral in the middle, bending inwards near the edges, the
- * way thick glass does.
+ * way thick glass does. `xEdge` and `yEdge` are how far in from each side
+ * the bend reaches, as a share of the width and the height.
  */
-function displacementMap(): string {
+function displacementMap(xEdge = 0.14, yEdge = 0.34): string {
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'>
 <defs>
-<linearGradient id='x' x1='0' x2='1' y1='0' y2='0'><stop offset='0' stop-color='rgb(255,0,0)'/><stop offset='0.14' stop-color='rgb(128,0,0)'/><stop offset='0.86' stop-color='rgb(128,0,0)'/><stop offset='1' stop-color='rgb(0,0,0)'/></linearGradient>
-<linearGradient id='y' x1='0' x2='0' y1='0' y2='1'><stop offset='0' stop-color='rgb(0,255,0)'/><stop offset='0.34' stop-color='rgb(0,128,0)'/><stop offset='0.66' stop-color='rgb(0,128,0)'/><stop offset='1' stop-color='rgb(0,0,0)'/></linearGradient>
+<linearGradient id='x' x1='0' x2='1' y1='0' y2='0'><stop offset='0' stop-color='rgb(255,0,0)'/><stop offset='${xEdge.toFixed(4)}' stop-color='rgb(128,0,0)'/><stop offset='${(1 - xEdge).toFixed(4)}' stop-color='rgb(128,0,0)'/><stop offset='1' stop-color='rgb(0,0,0)'/></linearGradient>
+<linearGradient id='y' x1='0' x2='0' y1='0' y2='1'><stop offset='0' stop-color='rgb(0,255,0)'/><stop offset='${yEdge.toFixed(4)}' stop-color='rgb(0,128,0)'/><stop offset='${(1 - yEdge).toFixed(4)}' stop-color='rgb(0,128,0)'/><stop offset='1' stop-color='rgb(0,0,0)'/></linearGradient>
 </defs>
 <rect width='100' height='100' fill='url(#x)'/>
 <rect width='100' height='100' fill='url(#y)' style='mix-blend-mode:screen'/>
@@ -71,6 +74,34 @@ html[data-glass-refract] [data-glass="bar"] {
     0 1px 4px rgba(0,0,0,0.08);
   outline: 0.5px solid rgba(0,0,0,0.05);
 }
+/* The sidebar: the bar's glass as a tall pane, blurred more (it sits over
+   whole cards and pages, not a strip of the map, and what's behind should
+   read as colour, not as a second, smudged page), its shadow spread wider. */
+[data-glass="panel"] {
+  background: linear-gradient(180deg, rgba(255,255,255,calc(0.42 * var(--gg-glass-k, 1))) 0%, rgba(255,255,255,calc(0.26 * var(--gg-glass-k, 1))) 100%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%) brightness(1.04);
+  backdrop-filter: blur(30px) saturate(180%) brightness(1.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    inset 1px 0 0 rgba(255,255,255,0.55),
+    inset -1px 0 0 rgba(255,255,255,0.35),
+    inset 0 -1px 0 rgba(255,255,255,0.45),
+    inset 0 0 30px rgba(255,255,255,0.3),
+    0 18px 44px rgba(0,0,0,0.12),
+    0 2px 10px rgba(0,0,0,0.06);
+  outline: 0.5px solid rgba(0,0,0,0.06);
+}
+/* Light along the pane's top, fading within its first rows, and a glint in the far corner. */
+[data-glass="panel-shine"] {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.55) 0px, rgba(255,255,255,0.12) 56px, rgba(255,255,255,0) 140px),
+    radial-gradient(120px 90px at 100% 100%, rgba(255,255,255,0.35), rgba(255,255,255,0));
+  pointer-events: none;
+}
+/* The place you're on: a pill of the accent, lit along its top like the glass it sits in. */
+[data-glass="pill"] {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(255,255,255,0.25), 0 1px 3px rgba(0,0,0,0.06);
+}
 [data-glass="shine"] {
   background:
     radial-gradient(140% 100% at 12% -30%, rgba(255,255,255,0.7), rgba(255,255,255,0) 52%),
@@ -111,6 +142,26 @@ html[data-gg-scheme="dark"] [data-glass="control"] {
     0 8px 24px rgba(0,0,0,0.45),
     0 1px 4px rgba(0,0,0,0.3);
   outline: 0.5px solid rgba(255,255,255,0.08);
+}
+html[data-gg-scheme="dark"] [data-glass="panel"] {
+  background: linear-gradient(180deg, rgba(58,58,62,calc(0.54 * var(--gg-glass-k, 1))) 0%, rgba(36,36,40,calc(0.46 * var(--gg-glass-k, 1))) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    inset 1px 0 0 rgba(255,255,255,0.09),
+    inset -1px 0 0 rgba(255,255,255,0.06),
+    inset 0 -1px 0 rgba(255,255,255,0.06),
+    inset 0 0 30px rgba(255,255,255,0.04),
+    0 18px 44px rgba(0,0,0,0.5),
+    0 2px 10px rgba(0,0,0,0.3);
+  outline: 0.5px solid rgba(255,255,255,0.08);
+}
+html[data-gg-scheme="dark"] [data-glass="panel-shine"] {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.12) 0px, rgba(255,255,255,0.03) 56px, rgba(255,255,255,0) 140px),
+    radial-gradient(120px 90px at 100% 100%, rgba(255,255,255,0.06), rgba(255,255,255,0));
+}
+html[data-gg-scheme="dark"] [data-glass="pill"] {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(255,255,255,0.04), 0 1px 3px rgba(0,0,0,0.3);
 }
 html[data-gg-scheme="dark"] [data-glass="shine"] {
   background:
@@ -192,7 +243,7 @@ export function sizeRefraction(width: number, height: number): void {
   }
 }
 
-export function glassMark(kind: 'bar' | 'shine' | 'lens' | 'lift'): object {
+export function glassMark(kind: 'bar' | 'shine' | 'lens' | 'lift' | 'panel-shine' | 'pill'): object {
   return { dataSet: { glass: kind } };
 }
 
@@ -230,6 +281,44 @@ export function refractionFor(width: number, height: number): object {
     document.head.appendChild(style);
   }
   return { dataSet: { glass: 'control', refract: key } };
+}
+
+/**
+ * The sidebar's glass pane, with its bend: only a thin band along the rim
+ * (about 18 points), as thick glass bends what's behind its edge and leaves
+ * the middle true. A control's bend reaches a third of the way in, which on
+ * a pane as tall as the window would swim. Sized in steps of 8 points, so a
+ * window being resized doesn't make a filter for every pixel.
+ */
+export function panelRefraction(width: number, height: number): object {
+  const plain = { dataSet: { glass: 'panel' } };
+  if (typeof document === 'undefined' || width < 40 || height < 40) return plain;
+  const w = Math.round(width / 8) * 8;
+  const h = Math.round(height / 8) * 8;
+  const key = `panel-${w}x${h}`;
+  if (!sized.has(key)) {
+    sized.add(key);
+    const id = `${FILTER_ID}-${key}`;
+    const band = 18;
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('width', '0');
+    svg.setAttribute('height', '0');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.style.position = 'absolute';
+    svg.innerHTML = `<filter id="${id}" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" x="0" y="0" width="${w}" height="${h}" color-interpolation-filters="sRGB">
+    <feImage href="${displacementMap(band / w, band / h)}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="map"/>
+    <feDisplacementMap in="SourceGraphic" in2="map" scale="28" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>`;
+    document.body.appendChild(svg);
+    const style = document.createElement('style');
+    style.textContent = `html[data-glass-refract] [data-refract="${key}"] {
+  -webkit-backdrop-filter: url(#${id}) blur(30px) saturate(180%) brightness(1.04);
+  backdrop-filter: url(#${id}) blur(30px) saturate(180%) brightness(1.04);
+}`;
+    document.head.appendChild(style);
+  }
+  return { dataSet: { glass: 'panel', refract: key } };
 }
 
 /**

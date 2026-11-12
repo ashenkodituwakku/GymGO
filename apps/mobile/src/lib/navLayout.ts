@@ -23,6 +23,18 @@ export function navMode(layout: NavLayout, width: number): NavMode {
   return width >= SIDEBAR_WIDE ? 'docked' : 'drawer';
 }
 
+/** The pages the docked sidebar steps aside for: the welcome tour, which is the whole screen. */
+const SIDEBAR_STEPS_ASIDE = new Set(['/welcome']);
+
+/**
+ * Whether the docked sidebar is beside this page. Once you're in it stays
+ * beside every page, as an iPad's does, not only the four tabs: Progress
+ * opened from it used to cover it, leaving a back button to find your way.
+ */
+export function dockedBeside(mode: NavMode, pathname: string, signedIn: boolean): boolean {
+  return mode === 'docked' && signedIn && !SIDEBAR_STEPS_ASIDE.has(pathname);
+}
+
 /** What the sidebar lists. Tabs first, then the places you'd go most from Profile. */
 export interface SidebarItem {
   href: string;

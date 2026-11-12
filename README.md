@@ -379,11 +379,15 @@ your accent glows behind them.
     the foot of the screen), or **Sidebar**: a menu down the left with the
     tabs, then Training (Workout, Progress, My workouts, Programme) and You
     (Collection, Friends, Appearance). From 960 points wide it stays open
-    beside the page; on a phone, **Menu** at the foot (naming the tab you're
-    on) slides it in over the page, and choosing a place, a tap beside it,
-    its close button, Escape or Android's back closes it. A page that isn't
-    a tab opens over the tabs with its back button, as it does from the tab
-    bar. GymPal's button moves beside Menu, or clear of the docked sidebar.
+    beside every page (Progress and the rest too, not only the tabs); on a
+    phone, **Menu** at the foot (naming the tab you're on) slides it in over
+    the page, and choosing a place, a tap beside it, its close button,
+    Escape or Android's back closes it. Either way the menu is a pane of
+    Liquid Glass floating in from the screen's edges, as iPadOS 26 draws
+    its sidebars (the tab bar's glass, as clear as your Liquid Glass level;
+    a plain plate in a solid look or at 0%), every place with an icon from
+    the tab bar's set, the place you're on in a pill of your accent. GymPal's
+    button moves beside Menu, or clear of the docked sidebar.
   - **GymPal's button** (everyone, while GymPal is on): **Edge tab** (the
     default: a small tab flush with the screen's edge, low down; tap it or
     pull it in), **Corner** (his button in the bottom corner) or **Hidden**

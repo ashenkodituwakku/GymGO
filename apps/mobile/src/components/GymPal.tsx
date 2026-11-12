@@ -85,7 +85,7 @@ import { useDialogName } from '@/lib/dialogName';
 import { haptic } from '@/lib/haptics';
 import { tabBarBottom } from '@/lib/layout';
 import { useThemeChoice } from '@/lib/themePrefs';
-import { MENU_BUTTON, SIDEBAR_WIDTH, navMode } from '@/lib/navLayout';
+import { MENU_BUTTON, SIDEBAR_WIDTH, dockedBeside, navMode } from '@/lib/navLayout';
 import { LIMITED } from '@/lib/limited';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
@@ -300,7 +300,7 @@ export function GymPal() {
         ? insets.bottom + EDGE
         : tabBarBottom(insets.bottom) + (besideBar ? (TAB_BAR - BUTTON) / 2 : TAB_BAR + 12);
   // The screen's edge on that side (beside a docked sidebar on the left), and the corner button's place in from it.
-  const flush = side === 'left' ? insets.left + (mode === 'docked' && TABS.has(pathname) ? SIDEBAR_WIDTH : 0) : insets.right;
+  const flush = side === 'left' ? insets.left + (dockedBeside(mode, pathname, true) ? SIDEBAR_WIDTH : 0) : insets.right;
   const show = () => setOpen(true);
 
   return (

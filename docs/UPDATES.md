@@ -9,6 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 159 · The sidebar in Liquid Glass, and it stays put
+
+*12 Nov 2026 · the commit "Sidebar: a floating pane of Liquid Glass, beside every page"*
+
+You asked for the sidebar to look better, in Liquid Glass.
+
+- The sidebar (Appearance → Layout → Sidebar) is now a pane of Liquid Glass floating in from the screen's edges, with rounded corners and a soft shadow, as iPadOS 26 draws its sidebars. It's the tab bar's own glass: Apple's on iOS 26, the imitation on older iPhones, and in a browser a blur with light along its rim and a slight bend at its edges (Chrome and Edge). How clear it is follows your Liquid Glass level; at 0%, or in a solid look, it's a plain plate.
+- On a phone, Menu slides the same glass pane in over the page, which now shows through it, dimmed less than before.
+- Every place has an icon from the same set as the tab bar (it was two sets of different sizes): outline, filled for the place you're on. The place you're on sits in a pill of your accent, lit along its top. Under a mouse a row shades as you point at it. "TRAINING" and "YOU" are now "Training" and "You", like the rest of the app's headings.
+- On a wide screen the sidebar stays beside every page. Opening Progress, My workouts, Collection or any other page from it used to cover it, leaving only a back button; now the page opens beside it with its place marked. It steps aside only for the welcome tour and when you're signed out.
+- Checked in the browser at 1280 and 1000 points and on a 390-point phone, in light and dark, at 0%, 50% and 100% Liquid Glass. In these screenshots the page behind the glass isn't blurred, under the tab bar either, though the same browser blurs a plain test page; so the blur itself hasn't been seen working here. Not yet seen on a phone.
+
 ## Update 158 · The keyboard run, finished (no change to the app)
 
 *11 Nov 2026 · the commit "Docs: a workout finished from the keyboard, end to end"*

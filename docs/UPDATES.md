@@ -9,6 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 161 · Even spacing beside the sidebar, and room on the map
+
+*14 Nov 2026 · the commit "Sidebar and Explore: even spacing, and a card in the results' place when there's no room"*
+
+You said the sidebar's spacing was off, especially on the map, where the panel beside it felt squished.
+
+- The sidebar's pane now sits 16 points in from the window's edges, the same as Explore's panels, so the two line up at the top and the bottom with an even 16-point gap between them. Its corners match the panels' too. Before, the sidebar was 12 points in, the panels stopped short of the window's foot, and the gap between them was uneven.
+- When a gym's card or Filters is open and there isn't room for it beside the results plus a fair amount of map (at least 360 points), the card now takes the results' place instead of squeezing in as a third pane. Close it and the results come back, scrolled where you left them. Before, at 1280 points with the sidebar there was only a sliver of map left, and at 1000 points the card ran off the window.
+- With the sidebar, that means the card sits beside the results from about 1440 points wide. Without the sidebar the same rule applies, from about 1190 points; between 900 and 1190 points the card now covers the results there too, where before it left the map a strip.
+- While a card covers the results, they can't be clicked, tabbed to or read out by a screen reader.
+- Checked in the browser at 1280 and 1000 points, light and dark, with a gym's card open and closed. Not yet seen on a phone (phones use the sheet and are unchanged).
+
 ## Update 160 · The sidebar hovers over the page
 
 *14 Nov 2026 · the commit "Sidebar: hover over the page, not beside it"*

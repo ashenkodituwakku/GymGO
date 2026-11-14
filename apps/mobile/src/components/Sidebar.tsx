@@ -52,8 +52,12 @@ const ICON: Record<string, PhosphorName> = {
   '/appearance': 'palette',
 };
 
-/** How far the pane floats in from the window's edges. */
-const EDGE = 12;
+/**
+ * How far the pane floats in from the window's edges: the same as Explore's
+ * panels (PANEL_GAP there), so beside them the two line up at the top and
+ * the foot, with the same gap between them as round the window's edge.
+ */
+const EDGE = 16;
 /** A row's height: a full touch target. */
 const ROW = 44;
 
@@ -306,10 +310,12 @@ const pillRadius = () => Math.min(ROW / 2, radius.pill);
 const styles = themed(() =>
   StyleSheet.create({
     // Over the page's left edge, the pane floating in from the window's; taps beside the pane reach the page.
-    docked: { position: 'absolute', top: 0, bottom: 0, left: 0, width: SIDEBAR_WIDTH, paddingLeft: EDGE, paddingRight: space[1] },
+    // The pane reaches to SIDEBAR_WIDTH, where content beside it (and Explore's panels, past a gap) begins.
+    docked: { position: 'absolute', top: 0, bottom: 0, left: 0, width: SIDEBAR_WIDTH, paddingLeft: EDGE },
     fill: { flex: 1 },
-    pane: { borderRadius: radius.xl, borderCurve: 'continuous' },
-    paneClip: { borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },
+    // Explore's panels' corners, so the panes side by side are one family.
+    pane: { borderRadius: radius.xl + 4, borderCurve: 'continuous' },
+    paneClip: { borderRadius: radius.xl + 4, borderCurve: 'continuous', overflow: 'hidden' },
     // The look's plate: its card colour and shadow (a solid look, or 0% Liquid Glass).
     plate: { backgroundColor: color.card, ...shadow.float },
     // Real Liquid Glass casts a soft shadow of its own; the older phones' imitation needs a deeper one.
@@ -318,7 +324,7 @@ const styles = themed(() =>
     },
     wash: { backgroundColor: color.glassWashThin },
     // The list scrolls inside the pane's rounded corners.
-    scroller: { borderRadius: radius.xl, overflow: 'hidden' },
+    scroller: { borderRadius: radius.xl + 4, overflow: 'hidden' },
     list: { paddingHorizontal: space[2] + 2, paddingTop: space[4], paddingBottom: space[3], gap: space[1] },
     brand: { paddingHorizontal: space[3], paddingBottom: space[4] },
     section: { gap: 2, paddingBottom: space[3] },

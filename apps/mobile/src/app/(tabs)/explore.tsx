@@ -73,6 +73,13 @@ const PEEK = 150;
 const WIDE = 900;
 const PANEL_WIDTH = 390;
 const PANEL_GAP = 16;
+/**
+ * The least map worth leaving beside the panels. With less room than a
+ * gym's card (or Filters) beside the results and this much map, the card
+ * takes the results' place instead: beside a docked sidebar a third pane
+ * left a sliver of map, and under 1060 points it ran off the window.
+ */
+const MIN_MAP = 360;
 
 // Made once: a component identity that changes would remount the sheet.
 
@@ -912,8 +919,14 @@ function MapScreen() {
   if (wide) {
     // Filters only when asked for, and a card only while there's a gym to show.
     const shown = panel === 'filters' || (panel === 'place' && selected) ? panel : null;
-    // The docked sidebar hovers over the map's left edge: the panels start past it.
-    const panelsWidth = start + PANEL_GAP + PANEL_WIDTH + (shown ? PANEL_GAP + PANEL_WIDTH : 0);
+    // The card beside the results when there's room for both and a fair map; otherwise in their
+    // place (closing it shows them again, scrolled where they were).
+    const besideResults = width >= start + PANEL_GAP * 3 + PANEL_WIDTH * 2 + MIN_MAP;
+    const covered = shown !== null && !besideResults;
+    // The docked sidebar hovers over the map's left edge: the panels start past it, and end
+    // where it does (the same gap from the window's foot), rather than a tab bar's clearance up.
+    const panelsWidth = start + PANEL_GAP + PANEL_WIDTH + (shown && besideResults ? PANEL_GAP + PANEL_WIDTH : 0);
+    const foot = PANEL_GAP + (start > 0 ? insets.bottom : clearance);
     return (
       <View style={styles.root}>
         {/* The map opens where the search is, so it waits for your country. */}
@@ -924,7 +937,7 @@ function MapScreen() {
             selectedId={selectedId}
             initialCentre={filters.centre}
             topInset={PANEL_GAP}
-            bottomInset={PANEL_GAP + clearance}
+            bottomInset={foot}
             leftInset={panelsWidth}
             showsUserLocation={here !== null}
             userLocation={here?.position ?? null}
@@ -938,14 +951,14 @@ function MapScreen() {
           <View style={styles.mapWaiting} />
         )}
 
-        <DesktopPanel left={start + PANEL_GAP} bottom={PANEL_GAP + clearance}>
+        <DesktopPanel left={start + PANEL_GAP} bottom={foot} hidden={covered}>
           {/* The panel's own heading names the place; the pill comes only to say something more. */}
           {pillNotable && <View style={styles.panelTop}>{statusPill}</View>}
           <ScrollView keyboardShouldPersistTaps="handled">{results(false)}</ScrollView>
         </DesktopPanel>
 
         {shown && (
-          <DesktopPanel left={start + PANEL_GAP * 2 + PANEL_WIDTH} bottom={PANEL_GAP + clearance}>
+          <DesktopPanel left={start + PANEL_GAP + (besideResults ? PANEL_GAP + PANEL_WIDTH : 0)} bottom={foot}>
             {shown === 'place' && selected ? (
               <ScrollView
                 stickyHeaderIndices={[0]}
@@ -1073,9 +1086,25 @@ function MapScreen() {
 }
 
 /** A floating glass panel down the left of a wide window. */
-function DesktopPanel({ left, bottom, children }: { left: number; bottom: number; children: ReactNode }) {
+function DesktopPanel({
+  left,
+  bottom,
+  hidden = false,
+  children,
+}: {
+  left: number;
+  bottom: number;
+  /** Under a card that's taken its place: kept, scrolled where it was, but not seen, reached or read out. */
+  hidden?: boolean;
+  children: ReactNode;
+}) {
   return (
-    <View style={[styles.panel, { left, bottom, width: PANEL_WIDTH }]}>
+    <View
+      style={[styles.panel, { left, bottom, width: PANEL_WIDTH }, hidden && styles.panelHidden]}
+      aria-hidden={hidden || undefined}
+      accessibilityElementsHidden={hidden}
+      importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
+    >
       <Glass kind="sheet" style={StyleSheet.absoluteFill} />
       {children}
     </View>
@@ -1375,6 +1404,8 @@ const styles = themed(() => StyleSheet.create({
     overflow: 'hidden',
     ...shadow.float,
   },
+  // Out of sight, and in a browser out of the Tab order too (visibility), while keeping where it was scrolled.
+  panelHidden: { opacity: 0, pointerEvents: 'none', ...(Platform.OS === 'web' ? ({ visibility: 'hidden' } as object) : null) },
   panelTop: { paddingHorizontal: space[4], paddingTop: space[4], paddingBottom: space[2] },
   panelClose: { alignItems: 'flex-end', paddingHorizontal: space[4], paddingTop: space[4] },
   desktopControls: { position: 'absolute', right: PANEL_GAP },

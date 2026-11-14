@@ -106,6 +106,16 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Even spacing beside the sidebar** (14 Nov). Sidebar.tsx `EDGE` is 16,
+  matching explore.tsx `PANEL_GAP`; the pane ends at SIDEBAR_WIDTH (no right
+  padding), so Explore's first panel at `start + PANEL_GAP` sits one gap
+  past it. Pane radius is `radius.xl + 4`, the panels'. In explore.tsx's
+  wide layout, `foot` is the panels' and map's bottom (the gap plus the
+  safe area when docked, the tab bar's clearance otherwise), and
+  `besideResults` (room for two panels and `MIN_MAP` 360 pt of map) decides
+  whether a card or Filters goes beside the results or over them; the
+  results panel stays mounted with `hidden`, so its scroll position
+  survives. This applies without the sidebar too (two panels from 1188 pt).
 - **Sidebar hovers over the page** (14 Nov). components/Sidebar.tsx
   `SidebarFrame` (around the Stack in app/_layout.tsx) draws pages full
   width and `DockedSidebar` absolutely over their left edge (`CHILD_TOUCH`,

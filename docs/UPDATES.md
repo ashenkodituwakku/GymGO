@@ -9,6 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 162 · The search stays put while the results scroll beside the map
+
+*14 Nov 2026 · the commit "Explore: the search and quick filters stay at the top of the panel beside the map"*
+
+You said scrolling the results panel beside the map didn't look laid out properly.
+
+- On a wide screen, the results panel scrolled as one piece: the search box and the quick filters went off the top, and the gyms ran up into the panel's rounded top corners and were cut off there.
+- Now the search box and the quick filters stay at the top of the panel, and only the results scroll, under a thin line that shows once you've scrolled. The search box also sits 16 points down from the panel's top edge, the same as a gym's card, instead of 4.
+- While you type, the suggestions show under the search box as before. In a short window they scroll on their own, so the quick filters don't get pushed out of the panel.
+- Phones are unchanged: the results sheet works as before.
+- Checked in the browser at 1280 by 800 (light and dark, scrolled and not) and 1280 by 600 (typing, with eight suggestions), and on a 390-point phone. Not yet seen on a phone with the sidebar, or on an iPad.
+
 ## Update 161 · Even spacing beside the sidebar, and room on the map
 
 *14 Nov 2026 · the commit "Sidebar and Explore: even spacing, and a card in the results' place when there's no room"*

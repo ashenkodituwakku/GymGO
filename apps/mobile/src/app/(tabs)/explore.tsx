@@ -954,7 +954,8 @@ function MapScreen() {
         <DesktopPanel left={start + PANEL_GAP} bottom={foot} hidden={covered}>
           {/* The panel's own heading names the place; the pill comes only to say something more. */}
           {pillNotable && <View style={styles.panelTop}>{statusPill}</View>}
-          <ScrollView keyboardShouldPersistTaps="handled">{results(false)}</ScrollView>
+          {/* It scrolls itself, under its search and quick filters. */}
+          {results(false)}
         </DesktopPanel>
 
         {shown && (

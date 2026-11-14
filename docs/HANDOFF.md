@@ -106,6 +106,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Explore's panel keeps its search pinned** (14 Nov). In ResultsContent.tsx
+  the pieces are consts (`search`, `recent`, `suggestionList`, `chips`,
+  `body`). With `inSheet` false (only the wide panel) it returns `pane`: a
+  head (search, then recent/suggestions in a `paneSuggestions` ScrollView
+  that shrinks first, then chips at `chipsRow`'s full height) over a
+  `paneBody` ScrollView with `scrolled` drawing the head's hairline. The
+  phone sheet's layout is unchanged. explore.tsx no longer wraps
+  `results(false)` in a ScrollView.
 - **Even spacing beside the sidebar** (14 Nov). Sidebar.tsx `EDGE` is 16,
   matching explore.tsx `PANEL_GAP`; the pane ends at SIDEBAR_WIDTH (no right
   padding), so Explore's first panel at `start + PANEL_GAP` sits one gap

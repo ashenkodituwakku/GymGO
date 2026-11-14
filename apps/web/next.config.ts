@@ -1,0 +1,36 @@
+import type { NextConfig } from 'next';
+
+const config: NextConfig = {
+  reactStrictMode: true,
+  /*
+   * The build output directory is overridable so a production build (or the
+   * end-to-end suite, which runs one) does not overwrite the artefacts a dev
+   * server is serving from.
+   */
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
+  // The domain package ships TypeScript source so web and future Expo clients
+  // compile the same rules rather than a drifting published build.
+  transpilePackages: ['@gymgo/domain', '@gymgo/demo-data'],
+  eslint: {
+    dirs: ['src'],
+  },
+  // The floating dev-tools badge sits over the page corner and ends up in
+  // every screenshot of the interface; build errors still surface as overlays.
+  devIndicators: false,
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          // No precise location, review evidence or identifiers are sent to
+          // third parties, so no third-party origins are permitted by default.
+          { key: 'X-Frame-Options', value: 'DENY' },
+        ],
+      },
+    ];
+  },
+};
+
+export default config;

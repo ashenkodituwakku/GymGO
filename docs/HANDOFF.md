@@ -1,0 +1,1272 @@
+# Handoff
+
+How to carry GymGO on in a new Claude Code session (another account, or
+after usage runs out). Kept up to date at every pushed step.
+
+## The prompt
+
+Paste this into a new Claude Code session that can reach
+`ashenkodituwakku/GymGO`:
+
+> You're continuing work on GymGO, a truthful gym finder (Expo app + Node
+> server) in the GitHub repo `ashenkodituwakku/GymGO`. Check out the branch
+> `claude/friendly-johnson-9rzxrj` and read `docs/HANDOFF.md` first, then
+> `README.md`, `docs/STATUS.md` and `SECURITY.md`. Follow the working rules
+> in the handoff exactly, and carry on from its "Next up" list. Push every
+> finished, tested step to `claude/friendly-johnson-9rzxrj`. Don't open a
+> pull request unless I ask.
+
+If the new session is told to develop on a different branch, it should
+still merge into and push `claude/friendly-johnson-9rzxrj`, because that's
+the branch the owner's launcher pulls.
+
+## Working rules
+
+- **Branches.** `claude/friendly-johnson-9rzxrj` is what the owner's
+  launcher (`gymgo -update`) pulls. Other sessions may push to it too:
+  always `git fetch`, then **merge** (never rebase or force-push), and
+  check `git merge-base --is-ancestor origin/claude/friendly-johnson-9rzxrj
+  HEAD` before pushing.
+- **Commits.** Small, verified steps with clear messages that say what
+  changed and how it was checked. No AI model names in commits or code. No
+  pull requests unless the owner asks.
+- **Truth first** (the product's rule). Unknown isn't no; a missing fee
+  isn't $0. Every fact about a gym carries its source and date. Never invent
+  prices, reviews, busyness, partnerships or photos for real gyms. A missing
+  image says "No photo supplied".
+- **Owner's go-ahead needed.** Spending money, deploying publicly,
+  contacting gyms, publishing, store submissions or live payments. Never
+  read or expose API keys or credentials unless asked.
+- **Check before saying done.** Run the tests and typecheck (see below),
+  look at the change in the browser with Playwright, and update
+  `docs/STATUS.md` honestly: say what was seen, and what wasn't (nothing
+  has run on a real iPhone from the sandbox). Report failures as failures.
+- **Number every update** (the owner asked, 3 Nov). Each piece of work
+  the owner asks for adds the next "Update N" at the top of
+  `docs/UPDATES.md` in the same push: a title, the date and its commits,
+  and a few plain lines on what changed (and anything not yet seen working).
+- **The Windows launcher** `scripts/gymgo.ps1` must stay ASCII-only
+  (`apps/web/src/launcher.test.ts` checks it).
+- **Speak plainly to the owner.** They test on a Windows PC (browser, with
+  Windows "Animation effects" off, so Reduce Motion is on) and an iPhone on
+  iOS 18 in Expo Go.
+
+## The code
+
+pnpm monorepo, Node 22+. `pnpm install`, then per package:
+`npx tsc --noEmit -p .` and `npx vitest run`. At last count: server 292,
+mobile 550, domain 191 and web 39 tests, all passing.
+
+- `apps/mobile`: the app (Expo SDK 58, React Native 0.88, expo-router,
+  Reanimated 4). Screens in `src/app`, shared pieces in `src/components`,
+  logic in `src/lib`.
+  - `src/lib/api.ts` is the server client. In development the app reaches
+    the server through the bundler at `/_gymgo`; `metro.config.js`
+    forwards it to port 4000 (`src/lib/serverAddress.ts`).
+  - `src/components/Glass.tsx`: every glass surface, the same opacity on
+    every device.
+  - `src/components/Skeleton.tsx`: skeleton loaders.
+  - `src/components/GymScan.tsx`: the check-in scan.
+  - `src/components/LegalText.tsx` and `src/app/legal/[doc].tsx`: the legal
+    documents.
+  - `src/lib/theme.ts`: palettes, accents and Pro "looks". Wrap styles in
+    `themed(() => StyleSheet.create(...))` and never keep a colour in a
+    module constant.
+- `apps/server`: Node with `node:sqlite` and raw http routes in
+  `src/app.ts`. `src/auth.ts` (scrypt, hashed tokens, reset links, rate
+  limits), `src/billing.ts` (Stripe, test mode until keys are set),
+  `src/legalPages.ts` (the public `/terms` pages and friends), `src/backup.ts`,
+  `src/devAccount.ts` (the local Pro test account `dev@gymgo.test` /
+  `GymGO-dev-pro-2026`, never on a hosted server).
+- `packages/domain`: pure rules shared by the app and server (search,
+  access, money, plans, collection). `legal.ts` holds the terms, privacy,
+  refund and community texts.
+- `deploy/`: Docker plus Caddy hosting (README → "Put GymGO online").
+  Not deployed anywhere yet.
+- `apps/web`: the older Next.js site; leave it alone unless asked.
+- Advertising: `docs/ADS.md` (what adding ads takes; nothing signed up for).
+- Logo: `apps/mobile/assets/brand/gymgo-logo.webp`, made into every icon
+  by `apps/mobile/scripts/brand-mark.mjs`.
+
+## Running it in the sandbox
+
+- **Server:**
+  `cd apps/server && GYMGO_DEV_PRO=on nohup node --no-warnings=ExperimentalWarning --import tsx src/main.ts &`
+- **App:** `cd apps/mobile && CI=1 npx expo start --web --port 8081 --clear`.
+  Metro has no file watcher here, so restart it with `--clear` after
+  editing.
+- **Process checks:** `pgrep -f "src/main.ts"` matches its own shell, so
+  check with `curl localhost:4000/api/health` instead. Never
+  `pkill -f <word>` with a word that's in your own command.
+- **Browser checks:** Playwright Chromium is at `/opt/pw-browsers/chromium`.
+  Map tiles (tiles.openfreemap.org) are blocked by the sandbox proxy, so
+  the map draws blank; markers and the UI still work.
+- **Docker:** start `dockerd &`, and pass `/root/.ccr/ca-bundle.crt` as the
+  `extra_ca` build secret.
+
+## Done recently (newest first)
+
+- **Sidebar folds away on the map** (14 Nov). lib/navLayout.ts
+  `SIDEBAR_FOLDS_AWAY` ('/explore'), `foldedOn()` and `sidebarInset()`
+  (SIDEBAR_WIDTH, SIDEBAR_FOLDED 60 or 0); SidebarFrame provides that as
+  `useSidebarInset()` and GymPal's left offset uses it. Sidebar.tsx
+  `FoldedSidebar`: the capsule (FOLD_WIDTH 44 × FOLD_HEIGHT 72, Glass
+  control) with local `open` state, opening `SidebarDrawer folding` (the
+  phone drawer at the docked pane's width, transparent backdrop, chevron
+  instead of the close cross). Navigating away unmounts it; arriving on
+  Explore starts folded. To fold on another page, add its path to the set.
+- **Explore's panel keeps its search pinned** (14 Nov). In ResultsContent.tsx
+  the pieces are consts (`search`, `recent`, `suggestionList`, `chips`,
+  `body`). With `inSheet` false (only the wide panel) it returns `pane`: a
+  head (search, then recent/suggestions in a `paneSuggestions` ScrollView
+  that shrinks first, then chips at `chipsRow`'s full height) over a
+  `paneBody` ScrollView with `scrolled` drawing the head's hairline. The
+  phone sheet's layout is unchanged. explore.tsx no longer wraps
+  `results(false)` in a ScrollView.
+- **Even spacing beside the sidebar** (14 Nov). Sidebar.tsx `EDGE` is 16,
+  matching explore.tsx `PANEL_GAP`; the pane ends at SIDEBAR_WIDTH (no right
+  padding), so Explore's first panel at `start + PANEL_GAP` sits one gap
+  past it. Pane radius is `radius.xl + 4`, the panels'. In explore.tsx's
+  wide layout, `foot` is the panels' and map's bottom (the gap plus the
+  safe area when docked, the tab bar's clearance otherwise), and
+  `besideResults` (room for two panels and `MIN_MAP` 360 pt of map) decides
+  whether a card or Filters goes beside the results or over them; the
+  results panel stays mounted with `hidden`, so its scroll position
+  survives. This applies without the sidebar too (two panels from 1188 pt).
+- **Sidebar hovers over the page** (14 Nov). components/Sidebar.tsx
+  `SidebarFrame` (around the Stack in app/_layout.tsx) draws pages full
+  width and `DockedSidebar` absolutely over their left edge (`CHILD_TOUCH`,
+  so the margins pass taps through). It gives the pages a safe area moved
+  in by SIDEBAR_WIDTH (so the page header's back button and centred title
+  shift) and `useSidebarInset()`. `ClearOfSidebar` pads each page's content:
+  the root Stack's screenLayout wraps every screen, the tabs layout every
+  tab but Explore, which adds `start` to its panels, its map's leftInset,
+  the area row and the time-zone warning. A new full-bleed screen should
+  either sit in ClearOfSidebar (automatic) or read useSidebarInset itself.
+- **Sidebar in Liquid Glass** (12 Nov). components/Sidebar.tsx `Pane`:
+  web is `panelRefraction(w, h)` (liquidGlass.web.ts: `data-glass="panel"`,
+  a bend only in an 18 pt band along the rim, sized in 8 pt steps) with the
+  tab bar's `glassWashThin` wash and `glassMark('panel-shine')`; phones use
+  `Glass kind="control"`; `solidSurfaces()` gets the look's plate. The
+  selected row is `glassMark('pill')` on `brandTint`. Every row's icon is
+  Phosphor (scripts/phosphor-icons.mjs: barbell, chart-line-up,
+  clipboard-text, calendar-dots, cards, users-three, palette, regular and
+  fill). The docked sidebar is now rendered by app/_layout.tsx's
+  ThemedStack beside the Stack (`dockedBeside(mode, pathname, signedIn)`
+  in lib/navLayout.ts: not on /welcome or signed out), not by the tabs
+  layout, so it stays beside pushed pages; GymPal's left offset uses the
+  same rule. Headless Chromium here doesn't blur the app's page under any
+  of its glass (the tab bar's either), though it blurs a plain test page.
+- **Moderation loading rows** (11 Nov). AccountContent.tsx (reviews,
+  photos, member reports) and Moderation.tsx (owners' updates, gym
+  claims) render `LinesSkeleton` while their list is null and there's
+  no error.
+- **Server errors passed on** (11 Nov). lib/apiErrors.ts
+  `failureText(error, unreached)`: an ApiError's own message, else the
+  "couldn't reach" line. Used by workouts/index.tsx, workouts/[id].tsx and
+  workout-edit.tsx, which called every failure unreachable. Use it for
+  new `.catch` handlers. App 578 tests (total 1,237). The same fix by
+  hand in account.tsx (Download my data) and CollectionData.tsx (delete).
+- **Checks, no code** (10 Nov). scripts/pages-build.sh run locally
+  (SERVER_URL a local server) and opened with the server off (limited)
+  and on (full): both fine. Real gym ids for browser checks:
+  `anytime-fitness-collingwood`, `101fitness-melbourne`,
+  `dohertys-gym-brunswick` (`melbourne-1` is not a gym). Measured and
+  declined: lazy-loading usa-data and eu-data saves about 100 KB sent of
+  2.2 MB; lib/query.ts `BUNDLED_GYMS` is read synchronously everywhere.
+- **Sheets take focus on the web** (10 Nov). SheetBackground.tsx
+  `SheetClip takesFocus` wraps its children in `FocusedWhileOpen` (web
+  only): focuses itself on mount, restores the opener on unmount, marks
+  itself `data-quiet-focus` from code (React Native for Web drops the
+  prop), which app/_layout.tsx's focus-ring CSS leaves out. Used by
+  Explore's gym and Filters sheets.
+- **axe on opened states** (10 Nov). lib/dialogName.ts `useDialogName(name)`
+  gives a React Native Modal its name in a browser (GymPal, ChoiceSheet,
+  CardReveal, HomeEditor's gallery, GoogleModal): use it on any new Modal.
+  GymPal's starters and JoinGym's MembershipBanner are `role="group"`.
+  theme.ts: `color.labelSecondaryOnFill` for secondary text on `color.fill`
+  (HomeEditor gallery, HomeWidgets stat captions, NoPhoto initials);
+  looks.ts `over(ground, wash)`. App 577 tests (total 1,236).
+- **axe audit** (10 Nov). explore.tsx: the three sheets get
+  `accessible={false}` with role and label null, and `WebSheetHandle` on
+  the web; app/_layout.tsx: `role="main"` on the root in a browser;
+  theme.ts: `color.brandOnTint` and `tintOver()` (quiet PrimaryButton uses
+  it, theme.test checks it); friends/index.tsx and challenges.tsx share
+  pills are white with `brandFill` words; ui.tsx NoPhoto initials a step
+  darker; collection.tsx BadgeShelf focusable on the web. Use
+  `brandOnTint`, not `brand`, for new text on `brandTint` over the page.
+- **Screens fetched ahead on the web** (10 Nov). `useScreensFetchedAhead()`
+  in app/(tabs)/_layout.tsx imports Explore, Saved, Profile, gym/[id] and
+  train when idle (web only; `mayPrefetch` in lib/prefetch.ts skips
+  save-data and 2G). The same chunks the router asks for, so nothing is
+  fetched twice. App 576 tests (total 1,235).
+- **Fonts start early on the web** (10 Nov). apps/mobile/index.ts calls
+  `startFonts()` (lib/earlyFonts.web.ts; a no-op in lib/earlyFonts.ts for
+  phones) before anything else: Inter where `NEEDS_BUNDLED_FACES`, and the
+  icon font under expo-symbols' own name. `SF_DRAWS` moved to
+  lib/typeface.ts so the entry point imports nothing that reads
+  lib/limited.ts. Don't add a `<link rel=preload>` for fonts: measured, no gain.
+- **Website first visit** (10 Nov). public/index.html has a loading screen
+  (`#boot`, picture public/icons/splash.png from scripts/site-images.mjs;
+  `data-boot` from the saved appearance); `dropBootScreen()` in
+  app/_layout.tsx removes it once the app has drawn words.
+  apps/server/src/web.ts compresses text and TTF/OTF (`pickEncoding`,
+  Brotli 9 or gzip, kept per file). pages-build.sh's path rewrite now
+  covers `src=`. Server 299 tests (total 1,233).
+- **School report rewrite** (10 Nov). docs/school: report and README cut
+  down and plainer; team Ashen, Liam; the Gantt is out of the report but
+  GymGO-Gantt.xlsx/.png stay (owners Ashen, Liam, Both). The scratchpad
+  build scripts aren't in the repo; pandoc builds the .docx from the .md.
+- **Body-weight exercises** (10 Nov). progress/[exercise].tsx: Most reps
+  tile instead of empty Heaviest/1-rep max, chart opens on Reps; new
+  lib/chartScale.ts (whole-number bands) used by ProgressChart; Compare
+  distance "Unknown". App 574 (total 1,229; school docs updated).
+- **Pro's table** (10 Nov). pro.tsx table headings in sentence case (`label`
+  variant, no `toUpperCase`); packages/domain plans.ts `PRO_FEATURES` lost its
+  unused `emoji` field and says "Not included" for Free instead of "—".
+- **"Check you’re online"** (10 Nov). serverAddress.ts `serverIsHosted`,
+  api.ts `serverHosted()`, copy.ts `serverOfflineLine(platform, hosted)`;
+  sign-in, Account, AccountContent and Pro use it. 2 new serverAddress
+  tests (app 571, total 1,226; school report and README updated).
+- **Server pages** (10 Nov). legalPages.ts: the Legal list has no second row
+  of links (`shell(…, 'index')`); the reset form's rule sits above the button
+  with `aria-describedby`; `h1 + section` spacing. legal.test checks each
+  document is linked once on /legal.
+- **"you can’t use"** (10 Nov). present.ts `priceLine`'s ineligible caption
+  and `priceText`'s spoken form; 3 new present tests (app 569).
+- **Ask for the total** (10 Nov). present.ts `priceLine`'s unknown-fee
+  caption is "for the total" and `priceText` "Ask for the total: some fees
+  aren’t published" (test updated); PlaceCard's Prices summary matches.
+- **By design, not a bug: 404s for gym photos and icons** (10 Nov). A gym
+  with no website photo or icon answers 404 (cached a day by the browser,
+  `public, max-age=86400`; an unknown id `no-store`; siteicons.test.ts),
+  and the app shows "No photo supplied" or the initials. In a local run
+  with `GYMGO_SITE_ICONS=off` every icon is a 404, so the browser console
+  lists many; that's the test setting, not a fault. Also checked on 10
+  Nov: a workout in progress at 320 and 390 (real exercise history, rest
+  bar clear of Finish), the free account's empty Saved, Progress and
+  Collection ("I’m here" is the real users' button; only the dev account,
+  which collects from anywhere, sees "Collect"), and a trip's page.
+- **Deposit line** (10 Nov). present.ts `depositLine` reworded (test
+  updated); PlaceCard's demo notice uses a colon.
+- **One quick budget** (10 Nov). query.ts `QUICK_BUDGET = 3000`, used by
+  Home's shortcut, Explore's toggle and ResultsContent's chip label.
+- **Legal pages, one title** (10 Nov). legal/[doc].tsx: bar title '' and
+  the page title is `accessibilityRole="header" level={1}`.
+- **Password rule once** (10 Nov). sign-in.tsx's create-mode placeholder
+  is "A new password"; the rule stays in the live check below it.
+- **Desktop panel label** (10 Nov). explore.tsx `pillNotable`; the
+  DesktopPanel's `panelTop` renders only when it's true; the phone's top
+  bar always shows the pill.
+- **Cities counted alike** (10 Nov). collection.ts `collectionStats` and
+  domain social.ts `collectionTotals` both skip blank cities and compare
+  lower-cased names.
+- **Visits counted once** (10 Nov). visitCost.ts `SpendReport` carries
+  `visitDays`; `totals` counts the union of days per currency instead of
+  summing `visits`. New test (failed on the old code).
+- **Curly apostrophes** (10 Nov). Visible copy uses ’ (copy.ts, PlaceCard,
+  FiltersContent, explore, pro, workout.ts cue; copy tests updated).
+  Comments, GymPal's prompts and dataset place names keep '.
+- **Programme counts its own weeks** (10 Nov). programmes.ts
+  `programmeProgress` filters `programmeSessions` to before startedOn +
+  weeks × 7 days (new test; it failed on the old code). programme.tsx and
+  friends/index.tsx have zero wordings.
+- **Map names the searched place** (10 Nov). explore.tsx's pill shows
+  `pillPlace || city.name` when live; spend.tsx's summary line says "paid
+  in this time" when `sum.visits === 0`. Checked with a test payment put in
+  the test browser's `gymgo.spend.v1` only.
+- **School project report** (10 Nov). `docs/school/`: report (.docx built
+  from the .md by pandoc + python-docx), Gantt (.xlsx by openpyxl, .png via
+  LibreOffice), flowchart (.svg/.png), README-Product-Page.md and
+  test-evidence screenshots. Peer testing and names are left for the team.
+- **Spend card label** (10 Nov). spend.tsx's summary card heading is
+  `variant="label"` in sentence case, not an eyebrow.
+- **Compare rows** (8 Nov). compare.tsx row labels use `variant="label"`
+  as written, not `eyebrow` + toUpperCase. Checked with two gyms put in
+  the test browser's `gymgo.compare.v1` only.
+- **Map label** (8 Nov). explore.tsx's city pill is `city.name` with no
+  dot when the data is live from GymGO's server; the dot and words stay
+  for locked, demo, bbox/outside-cities and offline.
+- **No greyed-out Keep it** (8 Nov). challenges.tsx renders the target
+  button only when `mine?.target !== target` (Join when not in). Sweep
+  after Updates 115–125: 24 screens at 320 dark clean; clip and a11y
+  clean on 10.
+- **Milestone icons** (8 Nov). TrainingInsights' `ladderIcon` is a 24pt box
+  with no fill (`ladderIconOn` removed); the icon is brand once reached,
+  labelTertiary before.
+- **Gym facts without circles** (8 Nov). PlaceCard's `factIcon` has no
+  brandTint circle; MemberBusy's `badge` is the people icon in `ink` with
+  no tint (the `tint` const went). `Fold` now requires `icon` (its emoji
+  fallback and `foldEmoji` removed), and unused `verdictEmoji`,
+  `factEmoji`, `googleEmoji`, `pickEmoji` styles are gone.
+- **Rows, not stacked buttons** (8 Nov). friends/index.tsx, progress/index.tsx
+  and workouts/index.tsx use ios.tsx's `Group`/`Row` (tiles as Profile's
+  rows) for their closing links; Progress's export note is the Group's
+  footer. Primary + quiet button pairs (sign in / create, invite /
+  cancel) are left as they are.
+- **Fewer pats on the back** (8 Nov). TrainingInsights' goal line, train.tsx's
+  summary title and CollectCard's finished-set line lose "Nice work." and
+  "!". CardReveal's rare "!" and GymPal's `GREETING`/`WAITING` (the
+  owner's wording) are kept on purpose, as is BuildingBar (the owner
+  asked for a 3-second bar with an animation).
+- **Pro page icon** (8 Nov). pro.tsx's hero is `AppBadge size={72}`
+  (BrandMark.tsx) in place of the BrandFill square with a crown.
+- **Ticks as icons** (8 Nov). ExerciseCard's `KitUsed` and the builder's
+  `KitNote` draw `good`/`maybe` icons instead of "✓"/"?" text; the
+  confirmed state is in the row's accessibilityLabel. No "✓" is left in
+  the app's text.
+- **Programme and trips, plainly** (8 Nov). programme.tsx's `mark`
+  (BrandFill square) and Home's `tripIcon` circle removed (a 22pt brand
+  globe). Checked with a trip and a programme put in the test browser's
+  storage only.
+- **Plain widget icons** (8 Nov). TrainingInsights' `stripIcon` and
+  CollectCard's `stripMedal` circles removed: a 20pt (tile) or 22pt (row)
+  glyph, flame in `color.maybe`, cards in `TIER_METAL` (labelSecondary
+  before any tier), HereNudge's pin in brand. country's Stack title and
+  report-bug's `badge` removed.
+- **One title per page** (8 Nov). templates.tsx's `TEMPLATE_ICON`/`mark`
+  (BrandFill square) removed; photos.tsx and spend.tsx set the bar title
+  to '' since each has its own largeTitle (as measurements.tsx, pro.tsx).
+- **Icons, not emoji** (8 Nov). `CELEBRATIONS`/`SOUND_PACKS` carry an
+  `icon: IconName` (new Icon names confetti, fireworks, smile, music,
+  arcade; Material has no fireworks, so `flare`) in place of an emoji
+  `sample`; PercentSlider's accent halo removed; "Thanks!" etc. made
+  plain; billing.ts `returnPage` has no emoji and says "Taking you back"
+  only with a destination (tested).
+- **Room for GymPal's button** (8 Nov). PageScroll's bottom padding is at
+  least `PAL_ROOM` (52 + 16 + 12, GymPal.tsx's BUTTON and EDGE plus air)
+  unless `gymPalButton` is 'hidden', so a page's last row clears the
+  corner or edge button.
+- **A ticked set, settled** (8 Nov). train.tsx `inputDone` is transparent
+  with `color.label` (was goodTint/goodInk); `setDone`/`setBest` row tints
+  unchanged.
+- **Console clean** (8 Nov). With a 14-screen walk in the browser the only
+  console warning is the map's "Expected value to be of type number, but
+  found null instead." (×3): it's OpenFreeMap's own liberty style, the same
+  warnings on a bare page with nothing but that style (checked with a
+  stand-alone MapLibre page), so nothing in GymGO to fix.
+- **Search suggestions as Maps draws them** (8 Nov). ResultsContent's
+  `lookGlyph` is `color.fill` with `labelSecondary` icons (look up, recent);
+  places keep the red pin circle, gyms their logo or the brand circle.
+- **Icons on the accent cards** (8 Nov). (tabs)/index.tsx `workoutIcon` and
+  profile.tsx `proMark` have no `onBrandFaint` square; icons are 26 pt.
+- **Pro said once** (8 Nov). (tabs)/index.tsx's Other cities: `groupPro`
+  (every city in the group outside `mayExplore`) shows "· with GymGO Pro"
+  by the group's name; the per-chip `proTag` only when a group is mixed.
+  profile.tsx's `ProCard` title on Free is "GymGO Free" with the limits as
+  its line (was "Go further with Pro").
+- **Plainer sentences** (8 Nov). No "word — word" asides left in the app's
+  visible strings (copy.ts `filtersButtonLabel`, `locatedNotice` denied,
+  `EMPTY.crowd`; PlaceCard's Reviews summary; FiltersContent's hint).
+- **A plain photo slot** (8 Nov). PhotoHero.tsx's `empty` style is
+  `color.fill` with no dashed `brandBorder`/`brandWash`.
+- **The builder's options fit** (8 Nov). workout/[id].tsx's length
+  `Segmented` labels drop " · N" under 360 points; Goal/Length/Machines use
+  `label`.
+- **Kit in fewer words** (8 Nov). exerciseLibrary.ts `kitShort(exercise)`
+  (one differing slot becomes "A or B"; a one-extra-item pair becomes "X,
+  Y optional"; else `kitText`), tested never longer than `kitText`. Used
+  for the shown line in exercises.tsx and AddExercise.tsx; their
+  accessibility labels keep `kitText`.
+- **Headings inside the tools' cards** (8 Nov). `label` in plates.tsx
+  (Each side ×2, Warm-up), strength.tsx (Percent of your max, What you could
+  do for) and month.tsx's switcher. Rule of thumb now: `label` for a
+  heading inside a card, `eyebrow` (capitals) for a heading over a list or
+  on a share picture.
+- **This month's figures fit** (8 Nov). HomeWidgets' month stats carry a
+  `spoken` each; Lifted shows the number with the label `${unit} lifted`.
+- **Tidying** (8 Nov). Removed unused ui.tsx `TierPill`/`SectionTitle`/
+  `Divider` (and their styles), theme `currentTweaks` and `bodyHover`,
+  exerciseLibrary `doableWith`, training `isSetKind`, places `isDemoMode`.
+  `npx tsc --noEmit --noUnusedLocals` in apps/mobile reports only
+  au-data's `GYM247_MEMBERSHIPS` (research kept on purpose).
+- **Works, Needs, Membership** (8 Nov, "less vibecoded"). `label` for
+  progress/[exercise]'s `Detail` (its `detailLabel` uppercase style gone),
+  JoinGym's banner and GooglePage's heading. The only `textTransform:
+  'uppercase'` left is ios.tsx's `groupHeader`. train.tsx's `SummaryStat`
+  takes no `icon`.
+- **A summary that ends with one button** (8 Nov, "less vibecoded").
+  train.tsx's `Summary` lists Share your record / Share this workout / See
+  your progress in a `savedCard` (rows keyed by id; the record row shows
+  "Making the picture…" while `sharingCard`), then a brand Done.
+  workouts/index.tsx's empty card: template choice is a `textLink`
+  (44 tall). Other runs of buttons left are side-by-side pairs or
+  confirm/cancel forms, which are fine.
+- **The last capitals in cards** (8 Nov, "less vibecoded"). `label` on the
+  heroes of profile.tsx (plan), friends/index (code), friends/[id],
+  challenges.tsx, strength.tsx and lifetime.tsx; share cards (RecapCard,
+  LifetimeCard, SetCard) keep `eyebrow`. strength.tsx's empty `ghost` card
+  has no `ghostLines`.
+- **The map says what it does** (8 Nov, "less vibecoded"). copy.ts's
+  `sessionGreeting` (the time-of-day quips) is gone with its eyebrow in
+  ResultsContent; `PLACEHOLDER` gave way to `mapPrompt(home)`
+  ("Suburb, city or gym"), and `PLACEHOLDER_SHORT` is "Search" (under 360
+  points). GymPal's `GREETING` is the owner's own wording: leave it.
+  CardReveal's button is "Done" (was "Nice!"), its Collection button
+  `cards`; welcome.tsx's last button "Get started", its third page `cards`.
+- **How to do it, as a card** (8 Nov, "less vibecoded").
+  progress/[exercise].tsx's how-to is `styles.card` with an
+  `ExerciseTile` (96, moving); its `hero`/`glyph` styles are gone.
+  ExerciseGlyph.tsx's `ExerciseTile` has no `lit` gloss.
+- **The welcome tour on a plain page** (8 Nov, "less vibecoded").
+  welcome.tsx's `Backdrop` (two radial glows of the accent) is gone.
+- **A gym's page as a plain list** (8 Nov, "less vibecoded"). ui.tsx's
+  `Fold` icon is 20 pt in a 32-wide box with no background (`foldIcon`).
+  PlaceCard's amenity chips (`markChip`) and GooglePage's `detailChip`
+  use `Icon` check/close with an accessibility label ending ": yes"/": no".
+- **The last tinted circles** (8 Nov, "less vibecoded"). No background on
+  ProOffer `mark`, GoogleGate `glyph`, leaderboard `joinMark`, trips
+  `tripIcon`, friends `emptyMark`, progress `lifetimeMark`; tinted
+  buttons (steppers, plus, save) unchanged. collection.tsx's no-logo
+  fallback is `<NoPhoto compact name=… />` in the rounded `nextIcon`; ui.tsx
+  `lettersCompactLong` (15 pt) for three-character initials.
+- **Numbers without ornaments** (8 Nov, "less vibecoded"). progress/index's
+  `Stat` takes no `icon`/`tint`; lifetime.tsx's tiles have no `icon`;
+  lifetime's `mark` and pro.tsx's `featureIcon` have no background.
+- **Plainer headings** (8 Nov, the owner's "less vibecoded"). New `label`
+  text style (13 pt semibold, sentence case) for a card's own small heading;
+  `eyebrow` (spaced capitals) is left for section headings over lists and
+  share cards. HomeWidgets' Frame title, ExerciseCard, train.tsx's set
+  count, PlanEditor ("Exercise N"), PlanSummary, the exercise page's hero,
+  SessionNote, What you did, Collection and Leaderboard heroes use `label`.
+  ios.tsx's `SectionHeader` has no `icon` any more. ui.tsx's `NoPhoto`
+  monogram is the initials (`labelSecondary`) on `color.fill` with the
+  tag; its rings, halos and gradient are gone.
+- **Less decoration** (8 Nov, the owner: "try make the app look less
+  vibecoded"). BrandFill.tsx's `Sheen` and `accentGlow` are gone, with
+  their 17 and 19 uses: accent-filled surfaces are flat. theme.ts's
+  `glowPools` and `heroGlowStops` are about half as strong at
+  `GLASS_DEFAULT`. HeroMark.tsx is now just the symbol (`labelTertiary`,
+  `weight="regular"`, 78% of `size`; `tint` colours it). No `sparkle`
+  icon outside GemCard's Legendary twinkle; new `haptics` icon. train.tsx's
+  no-workout page lists Build from muscles / Make your own / From a
+  template in a grouped card (`savedCard` styles). Home's
+  `shortcutIcon`/`upNextIcon` circles and HomeWidgets' tinted `toolIcon`
+  are gone. Avoid bringing back: coloured glows, glossy gradients,
+  sparkles, icons in tinted circles, stacks of equal tinted buttons.
+- **A new page starts at its top** (7 Nov, polishing). Redrawn's
+  `ScrollMemory` is now a `ScrollPlace` `{ y, restore }`; `restore` is set
+  only when the theme version changes (a redraw), and `startingY(memory)`
+  (Redrawn.tsx) gives a newly drawn PageScroll or TabScreen its start: the
+  kept place after a redraw, else 0. train.tsx's summary had been taking
+  the workout page's place (331 down).
+- **The built plan comes into view** (5 Nov, polishing). workout/[id].tsx
+  passes a ref to `PageScroll`; `BuildingBar`'s `onDone` sets
+  `showPlan.current`, and the plan's `onLayout` then calls
+  `scrollTo({ y: layout.y - 96, animated: !reduceMotion })` once (96 so a
+  header over the page can't cover it). The plan appears about 3 s after
+  the tap (the building bar), so a browser check has to wait for it.
+  programme.tsx scrolls its `PageScroll` to the top (not animated) when
+  `programme` turns from null to set or back.
+- **A note looks like a note** (5 Nov, polishing). Icon.tsx has `note`
+  (SF `note.text`, Material `sticky_note_2`, which is in expo-symbols'
+  web set); ExerciseNote.tsx and train.tsx's Note button use it instead of
+  `pin` (kept for places: addresses, trips, "near me"). The collection
+  uses `cards` (profile.tsx, homeWidgets.ts, CollectCard's tile, strip
+  and Collection button); `trophy` stays for Lifetime, the Leaderboard
+  and a gym's tier medal.
+- **The recovery map in small on Home** (5 Nov, polishing). MuscleFigures.tsx
+  now has `SmallFigures({ fillFor, width })` (any colour per muscle; the
+  idle grey for none), which `MuscleFigures` uses; HomeWidgets'
+  `RecoveryWidget` puts one beside its two lists (`restBody` row, 30 wide
+  under 360 points, else 38), coloured by `heatShade(band)`. month.tsx
+  puts one (56/66 wide) at the top of Sets for each muscle, each muscle
+  `mix(bodyIdle, brand, 0.2 + 0.8 * sets / most)`.
+- **The body on each exercise, the figure kept** (5 Nov, following the
+  owner's "make the muscle guy ... look better"). New
+  components/MuscleFigures.tsx: a front and back `BodyFigure`, not
+  pickable and hidden from screen readers, filled brand for an exercise's
+  `primary`, `mix(bodyIdle, brand, 0.4)` for `secondary`; on
+  progress/[exercise].tsx beside Works (38 wide under 360 points, else 46).
+  New lib/bodyGender.ts (`deviceStore` 'gymgo.body.v1', male by default):
+  `useBodyGender()`/`setBodyGender()` used by workout/[id].tsx (replacing
+  its own state), RecoveryMap (which has its own Male/Female `Segmented`
+  under the figures) and MuscleFigures. `inertFill(slug)` in body/shapes.ts
+  fills the non-muscle parts: the new `bodyHair` token for `hair`,
+  `bodyInert` for the rest (light `bodyInert` #E1E1E6, `bodyBorder`
+  #BABAC2, a little darker than before).
+- **A better-looking body figure** (5 Nov, the owner: "make the muscle guy
+  for building workout and checking what muscles are fatigued look
+  better"). components/body/BodyFigure(.web).tsx: a `LinearGradient` per
+  fill colour (`shadeStops` in body/shapes.ts: 22% lighter at the top,
+  16% deeper at the foot, in each muscle's own box), the silhouette filled
+  with the new `bodyBase` token (light, dark, Dim), a radial floor shadow
+  at `footing()`; a picked muscle gets a light edge, and on the web a CSS
+  `drop-shadow` glow. RecoveryMap's `HEAT` (today #E5484D, yesterday
+  #F76B15, 2–3 days #F5A524, 4+ mixed into the body grey); the legend and
+  list dots use the same `shade()`.
+- **Titles clear of the back button** (5 Nov). components/WebBack.tsx is
+  the chevron alone under 360 points wide (`round` style), found with a
+  browser check measuring the gap between the header's title text and the
+  back button on 28 screens; challenges.tsx uses `Segmented` for targets.
+- **The whole card in a shared picture** (5 Nov). The card's frame is drawn
+  `GLOW_ROOM` past its box; CardReveal's capture view now has
+  `padding: GLOW_ROOM, margin: -GLOW_ROOM` so the picture holds it all
+  without moving the pop-up (card/[id] already had padding round its shot).
+- **Collection on a tablet or a computer** (5 Nov). collection.tsx:
+  `columns` is 3 when the page (`min(width, COLUMN)`) is at least 560
+  wide; `BadgeShelf` and `RarityFilter` wrap (`wrap` when `width >=
+  COLUMN + 32`) instead of scrolling sideways. Also: `tsc --noUnusedLocals`
+  is clean in apps/mobile, apps/server and packages/domain, except
+  au-data's `GYM247_MEMBERSHIPS`, left as data. The map's one console
+  warning ("Expected value to be of type number, but found null") comes
+  from OpenFreeMap's own style, not GymGO's code.
+- **A friend code or a gift, copied and said so** (5 Nov). friends/index's
+  `sent` and ProExtras' `copied` hold what `shareText` did when it wasn't a
+  share sheet, so the button's words say it.
+- **Sharing on a computer copies instead** (5 Nov). lib/actions.ts:
+  `copyOnWeb` (the clipboard API, else a hidden textarea and
+  `document.execCommand('copy')`), `ShareOutcome`, `shareLine(outcome)`
+  (the one place the "Copied, ready to paste." / "Sharing isn't available
+  here." words live); `shareGym` returns a `ShareOutcome` and copies on the
+  web. gym/[id]'s header uses `ShareButton` (a tick and "Copied" for 2.5 s).
+  Headless Chromium denies the clipboard unless the context is given
+  `clipboard-read`/`clipboard-write`, which made sharing look broken in
+  tests.
+- **Every field's hint fits** (5 Nov). A browser scan measured each
+  input's placeholder (canvas `measureText` in its own font) against its
+  width at 320 pt over 20 screens. sign-in.tsx's name hint is shorter;
+  ResultsContent uses `PLACEHOLDER_SHORT` (lib/copy.ts) under 360 pt wide.
+- **Sharing a picture works again on the website** (5 Nov). Since the SDK
+  58 upgrade (react-native-view-shot 6.1.1), view-shot's web capture needs
+  its optional peer `html2canvas-pro`, which wasn't installed, so every
+  web share failed ("Couldn't make the picture here"). Added it to
+  apps/mobile (2.5.0 exactly, MIT; CREDITS.md: later releases ask for Node 24, the repo runs on 22). lib/shareImage.ts's
+  `pictureOnWeb` calls it directly, with `backgroundColor:
+  color.groupedBackground` and `scale` at least 2; phones still use
+  view-shot's `captureRef`.
+- **Tilt your card** (5 Nov). components/TiltCard.tsx wraps the card on
+  card/[id]: a Gesture Handler pan (`activeOffsetX([-8, 8])`,
+  `failOffsetY([-14, 14])`, so vertical drags scroll) springs
+  `rotateX`/`rotateY` (with `perspective: 900`) towards the touch and back
+  to flat; in a browser, the mouse is read from `onPointerMove` and
+  `onPointerLeave` on an outer View that doesn't tilt (Gesture Handler's
+  Hover didn't fire on the web). The maths is lib/tilt.ts (`tiltFor`, a
+  worklet, tested); MOST_TILT is 14°. Off with Reduce Motion. `still`
+  lays it flat at once: card/[id] sets it while sharing and waits two
+  frames before the capture, so the picture is flat even mid-tilt.
+- **Saying truly what's down** (5 Nov). lib/apiErrors.ts now holds
+  `ApiError`, `OfflineError` (re-exported by lib/api.ts), `readBody` (a
+  body that isn't JSON: 502/503/504 is `OfflineError`, else `ApiError`
+  with code `not_json`; a tunnel's 520–530 counts too) and `failure` (a
+  502/503/504 with no `error` and no `code`, as from Caddy, or the dev
+  proxy's `server_down` (metro.config.js), is `OfflineError`; the server's
+  own 502s and 503s always carry `error`, so they stay `ApiError` with
+  their words: the place finder busy, a friend code not made). lib/weather.ts's
+  `none` state has a `cause` ('server' | 'met' | 'other'). Tested in
+  apiBody.test.ts.
+- **Small phones, tidied** (5 Nov). Found with two browser scans worth
+  rerunning (in the session's scratchpad, not the repo): text cut short
+  (`text-overflow: ellipsis` with scrollWidth > clientWidth, or a line
+  clamp with scrollHeight > clientHeight) and controls with no name or
+  under 28 px. progress/[exercise].tsx's `Fact` takes `detail` and
+  `spoken`; lifetime.tsx's tiles take `spoken`; MemberBusy and
+  workouts/index.tsx check `useWindowDimensions().width < 360`; the
+  templates toggle has `minHeight: 28` with a negative margin.
+- **A clearer start to the collection** (5 Nov). collection.tsx's empty
+  state has a row of `CardShapeIcon`s with "Common to Legendary" (one
+  caption: five labels didn't fit at 320 pt). lib/sets.ts adds the street
+  (`address.line1`) to a missing gym's name when two gyms in the set share
+  it; a test covers it.
+- **The new cards everywhere** (5 Nov). components/CardShapeIcon.tsx
+  (a rarity's `cardPath` in its metal, any height, its own gradient id)
+  replaces the gem dot on a gym page's CollectCard line and the filter's
+  swatch; Home's CollectionStrip tile shows the rarest card's icon and
+  rarity (medal metal is still the best tier); CardReveal's glow and
+  heading use `CARD_FRAMES[rarity].metal`.
+- **Collection cards: shapes and the gym's own colour** (4 Nov).
+  lib/cardShape.ts has the silhouettes: `CARD_FRAMES` (frame width,
+  corners round/cut/scoop, side notches, Legendary's crest, the metal,
+  glow), `cardPath(rarity, w, h, inset, x, y)` (the face is the same path
+  inset by the frame, corners parallel) and `cardPadding`. GemCard measures
+  itself (onLayout) and draws `CardFrame` behind its content in an SVG
+  `GLOW_ROOM` bigger (the glow is the outline stroked wide and faint, so it
+  follows the shape); the picture is in a rounded box, with the Shine,
+  Foil and Sparkles inside it. Colour: packages/domain cardColour.ts
+  (`logoColour(pixels, channels)` picks the busiest vivid hue, null for
+  mono logos; `cardPalette(hex)` gives light/base/deep).
+  `scripts/brand-colours.mts` (tsx) writes lib/brandColours.ts from
+  assets/logos; the server's `GET /api/gyms/:id/icon-colour` reads the
+  stored website icon with sharp (`iconColour`, cached in memory by source
+  and size; public, like /icon). BrandLogo's `useBrandColour(location)`:
+  bundled colour, else the server's, else null (the gem's colours).
+  Collection's `RarityFilter` (radio pills with a `ShapeSwatch` and
+  counts); card/[id]'s `CardFacts`. Small cards drop the rarity pips so
+  "LEGENDARY" fits at 320 pt.
+- **Customise Home, smoothed** (4 Nov). components/HomeEditor.tsx was
+  rewritten: each widget is three layers (making room: a CSS transition
+  from React state `held`/`hover`; following the finger: a shared value;
+  the jiggle: a CSS animation), `dropped` glides it with `withTiming`
+  before `commit` keeps the order, and `drag.released` stops the frame
+  callback once let go. More widgets is the tray under the list (`spare`,
+  `onAdd` at the end); `EditBar` floats above the tab bar (TabScreen's
+  `bottomExtra`; `topExtra` is gone); lib/homeEditing.ts hides GymPal's
+  tab while editing; `bare` widgets get a frame and `Clipped` with an SVG
+  `Fade`.
+- **Customise Home as on an iPhone** (4 Nov). components/HomeEditor.tsx:
+  `EditableWidgets` (jiggle, − badge, hold-and-drag through a Gesture
+  Handler pan, positions worked out from heights because a browser's
+  onLayout doesn't report a move, auto-scroll near the edges through
+  ios.tsx's new `useTabScroll`), `EditBar` (+ and Done, in TabScreen's new
+  `overlay`, with `topExtra` room), `WidgetGallery` (live previews),
+  `EmptyWidget`. Home keeps `editing`, `gallery`, `dragging`;
+  `shownWhileEditing` gives empty widgets a stand-in. app/home-edit.tsx is
+  gone. Playwright: the jiggle never settles, so click badges with
+  `force: true`.
+- **Customise Home, 17 widgets, MET Norway's weather symbols** (4 Nov).
+  lib/homeWidgets.ts lists every widget (`HOME_WIDGETS`, `DEFAULT_HOME`,
+  `cleanHome`, `moveWidget`, `addWidget`, `removeWidget`, `shownWidgets`);
+  lib/homeLayout.ts keeps the order on the device (`useHomeWidgets`,
+  `homeLayout`); app/(tabs)/index.tsx draws them through `widget(id)` (a
+  new widget: add it to the list and a case there); app/home-edit.tsx was
+  Customise Home (now Home's own edit mode, above). New widgets in components/HomeWidgets.tsx. Weather
+  symbols: assets/weather/svg (MET Norway's, MIT) made into
+  assets/weather/icons/*.webp and src/lib/weatherArt.ts by
+  `node scripts/weather-icons.mjs`; components/Weather.tsx `WeatherSymbol`,
+  `WeatherCompact`, `WeatherHours`, `WeatherBadge` (always shown; lib/weather.ts
+  says why when there's no forecast).
+- **Weather on Home and the map** (4 Nov). MET Norway's Locationforecast
+  2.0, free for any use with credit. Rules in
+  packages/domain/src/weather.ts (`fromMetForecast`, `weatherKind`,
+  `weatherWords`, `tempLabel`, `tempUnitFor`, `weatherPoint`, `hoursFrom`);
+  server apps/server/src/weather.ts (`WeatherService`: Expires,
+  If-Modified-Since, one request per square, six hours of stale; User-Agent
+  from `GYMGO_PUBLIC_URL` and `GYMGO_CONTACT_EMAIL`), GET /api/weather?south=&west=
+  (whole tenths only), `GYMGO_WEATHER=off`. App: lib/weather.ts `useWeather`
+  (by `tilesAround(filters.centre)`, the gym lookup's block: never send a
+  position), components/Weather.tsx (`WeatherCard` on Home, `WeatherBadge`
+  under the map's buttons), weather icons in components/Icon.tsx. The
+  Privacy Policy names MET Norway: LEGAL_VERSION 2026-11-04.
+- **GymPal's new logo and a quieter button** (4 Nov; the owner said
+  "GymBud", meaning GymPal: the name stayed). Logo:
+  `apps/mobile/assets/gympal/gympal.svg`, groups `body` and `dumbbell`, made
+  into `src/lib/gymPalArt.ts` (`GYMPAL_BODY`, `GYMPAL_DUMBBELL`) and the PNG
+  by `node scripts/gympal-logo.mjs`; `GymPalMark` (was `GymPalFace`) lifts
+  the dumbbell once and on `cheer`. Button: lib/themePrefs.ts
+  `gymPalButton` ('tab' default, 'corner', 'hidden') with `gymPalSide`;
+  components/GymPal.tsx `EdgeTab`, `Launcher`, `EdgeStrip` (native only)
+  and `usePullIn` (RNGH Pan; `dragged` swallows a browser's click after a
+  drag); Ctrl+/ / ⌘/ in a window keydown listener. Appearance has the
+  choice and says how each opens. Unseen on a phone: the pull and the strip.
+- **Polish** (4 Nov; the owner: "Keep polishing the app"). app/train.tsx:
+  Finish asks once when sets aren't ticked (`finishAnyway`, reset by any
+  new tick; timed items don't count). lib/tapAgain.ts `useTapAgain(ms)` and
+  `useTapAgainOn<T>()` hold every "Tap again to…" state and disarm after
+  8 s (Delete account 20 s): use them for any new tap-again button, not
+  `useState`. Make your own on the No workout page (replaces the page, as
+  the builder does); Profile subtitles; the empty Monthly report.
+- **Your own workouts, splits and exercises** (3 Nov; the owner: "make sure
+  the user can make their own splits and workouts and make custom
+  exercises (only for pro users)"). Read as: making and starting a workout
+  of your own is free (the builder always was; "Workout library: Build and
+  share" free), keeping one is Pro (as before), splits and custom exercises
+  are Pro. If the owner meant all of it Pro, gate app/workout-edit.tsx's
+  Start. Rules in packages/domain/src/ownTraining.ts (`cleanOwnExercise`,
+  `cleanSplit`, `cleanPlanItems`, `cleanReps`, `OWN_LIMITS`); server
+  apps/server/src/ownTraining.ts (`own_exercises`, archived not deleted;
+  `own_splits`) with routes in app.ts and PATCH /api/workouts/:id. App:
+  lib/workout.ts `exerciseById` (GymGO's, then yours: use it, never
+  `EXERCISES.find`), `fromOwn`, `setOwnExercises`, `ownExercises`;
+  lib/exerciseGlyphs.ts `setGlyphAliases` (drawn as); lib/templates.ts
+  `templateOfSplit`, `setOwnTemplates`, `allTemplates`; lib/ownRegistry.ts
+  puts them all in place; lib/ownTraining.ts keeps them in step with the
+  account (device copy first, `useOwnTrainingSync` in AppProvider,
+  `useOwnTraining` to redraw). Screens: components/PlanEditor.tsx (with
+  lib/planEdit.ts), app/workout-edit.tsx (lib/planDraft.ts hands it the
+  builder's plan), app/split-edit.tsx, app/exercise-edit.tsx; entry points
+  on the builder, My workouts, a saved workout, Templates, Exercises, an
+  exercise's page and the add-exercise picker. The dev server serves stale
+  code after new files: restart Metro with --clear.
+- **Hevy features polished** (3 Nov; the owner: "make them better and
+  more professional and just reliable and cleaner"). components/SetKinds.tsx
+  `RpeHead` and `RpeCell` (the column, `RPE_COLUMN` 32 pt; rows with it use
+  `tight` gaps and `narrow` fields), used by app/train.tsx and
+  app/session-edit.tsx; both `setKind`s drop a warm-up's RPE, as do
+  `draftToLogged` and `checkEdits`. session-edit.tsx keeps the draft it
+  started from and holds leaving with `usePreventRemove` while they differ,
+  asking through lib/askToDiscard.ts; Save calls the hook's
+  `disablePrevention` first. lib/monthReport.ts `timeChangeWord`;
+  month.tsx `compared` (the month before had a workout).
+  lib/bodyMeasures.ts `formMeasures`, `STARTER_MEASURES`. The dev server
+  served stale code twice this round: restart Metro (`--clear`) before
+  trusting a browser check.
+- **Expo SDK 58** (3 Nov; the owner: "upgrade GymGO to expo sdk 58").
+  `expo install expo@^58.0.0 --fix`, then: app.json lists the plugins SDK
+  58 asked for and drops expo-build-properties' `enableSceneSupport`
+  (built in); `@expo/dom-webview` is a direct dependency only so pnpm stops
+  resolving the old 57 one; `patches/expo@58.0.22.patch` is the 57.0.25
+  patch on the delegates' new paths (`ios/Expo/`), keyed in
+  pnpm-workspace.yaml (bump both with expo). Code: refs typed as React
+  Native's `*Instance` types, `unstable_settings.anchor`, awaited
+  `File.write`, `backLabel` taking an undefined key (router 58's route keys
+  can be), GymMap.android's `WebView<object>` ref (webview 14 defaults its
+  props parameter to `undefined`, which makes them `never`). Left for
+  later: Gesture Handler 3 deprecates the `Gesture.Pan()` builder used in
+  (tabs)/_layout.tsx and PercentSlider (move to `usePanGesture` /
+  `useTapGesture`); R8 in Android release builds (keep rules may be
+  needed); Expo Go for SDK 58 in the stores, not confirmed on 3 Nov.
+- **30 more exercises and five more splits** (3 Nov; the owner: "find
+  more exercises and workout splits and make animated icons for them").
+  lib/workout.ts `EXERCISES` (96; `TIMED` adds wall-sit, hollow-hold,
+  mountain-climber); lib/exerciseGlyphs.ts a drawing for each (squat kind
+  'box'; the tempo lists `LOWER_FIRST`, `CYCLES`, `HOLDS` extended);
+  lib/templates.ts `together(letter, ...items)` for supersets and five
+  templates (full-body-3, body-weight, upper-lower, arnold, body-part),
+  beginners first; app/templates.tsx a level filter, a mark per template,
+  superset labels. The icons were checked by eye in the preview renders
+  (scratchpad tool, not in the repo); the Templates screen was driven in
+  the browser after the SDK 58 upgrade.
+- **Gym details from Apple Maps, through SerpApi** (3 Nov; the owner gave
+  serpapi.com/apple-maps-places-api, "import it into gymgo but dont change
+  ui"). That API looks places up by Apple's id only, so the search engine
+  (`apple_maps`) finds each gym and carries the same fields.
+  packages/domain/src/appleMaps.ts (pure: `readAppleResults`,
+  `readWeeklyHours`, `withAppleListing` filling gaps, cited);
+  packages/osm `MapOnlyGym.apple` so a pack's gym is cited to Apple on the
+  phone; apps/server/src/appleMaps.ts (`AppleMaps`: `apple_listings`
+  table, `lookUp`, `enrich`, `decorate`, the daily limit) merged in
+  `withOwner` (Apple first, the owner's updates over it), background
+  lookups after /api/area, appleMapsCli.ts (`apple-maps` script),
+  `SERPAPI_API_KEY` / `SERPAPI_DAILY_LIMIT` in config.ts and both
+  .env.example files. Never run against SerpApi: no key here, by the
+  owner's rules; tests use SerpApi's documented shape with an invented gym.
+  Terms (SerpApi's, Apple's) to check before going public.
+- **Sidebar layout** (3 Nov; the owner: "a sidebar menu mode in the
+  appearance ... make the normal one default"). ThemeChoice `layout`
+  ('tabs' default | 'sidebar'); lib/navLayout.ts (`navMode` → 'tabs',
+  'docked' from `SIDEBAR_WIDE` = 960 pt, or 'drawer'; the items; `tabFor`);
+  components/Sidebar.tsx (`DockedSidebar`, `MenuButton`, `SidebarDrawer`);
+  (tabs)/_layout.tsx picks one and sets `TabBarInset` to match; GymPal.tsx
+  places its button by the mode. Tabs switch with `router.navigate`, other
+  places `router.push` (their own back). Appearance → LAYOUT.
+- **Back buttons on every screen** (3 Nov; the owner: "there isnt a back
+  button for some of the mini pop up screens"). Monthly report, Body
+  measurements and Edit workout weren't registered in the root Stack
+  (app/_layout.tsx), so they opened with no header and no way back; now
+  they are. A sweep in the browser of every screen and sheet reachable
+  from Profile and Settings found each with its back (sheets: Done on
+  iPhone, the back capsule in a browser, Android's arrow). A new screen
+  needs its `<Stack.Screen>` line, or it has no header.
+- **Ideas from Hevy, round 6: body measurements** (3 Nov), the last of
+  the six. lib/bodyMeasures.ts (`MEASURES` with ranges in cm or %,
+  `keptValue`/`shownValue`/`valueLabel` for cm and inches,
+  `withMeasures`, `withoutDay`, `latestOf`, `seriesOf`, a `deviceStore`
+  at `gymgo.body-measures.v1`) and app/measurements.tsx, linked under the
+  body weight card on Progress. ProgressChart's `count` now also draws
+  lengths. Not done from Hevy, on purpose: a public feed of others'
+  workouts, likes and comments (GymGO never shows the days anyone
+  trained); the Watch app, Live Activity and Apple Health / Google Fit
+  (App Store builds); custom exercises (would need their definitions on
+  the account and every exercise list to take them) and routine folders.
+- **Ideas from Hevy, round 5: monthly report** (3 Nov). lib/monthReport.ts
+  (`monthKeyOf`, `shiftMonth`, `monthsWithTraining`, `reportMonth`,
+  `monthReport`, `changeWord`, `monthShareText`) and app/month.tsx
+  (`/month?m=YYYY-MM`), linked from Progress once there's a workout. By
+  the device's calendar; any month with a workout can be opened (Hevy
+  shows only last month's).
+- **Ideas from Hevy, round 4: exercise notes and rest per exercise** (3
+  Nov). lib/exerciseNotes.ts (a `deviceStore` at `gymgo.exercise-notes.v1`,
+  `tidyNote`, `setExerciseNote`, `useExerciseNote`) and
+  components/ExerciseNote.tsx (pinned box; a draft kept on Done or blur,
+  so other cards don't redraw per key). train.tsx: Rest beside Swap and
+  Plates opens `REST_CHOICES` chips that set the item's `restSeconds`
+  (`changeRest`); a Note button in the set buttons; `metaButtons` wraps.
+  progress/[exercise].tsx: a YOUR NOTE card.
+- **Ideas from Hevy, round 3: edit a logged workout** (3 Nov). Server
+  `PATCH /api/training/:id` takes name, unit, startedAt, finishedAt and
+  exercises besides the note: merged over the stored row and run through
+  `cleanTrainingSession`; the note is checked first so nothing half-saves.
+  App: lib/sessionEdit.ts (`draftsOf`, `checkEdits`, `finishFor`,
+  `minutesOf`), app/session-edit.tsx (reached from Edit on an opened
+  workout in Progress), `api.editTraining`, and components/SetKinds.tsx,
+  where the set-kind choices, `askSetKindNatively` and `RpePicker` now
+  live for both the workout and the editor. The day and start time
+  aren't editable (no date picker in the app yet).
+- **Ideas from Hevy, round 2: more records and charts** (3 Nov).
+  training.ts: ExerciseRecords gains `setVolumeKg`/`setVolumeSet` and
+  `sessionVolumeKg`/`sessionVolumeDate`; NewRecord kind `'volume'`
+  ("Biggest set yet"), checked after heaviest and e1rm, live in
+  `bestSoFar` too; `exerciseSeries(sessions, id, metric)` with
+  `EXERCISE_METRICS` (`e1rmSeries` is its first); `repRecords`.
+  ProgressChart takes `count` to draw reps. progress/[exercise].tsx: the
+  Records and Rep records lists, and the metric chips on Pro's chart.
+- **Ideas from Hevy, round 1: kinds of set and RPE** (3 Nov; the owner
+  asked to research Hevy's features and build them; the plan is six
+  rounds: kinds of set and RPE; more records and charts; editing a
+  finished workout; exercise notes and rest per exercise; a monthly
+  report; body measurements. Left out on purpose: a public feed of
+  workouts (GymGO never shows the days anyone trained), and the Watch,
+  Live Activity and Health parts, which need App Store builds).
+  training.ts: `SetKind` ('warmup' | 'drop' | 'failure', absent for an
+  ordinary set) and `rpe` on LoggedSet and DraftSet; `workingSets()` is
+  what records, volume, set counts, muscle balance, lifetime, the record
+  card, lastTrained and Do it again count; `setTags`, `withWarmUps`,
+  `rpeMeaning`. supersets.ts `restAfter`: none before a drop set, at most
+  `WARM_UP_REST` (60 s) after a warm-up. train.tsx: the set number is a
+  button (ChoiceSheet, now with a `message`; ActionSheetIOS on iPhone), an
+  RPE row of chips under a ticked set when `prefs.rpe` is on, and Pro's
+  Warm-ups button on barbell exercises. Server `cleanTrainingSession`
+  checks `kind` and `rpe` (in the JSON column; no migration) and needs a
+  set that isn't a warm-up; GymPal's training summary marks them.
+- **Appearance: more to customise** (2 Nov, the owner asked for more
+  customisation in Appearance). Everyone: Text (Smaller to Largest, 0.9×
+  to 1.25×, and Bold text one weight heavier), Clock (12- or 24-hour;
+  domain `setTwentyFourHour` drives `formatMinuteOfDay`, and copy.ts
+  `timeLabel`, savedWorkouts and friends follow), GymPal's button (bottom
+  left or right; the wide panel follows). Pro: Corners (Round 1.4×,
+  Standard, Sharp 0.45×; `cornersFor` caps them and leaves 0, pill and
+  sheet alone) and Your own colour (accent `'custom'`, `customAccent(hue)`
+  pushes brand and fill to 4.6:1). All in `gymgo.theme.v1` via
+  themePrefs.ts; theme.ts `applyTweaks` applies them, and a hue-only
+  change redraws in place (glass listeners) rather than every screen, so
+  the slider keeps focus. `useProTweaks` in _layout.tsx turns corners off
+  when the plan says not Pro; the accent already fell back to Indigo.
+  plans.ts and the GymPal guide describe it. Verified in the browser
+  (13 checks), not on a phone.
+- **Round 7 of the owner's 11: home-screen widgets, the part that can be
+  done here** (2 Nov). lib/widgetSnapshot.ts: next workout (programme day
+  first, else a template's), weeks in a row, this week against the goal,
+  this month's challenge, and the small widget's line. Not done: the
+  widget. Expo's `expo-widgets` (57.0.x exists) needs an App Group
+  (`groupIdentifier`), which free Personal Team signing doesn't allow, and
+  its native module would compile into every iPhone build once installed;
+  nothing native was added. README "Home-screen widgets" says what it takes.
+- **Round 6 of the owner's 11: monthly challenges** (2 Nov). Domain
+  challenges.ts (targets 8/12/16/20, month keys, time zones, training days
+  counted per local day). Server challenges.ts with a `challenge_members`
+  table (user, month, target, time zone, finished_at kept once reached),
+  routes GET /api/challenges?tz=, PUT/DELETE /api/challenges/:month (this
+  month only), friends who joined listed with count and target only, in
+  the data export, deleted with the account. Screen app/challenges.tsx
+  (from Profile and Friends; not in the limited version) with the month's
+  card. Watch out: the web dev server here sometimes misses edits; restart
+  it before trusting a browser check.
+- **Round 5 of the owner's 11: access filter and class timetables** (2
+  Nov). Filters gained `access` (AmenityId[]) → the domain's existing
+  `requiredAmenities`: confirmed / needs_confirmation (no record, kept) /
+  ruled_out (recorded no); the sheet's Access group offers the three
+  accessibility amenities; the domain's messages now use amenity labels.
+  Class timetables are a third owner update kind, `class_timetable`
+  (domain owner.ts: up to 80 classes, day, start/end the same day within
+  six hours, a 2–60 character name with control characters removed),
+  applied as `GymRecord.classes` with owner_confirmed provenance; owner
+  form in GymOwner.tsx (lib/ownerForm.ts rowsFrom/classesFrom), moderation
+  summary, and a Classes fold on the gym page (components/ClassTimetable.tsx).
+  Locally the test account was made admin and owner of Doherty's in a
+  scratch database only.
+- **Round 4 of the owner's 11: recovery map and progress photos** (2 Nov).
+  lib/recovery.ts bands lastTrained (main muscles only) into today /
+  yesterday / 2–3 days / 4+ / not in the log; components/RecoveryMap.tsx
+  shades the existing BodyFigure and lists the same, on Progress, with no
+  claim about recovery. Progress photos: lib/progressPhotos.ts (picker,
+  resize to 1,200 px, re-encoded JPEG, list in a device store) with files
+  in lib/photoVault.ts (documents folder) / photoVault.web.ts (Cache
+  Storage), app/photos.tsx (hidden until Show them, Then and now, notes,
+  delete removes the file). Nothing is uploaded; GymPal can't see them.
+- **Round 3 of the owner's 11: what you pay, and price changes** (2 Nov).
+  lib/visitCost.ts: spends you enter (membership by the day it ran, or
+  paid once), visits from collection days plus workouts logged at the gym,
+  per currency (never added across), and `visitPrice`, the gym's own
+  cheapest one-visit price for the gym floor with every part of its cost
+  known (no chain "from"/recommended price, no trial, not expired, status
+  not unknown; stale ones say "to confirm"), for the break-even line.
+  Screen app/spend.tsx (Profile). lib/priceWatch.ts compares saved gyms'
+  published offers with the ones last seen (first sight: remembered only;
+  a gym not loaded keeps its last; an unsaved one is forgotten); notes on
+  Saved (components/PriceChanges.tsx). Both kept on the device through a
+  shared lib/deviceStore.ts. GymPal's guide covers both.
+- **Round 2 of the owner's 11: training programmes** (2 Nov). Goal ×
+  2/3/4 days × 6/8/12 weeks (lib/programmes.ts): Strength uses 5×5 or a
+  new upper/lower split, Build muscle full body / PPL / upper-lower,
+  General fitness whole-body supersets. Week from the start day, every
+  fourth easier (half the sets; Pro's target 10% under last time),
+  rotation from the programme's own logged workouts ("Upper A · Strength
+  programme", recognised by workoutTitle; template Up next ignores them).
+  Kept on the device (lib/programmeStore.ts, `gymgo.programme.v1`, read
+  field by field). Screen app/programme.tsx; Home's Up next shows its next
+  day first; links from Templates and Profile. Exact weights are Pro, as
+  "What to lift next" already is (the rule in words is for everyone); the
+  workout screen's Pro target follows easier weeks. GymPal: `withLog` on a
+  screen's request turns the Pro log switch on; its guide covers
+  programmes.
+- **Round 1 of the owner's 11: "Can I do my workout here?" and supersets**
+  (2 Nov). A gym's page has a fold that checks a saved workout against
+  `knownKit` (the gym's list plus members' tallies): there / missing /
+  not known, with `swapFor` swaps from the known kit and **Start it here**
+  (lib/workoutFit.ts, components/WorkoutFit.tsx, PlaceCard `workoutFit`).
+  Supersets and circuits are a shared `group` letter on neighbouring items
+  (lib/supersets.ts: tidyGroups, linkWithNext, unlink, restAfter, nextUp),
+  in the builder (ExerciseCard) and the logger (train.tsx), with the rest
+  timer and "up next" following the group; saved plans keep `group`
+  (server cleanWorkoutPlan, A–L only) and a regrouped plan saves as new.
+  GymPal's guide covers both.
+- **gymgo.site follows the owner's server** (1 Nov). Asked: "when the
+  server is turned off it shows the limited edition of the website and when
+  the server is on it shows the normal version". One Pages build
+  (`EXPO_PUBLIC_LIMITED=auto`, `EXPO_PUBLIC_API_URL=https://app.gymgo.site`
+  unless the repository variable `GYMGO_SERVER_URL` says otherwise, `none`
+  for limited only). The page asks `/api/health` from a script that
+  pages-build.sh puts in index.html; the app's new entry (apps/mobile/
+  index.ts, `main` in package.json) waits for that answer (3 s at most)
+  before requiring `expo-router/entry`, so `LIMITED` (lib/limited.ts) stays
+  a constant read once. Phones start at once, as before. In the limited
+  version apiBase is null and the kept sign-in isn't read or cleared
+  (useAccount). WebsiteBanner (components/LimitedBanner.tsx) offers the
+  other version when a later answer differs; it never reloads by itself.
+  online.mjs adds gymgo.site and www to `GYMGO_ALLOWED_ORIGINS` and says
+  whether gymgo.site will follow. Found on the way: `expo export` reuses
+  cached files with old `EXPO_PUBLIC_*` values baked in when only a setting
+  changed, so pages-build.sh and online.mjs now pass `--clear`
+  (netlify-build.sh doesn't; CI starts with no cache anyway). It works only
+  once app.gymgo.site exists: the owner moves gymgo.site's DNS to
+  Cloudflare (keeping GitHub's records DNS only) and makes the named
+  tunnel (README, "GymGO online from your PC"). Not tried against the real
+  address from here.
+- **GymGO online from the owner's PC** (1 Nov). Asked: a server at
+  absolutely no cost; Oracle's free servers were out of capacity, Cloudflare
+  Workers' free plan allows 10 ms of CPU a request (one scrypt check is about
+  40 ms here), and the owner chose their PC "for now". `gymgo -Online`
+  (scripts/online.mjs): the server serves the web app itself (web.ts,
+  `GYMGO_WEB_DIR`) behind a Cloudflare Tunnel; the app finds the server at
+  its own address (`same-origin`). A public address switches the published
+  dev Pro account off (`retireDevProAccount`). Never open a real tunnel
+  from a cloud session: test with a stand-in cloudflared (`GYMGO_CLOUDFLARED`).
+- **Location and GymPal switches** (29 Oct), in Profile → Settings, kept
+  in prefs (`location`, `gymPal`). Anything new that reads where you are
+  must go through `currentFix` (lib/location.ts), which returns 'off' when
+  the switch is off; anything new that opens GymPal should use `AskGymPal`,
+  which hides itself when he's off.
+- **GymPal in more features, and more of him with Pro** (29 Oct). Asked:
+  include GymPal in many features, and extended use for Pro. Any screen opens
+  him with `openGymPal({ question, context, about })` (`lib/gymPalBus.ts`), or
+  the `AskGymPal` row; the chat shows what he was told and offers questions
+  for the screen (`lib/gymPalSuggestions.ts`). Context about a real gym must
+  only ever be what GymGO shows as unknown (the call questions), never a fact
+  passed on. Pro limits and the training-log summary are on the server
+  (`GYMPAL_PLANS`, `trainingSummary` in `apps/server/src/gymPal.ts`); the log
+  leaves only when a Pro member switches it on, never gyms or notes.
+- **Verity is now GymPal, with his own logo** (28 Oct; the owner asked:
+  "Change the Verity ChatBot to GymPal and create a logo for him"). The
+  logo is `apps/mobile/assets/gympal/gympal.svg` (a kettlebell in a pink
+  sweatband on GymGO's blue-violet; `gympal.png` beside it at 512 px). Its
+  groups `body`, `eyes` and `mouth` become `src/lib/gymPalArt.ts` through
+  `scripts/gympal-logo.mjs`, and `components/GymPal.tsx` lays them over one
+  another with `SvgXml` to blink and grin. The owner's smiley and
+  `scripts/verity-face.mjs` are gone. Renamed: `Verity.tsx` →
+  `GymPal.tsx`, the server's `verity.ts`/`verityGuide.ts` →
+  `gymPal.ts`/`gymPalGuide.ts`, `/api/verity` → `/api/gympal`, the error
+  codes `gympal_off`/`gympal_busy`, `GYMGO_VERITY_MODELS` →
+  `GYMGO_GYMPAL_MODELS` (`OPENROUTER_API_KEY` unchanged). The Terms and
+  Privacy Policy now say GymPal, so `LEGAL_VERSION` is 2026-10-28. The
+  entry below describes him as Verity.
+- **Verity, the AI assistant** (27 Oct). The owner asked for a free
+  chatbot in the bottom-right corner called Verity, greeting "Hi! I'm Verity
+  your personal assistant, ask me anything!", smiling and blinking, and to
+  have it know the app thoroughly. The name and look went back and forth
+  (GymBud; no yellow circle; its own logo); where it ended, asked last with
+  the picture attached: **Verity**, with the owner's yellow smiley as its
+  face, blinking and grinning from its own eyes and mouth
+  (`apps/mobile/src/components/Verity.tsx`, mounted in `app/_layout.tsx`;
+  the layers from `apps/mobile/scripts/verity-face.mjs`).
+  The server relays chats to OpenRouter (`apps/server/src/verity.ts`), only
+  ever to `:free` models, with Verity's guide to the app
+  (`verityGuide.ts`) as its instructions: keep that guide true of the app.
+  The owner hasn't set a key yet; never ask for it in chat (their rule).
+  Until it's set up, and on the website (no server), Verity answers every
+  question with an apology that it's waiting to be set up (`WAITING`).
+  Tested only against a stand-in for OpenRouter. Free models allow 50
+  questions a day for the whole account. Terms and Privacy Policy updated
+  (`LEGAL_VERSION` 2026-10-27).
+- **Country flags back, and only the flags** (27 Oct). After the undo below,
+  the owner asked session `01AgUY2LAX9QWwZT9VCizKDS` for the flag emoji back,
+  and said plainly: just the flags, not the other emoji. `components/Flag.tsx`
+  (`Flag`, `hasFlag`) draws a country's Noto 3D flag from
+  `src/lib/flagImages.ts`, written with the pictures by
+  `apps/mobile/scripts/noto-flags.mjs`; used in the country list, Home's city
+  buttons and country headings, `GemCard` and `SetCard`. Licence: SIL OFL 1.1
+  in `assets/flags/LICENSE.txt`, credited on Profile. `src/lib/flags.test.ts`
+  fails if a country has no flag. The icons, celebrations and everything else
+  the undo put back stay as they are.
+- **Undone at the owner's request (26 Oct): another session's six changes.**
+  The owner asked to undo what session `01AgUY2LAX9QWwZT9VCizKDS` did and put
+  the app back as it was. Commit `01cce83` reverts, newest first: the desktop
+  sidebar and wider pages (`45b7481`), the purple icons replaced with emoji
+  (`c977cd6`), flags on Home's cities (`40aa789`), light as the default
+  appearance (`40410b3`), Noto 3D emoji and flags (`129969b`), and Netlify's
+  removal for GitHub Pages only (`fc5490c`). The files are exactly as at
+  `c0daebd` (the end of polish round 9). Don't redo any of them unless the
+  owner asks again; each can come back by reverting its part of `01cce83`.
+
+- **Phone-only review: Android map, Expo Go warnings, links, haptics**
+  (14 Oct, the owner said Expo Go was "heavily bugged" and hasn't yet said
+  how; these came from reading the phone-only code). Conventions to keep:
+  - Open a web page with `openPage` (`lib/actions.ts`), never
+    `WebBrowser.openBrowserAsync` directly: it treats a double tap as one
+    and falls back to the phone's browser.
+  - End every fire-and-forget library promise with `.catch(...)`: an
+    unhandled one is a warning over the app in Expo Go.
+  - A map that can't load shows `MapNotice`; the Android map
+    (`GymMap.android.tsx`) restarts its page when Android takes it away
+    (`onRenderProcessGone`) and replays the pins, dot and padding.
+  - Haptics go through `lib/haptics.ts`, which uses Android's system
+    haptics, not the vibration motor.
+  - A chip that does something, rather than switching on or off, takes
+    `action` (a button to screen readers, not a checkbox).
+  - A choice of one from a few, outside iPhone: `ChoiceSheet` (the sort
+    order uses it; iPhone keeps Apple's action sheet).
+- **Settings menus, second pass** (13 Oct, the owner asked again):
+  Profile's account card shows workouts (from the shared training log,
+  `useTrainingLog`, so no extra request), saved and collected, with a
+  PRO/FREE badge; `ProCard` in `app/(tabs)/profile.tsx` replaces the plain
+  GymGO Pro row; `Group` headings are semibold (Account's and Country's
+  own headings match); Country's rows have inset dividers.
+- **Settings menus made more premium, and their bugs fixed** (13 Oct,
+  the owner asked). Switches on the web and Android are now the iPhone's
+  pill (`components/Toggle.tsx`; the system switch stays on iPhone): React
+  Native's stand-in had a teal Material thumb, and when off no track at
+  all. Profile's and Account's rows share one lit icon tile
+  (`SettingsTile` in `components/ios.tsx`, flat in the solid looks) and
+  the same height and inset dividers; rows that open something under them
+  turn their chevron down and tell screen readers (`expanded`); action
+  rows (Sign out, Download my data) lose their chevron. Account no longer
+  shows users "(see README)", and Profile's long Settings footer moved
+  onto the rows it explained (Haptics on the web, Demo mode).
+- **Liquid Glass review fixed** (13 Oct): a change of the level alone
+  redraws screens in place (`useGlassRedraw` in `components/Redrawn.tsx`,
+  called by every screen; a test checks), and cards stay at WCAG AA.
+- **Workout section made more premium, with GymGO's own exercise icons**
+  (13 Oct, the owner asked, then asked for them to move). Every exercise
+  has an icon drawn in code (`src/lib/exerciseGlyphs.ts`): one figure,
+  posed by limb angles, with its kit in the accent. Each pose has a `move`
+  (the other end of the rep); `exerciseFrames` draws 9 points through the
+  rep and `components/ExerciseGlyph.tsx` eases between them with
+  Reanimated on the UI thread. Icons move in plan cards and on the
+  exercise you're on in a workout, and stay still with Reduce Motion.
+  A new exercise needs an entry in `DRAW` (a test fails without one).
+  Also: `components/PlanSummary.tsx` (a plan's head card: exercises, sets,
+  about how long, from `src/lib/workoutStats.ts`), `ExerciseCard` with
+  sets, reps and rest side by side, wider set rows in a workout.
+- Owner-approved round (8 Oct): Swap one exercise (plan and workout;
+  `swapFor` in `src/lib/workout.ts`), Next to collect on Collection
+  (`nextToCollect` in `src/lib/collection.ts`), Share your week
+  (`weekRecap` in `src/lib/insights.ts`, `src/app/recap.tsx`,
+  `components/RecapCard.tsx`), a welcome tour after sign-up
+  (`src/app/welcome.tsx`, `noteNewAccount` in `lib/afterSignIn.ts`), and the
+  busy button renamed "Say how busy". Offered but not chosen: hiding the
+  AD PLACEHOLDER box for Free users, putting "can I get in?" first on gym
+  pages, and a notice when the map can't load.
+- **The limited website can go on GitHub Pages, free** (20 Oct; the owner
+  asked for a way without buying Netlify credits and said "Yes set it up").
+  `.github/workflows/pages.yml` runs `scripts/pages-build.sh` on pushes to
+  this branch and publishes to https://ashenkodituwakku.github.io/GymGO/.
+  `GYMGO_BASE_URL` (`app.config.js`) gives Expo the `/GymGO` path; the
+  script prefixes the page's own links, writes `404.html` (Pages has no
+  rewrites) and gets the path from `actions/configure-pages`, so a custom
+  domain later needs no change here. `scripts/web-assets.sh`, shared with
+  the Netlify build, renames the folders hosts leave out. **Waiting on the
+  owner:** Settings → Pages → Source "GitHub Actions", and this branch
+  added to the `github-pages` environment's deployment branches (only the
+  default branch can deploy until then); a run fails at "configure-pages"
+  or "deploy" until both are done. Built here both ways (under `/GymGO`
+  and at the root) and driven in a browser behind a Pages-like server:
+  deep links, icons, fonts, client navigation, nothing missing. README:
+  "The website on GitHub Pages".
+- **gymgo.site is the limited version** (20 Oct, the owner asked: "instead
+  of the demo version name it limited version … main cities around the
+  globe … so you don't need the servers yet"). The website build sets
+  `EXPO_PUBLIC_LIMITED=on` (`lib/limited.ts`, replacing `lib/demoOnly.ts`):
+  real built-in gyms, no server, every built-in city open, Demo mode off and
+  hidden, a "GymGO limited version · Gyms in N cities, built in" banner
+  (`components/LimitedBanner.tsx`), and a limited-version card on Profile.
+  Server-bound parts are left out, not offered (see README, "The website on
+  Netlify"). More world cities wait on Overpass: `packages/world-data`
+  fetches them in one command, but overpass-api.de and its lz4 instance
+  reset connections from this cloud network, so a public mirror must be
+  allowed (its README). The owner has linked the GitHub repository in
+  Netlify, so a push builds the site there, **but the Netlify account's
+  credits ran out**: every build since 11 Oct is "Skipped due to account
+  credit usage exceeded", so gymgo.site still shows the 11 Oct demo. Each
+  push to this branch is a production deploy, which is what used them up.
+- **The website is on Netlify** (6 Oct; the owner asked, and chose: live on
+  gymgo.site now, usable without an account, server decided later). Netlify
+  project `gymgowebsite`, replacing the "coming soon" page. `netlify.toml`
+  runs `scripts/netlify-build.sh`, which exports the app for the browser.
+  The website build sets `EXPO_PUBLIC_ACCOUNT=optional` (guests get in;
+  `lib/accountRule.ts`); the app and the PC version still need an account.
+  With no `GYMGO_SERVER_URL` in Netlify the build sets
+  `EXPO_PUBLIC_API_URL=none` (`lib/serverAddress.ts`), so it never asks for
+  a server: built-in gyms only, "offline copy" in the status pill. With one,
+  `_redirects` passes `/api` and the legal pages to it like Caddy does. The
+  Terms and Privacy Policy now say the app needs an account and the website
+  doesn't (same version, 2026-10-06). README: "The website on Netlify".
+- **GymGO needs an account now** (the owner asked for it to be usable only
+  with one). The server answers only a signed-in session apart from the
+  open list in `isPublicRoute` (`apps/server/src/app.ts`); a new route is
+  closed unless you add it there, and image files stay open because
+  `<Image>` can't send the token. In the app, `Stack.Protected` in
+  `src/app/_layout.tsx` keeps every screen behind sign-in except
+  `sign-in`, `legal/[doc]` and `report-bug`; a new screen must go inside
+  the protected group. `lib/api.ts` sends the session on every request;
+  `lib/afterSignIn.ts` brings a signed-out link back after sign-in. The
+  terms' version moved to 2026-10-06. Server tests read as a signed-in
+  member (`reader`). Old signed-out branches in screens (a "Sign in"
+  button) are left as harmless fallbacks. In a browser, the back capsule
+  on a page open while signed out (the legal pages, Report a bug) says
+  "‹ Sign in" and goes there, rather than "‹ Home", which needs an account.
+  Checked in the browser (6 Oct): every app page sends you to sign-in
+  signed out; a gym link opened signed out opens after signing in; a new
+  account lands on the country picker; signing out, Back and reload don't
+  get back in.
+- Map card and web back button (6 Oct). A gym's card no longer empties
+  when the search moves on without that gym (Show gyms near me, another
+  place, a filter that rules it out): the card stays, weighed the same way
+  as a gym page. Before, on a wide window the card turned into a Filters
+  panel that its close button couldn't shut, and on a phone it left a
+  blank sheet with no close button. In a browser, every page's back
+  button is now a soft accent capsule naming the page behind ("‹ Profile",
+  "‹ Home"; untitled pages say "Back"), filled on hover, with the title
+  centred; a page opened straight from a link goes Home. iPhone and Android
+  keep their own back buttons (components/WebBack.tsx, lib/backLabel.ts).
+- Polish round 3 (6 Oct): forms. Sign in's "don't match" clears as you
+  fix the email or password; on Account, Enter saves a name or a password,
+  and a new password says how many characters it still needs; naming an
+  interval timer has Cancel and a proper box, and deleting one takes two
+  taps; a review can be cancelled ("Send review" / "Cancel"); the owner
+  claim's contact hint fits, and only Australian gyms are asked for an ABN.
+  Search: Explore now passes your country to its search box (it never had,
+  so the box was read out as "Search a town, city or gym" to everyone and
+  world cities weren't yours-first), place suggestions in Explore and
+  Trips put your country's first (`suggestPlaces(..., home)`), and "Try a
+  city or ZIP code" / "A city or neighborhood" for a US user. A scan of
+  every screen found no unnamed controls and no button label that wraps.
+- Polish round 2 (5–6 Oct): every page scrolls a box you're typing in clear
+  of the iPhone keyboard (`PageScroll` now does it for all pages; only four
+  did); trips are described by the date where they are (`todayThere` in
+  `src/lib/trips.ts`: the list said "Tomorrow" while the trip's page said
+  "Under way"), their first day reads "Today", and removing one takes a
+  second tap; "1 gym near Melbourne CBD" in Find a machine, not "near
+  melbourne cbd"; a friend code nobody has shows in red and clears as you
+  type; the leaderboard's "You" is a label that a long name can't cut off;
+  Friends and Leaderboard show "Can't reach GymGO" with Try again when the
+  server is away, not "Sign in" to a signed-in person; My workouts has Try
+  again; Profile's Offline gyms and Google content lines fit their two
+  lines. A check for text cut short on every screen at 375 and 393 points
+  finds only gym names on Home's cards and map street names. Mac trackpad
+  haptics were looked at: a web page can't drive them (Safari only reports
+  a force click), and the owner chose to leave it.
+- Polish round (5 Oct): distances in your own country's units everywhere
+  (`setReaderCountry` in `src/lib/places.ts`, set from your Country); the
+  server keeps one copy when the same workout plan is saved twice; proper
+  empty states for a card you don't have and for Moderation; Friends' empty
+  line padded like its rows; a saved gym the server no longer has shows as
+  "No longer listed" with Remove (it used to be invisible but still take a
+  Free space; `gone` in `useGymData`), and a gone compare pick no longer
+  counts towards Free's two (picking another opened the Pro screen); Saved's sign-in line is a link and
+  says "your other devices", not "your PC". Seen in the browser at iPhone
+  and iPhone SE sizes and at 1440 wide, light and dark, signed in and out,
+  with Reduce Motion on.
+- Batch E: gift Pro (a code for a year), Pro Duo (a partner by friend
+  code), partner day passes (mechanics only; none listed). Stripe test mode
+  only, against a pretend Stripe.
+- Batch D: "is it busy?" from members there, verified gym owners (claim,
+  admin check, moderated updates shown as from the gym), a Moderation screen.
+- Batch C: workout templates, record celebration and card, rest alert when
+  locked, CSV as a real file with the Health explanation.
+- Batch B: collection sets (another session), friends, invites to train,
+  leaderboards, share cards as pictures. Card rarity now lives in the
+  domain package (`cards.ts`) so the server can show friends' cards.
+- Batch A: open late / 24 hours filters, Find a machine, Trips.
+- Glass equally opaque on every device (iOS 18 was see-through).
+- Sign-in, the dev account included, works on every device that opens the
+  app, Expo Go through `-Tunnel` included (the server goes through the
+  bundler).
+- Check-in scan with ripple and progress bar, with a Reduce Motion version.
+- Launch work: Terms, Privacy, Refunds, Community Guidelines (app plus public
+  pages, agreed at sign-up); security hardening and forgot password; free
+  hosting kit (`deploy/`); skeleton loaders.
+- New logo everywhere; collection synced to the account; card popup and
+  animations.
+
+## Next up: the owner asked for all 11 of these (2 Nov)
+
+Claimed by this session (session_01T19nwfpA683gnbhSJ8YpPV), built in this
+order and pushed round by round; tick each as it lands. Another session:
+`git fetch` first and leave these alone.
+
+- [x] "Can I do this workout here?" on a gym's page: the workout you built
+      against members' equipment reports (there / missing / not known yet),
+      with a swap for what's missing.
+- [x] Supersets and circuits in the workout builder and logger, one rest
+      timer for the group.
+- [x] Training programmes: a goal and days a week planned over weeks,
+      weight added when every rep is hit, an easier week now and then;
+      with Pro, GymPal can adjust it from the training log.
+- [x] Cost per visit: what you pay (entered by you) over your check-ins,
+      and when a membership beats day passes. Unknown prices stay unknown.
+- [x] Price-change notes for saved gyms: old and new published price,
+      source and date checked.
+- [x] Recovery map: the body figure shaded by days since each muscle was
+      trained, from the log. No health claims.
+- [x] Private progress photos, kept on the device only.
+- [x] Accessibility filter from OpenStreetMap's wheelchair data; gyms
+      without it shown as "not known", not hidden.
+- [x] Class timetables from verified gym owners only, dated.
+- [x] Monthly challenges with friends, opt-in, a card for finishing.
+- [~] Home-screen widgets (next workout, streak): what they show is built and
+      tested (lib/widgetSnapshot.ts); the widget itself waits on the owner
+      (a paid Apple Developer account for the App Group, and a Mac build).
+
+## Earlier: the owner asked for all 22 of these
+
+Status is updated as each batch lands. Build them in order, one batch per
+pushed commit or a few.
+
+**Two sessions are working through this list at once.** Before starting
+an item, `git fetch` and read this list on `origin/claude/friendly-johnson-9rzxrj`;
+skip anything ticked or marked claimed, and mark what you take as claimed
+(push that first) so the other session doesn't build it too.
+
+- All five batches are done (B's sets by the other session, the rest by
+  gymgo-82). Nothing is claimed now.
+
+**Batch A: search**
+- [x] Open late (after 10 pm) and 24-hour quick filters, from published
+      hours (`packages/domain/src/hours.ts`, `hours` in the filters).
+- [x] Machine search (`src/app/machines.tsx`, domain `machines.ts`,
+      server `GET /api/equipment/reported`).
+- [x] Travel mode (`src/app/trips/`, `src/lib/trips.ts`, domain
+      `trips.ts`); a Home card for a trip under way or within a month.
+
+**Batch B: collection and social**
+- [x] City and suburb sets with badges and a reward card
+      (`src/lib/sets.ts`, `src/components/SetCard.tsx`; on Collection and
+      at check-in).
+- [x] Leaderboards (opt-in, display name only), per city and among friends
+      (`src/app/leaderboard.tsx`; server `src/social.ts`).
+- [x] Friends: add by code, see each other's collections, invite to train
+      (`src/app/friends/`; server `src/social.ts`, domain `social.ts`).
+- [x] Share a collected card as an image (`src/lib/shareImage.ts`,
+      `src/app/card/[id].tsx`, Share card in the new-card pop-up).
+
+**Batch C: training**
+- [x] Workout templates (`src/lib/templates.ts`, `src/app/templates.tsx`).
+- [x] Personal-record celebration (`src/components/Celebrate.tsx`,
+      `src/lib/records.ts`; in the workout summary).
+- [x] Rest timer alert while the phone is locked (`src/lib/restAlert.ts`).
+      Live Activities still need a native build.
+- [x] Apple Health / Google Fit: explained on Progress beside the CSV
+      export, which now shares a real file on phones.
+
+**Batch D: trust**
+- [x] "Is it busy?" member reports (`src/components/MemberBusy.tsx`, domain
+      `busy.ts`, server busy routes).
+- [x] Verified gym owners (`src/components/GymOwner.tsx`, server
+      `owners.ts`, domain `owner.ts`; `make-admin` to decide claims).
+- [x] Faster moderation on the phone (`src/app/moderation.tsx`,
+      `src/components/Moderation.tsx`; count on Profile).
+
+**Batch E: money** (Stripe test mode; nothing live without the owner)
+- [x] Gift Pro (server `perks.ts`, domain `perks.ts`, app `ProExtras.tsx`).
+- [x] Duo Pro (same files; a Duo price in Stripe, a partner by friend code).
+- [x] Partner day passes, mechanics only (`DayPass.tsx`; admins add passes).
+      No gym has one: agreements are the owner's to make.

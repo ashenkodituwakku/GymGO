@@ -1,0 +1,564 @@
+/**
+ * Your gym collection: every gym you've checked in at, as a trading card.
+ * Each card has a rarity and a gem, rolled by luck (see lib/rarity.ts), and
+ * a visit tier (Bronze to Platinum) that only going back can raise. Above
+ * them, how many gyms, cities and countries, and the badges they earn.
+ *
+ * A card shows the gym's own logo or a member's photo when there is one,
+ * and says "No photo supplied" when there isn't: the gem frame is
+ * decoration, and nothing is drawn in to stand for a gym.
+ *
+ * "Next to collect" lists the nearest gyms not collected yet (where you
+ * are, or else where the search is), so there's always a next card to go
+ * after; it's on the empty screen too.
+ *
+ * Signed in, the collection is on your account too (lib/useCollection.ts),
+ * which the line at the top says. At the foot, Delete all collection data
+ * clears it, after a warning saying exactly what goes
+ * (components/CollectionData.tsx, also in Account → Your data).
+ */
+
+import { useRouter } from 'expo-router';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { CollectionSyncLine, useDeleteCollection } from '@/components/CollectionData';
+import { BrandFill } from '@/components/BrandFill';
+import { MarkImage, useGymMark } from '@/components/BrandLogo';
+import { GemCard } from '@/components/GemCard';
+import { useGlassRedraw } from '@/components/Redrawn';
+import { SetProgress, SetReward } from '@/components/SetCard';
+import { CITY_SET_SIZE, collectionSets, setsDone } from '@/lib/sets';
+import { Icon, type IconName } from '@/components/Icon';
+import { HeroMark } from '@/components/HeroMark';
+import { ListSkeleton } from '@/components/Skeleton';
+import { GLIDE, Pressy } from '@/components/motion';
+import { CountUp } from '@/components/CountUp';
+import { NoPhoto, PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { useApp } from '@/lib/app-state';
+import { shareLine, shareText } from '@/lib/actions';
+import { badges, collectionShareText, collectionStats, nextToCollect } from '@/lib/collection';
+import { distanceLabel } from '@/lib/places';
+import { nearLabel } from '@/lib/query';
+import type { GymLocation, GymRecord } from '@gymgo/domain';
+import { FOIL_ONE_IN, RARITIES, cardFor, oddsLine, rarityRank, type Rarity } from '@/lib/rarity';
+import { CARD_FRAMES } from '@/lib/cardShape';
+import { CardShapeIcon } from '@/components/CardShapeIcon';
+import { haptic } from '@/lib/haptics';
+import { usePageTitle } from '@/lib/pageTitle';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { useCollection } from '@/lib/useCollection';
+import { PageScroll } from '@/components/PageScroll';
+import { ScreenOptions } from '@/components/ScreenOptions';
+
+const COLUMN = 640;
+
+const SOCIAL: Array<{ path: '/friends' | '/leaderboard'; title: string; icon: IconName }> = [
+  { path: '/friends', title: 'Friends', icon: 'people' },
+  { path: '/leaderboard', title: 'Leaderboard', icon: 'trophy' },
+];
+/** Sets still going shown before "Show all": the closest to finished. */
+const SETS_SHOWN = 4;
+
+export default function CollectionScreen() {
+  useGlassRedraw();
+  usePageTitle('Collection');
+  const router = useRouter();
+  const { data, requestExplore, account, here, filters, prefs } = useApp();
+  const { loaded, gyms, sync, retry } = useCollection();
+  // Until the account is known, not yet: signed in, deleting clears its copy too.
+  const accountKnown = account.state !== 'loading';
+  const deleting = useDeleteCollection();
+  const { width } = useWindowDimensions();
+  // Two cards a row on a phone, three where the page is wide enough (a tablet, a computer).
+  const columns = Math.min(width, COLUMN) >= 560 ? 3 : 2;
+  const cardWidth = (Math.min(width, COLUMN) - space[4] * 2 - space[3] * (columns - 1)) / columns;
+  const [order, setOrder] = useState<'newest' | 'rarest' | 'visits'>('newest');
+  const [allSets, setAllSets] = useState(false);
+  const [only, setOnly] = useState<Rarity | null>(null);
+  const sorted = useMemo(() => {
+    const newest = Object.values(gyms).sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1));
+    if (order === 'rarest') {
+      const rank = new Map(newest.map((entry) => [entry.id, rarityRank(cardFor(entry).rarity) * 2 + (cardFor(entry).foil ? 1 : 0)]));
+      return [...newest].sort((a, b) => rank.get(b.id)! - rank.get(a.id)!);
+    }
+    if (order === 'visits') return [...newest].sort((a, b) => b.days.length - a.days.length);
+    return newest;
+  }, [gyms, order]);
+  // How many of each rarity you have, for the filter.
+  const counts = useMemo(() => {
+    const out = new Map<Rarity, number>();
+    for (const entry of sorted) out.set(cardFor(entry).rarity, (out.get(cardFor(entry).rarity) ?? 0) + 1);
+    return out;
+  }, [sorted]);
+  // A rarity you no longer have a card of shows them all again.
+  const showing = only && counts.get(only) ? only : null;
+  const entries = useMemo(() => (showing ? sorted.filter((entry) => cardFor(entry).rarity === showing) : sorted), [sorted, showing]);
+  // Where to look for the next one: where you are, else where the search is.
+  const from = here?.position ?? filters.centre;
+  const near = here ? 'Near you' : nearLabel(filters.placeName);
+  const next = useMemo(
+    () => nextToCollect(data.records, gyms, from, 4),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data.records, gyms, from.lat, from.lng],
+  );
+  const openGym = (id: string) => router.push({ pathname: '/gym/[id]', params: { id } });
+  const stats = collectionStats(gyms);
+  const sets = useMemo(() => collectionSets(gyms, data.listed), [gyms, data.listed]);
+  const earned = badges(stats, setsDone(sets));
+  const finished = sets.filter((set) => set.complete);
+  const going = sets.filter((set) => !set.complete);
+  const [shared, setShared] = useState<string | null>(null);
+  const share = async () => {
+    const outcome = await shareText(collectionShareText(gyms), 'My GymGO collection');
+    setShared(shareLine(outcome));
+  };
+
+  // Gyms found by searching an area aren't in the bundled data: fetch them, for their logos.
+  const { ensureGyms } = data;
+  useEffect(() => {
+    if (entries.length) void ensureGyms(entries.map((entry) => entry.id));
+  }, [entries, ensureGyms]);
+
+  // Signed in, nothing on this device, and the account couldn't be reached:
+  // the collection may well be there, so not "Start your collection".
+  const signedIn = account.state === 'signed_in' || account.state === 'unreachable';
+  if (loaded && entries.length === 0 && signedIn && (sync === 'offline' || sync === 'failed')) {
+    return (
+      <View style={styles.empty}>
+        <ScreenOptions options={{ title: 'Collection' }} />
+        <HeroMark icon="offline" size={64} />
+        <Txt variant="title2" style={styles.center}>
+          Your collection is on your account
+        </Txt>
+        <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
+          GymGO couldn’t load it just now. Anything you collect meanwhile is kept on this device and joins it when it’s back.
+        </Txt>
+        <PrimaryButton
+          label="Try again"
+          icon="refresh"
+          tone="quiet"
+          onPress={() => void (account.state === 'unreachable' ? account.reconnect() : retry())}
+        />
+      </View>
+    );
+  }
+
+  // Still coming from your account (signed in, nothing on this device yet).
+  if (entries.length === 0 && (account.state === 'loading' || (signedIn && sync === 'syncing'))) {
+    return (
+      <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+        <ScreenOptions options={{ title: 'Collection' }} />
+        <ListSkeleton rows={4} label="Loading your collection" />
+      </PageScroll>
+    );
+  }
+
+  if (loaded && entries.length === 0) {
+    return (
+      <View style={styles.empty}>
+        <ScreenOptions options={{ title: 'Collection' }} />
+        <HeroMark icon="trophy" tint={color.maybe} size={68} />
+        <Txt variant="title2" style={styles.center}>
+          Start your collection
+        </Txt>
+        <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
+          At a gym, open its page and tap I’m here. GymGO checks your location on this phone and gives you the gym’s card, with a rarity and a gem rolled by luck. Every day you go back rolls again, and the card climbs from Bronze to Platinum.
+        </Txt>
+        {/* The five cards there are to get, each in its shape and metal. */}
+        <View style={styles.shapesBox} accessible accessibilityLabel={`Cards come in five rarities: ${RARITIES.map((rarity) => rarity.label).join(', ')}`}>
+          <View style={styles.shapes}>
+            {RARITIES.map((rarity) => (
+              <CardShapeIcon key={rarity.id} rarity={rarity.id} height={34} />
+            ))}
+          </View>
+          <Txt variant="caption" color={color.labelSecondary}>
+            {`${RARITIES[0]!.label} to ${RARITIES[RARITIES.length - 1]!.label}`}
+          </Txt>
+        </View>
+        <PrimaryButton
+          label="Find a gym"
+          icon="map"
+          onPress={() => {
+            requestExplore({ recentre: true });
+            router.navigate('/explore');
+          }}
+        />
+        {next.length > 0 && (
+          <View style={styles.emptyNext}>
+            <NextToCollect items={next} near={near} country={prefs.country} onOpen={openGym} />
+          </View>
+        )}
+        <View style={styles.emptySync}>
+          <CollectionSyncLine />
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <PageScroll style={styles.page} contentContainerStyle={styles.content}>
+      <ScreenOptions options={{ title: 'Collection' }} />
+      {/* Trouble first (off your account, or not synced); all well, it's said at the foot. */}
+      <CollectionSyncLine when="trouble" />
+
+      {/* Your totals on the accent, the page's head. */}
+      <View style={styles.hero}>
+        <BrandFill round={radius.xl} />
+        <Txt variant="label" color={color.onBrandSoft}>
+          Your collection
+        </Txt>
+        <View style={styles.stats}>
+          <Stat first value={stats.gyms} one="gym" many="gyms" />
+          <Stat value={stats.cities} one="city" many="cities" />
+          <Stat value={stats.countries} one="country" many="countries" />
+          <Stat value={stats.visits} one="visit" many="visits" />
+        </View>
+      </View>
+
+      <View style={styles.social}>
+        {SOCIAL.map((item) => (
+          <Pressy key={item.path} scaleTo={0.96} onPress={() => router.push(item.path)} accessibilityRole="button" accessibilityLabel={item.title} style={styles.socialTile}>
+            <Icon name={item.icon} size={18} color={color.brand} />
+            <Txt variant="subhead" style={face('semibold')}>
+              {item.title}
+            </Txt>
+          </Pressy>
+        ))}
+      </View>
+
+      {next.length > 0 && <NextToCollect items={next} near={near} country={prefs.country} onOpen={openGym} />}
+
+      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+        {`BADGES · ${earned.filter((badge) => badge.earned).length} OF ${earned.length}`}
+      </Txt>
+      {/* On a phone, one row to swipe through, earned first, so the cards aren't pushed down the page;
+          where the page is narrower than the screen (a tablet, a computer), all of them, wrapped, rather
+          than a row cut off at the page's edge. */}
+      <BadgeShelf wrap={width >= COLUMN + space[4] * 2}>
+        {[...earned].sort((a, b) => Number(b.earned) - Number(a.earned)).map((badge) => (
+          <View
+            key={badge.id}
+            style={[styles.badge, badge.earned && styles.badgeOn]}
+            accessible
+            accessibilityLabel={`${badge.title}: ${badge.detail}. ${badge.earned ? 'Earned' : 'Not yet'}`}
+          >
+            <Icon name={badge.earned ? 'trophy' : 'lock'} size={14} color={badge.earned ? color.brand : color.labelTertiary} />
+            <View>
+              <Txt variant="footnote" color={badge.earned ? color.label : color.labelSecondary} style={face('semibold')}>
+                {badge.title}
+              </Txt>
+              <Txt variant="caption" color={color.labelSecondary}>
+                {badge.detail}
+              </Txt>
+            </View>
+          </View>
+        ))}
+      </BadgeShelf>
+
+      {sets.length > 0 && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+            SETS
+          </Txt>
+          {going.length > 0 && (
+            <View style={styles.setGroup}>
+              {(allSets ? going : going.slice(0, SETS_SHOWN)).map((set, index) => (
+                <SetProgress key={set.key} set={set} first={index === 0} />
+              ))}
+            </View>
+          )}
+          {going.length > SETS_SHOWN && (
+            <PrimaryButton
+              label={allSets ? 'Show fewer sets' : `Show all ${going.length} sets`}
+              tone="quiet"
+              onPress={() => setAllSets((shown) => !shown)}
+            />
+          )}
+          {finished.map((set) => (
+            // Opens big, to share as a picture.
+            <Pressy
+              key={set.key}
+              scaleTo={0.98}
+              onPress={() => router.push({ pathname: '/card/[id]', params: { id: `set:${set.key}` } })}
+              accessibilityRole="button"
+              accessibilityLabel={`${set.name} set complete. Open to share`}
+            >
+              <SetReward set={set} />
+            </Pressy>
+          ))}
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+            {`A suburb set is every gym GymGO lists in a suburb you’ve collected in; a city set is ${CITY_SET_SIZE} gyms in one city, or all of them if it has fewer. Finish one for its reward card.`}
+          </Txt>
+        </>
+      )}
+
+      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+        YOUR CARDS
+      </Txt>
+      {sorted.length > 1 && (
+        <Segmented
+          options={[
+            { value: 'newest', label: 'Newest' },
+            { value: 'rarest', label: 'Rarest' },
+            { value: 'visits', label: 'Most visits' },
+          ]}
+          value={order}
+          onChange={setOrder}
+        />
+      )}
+      {counts.size > 1 && <RarityFilter counts={counts} total={sorted.length} value={showing} onChange={setOnly} wrap={width >= COLUMN + space[4] * 2} />}
+      <View style={styles.grid}>
+        {entries.map((entry) => (
+          // Re-sorting slides each card to its new place rather than jumping.
+          <Animated.View key={entry.id} layout={GLIDE} style={{ width: cardWidth }}>
+            <GemCard
+              entry={entry}
+              record={data.records.find((record) => record.location.id === entry.id) ?? null}
+              cover={data.covers[entry.id] ?? null}
+              width={cardWidth}
+              onPress={() => router.push({ pathname: '/card/[id]', params: { id: entry.id } })}
+            />
+          </Animated.View>
+        ))}
+      </View>
+      <View style={styles.how}>
+        <View style={styles.howHead}>
+          <Icon name="gem" size={16} color={color.brand} />
+          <Txt variant="headline">How cards work</Txt>
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary}>
+          {`Each day you check in at a gym rolls its card: ${oddsLine()}. The card keeps its best roll, so going back is how it gets rarer. Its gem is picked at random when you first collect the gym, and 1 in ${FOIL_ONE_IN} cards is Foil.`}
+        </Txt>
+        <Txt variant="footnote" color={color.labelSecondary}>
+          Each rarity has its own shape and metal: rounded steel, cut green corners, notched blue, scooped purple, and a gold crest with a crown for Legendary. The card takes the colour of the gym’s own logo or website icon, or its gem’s when the logo is black, white or grey.
+        </Txt>
+        <Txt variant="footnote" color={color.labelSecondary}>
+          Rarity is luck, not a rating of the gym, and it can’t be bought. The tier (Bronze to Platinum) counts your visits.
+        </Txt>
+      </View>
+      <PrimaryButton label="Share your collection" icon="share" tone="quiet" onPress={() => void share()} />
+      {shared && (
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+          {shared}
+        </Txt>
+      )}
+      <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+        A visit counts once a day, when you check in at the gym; your location is only compared on the phone, never sent.
+      </Txt>
+      <CollectionSyncLine when="fine" />
+
+      {accountKnown &&
+        (deleting.warning ?? <PrimaryButton label="Delete all collection data" icon="warning" tone="danger" onPress={deleting.open} />)}
+    </PageScroll>
+  );
+}
+
+/** The badges: a row to swipe on a phone, wrapped where there's room to show them all. */
+function BadgeShelf({ wrap, children }: { wrap: boolean; children: ReactNode }) {
+  if (wrap) return <View style={styles.badgesWrapped}>{children}</View>;
+  return (
+    // In a browser the row takes keyboard focus, so the arrow keys can bring the badges past its edge into view:
+    // nothing in it is a control, so otherwise only a mouse or a finger could.
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.badgeRow}
+      contentContainerStyle={styles.badges}
+      {...(Platform.OS === 'web' ? { tabIndex: 0 as const, role: 'group' as const, 'aria-label': 'Badges' } : null)}
+    >
+      {children}
+    </ScrollView>
+  );
+}
+
+/**
+ * Show one rarity's cards, or all: each with its card's shape in its metal (CardShapeIcon)
+ * and how many you have. Only the rarities you have a card of.
+ */
+function RarityFilter({
+  counts,
+  total,
+  value,
+  onChange,
+  wrap,
+}: {
+  counts: Map<Rarity, number>;
+  total: number;
+  value: Rarity | null;
+  onChange: (rarity: Rarity | null) => void;
+  /** Where the page is narrower than the screen: wrapped, not a row cut off at the page's edge. */
+  wrap: boolean;
+}) {
+  const rarities = [...RARITIES].reverse().filter((rarity) => counts.get(rarity.id));
+  const pill = (key: Rarity | null, label: string, count: number) => {
+    const selected = value === key;
+    const metal = key ? CARD_FRAMES[key].metal : null;
+    return (
+      <Pressy
+        key={key ?? 'all'}
+        scaleTo={0.94}
+        onPress={() => {
+          haptic.select();
+          onChange(key);
+        }}
+        // One of a set, only one on: a radio button, so a screen reader says which is showing.
+        accessibilityRole="radio"
+        aria-checked={selected}
+        accessibilityLabel={key ? `${label}: ${count} card${count === 1 ? '' : 's'}` : `All ${count} cards`}
+        style={[styles.rarityPill, selected && { backgroundColor: metal ? metal[2] : color.label, borderColor: metal ? metal[1] : color.label }]}
+      >
+        {key && <CardShapeIcon rarity={key} />}
+        <Txt variant="footnote" color={selected ? (metal ? '#FFFFFF' : color.background) : color.label} style={face('semibold')}>
+          {label}
+        </Txt>
+        <Txt variant="footnote" color={selected ? (metal ? 'rgba(255, 255, 255, 0.8)' : color.background) : color.labelSecondary}>
+          {count}
+        </Txt>
+      </Pressy>
+    );
+  };
+  const pills = [pill(null, 'All', total), ...rarities.map((rarity) => pill(rarity.id, rarity.label, counts.get(rarity.id)!))];
+  if (wrap) {
+    return (
+      <View style={styles.rarityWrapped} accessibilityLabel="Show cards of one rarity">
+        {pills}
+      </View>
+    );
+  }
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rarityRow} style={styles.rarityScroll} accessibilityLabel="Show cards of one rarity">
+      {pills}
+    </ScrollView>
+  );
+}
+
+/** The nearest gyms not collected yet: tap one for its page, and I'm here when you get there. */
+function NextToCollect({ items, near, country, onOpen }: { items: Array<{ record: GymRecord; km: number }>; near: string; country: string | null; onOpen: (id: string) => void }) {
+  return (
+    <View>
+      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+        {`NEXT TO COLLECT · ${near.toUpperCase()}`}
+      </Txt>
+      <View style={styles.nextList}>
+        {items.map(({ record, km }, index) => {
+          const { location } = record;
+          // The branch only where it adds something: "Doherty’s Gym · City", but not
+          // "Anytime Fitness · Collingwood" above "Collingwood · 1.2 km".
+          const branch = location.branch && location.branch.toLowerCase() !== location.address.suburb.toLowerCase() ? location.branch : null;
+          const name = branch ? `${location.name} · ${branch}` : location.name;
+          const where = [location.address.suburb, distanceLabel(km, country ?? location.address.countryCode)].filter(Boolean).join(' · ');
+          return (
+            <Pressy
+              key={location.id}
+              scaleTo={0.98}
+              onPress={() => onOpen(location.id)}
+              accessibilityRole="button"
+              accessibilityLabel={`${name}, ${where}. Not collected yet`}
+              style={[styles.nextRow, index > 0 && styles.nextLine]}
+            >
+              <NextMark location={location} />
+              <View style={styles.flexFill}>
+                <Txt variant="headline" numberOfLines={2}>
+                  {name}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                  {where}
+                </Txt>
+              </View>
+              <Icon name="chevron" size={13} color={color.labelTertiary} />
+            </Pressy>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+/** A gym to collect's own mark on its white plate, as in a list of gyms; the gym icon where it has none. */
+function NextMark({ location }: { location: GymLocation }) {
+  const mark = useGymMark(location);
+  if (!mark) {
+    // No logo: its initials, as a gym card shows them.
+    return <NoPhoto compact name={location.name} style={styles.nextIcon} />;
+  }
+  return (
+    <View style={[styles.nextIcon, styles.nextLogo]}>
+      <MarkImage mark={mark} name={location.name} width={36} height={32} area={760} />
+    </View>
+  );
+}
+
+function Stat({ value, one, many, first = false }: { value: number; one: string; many: string; first?: boolean }) {
+  return (
+    <View style={[styles.stat, !first && styles.statLine]} accessible accessibilityLabel={`${value} ${value === 1 ? one : many}`}>
+      <CountUp id={`collection.${many}`} value={value} color={color.onBrand} style={face('bold')} />
+      <Txt variant="caption" color={color.onBrandSoft}>
+        {value === 1 ? one : many}
+      </Txt>
+    </View>
+  );
+}
+
+const styles = themed(() =>
+  StyleSheet.create({
+    page: { flex: 1, backgroundColor: color.groupedBackground },
+    content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: COLUMN, alignSelf: 'center' },
+    empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
+    emptySync: { alignSelf: 'stretch', width: '100%', maxWidth: 480, marginHorizontal: 'auto', marginTop: space[3] },
+    emptyNext: { alignSelf: 'stretch', width: '100%', maxWidth: 480, marginHorizontal: 'auto', marginTop: space[2] },
+    flexFill: { flex: 1, minWidth: 0 },
+    nextList: { marginTop: space[2], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden' },
+    nextRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], minHeight: 56 },
+    nextLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
+    nextIcon: { width: 42, height: 42, borderRadius: radius.md, borderCurve: 'continuous', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+    nextLogo: { backgroundColor: color.logoPlate, borderWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
+    // No wider than the list below it: across a desktop window a paragraph was one long line.
+    center: { textAlign: 'center', maxWidth: 480 },
+    section: { marginTop: space[2], marginLeft: space[4] },
+    hero: { gap: space[3], padding: space[4], paddingTop: space[4] + 2, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.brandFill },
+    stats: { flexDirection: 'row' },
+    social: { flexDirection: 'row', gap: space[2] },
+    socialTile: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[2],
+      paddingVertical: space[3],
+      borderRadius: radius.lg,
+      borderCurve: 'continuous',
+      backgroundColor: color.plate,
+      ...shadow.plate,
+    },
+    stat: { flex: 1, minWidth: 0, alignItems: 'center', gap: 2 },
+    statLine: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: color.onBrandFaint },
+    badgeRow: { marginHorizontal: -space[4], flexGrow: 0 },
+    badges: { flexDirection: 'row', gap: space[2], paddingHorizontal: space[4] },
+    badgesWrapped: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+    badge: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.md, backgroundColor: color.fill },
+    badgeOn: { backgroundColor: color.brandTint },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
+    shapesBox: { alignItems: 'center', gap: 6 },
+    shapes: { flexDirection: 'row', alignItems: 'flex-end', gap: space[3] },
+    // Runs to the page's edges when it scrolls, so a pill isn't cut off at the margin.
+    rarityScroll: { marginHorizontal: -space[4], flexGrow: 0 },
+    rarityRow: { gap: space[2], paddingHorizontal: space[4] },
+    rarityWrapped: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+    rarityPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: space[3],
+      paddingVertical: 7,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: color.separator,
+      backgroundColor: color.plate,
+    },
+    setGroup: { borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', ...shadow.plate },
+    how: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
+    howHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    note: { paddingHorizontal: space[4], textAlign: 'center' },
+  }),
+);

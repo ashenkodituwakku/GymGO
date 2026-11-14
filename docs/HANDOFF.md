@@ -106,6 +106,15 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Sidebar folds away on the map** (14 Nov). lib/navLayout.ts
+  `SIDEBAR_FOLDS_AWAY` ('/explore'), `foldedOn()` and `sidebarInset()`
+  (SIDEBAR_WIDTH, SIDEBAR_FOLDED 60 or 0); SidebarFrame provides that as
+  `useSidebarInset()` and GymPal's left offset uses it. Sidebar.tsx
+  `FoldedSidebar`: the capsule (FOLD_WIDTH 44 × FOLD_HEIGHT 72, Glass
+  control) with local `open` state, opening `SidebarDrawer folding` (the
+  phone drawer at the docked pane's width, transparent backdrop, chevron
+  instead of the close cross). Navigating away unmounts it; arriving on
+  Explore starts folded. To fold on another page, add its path to the set.
 - **Explore's panel keeps its search pinned** (14 Nov). In ResultsContent.tsx
   the pieces are consts (`search`, `recent`, `suggestionList`, `chips`,
   `body`). With `inSheet` false (only the wide panel) it returns `pane`: a

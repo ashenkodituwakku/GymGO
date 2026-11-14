@@ -9,6 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 163 · On the map, the sidebar folds away to a small capsule
+
+*14 Nov 2026 · the commit "Sidebar: folded away to a capsule on the map, opening over it"*
+
+You asked for the sidebar to fold into a small capsule with an arrow on the map, which you can open to go somewhere else.
+
+- On Explore, with the sidebar layout on a wide screen, the sidebar is now folded away to a small glass capsule with an arrow, at the top left. The results panel moves up beside it, so the map gets about 190 more points of width.
+- The arrow opens the sidebar over the map, in the same place and size as on other pages. Choosing a place takes you there, where the sidebar is open as usual. The arrow at its top, a click anywhere beside it or Escape folds it away again. Coming back to the map folds it again.
+- With the extra room, a gym's card now fits beside the results at 1280 points wide, with about 390 points of map left (before, it covered the results at that width). At 1000 points it still takes the results' place.
+- GymPal's button follows the capsule when it's on the left.
+- Every other page is unchanged, and so are phones and the Tab bar layout.
+- Checked in the browser at 1280 and 1000 points, light and dark: folded, opened, folded again with Escape and with a click on the map, a gym's card opened, Progress chosen from it (full sidebar there) and back to Explore (folded again). A new unit test covers where it folds. The blur behind the glass still can't be seen in this test browser (see Update 159), so when it's open the results show faintly through it here. Not yet seen on a phone or an iPad.
+
 ## Update 162 · The search stays put while the results scroll beside the map
 
 *14 Nov 2026 · the commit "Explore: the search and quick filters stay at the top of the panel beside the map"*

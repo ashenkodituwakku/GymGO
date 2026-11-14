@@ -381,8 +381,11 @@ your accent glows behind them.
     (Collection, Friends, Appearance). From 960 points wide it stays open,
     hovering over the left of every page (Progress and the rest too, not
     only the tabs): the page's header and background run on underneath it,
-    Explore's map too, and the page's content keeps clear of it; on a
-    phone, **Menu** at the foot (naming the tab you're on) slides it in over
+    Explore's map too, and the page's content keeps clear of it. On the
+    map it folds away to a small glass capsule with an arrow at the top
+    left, so the map has the room; the arrow opens it over the map, and
+    choosing a place, the fold arrow, a click beside it or Escape folds it
+    again. On a phone, **Menu** at the foot (naming the tab you're on) slides it in over
     the page, and choosing a place, a tap beside it, its close button,
     Escape or Android's back closes it. Either way the menu is a pane of
     Liquid Glass floating in from the screen's edges, as iPadOS 26 draws

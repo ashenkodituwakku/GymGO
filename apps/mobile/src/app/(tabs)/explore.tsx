@@ -923,7 +923,7 @@ function MapScreen() {
     // place (closing it shows them again, scrolled where they were).
     const besideResults = width >= start + PANEL_GAP * 3 + PANEL_WIDTH * 2 + MIN_MAP;
     const covered = shown !== null && !besideResults;
-    // The docked sidebar hovers over the map's left edge: the panels start past it, and end
+    // The sidebar (folded to its capsule here) hovers over the map's left edge: the panels start past it, and end
     // where it does (the same gap from the window's foot), rather than a tab bar's clearance up.
     const panelsWidth = start + PANEL_GAP + PANEL_WIDTH + (shown && besideResults ? PANEL_GAP + PANEL_WIDTH : 0);
     const foot = PANEL_GAP + (start > 0 ? insets.bottom : clearance);

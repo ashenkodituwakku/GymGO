@@ -6,7 +6,10 @@
  * app/_layout.tsx, so opening Progress from it doesn't cover it); on a
  * phone a Menu button at the foot slides it in over
  * the page (`MenuButton`, `SidebarDrawer`), and choosing a place, a tap
- * beside it, Escape or Android's back closes it.
+ * beside it, Escape or Android's back closes it. On the map it folds away
+ * to a small glass capsule with an arrow at the top left (`FoldedSidebar`),
+ * leaving the map the room; the arrow opens it over the map, to go
+ * somewhere else, and closes the same ways.
  *
  * Either way it's a pane of Liquid Glass floating clear of the window's
  * edges, over the page rather than beside it, as iPadOS 26 draws its
@@ -25,7 +28,7 @@ import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { LIMITED } from '@/lib/limited';
-import { MENU_BUTTON, SIDEBAR_TABS, SIDEBAR_TRAINING, SIDEBAR_WIDTH, SIDEBAR_YOU, dockedBeside, navMode, tabFor, type SidebarItem } from '@/lib/navLayout';
+import { MENU_BUTTON, SIDEBAR_TABS, SIDEBAR_TRAINING, SIDEBAR_WIDTH, SIDEBAR_YOU, foldedOn, navMode, sidebarInset, tabFor, type SidebarItem } from '@/lib/navLayout';
 import { useThemeChoice } from '@/lib/themePrefs';
 import { CHILD_TOUCH, color, currentTheme, face, radius, shadow, solidSurfaces, space, themed } from '@/lib/theme';
 import { Avatar } from './Avatar';
@@ -180,15 +183,17 @@ export function SidebarFrame({ signedIn, children }: { signedIn: boolean; childr
   const { layout } = useThemeChoice();
   const { width } = useWindowDimensions();
   const pathname = usePathname();
-  const docked = dockedBeside(navMode(layout, width), pathname, signedIn);
-  const inset = docked ? SIDEBAR_WIDTH : 0;
+  const mode = navMode(layout, width);
+  // All of the sidebar, its capsule on the map, or nothing.
+  const inset = sidebarInset(mode, pathname, signedIn);
+  const folded = foldedOn(mode, pathname, signedIn);
   const insets = useSafeAreaInsets();
   const shifted = useMemo(() => ({ ...insets, left: insets.left + inset }), [insets, inset]);
   return (
     <SidebarInset.Provider value={inset}>
       <View style={styles.fill}>
         <SafeAreaInsetsContext.Provider value={shifted}>{children}</SafeAreaInsetsContext.Provider>
-        {docked ? <DockedSidebar /> : null}
+        {folded ? <FoldedSidebar /> : inset > 0 ? <DockedSidebar /> : null}
       </View>
     </SidebarInset.Provider>
   );
@@ -214,6 +219,38 @@ function DockedSidebar() {
         </ScrollView>
       </Pane>
     </View>
+  );
+}
+
+/**
+ * On the map: the docked sidebar folded away to a small glass capsule with
+ * an arrow, top left, so the map and its panels have the room. The arrow
+ * opens the sidebar over the map; choosing a place goes there (where the
+ * sidebar is docked again), and the fold arrow, a click beside it or Escape
+ * folds it away.
+ */
+function FoldedSidebar() {
+  const insets = useSafeAreaInsets();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <View style={[styles.fold, { top: insets.top + EDGE, left: insets.left + EDGE }]}>
+        <Pressable
+          onPress={() => {
+            haptic.select();
+            setOpen(true);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Show the sidebar"
+          aria-expanded={open}
+          style={({ pressed, hovered }) => [styles.foldButton, hovered && styles.foldHover, pressed && styles.itemPressed]}
+        >
+          <Glass kind="control" style={[StyleSheet.absoluteFill, styles.foldCapsule]} />
+          <Icon name="chevron" size={18} color={color.label} />
+        </Pressable>
+      </View>
+      {open ? <SidebarDrawer folding onClose={() => setOpen(false)} /> : null}
+    </>
   );
 }
 
@@ -244,8 +281,12 @@ export function MenuButton({ bottom, onPress }: { bottom: number; onPress: () =>
   );
 }
 
-/** On a phone: the menu slid in from the left over a dimmed page. */
-export function SidebarDrawer({ onClose }: { onClose: () => void }) {
+/**
+ * On a phone: the menu slid in from the left over a dimmed page. `folding`:
+ * the map's folded sidebar opened, the docked pane's size and place, over
+ * the map undimmed, with an arrow to fold it away again.
+ */
+export function SidebarDrawer({ onClose, folding = false }: { onClose: () => void; folding?: boolean }) {
   const insets = useSafeAreaInsets();
   const shown = useSharedValue(0);
   const leaving = useRef(false);
@@ -282,15 +323,27 @@ export function SidebarDrawer({ onClose }: { onClose: () => void }) {
   const slide = useAnimatedStyle(() => ({ transform: [{ translateX: (shown.value - 1) * (DRAWER_WIDTH + EDGE * 3) }] }));
   return (
     <View style={StyleSheet.absoluteFill}>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dim]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" accessibilityLabel="Close the menu" />
+      <Animated.View style={[StyleSheet.absoluteFill, !folding && styles.dim, dim]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" accessibilityLabel={folding ? 'Fold the sidebar away' : 'Close the menu'} />
       </Animated.View>
-      <Animated.View style={[styles.drawer, { top: insets.top + EDGE, bottom: insets.bottom + EDGE }, slide]} accessibilityViewIsModal role="dialog" aria-modal accessibilityLabel="Menu">
+      <Animated.View
+        style={[styles.drawer, folding && styles.drawerFolding, { top: insets.top + EDGE, bottom: insets.bottom + EDGE }, slide]}
+        accessibilityViewIsModal
+        role="dialog"
+        aria-modal
+        accessibilityLabel="Menu"
+      >
         <Pane style={styles.fill}>
           <View style={styles.drawerHead}>
             <Wordmark height={24} />
-            <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Close the menu" hitSlop={10} style={({ pressed }) => [styles.close, pressed && styles.itemPressed]}>
-              <Icon name="close" size={14} color={color.labelSecondary} />
+            <Pressable
+              onPress={close}
+              accessibilityRole="button"
+              accessibilityLabel={folding ? 'Fold the sidebar away' : 'Close the menu'}
+              hitSlop={10}
+              style={({ pressed }) => [styles.close, pressed && styles.itemPressed]}
+            >
+              <Icon name={folding ? 'chevronBack' : 'close'} size={folding ? 16 : 14} color={color.labelSecondary} />
             </Pressable>
           </View>
           <ScrollView style={styles.scroller} contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
@@ -304,6 +357,9 @@ export function SidebarDrawer({ onClose }: { onClose: () => void }) {
 
 /** The slid-in pane's width on a phone: the docked one's, a little wider for a thumb. */
 const DRAWER_WIDTH = SIDEBAR_WIDTH + 24;
+/** The map's folded sidebar, a capsule standing on end. */
+const FOLD_WIDTH = 44;
+const FOLD_HEIGHT = 72;
 /** A pill no rounder than the look allows (8-bit is square). */
 const pillRadius = () => Math.min(ROW / 2, radius.pill);
 
@@ -343,6 +399,13 @@ const styles = themed(() =>
     // Lighter than a sheet's: the page should still show through the glass.
     dim: { backgroundColor: currentTheme().scheme === 'dark' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.22)' },
     drawer: { position: 'absolute', left: EDGE, width: DRAWER_WIDTH, maxWidth: '84%' },
+    // Opened from the map's capsule: exactly where and as wide as the docked pane.
+    drawerFolding: { width: SIDEBAR_WIDTH - EDGE },
+    // The map's folded sidebar: a glass capsule, a full touch target wide (SIDEBAR_FOLDED in navLayout.ts is its gap and width).
+    fold: { position: 'absolute', width: FOLD_WIDTH, height: FOLD_HEIGHT },
+    foldButton: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: Math.min(FOLD_WIDTH / 2, radius.pill), borderCurve: 'continuous', ...shadow.float },
+    foldCapsule: { borderRadius: Math.min(FOLD_WIDTH / 2, radius.pill), borderCurve: 'continuous', overflow: 'hidden' },
+    foldHover: { opacity: 0.85 },
     drawerHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: space[5], paddingRight: space[3], paddingTop: space[4], paddingBottom: space[1] },
     close: { width: 30, height: 30, borderRadius: Math.min(15, radius.pill), alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
   }),

@@ -1,28 +1,32 @@
 /**
  * The sidebar layout (Appearance → Layout → Sidebar; lib/navLayout.ts):
  * GymGO's places in a menu down the left: the four tabs, then your
- * training, then you. On a wide screen it stays open beside every page
- * (`DockedSidebar`, placed by app/_layout.tsx, so opening Progress from it
- * doesn't cover it); on a phone a Menu button at the foot slides it in over
+ * training, then you. On a wide screen it stays open, hovering over the
+ * left of every page (`SidebarFrame`, around the navigator in
+ * app/_layout.tsx, so opening Progress from it doesn't cover it); on a
+ * phone a Menu button at the foot slides it in over
  * the page (`MenuButton`, `SidebarDrawer`), and choosing a place, a tap
  * beside it, Escape or Android's back closes it.
  *
  * Either way it's a pane of Liquid Glass floating clear of the window's
- * edges, as iPadOS 26 draws its sidebars: the tab bar's own glass (Apple's
+ * edges, over the page rather than beside it, as iPadOS 26 draws its
+ * sidebars: the page's header and background run on underneath (Explore's
+ * map too), while its content keeps clear (`ClearOfSidebar`). It's the tab bar's own glass (Apple's
  * on iOS 26, the imitation on older phones, the browser's with a bend along
  * its rim), or the look's plain plate in a solid look or at 0% Liquid Glass.
  * The place you're on is a pill of the accent, lit like the glass it sits in.
  */
 
 import { router, usePathname, type Href } from 'expo-router';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { BackHandler, Platform, ScrollView, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { BackHandler, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { LIMITED } from '@/lib/limited';
-import { MENU_BUTTON, SIDEBAR_TABS, SIDEBAR_TRAINING, SIDEBAR_WIDTH, SIDEBAR_YOU, tabFor, type SidebarItem } from '@/lib/navLayout';
+import { MENU_BUTTON, SIDEBAR_TABS, SIDEBAR_TRAINING, SIDEBAR_WIDTH, SIDEBAR_YOU, dockedBeside, navMode, tabFor, type SidebarItem } from '@/lib/navLayout';
+import { useThemeChoice } from '@/lib/themePrefs';
 import { CHILD_TOUCH, color, currentTheme, face, radius, shadow, solidSurfaces, space, themed } from '@/lib/theme';
 import { Avatar } from './Avatar';
 import { Wordmark } from './BrandMark';
@@ -155,11 +159,48 @@ function Pane({ style, children }: { style?: StyleProp<ViewStyle>; children: Rea
   );
 }
 
-/** Beside the page on a wide screen: always there, the page taking the rest of the width. */
-export function DockedSidebar() {
+/** How far in from the left the docked sidebar reaches over the page (0 without it), for content to keep clear of. */
+const SidebarInset = createContext(0);
+export const useSidebarInset = (): number => useContext(SidebarInset);
+
+/**
+ * The pages, with the docked sidebar hovering over their left edge on a
+ * wide screen. Pages are as wide as the window, so their header and
+ * background run on under the glass; anything that reads the safe area
+ * (the page header's back button and title) is moved in by the sidebar's
+ * width, and `ClearOfSidebar` moves each page's content in. Its own
+ * component, so moving from page to page redraws only this, not the
+ * navigator inside it.
+ */
+export function SidebarFrame({ signedIn, children }: { signedIn: boolean; children: ReactNode }) {
+  const { layout } = useThemeChoice();
+  const { width } = useWindowDimensions();
+  const pathname = usePathname();
+  const docked = dockedBeside(navMode(layout, width), pathname, signedIn);
+  const inset = docked ? SIDEBAR_WIDTH : 0;
+  const insets = useSafeAreaInsets();
+  const shifted = useMemo(() => ({ ...insets, left: insets.left + inset }), [insets, inset]);
+  return (
+    <SidebarInset.Provider value={inset}>
+      <View style={styles.fill}>
+        <SafeAreaInsetsContext.Provider value={shifted}>{children}</SafeAreaInsetsContext.Provider>
+        {docked ? <DockedSidebar /> : null}
+      </View>
+    </SidebarInset.Provider>
+  );
+}
+
+/** A page's content, kept clear of the docked sidebar hovering over its left edge (as wide as ever without it). */
+export function ClearOfSidebar({ children }: { children: ReactNode }) {
+  const inset = useSidebarInset();
+  return <View style={[styles.fill, inset > 0 && { paddingLeft: inset }]}>{children}</View>;
+}
+
+/** Over the page's left edge on a wide screen: always there, the page running on underneath. */
+function DockedSidebar() {
   const insets = useSafeAreaInsets();
   return (
-    <View style={[styles.docked, { paddingTop: insets.top + EDGE, paddingBottom: insets.bottom + EDGE }]}>
+    <View style={[CHILD_TOUCH, styles.docked, { paddingTop: insets.top + EDGE, paddingBottom: insets.bottom + EDGE }]}>
       <Pane style={styles.fill}>
         <ScrollView style={styles.scroller} contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
           <View style={styles.brand}>
@@ -264,8 +305,8 @@ const pillRadius = () => Math.min(ROW / 2, radius.pill);
 
 const styles = themed(() =>
   StyleSheet.create({
-    // The pane floats in from the window's edges; the page's own grey shows round it.
-    docked: { width: SIDEBAR_WIDTH, paddingLeft: EDGE, paddingRight: space[1] },
+    // Over the page's left edge, the pane floating in from the window's; taps beside the pane reach the page.
+    docked: { position: 'absolute', top: 0, bottom: 0, left: 0, width: SIDEBAR_WIDTH, paddingLeft: EDGE, paddingRight: space[1] },
     fill: { flex: 1 },
     pane: { borderRadius: radius.xl, borderCurve: 'continuous' },
     paneClip: { borderRadius: radius.xl, borderCurve: 'continuous', overflow: 'hidden' },

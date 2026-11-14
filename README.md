@@ -378,8 +378,10 @@ your accent glows behind them.
   - **Layout** (everyone): **Tab bar**, the default (the four tabs float at
     the foot of the screen), or **Sidebar**: a menu down the left with the
     tabs, then Training (Workout, Progress, My workouts, Programme) and You
-    (Collection, Friends, Appearance). From 960 points wide it stays open
-    beside every page (Progress and the rest too, not only the tabs); on a
+    (Collection, Friends, Appearance). From 960 points wide it stays open,
+    hovering over the left of every page (Progress and the rest too, not
+    only the tabs): the page's header and background run on underneath it,
+    Explore's map too, and the page's content keeps clear of it; on a
     phone, **Menu** at the foot (naming the tab you're on) slides it in over
     the page, and choosing a place, a tap beside it, its close button,
     Escape or Android's back closes it. Either way the menu is a pane of

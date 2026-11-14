@@ -9,6 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 160 · The sidebar hovers over the page
+
+*14 Nov 2026 · the commit "Sidebar: hover over the page, not beside it"*
+
+You asked for the sidebar to hover above the page instead of being a separate rectangle.
+
+- On a wide screen the page now runs the whole width of the window, and the sidebar's glass pane floats over its left edge, as iPadOS 26 draws its sidebars. A page's header bar and background carry on underneath the glass instead of stopping at a strip beside it.
+- On Explore the map runs right under the sidebar, so you see it through the glass and round its edges. The results and filter panels, the Search this area button and the time-zone warning start just past the sidebar.
+- Everything you use on a page (its back button, title, cards and buttons) stays clear of the sidebar, so nothing is hidden under it. Clicks in the gap beside the pane reach the page.
+- Phones are unchanged: Menu still slides the glass pane in over the page.
+- Checked in the browser at 1280 and 1000 points, light and dark: Home, Explore, Progress, Profile, a gym page and My workouts, and a sidebar link opening its page. The blur behind the glass still can't be seen in this test browser (see Update 159). Not yet seen on a phone.
+
 ## Update 159 · The sidebar in Liquid Glass, and it stays put
 
 *12 Nov 2026 · the commit "Sidebar: a floating pane of Liquid Glass, beside every page"*

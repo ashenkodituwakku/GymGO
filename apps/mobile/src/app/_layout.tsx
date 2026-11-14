@@ -3,7 +3,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider, router, usePathname } fr
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { EASE_IN_OUT, EASE_OUT } from '@/components/motion';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -12,8 +12,7 @@ import { Redrawn, useThemeVersion } from '@/components/Redrawn';
 import { WebBack } from '@/components/WebBack';
 import { WebsiteBanner } from '@/components/LimitedBanner';
 import { GymPal } from '@/components/GymPal';
-import { DockedSidebar } from '@/components/Sidebar';
-import { dockedBeside, navMode } from '@/lib/navLayout';
+import { ClearOfSidebar, SidebarFrame } from '@/components/Sidebar';
 import { Txt } from '@/components/ui';
 import { LIMITED } from '@/lib/limited';
 import { backLabel } from '@/lib/backLabel';
@@ -264,16 +263,23 @@ function ThemedStack() {
     <ThemeProvider value={navTheme}>
       <StatusBar style={dark ? 'light' : 'dark'} />
       <WebsiteBanner />
-      {/* The sidebar and the pages side by side. The navigator keeps its place in the
-          tree whether the sidebar shows or not, so where you are isn't lost. */}
-      <View style={styles.beside}>
-        <SidebarBeside signedIn={signedIn || LIMITED} />
-        <View style={styles.pages}>
+      {/* The pages, with the sidebar layout's menu hovering over their left edge on a wide
+          screen. The navigator keeps its place in the tree whether it shows or not. */}
+      <SidebarFrame signedIn={signedIn || LIMITED}>
           <Stack
             // Each screen's content is drawn again in the new colours; the tabs
             // redraw their own screens (app/(tabs)/_layout.tsx), so the tab
             // you're on stays chosen.
-            screenLayout={({ route, children }) => (route.name === '(tabs)' ? children : <Redrawn>{children}</Redrawn>)}
+            // Every page's content keeps clear of a docked sidebar (the tabs do it per tab).
+        screenLayout={({ route, children }) =>
+          route.name === '(tabs)' ? (
+            children
+          ) : (
+            <ClearOfSidebar>
+              <Redrawn>{children}</Redrawn>
+            </ClearOfSidebar>
+          )
+        }
             screenOptions={({ route, navigation }) => ({
               headerShown: false,
               headerTintColor: color.brand,
@@ -367,26 +373,12 @@ function ThemedStack() {
             <Stack.Screen name="legal/[doc]" options={{ headerShown: true, title: '' }} />
             <Stack.Screen name="report-bug" options={{ ...MODAL, headerShown: true, title: 'Report a bug' }} />
           </Stack>
-        </View>
-      </View>
+      </SidebarFrame>
       {/* GymPal, the AI assistant, in the corner of every signed-in screen, and the website's (which waits to be set up). */}
       {signedIn && prefs.gymPal && <GymPal />}
       {!!veilColour && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle, { pointerEvents: 'none' }]} />}
     </ThemeProvider>
   );
-}
-
-/**
- * The sidebar layout on a wide screen: the menu beside every page once
- * you're in (lib/navLayout.ts), here rather than in the tabs so a page
- * opened from it doesn't cover it. Its own component, so moving from page
- * to page redraws only this, not the navigator.
- */
-function SidebarBeside({ signedIn }: { signedIn: boolean }) {
-  const { layout } = useThemeChoice();
-  const { width } = useWindowDimensions();
-  const pathname = usePathname();
-  return dockedBeside(navMode(layout, width), pathname, signedIn) ? <DockedSidebar /> : null;
 }
 
 /** A sheet from below, on every platform; on iPhone, with Done to close it (a screen's own button there wins). */
@@ -438,6 +430,4 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') paintPage();
 
 const styles = themed(() => StyleSheet.create({
   root: { flex: 1, backgroundColor: color.groupedBackground },
-  beside: { flex: 1, flexDirection: 'row' },
-  pages: { flex: 1, minWidth: 0 },
 }));

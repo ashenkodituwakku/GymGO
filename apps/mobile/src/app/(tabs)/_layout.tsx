@@ -40,7 +40,7 @@ import { TabBarInset, tabBarBottom } from '@/lib/layout';
 import { CHILD_TOUCH, color, currentTheme, radius, shadow, solidSurfaces, themed } from '@/lib/theme';
 import { Avatar } from '@/components/Avatar';
 import { BrandFill } from '@/components/BrandFill';
-import { MenuButton, SidebarDrawer } from '@/components/Sidebar';
+import { ClearOfSidebar, MenuButton, SidebarDrawer } from '@/components/Sidebar';
 import { MENU_BUTTON, navMode } from '@/lib/navLayout';
 import { mayPrefetch, type ConnectionHint } from '@/lib/prefetch';
 import { useThemeChoice } from '@/lib/themePrefs';
@@ -146,11 +146,15 @@ export default function TabsLayout() {
             defaultTabsSlotRender(
               {
                 ...descriptor,
-                render: () => (
-                  <Redrawn kind="tab" focused={options.isFocused}>
-                    <HeldWhileAway here={options.isFocused}>{descriptor.render()}</HeldWhileAway>
-                  </Redrawn>
-                ),
+                render: () => {
+                  const tab = (
+                    <Redrawn kind="tab" focused={options.isFocused}>
+                      <HeldWhileAway here={options.isFocused}>{descriptor.render()}</HeldWhileAway>
+                    </Redrawn>
+                  );
+                  // Clear of a docked sidebar; Explore's map runs on under it, its panels moved in.
+                  return descriptor.route.name === 'explore' ? tab : <ClearOfSidebar>{tab}</ClearOfSidebar>;
+                },
               },
               options,
             )

@@ -106,6 +106,16 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Sidebar hovers over the page** (14 Nov). components/Sidebar.tsx
+  `SidebarFrame` (around the Stack in app/_layout.tsx) draws pages full
+  width and `DockedSidebar` absolutely over their left edge (`CHILD_TOUCH`,
+  so the margins pass taps through). It gives the pages a safe area moved
+  in by SIDEBAR_WIDTH (so the page header's back button and centred title
+  shift) and `useSidebarInset()`. `ClearOfSidebar` pads each page's content:
+  the root Stack's screenLayout wraps every screen, the tabs layout every
+  tab but Explore, which adds `start` to its panels, its map's leftInset,
+  the area row and the time-zone warning. A new full-bleed screen should
+  either sit in ClearOfSidebar (automatic) or read useSidebarInset itself.
 - **Sidebar in Liquid Glass** (12 Nov). components/Sidebar.tsx `Pane`:
   web is `panelRefraction(w, h)` (liquidGlass.web.ts: `data-glass="panel"`,
   a bend only in an 18 pt band along the rim, sized in 8 pt steps) with the

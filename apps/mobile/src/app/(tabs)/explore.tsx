@@ -44,6 +44,7 @@ import { checkTimeZoneSupport } from '@/lib/selfcheck';
 import { CHILD_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
 import { Glass } from '@/components/Glass';
+import { useSidebarInset } from '@/components/Sidebar';
 import { GoogleModal } from '@/components/GoogleModal';
 import { ChoiceSheet } from '@/components/ChoiceSheet';
 import { GymMap, type GymMapHandle, type MapPin } from '@/components/GymMap';
@@ -119,6 +120,8 @@ function MapScreen() {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
   const wide = Platform.OS === 'web' && width >= WIDE;
+  // How far the docked sidebar (Appearance → Layout → Sidebar) reaches over the map's left edge.
+  const start = useSidebarInset();
 
   // The time-zone self-check runs once; its answer can't change mid-session.
   const selfCheck = useMemo(() => checkTimeZoneSupport(), []);
@@ -896,7 +899,7 @@ function MapScreen() {
 
   const selfCheckBanner = !selfCheck.ok && (
     // Under the status pill and the Search this area row (38 tall, 44 down), not over it.
-    <View style={[styles.selfCheck, { top: insets.top + space[2] + 44 + 38 + space[2] }]}>
+    <View style={[styles.selfCheck, { top: insets.top + space[2] + 44 + 38 + space[2] }, start > 0 && { left: start + space[4] }]}>
       <Icon name="maybe" size={16} color={color.maybeInk} />
       <Txt variant="footnote" color={color.maybeInk} style={styles.flex}>
         {`This device can’t work out time zones reliably, so guest-hour answers may be an hour out. (${selfCheck.detail})`}
@@ -909,7 +912,8 @@ function MapScreen() {
   if (wide) {
     // Filters only when asked for, and a card only while there's a gym to show.
     const shown = panel === 'filters' || (panel === 'place' && selected) ? panel : null;
-    const panelsWidth = PANEL_GAP + PANEL_WIDTH + (shown ? PANEL_GAP + PANEL_WIDTH : 0);
+    // The docked sidebar hovers over the map's left edge: the panels start past it.
+    const panelsWidth = start + PANEL_GAP + PANEL_WIDTH + (shown ? PANEL_GAP + PANEL_WIDTH : 0);
     return (
       <View style={styles.root}>
         {/* The map opens where the search is, so it waits for your country. */}
@@ -934,14 +938,14 @@ function MapScreen() {
           <View style={styles.mapWaiting} />
         )}
 
-        <DesktopPanel left={PANEL_GAP} bottom={PANEL_GAP + clearance}>
+        <DesktopPanel left={start + PANEL_GAP} bottom={PANEL_GAP + clearance}>
           {/* The panel's own heading names the place; the pill comes only to say something more. */}
           {pillNotable && <View style={styles.panelTop}>{statusPill}</View>}
           <ScrollView keyboardShouldPersistTaps="handled">{results(false)}</ScrollView>
         </DesktopPanel>
 
         {shown && (
-          <DesktopPanel left={PANEL_GAP * 2 + PANEL_WIDTH} bottom={PANEL_GAP + clearance}>
+          <DesktopPanel left={start + PANEL_GAP * 2 + PANEL_WIDTH} bottom={PANEL_GAP + clearance}>
             {shown === 'place' && selected ? (
               <ScrollView
                 stickyHeaderIndices={[0]}

@@ -47,13 +47,15 @@ export function mapPageHtml(options: {
   zoom?: number;
   colours: Record<string, string>;
   dark?: boolean;
+  /** The style to load (Appearance → Map, lib/mapStyles.ts), in place of the standard light or dark one. */
+  style?: string;
 }): string {
   const cdn = `https://cdn.jsdelivr.net/npm/maplibre-gl@${MAPLIBRE_VERSION}/dist`;
   const config = JSON.stringify({
     centre: options.centre,
     zoom: options.zoom ?? OPENING_ZOOM,
     colours: options.colours,
-    style: options.dark ? DARK_STYLE_URL : STYLE_URL,
+    style: options.style ?? (options.dark ? DARK_STYLE_URL : STYLE_URL),
   });
   return `<!doctype html>
 <html>

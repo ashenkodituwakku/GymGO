@@ -26,6 +26,7 @@
  */
 
 import { clearOf } from '@/lib/looks';
+import { useThemeChoice } from '@/lib/themePrefs';
 import { forwardRef, useEffect, useRef, useState, type ComponentProps, type ForwardedRef, type ReactNode, type Ref } from 'react';
 import {
   Platform,
@@ -47,6 +48,7 @@ import Animated, {
   ReduceMotion,
   interpolateColor,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withSequence,
   withSpring,
@@ -54,6 +56,18 @@ import Animated, {
   type WithSpringConfig,
   type WithTimingConfig,
 } from 'react-native-reanimated';
+
+/**
+ * Whether to keep still: the phone's (or browser's) Reduce Motion, or
+ * Appearance's own Reduce motion, which does the same in GymGO alone. Use it
+ * wherever the phone's setting was read; the shared animations below follow
+ * both by themselves (the root layout sets Reanimated's global setting).
+ */
+export function useCalm(): boolean {
+  const system = useReducedMotion();
+  const { reduceMotion } = useThemeChoice();
+  return system || reduceMotion;
+}
 
 /** A spring's damping for a damping ratio: 1 arrives without overshooting. */
 export const damp = (ratio: number, stiffness: number, mass: number) => Math.round(ratio * 2 * Math.sqrt(stiffness * mass) * 10) / 10;

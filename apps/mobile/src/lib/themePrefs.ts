@@ -11,6 +11,7 @@
  */
 
 import type { NavLayout } from './navLayout';
+import { FREE_MAP_STYLE, isMapStyle, type MapStyleId } from './mapStyles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Appearance, Platform } from 'react-native';
@@ -65,6 +66,12 @@ export interface ThemeChoice {
   gymPalButton: GymPalButton;
   /** How you get around (lib/navLayout.ts): the floating tab bar, the default, or a sidebar menu. For everyone. */
   layout: NavLayout;
+  /** On the map, the docked sidebar folds away to its capsule (lib/navLayout.ts); off, it stays open there too. For everyone. */
+  foldOnMap: boolean;
+  /** The map's style (lib/mapStyles.ts): Standard for everyone, the rest with Pro. */
+  mapStyle: MapStyleId;
+  /** Reduce motion in GymGO, as the phone's own setting does, without changing the phone. For everyone. */
+  reduceMotion: boolean;
 }
 
 export type GymPalButton = 'tab' | 'corner' | 'hidden';
@@ -83,6 +90,9 @@ export const DEFAULT_CHOICE: ThemeChoice = {
   gymPalSide: 'right',
   gymPalButton: 'tab',
   layout: 'tabs',
+  foldOnMap: true,
+  mapStyle: FREE_MAP_STYLE,
+  reduceMotion: false,
 };
 
 /** What was stored, cleaned: anything unknown falls back to the default. */
@@ -103,6 +113,9 @@ export function parseChoice(raw: string | null | undefined): ThemeChoice {
       gymPalSide: value.gymPalSide === 'left' ? 'left' : 'right',
       gymPalButton: value.gymPalButton === 'corner' || value.gymPalButton === 'hidden' ? value.gymPalButton : 'tab',
       layout: value.layout === 'sidebar' ? 'sidebar' : 'tabs',
+      foldOnMap: value.foldOnMap !== false,
+      mapStyle: isMapStyle(value.mapStyle) ? value.mapStyle : FREE_MAP_STYLE,
+      reduceMotion: value.reduceMotion === true,
     };
   } catch {
     return DEFAULT_CHOICE;
@@ -149,6 +162,8 @@ let cornersAllowed = true;
 /** Text size, bold text, corners, your own accent and the clock: drawn into everything (theme.ts applyTweaks). */
 function applyChoiceTweaks(next: ThemeChoice): void {
   setTwentyFourHour(next.clock24);
+  // In a browser, CSS that moves (the map's pins) stays still with it on, as with the phone's own setting.
+  if (Platform.OS === 'web' && typeof document !== 'undefined') document.documentElement.toggleAttribute('data-gg-calm', next.reduceMotion);
   applyTweaks({ textSize: next.textSize, bold: next.bold, corners: cornersAllowed ? next.corners : 'standard', customHue: next.customHue, clock24: next.clock24 });
 }
 
@@ -199,6 +214,11 @@ export function setThemeChoice(patch: Partial<ThemeChoice>): void {
   AsyncStorage.setItem(KEY, JSON.stringify(choice)).catch(() => undefined);
   applyChoiceTweaks(choice);
   for (const listener of listeners) listener();
+}
+
+/** Whether you've reduced motion in GymGO itself (on top of the phone's own setting), for code outside React. */
+export function motionReducedHere(): boolean {
+  return choice.reduceMotion;
 }
 
 export function useThemeChoice(): ThemeChoice {

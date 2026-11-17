@@ -9,6 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 166 · Appearance: a better Layout section, map styles, and Reduce motion
+
+*17 Nov 2026 · the commit "Appearance: Layout tiles, map styles (Pro), Reduce motion, folding on the map"*
+
+You asked for the Layout section to look better, for more to customise in Appearance, and for some of it to be Pro.
+
+- **Layout** is now two picture tiles, like Mode and Dark mode above it: a small screen with the tab bar floating at its foot, and one with the sidebar down its left, each with a line saying what it is. With Sidebar chosen, a switch under the tiles, **Fold away on the map**, decides whether the sidebar folds to its capsule on Explore (on, as before) or stays open there like everywhere else. For everyone.
+- **Map** (new, Pro): the style of Explore's map. **Standard** stays everyone's; **Muted** (pale greys so the pins stand out), **Classic** (the classic OpenStreetMap look: deep green woods, orange motorways) and **Deep blue** (a dark blue map, day or night) are Pro. They're OpenFreeMap's own styles (Liberty, Positron, OSM Bright and Fiord), and each tile is drawn in its style's own colours, read from those styles. In dark mode every style but Deep blue uses the dark map, and the page says so. On an iPhone the map is Apple's, so Muted is Apple's muted map, Deep blue its dark one, and Classic its standard map (Apple has nothing like it). Without Pro the three show a crown and open the Pro page; a Pro style kept after Pro ends shows as Standard. Choosing one while the map is open loads it in place.
+- **Reduce motion** (new, for everyone): GymGO keeps still, as the phone's own Reduce Motion makes it, without changing the phone. Things appear in place instead of sliding, gliding and popping (the sidebar opens at once), pages arrive without their lift, the map's pins don't bounce, and celebrations don't play. If the phone's setting is already on, the switch shows on and says so. It's an accessibility setting, so it isn't Pro.
+- The Pro page, the plans table, the README and GymPal's guide now mention the map styles (and the guide the new free settings).
+- While testing, turning folding off showed the map's panels sitting a sidebar's width too far right; fixed before this went out.
+- Checked in the browser at 1280 points (light and dark) and on a 390-point phone (dark): the tiles and sections; Muted loading OpenFreeMap's Positron on Explore; folding off keeping the sidebar open with the panels beside it; with Reduce motion on, the sidebar fully open at the first frame checked (with it off, mid-glide); and, with the plan rewritten to Free in the test browser, the PRO tags, crowns, Standard in use with Deep blue kept, and Muted opening the Pro page. New unit tests for the map styles, the fold switch and reading the new settings. Not yet seen on a phone.
+
 ## Update 165 · The map responds again, and the app's animations ease in the browser
 
 *17 Nov 2026 · the commit "Explore: the map takes clicks and drags again; animations ease in the browser"*

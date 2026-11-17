@@ -10,7 +10,8 @@
 
 import { useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import Animated, { Easing, cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import { useCalm } from './motion';
 import type { CelebrationStyle } from '@/lib/celebrations';
 import { PRISM } from '@/lib/rarity';
 
@@ -26,7 +27,7 @@ const STAR_GOLD = ['#F5B700', '#FFD34D', '#FFC21A'];
 const EMOJI = ['💪', '🔥', '🏆', '⭐', '🎉'];
 
 export function Celebration({ style }: { style: CelebrationStyle }) {
-  const still = useReducedMotion();
+  const still = useCalm();
   const { width, height } = useWindowDimensions();
   const t = useSharedValue(0);
   useEffect(() => {

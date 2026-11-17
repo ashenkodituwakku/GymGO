@@ -106,6 +106,22 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Appearance additions** (17 Nov). themePrefs.ts has `foldOnMap`
+  (default true), `mapStyle` (lib/mapStyles.ts) and `reduceMotion`. Folding:
+  `foldedOn`/`sidebarInset` take `folds`; SidebarFrame and GymPal pass
+  `foldOnMap`, and `useSidebarOpening()` is null unless the sidebar folds on
+  this page (else Explore's panels doubled their shift). Map style: the
+  style in use is `mapStyleFor(choice, isPro || !planKnown)` (as the looks),
+  passed from Explore as GymMap's `mapStyle`; the web map `setStyle`s in
+  place, Android's page is rebuilt with `mapPageHtml({ style })`, iPhone
+  sets `mapType`/`userInterfaceStyle` (`appleDark`). Reduce motion: the
+  root renders Reanimated's `ReducedMotionConfig` (Always) only while it's
+  on; components use motion.tsx `useCalm()` instead of `useReducedMotion()`;
+  code outside React reads `motionReducedHere()`; CSS can key off
+  `html[data-gg-calm]`. Android's map page (a WebView) still reads only the
+  system setting. To test the free view with the dev account, rewrite
+  `/api/billing`'s plan in Playwright (`context.route`) and set
+  `gymgo.plan.v1` to free.
 - **Map clicks, and curves in the browser** (17 Nov). Never give an
   `Animated.View` `pointerEvents: 'box-none'` (or 'none') through its
   *style* on the web: Reanimated drops it, and the view takes every click

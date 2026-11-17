@@ -45,6 +45,8 @@ import { CHILD_TOUCH, NO_TOUCH, color, face, radius, shadow, space, themed } fro
 import { FiltersContent } from '@/components/FiltersContent';
 import { Glass } from '@/components/Glass';
 import { FOLD_SHIFT, useSidebarInset, useSidebarOpening, useSidebarUnfolded } from '@/components/Sidebar';
+import { mapStyleFor } from '@/lib/mapStyles';
+import { useThemeChoice } from '@/lib/themePrefs';
 import { GoogleModal } from '@/components/GoogleModal';
 import { ChoiceSheet } from '@/components/ChoiceSheet';
 import { GymMap, type GymMapHandle, type MapPin } from '@/components/GymMap';
@@ -136,6 +138,8 @@ function MapScreen() {
   // (Each moving piece carries its own transform: a full-window layer to move them all at once took
   // every click and drag meant for the map, as a browser loses an animated view's pass-through.)
   const aside = useAnimatedStyle(() => ({ transform: [{ translateX: (opening?.value ?? 0) * FOLD_SHIFT }] }));
+  // Appearance's map style: Pro's, like the looks (yours until the plan is known, so it doesn't flash Standard).
+  const themeChoice = useThemeChoice();
   const asideHalf = useAnimatedStyle(() => ({ transform: [{ translateX: ((opening?.value ?? 0) * FOLD_SHIFT) / 2 }] }));
   const asideLeft = useAnimatedStyle(() => ({ marginLeft: (opening?.value ?? 0) * FOLD_SHIFT }));
 
@@ -953,6 +957,7 @@ function MapScreen() {
             userLocation={here?.position ?? null}
             onSelect={openGym}
             onRegionChange={onRegionChange}
+            mapStyle={mapStyleFor(themeChoice.mapStyle, billing.isPro || !billing.planKnown)}
             onMapPress={() => {
               if (panel === 'place') closePlace();
             }}
@@ -1041,6 +1046,7 @@ function MapScreen() {
             userLocation={here?.position ?? null}
             onSelect={openGym}
             onRegionChange={onRegionChange}
+            mapStyle={mapStyleFor(themeChoice.mapStyle, billing.isPro || !billing.planKnown)}
             onMapPress={() => {
               Keyboard.dismiss();
               if (selectedId) closePlace();

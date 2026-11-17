@@ -41,15 +41,19 @@ const SIDEBAR_FOLDS_AWAY = new Set(['/explore']);
 /** How far in from the window's left edge the folded sidebar's capsule reaches: its 16-point gap and its 44-point width. */
 export const SIDEBAR_FOLDED = 60;
 
-/** Whether the docked sidebar is folded away to its capsule on this page (it opens over the page from there). */
-export function foldedOn(mode: NavMode, pathname: string, signedIn: boolean): boolean {
-  return dockedBeside(mode, pathname, signedIn) && SIDEBAR_FOLDS_AWAY.has(pathname);
+/**
+ * Whether the docked sidebar is folded away to its capsule on this page (it
+ * unfolds beside the page from there). `folds` is Appearance's "Fold away
+ * on the map": off, it stays open there as everywhere else.
+ */
+export function foldedOn(mode: NavMode, pathname: string, signedIn: boolean, folds = true): boolean {
+  return folds && dockedBeside(mode, pathname, signedIn) && SIDEBAR_FOLDS_AWAY.has(pathname);
 }
 
 /** How far in from the left the sidebar reaches over this page, for its content to keep clear of: all of it, its capsule, or nothing. */
-export function sidebarInset(mode: NavMode, pathname: string, signedIn: boolean): number {
+export function sidebarInset(mode: NavMode, pathname: string, signedIn: boolean, folds = true): number {
   if (!dockedBeside(mode, pathname, signedIn)) return 0;
-  return SIDEBAR_FOLDS_AWAY.has(pathname) ? SIDEBAR_FOLDED : SIDEBAR_WIDTH;
+  return folds && SIDEBAR_FOLDS_AWAY.has(pathname) ? SIDEBAR_FOLDED : SIDEBAR_WIDTH;
 }
 
 /** What the sidebar lists. Tabs first, then the places you'd go most from Profile. */

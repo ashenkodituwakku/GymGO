@@ -4,8 +4,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
-import { EASE_IN_OUT, EASE_OUT } from '@/components/motion';
+import Animated, { ReduceMotion, ReducedMotionConfig, runOnJS, useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import { EASE_IN_OUT, EASE_OUT, useCalm } from '@/components/motion';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Redrawn, useThemeVersion } from '@/components/Redrawn';
@@ -195,7 +195,8 @@ function ThemedStack() {
   }, [gate]);
   const wanted = useWantedTheme();
   const version = useThemeVersion();
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useCalm();
+  const themeChoice = useThemeChoice();
   const veil = useSharedValue(0);
   const [veilColour, setVeilColour] = useState<string | null>(null);
 
@@ -261,6 +262,8 @@ function ThemedStack() {
 
   return (
     <ThemeProvider value={navTheme}>
+      {/* Appearance's own Reduce motion: every shared animation keeps still, as with the phone's setting. */}
+      {themeChoice.reduceMotion && <ReducedMotionConfig mode={ReduceMotion.Always} />}
       <StatusBar style={dark ? 'light' : 'dark'} />
       <WebsiteBanner />
       {/* The pages, with the sidebar layout's menu hovering over their left edge on a wide

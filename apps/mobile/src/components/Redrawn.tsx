@@ -26,6 +26,7 @@ import { Fragment, createContext, useCallback, useLayoutEffect, useRef, useSyncE
 import { Platform, StyleSheet, View, type ViewInstance } from 'react-native';
 import Animated, { ReduceMotion, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { subscribeTheme, themeVersion } from '@/lib/theme';
+import { motionReducedHere } from '@/lib/themePrefs';
 import { useGlassLevel } from './Glass';
 import { EASE_SCREEN, EASE_SCREEN_CSS } from './motion';
 
@@ -123,7 +124,7 @@ function ScreenInBrowser({ kind, focused, children }: { kind: ScreenKind; focuse
     if (!element || typeof element.animate !== 'function') return;
     for (const running of element.getAnimations()) running.cancel();
     dimmed.current = null;
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || motionReducedHere()) return;
     element.animate(
       [
         { opacity: motion.opacity, transform: `translateY(${motion.y}px)` },

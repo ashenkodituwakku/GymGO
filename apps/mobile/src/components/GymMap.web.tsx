@@ -24,10 +24,11 @@ import { DROP_BOX, DROP_DRAWN, DROP_GLYPH_BOX, DROP_HEAD, DROP_HIGHLIGHT, DROP_O
 import type { GymMapHandle, GymMapProps } from './map-types';
 import { mapItems, sameSpot, type MapItem } from '@/lib/cluster';
 import { currentTheme, themed } from '@/lib/theme';
+import { motionReducedHere } from '@/lib/themePrefs';
 
 export type { GymMapHandle, MapPin } from './map-types';
 
-import { DARK_STYLE_URL, STYLE_URL } from './mapPage';
+import { mapStyleUrl } from '@/lib/mapStyles';
 
 /** A dumbbell, drawn as plain rounded shapes so the preview needs no icon font. */
 const DUMBBELL = (size: string) =>
@@ -55,6 +56,8 @@ function ensurePinStyles() {
     '.gg-pin:hover .gg-face{transform:translateY(-2px) scale(1.08);}' +
     '.gg-pin:active .gg-face{transform:scale(0.94);}' +
     '@media (prefers-reduced-motion: reduce){.gg-pin .gg-face{transition:none;}.gg-pin:hover .gg-face{transform:none;}}' +
+    // Appearance's own Reduce motion (themePrefs.ts marks the page).
+    'html[data-gg-calm] .gg-pin .gg-face{transition:none;}html[data-gg-calm] .gg-pin:hover .gg-face{transform:none;}' +
     // The map's credit over the pins (up to 10), not under them: the tile licence says it stays readable.
     '.maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right{z-index:20;}';
   document.head.appendChild(sheet);
@@ -126,9 +129,9 @@ function bubbleElement(fill: string, count: number): HTMLElement {
   return wrap;
 }
 
-/** The system's Reduce Motion: pins just appear and go. */
+/** Reduce Motion, the system's or Appearance's own: pins just appear and go. */
 function calm() {
-  return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return motionReducedHere() || (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 }
 
 /** Grow in with a spring, the way a pin lands in Maps. */
@@ -204,9 +207,12 @@ class MapCredit implements maplibregl.IControl {
 }
 
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
-  { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, leftInset = 0, userLocation = null, onSelect, onMapPress, onRegionChange },
+  { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, leftInset = 0, userLocation = null, onSelect, onMapPress, onRegionChange, mapStyle = 'standard' },
   ref,
 ) {
+  // The style to draw (Appearance → Map), light or dark: a new choice is loaded into the map in place.
+  const styleUrl = mapStyleUrl(mapStyle, currentTheme().scheme);
+  const shownStyle = useRef(styleUrl);
   const host = useRef<ViewInstance>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const markers = useRef(new Map<string, { marker: maplibregl.Marker; signature: string }>());
@@ -244,7 +250,7 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     if (!container) return;
     const instance = new maplibregl.Map({
       container,
-      style: currentTheme().scheme === 'dark' ? DARK_STYLE_URL : STYLE_URL,
+      style: shownStyle.current,
       center: [initialCentre.lng, initialCentre.lat],
       zoom: 13.2,
       attributionControl: false,
@@ -289,7 +295,7 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
       tileLoaded = false;
       tileErrors = 0;
       setFailed(false);
-      instance.setStyle(currentTheme().scheme === 'dark' ? DARK_STYLE_URL : STYLE_URL, { diff: false });
+      instance.setStyle(shownStyle.current, { diff: false });
     };
     // The area on screen, clear of the panels and sheet, whenever the map comes to rest.
     const noteView = () => {
@@ -313,6 +319,14 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     // The map is created once; props update it through the effects below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // A style chosen in Appearance while the map is up: loaded in place, keeping where you are (the pins are the page's own, so they stay).
+  useEffect(() => {
+    const instance = map.current;
+    if (!instance || styleUrl === shownStyle.current) return;
+    shownStyle.current = styleUrl;
+    instance.setStyle(styleUrl, { diff: false });
+  }, [styleUrl]);
 
   useEffect(() => {
     const instance = map.current;

@@ -9,13 +9,14 @@
 import { useEffect, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { useCalm } from './motion';
 import { tiltFor } from '@/lib/tilt';
 
 const SPRING = { damping: 14, stiffness: 160, mass: 0.6 };
 
 export function TiltCard({ children, still = false }: { children: ReactNode; /** Lying flat, at once and until it's false again: while a picture of it is made. */ still?: boolean }) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useCalm();
   const rotateX = useSharedValue(0);
   const rotateY = useSharedValue(0);
   useEffect(() => {

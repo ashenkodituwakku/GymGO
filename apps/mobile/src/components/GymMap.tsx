@@ -10,6 +10,7 @@
  * blur exactly the line the demo banner exists to draw.
  */
 
+import { mapStyle as appleStyle } from '@/lib/mapStyles';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import MapView, { Marker, type MapMarker, type Region } from 'react-native-maps';
@@ -121,7 +122,7 @@ function visibleBox(region: Region, height: number, top: number, bottom: number)
 const CLOSEST_SPAN = 0.006;
 
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
-  { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, showsUserLocation, onSelect, onMapPress, onRegionChange },
+  { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, showsUserLocation, onSelect, onMapPress, onRegionChange, mapStyle = 'standard' },
   ref,
 ) {
   const map = useRef<MapView>(null);
@@ -200,7 +201,9 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
     <MapView
       ref={map}
       style={StyleSheet.absoluteFill}
-      userInterfaceStyle={currentTheme().scheme}
+      // Apple's own map: Muted is its muted map, Deep blue its dark one whatever the mode (lib/mapStyles.ts).
+      userInterfaceStyle={appleStyle(mapStyle).appleDark ? 'dark' : currentTheme().scheme}
+      mapType={appleStyle(mapStyle).apple}
       initialRegion={{
         latitude: initialCentre.lat,
         longitude: initialCentre.lng,

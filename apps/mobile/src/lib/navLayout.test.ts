@@ -31,6 +31,12 @@ describe('the layout', () => {
     expect(sidebarInset('tabs', '/explore', true)).toBe(0);
   });
 
+  it('keeps the sidebar open on the map too when folding away is turned off', () => {
+    expect(foldedOn('docked', '/explore', true, false)).toBe(false);
+    expect(sidebarInset('docked', '/explore', true, false)).toBe(SIDEBAR_WIDTH);
+    expect(sidebarInset('docked', '/progress', true, false)).toBe(SIDEBAR_WIDTH);
+  });
+
   it('knows which tab a page is on', () => {
     expect(tabFor('/')).toBe('/');
     expect(tabFor('/explore')).toBe('/explore');

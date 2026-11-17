@@ -10,7 +10,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
-import { useReducedMotion } from 'react-native-reanimated';
+import { useCalm } from './motion';
 import { Txt } from './ui';
 
 /** What each figure last showed, by its key, for this run of the app. */
@@ -33,7 +33,7 @@ export function CountUp({
   color?: string;
   style?: StyleProp<TextStyle>;
 }) {
-  const calm = useReducedMotion();
+  const calm = useCalm();
   const from = shown.get(id) ?? 0;
   const [now, setNow] = useState(calm || !Number.isInteger(value) || from > value ? value : from);
   const frame = useRef<number | null>(null);

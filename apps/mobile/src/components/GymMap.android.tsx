@@ -24,6 +24,7 @@ import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { BoundingBox, LatLng } from '@gymgo/domain';
 import { mapItems } from '@/lib/cluster';
 import { MapNotice } from './MapNotice';
+import { mapStyleUrl } from '@/lib/mapStyles';
 import { mapPageHtml, type PageMessage } from './mapPage';
 import { TIER_COLOUR } from './ui';
 import type { GymMapHandle, GymMapProps } from './map-types';
@@ -37,7 +38,7 @@ type Kept = 'padding' | 'user' | 'items';
 const KEPT_ORDER: Kept[] = ['padding', 'user', 'items'];
 
 export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
-  { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, userLocation = null, onSelect, onMapPress, onRegionChange },
+  { pins, selectedId, initialCentre, bottomInset, creditInset, topInset, userLocation = null, onSelect, onMapPress, onRegionChange, mapStyle = 'standard' },
   ref,
 ) {
   // `WebView<object>`: react-native-webview 14 defaults its props parameter to
@@ -56,6 +57,8 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
   const [failed, setFailed] = useState(false);
 
   // One page per start, opening where the last one was. Later moves are the page's own.
+  // A new map style (Appearance → Map) starts a new page, where you were.
+  const styleUrl = mapStyleUrl(mapStyle, currentTheme().scheme);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const html = useMemo(
     () =>
@@ -64,8 +67,9 @@ export const GymMap = forwardRef<GymMapHandle, GymMapProps>(function GymMap(
         zoom: camera.current ? camera.current.zoom - 1 : undefined,
         colours: Object.fromEntries(Object.entries(TIER_COLOUR).map(([tier, tone]) => [tier, tone.fill])),
         dark: currentTheme().scheme === 'dark',
+        style: styleUrl,
       }),
-    [page],
+    [page, styleUrl],
   );
 
   const inject = useCallback((script: string) => web.current?.injectJavaScript(`${script};true;`), []);

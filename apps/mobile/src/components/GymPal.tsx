@@ -65,7 +65,6 @@ import Animated, {
   cancelAnimation,
   runOnJS,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withDelay,
   withRepeat,
@@ -91,7 +90,7 @@ import { LIMITED } from '@/lib/limited';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
 import { Icon } from './Icon';
-import { ARRIVE_CURVE, POP_IN, Pressable, usePressScale } from './motion';
+import { ARRIVE_CURVE, POP_IN, Pressable, useCalm, usePressScale } from './motion';
 import { Toggle } from './Toggle';
 import { CloseButton, Txt } from './ui';
 
@@ -144,7 +143,7 @@ export function GymPal() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   // How and on which side he waits, and the layout (Appearance).
-  const { gymPalSide: side, gymPalButton: button, layout } = useThemeChoice();
+  const { gymPalSide: side, gymPalButton: button, layout, foldOnMap } = useThemeChoice();
   const { width } = useWindowDimensions();
   const mode = navMode(layout, width);
   const sidebarUnfolded = useSidebarUnfolded();
@@ -303,7 +302,7 @@ export function GymPal() {
         : tabBarBottom(insets.bottom) + (besideBar ? (TAB_BAR - BUTTON) / 2 : TAB_BAR + 12);
   // The screen's edge on that side (beside a docked sidebar on the left), and the corner button's place in from it.
   // On the left: clear of the docked sidebar (its capsule on the map, or all of it once unfolded there).
-  const flush = side === 'left' ? insets.left + sidebarInset(mode, pathname, true) + (sidebarUnfolded ? FOLD_SHIFT : 0) : insets.right;
+  const flush = side === 'left' ? insets.left + sidebarInset(mode, pathname, true, foldOnMap) + (sidebarUnfolded ? FOLD_SHIFT : 0) : insets.right;
   const show = () => setOpen(true);
 
   return (
@@ -354,7 +353,7 @@ export function GymPal() {
  * what it stands for is in the label of the button or heading it's on.
  */
 export function GymPalMark({ size, cheer = 0, still = false }: { size: number; cheer?: number; still?: boolean }) {
-  const calm = useReducedMotion() || still;
+  const calm = useCalm() || still;
   const lift = useSharedValue(0);
 
   useEffect(() => {
@@ -770,7 +769,7 @@ const plain = (text: string) => text.replace(/\*\*/g, '').replace(/^#{1,6}\s+/gm
 
 /** Three dots while GymPal thinks; still ones with Reduce Motion. */
 function Typing() {
-  const calm = useReducedMotion();
+  const calm = useCalm();
   return (
     <View style={[styles.bubble, styles.theirs, styles.typing]} accessible accessibilityLabel="GymPal is typing">
       {[0, 1, 2].map((index) => (

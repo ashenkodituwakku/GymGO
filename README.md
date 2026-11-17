@@ -372,10 +372,16 @@ your accent glows behind them.
     112% and 125% of every text style, in every look), and **Bold text**,
     which sets each weight one step heavier. A sample card (a gym's name
     and hours) shows it as you choose.
+  - **Reduce motion** (everyone): GymGO keeps still, as the phone's own
+    Reduce Motion makes it, without changing the phone: things appear in
+    place instead of sliding, gliding and popping, pages arrive without
+    their lift, the map's pins don't bounce and celebrations don't play.
+    With the phone's setting on, the switch shows on and can't be turned
+    off.
   - **Clock** (everyone): 12-hour or 24-hour, for opening hours, visit
     times, workout times and reminders ("19:00"; a late close reads
     "02:00 (next day)").
-  - **Layout** (everyone): **Tab bar**, the default (the four tabs float at
+  - **Layout** (everyone), chosen from two picture tiles: **Tab bar**, the default (the four tabs float at
     the foot of the screen), or **Sidebar**: a menu down the left with the
     tabs, then Training (Workout, Progress, My workouts, Programme) and You
     (Collection, Friends, Appearance). From 960 points wide it stays open,
@@ -383,7 +389,8 @@ your accent glows behind them.
     only the tabs): the page's header and background run on underneath it,
     Explore's map too, and the page's content keeps clear of it. On the
     map it folds away to a small glass capsule with an arrow at the top
-    left, so the map has the room; the arrow unfolds it, the pane growing
+    left, so the map has the room (unless **Fold away on the map** is off,
+    under the tiles); the arrow unfolds it, the pane growing
     out of the capsule while the map's panels move across beside it, and
     the arrow at its top or Escape folds it back. Going between the map and
     another page folds or unfolds it in the same way, and the pill under
@@ -401,6 +408,15 @@ your accent glows behind them.
     (nothing on screen: on a phone, swipe in from that edge near the
     bottom; on a computer, Ctrl + / or ⌘ /), on the right or the left. His
     chat panel opens on the same side on a wide screen.
+  - **Map** (Standard for everyone; the rest Pro): the style of Explore's
+    map, from four tiles drawn in each style's own colours. **Standard**
+    (OpenFreeMap's Liberty), **Muted** (Positron, pale greys so the pins
+    stand out), **Classic** (OSM Bright: deep green woods, orange
+    motorways) and **Deep blue** (Fiord, dark either way). In dark mode
+    every style but Deep blue uses OpenFreeMap's dark map. On an iPhone,
+    where the map is Apple's, Muted is Apple's muted map, Deep blue its
+    dark one and Classic its standard map. A Pro style kept after Pro
+    ends shows as Standard.
   - **Corners** (Pro): Round, Standard or Sharp, scaling the corners of
     cards, buttons and sheets (pills stay pills, and the square looks stay
     square, as the page says).
@@ -1889,7 +1905,7 @@ saved list always opens, wherever the gym is.
 | Warm-up sets | Mark any set as a warm-up; plates for any weight | A warm-up ramp to your weight, with the plates, on the plate calculator or added to a workout |
 | Gym notes | — | Your own notes on each gym, on your device |
 | Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
-| Colour themes | Indigo; light, dark or Dim; text size, bold text, 12- or 24-hour clock, GymPal's button and side | Twelve accents (Rainbow and Camo too) or your own colour, eight looks (Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles |
+| Colour themes | Indigo; light, dark or Dim; text size, bold text, reduce motion, the layout, 12- or 24-hour clock, GymPal's button and side, the Standard map | Twelve accents (Rainbow and Camo too) or your own colour, eight looks (Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles, three more map styles (Muted, Classic, Deep blue) |
 | Interval timer | Tabata and EMOM | Your own work, rest and rounds; keep up to 10 |
 | 1-rep max | Your estimated max, and 90%, 80% and 70% | Every step from 100% to 50% with plates, and what you could lift for 2 to 12 reps |
 | Streak freeze | — | One missed week a month doesn't end your streak |

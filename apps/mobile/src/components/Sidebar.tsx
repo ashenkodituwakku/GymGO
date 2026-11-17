@@ -248,7 +248,8 @@ export function useSidebarUnfolded(): boolean {
 /**
  * How far the docked sidebar is open as it moves, from 0 (its capsule, on
  * the map) to 1: what moves aside for it on the map follows this, so the
- * two travel together. Null without a docked sidebar.
+ * two travel together. Null where it doesn't fold (any other page, no
+ * docked sidebar, or folding turned off in Appearance).
  */
 const SidebarOpening = createContext<SharedValue<number> | null>(null);
 export const useSidebarOpening = (): SharedValue<number> | null => useContext(SidebarOpening);
@@ -263,13 +264,13 @@ export const useSidebarOpening = (): SharedValue<number> | null => useContext(Si
  * navigator inside it.
  */
 export function SidebarFrame({ signedIn, children }: { signedIn: boolean; children: ReactNode }) {
-  const { layout } = useThemeChoice();
+  const { layout, foldOnMap } = useThemeChoice();
   const { width } = useWindowDimensions();
   const pathname = usePathname();
   const mode = navMode(layout, width);
   // All of the sidebar, its capsule on the map, or nothing.
-  const inset = sidebarInset(mode, pathname, signedIn);
-  const foldable = foldedOn(mode, pathname, signedIn);
+  const inset = sidebarInset(mode, pathname, signedIn, foldOnMap);
+  const foldable = foldedOn(mode, pathname, signedIn, foldOnMap);
   const unfoldedNow = useSidebarUnfolded();
   // Arriving on a page starts the map's sidebar folded, so coming back to the map folds it away again.
   useEffect(() => {
@@ -285,7 +286,8 @@ export function SidebarFrame({ signedIn, children }: { signedIn: boolean; childr
   const shifted = useMemo(() => ({ ...insets, left: insets.left + inset }), [insets, inset]);
   return (
     <SidebarInset.Provider value={inset}>
-      <SidebarOpening.Provider value={inset > 0 ? opening : null}>
+      {/* Only where it folds: elsewhere (or with folding off) nothing moves aside for it. */}
+      <SidebarOpening.Provider value={foldable ? opening : null}>
         <View style={styles.fill}>
           <SafeAreaInsetsContext.Provider value={shifted}>{children}</SafeAreaInsetsContext.Provider>
           {inset > 0 ? <DockedSidebar foldable={foldable} open={open} opening={opening} /> : null}

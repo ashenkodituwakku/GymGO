@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // The font files are for the app's bundler, not for Node.
 vi.mock('./fonts', () => ({ BUNDLED_FACES: {} }));
 import { StyleSheet } from 'react-native';
-import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, applyTweaks, color, cornersFor, customAccent, dimApplies, face, hslHex, DEFAULT_TWEAKS, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
+import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, ambientGlow, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, applyTweaks, color, cornersFor, customAccent, dimApplies, face, hslHex, DEFAULT_TWEAKS, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
 import { mix, over, STANDARD_RADIUS } from './looks';
 
 const channel = (value: number) => (value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
@@ -67,10 +67,14 @@ describe('the colours', () => {
             for (const dark of darkStyles(look, scheme)) {
               applyTheme(scheme, accent, look, level, dark);
               const see = Number(/rgba\(\d+, \d+, \d+, ([\d.]+)\)/.exec(color.plate)?.[1] ?? 1);
-              const behind = mix(mix(color.groupedBackground, color.brand, glowPeak(level, scheme)), color.card, see);
-              for (const [ink, least] of PLATE_INKS) {
-                const ratio = contrast(color[ink], behind);
-                if (ratio < least) failures.push(`${look} ${scheme}${dark === 'dim' ? ' dim' : ''} ${accent} ${level}%: ${ink} on a card is ${ratio.toFixed(2)}`);
+              // Standard's cards are over the glow of the accent; Frost's over every colour of its own page.
+              const unders = LOOKS[look].backdrop?.(scheme).tones ?? [mix(color.groupedBackground, color.brand, glowPeak(level, scheme))];
+              for (const under of unders) {
+                const behind = mix(under, color.card, see);
+                for (const [ink, least] of PLATE_INKS) {
+                  const ratio = contrast(color[ink], behind);
+                  if (ratio < least) failures.push(`${look} ${scheme}${dark === 'dim' ? ' dim' : ''} ${accent} ${level}%: ${ink} on a card over ${under} is ${ratio.toFixed(2)}`);
+                }
               }
             }
           }
@@ -201,6 +205,27 @@ describe('Liquid Glass', () => {
       const palette = paletteFor('dark', FREE_ACCENT, look, 100);
       expect(palette.plate).toBe(palette.card);
     }
+  });
+
+  it('draws Frost as glass on a blue-and-white page: see-through cards with the level, solid at 0%, its page behind every one', () => {
+    const at = (level: number, scheme: 'light' | 'dark') => Number(/rgba\(\d+, \d+, \d+, ([\d.]+)\)/.exec(paletteFor(scheme, FREE_ACCENT, 'frost', level).plate)?.[1] ?? 1);
+    for (const scheme of ['light', 'dark'] as const) {
+      expect(at(0, scheme)).toBe(1);
+      expect(at(GLASS_DEFAULT, scheme)).toBeLessThan(0.75);
+      expect(at(100, scheme)).toBeLessThan(at(GLASS_DEFAULT, scheme));
+      expect(LOOKS.frost.solid).toBe(false);
+      const page = LOOKS.frost.backdrop!(scheme);
+      expect(page.image).toMatch(/^radial-gradient/);
+      expect(page.tones.length).toBeGreaterThan(3);
+    }
+    // Its glass floats in the page's blue, not Standard's grey, in dark.
+    expect(paletteFor('dark', FREE_ACCENT, 'frost').glassWashThin).toMatch(/^rgba\(30, 43, 76, /);
+    expect(paletteFor('dark', FREE_ACCENT, FREE_LOOK).glassWashThin).toMatch(/^rgba\(36, 36, 40, /);
+    // The page behind each page is Frost's own, even at 0%, and Standard's glow is not drawn over it.
+    applyTheme('light', FREE_ACCENT, 'frost', 0);
+    expect(JSON.stringify(ambientGlow())).toContain('linear-gradient');
+    applyTheme('light', FREE_ACCENT, FREE_LOOK, 0);
+    expect(ambientGlow()).toBeNull();
   });
 
   it('names each level', () => {

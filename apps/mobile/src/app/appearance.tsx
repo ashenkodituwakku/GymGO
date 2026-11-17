@@ -44,6 +44,7 @@ import {
   LOOKS,
   LOOK_IDS,
   TEXT_SIZES,
+  backgroundImage,
   color,
   cornersFor,
   customAccent,
@@ -144,6 +145,8 @@ export default function AppearanceScreen() {
     void loadAllLookFonts().then(() => setFontsReady(true));
   }, []);
   const lookInUse = billing.isPro || choice.look === FREE_LOOK ? choice.look : FREE_LOOK;
+  // Ten looks: two rows of five where there's room for them, else threes with the last one centred.
+  const [looksWide, setLooksWide] = useState(false);
   // The mode previews draw dark the way it'll look: Dim's grey where it applies.
   const darkTone = dimApplies('dark', lookInUse, choice.dark) ? 'dim' : 'dark';
   const accentInUse = billing.isPro || choice.accent === FREE_ACCENT ? choice.accent : FREE_ACCENT;
@@ -481,7 +484,7 @@ export default function AppearanceScreen() {
             </View>
           )}
         </View>
-        <View style={styles.looks} accessibilityRole="radiogroup">
+        <View style={styles.looks} accessibilityRole="radiogroup" onLayout={(event) => setLooksWide(event.nativeEvent.layout.width >= LOOKS_FIVE_ACROSS)}>
           {LOOK_IDS.map((id) => {
             const on = lookInUse === id;
             const locked = id !== FREE_LOOK && !billing.isPro;
@@ -492,7 +495,7 @@ export default function AppearanceScreen() {
                 accessibilityRole="radio"
                 aria-checked={on}
                 accessibilityLabel={`${LOOKS[id].name}: ${LOOKS[id].blurb}${locked ? '. Part of GymGO Pro' : ''}`}
-                style={({ pressed }) => [styles.lookTile, pressed && { opacity: 0.75 }]}
+                style={({ pressed }) => [styles.lookTile, looksWide && styles.lookTileFive, pressed && { opacity: 0.75 }]}
               >
                 <LookPreview look={id} accent={accentInUse} dark={choice.dark} on={on} />
                 <View style={styles.lookName}>
@@ -594,8 +597,8 @@ export default function AppearanceScreen() {
         </View>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {solidLook
-            ? `${LOOKS[lookInUse].name} draws everything as solid plates, so there’s no glass to set. Choose Standard to use Liquid Glass.`
-            : 'How glassy GymGO is: the controls, sheets and bars over the map, and the cards on every page, with your accent glowing through from behind. 0% makes it all solid; 100% is the clearest that keeps text readable.'}
+            ? `${LOOKS[lookInUse].name} draws everything as solid plates, so there’s no glass to set. Choose Standard or Frost to use Liquid Glass.`
+            : `How glassy GymGO is: the controls, sheets and bars over the map, and the cards on every page, with ${LOOKS[lookInUse].backdrop ? 'the page’s blues' : 'your accent glowing'} through from behind. 0% makes it all solid; 100% is the clearest that keeps text readable.`}
         </Txt>
 
         <View style={styles.accentHead}>
@@ -1140,6 +1143,9 @@ const PINS: Array<{ left: `${number}%`; top: number; tone: 'good' | 'maybe' | 'b
   { left: '84%', top: 128, tone: 'good' },
 ];
 
+/** How wide the looks' grid is before five go across (each tile then about 100 points, as wide as a preview gets). */
+const LOOKS_FIVE_ACROSS = 500;
+
 /** A tiny screen drawn in a look: its page, a card, a title in its type and a button. */
 function LookPreview({ look, accent, dark, on }: { look: LookId; accent: AccentId; dark: DarkStyle; on: boolean }) {
   const spec = LOOKS[look];
@@ -1148,10 +1154,12 @@ function LookPreview({ look, accent, dark, on }: { look: LookId; accent: AccentI
   const shadows = spec.shadows?.(scheme, palette.brand);
   const corner = (value: number) => Math.min(value * 0.5, 12);
   const title = spec.fonts?.display ?? spec.fonts?.body?.bold;
+  // A look with a page of its own (Frost) shows it, and its card as the glass over it.
+  const backdrop = spec.backdrop?.(scheme);
   return (
     <View style={[styles.lookFrame, on && { borderColor: color.brand }]}>
-      <View style={[styles.lookPage, { backgroundColor: palette.groupedBackground }]}>
-        <View style={[styles.lookCard, { backgroundColor: palette.card, borderRadius: corner(spec.radius.lg) }, shadows?.card]}>
+      <View style={[styles.lookPage, { backgroundColor: palette.groupedBackground }, backdrop && backgroundImage(backdrop.image)]}>
+        <View style={[styles.lookCard, { backgroundColor: backdrop ? palette.plate : palette.card, borderRadius: corner(spec.radius.lg) }, backdrop ? shadows?.plate : shadows?.card]}>
           <Txt variant="caption" color={palette.label} style={[{ fontSize: Math.round(11 * (spec.fonts?.displayScale ?? 1)), lineHeight: 14 }, title ? { fontFamily: title, fontWeight: 'normal' } : face('bold')]} numberOfLines={1}>
             GymGO
           </Txt>
@@ -1247,8 +1255,9 @@ const styles = themed(() =>
     tile: { width: '20%', minWidth: 64, alignItems: 'center', gap: space[1], paddingVertical: space[2] },
     ring: { padding: 3, borderRadius: 30, borderWidth: 2, borderColor: 'transparent' },
     swatch: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-    looks: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
+    looks: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     lookTile: { width: '33.33%', alignItems: 'center', gap: space[1], paddingVertical: space[2], paddingHorizontal: space[1] },
+    lookTileFive: { width: '20%' },
     lookFrame: { width: '100%', maxWidth: 104, aspectRatio: 0.9, padding: 3, borderRadius: 14, borderWidth: 2, borderColor: 'transparent' },
     lookPage: { flex: 1, borderRadius: concentric(14, 5), overflow: 'hidden', padding: 8, gap: 8, justifyContent: 'space-between' },
     lookCard: { padding: 6, gap: 5 },

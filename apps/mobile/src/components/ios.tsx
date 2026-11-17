@@ -12,7 +12,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { haptic } from '@/lib/haptics';
 import { useBottomClearance, useOverhang } from '@/lib/layout';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { LOOKS, PAGE_COLUMN, ambientGlow, backgroundImage, color, currentLook, currentTheme, face, heroGlowStops, radius, shadow, space, themed } from '@/lib/theme';
+import { PAGE_COLUMN, ambientGlow, backgroundImage, color, currentLook, currentTheme, face, heroGlowStops, radius, shadow, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { contrast } from '@/lib/looks';
@@ -133,12 +133,14 @@ function TabScreenInner({
     },
     [titleBottom, insets.top],
   );
-  // Only the glass look glows (ambientGlow is null in the others, which have
-  // grounds of their own: pixels, bevels, tones). Behind every tab, a glow
-  // that stays put, as strong as your Liquid Glass level; behind the title
-  // (Home, Profile), a brighter one that fades as the page scrolls.
+  // Only the glass looks have something behind the page (ambientGlow is null
+  // in the others, which have grounds of their own: pixels, bevels, tones).
+  // In Standard, behind every tab, a glow that stays put, as strong as your
+  // Liquid Glass level, and behind the title (Home, Profile) a brighter one
+  // that fades as the page scrolls; in Frost, its blue-and-white page, with
+  // no glow of the accent over it.
   const ambient = ambientGlow();
-  const glowing = glow && ambient !== null;
+  const glowing = glow && ambient !== null && !currentLook().backdrop;
   const glowStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [0, 280], [1, 0], 'clamp'),
     transform: [{ translateY: interpolate(scrollY.value, [0, 280], [0, -70], 'clamp') }],
@@ -301,12 +303,12 @@ export const TILE = themed(() => ({
 }));
 
 /**
- * A settings row's icon on its coloured tile. In the glass look the tile is
- * lit from the top and rimmed, like the iPhone's own; the solid looks keep
- * it flat. `children` in place of the icon: a brand's own mark.
+ * A settings row's icon on its coloured tile. In the glass looks (Standard,
+ * Frost) the tile is lit from the top and rimmed, like the iPhone's own; the
+ * solid looks keep it flat. `children` in place of the icon: a brand's own mark.
  */
 export function SettingsTile({ icon, tile, children }: { icon?: IconName; tile: string; children?: ReactNode }) {
-  const lit = currentLook() === LOOKS.standard;
+  const lit = !currentLook().solid;
   // A tile about the card's own colour (Google's white one on a white card) needs an edge to be a tile at all.
   const white = contrast(tile, color.plateSolid) < 1.3;
   return (

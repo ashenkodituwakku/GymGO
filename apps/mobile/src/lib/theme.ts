@@ -391,9 +391,9 @@ export function glassAlpha(layer: GlassLayer, level: number, scheme: Scheme, pla
   return levelAlpha(level, WASH_BALANCED[scheme][layer], WASH_CLEAREST[platform === 'android' ? 'wash' : 'blur'][scheme][layer]);
 }
 
-/** A layer's colour at a level. */
-export function glassWash(layer: GlassLayer, level: number, scheme: Scheme): string {
-  return `rgba(${WASH[scheme][layer]}, ${glassAlpha(layer, level, scheme)})`;
+/** A layer's colour at a level, in a look's own tint if it has one (Frost's blues). */
+export function glassWash(layer: GlassLayer, level: number, scheme: Scheme, look: LookId = current.look): string {
+  return `rgba(${(LOOKS[look].wash ?? WASH)[scheme][layer]}, ${glassAlpha(layer, level, scheme)})`;
 }
 
 /**
@@ -436,10 +436,17 @@ export function glowPeak(level: number, scheme: Scheme): number {
  * behind (a dark accent's, at 100%, took grey text under it).
  */
 export function readablePlateAlpha(palette: Palette, level: number, scheme: Scheme): number {
-  const under = mix(palette.groupedBackground, palette.brand, glowPeak(level, scheme));
-  for (let at = plateAlpha(level, scheme); at < 1; at += 0.02) {
-    const behind = mix(under, palette.card, at);
-    if (PLATE_INKS.every(([ink, least]) => contrast(palette[ink], behind) >= least)) return Math.round(at * 1000) / 1000;
+  return clearestReadable(palette, [mix(palette.groupedBackground, palette.brand, glowPeak(level, scheme))], plateAlpha(level, scheme));
+}
+
+/** The least solid a card can be, from `from` up, with every ink on it readable over each of the grounds under it. */
+function clearestReadable(palette: Palette, unders: string[], from: number): number {
+  for (let at = from; at < 1; at += 0.02) {
+    const fine = unders.every((under) => {
+      const behind = mix(under, palette.card, at);
+      return PLATE_INKS.every(([ink, least]) => contrast(palette[ink], behind) >= least);
+    });
+    if (fine) return Math.round(at * 1000) / 1000;
   }
   return 1;
 }
@@ -471,8 +478,8 @@ export function glassLevelName(level: number): string {
  * the page's ground and over a card. A see-through card is skipped:
  * readable() leaves out a ground it can't read.
  */
-function inksOnWashes(palette: Palette, scheme: Scheme): void {
-  const grounds = (wash: string) => [over(palette.groupedBackground, wash), over(palette.card, wash)];
+function inksOnWashes(palette: Palette, scheme: Scheme, more: string[] = []): void {
+  const grounds = (wash: string) => [palette.groupedBackground, palette.card, ...more].map((ground) => over(ground, wash));
   palette.brandOnTint = readable(palette.brand, grounds(palette.brandTint), scheme, 4.6);
   palette.labelSecondaryOnFill = readable(palette.labelSecondary, grounds(palette.fill), scheme, 4.6);
 }
@@ -481,12 +488,12 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
   const dim = dimApplies(scheme, look, dark);
   const palette: Palette = { ...BASE[scheme], ...(dim ? DIM : null), ...ACCENTS[accent][scheme], brandOnTint: '', labelSecondaryOnFill: '' };
   if (dim) for (const key of TEXT_KEYS) palette[key] = readable(palette[key], [DIM.card, DIM.groupedBackground, DIM.cardRaised], scheme, key === 'labelTertiary' ? 3 : 4.6);
-  palette.glassWashThin = glassWash('thin', glass, scheme);
-  palette.glassWashThick = glassWash('thick', glass, scheme);
-  palette.glassWashBar = glassWash('bar', glass, scheme);
+  palette.glassWashThin = glassWash('thin', glass, scheme, look);
+  palette.glassWashThick = glassWash('thick', glass, scheme, look);
+  palette.glassWashBar = glassWash('bar', glass, scheme, look);
   const surfaces = LOOKS[look].surfaces?.(scheme, palette.brand);
-  // Cards on the page are glass too, in the glass look: solid at 0%, clearer as the level rises.
-  const see = LOOKS[look].solid || cleanGlass(glass) === 0 ? 1 : readablePlateAlpha(palette, glass, scheme);
+  // Cards on the page are glass too, in Standard: solid at 0%, clearer as the level rises (Frost's below).
+  const see = LOOKS[look].solid || surfaces || cleanGlass(glass) === 0 ? 1 : readablePlateAlpha(palette, glass, scheme);
   palette.plate = see === 1 ? palette.card : alpha(palette.card, see);
   palette.plateSolid = mix(palette.groupedBackground, palette.card, see);
   const lift = (raised: string) => (scheme === 'dark' ? mix(raised, '#FFFFFF', 0.18) : raised);
@@ -497,9 +504,22 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
   palette.plate = palette.card;
   palette.plateSolid = palette.card;
   palette.segmentRaised = lift(palette.cardRaised);
-  const behind = [surfaces.card, surfaces.groupedBackground, surfaces.background];
+  // A look with a page of its own (Frost) is read over every colour of it too.
+  const tones = LOOKS[look].backdrop?.(scheme).tones ?? [];
+  const behind = [surfaces.card, surfaces.groupedBackground, surfaces.background, ...tones];
   for (const key of TEXT_KEYS) palette[key] = readable(palette[key], behind, scheme, key === 'labelTertiary' ? 3 : 4.6);
-  inksOnWashes(palette, scheme);
+  // Its cards are glass over that page: solid at 0%, clearer as the level
+  // rises, but never so clear that their text drops below its contrast over
+  // the deepest of the page's blues.
+  const plates = LOOKS[look].plates?.[scheme];
+  if (!plates || cleanGlass(glass) === 0) {
+    inksOnWashes(palette, scheme, tones);
+    return palette;
+  }
+  const at = clearestReadable(palette, tones, levelAlpha(glass, plates.balanced, plates.clearest));
+  palette.plate = at === 1 ? palette.card : alpha(palette.card, at);
+  palette.plateSolid = mix(surfaces.groupedBackground, palette.card, at);
+  inksOnWashes(palette, scheme, [...tones, ...tones.map((tone) => mix(tone, palette.card, at))]);
   return palette;
 }
 
@@ -604,10 +624,13 @@ export const glowStrength = (): number => (currentLook().solid ? 0 : cleanGlass(
  * a solid look or at 0% (null). Stronger in dark, where a faint one is lost.
  */
 export function ambientGlow(): ViewStyle | null {
+  if (currentLook().backdrop) return glow.backdrop;
   return glowStrength() === 0 ? null : glow.style;
 }
 /** Made once per change of the theme, not each time a page draws. */
 const glow = themed(() => ({
+  // A look's own page (Frost's blues), whatever the level: at 0% its cards are solid, but the page is still the look's.
+  backdrop: backgroundImage(currentLook().backdrop?.(current.scheme).image ?? 'none'),
   // Round pools (an ellipse takes the page's shape: a band down a tall phone),
   // eased out over three stops so no ring shows where one ends.
   style: backgroundImage(

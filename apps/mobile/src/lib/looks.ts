@@ -9,6 +9,10 @@
  * (see `readable` below), so no look trades legibility for style.
  *
  * - Standard: GymGO's own iPhone look (everyone).
+ * - Frost: frosted glass on a blue-and-white page (glassmorphism): see-through
+ *   cards with a white edge, over a page of pale blues that stays put as it
+ *   scrolls, so each card shows a little of what's behind it. How see-through
+ *   follows your Liquid Glass level, like Standard's.
  * - 8-bit: square pixels, arcade type for headings, a readable pixel face for
  *   everything else, and chunky outlines with hard drop shadows.
  * - Classic: a nineties desktop: teal backdrop, grey bevelled plates.
@@ -28,8 +32,8 @@
 
 import type { ViewStyle } from 'react-native';
 
-export type LookId = 'standard' | 'pixel' | 'classic' | 'material' | 'neon' | 'soft' | 'paper' | 'terminal' | 'comic';
-export const LOOK_IDS: LookId[] = ['standard', 'soft', 'paper', 'material', 'neon', 'terminal', 'pixel', 'classic', 'comic'];
+export type LookId = 'standard' | 'frost' | 'pixel' | 'classic' | 'material' | 'neon' | 'soft' | 'paper' | 'terminal' | 'comic';
+export const LOOK_IDS: LookId[] = ['standard', 'frost', 'soft', 'paper', 'material', 'neon', 'terminal', 'pixel', 'classic', 'comic'];
 export const FREE_LOOK: LookId = 'standard';
 
 type Scheme = 'light' | 'dark';
@@ -82,6 +86,25 @@ export interface LookSpec {
    * page gets (a list group, a Home tile). None means the standard soft ones.
    */
   shadows?: (scheme: Scheme, brand: string) => { float: ViewStyle; card: ViewStyle; plate: ViewStyle };
+  /**
+   * A page of the look's own, behind see-through cards (Frost): drawn behind
+   * each page and staying put as it scrolls, in place of Standard's glow.
+   */
+  backdrop?: (scheme: Scheme) => Backdrop;
+  /**
+   * Cards on the page as glass over the backdrop: how solid they are at the
+   * default Liquid Glass level and at 100% (solid at 0%), at the least: more
+   * solid where their text needs it.
+   */
+  plates?: Record<Scheme, { balanced: number; clearest: number }>;
+  /** The colour of the glass floating over the page and the map (red, green, blue), in place of Standard's white and grey. */
+  wash?: Record<Scheme, { thin: string; thick: string; bar: string }>;
+}
+
+/** A look's own page: CSS gradients, and every colour they reach (text over them is checked against each). */
+export interface Backdrop {
+  image: string;
+  tones: string[];
 }
 
 export const STANDARD_RADIUS: Radii = { sm: 10, md: 14, lg: 18, xl: 24, sheet: 38, pill: 999 };
@@ -285,6 +308,35 @@ const MONO: Record<Weight, string> = {
   bold: 'JetBrainsMono_700Bold',
 };
 
+/**
+ * Frost's page: white at the top fading to pale blue at the foot (deep navy
+ * in dark), and two soft pools of a stronger blue, top right and left, for
+ * the glass over them to show. Made in one place with the colours it
+ * reaches, so the cards' text is checked against what's really drawn.
+ */
+function frostBackdrop(scheme: Scheme): Backdrop {
+  const dark = scheme === 'dark';
+  const ground = dark ? ['#13203E', '#0C1529', '#0A1222'] : ['#F8FBFF', '#E7F0FD', '#D6E4F9'];
+  const pools = dark
+    ? [
+        { at: '90% 2%', tint: '#3B6BDB', strength: 0.34, reach: 48 },
+        { at: '2% 58%', tint: '#3457B5', strength: 0.26, reach: 52 },
+      ]
+    : [
+        { at: '90% 2%', tint: '#8CB4FF', strength: 0.5, reach: 48 },
+        { at: '2% 58%', tint: '#A6C3F7', strength: 0.45, reach: 52 },
+      ];
+  const round = (value: number) => Math.round(value * 100) / 100;
+  const image = [
+    // Each eased out over three stops, so no ring shows where a pool ends.
+    ...pools.map(({ at, tint, strength, reach }) => `radial-gradient(circle at ${at}, ${alpha(tint, strength)} 0%, ${alpha(tint, round(strength * 0.45))} ${round(reach * 0.45)}%, ${alpha(tint, 0)} ${reach}%)`),
+    `linear-gradient(170deg, ${ground[0]} 0%, ${ground[1]} 55%, ${ground[2]} 100%)`,
+  ].join(', ');
+  const pooled = (under: string) => pools.map(({ tint, strength }) => over(under, alpha(tint, strength)));
+  const tones = [...ground, ...ground.flatMap(pooled), over(over(ground[2]!, alpha(pools[0]!.tint, pools[0]!.strength)), alpha(pools[1]!.tint, pools[1]!.strength))];
+  return { image, tones };
+}
+
 export const LOOKS: Record<LookId, LookSpec> = {
   standard: {
     name: 'Standard',
@@ -292,6 +344,37 @@ export const LOOKS: Record<LookId, LookSpec> = {
     radius: STANDARD_RADIUS,
     solid: false,
     fonts: null,
+  },
+  frost: {
+    name: 'Frost',
+    blurb: 'Frosted glass cards on a blue-and-white page (deep blue in dark)',
+    radius: { sm: 12, md: 16, lg: 20, xl: 26, sheet: 38, pill: 999 },
+    solid: false,
+    fonts: null,
+    surfaces: (scheme) =>
+      scheme === 'dark'
+        ? { groupedBackground: '#0C1529', background: '#121D36', card: '#22325A', cardRaised: '#2C3D68', cardGlass: 'rgba(28, 40, 70, 0.86)', separator: 'rgba(170, 195, 255, 0.16)', fill: 'rgba(170, 195, 255, 0.1)' }
+        : { groupedBackground: '#E6EFFC', background: '#F4F8FE', card: '#FFFFFF', cardRaised: '#FFFFFF', cardGlass: 'rgba(255, 255, 255, 0.86)', separator: 'rgba(50, 80, 140, 0.16)', fill: 'rgba(60, 95, 160, 0.1)' },
+    backdrop: (scheme) => frostBackdrop(scheme),
+    plates: { light: { balanced: 0.6, clearest: 0.42 }, dark: { balanced: 0.6, clearest: 0.44 } },
+    wash: {
+      light: { thin: '255, 255, 255', thick: '246, 249, 255', bar: '246, 249, 255' },
+      dark: { thin: '30, 43, 76', thick: '22, 33, 60', bar: '17, 27, 50' },
+    },
+    // Glass's edge: a fine white line all round, brighter along the top where
+    // the light catches it, and a soft shadow in the page's own blue.
+    shadows: (scheme) =>
+      scheme === 'dark'
+        ? {
+            plate: { boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.32), inset 0px 0px 0px 1px rgba(170, 195, 255, 0.14), inset 0px 1px 0px rgba(215, 228, 255, 0.2)' },
+            card: { boxShadow: 'inset 0px 0px 0px 1px rgba(170, 195, 255, 0.12)' },
+            float: { boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.5), inset 0px 0px 0px 1px rgba(170, 195, 255, 0.16)' },
+          }
+        : {
+            plate: { boxShadow: '0px 1px 2px rgba(35, 70, 140, 0.05), 0px 8px 24px rgba(35, 70, 140, 0.1), inset 0px 0px 0px 1px rgba(255, 255, 255, 0.7), inset 0px 1px 0px rgba(255, 255, 255, 0.95)' },
+            card: { boxShadow: '0px 1px 2px rgba(35, 70, 140, 0.05), 0px 3px 10px rgba(35, 70, 140, 0.07)' },
+            float: { boxShadow: '0px 2px 6px rgba(35, 70, 140, 0.08), 0px 10px 30px rgba(35, 70, 140, 0.16)' },
+          },
   },
   pixel: {
     name: '8-bit',

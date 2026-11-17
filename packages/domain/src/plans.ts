@@ -90,7 +90,7 @@ export const PRO_FEATURES: Array<{ title: string; free: string; pro: string; gro
   { title: 'Streak freeze', free: 'Not included', pro: 'One missed week a month', group: 'training' },
   { title: 'Lifetime stats', free: 'Not included', pro: 'Every kilo, rep and hour, to share', group: 'training' },
   { title: 'GymPal', free: '20 questions a day', pro: '100 a day, and answers that know your training', group: 'training' },
-  { title: 'Colour themes', free: 'Indigo; light, dark or Dim; text size', pro: 'Twelve accents or your own, eight looks, corner styles, map styles', group: 'yours' },
+  { title: 'Colour themes', free: 'Indigo; light, dark or Dim; text size', pro: 'Twelve accents or your own, nine looks, corner styles, map styles', group: 'yours' },
   { title: 'Profile ring', free: 'Your picture', pro: 'Ringed in your accent', group: 'yours' },
   { title: 'Celebrations', free: 'Confetti', pro: 'Fireworks, stars or emoji', group: 'yours' },
   { title: 'Arcade sounds', free: 'Marimba', pro: 'Marimba or chip tunes', group: 'yours' },

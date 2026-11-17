@@ -9,6 +9,22 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 170 · Frost: a frosted-glass look from a reel
+
+*17 Nov 2026 · the commit "Frost: a frosted glass look on a blue-and-white page"*
+
+You sent a third reel (code.xr) and asked for it as an Appearance option. I can't watch videos, so I went by its caption: "Glassy Dashboard V5", a glassmorphism dashboard "featuring elegant translucent cards ... and a clean blue-and-white design". It is now **Frost**, a new look in Appearance → Look, beside Soft, Paper and the others, and part of Pro like them:
+
+- **The page** is white at the top fading to pale blue, with two soft pools of a stronger blue (top right and left), and it stays still as you scroll, so each card shows a little of the blue behind it. In dark mode it is deep navy, with the pools in a darker blue.
+- **Cards** are frosted glass: see-through white (navy in dark), with a fine white edge that is brighter along the top, and a soft blue shadow. Corners are a little rounder than Standard's.
+- **The Liquid Glass slider works in Frost too**, setting how see-through the cards are. At the default they are 60% solid; at 100% they are 42% solid (44% in dark); at 0% they are solid and the blue page stays. They never get so clear that text on them drops below WCAG AA over the deepest blue of the page, for any accent.
+- **The glass over the map, sheets, the tab bar and the sidebar** is tinted the page's blue in dark mode, not Standard's grey. Settings icons get Standard's lit tiles, as Frost is a glass look too.
+- **Appearance's look grid** now has ten tiles: two rows of five when it's wide enough, otherwise rows of three with the last tile centred. Frost's tile shows its blue page and a frosted card.
+- Standard's glow of your accent isn't drawn in Frost; its blue page takes that place. Your accent still colours buttons and links, and green, orange and grey keep their meaning.
+- The Pro page, the plans table, GymPal's guide and the README now say nine looks.
+
+- Checked in the browser at 320, 390 and 1280 points, in light and dark: Home, Profile, Progress, a gym's page, Explore (with the sidebar folded and the bar), and Appearance; the glass at 50% and 100%. No errors. New unit tests check that Frost's cards follow the level and its page is drawn behind each page, and the WCAG tests now cover Frost's cards over every colour of its page. All typechecks and tests pass. Not yet seen on a phone. On a phone the cards are see-through over the page without a blur behind them (as in Standard): over a smooth backdrop a blur looks the same.
+
 ## Update 169 · Animation principles and UX laws from a second reel
 
 *17 Nov 2026 · the commit "Motion and input from a reel: under 300ms, less for what's frequent, forgiving boxes"*

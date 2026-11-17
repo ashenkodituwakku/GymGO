@@ -106,6 +106,16 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Frost look** (17 Nov). lib/looks.ts: a look can now have a
+  `backdrop(scheme)` (`{ image, tones }`: CSS gradients for the page, and
+  every colour they reach, made together in `frostBackdrop` so text is
+  checked against what's drawn), `plates` (how solid its cards on the page
+  are at the default and 100% Liquid Glass) and `wash` (the floating
+  glass's tint). theme.ts `paletteFor` reads text over the tones, then
+  `clearestReadable` raises the plate's alpha until every PLATE_INK passes
+  over each tone; `ambientGlow()` returns the backdrop for such a look
+  (TabScreen and PageScroll draw it), and ios.tsx skips the hero glow there.
+  A page that draws neither shows the look's `groupedBackground`.
 - **Motion timing and forgiving boxes** (17 Nov). UI motion stays under
   about 300ms: motion.tsx springs (SLIDE, SETTLE, GLIDE) and timings were
   tightened, Redrawn's TAB is a 160ms fade (tabs are the most frequent

@@ -82,7 +82,7 @@ export function Glass({
   level?: number;
 }) {
   useGlassLevel();
-  // A look drawn in solid plates (every look but Standard), or Liquid
+  // A look drawn in solid plates (every look but Standard and Frost), or Liquid
   // Glass at 0%: no glass at all, just the card colour, the look's shadow
   // and, for a tinted button, its tint.
   if (level === undefined ? solidSurfaces() : currentLook().solid || level === 0) {

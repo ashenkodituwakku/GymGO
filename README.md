@@ -339,8 +339,14 @@ your accent glows behind them.
   Midnight, Lagoon, Grape, Fuchsia, Rose, Slate and Graphite, plus
   **Rainbow** (a gradient) and **Camo** (a woodland pattern) that paint
   filled buttons, selected chips, the tab bar and the Build a workout card,
-  picked from a grid of swatches. Pro also has eight **looks** that redraw
+  picked from a grid of swatches. Pro also has nine **looks** that redraw
   the whole app, not just its colour:
+  - **Frost**: frosted glass (glassmorphism) on a blue-and-white page,
+    deep navy in dark. Cards are see-through with a fine white edge, and
+    the page's blues show through them; how see-through follows your
+    Liquid Glass level (solid at 0%, never so clear that text drops below
+    WCAG AA over the deepest blue). The glass over the map and the sidebar
+    is tinted the page's blue in dark.
   - **Soft**: cards pressed out of the page itself, lit from the top left
     with a soft shadow below, rounder corners, set in Nunito.
   - **Paper**: cream pages (charcoal in dark), ink hairlines round cards,
@@ -1905,7 +1911,7 @@ saved list always opens, wherever the gym is.
 | Warm-up sets | Mark any set as a warm-up; plates for any weight | A warm-up ramp to your weight, with the plates, on the plate calculator or added to a workout |
 | Gym notes | — | Your own notes on each gym, on your device |
 | Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
-| Colour themes | Indigo; light, dark or Dim; text size, bold text, reduce motion, the layout, 12- or 24-hour clock, GymPal's button and side, the Standard map | Twelve accents (Rainbow and Camo too) or your own colour, eight looks (Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles, three more map styles (Muted, Classic, Deep blue) |
+| Colour themes | Indigo; light, dark or Dim; text size, bold text, reduce motion, the layout, 12- or 24-hour clock, GymPal's button and side, the Standard map | Twelve accents (Rainbow and Camo too) or your own colour, nine looks (Frost, Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles, three more map styles (Muted, Classic, Deep blue) |
 | Interval timer | Tabata and EMOM | Your own work, rest and rounds; keep up to 10 |
 | 1-rep max | Your estimated max, and 90%, 80% and 70% | Every step from 100% to 50% with plates, and what you could lift for 2 to 12 reps |
 | Streak freeze | — | One missed week a month doesn't end your streak |

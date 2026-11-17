@@ -7,8 +7,9 @@
  * always be scrolled into view. On iPhone it also takes the system's
  * automatic insets, which keep the content clear of a see-through header.
  *
- * Behind it, in the glass look, a glow of the accent that grows with your
- * Liquid Glass level (ambientGlow), for its frosted cards to be seen against:
+ * Behind it, in the glass looks, something for their frosted cards to be
+ * seen against (ambientGlow): Standard's glow of the accent, growing with your
+ * Liquid Glass level, or Frost's blue-and-white page:
  * on a view of its own around the scroll view, which Android's scroll view
  * can't draw a gradient on. The page's style (its colour, under the glow)
  * goes there too.

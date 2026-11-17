@@ -368,7 +368,7 @@ your accent glows behind them.
   keyboards and menus follow too.
 
   More of it is yours to set, kept on the device with the rest:
-  - **Text** (everyone): Smaller, Default, Larger or Largest (90%, 100%,
+  - **Text** (everyone), from four "Aa" tiles: Smaller, Default, Larger or Largest (90%, 100%,
     112% and 125% of every text style, in every look), and **Bold text**,
     which sets each weight one step heavier. A sample card (a gym's name
     and hours) shows it as you choose.
@@ -378,7 +378,7 @@ your accent glows behind them.
     their lift, the map's pins don't bounce and celebrations don't play.
     With the phone's setting on, the switch shows on and can't be turned
     off.
-  - **Clock** (everyone): 12-hour or 24-hour, for opening hours, visit
+  - **Clock** (everyone), from two faces showing a time in each: 12-hour or 24-hour, for opening hours, visit
     times, workout times and reminders ("19:00"; a late close reads
     "02:00 (next day)").
   - **Layout** (everyone), chosen from two picture tiles: **Tab bar**, the default (the four tabs float at
@@ -402,7 +402,7 @@ your accent glows behind them.
     a plain plate in a solid look or at 0%), every place with an icon from
     the tab bar's set, the place you're on in a pill of your accent. GymPal's
     button moves beside Menu, or clear of the docked sidebar.
-  - **GymPal's button** (everyone, while GymPal is on): **Edge tab** (the
+  - **GymPal's button** (everyone, while GymPal is on), from small screens showing where he waits: **Edge tab** (the
     default: a small tab flush with the screen's edge, low down; tap it or
     pull it in), **Corner** (his button in the bottom corner) or **Hidden**
     (nothing on screen: on a phone, swipe in from that edge near the

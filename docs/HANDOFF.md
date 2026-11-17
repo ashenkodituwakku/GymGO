@@ -106,6 +106,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Appearance tiles** (17 Nov). Every choice on appearance.tsx is now a
+  tile: the clock (`CLOCKS`, times written as lib/copy.ts timeLabel writes
+  them; change both if the format changes), GymPal's button and side
+  (`GymPalPreview` draws the edge tab, the corner mark and the hidden strip
+  on a `PREVIEW` screen) and the text size ("Aa" at each `TEXT_SIZES`
+  scale, `maxFontSizeMultiplier={1}`). `Segmented` is no longer used there.
 - **Appearance additions** (17 Nov). themePrefs.ts has `foldOnMap`
   (default true), `mapStyle` (lib/mapStyles.ts) and `reduceMotion`. Folding:
   `foldedOn`/`sidebarInset` take `folds`; SidebarFrame and GymPal pass

@@ -20,10 +20,10 @@ import { loadAllLookFonts } from '@/lib/lookFonts';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, Pressable } from '@/components/motion';
 import { Glass } from '@/components/Glass';
-import { GYMPAL_KEYS } from '@/components/GymPal';
+import { GYMPAL_KEYS, GymPalMark } from '@/components/GymPal';
 import { Icon } from '@/components/Icon';
 import { PercentSlider } from '@/components/PercentSlider';
-import { PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { PrimaryButton, Txt } from '@/components/ui';
 import { Toggle } from '@/components/Toggle';
 import { timeLabel } from '@/lib/copy';
 import { Celebration } from '@/components/Celebration';
@@ -85,6 +85,23 @@ const DARK_STYLES: Array<{ id: DarkStyle; label: string; blurb: string }> = [
 const LAYOUTS: Array<{ id: NavLayout; label: string; blurb: string }> = [
   { id: 'tabs', label: 'Tab bar', blurb: 'Four tabs floating at the foot' },
   { id: 'sidebar', label: 'Sidebar', blurb: 'A menu down the left, with your training' },
+];
+
+/** The clock, as the app writes a time in each: a close at 7 pm, a later one at 9:30 pm (lib/copy.ts timeLabel). */
+const CLOCKS: Array<{ id: '12' | '24'; label: string; time: string; later: string }> = [
+  { id: '12', label: '12-hour', time: '7\u00a0pm', later: 'until 9:30\u00a0pm' },
+  { id: '24', label: '24-hour', time: '19:00', later: 'until 21:30' },
+];
+
+const GYMPAL_BUTTONS: Array<{ id: GymPalButton; label: string; blurb: string }> = [
+  { id: 'tab', label: 'Edge tab', blurb: 'A small tab on the edge' },
+  { id: 'corner', label: 'Corner', blurb: 'His button in the corner' },
+  { id: 'hidden', label: 'Hidden', blurb: 'Nothing on screen' },
+];
+
+const GYMPAL_SIDES: Array<{ id: 'left' | 'right'; label: string }> = [
+  { id: 'left', label: 'Left side' },
+  { id: 'right', label: 'Right side' },
 ];
 
 /** A tiny screen in each mode, drawn from the real palettes. */
@@ -370,14 +387,35 @@ export default function AppearanceScreen() {
               {`Visitors welcome until ${timeLabel(21 * 60)} · Casual visit A$20`}
             </Txt>
           </View>
-          <Segmented
-            options={TEXT_SIZES.map((size) => ({ value: size.id, label: size.label }))}
-            value={choice.textSize}
-            onChange={(textSize: TextSize) => {
-              haptic.select();
-              setThemeChoice({ textSize });
-            }}
-          />
+          {/* Each size as "Aa" at that size, so the steps show at a glance. */}
+          <View style={styles.sizes} accessibilityRole="radiogroup">
+            {TEXT_SIZES.map((size) => {
+              const on = choice.textSize === size.id;
+              return (
+                <Pressable
+                  key={size.id}
+                  onPress={() => {
+                    if (on) return;
+                    haptic.select();
+                    setThemeChoice({ textSize: size.id as TextSize });
+                  }}
+                  accessibilityRole="radio"
+                  aria-checked={on}
+                  accessibilityLabel={`${size.label} text, ${Math.round(size.scale * 100)}%`}
+                  style={({ pressed }) => [styles.sizeTile, pressed && { opacity: 0.75 }]}
+                >
+                  <View style={[styles.sizeFace, on && styles.sampleOn]}>
+                    <Txt style={[face('semibold'), { fontSize: Math.round(22 * size.scale), lineHeight: Math.round(28 * size.scale) }]} color={on ? color.brand : color.label} maxFontSizeMultiplier={1}>
+                      Aa
+                    </Txt>
+                  </View>
+                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                    {size.label}
+                  </Txt>
+                </Pressable>
+              );
+            })}
+          </View>
           <View style={styles.toggleRow}>
             <View style={styles.flex}>
               <Txt variant="body">Bold text</Txt>
@@ -786,18 +824,36 @@ export default function AppearanceScreen() {
             CLOCK
           </Txt>
         </View>
-        <View style={styles.glassCard}>
-          <Segmented
-            options={[
-              { value: '12', label: '12-hour' },
-              { value: '24', label: '24-hour' },
-            ]}
-            value={choice.clock24 ? '24' : '12'}
-            onChange={(value: string) => {
-              haptic.select();
-              setThemeChoice({ clock24: value === '24' });
-            }}
-          />
+        <View style={styles.modes} accessibilityRole="radiogroup">
+          {CLOCKS.map((clock) => {
+            const on = (choice.clock24 ? '24' : '12') === clock.id;
+            return (
+              <Pressable
+                key={clock.id}
+                onPress={() => {
+                  if (on) return;
+                  haptic.select();
+                  setThemeChoice({ clock24: clock.id === '24' });
+                }}
+                accessibilityRole="radio"
+                aria-checked={on}
+                accessibilityLabel={`${clock.label}: ${clock.time.replace('\u00a0', ' ')}`}
+                style={({ pressed }) => [styles.darkStyle, pressed && { opacity: 0.75 }]}
+              >
+                <View style={[styles.clockFace, on && styles.sampleOn]}>
+                  <Txt variant="title2" color={on ? color.brand : color.label} style={face('bold')}>
+                    {clock.time}
+                  </Txt>
+                  <Txt variant="caption" color={color.labelSecondary}>
+                    {clock.later}
+                  </Txt>
+                </View>
+                <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                  {clock.label}
+                </Txt>
+              </Pressable>
+            );
+          })}
         </View>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {`Times read like ${timeLabel(19 * 60)}, for opening hours, visit times and reminders.`}
@@ -810,30 +866,68 @@ export default function AppearanceScreen() {
                 GYMPAL’S BUTTON
               </Txt>
             </View>
-            <View style={[styles.glassCard, styles.gymPalCard]}>
-              <Segmented
-                options={[
-                  { value: 'tab', label: 'Edge tab' },
-                  { value: 'corner', label: 'Corner' },
-                  { value: 'hidden', label: 'Hidden' },
-                ]}
-                value={choice.gymPalButton}
-                onChange={(gymPalButton: GymPalButton) => {
-                  haptic.select();
-                  setThemeChoice({ gymPalButton });
-                }}
-              />
-              <Segmented
-                options={[
-                  { value: 'left', label: 'Left side' },
-                  { value: 'right', label: 'Right side' },
-                ]}
-                value={choice.gymPalSide}
-                onChange={(gymPalSide: 'left' | 'right') => {
-                  haptic.select();
-                  setThemeChoice({ gymPalSide });
-                }}
-              />
+            {/* How he waits: each drawn on the side you've chosen. */}
+            <View style={styles.modes} accessibilityRole="radiogroup">
+              {GYMPAL_BUTTONS.map((item) => {
+                const on = choice.gymPalButton === item.id;
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => {
+                      if (on) return;
+                      haptic.select();
+                      setThemeChoice({ gymPalButton: item.id });
+                    }}
+                    accessibilityRole="radio"
+                    aria-checked={on}
+                    accessibilityLabel={`${item.label}: ${item.blurb}`}
+                    style={styles.darkStyle}
+                  >
+                    <View style={[styles.preview, styles.previewWide, on && styles.previewOn]}>
+                      <GymPalPreview button={item.id} side={choice.gymPalSide} tone={scheme === 'dark' ? darkTone : 'light'} />
+                    </View>
+                    <View style={styles.darkText}>
+                      <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                        {item.label}
+                      </Txt>
+                      <Txt variant="caption" color={color.labelSecondary} style={styles.centred}>
+                        {item.blurb}
+                      </Txt>
+                    </View>
+                    <Icon name={on ? 'done' : 'todo'} size={22} color={on ? color.brand : color.labelTertiary} />
+                  </Pressable>
+                );
+              })}
+            </View>
+            {/* Which side: each drawn with the way he waits. */}
+            <View style={[styles.modes, styles.sideRow]} accessibilityRole="radiogroup">
+              {GYMPAL_SIDES.map((item) => {
+                const on = choice.gymPalSide === item.id;
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => {
+                      if (on) return;
+                      haptic.select();
+                      setThemeChoice({ gymPalSide: item.id });
+                    }}
+                    accessibilityRole="radio"
+                    aria-checked={on}
+                    accessibilityLabel={`GymPal on the ${item.id}`}
+                    style={styles.sideTile}
+                  >
+                    <View style={[styles.preview, styles.previewSide, on && styles.previewOn]}>
+                      <GymPalPreview button={choice.gymPalButton} side={item.id} tone={scheme === 'dark' ? darkTone : 'light'} />
+                    </View>
+                    <View style={styles.sideLabel}>
+                      <Icon name={on ? 'done' : 'todo'} size={20} color={on ? color.brand : color.labelTertiary} />
+                      <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                        {item.label}
+                      </Txt>
+                    </View>
+                  </Pressable>
+                );
+              })}
             </View>
             <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
               {gymPalHow(choice.gymPalButton, choice.gymPalSide)}
@@ -902,6 +996,36 @@ function LayoutPreview({ layout, tone }: { layout: NavLayout; tone: keyof typeof
           ))}
         </View>
       )}
+    </View>
+  );
+}
+
+/** A tiny screen with GymPal waiting on it: his tab on the edge, his button in the corner, or (hidden) only the strip you swipe in from. */
+function GymPalPreview({ button, side, tone }: { button: GymPalButton; side: 'left' | 'right'; tone: keyof typeof PREVIEW }) {
+  const p = PREVIEW[tone];
+  const left = side === 'left';
+  return (
+    <View style={[styles.mini, { backgroundColor: p.page }]}>
+      <View style={[styles.miniCard, { backgroundColor: p.card }]}>
+        <View style={[styles.miniLine, { backgroundColor: p.text, width: '70%' }]} />
+        <View style={[styles.miniLine, { backgroundColor: p.line, width: '50%' }]} />
+      </View>
+      <View style={[styles.miniCard, { backgroundColor: p.card }]}>
+        <View style={[styles.miniLine, { backgroundColor: p.text, width: '60%' }]} />
+        <View style={[styles.miniLine, { backgroundColor: p.line, width: '40%' }]} />
+      </View>
+      {/* As the app draws them: a light tab flush with the edge, holding his mark; in the corner, his mark itself. */}
+      {button === 'tab' && (
+        <View style={[styles.palTab, left ? styles.palTabLeft : styles.palTabRight, { backgroundColor: p.card }]}>
+          <GymPalMark size={11} still />
+        </View>
+      )}
+      {button === 'corner' && (
+        <View style={[styles.palCorner, left ? { left: 7 } : { right: 7 }]}>
+          <GymPalMark size={20} still />
+        </View>
+      )}
+      {button === 'hidden' && <View style={[styles.palStrip, left ? { left: 0 } : { right: 0 }, { backgroundColor: color.brand }]} />}
     </View>
   );
 }
@@ -1091,6 +1215,22 @@ const styles = themed(() =>
     layoutBody: { flex: 1, gap: 5 },
     layoutTabs: { position: 'absolute', bottom: 7, left: '24%', right: '24%', height: 13, borderRadius: 6.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', ...shadow.plate },
     layoutOptions: { marginTop: space[3] },
+    // Text sizes, as "Aa" at each size.
+    sizes: { flexDirection: 'row', gap: space[2] },
+    sizeTile: { flex: 1, alignItems: 'center', gap: space[1] },
+    sizeFace: { alignSelf: 'stretch', height: 56, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
+    // The clock's faces: a time as the app writes it.
+    clockFace: { alignSelf: 'stretch', paddingVertical: space[3], alignItems: 'center', gap: 2, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
+    // GymPal's button: where he waits on the tiny screens.
+    palTab: { position: 'absolute', bottom: 10, width: 17, height: 30, alignItems: 'center', justifyContent: 'center', ...shadow.plate },
+    palTabLeft: { left: 0, borderTopRightRadius: 9, borderBottomRightRadius: 9 },
+    palTabRight: { right: 0, borderTopLeftRadius: 9, borderBottomLeftRadius: 9 },
+    palCorner: { position: 'absolute', bottom: 7, ...shadow.plate },
+    palStrip: { position: 'absolute', bottom: 8, width: 3, height: 26, borderRadius: 1.5, opacity: 0.4 },
+    previewSide: { aspectRatio: 1.9 },
+    sideRow: { marginTop: space[3] },
+    sideTile: { flex: 1, alignItems: 'center', gap: space[2] },
+    sideLabel: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
     // The map style tiles' tiny maps.
     mapFrame: { width: '100%', maxWidth: 76, aspectRatio: 1, padding: 3, borderRadius: radius.md + 3, borderWidth: 2, borderColor: 'transparent' },
     mapFrameOn: { borderColor: color.brand },
@@ -1130,7 +1270,6 @@ const styles = themed(() =>
     hueTrack: { flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden' },
     hueStop: { flex: 1 },
     glassCard: { gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
-    gymPalCard: { gap: space[2] },
     glassHead: { flexDirection: 'row', alignItems: 'baseline', gap: space[2], paddingHorizontal: space[1] },
     sliderRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     step: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },

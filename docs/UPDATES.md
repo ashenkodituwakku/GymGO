@@ -9,6 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 167 · Appearance's switch bars become picture tiles
+
+*17 Nov 2026 · the commit "Appearance: text size, clock and GymPal's button as tiles"*
+
+You asked for the bar options (the switches for the clock and GymPal's button) to be better.
+
+- **Clock**: two faces showing a time as the app writes it in each, "7 pm, until 9:30 pm" and "19:00, until 21:30", instead of a two-part bar. The one in use is outlined and tinted in your accent.
+- **GymPal's button**: three small screens showing where he waits, drawn as the app draws him: **Edge tab** (a light tab flush with the edge holding his mark), **Corner** (his mark in the corner) and **Hidden** (only the faint strip you swipe in from), each with a line saying what it is. Under them, **Left side** and **Right side** as two screens showing your chosen button on that side. Each set of screens follows the other, so what you see is what you'll get.
+- **Text size**, the last bar on the page: four tiles with "Aa" at each size, Smaller to Largest, above Bold text.
+- These now match the page's other choices (Mode, Dark mode, Layout, Look): tiles with a picture of the choice rather than words on a bar. Nothing they do has changed.
+- Checked in the browser at 1280 points (light) and on a 390-point phone (dark): choosing 24-hour, Edge tab on the left and Larger text each saved and showed straight away (the clock's note read "19:00"). All typechecks and app tests pass. Not yet seen on a phone.
+
 ## Update 166 · Appearance: a better Layout section, map styles, and Reduce motion
 
 *17 Nov 2026 · the commit "Appearance: Layout tiles, map styles (Pro), Reduce motion, folding on the map"*

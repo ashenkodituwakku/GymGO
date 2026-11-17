@@ -24,6 +24,7 @@ import { personalRecords } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
 import { useOwnTraining } from '@/lib/ownTraining';
 import { EXERCISES, MUSCLES, exerciseById, exerciseName, ownExercises, type Muscle } from '@/lib/workout';
+import { edgeFade } from '@/components/edgeFade';
 
 export default function ExercisesScreen() {
   useGlassRedraw();
@@ -84,7 +85,7 @@ export default function ExercisesScreen() {
           <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.eyebrow}>
             DONE MOST
           </Txt>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.yours}>
+          <ScrollView {...edgeFade()} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.yours}>
             {yours.map((item) => (
               <Pressy
                 key={item.id}
@@ -156,12 +157,12 @@ export default function ExercisesScreen() {
         </View>
       )}
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} accessibilityLabel="Kit">
+      <ScrollView {...edgeFade()} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} accessibilityLabel="Kit">
         {KIT_FILTERS.map((item) => (
           <Chip key={item.id} label={item.label} selected={kit === item.id} onPress={() => setKit(item.id)} />
         ))}
       </ScrollView>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} accessibilityLabel="Muscle">
+      <ScrollView {...edgeFade()} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} accessibilityLabel="Muscle">
         <Chip label="Every muscle" selected={muscle === null} onPress={() => setMuscle(null)} />
         {MUSCLES.map((item) => (
           <Chip key={item.id} label={item.label} selected={muscle === item.id} onPress={() => setMuscle(muscle === item.id ? null : item.id)} />

@@ -52,6 +52,7 @@ import { templateDayName, upNext } from '@/lib/templates';
 import { unitFor } from '@/lib/training';
 import { exerciseName } from '@/lib/workout';
 import { LIMITED } from '@/lib/limited';
+import { edgeFade } from '@/components/edgeFade';
 
 /** Melbourne suburbs worth a tap, in the order people ask about them. */
 const MELBOURNE_PICKS = ['Melbourne CBD', 'Fitzroy', 'Collingwood', 'Brunswick', 'Carlton', 'Richmond', 'South Melbourne', 'Northcote'];
@@ -847,6 +848,7 @@ function Carousel({ children }: { children: React.ReactNode }) {
     <View>
       <ScrollView
         ref={scroller}
+        {...edgeFade()}
         horizontal
         showsHorizontalScrollIndicator={false}
         style={bleed && styles.carousel}

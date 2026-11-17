@@ -18,11 +18,12 @@ import type { RecentPlace } from '@/lib/recentPlaces';
 import { EMPTY, PLACEHOLDER_SHORT, mapPrompt, TIER, lookupLine, searchPrompt, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
 import type { Lookup } from '@/lib/app-state';
 import { QUICK_BUDGET, SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
-import { NO_WEB_OUTLINE, color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { NO_WEB_OUTLINE, color, concentric, face, radius, shadow, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { MarkImage, useGymMark } from './BrandLogo';
 import { GymRow } from './GymRow';
 import { GymRowsSkeleton } from './Skeleton';
+import { edgeFade } from './edgeFade';
 import { Icon } from './Icon';
 import { Chip, PrimaryButton, TIER_COLOUR, Txt } from './ui';
 import { AdSlot } from './AdSlot';
@@ -304,6 +305,7 @@ export function ResultsContent({
   // Quick filters, in a row that scrolls sideways.
   const chips = (
     <ScrollView
+      {...edgeFade()}
       horizontal
       style={styles.chipsRow}
       showsHorizontalScrollIndicator={false}
@@ -467,7 +469,8 @@ export function ResultsContent({
                 </Txt>
               </View>
             )}
-            <View style={styles.list}>
+            {/* Concentric with what it sits in: the phone's sheet, or the wide panel (explore.tsx), 16 in from either. */}
+            <View style={[styles.list, { borderRadius: concentric(inSheet ? radius.sheet : radius.xl + 4, space[4]) }]}>
               {group.list.map((result, index) => (
                 <Animated.View
                   key={result.record.location.id}
@@ -757,9 +760,7 @@ const styles = themed(() => StyleSheet.create({
   },
   list: {
     marginHorizontal: space[4],
-    // Concentric with the sheet's corners, and a little translucent so the
-    // glass reads through at the edges.
-    borderRadius: 26,
+    // A little translucent so the glass reads through at the edges; its corners are set where it's drawn.
     borderCurve: 'continuous',
     backgroundColor: color.cardGlass,
     overflow: 'hidden',

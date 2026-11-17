@@ -26,8 +26,8 @@
  */
 
 import { clearOf } from '@/lib/looks';
-import { useThemeChoice } from '@/lib/themePrefs';
-import { forwardRef, useEffect, useRef, useState, type ComponentProps, type ForwardedRef, type ReactNode, type Ref } from 'react';
+import { motionReducedHere, useThemeChoice } from '@/lib/themePrefs';
+import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type ComponentProps, type ForwardedRef, type ReactNode, type Ref } from 'react';
 import {
   Platform,
   Pressable as NativePressable,
@@ -67,6 +67,35 @@ export function useCalm(): boolean {
   const system = useReducedMotion();
   const { reduceMotion } = useThemeChoice();
   return system || reduceMotion;
+}
+
+/**
+ * An icon that changes in place (Save to Saved, a tick coming on, a tab's
+ * outline filling) blurs in from a little smaller, rather than swapping in
+ * one frame. Attach the ref to the view around the icon; `key` is what
+ * changes. In a browser only, where the browser runs it (the Web Animations
+ * API) at no cost until it plays; a phone's icons swap as they always have.
+ * Not with Reduce Motion, the system's or GymGO's.
+ */
+export function useSwapIn(key: string) {
+  const ref = useRef<ViewInstance>(null);
+  const shown = useRef(key);
+  useLayoutEffect(() => {
+    if (shown.current === key) return;
+    shown.current = key;
+    if (Platform.OS !== 'web') return;
+    const element = ref.current as unknown as HTMLElement | null;
+    if (!element || typeof element.animate !== 'function') return;
+    if (motionReducedHere() || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    element.animate(
+      [
+        { opacity: 0.25, filter: 'blur(3px)', transform: 'scale(0.8)' },
+        { opacity: 1, filter: 'blur(0px)', transform: 'scale(1)' },
+      ],
+      { duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+    );
+  }, [key]);
+  return ref;
 }
 
 /** A spring's damping for a damping ratio: 1 arrives without overshooting. */

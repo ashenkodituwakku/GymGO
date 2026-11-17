@@ -9,6 +9,26 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 168 · Ten design tips from a reel, applied where they fit
+
+*17 Nov 2026 · the commit "Design tips from a reel: corners, edge fades, OKLCH, bold icons, icon swaps, logos, dvh"*
+
+You sent an Instagram reel (charles.unemployed) and asked for its changes. I can't hear or watch a video, but its caption lists the tips it covers, ten small UI rules. Each was checked against GymGO:
+
+1. **Nested corners** (an inner corner is the outer one less the gap): done. A helper (`concentric` in the theme) now sets them on Appearance's tiles, faces and sample (the tile plates' padding came to 12 to match the cards'), the map tiles in their rings, the look previews, and Explore's results list, inside the phone's sheet or the wide panel.
+2. **Borders of see-through black or white** rather than solid grey: already so. Separators, fills and glass edges are all see-through colours; the only solid borders are Google's sign-in button, whose colours Google sets.
+3. **Palettes in OKLCH**: done for **your own colour** (Pro). It's now made in OKLCH at one lightness and saturation, so every point on the hue slider looks as vivid as its neighbours; in HSL yellows glared and blues sank. It's still shaded until text in it reads at 4.6:1 or better (the existing test, every 15°, passes). A colour you picked before may look a little different, in the same hue.
+4. **Gradients "in OKLCH"**: done for **Rainbow** (Pro), the one gradient that runs between far-apart colours. It's blended through OKLCH into 21 stops, so it stays bright between green and blue rather than going muddy. Done in code rather than with CSS's `in oklch`, so older browsers and both phones draw it too.
+5. **Icon stroke matching the text's weight**: done for the outline icons (the tab bar's and the sidebar's). With **Bold text** on, they're drawn in Phosphor's bold cut, as the words go a step heavier. Other icons are already filled or two-tone.
+6. **Fades at the edges of sideways rows**: done in a browser, on Explore's quick filters, Home's carousel, the Exercises chips and Collection's rows. A chip cut off at the edge now fades out, saying there's more, instead of looking clipped. The first chip shows whole until you scroll. Phones show the rows as before.
+7. **Blurred icon swaps**: done in a browser. An icon that changes in place (Save to Saved, a tick coming on, a tab's outline filling) now blurs in from a little smaller over a fifth of a second, instead of swapping in one frame. It's in the two shared icon components, so it applies everywhere, and not with Reduce motion. Phones swap as before.
+8. **Lighter surfaces for depth in dark mode**: already so. Dark mode goes black page, #1C1C1E cards and #3A3A3C raised controls, as iOS does, rather than relying on shadows.
+9. **`100dvh` instead of `100vh`**: done where `100vh` was used, the older website (apps/web) and the server's billing return page, with `100vh` kept first for browsers that don't know `dvh`. The app itself fills the screen without either.
+10. **Multiply for pictures on white**: done for gym logos. Many come on a white square, which showed as a white box on dark mode's grey logo plate; multiplied onto the plate, the white takes the plate's colour. In light mode the plate is white, so nothing changes there.
+
+- The reel's comments note that multiply drops a picture's highlights. Fine for logos on their plate, where white was the problem.
+- Checked in the browser at 1280 points: Appearance's corners, the hue slider and Rainbow in light; Explore in dark, the chips' mask and the logos' blend mode. A tick changing ran the blur, and Bold text drew the sidebar's icons in their bold cut. New unit tests for the OKLCH maths. All typechecks and tests pass. Not yet seen on a phone.
+
 ## Update 167 · Appearance's switch bars become picture tiles
 
 *17 Nov 2026 · the commit "Appearance: text size, clock and GymPal's button as tiles"*

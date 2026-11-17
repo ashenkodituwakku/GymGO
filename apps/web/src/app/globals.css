@@ -238,6 +238,8 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
+  /* The visible height on a phone, below the browser's own bars (100vh runs under them). */
+  min-height: 100dvh;
   font-family: var(--font-text);
   font-size: var(--text-subhead);
   line-height: 1.47;
@@ -1786,6 +1788,7 @@ details.disclosure[open] > *:not(summary) {
     position: sticky;
     top: calc(var(--header-height) + var(--space-4));
     max-height: calc(100vh - var(--header-height) - var(--space-8));
+    max-height: calc(100dvh - var(--header-height) - var(--space-8));
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
@@ -1822,6 +1825,7 @@ details.disclosure[open] > *:not(summary) {
     position: sticky;
     top: calc(var(--header-height) + var(--space-4));
     height: calc(100vh - var(--header-height) - var(--space-8));
+    height: calc(100dvh - var(--header-height) - var(--space-8));
   }
 
   .map-panel--empty {

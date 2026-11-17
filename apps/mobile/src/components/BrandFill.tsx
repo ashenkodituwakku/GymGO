@@ -12,6 +12,7 @@ import { useId } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
 import { type AccentPaint, backgroundImage, currentPaint, NO_TOUCH } from '@/lib/theme';
+import { oklchStops } from '@/lib/looks';
 
 /** Woodland blobs on a 90-point tile that repeats without seams showing much. */
 const BLOBS: Array<[number, string]> = [
@@ -23,6 +24,22 @@ const BLOBS: Array<[number, string]> = [
   [3, 'M44 72 Q60 66 70 78 Q66 90 50 88 Q38 82 44 72 Z'],
   [2, 'M34 24 Q44 22 48 30 Q44 38 36 34 Q30 30 34 24 Z'],
 ];
+
+/**
+ * The gradient, blended through OKLCH (lib/looks.ts oklchStops): an sRGB
+ * blend between far-apart colours (green to blue, red to orange) went grey
+ * and muddy in the middle. Worked out once per set of colours.
+ */
+const gradients = new Map<string, string>();
+function rainbow(stops: readonly string[]): string {
+  const key = stops.join(',');
+  let gradient = gradients.get(key);
+  if (!gradient) {
+    gradient = `linear-gradient(100deg, ${oklchStops(stops).join(', ')})`;
+    gradients.set(key, gradient);
+  }
+  return gradient;
+}
 
 export function BrandFill({
   opacity = 1,
@@ -42,7 +59,7 @@ export function BrandFill({
   if (paint.kind === 'gradient') {
     return (
       <View style={layer}>
-        <View style={[StyleSheet.absoluteFill, backgroundImage(`linear-gradient(100deg, ${paint.stops.join(', ')})`)]} />
+        <View style={[StyleSheet.absoluteFill, backgroundImage(rainbow(paint.stops))]} />
         {/* A little shade over the brightest bands (the yellow), so white text still reads. */}
         <View style={[StyleSheet.absoluteFill, styles.shade]} />
       </View>

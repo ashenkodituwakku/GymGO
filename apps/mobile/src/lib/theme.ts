@@ -23,7 +23,7 @@
 
 import { Platform, StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 import { NEEDS_BUNDLED_FACES, SF_DRAWS } from './typeface';
-import { FREE_LOOK, LOOKS, STANDARD_RADIUS, alpha, contrast, mix, over, readable, type LookId, type LookSpec, type Radii } from './looks';
+import { FREE_LOOK, LOOKS, STANDARD_RADIUS, alpha, contrast, hexToOklch, mix, oklchToHex, over, readable, type LookId, type LookSpec, type Radii } from './looks';
 
 export { FREE_LOOK, LOOK_IDS, LOOKS, type LookId } from './looks';
 
@@ -229,11 +229,15 @@ export function hslHex(hue: number, saturation: number, lightness: number): stri
  */
 export function customAccent(hue: number): { name: string; light: AccentColors; dark: AccentColors } {
   const h = ((Math.round(hue) % 360) + 360) % 360;
-  const vivid = hslHex(h, 72, 50);
+  // The slider's hue is the colour wheel's (where that point's pure colour is); the colour itself is made in
+  // OKLCH at one lightness and chroma, so every hue looks as vivid as the next. Made in HSL, yellows came out
+  // garish and blues sank, before the contrast fix below pulled them about.
+  const wheel = hexToOklch(hslHex(h, 100, 50))?.[2] ?? h;
+  const vivid = oklchToHex(0.6, 0.17, wheel);
   // Buttons: dark enough that white on them reads (4.5 : 1).
   const fill = readable(vivid, ['#FFFFFF'], 'light', 4.6);
   const lightBrand = readable(vivid, ['#FFFFFF', '#F2F2F7'], 'light', 4.6);
-  const darkBrand = readable(hslHex(h, 80, 62), ['#1C1C1E', '#000000', '#2C2C2E'], 'dark', 4.6);
+  const darkBrand = readable(oklchToHex(0.76, 0.15, wheel), ['#1C1C1E', '#000000', '#2C2C2E'], 'dark', 4.6);
   const tones = (brand: string, scheme: Scheme): AccentColors => ({
     brand,
     brandPressed: mix(brand, '#000000', 0.12),
@@ -532,7 +536,20 @@ export interface Tweaks {
 export const DEFAULT_TWEAKS: Tweaks = { textSize: 'default', bold: false, corners: 'standard', customHue: CUSTOM_HUE_DEFAULT, clock24: false };
 
 let tweaks: Tweaks = DEFAULT_TWEAKS;
+/** Whether Bold text is on: outline icons are drawn in their bold cut to match the heavier words (PIcon). */
+export const boldText = (): boolean => tweaks.bold;
 const textScale = () => TEXT_SIZES.find((size) => size.id === tweaks.textSize)?.scale ?? 1;
+
+/**
+ * The corner for something inside a rounded box, `gap` in from its edge:
+ * the box's corner less the gap, so the two curves run side by side rather
+ * than the inner one bulging toward the outer's. Never under `least`, and
+ * square in a square look.
+ */
+export function concentric(outer: number, gap: number, least = 4): number {
+  if (outer <= 0) return 0;
+  return Math.max(least, outer - gap);
+}
 
 /** The look's corners, rounder or sharper; a pill stays a pill, a phone-shaped sheet stays the phone's shape, a square look stays square. */
 export function cornersFor(base: Radii, corners: CornerStyle): Radii {

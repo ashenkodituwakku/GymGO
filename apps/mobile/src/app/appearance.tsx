@@ -53,6 +53,7 @@ import {
   glassLevelName,
   paletteFor,
   radius,
+  concentric,
   shadow,
   space,
   themed,
@@ -1190,9 +1191,10 @@ const styles = themed(() =>
     content: { padding: space[4], paddingBottom: space[8], width: '100%', maxWidth: 560, alignSelf: 'center' },
     // As every settings list's headings (components/ios.tsx's Group).
     section: { marginLeft: space[4], marginBottom: space[2], letterSpacing: 0.5, ...face('semibold') },
-    modes: { flexDirection: 'row', gap: space[3], padding: space[4], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
+    // The tile plates: their contents one gap (12) in, so the tiles' corners follow the plate's (concentric).
+    modes: { flexDirection: 'row', gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     mode: { flex: 1, alignItems: 'center', gap: space[2] },
-    preview: { width: '100%', aspectRatio: 0.62, borderRadius: radius.md, borderWidth: 2, borderColor: 'transparent', overflow: 'hidden' },
+    preview: { width: '100%', aspectRatio: 0.62, borderRadius: concentric(radius.lg, space[3]), borderCurve: 'continuous', borderWidth: 2, borderColor: 'transparent', overflow: 'hidden' },
     previewOn: { borderColor: color.brand },
     previewWide: { aspectRatio: 1.3 },
     sectionGap: { marginTop: space[6] },
@@ -1218,9 +1220,9 @@ const styles = themed(() =>
     // Text sizes, as "Aa" at each size.
     sizes: { flexDirection: 'row', gap: space[2] },
     sizeTile: { flex: 1, alignItems: 'center', gap: space[1] },
-    sizeFace: { alignSelf: 'stretch', height: 56, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
+    sizeFace: { alignSelf: 'stretch', height: 56, alignItems: 'center', justifyContent: 'center', borderRadius: concentric(radius.lg, space[3]), borderCurve: 'continuous', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
     // The clock's faces: a time as the app writes it.
-    clockFace: { alignSelf: 'stretch', paddingVertical: space[3], alignItems: 'center', gap: 2, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
+    clockFace: { alignSelf: 'stretch', paddingVertical: space[3], alignItems: 'center', gap: 2, borderRadius: concentric(radius.lg, space[3]), borderCurve: 'continuous', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
     // GymPal's button: where he waits on the tiny screens.
     palTab: { position: 'absolute', bottom: 10, width: 17, height: 30, alignItems: 'center', justifyContent: 'center', ...shadow.plate },
     palTabLeft: { left: 0, borderTopRightRadius: 9, borderBottomRightRadius: 9 },
@@ -1234,7 +1236,7 @@ const styles = themed(() =>
     // The map style tiles' tiny maps.
     mapFrame: { width: '100%', maxWidth: 76, aspectRatio: 1, padding: 3, borderRadius: radius.md + 3, borderWidth: 2, borderColor: 'transparent' },
     mapFrameOn: { borderColor: color.brand },
-    miniMap: { flex: 1, borderRadius: radius.md, overflow: 'hidden' },
+    miniMap: { flex: 1, borderRadius: concentric(radius.md + 3, 5), overflow: 'hidden' },
     miniWater: { position: 'absolute', right: '-22%', top: '-18%', width: '62%', height: '58%', borderRadius: 40 },
     miniPark: { position: 'absolute', left: '-12%', bottom: '-10%', width: '56%', height: '44%', borderRadius: 24, transform: [{ rotate: '-10deg' }] },
     miniMinor: { position: 'absolute', left: '64%', top: '-20%', width: 3, height: '140%', transform: [{ rotate: '20deg' }] },
@@ -1248,7 +1250,7 @@ const styles = themed(() =>
     looks: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     lookTile: { width: '33.33%', alignItems: 'center', gap: space[1], paddingVertical: space[2], paddingHorizontal: space[1] },
     lookFrame: { width: '100%', maxWidth: 104, aspectRatio: 0.9, padding: 3, borderRadius: 14, borderWidth: 2, borderColor: 'transparent' },
-    lookPage: { flex: 1, borderRadius: 10, overflow: 'hidden', padding: 8, gap: 8, justifyContent: 'space-between' },
+    lookPage: { flex: 1, borderRadius: concentric(14, 5), overflow: 'hidden', padding: 8, gap: 8, justifyContent: 'space-between' },
     lookCard: { padding: 6, gap: 5 },
     lookLine: { height: 4, width: '70%', opacity: 0.5 },
     lookButton: { height: 20, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
@@ -1260,7 +1262,7 @@ const styles = themed(() =>
     sampleOn: { borderColor: color.brand, backgroundColor: color.brandTint },
     playRow: { marginTop: space[3] },
     flex: { flex: 1 },
-    textSample: { gap: 2, padding: space[3], borderRadius: radius.md, backgroundColor: color.fill },
+    textSample: { gap: 2, padding: space[3], borderRadius: concentric(radius.lg, space[3]), borderCurve: 'continuous', backgroundColor: color.fill },
     toggleRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[1] },
     cornerPreview: { width: '100%', aspectRatio: 1.25, padding: 10, justifyContent: 'flex-end', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
     cornerOn: { borderColor: color.brand },

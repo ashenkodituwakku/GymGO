@@ -96,6 +96,97 @@ const hex = (value: string) => {
 };
 const toHex = (rgb: readonly number[]) => `#${rgb.map((c) => Math.round(Math.min(255, Math.max(0, c))).toString(16).padStart(2, '0')).join('').toUpperCase()}`;
 
+// --- OKLCH -----------------------------------------------------------------
+//
+// OKLCH (Björn Ottosson's OKLab, as lightness, chroma and hue) is spaced the
+// way eyes see: the same lightness looks equally light in every hue, the same
+// chroma equally vivid. So a colour made in it at a hue the slider picks looks
+// as bright and as saturated as its neighbours (in HSL a yellow and a blue at
+// the same "lightness" look nothing alike), and a blend between two colours
+// through it keeps its colour, where a blend in sRGB goes grey between two
+// far-apart hues.
+
+const toLinear = (c: number) => {
+  const v = c / 255;
+  return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+};
+const fromLinear = (v: number) => 255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055);
+
+/** A hex colour as [lightness 0–1, chroma, hue in degrees]; null if it isn't one. */
+export function hexToOklch(value: string): [number, number, number] | null {
+  const x = hex(value);
+  if (!x) return null;
+  const [r, g, b] = x.map(toLinear) as [number, number, number];
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  const L = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
+  const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
+  const B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
+  const hue = (Math.atan2(B, A) * 180) / Math.PI;
+  return [L, Math.hypot(A, B), hue < 0 ? hue + 360 : hue];
+}
+
+/** OKLCH as linear sRGB, which may fall outside 0–1 (outside what a screen can show). */
+function oklchLinear(L: number, C: number, H: number): [number, number, number] {
+  const a = C * Math.cos((H * Math.PI) / 180);
+  const b = C * Math.sin((H * Math.PI) / 180);
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
+  return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s];
+}
+
+/**
+ * An OKLCH colour as hex. Where a screen can't show that much colour at that
+ * lightness and hue, the chroma comes down (lightness and hue kept) until it
+ * can, rather than the channels being clipped, which shifts the hue.
+ */
+export function oklchToHex(L: number, C: number, H: number): string {
+  const fits = (c: number) => oklchLinear(L, c, H).every((v) => v >= -0.0001 && v <= 1.0001);
+  let chroma = C;
+  if (!fits(chroma)) {
+    let low = 0;
+    let high = C;
+    for (let step = 0; step < 24; step++) {
+      const mid = (low + high) / 2;
+      if (fits(mid)) low = mid;
+      else high = mid;
+    }
+    chroma = low;
+  }
+  return toHex(oklchLinear(L, chroma, H).map((v) => fromLinear(Math.min(1, Math.max(0, v)))));
+}
+
+/** `a` moved `amount` (0 to 1) of the way to `b` through OKLCH, the short way round the hue circle. */
+export function mixOklch(a: string, b: string, amount: number): string {
+  const x = hexToOklch(a);
+  const y = hexToOklch(b);
+  if (!x || !y) return mix(a, b, amount);
+  // A grey has no hue to speak of: take the other colour's.
+  const hx = x[1] < 0.01 ? y[2] : x[2];
+  const hy = y[1] < 0.01 ? x[2] : y[2];
+  const turn = ((hy - hx + 540) % 360) - 180;
+  return oklchToHex(x[0] + (y[0] - x[0]) * amount, x[1] + (y[1] - x[1]) * amount, (hx + turn * amount + 360) % 360);
+}
+
+/**
+ * A gradient's stops with colours blended through OKLCH put between them, so
+ * the browser's (or the phone's) blend, which is in sRGB, only ever bridges
+ * near neighbours and never goes grey: CSS's "in oklch", in a form every
+ * browser and both phones draw.
+ */
+export function oklchStops(stops: readonly string[], between = 3): string[] {
+  const out: string[] = [];
+  stops.forEach((stop, index) => {
+    out.push(stop);
+    const next = stops[index + 1];
+    if (next === undefined) return;
+    for (let step = 1; step <= between; step++) out.push(mixOklch(stop, next, step / (between + 1)));
+  });
+  return out;
+}
+
 /** `a` moved `amount` (0 to 1) of the way to `b`. */
 export function mix(a: string, b: string, amount: number): string {
   const x = hex(a);

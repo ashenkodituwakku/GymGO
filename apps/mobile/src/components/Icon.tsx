@@ -9,6 +9,7 @@
 import { SymbolView } from 'expo-symbols';
 import type { ComponentProps } from 'react';
 import { View } from 'react-native';
+import { useSwapIn } from './motion';
 
 type SymbolName = ComponentProps<typeof SymbolView>['name'];
 
@@ -132,8 +133,10 @@ export function Icon({
   // Decoration: whatever the icon means is in the label beside it or on its
   // button. In a browser the symbol is a font glyph, whose character would
   // otherwise be read out as part of the button's name.
+  // A new icon here (saved, ticked) blurs in, in a browser.
+  const swap = useSwapIn(name);
   return (
-    <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View ref={swap} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <SymbolView
         name={ICONS[name] as unknown as SymbolName}
         size={size}

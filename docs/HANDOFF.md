@@ -106,6 +106,17 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Design tips from a reel** (17 Nov). theme.ts `concentric(outer, gap)`
+  for a box inside a rounded box; lib/looks.ts has OKLCH (`hexToOklch`,
+  `oklchToHex` with chroma brought down to fit sRGB, `mixOklch`,
+  `oklchStops`), used by `customAccent` (hue from the colour wheel, made at
+  L 0.6 / C 0.17, dark L 0.76 / C 0.15, then `readable`) and BrandFill's
+  Rainbow. scripts/phosphor-icons.mjs now copies each outline icon's bold
+  cut; PIcon draws it when `boldText()`. components/edgeFade(.web).ts marks
+  a horizontal ScrollView for a CSS mask (web only). motion.tsx
+  `useSwapIn(key)` returns a ref: the view blurs in (WAAPI, web only) when
+  the key changes; Icon and PIcon use it. BrandLogo's images have
+  `mixBlendMode: 'multiply'` onto their plate.
 - **Appearance tiles** (17 Nov). Every choice on appearance.tsx is now a
   tile: the clock (`CLOCKS`, times written as lib/copy.ts timeLabel writes
   them; change both if the format changes), GymPal's button and side

@@ -9,6 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 164 · The sidebar unfolds beside the map, smoothly
+
+*17 Nov 2026 · the commit "Sidebar: unfold from the capsule beside the map, one smooth motion"*
+
+You asked for the capsule to open the sidebar with a smoother animation, not over the map's panels but moving them across, and for the animations to be smooth and sleek.
+
+- The arrow now unfolds the sidebar out of the capsule: the capsule grows into the full pane, the menu fading up once there's room for it, while the results panel, a gym's card and the Search this area button slide across to make room. Both move together on one even glide, with no bounce, and the map eases its centre across with them. Folding reverses it: the pane shrinks back into the capsule and the panels slide back.
+- The sidebar no longer covers the map's panels, and you can keep using them with it open. It folds away with the arrow at its top or Escape (a gym's card or Filters, if open, closes first). Clicking the map no longer folds it.
+- Going between the map and another page now folds or unfolds the sidebar in the same way instead of swapping one for the other: choose Progress from the map and the pane is already in place; come back to the map and it folds itself away into the capsule as the panels slide back.
+- The pill under the place you're on now glides from place to place as you go, instead of jumping.
+- On the map, a gym's card and Filters fade in and out, and the results fade back when a card that covered them closes, instead of appearing and disappearing in one frame. The phone's Menu slides in on the same glide as the sidebar.
+- From the keyboard: opening the sidebar puts focus on its fold arrow, and folding it puts focus back on the capsule.
+- Checked in the browser at 1280 points, light and dark: frames taken in slow motion (the page's clock slowed tenfold) of the unfold, the fold, the pill gliding from Progress to Saved, and the sidebar folding on arrival at the map. Also checked: the panels end exactly the sidebar's extra width across (188 points), the menu rows sit at the same height on the map and on other pages, and the phone's Menu opens and closes. The glass's blur still can't be seen in this test browser (see Update 159). Not yet seen on a phone or an iPad.
+
 ## Update 163 · On the map, the sidebar folds away to a small capsule
 
 *14 Nov 2026 · the commit "Sidebar: folded away to a capsule on the map, opening over it"*

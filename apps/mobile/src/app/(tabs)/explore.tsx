@@ -41,10 +41,10 @@ import { useBottomClearance, useOverhang } from '@/lib/layout';
 import { resultFor } from '@/lib/results';
 import { QUICK_BUDGET, SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, atWorldCity, boxDrift, inArea, moveTo, nameForArea, runSearchShared } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
-import { CHILD_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { CHILD_TOUCH, NO_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
 import { Glass } from '@/components/Glass';
-import { useSidebarInset } from '@/components/Sidebar';
+import { FOLD_SHIFT, useSidebarInset, useSidebarOpening, useSidebarUnfolded } from '@/components/Sidebar';
 import { GoogleModal } from '@/components/GoogleModal';
 import { ChoiceSheet } from '@/components/ChoiceSheet';
 import { GymMap, type GymMapHandle, type MapPin } from '@/components/GymMap';
@@ -61,7 +61,7 @@ import { ResultsContent } from '@/components/ResultsContent';
 import { ReviewsSection } from '@/components/ReviewsSection';
 import { FloatingGlassBackground, FloatingSolidBackground, SHEET_GAP, SHEET_SCROLL_ONLY, SHEET_SIDE, SheetClip, SheetOpener, SheetScrollView } from '@/components/SheetBackground';
 import { CloseButton, ControlCapsule, Txt } from '@/components/ui';
-import { ARRIVE, DROP_IN, FADE_OUT, LEAVE, Pressable, usePressScale } from '@/components/motion';
+import { ARRIVE, DROP_IN, FADE_IN, FADE_OUT, LEAVE, Pressable, usePressScale } from '@/components/motion';
 import { FullVersionNote } from '@/components/FullVersionNote';
 import { WeatherBadge } from '@/components/Weather';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -127,8 +127,14 @@ function MapScreen() {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
   const wide = Platform.OS === 'web' && width >= WIDE;
-  // How far the docked sidebar (Appearance → Layout → Sidebar) reaches over the map's left edge.
+  // How far the docked sidebar (Appearance → Layout → Sidebar) reaches over the map's left edge: here, folded to its capsule.
   const start = useSidebarInset();
+  // Unfolded from its capsule, the sidebar takes more room: the panels (and what floats beside them)
+  // move across with it, on the same moving value, so the two travel as one.
+  const opening = useSidebarOpening();
+  const unfolded = useSidebarUnfolded();
+  const aside = useAnimatedStyle(() => ({ transform: [{ translateX: (opening?.value ?? 0) * FOLD_SHIFT }] }));
+  const asideLeft = useAnimatedStyle(() => ({ marginLeft: (opening?.value ?? 0) * FOLD_SHIFT }));
 
   // The time-zone self-check runs once; its answer can't change mid-session.
   const selfCheck = useMemo(() => checkTimeZoneSupport(), []);
@@ -906,12 +912,12 @@ function MapScreen() {
 
   const selfCheckBanner = !selfCheck.ok && (
     // Under the status pill and the Search this area row (38 tall, 44 down), not over it.
-    <View style={[styles.selfCheck, { top: insets.top + space[2] + 44 + 38 + space[2] }, start > 0 && { left: start + space[4] }]}>
+    <Animated.View style={[styles.selfCheck, { top: insets.top + space[2] + 44 + 38 + space[2] }, start > 0 && { left: start + space[4] }, asideLeft]}>
       <Icon name="maybe" size={16} color={color.maybeInk} />
       <Txt variant="footnote" color={color.maybeInk} style={styles.flex}>
         {`This device can’t work out time zones reliably, so guest-hour answers may be an hour out. (${selfCheck.detail})`}
       </Txt>
-    </View>
+    </Animated.View>
   );
 
   // --- Desktop ----------------------------------------------------------------
@@ -938,7 +944,8 @@ function MapScreen() {
             initialCentre={filters.centre}
             topInset={PANEL_GAP}
             bottomInset={foot}
-            leftInset={panelsWidth}
+            // Opened, the sidebar's extra room too: the map eases its centre across as the panels slide.
+            leftInset={panelsWidth + (unfolded ? FOLD_SHIFT : 0)}
             showsUserLocation={here !== null}
             userLocation={here?.position ?? null}
             onSelect={openGym}
@@ -951,6 +958,8 @@ function MapScreen() {
           <View style={styles.mapWaiting} />
         )}
 
+        {/* The panels, moving across as the sidebar unfolds (taps between them reach the map). */}
+        <Animated.View style={[CHILD_TOUCH, StyleSheet.absoluteFill, aside]}>
         <DesktopPanel left={start + PANEL_GAP} bottom={foot} hidden={covered}>
           {/* The panel's own heading names the place; the pill comes only to say something more. */}
           {pillNotable && <View style={styles.panelTop}>{statusPill}</View>}
@@ -959,7 +968,7 @@ function MapScreen() {
         </DesktopPanel>
 
         {shown && (
-          <DesktopPanel left={start + PANEL_GAP + (besideResults ? PANEL_GAP + PANEL_WIDTH : 0)} bottom={foot}>
+          <DesktopPanel left={start + PANEL_GAP + (besideResults ? PANEL_GAP + PANEL_WIDTH : 0)} bottom={foot} arrives>
             {shown === 'place' && selected ? (
               <ScrollView
                 stickyHeaderIndices={[0]}
@@ -987,13 +996,14 @@ function MapScreen() {
             )}
           </DesktopPanel>
         )}
+        </Animated.View>
 
         <View style={[CHILD_TOUCH, styles.desktopControls, { top: PANEL_GAP }]}>
           {controls}
         </View>
-        <View style={[CHILD_TOUCH, styles.areaRow, { top: PANEL_GAP, left: panelsWidth + PANEL_GAP, right: PANEL_GAP + 64 }]}>
+        <Animated.View style={[CHILD_TOUCH, styles.areaRow, { top: PANEL_GAP, left: panelsWidth + PANEL_GAP, right: PANEL_GAP + 64 }, asideLeft]}>
           {areaButton}
-        </View>
+        </Animated.View>
         {selfCheckBanner}
         {googleModal}
       </View>
@@ -1091,24 +1101,42 @@ function DesktopPanel({
   left,
   bottom,
   hidden = false,
+  arrives = false,
   children,
 }: {
   left: number;
   bottom: number;
   /** Under a card that's taken its place: kept, scrolled where it was, but not seen, reached or read out. */
   hidden?: boolean;
+  /** Comes and goes (a gym's card, Filters): it fades in and out rather than blinking. */
+  arrives?: boolean;
   children: ReactNode;
 }) {
+  // Fading out under a card that takes its place, and back up when the card goes, rather than blinking.
+  const shown = useSharedValue(hidden ? 0 : 1);
+  const [gone, setGone] = useState(hidden);
+  useEffect(() => {
+    shown.value = withTiming(hidden ? 0 : 1, hidden ? LEAVE : ARRIVE);
+    if (!hidden) {
+      setGone(false);
+      return;
+    }
+    const timer = setTimeout(() => setGone(true), 200);
+    return () => clearTimeout(timer);
+  }, [hidden, shown]);
+  const fade = useAnimatedStyle(() => ({ opacity: shown.value }));
   return (
-    <View
-      style={[styles.panel, { left, bottom, width: PANEL_WIDTH }, hidden && styles.panelHidden]}
+    <Animated.View
+      entering={arrives ? FADE_IN : undefined}
+      exiting={arrives ? FADE_OUT : undefined}
+      style={[styles.panel, { left, bottom, width: PANEL_WIDTH }, !arrives && fade, hidden && NO_TOUCH, gone && styles.panelHidden]}
       aria-hidden={hidden || undefined}
       accessibilityElementsHidden={hidden}
       importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
     >
       <Glass kind="sheet" style={StyleSheet.absoluteFill} />
       {children}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -1405,7 +1433,7 @@ const styles = themed(() => StyleSheet.create({
     overflow: 'hidden',
     ...shadow.float,
   },
-  // Out of sight, and in a browser out of the Tab order too (visibility), while keeping where it was scrolled.
+  // Out of sight once faded, and in a browser out of the Tab order too (visibility), while keeping where it was scrolled.
   panelHidden: { opacity: 0, pointerEvents: 'none', ...(Platform.OS === 'web' ? ({ visibility: 'hidden' } as object) : null) },
   panelTop: { paddingHorizontal: space[4], paddingTop: space[4], paddingBottom: space[2] },
   panelClose: { alignItems: 'flex-end', paddingHorizontal: space[4], paddingTop: space[4] },

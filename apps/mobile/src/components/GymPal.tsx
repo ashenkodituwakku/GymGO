@@ -86,6 +86,7 @@ import { haptic } from '@/lib/haptics';
 import { tabBarBottom } from '@/lib/layout';
 import { useThemeChoice } from '@/lib/themePrefs';
 import { MENU_BUTTON, navMode, sidebarInset } from '@/lib/navLayout';
+import { FOLD_SHIFT, useSidebarUnfolded } from './Sidebar';
 import { LIMITED } from '@/lib/limited';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
@@ -146,6 +147,7 @@ export function GymPal() {
   const { gymPalSide: side, gymPalButton: button, layout } = useThemeChoice();
   const { width } = useWindowDimensions();
   const mode = navMode(layout, width);
+  const sidebarUnfolded = useSidebarUnfolded();
   const { billing, openPro } = useApp();
   const pro = billing.isPro;
   const [open, setOpen] = useState(false);
@@ -300,7 +302,8 @@ export function GymPal() {
         ? insets.bottom + EDGE
         : tabBarBottom(insets.bottom) + (besideBar ? (TAB_BAR - BUTTON) / 2 : TAB_BAR + 12);
   // The screen's edge on that side (beside a docked sidebar on the left), and the corner button's place in from it.
-  const flush = side === 'left' ? insets.left + sidebarInset(mode, pathname, true) : insets.right;
+  // On the left: clear of the docked sidebar (its capsule on the map, or all of it once unfolded there).
+  const flush = side === 'left' ? insets.left + sidebarInset(mode, pathname, true) + (sidebarUnfolded ? FOLD_SHIFT : 0) : insets.right;
   const show = () => setOpen(true);
 
   return (

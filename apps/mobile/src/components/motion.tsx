@@ -65,6 +65,13 @@ export const PRESS_OUT: WithSpringConfig = { damping: damp(0.72, 340, 0.6), stif
 export const SETTLE: WithSpringConfig = { damping: damp(1, 300, 0.8), stiffness: 300, mass: 0.8, reduceMotion: ReduceMotion.System };
 /** Something arriving to be noticed (a medal, a new record): one lively pop that settles fast. */
 export const POP: WithSpringConfig = { damping: damp(0.6, 260, 0.8), stiffness: 260, mass: 0.8, reduceMotion: ReduceMotion.System };
+/**
+ * A pane sliding open or shut, and what moves aside for it (the sidebar
+ * unfolding from its capsule on the map, the map's panels making room): a
+ * long, even glide that settles without a bounce, slower to arrive than
+ * SETTLE because it carries a whole pane.
+ */
+export const SLIDE: WithSpringConfig = { damping: damp(1, 210, 1), stiffness: 210, mass: 1, reduceMotion: ReduceMotion.System };
 /** Glass moving (the tab bar's lens, the slider's thumb): smooth, with a liquid trace of overshoot. */
 export const LIQUID: WithSpringConfig = { damping: damp(0.78, 300, 0.7), stiffness: 300, mass: 0.7, reduceMotion: ReduceMotion.System };
 

@@ -6,10 +6,11 @@
  * app/_layout.tsx, so opening Progress from it doesn't cover it); on a
  * phone a Menu button at the foot slides it in over
  * the page (`MenuButton`, `SidebarDrawer`), and choosing a place, a tap
- * beside it, Escape or Android's back closes it. On the map it folds away
- * to a small glass capsule with an arrow at the top left (`FoldedSidebar`),
- * leaving the map the room; the arrow opens it over the map, to go
- * somewhere else, and closes the same ways.
+ * beside it, Escape or Android's back closes it. On the map the docked
+ * sidebar folds away to a small glass capsule with an arrow at the top left,
+ * leaving the map the room; the arrow unfolds it, the pane growing out of
+ * the capsule while the map's panels move across beside it
+ * (`useSidebarOpening`), and the arrow at its top or Escape folds it back.
  *
  * Either way it's a pane of Liquid Glass floating clear of the window's
  * edges, over the page rather than beside it, as iPadOS 26 draws its
@@ -21,22 +22,22 @@
  */
 
 import { router, usePathname, type Href } from 'expo-router';
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { BackHandler, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { BackHandler, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type LayoutChangeEvent, type StyleProp, type ViewInstance, type ViewStyle } from 'react-native';
+import Animated, { Extrapolation, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { LIMITED } from '@/lib/limited';
-import { MENU_BUTTON, SIDEBAR_TABS, SIDEBAR_TRAINING, SIDEBAR_WIDTH, SIDEBAR_YOU, foldedOn, navMode, sidebarInset, tabFor, type SidebarItem } from '@/lib/navLayout';
+import { MENU_BUTTON, SIDEBAR_FOLDED, SIDEBAR_TABS, SIDEBAR_TRAINING, SIDEBAR_WIDTH, SIDEBAR_YOU, foldedOn, navMode, sidebarInset, tabFor, type SidebarItem } from '@/lib/navLayout';
 import { useThemeChoice } from '@/lib/themePrefs';
-import { CHILD_TOUCH, color, currentTheme, face, radius, shadow, solidSurfaces, space, themed } from '@/lib/theme';
+import { CHILD_TOUCH, NO_TOUCH, color, currentTheme, face, radius, shadow, solidSurfaces, space, themed } from '@/lib/theme';
 import { Avatar } from './Avatar';
 import { Wordmark } from './BrandMark';
 import { Glass, HAS_LIQUID_GLASS, useGlassLevel } from './Glass';
 import { Icon } from './Icon';
 import { glassMark, installLiquidGlass, panelRefraction } from './liquidGlass';
-import { ARRIVE, LEAVE, Pressable } from './motion';
+import { ARRIVE, LEAVE, Pressable, SETTLE, SLIDE } from './motion';
 import { PIcon, type PhosphorName } from './PIcon';
 import { Txt } from './ui';
 
@@ -79,6 +80,43 @@ function SidebarList({ onGo }: { onGo?: () => void }) {
   const pathname = usePathname();
   const { account } = useApp();
   const onTab = tabFor(pathname);
+  const isOn = (item: SidebarItem) => (item.tab ? onTab === item.href : pathname === item.href);
+  const here = sections().flatMap((section) => section.items).find(isOn)?.href ?? null;
+
+  // The pill under the place you're on glides from place to place as you
+  // go, rather than jumping: each row's place in the list is measured as it
+  // lays out (a frame's worth of measurements is one redraw).
+  const sectionTops = useRef<number[]>([]);
+  const rowTops = useRef<Record<string, { section: number; y: number }>>({});
+  const [, setMeasured] = useState(0);
+  const pending = useRef(false);
+  const measured = () => {
+    if (pending.current) return;
+    pending.current = true;
+    requestAnimationFrame(() => {
+      pending.current = false;
+      setMeasured((n) => n + 1);
+    });
+  };
+  const row = here ? rowTops.current[here] : undefined;
+  const sectionTop = row ? sectionTops.current[row.section] : undefined;
+  const target = row && sectionTop !== undefined ? sectionTop + row.y : null;
+  const pillY = useSharedValue(target ?? 0);
+  const pillShown = useSharedValue(target === null ? 0 : 1);
+  const placed = useRef(target !== null);
+  useEffect(() => {
+    if (target === null) {
+      pillShown.value = withTiming(0, LEAVE);
+      return;
+    }
+    // Its first place, or back from a page with no row (a gym's page): there at once, fading up.
+    if (!placed.current || pillShown.value < 0.01) pillY.value = target;
+    else pillY.value = withSpring(target, SETTLE);
+    placed.current = true;
+    pillShown.value = withTiming(1, ARRIVE);
+  }, [target, pillY, pillShown]);
+  const pill = useAnimatedStyle(() => ({ opacity: pillShown.value, transform: [{ translateY: pillY.value }] }));
+
   const go = (item: SidebarItem) => {
     haptic.select();
     // A tab is switched to; a page opens over the tabs, with its back button.
@@ -88,19 +126,31 @@ function SidebarList({ onGo }: { onGo?: () => void }) {
   };
   return (
     <View role="navigation" accessibilityLabel="GymGO">
+      <Animated.View {...glassMark('pill')} style={[NO_TOUCH, styles.pill, styles.pillGlide, pill]} />
       {sections().map((section, index) => (
-        <View key={section.title ?? index} style={styles.section}>
+        <View
+          key={section.title ?? index}
+          style={styles.section}
+          onLayout={(event) => {
+            sectionTops.current[index] = event.nativeEvent.layout.y;
+            measured();
+          }}
+        >
           {section.title && (
             <Txt variant="footnote" color={color.labelSecondary} style={[styles.sectionTitle, face('semibold')]}>
               {section.title}
             </Txt>
           )}
           {section.items.map((item) => {
-            const on = item.tab ? onTab === item.href : pathname === item.href;
+            const on = isOn(item);
             const me = item.href === '/profile' ? account.face : null;
             return (
               <Pressable
                 key={item.href}
+                onLayout={(event) => {
+                  rowTops.current[item.href] = { section: index, y: event.nativeEvent.layout.y };
+                  measured();
+                }}
                 onPress={() => go(item)}
                 accessibilityRole="link"
                 aria-current={on ? 'page' : undefined}
@@ -108,7 +158,6 @@ function SidebarList({ onGo }: { onGo?: () => void }) {
                 accessibilityLabel={item.label}
                 style={({ pressed, hovered }) => [styles.item, !on && hovered && styles.itemHover, pressed && styles.itemPressed]}
               >
-                {on && <View {...glassMark('pill')} style={[StyleSheet.absoluteFill, styles.pill]} />}
                 <View style={styles.itemIcon}>
                   {me ? (
                     <View style={[styles.avatarRing, on && styles.avatarRingOn]}>
@@ -170,6 +219,40 @@ function Pane({ style, children }: { style?: StyleProp<ViewStyle>; children: Rea
 const SidebarInset = createContext(0);
 export const useSidebarInset = (): number => useContext(SidebarInset);
 
+/** How much further the map's sidebar reaches open than folded to its capsule: the room the map's panels make for it. */
+export const FOLD_SHIFT = SIDEBAR_WIDTH - SIDEBAR_FOLDED;
+
+/*
+ * Whether the map's sidebar is open from its capsule. Kept outside React's
+ * tree so GymPal, drawn over the frame rather than in it, can keep clear of
+ * it too. Arriving on any page starts it folded.
+ */
+let unfolded = false;
+const unfoldWatchers = new Set<() => void>();
+function setUnfolded(next: boolean) {
+  if (next === unfolded) return;
+  unfolded = next;
+  unfoldWatchers.forEach((watcher) => watcher());
+}
+const watchUnfolded = (watcher: () => void) => {
+  unfoldWatchers.add(watcher);
+  return () => {
+    unfoldWatchers.delete(watcher);
+  };
+};
+/** Whether the map's sidebar is open from its capsule (false anywhere else). */
+export function useSidebarUnfolded(): boolean {
+  return useSyncExternalStore(watchUnfolded, () => unfolded, () => false);
+}
+
+/**
+ * How far the docked sidebar is open as it moves, from 0 (its capsule, on
+ * the map) to 1: what moves aside for it on the map follows this, so the
+ * two travel together. Null without a docked sidebar.
+ */
+const SidebarOpening = createContext<SharedValue<number> | null>(null);
+export const useSidebarOpening = (): SharedValue<number> | null => useContext(SidebarOpening);
+
 /**
  * The pages, with the docked sidebar hovering over their left edge on a
  * wide screen. Pages are as wide as the window, so their header and
@@ -186,15 +269,28 @@ export function SidebarFrame({ signedIn, children }: { signedIn: boolean; childr
   const mode = navMode(layout, width);
   // All of the sidebar, its capsule on the map, or nothing.
   const inset = sidebarInset(mode, pathname, signedIn);
-  const folded = foldedOn(mode, pathname, signedIn);
+  const foldable = foldedOn(mode, pathname, signedIn);
+  const unfoldedNow = useSidebarUnfolded();
+  // Arriving on a page starts the map's sidebar folded, so coming back to the map folds it away again.
+  useEffect(() => {
+    setUnfolded(false);
+  }, [pathname]);
+  const open = inset > 0 && (!foldable || unfoldedNow);
+  // One value moves the pane and everything that makes room for it.
+  const opening = useSharedValue(open ? 1 : 0);
+  useEffect(() => {
+    opening.value = withSpring(open ? 1 : 0, SLIDE);
+  }, [open, opening]);
   const insets = useSafeAreaInsets();
   const shifted = useMemo(() => ({ ...insets, left: insets.left + inset }), [insets, inset]);
   return (
     <SidebarInset.Provider value={inset}>
-      <View style={styles.fill}>
-        <SafeAreaInsetsContext.Provider value={shifted}>{children}</SafeAreaInsetsContext.Provider>
-        {folded ? <FoldedSidebar /> : inset > 0 ? <DockedSidebar /> : null}
-      </View>
+      <SidebarOpening.Provider value={inset > 0 ? opening : null}>
+        <View style={styles.fill}>
+          <SafeAreaInsetsContext.Provider value={shifted}>{children}</SafeAreaInsetsContext.Provider>
+          {inset > 0 ? <DockedSidebar foldable={foldable} open={open} opening={opening} /> : null}
+        </View>
+      </SidebarOpening.Provider>
     </SidebarInset.Provider>
   );
 }
@@ -205,52 +301,163 @@ export function ClearOfSidebar({ children }: { children: ReactNode }) {
   return <View style={[styles.fill, inset > 0 && { paddingLeft: inset }]}>{children}</View>;
 }
 
-/** Over the page's left edge on a wide screen: always there, the page running on underneath. */
-function DockedSidebar() {
-  const insets = useSafeAreaInsets();
-  return (
-    <View style={[CHILD_TOUCH, styles.docked, { paddingTop: insets.top + EDGE, paddingBottom: insets.bottom + EDGE }]}>
-      <Pane style={styles.fill}>
-        <ScrollView style={styles.scroller} contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-          <View style={styles.brand}>
-            <Wordmark height={24} />
-          </View>
-          <SidebarList />
-        </ScrollView>
-      </Pane>
-    </View>
-  );
-}
+/** How long the pane takes to come to rest: when the menu (or the arrow) leaves the tab order, and the glass's bend comes in. */
+const SETTLED_MS = 480;
 
 /**
- * On the map: the docked sidebar folded away to a small glass capsule with
- * an arrow, top left, so the map and its panels have the room. The arrow
- * opens the sidebar over the map; choosing a place goes there (where the
- * sidebar is docked again), and the fold arrow, a click beside it or Escape
- * folds it away.
+ * Over the page's left edge on a wide screen, the page running on
+ * underneath. On the map (`foldable`) it folds away to a small glass
+ * capsule with an arrow: the arrow unfolds it, the pane growing out of the
+ * capsule as the map's panels move across to make room, and the arrow at
+ * its top (or Escape) folds it back. It's one pane either way, drawn by
+ * the frame around every page, so going between the map and another page
+ * folds or unfolds it instead of swapping one for another.
+ *
+ * Only the pane's size and corners move; the menu inside stays the full
+ * size and is clipped, fading up once there's room for it, so nothing in
+ * it reflows. In a browser the glass bends at its rim only once it has
+ * come to rest open (the bend is drawn for one size).
  */
-function FoldedSidebar() {
+function DockedSidebar({ foldable, open, opening }: { foldable: boolean; open: boolean; opening: SharedValue<number> }) {
   const insets = useSafeAreaInsets();
-  const [open, setOpen] = useState(false);
+  const { height } = useWindowDimensions();
+  useGlassLevel();
+  const solid = solidSurfaces();
+  const paneWidth = SIDEBAR_WIDTH - EDGE;
+  const paneHeight = Math.max(FOLD_HEIGHT, height - insets.top - insets.bottom - EDGE * 2);
+  const capsuleRadius = Math.min(FOLD_WIDTH / 2, radius.pill);
+  const paneRadius = radius.xl + 4;
+
+  const size = useAnimatedStyle(() => ({
+    width: interpolate(opening.value, [0, 1], [FOLD_WIDTH, paneWidth], Extrapolation.CLAMP),
+    height: interpolate(opening.value, [0, 1], [FOLD_HEIGHT, paneHeight], Extrapolation.CLAMP),
+    borderRadius: interpolate(opening.value, [0, 1], [capsuleRadius, paneRadius], Extrapolation.CLAMP),
+  }));
+  const corners = useAnimatedStyle(() => ({
+    borderRadius: interpolate(opening.value, [0, 1], [capsuleRadius, paneRadius], Extrapolation.CLAMP),
+  }));
+  // The menu fades up once the pane has room for it, and out before the pane closes over it; the arrow the other way round.
+  const menu = useAnimatedStyle(() => ({ opacity: interpolate(opening.value, [0.45, 1], [0, 1], Extrapolation.CLAMP) }));
+  const arrow = useAnimatedStyle(() => ({ opacity: interpolate(opening.value, [0, 0.3], [1, 0], Extrapolation.CLAMP) }));
+
+  // While it moves, and until each has faded, both the menu and the arrow
+  // are there; at rest, the one out of sight leaves the tab order.
+  const [moving, setMoving] = useState(false);
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    setMoving(true);
+    const timer = setTimeout(() => setMoving(false), SETTLED_MS);
+    return () => clearTimeout(timer);
+  }, [open]);
+  const menuGone = !open && !moving;
+  const arrowGone = open && !moving;
+
+  // Opened or folded from the keyboard: focus goes to the button that undoes it. Escape folds it.
+  const frame = useRef<ViewInstance>(null);
+  const foldButton = useRef<ViewInstance>(null);
+  const unfoldButton = useRef<ViewInstance>(null);
+  const handOff = useRef<'fold' | 'unfold' | null>(null);
+  useEffect(() => {
+    if (Platform.OS !== 'web' || handOff.current === null) return;
+    const to = handOff.current === 'fold' ? foldButton.current : unfoldButton.current;
+    handOff.current = null;
+    // Without scrolling: the pane is still narrow as it opens, and a browser would scroll its clipped menu sideways to show the button.
+    (to as unknown as HTMLElement | null)?.focus?.({ preventScroll: true });
+  }, [open]);
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !foldable || !open || typeof window === 'undefined') return;
+    const onKey = (event: KeyboardEvent) => {
+      // A gym's card or Filters, if open, takes Escape first (explore.tsx marks it handled).
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      event.preventDefault();
+      const inside = (frame.current as unknown as HTMLElement | null)?.contains(document.activeElement);
+      if (inside) handOff.current = 'unfold';
+      setUnfolded(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [foldable, open]);
+
+  // The glass: the look's plate, Apple's (or the imitation) on a phone, or the browser's, bent at the rim once at rest open.
+  const web = Platform.OS === 'web' && !solid;
+  if (web) installLiquidGlass();
+  const bend = web && open && !moving ? panelRefraction(paneWidth, paneHeight) : { dataSet: { glass: 'panel' } };
+
   return (
-    <>
-      <View style={[styles.fold, { top: insets.top + EDGE, left: insets.left + EDGE }]}>
-        <Pressable
-          onPress={() => {
-            haptic.select();
-            setOpen(true);
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="Show the sidebar"
-          aria-expanded={open}
-          style={({ pressed, hovered }) => [styles.foldButton, hovered && styles.foldHover, pressed && styles.itemPressed]}
+    <Animated.View ref={frame} style={[styles.frame, { top: insets.top + EDGE, left: insets.left + EDGE }, solid ? styles.plate : web ? null : styles.paneShadow, size]}>
+      {web ? (
+        <Animated.View {...bend} style={[StyleSheet.absoluteFill, styles.clip, corners]}>
+          {/* As solid as the tab bar (your Liquid Glass level), under the glass's own light. */}
+          <View style={[StyleSheet.absoluteFill, styles.wash]} />
+          <View {...glassMark('panel-shine')} style={StyleSheet.absoluteFill} />
+        </Animated.View>
+      ) : !solid ? (
+        <Animated.View style={[StyleSheet.absoluteFill, styles.clip, corners]}>
+          <Glass kind="control" style={StyleSheet.absoluteFill} />
+        </Animated.View>
+      ) : null}
+
+      <Animated.View style={[StyleSheet.absoluteFill, styles.clip, corners]}>
+        <Animated.View
+          style={[styles.menu, { width: paneWidth, height: paneHeight }, menu, !open && NO_TOUCH, menuGone && styles.gone]}
+          aria-hidden={!open || undefined}
+          accessibilityElementsHidden={!open}
+          importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
         >
-          <Glass kind="control" style={[StyleSheet.absoluteFill, styles.foldCapsule]} />
-          <Icon name="chevron" size={18} color={color.label} />
-        </Pressable>
-      </View>
-      {open ? <SidebarDrawer folding onClose={() => setOpen(false)} /> : null}
-    </>
+          <ScrollView style={styles.scroller} contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+            <View style={styles.brand}>
+              <Wordmark height={24} />
+              {foldable ? (
+                <Pressable
+                  ref={foldButton}
+                  onPress={() => {
+                    haptic.select();
+                    handOff.current = 'unfold';
+                    setUnfolded(false);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Fold the sidebar away"
+                  aria-expanded
+                  hitSlop={10}
+                  style={({ pressed, hovered }) => [styles.close, hovered && styles.closeHover, pressed && styles.itemPressed]}
+                >
+                  <Icon name="chevronBack" size={16} color={color.labelSecondary} />
+                </Pressable>
+              ) : null}
+            </View>
+            <SidebarList />
+          </ScrollView>
+        </Animated.View>
+
+        {foldable ? (
+          <Animated.View
+            style={[styles.capsule, arrow, open && NO_TOUCH, arrowGone && styles.gone]}
+            aria-hidden={open || undefined}
+            accessibilityElementsHidden={open}
+            importantForAccessibility={open ? 'no-hide-descendants' : 'auto'}
+          >
+            <Pressable
+              ref={unfoldButton}
+              onPress={() => {
+                haptic.select();
+                handOff.current = 'fold';
+                setUnfolded(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Show the sidebar"
+              aria-expanded={false}
+              style={({ pressed, hovered }) => [styles.capsuleButton, hovered && styles.itemHover, pressed && styles.itemPressed]}
+            >
+              <Icon name="chevron" size={18} color={color.label} />
+            </Pressable>
+          </Animated.View>
+        ) : null}
+      </Animated.View>
+    </Animated.View>
   );
 }
 
@@ -281,17 +488,14 @@ export function MenuButton({ bottom, onPress }: { bottom: number; onPress: () =>
   );
 }
 
-/**
- * On a phone: the menu slid in from the left over a dimmed page. `folding`:
- * the map's folded sidebar opened, the docked pane's size and place, over
- * the map undimmed, with an arrow to fold it away again.
- */
-export function SidebarDrawer({ onClose, folding = false }: { onClose: () => void; folding?: boolean }) {
+/** On a phone: the menu slid in from the left over a dimmed page. */
+export function SidebarDrawer({ onClose }: { onClose: () => void }) {
   const insets = useSafeAreaInsets();
   const shown = useSharedValue(0);
   const leaving = useRef(false);
   useEffect(() => {
-    shown.value = withTiming(1, ARRIVE);
+    // In on the pane's own glide; out quicker, on a timer, so it's gone when the page is back.
+    shown.value = withSpring(1, SLIDE);
   }, [shown]);
   const close = () => {
     if (leaving.current) return;
@@ -323,11 +527,11 @@ export function SidebarDrawer({ onClose, folding = false }: { onClose: () => voi
   const slide = useAnimatedStyle(() => ({ transform: [{ translateX: (shown.value - 1) * (DRAWER_WIDTH + EDGE * 3) }] }));
   return (
     <View style={StyleSheet.absoluteFill}>
-      <Animated.View style={[StyleSheet.absoluteFill, !folding && styles.dim, dim]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" accessibilityLabel={folding ? 'Fold the sidebar away' : 'Close the menu'} />
+      <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dim]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" accessibilityLabel="Close the menu" />
       </Animated.View>
       <Animated.View
-        style={[styles.drawer, folding && styles.drawerFolding, { top: insets.top + EDGE, bottom: insets.bottom + EDGE }, slide]}
+        style={[styles.drawer, { top: insets.top + EDGE, bottom: insets.bottom + EDGE }, slide]}
         accessibilityViewIsModal
         role="dialog"
         aria-modal
@@ -339,11 +543,11 @@ export function SidebarDrawer({ onClose, folding = false }: { onClose: () => voi
             <Pressable
               onPress={close}
               accessibilityRole="button"
-              accessibilityLabel={folding ? 'Fold the sidebar away' : 'Close the menu'}
+              accessibilityLabel="Close the menu"
               hitSlop={10}
               style={({ pressed }) => [styles.close, pressed && styles.itemPressed]}
             >
-              <Icon name={folding ? 'chevronBack' : 'close'} size={folding ? 16 : 14} color={color.labelSecondary} />
+              <Icon name="close" size={14} color={color.labelSecondary} />
             </Pressable>
           </View>
           <ScrollView style={styles.scroller} contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
@@ -357,7 +561,7 @@ export function SidebarDrawer({ onClose, folding = false }: { onClose: () => voi
 
 /** The slid-in pane's width on a phone: the docked one's, a little wider for a thumb. */
 const DRAWER_WIDTH = SIDEBAR_WIDTH + 24;
-/** The map's folded sidebar, a capsule standing on end. */
+/** The map's folded sidebar, a capsule standing on end, a full touch target wide (SIDEBAR_FOLDED in navLayout.ts is its gap and width). */
 const FOLD_WIDTH = 44;
 const FOLD_HEIGHT = 72;
 /** A pill no rounder than the look allows (8-bit is square). */
@@ -365,9 +569,17 @@ const pillRadius = () => Math.min(ROW / 2, radius.pill);
 
 const styles = themed(() =>
   StyleSheet.create({
-    // Over the page's left edge, the pane floating in from the window's; taps beside the pane reach the page.
-    // The pane reaches to SIDEBAR_WIDTH, where content beside it (and Explore's panels, past a gap) begins.
-    docked: { position: 'absolute', top: 0, bottom: 0, left: 0, width: SIDEBAR_WIDTH, paddingLeft: EDGE },
+    // Over the page's left edge, floating in from the window's. Open it reaches to SIDEBAR_WIDTH, where
+    // content beside it (and Explore's panels, past a gap) begins; folded, it's the capsule.
+    frame: { position: 'absolute', borderCurve: 'continuous' },
+    clip: { overflow: 'hidden', borderCurve: 'continuous' },
+    // Out of sight at rest, and in a browser out of the Tab order too.
+    gone: Platform.OS === 'web' ? ({ visibility: 'hidden' } as object) : { opacity: 0 },
+    // The folded capsule's arrow, filling the capsule.
+    // The menu at its full size, pinned to the pane's top left while the pane grows round it (so nothing reflows).
+    menu: { position: 'absolute', top: 0, left: 0 },
+    capsule: { position: 'absolute', top: 0, left: 0, width: FOLD_WIDTH, height: FOLD_HEIGHT },
+    capsuleButton: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     fill: { flex: 1 },
     // Explore's panels' corners, so the panes side by side are one family.
     pane: { borderRadius: radius.xl + 4, borderCurve: 'continuous' },
@@ -382,11 +594,14 @@ const styles = themed(() =>
     // The list scrolls inside the pane's rounded corners.
     scroller: { borderRadius: radius.xl + 4, overflow: 'hidden' },
     list: { paddingHorizontal: space[2] + 2, paddingTop: space[4], paddingBottom: space[3], gap: space[1] },
-    brand: { paddingHorizontal: space[3], paddingBottom: space[4] },
+    // The wordmark, and on the map the fold arrow: the same height either way, so the rows don't move.
+    brand: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 30 + space[4] - 3, paddingLeft: space[3], paddingBottom: space[4] - 3 },
     section: { gap: 2, paddingBottom: space[3] },
     sectionTitle: { paddingHorizontal: space[3], paddingTop: space[2], paddingBottom: space[1] },
     item: { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: ROW, paddingHorizontal: space[3], borderRadius: pillRadius(), borderCurve: 'continuous' },
     pill: { backgroundColor: color.brandTint, borderRadius: pillRadius(), borderCurve: 'continuous' },
+    // The pill gliding under the rows, from the top of the list.
+    pillGlide: { position: 'absolute', top: 0, left: 0, right: 0, height: ROW },
     itemHover: { backgroundColor: color.fill },
     itemPressed: { opacity: 0.7 },
     itemIcon: { width: 26, alignItems: 'center' },
@@ -399,14 +614,8 @@ const styles = themed(() =>
     // Lighter than a sheet's: the page should still show through the glass.
     dim: { backgroundColor: currentTheme().scheme === 'dark' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.22)' },
     drawer: { position: 'absolute', left: EDGE, width: DRAWER_WIDTH, maxWidth: '84%' },
-    // Opened from the map's capsule: exactly where and as wide as the docked pane.
-    drawerFolding: { width: SIDEBAR_WIDTH - EDGE },
-    // The map's folded sidebar: a glass capsule, a full touch target wide (SIDEBAR_FOLDED in navLayout.ts is its gap and width).
-    fold: { position: 'absolute', width: FOLD_WIDTH, height: FOLD_HEIGHT },
-    foldButton: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: Math.min(FOLD_WIDTH / 2, radius.pill), borderCurve: 'continuous', ...shadow.float },
-    foldCapsule: { borderRadius: Math.min(FOLD_WIDTH / 2, radius.pill), borderCurve: 'continuous', overflow: 'hidden' },
-    foldHover: { opacity: 0.85 },
     drawerHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: space[5], paddingRight: space[3], paddingTop: space[4], paddingBottom: space[1] },
     close: { width: 30, height: 30, borderRadius: Math.min(15, radius.pill), alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
+    closeHover: { backgroundColor: color.fillStrong },
   }),
 );

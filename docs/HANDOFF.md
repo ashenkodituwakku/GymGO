@@ -106,6 +106,24 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Sidebar unfolds beside the map** (17 Nov). Sidebar.tsx: SidebarFrame
+  holds `opening` (a shared value, 1 open, 0 the capsule) springing on
+  `SLIDE` (motion.tsx) whenever `open` changes, and provides it as
+  `useSidebarOpening()`; whether the map's sidebar is unfolded is a small
+  external store (`useSidebarUnfolded()`, reset on every navigation) so
+  GymPal, outside the frame, can read it. `DockedSidebar` is now the one
+  pane for every page: its frame's width, height and radius interpolate
+  `opening`; the menu sits at full size (`styles.menu`, absolute) inside a
+  clip and fades in past 45%; the capsule's arrow fades out by 30%. The
+  browser's rim bend (`panelRefraction`) is applied only at rest open (it's
+  drawn per size). Focus hand-off uses `focus({ preventScroll: true })`:
+  without it the browser scrolls the narrow clip sideways. explore.tsx
+  wraps both DesktopPanels in a layer translated by `opening * FOLD_SHIFT`
+  and gives the area row and time-zone banner an animated marginLeft; the
+  map's leftInset adds FOLD_SHIFT when unfolded. SidebarList's pill is one
+  absolutely placed view gliding to the measured row. To film an animation
+  headless, slow the page's clock: wrap `performance.now` and
+  `requestAnimationFrame` in an init script (see Update 164).
 - **Sidebar folds away on the map** (14 Nov). lib/navLayout.ts
   `SIDEBAR_FOLDS_AWAY` ('/explore'), `foldedOn()` and `sidebarInset()`
   (SIDEBAR_WIDTH, SIDEBAR_FOLDED 60 or 0); SidebarFrame provides that as

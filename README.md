@@ -383,9 +383,11 @@ your accent glows behind them.
     only the tabs): the page's header and background run on underneath it,
     Explore's map too, and the page's content keeps clear of it. On the
     map it folds away to a small glass capsule with an arrow at the top
-    left, so the map has the room; the arrow opens it over the map, and
-    choosing a place, the fold arrow, a click beside it or Escape folds it
-    again. On a phone, **Menu** at the foot (naming the tab you're on) slides it in over
+    left, so the map has the room; the arrow unfolds it, the pane growing
+    out of the capsule while the map's panels move across beside it, and
+    the arrow at its top or Escape folds it back. Going between the map and
+    another page folds or unfolds it in the same way, and the pill under
+    the place you're on glides to the next. On a phone, **Menu** at the foot (naming the tab you're on) slides it in over
     the page, and choosing a place, a tap beside it, its close button,
     Escape or Android's back closes it. Either way the menu is a pane of
     Liquid Glass floating in from the screen's edges, as iPadOS 26 draws

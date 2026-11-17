@@ -304,7 +304,7 @@ export function ClearOfSidebar({ children }: { children: ReactNode }) {
 }
 
 /** How long the pane takes to come to rest: when the menu (or the arrow) leaves the tab order, and the glass's bend comes in. */
-const SETTLED_MS = 480;
+const SETTLED_MS = 360;
 
 /**
  * Over the page's left edge on a wide screen, the page running on

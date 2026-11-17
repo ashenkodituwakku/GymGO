@@ -8,9 +8,7 @@
  * Only the icons in phosphor.ts are here; scripts/phosphor-icons.mjs adds more.
  */
 
-import { View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useSwapIn } from './motion';
 import { PHOSPHOR, type IconPaths } from './phosphor';
 import { NO_TOUCH, boldText } from '@/lib/theme';
 
@@ -35,10 +33,9 @@ export function PIcon({
   // An outline's stroke matches the words beside it: with Bold text on, its bold cut, as the words go a step heavier.
   const drawn = weight === 'regular' && boldText() && set.bold ? 'bold' : weight;
   const paths = set[drawn] ?? set.duotone ?? set.regular ?? set.fill ?? [];
-  // A tab's outline filling as you go to it (or any icon changing here) blurs in, in a browser.
-  const swap = useSwapIn(`${name}:${weight}`);
+  // No blur-in when it changes (Icon has one): these are the tab bar's and the sidebar's, which change on
+  // every move, and what's used most should animate least.
   return (
-    <View ref={swap} style={[NO_TOUCH, { width: size, height: size }]}>
     <Svg width={size} height={size} viewBox="0 0 256 256" style={NO_TOUCH}>
       {paths.map((path, index) => (
         <Path
@@ -49,6 +46,5 @@ export function PIcon({
         />
       ))}
     </Svg>
-    </View>
   );
 }

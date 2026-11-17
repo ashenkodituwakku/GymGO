@@ -173,6 +173,8 @@ export function ResultsContent({
         }}
         accessibilityRole="button"
         accessibilityLabel={filterCount ? `Filters, ${filterCount} on` : 'Filters'}
+        // 40 points to see, 48 to hit: bigger targets are quicker to reach.
+        hitSlop={4}
         style={({ pressed }) => [styles.filterButton, pressed && { opacity: 0.7 }]}
       >
         <Icon name="filters" size={17} color={color.brand} />
@@ -191,6 +193,7 @@ export function ResultsContent({
         }}
         accessibilityRole="button"
         accessibilityLabel={me ? 'Your account' : LIMITED ? 'Your profile' : 'Sign in'}
+        hitSlop={4}
         style={({ pressed }) => [styles.avatar, me ? styles.avatarSignedIn : null, pressed && { opacity: 0.7 }]}
       >
         {me ? (

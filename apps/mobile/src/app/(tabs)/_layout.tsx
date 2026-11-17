@@ -233,7 +233,7 @@ function GlassTabBar({ bottom }: { bottom: number }) {
       runOnJS(go)(target);
     })
     .onFinalize(() => {
-      lift.value = withTiming(0, { ...ARRIVE, duration: 320 });
+      lift.value = withTiming(0, { ...ARRIVE, duration: 240 });
     });
 
   const lensStyle = useAnimatedStyle(() => ({

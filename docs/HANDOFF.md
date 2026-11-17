@@ -106,6 +106,15 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Motion timing and forgiving boxes** (17 Nov). UI motion stays under
+  about 300ms: motion.tsx springs (SLIDE, SETTLE, GLIDE) and timings were
+  tightened, Redrawn's TAB is a 160ms fade (tabs are the most frequent
+  move) and PAGE 280ms; Sidebar's SETTLED_MS is 360 to match SLIDE. PIcon
+  no longer blurs in (it's the tab bar's and sidebar's). Typed numbers:
+  lib/training.ts `tidyWeight(text, unit)` (unit words, commas, a trailing
+  point; the other unit converted to a tenth) and `tidyReps`; the boxes
+  tidy on blur, and train.tsx's tick reads through them too.
+  bodyMeasures.ts `keptValue` takes cm/in/%/" and converts lengths.
 - **Design tips from a reel** (17 Nov). theme.ts `concentric(outer, gap)`
   for a box inside a rounded box; lib/looks.ts has OKLCH (`hexToOklch`,
   `oklchToHex` with chroma brought down to fit sRGB, `mixOklch`,

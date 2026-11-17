@@ -58,10 +58,14 @@ export const valueLabel = (id: MeasureId, kept: number, length: LengthUnit) => `
 
 /** What was typed ("82,5"), in the shown unit, as kept (cm, or %); null if it isn't a plausible value. */
 export function keptValue(id: MeasureId, typed: string, length: LengthUnit): number | null {
-  const clean = typed.trim().replace(',', '.');
+  // As people type it: "82.5 cm", "32in", "32\"" or "18 %" read too, and a length in the other unit is converted.
+  let clean = typed.trim().toLowerCase().replace(',', '.');
+  const named = /\s*(cm|centimetres?|centimeters?)$/.test(clean) ? 'cm' : /\s*(in|inch|inches|")$/.test(clean) ? 'in' : null;
+  clean = clean.replace(/\s*(cm|centimetres?|centimeters?|in|inch|inches|"|%)$/, '').replace(/\.$/, '').trim();
   if (!/^\d{1,3}(\.\d{1,2})?$/.test(clean)) return null;
   const value = Number(clean);
-  const kept = id === 'bodyFat' || length === 'cm' ? value : value * CM_PER_INCH;
+  const unit = id === 'bodyFat' ? null : (named ?? length);
+  const kept = unit === null || unit === 'cm' ? value : value * CM_PER_INCH;
   const measure = BY_ID.get(id)!;
   return kept >= measure.min && kept <= measure.max ? Math.round(kept * 100) / 100 : null;
 }

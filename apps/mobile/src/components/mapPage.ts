@@ -233,7 +233,7 @@ export function mapPageHtml(options: {
 
   function popIn(element, from) {
     var disc = element.querySelector('.gg-face');
-    if (disc && disc.animate && !calm()) disc.animate([{ transform: 'scale(' + from + ')', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 320, easing: SPRING });
+    if (disc && disc.animate && !calm()) disc.animate([{ transform: 'scale(' + from + ')', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 240, easing: SPRING });
   }
 
   function popOut(marker) {

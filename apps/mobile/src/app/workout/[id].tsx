@@ -69,7 +69,7 @@ const GOAL_LABEL: Record<Goal, string> = { strength: 'Strength', muscle: 'Muscle
 const MAIN_MUSCLES: Muscle[] = ['chest', 'upper-back', 'deltoids', 'quadriceps', 'hamstring', 'gluteal', 'biceps', 'triceps', 'abs', 'calves'];
 
 /** The plan, once the bar has filled: rising into place as it fades in. */
-const PLAN_IN = FadeInDown.duration(420).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System);
+const PLAN_IN = FadeInDown.duration(280).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System);
 
 export default function WorkoutScreen() {
   useGlassRedraw();

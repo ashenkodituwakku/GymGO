@@ -9,6 +9,42 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 169 · Animation principles and UX laws from a second reel
+
+*17 Nov 2026 · the commit "Motion and input from a reel: under 300ms, less for what's frequent, forgiving boxes"*
+
+You sent a second reel (charles.unemployed) to treat the same way. Its caption lists twelve animation principles (from Disney's *The Illusion of Life*) and eight UX laws (from *Laws of UX*, and Emil Kowalski on frequency of use). Most are judgement rules, so each was checked against GymGO, and changes made where the app fell short:
+
+**Changed**
+- **Snappy timing** (UI motion under 300ms): the sidebar's unfold now settles in about 300ms (it was about 450). Also:
+  - a page opening in a browser: 280ms (was 380);
+  - the workout plan's entrance: 280 (was 420);
+  - a gym's page growing from its card: 280 (was 340);
+  - rows making room: 260 in a browser (was 320);
+  - pop-ins and map pins: 260 and 240 (were 320);
+  - the tab bar's lens settling after a drag: 240 (was 320);
+  - small settles like a pill sliding: about 300 (was 340).
+- **Frequency of use** (the more often, the less it moves): switching tabs, the move you make most, is now a quick 160ms fade with no lift (it was a 300ms fade and lift). The tab bar's and sidebar's icons no longer blur in when they change (Update 168), since they change on every move; Save and Appearance's ticks still do. The workout's sets bar fills in 240ms (was 420), since it moves on every set you tick.
+- **Postel's law** (accept messy input, return clean output): weight, reps and measurement boxes now read what people type rather than refusing it.
+  - "62.5 kg", "62,5kg" and "100." read as weights; "8 reps", "8x" and "x 8" as reps; "82.5 cm", "32 in" and "18 %" as measurements.
+  - A weight in the other unit is converted to yours ("135 lb" in a kg workout becomes 61.2), as is a length.
+  - Leaving a box tidies its text to the plain number. Ticking a set straight from the box reads it the same way.
+  - This applies to the workout's set boxes, body weight, the plate calculator, 1-rep max and measurements. Anything that still isn't a number gets the usual hint.
+- **Fitts's law / bigger hit areas**: the search row's Filters and account buttons (40 points) now answer a tap 4 points beyond their edge.
+
+**Already so**
+- **Squash and stretch, anticipation**: the tab bar's glass lens stretches as you drag it, and buttons sink as you touch them, before they act.
+- **Slow in and slow out**: done in Update 165. The only constant-speed clocks left drive a celebration's physics and an exercise glyph's loop, not UI moves.
+- **Staging, pose to pose, follow through, secondary action, exaggerated feedback, solid drawing**: a gym's card takes the results' place rather than squeezing in beside them; animations run between key poses; the sidebar's menu fades up after the pane; Save pops; glass has rims and shadows.
+- **Doherty threshold** (answer within 400ms): Save changes at the tap and saves behind it; search suggestions are worked out on the device; loading shows placeholder rows straight away.
+- **Miller's law, Jakob's law**: the sidebar's eleven places come in three groups of four or fewer; Escape closes things, "/" goes to search, and back buttons and tab bars work as elsewhere.
+
+**Not applied**
+- **Arcs**: GymGO's moves are short slides and fades, where a curved path would read as decoration.
+- **Hick's law** (fewer choices): cutting choices means removing features, which is yours to decide.
+
+- Checked in the browser: "100 kg" on the plate calculator loads 25 + 15 kg a side; "225 lb" × "5 reps" on a kg 1-rep max page reads as 102.1 kg × 5 (about 120 kg), and leaving the boxes tidies them to "102.1" and "5". Pages open without errors. New unit tests for reading typed weights, reps and measurements. All typechecks and tests pass. Not yet seen on a phone.
+
 ## Update 168 · Ten design tips from a reel, applied where they fit
 
 *17 Nov 2026 · the commit "Design tips from a reel: corners, edge fades, OKLCH, bold icons, icon swaps, logos, dvh"*

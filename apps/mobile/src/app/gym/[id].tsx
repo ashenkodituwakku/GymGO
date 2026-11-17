@@ -55,7 +55,7 @@ import { LIMITED } from '@/lib/limited';
 /** The pop-up growing into the page: the page rises from where the pop-up sat, still when Reduce Motion is on. */
 const EXPAND_IN =
   Platform.OS === 'web'
-    ? FadeInDown.duration(340).easing(MOVE_CURVE).reduceMotion(ReduceMotion.System)
+    ? FadeInDown.duration(280).easing(MOVE_CURVE).reduceMotion(ReduceMotion.System)
     : FadeInDown.springify().damping(damp(1, 260, 1)).stiffness(260).withInitialValues({ opacity: 0, transform: [{ translateY: 60 }] }).reduceMotion(ReduceMotion.System);
 
 export default function GymPage() {

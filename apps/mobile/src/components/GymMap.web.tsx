@@ -138,7 +138,7 @@ function calm() {
 function popIn(element: HTMLElement, from = 0.4) {
   if (calm()) return;
   const disc = element.querySelector<HTMLElement>('.gg-face');
-  disc?.animate?.([{ transform: `scale(${from})`, opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 320, easing: SPRING });
+  disc?.animate?.([{ transform: `scale(${from})`, opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 240, easing: SPRING });
 }
 
 /** Shrink away, then go. */

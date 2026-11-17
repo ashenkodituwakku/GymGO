@@ -679,6 +679,31 @@ export function parseWeight(text: string): number | null | undefined {
   return value > 0 && value <= 1500 ? value : clean === '0' ? null : undefined;
 }
 
+/**
+ * What was typed in a weight box, tidied into a plain number in your unit,
+ * accepting what people type rather than refusing it: "62.5 kg", "62,5kg"
+ * and "100." read as 62.5, 62.5 and 100; "135 lb" in a kg workout (or
+ * "60 kg" in a pound one) is converted, to a tenth. Anything that still
+ * isn't a weight comes back as typed, so the box's own hint shows.
+ */
+export function tidyWeight(text: string, unit: WeightUnit): string {
+  let clean = text.trim().toLowerCase().replace(',', '.');
+  const named = /\s*(kgs?|kilos?|kilograms?)$/.exec(clean) ? 'kg' : /\s*(lbs?|pounds?)$/.exec(clean) ? 'lb' : null;
+  clean = clean.replace(/\s*(kgs?|kilos?|kilograms?|lbs?|pounds?)$/, '').replace(/\.$/, '').trim();
+  if (!/^\d{1,4}(\.\d+)?$/.test(clean)) return text;
+  let value = Number(clean);
+  if (named && named !== unit) value = named === 'lb' ? value / LB_PER_KG : value * LB_PER_KG;
+  // Two places at most, as the box keeps (a conversion to a tenth).
+  value = named && named !== unit ? Math.round(value * 10) / 10 : Math.round(value * 100) / 100;
+  return String(value);
+}
+
+/** What was typed in a reps box, tidied: "8 reps", "8x" or "x8" read as 8. Anything else comes back as typed. */
+export function tidyReps(text: string): string {
+  const clean = text.trim().toLowerCase().replace(/^[x×]\s*/, '').replace(/\s*(reps?|[x×])$/, '').trim();
+  return /^\d{1,3}$/.test(clean) ? clean : text;
+}
+
 /** Whole reps, 0 to 200; anything else → undefined. */
 export function parseReps(text: string): number | undefined {
   const clean = text.trim();

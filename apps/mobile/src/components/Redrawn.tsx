@@ -93,12 +93,16 @@ export function Redrawn({ children, kind = 'page', focused }: { children: ReactN
  * doesn't fly in.
  */
 type Motion = { opacity: number; y: number; duration: number };
-/** A tab you switch to. */
-const TAB: Motion = { opacity: 0, y: 8, duration: 300 };
-/** A page opening, in a browser. */
-const PAGE: Motion = { opacity: 0, y: 14, duration: 380 };
+/**
+ * A tab you switch to: the most frequent move in the app, so the least
+ * motion, a quick fade and no lift (the more often something's done, the
+ * less it should animate).
+ */
+const TAB: Motion = { opacity: 0.4, y: 0, duration: 160 };
+/** A page opening, in a browser: under 300ms, as UI motion should be. */
+const PAGE: Motion = { opacity: 0, y: 10, duration: 280 };
 /** A page you come back to, in a browser: it waited out of sight a little dimmed. */
-const BACK: Motion = { opacity: 0.6, y: 0, duration: 240 };
+const BACK: Motion = { opacity: 0.6, y: 0, duration: 200 };
 
 function ScreenIn({ kind, focused, children }: { kind: ScreenKind; focused: boolean; children: ReactNode }) {
   if (Platform.OS === 'web') return <ScreenInBrowser kind={kind} focused={focused}>{children}</ScreenInBrowser>;

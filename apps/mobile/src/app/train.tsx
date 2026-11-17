@@ -73,6 +73,8 @@ import {
   type Target,
   type TrainingSession,
   type WeightUnit,
+  tidyReps,
+  tidyWeight,
 } from '@/lib/training';
 import { PageScroll } from '@/components/PageScroll';
 import { SessionNote } from '@/components/SessionNote';
@@ -719,8 +721,10 @@ const ExerciseLog = memo(function ExerciseLog({
       setAt(at, { done: false });
       return;
     }
-    const weight = set.weight.trim() || (bodyWeight || timed ? '' : weightFor(item.sets, at, weightGuess));
-    const reps = timed ? '1' : set.reps.trim() || (repsGuess !== null ? String(repsGuess) : '');
+    // As typed, tidied ("62.5 kg" → "62.5", "135 lb" in kg converted, "8 reps" → "8"): ticking straight
+    // from the box comes before the box's own tidy on leaving it.
+    const weight = tidyWeight(set.weight, unit).trim() || (bodyWeight || timed ? '' : weightFor(item.sets, at, weightGuess));
+    const reps = timed ? '1' : tidyReps(set.reps).trim() || (repsGuess !== null ? String(repsGuess) : '');
     if (!timed && (parseReps(reps) === undefined || parseReps(reps) === 0)) return setHint('Type how many reps you did.');
     if (parseWeight(weight) === undefined) return setHint(`That weight doesn’t read as a number of ${unit}.`);
     setHint(null);
@@ -906,6 +910,11 @@ const ExerciseLog = memo(function ExerciseLog({
               <Input
                 value={set.weight}
                 onChangeText={(weight) => setAt(at, { weight })}
+                // Leaving the box tidies what was typed: "62.5 kg" → "62.5", "135 lb" in a kg workout → its kg.
+                onBlur={() => {
+                  const tidy = tidyWeight(set.weight, unit);
+                  if (tidy !== set.weight) setAt(at, { weight: tidy });
+                }}
                 placeholder={bodyWeight ? 'BW' : weightFor(item.sets, at, weightGuess) || '—'}
                 placeholderTextColor={color.labelTertiary}
                 keyboardType="decimal-pad"
@@ -920,6 +929,10 @@ const ExerciseLog = memo(function ExerciseLog({
               <Input
                 value={set.reps}
                 onChangeText={(reps) => setAt(at, { reps })}
+                onBlur={() => {
+                  const tidy = tidyReps(set.reps);
+                  if (tidy !== set.reps) setAt(at, { reps: tidy });
+                }}
                 placeholder={repsGuess !== null ? String(repsGuess) : '—'}
                 placeholderTextColor={color.labelTertiary}
                 keyboardType="number-pad"
@@ -1373,7 +1386,8 @@ function SetsBar({ done, planned }: { done: number; planned: number }) {
   const share = planned > 0 ? Math.min(1, done / planned) : 0;
   const shown = useSharedValue(share);
   useEffect(() => {
-    shown.value = withTiming(share, { duration: 420, easing: EASE_OUT, reduceMotion: ReduceMotion.System });
+    // Quick: it moves on every set you tick, and what's done most should move least.
+    shown.value = withTiming(share, { duration: 240, easing: EASE_OUT, reduceMotion: ReduceMotion.System });
   }, [share, shown]);
   const fill = useAnimatedStyle(() => ({ width: `${shown.value * 100}%` }));
   return (

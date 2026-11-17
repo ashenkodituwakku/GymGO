@@ -12,7 +12,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { CURVES, EASE_IN, EASE_OUT, FADE_IN, POP_IN, Pressable, usePop } from '@/components/motion';
+import { ARRIVE_CURVE, EASE_OUT, FADE_IN, LEAVE_CURVE, POP_IN, Pressable, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
 import { Icon, type IconName } from '@/components/Icon';
@@ -1083,8 +1083,8 @@ function Elapsed({ since }: { since: string }) {
 const timeLeft = (endsAt: number, at: number) => Math.max(0, (endsAt - at) / 1000);
 
 /** The rest bar rises from the bottom as a rest starts, and sinks away when it's up. */
-const REST_IN = (CURVES ? FadeInDown.duration(300).easing(EASE_OUT) : FadeInDown.duration(300)).reduceMotion(ReduceMotion.System);
-const REST_OUT = (CURVES ? FadeOutDown.duration(200).easing(EASE_IN) : FadeOutDown.duration(200)).reduceMotion(ReduceMotion.System);
+const REST_IN = FadeInDown.duration(300).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System);
+const REST_OUT = FadeOutDown.duration(200).easing(LEAVE_CURVE).reduceMotion(ReduceMotion.System);
 
 function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bottom: number }) {
   const now = useNow(true);

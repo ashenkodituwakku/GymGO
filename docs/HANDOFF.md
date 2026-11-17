@@ -106,6 +106,19 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Map clicks, and curves in the browser** (17 Nov). Never give an
+  `Animated.View` `pointerEvents: 'box-none'` (or 'none') through its
+  *style* on the web: Reanimated drops it, and the view takes every click
+  (Update 164's full-window layer blocked the map). Use the
+  `pointerEvents` prop, or keep pass-through containers plain Views and
+  animate only what's visible. In a browser Reanimated hands an entering,
+  exiting or layout animation to CSS, which takes only `Easing.bezier`
+  (anything else ran linear, and springs on layout transitions are
+  ignored): use motion.tsx's `ARRIVE_CURVE`, `LEAVE_CURVE`, `MOVE_CURVE`
+  for those, never a bare `FadeIn.duration()`. `withTiming` runs in JS and
+  takes the clamped curves as before. The shared Pressable now animates
+  hover (`over`) as well as press, and replaces "transparent" with
+  `clearOf(colour)` (lib/looks.ts) so a fade doesn't dim through black.
 - **Sidebar unfolds beside the map** (17 Nov). Sidebar.tsx: SidebarFrame
   holds `opening` (a shared value, 1 open, 0 the capsule) springing on
   `SLIDE` (motion.tsx) whenever `open` changes, and provides it as

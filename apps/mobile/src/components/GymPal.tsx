@@ -91,7 +91,7 @@ import { LIMITED } from '@/lib/limited';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
 import { Icon } from './Icon';
-import { POP_IN, Pressable, usePressScale } from './motion';
+import { ARRIVE_CURVE, POP_IN, Pressable, usePressScale } from './motion';
 import { Toggle } from './Toggle';
 import { CloseButton, Txt } from './ui';
 
@@ -445,7 +445,7 @@ function EdgeTab({ bottom, side, edge, onOpen }: { bottom: number; side: 'right'
   const right = side === 'right';
   return (
     <Animated.View
-      entering={FadeIn.duration(240).reduceMotion(ReduceMotion.System)}
+      entering={FadeIn.duration(240).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System)}
       style={[styles.edgeTab, right ? [styles.edgeTabRight, { right: edge }] : [styles.edgeTabLeft, { left: edge }], { bottom }, follow]}
     >
       <GestureDetector gesture={gesture}>
@@ -556,11 +556,11 @@ function Chat({
   return (
     <View style={StyleSheet.absoluteFill} ref={dialogName}>
       {/* Tapping outside closes it, as any sheet; a screen reader closes it with Close. */}
-      <Animated.View entering={FadeIn.duration(180).reduceMotion(ReduceMotion.System)} style={StyleSheet.absoluteFill}>
+      <Animated.View entering={FadeIn.duration(180).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System)} style={StyleSheet.absoluteFill}>
         <Pressable style={[StyleSheet.absoluteFill, styles.scrim, wide && styles.scrimLight]} onPress={onClose} accessible={false} importantForAccessibility="no" />
       </Animated.View>
       <Animated.View
-        entering={FadeInDown.duration(260).reduceMotion(ReduceMotion.System)}
+        entering={FadeInDown.duration(260).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System)}
         style={placed}
         // The Modal is the dialog itself (in a browser, too); this keeps a screen reader inside it on iPhone.
         accessibilityViewIsModal

@@ -18,7 +18,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Share, StyleSheet, View, useWindowDimensions, type ScrollViewInstance } from 'react-native';
 import Animated, { FadeInDown, ReduceMotion, useReducedMotion } from 'react-native-reanimated';
-import { CURVES, EASE_OUT, Pressable } from '@/components/motion';
+import { ARRIVE_CURVE, Pressable } from '@/components/motion';
 import { useBodyGender, setBodyGender } from '@/lib/bodyGender';
 import { BodyPicker } from '@/components/BodyPicker';
 import { Icon, type IconName } from '@/components/Icon';
@@ -69,7 +69,7 @@ const GOAL_LABEL: Record<Goal, string> = { strength: 'Strength', muscle: 'Muscle
 const MAIN_MUSCLES: Muscle[] = ['chest', 'upper-back', 'deltoids', 'quadriceps', 'hamstring', 'gluteal', 'biceps', 'triceps', 'abs', 'calves'];
 
 /** The plan, once the bar has filled: rising into place as it fades in. */
-const PLAN_IN = (CURVES ? FadeInDown.duration(420).easing(EASE_OUT) : FadeInDown.duration(380)).reduceMotion(ReduceMotion.System);
+const PLAN_IN = FadeInDown.duration(420).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System);
 
 export default function WorkoutScreen() {
   useGlassRedraw();

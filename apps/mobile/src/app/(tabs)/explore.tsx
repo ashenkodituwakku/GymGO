@@ -19,7 +19,7 @@ import BottomSheet, {
   type BottomSheetHandleProps,
   useBottomSheetSpringConfigs,
 } from '@gorhom/bottom-sheet';
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { ActionSheetIOS, ActivityIndicator, BackHandler, Keyboard, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type TextInputInstance } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -133,7 +133,10 @@ function MapScreen() {
   // move across with it, on the same moving value, so the two travel as one.
   const opening = useSidebarOpening();
   const unfolded = useSidebarUnfolded();
+  // (Each moving piece carries its own transform: a full-window layer to move them all at once took
+  // every click and drag meant for the map, as a browser loses an animated view's pass-through.)
   const aside = useAnimatedStyle(() => ({ transform: [{ translateX: (opening?.value ?? 0) * FOLD_SHIFT }] }));
+  const asideHalf = useAnimatedStyle(() => ({ transform: [{ translateX: ((opening?.value ?? 0) * FOLD_SHIFT) / 2 }] }));
   const asideLeft = useAnimatedStyle(() => ({ marginLeft: (opening?.value ?? 0) * FOLD_SHIFT }));
 
   // The time-zone self-check runs once; its answer can't change mid-session.
@@ -958,9 +961,8 @@ function MapScreen() {
           <View style={styles.mapWaiting} />
         )}
 
-        {/* The panels, moving across as the sidebar unfolds (taps between them reach the map). */}
-        <Animated.View style={[CHILD_TOUCH, StyleSheet.absoluteFill, aside]}>
-        <DesktopPanel left={start + PANEL_GAP} bottom={foot} hidden={covered}>
+        {/* The panels move across as the sidebar unfolds. */}
+        <DesktopPanel left={start + PANEL_GAP} bottom={foot} hidden={covered} slide={aside}>
           {/* The panel's own heading names the place; the pill comes only to say something more. */}
           {pillNotable && <View style={styles.panelTop}>{statusPill}</View>}
           {/* It scrolls itself, under its search and quick filters. */}
@@ -968,7 +970,7 @@ function MapScreen() {
         </DesktopPanel>
 
         {shown && (
-          <DesktopPanel left={start + PANEL_GAP + (besideResults ? PANEL_GAP + PANEL_WIDTH : 0)} bottom={foot} arrives>
+          <DesktopPanel left={start + PANEL_GAP + (besideResults ? PANEL_GAP + PANEL_WIDTH : 0)} bottom={foot} slide={aside} arrives>
             {shown === 'place' && selected ? (
               <ScrollView
                 stickyHeaderIndices={[0]}
@@ -996,14 +998,14 @@ function MapScreen() {
             )}
           </DesktopPanel>
         )}
-        </Animated.View>
 
         <View style={[CHILD_TOUCH, styles.desktopControls, { top: PANEL_GAP }]}>
           {controls}
         </View>
-        <Animated.View style={[CHILD_TOUCH, styles.areaRow, { top: PANEL_GAP, left: panelsWidth + PANEL_GAP, right: PANEL_GAP + 64 }, asideLeft]}>
-          {areaButton}
-        </Animated.View>
+        <View style={[CHILD_TOUCH, styles.areaRow, { top: PANEL_GAP, left: panelsWidth + PANEL_GAP, right: PANEL_GAP + 64 }]}>
+          {/* Centred in the map beside the panels, so half as far as they move. */}
+          <Animated.View style={asideHalf}>{areaButton}</Animated.View>
+        </View>
         {selfCheckBanner}
         {googleModal}
       </View>
@@ -1102,10 +1104,13 @@ function DesktopPanel({
   bottom,
   hidden = false,
   arrives = false,
+  slide,
   children,
 }: {
   left: number;
   bottom: number;
+  /** Moving across with the sidebar as it unfolds. */
+  slide?: ComponentProps<typeof Animated.View>['style'];
   /** Under a card that's taken its place: kept, scrolled where it was, but not seen, reached or read out. */
   hidden?: boolean;
   /** Comes and goes (a gym's card, Filters): it fades in and out rather than blinking. */
@@ -1125,17 +1130,19 @@ function DesktopPanel({
     return () => clearTimeout(timer);
   }, [hidden, shown]);
   const fade = useAnimatedStyle(() => ({ opacity: shown.value }));
+  // Two layers: the outer moves with the sidebar, the inner fades in and out (a browser's fade-in
+  // would take over the outer's movement while it runs).
   return (
     <Animated.View
-      entering={arrives ? FADE_IN : undefined}
-      exiting={arrives ? FADE_OUT : undefined}
-      style={[styles.panel, { left, bottom, width: PANEL_WIDTH }, !arrives && fade, hidden && NO_TOUCH, gone && styles.panelHidden]}
+      style={[styles.panelPlace, { left, bottom, width: PANEL_WIDTH }, slide, gone && styles.panelHidden]}
       aria-hidden={hidden || undefined}
       accessibilityElementsHidden={hidden}
       importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
     >
-      <Glass kind="sheet" style={StyleSheet.absoluteFill} />
-      {children}
+      <Animated.View entering={arrives ? FADE_IN : undefined} exiting={arrives ? FADE_OUT : undefined} style={[StyleSheet.absoluteFill, styles.panel, !arrives && fade]}>
+        <Glass kind="sheet" style={StyleSheet.absoluteFill} />
+        {children}
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -1425,9 +1432,8 @@ const styles = themed(() => StyleSheet.create({
   pillDot: { width: 7, height: 7, borderRadius: 3.5 },
   pillText: face('medium'),
 
+  panelPlace: { position: 'absolute', top: PANEL_GAP },
   panel: {
-    position: 'absolute',
-    top: PANEL_GAP,
     borderRadius: radius.xl + 4,
     borderCurve: 'continuous',
     overflow: 'hidden',

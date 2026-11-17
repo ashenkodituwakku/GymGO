@@ -118,6 +118,19 @@ export function over(ground: string, wash: string): string {
   return toHex(under.map((c, i) => c + (Number(parts[i + 1]) - c) * share));
 }
 
+/**
+ * A colour made fully clear, keeping its hue: where a fade from "transparent"
+ * should start. "Transparent" is clear black, so a highlight fading from it
+ * to a grey passed through a darker tint on the way.
+ */
+export function clearOf(value: string): string {
+  const rgb = /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i.exec(value);
+  if (rgb) return `rgba(${rgb[1]}, ${rgb[2]}, ${rgb[3]}, 0)`;
+  const short = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(value);
+  const x = hex(short ? `#${short[1]}${short[1]}${short[2]}${short[2]}${short[3]}${short[3]}` : value.slice(0, 7));
+  return x ? `rgba(${x[0]}, ${x[1]}, ${x[2]}, 0)` : 'transparent';
+}
+
 /** The colour with an alpha, as rgba(). */
 export function alpha(value: string, opacity: number): string {
   const x = hex(value);

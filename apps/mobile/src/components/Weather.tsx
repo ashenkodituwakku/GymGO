@@ -24,7 +24,7 @@ import { WEATHER_ART } from '@/lib/weatherArt';
 import { useWeather, type WeatherState } from '@/lib/weather';
 import { Glass } from './Glass';
 import { Icon } from './Icon';
-import { Pressable } from './motion';
+import { ARRIVE_CURVE, LEAVE_CURVE, Pressable } from './motion';
 import { Txt } from './ui';
 
 /**
@@ -113,7 +113,7 @@ export function WeatherCompact() {
   const temp = tempLabel(read.current.tempC, unit);
   return (
     <Animated.View
-      entering={FadeIn.duration(200).reduceMotion(ReduceMotion.System)}
+      entering={FadeIn.duration(200).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System)}
       style={[styles.compact, styles.card]}
       accessible
       accessibilityLabel={`Weather in ${where}: ${temp}${words ? `, ${words.toLowerCase()}` : ''}. ${madeLine(state.weather, timezone)}.`}
@@ -145,7 +145,7 @@ export function WeatherHours() {
     .join('; ');
   return (
     <Animated.View
-      entering={FadeIn.duration(200).reduceMotion(ReduceMotion.System)}
+      entering={FadeIn.duration(200).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System)}
       style={[styles.card, styles.hoursCard]}
       accessible
       accessibilityLabel={`Weather in ${where}: ${temp}${words ? `, ${words.toLowerCase()}` : ''}. ${nextWords ? `Next hours: ${nextWords}. ` : ''}${madeLine(state.weather, timezone)}.`}
@@ -204,8 +204,8 @@ export function WeatherBadge() {
     <View style={styles.badgeWrap}>
       {open && (
         <Animated.View
-          entering={FadeIn.duration(160).reduceMotion(ReduceMotion.System)}
-          exiting={FadeOut.duration(120).reduceMotion(ReduceMotion.System)}
+          entering={FadeIn.duration(160).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System)}
+          exiting={FadeOut.duration(120).easing(LEAVE_CURVE).reduceMotion(ReduceMotion.System)}
           style={styles.tip}
           pointerEvents="none"
         >

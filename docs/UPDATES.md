@@ -9,6 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 165 · The map responds again, and the app's animations ease in the browser
+
+*17 Nov 2026 · the commit "Explore: the map takes clicks and drags again; animations ease in the browser"*
+
+You said the map was glitched, so you couldn't move it or click anything on it, and asked for the other animations in the app to be smooth too.
+
+- **The map works again.** Update 164 slid Explore's panels with one layer laid over the whole window, meant to let clicks through to the map. In a browser that setting is lost on an animated layer, so the layer caught every click and drag. Each panel now slides itself, and the Search this area button inside its own row, so nothing covers the map. Checked: dragging moves the map (with the sidebar open and folded, and in the Tab bar layout), and clicking a gym's pin opens its card.
+- **Fades, pops and glides ease in the browser.** Every fade-in, fade-out and pop in the app, and the glide when rows make room for each other, ran at one constant speed in a browser, starting and stopping with a jolt: the browser runs these itself and takes only a standard curve, which the app wasn't giving it. They now get the same curves as on a phone: fades come in quickly and settle softly, things leave gathering pace, rows glide with a soft start and stop, and a pop goes a touch past and settles back.
+- **Hover fades.** Under a mouse, a button's or row's hover shade now fades in quickly and out a little slower, instead of snapping, on every button that uses the app's shared button.
+- **No dark flicker on press.** A highlight fading from clear used to pass through a darker tint on the way, because "clear" is clear black. It now fades from a clear version of its own colour. A new unit test covers how that colour is worked out.
+- The loading placeholders' pulse now eases at both ends in the browser too.
+- Page changes and tab switches already fade and lift in the browser (they're run by the browser itself), so they're unchanged.
+- Checked in the browser at 1280 points: the gym card's fade, the rows' glide and the hover fade each read back with their curves; a walk of eleven pages showed no errors. Not yet seen on a phone (its animations already used these curves).
+
 ## Update 164 · The sidebar unfolds beside the map, smoothly
 
 *17 Nov 2026 · the commit "Sidebar: unfold from the capsule beside the map, one smooth motion"*

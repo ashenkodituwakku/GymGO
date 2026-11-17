@@ -14,15 +14,16 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { Easing, ReduceMotion, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
-import { CURVES, FADE_OUT } from '@/components/motion';
+import Animated, { ReduceMotion, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import { EASE_IN_OUT, FADE_OUT } from '@/components/motion';
 import { color, radius, shadow, space, themed } from '@/lib/theme';
 
 export function Skeleton({ children, label = 'Loading', style }: { children: ReactNode; label?: string; style?: StyleProp<ViewStyle> }) {
   const glow = useSharedValue(1);
   useEffect(() => {
     glow.value = withRepeat(
-      withTiming(0.45, { duration: 850, ...(CURVES ? { easing: Easing.inOut(Easing.quad) } : {}), reduceMotion: ReduceMotion.System }),
+      // Eased at both ends on every device (it ran at a constant speed in the browser, so the pulse turned at a jolt).
+      withTiming(0.45, { duration: 850, easing: EASE_IN_OUT, reduceMotion: ReduceMotion.System }),
       -1,
       true,
       undefined,

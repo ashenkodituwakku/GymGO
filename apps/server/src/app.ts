@@ -281,7 +281,7 @@ export interface AppOptions {
    */
   webDir?: string | null;
   /** GymPal, the chat: the owner's OpenRouter key (none: off), the free models to ask, and a stand-in fetch for tests. */
-  gymPal?: { key: string | null; models?: string[]; fetchImpl?: typeof fetch; log?: (line: string) => void };
+  gymPal?: { key: string | null; models?: string[]; checkModels?: boolean; fetchImpl?: typeof fetch; log?: (line: string) => void };
   /** Gyms' Apple Maps listings through SerpApi (appleMaps.ts): off without a key. */
   appleMaps?: AppleMapsOptions;
   /** The weather on Home and the map, from MET Norway (weather.ts): on unless `on: false`. */
@@ -701,7 +701,7 @@ export function createApp(options: AppOptions) {
     now,
     ...options.weather,
   });
-  const gymPal = new GymPal({ key: options.gymPal?.key ?? null, models: options.gymPal?.models, fetchImpl: options.gymPal?.fetchImpl, referer: options.publicUrl ?? null, log: options.gymPal?.log });
+  const gymPal = new GymPal({ key: options.gymPal?.key ?? null, models: options.gymPal?.models, checkModels: options.gymPal?.checkModels, fetchImpl: options.gymPal?.fetchImpl, referer: options.publicUrl ?? null, log: options.gymPal?.log });
   // GymPal: plenty for real questions, and few enough that one person can't use up the free models' day for
   // everyone; more with Pro (gymPal.ts, GYMPAL_PLANS).
   const gymPalLimiters = {

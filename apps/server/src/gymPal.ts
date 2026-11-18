@@ -29,6 +29,10 @@ import { GYMPAL_GUIDE } from './gymPalGuide';
 type Fetch = typeof fetch;
 
 export const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+/** OpenRouter's public list of models (no key needed), to leave out any that have gone. */
+export const OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models';
+/** How long the list is trusted before it's read again. */
+const LIST_EVERY_MS = 6 * 60 * 60_000;
 /**
  * Asked in this order, each one free, from three different makers so one
  * being busy (a popular free model is often "rate-limited upstream")
@@ -219,6 +223,9 @@ export class GymPal {
   private readonly models: string[];
   /** Which model gave the last answer, for the server's check (`pnpm gympal:check`). */
   answeredBy: string | null = null;
+  private readonly checkModels: boolean;
+  private listed: { ids: string[]; at: number } | null = null;
+  private saidGone = '';
   private readonly fetchImpl: Fetch;
   private readonly referer: string | null;
   private readonly timeoutMs: number;
@@ -233,6 +240,8 @@ export class GymPal {
     fetchImpl?: Fetch;
     /** This server's public address, which OpenRouter shows the owner beside each request. */
     referer?: string | null;
+    /** Check the models against OpenRouter's public list before asking (the server does; tests don't, unless they say so). */
+    checkModels?: boolean;
     timeoutMs?: number;
     log?: (line: string) => void;
   }) {
@@ -241,6 +250,7 @@ export class GymPal {
     this.models = models.length ? models : DEFAULT_MODELS;
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.referer = options.referer ?? null;
+    this.checkModels = options.checkModels ?? false;
     this.timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
     this.log = options.log ?? ((line) => console.warn(line));
   }
@@ -258,10 +268,30 @@ export class GymPal {
   /**
    * GymPal's answer to the conversation's last question: with what the
    * person is looking at, and their training log if they've let him see it,
-   * after his guide.
+   * after his guide. Asked of the free models OpenRouter still lists, in
+   * turn; if one answers with nothing (a model that thinks first can spend
+   * the whole answer thinking), the next is asked.
    */
   async ask(messages: ChatMessage[], extra: { context?: string | null; log?: string | null; replyTokens?: number } = {}): Promise<string> {
     if (!this.key) throw new GymPalError(503, 'GymPal isn’t switched on for this server yet.', 'gympal_off');
+    // One message of instructions: not every model takes more than one.
+    const conversation = [{ role: 'system', content: instructions(extra.context ?? null, extra.log ?? null) }, ...messages];
+    const replyTokens = extra.replyTokens ?? GYMPAL_PLANS.free.replyTokens;
+    let models = await this.liveModels();
+    for (;;) {
+      const { answer, model } = await this.askOnce(models, conversation, replyTokens);
+      if (answer) {
+        this.answeredBy = `OpenRouter, ${model ?? models[0]}`;
+        return answer;
+      }
+      const rest = model ? models.filter((id) => id !== model) : [];
+      if (rest.length === 0 || rest.length === models.length) throw new GymPalError(502, 'GymPal didn’t have an answer. Try asking another way.');
+      models = rest;
+    }
+  }
+
+  /** One request to OpenRouter, which tries the models in turn when one fails: the answer (or none) and the model that gave it. */
+  private async askOnce(models: string[], conversation: Array<{ role: string; content: string }>, replyTokens: number): Promise<{ answer: string | null; model: string | null }> {
     let response: Response;
     try {
       response = await this.fetchImpl(OPENROUTER_URL, {
@@ -274,11 +304,12 @@ export class GymPal {
         },
         body: JSON.stringify({
           // Tried in turn: each one free, so whichever answers costs nothing.
-          models: this.models,
-          // One message of instructions: not every model takes more than one.
-          messages: [{ role: 'system', content: instructions(extra.context ?? null, extra.log ?? null) }, ...messages],
-          max_tokens: extra.replyTokens ?? GYMPAL_PLANS.free.replyTokens,
+          models,
+          messages: conversation,
+          max_tokens: replyTokens,
           temperature: 0.4,
+          // A model that thinks before answering keeps it short, and keeps the thinking to itself, so the answer has room.
+          reasoning: { effort: 'low', exclude: true },
         }),
         signal: AbortSignal.timeout(this.timeoutMs),
       });
@@ -291,8 +322,6 @@ export class GymPal {
       // The owner's to fix (a wrong key, an account owing money): said in the server's log, never the key itself.
       if (response.status === 401 || response.status === 402 || response.status === 403) {
         this.log(`[gympal] OpenRouter turned the request down (${response.status}). Check OPENROUTER_API_KEY and the account at openrouter.ai.`);
-      } else {
-        this.log(`[gympal] OpenRouter answered ${response.status}.`);
       }
       throw new GymPalError(502, 'GymPal isn’t working right now. Try again later.');
     }
@@ -302,12 +331,66 @@ export class GymPal {
     } catch {
       throw new GymPalError(502, 'GymPal isn’t working right now. Try again later.');
     }
+    const model = typeof (data as { model?: unknown }).model === 'string' ? ((data as { model: string }).model) : null;
     const answer = readAnswer(data);
-    if (!answer) throw new GymPalError(502, 'GymPal didn’t have an answer. Try asking another way.');
-    const model = (data as { model?: unknown }).model;
-    this.answeredBy = `OpenRouter${typeof model === 'string' ? `, ${model}` : ''}`;
-    return answer;
+    if (!answer) {
+      const finish = (data as { choices?: Array<{ finish_reason?: unknown }> } | null)?.choices?.[0]?.finish_reason;
+      this.log(`[gympal] ${model ?? 'The model'} sent no answer${typeof finish === 'string' ? ` (it stopped: ${finish})` : ''}.`);
+    }
+    // OpenRouter names the model as it was asked for, or without ":free": match it to the list either way.
+    const asked = model ? (models.find((id) => id === model || id.replace(/:free$/, '') === model) ?? model) : null;
+    return { answer, model: asked };
   }
+
+  /**
+   * The models to ask: those OpenRouter still lists (it turns a whole
+   * question down when one model in the list has gone, as inkling-small's
+   * free version had in November 2026), or, if none is left, up to three of
+   * the free ones it lists now, from different makers. Its list is public
+   * (no key) and read again every few hours; if it can't be read, the
+   * models are asked as they are.
+   */
+  private async liveModels(): Promise<string[]> {
+    if (!this.checkModels) return this.models;
+    const now = Date.now();
+    if (!this.listed || now - this.listed.at > LIST_EVERY_MS) {
+      try {
+        const response = await this.fetchImpl(OPENROUTER_MODELS_URL, { signal: AbortSignal.timeout(10_000) });
+        if (response.ok) {
+          const ids = ((await response.json()) as { data?: Array<{ id?: unknown }> }).data?.map((item) => item.id).filter((id): id is string => typeof id === 'string') ?? [];
+          if (ids.length) this.listed = { ids, at: now };
+        }
+      } catch {
+        // Not now: as before.
+      }
+    }
+    if (!this.listed) return this.models;
+    const listed = new Set(this.listed.ids);
+    const kept = this.models.filter((id) => listed.has(id));
+    const gone = this.models.filter((id) => !listed.has(id));
+    const chosen = kept.length ? kept : freeFromMakers(this.listed.ids);
+    const said = `${gone.join(',')}>${chosen.join(',')}`;
+    if (gone.length && this.saidGone !== said) {
+      this.saidGone = said;
+      this.log(`[gympal] OpenRouter no longer lists ${gone.join(', ')}; asking ${chosen.join(', ')}. GYMGO_GYMPAL_MODELS sets the list.`);
+    }
+    return chosen.length ? chosen : this.models;
+  }
+}
+
+/** Up to three free models from a list, each from a different maker, in the list's order. */
+export function freeFromMakers(ids: readonly string[], most = 3): string[] {
+  const chosen: string[] = [];
+  const makers = new Set<string>();
+  for (const id of ids) {
+    if (!freeModels([id]).models.length) continue;
+    const maker = id.split('/')[0]!;
+    if (makers.has(maker)) continue;
+    makers.add(maker);
+    chosen.push(id);
+    if (chosen.length === most) break;
+  }
+  return chosen;
 }
 
 /** GymPal's guide, then what the app said about the screen, then the training log: each clearly marked as data. */

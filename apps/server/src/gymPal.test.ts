@@ -3,7 +3,7 @@ import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from './app';
 import { openDb, type Db } from './db';
-import { DEFAULT_MODELS, GYMPAL_PLANS, OPENROUTER_URL, GymPal, cleanChat, cleanContext, freeModels, instructions, readAnswer, trainingSummary } from './gymPal';
+import { DEFAULT_MODELS, GYMPAL_PLANS, OPENROUTER_MODELS_URL, OPENROUTER_URL, GymPal, cleanChat, freeFromMakers, cleanContext, freeModels, instructions, readAnswer, trainingSummary } from './gymPal';
 import { GYMPAL_GUIDE } from './gymPalGuide';
 
 /** Stands in for OpenRouter: what it was asked, and an answer of the test's choosing. */
@@ -138,6 +138,78 @@ describe('OpenRouter saying no', () => {
     await expect(new GymPal({ key: 'k', fetchImpl: odd, log: (line) => lines.push(line) }).ask([{ role: 'user', content: 'Hi' }])).rejects.toMatchObject({ status: 502 });
     expect(lines[0]).toMatch(/^\[gympal\] OpenRouter said 502: Bad gateway x+…$/);
     expect(lines[0]!.length).toBeLessThan(360);
+  });
+});
+
+describe('models that think, and models that have gone', () => {
+  it('asks for short, unshown thinking, so the answer has room', async () => {
+    const open = fakeOpenRouter();
+    await new GymPal({ key: 'k', fetchImpl: open.fetchImpl }).ask([{ role: 'user', content: 'Hi' }]);
+    expect(open.asked[0]!.body.reasoning).toEqual({ effort: 'low', exclude: true });
+  });
+
+  it('asks the next model when one answers with nothing, and says so in the log', async () => {
+    const open = fakeOpenRouter((body) =>
+      body.models[0] === 'a/thinker:free'
+        ? { json: { model: 'a/thinker:free', choices: [{ message: { role: 'assistant', content: '' }, finish_reason: 'length' }] } }
+        : { json: { model: 'b/talker', choices: [{ message: { role: 'assistant', content: 'Here you go.' } }] } },
+    );
+    const lines: string[] = [];
+    const gymPal = new GymPal({ key: 'k', models: ['a/thinker:free', 'b/talker:free'], fetchImpl: open.fetchImpl, log: (line) => lines.push(line) });
+    expect(await gymPal.ask([{ role: 'user', content: 'Hi' }])).toBe('Here you go.');
+    expect(open.asked.map((call) => call.body.models)).toEqual([['a/thinker:free', 'b/talker:free'], ['b/talker:free']]);
+    expect(lines).toEqual(['[gympal] a/thinker:free sent no answer (it stopped: length).']);
+    expect(gymPal.answeredBy).toBe('OpenRouter, b/talker:free');
+  });
+
+  it('gives up with "no answer" once every model has answered with nothing', async () => {
+    const open = fakeOpenRouter((body) => ({ json: { model: body.models[0], choices: [{ message: { role: 'assistant', content: '   ' } }] } }));
+    await expect(new GymPal({ key: 'k', models: ['a/one:free', 'b/two:free'], fetchImpl: open.fetchImpl, log: () => {} }).ask([{ role: 'user', content: 'Hi' }])).rejects.toMatchObject({ status: 502 });
+    expect(open.asked).toHaveLength(2);
+  });
+
+  /** OpenRouter's public list of models, and its chat, each answered as the test says. */
+  function fakeWithList(list: () => Response, chat: (body: any) => unknown = (body) => ({ model: body.models[0], choices: [{ message: { role: 'assistant', content: 'Hi!' } }] })) {
+    const asked: Array<{ url: string; body: any }> = [];
+    const fetchImpl = (async (url: string, init?: RequestInit) => {
+      if (url === OPENROUTER_MODELS_URL) {
+        asked.push({ url, body: null });
+        return list();
+      }
+      const body = JSON.parse(String(init!.body));
+      asked.push({ url, body });
+      return new Response(JSON.stringify(chat(body)), { status: 200, headers: { 'content-type': 'application/json' } });
+    }) as typeof fetch;
+    return { asked, fetchImpl };
+  }
+  const listOf = (...ids: string[]) => () => new Response(JSON.stringify({ data: ids.map((id) => ({ id })) }), { status: 200 });
+
+  it('leaves out a model OpenRouter no longer lists, says so once, and reads the list only every few hours', async () => {
+    const open = fakeWithList(listOf('a/kept:free', 'c/other:free', 'openai/gpt-5'));
+    const lines: string[] = [];
+    const gymPal = new GymPal({ key: 'k', models: ['a/kept:free', 'b/gone:free'], checkModels: true, fetchImpl: open.fetchImpl, log: (line) => lines.push(line) });
+    await gymPal.ask([{ role: 'user', content: 'Hi' }]);
+    await gymPal.ask([{ role: 'user', content: 'Again' }]);
+    expect(open.asked.filter((call) => call.url === OPENROUTER_MODELS_URL)).toHaveLength(1);
+    expect(open.asked.filter((call) => call.url === OPENROUTER_URL).map((call) => call.body.models)).toEqual([['a/kept:free'], ['a/kept:free']]);
+    expect(lines).toEqual(['[gympal] OpenRouter no longer lists b/gone:free; asking a/kept:free. GYMGO_GYMPAL_MODELS sets the list.']);
+  });
+
+  it('asks free models from the list, one per maker, when none of its own are left', async () => {
+    const open = fakeWithList(listOf('x/new-a:free', 'x/new-b:free', 'openai/gpt-5', 'y/new:free', 'z/new:free', 'w/new:free'));
+    const gymPal = new GymPal({ key: 'k', models: ['a/gone:free'], checkModels: true, fetchImpl: open.fetchImpl, log: () => {} });
+    await gymPal.ask([{ role: 'user', content: 'Hi' }]);
+    expect(open.asked.find((call) => call.url === OPENROUTER_URL)!.body.models).toEqual(['x/new-a:free', 'y/new:free', 'z/new:free']);
+  });
+
+  it('asks its models as they are when the list can’t be read', async () => {
+    const open = fakeWithList(() => new Response('down', { status: 503 }));
+    await new GymPal({ key: 'k', models: ['a/one:free'], checkModels: true, fetchImpl: open.fetchImpl }).ask([{ role: 'user', content: 'Hi' }]);
+    expect(open.asked.find((call) => call.url === OPENROUTER_URL)!.body.models).toEqual(['a/one:free']);
+  });
+
+  it('picks free models one per maker', () => {
+    expect(freeFromMakers(['a/x:free', 'a/y:free', 'b/z', 'c/w:free'])).toEqual(['a/x:free', 'c/w:free']);
   });
 });
 

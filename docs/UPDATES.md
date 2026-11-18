@@ -9,6 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 180 · GymPal copes with models that think first, or have gone
+
+*18 Nov 2026 · the commit "GymPal: short thinking, the next model on an empty answer, and only models OpenRouter still lists"*
+
+Your two checks showed two more ways GymPal could fail. Before the update, OpenRouter answered 404: one of GymPal's models had been withdrawn, and OpenRouter turns down the whole question when any model in the list has gone. After the update, a model answered with nothing at all. Today's free models think before they answer, and the check gave the answer so little room that the thinking used it all.
+
+- **Short thinking.** GymPal asks models that think first to keep it brief and not send the thinking back, so the answer has room.
+- **The next model on an empty answer.** If one model sends nothing back, GymPal asks the next one, and the server's log says which model and why it stopped.
+- **Only models OpenRouter still lists.** Before asking, the server checks OpenRouter's public list of models (no key needed, read again every 6 hours) and leaves out any that have gone, saying so in its log. If none of its models are left, it asks up to three of the free ones OpenRouter lists, each from a different maker. A withdrawn model can no longer stop GymPal.
+- **`gympal:check` gives the answer as much room as the app does** (it gave 120 words' worth, a fifth of the app's).
+
+- New tests: short thinking is asked for, the next model is asked after an empty answer, a model OpenRouter no longer lists is left out (or free ones are found when none are left), and the list being unreachable changes nothing. All typechecks and tests pass. Not tried with a real key here: run the check on your Mac.
+
 ## Update 179 · Three short videos: the app is coming, the website is out
 
 *18 Nov 2026 · the commit "Three 9:16 shorts of the full app, advertising gymgo.site"*

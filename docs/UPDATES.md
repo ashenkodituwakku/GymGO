@@ -9,6 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 193 · The ads round checked on the screens; the Pro card's × reads
+
+*18 Nov 2026 · the commit "Pro card: its close mark in the secondary grey, like every other close button"*
+
+Updates 190 to 192 (the ads) were new to the screens, so they went through the same checks as everything else, on the website (no ads there: GymGO's own Pro card takes the space, for free accounts only).
+
+- **A scare that wasn't the ads.** The first run found faults on every page. This checkout simply hadn't installed the new ads package (it was in the lockfile already), so the website didn't build. Installed from the lockfile, nothing added: Home and Explore come back clean in all three looks, light and dark, at phone and desktop width.
+- **The Pro card, seen as a free account sees it.** Locally Pro isn't on sale (no Stripe here), so the card hides; for the check, a throwaway free account on the local server and a test that tells the page Pro is on sale (only in the check, nothing in the app). On Home and under Explore's list, in all three looks, light and dark, at 390 and 1280 points:
+  - axe clean on Home, Explore and Profile (36 page loads).
+  - All the card's words pass 4.5:1 on its card.
+  - **Fixed:** its "Not now" × was the only close mark in the light tertiary grey, 2.7:1 on light Frost and Liquid, under the 3:1 a control's mark needs. It's now the secondary grey, like the app's seven other close buttons.
+  - Reached by the keyboard, the card shows its focus ring and only Explore's list scrolls to it; the sheet stays where it was.
+- App tests 612.
+
 ## Update 192 · app-ads.txt on gymgo.site
 
 *18 Nov 2026 · the commit "Website: app-ads.txt with AdMob's line"*

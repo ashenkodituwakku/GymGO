@@ -118,6 +118,16 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **The ads round through the screen checks** (18 Nov). After the merge,
+  run `pnpm install --frozen-lockfile` (react-native-google-mobile-ads is
+  new; without it Metro fails on the config plugin and every page looks
+  broken). The Pro card only shows to free accounts when Pro is on sale;
+  the scratchpad's `contrast-measure.cjs` and `axe-looks.cjs` take
+  `SALE=1` (stubs `/api/billing` to say on sale, in the test only) and
+  `GYMGO_TOKEN` (a local free account); `FOCUS="From GymGO"` scrolls the
+  card into view. Its × is now `labelSecondary`, like the other close
+  buttons.
+
 - **Review form at the largest text** (18 Nov). ReviewsSection's
   `detailRow` wraps, and `detailLabel` has `minWidth: '45%'` so all four
   rows wrap together. Usage scripts in the scratchpad: `writeflow.cjs`

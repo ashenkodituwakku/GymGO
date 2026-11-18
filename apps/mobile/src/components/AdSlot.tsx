@@ -142,7 +142,7 @@ export function AdSlot({ place, style }: { place: AdPlace; style?: object }) {
         hitSlop={10}
         style={({ pressed }) => [styles.close, pressed && { opacity: 0.6 }]}
       >
-        <Icon name="close" size={12} color={color.labelTertiary} />
+        <Icon name="close" size={12} color={color.labelSecondary} />
       </Pressable>
     </View>
   );

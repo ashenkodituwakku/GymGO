@@ -130,15 +130,14 @@ function NoWorkout({ token }: { token: string | null }) {
   const router = useRouter();
   const { prefs } = useApp();
   const [saved, setSaved] = useState<SavedWorkout[] | null>(null);
-  useFocusEffect(
-    useCallback(() => {
-      if (!token) return;
-      api
-        .workouts(token)
-        .then((result) => setSaved(result.workouts))
-        .catch(() => setSaved(null));
-    }, [token]),
-  );
+  const loadSaved = useCallback(() => {
+    if (!token) return;
+    api
+      .workouts(token)
+      .then((result) => setSaved(result.workouts))
+      .catch(() => setSaved(null));
+  }, [token]);
+  useFocusEffect(loadSaved);
   const recent = (saved ?? []).slice(0, 4);
   const details = saved ? libraryDetails(saved) : new Map<string, string>();
   // What to do next, in a tap: on a template, its next day; otherwise your last workout again.
@@ -184,6 +183,22 @@ function NoWorkout({ token }: { token: string | null }) {
             : 'Build one for your gym, make your own, or pick a template (push, pull, legs; 5×5; full body).'}
         </Txt>
       </View>
+      {/* Without the server your last workout and your own can't show: said, rather than looking like a new account. */}
+      {log.error && !last && (
+        <View style={styles.offline}>
+          <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
+            {`${log.error} Your last workout shows here again once it’s back.`}
+          </Txt>
+          <PrimaryButton
+            label="Try again"
+            tone="quiet"
+            onPress={() => {
+              log.reload();
+              loadSaved();
+            }}
+          />
+        </View>
+      )}
       {last && (
         <View style={styles.again}>
           <Txt variant="label" color={color.labelSecondary}>
@@ -1412,6 +1427,7 @@ const styles = themed(() => StyleSheet.create({
   center: { textAlign: 'center' },
   flex: { flex: 1 },
   noWorkout: { flexGrow: 1, justifyContent: 'center', paddingVertical: space[8], gap: space[5] },
+  offline: { alignSelf: 'stretch', gap: space[2] },
   noWorkoutHead: { alignItems: 'center', gap: space[3], paddingHorizontal: space[2] },
   savedList: { gap: space[2] },
   savedHeader: { paddingHorizontal: space[4], letterSpacing: 0.3 },

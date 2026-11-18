@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 207 · Without the server: every page says so; Train did not
+
+*18 Nov 2026 · the commit "Train: say why your last workout is missing when the server can't be reached, with Try again"*
+
+The app was tried signed in with the GymGO server cut off, as on a dropped connection, page by page.
+
+- **What it does well.** Saved shows the device's copy and says the server isn't reachable. Profile says "Can't reach GymGO. You're still signed in." with Try again. Explore's map is marked as an offline copy. Progress says it couldn't reach the server for your log. A gym's page says its members' photos didn't load. Home keeps its widgets, with "No forecast just now". No page broke.
+- **Fixed: Train looked like a new account.** Without the server, your last workout and your own workouts can't load, and Train quietly showed the first-time screen, as if they'd gone. It now says the same as Progress, "Couldn't reach the GymGO server for your log. Your last workout shows here again once it's back.", with Try again, which loads both again.
+- Checked in the browser with the server's requests refused: the note and Try again show; with the server back, Try again brings back "Do it again" and your workouts, and the note goes. (The first try was a false all-clear: in development the app reaches the server through Metro's own address, which the test hadn't cut off.) App tests 617.
+
 ## Update 206 · Pop-ups: no invisible stop behind them, and GymPal gives focus back
 
-*18 Nov 2026 · the commit "Backdrops that are never a keyboard stop; GymPal returns focus to what opened him"*
+*18 Nov 2026 · `34ee181`*
 
 The same open-and-Escape check, on the pop-ups: the sort and time choices on Explore, and GymPal.
 

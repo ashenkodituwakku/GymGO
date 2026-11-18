@@ -118,6 +118,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Offline checks** (18 Nov). In development the web app reaches the
+  server through Metro at `/_gymgo/api/`, so a test that cuts the server
+  off must block that path too (scratchpad `offline.cjs` does). Train's
+  NoWorkout shows `log.error` with Try again (reloads the log and saved
+  workouts).
+
 - **Backdrop** (18 Nov). components/Backdrop.tsx: a tap-to-close area
   that's a responder View on the web (no tabindex; RNW Pressables always
   get one) and a Pressable on phones. Use it for any scrim. GymPal keeps

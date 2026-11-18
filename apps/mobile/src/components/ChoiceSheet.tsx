@@ -11,6 +11,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Backdrop } from './Backdrop';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDialogName } from '@/lib/dialogName';
@@ -72,7 +73,7 @@ export function ChoiceSheet<K extends string>({
     <Modal visible transparent animationType="none" onRequestClose={close} statusBarTranslucent navigationBarTranslucent>
       <View style={styles.root} ref={dialogName}>
         <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dim]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={close} accessible={false} />
+          <Backdrop style={StyleSheet.absoluteFill} onPress={close} />
         </Animated.View>
         <Animated.View style={[styles.column, { paddingBottom: insets.bottom + space[2] }, rise]} accessibilityViewIsModal>
           <View style={styles.group} role="radiogroup" accessibilityLabel={title}>

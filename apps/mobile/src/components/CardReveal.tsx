@@ -20,6 +20,7 @@
 import { BlurView } from 'expo-blur';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
+import { Backdrop } from './Backdrop';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { ReduceMotion, runOnJS, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
@@ -158,7 +159,7 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
       <View style={styles.root} ref={dialogName}>
         {/* The page stays in view behind, dimmed; a tap on it closes the pop-up. */}
         <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dim]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={close} accessible={false} />
+          <Backdrop style={StyleSheet.absoluteFill} onPress={close} />
         </Animated.View>
 
         <View style={[styles.centre, { paddingTop: insets.top + space[3], paddingBottom: insets.bottom + space[3] }, CHILD_TOUCH]}>

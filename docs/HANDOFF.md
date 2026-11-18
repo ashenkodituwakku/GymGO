@@ -118,6 +118,13 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Backdrop** (18 Nov). components/Backdrop.tsx: a tap-to-close area
+  that's a responder View on the web (no tabindex; RNW Pressables always
+  get one) and a Pressable on phones. Use it for any scrim. GymPal keeps
+  the last focused element outside `[aria-modal]` and restores it (or its
+  `data-gympal-launcher`) once the Modal has left. Scratchpad `popups.cjs`
+  runs open → Tab → Escape for any opener.
+
 - **Desktop side panels and focus** (18 Nov). explore.tsx: one effect on
   `[wide, panel, selectedId]` records the opener (the focused element,
   unless it's inside the panel), focuses `sidePanel` (tabIndex -1, quiet

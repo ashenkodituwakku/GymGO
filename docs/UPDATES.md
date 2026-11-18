@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 206 · Pop-ups: no invisible stop behind them, and GymPal gives focus back
+
+*18 Nov 2026 · the commit "Backdrops that are never a keyboard stop; GymPal returns focus to what opened him"*
+
+The same open-and-Escape check, on the pop-ups: the sort and time choices on Explore, and GymPal.
+
+- **Fixed: an invisible stop behind the pop-ups.** The area behind GymPal, the sort and time choices, Home's widget tray and the card reveal (a tap there closes them) was a button to the keyboard in a browser, because React Native Web gives every Pressable a tab stop. So a pop-up's focus trap landed on it first, with a focus ring round the whole screen, Tab stopped there, and Enter on it closed the pop-up. It's now a plain area that answers a tap (a new `Backdrop`). Opening the sort choice puts focus on its first option, "Best match", and Tab in GymPal goes from its text box to Close. Phones keep what they had.
+- **Fixed: closing GymPal lost focus.** Escape left focus nowhere (on the page itself). The Modal does try to put it back, but it noted the text box, which had already taken focus and leaves with him. GymPal now keeps track of what last had focus outside it and returns there once he's fully gone: his button (drawn afresh as he closes) or the Ask GymPal row on Profile.
+- Checked in the browser at 390 and 1280: sort, time and GymPal each take focus inside, Tab stays in them, and Escape returns to what opened them. A tap or click on the area behind still closes them. axe is clean with each one open. App tests 617.
+
 ## Update 205 · Filters on a computer take focus too
 
-*18 Nov 2026 · the commit "Explore on a computer: Filters take focus as they open, the same way as a gym's card"*
+*18 Nov 2026 · `3b7fc09`*
 
 Straight after Update 204, the same check on Filters: on a computer they open in the side panel, but focus stayed on the Filters button, so Tab went on to "Your account", and Escape left focus where it was.
 

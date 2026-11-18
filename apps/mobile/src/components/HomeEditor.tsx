@@ -16,6 +16,7 @@
 
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Modal, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Backdrop } from './Backdrop';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
@@ -554,7 +555,7 @@ export function WidgetGallery({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <View style={StyleSheet.absoluteFill} ref={dialogName}>
-        <Pressable style={[StyleSheet.absoluteFill, styles.scrim]} onPress={onClose} accessible={false} importantForAccessibility="no" />
+        <Backdrop style={[StyleSheet.absoluteFill, styles.scrim]} onPress={onClose} />
         <View style={[styles.sheet, { top, height: height - top }]} accessibilityViewIsModal>
           <View style={styles.sheetHead}>
             <View style={styles.flex}>

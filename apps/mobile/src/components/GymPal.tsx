@@ -58,6 +58,7 @@ import {
   type TextInputKeyPressEvent,
   type ScrollViewInstance,
 } from 'react-native';
+import { Backdrop } from './Backdrop';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   FadeIn,
@@ -282,6 +283,39 @@ export function GymPal() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // In a browser, focus goes back to what opened him (his button, a page's Ask GymPal) when he closes.
+  // The Modal tries, but it notes what had focus after his text box took it, and that box goes with him.
+  const lastOutside = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const onIn = (event: FocusEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target || typeof target.closest !== 'function' || target.closest('[aria-modal="true"]')) return;
+      lastOutside.current = target;
+    };
+    document.addEventListener('focusin', onIn);
+    return () => document.removeEventListener('focusin', onIn);
+  }, []);
+  const wasOpen = useRef(open);
+  useEffect(() => {
+    const was = wasOpen.current;
+    wasOpen.current = open;
+    if (!was || open || Platform.OS !== 'web' || typeof requestAnimationFrame === 'undefined') return;
+    const back = lastOutside.current;
+    // Once the Modal has really gone: while it's leaving, its focus trap pulls focus back in (to Close).
+    // His own button is drawn again as he closes (a new one, so the old has gone): that one, then.
+    let frames = 0;
+    const settle = () => {
+      if (document.querySelector('[aria-modal="true"]') && frames++ < 40) {
+        requestAnimationFrame(settle);
+        return;
+      }
+      const target = back?.isConnected ? back : (document.querySelector('[data-gympal-launcher]') as HTMLElement | null);
+      target?.focus({ preventScroll: true });
+    };
+    requestAnimationFrame(settle);
+  }, [open]);
+
   const startOver = () => {
     haptic.select();
     setLines([]);
@@ -352,6 +386,9 @@ export function GymPal() {
   );
 }
 
+/** Marks his corner button and edge tab in a browser, so focus can find the new one after he closes. */
+const LAUNCHER_MARK = { dataSet: { gympalLauncher: '' } } as object;
+
 /**
  * GymPal's logo, the dumbbell in its bubble lifting now and then: once,
  * soon after it appears, and each time `cheer` goes up (the chat opening,
@@ -397,6 +434,7 @@ function Launcher({ bottom, side, edge, onPress }: { bottom: number; side: 'righ
           onPressOut={press.onPressOut}
           accessibilityRole="button"
           accessibilityLabel="Ask GymPal"
+          {...LAUNCHER_MARK}
           accessibilityHint={Platform.OS === 'web' ? `Opens a chat with GymGO’s AI assistant. ${GYMPAL_KEYS} opens it too` : 'Opens a chat with GymGO’s AI assistant'}
           style={styles.launcherHit}
         >
@@ -463,6 +501,7 @@ function EdgeTab({ bottom, side, edge, onOpen }: { bottom: number; side: 'right'
             }}
             accessibilityRole="button"
             accessibilityLabel="Ask GymPal"
+            {...LAUNCHER_MARK}
             accessibilityHint={Platform.OS === 'web' ? `Opens a chat with GymGO’s AI assistant. ${GYMPAL_KEYS} opens it too` : 'Opens a chat with GymGO’s AI assistant'}
             hitSlop={{ top: 6, bottom: 6, left: right ? 10 : 0, right: right ? 0 : 10 }}
             style={({ pressed }) => [styles.edgeTabHit, right ? styles.edgeTabHitRight : styles.edgeTabHitLeft, pressed && styles.pressed]}
@@ -565,7 +604,7 @@ function Chat({
     <View style={StyleSheet.absoluteFill} ref={dialogName}>
       {/* Tapping outside closes it, as any sheet; a screen reader closes it with Close. */}
       <Animated.View entering={FadeIn.duration(180).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System)} style={StyleSheet.absoluteFill}>
-        <Pressable style={[StyleSheet.absoluteFill, styles.scrim, wide && styles.scrimLight]} onPress={onClose} accessible={false} importantForAccessibility="no" />
+        <Backdrop style={[StyleSheet.absoluteFill, styles.scrim, wide && styles.scrimLight]} onPress={onClose} />
       </Animated.View>
       <Animated.View
         entering={FadeInDown.duration(260).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System)}

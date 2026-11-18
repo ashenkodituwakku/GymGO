@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 198 · Another country without Pro: the card reads in light
+
+*18 Nov 2026 · the commit "Explore: the Pro-country card on the list's own card, the accent on its badge"*
+
+The last of the free plan's limits, tried as an Australian free account: Paris typed into Explore's search.
+
+- **It does the right thing.** The map goes to Paris, the list says "In France, with GymGO Pro", and a card explains it: "Gyms in France are part of GymGO Pro. GymGO Free covers Australia, the country you chose, with every gym in it." It offers See GymGO Pro and Back to Australia. axe was clean at phone and desktop width.
+- **Fixed: the card's words were just under 4.5:1 in light.** The card was an accent wash, and its grey words (4.42) and the quiet "Back to Australia" button (a second wash on the first, 4.43) fell short in all three looks. It's now on the list's own card, inset like the list, with the accent on the round badge behind the globe. It's the same build as the trip page's card for the same case.
+- Checked: every word on it over 4.5:1 in all three looks, light and dark, at 390 and 1280 (at 390 only the card's top shows above the fold of the half-open sheet; the measure there reads the part under the tab bar, as usual); axe clean; app tests 617.
+
 ## Update 197 · Space ticks a box on the website
 
-*18 Nov 2026 · the commit "Website: Space presses ticks, choices, switches and tabs, not only Enter"*
+*18 Nov 2026 · `761e927`*
 
 The free account's compare limit was tried with the keyboard: tick two saved gyms, Compare, then tick a third.
 

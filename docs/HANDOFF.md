@@ -118,6 +118,13 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Pro-country card on Explore** (18 Nov). ResultsContent's `lock` is
+  now `cardGlass` + `shadow.card`, inset by `space[4]` like the list,
+  with the accent on `lockBadge`. A quiet button (brandTint) on a
+  brandTint card stacks two washes, which `brandOnTint` isn't worked out
+  for; keep tinted buttons on cards. Scratchpad `abroadflow.cjs` types
+  Paris as a free account; the measure takes `FILL` + `PRESS=Enter`.
+
 - **Space presses checkboxes on the web** (18 Nov). RNW's PressResponder
   takes Space only for role="button"; lib/spaceKey.ts (installed once from
   the root layout, web only) clicks a focused checkbox, radio, switch,

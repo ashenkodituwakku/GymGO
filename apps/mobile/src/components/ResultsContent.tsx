@@ -596,12 +596,18 @@ function GymGlyph({ location }: { location: GymLocation }) {
 }
 
 const styles = themed(() => StyleSheet.create({
+  // The list's own card, with the accent on the badge: on an accent wash the
+  // grey words and the quiet button (a second wash on the first) fell just
+  // under 4.5 to 1 in light (4.42 and 4.43).
   lock: {
+    marginHorizontal: space[4],
     alignItems: 'center',
     gap: space[2],
     padding: space[5],
     borderRadius: radius.lg,
-    backgroundColor: color.brandTint,
+    borderCurve: 'continuous',
+    backgroundColor: color.cardGlass,
+    ...shadow.card,
   },
   lockBadge: {
     width: 44,
@@ -609,7 +615,7 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: color.card,
+    backgroundColor: color.brandTint,
   },
   lockTitle: { textAlign: 'center' },
   lockText: { textAlign: 'center' },

@@ -114,6 +114,15 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Thousands comma; the sidebar's tint** (18 Nov). training.ts has
+  `decimalPoint()`: a comma before groups of three digits is a thousands
+  separator, any other comma is decimal. Use it for any new number box.
+  `inksOnWashes` also checks over the three glass layers (over the page,
+  plus `sheenLift`). The sidebar's chosen item, Programme's `goalOn` and
+  Appearance's `sampleOn` text use `brandOnTint`.
+  `scratchpad/contrast-sidebar.cjs` runs the screen measure with
+  `layout: 'sidebar'`.
+
 - **Contrast on the glass looks** (18 Nov). The audit lives in the scratchpad
   (`contrast-measure.cjs`). It hides axe's "needs review" text, screenshots
   what's behind it, and samples a grid per text box. Rules from it:

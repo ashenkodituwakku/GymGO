@@ -670,9 +670,19 @@ export interface DraftSet {
   rpe?: number;
 }
 
-/** "62.5", "62,5" or " 135 " → the number; blank → null (body weight); anything else → undefined. */
+/**
+ * A typed number's comma, read as people write it: "62,5" and "2,25" are a
+ * decimal comma, but a comma before groups of three digits groups them, so
+ * "1,000" and "1,200.5" are over a thousand (a pound workout's leg press).
+ * Read as a point, "1,000" was 1, and 1 is a weight, so nothing said so.
+ */
+function decimalPoint(text: string): string {
+  return /^\d{1,3}(,\d{3})+(\.\d+)?$/.test(text) ? text.replace(/,/g, '') : text.replace(',', '.');
+}
+
+/** "62.5", "62,5", "1,000" or " 135 " → the number; blank → null (body weight); anything else → undefined. */
 export function parseWeight(text: string): number | null | undefined {
-  const clean = text.trim().replace(',', '.');
+  const clean = decimalPoint(text.trim());
   if (!clean) return null;
   if (!/^\d{1,4}(\.\d{1,2})?$/.test(clean)) return undefined;
   const value = Number(clean);
@@ -681,15 +691,15 @@ export function parseWeight(text: string): number | null | undefined {
 
 /**
  * What was typed in a weight box, tidied into a plain number in your unit,
- * accepting what people type rather than refusing it: "62.5 kg", "62,5kg"
- * and "100." read as 62.5, 62.5 and 100; "135 lb" in a kg workout (or
+ * accepting what people type rather than refusing it: "62.5 kg", "62,5kg",
+ * "1,000 lb" and "100." read as 62.5, 62.5, 1000 and 100; "135 lb" in a kg workout (or
  * "60 kg" in a pound one) is converted, to a tenth. Anything that still
  * isn't a weight comes back as typed, so the box's own hint shows.
  */
 export function tidyWeight(text: string, unit: WeightUnit): string {
-  let clean = text.trim().toLowerCase().replace(',', '.');
+  let clean = text.trim().toLowerCase();
   const named = /\s*(kgs?|kilos?|kilograms?)$/.exec(clean) ? 'kg' : /\s*(lbs?|pounds?)$/.exec(clean) ? 'lb' : null;
-  clean = clean.replace(/\s*(kgs?|kilos?|kilograms?|lbs?|pounds?)$/, '').replace(/\.$/, '').trim();
+  clean = decimalPoint(clean.replace(/\s*(kgs?|kilos?|kilograms?|lbs?|pounds?)$/, '').trim()).replace(/\.$/, '');
   if (!/^\d{1,4}(\.\d+)?$/.test(clean)) return text;
   let value = Number(clean);
   if (named && named !== unit) value = named === 'lb' ? value / LB_PER_KG : value * LB_PER_KG;
@@ -698,10 +708,11 @@ export function tidyWeight(text: string, unit: WeightUnit): string {
   return String(value);
 }
 
-/** What was typed in a reps box, tidied: "8 reps", "8x" or "x8" read as 8. Anything else comes back as typed. */
+/** What was typed in a reps box, tidied: "8 reps", "8x", "x8" or "08" read as 8. Anything else comes back as typed. */
 export function tidyReps(text: string): string {
   const clean = text.trim().toLowerCase().replace(/^[x×]\s*/, '').replace(/\s*(reps?|[x×])$/, '').trim();
-  return /^\d{1,3}$/.test(clean) ? clean : text;
+  // "08" is 8.
+  return /^\d{1,3}$/.test(clean) ? String(Number(clean)) : text;
 }
 
 /** Whole reps, 0 to 200; anything else → undefined. */

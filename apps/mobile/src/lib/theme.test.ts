@@ -365,6 +365,22 @@ describe('words on Standard\'s glow', () => {
   });
 });
 
+describe('words on a tint over glass', () => {
+  it('keeps the accent readable on its tint in the sidebar and bars, under their sheen', () => {
+    for (const look of ['standard', 'frost', 'liquid'] as const) {
+      for (const scheme of ['light', 'dark'] as const) {
+        for (const accent of ACCENT_IDS) {
+          const palette = paletteFor(scheme, accent, look, GLASS_DEFAULT);
+          for (const wash of [palette.glassWashThin, palette.glassWashThick, palette.glassWashBar]) {
+            const bar = mix(over(palette.groupedBackground, wash), '#FFFFFF', sheenLift(scheme, GLASS_DEFAULT));
+            expect(contrast(palette.brandOnTint, over(bar, palette.brandTint)), `${look} ${scheme} ${accent}`).toBeGreaterThanOrEqual(4.5);
+          }
+        }
+      }
+    }
+  });
+});
+
 describe('shadowUnder', () => {
   it('keeps only the shadow cast, not a look\'s face', () => {
     applyTheme('light', FREE_ACCENT, 'liquid', GLASS_DEFAULT, 'black');

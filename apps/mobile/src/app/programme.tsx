@@ -116,7 +116,7 @@ function Chooser() {
                 accessibilityLabel={`${option.label}: ${option.blurb}`}
                 style={({ pressed }) => [styles.goal, on && styles.goalOn, pressed && styles.pressed]}
               >
-                <Txt variant="headline" color={on ? color.brand : color.label}>
+                <Txt variant="headline" color={on ? color.brandOnTint : color.label}>
                   {option.label}
                 </Txt>
                 <Txt variant="footnote" color={color.labelSecondary}>

@@ -409,7 +409,7 @@ export default function AppearanceScreen() {
                   style={({ pressed }) => [styles.sizeTile, pressed && { opacity: 0.75 }]}
                 >
                   <View style={[styles.sizeFace, on && styles.sampleOn]}>
-                    <Txt style={[face('semibold'), { fontSize: Math.round(22 * size.scale), lineHeight: Math.round(28 * size.scale) }]} color={on ? color.brand : color.label} maxFontSizeMultiplier={1}>
+                    <Txt style={[face('semibold'), { fontSize: Math.round(22 * size.scale), lineHeight: Math.round(28 * size.scale) }]} color={on ? color.brandOnTint : color.label} maxFontSizeMultiplier={1}>
                       Aa
                     </Txt>
                   </View>
@@ -845,7 +845,7 @@ export default function AppearanceScreen() {
                 style={({ pressed }) => [styles.darkStyle, pressed && { opacity: 0.75 }]}
               >
                 <View style={[styles.clockFace, on && styles.sampleOn]}>
-                  <Txt variant="title2" color={on ? color.brand : color.label} style={face('bold')}>
+                  <Txt variant="title2" color={on ? color.brandOnTint : color.label} style={face('bold')}>
                     {clock.time}
                   </Txt>
                   <Txt variant="caption" color={color.labelSecondary}>

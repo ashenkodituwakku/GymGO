@@ -11,6 +11,24 @@ describe('reading what people type (accept messy, keep clean)', () => {
     expect(parseWeight(tidyWeight('62.5 KG', 'kg'))).toBe(62.5);
   });
 
+  it('reads a comma before groups of three as a thousands comma, not a decimal one', () => {
+    expect(tidyWeight('1,000', 'lb')).toBe('1000');
+    expect(tidyWeight('1,000 lbs', 'lb')).toBe('1000');
+    expect(tidyWeight('1,200.5 lb', 'lb')).toBe('1200.5');
+    expect(parseWeight('1,000')).toBe(1000);
+    // A decimal comma is still one.
+    expect(tidyWeight('2,25 kg', 'kg')).toBe('2.25');
+    expect(tidyWeight('100,0', 'kg')).toBe('100');
+    expect(parseWeight('62,5')).toBe(62.5);
+    // Three places after a comma is a thousand, never a silent 62.5: over the limit, so the box says so.
+    expect(parseWeight(tidyWeight('62,500', 'kg'))).toBeUndefined();
+  });
+
+  it('drops the zeros in front of reps', () => {
+    expect(tidyReps('08')).toBe('8');
+    expect(tidyReps('0')).toBe('0');
+  });
+
   it('converts a weight typed in the other unit, to a tenth', () => {
     expect(tidyWeight('135 lb', 'kg')).toBe('61.2');
     expect(tidyWeight('60 kg', 'lb')).toBe('132.3');

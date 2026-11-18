@@ -486,10 +486,15 @@ export function glassLevelName(level: number): string {
  * The inks for words on a wash of colour: the accent on its own tint (a
  * quiet button) and secondary words on the grey fill (a tile), each over
  * the page's ground and over a card. A see-through card is skipped:
- * readable() leaves out a ground it can't read.
+ * readable() leaves out a ground it can't read. And over the glass of the
+ * sidebar, bars and sheets, under the light of its sheen (`lift` of white):
+ * in dark that glass is lighter than a card, and the sidebar's chosen place
+ * came to 4.1 on its tint.
  */
-function inksOnWashes(palette: Palette, scheme: Scheme, more: string[] = []): void {
-  const grounds = (wash: string) => [palette.groupedBackground, palette.card, ...more].map((ground) => over(ground, wash));
+function inksOnWashes(palette: Palette, scheme: Scheme, more: string[] = [], lift = 0): void {
+  const glass = [palette.glassWashThin, palette.glassWashThick, palette.glassWashBar].map((wash) => over(palette.groupedBackground, wash));
+  const lit = lift > 0 ? glass.map((bar) => mix(bar, '#FFFFFF', lift)) : [];
+  const grounds = (wash: string) => [palette.groupedBackground, palette.card, ...more, ...glass, ...lit].map((ground) => over(ground, wash));
   palette.brandOnTint = readable(palette.brand, grounds(palette.brandTint), scheme, 4.6);
   palette.labelSecondaryOnFill = readable(palette.labelSecondary, grounds(palette.fill), scheme, 4.6);
 }
@@ -519,7 +524,7 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
   const lift = (raised: string) => (scheme === 'dark' ? mix(raised, '#FFFFFF', 0.18) : raised);
   palette.segmentRaised = lift(palette.cardRaised);
   // A tile or a quiet button sits on a card that is glass over that glow.
-  inksOnWashes(palette, scheme, glow ? [glow, mix(glow, palette.card, see)] : []);
+  inksOnWashes(palette, scheme, glow ? [glow, mix(glow, palette.card, see)] : [], sheenLift(scheme, glass));
   if (!surfaces) return palette;
   Object.assign(palette, surfaces);
   palette.plate = palette.card;
@@ -537,13 +542,13 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
   // the deepest of the page's blues.
   const plates = LOOKS[look].plates?.[scheme];
   if (!plates || cleanGlass(glass) === 0) {
-    inksOnWashes(palette, scheme, tones);
+    inksOnWashes(palette, scheme, tones, sheenLift(scheme, glass));
     return palette;
   }
   const at = clearestReadable(palette, tones, levelAlpha(glass, plates.balanced, plates.clearest), sheen);
   palette.plate = at === 1 ? palette.card : alpha(palette.card, at);
   palette.plateSolid = mix(surfaces.groupedBackground, palette.card, at);
-  inksOnWashes(palette, scheme, [...tones, ...tones.map((tone) => mix(tone, palette.card, at))]);
+  inksOnWashes(palette, scheme, [...tones, ...tones.map((tone) => mix(tone, palette.card, at))], sheenLift(scheme, glass));
   return palette;
 }
 

@@ -9,9 +9,25 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 182 · "1,000 lb" is a thousand, and the sidebar's chosen place reads in dark
+
+*18 Nov 2026 · the commit "Weights: a thousands comma; the sidebar's chosen place and tinted tiles readable"*
+
+- **A comma before three digits now groups them.** Update 169 let weight boxes read "62,5" as 62.5, but it read every comma as a decimal point. So "1,000" in a pound workout (a leg press) was logged as 1 lb, and 1 is a valid weight, so nothing said otherwise.
+  - Now "1,000" and "1,200.5" read as a thousand and more, while "62,5" and "2,25" are still decimals.
+  - "62,500" isn't quietly read as 62.5: it's over the limit, so the box shows its hint.
+  - Reps typed as "08" tidy to 8.
+  - This is the one reader behind the workout's sets, 1-rep max, the plate calculator and body weight. In the plate calculator, in a pound account: "1,000" now gives ten 45s, a 25 and a 2.5 a side; "62,5" reads 62.5; "225 lbs" reads 225. Body measurements were already safe: "1,000" there shows the hint.
+- **The sidebar was checked too.** None of the earlier audits had it on.
+  - axe ran on 72 pages with the sidebar (Standard, Frost and Liquid, light and dark, 390 and 1280 points), with no violations. Then the words axe couldn't judge were measured from the screen.
+  - In dark, the chosen place (the accent on its sliding pill) was 3.3 to 1 in Standard and 4.4 in Frost. It now uses the accent made for a tint.
+  - That colour is now also checked over the glass of the sidebar, bars and sheets, under the light of their sheen. In dark that glass is lighter than a card, which was all it had been checked on.
+  - The chosen goal on Training programme and the chosen sample faces in Appearance (text size, dark style) sit on the same tint, and now use it too.
+- Sidebar pages afterwards: no text under 4.5 to 1. New tests for the thousands comma, the zeros, and the accent on its tint over every glass layer in every look. App tests 607.
+
 ## Update 181 · Words on the glass looks, measured and made readable
 
-*18 Nov 2026 · the commit "Contrast on the glass looks: grey on the glow, the accent on its tint, Liquid's Build card"*
+*18 Nov 2026 · `683f22f`*
 
 - The merge brought nineteen rounds of see-through glass (Standard's clearer cards, Frost, Liquid). This round checked their words.
   - axe ran on Home, Profile, Progress, Appearance, a gym's page and Explore, in Standard, Frost and Liquid, light and dark, at 390 and 1280 points. That's 72 pages, with no violations.

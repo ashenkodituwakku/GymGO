@@ -261,7 +261,12 @@ your accent glows behind them.
   once you're on a plan (the next day of the template you did last, with a
   Start button), your next trip if there is one, **Machines** and **Trips**
   (below), gyms near you, your saved and recently viewed gyms, then
-  neighbourhoods and other cities as chips.
+  neighbourhoods and other cities as chips. In a browser, with a mouse or
+  trackpad, the card under the pointer drifts a few points towards it and
+  lifts, and in a glass look (Standard, Frost, Liquid) a light follows the
+  pointer across it, behind its words, with its rim catching the light
+  nearest the pointer. With Reduce motion on, the cards stay put and only
+  the light moves.
 - **Explore**: the map with the results sheet, filters, and sorting (best
   match, closest, cheapest, top rated). "Best match" means: gyms that meet
   everything you asked first, then, among the rest, the ones with the fewest

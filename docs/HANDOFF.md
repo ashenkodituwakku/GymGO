@@ -106,6 +106,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Hover on Home** (18 Nov). components/hoverShine.web.ts: `useHoverShine`
+  on a zone (Home's page) finds the card under a mouse (nearest pressable
+  with a background, gradient or box shadow; `wrapped` looks through bare
+  link wrappers, as GymCard has; or a surfaced parent up to two steps out),
+  marks it `data-shine`/`data-shining` and sets `--gg-mx/my/dx/dy`; CSS in
+  the same file does the drift (`translate`) and, under
+  `html[data-gg-glass]` (synced from `solidSurfaces()`), the light and rim.
+  To add it to another page, give its root a ref and call the hook.
 - **Frosted glass, Liquid look, sidebar seam** (18 Nov). With the sidebar
   docked, `ClearOfSidebar` (Sidebar.tsx) draws the page's ground
   (`ambientGlow()` over `groupedBackground`) the window's width and provides

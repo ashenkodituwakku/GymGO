@@ -9,6 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 172 · Home's cards answer the mouse
+
+*18 Nov 2026 · the commit "Home's cards drift towards the mouse and catch the light"*
+
+You asked for Home's cards to move as the pointer passes over them, or to catch a Liquid Glass shine. They now do both, in a browser with a mouse or trackpad:
+
+- **They move.** The card under the pointer lifts 2 points and drifts up to 3 points towards it, easing back when the pointer leaves.
+- **They shine** in a glass look (Standard, Frost, Liquid). A soft light follows the pointer across the card's face, and the card's rim catches the light nearest the pointer, as Liquid Glass does. The light sits behind the card's words and pictures, so text never washes out under it (a first try put it on top, and a gym card's name went grey). It's fainter in dark mode. The solid looks (8-bit, Paper and the rest) keep their flat plates and only move.
+- **Where:** every card, tile and chip on Home: the quick searches, Build a workout, the templates card, Machines and Trips, the weather, the widgets, gym cards, and the place and city chips. A text link (Map) and bare icons are left alone. A row inside a card (Templates) lights the card it sits in. It's off while you're rearranging Home.
+- **Reduce motion** (yours in Appearance, or the system's): the cards stay put and only the light moves.
+- Touch screens have no hover, so phones and the app are unchanged.
+
+- Checked in the browser at 1280 points in Liquid and Frost (light), Standard (dark) and Paper: the right card is picked under the pointer (not the Map link or the gap between cards), it moves and shines, Paper moves without the shine, and with Reduce motion the cards stay still. All typechecks and tests pass.
+
 ## Update 171 · More frosted glass, a Liquid Glass look, and no seam beside the sidebar
 
 *18 Nov 2026 · the commit "More frosted glass, a Liquid look, and the page running on under the sidebar"*

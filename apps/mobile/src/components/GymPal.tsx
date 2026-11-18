@@ -678,8 +678,8 @@ function Chat({
                 <Toggle value={log.on} onValueChange={(on) => log.set(on)} accessibilityLabel="Let GymPal see my training log" />
               ) : (
                 <Pressable onPress={onPro} accessibilityRole="button" accessibilityLabel="See GymGO Pro" style={styles.proPill} hitSlop={6}>
-                  <Icon name="lock" size={11} color={color.brand} />
-                  <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                  <Icon name="lock" size={11} color={color.brandOnTint} />
+                  <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
                     Pro
                   </Txt>
                 </Pressable>

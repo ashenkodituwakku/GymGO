@@ -156,7 +156,7 @@ export default function Profile() {
             {meStats.map((stat, at) => (
               <View key={stat.label} style={[styles.meStat, at > 0 && styles.meStatLine]}>
                 <Txt variant="figure">{stat.value}</Txt>
-                <Txt variant="caption" color={color.labelSecondary}>
+                <Txt variant="caption" color={color.labelSecondaryOnFill}>
                   {stat.label}
                 </Txt>
               </View>
@@ -393,7 +393,7 @@ function Badge({ label, strong = false }: { label: string; strong?: boolean }) {
   return (
     <View style={[styles.badge, strong && styles.badgeStrong]}>
       {strong && <BrandFill round={radius.pill} />}
-      <Txt variant="eyebrow" color={strong ? color.onBrand : color.labelSecondary}>
+      <Txt variant="eyebrow" color={strong ? color.onBrand : color.labelSecondaryOnFill}>
         {label}
       </Txt>
     </View>

@@ -9,9 +9,25 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 180 · Words on the glass looks, measured and made readable
+
+*18 Nov 2026 · the commit "Contrast on the glass looks: grey on the glow, the accent on its tint, Liquid's Build card"*
+
+- The merge brought nineteen rounds of see-through glass (Standard's clearer cards, Frost, Liquid). This round checked their words.
+  - axe ran on Home, Profile, Progress, Appearance, a gym's page and Explore, in Standard, Frost and Liquid, light and dark, at 390 and 1280 points. That's 72 pages, with no violations.
+  - But axe can't judge text on glass or gradients, and it left 2,644 such words to check by hand. So each was measured from the screen itself: its text hidden, what's behind sampled across its box, and the worst point counted.
+- After setting aside icons and rows under the tab bar, 53 words were under WCAG AA's 4.5 to 1. All 53 are now at 4.5 or more. What was wrong, and the fix:
+  - **Liquid's Build a workout card** was 2.6 to 1. It took a clear card's face (a white sheen across its corner and a soft light inside), which washed out its white words. It now keeps only its shadow (`shadowUnder` in the theme). The shine on filled buttons now fades sooner, so it's gone before the words start.
+  - **Grey words straight on Standard's page** were 4.3 to 4.45: Home's date, Profile's and Appearance's headings and footnotes. They had only been checked against the plain page, not the glow of your accent behind it. The grey is now checked against that glow too: one step darker on Indigo (#6C6C70 to #67676A), two on the darker accents. Your accent and the faint grey are unchanged.
+  - **The accent on its own tint** was 4.1 to 4.46 ("Add one", "Aim for 3 a week", Pro tags, Swap, Rest, Plates, and other quiet pills). The colour made for this existed, but only one button used it. The 76 places on a tint now use it, and it's now checked against a glass card over the glow as well.
+  - **Grey on a grey tile** was 4.33 to 4.39: Profile's counts and Moderator badge, a gym's membership tiles, and Home's search box. These now use the grey made for tiles, checked the same way.
+  - **Progress's weekday letters** (M, W, F, S) were 3.1 to 1, in the faint grey that's meant for what needn't be read. They're now secondary grey.
+- New tests check the grey on the glow, the accent on its tint, and grey on a tile, for every accent, light and dark, and `shadowUnder`. App tests 604.
+- Not changed: text boxes' placeholders keep the faint grey, as on iPhone. The Call button of a gym with no phone number stays grey, as it's switched off.
+
 ## Update 179 · Three short videos: the app is coming, the website is out
 
-*18 Nov 2026 · the commit "Three 9:16 shorts of the full app, advertising gymgo.site"*
+*18 Nov 2026 · `5fb2309`*
 
 - You asked for the explainer-video skills from iart-ai/explainer-video-skills, and for three short vertical videos showing GymGO that advertise the limited version, out now at gymgo.site, and say the app is coming soon. Then: footage from the real app, not the limited website.
 - The five skills are in `.claude/skills/` (MIT, with their notice and licence). One line of their probe script was fixed, as ffprobe 6 wrote a trailing comma that failed a correct file.

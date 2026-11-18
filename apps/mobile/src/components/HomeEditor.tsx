@@ -83,7 +83,7 @@ export function EmptyWidget({ id }: { id: HomeWidgetId }) {
   return (
     <View style={styles.empty}>
       <View style={styles.tile}>
-        <Icon name={widget.icon} size={16} color={color.brand} />
+        <Icon name={widget.icon} size={16} color={color.brandOnTint} />
       </View>
       <View style={styles.flex}>
         <Txt variant="subhead" style={face('semibold')}>
@@ -505,7 +505,7 @@ export function EditBar({ onAdd, onDone }: { onAdd: () => void; onDone: () => vo
           hitSlop={6}
           style={({ pressed }) => [styles.plus, pressed && styles.pressed]}
         >
-          <Icon name="plus" size={18} color={color.brand} weight="bold" />
+          <Icon name="plus" size={18} color={color.brandOnTint} weight="bold" />
         </Pressable>
         <Txt variant="caption" color={color.labelSecondary} style={styles.flex} numberOfLines={2}>
           Hold a widget to move it. − takes it off.
@@ -629,8 +629,8 @@ export function WidgetGallery({
               accessibilityRole="button"
               style={({ pressed }) => [styles.reset, pressed && styles.pressed]}
             >
-              <Icon name="refresh" size={14} color={color.brand} />
-              <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+              <Icon name="refresh" size={14} color={color.brandOnTint} />
+              <Txt variant="subhead" color={color.brandOnTint} style={face('semibold')}>
                 {resetting ? 'Tap again to put Home back' : 'Put Home back as it came'}
               </Txt>
             </Pressable>

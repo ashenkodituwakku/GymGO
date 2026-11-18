@@ -114,6 +114,18 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Contrast on the glass looks** (18 Nov). The audit lives in the scratchpad
+  (`contrast-measure.cjs`). It hides axe's "needs review" text, screenshots
+  what's behind it, and samples a grid per text box. Rules from it:
+  - A surface filled with the accent spreads `shadowUnder(shadow.plate)`,
+    never `shadow.plate`: on Liquid that paints a clear card's face.
+  - Text on `brandTint` uses `brandOnTint`, and grey on `fill` uses
+    `labelSecondaryOnFill`. Both are checked over a glass card on Standard's
+    glow (`inksOnWashes`).
+  - In Standard, `labelSecondary` is readable over the strongest single glow;
+    `brand` and `labelTertiary` are left as they are.
+  - `labelTertiary` is not for words people need to read.
+
 - **Shorts** (18 Nov). `.claude/skills/` holds iart-ai's five video skills (MIT,
   NOTICE.md). `marketing/shorts/` is a Remotion project, outside the pnpm
   workspace with its own package-lock, for three 9:16 shorts (WalkIn, Build,

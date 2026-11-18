@@ -97,7 +97,7 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
         hitSlop={8}
         style={({ pressed }) => [styles.pill, narrow && styles.pillUnder, pressed && { opacity: 0.7 }]}
       >
-        <Txt variant="footnote" color={color.brand} style={styles.title}>
+        <Txt variant="footnote" color={color.brandOnTint} style={styles.title}>
           {!token ? 'Sign in' : summary.mine ? 'Change' : 'Say how busy'}
         </Txt>
       </Pressable>

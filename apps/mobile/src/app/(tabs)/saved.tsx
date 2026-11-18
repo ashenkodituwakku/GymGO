@@ -122,7 +122,7 @@ export default function Saved() {
                       hitSlop={6}
                       style={styles.saveButton}
                     >
-                      <Icon name="save" size={16} color={color.brand} />
+                      <Icon name="save" size={16} color={color.brandOnTint} />
                     </Pressy>
                   </View>
                 </View>
@@ -192,7 +192,7 @@ export default function Saved() {
                       hitSlop={8}
                       style={({ pressed }) => [styles.remove, pressed && { opacity: 0.7 }]}
                     >
-                      <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                      <Txt variant="subhead" color={color.brandOnTint} style={face('semibold')}>
                         Remove
                       </Txt>
                     </Pressable>

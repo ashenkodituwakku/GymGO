@@ -25,7 +25,7 @@ export function MapNotice({ top, bottom, left = 0, onRetry }: { top: number; bot
           The gym list still works.
         </Txt>
         <Pressable onPress={onRetry} hitSlop={RETRY_SLOP} accessibilityRole="button" style={({ pressed }) => [styles.retry, pressed && { opacity: 0.7 }]}>
-          <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+          <Txt variant="footnote" color={color.brandOnTint} style={face('semibold')}>
             Try again
           </Txt>
         </Pressable>

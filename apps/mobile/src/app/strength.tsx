@@ -158,7 +158,7 @@ export default function StrengthScreen() {
                   style={({ pressed }) => [styles.percentRow, index > 0 && styles.line, pressed && { opacity: 0.6 }]}
                 >
                   <View style={styles.percent}>
-                    <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                    <Txt variant="footnote" color={color.brandOnTint} style={face('semibold')}>
                       {`${percent}%`}
                     </Txt>
                   </View>

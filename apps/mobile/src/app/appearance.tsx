@@ -477,8 +477,8 @@ export default function AppearanceScreen() {
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
-              <Icon name="crown" size={11} color={color.brand} />
-              <Txt variant="caption" color={color.brand} style={face('semibold')}>
+              <Icon name="crown" size={11} color={color.brandOnTint} />
+              <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
                 PRO
               </Txt>
             </View>
@@ -518,8 +518,8 @@ export default function AppearanceScreen() {
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
-              <Icon name="crown" size={11} color={color.brand} />
-              <Txt variant="caption" color={color.brand} style={face('semibold')}>
+              <Icon name="crown" size={11} color={color.brandOnTint} />
+              <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
                 PRO
               </Txt>
             </View>
@@ -607,8 +607,8 @@ export default function AppearanceScreen() {
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
-              <Icon name="crown" size={11} color={color.brand} />
-              <Txt variant="caption" color={color.brand} style={face('semibold')}>
+              <Icon name="crown" size={11} color={color.brandOnTint} />
+              <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
                 PRO
               </Txt>
             </View>
@@ -692,8 +692,8 @@ export default function AppearanceScreen() {
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
-              <Icon name="crown" size={11} color={color.brand} />
-              <Txt variant="caption" color={color.brand} style={face('semibold')}>
+              <Icon name="crown" size={11} color={color.brandOnTint} />
+              <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
                 PRO
               </Txt>
             </View>
@@ -735,8 +735,8 @@ export default function AppearanceScreen() {
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
-              <Icon name="crown" size={11} color={color.brand} />
-              <Txt variant="caption" color={color.brand} style={face('semibold')}>
+              <Icon name="crown" size={11} color={color.brandOnTint} />
+              <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
                 PRO
               </Txt>
             </View>
@@ -781,8 +781,8 @@ export default function AppearanceScreen() {
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
-              <Icon name="crown" size={11} color={color.brand} />
-              <Txt variant="caption" color={color.brand} style={face('semibold')}>
+              <Icon name="crown" size={11} color={color.brandOnTint} />
+              <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
                 PRO
               </Txt>
             </View>

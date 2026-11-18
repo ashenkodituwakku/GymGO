@@ -781,8 +781,8 @@ const ExerciseLog = memo(function ExerciseLog({
                     hitSlop={8}
                     style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
                   >
-                    <Icon name="timer" size={15} color={color.brand} />
-                    <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                    <Icon name="timer" size={15} color={color.brandOnTint} />
+                    <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
                       Rest
                     </Txt>
                   </Pressable>
@@ -795,8 +795,8 @@ const ExerciseLog = memo(function ExerciseLog({
                     hitSlop={8}
                     style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
                   >
-                    <Icon name="plates" size={15} color={color.brand} />
-                    <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                    <Icon name="plates" size={15} color={color.brandOnTint} />
+                    <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
                       Plates
                     </Txt>
                   </Pressable>

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // The font files are for the app's bundler, not for Node.
 vi.mock('./fonts', () => ({ BUNDLED_FACES: {} }));
 import { StyleSheet } from 'react-native';
-import { ACCENTS, ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, ambientGlow, sheenLift, shadow, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, applyTweaks, color, cornersFor, customAccent, dimApplies, face, hslHex, DEFAULT_TWEAKS, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
+import { ACCENTS, ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, ambientGlow, sheenLift, shadow, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, applyTweaks, color, cornersFor, customAccent, dimApplies, face, hslHex, DEFAULT_TWEAKS, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, readablePlateAlpha, shadowUnder, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
 import { mix, over, STANDARD_RADIUS } from './looks';
 
 const channel = (value: number) => (value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
@@ -330,5 +330,49 @@ describe('your adjustments', () => {
     applyTweaks({ customHue: 200 });
     expect(color.brand).toBe(customAccent(200).light.brand);
     applyTheme('light', FREE_ACCENT, FREE_LOOK);
+  });
+});
+
+describe('words on Standard\'s glow', () => {
+  // The strongest single glow on Standard's page: the title's, or a pool's.
+  const strongest = (scheme: 'light' | 'dark') =>
+    Math.max(...glowPools(GLASS_DEFAULT, scheme).map((pool) => pool.opacity), heroGlowStops(GLASS_DEFAULT, scheme).main);
+
+  it('keeps grey words on the page readable over the glow, and leaves the accent alone', () => {
+    for (const scheme of ['light', 'dark'] as const) {
+      for (const accent of ACCENT_IDS) {
+        const palette = paletteFor(scheme, accent, 'standard', GLASS_DEFAULT);
+        const glow = mix(palette.groupedBackground, palette.brand, strongest(scheme));
+        expect(contrast(palette.labelSecondary, glow), `${scheme} ${accent}`).toBeGreaterThanOrEqual(4.5);
+        // Your accent and the faint grey are as they are with no glass.
+        const solid = paletteFor(scheme, accent, 'standard', 0);
+        expect(palette.brand).toBe(solid.brand);
+        expect(palette.labelTertiary).toBe(solid.labelTertiary);
+      }
+    }
+  });
+
+  it('keeps the accent on its tint, and grey on a tile, readable on a glass card over the glow', () => {
+    for (const scheme of ['light', 'dark'] as const) {
+      for (const accent of ACCENT_IDS) {
+        const palette = paletteFor(scheme, accent, 'standard', GLASS_DEFAULT);
+        const see = readablePlateAlpha(palette, GLASS_DEFAULT, scheme);
+        const card = mix(mix(palette.groupedBackground, palette.brand, strongest(scheme)), palette.card, see);
+        expect(contrast(palette.brandOnTint, over(card, palette.brandTint)), `${scheme} ${accent} tint`).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(palette.labelSecondaryOnFill, over(card, palette.fill)), `${scheme} ${accent} fill`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+});
+
+describe('shadowUnder', () => {
+  it('keeps only the shadow cast, not a look\'s face', () => {
+    applyTheme('light', FREE_ACCENT, 'liquid', GLASS_DEFAULT, 'black');
+    const under = shadowUnder(shadow.plate);
+    expect(Object.keys(under)).toEqual(['boxShadow']);
+    expect(String(under.boxShadow)).not.toContain('inset');
+    expect(String(under.boxShadow)).toContain('rgba(0, 0, 0, 0.08)');
+    expect(shadowUnder({ boxShadow: 'inset 0px 1px 0px rgba(255, 255, 255, 0.9)' })).toEqual({});
+    expect(shadowUnder({})).toEqual({});
   });
 });

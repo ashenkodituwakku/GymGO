@@ -513,8 +513,8 @@ function ActionPill({ label, icon, onPress, disabled = false }: { label: string;
       hitSlop={4}
       style={({ pressed }) => [styles.pill, pressed && { opacity: 0.7 }, disabled && { opacity: 0.6 }]}
     >
-      <Icon name={icon} size={15} color={color.brand} />
-      <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+      <Icon name={icon} size={15} color={color.brandOnTint} />
+      <Txt variant="subhead" color={color.brandOnTint} style={face('semibold')}>
         {label}
       </Txt>
     </Pressable>

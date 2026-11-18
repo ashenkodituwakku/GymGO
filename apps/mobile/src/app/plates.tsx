@@ -210,7 +210,7 @@ export default function PlatesScreen() {
             hitSlop={8}
             style={({ pressed }) => [styles.editPlates, pressed && { opacity: 0.7 }]}
           >
-            <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+            <Txt variant="footnote" color={color.brandOnTint} style={face('semibold')}>
               {billing.isPro ? (editing ? 'Done' : 'Change') : 'Change with Pro'}
             </Txt>
           </Pressable>

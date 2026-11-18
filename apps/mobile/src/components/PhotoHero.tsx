@@ -330,7 +330,7 @@ export function PhotoHero({
         hitSlop={8}
         style={({ pressed }) => [styles.addPill, pressed && { opacity: 0.7 }]}
       >
-        <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+        <Txt variant="footnote" color={color.brandOnTint} style={face('semibold')}>
           Try again
         </Txt>
       </Pressable>
@@ -342,7 +342,7 @@ export function PhotoHero({
         hitSlop={8}
         style={({ pressed }) => [styles.addPill, pressed && { opacity: 0.7 }]}
       >
-        <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+        <Txt variant="footnote" color={color.brandOnTint} style={face('semibold')}>
           {token ? 'Add one' : 'Sign in to add'}
         </Txt>
       </Pressable>

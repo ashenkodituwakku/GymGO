@@ -146,10 +146,10 @@ export default function MyWorkouts() {
                       hitSlop={6}
                       style={({ pressed }) => [styles.startPill, narrow && styles.startRound, pressed && styles.pressed]}
                     >
-                      <Icon name="play" size={13} color={color.brand} />
+                      <Icon name="play" size={13} color={color.brandOnTint} />
                       {/* On a narrow phone the button is its ▷ alone, as on Workout, so the name has the room. */}
                       {!narrow && (
-                        <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                        <Txt variant="subhead" color={color.brandOnTint} style={face('semibold')}>
                           Start
                         </Txt>
                       )}

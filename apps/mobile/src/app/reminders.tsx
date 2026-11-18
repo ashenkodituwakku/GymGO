@@ -196,7 +196,7 @@ function Stepper({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: stri
       hitSlop={6}
       style={({ pressed }) => [styles.stepper, pressed && { opacity: 0.6 }]}
     >
-      <Icon name={icon} size={16} color={color.brand} />
+      <Icon name={icon} size={16} color={color.brandOnTint} />
     </Pressable>
   );
 }

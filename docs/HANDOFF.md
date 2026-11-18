@@ -114,6 +114,13 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Largest text on a small phone** (18 Nov). ui.tsx `Segmented` measures
+  its longest bold label (`labelWidth`: canvas in a browser, about 0.6 of the
+  size per letter elsewhere). If that won't fit `slot`, it renders wrapped
+  rows without the sliding pill. ios.tsx `Row`'s text keeps `minWidth: '45%'`.
+  `scratchpad/bigtext.cjs` checks clipped and spilling text at
+  `textSize: 'larger'` with bold on.
+
 - **Reviews redesigned** (18 Nov). ReviewsSection.tsx: Summary (with
   `starCounts` from the domain), ReviewCard, ReviewForm (StarPicker), and
   Elsewhere (`googleMapsSearchUrl` / `appleMapsSearchUrl` in present.ts).

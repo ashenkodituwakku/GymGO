@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 185 · The largest text on a small phone: no choice cut off, no word broken
+
+*18 Nov 2026 · the commit "Largest text on a small phone: segmented controls wrap, row titles keep their words"*
+
+- This round looked at Appearance's largest text with Bold text on, at 320 points (the smallest phones) and 390, in Standard and Liquid. Ten pages were checked for text cut short, spilling out of its box, or making the page scroll sideways. Long gym names, suburbs and a workout's list of exercises shorten on purpose, and still do. Three things lost words:
+  - **A segmented control cut a choice short.** Build a workout's Goal read "Strength, Muscle, Endura…". A segmented control now measures its longest label (with the label's own font in a browser). When that won't fit in an equal share, the segments flow onto two rows, the chosen one raised where it is. At the usual sizes it's one row with the sliding pill, as before (checked at 390 and 320).
+  - **A row's title broke mid-word.** Profile's Compare read "Comp / are" beside "None pic…", because a row's value could take more than half the room. A row's title now always gets at least 45%, and the value shortens instead.
+  - **Home's collection tile cut its own words** to "gyms coll…" and "1 cou…". Both lines can now take two lines before they shorten.
+- Checked in the browser at the largest size: the Goal and Length controls wrap with nothing cut, and the collection tile and Compare read in full. App tests 608.
+
 ## Update 184 · Reviews, redesigned, with links to Google Maps and Apple Maps
 
-*18 Nov 2026 · the commit "Reviews redesigned: a summary, aspect ratings, cards, and links to the maps' own reviews"*
+*18 Nov 2026 · `ea94cfe`*
 
 You asked for the review system to look better, and for reviews from Google Maps and Apple Maps to be brought into GymGO.
 

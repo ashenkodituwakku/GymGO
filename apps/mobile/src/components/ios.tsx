@@ -477,7 +477,8 @@ const styles = themed(() => StyleSheet.create({
   },
   tileEdge: { borderWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
   chevronOpen: { transform: [{ rotate: '90deg' }] },
-  rowText: { flex: 1, gap: 1 },
+  // Never squeezed below 45% by a value: with the largest text, a value took the room and "Compare" broke mid-word.
+  rowText: { flex: 1, gap: 1, minWidth: '45%' },
   value: { maxWidth: '45%' },
 
   search: {

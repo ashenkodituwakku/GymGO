@@ -1,23 +1,34 @@
 # Advertising in GymGO
 
-How GymGO could show ads, what has to happen first, and what is already in
-place. Nothing here has been signed up for, switched on or paid for: those
-steps are the owner's.
+How GymGO shows ads, what has to happen before real ones, and what is
+already in place. Nothing here has been signed up for, switched on or paid
+for: those steps are the owner's. Since 18 November 2026 the code is built
+and shows Google's **test ads** in development builds (Update 190).
 
 ## Where things stand
 
 - **The ad space exists.** `apps/mobile/src/components/AdSlot.tsx` marks two
   places: on Home under the gyms near you, and under Explore's list (after
   the last gym, never between two). Pro members never see it.
-- **What fills it today is GymGO's own card for Pro** ("Train anywhere with
-  Pro", "Gyms in every country"), only where Pro can be bought; elsewhere
-  the space is empty. It has a "Not now" that hides it for two weeks on that
-  device. Nothing in it loads or tracks anything.
+- **In a phone development build it shows Google AdMob test ads**
+  (`AdBanner.native.tsx`): an inline adaptive banner in a card of GymGO's
+  marked "Advertisement", non-personalised, rated Teen at most, after
+  Google's consent message (UMP) where the law needs one. Google's sample
+  app IDs and test ad units, so nothing real is ever requested or paid.
+- **Everywhere else it's GymGO's own card for Pro** ("Train anywhere with
+  Pro", "Gyms in every country"): the website, Expo Go (which can't hold
+  Google's library), a release build without the owner's ad units, and
+  whenever no ad comes back or consent is refused. Only where Pro can be
+  bought; elsewhere the space is empty. It has a "Not now" that hides it for
+  two weeks on that device. The Pro card loads and tracks nothing.
 - **The legal pages promise no ads.** `packages/domain/src/legal.ts` says
   "GymGO has no ads, no analytics and no session recording" and "uses no
   cookies for tracking and no analytics, advertising or tracking code". Those
   sentences must change, with a new legal version (so everyone is asked to
-  agree again), **before** any ad partner's code ships.
+  agree again), **before** any ad partner's code ships. Since Update 190
+  Google's library is in every iPhone and Android build (even one that shows
+  no ads), so this must be done before any build goes to the App Store or
+  Google Play. The website and Expo Go don't contain it.
 
 ## The options
 
@@ -75,12 +86,24 @@ make "no ads" a reason to go Pro.
 - The two sentences quoted above, which become untrue.
 - Terms: that the free plan is supported by ads.
 
-## What would be built once you say go
+## What's built (18 November 2026, Update 190)
 
-All of this is ready to do in a session; none of it is done, because it
-changes the native build and needs your AdMob IDs.
+All of the list below is in, with test ads. What's left is yours: the AdMob
+account and IDs, the store paperwork, and the legal wording. Then set
+`GYMGO_ADMOB_IOS_APP_ID` / `GYMGO_ADMOB_ANDROID_APP_ID` (app.config.js) and
+`EXPO_PUBLIC_ADMOB_IOS_HOME`, `_IOS_RESULTS`, `_ANDROID_HOME`,
+`_ANDROID_RESULTS` (lib/ads.ts) for a release build, and add "No ads" to
+Pro's benefits. Without those, a release build shows no ads at all.
 
-- `npx expo install react-native-google-mobile-ads expo-dev-client`.
+It hasn't run on a phone yet: try it with `gymgo --xcode` on the Mac (the
+Xcode project is remade by itself, since the app's packages changed), on
+the Simulator or your iPhone. Expect a banner marked "Test Ad".
+
+What was planned, and is now built (the version is 17.4.0, which supports
+React Native 0.88):
+
+- `react-native-google-mobile-ads` 17.4.0 installed (no `expo-dev-client`:
+  the Xcode route already runs a development build from the bundler).
 - `apps/mobile/app.config.js`: the library's plugin with
   `androidAppId` / `iosAppId` read from `GYMGO_ADMOB_ANDROID_APP_ID` and
   `GYMGO_ADMOB_IOS_APP_ID`. Development builds use Google's own sample app
@@ -89,9 +112,11 @@ changes the native build and needs your AdMob IDs.
   one stops at launch.)
 - Ad unit IDs from `EXPO_PUBLIC_ADMOB_*` settings; Google's test units
   (`TestIds`) in every development build.
-- `AdSlot` asks for a non-personalised native ad, shows it in the card's
-  shape with an "Ad" label and the advertiser's name, and falls back to the
-  Pro card when none comes back. Expo Go and the website keep the Pro card
+- `AdSlot` asks for a non-personalised ad (an inline adaptive banner for
+  now, the simplest and safest to build without a phone to try it on; a
+  native ad drawn as one of GymGO's cards can follow once it's been seen),
+  shows it in a card marked "Advertisement", and falls back to the Pro card
+  when none comes back. Expo Go and the website keep the Pro card
   (the library is only loaded where it exists).
 - Consent at launch with the library's `AdsConsent` (Google's UMP), before
   any ad is asked for, and a **Privacy choices** row in Profile that reopens

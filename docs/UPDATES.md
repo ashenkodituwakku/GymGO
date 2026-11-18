@@ -9,6 +9,21 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 190 · Ads, built with Google's test ads
+
+*18 Nov 2026 · the commit "Ads: Google AdMob test ads in phone development builds, the Pro card everywhere else"*
+
+You asked for ads, built with test ads. The two ad spaces (Home, under the gyms near you, and under Explore's list) can now show **Google AdMob ads**:
+
+- **In a phone development build** (the Mac's Xcode route, `gymgo --xcode`, on the Simulator or your iPhone): a banner from Google's test ads, in one of GymGO's cards marked "Advertisement". It uses Google's public sample app IDs and test ad units, so nothing real is requested, shown or paid. Google labels each one "Test Ad".
+- **Before any ad,** Google's consent message appears where the law needs one (Europe, the UK, some US states). Profile → Legal then has **Privacy choices** to change your answer, which Google requires there.
+- **Non-personalised ads only** (no tracking across apps, so no Apple tracking prompt), **rated Teen at most** (GymGO takes members from 13), never for Pro members, never between gyms, on a gym's page, over the map, during a workout or full screen.
+- **Everywhere else, GymGO's own Pro card, as before:** the website, Expo Go (it can't hold Google's ad library), a release build until your own ad units are set, and whenever no ad comes back or consent is refused. The website makes no requests to any ad network (checked).
+
+**Not done, and yours:** an AdMob account and its app and ad unit IDs, the store forms, and new privacy wording. Today's privacy text says "no ads" and "no advertising code", and Google's library is now inside every phone build, so the wording must change before any App Store or Google Play release. `docs/ADS.md` has the steps and the settings the IDs go in.
+
+- Checked: the library (17.4.0) supports this React Native; the phone config gets the AdMob app ID; the iPhone app's code bundles with the library; the website still shows the Pro card with no ad requests; new unit tests for which ad unit each build asks for. All typechecks and tests pass. **Not yet seen on a phone:** this workspace can't build an iPhone or Android app. Try `gymgo --xcode` on your Mac; it remakes the Xcode project by itself, since the app's packages changed.
+
 ## Update 189 · Writing a review, tried end to end; the form fits the largest text
 
 *18 Nov 2026 · the commit "Review form: the aspect rows wrap together at the largest text"*

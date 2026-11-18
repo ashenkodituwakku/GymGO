@@ -35,6 +35,7 @@ import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { useLegalInfo } from '@/lib/legal';
 import { LegalText } from '@/components/LegalText';
+import { openPrivacyChoices, useAdsState } from '@/components/AdBanner';
 import { Bone, Skeleton } from '@/components/Skeleton';
 import { LIMITED } from '@/lib/limited';
 import { CITY_LIST } from '@/lib/places';
@@ -81,6 +82,7 @@ export default function Profile() {
 
   const toggle = (key: 'facts' | 'sources' | 'copyright') => setAbout((current) => (current === key ? null : key));
   const openLegal = (doc: LegalDocId) => router.push({ pathname: '/legal/[doc]', params: { doc } });
+  const adsState = useAdsState();
 
   // Back from Stripe's manage page in a browser: pick up any change.
   const { refresh } = billing;
@@ -365,6 +367,8 @@ export default function Profile() {
       <Group header="Legal">
         <Row icon="source" tile={TILE.grey} title="Terms of Service" onPress={() => openLegal('terms')} />
         <Row icon="lock" tile={TILE.grey} title="Privacy Policy" subtitle="No ads, no analytics, and your location stays on your phone" onPress={() => openLegal('privacy')} />
+        {/* Google requires a way back to its consent form wherever its consent message applies (a phone build with ads, in Europe or the UK). */}
+        {adsState.privacyChoices && <Row icon="lock" tile={TILE.grey} title="Privacy choices" subtitle="What you agreed to for ads" onPress={() => void openPrivacyChoices()} />}
         <Row icon="refresh" tile={TILE.grey} title="Refunds and Cancelling" onPress={() => openLegal('refunds')} />
         <Row icon="people" tile={TILE.grey} title="Community Guidelines" subtitle="The rules for reviews, photos and reports" onPress={() => openLegal('community')} />
         {/* About members' photos and reviews, which the limited website has none of. */}

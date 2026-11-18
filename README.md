@@ -1496,9 +1496,16 @@ GymGO takes no payment. Prices were researched from gyms' own sites; see
 (the second pass, with opening hours and why no photos were added) for what
 was found and what still needs a direct check.
 
-**Ads:** a marked space that says AD PLACEHOLDER sits on Home and under
-Explore's list, for a future ad partner. It loads and tracks nothing, and
-Pro members don't see it (`apps/mobile/src/components/AdSlot.tsx`).
+**Ads:** one space on Home and one under Explore's list
+(`apps/mobile/src/components/AdSlot.tsx`), never for Pro members. In a
+phone development build (the Xcode route, `gymgo --xcode`) it shows
+**Google AdMob test ads**, non-personalised and rated for teens at most,
+after Google's consent message where the law needs one, in a card marked
+"Advertisement"; Profile → Legal then has **Privacy choices** where Google
+requires it. Everywhere else (the website, Expo Go, a release build without
+the owner's ad units) it's GymGO's own card for Pro, loading and tracking
+nothing. Real ads need the owner's AdMob account, IDs and new legal wording
+first: `docs/ADS.md` has the steps.
 
 ### What a visit costs, from members
 

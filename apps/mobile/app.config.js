@@ -17,6 +17,12 @@
  * - GYMGO_BASE_URL: the path a web export is served under ("/GymGO" on
  *   GitHub Pages without a custom domain; scripts/pages-build.sh sets it).
  *
+ * - GYMGO_ADMOB_IOS_APP_ID / GYMGO_ADMOB_ANDROID_APP_ID: the app IDs AdMob
+ *   gives ("ca-app-pub-…~…"), for its ads (docs/ADS.md). Until they're set,
+ *   Google's own sample app IDs, which only ever serve test ads. A phone
+ *   build with Google's ad library must have one, or it stops at launch.
+ *   The ad units each place asks for are EXPO_PUBLIC_ADMOB_* (lib/ads.ts).
+ *
  * None is a secret. See README → "Run it from Xcode" and "Sign in with
  * Google and Apple".
  */
@@ -27,10 +33,22 @@ const googleScheme = googleIos ? `com.googleusercontent.apps.${googleIos.replace
 
 const baseUrl = (process.env.GYMGO_BASE_URL || '').trim().replace(/\/+$/, '');
 
+/** Google's sample AdMob app IDs: test ads only, never paid, never counted against anyone's account. */
+const ADMOB_SAMPLE = { ios: 'ca-app-pub-3940256099942544~1458002511', android: 'ca-app-pub-3940256099942544~3347511713' };
+const admob = [
+  'react-native-google-mobile-ads',
+  {
+    iosAppId: (process.env.GYMGO_ADMOB_IOS_APP_ID || '').trim() || ADMOB_SAMPLE.ios,
+    androidAppId: (process.env.GYMGO_ADMOB_ANDROID_APP_ID || '').trim() || ADMOB_SAMPLE.android,
+    // Nothing starts until GymGO asks, after the consent message (AdBanner.native.tsx).
+    delayAppMeasurementInit: true,
+  },
+];
+
 module.exports = ({ config }) => ({
   ...config,
   ...(baseUrl ? { experiments: { ...config.experiments, baseUrl } } : {}),
-  plugins: [...(config.plugins || []), ...(appleSignIn ? ['expo-apple-authentication'] : [])],
+  plugins: [...(config.plugins || []), ...(appleSignIn ? ['expo-apple-authentication'] : []), admob],
   ios: {
     ...config.ios,
     usesAppleSignIn: appleSignIn,

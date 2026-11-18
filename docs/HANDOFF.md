@@ -233,7 +233,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
   AdChoices); AdCard.tsx is the website's stub with the same exports.
   AdSlot shows an ad where `adsPossible`, else the Pro card. The owner's
   AdMob IDs are public and belong in the code; never let a development
-  build ask for them (invalid traffic). The legal text still says no ads:
+  build ask for them (invalid traffic). apps/mobile/public/app-ads.txt is
+  AdMob's line for the website's root (Update 192); keep it as AdMob gives
+  it, and add a line for any other ad network. The legal text still says no ads:
   it must change before any store release, since the library is in every
   phone build.
 - **Frosted glass, Liquid look, sidebar seam** (18 Nov). With the sidebar

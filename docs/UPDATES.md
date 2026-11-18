@@ -9,6 +9,16 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 192 · app-ads.txt on gymgo.site
+
+*18 Nov 2026 · the commit "Website: app-ads.txt with AdMob's line"*
+
+You sent AdMob's app-ads.txt instructions and asked for it on the website. **gymgo.site/app-ads.txt** now carries AdMob's line, exactly as it gave it (`google.com, pub-7227955677859980, DIRECT, f08c47fec0942fa0`), from `apps/mobile/public/app-ads.txt`, which every website build puts at the site's root. It says only that Google may sell ads in GymGO's apps; nothing on the website loads ads.
+
+**What AdMob still needs before it shows as verified:** the app in the App Store (or Google Play) with `https://gymgo.site` as its developer website, written exactly so, then about 24 hours for AdMob to look. Until GymGO is in a store, AdMob can't connect the file to the app, so a "not found" or "not verified" status there before then is expected.
+
+- Checked: a web build puts the file at the site's root, unchanged; it goes live with this update's website build.
+
 ## Update 191 · Native ads in GymGO's own card, with your AdMob IDs
 
 *18 Nov 2026 · the commits "Ads: native advanced ads in GymGO's card, with the owner's AdMob IDs; real ads stay off" (which by mistake held only the files' new names) and "Ads: the native card itself, the owner's IDs and the docs", pushed straight after*

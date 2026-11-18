@@ -79,12 +79,13 @@ make "no ads" a reason to go Pro.
    message. Even non-personalised ads need consent in Europe; without it
    AdMob shows only "limited ads".
 4. **Publish `app-ads.txt`** at the root of the website the stores list for
-   GymGO (gymgo.site/app-ads.txt), with the line AdMob gives you (Apps →
-   View all apps → app-ads.txt). For this account it should read
-   `google.com, pub-7227955677859980, DIRECT, f08c47fec0942fa0`; use
-   AdMob's own line if it differs. Claude can add the file to the website
-   once you say so; it only matters once the app is in a store with
-   gymgo.site as its website.
+   GymGO (gymgo.site/app-ads.txt), with the line AdMob gives you. *Done
+   (18 November, Update 192): `apps/mobile/public/app-ads.txt` holds
+   AdMob's line, `google.com, pub-7227955677859980, DIRECT,
+   f08c47fec0942fa0`, and every website build puts it at the site's root.
+   AdMob can only check it once the app is in the App Store (or Google
+   Play) with `https://gymgo.site` as its website, written exactly so;
+   then allow 24 hours and look at the app-ads.txt status in AdMob.*
 5. **Store paperwork.** App Store Connect: the App Privacy answers change
    (data used for third-party advertising). Google Play: tick "Contains ads"
    and update the Data safety form.

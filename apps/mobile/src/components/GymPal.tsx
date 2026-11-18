@@ -30,12 +30,14 @@
  * in the chat as it opens and with each answer; otherwise it keeps still, so
  * nothing in the corner of your eye moves. Still with Reduce Motion.
  *
- * Answers come from a free AI model through the GymGO server
+ * Answers come from an AI model through the GymGO server
  * (apps/server/src/gymPal.ts), which hands the model GymPal's guide to the
- * app and the rules about real gyms' facts. Until it can answer (the
- * website, with no server behind it, or a server without the owner's
+ * app and the rules about real gyms' facts: GitHub Models or OpenRouter,
+ * whichever the owner has set up (the server says which, and the note under
+ * the box names it). Until it can answer (the website, with no server
+ * behind it, or a server with neither the owner's GitHub token nor
  * OpenRouter key), each question gets GymPal's apology that it's still
- * being set up; once the key is in, the next question goes through.
+ * being set up; once one is in, the next question goes through.
  *
  * His tab or button keeps out of the way where the corner is busy: a workout
  * in progress (its rest timer sits there), the welcome tour, and the screens
@@ -155,6 +157,8 @@ export function GymPal() {
   const [pending, setPending] = useState(false);
   const [problem, setProblem] = useState<{ text: string; toPro?: boolean } | null>(null);
   const [state, setState] = useState<State>('unknown');
+  // Where chats go, as the server says (an older server doesn't: OpenRouter, as it was then).
+  const [service, setService] = useState('OpenRouter');
   const [topic, setTopic] = useState<Topic | null>(null);
   const [useLog, setUseLog] = useState(false);
   // Pro ended: the log stays home.
@@ -168,7 +172,9 @@ export function GymPal() {
     if (!apiBase()) next = 'off';
     else {
       try {
-        next = (await api.gymPal()).on ? 'on' : 'off';
+        const status = await api.gymPal();
+        next = status.on ? 'on' : 'off';
+        if (status.service) setService(status.service);
       } catch (error) {
         next = error instanceof OfflineError ? 'away' : 'off';
       }
@@ -320,6 +326,7 @@ export function GymPal() {
           pending={pending}
           problem={problem}
           state={state}
+          service={service}
           topic={topic}
           suggestions={suggestionsFor(pathname, useLog && pro)}
           // Pro's switch, where there's Pro to have: not on the website.
@@ -496,6 +503,7 @@ function Chat({
   pending,
   problem,
   state,
+  service,
   topic,
   suggestions,
   log,
@@ -514,6 +522,8 @@ function Chat({
   pending: boolean;
   problem: { text: string; toPro?: boolean } | null;
   state: State;
+  /** The AI service chats go to, as the server says. */
+  service: string;
   topic: Topic | null;
   suggestions: string[];
   /** Pro's training-log switch: whether you have Pro, whether it's on, and how to change it; none where there's no Pro. */
@@ -707,10 +717,10 @@ function Chat({
             </Pressable>
           </View>
           <Txt variant="caption" color={color.labelTertiary} style={styles.small}>
-            {/* OpenRouter only once something is sent there. */}
+            {/* The AI service named only once something is sent there. */}
             {state === 'off'
               ? 'GymPal is AI and can be wrong; a gym’s own page has its facts. Not medical advice.'
-              : 'GymPal is AI and can be wrong; a gym’s own page has its facts. Chats go to OpenRouter, an AI service, so leave out personal details. Not medical advice.'}
+              : `GymPal is AI and can be wrong; a gym’s own page has its facts. Chats go to ${service}, an AI service, so leave out personal details. Not medical advice.`}
           </Txt>
         </KeyboardAvoidingView>
       </Animated.View>

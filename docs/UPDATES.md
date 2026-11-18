@@ -9,6 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 173 · GymPal can use GitHub Models
+
+*18 Nov 2026 · the commit "GymPal answers through GitHub Models with the owner's token"*
+
+You sent a GitHub token for GitHub Models and asked for GymPal to work with it.
+
+- **GymPal now asks GitHub Models first** when the server has a GitHub token, trying `openai/gpt-4.1-mini`, then `openai/gpt-4o-mini`, then `mistral-ai/mistral-small-2503`: the next when one is busy, isn't available, or doesn't answer. If GitHub turns the token down or every model is busy, GymPal falls back to OpenRouter's free models, if that key is set too.
+- **It doesn't cost money**: GitHub Models is free within GitHub's daily limits, and past them GitHub says no rather than charging, unless paid use for Models is switched on in your GitHub billing settings (leave it off).
+- **The token is not in the code.** It goes in `apps/server/.env.local` on your PC, as `GITHUB_MODELS_TOKEN=…`. That file is never uploaded to GitHub, and the server never prints it.
+- **A check you can run**: `pnpm --filter @gymgo/server gympal:check` asks GymPal one short question with your settings and says which model answered, or why none did. The server's first lines also say "GymPal: on, GitHub Models first (…)".
+- **The note under GymPal's message box** now names the service chats go to: "Chats go to GitHub Models…" (or OpenRouter). The Privacy Policy and Terms name GitHub Models (GitHub, part of Microsoft) too. That's a new version (18 November 2026), so existing accounts see the card on Profile asking them to agree.
+
+- **Not yet tried with your token.** This cloud workspace can't reach GitHub Models: every request to it comes back as a plain "OK" from the workspace's own network gate, never reaching GitHub, so the token was never used from here. New tests cover the GitHub requests (the address, the token header, one model at a time, the next model when one is busy or gone, the fall-back to OpenRouter, stopping at a turned-down token without ever logging it). All typechecks and tests pass.
+
 ## Update 172 · Home's cards answer the mouse
 
 *18 Nov 2026 · the commit "Home's cards drift towards the mouse and catch the light"*

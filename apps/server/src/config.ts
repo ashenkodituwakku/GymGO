@@ -38,6 +38,16 @@ export const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY?.trim() |
  */
 export const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY?.trim() || null;
 /**
+ * Optional. The owner's GitHub token for GitHub Models (models.github.ai),
+ * for GymPal: a fine-grained token with only "Models: read" (github.com ->
+ * Settings -> Developer settings -> Fine-grained tokens). Asked before
+ * OpenRouter when set. Free within GitHub's limits. It holds a secret: keep
+ * it in .env.local, never in git.
+ */
+export const GITHUB_MODELS_TOKEN = process.env.GITHUB_MODELS_TOKEN?.trim() || null;
+/** Optional. Which GitHub models GymPal asks, comma-separated ids such as openai/gpt-4.1-mini, tried in turn (gymPal.ts has the default). */
+export const GYMPAL_GITHUB_MODELS = (process.env.GYMGO_GYMPAL_GITHUB_MODELS ?? '').split(',').map((item) => item.trim()).filter(Boolean);
+/**
  * Optional. The owner's own SerpApi key (serpapi.com), for gyms' Apple Maps
  * listings (appleMaps.ts): a phone, website or hours a gym is missing. Each
  * lookup is one SerpApi search on the owner's plan. Keep it in .env.local,

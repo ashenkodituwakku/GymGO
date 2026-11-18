@@ -45,6 +45,13 @@ the branch the owner's launcher pulls.
   the owner asks for adds the next "Update N" at the top of
   `docs/UPDATES.md` in the same push: a title, the date and its commits,
   and a few plain lines on what changed (and anything not yet seen working).
+- **GymPal's token.** On 18 Nov the owner pasted a GitHub token in chat for
+  GitHub Models and asked GymPal to use it. It belongs only in
+  `apps/server/.env.local` on the owner's PC (`GITHUB_MODELS_TOKEN`): never
+  write it into a file in the repo, a commit, a doc or a log. The cloud
+  sandbox can't reach models.github.ai (its network gate answers "OK" in
+  GitHub's place), so it was never tried from here; the owner checks it with
+  `pnpm --filter @gymgo/server gympal:check`.
 - **The Windows launcher** `scripts/gymgo.ps1` must stay ASCII-only
   (`apps/web/src/launcher.test.ts` checks it).
 - **Speak plainly to the owner.** They test on a Windows PC (browser, with
@@ -106,6 +113,15 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **GymPal on GitHub Models** (18 Nov). gymPal.ts asks GitHub Models first
+  when `GITHUB_MODELS_TOKEN` is set (`askGitHub`: one model per request, in
+  turn through `GYMGO_GYMPAL_GITHUB_MODELS` or `DEFAULT_GITHUB_MODELS`, the
+  next on 429, 400/404 or a network failure, stopping at 401/403), then
+  OpenRouter if its key is set (`askOpenRouter`, as before). `service` and
+  `answeredBy`; GET /api/gympal returns `service`, and GymPal.tsx's note
+  names it. `src/gymPalCheck.ts` (`gympal:check`) asks one question with the
+  server's settings. LEGAL_VERSION 2026-11-18 (the privacy text names GitHub
+  Models), so Profile shows the new-terms card.
 - **Hover on Home** (18 Nov). components/hoverShine.web.ts: `useHoverShine`
   on a zone (Home's page) finds the card under a mouse (nearest pressable
   with a background, gradient or box shadow; `wrapped` looks through bare

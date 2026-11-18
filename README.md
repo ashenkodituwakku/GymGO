@@ -1147,8 +1147,9 @@ dumbbell: after changing the SVG, run `node scripts/gympal-logo.mjs` in
 The chat stays while the app is open, **Start over** clears it, and nothing
 of it is stored, on the phone or the server.
 
-Answers come from a free AI model on **OpenRouter** (openrouter.ai), through
-the GymGO server. A model can't be taught the app once and for all, so the
+Answers come from an AI model on **GitHub Models** (models.github.ai) or
+**OpenRouter** (openrouter.ai), through the GymGO server: GitHub first if
+its token is set, then OpenRouter if its key is. A model can't be taught the app once and for all, so the
 server sends GymPal's guide to GymGO with every question
 (`apps/server/src/gymPalGuide.ts`, written from this README and the screens):
 change it there when the app changes. The guide also holds the rules GymGO
@@ -1158,25 +1159,45 @@ where each fact has its source; unknown is never "no"; it never invents
 deals or partnerships; and it gives general training ideas, not medical
 advice. The chat says GymPal is AI and can be wrong.
 
-To switch it on (free, no card):
+To switch it on with **GitHub Models** (free, no card):
 
-1. Make an account at **openrouter.ai**, then **Keys → Create key**.
+1. On github.com: **Settings → Developer settings → Personal access tokens
+   → Fine-grained tokens → Generate new token**. Give it a name, and under
+   **Account permissions** set only **Models** to **Read-only**. Nothing
+   else: GymPal needs no access to your repositories.
 2. Add it to `apps/server/.env.local` (git-ignored, so it never reaches
    GitHub). Don't paste it anywhere else:
 
    ```
-   OPENROUTER_API_KEY=your-key
+   GITHUB_MODELS_TOKEN=github_pat_…
    ```
 
-3. Restart GymGO. The server's first lines say `GymPal: on, free models
-   only (…)`.
+3. Check it: `pnpm --filter @gymgo/server gympal:check` asks GymPal one
+   short question and says which model answered, or why none did (never
+   printing the token).
+4. Restart GymGO. The server's first lines say `GymPal: on, GitHub Models
+   first (…)`.
+
+Or with **OpenRouter** (also free): make an account at **openrouter.ai**,
+then **Keys → Create key**, and add `OPENROUTER_API_KEY=your-key` to the
+same file. With both set, OpenRouter answers whenever every GitHub model is
+busy or GitHub turns the token down.
 
 Until then, GymPal is there all the same, and answers every question with
 "Sorry, we're waiting for GymPal to be set up. Check back soon!", sending
 nothing anywhere. Each question first asks the server again, so once the
 key is in, the next one gets a real answer, with no reload.
 
-**It can't cost money.** The server only ever asks models whose OpenRouter
+**GitHub Models' cost and limits.** Free within GitHub's limits, which are
+set per model and per day (more for GitHub's "low" tier of models, and more
+again with a Copilot plan); past them GitHub says no rather than billing,
+unless you switch on paid use for Models in your GitHub billing settings, so
+leave that off. GymPal asks `openai/gpt-4.1-mini`, then `openai/gpt-4o-mini`,
+then `mistral-ai/mistral-small-2503` (all low tier), each in turn when one
+is busy or one GitHub no longer has; `GYMGO_GYMPAL_GITHUB_MODELS` sets
+others, comma-separated (ids as on github.com/marketplace/models).
+
+**OpenRouter can't cost money.** The server only ever asks models whose OpenRouter
 id ends in `:free`, and OpenRouter bills a fallback at the price of the
 model that answered, so a list of free ones stays free. By default
 it asks `google/gemma-4-31b-it:free`, then
@@ -1216,11 +1237,15 @@ never their gyms or notes), so he can answer "What should I train today?"
 and "How is my training going?". On Free the switch shows locked and opens
 the Pro screen.
 
-**Privacy.** What someone types, and the chat so far, goes to OpenRouter
-and the model's provider to be answered; free models' providers may keep
-it and use it to improve their models. GymGO keeps none of it. The chat
-asks people to leave out personal details, and the Privacy Policy and Terms
-say all of this, the training log included (since version 2026-10-29; each new version, such as 2026-11-04's for the weather, shows existing accounts a card on Profile asking them to agree to it).
+**Privacy.** What someone types, and the chat so far, goes to GitHub Models
+(GitHub, part of Microsoft) or OpenRouter, and the model's provider, to be
+answered; free models' providers may keep it and use it to improve their
+models. The note under the message box names the service the server uses.
+GymGO keeps none of it. The chat asks people to leave out personal details,
+and the Privacy Policy and Terms say all of this, the training log included
+(since version 2026-10-29; each new version, such as 2026-11-04's for the
+weather and 2026-11-18's for GitHub Models, shows existing accounts a card
+on Profile asking them to agree to it).
 On the website, which has no server behind it yet, GymPal always gives
 that apology; once the website is pointed at a GymGO server with the key
 (`GYMGO_SERVER_URL`, in The website on Netlify), it answers there too,

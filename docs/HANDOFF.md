@@ -118,6 +118,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Workout done focus** (18 Nov). train.tsx's summary focuses its
+  heading (a tabIndex -1, quiet-focus View) on mount in a browser, since
+  the Finish button unmounts with the workout. Scratchpad
+  `kbworkout.cjs` logs a workout by keyboard (WIDTH=390 for a phone).
+
 - **Offline checks** (18 Nov). In development the web app reaches the
   server through Metro at `/_gymgo/api/`, so a test that cuts the server
   off must block that path too (scratchpad `offline.cjs` does). Train's

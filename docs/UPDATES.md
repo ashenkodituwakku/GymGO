@@ -9,6 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 208 · A workout by keyboard alone; finishing tells you it's saved
+
+*18 Nov 2026 · the commit "Workout done: the heading takes focus as the workout is saved, in a browser"*
+
+A whole workout was logged with only the keyboard, at a computer's width and a phone's: Do it again, then Tab to the first set, a weight, Tab, reps, Tab to the tick, Space, and on to Finish workout.
+
+- **What worked:** Tab goes through each exercise in order (how to do it, swap, rest, plates, the set's kind, weight, reps, the tick), then adding a set, a warm-up, a note, an exercise, then Finish and Discard. Space ticks the set (Update 197), and focus stays on the tick, whose name then says it's your heaviest.
+- **Fixed: after Finish, focus went nowhere.** The Finish button goes with the workout, so focus fell to the page itself: a screen reader said nothing of the workout being saved, and Tab started again from the top. The "Workout done" (or "1 new record") heading now takes focus as it appears, so it's read out and Tab goes on from there.
+- **Also checked:** a wrong password says "That email and password don't match.", read out at once.
+- Checked in the browser at 1280 and 390: focus on "Workout done" after finishing. App tests 617.
+
 ## Update 207 · Without the server: every page says so; Train did not
 
 *18 Nov 2026 · `aabb99f`*

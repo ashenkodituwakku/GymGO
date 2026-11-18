@@ -258,7 +258,7 @@ function StepButton({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: s
       hitSlop={6}
       style={({ pressed }) => [styles.step, !onPress && { opacity: 0.35 }, pressed && { opacity: 0.6 }]}
     >
-      <Icon name={icon} size={16} color={color.brand} />
+      <Icon name={icon} size={16} color={color.brandOnTint} />
     </Pressable>
   );
 }

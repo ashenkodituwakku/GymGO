@@ -28,6 +28,8 @@ export function Txt({
   accessibilityRole,
   level,
   maxFontSizeMultiplier,
+  'aria-hidden': ariaHidden,
+  'aria-live': ariaLive,
 }: {
   variant?: Variant;
   color?: string;
@@ -43,6 +45,14 @@ export function Txt({
   level?: 1 | 2 | 3;
   /** How far it may grow with the phone's text size, for text in a box that can't grow with it. */
   maxFontSizeMultiplier?: number;
+  /**
+   * Skipped by a screen reader (decoration, or words its row's label already
+   * says). Named here so it reaches the text: undeclared, TypeScript let it
+   * through and it was dropped without a word.
+   */
+  'aria-hidden'?: boolean;
+  /** Said again by a screen reader when it changes. */
+  'aria-live'?: 'polite' | 'assertive' | 'off';
 }) {
   return (
     <Text
@@ -51,6 +61,8 @@ export function Txt({
       accessibilityRole={accessibilityRole}
       {...(Platform.OS === 'web' && accessibilityRole === 'header' && level ? ({ 'aria-level': level } as object) : null)}
       maxFontSizeMultiplier={maxFontSizeMultiplier}
+      aria-hidden={ariaHidden}
+      aria-live={ariaLive}
     >
       {children}
     </Text>

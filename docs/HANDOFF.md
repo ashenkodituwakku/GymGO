@@ -114,6 +114,19 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Opened states; Txt's aria props** (18 Nov). `Txt` declares and passes
+  `aria-hidden` and `aria-live`. TypeScript doesn't check hyphenated JSX
+  attributes, so add any other aria prop to Txt's list before using it.
+  Other rules from this round:
+  - `brandOnTint` is the accent on any wash (tint, grey fill, glass). Its
+    grounds now include `cardRaised`, `stackedGlass()` and `sheetCard()`.
+  - Standard's `brand` is readable on `sheetCard()`.
+  - Table headings are `labelSecondary`, never `labelTertiary`.
+  - A live region stays mounted (RecoveryMap's `none` style) rather than
+    appearing already full.
+
+  `scratchpad/contrast-states.cjs` measures the four opened states.
+
 - **Thousands comma; the sidebar's tint** (18 Nov). training.ts has
   `decimalPoint()`: a comma before groups of three digits is a thousands
   separator, any other comma is decimal. Use it for any new number box.

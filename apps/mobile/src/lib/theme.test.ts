@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // The font files are for the app's bundler, not for Node.
 vi.mock('./fonts', () => ({ BUNDLED_FACES: {} }));
 import { StyleSheet } from 'react-native';
-import { ACCENTS, ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, ambientGlow, sheenLift, shadow, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, applyTweaks, color, cornersFor, customAccent, dimApplies, face, hslHex, DEFAULT_TWEAKS, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, readablePlateAlpha, shadowUnder, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
+import { ACCENTS, ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, ambientGlow, sheenLift, shadow, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, applyTweaks, color, cornersFor, customAccent, dimApplies, face, hslHex, DEFAULT_TWEAKS, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, readablePlateAlpha, shadowUnder, sheetCard, stackedGlass, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
 import { mix, over, STANDARD_RADIUS } from './looks';
 
 const channel = (value: number) => (value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
@@ -344,10 +344,12 @@ describe('words on Standard\'s glow', () => {
         const palette = paletteFor(scheme, accent, 'standard', GLASS_DEFAULT);
         const glow = mix(palette.groupedBackground, palette.brand, strongest(scheme));
         expect(contrast(palette.labelSecondary, glow), `${scheme} ${accent}`).toBeGreaterThanOrEqual(4.5);
-        // Your accent and the faint grey are as they are with no glass.
+        // The faint grey is as it is with no glass, and so is the accent in
+        // light; in dark the accent reads on a glass card in a sheet.
         const solid = paletteFor(scheme, accent, 'standard', 0);
-        expect(palette.brand).toBe(solid.brand);
         expect(palette.labelTertiary).toBe(solid.labelTertiary);
+        if (scheme === 'light') expect(palette.brand).toBe(solid.brand);
+        else expect(contrast(palette.brand, sheetCard(palette)), `${accent} on a sheet's card`).toBeGreaterThanOrEqual(4.5);
       }
     }
   });
@@ -374,6 +376,12 @@ describe('words on a tint over glass', () => {
           for (const wash of [palette.glassWashThin, palette.glassWashThick, palette.glassWashBar]) {
             const bar = mix(over(palette.groupedBackground, wash), '#FFFFFF', sheenLift(scheme, GLASS_DEFAULT));
             expect(contrast(palette.brandOnTint, over(bar, palette.brandTint)), `${look} ${scheme} ${accent}`).toBeGreaterThanOrEqual(4.5);
+          }
+          // In a sheet: on its glass card, on glass on glass, and on a grey slot (a raised card).
+          for (const ground of [sheetCard(palette), stackedGlass(palette), palette.cardRaised]) {
+            for (const wash of [palette.brandTint, palette.fill]) {
+              expect(contrast(palette.brandOnTint, over(ground, wash)), `${look} ${scheme} ${accent} in a sheet`).toBeGreaterThanOrEqual(4.5);
+            }
           }
         }
       }

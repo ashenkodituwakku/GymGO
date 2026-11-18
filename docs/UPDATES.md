@@ -9,9 +9,27 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 183 · Opened screens on the glass: a workout, a gym's sheet, GymPal; and two screen-reader cues that were lost
+
+*18 Nov 2026 · the commit "Opened states readable on the glass; Txt passes aria-hidden and aria-live through"*
+
+- The screen measure ran on the opened states: a workout in progress, Filters, a gym's sheet on Explore and GymPal, in Standard, Frost and Liquid, light and dark. axe found nothing. Measured from the screen, 22 words were under 4.5 to 1, after setting aside text behind the opened sheet or panel. Six remain, and none of them need a fix (below).
+- **A workout's column headings** (SET, KG, REPS, RPE) were 3.1 to 1, in the faint grey. They're now secondary grey, in a workout and in Edit workout. The "×" between the boxes stays faint, as decoration: the headings say what the boxes are. It's now hidden from screen readers.
+- **GymPal's note under the message box** ("GymPal is AI and can be wrong… Not medical advice", and where chats go) was 2.9 to 1. It's now secondary grey.
+- **A gym's sheet in dark:** Call, Website, Saved, Share and "Membership · 4 options" were 4.3 to 4.4, and "Add one" was 3.95.
+  - Those words sit on a glass card inside the sheet, over the map: measured at #29292A, lighter than a card. Standard's accent is now checked against that, so dark Indigo is one step lighter (#7D7AFF to #8481FF). No other accent's words change, and light is unchanged.
+  - The accent on a tint or a grey pill is checked on a grey slot (a raised card) and on glass on glass too. In dark it's now a paler lavender, in line with Frost's and Liquid's.
+- **The accent on a grey pill:** "Superset with the next" was 4.1 in dark. It and nine other grey pills (Back to it, See Pro, Change, Reset Home and the choice sheets' ticks) now use the accent made for a wash.
+- **Two screen-reader cues were being dropped.** The text component took a fixed list of settings, and TypeScript let `aria-hidden` and `aria-live` through without a word, so they never reached the page.
+  - The recovery map's line for a picked muscle ("Chest: today") was meant to be read out when it changes, and wasn't. It now is: it stays in the page, empty until a muscle is picked, since a screen reader may say nothing of a region that arrives already full.
+  - GymPal's "about …" line was meant to be skipped, as its message already says it, and wasn't. It is now.
+  - Both are declared now, so the same slip is caught as it's typed.
+  - Checked in the browser: picking Chest by keyboard fills the live region; the "×" is hidden, 15 of 15.
+- The six left: the "×" itself (decoration, hidden), and the avatar behind Filters. App tests 607.
+
 ## Update 182 · "1,000 lb" is a thousand, and the sidebar's chosen place reads in dark
 
-*18 Nov 2026 · the commit "Weights: a thousands comma; the sidebar's chosen place and tinted tiles readable"*
+*18 Nov 2026 · `4c04934`*
 
 - **A comma before three digits now groups them.** Update 169 let weight boxes read "62,5" as 62.5, but it read every comma as a decimal point. So "1,000" in a pound workout (a leg press) was logged as 1 lb, and 1 is a valid weight, so nothing said otherwise.
   - Now "1,000" and "1,200.5" read as a thousand and more, while "62,5" and "2,25" are still decimals.

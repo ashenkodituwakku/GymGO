@@ -333,7 +333,7 @@ export function EditableWidgets({
                     {widget.detail}
                   </Txt>
                 </View>
-                <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                <Txt variant="footnote" color={color.brandOnTint} style={face('semibold')}>
                   Add
                 </Txt>
               </Pressable>

@@ -238,7 +238,7 @@ function TemplateCard({
                     {exerciseName(item.exerciseId)}
                   </Txt>
                   {group && (
-                    <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                    <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
                       {`${groupName(group)} · ${group.position} of ${group.members.length}`}
                     </Txt>
                   )}

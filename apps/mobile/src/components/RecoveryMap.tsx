@@ -93,11 +93,11 @@ export function RecoveryMap({ sessions, maxWidth }: { sessions: TrainingSession[
           onChange={setBodyGender}
         />
       </View>
-      {pickedRest && (
-        <Txt variant="subhead" style={styles.center} aria-live="polite">
-          {restLine(pickedRest)}
-        </Txt>
-      )}
+      {/* Always there, empty until a muscle is picked: a screen reader says a
+          live region's change, and may say nothing of one that arrives full. */}
+      <Txt variant="subhead" style={[styles.center, !pickedRest && styles.none]} aria-live="polite">
+        {pickedRest ? restLine(pickedRest) : ''}
+      </Txt>
       <View style={styles.legend} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
         {BANDS.map((band) => (
           <View key={band.id} style={styles.key}>
@@ -130,6 +130,8 @@ const styles = themed(() =>
     card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
     figures: { flexDirection: 'row', justifyContent: 'center', gap: space[2] },
     center: { textAlign: 'center' },
+    // Out of the layout while empty, so it adds no gap, but still in the page for its announcement.
+    none: { position: 'absolute', width: 1, height: 1, overflow: 'hidden' },
     genderSwitch: { width: 160, alignSelf: 'center' },
     legend: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3], justifyContent: 'center' },
     key: { flexDirection: 'row', alignItems: 'center', gap: 6 },

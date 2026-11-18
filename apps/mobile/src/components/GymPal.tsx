@@ -715,7 +715,8 @@ function Chat({
               <Icon name="send" size={18} color={canSend ? color.onBrand : color.labelTertiary} weight="bold" />
             </Pressable>
           </View>
-          <Txt variant="caption" color={color.labelTertiary} style={styles.small}>
+          {/* What GymPal is and where chats go: words to read, so secondary grey. */}
+          <Txt variant="caption" color={color.labelSecondary} style={styles.small}>
             {/* The AI service named only once something is sent there. */}
             {state === 'off'
               ? 'GymPal is AI and can be wrong; a gym’s own page has its facts. Not medical advice.'

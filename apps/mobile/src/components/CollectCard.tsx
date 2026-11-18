@@ -264,11 +264,12 @@ export function CollectionStrip({ onPress, tile = false }: { onPress: () => void
         </View>
         <View style={styles.tileFigure}>
           <Txt variant="title2">{String(stats.gyms)}</Txt>
-          <Txt variant="caption" color={color.labelSecondary} numberOfLines={1} style={styles.tileShrink}>
+          {/* Two lines before they shorten: in a half-width tile with the largest text, one line read "gyms coll…". */}
+          <Txt variant="caption" color={color.labelSecondary} numberOfLines={2} style={styles.tileShrink}>
             {stats.gyms === 1 ? 'gym collected' : 'gyms collected'}
           </Txt>
         </View>
-        <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+        <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
           {places}
         </Txt>
         {rarest && (

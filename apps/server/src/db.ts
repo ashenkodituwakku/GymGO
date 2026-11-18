@@ -372,6 +372,11 @@ function migrate(db: Db): void {
   // Which version of the terms the account agreed to, and when (see LEGAL_VERSION in @gymgo/domain).
   if (!userColumns.some((column) => column.name === 'terms_version')) db.exec('alter table users add column terms_version text');
   if (!userColumns.some((column) => column.name === 'terms_accepted_at')) db.exec('alter table users add column terms_accepted_at text');
+  // A review's optional ratings for four aspects, 1 to 5 or none (added 18 Nov 2026).
+  const reviewColumns = db.prepare('pragma table_info(reviews)').all() as Array<{ name: string }>;
+  for (const aspect of ['equipment', 'cleanliness', 'atmosphere', 'value']) {
+    if (!reviewColumns.some((column) => column.name === aspect)) db.exec(`alter table reviews add column ${aspect} integer check (${aspect} between 1 and 5)`);
+  }
   // Bug reports that are copyright notices, kept apart so they're dealt with first.
   // A note on a logged session (added 17 Oct 2026).
   const trainingColumns = db.prepare('pragma table_info(training_sessions)').all() as Array<{ name: string }>;

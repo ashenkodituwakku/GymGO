@@ -102,8 +102,8 @@ export function PlanEditor({ items, onChange, where }: { items: PlanItem[]; onCh
                   accessibilityLabel={`${name}: ${restWords(item.restSeconds)} after each set. Change it`}
                   style={({ pressed }) => [styles.rest, resting === index && styles.restOpen, pressed && { opacity: 0.6 }]}
                 >
-                  <Icon name="timer" size={14} color={color.brand} />
-                  <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                  <Icon name="timer" size={14} color={color.brandOnTint} />
+                  <Txt variant="footnote" color={color.brandOnTint} style={face('semibold')}>
                     {item.restSeconds === 0 ? 'No rest' : restLabel(item.restSeconds)}
                   </Txt>
                 </Pressable>

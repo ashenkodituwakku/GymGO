@@ -77,7 +77,7 @@ export default function MyWorkouts() {
       {active && (
         <Pressable onPress={() => router.push('/train')} accessibilityRole="button" style={styles.notice}>
           <Txt variant="footnote" color={color.labelSecondary}>
-            {active.name} is in progress. <Txt variant="footnote" color={color.brand}>Back to it ›</Txt>
+            {active.name} is in progress. <Txt variant="footnote" color={color.brandOnTint}>Back to it ›</Txt>
           </Txt>
         </Pressable>
       )}
@@ -92,7 +92,7 @@ export default function MyWorkouts() {
       {!billing.isPro && workouts !== null && workouts.length > 0 && (
         <Pressable onPress={() => openPro('workouts')} accessibilityRole="button" style={styles.notice}>
           <Txt variant="footnote" color={color.labelSecondary}>
-            Your workouts stay here. Saving new ones is part of GymGO Pro. <Txt variant="footnote" color={color.brand}>See Pro ›</Txt>
+            Your workouts stay here. Saving new ones is part of GymGO Pro. <Txt variant="footnote" color={color.brandOnTint}>See Pro ›</Txt>
           </Txt>
         </Pressable>
       )}
@@ -146,10 +146,10 @@ export default function MyWorkouts() {
                       hitSlop={6}
                       style={({ pressed }) => [styles.startPill, narrow && styles.startRound, pressed && styles.pressed]}
                     >
-                      <Icon name="play" size={13} color={color.brand} />
+                      <Icon name="play" size={13} color={color.brandOnTint} />
                       {/* On a narrow phone the button is its ▷ alone, as on Workout, so the name has the room. */}
                       {!narrow && (
-                        <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                        <Txt variant="subhead" color={color.brandOnTint} style={face('semibold')}>
                           Start
                         </Txt>
                       )}

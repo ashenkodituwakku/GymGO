@@ -44,7 +44,7 @@ export function askSetKindNatively(title: string, onPick: (kind: SetKind | 'norm
 /** RPE's column heading, over the cells below. */
 export function RpeHead() {
   return (
-    <Txt variant="caption" color={color.labelTertiary} style={styles.head}>
+    <Txt variant="caption" color={color.labelSecondary} style={styles.head}>
       RPE
     </Txt>
   );

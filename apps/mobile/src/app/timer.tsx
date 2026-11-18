@@ -224,8 +224,8 @@ export default function TimerScreen() {
         <Setting icon="refresh" label="Rounds" value={String(plan.rounds)} locked={!pro} canLess={plan.rounds > LIMITS.rounds.min} canMore={plan.rounds < LIMITS.rounds.max} onChange={(by) => adjust('rounds', by)} />
         {!pro ? (
           <Pressable onPress={() => openPro('timers')} accessibilityRole="button" style={({ pressed }) => [styles.pro, pressed && { opacity: 0.7 }]}>
-            <Icon name="crown" size={18} color={color.brand} />
-            <Txt variant="subhead" color={color.brand} style={[styles.flex, face('medium')]}>
+            <Icon name="crown" size={18} color={color.brandOnTint} />
+            <Txt variant="subhead" color={color.brandOnTint} style={[styles.flex, face('medium')]}>
               Set your own work, rest and rounds, and keep up to {MAX_OWN_TIMERS} timers, with GymGO Pro
             </Txt>
             <Icon name="chevron" size={13} color={color.labelTertiary} />
@@ -335,7 +335,7 @@ function Step({ icon, label, disabled, locked, onPress }: { icon: IconName; labe
       hitSlop={6}
       style={({ pressed }) => [styles.step, (disabled || locked) && { opacity: 0.4 }, pressed && { opacity: 0.6 }]}
     >
-      <Icon name={icon} size={16} color={color.brand} />
+      <Icon name={icon} size={16} color={color.brandOnTint} />
     </Pressable>
   );
 }

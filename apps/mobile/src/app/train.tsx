@@ -781,8 +781,8 @@ const ExerciseLog = memo(function ExerciseLog({
                     hitSlop={8}
                     style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
                   >
-                    <Icon name="timer" size={15} color={color.brand} />
-                    <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                    <Icon name="timer" size={15} color={color.brandOnTint} />
+                    <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
                       Rest
                     </Txt>
                   </Pressable>
@@ -795,8 +795,8 @@ const ExerciseLog = memo(function ExerciseLog({
                     hitSlop={8}
                     style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
                   >
-                    <Icon name="plates" size={15} color={color.brand} />
-                    <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                    <Icon name="plates" size={15} color={color.brandOnTint} />
+                    <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
                       Plates
                     </Txt>
                   </Pressable>
@@ -860,16 +860,17 @@ const ExerciseLog = memo(function ExerciseLog({
         </View>
       )}
 
+      {/* Headings are words to read, so secondary grey (tertiary is for what needn't be). */}
       {!timed && (
         <View style={[styles.setHead, rpeColumn && styles.tight]}>
-          <Txt variant="caption" color={color.labelTertiary} style={styles.setCol}>
+          <Txt variant="caption" color={color.labelSecondary} style={styles.setCol}>
             SET
           </Txt>
-          <Txt variant="caption" color={color.labelTertiary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
+          <Txt variant="caption" color={color.labelSecondary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
             {bodyWeight ? 'ADDED' : unit.toUpperCase()}
           </Txt>
           <View style={styles.times} />
-          <Txt variant="caption" color={color.labelTertiary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
+          <Txt variant="caption" color={color.labelSecondary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
             REPS
           </Txt>
           <View style={styles.flex} />
@@ -923,7 +924,8 @@ const ExerciseLog = memo(function ExerciseLog({
                 style={[styles.input, rpeColumn && styles.narrow, set.done && styles.inputDone]}
                 accessibilityLabel={`${name}, ${tags[at]!.spoken} weight in ${unit}${bodyWeight ? ', blank for body weight' : ''}`}
               />
-              <Txt variant="subhead" color={color.labelTertiary} style={styles.times}>
+              {/* Between the boxes, decoration: the headings above say weight and reps. */}
+              <Txt variant="subhead" color={color.labelTertiary} style={styles.times} aria-hidden>
                 ×
               </Txt>
               <Input

@@ -177,7 +177,7 @@ export function ResultsContent({
         hitSlop={4}
         style={({ pressed }) => [styles.filterButton, pressed && { opacity: 0.7 }]}
       >
-        <Icon name="filters" size={17} color={color.brand} />
+        <Icon name="filters" size={17} color={color.brandOnTint} />
         {filterCount > 0 && (
           <View style={styles.badge}>
             <Txt variant="caption" color={color.onBrand} style={styles.badgeText}>
@@ -199,7 +199,7 @@ export function ResultsContent({
         {me ? (
           <Avatar account={me} size={40} variant="headline" />
         ) : (
-          <Icon name="account" size={22} color={color.brand} />
+          <Icon name="account" size={22} color={color.brandOnTint} />
         )}
       </Pressable>
     </View>
@@ -395,7 +395,7 @@ export function ResultsContent({
 
       {notice && (
         <Animated.View key={notice} style={styles.notice} entering={FADE_IN} exiting={FADE_OUT}>
-          <Icon name="info" size={16} color={color.brand} />
+          <Icon name="info" size={16} color={color.brandOnTint} />
           <Txt variant="footnote" style={styles.noticeText}>
             {notice}
           </Txt>
@@ -406,7 +406,7 @@ export function ResultsContent({
       {locked && (
         <Animated.View style={styles.lock} entering={FADE_IN} exiting={FADE_OUT}>
           <View style={styles.lockBadge}>
-            <Icon name="globe" size={22} color={color.brand} />
+            <Icon name="globe" size={22} color={color.brandOnTint} />
           </View>
           <Txt variant="headline" style={styles.lockTitle}>
             Gyms in {countryInSentence(locked.country)} are part of GymGO Pro

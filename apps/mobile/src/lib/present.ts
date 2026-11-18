@@ -67,6 +67,16 @@ export function googleMapsSearchUrl(record: GymRecord): string {
 }
 
 /**
+ * The gym on Apple Maps: a search by its name and address, near where it is.
+ * Like the Google link, it opens Apple's own listing (and Apple's own
+ * ratings and reviews there); GymGO copies and stores nothing from it.
+ */
+export function appleMapsSearchUrl(record: GymRecord): string {
+  const { lat, lng } = record.location.position;
+  return `https://maps.apple.com/?q=${encodeURIComponent(googleQuery(record))}&sll=${lat},${lng}`;
+}
+
+/**
  * Google's own embeddable map, centred on the gym, with Google's card for it
  * (name, address, star rating, number of reviews, and a link to the full
  * listing). This is Google's public "Embed a map" feature: free, unlimited,

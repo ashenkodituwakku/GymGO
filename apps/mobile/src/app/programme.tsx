@@ -116,7 +116,7 @@ function Chooser() {
                 accessibilityLabel={`${option.label}: ${option.blurb}`}
                 style={({ pressed }) => [styles.goal, on && styles.goalOn, pressed && styles.pressed]}
               >
-                <Txt variant="headline" color={on ? color.brand : color.label}>
+                <Txt variant="headline" color={on ? color.brandOnTint : color.label}>
                   {option.label}
                 </Txt>
                 <Txt variant="footnote" color={color.labelSecondary}>
@@ -385,8 +385,8 @@ function ExerciseRow({
         </Txt>
         {onSwap && (
           <Pressable onPress={onSwap} accessibilityRole="button" accessibilityLabel={`Swap ${name} for the rest of the programme`} hitSlop={6} style={styles.swap}>
-            <Icon name="shuffle" size={13} color={color.brand} />
-            <Txt variant="caption" color={color.brand} style={face('semibold')}>
+            <Icon name="shuffle" size={13} color={color.brandOnTint} />
+            <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
               Swap
             </Txt>
           </Pressable>

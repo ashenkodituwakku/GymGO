@@ -100,8 +100,8 @@ export function WeekCard({
         </View>
       ) : (
         <Pressable onPress={() => change(0)} accessibilityRole="button" style={({ pressed }) => [styles.setGoal, pressed && { opacity: 0.7 }]}>
-          <Icon name="target" size={16} color={color.brand} />
-          <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+          <Icon name="target" size={16} color={color.brandOnTint} />
+          <Txt variant="subhead" color={color.brandOnTint} style={face('semibold')}>
             Aim for 3 a week
           </Txt>
         </Pressable>
@@ -111,7 +111,8 @@ export function WeekCard({
         <View style={styles.rowLabels}>
           {ROW_LABELS.map((label, index) => (
             <View key={index} style={styles.rowLabel}>
-              <Txt variant="caption" color={color.labelTertiary}>
+              {/* Words, so secondary grey (tertiary is for what needn't be read). */}
+              <Txt variant="caption" color={color.labelSecondary}>
                 {label}
               </Txt>
             </View>
@@ -291,7 +292,7 @@ function Stepper({ icon, label, disabled, onPress }: { icon: IconName; label: st
       hitSlop={6}
       style={({ pressed }) => [styles.stepper, disabled && { opacity: 0.35 }, pressed && { opacity: 0.6 }]}
     >
-      <Icon name={icon} size={14} color={color.brand} />
+      <Icon name={icon} size={14} color={color.brandOnTint} />
     </Pressable>
   );
 }

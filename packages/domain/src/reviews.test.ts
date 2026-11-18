@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { describeRating, publishedReviews, summariseAspects, summariseRatings } from './reviews';
+import { describeRating, publishedReviews, starCounts, summariseAspects, summariseRatings } from './reviews';
 import { review } from './testing';
 
 describe('summariseRatings', () => {
@@ -49,5 +49,24 @@ describe('summariseRatings', () => {
 
   it('uses singular wording for a single review', () => {
     expect(describeRating(summariseRatings([review()]))).toBe('4.0 from 1 review');
+  });
+});
+
+describe('starCounts', () => {
+  it('counts published reviews by stars, 5 down to 1, leaving others out', () => {
+    const reviews = [
+      review({ id: 'a', overall: 5, status: 'published' }),
+      review({ id: 'b', overall: 5, status: 'published' }),
+      review({ id: 'c', overall: 2, status: 'published' }),
+      review({ id: 'd', overall: 1, status: 'pending' }),
+    ];
+    expect(starCounts(reviews)).toEqual([
+      { stars: 5, count: 2 },
+      { stars: 4, count: 0 },
+      { stars: 3, count: 0 },
+      { stars: 2, count: 1 },
+      { stars: 1, count: 0 },
+    ]);
+    expect(starCounts([]).every((row) => row.count === 0)).toBe(true);
   });
 });

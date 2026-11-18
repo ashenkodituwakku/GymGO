@@ -247,14 +247,14 @@ export default function SessionEditScreen() {
             </View>
             {item.sets.length > 0 && (
               <View style={[styles.setHead, rpeColumn && styles.tight]}>
-                <Txt variant="caption" color={color.labelTertiary} style={styles.setCol}>
+                <Txt variant="caption" color={color.labelSecondary} style={styles.setCol}>
                   SET
                 </Txt>
-                <Txt variant="caption" color={color.labelTertiary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
+                <Txt variant="caption" color={color.labelSecondary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
                   {bodyWeight ? 'ADDED' : draft.unit.toUpperCase()}
                 </Txt>
                 <View style={styles.times} />
-                <Txt variant="caption" color={color.labelTertiary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
+                <Txt variant="caption" color={color.labelSecondary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
                   REPS
                 </Txt>
                 <View style={styles.flex} />
@@ -291,7 +291,8 @@ export default function SessionEditScreen() {
                       style={[styles.input, rpeColumn && styles.narrow]}
                       accessibilityLabel={`${spoken} weight in ${draft.unit}${bodyWeight ? ', blank for body weight' : ''}`}
                     />
-                    <Txt variant="subhead" color={color.labelTertiary} style={styles.times}>
+                    {/* Between the boxes, decoration: the headings above say weight and reps. */}
+                    <Txt variant="subhead" color={color.labelTertiary} style={styles.times} aria-hidden>
                       ×
                     </Txt>
                     <Input

@@ -90,9 +90,11 @@ export function BrandFill({
 
 const styles = StyleSheet.create({
   shade: { backgroundColor: 'rgba(0, 0, 0, 0.2)' },
-  // Gone by the middle, where the words are, so white text keeps its contrast on the fill.
+  // Mostly along the top edge, and down to 6% by a fifth of the way, where a
+  // button's words start: more than about 10% of white behind white text
+  // takes it under 4.5 to 1 on the default accent (it had 13% there).
   shine: {
-    ...backgroundImage('linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.08) 30%, rgba(255, 255, 255, 0) 50%)'),
+    ...backgroundImage('linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.06) 18%, rgba(255, 255, 255, 0) 40%)'),
     boxShadow: 'inset 0px 1px 0.5px rgba(255, 255, 255, 0.6), inset 0px -1px 0.5px rgba(255, 255, 255, 0.18)',
   },
 });

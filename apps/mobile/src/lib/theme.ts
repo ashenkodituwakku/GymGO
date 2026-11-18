@@ -484,14 +484,34 @@ export function glassLevelName(level: number): string {
 
 /**
  * The inks for words on a wash of colour: the accent on its own tint (a
- * quiet button) and secondary words on the grey fill (a tile), each over
+ * quiet button) or the grey fill (a pill), and secondary words on the grey
+ * fill (a tile), each over
  * the page's ground and over a card. A see-through card is skipped:
- * readable() leaves out a ground it can't read.
+ * readable() leaves out a ground it can't read. And over the glass of the
+ * sidebar, bars and sheets, under the light of its sheen (`lift` of white):
+ * in dark that glass is lighter than a card, and the sidebar's chosen place
+ * came to 4.1 on its tint.
  */
-function inksOnWashes(palette: Palette, scheme: Scheme, more: string[] = []): void {
-  const grounds = (wash: string) => [palette.groupedBackground, palette.card, ...more].map((ground) => over(ground, wash));
-  palette.brandOnTint = readable(palette.brand, grounds(palette.brandTint), scheme, 4.6);
+function inksOnWashes(palette: Palette, scheme: Scheme, more: string[] = [], lift = 0): void {
+  const glass = [palette.glassWashThin, palette.glassWashThick, palette.glassWashBar].map((wash) => over(palette.groupedBackground, wash));
+  const lit = lift > 0 ? glass.map((bar) => mix(bar, '#FFFFFF', lift)) : [];
+  // And on a raised card, and on glass on glass (a button in a gym's sheet
+  // over the map), both lighter than a card in dark: measured on the screen.
+  const raised = [palette.cardRaised, stackedGlass(palette), sheetCard(palette)];
+  const grounds = (wash: string) => [palette.groupedBackground, palette.card, ...more, ...glass, ...lit, ...raised].map((ground) => over(ground, wash));
+  // The accent on a wash: its own tint (a quiet button) or the grey fill (a pill).
+  palette.brandOnTint = readable(palette.brand, [...grounds(palette.brandTint), ...grounds(palette.fill)], scheme, 4.6);
   palette.labelSecondaryOnFill = readable(palette.labelSecondary, grounds(palette.fill), scheme, 4.6);
+}
+
+/** Glass on glass: a thin layer (a button) on a thick one (a sheet), over the page. */
+export function stackedGlass(palette: Pick<Palette, 'groupedBackground' | 'glassWashThick' | 'glassWashThin'>): string {
+  return over(over(palette.groupedBackground, palette.glassWashThick), palette.glassWashThin);
+}
+
+/** A glass card in a sheet (a gym's membership card over the map): #29292A in Standard's dark, as measured on the screen. */
+export function sheetCard(palette: Pick<Palette, 'groupedBackground' | 'glassWashThick' | 'cardGlass'>): string {
+  return over(over(palette.groupedBackground, palette.glassWashThick), palette.cardGlass);
 }
 
 export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE_LOOK, glass: number = GLASS_DEFAULT, dark: DarkStyle = 'black'): Palette {
@@ -502,13 +522,29 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
   palette.glassWashThick = glassWash('thick', glass, scheme, look);
   palette.glassWashBar = glassWash('bar', glass, scheme, look);
   const surfaces = LOOKS[look].surfaces?.(scheme, palette.brand);
+  // Standard's page has a glow of your accent (behind a tab's title, and in
+  // two pools). The grey words straight on the page (a date, a section's
+  // heading and footnote) are read over the brightest of it too: over the
+  // plain page alone they came to 4.3 under the title's glow. Only the grey:
+  // your accent and the faint grey stay exactly as they are. The title's glow
+  // and the pools sit in different places, so the strongest one is the
+  // ground (glowPeak, which adds them, is for a card that may lie under both).
+  const strongest = Math.max(0, ...glowPools(glass, scheme).map((pool) => pool.opacity), cleanGlass(glass) === 0 ? 0 : heroGlowStops(glass, scheme).main);
+  const glow = surfaces || LOOKS[look].solid || strongest === 0 ? null : mix(palette.groupedBackground, palette.brand, strongest);
+  if (glow) palette.labelSecondary = readable(palette.labelSecondary, [glow], scheme, 4.5);
+  // Its accent's words on a glass card in a sheet (a gym's sheet over the
+  // map: Call, Website, "Membership · 4 options") were 4.3 to 4.4 in dark;
+  // Frost's and Liquid's are read over their own surfaces below. In light,
+  // and for most accents, no change: dark Indigo is a step lighter.
+  if (glow) palette.brand = readable(palette.brand, [sheetCard(palette), stackedGlass(palette)], scheme, 4.5);
   // Cards on the page are glass too, in Standard: solid at 0%, clearer as the level rises (Frost's below).
   const see = LOOKS[look].solid || surfaces || cleanGlass(glass) === 0 ? 1 : readablePlateAlpha(palette, glass, scheme);
   palette.plate = see === 1 ? palette.card : alpha(palette.card, see);
   palette.plateSolid = mix(palette.groupedBackground, palette.card, see);
   const lift = (raised: string) => (scheme === 'dark' ? mix(raised, '#FFFFFF', 0.18) : raised);
   palette.segmentRaised = lift(palette.cardRaised);
-  inksOnWashes(palette, scheme);
+  // A tile or a quiet button sits on a card that is glass over that glow.
+  inksOnWashes(palette, scheme, glow ? [glow, mix(glow, palette.card, see)] : [], sheenLift(scheme, glass));
   if (!surfaces) return palette;
   Object.assign(palette, surfaces);
   palette.plate = palette.card;
@@ -526,13 +562,13 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
   // the deepest of the page's blues.
   const plates = LOOKS[look].plates?.[scheme];
   if (!plates || cleanGlass(glass) === 0) {
-    inksOnWashes(palette, scheme, tones);
+    inksOnWashes(palette, scheme, tones, sheenLift(scheme, glass));
     return palette;
   }
   const at = clearestReadable(palette, tones, levelAlpha(glass, plates.balanced, plates.clearest), sheen);
   palette.plate = at === 1 ? palette.card : alpha(palette.card, at);
   palette.plateSolid = mix(surfaces.groupedBackground, palette.card, at);
-  inksOnWashes(palette, scheme, [...tones, ...tones.map((tone) => mix(tone, palette.card, at))]);
+  inksOnWashes(palette, scheme, [...tones, ...tones.map((tone) => mix(tone, palette.card, at))], sheenLift(scheme, glass));
   return palette;
 }
 
@@ -984,6 +1020,22 @@ function liquidFace(scheme: Scheme, level: number): ViewStyle {
 
 /** Shadows in use now. Change in place with the look (hard pixel shadows, bevels, glows), and the glass edge of small surfaces. */
 export const shadow: { float: ViewStyle; card: ViewStyle; plate: ViewStyle; rim: ViewStyle } = { ...standardShadows('light'), rim: smallRim(LOOKS[FREE_LOOK], 'light', GLASS_DEFAULT) };
+
+/**
+ * Only the shadow a surface casts, without what a look paints on its face:
+ * on Liquid, shadow.plate is a clear card's sheen, inner light and blur as
+ * well. For a surface filled with the accent (Home's Build a workout), where
+ * that face washed the white words on it down to under 3 to 1.
+ */
+export function shadowUnder(style: ViewStyle): ViewStyle {
+  const box = style.boxShadow;
+  if (typeof box !== 'string') return {};
+  const outer = box
+    .split(/,(?![^(]*\))/)
+    .map((part) => part.trim())
+    .filter((part) => part && !part.startsWith('inset'));
+  return outer.length ? { boxShadow: outer.join(', ') } : {};
+}
 
 /**
  * Where touches go. Made with StyleSheet.create: in a browser only compiled

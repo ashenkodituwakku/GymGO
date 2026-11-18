@@ -24,8 +24,8 @@ export function ProOffer({ icon, title, body, onPress }: { icon: IconName; title
       </View>
       <View style={styles.flex}>
         <View style={styles.tag}>
-          <Icon name="crown" size={10} color={color.brand} />
-          <Txt variant="caption" color={color.brand} style={face('bold')}>
+          <Icon name="crown" size={10} color={color.brandOnTint} />
+          <Txt variant="caption" color={color.brandOnTint} style={face('bold')}>
             PRO
           </Txt>
         </View>

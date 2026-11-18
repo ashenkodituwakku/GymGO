@@ -287,6 +287,11 @@ describe('the guide', () => {
     expect(GYMPAL_GUIDE).toContain('never estimates or predicts how busy');
     expect(GYMPAL_GUIDE).toContain('never medical advice');
   });
+
+  it('says reviews elsewhere are linked, not copied', () => {
+    expect(GYMPAL_GUIDE).toContain('Reviews on other maps');
+    expect(GYMPAL_GUIDE).toContain('doesn\'t copy those in');
+  });
 });
 
 describe('what the screen says', () => {

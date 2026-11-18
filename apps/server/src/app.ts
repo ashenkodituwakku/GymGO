@@ -29,7 +29,7 @@
  *   DELETE /api/me/avatar                 your account, with no profile picture
  *   GET    /api/avatars/:id               a profile picture (the id is random and changes with each picture)
  *   GET    /api/gyms/:gymId/reviews       published reviews, plus your own
- *   POST   /api/gyms/:gymId/reviews       { overall, body, visitedOn? } -> held for moderation
+ *   POST   /api/gyms/:gymId/reviews       { overall, body, visitedOn?, equipment?, cleanliness?, atmosphere?, value? } -> held for moderation
  *   GET    /api/gyms/:gymId/photos        published photos, plus your own waiting ones
  *   POST   /api/gyms/:gymId/photos        { data (base64 JPEG/PNG), consent: true } -> held for moderation
  *   GET    /api/photos/covers             { gymId: url } of each gym's newest published photo
@@ -589,6 +589,10 @@ interface ReviewRow {
   overall: number;
   body: string;
   visited_on: string | null;
+  equipment: number | null;
+  cleanliness: number | null;
+  atmosphere: number | null;
+  value: number | null;
   status: Review['status'];
   moderation_reason: string | null;
   created_at: string;
@@ -602,10 +606,10 @@ function toReview(row: ReviewRow): Review {
     authorId: row.user_id,
     authorDisplayName: row.display_name,
     overall: row.overall,
-    equipment: null,
-    cleanliness: null,
-    atmosphere: null,
-    value: null,
+    equipment: row.equipment ?? null,
+    cleanliness: row.cleanliness ?? null,
+    atmosphere: row.atmosphere ?? null,
+    value: row.value ?? null,
     body: row.body,
     visitedOn: row.visited_on,
     createdAt: row.created_at,
@@ -618,6 +622,8 @@ function toReview(row: ReviewRow): Review {
 }
 
 const REVIEW_SELECT = `select reviews.*, users.display_name from reviews join users on users.id = reviews.user_id`;
+/** The aspects a review may also rate, each optional (Review in @gymgo/domain). */
+const REVIEW_ASPECTS = ['equipment', 'cleanliness', 'atmosphere', 'value'] as const;
 
 export function createApp(options: AppOptions) {
   const { db } = options;
@@ -1639,8 +1645,8 @@ export function createApp(options: AppOptions) {
         connectedSignIns: rows('select provider, email, created_at as connectedAt from identities where user_id = ? order by created_at'),
         savedGyms: rows('select gym_id as gymId, created_at as savedAt from saved_gyms where user_id = ? order by created_at'),
         reviews: rows(
-          `select id, gym_id as gymId, overall, body, visited_on as visitedOn, status, moderation_reason as moderationReason,
-                  created_at as createdAt, moderated_at as moderatedAt from reviews where user_id = ? order by created_at`,
+          `select id, gym_id as gymId, overall, equipment, cleanliness, atmosphere, value, body, visited_on as visitedOn, status,
+                  moderation_reason as moderationReason, created_at as createdAt, moderated_at as moderatedAt from reviews where user_id = ? order by created_at`,
         ),
         photos: rows(
           `select id, gym_id as gymId, type, bytes, status, moderation_reason as moderationReason, created_at as createdAt,
@@ -1827,6 +1833,14 @@ export function createApp(options: AppOptions) {
         const text = typeof body.body === 'string' ? body.body.trim() : '';
         const visitedOn = typeof body.visitedOn === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.visitedOn) ? body.visitedOn : null;
         if (!Number.isInteger(overall) || overall < 1 || overall > 5) throw new HttpError(400, 'Pick a rating from 1 to 5 stars.');
+        // Each aspect is optional: left out (or null), it's simply not rated.
+        const aspects = REVIEW_ASPECTS.map((aspect) => {
+          const given = body[aspect];
+          if (given === undefined || given === null) return null;
+          const stars = Number(given);
+          if (!Number.isInteger(stars) || stars < 1 || stars > 5) throw new HttpError(400, `Rate ${aspect} from 1 to 5 stars, or leave it out.`);
+          return stars;
+        });
         if (text.length < 10) throw new HttpError(400, 'Say a little more: at least 10 characters.');
         if (text.length > 2000) throw new HttpError(400, 'Keep it under 2,000 characters.');
         const existing = db
@@ -1835,8 +1849,8 @@ export function createApp(options: AppOptions) {
         if (existing) throw new HttpError(409, 'You’ve already reviewed this gym.');
         const id = randomUUID();
         db.prepare(
-          `insert into reviews (id, gym_id, user_id, overall, body, visited_on, status, created_at) values (?, ?, ?, ?, ?, ?, 'pending', ?)`,
-        ).run(id, gymId, account.id, overall, text, visitedOn, now().toISOString());
+          `insert into reviews (id, gym_id, user_id, overall, equipment, cleanliness, atmosphere, value, body, visited_on, status, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
+        ).run(id, gymId, account.id, overall, ...aspects, text, visitedOn, now().toISOString());
         const row = db.prepare(`${REVIEW_SELECT} where reviews.id = ?`).get(id) as unknown as ReviewRow;
         return send(res, 201, { review: toReview(row) });
       }

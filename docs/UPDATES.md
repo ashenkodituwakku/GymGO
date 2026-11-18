@@ -9,7 +9,7 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
-## Update 181 · GymPal can use Groq's free plan too
+## Update 188 · GymPal can use Groq's free plan too
 
 *18 Nov 2026 · the commit "GymPal asks Groq's free plan first, then OpenRouter"*
 
@@ -22,10 +22,119 @@ You asked me to find a free, unlimited key for GymPal. **There isn't one:** ever
 - **The note under GymPal's box** says "Chats go to Groq or OpenRouter, AI services…". The Privacy Policy and Terms name Groq (version 2026-11-18.2), so existing accounts see the terms card once.
 
 - New tests: Groq asked first with the right fields (its own token field; short, hidden thinking for GPT-OSS, none for Qwen), the next Groq model when one has used its day or answers with nothing, OpenRouter after them, "busy" with no OpenRouter, a turned-down key never logged. All typechecks and tests pass. Not tried with a real Groq key here.
+## Update 187 · Dark mode's Dim checked, and GymPal knows the new reviews
+
+*18 Nov 2026 · the commit "GymPal's guide describes reviews; Read more says if it's open; Dim checked"*
+
+- **Dim** (Standard's softer dark mode, in Appearance) hadn't been checked: every dark measurement used black. It has now, with the same measure from the screen on Home, Profile, Progress, Appearance, a gym's page and Explore, and on a workout in progress, Filters, a gym's sheet, GymPal and a gym's reviews (with and without reviews). axe found nothing, and no words were under 4.5 to 1. Nothing needed changing.
+- **GymPal's guide** mentioned reviews only in passing, so GymPal couldn't explain the new ones. It now knows what the summary shows, how to write a review (stars, the four optional ratings, at least 10 characters, one per gym, checked by a moderator), that visits aren't verified, and that Reviews on other maps opens Google's or Apple's listing without copying their reviews in. A test checks that last part. The rule that GymPal never states a real gym's reviews or rating is unchanged.
+- **Read more** on a long review now tells a screen reader whether it's open.
+- App 608, server 310 tests.
+
+## Update 186 · The review ratings reach your data download and the moderators, and stars are said as words
+
+*18 Nov 2026 · `2f4ea36`*
+
+- **Download my data left out the new ratings.** Update 184 began keeping the equipment, cleanliness, atmosphere and value ratings, but the download names each column it includes, and those four weren't there. It promises everything GymGO holds about you, so they're in it now. A test checks it.
+- **Moderators couldn't see them either**, though they're published along with the review. The queue now shows them under the text ("Equipment 4 of 5"), and gives the rating as "4 of 5 stars" rather than "★★★★".
+- **Stars said as words to a screen reader**, not as "black star":
+  - A gym's Reviews row says "3.8 out of 5, from 4 reviews".
+  - Compare's rating cells say just the number, as the row's heading says it's a rating.
+  - On "See it on Google", the rating is said as a number, and each review's row of stars as "4 out of 5 stars".
+  - The stars still show as before.
+- Checked:
+  - The download has the four ratings.
+  - In the browser, the queue shows "4 of 5 stars" and "Equipment 4 of 5" for a review waiting on an invented demo gym, and the Reviews row's spoken name is as above.
+  - App 608, server 309, domain 198 tests.
+
+## Update 185 · The largest text on a small phone: no choice cut off, no word broken
+
+*18 Nov 2026 · `d56c320`*
+
+- This round looked at Appearance's largest text with Bold text on, at 320 points (the smallest phones) and 390, in Standard and Liquid. Ten pages were checked for text cut short, spilling out of its box, or making the page scroll sideways. Long gym names, suburbs and a workout's list of exercises shorten on purpose, and still do. Three things lost words:
+  - **A segmented control cut a choice short.** Build a workout's Goal read "Strength, Muscle, Endura…". A segmented control now measures its longest label (with the label's own font in a browser). When that won't fit in an equal share, the segments flow onto two rows, the chosen one raised where it is. At the usual sizes it's one row with the sliding pill, as before (checked at 390 and 320).
+  - **A row's title broke mid-word.** Profile's Compare read "Comp / are" beside "None pic…", because a row's value could take more than half the room. A row's title now always gets at least 45%, and the value shortens instead.
+  - **Home's collection tile cut its own words** to "gyms coll…" and "1 cou…". Both lines can now take two lines before they shorten.
+- Checked in the browser at the largest size: the Goal and Length controls wrap with nothing cut, and the collection tile and Compare read in full. App tests 608.
+
+## Update 184 · Reviews, redesigned, with links to Google Maps and Apple Maps
+
+*18 Nov 2026 · `ea94cfe`*
+
+You asked for the review system to look better, and for reviews from Google Maps and Apple Maps to be brought into GymGO.
+
+- **A gym's reviews, redesigned** (in Reviews on a gym's page and in its sheet on Explore):
+  - **A summary card:** the average, large, with its stars; how many reviews; a bar for each of 5 to 1 stars; and averages for equipment, cleanliness, atmosphere and value, where people rated them. It still says visits aren't verified and that a moderator reads every review first.
+  - **Each review is a card:** the writer's initials, their name and the date, the visit month when given, solid stars, and the aspects they rated. A long review opens with "Read more". After three reviews, "Show all".
+  - **Writing one:** big stars with a word for each (Poor to Excellent), then optional stars for equipment, cleanliness, atmosphere and value (tap a star again to clear it), then the text.
+  - **No reviews yet** is a card that says so, never a score of zero. Your review waiting for a moderator is a card of its own.
+  - The stars are Phosphor's solid star: in a browser the icon font's was only an outline, which made 3.8 hard to tell from 5.
+- **The four aspect ratings are kept now.** The data model always had them, but the server stored only the stars and text. Each is optional, 1 to 5; anything else is refused. Older reviews simply have none.
+- **Google Maps and Apple Maps:** every real gym's reviews end with "Reviews on other maps", two buttons that open the gym's listing there, with its own ratings and reviews.
+  - Their reviews aren't copied into GymGO. They belong to their writers and to Google and Apple, whose terms allow showing them only inside their own products. Your own rule is that every fact carries its source.
+  - GymGO's own reviews are never averaged with theirs.
+  - With your own Google Places API key on the server (Google bills for it), each gym's "See it on Google" page already shows Google's reviews live, credited to their writers and never stored. That's the one allowed way to show them in GymGO. It's off until you choose to add a key. Apple offers no such way.
+  - An invented demo gym gets no links, as there's nothing real to find.
+- **Checked:**
+  - In the browser, with four test reviews and one waiting for a moderator, all on an invented demo gym (no real gym was given a made-up review): Standard, Frost and Liquid, light and dark, 390 and 1280 points.
+  - A real gym's empty card and its links.
+  - axe: no violations, after giving the stars and bars a picture role. The screen measure: no text under 4.5 to 1.
+  - New tests for the aspects (kept, optional, refused out of range), the breakdown and the Apple Maps link.
+  - App 608, server 309, domain 198 tests.
+
+## Update 183 · Opened screens on the glass: a workout, a gym's sheet, GymPal; and two screen-reader cues that were lost
+
+*18 Nov 2026 · `50ff93c`*
+
+- The screen measure ran on the opened states: a workout in progress, Filters, a gym's sheet on Explore and GymPal, in Standard, Frost and Liquid, light and dark. axe found nothing. Measured from the screen, 22 words were under 4.5 to 1, after setting aside text behind the opened sheet or panel. Six remain, and none of them need a fix (below).
+- **A workout's column headings** (SET, KG, REPS, RPE) were 3.1 to 1, in the faint grey. They're now secondary grey, in a workout and in Edit workout. The "×" between the boxes stays faint, as decoration: the headings say what the boxes are. It's now hidden from screen readers.
+- **GymPal's note under the message box** ("GymPal is AI and can be wrong… Not medical advice", and where chats go) was 2.9 to 1. It's now secondary grey.
+- **A gym's sheet in dark:** Call, Website, Saved, Share and "Membership · 4 options" were 4.3 to 4.4, and "Add one" was 3.95.
+  - Those words sit on a glass card inside the sheet, over the map: measured at #29292A, lighter than a card. Standard's accent is now checked against that, so dark Indigo is one step lighter (#7D7AFF to #8481FF). No other accent's words change, and light is unchanged.
+  - The accent on a tint or a grey pill is checked on a grey slot (a raised card) and on glass on glass too. In dark it's now a paler lavender, in line with Frost's and Liquid's.
+- **The accent on a grey pill:** "Superset with the next" was 4.1 in dark. It and nine other grey pills (Back to it, See Pro, Change, Reset Home and the choice sheets' ticks) now use the accent made for a wash.
+- **Two screen-reader cues were being dropped.** The text component took a fixed list of settings, and TypeScript let `aria-hidden` and `aria-live` through without a word, so they never reached the page.
+  - The recovery map's line for a picked muscle ("Chest: today") was meant to be read out when it changes, and wasn't. It now is: it stays in the page, empty until a muscle is picked, since a screen reader may say nothing of a region that arrives already full.
+  - GymPal's "about …" line was meant to be skipped, as its message already says it, and wasn't. It is now.
+  - Both are declared now, so the same slip is caught as it's typed.
+  - Checked in the browser: picking Chest by keyboard fills the live region; the "×" is hidden, 15 of 15.
+- The six left: the "×" itself (decoration, hidden), and the avatar behind Filters. App tests 607.
+
+## Update 182 · "1,000 lb" is a thousand, and the sidebar's chosen place reads in dark
+
+*18 Nov 2026 · `4c04934`*
+
+- **A comma before three digits now groups them.** Update 169 let weight boxes read "62,5" as 62.5, but it read every comma as a decimal point. So "1,000" in a pound workout (a leg press) was logged as 1 lb, and 1 is a valid weight, so nothing said otherwise.
+  - Now "1,000" and "1,200.5" read as a thousand and more, while "62,5" and "2,25" are still decimals.
+  - "62,500" isn't quietly read as 62.5: it's over the limit, so the box shows its hint.
+  - Reps typed as "08" tidy to 8.
+  - This is the one reader behind the workout's sets, 1-rep max, the plate calculator and body weight. In the plate calculator, in a pound account: "1,000" now gives ten 45s, a 25 and a 2.5 a side; "62,5" reads 62.5; "225 lbs" reads 225. Body measurements were already safe: "1,000" there shows the hint.
+- **The sidebar was checked too.** None of the earlier audits had it on.
+  - axe ran on 72 pages with the sidebar (Standard, Frost and Liquid, light and dark, 390 and 1280 points), with no violations. Then the words axe couldn't judge were measured from the screen.
+  - In dark, the chosen place (the accent on its sliding pill) was 3.3 to 1 in Standard and 4.4 in Frost. It now uses the accent made for a tint.
+  - That colour is now also checked over the glass of the sidebar, bars and sheets, under the light of their sheen. In dark that glass is lighter than a card, which was all it had been checked on.
+  - The chosen goal on Training programme and the chosen sample faces in Appearance (text size, dark style) sit on the same tint, and now use it too.
+- Sidebar pages afterwards: no text under 4.5 to 1. New tests for the thousands comma, the zeros, and the accent on its tint over every glass layer in every look. App tests 607.
+
+## Update 181 · Words on the glass looks, measured and made readable
+
+*18 Nov 2026 · `683f22f`*
+
+- The merge brought nineteen rounds of see-through glass (Standard's clearer cards, Frost, Liquid). This round checked their words.
+  - axe ran on Home, Profile, Progress, Appearance, a gym's page and Explore, in Standard, Frost and Liquid, light and dark, at 390 and 1280 points. That's 72 pages, with no violations.
+  - But axe can't judge text on glass or gradients, and it left 2,644 such words to check by hand. So each was measured from the screen itself: its text hidden, what's behind sampled across its box, and the worst point counted.
+- After setting aside icons and rows under the tab bar, 53 words were under WCAG AA's 4.5 to 1. All 53 are now at 4.5 or more. What was wrong, and the fix:
+  - **Liquid's Build a workout card** was 2.6 to 1. It took a clear card's face (a white sheen across its corner and a soft light inside), which washed out its white words. It now keeps only its shadow (`shadowUnder` in the theme). The shine on filled buttons now fades sooner, so it's gone before the words start.
+  - **Grey words straight on Standard's page** were 4.3 to 4.45: Home's date, Profile's and Appearance's headings and footnotes. They had only been checked against the plain page, not the glow of your accent behind it. The grey is now checked against that glow too: one step darker on Indigo (#6C6C70 to #67676A), two on the darker accents. Your accent and the faint grey are unchanged.
+  - **The accent on its own tint** was 4.1 to 4.46 ("Add one", "Aim for 3 a week", Pro tags, Swap, Rest, Plates, and other quiet pills). The colour made for this existed, but only one button used it. The 76 places on a tint now use it, and it's now checked against a glass card over the glow as well.
+  - **Grey on a grey tile** was 4.33 to 4.39: Profile's counts and Moderator badge, a gym's membership tiles, and Home's search box. These now use the grey made for tiles, checked the same way.
+  - **Progress's weekday letters** (M, W, F, S) were 3.1 to 1, in the faint grey that's meant for what needn't be read. They're now secondary grey.
+- New tests check the grey on the glow, the accent on its tint, and grey on a tile, for every accent, light and dark, and `shadowUnder`. App tests 604.
+- Not changed: text boxes' placeholders keep the faint grey, as on iPhone. The Call button of a gym with no phone number stays grey, as it's switched off.
 
 ## Update 180 · GymPal copes with models that think first, or have gone
 
-*18 Nov 2026 · the commit "GymPal: short thinking, the next model on an empty answer, and only models OpenRouter still lists"*
+*18 Nov 2026 · `280cffa`*
 
 Your two checks showed two more ways GymPal could fail. Before the update, OpenRouter answered 404: one of GymPal's models had been withdrawn, and OpenRouter turns down the whole question when any model in the list has gone. After the update, a model answered with nothing at all. Today's free models think before they answer, and the check gave the answer so little room that the thinking used it all.
 
@@ -38,7 +147,7 @@ Your two checks showed two more ways GymPal could fail. Before the update, OpenR
 
 ## Update 179 · Three short videos: the app is coming, the website is out
 
-*18 Nov 2026 · the commit "Three 9:16 shorts of the full app, advertising gymgo.site"*
+*18 Nov 2026 · `5fb2309`*
 
 - You asked for the explainer-video skills from iart-ai/explainer-video-skills, and for three short vertical videos showing GymGO that advertise the limited version, out now at gymgo.site, and say the app is coming soon. Then: footage from the real app, not the limited website.
 - The five skills are in `.claude/skills/` (MIT, with their notice and licence). One line of their probe script was fixed, as ffprobe 6 wrote a trailing comma that failed a correct file.

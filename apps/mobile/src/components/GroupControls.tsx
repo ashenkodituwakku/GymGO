@@ -40,8 +40,8 @@ export function GroupControls({
           accessibilityHint="Do them one after the other, resting once each has had its set."
           style={({ pressed }) => [styles.button, pressed && styles.pressed]}
         >
-          <Icon name="source" size={13} color={color.brand} />
-          <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+          <Icon name="source" size={13} color={color.brandOnTint} />
+          <Txt variant="footnote" color={color.brandOnTint} style={face('semibold')}>
             {group ? 'Add the next to this group' : 'Superset with the next'}
           </Txt>
         </Pressable>

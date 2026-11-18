@@ -150,11 +150,11 @@ export default function TripsScreen() {
           <Txt variant="headline">Where to?</Txt>
           {where ? (
             <Pressable onPress={() => setWhere(null)} accessibilityRole="button" accessibilityLabel={`${where.placeName}. Change`} style={styles.picked}>
-              <Icon name="pin" size={16} color={color.brand} />
+              <Icon name="pin" size={16} color={color.brandOnTint} />
               <Txt variant="body" style={[styles.flex, face('semibold')]}>
                 {where.placeName}
               </Txt>
-              <Txt variant="footnote" color={color.brand}>
+              <Txt variant="footnote" color={color.brandOnTint}>
                 Change
               </Txt>
             </Pressable>
@@ -258,7 +258,7 @@ function StepButton({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: s
       hitSlop={6}
       style={({ pressed }) => [styles.step, !onPress && { opacity: 0.35 }, pressed && { opacity: 0.6 }]}
     >
-      <Icon name={icon} size={16} color={color.brand} />
+      <Icon name={icon} size={16} color={color.brandOnTint} />
     </Pressable>
   );
 }

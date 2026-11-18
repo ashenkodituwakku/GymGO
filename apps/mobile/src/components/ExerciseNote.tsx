@@ -98,7 +98,7 @@ export function ExerciseNote({
       accessibilityLabel={`Your note on ${name}: ${note}. Change it`}
       style={({ pressed }) => [styles.pinned, pressed && { opacity: 0.75 }]}
     >
-      <Icon name="note" size={14} color={color.brand} />
+      <Icon name="note" size={14} color={color.brandOnTint} />
       <Txt variant="footnote" style={styles.flex}>
         {note}
       </Txt>

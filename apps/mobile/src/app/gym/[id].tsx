@@ -275,7 +275,7 @@ export default function GymPage() {
                 onSignIn={() => router.push('/sign-in')}
               />
             )}
-            reviews={LIMITED ? <FullVersionNote what="Reviews" /> : <ReviewsSection gymId={location.id} account={account} inSheet={false} onSignIn={() => router.push('/sign-in')} />}
+            reviews={LIMITED ? <FullVersionNote what="Reviews" /> : <ReviewsSection gymId={location.id} record={result.record} account={account} inSheet={false} onSignIn={() => router.push('/sign-in')} />}
             notes={LIMITED ? null : location.isDemoData ? null : <GymNotes gymId={location.id} isPro={billing.isPro} inSheet={false} onPro={() => openPro('notes')} />}
             collect={location.isDemoData ? null : <CollectCard record={result.record} onOpenCollection={() => router.push('/collection')} />}
             dayPass={LIMITED ? null : location.isDemoData ? null : <DayPass gymId={location.id} timezone={location.timezone} account={account} onSignIn={() => router.push('/sign-in')} />}

@@ -149,8 +149,8 @@ export default function AccountScreen() {
         </Txt>
         {billing.isPro && (
           <View style={styles.pro}>
-            <Icon name="crown" size={12} color={color.brand} />
-            <Txt variant="caption" color={color.brand} style={face('semibold')}>
+            <Icon name="crown" size={12} color={color.brandOnTint} />
+            <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
               GYMGO PRO
             </Txt>
           </View>

@@ -75,15 +75,36 @@ export function ModerationQueue({ token, records, onPublished }: { token: string
         return (
           <View key={review.id} style={styles.queueItem}>
             <Txt variant="footnote" color={color.labelSecondary}>
-              {gym ? gym.location.name : review.gymId} · {'★'.repeat(review.overall)} · {review.authorDisplayName}
+              {gym ? gym.location.name : review.gymId} · {review.overall} of 5 stars · {review.authorDisplayName}
             </Txt>
             <Txt variant="subhead">{review.body}</Txt>
+            {/* The aspects it rates are published with it, so the moderator sees them too. */}
+            {aspectsLine(review) && (
+              <Txt variant="footnote" color={color.labelSecondary}>
+                {aspectsLine(review)}
+              </Txt>
+            )}
             <DecideButtons approveLabel="Publish" reasons={REVIEW_REASONS} onApprove={() => void decide(review, 'publish')} onReject={(reason) => void decide(review, 'reject', reason)} />
           </View>
         );
       })}
     </View>
   );
+}
+
+/** "Equipment 5 of 5 · Cleanliness 3 of 5", for the aspects a review rated; empty when none. */
+function aspectsLine(review: Review): string {
+  return (
+    [
+      ['Equipment', review.equipment],
+      ['Cleanliness', review.cleanliness],
+      ['Atmosphere', review.atmosphere],
+      ['Value', review.value],
+    ] as const
+  )
+    .filter(([, stars]) => stars !== null)
+    .map(([label, stars]) => `${label} ${stars} of 5`)
+    .join(' · ');
 }
 
 const OUTCOME_LABEL: Record<AccessOutcome | 'closed' | 'open', string> = {

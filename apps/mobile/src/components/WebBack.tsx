@@ -46,9 +46,9 @@ export function WebBack({
       // Hover fills it; a press dims it (kept apart, so the press's fade never holds the colour).
       style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.pill, narrow && styles.round, hovered && styles.pillOn, pressed && styles.pillDown]}
     >
-      <Icon name="chevronBack" size={20} color={color.brand} />
+      <Icon name="chevronBack" size={20} color={color.brandOnTint} />
       {!narrow && (
-        <Txt variant="subhead" color={color.brand} numberOfLines={1} style={styles.label}>
+        <Txt variant="subhead" color={color.brandOnTint} numberOfLines={1} style={styles.label}>
           {where}
         </Txt>
       )}

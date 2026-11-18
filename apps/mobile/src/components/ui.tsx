@@ -28,6 +28,8 @@ export function Txt({
   accessibilityRole,
   level,
   maxFontSizeMultiplier,
+  'aria-hidden': ariaHidden,
+  'aria-live': ariaLive,
 }: {
   variant?: Variant;
   color?: string;
@@ -43,6 +45,14 @@ export function Txt({
   level?: 1 | 2 | 3;
   /** How far it may grow with the phone's text size, for text in a box that can't grow with it. */
   maxFontSizeMultiplier?: number;
+  /**
+   * Skipped by a screen reader (decoration, or words its row's label already
+   * says). Named here so it reaches the text: undeclared, TypeScript let it
+   * through and it was dropped without a word.
+   */
+  'aria-hidden'?: boolean;
+  /** Said again by a screen reader when it changes. */
+  'aria-live'?: 'polite' | 'assertive' | 'off';
 }) {
   return (
     <Text
@@ -51,6 +61,8 @@ export function Txt({
       accessibilityRole={accessibilityRole}
       {...(Platform.OS === 'web' && accessibilityRole === 'header' && level ? ({ 'aria-level': level } as object) : null)}
       maxFontSizeMultiplier={maxFontSizeMultiplier}
+      aria-hidden={ariaHidden}
+      aria-live={ariaLive}
     >
       {children}
     </Text>
@@ -198,6 +210,7 @@ export function Fold({
   icon,
   title,
   summary,
+  spokenSummary,
   initiallyOpen = false,
   children,
 }: {
@@ -205,6 +218,8 @@ export function Fold({
   icon: IconName;
   title: string;
   summary?: string;
+  /** The summary as said aloud, when the shown one has a symbol in it ("★ 3.8"). */
+  spokenSummary?: string;
   initiallyOpen?: boolean;
   children: ReactNode;
 }) {
@@ -225,7 +240,7 @@ export function Fold({
         }}
         accessibilityRole="button"
         aria-expanded={open}
-        accessibilityLabel={`${title}${summary ? `, ${summary}` : ''}`}
+        accessibilityLabel={`${title}${(spokenSummary ?? summary) ? `, ${spokenSummary ?? summary}` : ''}`}
         style={({ pressed }) => [styles.foldHead, pressed && { opacity: 0.7 }]}
       >
         <View style={styles.foldIcon}>
@@ -253,7 +268,32 @@ export function Fold({
   );
 }
 
-/** An iOS segmented control: a grey track with the chosen segment raised. */
+/**
+ * How wide a label is drawn in a text style: measured with the style's own
+ * font in a browser, estimated elsewhere (a phone's bold capitals run about
+ * 0.6 of the size each). For a control to know if a word will fit.
+ */
+const SEGMENT_PADDING = 6;
+let measureContext: CanvasRenderingContext2D | null | undefined;
+function labelWidth(text: string, style: TextStyle): number {
+  const size = style.fontSize ?? 13;
+  if (Platform.OS === 'web' && typeof document !== 'undefined') {
+    if (measureContext === undefined) measureContext = document.createElement('canvas').getContext('2d');
+    if (measureContext) {
+      measureContext.font = `${style.fontWeight ?? 400} ${size}px ${style.fontFamily ?? 'system-ui'}`;
+      return measureContext.measureText(text).width;
+    }
+  }
+  return text.length * size * 0.6;
+}
+
+/**
+ * An iOS segmented control: a grey track with the chosen segment raised.
+ * When the longest label won't fit in an equal share (the largest text on a
+ * small phone: "Endurance" was cut to "Endura…"), the segments flow onto
+ * two rows instead, the chosen one raised where it is: a choice you can't
+ * read isn't one.
+ */
 export function Segmented<T extends string | number>({
   options,
   value,
@@ -272,6 +312,35 @@ export function Segmented<T extends string | number>({
     left.value = width > 0 ? withSpring(index * slot, SETTLE) : index * slot;
   }, [index, slot, width, left]);
   const pill = useAnimatedStyle(() => ({ transform: [{ translateX: left.value }] }));
+  // The widest label, bold as when it's chosen, with the segment's own padding.
+  const bold = StyleSheet.flatten([type.footnote, face('semibold')]) as TextStyle;
+  const needed = Math.ceil(Math.max(0, ...options.map((option) => labelWidth(option.label, bold)))) + 2 * SEGMENT_PADDING + 2;
+  if (width > 0 && slot < needed) {
+    return (
+      <View style={[styles.segmented, styles.segmentedWrap]} accessibilityRole="tablist" onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
+        {options.map((option) => {
+          const on = option.value === value;
+          return (
+            <Pressable
+              key={String(option.value)}
+              onPress={() => {
+                if (on) return;
+                haptic.select();
+                onChange(option.value);
+              }}
+              accessibilityRole="tab"
+              aria-selected={on}
+              style={[styles.segment, styles.segmentWrapped, { flexBasis: needed }, on && styles.segmentOn]}
+            >
+              <Txt variant="footnote" color={color.label} style={on ? face('semibold') : face('medium')} numberOfLines={1}>
+                {option.label}
+              </Txt>
+            </Pressable>
+          );
+        })}
+      </View>
+    );
+  }
   return (
     <View style={styles.segmented} accessibilityRole="tablist" onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
       {width > 0 && <Animated.View style={[styles.segmentPill, { width: slot }, pill, { pointerEvents: 'none' }]} />}
@@ -716,7 +785,10 @@ const styles = themed(() => StyleSheet.create({
   foldBody: { paddingHorizontal: space[4], paddingBottom: space[4], gap: space[3] },
 
   segmented: { flexDirection: 'row', padding: 2, borderRadius: 9, backgroundColor: color.fill, ...shadow.rim },
-  segment: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 7, paddingHorizontal: 6, borderRadius: 7 },
+  segment: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 7, paddingHorizontal: SEGMENT_PADDING, borderRadius: 7 },
+  // Two rows when a label won't fit in an equal share (Segmented).
+  segmentedWrap: { flexWrap: 'wrap', gap: 2 },
+  segmentWrapped: { flexGrow: 1, flexShrink: 0 },
   segmentPill: {
     position: 'absolute',
     top: 2,

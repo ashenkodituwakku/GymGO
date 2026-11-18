@@ -296,7 +296,7 @@ export function PlaceCard({
 
       {notice && (
         <Animated.View style={styles.notice} entering={FADE_IN} exiting={FADE_OUT}>
-          <Icon name="info" size={15} color={color.brand} />
+          <Icon name="info" size={15} color={color.brandOnTint} />
           <Txt variant="footnote" style={styles.flex}>
             {notice}
           </Txt>
@@ -355,8 +355,8 @@ export function PlaceCard({
                 hitSlop={8}
                 style={({ pressed }) => [styles.askCall, pressed && { opacity: 0.7 }]}
               >
-                <Icon name="call" size={14} color={color.brand} />
-                <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                <Icon name="call" size={14} color={color.brandOnTint} />
+                <Txt variant="footnote" color={color.brandOnTint} style={face('semibold')}>
                   Call
                 </Txt>
               </Pressable>
@@ -365,7 +365,7 @@ export function PlaceCard({
           {questions.map((question, index) => (
             <View key={question} style={styles.askRow}>
               <View style={styles.askNumber}>
-                <Txt variant="caption" color={color.brand} style={face('bold')}>
+                <Txt variant="caption" color={color.brandOnTint} style={face('bold')}>
                   {index + 1}
                 </Txt>
               </View>
@@ -682,6 +682,7 @@ export function PlaceCard({
           icon="star"
           title="Reviews"
           summary={result.rating.count ? `${ratingShort(result.rating.average)} from ${result.rating.count}` : LIMITED ? 'With the full version' : 'None yet'}
+          spokenSummary={result.rating.count && result.rating.average !== null ? `${result.rating.average.toFixed(1)} out of 5, from ${result.rating.count} review${result.rating.count === 1 ? '' : 's'}` : undefined}
         >
           {reviews}
         </Fold>

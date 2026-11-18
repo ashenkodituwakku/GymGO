@@ -437,8 +437,9 @@ export function SearchButton({ placeholder, onPress }: { placeholder: string; on
       accessibilityLabel={placeholder || 'Search'}
       style={({ pressed }) => [styles.search, pressed && { opacity: 0.75 }]}
     >
-      <Icon name="search" size={17} color={color.labelSecondary} />
-      <Txt variant="body" color={color.labelSecondary} style={styles.flex}>
+      {/* On the grey fill, so the grey made for it. */}
+      <Icon name="search" size={17} color={color.labelSecondaryOnFill} />
+      <Txt variant="body" color={color.labelSecondaryOnFill} style={styles.flex}>
         {placeholder}
       </Txt>
     </Pressable>
@@ -476,7 +477,8 @@ const styles = themed(() => StyleSheet.create({
   },
   tileEdge: { borderWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
   chevronOpen: { transform: [{ rotate: '90deg' }] },
-  rowText: { flex: 1, gap: 1 },
+  // Never squeezed below 45% by a value: with the largest text, a value took the room and "Compare" broke mid-word.
+  rowText: { flex: 1, gap: 1, minWidth: '45%' },
   value: { maxWidth: '45%' },
 
   search: {

@@ -47,7 +47,7 @@ import { PLACES, activeCities, cityNear, cityPlace, localBudget, moneyLabel, tra
 import { QUICK_BUDGET, YOUR_LOCATION, atPlace, atWorldCity, moveTo, nearLabel, nextVisitAt, nowIn, runSearchShared, visitIsLater, type Filters } from '@/lib/query';
 import { todayThere, tripDatesLabel, tripToShow, tripWhen, useTrips } from '@/lib/trips';
 import { resultsById } from '@/lib/results';
-import { PAGE_COLUMN, color, dropShadow, face, radius, shadow, space, themed } from '@/lib/theme';
+import { PAGE_COLUMN, color, dropShadow, face, radius, shadow, shadowUnder, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { templateDayName, upNext } from '@/lib/templates';
 import { unitFor } from '@/lib/training';
@@ -335,7 +335,7 @@ export default function Home() {
                     accessibilityLabel={`Trip to ${trip.placeName}, ${tripDatesLabel(trip)}, ${tripWhen(trip, todayThere(trip))}. See the gyms there`}
                     style={styles.trip}
                   >
-                    <Icon name="globe" size={22} color={color.brand} />
+                    <Icon name="globe" size={22} color={color.brandOnTint} />
                     <View style={styles.flex}>
                       <Txt variant="headline" numberOfLines={1}>{`Trip to ${trip.placeName}`}</Txt>
                       <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
@@ -405,7 +405,7 @@ export default function Home() {
                         accessibilityLabel={`Gyms in ${countryInSentence(filters.countryCode)} are part of GymGO Pro. See GymGO Pro`}
                         style={({ pressed }) => [styles.locked, pressed && { opacity: 0.8 }]}
                       >
-                        <Icon name="globe" size={22} color={color.brand} />
+                        <Icon name="globe" size={22} color={color.brandOnTint} />
                         <View style={styles.lockedText}>
                           <Txt variant="headline">Gyms in {countryInSentence(filters.countryCode)} are part of GymGO Pro</Txt>
                           <Txt variant="footnote" color={color.labelSecondary}>
@@ -436,8 +436,8 @@ export default function Home() {
                           hitSlop={4}
                           style={({ pressed }) => [styles.suburb, styles.retry, styles.searchHere, pressed && { opacity: 0.7 }]}
                         >
-                          <Icon name="search" size={15} color={color.brand} />
-                          <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                          <Icon name="search" size={15} color={color.brandOnTint} />
+                          <Txt variant="subhead" color={color.brandOnTint} style={face('semibold')}>
                             Search this area
                           </Txt>
                         </Pressable>
@@ -464,7 +464,7 @@ export default function Home() {
                           hitSlop={4}
                           style={({ pressed }) => [styles.suburb, styles.retry, pressed && { opacity: 0.7 }]}
                         >
-                          <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                          <Txt variant="subhead" color={color.brandOnTint} style={face('semibold')}>
                             Try again
                           </Txt>
                         </Pressable>
@@ -600,7 +600,7 @@ export default function Home() {
                                   accessibilityLabel={`${cities.length - CITIES_SHOWN} more cities in ${label}`}
                                   style={({ pressed }) => [styles.suburb, styles.moreChip, pressed && { opacity: 0.7 }]}
                                 >
-                                  <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+                                  <Txt variant="subhead" color={color.brandOnTint} style={face('semibold')}>
                                     {cities.length - CITIES_SHOWN} more
                                   </Txt>
                                 </Pressable>
@@ -676,7 +676,7 @@ export default function Home() {
           {account.face ? (
             <Avatar account={account.face} size={40} variant="headline" />
           ) : (
-            <Icon name="account" size={22} color={color.brand} />
+            <Icon name="account" size={22} color={color.brandOnTint} />
           )}
         </Pressy>
       }
@@ -746,8 +746,8 @@ export default function Home() {
             accessibilityHint="Move, take off and add the widgets on Home"
             style={({ pressed }) => [styles.customiseButton, pressed && { opacity: 0.7 }]}
           >
-            <Icon name="customise" size={16} color={color.brand} />
-            <Txt variant="subhead" color={color.brand} style={face('semibold')}>
+            <Icon name="customise" size={16} color={color.brandOnTint} />
+            <Txt variant="subhead" color={color.brandOnTint} style={face('semibold')}>
               Customise Home
             </Txt>
           </Pressable>
@@ -968,7 +968,8 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.xl,
     borderCurve: 'continuous',
     backgroundColor: color.brandFill,
-    ...shadow.plate,
+    // Filled with the accent: its shadow, not a clear card's face (Liquid's sheen sat on the words).
+    ...shadowUnder(shadow.plate),
   },
   workoutIcon: { width: 32, height: 40, alignItems: 'center', justifyContent: 'center' },
   shortcuts: { flexDirection: 'row', gap: space[2] },

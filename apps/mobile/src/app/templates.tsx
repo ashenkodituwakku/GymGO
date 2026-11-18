@@ -197,7 +197,7 @@ function TemplateCard({
         </View>
         {onChange && (
           <Pressable onPress={onChange} accessibilityRole="button" accessibilityLabel={`Change ${template.name}`} hitSlop={8} style={({ pressed }) => [styles.change, pressed && { opacity: 0.6 }]}>
-            <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+            <Txt variant="footnote" color={color.brandOnTint} style={face('semibold')}>
               Change
             </Txt>
           </Pressable>
@@ -238,7 +238,7 @@ function TemplateCard({
                     {exerciseName(item.exerciseId)}
                   </Txt>
                   {group && (
-                    <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                    <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
                       {`${groupName(group)} · ${group.position} of ${group.members.length}`}
                     </Txt>
                   )}

@@ -166,10 +166,11 @@ function SidebarList({ onGo }: { onGo?: () => void }) {
                       <Avatar account={me} size={24} variant="subhead" />
                     </View>
                   ) : (
-                    <PIcon name={ICON[item.href] ?? 'house'} weight={on ? 'fill' : 'regular'} size={22} color={on ? color.brand : color.label} />
+                    <PIcon name={ICON[item.href] ?? 'house'} weight={on ? 'fill' : 'regular'} size={22} color={on ? color.brandOnTint : color.label} />
                   )}
                 </View>
-                <Txt variant="body" color={on ? color.brand : color.label} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                {/* The chosen place sits on the accent's tint (the sliding pill), so the accent made for it: plain, it was 3.3 to 1 in dark. */}
+                <Txt variant="body" color={on ? color.brandOnTint : color.label} style={on ? face('semibold') : undefined} numberOfLines={1}>
                   {item.label}
                 </Txt>
               </Pressable>

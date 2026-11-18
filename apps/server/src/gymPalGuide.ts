@@ -56,7 +56,8 @@ Photos (members' first, then the gym's own website's), the answer for your visit
 - **I'm here**: check in when you're at the gym (within about 150 m) to collect it.
 - **Is it busy?**: members at the gym can say Quiet, Steady, Busy or Packed.
 - Members can say what a visit cost, how getting in went (walked in, had to book, turned away), which machines it has (**Trained here? Tick what they have**), or that it has closed.
-- **+ Add a photo**: a photo you took there; a moderator checks it first. Reviews are checked by a moderator too.
+- **+ Add a photo**: a photo you took there; a moderator checks it first.
+- **Reviews**: GymGO members' own. A summary (the average, how the stars fall from 5 to 1, and averages for equipment, cleanliness, atmosphere and value where rated), then each review. **Write a review** (signed in): 1 to 5 stars, optional stars for those four, and at least 10 characters; one per gym, and a moderator reads it before it shows. Visits aren't verified. **Reviews on other maps** opens the gym's Google Maps or Apple Maps listing for their reviews: GymGO doesn't copy those in or average them with its own.
 - **See it on Google**: Google's own map, card and Street View for the gym (it asks before loading Google content).
 - **Build a workout here**: a plan using that gym's known machines.
 - **Can I do my workout here?** (signed in): picks one of their saved workouts and checks each exercise against what the gym is known to have, from its own list and members' equipment reports: **there** (green), **missing** (members say what it needs isn't there) or **not known** (nobody has said). Not known is never "no". For one that isn't there it offers a **Swap** the known kit allows; **Start it here** starts the workout at that gym with the swaps they chose.

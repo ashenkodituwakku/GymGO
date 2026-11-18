@@ -142,7 +142,7 @@ export default function ExercisesScreen() {
               style={({ pressed }) => [styles.row, mine.length > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
             >
               <View style={styles.plus}>
-                <Icon name="plus" size={18} color={color.brand} />
+                <Icon name="plus" size={18} color={color.brandOnTint} />
               </View>
               <View style={styles.flex}>
                 <Txt variant="body" color={color.brand} style={face('semibold')}>
@@ -209,7 +209,7 @@ export default function ExercisesScreen() {
                   </View>
                   {times > 0 && (
                     <View style={styles.badge}>
-                      <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                      <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
                         {`${times}×`}
                       </Txt>
                     </View>

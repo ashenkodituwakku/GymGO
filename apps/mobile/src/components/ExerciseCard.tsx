@@ -128,8 +128,8 @@ export function SwapButton({ name, swapTo, onSwap }: { name: string; swapTo: str
       hitSlop={8}
       style={({ pressed }) => [styles.swap, pressed && { opacity: 0.6 }]}
     >
-      <Icon name="shuffle" size={14} color={color.brand} />
-      <Txt variant="caption" color={color.brand} style={face('semibold')}>
+      <Icon name="shuffle" size={14} color={color.brandOnTint} />
+      <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
         Swap
       </Txt>
     </Pressable>

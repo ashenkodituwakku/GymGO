@@ -22,6 +22,8 @@ const ICONS = {
   directions: { ios: 'arrow.triangle.turn.up.right.diamond.fill', android: 'directions', web: 'directions' },
   call: { ios: 'phone.fill', android: 'call', web: 'call' },
   website: { ios: 'safari.fill', android: 'language', web: 'language' },
+  /** Opens somewhere outside GymGO (another app or site). */
+  external: { ios: 'arrow.up.right.square', android: 'open_in_new', web: 'open_in_new' },
   save: { ios: 'bookmark', android: 'bookmark_border', web: 'bookmark_border' },
   saved: { ios: 'bookmark.fill', android: 'bookmark', web: 'bookmark' },
   gym: { ios: 'dumbbell.fill', android: 'fitness_center', web: 'fitness_center' },

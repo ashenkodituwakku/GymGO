@@ -118,6 +118,70 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Dim checked; GymPal's guide on reviews** (18 Nov). The contrast scripts
+  have Dim variants (`scratchpad/dim-contrast-*.cjs`, theme `dark: 'dim'`).
+  Update gymPalGuide.ts whenever a screen GymPal explains changes. Its test
+  pins that reviews elsewhere are linked, not copied.
+
+- **Review ratings in the export and the queue** (18 Nov). `/api/me/export`
+  names its review columns, so add any new review column there too.
+  AccountContent's review queue shows `aspectsLine()`. A "★" character in
+  text needs words for screen readers: `Fold`'s `spokenSummary`, an
+  `aria-hidden` star inside a `Txt`, or a View with role image and a label.
+
+- **Largest text on a small phone** (18 Nov). ui.tsx `Segmented` measures
+  its longest bold label (`labelWidth`: canvas in a browser, about 0.6 of the
+  size per letter elsewhere). If that won't fit `slot`, it renders wrapped
+  rows without the sliding pill. ios.tsx `Row`'s text keeps `minWidth: '45%'`.
+  `scratchpad/bigtext.cjs` checks clipped and spilling text at
+  `textSize: 'larger'` with bold on.
+
+- **Reviews redesigned** (18 Nov). ReviewsSection.tsx: Summary (with
+  `starCounts` from the domain), ReviewCard, ReviewForm (StarPicker), and
+  Elsewhere (`googleMapsSearchUrl` / `appleMapsSearchUrl` in present.ts).
+  Stars are a solid Phosphor path drawn with Svg, because the web icon
+  font's star is an outline.
+  - Reviews now store `equipment`, `cleanliness`, `atmosphere` and `value`
+    (nullable 1-5, migrated in db.ts).
+  - Never copy third-party reviews. Google's live, keyed Places details on
+    the "See it on Google" page are the only external reviews shown.
+  - Local test reviews go on demo gyms only (e.g. keystone-fitness-ultimo,
+    with demo mode on).
+
+- **Opened states; Txt's aria props** (18 Nov). `Txt` declares and passes
+  `aria-hidden` and `aria-live`. TypeScript doesn't check hyphenated JSX
+  attributes, so add any other aria prop to Txt's list before using it.
+  Other rules from this round:
+  - `brandOnTint` is the accent on any wash (tint, grey fill, glass). Its
+    grounds now include `cardRaised`, `stackedGlass()` and `sheetCard()`.
+  - Standard's `brand` is readable on `sheetCard()`.
+  - Table headings are `labelSecondary`, never `labelTertiary`.
+  - A live region stays mounted (RecoveryMap's `none` style) rather than
+    appearing already full.
+
+  `scratchpad/contrast-states.cjs` measures the four opened states.
+
+- **Thousands comma; the sidebar's tint** (18 Nov). training.ts has
+  `decimalPoint()`: a comma before groups of three digits is a thousands
+  separator, any other comma is decimal. Use it for any new number box.
+  `inksOnWashes` also checks over the three glass layers (over the page,
+  plus `sheenLift`). The sidebar's chosen item, Programme's `goalOn` and
+  Appearance's `sampleOn` text use `brandOnTint`.
+  `scratchpad/contrast-sidebar.cjs` runs the screen measure with
+  `layout: 'sidebar'`.
+
+- **Contrast on the glass looks** (18 Nov). The audit lives in the scratchpad
+  (`contrast-measure.cjs`). It hides axe's "needs review" text, screenshots
+  what's behind it, and samples a grid per text box. Rules from it:
+  - A surface filled with the accent spreads `shadowUnder(shadow.plate)`,
+    never `shadow.plate`: on Liquid that paints a clear card's face.
+  - Text on `brandTint` uses `brandOnTint`, and grey on `fill` uses
+    `labelSecondaryOnFill`. Both are checked over a glass card on Standard's
+    glow (`inksOnWashes`).
+  - In Standard, `labelSecondary` is readable over the strongest single glow;
+    `brand` and `labelTertiary` are left as they are.
+  - `labelTertiary` is not for words people need to read.
+
 - **Shorts** (18 Nov). `.claude/skills/` holds iart-ai's five video skills (MIT,
   NOTICE.md). `marketing/shorts/` is a Remotion project, outside the pnpm
   workspace with its own package-lock, for three 9:16 shorts (WalkIn, Build,

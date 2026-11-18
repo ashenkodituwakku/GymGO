@@ -101,14 +101,14 @@ export function ChoiceSheet<K extends string>({
                     <Txt variant="body" color={on ? color.brand : color.label} style={[styles.label, on && face('semibold')]}>
                       {option.label}
                     </Txt>
-                    {on ? <Icon name="check" size={18} color={color.brand} /> : null}
+                    {on ? <Icon name="check" size={18} color={color.brandOnTint} /> : null}
                   </Pressable>
                 </View>
               );
             })}
           </View>
           <Pressable onPress={close} accessibilityRole="button" style={({ pressed }) => [styles.group, styles.row, styles.cancel, pressed && styles.pressed]}>
-            <Txt variant="body" color={color.brand} style={face('semibold')}>
+            <Txt variant="body" color={color.brandOnTint} style={face('semibold')}>
               Cancel
             </Txt>
           </Pressable>

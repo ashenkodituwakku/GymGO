@@ -17,10 +17,20 @@ export interface Candidate {
   pos: [number, number];
 }
 
+/**
+ * The name as signed. OpenStreetMap separates several values with ";" (a
+ * semicolon in a value is written ";;"), and the odd name carries one by
+ * mistake, like Lisbon's "110% Studio;": the first value is the name.
+ */
+export function nameOf(raw: string | undefined): string {
+  const values = (raw ?? '').split(/(?<!;);(?!;)/).map((value) => value.replaceAll(';;', ';').trim());
+  return values.find(Boolean) ?? '';
+}
+
 /** A named element with a position that the rules keep, or null. */
 export function candidate(el: OsmElement): Candidate | null {
   const tags = el.tags ?? {};
-  const name = (tags.name ?? '').trim();
+  const name = nameOf(tags.name);
   const pos = position(el);
   if (!name || !pos || !keep(name, tags)) return null;
   return { el, name, tags, pos };

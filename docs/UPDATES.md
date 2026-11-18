@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 196 · A stray semicolon out of a gym's name
+
+*18 Nov 2026 · the commit "Gym names: the first of OpenStreetMap's values, so a stray semicolon doesn't show"*
+
+The free account's Saved list (Update 195's check) showed a Lisbon gym as **"110% Studio;"**. In OpenStreetMap a ";" separates several values in one tag, and this gym's name had one by mistake.
+
+- **The name is now the first value** wherever GymGO reads a gym from the map: the bundled countries' generators, the live area search and the country packs (one shared function, `nameOf`, in `packages/osm`). A semicolon that's really part of a name is written ";;" on the map, and that stays a semicolon.
+- **The one gym already in the data** reads "110% Studio" now (its id didn't change, so anyone who saved it keeps it). It was the only such name among the 3,012 gyms GymGO carries.
+- Checked: three new tests (a stray separator, two values, ";;", and what the map reader hands on); every package's tests pass (app 612, server 315, domain 198, OSM 40, the data packages); the Saved page shows the name without it.
+
 ## Update 195 · A saved gym looks saved on the website and Android
 
-*18 Nov 2026 · the commit "Save and Saved: Phosphor's bookmark away from iPhone, outline and filled"*
+*18 Nov 2026 · `991a9e0`*
 
 Saving gyms was tried as a free account would: nine saved, the Saved page, a tenth from a gym's page, then an eleventh.
 

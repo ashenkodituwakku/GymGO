@@ -1,4 +1,4 @@
-import { candidate, contactOf, extrasOf, line1Of, pyJson } from './fields';
+import { candidate, contactOf, extrasOf, line1Of, nameOf, pyJson } from './fields';
 import { mapOnlyRecord } from './record';
 import { keep, parseHours, slug, trainingType } from './rules';
 
@@ -177,5 +177,25 @@ describe('helpers', () => {
 
   it('writes JSON the way the Python generators did', () => {
     expect(pyJson({ lat: -37, lng: 144.5, hours: [[1, 360, 1260]] })).toBe('{"lat": -37.0, "lng": 144.5, "hours": [[1, 360, 1260]]}');
+  });
+});
+
+describe('a name with OpenStreetMap\'s value separator', () => {
+  it('keeps the first value, so a stray semicolon doesn\'t show', () => {
+    expect(nameOf('110% Studio;')).toBe('110% Studio');
+    expect(nameOf('Studio A;Studio B')).toBe('Studio A');
+    expect(nameOf(' ; Iron Den ')).toBe('Iron Den');
+  });
+
+  it('keeps a semicolon written as ";;", and plain names as they are', () => {
+    expect(nameOf('Sweat;;Repeat')).toBe('Sweat;Repeat');
+    expect(nameOf('  Anytime Fitness ')).toBe('Anytime Fitness');
+    expect(nameOf(undefined)).toBe('');
+    expect(nameOf(';')).toBe('');
+  });
+
+  it('is the name a candidate gets', () => {
+    const found = candidate({ type: 'node', id: 1, lat: 38.73, lon: -9.14, tags: { leisure: 'fitness_centre', name: '110% Studio;' } });
+    expect(found?.name).toBe('110% Studio');
   });
 });

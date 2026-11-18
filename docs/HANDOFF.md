@@ -118,6 +118,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Names: first OSM value** (18 Nov). `nameOf()` in
+  packages/osm/src/fields.ts splits on OSM's ";" (keeping ";;" as a
+  literal) and `candidate()` uses it. eu-data's "110% Studio;" was fixed
+  by hand to match what the generator now gives; the au and usa
+  generators read names themselves and had none with ";".
+
 - **Saved looks saved off iPhone** (18 Nov). expo-symbols draws Material
   Symbols' outline-only font on Android and the web, so a pair that
   differs only by fill (`bookmark` / `bookmark_border`) looks the same.

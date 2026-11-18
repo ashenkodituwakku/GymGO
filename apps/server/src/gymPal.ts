@@ -30,11 +30,13 @@ type Fetch = typeof fetch;
 
 export const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 /**
- * Asked in this order, each one free, from two different providers so one
- * being busy doesn't stop GymPal. Checked on OpenRouter's list of models on
- * 27 October 2026.
+ * Asked in this order, each one free, from three different makers so one
+ * being busy (a popular free model is often "rate-limited upstream")
+ * doesn't stop GymPal. Checked on OpenRouter's list of models on 18
+ * November 2026, when inkling-small's free version had gone (inkling-2-small
+ * took its place). Free models come and go: GYMGO_GYMPAL_MODELS overrides.
  */
-export const DEFAULT_MODELS = ['google/gemma-4-31b-it:free', 'thinkingmachines/inkling-small:free', 'google/gemma-4-26b-a4b-it:free'];
+export const DEFAULT_MODELS = ['google/gemma-4-31b-it:free', 'thinkingmachines/inkling-2-small:free', 'nvidia/nemotron-3.5-super-vl:free'];
 
 /**
  * What each plan gets: questions a minute and a day, how much of the
@@ -179,6 +181,31 @@ export function trainingSummary(sessions: readonly LoggedSession[], now: Date, n
   return text;
 }
 
+/**
+ * What OpenRouter gave as its reason for saying no ("rate-limited upstream",
+ * "no endpoints found matching your data policy"), for the server's log:
+ * its message, and its provider's if it passed one on. Never more than a
+ * line, and never anything sent to it (the key is only in the request).
+ */
+export async function reasonOf(response: Response): Promise<string> {
+  let text = '';
+  try {
+    text = await response.text();
+  } catch {
+    return 'no reason given';
+  }
+  let reason = text;
+  try {
+    const error = (JSON.parse(text) as { error?: { message?: unknown; metadata?: { raw?: unknown; provider_name?: unknown } } }).error;
+    const parts = [error?.message, error?.metadata?.provider_name ? `(${String(error.metadata.provider_name)})` : null, typeof error?.metadata?.raw === 'string' ? error.metadata.raw : null];
+    reason = parts.filter((part) => typeof part === 'string' && part.trim()).join(' ');
+  } catch {
+    // Not JSON: the text as it came.
+  }
+  reason = reason.replace(/\s+/g, ' ').trim();
+  return reason ? (reason.length > 300 ? `${reason.slice(0, 300)}…` : reason) : 'no reason given';
+}
+
 /** A model's answer as text, without any thinking it wrote out first. */
 export function readAnswer(data: unknown): string | null {
   const content = (data as { choices?: Array<{ message?: { content?: unknown } }> } | null)?.choices?.[0]?.message?.content;
@@ -258,6 +285,7 @@ export class GymPal {
     } catch {
       throw new GymPalError(502, 'GymPal couldn’t be reached. Try again in a moment.');
     }
+    if (!response.ok) this.log(`[gympal] OpenRouter said ${response.status}: ${await reasonOf(response)}`);
     if (response.status === 429) throw new GymPalError(429, 'GymPal’s had a lot of questions. Try again a bit later.', 'gympal_busy');
     if (!response.ok) {
       // The owner's to fix (a wrong key, an account owing money): said in the server's log, never the key itself.

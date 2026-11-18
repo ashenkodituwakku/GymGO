@@ -1191,8 +1191,11 @@ key is in, the next one gets a real answer, with no reload.
 id ends in `:free`, and OpenRouter bills a fallback at the price of the
 model that answered, so a list of free ones stays free. By default
 it asks `google/gemma-4-31b-it:free`, then
-`thinkingmachines/inkling-small:free`, then `google/gemma-4-26b-a4b-it:free`
-(free on OpenRouter's list on 27 October 2026; free models come and go).
+`thinkingmachines/inkling-2-small:free`, then
+`nvidia/nemotron-3.5-super-vl:free`, three makers so one being busy doesn't
+stop GymPal (free on OpenRouter's list on 18 November 2026; free models come
+and go). When OpenRouter says no, the server's log (and `gympal:check`)
+shows its reason, such as "rate-limited upstream".
 `GYMGO_GYMPAL_MODELS` sets others, comma-separated; any that isn't free is
 left out, and the server says so. There's no free ChatGPT: every OpenAI
 model on OpenRouter is paid.

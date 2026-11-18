@@ -9,6 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 177 · GymPal's free models refreshed, and OpenRouter's reasons shown
+
+*18 Nov 2026 · the commit "GymPal: fresh free models from three makers, and OpenRouter's reason in the log"*
+
+Your OpenRouter check said "GymPal's had a lot of questions": OpenRouter took the key but refused the question as rate-limited (429), and the server didn't say why.
+
+- **One of GymPal's three free models had been withdrawn**: `thinkingmachines/inkling-small:free` is no longer on OpenRouter. GymPal now asks `google/gemma-4-31b-it:free`, then `thinkingmachines/inkling-2-small:free`, then `nvidia/nemotron-3.5-super-vl:free`. That's three different makers, so one busy maker doesn't stop GymPal; before, two of the three were Google's Gemma, the most popular free models and often "rate-limited upstream". All three were checked on OpenRouter's public model list today.
+- **When OpenRouter says no, the server's log and `gympal:check` now show its own reason**, such as "temporarily rate-limited upstream" and which provider said so. Never the key.
+
+- New tests: the reason is logged (and cut to one line when it's long), and the key never is. All typechecks and tests pass. Not tried with a real key here (none is set in this workspace).
+
 ## Update 176 · GitHub Models is gone, so GymPal is back to OpenRouter
 
 *18 Nov 2026 · the commit "Take GitHub Models out of GymPal: GitHub retired it on 30 July"*

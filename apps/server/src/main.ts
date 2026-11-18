@@ -80,7 +80,7 @@ const server = createServer(
     signIn: { google: GOOGLE_SIGN_IN, apple: APPLE_SIGN_IN_IDS },
     bugReports: { send: bugMail, to: BUG_REPORT_TO, retryEveryMs: 15 * 60_000 },
     legal: { copyrightAgent: COPYRIGHT_AGENT, operator: LEGAL_OPERATOR },
-    gymPal: { key: OPENROUTER_API_KEY, models: GYMPAL_MODELS },
+    gymPal: { key: OPENROUTER_API_KEY, models: GYMPAL_MODELS, checkModels: true },
     appleMaps: { key: SERPAPI_API_KEY, perDay: SERPAPI_DAILY_LIMIT },
     weather: { on: WEATHER, log: (line) => console.log(line) },
     webDir: WEB_DIR,

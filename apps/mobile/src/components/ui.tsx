@@ -210,6 +210,7 @@ export function Fold({
   icon,
   title,
   summary,
+  spokenSummary,
   initiallyOpen = false,
   children,
 }: {
@@ -217,6 +218,8 @@ export function Fold({
   icon: IconName;
   title: string;
   summary?: string;
+  /** The summary as said aloud, when the shown one has a symbol in it ("★ 3.8"). */
+  spokenSummary?: string;
   initiallyOpen?: boolean;
   children: ReactNode;
 }) {
@@ -237,7 +240,7 @@ export function Fold({
         }}
         accessibilityRole="button"
         aria-expanded={open}
-        accessibilityLabel={`${title}${summary ? `, ${summary}` : ''}`}
+        accessibilityLabel={`${title}${(spokenSummary ?? summary) ? `, ${spokenSummary ?? summary}` : ''}`}
         style={({ pressed }) => [styles.foldHead, pressed && { opacity: 0.7 }]}
       >
         <View style={styles.foldIcon}>

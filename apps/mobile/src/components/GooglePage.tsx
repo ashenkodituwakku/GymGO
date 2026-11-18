@@ -165,7 +165,10 @@ export function PlaceDetails({ place, hidePhotos = false }: { place: GooglePlace
       <View style={styles.summary}>
         {place.rating !== null && (
           <Txt variant="headline">
-            ★ {place.rating.toFixed(1)}
+            <Txt variant="headline" aria-hidden>
+              {'★ '}
+            </Txt>
+            {place.rating.toFixed(1)}
             <Txt variant="subhead" color={color.labelSecondary}>
               {place.ratingCount ? ` · ${place.ratingCount.toLocaleString()} Google reviews` : ''}
             </Txt>
@@ -269,7 +272,14 @@ export function PlaceDetails({ place, hidePhotos = false }: { place: GooglePlace
             <View key={`${review.author.name}-${index}`} style={styles.card}>
               <View style={styles.reviewHead}>
                 <Author author={review.author} />
-                {review.rating !== null && <Txt variant="subhead">{'★'.repeat(Math.round(review.rating))}</Txt>}
+                {review.rating !== null && (
+                  // A picture of the rating, said as words, not "black star" five times.
+                  <View accessible accessibilityRole="image" accessibilityLabel={`${Math.round(review.rating)} out of 5 stars`}>
+                    <Txt variant="subhead" aria-hidden>
+                      {'★'.repeat(Math.round(review.rating))}
+                    </Txt>
+                  </View>
+                )}
               </View>
               {!!review.when && (
                 <Txt variant="caption" color={color.labelSecondary}>

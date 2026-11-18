@@ -1645,8 +1645,8 @@ export function createApp(options: AppOptions) {
         connectedSignIns: rows('select provider, email, created_at as connectedAt from identities where user_id = ? order by created_at'),
         savedGyms: rows('select gym_id as gymId, created_at as savedAt from saved_gyms where user_id = ? order by created_at'),
         reviews: rows(
-          `select id, gym_id as gymId, overall, body, visited_on as visitedOn, status, moderation_reason as moderationReason,
-                  created_at as createdAt, moderated_at as moderatedAt from reviews where user_id = ? order by created_at`,
+          `select id, gym_id as gymId, overall, equipment, cleanliness, atmosphere, value, body, visited_on as visitedOn, status,
+                  moderation_reason as moderationReason, created_at as createdAt, moderated_at as moderatedAt from reviews where user_id = ? order by created_at`,
         ),
         photos: rows(
           `select id, gym_id as gymId, type, bytes, status, moderation_reason as moderationReason, created_at as createdAt,

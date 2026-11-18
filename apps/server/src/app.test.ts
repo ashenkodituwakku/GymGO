@@ -284,6 +284,10 @@ describe('reviews and moderation', () => {
     const published = await call('GET', '/api/gyms/prime-athletica-fitzroy/reviews', { token: reader });
     const kept = published.body!.reviews.find((review: any) => review.id === posted.body!.review.id);
     expect(kept).toMatchObject({ equipment: 5, cleanliness: 3, atmosphere: null, value: null });
+    // And Download my data has them: everything held about you.
+    const exported = await call('GET', '/api/me/export', { token: author.token });
+    const mine = exported.body!.reviews.find((review: any) => review.id === posted.body!.review.id);
+    expect(mine).toMatchObject({ overall: 4, equipment: 5, cleanliness: 3, atmosphere: null, value: null });
   });
 
   it('needs a reason to reject, and one review per person per gym', async () => {

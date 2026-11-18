@@ -9,9 +9,25 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 186 · The review ratings reach your data download and the moderators, and stars are said as words
+
+*18 Nov 2026 · the commit "Reviews' aspect ratings in Download my data and the moderation queue; stars said as words"*
+
+- **Download my data left out the new ratings.** Update 184 began keeping the equipment, cleanliness, atmosphere and value ratings, but the download names each column it includes, and those four weren't there. It promises everything GymGO holds about you, so they're in it now. A test checks it.
+- **Moderators couldn't see them either**, though they're published along with the review. The queue now shows them under the text ("Equipment 4 of 5"), and gives the rating as "4 of 5 stars" rather than "★★★★".
+- **Stars said as words to a screen reader**, not as "black star":
+  - A gym's Reviews row says "3.8 out of 5, from 4 reviews".
+  - Compare's rating cells say just the number, as the row's heading says it's a rating.
+  - On "See it on Google", the rating is said as a number, and each review's row of stars as "4 out of 5 stars".
+  - The stars still show as before.
+- Checked:
+  - The download has the four ratings.
+  - In the browser, the queue shows "4 of 5 stars" and "Equipment 4 of 5" for a review waiting on an invented demo gym, and the Reviews row's spoken name is as above.
+  - App 608, server 309, domain 198 tests.
+
 ## Update 185 · The largest text on a small phone: no choice cut off, no word broken
 
-*18 Nov 2026 · the commit "Largest text on a small phone: segmented controls wrap, row titles keep their words"*
+*18 Nov 2026 · `d56c320`*
 
 - This round looked at Appearance's largest text with Bold text on, at 320 points (the smallest phones) and 390, in Standard and Liquid. Ten pages were checked for text cut short, spilling out of its box, or making the page scroll sideways. Long gym names, suburbs and a workout's list of exercises shorten on purpose, and still do. Three things lost words:
   - **A segmented control cut a choice short.** Build a workout's Goal read "Strength, Muscle, Endura…". A segmented control now measures its longest label (with the label's own font in a browser). When that won't fit in an equal share, the segments flow onto two rows, the chosen one raised where it is. At the usual sizes it's one row with the sliding pill, as before (checked at 390 and 320).

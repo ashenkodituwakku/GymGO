@@ -28,7 +28,8 @@ import { PageScroll } from '@/components/PageScroll';
 import { SheetDone } from '@/components/SheetDone';
 import { ScreenOptions } from '@/components/ScreenOptions';
 
-type Cell = { text: string; ink?: string; strong?: boolean };
+/** `star`: a star before the text, seen but not said (the row's heading says it's a rating). */
+type Cell = { text: string; ink?: string; strong?: boolean; star?: boolean };
 
 const tri = (value: Tri): Cell =>
   value === 'yes' ? { text: 'Yes' } : value === 'no' ? { text: 'No' } : { text: 'Not known', ink: color.maybeInk };
@@ -192,7 +193,7 @@ export default function Compare() {
     {
       label: 'Rating',
       cells: gyms.map((result) =>
-        result.rating.average === null ? { text: 'No reviews yet', ink: color.labelSecondary } : { text: `★ ${result.rating.average.toFixed(1)} (${result.rating.count})` },
+        result.rating.average === null ? { text: 'No reviews yet', ink: color.labelSecondary } : { text: `${result.rating.average.toFixed(1)} (${result.rating.count})`, star: true },
       ),
     },
     {
@@ -247,6 +248,11 @@ export default function Compare() {
             <View style={styles.cells}>
               {row.cells.map((cell, column) => (
                 <Txt key={column} variant="subhead" color={cell.ink ?? color.label} style={[styles.cell, cell.strong && face('semibold')]}>
+                  {cell.star && (
+                    <Txt variant="subhead" color={cell.ink ?? color.label} aria-hidden>
+                      {'★ '}
+                    </Txt>
+                  )}
                   {cell.text}
                 </Txt>
               ))}

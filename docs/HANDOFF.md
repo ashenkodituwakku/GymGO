@@ -114,6 +114,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Review ratings in the export and the queue** (18 Nov). `/api/me/export`
+  names its review columns, so add any new review column there too.
+  AccountContent's review queue shows `aspectsLine()`. A "★" character in
+  text needs words for screen readers: `Fold`'s `spokenSummary`, an
+  `aria-hidden` star inside a `Txt`, or a View with role image and a label.
+
 - **Largest text on a small phone** (18 Nov). ui.tsx `Segmented` measures
   its longest bold label (`labelWidth`: canvas in a browser, about 0.6 of the
   size per letter elsewhere). If that won't fit `slot`, it renders wrapped

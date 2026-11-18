@@ -682,6 +682,7 @@ export function PlaceCard({
           icon="star"
           title="Reviews"
           summary={result.rating.count ? `${ratingShort(result.rating.average)} from ${result.rating.count}` : LIMITED ? 'With the full version' : 'None yet'}
+          spokenSummary={result.rating.count && result.rating.average !== null ? `${result.rating.average.toFixed(1)} out of 5, from ${result.rating.count} review${result.rating.count === 1 ? '' : 's'}` : undefined}
         >
           {reviews}
         </Fold>

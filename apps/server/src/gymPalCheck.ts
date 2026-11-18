@@ -2,30 +2,27 @@
  * Ask GymPal one short question, to see that it answers on this machine:
  *   pnpm --filter @gymgo/server gympal:check
  *
- * Uses the same settings as the server (apps/server/.env.local):
- * GITHUB_MODELS_TOKEN and/or OPENROUTER_API_KEY, and the model lists. Says
- * which service and model answered, or why none did. Never prints the token
- * or key. One question uses one of the day's free questions.
+ * Uses the same settings as the server (apps/server/.env.local): the
+ * OpenRouter key and model list. Says which model answered, or why none did.
+ * Never prints the key. One question uses one of the day's free questions.
  */
-import { GITHUB_MODELS_TOKEN, GYMPAL_GITHUB_MODELS, GYMPAL_MODELS, OPENROUTER_API_KEY } from './config';
+import { GYMPAL_MODELS, LEFTOVER_GITHUB_MODELS_TOKEN, OPENROUTER_API_KEY } from './config';
 import { GymPal, GymPalError } from './gymPal';
 
-const gymPal = new GymPal({
-  key: OPENROUTER_API_KEY,
-  models: GYMPAL_MODELS,
-  github: { token: GITHUB_MODELS_TOKEN, models: GYMPAL_GITHUB_MODELS },
-  log: (line) => console.log(line),
-});
+if (LEFTOVER_GITHUB_MODELS_TOKEN) {
+  console.log('GITHUB_MODELS_TOKEN does nothing: GitHub retired GitHub Models on 30 July 2026. Delete that line from apps/server/.env.local and revoke the token on github.com.\n');
+}
+const gymPal = new GymPal({ key: OPENROUTER_API_KEY, models: GYMPAL_MODELS, log: (line) => console.log(line) });
 if (!gymPal.on) {
-  console.error('GymPal is off: set GITHUB_MODELS_TOKEN (or OPENROUTER_API_KEY) in apps/server/.env.local first; see README, "GymPal".');
+  console.error('GymPal is off: set OPENROUTER_API_KEY in apps/server/.env.local first (a free key from openrouter.ai); see README, "GymPal".');
   process.exit(1);
 }
-console.log(`Asking GymPal through ${gymPal.service}…`);
+console.log('Asking GymPal through OpenRouter…');
 try {
   const reply = await gymPal.ask([{ role: 'user', content: 'In one short sentence, what can you help me with in GymGO?' }], { replyTokens: 120 });
   console.log(`Answered by ${gymPal.answeredBy}:\n\n${reply}\n\nGymPal works.`);
 } catch (error) {
   const reason = error instanceof GymPalError ? error.message : String(error);
-  console.error(`GymPal didn't answer: ${reason}\n(Any reason from GitHub or OpenRouter is in the lines above.)`);
+  console.error(`GymPal didn't answer: ${reason}\n(Any reason from OpenRouter is in the lines above.)`);
   process.exit(1);
 }

@@ -9,6 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 176 · GitHub Models is gone, so GymPal is back to OpenRouter
+
+*18 Nov 2026 · the commit "Take GitHub Models out of GymPal: GitHub retired it on 30 July"*
+
+Your Mac's check failed the same way as the one here, which showed the problem wasn't this workspace: **GitHub retired GitHub Models on 30 July 2026**. Its playground, catalogue and API are gone, and its address now answers every request with a bare "OK". GitHub's own docs say so. No GitHub token can make GymPal work there, and I should have checked before building Updates 173 to 175.
+
+- **GymPal is OpenRouter only again**, as before Update 173. The GitHub Models code is out.
+- **The token on your Mac now does nothing.** Without this fix, it made the server think GymPal was switched on, so every question would have failed. The server now says at start-up that the line does nothing and should be deleted. `gymgo-mac.sh --gympal` (Mac) and `gymgo -GymPal` (Windows) now take that line out of `apps/server/.env.local` for you, keep everything else, and point to the OpenRouter steps.
+- **The Privacy Policy and Terms are back to the 4 November version**: GitHub Models is no longer named. Anyone who agreed to the 18 November version sees the terms card once more.
+- **Kept from that work:** `pnpm --filter @gymgo/server gympal:check` now checks OpenRouter, the server tells the app which service it uses, and the note under GymPal's box names it.
+- **To switch GymPal on:** a free key from openrouter.ai (Keys → Create key) in `apps/server/.env.local` as `OPENROUTER_API_KEY=…`, then run the check. README, GymPal, has the steps.
+
+- Checked: the server's GymPal tests (25), the check command with and without the leftover token, and the Mac `--gympal` cleanup on a test file here (token line out, other settings kept, file still private). All typechecks and tests pass. The Windows `-GymPal` cleanup was read through, not run.
+
 ## Update 175 · GymPal setup on a Mac too
 
 *18 Nov 2026 · the commit "gymgo-mac.sh --gympal: the same GymPal setup on a Mac"*

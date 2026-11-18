@@ -126,8 +126,8 @@
  *   POST   /api/bug-reports               anyone: { description, topic?: 'bug' | 'copyright', replyTo?, context? } -> kept, and emailed to the team
  *   GET    /api/moderation/bug-reports    moderators: the latest bug reports, and whether each was emailed
  *   GET    /api/weather?south=&west=      { weather }: MET Norway's forecast for the middle of that block's own map square (weather.ts), the next 12 hours
- *   GET    /api/gympal                    { on, pro, perDay, service }: whether GymPal, the chat, can answer on this server, your plan's questions a day, and where chats go (GitHub Models or OpenRouter)
- *   POST   /api/gympal                    { messages: [{ role: 'user' | 'assistant', content }] } -> { reply }, from GitHub Models or a free model through OpenRouter
+ *   GET    /api/gympal                    { on, pro, perDay, service }: whether GymPal, the chat, can answer on this server, your plan's questions a day, and the AI service chats go to
+ *   POST   /api/gympal                    { messages: [{ role: 'user' | 'assistant', content }] } -> { reply }, from a free model through OpenRouter
  *   DELETE /api/moderation/member-reports/:kind/:gymId/:userId   moderators: remove one
  *
  * Every route that changes something re-checks permission here with the
@@ -280,8 +280,8 @@ export interface AppOptions {
    * Caddy in front (web.ts, scripts/online.mjs). None: the API only.
    */
   webDir?: string | null;
-  /** GymPal, the chat: the owner's OpenRouter key and GitHub token (neither: off), the models to ask, and a stand-in fetch for tests. */
-  gymPal?: { key: string | null; models?: string[]; github?: { token: string | null; models?: string[] }; fetchImpl?: typeof fetch; log?: (line: string) => void };
+  /** GymPal, the chat: the owner's OpenRouter key (none: off), the free models to ask, and a stand-in fetch for tests. */
+  gymPal?: { key: string | null; models?: string[]; fetchImpl?: typeof fetch; log?: (line: string) => void };
   /** Gyms' Apple Maps listings through SerpApi (appleMaps.ts): off without a key. */
   appleMaps?: AppleMapsOptions;
   /** The weather on Home and the map, from MET Norway (weather.ts): on unless `on: false`. */
@@ -701,7 +701,7 @@ export function createApp(options: AppOptions) {
     now,
     ...options.weather,
   });
-  const gymPal = new GymPal({ key: options.gymPal?.key ?? null, models: options.gymPal?.models, github: options.gymPal?.github, fetchImpl: options.gymPal?.fetchImpl, referer: options.publicUrl ?? null, log: options.gymPal?.log });
+  const gymPal = new GymPal({ key: options.gymPal?.key ?? null, models: options.gymPal?.models, fetchImpl: options.gymPal?.fetchImpl, referer: options.publicUrl ?? null, log: options.gymPal?.log });
   // GymPal: plenty for real questions, and few enough that one person can't use up the free models' day for
   // everyone; more with Pro (gymPal.ts, GYMPAL_PLANS).
   const gymPalLimiters = {

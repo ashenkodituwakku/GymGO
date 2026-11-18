@@ -1,17 +1,8 @@
 /**
- * GymPal: the chat in the corner of the app, answered by an AI model through
- * GitHub Models (models.github.ai) or OpenRouter (openrouter.ai), with
- * GymPal's guide to GymGO (gymPalGuide.ts) as its instructions.
+ * GymPal: the chat in the corner of the app, answered by a free AI model
+ * through OpenRouter (openrouter.ai), with GymPal's guide to GymGO
+ * (gymPalGuide.ts) as its instructions.
  *
- * GitHub Models, with the owner's GitHub token (GITHUB_MODELS_TOKEN, a token
- * with Models access): asked first when it's set, each of its models in
- * turn. It is free within GitHub's limits (a number of questions a minute
- * and a day for each model); past them GitHub says no rather than billing,
- * unless the owner has switched on paid use for Models in their GitHub
- * settings. If every GitHub model is busy or the token is turned down,
- * OpenRouter is asked, if its key is set too.
- *
- * OpenRouter:
  * It costs nothing. Only models whose OpenRouter id ends in ":free" are ever
  * asked: any other named in GYMGO_GYMPAL_MODELS is left out, and the server
  * says so as it starts. OpenRouter bills a fallback at the price of the model
@@ -38,14 +29,6 @@ import { GYMPAL_GUIDE } from './gymPalGuide';
 type Fetch = typeof fetch;
 
 export const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-export const GITHUB_MODELS_URL = 'https://models.github.ai/inference/chat/completions';
-/**
- * GitHub Models' chat models, asked in this order: small, quick ones in
- * GitHub's "low" tier, which allows the most free questions a day, from two
- * providers. GYMGO_GYMPAL_GITHUB_MODELS replaces the list (GitHub retires
- * models; one it doesn't know is passed over and the next asked).
- */
-export const DEFAULT_GITHUB_MODELS = ['openai/gpt-4.1-mini', 'openai/gpt-4o-mini', 'mistral-ai/mistral-small-2503'];
 /**
  * Asked in this order, each one free, from two different providers so one
  * being busy doesn't stop GymPal. Checked on OpenRouter's list of models on
@@ -204,15 +187,10 @@ export function readAnswer(data: unknown): string | null {
   return answer || null;
 }
 
-/** What one GitHub model made of a question: its answer, or why not and whether the next is worth asking. */
-type Attempt = { answer: string } | { error: GymPalError; next: boolean };
-
 export class GymPal {
   private readonly key: string | null;
   private readonly models: string[];
-  private readonly githubToken: string | null;
-  private readonly githubModels: string[];
-  /** Which service and model gave the last answer, for the server's check (`pnpm gympal:check`). */
+  /** Which model gave the last answer, for the server's check (`pnpm gympal:check`). */
   answeredBy: string | null = null;
   private readonly fetchImpl: Fetch;
   private readonly referer: string | null;
@@ -220,12 +198,10 @@ export class GymPal {
   private readonly log: (line: string) => void;
 
   constructor(options: {
-    /** The owner's OpenRouter key (OPENROUTER_API_KEY). */
+    /** The owner's OpenRouter key (OPENROUTER_API_KEY); without it GymPal is off. */
     key: string | null;
-    /** OpenRouter's models: only the free ones are kept. */
+    /** Only the free ones are kept. */
     models?: readonly string[];
-    /** The owner's GitHub token with Models access (GITHUB_MODELS_TOKEN), and which of its models to ask. Without it or a key, GymPal is off. */
-    github?: { token: string | null; models?: readonly string[] };
     /** Stands in for the web in tests, so no test ever calls OpenRouter. */
     fetchImpl?: Fetch;
     /** This server's public address, which OpenRouter shows the owner beside each request. */
@@ -234,9 +210,6 @@ export class GymPal {
     log?: (line: string) => void;
   }) {
     this.key = options.key?.trim() || null;
-    this.githubToken = options.github?.token?.trim() || null;
-    const githubModels = (options.github?.models ?? []).map((id) => id.trim()).filter(Boolean);
-    this.githubModels = githubModels.length ? [...new Set(githubModels)] : DEFAULT_GITHUB_MODELS;
     const { models } = freeModels(options.models?.length ? options.models : DEFAULT_MODELS);
     this.models = models.length ? models : DEFAULT_MODELS;
     this.fetchImpl = options.fetchImpl ?? fetch;
@@ -245,14 +218,14 @@ export class GymPal {
     this.log = options.log ?? ((line) => console.warn(line));
   }
 
-  /** Whether GymPal can answer: a GitHub token or an OpenRouter key is set. */
+  /** Whether GymPal can answer: an OpenRouter key is set. */
   get on(): boolean {
-    return this.githubToken !== null || this.key !== null;
+    return this.key !== null;
   }
 
-  /** The service asked first, named for the chat's note on where chats go; null when GymPal is off. */
-  get service(): 'GitHub Models' | 'OpenRouter' | null {
-    return this.githubToken ? 'GitHub Models' : this.key ? 'OpenRouter' : null;
+  /** The AI service chats go to, for the note under the chat's message box; null when GymPal is off. */
+  get service(): 'OpenRouter' | null {
+    return this.key ? 'OpenRouter' : null;
   }
 
   /**
@@ -261,77 +234,13 @@ export class GymPal {
    * after his guide.
    */
   async ask(messages: ChatMessage[], extra: { context?: string | null; log?: string | null; replyTokens?: number } = {}): Promise<string> {
-    if (!this.on) throw new GymPalError(503, 'GymPal isn’t switched on for this server yet.', 'gympal_off');
-    // One message of instructions: not every model takes more than one.
-    const conversation = [{ role: 'system', content: instructions(extra.context ?? null, extra.log ?? null) }, ...messages];
-    const replyTokens = extra.replyTokens ?? GYMPAL_PLANS.free.replyTokens;
-    if (this.githubToken) {
-      const errors: GymPalError[] = [];
-      for (const model of this.githubModels) {
-        const attempt = await this.askGitHub(this.githubToken, model, conversation, replyTokens);
-        if ('answer' in attempt) {
-          this.answeredBy = `GitHub Models, ${model}`;
-          return attempt.answer;
-        }
-        errors.push(attempt.error);
-        // Busy, gone or down: the next model. Turned down (the token): no use asking another.
-        if (!attempt.next) break;
-      }
-      // With no OpenRouter to fall back on: busy if any model was (it'll pass), else the last reason.
-      if (!this.key) throw errors.find((error) => error.code === 'gympal_busy') ?? errors.at(-1) ?? new GymPalError(502, 'GymPal isn’t working right now. Try again later.');
-    }
-    return this.askOpenRouter(conversation, replyTokens);
-  }
-
-  /** One GitHub model's answer, or why not. Never says the token, in the log or anywhere else. */
-  private async askGitHub(token: string, model: string, conversation: Array<{ role: string; content: string }>, replyTokens: number): Promise<Attempt> {
-    let response: Response;
-    try {
-      response = await this.fetchImpl(GITHUB_MODELS_URL, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/vnd.github+json',
-          'X-GitHub-Api-Version': '2022-11-28',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ model, messages: conversation, max_tokens: replyTokens, temperature: 0.4 }),
-        signal: AbortSignal.timeout(this.timeoutMs),
-      });
-    } catch {
-      return { error: new GymPalError(502, 'GymPal couldn’t be reached. Try again in a moment.'), next: true };
-    }
-    if (response.status === 429) return { error: new GymPalError(429, 'GymPal’s had a lot of questions. Try again a bit later.', 'gympal_busy'), next: true };
-    if (response.status === 401 || response.status === 403) {
-      this.log(`[gympal] GitHub Models turned the request down (${response.status}). Check GITHUB_MODELS_TOKEN: a token with Models access (read-only is enough).`);
-      return { error: new GymPalError(502, 'GymPal isn’t working right now. Try again later.'), next: false };
-    }
-    if (!response.ok) {
-      // 400 or 404: most often a model GitHub no longer has.
-      this.log(response.status === 400 || response.status === 404 ? `[gympal] GitHub Models didn't take ${model} (${response.status}); asking the next. Set GYMGO_GYMPAL_GITHUB_MODELS to models from github.com/marketplace/models.` : `[gympal] GitHub Models answered ${response.status} for ${model}.`);
-      return { error: new GymPalError(502, 'GymPal isn’t working right now. Try again later.'), next: true };
-    }
-    let data: unknown;
-    try {
-      data = await response.json();
-    } catch {
-      // Something in the way (a proxy or firewall) answering in GitHub's place, most often.
-      this.log(`[gympal] What came back for ${model} wasn't an answer from GitHub Models: is something between this server and models.github.ai?`);
-      return { error: new GymPalError(502, 'GymPal isn’t working right now. Try again later.'), next: true };
-    }
-    const answer = readAnswer(data);
-    if (!answer) this.log(`[gympal] GitHub Models' ${model} sent no answer.`);
-    return answer ? { answer } : { error: new GymPalError(502, 'GymPal didn’t have an answer. Try asking another way.'), next: true };
-  }
-
-  /** OpenRouter's answer: its free models, tried in turn by OpenRouter itself. */
-  private async askOpenRouter(conversation: Array<{ role: string; content: string }>, replyTokens: number): Promise<string> {
+    if (!this.key) throw new GymPalError(503, 'GymPal isn’t switched on for this server yet.', 'gympal_off');
     let response: Response;
     try {
       response = await this.fetchImpl(OPENROUTER_URL, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${this.key ?? ''}`,
+          Authorization: `Bearer ${this.key}`,
           'Content-Type': 'application/json',
           'X-Title': 'GymGO',
           ...(this.referer ? { 'HTTP-Referer': this.referer } : {}),
@@ -339,8 +248,9 @@ export class GymPal {
         body: JSON.stringify({
           // Tried in turn: each one free, so whichever answers costs nothing.
           models: this.models,
-          messages: conversation,
-          max_tokens: replyTokens,
+          // One message of instructions: not every model takes more than one.
+          messages: [{ role: 'system', content: instructions(extra.context ?? null, extra.log ?? null) }, ...messages],
+          max_tokens: extra.replyTokens ?? GYMPAL_PLANS.free.replyTokens,
           temperature: 0.4,
         }),
         signal: AbortSignal.timeout(this.timeoutMs),

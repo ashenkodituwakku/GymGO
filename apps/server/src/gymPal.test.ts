@@ -3,7 +3,7 @@ import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from './app';
 import { openDb, type Db } from './db';
-import { DEFAULT_GITHUB_MODELS, DEFAULT_MODELS, GITHUB_MODELS_URL, GYMPAL_PLANS, OPENROUTER_URL, GymPal, cleanChat, cleanContext, freeModels, instructions, readAnswer, trainingSummary } from './gymPal';
+import { DEFAULT_MODELS, GYMPAL_PLANS, OPENROUTER_URL, GymPal, cleanChat, cleanContext, freeModels, instructions, readAnswer, trainingSummary } from './gymPal';
 import { GYMPAL_GUIDE } from './gymPalGuide';
 
 /** Stands in for OpenRouter: what it was asked, and an answer of the test's choosing. */
@@ -118,78 +118,6 @@ describe('asking OpenRouter', () => {
     await expect(new GymPal({ key: 'test-key', fetchImpl: down }).ask([{ role: 'user', content: 'Hi' }])).rejects.toMatchObject({ status: 502 });
     const empty = fakeOpenRouter(() => ({ json: { choices: [{ message: { content: '' } }] } }));
     await expect(new GymPal({ key: 'test-key', fetchImpl: empty.fetchImpl }).ask([{ role: 'user', content: 'Hi' }])).rejects.toMatchObject({ status: 502 });
-  });
-});
-
-describe('asking GitHub Models', () => {
-  /** Stands in for both services: each URL's answer of the test's choosing, and everything asked. */
-  function fakeServices(github: (model: string) => { status?: number; json?: unknown }, openRouter: () => { status?: number; json?: unknown } = () => ({ json: reply('From OpenRouter') })) {
-    const asked: Array<{ url: string; headers: Record<string, string>; body: any }> = [];
-    const fetchImpl = (async (url: string, init: RequestInit) => {
-      const body = JSON.parse(String(init.body));
-      asked.push({ url, headers: init.headers as Record<string, string>, body });
-      const { status = 200, json = {} } = url === GITHUB_MODELS_URL ? github(body.model) : openRouter();
-      return new Response(JSON.stringify(json), { status, headers: { 'content-type': 'application/json' } });
-    }) as typeof fetch;
-    return { asked, fetchImpl };
-  }
-
-  it('is on with only a GitHub token, and asks GitHub first, one model at a time, with the token and GitHub’s headers', async () => {
-    const services = fakeServices(() => ({ json: reply('From GitHub') }));
-    const gymPal = new GymPal({ key: null, github: { token: ' github-test-token ' }, fetchImpl: services.fetchImpl });
-    expect(gymPal.on).toBe(true);
-    expect(gymPal.service).toBe('GitHub Models');
-    expect(await gymPal.ask([{ role: 'user', content: 'Hello' }], { context: 'An exercise page', replyTokens: 300 })).toBe('From GitHub');
-    const [first] = services.asked;
-    expect(first!.url).toBe('https://models.github.ai/inference/chat/completions');
-    expect(first!.headers.Authorization).toBe('Bearer github-test-token');
-    expect(first!.headers['X-GitHub-Api-Version']).toBe('2022-11-28');
-    expect(first!.body.model).toBe(DEFAULT_GITHUB_MODELS[0]);
-    expect(first!.body.models).toBeUndefined();
-    expect(first!.body.max_tokens).toBe(300);
-    expect(first!.body.messages[0].role).toBe('system');
-    expect(first!.body.messages[0].content).toContain('An exercise page');
-    expect(gymPal.answeredBy).toBe(`GitHub Models, ${DEFAULT_GITHUB_MODELS[0]}`);
-  });
-
-  it('asks the next GitHub model when one is busy or gone, and the owner’s own list when given', async () => {
-    const services = fakeServices((model) => (model === 'a/busy' ? { status: 429 } : model === 'b/retired' ? { status: 404 } : { json: reply(`From ${model}`) }));
-    const lines: string[] = [];
-    const gymPal = new GymPal({ key: null, github: { token: 't', models: ['a/busy', 'b/retired', 'c/works'] }, fetchImpl: services.fetchImpl, log: (line) => lines.push(line) });
-    expect(await gymPal.ask([{ role: 'user', content: 'Hi' }])).toBe('From c/works');
-    expect(services.asked.map((call) => call.body.model)).toEqual(['a/busy', 'b/retired', 'c/works']);
-    expect(lines.join('\n')).toContain('b/retired');
-  });
-
-  it('falls back to OpenRouter when every GitHub model is busy, if its key is set', async () => {
-    const services = fakeServices(() => ({ status: 429 }));
-    const gymPal = new GymPal({ key: 'or-key', github: { token: 't', models: ['a/one', 'b/two'] }, fetchImpl: services.fetchImpl });
-    expect(gymPal.service).toBe('GitHub Models');
-    expect(await gymPal.ask([{ role: 'user', content: 'Hi' }])).toBe('From OpenRouter');
-    expect(services.asked.map((call) => call.url)).toEqual([GITHUB_MODELS_URL, GITHUB_MODELS_URL, OPENROUTER_URL]);
-    expect(services.asked[2]!.headers.Authorization).toBe('Bearer or-key');
-  });
-
-  it('says busy when every GitHub model is, with no OpenRouter to fall back on', async () => {
-    const services = fakeServices(() => ({ status: 429 }));
-    await expect(new GymPal({ key: null, github: { token: 't' }, fetchImpl: services.fetchImpl }).ask([{ role: 'user', content: 'Hi' }])).rejects.toMatchObject({ status: 429, code: 'gympal_busy' });
-    expect(services.asked).toHaveLength(DEFAULT_GITHUB_MODELS.length);
-  });
-
-  it('stops at a token GitHub turns down, telling the owner what to check but never the token', async () => {
-    const services = fakeServices(() => ({ status: 401 }));
-    const lines: string[] = [];
-    await expect(new GymPal({ key: null, github: { token: 'secret-github-token' }, fetchImpl: services.fetchImpl, log: (line) => lines.push(line) }).ask([{ role: 'user', content: 'Hi' }])).rejects.toMatchObject({ status: 502 });
-    expect(services.asked).toHaveLength(1);
-    expect(lines.join('\n')).toContain('GITHUB_MODELS_TOKEN');
-    expect(lines.join('\n')).not.toContain('secret-github-token');
-  });
-
-  it('is off with neither a token nor a key', async () => {
-    const gymPal = new GymPal({ key: null, github: { token: '  ' } });
-    expect(gymPal.on).toBe(false);
-    expect(gymPal.service).toBeNull();
-    await expect(gymPal.ask([{ role: 'user', content: 'Hi' }])).rejects.toMatchObject({ status: 503, code: 'gympal_off' });
   });
 });
 

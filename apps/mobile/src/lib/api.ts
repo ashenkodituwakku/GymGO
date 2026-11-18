@@ -725,8 +725,8 @@ export const api = {
     request<unknown>('POST', `/api/moderation/reviews/${encodeURIComponent(reviewId)}`, { token, body }),
   /**
    * Whether GymPal, the chat, can answer on this server (it needs the owner's
-   * GitHub token or OpenRouter key), your plan's questions a day, and the AI
-   * service chats go to (the last two missing from older servers).
+   * OpenRouter key), your plan's questions a day, and the AI service chats go
+   * to (the last two missing from older servers).
    */
   gymPal: () => request<{ on: boolean; pro?: boolean; perDay?: number; service?: string | null }>('GET', '/api/gympal'),
   /**

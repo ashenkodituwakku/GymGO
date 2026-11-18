@@ -20,9 +20,9 @@
 #   --no-dev-account   leave out the ready-made Pro account (dev@gymgo.test)
 #   --repair           reinstall the packages' links and start with a clean cache, for
 #                      "Unable to resolve …" when the app builds
-#   --gympal           switch GymPal on with GitHub Models: paste your GitHub token when
-#                      asked (it doesn't show); saved in apps/server/.env.local on this
-#                      Mac (never uploaded) and checked with one question
+#   --gympal           take out a GitHub token saved for GymPal earlier (GitHub retired
+#                      GitHub Models on 30 July 2026) and say how to use a free
+#                      OpenRouter key instead
 #   --doctor           print what's installed and where things stand, for troubleshooting
 #   --path DIR         where GymGO lives (default ~/GymGO)
 #
@@ -176,32 +176,25 @@ if ! node scripts/check-deps.mjs; then
 fi
 done_ 'Dependencies ready'
 
-# --- GymPal: the owner's GitHub token, saved on this Mac and checked ---------
-# Read without showing, kept only in apps/server/.env.local (git-ignored, so
-# never uploaded, and left alone by updates; readable by you alone), never printed.
+# --- GymPal: GitHub Models is gone; take out a token saved for it ----------
+# An update on 18 Nov 2026 saved a GitHub token for GymPal here, before it
+# turned out GitHub had retired GitHub Models on 30 July 2026.
 if [[ $gympal -eq 1 ]]; then
-  printf '\n  Switching GymPal on with GitHub Models\n'
-  printf '  Paste your GitHub token (it starts github_pat_) and press Return. It won'"'"'t show as you paste.\n'
-  token=''
-  IFS= read -rs -p '  Token: ' token || true
   printf '\n'
-  token="$(printf '%s' "$token" | tr -d '[:space:]')"
-  [[ -n "$token" ]] || stop 'No token was pasted.' 'Run this again with --gympal and paste it at the Token prompt.'
-  [[ "$token" =~ ^(github_pat_|ghp_)[A-Za-z0-9_]+$ ]] || stop 'That doesn’t look like a GitHub token.' 'It starts github_pat_ (or ghp_). Copy it again from github.com: Settings > Developer settings > Personal access tokens.'
+  warn 'GitHub retired GitHub Models on 30 July 2026, so GymPal can'"'"'t use a GitHub token.'
   env_file="$path/apps/server/.env.local"
-  # Every other setting stays as it was; an older token is replaced.
-  (
-    umask 077
-    if [[ -f "$env_file" ]]; then grep -v '^[[:space:]]*GITHUB_MODELS_TOKEN[[:space:]]*=' "$env_file" || true; fi
-    printf 'GITHUB_MODELS_TOKEN=%s\n' "$token"
-  ) > "$env_file.new"
-  mv "$env_file.new" "$env_file"
-  chmod 600 "$env_file"
-  unset token
-  done_ "Token saved in $env_file (on this Mac only)"
-  step 'Asking GymPal one question to check it works'
-  "${pnpm[@]}" --filter @gymgo/server gympal:check || stop 'GymPal didn’t answer.' 'The reason is in the lines above. The token is saved; once that’s fixed, run this again with --gympal.'
-  done_ 'GymPal works. Start GymGO as usual (gymgo) and he’ll answer in the app.'
+  if [[ -f "$env_file" ]] && grep -q '^[[:space:]]*GITHUB_MODELS_TOKEN[[:space:]]*=' "$env_file"; then
+    (
+      umask 077
+      grep -v '^[[:space:]]*GITHUB_MODELS_TOKEN[[:space:]]*=' "$env_file" || true
+    ) > "$env_file.new"
+    mv "$env_file.new" "$env_file"
+    chmod 600 "$env_file"
+    done_ "Took the GitHub token out of $env_file"
+    printf '     Revoke it too: github.com > Settings > Developer settings > Personal access tokens.\n'
+  fi
+  printf '\n  To switch GymPal on, use a free OpenRouter key: README, "GymPal".\n'
+  printf '  Then check it with: pnpm --filter @gymgo/server gympal:check\n\n'
   exit 0
 fi
 

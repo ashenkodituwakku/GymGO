@@ -45,17 +45,14 @@ the branch the owner's launcher pulls.
   the owner asks for adds the next "Update N" at the top of
   `docs/UPDATES.md` in the same push: a title, the date and its commits,
   and a few plain lines on what changed (and anything not yet seen working).
-- **GymPal's token.** On 18 Nov the owner pasted a GitHub token in chat for
-  GitHub Models and asked GymPal to use it. It belongs only in
-  `apps/server/.env.local` on the owner's PC (`GITHUB_MODELS_TOKEN`): never
-  write it into a file in the repo, a commit, a doc or a log. The cloud
-  sandbox can't reach models.github.ai (its network gate answers "OK" in
-  GitHub's place), so it was never tried from here; the owner checks it with
-  `pnpm --filter @gymgo/server gympal:check`, or with `gymgo -GymPal`
-  (scripts/gymgo.ps1: reads the token hidden, writes it into
-  apps\server\.env.local keeping other lines, runs the check), or on a Mac
-  with `gymgo-mac.sh --gympal` (the same, file mode 600; macOS bash is 3.2,
-  so keep to what it has).
+- **No GitHub Models.** GitHub retired GitHub Models on 30 July 2026 (its
+  docs say so; models.github.ai answers every request with a bare "OK").
+  On 18 Nov GymPal briefly asked it (Updates 173 to 175) before that was
+  found; it was taken out again in Update 176. GymPal is OpenRouter only.
+  The owner pasted a GitHub token in chat for it and saved it on their Mac:
+  never write it anywhere or use it. The server and `gymgo -GymPal` /
+  `gymgo-mac.sh --gympal` only say it does nothing and take its line out.
+  Check a service is still running before building on it.
 - **The Windows launcher** `scripts/gymgo.ps1` must stay ASCII-only
   (`apps/web/src/launcher.test.ts` checks it).
 - **Speak plainly to the owner.** They test on a Windows PC (browser, with
@@ -117,15 +114,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
-- **GymPal on GitHub Models** (18 Nov). gymPal.ts asks GitHub Models first
-  when `GITHUB_MODELS_TOKEN` is set (`askGitHub`: one model per request, in
-  turn through `GYMGO_GYMPAL_GITHUB_MODELS` or `DEFAULT_GITHUB_MODELS`, the
-  next on 429, 400/404 or a network failure, stopping at 401/403), then
-  OpenRouter if its key is set (`askOpenRouter`, as before). `service` and
-  `answeredBy`; GET /api/gympal returns `service`, and GymPal.tsx's note
-  names it. `src/gymPalCheck.ts` (`gympal:check`) asks one question with the
-  server's settings. LEGAL_VERSION 2026-11-18 (the privacy text names GitHub
-  Models), so Profile shows the new-terms card.
+- **GymPal: GitHub Models taken out again** (18 Nov). See "No GitHub
+  Models" under Working rules. What stays from that work: GET /api/gympal
+  returns `service` (GymPal.tsx's note names it), `answeredBy`, and
+  `src/gymPalCheck.ts` (`pnpm --filter @gymgo/server gympal:check`, one
+  question with the server's settings). config.ts
+  `LEFTOVER_GITHUB_MODELS_TOKEN` only drives the "does nothing" notice.
 - **Hover on Home** (18 Nov). components/hoverShine.web.ts: `useHoverShine`
   on a zone (Home's page) finds the card under a mouse (nearest pressable
   with a background, gradient or box shadow; `wrapped` looks through bare

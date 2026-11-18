@@ -32,12 +32,11 @@
  *
  * Answers come from an AI model through the GymGO server
  * (apps/server/src/gymPal.ts), which hands the model GymPal's guide to the
- * app and the rules about real gyms' facts: GitHub Models or OpenRouter,
- * whichever the owner has set up (the server says which, and the note under
- * the box names it). Until it can answer (the website, with no server
- * behind it, or a server with neither the owner's GitHub token nor
- * OpenRouter key), each question gets GymPal's apology that it's still
- * being set up; once one is in, the next question goes through.
+ * app and the rules about real gyms' facts, through the AI service the
+ * server names (OpenRouter; the note under the box says so). Until it can
+ * answer (the website, with no server behind it, or a server without the
+ * owner's OpenRouter key), each question gets GymPal's apology that it's
+ * still being set up; once the key is in, the next question goes through.
  *
  * His tab or button keeps out of the way where the corner is busy: a workout
  * in progress (its rest timer sits there), the welcome tour, and the screens

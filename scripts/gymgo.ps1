@@ -48,10 +48,10 @@
     cloudflared: winget install --id Cloudflare.cloudflared
 
 .PARAMETER GymPal
-    Switch GymPal, the AI assistant, on with GitHub Models: paste your
-    GitHub token when asked (it does not show as you paste). It is saved in
-    apps\server\.env.local on this PC, which is never uploaded, and GymPal
-    is asked one question to check it works. Then start GymGO as usual.
+    GitHub retired GitHub Models on 30 July 2026, so GymPal cannot use a
+    GitHub token. This takes out a GitHub token saved here earlier
+    (apps\server\.env.local) and says how to switch GymPal on with a free
+    OpenRouter key instead (README, GymPal).
 
 .PARAMETER OldWebsite
     Start the older Next.js website instead of the app.
@@ -257,38 +257,26 @@ try {
     }
     Write-Done 'Dependencies ready'
 
-    # --- GymPal: save the owner's GitHub token on this PC, and check it -------
-    # Read hidden, kept only in apps\server\.env.local (git-ignored, so never
-    # uploaded, and left alone by gymgo -Update), and never printed.
+    # --- GymPal: GitHub Models is gone; take out a token saved for it --------
+    # An update on 18 Nov 2026 saved a GitHub token for GymPal here, before it
+    # turned out GitHub had retired GitHub Models on 30 July 2026.
     if ($GymPal) {
         Write-Host ''
-        Write-Host '  Switching GymPal on with GitHub Models' -ForegroundColor White
-        Write-Host '  Paste your GitHub token (it starts github_pat_) and press Enter.' -ForegroundColor DarkGray
-        Write-Host '  It will not show as you paste.' -ForegroundColor DarkGray
-        $secret = Read-Host '  Token' -AsSecureString
-        $token = [System.Net.NetworkCredential]::new('', $secret).Password.Trim()
-        if (-not $token) {
-            Stop-WithError 'No token was pasted.' 'Run gymgo -GymPal again and paste it at the Token prompt.'
-        }
-        if ($token -notmatch '^(github_pat_|ghp_)[A-Za-z0-9_]+$') {
-            Stop-WithError 'That does not look like a GitHub token.' 'It starts github_pat_ (or ghp_). Copy it again from github.com: Settings > Developer settings > Personal access tokens.'
-        }
+        Write-Host '  GitHub retired GitHub Models on 30 July 2026, so GymPal cannot use a GitHub token.' -ForegroundColor Yellow
         $envFile = Join-Path $Path 'apps\server\.env.local'
-        $lines = @()
         if (Test-Path -LiteralPath $envFile) {
-            # Every other setting stays as it was; an older token is replaced.
-            $lines = @(Get-Content -LiteralPath $envFile | Where-Object { $_ -notmatch '^\s*GITHUB_MODELS_TOKEN\s*=' })
+            $all = @(Get-Content -LiteralPath $envFile)
+            $kept = @($all | Where-Object { $_ -notmatch '^\s*GITHUB_MODELS_TOKEN\s*=' })
+            if ($kept.Count -lt $all.Count) {
+                [System.IO.File]::WriteAllLines($envFile, [string[]] $kept, [System.Text.UTF8Encoding]::new($false))
+                Write-Done "Took the GitHub token out of $envFile"
+                Write-Host '  Revoke it too: github.com > Settings > Developer settings > Personal access tokens.' -ForegroundColor DarkGray
+            }
         }
-        $lines += "GITHUB_MODELS_TOKEN=$token"
-        # UTF-8 without a byte-order mark, as the server reads it.
-        [System.IO.File]::WriteAllLines($envFile, [string[]] $lines, [System.Text.UTF8Encoding]::new($false))
-        Write-Done "Token saved in $envFile (on this PC only)"
-        Write-Step 'Asking GymPal one question to check it works'
-        Invoke-Pnpm --filter '@gymgo/server' gympal:check
-        if ($LASTEXITCODE -ne 0) {
-            Stop-WithError 'GymPal did not answer.' 'The reason is in the lines above. The token is saved; once that is fixed, run: gymgo -GymPal'
-        }
-        Write-Done 'GymPal works. Start GymGO as usual (gymgo, or gymgo -Online) and he will answer in the app.'
+        Write-Host ''
+        Write-Host '  To switch GymPal on, use a free OpenRouter key: README, "GymPal".'
+        Write-Host '  Then check it with: pnpm --filter @gymgo/server gympal:check' -ForegroundColor DarkGray
+        Write-Host ''
         return
     }
 

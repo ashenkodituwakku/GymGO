@@ -29,8 +29,7 @@ import {
   MAIL_FROM,
   SMTP_URL,
   OPENROUTER_API_KEY,
-  GITHUB_MODELS_TOKEN,
-  GYMPAL_GITHUB_MODELS,
+  LEFTOVER_GITHUB_MODELS_TOKEN,
   SERPAPI_API_KEY,
   SERPAPI_DAILY_LIMIT,
   WEATHER,
@@ -41,7 +40,7 @@ import { senderFor, smtpMailer } from './mail';
 import { scheduleBackups } from './backup';
 import { openDb, seedGyms } from './db';
 import { devAccountRefusal, ensureDevProAccount, retireDevProAccount } from './devAccount';
-import { DEFAULT_GITHUB_MODELS, DEFAULT_MODELS, freeModels } from './gymPal';
+import { DEFAULT_MODELS, freeModels } from './gymPal';
 
 const db = openDb(DB_PATH);
 seedGyms(db, GYM_RECORDS);
@@ -81,7 +80,7 @@ const server = createServer(
     signIn: { google: GOOGLE_SIGN_IN, apple: APPLE_SIGN_IN_IDS },
     bugReports: { send: bugMail, to: BUG_REPORT_TO, retryEveryMs: 15 * 60_000 },
     legal: { copyrightAgent: COPYRIGHT_AGENT, operator: LEGAL_OPERATOR },
-    gymPal: { key: OPENROUTER_API_KEY, models: GYMPAL_MODELS, github: { token: GITHUB_MODELS_TOKEN, models: GYMPAL_GITHUB_MODELS } },
+    gymPal: { key: OPENROUTER_API_KEY, models: GYMPAL_MODELS },
     appleMaps: { key: SERPAPI_API_KEY, perDay: SERPAPI_DAILY_LIMIT },
     weather: { on: WEATHER, log: (line) => console.log(line) },
     webDir: WEB_DIR,
@@ -163,17 +162,16 @@ server.listen(PORT, HOST, () => {
         ? '[server] Legal pages: /terms, /privacy, /refunds, /community. Set GYMGO_CONTACT_EMAIL (and GYMGO_LEGAL_NAME) before GymGO is public; see README'
         : '[server] Legal pages: /terms, /privacy, /refunds, /community (no GYMGO_CONTACT_EMAIL set; they point to Report a bug)',
   );
-  // Which models, never the key or token; and any OpenRouter ones that aren't free, which are never asked.
+  // Which models, never the key; and any that aren't free, which are never asked.
   const chat = freeModels(GYMPAL_MODELS.length ? GYMPAL_MODELS : DEFAULT_MODELS);
-  const githubModels = (GYMPAL_GITHUB_MODELS.length ? GYMPAL_GITHUB_MODELS : DEFAULT_GITHUB_MODELS).join(', ');
-  const openRouterModels = (chat.models.length ? chat.models : DEFAULT_MODELS).join(', ');
   console.log(
-    GITHUB_MODELS_TOKEN
-      ? `[server] GymPal: on, GitHub Models first (${githubModels})${OPENROUTER_API_KEY ? `, then OpenRouter's free models (${openRouterModels})` : ''}. Check it with: pnpm --filter @gymgo/server gympal:check`
-      : OPENROUTER_API_KEY
-        ? `[server] GymPal: on, OpenRouter's free models only (${openRouterModels})`
-        : '[server] GymPal: off (no GITHUB_MODELS_TOKEN or OPENROUTER_API_KEY set; see README)',
+    OPENROUTER_API_KEY
+      ? `[server] GymPal: on, free models only (${(chat.models.length ? chat.models : DEFAULT_MODELS).join(', ')})`
+      : '[server] GymPal: off (no OPENROUTER_API_KEY set; see README)',
   );
+  if (LEFTOVER_GITHUB_MODELS_TOKEN) {
+    console.log('[server] GymPal: GITHUB_MODELS_TOKEN does nothing. GitHub retired GitHub Models on 30 July 2026. Delete that line from apps/server/.env.local and revoke the token on github.com (Settings > Developer settings > Personal access tokens).');
+  }
   if (chat.ignored.length) console.log(`[server] GymPal: left out ${chat.ignored.join(', ')}, as they aren't free (only ids ending :free are used)`);
   console.log(
     GOOGLE_PLACES_API_KEY

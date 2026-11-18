@@ -108,10 +108,9 @@ After that you can run:
   to GymGO's packages and starts the app with a clean cache. The launcher
   already does this by itself when it installs new packages or finds one
   missing, so you shouldn't often need it;
-- `gymgo -GymPal` to switch GymPal on with GitHub Models: paste your GitHub
-  token when asked (it doesn't show as you paste). It's saved in
-  `apps\server\.env.local` on this PC (never uploaded) and GymPal is asked
-  one question to check it works;
+- `gymgo -GymPal` takes out a GitHub token saved for GymPal by an earlier
+  version (GitHub retired GitHub Models on 30 July 2026, so it does
+  nothing) and points to the OpenRouter steps under GymPal;
 - `gymgo -Tunnel` when the phone isn't on the same Wi-Fi;
 - `gymgo -NoBrowser` to start without opening a browser window;
 - `gymgo -NoDevAccount` to start without the ready-made Pro account.
@@ -183,16 +182,9 @@ echo 'alias gymgo="bash ~/GymGO/scripts/gymgo-mac.sh"' >> ~/.zshrc
 After that, `gymgo` starts everything, and `gymgo --xcode`, `gymgo --tunnel`
 and `gymgo --doctor` work as above.
 
-**GymPal on a Mac.** To switch GymPal on with GitHub Models, in Terminal:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/ashenkodituwakku/GymGO/claude/friendly-johnson-9rzxrj/scripts/gymgo-mac.sh | bash -s -- --gympal
-```
-
-(or `gymgo --gympal` once your copy is up to date). It asks for your GitHub
-token (it doesn't show as you paste), saves it in `apps/server/.env.local`
-in `~/GymGO`, readable by you alone and never uploaded, and asks GymPal one
-question to check it works. Then start GymGO as usual.
+`gymgo --gympal` takes out a GitHub token saved for GymPal by an earlier
+version (GitHub retired GitHub Models on 30 July 2026) and points to the
+OpenRouter steps under GymPal.
 
 **3. In Xcode:**
 
@@ -1162,9 +1154,9 @@ dumbbell: after changing the SVG, run `node scripts/gympal-logo.mjs` in
 The chat stays while the app is open, **Start over** clears it, and nothing
 of it is stored, on the phone or the server.
 
-Answers come from an AI model on **GitHub Models** (models.github.ai) or
-**OpenRouter** (openrouter.ai), through the GymGO server: GitHub first if
-its token is set, then OpenRouter if its key is. A model can't be taught the app once and for all, so the
+Answers come from a free AI model on **OpenRouter** (openrouter.ai), through
+the GymGO server. (GitHub Models can't be used: GitHub retired it on 30 July
+2026, and its address now only answers "OK".) A model can't be taught the app once and for all, so the
 server sends GymPal's guide to GymGO with every question
 (`apps/server/src/gymPalGuide.ts`, written from this README and the screens):
 change it there when the app changes. The guide also holds the rules GymGO
@@ -1174,48 +1166,28 @@ where each fact has its source; unknown is never "no"; it never invents
 deals or partnerships; and it gives general training ideas, not medical
 advice. The chat says GymPal is AI and can be wrong.
 
-To switch it on with **GitHub Models** (free, no card), the quick way on
-Windows: `gymgo -GymPal` (after `gymgo -Update` once), which asks for the
-token, saves it and checks it (steps 2 and 3 below); on a Mac, the one line
-under "GymPal on a Mac" above does the same. Or by hand:
+To switch it on (free, no card):
 
-1. On github.com: **Settings → Developer settings → Personal access tokens
-   → Fine-grained tokens → Generate new token**. Give it a name, and under
-   **Account permissions** set only **Models** to **Read-only**. Nothing
-   else: GymPal needs no access to your repositories.
+1. Make an account at **openrouter.ai**, then **Keys → Create key**.
 2. Add it to `apps/server/.env.local` (git-ignored, so it never reaches
    GitHub). Don't paste it anywhere else:
 
    ```
-   GITHUB_MODELS_TOKEN=github_pat_…
+   OPENROUTER_API_KEY=your-key
    ```
 
 3. Check it: `pnpm --filter @gymgo/server gympal:check` asks GymPal one
    short question and says which model answered, or why none did (never
-   printing the token).
-4. Restart GymGO. The server's first lines say `GymPal: on, GitHub Models
-   first (…)`.
-
-Or with **OpenRouter** (also free): make an account at **openrouter.ai**,
-then **Keys → Create key**, and add `OPENROUTER_API_KEY=your-key` to the
-same file. With both set, OpenRouter answers whenever every GitHub model is
-busy or GitHub turns the token down.
+   printing the key).
+4. Restart GymGO. The server's first lines say `GymPal: on, free models
+   only (…)`.
 
 Until then, GymPal is there all the same, and answers every question with
 "Sorry, we're waiting for GymPal to be set up. Check back soon!", sending
 nothing anywhere. Each question first asks the server again, so once the
 key is in, the next one gets a real answer, with no reload.
 
-**GitHub Models' cost and limits.** Free within GitHub's limits, which are
-set per model and per day (more for GitHub's "low" tier of models, and more
-again with a Copilot plan); past them GitHub says no rather than billing,
-unless you switch on paid use for Models in your GitHub billing settings, so
-leave that off. GymPal asks `openai/gpt-4.1-mini`, then `openai/gpt-4o-mini`,
-then `mistral-ai/mistral-small-2503` (all low tier), each in turn when one
-is busy or one GitHub no longer has; `GYMGO_GYMPAL_GITHUB_MODELS` sets
-others, comma-separated (ids as on github.com/marketplace/models).
-
-**OpenRouter can't cost money.** The server only ever asks models whose OpenRouter
+**It can't cost money.** The server only ever asks models whose OpenRouter
 id ends in `:free`, and OpenRouter bills a fallback at the price of the
 model that answered, so a list of free ones stays free. By default
 it asks `google/gemma-4-31b-it:free`, then
@@ -1255,15 +1227,14 @@ never their gyms or notes), so he can answer "What should I train today?"
 and "How is my training going?". On Free the switch shows locked and opens
 the Pro screen.
 
-**Privacy.** What someone types, and the chat so far, goes to GitHub Models
-(GitHub, part of Microsoft) or OpenRouter, and the model's provider, to be
-answered; free models' providers may keep it and use it to improve their
-models. The note under the message box names the service the server uses.
-GymGO keeps none of it. The chat asks people to leave out personal details,
-and the Privacy Policy and Terms say all of this, the training log included
-(since version 2026-10-29; each new version, such as 2026-11-04's for the
-weather and 2026-11-18's for GitHub Models, shows existing accounts a card
-on Profile asking them to agree to it).
+**Privacy.** What someone types, and the chat so far, goes to OpenRouter
+and the model's provider to be answered; free models' providers may keep
+it and use it to improve their models. The note under the message box
+names the service. GymGO keeps none of it. The chat asks people to leave
+out personal details, and the Privacy Policy and Terms say all of this, the
+training log included (since version 2026-10-29; each new version, such as
+2026-11-04's for the weather, shows existing accounts a card on Profile
+asking them to agree to it).
 On the website, which has no server behind it yet, GymPal always gives
 that apology; once the website is pointed at a GymGO server with the key
 (`GYMGO_SERVER_URL`, in The website on Netlify), it answers there too,

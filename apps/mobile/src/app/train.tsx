@@ -1316,6 +1316,7 @@ function Summary({
               onPress={row.busy ? undefined : row.go}
               accessibilityRole="button"
               accessibilityState={{ busy: row.busy }}
+              aria-busy={row.busy}
               style={({ pressed }) => [styles.savedRow, index > 0 && styles.savedLine, pressed && { backgroundColor: color.fill }]}
             >
               <Icon name={row.icon} size={20} color={color.brand} />

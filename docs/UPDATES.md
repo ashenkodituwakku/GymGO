@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 202 · The first run, tried as someone new; the tour works by keyboard
+
+*18 Nov 2026 · the commit "Welcome tour: reachable by keyboard, arrow keys turn its pages, the dots say which is shown"*
+
+A brand-new account was made through the form on the local server, by keyboard where possible, and taken through what GymGO asks first.
+
+- **What worked:** the date of birth field writes itself as "01 / 1990", Space ticks the agreement (Update 197), and Create account goes on to the welcome tour, then "Where do you train?", then Home. axe was clean at each step except one.
+- **Fixed: the tour couldn't be reached by keyboard.** Its sideways pages were a scrolling part with nothing inside it a keyboard can land on, so axe flagged it. The tour is now a labelled region you can tab to, with the app's focus ring, and the arrow keys turn its pages: Right goes on and stops at the last, Left goes back. Next and the dots work as before.
+- **Fixed: the page dots didn't say which page is showing**, in a browser. This version of React Native Web ignores React Native's older `accessibilityState`, so every state written that way said nothing on the website. All eleven uses were looked at. The dots now say which page is selected, the % slider says when it's off, and the share row says when it's busy. The rest already said it another way: in their own labels, which change ("Remove from Saved"), or in aria attributes or `disabled`, which the website reads.
+- Checked in the browser: Tab reaches the tour; the arrow keys and the dots follow each other through all three pages; axe is clean at 390 and 1280. App tests 617.
+
 ## Update 201 · The sign-in form's prompts read; the password rule's mark too
 
-*18 Nov 2026 · the commit "Placeholders that are a field's only label in a readable grey; the password rule's marks"*
+*18 Nov 2026 · `81669ab`*
 
 The signed-out screens had never been through the checks (they always ran signed in). Sign in and Welcome came back axe-clean in all three looks, and every word on them passes, but two things the measure can't see needed a look by hand:
 

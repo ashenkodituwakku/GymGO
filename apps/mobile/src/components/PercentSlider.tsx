@@ -205,6 +205,7 @@ export function PercentSlider({
         accessibilityRole="adjustable"
         accessibilityLabel={label}
         accessibilityState={{ disabled }}
+        aria-disabled={disabled || undefined}
         accessibilityValue={{ min: 0, max: 100, now: value, text: valueText ?? `${value}%` }}
         aria-valuemin={0}
         aria-valuemax={100}

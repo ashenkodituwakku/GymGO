@@ -24,7 +24,7 @@ import { PrimaryButton, Txt } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, face, radius, space, themed, webFocusRing } from '@/lib/theme';
 
 const PAGES: Array<{ icon: IconName; title: string; line: string }> = [
   {
@@ -79,6 +79,14 @@ export default function WelcomeScreen() {
   const settle = (at: number) => {
     if (at >= 0 && at < PAGES.length) setPage(at);
   };
+  // In a browser the pager takes keyboard focus: a ring shows it, and the arrow keys turn a page
+  // (a scroll of a few points would only snap back to the page it's on).
+  const [ringed, setRinged] = useState(false);
+  const onKeyDown = (event: { key: string; preventDefault: () => void }) => {
+    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+    event.preventDefault();
+    go(from() + (event.key === 'ArrowRight' ? 1 : -1));
+  };
   const onScroll = useAnimatedScrollHandler((event) => {
     scrollX.value = event.contentOffset.x;
     const at = Math.round(event.contentOffset.x / Math.max(1, width));
@@ -106,10 +114,18 @@ export default function WelcomeScreen() {
         ref={pager}
         horizontal
         pagingEnabled
+        // Reachable by the keyboard in a browser, where the arrow keys turn its pages
+        // (Next and the dots do too); a scrolling part nothing inside can focus is otherwise out of reach.
+        tabIndex={0}
+        role="region"
+        aria-label="The tour, three pages: the arrow keys turn them"
+        onFocus={() => setRinged(true)}
+        onBlur={() => setRinged(false)}
+        {...({ onKeyDown } as object)}
         showsHorizontalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
-        style={styles.pager}
+        style={[styles.pager, webFocusRing(ringed), ringed && styles.ringInside]}
       >
         {PAGES.map((item, index) => (
           <View key={item.title} style={[styles.slide, { width }]} accessible accessibilityLabel={`${index + 1} of ${PAGES.length}. ${item.title}. ${item.line}`}>
@@ -135,6 +151,8 @@ export default function WelcomeScreen() {
             onPress={() => go(index)}
             accessibilityRole="tab"
             accessibilityState={{ selected: index === page }}
+            // A browser reads only the aria form.
+            aria-selected={index === page}
             accessibilityLabel={`Page ${index + 1} of ${PAGES.length}`}
             hitSlop={8}
             style={[styles.dot, index === page && styles.dotOn]}
@@ -178,6 +196,8 @@ const styles = themed(() =>
     top: { height: 44, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: space[4] },
     skip: { paddingHorizontal: space[2], paddingVertical: space[1], borderRadius: radius.pill },
     pager: { flex: 1 },
+    // Drawn just inside its edges, which meet the screen's.
+    ringInside: { outlineOffset: -3 } as object,
     slide: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[4], paddingHorizontal: space[6] },
     drift: { alignItems: 'center', alignSelf: 'stretch' },
     title: { textAlign: 'center', maxWidth: 440 },

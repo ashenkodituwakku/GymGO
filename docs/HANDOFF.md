@@ -118,6 +118,13 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **accessibilityState is ignored on the web** (18 Nov). This RNW
+  version never reads `accessibilityState`; use the aria props
+  (`aria-selected`, `aria-checked`, `aria-disabled`, `aria-expanded`,
+  `aria-busy`), which phones read too. The welcome tour's pager is a
+  focusable `role="region"` with arrow-key paging. Scratchpad
+  `firstrun.cjs` makes a new local account through the form.
+
 - **Placeholders** (18 Nov). A placeholder that's a field's only visible
   label uses `labelSecondaryOnFill`; example numbers and last-time hints
   keep `labelTertiary`. Scratchpad `placeholders.cjs` reads each field's

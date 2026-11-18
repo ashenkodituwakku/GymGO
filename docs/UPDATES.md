@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 204 · On a computer, a gym's card takes the keyboard's focus
+
+*18 Nov 2026 · the commit "Explore on a computer: the gym's card takes focus as it opens and gives it back when it closes"*
+
+Opening a gym from Explore's list was tried by keyboard. On a phone's width it was right: the gym's sheet takes focus, and Escape brings you back to the row. On a computer the card opens in a panel beside the list, but focus stayed on the row, and Tab went down the rest of the list first: **77 presses** near the CBD before the card.
+
+- **Now the card takes focus as it opens**, as the phone's sheet does, so the next Tab is its first button (Open full screen, then Add to Compare, Close). Opening another gym from the list moves focus into that one. When the card closes (Escape, its close button or a tap on the map), focus goes back to whatever opened it: the row, a pin or the search box.
+- Checked in the browser at 1280: Tab after opening reaches the card's buttons; a second gym opened from its row takes focus, and Escape returns to that row; the close button returns to its row; axe clean with the card open in Standard and Liquid, light and dark. The phone's sheet is unchanged. App tests 617.
+
 ## Update 203 · Every control shows keyboard focus; the tour's ring only for the keyboard
 
-*18 Nov 2026 · the commit "Welcome tour: its focus ring only for the keyboard, not a tap or a swipe"*
+*18 Nov 2026 · `436b828`*
 
 - **A sweep of keyboard focus.** Tab was pressed through Home, Explore, Saved, Profile, Train and Progress (about 45 stops each), and each control that took focus was checked for a visible mark. All of them showed GymGO's ring (an accent ring with a band of the page's colour inside, drawn over the control's edge), except Explore's search box, which shows focus with its accent border instead.
 - **Fixed: the tour's ring (Update 202) showed on a tap too.** A tap or swipe in a phone's browser also gives the tour focus, so a ring would have appeared around it on every swipe. It now shows only when focus comes from the keyboard, as the browser itself judges it. The app's general ring is turned off for the tour, since inside the scrolling pages it would have slid away with the first one.

@@ -118,6 +118,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Desktop place card and focus** (18 Nov). explore.tsx keeps
+  `placeOpener` (document.activeElement when a gym opens in the side
+  panel), focuses `placePanel` (tabIndex -1, quiet focus) on each new
+  gym, and restores the opener when `panel` goes from 'place' to null.
+  Scratchpad `sheetkeys.cjs` checks both widths.
+
 - **Focus rings** (18 Nov). The app's ring is an `::after` on
   `:focus-visible` (app/_layout.tsx), not an outline; scratchpad
   `focussweep.cjs` tabs through pages and checks for it. Something with

@@ -21,7 +21,7 @@ import BottomSheet, {
 } from '@gorhom/bottom-sheet';
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { ActionSheetIOS, ActivityIndicator, BackHandler, Keyboard, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type TextInputInstance } from 'react-native';
+import { ActionSheetIOS, ActivityIndicator, BackHandler, Keyboard, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type TextInputInstance, type ViewInstance } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isWithinBox, type BoundingBox, type HoursNeed } from '@gymgo/domain';
 import { withoutKnown } from '@gymgo/osm';
@@ -71,6 +71,9 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { LIMITED } from '@/lib/limited';
 
 const PEEK = 150;
+
+/** A browser element, as far as moving focus goes. */
+type FocusTarget = { focus?: (options?: { preventScroll?: boolean }) => void; isConnected?: boolean };
 /** Below this width the phone layout is used, even in a browser. */
 const WIDE = 900;
 const PANEL_WIDTH = 390;
@@ -157,6 +160,11 @@ function MapScreen() {
   const [googleFor, setGoogleFor] = useState<string | null>(null);
   // Desktop: which panel sits beside the results.
   const [panel, setPanel] = useState<Panel>(null);
+  // In a browser the side panel's card takes the keyboard's focus as a gym opens, as the phone's sheet does
+  // (components/SheetBackground.tsx), and gives it back when it closes: left on the row, Tab walked the
+  // whole list (77 rows near the CBD) before it reached the card.
+  const placePanel = useRef<ViewInstance>(null);
+  const placeOpener = useRef<FocusTarget | null>(null);
   // Phone: whether the Filters sheet is up.
   const filtersShown = useRef(false);
   // Phone: where the results sheet was before a place card pushed it down,
@@ -569,6 +577,10 @@ function MapScreen() {
       setCardScrolled(false);
       addRecent(id);
       if (wide) {
+        // What opened it (a row, a pin, the search box), to come back to when it closes.
+        if (Platform.OS === 'web' && typeof document !== 'undefined' && document.activeElement !== document.body) {
+          placeOpener.current = document.activeElement as FocusTarget;
+        }
         setPanel('place');
       } else {
         placeSheet.current?.present();
@@ -607,6 +619,21 @@ function MapScreen() {
       });
     }
   }, [wide, selectedId]);
+
+  useEffect(() => {
+    if (!wide || panel !== 'place' || !selectedId) return;
+    const card = placePanel.current as unknown as FocusTarget | null;
+    card?.focus?.({ preventScroll: true });
+  }, [wide, panel, selectedId]);
+  const panelWas = useRef(panel);
+  useEffect(() => {
+    const was = panelWas.current;
+    panelWas.current = panel;
+    if (!wide || was !== 'place' || panel !== null) return;
+    const opener = placeOpener.current;
+    placeOpener.current = null;
+    if (opener?.isConnected) opener.focus?.({ preventScroll: true });
+  }, [wide, panel]);
 
   const closePlace = useCallback(() => {
     if (wide) {
@@ -977,6 +1004,8 @@ function MapScreen() {
         {shown && (
           <DesktopPanel left={start + PANEL_GAP + (besideResults ? PANEL_GAP + PANEL_WIDTH : 0)} bottom={foot} slide={aside} arrives>
             {shown === 'place' && selected ? (
+              // Focusable from code only (never a Tab stop of its own), and no ring round the whole card.
+              <View ref={placePanel} tabIndex={-1} style={styles.panelFocus} {...({ dataSet: { quietFocus: '' } } as object)}>
               <ScrollView
                 stickyHeaderIndices={[0]}
                 onScroll={(event) => {
@@ -988,6 +1017,7 @@ function MapScreen() {
                 <PlaceHeader result={selected} onClose={closePlace} onExpand={expandPlace} scrolled={cardScrolled} topPadding={space[4]} />
                 {placeCard(false)}
               </ScrollView>
+              </View>
             ) : (
               <ScrollView keyboardShouldPersistTaps="handled">
                 <View style={styles.panelClose}>
@@ -1448,6 +1478,8 @@ const styles = themed(() => StyleSheet.create({
   // Out of sight once faded, and in a browser out of the Tab order too (visibility), while keeping where it was scrolled.
   panelHidden: { opacity: 0, pointerEvents: 'none', ...(Platform.OS === 'web' ? ({ visibility: 'hidden' } as object) : null) },
   panelTop: { paddingHorizontal: space[4], paddingTop: space[4], paddingBottom: space[2] },
+  // Fills the panel, as the scroll view did on its own.
+  panelFocus: { flex: 1 },
   panelClose: { alignItems: 'flex-end', paddingHorizontal: space[4], paddingTop: space[4] },
   desktopControls: { position: 'absolute', right: PANEL_GAP },
   controlColumn: { alignItems: 'flex-end', gap: space[2] },

@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 197 · Space ticks a box on the website
+
+*18 Nov 2026 · the commit "Website: Space presses ticks, choices, switches and tabs, not only Enter"*
+
+The free account's compare limit was tried with the keyboard: tick two saved gyms, Compare, then tick a third.
+
+- **The limit itself works.** Two ticks, Compare 2, the comparison (axe clean at phone and desktop width), and a third tick opens Pro with "Free compares two gyms at a time. Pro lines up four."
+- **Fixed: Space did nothing on a tick.** In a browser, React Native Web presses a control from the keyboard with Enter, and with Space only when it's a button. GymGO's ticks, choices, switches and tabs tell a screen reader they're checkboxes, radios, switches and tabs, and people expect Space to work on those, but Space only scrolled the page. The website now listens for Space once, on the page, and presses the focused control. Typing places and the browser's own controls keep their Space; a link keeps it for scrolling unless it's one of the tab bar's tabs.
+- Checked in the browser: Space ticks the compare boxes on Saved, picks a choice in Appearance ("Automatic"), turns Bold text and RPE on sets on and off, and moves between the tab bar's tabs, while Enter still works. 5 new tests for which controls Space presses; app tests 617.
+
 ## Update 196 · A stray semicolon out of a gym's name
 
-*18 Nov 2026 · the commit "Gym names: the first of OpenStreetMap's values, so a stray semicolon doesn't show"*
+*18 Nov 2026 · `f5637bd`*
 
 The free account's Saved list (Update 195's check) showed a Lisbon gym as **"110% Studio;"**. In OpenStreetMap a ";" separates several values in one tag, and this gym's name had one by mistake.
 

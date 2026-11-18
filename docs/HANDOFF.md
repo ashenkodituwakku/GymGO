@@ -118,6 +118,13 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Space presses checkboxes on the web** (18 Nov). RNW's PressResponder
+  takes Space only for role="button"; lib/spaceKey.ts (installed once from
+  the root layout, web only) clicks a focused checkbox, radio, switch,
+  tab, option or menu item on Space. Native inputs, buttons and typing
+  places are left alone; links only when role="tab". Scratchpad
+  `compareflow.cjs` runs the free compare limit by keyboard.
+
 - **Names: first OSM value** (18 Nov). `nameOf()` in
   packages/osm/src/fields.ts splits on OSM's ";" (keeping ";;" as a
   literal) and `candidate()` uses it. eu-data's "110% Studio;" was fixed

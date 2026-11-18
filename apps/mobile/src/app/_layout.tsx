@@ -17,6 +17,7 @@ import { Txt } from '@/components/ui';
 import { LIMITED } from '@/lib/limited';
 import { backLabel } from '@/lib/backLabel';
 import { setGlassLevel } from '@/components/liquidGlass';
+import { installSpaceKey } from '@/lib/spaceKey';
 import { AppProvider, useApp } from '@/lib/app-state';
 import {
   BUNDLED_FACES,
@@ -131,6 +132,11 @@ export default function RootLayout() {
   useEffect(() => {
     if (!themeReady) void loadThemeChoice().then(() => setThemeReady(true));
   }, [themeReady]);
+
+  // In a browser, Space ticks a checkbox and picks a choice, not only Enter (lib/spaceKey.ts).
+  useEffect(() => {
+    if (Platform.OS === 'web') installSpaceKey();
+  }, []);
 
   useEffect(() => {
     if (!ready) return;

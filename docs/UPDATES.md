@@ -9,9 +9,29 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 199 · Grey words on the accent's tint get their own shade
+
+*18 Nov 2026 · the commit "Theme: labelSecondaryOnTint for grey words on the accent's tint, used in eleven places"*
+
+Update 198's card had grey words on the accent's light tint. The app does that in other places too, so they were looked for together.
+
+- **A new shade, made the way the others are.** The theme already darkens (or, in dark, lightens) the accent on its tint and the grey on a grey tile until they read at 4.5:1 on every surface a look paints. Grey on the accent's tint now gets the same: `labelSecondaryOnTint`, worked out for each look, light and dark, Dim and every accent, on the page, on cards and on glass.
+- **Used wherever grey words sit on the tint** (found by searching for every tinted style and the words inside it):
+  - Home's trip card and its Pro-country card;
+  - the chosen clock sample in Appearance;
+  - an earned badge in your collection;
+  - your own row on the leaderboard;
+  - the chosen measurement and programme goal;
+  - the streak freeze cards on Progress;
+  - GymPal's "About: …" chip;
+  - the price pills when joining a gym.
+
+  Where the tint only shows when something's chosen, the shade follows it.
+- Checked: the theme's tests now hold the new shade to 4.5:1 for every look, scheme and accent, on the page, on a card and on glass over the glow. The screen measure found every word on those pages over 4.5:1 in all three looks, light and dark, at 390 and 1280, and axe was clean. App tests 617.
+
 ## Update 198 · Another country without Pro: the card reads in light
 
-*18 Nov 2026 · the commit "Explore: the Pro-country card on the list's own card, the accent on its badge"*
+*18 Nov 2026 · `a76e51a`*
 
 The last of the free plan's limits, tried as an Australian free account: Paris typed into Explore's search.
 

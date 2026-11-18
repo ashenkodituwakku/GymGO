@@ -112,7 +112,7 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
               <View style={styles.pillTop}>
                 {/* A tier called just "Membership" would only repeat the heading above it. */}
                 {!/^\s*membership\s*$/i.test(offer.label) && (
-                  <Txt variant="caption" color={color.labelSecondary} numberOfLines={2} style={styles.center}>
+                  <Txt variant="caption" color={color.labelSecondaryOnTint} numberOfLines={2} style={styles.center}>
                     {offer.label}
                   </Txt>
                 )}
@@ -128,7 +128,7 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
                   {formatMoney(offer.baseAmountMinor!, offer.currency)}
                 </Txt>
                 {view && (
-                  <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
+                  <Txt variant="caption" color={color.labelSecondaryOnTint} style={styles.center}>
                     {view.billingLabel}
                   </Txt>
                 )}

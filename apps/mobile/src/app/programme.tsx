@@ -119,7 +119,7 @@ function Chooser() {
                 <Txt variant="headline" color={on ? color.brandOnTint : color.label}>
                   {option.label}
                 </Txt>
-                <Txt variant="footnote" color={color.labelSecondary}>
+                <Txt variant="footnote" color={on ? color.labelSecondaryOnTint : color.labelSecondary}>
                   {option.blurb}
                 </Txt>
               </Pressable>

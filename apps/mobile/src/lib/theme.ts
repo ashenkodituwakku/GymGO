@@ -339,6 +339,8 @@ export type Palette = { -readonly [K in keyof (typeof BASE)['light']]: string } 
     brandOnTint: string;
     /** Secondary words on the grey fill (a tile on the page or on a card): the secondary ink, a step stronger where it alone would read under 4.5:1 there. */
     labelSecondaryOnFill: string;
+    /** Secondary words on the accent's tint (a highlighted row, a chosen sample, an earned badge): the same, on that wash. */
+    labelSecondaryOnTint: string;
   };
 
 /** Text colours kept readable on whatever surfaces a look paints. */
@@ -502,6 +504,7 @@ function inksOnWashes(palette: Palette, scheme: Scheme, more: string[] = [], lif
   // The accent on a wash: its own tint (a quiet button) or the grey fill (a pill).
   palette.brandOnTint = readable(palette.brand, [...grounds(palette.brandTint), ...grounds(palette.fill)], scheme, 4.6);
   palette.labelSecondaryOnFill = readable(palette.labelSecondary, grounds(palette.fill), scheme, 4.6);
+  palette.labelSecondaryOnTint = readable(palette.labelSecondary, grounds(palette.brandTint), scheme, 4.6);
 }
 
 /** Glass on glass: a thin layer (a button) on a thick one (a sheet), over the page. */
@@ -516,7 +519,7 @@ export function sheetCard(palette: Pick<Palette, 'groupedBackground' | 'glassWas
 
 export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE_LOOK, glass: number = GLASS_DEFAULT, dark: DarkStyle = 'black'): Palette {
   const dim = dimApplies(scheme, look, dark);
-  const palette: Palette = { ...BASE[scheme], ...(dim ? DIM : null), ...ACCENTS[accent][scheme], brandOnTint: '', labelSecondaryOnFill: '' };
+  const palette: Palette = { ...BASE[scheme], ...(dim ? DIM : null), ...ACCENTS[accent][scheme], brandOnTint: '', labelSecondaryOnFill: '', labelSecondaryOnTint: '' };
   if (dim) for (const key of TEXT_KEYS) palette[key] = readable(palette[key], [DIM.card, DIM.groupedBackground, DIM.cardRaised], scheme, key === 'labelTertiary' ? 3 : 4.6);
   palette.glassWashThin = glassWash('thin', glass, scheme, look);
   palette.glassWashThick = glassWash('thick', glass, scheme, look);

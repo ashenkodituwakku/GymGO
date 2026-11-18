@@ -272,7 +272,7 @@ function Row({ row }: { row: BoardEntry }) {
       </View>
       <View style={styles.counts}>
         <Txt variant="headline">{`${row.gyms} gym${row.gyms === 1 ? '' : 's'}`}</Txt>
-        <Txt variant="caption" color={color.labelSecondary}>
+        <Txt variant="caption" color={row.you ? color.labelSecondaryOnTint : color.labelSecondary}>
           {`${row.visits} visit${row.visits === 1 ? '' : 's'}`}
         </Txt>
       </View>

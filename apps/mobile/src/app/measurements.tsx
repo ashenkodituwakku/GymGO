@@ -111,7 +111,7 @@ export default function MeasurementsScreen() {
                     <Txt variant="body" style={on && face('semibold')}>
                       {measure.label}
                     </Txt>
-                    <Txt variant="footnote" color={color.labelSecondary}>
+                    <Txt variant="footnote" color={on ? color.labelSecondaryOnTint : color.labelSecondary}>
                       {changeWords}
                     </Txt>
                   </View>

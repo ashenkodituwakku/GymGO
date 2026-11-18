@@ -50,6 +50,8 @@ describe('the colours', () => {
             if (onTint < 4.5) failures.push(`${name}: a quiet button's words on ${ground} are ${onTint.toFixed(2)}`);
             const onFill = contrast(color.labelSecondaryOnFill, over(color[ground], color.fill));
             if (onFill < 4.5) failures.push(`${name}: secondary words on a fill tile on ${ground} are ${onFill.toFixed(2)}`);
+            const greyOnTint = contrast(color.labelSecondaryOnTint, over(color[ground], color.brandTint));
+            if (greyOnTint < 4.5) failures.push(`${name}: secondary words on the accent's tint on ${ground} are ${greyOnTint.toFixed(2)}`);
           }
         }
       }
@@ -362,6 +364,7 @@ describe('words on Standard\'s glow', () => {
         const card = mix(mix(palette.groupedBackground, palette.brand, strongest(scheme)), palette.card, see);
         expect(contrast(palette.brandOnTint, over(card, palette.brandTint)), `${scheme} ${accent} tint`).toBeGreaterThanOrEqual(4.5);
         expect(contrast(palette.labelSecondaryOnFill, over(card, palette.fill)), `${scheme} ${accent} fill`).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(palette.labelSecondaryOnTint, over(card, palette.brandTint)), `${scheme} ${accent} grey on tint`).toBeGreaterThanOrEqual(4.5);
       }
     }
   });

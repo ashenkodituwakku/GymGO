@@ -848,7 +848,7 @@ export default function AppearanceScreen() {
                   <Txt variant="title2" color={on ? color.brandOnTint : color.label} style={face('bold')}>
                     {clock.time}
                   </Txt>
-                  <Txt variant="caption" color={color.labelSecondary}>
+                  <Txt variant="caption" color={on ? color.labelSecondaryOnTint : color.labelSecondary}>
                     {clock.later}
                   </Txt>
                 </View>

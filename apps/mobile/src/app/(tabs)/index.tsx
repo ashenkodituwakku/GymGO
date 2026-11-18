@@ -338,7 +338,7 @@ export default function Home() {
                     <Icon name="globe" size={22} color={color.brandOnTint} />
                     <View style={styles.flex}>
                       <Txt variant="headline" numberOfLines={1}>{`Trip to ${trip.placeName}`}</Txt>
-                      <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
+                      <Txt variant="footnote" color={color.labelSecondaryOnTint} numberOfLines={2}>
                         {`${tripWhen(trip, todayThere(trip))} · ${tripDatesLabel(trip)} · gyms that let visitors in`}
                       </Txt>
                     </View>
@@ -408,7 +408,7 @@ export default function Home() {
                         <Icon name="globe" size={22} color={color.brandOnTint} />
                         <View style={styles.lockedText}>
                           <Txt variant="headline">Gyms in {countryInSentence(filters.countryCode)} are part of GymGO Pro</Txt>
-                          <Txt variant="footnote" color={color.labelSecondary}>
+                          <Txt variant="footnote" color={color.labelSecondaryOnTint}>
                             Free covers {prefs.country ? countryInSentence(prefs.country) : 'your country'}. Pro finds gyms in every country.
                           </Txt>
                         </View>

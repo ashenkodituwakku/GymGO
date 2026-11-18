@@ -597,11 +597,11 @@ function Chat({
           {/* What GymPal was told, and the way to take it back. */}
           {topic && (
             <View style={styles.topic}>
-              <Txt variant="footnote" color={color.labelSecondary} style={styles.flex} numberOfLines={1}>
+              <Txt variant="footnote" color={color.labelSecondaryOnTint} style={styles.flex} numberOfLines={1}>
                 About: <Txt variant="footnote" color={color.label} style={face('semibold')}>{topic.label}</Txt>
               </Txt>
               <Pressable onPress={onForget} accessibilityRole="button" accessibilityLabel={`Stop telling GymPal about ${topic.label}`} hitSlop={10} style={styles.forget}>
-                <Icon name="close" size={11} color={color.labelSecondary} weight="bold" />
+                <Icon name="close" size={11} color={color.labelSecondaryOnTint} weight="bold" />
               </Pressable>
             </View>
           )}

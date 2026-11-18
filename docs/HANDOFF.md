@@ -118,6 +118,13 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **labelSecondaryOnTint** (18 Nov). Grey words on `brandTint` use
+  `color.labelSecondaryOnTint` (theme.ts inksOnWashes, tested in
+  theme.test.ts beside brandOnTint and labelSecondaryOnFill). On a
+  conditional tint, pick it with the same condition. Scratchpad
+  `in-tint.py` (run from apps/mobile) lists grey or accent words inside
+  tinted styles.
+
 - **Pro-country card on Explore** (18 Nov). ResultsContent's `lock` is
   now `cardGlass` + `shadow.card`, inset by `space[4]` like the list,
   with the accent on `lockBadge`. A quiet button (brandTint) on a

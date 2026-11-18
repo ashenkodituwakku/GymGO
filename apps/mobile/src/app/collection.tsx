@@ -249,7 +249,7 @@ export default function CollectionScreen() {
               <Txt variant="footnote" color={badge.earned ? color.label : color.labelSecondary} style={face('semibold')}>
                 {badge.title}
               </Txt>
-              <Txt variant="caption" color={color.labelSecondary}>
+              <Txt variant="caption" color={badge.earned ? color.labelSecondaryOnTint : color.labelSecondary}>
                 {badge.detail}
               </Txt>
             </View>

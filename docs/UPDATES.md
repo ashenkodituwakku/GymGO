@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 159 · Sign-in says what's wrong, out loud
+
+*18 Nov 2026 · the commit "Sign-in: problems are announced, and checkboxes say when they're unticked"*
+
+- This round tried creating an account with each thing wrong in turn (a short password, a common one, an email already used, a mistyped email, the terms not ticked, a birth year under 13) and asked for a password reset with no email and with an unknown one. Every case was handled, but two were silent to a screen reader:
+  - "That email doesn't look right yet" appeared under the field without being read out, so the disabled Create account button gave no reason. It's now read out as it appears, and the field is marked as having a problem.
+  - The under-13 message replaces the whole form; it's now read out when it does.
+- The terms checkbox, and the one for each day in Reminders, told a browser nothing while unticked (the accessibility audit flagged it). They now say ticked or not, as the app's other six checkboxes already did.
+- The sign-in page (both tabs, with a mistyped email), welcome, the in-app legal pages and Report a bug pass the accessibility audit signed out, light and dark. App tests 578.
+
 ## Update 158 · The keyboard run, finished (no change to the app)
 
-*11 Nov 2026 · the commit "Docs: a workout finished from the keyboard, end to end"*
+*11 Nov 2026 · `504fd9d`*
 
 - Update 155 said a workout could be logged and finished from the keyboard alone. When that was written, Finish workout had only been shown to be a named button that takes focus; it hadn't been tabbed to and pressed. It now has been: start the suggested workout, type a weight and reps, tick the set, Tab to Finish workout, Enter, then Enter again on "Finish anyway" (focus is put on it, under the line saying the unticked sets won't be logged). The app shows "Workout done" and the account's log has one more workout.
 - Finish workout is the last but one stop on the page, after every set of every exercise, so it is a long way by Tab on a six-exercise workout. Nothing was changed for that.

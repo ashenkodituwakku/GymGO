@@ -251,7 +251,8 @@ export default function SignInScreen() {
           <PrimaryButton label="Cancel" tone="quiet" onPress={() => setPendingSocial(null)} />
         </Animated.View>
       ) : mode === 'create' && locked ? (
-        <View style={[styles.form, styles.pending]}>
+        // Said aloud as it replaces the form: otherwise a screen reader hears nothing after Create account.
+        <View style={[styles.form, styles.pending]} accessibilityLiveRegion="assertive">
           <Txt variant="subhead" color={color.labelSecondary}>
             {TOO_YOUNG}
           </Txt>
@@ -395,6 +396,8 @@ function TermsBox({ agreed, onChange }: { agreed: boolean; onChange: (agreed: bo
         }}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: agreed }}
+        // Said outright for a browser, which was told nothing while it was unticked.
+        aria-checked={agreed}
         accessibilityLabel="I agree to GymGO’s Terms of Service and Privacy Policy"
         hitSlop={10}
         style={[styles.box, agreed && styles.boxOn]}
@@ -473,6 +476,7 @@ function AuthField({
           ref={ref}
           placeholderTextColor={color.labelTertiary}
           accessibilityLabel={label}
+          aria-invalid={problem ? true : undefined}
           {...props}
           onFocus={(event) => {
             setFocused(true);
@@ -486,10 +490,13 @@ function AuthField({
         />
         {accessory}
       </View>
+      {/* Read out when it appears, as the line under the form's own errors is: it's why the button below won't press. */}
       {problem && (
-        <Txt variant="footnote" color={color.maybeInk} style={styles.fieldHint}>
-          {problem}
-        </Txt>
+        <View accessibilityLiveRegion="polite">
+          <Txt variant="footnote" color={color.maybeInk} style={styles.fieldHint}>
+            {problem}
+          </Txt>
+        </View>
       )}
     </View>
   );

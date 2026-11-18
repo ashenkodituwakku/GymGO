@@ -145,6 +145,7 @@ export default function RemindersScreen() {
                   onPress={() => toggleDay(day)}
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: on }}
+                  aria-checked={on}
                   accessibilityLabel={DAY_NAME[day]}
                   hitSlop={4}
                   style={({ pressed }) => [styles.day, on && styles.dayOn, pressed && { opacity: 0.7 }]}

@@ -106,6 +106,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Sign-in announcements** (18 Nov). sign-in.tsx: AuthField's problem line
+  is a polite live region and sets `aria-invalid`; the under-13 panel is
+  assertive; the terms checkbox (and reminders.tsx's day checkboxes) set
+  `aria-checked` as well as `accessibilityState`. Give new checkboxes
+  `aria-checked`: the web reads nothing from `accessibilityState` alone.
 - **Moderation loading rows** (11 Nov). AccountContent.tsx (reviews,
   photos, member reports) and Moderation.tsx (owners' updates, gym
   claims) render `LinesSkeleton` while their list is null and there's

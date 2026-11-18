@@ -534,6 +534,12 @@ is set deliberately. Before submitting, check both stores' current payment
 rules; outside places where linking to web payment is allowed, Pro would
 need Apple's and Google's own in-app purchase as well.
 
+## Marketing videos (`marketing/shorts`)
+
+| | Made locally | Checked locally | Published |
+|---|---|---|---|
+| Three 9:16 shorts of the full app (18 Nov): WalkIn, Build and OnePlace. Each is about 20 s, ends on "The GymGO app is coming soon · try the limited version now: gymgo.site", and has captions but no sound | ✅ rendered here from real screenshots of the full app (sample training in the local test account) | ✅ stills of every scene and the end card checked; each MP4 read back as 1080x1920 h264 at 30 fps and watched through at its cuts | ❌ not posted anywhere: that's yours to do, with music from the platform's own library |
+
 ## Verification evidence
 
 Run `pnpm verify` and `pnpm test:e2e`. Last run on this commit:

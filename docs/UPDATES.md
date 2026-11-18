@@ -9,9 +9,27 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 160 · Three short videos: the app is coming, the website is out
+
+*18 Nov 2026 · the commit "Three 9:16 shorts of the full app, advertising gymgo.site"*
+
+- You asked for the explainer-video skills from iart-ai/explainer-video-skills, and for three short vertical videos showing GymGO that advertise the limited version, out now at gymgo.site, and say the app is coming soon. Then: footage from the real app, not the limited website.
+- The five skills are in `.claude/skills/` (MIT, with their notice and licence). One line of their probe script was fixed, as ffprobe 6 wrote a trailing comma that failed a correct file.
+- The videos are made in `marketing/shorts/` with Remotion, each about 20 seconds at 1080 × 1920 and 30 fps:
+  - **WalkIn:** most gyms never say if you can walk in. GymGO finds them, shows prices with their source, and says what to ask when nothing's published.
+  - **Build:** tap the muscles you want, GymGO builds the workout, and logging a set starts the rest timer.
+  - **OnePlace:** weeks in a row, strength going up, which muscles you've trained, and a card for each gym you check in at.
+- Every app frame is a screenshot of the full app, tagged "GymGO app · coming soon". Every short ends on "The GymGO app is coming soon. Try the limited version now: gymgo.site. Free in your browser · no account needed".
+- What they don't do:
+  - No gym is shown by its brand, and no short shows or claims "Good to go", as no real search gives it yet.
+  - Lines too small to read are shown bigger by cropping the same screenshot, not redrawn.
+  - The training shown is sample data in the local test account.
+  - There's no narration, so the captions carry it. Add music from the platform's library when posting.
+- Stills of every scene were checked before encoding. Each file was read back as 1080x1920, h264, 30 fps. Nothing was posted anywhere. The MP4s aren't committed; `marketing/shorts/README.md` says how to make them again.
+
 ## Update 159 · Sign-in says what's wrong, out loud
 
-*18 Nov 2026 · the commit "Sign-in: problems are announced, and checkboxes say when they're unticked"*
+*18 Nov 2026 · `8216503`*
 
 - This round tried creating an account with each thing wrong in turn (a short password, a common one, an email already used, a mistyped email, the terms not ticked, a birth year under 13) and asked for a password reset with no email and with an unknown one. Every case was handled, but two were silent to a screen reader:
   - "That email doesn't look right yet" appeared under the field without being read out, so the disabled Create account button gave no reason. It's now read out as it appears, and the field is marked as having a problem.

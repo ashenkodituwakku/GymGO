@@ -106,6 +106,21 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Shorts** (18 Nov). `.claude/skills/` holds iart-ai's five video skills (MIT,
+  NOTICE.md). `marketing/shorts/` is a Remotion project, outside the pnpm
+  workspace with its own package-lock, for three 9:16 shorts (WalkIn, Build,
+  OnePlace). How it works:
+  - `capture.cjs` screenshots the full app at 390x844 @3x from a signed-in
+    local session (GYMGO_TOKEN, never written to disk), and it logs a workout.
+  - `src/script.ts` holds scenes, captions, camera and callouts as data.
+  - `render.mjs` renders stills and a contact sheet, then the MP4, then
+    probes it.
+
+  Rules: the camera scales the whole phone, never the picture inside it.
+  Callouts are crops of the same screenshot. The footage is only the full app;
+  gymgo.site is only advertised. No chain logos and no "Good to go". `out/`
+  and `public/shots/` are ignored; only the source is committed.
+
 - **Sign-in announcements** (18 Nov). sign-in.tsx: AuthField's problem line
   is a polite live region and sets `aria-invalid`; the under-13 panel is
   assertive; the terms checkbox (and reminders.tsx's day checkboxes) set

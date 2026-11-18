@@ -185,3 +185,18 @@ not photographs and show no real place; the app credits each one
 
 The website's share preview and home-screen icons (`apps/mobile/public`) are
 made from GymGO's own app icon by `apps/mobile/scripts/site-images.mjs`.
+
+## Short videos (`marketing/shorts`)
+
+GymGO's short vertical videos are made with:
+
+| Component | What it does here | Licence |
+|---|---|---|
+| [explainer-video skills](https://github.com/iart-ai/explainer-video-skills) (© 2026 iart.ai) | How the videos are planned, built and checked, plus the contact-sheet and probe scripts. Copied into `.claude/skills/`; see `NOTICE.md` there | MIT |
+| [Remotion](https://www.remotion.dev) | Draws each frame in React and encodes the MP4 | Remotion License: free for individuals, for-profit companies of up to 3 employees and non-profits; bigger companies need a Company License |
+| [Inter](https://rsms.me/inter/) by Rasmus Andersson | The captions and end card (`marketing/shorts/public/fonts`) | SIL Open Font License 1.1 (`OFL.txt` alongside) |
+| [React](https://react.dev), [zod](https://zod.dev) | The video's components, and the check on each script | MIT |
+
+Every frame of app in them is a screenshot of GymGO itself. The gyms shown
+are real independents without logos, with the facts and sources the app
+gives them. The training shown is sample data in the local test account.

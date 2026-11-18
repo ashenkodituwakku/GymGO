@@ -331,7 +331,7 @@ export default function SignInScreen() {
         />
         {mode === 'create' && (
           <Animated.View entering={FADE_IN} style={styles.rule}>
-            <Icon name={password.length >= 8 ? 'done' : 'todo'} size={15} color={password.length >= 8 ? color.good : color.labelTertiary} />
+            <Icon name={password.length >= 8 ? 'done' : 'todo'} size={15} color={password.length >= 8 ? color.goodInk : color.labelSecondary} />
             <Txt variant="footnote" color={password.length >= 8 ? color.goodInk : color.labelSecondary}>
               8 characters or more
             </Txt>
@@ -474,7 +474,7 @@ function AuthField({
         <Icon name={icon} size={17} color={focused ? color.brand : color.labelTertiary} />
         <TextInput
           ref={ref}
-          placeholderTextColor={color.labelTertiary}
+          placeholderTextColor={color.labelSecondaryOnFill}
           accessibilityLabel={label}
           aria-invalid={problem ? true : undefined}
           {...props}

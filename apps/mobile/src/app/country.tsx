@@ -125,7 +125,7 @@ export default function CountryScreen() {
                   onFocus={() => setFocused(true)}
                   onBlur={() => setFocused(false)}
                   placeholder="Search countries"
-                  placeholderTextColor={color.labelTertiary}
+                  placeholderTextColor={color.labelSecondaryOnFill}
                   autoCorrect={false}
                   autoFocus={!first && Platform.OS === 'web'}
                   style={styles.input}

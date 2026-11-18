@@ -695,7 +695,7 @@ function Chat({
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               placeholder="Ask GymPal anything"
-              placeholderTextColor={color.labelTertiary}
+              placeholderTextColor={color.labelSecondaryOnFill}
               accessibilityLabel="Ask GymPal"
               multiline
               numberOfLines={1}

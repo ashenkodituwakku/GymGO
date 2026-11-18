@@ -236,7 +236,7 @@ export default function TimerScreen() {
               value={naming}
               onChangeText={setNaming}
               placeholder="Name, like Hill sprints"
-              placeholderTextColor={color.labelTertiary}
+              placeholderTextColor={color.labelSecondaryOnFill}
               autoFocus
               maxLength={40}
               returnKeyType="done"

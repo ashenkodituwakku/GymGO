@@ -446,7 +446,7 @@ function PasswordForm({ needsCurrent, onSave }: { needsCurrent: boolean; onSave:
           autoComplete="current-password"
           style={styles.input}
           accessibilityLabel="Current password"
-          placeholderTextColor={color.labelTertiary}
+          placeholderTextColor={color.labelSecondaryOnFill}
           returnKeyType="next"
           onSubmitEditing={() => nextRef.current?.focus()}
         />
@@ -460,7 +460,7 @@ function PasswordForm({ needsCurrent, onSave }: { needsCurrent: boolean; onSave:
         autoComplete="new-password"
         style={styles.input}
         accessibilityLabel="New password"
-        placeholderTextColor={color.labelTertiary}
+        placeholderTextColor={color.labelSecondaryOnFill}
         returnKeyType="done"
         onSubmitEditing={() => void save()}
       />

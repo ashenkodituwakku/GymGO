@@ -118,6 +118,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Placeholders** (18 Nov). A placeholder that's a field's only visible
+  label uses `labelSecondaryOnFill`; example numbers and last-time hints
+  keep `labelTertiary`. Scratchpad `placeholders.cjs` reads each field's
+  `::placeholder` colour against its backgrounds; the scripts take
+  `GYMGO_TOKEN=none` for signed-out pages.
+
 - **Status inks on the tint** (18 Nov). Orange (`maybeInk`) on
   `brandTint` is 4.0–4.2:1 in light; JoinGym's "… only" line uses `label`.
 - **labelSecondaryOnTint** (18 Nov). Grey words on `brandTint` use

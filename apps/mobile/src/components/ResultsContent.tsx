@@ -159,7 +159,7 @@ export function ResultsContent({
           }}
           onSubmitEditing={onSubmitSearch}
           placeholder={narrow ? PLACEHOLDER_SHORT : mapPrompt(home)}
-          placeholderTextColor={color.labelTertiary}
+          placeholderTextColor={color.labelSecondaryOnFill}
           returnKeyType="search"
           autoCorrect={false}
           style={styles.input}

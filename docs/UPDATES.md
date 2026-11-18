@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 201 · The sign-in form's prompts read; the password rule's mark too
+
+*18 Nov 2026 · the commit "Placeholders that are a field's only label in a readable grey; the password rule's marks"*
+
+The signed-out screens had never been through the checks (they always ran signed in). Sign in and Welcome came back axe-clean in all three looks, and every word on them passes, but two things the measure can't see needed a look by hand:
+
+- **The fields' prompts.** On the sign-in form each field shows only an icon and a grey prompt ("Name shown on reviews", "A new password", "MM / YYYY"), so the prompt is its only visible label, and it was in the faintest grey (3.3:1). The prompts are now a readable grey wherever they're a field's only label: sign-in, the account page's password fields, the timer's name, GymPal's question box, and the country and Explore searches. Worked out on each field's own fill, that's 5.1 to 8.8:1. Where a field has its label above it, or the grey number is an example or last time's value (the 1-rep max, a workout's sets), it stays faint, so it doesn't look typed in.
+- **The password rule's mark.** The circle beside "8 characters or more" (2.9:1) is now the secondary grey, and the tick it turns into is the readable green; the plain green was about 2.2:1 on white.
+- Checked: placeholder contrast read from the browser for each field in three looks, light and dark; app tests 617.
+
 ## Update 200 · "Students only" on a price reads in light
 
-*18 Nov 2026 · the commit "Join a gym: who a price is only for, in full ink on the accent's tint"*
+*18 Nov 2026 · `1e9797a`*
 
 The last pairing from Update 199's search, worked out from the theme rather than seen, since no gym in the data limits a price yet: when a gym's price is only for some people ("Students only"), that line was orange on the accent's tint. In light that's 4.0 to 4.2:1 for every accent, under 4.5. It's now in the full ink, still semibold; the words say who it's for, so the colour wasn't the only sign.
 

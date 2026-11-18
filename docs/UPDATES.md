@@ -51,7 +51,7 @@ You asked for ads, built with test ads. The two ad spaces (Home, under the gyms 
 
 ## Update 189 · Writing a review, tried end to end; the form fits the largest text
 
-*18 Nov 2026 · the commit "Review form: the aspect rows wrap together at the largest text"*
+*18 Nov 2026 · `f3a0ef7`*
 
 - **Writing a review was tried through the screens**, on invented demo gyms, from a gym's page and from its sheet on Explore. What happened:
   - The hint under the form went from "Tap a star to rate it." to "Say a little more… (5 to go)" to "A moderator reads every review before it appears."

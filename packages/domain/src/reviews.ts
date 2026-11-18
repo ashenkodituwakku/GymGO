@@ -48,3 +48,9 @@ export function describeRating(summary: RatingSummary): string {
   const plural = summary.count === 1 ? 'review' : 'reviews';
   return `${summary.average.toFixed(1)} from ${summary.count} ${plural}`;
 }
+
+/** How many published reviews gave each number of stars, from 5 down to 1 (a breakdown's bars). */
+export function starCounts(reviews: Review[]): Array<{ stars: 1 | 2 | 3 | 4 | 5; count: number }> {
+  const published = publishedReviews(reviews);
+  return ([5, 4, 3, 2, 1] as const).map((stars) => ({ stars, count: published.filter((review) => review.overall === stars).length }));
+}

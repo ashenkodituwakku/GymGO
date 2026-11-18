@@ -114,6 +114,18 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Reviews redesigned** (18 Nov). ReviewsSection.tsx: Summary (with
+  `starCounts` from the domain), ReviewCard, ReviewForm (StarPicker), and
+  Elsewhere (`googleMapsSearchUrl` / `appleMapsSearchUrl` in present.ts).
+  Stars are a solid Phosphor path drawn with Svg, because the web icon
+  font's star is an outline.
+  - Reviews now store `equipment`, `cleanliness`, `atmosphere` and `value`
+    (nullable 1-5, migrated in db.ts).
+  - Never copy third-party reviews. Google's live, keyed Places details on
+    the "See it on Google" page are the only external reviews shown.
+  - Local test reviews go on demo gyms only (e.g. keystone-fitness-ultimo,
+    with demo mode on).
+
 - **Opened states; Txt's aria props** (18 Nov). `Txt` declares and passes
   `aria-hidden` and `aria-live`. TypeScript doesn't check hyphenated JSX
   attributes, so add any other aria prop to Txt's list before using it.

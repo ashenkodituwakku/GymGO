@@ -9,9 +9,34 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 184 · Reviews, redesigned, with links to Google Maps and Apple Maps
+
+*18 Nov 2026 · the commit "Reviews redesigned: a summary, aspect ratings, cards, and links to the maps' own reviews"*
+
+You asked for the review system to look better, and for reviews from Google Maps and Apple Maps to be brought into GymGO.
+
+- **A gym's reviews, redesigned** (in Reviews on a gym's page and in its sheet on Explore):
+  - **A summary card:** the average, large, with its stars; how many reviews; a bar for each of 5 to 1 stars; and averages for equipment, cleanliness, atmosphere and value, where people rated them. It still says visits aren't verified and that a moderator reads every review first.
+  - **Each review is a card:** the writer's initials, their name and the date, the visit month when given, solid stars, and the aspects they rated. A long review opens with "Read more". After three reviews, "Show all".
+  - **Writing one:** big stars with a word for each (Poor to Excellent), then optional stars for equipment, cleanliness, atmosphere and value (tap a star again to clear it), then the text.
+  - **No reviews yet** is a card that says so, never a score of zero. Your review waiting for a moderator is a card of its own.
+  - The stars are Phosphor's solid star: in a browser the icon font's was only an outline, which made 3.8 hard to tell from 5.
+- **The four aspect ratings are kept now.** The data model always had them, but the server stored only the stars and text. Each is optional, 1 to 5; anything else is refused. Older reviews simply have none.
+- **Google Maps and Apple Maps:** every real gym's reviews end with "Reviews on other maps", two buttons that open the gym's listing there, with its own ratings and reviews.
+  - Their reviews aren't copied into GymGO. They belong to their writers and to Google and Apple, whose terms allow showing them only inside their own products. Your own rule is that every fact carries its source.
+  - GymGO's own reviews are never averaged with theirs.
+  - With your own Google Places API key on the server (Google bills for it), each gym's "See it on Google" page already shows Google's reviews live, credited to their writers and never stored. That's the one allowed way to show them in GymGO. It's off until you choose to add a key. Apple offers no such way.
+  - An invented demo gym gets no links, as there's nothing real to find.
+- **Checked:**
+  - In the browser, with four test reviews and one waiting for a moderator, all on an invented demo gym (no real gym was given a made-up review): Standard, Frost and Liquid, light and dark, 390 and 1280 points.
+  - A real gym's empty card and its links.
+  - axe: no violations, after giving the stars and bars a picture role. The screen measure: no text under 4.5 to 1.
+  - New tests for the aspects (kept, optional, refused out of range), the breakdown and the Apple Maps link.
+  - App 608, server 309, domain 198 tests.
+
 ## Update 183 · Opened screens on the glass: a workout, a gym's sheet, GymPal; and two screen-reader cues that were lost
 
-*18 Nov 2026 · the commit "Opened states readable on the glass; Txt passes aria-hidden and aria-live through"*
+*18 Nov 2026 · `50ff93c`*
 
 - The screen measure ran on the opened states: a workout in progress, Filters, a gym's sheet on Explore and GymPal, in Standard, Frost and Liquid, light and dark. axe found nothing. Measured from the screen, 22 words were under 4.5 to 1, after setting aside text behind the opened sheet or panel. Six remain, and none of them need a fix (below).
 - **A workout's column headings** (SET, KG, REPS, RPE) were 3.1 to 1, in the faint grey. They're now secondary grey, in a workout and in Edit workout. The "×" between the boxes stays faint, as decoration: the headings say what the boxes are. It's now hidden from screen readers.

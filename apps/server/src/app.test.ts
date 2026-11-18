@@ -265,6 +265,27 @@ describe('reviews and moderation', () => {
     expect(after.body!.ratings['dohertys-gym-city']).toEqual({ average: 4.3, count: 3 });
   });
 
+  it('keeps the aspects a review rates, each optional, and refuses one out of range', async () => {
+    const author = await signUp();
+    const bad = (extra: Record<string, unknown>) =>
+      call('POST', '/api/gyms/prime-athletica-fitzroy/reviews', { token: author.token, body: { overall: 4, body: 'Plenty of plates here.', ...extra } });
+    expect((await bad({ equipment: 6 })).status).toBe(400);
+    expect((await bad({ value: 2.5 })).status).toBe(400);
+    expect((await bad({ atmosphere: 'great' })).status).toBe(400);
+    const posted = await call('POST', '/api/gyms/prime-athletica-fitzroy/reviews', {
+      token: author.token,
+      body: { overall: 4, equipment: 5, cleanliness: 3, value: null, body: 'Plenty of plates, the change rooms need work.' },
+    });
+    expect(posted.status).toBe(201);
+    expect(posted.body!.review).toMatchObject({ overall: 4, equipment: 5, cleanliness: 3, atmosphere: null, value: null });
+    const moderator = await signUp();
+    db.prepare(`update users set role = 'moderator' where id = ?`).run(moderator.id);
+    await call('POST', `/api/moderation/reviews/${posted.body!.review.id}`, { token: moderator.token, body: { decision: 'publish' } });
+    const published = await call('GET', '/api/gyms/prime-athletica-fitzroy/reviews', { token: reader });
+    const kept = published.body!.reviews.find((review: any) => review.id === posted.body!.review.id);
+    expect(kept).toMatchObject({ equipment: 5, cleanliness: 3, atmosphere: null, value: null });
+  });
+
   it('needs a reason to reject, and one review per person per gym', async () => {
     const author = await signUp();
     const posted = await call('POST', '/api/gyms/dohertys-gym-city/reviews', {

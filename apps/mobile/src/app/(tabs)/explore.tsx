@@ -853,7 +853,7 @@ function MapScreen() {
             onSignIn={openAccount}
           />
         )}
-        reviews={LIMITED ? <FullVersionNote what="Reviews" /> : <ReviewsSection gymId={selected.record.location.id} account={account} inSheet={inSheet} onSignIn={openAccount} />}
+        reviews={LIMITED ? <FullVersionNote what="Reviews" /> : <ReviewsSection gymId={selected.record.location.id} record={selected.record} account={account} inSheet={inSheet} onSignIn={openAccount} />}
         notes={LIMITED ? null : selected.record.location.isDemoData ? null : <GymNotes gymId={selected.record.location.id} isPro={billing.isPro} inSheet={inSheet} onPro={() => openPro('notes')} />}
         collect={selected.record.location.isDemoData ? null : <CollectCard record={selected.record} onOpenCollection={() => router.push('/collection')} />}
       />

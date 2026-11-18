@@ -542,7 +542,11 @@ export const api = {
 
   reviews: (gymId: string, token: string | null) =>
     request<{ reviews: Review[]; mine: Review[] }>('GET', `/api/gyms/${encodeURIComponent(gymId)}/reviews`, { token }),
-  postReview: (token: string, gymId: string, body: { overall: number; body: string }) =>
+  postReview: (
+    token: string,
+    gymId: string,
+    body: { overall: number; body: string; equipment?: number | null; cleanliness?: number | null; atmosphere?: number | null; value?: number | null },
+  ) =>
     request<{ review: Review }>('POST', `/api/gyms/${encodeURIComponent(gymId)}/reviews`, { token, body }),
 
   photos: (gymId: string, token: string | null) =>

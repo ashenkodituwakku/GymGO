@@ -166,7 +166,7 @@ export function WeatherHours() {
           ))}
         </View>
       )}
-      <Txt variant="caption" color={color.labelTertiary} numberOfLines={2} style={styles.credit}>
+      <Txt variant="caption" color={color.labelSecondary} numberOfLines={2} style={styles.credit}>
         {`${capital(where)} · ${madeLine(state.weather, timezone)}`}
       </Txt>
     </Animated.View>

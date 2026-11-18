@@ -169,7 +169,7 @@ export default function ReportBug() {
           style={styles.description}
           textAlignVertical="top"
         />
-        <Txt variant="caption" color={typed.length > 0 && typed.length < MIN_CHARS ? color.maybeInk : color.labelTertiary} style={styles.count}>
+        <Txt variant="caption" color={typed.length > 0 && typed.length < MIN_CHARS ? color.maybeInk : color.labelSecondary} style={styles.count}>
           {typed.length > 0 && typed.length < MIN_CHARS ? 'A few more words, please · ' : ''}
           {description.length.toLocaleString('en-US')} / {MAX_CHARS.toLocaleString('en-US')}
         </Txt>
@@ -233,7 +233,7 @@ export default function ReportBug() {
         </Txt>
       )}
       <PrimaryButton label={busy ? 'Sending…' : notice ? 'Send notice' : 'Send report'} icon={notice ? 'mail' : 'bug'} onPress={() => void submit()} disabled={!ready} busy={busy} />
-      <Txt variant="footnote" color={color.labelTertiary} style={styles.center}>
+      <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
         Reports are kept on the GymGO server and emailed to the team. Please leave out passwords and card details.
       </Txt>
     </PageScroll>

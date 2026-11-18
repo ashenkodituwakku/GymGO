@@ -118,6 +118,17 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Free account sweep, faint-grey words, Liquid's shine** (18 Nov).
+  `labelTertiary` is for chevrons, placeholders and separators only;
+  words use `labelSecondary` (search `[?:] color.labelTertiary` too, not
+  just `color={color.labelTertiary}`). Accent words on `brandTint` use
+  `brandOnTint`, conditional colours included. BrandFill's Liquid shine is
+  `Shine`: stops worked out from its own height (min of 18%/7 pt and
+  40%/16 pt) because phones' gradients don't read CSS `min()`. For a free
+  account's view, sign up a throwaway one on the local server
+  (`POST /api/auth/signup` with `acceptTerms: true`). The measure takes
+  `FILL='[["Weight in kg","100"],["Reps","5"]]'`.
+
 - **The ads round through the screen checks** (18 Nov). After the merge,
   run `pnpm install --frozen-lockfile` (react-native-google-mobile-ads is
   new; without it Metro fails on the config plugin and every page looks

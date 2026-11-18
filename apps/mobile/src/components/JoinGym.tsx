@@ -231,7 +231,7 @@ export function JoinGym({ record }: { record: GymRecord }) {
               </View>
             )}
             {source && (
-              <Txt variant="caption" color={color.labelTertiary}>
+              <Txt variant="caption" color={color.labelSecondary}>
                 {source.label} · read {new Date(source.checkedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
               </Txt>
             )}

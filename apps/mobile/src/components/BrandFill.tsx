@@ -8,7 +8,7 @@
  * Both are decoration on controls, never a stand-in for a photo or a gym.
  */
 
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
 import { type AccentPaint, backgroundImage, currentLook, currentPaint, glassLevel, NO_TOUCH } from '@/lib/theme';
@@ -57,7 +57,7 @@ export function BrandFill({
   // On Liquid Glass a filled button is tinted glass: light across its top and a bright rim (the Appearance swatches stay flat).
   const glassy = given === undefined && currentLook().glassCards === true && glassLevel() > 0;
   const layer = [NO_TOUCH, StyleSheet.absoluteFill, { opacity }, round !== undefined && { borderRadius: round, overflow: 'hidden' as const }];
-  const shine = glassy ? <View style={[StyleSheet.absoluteFill, styles.shine]} /> : null;
+  const shine = glassy ? <Shine /> : null;
   if (!paint) return shine ? <View style={layer}>{shine}</View> : null;
   if (paint.kind === 'gradient') {
     return (
@@ -88,13 +88,36 @@ export function BrandFill({
   );
 }
 
+/**
+ * Liquid Glass's light across the top of a filled control: mostly along the
+ * top edge, down to 6% by a fifth of the way (where a button's words start)
+ * and gone by two fifths. More than about 10% of white behind white text
+ * takes it under 4.5 to 1 on the default accent (it had 13% there).
+ *
+ * Worked out in points from the control's own height, and never past 7 and
+ * 16 points: as a plain share of the height it reached 86 points down a tall
+ * card (Friends' code, the 1-rep max) and lay over its first line (3.5 to 1),
+ * while fixed points alone covered most of a 16-point badge (Profile's PRO,
+ * 4.2 to 1). A CSS min() would say it in one line, but a phone's gradients
+ * don't read min(). Until the height is known, only the rim shows.
+ */
+function Shine() {
+  const [height, setHeight] = useState(0);
+  const soft = Math.min(height * 0.18, 7);
+  const gone = Math.min(height * 0.4, 16);
+  return (
+    <View
+      onLayout={(event) => setHeight(Math.round(event.nativeEvent.layout.height))}
+      style={[
+        StyleSheet.absoluteFill,
+        styles.rim,
+        height > 0 && backgroundImage(`linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0px, rgba(255, 255, 255, 0.06) ${soft.toFixed(1)}px, rgba(255, 255, 255, 0) ${gone.toFixed(1)}px)`),
+      ]}
+    />
+  );
+}
+
 const styles = StyleSheet.create({
   shade: { backgroundColor: 'rgba(0, 0, 0, 0.2)' },
-  // Mostly along the top edge, and down to 6% by a fifth of the way, where a
-  // button's words start: more than about 10% of white behind white text
-  // takes it under 4.5 to 1 on the default accent (it had 13% there).
-  shine: {
-    ...backgroundImage('linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.06) 18%, rgba(255, 255, 255, 0) 40%)'),
-    boxShadow: 'inset 0px 1px 0.5px rgba(255, 255, 255, 0.6), inset 0px -1px 0.5px rgba(255, 255, 255, 0.18)',
-  },
+  rim: { boxShadow: 'inset 0px 1px 0.5px rgba(255, 255, 255, 0.6), inset 0px -1px 0.5px rgba(255, 255, 255, 0.18)' },
 });

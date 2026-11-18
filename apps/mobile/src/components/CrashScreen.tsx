@@ -104,7 +104,7 @@ export function CrashScreen({ error, retry }: ErrorBoundaryProps) {
       </View>
 
       {__DEV__ && error?.message ? (
-        <Txt variant="caption" color={color.labelTertiary} style={styles.center}>
+        <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
           {error.message}
         </Txt>
       ) : null}

@@ -739,7 +739,7 @@ function Bubble({ line }: { line: Line }) {
         </Txt>
       </View>
       {!!line.about && (
-        <Txt variant="caption" color={color.labelTertiary} style={styles.aboutLine} aria-hidden>
+        <Txt variant="caption" color={color.labelSecondary} style={styles.aboutLine} aria-hidden>
           {`about ${line.about}`}
         </Txt>
       )}

@@ -268,7 +268,7 @@ export function RecoveryWidget({ log }: { log: LogState }) {
         {/* The recovery map in small, for a glance at the whole body. */}
         <SmallFigures width={window.width < 360 ? 30 : 38} fillFor={(muscle) => heatShade(bands.get(muscle) ?? 'never')} />
       </View>
-      <Txt variant="caption" color={color.labelTertiary}>
+      <Txt variant="caption" color={color.labelSecondary}>
         From your log: when, not whether a muscle is ready.
       </Txt>
     </Frame>
@@ -315,7 +315,7 @@ export function BodyWeightWidget({ unit }: { unit: WeightUnit }) {
           Log your weight on Progress now and then, and the latest shows here.
         </Txt>
       )}
-      <Txt variant="caption" color={color.labelTertiary}>
+      <Txt variant="caption" color={color.labelSecondary}>
         On this device only.
       </Txt>
     </Frame>

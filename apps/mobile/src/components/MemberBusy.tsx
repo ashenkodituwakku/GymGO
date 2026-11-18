@@ -163,7 +163,7 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
         />
       )}
       {anywhere && !picking && (
-        <Txt variant="caption" color={color.labelTertiary}>
+        <Txt variant="caption" color={color.labelSecondary}>
           Dev account: you can say so from anywhere, to try it.
         </Txt>
       )}

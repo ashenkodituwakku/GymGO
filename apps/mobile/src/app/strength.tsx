@@ -211,10 +211,10 @@ export default function StrengthScreen() {
       {weightText.trim() === '' && (
         // Where the estimate will be, outlined, so the page shows what it's for before anything's typed.
         <View style={styles.ghost} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <Txt variant="label" color={color.labelTertiary}>
+          <Txt variant="label" color={color.labelSecondary}>
             Estimated 1-rep max
           </Txt>
-          <Txt variant="largeTitle" color={color.labelTertiary}>
+          <Txt variant="largeTitle" color={color.labelSecondary}>
             ≈ — {unit}
           </Txt>
         </View>

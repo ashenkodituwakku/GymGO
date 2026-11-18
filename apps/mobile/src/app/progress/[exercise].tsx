@@ -363,7 +363,7 @@ function Detail({ label, children }: { label: string; children: ReactNode }) {
 function Pill({ text, strong = false }: { text: string; strong?: boolean }) {
   return (
     <View style={[styles.pill, strong && styles.pillStrong]}>
-      <Txt variant="footnote" color={strong ? color.brand : color.label} style={strong ? face('semibold') : undefined}>
+      <Txt variant="footnote" color={strong ? color.brandOnTint : color.label} style={strong ? face('semibold') : undefined}>
         {text}
       </Txt>
     </View>

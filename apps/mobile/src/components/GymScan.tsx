@@ -154,7 +154,7 @@ function Percent({ progress }: { progress: SharedValue<number> }) {
     return () => clearInterval(id);
   }, [progress]);
   return (
-    <Txt variant="caption" color={color.labelTertiary} style={face('semibold')}>
+    <Txt variant="caption" color={color.labelSecondary} style={face('semibold')}>
       {`${shown}%`}
     </Txt>
   );

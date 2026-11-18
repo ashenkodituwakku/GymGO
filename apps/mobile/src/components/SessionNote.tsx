@@ -57,7 +57,7 @@ export function SessionNote({ session, compact = false }: { session: TrainingSes
           accessibilityLabel={`Note on ${session.name}`}
           style={styles.input}
         />
-        <Txt variant="caption" color={draft.length > NOTE_LIMIT - 40 ? color.maybeInk : color.labelTertiary} style={styles.count}>
+        <Txt variant="caption" color={draft.length > NOTE_LIMIT - 40 ? color.maybeInk : color.labelSecondary} style={styles.count}>
           {`${draft.length}/${NOTE_LIMIT}`}
         </Txt>
         {problem && (

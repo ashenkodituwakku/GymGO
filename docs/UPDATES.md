@@ -9,9 +9,32 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 194 · A free account's screens; words out of the faintest grey; Liquid's shine kept off tall cards
+
+*18 Nov 2026 · the commit "Words out of the faintest grey; Liquid's shine sized to each control"*
+
+Most of the screen checks so far were signed in as the Pro test account. Free accounts see other things (Pro offers, locked charts, limits), so this round went through the app as a throwaway free account on the local server, with Pro pretended on sale in the check only.
+
+- **axe:** clean on 15 pages (Profile, Progress, Appearance, Pro, Train, Saved, Templates, Exercises, Compare, Country, 1-rep max, Lifetime, Collection, Challenges, Spend), light and dark, phone and desktop width.
+- **Words in the faintest grey, fixed.** That grey is for chevrons and placeholders (3:1); words need 4.5:1, and these had 2.7 to 3.2:1. Now in the secondary grey:
+  - the 1-rep max page's preview before anything's typed ("Estimated 1-rep max", "≈ — kg");
+  - the source and date line when joining a gym ("… · read 3 Nov 2026"), which is where a fact's source shows;
+  - the weather card's place and time line;
+  - GymPal's "about …" line;
+  - the recovery and body weight Home widgets' notes;
+  - the chart's scale and dates;
+  - the gym scan's percentage;
+  - Report a bug's privacy note and its character count, and a workout note's count;
+  - two lines only the developer sees.
+
+  The separators (×, •, ···) stay faint: they carry nothing the words around them don't.
+- **Accent words on an accent wash, fixed.** Two places the earlier sweep missed, because their colour was picked by a condition: an exercise's main muscles on its chart page (4.4:1 in dark) and Friends' quiet small button. Both now use the shade made for washes.
+- **Liquid's shine on tall accent cards.** The light across the top of a filled control was set as a share of its height, so on a tall card it reached 86 points down and lay over the first line: Friends' "Your friend code" was 3.5:1. Fixed points alone would have covered most of Profile's small PRO badge instead (that was tried: 4.2:1). Each control now works its shine out from its own height, and never further than 7 and 16 points. Buttons look as before, and tall cards get a thin rim.
+- Checked: every word on those pages measured over 4.5:1 in all three looks, light and dark, at 390 and 1280; the 1-rep max card with a set typed in; axe clean again on the changed pages in Liquid and Frost. App tests 612.
+
 ## Update 193 · The ads round checked on the screens; the Pro card's × reads
 
-*18 Nov 2026 · the commit "Pro card: its close mark in the secondary grey, like every other close button"*
+*18 Nov 2026 · `273a10e`*
 
 Updates 190 to 192 (the ads) were new to the screens, so they went through the same checks as everything else, on the website (no ads there: GymGO's own Pro card takes the space, for free accounts only).
 

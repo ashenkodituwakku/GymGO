@@ -130,17 +130,17 @@ export function ProgressChart({
         )}
         {width > 0 &&
           grid.map((line) => (
-            <Txt key={line.at} variant="caption" color={color.labelTertiary} numberOfLines={1} style={[styles.gridLabel, { top: line.at - 8 }]}>
+            <Txt key={line.at} variant="caption" color={color.labelSecondary} numberOfLines={1} style={[styles.gridLabel, { top: line.at - 8 }]}>
               {gridLabel(line.value)}
             </Txt>
           ))}
       </View>
       <View style={[styles.axis, { marginRight: GUTTER }, points.length === 1 && styles.axisSingle]}>
-        <Txt variant="caption" color={color.labelTertiary}>
+        <Txt variant="caption" color={color.labelSecondary}>
           {points[0] ? day(points[0].date) : ''}
         </Txt>
         {points.length > 1 && (
-          <Txt variant="caption" color={color.labelTertiary}>
+          <Txt variant="caption" color={color.labelSecondary}>
             {day(points[points.length - 1]!.date)}
           </Txt>
         )}

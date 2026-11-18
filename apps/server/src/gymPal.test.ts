@@ -3,7 +3,7 @@ import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from './app';
 import { openDb, type Db } from './db';
-import { DEFAULT_MODELS, GYMPAL_PLANS, OPENROUTER_MODELS_URL, OPENROUTER_URL, GymPal, cleanChat, freeFromMakers, cleanContext, freeModels, instructions, readAnswer, trainingSummary } from './gymPal';
+import { DEFAULT_GROQ_MODELS, DEFAULT_MODELS, GROQ_URL, GYMPAL_PLANS, OPENROUTER_MODELS_URL, OPENROUTER_URL, GymPal, cleanChat, freeFromMakers, cleanContext, freeModels, instructions, readAnswer, trainingSummary } from './gymPal';
 import { GYMPAL_GUIDE } from './gymPalGuide';
 
 /** Stands in for OpenRouter: what it was asked, and an answer of the test's choosing. */
@@ -210,6 +210,71 @@ describe('models that think, and models that have gone', () => {
 
   it('picks free models one per maker', () => {
     expect(freeFromMakers(['a/x:free', 'a/y:free', 'b/z', 'c/w:free'])).toEqual(['a/x:free', 'c/w:free']);
+  });
+});
+
+describe('asking Groq first', () => {
+  /** Groq and OpenRouter, each answered as the test says, and everything asked. */
+  function fakeBoth(groq: (model: string) => { status?: number; json?: unknown }, openRouter: () => { status?: number; json?: unknown } = () => ({ json: reply('From OpenRouter') })) {
+    const asked: Array<{ url: string; headers: Record<string, string>; body: any }> = [];
+    const fetchImpl = (async (url: string, init: RequestInit) => {
+      const body = JSON.parse(String(init.body));
+      asked.push({ url, headers: init.headers as Record<string, string>, body });
+      const { status = 200, json = {} } = url === GROQ_URL ? groq(body.model) : openRouter();
+      return new Response(JSON.stringify(json), { status, headers: { 'content-type': 'application/json' } });
+    }) as typeof fetch;
+    return { asked, fetchImpl };
+  }
+  const answer = (content: string) => ({ choices: [{ message: { role: 'assistant', content } }] });
+
+  it('is on with only a Groq key, and asks Groq one model at a time, with short hidden thinking and its own token field', async () => {
+    const both = fakeBoth(() => ({ json: answer('From Groq') }));
+    const gymPal = new GymPal({ key: null, groq: { key: ' groq-test-key ' }, fetchImpl: both.fetchImpl });
+    expect(gymPal.on).toBe(true);
+    expect(gymPal.service).toBe('Groq');
+    expect(await gymPal.ask([{ role: 'user', content: 'Hello' }], { replyTokens: 300 })).toBe('From Groq');
+    const [first] = both.asked;
+    expect(first!.url).toBe('https://api.groq.com/openai/v1/chat/completions');
+    expect(first!.headers.Authorization).toBe('Bearer groq-test-key');
+    expect(first!.body).toMatchObject({ model: DEFAULT_GROQ_MODELS[0], max_completion_tokens: 300, reasoning_effort: 'low', include_reasoning: false });
+    expect(first!.body.max_tokens).toBeUndefined();
+    expect(first!.body.models).toBeUndefined();
+    expect(gymPal.answeredBy).toBe(`Groq, ${DEFAULT_GROQ_MODELS[0]}`);
+  });
+
+  it('asks the next Groq model when one has used its day, is gone or answers with nothing, and Qwen without thinking', async () => {
+    const both = fakeBoth((model) => (model === 'openai/gpt-oss-120b' ? { status: 429, json: { error: { message: 'Rate limit reached for model on tokens per day (TPD)' } } } : model === 'openai/gpt-oss-20b' ? { json: answer('') } : { json: answer('From Qwen') }));
+    const lines: string[] = [];
+    const gymPal = new GymPal({ key: null, groq: { key: 'k' }, fetchImpl: both.fetchImpl, log: (line) => lines.push(line) });
+    expect(await gymPal.ask([{ role: 'user', content: 'Hi' }])).toBe('From Qwen');
+    expect(both.asked.map((call) => call.body.model)).toEqual(DEFAULT_GROQ_MODELS);
+    expect(both.asked[2]!.body).toMatchObject({ reasoning_effort: 'none', reasoning_format: 'hidden' });
+    expect(lines.join('\n')).toContain('Groq said 429 for openai/gpt-oss-120b: Rate limit reached for model on tokens per day (TPD)');
+    expect(lines.join('\n')).toContain("Groq's openai/gpt-oss-20b sent no answer");
+  });
+
+  it('falls back to OpenRouter once every Groq model has used its day, if its key is set', async () => {
+    const both = fakeBoth(() => ({ status: 429 }));
+    const gymPal = new GymPal({ key: 'or-key', groq: { key: 'k', models: ['a/one', 'b/two'] }, fetchImpl: both.fetchImpl, log: () => {} });
+    expect(gymPal.service).toBe('Groq or OpenRouter');
+    expect(await gymPal.ask([{ role: 'user', content: 'Hi' }])).toBe('From OpenRouter');
+    expect(both.asked.map((call) => call.url)).toEqual([GROQ_URL, GROQ_URL, OPENROUTER_URL]);
+    expect(gymPal.answeredBy).toMatch(/^OpenRouter, /);
+  });
+
+  it('says busy when every Groq model has used its day and there is no OpenRouter', async () => {
+    const both = fakeBoth(() => ({ status: 429 }));
+    await expect(new GymPal({ key: null, groq: { key: 'k' }, fetchImpl: both.fetchImpl, log: () => {} }).ask([{ role: 'user', content: 'Hi' }])).rejects.toMatchObject({ status: 429, code: 'gympal_busy' });
+    expect(both.asked).toHaveLength(DEFAULT_GROQ_MODELS.length);
+  });
+
+  it('stops asking Groq at a key it turns down, telling the owner what to check but never the key', async () => {
+    const both = fakeBoth(() => ({ status: 401, json: { error: { message: 'Invalid API Key' } } }));
+    const lines: string[] = [];
+    await expect(new GymPal({ key: null, groq: { key: 'secret-groq-key' }, fetchImpl: both.fetchImpl, log: (line) => lines.push(line) }).ask([{ role: 'user', content: 'Hi' }])).rejects.toMatchObject({ status: 502 });
+    expect(both.asked).toHaveLength(1);
+    expect(lines.join('\n')).toContain('GROQ_API_KEY');
+    expect(lines.join('\n')).not.toContain('secret-groq-key');
   });
 });
 

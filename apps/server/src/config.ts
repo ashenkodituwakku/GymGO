@@ -38,6 +38,14 @@ export const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY?.trim() |
  */
 export const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY?.trim() || null;
 /**
+ * Optional. The owner's Groq API key (console.groq.com, free, no card), for
+ * GymPal: asked before OpenRouter. It holds a secret: keep it in .env.local,
+ * never in git.
+ */
+export const GROQ_API_KEY = process.env.GROQ_API_KEY?.trim() || null;
+/** Optional. Which Groq models GymPal asks, comma-separated, tried in turn (gymPal.ts has the default). */
+export const GYMPAL_GROQ_MODELS = (process.env.GYMGO_GYMPAL_GROQ_MODELS ?? '').split(',').map((item) => item.trim()).filter(Boolean);
+/**
  * Whether a GitHub token for GitHub Models is still set (an update on 18 Nov
  * 2026 asked for one, before it turned out GitHub had retired GitHub Models
  * on 30 July 2026). It does nothing; the server only says so, so the owner

@@ -287,7 +287,7 @@ function ReviewCard({ review }: { review: Review }) {
         {review.body}
       </Txt>
       {long && (
-        <Pressable onPress={() => setOpen((was) => !was)} accessibilityRole="button" hitSlop={8} style={styles.more}>
+        <Pressable onPress={() => setOpen((was) => !was)} accessibilityRole="button" aria-expanded={open} hitSlop={8} style={styles.more}>
           <Txt variant="footnote" color={color.brand} style={face('semibold')}>
             {open ? 'Show less' : 'Read more'}
           </Txt>

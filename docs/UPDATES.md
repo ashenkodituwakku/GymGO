@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 187 · Dark mode's Dim checked, and GymPal knows the new reviews
+
+*18 Nov 2026 · the commit "GymPal's guide describes reviews; Read more says if it's open; Dim checked"*
+
+- **Dim** (Standard's softer dark mode, in Appearance) hadn't been checked: every dark measurement used black. It has now, with the same measure from the screen on Home, Profile, Progress, Appearance, a gym's page and Explore, and on a workout in progress, Filters, a gym's sheet, GymPal and a gym's reviews (with and without reviews). axe found nothing, and no words were under 4.5 to 1. Nothing needed changing.
+- **GymPal's guide** mentioned reviews only in passing, so GymPal couldn't explain the new ones. It now knows what the summary shows, how to write a review (stars, the four optional ratings, at least 10 characters, one per gym, checked by a moderator), that visits aren't verified, and that Reviews on other maps opens Google's or Apple's listing without copying their reviews in. A test checks that last part. The rule that GymPal never states a real gym's reviews or rating is unchanged.
+- **Read more** on a long review now tells a screen reader whether it's open.
+- App 608, server 310 tests.
+
 ## Update 186 · The review ratings reach your data download and the moderators, and stars are said as words
 
-*18 Nov 2026 · the commit "Reviews' aspect ratings in Download my data and the moderation queue; stars said as words"*
+*18 Nov 2026 · `2f4ea36`*
 
 - **Download my data left out the new ratings.** Update 184 began keeping the equipment, cleanliness, atmosphere and value ratings, but the download names each column it includes, and those four weren't there. It promises everything GymGO holds about you, so they're in it now. A test checks it.
 - **Moderators couldn't see them either**, though they're published along with the review. The queue now shows them under the text ("Equipment 4 of 5"), and gives the rating as "4 of 5 stars" rather than "★★★★".

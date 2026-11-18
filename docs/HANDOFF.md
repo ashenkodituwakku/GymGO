@@ -114,6 +114,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Dim checked; GymPal's guide on reviews** (18 Nov). The contrast scripts
+  have Dim variants (`scratchpad/dim-contrast-*.cjs`, theme `dark: 'dim'`).
+  Update gymPalGuide.ts whenever a screen GymPal explains changes. Its test
+  pins that reviews elsewhere are linked, not copied.
+
 - **Review ratings in the export and the queue** (18 Nov). `/api/me/export`
   names its review columns, so add any new review column there too.
   AccountContent's review queue shows `aspectsLine()`. A "★" character in

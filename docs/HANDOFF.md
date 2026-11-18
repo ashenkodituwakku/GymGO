@@ -118,6 +118,8 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Status inks on the tint** (18 Nov). Orange (`maybeInk`) on
+  `brandTint` is 4.0–4.2:1 in light; JoinGym's "… only" line uses `label`.
 - **labelSecondaryOnTint** (18 Nov). Grey words on `brandTint` use
   `color.labelSecondaryOnTint` (theme.ts inksOnWashes, tested in
   theme.test.ts beside brandOnTint and labelSecondaryOnFill). On a

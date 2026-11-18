@@ -116,8 +116,9 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
                     {offer.label}
                   </Txt>
                 )}
+                {/* Full ink and semibold: the orange read 4.0 to 1 on the accent's tint in light, and the words say it anyway. */}
                 {!!offer.eligibility.onlyFor && (
-                  <Txt variant="caption" color={color.maybeInk} numberOfLines={2} style={[styles.center, face('semibold')]}>
+                  <Txt variant="caption" color={color.label} numberOfLines={2} style={[styles.center, face('semibold')]}>
                     {`${offer.eligibility.onlyFor} only`}
                   </Txt>
                 )}

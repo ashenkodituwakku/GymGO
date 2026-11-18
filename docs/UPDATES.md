@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 200 · "Students only" on a price reads in light
+
+*18 Nov 2026 · the commit "Join a gym: who a price is only for, in full ink on the accent's tint"*
+
+The last pairing from Update 199's search, worked out from the theme rather than seen, since no gym in the data limits a price yet: when a gym's price is only for some people ("Students only"), that line was orange on the accent's tint. In light that's 4.0 to 4.2:1 for every accent, under 4.5. It's now in the full ink, still semibold; the words say who it's for, so the colour wasn't the only sign.
+
+- Checked: worked out for every look, light and dark, and every accent (two other places the search flagged sit just outside their tint); app tests 617.
+
 ## Update 199 · Grey words on the accent's tint get their own shade
 
-*18 Nov 2026 · the commit "Theme: labelSecondaryOnTint for grey words on the accent's tint, used in eleven places"*
+*18 Nov 2026 · `8238ac4`*
 
 Update 198's card had grey words on the accent's light tint. The app does that in other places too, so they were looked for together.
 

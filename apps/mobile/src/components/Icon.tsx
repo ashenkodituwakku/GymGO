@@ -8,8 +8,16 @@
 
 import { SymbolView } from 'expo-symbols';
 import type { ComponentProps } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { useSwapIn } from './motion';
+import { PIcon } from './PIcon';
+
+/**
+ * Off and on drawn by Phosphor away from iPhone: Material Symbols' font (on
+ * Android and the web) has only the outline, so "bookmark" and
+ * "bookmark_border" came out the same and a saved gym looked unsaved.
+ */
+const FILLED_PAIRS = { save: false, saved: true } as const;
 
 type SymbolName = ComponentProps<typeof SymbolView>['name'];
 
@@ -137,6 +145,14 @@ export function Icon({
   // otherwise be read out as part of the button's name.
   // A new icon here (saved, ticked) blurs in, in a browser.
   const swap = useSwapIn(name);
+  if (Platform.OS !== 'ios' && name in FILLED_PAIRS) {
+    const filled = FILLED_PAIRS[name as keyof typeof FILLED_PAIRS];
+    return (
+      <View ref={swap} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <PIcon name="bookmark-simple" weight={filled ? 'fill' : weight === 'bold' || weight === 'heavy' || weight === 'black' ? 'bold' : 'regular'} size={size} color={color} />
+      </View>
+    );
+  }
   return (
     <View ref={swap} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <SymbolView

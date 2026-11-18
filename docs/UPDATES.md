@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 195 · A saved gym looks saved on the website and Android
+
+*18 Nov 2026 · the commit "Save and Saved: Phosphor's bookmark away from iPhone, outline and filled"*
+
+Saving gyms was tried as a free account would: nine saved, the Saved page, a tenth from a gym's page, then an eleventh.
+
+- **What worked:** the Saved page said "9 of 10 saved on Free." with a link to Pro, the tenth saved, and the eleventh opened the Pro page with "You've saved as many gyms as Free keeps." Where Pro isn't on sale, the page says so plainly ("Not on sale yet").
+- **Fixed: Save and Saved looked the same.** On the website and on Android the icons come from Material Symbols' font, which only has the outline, so "bookmark" and "bookmark_border" drew the same glyph. The only sign a gym was saved was the button's spoken label. Off iPhone they're now Phosphor's bookmark, outline for Save and filled for Saved, the same one as the Saved tab. The iPhone keeps its own symbols, which were already different.
+- Checked: no other icon pair in the app depends on outline versus filled (the rest use different glyphs). Close-ups of a saved and an unsaved gym's header in the browser; app tests 612.
+
 ## Update 194 · A free account's screens; words out of the faintest grey; Liquid's shine kept off tall cards
 
-*18 Nov 2026 · the commit "Words out of the faintest grey; Liquid's shine sized to each control"*
+*18 Nov 2026 · `df033ae`*
 
 Most of the screen checks so far were signed in as the Pro test account. Free accounts see other things (Pro offers, locked charts, limits), so this round went through the app as a throwaway free account on the local server, with Pro pretended on sale in the check only.
 

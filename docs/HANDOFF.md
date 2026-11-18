@@ -118,6 +118,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Saved looks saved off iPhone** (18 Nov). expo-symbols draws Material
+  Symbols' outline-only font on Android and the web, so a pair that
+  differs only by fill (`bookmark` / `bookmark_border`) looks the same.
+  Icon.tsx draws `save`/`saved` with PIcon's `bookmark-simple` (regular /
+  fill) away from iOS (`FILLED_PAIRS`); add a pair there if another
+  on/off icon differs only by fill. Scratchpad `saveflow.cjs` runs the
+  free account's saving limit.
+
 - **Free account sweep, faint-grey words, Liquid's shine** (18 Nov).
   `labelTertiary` is for chevrons, placeholders and separators only;
   words use `labelSecondary` (search `[?:] color.labelTertiary` too, not

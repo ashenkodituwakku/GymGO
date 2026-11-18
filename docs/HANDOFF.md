@@ -51,7 +51,9 @@ the branch the owner's launcher pulls.
   write it into a file in the repo, a commit, a doc or a log. The cloud
   sandbox can't reach models.github.ai (its network gate answers "OK" in
   GitHub's place), so it was never tried from here; the owner checks it with
-  `pnpm --filter @gymgo/server gympal:check`.
+  `pnpm --filter @gymgo/server gympal:check`, or with `gymgo -GymPal`
+  (scripts/gymgo.ps1: reads the token hidden, writes it into
+  apps\server\.env.local keeping other lines, runs the check).
 - **The Windows launcher** `scripts/gymgo.ps1` must stay ASCII-only
   (`apps/web/src/launcher.test.ts` checks it).
 - **Speak plainly to the owner.** They test on a Windows PC (browser, with

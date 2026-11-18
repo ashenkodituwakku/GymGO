@@ -9,6 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 174 · `gymgo -GymPal` sets GymPal up for you
+
+*18 Nov 2026 · the commit "gymgo -GymPal: paste the token once, saved and checked"*
+
+You asked me to set GymPal up for you. I can't reach your PC from here (no folder on it is shared with this session), so the launcher now does it in one command:
+
+- **`gymgo -GymPal`** asks you to paste your GitHub token, and it doesn't show as you paste. It saves the token in `apps\server\.env.local` on your PC, replacing any older one and keeping every other setting. That file is never uploaded to GitHub, and `gymgo -Update` leaves it alone. Then it asks GymPal one question and says whether he answered, and which model did.
+- It refuses anything that doesn't look like a GitHub token (one starting `github_pat_` or `ghp_`), and says why.
+- To use it, run **`gymgo -Update`** once and press Ctrl+C when GymGO has started, so your launcher knows the new option. Then run **`gymgo -GymPal`**, and then `gymgo` or `gymgo -Online` as usual.
+
+- The launcher is still plain ASCII (its test checks). I couldn't run PowerShell here to try the new step, so it was checked by reading it through. Not yet run on your PC.
+
 ## Update 173 · GymPal can use GitHub Models
 
 *18 Nov 2026 · the commit "GymPal answers through GitHub Models with the owner's token"*

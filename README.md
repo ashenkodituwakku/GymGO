@@ -108,6 +108,10 @@ After that you can run:
   to GymGO's packages and starts the app with a clean cache. The launcher
   already does this by itself when it installs new packages or finds one
   missing, so you shouldn't often need it;
+- `gymgo -GymPal` to switch GymPal on with GitHub Models: paste your GitHub
+  token when asked (it doesn't show as you paste). It's saved in
+  `apps\server\.env.local` on this PC (never uploaded) and GymPal is asked
+  one question to check it works;
 - `gymgo -Tunnel` when the phone isn't on the same Wi-Fi;
 - `gymgo -NoBrowser` to start without opening a browser window;
 - `gymgo -NoDevAccount` to start without the ready-made Pro account.
@@ -1159,7 +1163,9 @@ where each fact has its source; unknown is never "no"; it never invents
 deals or partnerships; and it gives general training ideas, not medical
 advice. The chat says GymPal is AI and can be wrong.
 
-To switch it on with **GitHub Models** (free, no card):
+To switch it on with **GitHub Models** (free, no card), the quick way on
+Windows: `gymgo -GymPal` (after `gymgo -Update` once), which asks for the
+token, saves it and checks it (steps 2 and 3 below). Or by hand:
 
 1. On github.com: **Settings → Developer settings → Personal access tokens
    → Fine-grained tokens → Generate new token**. Give it a name, and under

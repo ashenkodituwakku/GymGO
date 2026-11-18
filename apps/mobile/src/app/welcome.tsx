@@ -119,9 +119,11 @@ export default function WelcomeScreen() {
         tabIndex={0}
         role="region"
         aria-label="The tour, three pages: the arrow keys turn them"
-        onFocus={() => setRinged(true)}
+        // Only for the keyboard (the browser's own :focus-visible): a tap or a swipe also focuses it.
+        onFocus={(event) => setRinged(Boolean((event.target as unknown as { matches?: (selector: string) => boolean }).matches?.(':focus-visible')))}
         onBlur={() => setRinged(false)}
-        {...({ onKeyDown } as object)}
+        // Its own ring, not the app's overlay (app/_layout.tsx), which would scroll away with the first page.
+        {...({ onKeyDown, dataSet: { quietFocus: '' } } as object)}
         showsHorizontalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}

@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 203 · Every control shows keyboard focus; the tour's ring only for the keyboard
+
+*18 Nov 2026 · the commit "Welcome tour: its focus ring only for the keyboard, not a tap or a swipe"*
+
+- **A sweep of keyboard focus.** Tab was pressed through Home, Explore, Saved, Profile, Train and Progress (about 45 stops each), and each control that took focus was checked for a visible mark. All of them showed GymGO's ring (an accent ring with a band of the page's colour inside, drawn over the control's edge), except Explore's search box, which shows focus with its accent border instead.
+- **Fixed: the tour's ring (Update 202) showed on a tap too.** A tap or swipe in a phone's browser also gives the tour focus, so a ring would have appeared around it on every swipe. It now shows only when focus comes from the keyboard, as the browser itself judges it. The app's general ring is turned off for the tour, since inside the scrolling pages it would have slid away with the first one.
+- Checked in the browser: a click focuses the tour with no ring; Tab focuses it with the ring, and the arrow keys turn its pages. App tests 617.
+
 ## Update 202 · The first run, tried as someone new; the tour works by keyboard
 
-*18 Nov 2026 · the commit "Welcome tour: reachable by keyboard, arrow keys turn its pages, the dots say which is shown"*
+*18 Nov 2026 · `a2a9501`*
 
 A brand-new account was made through the form on the local server, by keyboard where possible, and taken through what GymGO asks first.
 

@@ -118,6 +118,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Focus rings** (18 Nov). The app's ring is an `::after` on
+  `:focus-visible` (app/_layout.tsx), not an outline; scratchpad
+  `focussweep.cjs` tabs through pages and checks for it. Something with
+  its own ring takes `dataSet={{ quietFocus: '' }}` and should test
+  `matches(':focus-visible')` on focus, so taps don't ring it.
+
 - **accessibilityState is ignored on the web** (18 Nov). This RNW
   version never reads `accessibilityState`; use the aria props
   (`aria-selected`, `aria-checked`, `aria-disabled`, `aria-expanded`,

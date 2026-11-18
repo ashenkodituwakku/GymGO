@@ -1499,13 +1499,15 @@ was found and what still needs a direct check.
 **Ads:** one space on Home and one under Explore's list
 (`apps/mobile/src/components/AdSlot.tsx`), never for Pro members. In a
 phone development build (the Xcode route, `gymgo --xcode`) it shows
-**Google AdMob test ads**, non-personalised and rated for teens at most,
-after Google's consent message where the law needs one, in a card marked
-"Advertisement"; Profile → Legal then has **Privacy choices** where Google
-requires it. Everywhere else (the website, Expo Go, a release build without
-the owner's ad units) it's GymGO's own card for Pro, loading and tracking
-nothing. Real ads need the owner's AdMob account, IDs and new legal wording
-first: `docs/ADS.md` has the steps.
+**Google AdMob test ads**, native ads set in one of GymGO's cards and
+marked "Ad", non-personalised and rated for teens at most, after Google's
+consent message where the law needs one; Profile → Legal then has
+**Privacy choices** where Google requires it. Everywhere else (the website,
+Expo Go, a release build before real ads are switched on) it's GymGO's own
+card for Pro, loading and tracking nothing. The owner's AdMob iPhone app and
+ad unit are in; real ads wait for new legal wording and the owner's
+go-ahead (`ADS_LIVE` in `apps/mobile/src/lib/ads.ts`): `docs/ADS.md` has
+the steps.
 
 ### What a visit costs, from members
 

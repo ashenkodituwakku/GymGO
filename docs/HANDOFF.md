@@ -221,14 +221,21 @@ mobile 550, domain 191 and web 39 tests, all passing.
   the same file does the drift (`translate`) and, under
   `html[data-gg-glass]` (synced from `solidSurfaces()`), the light and rim.
   To add it to another page, give its root a ref and call the hook.
-- **Ads with test ads** (18 Nov). docs/ADS.md is the plan and the owner's
-  steps. lib/ads.ts picks the unit; components/AdBanner.native.tsx loads
+- **Ads with test ads** (18 Nov; native since Update 191). docs/ADS.md is
+  the plan and the owner's steps. lib/ads.ts picks the unit: Google's native
+  test units in `__DEV__`, always; the owner's `OWNER_AD_UNITS` in a release
+  only when `ADS_LIVE` is true (it's false until the legal pages say there
+  are ads and the owner says go). components/AdCard.native.tsx loads
   Google's library only outside Expo Go (`require` inside `library()`), runs
-  consent then `initialize`, and draws the banner; AdBanner.tsx is the
-  website's stub with the same exports. AdSlot shows an ad where
-  `adsPossible`, else the Pro card. The legal text still says no ads: it
-  must change before any store release, since the library is in every phone
-  build. Never put real ad unit IDs in the code.
+  consent then `initialize`, loads a `NativeAd` per card and draws it in
+  GymGO's card (every shown asset wrapped in `NativeAsset`, the media in
+  `NativeMediaView`, an "Ad" badge, the top-right corner kept clear for
+  AdChoices); AdCard.tsx is the website's stub with the same exports.
+  AdSlot shows an ad where `adsPossible`, else the Pro card. The owner's
+  AdMob IDs are public and belong in the code; never let a development
+  build ask for them (invalid traffic). The legal text still says no ads:
+  it must change before any store release, since the library is in every
+  phone build.
 - **Frosted glass, Liquid look, sidebar seam** (18 Nov). With the sidebar
   docked, `ClearOfSidebar` (Sidebar.tsx) draws the page's ground
   (`ambientGlow()` over `groupedBackground`) the window's width and provides

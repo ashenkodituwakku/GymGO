@@ -9,6 +9,21 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 191 · Native ads in GymGO's own card, with your AdMob IDs
+
+*18 Nov 2026 · the commits "Ads: native advanced ads in GymGO's card, with the owner's AdMob IDs; real ads stay off" (which by mistake held only the files' new names) and "Ads: the native card itself, the owner's IDs and the docs", pushed straight after*
+
+You sent your AdMob setup: the iPhone app and one **native advanced** ad unit. Update 190 asked for banners, which a native unit can't serve, so the ad is now native:
+
+- **The ad is GymGO's own card.** Google sends the ad's parts (advertiser, headline, words, icon, picture or video, button) and GymGO sets them in a card like its others, with an **"Ad"** badge beside the advertiser and Google's AdChoices mark in the top corner. The picture or video is Google's own media view, at least 120 points each way, as Google's rules ask. Nothing takes the space until an ad has come; if none does, the Pro card shows, as before.
+- **Your IDs are in.** The iPhone build now carries your AdMob app ID, and your native unit is kept for both places (Home and under Explore's list). They aren't secrets: every copy of the app carries them.
+- **Real ads stay off.** A development build (`gymgo --xcode`) only ever asks Google's **test** ads, on purpose: tapping your own real ads is what AdMob calls invalid traffic, and it can get a new account limited. A release build asks your unit only once `ADS_LIVE` is turned on in `lib/ads.ts`, which waits for the privacy wording (it still says "no ads") and your go-ahead.
+- **Android** keeps Google's sample app ID until there's an Android app in your AdMob account.
+
+**Still yours** (`docs/ADS.md` has the steps): the Android app in AdMob, Privacy & messaging (the consent message for Europe and the UK), `app-ads.txt` on gymgo.site (the line is in ADS.md; I can add it when you say), the store forms, and the new legal wording.
+
+- Checked: typecheck and all 612 app tests pass (a new one: a release asks no real ad until ads are live); the phone config shows your iPhone app ID; the iPhone app's code bundles with both the test unit and yours in it; the website loads with no errors and no ad code. **Not yet seen on a phone:** try `gymgo --xcode` on your Mac. Expect a card on Home under the gyms near you with Google's test ad in it.
+
 ## Update 190 · Ads, built with Google's test ads
 
 *18 Nov 2026 · the commit "Ads: Google AdMob test ads in phone development builds, the Pro card everywhere else"*

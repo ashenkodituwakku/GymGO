@@ -1,5 +1,5 @@
 /**
- * Google AdMob's ads, where a build can show them (AdBanner.native.tsx).
+ * Google AdMob's ads, where a build can show them (AdCard.native.tsx).
  * This is the website's version: no ads, so nothing here loads or tracks
  * anything, and AdSlot shows GymGO's own Pro card instead.
  */
@@ -33,6 +33,6 @@ export function openPrivacyChoices(): Promise<void> {
   return Promise.resolve();
 }
 
-export function AdBanner(_props: { place: AdPlace; width: number; onLoaded: () => void; onFailed: () => void }) {
+export function AdCard(_props: { place: AdPlace; onLoaded: () => void; onFailed: () => void }) {
   return null;
 }

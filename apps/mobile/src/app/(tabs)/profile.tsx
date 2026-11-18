@@ -35,7 +35,7 @@ import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { useLegalInfo } from '@/lib/legal';
 import { LegalText } from '@/components/LegalText';
-import { openPrivacyChoices, useAdsState } from '@/components/AdBanner';
+import { openPrivacyChoices, useAdsState } from '@/components/AdCard';
 import { Bone, Skeleton } from '@/components/Skeleton';
 import { LIMITED } from '@/lib/limited';
 import { CITY_LIST } from '@/lib/places';

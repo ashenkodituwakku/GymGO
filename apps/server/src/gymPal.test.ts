@@ -27,6 +27,8 @@ describe('only free models', () => {
       ignored: ['openai/gpt-5-nano', 'openrouter/free', 'openai/gpt-4o:free-ish'],
     });
     expect(DEFAULT_MODELS.every((id) => id.endsWith(':free'))).toBe(true);
+    // From three makers, so one being busy doesn't stop GymPal.
+    expect(new Set(DEFAULT_MODELS.map((id) => id.split('/')[0])).size).toBe(DEFAULT_MODELS.length);
   });
 
   it('asks only free models, even when told to ask a paid one', async () => {
@@ -118,6 +120,24 @@ describe('asking OpenRouter', () => {
     await expect(new GymPal({ key: 'test-key', fetchImpl: down }).ask([{ role: 'user', content: 'Hi' }])).rejects.toMatchObject({ status: 502 });
     const empty = fakeOpenRouter(() => ({ json: { choices: [{ message: { content: '' } }] } }));
     await expect(new GymPal({ key: 'test-key', fetchImpl: empty.fetchImpl }).ask([{ role: 'user', content: 'Hi' }])).rejects.toMatchObject({ status: 502 });
+  });
+});
+
+describe('OpenRouter saying no', () => {
+  it('logs OpenRouter’s own reason (and its provider’s), never the key, and still tells the app GymPal is busy', async () => {
+    const busy = fakeOpenRouter(() => ({ status: 429, json: { error: { code: 429, message: 'google/gemma-4-31b-it:free is temporarily rate-limited upstream.', metadata: { provider_name: 'Venice', raw: 'Too many requests' } } } }));
+    const lines: string[] = [];
+    await expect(new GymPal({ key: 'secret-or-key', fetchImpl: busy.fetchImpl, log: (line) => lines.push(line) }).ask([{ role: 'user', content: 'Hi' }])).rejects.toMatchObject({ status: 429, code: 'gympal_busy' });
+    expect(lines.join('\n')).toContain('OpenRouter said 429: google/gemma-4-31b-it:free is temporarily rate-limited upstream. (Venice) Too many requests');
+    expect(lines.join('\n')).not.toContain('secret-or-key');
+  });
+
+  it('logs a reason that isn’t JSON as it came, cut to a line', async () => {
+    const odd = (async () => new Response(`Bad gateway ${'x'.repeat(400)}`, { status: 502 })) as unknown as typeof fetch;
+    const lines: string[] = [];
+    await expect(new GymPal({ key: 'k', fetchImpl: odd, log: (line) => lines.push(line) }).ask([{ role: 'user', content: 'Hi' }])).rejects.toMatchObject({ status: 502 });
+    expect(lines[0]).toMatch(/^\[gympal\] OpenRouter said 502: Bad gateway x+…$/);
+    expect(lines[0]!.length).toBeLessThan(360);
   });
 });
 
@@ -239,7 +259,7 @@ describe('/api/gympal', () => {
 
   it('says whether it’s on, and answers', async () => {
     const token = await signUp();
-    expect((await call('GET', '/api/gympal', { token })).body).toEqual({ on: true, pro: false, perDay: GYMPAL_PLANS.free.perDay });
+    expect((await call('GET', '/api/gympal', { token })).body).toEqual({ on: true, pro: false, perDay: GYMPAL_PLANS.free.perDay, service: 'OpenRouter' });
     const answer = await call('POST', '/api/gympal', { token, body: { messages: [{ role: 'user', content: 'Where are my records?' }] } });
     expect(answer).toEqual({ status: 200, body: { reply: 'You asked: Where are my records?' } });
   });
@@ -270,7 +290,7 @@ describe('/api/gympal', () => {
       });
       const token = ((await signed.json()) as { token: string }).token;
       const state = await fetch(`${offBase}/api/gympal`, { headers: { authorization: `Bearer ${token}` } });
-      expect(await state.json()).toEqual({ on: false, pro: false, perDay: GYMPAL_PLANS.free.perDay });
+      expect(await state.json()).toEqual({ on: false, pro: false, perDay: GYMPAL_PLANS.free.perDay, service: null });
       const asked = await fetch(`${offBase}/api/gympal`, {
         method: 'POST',
         headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
@@ -316,7 +336,7 @@ describe('/api/gympal', () => {
     expect(refused.body.code).toBe('pro_required');
 
     const pro = await signUpPro();
-    expect((await call('GET', '/api/gympal', { token: pro })).body).toEqual({ on: true, pro: true, perDay: GYMPAL_PLANS.pro.perDay });
+    expect((await call('GET', '/api/gympal', { token: pro })).body).toEqual({ on: true, pro: true, perDay: GYMPAL_PLANS.pro.perDay, service: 'OpenRouter' });
     const finished = new Date(Date.now() - 3600_000);
     const logged = await call('POST', '/api/training', {
       token: pro,

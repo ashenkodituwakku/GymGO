@@ -126,7 +126,7 @@
  *   POST   /api/bug-reports               anyone: { description, topic?: 'bug' | 'copyright', replyTo?, context? } -> kept, and emailed to the team
  *   GET    /api/moderation/bug-reports    moderators: the latest bug reports, and whether each was emailed
  *   GET    /api/weather?south=&west=      { weather }: MET Norway's forecast for the middle of that block's own map square (weather.ts), the next 12 hours
- *   GET    /api/gympal                    { on, pro, perDay }: whether GymPal, the chat, can answer on this server, and your plan's questions a day
+ *   GET    /api/gympal                    { on, pro, perDay, service }: whether GymPal, the chat, can answer on this server, your plan's questions a day, and the AI service chats go to
  *   POST   /api/gympal                    { messages: [{ role: 'user' | 'assistant', content }] } -> { reply }, from a free model through OpenRouter
  *   DELETE /api/moderation/member-reports/:kind/:gymId/:userId   moderators: remove one
  *
@@ -2538,7 +2538,7 @@ export function createApp(options: AppOptions) {
     if (method === 'GET' && path === '/api/gympal') {
       const { account } = requireAccount(req);
       const pro = billing.isPro(account.id);
-      return send(res, 200, { on: gymPal.on, pro, perDay: GYMPAL_PLANS[pro ? 'pro' : 'free'].perDay });
+      return send(res, 200, { on: gymPal.on, pro, perDay: GYMPAL_PLANS[pro ? 'pro' : 'free'].perDay, service: gymPal.service });
     }
 
     if (method === 'POST' && path === '/api/gympal') {

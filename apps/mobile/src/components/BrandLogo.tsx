@@ -132,6 +132,10 @@ export function useGymMark(location: GymLocation): Mark | null {
  * The mark alone, fitted inside width × height and never stretched. Marks are
  * balanced by area, as on a sponsor wall, so a wide wordmark and a round badge
  * look the same size. A square website icon gets an app icon's rounded corners.
+ *
+ * Multiplied onto its plate: many logos come on a white square, which showed
+ * as a white box on dark mode's grey plate (logoPlate); multiplied, white
+ * takes the plate's colour and the mark keeps its own.
  */
 export function MarkImage({ mark, name, width, height, area }: { mark: Mark; name: string; width: number; height: number; area: number }) {
   const aspect = mark.kind === 'brand' ? mark.logo.aspect : mark.aspect;
@@ -141,14 +145,14 @@ export function MarkImage({ mark, name, width, height, area }: { mark: Mark; nam
   w *= shrink;
   h *= shrink;
   if (mark.kind === 'brand') {
-    return <Image source={LOGO_IMAGES[mark.logo.slug]} style={{ width: w, height: h }} resizeMode="contain" accessibilityLabel={`${mark.logo.brand} logo`} />;
+    return <Image source={LOGO_IMAGES[mark.logo.slug]} style={[{ width: w, height: h }, styles.onPlate]} resizeMode="contain" accessibilityLabel={`${mark.logo.brand} logo`} />;
   }
   const square = aspect > 0.8 && aspect < 1.25;
   return (
     <Animated.Image
       entering={FADE_IN}
       source={{ uri: mark.uri }}
-      style={{ width: w, height: h, borderRadius: square ? Math.min(w, h) * 0.22 : 0 }}
+      style={[{ width: w, height: h, borderRadius: square ? Math.min(w, h) * 0.22 : 0 }, styles.onPlate]}
       resizeMode="contain"
       accessibilityLabel={`${name} logo`}
     />
@@ -220,6 +224,8 @@ export function LogoCredit({ location }: { location: GymLocation }) {
 }
 
 const styles = themed(() => StyleSheet.create({
+  // CSS's mix-blend-mode in a browser; React Native's own on a phone (new architecture).
+  onPlate: { mixBlendMode: 'multiply' },
   badge: { paddingHorizontal: 8, paddingVertical: 6, marginBottom: 0, alignSelf: 'auto', borderRadius: radius.md },
   plate: {
     alignSelf: 'flex-start',

@@ -23,7 +23,7 @@
 
 import { Platform, StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 import { NEEDS_BUNDLED_FACES, SF_DRAWS } from './typeface';
-import { FREE_LOOK, LOOKS, STANDARD_RADIUS, alpha, contrast, mix, over, readable, type LookId, type LookSpec, type Radii } from './looks';
+import { FREE_LOOK, LOOKS, STANDARD_RADIUS, alpha, contrast, hexToOklch, mix, oklchToHex, over, readable, type LookId, type LookSpec, type Radii } from './looks';
 
 export { FREE_LOOK, LOOK_IDS, LOOKS, type LookId } from './looks';
 
@@ -229,11 +229,15 @@ export function hslHex(hue: number, saturation: number, lightness: number): stri
  */
 export function customAccent(hue: number): { name: string; light: AccentColors; dark: AccentColors } {
   const h = ((Math.round(hue) % 360) + 360) % 360;
-  const vivid = hslHex(h, 72, 50);
+  // The slider's hue is the colour wheel's (where that point's pure colour is); the colour itself is made in
+  // OKLCH at one lightness and chroma, so every hue looks as vivid as the next. Made in HSL, yellows came out
+  // garish and blues sank, before the contrast fix below pulled them about.
+  const wheel = hexToOklch(hslHex(h, 100, 50))?.[2] ?? h;
+  const vivid = oklchToHex(0.6, 0.17, wheel);
   // Buttons: dark enough that white on them reads (4.5 : 1).
   const fill = readable(vivid, ['#FFFFFF'], 'light', 4.6);
   const lightBrand = readable(vivid, ['#FFFFFF', '#F2F2F7'], 'light', 4.6);
-  const darkBrand = readable(hslHex(h, 80, 62), ['#1C1C1E', '#000000', '#2C2C2E'], 'dark', 4.6);
+  const darkBrand = readable(oklchToHex(0.76, 0.15, wheel), ['#1C1C1E', '#000000', '#2C2C2E'], 'dark', 4.6);
   const tones = (brand: string, scheme: Scheme): AccentColors => ({
     brand,
     brandPressed: mix(brand, '#000000', 0.12),
@@ -355,10 +359,15 @@ const WASH: Record<Scheme, Record<GlassLayer, string>> = {
   light: { thin: '255, 255, 255', thick: '248, 248, 251', bar: '248, 248, 251' },
   dark: { thin: '36, 36, 40', thick: '28, 28, 30', bar: '22, 22, 24' },
 };
-/** How solid each layer is at the default, 50%. */
-const WASH_BALANCED: Record<Scheme, Record<GlassLayer, number>> = {
-  light: { thin: 0.8, thick: 0.94, bar: 0.98 },
-  dark: { thin: 0.82, thick: 0.95, bar: 0.98 },
+/**
+ * How solid each layer is at the default, 50%: frosted, so what passes under
+ * a bar, a sheet or a control shows through its blur as soft colour. Android
+ * draws no blur behind (Glass.tsx), so there the glass stays as solid as it
+ * was: a thin wash with no blur under it is hard to read over the map.
+ */
+const WASH_BALANCED: Record<'blur' | 'wash', Record<Scheme, Record<GlassLayer, number>>> = {
+  blur: { light: { thin: 0.72, thick: 0.86, bar: 0.88 }, dark: { thin: 0.74, thick: 0.88, bar: 0.9 } },
+  wash: { light: { thin: 0.8, thick: 0.94, bar: 0.98 }, dark: { thin: 0.82, thick: 0.95, bar: 0.98 } },
 };
 /**
  * And at 100%. Android draws no blur behind its glass (see Glass.tsx), so
@@ -384,12 +393,13 @@ function levelAlpha(level: number, balanced: number, clearest: number): number {
 
 /** How solid a layer is at a level: 1 at 0%, the balance at 50%, the clearest at 100%. */
 export function glassAlpha(layer: GlassLayer, level: number, scheme: Scheme, platform: string = Platform.OS): number {
-  return levelAlpha(level, WASH_BALANCED[scheme][layer], WASH_CLEAREST[platform === 'android' ? 'wash' : 'blur'][scheme][layer]);
+  const kind = platform === 'android' ? 'wash' : 'blur';
+  return levelAlpha(level, WASH_BALANCED[kind][scheme][layer], WASH_CLEAREST[kind][scheme][layer]);
 }
 
-/** A layer's colour at a level. */
-export function glassWash(layer: GlassLayer, level: number, scheme: Scheme): string {
-  return `rgba(${WASH[scheme][layer]}, ${glassAlpha(layer, level, scheme)})`;
+/** A layer's colour at a level, in a look's own tint if it has one (Frost's blues). */
+export function glassWash(layer: GlassLayer, level: number, scheme: Scheme, look: LookId = current.look): string {
+  return `rgba(${(LOOKS[look].wash ?? WASH)[scheme][layer]}, ${glassAlpha(layer, level, scheme)})`;
 }
 
 /**
@@ -398,7 +408,7 @@ export function glassWash(layer: GlassLayer, level: number, scheme: Scheme): str
  * the accent showing through it. At most: see readablePlateAlpha.
  */
 export function plateAlpha(level: number, scheme: Scheme): number {
-  return scheme === 'dark' ? levelAlpha(level, 0.84, 0.62) : levelAlpha(level, 0.82, 0.58);
+  return scheme === 'dark' ? levelAlpha(level, 0.76, 0.62) : levelAlpha(level, 0.74, 0.58);
 }
 
 /**
@@ -432,10 +442,21 @@ export function glowPeak(level: number, scheme: Scheme): number {
  * behind (a dark accent's, at 100%, took grey text under it).
  */
 export function readablePlateAlpha(palette: Palette, level: number, scheme: Scheme): number {
-  const under = mix(palette.groupedBackground, palette.brand, glowPeak(level, scheme));
-  for (let at = plateAlpha(level, scheme); at < 1; at += 0.02) {
-    const behind = mix(under, palette.card, at);
-    if (PLATE_INKS.every(([ink, least]) => contrast(palette[ink], behind) >= least)) return Math.round(at * 1000) / 1000;
+  return clearestReadable(palette, [mix(palette.groupedBackground, palette.brand, glowPeak(level, scheme))], plateAlpha(level, scheme));
+}
+
+/**
+ * The least solid a card can be, from `from` up, with every ink on it
+ * readable over each of the grounds under it (and, on Liquid Glass, under
+ * the light its sheen adds: `lift` of white at its brightest).
+ */
+function clearestReadable(palette: Palette, unders: string[], from: number, lift = 0): number {
+  for (let at = from; at < 1; at += 0.02) {
+    const fine = unders.every((under) => {
+      const behind = mix(mix(under, palette.card, at), '#FFFFFF', lift);
+      return PLATE_INKS.every(([ink, least]) => contrast(palette[ink], behind) >= least);
+    });
+    if (fine) return Math.round(at * 1000) / 1000;
   }
   return 1;
 }
@@ -467,8 +488,8 @@ export function glassLevelName(level: number): string {
  * the page's ground and over a card. A see-through card is skipped:
  * readable() leaves out a ground it can't read.
  */
-function inksOnWashes(palette: Palette, scheme: Scheme): void {
-  const grounds = (wash: string) => [over(palette.groupedBackground, wash), over(palette.card, wash)];
+function inksOnWashes(palette: Palette, scheme: Scheme, more: string[] = []): void {
+  const grounds = (wash: string) => [palette.groupedBackground, palette.card, ...more].map((ground) => over(ground, wash));
   palette.brandOnTint = readable(palette.brand, grounds(palette.brandTint), scheme, 4.6);
   palette.labelSecondaryOnFill = readable(palette.labelSecondary, grounds(palette.fill), scheme, 4.6);
 }
@@ -477,12 +498,12 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
   const dim = dimApplies(scheme, look, dark);
   const palette: Palette = { ...BASE[scheme], ...(dim ? DIM : null), ...ACCENTS[accent][scheme], brandOnTint: '', labelSecondaryOnFill: '' };
   if (dim) for (const key of TEXT_KEYS) palette[key] = readable(palette[key], [DIM.card, DIM.groupedBackground, DIM.cardRaised], scheme, key === 'labelTertiary' ? 3 : 4.6);
-  palette.glassWashThin = glassWash('thin', glass, scheme);
-  palette.glassWashThick = glassWash('thick', glass, scheme);
-  palette.glassWashBar = glassWash('bar', glass, scheme);
+  palette.glassWashThin = glassWash('thin', glass, scheme, look);
+  palette.glassWashThick = glassWash('thick', glass, scheme, look);
+  palette.glassWashBar = glassWash('bar', glass, scheme, look);
   const surfaces = LOOKS[look].surfaces?.(scheme, palette.brand);
-  // Cards on the page are glass too, in the glass look: solid at 0%, clearer as the level rises.
-  const see = LOOKS[look].solid || cleanGlass(glass) === 0 ? 1 : readablePlateAlpha(palette, glass, scheme);
+  // Cards on the page are glass too, in Standard: solid at 0%, clearer as the level rises (Frost's below).
+  const see = LOOKS[look].solid || surfaces || cleanGlass(glass) === 0 ? 1 : readablePlateAlpha(palette, glass, scheme);
   palette.plate = see === 1 ? palette.card : alpha(palette.card, see);
   palette.plateSolid = mix(palette.groupedBackground, palette.card, see);
   const lift = (raised: string) => (scheme === 'dark' ? mix(raised, '#FFFFFF', 0.18) : raised);
@@ -493,9 +514,25 @@ export function paletteFor(scheme: Scheme, accent: AccentId, look: LookId = FREE
   palette.plate = palette.card;
   palette.plateSolid = palette.card;
   palette.segmentRaised = lift(palette.cardRaised);
-  const behind = [surfaces.card, surfaces.groupedBackground, surfaces.background];
+  // A look with a page of its own (Frost) is read over every colour of it too.
+  const tones = LOOKS[look].backdrop?.(scheme, ACCENTS[accent][scheme].brand).tones ?? [];
+  // And Liquid's cards under the light of their sheen, at its brightest.
+  const sheen = LOOKS[look].glassCards ? sheenLift(scheme, glass) : 0;
+  const lifted = sheen > 0 ? [surfaces.card, ...tones].map((ground) => mix(ground, '#FFFFFF', sheen)) : [];
+  const behind = [surfaces.card, surfaces.groupedBackground, surfaces.background, ...tones, ...lifted];
   for (const key of TEXT_KEYS) palette[key] = readable(palette[key], behind, scheme, key === 'labelTertiary' ? 3 : 4.6);
-  inksOnWashes(palette, scheme);
+  // Its cards are glass over that page: solid at 0%, clearer as the level
+  // rises, but never so clear that their text drops below its contrast over
+  // the deepest of the page's blues.
+  const plates = LOOKS[look].plates?.[scheme];
+  if (!plates || cleanGlass(glass) === 0) {
+    inksOnWashes(palette, scheme, tones);
+    return palette;
+  }
+  const at = clearestReadable(palette, tones, levelAlpha(glass, plates.balanced, plates.clearest), sheen);
+  palette.plate = at === 1 ? palette.card : alpha(palette.card, at);
+  palette.plateSolid = mix(surfaces.groupedBackground, palette.card, at);
+  inksOnWashes(palette, scheme, [...tones, ...tones.map((tone) => mix(tone, palette.card, at))]);
   return palette;
 }
 
@@ -532,7 +569,20 @@ export interface Tweaks {
 export const DEFAULT_TWEAKS: Tweaks = { textSize: 'default', bold: false, corners: 'standard', customHue: CUSTOM_HUE_DEFAULT, clock24: false };
 
 let tweaks: Tweaks = DEFAULT_TWEAKS;
+/** Whether Bold text is on: outline icons are drawn in their bold cut to match the heavier words (PIcon). */
+export const boldText = (): boolean => tweaks.bold;
 const textScale = () => TEXT_SIZES.find((size) => size.id === tweaks.textSize)?.scale ?? 1;
+
+/**
+ * The corner for something inside a rounded box, `gap` in from its edge:
+ * the box's corner less the gap, so the two curves run side by side rather
+ * than the inner one bulging toward the outer's. Never under `least`, and
+ * square in a square look.
+ */
+export function concentric(outer: number, gap: number, least = 4): number {
+  if (outer <= 0) return 0;
+  return Math.max(least, outer - gap);
+}
 
 /** The look's corners, rounder or sharper; a pill stays a pill, a phone-shaped sheet stays the phone's shape, a square look stays square. */
 export function cornersFor(base: Radii, corners: CornerStyle): Radii {
@@ -587,10 +637,13 @@ export const glowStrength = (): number => (currentLook().solid ? 0 : cleanGlass(
  * a solid look or at 0% (null). Stronger in dark, where a faint one is lost.
  */
 export function ambientGlow(): ViewStyle | null {
+  if (currentLook().backdrop) return glow.backdrop;
   return glowStrength() === 0 ? null : glow.style;
 }
 /** Made once per change of the theme, not each time a page draws. */
 const glow = themed(() => ({
+  // A look's own page (Frost's blues), whatever the level: at 0% its cards are solid, but the page is still the look's.
+  backdrop: backgroundImage(currentLook().backdrop?.(current.scheme, ACCENTS[current.accent][current.scheme].brand).image ?? 'none'),
   // Round pools (an ellipse takes the page's shape: a band down a tall phone),
   // eased out over three stops so no ring shows where one ends.
   style: backgroundImage(
@@ -663,7 +716,8 @@ export function applyTheme(scheme: Scheme, accent: AccentId, look: LookId = curr
   styleVersion += 1;
   const spec = LOOKS[look];
   Object.assign(radius, cornersFor(spec.radius, tweaks.corners));
-  Object.assign(shadow, spec.shadows?.(scheme, color.brand) ?? standardShadows(scheme, level));
+  const own = spec.shadows?.(scheme, color.brand) ?? standardShadows(scheme, level);
+  Object.assign(shadow, own, { plate: spec.glassCards ? { ...own.plate, ...liquidFace(scheme, level) } : own.plate, rim: smallRim(spec, scheme, level) });
   Object.assign(type, typeScale());
   // A change of Liquid Glass alone draws each screen again in place
   // (useGlassRedraw), its cards and the glow behind them following the
@@ -888,8 +942,48 @@ function standardShadows(scheme: Scheme, level: number = GLASS_DEFAULT): typeof 
   };
 }
 
-/** Shadows in use now. Change in place with the look (hard pixel shadows, bevels, glows). */
-export const shadow: { float: ViewStyle; card: ViewStyle; plate: ViewStyle } = { ...standardShadows('light') };
+/**
+ * The glass edge of a small surface on a page (a chip, a search box, a
+ * segmented control, a text box) in a glass look: light along its top and a
+ * fine line all round, brighter the glassier it is and brightest on Liquid
+ * Glass. None in a solid look or at 0%.
+ */
+function smallRim(look: LookSpec, scheme: Scheme, level: number): ViewStyle {
+  const at = cleanGlass(level) / 100;
+  if (look.solid || at === 0) return {};
+  const k = look.glassCards ? 1.5 : 1;
+  const a = (value: number) => Math.min(1, value * k).toFixed(3);
+  return scheme === 'dark'
+    ? { boxShadow: `inset 0px 1px 0px rgba(255, 255, 255, ${a(0.08 + at * 0.1)}), inset 0px 0px 0px 1px rgba(255, 255, 255, ${a(0.03 + at * 0.05)})` }
+    : { boxShadow: `inset 0px 1px 0px rgba(255, 255, 255, ${a(0.45 + at * 0.4)}), inset 0px 0px 0px 1px rgba(255, 255, 255, ${a(0.15 + at * 0.3)})` };
+}
+
+/**
+ * The most white a Liquid Glass card's sheen lays over it, at its brightest
+ * corner: only counted in dark, where it is lighter behind light text (in
+ * light it only makes dark text stand out more).
+ */
+export function sheenLift(scheme: Scheme, level: number): number {
+  return scheme === 'dark' ? Math.round(0.07 * (0.6 + 0.8 * (cleanGlass(level) / 100)) * 1000) / 1000 : 0;
+}
+
+/**
+ * Liquid Glass on a card's face: light across it from the top corner and a
+ * glint at the far one, and in a browser a blur under it that also deepens
+ * the colours behind, as thick glass does. None at 0%, where cards are solid.
+ */
+function liquidFace(scheme: Scheme, level: number): ViewStyle {
+  const at = cleanGlass(level) / 100;
+  if (at === 0) return {};
+  const k = 0.6 + 0.8 * at;
+  const top = scheme === 'dark' ? sheenLift(scheme, level) : Math.round(0.5 * k * 1000) / 1000;
+  const glint = Math.round((scheme === 'dark' ? 0.04 : 0.2) * k * 1000) / 1000;
+  const sheen = `linear-gradient(160deg, rgba(255, 255, 255, ${top}) 0%, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0) 78%, rgba(255, 255, 255, ${glint}) 100%)`;
+  return { ...backgroundImage(sheen), ...(Platform.OS === 'web' ? ({ backdropFilter: `blur(${Math.round(8 + at * 10)}px) saturate(180%)` } as ViewStyle) : null) };
+}
+
+/** Shadows in use now. Change in place with the look (hard pixel shadows, bevels, glows), and the glass edge of small surfaces. */
+export const shadow: { float: ViewStyle; card: ViewStyle; plate: ViewStyle; rim: ViewStyle } = { ...standardShadows('light'), rim: smallRim(LOOKS[FREE_LOOK], 'light', GLASS_DEFAULT) };
 
 /**
  * Where touches go. Made with StyleSheet.create: in a browser only compiled

@@ -20,6 +20,9 @@
 #   --no-dev-account   leave out the ready-made Pro account (dev@gymgo.test)
 #   --repair           reinstall the packages' links and start with a clean cache, for
 #                      "Unable to resolve …" when the app builds
+#   --gympal           take out a GitHub token saved for GymPal earlier (GitHub retired
+#                      GitHub Models on 30 July 2026) and say how to use a free
+#                      OpenRouter key instead
 #   --doctor           print what's installed and where things stand, for troubleshooting
 #   --path DIR         where GymGO lives (default ~/GymGO)
 #
@@ -46,6 +49,7 @@ auto_update=1
 dev_account=1
 doctor=0
 repair=0
+gympal=0
 pass=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -55,10 +59,11 @@ while [[ $# -gt 0 ]]; do
     --no-dev-account) dev_account=0 ;;
     --doctor) doctor=1 ;;
     --repair) repair=1 ;;
+    --gympal) gympal=1 ;;
     --path) path="$2"; shift ;;
     --team) pass+=("--team" "$2"); shift ;;
     --xcode | --clean | --tunnel | --no-browser) pass+=("$1") ;;
-    -h | --help) sed -n '2,29p' "${BASH_SOURCE[0]:-$0}" 2>/dev/null || true; exit 0 ;;
+    -h | --help) sed -n '2,30p' "${BASH_SOURCE[0]:-$0}" 2>/dev/null || true; exit 0 ;;
     *) echo "Unknown option: $1 (try --help)" >&2; exit 2 ;;
   esac
   shift
@@ -170,6 +175,28 @@ if ! node scripts/check-deps.mjs; then
   [[ " ${pass[*]-} " == *" --clear "* ]] || pass+=("--clear")
 fi
 done_ 'Dependencies ready'
+
+# --- GymPal: GitHub Models is gone; take out a token saved for it ----------
+# An update on 18 Nov 2026 saved a GitHub token for GymPal here, before it
+# turned out GitHub had retired GitHub Models on 30 July 2026.
+if [[ $gympal -eq 1 ]]; then
+  printf '\n'
+  warn 'GitHub retired GitHub Models on 30 July 2026, so GymPal can'"'"'t use a GitHub token.'
+  env_file="$path/apps/server/.env.local"
+  if [[ -f "$env_file" ]] && grep -q '^[[:space:]]*GITHUB_MODELS_TOKEN[[:space:]]*=' "$env_file"; then
+    (
+      umask 077
+      grep -v '^[[:space:]]*GITHUB_MODELS_TOKEN[[:space:]]*=' "$env_file" || true
+    ) > "$env_file.new"
+    mv "$env_file.new" "$env_file"
+    chmod 600 "$env_file"
+    done_ "Took the GitHub token out of $env_file"
+    printf '     Revoke it too: github.com > Settings > Developer settings > Personal access tokens.\n'
+  fi
+  printf '\n  To switch GymPal on, use a free OpenRouter key: README, "GymPal".\n'
+  printf '  Then check it with: pnpm --filter @gymgo/server gympal:check\n\n'
+  exit 0
+fi
 
 # --- Start ---------------------------------------------------------------------
 # A ready-made Pro account, on this computer's own database only (the

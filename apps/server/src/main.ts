@@ -29,6 +29,7 @@ import {
   MAIL_FROM,
   SMTP_URL,
   OPENROUTER_API_KEY,
+  LEFTOVER_GITHUB_MODELS_TOKEN,
   SERPAPI_API_KEY,
   SERPAPI_DAILY_LIMIT,
   WEATHER,
@@ -168,6 +169,9 @@ server.listen(PORT, HOST, () => {
       ? `[server] GymPal: on, free models only (${(chat.models.length ? chat.models : DEFAULT_MODELS).join(', ')})`
       : '[server] GymPal: off (no OPENROUTER_API_KEY set; see README)',
   );
+  if (LEFTOVER_GITHUB_MODELS_TOKEN) {
+    console.log('[server] GymPal: GITHUB_MODELS_TOKEN does nothing. GitHub retired GitHub Models on 30 July 2026. Delete that line from apps/server/.env.local and revoke the token on github.com (Settings > Developer settings > Personal access tokens).');
+  }
   if (chat.ignored.length) console.log(`[server] GymPal: left out ${chat.ignored.join(', ')}, as they aren't free (only ids ending :free are used)`);
   console.log(
     GOOGLE_PLACES_API_KEY

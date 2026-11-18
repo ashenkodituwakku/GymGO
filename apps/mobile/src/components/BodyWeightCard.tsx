@@ -9,7 +9,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { localToday, recentWeighIns, useBodyWeight, weightChange, type WeighIn } from '@/lib/bodyWeight';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, shadow, space, themed, webFocusRing } from '@/lib/theme';
-import { formatWeight, fromKg, parseWeight, toKg, type WeightUnit } from '@/lib/training';
+import { formatWeight, fromKg, parseWeight, toKg, type WeightUnit, tidyWeight } from '@/lib/training';
 import { Icon } from './Icon';
 import { ProgressChart } from './ProgressChart';
 import { Txt } from './ui';
@@ -34,7 +34,8 @@ export function BodyWeightCard({ unit }: { unit: WeightUnit }) {
   const recent = recentWeighIns(list, today);
 
   const save = () => {
-    const value = parseWeight(text);
+    // "72.5 kg", "160 lb" (converted to your unit) and "72,5" read as well as "72.5".
+    const value = parseWeight(tidyWeight(text, unit));
     const kg = typeof value === 'number' ? toKg(value, unit) : null;
     if (kg === null || kg < 20 || kg > 400) {
       haptic.warn();

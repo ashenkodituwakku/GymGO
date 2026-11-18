@@ -19,7 +19,7 @@ import BottomSheet, {
   type BottomSheetHandleProps,
   useBottomSheetSpringConfigs,
 } from '@gorhom/bottom-sheet';
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { ActionSheetIOS, ActivityIndicator, BackHandler, Keyboard, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type TextInputInstance } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -41,9 +41,12 @@ import { useBottomClearance, useOverhang } from '@/lib/layout';
 import { resultFor } from '@/lib/results';
 import { QUICK_BUDGET, SORTS, THIS_AREA, YOUR_LOCATION, applyRelaxation, atPlace, atWorldCity, boxDrift, inArea, moveTo, nameForArea, runSearchShared } from '@/lib/query';
 import { checkTimeZoneSupport } from '@/lib/selfcheck';
-import { CHILD_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { CHILD_TOUCH, NO_TOUCH, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { FiltersContent } from '@/components/FiltersContent';
 import { Glass } from '@/components/Glass';
+import { FOLD_SHIFT, useSidebarInset, useSidebarOpening, useSidebarUnfolded } from '@/components/Sidebar';
+import { mapStyleFor } from '@/lib/mapStyles';
+import { useThemeChoice } from '@/lib/themePrefs';
 import { GoogleModal } from '@/components/GoogleModal';
 import { ChoiceSheet } from '@/components/ChoiceSheet';
 import { GymMap, type GymMapHandle, type MapPin } from '@/components/GymMap';
@@ -60,7 +63,7 @@ import { ResultsContent } from '@/components/ResultsContent';
 import { ReviewsSection } from '@/components/ReviewsSection';
 import { FloatingGlassBackground, FloatingSolidBackground, SHEET_GAP, SHEET_SCROLL_ONLY, SHEET_SIDE, SheetClip, SheetOpener, SheetScrollView } from '@/components/SheetBackground';
 import { CloseButton, ControlCapsule, Txt } from '@/components/ui';
-import { ARRIVE, DROP_IN, FADE_OUT, LEAVE, Pressable, usePressScale } from '@/components/motion';
+import { ARRIVE, DROP_IN, FADE_IN, FADE_OUT, LEAVE, Pressable, usePressScale } from '@/components/motion';
 import { FullVersionNote } from '@/components/FullVersionNote';
 import { WeatherBadge } from '@/components/Weather';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -72,6 +75,13 @@ const PEEK = 150;
 const WIDE = 900;
 const PANEL_WIDTH = 390;
 const PANEL_GAP = 16;
+/**
+ * The least map worth leaving beside the panels. With less room than a
+ * gym's card (or Filters) beside the results and this much map, the card
+ * takes the results' place instead: beside a docked sidebar a third pane
+ * left a sliver of map, and under 1060 points it ran off the window.
+ */
+const MIN_MAP = 360;
 
 // Made once: a component identity that changes would remount the sheet.
 
@@ -119,6 +129,19 @@ function MapScreen() {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
   const wide = Platform.OS === 'web' && width >= WIDE;
+  // How far the docked sidebar (Appearance → Layout → Sidebar) reaches over the map's left edge: here, folded to its capsule.
+  const start = useSidebarInset();
+  // Unfolded from its capsule, the sidebar takes more room: the panels (and what floats beside them)
+  // move across with it, on the same moving value, so the two travel as one.
+  const opening = useSidebarOpening();
+  const unfolded = useSidebarUnfolded();
+  // (Each moving piece carries its own transform: a full-window layer to move them all at once took
+  // every click and drag meant for the map, as a browser loses an animated view's pass-through.)
+  const aside = useAnimatedStyle(() => ({ transform: [{ translateX: (opening?.value ?? 0) * FOLD_SHIFT }] }));
+  // Appearance's map style: Pro's, like the looks (yours until the plan is known, so it doesn't flash Standard).
+  const themeChoice = useThemeChoice();
+  const asideHalf = useAnimatedStyle(() => ({ transform: [{ translateX: ((opening?.value ?? 0) * FOLD_SHIFT) / 2 }] }));
+  const asideLeft = useAnimatedStyle(() => ({ marginLeft: (opening?.value ?? 0) * FOLD_SHIFT }));
 
   // The time-zone self-check runs once; its answer can't change mid-session.
   const selfCheck = useMemo(() => checkTimeZoneSupport(), []);
@@ -896,12 +919,12 @@ function MapScreen() {
 
   const selfCheckBanner = !selfCheck.ok && (
     // Under the status pill and the Search this area row (38 tall, 44 down), not over it.
-    <View style={[styles.selfCheck, { top: insets.top + space[2] + 44 + 38 + space[2] }]}>
+    <Animated.View style={[styles.selfCheck, { top: insets.top + space[2] + 44 + 38 + space[2] }, start > 0 && { left: start + space[4] }, asideLeft]}>
       <Icon name="maybe" size={16} color={color.maybeInk} />
       <Txt variant="footnote" color={color.maybeInk} style={styles.flex}>
         {`This device can’t work out time zones reliably, so guest-hour answers may be an hour out. (${selfCheck.detail})`}
       </Txt>
-    </View>
+    </Animated.View>
   );
 
   // --- Desktop ----------------------------------------------------------------
@@ -909,7 +932,14 @@ function MapScreen() {
   if (wide) {
     // Filters only when asked for, and a card only while there's a gym to show.
     const shown = panel === 'filters' || (panel === 'place' && selected) ? panel : null;
-    const panelsWidth = PANEL_GAP + PANEL_WIDTH + (shown ? PANEL_GAP + PANEL_WIDTH : 0);
+    // The card beside the results when there's room for both and a fair map; otherwise in their
+    // place (closing it shows them again, scrolled where they were).
+    const besideResults = width >= start + PANEL_GAP * 3 + PANEL_WIDTH * 2 + MIN_MAP;
+    const covered = shown !== null && !besideResults;
+    // The sidebar (folded to its capsule here) hovers over the map's left edge: the panels start past it, and end
+    // where it does (the same gap from the window's foot), rather than a tab bar's clearance up.
+    const panelsWidth = start + PANEL_GAP + PANEL_WIDTH + (shown && besideResults ? PANEL_GAP + PANEL_WIDTH : 0);
+    const foot = PANEL_GAP + (start > 0 ? insets.bottom : clearance);
     return (
       <View style={styles.root}>
         {/* The map opens where the search is, so it waits for your country. */}
@@ -920,12 +950,14 @@ function MapScreen() {
             selectedId={selectedId}
             initialCentre={filters.centre}
             topInset={PANEL_GAP}
-            bottomInset={PANEL_GAP + clearance}
-            leftInset={panelsWidth}
+            bottomInset={foot}
+            // Opened, the sidebar's extra room too: the map eases its centre across as the panels slide.
+            leftInset={panelsWidth + (unfolded ? FOLD_SHIFT : 0)}
             showsUserLocation={here !== null}
             userLocation={here?.position ?? null}
             onSelect={openGym}
             onRegionChange={onRegionChange}
+            mapStyle={mapStyleFor(themeChoice.mapStyle, billing.isPro || !billing.planKnown)}
             onMapPress={() => {
               if (panel === 'place') closePlace();
             }}
@@ -934,14 +966,16 @@ function MapScreen() {
           <View style={styles.mapWaiting} />
         )}
 
-        <DesktopPanel left={PANEL_GAP} bottom={PANEL_GAP + clearance}>
+        {/* The panels move across as the sidebar unfolds. */}
+        <DesktopPanel left={start + PANEL_GAP} bottom={foot} hidden={covered} slide={aside}>
           {/* The panel's own heading names the place; the pill comes only to say something more. */}
           {pillNotable && <View style={styles.panelTop}>{statusPill}</View>}
-          <ScrollView keyboardShouldPersistTaps="handled">{results(false)}</ScrollView>
+          {/* It scrolls itself, under its search and quick filters. */}
+          {results(false)}
         </DesktopPanel>
 
         {shown && (
-          <DesktopPanel left={PANEL_GAP * 2 + PANEL_WIDTH} bottom={PANEL_GAP + clearance}>
+          <DesktopPanel left={start + PANEL_GAP + (besideResults ? PANEL_GAP + PANEL_WIDTH : 0)} bottom={foot} slide={aside} arrives>
             {shown === 'place' && selected ? (
               <ScrollView
                 stickyHeaderIndices={[0]}
@@ -974,7 +1008,8 @@ function MapScreen() {
           {controls}
         </View>
         <View style={[CHILD_TOUCH, styles.areaRow, { top: PANEL_GAP, left: panelsWidth + PANEL_GAP, right: PANEL_GAP + 64 }]}>
-          {areaButton}
+          {/* Centred in the map beside the panels, so half as far as they move. */}
+          <Animated.View style={asideHalf}>{areaButton}</Animated.View>
         </View>
         {selfCheckBanner}
         {googleModal}
@@ -1011,6 +1046,7 @@ function MapScreen() {
             userLocation={here?.position ?? null}
             onSelect={openGym}
             onRegionChange={onRegionChange}
+            mapStyle={mapStyleFor(themeChoice.mapStyle, billing.isPro || !billing.planKnown)}
             onMapPress={() => {
               Keyboard.dismiss();
               if (selectedId) closePlace();
@@ -1069,12 +1105,51 @@ function MapScreen() {
 }
 
 /** A floating glass panel down the left of a wide window. */
-function DesktopPanel({ left, bottom, children }: { left: number; bottom: number; children: ReactNode }) {
+function DesktopPanel({
+  left,
+  bottom,
+  hidden = false,
+  arrives = false,
+  slide,
+  children,
+}: {
+  left: number;
+  bottom: number;
+  /** Moving across with the sidebar as it unfolds. */
+  slide?: ComponentProps<typeof Animated.View>['style'];
+  /** Under a card that's taken its place: kept, scrolled where it was, but not seen, reached or read out. */
+  hidden?: boolean;
+  /** Comes and goes (a gym's card, Filters): it fades in and out rather than blinking. */
+  arrives?: boolean;
+  children: ReactNode;
+}) {
+  // Fading out under a card that takes its place, and back up when the card goes, rather than blinking.
+  const shown = useSharedValue(hidden ? 0 : 1);
+  const [gone, setGone] = useState(hidden);
+  useEffect(() => {
+    shown.value = withTiming(hidden ? 0 : 1, hidden ? LEAVE : ARRIVE);
+    if (!hidden) {
+      setGone(false);
+      return;
+    }
+    const timer = setTimeout(() => setGone(true), 200);
+    return () => clearTimeout(timer);
+  }, [hidden, shown]);
+  const fade = useAnimatedStyle(() => ({ opacity: shown.value }));
+  // Two layers: the outer moves with the sidebar, the inner fades in and out (a browser's fade-in
+  // would take over the outer's movement while it runs).
   return (
-    <View style={[styles.panel, { left, bottom, width: PANEL_WIDTH }]}>
-      <Glass kind="sheet" style={StyleSheet.absoluteFill} />
-      {children}
-    </View>
+    <Animated.View
+      style={[styles.panelPlace, { left, bottom, width: PANEL_WIDTH }, slide, gone && styles.panelHidden]}
+      aria-hidden={hidden || undefined}
+      accessibilityElementsHidden={hidden}
+      importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
+    >
+      <Animated.View entering={arrives ? FADE_IN : undefined} exiting={arrives ? FADE_OUT : undefined} style={[StyleSheet.absoluteFill, styles.panel, !arrives && fade]}>
+        <Glass kind="sheet" style={StyleSheet.absoluteFill} />
+        {children}
+      </Animated.View>
+    </Animated.View>
   );
 }
 
@@ -1363,14 +1438,15 @@ const styles = themed(() => StyleSheet.create({
   pillDot: { width: 7, height: 7, borderRadius: 3.5 },
   pillText: face('medium'),
 
+  panelPlace: { position: 'absolute', top: PANEL_GAP },
   panel: {
-    position: 'absolute',
-    top: PANEL_GAP,
     borderRadius: radius.xl + 4,
     borderCurve: 'continuous',
     overflow: 'hidden',
     ...shadow.float,
   },
+  // Out of sight once faded, and in a browser out of the Tab order too (visibility), while keeping where it was scrolled.
+  panelHidden: { opacity: 0, pointerEvents: 'none', ...(Platform.OS === 'web' ? ({ visibility: 'hidden' } as object) : null) },
   panelTop: { paddingHorizontal: space[4], paddingTop: space[4], paddingBottom: space[2] },
   panelClose: { alignItems: 'flex-end', paddingHorizontal: space[4], paddingTop: space[4] },
   desktopControls: { position: 'absolute', right: PANEL_GAP },

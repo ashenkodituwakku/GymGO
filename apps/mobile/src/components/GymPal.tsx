@@ -30,12 +30,13 @@
  * in the chat as it opens and with each answer; otherwise it keeps still, so
  * nothing in the corner of your eye moves. Still with Reduce Motion.
  *
- * Answers come from a free AI model through the GymGO server
+ * Answers come from an AI model through the GymGO server
  * (apps/server/src/gymPal.ts), which hands the model GymPal's guide to the
- * app and the rules about real gyms' facts. Until it can answer (the
- * website, with no server behind it, or a server without the owner's
- * OpenRouter key), each question gets GymPal's apology that it's still
- * being set up; once the key is in, the next question goes through.
+ * app and the rules about real gyms' facts, through the AI service the
+ * server names (OpenRouter; the note under the box says so). Until it can
+ * answer (the website, with no server behind it, or a server without the
+ * owner's OpenRouter key), each question gets GymPal's apology that it's
+ * still being set up; once the key is in, the next question goes through.
  *
  * His tab or button keeps out of the way where the corner is busy: a workout
  * in progress (its rest timer sits there), the welcome tour, and the screens
@@ -65,7 +66,6 @@ import Animated, {
   cancelAnimation,
   runOnJS,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withDelay,
   withRepeat,
@@ -85,12 +85,13 @@ import { useDialogName } from '@/lib/dialogName';
 import { haptic } from '@/lib/haptics';
 import { tabBarBottom } from '@/lib/layout';
 import { useThemeChoice } from '@/lib/themePrefs';
-import { MENU_BUTTON, SIDEBAR_WIDTH, navMode } from '@/lib/navLayout';
+import { MENU_BUTTON, navMode, sidebarInset } from '@/lib/navLayout';
+import { FOLD_SHIFT, useSidebarUnfolded } from './Sidebar';
 import { LIMITED } from '@/lib/limited';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
 import { Icon } from './Icon';
-import { POP_IN, Pressable, usePressScale } from './motion';
+import { ARRIVE_CURVE, POP_IN, Pressable, useCalm, usePressScale } from './motion';
 import { Toggle } from './Toggle';
 import { CloseButton, Txt } from './ui';
 
@@ -143,9 +144,10 @@ export function GymPal() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   // How and on which side he waits, and the layout (Appearance).
-  const { gymPalSide: side, gymPalButton: button, layout } = useThemeChoice();
+  const { gymPalSide: side, gymPalButton: button, layout, foldOnMap } = useThemeChoice();
   const { width } = useWindowDimensions();
   const mode = navMode(layout, width);
+  const sidebarUnfolded = useSidebarUnfolded();
   const { billing, openPro } = useApp();
   const pro = billing.isPro;
   const [open, setOpen] = useState(false);
@@ -154,6 +156,8 @@ export function GymPal() {
   const [pending, setPending] = useState(false);
   const [problem, setProblem] = useState<{ text: string; toPro?: boolean } | null>(null);
   const [state, setState] = useState<State>('unknown');
+  // Where chats go, as the server says (an older server doesn't: OpenRouter, as it was then).
+  const [service, setService] = useState('OpenRouter');
   const [topic, setTopic] = useState<Topic | null>(null);
   const [useLog, setUseLog] = useState(false);
   // Pro ended: the log stays home.
@@ -167,7 +171,9 @@ export function GymPal() {
     if (!apiBase()) next = 'off';
     else {
       try {
-        next = (await api.gymPal()).on ? 'on' : 'off';
+        const status = await api.gymPal();
+        next = status.on ? 'on' : 'off';
+        if (status.service) setService(status.service);
       } catch (error) {
         next = error instanceof OfflineError ? 'away' : 'off';
       }
@@ -300,7 +306,8 @@ export function GymPal() {
         ? insets.bottom + EDGE
         : tabBarBottom(insets.bottom) + (besideBar ? (TAB_BAR - BUTTON) / 2 : TAB_BAR + 12);
   // The screen's edge on that side (beside a docked sidebar on the left), and the corner button's place in from it.
-  const flush = side === 'left' ? insets.left + (mode === 'docked' && TABS.has(pathname) ? SIDEBAR_WIDTH : 0) : insets.right;
+  // On the left: clear of the docked sidebar (its capsule on the map, or all of it once unfolded there).
+  const flush = side === 'left' ? insets.left + sidebarInset(mode, pathname, true, foldOnMap) + (sidebarUnfolded ? FOLD_SHIFT : 0) : insets.right;
   const show = () => setOpen(true);
 
   return (
@@ -318,6 +325,7 @@ export function GymPal() {
           pending={pending}
           problem={problem}
           state={state}
+          service={service}
           topic={topic}
           suggestions={suggestionsFor(pathname, useLog && pro)}
           // Pro's switch, where there's Pro to have: not on the website.
@@ -351,7 +359,7 @@ export function GymPal() {
  * what it stands for is in the label of the button or heading it's on.
  */
 export function GymPalMark({ size, cheer = 0, still = false }: { size: number; cheer?: number; still?: boolean }) {
-  const calm = useReducedMotion() || still;
+  const calm = useCalm() || still;
   const lift = useSharedValue(0);
 
   useEffect(() => {
@@ -442,7 +450,7 @@ function EdgeTab({ bottom, side, edge, onOpen }: { bottom: number; side: 'right'
   const right = side === 'right';
   return (
     <Animated.View
-      entering={FadeIn.duration(240).reduceMotion(ReduceMotion.System)}
+      entering={FadeIn.duration(240).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System)}
       style={[styles.edgeTab, right ? [styles.edgeTabRight, { right: edge }] : [styles.edgeTabLeft, { left: edge }], { bottom }, follow]}
     >
       <GestureDetector gesture={gesture}>
@@ -494,6 +502,7 @@ function Chat({
   pending,
   problem,
   state,
+  service,
   topic,
   suggestions,
   log,
@@ -512,6 +521,8 @@ function Chat({
   pending: boolean;
   problem: { text: string; toPro?: boolean } | null;
   state: State;
+  /** The AI service chats go to, as the server says. */
+  service: string;
   topic: Topic | null;
   suggestions: string[];
   /** Pro's training-log switch: whether you have Pro, whether it's on, and how to change it; none where there's no Pro. */
@@ -553,11 +564,11 @@ function Chat({
   return (
     <View style={StyleSheet.absoluteFill} ref={dialogName}>
       {/* Tapping outside closes it, as any sheet; a screen reader closes it with Close. */}
-      <Animated.View entering={FadeIn.duration(180).reduceMotion(ReduceMotion.System)} style={StyleSheet.absoluteFill}>
+      <Animated.View entering={FadeIn.duration(180).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System)} style={StyleSheet.absoluteFill}>
         <Pressable style={[StyleSheet.absoluteFill, styles.scrim, wide && styles.scrimLight]} onPress={onClose} accessible={false} importantForAccessibility="no" />
       </Animated.View>
       <Animated.View
-        entering={FadeInDown.duration(260).reduceMotion(ReduceMotion.System)}
+        entering={FadeInDown.duration(260).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System)}
         style={placed}
         // The Modal is the dialog itself (in a browser, too); this keeps a screen reader inside it on iPhone.
         accessibilityViewIsModal
@@ -705,10 +716,10 @@ function Chat({
             </Pressable>
           </View>
           <Txt variant="caption" color={color.labelTertiary} style={styles.small}>
-            {/* OpenRouter only once something is sent there. */}
+            {/* The AI service named only once something is sent there. */}
             {state === 'off'
               ? 'GymPal is AI and can be wrong; a gym’s own page has its facts. Not medical advice.'
-              : 'GymPal is AI and can be wrong; a gym’s own page has its facts. Chats go to OpenRouter, an AI service, so leave out personal details. Not medical advice.'}
+              : `GymPal is AI and can be wrong; a gym’s own page has its facts. Chats go to ${service}, an AI service, so leave out personal details. Not medical advice.`}
           </Txt>
         </KeyboardAvoidingView>
       </Animated.View>
@@ -767,7 +778,7 @@ const plain = (text: string) => text.replace(/\*\*/g, '').replace(/^#{1,6}\s+/gm
 
 /** Three dots while GymPal thinks; still ones with Reduce Motion. */
 function Typing() {
-  const calm = useReducedMotion();
+  const calm = useCalm();
   return (
     <View style={[styles.bubble, styles.theirs, styles.typing]} accessible accessibilityLabel="GymPal is typing">
       {[0, 1, 2].map((index) => (

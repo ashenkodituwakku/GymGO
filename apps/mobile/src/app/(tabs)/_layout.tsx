@@ -40,7 +40,7 @@ import { TabBarInset, tabBarBottom } from '@/lib/layout';
 import { CHILD_TOUCH, color, currentTheme, radius, shadow, solidSurfaces, themed } from '@/lib/theme';
 import { Avatar } from '@/components/Avatar';
 import { BrandFill } from '@/components/BrandFill';
-import { DockedSidebar, MenuButton, SidebarDrawer } from '@/components/Sidebar';
+import { ClearOfSidebar, MenuButton, SidebarDrawer } from '@/components/Sidebar';
 import { MENU_BUTTON, navMode } from '@/lib/navLayout';
 import { mayPrefetch, type ConnectionHint } from '@/lib/prefetch';
 import { useThemeChoice } from '@/lib/themePrefs';
@@ -134,8 +134,8 @@ export default function TabsLayout() {
   const clearance = keyboardUp ? 8 : mode === 'tabs' ? bottom + BAR_HEIGHT + 8 : mode === 'drawer' ? bottom + MENU_BUTTON + 8 : insets.bottom + 8;
   return (
     <TabBarInset.Provider value={clearance}>
-      <Tabs style={[styles.root, mode === 'docked' && styles.rootDocked]}>
-        {mode === 'docked' && <DockedSidebar />}
+      {/* Docked, the sidebar is beside every page, tabs or not (app/_layout.tsx). */}
+      <Tabs style={styles.root}>
         {/* Its own container defaults to never shrinking, which lets a
             screen grow past the window so nothing scrolls. */}
         <TabSlot
@@ -146,11 +146,15 @@ export default function TabsLayout() {
             defaultTabsSlotRender(
               {
                 ...descriptor,
-                render: () => (
-                  <Redrawn kind="tab" focused={options.isFocused}>
-                    <HeldWhileAway here={options.isFocused}>{descriptor.render()}</HeldWhileAway>
-                  </Redrawn>
-                ),
+                render: () => {
+                  const tab = (
+                    <Redrawn kind="tab" focused={options.isFocused}>
+                      <HeldWhileAway here={options.isFocused}>{descriptor.render()}</HeldWhileAway>
+                    </Redrawn>
+                  );
+                  // Clear of a docked sidebar; Explore's map runs on under it, its panels moved in.
+                  return descriptor.route.name === 'explore' ? tab : <ClearOfSidebar>{tab}</ClearOfSidebar>;
+                },
               },
               options,
             )
@@ -229,7 +233,7 @@ function GlassTabBar({ bottom }: { bottom: number }) {
       runOnJS(go)(target);
     })
     .onFinalize(() => {
-      lift.value = withTiming(0, { ...ARRIVE, duration: 320 });
+      lift.value = withTiming(0, { ...ARRIVE, duration: 240 });
     });
 
   const lensStyle = useAnimatedStyle(() => ({
@@ -350,7 +354,6 @@ const round = (size: number) => Math.min(size / 2, radius.pill);
 
 const styles = themed(() => StyleSheet.create({
   root: { flex: 1 },
-  rootDocked: { flexDirection: 'row' },
   slot: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 },
   hidden: { display: 'none' },
   dock: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },

@@ -18,11 +18,12 @@ import type { RecentPlace } from '@/lib/recentPlaces';
 import { EMPTY, PLACEHOLDER_SHORT, mapPrompt, TIER, lookupLine, searchPrompt, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
 import type { Lookup } from '@/lib/app-state';
 import { QUICK_BUDGET, SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
-import { NO_WEB_OUTLINE, color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { NO_WEB_OUTLINE, color, concentric, face, radius, shadow, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { MarkImage, useGymMark } from './BrandLogo';
 import { GymRow } from './GymRow';
 import { GymRowsSkeleton } from './Skeleton';
+import { edgeFade } from './edgeFade';
 import { Icon } from './Icon';
 import { Chip, PrimaryButton, TIER_COLOUR, Txt } from './ui';
 import { AdSlot } from './AdSlot';
@@ -135,210 +136,220 @@ export function ResultsContent({
   // leaving it, so a tap on one of them lands before they go.
   const [searching, setSearching] = useState(false);
   const showRecent = searching && !typed && recentPlaces.length > 0 && onPickRecentPlace !== undefined;
+  // In the wide panel: the results scrolled under the search, so a line marks where they're cut.
+  const [scrolled, setScrolled] = useState(false);
 
-  return (
-    <View style={styles.wrap}>
-      {/* Search --------------------------------------------------------- */}
-      <View style={styles.searchRow}>
-        <View style={[styles.search, focused && styles.searchFocused]}>
-          <Icon name="search" size={16} color={color.labelSecondary} />
-          <SearchInput
-            ref={searchRef as never}
-            value={query}
-            onChangeText={onQueryChange}
-            onFocus={() => {
-              // In a browser, where the keyboard can land here, show it; phones draw no ring.
-              if (Platform.OS === 'web') setFocused(true);
-              setSearching(true);
-              onSearchFocus();
-            }}
-            onBlur={() => {
-              setFocused(false);
-              setTimeout(() => setSearching(false), 250);
-            }}
-            onSubmitEditing={onSubmitSearch}
-            placeholder={narrow ? PLACEHOLDER_SHORT : mapPrompt(home)}
-            placeholderTextColor={color.labelTertiary}
-            returnKeyType="search"
-            autoCorrect={false}
-            style={styles.input}
-            accessibilityLabel={searchPrompt(home)}
-          />
-        </View>
-        <Pressable
-          onPress={() => {
-            haptic.tap();
-            onOpenFilters();
+  const search = (
+    <View style={styles.searchRow}>
+      <View style={[styles.search, focused && styles.searchFocused]}>
+        <Icon name="search" size={16} color={color.labelSecondary} />
+        <SearchInput
+          ref={searchRef as never}
+          value={query}
+          onChangeText={onQueryChange}
+          onFocus={() => {
+            // In a browser, where the keyboard can land here, show it; phones draw no ring.
+            if (Platform.OS === 'web') setFocused(true);
+            setSearching(true);
+            onSearchFocus();
           }}
-          accessibilityRole="button"
-          accessibilityLabel={filterCount ? `Filters, ${filterCount} on` : 'Filters'}
-          style={({ pressed }) => [styles.filterButton, pressed && { opacity: 0.7 }]}
-        >
-          <Icon name="filters" size={17} color={color.brand} />
-          {filterCount > 0 && (
-            <View style={styles.badge}>
-              <Txt variant="caption" color={color.onBrand} style={styles.badgeText}>
-                {filterCount}
+          onBlur={() => {
+            setFocused(false);
+            setTimeout(() => setSearching(false), 250);
+          }}
+          onSubmitEditing={onSubmitSearch}
+          placeholder={narrow ? PLACEHOLDER_SHORT : mapPrompt(home)}
+          placeholderTextColor={color.labelTertiary}
+          returnKeyType="search"
+          autoCorrect={false}
+          style={styles.input}
+          accessibilityLabel={searchPrompt(home)}
+        />
+      </View>
+      <Pressable
+        onPress={() => {
+          haptic.tap();
+          onOpenFilters();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={filterCount ? `Filters, ${filterCount} on` : 'Filters'}
+        // 40 points to see, 48 to hit: bigger targets are quicker to reach.
+        hitSlop={4}
+        style={({ pressed }) => [styles.filterButton, pressed && { opacity: 0.7 }]}
+      >
+        <Icon name="filters" size={17} color={color.brand} />
+        {filterCount > 0 && (
+          <View style={styles.badge}>
+            <Txt variant="caption" color={color.onBrand} style={styles.badgeText}>
+              {filterCount}
+            </Txt>
+          </View>
+        )}
+      </Pressable>
+      <Pressable
+        onPress={() => {
+          haptic.tap();
+          onOpenAccount();
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={me ? 'Your account' : LIMITED ? 'Your profile' : 'Sign in'}
+        hitSlop={4}
+        style={({ pressed }) => [styles.avatar, me ? styles.avatarSignedIn : null, pressed && { opacity: 0.7 }]}
+      >
+        {me ? (
+          <Avatar account={me} size={40} variant="headline" />
+        ) : (
+          <Icon name="account" size={22} color={color.brand} />
+        )}
+      </Pressable>
+    </View>
+  );
+
+  const recent = showRecent && (
+      <Animated.View entering={FADE_IN} exiting={FADE_OUT} style={styles.suggestions}>
+        <View style={styles.recentHead}>
+          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.flexOne}>
+            RECENT
+          </Txt>
+          <Pressable
+            onPress={() => {
+              haptic.tap();
+              onClearRecentPlaces?.();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Clear recent places"
+            hitSlop={8}
+          >
+            <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+              Clear
+            </Txt>
+          </Pressable>
+        </View>
+        {recentPlaces.map((place) => (
+          <Pressable
+            key={`${place.countryCode}:${place.placeName}`}
+            onPress={() => onPickRecentPlace?.(place)}
+            style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
+            accessibilityRole="button"
+            accessibilityLabel={`${place.placeName}, searched before`}
+          >
+            <View style={[styles.suggestionGlyph, styles.lookGlyph]}>
+              <Icon name="history" size={16} color={color.labelSecondary} />
+            </View>
+            <View style={styles.suggestionText}>
+              <Txt variant="body" numberOfLines={1}>
+                {place.placeName}
+              </Txt>
+              <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                {countryName(place.countryCode)}
               </Txt>
             </View>
-          )}
-        </Pressable>
-        <Pressable
-          onPress={() => {
-            haptic.tap();
-            onOpenAccount();
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={me ? 'Your account' : LIMITED ? 'Your profile' : 'Sign in'}
-          style={({ pressed }) => [styles.avatar, me ? styles.avatarSignedIn : null, pressed && { opacity: 0.7 }]}
-        >
-          {me ? (
-            <Avatar account={me} size={40} variant="headline" />
-          ) : (
-            <Icon name="account" size={22} color={color.brand} />
-          )}
-        </Pressable>
-      </View>
+          </Pressable>
+        ))}
+      </Animated.View>
+    );
 
-      {showRecent && (
-        <Animated.View entering={FADE_IN} exiting={FADE_OUT} style={styles.suggestions}>
-          <View style={styles.recentHead}>
-            <Txt variant="eyebrow" color={color.labelSecondary} style={styles.flexOne}>
-              RECENT
-            </Txt>
+  const suggestionList = (suggestions.length > 0 || offerLookUp) && (
+      <View style={styles.suggestions}>
+        {suggestions.map((hit) => {
+          const row = suggestionRow(hit, home);
+          return (
             <Pressable
-              onPress={() => {
-                haptic.tap();
-                onClearRecentPlaces?.();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Clear recent places"
-              hitSlop={8}
-            >
-              <Txt variant="footnote" color={color.brand} style={face('semibold')}>
-                Clear
-              </Txt>
-            </Pressable>
-          </View>
-          {recentPlaces.map((place) => (
-            <Pressable
-              key={`${place.countryCode}:${place.placeName}`}
-              onPress={() => onPickRecentPlace?.(place)}
+              key={suggestionKey(hit)}
+              onPress={() => onPickSuggestion(hit)}
               style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
               accessibilityRole="button"
-              accessibilityLabel={`${place.placeName}, searched before`}
+              accessibilityLabel={`${row.title}, ${row.label}`}
             >
-              <View style={[styles.suggestionGlyph, styles.lookGlyph]}>
-                <Icon name="history" size={16} color={color.labelSecondary} />
-              </View>
-              <View style={styles.suggestionText}>
-                <Txt variant="body" numberOfLines={1}>
-                  {place.placeName}
-                </Txt>
-                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-                  {countryName(place.countryCode)}
-                </Txt>
-              </View>
-            </Pressable>
-          ))}
-        </Animated.View>
-      )}
-
-      {(suggestions.length > 0 || offerLookUp) && (
-        <View style={styles.suggestions}>
-          {suggestions.map((hit) => {
-            const row = suggestionRow(hit, home);
-            return (
-              <Pressable
-                key={suggestionKey(hit)}
-                onPress={() => onPickSuggestion(hit)}
-                style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
-                accessibilityRole="button"
-                accessibilityLabel={`${row.title}, ${row.label}`}
-              >
-                {hit.kind === 'gym' ? (
-                  <GymGlyph location={hit.record.location} />
-                ) : (
-                  <View style={styles.suggestionGlyph}>
-                    <Icon name="pin" size={16} color={color.onBrand} />
-                  </View>
-                )}
-                <View style={styles.suggestionText}>
-                  <Txt variant="body" numberOfLines={1}>
-                    {row.title}
-                  </Txt>
-                  <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-                    {row.detail}
-                  </Txt>
+              {hit.kind === 'gym' ? (
+                <GymGlyph location={hit.record.location} />
+              ) : (
+                <View style={styles.suggestionGlyph}>
+                  <Icon name="pin" size={16} color={color.onBrand} />
                 </View>
-              </Pressable>
-            );
-          })}
-          {offerLookUp && (
-            <Pressable
-              onPress={() => {
-                haptic.select();
-                onLookUp();
-              }}
-              style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
-              accessibilityRole="button"
-              accessibilityLabel={`Look up ${typed} anywhere in the world`}
-            >
-              <View style={[styles.suggestionGlyph, styles.lookGlyph]}>
-                <Icon name="search" size={16} color={color.labelSecondary} />
-              </View>
+              )}
               <View style={styles.suggestionText}>
                 <Txt variant="body" numberOfLines={1}>
-                  {`Look up “${typed}”`}
+                  {row.title}
                 </Txt>
                 <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-                  {suggestions.length ? 'Not listed? Find it anywhere in the world' : 'Find it anywhere in the world'}
+                  {row.detail}
                 </Txt>
               </View>
             </Pressable>
-          )}
-        </View>
-      )}
-
-      {/* Quick filters -------------------------------------------------- */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chips}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Chip
-          icon="sort"
-          label={SORTS.find((item) => item.key === filters.sort)?.label ?? 'Best match'}
-          selected={filters.sort !== 'best_match'}
-          onPress={onSort}
-          action
-          accessibilityLabel={`Sorted by ${SORTS.find((item) => item.key === filters.sort)?.label ?? 'best match'}. Change`}
-        />
-        <Chip
-          icon="clock"
-          label={timeLabel(filters.visitMinuteOfDay)}
-          selected={false}
-          onPress={onOpenFilters}
-          action
-          accessibilityLabel={`Visiting ${visitWhen(filters.visitMinuteOfDay, visitIsLater(filters))}. Change time`}
-        />
-        {/* The budget that's on, set from anywhere (Home's tile, Filters); tapping it clears it. */}
-        {tracksPrices(filters.countryCode) && (
-          <Chip
-            label={`Under ${moneyLabel(filters.budgetMinor ?? localBudget(QUICK_BUDGET, filters.countryCode), filters.countryCode)}`}
-            selected={filters.budgetMinor !== null}
-            onPress={onToggleBudget}
-          />
+          );
+        })}
+        {offerLookUp && (
+          <Pressable
+            onPress={() => {
+              haptic.select();
+              onLookUp();
+            }}
+            style={({ pressed }) => [styles.suggestion, pressed && { backgroundColor: color.fill }]}
+            accessibilityRole="button"
+            accessibilityLabel={`Look up ${typed} anywhere in the world`}
+          >
+            <View style={[styles.suggestionGlyph, styles.lookGlyph]}>
+              <Icon name="search" size={16} color={color.labelSecondary} />
+            </View>
+            <View style={styles.suggestionText}>
+              <Txt variant="body" numberOfLines={1}>
+                {`Look up “${typed}”`}
+              </Txt>
+              <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                {suggestions.length ? 'Not listed? Find it anywhere in the world' : 'Find it anywhere in the world'}
+              </Txt>
+            </View>
+          </Pressable>
         )}
-        <Chip label={HOURS_LABELS.late} selected={filters.hours === 'late'} onPress={() => onToggleHours('late')} />
-        <Chip label={HOURS_LABELS.allDay} selected={filters.hours === 'allDay'} onPress={() => onToggleHours('allDay')} />
-        <Chip label="Squat rack" selected={filters.equipment.includes('squat_rack')} onPress={() => onToggleEquipment('squat_rack')} />
-        <Chip label="Dumbbells" selected={filters.equipment.includes('dumbbells')} onPress={() => onToggleEquipment('dumbbells')} />
-        <Chip label="Cables" selected={filters.equipment.includes('cable_station')} onPress={() => onToggleEquipment('cable_station')} />
-        <Chip label="Platform" selected={filters.equipment.includes('lifting_platform')} onPress={() => onToggleEquipment('lifting_platform')} />
-      </ScrollView>
+      </View>
+    );
 
+  // Quick filters, in a row that scrolls sideways.
+  const chips = (
+    <ScrollView
+      {...edgeFade()}
+      horizontal
+      style={styles.chipsRow}
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.chips}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Chip
+        icon="sort"
+        label={SORTS.find((item) => item.key === filters.sort)?.label ?? 'Best match'}
+        selected={filters.sort !== 'best_match'}
+        onPress={onSort}
+        action
+        accessibilityLabel={`Sorted by ${SORTS.find((item) => item.key === filters.sort)?.label ?? 'best match'}. Change`}
+      />
+      <Chip
+        icon="clock"
+        label={timeLabel(filters.visitMinuteOfDay)}
+        selected={false}
+        onPress={onOpenFilters}
+        action
+        accessibilityLabel={`Visiting ${visitWhen(filters.visitMinuteOfDay, visitIsLater(filters))}. Change time`}
+      />
+      {/* The budget that's on, set from anywhere (Home's tile, Filters); tapping it clears it. */}
+      {tracksPrices(filters.countryCode) && (
+        <Chip
+          label={`Under ${moneyLabel(filters.budgetMinor ?? localBudget(QUICK_BUDGET, filters.countryCode), filters.countryCode)}`}
+          selected={filters.budgetMinor !== null}
+          onPress={onToggleBudget}
+        />
+      )}
+      <Chip label={HOURS_LABELS.late} selected={filters.hours === 'late'} onPress={() => onToggleHours('late')} />
+      <Chip label={HOURS_LABELS.allDay} selected={filters.hours === 'allDay'} onPress={() => onToggleHours('allDay')} />
+      <Chip label="Squat rack" selected={filters.equipment.includes('squat_rack')} onPress={() => onToggleEquipment('squat_rack')} />
+      <Chip label="Dumbbells" selected={filters.equipment.includes('dumbbells')} onPress={() => onToggleEquipment('dumbbells')} />
+      <Chip label="Cables" selected={filters.equipment.includes('cable_station')} onPress={() => onToggleEquipment('cable_station')} />
+      <Chip label="Platform" selected={filters.equipment.includes('lifting_platform')} onPress={() => onToggleEquipment('lifting_platform')} />
+    </ScrollView>
+  );
+
+  const body = (
+    <>
       {/* Summary -------------------------------------------------------- */}
       <View style={styles.summary}>
         <Txt variant="title2">
@@ -461,7 +472,8 @@ export function ResultsContent({
                 </Txt>
               </View>
             )}
-            <View style={styles.list}>
+            {/* Concentric with what it sits in: the phone's sheet, or the wide panel (explore.tsx), 16 in from either. */}
+            <View style={[styles.list, { borderRadius: concentric(inSheet ? radius.sheet : radius.xl + 4, space[4]) }]}>
               {group.list.map((result, index) => (
                 <Animated.View
                   key={result.record.location.id}
@@ -495,6 +507,47 @@ export function ResultsContent({
           {EMPTY.crowd}
         </Txt>
       </View>
+    </>
+  );
+
+  if (!inSheet) {
+    // Beside the map on a wide screen: the search and quick filters stay at the top of the panel,
+    // and the results scroll under them, clipped at a line, rather than up into the panel's corners.
+    return (
+      <View style={styles.pane}>
+        <View style={[styles.paneHead, scrolled && styles.paneHeadScrolled]}>
+          {search}
+          {(recent || suggestionList) && (
+            <ScrollView style={styles.paneSuggestions} keyboardShouldPersistTaps="handled">
+              {recent}
+              {suggestionList}
+            </ScrollView>
+          )}
+          {chips}
+        </View>
+        <ScrollView
+          style={styles.paneBody}
+          contentContainerStyle={styles.wrap}
+          keyboardShouldPersistTaps="handled"
+          onScroll={(event) => {
+            const past = event.nativeEvent.contentOffset.y > 4;
+            if (past !== scrolled) setScrolled(past);
+          }}
+          scrollEventThrottle={32}
+        >
+          {body}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.wrap}>
+      {search}
+      {recent}
+      {suggestionList}
+      {chips}
+      {body}
     </View>
   );
 }
@@ -562,6 +615,13 @@ const styles = themed(() => StyleSheet.create({
   lockText: { textAlign: 'center' },
   lockButtons: { alignSelf: 'stretch', gap: space[2], marginTop: space[2] },
   wrap: { paddingBottom: space[8] },
+  // The wide panel: a fixed head (search, suggestions, quick filters) over the scrolling results.
+  pane: { flex: 1 },
+  paneHead: { paddingTop: space[3], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'transparent', flexShrink: 1 },
+  paneHeadScrolled: { borderBottomColor: color.separator },
+  // Suggestions give way (and scroll) before the head outgrows a short window.
+  paneSuggestions: { flexGrow: 0, flexShrink: 1 },
+  paneBody: { flex: 1 },
 
   searchRow: {
     flexDirection: 'row',
@@ -584,6 +644,7 @@ const styles = themed(() => StyleSheet.create({
     // iOS 26 search fields are capsules.
     borderRadius: radius.pill,
     backgroundColor: color.fill,
+    ...shadow.rim,
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
@@ -662,6 +723,8 @@ const styles = themed(() => StyleSheet.create({
   flexOne: { flex: 1 },
 
   chips: { gap: space[2], paddingHorizontal: space[4], paddingVertical: space[3] },
+  // Its full height always, even when a long list of suggestions squeezes the wide panel's head.
+  chipsRow: { flexGrow: 0, flexShrink: 0 },
 
   summary: { paddingHorizontal: space[4], paddingTop: space[1], gap: 2 },
 
@@ -701,9 +764,7 @@ const styles = themed(() => StyleSheet.create({
   },
   list: {
     marginHorizontal: space[4],
-    // Concentric with the sheet's corners, and a little translucent so the
-    // glass reads through at the edges.
-    borderRadius: 26,
+    // A little translucent so the glass reads through at the edges; its corners are set where it's drawn.
     borderCurve: 'continuous',
     backgroundColor: color.cardGlass,
     overflow: 'hidden',

@@ -108,6 +108,9 @@ After that you can run:
   to GymGO's packages and starts the app with a clean cache. The launcher
   already does this by itself when it installs new packages or finds one
   missing, so you shouldn't often need it;
+- `gymgo -GymPal` takes out a GitHub token saved for GymPal by an earlier
+  version (GitHub retired GitHub Models on 30 July 2026, so it does
+  nothing) and points to the OpenRouter steps under GymPal;
 - `gymgo -Tunnel` when the phone isn't on the same Wi-Fi;
 - `gymgo -NoBrowser` to start without opening a browser window;
 - `gymgo -NoDevAccount` to start without the ready-made Pro account.
@@ -179,6 +182,10 @@ echo 'alias gymgo="bash ~/GymGO/scripts/gymgo-mac.sh"' >> ~/.zshrc
 After that, `gymgo` starts everything, and `gymgo --xcode`, `gymgo --tunnel`
 and `gymgo --doctor` work as above.
 
+`gymgo --gympal` takes out a GitHub token saved for GymPal by an earlier
+version (GitHub retired GitHub Models on 30 July 2026) and points to the
+OpenRouter steps under GymPal.
+
 **3. In Xcode:**
 
 1. At the top, next to **GymGO**, pick where to run it: an **iPhone
@@ -245,9 +252,13 @@ switch tabs; it swells under your finger. It's the same bar everywhere: on
 iOS 26 it's made of Apple's own Liquid Glass material, on older iPhones and
 Android the closest blur, and in a browser a glass with real refraction in
 Chrome and Edge (blur only in Safari and Firefox). Every glass surface is
-equally solid on every device (by default buttons 80%, sheets 94%, pinned
-headers 98%): Liquid Glass takes it as its tint and the others as a wash over
-the blur, so the map never shows through more on one phone than another.
+equally solid on every device that blurs behind it (by default buttons 72%,
+sheets 86%, pinned headers 88%, frosted so what passes under them shows as
+soft colour; Android, which draws no blur, keeps 80%, 94% and 98%): Liquid
+Glass takes it as its tint and the others as a wash over the blur, so the map
+never shows through more on one phone than another. In the glass looks
+(Standard, Frost, Liquid) chips, search boxes, segmented controls and text
+boxes have a glass edge too: light along the top and a fine line all round.
 How see-through is yours to set: the **Liquid Glass** percentage in
 Appearance, which also frosts the cards on every page and sets how brightly
 your accent glows behind them.
@@ -257,7 +268,12 @@ your accent glows behind them.
   once you're on a plan (the next day of the template you did last, with a
   Start button), your next trip if there is one, **Machines** and **Trips**
   (below), gyms near you, your saved and recently viewed gyms, then
-  neighbourhoods and other cities as chips.
+  neighbourhoods and other cities as chips. In a browser, with a mouse or
+  trackpad, the card under the pointer drifts a few points towards it and
+  lifts, and in a glass look (Standard, Frost, Liquid) a light follows the
+  pointer across it, behind its words, with its rim catching the light
+  nearest the pointer. With Reduce motion on, the cards stay put and only
+  the light moves.
 - **Explore**: the map with the results sheet, filters, and sorting (best
   match, closest, cheapest, top rated). "Best match" means: gyms that meet
   everything you asked first, then, among the rest, the ones with the fewest
@@ -332,15 +348,29 @@ your accent glows behind them.
   its thumb swells into a lens of glass under your finger, magnifying the
   track, stretches when you move it fast and wobbles back when you let go,
   with a firmer tick at 0, 50 and 100. 0% makes them solid plates; 50% is
-  the default; 100% is the clearest that keeps text readable (Android,
+  the default (cards 74% solid in light, 76% in dark, at least as solid as
+  their text needs); 100% is the clearest that keeps text readable (Android,
   which draws no blur behind its glass, stops a little more solid). The
   screens follow when you let go, each staying where it was scrolled. 0%
   also takes the glow away. With Pro, eleven more accents besides Indigo: Cobalt, Ocean,
   Midnight, Lagoon, Grape, Fuchsia, Rose, Slate and Graphite, plus
   **Rainbow** (a gradient) and **Camo** (a woodland pattern) that paint
   filled buttons, selected chips, the tab bar and the Build a workout card,
-  picked from a grid of swatches. Pro also has eight **looks** that redraw
+  picked from a grid of swatches. Pro also has ten **looks** that redraw
   the whole app, not just its colour:
+  - **Frost**: frosted glass (glassmorphism) on a blue-and-white page,
+    deep navy in dark. Cards are see-through with a fine white edge, and
+    the page's blues show through them; how see-through follows your
+    Liquid Glass level (solid at 0%, never so clear that text drops below
+    WCAG AA over the deepest blue). The glass over the map and the sidebar
+    is tinted the page's blue in dark.
+  - **Liquid**: everything in Liquid Glass. Clear cards (42% solid at the
+    default, 28% at 100%, more where their text needs it) with bright,
+    light-catching edges and a sheen across them, over soft pools of your
+    accent and the colours either side of it; in a browser each card also
+    blurs and deepens what's behind it. Filled buttons are tinted glass
+    with a shine along the top, chips and search boxes have glass edges,
+    and the corners are rounder, like iOS 26.
   - **Soft**: cards pressed out of the page itself, lit from the top left
     with a soft shadow below, rounder corners, set in Nunito.
   - **Paper**: cream pages (charcoal in dark), ink hairlines round cards,
@@ -368,28 +398,55 @@ your accent glows behind them.
   keyboards and menus follow too.
 
   More of it is yours to set, kept on the device with the rest:
-  - **Text** (everyone): Smaller, Default, Larger or Largest (90%, 100%,
+  - **Text** (everyone), from four "Aa" tiles: Smaller, Default, Larger or Largest (90%, 100%,
     112% and 125% of every text style, in every look), and **Bold text**,
     which sets each weight one step heavier. A sample card (a gym's name
     and hours) shows it as you choose.
-  - **Clock** (everyone): 12-hour or 24-hour, for opening hours, visit
+  - **Reduce motion** (everyone): GymGO keeps still, as the phone's own
+    Reduce Motion makes it, without changing the phone: things appear in
+    place instead of sliding, gliding and popping, pages arrive without
+    their lift, the map's pins don't bounce and celebrations don't play.
+    With the phone's setting on, the switch shows on and can't be turned
+    off.
+  - **Clock** (everyone), from two faces showing a time in each: 12-hour or 24-hour, for opening hours, visit
     times, workout times and reminders ("19:00"; a late close reads
     "02:00 (next day)").
-  - **Layout** (everyone): **Tab bar**, the default (the four tabs float at
+  - **Layout** (everyone), chosen from two picture tiles: **Tab bar**, the default (the four tabs float at
     the foot of the screen), or **Sidebar**: a menu down the left with the
     tabs, then Training (Workout, Progress, My workouts, Programme) and You
-    (Collection, Friends, Appearance). From 960 points wide it stays open
-    beside the page; on a phone, **Menu** at the foot (naming the tab you're
-    on) slides it in over the page, and choosing a place, a tap beside it,
-    its close button, Escape or Android's back closes it. A page that isn't
-    a tab opens over the tabs with its back button, as it does from the tab
-    bar. GymPal's button moves beside Menu, or clear of the docked sidebar.
-  - **GymPal's button** (everyone, while GymPal is on): **Edge tab** (the
+    (Collection, Friends, Appearance). From 960 points wide it stays open,
+    hovering over the left of every page (Progress and the rest too, not
+    only the tabs): the page's header and background run on underneath it,
+    Explore's map too, and the page's content keeps clear of it. On the
+    map it folds away to a small glass capsule with an arrow at the top
+    left, so the map has the room (unless **Fold away on the map** is off,
+    under the tiles); the arrow unfolds it, the pane growing
+    out of the capsule while the map's panels move across beside it, and
+    the arrow at its top or Escape folds it back. Going between the map and
+    another page folds or unfolds it in the same way, and the pill under
+    the place you're on glides to the next. On a phone, **Menu** at the foot (naming the tab you're on) slides it in over
+    the page, and choosing a place, a tap beside it, its close button,
+    Escape or Android's back closes it. Either way the menu is a pane of
+    Liquid Glass floating in from the screen's edges, as iPadOS 26 draws
+    its sidebars (the tab bar's glass, as clear as your Liquid Glass level;
+    a plain plate in a solid look or at 0%), every place with an icon from
+    the tab bar's set, the place you're on in a pill of your accent. GymPal's
+    button moves beside Menu, or clear of the docked sidebar.
+  - **GymPal's button** (everyone, while GymPal is on), from small screens showing where he waits: **Edge tab** (the
     default: a small tab flush with the screen's edge, low down; tap it or
     pull it in), **Corner** (his button in the bottom corner) or **Hidden**
     (nothing on screen: on a phone, swipe in from that edge near the
     bottom; on a computer, Ctrl + / or ⌘ /), on the right or the left. His
     chat panel opens on the same side on a wide screen.
+  - **Map** (Standard for everyone; the rest Pro): the style of Explore's
+    map, from four tiles drawn in each style's own colours. **Standard**
+    (OpenFreeMap's Liberty), **Muted** (Positron, pale greys so the pins
+    stand out), **Classic** (OSM Bright: deep green woods, orange
+    motorways) and **Deep blue** (Fiord, dark either way). In dark mode
+    every style but Deep blue uses OpenFreeMap's dark map. On an iPhone,
+    where the map is Apple's, Muted is Apple's muted map, Deep blue its
+    dark one and Classic its standard map. A Pro style kept after Pro
+    ends shows as Standard.
   - **Corners** (Pro): Round, Standard or Sharp, scaling the corners of
     cards, buttons and sheets (pills stay pills, and the square looks stay
     square, as the page says).
@@ -1098,7 +1155,8 @@ The chat stays while the app is open, **Start over** clears it, and nothing
 of it is stored, on the phone or the server.
 
 Answers come from a free AI model on **OpenRouter** (openrouter.ai), through
-the GymGO server. A model can't be taught the app once and for all, so the
+the GymGO server. (GitHub Models can't be used: GitHub retired it on 30 July
+2026, and its address now only answers "OK".) A model can't be taught the app once and for all, so the
 server sends GymPal's guide to GymGO with every question
 (`apps/server/src/gymPalGuide.ts`, written from this README and the screens):
 change it there when the app changes. The guide also holds the rules GymGO
@@ -1118,7 +1176,10 @@ To switch it on (free, no card):
    OPENROUTER_API_KEY=your-key
    ```
 
-3. Restart GymGO. The server's first lines say `GymPal: on, free models
+3. Check it: `pnpm --filter @gymgo/server gympal:check` asks GymPal one
+   short question and says which model answered, or why none did (never
+   printing the key).
+4. Restart GymGO. The server's first lines say `GymPal: on, free models
    only (…)`.
 
 Until then, GymPal is there all the same, and answers every question with
@@ -1130,8 +1191,11 @@ key is in, the next one gets a real answer, with no reload.
 id ends in `:free`, and OpenRouter bills a fallback at the price of the
 model that answered, so a list of free ones stays free. By default
 it asks `google/gemma-4-31b-it:free`, then
-`thinkingmachines/inkling-small:free`, then `google/gemma-4-26b-a4b-it:free`
-(free on OpenRouter's list on 27 October 2026; free models come and go).
+`thinkingmachines/inkling-2-small:free`, then
+`nvidia/nemotron-3.5-super-vl:free`, three makers so one being busy doesn't
+stop GymPal (free on OpenRouter's list on 18 November 2026; free models come
+and go). When OpenRouter says no, the server's log (and `gympal:check`)
+shows its reason, such as "rate-limited upstream".
 `GYMGO_GYMPAL_MODELS` sets others, comma-separated; any that isn't free is
 left out, and the server says so. There's no free ChatGPT: every OpenAI
 model on OpenRouter is paid.
@@ -1168,9 +1232,12 @@ the Pro screen.
 
 **Privacy.** What someone types, and the chat so far, goes to OpenRouter
 and the model's provider to be answered; free models' providers may keep
-it and use it to improve their models. GymGO keeps none of it. The chat
-asks people to leave out personal details, and the Privacy Policy and Terms
-say all of this, the training log included (since version 2026-10-29; each new version, such as 2026-11-04's for the weather, shows existing accounts a card on Profile asking them to agree to it).
+it and use it to improve their models. The note under the message box
+names the service. GymGO keeps none of it. The chat asks people to leave
+out personal details, and the Privacy Policy and Terms say all of this, the
+training log included (since version 2026-10-29; each new version, such as
+2026-11-04's for the weather, shows existing accounts a card on Profile
+asking them to agree to it).
 On the website, which has no server behind it yet, GymPal always gives
 that apology; once the website is pointed at a GymGO server with the key
 (`GYMGO_SERVER_URL`, in The website on Netlify), it answers there too,
@@ -1878,7 +1945,7 @@ saved list always opens, wherever the gym is.
 | Warm-up sets | Mark any set as a warm-up; plates for any weight | A warm-up ramp to your weight, with the plates, on the plate calculator or added to a workout |
 | Gym notes | — | Your own notes on each gym, on your device |
 | Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
-| Colour themes | Indigo; light, dark or Dim; text size, bold text, 12- or 24-hour clock, GymPal's button and side | Twelve accents (Rainbow and Camo too) or your own colour, eight looks (Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles |
+| Colour themes | Indigo; light, dark or Dim; text size, bold text, reduce motion, the layout, 12- or 24-hour clock, GymPal's button and side, the Standard map | Twelve accents (Rainbow and Camo too) or your own colour, ten looks (Frost, Liquid, Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles, three more map styles (Muted, Classic, Deep blue) |
 | Interval timer | Tabata and EMOM | Your own work, rest and rounds; keep up to 10 |
 | 1-rep max | Your estimated max, and 90%, 80% and 70% | Every step from 100% to 50% with plates, and what you could lift for 2 to 12 reps |
 | Streak freeze | — | One missed week a month doesn't end your streak |

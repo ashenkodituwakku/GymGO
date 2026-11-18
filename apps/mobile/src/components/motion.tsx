@@ -25,7 +25,9 @@
  * screen uses in place of React Native's.
  */
 
-import { forwardRef, useEffect, useRef, useState, type ComponentProps, type ForwardedRef, type ReactNode, type Ref } from 'react';
+import { clearOf } from '@/lib/looks';
+import { motionReducedHere, useThemeChoice } from '@/lib/themePrefs';
+import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type ComponentProps, type ForwardedRef, type ReactNode, type Ref } from 'react';
 import {
   Platform,
   Pressable as NativePressable,
@@ -46,6 +48,7 @@ import Animated, {
   ReduceMotion,
   interpolateColor,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withSequence,
   withSpring,
@@ -54,6 +57,47 @@ import Animated, {
   type WithTimingConfig,
 } from 'react-native-reanimated';
 
+/**
+ * Whether to keep still: the phone's (or browser's) Reduce Motion, or
+ * Appearance's own Reduce motion, which does the same in GymGO alone. Use it
+ * wherever the phone's setting was read; the shared animations below follow
+ * both by themselves (the root layout sets Reanimated's global setting).
+ */
+export function useCalm(): boolean {
+  const system = useReducedMotion();
+  const { reduceMotion } = useThemeChoice();
+  return system || reduceMotion;
+}
+
+/**
+ * An icon that changes in place (Save to Saved, a tick coming on, a tab's
+ * outline filling) blurs in from a little smaller, rather than swapping in
+ * one frame. Attach the ref to the view around the icon; `key` is what
+ * changes. In a browser only, where the browser runs it (the Web Animations
+ * API) at no cost until it plays; a phone's icons swap as they always have.
+ * Not with Reduce Motion, the system's or GymGO's.
+ */
+export function useSwapIn(key: string) {
+  const ref = useRef<ViewInstance>(null);
+  const shown = useRef(key);
+  useLayoutEffect(() => {
+    if (shown.current === key) return;
+    shown.current = key;
+    if (Platform.OS !== 'web') return;
+    const element = ref.current as unknown as HTMLElement | null;
+    if (!element || typeof element.animate !== 'function') return;
+    if (motionReducedHere() || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    element.animate(
+      [
+        { opacity: 0.25, filter: 'blur(3px)', transform: 'scale(0.8)' },
+        { opacity: 1, filter: 'blur(0px)', transform: 'scale(1)' },
+      ],
+      { duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+    );
+  }, [key]);
+  return ref;
+}
+
 /** A spring's damping for a damping ratio: 1 arrives without overshooting. */
 export const damp = (ratio: number, stiffness: number, mass: number) => Math.round(ratio * 2 * Math.sqrt(stiffness * mass) * 10) / 10;
 
@@ -61,10 +105,17 @@ export const damp = (ratio: number, stiffness: number, mass: number) => Math.rou
 export const PRESS_IN: WithSpringConfig = { damping: damp(0.9, 520, 0.6), stiffness: 520, mass: 0.6, reduceMotion: ReduceMotion.System };
 /** Letting go: back with only a hint of give, so it feels alive rather than mechanical. */
 export const PRESS_OUT: WithSpringConfig = { damping: damp(0.72, 340, 0.6), stiffness: 340, mass: 0.6, reduceMotion: ReduceMotion.System };
-/** Things settling into place (a chevron turning, a pill sliding): quick, and no bounce at all. */
-export const SETTLE: WithSpringConfig = { damping: damp(1, 300, 0.8), stiffness: 300, mass: 0.8, reduceMotion: ReduceMotion.System };
+/** Things settling into place (a chevron turning, a pill sliding): quick (in place in about 300ms), and no bounce at all. */
+export const SETTLE: WithSpringConfig = { damping: damp(1, 360, 0.8), stiffness: 360, mass: 0.8, reduceMotion: ReduceMotion.System };
 /** Something arriving to be noticed (a medal, a new record): one lively pop that settles fast. */
 export const POP: WithSpringConfig = { damping: damp(0.6, 260, 0.8), stiffness: 260, mass: 0.8, reduceMotion: ReduceMotion.System };
+/**
+ * A pane sliding open or shut, and what moves aside for it (the sidebar
+ * unfolding from its capsule on the map, the map's panels making room): an
+ * even glide that settles without a bounce, in place in about 300ms (UI
+ * motion past that starts to feel slow; it was 450).
+ */
+export const SLIDE: WithSpringConfig = { damping: damp(1, 420, 1), stiffness: 420, mass: 1, reduceMotion: ReduceMotion.System };
 /** Glass moving (the tab bar's lens, the slider's thumb): smooth, with a liquid trace of overshoot. */
 export const LIQUID: WithSpringConfig = { damping: damp(0.78, 300, 0.7), stiffness: 300, mass: 0.7, reduceMotion: ReduceMotion.System };
 
@@ -103,18 +154,37 @@ export const ARRIVE: WithTimingConfig = { duration: 260, easing: EASE_OUT, reduc
 /** A fade or slide going away: quicker than it came. */
 export const LEAVE: WithTimingConfig = { duration: 170, easing: EASE_IN, reduceMotion: ReduceMotion.System };
 
-/** Rows and sections making room for each other: a glide that stops dead, no wobble. */
-export const GLIDE = LinearTransition.springify().damping(damp(1, 300, 1)).stiffness(300).reduceMotion(ReduceMotion.System);
 /**
- * Whether an entering or exiting animation can take one of these curves: a
- * browser's version of them can't (it warns and runs them linear), so
- * there they keep their own easing.
+ * Whether an entering or exiting animation can take one of the curves
+ * above. A browser runs those animations itself, and takes only a
+ * cubic-bézier: handed one of these, Reanimated ran it at one constant
+ * speed. So the browser gets the same curves as béziers (below).
  */
 export const CURVES = Platform.OS !== 'web';
 
+/*
+ * The curves for an entering, exiting or layout animation, in the form each
+ * platform runs: the clamped curves above on a phone, the same curves as
+ * béziers in a browser. Before, every fade and glide in the browser ran at a
+ * constant speed, starting and stopping with a jolt.
+ */
+/** Coming in (EASE_OUT). */
+export const ARRIVE_CURVE = CURVES ? EASE_OUT : Easing.bezier(0.22, 1, 0.36, 1);
+/** Going away (EASE_IN). */
+export const LEAVE_CURVE = CURVES ? EASE_IN : Easing.bezier(0.4, 0, 1, 1);
+/** Moving from one place to another (EASE_SCREEN). */
+export const MOVE_CURVE = CURVES ? EASE_SCREEN : Easing.bezier(0.2, 0, 0, 1);
+
+/**
+ * Rows and sections making room for each other: a glide that stops dead, no
+ * wobble. A browser ignores a layout spring (it ran at a constant speed), so
+ * there it's timed on MOVE_CURVE.
+ */
+export const GLIDE = (CURVES ? LinearTransition.springify().damping(damp(1, 380, 1)).stiffness(380) : LinearTransition.duration(260).easing(MOVE_CURVE)).reduceMotion(ReduceMotion.System);
+
 /** A notice or small element arriving and leaving. */
-export const FADE_IN = (CURVES ? FadeIn.duration(240).easing(EASE_OUT) : FadeIn.duration(200)).reduceMotion(ReduceMotion.System);
-export const FADE_OUT = (CURVES ? FadeOut.duration(160).easing(EASE_IN) : FadeOut.duration(150)).reduceMotion(ReduceMotion.System);
+export const FADE_IN = FadeIn.duration(CURVES ? 240 : 220).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System);
+export const FADE_OUT = FadeOut.duration(CURVES ? 160 : 150).easing(LEAVE_CURVE).reduceMotion(ReduceMotion.System);
 
 /*
  * Entrances are springs on the phone. In the browser they're timed instead:
@@ -138,11 +208,15 @@ function growIn() {
   };
 }
 
-/** Something to be noticed arriving (a new card, a record, a medal): one pop, on the shared POP spring; timed in a browser. */
-export const POP_IN = (Platform.OS === 'web' ? ZoomIn.duration(260) : ZoomIn.springify().damping(POP.damping!).stiffness(POP.stiffness!).mass(POP.mass!)).reduceMotion(ReduceMotion.System);
+/**
+ * Something to be noticed arriving (a new card, a record, a medal): one pop,
+ * on the shared POP spring; in a browser, timed on a curve that goes a touch
+ * past and settles back, as the spring does.
+ */
+export const POP_IN = (Platform.OS === 'web' ? ZoomIn.duration(260).easing(Easing.bezier(0.34, 1.4, 0.64, 1)) : ZoomIn.springify().damping(POP.damping!).stiffness(POP.stiffness!).mass(POP.mass!)).reduceMotion(ReduceMotion.System);
 
 /** Something small appearing over the map, as "Search this area" does. */
-export const DROP_IN = Platform.OS === 'web' ? FadeIn.duration(180).reduceMotion(ReduceMotion.System) : growIn;
+export const DROP_IN = Platform.OS === 'web' ? FadeIn.duration(200).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System) : growIn;
 
 /**
  * The entrance for content that takes the place of a loading placeholder:
@@ -259,27 +333,45 @@ export const Pressable = forwardRef(function Pressable(
   const [pressed, setPressed] = useState(false);
   const [hovered, setHovered] = useState(false);
   const highlight = useSharedValue(0);
+  // Under a mouse, a row's or button's hover shade fades in and out too, rather than snapping.
+  const over = useSharedValue(0);
   const shrink = useSharedValue(0);
 
-  const resolve = (down: boolean): ViewStyle =>
-    StyleSheet.flatten(typeof style === 'function' ? style({ pressed: down, hovered } as PressableStateCallbackType) : style) ?? {};
-  const rest = resolve(false);
-  const down = typeof style === 'function' ? resolve(true) : rest;
-  const restOpacity = typeof rest.opacity === 'number' ? rest.opacity : 1;
-  const downOpacity = typeof down.opacity === 'number' ? down.opacity : 1;
-  const restColor = typeof rest.backgroundColor === 'string' ? rest.backgroundColor : 'transparent';
-  const downColor = typeof down.backgroundColor === 'string' ? down.backgroundColor : restColor;
+  const resolve = (down: boolean, hover: boolean): ViewStyle =>
+    StyleSheet.flatten(typeof style === 'function' ? style({ pressed: down, hovered: hover } as PressableStateCallbackType) : style) ?? {};
+  const plain = resolve(false, false);
+  const lit = typeof style === 'function' ? resolve(false, true) : plain;
+  const rest = hovered ? lit : plain;
+  const down = typeof style === 'function' ? resolve(true, hovered) : rest;
+  const opacityOf = (s: ViewStyle) => (typeof s.opacity === 'number' ? s.opacity : 1);
+  const colourOf = (s: ViewStyle) => (typeof s.backgroundColor === 'string' ? s.backgroundColor : 'transparent');
+  const plainOpacity = opacityOf(plain);
+  const litOpacity = opacityOf(lit);
+  const downOpacity = opacityOf(down);
+  // "Transparent" is clear black: fading from it to a grey dimmed through a darker tint on the way.
+  // A clear version of the colour it fades to doesn't.
+  const solid = [colourOf(plain), colourOf(lit), colourOf(down)].find((c) => c !== 'transparent');
+  const clean = (c: string) => (c === 'transparent' && solid ? clearOf(solid) : c);
+  const plainColor = clean(colourOf(plain));
+  const litColor = clean(colourOf(lit));
+  const downColor = typeof down.backgroundColor === 'string' ? clean(down.backgroundColor) : hovered ? litColor : plainColor;
   const restScale = scaleOf(rest.transform);
   const downScale = scaleOf(down.transform);
-  const fadesOpacity = restOpacity !== downOpacity;
-  const fadesColor = restColor !== downColor;
+  const fadesOpacity = plainOpacity !== litOpacity || opacityOf(rest) !== downOpacity;
+  const fadesColor = plainColor !== litColor || (hovered ? litColor : plainColor) !== downColor;
   const scales = restScale !== null && downScale !== null && restScale !== downScale;
 
   const feedback = useAnimatedStyle(() => {
     // React Native's styles are read-only; this one is built up here.
     const out: { -readonly [K in keyof ViewStyle]: ViewStyle[K] } = {};
-    if (fadesOpacity) out.opacity = restOpacity + (downOpacity - restOpacity) * highlight.value;
-    if (fadesColor) out.backgroundColor = interpolateColor(highlight.value, [0, 1], [restColor, downColor]) as string;
+    if (fadesOpacity) {
+      const resting = plainOpacity + (litOpacity - plainOpacity) * over.value;
+      out.opacity = resting + (downOpacity - resting) * highlight.value;
+    }
+    if (fadesColor) {
+      const resting = interpolateColor(over.value, [0, 1], [plainColor, litColor]) as string;
+      out.backgroundColor = interpolateColor(highlight.value, [0, 1], [resting, downColor]) as string;
+    }
     if (scales) out.transform = [{ scale: restScale! + (downScale! - restScale!) * shrink.value }];
     return out;
   });
@@ -304,10 +396,12 @@ export const Pressable = forwardRef(function Pressable(
       }}
       onHoverIn={(event) => {
         setHovered(true);
+        over.value = withTiming(1, { duration: 140, easing: EASE_OUT, reduceMotion: ReduceMotion.System });
         onHoverIn?.(event);
       }}
       onHoverOut={(event) => {
         setHovered(false);
+        over.value = withTiming(0, { duration: 240, easing: EASE_SOFT, reduceMotion: ReduceMotion.System });
         onHoverOut?.(event);
       }}
       style={[pressed ? down : rest, feedback]}

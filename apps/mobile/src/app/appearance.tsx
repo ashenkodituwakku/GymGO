@@ -4,8 +4,12 @@
  * whole app is drawn: Soft, Paper, Material, Neon, Terminal, 8-bit, Classic,
  * Comic) and an accent, where Standard and Indigo are everyone's and the
  * rest are part of GymGO Pro; and Liquid Glass, how see-through the things
- * over the map are, for everyone. With Pro, too, how a record is celebrated
- * and how the sounds are voiced (Marimba, or Arcade's chip tunes).
+ * over the map are, for everyone. With Pro, too, how a record is celebrated,
+ * how the sounds are voiced (Marimba, or Arcade's chip tunes) and the map's
+ * style (Standard for everyone; Muted, Classic and Deep blue: lib/mapStyles.ts).
+ * For everyone as well: the layout (tab bar or sidebar, drawn as tiles, and
+ * whether the sidebar folds away on the map), text size, bold text and
+ * Reduce motion, which keeps GymGO still without changing the phone.
  */
 
 import { useEffect, useState } from 'react';
@@ -16,10 +20,10 @@ import { loadAllLookFonts } from '@/lib/lookFonts';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, Pressable } from '@/components/motion';
 import { Glass } from '@/components/Glass';
-import { GYMPAL_KEYS } from '@/components/GymPal';
+import { GYMPAL_KEYS, GymPalMark } from '@/components/GymPal';
 import { Icon } from '@/components/Icon';
 import { PercentSlider } from '@/components/PercentSlider';
-import { PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { PrimaryButton, Txt } from '@/components/ui';
 import { Toggle } from '@/components/Toggle';
 import { timeLabel } from '@/lib/copy';
 import { Celebration } from '@/components/Celebration';
@@ -40,6 +44,7 @@ import {
   LOOKS,
   LOOK_IDS,
   TEXT_SIZES,
+  backgroundImage,
   color,
   cornersFor,
   customAccent,
@@ -49,6 +54,7 @@ import {
   glassLevelName,
   paletteFor,
   radius,
+  concentric,
   shadow,
   space,
   themed,
@@ -61,6 +67,8 @@ import {
 } from '@/lib/theme';
 import { setThemeChoice, useThemeChoice, type GymPalButton } from '@/lib/themePrefs';
 import type { NavLayout } from '@/lib/navLayout';
+import { FREE_MAP_STYLE, MAP_STYLES, mapStyle, mapStyleFor, type MapPalette, type MapStyleId } from '@/lib/mapStyles';
+import { useReducedMotion } from 'react-native-reanimated';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { ScreenOptions } from '@/components/ScreenOptions';
@@ -74,6 +82,28 @@ const MODES: Array<{ id: AppearanceChoice; label: string }> = [
 const DARK_STYLES: Array<{ id: DarkStyle; label: string; blurb: string }> = [
   { id: 'black', label: 'Black', blurb: 'True black, darkest at night' },
   { id: 'dim', label: 'Dim', blurb: 'A soft blue-grey, easier in a lit room' },
+];
+
+const LAYOUTS: Array<{ id: NavLayout; label: string; blurb: string }> = [
+  { id: 'tabs', label: 'Tab bar', blurb: 'Four tabs floating at the foot' },
+  { id: 'sidebar', label: 'Sidebar', blurb: 'A menu down the left, with your training' },
+];
+
+/** The clock, as the app writes a time in each: a close at 7 pm, a later one at 9:30 pm (lib/copy.ts timeLabel). */
+const CLOCKS: Array<{ id: '12' | '24'; label: string; time: string; later: string }> = [
+  { id: '12', label: '12-hour', time: '7\u00a0pm', later: 'until 9:30\u00a0pm' },
+  { id: '24', label: '24-hour', time: '19:00', later: 'until 21:30' },
+];
+
+const GYMPAL_BUTTONS: Array<{ id: GymPalButton; label: string; blurb: string }> = [
+  { id: 'tab', label: 'Edge tab', blurb: 'A small tab on the edge' },
+  { id: 'corner', label: 'Corner', blurb: 'His button in the corner' },
+  { id: 'hidden', label: 'Hidden', blurb: 'Nothing on screen' },
+];
+
+const GYMPAL_SIDES: Array<{ id: 'left' | 'right'; label: string }> = [
+  { id: 'left', label: 'Left side' },
+  { id: 'right', label: 'Right side' },
 ];
 
 /** A tiny screen in each mode, drawn from the real palettes. */
@@ -115,6 +145,8 @@ export default function AppearanceScreen() {
     void loadAllLookFonts().then(() => setFontsReady(true));
   }, []);
   const lookInUse = billing.isPro || choice.look === FREE_LOOK ? choice.look : FREE_LOOK;
+  // Eleven looks: rows of five where there's room for them, else threes, the last row centred.
+  const [looksWide, setLooksWide] = useState(false);
   // The mode previews draw dark the way it'll look: Dim's grey where it applies.
   const darkTone = dimApplies('dark', lookInUse, choice.dark) ? 'dim' : 'dark';
   const accentInUse = billing.isPro || choice.accent === FREE_ACCENT ? choice.accent : FREE_ACCENT;
@@ -176,6 +208,28 @@ export default function AppearanceScreen() {
     setHue(next);
     if (next !== choice.customHue) setThemeChoice({ customHue: next });
   };
+
+  const pickLayout = (layout: NavLayout) => {
+    if (layout === choice.layout) return;
+    haptic.select();
+    setThemeChoice({ layout });
+  };
+
+  // The map's style: Standard for everyone, the rest with Pro (like the looks).
+  const mapStyleInUse = mapStyleFor(choice.mapStyle, billing.isPro);
+  const pickMapStyle = (id: MapStyleId) => {
+    if (id !== FREE_MAP_STYLE && !billing.isPro) {
+      haptic.tap();
+      openPro('themes');
+      return;
+    }
+    if (id === choice.mapStyle) return;
+    haptic.select();
+    setThemeChoice({ mapStyle: id });
+  };
+  const scheme = color.label === '#FFFFFF' ? 'dark' : 'light';
+  // The phone's own Reduce Motion: with it on, Appearance's switch has nothing left to do.
+  const phoneCalm = useReducedMotion();
 
   const pickAccent = (accent: AccentId) => {
     if (accent !== FREE_ACCENT && !billing.isPro) {
@@ -271,22 +325,57 @@ export default function AppearanceScreen() {
             LAYOUT
           </Txt>
         </View>
-        <View style={styles.glassCard}>
-          <Segmented
-            options={[
-              { value: 'tabs', label: 'Tab bar' },
-              { value: 'sidebar', label: 'Sidebar' },
-            ]}
-            value={choice.layout}
-            onChange={(layout: NavLayout) => {
-              haptic.select();
-              setThemeChoice({ layout });
-            }}
-          />
+        <View style={styles.modes} accessibilityRole="radiogroup">
+          {LAYOUTS.map((item) => {
+            const on = choice.layout === item.id;
+            return (
+              <Pressable
+                key={item.id}
+                onPress={() => pickLayout(item.id)}
+                accessibilityRole="radio"
+                aria-checked={on}
+                accessibilityLabel={`${item.label}: ${item.blurb}`}
+                style={styles.darkStyle}
+              >
+                <View style={[styles.preview, styles.previewWide, on && styles.previewOn]}>
+                  <LayoutPreview layout={item.id} tone={scheme === 'dark' ? darkTone : 'light'} />
+                </View>
+                <View style={styles.darkText}>
+                  <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                    {item.label}
+                  </Txt>
+                  <Txt variant="caption" color={color.labelSecondary} style={styles.centred}>
+                    {item.blurb}
+                  </Txt>
+                </View>
+                <Icon name={on ? 'done' : 'todo'} size={22} color={on ? color.brand : color.labelTertiary} />
+              </Pressable>
+            );
+          })}
         </View>
+        {choice.layout === 'sidebar' && (
+          <Animated.View entering={FADE_IN} style={[styles.glassCard, styles.layoutOptions]}>
+            <View style={styles.toggleRow}>
+              <View style={styles.flex}>
+                <Txt variant="body">Fold away on the map</Txt>
+                <Txt variant="footnote" color={color.labelSecondary}>
+                  A small capsule on Explore; its arrow opens the sidebar
+                </Txt>
+              </View>
+              <Toggle
+                value={choice.foldOnMap}
+                onValueChange={(foldOnMap) => {
+                  haptic.select();
+                  setThemeChoice({ foldOnMap });
+                }}
+                accessibilityLabel="Fold the sidebar away on the map"
+              />
+            </View>
+          </Animated.View>
+        )}
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {choice.layout === 'sidebar'
-            ? 'A menu down the left with the tabs, your training and you. On a wide screen it stays open beside the page; on a phone, Menu at the foot slides it in.'
+            ? `A menu down the left with the tabs, your training and you. On a wide screen it stays open beside the page${choice.foldOnMap ? ' and folds away on the map' : ', the map included'}; on a phone, Menu at the foot slides it in.`
             : 'The four tabs float at the foot of the screen. This is the default; Sidebar puts them, with your training, in a menu down the left.'}
         </Txt>
 
@@ -302,14 +391,35 @@ export default function AppearanceScreen() {
               {`Visitors welcome until ${timeLabel(21 * 60)} · Casual visit A$20`}
             </Txt>
           </View>
-          <Segmented
-            options={TEXT_SIZES.map((size) => ({ value: size.id, label: size.label }))}
-            value={choice.textSize}
-            onChange={(textSize: TextSize) => {
-              haptic.select();
-              setThemeChoice({ textSize });
-            }}
-          />
+          {/* Each size as "Aa" at that size, so the steps show at a glance. */}
+          <View style={styles.sizes} accessibilityRole="radiogroup">
+            {TEXT_SIZES.map((size) => {
+              const on = choice.textSize === size.id;
+              return (
+                <Pressable
+                  key={size.id}
+                  onPress={() => {
+                    if (on) return;
+                    haptic.select();
+                    setThemeChoice({ textSize: size.id as TextSize });
+                  }}
+                  accessibilityRole="radio"
+                  aria-checked={on}
+                  accessibilityLabel={`${size.label} text, ${Math.round(size.scale * 100)}%`}
+                  style={({ pressed }) => [styles.sizeTile, pressed && { opacity: 0.75 }]}
+                >
+                  <View style={[styles.sizeFace, on && styles.sampleOn]}>
+                    <Txt style={[face('semibold'), { fontSize: Math.round(22 * size.scale), lineHeight: Math.round(28 * size.scale) }]} color={on ? color.brand : color.label} maxFontSizeMultiplier={1}>
+                      Aa
+                    </Txt>
+                  </View>
+                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                    {size.label}
+                  </Txt>
+                </Pressable>
+              );
+            })}
+          </View>
           <View style={styles.toggleRow}>
             <View style={styles.flex}>
               <Txt variant="body">Bold text</Txt>
@@ -333,6 +443,36 @@ export default function AppearanceScreen() {
 
         <View style={styles.accentHead}>
           <Txt variant="footnote" color={color.labelSecondary}>
+            MOTION
+          </Txt>
+        </View>
+        <View style={styles.glassCard}>
+          <View style={styles.toggleRow}>
+            <View style={styles.flex}>
+              <Txt variant="body">Reduce motion</Txt>
+              <Txt variant="footnote" color={color.labelSecondary}>
+                Things appear in place instead of sliding, gliding and popping
+              </Txt>
+            </View>
+            <Toggle
+              value={choice.reduceMotion || phoneCalm}
+              disabled={phoneCalm}
+              onValueChange={(reduceMotion) => {
+                haptic.select();
+                setThemeChoice({ reduceMotion });
+              }}
+              accessibilityLabel="Reduce motion"
+            />
+          </View>
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+          {phoneCalm
+            ? 'Your phone’s Reduce Motion is on, so GymGO already keeps still.'
+            : 'In GymGO only, without changing your phone. Celebrations stay still with it on. Free for everyone.'}
+        </Txt>
+
+        <View style={styles.accentHead}>
+          <Txt variant="footnote" color={color.labelSecondary}>
             LOOK
           </Txt>
           {!billing.isPro && (
@@ -344,7 +484,7 @@ export default function AppearanceScreen() {
             </View>
           )}
         </View>
-        <View style={styles.looks} accessibilityRole="radiogroup">
+        <View style={styles.looks} accessibilityRole="radiogroup" onLayout={(event) => setLooksWide(event.nativeEvent.layout.width >= LOOKS_FIVE_ACROSS)}>
           {LOOK_IDS.map((id) => {
             const on = lookInUse === id;
             const locked = id !== FREE_LOOK && !billing.isPro;
@@ -355,7 +495,7 @@ export default function AppearanceScreen() {
                 accessibilityRole="radio"
                 aria-checked={on}
                 accessibilityLabel={`${LOOKS[id].name}: ${LOOKS[id].blurb}${locked ? '. Part of GymGO Pro' : ''}`}
-                style={({ pressed }) => [styles.lookTile, pressed && { opacity: 0.75 }]}
+                style={({ pressed }) => [styles.lookTile, looksWide && styles.lookTileFive, pressed && { opacity: 0.75 }]}
               >
                 <LookPreview look={id} accent={accentInUse} dark={choice.dark} on={on} />
                 <View style={styles.lookName}>
@@ -457,8 +597,8 @@ export default function AppearanceScreen() {
         </View>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {solidLook
-            ? `${LOOKS[lookInUse].name} draws everything as solid plates, so there’s no glass to set. Choose Standard to use Liquid Glass.`
-            : 'How glassy GymGO is: the controls, sheets and bars over the map, and the cards on every page, with your accent glowing through from behind. 0% makes it all solid; 100% is the clearest that keeps text readable.'}
+            ? `${LOOKS[lookInUse].name} draws everything as solid plates, so there’s no glass to set. Choose Standard, Frost or Liquid to use Liquid Glass.`
+            : `How glassy GymGO is: the controls, sheets and bars over the map, and the cards on every page, with ${LOOKS[lookInUse].backdrop ? 'the page’s colours showing' : 'your accent glowing'} through from behind. 0% makes it all solid; 100% is the clearest that keeps text readable.`}
         </Txt>
 
         <View style={styles.accentHead}>
@@ -544,6 +684,49 @@ export default function AppearanceScreen() {
           {billing.isPro
             ? 'The accent colours buttons, links and your selections. Evidence colours (green, orange, grey) never change, so they always mean the same thing.'
             : 'Indigo is everyone’s. The rest, from Midnight and Lagoon to Rainbow and Camo, come with GymGO Pro, as do the looks. Dark mode is free for everyone.'}
+        </Txt>
+
+        <View style={styles.accentHead}>
+          <Txt variant="footnote" color={color.labelSecondary}>
+            MAP
+          </Txt>
+          {!billing.isPro && (
+            <View style={styles.proTag}>
+              <Icon name="crown" size={11} color={color.brand} />
+              <Txt variant="caption" color={color.brand} style={face('semibold')}>
+                PRO
+              </Txt>
+            </View>
+          )}
+        </View>
+        <View style={styles.celebrations} accessibilityRole="radiogroup">
+          {MAP_STYLES.map((item) => {
+            const on = mapStyleInUse === item.id;
+            const locked = item.id !== FREE_MAP_STYLE && !billing.isPro;
+            return (
+              <Pressable
+                key={item.id}
+                onPress={() => pickMapStyle(item.id)}
+                accessibilityRole="radio"
+                aria-checked={on}
+                accessibilityLabel={`${item.name}: ${item.blurb}${locked ? '. Part of GymGO Pro' : ''}`}
+                style={({ pressed }) => [styles.celebration, pressed && { opacity: 0.75 }]}
+              >
+                <View style={[styles.mapFrame, on && styles.mapFrameOn]}>
+                  <MiniMap palette={item.preview} />
+                </View>
+                <View style={styles.lookName}>
+                  {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
+                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                    {item.name}
+                  </Txt>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
+          {mapNote(mapStyleInUse, scheme, billing.isPro)}
         </Txt>
 
         <View style={styles.accentHead}>
@@ -645,18 +828,36 @@ export default function AppearanceScreen() {
             CLOCK
           </Txt>
         </View>
-        <View style={styles.glassCard}>
-          <Segmented
-            options={[
-              { value: '12', label: '12-hour' },
-              { value: '24', label: '24-hour' },
-            ]}
-            value={choice.clock24 ? '24' : '12'}
-            onChange={(value: string) => {
-              haptic.select();
-              setThemeChoice({ clock24: value === '24' });
-            }}
-          />
+        <View style={styles.modes} accessibilityRole="radiogroup">
+          {CLOCKS.map((clock) => {
+            const on = (choice.clock24 ? '24' : '12') === clock.id;
+            return (
+              <Pressable
+                key={clock.id}
+                onPress={() => {
+                  if (on) return;
+                  haptic.select();
+                  setThemeChoice({ clock24: clock.id === '24' });
+                }}
+                accessibilityRole="radio"
+                aria-checked={on}
+                accessibilityLabel={`${clock.label}: ${clock.time.replace('\u00a0', ' ')}`}
+                style={({ pressed }) => [styles.darkStyle, pressed && { opacity: 0.75 }]}
+              >
+                <View style={[styles.clockFace, on && styles.sampleOn]}>
+                  <Txt variant="title2" color={on ? color.brand : color.label} style={face('bold')}>
+                    {clock.time}
+                  </Txt>
+                  <Txt variant="caption" color={color.labelSecondary}>
+                    {clock.later}
+                  </Txt>
+                </View>
+                <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                  {clock.label}
+                </Txt>
+              </Pressable>
+            );
+          })}
         </View>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {`Times read like ${timeLabel(19 * 60)}, for opening hours, visit times and reminders.`}
@@ -669,30 +870,68 @@ export default function AppearanceScreen() {
                 GYMPAL’S BUTTON
               </Txt>
             </View>
-            <View style={[styles.glassCard, styles.gymPalCard]}>
-              <Segmented
-                options={[
-                  { value: 'tab', label: 'Edge tab' },
-                  { value: 'corner', label: 'Corner' },
-                  { value: 'hidden', label: 'Hidden' },
-                ]}
-                value={choice.gymPalButton}
-                onChange={(gymPalButton: GymPalButton) => {
-                  haptic.select();
-                  setThemeChoice({ gymPalButton });
-                }}
-              />
-              <Segmented
-                options={[
-                  { value: 'left', label: 'Left side' },
-                  { value: 'right', label: 'Right side' },
-                ]}
-                value={choice.gymPalSide}
-                onChange={(gymPalSide: 'left' | 'right') => {
-                  haptic.select();
-                  setThemeChoice({ gymPalSide });
-                }}
-              />
+            {/* How he waits: each drawn on the side you've chosen. */}
+            <View style={styles.modes} accessibilityRole="radiogroup">
+              {GYMPAL_BUTTONS.map((item) => {
+                const on = choice.gymPalButton === item.id;
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => {
+                      if (on) return;
+                      haptic.select();
+                      setThemeChoice({ gymPalButton: item.id });
+                    }}
+                    accessibilityRole="radio"
+                    aria-checked={on}
+                    accessibilityLabel={`${item.label}: ${item.blurb}`}
+                    style={styles.darkStyle}
+                  >
+                    <View style={[styles.preview, styles.previewWide, on && styles.previewOn]}>
+                      <GymPalPreview button={item.id} side={choice.gymPalSide} tone={scheme === 'dark' ? darkTone : 'light'} />
+                    </View>
+                    <View style={styles.darkText}>
+                      <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                        {item.label}
+                      </Txt>
+                      <Txt variant="caption" color={color.labelSecondary} style={styles.centred}>
+                        {item.blurb}
+                      </Txt>
+                    </View>
+                    <Icon name={on ? 'done' : 'todo'} size={22} color={on ? color.brand : color.labelTertiary} />
+                  </Pressable>
+                );
+              })}
+            </View>
+            {/* Which side: each drawn with the way he waits. */}
+            <View style={[styles.modes, styles.sideRow]} accessibilityRole="radiogroup">
+              {GYMPAL_SIDES.map((item) => {
+                const on = choice.gymPalSide === item.id;
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => {
+                      if (on) return;
+                      haptic.select();
+                      setThemeChoice({ gymPalSide: item.id });
+                    }}
+                    accessibilityRole="radio"
+                    aria-checked={on}
+                    accessibilityLabel={`GymPal on the ${item.id}`}
+                    style={styles.sideTile}
+                  >
+                    <View style={[styles.preview, styles.previewSide, on && styles.previewOn]}>
+                      <GymPalPreview button={choice.gymPalButton} side={item.id} tone={scheme === 'dark' ? darkTone : 'light'} />
+                    </View>
+                    <View style={styles.sideLabel}>
+                      <Icon name={on ? 'done' : 'todo'} size={20} color={on ? color.brand : color.labelTertiary} />
+                      <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                        {item.label}
+                      </Txt>
+                    </View>
+                  </Pressable>
+                );
+              })}
             </View>
             <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
               {gymPalHow(choice.gymPalButton, choice.gymPalSide)}
@@ -715,6 +954,98 @@ function gymPalHow(button: GymPalButton, side: 'left' | 'right'): string {
 }
 
 /** "Your own" among the accents: the colour you picked, or a rainbow ring before you have. */
+/** What the map style in use looks like, and where it differs. */
+function mapNote(id: MapStyleId, scheme: 'light' | 'dark', isPro: boolean): string {
+  const style = mapStyle(id);
+  const dark = scheme === 'dark' && id !== 'deep' ? ' In dark mode every style but Deep blue shows the dark map.' : '';
+  // An iPhone draws Apple's map, which has nothing like Classic.
+  const apple = Platform.OS === 'ios' ? ' On iPhone it’s Apple’s map: Muted is its muted map, Deep blue its dark one, and Classic its standard map.' : '';
+  const pro = isPro ? '' : ' Muted, Classic and Deep blue come with GymGO Pro.';
+  return `${style.blurb}, on Explore’s map.${dark}${apple}${pro}`;
+}
+
+/** A tiny screen in each layout: the tab bar floating at its foot, or the sidebar down its left. */
+function LayoutPreview({ layout, tone }: { layout: NavLayout; tone: keyof typeof PREVIEW }) {
+  const p = PREVIEW[tone];
+  return (
+    <View style={[styles.layoutScreen, { backgroundColor: p.page }]}>
+      {layout === 'sidebar' && (
+        <View style={[styles.layoutSide, { backgroundColor: p.card }]}>
+          <View style={[styles.layoutRow, { backgroundColor: color.brandTint }]}>
+            <View style={[styles.layoutDot, { backgroundColor: color.brand }]} />
+            <View style={[styles.miniLine, styles.layoutLine, { backgroundColor: color.brand }]} />
+          </View>
+          {[0.7, 0.55, 0.65, 0.5].map((width, index) => (
+            <View key={index} style={styles.layoutRow}>
+              <View style={[styles.layoutDot, { backgroundColor: p.line }]} />
+              <View style={[styles.miniLine, { backgroundColor: p.line, width: `${width * 100}%` }]} />
+            </View>
+          ))}
+        </View>
+      )}
+      <View style={styles.layoutBody}>
+        <View style={[styles.miniCard, { backgroundColor: p.card }]}>
+          <View style={[styles.miniLine, { backgroundColor: p.text, width: '70%' }]} />
+          <View style={[styles.miniLine, { backgroundColor: p.line, width: '50%' }]} />
+        </View>
+        <View style={[styles.miniCard, { backgroundColor: p.card }]}>
+          <View style={[styles.miniLine, { backgroundColor: p.text, width: '60%' }]} />
+          <View style={[styles.miniLine, { backgroundColor: p.line, width: '40%' }]} />
+        </View>
+      </View>
+      {layout === 'tabs' && (
+        <View style={[styles.layoutTabs, { backgroundColor: p.card }]}>
+          {[0, 1, 2, 3].map((index) => (
+            <View key={index} style={[styles.layoutDot, { backgroundColor: index === 0 ? color.brand : p.line }]} />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+/** A tiny screen with GymPal waiting on it: his tab on the edge, his button in the corner, or (hidden) only the strip you swipe in from. */
+function GymPalPreview({ button, side, tone }: { button: GymPalButton; side: 'left' | 'right'; tone: keyof typeof PREVIEW }) {
+  const p = PREVIEW[tone];
+  const left = side === 'left';
+  return (
+    <View style={[styles.mini, { backgroundColor: p.page }]}>
+      <View style={[styles.miniCard, { backgroundColor: p.card }]}>
+        <View style={[styles.miniLine, { backgroundColor: p.text, width: '70%' }]} />
+        <View style={[styles.miniLine, { backgroundColor: p.line, width: '50%' }]} />
+      </View>
+      <View style={[styles.miniCard, { backgroundColor: p.card }]}>
+        <View style={[styles.miniLine, { backgroundColor: p.text, width: '60%' }]} />
+        <View style={[styles.miniLine, { backgroundColor: p.line, width: '40%' }]} />
+      </View>
+      {/* As the app draws them: a light tab flush with the edge, holding his mark; in the corner, his mark itself. */}
+      {button === 'tab' && (
+        <View style={[styles.palTab, left ? styles.palTabLeft : styles.palTabRight, { backgroundColor: p.card }]}>
+          <GymPalMark size={11} still />
+        </View>
+      )}
+      {button === 'corner' && (
+        <View style={[styles.palCorner, left ? { left: 7 } : { right: 7 }]}>
+          <GymPalMark size={20} still />
+        </View>
+      )}
+      {button === 'hidden' && <View style={[styles.palStrip, left ? { left: 0 } : { right: 0 }, { backgroundColor: color.brand }]} />}
+    </View>
+  );
+}
+
+/** A tiny map in a style's own colours: land, a lake, a park, a main road and a side street. */
+function MiniMap({ palette }: { palette: MapPalette }) {
+  return (
+    <View style={[styles.miniMap, { backgroundColor: palette.land }]}>
+      <View style={[styles.miniWater, { backgroundColor: palette.water }]} />
+      <View style={[styles.miniPark, { backgroundColor: palette.park }]} />
+      <View style={[styles.miniMinor, { backgroundColor: palette.minor }]} />
+      <View style={[styles.miniMajor, { backgroundColor: palette.major }]} />
+    </View>
+  );
+}
+
 function CustomTile({ hue, on, locked, onPress }: { hue: number; on: boolean; locked: boolean; onPress: () => void }) {
   const scheme = color.label === '#FFFFFF' ? 'dark' : 'light';
   const mine = customAccent(hue);
@@ -812,6 +1143,9 @@ const PINS: Array<{ left: `${number}%`; top: number; tone: 'good' | 'maybe' | 'b
   { left: '84%', top: 128, tone: 'good' },
 ];
 
+/** How wide the looks' grid is before five go across (each tile then about 100 points, as wide as a preview gets). */
+const LOOKS_FIVE_ACROSS = 500;
+
 /** A tiny screen drawn in a look: its page, a card, a title in its type and a button. */
 function LookPreview({ look, accent, dark, on }: { look: LookId; accent: AccentId; dark: DarkStyle; on: boolean }) {
   const spec = LOOKS[look];
@@ -820,10 +1154,12 @@ function LookPreview({ look, accent, dark, on }: { look: LookId; accent: AccentI
   const shadows = spec.shadows?.(scheme, palette.brand);
   const corner = (value: number) => Math.min(value * 0.5, 12);
   const title = spec.fonts?.display ?? spec.fonts?.body?.bold;
+  // A look with a page of its own (Frost) shows it, and its card as the glass over it.
+  const backdrop = spec.backdrop?.(scheme, ACCENTS[accent][scheme].brand);
   return (
     <View style={[styles.lookFrame, on && { borderColor: color.brand }]}>
-      <View style={[styles.lookPage, { backgroundColor: palette.groupedBackground }]}>
-        <View style={[styles.lookCard, { backgroundColor: palette.card, borderRadius: corner(spec.radius.lg) }, shadows?.card]}>
+      <View style={[styles.lookPage, { backgroundColor: palette.groupedBackground }, backdrop && backgroundImage(backdrop.image)]}>
+        <View style={[styles.lookCard, { backgroundColor: backdrop ? palette.plate : palette.card, borderRadius: corner(spec.radius.lg) }, backdrop ? shadows?.plate : shadows?.card]}>
           <Txt variant="caption" color={palette.label} style={[{ fontSize: Math.round(11 * (spec.fonts?.displayScale ?? 1)), lineHeight: 14 }, title ? { fontFamily: title, fontWeight: 'normal' } : face('bold')]} numberOfLines={1}>
             GymGO
           </Txt>
@@ -863,9 +1199,10 @@ const styles = themed(() =>
     content: { padding: space[4], paddingBottom: space[8], width: '100%', maxWidth: 560, alignSelf: 'center' },
     // As every settings list's headings (components/ios.tsx's Group).
     section: { marginLeft: space[4], marginBottom: space[2], letterSpacing: 0.5, ...face('semibold') },
-    modes: { flexDirection: 'row', gap: space[3], padding: space[4], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
+    // The tile plates: their contents one gap (12) in, so the tiles' corners follow the plate's (concentric).
+    modes: { flexDirection: 'row', gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     mode: { flex: 1, alignItems: 'center', gap: space[2] },
-    preview: { width: '100%', aspectRatio: 0.62, borderRadius: radius.md, borderWidth: 2, borderColor: 'transparent', overflow: 'hidden' },
+    preview: { width: '100%', aspectRatio: 0.62, borderRadius: concentric(radius.lg, space[3]), borderCurve: 'continuous', borderWidth: 2, borderColor: 'transparent', overflow: 'hidden' },
     previewOn: { borderColor: color.brand },
     previewWide: { aspectRatio: 1.3 },
     sectionGap: { marginTop: space[6] },
@@ -879,16 +1216,50 @@ const styles = themed(() =>
     miniCard: { borderRadius: 5, padding: 5, gap: 4 },
     miniLine: { height: 4, borderRadius: 2 },
     note: { marginHorizontal: space[4], marginTop: space[2] },
+    // The layout tiles' tiny screens.
+    layoutScreen: { flex: 1, flexDirection: 'row', padding: 6, gap: 6 },
+    layoutSide: { width: '40%', borderRadius: 6, padding: 4, gap: 3 },
+    layoutRow: { flexDirection: 'row', alignItems: 'center', gap: 3, padding: 3, borderRadius: 4 },
+    layoutDot: { width: 5, height: 5, borderRadius: 2.5 },
+    layoutLine: { width: '60%', opacity: 0.7 },
+    layoutBody: { flex: 1, gap: 5 },
+    layoutTabs: { position: 'absolute', bottom: 7, left: '24%', right: '24%', height: 13, borderRadius: 6.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', ...shadow.plate },
+    layoutOptions: { marginTop: space[3] },
+    // Text sizes, as "Aa" at each size.
+    sizes: { flexDirection: 'row', gap: space[2] },
+    sizeTile: { flex: 1, alignItems: 'center', gap: space[1] },
+    sizeFace: { alignSelf: 'stretch', height: 56, alignItems: 'center', justifyContent: 'center', borderRadius: concentric(radius.lg, space[3]), borderCurve: 'continuous', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
+    // The clock's faces: a time as the app writes it.
+    clockFace: { alignSelf: 'stretch', paddingVertical: space[3], alignItems: 'center', gap: 2, borderRadius: concentric(radius.lg, space[3]), borderCurve: 'continuous', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
+    // GymPal's button: where he waits on the tiny screens.
+    palTab: { position: 'absolute', bottom: 10, width: 17, height: 30, alignItems: 'center', justifyContent: 'center', ...shadow.plate },
+    palTabLeft: { left: 0, borderTopRightRadius: 9, borderBottomRightRadius: 9 },
+    palTabRight: { right: 0, borderTopLeftRadius: 9, borderBottomLeftRadius: 9 },
+    palCorner: { position: 'absolute', bottom: 7, ...shadow.plate },
+    palStrip: { position: 'absolute', bottom: 8, width: 3, height: 26, borderRadius: 1.5, opacity: 0.4 },
+    previewSide: { aspectRatio: 1.9 },
+    sideRow: { marginTop: space[3] },
+    sideTile: { flex: 1, alignItems: 'center', gap: space[2] },
+    sideLabel: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
+    // The map style tiles' tiny maps.
+    mapFrame: { width: '100%', maxWidth: 76, aspectRatio: 1, padding: 3, borderRadius: radius.md + 3, borderWidth: 2, borderColor: 'transparent' },
+    mapFrameOn: { borderColor: color.brand },
+    miniMap: { flex: 1, borderRadius: concentric(radius.md + 3, 5), overflow: 'hidden' },
+    miniWater: { position: 'absolute', right: '-22%', top: '-18%', width: '62%', height: '58%', borderRadius: 40 },
+    miniPark: { position: 'absolute', left: '-12%', bottom: '-10%', width: '56%', height: '44%', borderRadius: 24, transform: [{ rotate: '-10deg' }] },
+    miniMinor: { position: 'absolute', left: '64%', top: '-20%', width: 3, height: '140%', transform: [{ rotate: '20deg' }] },
+    miniMajor: { position: 'absolute', left: '-20%', right: '-20%', top: '50%', height: 5, borderRadius: 2, transform: [{ rotate: '-12deg' }] },
     accentHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginLeft: space[4], marginTop: space[6], marginBottom: space[2] },
     proTag: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 1, borderRadius: radius.pill, backgroundColor: color.brandTint },
     grid: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     tile: { width: '20%', minWidth: 64, alignItems: 'center', gap: space[1], paddingVertical: space[2] },
     ring: { padding: 3, borderRadius: 30, borderWidth: 2, borderColor: 'transparent' },
     swatch: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-    looks: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
+    looks: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     lookTile: { width: '33.33%', alignItems: 'center', gap: space[1], paddingVertical: space[2], paddingHorizontal: space[1] },
+    lookTileFive: { width: '20%' },
     lookFrame: { width: '100%', maxWidth: 104, aspectRatio: 0.9, padding: 3, borderRadius: 14, borderWidth: 2, borderColor: 'transparent' },
-    lookPage: { flex: 1, borderRadius: 10, overflow: 'hidden', padding: 8, gap: 8, justifyContent: 'space-between' },
+    lookPage: { flex: 1, borderRadius: concentric(14, 5), overflow: 'hidden', padding: 8, gap: 8, justifyContent: 'space-between' },
     lookCard: { padding: 6, gap: 5 },
     lookLine: { height: 4, width: '70%', opacity: 0.5 },
     lookButton: { height: 20, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
@@ -900,7 +1271,7 @@ const styles = themed(() =>
     sampleOn: { borderColor: color.brand, backgroundColor: color.brandTint },
     playRow: { marginTop: space[3] },
     flex: { flex: 1 },
-    textSample: { gap: 2, padding: space[3], borderRadius: radius.md, backgroundColor: color.fill },
+    textSample: { gap: 2, padding: space[3], borderRadius: concentric(radius.lg, space[3]), borderCurve: 'continuous', backgroundColor: color.fill },
     toggleRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[1] },
     cornerPreview: { width: '100%', aspectRatio: 1.25, padding: 10, justifyContent: 'flex-end', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
     cornerOn: { borderColor: color.brand },
@@ -910,7 +1281,6 @@ const styles = themed(() =>
     hueTrack: { flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden' },
     hueStop: { flex: 1 },
     glassCard: { gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
-    gymPalCard: { gap: space[2] },
     glassHead: { flexDirection: 'row', alignItems: 'baseline', gap: space[2], paddingHorizontal: space[1] },
     sliderRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     step: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },

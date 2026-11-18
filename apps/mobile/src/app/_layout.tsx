@@ -4,14 +4,15 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
-import { EASE_IN_OUT, EASE_OUT } from '@/components/motion';
+import Animated, { ReduceMotion, ReducedMotionConfig, runOnJS, useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import { EASE_IN_OUT, EASE_OUT, useCalm } from '@/components/motion';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Redrawn, useThemeVersion } from '@/components/Redrawn';
 import { WebBack } from '@/components/WebBack';
 import { WebsiteBanner } from '@/components/LimitedBanner';
 import { GymPal } from '@/components/GymPal';
+import { ClearOfSidebar, SidebarFrame } from '@/components/Sidebar';
 import { Txt } from '@/components/ui';
 import { LIMITED } from '@/lib/limited';
 import { backLabel } from '@/lib/backLabel';
@@ -194,7 +195,8 @@ function ThemedStack() {
   }, [gate]);
   const wanted = useWantedTheme();
   const version = useThemeVersion();
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useCalm();
+  const themeChoice = useThemeChoice();
   const veil = useSharedValue(0);
   const [veilColour, setVeilColour] = useState<string | null>(null);
 
@@ -260,106 +262,121 @@ function ThemedStack() {
 
   return (
     <ThemeProvider value={navTheme}>
+      {/* Appearance's own Reduce motion: every shared animation keeps still, as with the phone's setting. */}
+      {themeChoice.reduceMotion && <ReducedMotionConfig mode={ReduceMotion.Always} />}
       <StatusBar style={dark ? 'light' : 'dark'} />
       <WebsiteBanner />
-      <Stack
-        // Each screen's content is drawn again in the new colours; the tabs
-        // redraw their own screens (app/(tabs)/_layout.tsx), so the tab
-        // you're on stays chosen.
-        screenLayout={({ route, children }) => (route.name === '(tabs)' ? children : <Redrawn>{children}</Redrawn>)}
-        screenOptions={({ route, navigation }) => ({
-          headerShown: false,
-          headerTintColor: color.brand,
-          headerTitleStyle: { ...face('semibold'), color: color.label },
-          headerStyle: { backgroundColor: color.background },
-          contentStyle: { backgroundColor: color.groupedBackground },
-          // A browser: a capsule naming the page behind (components/WebBack.tsx).
-          ...(Platform.OS === 'web'
-            ? {
-                headerTitleAlign: 'center' as const,
-                // The page's title as its heading; none at all when a page draws its own big title
-                // (a gym, a workout), which is its heading instead: an empty one read as nothing.
-                headerTitle: ({ children }: { children: string }) =>
-                  children ? (
-                    <Txt variant="headline" accessibilityRole="header" level={1} numberOfLines={1}>
-                      {children}
-                    </Txt>
-                  ) : null,
-                headerLeft: ({ label }: { label?: string }) => (
-                  <WebBack
-                    label={backLabel(navigation.getState().routes, route.key, label)}
-                    canGoBack={navigation.canGoBack()}
-                    onPress={() => navigation.goBack()}
-                    home={signedIn || LIMITED ? { label: 'Home', href: '/' } : { label: 'Sign in', href: '/sign-in' }}
-                  />
-                ),
-              }
-            : { headerBackTitle: 'Back' }),
-          // iPhone: swipe back from anywhere on the screen, not just the edge.
-          fullScreenGestureEnabled: true,
-          // Android: the same slide-over as iPhone, rather than a fade-up.
-          animation: Platform.OS === 'android' ? 'ios_from_right' : 'default',
-        })}
-      >
-        <Stack.Protected guard={signedIn}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="gym/[id]"
-            options={{
-              headerShown: true,
-              title: '',
-              // iOS: the header is frosted glass over the photo, as in Maps.
-              headerTransparent: Platform.OS === 'ios',
-              headerBlurEffect: dark ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight',
-              headerShadowVisible: false,
-            }}
-          />
-          <Stack.Screen name="compare" options={{ ...MODAL, headerShown: true, title: 'Compare' }} />
-          <Stack.Screen name="workout/[id]" options={{ headerShown: true, title: 'Workout' }} />
-          <Stack.Screen name="workouts/index" options={{ headerShown: true, title: 'My workouts' }} />
-          <Stack.Screen name="workouts/[id]" options={{ headerShown: true, title: 'Workout' }} />
-          <Stack.Screen name="train" options={{ headerShown: true, title: 'Workout', gestureEnabled: false }} />
-          <Stack.Screen name="plates" options={{ ...MODAL, headerShown: true, title: 'Plates' }} />
-          <Stack.Screen name="timer" options={{ headerShown: true, title: 'Interval timer' }} />
-          <Stack.Screen name="strength" options={{ headerShown: true, title: '1-rep max' }} />
-          <Stack.Screen name="progress/index" options={{ headerShown: true, title: 'Progress' }} />
-          <Stack.Screen name="collection" options={{ headerShown: true, title: 'Collection' }} />
-          <Stack.Screen name="recap" options={{ headerShown: true, title: 'Your week' }} />
-          <Stack.Screen name="lifetime" options={{ headerShown: true, title: 'Lifetime' }} />
-          <Stack.Screen name="welcome" options={{ headerShown: false, animation: 'fade', gestureEnabled: false }} />
-          <Stack.Screen name="machines" options={{ headerShown: true, title: 'Find a machine' }} />
-          <Stack.Screen name="trips/index" options={{ headerShown: true, title: 'Trips' }} />
-          <Stack.Screen name="trips/[id]" options={{ headerShown: true, title: 'Trip' }} />
-          <Stack.Screen name="card/[id]" options={{ ...MODAL, headerShown: true, title: 'Card' }} />
-          <Stack.Screen name="friends/index" options={{ headerShown: true, title: 'Friends' }} />
-          <Stack.Screen name="friends/[id]" options={{ headerShown: true, title: 'Friend' }} />
-          <Stack.Screen name="leaderboard" options={{ headerShown: true, title: 'Leaderboard' }} />
-          <Stack.Screen name="templates" options={{ headerShown: true, title: 'Templates' }} />
-          <Stack.Screen name="programme" options={{ headerShown: true, title: 'Programme' }} />
-          <Stack.Screen name="spend" options={{ headerShown: true, title: 'What you pay' }} />
-          <Stack.Screen name="photos" options={{ headerShown: true, title: 'Progress photos' }} />
-          <Stack.Screen name="month" options={{ headerShown: true, title: 'Monthly report' }} />
-          <Stack.Screen name="measurements" options={{ headerShown: true, title: 'Body measurements' }} />
-          <Stack.Screen name="session-edit" options={{ headerShown: true, title: 'Edit workout' }} />
-          <Stack.Screen name="workout-edit" options={{ headerShown: true, title: 'Your own workout' }} />
-          <Stack.Screen name="split-edit" options={{ headerShown: true, title: 'Your own split' }} />
-          <Stack.Screen name="exercise-edit" options={{ headerShown: true, title: 'Your own exercise' }} />
-          <Stack.Screen name="challenges" options={{ headerShown: true, title: 'Monthly challenge' }} />
-          <Stack.Screen name="exercises" options={{ headerShown: true, title: 'Exercises' }} />
-          <Stack.Screen name="moderation" options={{ headerShown: true, title: 'Moderation' }} />
-          <Stack.Screen name="progress/[exercise]" options={{ headerShown: true, title: '' }} />
-          <Stack.Screen name="pro" options={{ ...MODAL, headerShown: true, title: 'GymGO Pro' }} />
-          <Stack.Screen name="country" options={{ ...MODAL, headerShown: true, title: '' }} />
-          <Stack.Screen name="appearance" options={{ headerShown: true, title: 'Appearance' }} />
-          <Stack.Screen name="reminders" options={{ headerShown: true, title: 'Reminders' }} />
-          <Stack.Screen name="account" options={{ headerShown: true, title: 'Account' }} />
-        </Stack.Protected>
-        {/* Open without an account: signing in (signed out, it's the whole app rather than a sheet over it),
-            the legal pages, and Report a bug, so someone who can't get in can still say so. */}
-        <Stack.Screen name="sign-in" options={signedIn ? { ...MODAL, headerShown: true, title: '' } : { headerShown: false, animation: 'fade' }} />
-        <Stack.Screen name="legal/[doc]" options={{ headerShown: true, title: '' }} />
-        <Stack.Screen name="report-bug" options={{ ...MODAL, headerShown: true, title: 'Report a bug' }} />
-      </Stack>
+      {/* The pages, with the sidebar layout's menu hovering over their left edge on a wide
+          screen. The navigator keeps its place in the tree whether it shows or not. */}
+      <SidebarFrame signedIn={signedIn || LIMITED}>
+          <Stack
+            // Each screen's content is drawn again in the new colours; the tabs
+            // redraw their own screens (app/(tabs)/_layout.tsx), so the tab
+            // you're on stays chosen.
+            // Every page's content keeps clear of a docked sidebar (the tabs do it per tab).
+        screenLayout={({ route, children }) =>
+          route.name === '(tabs)' ? (
+            children
+          ) : (
+            <ClearOfSidebar>
+              <Redrawn>{children}</Redrawn>
+            </ClearOfSidebar>
+          )
+        }
+            screenOptions={({ route, navigation }) => ({
+              headerShown: false,
+              headerTintColor: color.brand,
+              headerTitleStyle: { ...face('semibold'), color: color.label },
+              headerStyle: { backgroundColor: color.background },
+              contentStyle: { backgroundColor: color.groupedBackground },
+              // A browser: a capsule naming the page behind (components/WebBack.tsx).
+              ...(Platform.OS === 'web'
+                ? {
+                    headerTitleAlign: 'center' as const,
+                    // The page's title as its heading; none at all when a page draws its own big title
+                    // (a gym, a workout), which is its heading instead: an empty one read as nothing.
+                    headerTitle: ({ children }: { children: string }) =>
+                      children ? (
+                        <Txt variant="headline" accessibilityRole="header" level={1} numberOfLines={1}>
+                          {children}
+                        </Txt>
+                      ) : null,
+                    headerLeft: ({ label }: { label?: string }) => (
+                      <WebBack
+                        label={backLabel(navigation.getState().routes, route.key, label)}
+                        canGoBack={navigation.canGoBack()}
+                        onPress={() => navigation.goBack()}
+                        home={signedIn || LIMITED ? { label: 'Home', href: '/' } : { label: 'Sign in', href: '/sign-in' }}
+                      />
+                    ),
+                  }
+                : { headerBackTitle: 'Back' }),
+              // iPhone: swipe back from anywhere on the screen, not just the edge.
+              fullScreenGestureEnabled: true,
+              // Android: the same slide-over as iPhone, rather than a fade-up.
+              animation: Platform.OS === 'android' ? 'ios_from_right' : 'default',
+            })}
+          >
+            <Stack.Protected guard={signedIn}>
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen
+                name="gym/[id]"
+                options={{
+                  headerShown: true,
+                  title: '',
+                  // iOS: the header is frosted glass over the photo, as in Maps.
+                  headerTransparent: Platform.OS === 'ios',
+                  headerBlurEffect: dark ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight',
+                  headerShadowVisible: false,
+                }}
+              />
+              <Stack.Screen name="compare" options={{ ...MODAL, headerShown: true, title: 'Compare' }} />
+              <Stack.Screen name="workout/[id]" options={{ headerShown: true, title: 'Workout' }} />
+              <Stack.Screen name="workouts/index" options={{ headerShown: true, title: 'My workouts' }} />
+              <Stack.Screen name="workouts/[id]" options={{ headerShown: true, title: 'Workout' }} />
+              <Stack.Screen name="train" options={{ headerShown: true, title: 'Workout', gestureEnabled: false }} />
+              <Stack.Screen name="plates" options={{ ...MODAL, headerShown: true, title: 'Plates' }} />
+              <Stack.Screen name="timer" options={{ headerShown: true, title: 'Interval timer' }} />
+              <Stack.Screen name="strength" options={{ headerShown: true, title: '1-rep max' }} />
+              <Stack.Screen name="progress/index" options={{ headerShown: true, title: 'Progress' }} />
+              <Stack.Screen name="collection" options={{ headerShown: true, title: 'Collection' }} />
+              <Stack.Screen name="recap" options={{ headerShown: true, title: 'Your week' }} />
+              <Stack.Screen name="lifetime" options={{ headerShown: true, title: 'Lifetime' }} />
+              <Stack.Screen name="welcome" options={{ headerShown: false, animation: 'fade', gestureEnabled: false }} />
+              <Stack.Screen name="machines" options={{ headerShown: true, title: 'Find a machine' }} />
+              <Stack.Screen name="trips/index" options={{ headerShown: true, title: 'Trips' }} />
+              <Stack.Screen name="trips/[id]" options={{ headerShown: true, title: 'Trip' }} />
+              <Stack.Screen name="card/[id]" options={{ ...MODAL, headerShown: true, title: 'Card' }} />
+              <Stack.Screen name="friends/index" options={{ headerShown: true, title: 'Friends' }} />
+              <Stack.Screen name="friends/[id]" options={{ headerShown: true, title: 'Friend' }} />
+              <Stack.Screen name="leaderboard" options={{ headerShown: true, title: 'Leaderboard' }} />
+              <Stack.Screen name="templates" options={{ headerShown: true, title: 'Templates' }} />
+              <Stack.Screen name="programme" options={{ headerShown: true, title: 'Programme' }} />
+              <Stack.Screen name="spend" options={{ headerShown: true, title: 'What you pay' }} />
+              <Stack.Screen name="photos" options={{ headerShown: true, title: 'Progress photos' }} />
+              <Stack.Screen name="month" options={{ headerShown: true, title: 'Monthly report' }} />
+              <Stack.Screen name="measurements" options={{ headerShown: true, title: 'Body measurements' }} />
+              <Stack.Screen name="session-edit" options={{ headerShown: true, title: 'Edit workout' }} />
+              <Stack.Screen name="workout-edit" options={{ headerShown: true, title: 'Your own workout' }} />
+              <Stack.Screen name="split-edit" options={{ headerShown: true, title: 'Your own split' }} />
+              <Stack.Screen name="exercise-edit" options={{ headerShown: true, title: 'Your own exercise' }} />
+              <Stack.Screen name="challenges" options={{ headerShown: true, title: 'Monthly challenge' }} />
+              <Stack.Screen name="exercises" options={{ headerShown: true, title: 'Exercises' }} />
+              <Stack.Screen name="moderation" options={{ headerShown: true, title: 'Moderation' }} />
+              <Stack.Screen name="progress/[exercise]" options={{ headerShown: true, title: '' }} />
+              <Stack.Screen name="pro" options={{ ...MODAL, headerShown: true, title: 'GymGO Pro' }} />
+              <Stack.Screen name="country" options={{ ...MODAL, headerShown: true, title: '' }} />
+              <Stack.Screen name="appearance" options={{ headerShown: true, title: 'Appearance' }} />
+              <Stack.Screen name="reminders" options={{ headerShown: true, title: 'Reminders' }} />
+              <Stack.Screen name="account" options={{ headerShown: true, title: 'Account' }} />
+            </Stack.Protected>
+            {/* Open without an account: signing in (signed out, it's the whole app rather than a sheet over it),
+                the legal pages, and Report a bug, so someone who can't get in can still say so. */}
+            <Stack.Screen name="sign-in" options={signedIn ? { ...MODAL, headerShown: true, title: '' } : { headerShown: false, animation: 'fade' }} />
+            <Stack.Screen name="legal/[doc]" options={{ headerShown: true, title: '' }} />
+            <Stack.Screen name="report-bug" options={{ ...MODAL, headerShown: true, title: 'Report a bug' }} />
+          </Stack>
+      </SidebarFrame>
       {/* GymPal, the AI assistant, in the corner of every signed-in screen, and the website's (which waits to be set up). */}
       {signedIn && prefs.gymPal && <GymPal />}
       {!!veilColour && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle, { pointerEvents: 'none' }]} />}

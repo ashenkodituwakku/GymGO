@@ -16,12 +16,12 @@ import Animated, {
   runOnJS,
   useAnimatedReaction,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withRepeat,
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import { useCalm } from './motion';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
 import { Icon } from './Icon';
@@ -35,7 +35,7 @@ const BAR_H = 10;
 const STEPS = ['Picking exercises', 'Fitting them to the machines', 'Setting sets, reps and rest'];
 
 export function BuildingBar({ onDone }: { onDone: () => void }) {
-  const calm = useReducedMotion();
+  const calm = useCalm();
   const progress = useSharedValue(0);
   const sweep = useSharedValue(0);
   const breath = useSharedValue(0);

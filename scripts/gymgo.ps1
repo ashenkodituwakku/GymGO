@@ -47,6 +47,12 @@
     PC"). Online while the window stays open and the PC is awake. Needs
     cloudflared: winget install --id Cloudflare.cloudflared
 
+.PARAMETER GymPal
+    GitHub retired GitHub Models on 30 July 2026, so GymPal cannot use a
+    GitHub token. This takes out a GitHub token saved here earlier
+    (apps\server\.env.local) and says how to switch GymPal on with a free
+    OpenRouter key instead (README, GymPal).
+
 .PARAMETER OldWebsite
     Start the older Next.js website instead of the app.
 
@@ -61,6 +67,7 @@
     gymgo -NoBrowser
     gymgo -NoDevAccount
     gymgo -Online
+    gymgo -GymPal
     gymgo -OldWebsite
 #>
 [CmdletBinding()]
@@ -72,6 +79,7 @@ param(
     [switch] $Repair,
     [switch] $NoDevAccount,
     [switch] $Online,
+    [switch] $GymPal,
     [switch] $OldWebsite,
     [ValidateRange(1, 65535)]
     [int] $Port = 3000
@@ -248,6 +256,29 @@ try {
         $clearCache = $true
     }
     Write-Done 'Dependencies ready'
+
+    # --- GymPal: GitHub Models is gone; take out a token saved for it --------
+    # An update on 18 Nov 2026 saved a GitHub token for GymPal here, before it
+    # turned out GitHub had retired GitHub Models on 30 July 2026.
+    if ($GymPal) {
+        Write-Host ''
+        Write-Host '  GitHub retired GitHub Models on 30 July 2026, so GymPal cannot use a GitHub token.' -ForegroundColor Yellow
+        $envFile = Join-Path $Path 'apps\server\.env.local'
+        if (Test-Path -LiteralPath $envFile) {
+            $all = @(Get-Content -LiteralPath $envFile)
+            $kept = @($all | Where-Object { $_ -notmatch '^\s*GITHUB_MODELS_TOKEN\s*=' })
+            if ($kept.Count -lt $all.Count) {
+                [System.IO.File]::WriteAllLines($envFile, [string[]] $kept, [System.Text.UTF8Encoding]::new($false))
+                Write-Done "Took the GitHub token out of $envFile"
+                Write-Host '  Revoke it too: github.com > Settings > Developer settings > Personal access tokens.' -ForegroundColor DarkGray
+            }
+        }
+        Write-Host ''
+        Write-Host '  To switch GymPal on, use a free OpenRouter key: README, "GymPal".'
+        Write-Host '  Then check it with: pnpm --filter @gymgo/server gympal:check' -ForegroundColor DarkGray
+        Write-Host ''
+        return
+    }
 
     # --- Online: this computer as GymGO's server, through a Cloudflare tunnel ---
     if ($Online) {

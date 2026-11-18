@@ -22,7 +22,6 @@ import Animated, {
   scrollTo,
   useAnimatedStyle,
   useFrameCallback,
-  useReducedMotion,
   useSharedValue,
   withTiming,
   type CSSAnimationKeyframes,
@@ -39,7 +38,7 @@ import { CHILD_TOUCH, PAGE_COLUMN, color, currentTheme, face, radius, shadow, sp
 import { Glass } from './Glass';
 import { Icon } from './Icon';
 import { useTabScroll } from './ios';
-import { Pressable } from './motion';
+import { Pressable, useCalm } from './motion';
 import { CloseButton, Txt } from './ui';
 
 /** Room between widgets: Home's own, so nothing moves when editing starts. */
@@ -385,7 +384,7 @@ function EditItem({
   children: ReactNode;
 }) {
   const widget = homeWidget(id);
-  const calm = useReducedMotion();
+  const calm = useCalm();
 
   // Hold, then drag: a quick swipe still scrolls the page.
   const pan = Gesture.Pan()

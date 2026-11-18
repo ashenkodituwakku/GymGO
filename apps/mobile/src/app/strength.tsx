@@ -35,6 +35,8 @@ import {
   repMax,
   unitFor,
   type WeightUnit,
+  tidyReps,
+  tidyWeight,
 } from '@/lib/training';
 
 /** Near enough to load: 2.5 kg or 5 lb, the smallest step the usual plates make. */
@@ -52,9 +54,10 @@ export default function StrengthScreen() {
   const unit = picked ?? unitFor(prefs.country);
   const [weightText, setWeightText] = useState(params.weight ?? '');
   const [repsText, setRepsText] = useState(params.reps ?? '');
-  const weight = parseWeight(weightText);
+  // As typed: "100 kg" or "225lb" (converted to the unit shown) read too, and "5 reps".
+  const weight = parseWeight(tidyWeight(weightText, unit));
   // Nothing typed yet isn't a mistake.
-  const reps = repsText.trim() ? parseReps(repsText) : null;
+  const reps = repsText.trim() ? parseReps(tidyReps(repsText)) : null;
   const max = typeof weight === 'number' && typeof reps === 'number' ? oneRepMax(weight, reps) : null;
   const plates = (pro ? prefs.plates[unit] : null) ?? PLATES[unit];
   const percents = pro ? [...PERCENT_STEPS] : FREE_PERCENTS;
@@ -71,6 +74,8 @@ export default function StrengthScreen() {
         <Input
           value={weightText}
           onChangeText={setWeightText}
+          // Leaving it tidies what was typed: "225 lb" on a kg page shows as its kg.
+          onBlur={() => setWeightText((typed) => tidyWeight(typed, unit))}
           placeholder={unit === 'kg' ? '100' : '225'}
           placeholderTextColor={color.labelTertiary}
           keyboardType="decimal-pad"
@@ -85,6 +90,7 @@ export default function StrengthScreen() {
         <Input
           value={repsText}
           onChangeText={setRepsText}
+          onBlur={() => setRepsText((typed) => tidyReps(typed))}
           placeholder="5"
           placeholderTextColor={color.labelTertiary}
           keyboardType="number-pad"

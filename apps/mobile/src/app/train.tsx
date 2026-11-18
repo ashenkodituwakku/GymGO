@@ -12,7 +12,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { CURVES, EASE_IN, EASE_OUT, FADE_IN, POP_IN, Pressable, usePop } from '@/components/motion';
+import { ARRIVE_CURVE, EASE_OUT, FADE_IN, LEAVE_CURVE, POP_IN, Pressable, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
 import { Icon, type IconName } from '@/components/Icon';
@@ -73,6 +73,8 @@ import {
   type Target,
   type TrainingSession,
   type WeightUnit,
+  tidyReps,
+  tidyWeight,
 } from '@/lib/training';
 import { PageScroll } from '@/components/PageScroll';
 import { SessionNote } from '@/components/SessionNote';
@@ -719,8 +721,10 @@ const ExerciseLog = memo(function ExerciseLog({
       setAt(at, { done: false });
       return;
     }
-    const weight = set.weight.trim() || (bodyWeight || timed ? '' : weightFor(item.sets, at, weightGuess));
-    const reps = timed ? '1' : set.reps.trim() || (repsGuess !== null ? String(repsGuess) : '');
+    // As typed, tidied ("62.5 kg" → "62.5", "135 lb" in kg converted, "8 reps" → "8"): ticking straight
+    // from the box comes before the box's own tidy on leaving it.
+    const weight = tidyWeight(set.weight, unit).trim() || (bodyWeight || timed ? '' : weightFor(item.sets, at, weightGuess));
+    const reps = timed ? '1' : tidyReps(set.reps).trim() || (repsGuess !== null ? String(repsGuess) : '');
     if (!timed && (parseReps(reps) === undefined || parseReps(reps) === 0)) return setHint('Type how many reps you did.');
     if (parseWeight(weight) === undefined) return setHint(`That weight doesn’t read as a number of ${unit}.`);
     setHint(null);
@@ -906,6 +910,11 @@ const ExerciseLog = memo(function ExerciseLog({
               <Input
                 value={set.weight}
                 onChangeText={(weight) => setAt(at, { weight })}
+                // Leaving the box tidies what was typed: "62.5 kg" → "62.5", "135 lb" in a kg workout → its kg.
+                onBlur={() => {
+                  const tidy = tidyWeight(set.weight, unit);
+                  if (tidy !== set.weight) setAt(at, { weight: tidy });
+                }}
                 placeholder={bodyWeight ? 'BW' : weightFor(item.sets, at, weightGuess) || '—'}
                 placeholderTextColor={color.labelTertiary}
                 keyboardType="decimal-pad"
@@ -920,6 +929,10 @@ const ExerciseLog = memo(function ExerciseLog({
               <Input
                 value={set.reps}
                 onChangeText={(reps) => setAt(at, { reps })}
+                onBlur={() => {
+                  const tidy = tidyReps(set.reps);
+                  if (tidy !== set.reps) setAt(at, { reps: tidy });
+                }}
                 placeholder={repsGuess !== null ? String(repsGuess) : '—'}
                 placeholderTextColor={color.labelTertiary}
                 keyboardType="number-pad"
@@ -1083,8 +1096,8 @@ function Elapsed({ since }: { since: string }) {
 const timeLeft = (endsAt: number, at: number) => Math.max(0, (endsAt - at) / 1000);
 
 /** The rest bar rises from the bottom as a rest starts, and sinks away when it's up. */
-const REST_IN = (CURVES ? FadeInDown.duration(300).easing(EASE_OUT) : FadeInDown.duration(300)).reduceMotion(ReduceMotion.System);
-const REST_OUT = (CURVES ? FadeOutDown.duration(200).easing(EASE_IN) : FadeOutDown.duration(200)).reduceMotion(ReduceMotion.System);
+const REST_IN = FadeInDown.duration(300).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System);
+const REST_OUT = FadeOutDown.duration(200).easing(LEAVE_CURVE).reduceMotion(ReduceMotion.System);
 
 function RestBar({ endsAt, total, bottom }: { endsAt: number; total: number; bottom: number }) {
   const now = useNow(true);
@@ -1373,7 +1386,8 @@ function SetsBar({ done, planned }: { done: number; planned: number }) {
   const share = planned > 0 ? Math.min(1, done / planned) : 0;
   const shown = useSharedValue(share);
   useEffect(() => {
-    shown.value = withTiming(share, { duration: 420, easing: EASE_OUT, reduceMotion: ReduceMotion.System });
+    // Quick: it moves on every set you tick, and what's done most should move least.
+    shown.value = withTiming(share, { duration: 240, easing: EASE_OUT, reduceMotion: ReduceMotion.System });
   }, [share, shown]);
   const fill = useAnimatedStyle(() => ({ width: `${shown.value * 100}%` }));
   return (

@@ -17,11 +17,10 @@
 
 import { useEffect, useId, useState } from 'react';
 import { Image, Platform, StyleSheet, View } from 'react-native';
-import { Pressable } from './motion';
+import { Pressable, useCalm } from './motion';
 import Animated, {
   Easing,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withDelay,
   withRepeat,
@@ -388,7 +387,7 @@ function Foil({ id }: { id: string }) {
 
 /** A band of light that sweeps across the picture now and then (still, with Reduce Motion). */
 function Shine({ id, width }: { id: string; width: number }) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useCalm();
   const x = useSharedValue(-width);
   useEffect(() => {
     if (reduceMotion) return;
@@ -432,7 +431,7 @@ function Sparkles({ big }: { big: boolean }) {
 }
 
 function Twinkle({ top, left, size, delay }: { top: `${number}%`; left: `${number}%`; size: number; delay: number }) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useCalm();
   const glow = useSharedValue(1);
   useEffect(() => {
     if (reduceMotion) return;

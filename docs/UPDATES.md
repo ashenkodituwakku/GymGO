@@ -9,7 +9,7 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
-## Update 160 · Three short videos: the app is coming, the website is out
+## Update 179 · Three short videos: the app is coming, the website is out
 
 *18 Nov 2026 · the commit "Three 9:16 shorts of the full app, advertising gymgo.site"*
 
@@ -27,7 +27,7 @@ next number here as part of the update itself.
   - There's no narration, so the captions carry it. Add music from the platform's library when posting.
 - Stills of every scene were checked before encoding. Each file was read back as 1080x1920, h264, 30 fps. Nothing was posted anywhere. The MP4s aren't committed; `marketing/shorts/README.md` says how to make them again.
 
-## Update 159 · Sign-in says what's wrong, out loud
+## Update 178 · Sign-in says what's wrong, out loud
 
 *18 Nov 2026 · `8216503`*
 
@@ -37,9 +37,296 @@ next number here as part of the update itself.
 - The terms checkbox, and the one for each day in Reminders, told a browser nothing while unticked (the accessibility audit flagged it). They now say ticked or not, as the app's other six checkboxes already did.
 - The sign-in page (both tabs, with a mistyped email), welcome, the in-app legal pages and Report a bug pass the accessibility audit signed out, light and dark. App tests 578.
 
+## Update 177 · GymPal's free models refreshed, and OpenRouter's reasons shown
+
+*18 Nov 2026 · `bf30322`*
+
+Your OpenRouter check said "GymPal's had a lot of questions": OpenRouter took the key but refused the question as rate-limited (429), and the server didn't say why.
+
+- **One of GymPal's three free models had been withdrawn**: `thinkingmachines/inkling-small:free` is no longer on OpenRouter. GymPal now asks `google/gemma-4-31b-it:free`, then `thinkingmachines/inkling-2-small:free`, then `nvidia/nemotron-3.5-super-vl:free`. That's three different makers, so one busy maker doesn't stop GymPal; before, two of the three were Google's Gemma, the most popular free models and often "rate-limited upstream". All three were checked on OpenRouter's public model list today.
+- **When OpenRouter says no, the server's log and `gympal:check` now show its own reason**, such as "temporarily rate-limited upstream" and which provider said so. Never the key.
+
+- New tests: the reason is logged (and cut to one line when it's long), and the key never is. All typechecks and tests pass. Not tried with a real key here (none is set in this workspace).
+
+## Update 176 · GitHub Models is gone, so GymPal is back to OpenRouter
+
+*18 Nov 2026 · the commit "Take GitHub Models out of GymPal: GitHub retired it on 30 July"*
+
+Your Mac's check failed the same way as the one here, which showed the problem wasn't this workspace: **GitHub retired GitHub Models on 30 July 2026**. Its playground, catalogue and API are gone, and its address now answers every request with a bare "OK". GitHub's own docs say so. No GitHub token can make GymPal work there, and I should have checked before building Updates 173 to 175.
+
+- **GymPal is OpenRouter only again**, as before Update 173. The GitHub Models code is out.
+- **The token on your Mac now does nothing.** Without this fix, it made the server think GymPal was switched on, so every question would have failed. The server now says at start-up that the line does nothing and should be deleted. `gymgo-mac.sh --gympal` (Mac) and `gymgo -GymPal` (Windows) now take that line out of `apps/server/.env.local` for you, keep everything else, and point to the OpenRouter steps.
+- **The Privacy Policy and Terms are back to the 4 November version**: GitHub Models is no longer named. Anyone who agreed to the 18 November version sees the terms card once more.
+- **Kept from that work:** `pnpm --filter @gymgo/server gympal:check` now checks OpenRouter, the server tells the app which service it uses, and the note under GymPal's box names it.
+- **To switch GymPal on:** a free key from openrouter.ai (Keys → Create key) in `apps/server/.env.local` as `OPENROUTER_API_KEY=…`, then run the check. README, GymPal, has the steps.
+
+- Checked: the server's GymPal tests (25), the check command with and without the leftover token, and the Mac `--gympal` cleanup on a test file here (token line out, other settings kept, file still private). All typechecks and tests pass. The Windows `-GymPal` cleanup was read through, not run.
+
+## Update 175 · GymPal setup on a Mac too
+
+*18 Nov 2026 · the commit "gymgo-mac.sh --gympal: the same GymPal setup on a Mac"*
+
+You asked about the Mac. The Mac launcher now has the same step as Windows' `gymgo -GymPal`:
+
+- **In Terminal, one line:** `curl -fsSL https://raw.githubusercontent.com/ashenkodituwakku/GymGO/claude/friendly-johnson-9rzxrj/scripts/gymgo-mac.sh | bash -s -- --gympal`. That fetches the newest launcher from GitHub, so it knows the new option even if your copy is old, and brings `~/GymGO` up to date. Once your copy is current, `gymgo --gympal` does the same.
+- It asks for your GitHub token, which doesn't show as you paste, and saves it in `~/GymGO/apps/server/.env.local`. Other settings in that file are kept and an older token is replaced. Only your Mac user can read the file, it's never uploaded, and updates leave it alone. Then it asks GymPal one question and says whether he answered.
+- Its `--help` also now prints just the list of options (it used to print two lines of code after them).
+
+- Run here in a Linux shell with a made-up token: the other line in the file was kept, the old token replaced, the file readable only by its owner, and git ignored it. The check then failed only because this workspace can't reach GitHub Models. The test file was deleted afterwards. Not yet run on a Mac.
+
+## Update 174 · `gymgo -GymPal` sets GymPal up for you
+
+*18 Nov 2026 · the commit "gymgo -GymPal: paste the token once, saved and checked"*
+
+You asked me to set GymPal up for you. I can't reach your PC from here (no folder on it is shared with this session), so the launcher now does it in one command:
+
+- **`gymgo -GymPal`** asks you to paste your GitHub token, and it doesn't show as you paste. It saves the token in `apps\server\.env.local` on your PC, replacing any older one and keeping every other setting. That file is never uploaded to GitHub, and `gymgo -Update` leaves it alone. Then it asks GymPal one question and says whether he answered, and which model did.
+- It refuses anything that doesn't look like a GitHub token (one starting `github_pat_` or `ghp_`), and says why.
+- To use it, run **`gymgo -Update`** once and press Ctrl+C when GymGO has started, so your launcher knows the new option. Then run **`gymgo -GymPal`**, and then `gymgo` or `gymgo -Online` as usual.
+
+- The launcher is still plain ASCII (its test checks). I couldn't run PowerShell here to try the new step, so it was checked by reading it through. Not yet run on your PC.
+
+## Update 173 · GymPal can use GitHub Models
+
+*18 Nov 2026 · the commit "GymPal answers through GitHub Models with the owner's token"*
+
+You sent a GitHub token for GitHub Models and asked for GymPal to work with it.
+
+- **GymPal now asks GitHub Models first** when the server has a GitHub token, trying `openai/gpt-4.1-mini`, then `openai/gpt-4o-mini`, then `mistral-ai/mistral-small-2503`: the next when one is busy, isn't available, or doesn't answer. If GitHub turns the token down or every model is busy, GymPal falls back to OpenRouter's free models, if that key is set too.
+- **It doesn't cost money**: GitHub Models is free within GitHub's daily limits, and past them GitHub says no rather than charging, unless paid use for Models is switched on in your GitHub billing settings (leave it off).
+- **The token is not in the code.** It goes in `apps/server/.env.local` on your PC, as `GITHUB_MODELS_TOKEN=…`. That file is never uploaded to GitHub, and the server never prints it.
+- **A check you can run**: `pnpm --filter @gymgo/server gympal:check` asks GymPal one short question with your settings and says which model answered, or why none did. The server's first lines also say "GymPal: on, GitHub Models first (…)".
+- **The note under GymPal's message box** now names the service chats go to: "Chats go to GitHub Models…" (or OpenRouter). The Privacy Policy and Terms name GitHub Models (GitHub, part of Microsoft) too. That's a new version (18 November 2026), so existing accounts see the card on Profile asking them to agree.
+
+- **Not yet tried with your token.** This cloud workspace can't reach GitHub Models: every request to it comes back as a plain "OK" from the workspace's own network gate, never reaching GitHub, so the token was never used from here. New tests cover the GitHub requests (the address, the token header, one model at a time, the next model when one is busy or gone, the fall-back to OpenRouter, stopping at a turned-down token without ever logging it). All typechecks and tests pass.
+
+## Update 172 · Home's cards answer the mouse
+
+*18 Nov 2026 · the commit "Home's cards drift towards the mouse and catch the light"*
+
+You asked for Home's cards to move as the pointer passes over them, or to catch a Liquid Glass shine. They now do both, in a browser with a mouse or trackpad:
+
+- **They move.** The card under the pointer lifts 2 points and drifts up to 3 points towards it, easing back when the pointer leaves.
+- **They shine** in a glass look (Standard, Frost, Liquid). A soft light follows the pointer across the card's face, and the card's rim catches the light nearest the pointer, as Liquid Glass does. The light sits behind the card's words and pictures, so text never washes out under it (a first try put it on top, and a gym card's name went grey). It's fainter in dark mode. The solid looks (8-bit, Paper and the rest) keep their flat plates and only move.
+- **Where:** every card, tile and chip on Home: the quick searches, Build a workout, the templates card, Machines and Trips, the weather, the widgets, gym cards, and the place and city chips. A text link (Map) and bare icons are left alone. A row inside a card (Templates) lights the card it sits in. It's off while you're rearranging Home.
+- **Reduce motion** (yours in Appearance, or the system's): the cards stay put and only the light moves.
+- Touch screens have no hover, so phones and the app are unchanged.
+
+- Checked in the browser at 1280 points in Liquid and Frost (light), Standard (dark) and Paper: the right card is picked under the pointer (not the Map link or the gap between cards), it moves and shines, Paper moves without the shine, and with Reduce motion the cards stay still. All typechecks and tests pass.
+
+## Update 171 · More frosted glass, a Liquid Glass look, and no seam beside the sidebar
+
+*18 Nov 2026 · the commit "More frosted glass, a Liquid look, and the page running on under the sidebar"*
+
+You asked for most of the UI to be more frosted glass, for a Liquid Glass appearance that puts everything in Liquid Glass, and, with a screenshot, for the hard edge on Home beside the sidebar to go.
+
+**The seam beside the sidebar.** With the sidebar docked, each page started at the sidebar's edge, so its background did too. Frost's blues stopped in a straight line down the side of the sidebar, with the plain page colour under the glass. Now, with the sidebar docked, the page's background is drawn the full width of the window, under the sidebar as well, and the page draws none of its own. Frost's blues, Liquid's colours and Standard's glow run on unbroken under the glass on every page, not just Home.
+
+**More frosted glass (Standard, Frost and Liquid).** This follows your Liquid Glass slider as before: 0% is still solid, and 100% is unchanged.
+- At the default, the glass over the map and pages is more see-through, so what passes under it shows as soft colour through the blur. Controls are 72% solid (were 80%), sheets 86% (were 94%), and pinned headers and bars 88% (were 98%). Android draws no blur behind its glass, so it keeps the old amounts, which stay readable over the map.
+- Cards on the page are more see-through at the default in Standard: 74% solid in light (was 82%) and 76% in dark (was 84%). They never get so clear that their text drops below WCAG AA over the glow.
+- Chips, search boxes (Home's and Explore's), segmented controls and text boxes now have a glass edge: light along the top and a fine line all round. It's brighter the higher the slider, brightest in Liquid, and absent in the solid looks.
+
+**Liquid, a new look (Pro).** Everything in Liquid Glass:
+- Clear cards: 42% solid at the default (50% in dark) and 28% at 100%, but more solid wherever their text needs it. Each has a bright edge that catches the light along its top, fainter down the sides and along the bottom, a soft light inside the rim, a sheen across its face from the top corner, and a glint at the far one.
+- In a browser each card also blurs what's behind it and deepens its colours, as thick glass does. On a phone the cards are see-through without a blur behind them.
+- Glass needs colour behind it to look like glass, so the page has three soft pools: your accent's colour and the colours either side of it, made in OKLCH so each is as light and vivid as the next. A grey accent (Slate, Graphite) gets blue-violet pools.
+- Filled buttons (Build a workout, Go, chosen chips) are tinted glass with a shine along the top. The shine is gone by the middle, where the words are, so white text keeps its contrast.
+- The glass over the map, sheets, the tab bar and the sidebar is the same Liquid Glass as in Standard (Apple's own on iOS 26). Corners are rounder, like iOS 26.
+- Appearance's look grid now has eleven tiles: rows of five when it's wide enough, otherwise rows of three, with the last row centred.
+- The Pro page, the plans table, GymPal's guide and the README now say ten looks.
+
+- Checked in the browser at 390 and 1280 points in light and dark: Home, Profile, Progress, a gym's page, Explore and Appearance, in Standard, Frost and Liquid, with the sidebar and with the tab bar; the colours either side of the sidebar's edge measured to confirm the step is gone. The contrast tests cover Liquid's cards over every colour of its page (and under its sheen) for every accent at 25, 50, 75 and 100%. A new test covers Liquid's sheen, blur and glass edges, and that the edges disappear at 0% and in solid looks. All typechecks and tests pass. Not yet seen on a phone.
+
+## Update 170 · Frost: a frosted-glass look from a reel
+
+*17 Nov 2026 · the commit "Frost: a frosted glass look on a blue-and-white page"*
+
+You sent a third reel (code.xr) and asked for it as an Appearance option. I can't watch videos, so I went by its caption: "Glassy Dashboard V5", a glassmorphism dashboard "featuring elegant translucent cards ... and a clean blue-and-white design". It is now **Frost**, a new look in Appearance → Look, beside Soft, Paper and the others, and part of Pro like them:
+
+- **The page** is white at the top fading to pale blue, with two soft pools of a stronger blue (top right and left), and it stays still as you scroll, so each card shows a little of the blue behind it. In dark mode it is deep navy, with the pools in a darker blue.
+- **Cards** are frosted glass: see-through white (navy in dark), with a fine white edge that is brighter along the top, and a soft blue shadow. Corners are a little rounder than Standard's.
+- **The Liquid Glass slider works in Frost too**, setting how see-through the cards are. At the default they are 60% solid; at 100% they are 42% solid (44% in dark); at 0% they are solid and the blue page stays. They never get so clear that text on them drops below WCAG AA over the deepest blue of the page, for any accent.
+- **The glass over the map, sheets, the tab bar and the sidebar** is tinted the page's blue in dark mode, not Standard's grey. Settings icons get Standard's lit tiles, as Frost is a glass look too.
+- **Appearance's look grid** now has ten tiles: two rows of five when it's wide enough, otherwise rows of three with the last tile centred. Frost's tile shows its blue page and a frosted card.
+- Standard's glow of your accent isn't drawn in Frost; its blue page takes that place. Your accent still colours buttons and links, and green, orange and grey keep their meaning.
+- The Pro page, the plans table, GymPal's guide and the README now say nine looks.
+
+- Checked in the browser at 320, 390 and 1280 points, in light and dark: Home, Profile, Progress, a gym's page, Explore (with the sidebar folded and the bar), and Appearance; the glass at 50% and 100%. No errors. New unit tests check that Frost's cards follow the level and its page is drawn behind each page, and the WCAG tests now cover Frost's cards over every colour of its page. All typechecks and tests pass. Not yet seen on a phone. On a phone the cards are see-through over the page without a blur behind them (as in Standard): over a smooth backdrop a blur looks the same.
+
+## Update 169 · Animation principles and UX laws from a second reel
+
+*17 Nov 2026 · the commit "Motion and input from a reel: under 300ms, less for what's frequent, forgiving boxes"*
+
+You sent a second reel (charles.unemployed) to treat the same way. Its caption lists twelve animation principles (from Disney's *The Illusion of Life*) and eight UX laws (from *Laws of UX*, and Emil Kowalski on frequency of use). Most are judgement rules, so each was checked against GymGO, and changes made where the app fell short:
+
+**Changed**
+- **Snappy timing** (UI motion under 300ms): the sidebar's unfold now settles in about 300ms (it was about 450). Also:
+  - a page opening in a browser: 280ms (was 380);
+  - the workout plan's entrance: 280 (was 420);
+  - a gym's page growing from its card: 280 (was 340);
+  - rows making room: 260 in a browser (was 320);
+  - pop-ins and map pins: 260 and 240 (were 320);
+  - the tab bar's lens settling after a drag: 240 (was 320);
+  - small settles like a pill sliding: about 300 (was 340).
+- **Frequency of use** (the more often, the less it moves): switching tabs, the move you make most, is now a quick 160ms fade with no lift (it was a 300ms fade and lift). The tab bar's and sidebar's icons no longer blur in when they change (Update 168), since they change on every move; Save and Appearance's ticks still do. The workout's sets bar fills in 240ms (was 420), since it moves on every set you tick.
+- **Postel's law** (accept messy input, return clean output): weight, reps and measurement boxes now read what people type rather than refusing it.
+  - "62.5 kg", "62,5kg" and "100." read as weights; "8 reps", "8x" and "x 8" as reps; "82.5 cm", "32 in" and "18 %" as measurements.
+  - A weight in the other unit is converted to yours ("135 lb" in a kg workout becomes 61.2), as is a length.
+  - Leaving a box tidies its text to the plain number. Ticking a set straight from the box reads it the same way.
+  - This applies to the workout's set boxes, body weight, the plate calculator, 1-rep max and measurements. Anything that still isn't a number gets the usual hint.
+- **Fitts's law / bigger hit areas**: the search row's Filters and account buttons (40 points) now answer a tap 4 points beyond their edge.
+
+**Already so**
+- **Squash and stretch, anticipation**: the tab bar's glass lens stretches as you drag it, and buttons sink as you touch them, before they act.
+- **Slow in and slow out**: done in Update 165. The only constant-speed clocks left drive a celebration's physics and an exercise glyph's loop, not UI moves.
+- **Staging, pose to pose, follow through, secondary action, exaggerated feedback, solid drawing**: a gym's card takes the results' place rather than squeezing in beside them; animations run between key poses; the sidebar's menu fades up after the pane; Save pops; glass has rims and shadows.
+- **Doherty threshold** (answer within 400ms): Save changes at the tap and saves behind it; search suggestions are worked out on the device; loading shows placeholder rows straight away.
+- **Miller's law, Jakob's law**: the sidebar's eleven places come in three groups of four or fewer; Escape closes things, "/" goes to search, and back buttons and tab bars work as elsewhere.
+
+**Not applied**
+- **Arcs**: GymGO's moves are short slides and fades, where a curved path would read as decoration.
+- **Hick's law** (fewer choices): cutting choices means removing features, which is yours to decide.
+
+- Checked in the browser: "100 kg" on the plate calculator loads 25 + 15 kg a side; "225 lb" × "5 reps" on a kg 1-rep max page reads as 102.1 kg × 5 (about 120 kg), and leaving the boxes tidies them to "102.1" and "5". Pages open without errors. New unit tests for reading typed weights, reps and measurements. All typechecks and tests pass. Not yet seen on a phone.
+
+## Update 168 · Ten design tips from a reel, applied where they fit
+
+*17 Nov 2026 · the commit "Design tips from a reel: corners, edge fades, OKLCH, bold icons, icon swaps, logos, dvh"*
+
+You sent an Instagram reel (charles.unemployed) and asked for its changes. I can't hear or watch a video, but its caption lists the tips it covers, ten small UI rules. Each was checked against GymGO:
+
+1. **Nested corners** (an inner corner is the outer one less the gap): done. A helper (`concentric` in the theme) now sets them on Appearance's tiles, faces and sample (the tile plates' padding came to 12 to match the cards'), the map tiles in their rings, the look previews, and Explore's results list, inside the phone's sheet or the wide panel.
+2. **Borders of see-through black or white** rather than solid grey: already so. Separators, fills and glass edges are all see-through colours; the only solid borders are Google's sign-in button, whose colours Google sets.
+3. **Palettes in OKLCH**: done for **your own colour** (Pro). It's now made in OKLCH at one lightness and saturation, so every point on the hue slider looks as vivid as its neighbours; in HSL yellows glared and blues sank. It's still shaded until text in it reads at 4.6:1 or better (the existing test, every 15°, passes). A colour you picked before may look a little different, in the same hue.
+4. **Gradients "in OKLCH"**: done for **Rainbow** (Pro), the one gradient that runs between far-apart colours. It's blended through OKLCH into 21 stops, so it stays bright between green and blue rather than going muddy. Done in code rather than with CSS's `in oklch`, so older browsers and both phones draw it too.
+5. **Icon stroke matching the text's weight**: done for the outline icons (the tab bar's and the sidebar's). With **Bold text** on, they're drawn in Phosphor's bold cut, as the words go a step heavier. Other icons are already filled or two-tone.
+6. **Fades at the edges of sideways rows**: done in a browser, on Explore's quick filters, Home's carousel, the Exercises chips and Collection's rows. A chip cut off at the edge now fades out, saying there's more, instead of looking clipped. The first chip shows whole until you scroll. Phones show the rows as before.
+7. **Blurred icon swaps**: done in a browser. An icon that changes in place (Save to Saved, a tick coming on, a tab's outline filling) now blurs in from a little smaller over a fifth of a second, instead of swapping in one frame. It's in the two shared icon components, so it applies everywhere, and not with Reduce motion. Phones swap as before.
+8. **Lighter surfaces for depth in dark mode**: already so. Dark mode goes black page, #1C1C1E cards and #3A3A3C raised controls, as iOS does, rather than relying on shadows.
+9. **`100dvh` instead of `100vh`**: done where `100vh` was used, the older website (apps/web) and the server's billing return page, with `100vh` kept first for browsers that don't know `dvh`. The app itself fills the screen without either.
+10. **Multiply for pictures on white**: done for gym logos. Many come on a white square, which showed as a white box on dark mode's grey logo plate; multiplied onto the plate, the white takes the plate's colour. In light mode the plate is white, so nothing changes there.
+
+- The reel's comments note that multiply drops a picture's highlights. Fine for logos on their plate, where white was the problem.
+- Checked in the browser at 1280 points: Appearance's corners, the hue slider and Rainbow in light; Explore in dark, the chips' mask and the logos' blend mode. A tick changing ran the blur, and Bold text drew the sidebar's icons in their bold cut. New unit tests for the OKLCH maths. All typechecks and tests pass. Not yet seen on a phone.
+
+## Update 167 · Appearance's switch bars become picture tiles
+
+*17 Nov 2026 · the commit "Appearance: text size, clock and GymPal's button as tiles"*
+
+You asked for the bar options (the switches for the clock and GymPal's button) to be better.
+
+- **Clock**: two faces showing a time as the app writes it in each, "7 pm, until 9:30 pm" and "19:00, until 21:30", instead of a two-part bar. The one in use is outlined and tinted in your accent.
+- **GymPal's button**: three small screens showing where he waits, drawn as the app draws him: **Edge tab** (a light tab flush with the edge holding his mark), **Corner** (his mark in the corner) and **Hidden** (only the faint strip you swipe in from), each with a line saying what it is. Under them, **Left side** and **Right side** as two screens showing your chosen button on that side. Each set of screens follows the other, so what you see is what you'll get.
+- **Text size**, the last bar on the page: four tiles with "Aa" at each size, Smaller to Largest, above Bold text.
+- These now match the page's other choices (Mode, Dark mode, Layout, Look): tiles with a picture of the choice rather than words on a bar. Nothing they do has changed.
+- Checked in the browser at 1280 points (light) and on a 390-point phone (dark): choosing 24-hour, Edge tab on the left and Larger text each saved and showed straight away (the clock's note read "19:00"). All typechecks and app tests pass. Not yet seen on a phone.
+
+## Update 166 · Appearance: a better Layout section, map styles, and Reduce motion
+
+*17 Nov 2026 · the commit "Appearance: Layout tiles, map styles (Pro), Reduce motion, folding on the map"*
+
+You asked for the Layout section to look better, for more to customise in Appearance, and for some of it to be Pro.
+
+- **Layout** is now two picture tiles, like Mode and Dark mode above it: a small screen with the tab bar floating at its foot, and one with the sidebar down its left, each with a line saying what it is. With Sidebar chosen, a switch under the tiles, **Fold away on the map**, decides whether the sidebar folds to its capsule on Explore (on, as before) or stays open there like everywhere else. For everyone.
+- **Map** (new, Pro): the style of Explore's map. **Standard** stays everyone's; **Muted** (pale greys so the pins stand out), **Classic** (the classic OpenStreetMap look: deep green woods, orange motorways) and **Deep blue** (a dark blue map, day or night) are Pro. They're OpenFreeMap's own styles (Liberty, Positron, OSM Bright and Fiord), and each tile is drawn in its style's own colours, read from those styles. In dark mode every style but Deep blue uses the dark map, and the page says so. On an iPhone the map is Apple's, so Muted is Apple's muted map, Deep blue its dark one, and Classic its standard map (Apple has nothing like it). Without Pro the three show a crown and open the Pro page; a Pro style kept after Pro ends shows as Standard. Choosing one while the map is open loads it in place.
+- **Reduce motion** (new, for everyone): GymGO keeps still, as the phone's own Reduce Motion makes it, without changing the phone. Things appear in place instead of sliding, gliding and popping (the sidebar opens at once), pages arrive without their lift, the map's pins don't bounce, and celebrations don't play. If the phone's setting is already on, the switch shows on and says so. It's an accessibility setting, so it isn't Pro.
+- The Pro page, the plans table, the README and GymPal's guide now mention the map styles (and the guide the new free settings).
+- While testing, turning folding off showed the map's panels sitting a sidebar's width too far right; fixed before this went out.
+- Checked in the browser at 1280 points (light and dark) and on a 390-point phone (dark): the tiles and sections; Muted loading OpenFreeMap's Positron on Explore; folding off keeping the sidebar open with the panels beside it; with Reduce motion on, the sidebar fully open at the first frame checked (with it off, mid-glide); and, with the plan rewritten to Free in the test browser, the PRO tags, crowns, Standard in use with Deep blue kept, and Muted opening the Pro page. New unit tests for the map styles, the fold switch and reading the new settings. Not yet seen on a phone.
+
+## Update 165 · The map responds again, and the app's animations ease in the browser
+
+*17 Nov 2026 · the commit "Explore: the map takes clicks and drags again; animations ease in the browser"*
+
+You said the map was glitched, so you couldn't move it or click anything on it, and asked for the other animations in the app to be smooth too.
+
+- **The map works again.** Update 164 slid Explore's panels with one layer laid over the whole window, meant to let clicks through to the map. In a browser that setting is lost on an animated layer, so the layer caught every click and drag. Each panel now slides itself, and the Search this area button inside its own row, so nothing covers the map. Checked: dragging moves the map (with the sidebar open and folded, and in the Tab bar layout), and clicking a gym's pin opens its card.
+- **Fades, pops and glides ease in the browser.** Every fade-in, fade-out and pop in the app, and the glide when rows make room for each other, ran at one constant speed in a browser, starting and stopping with a jolt: the browser runs these itself and takes only a standard curve, which the app wasn't giving it. They now get the same curves as on a phone: fades come in quickly and settle softly, things leave gathering pace, rows glide with a soft start and stop, and a pop goes a touch past and settles back.
+- **Hover fades.** Under a mouse, a button's or row's hover shade now fades in quickly and out a little slower, instead of snapping, on every button that uses the app's shared button.
+- **No dark flicker on press.** A highlight fading from clear used to pass through a darker tint on the way, because "clear" is clear black. It now fades from a clear version of its own colour. A new unit test covers how that colour is worked out.
+- The loading placeholders' pulse now eases at both ends in the browser too.
+- Page changes and tab switches already fade and lift in the browser (they're run by the browser itself), so they're unchanged.
+- Checked in the browser at 1280 points: the gym card's fade, the rows' glide and the hover fade each read back with their curves; a walk of eleven pages showed no errors. Not yet seen on a phone (its animations already used these curves).
+
+## Update 164 · The sidebar unfolds beside the map, smoothly
+
+*17 Nov 2026 · the commit "Sidebar: unfold from the capsule beside the map, one smooth motion"*
+
+You asked for the capsule to open the sidebar with a smoother animation, not over the map's panels but moving them across, and for the animations to be smooth and sleek.
+
+- The arrow now unfolds the sidebar out of the capsule: the capsule grows into the full pane, the menu fading up once there's room for it, while the results panel, a gym's card and the Search this area button slide across to make room. Both move together on one even glide, with no bounce, and the map eases its centre across with them. Folding reverses it: the pane shrinks back into the capsule and the panels slide back.
+- The sidebar no longer covers the map's panels, and you can keep using them with it open. It folds away with the arrow at its top or Escape (a gym's card or Filters, if open, closes first). Clicking the map no longer folds it.
+- Going between the map and another page now folds or unfolds the sidebar in the same way instead of swapping one for the other: choose Progress from the map and the pane is already in place; come back to the map and it folds itself away into the capsule as the panels slide back.
+- The pill under the place you're on now glides from place to place as you go, instead of jumping.
+- On the map, a gym's card and Filters fade in and out, and the results fade back when a card that covered them closes, instead of appearing and disappearing in one frame. The phone's Menu slides in on the same glide as the sidebar.
+- From the keyboard: opening the sidebar puts focus on its fold arrow, and folding it puts focus back on the capsule.
+- Checked in the browser at 1280 points, light and dark: frames taken in slow motion (the page's clock slowed tenfold) of the unfold, the fold, the pill gliding from Progress to Saved, and the sidebar folding on arrival at the map. Also checked: the panels end exactly the sidebar's extra width across (188 points), the menu rows sit at the same height on the map and on other pages, and the phone's Menu opens and closes. The glass's blur still can't be seen in this test browser (see Update 159). Not yet seen on a phone or an iPad.
+
+## Update 163 · On the map, the sidebar folds away to a small capsule
+
+*14 Nov 2026 · the commit "Sidebar: folded away to a capsule on the map, opening over it"*
+
+You asked for the sidebar to fold into a small capsule with an arrow on the map, which you can open to go somewhere else.
+
+- On Explore, with the sidebar layout on a wide screen, the sidebar is now folded away to a small glass capsule with an arrow, at the top left. The results panel moves up beside it, so the map gets about 190 more points of width.
+- The arrow opens the sidebar over the map, in the same place and size as on other pages. Choosing a place takes you there, where the sidebar is open as usual. The arrow at its top, a click anywhere beside it or Escape folds it away again. Coming back to the map folds it again.
+- With the extra room, a gym's card now fits beside the results at 1280 points wide, with about 390 points of map left (before, it covered the results at that width). At 1000 points it still takes the results' place.
+- GymPal's button follows the capsule when it's on the left.
+- Every other page is unchanged, and so are phones and the Tab bar layout.
+- Checked in the browser at 1280 and 1000 points, light and dark: folded, opened, folded again with Escape and with a click on the map, a gym's card opened, Progress chosen from it (full sidebar there) and back to Explore (folded again). A new unit test covers where it folds. The blur behind the glass still can't be seen in this test browser (see Update 159), so when it's open the results show faintly through it here. Not yet seen on a phone or an iPad.
+
+## Update 162 · The search stays put while the results scroll beside the map
+
+*14 Nov 2026 · the commit "Explore: the search and quick filters stay at the top of the panel beside the map"*
+
+You said scrolling the results panel beside the map didn't look laid out properly.
+
+- On a wide screen, the results panel scrolled as one piece: the search box and the quick filters went off the top, and the gyms ran up into the panel's rounded top corners and were cut off there.
+- Now the search box and the quick filters stay at the top of the panel, and only the results scroll, under a thin line that shows once you've scrolled. The search box also sits 16 points down from the panel's top edge, the same as a gym's card, instead of 4.
+- While you type, the suggestions show under the search box as before. In a short window they scroll on their own, so the quick filters don't get pushed out of the panel.
+- Phones are unchanged: the results sheet works as before.
+- Checked in the browser at 1280 by 800 (light and dark, scrolled and not) and 1280 by 600 (typing, with eight suggestions), and on a 390-point phone. Not yet seen on a phone with the sidebar, or on an iPad.
+
+## Update 161 · Even spacing beside the sidebar, and room on the map
+
+*14 Nov 2026 · the commit "Sidebar and Explore: even spacing, and a card in the results' place when there's no room"*
+
+You said the sidebar's spacing was off, especially on the map, where the panel beside it felt squished.
+
+- The sidebar's pane now sits 16 points in from the window's edges, the same as Explore's panels, so the two line up at the top and the bottom with an even 16-point gap between them. Its corners match the panels' too. Before, the sidebar was 12 points in, the panels stopped short of the window's foot, and the gap between them was uneven.
+- When a gym's card or Filters is open and there isn't room for it beside the results plus a fair amount of map (at least 360 points), the card now takes the results' place instead of squeezing in as a third pane. Close it and the results come back, scrolled where you left them. Before, at 1280 points with the sidebar there was only a sliver of map left, and at 1000 points the card ran off the window.
+- With the sidebar, that means the card sits beside the results from about 1440 points wide. Without the sidebar the same rule applies, from about 1190 points; between 900 and 1190 points the card now covers the results there too, where before it left the map a strip.
+- While a card covers the results, they can't be clicked, tabbed to or read out by a screen reader.
+- Checked in the browser at 1280 and 1000 points, light and dark, with a gym's card open and closed. Not yet seen on a phone (phones use the sheet and are unchanged).
+
+## Update 160 · The sidebar hovers over the page
+
+*14 Nov 2026 · the commit "Sidebar: hover over the page, not beside it"*
+
+You asked for the sidebar to hover above the page instead of being a separate rectangle.
+
+- On a wide screen the page now runs the whole width of the window, and the sidebar's glass pane floats over its left edge, as iPadOS 26 draws its sidebars. A page's header bar and background carry on underneath the glass instead of stopping at a strip beside it.
+- On Explore the map runs right under the sidebar, so you see it through the glass and round its edges. The results and filter panels, the Search this area button and the time-zone warning start just past the sidebar.
+- Everything you use on a page (its back button, title, cards and buttons) stays clear of the sidebar, so nothing is hidden under it. Clicks in the gap beside the pane reach the page.
+- Phones are unchanged: Menu still slides the glass pane in over the page.
+- Checked in the browser at 1280 and 1000 points, light and dark: Home, Explore, Progress, Profile, a gym page and My workouts, and a sidebar link opening its page. The blur behind the glass still can't be seen in this test browser (see Update 159). Not yet seen on a phone.
+
+## Update 159 · The sidebar in Liquid Glass, and it stays put
+
+*12 Nov 2026 · the commit "Sidebar: a floating pane of Liquid Glass, beside every page"*
+
+You asked for the sidebar to look better, in Liquid Glass.
+
+- The sidebar (Appearance → Layout → Sidebar) is now a pane of Liquid Glass floating in from the screen's edges, with rounded corners and a soft shadow, as iPadOS 26 draws its sidebars. It's the tab bar's own glass: Apple's on iOS 26, the imitation on older iPhones, and in a browser a blur with light along its rim and a slight bend at its edges (Chrome and Edge). How clear it is follows your Liquid Glass level; at 0%, or in a solid look, it's a plain plate.
+- On a phone, Menu slides the same glass pane in over the page, which now shows through it, dimmed less than before.
+- Every place has an icon from the same set as the tab bar (it was two sets of different sizes): outline, filled for the place you're on. The place you're on sits in a pill of your accent, lit along its top. Under a mouse a row shades as you point at it. "TRAINING" and "YOU" are now "Training" and "You", like the rest of the app's headings.
+- On a wide screen the sidebar stays beside every page. Opening Progress, My workouts, Collection or any other page from it used to cover it, leaving only a back button; now the page opens beside it with its place marked. It steps aside only for the welcome tour and when you're signed out.
+- Checked in the browser at 1280 and 1000 points and on a 390-point phone, in light and dark, at 0%, 50% and 100% Liquid Glass. In these screenshots the page behind the glass isn't blurred, under the tab bar either, though the same browser blurs a plain test page; so the blur itself hasn't been seen working here. Not yet seen on a phone.
+
 ## Update 158 · The keyboard run, finished (no change to the app)
 
-*11 Nov 2026 · `504fd9d`*
+*11 Nov 2026 · the commit "Docs: a workout finished from the keyboard, end to end"*
 
 - Update 155 said a workout could be logged and finished from the keyboard alone. When that was written, Finish workout had only been shown to be a named button that takes focus; it hadn't been tabbed to and pressed. It now has been: start the suggested workout, type a weight and reps, tick the set, Tab to Finish workout, Enter, then Enter again on "Finish anyway" (focus is put on it, under the line saying the unticked sets won't be logged). The app shows "Workout done" and the account's log has one more workout.
 - Finish workout is the last but one stop on the page, after every set of every exercise, so it is a long way by Tab on a six-exercise workout. Nothing was changed for that.

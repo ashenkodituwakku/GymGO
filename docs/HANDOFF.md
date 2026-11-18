@@ -45,6 +45,14 @@ the branch the owner's launcher pulls.
   the owner asks for adds the next "Update N" at the top of
   `docs/UPDATES.md` in the same push: a title, the date and its commits,
   and a few plain lines on what changed (and anything not yet seen working).
+- **No GitHub Models.** GitHub retired GitHub Models on 30 July 2026 (its
+  docs say so; models.github.ai answers every request with a bare "OK").
+  On 18 Nov GymPal briefly asked it (Updates 173 to 175) before that was
+  found; it was taken out again in Update 176. GymPal is OpenRouter only.
+  The owner pasted a GitHub token in chat for it and saved it on their Mac:
+  never write it anywhere or use it. The server and `gymgo -GymPal` /
+  `gymgo-mac.sh --gympal` only say it does nothing and take its line out.
+  Check a service is still running before building on it.
 - **The Windows launcher** `scripts/gymgo.ps1` must stay ASCII-only
   (`apps/web/src/launcher.test.ts` checks it).
 - **Speak plainly to the owner.** They test on a Windows PC (browser, with
@@ -126,6 +134,166 @@ mobile 550, domain 191 and web 39 tests, all passing.
   assertive; the terms checkbox (and reminders.tsx's day checkboxes) set
   `aria-checked` as well as `accessibilityState`. Give new checkboxes
   `aria-checked`: the web reads nothing from `accessibilityState` alone.
+- **GymPal: GitHub Models taken out again** (18 Nov). See "No GitHub
+  Models" under Working rules. What stays from that work: GET /api/gympal
+  returns `service` (GymPal.tsx's note names it), `answeredBy`, and
+  `src/gymPalCheck.ts` (`pnpm --filter @gymgo/server gympal:check`, one
+  question with the server's settings). config.ts
+  `LEFTOVER_GITHUB_MODELS_TOKEN` only drives the "does nothing" notice.
+- **Hover on Home** (18 Nov). components/hoverShine.web.ts: `useHoverShine`
+  on a zone (Home's page) finds the card under a mouse (nearest pressable
+  with a background, gradient or box shadow; `wrapped` looks through bare
+  link wrappers, as GymCard has; or a surfaced parent up to two steps out),
+  marks it `data-shine`/`data-shining` and sets `--gg-mx/my/dx/dy`; CSS in
+  the same file does the drift (`translate`) and, under
+  `html[data-gg-glass]` (synced from `solidSurfaces()`), the light and rim.
+  To add it to another page, give its root a ref and call the hook.
+- **Frosted glass, Liquid look, sidebar seam** (18 Nov). With the sidebar
+  docked, `ClearOfSidebar` (Sidebar.tsx) draws the page's ground
+  (`ambientGlow()` over `groupedBackground`) the window's width and provides
+  `PageGround` (components/pageGround.ts); TabScreen and PageScroll then draw
+  none of their own (PageScroll drops a `groupedBackground` page colour, keeps
+  any other). A new page that paints its own ground should do the same.
+  theme.ts: `WASH_BALANCED` has blur and wash (Android) sets; `shadow.rim` is
+  the glass edge for small surfaces (empty in solid looks and at 0%): spread
+  it on new chips, fields and segmented controls. `glassCards` looks get
+  `liquidFace` added to `shadow.plate` (a sheen, and on the web a
+  backdropFilter), and `sheenLift` is counted in the plate and text checks.
+  A look's `backdrop` now takes the accent's brand (Liquid's pools follow it).
+- **Frost look** (17 Nov). lib/looks.ts: a look can now have a
+  `backdrop(scheme)` (`{ image, tones }`: CSS gradients for the page, and
+  every colour they reach, made together in `frostBackdrop` so text is
+  checked against what's drawn), `plates` (how solid its cards on the page
+  are at the default and 100% Liquid Glass) and `wash` (the floating
+  glass's tint). theme.ts `paletteFor` reads text over the tones, then
+  `clearestReadable` raises the plate's alpha until every PLATE_INK passes
+  over each tone; `ambientGlow()` returns the backdrop for such a look
+  (TabScreen and PageScroll draw it), and ios.tsx skips the hero glow there.
+  A page that draws neither shows the look's `groupedBackground`.
+- **Motion timing and forgiving boxes** (17 Nov). UI motion stays under
+  about 300ms: motion.tsx springs (SLIDE, SETTLE, GLIDE) and timings were
+  tightened, Redrawn's TAB is a 160ms fade (tabs are the most frequent
+  move) and PAGE 280ms; Sidebar's SETTLED_MS is 360 to match SLIDE. PIcon
+  no longer blurs in (it's the tab bar's and sidebar's). Typed numbers:
+  lib/training.ts `tidyWeight(text, unit)` (unit words, commas, a trailing
+  point; the other unit converted to a tenth) and `tidyReps`; the boxes
+  tidy on blur, and train.tsx's tick reads through them too.
+  bodyMeasures.ts `keptValue` takes cm/in/%/" and converts lengths.
+- **Design tips from a reel** (17 Nov). theme.ts `concentric(outer, gap)`
+  for a box inside a rounded box; lib/looks.ts has OKLCH (`hexToOklch`,
+  `oklchToHex` with chroma brought down to fit sRGB, `mixOklch`,
+  `oklchStops`), used by `customAccent` (hue from the colour wheel, made at
+  L 0.6 / C 0.17, dark L 0.76 / C 0.15, then `readable`) and BrandFill's
+  Rainbow. scripts/phosphor-icons.mjs now copies each outline icon's bold
+  cut; PIcon draws it when `boldText()`. components/edgeFade(.web).ts marks
+  a horizontal ScrollView for a CSS mask (web only). motion.tsx
+  `useSwapIn(key)` returns a ref: the view blurs in (WAAPI, web only) when
+  the key changes; Icon and PIcon use it. BrandLogo's images have
+  `mixBlendMode: 'multiply'` onto their plate.
+- **Appearance tiles** (17 Nov). Every choice on appearance.tsx is now a
+  tile: the clock (`CLOCKS`, times written as lib/copy.ts timeLabel writes
+  them; change both if the format changes), GymPal's button and side
+  (`GymPalPreview` draws the edge tab, the corner mark and the hidden strip
+  on a `PREVIEW` screen) and the text size ("Aa" at each `TEXT_SIZES`
+  scale, `maxFontSizeMultiplier={1}`). `Segmented` is no longer used there.
+- **Appearance additions** (17 Nov). themePrefs.ts has `foldOnMap`
+  (default true), `mapStyle` (lib/mapStyles.ts) and `reduceMotion`. Folding:
+  `foldedOn`/`sidebarInset` take `folds`; SidebarFrame and GymPal pass
+  `foldOnMap`, and `useSidebarOpening()` is null unless the sidebar folds on
+  this page (else Explore's panels doubled their shift). Map style: the
+  style in use is `mapStyleFor(choice, isPro || !planKnown)` (as the looks),
+  passed from Explore as GymMap's `mapStyle`; the web map `setStyle`s in
+  place, Android's page is rebuilt with `mapPageHtml({ style })`, iPhone
+  sets `mapType`/`userInterfaceStyle` (`appleDark`). Reduce motion: the
+  root renders Reanimated's `ReducedMotionConfig` (Always) only while it's
+  on; components use motion.tsx `useCalm()` instead of `useReducedMotion()`;
+  code outside React reads `motionReducedHere()`; CSS can key off
+  `html[data-gg-calm]`. Android's map page (a WebView) still reads only the
+  system setting. To test the free view with the dev account, rewrite
+  `/api/billing`'s plan in Playwright (`context.route`) and set
+  `gymgo.plan.v1` to free.
+- **Map clicks, and curves in the browser** (17 Nov). Never give an
+  `Animated.View` `pointerEvents: 'box-none'` (or 'none') through its
+  *style* on the web: Reanimated drops it, and the view takes every click
+  (Update 164's full-window layer blocked the map). Use the
+  `pointerEvents` prop, or keep pass-through containers plain Views and
+  animate only what's visible. In a browser Reanimated hands an entering,
+  exiting or layout animation to CSS, which takes only `Easing.bezier`
+  (anything else ran linear, and springs on layout transitions are
+  ignored): use motion.tsx's `ARRIVE_CURVE`, `LEAVE_CURVE`, `MOVE_CURVE`
+  for those, never a bare `FadeIn.duration()`. `withTiming` runs in JS and
+  takes the clamped curves as before. The shared Pressable now animates
+  hover (`over`) as well as press, and replaces "transparent" with
+  `clearOf(colour)` (lib/looks.ts) so a fade doesn't dim through black.
+- **Sidebar unfolds beside the map** (17 Nov). Sidebar.tsx: SidebarFrame
+  holds `opening` (a shared value, 1 open, 0 the capsule) springing on
+  `SLIDE` (motion.tsx) whenever `open` changes, and provides it as
+  `useSidebarOpening()`; whether the map's sidebar is unfolded is a small
+  external store (`useSidebarUnfolded()`, reset on every navigation) so
+  GymPal, outside the frame, can read it. `DockedSidebar` is now the one
+  pane for every page: its frame's width, height and radius interpolate
+  `opening`; the menu sits at full size (`styles.menu`, absolute) inside a
+  clip and fades in past 45%; the capsule's arrow fades out by 30%. The
+  browser's rim bend (`panelRefraction`) is applied only at rest open (it's
+  drawn per size). Focus hand-off uses `focus({ preventScroll: true })`:
+  without it the browser scrolls the narrow clip sideways. explore.tsx
+  wraps both DesktopPanels in a layer translated by `opening * FOLD_SHIFT`
+  and gives the area row and time-zone banner an animated marginLeft; the
+  map's leftInset adds FOLD_SHIFT when unfolded. SidebarList's pill is one
+  absolutely placed view gliding to the measured row. To film an animation
+  headless, slow the page's clock: wrap `performance.now` and
+  `requestAnimationFrame` in an init script (see Update 164).
+- **Sidebar folds away on the map** (14 Nov). lib/navLayout.ts
+  `SIDEBAR_FOLDS_AWAY` ('/explore'), `foldedOn()` and `sidebarInset()`
+  (SIDEBAR_WIDTH, SIDEBAR_FOLDED 60 or 0); SidebarFrame provides that as
+  `useSidebarInset()` and GymPal's left offset uses it. Sidebar.tsx
+  `FoldedSidebar`: the capsule (FOLD_WIDTH 44 × FOLD_HEIGHT 72, Glass
+  control) with local `open` state, opening `SidebarDrawer folding` (the
+  phone drawer at the docked pane's width, transparent backdrop, chevron
+  instead of the close cross). Navigating away unmounts it; arriving on
+  Explore starts folded. To fold on another page, add its path to the set.
+- **Explore's panel keeps its search pinned** (14 Nov). In ResultsContent.tsx
+  the pieces are consts (`search`, `recent`, `suggestionList`, `chips`,
+  `body`). With `inSheet` false (only the wide panel) it returns `pane`: a
+  head (search, then recent/suggestions in a `paneSuggestions` ScrollView
+  that shrinks first, then chips at `chipsRow`'s full height) over a
+  `paneBody` ScrollView with `scrolled` drawing the head's hairline. The
+  phone sheet's layout is unchanged. explore.tsx no longer wraps
+  `results(false)` in a ScrollView.
+- **Even spacing beside the sidebar** (14 Nov). Sidebar.tsx `EDGE` is 16,
+  matching explore.tsx `PANEL_GAP`; the pane ends at SIDEBAR_WIDTH (no right
+  padding), so Explore's first panel at `start + PANEL_GAP` sits one gap
+  past it. Pane radius is `radius.xl + 4`, the panels'. In explore.tsx's
+  wide layout, `foot` is the panels' and map's bottom (the gap plus the
+  safe area when docked, the tab bar's clearance otherwise), and
+  `besideResults` (room for two panels and `MIN_MAP` 360 pt of map) decides
+  whether a card or Filters goes beside the results or over them; the
+  results panel stays mounted with `hidden`, so its scroll position
+  survives. This applies without the sidebar too (two panels from 1188 pt).
+- **Sidebar hovers over the page** (14 Nov). components/Sidebar.tsx
+  `SidebarFrame` (around the Stack in app/_layout.tsx) draws pages full
+  width and `DockedSidebar` absolutely over their left edge (`CHILD_TOUCH`,
+  so the margins pass taps through). It gives the pages a safe area moved
+  in by SIDEBAR_WIDTH (so the page header's back button and centred title
+  shift) and `useSidebarInset()`. `ClearOfSidebar` pads each page's content:
+  the root Stack's screenLayout wraps every screen, the tabs layout every
+  tab but Explore, which adds `start` to its panels, its map's leftInset,
+  the area row and the time-zone warning. A new full-bleed screen should
+  either sit in ClearOfSidebar (automatic) or read useSidebarInset itself.
+- **Sidebar in Liquid Glass** (12 Nov). components/Sidebar.tsx `Pane`:
+  web is `panelRefraction(w, h)` (liquidGlass.web.ts: `data-glass="panel"`,
+  a bend only in an 18 pt band along the rim, sized in 8 pt steps) with the
+  tab bar's `glassWashThin` wash and `glassMark('panel-shine')`; phones use
+  `Glass kind="control"`; `solidSurfaces()` gets the look's plate. The
+  selected row is `glassMark('pill')` on `brandTint`. Every row's icon is
+  Phosphor (scripts/phosphor-icons.mjs: barbell, chart-line-up,
+  clipboard-text, calendar-dots, cards, users-three, palette, regular and
+  fill). The docked sidebar is now rendered by app/_layout.tsx's
+  ThemedStack beside the Stack (`dockedBeside(mode, pathname, signedIn)`
+  in lib/navLayout.ts: not on /welcome or signed out), not by the tabs
+  layout, so it stays beside pushed pages; GymPal's left offset uses the
+  same rule. Headless Chromium here doesn't blur the app's page under any
+  of its glass (the tab bar's either), though it blurs a plain test page.
 - **Moderation loading rows** (11 Nov). AccountContent.tsx (reviews,
   photos, member reports) and Moderation.tsx (owners' updates, gym
   claims) render `LinesSkeleton` while their list is null and there's

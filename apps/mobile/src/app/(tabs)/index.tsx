@@ -14,7 +14,7 @@ import type { TemplateItem } from '@/lib/templates';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { HOURS_LABELS } from '@gymgo/domain';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Platform, ScrollView, StyleSheet, View, useWindowDimensions, type ScrollViewInstance } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View, useWindowDimensions, type ScrollViewInstance, type ViewInstance } from 'react-native';
 import { GymCard } from '@/components/GymCard';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { GymCardsSkeleton } from '@/components/Skeleton';
@@ -25,6 +25,7 @@ import { AdSlot } from '@/components/AdSlot';
 import { BrandFill } from '@/components/BrandFill';
 import { Avatar } from '@/components/Avatar';
 import { SearchButton, SectionHeader, TabScreen } from '@/components/ios';
+import { useHoverShine } from '@/components/hoverShine';
 import { Txt } from '@/components/ui';
 import { startSession, useActiveSessionGlance } from '@/lib/activeSession';
 import { WeekStrip } from '@/components/TrainingInsights';
@@ -52,6 +53,7 @@ import { templateDayName, upNext } from '@/lib/templates';
 import { unitFor } from '@/lib/training';
 import { exerciseName } from '@/lib/workout';
 import { LIMITED } from '@/lib/limited';
+import { edgeFade } from '@/components/edgeFade';
 
 /** Melbourne suburbs worth a tap, in the order people ask about them. */
 const MELBOURNE_PICKS = ['Melbourne CBD', 'Fitzroy', 'Collingwood', 'Brunswick', 'Carlton', 'Richmond', 'South Melbourne', 'Northcote'];
@@ -647,8 +649,12 @@ export default function Home() {
   const shownWhileEditing = (id: HomeWidgetId): ReactNode => (hasContent(id) ? widget(id) : <EmptyWidget id={id} />);
   // The widgets not on Home, for More widgets and the gallery.
   const spare = availableWidgets(LIMITED).filter((each) => !chosen.includes(each.id));
+  const shineZone = useRef<ViewInstance>(null);
+  useHoverShine(shineZone, !editing);
 
   return (
+    // In a browser, the card under the mouse drifts towards it and catches the light (hoverShine.web.ts); not while rearranging Home.
+    <View ref={shineZone} style={styles.flex}>
     <TabScreen
       glow
       gap={space[6]}
@@ -763,6 +769,7 @@ export default function Home() {
         onClose={() => setGallery(false)}
       />
     </TabScreen>
+    </View>
   );
 }
 
@@ -847,6 +854,7 @@ function Carousel({ children }: { children: React.ReactNode }) {
     <View>
       <ScrollView
         ref={scroller}
+        {...edgeFade()}
         horizontal
         showsHorizontalScrollIndicator={false}
         style={bleed && styles.carousel}

@@ -52,4 +52,11 @@ describe('your adjustments', () => {
     expect(odd).toMatchObject({ textSize: 'default', bold: false, corners: 'standard', customHue: DEFAULT_CHOICE.customHue, clock24: false, gymPalSide: 'right', gymPalButton: 'tab' });
     expect(parseChoice(JSON.stringify({ customHue: -30 })).customHue).toBe(330);
   });
+
+  it('keeps the map style, folding away on the map and Reduce motion, and falls back for anything odd', () => {
+    expect(parseChoice(null)).toMatchObject({ foldOnMap: true, mapStyle: 'standard', reduceMotion: false });
+    expect(parseChoice(JSON.stringify({ foldOnMap: false, mapStyle: 'deep', reduceMotion: true }))).toMatchObject({ foldOnMap: false, mapStyle: 'deep', reduceMotion: true });
+    // Only a plain false turns folding off; anything else keeps the default.
+    expect(parseChoice(JSON.stringify({ foldOnMap: 'no', mapStyle: 'satellite', reduceMotion: 'yes' }))).toMatchObject({ foldOnMap: true, mapStyle: 'standard', reduceMotion: false });
+  });
 });

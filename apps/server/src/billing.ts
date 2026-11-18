@@ -740,7 +740,7 @@ export function returnPage(result: 'success' | 'cancelled' | 'portal', destinati
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GymGO</title>
 <style>
-  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f2f2f7; color: #1c1c1e;
+  body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; background: #f2f2f7; color: #1c1c1e;
          font: 17px/1.4 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif; }
   main { max-width: 340px; padding: 32px 24px; text-align: center; background: #fff; border-radius: 24px; margin: 16px; }
   h1 { font-size: 22px; margin: 0 0 8px; } p { color: #636366; margin: 8px 0; }

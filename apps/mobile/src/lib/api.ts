@@ -725,9 +725,10 @@ export const api = {
     request<unknown>('POST', `/api/moderation/reviews/${encodeURIComponent(reviewId)}`, { token, body }),
   /**
    * Whether GymPal, the chat, can answer on this server (it needs the owner's
-   * OpenRouter key), and your plan's questions a day (missing from older servers).
+   * OpenRouter key), your plan's questions a day, and the AI service chats go
+   * to (the last two missing from older servers).
    */
-  gymPal: () => request<{ on: boolean; pro?: boolean; perDay?: number }>('GET', '/api/gympal'),
+  gymPal: () => request<{ on: boolean; pro?: boolean; perDay?: number; service?: string | null }>('GET', '/api/gympal'),
   /**
    * GymPal's answer to the last question in the conversation (the latest 10,
    * or 30 with Pro), with what the screen shows, and, for Pro with the switch

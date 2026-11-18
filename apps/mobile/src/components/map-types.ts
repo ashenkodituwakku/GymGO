@@ -1,4 +1,5 @@
 import type { BoundingBox, LatLng, ResultTier } from '@gymgo/domain';
+import type { MapStyleId } from '@/lib/mapStyles';
 
 export interface MapPin {
   id: string;
@@ -33,6 +34,8 @@ export interface GymMapProps {
   onMapPress: () => void;
   /** The area on screen, each time the map comes to rest after moving. */
   onRegionChange?: (box: BoundingBox) => void;
+  /** Appearance's map style (lib/mapStyles.ts), already allowed for your plan; Standard if not given. */
+  mapStyle?: MapStyleId;
 }
 
 export interface GymMapHandle {

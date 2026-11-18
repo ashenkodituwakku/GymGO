@@ -13,7 +13,7 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { Input, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
-import { BAR, PLATES, PLATE_CHOICES, formatWeight, parseWeight, plateLoad, unitFor, warmUpSets, type WeightUnit } from '@/lib/training';
+import { BAR, PLATES, PLATE_CHOICES, formatWeight, parseWeight, plateLoad, unitFor, warmUpSets, type WeightUnit, tidyWeight } from '@/lib/training';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { ProOffer } from '@/components/ProOffer';
@@ -33,7 +33,8 @@ export default function PlatesScreen() {
   const [text, setText] = useState(params.weight ?? '');
   const [pickedBar, setBar] = useState<number | null>(null);
   const bar = pickedBar ?? BAR[unit];
-  const weight = parseWeight(text);
+  // As typed: "100 kg" or "225lb" (converted to the unit shown) read too.
+  const weight = parseWeight(tidyWeight(text, unit));
   // Your gym's plates with Pro, else the usual set.
   const custom = billing.isPro ? (prefs.plates[unit] ?? null) : null;
   const plates = custom ?? PLATES[unit];
@@ -65,6 +66,8 @@ export default function PlatesScreen() {
         <Input
           value={text}
           onChangeText={setText}
+          // Leaving it tidies what was typed: "100 kg" shows as 100, "225 lb" on a kg page as its kg.
+          onBlur={() => setText((typed) => tidyWeight(typed, unit))}
           placeholder={unit === 'kg' ? '100' : '225'}
           placeholderTextColor={color.labelTertiary}
           keyboardType="decimal-pad"

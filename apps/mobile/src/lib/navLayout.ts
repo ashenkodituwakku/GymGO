@@ -23,6 +23,39 @@ export function navMode(layout: NavLayout, width: number): NavMode {
   return width >= SIDEBAR_WIDE ? 'docked' : 'drawer';
 }
 
+/** The pages the docked sidebar steps aside for: the welcome tour, which is the whole screen. */
+const SIDEBAR_STEPS_ASIDE = new Set(['/welcome']);
+
+/**
+ * Whether the docked sidebar is beside this page. Once you're in it stays
+ * beside every page, as an iPad's does, not only the four tabs: Progress
+ * opened from it used to cover it, leaving a back button to find your way.
+ */
+export function dockedBeside(mode: NavMode, pathname: string, signedIn: boolean): boolean {
+  return mode === 'docked' && signedIn && !SIDEBAR_STEPS_ASIDE.has(pathname);
+}
+
+/** The pages where the docked sidebar folds away to a small capsule: the map, which wants the room. */
+const SIDEBAR_FOLDS_AWAY = new Set(['/explore']);
+
+/** How far in from the window's left edge the folded sidebar's capsule reaches: its 16-point gap and its 44-point width. */
+export const SIDEBAR_FOLDED = 60;
+
+/**
+ * Whether the docked sidebar is folded away to its capsule on this page (it
+ * unfolds beside the page from there). `folds` is Appearance's "Fold away
+ * on the map": off, it stays open there as everywhere else.
+ */
+export function foldedOn(mode: NavMode, pathname: string, signedIn: boolean, folds = true): boolean {
+  return folds && dockedBeside(mode, pathname, signedIn) && SIDEBAR_FOLDS_AWAY.has(pathname);
+}
+
+/** How far in from the left the sidebar reaches over this page, for its content to keep clear of: all of it, its capsule, or nothing. */
+export function sidebarInset(mode: NavMode, pathname: string, signedIn: boolean, folds = true): number {
+  if (!dockedBeside(mode, pathname, signedIn)) return 0;
+  return folds && SIDEBAR_FOLDS_AWAY.has(pathname) ? SIDEBAR_FOLDED : SIDEBAR_WIDTH;
+}
+
 /** What the sidebar lists. Tabs first, then the places you'd go most from Profile. */
 export interface SidebarItem {
   href: string;

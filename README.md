@@ -245,9 +245,13 @@ switch tabs; it swells under your finger. It's the same bar everywhere: on
 iOS 26 it's made of Apple's own Liquid Glass material, on older iPhones and
 Android the closest blur, and in a browser a glass with real refraction in
 Chrome and Edge (blur only in Safari and Firefox). Every glass surface is
-equally solid on every device (by default buttons 80%, sheets 94%, pinned
-headers 98%): Liquid Glass takes it as its tint and the others as a wash over
-the blur, so the map never shows through more on one phone than another.
+equally solid on every device that blurs behind it (by default buttons 72%,
+sheets 86%, pinned headers 88%, frosted so what passes under them shows as
+soft colour; Android, which draws no blur, keeps 80%, 94% and 98%): Liquid
+Glass takes it as its tint and the others as a wash over the blur, so the map
+never shows through more on one phone than another. In the glass looks
+(Standard, Frost, Liquid) chips, search boxes, segmented controls and text
+boxes have a glass edge too: light along the top and a fine line all round.
 How see-through is yours to set: the **Liquid Glass** percentage in
 Appearance, which also frosts the cards on every page and sets how brightly
 your accent glows behind them.
@@ -332,14 +336,15 @@ your accent glows behind them.
   its thumb swells into a lens of glass under your finger, magnifying the
   track, stretches when you move it fast and wobbles back when you let go,
   with a firmer tick at 0, 50 and 100. 0% makes them solid plates; 50% is
-  the default; 100% is the clearest that keeps text readable (Android,
+  the default (cards 74% solid in light, 76% in dark, at least as solid as
+  their text needs); 100% is the clearest that keeps text readable (Android,
   which draws no blur behind its glass, stops a little more solid). The
   screens follow when you let go, each staying where it was scrolled. 0%
   also takes the glow away. With Pro, eleven more accents besides Indigo: Cobalt, Ocean,
   Midnight, Lagoon, Grape, Fuchsia, Rose, Slate and Graphite, plus
   **Rainbow** (a gradient) and **Camo** (a woodland pattern) that paint
   filled buttons, selected chips, the tab bar and the Build a workout card,
-  picked from a grid of swatches. Pro also has nine **looks** that redraw
+  picked from a grid of swatches. Pro also has ten **looks** that redraw
   the whole app, not just its colour:
   - **Frost**: frosted glass (glassmorphism) on a blue-and-white page,
     deep navy in dark. Cards are see-through with a fine white edge, and
@@ -347,6 +352,13 @@ your accent glows behind them.
     Liquid Glass level (solid at 0%, never so clear that text drops below
     WCAG AA over the deepest blue). The glass over the map and the sidebar
     is tinted the page's blue in dark.
+  - **Liquid**: everything in Liquid Glass. Clear cards (42% solid at the
+    default, 28% at 100%, more where their text needs it) with bright,
+    light-catching edges and a sheen across them, over soft pools of your
+    accent and the colours either side of it; in a browser each card also
+    blurs and deepens what's behind it. Filled buttons are tinted glass
+    with a shine along the top, chips and search boxes have glass edges,
+    and the corners are rounder, like iOS 26.
   - **Soft**: cards pressed out of the page itself, lit from the top left
     with a soft shadow below, rounder corners, set in Nunito.
   - **Paper**: cream pages (charcoal in dark), ink hairlines round cards,
@@ -1911,7 +1923,7 @@ saved list always opens, wherever the gym is.
 | Warm-up sets | Mark any set as a warm-up; plates for any weight | A warm-up ramp to your weight, with the plates, on the plate calculator or added to a workout |
 | Gym notes | — | Your own notes on each gym, on your device |
 | Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
-| Colour themes | Indigo; light, dark or Dim; text size, bold text, reduce motion, the layout, 12- or 24-hour clock, GymPal's button and side, the Standard map | Twelve accents (Rainbow and Camo too) or your own colour, nine looks (Frost, Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles, three more map styles (Muted, Classic, Deep blue) |
+| Colour themes | Indigo; light, dark or Dim; text size, bold text, reduce motion, the layout, 12- or 24-hour clock, GymPal's button and side, the Standard map | Twelve accents (Rainbow and Camo too) or your own colour, ten looks (Frost, Liquid, Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles, three more map styles (Muted, Classic, Deep blue) |
 | Interval timer | Tabata and EMOM | Your own work, rest and rounds; keep up to 10 |
 | 1-rep max | Your estimated max, and 90%, 80% and 70% | Every step from 100% to 50% with plates, and what you could lift for 2 to 12 reps |
 | Streak freeze | — | One missed week a month doesn't end your streak |

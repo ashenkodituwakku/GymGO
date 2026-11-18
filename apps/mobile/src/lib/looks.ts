@@ -13,6 +13,10 @@
  *   cards with a white edge, over a page of pale blues that stays put as it
  *   scrolls, so each card shows a little of what's behind it. How see-through
  *   follows your Liquid Glass level, like Standard's.
+ * - Liquid: everything in Liquid Glass. Clear cards with bright, light-
+ *   catching edges and a sheen across them, over soft pools of your accent
+ *   and its neighbouring colours for the glass to show; in a browser each
+ *   card also blurs and deepens what's behind it. Rounder, like iOS 26.
  * - 8-bit: square pixels, arcade type for headings, a readable pixel face for
  *   everything else, and chunky outlines with hard drop shadows.
  * - Classic: a nineties desktop: teal backdrop, grey bevelled plates.
@@ -32,8 +36,8 @@
 
 import type { ViewStyle } from 'react-native';
 
-export type LookId = 'standard' | 'frost' | 'pixel' | 'classic' | 'material' | 'neon' | 'soft' | 'paper' | 'terminal' | 'comic';
-export const LOOK_IDS: LookId[] = ['standard', 'frost', 'soft', 'paper', 'material', 'neon', 'terminal', 'pixel', 'classic', 'comic'];
+export type LookId = 'standard' | 'frost' | 'liquid' | 'pixel' | 'classic' | 'material' | 'neon' | 'soft' | 'paper' | 'terminal' | 'comic';
+export const LOOK_IDS: LookId[] = ['standard', 'frost', 'liquid', 'soft', 'paper', 'material', 'neon', 'terminal', 'pixel', 'classic', 'comic'];
 export const FREE_LOOK: LookId = 'standard';
 
 type Scheme = 'light' | 'dark';
@@ -90,13 +94,19 @@ export interface LookSpec {
    * A page of the look's own, behind see-through cards (Frost): drawn behind
    * each page and staying put as it scrolls, in place of Standard's glow.
    */
-  backdrop?: (scheme: Scheme) => Backdrop;
+  backdrop?: (scheme: Scheme, brand: string) => Backdrop;
   /**
    * Cards on the page as glass over the backdrop: how solid they are at the
    * default Liquid Glass level and at 100% (solid at 0%), at the least: more
    * solid where their text needs it.
    */
   plates?: Record<Scheme, { balanced: number; clearest: number }>;
+  /**
+   * Cards on the page drawn as Liquid Glass (Liquid): a sheen across each
+   * and, in a browser, a blur under it that deepens the colours behind
+   * (theme.ts adds these to the look's own card shadow).
+   */
+  glassCards?: boolean;
   /** The colour of the glass floating over the page and the map (red, green, blue), in place of Standard's white and grey. */
   wash?: Record<Scheme, { thin: string; thick: string; bar: string }>;
 }
@@ -337,6 +347,33 @@ function frostBackdrop(scheme: Scheme): Backdrop {
   return { image, tones };
 }
 
+/**
+ * Liquid's page: near white (near black in dark) with three soft pools, your
+ * accent's hue and its neighbours either side, made in OKLCH so each is as
+ * light and as vivid as the next. Glass needs colour behind it to be seen as
+ * glass: over a plain page it is just a pale card. A grey accent (Slate,
+ * Graphite) has no hue of its own, so its pools are blue-violet.
+ */
+function liquidBackdrop(scheme: Scheme, brand: string): Backdrop {
+  const dark = scheme === 'dark';
+  const [, chroma, hue] = hexToOklch(brand) ?? [0, 0, 265];
+  const base = chroma < 0.04 ? 265 : hue;
+  const ground = dark ? ['#11111A', '#0C0C13', '#08080D'] : ['#FAFAFD', '#F2F2F8', '#ECEDF5'];
+  const [L, C, strength] = dark ? [0.5, 0.14, 0.5] : [0.8, 0.12, 0.55];
+  const pools = [
+    { at: '12% 6%', tint: oklchToHex(L, C, base), reach: 50 },
+    { at: '96% 42%', tint: oklchToHex(L, C, (base + 60) % 360), reach: 46 },
+    { at: '30% 100%', tint: oklchToHex(L, C, (base + 300) % 360), reach: 50 },
+  ];
+  const round = (value: number) => Math.round(value * 100) / 100;
+  const image = [
+    ...pools.map(({ at, tint, reach }) => `radial-gradient(circle at ${at}, ${alpha(tint, strength)} 0%, ${alpha(tint, round(strength * 0.45))} ${round(reach * 0.45)}%, ${alpha(tint, 0)} ${reach}%)`),
+    `linear-gradient(170deg, ${ground[0]} 0%, ${ground[1]} 55%, ${ground[2]} 100%)`,
+  ].join(', ');
+  const tones = [...ground, ...ground.flatMap((under) => pools.map(({ tint }) => over(under, alpha(tint, strength))))];
+  return { image, tones };
+}
+
 export const LOOKS: Record<LookId, LookSpec> = {
   standard: {
     name: 'Standard',
@@ -374,6 +411,34 @@ export const LOOKS: Record<LookId, LookSpec> = {
             plate: { boxShadow: '0px 1px 2px rgba(35, 70, 140, 0.05), 0px 8px 24px rgba(35, 70, 140, 0.1), inset 0px 0px 0px 1px rgba(255, 255, 255, 0.7), inset 0px 1px 0px rgba(255, 255, 255, 0.95)' },
             card: { boxShadow: '0px 1px 2px rgba(35, 70, 140, 0.05), 0px 3px 10px rgba(35, 70, 140, 0.07)' },
             float: { boxShadow: '0px 2px 6px rgba(35, 70, 140, 0.08), 0px 10px 30px rgba(35, 70, 140, 0.16)' },
+          },
+  },
+  liquid: {
+    name: 'Liquid',
+    blurb: 'Everything in Liquid Glass: clear, bright-edged cards over soft colour',
+    radius: { sm: 12, md: 18, lg: 24, xl: 30, sheet: 38, pill: 999 },
+    solid: false,
+    fonts: null,
+    glassCards: true,
+    surfaces: (scheme) =>
+      scheme === 'dark'
+        ? { groupedBackground: '#0C0C13', background: '#15151D', card: '#2C2C36', cardRaised: '#383843', cardGlass: 'rgba(44, 44, 54, 0.82)', separator: 'rgba(235, 235, 245, 0.14)', fill: 'rgba(235, 235, 245, 0.1)' }
+        : { groupedBackground: '#F2F2F8', background: '#F7F7FB', card: '#FFFFFF', cardRaised: '#FFFFFF', cardGlass: 'rgba(255, 255, 255, 0.8)', separator: 'rgba(60, 60, 67, 0.15)', fill: 'rgba(120, 120, 135, 0.12)' },
+    backdrop: (scheme, brand) => liquidBackdrop(scheme, brand),
+    plates: { light: { balanced: 0.42, clearest: 0.28 }, dark: { balanced: 0.5, clearest: 0.36 } },
+    // Apple's glass edge: bright along the top, fainter down the sides and
+    // along the bottom, a soft light inside the rim, and a shadow under it.
+    shadows: (scheme) =>
+      scheme === 'dark'
+        ? {
+            plate: { boxShadow: '0px 10px 28px rgba(0, 0, 0, 0.45), inset 0px 1px 0.5px rgba(255, 255, 255, 0.24), inset 1px 0px 0.5px rgba(255, 255, 255, 0.1), inset -1px 0px 0.5px rgba(255, 255, 255, 0.06), inset 0px -1px 0.5px rgba(255, 255, 255, 0.08), inset 0px 0px 18px rgba(255, 255, 255, 0.05)' },
+            card: { boxShadow: 'inset 0px 1px 0px rgba(255, 255, 255, 0.18), inset 0px 0px 0px 1px rgba(255, 255, 255, 0.08)' },
+            float: { boxShadow: '0px 12px 32px rgba(0, 0, 0, 0.55), inset 0px 1px 0px rgba(255, 255, 255, 0.2)' },
+          }
+        : {
+            plate: { boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.08), 0px 1px 3px rgba(0, 0, 0, 0.05), inset 0px 1px 0.5px rgba(255, 255, 255, 0.95), inset 1px 0px 0.5px rgba(255, 255, 255, 0.55), inset -1px 0px 0.5px rgba(255, 255, 255, 0.35), inset 0px -1px 0.5px rgba(255, 255, 255, 0.45), inset 0px 0px 18px rgba(255, 255, 255, 0.35)' },
+            card: { boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06), inset 0px 1px 0px rgba(255, 255, 255, 0.9), inset 0px 0px 0px 1px rgba(255, 255, 255, 0.45)' },
+            float: { boxShadow: '0px 12px 32px rgba(0, 0, 0, 0.14), 0px 2px 6px rgba(0, 0, 0, 0.08), inset 0px 1px 0px rgba(255, 255, 255, 0.95)' },
           },
   },
   pixel: {

@@ -30,7 +30,8 @@ import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type NativeScroll
 import { ScrollMemory, startingY } from '@/components/Redrawn';
 import { useOverhang, useScreenBottom, type Measurable } from '@/lib/layout';
 import { useThemeChoice } from '@/lib/themePrefs';
-import { ambientGlow } from '@/lib/theme';
+import { ambientGlow, color } from '@/lib/theme';
+import { usePageGroundDrawn } from './pageGround';
 
 /** GymPal's button on a page (GymPal.tsx: BUTTON 52, EDGE 16) and a little air over it. */
 const PAL_ROOM = 52 + 16 + 12;
@@ -52,6 +53,7 @@ export const PageScroll = forwardRef(function PageScroll(
   const screenBottom = useScreenBottom(palButton ? Math.max(gap, PAL_ROOM) : gap);
   const { measureRef, onLayout: measure, overhang } = useOverhang();
   const memory = useContext(ScrollMemory);
+  const groundDrawn = usePageGroundDrawn();
   const node = useRef<ScrollViewInstance | null>(null);
   // Only the first time the content is laid out: back to where the page was before a redraw.
   const placed = useRef(false);
@@ -65,7 +67,7 @@ export const PageScroll = forwardRef(function PageScroll(
     [measureRef, forwarded],
   );
   return (
-    <View style={[styles.fill, style, ambientGlow()]}>
+    <View style={[styles.fill, groundDrawn ? clearOfGround(style) : [style, ambientGlow()]]}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         automaticallyAdjustKeyboardInsets
@@ -99,6 +101,12 @@ export const PageScroll = forwardRef(function PageScroll(
     </View>
   );
 });
+
+/** The page's style, without the plain ground colour, when the ground is drawn behind it already (a colour of its own stays). */
+function clearOfGround(style: ScrollViewProps['style']): ScrollViewProps['style'] {
+  const flat = StyleSheet.flatten(style);
+  return flat?.backgroundColor === color.groupedBackground ? [style, { backgroundColor: 'transparent' }] : style;
+}
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },

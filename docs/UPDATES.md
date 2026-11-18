@@ -9,6 +9,30 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 171 · More frosted glass, a Liquid Glass look, and no seam beside the sidebar
+
+*18 Nov 2026 · the commit "More frosted glass, a Liquid look, and the page running on under the sidebar"*
+
+You asked for most of the UI to be more frosted glass, for a Liquid Glass appearance that puts everything in Liquid Glass, and, with a screenshot, for the hard edge on Home beside the sidebar to go.
+
+**The seam beside the sidebar.** With the sidebar docked, each page started at the sidebar's edge, so its background did too. Frost's blues stopped in a straight line down the side of the sidebar, with the plain page colour under the glass. Now, with the sidebar docked, the page's background is drawn the full width of the window, under the sidebar as well, and the page draws none of its own. Frost's blues, Liquid's colours and Standard's glow run on unbroken under the glass on every page, not just Home.
+
+**More frosted glass (Standard, Frost and Liquid).** This follows your Liquid Glass slider as before: 0% is still solid, and 100% is unchanged.
+- At the default, the glass over the map and pages is more see-through, so what passes under it shows as soft colour through the blur. Controls are 72% solid (were 80%), sheets 86% (were 94%), and pinned headers and bars 88% (were 98%). Android draws no blur behind its glass, so it keeps the old amounts, which stay readable over the map.
+- Cards on the page are more see-through at the default in Standard: 74% solid in light (was 82%) and 76% in dark (was 84%). They never get so clear that their text drops below WCAG AA over the glow.
+- Chips, search boxes (Home's and Explore's), segmented controls and text boxes now have a glass edge: light along the top and a fine line all round. It's brighter the higher the slider, brightest in Liquid, and absent in the solid looks.
+
+**Liquid, a new look (Pro).** Everything in Liquid Glass:
+- Clear cards: 42% solid at the default (50% in dark) and 28% at 100%, but more solid wherever their text needs it. Each has a bright edge that catches the light along its top, fainter down the sides and along the bottom, a soft light inside the rim, a sheen across its face from the top corner, and a glint at the far one.
+- In a browser each card also blurs what's behind it and deepens its colours, as thick glass does. On a phone the cards are see-through without a blur behind them.
+- Glass needs colour behind it to look like glass, so the page has three soft pools: your accent's colour and the colours either side of it, made in OKLCH so each is as light and vivid as the next. A grey accent (Slate, Graphite) gets blue-violet pools.
+- Filled buttons (Build a workout, Go, chosen chips) are tinted glass with a shine along the top. The shine is gone by the middle, where the words are, so white text keeps its contrast.
+- The glass over the map, sheets, the tab bar and the sidebar is the same Liquid Glass as in Standard (Apple's own on iOS 26). Corners are rounder, like iOS 26.
+- Appearance's look grid now has eleven tiles: rows of five when it's wide enough, otherwise rows of three, with the last row centred.
+- The Pro page, the plans table, GymPal's guide and the README now say ten looks.
+
+- Checked in the browser at 390 and 1280 points in light and dark: Home, Profile, Progress, a gym's page, Explore and Appearance, in Standard, Frost and Liquid, with the sidebar and with the tab bar; the colours either side of the sidebar's edge measured to confirm the step is gone. The contrast tests cover Liquid's cards over every colour of its page (and under its sheen) for every accent at 25, 50, 75 and 100%. A new test covers Liquid's sheen, blur and glass edges, and that the edges disappear at 0% and in solid looks. All typechecks and tests pass. Not yet seen on a phone.
+
 ## Update 170 · Frost: a frosted-glass look from a reel
 
 *17 Nov 2026 · the commit "Frost: a frosted glass look on a blue-and-white page"*

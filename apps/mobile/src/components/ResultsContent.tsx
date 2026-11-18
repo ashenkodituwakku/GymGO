@@ -644,6 +644,7 @@ const styles = themed(() => StyleSheet.create({
     // iOS 26 search fields are capsules.
     borderRadius: radius.pill,
     backgroundColor: color.fill,
+    ...shadow.rim,
     borderWidth: 1.5,
     borderColor: 'transparent',
   },

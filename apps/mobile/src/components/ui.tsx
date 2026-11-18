@@ -635,6 +635,8 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: color.fill,
     overflow: 'hidden',
+    // Glass's edge in a glass look (nothing in a solid one), as on the other small surfaces.
+    ...shadow.rim,
   },
   choiceChipOn: { backgroundColor: color.brandFill },
 
@@ -648,6 +650,7 @@ const styles = themed(() => StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: color.fill,
     overflow: 'hidden',
+    ...shadow.rim,
   },
   chipSelected: { backgroundColor: color.brandFill },
   chipText: face('medium'),
@@ -712,7 +715,7 @@ const styles = themed(() => StyleSheet.create({
   infoHead: { alignItems: 'flex-start' },
   foldBody: { paddingHorizontal: space[4], paddingBottom: space[4], gap: space[3] },
 
-  segmented: { flexDirection: 'row', padding: 2, borderRadius: 9, backgroundColor: color.fill },
+  segmented: { flexDirection: 'row', padding: 2, borderRadius: 9, backgroundColor: color.fill, ...shadow.rim },
   segment: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 7, paddingHorizontal: 6, borderRadius: 7 },
   segmentPill: {
     position: 'absolute',
@@ -757,6 +760,7 @@ const styles = themed(() => StyleSheet.create({
     backgroundColor: color.cardGlass,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: color.separator,
+    ...shadow.rim,
     fontSize: 17,
     color: color.label,
     ...face('regular'),

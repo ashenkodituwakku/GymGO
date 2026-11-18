@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // The font files are for the app's bundler, not for Node.
 vi.mock('./fonts', () => ({ BUNDLED_FACES: {} }));
 import { StyleSheet } from 'react-native';
-import { ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, ambientGlow, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, applyTweaks, color, cornersFor, customAccent, dimApplies, face, hslHex, DEFAULT_TWEAKS, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
+import { ACCENTS, ACCENT_IDS, FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT, ambientGlow, sheenLift, shadow, LOOKS, LOOK_IDS, PLATE_INKS, applyTheme, applyTweaks, color, cornersFor, customAccent, dimApplies, face, hslHex, DEFAULT_TWEAKS, glassAlpha, glassLevelName, glowPeak, glowPools, heroGlowStops, paletteFor, plateAlpha, radius, solidSurfaces, subscribeGlass, subscribeTheme, themed, type } from './theme';
 import { mix, over, STANDARD_RADIUS } from './looks';
 
 const channel = (value: number) => (value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
@@ -67,10 +67,12 @@ describe('the colours', () => {
             for (const dark of darkStyles(look, scheme)) {
               applyTheme(scheme, accent, look, level, dark);
               const see = Number(/rgba\(\d+, \d+, \d+, ([\d.]+)\)/.exec(color.plate)?.[1] ?? 1);
-              // Standard's cards are over the glow of the accent; Frost's over every colour of its own page.
-              const unders = LOOKS[look].backdrop?.(scheme).tones ?? [mix(color.groupedBackground, color.brand, glowPeak(level, scheme))];
+              // Standard's cards are over the glow of the accent; Frost's and Liquid's over every colour of their own page,
+              // and Liquid's under the light of its sheen too.
+              const unders = LOOKS[look].backdrop?.(scheme, ACCENTS[accent][scheme].brand).tones ?? [mix(color.groupedBackground, color.brand, glowPeak(level, scheme))];
+              const lift = LOOKS[look].glassCards ? sheenLift(scheme, level) : 0;
               for (const under of unders) {
-                const behind = mix(under, color.card, see);
+                const behind = mix(mix(under, color.card, see), '#FFFFFF', lift);
                 for (const [ink, least] of PLATE_INKS) {
                   const ratio = contrast(color[ink], behind);
                   if (ratio < least) failures.push(`${look} ${scheme}${dark === 'dim' ? ' dim' : ''} ${accent} ${level}%: ${ink} on a card over ${under} is ${ratio.toFixed(2)}`);
@@ -136,9 +138,10 @@ describe('the colours', () => {
 });
 
 describe('Liquid Glass', () => {
-  it('is today’s balance at 50%, solid at 0% and clearer up to 100%', () => {
-    expect(glassAlpha('thin', 50, 'light', 'ios')).toBe(0.8);
-    expect(glassAlpha('thick', 50, 'dark', 'ios')).toBe(0.95);
+  it('is frosted at 50%, solid at 0% and clearer up to 100%', () => {
+    expect(glassAlpha('thin', 50, 'light', 'ios')).toBe(0.72);
+    expect(glassAlpha('thick', 50, 'dark', 'ios')).toBe(0.88);
+    expect(glassAlpha('bar', 50, 'light', 'web')).toBe(0.88);
     for (const layer of ['thin', 'thick', 'bar'] as const) {
       expect(glassAlpha(layer, 0, 'light', 'ios')).toBe(1);
       let last = 1;
@@ -153,14 +156,16 @@ describe('Liquid Glass', () => {
   it('never goes as clear on Android, which draws no blur behind it', () => {
     for (const layer of ['thin', 'thick', 'bar'] as const) {
       expect(glassAlpha(layer, 100, 'light', 'android')).toBeGreaterThan(glassAlpha(layer, 100, 'light', 'ios'));
-      expect(glassAlpha(layer, 50, 'light', 'android')).toBe(glassAlpha(layer, 50, 'light', 'ios'));
+      expect(glassAlpha(layer, 50, 'light', 'android')).toBeGreaterThan(glassAlpha(layer, 50, 'light', 'ios'));
     }
+    // There it stays as solid as it was before the glass went frosted.
+    expect(glassAlpha('thin', 50, 'light', 'android')).toBe(0.8);
   });
 
   it('changes the glass colours in place, and turns glass off at 0%', () => {
-    expect(color.glassWashThin).toBe('rgba(255, 255, 255, 0.8)');
+    expect(color.glassWashThin).toBe('rgba(255, 255, 255, 0.72)');
     expect(applyTheme('light', FREE_ACCENT, FREE_LOOK, 100)).toBe(true);
-    expect(color.glassWashThin).not.toBe('rgba(255, 255, 255, 0.8)');
+    expect(color.glassWashThin).not.toBe('rgba(255, 255, 255, 0.72)');
     expect(solidSurfaces()).toBe(false);
     applyTheme('light', FREE_ACCENT, FREE_LOOK, 0);
     expect(color.glassWashThin).toBe('rgba(255, 255, 255, 1)');
@@ -197,7 +202,7 @@ describe('Liquid Glass', () => {
   it('lets the glow through cards on the page with the level, and keeps them solid at 0% or in a solid look', () => {
     expect(paletteFor('light', FREE_ACCENT, FREE_LOOK, 0).plate).toBe(paletteFor('light', FREE_ACCENT, FREE_LOOK, 0).card);
     expect(plateAlpha(0, 'light')).toBe(1);
-    expect(plateAlpha(GLASS_DEFAULT, 'light')).toBe(0.82);
+    expect(plateAlpha(GLASS_DEFAULT, 'light')).toBe(0.74);
     expect(plateAlpha(100, 'light')).toBe(0.58);
     expect(plateAlpha(100, 'dark')).toBe(0.62);
     expect(paletteFor('light', FREE_ACCENT, FREE_LOOK, 100).plate).not.toBe(paletteFor('light', FREE_ACCENT, FREE_LOOK, 100).card);
@@ -214,7 +219,7 @@ describe('Liquid Glass', () => {
       expect(at(GLASS_DEFAULT, scheme)).toBeLessThan(0.75);
       expect(at(100, scheme)).toBeLessThan(at(GLASS_DEFAULT, scheme));
       expect(LOOKS.frost.solid).toBe(false);
-      const page = LOOKS.frost.backdrop!(scheme);
+      const page = LOOKS.frost.backdrop!(scheme, '#5856D6');
       expect(page.image).toMatch(/^radial-gradient/);
       expect(page.tones.length).toBeGreaterThan(3);
     }
@@ -226,6 +231,27 @@ describe('Liquid Glass', () => {
     expect(JSON.stringify(ambientGlow())).toContain('linear-gradient');
     applyTheme('light', FREE_ACCENT, FREE_LOOK, 0);
     expect(ambientGlow()).toBeNull();
+  });
+
+  it('draws Liquid as clear glass over pools of your accent: sheen and blur on cards, a glass edge on small things', () => {
+    const at = (level: number, scheme: 'light' | 'dark') => Number(/rgba\(\d+, \d+, \d+, ([\d.]+)\)/.exec(paletteFor(scheme, FREE_ACCENT, 'liquid', level).plate)?.[1] ?? 1);
+    // Clearer than Frost's at the default, and clearer still at 100%.
+    expect(at(GLASS_DEFAULT, 'light')).toBeLessThan(0.6);
+    expect(at(100, 'light')).toBeLessThan(at(GLASS_DEFAULT, 'light'));
+    expect(at(0, 'dark')).toBe(1);
+    // The pools follow the accent: Ocean's page isn't Rose's.
+    expect(LOOKS.liquid.backdrop!('light', ACCENTS.ocean.light.brand).image).not.toBe(LOOKS.liquid.backdrop!('light', ACCENTS.rose.light.brand).image);
+    applyTheme('light', FREE_ACCENT, 'liquid', GLASS_DEFAULT);
+    expect(JSON.stringify(shadow.plate)).toContain('linear-gradient(160deg');
+    expect(JSON.stringify(shadow.rim)).toContain('inset');
+    // At 0% its cards are solid plates with no sheen; in a solid look small things have no glass edge.
+    applyTheme('light', FREE_ACCENT, 'liquid', 0);
+    expect(JSON.stringify(shadow.plate)).not.toContain('linear-gradient');
+    expect(shadow.rim).toEqual({});
+    applyTheme('light', FREE_ACCENT, 'paper', GLASS_DEFAULT);
+    expect(shadow.rim).toEqual({});
+    applyTheme('light', FREE_ACCENT, FREE_LOOK, GLASS_DEFAULT);
+    expect(JSON.stringify(shadow.rim)).toContain('inset');
   });
 
   it('names each level', () => {

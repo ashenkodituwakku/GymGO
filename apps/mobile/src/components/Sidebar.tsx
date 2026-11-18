@@ -31,14 +31,16 @@ import { haptic } from '@/lib/haptics';
 import { LIMITED } from '@/lib/limited';
 import { MENU_BUTTON, SIDEBAR_FOLDED, SIDEBAR_TABS, SIDEBAR_TRAINING, SIDEBAR_WIDTH, SIDEBAR_YOU, foldedOn, navMode, sidebarInset, tabFor, type SidebarItem } from '@/lib/navLayout';
 import { useThemeChoice } from '@/lib/themePrefs';
-import { CHILD_TOUCH, NO_TOUCH, color, currentTheme, face, radius, shadow, solidSurfaces, space, themed } from '@/lib/theme';
+import { CHILD_TOUCH, NO_TOUCH, ambientGlow, color, currentTheme, face, radius, shadow, solidSurfaces, space, themed } from '@/lib/theme';
 import { Avatar } from './Avatar';
 import { Wordmark } from './BrandMark';
 import { Glass, HAS_LIQUID_GLASS, useGlassLevel } from './Glass';
 import { Icon } from './Icon';
 import { glassMark, installLiquidGlass, panelRefraction } from './liquidGlass';
 import { ARRIVE, LEAVE, Pressable, SETTLE, SLIDE } from './motion';
+import { PageGround } from './pageGround';
 import { PIcon, type PhosphorName } from './PIcon';
+import { useThemeVersion } from './Redrawn';
 import { Txt } from './ui';
 
 /** Every place's icon, from the tab bar's set: outline, filled for the place you're on. */
@@ -297,10 +299,23 @@ export function SidebarFrame({ signedIn, children }: { signedIn: boolean; childr
   );
 }
 
-/** A page's content, kept clear of the docked sidebar hovering over its left edge (as wide as ever without it). */
+/**
+ * A page's content, kept clear of the docked sidebar hovering over its left
+ * edge (as wide as ever without it). With the sidebar there, the page's
+ * ground is drawn here, the window's width, so it runs on under the glass
+ * in one piece (see pageGround.ts); the page inside leaves its own clear.
+ */
 export function ClearOfSidebar({ children }: { children: ReactNode }) {
   const inset = useSidebarInset();
-  return <View style={[styles.fill, inset > 0 && { paddingLeft: inset }]}>{children}</View>;
+  // Drawn again with the colours and the Liquid Glass level, which the glow follows.
+  useThemeVersion();
+  useGlassLevel();
+  const ambient = inset > 0 ? ambientGlow() : null;
+  return (
+    <PageGround.Provider value={ambient !== null}>
+      <View style={[styles.fill, inset > 0 && { paddingLeft: inset }, ambient && [styles.ground, ambient]]}>{children}</View>
+    </PageGround.Provider>
+  );
 }
 
 /** How long the pane takes to come to rest: when the menu (or the arrow) leaves the tab order, and the glass's bend comes in. */
@@ -583,6 +598,7 @@ const styles = themed(() =>
     capsule: { position: 'absolute', top: 0, left: 0, width: FOLD_WIDTH, height: FOLD_HEIGHT },
     capsuleButton: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     fill: { flex: 1 },
+    ground: { backgroundColor: color.groupedBackground },
     // Explore's panels' corners, so the panes side by side are one family.
     pane: { borderRadius: radius.xl + 4, borderCurve: 'continuous' },
     paneClip: { borderRadius: radius.xl + 4, borderCurve: 'continuous', overflow: 'hidden' },

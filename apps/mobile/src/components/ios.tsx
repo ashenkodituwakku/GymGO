@@ -15,6 +15,7 @@ import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { PAGE_COLUMN, ambientGlow, backgroundImage, color, currentLook, currentTheme, face, heroGlowStops, radius, shadow, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
+import { usePageGroundDrawn } from './pageGround';
 import { contrast } from '@/lib/looks';
 import { ScrollMemory, startingY } from './Redrawn';
 import { Toggle } from './Toggle';
@@ -139,8 +140,11 @@ function TabScreenInner({
   // Liquid Glass level, and behind the title (Home, Profile) a brighter one
   // that fades as the page scrolls; in Frost, its blue-and-white page, with
   // no glow of the accent over it.
-  const ambient = ambientGlow();
-  const glowing = glow && ambient !== null && !currentLook().backdrop;
+  // With the sidebar docked the ground is drawn behind the page already, under the sidebar too (pageGround.ts).
+  const groundDrawn = usePageGroundDrawn();
+  const ambient = groundDrawn ? null : ambientGlow();
+  const clear = groundDrawn || ambient !== null;
+  const glowing = glow && clear && ambientGlow() !== null && !currentLook().backdrop;
   const glowStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [0, 280], [1, 0], 'clamp'),
     transform: [{ translateY: interpolate(scrollY.value, [0, 280], [0, -70], 'clamp') }],
@@ -156,7 +160,7 @@ function TabScreenInner({
         ref={scroller}
         // In a browser, what the keyboard moves to is scrolled clear of the frosted bar above and the tab bar below
         // (it came to rest under the tab bar, hidden: Home's Map link, at a phone's width).
-        style={[styles.screen, ambient && styles.clear, Platform.OS === 'web' && ({ scrollPaddingTop: insets.top + BAR, scrollPaddingBottom: clearance + space[2] } as object)]}
+        style={[styles.screen, clear && styles.clear, Platform.OS === 'web' && ({ scrollPaddingTop: insets.top + BAR, scrollPaddingBottom: clearance + space[2] } as object)]}
         onScroll={onScroll}
         scrollEventThrottle={16}
         scrollEnabled={scrollEnabled}
@@ -483,5 +487,7 @@ const styles = themed(() => StyleSheet.create({
     paddingHorizontal: space[3],
     borderRadius: radius.pill,
     backgroundColor: color.fill,
+    // Glass's edge in a glass look.
+    ...shadow.rim,
   },
 }));

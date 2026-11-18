@@ -106,6 +106,18 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Frosted glass, Liquid look, sidebar seam** (18 Nov). With the sidebar
+  docked, `ClearOfSidebar` (Sidebar.tsx) draws the page's ground
+  (`ambientGlow()` over `groupedBackground`) the window's width and provides
+  `PageGround` (components/pageGround.ts); TabScreen and PageScroll then draw
+  none of their own (PageScroll drops a `groupedBackground` page colour, keeps
+  any other). A new page that paints its own ground should do the same.
+  theme.ts: `WASH_BALANCED` has blur and wash (Android) sets; `shadow.rim` is
+  the glass edge for small surfaces (empty in solid looks and at 0%): spread
+  it on new chips, fields and segmented controls. `glassCards` looks get
+  `liquidFace` added to `shadow.plate` (a sheen, and on the web a
+  backdropFilter), and `sheenLift` is counted in the plate and text checks.
+  A look's `backdrop` now takes the accent's brand (Liquid's pools follow it).
 - **Frost look** (17 Nov). lib/looks.ts: a look can now have a
   `backdrop(scheme)` (`{ image, tones }`: CSS gradients for the page, and
   every colour they reach, made together in `frostBackdrop` so text is

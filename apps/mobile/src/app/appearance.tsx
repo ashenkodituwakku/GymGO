@@ -145,7 +145,7 @@ export default function AppearanceScreen() {
     void loadAllLookFonts().then(() => setFontsReady(true));
   }, []);
   const lookInUse = billing.isPro || choice.look === FREE_LOOK ? choice.look : FREE_LOOK;
-  // Ten looks: two rows of five where there's room for them, else threes with the last one centred.
+  // Eleven looks: rows of five where there's room for them, else threes, the last row centred.
   const [looksWide, setLooksWide] = useState(false);
   // The mode previews draw dark the way it'll look: Dim's grey where it applies.
   const darkTone = dimApplies('dark', lookInUse, choice.dark) ? 'dim' : 'dark';
@@ -597,8 +597,8 @@ export default function AppearanceScreen() {
         </View>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {solidLook
-            ? `${LOOKS[lookInUse].name} draws everything as solid plates, so there’s no glass to set. Choose Standard or Frost to use Liquid Glass.`
-            : `How glassy GymGO is: the controls, sheets and bars over the map, and the cards on every page, with ${LOOKS[lookInUse].backdrop ? 'the page’s blues' : 'your accent glowing'} through from behind. 0% makes it all solid; 100% is the clearest that keeps text readable.`}
+            ? `${LOOKS[lookInUse].name} draws everything as solid plates, so there’s no glass to set. Choose Standard, Frost or Liquid to use Liquid Glass.`
+            : `How glassy GymGO is: the controls, sheets and bars over the map, and the cards on every page, with ${LOOKS[lookInUse].backdrop ? 'the page’s colours showing' : 'your accent glowing'} through from behind. 0% makes it all solid; 100% is the clearest that keeps text readable.`}
         </Txt>
 
         <View style={styles.accentHead}>
@@ -1155,7 +1155,7 @@ function LookPreview({ look, accent, dark, on }: { look: LookId; accent: AccentI
   const corner = (value: number) => Math.min(value * 0.5, 12);
   const title = spec.fonts?.display ?? spec.fonts?.body?.bold;
   // A look with a page of its own (Frost) shows it, and its card as the glass over it.
-  const backdrop = spec.backdrop?.(scheme);
+  const backdrop = spec.backdrop?.(scheme, ACCENTS[accent][scheme].brand);
   return (
     <View style={[styles.lookFrame, on && { borderColor: color.brand }]}>
       <View style={[styles.lookPage, { backgroundColor: palette.groupedBackground }, backdrop && backgroundImage(backdrop.image)]}>

@@ -48,11 +48,15 @@ the branch the owner's launcher pulls.
 - **No GitHub Models.** GitHub retired GitHub Models on 30 July 2026 (its
   docs say so; models.github.ai answers every request with a bare "OK").
   On 18 Nov GymPal briefly asked it (Updates 173 to 175) before that was
-  found; it was taken out again in Update 176. GymPal is OpenRouter only.
+  found; it was taken out again in Update 176. GymPal is Groq's free plan
+  (`GROQ_API_KEY`, Update 181) then OpenRouter's free models: never a paid
+  model, and no "unlimited" key (none exists; shared ones are leaked).
   The owner pasted a GitHub token in chat for it and saved it on their Mac:
   never write it anywhere or use it. The server and `gymgo -GymPal` /
   `gymgo-mac.sh --gympal` only say it does nothing and take its line out.
-  Check a service is still running before building on it.
+  Check a service is still running before building on it. The owner has
+  pasted keys in chat more than once: never use one from chat; point them
+  to the one-line Terminal command that saves a key without showing it.
 - **The Windows launcher** `scripts/gymgo.ps1` must stay ASCII-only
   (`apps/web/src/launcher.test.ts` checks it).
 - **Speak plainly to the owner.** They test on a Windows PC (browser, with

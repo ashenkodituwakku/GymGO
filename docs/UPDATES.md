@@ -9,7 +9,7 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
-## Update 188 · Writing a review, tried end to end; the form fits the largest text
+## Update 189 · Writing a review, tried end to end; the form fits the largest text
 
 *18 Nov 2026 · the commit "Review form: the aspect rows wrap together at the largest text"*
 
@@ -26,6 +26,19 @@ next number here as part of the update itself.
   - Checked at 320 points with the largest bold text (all under) and at 390 with the usual text (all beside, lined up on the right).
 - App tests 608.
 
+## Update 188 · GymPal can use Groq's free plan too
+
+*18 Nov 2026 · `6c9f208`*
+
+You asked me to find a free, unlimited key for GymPal. **There isn't one:** every free AI service has daily limits, and "unlimited" keys passed around online are other people's, leaked or stolen, which GymGO won't use. I can't make accounts for you either. So GymPal now chains two free services, asking the next when one runs out:
+
+- **Groq first** (groq.com), if `GROQ_API_KEY` is set. Its free plan needs no card. Each model gets 30 questions a minute, 1,000 a day and 200,000 tokens a day. GymPal's guide alone is about 5,000 tokens a question, so tokens run out first: roughly 25 to 35 questions a day for each of three models (`openai/gpt-oss-120b`, `openai/gpt-oss-20b`, then `qwen/qwen3.8-27b`), more if Groq's caching of the repeated guide applies. Past that Groq says no rather than charging, unless a payment method is added there (don't). Groq says it doesn't keep what's sent by default. All of this was checked on Groq's own docs today.
+- **Then OpenRouter's free models**, if its key is set too (50 questions a day without credit).
+- Each refusal is logged with its reason, and `gympal:check` says which service and model answered.
+- **Others I looked at and left out:** Google's Gemini free tier is now about 20 questions a day on its main model, and Google may use what's sent to improve its products. Cerebras and Mistral need a card or an opt-in to training.
+- **The note under GymPal's box** says "Chats go to Groq or OpenRouter, AI services…". The Privacy Policy and Terms name Groq (version 2026-11-18.2), so existing accounts see the terms card once.
+
+- New tests: Groq asked first with the right fields (its own token field; short, hidden thinking for GPT-OSS, none for Qwen), the next Groq model when one has used its day or answers with nothing, OpenRouter after them, "busy" with no OpenRouter, a turned-down key never logged. All typechecks and tests pass. Not tried with a real Groq key here.
 ## Update 187 · Dark mode's Dim checked, and GymPal knows the new reviews
 
 *18 Nov 2026 · `9ec4f27`*

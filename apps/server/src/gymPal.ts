@@ -1,8 +1,17 @@
 /**
  * GymPal: the chat in the corner of the app, answered by a free AI model
- * through OpenRouter (openrouter.ai), with GymPal's guide to GymGO
- * (gymPalGuide.ts) as its instructions.
+ * through Groq (groq.com) or OpenRouter (openrouter.ai), with GymPal's guide
+ * to GymGO (gymPalGuide.ts) as its instructions.
  *
+ * Groq, with the owner's key (GROQ_API_KEY): asked first when it's set, each
+ * of its models in turn. Its free plan needs no card and allows each model
+ * 30 questions a minute, 1,000 a day and 200,000 tokens a day (GymPal's guide
+ * alone is about 5,000, so the tokens run out first: a few dozen questions a
+ * day a model); past that Groq says no (429) rather than billing, unless the
+ * owner adds a payment method to move up to its paid plan. Then OpenRouter,
+ * if its key is set too. Checked on Groq's docs on 18 November 2026.
+ *
+ * OpenRouter:
  * It costs nothing. Only models whose OpenRouter id ends in ":free" are ever
  * asked: any other named in GYMGO_GYMPAL_MODELS is left out, and the server
  * says so as it starts. OpenRouter bills a fallback at the price of the model
@@ -29,6 +38,14 @@ import { GYMPAL_GUIDE } from './gymPalGuide';
 type Fetch = typeof fetch;
 
 export const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+export const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+/**
+ * Groq's chat models, asked in turn (each has its own day's allowance): its
+ * two production ones, then Qwen, a preview Groq may withdraw at short
+ * notice (a model it no longer has is passed over). GYMGO_GYMPAL_GROQ_MODELS
+ * replaces the list.
+ */
+export const DEFAULT_GROQ_MODELS = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b'];
 /** OpenRouter's public list of models (no key needed), to leave out any that have gone. */
 export const OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models';
 /** How long the list is trusted before it's read again. */
@@ -224,6 +241,8 @@ export class GymPal {
   /** Which model gave the last answer, for the server's check (`pnpm gympal:check`). */
   answeredBy: string | null = null;
   private readonly checkModels: boolean;
+  private readonly groqKey: string | null;
+  private readonly groqModels: string[];
   private listed: { ids: string[]; at: number } | null = null;
   private saidGone = '';
   private readonly fetchImpl: Fetch;
@@ -242,6 +261,8 @@ export class GymPal {
     referer?: string | null;
     /** Check the models against OpenRouter's public list before asking (the server does; tests don't, unless they say so). */
     checkModels?: boolean;
+    /** The owner's Groq key (GROQ_API_KEY), asked before OpenRouter, and which of its models. */
+    groq?: { key: string | null; models?: readonly string[] };
     timeoutMs?: number;
     log?: (line: string) => void;
   }) {
@@ -251,18 +272,22 @@ export class GymPal {
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.referer = options.referer ?? null;
     this.checkModels = options.checkModels ?? false;
+    this.groqKey = options.groq?.key?.trim() || null;
+    const groqModels = (options.groq?.models ?? []).map((id) => id.trim()).filter(Boolean);
+    this.groqModels = groqModels.length ? [...new Set(groqModels)] : DEFAULT_GROQ_MODELS;
     this.timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
     this.log = options.log ?? ((line) => console.warn(line));
   }
 
-  /** Whether GymPal can answer: an OpenRouter key is set. */
+  /** Whether GymPal can answer: a Groq or an OpenRouter key is set. */
   get on(): boolean {
-    return this.key !== null;
+    return this.groqKey !== null || this.key !== null;
   }
 
-  /** The AI service chats go to, for the note under the chat's message box; null when GymPal is off. */
-  get service(): 'OpenRouter' | null {
-    return this.key ? 'OpenRouter' : null;
+  /** The AI services chats go to, for the note under the chat's message box; null when GymPal is off. */
+  get service(): 'Groq or OpenRouter' | 'Groq' | 'OpenRouter' | null {
+    if (this.groqKey && this.key) return 'Groq or OpenRouter';
+    return this.groqKey ? 'Groq' : this.key ? 'OpenRouter' : null;
   }
 
   /**
@@ -273,10 +298,25 @@ export class GymPal {
    * the whole answer thinking), the next is asked.
    */
   async ask(messages: ChatMessage[], extra: { context?: string | null; log?: string | null; replyTokens?: number } = {}): Promise<string> {
-    if (!this.key) throw new GymPalError(503, 'GymPal isn’t switched on for this server yet.', 'gympal_off');
+    if (!this.on) throw new GymPalError(503, 'GymPal isn’t switched on for this server yet.', 'gympal_off');
     // One message of instructions: not every model takes more than one.
     const conversation = [{ role: 'system', content: instructions(extra.context ?? null, extra.log ?? null) }, ...messages];
     const replyTokens = extra.replyTokens ?? GYMPAL_PLANS.free.replyTokens;
+    if (this.groqKey) {
+      const errors: GymPalError[] = [];
+      for (const model of this.groqModels) {
+        const attempt = await this.askGroq(this.groqKey, model, conversation, replyTokens);
+        if ('answer' in attempt) {
+          this.answeredBy = `Groq, ${model}`;
+          return attempt.answer;
+        }
+        errors.push(attempt.error);
+        // Its day's allowance used up, gone or down: the next model. The key turned down: no use asking another.
+        if (!attempt.next) break;
+      }
+      // With no OpenRouter to fall back on: busy if any model was (it passes), else the last reason.
+      if (!this.key) throw errors.find((error) => error.code === 'gympal_busy') ?? errors.at(-1) ?? new GymPalError(502, 'GymPal isn’t working right now. Try again later.');
+    }
     let models = await this.liveModels();
     for (;;) {
       const { answer, model } = await this.askOnce(models, conversation, replyTokens);
@@ -288,6 +328,46 @@ export class GymPal {
       if (rest.length === 0 || rest.length === models.length) throw new GymPalError(502, 'GymPal didn’t have an answer. Try asking another way.');
       models = rest;
     }
+  }
+
+  /**
+   * One Groq model's answer, or why not. GPT-OSS keeps its thinking short
+   * and to itself; Qwen thinks not at all. Never says the key.
+   */
+  private async askGroq(key: string, model: string, conversation: Array<{ role: string; content: string }>, replyTokens: number): Promise<{ answer: string } | { error: GymPalError; next: boolean }> {
+    const thinking = model.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low', include_reasoning: false } : model.startsWith('qwen/') ? { reasoning_effort: 'none', reasoning_format: 'hidden' } : {};
+    let response: Response;
+    try {
+      response = await this.fetchImpl(GROQ_URL, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, messages: conversation, max_completion_tokens: replyTokens, temperature: 0.4, ...thinking }),
+        signal: AbortSignal.timeout(this.timeoutMs),
+      });
+    } catch {
+      return { error: new GymPalError(502, 'GymPal couldn’t be reached. Try again in a moment.'), next: true };
+    }
+    if (!response.ok) this.log(`[gympal] Groq said ${response.status} for ${model}: ${await reasonOf(response)}`);
+    if (response.status === 429) return { error: new GymPalError(429, 'GymPal’s had a lot of questions. Try again a bit later.', 'gympal_busy'), next: true };
+    if (response.status === 401 || response.status === 403) {
+      this.log('[gympal] Groq turned the key down. Check GROQ_API_KEY (console.groq.com, API Keys).');
+      return { error: new GymPalError(502, 'GymPal isn’t working right now. Try again later.'), next: false };
+    }
+    if (!response.ok) return { error: new GymPalError(502, 'GymPal isn’t working right now. Try again later.'), next: true };
+    let data: unknown;
+    try {
+      data = await response.json();
+    } catch {
+      this.log(`[gympal] What came back from Groq for ${model} wasn't an answer.`);
+      return { error: new GymPalError(502, 'GymPal isn’t working right now. Try again later.'), next: true };
+    }
+    const answer = readAnswer(data);
+    if (!answer) {
+      const finish = (data as { choices?: Array<{ finish_reason?: unknown }> } | null)?.choices?.[0]?.finish_reason;
+      this.log(`[gympal] Groq's ${model} sent no answer${typeof finish === 'string' ? ` (it stopped: ${finish})` : ''}.`);
+      return { error: new GymPalError(502, 'GymPal didn’t have an answer. Try asking another way.'), next: true };
+    }
+    return { answer };
   }
 
   /** One request to OpenRouter, which tries the models in turn when one fails: the answer (or none) and the model that gave it. */

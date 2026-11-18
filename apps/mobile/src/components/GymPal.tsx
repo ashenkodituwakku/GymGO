@@ -720,7 +720,7 @@ function Chat({
             {/* The AI service named only once something is sent there. */}
             {state === 'off'
               ? 'GymPal is AI and can be wrong; a gym’s own page has its facts. Not medical advice.'
-              : `GymPal is AI and can be wrong; a gym’s own page has its facts. Chats go to ${service}, an AI service, so leave out personal details. Not medical advice.`}
+              : `GymPal is AI and can be wrong; a gym’s own page has its facts. Chats go to ${service}, ${service.includes(' or ') ? 'AI services' : 'an AI service'}, so leave out personal details. Not medical advice.`}
           </Txt>
         </KeyboardAvoidingView>
       </Animated.View>

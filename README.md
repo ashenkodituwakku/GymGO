@@ -1154,9 +1154,11 @@ dumbbell: after changing the SVG, run `node scripts/gympal-logo.mjs` in
 The chat stays while the app is open, **Start over** clears it, and nothing
 of it is stored, on the phone or the server.
 
-Answers come from a free AI model on **OpenRouter** (openrouter.ai), through
-the GymGO server. (GitHub Models can't be used: GitHub retired it on 30 July
-2026, and its address now only answers "OK".) A model can't be taught the app once and for all, so the
+Answers come from a free AI model on **Groq** (groq.com) or **OpenRouter**
+(openrouter.ai), through the GymGO server: Groq first if its key is set,
+then OpenRouter if its key is, so GymPal can answer more questions a day
+than either gives free on its own. No free AI service is unlimited. (GitHub
+Models can't be used: GitHub retired it on 30 July 2026.) A model can't be taught the app once and for all, so the
 server sends GymPal's guide to GymGO with every question
 (`apps/server/src/gymPalGuide.ts`, written from this README and the screens):
 change it there when the app changes. The guide also holds the rules GymGO
@@ -1166,21 +1168,27 @@ where each fact has its source; unknown is never "no"; it never invents
 deals or partnerships; and it gives general training ideas, not medical
 advice. The chat says GymPal is AI and can be wrong.
 
-To switch it on (free, no card):
+To switch it on (free, no card), set up either or, for the most questions
+a day, both:
 
-1. Make an account at **openrouter.ai**, then **Keys → Create key**.
-2. Add it to `apps/server/.env.local` (git-ignored, so it never reaches
-   GitHub). Don't paste it anywhere else:
+1. **Groq:** make an account at **console.groq.com**, then **API Keys →
+   Create API Key**. Don't add a payment method there: that moves you to
+   Groq's paid plan.
+2. **OpenRouter:** make an account at **openrouter.ai**, then **Keys →
+   Create key**.
+3. Add them to `apps/server/.env.local` (git-ignored, so it never reaches
+   GitHub). Don't paste them anywhere else, a chat included:
 
    ```
-   OPENROUTER_API_KEY=your-key
+   GROQ_API_KEY=your-groq-key
+   OPENROUTER_API_KEY=your-openrouter-key
    ```
 
-3. Check it: `pnpm --filter @gymgo/server gympal:check` asks GymPal one
-   short question and says which model answered, or why none did (never
-   printing the key).
-4. Restart GymGO. The server's first lines say `GymPal: on, free models
-   only (…)`.
+4. Check it: `pnpm --filter @gymgo/server gympal:check` asks GymPal one
+   short question and says which service and model answered, or why none
+   did (never printing a key).
+5. Restart GymGO. The server's first lines say `GymPal: on, Groq's free
+   plan first (…)` (or `free models only (…)` with OpenRouter alone).
 
 Until then, GymPal is there all the same, and answers every question with
 "Sorry, we're waiting for GymPal to be set up. Check back soon!", sending
@@ -1205,7 +1213,17 @@ asked to keep it short, and if one sends back nothing, the next is asked.
 left out, and the server says so. There's no free ChatGPT: every OpenAI
 model on OpenRouter is paid.
 
-**Limits.** OpenRouter's free models allow 20 questions a minute and **50 a
+**Groq's limits.** Its free plan allows each model 30 questions a minute,
+1,000 a day and 200,000 tokens a day, for the whole account (checked on
+Groq's docs on 18 November 2026). GymPal's guide alone is about 5,000
+tokens and goes with every question, so the tokens run out first: roughly
+25 to 35 questions a day for each of its three models (`openai/gpt-oss-120b`,
+`openai/gpt-oss-20b`, then `qwen/qwen3.8-27b`, a preview Groq may withdraw;
+`GYMGO_GYMPAL_GROQ_MODELS` sets others), more if Groq's caching of the
+repeated guide applies. Past them Groq says no, and GymPal asks the next
+model, then OpenRouter. Groq says it doesn't keep what's sent by default.
+
+**OpenRouter's limits.** Its free models allow 20 questions a minute and **50 a
 day for the whole account**, shared by everyone using your GymGO (1,000 a
 day once $10 of credit has ever been bought there, which is yours to
 decide). Past that, GymPal says he's had a lot of questions. GymGO also
@@ -1235,14 +1253,15 @@ never their gyms or notes), so he can answer "What should I train today?"
 and "How is my training going?". On Free the switch shows locked and opens
 the Pro screen.
 
-**Privacy.** What someone types, and the chat so far, goes to OpenRouter
-and the model's provider to be answered; free models' providers may keep
-it and use it to improve their models. The note under the message box
-names the service. GymGO keeps none of it. The chat asks people to leave
-out personal details, and the Privacy Policy and Terms say all of this, the
-training log included (since version 2026-10-29; each new version, such as
-2026-11-04's for the weather, shows existing accounts a card on Profile
-asking them to agree to it).
+**Privacy.** What someone types, and the chat so far, goes to Groq or
+OpenRouter (whichever answers) and the model's provider to be answered;
+free models' providers may keep it and use it to improve their models. The
+note under the message box names the services. GymGO keeps none of it. The
+chat asks people to leave out personal details, and the Privacy Policy and
+Terms say all of this, the training log included (since version 2026-10-29;
+each new version, such as 2026-11-04's for the weather and 2026-11-18.2's
+naming Groq, shows existing accounts a card on Profile asking them to agree
+to it).
 On the website, which has no server behind it yet, GymPal always gives
 that apology; once the website is pointed at a GymGO server with the key
 (`GYMGO_SERVER_URL`, in The website on Netlify), it answers there too,

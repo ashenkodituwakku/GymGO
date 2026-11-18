@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 205 · Filters on a computer take focus too
+
+*18 Nov 2026 · the commit "Explore on a computer: Filters take focus as they open, the same way as a gym's card"*
+
+Straight after Update 204, the same check on Filters: on a computer they open in the side panel, but focus stayed on the Filters button, so Tab went on to "Your account", and Escape left focus where it was.
+
+- **Both side panels now work the same way**, through one piece of code. As the panel opens (or another gym is picked), its content takes focus. When it closes, focus goes back to what opened it: the Filters button, a row, a pin or the search box. Going from Filters back to a gym's card (Escape or Done) puts focus in the card and keeps the earlier opener.
+- Checked in the browser at 1280: Filters by keyboard (focus in, Tab to its first control, Escape back to the button); a gym, a second gym, Escape back to the second row; a gym, then Filters, then Escape back into the gym's card. App tests 617.
+
 ## Update 204 · On a computer, a gym's card takes the keyboard's focus
 
-*18 Nov 2026 · the commit "Explore on a computer: the gym's card takes focus as it opens and gives it back when it closes"*
+*18 Nov 2026 · `74ba0ae`*
 
 Opening a gym from Explore's list was tried by keyboard. On a phone's width it was right: the gym's sheet takes focus, and Escape brings you back to the row. On a computer the card opens in a panel beside the list, but focus stayed on the row, and Tab went down the rest of the list first: **77 presses** near the CBD before the card.
 

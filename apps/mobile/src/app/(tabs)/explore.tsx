@@ -160,11 +160,11 @@ function MapScreen() {
   const [googleFor, setGoogleFor] = useState<string | null>(null);
   // Desktop: which panel sits beside the results.
   const [panel, setPanel] = useState<Panel>(null);
-  // In a browser the side panel's card takes the keyboard's focus as a gym opens, as the phone's sheet does
-  // (components/SheetBackground.tsx), and gives it back when it closes: left on the row, Tab walked the
-  // whole list (77 rows near the CBD) before it reached the card.
-  const placePanel = useRef<ViewInstance>(null);
-  const placeOpener = useRef<FocusTarget | null>(null);
+  // In a browser the side panel (a gym's card, or Filters) takes the keyboard's focus as it opens, as
+  // the phone's sheets do (components/SheetBackground.tsx), and gives it back to what opened it when it
+  // closes: left behind, Tab walked the whole list (77 rows near the CBD) before it reached the card.
+  const sidePanel = useRef<ViewInstance>(null);
+  const panelOpener = useRef<FocusTarget | null>(null);
   // Phone: whether the Filters sheet is up.
   const filtersShown = useRef(false);
   // Phone: where the results sheet was before a place card pushed it down,
@@ -577,10 +577,6 @@ function MapScreen() {
       setCardScrolled(false);
       addRecent(id);
       if (wide) {
-        // What opened it (a row, a pin, the search box), to come back to when it closes.
-        if (Platform.OS === 'web' && typeof document !== 'undefined' && document.activeElement !== document.body) {
-          placeOpener.current = document.activeElement as FocusTarget;
-        }
         setPanel('place');
       } else {
         placeSheet.current?.present();
@@ -620,20 +616,25 @@ function MapScreen() {
     }
   }, [wide, selectedId]);
 
-  useEffect(() => {
-    if (!wide || panel !== 'place' || !selectedId) return;
-    const card = placePanel.current as unknown as FocusTarget | null;
-    card?.focus?.({ preventScroll: true });
-  }, [wide, panel, selectedId]);
   const panelWas = useRef(panel);
   useEffect(() => {
     const was = panelWas.current;
     panelWas.current = panel;
-    if (!wide || was !== 'place' || panel !== null) return;
-    const opener = placeOpener.current;
-    placeOpener.current = null;
-    if (opener?.isConnected) opener.focus?.({ preventScroll: true });
-  }, [wide, panel]);
+    if (!wide || Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const box = sidePanel.current as unknown as (FocusTarget & { contains?: (node: unknown) => boolean }) | null;
+    if (panel === null) {
+      if (was === null) return;
+      const opener = panelOpener.current;
+      panelOpener.current = null;
+      if (opener?.isConnected) opener.focus?.({ preventScroll: true });
+      return;
+    }
+    // What opened it (a row, a pin, the search box, Filters), unless the change came from inside the panel
+    // (Filters' Done going back to the card): that's where focus returns when the panel closes.
+    const active = document.activeElement;
+    if (active && active !== document.body && !box?.contains?.(active)) panelOpener.current = active as unknown as FocusTarget;
+    box?.focus?.({ preventScroll: true });
+  }, [wide, panel, selectedId]);
 
   const closePlace = useCallback(() => {
     if (wide) {
@@ -1003,9 +1004,9 @@ function MapScreen() {
 
         {shown && (
           <DesktopPanel left={start + PANEL_GAP + (besideResults ? PANEL_GAP + PANEL_WIDTH : 0)} bottom={foot} slide={aside} arrives>
+            {/* Focusable from code only (never a Tab stop of its own), and no ring round the whole panel. */}
+            <View ref={sidePanel} tabIndex={-1} style={styles.panelFocus} {...({ dataSet: { quietFocus: '' } } as object)}>
             {shown === 'place' && selected ? (
-              // Focusable from code only (never a Tab stop of its own), and no ring round the whole card.
-              <View ref={placePanel} tabIndex={-1} style={styles.panelFocus} {...({ dataSet: { quietFocus: '' } } as object)}>
               <ScrollView
                 stickyHeaderIndices={[0]}
                 onScroll={(event) => {
@@ -1017,7 +1018,6 @@ function MapScreen() {
                 <PlaceHeader result={selected} onClose={closePlace} onExpand={expandPlace} scrolled={cardScrolled} topPadding={space[4]} />
                 {placeCard(false)}
               </ScrollView>
-              </View>
             ) : (
               <ScrollView keyboardShouldPersistTaps="handled">
                 <View style={styles.panelClose}>
@@ -1031,6 +1031,7 @@ function MapScreen() {
                 />
               </ScrollView>
             )}
+            </View>
           </DesktopPanel>
         )}
 

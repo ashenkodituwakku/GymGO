@@ -183,6 +183,17 @@ echo 'alias gymgo="bash ~/GymGO/scripts/gymgo-mac.sh"' >> ~/.zshrc
 After that, `gymgo` starts everything, and `gymgo --xcode`, `gymgo --tunnel`
 and `gymgo --doctor` work as above.
 
+**GymPal on a Mac.** To switch GymPal on with GitHub Models, in Terminal:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ashenkodituwakku/GymGO/claude/friendly-johnson-9rzxrj/scripts/gymgo-mac.sh | bash -s -- --gympal
+```
+
+(or `gymgo --gympal` once your copy is up to date). It asks for your GitHub
+token (it doesn't show as you paste), saves it in `apps/server/.env.local`
+in `~/GymGO`, readable by you alone and never uploaded, and asks GymPal one
+question to check it works. Then start GymGO as usual.
+
 **3. In Xcode:**
 
 1. At the top, next to **GymGO**, pick where to run it: an **iPhone
@@ -1165,7 +1176,8 @@ advice. The chat says GymPal is AI and can be wrong.
 
 To switch it on with **GitHub Models** (free, no card), the quick way on
 Windows: `gymgo -GymPal` (after `gymgo -Update` once), which asks for the
-token, saves it and checks it (steps 2 and 3 below). Or by hand:
+token, saves it and checks it (steps 2 and 3 below); on a Mac, the one line
+under "GymPal on a Mac" above does the same. Or by hand:
 
 1. On github.com: **Settings → Developer settings → Personal access tokens
    → Fine-grained tokens → Generate new token**. Give it a name, and under

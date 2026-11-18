@@ -53,7 +53,9 @@ the branch the owner's launcher pulls.
   GitHub's place), so it was never tried from here; the owner checks it with
   `pnpm --filter @gymgo/server gympal:check`, or with `gymgo -GymPal`
   (scripts/gymgo.ps1: reads the token hidden, writes it into
-  apps\server\.env.local keeping other lines, runs the check).
+  apps\server\.env.local keeping other lines, runs the check), or on a Mac
+  with `gymgo-mac.sh --gympal` (the same, file mode 600; macOS bash is 3.2,
+  so keep to what it has).
 - **The Windows launcher** `scripts/gymgo.ps1` must stay ASCII-only
   (`apps/web/src/launcher.test.ts` checks it).
 - **Speak plainly to the owner.** They test on a Windows PC (browser, with

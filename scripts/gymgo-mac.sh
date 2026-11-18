@@ -20,6 +20,9 @@
 #   --no-dev-account   leave out the ready-made Pro account (dev@gymgo.test)
 #   --repair           reinstall the packages' links and start with a clean cache, for
 #                      "Unable to resolve …" when the app builds
+#   --gympal           switch GymPal on with GitHub Models: paste your GitHub token when
+#                      asked (it doesn't show); saved in apps/server/.env.local on this
+#                      Mac (never uploaded) and checked with one question
 #   --doctor           print what's installed and where things stand, for troubleshooting
 #   --path DIR         where GymGO lives (default ~/GymGO)
 #
@@ -46,6 +49,7 @@ auto_update=1
 dev_account=1
 doctor=0
 repair=0
+gympal=0
 pass=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -55,10 +59,11 @@ while [[ $# -gt 0 ]]; do
     --no-dev-account) dev_account=0 ;;
     --doctor) doctor=1 ;;
     --repair) repair=1 ;;
+    --gympal) gympal=1 ;;
     --path) path="$2"; shift ;;
     --team) pass+=("--team" "$2"); shift ;;
     --xcode | --clean | --tunnel | --no-browser) pass+=("$1") ;;
-    -h | --help) sed -n '2,29p' "${BASH_SOURCE[0]:-$0}" 2>/dev/null || true; exit 0 ;;
+    -h | --help) sed -n '2,30p' "${BASH_SOURCE[0]:-$0}" 2>/dev/null || true; exit 0 ;;
     *) echo "Unknown option: $1 (try --help)" >&2; exit 2 ;;
   esac
   shift
@@ -170,6 +175,35 @@ if ! node scripts/check-deps.mjs; then
   [[ " ${pass[*]-} " == *" --clear "* ]] || pass+=("--clear")
 fi
 done_ 'Dependencies ready'
+
+# --- GymPal: the owner's GitHub token, saved on this Mac and checked ---------
+# Read without showing, kept only in apps/server/.env.local (git-ignored, so
+# never uploaded, and left alone by updates; readable by you alone), never printed.
+if [[ $gympal -eq 1 ]]; then
+  printf '\n  Switching GymPal on with GitHub Models\n'
+  printf '  Paste your GitHub token (it starts github_pat_) and press Return. It won'"'"'t show as you paste.\n'
+  token=''
+  IFS= read -rs -p '  Token: ' token || true
+  printf '\n'
+  token="$(printf '%s' "$token" | tr -d '[:space:]')"
+  [[ -n "$token" ]] || stop 'No token was pasted.' 'Run this again with --gympal and paste it at the Token prompt.'
+  [[ "$token" =~ ^(github_pat_|ghp_)[A-Za-z0-9_]+$ ]] || stop 'That doesn’t look like a GitHub token.' 'It starts github_pat_ (or ghp_). Copy it again from github.com: Settings > Developer settings > Personal access tokens.'
+  env_file="$path/apps/server/.env.local"
+  # Every other setting stays as it was; an older token is replaced.
+  (
+    umask 077
+    if [[ -f "$env_file" ]]; then grep -v '^[[:space:]]*GITHUB_MODELS_TOKEN[[:space:]]*=' "$env_file" || true; fi
+    printf 'GITHUB_MODELS_TOKEN=%s\n' "$token"
+  ) > "$env_file.new"
+  mv "$env_file.new" "$env_file"
+  chmod 600 "$env_file"
+  unset token
+  done_ "Token saved in $env_file (on this Mac only)"
+  step 'Asking GymPal one question to check it works'
+  "${pnpm[@]}" --filter @gymgo/server gympal:check || stop 'GymPal didn’t answer.' 'The reason is in the lines above. The token is saved; once that’s fixed, run this again with --gympal.'
+  done_ 'GymPal works. Start GymGO as usual (gymgo) and he’ll answer in the app.'
+  exit 0
+fi
 
 # --- Start ---------------------------------------------------------------------
 # A ready-made Pro account, on this computer's own database only (the

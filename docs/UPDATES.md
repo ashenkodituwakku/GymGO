@@ -9,6 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 175 · GymPal setup on a Mac too
+
+*18 Nov 2026 · the commit "gymgo-mac.sh --gympal: the same GymPal setup on a Mac"*
+
+You asked about the Mac. The Mac launcher now has the same step as Windows' `gymgo -GymPal`:
+
+- **In Terminal, one line:** `curl -fsSL https://raw.githubusercontent.com/ashenkodituwakku/GymGO/claude/friendly-johnson-9rzxrj/scripts/gymgo-mac.sh | bash -s -- --gympal`. That fetches the newest launcher from GitHub, so it knows the new option even if your copy is old, and brings `~/GymGO` up to date. Once your copy is current, `gymgo --gympal` does the same.
+- It asks for your GitHub token, which doesn't show as you paste, and saves it in `~/GymGO/apps/server/.env.local`. Other settings in that file are kept and an older token is replaced. Only your Mac user can read the file, it's never uploaded, and updates leave it alone. Then it asks GymPal one question and says whether he answered.
+- Its `--help` also now prints just the list of options (it used to print two lines of code after them).
+
+- Run here in a Linux shell with a made-up token: the other line in the file was kept, the old token replaced, the file readable only by its owner, and git ignored it. The check then failed only because this workspace can't reach GitHub Models. The test file was deleted afterwards. Not yet run on a Mac.
+
 ## Update 174 · `gymgo -GymPal` sets GymPal up for you
 
 *18 Nov 2026 · the commit "gymgo -GymPal: paste the token once, saved and checked"*

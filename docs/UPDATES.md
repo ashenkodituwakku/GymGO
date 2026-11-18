@@ -9,9 +9,26 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 188 · Writing a review, tried end to end; the form fits the largest text
+
+*18 Nov 2026 · the commit "Review form: the aspect rows wrap together at the largest text"*
+
+- **Writing a review was tried through the screens**, on invented demo gyms, from a gym's page and from its sheet on Explore. What happened:
+  - The hint under the form went from "Tap a star to rate it." to "Say a little more… (5 to go)" to "A moderator reads every review before it appears."
+  - Send review waited until the review was complete.
+  - Tapping an aspect's star again cleared it.
+  - The review reached the server with the aspects as set, the cleared one as none.
+  - The waiting card took Write a review's place.
+  - From a link while signed out, GymGO asks you to sign in and then opens that gym. Nothing there needed changing.
+- **The form at the largest text on a small phone:** the aspect rows' stars ran past the card's edge (Atmosphere's fifth star was cut off).
+  - Each row now puts its stars under the label when they won't fit beside it.
+  - Every label has the same least width, so the four rows change together rather than some beside and some under.
+  - Checked at 320 points with the largest bold text (all under) and at 390 with the usual text (all beside, lined up on the right).
+- App tests 608.
+
 ## Update 187 · Dark mode's Dim checked, and GymPal knows the new reviews
 
-*18 Nov 2026 · the commit "GymPal's guide describes reviews; Read more says if it's open; Dim checked"*
+*18 Nov 2026 · `9ec4f27`*
 
 - **Dim** (Standard's softer dark mode, in Appearance) hadn't been checked: every dark measurement used black. It has now, with the same measure from the screen on Home, Profile, Progress, Appearance, a gym's page and Explore, and on a workout in progress, Filters, a gym's sheet, GymPal and a gym's reviews (with and without reviews). axe found nothing, and no words were under 4.5 to 1. Nothing needed changing.
 - **GymPal's guide** mentioned reviews only in passing, so GymPal couldn't explain the new ones. It now knows what the summary shows, how to write a review (stars, the four optional ratings, at least 10 characters, one per gym, checked by a moderator), that visits aren't verified, and that Reviews on other maps opens Google's or Apple's listing without copying their reviews in. A test checks that last part. The rule that GymPal never states a real gym's reviews or rating is unchanged.

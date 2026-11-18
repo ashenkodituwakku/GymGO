@@ -402,7 +402,7 @@ function ReviewForm({ gymId, token, inSheet, onDone, onCancel }: { gymId: string
         </Txt>
         {ASPECTS.map(({ id, label }) => (
           <View key={id} style={styles.detailRow}>
-            <Txt variant="subhead" style={styles.flex}>
+            <Txt variant="subhead" style={styles.detailLabel}>
               {label}
             </Txt>
             <StarPicker label={label} value={aspects[id]} onChange={(next) => setAspects((was) => ({ ...was, [id]: next }))} size={22} clearable />
@@ -508,7 +508,10 @@ const styles = themed(() =>
     overall: { flexDirection: 'row', alignItems: 'center', gap: space[3], flexWrap: 'wrap' },
     pick: { padding: 2 },
     details: { gap: space[2] },
-    detailRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    // The stars beside the label, at the right; under it when they won't fit (the largest text on a small phone pushed them past the card).
+    detailRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space[2], rowGap: 2 },
+    // One least width for every label, so the four rows wrap together or not at all.
+    detailLabel: { flexGrow: 1, minWidth: '45%' },
     body: { height: 110, paddingTop: space[3], textAlignVertical: 'top' },
     buttons: { flexDirection: 'row', gap: space[2] },
     elsewhere: { gap: space[2], paddingTop: space[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },

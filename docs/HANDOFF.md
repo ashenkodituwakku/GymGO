@@ -114,6 +114,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Review form at the largest text** (18 Nov). ReviewsSection's
+  `detailRow` wraps, and `detailLabel` has `minWidth: '45%'` so all four
+  rows wrap together. Usage scripts in the scratchpad: `writeflow.cjs`
+  (a gym's page), `sheetflow.cjs` (Explore's sheet), `signinflow.cjs`.
+
 - **Dim checked; GymPal's guide on reviews** (18 Nov). The contrast scripts
   have Dim variants (`scratchpad/dim-contrast-*.cjs`, theme `dark: 'dim'`).
   Update gymPalGuide.ts whenever a screen GymPal explains changes. Its test

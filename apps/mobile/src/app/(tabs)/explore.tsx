@@ -705,7 +705,11 @@ function MapScreen() {
     useCallback(() => {
       if (Platform.OS !== 'web') return;
       const onKey = (event: KeyboardEvent) => {
-        if (event.key === 'Escape' && !event.defaultPrevented && escape.current()) event.preventDefault();
+        // Not an Escape meant for a dialog over this tab (GymPal, the sort and time choices): one Escape
+        // closed GymPal and Filters under it together. Those don't mark their Escape as handled, so it's
+        // where the key was pressed that tells.
+        const inDialog = (event.target as HTMLElement | null)?.closest?.('[aria-modal="true"]');
+        if (event.key === 'Escape' && !event.defaultPrevented && !inDialog && escape.current()) event.preventDefault();
         // "/" jumps to the search box, as on most sites, unless you're already typing somewhere.
         const target = event.target as HTMLElement | null;
         const typing = target !== null && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
@@ -1428,7 +1432,7 @@ function PhoneShell(props: {
         backdropComponent={backdrop}
         onDismiss={props.onFiltersDismiss}
       >
-        <SheetClip takesFocus>
+        <SheetClip takesFocus holdsFocus="Filters">
           <SheetScrollView contentContainerStyle={{ paddingBottom: space[4] }}>{props.filters}</SheetScrollView>
         </SheetClip>
       </BottomSheetModal>

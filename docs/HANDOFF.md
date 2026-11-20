@@ -141,7 +141,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
   WebGL notes and an OpenFreeMap style warning ("Expected value to be
   of type number") are expected; anything else is new. An overlay
   over the bottom of a TabScreen goes in `bottomExtra`, which now also
-  pads the scroll so focus stays clear of it (WCAG 2.4.11).
+  pads the scroll so focus stays clear of it (WCAG 2.4.11). A sheet
+  over a dimmed page takes `<SheetClip takesFocus holdsFocus="Name">`
+  so focus stays in it (Filters). A page-level Escape handler should
+  ignore keys pressed inside `[aria-modal="true"]` (React Native Web's
+  Modal doesn't mark its Escape as handled).
 
 - **Headings** (20 Nov). A pushed page's level-1 heading is the
   navigation bar's title, so a large title inside the page is

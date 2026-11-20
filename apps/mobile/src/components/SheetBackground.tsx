@@ -74,12 +74,21 @@ export function FloatingSolidBackground(props: BottomSheetBackgroundProps) {
  * background does, with the same rounded bottom corners, so rows never run
  * past the corners or show below the card. Put the sheet's scroll view in it.
  */
-export function SheetClip({ children, takesFocus = false }: { children: ReactNode; takesFocus?: boolean }) {
+export function SheetClip({
+  children,
+  takesFocus = false,
+  holdsFocus,
+}: {
+  children: ReactNode;
+  takesFocus?: boolean;
+  /** A sheet over a dimmed page (Filters): focus stays in it while it's open, and it's a dialog of this name. */
+  holdsFocus?: string;
+}) {
   const { animatedLayoutState } = useBottomSheetInternal();
   const reach = useReach();
   // The content starts below the sheet's handle.
   const size = useAnimatedStyle(() => ({ height: Math.max(0, reach.get() - Math.max(0, animatedLayoutState.get().handleHeight)) }));
-  return <Animated.View style={[styles.clip, size]}>{takesFocus && Platform.OS === 'web' ? <FocusedWhileOpen>{children}</FocusedWhileOpen> : children}</Animated.View>;
+  return <Animated.View style={[styles.clip, size]}>{takesFocus && Platform.OS === 'web' ? <FocusedWhileOpen holds={holdsFocus}>{children}</FocusedWhileOpen> : children}</Animated.View>;
 }
 
 /**
@@ -88,8 +97,26 @@ export function SheetClip({ children, takesFocus = false }: { children: ReactNod
  * focus stayed on the button behind the sheet and Tab walked the page
  * underneath first. When the sheet closes, focus goes back to what opened it.
  */
-function FocusedWhileOpen({ children }: { children: ReactNode }) {
+function FocusedWhileOpen({ children, holds }: { children: ReactNode; holds?: string }) {
   const here = useRef<ViewInstance>(null);
+  // Over a dimmed page (Filters), Tab past its last control went on to the page underneath: the map and its
+  // buttons, out of sight behind the sheet. Focus that leaves comes back, to the first control going forwards
+  // or the last going backwards. A dialog opened over it (GymPal) keeps its own.
+  useEffect(() => {
+    if (!holds || typeof document === 'undefined') return;
+    const TABBABLE = 'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const onIn = (event: FocusEvent) => {
+      const node = here.current as unknown as HTMLElement | null;
+      const target = event.target as HTMLElement | null;
+      if (!node || !target || node.contains(target) || target.closest?.('[aria-modal="true"]')) return;
+      const stops = [...node.querySelectorAll<HTMLElement>(TABBABLE)].filter((e) => e.getClientRects().length > 0);
+      if (!stops.length) return node.focus({ preventScroll: true });
+      const after = (node.compareDocumentPosition(target) & 4) !== 0; // Node.DOCUMENT_POSITION_FOLLOWING
+      (after ? stops[0] : stops[stops.length - 1])!.focus();
+    };
+    document.addEventListener('focusin', onIn);
+    return () => document.removeEventListener('focusin', onIn);
+  }, [holds]);
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const opener = document.activeElement as { focus?: (options?: { preventScroll?: boolean }) => void; isConnected?: boolean } | null;
@@ -104,7 +131,7 @@ function FocusedWhileOpen({ children }: { children: ReactNode }) {
   }, []);
   // Focusable from code only, never a Tab stop of its own.
   return (
-    <View ref={here} tabIndex={-1} style={styles.focused}>
+    <View ref={here} tabIndex={-1} style={styles.focused} {...(holds ? { role: 'dialog' as const, 'aria-label': holds } : null)}>
       {children}
     </View>
   );

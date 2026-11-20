@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 229 · Filters keeps the keyboard in it; Escape closes only what's on top
+
+*20 Nov 2026 · the commit "Filters holds focus while open; Escape in a dialog doesn't close Explore's sheets too"*
+
+Tabbing through Explore with Filters open (Update 228's check, carried on) found two things:
+
+- **Fixed: Tab walked out of Filters.** Filters opens over a dimmed page, and tapping outside it closes it, so it's a dialog. But Tab past its last button went on to the page underneath: the map, its credits and its buttons, all out of sight behind the sheet. Now focus that leaves Filters comes back to its first control (Reset) going forwards, or its last (Show … gyms) going backwards. The sheet is also named "Filters" as a dialog for a screen reader. A dialog opened over it keeps its own focus: in GymPal, Tab stays in GymPal. A gym's card isn't a dialog in this sense (the map stays usable beside it, as in a maps app), so it's left as it is.
+- **Fixed: one Escape closed two things.** With GymPal open over Filters, Escape closed GymPal and Filters with it. GymPal's dialog (and the sort and time choices) don't mark their Escape as handled, so Explore's own Escape closed its sheet too. Explore now leaves alone an Escape pressed inside another dialog. Now the first Escape closes GymPal and puts you back in Filters; the second closes Filters and puts you back on its button.
+- Checked in the browser: 40 Tabs in Filters, all inside it; Tab from the last control goes to the first, Shift+Tab from the first to the last; Show … gyms closes it with focus back on Filters; GymPal over Filters, then two Escapes, as above. axe on Explore in the standard look, light and dark, phone and desktop: 4 checks, all clean. Hooks rules clean. App tests 617.
+
 ## Update 228 · What has focus is never hidden behind a bar or a sheet
 
-*20 Nov 2026 · the commit "Focus not obscured: clear of Customise Home's bar, and Explore's sheet makes way for the map"*
+*20 Nov 2026 · `a6d997f`*
 
 WCAG 2.2 asks that what has keyboard focus isn't hidden behind something that stays on screen (2.4.11). Pages were tabbed through, 50 to 70 stops each, checking at every stop whether the focused control was under something else. The tab pages were already fine: their scrolling keeps focus clear of the tab bar. Two places weren't:
 

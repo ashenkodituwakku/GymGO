@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 216 · Shared, copied, hints and the map's notices are said too; a fading notice still fades
+
+*20 Nov 2026 · the commit "LiveLine: 17 more messages said, and a notice that fades out keeps its place"*
+
+Update 215 looked for messages held as a "problem", "error", "note" or "notice" that start with a line of text. This round looked wider: messages under other names ("shared", "hint", "sent", Report a bug's two email lines) and messages drawn in a box with an icon. A script listed every message that comes and goes and isn't in a line a screen reader hears: 17 more, in 14 files.
+
+- **Now said as they appear:** "Copied, ready to paste." after sharing your collection or a finished workout; "Type how many reps you did." when a set is ticked with none; Report a bug's "That email address doesn’t look right." and, on a copyright notice, "A notice needs an email address…", and its problem sending; a problem on Pro; Workouts failing to load; Account's notices; an invite sent from a friend's page; the notices of the five member tools on a gym's page; the gym card's notices (a demo listing's Call, no phone or website on record); and Explore's, such as "Couldn’t find a place called …".
+- **Caught on the way: a notice that fades out would have stopped fading.** In a browser the fading copy is drawn inside the box that holds the message, which is now the `LiveLine`, and that box leaves the layout the moment the message goes. So Explore's notice was clipped to nothing as it went, and drawn at the top of the list besides. Seen in the browser with the change held back for one run: the copy's box was 0×0 with its overflow hidden, at y 45 against the notice's 279. `<LiveLine fadesOut>` now keeps its place until the copy has gone. In a browser it watches for that, which a busy page can delay well past the fade's 150 ms (up to about 400 ms here), and gives up after a second. On a phone it waits the fade's length (`FADE_OUT_MS`, now exported from `components/motion.tsx`). Only the three notices that fade out use it: Explore's, Account's and the gym card's. Only Explore's is ever cleared; the other two are only replaced.
+- Checked in the browser, each message said from a line that was on the page before it appeared: Collection's share, both Report a bug email lines, a workout's reps hint, Explore's "Couldn’t find a place", the gym card's demo Call. Explore's notice, cleared by picking a recent place, faded where it was, in the kept box, in three runs (opacity seen at 0.48 and 0.17 on the way), and afterwards the box was out of the layout again. axe on the eight screens this touched most (Collection, Report a bug, a workout, Explore, Account, Pro, Workouts, a gym's page) in all three looks, light and dark, phone and desktop: 96 checks, all clean. React's hooks rules still clean over the app. App tests 617.
+
 ## Update 215 · Every problem message is now said to a screen reader
 
-*20 Nov 2026 · the commit "LiveLine: problem and notice messages across the app are said as they appear"*
+*20 Nov 2026 · `21a4a23`*
 
 Update 214 found messages that showed but weren't said. Rather than go form by form, the app was searched for every message that comes and goes (a problem, a notice) and 29 more were found on 23 screens that a screen reader wouldn't hear. Among them: Profile, Progress, Train, Spend, Measurements, Photos, Challenges, the leaderboard, a friend's page, editing a workout, a split or an exercise, a session's note, the day pass, the gym owner's tools, moderation, the Pro extras, the collection's data and the crash screen.
 

@@ -25,7 +25,7 @@ import { GymRow } from './GymRow';
 import { GymRowsSkeleton } from './Skeleton';
 import { edgeFade } from './edgeFade';
 import { Icon } from './Icon';
-import { Chip, PrimaryButton, TIER_COLOUR, Txt } from './ui';
+import { Chip, PrimaryButton, TIER_COLOUR, Txt, LiveLine } from './ui';
 import { AdSlot } from './AdSlot';
 import { Avatar } from './Avatar';
 import type { Account } from '@/lib/api';
@@ -393,14 +393,16 @@ export function ResultsContent({
         </Txt>
       )}
 
-      {notice && (
-        <Animated.View key={notice} style={styles.notice} entering={FADE_IN} exiting={FADE_OUT}>
-          <Icon name="info" size={16} color={color.brandOnTint} />
-          <Txt variant="footnote" style={styles.noticeText}>
-            {notice}
-          </Txt>
-        </Animated.View>
-      )}
+      <LiveLine fadesOut>
+        {notice && (
+          <Animated.View key={notice} style={styles.notice} entering={FADE_IN} exiting={FADE_OUT}>
+            <Icon name="info" size={16} color={color.brandOnTint} />
+            <Txt variant="footnote" style={styles.noticeText}>
+              {notice}
+            </Txt>
+          </Animated.View>
+        )}
+      </LiveLine>
 
       {/* Another country, without Pro ------------------------------------- */}
       {locked && (

@@ -162,11 +162,13 @@ export default function FriendScreen() {
       ) : (
         <PrimaryButton label="Invite to train" icon="calendar" onPress={() => setInviting(true)} />
       )}
-      {sent && (
-        <Txt variant="footnote" color={color.labelSecondary}>
-          {sent}
-        </Txt>
-      )}
+      <LiveLine>
+        {sent && (
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {sent}
+          </Txt>
+        )}
+      </LiveLine>
 
       <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
         THEIR CARDS

@@ -184,7 +184,8 @@ export const GLIDE = (CURVES ? LinearTransition.springify().damping(damp(1, 380,
 
 /** A notice or small element arriving and leaving. */
 export const FADE_IN = FadeIn.duration(CURVES ? 240 : 220).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System);
-export const FADE_OUT = FadeOut.duration(CURVES ? 160 : 150).easing(LEAVE_CURVE).reduceMotion(ReduceMotion.System);
+export const FADE_OUT_MS = CURVES ? 160 : 150;
+export const FADE_OUT = FadeOut.duration(FADE_OUT_MS).easing(LEAVE_CURVE).reduceMotion(ReduceMotion.System);
 
 /*
  * Entrances are springs on the phone. In the browser they're timed instead:

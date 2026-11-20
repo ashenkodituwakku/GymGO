@@ -15,7 +15,7 @@ import { useDeleteCollection } from '@/components/CollectionData';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { GoogleMark, SocialButtons, useSignInProviders, type TokenHandler } from '@/components/SocialSignIn';
 import { ROW, ROW_RULE_INSET, RowChevron, SettingsTile, TILE } from '@/components/ios';
-import { Input, PrimaryButton, Txt } from '@/components/ui';
+import { Input, PrimaryButton, Txt, LiveLine } from '@/components/ui';
 import { ApiError, OfflineError, api, serverHosted, type SignInMethods, type SignInProvider } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { serverOfflineLine } from '@/lib/copy';
@@ -157,14 +157,16 @@ export default function AccountScreen() {
         )}
       </Animated.View>
 
-      {notice && (
-        <Animated.View entering={FADE_IN} exiting={FADE_OUT} style={[styles.notice, notice.good ? styles.noticeGood : styles.noticeBad]}>
-          <Icon name={notice.good ? 'done' : 'info'} size={16} color={notice.good ? color.goodInk : color.dangerInk} />
-          <Txt variant="footnote" color={notice.good ? color.goodInk : color.dangerInk} style={styles.flex}>
-            {notice.text}
-          </Txt>
-        </Animated.View>
-      )}
+      <LiveLine fadesOut>
+        {notice && (
+          <Animated.View entering={FADE_IN} exiting={FADE_OUT} style={[styles.notice, notice.good ? styles.noticeGood : styles.noticeBad]}>
+            <Icon name={notice.good ? 'done' : 'info'} size={16} color={notice.good ? color.goodInk : color.dangerInk} />
+            <Txt variant="footnote" color={notice.good ? color.goodInk : color.dangerInk} style={styles.flex}>
+              {notice.text}
+            </Txt>
+          </Animated.View>
+        )}
+      </LiveLine>
 
       <Section title="Profile" footer="Only you see your profile picture. It isn’t shown with your reviews or photos, and its location data is removed.">
         <Line icon="person" tile={TILE.indigo} title="Name" value={me.displayName} onPress={() => setEditing(editing === 'name' ? null : 'name')} open={editing === 'name'} />

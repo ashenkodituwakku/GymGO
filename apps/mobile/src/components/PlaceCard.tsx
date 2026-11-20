@@ -35,7 +35,7 @@ import { useApp } from '@/lib/app-state';
 import { LogoBadge, LogoCredit, useGymMark } from './BrandLogo';
 import { Glass } from './Glass';
 import { FADE_IN, FADE_OUT, Pressable, Pressy } from './motion';
-import { ActionButton, CloseButton, Fold, FoldGroup, GroupLine, InfoRow, RoundToggle, TIER_COLOUR, Txt } from './ui';
+import { ActionButton, CloseButton, Fold, FoldGroup, GroupLine, InfoRow, RoundToggle, TIER_COLOUR, Txt, LiveLine } from './ui';
 import { AskGymPal } from './AskGymPal';
 import { JoinGym, MembershipBanner } from './JoinGym';
 import { LIMITED } from '@/lib/limited';
@@ -294,14 +294,16 @@ export function PlaceCard({
         )}
       </Animated.View>
 
-      {notice && (
-        <Animated.View style={styles.notice} entering={FADE_IN} exiting={FADE_OUT}>
-          <Icon name="info" size={15} color={color.brandOnTint} />
-          <Txt variant="footnote" style={styles.flex}>
-            {notice}
-          </Txt>
-        </Animated.View>
-      )}
+      <LiveLine fadesOut>
+        {notice && (
+          <Animated.View style={styles.notice} entering={FADE_IN} exiting={FADE_OUT}>
+            <Icon name="info" size={15} color={color.brandOnTint} />
+            <Txt variant="footnote" style={styles.flex}>
+              {notice}
+            </Txt>
+          </Animated.View>
+        )}
+      </LiveLine>
 
       {statusWarning}
 

@@ -21,7 +21,7 @@ import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space, themed, shadow } from '@/lib/theme';
 import { Icon } from './Icon';
 import { FADE_IN, GLIDE, Pressable } from './motion';
-import { ChoiceChip, PrimaryButton, Txt } from './ui';
+import { ChoiceChip, PrimaryButton, Txt, LiveLine } from './ui';
 
 const TONE: Record<BusyLevel, 'good' | 'maybe' | 'no'> = { quiet: 'good', steady: 'good', busy: 'maybe', packed: 'no' };
 
@@ -141,13 +141,15 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
           </Txt>
         </View>
       </View>
-      {notice && (
-        <Animated.View entering={FADE_IN}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            {notice}
-          </Txt>
-        </Animated.View>
-      )}
+      <LiveLine>
+        {notice && (
+          <Animated.View entering={FADE_IN}>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              {notice}
+            </Txt>
+          </Animated.View>
+        )}
+      </LiveLine>
       {picking ? (
         <Animated.View entering={FADE_IN} style={styles.levels}>
           {BUSY_LEVELS.map((item) => (

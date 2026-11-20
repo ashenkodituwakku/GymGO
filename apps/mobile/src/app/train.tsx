@@ -988,11 +988,13 @@ const ExerciseLog = memo(function ExerciseLog({
         </Fragment>
       ))}
 
-      {hint && (
-        <Txt variant="footnote" color={color.maybeInk}>
-          {hint}
-        </Txt>
-      )}
+      <LiveLine>
+        {hint && (
+          <Txt variant="footnote" color={color.maybeInk}>
+            {hint}
+          </Txt>
+        )}
+      </LiveLine>
 
       {!timed && (
         <View style={styles.setButtons}>
@@ -1350,11 +1352,13 @@ function Summary({
             </Pressable>
           ))}
         </View>
-        {shared && (
-          <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-            {shared}
-          </Txt>
-        )}
+        <LiveLine>
+          {shared && (
+            <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+              {shared}
+            </Txt>
+          )}
+        </LiveLine>
         <PrimaryButton label="Done" onPress={onClose} />
       </View>
     </PageScroll>

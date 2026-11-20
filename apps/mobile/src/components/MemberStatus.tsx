@@ -17,7 +17,7 @@ import { WHEN_CHOICES, localDateDaysAgo } from '@/lib/present';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
-import { ChoiceChip, PrimaryButton, Txt } from './ui';
+import { ChoiceChip, PrimaryButton, Txt, LiveLine } from './ui';
 import { dateLabel, statusSummaryLine } from '@/lib/copy';
 import { FADE_IN, GLIDE } from './motion';
 
@@ -117,13 +117,15 @@ export function MemberStatus({ gymId, isDemo, account, onSignIn }: { gymId: stri
       <Txt variant="footnote" color={color.labelSecondary}>
         {statusSummaryLine(summary.closed, summary.open)}
       </Txt>
-      {notice && (
-        <Animated.View entering={FADE_IN}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            {notice}
-          </Txt>
-        </Animated.View>
-      )}
+      <LiveLine>
+        {notice && (
+          <Animated.View entering={FADE_IN}>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              {notice}
+            </Txt>
+          </Animated.View>
+        )}
+      </LiveLine>
       {editing && token ? (
         <Animated.View style={styles.editor} entering={FADE_IN}>
           <View style={styles.chips}>

@@ -27,7 +27,7 @@ import { Pressable } from '@/components/motion';
 import { AppBadge } from '@/components/BrandMark';
 import { Icon, type IconName } from '@/components/Icon';
 import { useGlassRedraw } from '@/components/Redrawn';
-import { PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { PrimaryButton, Segmented, Txt, LiveLine } from '@/components/ui';
 import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtras';
 import { AskGymPal } from '@/components/AskGymPal';
 import { useApp, type ProReason } from '@/lib/app-state';
@@ -344,13 +344,15 @@ export default function ProScreen() {
         {!SERVERLESS && (!billing.isPro || billing.grant?.via === 'gift') && <RedeemGift token={signedIn ? token : null} billing={billing} onSignIn={() => router.push('/sign-in')} />}
         {!SERVERLESS && <GiftPro token={signedIn ? token : null} billing={billing} currency={currency} onSignIn={() => router.push('/sign-in')} />}
 
-        {problem && (
-          <View style={styles.problem}>
-            <Txt variant="footnote" color={color.dangerInk}>
-              {problem}
-            </Txt>
-          </View>
-        )}
+        <LiveLine>
+          {problem && (
+            <View style={styles.problem}>
+              <Txt variant="footnote" color={color.dangerInk}>
+                {problem}
+              </Txt>
+            </View>
+          )}
+        </LiveLine>
 
         {/* Always free -------------------------------------------------------------------- */}
         <View style={styles.card}>

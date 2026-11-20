@@ -19,7 +19,7 @@ import { localBudget, moneyLabel, tracksPrices } from '@/lib/places';
 import { WHEN_CHOICES as WHEN, localDateDaysAgo as dateDaysAgo, parseAmount } from '@/lib/present';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, space, themed } from '@/lib/theme';
-import { ChoiceChip, PrimaryButton, TextField, Txt } from './ui';
+import { ChoiceChip, PrimaryButton, TextField, Txt, LiveLine } from './ui';
 import { FADE_IN, GLIDE } from './motion';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; summary: PriceSummary };
@@ -106,13 +106,15 @@ export function MemberPrices({
         </>
       )}
 
-      {notice && (
-        <Animated.View entering={FADE_IN}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            {notice}
-          </Txt>
-        </Animated.View>
-      )}
+      <LiveLine>
+        {notice && (
+          <Animated.View entering={FADE_IN}>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              {notice}
+            </Txt>
+          </Animated.View>
+        )}
+      </LiveLine>
 
       {editing && token ? (
         <Editor

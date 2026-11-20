@@ -18,7 +18,7 @@ import { WHEN_CHOICES, localDateDaysAgo } from '@/lib/present';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, face, space, themed } from '@/lib/theme';
 import { Icon, type IconName } from './Icon';
-import { ChoiceChip, PrimaryButton, Txt } from './ui';
+import { ChoiceChip, PrimaryButton, Txt, LiveLine } from './ui';
 import { FADE_IN, GLIDE } from './motion';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; summary: AccessSummary };
@@ -98,13 +98,15 @@ export function MemberAccess({
         </>
       )}
 
-      {notice && (
-        <Animated.View entering={FADE_IN}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            {notice}
-          </Txt>
-        </Animated.View>
-      )}
+      <LiveLine>
+        {notice && (
+          <Animated.View entering={FADE_IN}>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              {notice}
+            </Txt>
+          </Animated.View>
+        )}
+      </LiveLine>
 
       {editing && token ? (
         <Editor

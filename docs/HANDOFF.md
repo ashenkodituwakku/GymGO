@@ -118,6 +118,17 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **LiveLine fadesOut** (20 Nov). A message whose view has
+  `exiting={FADE_OUT}` goes in `<LiveLine fadesOut>`. On the web
+  Reanimated appends the fading copy to the element's `offsetParent`,
+  which is now the LiveLine box (RNW Views are `position: relative`);
+  collapsed at once, the box clipped the copy and moved it to the top of
+  the column. `fadesOut` keeps the box in the flow until the copy is
+  removed (a MutationObserver, 1 s at most; on native `FADE_OUT_MS` + 40).
+  Any `{name && (` message, whatever the state is called and whether it
+  starts with a Txt, a View or an Animated.View, belongs in a LiveLine
+  (Updates 215 and 216 found 46).
+
 - **LiveLine** (20 Nov). components/ui.tsx: wrap any message that comes
   and goes in `<LiveLine>{problem && (<Txt …/>)}</LiveLine>`. It's an
   always-present `aria-live="polite"` View, absolutely positioned at 0×0

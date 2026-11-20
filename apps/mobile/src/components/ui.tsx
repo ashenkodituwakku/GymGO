@@ -3,7 +3,7 @@
  */
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { createContext, forwardRef, useContext, useEffect, useState, type ReactNode, type Ref } from 'react';
+import { createContext, forwardRef, useContext, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { ActivityIndicator, Platform, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle, type TextInputInstance, type ViewInstance } from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
@@ -13,7 +13,7 @@ import { color, currentTheme, dropShadow, face, HIT, radius, shadow, space, them
 import { BrandFill } from './BrandFill';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
-import { FADE_IN, FADE_OUT, GLIDE, Pressable, Pressy, SETTLE, usePop, usePressScale } from './motion';
+import { FADE_IN, FADE_OUT, FADE_OUT_MS, GLIDE, Pressable, Pressy, SETTLE, usePop, usePressScale } from './motion';
 
 // --- Text -------------------------------------------------------------------
 
@@ -24,11 +24,38 @@ type Variant = keyof typeof type;
  * a screen reader as it changes. The live region is always in the page, as
  * one only made with its words isn't reliably read; while there's nothing to
  * say it's out of the layout, so it adds no gap among its neighbours.
+ *
+ * `fadesOut`, for a message that leaves with FADE_OUT: its fading copy is
+ * drawn inside this box, so the box keeps its place until the fade is over
+ * (taken out at once, the message vanished instead of fading, and in a
+ * browser the copy was drawn at the top of the list). A browser takes the
+ * copy away when its fade ends, which a busy page can put back: there the
+ * box goes once it's empty, and a second at most. A phone's fade takes
+ * FADE_OUT_MS.
  */
-export function LiveLine({ children }: { children?: ReactNode }) {
+export function LiveLine({ children, fadesOut = false }: { children?: ReactNode; fadesOut?: boolean }) {
   const empty = children === null || children === undefined || children === false || children === '';
+  const box = useRef<ViewInstance>(null);
+  const [faded, setFaded] = useState(empty);
+  useEffect(() => {
+    if (!fadesOut) return;
+    if (!empty) {
+      setFaded(false);
+      return;
+    }
+    const node = box.current as unknown as HTMLElement | null;
+    const copy = Platform.OS === 'web' && typeof MutationObserver !== 'undefined' && !!node?.firstElementChild;
+    const watch = copy ? new MutationObserver(() => node!.firstElementChild === null && setFaded(true)) : null;
+    watch?.observe(node!, { childList: true });
+    const timer = setTimeout(() => setFaded(true), copy ? 1000 : FADE_OUT_MS + 40);
+    return () => {
+      watch?.disconnect();
+      clearTimeout(timer);
+    };
+  }, [empty, fadesOut]);
+  const out = empty && (!fadesOut || faded);
   return (
-    <View aria-live="polite" style={empty ? liveEmpty : undefined}>
+    <View ref={box} aria-live="polite" style={out ? liveEmpty : undefined}>
       {children}
     </View>
   );

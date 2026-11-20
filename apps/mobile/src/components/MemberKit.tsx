@@ -16,7 +16,7 @@ import { haptic } from '@/lib/haptics';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon, type IconName } from './Icon';
-import { PrimaryButton, TextField, Txt } from './ui';
+import { PrimaryButton, TextField, Txt, LiveLine } from './ui';
 import { LinesSkeleton } from './Skeleton';
 import { FADE_IN, GLIDE, Pressable } from './motion';
 
@@ -110,13 +110,15 @@ export function MemberKit({
         </Txt>
       )}
 
-      {notice && (
-        <Animated.View entering={FADE_IN}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            {notice}
-          </Txt>
-        </Animated.View>
-      )}
+      <LiveLine>
+        {notice && (
+          <Animated.View entering={FADE_IN}>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              {notice}
+            </Txt>
+          </Animated.View>
+        )}
+      </LiveLine>
 
       {editing && token ? (
         <Editor

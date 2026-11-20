@@ -34,7 +34,7 @@ import { HeroMark } from '@/components/HeroMark';
 import { ListSkeleton } from '@/components/Skeleton';
 import { GLIDE, Pressy } from '@/components/motion';
 import { CountUp } from '@/components/CountUp';
-import { NoPhoto, PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { NoPhoto, PrimaryButton, Segmented, Txt, LiveLine } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { shareLine, shareText } from '@/lib/actions';
 import { badges, collectionShareText, collectionStats, nextToCollect } from '@/lib/collection';
@@ -339,11 +339,13 @@ export default function CollectionScreen() {
         </Txt>
       </View>
       <PrimaryButton label="Share your collection" icon="share" tone="quiet" onPress={() => void share()} />
-      {shared && (
-        <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-          {shared}
-        </Txt>
-      )}
+      <LiveLine>
+        {shared && (
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
+            {shared}
+          </Txt>
+        )}
+      </LiveLine>
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
         A visit counts once a day, when you check in at the gym; your location is only compared on the phone, never sent.
       </Txt>

@@ -16,7 +16,7 @@ import { Icon } from '@/components/Icon';
 import { Group, Row, TILE } from '@/components/ios';
 import { FADE_IN } from '@/components/motion';
 import { useGlassRedraw } from '@/components/Redrawn';
-import { PrimaryButton, TextField, Txt } from '@/components/ui';
+import { PrimaryButton, TextField, Txt, LiveLine } from '@/components/ui';
 import { api, problemText } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { deviceDetails } from '@/lib/bugReport';
@@ -172,11 +172,13 @@ export default function ReportBug() {
             autoComplete="email"
             autoCorrect={false}
           />
-          {replyProblem && (
-            <Txt variant="footnote" color={color.maybeInk}>
-              That email address doesn’t look right.
-            </Txt>
-          )}
+          <LiveLine>
+            {replyProblem && (
+              <Txt variant="footnote" color={color.maybeInk}>
+                That email address doesn’t look right.
+              </Txt>
+            )}
+          </LiveLine>
         </View>
       )}
 
@@ -198,20 +200,24 @@ export default function ReportBug() {
         ) : null}
       </Group>
 
-      {problem && (
-        <View style={styles.problem}>
-          <Icon name="info" size={16} color={color.dangerInk} />
-          <Txt variant="footnote" color={color.dangerInk} style={styles.flex}>
-            {problem}
-          </Txt>
-        </View>
-      )}
+      <LiveLine>
+        {problem && (
+          <View style={styles.problem}>
+            <Icon name="info" size={16} color={color.dangerInk} />
+            <Txt variant="footnote" color={color.dangerInk} style={styles.flex}>
+              {problem}
+            </Txt>
+          </View>
+        )}
+      </LiveLine>
 
-      {replyMissing && (
-        <Txt variant="footnote" color={color.maybeInk} style={styles.center}>
-          A notice needs an email address, so GymGO can tell you what happens to it.
-        </Txt>
-      )}
+      <LiveLine>
+        {replyMissing && (
+          <Txt variant="footnote" color={color.maybeInk} style={styles.center}>
+            A notice needs an email address, so GymGO can tell you what happens to it.
+          </Txt>
+        )}
+      </LiveLine>
       <PrimaryButton label={busy ? 'Sending…' : notice ? 'Send notice' : 'Send report'} icon={notice ? 'mail' : 'bug'} onPress={() => void submit()} disabled={!ready} busy={busy} />
       <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
         Reports are kept on the GymGO server and emailed to the team. Please leave out passwords and card details.

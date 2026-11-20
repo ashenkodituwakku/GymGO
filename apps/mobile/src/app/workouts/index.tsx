@@ -12,7 +12,7 @@ import { Icon } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
 import { Group, Row, TILE } from '@/components/ios';
 import { useGlassRedraw } from '@/components/Redrawn';
-import { PrimaryButton, Txt } from '@/components/ui';
+import { PrimaryButton, Txt, LiveLine } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { leadExercise } from '@/lib/exerciseGlyphs';
 import { useActiveSessionGlance } from '@/lib/activeSession';
@@ -81,14 +81,16 @@ export default function MyWorkouts() {
           </Txt>
         </Pressable>
       )}
-      {problem && (
-        <View style={styles.problem}>
-          <Txt variant="footnote" color={color.dangerInk}>
-            {problem}
-          </Txt>
-          {workouts === null && <PrimaryButton label="Try again" icon="refresh" tone="quiet" onPress={load} />}
-        </View>
-      )}
+      <LiveLine>
+        {problem && (
+          <View style={styles.problem}>
+            <Txt variant="footnote" color={color.dangerInk}>
+              {problem}
+            </Txt>
+            {workouts === null && <PrimaryButton label="Try again" icon="refresh" tone="quiet" onPress={load} />}
+          </View>
+        )}
+      </LiveLine>
       {!billing.isPro && workouts !== null && workouts.length > 0 && (
         <Pressable onPress={() => openPro('workouts')} accessibilityRole="button" style={styles.notice}>
           <Txt variant="footnote" color={color.labelSecondary}>

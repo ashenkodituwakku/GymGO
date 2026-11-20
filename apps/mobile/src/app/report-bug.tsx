@@ -10,7 +10,7 @@
 import Constants from 'expo-constants';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { Group, Row, TILE } from '@/components/ios';
@@ -21,6 +21,7 @@ import { api, problemText } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { deviceDetails } from '@/lib/bugReport';
 import { problems } from '@/lib/problemLog';
+import { FOCUS_FROM_CODE, useFocusOnArrival } from '@/lib/focusNext';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { ACCENTS, LOOKS, color, radius, shadow, space, themed } from '@/lib/theme';
@@ -118,28 +119,7 @@ export default function ReportBug() {
 
   const leave = () => (router.canGoBack() ? router.back() : router.replace('/profile'));
 
-  if (sent) {
-    return (
-      <View style={styles.page}>
-        <ScreenOptions options={{ title }} />
-        <Animated.View entering={FADE_IN} style={styles.done}>
-          <View style={styles.doneIcon}>
-            <Icon name="good" size={34} color={color.onBrand} />
-          </View>
-          <Txt variant="title2" style={styles.center} accessibilityRole="header">
-            Thanks, that’s sent
-          </Txt>
-          <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-            {sent.emailed ? 'It’s with the GymGO team now.' : 'It’s saved for the GymGO team, and emailed to them as soon as the server can.'}
-            {sent.replyTo ? ` If they need to know more, they’ll write to ${sent.replyTo}.` : ''}
-          </Txt>
-          <View style={styles.doneButton}>
-            <PrimaryButton label="Done" onPress={leave} />
-          </View>
-        </Animated.View>
-      </View>
-    );
-  }
+  if (sent) return <SentScreen title={title} sent={sent} onDone={leave} />;
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
@@ -237,6 +217,34 @@ export default function ReportBug() {
         Reports are kept on the GymGO server and emailed to the team. Please leave out passwords and card details.
       </Txt>
     </PageScroll>
+  );
+}
+
+
+/** Sent: its heading takes focus as it replaces the form, so a screen reader says so (lib/focusNext.ts). */
+function SentScreen({ title, sent, onDone }: { title: string; sent: { emailed: boolean; replyTo: string | null }; onDone: () => void }) {
+  const arrived = useFocusOnArrival<ViewInstance>();
+  return (
+    <View style={styles.page}>
+      <ScreenOptions options={{ title }} />
+      <Animated.View entering={FADE_IN} style={styles.done}>
+        <View style={styles.doneIcon}>
+          <Icon name="good" size={34} color={color.onBrand} />
+        </View>
+        <View ref={arrived} {...FOCUS_FROM_CODE}>
+          <Txt variant="title2" style={styles.center} accessibilityRole="header">
+            Thanks, that’s sent
+          </Txt>
+        </View>
+        <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
+          {sent.emailed ? 'It’s with the GymGO team now.' : 'It’s saved for the GymGO team, and emailed to them as soon as the server can.'}
+          {sent.replyTo ? ` If they need to know more, they’ll write to ${sent.replyTo}.` : ''}
+        </Txt>
+        <View style={styles.doneButton}>
+          <PrimaryButton label="Done" onPress={onDone} />
+        </View>
+      </Animated.View>
+    </View>
   );
 }
 

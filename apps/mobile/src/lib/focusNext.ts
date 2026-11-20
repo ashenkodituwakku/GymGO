@@ -8,7 +8,32 @@
  * Phones move a screen reader's focus on their own; there it does nothing.
  */
 
+import { useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
+
 const TABBABLE = 'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+/**
+ * The props for a view that takes focus from code only: never a Tab stop of
+ * its own, and no focus ring round it (app/_layout.tsx leaves this mark out).
+ */
+export const FOCUS_FROM_CODE = { tabIndex: -1, dataSet: { quietFocus: '' } } as object;
+
+/**
+ * When a screen replaces the one whose button was pressed (Workout done after
+ * Finish, Thanks after Send), focus went with the button, to the page itself.
+ * Put the returned ref, with FOCUS_FROM_CODE, on the new screen's heading:
+ * it takes focus as it appears, so a screen reader reads it and Tab goes on
+ * from there. A browser only.
+ */
+export function useFocusOnArrival<T>() {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    (ref.current as unknown as { focus?: (options?: { preventScroll?: boolean }) => void } | null)?.focus?.({ preventScroll: true });
+  }, []);
+  return ref;
+}
 
 type Node = { contains?: (other: unknown) => boolean; compareDocumentPosition?: (other: unknown) => number; isConnected?: boolean };
 

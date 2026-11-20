@@ -9,6 +9,16 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 212 · Sending a bug report says so
+
+*20 Nov 2026 · the commit "Report a bug: Thanks takes focus as it replaces the form; one shared helper with Workout done"*
+
+Report a bug was tried by keyboard on the local server (where no email can go out: no mail account is set).
+
+- **What worked:** a few letters in gets "A few more words, please · 3 / 4,000", and Send report goes through.
+- **Fixed: after sending, focus went nowhere.** The form, Send button and all, gives way to "Thanks, that's sent", and focus fell to the page itself, as Workout done's did (Update 208). Its heading now takes focus, so a screen reader reads it, and the next Tab is Done. Workout done and this now share one small helper (`useFocusOnArrival` in `lib/focusNext.ts`).
+- Checked in the browser: focus on "Thanks, that's sent", then Done; Workout done still takes focus after a keyboard workout. App tests 617.
+
 ## Update 211 · Moving between pages: the new page is said, and Back puts you where you were
 
 *20 Nov 2026 · `c1092b2`*

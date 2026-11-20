@@ -5,12 +5,13 @@
  * any records you broke.
  */
 
+import { FOCUS_FROM_CODE, useFocusOnArrival } from '@/lib/focusNext';
 import { programmeProgress, programmeTarget, programmeTitle } from '@/lib/programmes';
 import { useProgramme } from '@/lib/programmeStore';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, Platform, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
+import { AccessibilityInfo, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { ARRIVE_CURVE, EASE_OUT, FADE_IN, LEAVE_CURVE, POP_IN, Pressable, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -1234,11 +1235,7 @@ function Summary({
   const done = session.exercises.filter((logged) => logged.sets.length > 0);
   // In a browser the Finish button goes with the workout, and focus with it (to the page itself): it comes
   // here, to the heading, so a screen reader says the workout's saved and Tab goes on from it.
-  const heading = useRef<ViewInstance>(null);
-  useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    (heading.current as unknown as { focus?: (options?: { preventScroll?: boolean }) => void } | null)?.focus?.({ preventScroll: true });
-  }, []);
+  const heading = useFocusOnArrival<ViewInstance>();
   const card = useRef<ViewInstance>(null);
   const [sharingCard, setSharingCard] = useState(false);
   const shareCard = async () => {
@@ -1255,7 +1252,7 @@ function Summary({
       <Animated.View entering={records.length ? POP_IN : FADE_IN}>
         <HeroMark icon={records.length ? 'trophy' : 'check'} tint={records.length ? color.maybe : color.good} size={72} />
       </Animated.View>
-      <View ref={heading} tabIndex={-1} {...({ dataSet: { quietFocus: '' } } as object)}>
+      <View ref={heading} {...FOCUS_FROM_CODE}>
         <Txt variant="largeTitle" style={styles.center} accessibilityRole="header" level={1}>
           {records.length ? `${records.length} new record${records.length === 1 ? '' : 's'}` : 'Workout done'}
         </Txt>

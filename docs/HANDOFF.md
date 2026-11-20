@@ -133,6 +133,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
   gives it to `[data-customise-home]` (the button on Home) if focus was
   lost; the − badge calls `focusNextWhenGone`.
 
+- **useFocusOnArrival / FOCUS_FROM_CODE** (20 Nov). lib/focusNext.ts:
+  put the hook's ref and `{...FOCUS_FROM_CODE}` on the heading of a
+  screen that replaces the one whose button was pressed (Workout done,
+  Report a bug's Thanks). The hook must live in the replacing screen's
+  own component, so it runs when that screen mounts.
 - **focusNextWhenGone** (20 Nov). lib/focusNext.ts: call it with the
   pressed element (the press event's currentTarget on the web) just
   before a button removes itself; it focuses the next tabbable element

@@ -415,6 +415,11 @@ export function Row({
           : undefined
       }
       accessible={!!onPress}
+      // Not a keyboard stop of its own then: in a browser a Pressable is a stop unless told otherwise (React
+      // Native Web reads tabIndex, not focusable), so a switch's row was a stop that did nothing, with the
+      // switch a second Tab after it. Android reads focusable.
+      focusable={!!onPress}
+      {...(Platform.OS === 'web' ? ({ tabIndex: onPress ? 0 : -1 } as object) : null)}
       accessibilityRole={onPress ? 'button' : undefined}
       aria-expanded={onPress ? expanded : undefined}
       style={({ pressed }) => pressed && onPress && { backgroundColor: color.fill }}

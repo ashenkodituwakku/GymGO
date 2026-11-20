@@ -369,7 +369,8 @@ function BadgeShelf({ wrap, children }: { wrap: boolean; children: ReactNode }) 
       showsHorizontalScrollIndicator={false}
       style={styles.badgeRow}
       contentContainerStyle={styles.badges}
-      {...(Platform.OS === 'web' ? { tabIndex: 0 as const, role: 'group' as const, 'aria-label': 'Badges' } : null)}
+      // A region, the role for a scrolling part the keyboard can focus (a group isn't one a screen reader expects there).
+      {...(Platform.OS === 'web' ? { tabIndex: 0 as const, role: 'region' as const, 'aria-label': 'Badges' } : null)}
     >
       {children}
     </ScrollView>

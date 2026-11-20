@@ -44,7 +44,7 @@
  */
 
 import { usePathname } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   KeyboardAvoidingView,
@@ -395,9 +395,22 @@ const LAUNCHER_MARK = { dataSet: { gympalLauncher: '' } } as object;
  * each answer); `still` for one beside a screen's own text. Decoration:
  * what it stands for is in the label of the button or heading it's on.
  */
+/**
+ * The art's gradients, named for this one drawing. In a browser every mark is
+ * in the same page, and each layer of each mark named its gradients
+ * "gympal-ground" and "gympal-iron": the same ids over and over, which a page
+ * mustn't have, and a mark's fill would find another mark's gradient (one in a
+ * hidden page doesn't paint).
+ */
+function ownIds(xml: string, tag: string): string {
+  return xml.replace(/gympal-(ground|iron)/g, `gympal-$1-${tag}`);
+}
+
 export function GymPalMark({ size, cheer = 0, still = false }: { size: number; cheer?: number; still?: boolean }) {
   const calm = useCalm() || still;
   const lift = useSharedValue(0);
+  const uid = useId().replace(/[^A-Za-z0-9]/g, '');
+  const art = useMemo(() => ({ body: ownIds(GYMPAL_BODY, `${uid}b`), dumbbell: ownIds(GYMPAL_DUMBBELL, `${uid}d`) }), [uid]);
 
   useEffect(() => {
     if (calm) return;
@@ -411,9 +424,9 @@ export function GymPalMark({ size, cheer = 0, still = false }: { size: number; c
   const box = { width: size, height: size };
   return (
     <View style={box} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <SvgXml xml={GYMPAL_BODY} width={size} height={size} />
+      <SvgXml xml={art.body} width={size} height={size} />
       <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: DUMBBELL_AT }, dumbbell]}>
-        <SvgXml xml={GYMPAL_DUMBBELL} width={size} height={size} />
+        <SvgXml xml={art.dumbbell} width={size} height={size} />
       </Animated.View>
     </View>
   );

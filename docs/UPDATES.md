@@ -9,9 +9,21 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 223 · One Tab per switch, and no repeated ids
+
+*20 Nov 2026 · the commit "Switch rows aren't Tab stops of their own; GymPal's art has its own ids; Badges is a region"*
+
+The rest of the rules axe leaves out of its default run were tried over the pages: headings made of bold lines, controls without a role in the Tab order, repeated ids, a page locked to one orientation, and made-up role names. Three things came up:
+
+- **Fixed: a switch took two Tabs.** The row a switch sits in (Haptics, Sounds, RPE on sets, Location, GymPal, Google content and Demo mode on Profile; "Email me about this" and "App and device details" on Report a bug) was a Tab stop of its own. It had no role, and Enter on it did nothing, so the switch was one more Tab after it. React Native Web makes every pressable a Tab stop unless it's given `tabIndex`, and it ignores `focusable`. A row with nothing to press is now `tabIndex` −1 in a browser (Android keeps `focusable`). Report a bug now goes text box, switch, switch. On Profile all 32 buttons, the rows that do open something among them, are still Tab stops.
+- **Fixed: the GymPal logo repeated its ids.** Each of its two layers named its gradients "gympal-ground" and "gympal-iron", so every page showing the logo twice had the same ids four times. Nothing looked wrong. But a logo's fill takes the first gradient of that name, and one in a hidden page doesn't paint. Each layer of each logo now names its own (React's `useId`). The logos paint the same colours as before, sampled from the drawn tile on Profile, Templates and Appearance.
+- **Fixed: Collection's badge row** is a Tab stop so the keyboard can scroll it, and it was marked a group. A group isn't a role for a scrolling part, so it's now a region, still named "Badges".
+- No headings made of bold lines, no orientation lock and no made-up roles were found.
+- Checked in the browser: Report a bug's Tab order; the two rules now pass on Profile, Report a bug, Appearance, Templates and Collection; Profile has no repeated ids; the logos' colours. axe on those five pages in the standard look, light and dark, phone and desktop: 20 checks, all clean. Hooks rules clean. App tests 617.
+
 ## Update 222 · Say what you see: buttons named by their own words
 
-*20 Nov 2026 · the commit "Label in name: fifteen controls are named starting with the words they show"*
+*20 Nov 2026 · `215f32b`*
 
 With voice control you press a button by saying what's written on it. That only works if the button's name, which is what a screen reader says, contains those words (WCAG 2.5.3, "Label in Name"). axe has a rule for this but leaves it out of its default run. So every page was checked another way: does each named control's visible title, its first line of words, appear in its name? Fifteen didn't:
 

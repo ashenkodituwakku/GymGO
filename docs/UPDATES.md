@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 230 · Checked: the other sheets hold focus; one question about moving widgets
+
+*20 Nov 2026 · the commit "Docs: dialogs, desktop focus and dragging checks of Update 230"*
+
+Following Update 229, the other things that open over a page were tried by keyboard, along with the desktop layout:
+
+- **Customise Home's widget gallery** (+ on the editing bar) is a dialog named "Widgets". Forty Tabs stay inside it, and Escape closes it with focus back on "Add a widget". **The card that shows when you collect a gym** uses the same kind of dialog, with its own focus trap. The sort and time choices were already checked (Update 224). Nothing to change.
+- **Desktop width (1280):** tabbing through Home, Explore (with a gym or Filters open), Profile, Saved, Progress, a workout in progress, Customise Home and a gym's page, nothing that has focus is hidden. The recovery map's muscles fool the check, as on phones, but each draws its own outline.
+- **Dragging (WCAG 2.5.7) — a question for you, not changed.** On Home, a widget is moved by holding and dragging it, as on an iPhone. A screen reader has Move up and Move down for each widget, and the keyboard has its own way (Update 210). But someone using a mouse or a finger who can't hold and drag has no other way to move one. WCAG 2.2 asks for one, and the usual answer is a small pair of up and down buttons on each widget while editing. That would change the iPhone-style editing (jiggle, − badges, hold and drag) asked for in Update 72, so it's left for you to decide. The map's own dragging is fine: the search and the list find the same gyms without it. The tour (Next and the dots) and GymPal's edge tab (a tap opens it) are fine too.
+
 ## Update 229 · Filters keeps the keyboard in it; Escape closes only what's on top
 
-*20 Nov 2026 · the commit "Filters holds focus while open; Escape in a dialog doesn't close Explore's sheets too"*
+*20 Nov 2026 · `7bd3d91`*
 
 Tabbing through Explore with Filters open (Update 228's check, carried on) found two things:
 

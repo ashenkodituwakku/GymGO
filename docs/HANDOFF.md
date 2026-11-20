@@ -145,7 +145,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
   over a dimmed page takes `<SheetClip takesFocus holdsFocus="Name">`
   so focus stays in it (Filters). A page-level Escape handler should
   ignore keys pressed inside `[aria-modal="true"]` (React Native Web's
-  Modal doesn't mark its Escape as handled).
+  Modal doesn't mark its Escape as handled). Open question for the
+  owner: a non-drag way for a pointer to move Home's widgets (WCAG
+  2.5.7), e.g. up/down buttons while editing; not added because it
+  changes the iPhone-style editing they asked for.
 
 - **Headings** (20 Nov). A pushed page's level-1 heading is the
   navigation bar's title, so a large title inside the page is

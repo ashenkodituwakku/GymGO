@@ -208,7 +208,9 @@ export default function WorkoutScreen() {
       <ScreenOptions options={{ title: 'Workout' }} />
       <PageScroll ref={page} style={styles.page} contentContainerStyle={styles.content}>
         <View style={styles.intro}>
-          <Txt variant="largeTitle">Build a workout</Txt>
+          <Txt variant="largeTitle" accessibilityRole="header" level={2}>
+            Build a workout
+          </Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
             {gymName ? `For ${gymName}. ` : ''}Tap the muscles you want to train.
           </Txt>

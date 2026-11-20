@@ -126,7 +126,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
   Melbourne gym: it shows "Gym not found" with demo gyms on (prefs
   `demo: true`); use `ironbark-strength-surry-hills` there. A page
   section's small-capitals title (`variant="eyebrow"` with
-  `styles.section`) is `accessibilityRole="header" level={2}`.
+  `styles.section`) is `accessibilityRole="header" level={2}`. A name in
+  a capitals label is written as words with `textTransform: 'uppercase'`
+  (VoiceOver spells out "GYMGO"); the eyebrow variant itself has no
+  transform, as a few labels are in normal case on purpose.
 
 - **LiveLine fadesOut** (20 Nov). A message whose view has
   `exiting={FADE_OUT}` goes in `<LiveLine fadesOut>`. On the web

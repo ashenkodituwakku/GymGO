@@ -148,8 +148,8 @@ export default function Profile() {
                 {me.email}
               </Txt>
               <View style={styles.badges}>
-                {plan && <Badge label={billing.isPro ? 'PRO' : 'FREE'} strong={billing.isPro} />}
-                {moderator && <Badge label="MODERATOR" />}
+                {plan && <Badge label={billing.isPro ? 'Pro' : 'Free'} strong={billing.isPro} />}
+                {moderator && <Badge label="Moderator" />}
               </View>
             </View>
             <Icon name="chevron" size={14} color={color.labelTertiary} />
@@ -399,7 +399,7 @@ function Badge({ label, strong = false }: { label: string; strong?: boolean }) {
   return (
     <View style={[styles.badge, strong && styles.badgeStrong]}>
       {strong && <BrandFill round={radius.pill} />}
-      <Txt variant="eyebrow" color={strong ? color.onBrand : color.labelSecondaryOnFill}>
+      <Txt variant="eyebrow" color={strong ? color.onBrand : color.labelSecondaryOnFill} style={styles.badgeCaps}>
         {label}
       </Txt>
     </View>
@@ -660,6 +660,8 @@ const styles = themed(() => StyleSheet.create({
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: space[1] + 2, marginTop: space[1] + 2 },
   // No clipping: a clipped view hides its own glow (BrandFill takes the corners itself).
   badge: { paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill, backgroundColor: color.fill },
+  // Drawn in capitals, written as words: VoiceOver can spell out a word typed in capitals.
+  badgeCaps: { textTransform: 'uppercase' },
   badgeStrong: { backgroundColor: color.brandFill },
   meStats: { flexDirection: 'row', paddingVertical: space[2] + 2, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.fill },
   meStat: { flex: 1, alignItems: 'center', gap: 1 },

@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 220 · "GymGO Pro" is read as a name, not spelt out
+
+*20 Nov 2026 · the commit "Labels in capitals are written as words; Build a workout is a heading"*
+
+Grouped lists already write their labels as words and let the style draw the capitals, because VoiceOver spelt out "GYMGO" typed in capitals (`components/ios.tsx`). Four labels still had a name typed in capitals, and the browser passed them on that way too: the accessibility tree said "GYMGO’S TEMPLATES".
+
+- **Now written as words, drawn in capitals:** "GymGO’s templates" on Templates, "GymGO Pro" on Account and on the Pro card for a free account, and Profile's "Pro", "Free" and "Moderator" badges. On screen they look exactly as before. In the browser each is shown as "GYMGO PRO" but read as "GymGO Pro" (its text is written as words and `text-transform` makes the capitals).
+- Left alone: the section titles typed in capitals ("HISTORY", "BADGES · 7 OF 12"), which are ordinary words. Turning on capitals for every small label would also change the few written in normal case on purpose ("Your workout", "Saved 18 November").
+- **Build a workout is a heading** (level 2, under the bar's "Workout"). It was the last large page title that wasn't one; the other large text is figures (the timer, a friend code, a 1-rep max, a rating).
+- Checked in the browser: each label's drawn text in capitals, its written text in words, and the accessibility tree's names. That covers the Pro card on Home for the local free test account, with Pro made to look on sale, as the contrast checks do. Profile's badges look as before, and the builder's headings read "Workout", then "Build a workout". axe on Templates, Account, Profile and the builder in the standard look, light and dark, phone and desktop: 16 checks, all clean. Hooks rules clean. App tests 617.
+
 ## Update 219 · Long pages have sections a screen reader can jump between
 
-*20 Nov 2026 · the commit "Headings: the small-capitals section titles on long pages are headings"*
+*20 Nov 2026 · `c7dee6a`*
 
 After Update 218 every page has its main heading, but many long pages had nothing under it. Their sections are marked by small capitals ("BADGES · 7 OF 12", "HISTORY", "EVERY COUNTRY"), which a screen reader read as plain lines. To reach the bottom of Progress or past 200 countries, it had to go line by line. Grouped lists already did this (each group's label is a heading), and Templates and Exercises did too.
 

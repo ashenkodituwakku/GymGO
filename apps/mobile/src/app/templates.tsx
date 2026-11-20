@@ -111,7 +111,7 @@ export default function TemplatesScreen() {
         <Icon name="chevron" size={13} color={color.labelTertiary} />
       </Pressable>
       <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.eyebrow}>
-        GYMGO’S TEMPLATES
+        GymGO’s templates
       </Txt>
       <View style={styles.levels} accessibilityLabel="Level">
         {([null, 'Beginner', 'Intermediate'] as const).map((each) => (
@@ -279,7 +279,8 @@ const styles = themed(() =>
     grouped: { borderLeftWidth: 3, borderLeftColor: color.brand, paddingLeft: space[2] },
     groupStart: { marginTop: space[1] },
     levels: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-    eyebrow: { marginTop: space[2], marginLeft: space[4] },
+    // Capitals by style, so a name in it is read as written (VoiceOver spelt out "GYMGO").
+    eyebrow: { marginTop: space[2], marginLeft: space[4], textTransform: 'uppercase' },
     change: { paddingHorizontal: space[3], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
     note: { paddingHorizontal: space[4], textAlign: 'center' },
     programme: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate },

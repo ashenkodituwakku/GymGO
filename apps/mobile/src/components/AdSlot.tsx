@@ -115,8 +115,8 @@ export function AdSlot({ place, style }: { place: AdPlace; style?: object }) {
           <Icon name="crown" size={18} color={color.onBrand} />
         </View>
         <View style={styles.words}>
-          <Txt variant="eyebrow" color={color.brand}>
-            GYMGO PRO
+          <Txt variant="eyebrow" color={color.brand} style={styles.caps}>
+            GymGO Pro
           </Txt>
           <Txt variant="headline" numberOfLines={2}>
             {words.title}
@@ -153,6 +153,8 @@ export function AdSlot({ place, style }: { place: AdPlace; style?: object }) {
 
 const styles = themed(() =>
   StyleSheet.create({
+    // Drawn in capitals, written as words: VoiceOver spells out a name typed in capitals ("G-Y-M-G-O").
+    caps: { textTransform: 'uppercase' },
     card: {
       flexDirection: 'row',
       alignItems: 'flex-start',

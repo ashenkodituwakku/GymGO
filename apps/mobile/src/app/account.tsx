@@ -150,8 +150,8 @@ export default function AccountScreen() {
         {billing.isPro && (
           <View style={styles.pro}>
             <Icon name="crown" size={12} color={color.brandOnTint} />
-            <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
-              GYMGO PRO
+            <Txt variant="caption" color={color.brandOnTint} style={[face('semibold'), styles.caps]}>
+              GymGO Pro
             </Txt>
           </View>
         )}
@@ -478,6 +478,8 @@ function PasswordForm({ needsCurrent, onSave }: { needsCurrent: boolean; onSave:
 
 const styles = themed(() =>
   StyleSheet.create({
+    // Drawn in capitals, written as words: VoiceOver spells out a name typed in capitals ("G-Y-M-G-O").
+    caps: { textTransform: 'uppercase' },
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[4], paddingBottom: space[8], gap: space[2], width: '100%', maxWidth: 560, alignSelf: 'center' },
     head: { alignItems: 'center', gap: 4, paddingVertical: space[4] },

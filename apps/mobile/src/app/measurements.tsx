@@ -87,7 +87,7 @@ export default function MeasurementsScreen() {
 
       {latest.length > 0 && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             LATEST
           </Txt>
           <View style={styles.group} role="radiogroup" accessibilityLabel="Which measurement the chart shows">
@@ -139,7 +139,7 @@ export default function MeasurementsScreen() {
         </View>
       )}
 
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         {`MEASURE TODAY · ${unitOf('waist', length).toUpperCase()}`}
       </Txt>
       <View style={styles.card}>
@@ -214,7 +214,7 @@ export default function MeasurementsScreen() {
 
       {days.length > 0 && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             EVERY DAY YOU MEASURED
           </Txt>
           <View style={styles.group}>

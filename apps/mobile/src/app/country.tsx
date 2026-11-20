@@ -136,7 +136,7 @@ export default function CountryScreen() {
           }
           renderSectionHeader={({ section }) =>
             section.title ? (
-              <Txt variant="footnote" color={color.labelSecondary} style={styles.sectionTitle}>
+              <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.sectionTitle}>
                 {section.title.toUpperCase()}
               </Txt>
             ) : null

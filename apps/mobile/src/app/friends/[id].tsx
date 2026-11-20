@@ -172,7 +172,7 @@ export default function FriendScreen() {
         )}
       </LiveLine>
 
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         THEIR CARDS
       </Txt>
       {!friend && !problem && <GymCardsSkeleton count={2} width={cardWidth} label="Loading their cards" />}

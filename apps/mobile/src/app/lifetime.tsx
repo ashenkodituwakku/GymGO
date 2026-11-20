@@ -199,7 +199,7 @@ export default function LifetimeScreen() {
         ))}
       </View>
 
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         YOUR FAVOURITES
       </Txt>
       <View style={styles.group}>
@@ -241,7 +241,7 @@ export default function LifetimeScreen() {
         Added up on this phone from the workouts in your log. Weight counts every set with a weight (weight × reps); body-weight sets count as sets and reps only. A workout left running counts as four hours at most.
       </Txt>
 
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         AS A PICTURE
       </Txt>
       {/* What's captured: the card and a little room round it. */}

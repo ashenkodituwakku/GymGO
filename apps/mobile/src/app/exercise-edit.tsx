@@ -173,7 +173,7 @@ export default function ExerciseEditScreen() {
         </View>
       </Card>
 
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         MAINLY WORKS · ONE OR TWO
       </Txt>
       <View style={styles.chips} accessibilityLabel="The muscles it mainly works">
@@ -182,7 +182,7 @@ export default function ExerciseEditScreen() {
         ))}
       </View>
 
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         ALSO WORKS · UP TO FOUR, IF ANY
       </Txt>
       <View style={styles.chips} accessibilityLabel="The muscles it works second">
@@ -191,7 +191,7 @@ export default function ExerciseEditScreen() {
         ))}
       </View>
 
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         {`NEEDS · ${draft.kit.length === 0 ? 'NOTHING: BODY WEIGHT' : 'UP TO THREE'}`}
       </Txt>
       <View style={styles.chips} accessibilityLabel="What it needs">
@@ -215,7 +215,7 @@ export default function ExerciseEditScreen() {
         />
       </Card>
 
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         ITS ICON
       </Txt>
       <Card style={styles.card}>

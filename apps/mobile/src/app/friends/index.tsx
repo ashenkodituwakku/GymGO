@@ -295,7 +295,7 @@ export default function FriendsScreen() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <View style={styles.section}>
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.sectionTitle}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.sectionTitle}>
         {title.toUpperCase()}
       </Txt>
       <View style={styles.sectionBody}>{children}</View>

@@ -230,7 +230,7 @@ export default function CollectionScreen() {
 
       {next.length > 0 && <NextToCollect items={next} near={near} country={prefs.country} onOpen={openGym} />}
 
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         {`BADGES · ${earned.filter((badge) => badge.earned).length} OF ${earned.length}`}
       </Txt>
       {/* On a phone, one row to swipe through, earned first, so the cards aren't pushed down the page;
@@ -259,7 +259,7 @@ export default function CollectionScreen() {
 
       {sets.length > 0 && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             SETS
           </Txt>
           {going.length > 0 && (
@@ -294,7 +294,7 @@ export default function CollectionScreen() {
         </>
       )}
 
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         YOUR CARDS
       </Txt>
       {sorted.length > 1 && (
@@ -441,7 +441,7 @@ function RarityFilter({
 function NextToCollect({ items, near, country, onOpen }: { items: Array<{ record: GymRecord; km: number }>; near: string; country: string | null; onOpen: (id: string) => void }) {
   return (
     <View>
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         {`NEXT TO COLLECT · ${near.toUpperCase()}`}
       </Txt>
       <View style={styles.nextList}>

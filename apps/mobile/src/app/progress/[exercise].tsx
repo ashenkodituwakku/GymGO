@@ -170,7 +170,7 @@ export default function ExerciseProgressScreen() {
       )}
 
       {/* Your note on it, pinned in every workout with it too; kept on this device. */}
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         YOUR NOTE
       </Txt>
       <View style={styles.card}>
@@ -199,7 +199,7 @@ export default function ExerciseProgressScreen() {
       {/* Most reps is a tile above when nothing was lifted with a weight, so not again here. */}
       {record && (record.setVolumeSet || record.sessionVolumeKg !== null || (record.mostReps !== null && record.heaviestKg !== null)) && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             RECORDS
           </Txt>
           <View style={styles.group}>
@@ -230,7 +230,7 @@ export default function ExerciseProgressScreen() {
 
       {reps.length > 0 && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             REP RECORDS
           </Txt>
           <View style={styles.group}>
@@ -285,7 +285,7 @@ export default function ExerciseProgressScreen() {
         />
       )}
 
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         EVERY TIME
       </Txt>
       <View style={styles.group}>
@@ -316,7 +316,7 @@ export default function ExerciseProgressScreen() {
 
       {swaps.length > 0 && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             SWAP FOR
           </Txt>
           <View style={styles.group}>

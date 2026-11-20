@@ -178,7 +178,7 @@ export default function ProgressScreen() {
 
       {known && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             YOUR WEEKS
           </Txt>
           <Animated.View>
@@ -196,7 +196,7 @@ export default function ProgressScreen() {
 
       {known && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             YOUR BODY
           </Txt>
           <BodyWeightCard unit={unit} />
@@ -266,7 +266,7 @@ export default function ProgressScreen() {
 
       {records.length > 0 && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             YOUR RECORDS
           </Txt>
           <Animated.View layout={GLIDE} style={styles.group}>
@@ -313,7 +313,7 @@ export default function ProgressScreen() {
 
       {known && log.sessions.length > 0 && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             MILESTONES
           </Txt>
           <Animated.View>
@@ -351,13 +351,13 @@ export default function ProgressScreen() {
 
       {log.sessions.length > 0 && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             HISTORY
           </Txt>
           <Animated.View layout={GLIDE} style={styles.days}>
             {days.slice(0, shownDays).map((day) => (
               <View key={day.key} style={styles.day}>
-                <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={[face('semibold'), styles.dayLabel]}>
+                <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={3} style={[face('semibold'), styles.dayLabel]}>
                   {day.label}
                 </Txt>
                 <View style={styles.group}>

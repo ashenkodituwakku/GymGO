@@ -153,7 +153,7 @@ export default function SplitEditScreen() {
         <TextField label="Split’s name" inSheet={false} value={draft.name} onChangeText={(name) => setDraft({ ...draft, name })} maxLength={60} placeholder="My push, pull, legs" />
       </Card>
 
-      <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+      <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         {`DAYS · ${draft.days.length} OF UP TO ${MOST_DAYS}`}
       </Txt>
       <View style={styles.days} accessibilityLabel="Days of the split">

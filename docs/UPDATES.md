@@ -9,9 +9,21 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 219 · Long pages have sections a screen reader can jump between
+
+*20 Nov 2026 · the commit "Headings: the small-capitals section titles on long pages are headings"*
+
+After Update 218 every page has its main heading, but many long pages had nothing under it. Their sections are marked by small capitals ("BADGES · 7 OF 12", "HISTORY", "EVERY COUNTRY"), which a screen reader read as plain lines. To reach the bottom of Progress or past 200 countries, it had to go line by line. Grouped lists already did this (each group's label is a heading), and Templates and Exercises did too.
+
+- **Now the section titles are headings (level 2)**: 30 places in the code, and the one that draws the country chooser's three. On Progress, an exercise's progress, the monthly report, Collection, Measurements, Lifetime, Friends, a friend's page, editing a split, your own exercise, and the country chooser ("Suggested", "With cities built in", "Every country").
+- On Progress the log's days ("Today", "Wednesday, November 18"…) were level 2 beside the sections; they're now level 3, under History.
+- Nothing moves: the browser makes these `h2` and `h3` elements, and every margin on them is the app's own (20/8/16 px on Country, 8/16 on Collection, 12/16 and 16 on Progress), with none of a browser's default heading margins. The sizes are as before (11 and 13 px).
+- Left alone: the small-capitals labels inside a card (the recap, the timer's ring, an ad), which aren't sections of the page. The titles are still typed in capitals, which a screen reader may spell out when a word is short. Writing them as words and letting the style put them in capitals, as grouped lists do, is a change of its own.
+- Checked in the browser, the outline of each of the eleven pages: one main heading, then its sections, then Progress's days under History. axe on the eleven pages in the standard look, light and dark, phone and desktop: 44 checks, all clean (headings change no colours or surfaces, so the frost and liquid looks weren't rerun). Hooks rules clean. App tests 617.
+
 ## Update 218 · Every page has one main heading
 
-*20 Nov 2026 · the commit "Headings: Explore and Welcome get a main heading; Challenges and Programme keep one"*
+*20 Nov 2026 · `fff6f8d`*
 
 A screen reader can jump from heading to heading, and its first stop is a page's main heading (level 1). Every page was opened to count them. Most have exactly one: the title in the bar at the top, or the page's own. Four didn't:
 

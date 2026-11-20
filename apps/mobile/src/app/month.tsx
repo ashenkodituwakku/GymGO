@@ -196,7 +196,7 @@ export default function MonthScreen() {
 
       {report.records.length > 0 && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             {`RECORDS · ${report.records.length}`}
           </Txt>
           <View style={styles.group}>
@@ -220,7 +220,7 @@ export default function MonthScreen() {
 
       {report.topExercises.length > 0 && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             DONE MOST
           </Txt>
           <View style={styles.group}>
@@ -245,7 +245,7 @@ export default function MonthScreen() {
 
       {report.muscles.length > 0 && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             SETS FOR EACH MUSCLE
           </Txt>
           <View style={styles.card}>
@@ -288,7 +288,7 @@ export default function MonthScreen() {
 
       {report.biggest && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.section}>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
             BIGGEST WORKOUT
           </Txt>
           <View style={[styles.group, styles.row]} accessible>

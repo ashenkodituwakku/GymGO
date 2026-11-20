@@ -9,9 +9,23 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 217 · What the calculators, measurements and offline screens tell you is said too
+
+*20 Nov 2026 · the commit "LiveLine: the calculators', measurements', invites' and offline messages are said"*
+
+Updates 215 and 216 went by what a message is called. This round went by how it looks: every line that comes and goes in the colours of a problem, a warning or a success. Most of those are facts drawn with the page (a gym's prices, a chart's legend, a programme's week) and are right as they are. Nine answer something you did, and weren't said:
+
+- **The plate and strength calculators:** "That doesn’t read as a weight.", "Reps are a whole number, like 5." and "Past 12 reps the estimate isn’t worth much…", as you type.
+- **Measurements:** "Kept for today. Measuring something again today replaces it." after Keep today’s.
+- **Editing a split or workout:** "Reps as a number (8), a range (8–10) or a time (30 s)." under reps it can't read.
+- **Inviting a friend to train:** "That time has passed today. Pick a later one, or another day."
+- **When GymGO's server can't be reached:** "Still no answer…" after Try again on the server card (Profile, Account and others), and the reason on Progress and on Workout ("Couldn’t reach the GymGO server for your log…"), which shows once loading has failed.
+- Each is now in a `LiveLine`, the same as Updates 215 and 216. Every one sits in a column spaced by `gap`, where an empty line takes no room, so nothing moves.
+- Checked in the browser, all nine said: the calculators by typing "abc" and 15 reps; Measurements by keeping a value; the split editor by adding a back squat and typing "lots" for its reps, not saved; a friend's invite by picking Today at 6 am, not sent; and Profile, Progress and Workout with the server blocked. Every one except the two offline lines came from a line already on the page before the message appeared. Those two show once loading has failed, so instead their lines were seen on the page, empty, while all was well. axe on the eight screens (Plates, 1-rep max, Measurements, Progress, Workout, Profile, the split editor, a friend's page), in all three looks, light and dark, phone and desktop: 96 checks, all clean. React's hooks rules still clean. App tests 617.
+
 ## Update 216 · Shared, copied, hints and the map's notices are said too; a fading notice still fades
 
-*20 Nov 2026 · the commit "LiveLine: 17 more messages said, and a notice that fades out keeps its place"*
+*20 Nov 2026 · `4c11c97`*
 
 Update 215 looked for messages held as a "problem", "error", "note" or "notice" that start with a line of text. This round looked wider: messages under other names ("shared", "hint", "sent", Report a bug's two email lines) and messages drawn in a box with an icon. A script listed every message that comes and goes and isn't in a line a screen reader hears: 17 more, in 14 files.
 

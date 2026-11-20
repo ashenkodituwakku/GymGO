@@ -151,11 +151,13 @@ export default function FriendScreen() {
             ))}
           </View>
           <Input value={note} onChangeText={setNote} placeholder="A note (optional): “Leg day?”" maxLength={200} accessibilityLabel="A note with the invite" style={styles.input} />
-          {past && (
-            <Txt variant="footnote" color={color.maybeInk}>
-              That time has passed today. Pick a later one, or another day.
-            </Txt>
-          )}
+          <LiveLine>
+            {past && (
+              <Txt variant="footnote" color={color.maybeInk}>
+                That time has passed today. Pick a later one, or another day.
+              </Txt>
+            )}
+          </LiveLine>
           <PrimaryButton label={picked ? `Invite them: ${inviteWhen(when.toISOString())}` : 'Pick a gym'} icon="calendar" busy={sending} disabled={!picked || past} onPress={() => void send()} />
           <PrimaryButton label="Cancel" tone="quiet" onPress={() => setInviting(false)} />
         </View>

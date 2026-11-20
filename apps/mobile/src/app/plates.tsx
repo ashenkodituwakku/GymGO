@@ -10,7 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { BarDiagram, plateColour } from '@/components/BarDiagram';
 import { useGlassRedraw } from '@/components/Redrawn';
-import { Input, Segmented, Txt } from '@/components/ui';
+import { Input, Segmented, Txt, LiveLine } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { BAR, PLATES, PLATE_CHOICES, formatWeight, parseWeight, plateLoad, unitFor, warmUpSets, type WeightUnit, tidyWeight } from '@/lib/training';
@@ -96,11 +96,13 @@ export default function PlatesScreen() {
         </View>
       </View>
 
-      {weight === undefined && (
-        <Txt variant="footnote" color={color.maybeInk}>
-          That doesn’t read as a weight.
-        </Txt>
-      )}
+      <LiveLine>
+        {weight === undefined && (
+          <Txt variant="footnote" color={color.maybeInk}>
+            That doesn’t read as a weight.
+          </Txt>
+        )}
+      </LiveLine>
 
       {load && (
         <View style={styles.card} accessible accessibilityLabel={`Each side: ${load.perSide.length ? load.perSide.map((plate) => formatWeight(plate, unit)).join(', ') : 'nothing, just the bar'}`}>

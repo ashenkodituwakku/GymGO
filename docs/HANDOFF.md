@@ -127,7 +127,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
   removed (a MutationObserver, 1 s at most; on native `FADE_OUT_MS` + 40).
   Any `{name && (` message, whatever the state is called and whether it
   starts with a Txt, a View or an Animated.View, belongs in a LiveLine
-  (Updates 215 and 216 found 46).
+  (Updates 215 to 217 found 55). To find one by look: a short
+  conditional block coloured `dangerInk`, `maybeInk` or `goodInk`. Leave
+  out facts drawn with the page (prices, legends, a programme's week).
 
 - **LiveLine** (20 Nov). components/ui.tsx: wrap any message that comes
   and goes in `<LiveLine>{problem && (<Txt …/>)}</LiveLine>`. It's an

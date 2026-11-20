@@ -20,7 +20,7 @@ import { ExerciseTile } from './ExerciseGlyph';
 import { GroupControls, joinableNext } from './GroupControls';
 import { Icon, type IconName } from './Icon';
 import { Pressable } from './motion';
-import { Chip, Input, Txt } from './ui';
+import { Chip, Input, Txt, LiveLine } from './ui';
 
 const restWords = (seconds: number) => (seconds === 0 ? 'No rest' : `${restLabel(seconds)} rest`);
 
@@ -109,11 +109,13 @@ export function PlanEditor({ items, onChange, where }: { items: PlanItem[]; onCh
                 </Pressable>
               </View>
             )}
-            {!repsOk && !finisher && (
-              <Txt variant="caption" color={color.dangerInk}>
-                Reps as a number (8), a range (8–10) or a time (30 s).
-              </Txt>
-            )}
+            <LiveLine>
+              {!repsOk && !finisher && (
+                <Txt variant="caption" color={color.dangerInk}>
+                  Reps as a number (8), a range (8–10) or a time (30 s).
+                </Txt>
+              )}
+            </LiveLine>
             {resting === index && (
               <View style={styles.restChips} role="radiogroup" accessibilityLabel={`Rest after each set of ${name}`}>
                 {PLAN_RESTS.map((seconds) => (

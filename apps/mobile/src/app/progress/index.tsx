@@ -160,14 +160,16 @@ export default function ProgressScreen() {
       {start}
 
       {log.status === 'loading' && <ListSkeleton rows={4} label="Loading your log" />}
-      {log.error && (
-        <View style={styles.problem}>
-          <Txt variant="footnote" color={color.dangerInk}>
-            {log.error}
-          </Txt>
-          <PrimaryButton label="Try again" tone="quiet" onPress={log.reload} />
-        </View>
-      )}
+      <LiveLine>
+        {log.error && (
+          <View style={styles.problem}>
+            <Txt variant="footnote" color={color.dangerInk}>
+              {log.error}
+            </Txt>
+            <PrimaryButton label="Try again" tone="quiet" onPress={log.reload} />
+          </View>
+        )}
+      </LiveLine>
       {log.status === 'ready' && log.sessions.length === 0 && (
         <Txt variant="subhead" color={color.labelSecondary}>
           Nothing logged yet. Build a workout, tap Start, and tick your sets as you go.

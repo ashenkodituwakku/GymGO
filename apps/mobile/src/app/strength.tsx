@@ -17,7 +17,7 @@ import { Icon } from '@/components/Icon';
 import { PageScroll } from '@/components/PageScroll';
 import { ProOffer } from '@/components/ProOffer';
 import { useGlassRedraw } from '@/components/Redrawn';
-import { Input, Segmented, Txt } from '@/components/ui';
+import { Input, Segmented, Txt, LiveLine } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { useApp } from '@/lib/app-state';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -110,16 +110,20 @@ export default function StrengthScreen() {
         </View>
       </View>
 
-      {(weight === undefined || reps === undefined) && (
-        <Txt variant="footnote" color={color.maybeInk}>
-          {weight === undefined ? 'That doesn’t read as a weight.' : 'Reps are a whole number, like 5.'}
-        </Txt>
-      )}
-      {typeof reps === 'number' && reps > 12 && (
-        <Txt variant="footnote" color={color.maybeInk}>
-          Past 12 reps the estimate isn’t worth much, so there isn’t one. Try a heavier set.
-        </Txt>
-      )}
+      <LiveLine>
+        {(weight === undefined || reps === undefined) && (
+          <Txt variant="footnote" color={color.maybeInk}>
+            {weight === undefined ? 'That doesn’t read as a weight.' : 'Reps are a whole number, like 5.'}
+          </Txt>
+        )}
+      </LiveLine>
+      <LiveLine>
+        {typeof reps === 'number' && reps > 12 && (
+          <Txt variant="footnote" color={color.maybeInk}>
+            Past 12 reps the estimate isn’t worth much, so there isn’t one. Try a heavier set.
+          </Txt>
+        )}
+      </LiveLine>
 
       {max !== null && (
         // The answer on the accent: what the page is for.

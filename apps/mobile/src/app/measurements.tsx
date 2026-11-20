@@ -196,11 +196,13 @@ export default function MeasurementsScreen() {
             </Txt>
           )}
         </LiveLine>
-        {kept && (
-          <Txt variant="footnote" color={color.goodInk}>
-            Kept for today. Measuring something again today replaces it.
-          </Txt>
-        )}
+        <LiveLine>
+          {kept && (
+            <Txt variant="footnote" color={color.goodInk}>
+              Kept for today. Measuring something again today replaces it.
+            </Txt>
+          )}
+        </LiveLine>
         <PrimaryButton label="Keep today’s" icon="check" onPress={save} />
         <View style={styles.privacy}>
           <Icon name="lock" size={12} color={color.labelTertiary} />

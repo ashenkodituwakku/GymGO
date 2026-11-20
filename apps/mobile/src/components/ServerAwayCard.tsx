@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { AppBadge } from '@/components/BrandMark';
-import { PrimaryButton, Txt } from '@/components/ui';
+import { PrimaryButton, Txt, LiveLine } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { color, radius, shadow, space, themed } from '@/lib/theme';
 
@@ -35,11 +35,13 @@ export function ServerAwayCard() {
         </View>
       </View>
       <PrimaryButton label={trying ? 'Trying…' : 'Try again'} icon="refresh" tone="quiet" busy={trying} onPress={() => void retry()} />
-      {tried && !trying && (
-        <Txt variant="footnote" color={color.maybeInk}>
-          Still no answer. GymGO keeps trying by itself every 20 seconds.
-        </Txt>
-      )}
+      <LiveLine>
+        {tried && !trying && (
+          <Txt variant="footnote" color={color.maybeInk}>
+            Still no answer. GymGO keeps trying by itself every 20 seconds.
+          </Txt>
+        )}
+      </LiveLine>
     </View>
   );
 }

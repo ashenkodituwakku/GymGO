@@ -185,21 +185,23 @@ function NoWorkout({ token }: { token: string | null }) {
         </Txt>
       </View>
       {/* Without the server your last workout and your own can't show: said, rather than looking like a new account. */}
-      {log.error && !last && (
-        <View style={styles.offline}>
-          <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
-            {`${log.error} Your last workout shows here again once it’s back.`}
-          </Txt>
-          <PrimaryButton
-            label="Try again"
-            tone="quiet"
-            onPress={() => {
-              log.reload();
-              loadSaved();
-            }}
-          />
-        </View>
-      )}
+      <LiveLine>
+        {log.error && !last && (
+          <View style={styles.offline}>
+            <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
+              {`${log.error} Your last workout shows here again once it’s back.`}
+            </Txt>
+            <PrimaryButton
+              label="Try again"
+              tone="quiet"
+              onPress={() => {
+                log.reload();
+                loadSaved();
+              }}
+            />
+          </View>
+        )}
+      </LiveLine>
       {last && (
         <View style={styles.again}>
           <Txt variant="label" color={color.labelSecondary}>

@@ -14,7 +14,7 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { MilestonesCard, MuscleBalanceCard, WeekCard } from '@/components/TrainingInsights';
 import { CountUp } from '@/components/CountUp';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
-import { PrimaryButton, Txt } from '@/components/ui';
+import { PrimaryButton, Txt, LiveLine } from '@/components/ui';
 import { Group, Row, RowChevron, TILE } from '@/components/ios';
 import { ListSkeleton } from '@/components/Skeleton';
 import { weekRecap } from '@/lib/insights';
@@ -522,11 +522,13 @@ function SessionRow({
               </Txt>
             </Pressable>
           </View>
-          {problem && (
-            <Txt variant="footnote" color={color.dangerInk}>
-              {problem}
-            </Txt>
-          )}
+          <LiveLine>
+            {problem && (
+              <Txt variant="footnote" color={color.dangerInk}>
+                {problem}
+              </Txt>
+            )}
+          </LiveLine>
         </View>
       )}
     </View>

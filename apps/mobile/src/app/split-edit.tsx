@@ -15,7 +15,7 @@ import { PageScroll } from '@/components/PageScroll';
 import { PlanEditor } from '@/components/PlanEditor';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
-import { Card, Chip, PrimaryButton, TextField, Txt } from '@/components/ui';
+import { Card, Chip, PrimaryButton, TextField, Txt, LiveLine } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { askToDiscard } from '@/lib/askToDiscard';
@@ -214,11 +214,13 @@ export default function SplitEditScreen() {
       <PlanEditor key={shownAt} items={shown.items} onChange={(items) => changeDay({ items })} where={shown.name.trim() || `day ${shownAt + 1}`} />
 
       <View style={styles.actions}>
-        {problem && (
-          <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
-            {problem}
-          </Txt>
-        )}
+        <LiveLine>
+          {problem && (
+            <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
+              {problem}
+            </Txt>
+          )}
+        </LiveLine>
         <PrimaryButton label={saving ? 'Saving…' : existing ? 'Save changes' : billing.isPro ? 'Keep this split' : 'Keep this split · Pro'} icon="save" disabled={saving} onPress={() => void save()} />
         {existing && <PrimaryButton label={deleting ? 'Tap again to delete it' : 'Delete this split'} icon="trash" tone="danger" onPress={() => void remove()} />}
         {existing && (

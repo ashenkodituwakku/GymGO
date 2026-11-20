@@ -17,7 +17,7 @@ import { PlanEditor } from '@/components/PlanEditor';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { ListSkeleton } from '@/components/Skeleton';
-import { Card, PrimaryButton, TextField, Txt } from '@/components/ui';
+import { Card, PrimaryButton, TextField, Txt, LiveLine } from '@/components/ui';
 import { startSession, useActiveSessionGlance } from '@/lib/activeSession';
 import { ApiError, api, failureText, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -185,11 +185,13 @@ export default function WorkoutEditScreen() {
       <PlanEditor items={draft.items} onChange={(items) => setDraft({ ...draft, items })} where={where} />
 
       <View style={styles.actions}>
-        {problem && (
-          <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
-            {problem}
-          </Txt>
-        )}
+        <LiveLine>
+          {problem && (
+            <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
+              {problem}
+            </Txt>
+          )}
+        </LiveLine>
         <PrimaryButton label={active ? 'Back to your workout' : 'Start workout'} icon="play" disabled={draft.items.length === 0} onPress={start} />
         {active && (
           <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>

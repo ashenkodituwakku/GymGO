@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 215 · Every problem message is now said to a screen reader
+
+*20 Nov 2026 · the commit "LiveLine: problem and notice messages across the app are said as they appear"*
+
+Update 214 found messages that showed but weren't said. Rather than go form by form, the app was searched for every message that comes and goes (a problem, a notice) and 29 more were found on 23 screens that a screen reader wouldn't hear. Among them: Profile, Progress, Train, Spend, Measurements, Photos, Challenges, the leaderboard, a friend's page, editing a workout, a split or an exercise, a session's note, the day pass, the gym owner's tools, moderation, the Pro extras, the collection's data and the crash screen.
+
+- **Now they're all said as they appear**, through one small piece (`LiveLine` in `components/ui.tsx`): a line a screen reader listens to, always on the page (one made only with its words isn't reliably read), and out of the layout while there's nothing to say, so it adds no space between its neighbours. Update 214's two lines use it too.
+- Checked: 29 wrapped by one script that matches each message by its indentation and leaves alone any already in such a line (one slip, a closing tag on Friends, was put right before anything ran); the Friends screen draws exactly as before (the empty lines are 0×0, out of the flow), and a message, when there is one, sits in the flow and is said; axe clean on the ten screens it touched most, light and dark, phone and desktop; React's hooks rules still clean over the app. App tests 617.
+
 ## Update 214 · Adding a friend and logging your weight: you're told, and you stay in the field
 
-*20 Nov 2026 · the commit "Friends and body weight: results are said, and Enter keeps you in the field; a hooks check over the app"*
+*20 Nov 2026 · `e58079d`*
 
 Two small forms were tried by keyboard on the website: a friend's code on Friends, and today's weight on Progress.
 

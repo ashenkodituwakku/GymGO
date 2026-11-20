@@ -18,7 +18,7 @@ import { CAN_BUY_HERE, startGift } from '@/lib/purchase';
 import type { BillingApi } from '@/lib/useBilling';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
-import { Input, PrimaryButton, Txt } from './ui';
+import { Input, PrimaryButton, Txt, LiveLine } from './ui';
 
 const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -72,11 +72,13 @@ export function GiftPro({ token, billing, currency, onSignIn }: { token: string 
           onPress={() => void buy()}
         />
       )}
-      {problem && (
-        <Txt variant="footnote" color={color.dangerInk}>
-          {problem}
-        </Txt>
-      )}
+      <LiveLine>
+        {problem && (
+          <Txt variant="footnote" color={color.dangerInk}>
+            {problem}
+          </Txt>
+        )}
+      </LiveLine>
       {gifts.map((gift) => (
         <View key={gift.code} style={styles.gift}>
           <View style={styles.flex}>
@@ -143,11 +145,13 @@ export function RedeemGift({ token, billing, onSignIn }: { token: string | null;
         />
         <PrimaryButton label="Redeem" busy={busy} disabled={!code.trim()} onPress={() => void redeem()} />
       </View>
-      {note && (
-        <Txt variant="footnote" color={color.labelSecondary}>
-          {note}
-        </Txt>
-      )}
+      <LiveLine>
+        {note && (
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {note}
+          </Txt>
+        )}
+      </LiveLine>
     </View>
   );
 }
@@ -213,11 +217,13 @@ export function DuoPartner({ token }: { token: string }) {
         <PrimaryButton label={duo.partner ? 'Swap' : 'Add'} busy={busy} disabled={!code.trim()} onPress={add} />
       </View>
       {duo.partner && <PrimaryButton label={`Take ${duo.partner.displayName} off`} tone="quiet" onPress={() => void act(() => api.leaveDuo(token), 'Done. Your Duo has room for someone again.')} />}
-      {note && (
-        <Txt variant="footnote" color={color.labelSecondary}>
-          {note}
-        </Txt>
-      )}
+      <LiveLine>
+        {note && (
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {note}
+          </Txt>
+        )}
+      </LiveLine>
     </View>
   );
 }

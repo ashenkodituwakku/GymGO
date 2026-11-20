@@ -21,7 +21,7 @@ import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { Toggle } from './Toggle';
-import { ChoiceChip, Fold, Input, PrimaryButton, Txt } from './ui';
+import { ChoiceChip, Fold, Input, PrimaryButton, Txt, LiveLine } from './ui';
 
 const KIND_LABEL: Record<OwnerUpdatePayload['kind'], string> = { visitor_hours: 'visitor hours', casual_price: 'casual visit price', class_timetable: 'class timetable' };
 const month = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
@@ -127,11 +127,13 @@ function Claim({ gymName, gymId, country, token, view, onSignIn, onSent }: { gym
             accessibilityLabel="How we can check it’s yours"
             style={[styles.input, styles.tall]}
           />
-          {notice && (
-            <Txt variant="footnote" color={color.noInk}>
-              {notice}
-            </Txt>
-          )}
+          <LiveLine>
+            {notice && (
+              <Txt variant="footnote" color={color.noInk}>
+                {notice}
+              </Txt>
+            )}
+          </LiveLine>
           <PrimaryButton label="Send claim" busy={sending} onPress={() => void send()} />
           <PrimaryButton label="Cancel" tone="quiet" onPress={() => setOpen(false)} />
         </>
@@ -206,11 +208,13 @@ function OwnerTools({ record, token, view, onSent }: { record: GymRecord; token:
           {`${KIND_LABEL[item.payload.kind]}: ${item.status === 'pending' ? 'waiting for a moderator' : item.status === 'approved' ? 'showing' : `not approved (${item.reason ?? 'no reason given'})`}`}
         </Txt>
       ))}
-      {notice && (
-        <Txt variant="footnote" color={color.labelSecondary}>
-          {notice}
-        </Txt>
-      )}
+      <LiveLine>
+        {notice && (
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {notice}
+          </Txt>
+        )}
+      </LiveLine>
       {part === null && (
         <View style={styles.row}>
           <View style={styles.flex}>

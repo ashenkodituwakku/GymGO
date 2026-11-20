@@ -118,6 +118,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **LiveLine** (20 Nov). components/ui.tsx: wrap any message that comes
+  and goes in `<LiveLine>{problem && (<Txt …/>)}</LiveLine>`. It's an
+  always-present `aria-live="polite"` View, absolutely positioned at 0×0
+  while empty so it adds no `gap`. A new `{problem && <Txt>}` outside one
+  is silent to screen readers.
+
 - **Hooks check** (20 Nov). `pnpm lint` is tsc only, which doesn't catch
   a hook placed after an early return (it showed as the crash screen).
   eslint 9 and eslint-plugin-react-hooks 5 are in node_modules/.pnpm: a

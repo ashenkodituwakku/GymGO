@@ -17,7 +17,7 @@ import { Pressable } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
-import { Card, Chip, Input, PrimaryButton, Segmented, TextField, Txt } from '@/components/ui';
+import { Card, Chip, Input, PrimaryButton, Segmented, TextField, Txt, LiveLine } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { askToDiscard } from '@/lib/askToDiscard';
@@ -242,11 +242,13 @@ export default function ExerciseEditScreen() {
       </Card>
 
       <View style={styles.actions}>
-        {problem && (
-          <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
-            {problem}
-          </Txt>
-        )}
+        <LiveLine>
+          {problem && (
+            <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
+              {problem}
+            </Txt>
+          )}
+        </LiveLine>
         <PrimaryButton label={saving ? 'Saving…' : existing ? 'Save changes' : billing.isPro ? 'Keep this exercise' : 'Keep this exercise · Pro'} icon="save" disabled={saving} onPress={() => void save()} />
         {existing && <PrimaryButton label={deleting ? 'Tap again to delete it' : 'Delete this exercise'} icon="trash" tone="danger" onPress={() => void remove()} />}
         {existing && (

@@ -15,7 +15,7 @@ import { addDays, nowIn } from '@/lib/query';
 import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
-import { ChoiceChip, PrimaryButton, Txt } from './ui';
+import { ChoiceChip, PrimaryButton, Txt, LiveLine } from './ui';
 
 const dayLabel = (date: string, today: string) =>
   date === today ? 'Today' : date === addDays(today, 1) ? 'Tomorrow' : new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', timeZone: 'UTC' });
@@ -98,11 +98,13 @@ export function DayPass({ gymId, timezone, account, onSignIn }: { gymId: string;
           )}
         </View>
       ))}
-      {problem && (
-        <Txt variant="footnote" color={color.dangerInk}>
-          {problem}
-        </Txt>
-      )}
+      <LiveLine>
+        {problem && (
+          <Txt variant="footnote" color={color.dangerInk}>
+            {problem}
+          </Txt>
+        )}
+      </LiveLine>
     </View>
   );
 }

@@ -12,7 +12,7 @@ import { Pressable } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
-import { Card, PrimaryButton, TextField, Txt } from '@/components/ui';
+import { Card, PrimaryButton, TextField, Txt, LiveLine } from '@/components/ui';
 import { dateLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -129,11 +129,13 @@ export default function PhotosScreen() {
           No photos yet. Add one now and another in a few weeks: Then and now puts them side by side.
         </Txt>
       )}
-      {problem && (
-        <Txt variant="footnote" color={color.dangerInk}>
-          {problem}
-        </Txt>
-      )}
+      <LiveLine>
+        {problem && (
+          <Txt variant="footnote" color={color.dangerInk}>
+            {problem}
+          </Txt>
+        )}
+      </LiveLine>
       <PrimaryButton label={busy ? 'Adding…' : 'Add a photo'} icon="plus" disabled={busy} onPress={() => void add()} />
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
         Each is kept 1,200 pixels across at most and saved afresh, without the original’s details of where and on what it was taken.

@@ -18,7 +18,7 @@ import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
-import { Card, PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { Card, PrimaryButton, Segmented, Txt, LiveLine } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { api, problemText, type Board, type BoardEntry } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -145,11 +145,13 @@ export default function LeaderboardScreen() {
         />
       )}
 
-      {problem && (
-        <Txt variant="footnote" color={color.noInk}>
-          {problem}
-        </Txt>
-      )}
+      <LiveLine>
+        {problem && (
+          <Txt variant="footnote" color={color.noInk}>
+            {problem}
+          </Txt>
+        )}
+      </LiveLine>
       {board?.you && <YourPlace you={board.you} board={board} where={[scope === 'friends' ? 'Friends' : 'Everyone', area === 'city' && city ? `in ${city}` : null]} />}
       {!board && !problem ? (
         <ListSkeleton rows={5} />

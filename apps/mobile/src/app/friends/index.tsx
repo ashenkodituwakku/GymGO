@@ -18,7 +18,7 @@ import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
-import { Card, Input, PrimaryButton, Txt } from '@/components/ui';
+import { Card, Input, PrimaryButton, Txt, LiveLine } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { KEEP_FOCUS_ON_ENTER } from '@/lib/focusNext';
 import { shareText } from '@/lib/actions';
@@ -119,11 +119,13 @@ export default function FriendsScreen() {
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: 'Friends' }} />
-      {problem && (
-        <Txt variant="footnote" color={color.noInk}>
-          {problem}
-        </Txt>
-      )}
+      <LiveLine>
+        {problem && (
+          <Txt variant="footnote" color={color.noInk}>
+            {problem}
+          </Txt>
+        )}
+      </LiveLine>
 
       {/* Your code on the accent: the one thing here to send. */}
       <View style={styles.hero}>
@@ -177,13 +179,13 @@ export default function FriendsScreen() {
           <PrimaryButton label="Add" busy={adding} disabled={!code.trim()} onPress={() => void add()} />
         </View>
         {/* Said as it changes ("No one has that code", "You and Sam are friends now"): always there, so a screen reader hears it. */}
-        <View aria-live="polite">
+        <LiveLine>
           {note && (
             <Txt variant="footnote" color={note.problem ? color.dangerInk : color.labelSecondary}>
               {note.text}
             </Txt>
           )}
-        </View>
+        </LiveLine>
       </Card>
 
       {view && view.incoming.length > 0 && (

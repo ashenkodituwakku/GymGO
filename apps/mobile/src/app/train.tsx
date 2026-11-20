@@ -20,7 +20,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { CountUp } from '@/components/CountUp';
 import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
-import { Chip, Input, PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { Chip, Input, PrimaryButton, Segmented, Txt, LiveLine } from '@/components/ui';
 import { ChoiceSheet } from '@/components/ChoiceSheet';
 import { KIND_INK, KIND_MESSAGE, KIND_OPTIONS, RpePicker, askSetKindNatively, RpeCell, RpeHead } from '@/components/SetKinds';
 import { ExerciseNote } from '@/components/ExerciseNote';
@@ -572,11 +572,13 @@ export default function TrainScreen() {
             disabled={saving}
             onPress={() => void finish()}
           />
-          {problem && (
-            <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
-              {problem}
-            </Txt>
-          )}
+          <LiveLine>
+            {problem && (
+              <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
+                {problem}
+              </Txt>
+            )}
+          </LiveLine>
           {problem && !token && !LIMITED && <PrimaryButton label="Sign in" tone="quiet" onPress={() => router.push('/sign-in')} />}
           <PrimaryButton
             label={confirmDiscard ? 'Tap again to discard it' : 'Discard workout'}

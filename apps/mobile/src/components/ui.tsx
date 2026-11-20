@@ -19,6 +19,22 @@ import { FADE_IN, FADE_OUT, GLIDE, Pressable, Pressy, SETTLE, usePop, usePressSc
 
 type Variant = keyof typeof type;
 
+/**
+ * A message that may come and go (a problem, a "Logged" or "Sent"), said by
+ * a screen reader as it changes. The live region is always in the page, as
+ * one only made with its words isn't reliably read; while there's nothing to
+ * say it's out of the layout, so it adds no gap among its neighbours.
+ */
+export function LiveLine({ children }: { children?: ReactNode }) {
+  const empty = children === null || children === undefined || children === false || children === '';
+  return (
+    <View aria-live="polite" style={empty ? liveEmpty : undefined}>
+      {children}
+    </View>
+  );
+}
+const liveEmpty = { position: 'absolute', width: 0, height: 0, overflow: 'hidden' } as const;
+
 export function Txt({
   variant = 'body',
   color: tint = color.label,

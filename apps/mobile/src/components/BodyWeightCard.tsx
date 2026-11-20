@@ -13,7 +13,7 @@ import { color, face, radius, shadow, space, themed, webFocusRing } from '@/lib/
 import { formatWeight, fromKg, parseWeight, toKg, type WeightUnit, tidyWeight } from '@/lib/training';
 import { Icon } from './Icon';
 import { ProgressChart } from './ProgressChart';
-import { Txt } from './ui';
+import { Txt, LiveLine } from './ui';
 import { dateLabel } from '@/lib/copy';
 
 /** "10 Sep", for a weigh-in's date. */
@@ -113,7 +113,7 @@ export function BodyWeightCard({ unit }: { unit: WeightUnit }) {
         </Pressable>
       </View>
       {/* Said as it changes (a weight it can't read, or the one just logged): always there, so a screen reader hears it. */}
-      <View aria-live="polite">
+      <LiveLine>
         {problem ? (
           <Txt variant="footnote" color={color.dangerInk}>
             {problem}
@@ -123,7 +123,7 @@ export function BodyWeightCard({ unit }: { unit: WeightUnit }) {
             {said}
           </Txt>
         ) : null}
-      </View>
+      </LiveLine>
 
       <View style={styles.foot}>
         <Icon name="lock" size={12} color={color.labelTertiary} />

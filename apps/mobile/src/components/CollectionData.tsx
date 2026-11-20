@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import { useState, type ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
-import { PrimaryButton, Txt } from '@/components/ui';
+import { PrimaryButton, Txt, LiveLine } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { collectionStats } from '@/lib/collection';
@@ -123,11 +123,13 @@ export function useDeleteCollection(): { open: () => void; toggle: () => void; o
             signedIn ? 'on this device and on your account, so on your other devices too' : 'on this device'
           }. It can’t be undone: a gym you collect again rolls a new card.`}
         </Txt>
-        {problem && (
-          <Txt variant="footnote" color={color.dangerInk}>
-            {problem}
-          </Txt>
-        )}
+        <LiveLine>
+          {problem && (
+            <Txt variant="footnote" color={color.dangerInk}>
+              {problem}
+            </Txt>
+          )}
+        </LiveLine>
         <PrimaryButton label="Delete everything" icon="trash" tone="danger" busy={step === 'deleting'} onPress={() => void confirm()} />
         <PrimaryButton label="Keep my collection" tone="quiet" disabled={step === 'deleting'} onPress={close} />
       </View>

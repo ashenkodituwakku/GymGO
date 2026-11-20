@@ -6,7 +6,7 @@ import { Share, StyleSheet, View } from 'react-native';
 import { ExerciseCard } from '@/components/ExerciseCard';
 import { PlanSummary } from '@/components/PlanSummary';
 import { useGlassRedraw } from '@/components/Redrawn';
-import { PrimaryButton, Txt } from '@/components/ui';
+import { PrimaryButton, Txt, LiveLine } from '@/components/ui';
 import { LinesSkeleton, ListSkeleton } from '@/components/Skeleton';
 import { useActiveSessionGlance } from '@/lib/activeSession';
 import { api, failureText, type SavedWorkout } from '@/lib/api';
@@ -162,11 +162,13 @@ export default function SavedWorkoutScreen() {
             />
           )}
           <PrimaryButton label={confirmDelete ? 'Tap again to delete' : 'Delete workout'} icon="trash" tone="danger" onPress={() => void remove()} />
-          {problem && (
-            <Txt variant="footnote" color={color.dangerInk}>
-              {problem}
-            </Txt>
-          )}
+          <LiveLine>
+            {problem && (
+              <Txt variant="footnote" color={color.dangerInk}>
+                {problem}
+              </Txt>
+            )}
+          </LiveLine>
         </View>
       </PageScroll>
     </>

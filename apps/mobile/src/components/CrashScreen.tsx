@@ -13,7 +13,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { AppBadge } from './BrandMark';
-import { PrimaryButton, TextField, Txt } from './ui';
+import { PrimaryButton, TextField, Txt, LiveLine } from './ui';
 import { api, problemText } from '@/lib/api';
 import { browserName } from '@/lib/bugReport';
 import { color, radius, space, themed } from '@/lib/theme';
@@ -93,11 +93,13 @@ export function CrashScreen({ error, retry }: ErrorBoundaryProps) {
               style={styles.note}
               textAlignVertical="top"
             />
-            {problem && (
-              <Txt variant="footnote" color={color.dangerInk}>
-                {problem}
-              </Txt>
-            )}
+            <LiveLine>
+              {problem && (
+                <Txt variant="footnote" color={color.dangerInk}>
+                  {problem}
+                </Txt>
+              )}
+            </LiveLine>
             <PrimaryButton label={state === 'sending' ? 'Sending…' : 'Send a bug report'} icon="bug" tone="quiet" busy={state === 'sending'} onPress={() => void send()} />
           </>
         )}

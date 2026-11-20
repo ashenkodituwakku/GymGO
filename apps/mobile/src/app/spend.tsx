@@ -15,7 +15,7 @@ import { Pressable } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
-import { Card, ChoiceChip, PrimaryButton, Segmented, TextField, Txt } from '@/components/ui';
+import { Card, ChoiceChip, PrimaryButton, Segmented, TextField, Txt, LiveLine } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { dateLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
@@ -245,11 +245,13 @@ function AddSpend({ onDone }: { onDone: () => void }) {
       </View>
       <TextField label={kind === 'membership' ? 'Started on' : 'Paid on'} inSheet={false} value={startedOn} onChangeText={setStartedOn} placeholder="2026-10-01" />
       <TextField label="Name (optional)" inSheet={false} value={label} onChangeText={setLabel} placeholder={kind === 'membership' ? 'Membership' : '10-visit pass'} maxLength={60} />
-      {problem && (
-        <Txt variant="footnote" color={color.dangerInk}>
-          {problem}
-        </Txt>
-      )}
+      <LiveLine>
+        {problem && (
+          <Txt variant="footnote" color={color.dangerInk}>
+            {problem}
+          </Txt>
+        )}
+      </LiveLine>
       <View style={styles.actions}>
         <PrimaryButton label="Add it" icon="check" onPress={save} />
         <PrimaryButton label="Cancel" tone="quiet" onPress={onDone} />

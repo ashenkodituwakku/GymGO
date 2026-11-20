@@ -14,7 +14,7 @@ import { GemCard } from '@/components/GemCard';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { GymCardsSkeleton } from '@/components/Skeleton';
-import { Chip, Input, PrimaryButton, Txt } from '@/components/ui';
+import { Chip, Input, PrimaryButton, Txt, LiveLine } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { api, problemText } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -102,11 +102,13 @@ export default function FriendScreen() {
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: friend?.name ?? name ?? 'Friend' }} />
-      {problem && (
-        <Txt variant="footnote" color={color.noInk}>
-          {problem}
-        </Txt>
-      )}
+      <LiveLine>
+        {problem && (
+          <Txt variant="footnote" color={color.noInk}>
+            {problem}
+          </Txt>
+        )}
+      </LiveLine>
       {friend && (
         // Their totals on the accent, like a plan's head.
         <View style={styles.hero}>

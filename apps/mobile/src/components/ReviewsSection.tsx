@@ -25,7 +25,7 @@ import type { AccountApi } from '@/lib/useAccount';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { PHOSPHOR } from './phosphor';
-import { PrimaryButton, TextField, Txt } from './ui';
+import { PrimaryButton, TextField, Txt, LiveLine } from './ui';
 import { ReviewsSkeleton } from './Skeleton';
 
 type Load = { state: 'loading' } | { state: 'offline' } | { state: 'ready'; reviews: Review[]; mine: Review[] };
@@ -436,11 +436,13 @@ function ReviewForm({ gymId, token, inSheet, onDone, onCancel }: { gymId: string
         maxLength={2000}
         style={styles.body}
       />
-      {error && (
-        <Txt variant="footnote" color={color.dangerInk}>
-          {error}
-        </Txt>
-      )}
+      <LiveLine>
+        {error && (
+          <Txt variant="footnote" color={color.dangerInk}>
+            {error}
+          </Txt>
+        )}
+      </LiveLine>
       <Txt variant="caption" color={color.labelSecondary}>
         {missing ?? 'A moderator reads every review before it appears.'}
       </Txt>

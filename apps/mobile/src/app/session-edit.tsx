@@ -21,7 +21,7 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { KIND_INK, KIND_MESSAGE, KIND_OPTIONS, RpeCell, RpeHead, RpePicker, askSetKindNatively } from '@/components/SetKinds';
 import { ListSkeleton } from '@/components/Skeleton';
-import { Input, PrimaryButton, Segmented, TextField, Txt } from '@/components/ui';
+import { Input, PrimaryButton, Segmented, TextField, Txt, LiveLine } from '@/components/ui';
 import { ApiError, api } from '@/lib/api';
 import { askToDiscard } from '@/lib/askToDiscard';
 import { useApp } from '@/lib/app-state';
@@ -352,11 +352,13 @@ export default function SessionEditScreen() {
 
       <View style={styles.actions}>
         <PrimaryButton label={saving ? 'Saving…' : 'Save changes'} icon="check" disabled={saving} onPress={() => void save()} />
-        {problem && (
-          <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
-            {problem}
-          </Txt>
-        )}
+        <LiveLine>
+          {problem && (
+            <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
+              {problem}
+            </Txt>
+          )}
+        </LiveLine>
         <PrimaryButton label="Cancel" tone="quiet" onPress={close} />
       </View>
 

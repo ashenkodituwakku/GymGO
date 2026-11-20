@@ -15,7 +15,7 @@ import type { TrainingSession } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
 import { Icon } from './Icon';
 import { Pressable } from './motion';
-import { Input, PrimaryButton, Txt } from './ui';
+import { Input, PrimaryButton, Txt, LiveLine } from './ui';
 
 export const NOTE_LIMIT = 500;
 
@@ -60,11 +60,13 @@ export function SessionNote({ session, compact = false }: { session: TrainingSes
         <Txt variant="caption" color={draft.length > NOTE_LIMIT - 40 ? color.maybeInk : color.labelSecondary} style={styles.count}>
           {`${draft.length}/${NOTE_LIMIT}`}
         </Txt>
-        {problem && (
-          <Txt variant="footnote" color={color.dangerInk}>
-            {problem}
-          </Txt>
-        )}
+        <LiveLine>
+          {problem && (
+            <Txt variant="footnote" color={color.dangerInk}>
+              {problem}
+            </Txt>
+          )}
+        </LiveLine>
         <View style={styles.buttons}>
           <View style={styles.flex}>
             <PrimaryButton label="Cancel" tone="quiet" onPress={() => setDraft(null)} />

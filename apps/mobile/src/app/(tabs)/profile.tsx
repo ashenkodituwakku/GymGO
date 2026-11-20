@@ -18,7 +18,7 @@ import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/com
 import { Group, ROW, Row, TILE, TabScreen } from '@/components/ios';
 import { GymPalMark } from '@/components/GymPal';
 import { openGymPal } from '@/lib/gymPalBus';
-import { PrimaryButton, Txt } from '@/components/ui';
+import { PrimaryButton, Txt, LiveLine } from '@/components/ui';
 import { ApiError, api } from '@/lib/api';
 import { holdPendingSignIn } from '@/lib/ageGate';
 import { setAlwaysShowGoogle, useAlwaysShowGoogle } from '@/lib/googleConsent';
@@ -376,11 +376,13 @@ export default function Profile() {
         {about === 'copyright' && <CopyrightExplainer onNotice={() => router.push({ pathname: '/report-bug', params: { topic: 'copyright', from: 'Profile' } })} />}
       </Group>
 
-      {error && (
-        <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
-          {error}
-        </Txt>
-      )}
+      <LiveLine>
+        {error && (
+          <Txt variant="footnote" color={color.dangerInk} style={styles.center}>
+            {error}
+          </Txt>
+        )}
+      </LiveLine>
 
       <View style={styles.colophon}>
         <Wordmark height={24} />
@@ -505,11 +507,13 @@ function SignInCard() {
       {social && <OrDivider label="or" />}
       <PrimaryButton label="Sign in with email" icon="mail" onPress={() => router.push('/sign-in')} />
       <PrimaryButton label="Create an account" tone="quiet" onPress={() => router.push({ pathname: '/sign-in', params: { mode: 'create' } })} />
-      {problem && (
-        <Txt variant="footnote" color={color.dangerInk}>
-          {problem}
-        </Txt>
-      )}
+      <LiveLine>
+        {problem && (
+          <Txt variant="footnote" color={color.dangerInk}>
+            {problem}
+          </Txt>
+        )}
+      </LiveLine>
     </View>
   );
 }
@@ -588,11 +592,13 @@ function NewTermsCard() {
         tint={color.labelSecondary}
         text="Have a look at the new [Terms of Service](terms) and [Privacy Policy](privacy). Agree to keep using your account; if you’d rather not, you can delete it in Account settings."
       />
-      {problem && (
-        <Txt variant="footnote" color={color.dangerInk}>
-          {problem}
-        </Txt>
-      )}
+      <LiveLine>
+        {problem && (
+          <Txt variant="footnote" color={color.dangerInk}>
+            {problem}
+          </Txt>
+        )}
+      </LiveLine>
       <PrimaryButton label="Agree" busy={busy} onPress={() => void agree()} />
     </View>
   );

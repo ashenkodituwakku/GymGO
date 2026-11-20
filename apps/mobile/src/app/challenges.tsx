@@ -17,7 +17,7 @@ import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { ListSkeleton } from '@/components/Skeleton';
-import { Card, PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { Card, PrimaryButton, Segmented, Txt, LiveLine } from '@/components/ui';
 import { ApiError, api, type ChallengeView } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
@@ -105,11 +105,13 @@ export default function ChallengesScreen() {
         </Txt>
       </View>
       {!view && !problem && <ListSkeleton rows={3} label="Loading this month’s challenge" />}
-      {problem && (
-        <Txt variant="footnote" color={color.dangerInk}>
-          {problem}
-        </Txt>
-      )}
+      <LiveLine>
+        {problem && (
+          <Txt variant="footnote" color={color.dangerInk}>
+            {problem}
+          </Txt>
+        )}
+      </LiveLine>
       {view && mine?.finished && <ChallengeCard month={view.month} target={mine.target} />}
       {view && mine && !mine.finished && (
         <Card style={styles.card}>

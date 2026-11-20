@@ -17,7 +17,7 @@ import { PageScroll } from '@/components/PageScroll';
 import { ProgressChart } from '@/components/ProgressChart';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
-import { Input, PrimaryButton, Txt } from '@/components/ui';
+import { Input, PrimaryButton, Txt, LiveLine } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { localToday } from '@/lib/bodyWeight';
 import { MEASURES, formMeasures, keptValue, latestOf, lengthUnitFor, measureDays, seriesOf, shownValue, unitOf, valueLabel, withMeasures, withoutDay, type MeasureId } from '@/lib/bodyMeasures';
@@ -189,11 +189,13 @@ export default function MeasurementsScreen() {
             </Txt>
           </Pressable>
         )}
-        {problem && (
-          <Txt variant="footnote" color={color.dangerInk}>
-            {problem}
-          </Txt>
-        )}
+        <LiveLine>
+          {problem && (
+            <Txt variant="footnote" color={color.dangerInk}>
+              {problem}
+            </Txt>
+          )}
+        </LiveLine>
         {kept && (
           <Txt variant="footnote" color={color.goodInk}>
             Kept for today. Measuring something again today replaces it.

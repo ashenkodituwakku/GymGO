@@ -14,7 +14,7 @@ import { timeLabel } from '@/lib/copy';
 import { priceLabel, type GymRecord, type OwnerUpdatePayload } from '@gymgo/domain';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { LinesSkeleton } from './Skeleton';
-import { ChoiceChip, PrimaryButton, Txt } from './ui';
+import { ChoiceChip, PrimaryButton, Txt, LiveLine } from './ui';
 
 /** Approve in one tap; Reject opens the reasons, and a reason sends it. */
 export function DecideButtons({
@@ -97,11 +97,13 @@ export function OwnerUpdateQueue({ token, records, onChanged }: { token: string;
   return (
     <View style={styles.queue}>
       <Txt variant="headline">{`Owners’ updates waiting ${queue ? `(${queue.length})` : ''}`}</Txt>
-      {error && (
-        <Txt variant="footnote" color={color.noInk}>
-          {error}
-        </Txt>
-      )}
+      <LiveLine>
+        {error && (
+          <Txt variant="footnote" color={color.noInk}>
+            {error}
+          </Txt>
+        )}
+      </LiveLine>
       {queue === null && !error && <LinesSkeleton lines={2} label="Loading the owners’ updates waiting" />}
       {queue?.length === 0 && (
         <Txt variant="subhead" color={color.labelSecondary}>
@@ -148,11 +150,13 @@ export function ClaimQueue({ token, records }: { token: string; records: GymReco
   return (
     <View style={styles.queue}>
       <Txt variant="headline">{`Gym claims waiting ${queue ? `(${queue.length})` : ''}`}</Txt>
-      {error && (
-        <Txt variant="footnote" color={color.noInk}>
-          {error}
-        </Txt>
-      )}
+      <LiveLine>
+        {error && (
+          <Txt variant="footnote" color={color.noInk}>
+            {error}
+          </Txt>
+        )}
+      </LiveLine>
       {queue === null && !error && <LinesSkeleton lines={2} label="Loading the gym claims waiting" />}
       {queue?.length === 0 && (
         <Txt variant="subhead" color={color.labelSecondary}>

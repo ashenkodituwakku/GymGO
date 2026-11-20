@@ -1213,6 +1213,23 @@ function PhoneShell(props: {
   // or its last rows ends up out of sight.
   const { measureRef, onLayout: measure, overhang } = useOverhang();
   const clearance = props.clearance + overhang;
+  // In a browser, Tab through the results opens the sheet all the way, and Tab goes on round to the map's
+  // own controls (the map, Show every gym, near me, the weather), which were then under the sheet: focus
+  // that couldn't be seen (WCAG 2.4.11). Focus anywhere on this tab outside the sheets brings the sheet down
+  // to the middle, so what has focus is in view.
+  const sheetLayer = useRef<ViewInstance>(null);
+  const { sheetIndex: shownIndex, mainSheet: sheetToLower } = props;
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const onIn = (event: FocusEvent) => {
+      const target = event.target as HTMLElement | null;
+      const layer = sheetLayer.current as unknown as HTMLElement | null;
+      if (!target?.closest?.('[data-explore-shell]') || !layer || layer.contains(target)) return;
+      if (shownIndex.current >= 2) sheetToLower.current?.snapToIndex(1);
+    };
+    document.addEventListener('focusin', onIn);
+    return () => document.removeEventListener('focusin', onIn);
+  }, [shownIndex, sheetToLower]);
   // The height the sheets live in: the screen, less the tab bar and a gap.
   const [height, setHeight] = useState(window.height - clearance - SHEET_GAP);
   const bottomInset = 0;
@@ -1275,7 +1292,7 @@ function PhoneShell(props: {
   );
 
   return (
-    <View ref={measureRef} onLayout={measure} style={styles.root}>
+    <View ref={measureRef} onLayout={measure} style={styles.root} {...({ dataSet: { exploreShell: '' } } as object)}>
       {props.map}
       {/* Pass-through as a prop: an animated view's styles reach the browser inline, where 'box-none' isn't understood and the layer would swallow every tap and drag on the map. */}
       {/* (React Native Web warns that the prop is deprecated; it's still the only form that works here.) */}
@@ -1288,6 +1305,7 @@ function PhoneShell(props: {
           a sheet ever sits behind it (as in Find My). Its own sheet host
           also keeps a gym's card on this tab when you switch away. */}
       <View
+        ref={sheetLayer}
         style={[CHILD_TOUCH, styles.sheetLayer, { bottom: clearance + SHEET_GAP }]}
         onLayout={(event) => setHeight(event.nativeEvent.layout.height)}
       >

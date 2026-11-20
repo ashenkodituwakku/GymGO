@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 228 · What has focus is never hidden behind a bar or a sheet
+
+*20 Nov 2026 · the commit "Focus not obscured: clear of Customise Home's bar, and Explore's sheet makes way for the map"*
+
+WCAG 2.2 asks that what has keyboard focus isn't hidden behind something that stays on screen (2.4.11). Pages were tabbed through, 50 to 70 stops each, checking at every stop whether the focused control was under something else. The tab pages were already fine: their scrolling keeps focus clear of the tab bar. Two places weren't:
+
+- **Customise Home:** a widget near the bottom took focus behind the editing bar (Add a widget, Done). The page made room under its last widget for the bar, but left the bar out of the room it keeps clear when scrolling to what has focus. Now it's in that room too (`scrollPaddingBottom` in `components/ios.tsx`), and no widget is hidden.
+- **Explore, at a phone's width:** Tab through the results opens the sheet all the way, then Tab goes on round to the map's own controls (Show every gym, Show gyms near me, the weather). Those were under the sheet, so focus couldn't be seen. Now focus anywhere on Explore outside the sheet brings the sheet down to the middle, and the control shows, with its ring. Phones aren't affected: this listens only in a browser.
+- Not counted: the muscles on the recovery map and in the workout builder overlap each other's boxes, which fools this check, but each muscle draws its own outline when it has focus. And the map itself is one large area, which stays partly in view.
+- Checked in the browser: 60 stops on Explore and in Customise Home, with nothing hidden; Home, Profile and Saved still with nothing hidden; a picture of Explore as focus comes round to "Show gyms near me". axe on Home and Explore in the standard look, light and dark, phone and desktop: 8 checks, all clean. Hooks rules clean. App tests 617.
+
 ## Update 227 · Checked: a quiet console, forms that fill themselves
 
-*20 Nov 2026 · the commit "Docs: the console, autofill and High Contrast checks of Update 227"*
+*20 Nov 2026 · `b1085a7`*
 
 Three checks that found nothing to change, written down so they needn't be repeated:
 

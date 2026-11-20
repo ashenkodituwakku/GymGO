@@ -118,6 +118,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Measure leftovers are icons** (20 Nov). The screen measure's empty-text
+  readings are Material Symbols glyphs (private-use code points), all
+  aria-hidden inside fully named controls; checked by code point on Friends
+  and Home. Words below 4.5:1 would show with their text.
 - **RouteFocus** (20 Nov). components/RouteFocus.tsx, in the root
   layout, web only: on each pathname change it says `document.title`
   (less " · GymGO") in a hidden `aria-live="polite"` Text, remembers the

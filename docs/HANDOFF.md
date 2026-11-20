@@ -130,6 +130,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
   drawn more than once takes its ids from `useId` (GymPalMark). Text
   that can grow (a reader's own spacing) needs room for another line:
   prefer `numberOfLines={2}` to 1 for names, figures and values.
+  Forced colours drop shadows and fills: the focus ring and the state
+  of switches, tabs, chips and choices have a `@media (forced-colors:
+  active)` block in app/_layout.tsx, keyed on ARIA state. A new control
+  that shows state only by a fill needs its role and aria-checked or
+  aria-selected for it to show there. Test with Playwright's
+  `forcedColors: 'active'`.
 
 - **Headings** (20 Nov). A pushed page's level-1 heading is the
   navigation bar's title, so a large title inside the page is

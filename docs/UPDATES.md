@@ -9,9 +9,22 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 225 · High Contrast mode: focus, switches and choices can be seen
+
+*20 Nov 2026 · the commit "Forced colours: a focus ring, switches and selected choices that show in High Contrast"*
+
+Windows' High Contrast themes (forced colours) make the browser redraw a page in a few system colours. It drops every shadow and replaces every fill with the page's own colour. GymGO draws its focus ring with a shadow and shows state with fills, so with forced colours on (emulated in the browser):
+
+- **There was no focus ring at all.** A keyboard user couldn't see where they were. Now the ring is drawn as an outline in the system's highlight colour, which forced colours keep. Without forced colours it's the same two-tone ring as before.
+- **Switches vanished.** Track and knob are both fills, so only the label was left, with no switch to see or tell on from off. Now the track is outlined, the knob drawn in the text colour, and a switch that's on fills with the highlight colour.
+- **Selected choices looked like the rest.** The selected segment (kg/lb), a filter chip that's on and the current tab were told apart only by a fill. Every tab, chip, tick and choice is now outlined. The selected ones fill with the highlight colour, their words and icons in the highlight's own text colour.
+- All of this is CSS in one place (`app/_layout.tsx`), keyed on what each control already tells a screen reader (`aria-checked`, `aria-selected`, `role=switch`). It applies only when forced colours are on, and the outlines take no room.
+- **Checked, nothing to change: reflow.** At 320 pixels wide (a 1280-pixel screen at 400%), no page scrolls sideways and no text runs off the edge outside the rows made to scroll (carousels, chip rows). That covers every page and the opened sheets, and Sign in signed out.
+- Checked in the browser, with forced colours on and off: the focus ring on Plates' unit choice; a switch on Report a bug; Plates' kg/lb; Explore's chips with "Open late" on; the tab bar. Without forced colours each looks as before. axe on Home, Explore, Plates and Report a bug in the standard look, light and dark, phone and desktop: 16 checks, all clean. Hooks rules clean. App tests 617. Real Windows High Contrast, as opposed to the browser's emulation of it, is still to be tried on a Windows machine.
+
 ## Update 224 · Wider text isn't cut off; reduced motion holds
 
-*20 Nov 2026 · the commit "Text spacing: figures, gym names, values and labels wrap instead of being cut off"*
+*20 Nov 2026 · `892cb1a`*
 
 Some people read with their own text settings: more space between lines, letters and words. WCAG 1.4.12 says nothing may be cut off when they do (line height 1.5, letter spacing 0.12em, word spacing 0.16em, paragraphs 2em apart). Every page was opened twice, once plainly and once with that spacing in place from the start, and the text cut off only the second time was listed.
 

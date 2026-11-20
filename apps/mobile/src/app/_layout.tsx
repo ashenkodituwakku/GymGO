@@ -68,7 +68,20 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
     ':not(input):not(textarea):focus-visible{outline:none}' +
     // Not round a container that only holds focus for what's in it (a sheet as it opens: components/SheetBackground.tsx).
     ':not(input):not(textarea):not([data-quiet-focus]):focus-visible::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:10;' +
-    'box-shadow:inset 0 0 0 2px var(--gg-focus),inset 0 0 0 4px var(--gg-focus-inner)}';
+    'box-shadow:inset 0 0 0 2px var(--gg-focus),inset 0 0 0 4px var(--gg-focus-inner)}' +
+    // With forced colours (Windows High Contrast) the browser drops every shadow, and with it this ring: there
+    // was no focus to be seen at all. An outline survives, in the system's own highlight colour.
+    '@media (forced-colors: active){:not(input):not(textarea):not([data-quiet-focus]):focus-visible::after{outline:2px solid Highlight;outline-offset:-2px}' +
+    // The same mode replaces every fill with the page's colour, and GymGO shows state with fills: a switch's
+    // track and knob vanished altogether, and a selected segment, tab, chip or choice looked like the rest.
+    // Drawn here from what each says it is (its ARIA state), in the system's colours; outlines take no room.
+    '[role=switch]>div{forced-color-adjust:none;background-color:Canvas!important;outline:2px solid CanvasText;outline-offset:-2px}' +
+    '[role=switch]>div>div{forced-color-adjust:none;background-color:CanvasText!important}' +
+    '[role=switch][aria-checked=true]>div{background-color:Highlight!important;outline-color:Highlight}' +
+    '[role=switch][aria-checked=true]>div>div{background-color:HighlightText!important}' +
+    '[role=tab],[role=checkbox],[role=radio]{outline:1px solid CanvasText;outline-offset:-1px}' +
+    '[role=tab][aria-selected=true],[role=checkbox][aria-checked=true],[role=radio][aria-checked=true]{forced-color-adjust:none;background-color:Highlight!important;color:HighlightText!important}' +
+    '[role=tab][aria-selected=true] *,[role=checkbox][aria-checked=true] *,[role=radio][aria-checked=true] *{color:HighlightText!important}}';
   document.head.appendChild(css);
 }
 

@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 227 · Checked: a quiet console, forms that fill themselves
+
+*20 Nov 2026 · the commit "Docs: the console, autofill and High Contrast checks of Update 227"*
+
+Three checks that found nothing to change, written down so they needn't be repeated:
+
+- **The browser's console** was read on every page and on what opens over a page. Signed in (the dev account), signed out and as a free account, React reports nothing in the development build: no list without keys, no state set while another part draws, no failed request. What's left is expected. There's Reanimated's note that reduced motion is on (the check turns it on), WebGL's notes from drawing the map without a graphics card, and one map warning on Explore ("Expected value to be of type number, but found null"). That warning comes from the map style GymGO borrows from OpenFreeMap (a rule of theirs meeting a map feature without that value), not from GymGO's code.
+- **Forms fill themselves.** Creating an account asks the browser for your name, email and a new password (`autocomplete` name, email, new-password); signing in for the email and saved password (current-password). The month and year you were born is left out of autofill on purpose; there's no single autofill value for month and year anyway. WCAG 1.3.5 asks for this, and it was already right.
+- **The white box behind "Good morning" in High Contrast** (Update 225's pictures) isn't GymGO's. In forced colours Chromium draws a plain backplate behind text over a background picture, here Home's soft wash, so the text stays readable. That's as it should be.
+
 ## Update 226 · High Contrast mode: buttons look like buttons
 
-*20 Nov 2026 · the commit "Forced colours: buttons and cards are outlined, so they look pressable"*
+*20 Nov 2026 · `83b71c2`*
 
 Looking at whole pages with forced colours on, after Update 225, one more thing was lost with the fills: the edge of a button. "Do it again" on Workout, "Start" on Home's Up next card and "Change" on Plates were words on the page, like any other text, with nothing to say they could be pressed. So were the cards and rows that open something.
 

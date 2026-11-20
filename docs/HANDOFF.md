@@ -135,7 +135,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
   active)` block in app/_layout.tsx, keyed on ARIA state. A new control
   that shows state only by a fill needs its role and aria-checked or
   aria-selected for it to show there. Test with Playwright's
-  `forcedColors: 'active'`.
+  `forcedColors: 'active'`. Every `[role=button]` is outlined there
+  too (Update 226), so a button whose only edge is a fill still looks
+  pressable. Console check: only Reanimated's reduced-motion note,
+  WebGL notes and an OpenFreeMap style warning ("Expected value to be
+  of type number") are expected; anything else is new.
 
 - **Headings** (20 Nov). A pushed page's level-1 heading is the
   navigation bar's title, so a large title inside the page is

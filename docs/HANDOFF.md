@@ -118,6 +118,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Target size** (20 Nov). axe's default run leaves out `target-size`
+  (WCAG 2.2, 24×24 px): run it with `runOnly: { type: 'rule', values:
+  ['target-size'] }`. React Native Web ignores `hitSlop`, so a small
+  Pressable is a small target on the website: draw the small thing
+  inside a target of 24 or more instead (Welcome's dots).
+
 - **Headings** (20 Nov). A pushed page's level-1 heading is the
   navigation bar's title, so a large title inside the page is
   `level={2}` (Challenges, Programme). A page without that bar needs its

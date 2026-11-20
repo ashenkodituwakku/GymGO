@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 221 · Every control is big enough to press: the tour's dots were 8 pixels
+
+*20 Nov 2026 · the commit "Welcome: the tour's dots are 24-pixel targets"*
+
+WCAG 2.2 asks for controls of at least 24 by 24 pixels, or enough room around a smaller one. axe has a rule for it (`target-size`), but it isn't in axe's default run, so none of the axe checks so far had tested this. It was run on its own over every page, and on what opens over a page.
+
+- **Found: the tour's page dots on Welcome.** They were 8 by 8 pixels (the current one 22 by 8), close together. On a phone each had a larger touch area (`hitSlop`), but a browser has no such thing, so on the website the target was the dot itself.
+- **Fixed:** each dot is now drawn inside a 24-pixel-tall target, as wide as its dot plus 16. The targets' centres are 24 and 31 pixels apart, and the row is as tall as before, so Next hasn't moved. The one visible change is the dots spreading from 8 to 16 pixels apart. Pressing one still turns to its page.
+- **Everything else passes**, at phone width on every page (with and without an id in the path, and Sign in signed out), and at desktop width on the main pages: Filters, the sort and time choices, a gym's sheet, a gym's page, GymPal, customising Home and a workout in progress. axe was unsure about only two kinds of target. One is map markers partly under an open sheet (covered, so not meant to be pressed there). The other is the map's credit links (OpenFreeMap, OpenMapTiles, OpenStreetMap), which are text links in a line of credits; the rule exempts targets in a line of text.
+- Checked in the browser: the dots' sizes and spacing, pressing the third, and the picture of the row. axe on Welcome in all three looks, light and dark, phone and desktop: 12 checks, all clean. Hooks rules clean. App tests 617.
+
 ## Update 220 · "GymGO Pro" is read as a name, not spelt out
 
-*20 Nov 2026 · the commit "Labels in capitals are written as words; Build a workout is a heading"*
+*20 Nov 2026 · `c24b877`*
 
 Grouped lists already write their labels as words and let the style draw the capitals, because VoiceOver spelt out "GYMGO" typed in capitals (`components/ios.tsx`). Four labels still had a name typed in capitals, and the browser passed them on that way too: the accessibility tree said "GYMGO’S TEMPLATES".
 

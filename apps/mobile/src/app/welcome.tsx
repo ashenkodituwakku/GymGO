@@ -161,9 +161,12 @@ export default function WelcomeScreen() {
             // A browser reads only the aria form.
             aria-selected={index === page}
             accessibilityLabel={`Page ${index + 1} of ${PAGES.length}`}
-            hitSlop={8}
-            style={[styles.dot, index === page && styles.dotOn]}
-          />
+            // The target is the box, the dot is drawn in it: a browser has no hitSlop, so an 8-point dot
+            // was an 8-pixel target there (WCAG 2.2 asks for 24).
+            style={styles.dotTarget}
+          >
+            <View style={[styles.dot, index === page && styles.dotOn]} />
+          </Pressable>
         ))}
       </View>
 
@@ -211,7 +214,9 @@ const styles = themed(() =>
     drift: { alignItems: 'center', alignSelf: 'stretch' },
     title: { textAlign: 'center', maxWidth: 440 },
     line: { textAlign: 'center', maxWidth: 440 },
-    dots: { flexDirection: 'row', justifyContent: 'center', gap: space[2], paddingVertical: space[4] },
+    // Each dot's target is 24 high and its dot's width plus 16: centres 24 apart, the row as tall as before.
+    dots: { flexDirection: 'row', justifyContent: 'center', paddingVertical: space[2] },
+    dotTarget: { height: 24, paddingHorizontal: space[2], alignItems: 'center', justifyContent: 'center' },
     dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: color.fill },
     dotOn: { width: 22, backgroundColor: color.brand },
     actions: { paddingHorizontal: space[4], width: '100%', maxWidth: 480, alignSelf: 'center' },

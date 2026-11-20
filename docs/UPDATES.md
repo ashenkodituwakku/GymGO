@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 213 · Writing a review by keyboard keeps your place
+
+*20 Nov 2026 · the commit "Reviews: the form takes focus as it opens, the waiting card as it's sent"*
+
+A review was written with only the keyboard, on demo gyms, as a free account.
+
+- **What worked:** Space picks a star (Update 197), and the form sends.
+- **Fixed: opening the form lost focus.** Write a review gives way to the form, and focus went with the button to the page itself. The form's "Your review" heading now takes focus, and the next Tab is the first star.
+- **Fixed: sending lost focus.** The form gives way to "Your review is waiting for a moderator" once the reviews are read again. That card now takes focus then, only after you've sent: opening a gym's page that already has your waiting review leaves focus where you put it.
+- Checked in the browser: open, Tab, stars by Space, send; the page with a waiting review; axe clean with the form open. App tests 617.
+
 ## Update 212 · Sending a bug report says so
 
-*20 Nov 2026 · the commit "Report a bug: Thanks takes focus as it replaces the form; one shared helper with Workout done"*
+*20 Nov 2026 · `1d1f213`*
 
 Report a bug was tried by keyboard on the local server (where no email can go out: no mail account is set).
 

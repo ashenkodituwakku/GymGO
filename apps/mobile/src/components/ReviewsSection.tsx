@@ -12,12 +12,13 @@
  * GymGO's own reviews are never averaged with them.
  */
 
-import { useCallback, useEffect, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Linking, Platform, StyleSheet, View, type ViewInstance } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Pressable } from './motion';
 import { starCounts, summariseAspects, summariseRatings, type GymRecord, type Review } from '@gymgo/domain';
 import { api, ApiError, OfflineError } from '@/lib/api';
+import { FOCUS_FROM_CODE, useFocusOnArrival } from '@/lib/focusNext';
 import { haptic } from '@/lib/haptics';
 import { appleMapsSearchUrl, googleMapsSearchUrl } from '@/lib/present';
 import type { AccountApi } from '@/lib/useAccount';
@@ -64,6 +65,16 @@ export function ReviewsSection({
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [writing, setWriting] = useState(false);
   const [all, setAll] = useState(false);
+  // Sent: the waiting card takes the form's place once the reviews are read again, and focus with it
+  // (only then, not each time a page with a waiting review opens).
+  const [justSent, setJustSent] = useState(false);
+  const waitingCard = useRef<ViewInstance>(null);
+  const waiting = load.state === 'ready' ? load.mine.some((review) => review.status === 'pending') : false;
+  useEffect(() => {
+    if (!justSent || !waiting) return;
+    setJustSent(false);
+    if (Platform.OS === 'web') (waitingCard.current as unknown as { focus?: (options?: { preventScroll?: boolean }) => void } | null)?.focus?.({ preventScroll: true });
+  }, [justSent, waiting]);
   const token = account.state === 'signed_in' ? account.token : null;
 
   const refresh = useCallback(() => {
@@ -108,6 +119,7 @@ export function ReviewsSection({
         inSheet={inSheet}
         onDone={() => {
           setWriting(false);
+          setJustSent(true);
           refresh();
         }}
         onCancel={() => setWriting(false)}
@@ -120,8 +132,8 @@ export function ReviewsSection({
     <View style={styles.wrap}>
       {load.reviews.length > 0 ? <Summary reviews={load.reviews} /> : <NoneYet />}
 
-      {pending.map((review) => (
-        <View key={review.id} style={styles.pending}>
+      {pending.map((review, index) => (
+        <View key={review.id} ref={index === 0 ? waitingCard : undefined} {...FOCUS_FROM_CODE} style={styles.pending}>
           <View style={styles.pendingHead}>
             <Icon name="clock" size={14} color={color.maybeInk} />
             <Txt variant="footnote" color={color.maybeInk} style={face('semibold')}>
@@ -349,6 +361,7 @@ function StarPicker({
 }
 
 function ReviewForm({ gymId, token, inSheet, onDone, onCancel }: { gymId: string; token: string; inSheet: boolean; onDone: () => void; onCancel: () => void }) {
+  const arrived = useFocusOnArrival<ViewInstance>();
   const [stars, setStars] = useState(0);
   const [aspects, setAspects] = useState<Record<Aspect, number>>({ equipment: 0, cleanliness: 0, atmosphere: 0, value: 0 });
   const [body, setBody] = useState('');
@@ -388,7 +401,10 @@ function ReviewForm({ gymId, token, inSheet, onDone, onCancel }: { gymId: string
 
   return (
     <View style={[styles.card, styles.form]}>
-      <Txt variant="headline">Your review</Txt>
+      {/* It replaces Write a review, and focus went with that button: here instead (lib/focusNext.ts). */}
+      <View ref={arrived} {...FOCUS_FROM_CODE}>
+        <Txt variant="headline">Your review</Txt>
+      </View>
       <View style={styles.overall}>
         <StarPicker label="Rating" value={stars} onChange={setStars} size={32} clearable={false} />
         <Txt variant="subhead" color={stars ? color.label : color.labelSecondary} style={face('semibold')}>

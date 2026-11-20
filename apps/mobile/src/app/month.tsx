@@ -177,7 +177,8 @@ export default function MonthScreen() {
             <Txt variant="caption" color={color.labelSecondary}>
               {tile.label}
             </Txt>
-            <Txt variant="headline" numberOfLines={1}>
+            {/* Two lines, not cut short: with wider text (a reader's own spacing, WCAG 1.4.12) "6 h 15 min" lost its end. */}
+            <Txt variant="headline" numberOfLines={2}>
               {tile.value}
             </Txt>
             {compared && (

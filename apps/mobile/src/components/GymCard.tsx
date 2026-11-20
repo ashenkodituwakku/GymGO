@@ -65,8 +65,8 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
         >
           {/* Sized here, not on the Pressable: on the web the link wrapper
               replaces the Pressable's style. */}
-          <View>
-            <Animated.View style={[styles.card, { width }, press.style]}>
+          <View style={styles.fill}>
+            <Animated.View style={[styles.card, styles.fill, { width }, press.style]}>
               {cover ? (
                 <Image source={{ uri: cover }} style={styles.image} resizeMode="cover" />
               ) : illustration ? (
@@ -79,7 +79,8 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
                 <NoPhoto name={location.name} style={styles.image} />
               )}
               <View style={styles.body}>
-                <Txt variant="headline" numberOfLines={1}>
+                {/* Two lines: a long name ("Waterloo Aquatic & Fitness Centre") was cut short on one. */}
+                <Txt variant="headline" numberOfLines={2}>
                   {location.name}
                 </Txt>
                 <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
@@ -140,8 +141,10 @@ const styles = themed(() => StyleSheet.create({
   },
   image: { width: '100%', height: 118, backgroundColor: color.fill },
   tile: { alignItems: 'center', justifyContent: 'center' },
-  body: { padding: space[3], gap: 2 },
-  foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], marginTop: space[2] },
+  // In a row of cards each is as tall as the tallest (a name on two lines), its price and chip along the bottom.
+  fill: { flexGrow: 1 },
+  body: { padding: space[3], gap: 2, flexGrow: 1 },
+  foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], marginTop: 'auto', paddingTop: space[2] },
   chipRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   chip: { paddingHorizontal: space[2], paddingVertical: 3, borderRadius: radius.pill, flexShrink: 1 },
 }));

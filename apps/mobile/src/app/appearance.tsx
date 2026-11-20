@@ -413,7 +413,7 @@ export default function AppearanceScreen() {
                       Aa
                     </Txt>
                   </View>
-                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={2}>
                     {size.label}
                   </Txt>
                 </Pressable>
@@ -500,7 +500,7 @@ export default function AppearanceScreen() {
                 <LookPreview look={id} accent={accentInUse} dark={choice.dark} on={on} />
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
-                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={2}>
                     {LOOKS[id].name}
                   </Txt>
                 </View>
@@ -643,7 +643,7 @@ export default function AppearanceScreen() {
                     ) : null}
                   </View>
                 </View>
-                <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={2}>
                   {accent.name}
                 </Txt>
               </Pressable>
@@ -717,7 +717,7 @@ export default function AppearanceScreen() {
                 </View>
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
-                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={2}>
                     {item.name}
                   </Txt>
                 </View>
@@ -760,7 +760,7 @@ export default function AppearanceScreen() {
                 </View>
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
-                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={2}>
                     {item.name}
                   </Txt>
                 </View>
@@ -806,7 +806,7 @@ export default function AppearanceScreen() {
                 </View>
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
-                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={2}>
                     {item.name}
                   </Txt>
                 </View>
@@ -1062,7 +1062,7 @@ function CustomTile({ hue, on, locked, onPress }: { hue: number; on: boolean; lo
           {on ? <Icon name="check" size={18} color={color.onBrand} /> : locked ? <Icon name="crown" size={14} color={color.onBrandSoft} /> : <Icon name="plus" size={16} color={color.onBrand} />}
         </View>
       </View>
-      <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={1}>
+      <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={2}>
         Your own
       </Txt>
     </Pressable>

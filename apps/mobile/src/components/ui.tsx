@@ -375,7 +375,7 @@ export function Segmented<T extends string | number>({
               aria-selected={on}
               style={[styles.segment, styles.segmentWrapped, { flexBasis: needed }, on && styles.segmentOn]}
             >
-              <Txt variant="footnote" color={color.label} style={on ? face('semibold') : face('medium')} numberOfLines={1}>
+              <Txt variant="footnote" color={color.label} style={[on ? face('semibold') : face('medium'), styles.segmentText]} numberOfLines={2}>
                 {option.label}
               </Txt>
             </Pressable>
@@ -401,7 +401,7 @@ export function Segmented<T extends string | number>({
             aria-selected={on}
             style={[styles.segment, on && width === 0 && styles.segmentOn]}
           >
-            <Txt variant="footnote" color={color.label} style={on ? face('semibold') : face('medium')} numberOfLines={1}>
+            <Txt variant="footnote" color={color.label} style={[on ? face('semibold') : face('medium'), styles.segmentText]} numberOfLines={2}>
               {option.label}
             </Txt>
           </Pressable>
@@ -829,6 +829,8 @@ const styles = themed(() => StyleSheet.create({
 
   segmented: { flexDirection: 'row', padding: 2, borderRadius: 9, backgroundColor: color.fill, ...shadow.rim },
   segment: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 7, paddingHorizontal: SEGMENT_PADDING, borderRadius: 7 },
+  // A label that wraps (wider text: a reader's own spacing) stays centred in its segment.
+  segmentText: { textAlign: 'center' },
   // Two rows when a label won't fit in an equal share (Segmented).
   segmentedWrap: { flexWrap: 'wrap', gap: 2 },
   segmentWrapped: { flexGrow: 1, flexShrink: 0 },

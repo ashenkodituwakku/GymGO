@@ -380,7 +380,7 @@ export function Row({
         ) : null}
       </View>
       {value ? (
-        <Txt variant="body" color={color.labelSecondary} numberOfLines={1} style={styles.value}>
+        <Txt variant="body" color={color.labelSecondary} numberOfLines={2} style={styles.value}>
           {value}
         </Txt>
       ) : null}

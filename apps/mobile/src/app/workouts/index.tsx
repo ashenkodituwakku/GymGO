@@ -132,10 +132,11 @@ export default function MyWorkouts() {
                   >
                     <ExerciseTile exerciseId={leadExercise(workout.plan.items.map((item) => item.exerciseId))} size={46} />
                     <View style={styles.flex}>
-                      <Txt variant="headline" numberOfLines={2}>
+                      {/* Up to three lines: beside the Start button, wider text (WCAG 1.4.12) needed more than two. */}
+                      <Txt variant="headline" numberOfLines={3}>
                         {title}
                       </Txt>
-                      <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
+                      <Txt variant="footnote" color={color.labelSecondary} numberOfLines={3}>
                         {details.get(workout.id)}
                       </Txt>
                     </View>

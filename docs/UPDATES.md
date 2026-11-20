@@ -9,9 +9,24 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 224 · Wider text isn't cut off; reduced motion holds
+
+*20 Nov 2026 · the commit "Text spacing: figures, gym names, values and labels wrap instead of being cut off"*
+
+Some people read with their own text settings: more space between lines, letters and words. WCAG 1.4.12 says nothing may be cut off when they do (line height 1.5, letter spacing 0.12em, word spacing 0.16em, paragraphs 2em apart). Every page was opened twice, once plainly and once with that spacing in place from the start, and the text cut off only the second time was listed.
+
+- **Fixed, wrapping instead of being cut short:** the monthly report's figures ("6 h 15 min" lost its end), gym names on Home's cards, a row's value on the right (Profile's "None picked"), Appearance's swatch names ("Your own"), My workouts' rows (beside the Start button they now take up to three lines) and the choices in a segmented control ("Standard · 6" in the workout builder).
+- **Home's gym cards stay even.** A two-line name ("Waterloo Aquatic & Fitness Centre", already cut short at ordinary spacing) made that one card taller than the rest. Each card in a row now grows to the tallest, with its chip and price along the bottom: all 238 pixels high, the bottom row 12 pixels from the edge. A segmented choice that wraps stays centred.
+- At ordinary spacing nothing else changes: these only take another line when the words need it. The builder's segmented control is still 36 pixels high.
+- Left as they are: the preview of Up next's exercises (the full list is on the workout) and the words inside Appearance's small theme previews.
+- **Checked, nothing to change:**
+  - **Reduced motion.** With it on, none of the 13 pages and opened states tried (the main pages, Welcome, the timer, a gym's page and sheet, Customise Home, a workout in progress) has anything running: no animations, and nothing on screen whose position or fade changes over half a second. With motion allowed, the same check does see the jiggle in Customise Home (11 endless animations), so it isn't blind.
+  - **The two Tab stops in the sort and time sheets with no role** are React Native Web's own: zero-size stops before and after the dialog that send focus back inside. That's the dialog's focus trap working as meant.
+- Checked in the browser: the spacing check over every page and the opened sheets, the cards' heights and bottom rows, and the segmented control both ways. axe on Home, the monthly report, Profile, Appearance, My workouts, the builder and Collection in the standard look, light and dark, phone and desktop: 28 checks, all clean. Hooks rules clean. App tests 617.
+
 ## Update 223 · One Tab per switch, and no repeated ids
 
-*20 Nov 2026 · the commit "Switch rows aren't Tab stops of their own; GymPal's art has its own ids; Badges is a region"*
+*20 Nov 2026 · `3ecaa6c`*
 
 The rest of the rules axe leaves out of its default run were tried over the pages: headings made of bold lines, controls without a role in the Tab order, repeated ids, a page locked to one orientation, and made-up role names. Three things came up:
 

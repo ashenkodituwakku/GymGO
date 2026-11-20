@@ -127,7 +127,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
   ("Add set: Bench press"), so voice control can press it by them.
   A Pressable that isn't a control needs `tabIndex: -1` on the web:
   React Native Web ignores `focusable` (components/ios.tsx Row). An SVG
-  drawn more than once takes its ids from `useId` (GymPalMark).
+  drawn more than once takes its ids from `useId` (GymPalMark). Text
+  that can grow (a reader's own spacing) needs room for another line:
+  prefer `numberOfLines={2}` to 1 for names, figures and values.
 
 - **Headings** (20 Nov). A pushed page's level-1 heading is the
   navigation bar's title, so a large title inside the page is

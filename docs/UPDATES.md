@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 226 · High Contrast mode: buttons look like buttons
+
+*20 Nov 2026 · the commit "Forced colours: buttons and cards are outlined, so they look pressable"*
+
+Looking at whole pages with forced colours on, after Update 225, one more thing was lost with the fills: the edge of a button. "Do it again" on Workout, "Start" on Home's Up next card and "Change" on Plates were words on the page, like any other text, with nothing to say they could be pressed. So were the cards and rows that open something.
+
+- **Now every button is outlined in forced colours**, as Windows draws its own buttons in High Contrast. That's the same one-pixel outline in the text colour that Update 225 gave tabs, chips and choices. It takes no room, and nothing changes without forced colours.
+- On Home the quick searches, Build a workout, the tool tiles and the stat cards now have edges. On Workout "Do it again" is a button again, and on Plates so is "Change". On Profile each row has its own box: plainer than the normal look, but it says where each one is.
+- Checked in the browser with forced colours on: Home, Workout, Plates and Profile. Last round's ring, switch, kg/lb and chips still show as they did, and without forced colours they look as before. App tests 617.
+
 ## Update 225 · High Contrast mode: focus, switches and choices can be seen
 
-*20 Nov 2026 · the commit "Forced colours: a focus ring, switches and selected choices that show in High Contrast"*
+*20 Nov 2026 · `963f811`*
 
 Windows' High Contrast themes (forced colours) make the browser redraw a page in a few system colours. It drops every shadow and replaces every fill with the page's own colour. GymGO draws its focus ring with a shadow and shows state with fills, so with forced colours on (emulated in the browser):
 

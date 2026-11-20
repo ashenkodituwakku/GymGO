@@ -79,7 +79,7 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
     '[role=switch]>div>div{forced-color-adjust:none;background-color:CanvasText!important}' +
     '[role=switch][aria-checked=true]>div{background-color:Highlight!important;outline-color:Highlight}' +
     '[role=switch][aria-checked=true]>div>div{background-color:HighlightText!important}' +
-    '[role=tab],[role=checkbox],[role=radio]{outline:1px solid CanvasText;outline-offset:-1px}' +
+    '[role=tab],[role=checkbox],[role=radio],[role=button]{outline:1px solid CanvasText;outline-offset:-1px}' +
     '[role=tab][aria-selected=true],[role=checkbox][aria-checked=true],[role=radio][aria-checked=true]{forced-color-adjust:none;background-color:Highlight!important;color:HighlightText!important}' +
     '[role=tab][aria-selected=true] *,[role=checkbox][aria-checked=true] *,[role=radio][aria-checked=true] *{color:HighlightText!important}}';
   document.head.appendChild(css);

@@ -233,7 +233,7 @@ function NoWorkout({ token }: { token: string | null }) {
       )}
       {recent.length > 0 && (
         <View style={styles.savedList}>
-          <Txt variant="footnote" color={color.labelSecondary} style={styles.savedHeader}>
+          <Txt accessibilityRole="header" level={2} variant="footnote" color={color.labelSecondary} style={styles.savedHeader}>
             YOUR WORKOUTS
           </Txt>
           <View style={styles.savedCard}>
@@ -280,7 +280,14 @@ function NoWorkout({ token }: { token: string | null }) {
         <PrimaryButton label="Build a workout" icon="body" onPress={() => router.replace({ pathname: '/workout/[id]', params: { id: 'any' } })} />
       )}
       <View style={styles.savedList}>
-        <Txt variant="footnote" color={color.labelSecondary} style={styles.savedHeader}>
+        {/* A section's heading when it names one; "OR" between two choices isn't. */}
+        <Txt
+          variant="footnote"
+          color={color.labelSecondary}
+          style={styles.savedHeader}
+          accessibilityRole={last || recent.length > 0 ? 'header' : undefined}
+          level={2}
+        >
           {last || recent.length > 0 ? 'START ANOTHER WAY' : 'OR'}
         </Txt>
         <View style={styles.savedCard}>

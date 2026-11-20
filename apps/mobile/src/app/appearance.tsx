@@ -247,8 +247,8 @@ export default function AppearanceScreen() {
       <PageScroll style={styles.page} contentContainerStyle={styles.content}>
         <ScreenOptions options={{ title: 'Appearance' }} />
 
-        <Txt variant="footnote" color={color.labelSecondary} style={styles.section}>
-          MODE
+        <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={[styles.section, styles.headCaps]}>
+          Mode
         </Txt>
         <View style={styles.modes}>
           {MODES.map((mode) => {
@@ -284,8 +284,8 @@ export default function AppearanceScreen() {
           Automatic follows your phone, so GymGO goes dark when your phone does.
         </Txt>
 
-        <Txt variant="footnote" color={color.labelSecondary} style={[styles.section, styles.sectionGap]}>
-          DARK MODE
+        <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={[styles.section, styles.sectionGap, styles.headCaps]}>
+          Dark mode
         </Txt>
         <View style={styles.modes} accessibilityRole="radiogroup">
           {DARK_STYLES.map((style) => {
@@ -321,8 +321,8 @@ export default function AppearanceScreen() {
 
         {/* How you get around: the floating tab bar (the default) or a sidebar menu (lib/navLayout.ts). */}
         <View style={styles.accentHead}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            LAYOUT
+          <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
+            Layout
           </Txt>
         </View>
         <View style={styles.modes} accessibilityRole="radiogroup">
@@ -380,8 +380,8 @@ export default function AppearanceScreen() {
         </Txt>
 
         <View style={styles.accentHead}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            TEXT
+          <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
+            Text
           </Txt>
         </View>
         <View style={styles.glassCard}>
@@ -442,8 +442,8 @@ export default function AppearanceScreen() {
         </Txt>
 
         <View style={styles.accentHead}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            MOTION
+          <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
+            Motion
           </Txt>
         </View>
         <View style={styles.glassCard}>
@@ -472,8 +472,8 @@ export default function AppearanceScreen() {
         </Txt>
 
         <View style={styles.accentHead}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            LOOK
+          <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
+            Look
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
@@ -513,8 +513,8 @@ export default function AppearanceScreen() {
         </Txt>
 
         <View style={styles.accentHead}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            CORNERS
+          <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
+            Corners
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
@@ -560,8 +560,8 @@ export default function AppearanceScreen() {
         </Txt>
 
         <View style={styles.accentHead}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            LIQUID GLASS
+          <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
+            Liquid Glass
           </Txt>
         </View>
         <View style={styles.glassCard}>
@@ -602,8 +602,8 @@ export default function AppearanceScreen() {
         </Txt>
 
         <View style={styles.accentHead}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            ACCENT
+          <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
+            Accent
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
@@ -687,8 +687,8 @@ export default function AppearanceScreen() {
         </Txt>
 
         <View style={styles.accentHead}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            MAP
+          <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
+            Map
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
@@ -730,8 +730,8 @@ export default function AppearanceScreen() {
         </Txt>
 
         <View style={styles.accentHead}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            CELEBRATIONS
+          <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
+            Celebrations
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
@@ -776,8 +776,8 @@ export default function AppearanceScreen() {
         </Txt>
 
         <View style={styles.accentHead}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            SOUNDS
+          <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
+            Sounds
           </Txt>
           {!billing.isPro && (
             <View style={styles.proTag}>
@@ -824,8 +824,8 @@ export default function AppearanceScreen() {
         </Txt>
 
         <View style={styles.accentHead}>
-          <Txt variant="footnote" color={color.labelSecondary}>
-            CLOCK
+          <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
+            Clock
           </Txt>
         </View>
         <View style={styles.modes} accessibilityRole="radiogroup">
@@ -866,8 +866,8 @@ export default function AppearanceScreen() {
         {prefs.gymPal && (
           <>
             <View style={styles.accentHead}>
-              <Txt variant="footnote" color={color.labelSecondary}>
-                GYMPAL’S BUTTON
+              <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
+                GymPal’s button
               </Txt>
             </View>
             {/* How he waits: each drawn on the side you've chosen. */}
@@ -1250,6 +1250,8 @@ const styles = themed(() =>
     miniMinor: { position: 'absolute', left: '64%', top: '-20%', width: 3, height: '140%', transform: [{ rotate: '20deg' }] },
     miniMajor: { position: 'absolute', left: '-20%', right: '-20%', top: '50%', height: 5, borderRadius: 2, transform: [{ rotate: '-12deg' }] },
     accentHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginLeft: space[4], marginTop: space[6], marginBottom: space[2] },
+    // Each section's name: a heading to jump between, written as words and drawn in capitals (VoiceOver spelt out "GYMPAL").
+    headCaps: { textTransform: 'uppercase' },
     proTag: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 1, borderRadius: radius.pill, backgroundColor: color.brandTint },
     grid: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     tile: { width: '20%', minWidth: 64, alignItems: 'center', gap: space[1], paddingVertical: space[2] },

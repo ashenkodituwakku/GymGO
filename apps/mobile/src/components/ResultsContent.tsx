@@ -208,7 +208,7 @@ export function ResultsContent({
   const recent = showRecent && (
       <Animated.View entering={FADE_IN} exiting={FADE_OUT} style={styles.suggestions}>
         <View style={styles.recentHead}>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.flexOne}>
+          <Txt accessibilityRole="header" level={2} variant="eyebrow" color={color.labelSecondary} style={styles.flexOne}>
             RECENT
           </Txt>
           <Pressable

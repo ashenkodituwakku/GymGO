@@ -148,7 +148,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
   Modal doesn't mark its Escape as handled). Open question for the
   owner: a non-drag way for a pointer to move Home's widgets (WCAG
   2.5.7), e.g. up/down buttons while editing; not added because it
-  changes the iPhone-style editing they asked for.
+  changes the iPhone-style editing they asked for. Spelling: cspell
+  with en-GB over the app's text found nothing (install it outside the
+  repo; it only reads files inside its working folder).
 
 - **Headings** (20 Nov). A pushed page's level-1 heading is the
   navigation bar's title, so a large title inside the page is

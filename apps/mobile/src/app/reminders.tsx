@@ -133,7 +133,7 @@ export default function RemindersScreen() {
             </View>
           )}
 
-          <Txt variant="footnote" color={color.labelSecondary} style={styles.section}>
+          <Txt accessibilityRole="header" level={2} variant="footnote" color={color.labelSecondary} style={styles.section}>
             DAYS
           </Txt>
           <View style={styles.days}>
@@ -158,7 +158,7 @@ export default function RemindersScreen() {
             })}
           </View>
 
-          <Txt variant="footnote" color={color.labelSecondary} style={styles.section}>
+          <Txt accessibilityRole="header" level={2} variant="footnote" color={color.labelSecondary} style={styles.section}>
             TIME
           </Txt>
           <View style={styles.time}>

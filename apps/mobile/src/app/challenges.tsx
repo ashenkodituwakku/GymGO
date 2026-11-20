@@ -160,7 +160,7 @@ export default function ChallengesScreen() {
       )}
       {view && view.cards.filter((card) => card.month !== view.month || !mine?.finished).length > 0 && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary}>
+          <Txt accessibilityRole="header" level={2} variant="eyebrow" color={color.labelSecondary}>
             YOUR CARDS
           </Txt>
           {view.cards

@@ -200,7 +200,7 @@ export default function TimerScreen() {
         )}
       </View>
 
-      <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
+      <Txt accessibilityRole="header" level={2} variant="footnote" color={color.labelSecondary} style={styles.caps}>
         TIMERS
       </Txt>
       <View style={styles.card}>
@@ -215,7 +215,7 @@ export default function TimerScreen() {
         </Txt>
       </View>
 
-      <Txt variant="footnote" color={color.labelSecondary} style={styles.caps}>
+      <Txt accessibilityRole="header" level={2} variant="footnote" color={color.labelSecondary} style={styles.caps}>
         {pro ? 'SETTINGS' : 'SETTINGS · PRO'}
       </Txt>
       <View style={styles.card}>

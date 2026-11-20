@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 231 · Appearance and the rest: every section has a heading; a spelling check
+
+*20 Nov 2026 · the commit "Headings: Appearance's 14 section names and six more elsewhere; a spelling check of the app's words"*
+
+The app's own words (3,389 pieces of text: labels, buttons, messages, explanations) were run through a spelling checker in British English, the app's spelling. It found no misspellings. The words it didn't know were place names from the list of cities, gym terms (deadlift, glutes, EMOM, Pallof press, woodchop) and brand names. But it turned up one label typed in capitals, "GYMPAL’S BUTTON" on Appearance, and following that up showed Appearance's section names weren't headings at all.
+
+- **Appearance's 14 section names are now headings** (level 2): Mode, Dark mode, Layout, Text, Motion, Look, Corners, Liquid Glass, Accent, Map, Celebrations, Sounds, Clock and GymPal's button. Update 219 missed them, as they're written in a different text style from the other pages' section names. They're now written as words and drawn in capitals by the style, so "GymPal's button" is read as a name and not spelt out. On screen they look as before.
+- **Six more section names elsewhere are headings:** on Workout "YOUR WORKOUTS" and "START ANOTHER WAY" (not when it's just "OR" between two choices), on the interval timer "TIMERS" and "SETTINGS", and Explore's "RECENT" places when you open the search box. Also "LOOKED AT LATELY" on Saved, "YOUR CARDS" on the monthly challenge, and "DAYS" and "TIME" on Reminders; those only show once there's something in them.
+- Left as they are: the "PRO" marks beside choices, the SET, REPS and RPE column labels, and the words inside cards (a new record, a week's best card), which aren't sections of a page.
+- Checked in the browser: Appearance's outline (its title, then 14 sections), Workout's, the timer's and Explore's with the search open. Appearance's names are drawn in capitals and written as words, "GymPal's button" among them in the accessibility tree. axe on Appearance, Workout, the timer, Explore, Reminders and the monthly challenge in the standard look, light and dark, phone and desktop: 24 checks, all clean. Hooks rules clean. App tests 617.
+
 ## Update 230 · Checked: the other sheets hold focus; one question about moving widgets
 
-*20 Nov 2026 · the commit "Docs: dialogs, desktop focus and dragging checks of Update 230"*
+*20 Nov 2026 · `5a6c310`*
 
 Following Update 229, the other things that open over a page were tried by keyboard, along with the desktop layout:
 

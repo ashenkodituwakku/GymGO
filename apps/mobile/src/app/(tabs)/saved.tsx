@@ -93,7 +93,7 @@ export default function Saved() {
       ) : null}
       {prefsReady && account.state !== 'loading' && saved.length === 0 && gone.length === 0 && lately.length > 0 && (
         <>
-          <Txt variant="eyebrow" color={color.labelSecondary} style={styles.latelyHead}>
+          <Txt accessibilityRole="header" level={2} variant="eyebrow" color={color.labelSecondary} style={styles.latelyHead}>
             LOOKED AT LATELY
           </Txt>
           <View style={styles.list}>

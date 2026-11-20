@@ -481,6 +481,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Buttons that remove themselves (20 Nov): Not now on the Pro card and Remove on a gone gym move focus to the next control instead of losing it | ✅ | ✅ in the browser at 390 and 1280 (Not now); Remove by the same helper, not reproduced (needs a gym gone from the map); app 617 tests | n/a | n/a (phones move screen-reader focus themselves) | ⚠️ the website gets it with the next publish | n/a |
 | Customise Home by keyboard (20 Nov): the edit bar takes focus as a named toolbar, taking a widget off moves focus to the next, Done returns it to Customise Home | ✅ | ✅ in the browser at 390 and 1280, axe clean while editing; app 617 tests | n/a | n/a (phones move screen-reader focus themselves) | ⚠️ the website gets it with the next publish | n/a |
 | Moving between pages on the website (20 Nov): each new page's name said in a polite live line; going back (app or browser) returns focus to the control you left from | ✅ | ✅ in the browser at 390 and 1280: Profile→Progress→Back, Profile→Lifetime→browser back; axe clean; app 617 tests | n/a | n/a (phones' screen readers do it) | ⚠️ the website gets it with the next publish | n/a |
+| Regression sweep after Updates 202–211 (20 Nov): axe on 30 pages × light/dark × 390/1280 (120 loads) clean, no page errors; contrast measure on the changed pages in Standard and Liquid, every word over 4.5:1 | ✅ | ✅ in the browser | n/a | n/a | n/a | n/a |
 
 **What "tested locally" means for the phone app, exactly:**
 

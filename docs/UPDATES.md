@@ -11,7 +11,7 @@ next number here as part of the update itself.
 
 ## Update 211 · Moving between pages: the new page is said, and Back puts you where you were
 
-*20 Nov 2026 · the commit "Website: each new page's name is said, and going back puts focus where you left"*
+*20 Nov 2026 · `c1092b2`*
 
 Going from page to page was tried by keyboard on the website (Profile → Progress, back; Profile → Lifetime, the browser's back).
 
@@ -19,6 +19,7 @@ Going from page to page was tried by keyboard on the website (Profile → Progre
 - **Fixed: a screen reader wasn't told the page had changed.** In a one-page app the browser doesn't announce a new title. Each new page's name ("Progress", "Profile") is now said politely by a line nobody sees.
 - **Fixed: going back lost your place.** Focus fell to the page itself, and Tab started again from the top. Now the control you left a page from is remembered, and coming back puts focus on it: the Progress row after Back, the Lifetime row after the browser's back button. Moving between the tabs is unchanged (focus stays on the tab).
 - Checked in the browser at 390 and 1280 with the app's Back and the browser's; axe clean. Phones' screen readers do both themselves, so nothing changes there. App tests 617.
+- **And a sweep after Updates 202 to 211**, since they changed parts many screens share (the tap-to-close backdrop, the focus helpers, the page announcer): axe on 30 pages, light and dark, at 390 and 1280 (120 page loads), all clean with no page errors. The screen measure on Welcome, Train, Friends, Explore and Home, in Standard and Liquid, found every word over 4.5:1.
 
 ## Update 210 · Customising Home by keyboard keeps your place
 

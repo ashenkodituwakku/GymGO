@@ -118,6 +118,20 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **The website version, checked as it's built** (20 Nov). Run Metro
+  as gymgo.site builds it: `EXPO_PUBLIC_API_URL=none
+  EXPO_PUBLIC_LIMITED=on EXPO_PUBLIC_ACCOUNT=optional` (on another port
+  beside the full app's). Without `API_URL=none` it talks to the local
+  server, and a guest's requests get 401s the real site never makes.
+  Its gyms are all real, with real, long names: check text there, not
+  only with the demo gyms. A plan's name is never cut short (JoinGym's
+  price boxes have no line limit); a gym's name takes up to four lines
+  on a card (GymCard), three in a list (GymRow) and two in search
+  suggestions. A list in a line ends in words, not "…": see
+  `exercisePreview` in lib/workout.ts. In Playwright, `addInitScript`
+  runs in the page, where `process` doesn't exist: pass settings in as
+  its argument (reading `process.env` there throws and skips the rest).
+
 - **Target size** (20 Nov). axe's default run leaves out `target-size`
   (WCAG 2.2, 24×24 px): run it with `runOnly: { type: 'rule', values:
   ['target-size'] }`. React Native Web ignores `hitSlop`, so a small

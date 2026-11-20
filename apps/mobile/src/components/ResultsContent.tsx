@@ -237,10 +237,10 @@ export function ResultsContent({
               <Icon name="history" size={16} color={color.labelSecondary} />
             </View>
             <View style={styles.suggestionText}>
-              <Txt variant="body" numberOfLines={1}>
+              <Txt variant="body" numberOfLines={2}>
                 {place.placeName}
               </Txt>
-              <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+              <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
                 {countryName(place.countryCode)}
               </Txt>
             </View>
@@ -249,6 +249,7 @@ export function ResultsContent({
       </Animated.View>
     );
 
+  // Each line may take two: a real gym's name can run long ("Kensington Community Aquatic and Recreation Centre").
   const suggestionList = (suggestions.length > 0 || offerLookUp) && (
       <View style={styles.suggestions}>
         {suggestions.map((hit) => {
@@ -269,10 +270,10 @@ export function ResultsContent({
                 </View>
               )}
               <View style={styles.suggestionText}>
-                <Txt variant="body" numberOfLines={1}>
+                <Txt variant="body" numberOfLines={2}>
                   {row.title}
                 </Txt>
-                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
                   {row.detail}
                 </Txt>
               </View>
@@ -293,10 +294,10 @@ export function ResultsContent({
               <Icon name="search" size={16} color={color.labelSecondary} />
             </View>
             <View style={styles.suggestionText}>
-              <Txt variant="body" numberOfLines={1}>
+              <Txt variant="body" numberOfLines={2}>
                 {`Look up “${typed}”`}
               </Txt>
-              <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+              <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
                 {suggestions.length ? 'Not listed? Find it anywhere in the world' : 'Find it anywhere in the world'}
               </Txt>
             </View>

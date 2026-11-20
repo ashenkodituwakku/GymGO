@@ -95,10 +95,11 @@ export const GymRow = memo(function GymRow({ result, visitMinute, cover, memberT
       )}
 
       <View style={styles.middle}>
-        {/* A phone leaves this column narrow, so a long name takes a second
-            line rather than losing its end, and a long suburb gives way
-            before the distance does. */}
-        <Txt variant="headline" numberOfLines={2}>
+        {/* A phone leaves this column narrow, so a long name takes more lines
+            rather than losing its end (three, for a long one with text
+            spacing turned up), and a long suburb gives way before the
+            distance does. */}
+        <Txt variant="headline" numberOfLines={3}>
           {location.name}
         </Txt>
         <View style={styles.where}>

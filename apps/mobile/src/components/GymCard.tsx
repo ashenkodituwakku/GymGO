@@ -79,11 +79,13 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
                 <NoPhoto name={location.name} style={styles.image} />
               )}
               <View style={styles.body}>
-                {/* Two lines: a long name ("Waterloo Aquatic & Fitness Centre") was cut short on one. */}
-                <Txt variant="headline" numberOfLines={2}>
+                {/* Up to four lines: a real name as long as "Kensington Community Aquatic and Recreation
+                    Centre" takes four on the narrower card, and lost its end on two. The cards in a row
+                    stay one height, so only a row with a long name grows. */}
+                <Txt variant="headline" numberOfLines={4}>
                   {location.name}
                 </Txt>
-                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
                   {where}
                 </Txt>
                 <View style={styles.foot}>

@@ -9,9 +9,22 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 232 · The website version checked as it's built: long real names and plan names in full
+
+*20 Nov 2026 · the commit "Website version: long real gym names, plan names and workout lists shown in full; two labels match their words"*
+
+The checks so far had run on the full app with the invented demo gyms. This round ran them on the website version as gymgo.site builds it (the limited version, no account needed, no server), where every gym is a real one with its own, sometimes long, name. Headings, axe, target size, focus behind the bars, the console and keyboard order were all clean there. Real names and real plan names turned up text that lost its end:
+
+- **Fixed: a plan's name cut short on a gym's page.** On Prime Athletica in Fitzroy, the membership "Unlimited classes and gym" showed as "Unlimited classes and…" in its price box, at normal text size. A plan's name is part of what it costs, so plan names (and who a plan is for) now show in full, however many lines they take.
+- **Fixed: long gym names cut short.** "Kensington Community Aquatic and Recreation Centre" lost "Centre" on Home's gym cards and in the search suggestions. Card names now take up to four lines (the cards in a row stay one height), search suggestions two lines each, and a name in Explore's list three, so "North Melbourne Boxing and fitness centre" keeps its end when someone turns text spacing up. A card's suburb and distance take two lines for the same reason.
+- **Fixed: a workout's exercise list ended in "…".** Home's Up next card listed every exercise on one line, so a long day lost most of them. It now names as many as fit about two lines, then says how many more ("Leg press, Seated dumbbell shoulder press, Seated cable row and 2 more"), with no line limit, so it can grow with text spacing.
+- **Fixed: two labels that didn't match their words** (so voice control could miss them): Home's "Start from a template, or a programme planned over weeks" now has that as its name, and Appearance's "Left side" and "Right side" for GymPal are named "GymPal on the left side" and "… right side". Appearance's small look samples, which say "GymGO" and "Go", are hidden from screen readers, as the tile's own name says which look it is.
+- **Checked, nothing to change:** on the website version the console has nothing new, and no requests are made to a server. (With a server, the website's guests get a 401 for the account-only lists and the app falls back to the built-in gyms, as designed; and a gym's icon or photo that the server doesn't have answers 404, which is how the app knows there's none.) The server and shared packages' own words were also run through the British English spelling check: no misspellings (the odd ones are place names, brand names and the data's own spellings, left as the sources give them).
+- Checked in the browser: 20 real Melbourne gyms' pages, Home, Explore and Saved with no text cut short; text spacing on Home, Explore, Filters, a gym's page and the programme page with nothing lost; labels matching their words across 16 pages signed in, and the website version's pages; axe on 26 pages of the website version and 5 of the full app in the standard look, light and dark, phone and desktop, all clean. Hooks rules clean. App tests 619 (two new, for the exercise list).
+
 ## Update 231 · Appearance and the rest: every section has a heading; a spelling check
 
-*20 Nov 2026 · the commit "Headings: Appearance's 14 section names and six more elsewhere; a spelling check of the app's words"*
+*20 Nov 2026 · `cb1f0df`*
 
 The app's own words (3,389 pieces of text: labels, buttons, messages, explanations) were run through a spelling checker in British English, the app's spelling. It found no misspellings. The words it didn't know were place names from the list of cities, gym terms (deadlift, glutes, EMOM, Pallof press, woodchop) and brand names. But it turned up one label typed in capitals, "GYMPAL’S BUTTON" on Appearance, and following that up showed Appearance's section names weren't headings at all.
 

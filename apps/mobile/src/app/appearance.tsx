@@ -917,7 +917,7 @@ export default function AppearanceScreen() {
                     }}
                     accessibilityRole="radio"
                     aria-checked={on}
-                    accessibilityLabel={`GymPal on the ${item.id}`}
+                    accessibilityLabel={`GymPal on the ${item.id} side`}
                     style={styles.sideTile}
                   >
                     <View style={[styles.preview, styles.previewSide, on && styles.previewOn]}>
@@ -1156,8 +1156,9 @@ function LookPreview({ look, accent, dark, on }: { look: LookId; accent: AccentI
   const title = spec.fonts?.display ?? spec.fonts?.body?.bold;
   // A look with a page of its own (Frost) shows it, and its card as the glass over it.
   const backdrop = spec.backdrop?.(scheme, ACCENTS[accent][scheme].brand);
+  // A sample only: the tile's own name says which look this is.
   return (
-    <View style={[styles.lookFrame, on && { borderColor: color.brand }]}>
+    <View aria-hidden style={[styles.lookFrame, on && { borderColor: color.brand }]}>
       <View style={[styles.lookPage, { backgroundColor: palette.groupedBackground }, backdrop && backgroundImage(backdrop.image)]}>
         <View style={[styles.lookCard, { backgroundColor: backdrop ? palette.plate : palette.card, borderRadius: corner(spec.radius.lg) }, backdrop ? shadows?.plate : shadows?.card]}>
           <Txt variant="caption" color={palette.label} style={[{ fontSize: Math.round(11 * (spec.fonts?.displayScale ?? 1)), lineHeight: 14 }, title ? { fontFamily: title, fontWeight: 'normal' } : face('bold')]} numberOfLines={1}>

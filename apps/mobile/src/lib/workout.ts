@@ -166,6 +166,24 @@ export function exerciseName(id: string): string {
   return words ? words[0]!.toUpperCase() + words.slice(1) : 'This exercise';
 }
 
+/**
+ * A workout's exercises in a line or two: as many names as fit about two
+ * lines, then how many more, so the list ends in words rather than "…"
+ * (and needs no line limit, so it can grow when text spacing is turned up).
+ */
+export function exercisePreview(ids: string[], budget = 70): string {
+  const names = ids.map(exerciseName);
+  const shown: string[] = [];
+  let length = 0;
+  for (const name of names) {
+    if (shown.length && length + name.length > budget) break;
+    shown.push(name);
+    length += name.length + 2;
+  }
+  const more = names.length - shown.length;
+  return more ? `${shown.join(', ')} and ${more} more` : shown.join(', ');
+}
+
 export const EXERCISES: Exercise[] = [
   // Chest
   { id: 'bench-press', name: 'Barbell bench press', primary: ['chest'], secondary: ['triceps', 'deltoids'], needs: [['barbells', 'bench']], compound: true, cue: 'Shoulder blades pinned back, bar to mid-chest, feet planted.' },

@@ -51,7 +51,7 @@ import { PAGE_COLUMN, color, dropShadow, face, radius, shadow, shadowUnder, spac
 import { usePageTitle } from '@/lib/pageTitle';
 import { templateDayName, upNext } from '@/lib/templates';
 import { unitFor } from '@/lib/training';
-import { exerciseName } from '@/lib/workout';
+import { exercisePreview } from '@/lib/workout';
 import { LIMITED } from '@/lib/limited';
 import { edgeFade } from '@/components/edgeFade';
 
@@ -294,8 +294,8 @@ export default function Home() {
                       <Txt variant="headline" numberOfLines={1}>
                         {planDay.name}
                       </Txt>
-                      <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-                        {planDay.items.map((item) => exerciseName(item.exerciseId)).join(', ')}
+                      <Txt variant="footnote" color={color.labelSecondary}>
+                        {exercisePreview(planDay.items.map((item) => item.exerciseId))}
                       </Txt>
                     </View>
                     <View style={styles.startPill}>
@@ -309,7 +309,7 @@ export default function Home() {
                 <Pressable
                   onPress={() => router.push('/templates')}
                   accessibilityRole="link"
-                  accessibilityLabel={plan || onProgramme ? 'Templates and programmes' : 'Start from a template or a training programme'}
+                  accessibilityLabel={plan || onProgramme ? 'Templates and programmes' : 'Start from a template, or a programme planned over weeks'}
                   style={({ pressed }) => [styles.templatesRow, ((!!plan && planDay) || !!onProgramme) && styles.templatesUnder, pressed && { backgroundColor: color.fill }]}
                 >
                   <Icon name="list" size={15} color={color.brand} />
@@ -810,8 +810,8 @@ function ProgrammeUpNext({
           <Txt variant="headline" numberOfLines={1}>
             {day.name}
           </Txt>
-          <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
-            {items.map((item) => exerciseName(item.exerciseId)).join(', ')}
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {exercisePreview(items.map((item) => item.exerciseId))}
           </Txt>
         </View>
         <View style={styles.startPill}>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EQUIPMENT_TYPES } from '@gymgo/domain';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
-import { EXERCISES, generateWorkout, type Kit, knownKit, MUSCLES, TYPICAL_KIT, wayToDo, exerciseName, swapFor, swapInWorkout, doseFor } from './workout';
+import { EXERCISES, generateWorkout, type Kit, knownKit, MUSCLES, TYPICAL_KIT, wayToDo, exerciseName, exercisePreview, swapFor, swapInWorkout, doseFor } from './workout';
 
 describe('the exercise library', () => {
   it('only names equipment GymGO tracks, and every muscle can be trained with typical kit', () => {
@@ -117,5 +117,22 @@ describe('swapping one exercise', () => {
     expect(bodyWeightChest.length).toBeGreaterThan(0);
     const only = bodyWeightChest.map((exercise) => ({ exerciseId: exercise.id }));
     expect(swapFor(only, 0, [])).toBeNull();
+  });
+});
+
+describe('a workout in a line or two', () => {
+  it('names every exercise when they fit, and says how many more when they do not', () => {
+    expect(exercisePreview(['incline-bench'])).toBe(exerciseName('incline-bench'));
+    const ids = EXERCISES.slice(0, 9).map((exercise) => exercise.id);
+    const line = exercisePreview(ids);
+    const more = /and (\d+) more$/.exec(line);
+    expect(more).not.toBeNull();
+    const shown = line.replace(/ and \d+ more$/, '').split(', ');
+    expect(shown.length + Number(more![1])).toBe(9);
+    expect(shown).toEqual(ids.slice(0, shown.length).map(exerciseName));
+  });
+  it('always shows at least one name, however long', () => {
+    expect(exercisePreview(['incline-bench', 'incline-bench'], 1)).toBe(`${exerciseName('incline-bench')} and 1 more`);
+    expect(exercisePreview([])).toBe('');
   });
 });

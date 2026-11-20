@@ -111,14 +111,15 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
               {/* The name (and who it's for) at the top, the price at the foot: both line up along a row. */}
               <View style={styles.pillTop}>
                 {/* A tier called just "Membership" would only repeat the heading above it. */}
+                {/* In full, however many lines it takes: a plan's name is part of what it costs ("Unlimited classes and gym"). */}
                 {!/^\s*membership\s*$/i.test(offer.label) && (
-                  <Txt variant="caption" color={color.labelSecondaryOnTint} numberOfLines={2} style={styles.center}>
+                  <Txt variant="caption" color={color.labelSecondaryOnTint} style={styles.center}>
                     {offer.label}
                   </Txt>
                 )}
                 {/* Full ink and semibold: the orange read 4.0 to 1 on the accent's tint in light, and the words say it anyway. */}
                 {!!offer.eligibility.onlyFor && (
-                  <Txt variant="caption" color={color.label} numberOfLines={2} style={[styles.center, face('semibold')]}>
+                  <Txt variant="caption" color={color.label} style={[styles.center, face('semibold')]}>
                     {`${offer.eligibility.onlyFor} only`}
                   </Txt>
                 )}

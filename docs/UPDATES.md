@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 218 · Every page has one main heading
+
+*20 Nov 2026 · the commit "Headings: Explore and Welcome get a main heading; Challenges and Programme keep one"*
+
+A screen reader can jump from heading to heading, and its first stop is a page's main heading (level 1). Every page was opened to count them. Most have exactly one: the title in the bar at the top, or the page's own. Four didn't:
+
+- **Explore had no heading at all**, so the jump found nothing. A screen reader met the map's 15 markers and its credits before the search box, with no way past them. The results' "Near Surry Hills" is now the main heading, so one jump lands on the results. It looks the same as before (22 px bold, no margin).
+- **Welcome had none either.** Each page of the tour is read whole as one group, so its title can't be the heading. A heading nobody sees, "Welcome to GymGO", now comes first. It's in the same unseen 1×1 box as the line that says a page's name, and it paints nothing: the pixels there match with its text made transparent, light and dark.
+- **Monthly challenge and Training programme had two**: the bar's title and the page's own large title. The page's title, and the plan's card once a programme is running, are now level 2 under the bar's.
+- Checked in the browser at phone and desktop width: each of the four now has exactly one main heading. Every other page without an id in its path has one, and so do the ones with an id that were opened: a gym, a friend, the two legal pages and the workout builder. A trip, an exercise's progress and a saved workout weren't opened. The page under a pushed page (Home under Plates) is hidden from a screen reader as it should be (`display: none`, `aria-hidden`). Each page's title, which is said on arriving (Update 211), is its own: Sign in is "Create an account", and only Home is plain "GymGO". axe on the four pages, in all three looks, light and dark, phone and desktop: 48 checks, all clean. Hooks rules clean. App tests 617.
+
 ## Update 217 · What the calculators, measurements and offline screens tell you is said too
 
-*20 Nov 2026 · the commit "LiveLine: the calculators', measurements', invites' and offline messages are said"*
+*20 Nov 2026 · `d7649ee`*
 
 Updates 215 and 216 went by what a message is called. This round went by how it looks: every line that comes and goes in the colours of a problem, a warning or a success. Most of those are facts drawn with the page (a gym's prices, a chart's legend, a programme's week) and are right as they are. Nine answer something you did, and weren't said:
 

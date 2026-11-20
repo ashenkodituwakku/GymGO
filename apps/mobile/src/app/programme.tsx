@@ -91,7 +91,7 @@ function Chooser() {
   return (
     <>
       <View style={styles.intro}>
-        <Txt variant="largeTitle" accessibilityRole="header" level={1}>
+        <Txt variant="largeTitle" accessibilityRole="header" level={2}>
           Training programme
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
@@ -206,7 +206,7 @@ function Running({ programme }: { programme: Programme }) {
       <Card style={styles.card}>
         <View style={styles.head}>
           <View style={styles.flex}>
-            <Txt variant="title2" accessibilityRole="header" level={1}>
+            <Txt variant="title2" accessibilityRole="header" level={2}>
               {title}
             </Txt>
             <Txt variant="footnote" color={color.brand} style={face('semibold')}>

@@ -99,6 +99,11 @@ export default function WelcomeScreen() {
   return (
     <View style={[styles.page, { paddingTop: insets.top + space[2], paddingBottom: insets.bottom + space[4] }]}>
       <ScreenOptions options={{ headerShown: false }} />
+      {/* The page's heading for a screen reader, which moves by headings: each page of the tour is one
+          labelled group (said whole), so its title can't be the heading. Not drawn: the wordmark says it. */}
+      <Txt variant="body" accessibilityRole="header" level={1} style={styles.unseen}>
+        Welcome to GymGO
+      </Txt>
       <View style={styles.top}>
         <Wordmark height={22} />
         {!last && (
@@ -194,6 +199,8 @@ function Drift({ index, width, scrollX, depth, children }: { index: number; widt
 
 const styles = themed(() =>
   StyleSheet.create({
+    // Read by a screen reader, never seen: the usual visually-hidden box (as components/RouteFocus.tsx).
+    unseen: { position: 'absolute', width: 1, height: 1, overflow: 'hidden', pointerEvents: 'none' } as object,
     page: { flex: 1, backgroundColor: color.groupedBackground },
     top: { height: 44, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: space[4] },
     skip: { paddingHorizontal: space[2], paddingVertical: space[1], borderRadius: radius.pill },

@@ -352,7 +352,7 @@ export function ResultsContent({
     <>
       {/* Summary -------------------------------------------------------- */}
       <View style={styles.summary}>
-        <Txt variant="title2">
+        <Txt variant="title2" accessibilityRole="header" level={1}>
           {nearLabel(filters.placeName)}
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>

@@ -118,6 +118,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Headings** (20 Nov). A pushed page's level-1 heading is the
+  navigation bar's title, so a large title inside the page is
+  `level={2}` (Challenges, Programme). A page without that bar needs its
+  own `accessibilityRole="header" level={1}`: Explore's results summary,
+  and on Welcome an unseen one. `/gym/prime-athletica-fitzroy` is a
+  Melbourne gym: it shows "Gym not found" with demo gyms on (prefs
+  `demo: true`); use `ironbark-strength-surry-hills` there.
+
 - **LiveLine fadesOut** (20 Nov). A message whose view has
   `exiting={FADE_OUT}` goes in `<LiveLine fadesOut>`. On the web
   Reanimated appends the fading copy to the element's `offsetParent`,

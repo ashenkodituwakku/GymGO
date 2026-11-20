@@ -97,7 +97,7 @@ export default function ChallengesScreen() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: 'Monthly challenge' }} />
       <View style={styles.intro}>
-        <Txt variant="largeTitle" accessibilityRole="header" level={1}>
+        <Txt variant="largeTitle" accessibilityRole="header" level={2}>
           {view ? label : 'Monthly challenge'}
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>

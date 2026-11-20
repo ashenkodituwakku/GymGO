@@ -333,7 +333,7 @@ export default function SessionEditScreen() {
                 changeSets(exerciseAt, [...item.sets, { weight: previous?.weight ?? '', reps: previous?.reps ?? '', done: true }]);
               }}
               accessibilityRole="button"
-              accessibilityLabel={`Add a set of ${name}`}
+              accessibilityLabel={`Add set: ${name}`}
               style={({ pressed }) => [styles.textButton, styles.addSet, pressed && { opacity: 0.6 }]}
             >
               <Icon name="plus" size={13} color={color.brand} />

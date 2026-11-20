@@ -262,7 +262,7 @@ export default function ExerciseProgressScreen() {
           {/* What the chart follows: the estimated 1-rep max, the heaviest weight, the biggest set, the day's volume or reps. */}
           <View style={styles.metrics} role="radiogroup" accessibilityLabel="What the chart shows">
             {EXERCISE_METRICS.map((item) => (
-              <Chip key={item.id} label={item.label} selected={metric === item.id} accessibilityLabel={item.title} onPress={() => setPicked(item.id)} />
+              <Chip key={item.id} label={item.label} selected={metric === item.id} accessibilityLabel={item.title.toLowerCase().includes(item.label.toLowerCase()) ? item.title : `${item.label}: ${item.title}`} onPress={() => setPicked(item.id)} />
             ))}
           </View>
           {series.length > 0 ? (

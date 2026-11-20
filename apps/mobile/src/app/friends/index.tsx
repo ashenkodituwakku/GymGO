@@ -146,7 +146,7 @@ export default function FriendsScreen() {
           disabled={!view}
           onPress={() => view && void shareText(`Add me on GymGO: my friend code is ${view.code}`, 'My GymGO friend code').then((outcome) => setSent(outcome === 'shared' ? null : outcome))}
           accessibilityRole="button"
-          accessibilityLabel="Send your friend code"
+          accessibilityLabel="Send your code to a friend"
           style={styles.send}
         >
           {/* The accent on white: white words on a faint wash of white read at under 4.5:1 here. */}

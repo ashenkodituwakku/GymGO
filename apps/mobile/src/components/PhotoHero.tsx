@@ -338,7 +338,7 @@ export function PhotoHero({
       <Pressable
         onPress={() => void pick()}
         accessibilityRole="button"
-        accessibilityLabel={token ? 'Add a photo' : 'Sign in to add a photo'}
+        accessibilityLabel={token ? 'Add one: a photo of this gym' : 'Sign in to add a photo of this gym'}
         hitSlop={8}
         style={({ pressed }) => [styles.addPill, pressed && { opacity: 0.7 }]}
       >

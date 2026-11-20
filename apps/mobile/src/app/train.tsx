@@ -1007,7 +1007,7 @@ const ExerciseLog = memo(function ExerciseLog({
               onChange(index, [...item.sets, { weight: previous?.weight ?? '', reps: previous?.reps ?? '', done: false }]);
             }}
             accessibilityRole="button"
-            accessibilityLabel={`Add a set of ${name}`}
+            accessibilityLabel={`Add set: ${name}`}
             style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
           >
             <Icon name="plus" size={13} color={color.brand} />
@@ -1019,7 +1019,7 @@ const ExerciseLog = memo(function ExerciseLog({
             <Pressable
               onPress={addWarmUps}
               accessibilityRole="button"
-              accessibilityLabel={isPro ? `Add warm-up sets before ${name}` : `Warm-up sets for ${name} are part of GymGO Pro`}
+              accessibilityLabel={isPro ? `Warm-ups: add warm-up sets before ${name}` : `Warm-ups for ${name}, with GymGO Pro`}
               style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
             >
               <Icon name="sunrise" size={13} color={color.brand} />

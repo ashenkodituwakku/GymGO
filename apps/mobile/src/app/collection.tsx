@@ -27,7 +27,7 @@ import { BrandFill } from '@/components/BrandFill';
 import { MarkImage, useGymMark } from '@/components/BrandLogo';
 import { GemCard } from '@/components/GemCard';
 import { useGlassRedraw } from '@/components/Redrawn';
-import { SetProgress, SetReward } from '@/components/SetCard';
+import { KIND, SetProgress, SetReward } from '@/components/SetCard';
 import { CITY_SET_SIZE, collectionSets, setsDone } from '@/lib/sets';
 import { Icon, type IconName } from '@/components/Icon';
 import { HeroMark } from '@/components/HeroMark';
@@ -283,7 +283,7 @@ export default function CollectionScreen() {
               scaleTo={0.98}
               onPress={() => router.push({ pathname: '/card/[id]', params: { id: `set:${set.key}` } })}
               accessibilityRole="button"
-              accessibilityLabel={`${set.name} set complete. Open to share`}
+              accessibilityLabel={`${KIND[set.kind]} complete: ${set.name}. Open to share`}
             >
               <SetReward set={set} />
             </Pressy>

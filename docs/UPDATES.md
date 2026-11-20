@@ -9,9 +9,25 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 222 · Say what you see: buttons named by their own words
+
+*20 Nov 2026 · the commit "Label in name: fifteen controls are named starting with the words they show"*
+
+With voice control you press a button by saying what's written on it. That only works if the button's name, which is what a screen reader says, contains those words (WCAG 2.5.3, "Label in Name"). axe has a rule for this but leaves it out of its default run. So every page was checked another way: does each named control's visible title, its first line of words, appear in its name? Fifteen didn't:
+
+- **Home's "Machines" tile** was named "Find a machine". Now "Machines: who has what".
+- **On a gym's card and page:** "Build a workout here" (was "Build a workout for this gym"), "See it on Google" (was "See this gym on Google Maps") and the photo strip's "Add one" (was "Add a photo"). Each name now starts with its words.
+- **"Make your own split" and "Make your own exercise"** were named "Make a split of your own" and "Make an exercise of your own". Free accounts get the same words, with "with GymGO Pro" after.
+- **Templates' "5 exercises" buttons** were named "Show the exercises for Full body B". Now "5 exercises in Full body B: show them", and "Hide exercises: Full body B" once open.
+- **In a workout and when editing one:** "Add set" (was "Add a set of Incline barbell bench press") is now "Add set: Incline barbell bench press", and "Warm-ups" now starts with "Warm-ups".
+- **Collection's finished sets** were both named "Melbourne set complete" when the card says "SUBURB SET COMPLETE" or "CITY SET COMPLETE". A screen reader couldn't tell the two apart. Now "City set complete: Melbourne. Open to share".
+- **Also:** Friends' "Send your code", Plates' "Change", the monthly challenge's "Share it", the split editor's "Remove this day" and an exercise's "Volume" chart choice ("Volume: Weight lifted that day").
+- Judged fine and left: the Up next card (its name holds its words, in another order), "All 8" on Templates (its name starts with "All"), and cards whose first line is a picture's "Illustration" badge or a theme's preview (their names start with their real titles).
+- Checked in the browser: the same check, rerun on every page that had one, finds none; the new names read in the accessibility tree. axe on the ten pages in the standard look, light and dark, phone and desktop: 40 checks, all clean. Hooks rules clean. App tests 617.
+
 ## Update 221 · Every control is big enough to press: the tour's dots were 8 pixels
 
-*20 Nov 2026 · the commit "Welcome: the tour's dots are 24-pixel targets"*
+*20 Nov 2026 · `82cab54`*
 
 WCAG 2.2 asks for controls of at least 24 by 24 pixels, or enough room around a smaller one. axe has a rule for it (`target-size`), but it isn't in axe's default run, so none of the axe checks so far had tested this. It was run on its own over every page, and on what opens over a page.
 

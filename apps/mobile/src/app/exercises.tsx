@@ -138,7 +138,7 @@ export default function ExercisesScreen() {
             <Pressable
               onPress={makeOwn}
               accessibilityRole="button"
-              accessibilityLabel={billing.isPro ? 'Make an exercise of your own' : 'Making your own exercises is part of GymGO Pro'}
+              accessibilityLabel={billing.isPro ? 'Make your own exercise' : 'Make your own exercise, with GymGO Pro'}
               style={({ pressed }) => [styles.row, mine.length > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
             >
               <View style={styles.plus}>

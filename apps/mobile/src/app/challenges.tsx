@@ -209,7 +209,7 @@ function ChallengeCard({ month, target, small = false }: { month: string; target
         <Pressable
           onPress={() => void Share.share({ message: `I trained on ${target} days in ${label} with GymGO.` }).catch(() => undefined)}
           accessibilityRole="button"
-          accessibilityLabel={`Share your ${label} card`}
+          accessibilityLabel={`Share it: your ${label} card`}
           style={({ pressed }) => [styles.share, pressed && { opacity: 0.8 }]}
         >
           {/* The accent on white: white words on a faint wash of white read at under 4.5:1 here. */}

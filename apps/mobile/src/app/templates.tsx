@@ -98,7 +98,7 @@ export default function TemplatesScreen() {
       <Pressable
         onPress={() => (billing.isPro ? router.push('/split-edit') : openPro('splits'))}
         accessibilityRole="button"
-        accessibilityLabel={billing.isPro ? 'Make a split of your own' : 'Making your own splits is part of GymGO Pro'}
+        accessibilityLabel={billing.isPro ? 'Make your own split' : 'Make your own split, with GymGO Pro'}
         style={({ pressed }) => [styles.programme, pressed && { opacity: 0.8 }]}
       >
         <Icon name="plus" size={18} color={color.brand} />
@@ -220,7 +220,7 @@ function TemplateCard({
           ))}
         </View>
       )}
-      <Pressable onPress={() => setOpen(!open)} accessibilityRole="button" accessibilityLabel={open ? 'Hide the exercises' : `Show the exercises for ${shown.name}`} style={styles.toggle}>
+      <Pressable onPress={() => setOpen(!open)} accessibilityRole="button" accessibilityLabel={open ? `Hide exercises: ${shown.name}` : `${shown.items.length} exercises in ${shown.name}: show them`} style={styles.toggle}>
         <Txt variant="footnote" color={color.brand} style={face('semibold')}>
           {open ? 'Hide exercises' : `${shown.items.length} exercises`}
         </Txt>

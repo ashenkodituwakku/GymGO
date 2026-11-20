@@ -122,7 +122,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
   (WCAG 2.2, 24×24 px): run it with `runOnly: { type: 'rule', values:
   ['target-size'] }`. React Native Web ignores `hitSlop`, so a small
   Pressable is a small target on the website: draw the small thing
-  inside a target of 24 or more instead (Welcome's dots).
+  inside a target of 24 or more instead (Welcome's dots). A control's
+  `accessibilityLabel` starts with the words it shows, then any detail
+  ("Add set: Bench press"), so voice control can press it by them.
 
 - **Headings** (20 Nov). A pushed page's level-1 heading is the
   navigation bar's title, so a large title inside the page is

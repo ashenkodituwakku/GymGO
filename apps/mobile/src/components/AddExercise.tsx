@@ -117,7 +117,7 @@ export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: 
           router.push('/exercise-edit');
         }}
         accessibilityRole="button"
-        accessibilityLabel={billing.isPro ? 'Make an exercise of your own' : 'Making your own exercises is part of GymGO Pro'}
+        accessibilityLabel={billing.isPro ? 'Make your own exercise' : 'Make your own exercise, with GymGO Pro'}
         style={({ pressed }) => [styles.make, pressed && { opacity: 0.6 }]}
       >
         <Icon name="plus" size={13} color={color.brand} />

@@ -200,7 +200,7 @@ export default function SplitEditScreen() {
             <DayButton
               icon="trash"
               label="Remove this day"
-              spoken={`Remove ${shown.name.trim() || 'this day'} from the split`}
+              spoken={`Remove this day: ${shown.name.trim() || `Day ${shownAt + 1}`}`}
               danger
               onPress={() => {
                 setDraft({ ...draft, days: draft.days.filter((_, at) => at !== shownAt) });

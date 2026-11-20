@@ -208,7 +208,7 @@ export default function PlatesScreen() {
           <Pressable
             onPress={() => (billing.isPro ? setEditing(!editing) : openPro('plates'))}
             accessibilityRole="button"
-            accessibilityLabel={billing.isPro ? (editing ? 'Done choosing plates' : 'Choose your gym’s plates') : 'Choose your gym’s plates, with GymGO Pro'}
+            accessibilityLabel={billing.isPro ? (editing ? 'Done choosing plates' : 'Change: choose your gym’s plates') : 'Change with Pro: choose your gym’s plates'}
             hitSlop={8}
             style={({ pressed }) => [styles.editPlates, pressed && { opacity: 0.7 }]}
           >

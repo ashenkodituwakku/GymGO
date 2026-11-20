@@ -432,7 +432,7 @@ export function PlaceCard({
             onOpenGoogle();
           }}
           accessibilityRole="button"
-          accessibilityLabel="See this gym on Google Maps"
+          accessibilityLabel="See it on Google: this gym on Google Maps"
           style={({ pressed }) => [styles.google, pressed && { opacity: 0.75 }]}
         >
           <View style={styles.rowIcon}>
@@ -457,7 +457,7 @@ export function PlaceCard({
           onOpenWorkout();
         }}
         accessibilityRole="button"
-        accessibilityLabel="Build a workout for this gym"
+        accessibilityLabel="Build a workout here, for this gym's machines"
         style={({ pressed }) => [styles.google, pressed && { opacity: 0.75 }]}
       >
         <View style={styles.rowIcon}>

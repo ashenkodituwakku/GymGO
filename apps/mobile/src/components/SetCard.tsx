@@ -17,7 +17,8 @@ import { Icon } from './Icon';
 import { POP_IN } from './motion';
 import { Txt } from './ui';
 
-const KIND: Record<GymSet['kind'], string> = { suburb: 'Suburb set', city: 'City set' };
+/** What each kind of set is called ("Suburb set"), shown in capitals on its cards. */
+export const KIND: Record<GymSet['kind'], string> = { suburb: 'Suburb set', city: 'City set' };
 
 /** "5 Sep 2026" from a local day ("2026-09-05"). */
 export function dayLabel(day: string): string {

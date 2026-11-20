@@ -118,6 +118,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Hooks check** (20 Nov). `pnpm lint` is tsc only, which doesn't catch
+  a hook placed after an early return (it showed as the crash screen).
+  eslint 9 and eslint-plugin-react-hooks 5 are in node_modules/.pnpm: a
+  flat config with `react-hooks/rules-of-hooks` and the
+  @typescript-eslint parser, run with `--no-config-lookup` over
+  `src/**/*.{ts,tsx}`, is clean. `KEEP_FOCUS_ON_ENTER` (lib/focusNext.ts)
+  keeps a one-line field focused after Enter on the web.
+
 - **Measure leftovers are icons** (20 Nov). The screen measure's empty-text
   readings are Material Symbols glyphs (private-use code points), all
   aria-hidden inside fully named controls; checked by code point on Friends

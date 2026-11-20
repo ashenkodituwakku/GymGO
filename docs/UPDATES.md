@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 214 · Adding a friend and logging your weight: you're told, and you stay in the field
+
+*20 Nov 2026 · the commit "Friends and body weight: results are said, and Enter keeps you in the field; a hooks check over the app"*
+
+Two small forms were tried by keyboard on the website: a friend's code on Friends, and today's weight on Progress.
+
+- **Fixed: their results weren't said.** "No one has that code. Check it with your friend?" and a weight GymGO can't read ("Type your weight in kg, like 72.5.") showed, but a screen reader wasn't told. Both now sit in a line a screen reader hears as it changes. A weight that's logged now says so too: "Logged 72.6 kg for today." (until you type again).
+- **Fixed: Enter dropped you out of the field.** A one-line field lets go of focus on Enter in a browser, so a wrong code couldn't be put right without finding the field again. Both fields now keep focus. Phones keep their own keyboard behaviour.
+- **Caught on the way:** my first go put the new line's state below the card's early return, which breaks React's rules of hooks; the browser check showed the "Something went wrong" screen on Progress, and it was fixed before anything was committed. As the repo's own lint is the type check and doesn't look for this, React's hooks rules were then run over the whole app: nothing else breaks them (a helper in the country packs named `use`, which isn't React's, is renamed `adopt` so it doesn't look as if it does).
+- Checked in the browser: both messages said, focus kept, Home and Progress draw; axe clean. App tests 617.
+
 ## Update 213 · Writing a review by keyboard keeps your place
 
-*20 Nov 2026 · the commit "Reviews: the form takes focus as it opens, the waiting card as it's sent"*
+*20 Nov 2026 · `0aaf1c8`*
 
 A review was written with only the keyboard, on demo gyms, as a free account.
 

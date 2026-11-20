@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { KEEP_FOCUS_ON_ENTER } from '@/lib/focusNext';
 import { localToday, recentWeighIns, useBodyWeight, weightChange, type WeighIn } from '@/lib/bodyWeight';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, shadow, space, themed, webFocusRing } from '@/lib/theme';
@@ -25,6 +26,8 @@ export function BodyWeightCard({ unit }: { unit: WeightUnit }) {
   const [text, setText] = useState('');
   const [focused, setFocused] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  // The weight just logged, said and shown until you type again.
+  const [said, setSaid] = useState<string | null>(null);
   const today = localToday();
   if (list === null) return null;
 
@@ -46,6 +49,7 @@ export function BodyWeightCard({ unit }: { unit: WeightUnit }) {
     add(today, kg);
     setText('');
     setProblem(null);
+    setSaid(`Logged ${shown(kg, unit)} for today.`);
   };
 
   const changeWords = change
@@ -78,8 +82,10 @@ export function BodyWeightCard({ unit }: { unit: WeightUnit }) {
           onChangeText={(value) => {
             setText(value);
             setProblem(null);
+            setSaid(null);
           }}
           onSubmitEditing={save}
+          {...KEEP_FOCUS_ON_ENTER}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           placeholder={todays ? `Today: ${shown(todays.kg, unit)}` : 'Today’s weight'}
@@ -106,11 +112,18 @@ export function BodyWeightCard({ unit }: { unit: WeightUnit }) {
           </Txt>
         </Pressable>
       </View>
-      {problem && (
-        <Txt variant="footnote" color={color.dangerInk}>
-          {problem}
-        </Txt>
-      )}
+      {/* Said as it changes (a weight it can't read, or the one just logged): always there, so a screen reader hears it. */}
+      <View aria-live="polite">
+        {problem ? (
+          <Txt variant="footnote" color={color.dangerInk}>
+            {problem}
+          </Txt>
+        ) : said ? (
+          <Txt variant="footnote" color={color.labelSecondary}>
+            {said}
+          </Txt>
+        ) : null}
+      </View>
 
       <View style={styles.foot}>
         <Icon name="lock" size={12} color={color.labelTertiary} />

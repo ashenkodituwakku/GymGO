@@ -20,6 +20,14 @@ const TABBABLE = 'a[href], button, input, select, textarea, [tabindex]:not([tabi
 export const FOCUS_FROM_CODE = { tabIndex: -1, dataSet: { quietFocus: '' } } as object;
 
 /**
+ * For a one-line field whose Enter does something you might do again (add a
+ * friend's code, log a weight): in a browser it kept focus after Enter, as
+ * a phone keeps its keyboard up, instead of blurring to the page itself, so
+ * a wrong code can be put right at once. Phones keep their own behaviour.
+ */
+export const KEEP_FOCUS_ON_ENTER = (Platform.OS === 'web' ? { blurOnSubmit: false } : {}) as object;
+
+/**
  * When a screen replaces the one whose button was pressed (Workout done after
  * Finish, Thanks after Send), focus went with the button, to the page itself.
  * Put the returned ref, with FOCUS_FROM_CODE, on the new screen's heading:

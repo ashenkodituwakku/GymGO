@@ -74,7 +74,8 @@ export function useCountryPack(country: string | null, active: boolean) {
     }
     let live = true;
     let timer: ReturnType<typeof setTimeout> | null = null;
-    const use = (text: string) => {
+    // Takes a pack (from the server or this device) if it reads and is for this country. Not React's use().
+    const adopt = (text: string) => {
       const pack = parsePack(text);
       if (!pack || pack.country !== country) return false;
       const made = new PackIndex(pack);
@@ -95,7 +96,7 @@ export function useCountryPack(country: string | null, active: boolean) {
           if (current.current?.builtAt === status.builtAt) return;
           const text = await getText(`${base}/api/country/${country}/pack?${q}`, DOWNLOAD_MS);
           if (!live) return;
-          if (use(text)) await writePack(country, text);
+          if (adopt(text)) await writePack(country, text);
           return;
         }
         if (status.state === 'building') {
@@ -115,7 +116,7 @@ export function useCountryPack(country: string | null, active: boolean) {
     setState({ ...OFF, status: 'loading', country });
     void readPack(country).then((text) => {
       if (!live) return;
-      if (!(text && use(text))) setState({ ...OFF, status: 'loading', country });
+      if (!(text && adopt(text))) setState({ ...OFF, status: 'loading', country });
       void check();
     });
     return () => {

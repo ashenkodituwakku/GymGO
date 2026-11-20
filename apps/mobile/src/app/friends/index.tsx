@@ -20,6 +20,7 @@ import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Card, Input, PrimaryButton, Txt } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
+import { KEEP_FOCUS_ON_ENTER } from '@/lib/focusNext';
 import { shareText } from '@/lib/actions';
 import { api, problemText, type FriendsOverview, type Person, type TrainInvite } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
@@ -170,15 +171,19 @@ export default function FriendsScreen() {
             maxLength={12}
             accessibilityLabel="Your friend’s code"
             onSubmitEditing={() => void add()}
+            {...KEEP_FOCUS_ON_ENTER}
             style={styles.input}
           />
           <PrimaryButton label="Add" busy={adding} disabled={!code.trim()} onPress={() => void add()} />
         </View>
-        {note && (
-          <Txt variant="footnote" color={note.problem ? color.dangerInk : color.labelSecondary}>
-            {note.text}
-          </Txt>
-        )}
+        {/* Said as it changes ("No one has that code", "You and Sam are friends now"): always there, so a screen reader hears it. */}
+        <View aria-live="polite">
+          {note && (
+            <Txt variant="footnote" color={note.problem ? color.dangerInk : color.labelSecondary}>
+              {note.text}
+            </Txt>
+          )}
+        </View>
       </Card>
 
       {view && view.incoming.length > 0 && (

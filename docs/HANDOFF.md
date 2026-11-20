@@ -118,6 +118,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Home editing focus** (20 Nov). HomeEditor's EditBar wraps its glass
+  in a `role="toolbar"` view that takes focus on mount and, on unmount,
+  gives it to `[data-customise-home]` (the button on Home) if focus was
+  lost; the − badge calls `focusNextWhenGone`.
+
 - **focusNextWhenGone** (20 Nov). lib/focusNext.ts: call it with the
   pressed element (the press event's currentTarget on the web) just
   before a button removes itself; it focuses the next tabbable element

@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 210 · Customising Home by keyboard keeps your place
+
+*20 Nov 2026 · the commit "Customise Home: the edit bar takes focus, removing a widget moves on, Done comes back"*
+
+Customise Home was tried with only the keyboard.
+
+- **Fixed: starting to edit lost focus.** The Customise Home button goes as editing starts, and focus went with it to the page itself. The bar at the foot now takes focus as a toolbar named "Customising Home", so a screen reader reads how editing works ("Hold a widget to move it. − takes it off.") and the next Tab is Add a widget, then Done.
+- **Fixed: taking a widget off lost focus.** Its − goes with it. Focus now moves on to the next widget (Update 209's helper).
+- **Fixed: Done lost focus.** The bar goes, and focus now comes back to Customise Home.
+- Checked in the browser at 390 and 1280: start, Tab, take Weather off, Done; axe clean while editing. App tests 617.
+
 ## Update 209 · "Not now" on the Pro card moves focus on, not away
 
-*20 Nov 2026 · the commit "Not now and Remove: focus goes on to what's next instead of with what they remove"*
+*20 Nov 2026 · `cf1e9f6`*
 
 Following Update 208, other buttons that take themselves away were tried by keyboard.
 

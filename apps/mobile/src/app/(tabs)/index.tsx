@@ -744,6 +744,8 @@ export default function Home() {
             }}
             accessibilityRole="button"
             accessibilityHint="Move, take off and add the widgets on Home"
+            // Where focus comes back to when Done ends editing (components/HomeEditor.tsx EditBar).
+            {...({ dataSet: { customiseHome: '' } } as object)}
             style={({ pressed }) => [styles.customiseButton, pressed && { opacity: 0.7 }]}
           >
             <Icon name="customise" size={16} color={color.brandOnTint} />

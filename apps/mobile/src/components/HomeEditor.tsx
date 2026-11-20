@@ -15,7 +15,7 @@
  */
 
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Modal, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Modal, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import { Backdrop } from './Backdrop';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -31,6 +31,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { useDialogName } from '@/lib/dialogName';
+import { focusNextWhenGone } from '@/lib/focusNext';
 import { haptic } from '@/lib/haptics';
 import { HOME_GROUPS, homeWidget, type HomeWidget, type HomeWidgetId } from '@/lib/homeWidgets';
 import { useBottomClearance } from '@/lib/layout';
@@ -469,8 +470,10 @@ function EditItem({
             </View>
           </GestureDetector>
           <Pressable
-            onPress={() => {
+            onPress={(event) => {
               haptic.select();
+              // Focus goes on to the next widget, not with this one (lib/focusNext.ts).
+              focusNextWhenGone((event as unknown as { currentTarget?: unknown }).currentTarget);
               onRemove();
             }}
             accessibilityRole="button"
@@ -493,8 +496,23 @@ function EditItem({
  */
 export function EditBar({ onAdd, onDone }: { onAdd: () => void; onDone: () => void }) {
   const clearance = useBottomClearance();
+  // In a browser, Customise Home goes as editing starts, and focus went with it (to the page itself):
+  // the bar takes it, so a screen reader reads how editing works and Tab goes on to its buttons; and
+  // when Done takes the bar away, focus goes back to Customise Home.
+  const bar = useRef<ViewInstance>(null);
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    (bar.current as unknown as { focus?: (options?: { preventScroll?: boolean }) => void } | null)?.focus?.({ preventScroll: true });
+    return () => {
+      requestAnimationFrame(() => {
+        if (document.activeElement && document.activeElement !== document.body) return;
+        (document.querySelector('[data-customise-home]') as HTMLElement | null)?.focus({ preventScroll: true });
+      });
+    };
+  }, []);
   return (
     <View style={[CHILD_TOUCH, styles.bar, { bottom: clearance + space[2] }]}>
+      <View ref={bar} tabIndex={-1} role="toolbar" aria-label="Customising Home" {...({ dataSet: { quietFocus: '' } } as object)}>
       <Glass style={styles.barGlass}>
         <Pressable
           onPress={() => {
@@ -525,6 +543,7 @@ export function EditBar({ onAdd, onDone }: { onAdd: () => void; onDone: () => vo
           </Txt>
         </Pressable>
       </Glass>
+      </View>
     </View>
   );
 }

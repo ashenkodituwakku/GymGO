@@ -118,6 +118,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **RouteFocus** (20 Nov). components/RouteFocus.tsx, in the root
+  layout, web only: on each pathname change it says `document.title`
+  (less " · GymGO") in a hidden `aria-live="polite"` Text, remembers the
+  last focused element of the page left, and refocuses it on returning
+  if focus is lost (350 ms after the change, once the page has drawn).
+
 - **Home editing focus** (20 Nov). HomeEditor's EditBar wraps its glass
   in a `role="toolbar"` view that takes focus on mount and, on unmount,
   gives it to `[data-customise-home]` (the button on Home) if focus was

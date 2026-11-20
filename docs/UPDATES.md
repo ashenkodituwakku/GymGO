@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 211 · Moving between pages: the new page is said, and Back puts you where you were
+
+*20 Nov 2026 · the commit "Website: each new page's name is said, and going back puts focus where you left"*
+
+Going from page to page was tried by keyboard on the website (Profile → Progress, back; Profile → Lifetime, the browser's back).
+
+- **Going forward was fine:** the tab's title changes, and the next Tab is the new page's first control (Back to Profile), as on a fresh page.
+- **Fixed: a screen reader wasn't told the page had changed.** In a one-page app the browser doesn't announce a new title. Each new page's name ("Progress", "Profile") is now said politely by a line nobody sees.
+- **Fixed: going back lost your place.** Focus fell to the page itself, and Tab started again from the top. Now the control you left a page from is remembered, and coming back puts focus on it: the Progress row after Back, the Lifetime row after the browser's back button. Moving between the tabs is unchanged (focus stays on the tab).
+- Checked in the browser at 390 and 1280 with the app's Back and the browser's; axe clean. Phones' screen readers do both themselves, so nothing changes there. App tests 617.
+
 ## Update 210 · Customising Home by keyboard keeps your place
 
-*20 Nov 2026 · the commit "Customise Home: the edit bar takes focus, removing a widget moves on, Done comes back"*
+*20 Nov 2026 · `6348380`*
 
 Customise Home was tried with only the keyboard.
 

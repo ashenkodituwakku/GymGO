@@ -18,6 +18,7 @@ import { LIMITED } from '@/lib/limited';
 import { backLabel } from '@/lib/backLabel';
 import { setGlassLevel } from '@/components/liquidGlass';
 import { installSpaceKey } from '@/lib/spaceKey';
+import { RouteFocus } from '@/components/RouteFocus';
 import { AppProvider, useApp } from '@/lib/app-state';
 import {
   BUNDLED_FACES,
@@ -272,6 +273,8 @@ function ThemedStack() {
       {themeChoice.reduceMotion && <ReducedMotionConfig mode={ReduceMotion.Always} />}
       <StatusBar style={dark ? 'light' : 'dark'} />
       <WebsiteBanner />
+      {/* In a browser: says each new page's name, and puts focus back where you left a page (components/RouteFocus.tsx). */}
+      <RouteFocus />
       {/* The pages, with the sidebar layout's menu hovering over their left edge on a wide
           screen. The navigator keeps its place in the tree whether it shows or not. */}
       <SidebarFrame signedIn={signedIn || LIMITED}>

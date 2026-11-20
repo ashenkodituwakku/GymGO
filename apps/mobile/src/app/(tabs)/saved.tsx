@@ -21,6 +21,7 @@ import { PrimaryButton, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
+import { focusNextWhenGone } from '@/lib/focusNext';
 import { resultsById } from '@/lib/results';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -183,8 +184,10 @@ export default function Saved() {
                       </Txt>
                     </View>
                     <Pressable
-                      onPress={() => {
+                      onPress={(event) => {
                         haptic.select();
+                        // Focus goes on to what's next, not with the row (lib/focusNext.ts).
+                        focusNextWhenGone((event as unknown as { currentTarget?: unknown }).currentTarget);
                         account.toggleSave(id);
                       }}
                       accessibilityRole="button"

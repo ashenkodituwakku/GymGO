@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 209 · "Not now" on the Pro card moves focus on, not away
+
+*20 Nov 2026 · the commit "Not now and Remove: focus goes on to what's next instead of with what they remove"*
+
+Following Update 208, other buttons that take themselves away were tried by keyboard.
+
+- **Fixed: "Not now" on GymGO's Pro card.** The card goes, and focus went with it to the page itself, so a screen reader went quiet and Tab started again from the top. Focus now moves on to the next thing on the page ("See all" under Saved, on Home), with its ring. Remove on a saved gym that's no longer on the map does the same (one small helper, `lib/focusNext.ts`).
+- **Left as it is:** Discard workout takes you back to Home, a new page, and focus starting at the top of a new page is what browsers do.
+- Checked in the browser at 390 and 1280 as a free account. App tests 617.
+
 ## Update 208 · A workout by keyboard alone; finishing tells you it's saved
 
-*18 Nov 2026 · the commit "Workout done: the heading takes focus as the workout is saved, in a browser"*
+*18 Nov 2026 · `6b954a7`*
 
 A whole workout was logged with only the keyboard, at a computer's width and a phone's: Do it again, then Tab to the first set, a weight, Tab, reps, Tab to the tick, Space, and on to Finish workout.
 

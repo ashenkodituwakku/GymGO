@@ -118,6 +118,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **focusNextWhenGone** (20 Nov). lib/focusNext.ts: call it with the
+  pressed element (the press event's currentTarget on the web) just
+  before a button removes itself; it focuses the next tabbable element
+  once the removed part has gone, if focus was lost. Used by AdSlot's
+  Not now and Saved's Remove.
+
 - **Workout done focus** (18 Nov). train.tsx's summary focuses its
   heading (a tabIndex -1, quiet-focus View) on mount in a browser, since
   the Finish button unmounts with the workout. Scratchpad

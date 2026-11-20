@@ -20,6 +20,7 @@ import type { AdPlace } from '@/lib/ads';
 import { AdCard, adsPossible, startAds, useAdsState } from './AdCard';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
+import { focusNextWhenGone } from '@/lib/focusNext';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
 import { Icon } from './Icon';
@@ -133,8 +134,10 @@ export function AdSlot({ place, style }: { place: AdPlace; style?: object }) {
       </Pressy>
       {/* Beside the card rather than inside it: a button inside a button is one a screen reader can't reach. */}
       <Pressable
-        onPress={() => {
+        onPress={(event) => {
           haptic.tap();
+          // Focus goes on to what's next, not with the card (lib/focusNext.ts).
+          focusNextWhenGone((event as unknown as { currentTarget?: unknown }).currentTarget);
           hide();
         }}
         accessibilityRole="button"

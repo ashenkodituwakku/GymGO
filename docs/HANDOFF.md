@@ -437,7 +437,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `data-gg-hover` on the icons of the nearest control (`CONTROL` roles);
   `movingIcons` decides which (arrows only on a tall card, none past
   `MOST`). The CSS uses the `translate`/`rotate`/`scale` properties, so it
-  adds to `useSwapIn`'s transform instead of replacing it.
+  adds to `useSwapIn`'s transform instead of replacing it. The tab bar's and
+  sidebar's outlines (`ART_NAMES`) are drawn in parts on the web by
+  components/iconArt.tsx (PIcon swaps to it for regular/bold weights; the
+  filled, selected one stays a single path) with `data-part` names, and each
+  has a scene in `ART_CSS` (lengths on the 256 grid, `transform-box:
+  view-box`; lines drawn with `pathLength` 100 and `gg-art-draw`). A new
+  drawing needs its name in `ART_NAMES`, its parts in `ART` and its scene
+  in `ART_CSS`; TypeScript asks for all three.
 - **Hover on Home** (18 Nov). components/hoverShine.web.ts: `useHoverShine`
   on a zone (Home's page) finds the card under a mouse (nearest pressable
   with a background, gradient or box shadow; `wrapped` looks through bare

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MOST, MOTION_CSS, TALL, iconHoverCss, iconMotion, movingIcons, type IconMotion } from './iconHover';
+import { ART_CSS, ART_NAMES, MOST, MOTION_CSS, TALL, iconHoverCss, iconMotion, isArt, movingIcons, type IconMotion } from './iconHover';
 
 describe('icon hover', () => {
   it('gives each icon a motion that says what it does, and the rest a lift', () => {
@@ -21,15 +21,31 @@ describe('icon hover', () => {
     for (const motion of Object.keys(MOTION_CSS) as IconMotion[]) {
       expect(css).toContain(`[data-gg-icon="${motion}"][data-gg-hover]`);
     }
-    for (const [, name] of css.matchAll(/animation: (gg-icon-[a-z]+)/g)) {
+    for (const [, name] of css.matchAll(/animation(?:-name)?: (gg-[a-z-]+)/g)) {
       expect(css).toContain(`@keyframes ${name} `);
     }
   });
 
+  it('plays a scene of its own for each icon drawn in parts', () => {
+    const css = iconHoverCss();
+    expect(isArt('chart-line-up')).toBe(true);
+    expect(isArt('barbell')).toBe(true);
+    expect(isArt('magnifying-glass')).toBe(false);
+    for (const art of ART_NAMES) {
+      expect(ART_CSS[art]).toContain(`[data-gg-art="${art}"][data-gg-hover] [data-part=`);
+      expect(css).toContain(ART_CSS[art]);
+    }
+    // Progress: the line draws out of the axis and the arrow comes after it; Workout: plates slide on, then the bar dips.
+    expect(ART_CSS['chart-line-up']).toMatch(/\[data-part="line"\][^}]*gg-art-draw/);
+    expect(ART_CSS['chart-line-up']).toMatch(/\[data-part="arrow"\][^}]*gg-chart-arrow/);
+    expect(ART_CSS.barbell).toMatch(/\[data-part="outer-left"\][^}]*gg-plate-left[^}]*240ms/);
+    expect(ART_CSS.barbell).toMatch(/\[data-part="all"\][^}]*gg-bar-dip/);
+  });
+
   it('keeps still with Reduce motion, the app’s own or the system’s', () => {
     const css = iconHoverCss();
-    expect(css).toMatch(/html\[data-gg-calm\] \[data-gg-icon\] \{[^}]*animation: none !important/);
-    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\[data-gg-icon\] \{[^}]*scale: none !important/);
+    expect(css).toMatch(/html\[data-gg-calm\] \[data-gg-icon\], html\[data-gg-calm\] \[data-gg-icon\] \* \{[^}]*animation: none !important/);
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\[data-gg-icon\], \[data-gg-icon\] \* \{[^}]*scale: none !important/);
   });
 
   it('moves a control’s icons, a tall card’s arrow only, and nothing with too many icons', () => {

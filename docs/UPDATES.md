@@ -9,6 +9,28 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 234 · Each navigation icon plays its own little scene
+
+*21 Nov 2026 · the commit "Icons: the tab bar's and sidebar's icons drawn in parts, each with its own scene on hover"*
+
+You said Update 233's motions weren't what you meant: you wanted a custom animation for each icon, like Progress's arrow coming out of the axis as the graph grows and the dumbbell having plates added. So the tab bar's and the sidebar's icons are now drawn in parts, and each plays a scene of its own when the mouse is on it, in a browser:
+
+- **Progress:** the graph line draws itself out of the axis, and as it reaches the top the arrow shoots out past the end and settles.
+- **Workout:** the inner plates slide onto the bar, then the outer plates, each with a little clank, and the bar dips with the weight.
+- **Home:** the roof hops and lands, and the door swings open on its hinge.
+- **Explore:** the map's two outer panels unfold from the middle one.
+- **Saved:** the bookmark drops in and bounces, and a fill runs down it.
+- **Profile** (when you're signed out and it shows the icon): the head pops up as the ring draws round.
+- **My workouts:** the clip snaps down and the two lines write themselves, one after the other.
+- **Programme:** the calendar's rings flick and the days pop in, one by one.
+- **Collection:** the front card flips over and the one behind slides out.
+- **Friends:** the one in the middle hops and a friend steps out from behind each side.
+- **Appearance:** the palette rocks and its four paints pop and light up in colour.
+
+At rest each icon looks exactly as before: they're Phosphor's own outlines, redrawn from the strokes they're designed from (laid over the old ones, they match). The page you're on (its filled icon) doesn't play, nor does anything with Reduce motion on, and moving the mouse away ends a scene at once. Phones and tablets have no hover, so they keep the icons as they were. Other icons around the app keep Update 233's small motions; they're font glyphs in a browser, so they can't be taken apart the same way.
+
+- Checked: typecheck and all app tests pass (624; the scene tests check each icon has a scene and every animation it names exists). In the browser, frames caught along each scene at 120, 300, 480, 700 and 1100 ms show each one playing as described; a line waits hidden for its turn; leaving mid-scene puts the icon back at rest; the tab bar's icons play too, in dark mode; no page errors.
+
 ## Update 233 · Icons move a little under the mouse
 
 *21 Nov 2026 · the commit "Icons: a small motion when the mouse is on their button, in a browser"*

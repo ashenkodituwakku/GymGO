@@ -9,6 +9,21 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 233 · Icons move a little under the mouse
+
+*21 Nov 2026 · the commit "Icons: a small motion when the mouse is on their button, in a browser"*
+
+You asked for little animations on icons when you hover over them. On the website (and in a browser on a computer), pointing at a button, link or row now moves its icon a little, in a way that says what it does:
+
+- **A chevron steps forward and Back steps back**, Share, Send, Progress and Workout rise, Download dips, an outside link or Directions moves up and out.
+- **Settings' gear turns, Refresh and History wind back, Plus and Close turn a quarter.**
+- **The bell and the phone ring, Save and the stars pop, Search and the palette tilt, the eye blinks, a bin or a warning gives a small shake**, Expand grows, Collapse shrinks, the menu widens.
+- **Anything else lifts a point and grows a touch**, the sidebar's and the tab bar's icons included.
+
+Kept calm on purpose: only the icons of the one thing under the pointer move, never those of a button inside it. A big card, like a gym's, moves only its arrow, so its little icons don't all go at once, and nothing with more than three icons moves. **Reduce motion** (yours in Appearance, or your system's) keeps them still. Phones and tablets have no hover, so nothing changes there.
+
+- Checked: typecheck and all app tests pass (623, four new ones on the motions, the rules and Reduce motion). In the browser, at computer and phone width: the icons are tagged (71 on Profile); a row's icon lifts and its chevron steps forward, then both settle back when the pointer leaves; the sidebar's palette tilts and Saved's bookmark pops; with Reduce motion on, nothing moves; no page errors.
+
 ## Update 232 · The website version checked as it's built: long real names and plan names in full
 
 *20 Nov 2026 · the commit "Website version: long real gym names, plan names and workout lists shown in full; two labels match their words"*

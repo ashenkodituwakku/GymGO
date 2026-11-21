@@ -9,6 +9,7 @@
 import { SymbolView } from 'expo-symbols';
 import type { ComponentProps } from 'react';
 import { Platform, View } from 'react-native';
+import { iconMotion } from '@/lib/iconHover';
 import { useSwapIn } from './motion';
 import { PIcon } from './PIcon';
 
@@ -145,16 +146,18 @@ export function Icon({
   // otherwise be read out as part of the button's name.
   // A new icon here (saved, ticked) blurs in, in a browser.
   const swap = useSwapIn(name);
+  // Its motion when the mouse is on its button, in a browser (lib/iconHover.ts).
+  const hover = Platform.OS === 'web' ? ({ dataSet: { ggIcon: iconMotion(name) } } as object) : null;
   if (Platform.OS !== 'ios' && name in FILLED_PAIRS) {
     const filled = FILLED_PAIRS[name as keyof typeof FILLED_PAIRS];
     return (
-      <View ref={swap} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <View ref={swap} {...hover} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <PIcon name="bookmark-simple" weight={filled ? 'fill' : weight === 'bold' || weight === 'heavy' || weight === 'black' ? 'bold' : 'regular'} size={size} color={color} />
       </View>
     );
   }
   return (
-    <View ref={swap} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View ref={swap} {...hover} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <SymbolView
         name={ICONS[name] as unknown as SymbolName}
         size={size}

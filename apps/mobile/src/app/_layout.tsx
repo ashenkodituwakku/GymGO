@@ -18,6 +18,7 @@ import { LIMITED } from '@/lib/limited';
 import { backLabel } from '@/lib/backLabel';
 import { setGlassLevel } from '@/components/liquidGlass';
 import { installSpaceKey } from '@/lib/spaceKey';
+import { installIconHover } from '@/lib/iconHover';
 import { RouteFocus } from '@/components/RouteFocus';
 import { AppProvider, useApp } from '@/lib/app-state';
 import {
@@ -147,9 +148,12 @@ export default function RootLayout() {
     if (!themeReady) void loadThemeChoice().then(() => setThemeReady(true));
   }, [themeReady]);
 
-  // In a browser, Space ticks a checkbox and picks a choice, not only Enter (lib/spaceKey.ts).
+  // In a browser, Space ticks a checkbox and picks a choice, not only Enter (lib/spaceKey.ts);
+  // and a button's icon moves a little when the mouse is on it (lib/iconHover.ts).
   useEffect(() => {
-    if (Platform.OS === 'web') installSpaceKey();
+    if (Platform.OS !== 'web') return;
+    installSpaceKey();
+    installIconHover();
   }, []);
 
   useEffect(() => {

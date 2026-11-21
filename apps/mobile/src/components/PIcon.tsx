@@ -8,7 +8,9 @@
  * Only the icons in phosphor.ts are here; scripts/phosphor-icons.mjs adds more.
  */
 
+import { Platform } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { iconMotion } from '@/lib/iconHover';
 import { PHOSPHOR, type IconPaths } from './phosphor';
 import { NO_TOUCH, boldText } from '@/lib/theme';
 
@@ -36,7 +38,7 @@ export function PIcon({
   // No blur-in when it changes (Icon has one): these are the tab bar's and the sidebar's, which change on
   // every move, and what's used most should animate least.
   return (
-    <Svg width={size} height={size} viewBox="0 0 256 256" style={NO_TOUCH}>
+    <Svg width={size} height={size} viewBox="0 0 256 256" style={NO_TOUCH} {...(Platform.OS === 'web' ? ({ 'data-gg-icon': iconMotion(name) } as object) : null)}>
       {paths.map((path, index) => (
         <Path
           key={index}

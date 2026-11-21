@@ -1,0 +1,2 @@
+# Sellers allowed to sell ads in GymGO's apps (IAB Tech Lab app-ads.txt). docs/ADS.md.
+google.com, pub-7227955677859980, DIRECT, f08c47fec0942fa0

@@ -1,0 +1,23 @@
+{
+  "name": "gymgo-shorts",
+  "private": true,
+  "description": "GymGO's short vertical videos (9:16), made with the explainer-video skill (.claude/skills). Not part of the pnpm workspace.",
+  "scripts": {
+    "capture": "node capture.cjs",
+    "studio": "remotion studio src/index.ts",
+    "render": "node render.mjs"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.540",
+    "@remotion/cli": "4.0.540",
+    "@remotion/renderer": "4.0.540",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.540",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "typescript": "5.9.3"
+  }
+}

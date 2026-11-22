@@ -72,6 +72,12 @@ export interface ThemeChoice {
   mapStyle: MapStyleId;
   /** Reduce motion in GymGO, as the phone's own setting does, without changing the phone. For everyone. */
   reduceMotion: boolean;
+  /**
+   * Up and down buttons on each widget while customising Home, besides
+   * holding and dragging: for anyone who finds dragging hard (WCAG 2.5.7).
+   * Off, editing is as an iPhone's. For everyone.
+   */
+  moveButtons: boolean;
 }
 
 export type GymPalButton = 'tab' | 'corner' | 'hidden';
@@ -93,6 +99,7 @@ export const DEFAULT_CHOICE: ThemeChoice = {
   foldOnMap: true,
   mapStyle: FREE_MAP_STYLE,
   reduceMotion: false,
+  moveButtons: false,
 };
 
 /** What was stored, cleaned: anything unknown falls back to the default. */
@@ -116,6 +123,7 @@ export function parseChoice(raw: string | null | undefined): ThemeChoice {
       foldOnMap: value.foldOnMap !== false,
       mapStyle: isMapStyle(value.mapStyle) ? value.mapStyle : FREE_MAP_STYLE,
       reduceMotion: value.reduceMotion === true,
+      moveButtons: value.moveButtons === true,
     };
   } catch {
     return DEFAULT_CHOICE;

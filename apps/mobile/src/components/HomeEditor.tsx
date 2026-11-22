@@ -36,6 +36,7 @@ import { haptic } from '@/lib/haptics';
 import { HOME_GROUPS, homeWidget, type HomeWidget, type HomeWidgetId } from '@/lib/homeWidgets';
 import { useBottomClearance } from '@/lib/layout';
 import { useTapAgain } from '@/lib/tapAgain';
+import { useThemeChoice } from '@/lib/themePrefs';
 import { CHILD_TOUCH, PAGE_COLUMN, color, currentTheme, face, radius, shadow, space, themed } from '@/lib/theme';
 import { Glass } from './Glass';
 import { Icon } from './Icon';
@@ -387,6 +388,8 @@ function EditItem({
 }) {
   const widget = homeWidget(id);
   const calm = useCalm();
+  // Appearance's Move widgets with buttons: up and down at the right-hand corners, as well as dragging.
+  const { moveButtons } = useThemeChoice();
 
   // Hold, then drag: a quick swipe still scrolls the page.
   const pan = Gesture.Pan()
@@ -438,7 +441,8 @@ function EditItem({
       <Animated.View style={[follow, holding && styles.lifted]}>
         <Animated.View
           style={
-            calm || holding
+            // Still with Reduce motion, and with Move widgets with buttons, so the buttons hold still to press.
+            calm || holding || moveButtons
               ? null
               : { animationName: JIGGLE, animationDuration: 300 + (index % 3) * 20, animationDelay: (index * 70) % 300, animationIterationCount: 'infinite', animationTimingFunction: 'ease-in-out' }
           }
@@ -483,6 +487,36 @@ function EditItem({
           >
             <Icon name="minus" size={13} color="#FFFFFF" weight="bold" />
           </Pressable>
+          {moveButtons && index > 0 && (
+            <Pressable
+              onPress={() => {
+                haptic.select();
+                onStep(-1);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Move ${widget.title} up`}
+              style={({ pressed }) => [styles.step, styles.stepUp, pressed && styles.pressed]}
+            >
+              <View style={styles.turnUp}>
+                <Icon name="chevron" size={13} color={color.onBrand} weight="bold" />
+              </View>
+            </Pressable>
+          )}
+          {moveButtons && !last && (
+            <Pressable
+              onPress={() => {
+                haptic.select();
+                onStep(1);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Move ${widget.title} down`}
+              style={({ pressed }) => [styles.step, styles.stepDown, pressed && styles.pressed]}
+            >
+              <View style={styles.turnDown}>
+                <Icon name="chevron" size={13} color={color.onBrand} weight="bold" />
+              </View>
+            </Pressable>
+          )}
         </Animated.View>
       </Animated.View>
     </Animated.View>
@@ -690,6 +724,24 @@ const styles = themed(() => {
       borderColor: color.groupedBackground,
       zIndex: 30,
     },
+    // Move widgets with buttons (Appearance): round, in the accent, at the right-hand corners.
+    step: {
+      position: 'absolute',
+      right: -8,
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: color.brandFill,
+      borderWidth: 2,
+      borderColor: color.groupedBackground,
+      zIndex: 30,
+    },
+    stepUp: { top: -8 },
+    stepDown: { bottom: -8 },
+    turnUp: { transform: [{ rotate: '-90deg' }] },
+    turnDown: { transform: [{ rotate: '90deg' }] },
     addBadge: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#34C759' },
     pressed: { opacity: 0.6 },
     empty: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3] + 2, borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },

@@ -464,6 +464,23 @@ export default function AppearanceScreen() {
               accessibilityLabel="Reduce motion"
             />
           </View>
+          <View style={styles.toggleRule} />
+          <View style={styles.toggleRow}>
+            <View style={styles.flex}>
+              <Txt variant="body">Move widgets with buttons</Txt>
+              <Txt variant="footnote" color={color.labelSecondary}>
+                Up and down buttons on each widget while you customise Home, which then hold still, for when holding and dragging is hard
+              </Txt>
+            </View>
+            <Toggle
+              value={choice.moveButtons}
+              onValueChange={(moveButtons) => {
+                haptic.select();
+                setThemeChoice({ moveButtons });
+              }}
+              accessibilityLabel="Move widgets with buttons"
+            />
+          </View>
         </View>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {phoneCalm
@@ -1276,6 +1293,7 @@ const styles = themed(() =>
     flex: { flex: 1 },
     textSample: { gap: 2, padding: space[3], borderRadius: concentric(radius.lg, space[3]), borderCurve: 'continuous', backgroundColor: color.fill },
     toggleRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[1] },
+    toggleRule: { height: StyleSheet.hairlineWidth, backgroundColor: color.separator, marginVertical: space[3], marginLeft: space[1] },
     cornerPreview: { width: '100%', aspectRatio: 1.25, padding: 10, justifyContent: 'flex-end', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
     cornerOn: { borderColor: color.brand },
     cornerButton: { height: 18, backgroundColor: color.brandFill },

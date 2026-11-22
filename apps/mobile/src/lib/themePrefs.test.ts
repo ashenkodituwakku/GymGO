@@ -58,5 +58,9 @@ describe('your adjustments', () => {
     expect(parseChoice(JSON.stringify({ foldOnMap: false, mapStyle: 'deep', reduceMotion: true }))).toMatchObject({ foldOnMap: false, mapStyle: 'deep', reduceMotion: true });
     // Only a plain false turns folding off; anything else keeps the default.
     expect(parseChoice(JSON.stringify({ foldOnMap: 'no', mapStyle: 'satellite', reduceMotion: 'yes' }))).toMatchObject({ foldOnMap: true, mapStyle: 'standard', reduceMotion: false });
+    // Move widgets with buttons: off unless chosen, and only a real true turns it on.
+    expect(parseChoice(null).moveButtons).toBe(false);
+    expect(parseChoice(JSON.stringify({ moveButtons: true })).moveButtons).toBe(true);
+    expect(parseChoice(JSON.stringify({ moveButtons: 'yes' })).moveButtons).toBe(false);
   });
 });

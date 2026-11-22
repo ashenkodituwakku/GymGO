@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 246 · Home's widgets can be moved with buttons, for anyone who finds dragging hard
+
+*22 Nov 2026 · the commit "Move widgets with buttons: an Appearance setting for Customise Home"*
+
+Update 230 left a question open: on Home a widget is moved only by holding and dragging it, and someone who can't hold and drag had no other way with a mouse or a finger (WCAG 2.2's 2.5.7; screen readers and the keyboard already had Move up and Move down). Up and down buttons on every widget would have changed the iPhone-style editing you asked for in Update 72, so they're a setting instead, off unless you turn it on:
+
+- **Appearance → Motion → Move widgets with buttons.** With it on, while you customise Home each widget has a round up button at its top-right corner and a down button at its bottom-right, in the accent, matching the − badges at the left (the first has no up, the last no down). Each moves its widget one place; focus stays on the button, so it can be pressed again to keep going. Widgets also stop jiggling while it's on, so the buttons hold still to press.
+- **With it off (as it starts), Customise Home is exactly as before**: jiggle, − badges, hold and drag, + and Done.
+- If you'd rather the buttons always showed, or weren't offered at all, it's a one-line change either way.
+- Checked in the browser: with the setting off, no move buttons; with it on, 20 on 11 widgets; Move down on the first widget moved it to second with focus staying on its button, and Move up put it back; nothing jiggles; axe and the target-size rule on Home while customising, light and dark, phone and desktop: clean. The setting is stored like the rest of Appearance (the settings test now covers it). App tests 626.
+
 ## Update 245 · Checked: this week's type rules in every look
 
-*22 Nov 2026 · the commit "Docs: the type rules checked in every look (Update 245)"*
+*22 Nov 2026 · `123db97`*
 
 The week's type changes (labels centred by their capitals, the growing welcome headline, hyphenation, bold that doesn't move, two-line card titles) had only been tried in the Standard look. The other ten looks draw in very different faces (Paper's serif, Terminal's monospace, 8-bit's pixels, Comic's display letters), so each was swept:
 

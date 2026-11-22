@@ -516,6 +516,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Scrolling never waits on the app (22 Nov): rows bind their own wheel listener, the page's is passive; tooltips decide icon-only buttons without a layout read | ✅ | ✅ listeners read through Chrome's tools; swipes still claimed on 4 pages ± Reduce motion; tooltips by mouse and Tab, none on worded buttons; app 626 tests | n/a | n/a | ⚠️ the website gets it with the next publish | n/a |
 | Checked (22 Nov): the iPhone and Android bundles (Hermes) build with this week's work; browser-only code absent, shared code present | ✅ | ✅ expo export for iOS and Android, no errors or warnings; strings looked up in both bundles | ❌ not run on a phone | n/a | n/a | n/a |
 | Checked (22 Nov): the week's type rules in all 11 looks | ✅ | ✅ cut-text and spilled-label sweep, 10 looks × 6 pages at 390 and 5 pages at 1280; welcome headline in 8-bit and Comic at both widths | n/a | n/a | n/a | n/a |
+| Move widgets with buttons (22 Nov): an Appearance setting, off by default, adding up/down buttons to each widget while customising Home (and stopping the jiggle) | ✅ | ✅ in the browser: off shows none, on shows 20 on 11 widgets, moves keep focus, order restored; axe + target-size on Home editing × light/dark × 390/1280; settings test covers it; app 626 tests | ❌ not on a phone | n/a | ⚠️ the website gets it with the next publish | n/a |
 
 **What "tested locally" means for the phone app, exactly:**
 

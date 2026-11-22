@@ -188,10 +188,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
   over a dimmed page takes `<SheetClip takesFocus holdsFocus="Name">`
   so focus stays in it (Filters). A page-level Escape handler should
   ignore keys pressed inside `[aria-modal="true"]` (React Native Web's
-  Modal doesn't mark its Escape as handled). Open question for the
-  owner: a non-drag way for a pointer to move Home's widgets (WCAG
-  2.5.7), e.g. up/down buttons while editing; not added because it
-  changes the iPhone-style editing they asked for. Spelling: cspell
+  Modal doesn't mark its Escape as handled). A non-drag way for a
+  pointer to move Home's widgets (WCAG 2.5.7) is Appearance's Move
+  widgets with buttons (ThemeChoice.moveButtons, off by default, Update
+  246): up/down buttons on each widget while editing, and no jiggle;
+  ask the owner before making it the default. Spelling: cspell
   with en-GB over the app's text found nothing (install it outside the
   repo; it only reads files inside its working folder).
 

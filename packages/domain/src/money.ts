@@ -256,8 +256,19 @@ export function describeMembership(offer: VisitOffer): MembershipCostView | null
   if (offer.productType !== 'membership' || terms === null) return null;
 
   const days = terms.billingIntervalDays;
+  // A year paid up front is "per year", not "every 365 days".
   const billingLabel =
-    days === 7 ? 'per week' : days === 14 ? 'per fortnight' : days === 28 ? 'per 4 weeks' : days >= 28 && days <= 31 ? 'per month' : `every ${days} days`;
+    days === 7
+      ? 'per week'
+      : days === 14
+        ? 'per fortnight'
+        : days === 28
+          ? 'per 4 weeks'
+          : days >= 28 && days <= 31
+            ? 'per month'
+            : days === 365 || days === 366
+              ? 'per year'
+              : `every ${days} days`;
 
   const upfrontParts = [terms.joiningFeeMinor, terms.accessCardFeeMinor];
   const upfrontUnknown = upfrontParts.some((part) => part === null);

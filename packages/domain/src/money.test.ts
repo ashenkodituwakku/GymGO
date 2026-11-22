@@ -163,6 +163,18 @@ describe('describeMembership', () => {
   it('returns nothing for a non-membership product', () => {
     expect(describeMembership(offer())).toBeNull();
   });
+
+  it('says a year as a year, and any other odd length in days', () => {
+    const every = (billingIntervalDays: number) =>
+      describeMembership(
+        offer({
+          productType: 'membership',
+          baseAmountMinor: 80000,
+          membershipTerms: { billingIntervalDays, joiningFeeMinor: 0, accessCardFeeMinor: 0, minimumTermDays: null, cancellationNoticeDays: null, notes: [] },
+        }),
+      )?.billingLabel;
+    expect([7, 14, 28, 30, 365, 366, 90].map(every)).toEqual(['per week', 'per fortnight', 'per 4 weeks', 'per month', 'per year', 'per year', 'every 90 days']);
+  });
 });
 
 describe('which money visit prices are kept in', () => {

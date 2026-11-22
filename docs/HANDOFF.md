@@ -118,6 +118,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Billing words** (22 Nov). `describeMembership` (packages/domain
+  money.ts) says 7, 14, 28, 28–31 and 365/366 days as week, fortnight,
+  4 weeks, month and year; anything else in days. The gym page's price
+  fact is the price of one visit: unknown, it says "visit price", as a
+  gym can publish memberships and not that.
+
 - **The website version, checked as it's built** (20 Nov). Run Metro
   as gymgo.site builds it: `EXPO_PUBLIC_API_URL=none
   EXPO_PUBLIC_LIMITED=on EXPO_PUBLIC_ACCOUNT=optional` (on another port

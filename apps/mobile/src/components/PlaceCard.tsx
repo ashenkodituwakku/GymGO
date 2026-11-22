@@ -398,7 +398,8 @@ export function PlaceCard({
       <Animated.View style={styles.facts}>
         {/* What isn't known says so in words, rather than a bare dash or question mark. */}
         {price.headline === '—' ? (
-          <Fact icon="money" value="Unknown" caption="price" tint={color.maybeInk} unknown />
+          // "visit price": a gym can publish its memberships (shown above) and still not what one visit costs.
+          <Fact icon="money" value="Unknown" caption="visit price" tint={color.maybeInk} unknown />
         ) : (
           <Fact icon="money" value={price.headline} caption={price.caption} tint={price.confirmed ? color.label : color.maybeInk} />
         )}

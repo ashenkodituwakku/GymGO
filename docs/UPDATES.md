@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 233 · Yearly plans say "per year"; an unknown visit price is called that
+
+*22 Nov 2026 · the commit "Yearly plans say per year; a gym page's unknown price is the visit price"*
+
+Two pieces of wording found looking at real gyms in other countries on the website version:
+
+- **"per year", not "every 365 days".** A plan paid a year at a time (Activ Fitness in Zurich, Equilibrium Fitness in North Melbourne) read "599 CHF every 365 days". It now reads "599 CHF per year", on the gym's price boxes and in Join this gym. Other odd lengths still say their days ("every 90 days"). In the shared money rules, so the server and app agree; a new test covers each length.
+- **"Unknown visit price", not "Unknown price".** On Activ Fitness's page, the membership prices sat a little above a fact that said "Unknown price", which read as a contradiction. That fact is about one visit, so it now says so. Known prices are unchanged ("A$22 per visit").
+- Checked in the browser on the website version: both pages' price boxes read "per year"; Zurich, Madrid and Detroit on Explore with nothing cut short; 18 of the longest real gym names (Detroit, Brisbane, Tampa, Sydney, Madrid, Nashville, Adelaide, Honolulu, New York, Washington, Barcelona, Zurich, Perth) on their pages and Home at 390 and 320 wide, nothing cut short. Tests: shared rules 199, app 619, server 315.
+
 ## Update 232 · The website version checked as it's built: long real names and plan names in full
 
-*20 Nov 2026 · the commit "Website version: long real gym names, plan names and workout lists shown in full; two labels match their words"*
+*20 Nov 2026 · `ba23a34`*
 
 The checks so far had run on the full app with the invented demo gyms. This round ran them on the website version as gymgo.site builds it (the limited version, no account needed, no server), where every gym is a real one with its own, sometimes long, name. Headings, axe, target size, focus behind the bars, the console and keyboard order were all clean there. Real names and real plan names turned up text that lost its end:
 

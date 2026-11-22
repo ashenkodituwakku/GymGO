@@ -9,7 +9,7 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
-## Update 233 · Yearly plans say "per year"; an unknown visit price is called that
+## Update 235 · Yearly plans say "per year"; an unknown visit price is called that
 
 *22 Nov 2026 · the commit "Yearly plans say per year; a gym page's unknown price is the visit price"*
 
@@ -18,6 +18,43 @@ Two pieces of wording found looking at real gyms in other countries on the websi
 - **"per year", not "every 365 days".** A plan paid a year at a time (Activ Fitness in Zurich, Equilibrium Fitness in North Melbourne) read "599 CHF every 365 days". It now reads "599 CHF per year", on the gym's price boxes and in Join this gym. Other odd lengths still say their days ("every 90 days"). In the shared money rules, so the server and app agree; a new test covers each length.
 - **"Unknown visit price", not "Unknown price".** On Activ Fitness's page, the membership prices sat a little above a fact that said "Unknown price", which read as a contradiction. That fact is about one visit, so it now says so. Known prices are unchanged ("A$22 per visit").
 - Checked in the browser on the website version: both pages' price boxes read "per year"; Zurich, Madrid and Detroit on Explore with nothing cut short; 18 of the longest real gym names (Detroit, Brisbane, Tampa, Sydney, Madrid, Nashville, Adelaide, Honolulu, New York, Washington, Barcelona, Zurich, Perth) on their pages and Home at 390 and 320 wide, nothing cut short. Tests: shared rules 199, app 619, server 315.
+
+## Update 234 · Each navigation icon plays its own little scene
+
+*21 Nov 2026 · `aa6ec54`*
+
+You said Update 233's motions weren't what you meant: you wanted a custom animation for each icon, like Progress's arrow coming out of the axis as the graph grows and the dumbbell having plates added. So the tab bar's and the sidebar's icons are now drawn in parts, and each plays a scene of its own when the mouse is on it, in a browser:
+
+- **Progress:** the graph line draws itself out of the axis, and as it reaches the top the arrow shoots out past the end and settles.
+- **Workout:** the inner plates slide onto the bar, then the outer plates, each with a little clank, and the bar dips with the weight.
+- **Home:** the roof hops and lands, and the door swings open on its hinge.
+- **Explore:** the map's two outer panels unfold from the middle one.
+- **Saved:** the bookmark drops in and bounces, and a fill runs down it.
+- **Profile** (when you're signed out and it shows the icon): the head pops up as the ring draws round.
+- **My workouts:** the clip snaps down and the two lines write themselves, one after the other.
+- **Programme:** the calendar's rings flick and the days pop in, one by one.
+- **Collection:** the front card flips over and the one behind slides out.
+- **Friends:** the one in the middle hops and a friend steps out from behind each side.
+- **Appearance:** the palette rocks and its four paints pop and light up in colour.
+
+At rest each icon looks exactly as before: they're Phosphor's own outlines, redrawn from the strokes they're designed from (laid over the old ones, they match). The page you're on (its filled icon) doesn't play, nor does anything with Reduce motion on, and moving the mouse away ends a scene at once. Phones and tablets have no hover, so they keep the icons as they were. Other icons around the app keep Update 233's small motions; they're font glyphs in a browser, so they can't be taken apart the same way.
+
+- Checked: typecheck and all app tests pass (624; the scene tests check each icon has a scene and every animation it names exists). In the browser, frames caught along each scene at 120, 300, 480, 700 and 1100 ms show each one playing as described; a line waits hidden for its turn; leaving mid-scene puts the icon back at rest; the tab bar's icons play too, in dark mode; no page errors.
+
+## Update 233 · Icons move a little under the mouse
+
+*21 Nov 2026 · `854b2ec`*
+
+You asked for little animations on icons when you hover over them. On the website (and in a browser on a computer), pointing at a button, link or row now moves its icon a little, in a way that says what it does:
+
+- **A chevron steps forward and Back steps back**, Share, Send, Progress and Workout rise, Download dips, an outside link or Directions moves up and out.
+- **Settings' gear turns, Refresh and History wind back, Plus and Close turn a quarter.**
+- **The bell and the phone ring, Save and the stars pop, Search and the palette tilt, the eye blinks, a bin or a warning gives a small shake**, Expand grows, Collapse shrinks, the menu widens.
+- **Anything else lifts a point and grows a touch**, the sidebar's and the tab bar's icons included.
+
+Kept calm on purpose: only the icons of the one thing under the pointer move, never those of a button inside it. A big card, like a gym's, moves only its arrow, so its little icons don't all go at once, and nothing with more than three icons moves. **Reduce motion** (yours in Appearance, or your system's) keeps them still. Phones and tablets have no hover, so nothing changes there.
+
+- Checked: typecheck and all app tests pass (623, four new ones on the motions, the rules and Reduce motion). In the browser, at computer and phone width: the icons are tagged (71 on Profile); a row's icon lifts and its chevron steps forward, then both settle back when the pointer leaves; the sidebar's palette tilts and Saved's bookmark pops; with Reduce motion on, nothing moves; no page errors.
 
 ## Update 232 · The website version checked as it's built: long real names and plan names in full
 

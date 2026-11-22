@@ -273,7 +273,13 @@ your accent glows behind them.
   lifts, and in a glass look (Standard, Frost, Liquid) a light follows the
   pointer across it, behind its words, with its rim catching the light
   nearest the pointer. With Reduce motion on, the cards stay put and only
-  the light moves.
+  the light moves. Everywhere in a browser, an icon on a button, link or
+  row moves a little when the mouse is on it, in a way that fits what it
+  does (a chevron steps forward, the bell rings, Save pops, Settings' gear
+  turns); the tab bar's and sidebar's icons each play a scene of their own
+  (Progress's graph draws itself and its arrow shoots out, Workout's
+  barbell is loaded plate by plate, Home's door swings open). A big card
+  moves only its arrow, and Reduce motion keeps them all still.
 - **Explore**: the map with the results sheet, filters, and sorting (best
   match, closest, cheapest, top rated). "Best match" means: gyms that meet
   everything you asked first, then, among the rest, the ones with the fewest

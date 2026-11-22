@@ -9,7 +9,9 @@
  *
  * It stays while the pointer is on the button or the label itself, goes
  * with Escape, a press or a scroll (WCAG 1.4.13), and only for a mouse or
- * trackpad (`hover: hover`). No fade with Reduce motion.
+ * trackpad (`hover: hover`). Tabbing to such a button from the keyboard
+ * shows its label too, with the same wait, so someone who can see but
+ * doesn't use a mouse gets the name as well. No fade with Reduce motion.
  */
 
 /** The first label's wait, and how long after one goes the next can come at once. */
@@ -78,19 +80,8 @@ function hide() {
   target = null;
 }
 
-function onOver(event: PointerEvent) {
-  if (event.pointerType !== 'mouse') return;
-  if (tip && (event.target === tip || tip.contains(event.target as Node))) {
-    if (hideTimer) clearTimeout(hideTimer);
-    hideTimer = null;
-    return;
-  }
-  const found = iconButton(event.target);
-  if (!found) {
-    // Off the button (and not on its label): give the pointer a moment to reach the label.
-    if (target && !hideTimer) hideTimer = setTimeout(hide, 120);
-    return;
-  }
+/** Arrange for a button's label: at once if one showed a moment ago, else after the first wait. */
+function aim(found: { el: HTMLElement; name: string }) {
   if (hideTimer) clearTimeout(hideTimer);
   hideTimer = null;
   if (found.el === target) return;
@@ -106,6 +97,35 @@ function onOver(event: PointerEvent) {
     showTimer = null;
     if (target === found.el && found.el.isConnected) show(found.el, found.name);
   }, wait);
+}
+
+/** Focus from the keyboard (not a click) on an icon-only button. */
+function onFocus(event: FocusEvent) {
+  const el = event.target as HTMLElement | null;
+  if (!el?.matches?.(':focus-visible')) return;
+  const found = iconButton(el);
+  if (found && found.el === el) aim(found);
+  else if (target) hide();
+}
+
+function onBlur(event: FocusEvent) {
+  if (target && event.target === target) hide();
+}
+
+function onOver(event: PointerEvent) {
+  if (event.pointerType !== 'mouse') return;
+  if (tip && (event.target === tip || tip.contains(event.target as Node))) {
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = null;
+    return;
+  }
+  const found = iconButton(event.target);
+  if (!found) {
+    // Off the button (and not on its label): give the pointer a moment to reach the label.
+    if (target && !hideTimer) hideTimer = setTimeout(hide, 120);
+    return;
+  }
+  aim(found);
 }
 
 export function installTooltips(): void {
@@ -134,8 +154,20 @@ export function installTooltips(): void {
   } satisfies Partial<CSSStyleDeclaration>);
   document.body.appendChild(tip);
   document.addEventListener('pointerover', onOver, { passive: true });
+  document.addEventListener('focusin', onFocus);
+  document.addEventListener('focusout', onBlur);
   document.addEventListener('pointerdown', hide, { passive: true, capture: true });
-  document.addEventListener('scroll', hide, { passive: true, capture: true });
+  // A scroll takes a mouse's label away; one for a button focused from the keyboard (which the
+  // browser may have scrolled to) moves with it instead.
+  document.addEventListener(
+    'scroll',
+    () => {
+      if (target && document.activeElement === target) {
+        if (tip?.style.display === 'block') place(target);
+      } else hide();
+    },
+    { passive: true, capture: true },
+  );
   document.addEventListener('keydown', (event) => event.key === 'Escape' && target && hide(), { capture: true });
   window.addEventListener('blur', hide);
 }

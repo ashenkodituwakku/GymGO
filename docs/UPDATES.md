@@ -9,6 +9,21 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 249 · Apple Pay, Google Pay and PayPal, ready for you to switch on
+
+*22 Nov 2026 · the commit "Payments: Apple Pay and Google Pay through Stripe, PayPal through GymGO's own account; off until set up"*
+
+You asked to polish the app and include paying with Apple Pay, Google Pay and PayPal, which you'll set up later. Everything is built and switched off until you connect it; `docs/PAYMENTS.md` has the steps.
+
+- **Apple Pay and Google Pay come with Stripe's checkout page.** Turn them on in the Stripe Dashboard (Settings → Payment methods) and they appear on devices that have them, with no code or domain set-up. The server reads Stripe's own settings, so the Pro page says only what's really on: "Card, Apple Pay or Google Pay, on Stripe's secure page", under Subscribe.
+- **PayPal has its own button,** "Pay with PayPal", under Subscribe, once your PayPal business account's keys are set and `paypal:setup` has made GymGO's plans in PayPal. It works for monthly and yearly Pro and Duo, A$ and US$, and the free trial. Stripe offers PayPal on its page only to businesses in Europe, and GymGO's A$ and US$ prices suggest yours isn't, so PayPal is connected directly (PayPal's Subscriptions API). If your Stripe account is European, PayPal can simply be turned on in Stripe instead; the page then lists it there.
+- **Pro is the same whichever way you pay.** A PayPal subscription is checked with PayPal when you come back (Pro turns on at once), kept in step by PayPal's webhook or a re-check every ten minutes, and keeps Pro until the end of what was paid for if cancelled. Manage subscription opens PayPal's page for PayPal subscribers, and deleting an account cancels at PayPal first.
+- **Polish on the Pro page:** the renewal terms now say that "Pay with PayPal" agrees to them too, and the trial's line names PayPal when it's offered. Walking the main screens at phone and computer width, light and dark, found nothing else broken.
+
+**Yours, when you want it on:** turn on Apple Pay and Google Pay in Stripe; for PayPal, a business account, an app at developer.paypal.com (its keys in `.env.local`), `paypal:setup`, and the webhook. **Before PayPal takes real money**, the Privacy Policy and Terms must name PayPal (they name only Stripe). I haven't changed them, because that wording is yours to approve; `docs/PAYMENTS.md` lists what would change. Inside the phone apps, the stores' own rules for selling subscriptions still apply, as before.
+
+- Checked: typecheck and every package's tests pass (server 341, with 26 new for PayPal and the ways to pay). With the server's answers stood in, the Pro page shows the line and the PayPal button in light and dark, at phone and computer width, with no page errors. Nothing has talked to the real Stripe or PayPal: there are no keys here.
+
 ## Update 248 · No more hitch when you click the map
 
 *22 Nov 2026 · the commit "Explore: picking a gym on the map no longer redraws the whole app in that frame"*

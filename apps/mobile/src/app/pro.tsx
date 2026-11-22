@@ -15,10 +15,13 @@ import {
   PRO_FEATURE_GROUPS,
   annualSaving,
   formatPlanPrice,
+  orList,
   proPrice,
+  stripePageNames,
   trialEndsAt,
   type BillingCurrency,
   type BillingInterval,
+  type PayWith,
 } from '@gymgo/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -36,7 +39,7 @@ import { ApiError, OfflineError, apiBase, serverHosted } from '@/lib/api';
 import { serverOfflineLine } from '@/lib/copy';
 import { LIMITED } from '@/lib/limited';
 import { haptic } from '@/lib/haptics';
-import { CAN_BUY_HERE, openManage, startCheckout } from '@/lib/purchase';
+import { CAN_BUY_HERE, manageSubscription, startCheckout, startPayPalCheckout } from '@/lib/purchase';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
@@ -109,6 +112,8 @@ export default function ProScreen() {
   const [picked, setCurrency] = useState<BillingCurrency | null>(null);
   const currency: BillingCurrency = picked ?? (home === 'AU' || home === 'NZ' ? 'aud' : 'usd');
   const [busy, setBusy] = useState(false);
+  // Which page is opening, for the button's words: Stripe's or PayPal's.
+  const [via, setVia] = useState<'stripe' | 'paypal'>('stripe');
   const [problem, setProblem] = useState<string | null>(null);
   const [welcome, setWelcome] = useState(false);
   const token = account.token;
@@ -143,19 +148,21 @@ export default function ProScreen() {
   const saving = monthly && yearly ? annualSaving(monthly.amountMinor, yearly.amountMinor) : null;
   const chosen = interval === 'year' ? yearly : monthly;
 
-  const subscribe = async () => {
+  const subscribe = async (with_: 'stripe' | 'paypal' = 'stripe') => {
     if (!token || !chosen) return;
     setBusy(true);
+    setVia(with_);
     setProblem(null);
     try {
-      const outcome = await startCheckout(token, interval, currency, plan === 'duo' && duoOnSale ? 'duo' : 'pro', trial !== null);
-      if (outcome === 'left') return; // The browser is on its way to Stripe.
+      const start = with_ === 'paypal' ? startPayPalCheckout : startCheckout;
+      const outcome = await start(token, interval, currency, plan === 'duo' && duoOnSale ? 'duo' : 'pro', trial !== null);
+      if (outcome === 'left') return; // The browser is on its way to Stripe or PayPal.
       const next = await billing.refresh(true);
       if (next?.plan === 'pro') {
         haptic.success();
         setWelcome(true);
       } else if (outcome === 'done') {
-        setProblem('Stripe hasn’t confirmed the payment yet. Give it a moment, then open this screen again.');
+        setProblem(`${with_ === 'paypal' ? 'PayPal' : 'Stripe'} hasn’t confirmed the payment yet. Give it a moment, then open this screen again.`);
       }
     } catch (error) {
       setProblem(messageFor(error));
@@ -171,7 +178,7 @@ export default function ProScreen() {
     setBusy(true);
     setProblem(null);
     try {
-      const outcome = await openManage(token);
+      const outcome = await manageSubscription(token, billing.subscription);
       if (outcome !== 'left') await billing.refresh(true);
     } catch (error) {
       setProblem(messageFor(error));
@@ -208,7 +215,12 @@ export default function ProScreen() {
               {billing.grant ? grantLine(billing.grant) : `${billing.duo ? 'Duo: you and one more person. ' : ''}${describeSubscription(billing.subscription)}`}
             </Txt>
             {billing.grant ? null : billing.subscription?.manageable === false ? null : CAN_BUY_HERE ? (
-              <PrimaryButton label={busy ? 'Opening Stripe…' : 'Manage subscription'} tone="quiet" disabled={busy} onPress={() => void manage()} />
+              <PrimaryButton
+                label={busy ? `Opening ${billing.subscription?.provider === 'paypal' ? 'PayPal' : 'Stripe'}…` : 'Manage subscription'}
+                tone="quiet"
+                disabled={busy}
+                onPress={() => void manage()}
+              />
             ) : (
               <Txt variant="footnote" color={color.labelSecondary}>
                 {serverHosted() ? 'Manage it on GymGO’s website.' : 'Manage it from GymGO on your computer.'}
@@ -320,6 +332,9 @@ export default function ProScreen() {
               sale={billing.sale}
               onAskAgain={billing.askSale}
               busy={busy}
+              via={via}
+              payWith={billing.payWith}
+              onPayPal={() => void subscribe('paypal')}
               label={
                 trial
                   ? `Start ${trial.days}-day free trial`
@@ -331,10 +346,10 @@ export default function ProScreen() {
                 !chosen
                   ? null
                   : trial
-                    ? `Free for ${trial.days} days, then ${formatPlanPrice(chosen.amountMinor, currency)} a month, tax included, until you cancel. Stripe takes your card now; the first payment is on ${dayLabel(trialEndsAt(new Date(), trial.days).toISOString())}. Cancel before then in Profile → Manage subscription and you aren’t charged. Tapping Start agrees to these terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
-                    : `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; Pro stays on to the end of the ${interval} you’ve paid for. Tapping Subscribe agrees to these renewal terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
+                    ? `Free for ${trial.days} days, then ${formatPlanPrice(chosen.amountMinor, currency)} a month, tax included, until you cancel. ${billing.payWith?.paypal === 'direct' ? 'Stripe (or PayPal) takes your payment details' : 'Stripe takes your card'} now; the first payment is on ${dayLabel(trialEndsAt(new Date(), trial.days).toISOString())}. Cancel before then in Profile → Manage subscription and you aren’t charged. Tapping Start${billing.payWith?.paypal === 'direct' ? ' or Pay with PayPal' : ''} agrees to these terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
+                    : `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; Pro stays on to the end of the ${interval} you’ve paid for. Tapping Subscribe${billing.payWith?.paypal === 'direct' ? ' or Pay with PayPal' : ''} agrees to these renewal terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
               }
-              onSubscribe={() => void subscribe()}
+              onSubscribe={() => void subscribe('stripe')}
               onSignIn={() => router.push('/sign-in')}
             />
           </>
@@ -392,6 +407,9 @@ function BuyButton({
   sale,
   onAskAgain,
   busy,
+  via,
+  payWith,
+  onPayPal,
   label,
   renewal,
   onSubscribe,
@@ -401,6 +419,11 @@ function BuyButton({
   sale: Sale;
   onAskAgain: () => void;
   busy: boolean;
+  /** Which page is opening: Stripe's or PayPal's. */
+  via: 'stripe' | 'paypal';
+  /** The ways checkout takes, as the server's payment settings say; null when not known. */
+  payWith: PayWith | null;
+  onPayPal: () => void;
   label: string;
   /** The auto-renewal terms, shown right by the button that agrees to them. */
   renewal: string | null;
@@ -455,9 +478,28 @@ function BuyButton({
       </View>
     );
   }
+  // What Stripe's page takes, named only when the server has read it from the payment settings.
+  const onStripe = stripePageNames(payWith);
+  const paypal = payWith?.paypal === 'direct';
   return (
     <View style={styles.gap}>
-      <PrimaryButton label={busy ? 'Opening Stripe…' : label} disabled={busy} onPress={onSubscribe} />
+      <PrimaryButton label={busy && via === 'stripe' ? 'Opening Stripe…' : label} disabled={busy} onPress={onSubscribe} />
+      {onStripe.length > 0 && (
+        <View style={styles.payWith}>
+          <Icon name="lock" size={12} color={color.labelSecondary} />
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.payWithText}>
+            {`${orList(onStripe).replace(/^./, (first) => first.toUpperCase())}, on Stripe’s secure page`}
+          </Txt>
+        </View>
+      )}
+      {paypal && (
+        <PrimaryButton
+          label={busy && via === 'paypal' ? 'Opening PayPal…' : 'Pay with PayPal'}
+          tone="quiet"
+          disabled={busy}
+          onPress={onPayPal}
+        />
+      )}
       {!!renewal && <LegalText variant="footnote" tint={color.labelSecondary} style={styles.center} text={renewal} />}
     </View>
   );
@@ -545,6 +587,9 @@ const styles = themed(() => StyleSheet.create({
   flex: { flex: 1 },
   center: { textAlign: 'center' },
   gap: { gap: space[2] },
+  // "Pay by card, Apple Pay or Google Pay", under the button that opens Stripe's page.
+  payWith: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[1] },
+  payWithText: { flexShrink: 1, textAlign: 'center' },
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[4], paddingBottom: space[8], width: '100%', maxWidth: 560, alignSelf: 'center' },
   hero: { alignItems: 'center', gap: space[2], paddingTop: space[2] },

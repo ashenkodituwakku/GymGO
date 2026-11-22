@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LIMITS, PRO_PRICES, TRIAL_DAYS, TRIAL_OFFER_DAYS, annualSaving, formatPlanPrice, isProStatus, proPrice, trialEndsAt, trialOffer } from './plans';
+import { LIMITS, PRO_PRICES, TRIAL_DAYS, TRIAL_OFFER_DAYS, annualSaving, formatPlanPrice, isProStatus, orList, proPrice, stripePageNames, trialEndsAt, trialOffer } from './plans';
 
 describe('plans', () => {
   it('gives Pro more of everything Free has', () => {
@@ -54,5 +54,20 @@ describe('the free trial', () => {
   });
   it('ends, and is first charged, 3 days after it starts', () => {
     expect(trialEndsAt(new Date('2026-10-06T10:00:00Z')).toISOString()).toBe('2026-10-09T10:00:00.000Z');
+  });
+});
+
+describe('the ways to pay, in words', () => {
+  it('names only what Stripe’s page really takes, and never PayPal’s own button', () => {
+    expect(stripePageNames(null)).toEqual([]);
+    expect(stripePageNames({ card: true, applePay: true, googlePay: true, link: false, paypal: 'direct' })).toEqual(['card', 'Apple Pay', 'Google Pay']);
+    expect(stripePageNames({ card: true, applePay: false, googlePay: false, link: true, paypal: 'stripe' })).toEqual(['card', 'PayPal']);
+  });
+
+  it('joins them as a person would', () => {
+    expect(orList([])).toBe('');
+    expect(orList(['card'])).toBe('card');
+    expect(orList(['card', 'Apple Pay'])).toBe('card or Apple Pay');
+    expect(orList(['card', 'Apple Pay', 'Google Pay'])).toBe('card, Apple Pay or Google Pay');
   });
 });

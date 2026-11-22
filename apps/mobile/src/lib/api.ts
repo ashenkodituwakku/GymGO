@@ -15,7 +15,7 @@
 
 import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
-import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review, CollectionTotals, FriendCard, BusyLevel, OwnerUpdatePayload, OwnExercise, OwnExerciseFields, Split, SplitFields, Weather } from '@gymgo/domain';
+import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PayWith, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review, CollectionTotals, FriendCard, BusyLevel, OwnerUpdatePayload, OwnExercise, OwnExerciseFields, Split, SplitFields, Weather } from '@gymgo/domain';
 import type { TrainingSession } from './training';
 import { pickApiBase, serverIsHosted } from './serverAddress';
 import { LIMITED } from './limited';
@@ -412,6 +412,10 @@ export interface SubscriptionInfo {
   manageable?: boolean;
   /** In its free trial: `renewsAt` is when it ends and the first payment is taken (missing from older servers). */
   trial?: boolean;
+  /** Who takes the payments: Stripe, or PayPal (missing from older servers: Stripe). */
+  provider?: 'stripe' | 'paypal';
+  /** Where a PayPal subscription is managed or cancelled: PayPal's automatic payments. */
+  manageUrl?: string | null;
 }
 
 export interface BillingState {
@@ -598,14 +602,22 @@ export const api = {
     request<unknown>('POST', `/api/moderation/photos/${encodeURIComponent(photoId)}`, { token, body }),
 
   billingPlans: () =>
-    request<{ available: boolean; prices: ProPrice[]; duo?: ProPrice[]; gifts?: Array<{ currency: BillingCurrency; amountMinor: number }>; limits: Record<PlanId, PlanLimits> }>(
-      'GET',
-      '/api/billing/plans',
-    ),
+    request<{
+      available: boolean;
+      prices: ProPrice[];
+      duo?: ProPrice[];
+      gifts?: Array<{ currency: BillingCurrency; amountMinor: number }>;
+      limits: Record<PlanId, PlanLimits>;
+      /** The ways checkout will really take (missing from older servers). */
+      payWith?: PayWith | null;
+    }>('GET', '/api/billing/plans'),
   billing: (token: string) => request<BillingState>('GET', '/api/billing', { token }),
   syncBilling: (token: string) => request<BillingState>('POST', '/api/billing/sync', { token }),
   checkout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string; plan?: 'pro' | 'duo'; trial?: boolean }) =>
     request<{ url: string }>('POST', '/api/billing/checkout', { token, body }),
+  /** PayPal's page to approve a Pro subscription paid with PayPal (GymGO's own PayPal account). */
+  paypalCheckout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string; plan?: 'pro' | 'duo'; trial?: boolean }) =>
+    request<{ url: string }>('POST', '/api/billing/paypal/checkout', { token, body }),
   giftCheckout: (token: string, body: { currency: BillingCurrency; returnUrl: string }) => request<{ url: string }>('POST', '/api/billing/gift', { token, body }),
   giftsBought: (token: string) => request<{ gifts: GiftBought[] }>('GET', '/api/billing/gifts', { token }),
   redeemGift: (token: string, code: string) => request<BillingState>('POST', '/api/billing/redeem', { token, body: { code } }),

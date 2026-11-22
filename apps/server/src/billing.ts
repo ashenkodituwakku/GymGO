@@ -33,11 +33,13 @@ import {
   type TrialOffer,
   type BillingCurrency,
   type BillingInterval,
+  type PayWith,
   type PlanId,
   type PlanLimits,
   type ProPrice,
 } from '@gymgo/domain';
 import type { Db } from './db';
+import { PAYPAL_ID_PREFIX, type PayPalPro } from './paypal';
 
 // --- The parts of Stripe used here ---------------------------------------------
 
@@ -76,6 +78,20 @@ export interface StripeCheckoutSession {
   metadata?: Record<string, string> | null;
 }
 
+/** One of Stripe's payment method settings (Dashboard → Settings → Payment methods): which are offered. */
+export interface StripePaymentMethodConfiguration {
+  id: string;
+  active: boolean;
+  is_default: boolean;
+  /** Set for a Connect platform's child settings, never for the account's own. */
+  application?: string | null;
+  card?: { available: boolean };
+  apple_pay?: { available: boolean };
+  google_pay?: { available: boolean };
+  link?: { available: boolean };
+  paypal?: { available: boolean };
+}
+
 /** The real client satisfies this; tests pass a fake that never calls Stripe. */
 export interface StripeApi {
   customers: {
@@ -98,6 +114,11 @@ export interface StripeApi {
   };
   prices: {
     list(params: { lookup_keys: string[]; active?: boolean; limit?: number }): Promise<{ data: StripePrice[] }>;
+  };
+  /** Which payment methods the account offers (card, Apple Pay, Google Pay, Link, PayPal…). */
+  paymentMethodConfigurations?: {
+    list(params: { active?: boolean; limit?: number }): Promise<{ data: StripePaymentMethodConfiguration[] }>;
+    retrieve(id: string): Promise<StripePaymentMethodConfiguration>;
   };
   /** Uploaded files: GymGO's icon for the checkout page, from the setup script. */
   files?: {
@@ -132,8 +153,12 @@ export interface SubscriptionView {
   renewsAt: string | null;
   /** When Pro ends, if it's been cancelled. */
   endsAt: string | null;
-  /** Bought through Stripe, so Stripe's page can change or cancel it. The local dev account's Pro can't be. */
+  /** Bought through Stripe (or PayPal), so its page can change or cancel it. The local dev account's Pro can't be. */
   manageable: boolean;
+  /** Who takes the payments: Stripe, or PayPal (paypal.ts). */
+  provider: 'stripe' | 'paypal';
+  /** Where a PayPal subscription is managed or cancelled (PayPal's automatic payments); null for Stripe's (its portal). */
+  manageUrl: string | null;
   /** In its free trial: `renewsAt` is when the trial ends and the first payment is taken. */
   trial: boolean;
 }
@@ -212,6 +237,13 @@ export interface BillingOptions {
   grantFor?: (userId: string) => ProGrant | null;
   /** A one-off payment went through (a gift, a day pass): perks.ts fulfils it, once. */
   onPaid?: (session: StripeCheckoutSession) => void;
+  /**
+   * The payment method setting (pmc_…) GymGO's checkouts use, when not the
+   * account's default (STRIPE_PAYMENT_METHOD_CONFIGURATION).
+   */
+  paymentMethodConfiguration?: string | null;
+  /** Pro paid with PayPal through GymGO's own PayPal account (paypal.ts), when connected. */
+  paypal?: PayPalPro | null;
 }
 
 export class Billing {
@@ -219,6 +251,7 @@ export class Billing {
   private giftCache: { at: number; prices: Array<GiftPrice & { id: string }> } | null = null;
   private portalConfig: { id: string | null } | null = null;
   private iconCache: { at: number; file: string | null } | null = null;
+  private payWithCache: { at: number; stripe: Omit<PayWith, 'paypal'> & { paypal: boolean } } | null = null;
 
   constructor(
     private readonly db: Db,
@@ -253,6 +286,54 @@ export class Billing {
       duo: live.filter((price) => price.plan === 'duo').map(strip),
       gifts: (await this.giftPrices()).map(({ id: _id, ...price }) => price),
     };
+  }
+
+  /**
+   * The ways to pay that checkout will really offer, from Stripe's own
+   * payment method settings: so the app says "Pay by card, Apple Pay or
+   * Google Pay" only when they're on. Null when that can't be read (payments
+   * off, or Stripe didn't answer): the app then names none.
+   */
+  async payWith(): Promise<PayWith | null> {
+    if (!this.enabled) return null;
+    const now = this.options.now().getTime();
+    if (!this.payWithCache || now - this.payWithCache.at >= PRICE_CACHE_MS) {
+      const read = await this.readPaymentMethods().catch(() => null);
+      // Unread, only what Stripe's checkout always takes (a card) is claimed; and PayPal, if it's GymGO's own.
+      if (!read) return { card: true, applePay: false, googlePay: false, link: false, paypal: (await this.paypalDirect()) ? 'direct' : null };
+      this.payWithCache = { at: now, stripe: read };
+    }
+    const { paypal, ...stripe } = this.payWithCache.stripe;
+    return { ...stripe, paypal: paypal ? 'stripe' : (await this.paypalDirect()) ? 'direct' : null };
+  }
+
+  /** PayPal through GymGO's own account is ready: connected, and its plans made. */
+  private async paypalDirect(): Promise<boolean> {
+    return (await this.options.paypal?.ready().catch(() => false)) ?? false;
+  }
+
+  private async readPaymentMethods(): Promise<(Omit<PayWith, 'paypal'> & { paypal: boolean }) | null> {
+    const settings = this.stripe.paymentMethodConfigurations;
+    if (!settings) return null;
+    const chosen = this.options.paymentMethodConfiguration;
+    const configuration = chosen
+      ? await settings.retrieve(chosen)
+      : (await settings.list({ active: true, limit: 20 })).data.find((item) => item.is_default && !item.application);
+    if (!configuration) return null;
+    const on = (method: { available: boolean } | undefined) => method?.available === true;
+    return {
+      card: on(configuration.card),
+      applePay: on(configuration.apple_pay),
+      googlePay: on(configuration.google_pay),
+      link: on(configuration.link),
+      paypal: on(configuration.paypal),
+    };
+  }
+
+  /** The chosen payment method setting, for a checkout; nothing for the account's default. */
+  private paymentMethodSetting(): { payment_method_configuration?: string } {
+    const chosen = this.options.paymentMethodConfiguration;
+    return chosen ? { payment_method_configuration: chosen } : {};
   }
 
   private async stripePrices(): Promise<Array<ProPrice & { id: string; plan: 'pro' | 'duo' }>> {
@@ -357,7 +438,7 @@ export class Billing {
    * the account's first 30 days, and once (any subscription it has ever had,
    * a trial included, rules it out).
    */
-  private trialFor(userId: string): TrialOffer | null {
+  trialFor(userId: string): TrialOffer | null {
     if (!this.enabled) return null;
     const account = this.db.prepare('select created_at from users where id = ?').get(userId) as { created_at: string } | undefined;
     if (!account) return null;
@@ -375,17 +456,21 @@ export class Billing {
     return end !== null && Date.parse(end) <= now;
   }
 
-  private view(row: SubscriptionRow, manageable: boolean): SubscriptionView {
+  private view(row: SubscriptionRow, stripeCustomer: boolean): SubscriptionView {
     const ending = row.cancel_at ?? (row.cancel_at_period_end ? row.current_period_end : null);
     const live = isProStatus(row.status);
+    const paypal = row.stripe_subscription_id.startsWith(PAYPAL_ID_PREFIX);
+    const manageUrl = paypal ? (this.options.paypal?.manageUrl() ?? null) : null;
     return {
+      provider: paypal ? 'paypal' : 'stripe',
+      manageUrl,
+      manageable: paypal ? manageUrl !== null : stripeCustomer,
       status: row.status,
       interval: row.interval === 'month' || row.interval === 'year' ? row.interval : null,
       currency: row.currency === 'aud' || row.currency === 'usd' ? row.currency : null,
       amountMinor: row.amount_minor,
       renewsAt: live && !ending ? row.current_period_end : null,
       endsAt: live ? ending : null,
-      manageable,
       trial: row.status === 'trialing',
     };
   }
@@ -424,6 +509,8 @@ export class Billing {
       },
       // A card even when nothing is due today: a trial bills it when it ends.
       ...(choice.trial ? { payment_method_collection: 'always' } : {}),
+      // Card, Apple Pay, Google Pay, Link (and PayPal in Europe): whichever the payment method setting turns on.
+      ...this.paymentMethodSetting(),
       ...SELLER_IS_GYMGO,
       ...(await this.checkoutLook()),
       // The renewal terms and where the full terms are, by the button that agrees to them, on Stripe's page too.
@@ -470,6 +557,7 @@ export class Billing {
       cancel_url: urls.cancel,
       metadata: { ...metadata, gymgo_account_id: account.id },
       payment_intent_data: { metadata: { ...metadata, gymgo_account_id: account.id } },
+      ...this.paymentMethodSetting(),
       ...SELLER_IS_GYMGO,
       ...(await this.checkoutLook()),
       ...(urls.terms && urls.refunds
@@ -533,6 +621,7 @@ export class Billing {
 
   /** Re-read every subscription this account has from Stripe. */
   async syncAccount(userId: string): Promise<PlanView> {
+    await this.options.paypal?.syncUser(userId).catch(() => undefined);
     const customer = this.customerIdFor(userId);
     if (customer && this.enabled) {
       const listed = await this.stripe.subscriptions.list({ customer, status: 'all', limit: 20 });
@@ -547,6 +636,7 @@ export class Billing {
    * reading the plan re-syncs now and then.
    */
   async planForFresh(userId: string): Promise<PlanView> {
+    await this.options.paypal?.syncUserIfStale(userId).catch(() => undefined);
     if (!this.enabled || this.options.webhookSecret) return this.planFor(userId);
     const row = this.db.prepare('select synced_at from billing_customers where user_id = ?').get(userId) as
       | { synced_at: string | null }
@@ -674,9 +764,12 @@ export class Billing {
    * keeps paying for an account that no longer exists.
    */
   async cancelAllFor(userId: string): Promise<void> {
+    // PayPal's own first (paypal.ts); then Stripe's.
+    await this.options.paypal?.cancelAllFor(userId);
     const running = (
       this.db.prepare('select * from subscriptions where user_id = ?').all(userId) as unknown as SubscriptionRow[]
-    ).filter((row) => isProStatus(row.status) || row.status === 'incomplete' || row.status === 'unpaid' || row.status === 'paused');
+    ).filter((row) => !row.stripe_subscription_id.startsWith(PAYPAL_ID_PREFIX))
+      .filter((row) => isProStatus(row.status) || row.status === 'incomplete' || row.status === 'unpaid' || row.status === 'paused');
     if (running.length === 0) return;
     if (!this.enabled) {
       throw new BillingError(

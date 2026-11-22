@@ -280,6 +280,21 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `data-gympal-launcher`) once the Modal has left. Scratchpad `popups.cjs`
   runs open → Tab → Escape for any opener.
 
+- **Apple Pay, Google Pay, PayPal** (22 Nov, Update 249). docs/PAYMENTS.md
+  is the owner's set-up. billing.ts `payWith()` reads Stripe's payment
+  method configuration (`paymentMethodConfigurations`: each method's
+  `available`), cached ten minutes, and `paymentMethodSetting()` passes
+  `STRIPE_PAYMENT_METHOD_CONFIGURATION` to checkouts. paypal.ts is PayPal
+  through GymGO's own account: `createPayPal` (REST over fetch),
+  `PayPalPro` (plans found by product `GYMGO-PRO` and description
+  `gymgo:<lookup key>[:trial]`, prices read back; checkout records nothing
+  until confirm; `readStatus` maps to Stripe's statuses; rows in
+  `subscriptions` as `paypal:I-…`). Anything that calls Stripe with a
+  subscription id must skip `paypal:` rows (cancelAllFor does). The app:
+  `stripePageNames`/`orList` for the line under Subscribe; `payWith.paypal
+  === 'direct'` shows Pay with PayPal; `manageSubscription` opens PayPal's
+  autopay page for `provider: 'paypal'`. legal.ts still names only Stripe:
+  PayPal must be added there (owner's wording) before it takes real money.
 - **Picking a gym on the map, kept light** (22 Nov, Update 248). The
   click's frame used to redraw the whole app. `addRecent` (app-state.tsx)
   now runs in `startTransition` and does nothing for the gym already first.

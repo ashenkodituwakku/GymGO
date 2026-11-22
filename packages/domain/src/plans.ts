@@ -43,6 +43,45 @@ export const LIMITS: Record<PlanId, PlanLimits> = {
 /** Above this, a limit reads as "unlimited". */
 export const UNLIMITED_FROM = 1000;
 
+/**
+ * The ways a GymGO server can take a payment right now, as its payment
+ * settings say (docs/PAYMENTS.md): never a promise the checkout can't keep.
+ *
+ * Card, Apple Pay, Google Pay and Link are on Stripe's checkout page, each
+ * there only when it's turned on in the Stripe Dashboard (Apple Pay and
+ * Google Pay show on devices that have them). PayPal is either on Stripe's
+ * page too ('stripe': Stripe offers it to businesses in Europe), or through
+ * GymGO's own PayPal account, with its own button ('direct'), or not at all.
+ */
+export interface PayWith {
+  card: boolean;
+  applePay: boolean;
+  googlePay: boolean;
+  link: boolean;
+  paypal: 'stripe' | 'direct' | null;
+}
+
+/**
+ * What Stripe's checkout page takes, in words, for "Pay by …": only what's
+ * really on. PayPal through GymGO's own account isn't on that page (it has
+ * its own button), so it isn't named here.
+ */
+export function stripePageNames(payWith: PayWith | null | undefined): string[] {
+  if (!payWith) return [];
+  const names: string[] = [];
+  if (payWith.card) names.push('card');
+  if (payWith.applePay) names.push('Apple Pay');
+  if (payWith.googlePay) names.push('Google Pay');
+  if (payWith.paypal === 'stripe') names.push('PayPal');
+  return names;
+}
+
+/** A list in words: "card", "card or Apple Pay", "card, Apple Pay or Google Pay". */
+export function orList(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  return `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`;
+}
+
 export interface ProPrice {
   /** Stripe's lookup key for this price, so the server never needs a price id. */
   lookupKey: string;

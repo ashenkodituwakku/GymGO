@@ -1,5 +1,6 @@
 /**
- * Paying for GymGO Pro: Stripe's own checkout page, opened from the app.
+ * Paying for GymGO Pro: Stripe's own checkout page (card, Apple Pay, Google
+ * Pay, whichever are on), or PayPal's, opened from the app.
  *
  * In a browser the page simply goes to Stripe and comes back. On a phone it
  * opens in an in-app browser that closes itself when Stripe sends you back
@@ -49,6 +50,22 @@ export async function startCheckout(token: string, interval: BillingInterval, cu
   return visit(url, back);
 }
 
+/** Pro (or Duo) paid with PayPal, on PayPal's own page; `trial` as for Stripe. */
+export async function startPayPalCheckout(token: string, interval: BillingInterval, currency: BillingCurrency, plan: 'pro' | 'duo' = 'pro', trial = false): Promise<PurchaseOutcome> {
+  const back = returnUrl('pro');
+  const { url } = await api.paypalCheckout(token, { interval, currency, returnUrl: back, plan, ...(trial ? { trial } : {}) });
+  return visit(url, back);
+}
+
+/** Where a PayPal subscription is managed: PayPal's automatic payments, in the browser (nothing to come back from). */
+export async function openPayPalManage(url: string): Promise<void> {
+  if (Platform.OS === 'web') {
+    window.open(url, '_blank', 'noopener');
+    return;
+  }
+  await WebBrowser.openBrowserAsync(url);
+}
+
 /** A year of Pro as a gift code: paid once at Stripe. */
 export async function startGift(token: string, currency: BillingCurrency): Promise<PurchaseOutcome> {
   const back = returnUrl('pro');
@@ -61,6 +78,19 @@ export async function startPassBooking(token: string, passId: string, forDate: s
   const back = returnUrl(`gym/${encodeURIComponent(gymId)}`);
   const { url } = await api.bookPass(token, passId, { forDate, returnUrl: back });
   return visit(url, back);
+}
+
+/**
+ * Where a subscription is managed: PayPal's automatic payments for one paid
+ * with PayPal, Stripe's page for the rest. PayPal's opens in the browser,
+ * with nothing to come back from ('left').
+ */
+export async function manageSubscription(token: string, subscription: { provider?: 'stripe' | 'paypal'; manageUrl?: string | null } | null): Promise<PurchaseOutcome> {
+  if (subscription?.provider === 'paypal' && subscription.manageUrl) {
+    await openPayPalManage(subscription.manageUrl);
+    return 'left';
+  }
+  return openManage(token);
 }
 
 /** Stripe's page to change card, see receipts, or cancel. */

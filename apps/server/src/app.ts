@@ -78,6 +78,9 @@
  *   POST   /api/billing/sync              re-read your subscription from Stripe
  *   GET    /api/billing/return            where Stripe sends people back to; forwards them into the app
  *   POST   /api/billing/webhook           Stripe's events (signature checked)
+ *   POST   /api/billing/paypal/checkout   { interval, currency, returnUrl, plan?, trial? } -> { url } of PayPal's page to approve
+ *   GET    /api/billing/paypal/return     where PayPal sends people back to; records the subscription, forwards into the app
+ *   POST   /api/billing/paypal/webhook    PayPal's events (signature checked by PayPal)
  *   GET    /api/workouts                  your saved workouts
  *   POST   /api/workouts                  Pro: { name, gymId?, plan } -> saved
  *   DELETE /api/workouts/:id
@@ -204,6 +207,7 @@ import {
 import { DEV_PRO_EMAIL, matchesDevPassword } from './devAccount';
 import { legalIndexPage, legalPage, resetEmail, resetPasswordPage, securityTxt } from './legalPages';
 import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
+import { PayPalError, PayPalPro, type PayPalApi } from './paypal';
 import { AreaError, AreaSearch, parseBox, whereIs } from './area';
 import { CountryPacks } from './countryPack';
 import { PlaceError, PlaceSearch } from './places';
@@ -247,8 +251,13 @@ export interface AppOptions {
   googleKey?: string | null;
   /** Swappable for tests, so no test ever calls Google. */
   fetchImpl?: typeof fetch;
-  /** Stripe, for GymGO Pro. Without a client, Pro isn't on sale. */
-  billing?: { stripe: StripeApi | null; webhookSecret: string | null };
+  /**
+   * Stripe, for GymGO Pro. Without a client, Pro isn't on sale. Its payment
+   * method setting (pmc_…), when checkouts shouldn't use the account's default.
+   */
+  billing?: { stripe: StripeApi | null; webhookSecret: string | null; paymentMethodConfiguration?: string | null };
+  /** PayPal, for Pro paid with GymGO's own PayPal account (paypal.ts). Without a client, no PayPal button. */
+  paypal?: { api: PayPalApi | null; webhookId: string | null };
   /** This server's public address, once hosted. */
   publicUrl?: string | null;
   /** "Search this area": which Overpass API server to ask, and a stand-in fetch for tests. */
@@ -317,6 +326,7 @@ export function isPublicRoute(method: string, path: string): boolean {
   if (path === '/api/health' || path === '/api/legal' || path.startsWith('/api/auth/') || path === '/reset-password') return true;
   if (method === 'GET' && (path === '/legal' || isLegalDocId(path.slice(1)) || path === '/.well-known/security.txt')) return true;
   if ((method === 'POST' && path === '/api/billing/webhook') || (method === 'GET' && (path === '/api/billing/return' || path === '/api/billing/plans'))) return true;
+  if ((method === 'POST' && path === '/api/billing/paypal/webhook') || (method === 'GET' && path === '/api/billing/paypal/return')) return true;
   if (method === 'POST' && path === '/api/bug-reports') return true;
   if (method === 'GET' && (/^\/api\/avatars\/[^/]+$/.test(path) || (/^\/api\/photos\/[^/]+$/.test(path) && path !== '/api/photos/covers'))) return true;
   if (method === 'GET' && /^\/api\/gyms\/[^/]+\/(icon|icon-colour|photo|photo\/\d|site-photos)$/.test(path)) return true;
@@ -764,13 +774,25 @@ export function createApp(options: AppOptions) {
 
   const perks = new Perks(db, now);
   const own = new OwnTraining(db, now);
+  // PayPal reads who's Pro and who may have the free trial from Billing, which keeps PayPal's subscriptions too.
+  const billingFor: { current: Billing | null } = { current: null };
+  const paypal = new PayPalPro(db, {
+    api: options.paypal?.api ?? null,
+    webhookId: options.paypal?.webhookId ?? null,
+    now,
+    subscribedPro: (userId) => billingFor.current?.subscribed(userId).pro ?? false,
+    trialFor: (userId) => billingFor.current?.trialFor(userId) ?? null,
+  });
   const billing = new Billing(db, {
     stripe: options.billing?.stripe ?? null,
     webhookSecret: options.billing?.webhookSecret ?? null,
+    paymentMethodConfiguration: options.billing?.paymentMethodConfiguration ?? null,
+    paypal,
     now,
     grantFor: (userId) => perks.grantFor(userId),
     onPaid: (session) => perks.fulfil(session),
   });
+  billingFor.current = billing;
   perks.attach(billing);
 
   /**
@@ -952,7 +974,55 @@ export function createApp(options: AppOptions) {
 
     if (method === 'GET' && path === '/api/billing/plans') {
       const { available, prices, duo, gifts } = await billing.prices();
-      return send(res, 200, { available, prices, duo, gifts, limits: LIMITS });
+      // The ways to pay checkout will really offer (card, Apple Pay, Google Pay, PayPal), from the payment settings.
+      return send(res, 200, { available, prices, duo, gifts, limits: LIMITS, payWith: await billing.payWith() });
+    }
+
+    // --- Pro with PayPal (paypal.ts) ----------------------------------------------------
+    if (method === 'POST' && path === '/api/billing/paypal/webhook') {
+      const headers: Record<string, string | undefined> = {};
+      for (const name of ['paypal-auth-algo', 'paypal-cert-url', 'paypal-transmission-id', 'paypal-transmission-sig', 'paypal-transmission-time']) {
+        const value = req.headers[name];
+        headers[name] = Array.isArray(value) ? value[0] : value;
+      }
+      await paypal.handleWebhook(await readRaw(req, 1024 * 1024), headers);
+      return send(res, 200, { received: true });
+    }
+
+    if (method === 'GET' && path === '/api/billing/paypal/return') {
+      const kind = url.searchParams.get('result') === 'success' ? 'success' : 'cancelled';
+      const to = safeReturnUrl(url.searchParams.get('to'), (origin) => isAllowedOrigin(origin, options.allowedOrigins));
+      const subscriptionId = url.searchParams.get('subscription_id');
+      if (kind === 'success' && subscriptionId && paypal.connected) {
+        // Turn Pro on now, without waiting for a webhook that may never come.
+        await paypal.confirm(subscriptionId).catch((error: unknown) => console.error('[paypal] return sync failed', error));
+      }
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'");
+      res.setHeader('Referrer-Policy', 'no-referrer');
+      res.end(returnPage(kind, to ? withQuery(to, { checkout: kind }) : null));
+      return;
+    }
+
+    if (method === 'POST' && path === '/api/billing/paypal/checkout') {
+      const { account } = requireAccount(req);
+      const body = (await readJson(req)) as Record<string, unknown>;
+      const interval = body.interval;
+      const currency = body.currency;
+      if (interval !== 'month' && interval !== 'year') throw new HttpError(400, 'Choose monthly or yearly.');
+      if (currency !== 'aud' && currency !== 'usd') throw new HttpError(400, 'Choose A$ or US$.');
+      const plan = body.plan === 'duo' ? 'duo' : 'pro';
+      const returnUrl = returnUrlFrom(body.returnUrl);
+      const back = `${publicBase(req)}/api/billing/paypal/return?to=${encodeURIComponent(returnUrl)}`;
+      // PayPal adds the subscription's id (subscription_id) to the success address itself.
+      const approveUrl = await paypal.checkout(
+        account,
+        { interval: interval as BillingInterval, currency: currency as BillingCurrency, plan, trial: body.trial === true },
+        { success: `${back}&result=success`, cancel: `${back}&result=cancelled` },
+      );
+      return send(res, 200, { url: approveUrl });
     }
 
     if (method === 'GET' && path === '/api/billing/return') {
@@ -2733,7 +2803,7 @@ export function createApp(options: AppOptions) {
     try {
       await route(req, res);
     } catch (error) {
-      if (error instanceof HttpError || error instanceof BillingError) {
+      if (error instanceof HttpError || error instanceof BillingError || error instanceof PayPalError) {
         const detail = error instanceof HttpError ? error.detail : undefined;
         return send(res, error.status, { error: error.message, ...(error.code ? { code: error.code } : {}), ...detail });
       }

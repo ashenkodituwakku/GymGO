@@ -156,6 +156,13 @@ const SCHEMA = `
     type text not null,
     received_at text not null
   );
+  -- PayPal's webhook events, each handled once (paypal.ts). Its subscriptions share the
+  -- subscriptions table, their ids written "paypal:I-…".
+  create table if not exists paypal_events (
+    id text primary key,
+    type text not null,
+    received_at text not null
+  );
   create table if not exists workouts (
     id text primary key,
     user_id text not null references users(id) on delete cascade,

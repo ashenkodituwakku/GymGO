@@ -1961,6 +1961,12 @@ don't show.
 
 ### GymGO Pro (subscriptions, through Stripe)
 
+People pay by card, Apple Pay or Google Pay on Stripe's checkout page
+(whichever are turned on in Stripe's settings; the Pro page names only those),
+or with PayPal through GymGO's own PayPal account, from its own button, once
+PayPal's keys are set. `docs/PAYMENTS.md` has what to switch on, and the
+legal wording PayPal needs before it takes real payments.
+
 GymGO has two plans. When it first opens it asks **which country is
 yours**; you can change it in Profile → Country. **Free** is everything that
 tells you the truth about a gym in that country: every gym and city, the

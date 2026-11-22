@@ -3,6 +3,7 @@ import { DEFAULT_DAILY_LIMIT } from './appleMaps';
 import { networkInterfaces } from 'node:os';
 import { createApp } from './app';
 import { createStripe } from './billing';
+import { createPayPal } from './paypal';
 import {
   ALLOWED_ORIGINS,
   ATTRIBUTION,
@@ -16,6 +17,11 @@ import {
   PORT,
   PUBLIC_URL,
   SITE_ICONS,
+  STRIPE_PAYMENT_METHOD_CONFIGURATION,
+  PAYPAL_CLIENT_ID,
+  PAYPAL_CLIENT_SECRET,
+  PAYPAL_MODE,
+  PAYPAL_WEBHOOK_ID,
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
   DEV_PRO_ACCOUNT,
@@ -74,7 +80,15 @@ const server = createServer(
     allowedOrigins: [...ALLOWED_ORIGINS, ...(PUBLIC_URL ? [new URL(PUBLIC_URL).origin] : [])],
     photoDir: PHOTO_DIR,
     googleKey: GOOGLE_PLACES_API_KEY,
-    billing: { stripe: STRIPE_SECRET_KEY ? createStripe(STRIPE_SECRET_KEY) : null, webhookSecret: STRIPE_WEBHOOK_SECRET },
+    billing: {
+      stripe: STRIPE_SECRET_KEY ? createStripe(STRIPE_SECRET_KEY) : null,
+      webhookSecret: STRIPE_WEBHOOK_SECRET,
+      paymentMethodConfiguration: STRIPE_PAYMENT_METHOD_CONFIGURATION,
+    },
+    paypal: {
+      api: PAYPAL_CLIENT_ID && PAYPAL_CLIENT_SECRET ? createPayPal({ clientId: PAYPAL_CLIENT_ID, secret: PAYPAL_CLIENT_SECRET, mode: PAYPAL_MODE }) : null,
+      webhookId: PAYPAL_WEBHOOK_ID,
+    },
     publicUrl: PUBLIC_URL,
     area: { endpoints: OVERPASS_URLS },
     places: { endpoint: GEOCODER_URL },
@@ -98,6 +112,15 @@ const server = createServer(
 server.headersTimeout = 30_000;
 if (BACKUP_DIR) scheduleBackups(db, BACKUP_DIR);
 server.requestTimeout = 120_000;
+
+/** Whether PayPal is on, and with real money or PayPal's sandbox; never the keys. */
+function paypalMode(): string {
+  if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) return 'off (no PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET set; see docs/PAYMENTS.md)';
+  const webhooks = PAYPAL_WEBHOOK_ID ? 'webhooks on (/api/billing/paypal/webhook)' : 'webhooks off: changes made at PayPal show up when the app re-checks';
+  const mode = PAYPAL_MODE === 'live' ? 'on, LIVE mode: real money' : 'on, sandbox (no real money)';
+  // The legal pages name Stripe as the one payment company: PayPal must be named there before people pay with it.
+  return `${mode}; ${webhooks}. Before taking payments, name PayPal in the Privacy Policy and Terms (docs/PAYMENTS.md).`;
+}
 
 /** Which kind of Stripe key, never the key itself. */
 function stripeMode(key: string | null): string {
@@ -123,6 +146,7 @@ server.listen(PORT, HOST, () => {
   console.log(`[server] GymGO API on http://localhost:${PORT} (database: ${DB_PATH})`);
   if (lan.length > 0) console.log(`[server] Phones on your Wi-Fi reach it at ${lan.join(' or ')}`);
   console.log(`[server] GymGO Pro payments (Stripe): ${stripeMode(STRIPE_SECRET_KEY)}`);
+  console.log(`[server] GymGO Pro payments (PayPal): ${paypalMode()}`);
   if (devAccountLine) console.log(devAccountLine);
   if (WEB_DIR) console.log(`[server] Serving the web app from ${WEB_DIR} at ${PUBLIC_URL ?? `http://localhost:${PORT}`}`);
   if (STRIPE_SECRET_KEY) {

@@ -78,6 +78,24 @@ export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY?.trim() || null;
 /** Optional. The signing secret of the webhook pointed at /api/billing/webhook. */
 export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET?.trim() || null;
 /**
+ * Optional. The Stripe payment method setting (pmc_…) GymGO's checkouts use,
+ * when not your account's default (Dashboard → Settings → Payment methods).
+ * Card, Apple Pay, Google Pay (and PayPal, for businesses in Europe) are
+ * turned on there, not here: docs/PAYMENTS.md.
+ */
+export const STRIPE_PAYMENT_METHOD_CONFIGURATION = process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION?.trim() || null;
+/**
+ * Optional. PayPal, for Pro paid with your own PayPal business account
+ * (paypal.ts, docs/PAYMENTS.md): the REST app's client id and secret, from
+ * developer.paypal.com. Without both, there's no PayPal button.
+ */
+export const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID?.trim() || null;
+export const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET?.trim() || null;
+/** Optional. "live" to take real money with PayPal; anything else is PayPal's sandbox (no real money). */
+export const PAYPAL_MODE: 'live' | 'sandbox' = process.env.PAYPAL_MODE?.trim().toLowerCase() === 'live' ? 'live' : 'sandbox';
+/** Optional. The id of the PayPal webhook pointed at /api/billing/paypal/webhook, so its events can be checked. */
+export const PAYPAL_WEBHOOK_ID = process.env.PAYPAL_WEBHOOK_ID?.trim() || null;
+/**
  * Optional. This server's public address (https://…) once it's hosted, used
  * for the page Stripe returns people to. Locally it's worked out per request.
  */

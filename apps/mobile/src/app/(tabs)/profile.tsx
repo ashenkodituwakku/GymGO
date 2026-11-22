@@ -28,7 +28,7 @@ import { useThemeChoice } from '@/lib/themePrefs';
 import { useCollection } from '@/lib/useCollection';
 import { useTrainingLog } from '@/lib/useTraining';
 import { BrandFill } from '@/components/BrandFill';
-import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
+import { CAN_BUY_HERE, manageSubscription } from '@/lib/purchase';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { Avatar } from '@/components/Avatar';
 import { haptic } from '@/lib/haptics';
@@ -94,7 +94,7 @@ export default function Profile() {
     if (!account.token) return;
     setError(null);
     try {
-      const outcome = await openManage(account.token);
+      const outcome = await manageSubscription(account.token, billing.subscription);
       if (outcome !== 'left') await refresh(true);
     } catch (problem) {
       setError(problem instanceof ApiError ? problem.message : 'Couldn’t reach the GymGO server.');

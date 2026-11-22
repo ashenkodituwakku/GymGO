@@ -297,7 +297,7 @@ export default function Home() {
                       </Txt>
                     </View>
                     <View style={styles.startPill}>
-                      <Txt variant="footnote" color={color.onBrand} style={face('semibold')} trim>
+                      <Txt variant="footnote" color={color.onBrand} style={face('semibold')}>
                         Start
                       </Txt>
                     </View>

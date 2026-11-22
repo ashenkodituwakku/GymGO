@@ -129,7 +129,8 @@ mobile 550, domain 191 and web 39 tests, all passing.
   buttons get tooltips from components/tooltips.web.ts (aria-label, 60
   characters at most; `data-no-tip` opts out). Text: `SteadyTxt on={…}`
   for words that turn bold when chosen; Txt's `trim` (button labels),
-  `fluid` (a page's big headline, web), `acronyms` (small capitals in a
+  `fluid` (a page's big headline, web; `trim` only on a box with a set
+  least height and no line limit, Update 240), `acronyms` (small capitals in a
   sentence, web) and `hyphens` (narrow columns); `FileName` for a file's
   name. Card titles: `numberOfLines={2}`. Curly quotes in visible words.
   A card in a TiltCard can read its lean from `TiltContext` (GemCard's

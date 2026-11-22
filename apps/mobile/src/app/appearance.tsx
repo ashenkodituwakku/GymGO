@@ -1104,7 +1104,7 @@ const MAP = {
 function GlassPreview({ level }: { level: number }) {
   const map = MAP[currentTheme().scheme];
   return (
-    <View style={[styles.previewMap, { backgroundColor: map.land }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View style={[styles.previewMap, { backgroundColor: map.land }]} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <View style={[styles.park, { backgroundColor: map.park }]} />
       <View style={[styles.water, { backgroundColor: map.water }]} />
       <View style={[styles.road, styles.roadA, { backgroundColor: map.road }]} />

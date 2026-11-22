@@ -95,7 +95,11 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
     '[role=switch][aria-checked=true]>div>div{background-color:HighlightText!important}' +
     '[role=tab],[role=checkbox],[role=radio],[role=button]{outline:1px solid CanvasText;outline-offset:-1px}' +
     '[role=tab][aria-selected=true],[role=checkbox][aria-checked=true],[role=radio][aria-checked=true]{forced-color-adjust:none;background-color:Highlight!important;color:HighlightText!important}' +
-    '[role=tab][aria-selected=true] *,[role=checkbox][aria-checked=true] *,[role=radio][aria-checked=true] *{color:HighlightText!important}}';
+    '[role=tab][aria-selected=true] *,[role=checkbox][aria-checked=true] *,[role=radio][aria-checked=true] *{color:HighlightText!important}' +
+    // A field marked wrong (a password that doesn't match) is red; forced colours make every border alike, so it's dashed round as well.
+    '*:has(> input[aria-invalid=true]),*:has(> textarea[aria-invalid=true]){outline:2px dashed CanvasText;outline-offset:2px}}' +
+    // Headings break into even lines rather than leaving one word on the last; paragraphs avoid ending on a lone word.
+    '[role=heading]{text-wrap:balance}div[dir=auto]{text-wrap:pretty}';
   document.head.appendChild(css);
   // An icon-only button's name under a mouse (components/tooltips.web.ts).
   if (document.body) installTooltips();

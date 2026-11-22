@@ -104,7 +104,10 @@ export function Txt({
    * A button's or chip's label, centred by its letters rather than its line:
    * in a browser that can (CSS text-box trim), the room above the capitals
    * and below the baseline is trimmed, so the words sit in the optical middle
-   * of the pill instead of a touch low.
+   * of the pill instead of a touch low. Only for a label in a box with a
+   * set least height (a button's 52, a chip's 36) and no line limit: the
+   * trimmed text is shorter, so a box sized by its text would shrink, and a
+   * line limit's clipping would cut off the tails of g, p and y.
    */
   trim?: boolean;
   /**
@@ -475,7 +478,7 @@ export function Segmented<T extends string | number>({
               aria-selected={on}
               style={[styles.segment, styles.segmentWrapped, { flexBasis: needed }, on && styles.segmentOn]}
             >
-              <SteadyTxt on={on} variant="footnote" color={color.label} style={[face('medium'), styles.segmentText]} numberOfLines={2} trim hyphens>
+              <SteadyTxt on={on} variant="footnote" color={color.label} style={[face('medium'), styles.segmentText]} numberOfLines={2} hyphens>
                 {option.label}
               </SteadyTxt>
             </Pressable>
@@ -501,7 +504,7 @@ export function Segmented<T extends string | number>({
             aria-selected={on}
             style={[styles.segment, on && width === 0 && styles.segmentOn]}
           >
-            <SteadyTxt on={on} variant="footnote" color={color.label} style={[face('medium'), styles.segmentText]} numberOfLines={2} trim hyphens>
+            <SteadyTxt on={on} variant="footnote" color={color.label} style={[face('medium'), styles.segmentText]} numberOfLines={2} hyphens>
               {option.label}
             </SteadyTxt>
           </Pressable>

@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 240 · A fix to Update 236's centred labels; wrong fields in High Contrast; even headings
+
+*22 Nov 2026 · the commit "Trim only fixed-height labels; dashed wrong fields in forced colours; balanced headings"*
+
+- **Fixed (my mistake in Update 236): two-way switches had shrunk and cut letters.** Centring labels by their capitals (text-box trim) makes the words' box shorter. On a button (52 points) or a chip (36) that's what's wanted, as they keep their height. But the two-way switches (Sign in / Create account, Appearance's choices, everywhere the segmented control is used) and Home's Start pill size themselves by their words: they had shrunk from 32 points to 23, and as their labels may take two lines, the clipping that goes with that cut off the tails of g, p and y ("Sign in"). Trimming is now only on buttons and chips; the switches and the pill are back to 32 points, letters whole. The rule is written down beside the option, so it isn't used that way again.
+- **Wrong fields show in Windows High Contrast.** Forced colours draw every field's border the same, so a password that didn't match left the two fields looking like any others (the message under them still said so). A field marked wrong now has a dashed outline there as well.
+- **Headings break into even lines** in a browser rather than leaving one word on the last, and paragraphs avoid ending on a lone word (text-wrap balance and pretty). Nothing that was whole is cut by it: a sweep of 16 signed-in pages, the sign-in page and 5 website pages found nothing new.
+- **Two decorations hidden from screen readers on the website too**, as they already were on phones: Appearance's little Liquid Glass map (with its sample "Search" and "Gyms near you") and the "or use email" line between the sign-in buttons.
+- Checked in the browser: the switches 32 points with whole letters; chips 36 and the main button 52 with their words centred and their tails whole; in forced colours, both wrong fields with a dashed outline; axe on Home, Appearance, Programme, the monthly report and sign-in, light and dark, phone and desktop: clean. App tests 626.
+
 ## Update 239 · A programme's days slide the way you move through them
 
-*22 Nov 2026 · the commit "Programme days slide in from the side of the day picked"*
+*22 Nov 2026 · `5cfdf47`*
 
 The reels' rule that a step slides in from the direction of travel (Update 236, for the monthly report) also fits a training programme's days, which run in order (Push, Pull, Legs):
 

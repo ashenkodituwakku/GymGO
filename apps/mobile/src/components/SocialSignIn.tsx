@@ -216,7 +216,7 @@ export function GoogleMark({ size = 18 }: { size?: number }) {
 /** "or" between the buttons and the email form. */
 export function OrDivider({ label = 'or use email' }: { label?: string }) {
   return (
-    <View style={styles.divider} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View style={styles.divider} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <View style={styles.line} />
       <Txt variant="footnote" color={color.labelSecondary}>
         {label}

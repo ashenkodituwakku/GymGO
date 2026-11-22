@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 239 · A programme's days slide the way you move through them
+
+*22 Nov 2026 · the commit "Programme days slide in from the side of the day picked"*
+
+The reels' rule that a step slides in from the direction of travel (Update 236, for the monthly report) also fits a training programme's days, which run in order (Push, Pull, Legs):
+
+- **Choosing a day's chip slides its plan in from that side**: a later day from the right, an earlier one from the left. Both when you're choosing a programme and on the one you're following. Before, the list swapped in place. Still with Reduce motion.
+- Checked in the browser: Pull's plan came in from the right (21 points out) and Push's from the left; no page errors. App tests 626.
+
 ## Update 238 · Icon buttons name themselves to the keyboard too; Reduce motion and the legal pages checked
 
-*22 Nov 2026 · the commit "Tooltips on keyboard focus; Reduce motion and legal page checks"*
+*22 Nov 2026 · `8457b8d`*
 
 - **Tabbing to an icon-only button shows its name**, with the same wait as the mouse (the first after half a second, the next at once). Before, only a mouse got the label, so someone who can see but uses the keyboard had to guess what Save or the map's buttons were. Clicking a button doesn't show one, and if the browser scrolls to the button you tabbed to, the label goes with it rather than vanishing. A screen reader still hears the button's name once.
 - **Checked, nothing to change: Reduce motion.** With the system's Reduce motion on, and separately with GymGO's own (Appearance), Home's rail doesn't stretch past its ends, a card on its page stays flat under the mouse and has no glare or foil, and the earlier rules (entrances, the shake, the month's slide) are still by Reanimated's Reduce motion setting.

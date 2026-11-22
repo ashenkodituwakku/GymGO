@@ -16,7 +16,8 @@ import { StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { AskGymPal } from '@/components/AskGymPal';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
-import { Pressable } from '@/components/motion';
+import Animated from 'react-native-reanimated';
+import { Pressable, stepIn } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
@@ -85,6 +86,8 @@ function Chooser() {
   const [days, setDays] = useState<ProgrammeDays>(3);
   const [weeks, setWeeks] = useState<ProgrammeWeeks>(8);
   const [shown, setShown] = useState(0);
+  // Which way the last day picked lay, so its plan slides in from that side (the days run in order).
+  const [forward, setForward] = useState<boolean | null>(null);
   const plan = programmeDays(goal, days);
   const day = plan[Math.min(shown, plan.length - 1)]!;
   const unit = unitFor(prefs.country);
@@ -142,10 +145,20 @@ function Chooser() {
         <Txt variant="headline">{`${plan.length} days, taking turns`}</Txt>
         <View style={styles.chips}>
           {plan.map((option, index) => (
-            <Chip key={option.name} label={option.name} selected={option === day} onPress={() => setShown(index)} />
+            <Chip
+              key={option.name}
+              label={option.name}
+              selected={option === day}
+              onPress={() => {
+                setForward(index > shown);
+                setShown(index);
+              }}
+            />
           ))}
         </View>
-        <DayList items={day.items} />
+        <Animated.View key={day.name} entering={stepIn(forward)}>
+          <DayList items={day.items} />
+        </Animated.View>
         <Txt variant="footnote" color={color.labelSecondary}>
           {progressionRule(unit)}
         </Txt>
@@ -173,6 +186,7 @@ function Running({ programme }: { programme: Programme }) {
   const progress = useMemo(() => programmeProgress(programme, log.sessions, new Date()), [programme, log.sessions]);
   const next = nextProgrammeDay(programme, log.sessions);
   const [picked, setPicked] = useState<number | null>(null);
+  const [forward, setForward] = useState<boolean | null>(null);
   const plan = programmeDays(programme.goal, programme.days);
   const dayIndex = picked ?? next;
   const day = plan[dayIndex]!;
@@ -256,10 +270,19 @@ function Running({ programme }: { programme: Programme }) {
           <Txt variant="headline">{picked === null || picked === next ? `Next: ${day.name}` : day.name}</Txt>
           <View style={styles.chips}>
             {plan.map((option, index) => (
-              <Chip key={option.name} label={index === next ? `${option.name} (next)` : option.name} selected={index === dayIndex} onPress={() => setPicked(index)} />
+              <Chip
+                key={option.name}
+                label={index === next ? `${option.name} (next)` : option.name}
+                selected={index === dayIndex}
+                onPress={() => {
+                  setForward(index > dayIndex);
+                  setPicked(index);
+                }}
+              />
             ))}
           </View>
-          <View style={styles.list}>
+          {/* The day's plan, sliding in from the side of the day picked. */}
+          <Animated.View key={dayIndex} entering={stepIn(forward)} style={styles.list}>
             {items.map((entry, index) => (
               <ExerciseRow
                 key={`${entry.exerciseId}-${index}`}
@@ -270,7 +293,7 @@ function Running({ programme }: { programme: Programme }) {
                 onSwap={swapFor(items, index, TYPICAL_KIT) ? () => swap(index) : null}
               />
             ))}
-          </View>
+          </Animated.View>
           {!billing.isPro && (
             <Pressable onPress={() => openPro('progress')} accessibilityRole="button" accessibilityLabel="Exact weights for each exercise are part of GymGO Pro" style={styles.proHint}>
               <Icon name="target" size={13} color={color.brand} />

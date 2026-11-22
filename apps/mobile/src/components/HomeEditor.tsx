@@ -15,7 +15,7 @@
  */
 
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Modal, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
+import { AccessibilityInfo, Modal, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import { Backdrop } from './Backdrop';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -180,6 +180,28 @@ export function EditableWidgets({
   }, [ids, order]);
 
   /**
+   * Said to a screen reader after a widget moves or comes off ("Weather
+   * moved to 3 of 9"), however it was done: by a button, a screen reader's
+   * action or a drag. A phone's screen reader announces it; in a browser, a
+   * live region nobody sees.
+   */
+  const [said, setSaid] = useState('');
+  const say = (text: string) => {
+    if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(text);
+    // The same words twice in a row still count as news: a space makes them differ.
+    else setSaid((before) => (before === text ? `${text}\u00a0` : text));
+  };
+  const move = (id: HomeWidgetId, to: number) => {
+    const place = Math.min(Math.max(0, to), ids.length - 1);
+    onMove(id, place);
+    say(`${homeWidget(id).title} moved to ${place + 1} of ${ids.length}`);
+  };
+  const remove = (id: HomeWidgetId) => {
+    onRemove(id);
+    say(`${homeWidget(id).title} taken off Home`);
+  };
+
+  /**
    * Where the held widget is, and the place it would drop in. Where each
    * widget starts is worked out from the heights (they're a stack,
    * WIDGET_GAP apart): a browser reports a widget's size when it changes,
@@ -247,7 +269,7 @@ export function EditableWidgets({
     settle.current = true;
     setHeld(null);
     setHover(null);
-    onMove(id, to);
+    move(id, to);
   };
   const putBack = () => {
     drag.id.value = '';
@@ -272,6 +294,15 @@ export function EditableWidgets({
 
   return (
     <View style={styles.list}>
+      {Platform.OS === 'web' && (
+        <View style={styles.unseen} aria-live="polite">
+          {said ? (
+            <Txt variant="footnote" color="transparent">
+              {said}
+            </Txt>
+          ) : null}
+        </View>
+      )}
       {ids.map((id, index) => {
         // Making room: the ones between where it was and where it's going move by its height.
         let shift = 0;
@@ -295,8 +326,8 @@ export function EditableWidgets({
             place={place}
             onStart={started}
             onDrop={dropped}
-            onRemove={() => onRemove(id)}
-            onStep={(by) => onMove(id, Math.max(0, index + by))}
+            onRemove={() => remove(id)}
+            onStep={(by) => move(id, index + by)}
           >
             {render(id)}
           </EditItem>
@@ -704,6 +735,8 @@ const styles = themed(() => {
     // A mouse held and dragged would select the words under it as it goes.
     list: { gap: WIDGET_GAP, userSelect: 'none' },
     item: { position: 'relative' },
+    // Read by a screen reader, not seen, taking no room (it's out of the stack's flow).
+    unseen: { position: 'absolute', width: 1, height: 1, overflow: 'hidden', pointerEvents: 'none' } as object,
     lifted: { ...shadow.float },
     // A section of the page, framed while editing so it has edges to hold.
     frame: { padding: space[3], borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', ...shadow.plate },

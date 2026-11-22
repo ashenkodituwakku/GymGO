@@ -9,9 +9,16 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 247 · A screen reader hears where a widget went
+
+*22 Nov 2026 · the commit "Customise Home tells a screen reader where a widget moved, or that it came off"*
+
+- **After a widget moves, a screen reader says where to**: "Quick searches moved to 2 of 11". Before, moving one (with Update 246's buttons, a screen reader's own Move up and Move down, or a drag) changed the order in silence, so someone who can't see it had to go looking. Taking one off says so too ("Weather taken off Home"). On a phone it's the screen reader's own announcement; in a browser, a polite live region that takes no room and isn't seen.
+- Checked in the browser: Move down twice then back up, announced as "moved to 2 of 11", "3 of 11" and "1 of 11", with focus staying on the button between presses; the order back as it was afterwards. App tests 626.
+
 ## Update 246 · Home's widgets can be moved with buttons, for anyone who finds dragging hard
 
-*22 Nov 2026 · the commit "Move widgets with buttons: an Appearance setting for Customise Home"*
+*22 Nov 2026 · `34b34b3`*
 
 Update 230 left a question open: on Home a widget is moved only by holding and dragging it, and someone who can't hold and drag had no other way with a mouse or a finger (WCAG 2.2's 2.5.7; screen readers and the keyboard already had Move up and Move down). Up and down buttons on every widget would have changed the iPhone-style editing you asked for in Update 72, so they're a setting instead, off unless you turn it on:
 

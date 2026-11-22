@@ -125,8 +125,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `stepIn(forward)`; a progress fill uses `useFillBar` (transform, not
   width). lib/theme.ts `applyTheme` marks `html[data-theme-switching]`
   for 300 ms (transitions off). A sideways ScrollView in a browser takes
-  `{...rubberBand(edgeFade())}` (components/rubberBand.web.ts; it
-  preventDefaults a wheel past a row's end, as overscroll-behavior alone
+  `{...rubberBand(edgeFade())}` (components/rubberBand.web.ts; each row
+  binds its own non-passive wheel listener on pointerover, never the
+  page, Update 243; it preventDefaults a wheel past a row's end, as overscroll-behavior alone
   let the browser go Back: test by moving the mouse after the swipe, which
   is when Chrome finishes the gesture, Update 241; at 1280×860 Home's
   rail starts below the fold, so scroll it into view first); icon-only

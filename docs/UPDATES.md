@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 243 · Scrolling never waits on the rows or the tooltips
+
+*22 Nov 2026 · the commit "Rows listen for the wheel themselves; tooltips read text, not layout"*
+
+Two costs that Updates 236 and 241 added to every page in a browser, taken back out:
+
+- **Scrolling and the map's zoom no longer wait on the app.** To stop a swipe past a row's start going Back (Update 241), the page listened to every wheel and trackpad movement in a way that could cancel it, and a browser has to wait for such a listener before it scrolls anything: the page, a sheet, the map. Now each row listens for itself, starting the moment the pointer comes onto it, and the page's own listener can't cancel anything, so the browser never waits for it. Rows still claim a swipe past their ends.
+- **Moving the mouse no longer makes the page lay itself out.** To decide whether a button is only an icon (and so gets a tooltip), the label code read the button's visible text in a way that makes the browser work out the page's layout again, on every movement onto something new. It now reads the button's words directly, leaving out its icon's glyph (which is hidden from screen readers), which needs no layout.
+- Checked in the browser: through Chrome's own tools, the page's only wheel listener is passive, and the row being pointed at has the one that can claim a swipe; swipes past the start of Home's rail (with and without Reduce motion), Explore's chips, Exercises and the welcome tour still stay on the page; tooltips still show on icon-only buttons (Save, Add to Compare, Ask GymPal) by mouse and by Tab, and not on a button with words. App tests 626.
+
 ## Update 242 · Checked: the full app's production build, served by the server
 
-*22 Nov 2026 · the commit "Docs: the full app's production build checked (Update 242)"*
+*22 Nov 2026 · `9de9b66`*
 
 Update 241 checked the website's build. This time the full app (accounts, workouts, cards) was built for production as online mode builds it (served by the GymGO server from the same address) and the week's work was driven on it, signed in. Nothing needed changing:
 

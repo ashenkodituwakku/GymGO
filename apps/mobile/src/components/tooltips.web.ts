@@ -36,9 +36,25 @@ function iconButton(from: EventTarget | null): { el: HTMLElement; name: string }
   if (!el || el.closest('[data-no-tip]')) return null;
   const name = (el.getAttribute('aria-label') ?? '').trim();
   if (!name || name.length > 60) return null;
-  // Icon only: no words of its own on show.
-  if ((el.innerText ?? '').replace(/\s+/g, '').length > 0) return null;
+  // Icon only: no words of its own (its icon is a glyph in a hidden wrapper, which doesn't count).
+  if (hasWords(el)) return null;
   return { el, name };
+}
+
+/**
+ * Whether a button shows words of its own: any text not inside something
+ * hidden from screen readers (an icon's glyph, a decoration). Read from its
+ * text, not innerText, which makes the browser lay the page out again on
+ * every move of the pointer.
+ */
+function hasWords(el: HTMLElement): boolean {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!/\S/.test(node.nodeValue ?? '')) continue;
+    const hidden = node.parentElement?.closest('[aria-hidden=true]');
+    if (!hidden || !el.contains(hidden)) return true;
+  }
+  return false;
 }
 
 function calm(): boolean {

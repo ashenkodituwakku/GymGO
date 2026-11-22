@@ -29,7 +29,7 @@ function calm(): boolean {
 }
 
 function onWheel(event: WheelEvent) {
-  const row = (event.target as Element | null)?.closest?.('[data-rubber-band]') as HTMLElement | null;
+  const row = event.currentTarget as HTMLElement | null;
   const content = row?.firstElementChild as HTMLElement | null;
   if (!row || !content) return;
   // Sideways only: an up-and-down scroll over the row is the page's.
@@ -60,14 +60,30 @@ function onWheel(event: WheelEvent) {
   pulled.set(row, state);
 }
 
+/**
+ * The rows listening for the wheel. Each row listens for itself, not the
+ * page: a listener that can claim a swipe (not passive) makes the browser
+ * wait for it before scrolling, and on the page that would hold up every
+ * scroll and every zoom of the map, not just the rows'.
+ */
+const bound = new WeakSet<HTMLElement>();
+function bind(from: EventTarget | null) {
+  const row = (from as Element | null)?.closest?.('[data-rubber-band]') as HTMLElement | null;
+  if (!row || bound.has(row)) return;
+  bound.add(row);
+  row.addEventListener('wheel', onWheel, { passive: false });
+}
+
 function install(): void {
   if (installed || typeof document === 'undefined') return;
   installed = true;
   const style = document.createElement('style');
   style.textContent = '[data-rubber-band] { overscroll-behavior-x: contain; }';
   document.head.appendChild(style);
-  // Not passive: it claims a swipe past a row's end (above). It returns at once for anything else.
-  document.addEventListener('wheel', onWheel, { passive: false, capture: true });
+  // A row starts listening when the pointer comes onto it, before any swipe over it; the page's own
+  // listeners are passive, so they never hold up scrolling.
+  document.addEventListener('pointerover', (event) => bind(event.target), { passive: true });
+  document.addEventListener('wheel', (event) => bind(event.target), { passive: true });
 }
 
 /** Spread onto a horizontal ScrollView. Pass another row helper's props (edgeFade()) to keep its marks too. */

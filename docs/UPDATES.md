@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 242 · Checked: the full app's production build, served by the server
+
+*22 Nov 2026 · the commit "Docs: the full app's production build checked (Update 242)"*
+
+Update 241 checked the website's build. This time the full app (accounts, workouts, cards) was built for production as online mode builds it (served by the GymGO server from the same address) and the week's work was driven on it, signed in. Nothing needed changing:
+
+- **No console messages** beyond the expected map and WebGL notes, and **no failed requests**, on 16 pages: Home, Explore (and Filters), Saved, Profile, Workout, Progress, the monthly report, the programme, Collection, a Legendary card, Appearance, Account, Templates, Exercises and a gym's page.
+- **The same behaviour as on the development server**: tooltips (the first after a wait, the next at once, Escape), the theme switch's pause on transitions (from 274 to 575 ms after the tap), Earlier on the monthly report sliding in from the left, the wrong-password shake and red fields, hyphenated tiles, EMOM in small capitals, the 35.5 and 64-point welcome headline, "Saved as …" giving way in the middle, the card's glare and foil, and Home's rail giving 156 points past its start and staying on the page when the mouse moves on.
+- Two differences in the first readings were the test's, not the app's, and are noted so they aren't chased again: at 1280 by 860, Home's rail starts just below the fold (scroll it into view before swiping), and a one-line label clipped by a line limit shows as taller than its box, not wider.
+- Not checkable here: Safari and Firefox (only Chromium is installed, and installing others isn't allowed in this setup), so text-box trim, text-wrap and hyphenation are unconfirmed in them; each has a plain fallback where a browser doesn't know it.
+
 ## Update 241 · The website built as Netlify builds it; a swipe past a row's start really doesn't go Back now
 
-*22 Nov 2026 · the commit "Rows claim a swipe past their ends, so it can't go Back; production build checked"*
+*22 Nov 2026 · `024e3e0`*
 
 The checks this week had all been on the development server. This time the website was exported exactly as Netlify does (the limited version, no server, guests welcome; 40 seconds, 16 MB) and served as Netlify serves it, then tested:
 

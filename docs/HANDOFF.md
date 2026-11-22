@@ -125,7 +125,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `stepIn(forward)`; a progress fill uses `useFillBar` (transform, not
   width). lib/theme.ts `applyTheme` marks `html[data-theme-switching]`
   for 300 ms (transitions off). A sideways ScrollView in a browser takes
-  `{...rubberBand(edgeFade())}` (components/rubberBand.web.ts); icon-only
+  `{...rubberBand(edgeFade())}` (components/rubberBand.web.ts; it
+  preventDefaults a wheel past a row's end, as overscroll-behavior alone
+  let the browser go Back: test by moving the mouse after the swipe, which
+  is when Chrome finishes the gesture, Update 241); icon-only
   buttons get tooltips from components/tooltips.web.ts (aria-label, 60
   characters at most; `data-no-tip` opts out). Text: `SteadyTxt on={…}`
   for words that turn bold when chosen; Txt's `trim` (button labels),

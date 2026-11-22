@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 241 · The website built as Netlify builds it; a swipe past a row's start really doesn't go Back now
+
+*22 Nov 2026 · the commit "Rows claim a swipe past their ends, so it can't go Back; production build checked"*
+
+The checks this week had all been on the development server. This time the website was exported exactly as Netlify does (the limited version, no server, guests welcome; 40 seconds, 16 MB) and served as Netlify serves it, then tested:
+
+- **Fixed (Updates 236 and 237 said this was done, and it wasn't): a sideways swipe past the start of a row could still go Back a page.** The rows were marked so the browser wouldn't hand the swipe on (overscroll-behavior), but a row already at its start can't take a swipe that way, so the browser gave it to the page anyway, and went Back as the gesture ended. My earlier check never moved the mouse afterwards, which is when the browser finishes the gesture, so it missed it. Now while a row is being pulled past an end, it claims the swipe itself, so it goes nowhere else; with Reduce motion on it still claims it, just without the stretch. A row that fits the window and doesn't scroll is left alone, like any still part of a page.
+- **The production build has everything from this week**: all the new style rules (theme switch, height animation, trimmed labels, the fluid headline, small capitals, hyphenation, wrong fields in High Contrast, balanced headings, the rows), the tooltips, the rows' give, the 64-point welcome headline at desktop width and Prime Athletica's three plan names in full. No console messages, no failed requests (it asks nothing of a server) and no page errors.
+- Checked: with a page to go Back to, a swipe past the start of Home's rail (with and without Reduce motion), Explore's chips, Exercises' row and the welcome tour, then moving the mouse on: still on the same page, on the development server and on the rebuilt production site. The same test on the production site built before the fix went Back each time, so the test catches it. App tests 626.
+
 ## Update 240 · A fix to Update 236's centred labels; wrong fields in High Contrast; even headings
 
-*22 Nov 2026 · the commit "Trim only fixed-height labels; dashed wrong fields in forced colours; balanced headings"*
+*22 Nov 2026 · `4add786`*
 
 - **Fixed (my mistake in Update 236): two-way switches had shrunk and cut letters.** Centring labels by their capitals (text-box trim) makes the words' box shorter. On a button (52 points) or a chip (36) that's what's wanted, as they keep their height. But the two-way switches (Sign in / Create account, Appearance's choices, everywhere the segmented control is used) and Home's Start pill size themselves by their words: they had shrunk from 32 points to 23, and as their labels may take two lines, the clipping that goes with that cut off the tails of g, p and y ("Sign in"). Trimming is now only on buttons and chips; the switches and the pill are back to 32 points, letters whole. The rule is written down beside the option, so it isn't used that way again.
 - **Wrong fields show in Windows High Contrast.** Forced colours draw every field's border the same, so a password that didn't match left the two fields looking like any others (the message under them still said so). A field marked wrong now has a dashed outline there as well.

@@ -31,7 +31,6 @@ export function GoogleGate({ what, children }: { what: string; children: ReactNo
       </View>
       <View style={styles.actions}>
         <Pressy
-          scaleTo={0.96}
           onPress={() => {
             haptic.tap();
             setShown(true);

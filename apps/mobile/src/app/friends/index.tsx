@@ -142,7 +142,6 @@ export default function FriendsScreen() {
           Send it to a friend. They add it, you accept, and you can see each other’s cards. Never the days you trained.
         </Txt>
         <Pressy
-          scaleTo={0.96}
           disabled={!view}
           onPress={() => view && void shareText(`Add me on GymGO: my friend code is ${view.code}`, 'My GymGO friend code').then((outcome) => setSent(outcome === 'shared' ? null : outcome))}
           accessibilityRole="button"

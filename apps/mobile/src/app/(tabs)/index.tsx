@@ -54,6 +54,7 @@ import { unitFor } from '@/lib/training';
 import { exercisePreview } from '@/lib/workout';
 import { LIMITED } from '@/lib/limited';
 import { edgeFade } from '@/components/edgeFade';
+import { rubberBand } from '@/components/rubberBand';
 
 /** Melbourne suburbs worth a tap, in the order people ask about them. */
 const MELBOURNE_PICKS = ['Melbourne CBD', 'Fitzroy', 'Collingwood', 'Brunswick', 'Carlton', 'Richmond', 'South Melbourne', 'Northcote'];
@@ -211,7 +212,6 @@ export default function Home() {
           {shortcuts.map((item) => (
             <Pressy
               key={item.title}
-              scaleTo={0.93}
               onPress={item.onPress}
               accessibilityRole="button"
               accessibilityLabel={item.title}
@@ -219,7 +219,7 @@ export default function Home() {
             >
               <Icon name={item.icon} size={22} color={color.brand} />
               {/* Two lines on the narrowest phones, where "Under A$25" didn't fit on one. */}
-              <Txt variant="footnote" style={[styles.center, face('medium')]} numberOfLines={2}>
+              <Txt variant="footnote" style={[styles.center, face('medium')]} numberOfLines={2} hyphens>
                 {item.title}
               </Txt>
             </Pressy>
@@ -236,7 +236,6 @@ export default function Home() {
         return (
           <View style={styles.group}>
                 <Pressy
-                  scaleTo={0.97}
                   onPress={() => {
                     haptic.select();
                     router.push({ pathname: '/workout/[id]', params: { id: 'any' } });
@@ -277,7 +276,6 @@ export default function Home() {
                 )}
                 {plan && planDay && (
                   <Pressy
-                    scaleTo={0.98}
                     onPress={() => {
                       haptic.success();
                       startSession({ name: templateDayName(plan.template, planDay), workoutId: null, gymId: null, gymName: null, unit: unitFor(prefs.country), items: planDay.items });
@@ -299,7 +297,7 @@ export default function Home() {
                       </Txt>
                     </View>
                     <View style={styles.startPill}>
-                      <Txt variant="footnote" color={color.onBrand} style={face('semibold')}>
+                      <Txt variant="footnote" color={color.onBrand} style={face('semibold')} trim>
                         Start
                       </Txt>
                     </View>
@@ -326,7 +324,6 @@ export default function Home() {
           <View style={styles.group}>
                 {trip && (
                   <Pressy
-                    scaleTo={0.97}
                     onPress={() => {
                       haptic.select();
                       router.push({ pathname: '/trips/[id]', params: { id: trip.id } });
@@ -347,7 +344,7 @@ export default function Home() {
                 )}
                 <View style={styles.finders}>
                   {finders.map((item) => (
-                    <Pressy key={item.title} scaleTo={0.95} onPress={item.onPress} accessibilityRole="button" accessibilityLabel={item.label} style={[styles.finder, narrow && styles.finderNarrow]}>
+                    <Pressy key={item.title} onPress={item.onPress} accessibilityRole="button" accessibilityLabel={item.label} style={[styles.finder, narrow && styles.finderNarrow]}>
                       <Icon name={item.icon} size={20} color={color.brand} />
                       <View style={narrow ? styles.finderTextNarrow : styles.flex}>
                         <Txt variant="subhead" style={[face('semibold'), narrow && styles.center]} numberOfLines={1}>
@@ -667,7 +664,6 @@ export default function Home() {
       title={name ? `${greeting(clock.getHours() * 60)}, ${name}` : greeting(clock.getHours() * 60)}
       right={
         <Pressy
-          scaleTo={0.9}
           onPress={() => router.navigate('/profile')}
           accessibilityRole="button"
           accessibilityLabel={account.face || LIMITED ? 'Your profile' : 'Sign in'}
@@ -689,7 +685,6 @@ export default function Home() {
 
       {active && (
         <Pressy
-          scaleTo={0.97}
           onPress={() => {
             haptic.select();
             router.push('/train');
@@ -797,7 +792,6 @@ function ProgrammeUpNext({
   return (
     <View>
       <Pressy
-        scaleTo={0.98}
         onPress={() => onStart(programmeDayName(programme, day), items)}
         accessibilityRole="button"
         accessibilityLabel={`Start ${day.name}, up next in your ${programmeTitle(programme.goal)}, ${caption}`}
@@ -856,7 +850,7 @@ function Carousel({ children }: { children: React.ReactNode }) {
     <View>
       <ScrollView
         ref={scroller}
-        {...edgeFade()}
+        {...rubberBand(edgeFade())}
         horizontal
         showsHorizontalScrollIndicator={false}
         style={bleed && styles.carousel}

@@ -183,7 +183,7 @@ function MapScreen() {
   const viewBox = useRef<BoundingBox | null>(null);
   const [areaBusy, setAreaBusy] = useState(false);
   const areaAsking = useRef(false);
-  const areaPress = usePressScale(0.94);
+  const areaPress = usePressScale();
 
   const map = useRef<GymMapHandle>(null);
   const mainSheet = useRef<BottomSheet>(null);

@@ -9,9 +9,44 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 236 · The rules from your four reels: motion, type and a holographic card
+
+*22 Nov 2026 · the commit "Motion, type and holographic cards, from the reels' rules"*
+
+You sent four Instagram reels to take note of and implement. Three are lists of rules for building interfaces (ten for animation, ten for typography, and five libraries); the fourth only asks people to comment to be sent a "skill", with nothing in it to build, so there was nothing to take from it. Each rule was checked against GymGO and applied where it fits:
+
+**Animation**
+- **Entrances never grow from nothing.** Something that pops in to be noticed (a new record, a set completed, the collect card, GymPal's corner button) used to grow from a dot. Now everything that arrives fades up from 97% of its size, goes a touch past full size and settles. Same on phones and in a browser.
+- **One press for everything.** Buttons and cards sank by anything from 85% to 98% when pressed, depending on who drew them. Every one now sinks to 97%, so a press feels the same everywhere.
+- **A wrong password shakes and turns red.** Signing in with an email and password that don't match now shakes the form side to side for 360 ms, and both fields go red (their icons too) until you change either one. Before, it shook for 270 ms and nothing else marked the fields.
+- **The monthly report slides the way you went.** Earlier brings the month in from the left, Later from the right, rather than swapping it in place.
+- **Progress bars move by transform.** The check-in's scan bar and the workout's sets bar grew by width, which makes the page lay itself out every frame; they now slide. (Left as they are: the sign-in building bar you asked to keep unchanged, Liquid Glass's slider, whose fill carries the accent's paint, and the sidebar's opening, which changes its real size.)
+- **A theme switch lands in one go.** While the colours change, a browser's transitions are switched off for a moment, so nothing fades across from the old theme while the rest has already switched.
+- **Icon buttons name themselves under a mouse.** GymGO had no tooltips. Now, in a browser, a button that's only an icon (Save, Ask GymPal, the map's buttons) shows its name when the pointer rests on it. The first waits half a second, so a pointer passing over doesn't set one off; the next ones show at once as you move along a row. The label can be pointed at without going, Escape, a press or a scroll puts it away, and a screen reader isn't told twice. Phones have no hover, so nothing changes there.
+- **A throw keeps its speed.** Flicking the tab bar's lens now picks the tab it would coast to and springs there at the speed you let go; GymPal's edge tab springs back from your throw rather than from a standstill.
+- **Rows give at their ends in a browser.** Home's rail of gyms and a gym's photos already bounce at their ends on a phone. In a desktop browser a trackpad swipe stopped dead, and on a Mac a swipe past the first card could go Back a page. Now the row follows a little past its end, less the further you pull, and springs back when you stop; going Back from there is switched off.
+- **Accordions** already animate their height as they open (Join this gym, Your notes); a browser is also allowed to animate to a natural height now (interpolate-size).
+
+**Type**
+- **Bold without moving.** A chosen segment, sidebar item, choice in a list or Appearance tile turns bold, which made its words wider and could wrap them onto another line. A hidden bold copy now holds that room, so nothing shifts as they thicken.
+- **Labels centred by their letters.** In a browser that can, buttons', chips' and the Start pill's words are centred by their capitals rather than their line, so they sit in the optical middle (text-box trim).
+- **The website's welcome headline grows with the window**: 35.5 points on a phone-sized window, up to 64 on a wide one, from the reel's clamp(2rem, 1rem + 5vw, 4rem).
+- **Acronyms in small capitals.** In a sentence, "EMOM", "RPE" and "AI" are drawn as small capitals in a browser, at the height of the words around them (Pro's timer line, the effort picker, GymPal's note). Still capitals to a screen reader and when copied.
+- **Curly quotes.** The straight apostrophes left in the app's words are now curly: the collect button's "You’re at…", the gym page's workout link, the reviews link, the questions passed to GymPal, and "days’ cancellation notice". Place names in the city lists ("St. John's") are left as their sources write them, as searches match them.
+- **File names give way in the middle.** After Download my data, the page now says what it saved: "Saved as gymgo-my-data-2026-11-22.json". Where there isn't room, the middle gives way and the date and ".json" stay.
+- **Narrow columns hyphenate.** A long word in a price box, a fact under a gym's photo, a Home shortcut, a segment or an Appearance tile breaks with a hyphen in a browser and on Android, rather than leaving a gap or running out of room. The gym page's facts take two lines now, so "visit price" fits.
+- **Card titles take two lines at most.** Home's gym cards, a set's card, a workout card, the last-workout widget and a template's card now stop at two lines with "…". This takes back Update 232's four-line gym names on Home's cards; the full name is in each card's spoken label and on the gym's page. The list on Explore isn't cards and keeps three.
+- **On the Terms and Privacy pages** (the server's): link underlines sit a little lower (0.2em), the title grows with the window, a footnote mark wouldn't push its line apart, and any acronym marked as one is in small capitals.
+
+**Libraries**
+- **The holographic cards idea is in.** A card already tilted in your hand on its own page. Now it catches the light as it does: a soft glare slides the way the card leans, brighter the further it goes, and on a Foil, Epic or Legendary card a band of rainbow foil slides across the other way. Nothing at rest, only on the card's own page, and not with Reduce motion. It's light over the picture, never in place of one.
+- **Not used:** Spark (3D scans dissolving into dust) needs 3D scans of gyms, which don't exist and couldn't be made up; Canvas UI's shader effects and ShaderGradient's moving gradients are heavy WebGL decoration that would undo the website's speed work and add nothing to finding a gym; Pretext wraps text round shapes, which nothing in GymGO does.
+
+- Checked in the browser: tooltips (none at 250 ms, Save at 700 ms, the next at once, gone with Escape); the theme-switch mark on while the colours change and off after; Home's rail pulled 156 px past its start and back to rest; Earlier on the monthly report (from the left); a wrong password (shake, both fields red, cleared on typing, no page errors); steady bold (Appearance's tiles the same size before and after choosing); the trimmed Start label; EMOM in small capitals; the welcome headline at 390 and 1280 wide; "Saved as …" at 320 wide, giving way in the middle when squeezed to 190; the holographic light on an Uncommon card (glare) and a Legendary one (glare and foil). axe on 12 pages of the full app and 5 of the website version, light and dark, phone and desktop: clean. Labels match their words, headings and text spacing unchanged, no console messages. Tests: app 626 (two new, for a row's give and the tooltip's wait), server 315, shared rules 199. Hooks rules clean.
+
 ## Update 235 · Yearly plans say "per year"; an unknown visit price is called that
 
-*22 Nov 2026 · the commit "Yearly plans say per year; a gym page's unknown price is the visit price"*
+*22 Nov 2026 · `ee7cb10`*
 
 Two pieces of wording found looking at real gyms in other countries on the website version:
 

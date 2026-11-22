@@ -478,7 +478,7 @@ function Elsewhere({ record }: { record: GymRecord }) {
             key={link.label}
             onPress={() => open(link.url)}
             accessibilityRole="link"
-            accessibilityLabel={`Read ${record.location.name}'s reviews on ${link.label} (opens ${link.label})`}
+            accessibilityLabel={`Read ${record.location.name}’s reviews on ${link.label} (opens ${link.label})`}
             style={({ pressed }) => [styles.link, pressed && styles.pressed]}
           >
             <Icon name="map" size={15} color={color.brandOnTint} />

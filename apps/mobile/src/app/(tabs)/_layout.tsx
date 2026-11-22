@@ -226,9 +226,12 @@ function GlassTabBar({ bottom }: { bottom: number }) {
       // Glides after the finger: a drag begun on another tab used to jump the lens there in one frame.
       x.value = withSpring(Math.min(Math.max(event.x - PAD - tabWidth / 2, 0), tabWidth * last), FOLLOW);
     })
-    .onEnd(() => {
-      const target = Math.min(Math.max(Math.round(x.value / tabWidth), 0), last);
-      x.value = withSpring(target * tabWidth, SPRING);
+    .onEnd((event) => {
+      // A flick carries on: where the lens would coast to at the speed it was let go (a fifth of a
+      // second's travel) picks the tab, and the spring starts at that speed, so it doesn't stop dead first.
+      const coast = x.value + event.velocityX * 0.2;
+      const target = Math.min(Math.max(Math.round(coast / tabWidth), 0), last);
+      x.value = withSpring(target * tabWidth, { ...SPRING, velocity: event.velocityX });
       runOnJS(markDragEnd)();
       runOnJS(go)(target);
     })

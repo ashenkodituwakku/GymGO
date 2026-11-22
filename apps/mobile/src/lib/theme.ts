@@ -745,6 +745,24 @@ export function subscribeGlass(listener: () => void): () => void {
   return () => glassListeners.delete(listener);
 }
 
+/**
+ * While the colours change, a browser's CSS transitions are switched off
+ * (app/_layout.tsx: html[data-theme-switching]), so the new theme lands in
+ * one go rather than some things fading across from the old one (a filter,
+ * a glow, a map pin) while the rest have already switched. Back on once the
+ * screens have drawn in the new colours.
+ */
+let holdTimer: ReturnType<typeof setTimeout> | null = null;
+function holdTransitions() {
+  if (typeof document === 'undefined' || !document.documentElement) return;
+  document.documentElement.setAttribute('data-theme-switching', '');
+  if (holdTimer) clearTimeout(holdTimer);
+  holdTimer = setTimeout(() => {
+    holdTimer = null;
+    document.documentElement.removeAttribute('data-theme-switching');
+  }, 300);
+}
+
 /** Switch the colours (and the look) everywhere. Returns false if nothing changed. */
 export function applyTheme(scheme: Scheme, accent: AccentId, look: LookId = current.look, glass: number = current.glass, dark: DarkStyle = current.dark): boolean {
   const level = cleanGlass(glass);
@@ -764,6 +782,7 @@ export function applyTheme(scheme: Scheme, accent: AccentId, look: LookId = curr
   // keyboard), where a tab is scrolled and the gym picked on Explore all
   // stay as they were.
   if (!sameColours) {
+    holdTransitions();
     version += 1;
     for (const listener of listeners) listener();
   }

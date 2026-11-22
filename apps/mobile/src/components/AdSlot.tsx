@@ -101,7 +101,6 @@ export function AdSlot({ place, style }: { place: AdPlace; style?: object }) {
   return (
     <View style={style}>
       <Pressy
-        scaleTo={0.98}
         onPress={() => {
           haptic.select();
           openPro(place === 'results' ? 'worldwide' : undefined);

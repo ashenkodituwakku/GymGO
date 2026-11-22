@@ -17,7 +17,7 @@ import { PageScroll } from '@/components/PageScroll';
 import { ProgressChart } from '@/components/ProgressChart';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
-import { Input, PrimaryButton, Txt, LiveLine } from '@/components/ui';
+import { Input, PrimaryButton, SteadyTxt, Txt, LiveLine } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
 import { localToday } from '@/lib/bodyWeight';
 import { MEASURES, formMeasures, keptValue, latestOf, lengthUnitFor, measureDays, seriesOf, shownValue, unitOf, valueLabel, withMeasures, withoutDay, type MeasureId } from '@/lib/bodyMeasures';
@@ -108,9 +108,9 @@ export default function MeasurementsScreen() {
                   style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, on && styles.rowOn, pressed && { backgroundColor: color.fill }]}
                 >
                   <View style={styles.flex}>
-                    <Txt variant="body" style={on && face('semibold')}>
+                    <SteadyTxt on={on} variant="body">
                       {measure.label}
-                    </Txt>
+                    </SteadyTxt>
                     <Txt variant="footnote" color={on ? color.labelSecondaryOnTint : color.labelSecondary}>
                       {changeWords}
                     </Txt>

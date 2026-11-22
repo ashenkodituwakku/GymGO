@@ -42,9 +42,12 @@ async function handOver(name: string, text: string, type: string): Promise<void>
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-export async function downloadMyData(token: string): Promise<void> {
+/** Everything GymGO holds about you, as a file; returns the file's name. */
+export async function downloadMyData(token: string): Promise<string> {
   const data = await api.exportMyData(token);
-  await handOver(`gymgo-my-data-${today()}.json`, JSON.stringify(data, null, 2), 'application/json');
+  const name = `gymgo-my-data-${today()}.json`;
+  await handOver(name, JSON.stringify(data, null, 2), 'application/json');
+  return name;
 }
 
 /** Your training log, a row a set, for a spreadsheet. */

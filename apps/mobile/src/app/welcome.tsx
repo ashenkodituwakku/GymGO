@@ -12,7 +12,7 @@
 
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useRef, useState, type ReactNode } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { interpolate, runOnJS, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Wordmark } from '@/components/BrandMark';
@@ -140,7 +140,7 @@ export default function WelcomeScreen() {
               <HeroMark icon={item.icon} size={88} tint={color.brand} />
             </Drift>
             <Drift index={index} width={width} scrollX={scrollX} depth={0.12}>
-              <Txt variant="largeTitle" style={styles.title}>
+              <Txt variant="largeTitle" style={styles.title} fluid>
                 {item.title}
               </Txt>
             </Drift>
@@ -212,7 +212,8 @@ const styles = themed(() =>
     ringInside: { outlineOffset: -3 } as object,
     slide: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[4], paddingHorizontal: space[6] },
     drift: { alignItems: 'center', alignSelf: 'stretch' },
-    title: { textAlign: 'center', maxWidth: 440 },
+    // Room for the headline as it grows in a wide browser window (Txt's `fluid`).
+    title: { textAlign: 'center', maxWidth: Platform.OS === 'web' ? 680 : 440 },
     line: { textAlign: 'center', maxWidth: 440 },
     // Each dot's target is 24 high and its dot's width plus 16: centres 24 apart, the row as tall as before.
     dots: { flexDirection: 'row', justifyContent: 'center', paddingVertical: space[2] },

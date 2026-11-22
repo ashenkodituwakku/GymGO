@@ -132,7 +132,6 @@ export default function Profile() {
     <TabScreen title="Profile" glow>
       {me ? (
         <Pressy
-          scaleTo={0.98}
           onPress={() => router.push('/account')}
           accessibilityRole="button"
           accessibilityLabel={`${me.displayName}, ${me.email}${plan ? `, ${plan}` : ''}${moderator ? ', moderator' : ''}. ${meStats.map((stat) => stat.spoken ?? `${stat.value} ${stat.label}`).join(', ')}. Account settings`}
@@ -416,7 +415,6 @@ function ProCard({ isPro, line, trial, canBuy, onOpen }: { isPro: boolean; line:
   const action = isPro || !canBuy ? null : trial ? 'See the free trial' : 'See what’s in Pro';
   return (
     <Pressy
-      scaleTo={0.98}
       onPress={onOpen}
       accessibilityRole="button"
       // The words on the card, so a voice command that names them finds it.

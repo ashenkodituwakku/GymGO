@@ -43,6 +43,7 @@ import { allowCorners, loadThemeChoice, schemeFor, useSystemScheme, useThemeChoi
 import { rememberOpeningLink, takeWanted } from '@/lib/afterSignIn';
 import { installProblemLog } from '@/lib/problemLog';
 import { SHEET_DONE } from '@/components/SheetDone';
+import { installTooltips } from '@/components/tooltips';
 
 // A link opened while signed out goes there once you've signed in (lib/afterSignIn.ts).
 void rememberOpeningLink();
@@ -66,6 +67,18 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   const css = document.createElement('style');
   css.textContent =
     '*{font-synthesis:none}body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}' +
+    // A theme switch lands in one go: no CSS transition carries the old colours across (lib/theme.ts, holdTransitions).
+    'html[data-theme-switching] *,html[data-theme-switching] *::before,html[data-theme-switching] *::after{transition:none!important}' +
+    // Something that opens to its natural height (height: auto) can be animated to it, where a browser can.
+    ':root{interpolate-size:allow-keywords}' +
+    // A button's or chip's label centred by its letters, not its line (Txt's `trim`).
+    '[data-trim]{text-box:trim-both cap alphabetic}' +
+    // A page's big headline grows with the window (Txt's `fluid`).
+    '[data-fluid]{font-size:clamp(2rem,1rem + 5vw,4rem)!important;line-height:1.1!important;text-wrap:balance}' +
+    // An acronym in a sentence in small capitals (Txt's `acronyms`), made from the capitals if the face has none.
+    '[data-acronym]{font-variant-caps:all-small-caps;font-synthesis:small-caps;letter-spacing:0.03em}' +
+    // Narrow columns break long words with a hyphen (Txt's `hyphens`; the page says it's in English).
+    '[data-hyphens]{-webkit-hyphens:auto;hyphens:auto;hyphenate-limit-chars:6 3 3}' +
     ':not(input):not(textarea):focus-visible{outline:none}' +
     // Not round a container that only holds focus for what's in it (a sheet as it opens: components/SheetBackground.tsx).
     ':not(input):not(textarea):not([data-quiet-focus]):focus-visible::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:10;' +
@@ -84,6 +97,9 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
     '[role=tab][aria-selected=true],[role=checkbox][aria-checked=true],[role=radio][aria-checked=true]{forced-color-adjust:none;background-color:Highlight!important;color:HighlightText!important}' +
     '[role=tab][aria-selected=true] *,[role=checkbox][aria-checked=true] *,[role=radio][aria-checked=true] *{color:HighlightText!important}}';
   document.head.appendChild(css);
+  // An icon-only button's name under a mouse (components/tooltips.web.ts).
+  if (document.body) installTooltips();
+  else document.addEventListener('DOMContentLoaded', installTooltips, { once: true });
 }
 
 const FACES = NEEDS_BUNDLED_FACES ? BUNDLED_FACES : {};

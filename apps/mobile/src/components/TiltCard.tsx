@@ -6,14 +6,21 @@
  * on top of it. Still with Reduce Motion. Used on a card's own page.
  */
 
-import { useEffect, type ReactNode } from 'react';
+import { createContext, useEffect, useMemo, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withSpring, type SharedValue } from 'react-native-reanimated';
 import { useCalm } from './motion';
 import { tiltFor } from '@/lib/tilt';
 
 const SPRING = { damping: 14, stiffness: 160, mass: 0.6 };
+
+/**
+ * How the card in hand is leaning, for what's drawn on it to catch the
+ * light (GemCard's holographic glare and foil): none when it isn't in a
+ * TiltCard, or with Reduce Motion.
+ */
+export const TiltContext = createContext<{ rotateX: SharedValue<number>; rotateY: SharedValue<number> } | null>(null);
 
 export function TiltCard({ children, still = false }: { children: ReactNode; /** Lying flat, at once and until it's false again: while a picture of it is made. */ still?: boolean }) {
   const reduceMotion = useCalm();
@@ -53,6 +60,7 @@ export function TiltCard({ children, still = false }: { children: ReactNode; /**
   const style = useAnimatedStyle(() => ({
     transform: [{ perspective: 900 }, { rotateX: `${rotateX.value}deg` }, { rotateY: `${rotateY.value}deg` }],
   }));
+  const leaning = useMemo(() => ({ rotateX, rotateY }), [rotateX, rotateY]);
 
   if (reduceMotion) return <>{children}</>;
   // A mouse over it, in a browser: read from the browser's own pointer events on a layer that
@@ -78,7 +86,7 @@ export function TiltCard({ children, still = false }: { children: ReactNode; /**
             height.value = event.nativeEvent.layout.height;
           }}
         >
-          {children}
+          <TiltContext.Provider value={still ? null : leaning}>{children}</TiltContext.Provider>
         </Animated.View>
       </GestureDetector>
     </View>

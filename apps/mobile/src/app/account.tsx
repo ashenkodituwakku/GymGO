@@ -15,7 +15,7 @@ import { useDeleteCollection } from '@/components/CollectionData';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { GoogleMark, SocialButtons, useSignInProviders, type TokenHandler } from '@/components/SocialSignIn';
 import { ROW, ROW_RULE_INSET, RowChevron, SettingsTile, TILE } from '@/components/ios';
-import { Input, PrimaryButton, Txt, LiveLine } from '@/components/ui';
+import { FileName, Input, PrimaryButton, Txt, LiveLine } from '@/components/ui';
 import { ApiError, OfflineError, api, serverHosted, type SignInMethods, type SignInProvider } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { serverOfflineLine } from '@/lib/copy';
@@ -50,6 +50,8 @@ export default function AccountScreen() {
   const [editing, setEditing] = useState<'name' | 'password' | null>(null);
   const [notice, setNotice] = useState<{ text: string; good: boolean } | null>(null);
   const [exported, setExported] = useState<string | null>(null);
+  // The file Download my data saved, named under the section (its middle gives way on a narrow screen).
+  const [savedAs, setSavedAs] = useState<string | null>(null);
   // Longer to read what deleting takes with it.
   const [confirmDelete, setConfirmDelete] = useTapAgain(20000);
   const [picturing, setPicturing] = useState(false);
@@ -250,7 +252,7 @@ export default function AccountScreen() {
         </Animated.View>
       )}
 
-      <Section title="Your data">
+      <Section title="Your data" after={savedAs ? <FileName prefix="Saved as " name={savedAs} /> : undefined}>
         <Line
           icon="download"
           tile={TILE.green}
@@ -260,7 +262,8 @@ export default function AccountScreen() {
           onPress={async () => {
             try {
               setExported('Preparing…');
-              await downloadMyData(token);
+              setSavedAs(null);
+              setSavedAs(await downloadMyData(token));
               setExported('Saved');
             } catch (error) {
               // A server that answered but couldn't do it isn't out of reach.
@@ -308,7 +311,7 @@ export default function AccountScreen() {
   );
 }
 
-function Section({ title, footer, children }: { title?: string; footer?: string; children: ReactNode }) {
+function Section({ title, footer, after, children }: { title?: string; footer?: string; /** Under the footer: something more than words (a file's name). */ after?: ReactNode; children: ReactNode }) {
   return (
     <Animated.View layout={GLIDE} style={styles.section}>
       {title && (
@@ -322,6 +325,7 @@ function Section({ title, footer, children }: { title?: string; footer?: string;
           {footer}
         </Txt>
       )}
+      {after ? <View style={styles.footer}>{after}</View> : null}
     </Animated.View>
   );
 }

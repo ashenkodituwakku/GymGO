@@ -190,7 +190,9 @@ function TemplateCard({
     <Card style={styles.card}>
       <View style={styles.head}>
         <View style={styles.flex}>
-          <Txt variant="title2">{template.name}</Txt>
+          <Txt variant="title2" numberOfLines={2}>
+            {template.name}
+          </Txt>
           <Txt variant="footnote" color={color.brand} style={face('semibold')}>
             {`${template.level} · ${template.perWeek}`}
           </Txt>

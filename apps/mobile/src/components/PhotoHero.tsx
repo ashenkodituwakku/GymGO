@@ -17,6 +17,7 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
 import { Pressable } from './motion';
+import { rubberBand } from './rubberBand';
 import { api, apiBase, ApiError, OfflineError, photoUrl, type GymPhoto } from '@/lib/api';
 import { EMPTY } from '@/lib/copy';
 import { ILLUSTRATION_CREDIT, demoPicture } from '@/lib/gymPicture';
@@ -133,6 +134,7 @@ function Gallery({ slides, width }: { slides: Slide[]; width: number }) {
     <View style={{ width }}>
       <ScrollView
         ref={scroller}
+        {...rubberBand()}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}

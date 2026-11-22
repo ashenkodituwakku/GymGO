@@ -17,7 +17,7 @@ import { Pressable } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
-import { Card, Chip, Input, PrimaryButton, Segmented, TextField, Txt, LiveLine } from '@/components/ui';
+import { Card, Chip, Input, PrimaryButton, Segmented, TextField, SteadyTxt, Txt, LiveLine } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { askToDiscard } from '@/lib/askToDiscard';
@@ -25,7 +25,7 @@ import { matchesQuery } from '@/lib/exerciseLibrary';
 import { haptic } from '@/lib/haptics';
 import { addOwnExercise, changeOwnExercise, deleteOwnExercise, useOwnTraining } from '@/lib/ownTraining';
 import { usePageTitle } from '@/lib/pageTitle';
-import { color, face, radius, space, themed } from '@/lib/theme';
+import { color, radius, space, themed } from '@/lib/theme';
 import { EXERCISES, KIT_LABEL, MUSCLES, type Kit } from '@/lib/workout';
 import { useTapAgain } from '@/lib/tapAgain';
 
@@ -274,9 +274,9 @@ function LookChoice({ label, exerciseId, selected, onPress }: { label: string; e
       style={({ pressed }) => [styles.look, selected && styles.lookOn, pressed && { opacity: 0.7 }]}
     >
       <ExerciseTile exerciseId={exerciseId} size={44} />
-      <Txt variant="caption" numberOfLines={2} style={[styles.lookLabel, selected && face('semibold')]}>
+      <SteadyTxt on={selected} variant="caption" numberOfLines={2} style={styles.lookLabel}>
         {label}
-      </Txt>
+      </SteadyTxt>
     </Pressable>
   );
 }

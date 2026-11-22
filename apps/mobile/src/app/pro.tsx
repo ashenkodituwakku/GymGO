@@ -195,7 +195,7 @@ export default function ProScreen() {
           <Txt variant="largeTitle" style={styles.center} accessibilityRole="header" level={1}>
             GymGO Pro
           </Txt>
-          <Txt variant="body" color={color.labelSecondary} style={styles.center}>
+          <Txt variant="body" color={color.labelSecondary} style={styles.center} acronyms>
             {billing.isPro ? 'Thanks for backing GymGO.' : reason ? REASON[reason] : 'What Free covers, and what Pro adds.'}
           </Txt>
         </View>

@@ -249,7 +249,6 @@ export function CollectionStrip({ onPress, tile = false }: { onPress: () => void
     const places = `${stats.cities} cit${stats.cities === 1 ? 'y' : 'ies'} · ${stats.countries} countr${stats.countries === 1 ? 'y' : 'ies'}`;
     return (
       <Pressy
-        scaleTo={0.96}
         onPress={() => {
           haptic.select();
           onPress();
@@ -286,7 +285,6 @@ export function CollectionStrip({ onPress, tile = false }: { onPress: () => void
   }
   return (
     <Pressy
-      scaleTo={0.97}
       onPress={() => {
         haptic.select();
         onPress();
@@ -329,13 +327,12 @@ export function HereNudge({ here, records, onOpen }: { here: Fix | null; records
   const collected = Boolean(gyms[location.id]);
   return (
     <Pressy
-      scaleTo={0.97}
       onPress={() => {
         haptic.select();
         onOpen(location.id);
       }}
       accessibilityRole="button"
-      accessibilityLabel={`You're at ${location.name}. ${collected ? 'Check in for today' : 'Collect it'}`}
+      accessibilityLabel={`You’re at ${location.name}. ${collected ? 'Check in for today' : 'Collect it'}`}
       style={[styles.strip, styles.nudge]}
     >
       <Icon name="pin" size={22} color={color.brand} />

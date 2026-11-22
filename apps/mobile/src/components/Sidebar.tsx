@@ -41,7 +41,7 @@ import { ARRIVE, LEAVE, Pressable, SETTLE, SLIDE } from './motion';
 import { PageGround } from './pageGround';
 import { PIcon, type PhosphorName } from './PIcon';
 import { useThemeVersion } from './Redrawn';
-import { Txt } from './ui';
+import { SteadyTxt, Txt } from './ui';
 
 /** Every place's icon, from the tab bar's set: outline, filled for the place you're on. */
 const ICON: Record<string, PhosphorName> = {
@@ -170,9 +170,9 @@ function SidebarList({ onGo }: { onGo?: () => void }) {
                   )}
                 </View>
                 {/* The chosen place sits on the accent's tint (the sliding pill), so the accent made for it: plain, it was 3.3 to 1 in dark. */}
-                <Txt variant="body" color={on ? color.brandOnTint : color.label} style={on ? face('semibold') : undefined} numberOfLines={1}>
+                <SteadyTxt on={on} variant="body" color={on ? color.brandOnTint : color.label} numberOfLines={1}>
                   {item.label}
-                </Txt>
+                </SteadyTxt>
               </Pressable>
             );
           })}

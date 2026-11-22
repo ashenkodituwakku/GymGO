@@ -67,6 +67,8 @@ export default function SignInScreen() {
   }, []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The server said the email and password don't match: both fields turn red until either changes.
+  const [mismatch, setMismatch] = useState(false);
   // "Forgot your password?": the address a reset link went to, once asked.
   const [resetSentTo, setResetSentTo] = useState<string | null>(null);
   const [resetBusy, setResetBusy] = useState(false);
@@ -118,12 +120,15 @@ export default function SignInScreen() {
     (message: string) => {
       haptic.warn();
       setError(message);
+      // A head shake, as a Mac's login window gives: side to side, smaller each time, 360 ms in all.
       shake.value = withSequence(
-        withTiming(-8, { duration: 50, reduceMotion: ReduceMotion.System }),
-        withTiming(8, { duration: 70, reduceMotion: ReduceMotion.System }),
-        withTiming(-5, { duration: 60, reduceMotion: ReduceMotion.System }),
-        withTiming(3, { duration: 50, reduceMotion: ReduceMotion.System }),
-        withTiming(0, { duration: 40, reduceMotion: ReduceMotion.System }),
+        withTiming(-8, { duration: 45, reduceMotion: ReduceMotion.System }),
+        withTiming(8, { duration: 60, reduceMotion: ReduceMotion.System }),
+        withTiming(-6, { duration: 60, reduceMotion: ReduceMotion.System }),
+        withTiming(5, { duration: 55, reduceMotion: ReduceMotion.System }),
+        withTiming(-3, { duration: 50, reduceMotion: ReduceMotion.System }),
+        withTiming(2, { duration: 45, reduceMotion: ReduceMotion.System }),
+        withTiming(0, { duration: 45, reduceMotion: ReduceMotion.System }),
       );
     },
     [shake],
@@ -156,7 +161,10 @@ export default function SignInScreen() {
     } catch (caught) {
       noteNewAccount(false);
       if (tooYoung(caught)) refuseYoung();
-      else fail(messageFor(caught));
+      else {
+        setMismatch(mode === 'sign_in' && caught instanceof ApiError && caught.status === 401);
+        fail(messageFor(caught));
+      }
     } finally {
       setBusy(false);
     }
@@ -285,7 +293,9 @@ export default function SignInScreen() {
             setEmail(text);
             // A "don't match" from the last try is stale once either field changes.
             setError(null);
+            setMismatch(false);
           }}
+          wrong={mismatch}
           placeholder="you@example.com"
           autoCapitalize="none"
           autoCorrect={false}
@@ -305,7 +315,9 @@ export default function SignInScreen() {
           onChangeText={(text) => {
             setPassword(text);
             setError(null);
+            setMismatch(false);
           }}
+          wrong={mismatch}
           // The rule is the live check under it ("8 characters or more"), not said twice.
           placeholder={mode === 'create' ? 'A new password' : 'Your password'}
           secureTextEntry={!showPassword}
@@ -465,18 +477,20 @@ function AuthField({
   label,
   accessory,
   problem = null,
+  wrong = false,
   ...props
-}: TextInputProps & { ref?: Ref<TextInputInstance>; icon: IconName; label: string; accessory?: ReactNode; problem?: string | null }) {
+}: TextInputProps & { ref?: Ref<TextInputInstance>; icon: IconName; label: string; accessory?: ReactNode; problem?: string | null; wrong?: boolean }) {
   const [focused, setFocused] = useState(false);
   return (
     <View style={styles.field}>
-      <View style={[styles.fieldBox, focused && styles.fieldFocused, problem && styles.fieldProblem]}>
-        <Icon name={icon} size={17} color={focused ? color.brand : color.labelTertiary} />
+      {/* `wrong`: the server turned this down (the email and password don't match): red, and its icon too. */}
+      <View style={[styles.fieldBox, focused && styles.fieldFocused, problem && styles.fieldProblem, wrong && styles.fieldWrong]}>
+        <Icon name={icon} size={17} color={wrong ? color.dangerInk : focused ? color.brand : color.labelTertiary} />
         <TextInput
           ref={ref}
           placeholderTextColor={color.labelSecondaryOnFill}
           accessibilityLabel={label}
-          aria-invalid={problem ? true : undefined}
+          aria-invalid={problem || wrong ? true : undefined}
           {...props}
           onFocus={(event) => {
             setFocused(true);
@@ -526,6 +540,7 @@ const styles = themed(() =>
     },
     fieldFocused: { borderColor: color.brand },
     fieldProblem: { borderColor: color.maybe },
+    fieldWrong: { borderColor: color.danger },
     // The box's border shows focus, in the accent, instead of the browser's own ring.
     // minWidth 0: a browser text field won't otherwise shrink below its own width, and ran past a narrow phone's edge.
     fieldInput: { flex: 1, minWidth: 0, height: '100%', fontSize: 17, color: color.label, ...NO_WEB_OUTLINE, ...face('regular') },

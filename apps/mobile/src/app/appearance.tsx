@@ -23,7 +23,7 @@ import { Glass } from '@/components/Glass';
 import { GYMPAL_KEYS, GymPalMark } from '@/components/GymPal';
 import { Icon } from '@/components/Icon';
 import { PercentSlider } from '@/components/PercentSlider';
-import { PrimaryButton, Txt } from '@/components/ui';
+import { PrimaryButton, SteadyTxt, Txt } from '@/components/ui';
 import { Toggle } from '@/components/Toggle';
 import { timeLabel } from '@/lib/copy';
 import { Celebration } from '@/components/Celebration';
@@ -272,9 +272,9 @@ export default function AppearanceScreen() {
                     <MiniScreen tone={mode.id === 'dark' ? darkTone : mode.id} />
                   )}
                 </View>
-                <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                <SteadyTxt on={on} variant="subhead">
                   {mode.label}
-                </Txt>
+                </SteadyTxt>
                 <Icon name={on ? 'done' : 'todo'} size={22} color={on ? color.brand : color.labelTertiary} />
               </Pressable>
             );
@@ -303,9 +303,9 @@ export default function AppearanceScreen() {
                   <MiniScreen tone={style.id === 'dim' ? 'dim' : 'dark'} />
                 </View>
                 <View style={styles.darkText}>
-                  <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                  <SteadyTxt on={on} variant="subhead">
                     {style.label}
-                  </Txt>
+                  </SteadyTxt>
                   <Txt variant="caption" color={color.labelSecondary} style={styles.centred}>
                     {style.blurb}
                   </Txt>
@@ -341,9 +341,9 @@ export default function AppearanceScreen() {
                   <LayoutPreview layout={item.id} tone={scheme === 'dark' ? darkTone : 'light'} />
                 </View>
                 <View style={styles.darkText}>
-                  <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                  <SteadyTxt on={on} variant="subhead">
                     {item.label}
-                  </Txt>
+                  </SteadyTxt>
                   <Txt variant="caption" color={color.labelSecondary} style={styles.centred}>
                     {item.blurb}
                   </Txt>
@@ -413,9 +413,9 @@ export default function AppearanceScreen() {
                       Aa
                     </Txt>
                   </View>
-                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={2}>
+                  <SteadyTxt on={on} variant="footnote" color={on ? color.label : color.labelSecondary} numberOfLines={2} hyphens>
                     {size.label}
-                  </Txt>
+                  </SteadyTxt>
                 </Pressable>
               );
             })}
@@ -500,9 +500,9 @@ export default function AppearanceScreen() {
                 <LookPreview look={id} accent={accentInUse} dark={choice.dark} on={on} />
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
-                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={2}>
+                  <SteadyTxt on={on} variant="footnote" color={on ? color.label : color.labelSecondary} numberOfLines={2} hyphens>
                     {LOOKS[id].name}
-                  </Txt>
+                  </SteadyTxt>
                 </View>
               </Pressable>
             );
@@ -544,9 +544,9 @@ export default function AppearanceScreen() {
                 </View>
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
-                  <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                  <SteadyTxt on={on} variant="subhead">
                     {style.label}
-                  </Txt>
+                  </SteadyTxt>
                 </View>
                 <Icon name={on ? 'done' : 'todo'} size={22} color={on ? color.brand : color.labelTertiary} />
               </Pressable>
@@ -643,9 +643,9 @@ export default function AppearanceScreen() {
                     ) : null}
                   </View>
                 </View>
-                <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={2}>
+                <SteadyTxt on={on} variant="footnote" color={on ? color.label : color.labelSecondary} numberOfLines={2} hyphens>
                   {accent.name}
-                </Txt>
+                </SteadyTxt>
               </Pressable>
             );
           })}
@@ -717,9 +717,9 @@ export default function AppearanceScreen() {
                 </View>
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
-                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={2}>
+                  <SteadyTxt on={on} variant="footnote" color={on ? color.label : color.labelSecondary} numberOfLines={2} hyphens>
                     {item.name}
-                  </Txt>
+                  </SteadyTxt>
                 </View>
               </Pressable>
             );
@@ -760,9 +760,9 @@ export default function AppearanceScreen() {
                 </View>
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
-                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={2}>
+                  <SteadyTxt on={on} variant="footnote" color={on ? color.label : color.labelSecondary} numberOfLines={2} hyphens>
                     {item.name}
-                  </Txt>
+                  </SteadyTxt>
                 </View>
               </Pressable>
             );
@@ -806,9 +806,9 @@ export default function AppearanceScreen() {
                 </View>
                 <View style={styles.lookName}>
                   {locked && <Icon name="crown" size={12} color={color.labelTertiary} />}
-                  <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={2}>
+                  <SteadyTxt on={on} variant="footnote" color={on ? color.label : color.labelSecondary} numberOfLines={2} hyphens>
                     {item.name}
-                  </Txt>
+                  </SteadyTxt>
                 </View>
                 <Txt variant="caption" color={color.labelSecondary} style={styles.centred}>
                   {item.blurb}
@@ -852,9 +852,9 @@ export default function AppearanceScreen() {
                     {clock.later}
                   </Txt>
                 </View>
-                <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                <SteadyTxt on={on} variant="subhead">
                   {clock.label}
-                </Txt>
+                </SteadyTxt>
               </Pressable>
             );
           })}
@@ -891,9 +891,9 @@ export default function AppearanceScreen() {
                       <GymPalPreview button={item.id} side={choice.gymPalSide} tone={scheme === 'dark' ? darkTone : 'light'} />
                     </View>
                     <View style={styles.darkText}>
-                      <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                      <SteadyTxt on={on} variant="subhead">
                         {item.label}
-                      </Txt>
+                      </SteadyTxt>
                       <Txt variant="caption" color={color.labelSecondary} style={styles.centred}>
                         {item.blurb}
                       </Txt>
@@ -925,9 +925,9 @@ export default function AppearanceScreen() {
                     </View>
                     <View style={styles.sideLabel}>
                       <Icon name={on ? 'done' : 'todo'} size={20} color={on ? color.brand : color.labelTertiary} />
-                      <Txt variant="subhead" style={on ? face('semibold') : undefined}>
+                      <SteadyTxt on={on} variant="subhead">
                         {item.label}
-                      </Txt>
+                      </SteadyTxt>
                     </View>
                   </Pressable>
                 );
@@ -1062,9 +1062,9 @@ function CustomTile({ hue, on, locked, onPress }: { hue: number; on: boolean; lo
           {on ? <Icon name="check" size={18} color={color.onBrand} /> : locked ? <Icon name="crown" size={14} color={color.onBrandSoft} /> : <Icon name="plus" size={16} color={color.onBrand} />}
         </View>
       </View>
-      <Txt variant="footnote" color={on ? color.label : color.labelSecondary} style={on ? face('semibold') : undefined} numberOfLines={2}>
+      <SteadyTxt on={on} variant="footnote" color={on ? color.label : color.labelSecondary} numberOfLines={2} hyphens>
         Your own
-      </Txt>
+      </SteadyTxt>
     </Pressable>
   );
 }

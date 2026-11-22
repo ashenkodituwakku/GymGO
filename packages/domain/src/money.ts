@@ -300,7 +300,7 @@ export function describeMembership(offer: VisitOffer): MembershipCostView | null
     cancellationLabel:
       terms.cancellationNoticeDays === null
         ? 'Cancellation notice not confirmed'
-        : `${terms.cancellationNoticeDays} days' cancellation notice`,
+        : `${terms.cancellationNoticeDays} days’ cancellation notice`,
     effectiveWeeklyNote,
     effectiveWeeklyMinor,
   };

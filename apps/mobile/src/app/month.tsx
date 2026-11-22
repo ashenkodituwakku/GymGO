@@ -13,7 +13,8 @@ import { monthLabel } from '@gymgo/domain';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { HeroMark } from '@/components/HeroMark';
 import { Icon } from '@/components/Icon';
-import { Pressable } from '@/components/motion';
+import Animated from 'react-native-reanimated';
+import { Pressable, stepIn } from '@/components/motion';
 import { SmallFigures } from '@/components/MuscleFigures';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -48,6 +49,8 @@ export default function MonthScreen() {
   const month = picked && months.includes(picked) ? picked : reportMonth(log.sessions);
   const report = useMemo(() => (month ? monthReport(log.sessions, month) : null), [log.sessions, month]);
   const [shared, setShared] = useState<string | null>(null);
+  // Which way the last Earlier or Later went, so the new month slides in from that side; none on opening.
+  const [forward, setForward] = useState<boolean | null>(null);
 
   if (!account.token) {
     return (
@@ -128,6 +131,7 @@ export default function MonthScreen() {
   };
   const go = (next: string) => {
     haptic.select();
+    setForward(next > (month ?? ''));
     setPicked(next);
     setShared(null);
   };
@@ -150,9 +154,11 @@ export default function MonthScreen() {
           <Txt variant="label" color={color.labelSecondary} style={styles.center}>
             Monthly report
           </Txt>
-          <Txt variant="title2" accessibilityRole="header" level={1} style={styles.center}>
-            {label}
-          </Txt>
+          <Animated.View key={month} entering={stepIn(forward)}>
+            <Txt variant="title2" accessibilityRole="header" level={1} style={styles.center}>
+              {label}
+            </Txt>
+          </Animated.View>
         </View>
         <Pressable
           onPress={() => newer && go(newer)}
@@ -166,143 +172,146 @@ export default function MonthScreen() {
         </Pressable>
       </View>
 
-      <View style={styles.tiles}>
-        {tiles.map((tile) => (
-          <View
-            key={tile.label}
-            style={styles.tile}
-            accessible
-            accessibilityLabel={`${tile.label}: ${tile.value}${compared ? `, ${tile.change === 'same' ? `the same as ${before}` : `${tile.change} on ${before}`}` : ''}`}
-          >
-            <Txt variant="caption" color={color.labelSecondary}>
-              {tile.label}
-            </Txt>
-            {/* Two lines, not cut short: with wider text (a reader's own spacing, WCAG 1.4.12) "6 h 15 min" lost its end. */}
-            <Txt variant="headline" numberOfLines={2}>
-              {tile.value}
-            </Txt>
-            {compared && (
-              <Txt variant="caption" color={tile.change.startsWith('+') ? color.goodInk : color.labelSecondary} numberOfLines={2}>
-                {tile.change === 'same' ? `Same as ${beforeShort}` : `${tile.change} on ${beforeShort}`}
+      {/* The month itself, sliding in from the side of the button pressed. */}
+      <Animated.View key={month} entering={stepIn(forward)} style={styles.monthBody}>
+        <View style={styles.tiles}>
+          {tiles.map((tile) => (
+            <View
+              key={tile.label}
+              style={styles.tile}
+              accessible
+              accessibilityLabel={`${tile.label}: ${tile.value}${compared ? `, ${tile.change === 'same' ? `the same as ${before}` : `${tile.change} on ${before}`}` : ''}`}
+            >
+              <Txt variant="caption" color={color.labelSecondary}>
+                {tile.label}
               </Txt>
-            )}
-          </View>
-        ))}
-      </View>
-      {!compared && (
-        <Txt variant="footnote" color={color.labelSecondary} style={styles.noCompare}>
-          {`No workouts in ${before} to compare with.`}
-        </Txt>
-      )}
-
-      {report.records.length > 0 && (
-        <>
-          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
-            {`RECORDS · ${report.records.length}`}
-          </Txt>
-          <View style={styles.group}>
-            {report.records.map((record, index) => (
-              <View key={`${record.exerciseId}-${record.kind}-${record.date}`} style={[styles.row, index > 0 && styles.rowLine]}>
-                <ExerciseTile exerciseId={record.exerciseId} size={32} />
-                <View style={styles.flex}>
-                  <Txt variant="body">{exerciseName(record.exerciseId)}</Txt>
-                  <Txt variant="footnote" color={color.maybeInk}>
-                    {RECORD_WORD[record.kind]}
-                  </Txt>
-                </View>
-                <Txt variant="footnote" color={color.labelSecondary}>
-                  {dayOf(record.date)}
+              {/* Two lines, not cut short: with wider text (a reader's own spacing, WCAG 1.4.12) "6 h 15 min" lost its end. */}
+              <Txt variant="headline" numberOfLines={2}>
+                {tile.value}
+              </Txt>
+              {compared && (
+                <Txt variant="caption" color={tile.change.startsWith('+') ? color.goodInk : color.labelSecondary} numberOfLines={2}>
+                  {tile.change === 'same' ? `Same as ${beforeShort}` : `${tile.change} on ${beforeShort}`}
                 </Txt>
-              </View>
-            ))}
-          </View>
-        </>
-      )}
-
-      {report.topExercises.length > 0 && (
-        <>
-          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
-            DONE MOST
+              )}
+            </View>
+          ))}
+        </View>
+        {!compared && (
+          <Txt variant="footnote" color={color.labelSecondary} style={styles.noCompare}>
+            {`No workouts in ${before} to compare with.`}
           </Txt>
-          <View style={styles.group}>
-            {report.topExercises.map((item, index) => (
-              <Pressable
-                key={item.exerciseId}
-                onPress={() => router.push({ pathname: '/progress/[exercise]', params: { exercise: item.exerciseId } })}
-                accessibilityRole="button"
-                accessibilityLabel={`${item.name}: ${item.sets} sets`}
-                style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
-              >
-                <ExerciseTile exerciseId={item.exerciseId} size={32} />
-                <Txt variant="body" style={styles.flex}>
-                  {item.name}
-                </Txt>
-                <Txt variant="headline">{`${item.sets} sets`}</Txt>
-              </Pressable>
-            ))}
-          </View>
-        </>
-      )}
+        )}
 
-      {report.muscles.length > 0 && (
-        <>
-          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
-            SETS FOR EACH MUSCLE
-          </Txt>
-          <View style={styles.card}>
-            {report.muscles.some((entry) => entry.sets > 0) && (
-              <View style={styles.figures}>
-                <SmallFigures width={window.width < 360 ? 56 : 66} fillFor={shadeOf} />
-              </View>
-            )}
-            {report.muscles.map((entry) => (
-              <View
-                key={entry.muscle}
-                style={styles.muscle}
-                accessible
-                accessibilityLabel={`${entry.label}: ${formatSets(entry.sets)} sets${compared ? `, ${formatSets(entry.before)} in ${before}` : ''}`}
-              >
-                <View style={styles.muscleHead}>
-                  <Txt variant="subhead" style={styles.flex}>
-                    {entry.label}
-                  </Txt>
-                  <Txt variant="footnote" color={color.labelSecondary}>
-                    {compared ? `${formatSets(entry.sets)} · ${formatSets(entry.before)} before` : `${formatSets(entry.sets)} sets`}
-                  </Txt>
-                </View>
-                <View style={styles.track} aria-hidden>
-                  <View style={[styles.fill, { width: `${Math.round((entry.sets / most) * 100)}%` }]} />
-                </View>
-                {compared && (
-                  <View style={styles.trackBefore} aria-hidden>
-                    <View style={[styles.fillBefore, { width: `${Math.round((entry.before / most) * 100)}%` }]} />
-                  </View>
-                )}
-              </View>
-            ))}
-            <Txt variant="caption" color={color.labelSecondary}>
-              {`Working sets, a half for a muscle an exercise works second.${compared ? ` The lighter bar is ${before}.` : ''} On the body, the deeper the colour, the more sets.`}
+        {report.records.length > 0 && (
+          <>
+            <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
+              {`RECORDS · ${report.records.length}`}
             </Txt>
-          </View>
-        </>
-      )}
+            <View style={styles.group}>
+              {report.records.map((record, index) => (
+                <View key={`${record.exerciseId}-${record.kind}-${record.date}`} style={[styles.row, index > 0 && styles.rowLine]}>
+                  <ExerciseTile exerciseId={record.exerciseId} size={32} />
+                  <View style={styles.flex}>
+                    <Txt variant="body">{exerciseName(record.exerciseId)}</Txt>
+                    <Txt variant="footnote" color={color.maybeInk}>
+                      {RECORD_WORD[record.kind]}
+                    </Txt>
+                  </View>
+                  <Txt variant="footnote" color={color.labelSecondary}>
+                    {dayOf(record.date)}
+                  </Txt>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
 
-      {report.biggest && (
-        <>
-          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
-            BIGGEST WORKOUT
-          </Txt>
-          <View style={[styles.group, styles.row]} accessible>
-            <View style={styles.flex}>
-              <Txt variant="body">{report.biggest.name}</Txt>
-              <Txt variant="footnote" color={color.labelSecondary}>
-                {dayOf(report.biggest.date)}
+        {report.topExercises.length > 0 && (
+          <>
+            <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
+              DONE MOST
+            </Txt>
+            <View style={styles.group}>
+              {report.topExercises.map((item, index) => (
+                <Pressable
+                  key={item.exerciseId}
+                  onPress={() => router.push({ pathname: '/progress/[exercise]', params: { exercise: item.exerciseId } })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.name}: ${item.sets} sets`}
+                  style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
+                >
+                  <ExerciseTile exerciseId={item.exerciseId} size={32} />
+                  <Txt variant="body" style={styles.flex}>
+                    {item.name}
+                  </Txt>
+                  <Txt variant="headline">{`${item.sets} sets`}</Txt>
+                </Pressable>
+              ))}
+            </View>
+          </>
+        )}
+
+        {report.muscles.length > 0 && (
+          <>
+            <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
+              SETS FOR EACH MUSCLE
+            </Txt>
+            <View style={styles.card}>
+              {report.muscles.some((entry) => entry.sets > 0) && (
+                <View style={styles.figures}>
+                  <SmallFigures width={window.width < 360 ? 56 : 66} fillFor={shadeOf} />
+                </View>
+              )}
+              {report.muscles.map((entry) => (
+                <View
+                  key={entry.muscle}
+                  style={styles.muscle}
+                  accessible
+                  accessibilityLabel={`${entry.label}: ${formatSets(entry.sets)} sets${compared ? `, ${formatSets(entry.before)} in ${before}` : ''}`}
+                >
+                  <View style={styles.muscleHead}>
+                    <Txt variant="subhead" style={styles.flex}>
+                      {entry.label}
+                    </Txt>
+                    <Txt variant="footnote" color={color.labelSecondary}>
+                      {compared ? `${formatSets(entry.sets)} · ${formatSets(entry.before)} before` : `${formatSets(entry.sets)} sets`}
+                    </Txt>
+                  </View>
+                  <View style={styles.track} aria-hidden>
+                    <View style={[styles.fill, { width: `${Math.round((entry.sets / most) * 100)}%` }]} />
+                  </View>
+                  {compared && (
+                    <View style={styles.trackBefore} aria-hidden>
+                      <View style={[styles.fillBefore, { width: `${Math.round((entry.before / most) * 100)}%` }]} />
+                    </View>
+                  )}
+                </View>
+              ))}
+              <Txt variant="caption" color={color.labelSecondary}>
+                {`Working sets, a half for a muscle an exercise works second.${compared ? ` The lighter bar is ${before}.` : ''} On the body, the deeper the colour, the more sets.`}
               </Txt>
             </View>
-            <Txt variant="headline">{weight(report.biggest.volumeKg)}</Txt>
-          </View>
-        </>
-      )}
+          </>
+        )}
+
+        {report.biggest && (
+          <>
+            <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
+              BIGGEST WORKOUT
+            </Txt>
+            <View style={[styles.group, styles.row]} accessible>
+              <View style={styles.flex}>
+                <Txt variant="body">{report.biggest.name}</Txt>
+                <Txt variant="footnote" color={color.labelSecondary}>
+                  {dayOf(report.biggest.date)}
+                </Txt>
+              </View>
+              <Txt variant="headline">{weight(report.biggest.volumeKg)}</Txt>
+            </View>
+          </>
+        )}
+      </Animated.View>
 
       <PrimaryButton
         label={shared ?? 'Share this month'}
@@ -336,6 +345,7 @@ const styles = themed(() =>
     step: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
     stepOff: { backgroundColor: color.fill },
     tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+    monthBody: { gap: space[3] },
     noCompare: { marginTop: -space[1], paddingHorizontal: space[1] },
     tile: { flexGrow: 1, flexBasis: '30%', minWidth: 96, gap: 2, padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     section: { marginTop: space[3], marginLeft: space[4] },

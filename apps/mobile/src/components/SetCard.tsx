@@ -71,7 +71,7 @@ export function SetProgress({ set, first }: { set: GymSet; first: boolean }) {
     >
       <View style={styles.rowHead}>
         <View style={styles.flex}>
-          <Txt variant="headline" numberOfLines={1}>
+          <Txt variant="headline" numberOfLines={2}>
             {set.name}
           </Txt>
           <Txt variant="caption" color={color.labelSecondary}>

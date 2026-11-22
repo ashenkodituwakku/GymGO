@@ -384,7 +384,7 @@ export function PlaceCard({
               question: `Help me call ${location.name}. How should I ask these, and what should I listen for?`,
               about: `calling ${location.name}`,
               // Only the questions: what GymGO hasn't confirmed, so nothing about the gym is passed on as fact.
-              context: `The gym: ${location.name}. GymGO hasn't confirmed these for a visit at ${timeLabel(visitMinute)}, so they're questions for the gym (unknown, not no):\n${questions.map((question, index) => `${index + 1}. ${question}`).join('\n')}`,
+              context: `The gym: ${location.name}. GymGO hasn’t confirmed these for a visit at ${timeLabel(visitMinute)}, so they’re questions for the gym (unknown, not no):\n${questions.map((question, index) => `${index + 1}. ${question}`).join('\n')}`,
             }}
           />
         </Animated.View>
@@ -427,7 +427,6 @@ export function PlaceCard({
         <>
         <GroupLine />
         <Pressy
-          scaleTo={0.98}
           onPress={() => {
             haptic.select();
             onOpenGoogle();
@@ -452,13 +451,12 @@ export function PlaceCard({
 
       <GroupLine />
       <Pressy
-        scaleTo={0.98}
         onPress={() => {
           haptic.select();
           onOpenWorkout();
         }}
         accessibilityRole="button"
-        accessibilityLabel="Build a workout here, for this gym's machines"
+        accessibilityLabel="Build a workout here, for this gym’s machines"
         style={({ pressed }) => [styles.google, pressed && { opacity: 0.75 }]}
       >
         <View style={styles.rowIcon}>
@@ -727,7 +725,7 @@ function Fact({ icon, value, caption, tint, unknown = false }: { icon: IconName;
       <Txt variant={unknown ? 'subhead' : 'figure'} color={tint} numberOfLines={1} style={unknown && [face('semibold'), styles.factWord]}>
         {value}
       </Txt>
-      <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
+      <Txt variant="caption" color={color.labelSecondary} numberOfLines={2} hyphens style={styles.factCaption}>
         {caption}
       </Txt>
     </View>
@@ -896,6 +894,7 @@ const styles = themed(() => StyleSheet.create({
   factIcon: { height: 24, marginBottom: 3, alignItems: 'center', justifyContent: 'center' },
   // A word as tall as a figure's line, at any text size, so the three captions line up.
   factWord: { lineHeight: type.figure.lineHeight },
+  factCaption: { textAlign: 'center' },
 
   // A row of the links' card (a FoldGroup).
   google: {

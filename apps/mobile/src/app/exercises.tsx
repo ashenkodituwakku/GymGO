@@ -89,7 +89,6 @@ export default function ExercisesScreen() {
             {yours.map((item) => (
               <Pressy
                 key={item.id}
-                scaleTo={0.96}
                 onPress={() => open(item.id)}
                 accessibilityRole="button"
                 accessibilityLabel={`${item.name}, done ${item.sessions} time${item.sessions === 1 ? '' : 's'}`}

@@ -73,6 +73,10 @@ export function Txt({
   maxFontSizeMultiplier,
   'aria-hidden': ariaHidden,
   'aria-live': ariaLive,
+  trim,
+  fluid,
+  acronyms,
+  hyphens,
 }: {
   variant?: Variant;
   color?: string;
@@ -96,7 +100,34 @@ export function Txt({
   'aria-hidden'?: boolean;
   /** Said again by a screen reader when it changes. */
   'aria-live'?: 'polite' | 'assertive' | 'off';
+  /**
+   * A button's or chip's label, centred by its letters rather than its line:
+   * in a browser that can (CSS text-box trim), the room above the capitals
+   * and below the baseline is trimmed, so the words sit in the optical middle
+   * of the pill instead of a touch low.
+   */
+  trim?: boolean;
+  /**
+   * A page's big headline that grows with a browser window: from about the
+   * phone's large title on a narrow one to twice that on a wide one (CSS
+   * clamp(2rem, 1rem + 5vw, 4rem)). A phone keeps its own size.
+   */
+  fluid?: boolean;
+  /**
+   * In a sentence of words, its acronyms (RPE, EMOM, AI) in small capitals
+   * in a browser, so they sit at the height of the words around them rather
+   * than shouting. The letters are still capitals to a screen reader and when
+   * copied.
+   */
+  acronyms?: boolean;
+  /**
+   * Text in a narrow column (a price box, a tile's name) breaks a long word
+   * with a hyphen rather than leaving a ragged gap or running out of room:
+   * in a browser (CSS hyphens) and on Android. iPhone has no hyphenation here.
+   */
+  hyphens?: boolean;
 }) {
+  const words = acronyms && Platform.OS === 'web' && typeof children === 'string' ? withAcronyms(children) : children;
   return (
     <Text
       style={[type[variant] as TextStyle, { color: tint }, style]}
@@ -106,9 +137,80 @@ export function Txt({
       maxFontSizeMultiplier={maxFontSizeMultiplier}
       aria-hidden={ariaHidden}
       aria-live={ariaLive}
+      {...(Platform.OS === 'web' && (trim || fluid || hyphens)
+        ? ({ dataSet: { ...(trim ? { trim: 'on' } : null), ...(fluid ? { fluid: 'on' } : null), ...(hyphens ? { hyphens: 'on' } : null) } } as object)
+        : null)}
+      {...(Platform.OS === 'android' && hyphens ? { android_hyphenationFrequency: 'normal' as const } : null)}
     >
-      {children}
+      {words}
     </Text>
+  );
+}
+
+/** A word of two to five capitals on its own (RPE, EMOM): not part of a name in mixed case, like GymGO. */
+export const ACRONYM = /\b([A-Z]{2,5})\b/g;
+
+/** Text split so each acronym is its own piece, marked for small capitals (app/_layout.tsx: [data-acronym]). */
+function withAcronyms(text: string): ReactNode {
+  const pieces = text.split(ACRONYM);
+  if (pieces.length === 1) return text;
+  return pieces.map((piece, at) =>
+    at % 2 === 1 ? (
+      <Text key={at} {...({ dataSet: { acronym: 'on' } } as object)}>
+        {piece}
+      </Text>
+    ) : (
+      piece
+    ),
+  );
+}
+
+/**
+ * Text that turns bold when chosen (a segment, a sidebar item, a tile's
+ * name) without anything moving: a hidden bold copy holds the room the bold
+ * words take, so they don't shift sideways or wrap onto another line as they
+ * thicken. `boxStyle` is for how the text sits in its row (flex), which the
+ * box takes on in its place.
+ */
+export function SteadyTxt({
+  on,
+  style,
+  boxStyle,
+  ...rest
+}: Omit<Parameters<typeof Txt>[0], 'style' | 'aria-hidden'> & { on: boolean; style?: StyleProp<TextStyle>; boxStyle?: StyleProp<ViewStyle> }) {
+  return (
+    <View style={[styles.steady, boxStyle]}>
+      <Txt {...rest} style={[style, face('semibold'), styles.steadyGhost]} aria-hidden />
+      <Txt {...rest} style={[style, on && face('semibold'), styles.steadyShown]} />
+    </View>
+  );
+}
+
+/**
+ * A file's name on one line that, when there isn't room, gives way in the
+ * middle and keeps its end: "gymgo-my-d…11-22.json", so its date and its
+ * kind (.json, .csv) still show. The start shrinks with an ellipsis; the
+ * end (its last 10 characters) never does. Read whole by a screen reader.
+ */
+export function FileName({ name, variant = 'footnote', color: tint = color.labelSecondary, prefix }: { name: string; variant?: Variant; color?: string; prefix?: string }) {
+  const keep = Math.min(name.length, 10);
+  const head = name.slice(0, name.length - keep);
+  return (
+    <View style={styles.fileName} accessible accessibilityLabel={`${prefix ?? ''}${name}`}>
+      {prefix ? (
+        <Txt variant={variant} color={tint} style={styles.fileKeep}>
+          {prefix}
+        </Txt>
+      ) : null}
+      {head ? (
+        <Txt variant={variant} color={tint} numberOfLines={1} style={styles.fileHead}>
+          {head}
+        </Txt>
+      ) : null}
+      <Txt variant={variant} color={tint} style={styles.fileKeep}>
+        {name.slice(name.length - keep)}
+      </Txt>
+    </View>
   );
 }
 
@@ -126,7 +228,6 @@ export const TIER_COLOUR: Record<ResultTier, { fill: string; ink: string; tint: 
 export function ChoiceChip({ label, selected, onPress, icon }: { label: string; selected: boolean; onPress: () => void; icon?: IconName }) {
   return (
     <Pressy
-      scaleTo={0.94}
       onPress={() => {
         haptic.select();
         onPress();
@@ -168,7 +269,6 @@ export function Chip({
 }) {
   return (
     <Pressy
-      scaleTo={0.94}
       onPress={() => {
         haptic.select();
         onPress();
@@ -181,7 +281,7 @@ export function Chip({
     >
       {selected && <BrandFill />}
       {icon && <Icon name={icon} size={14} color={selected ? color.onBrand : color.label} />}
-      <Txt variant="subhead" color={selected ? color.onBrand : color.label} style={styles.chipText}>
+      <Txt variant="subhead" color={selected ? color.onBrand : color.label} style={styles.chipText} trim>
         {label}
       </Txt>
     </Pressy>
@@ -375,9 +475,9 @@ export function Segmented<T extends string | number>({
               aria-selected={on}
               style={[styles.segment, styles.segmentWrapped, { flexBasis: needed }, on && styles.segmentOn]}
             >
-              <Txt variant="footnote" color={color.label} style={[on ? face('semibold') : face('medium'), styles.segmentText]} numberOfLines={2}>
+              <SteadyTxt on={on} variant="footnote" color={color.label} style={[face('medium'), styles.segmentText]} numberOfLines={2} trim hyphens>
                 {option.label}
-              </Txt>
+              </SteadyTxt>
             </Pressable>
           );
         })}
@@ -401,9 +501,9 @@ export function Segmented<T extends string | number>({
             aria-selected={on}
             style={[styles.segment, on && width === 0 && styles.segmentOn]}
           >
-            <Txt variant="footnote" color={color.label} style={[on ? face('semibold') : face('medium'), styles.segmentText]} numberOfLines={2}>
+            <SteadyTxt on={on} variant="footnote" color={color.label} style={[face('medium'), styles.segmentText]} numberOfLines={2} trim hyphens>
               {option.label}
-            </Txt>
+            </SteadyTxt>
           </Pressable>
         );
       })}
@@ -433,7 +533,6 @@ export function ControlCapsule({ buttons }: { buttons: CapsuleButton[] }) {
           <View key={button.icon}>
             {index > 0 && <View style={styles.capsuleDivider} />}
             <Pressy
-              scaleTo={0.86}
               onPress={() => {
                 if (button.busy) return;
                 haptic.tap();
@@ -455,7 +554,7 @@ export function ControlCapsule({ buttons }: { buttons: CapsuleButton[] }) {
 
 /** The round glass close button that sits in a sheet's corner. */
 export function CloseButton({ onPress }: { onPress: () => void }) {
-  const press = usePressScale(0.86);
+  const press = usePressScale();
   return (
     <Animated.View style={press.style}>
       <Glass style={styles.close} interactive>
@@ -481,7 +580,7 @@ export function CloseButton({ onPress }: { onPress: () => void }) {
 /** A round glass toggle beside the close button: compare this gym, say. */
 /** A small round glass button; with `on`, a toggle that fills when on. */
 export function RoundToggle({ icon, on, label, onPress }: { icon: IconName; on?: boolean; label: string; onPress: () => void }) {
-  const press = usePressScale(0.86);
+  const press = usePressScale();
   const pop = usePop(on === true);
   return (
     <Animated.View style={press.style}>
@@ -538,7 +637,7 @@ export function ActionButton({
   unavailable?: boolean;
 }) {
   const ink = unavailable ? color.labelTertiary : primary ? color.onBrand : color.brand;
-  const press = usePressScale(0.94);
+  const press = usePressScale();
   const pop = usePop(on);
   return (
     <Animated.View style={[styles.actionWrap, press.style]}>
@@ -717,7 +816,6 @@ export function PrimaryButton({
   return (
     <Pressy
       ref={focusRef}
-      scaleTo={0.97}
       disabled={disabled || busy}
       onPress={() => {
         haptic.tap();
@@ -730,7 +828,7 @@ export function PrimaryButton({
     >
       {tone === 'brand' && <BrandFill />}
       {busy ? <ActivityIndicator size="small" color={ink} /> : icon ? <Icon name={icon} size={17} color={ink} /> : null}
-      <Txt variant="headline" color={ink}>
+      <Txt variant="headline" color={ink} trim>
         {label}
       </Txt>
     </Pressy>
@@ -831,6 +929,12 @@ const styles = themed(() => StyleSheet.create({
   segment: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 7, paddingHorizontal: SEGMENT_PADDING, borderRadius: 7 },
   // A label that wraps (wider text: a reader's own spacing) stays centred in its segment.
   segmentText: { textAlign: 'center' },
+  steady: { minWidth: 0, flexShrink: 1 },
+  fileName: { flexDirection: 'row', alignItems: 'baseline', minWidth: 0 },
+  fileHead: { flexShrink: 1, minWidth: 0 },
+  fileKeep: { flexShrink: 0 },
+  steadyGhost: { opacity: 0 },
+  steadyShown: { position: 'absolute', top: 0, left: 0, right: 0 },
   // Two rows when a label won't fit in an equal share (Segmented).
   segmentedWrap: { flexWrap: 'wrap', gap: 2 },
   segmentWrapped: { flexGrow: 1, flexShrink: 0 },

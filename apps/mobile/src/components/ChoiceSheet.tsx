@@ -20,7 +20,7 @@ import { HIT, color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { ARRIVE, LEAVE } from './motion';
 import { SHEET_SIDE } from './SheetBackground';
-import { Txt } from './ui';
+import { SteadyTxt, Txt } from './ui';
 
 export function ChoiceSheet<K extends string>({
   title,
@@ -99,9 +99,9 @@ export function ChoiceSheet<K extends string>({
                     accessibilityLabel={option.label}
                     style={({ pressed }) => [styles.row, pressed && styles.pressed]}
                   >
-                    <Txt variant="body" color={on ? color.brand : color.label} style={[styles.label, on && face('semibold')]}>
+                    <SteadyTxt on={on} variant="body" color={on ? color.brand : color.label} boxStyle={styles.label}>
                       {option.label}
-                    </Txt>
+                    </SteadyTxt>
                     {on ? <Icon name="check" size={18} color={color.brandOnTint} /> : null}
                   </Pressable>
                 </View>

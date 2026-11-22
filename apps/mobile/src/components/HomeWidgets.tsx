@@ -85,7 +85,6 @@ function Frame({
   if (!onPress) return <View style={styles.card}>{inner}</View>;
   return (
     <Pressy
-      scaleTo={0.98}
       onPress={() => {
         haptic.select();
         onPress();
@@ -134,7 +133,7 @@ export function LastWorkoutWidget({ log, busy }: { log: LogState; /** A workout'
     <Frame icon="refresh" title="Last workout" link={{ text: 'Log', label: 'Your training log, on Progress', onPress: () => router.push('/progress') }}>
       <View style={styles.row}>
         <View style={styles.flex}>
-          <Txt variant="headline" numberOfLines={1}>
+          <Txt variant="headline" numberOfLines={2}>
             {named.title}
           </Txt>
           <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
@@ -143,7 +142,6 @@ export function LastWorkoutWidget({ log, busy }: { log: LogState; /** A workout'
         </View>
         {plan && !busy && (
           <Pressy
-            scaleTo={0.94}
             onPress={() => {
               haptic.success();
               startSession({ ...plan, gymName: null, unit: latest.unit });
@@ -337,7 +335,6 @@ export function ToolsWidget() {
       {TOOLS.map((tool) => (
         <Pressy
           key={tool.route}
-          scaleTo={0.93}
           onPress={() => {
             haptic.select();
             router.push(tool.route);

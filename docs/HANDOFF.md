@@ -118,6 +118,23 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Motion and type rules** (22 Nov, Update 236). components/motion.tsx:
+  every press sinks to `PRESS_SCALE` (0.97; don't pass `scaleTo`), every
+  entrance starts at `ENTER_SCALE` (0.97) and transparent, never scale 0
+  (`POP_IN` is a Keyframe now); a stepper's new step takes
+  `stepIn(forward)`; a progress fill uses `useFillBar` (transform, not
+  width). lib/theme.ts `applyTheme` marks `html[data-theme-switching]`
+  for 300 ms (transitions off). A sideways ScrollView in a browser takes
+  `{...rubberBand(edgeFade())}` (components/rubberBand.web.ts); icon-only
+  buttons get tooltips from components/tooltips.web.ts (aria-label, 60
+  characters at most; `data-no-tip` opts out). Text: `SteadyTxt on={…}`
+  for words that turn bold when chosen; Txt's `trim` (button labels),
+  `fluid` (a page's big headline, web), `acronyms` (small capitals in a
+  sentence, web) and `hyphens` (narrow columns); `FileName` for a file's
+  name. Card titles: `numberOfLines={2}`. Curly quotes in visible words.
+  A card in a TiltCard can read its lean from `TiltContext` (GemCard's
+  TiltLight). The fourth reel ("unslop") had nothing to build.
+
 - **Billing words** (22 Nov). `describeMembership` (packages/domain
   money.ts) says 7, 14, 28, 28–31 and 365/366 days as week, fortnight,
   4 weeks, month and year; anything else in days. The gym page's price

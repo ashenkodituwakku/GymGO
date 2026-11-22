@@ -177,7 +177,6 @@ function GoogleButton({
   const dark = currentTheme().scheme === 'dark';
   return (
     <Pressy
-      scaleTo={0.97}
       disabled={!request || busy}
       onPress={() => {
         haptic.tap();

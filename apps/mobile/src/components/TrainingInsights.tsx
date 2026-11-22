@@ -228,7 +228,6 @@ export function WeekStrip({
     const short = goal && count >= goal ? (streak > 1 ? `Goal met · ${streak}-week run` : 'Goal met') : streak > 1 ? `${streak}-week run` : goal ? `${goal - count} to go` : 'Set a weekly goal';
     return (
       <Pressy
-        scaleTo={0.96}
         onPress={() => {
           haptic.select();
           onPress();
@@ -256,7 +255,6 @@ export function WeekStrip({
   }
   return (
     <Pressy
-      scaleTo={0.97}
       onPress={() => {
         haptic.select();
         onPress();

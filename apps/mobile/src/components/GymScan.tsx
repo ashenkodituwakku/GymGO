@@ -29,6 +29,7 @@ import Animated, {
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { Icon } from './Icon';
 import { Txt } from './ui';
+import { useFillBar } from './motion';
 
 /** Finding where you are, then comparing it with the gym, then the answer. */
 export type ScanPhase = 'locating' | 'checking' | 'done';
@@ -58,7 +59,7 @@ export function GymScan({ phase, gymName }: { phase: ScanPhase; gymName: string 
   }, [phase, progress]);
   useEffect(() => () => cancelAnimation(progress), [progress]);
 
-  const bar = useAnimatedStyle(() => ({ width: `${progress.value * 100}%` }));
+  const bar = useFillBar(progress);
   const line =
     phase === 'locating' ? 'Finding where you are…' : phase === 'checking' ? `Checking you’re at ${gymName}…` : `You’re at ${gymName}`;
 
@@ -70,8 +71,8 @@ export function GymScan({ phase, gymName }: { phase: ScanPhase; gymName: string 
         )}
         <Core done={phase === 'done'} />
       </View>
-      <View style={styles.track}>
-        <Animated.View style={[styles.fill, phase === 'done' && styles.fillDone, bar]} />
+      <View style={styles.track} onLayout={bar.onLayout}>
+        <Animated.View style={[styles.fill, phase === 'done' && styles.fillDone, bar.style]} />
       </View>
       <View style={styles.caption}>
         <Txt variant="footnote" color={phase === 'done' ? color.goodInk : color.labelSecondary} style={face('semibold')} numberOfLines={1}>
@@ -186,7 +187,7 @@ const styles = themed(() =>
     },
     coreDone: { backgroundColor: color.good },
     track: { height: 8, borderRadius: 4, backgroundColor: color.fill, overflow: 'hidden' },
-    fill: { height: '100%', borderRadius: 4, backgroundColor: color.brand },
+    fill: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, borderRadius: 4, backgroundColor: color.brand },
     fillDone: { backgroundColor: color.good },
     caption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] },
   }),

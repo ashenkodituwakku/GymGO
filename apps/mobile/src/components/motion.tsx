@@ -33,6 +33,7 @@ import {
   Pressable as NativePressable,
   StyleSheet,
   type GestureResponderEvent,
+  type LayoutChangeEvent,
   type PressableProps,
   type PressableStateCallbackType,
   type StyleProp,
@@ -43,8 +44,8 @@ import Animated, {
   Easing,
   FadeIn,
   FadeOut,
+  Keyframe,
   LinearTransition,
-  ZoomIn,
   ReduceMotion,
   interpolateColor,
   useAnimatedStyle,
@@ -53,6 +54,7 @@ import Animated, {
   withSequence,
   withSpring,
   withTiming,
+  type SharedValue,
   type WithSpringConfig,
   type WithTimingConfig,
 } from 'react-native-reanimated';
@@ -197,11 +199,17 @@ export const FADE_OUT = FadeOut.duration(FADE_OUT_MS).easing(LEAVE_CURVE).reduce
 /** growIn's spring, worked out here: growIn runs on the UI thread, where calling damp (not a worklet) stopped the app on a phone. */
 const GROW: WithSpringConfig = { damping: damp(0.82, 320, 0.7), stiffness: 320, mass: 0.7, reduceMotion: ReduceMotion.System };
 
-/** Grows in from a little smaller as it fades up, the way a button or popover appears on iOS. */
+/**
+ * Where every entrance starts: transparent and only a touch smaller, never
+ * from nothing (scale 0), which reads as a cartoon and makes the eye chase it.
+ */
+export const ENTER_SCALE = 0.97;
+
+/** Grows in from a touch smaller as it fades up, the way a button or popover appears on iOS. */
 function growIn() {
   'worklet';
   return {
-    initialValues: { opacity: 0, transform: [{ scale: 0.86 }] },
+    initialValues: { opacity: 0, transform: [{ scale: ENTER_SCALE }] },
     animations: {
       opacity: withTiming(1, { duration: 180, easing: EASE_OUT, reduceMotion: ReduceMotion.System }),
       transform: [{ scale: withSpring(1, GROW) }],
@@ -210,11 +218,38 @@ function growIn() {
 }
 
 /**
- * Something to be noticed arriving (a new card, a record, a medal): one pop,
- * on the shared POP spring; in a browser, timed on a curve that goes a touch
- * past and settles back, as the spring does.
+ * Something to be noticed arriving (a new card, a record, a medal): it fades
+ * up from a touch smaller (ENTER_SCALE, never from nothing), goes a little
+ * past full size and settles back, as a spring would. Keyframes, so the
+ * phone and the browser play the same thing.
  */
-export const POP_IN = (Platform.OS === 'web' ? ZoomIn.duration(260).easing(Easing.bezier(0.34, 1.4, 0.64, 1)) : ZoomIn.springify().damping(POP.damping!).stiffness(POP.stiffness!).mass(POP.mass!)).reduceMotion(ReduceMotion.System);
+export const POP_IN = new Keyframe({
+  0: { opacity: 0, transform: [{ scale: ENTER_SCALE }] },
+  55: { opacity: 1, transform: [{ scale: 1.03 }], easing: Easing.out(Easing.quad) },
+  100: { opacity: 1, transform: [{ scale: 1 }], easing: Easing.inOut(Easing.quad) },
+})
+  .duration(300)
+  .reduceMotion(ReduceMotion.System);
+
+/**
+ * A stepper's next step (a later month, the next page) slides in from the
+ * side you're heading to, so you can tell which way you went: from the
+ * right going forward, from the left going back. Not a crossfade, which
+ * says nothing about direction. Still with Reduce Motion.
+ */
+const stepFrom = (side: 1 | -1) =>
+  new Keyframe({
+    0: { opacity: 0, transform: [{ translateX: side * 28 }] },
+    100: { opacity: 1, transform: [{ translateX: 0 }], easing: Easing.bezier(0.22, 1, 0.36, 1) },
+  })
+    .duration(260)
+    .reduceMotion(ReduceMotion.System);
+const STEP_FORWARD = stepFrom(1);
+const STEP_BACK = stepFrom(-1);
+/** The entrance for a stepper's new step: `forward` for next or later, false for back or earlier; none before the first step. */
+export function stepIn(forward: boolean | null) {
+  return forward === null ? undefined : forward ? STEP_FORWARD : STEP_BACK;
+}
 
 /** Something small appearing over the map, as "Search this area" does. */
 export const DROP_IN = Platform.OS === 'web' ? FadeIn.duration(200).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System) : growIn;
@@ -230,8 +265,14 @@ export function useArrival(loading: boolean) {
   return waited.current && !loading ? FADE_IN : undefined;
 }
 
+/**
+ * How far anything pressed sinks: one size for every button and card, so a
+ * press feels the same everywhere (a big card and a small button alike).
+ */
+export const PRESS_SCALE = 0.97;
+
 /** A scale that sinks on press and springs back: spread its handlers onto a Pressable, its style onto what should move. */
-export function usePressScale(to = 0.96) {
+export function usePressScale(to = PRESS_SCALE) {
   const scale = useSharedValue(1);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   return {
@@ -241,6 +282,27 @@ export function usePressScale(to = 0.96) {
     },
     onPressOut: () => {
       scale.value = withSpring(1, PRESS_OUT);
+    },
+  };
+}
+
+/**
+ * A progress bar's fill, moved by a transform rather than its width (a
+ * width makes the page lay itself out again every frame): the fill is the
+ * track's full size, slid left out of the track's clip by what isn't done.
+ * Put `onLayout` on the track (which clips: overflow hidden) and `style` on
+ * a fill that covers it. Hidden until the track is measured.
+ */
+export function useFillBar(progress: SharedValue<number>) {
+  const width = useSharedValue(0);
+  const style = useAnimatedStyle(() => ({
+    opacity: width.value > 0 ? 1 : 0,
+    transform: [{ translateX: (Math.min(1, Math.max(0, progress.value)) - 1) * width.value }],
+  }));
+  return {
+    style,
+    onLayout: (event: LayoutChangeEvent) => {
+      width.value = event.nativeEvent.layout.width;
     },
   };
 }
@@ -269,7 +331,7 @@ type ViewMotion = Pick<ComponentProps<typeof Animated.View>, 'entering' | 'exiti
  * style as a Pressable, including the `({ pressed }) => …` form.
  */
 export function Pressy({
-  scaleTo = 0.96,
+  scaleTo = PRESS_SCALE,
   style,
   onPressIn,
   onPressOut,

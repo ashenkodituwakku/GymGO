@@ -65,7 +65,7 @@ export function ExerciseCard({
             {`${group ? `${groupTag(group)} · ` : ''}${exercise.cardio ? 'Finisher' : muscles}`}
           </Txt>
           <View style={styles.titleRow}>
-            <Txt variant="headline" style={styles.flex}>
+            <Txt variant="headline" style={styles.flex} numberOfLines={2}>
               {exercise.name}
             </Txt>
             {onSwap && swapTo && <SwapButton name={exercise.name} swapTo={swapTo} onSwap={onSwap} />}

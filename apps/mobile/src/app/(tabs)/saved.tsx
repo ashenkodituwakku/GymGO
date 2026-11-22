@@ -113,7 +113,6 @@ export default function Saved() {
                       />
                     </View>
                     <Pressy
-                      scaleTo={0.92}
                       onPress={() => {
                         haptic.success();
                         account.toggleSave(id);
@@ -272,7 +271,6 @@ function CompareTick({ on, name, onPress }: { on: boolean; name: string; onPress
   const pop = usePop(on);
   return (
     <Pressy
-      scaleTo={0.85}
       onPress={() => {
         haptic.select();
         onPress();

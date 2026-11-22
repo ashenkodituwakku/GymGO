@@ -15,7 +15,7 @@
  * one.) Rarity is luck (see lib/rarity.ts), not a rating of the gym.
  */
 
-import { useEffect, useId, useState } from 'react';
+import { useContext, useEffect, useId, useState } from 'react';
 import { Image, Platform, StyleSheet, View } from 'react-native';
 import { Pressable, useCalm } from './motion';
 import Animated, {
@@ -27,7 +27,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Circle, Defs, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, G, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { cardPalette, type GymRecord, type Rarity } from '@gymgo/domain';
 import { MarkImage, useBrandColour, useGymMark } from './BrandLogo';
 import { Icon } from './Icon';
@@ -38,6 +38,8 @@ import { demoPicture } from '@/lib/gymPicture';
 import { tierFor, type CollectedGym } from '@/lib/collection';
 import { CARD_FRAMES, GLOW_ROOM, cardPadding, cardPath } from '@/lib/cardShape';
 import { Flag } from './Flag';
+import { TiltContext } from './TiltCard';
+import { MOST_TILT } from '@/lib/tilt';
 import { haptic } from '@/lib/haptics';
 import { PRISM, cardFor, gemInfo, rarityLabel, rarityRank, type CardLook } from '@/lib/rarity';
 import { color, currentTheme, face, radius, space, themed } from '@/lib/theme';
@@ -123,6 +125,7 @@ export function GemCard({
           {look.foil && <Foil id={ids.foil} />}
           {legendary && <Sparkles big={big} />}
           {shines && <Shine id={ids.shine} width={artWidth} />}
+          <TiltLight ids={ids} prism={shines} width={artWidth} height={artHeight} />
         </View>
 
         <View style={styles.body}>
@@ -187,7 +190,7 @@ export function GemCard({
 /** Ids for this card's SVG gradients: unique on the page, and safe inside url(#…). */
 function useSvgIds() {
   const base = useId().replace(/[^a-zA-Z0-9]/g, '');
-  return { metal: `m${base}`, face: `c${base}`, prism: `p${base}`, window: `w${base}`, foil: `o${base}`, shine: `s${base}`, ring: `r${base}` };
+  return { metal: `m${base}`, face: `c${base}`, prism: `p${base}`, window: `w${base}`, foil: `o${base}`, shine: `s${base}`, ring: `r${base}`, glare: `g${base}`, holo: `h${base}` };
 }
 
 /**
@@ -414,6 +417,68 @@ function Shine({ id, width }: { id: string; width: number }) {
   );
 }
 
+/**
+ * The light on a card held in the hand (its own page, in a TiltCard), as a
+ * holographic trading card catches it: a soft glare that slides the way the
+ * card turns, brighter the further it leans, and on a Foil, Epic or
+ * Legendary card a band of rainbow foil that slides across the other way.
+ * Nothing at rest, nowhere else, and not with Reduce Motion (TiltCard then
+ * shares no lean). Over the picture's window only, like the timed shine,
+ * and moved by transforms alone.
+ */
+function TiltLight({ ids, prism, width, height }: { ids: ReturnType<typeof useSvgIds>; prism: boolean; width: number; height: number }) {
+  const tilt = useContext(TiltContext);
+  const glare = useAnimatedStyle(() => {
+    if (!tilt) return { opacity: 0 };
+    const across = tilt.rotateY.value / MOST_TILT;
+    const down = -tilt.rotateX.value / MOST_TILT;
+    return {
+      opacity: Math.min(1, Math.hypot(across, down)) * 0.85,
+      transform: [{ translateX: across * width * 0.45 }, { translateY: down * height * 0.45 }],
+    };
+  });
+  const foil = useAnimatedStyle(() => {
+    if (!tilt) return { opacity: 0 };
+    const across = tilt.rotateY.value / MOST_TILT;
+    const down = -tilt.rotateX.value / MOST_TILT;
+    return {
+      opacity: Math.min(1, Math.hypot(across, down) * 1.4) * 0.4,
+      transform: [{ translateX: -across * width * 0.6 }, { rotate: '24deg' }],
+    };
+  });
+  if (!tilt) return null;
+  return (
+    <>
+      {prism && (
+        <Animated.View style={[styles.holo, { width: width * 2.2, left: -width * 0.6 }, foil, styles.noTouch]}>
+          <Svg width="100%" height="100%" preserveAspectRatio="none" {...SVG_NO_TOUCH}>
+            <Defs>
+              <LinearGradient id={ids.holo} x1="0" y1="0" x2="1" y2="0">
+                {[...PRISM, ...PRISM].map((stop, at, all) => (
+                  <Stop key={at} offset={at / (all.length - 1)} stopColor={stop} stopOpacity={0.55} />
+                ))}
+              </LinearGradient>
+            </Defs>
+            <Rect x="0" y="0" width="100%" height="100%" fill={`url(#${ids.holo})`} />
+          </Svg>
+        </Animated.View>
+      )}
+      <Animated.View style={[styles.glare, { width: width * 1.6, height: height * 1.6, left: -width * 0.3, top: -height * 0.3 }, glare, styles.noTouch]}>
+        <Svg width="100%" height="100%" {...SVG_NO_TOUCH}>
+          <Defs>
+            <RadialGradient id={ids.glare} cx="50%" cy="50%" r="50%">
+              <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.55} />
+              <Stop offset="0.45" stopColor="#FFFFFF" stopOpacity={0.16} />
+              <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Rect x="0" y="0" width="100%" height="100%" fill={`url(#${ids.glare})`} />
+        </Svg>
+      </Animated.View>
+    </>
+  );
+}
+
 /** A Legendary card's sparkles, twinkling in turn. */
 function Sparkles({ big }: { big: boolean }) {
   const spots = [
@@ -496,6 +561,8 @@ const styles = themed(() =>
     trackFill: { height: '100%', borderRadius: 3 },
     toNext: { fontSize: 11 },
     shine: { position: 'absolute', top: '-50%', bottom: '-50%', left: 0 },
+    holo: { position: 'absolute', top: '-60%', bottom: '-60%' },
+    glare: { position: 'absolute' },
     sparkle: { position: 'absolute' },
     noTouch: { pointerEvents: 'none' },
     pressed: { transform: [{ scale: 0.97 }] },

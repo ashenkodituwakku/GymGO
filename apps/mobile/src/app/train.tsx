@@ -12,8 +12,8 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
-import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { ARRIVE_CURVE, EASE_OUT, FADE_IN, LEAVE_CURVE, POP_IN, Pressable, usePop } from '@/components/motion';
+import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import { ARRIVE_CURVE, EASE_OUT, FADE_IN, LEAVE_CURVE, POP_IN, Pressable, useFillBar, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
 import { Icon, type IconName } from '@/components/Icon';
@@ -1428,15 +1428,16 @@ function SetsBar({ done, planned }: { done: number; planned: number }) {
     // Quick: it moves on every set you tick, and what's done most should move least.
     shown.value = withTiming(share, { duration: 240, easing: EASE_OUT, reduceMotion: ReduceMotion.System });
   }, [share, shown]);
-  const fill = useAnimatedStyle(() => ({ width: `${shown.value * 100}%` }));
+  const fill = useFillBar(shown);
   return (
     <View
       style={styles.barTrack}
+      onLayout={fill.onLayout}
       accessibilityRole="progressbar"
       accessibilityLabel={`${done} of ${planned} sets done`}
       accessibilityValue={{ min: 0, max: planned, now: done }}
     >
-      <Animated.View style={[styles.barFill, fill]} />
+      <Animated.View style={[styles.barFill, fill.style]} />
     </View>
   );
 }
@@ -1465,7 +1466,7 @@ const styles = themed(() => StyleSheet.create({
   meta: { flexGrow: 1, flexShrink: 0, maxWidth: '100%' },
   metaButtons: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], maxWidth: '100%' },
   barTrack: { height: 6, borderRadius: 3, backgroundColor: color.fill, overflow: 'hidden', marginTop: space[2] },
-  barFill: { height: '100%', borderRadius: 3, backgroundColor: color.brandFill },
+  barFill: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, borderRadius: 3, backgroundColor: color.brandFill },
   platesButton: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: space[2], paddingVertical: 6, borderRadius: radius.pill, backgroundColor: color.brandTint },
   guides: { gap: space[1] },
   target: { flexDirection: 'row', alignItems: 'flex-start', gap: space[1], padding: space[2], borderRadius: radius.sm, backgroundColor: color.goodTint },

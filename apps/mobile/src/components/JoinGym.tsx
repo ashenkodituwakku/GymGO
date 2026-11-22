@@ -113,7 +113,7 @@ export function MembershipBanner({ record }: { record: GymRecord }) {
                 {/* A tier called just "Membership" would only repeat the heading above it. */}
                 {/* In full, however many lines it takes: a plan's name is part of what it costs ("Unlimited classes and gym"). */}
                 {!/^\s*membership\s*$/i.test(offer.label) && (
-                  <Txt variant="caption" color={color.labelSecondaryOnTint} style={styles.center}>
+                  <Txt variant="caption" color={color.labelSecondaryOnTint} style={styles.center} hyphens>
                     {offer.label}
                   </Txt>
                 )}

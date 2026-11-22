@@ -43,7 +43,7 @@ const STYLE = `
   header { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
   header a { color: var(--ink); text-decoration: none; font-weight: 700; font-size: 19px; letter-spacing: -0.01em; }
   header a span { color: var(--link); }
-  h1 { font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 6px; }
+  h1 { font-size: clamp(2rem, 1rem + 5vw, 4rem); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 6px; text-wrap: balance; }
   .updated { color: var(--muted); margin: 0 0 28px; font-size: 15px; }
   h1 + section { margin-top: 22px; }
   section { background: var(--card); border-radius: 16px; padding: 18px 20px; margin: 0 0 14px; }
@@ -52,7 +52,10 @@ const STYLE = `
   p:last-child, ul:last-child { margin-bottom: 0; }
   ul { margin: 0 0 10px; padding-left: 22px; }
   li { margin: 0 0 6px; }
-  a { color: var(--link); }
+  a { color: var(--link); text-underline-offset: 0.2em; }
+  /* A footnote mark sits up without pushing its line away from the others. */
+  sup { line-height: 0; font-size: 0.75em; vertical-align: baseline; position: relative; top: -0.45em; }
+  abbr { font-variant-caps: all-small-caps; letter-spacing: 0.02em; text-decoration: none; }
   nav { margin-top: 28px; color: var(--muted); font-size: 15px; display: flex; flex-wrap: wrap; gap: 6px 16px; }
   nav a { color: var(--muted); }
   .docs { list-style: none; padding: 0; }

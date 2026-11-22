@@ -43,7 +43,7 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
   const cover = memberCover ?? siteCover;
   const illustration = cover ? null : demoPicture(location);
   const mark = useGymMark(location);
-  const press = usePressScale(0.97);
+  const press = usePressScale();
   const saved = account.saved.includes(id);
   const comparing = compare.includes(id);
   const where = [location.address.suburb, result.distanceKm !== null ? distanceLabel(result.distanceKm, result.record.location.address.countryCode) : null]
@@ -79,10 +79,10 @@ export function GymCard({ result, width = 216 }: { result: GymSearchResult; widt
                 <NoPhoto name={location.name} style={styles.image} />
               )}
               <View style={styles.body}>
-                {/* Up to four lines: a real name as long as "Kensington Community Aquatic and Recreation
-                    Centre" takes four on the narrower card, and lost its end on two. The cards in a row
-                    stay one height, so only a row with a long name grows. */}
-                <Txt variant="headline" numberOfLines={4}>
+                {/* A card's title takes two lines at most, so a row of cards keeps one shape; a name
+                    longer than that ("Kensington Community Aquatic and Recreation Centre") ends in "…"
+                    here, and is whole in the card's spoken label and on the gym's page. */}
+                <Txt variant="headline" numberOfLines={2}>
                   {location.name}
                 </Txt>
                 <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>

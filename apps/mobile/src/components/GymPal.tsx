@@ -434,7 +434,7 @@ export function GymPalMark({ size, cheer = 0, still = false }: { size: number; c
 
 /** The logo in the corner, as a button. */
 function Launcher({ bottom, side, edge, onPress }: { bottom: number; side: 'right' | 'left'; edge: number; onPress: () => void }) {
-  const press = usePressScale(0.9);
+  const press = usePressScale();
   return (
     <Animated.View entering={POP_IN} style={[styles.launcher, side === 'left' ? { bottom, left: edge } : { bottom, right: edge }]}>
       <Animated.View style={press.style}>
@@ -467,19 +467,25 @@ function Launcher({ bottom, side, edge, onPress }: { bottom: number; side: 'righ
  */
 function usePullIn(side: 'right' | 'left', opened: () => void, dragged: () => void = () => {}) {
   const pull = useSharedValue(0);
+  // How fast it was moving when let go, in the same units as `pull`, so the spring back starts at that speed.
+  const thrown = useSharedValue(0);
   const inward = side === 'right' ? -1 : 1;
   const gesture = Gesture.Pan()
     .activeOffsetX([-8, 8])
     .failOffsetY([-24, 24])
+    .onBegin(() => {
+      thrown.value = 0;
+    })
     .onUpdate((event) => {
       pull.value = Math.max(0, (event.translationX * inward) / PULL_OPENS);
     })
     .onEnd((event) => {
+      thrown.value = (event.velocityX * inward) / PULL_OPENS;
       runOnJS(dragged)();
       if (event.translationX * inward >= PULL_OPENS || event.velocityX * inward > 600) runOnJS(opened)();
     })
     .onFinalize(() => {
-      pull.value = withSpring(0, { damping: 18, stiffness: 260 });
+      pull.value = withSpring(0, { damping: 18, stiffness: 260, velocity: thrown.value });
     });
   return { pull, gesture, inward };
 }
@@ -768,7 +774,7 @@ function Chat({
             </Pressable>
           </View>
           {/* What GymPal is and where chats go: words to read, so secondary grey. */}
-          <Txt variant="caption" color={color.labelSecondary} style={styles.small}>
+          <Txt variant="caption" color={color.labelSecondary} style={styles.small} acronyms>
             {/* The AI service named only once something is sent there. */}
             {state === 'off'
               ? 'GymPal is AI and can be wrong; a gym’s own page has its facts. Not medical advice.'

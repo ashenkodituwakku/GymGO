@@ -78,7 +78,7 @@ export function RpeCell({ value, label, open, onPress }: { value: number | undef
 export function RpePicker({ label, value, onPick, onClose }: { label: string; value: number | null; onPick: (rpe: number | null) => void; onClose: () => void }) {
   return (
     <View style={styles.picker} accessibilityLabel={`${label}: how hard was it?`} role="group">
-      <Txt variant="caption" color={color.labelSecondary}>
+      <Txt variant="caption" color={color.labelSecondary} acronyms>
         {value !== null ? `RPE ${value}: ${rpeMeaning(value)}` : 'How hard was it? 10 is nothing left, 8 two more reps'}
       </Txt>
       <View style={styles.chips}>

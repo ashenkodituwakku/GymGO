@@ -219,7 +219,7 @@ export default function CollectionScreen() {
 
       <View style={styles.social}>
         {SOCIAL.map((item) => (
-          <Pressy key={item.path} scaleTo={0.96} onPress={() => router.push(item.path)} accessibilityRole="button" accessibilityLabel={item.title} style={styles.socialTile}>
+          <Pressy key={item.path} onPress={() => router.push(item.path)} accessibilityRole="button" accessibilityLabel={item.title} style={styles.socialTile}>
             <Icon name={item.icon} size={18} color={color.brand} />
             <Txt variant="subhead" style={face('semibold')}>
               {item.title}
@@ -280,7 +280,6 @@ export default function CollectionScreen() {
             // Opens big, to share as a picture.
             <Pressy
               key={set.key}
-              scaleTo={0.98}
               onPress={() => router.push({ pathname: '/card/[id]', params: { id: `set:${set.key}` } })}
               accessibilityRole="button"
               accessibilityLabel={`${KIND[set.kind]} complete: ${set.name}. Open to share`}
@@ -402,7 +401,6 @@ function RarityFilter({
     return (
       <Pressy
         key={key ?? 'all'}
-        scaleTo={0.94}
         onPress={() => {
           haptic.select();
           onChange(key);
@@ -456,7 +454,6 @@ function NextToCollect({ items, near, country, onOpen }: { items: Array<{ record
           return (
             <Pressy
               key={location.id}
-              scaleTo={0.98}
               onPress={() => onOpen(location.id)}
               accessibilityRole="button"
               accessibilityLabel={`${name}, ${where}. Not collected yet`}

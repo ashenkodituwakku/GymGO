@@ -31,6 +31,7 @@ import { Icon } from './Icon';
 import { PagerArrows } from './PhotoHero';
 import { CloseButton, PrimaryButton, Txt } from './ui';
 import { openPage } from '@/lib/actions';
+import { rubberBand } from './rubberBand';
 
 const open = openPage;
 
@@ -131,6 +132,7 @@ export function GooglePhotos({ photos, width }: { photos: GooglePlace['photos'];
     <View style={styles.hero}>
       <ScrollView
         ref={scroller}
+        {...rubberBand()}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -201,7 +203,7 @@ export function PlaceDetails({ place, hidePhotos = false }: { place: GooglePlace
       </View>
 
       {!hidePhotos && place.photos.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.photos}>
+        <ScrollView {...rubberBand()} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.photos}>
           {place.photos.map((photo, index) => (
             <View key={`${index}-${photo.uri}`} style={{ width: photoWidth, gap: 4 }}>
               <Image source={{ uri: photo.uri }} style={[styles.photo, { width: photoWidth }]} resizeMode="cover" />

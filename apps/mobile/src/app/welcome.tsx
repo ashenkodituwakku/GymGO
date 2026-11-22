@@ -25,6 +25,7 @@ import { ScreenOptions } from '@/components/ScreenOptions';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, space, themed, webFocusRing } from '@/lib/theme';
+import { rubberBand } from '@/components/rubberBand';
 
 const PAGES: Array<{ icon: IconName; title: string; line: string }> = [
   {
@@ -128,7 +129,7 @@ export default function WelcomeScreen() {
         onFocus={(event) => setRinged(Boolean((event.target as unknown as { matches?: (selector: string) => boolean }).matches?.(':focus-visible')))}
         onBlur={() => setRinged(false)}
         // Its own ring, not the app's overlay (app/_layout.tsx), which would scroll away with the first page.
-        {...({ onKeyDown, dataSet: { quietFocus: '' } } as object)}
+        {...rubberBand({ onKeyDown, dataSet: { quietFocus: '' } })}
         showsHorizontalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}

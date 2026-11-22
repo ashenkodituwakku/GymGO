@@ -128,7 +128,8 @@ export function installTooltips(): void {
     color: '#FFFFFF',
     font: '500 12px/16px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif',
     whiteSpace: 'nowrap',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.18)',
+    // A faint rim, so the dark label still has an edge on a dark page.
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.18), inset 0 0 0 0.5px rgba(255, 255, 255, 0.16)',
     pointerEvents: 'auto',
   } satisfies Partial<CSSStyleDeclaration>);
   document.body.appendChild(tip);

@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 237 · Every sideways row gives at its ends; tooltips keep an edge in the dark
+
+*22 Nov 2026 · the commit "Rubber band on every sideways row; a rim on tooltips"*
+
+Following Update 236 through the rest of the app:
+
+- **Every sideways row now behaves like Home's.** Explore's chips, Collection's rows of sets and rarities, Exercises' "Yours", kit and muscle chips, Google's photos on a gym's page, Compare's table and the welcome tour all give a little at their ends under a trackpad in a browser and spring back, and a swipe past the start no longer sends the browser Back. Their fading edges are kept; on the welcome tour, its quiet focus ring is kept too (the two marks were merged, where the second would have replaced the first).
+- **Tooltips keep an edge in dark mode.** The label is a dark pill, which had no edge on a black page; it now has a faint light rim. Over the tab bar it opens above the icon, centred on it, as there's no room below.
+- Checked in the browser: each row marked (and its fade or focus mark kept) on Explore, Exercises and the welcome tour, and pulled 100 to 125 points past its start; the tab bar's Explore label in dark mode, above the icon. No page errors. App tests 626.
+
 ## Update 236 · The rules from your four reels: motion, type and a holographic card
 
-*22 Nov 2026 · the commit "Motion, type and holographic cards, from the reels' rules"*
+*22 Nov 2026 · `0055adb`*
 
 You sent four Instagram reels to take note of and implement. Three are lists of rules for building interfaces (ten for animation, ten for typography, and five libraries); the fourth only asks people to comment to be sent a "skill", with nothing in it to build, so there was nothing to take from it. Each rule was checked against GymGO and applied where it fits:
 

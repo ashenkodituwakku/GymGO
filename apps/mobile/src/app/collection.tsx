@@ -51,6 +51,7 @@ import { useCollection } from '@/lib/useCollection';
 import { PageScroll } from '@/components/PageScroll';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { edgeFade } from '@/components/edgeFade';
+import { rubberBand } from '@/components/rubberBand';
 
 const COLUMN = 640;
 
@@ -363,7 +364,7 @@ function BadgeShelf({ wrap, children }: { wrap: boolean; children: ReactNode }) 
     // In a browser the row takes keyboard focus, so the arrow keys can bring the badges past its edge into view:
     // nothing in it is a control, so otherwise only a mouse or a finger could.
     <ScrollView
-      {...edgeFade()}
+      {...rubberBand(edgeFade())}
       horizontal
       showsHorizontalScrollIndicator={false}
       style={styles.badgeRow}
@@ -430,7 +431,7 @@ function RarityFilter({
     );
   }
   return (
-    <ScrollView {...edgeFade()} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rarityRow} style={styles.rarityScroll} accessibilityLabel="Show cards of one rarity">
+    <ScrollView {...rubberBand(edgeFade())} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rarityRow} style={styles.rarityScroll} accessibilityLabel="Show cards of one rarity">
       {pills}
     </ScrollView>
   );

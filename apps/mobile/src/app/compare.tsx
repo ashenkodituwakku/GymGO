@@ -27,6 +27,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { SheetDone } from '@/components/SheetDone';
 import { ScreenOptions } from '@/components/ScreenOptions';
+import { rubberBand } from '@/components/rubberBand';
 
 /** `star`: a star before the text, seen but not said (the row's heading says it's a rating). */
 type Cell = { text: string; ink?: string; strong?: boolean; star?: boolean };
@@ -312,7 +313,7 @@ export default function Compare() {
           </View>
         ) : (
           // Wider than the screen (four gyms on a phone): it scrolls sideways, names and all.
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tableScroll}>
+          <ScrollView {...rubberBand()} horizontal showsHorizontalScrollIndicator={false} style={styles.tableScroll}>
             <View style={[styles.table, { width: tableWidth }]}>
               {head}
               {body}

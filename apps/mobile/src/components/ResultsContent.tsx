@@ -24,6 +24,7 @@ import { MarkImage, useGymMark } from './BrandLogo';
 import { GymRow } from './GymRow';
 import { GymRowsSkeleton } from './Skeleton';
 import { edgeFade } from './edgeFade';
+import { rubberBand } from './rubberBand';
 import { Icon } from './Icon';
 import { Chip, PrimaryButton, TIER_COLOUR, Txt, LiveLine } from './ui';
 import { AdSlot } from './AdSlot';
@@ -309,7 +310,7 @@ export function ResultsContent({
   // Quick filters, in a row that scrolls sideways.
   const chips = (
     <ScrollView
-      {...edgeFade()}
+      {...rubberBand(edgeFade())}
       horizontal
       style={styles.chipsRow}
       showsHorizontalScrollIndicator={false}

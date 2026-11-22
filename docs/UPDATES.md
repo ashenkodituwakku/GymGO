@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 245 · Checked: this week's type rules in every look
+
+*22 Nov 2026 · the commit "Docs: the type rules checked in every look (Update 245)"*
+
+The week's type changes (labels centred by their capitals, the growing welcome headline, hyphenation, bold that doesn't move, two-line card titles) had only been tried in the Standard look. The other ten looks draw in very different faces (Paper's serif, Terminal's monospace, 8-bit's pixels, Comic's display letters), so each was swept:
+
+- **Nothing cut short, no label spilling out of its tab, chip or button**, in Frost, Liquid, Soft, Paper, Material, Neon, Terminal, 8-bit, Classic and Comic, on Home, Appearance, the programme, a gym's page, Templates and the monthly report at phone width, and on Home, the welcome tour, Appearance, a gym's page and the programme at desktop width.
+- **The welcome headline holds up in the widest faces**: in 8-bit it's 35.5 points on a phone (four lines) and 64 at desktop width, balanced into three even lines of "Find a gym / that lets / you in"; in Comic it fits one line at both sizes. Neither runs off the side.
+- Nothing needed changing.
+
 ## Update 244 · Checked: the iPhone and Android bundles build with this week's work
 
-*22 Nov 2026 · the commit "Docs: the phone bundles checked (Update 244)"*
+*22 Nov 2026 · `4f5b598`*
 
 Everything this week was driven in a browser, but the same code makes the phone apps. Without a phone here, the next best thing was to build the apps' code as the phone builds do (Hermes, for iPhone and Android, 85 seconds) and look inside:
 

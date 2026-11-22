@@ -515,6 +515,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Checked (22 Nov): the full app's production build served by the server, signed in, with this week's changes | ✅ | ✅ console and requests clean on 16 pages; tooltips, theme switch, month slide, shake, hyphens, small capitals, headline, file name, card light, rail and Back all as on the dev server | n/a | n/a | n/a | ❌ Safari and Firefox not available here |
 | Scrolling never waits on the app (22 Nov): rows bind their own wheel listener, the page's is passive; tooltips decide icon-only buttons without a layout read | ✅ | ✅ listeners read through Chrome's tools; swipes still claimed on 4 pages ± Reduce motion; tooltips by mouse and Tab, none on worded buttons; app 626 tests | n/a | n/a | ⚠️ the website gets it with the next publish | n/a |
 | Checked (22 Nov): the iPhone and Android bundles (Hermes) build with this week's work; browser-only code absent, shared code present | ✅ | ✅ expo export for iOS and Android, no errors or warnings; strings looked up in both bundles | ❌ not run on a phone | n/a | n/a | n/a |
+| Checked (22 Nov): the week's type rules in all 11 looks | ✅ | ✅ cut-text and spilled-label sweep, 10 looks × 6 pages at 390 and 5 pages at 1280; welcome headline in 8-bit and Comic at both widths | n/a | n/a | n/a | n/a |
 
 **What "tested locally" means for the phone app, exactly:**
 

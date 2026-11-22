@@ -280,6 +280,19 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `data-gympal-launcher`) once the Modal has left. Scratchpad `popups.cjs`
   runs open → Tab → Escape for any opener.
 
+- **Picking a gym on the map, kept light** (22 Nov, Update 248). The
+  click's frame used to redraw the whole app. `addRecent` (app-state.tsx)
+  now runs in `startTransition` and does nothing for the gym already first.
+  `ResultsContent` is `memo`: keep every prop Explore hands it stable
+  (`useCallback`/`useMemo`; `locked` is memoised, `focusSearch` and
+  `seeWorldwide` are callbacks); it calls `useGlassRedraw()` itself, since
+  Explore's redraws no longer reach it. `PlaceCard staged` (Explore only)
+  mounts its folded detail a frame later in a transition; the gym page leaves
+  it off, because PageScroll restores the scroll on the first content size.
+  To measure, a fake `__REACT_DEVTOOLS_GLOBAL_HOOK__` in a Playwright init
+  script can count the components each commit renders (count a fiber only
+  when it isn't the same object as in the last commit: skipped subtrees keep
+  their old flags).
 - **Desktop side panels and focus** (18 Nov). explore.tsx: one effect on
   `[wide, panel, selectedId]` records the opener (the focused element,
   unless it's inside the panel), focuses `sidePanel` (tabIndex -1, quiet

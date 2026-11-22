@@ -9,6 +9,26 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 248 · No more hitch when you click the map
+
+*22 Nov 2026 · the commit "Explore: picking a gym on the map no longer redraws the whole app in that frame"*
+
+You asked to fix the momentary lag when you click the map. Measured in the browser, clicking a gym's pin did a lot of work all at once, on the very frame the map set off towards the gym and its card opened:
+
+- **The whole app was redrawn** (744 parts), because the gym was added to your recently viewed gyms, which lives in the app-wide state.
+- **The results panel was redrawn** (some 470 of those parts: its search, chips and list), though nothing in it had changed.
+- **The whole card was built** at once (about 900 parts), most of them its folded sections, below what you see first.
+
+Now:
+
+- **Recently viewed is updated as a background task**: React does it in small slices between the map's frames, and opening the same gym again changes nothing at all.
+- **The results panel is drawn again only when something in it changes**: Explore hands it the same things each time, so picking a gym or closing its card leaves it alone.
+- **The card's top comes at once and its folded sections a frame later**, also as a background task. The top is the photos, actions, facts, and the Google and workout rows. The gym's own page still draws everything at once, so it can scroll back to where you were after a change of colours.
+
+Clicking a pin now redraws 84 parts plus the top of the card, instead of 744 plus the whole card. In this workspace's development build that frame took 41 to 68 ms, down from 74 to 125 ms. Closing a card by clicking the map is down to 84 parts in under 5 ms. On a phone-width screen, a tap redraws 141 parts in 13 ms. A click on empty map does no React work at all, just one map frame, which a graphics card draws in a moment.
+
+- Checked: typecheck and every package's tests pass (app 626, server 315). In the browser: the card opens complete (its folded sections arrive just after), the list beside it is untouched, closing still works, phone width still works, no page errors. The timings come from this workspace's development build and software graphics; a production build on a real computer is faster throughout.
+
 ## Update 247 · A screen reader hears where a widget went
 
 *22 Nov 2026 · the commit "Customise Home tells a screen reader where a widget moved, or that it came off"*

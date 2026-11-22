@@ -195,7 +195,9 @@ function MapScreen() {
   // freshness; it moves on whenever the filters or data do.
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   // Another country than yours, without Pro: no pins or list, just the way to Pro (or home).
-  const locked = mayExplore(filters.countryCode) ? null : { country: filters.countryCode, home: prefs.country ?? filters.countryCode };
+  // The same object while nothing in it changes, so the results panel (memoised) isn't redrawn for it.
+  const lockedCountry = mayExplore(filters.countryCode) ? null : filters.countryCode;
+  const locked = useMemo(() => (lockedCountry === null ? null : { country: lockedCountry, home: prefs.country ?? lockedCountry }), [lockedCountry, prefs.country]);
   // Each gym once: not the map's own copy of one GymGO carries too.
   const loaded = useMemo(() => data.listed.filter((record) => mayExplore(record.location.address.countryCode)), [data.listed, mayExplore]);
   // Typing a gym's name also finds it among your country's gyms kept on this device.
@@ -796,13 +798,18 @@ function MapScreen() {
       ? `Real gyms from OpenStreetMap: names, addresses and sometimes opening hours, mapped by volunteers. Prices, guest hours and machines are unknown until a gym publishes them, so call first. ${MELBOURNE_ATTRIBUTION}.`
       : `Real gyms. Tap a fact to see where we read it; anything a gym doesn’t publish is unknown. ${MELBOURNE_ATTRIBUTION}.`;
 
+  // Kept the same between redraws, like every other prop of the results panel: it's memoised, so
+  // picking a gym (which redraws this screen) leaves its hundreds of parts alone.
+  const focusSearch = useCallback(() => mainSheet.current?.snapToIndex(2), []);
+  const seeWorldwide = useCallback(() => openPro('worldwide'), [openPro]);
+
   const results = (inSheet: boolean) => (
     <ResultsContent
       outcome={outcome}
       filters={filters}
       query={query}
       onQueryChange={setQuery}
-      onSearchFocus={() => mainSheet.current?.snapToIndex(2)}
+      onSearchFocus={focusSearch}
       suggestions={suggestions}
       onPickSuggestion={pickSuggestion}
       recentPlaces={recentPlaces.places}
@@ -826,7 +833,7 @@ function MapScreen() {
       covers={data.covers}
       memberPrices={data.memberPrices}
       locked={locked}
-      onSeePro={() => openPro('worldwide')}
+      onSeePro={seeWorldwide}
       onGoHome={goHome}
       lookup={lookup}
       onSearchHere={LIMITED ? undefined : searchHere}
@@ -843,6 +850,7 @@ function MapScreen() {
     selected && (
       <PlaceCard
         key={selected.record.location.id}
+        staged
         result={selected}
         visitMinute={filters.visitMinuteOfDay}
         visitDate={filters.visitDate}

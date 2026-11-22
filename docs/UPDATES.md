@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 244 · Checked: the iPhone and Android bundles build with this week's work
+
+*22 Nov 2026 · the commit "Docs: the phone bundles checked (Update 244)"*
+
+Everything this week was driven in a browser, but the same code makes the phone apps. Without a phone here, the next best thing was to build the apps' code as the phone builds do (Hermes, for iPhone and Android, 85 seconds) and look inside:
+
+- **Both build with no errors or warnings.**
+- **The browser-only parts stayed out**: the rows' give and their swipe claim, the tooltips, and the browser's type rules (hyphenation, trimmed labels, the fluid headline, small capitals) aren't in either bundle; each has a phone version that does nothing, or a phone's own way (Android hyphenates with its own setting).
+- **What's shared is in both**: "Saved as …", "visit price", "GymPal on the left side" and the rest. The theme switch's pause on transitions is in them too, and does nothing on a phone, where there's no page to mark.
+- What a bundle can't show is how it all feels on a phone (the 97% press, the shake, the card's glare and foil, Android's hyphens): that's still for a real device.
+
 ## Update 243 · Scrolling never waits on the rows or the tooltips
 
-*22 Nov 2026 · the commit "Rows listen for the wheel themselves; tooltips read text, not layout"*
+*22 Nov 2026 · `bbdc067`*
 
 Two costs that Updates 236 and 241 added to every page in a browser, taken back out:
 

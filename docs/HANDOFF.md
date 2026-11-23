@@ -292,7 +292,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `subscriptions` as `paypal:I-…`). Anything that calls Stripe with a
   subscription id must skip `paypal:` rows (cancelAllFor does). The app:
   `stripePageNames`/`orList` for the line under Subscribe; `payWith.paypal
-  === 'direct'` shows Pay with PayPal; `manageSubscription` opens PayPal's
+  === 'direct'` shows PayPalButton (PayPal's wordmark paths from its
+  published button SVG, its #60CDFF blue, white in dark mode, per PayPal's
+  August 2026 colours); `manageSubscription` opens PayPal's
   autopay page for `provider: 'paypal'`. legal.ts still names only Stripe:
   PayPal must be added there (owner's wording) before it takes real money.
 - **Picking a gym on the map, kept light** (22 Nov, Update 248). The

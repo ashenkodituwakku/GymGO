@@ -12,7 +12,7 @@ Claude: every step below is the owner's. Built on 22 November 2026
 | **Card** | Stripe's checkout page | Stripe connected (`STRIPE_SECRET_KEY`), as today |
 | **Apple Pay** | Stripe's checkout page, on Safari and Apple devices that have it set up | On in the Stripe Dashboard (below) |
 | **Google Pay** | Stripe's checkout page, in Chrome and on Android with a card saved | On in the Stripe Dashboard (below) |
-| **PayPal** | PayPal's own page, from a **Pay with PayPal** button | Your PayPal business account's keys (below) |
+| **PayPal** | PayPal's own page, from PayPal's own button (its wordmark on its blue; white in dark mode) | Your PayPal business account's keys (below) |
 
 - **The Pro page only names what's really on.** The server reads Stripe's
   payment method settings and says so under the Subscribe button ("Card,
@@ -91,7 +91,7 @@ nothing.
    (every ten minutes or so). A server on your own computer can't receive
    webhooks unless it's reachable from the internet (`gymgo -Online`).
 5. **Restart the server.** Its first lines say `GymGO Pro payments (PayPal): on, sandbox`.
-   The Pro page then shows **Pay with PayPal**.
+   The Pro page then shows the PayPal button.
 6. **Try it** with a sandbox buyer account (developer.paypal.com → Sandbox
    accounts): subscribe, approve at PayPal, and you come back on Pro.
 7. **Before real money**, the legal pages (below), then a live app at
@@ -153,7 +153,7 @@ the website, in Safari, it's fine.
 - Routes: `POST /api/billing/paypal/checkout`, `GET /api/billing/paypal/return`,
   `POST /api/billing/paypal/webhook`; `GET /api/billing/plans` now includes
   `payWith`.
-- The app: the line under Subscribe, the Pay with PayPal button, the renewal
+- The app: the line under Subscribe, PayPal's button (components/PayPalButton.tsx: PayPal's own wordmark and colours, Update 250), the renewal
   terms naming both buttons, Manage subscription opening PayPal for PayPal
   subscribers.
 - Tests: `apps/server/src/paypal.test.ts` (26: plans, status, the ways to

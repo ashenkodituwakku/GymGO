@@ -9,6 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 250 · The PayPal button is PayPal's own
+
+*23 Nov 2026 · the commit "Pro: PayPal's own button, its wordmark on its colours"*
+
+You asked for the PayPal button to be the PayPal logo, clean, standing out, in PayPal's colours. It's now just PayPal's wordmark on PayPal's button colour, the size and corners of the Subscribe button above it:
+
+- **PayPal's current colours.** PayPal changed its buttons in August 2026: the gold one became blue. On a light page the button is PayPal's light blue (#60CDFF) with the black wordmark; in dark mode it's PayPal's white button, as PayPal's own guidance says for contrast on dark pages. A touch darker under the mouse.
+- **PayPal's own wordmark,** taken unchanged from PayPal's published button artwork (paypalobjects.com), not redrawn. A screen reader hears "Pay with PayPal". While PayPal's page is opening, a spinner takes the wordmark's place.
+- The renewal terms under it now say "Tapping Subscribe or PayPal agrees…", since the button no longer has words.
+
+- Checked: typecheck passes; on the Pro page (with the server's answers stood in) the button shows in light and dark, its blue darkens on hover, no page errors. It shows only once PayPal is set up (docs/PAYMENTS.md).
+
 ## Update 249 · Apple Pay, Google Pay and PayPal, ready for you to switch on
 
 *22 Nov 2026 · the commit "Payments: Apple Pay and Google Pay through Stripe, PayPal through GymGO's own account; off until set up"*

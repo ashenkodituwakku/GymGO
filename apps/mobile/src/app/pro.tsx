@@ -29,6 +29,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { AppBadge } from '@/components/BrandMark';
 import { Icon, type IconName } from '@/components/Icon';
+import { PayPalButton } from '@/components/PayPalButton';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Segmented, Txt, LiveLine } from '@/components/ui';
 import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtras';
@@ -346,8 +347,8 @@ export default function ProScreen() {
                 !chosen
                   ? null
                   : trial
-                    ? `Free for ${trial.days} days, then ${formatPlanPrice(chosen.amountMinor, currency)} a month, tax included, until you cancel. ${billing.payWith?.paypal === 'direct' ? 'Stripe (or PayPal) takes your payment details' : 'Stripe takes your card'} now; the first payment is on ${dayLabel(trialEndsAt(new Date(), trial.days).toISOString())}. Cancel before then in Profile → Manage subscription and you aren’t charged. Tapping Start${billing.payWith?.paypal === 'direct' ? ' or Pay with PayPal' : ''} agrees to these terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
-                    : `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; Pro stays on to the end of the ${interval} you’ve paid for. Tapping Subscribe${billing.payWith?.paypal === 'direct' ? ' or Pay with PayPal' : ''} agrees to these renewal terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
+                    ? `Free for ${trial.days} days, then ${formatPlanPrice(chosen.amountMinor, currency)} a month, tax included, until you cancel. ${billing.payWith?.paypal === 'direct' ? 'Stripe (or PayPal) takes your payment details' : 'Stripe takes your card'} now; the first payment is on ${dayLabel(trialEndsAt(new Date(), trial.days).toISOString())}. Cancel before then in Profile → Manage subscription and you aren’t charged. Tapping Start${billing.payWith?.paypal === 'direct' ? ' or PayPal' : ''} agrees to these terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
+                    : `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; Pro stays on to the end of the ${interval} you’ve paid for. Tapping Subscribe${billing.payWith?.paypal === 'direct' ? ' or PayPal' : ''} agrees to these renewal terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
               }
               onSubscribe={() => void subscribe('stripe')}
               onSignIn={() => router.push('/sign-in')}
@@ -492,14 +493,8 @@ function BuyButton({
           </Txt>
         </View>
       )}
-      {paypal && (
-        <PrimaryButton
-          label={busy && via === 'paypal' ? 'Opening PayPal…' : 'Pay with PayPal'}
-          tone="quiet"
-          disabled={busy}
-          onPress={onPayPal}
-        />
-      )}
+      {/* PayPal's own button: its wordmark on its colours (components/PayPalButton.tsx). */}
+      {paypal && <PayPalButton busy={busy && via === 'paypal'} disabled={busy} onPress={onPayPal} />}
       {!!renewal && <LegalText variant="footnote" tint={color.labelSecondary} style={styles.center} text={renewal} />}
     </View>
   );

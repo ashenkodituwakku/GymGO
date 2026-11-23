@@ -189,6 +189,8 @@ export interface FeedItem {
   comments: number;
   /** Your own, kept from your friends. */
   hidden?: boolean;
+  /** The gym it was at, when one was tagged. */
+  gym?: { id: string; name: string } | null;
 }
 
 export interface FeedComment {
@@ -217,6 +219,8 @@ export interface FeedPage {
   next: string | null;
   /** With the first page: friends' likes and comments on your workouts lately. */
   activity?: FeedActivity[];
+  /** With the first page of one person's: who, and how many workouts they share (all of yours). */
+  person?: { person: FeedPerson; workouts: number };
 }
 
 /** Each one's best on an exercise, in kg (null where there's none). */
@@ -758,8 +762,14 @@ export const api = {
   /** Keep a workout from your friends' feed, or show it again. */
   hideTraining: (token: string, id: string, hidden: boolean) =>
     request<{ session: TrainingSession }>('PATCH', `/api/training/${encodeURIComponent(id)}`, { token, body: { hidden } }),
+  /** Tag the gym a logged workout was at (one GymGO knows), or null for none. */
+  tagTrainingGym: (token: string, id: string, gymId: string | null) =>
+    request<{ session: TrainingSession }>('PATCH', `/api/training/${encodeURIComponent(id)}`, { token, body: { gymId } }),
   /** Your friends' shared workouts (and yours, while you share), newest first. */
-  feed: (token: string, after: string | null = null) => request<FeedPage>('GET', `/api/feed${after ? `?after=${encodeURIComponent(after)}` : ''}`, { token }),
+  feed: (token: string, after: string | null = null, person: string | null = null) => {
+    const query = [after ? `after=${encodeURIComponent(after)}` : null, person ? `person=${encodeURIComponent(person)}` : null].filter(Boolean).join('&');
+    return request<FeedPage>('GET', `/api/feed${query ? `?${query}` : ''}`, { token });
+  },
   feedItem: (token: string, id: string) => request<{ item: FeedItem; comments: FeedComment[]; sharing: boolean }>('GET', `/api/feed/${encodeURIComponent(id)}`, { token }),
   likeWorkout: (token: string, id: string, like: boolean) => request<{ likes: number; liked: boolean }>(like ? 'PUT' : 'DELETE', `/api/feed/${encodeURIComponent(id)}/like`, { token }),
   commentOnWorkout: (token: string, id: string, body: string) => request<{ comment: FeedComment }>('POST', `/api/feed/${encodeURIComponent(id)}/comments`, { token, body: { body } }),

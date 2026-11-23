@@ -23,6 +23,13 @@ GymGO's own look; nothing of Hevy's is copied.
 - **On your workouts**, at the top of the feed: who liked or commented on
   yours in the last 30 days, newest first, the ones since you last looked
   marked with a dot.
+- **A friend's workouts**, on their page (Update 253): their latest, with a
+  count and See all (the feed for just them). Your own includes hidden ones.
+- **Muscle split** on a workout's page (Update 253): its sets shared among
+  the muscles worked, main muscles counting fully and others half.
+- **The gym** (Update 253): tagged while training (the chip under the title,
+  Which gym?) or from Edit workout; shown on the card and the workout's page,
+  which opens the gym.
 - **Head to head** (Pro), on a friend's page: your best on every exercise
   you've both done beside theirs (heaviest lift, estimated 1-rep max, most
   reps at body weight), the one ahead marked. Free accounts see what it is
@@ -34,8 +41,10 @@ GymGO's own look; nothing of Hevy's is copied.
   that asks says plainly what friends see, ones already logged included,
   and what they never see.
 - Friends, and only friends, then see a workout's name, when it was, how long,
-  the exercises and sets, the volume and the records. **Never your notes, and
-  never which gym** (the feed never sends either).
+  the exercises and sets, the volume and the records, and **the gym only when
+  you tag one** (Update 253: the gym chip on a workout; workouts logged before
+  then show none). **Never your notes** (the feed never sends them). The gym
+  is named as GymGO knows it, never typed text.
 - Any one workout can be hidden from friends (its page → Hide from friends);
   turning sharing off hides them all at once.
 - Seeing friends' workouts doesn't need you to share yours.
@@ -66,7 +75,7 @@ I haven't changed the legal pages, because that wording is yours to approve
 
 - Privacy → what friends see: add "and, if you choose to share them, the
   workouts you log: their names, when, how long, the exercises, sets and
-  records (never your notes or which gym); and the likes and comments on
+  records, and the gym when they tag one (never their notes); and the likes and comments on
   them".
 - Privacy → what we keep: your choice to share workouts, which ones you've
   hidden, and the likes, comments and reports you make on friends' workouts,

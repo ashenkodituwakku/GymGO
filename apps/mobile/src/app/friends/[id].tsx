@@ -11,13 +11,15 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { CollectionTotals, FriendCard } from '@gymgo/domain';
 import { BrandFill } from '@/components/BrandFill';
 import { GemCard } from '@/components/GemCard';
+import { FeedCard } from '@/components/FeedCard';
 import { HeadToHead } from '@/components/HeadToHead';
+import { Pressy } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { GymCardsSkeleton } from '@/components/Skeleton';
 import { Chip, Input, PrimaryButton, Txt, LiveLine } from '@/components/ui';
 import { ScreenOptions } from '@/components/ScreenOptions';
-import { api, problemText } from '@/lib/api';
+import { ApiError, api, problemText, type FeedItem } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { timeLabel } from '@/lib/copy';
 import { INVITE_MINUTES, friendCardProps, inviteAt, inviteWhen } from '@/lib/friends';
@@ -44,6 +46,32 @@ export default function FriendScreen() {
   const [friend, setFriend] = useState<{ name: string; totals: CollectionTotals; cards: FriendCard[] } | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   usePageTitle(friend?.name ?? name ?? 'Friend');
+  // Their latest workouts, when they share them (null: not yet asked; 'private': they don't share).
+  const [workouts, setWorkouts] = useState<{ items: FeedItem[]; count: number } | 'private' | null>(null);
+  useEffect(() => {
+    if (!token || !id) return;
+    let live = true;
+    api
+      .feed(token, null, id)
+      .then((page) => live && setWorkouts({ items: page.items.slice(0, 3), count: page.person?.workouts ?? page.items.length }))
+      .catch((error) => live && setWorkouts(error instanceof ApiError && error.status === 404 ? 'private' : null));
+    return () => {
+      live = false;
+    };
+  }, [token, id]);
+  const like = async (item: FeedItem) => {
+    if (!token || workouts === null || workouts === 'private') return;
+    const want = !item.liked;
+    const change = (liked: boolean, likes: number) =>
+      setWorkouts((now) => (now && now !== 'private' ? { ...now, items: now.items.map((each) => (each.id === item.id ? { ...each, liked, likes } : each)) } : now));
+    change(want, item.likes + (want ? 1 : -1));
+    try {
+      const answer = await api.likeWorkout(token, item.id, want);
+      change(answer.liked, answer.likes);
+    } catch {
+      change(item.liked, item.likes);
+    }
+  };
 
   useEffect(() => {
     if (!token || !id) return;
@@ -174,6 +202,38 @@ export default function FriendScreen() {
         )}
       </LiveLine>
 
+      {/* Their workouts, newest first, when they share them. */}
+      {workouts && workouts !== 'private' && workouts.items.length > 0 && (
+        <>
+          <View style={styles.sectionHead}>
+            <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2}>
+              {`WORKOUTS · ${workouts.count}`}
+            </Txt>
+            {workouts.count > workouts.items.length && (
+              <Pressy
+                onPress={() => router.push({ pathname: '/feed', params: { person: id, name: friend?.name ?? name ?? '' } })}
+                accessibilityRole="link"
+                accessibilityLabel={`See all ${workouts.count} of their workouts`}
+                hitSlop={8}
+              >
+                <Txt variant="subhead" color={color.brand}>
+                  See all
+                </Txt>
+              </Pressy>
+            )}
+          </View>
+          {workouts.items.map((item) => (
+            <FeedCard
+              key={item.id}
+              item={item}
+              onOpen={() => router.push({ pathname: '/feed/[id]', params: { id: item.id } })}
+              onLike={() => void like(item)}
+              onComment={() => router.push({ pathname: '/feed/[id]', params: { id: item.id, comment: '1' } })}
+            />
+          ))}
+        </>
+      )}
+
       {/* Your best lifts beside theirs (Pro), from the workouts they share. */}
       {token && id && <HeadToHead token={token} friendId={id} friendName={friend?.name ?? name ?? 'Your friend'} pro={billing.isPro} unit={unitFor(prefs.country)} />}
 
@@ -249,6 +309,7 @@ const styles = themed(() =>
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
     input: { height: 44, paddingHorizontal: space[3], borderRadius: radius.md, backgroundColor: color.fill, color: color.label, fontSize: 16 },
     section: { marginTop: space[2], marginLeft: space[4] },
+    sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space[2], marginHorizontal: space[4] },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
     note: { paddingHorizontal: space[4], textAlign: 'center' },
   }),

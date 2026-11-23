@@ -280,6 +280,17 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `data-gympal-launcher`) once the Modal has left. Scratchpad `popups.cjs`
   runs open → Tab → Escape for any opener.
 
+- **Gym tags, profiles, muscle split** (23 Nov, Update 253).
+  `training_sessions.gym_name` is set by the server from its own gym
+  record (`gymRecord`) on POST, and on PATCH `{ gymId }` (null clears; an
+  unknown id is a 400), never from client text. The feed shows `gym` only
+  when `gym_name` is set (older workouts have none). `GET
+  /api/feed?person=` is one friend's (sharing) or your own (hidden ones
+  too), with `person.workouts`. App: app/gym-tag.tsx (`session=active` or
+  a logged id), the chip in train.tsx, a Gym row in session-edit.tsx,
+  `muscleSplit` (lib/feed.ts) on feed/[id], the friend page's workouts
+  (friends/[id].tsx), feed/index.tsx `?person=&name=`. PrimaryButton's
+  quiet and danger tones are now 44 tall (`styles.secondary` in ui.tsx).
 - **The friends' feed** (23 Nov, Update 252). docs/FEED.md. Server
   feed.ts (`Feed`): `users.share_workouts` (opt-in), `training_sessions.hidden`
   and `.records_json` (records cached, invalidated by `forgetRecordsFrom` on

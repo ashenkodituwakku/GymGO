@@ -58,6 +58,8 @@ export interface TrainingSession {
   note?: string | null;
   /** Kept from your friends' feed, when you share your workouts (absent from older servers). */
   hidden?: boolean;
+  /** The tagged gym's name, as GymGO knows it (absent from older servers, and for a gym it doesn't know). */
+  gymName?: string | null;
 }
 
 /**

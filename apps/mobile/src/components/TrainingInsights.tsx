@@ -182,7 +182,7 @@ export function WeekCard({
         accessibilityLabel={`The last ${WEEKS} weeks: you trained on ${daysTrained} day${daysTrained === 1 ? '' : 's'}${goal ? `, and met your goal in ${weeksMet} week${weeksMet === 1 ? '' : 's'}` : ''}. Tap a day you trained to see what you did.`}
       >
         <Txt variant="caption" color={color.labelSecondary}>
-          {`The last ${WEEKS} weeks, a square a day, Monday at the top.${goal ? ' A green dot marks a week you met your goal.' : ''} Tap a day you trained to see what you did.`}
+          {`The last ${WEEKS} weeks.${goal ? ' A green dot: goal met.' : ''} Tap a day to see it.`}
         </Txt>
       </View>
     </View>

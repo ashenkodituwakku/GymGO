@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FeedItem } from './api';
-import { ahead, bestLine, bestSetLine, feedCardLabel, feedExerciseName, feedWhen, likedLine, recordsFor, volumeLine } from './feed';
+import { ahead, bestLine, muscleSplit, bestSetLine, feedCardLabel, feedExerciseName, feedWhen, likedLine, recordsFor, volumeLine } from './feed';
 
 describe('when a workout was, in the feed', () => {
   const now = new Date(2026, 10, 23, 18, 0); // 23 Nov 2026, 6 pm, this device's time
@@ -84,5 +84,22 @@ describe('head to head', () => {
     expect(ahead({ heaviestKg: 100, e1rmKg: 110, mostReps: null }, { heaviestKg: 90, e1rmKg: 120, mostReps: null })).toBe('you');
     expect(ahead({ heaviestKg: 100, e1rmKg: 110, mostReps: null }, { heaviestKg: 100, e1rmKg: 120, mostReps: null })).toBe('them');
     expect(ahead({ heaviestKg: null, e1rmKg: null, mostReps: 12 }, { heaviestKg: null, e1rmKg: null, mostReps: 12 })).toBeNull();
+  });
+});
+
+describe('muscle split', () => {
+  it('shares a workout’s sets among the muscles it worked, biggest first', () => {
+    const split = muscleSplit([
+      { exerciseId: 'bench-press', sets: [{ weight: 60, reps: 8, kind: 'warmup' }, { weight: 80, reps: 5 }, { weight: 80, reps: 5 }] },
+      { exerciseId: 'back-squat', sets: [{ weight: 100, reps: 5 }, { weight: 100, reps: 5 }] },
+    ]);
+    expect(split[0]!.share).toBeGreaterThan(0);
+    expect(split.reduce((sum, item) => sum + item.share, 0)).toBeLessThanOrEqual(1.0001);
+    expect(split.map((item) => item.label)).toEqual(expect.arrayContaining(['Chest', 'Quads']));
+    for (let at = 1; at < split.length; at++) expect(split[at - 1]!.share).toBeGreaterThanOrEqual(split[at]!.share);
+  });
+  it('is empty for exercises it doesn’t know or sets not done', () => {
+    expect(muscleSplit([{ exerciseId: 'mine-abcdefghij', sets: [{ weight: 10, reps: 10 }] }])).toEqual([]);
+    expect(muscleSplit([{ exerciseId: 'bench-press', sets: [{ weight: 10, reps: 0 }] }])).toEqual([]);
   });
 });

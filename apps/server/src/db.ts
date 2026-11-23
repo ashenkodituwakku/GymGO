@@ -415,6 +415,8 @@ function migrate(db: Db): void {
   // A workout hidden from your friends' feed, and the records it broke, once worked out (feed.ts; added 23 Nov 2026).
   if (!trainingColumns.some((column) => column.name === 'hidden')) db.exec('alter table training_sessions add column hidden integer not null default 0');
   if (!trainingColumns.some((column) => column.name === 'records_json')) db.exec('alter table training_sessions add column records_json text');
+  // The gym a workout was at, by its name as GymGO knows it, when one was tagged (added 23 Nov 2026).
+  if (!trainingColumns.some((column) => column.name === 'gym_name')) db.exec('alter table training_sessions add column gym_name text');
   const reportColumns = db.prepare('pragma table_info(bug_reports)').all() as Array<{ name: string }>;
   if (!reportColumns.some((column) => column.name === 'topic')) {
     db.exec(`alter table bug_reports add column topic text not null default 'bug' check (topic in ('bug', 'copyright'))`);

@@ -13,7 +13,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useSharedValue, withTiming } from 'react-native-reanimated';
-import { ARRIVE_CURVE, EASE_OUT, FADE_IN, LEAVE_CURVE, POP_IN, Pressable, useFillBar, usePop } from '@/components/motion';
+import { ARRIVE_CURVE, EASE_OUT, FADE_IN, LEAVE_CURVE, POP_IN, Pressable, Pressy, useFillBar, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
 import { Icon, type IconName } from '@/components/Icon';
@@ -515,9 +515,21 @@ export default function TrainScreen() {
           </Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
             {named.plan ? `${named.plan} · ` : ''}
-            {session.gymName ? `${session.gymName} · ` : ''}
             <Elapsed since={session.startedAt} /> so far · {ticked} of {planned} sets
           </Txt>
+          {/* Where you're training: tap to tag the gym, or change it. */}
+          <Pressy
+            onPress={() => router.push({ pathname: '/gym-tag', params: { session: 'active' } })}
+            accessibilityRole="button"
+            accessibilityLabel={session.gymName ? `At ${session.gymName}. Change the gym` : 'Tag the gym you’re at'}
+            style={[styles.gymTag, !session.gymName && styles.gymTagEmpty]}
+          >
+            <Icon name="pin" size={14} color={session.gymName ? color.brand : color.labelSecondary} />
+            <Txt variant="footnote" color={session.gymName ? color.label : color.labelSecondary} numberOfLines={1} style={[styles.gymTagText, face('semibold')]}>
+              {session.gymName ?? 'Tag your gym'}
+            </Txt>
+            <Icon name="chevron" size={11} color={color.labelTertiary} />
+          </Pressy>
           <SetsBar done={ticked} planned={planned} />
         </View>
 
@@ -1271,7 +1283,7 @@ function Summary({
         </Txt>
       </View>
       <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-        {session.name}
+        {session.gymName ? `${session.name} · ${session.gymName}` : session.name}
       </Txt>
       {/* The workout in three figures, counting up as the page arrives. */}
       <View style={styles.summaryStats}>
@@ -1446,6 +1458,10 @@ const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
   intro: { gap: 2, marginBottom: space[1] },
+  // The gym you're at, as a small chip under the title.
+  gymTag: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 5, maxWidth: '100%', marginTop: space[2], marginBottom: space[1], paddingHorizontal: space[3], minHeight: 32, borderRadius: radius.pill, backgroundColor: color.brandTint },
+  gymTagEmpty: { backgroundColor: color.fill },
+  gymTagText: { flexShrink: 1 },
   center: { textAlign: 'center' },
   flex: { flex: 1 },
   noWorkout: { flexGrow: 1, justifyContent: 'center', paddingVertical: space[8], gap: space[5] },

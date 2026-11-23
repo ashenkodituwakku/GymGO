@@ -117,7 +117,7 @@ export const FeedCard = memo(function FeedCard({
 });
 
 /** Who and when (and, on your own, whether your friends can see it). */
-export function FeedByline({ item }: { item: FeedItem }) {
+export function FeedByline({ item, gym = true }: { item: FeedItem; /** The gym after the time (a page that shows it as a link of its own says false). */ gym?: boolean }) {
   return (
     <View style={styles.head}>
       <Avatar account={{ displayName: item.person.displayName, avatarUrl: item.person.avatarUrl }} size={40} variant="headline" person={item.you ? undefined : item.person.displayName} />
@@ -127,6 +127,7 @@ export function FeedByline({ item }: { item: FeedItem }) {
         </Txt>
         <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
           {feedWhen(item.finishedAt)}
+          {gym && item.gym ? ` · ${item.gym.name}` : ''}
           {item.you && item.hidden ? ' · Hidden from friends' : ''}
         </Txt>
       </View>

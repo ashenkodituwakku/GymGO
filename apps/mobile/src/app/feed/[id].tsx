@@ -27,7 +27,7 @@ import { api, problemText, type FeedComment, type FeedItem } from '@/lib/api';
 import { startSession, useActiveSession } from '@/lib/activeSession';
 import { againPlan } from '@/lib/again';
 import { useApp } from '@/lib/app-state';
-import { feedExerciseName, feedWhen, firstName, likedLine, recordsFor } from '@/lib/feed';
+import { feedExerciseName, feedWhen, firstName, likedLine, muscleSplit, recordsFor } from '@/lib/feed';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { RECORD_WORD, recordSet } from '@/lib/records';
@@ -157,6 +157,7 @@ export default function FeedWorkoutScreen() {
   };
 
   const liked = item ? likedLine(item) : '';
+  const split = item ? muscleSplit(item.exercises) : [];
   // A friend's workout, to do yourself: the same exercises, sets and reps (theirs that they made themselves left out); your weights come from your own log.
   const plan = item && !item.you ? againPlan({ ...item, workoutId: null, gymId: null, exercises: item.exercises.filter((exercise) => !exercise.exerciseId.startsWith('mine-')) }) : null;
   const doIt = () => {
@@ -182,10 +183,24 @@ export default function FeedWorkoutScreen() {
       {item && (
         <>
           <Card style={styles.card}>
-            <FeedByline item={item} />
+            <FeedByline item={item} gym={false} />
             <Txt variant="title" accessibilityRole="header">
               {item.name}
             </Txt>
+            {/* The gym it was at, when tagged: opens the gym. */}
+            {item.gym && (
+              <Pressy
+                onPress={() => router.push({ pathname: '/gym/[id]', params: { id: item.gym!.id } })}
+                accessibilityRole="link"
+                accessibilityLabel={`At ${item.gym.name}. Open the gym`}
+                style={styles.gymLink}
+              >
+                <Icon name="pin" size={14} color={color.brand} />
+                <Txt variant="subhead" color={color.brand} style={face('semibold')} numberOfLines={1}>
+                  {item.gym.name}
+                </Txt>
+              </Pressy>
+            )}
             <FeedStats item={item} />
             <View style={styles.likeRow}>
               <Pressy
@@ -207,6 +222,28 @@ export default function FeedWorkoutScreen() {
               )}
             </View>
           </Card>
+
+          {/* Which muscles it worked, as shares of its sets. */}
+          {split.length > 0 && (
+            <Card style={styles.split}>
+              <Txt variant="headline" accessibilityRole="header">
+                Muscle split
+              </Txt>
+              {split.slice(0, 6).map((part) => (
+                <View key={part.muscle} style={styles.splitRow} accessible accessibilityLabel={`${part.label}: ${Math.round(part.share * 100)}% of the sets`}>
+                  <Txt variant="subhead" style={styles.splitLabel} numberOfLines={1}>
+                    {part.label}
+                  </Txt>
+                  <View style={styles.splitTrack}>
+                    <View style={[styles.splitFill, { width: `${Math.max(4, Math.round(part.share * 100))}%` }]} />
+                  </View>
+                  <Txt variant="footnote" color={color.labelSecondary} style={styles.splitShare}>
+                    {`${Math.round(part.share * 100)}%`}
+                  </Txt>
+                </View>
+              ))}
+            </Card>
+          )}
 
           {/* Do it yourself, or see how you stack up. */}
           {!item.you && (
@@ -244,7 +281,7 @@ export default function FeedWorkoutScreen() {
 
           {/* Your own: whether your friends see it. */}
           {item.you && (
-            <Group footer={item.hidden ? 'Only you can see this workout.' : 'While you share your workouts, your friends see this one. Your notes and which gym stay private.'}>
+            <Group footer={item.hidden ? 'Only you can see this workout.' : 'While you share your workouts, your friends see this one, and its gym if you tagged one. Your notes stay private.'}>
               <Row icon="eyeOff" tile={TILE.indigo} title="Hide from friends" toggle={{ value: item.hidden === true, onChange: (on) => void hide(on) }} />
               <Row icon="note" tile={TILE.orange} title="Change this workout" subtitle="Its name, sets or times" onPress={() => router.push({ pathname: '/session-edit', params: { id: item.id } })} />
             </Group>
@@ -362,10 +399,17 @@ const styles = themed(() =>
     centre: { textAlign: 'center' },
     card: { gap: space[3] },
     flex: { flex: 1, minWidth: 0 },
+    gymLink: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, marginTop: -space[2], minHeight: 28 },
     likeRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingTop: space[1] },
     likeButton: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40, paddingHorizontal: space[3], borderRadius: radius.pill, backgroundColor: color.fill },
     likeButtonOn: { backgroundColor: color.dangerTint },
     exercise: { gap: space[3] },
+    split: { gap: space[2] },
+    splitRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+    splitLabel: { width: 92 },
+    splitTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: color.fill, overflow: 'hidden' },
+    splitFill: { height: '100%', borderRadius: 4, backgroundColor: color.brand },
+    splitShare: { width: 40, textAlign: 'right', fontVariant: ['tabular-nums'] },
     exerciseHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     glyph: { width: 48, height: 48, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
     records: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },

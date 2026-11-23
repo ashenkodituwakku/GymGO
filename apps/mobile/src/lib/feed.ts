@@ -6,7 +6,7 @@
  * No React Native here, so it is unit-tested in Node.
  */
 
-import { exerciseName } from './workout';
+import { exerciseById, exerciseName, muscleLabel, type Muscle } from './workout';
 import { durationLabel, formatWeight, fromKg, repsWords, workingSets, type LoggedSet, type NewRecord, type WeightUnit } from './training';
 import { RECORD_WORD } from './records';
 import type { FeedItem, FeedPerson, HeadToHeadBest } from './api';
@@ -120,4 +120,26 @@ export function ahead(you: HeadToHeadBest, them: HeadToHeadBest): 'you' | 'them'
     return a > b ? 'you' : 'them';
   }
   return null;
+}
+
+/**
+ * Which muscles a workout worked, as shares of its sets: each working set
+ * counts once for the exercise's main muscles and half for the others (as
+ * the month report counts them). The biggest first, those under 5% left out.
+ */
+export function muscleSplit(exercises: ReadonlyArray<{ exerciseId: string; sets: readonly LoggedSet[] }>): Array<{ muscle: Muscle; label: string; share: number }> {
+  const counts = new Map<Muscle, number>();
+  for (const logged of exercises) {
+    const sets = workingSets(logged.sets).length;
+    const exercise = exerciseById(logged.exerciseId);
+    if (!sets || !exercise) continue;
+    for (const muscle of exercise.primary) counts.set(muscle, (counts.get(muscle) ?? 0) + sets);
+    for (const muscle of exercise.secondary) counts.set(muscle, (counts.get(muscle) ?? 0) + sets / 2);
+  }
+  const total = [...counts.values()].reduce((sum, count) => sum + count, 0);
+  if (total === 0) return [];
+  return [...counts.entries()]
+    .map(([muscle, count]) => ({ muscle, label: muscleLabel(muscle), share: count / total }))
+    .filter((item) => item.share >= 0.05)
+    .sort((a, b) => b.share - a.share);
 }

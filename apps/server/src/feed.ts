@@ -6,7 +6,7 @@
  * - Sharing is your choice, and off until you turn it on (Feed → Share my
  *   workouts). Then your friends, and only your friends, see the workouts
  *   you log: the name, when, how long, the exercises and sets, and the
- *   records. Never your notes, never which gym. Any one workout can be
+ *   records, and the gym when you tag one. Never your notes. Any one workout can be
  *   hidden from them, and turning sharing off hides them all at once.
  * - Seeing a friend's workouts doesn't need you to share yours.
  * - Likes and comments are between friends: you can like or comment on a
@@ -73,6 +73,8 @@ export interface FeedItem {
   comments: number;
   /** Your own workout, hidden from your friends. */
   hidden?: boolean;
+  /** The gym it was at, when one was tagged. */
+  gym: { id: string; name: string } | null;
 }
 
 export interface FeedComment {
@@ -95,11 +97,13 @@ type SessionRow = {
   exercises_json: string;
   hidden: number;
   records_json: string | null;
+  gym_id: string | null;
+  gym_name: string | null;
 };
 type UserRow = { id: string; display_name: string; avatar_id: string | null };
 type CommentRow = { id: string; session_id: string; user_id: string; body: string; created_at: string };
 
-const SESSION_COLUMNS = 's.id, s.user_id, s.name, s.unit, s.started_at, s.finished_at, s.exercises_json, s.hidden, s.records_json';
+const SESSION_COLUMNS = 's.id, s.user_id, s.name, s.unit, s.started_at, s.finished_at, s.exercises_json, s.hidden, s.records_json, s.gym_id, s.gym_name';
 
 const person = (row: UserRow): FeedPerson => ({
   id: row.id,
@@ -213,25 +217,44 @@ export class Feed {
    * your own while you share them (so you see what they see, and their
    * likes and comments).
    */
-  page(userId: string, after: FeedCursor | null, limit = FEED_PAGE): { sharing: boolean; items: FeedItem[]; next: string | null; activity?: FeedActivity[] } {
+  page(
+    userId: string,
+    after: FeedCursor | null,
+    limit = FEED_PAGE,
+    personId: string | null = null,
+  ): { sharing: boolean; items: FeedItem[]; next: string | null; activity?: FeedActivity[]; person?: { person: FeedPerson; workouts: number } } {
     const sharing = this.sharing(userId);
-    // With the first page: who liked or commented on your workouts lately.
-    const activity = after ? {} : { activity: this.activity(userId) };
+    // One person's workouts (a profile): yours, or a friend's who shares them.
+    if (personId !== null) {
+      const allowed = personId === userId || (this.areFriends(userId, personId) && this.sharing(personId));
+      if (!allowed) throw new FeedError(404, 'You see a friend’s workouts once they share them.');
+    }
+    // With the first page of the whole feed: who liked or commented on your workouts lately.
+    const activity = after || personId ? {} : { activity: this.activity(userId) };
+    const profile =
+      personId && !after
+        ? {
+            person: {
+              person: person(this.user(personId)),
+              workouts: (this.db.prepare(`select count(*) as n from training_sessions where user_id = ?${personId === userId ? '' : ' and hidden = 0'}`).get(personId) as { n: number }).n,
+            },
+          }
+        : {};
     const sharers = this.friendIds(userId).filter((id) => this.sharing(id));
-    const people = sharing ? [userId, ...sharers] : sharers;
-    if (people.length === 0) return { sharing, items: [], next: null, ...activity };
+    const people = personId ? [personId] : sharing ? [userId, ...sharers] : sharers;
+    if (people.length === 0) return { sharing, items: [], next: null, ...activity, ...profile };
     const marks = people.map(() => '?').join(', ');
     const rows = this.db
       .prepare(
         `select ${SESSION_COLUMNS} from training_sessions s
-         where s.user_id in (${marks}) and s.hidden = 0
+         where s.user_id in (${marks}) and (s.hidden = 0 or (s.user_id = ? and ? = 1))
            and (? is null or s.finished_at < ? or (s.finished_at = ? and s.id < ?))
          order by s.finished_at desc, s.id desc limit ?`,
       )
-      .all(...people, after?.finishedAt ?? null, after?.finishedAt ?? null, after?.finishedAt ?? null, after?.id ?? null, limit + 1) as SessionRow[];
+      .all(...people, userId, personId === userId ? 1 : 0, after?.finishedAt ?? null, after?.finishedAt ?? null, after?.finishedAt ?? null, after?.id ?? null, limit + 1) as SessionRow[];
     const shown = rows.slice(0, limit);
     const last = shown.at(-1);
-    return { sharing, items: shown.map((row) => this.itemView(userId, row)), next: rows.length > limit && last ? `${last.finished_at}|${last.id}` : null, ...activity };
+    return { sharing, items: shown.map((row) => this.itemView(userId, row)), next: rows.length > limit && last ? `${last.finished_at}|${last.id}` : null, ...activity, ...profile };
   }
 
   /** Likes and comments by others on your workouts, newest first, over the last ACTIVITY_DAYS. */
@@ -363,6 +386,7 @@ export class Feed {
       liked: likeRows.some((liker) => liker.id === viewerId),
       likedBy: likeRows.slice(0, LIKERS_SHOWN).map(person),
       comments,
+      gym: row.gym_id && row.gym_name ? { id: row.gym_id, name: row.gym_name } : null,
       ...(row.user_id === viewerId ? { hidden: row.hidden === 1 } : {}),
     };
   }
@@ -372,7 +396,7 @@ export class Feed {
   /** The records a workout broke, against its owner's earlier ones: kept once worked out. */
   private recordsOf(row: SessionRow): NewRecord[] {
     if (row.records_json !== null) return JSON.parse(row.records_json) as NewRecord[];
-    const toSession = (item: SessionRow | (Omit<SessionRow, 'hidden' | 'records_json' | 'user_id'>)): TrainingSession => ({
+    const toSession = (item: SessionRow | (Omit<SessionRow, 'hidden' | 'records_json' | 'user_id' | 'gym_id' | 'gym_name'>)): TrainingSession => ({
       id: item.id,
       name: item.name,
       unit: item.unit,
@@ -384,7 +408,7 @@ export class Feed {
     });
     const earlier = this.db
       .prepare('select id, name, unit, started_at, finished_at, exercises_json from training_sessions where user_id = ? and finished_at < ? and id != ?')
-      .all(row.user_id, row.finished_at, row.id) as Array<Omit<SessionRow, 'hidden' | 'records_json' | 'user_id'>>;
+      .all(row.user_id, row.finished_at, row.id) as Array<Omit<SessionRow, 'hidden' | 'records_json' | 'user_id' | 'gym_id' | 'gym_name'>>;
     const records = recordsBroken(toSession(row), earlier.map(toSession));
     this.db.prepare('update training_sessions set records_json = ? where id = ?').run(JSON.stringify(records), row.id);
     return records;

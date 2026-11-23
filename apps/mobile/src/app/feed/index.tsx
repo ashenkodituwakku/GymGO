@@ -6,11 +6,11 @@
  *
  * Sharing your own workouts is your choice and off until you turn it on
  * here. Friends then see the exercises, sets, times and records; never your
- * notes or which gym (apps/server/src/feed.ts).
+ * notes, and the gym only when they tag one (apps/server/src/feed.ts).
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
@@ -39,8 +39,13 @@ const ACTIVITY_FIRST = 3;
 
 export default function FeedScreen() {
   useGlassRedraw();
-  usePageTitle('Feed');
   const router = useRouter();
+  // One person's workouts (from a friend's page, or your own), or everyone's.
+  const { person: personId, name: personName } = useLocalSearchParams<{ person?: string; name?: string }>();
+  const only = personId ?? null;
+  const [who, setWho] = useState<{ name: string; workouts: number } | null>(null);
+  const title = only ? (who?.name ?? personName ?? 'Workouts') : 'Feed';
+  usePageTitle(only ? `${title}’s workouts` : 'Feed');
   const { account } = useApp();
   const token = account.token;
   const [items, setItems] = useState<FeedItem[] | null>(null);
@@ -59,12 +64,13 @@ export default function FeedScreen() {
   const load = useCallback(() => {
     if (!token) return;
     const ask = ++asked.current;
-    Promise.all([api.feed(token), api.friends(token).catch(() => null)])
+    Promise.all([api.feed(token, null, only), api.friends(token).catch(() => null)])
       .then(([page, overview]) => {
         if (ask !== asked.current) return;
         setItems(page.items);
         setNext(page.next);
         setSharing(page.sharing);
+        if (page.person) setWho({ name: page.person.person.displayName, workouts: page.person.workouts });
         const lately = page.activity ?? [];
         setActivity(lately);
         // What's new since last time stays marked while you're here; next time it's seen.
@@ -78,14 +84,14 @@ export default function FeedScreen() {
         setProblem(null);
       })
       .catch((error) => ask === asked.current && setProblem(problemText(error, 'Couldn’t reach GymGO. Try again in a moment.')));
-  }, [token]);
+  }, [token, only]);
   useFocusEffect(load);
 
   const older = async () => {
     if (!token || !next) return;
     setMore(true);
     try {
-      const page = await api.feed(token, next);
+      const page = await api.feed(token, next, only);
       setItems((shown) => [...(shown ?? []), ...page.items.filter((item) => !(shown ?? []).some((had) => had.id === item.id))]);
       setNext(page.next);
     } catch (error) {
@@ -160,7 +166,7 @@ export default function FeedScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <ScreenOptions options={{ title: 'Feed' }} />
+      <ScreenOptions options={{ title: only ? `${title}’s workouts` : 'Feed' }} />
       <LiveLine>
         {problem && (
           <Txt variant="footnote" color={color.noInk}>
@@ -169,19 +175,26 @@ export default function FeedScreen() {
         )}
       </LiveLine>
 
+      {/* One person's: who, and how many. */}
+      {only && who && (
+        <Txt variant="subhead" color={color.labelSecondary}>
+          {`${who.workouts} workout${who.workouts === 1 ? '' : 's'}`}
+        </Txt>
+      )}
+
       {/* Asked once, plainly, until you choose: what friends would see, and what they never do. */}
-      {sharing === false && (
+      {sharing === false && !only && (
         <Card style={styles.invite}>
           <Txt variant="headline">Share your workouts with friends</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
-            Your friends see the workouts you log here, ones already logged included: the exercises, sets, time and records. Never your notes, and never which gym. Hide any one from its page, or stop sharing, whenever you like.
+            Your friends see the workouts you log here, ones already logged included: the exercises, sets, time and records, and the gym when you tag one. Never your notes. Hide any one from its page, or stop sharing, whenever you like.
           </Txt>
           <PrimaryButton label="Share my workouts" busy={switching} onPress={() => void share(true)} />
         </Card>
       )}
 
       {/* Who liked or commented on yours lately. */}
-      {activity.length > 0 && (
+      {activity.length > 0 && !only && (
         <Card style={styles.activity}>
           <Txt variant="headline" accessibilityRole="header">
             On your workouts
@@ -245,8 +258,8 @@ export default function FeedScreen() {
 
       {next && <PrimaryButton label="Show older workouts" icon="history" tone="quiet" busy={more} onPress={() => void older()} />}
 
-      {sharing === true && (
-        <Group footer="Friends see the exercises, sets, time and records of the workouts you log; never your notes or which gym. Hide one from its page.">
+      {sharing === true && !only && (
+        <Group footer="Friends see the exercises, sets, time and records of the workouts you log, and the gym when you tag one; never your notes. Hide one from its page.">
           <Row icon="people" tile={TILE.indigo} title="Share my workouts with friends" toggle={{ value: true, onChange: (on) => void share(on) }} />
         </Group>
       )}

@@ -850,8 +850,11 @@ friends' workouts, newest first, each a card with its time, volume, sets,
 records and exercises, to **like** and **comment** on. Open one for every set,
 **Do this workout** (it becomes a workout to start, with your own weights) and
 **Head to head** (Pro: your best lifts beside theirs). Sharing your own is off
-until you turn it on, and friends never see your notes or which gym; hide any
+until you turn it on; friends never see your notes, and see the gym only when you tag one; hide any
 one workout from its page. Who liked or commented on yours shows at the top.
+A workout can be **tagged with its gym** (the chip under its title while you
+train, or Edit workout later), a friend's page lists **their workouts**, and a
+workout's page shows its **muscle split**.
 `docs/FEED.md` has the details, and the Privacy Policy wording it needs.
 
 Each gym is a **trading card** with a rarity rolled by luck: every day you

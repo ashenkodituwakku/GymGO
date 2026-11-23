@@ -96,12 +96,12 @@
  *   DELETE /api/splits/:id
  *   GET    /api/training                  the sessions you've logged, newest first
  *   POST   /api/training                  { name, unit, startedAt, finishedAt, workoutId?, gymId?, exercises, note? } -> logged (sent again: the one already logged)
- *   PATCH  /api/training/:id              { note: string | null } -> the session with its note (up to 500 characters; null or blank clears it); { hidden } keeps it from your friends' feed
+ *   PATCH  /api/training/:id              { note: string | null } -> the session with its note (up to 500 characters; null or blank clears it); { hidden } keeps it from your friends' feed; { gymId } tags the gym it was at (null: none)
  *   DELETE /api/training/:id
  *   GET    /api/collection                your gym collection (gyms checked in at, and the days) and when it was last reset
  *   PUT    /api/collection                { gyms, resetAt } -> merged into the account's (never overwritten); 409 when reset elsewhere since
  *   DELETE /api/collection                reset: every gym and visit removed, and the reset remembered
- *   GET    /api/feed?after=               your friends' shared workouts (and yours, while you share), newest first: { sharing, items, next, activity (first page) }
+ *   GET    /api/feed?after=&person=       your friends' shared workouts (and yours, while you share), newest first: { sharing, items, next, activity (first page) }; person= one friend's (or your own) with their count
  *   GET    /api/feed/:id                  one workout in the feed, with its comments
  *   GET    /api/feed/compare/:friendId    Pro: head to head, your best and a sharing friend's on the exercises you've both done
  *   PUT    /api/feed/:id/like             like it (DELETE: take the like back) -> { likes, liked }
@@ -538,6 +538,7 @@ type TrainingRow = {
   exercises_json: string;
   note: string | null;
   hidden: number;
+  gym_name: string | null;
 };
 
 const trainingView = (row: TrainingRow) => ({
@@ -548,13 +549,15 @@ const trainingView = (row: TrainingRow) => ({
   finishedAt: row.finished_at,
   workoutId: row.workout_id,
   gymId: row.gym_id,
+  // The gym's name as GymGO knows it, when one was tagged.
+  gymName: row.gym_name ?? null,
   exercises: JSON.parse(row.exercises_json),
   note: row.note ?? null,
   // Kept from your friends' feed (feed.ts), when you share your workouts.
   hidden: row.hidden === 1,
 });
 
-const TRAINING_COLUMNS = 'id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json, note, hidden';
+const TRAINING_COLUMNS = 'id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json, note, hidden, gym_name';
 
 /** The middle of sorted amounts (the mean of the middle two for an even count). */
 function median(sorted: number[]): number {
@@ -1329,9 +1332,11 @@ export function createApp(options: AppOptions) {
       const count = (db.prepare('select count(*) as n from training_sessions where user_id = ?').get(account.id) as { n: number }).n;
       if (count >= MAX_TRAINING_SESSIONS) throw new HttpError(409, `You’ve logged ${count} sessions, the most there’s room for. Delete some old ones first.`);
       const id = randomUUID();
+      // The gym it was at, named as GymGO knows it (never words sent with it), when GymGO knows the gym.
+      const gymName = session.gymId ? (gymRecord(db, session.gymId)?.location.name ?? null) : null;
       db.prepare(
-        `insert into training_sessions (id, user_id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json, note, created_at)
-         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `insert into training_sessions (id, user_id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json, note, gym_name, created_at)
+         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).run(
         id,
         account.id,
@@ -1343,11 +1348,12 @@ export function createApp(options: AppOptions) {
         session.gymId,
         JSON.stringify(session.exercises),
         session.note,
+        gymName,
         now().toISOString(),
       );
       // A workout logged after the fact changes the records of any that came after it.
       feed.forgetRecordsFrom(account.id, session.finishedAt);
-      return send(res, 201, { session: { id, ...session, hidden: false } });
+      return send(res, 201, { session: { id, ...session, gymName, hidden: false } });
     }
 
     // A session you logged, changed afterwards: its note (added after Finish,
@@ -1359,8 +1365,18 @@ export function createApp(options: AppOptions) {
       const body = (await readJson(req)) as Record<string, unknown>;
       const editable = ['name', 'unit', 'startedAt', 'finishedAt', 'exercises'] as const;
       const edits = editable.filter((key) => key in body);
-      if (!('note' in body) && !('hidden' in body) && edits.length === 0) throw new HttpError(400, 'Send the note (or null to clear it), or what to change.');
+      if (!('note' in body) && !('hidden' in body) && !('gymId' in body) && edits.length === 0) throw new HttpError(400, 'Send the note (or null to clear it), or what to change.');
       if ('hidden' in body && typeof body.hidden !== 'boolean') throw new HttpError(400, 'Hidden is true or false.');
+      // The gym it was at: one GymGO knows, or null for none.
+      let gymTag: { id: string; name: string } | null | undefined;
+      if ('gymId' in body) {
+        if (body.gymId === null) gymTag = null;
+        else {
+          const record = typeof body.gymId === 'string' && body.gymId.length <= 120 ? gymRecord(db, body.gymId) : null;
+          if (!record) throw new HttpError(400, 'GymGO doesn’t know that gym.');
+          gymTag = { id: record.location.id, name: record.location.name };
+        }
+      }
       const sessionId = decodeURIComponent(parts[2]!);
       const kept = db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where id = ? and user_id = ?`).get(sessionId, account.id) as TrainingRow | undefined;
       if (!kept) throw new HttpError(404, 'No logged session with that id.');
@@ -1384,6 +1400,7 @@ export function createApp(options: AppOptions) {
         feed.forgetRecordsFrom(account.id, clean.finishedAt < before.finishedAt ? clean.finishedAt : before.finishedAt);
       }
       if (typeof body.hidden === 'boolean') db.prepare('update training_sessions set hidden = ? where id = ? and user_id = ?').run(body.hidden ? 1 : 0, sessionId, account.id);
+      if (gymTag !== undefined) db.prepare('update training_sessions set gym_id = ?, gym_name = ? where id = ? and user_id = ?').run(gymTag?.id ?? null, gymTag?.name ?? null, sessionId, account.id);
       if (note !== undefined) db.prepare('update training_sessions set note = ? where id = ? and user_id = ?').run(note, sessionId, account.id);
       const row = db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where id = ? and user_id = ?`).get(sessionId, account.id) as TrainingRow;
       return send(res, 200, { session: trainingView(row) });
@@ -1494,7 +1511,10 @@ export function createApp(options: AppOptions) {
           if (typeof body.workouts !== 'boolean') throw new HttpError(400, 'Say whether to share your workouts: true or false.');
           return send(res, 200, { workouts: feed.setSharing(me, body.workouts) });
         }
-        if (path === '/api/feed' && method === 'GET') return send(res, 200, feed.page(me, readCursor(url.searchParams.get('after'))));
+        if (path === '/api/feed' && method === 'GET') {
+          const person = url.searchParams.get('person');
+          return send(res, 200, feed.page(me, readCursor(url.searchParams.get('after')), undefined, person && person.length <= 60 ? person : null));
+        }
         if (parts[2] === 'compare' && parts.length === 4 && method === 'GET') {
           if (!billing.isPro(me)) throw new HttpError(403, 'Head to head is part of GymGO Pro.', 'pro_required');
           return send(res, 200, feed.headToHead(me, decodeURIComponent(parts[3]!)));
@@ -1856,7 +1876,7 @@ export function createApp(options: AppOptions) {
         collection: rows('select entry_json from collection_gyms where user_id = ? order by gym_id').map(({ entry_json }) => JSON.parse(String(entry_json))),
         collectionResetAt: rows('select reset_at from collection_resets where user_id = ?')[0]?.reset_at ?? null,
         trainingSessions: rows(
-          `select id, name, unit, started_at as startedAt, finished_at as finishedAt, workout_id as workoutId, gym_id as gymId, exercises_json, note
+          `select id, name, unit, started_at as startedAt, finished_at as finishedAt, workout_id as workoutId, gym_id as gymId, gym_name as gymName, exercises_json, note
            from training_sessions where user_id = ? order by finished_at`,
         ).map(({ exercises_json, ...session }) => ({ ...session, exercises: JSON.parse(String(exercises_json)) })),
         subscriptions: rows(

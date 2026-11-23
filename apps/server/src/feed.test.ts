@@ -2,7 +2,8 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from './app';
-import { openDb, type Db } from './db';
+import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
+import { openDb, seedGyms, type Db } from './db';
 import { cleanComment, MAX_COMMENT } from './feed';
 
 let clock = new Date('2026-11-20T10:00:00Z');
@@ -12,6 +13,7 @@ let db: Db;
 
 beforeAll(async () => {
   db = openDb(':memory:');
+  seedGyms(db, MELBOURNE_GYMS.slice(0, 3));
   server = createServer(createApp({ db, attribution: 'test', signupsPerHour: 1000, now: () => clock }));
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -340,6 +342,54 @@ describe('head to head', () => {
     // Not a friend: nothing to compare.
     const stranger = await person('Wyn');
     expect((await call('GET', `/api/feed/compare/${stranger.id}`, { token: uma.token })).status).toBe(404);
+  });
+});
+
+describe('the gym a workout was at', () => {
+  it('is named as GymGO knows it, shown to friends, and can be changed or taken off', async () => {
+    const xia = await person('Xia');
+    const yan = await person('Yan');
+    await befriend(xia, yan);
+    await call('PUT', '/api/me/sharing', { token: xia.token, body: { workouts: true } });
+    const gym = MELBOURNE_GYMS[0]!.location;
+    const other = MELBOURNE_GYMS[1]!.location;
+    const workout = await log(xia.token, 'Gym day', [[60, 8]], { gymId: gym.id });
+    const mine = (await call('GET', '/api/training', { token: xia.token })).body!.sessions.find((s: { id: string }) => s.id === workout);
+    expect(mine).toMatchObject({ gymId: gym.id, gymName: gym.name });
+    expect((await call('GET', `/api/feed/${workout}`, { token: yan.token })).body!.item.gym).toEqual({ id: gym.id, name: gym.name });
+    // Changed to another gym GymGO knows; one it doesn't is refused; null takes it off.
+    expect((await call('PATCH', `/api/training/${workout}`, { token: xia.token, body: { gymId: other.id } })).body!.session).toMatchObject({ gymId: other.id, gymName: other.name });
+    expect((await call('PATCH', `/api/training/${workout}`, { token: xia.token, body: { gymId: 'made-up-gym' } })).status).toBe(400);
+    expect((await call('PATCH', `/api/training/${workout}`, { token: xia.token, body: { gymId: null } })).body!.session).toMatchObject({ gymId: null, gymName: null });
+    expect((await call('GET', `/api/feed/${workout}`, { token: yan.token })).body!.item.gym).toBeNull();
+    // A gym GymGO doesn't know is kept as an id, with no name to show.
+    const unknown = await log(xia.token, 'Elsewhere', [[60, 8]], { gymId: 'somewhere-else' });
+    expect((await call('GET', `/api/feed/${unknown}`, { token: yan.token })).body!.item.gym).toBeNull();
+  });
+});
+
+describe('a person’s workouts', () => {
+  it('lists a sharing friend’s, or your own (hidden ones too), with how many', async () => {
+    const zed = await person('Zed');
+    const amy = await person('Amy');
+    const bo = await person('Bo');
+    await befriend(zed, amy);
+    const shown = await log(amy.token, 'One', [[50, 5]]);
+    const hidden = await log(amy.token, 'Two', [[50, 5]]);
+    await call('PATCH', `/api/training/${hidden}`, { token: amy.token, body: { hidden: true } });
+    // Not sharing yet: nothing to see.
+    expect((await call('GET', `/api/feed?person=${amy.id}`, { token: zed.token })).status).toBe(404);
+    await call('PUT', '/api/me/sharing', { token: amy.token, body: { workouts: true } });
+    const theirs = (await call('GET', `/api/feed?person=${amy.id}`, { token: zed.token })).body!;
+    expect(theirs.items.map((i: { id: string }) => i.id)).toEqual([shown]);
+    expect(theirs.person).toMatchObject({ person: { displayName: 'Amy' }, workouts: 1 });
+    expect(theirs).not.toHaveProperty('activity');
+    // Your own: every workout, hidden ones too, even while not sharing.
+    const own = (await call('GET', `/api/feed?person=${amy.id}`, { token: amy.token })).body!;
+    expect(own.items.map((i: { id: string }) => i.id).sort()).toEqual([shown, hidden].sort());
+    expect(own.person.workouts).toBe(2);
+    // Not a friend.
+    expect((await call('GET', `/api/feed?person=${amy.id}`, { token: bo.token })).status).toBe(404);
   });
 });
 

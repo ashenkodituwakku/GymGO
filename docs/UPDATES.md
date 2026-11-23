@@ -9,6 +9,30 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 253 · Tag your gym, friends' profiles, muscle split, and a calmer look
+
+*23 Nov 2026 · the commit "Workouts: tag the gym; a friend's workouts and muscle split; lighter secondary buttons"*
+
+You asked to make the app cleaner and less clunky, to be able to tag which gym you went to on a workout, and for more from Hevy, looking really good. Hevy's features and patterns are drawn in GymGO's own look; nothing of Hevy's art or design is copied.
+
+- **Tag your gym.** A workout in progress has a gym chip under its title ("Tag your gym", or the gym's name). It opens **Which gym?**: your usual gyms first (the ones your workouts were at), then saved, visited and nearby ones, with distances, and a search. A workout built for a gym starts tagged with it. The gym:
+  - shows on the summary when you finish, in your history, and on the workout in the feed, where it opens the gym's page;
+  - can be changed or taken off later, from Edit workout.
+  - It's named as GymGO knows the gym, never typed text. Friends see it only when you've tagged one; workouts logged before today show none.
+- **A friend's workouts.** A friend's page now lists their latest workouts, with a count and See all. Like and comment right there, as on Hevy's profiles. Your own list shows hidden workouts too.
+- **Muscle split** on a workout's page: which muscles it worked, as bars by share of its sets (main muscles count fully, others half, as in your month report).
+- **A calmer look:**
+  - Quiet buttons ("Share your week", "Cancel", "See GymGO Pro") are now a step down from the main one: 44 points tall instead of 52, lighter words. A page reads as one thing to press first, not a stack of slabs.
+  - Progress's three figures sit in one card with hairlines between them, not three boxes.
+  - The calendar's explanation is one short line.
+  - Home's template link just says "Templates and programmes".
+
+- Checked: every package's tests, lint and typecheck pass (server 359, with 2 new for gym tags and a person's workouts; app 638, with 2 new for muscle split; domain 205). In a browser against the local server, at phone and computer width, light and dark:
+  - the gym chip, the picker and tagging a workout all worked;
+  - the gym showed on the feed card and the workout's page, where it opens the gym;
+  - the muscle split, a friend's workout list and the Progress card all showed.
+  - One thing fixed on the way: the workout's page showed its gym twice.
+
 ## Update 252 · A feed of your friends' workouts, and Head to head
 
 *23 Nov 2026 · the commit "Feed: your friends' workouts, likes and comments; Do this workout; Head to head (Pro)"*

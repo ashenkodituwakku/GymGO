@@ -214,6 +214,24 @@ export default function SessionEditScreen() {
             />
           </View>
         </View>
+        {/* The gym it was at: changed at once, apart from the rest of the edit. */}
+        {session && (
+          <Pressable
+            onPress={() => router.push({ pathname: '/gym-tag', params: { session: session.id } })}
+            accessibilityRole="button"
+            accessibilityLabel={session.gymName ? `Gym: ${session.gymName}. Change it` : 'Gym: none. Tag one'}
+            style={({ pressed }) => [styles.gymRow, pressed && { opacity: 0.7 }]}
+          >
+            <Icon name="pin" size={16} color={color.brand} />
+            <Txt variant="body" style={styles.flex} numberOfLines={1}>
+              {session.gymName ?? 'Tag the gym'}
+            </Txt>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              {session.gymName ? 'Change' : 'None'}
+            </Txt>
+            <Icon name="chevron" size={12} color={color.labelTertiary} />
+          </Pressable>
+        )}
       </View>
 
       {draft.exercises.map((item, exerciseAt) => {
@@ -378,6 +396,7 @@ export default function SessionEditScreen() {
 
 const styles = themed(() =>
   StyleSheet.create({
+    gymRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: 44, paddingTop: space[2], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
     page: { flex: 1, backgroundColor: color.groupedBackground },
     content: { padding: space[4], paddingBottom: space[8], gap: space[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
     intro: { gap: space[1] },

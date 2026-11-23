@@ -307,12 +307,12 @@ export default function Home() {
                 <Pressable
                   onPress={() => router.push('/templates')}
                   accessibilityRole="link"
-                  accessibilityLabel={plan || onProgramme ? 'Templates and programmes' : 'Start from a template, or a programme planned over weeks'}
+                  accessibilityLabel="Templates and programmes"
                   style={({ pressed }) => [styles.templatesRow, ((!!plan && planDay) || !!onProgramme) && styles.templatesUnder, pressed && { backgroundColor: color.fill }]}
                 >
                   <Icon name="list" size={15} color={color.brand} />
                   <Txt variant="footnote" color={color.brand} style={[face('semibold'), styles.flex]}>
-                    {plan || onProgramme ? 'Templates and programmes' : 'Start from a template, or a programme planned over weeks'}
+                    Templates and programmes
                   </Txt>
                   <Icon name="chevron" size={12} color={color.labelTertiary} />
                 </Pressable>

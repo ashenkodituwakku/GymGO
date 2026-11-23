@@ -139,7 +139,8 @@ export default function FriendScreen() {
           </Txt>
         )}
       </LiveLine>
-      {friend && (
+      {/* Their totals, once there's something to count (nothing yet: Their cards says so, not a box of zeros). */}
+      {friend && friend.totals.gyms > 0 && (
         // Their totals on the accent, like a plan's head.
         <View style={styles.hero}>
           <BrandFill round={radius.xl} />

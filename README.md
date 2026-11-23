@@ -852,7 +852,9 @@ records and exercises, to **like** and **comment** on. Open one for every set,
 **Head to head** (Pro: your best lifts beside theirs). Sharing your own is off
 until you turn it on; friends never see your notes, and see the gym only when you tag one; hide any
 one workout from its page. Who liked or commented on yours shows at the top.
-A workout can be **tagged with its gym** (the chip under its title while you
+While you train, each set shows **Previous** (last time's set at the same
+place; tap to copy it in), and a finished workout is **compared with the last
+time** you did it. A workout can be **tagged with its gym** (the chip under its title while you
 train, or Edit workout later), a friend's page lists **their workouts**, and a
 workout's page shows its **muscle split**.
 `docs/FEED.md` has the details, and the Privacy Policy wording it needs.

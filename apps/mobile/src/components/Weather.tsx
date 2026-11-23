@@ -126,8 +126,9 @@ export function WeatherCompact() {
         <Txt variant="subhead" style={face('semibold')} numberOfLines={1}>
           {words ?? 'Now'}
         </Txt>
-        <Txt variant="caption" color={color.labelSecondary} numberOfLines={2}>
-          {`${capital(where)} · MET Norway, ${madeAt(state.weather, timezone)}`}
+        {/* Short on Home: the place and the source (the screen reader hears the whole line, with when it was made). */}
+        <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
+          {`${capital(where).replace(/^The /, '').replace(/ area$/, '')} · MET Norway`}
         </Txt>
       </View>
     </Animated.View>

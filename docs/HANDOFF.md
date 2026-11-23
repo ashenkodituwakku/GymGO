@@ -280,6 +280,16 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `data-gympal-launcher`) once the Modal has left. Scratchpad `popups.cjs`
   runs open → Tab → Escape for any opener.
 
+- **Roomier Home, Previous, compare** (23 Nov, Update 254). Home
+  (app/(tabs)/index.tsx): quick searches as `styles.pills` in a horizontal
+  ScrollView, the workout card with an `ExerciseGlyph` (bench-press, moving,
+  reps 2) and a white "Start building" pill, the templates link alone
+  (`templatesAlone`) unless Up next shares its card, `group` gap 16.
+  lib/previous.ts (`previousSet`: same place among warm-ups or working sets,
+  converted to the workout's unit) beside each set row in train.tsx (not
+  with RPE on); lib/compare.ts (`compareWithLast`: by workoutId or name,
+  `signed`) on the summary, worked out in `finish()` before the log takes
+  the new workout in.
 - **Gym tags, profiles, muscle split** (23 Nov, Update 253).
   `training_sessions.gym_name` is set by the server from its own gym
   record (`gymRecord`) on POST, and on PATCH `{ gymId }` (null clears; an

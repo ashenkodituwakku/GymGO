@@ -9,6 +9,30 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 254 · A roomier Home, Previous beside every set, and how it compares with last time
+
+*23 Nov 2026 · the commit "Home: room to breathe; Previous beside each set; compared with last time"*
+
+You said the phone's Home felt cramped and asked to make it spacious and good to look at, to keep polishing, and for more of Hevy's features. Hevy's patterns are drawn in GymGO's own look.
+
+- **Home, with room to breathe.** The top of Home was seven boxes stacked tight. Now:
+  - **Quick searches** (Near me, Early start, After work, Under A$30) are one row of pills that slides sideways, instead of four squeezed tiles.
+  - **Build a workout** is a roomier card, with "Start building" on a white pill and a lifter at the bar who does two reps as Home opens, then rests.
+  - **Templates and programmes** is a plain link under it, not another box (it's still a card when something's up next).
+  - **Machines and Trips** have their icons on soft round tiles, with more padding, and there's more space between groups.
+  - **The weather** says just the place and MET Norway on one line (a screen reader still hears when the forecast was made).
+- **Previous, beside every set** (as Hevy has it): while you train, each set row shows the set at the same place last time ("90 × 5"), a warm-up beside a warm-up, in this workout's unit. Tap it to copy it in. (Not beside the RPE column, where there's no room.)
+- **Compared with last time**, when you finish: against the last time you did the same workout (by saved workout or name), how much more you lifted, how many more sets and how long it took, with what went up in green.
+- **Polish:**
+  - The finished workout's three figures sit in one card, as Progress's do.
+  - A friend who hasn't collected a gym no longer has a purple box of four zeros on their page.
+  - Fixed: "Do it again" kept the last workout's gym but showed "Tag your gym"; it now shows the gym's name.
+
+- Checked: every package's tests, lint and typecheck pass (app 646, with 8 new for Previous and the comparison; server 359; domain 205). In a browser against the local server:
+  - Home at phone and computer width, light and dark;
+  - Do it again showing Previous, copying it in, ticking the sets and finishing, which showed the comparison;
+  - the gym chip after Do it again.
+
 ## Update 253 · Tag your gym, friends' profiles, muscle split, and a calmer look
 
 *23 Nov 2026 · the commit "Workouts: tag the gym; a friend's workouts and muscle split; lighter secondary buttons"*

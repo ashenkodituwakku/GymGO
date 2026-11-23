@@ -35,6 +35,8 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { playSound } from '@/lib/sounds';
 import { cancelRestAlert, scheduleRestAlert } from '@/lib/restAlert';
+import { compareWithLast, signed, type Compared } from '@/lib/compare';
+import { previousSet } from '@/lib/previous';
 import { RECORD_WORD, bestRecord, recordLine } from '@/lib/records';
 import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
 import { templateDayName, upNext, workoutTitle } from '@/lib/templates';
@@ -167,7 +169,8 @@ function NoWorkout({ token }: { token: string | null }) {
       items: plan.items,
       button: 'Do it again',
       icon: 'refresh',
-      start: () => startSession({ ...plan, gymName: null, unit: latest.unit }),
+      // The same gym too, named, so the chip says where it's tagged.
+      start: () => startSession({ ...plan, gymName: latest.gymName ?? null, unit: latest.unit }),
     };
   }, [log.sessions, unit]);
   return (
@@ -330,7 +333,7 @@ export default function TrainScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const page = useOverhang();
-  const [done, setDone] = useState<{ session: TrainingSession; records: NewRecord[] } | null>(null);
+  const [done, setDone] = useState<{ session: TrainingSession; records: NewRecord[]; compared: Compared | null } | null>(null);
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [confirmDiscard, setConfirmDiscard] = useTapAgain();
@@ -485,12 +488,14 @@ export default function TrainScreen() {
     try {
       const { session: saved } = await api.logTraining(token, body);
       const records = recordsBroken(saved, log.sessions);
+      // Against the last time you did it, from the log before this one joins it.
+      const compared = compareWithLast(saved, log.sessions);
       log.add(saved);
       endSession();
       haptic.success();
       // A new record is worth a fanfare.
       if (records.length > 0) playSound('record', 250);
-      setDone({ session: saved, records });
+      setDone({ session: saved, records, compared });
     } catch (error) {
       setProblem(error instanceof ApiError ? error.message : 'Couldn’t reach the GymGO server. Your workout is still here; try again.');
     } finally {
@@ -912,7 +917,14 @@ const ExerciseLog = memo(function ExerciseLog({
           <Txt variant="caption" color={color.labelSecondary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
             REPS
           </Txt>
-          <View style={styles.flex} />
+          {/* Last time's set at the same place, in the room before the tick (not beside RPE's column: no room). */}
+          {!rpeColumn && last ? (
+            <Txt variant="caption" color={color.labelSecondary} style={[styles.flex, styles.previous]}>
+              PREVIOUS
+            </Txt>
+          ) : (
+            <View style={styles.flex} />
+          )}
           {rpeColumn && <RpeHead />}
           <View style={styles.tickCol} />
         </View>
@@ -984,7 +996,25 @@ const ExerciseLog = memo(function ExerciseLog({
               />
             </>
           )}
-          {!timed && <View style={styles.flex} />}
+          {!timed && (() => {
+            const previous = !rpeColumn ? previousSet(last, item.sets, at, unit) : null;
+            if (!previous) return <View style={styles.flex} />;
+            // Tap to copy last time's set in, while the set's still to do.
+            return (
+              <Pressable
+                onPress={set.done ? undefined : () => setAt(at, { weight: bodyWeight ? '' : previous.weight, reps: previous.reps })}
+                disabled={set.done}
+                accessibilityRole="button"
+                accessibilityLabel={`${name}, ${tags[at]!.spoken}: last time ${previous.label}${set.done ? '' : '. Use it'}`}
+                hitSlop={4}
+                style={({ pressed }) => [styles.flex, styles.previousCell, pressed && { opacity: 0.5 }]}
+              >
+                <Txt variant="footnote" color={color.labelTertiary} numberOfLines={1} style={styles.previous}>
+                  {previous.label}
+                </Txt>
+              </Pressable>
+            );
+          })()}
           {/* How hard it was, once it's done (not a warm-up: it's meant to be easy). */}
           {rpeColumn && (
             <RpeCell
@@ -1238,13 +1268,13 @@ function Summary({
   onClose,
   onProgress,
 }: {
-  result: { session: TrainingSession; records: NewRecord[] };
+  result: { session: TrainingSession; records: NewRecord[]; compared: Compared | null };
   /** This week against your weekly goal, when you've set one. */
   week: WeekAfter | null;
   onClose: () => void;
   onProgress: () => void;
 }) {
-  const { session, records } = result;
+  const { session, records, compared } = result;
   const { prefs, billing } = useApp();
   const celebration = celebrationFor(prefs.celebration, billing.isPro);
   // Worked out as the summary opens: the log taking in this workout afterwards doesn't change what it said.
@@ -1290,15 +1320,32 @@ function Summary({
         <SummaryStat label="time" spoken={`Time, ${durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt))}`}>
           <Txt variant="figure">{durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt))}</Txt>
         </SummaryStat>
-        <SummaryStat label={setCount(session) === 1 ? 'set' : 'sets'} spoken={`${setCount(session)} ${setCount(session) === 1 ? 'set' : 'sets'}`}>
+        <SummaryStat line label={setCount(session) === 1 ? 'set' : 'sets'} spoken={`${setCount(session)} ${setCount(session) === 1 ? 'set' : 'sets'}`}>
           <CountUp id={`summary.${session.id}.sets`} value={setCount(session)} variant="figure" />
         </SummaryStat>
         {volume > 0 && (
-          <SummaryStat label={`${unit} lifted`} spoken={`${Math.round(volume).toLocaleString()} ${unit} lifted`}>
+          <SummaryStat line label={`${unit} lifted`} spoken={`${Math.round(volume).toLocaleString()} ${unit} lifted`}>
             <CountUp id={`summary.${session.id}.volume`} value={Math.round(volume)} variant="figure" />
           </SummaryStat>
         )}
       </View>
+      {/* Against the last time you did the same workout: more lifted, more sets, quicker or longer. */}
+      {compared && (
+        <View
+          style={[styles.didCard, styles.compareCard]}
+          accessible
+          accessibilityLabel={`Compared with your last ${compared.last.name}, ${agoLabel(daysAgo(compared.last.finishedAt)).toLowerCase()}: volume ${signed(fromKg(compared.volumeKg, unit), unit)}, sets ${signed(compared.sets)}, time ${signed(compared.minutes, 'min')}`}
+        >
+          <Txt variant="label" color={color.labelSecondary} numberOfLines={2}>
+            {`Compared with your last ${compared.last.name} · ${agoLabel(daysAgo(compared.last.finishedAt))}`}
+          </Txt>
+          <View style={styles.deltas}>
+            <Delta label="volume" value={signed(fromKg(compared.volumeKg, unit), unit)} better={compared.volumeKg > 0.5 ? true : compared.volumeKg < -0.5 ? false : null} />
+            <Delta label="sets" value={signed(compared.sets)} better={compared.sets > 0 ? true : compared.sets < 0 ? false : null} />
+            <Delta label="time" value={signed(compared.minutes, 'min')} better={null} />
+          </View>
+        </View>
+      )}
       {weekNow && <WeekLine week={weekNow} />}
       {best && (
         <View style={styles.recordCard}>
@@ -1388,6 +1435,28 @@ function Summary({
   );
 }
 
+/** One change against last time: up in green with an arrow, down plainly; time just says how it went. */
+function Delta({ label, value, better }: { label: string; value: string; better: boolean | null }) {
+  const ink = better === true ? color.goodInk : color.label;
+  return (
+    <View style={styles.delta}>
+      <View style={styles.deltaValue}>
+        {better !== null && value !== 'same' && (
+          <View style={better ? styles.up : styles.down}>
+            <Icon name="chevron" size={11} color={ink} />
+          </View>
+        )}
+        <Txt variant="headline" color={ink} numberOfLines={1}>
+          {value}
+        </Txt>
+      </View>
+      <Txt variant="caption" color={color.labelSecondary}>
+        {label}
+      </Txt>
+    </View>
+  );
+}
+
 /** Your week after this workout: the goal met (with the streak it continues), or how many more to go. */
 function WeekLine({ week }: { week: WeekAfter }) {
   const met = week.done >= week.goal;
@@ -1421,9 +1490,9 @@ function WeekLine({ week }: { week: WeekAfter }) {
 }
 
 /** One of the summary's figures. Read out whole and final (`spoken`), not as it counts up. */
-function SummaryStat({ label, spoken, children }: { label: string; spoken: string; children: ReactNode }) {
+function SummaryStat({ label, spoken, children, line = false }: { label: string; spoken: string; children: ReactNode; /** A hairline before it: not the first. */ line?: boolean }) {
   return (
-    <View style={styles.summaryStat} accessible accessibilityLabel={spoken}>
+    <View style={[styles.summaryStat, line && styles.summaryStatLine]} accessible accessibilityLabel={spoken}>
       {children}
       <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
         {label}
@@ -1493,6 +1562,9 @@ const styles = themed(() => StyleSheet.create({
   inputCol: { flex: 1, minWidth: 64, maxWidth: 112, textAlign: 'center' },
   times: { width: 10, textAlign: 'center' },
   tickCol: { width: 30 },
+  // Last time's set, right up against the tick: read across, it says "beat this".
+  previous: { textAlign: 'right', fontVariant: ['tabular-nums'] },
+  previousCell: { alignSelf: 'stretch', justifyContent: 'center', paddingRight: space[1] },
   setNumber: { width: 36, minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 3 },
   setTag: { minWidth: 22, height: 24, alignItems: 'center', justifyContent: 'center', borderRadius: 6 },
   setTagKind: { backgroundColor: color.fill },
@@ -1514,6 +1586,12 @@ const styles = themed(() => StyleSheet.create({
     ...shadow.plate,
   },
   againStrip: { flexDirection: 'row', flexWrap: 'wrap', gap: space[1] + 2, marginVertical: space[2] },
+  compareCard: { paddingBottom: space[4] },
+  deltas: { flexDirection: 'row', marginTop: space[2] },
+  delta: { flex: 1, minWidth: 0, gap: 2 },
+  deltaValue: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  up: { transform: [{ rotate: '-90deg' }] },
+  down: { transform: [{ rotate: '90deg' }] },
   didCard: {
     alignSelf: 'stretch',
     width: '100%',
@@ -1563,17 +1641,21 @@ const styles = themed(() => StyleSheet.create({
   restButton: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandTint },
   restButtonStrong: { backgroundColor: color.brandFill },
   summary: { alignItems: 'stretch', paddingTop: space[8] },
-  summaryStats: { flexDirection: 'row', gap: space[2], marginVertical: space[2] },
-  summaryStat: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 2,
-    paddingVertical: space[3],
+  // The three figures in one card, parted by hairlines (as Progress has them).
+  summaryStats: {
+    flexDirection: 'row',
+    alignSelf: 'stretch',
+    width: '100%',
+    maxWidth: 480,
+    marginHorizontal: 'auto',
+    marginVertical: space[2],
     borderRadius: radius.lg,
     borderCurve: 'continuous',
     backgroundColor: color.plate,
     ...shadow.plate,
   },
+  summaryStat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: space[3] },
+  summaryStatLine: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: color.separator },
   record: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
   weekMet: { backgroundColor: color.goodTint },
   weekDots: { flexDirection: 'row', gap: 4 },

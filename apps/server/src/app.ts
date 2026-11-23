@@ -96,11 +96,19 @@
  *   DELETE /api/splits/:id
  *   GET    /api/training                  the sessions you've logged, newest first
  *   POST   /api/training                  { name, unit, startedAt, finishedAt, workoutId?, gymId?, exercises, note? } -> logged (sent again: the one already logged)
- *   PATCH  /api/training/:id              { note: string | null } -> the session with its note (up to 500 characters; null or blank clears it)
+ *   PATCH  /api/training/:id              { note: string | null } -> the session with its note (up to 500 characters; null or blank clears it); { hidden } keeps it from your friends' feed
  *   DELETE /api/training/:id
  *   GET    /api/collection                your gym collection (gyms checked in at, and the days) and when it was last reset
  *   PUT    /api/collection                { gyms, resetAt } -> merged into the account's (never overwritten); 409 when reset elsewhere since
  *   DELETE /api/collection                reset: every gym and visit removed, and the reset remembered
+ *   GET    /api/feed?after=               your friends' shared workouts (and yours, while you share), newest first: { sharing, items, next, activity (first page) }
+ *   GET    /api/feed/:id                  one workout in the feed, with its comments
+ *   GET    /api/feed/compare/:friendId    Pro: head to head, your best and a sharing friend's on the exercises you've both done
+ *   PUT    /api/feed/:id/like             like it (DELETE: take the like back) -> { likes, liked }
+ *   POST   /api/feed/:id/comments         { body } -> a comment (up to 300 characters)
+ *   DELETE /api/feed/comments/:id         your comment, one on your workout, or (moderators) any
+ *   POST   /api/feed/comments/:id/report  report a comment to the team
+ *   PUT    /api/me/sharing                { workouts } -> whether your friends see the workouts you log
  *   GET    /api/friends                   your friend code, friends (with totals), requests both ways, invites to train, whether you're on the leaderboard
  *   POST   /api/friends                   { code } -> asks them (or, if they'd asked you, you're friends)
  *   POST   /api/friends/:id/accept        accept their request
@@ -227,6 +235,7 @@ import { Social, SocialError } from './social';
 import { OwnerError, Owners } from './owners';
 import { PerkError, Perks } from './perks';
 import { OwnTraining, OwnTrainingError } from './ownTraining';
+import { Feed, FeedError, readCursor } from './feed';
 import type { SendMail } from './mail';
 
 export interface AppOptions {
@@ -528,6 +537,7 @@ type TrainingRow = {
   gym_id: string | null;
   exercises_json: string;
   note: string | null;
+  hidden: number;
 };
 
 const trainingView = (row: TrainingRow) => ({
@@ -540,9 +550,11 @@ const trainingView = (row: TrainingRow) => ({
   gymId: row.gym_id,
   exercises: JSON.parse(row.exercises_json),
   note: row.note ?? null,
+  // Kept from your friends' feed (feed.ts), when you share your workouts.
+  hidden: row.hidden === 1,
 });
 
-const TRAINING_COLUMNS = 'id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json, note';
+const TRAINING_COLUMNS = 'id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json, note, hidden';
 
 /** The middle of sorted amounts (the mean of the middle two for an even count). */
 function median(sorted: number[]): number {
@@ -667,6 +679,10 @@ export function createApp(options: AppOptions) {
   const equipmentLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
   // Adding friends by code: plenty for real use, far too few to guess codes with.
   const friendLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
+  // The friends' feed: comments, likes and reports, generous for real use, short of a script.
+  const commentLimiter = new AttemptLimiter(60, 60 * 60_000);
+  const likeLimiter = new AttemptLimiter(300, 60 * 60_000);
+  const commentReportLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
   // Apple Pay and Google Pay buttons: a checkout per plan the Pro page shows.
   const walletLimiter = new AttemptLimiter(60, 60 * 60_000);
   // How busy a gym is: a few gyms a day, a few times each.
@@ -736,7 +752,7 @@ export function createApp(options: AppOptions) {
   // rate-limit keys (addresses among them) whose window has passed.
   const limiters = [
     loginLimiter, accountLoginLimiter, forgotLimiter, forgotEmailLimiter, resetLimiter, signupLimiter, photoLimiter, avatarLimiter,
-    equipmentLimiter, friendLimiter, walletLimiter, busyLimiter, redeemLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter, weatherLimiter,
+    equipmentLimiter, friendLimiter, walletLimiter, commentLimiter, likeLimiter, commentReportLimiter, busyLimiter, redeemLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter, weatherLimiter,
     gymPalLimiters.free.minute, gymPalLimiters.free.day, gymPalLimiters.pro.minute, gymPalLimiters.pro.day,
   ];
   /** How busy a gym is matters for an hour; a member's report is kept a day at most. */
@@ -777,6 +793,7 @@ export function createApp(options: AppOptions) {
 
   const perks = new Perks(db, now);
   const own = new OwnTraining(db, now);
+  const feed = new Feed(db, now);
   // PayPal reads who's Pro and who may have the free trial from Billing, which keeps PayPal's subscriptions too.
   const billingFor: { current: Billing | null } = { current: null };
   const paypal = new PayPalPro(db, {
@@ -1328,7 +1345,9 @@ export function createApp(options: AppOptions) {
         session.note,
         now().toISOString(),
       );
-      return send(res, 201, { session: { id, ...session } });
+      // A workout logged after the fact changes the records of any that came after it.
+      feed.forgetRecordsFrom(account.id, session.finishedAt);
+      return send(res, 201, { session: { id, ...session, hidden: false } });
     }
 
     // A session you logged, changed afterwards: its note (added after Finish,
@@ -1340,7 +1359,8 @@ export function createApp(options: AppOptions) {
       const body = (await readJson(req)) as Record<string, unknown>;
       const editable = ['name', 'unit', 'startedAt', 'finishedAt', 'exercises'] as const;
       const edits = editable.filter((key) => key in body);
-      if (!('note' in body) && edits.length === 0) throw new HttpError(400, 'Send the note (or null to clear it), or what to change.');
+      if (!('note' in body) && !('hidden' in body) && edits.length === 0) throw new HttpError(400, 'Send the note (or null to clear it), or what to change.');
+      if ('hidden' in body && typeof body.hidden !== 'boolean') throw new HttpError(400, 'Hidden is true or false.');
       const sessionId = decodeURIComponent(parts[2]!);
       const kept = db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where id = ? and user_id = ?`).get(sessionId, account.id) as TrainingRow | undefined;
       if (!kept) throw new HttpError(404, 'No logged session with that id.');
@@ -1360,7 +1380,10 @@ export function createApp(options: AppOptions) {
           sessionId,
           account.id,
         );
+        // Its records, and those of the workouts after it, are worked out again.
+        feed.forgetRecordsFrom(account.id, clean.finishedAt < before.finishedAt ? clean.finishedAt : before.finishedAt);
       }
+      if (typeof body.hidden === 'boolean') db.prepare('update training_sessions set hidden = ? where id = ? and user_id = ?').run(body.hidden ? 1 : 0, sessionId, account.id);
       if (note !== undefined) db.prepare('update training_sessions set note = ? where id = ? and user_id = ?').run(note, sessionId, account.id);
       const row = db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where id = ? and user_id = ?`).get(sessionId, account.id) as TrainingRow;
       return send(res, 200, { session: trainingView(row) });
@@ -1368,8 +1391,12 @@ export function createApp(options: AppOptions) {
 
     if (method === 'DELETE' && parts[0] === 'api' && parts[1] === 'training' && parts.length === 3) {
       const { account } = requireAccount(req);
-      const removed = db.prepare('delete from training_sessions where id = ? and user_id = ?').run(decodeURIComponent(parts[2]!), account.id);
-      if (removed.changes === 0) throw new HttpError(404, 'No logged session with that id.');
+      const sessionId = decodeURIComponent(parts[2]!);
+      const gone = db.prepare('select finished_at from training_sessions where id = ? and user_id = ?').get(sessionId, account.id) as { finished_at: string } | undefined;
+      const removed = db.prepare('delete from training_sessions where id = ? and user_id = ?').run(sessionId, account.id);
+      if (removed.changes === 0 || !gone) throw new HttpError(404, 'No logged session with that id.');
+      // The workouts after it may have broken records only against it.
+      feed.forgetRecordsFrom(account.id, gone.finished_at);
       return send(res, 204);
     }
 
@@ -1457,6 +1484,65 @@ export function createApp(options: AppOptions) {
       throw new HttpError(404, 'Not found.');
     }
 
+    // --- The friends' feed (feed.ts) ------------------------------------------
+    if ((parts[0] === 'api' && parts[1] === 'feed') || path === '/api/me/sharing') {
+      const { account, user } = requireAccount(req);
+      const me = account.id;
+      try {
+        if (path === '/api/me/sharing' && method === 'PUT') {
+          const body = (await readJson(req)) as Record<string, unknown>;
+          if (typeof body.workouts !== 'boolean') throw new HttpError(400, 'Say whether to share your workouts: true or false.');
+          return send(res, 200, { workouts: feed.setSharing(me, body.workouts) });
+        }
+        if (path === '/api/feed' && method === 'GET') return send(res, 200, feed.page(me, readCursor(url.searchParams.get('after'))));
+        if (parts[2] === 'compare' && parts.length === 4 && method === 'GET') {
+          if (!billing.isPro(me)) throw new HttpError(403, 'Head to head is part of GymGO Pro.', 'pro_required');
+          return send(res, 200, feed.headToHead(me, decodeURIComponent(parts[3]!)));
+        }
+        if (parts[2] === 'comments' && parts.length >= 4) {
+          const commentId = decodeURIComponent(parts[3]!);
+          if (parts.length === 4 && method === 'DELETE') {
+            feed.removeComment(me, commentId, can(user, 'moderation.view_queue'));
+            return send(res, 204);
+          }
+          if (parts.length === 5 && parts[4] === 'report' && method === 'POST') {
+            if (!commentReportLimiter.allow(me, now().getTime())) throw new HttpError(429, 'That’s a lot of reports for one day. Try again tomorrow.');
+            const reported = feed.report(me, commentId);
+            if (reported) {
+              const id = bugReports.create(
+                {
+                  topic: 'bug',
+                  description: `A comment in the friends' feed was reported.\n\nComment ${commentId} on workout ${reported.sessionId}, by ${reported.author.displayName} (account ${reported.author.id}):\n\n${reported.body}\n\nA moderator can delete it: DELETE /api/feed/comments/${commentId}.`,
+                  replyTo: null,
+                  context: [{ label: 'Kind', value: 'Reported feed comment' }],
+                },
+                { id: account.id, email: account.email, displayName: account.display_name },
+              );
+              await bugReports.deliverWithin(id, 8000);
+            }
+            return send(res, 200, { reported: true });
+          }
+        }
+        if (parts.length >= 3 && parts[2] !== 'comments' && parts[2] !== 'compare') {
+          const sessionId = decodeURIComponent(parts[2]!);
+          if (parts.length === 3 && method === 'GET') return send(res, 200, feed.item(me, sessionId));
+          if (parts.length === 4 && parts[3] === 'like' && (method === 'PUT' || method === 'DELETE')) {
+            if (!likeLimiter.allow(me, now().getTime())) throw new HttpError(429, 'That’s a lot of likes for one hour. Try again later.');
+            return send(res, 200, feed.like(me, sessionId, method === 'PUT'));
+          }
+          if (parts.length === 4 && parts[3] === 'comments' && method === 'POST') {
+            if (!commentLimiter.allow(me, now().getTime())) throw new HttpError(429, 'That’s a lot of comments for one hour. Try again later.');
+            const body = (await readJson(req)) as Record<string, unknown>;
+            return send(res, 201, { comment: feed.comment(me, sessionId, body.body) });
+          }
+        }
+      } catch (error) {
+        if (error instanceof FeedError) throw new HttpError(error.status, error.message);
+        throw error;
+      }
+      throw new HttpError(404, 'Not found.');
+    }
+
     // --- Friends, invites to train, leaderboards (social.ts) -----------------
     if (parts[0] === 'api' && (parts[1] === 'friends' || parts[1] === 'invites' || parts[1] === 'leaderboard' || path === '/api/me/leaderboard')) {
       const { account } = requireAccount(req);
@@ -1472,6 +1558,8 @@ export function createApp(options: AppOptions) {
           const other = decodeURIComponent(parts[2]!);
           if (parts.length === 3 && method === 'DELETE') {
             social.remove(me, other);
+            // Their likes and comments on each other's workouts go with the friendship.
+            feed.forgetBetween(me, other);
             return send(res, 204);
           }
           if (parts[3] === 'accept' && parts.length === 4 && method === 'POST') {
@@ -1784,6 +1872,7 @@ export function createApp(options: AppOptions) {
         ...owners.exportFor(id),
         ...perks.exportFor(id),
         ...own.exportFor(id),
+        ...feed.exportFor(id),
       });
     }
 

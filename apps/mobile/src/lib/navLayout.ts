@@ -80,6 +80,7 @@ export const SIDEBAR_TRAINING: readonly SidebarItem[] = [
 
 export const SIDEBAR_YOU: readonly SidebarItem[] = [
   { href: '/collection', label: 'Collection', tab: false },
+  { href: '/feed', label: 'Feed', tab: false },
   { href: '/friends', label: 'Friends', tab: false },
   { href: '/appearance', label: 'Appearance', tab: false },
 ];

@@ -845,6 +845,15 @@ the city you're searching. **Everyone** lists only people who switched on
 friends. Adding friends is limited to 20 codes a day, so codes can't be
 guessed.
 
+**Feed** (sidebar → Feed, Profile → Friends, or the Friends page): your
+friends' workouts, newest first, each a card with its time, volume, sets,
+records and exercises, to **like** and **comment** on. Open one for every set,
+**Do this workout** (it becomes a workout to start, with your own weights) and
+**Head to head** (Pro: your best lifts beside theirs). Sharing your own is off
+until you turn it on, and friends never see your notes or which gym; hide any
+one workout from its page. Who liked or commented on yours shows at the top.
+`docs/FEED.md` has the details, and the Privacy Policy wording it needs.
+
 Each gym is a **trading card** with a rarity rolled by luck: every day you
 check in rolls it (Common 60%, Uncommon 25%, Rare 10%, Epic 4%, Legendary
 1%) and the card keeps its best roll. Each card also has a random **gem**

@@ -56,12 +56,16 @@ const ICONS = {
   'shuffle-angular': ['duotone'],
   'share-network': ['duotone'],
   // The sidebar's other places.
+  pulse: ['regular', 'bold', 'fill'],
   'chart-line-up': ['regular', 'bold', 'fill'],
   'clipboard-text': ['regular', 'bold', 'fill'],
   'calendar-dots': ['regular', 'bold', 'fill'],
   cards: ['regular', 'bold', 'fill'],
   'users-three': ['regular', 'bold', 'fill'],
   palette: ['regular', 'bold', 'fill'],
+  // The friends' feed: a like (filled once you've liked it) and comments.
+  heart: ['regular', 'bold', 'fill'],
+  'chat-circle': ['regular', 'bold', 'fill'],
 };
 
 const suffix = { regular: '', bold: '-bold', fill: '-fill', duotone: '-duotone' };

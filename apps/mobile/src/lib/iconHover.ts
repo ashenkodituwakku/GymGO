@@ -173,6 +173,7 @@ export const ART_NAMES = [
   'cards',
   'users-three',
   'palette',
+  'pulse',
 ] as const;
 export type ArtName = (typeof ART_NAMES)[number];
 
@@ -263,6 +264,11 @@ ${['#FF5F57', '#FFBD2E', '#28C840', '#3A86FF']
   .join('\n')}
 @keyframes gg-palette-rock { 0% { transform: rotate(0); } 30% { transform: rotate(-12deg); } 62% { transform: rotate(6deg); } 100% { transform: rotate(0); } }
 @keyframes gg-paint { 0% { transform: scale(1); } 55% { transform: scale(1.6); } 100% { transform: scale(1); } }`,
+  // Feed: a heartbeat runs across, as on a monitor, and the line holds; its peak gives a little kick as it's drawn.
+  pulse: `
+${at('pulse', 'beat')} { ${DRAW} animation-duration: 680ms; animation-timing-function: cubic-bezier(0.5, 0, 0.3, 1); }
+[data-gg-art="pulse"][data-gg-hover] { animation: gg-pulse-kick 680ms ${OUT} both; }
+@keyframes gg-pulse-kick { 0%, 30% { scale: 1 1; } 45% { scale: 1 1.14; } 70% { scale: 1 0.96; } 100% { scale: 1 1; } }`,
 };
 
 /** The page's style sheet for it: the motions, the scenes, their keyframes, and Reduce motion. */

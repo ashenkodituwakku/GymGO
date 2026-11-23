@@ -168,6 +168,7 @@ export const PRO_FEATURES: Array<{ title: string; free: string; pro: string; gro
   { title: '1-rep max', free: 'Your max, and 3 percentages', pro: 'Every percentage, with plates', group: 'training' },
   { title: 'Streak freeze', free: 'Not included', pro: 'One missed week a month', group: 'training' },
   { title: 'Lifetime stats', free: 'Not included', pro: 'Every kilo, rep and hour, to share', group: 'training' },
+  { title: 'Head to head', free: 'Your friends’ workouts, likes and comments', pro: 'Your best lifts beside a friend’s', group: 'training' },
   { title: 'GymPal', free: '20 questions a day', pro: '100 a day, and answers that know your training', group: 'training' },
   { title: 'Colour themes', free: 'Indigo; light, dark or Dim; text size', pro: 'Twelve accents or your own, ten looks, corner styles, map styles', group: 'yours' },
   { title: 'Profile ring', free: 'Your picture', pro: 'Ringed in your accent', group: 'yours' },
@@ -186,6 +187,7 @@ export const ALWAYS_FREE = [
   'The workout builder',
   'Logging your workouts, with a rest timer, a plate calculator and your records',
   'A weekly goal, your training calendar and milestones',
+  'Friends, and a feed of their workouts to like and comment on',
   'A profile picture, an interval timer and a 1-rep max calculator',
   'Dark mode',
 ] as const;

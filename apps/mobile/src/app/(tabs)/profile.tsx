@@ -214,6 +214,7 @@ export default function Profile() {
       {/* Friends and leaderboards live on the server, which the limited website hasn't got. */}
       {!LIMITED && (
         <Group header="Friends">
+          <Row icon="workout" tile={TILE.orange} title="Feed" subtitle="Your friends’ workouts: like them, comment, share yours" onPress={() => router.push('/feed')} />
           <Row icon="people" tile={TILE.indigo} title="Friends" subtitle="Add by code, see their cards, invite to train" onPress={() => router.push('/friends')} />
           <Row icon="trophy" tile={TILE.teal} title="Leaderboard" subtitle="Most gyms collected, if you join" onPress={() => router.push('/leaderboard')} />
         </Group>

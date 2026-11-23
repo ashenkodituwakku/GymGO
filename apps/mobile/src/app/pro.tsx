@@ -93,6 +93,7 @@ const REASON: Record<ProReason, string> = {
   celebrations: 'Confetti is free. Pro celebrates your records and goals your way: fireworks, gold stars or a shower of emoji.',
   lifetime: 'Your log and records are free. Pro adds your lifetime in numbers: every kilo, rep and hour, your favourites, and what all that weight compares to, as a picture to share too.',
   sounds: 'Sounds are free. Pro adds Arcade: the workout and check-in sounds as chip tunes, like an old games console.',
+  headToHead: 'Friends and their workouts are free. Pro puts your best lifts beside a friend’s, exercise by exercise: heaviest, strongest set and most reps.',
   gympal: 'GymPal is free, 20 questions a day. Pro gives you 100 a day, longer chats, and answers that know your training: what to train today, how you’re going.',
 };
 

@@ -11,6 +11,7 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { CollectionTotals, FriendCard } from '@gymgo/domain';
 import { BrandFill } from '@/components/BrandFill';
 import { GemCard } from '@/components/GemCard';
+import { HeadToHead } from '@/components/HeadToHead';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { GymCardsSkeleton } from '@/components/Skeleton';
@@ -24,6 +25,7 @@ import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
+import { unitFor } from '@/lib/training';
 
 const COLUMN = 640;
 const DAYS = 7;
@@ -32,7 +34,7 @@ export default function FriendScreen() {
   useGlassRedraw();
   const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
   const router = useRouter();
-  const { account, data } = useApp();
+  const { account, data, billing, prefs } = useApp();
   const mine = useCollection().gyms;
   const token = account.token;
   const { width } = useWindowDimensions();
@@ -171,6 +173,9 @@ export default function FriendScreen() {
           </Txt>
         )}
       </LiveLine>
+
+      {/* Your best lifts beside theirs (Pro), from the workouts they share. */}
+      {token && id && <HeadToHead token={token} friendId={id} friendName={friend?.name ?? name ?? 'Your friend'} pro={billing.isPro} unit={unitFor(prefs.country)} />}
 
       <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
         THEIR CARDS

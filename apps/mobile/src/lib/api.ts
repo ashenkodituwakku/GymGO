@@ -16,7 +16,7 @@
 import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
 import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PayWith, WalletButtons, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review, CollectionTotals, FriendCard, BusyLevel, OwnerUpdatePayload, OwnExercise, OwnExerciseFields, Split, SplitFields, Weather } from '@gymgo/domain';
-import type { TrainingSession } from './training';
+import type { LoggedExercise, NewRecord, TrainingSession, WeightUnit } from './training';
 import { pickApiBase, serverIsHosted } from './serverAddress';
 import { LIMITED } from './limited';
 import { WEBSITE_AUTO, serverMissed } from './website';
@@ -159,6 +159,76 @@ export interface FriendsOverview {
   outgoing: Person[];
   invites: { incoming: TrainInvite[]; outgoing: TrainInvite[] };
   leaderboard: boolean;
+}
+
+/** Someone in the friends' feed: a friend, or you. */
+export interface FeedPerson {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
+/** A workout in the friends' feed (server feed.ts). */
+export interface FeedItem {
+  id: string;
+  person: FeedPerson;
+  /** Your own. */
+  you: boolean;
+  name: string;
+  unit: WeightUnit;
+  startedAt: string;
+  finishedAt: string;
+  /** `name` for an exercise its owner made; GymGO's own are named here (exerciseName). */
+  exercises: Array<LoggedExercise & { name?: string }>;
+  volumeKg: number;
+  sets: number;
+  records: NewRecord[];
+  likes: number;
+  liked: boolean;
+  likedBy: FeedPerson[];
+  comments: number;
+  /** Your own, kept from your friends. */
+  hidden?: boolean;
+}
+
+export interface FeedComment {
+  id: string;
+  person: FeedPerson;
+  you: boolean;
+  body: string;
+  createdAt: string;
+  canDelete: boolean;
+}
+
+export interface FeedActivity {
+  kind: 'like' | 'comment';
+  person: FeedPerson;
+  workoutId: string;
+  workoutName: string;
+  body?: string;
+  at: string;
+}
+
+export interface FeedPage {
+  /** Whether you share your own workouts. */
+  sharing: boolean;
+  items: FeedItem[];
+  /** Where the next page starts; null at the end. */
+  next: string | null;
+  /** With the first page: friends' likes and comments on your workouts lately. */
+  activity?: FeedActivity[];
+}
+
+/** Each one's best on an exercise, in kg (null where there's none). */
+export interface HeadToHeadBest {
+  heaviestKg: number | null;
+  e1rmKg: number | null;
+  mostReps: number | null;
+}
+
+export interface HeadToHead {
+  friend: FeedPerson;
+  rows: Array<{ exerciseId: string; name?: string; you: HeadToHeadBest; them: HeadToHeadBest }>;
 }
 
 export interface BoardEntry {
@@ -685,6 +755,20 @@ export const api = {
   ownerUpdateQueue: (token: string) => request<{ updates: OwnerUpdateItem[] }>('GET', '/api/moderation/owner-updates', { token }),
   decideOwnerUpdate: (token: string, id: string, body: { decision: 'approve' | 'reject'; reason?: string }) =>
     request<unknown>('POST', `/api/moderation/owner-updates/${encodeURIComponent(id)}`, { token, body }),
+  /** Keep a workout from your friends' feed, or show it again. */
+  hideTraining: (token: string, id: string, hidden: boolean) =>
+    request<{ session: TrainingSession }>('PATCH', `/api/training/${encodeURIComponent(id)}`, { token, body: { hidden } }),
+  /** Your friends' shared workouts (and yours, while you share), newest first. */
+  feed: (token: string, after: string | null = null) => request<FeedPage>('GET', `/api/feed${after ? `?after=${encodeURIComponent(after)}` : ''}`, { token }),
+  feedItem: (token: string, id: string) => request<{ item: FeedItem; comments: FeedComment[]; sharing: boolean }>('GET', `/api/feed/${encodeURIComponent(id)}`, { token }),
+  likeWorkout: (token: string, id: string, like: boolean) => request<{ likes: number; liked: boolean }>(like ? 'PUT' : 'DELETE', `/api/feed/${encodeURIComponent(id)}/like`, { token }),
+  commentOnWorkout: (token: string, id: string, body: string) => request<{ comment: FeedComment }>('POST', `/api/feed/${encodeURIComponent(id)}/comments`, { token, body: { body } }),
+  deleteComment: (token: string, id: string) => request<unknown>('DELETE', `/api/feed/comments/${encodeURIComponent(id)}`, { token }),
+  reportComment: (token: string, id: string) => request<{ reported: boolean }>('POST', `/api/feed/comments/${encodeURIComponent(id)}/report`, { token }),
+  /** Pro: your best and a friend's, on the exercises you've both done. */
+  headToHead: (token: string, friendId: string) => request<HeadToHead>('GET', `/api/feed/compare/${encodeURIComponent(friendId)}`, { token }),
+  /** Whether your friends see the workouts you log. */
+  shareWorkouts: (token: string, workouts: boolean) => request<{ workouts: boolean }>('PUT', '/api/me/sharing', { token, body: { workouts } }),
   friends: (token: string) => request<FriendsOverview>('GET', '/api/friends', { token }),
   addFriend: (token: string, code: string) => request<{ status: 'requested' | 'accepted'; friend: Person }>('POST', '/api/friends', { token, body: { code } }),
   acceptFriend: (token: string, id: string) => request<FriendsOverview>('POST', `/api/friends/${encodeURIComponent(id)}/accept`, { token }),

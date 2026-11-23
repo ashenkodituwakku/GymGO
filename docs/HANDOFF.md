@@ -280,6 +280,20 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `data-gympal-launcher`) once the Modal has left. Scratchpad `popups.cjs`
   runs open → Tab → Escape for any opener.
 
+- **The friends' feed** (23 Nov, Update 252). docs/FEED.md. Server
+  feed.ts (`Feed`): `users.share_workouts` (opt-in), `training_sessions.hidden`
+  and `.records_json` (records cached, invalidated by `forgetRecordsFrom` on
+  log, edit and delete), tables `feed_likes`, `feed_comments`, `feed_reports`
+  (in db.ts SCHEMA, cascading). Visibility is one rule (`visible()`): yours, or
+  an accepted friend's that they share and haven't hidden; everything else
+  404s. Unfriending calls `feed.forgetBetween`. Reports go through
+  `bugReports.create`. Head to head is Pro (`billing.isPro`) and uses only the
+  friend's non-hidden workouts. The records code moved to
+  packages/domain/src/lifting.ts; apps/mobile/src/lib/training.ts re-exports
+  it, so app imports didn't change. App: app/feed/index.tsx, app/feed/[id].tsx,
+  components/FeedCard.tsx (memoised: calls useGlassRedraw, which a test
+  checks), components/HeadToHead.tsx, lib/feed.ts; ProReason `headToHead`.
+  legal.ts doesn't mention workout sharing yet (owner's wording).
 - **Apple Pay's and Google Pay's own buttons** (23 Nov, Update 251).
   Web only. `deviceWallet` (domain plans.ts) picks Apple Pay for
   iPhone/iPad/Mac (userAgentData.platform, else navigator.platform, else

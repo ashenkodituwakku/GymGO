@@ -9,6 +9,32 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 252 · A feed of your friends' workouts, and Head to head
+
+*23 Nov 2026 · the commit "Feed: your friends' workouts, likes and comments; Do this workout; Head to head (Pro)"*
+
+You asked to keep polishing, add the features it needs and more Pro features, and a workout feed where you can see all your friends' workouts, taking inspiration from Hevy.
+
+- **Feed** (sidebar → Feed, Profile → Friends, the Friends page): your friends' workouts, newest first. Each card says who and when, the workout's name, its **time, volume, sets and records**, and the first exercises with their best set ("85 kg × 5") and any record ("Heaviest yet"). Below are who liked it, and **Like** (a heart) and **Comment**. Twenty at a time, with Show older.
+- **A workout's page**: every exercise and every set (warm-ups and drop sets tagged, RPE, a trophy on the set that made a record), the likes and the comments, with a box to add one.
+  - On a friend's: **Do this workout** turns it into a workout to start, with your own weights.
+  - On yours: **Hide from friends**.
+- **On your workouts**, at the top of the feed: who liked or commented on yours lately, with the new ones marked.
+- **Head to head** (new in Pro), on a friend's page: your best lifts beside theirs on every exercise you've both done (heaviest, estimated 1-rep max, most reps), with whoever's ahead marked. Free shows what it is and the way to Pro, and Pro's comparison table lists it.
+- **Your choice what's shared.** Sharing your own workouts is off until you turn it on in the feed, which says plainly what friends see: the exercises, sets, time and records. Friends never see your notes or which gym. Hide any one workout, or stop sharing at once. You can see friends' workouts without sharing yours.
+- **Comments** are between friends, up to 300 characters. Whoever wrote one, or whoever's workout it's on, can delete it. Anyone else can report it to the team, which sends it like a bug report. Unfriending takes away each one's likes and comments on the other's workouts. Download my data includes them all.
+- The records a friend sees are worked out the same way as on your phone. The code for them now lives in the shared domain package, so the server uses it too.
+- The sidebar's Feed has its own icon: a pulse, whose line draws itself under the mouse like the other icons' scenes.
+
+**Yours to decide:** the Privacy Policy lists what friends see (your name, picture, cards and totals). For anyone who turns sharing on, they now see workouts too. I haven't changed the policy, because that wording is yours to approve and changing it asks everyone to agree again. `docs/FEED.md` has the lines that would change.
+
+- Checked: every package's tests, lint and typecheck pass (server 357, with 11 new for the feed; app 636, with 10 new; domain 205). In a browser against the local server, with two test friends' workouts, at phone and computer width, light and dark:
+  - the feed, a workout's page, liking and commenting, and sharing on and off all worked;
+  - activity on your workouts listed the friends' likes and comment;
+  - Head to head showed the bench press both had done;
+  - Do this workout started the friend's leg day with the account's own weights.
+  - The tests caught one real bug, fixed: a comment kept the spaces at the end of a line.
+
 ## Update 251 · Apple Pay's and Google Pay's own buttons, for the device you're on
 
 *23 Nov 2026 · the commit "Pro: Apple Pay's and Google Pay's own buttons, the device's own wallet; off until set up"*

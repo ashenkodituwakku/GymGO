@@ -120,7 +120,7 @@ export interface Lookup {
 }
 
 /** Why the Pro screen opened, so it can say so. */
-export type ProReason = 'saved' | 'compare' | 'workouts' | 'exercises' | 'splits' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates' | 'timers' | 'strength' | 'freeze' | 'celebrations' | 'lifetime' | 'sounds' | 'gympal';
+export type ProReason = 'saved' | 'compare' | 'workouts' | 'exercises' | 'splits' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates' | 'timers' | 'strength' | 'freeze' | 'celebrations' | 'lifetime' | 'sounds' | 'gympal' | 'headToHead';
 
 type AppState = {
   data: ReturnType<typeof useGymData>;

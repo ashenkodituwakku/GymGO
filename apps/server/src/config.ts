@@ -85,6 +85,15 @@ export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET?.trim() |
  */
 export const STRIPE_PAYMENT_METHOD_CONFIGURATION = process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION?.trim() || null;
 /**
+ * Optional. Stripe's publishable key (pk_test_… or pk_live_…, the same mode
+ * as STRIPE_SECRET_KEY), from the Stripe Dashboard → Developers → API keys.
+ * Unlike the secret key it's public by design: web pages carry it. With it,
+ * the Pro page on the web shows Apple Pay's button on Apple devices and
+ * Google Pay's elsewhere (docs/PAYMENTS.md). Without it, those are only on
+ * Stripe's own checkout page.
+ */
+export const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY?.trim() || null;
+/**
  * Optional. PayPal, for Pro paid with your own PayPal business account
  * (paypal.ts, docs/PAYMENTS.md): the REST app's client id and secret, from
  * developer.paypal.com. Without both, there's no PayPal button.

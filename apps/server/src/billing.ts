@@ -37,9 +37,18 @@ import {
   type PlanId,
   type PlanLimits,
   type ProPrice,
+  type WalletButtons,
 } from '@gymgo/domain';
 import type { Db } from './db';
 import { PAYPAL_ID_PREFIX, type PayPalPro } from './paypal';
+
+/** What a subscription checkout is for: Pro or Duo, monthly or yearly, A$ or US$, and the free trial. */
+export interface SubscriptionChoice {
+  interval: BillingInterval;
+  currency: BillingCurrency;
+  plan?: 'pro' | 'duo';
+  trial?: boolean;
+}
 
 // --- The parts of Stripe used here ---------------------------------------------
 
@@ -76,6 +85,8 @@ export interface StripeCheckoutSession {
   mode?: string;
   payment_status?: string;
   metadata?: Record<string, string> | null;
+  /** For a checkout shown on GymGO's own page by Stripe.js (ui_mode 'elements'): what the page opens it with. */
+  client_secret?: string | null;
 }
 
 /** One of Stripe's payment method settings (Dashboard → Settings → Payment methods): which are offered. */
@@ -244,6 +255,13 @@ export interface BillingOptions {
   paymentMethodConfiguration?: string | null;
   /** Pro paid with PayPal through GymGO's own PayPal account (paypal.ts), when connected. */
   paypal?: PayPalPro | null;
+  /**
+   * Stripe's publishable key (pk_…, STRIPE_PUBLISHABLE_KEY): public by
+   * design, it lets the Pro page show Apple Pay's and Google Pay's own
+   * buttons (Stripe's Express Checkout). Without it, those are only on
+   * Stripe's checkout page.
+   */
+  publishableKey?: string | null;
 }
 
 export class Billing {
@@ -305,6 +323,19 @@ export class Billing {
     }
     const { paypal, ...stripe } = this.payWithCache.stripe;
     return { ...stripe, paypal: paypal ? 'stripe' : (await this.paypalDirect()) ? 'direct' : null };
+  }
+
+  /**
+   * Apple Pay's and Google Pay's own buttons on the Pro page: with the
+   * publishable key set, and each only when the payment method settings
+   * have it on (a wallet pays by card, so cards must be on too).
+   */
+  async wallets(): Promise<WalletButtons | null> {
+    const key = this.options.publishableKey;
+    if (!key || !this.enabled) return null;
+    const payWith = await this.payWith();
+    if (!payWith?.card || (!payWith.applePay && !payWith.googlePay)) return null;
+    return { publishableKey: key, applePay: payWith.applePay, googlePay: payWith.googlePay };
   }
 
   /** PayPal through GymGO's own account is ready: connected, and its plans made. */
@@ -479,9 +510,43 @@ export class Billing {
 
   async checkout(
     account: { id: string; email: string; display_name: string },
-    choice: { interval: BillingInterval; currency: BillingCurrency; plan?: 'pro' | 'duo'; trial?: boolean },
+    choice: SubscriptionChoice,
     urls: { success: string; cancel: string; terms?: string; refunds?: string },
   ): Promise<string> {
+    const session = await this.subscriptionCheckout(account, choice, { page: 'stripe', ...urls });
+    if (!session.url) throw new BillingError(502, 'Stripe didn’t return a checkout page. Try again.');
+    return session.url;
+  }
+
+  /**
+   * The same subscription, for Apple Pay's or Google Pay's own button on
+   * GymGO's Pro page (Stripe's Express Checkout Element): the page opens the
+   * wallet itself, with this checkout's client secret, and Stripe sends the
+   * browser to `returnUrl` once paid. Made when the page shows the button,
+   * before anyone taps it, so it tells Stripe nothing new about the account:
+   * the Stripe customer it already has, or none, and Stripe makes one from
+   * the wallet's name and email when they pay (linked by
+   * client_reference_id, as any checkout is).
+   */
+  async walletCheckout(
+    account: { id: string; email: string; display_name: string },
+    choice: SubscriptionChoice,
+    returnUrl: string,
+  ): Promise<{ clientSecret: string }> {
+    if (!this.options.publishableKey) {
+      throw new BillingError(503, 'Apple Pay and Google Pay buttons aren’t set up on this GymGO server.', 'wallet_off');
+    }
+    const session = await this.subscriptionCheckout(account, choice, { page: 'gymgo', returnUrl });
+    if (!session.client_secret) throw new BillingError(502, 'Stripe didn’t return the checkout. Try again.');
+    return { clientSecret: session.client_secret };
+  }
+
+  /** A subscription checkout, on Stripe's page or (for the wallet buttons) on GymGO's. */
+  private async subscriptionCheckout(
+    account: { id: string; email: string; display_name: string },
+    choice: SubscriptionChoice,
+    where: { page: 'stripe'; success: string; cancel: string; terms?: string; refunds?: string } | { page: 'gymgo'; returnUrl: string },
+  ): Promise<StripeCheckoutSession> {
     if (this.subscribed(account.id).pro) throw new BillingError(409, 'You already have GymGO Pro.', 'already_pro');
     const plan = choice.plan ?? 'pro';
     // Only when the app showed the trial, so nobody is charged at once expecting free days, or the other way round.
@@ -493,14 +558,12 @@ export class Billing {
     }
     const price = (await this.stripePrices()).find((item) => item.plan === plan && item.interval === choice.interval && item.currency === choice.currency);
     if (!price) throw new BillingError(503, 'That price isn’t on sale yet. Run the Stripe setup (see README).', 'price_missing');
-    const customer = await this.customerFor(account);
-    const session = await this.createCheckout({
+    const customer = where.page === 'stripe' ? await this.customerFor(account) : this.customerIdFor(account.id);
+    const common = {
       mode: 'subscription',
-      customer,
+      ...(customer ? { customer } : {}),
       client_reference_id: account.id,
       line_items: [{ price: price.id, quantity: 1 }],
-      success_url: urls.success,
-      cancel_url: urls.cancel,
       metadata: { gymgo_account_id: account.id },
       subscription_data: {
         metadata: { gymgo_account_id: account.id },
@@ -512,9 +575,18 @@ export class Billing {
       // Card, Apple Pay, Google Pay, Link (and PayPal in Europe): whichever the payment method setting turns on.
       ...this.paymentMethodSetting(),
       ...SELLER_IS_GYMGO,
+    };
+    if (where.page === 'gymgo') {
+      // Shown by Stripe.js on the Pro page, which has the renewal terms by the buttons already.
+      return this.stripe.checkout.sessions.create({ ...common, ui_mode: 'elements', return_url: where.returnUrl });
+    }
+    return this.createCheckout({
+      ...common,
+      success_url: where.success,
+      cancel_url: where.cancel,
       ...(await this.checkoutLook()),
       // The renewal terms and where the full terms are, by the button that agrees to them, on Stripe's page too.
-      ...(urls.terms && urls.refunds
+      ...(where.terms && where.refunds
         ? {
             custom_text: {
               submit: {
@@ -522,14 +594,12 @@ export class Billing {
                   choice.trial
                     ? `Free for ${TRIAL_DAYS} days, then ${formatPlanPrice(price.amountMinor, price.currency)} a month until you cancel. Cancel before the trial ends (in GymGO: Profile → Manage subscription) and you aren’t charged.`
                     : 'Renews automatically until you cancel; cancel any time in GymGO (Profile → Manage subscription).'
-                } By subscribing you agree to GymGO’s Terms of Service (${urls.terms}) and its Refunds and Cancelling policy (${urls.refunds}).`,
+                } By subscribing you agree to GymGO’s Terms of Service (${where.terms}) and its Refunds and Cancelling policy (${where.refunds}).`,
               },
             },
           }
         : {}),
     });
-    if (!session.url) throw new BillingError(502, 'Stripe didn’t return a checkout page. Try again.');
-    return session.url;
   }
 
   /**

@@ -7,7 +7,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DUO_PRICES, GIFT_PRICES, LIMITS, PRO_PRICES, type BillingCurrency, type PayWith, type PlanId, type ProPrice } from '@gymgo/domain';
+import { DUO_PRICES, GIFT_PRICES, LIMITS, PRO_PRICES, type BillingCurrency, type PayWith, type PlanId, type ProPrice, type WalletButtons } from '@gymgo/domain';
 import { useCallback, useEffect, useState } from 'react';
 import { api, type BillingState } from './api';
 import type { AccountApi } from './useAccount';
@@ -22,12 +22,13 @@ const PLAN_KEY = 'gymgo.plan.v1';
 export type Sale = 'asking' | 'unreachable' | 'on' | 'off';
 
 export function useBilling(account: AccountApi) {
-  const [offer, setOffer] = useState<{ sale: Sale; prices: ProPrice[]; duo: ProPrice[]; gifts: Array<{ currency: BillingCurrency; amountMinor: number }>; payWith: PayWith | null }>({
+  const [offer, setOffer] = useState<{ sale: Sale; prices: ProPrice[]; duo: ProPrice[]; gifts: Array<{ currency: BillingCurrency; amountMinor: number }>; payWith: PayWith | null; wallets: WalletButtons | null }>({
     sale: 'asking',
     prices: PRO_PRICES,
     duo: DUO_PRICES,
     gifts: GIFT_PRICES,
     payWith: null,
+    wallets: null,
   });
   const [state, setState] = useState<BillingState | null>(null);
   const [remembered, setRemembered] = useState<PlanId>('free');
@@ -38,7 +39,7 @@ export function useBilling(account: AccountApi) {
     setOffer((current) => (current.sale === 'unreachable' ? { ...current, sale: 'asking' } : current));
     api
       .billingPlans()
-      .then((result) => setOffer({ sale: result.available ? 'on' : 'off', prices: result.prices, duo: result.duo ?? [], gifts: result.gifts ?? [], payWith: result.payWith ?? null }))
+      .then((result) => setOffer({ sale: result.available ? 'on' : 'off', prices: result.prices, duo: result.duo ?? [], gifts: result.gifts ?? [], payWith: result.payWith ?? null, wallets: result.wallets ?? null }))
       .catch(() => setOffer((current) => (current.sale === 'asking' ? { ...current, sale: 'unreachable' } : current)));
   }, []);
 
@@ -90,6 +91,8 @@ export function useBilling(account: AccountApi) {
     prices: offer.prices,
     /** The ways to pay checkout will really take (card, Apple Pay, Google Pay, PayPal); null when not known. */
     payWith: offer.payWith,
+    /** Apple Pay's and Google Pay's own buttons for the Pro page, when the server has them set up. */
+    wallets: offer.wallets,
     /** Duo's prices, and a gift year's (empty when the server doesn't sell them). */
     duoPrices: offer.duo,
     giftPrices: offer.gifts,

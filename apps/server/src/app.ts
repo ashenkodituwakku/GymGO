@@ -63,6 +63,7 @@
  *   GET    /api/billing/plans             GymGO Pro's prices, and whether it's on sale
  *   GET    /api/billing                   your plan (Free or Pro) and subscription
  *   POST   /api/billing/checkout          { interval, currency, returnUrl, plan?, trial? } -> { url } of Stripe Checkout
+ *   POST   /api/billing/wallet            { interval, currency, returnUrl, plan?, trial? } -> { clientSecret } for Apple Pay's or Google Pay's button
  *   POST   /api/billing/portal            { returnUrl } -> { url } of Stripe's page to manage or cancel
  *   POST   /api/billing/gift              { currency, returnUrl } -> { url } of Stripe Checkout for a year of Pro as a gift code
  *   GET    /api/billing/gifts             the gift codes you bought, and whether they've been used
@@ -255,7 +256,7 @@ export interface AppOptions {
    * Stripe, for GymGO Pro. Without a client, Pro isn't on sale. Its payment
    * method setting (pmc_…), when checkouts shouldn't use the account's default.
    */
-  billing?: { stripe: StripeApi | null; webhookSecret: string | null; paymentMethodConfiguration?: string | null };
+  billing?: { stripe: StripeApi | null; webhookSecret: string | null; paymentMethodConfiguration?: string | null; publishableKey?: string | null };
   /** PayPal, for Pro paid with GymGO's own PayPal account (paypal.ts). Without a client, no PayPal button. */
   paypal?: { api: PayPalApi | null; webhookId: string | null };
   /** This server's public address, once hosted. */
@@ -666,6 +667,8 @@ export function createApp(options: AppOptions) {
   const equipmentLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
   // Adding friends by code: plenty for real use, far too few to guess codes with.
   const friendLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
+  // Apple Pay and Google Pay buttons: a checkout per plan the Pro page shows.
+  const walletLimiter = new AttemptLimiter(60, 60 * 60_000);
   // How busy a gym is: a few gyms a day, a few times each.
   const busyLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
   // Gift codes: enough for real use, too few to guess one.
@@ -733,7 +736,7 @@ export function createApp(options: AppOptions) {
   // rate-limit keys (addresses among them) whose window has passed.
   const limiters = [
     loginLimiter, accountLoginLimiter, forgotLimiter, forgotEmailLimiter, resetLimiter, signupLimiter, photoLimiter, avatarLimiter,
-    equipmentLimiter, friendLimiter, busyLimiter, redeemLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter, weatherLimiter,
+    equipmentLimiter, friendLimiter, walletLimiter, busyLimiter, redeemLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter, weatherLimiter,
     gymPalLimiters.free.minute, gymPalLimiters.free.day, gymPalLimiters.pro.minute, gymPalLimiters.pro.day,
   ];
   /** How busy a gym is matters for an hour; a member's report is kept a day at most. */
@@ -787,6 +790,7 @@ export function createApp(options: AppOptions) {
     stripe: options.billing?.stripe ?? null,
     webhookSecret: options.billing?.webhookSecret ?? null,
     paymentMethodConfiguration: options.billing?.paymentMethodConfiguration ?? null,
+    publishableKey: options.billing?.publishableKey ?? null,
     paypal,
     now,
     grantFor: (userId) => perks.grantFor(userId),
@@ -975,7 +979,8 @@ export function createApp(options: AppOptions) {
     if (method === 'GET' && path === '/api/billing/plans') {
       const { available, prices, duo, gifts } = await billing.prices();
       // The ways to pay checkout will really offer (card, Apple Pay, Google Pay, PayPal), from the payment settings.
-      return send(res, 200, { available, prices, duo, gifts, limits: LIMITS, payWith: await billing.payWith() });
+      // And Apple Pay's and Google Pay's own buttons, when the publishable key is set.
+      return send(res, 200, { available, prices, duo, gifts, limits: LIMITS, payWith: await billing.payWith(), wallets: await billing.wallets() });
     }
 
     // --- Pro with PayPal (paypal.ts) ----------------------------------------------------
@@ -1075,6 +1080,26 @@ export function createApp(options: AppOptions) {
         },
       );
       return send(res, 200, { url: checkoutUrl });
+    }
+
+    if (method === 'POST' && path === '/api/billing/wallet') {
+      const { account } = requireAccount(req);
+      // Made each time the Pro page shows the button for a plan, so a limit well above any real browsing.
+      if (!walletLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That’s a lot of checkouts for one hour. Try again later.');
+      const body = (await readJson(req)) as Record<string, unknown>;
+      const interval = body.interval;
+      const currency = body.currency;
+      if (interval !== 'month' && interval !== 'year') throw new HttpError(400, 'Choose monthly or yearly.');
+      if (currency !== 'aud' && currency !== 'usd') throw new HttpError(400, 'Choose A$ or US$.');
+      const plan = body.plan === 'duo' ? 'duo' : 'pro';
+      const back = `${publicBase(req)}/api/billing/return?to=${encodeURIComponent(returnUrlFrom(body.returnUrl))}`;
+      const checkout = await billing.walletCheckout(
+        account,
+        { interval: interval as BillingInterval, currency: currency as BillingCurrency, plan, trial: body.trial === true },
+        // Where Stripe.js sends the browser once the wallet has paid; {CHECKOUT_SESSION_ID} as for Stripe's page.
+        `${back}&result=success&session_id={CHECKOUT_SESSION_ID}`,
+      );
+      return send(res, 200, checkout);
     }
 
     // --- Gift Pro, Duo and day passes (perks.ts) ------------------------------------

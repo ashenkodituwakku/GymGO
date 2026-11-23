@@ -15,7 +15,7 @@
 
 import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
-import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PayWith, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review, CollectionTotals, FriendCard, BusyLevel, OwnerUpdatePayload, OwnExercise, OwnExerciseFields, Split, SplitFields, Weather } from '@gymgo/domain';
+import type { BillingCurrency, BillingInterval, CollectedGym, GymRecord, LegalOperator, PayWith, WalletButtons, PlanId, PlanLimits, ProPrice, RatingSummary, ReportCurrency, ReportedEquipment, Review, CollectionTotals, FriendCard, BusyLevel, OwnerUpdatePayload, OwnExercise, OwnExerciseFields, Split, SplitFields, Weather } from '@gymgo/domain';
 import type { TrainingSession } from './training';
 import { pickApiBase, serverIsHosted } from './serverAddress';
 import { LIMITED } from './limited';
@@ -610,11 +610,16 @@ export const api = {
       limits: Record<PlanId, PlanLimits>;
       /** The ways checkout will really take (missing from older servers). */
       payWith?: PayWith | null;
+      /** Apple Pay's and Google Pay's own buttons, when the server has them set up (missing from older servers). */
+      wallets?: WalletButtons | null;
     }>('GET', '/api/billing/plans'),
   billing: (token: string) => request<BillingState>('GET', '/api/billing', { token }),
   syncBilling: (token: string) => request<BillingState>('POST', '/api/billing/sync', { token }),
   checkout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string; plan?: 'pro' | 'duo'; trial?: boolean }) =>
     request<{ url: string }>('POST', '/api/billing/checkout', { token, body }),
+  /** The checkout behind Apple Pay's or Google Pay's own button on the Pro page: Stripe.js opens it with the client secret. */
+  walletCheckout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string; plan?: 'pro' | 'duo'; trial?: boolean }) =>
+    request<{ clientSecret: string }>('POST', '/api/billing/wallet', { token, body }),
   /** PayPal's page to approve a Pro subscription paid with PayPal (GymGO's own PayPal account). */
   paypalCheckout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string; plan?: 'pro' | 'duo'; trial?: boolean }) =>
     request<{ url: string }>('POST', '/api/billing/paypal/checkout', { token, body }),

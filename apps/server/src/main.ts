@@ -18,6 +18,7 @@ import {
   PUBLIC_URL,
   SITE_ICONS,
   STRIPE_PAYMENT_METHOD_CONFIGURATION,
+  STRIPE_PUBLISHABLE_KEY,
   PAYPAL_CLIENT_ID,
   PAYPAL_CLIENT_SECRET,
   PAYPAL_MODE,
@@ -84,6 +85,7 @@ const server = createServer(
       stripe: STRIPE_SECRET_KEY ? createStripe(STRIPE_SECRET_KEY) : null,
       webhookSecret: STRIPE_WEBHOOK_SECRET,
       paymentMethodConfiguration: STRIPE_PAYMENT_METHOD_CONFIGURATION,
+      publishableKey: walletKey(STRIPE_PUBLISHABLE_KEY, STRIPE_SECRET_KEY).key,
     },
     paypal: {
       api: PAYPAL_CLIENT_ID && PAYPAL_CLIENT_SECRET ? createPayPal({ clientId: PAYPAL_CLIENT_ID, secret: PAYPAL_CLIENT_SECRET, mode: PAYPAL_MODE }) : null,
@@ -129,6 +131,27 @@ function stripeMode(key: string | null): string {
   return live ? 'on, LIVE mode: real cards are charged' : 'on, test mode (no real money)';
 }
 
+/**
+ * The publishable key, when it can open the wallet buttons: shaped like one,
+ * and the same mode (test or live) as the secret key, or Stripe.js would
+ * refuse every checkout. Says which, never the key.
+ */
+function walletKey(publishable: string | null, secret: string | null): { key: string | null; line: string } {
+  if (!publishable) return { key: null, line: 'off (no STRIPE_PUBLISHABLE_KEY set; Apple Pay and Google Pay are on Stripe’s page only)' };
+  if (!secret) return { key: null, line: 'off (no STRIPE_SECRET_KEY set)' };
+  const mode = /^pk_(test|live)_[A-Za-z0-9]+$/.exec(publishable)?.[1];
+  if (!mode) return { key: null, line: 'off: STRIPE_PUBLISHABLE_KEY isn’t a publishable key (pk_test_… or pk_live_…)' };
+  const secretLive = /^(sk|rk)_live_/.test(secret);
+  if ((mode === 'live') !== secretLive) {
+    return { key: null, line: `off: STRIPE_PUBLISHABLE_KEY is a ${mode} key but STRIPE_SECRET_KEY is a ${secretLive ? 'live' : 'test'} one; use the pair from the same mode` };
+  }
+  // Stripe.js (and Google Pay's button) then load on the Pro page: the Privacy Policy must say so before real payments.
+  return {
+    key: publishable,
+    line: `on (${mode} mode); they show only on a domain registered in Stripe. Before taking real payments this way, add the Privacy Policy's wording (docs/PAYMENTS.md).`,
+  };
+}
+
 server.on('error', (error: NodeJS.ErrnoException) => {
   if (error.code === 'EADDRINUSE') {
     console.error(`[server] Port ${PORT} is already in use. Is GymGO already running?`);
@@ -147,6 +170,7 @@ server.listen(PORT, HOST, () => {
   if (lan.length > 0) console.log(`[server] Phones on your Wi-Fi reach it at ${lan.join(' or ')}`);
   console.log(`[server] GymGO Pro payments (Stripe): ${stripeMode(STRIPE_SECRET_KEY)}`);
   console.log(`[server] GymGO Pro payments (PayPal): ${paypalMode()}`);
+  if (STRIPE_SECRET_KEY) console.log(`[server] Apple Pay and Google Pay buttons: ${walletKey(STRIPE_PUBLISHABLE_KEY, STRIPE_SECRET_KEY).line}`);
   if (devAccountLine) console.log(devAccountLine);
   if (WEB_DIR) console.log(`[server] Serving the web app from ${WEB_DIR} at ${PUBLIC_URL ?? `http://localhost:${PORT}`}`);
   if (STRIPE_SECRET_KEY) {

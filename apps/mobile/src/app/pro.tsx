@@ -13,23 +13,26 @@ import {
   ALWAYS_FREE,
   PRO_FEATURES,
   PRO_FEATURE_GROUPS,
+  WALLET_NAME,
   annualSaving,
   formatPlanPrice,
   orList,
   proPrice,
   stripePageNames,
   trialEndsAt,
+  walletButtonFor,
   type BillingCurrency,
   type BillingInterval,
   type PayWith,
 } from '@gymgo/domain';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { AppBadge } from '@/components/BrandMark';
 import { Icon, type IconName } from '@/components/Icon';
 import { PayPalButton } from '@/components/PayPalButton';
+import { WalletButton } from '@/components/WalletButton';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Segmented, Txt, LiveLine } from '@/components/ui';
 import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtras';
@@ -40,7 +43,7 @@ import { ApiError, OfflineError, apiBase, serverHosted } from '@/lib/api';
 import { serverOfflineLine } from '@/lib/copy';
 import { LIMITED } from '@/lib/limited';
 import { haptic } from '@/lib/haptics';
-import { CAN_BUY_HERE, manageSubscription, startCheckout, startPayPalCheckout } from '@/lib/purchase';
+import { CAN_BUY_HERE, manageSubscription, startCheckout, startPayPalCheckout, walletHere } from '@/lib/purchase';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
@@ -117,6 +120,11 @@ export default function ProScreen() {
   const [via, setVia] = useState<'stripe' | 'paypal'>('stripe');
   const [problem, setProblem] = useState<string | null>(null);
   const [welcome, setWelcome] = useState(false);
+  // Apple Pay's own button on an iPhone, iPad or Mac, Google Pay's elsewhere: in a browser, when the server has it set up.
+  const deviceWallet = useMemo(() => walletHere(), []);
+  const wallet = deviceWallet ? walletButtonFor(billing.wallets, deviceWallet) : null;
+  // Shown only once Stripe says this device can pay with it.
+  const [walletShown, setWalletShown] = useState(false);
   const token = account.token;
   const signedIn = account.state === 'signed_in' && token !== null;
   const reason = params.reason && params.reason in REASON ? (params.reason as ProReason) : null;
@@ -148,6 +156,9 @@ export default function ProScreen() {
   const yearly = proPrice('year', currency, list);
   const saving = monthly && yearly ? annualSaving(monthly.amountMinor, yearly.amountMinor) : null;
   const chosen = interval === 'year' ? yearly : monthly;
+  // Every button that agrees to the renewal terms, for the terms' own words.
+  const alsoTapped = [walletShown && wallet ? WALLET_NAME[wallet] : null, billing.payWith?.paypal === 'direct' ? 'PayPal' : null].filter((name): name is string => name !== null);
+  const tapping = (main: string) => orList([main, ...alsoTapped]);
 
   const subscribe = async (with_: 'stripe' | 'paypal' = 'stripe') => {
     if (!token || !chosen) return;
@@ -336,6 +347,19 @@ export default function ProScreen() {
               via={via}
               payWith={billing.payWith}
               onPayPal={() => void subscribe('paypal')}
+              wallet={
+                wallet && token && chosen && billing.wallets ? (
+                  <WalletButton
+                    wallet={wallet}
+                    publishableKey={billing.wallets.publishableKey}
+                    token={token}
+                    choice={{ interval, currency, plan: plan === 'duo' && duoOnSale ? 'duo' : 'pro', trial: trial !== null }}
+                    disabled={busy}
+                    onShown={setWalletShown}
+                    onProblem={setProblem}
+                  />
+                ) : null
+              }
               label={
                 trial
                   ? `Start ${trial.days}-day free trial`
@@ -347,8 +371,8 @@ export default function ProScreen() {
                 !chosen
                   ? null
                   : trial
-                    ? `Free for ${trial.days} days, then ${formatPlanPrice(chosen.amountMinor, currency)} a month, tax included, until you cancel. ${billing.payWith?.paypal === 'direct' ? 'Stripe (or PayPal) takes your payment details' : 'Stripe takes your card'} now; the first payment is on ${dayLabel(trialEndsAt(new Date(), trial.days).toISOString())}. Cancel before then in Profile → Manage subscription and you aren’t charged. Tapping Start${billing.payWith?.paypal === 'direct' ? ' or PayPal' : ''} agrees to these terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
-                    : `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; Pro stays on to the end of the ${interval} you’ve paid for. Tapping Subscribe${billing.payWith?.paypal === 'direct' ? ' or PayPal' : ''} agrees to these renewal terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
+                    ? `Free for ${trial.days} days, then ${formatPlanPrice(chosen.amountMinor, currency)} a month, tax included, until you cancel. ${billing.payWith?.paypal === 'direct' ? 'Stripe (or PayPal) takes your payment details' : 'Stripe takes your card'} now; the first payment is on ${dayLabel(trialEndsAt(new Date(), trial.days).toISOString())}. Cancel before then in Profile → Manage subscription and you aren’t charged. Tapping ${tapping('Start')} agrees to these terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
+                    : `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; Pro stays on to the end of the ${interval} you’ve paid for. Tapping ${tapping('Subscribe')} agrees to these renewal terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
               }
               onSubscribe={() => void subscribe('stripe')}
               onSignIn={() => router.push('/sign-in')}
@@ -411,6 +435,7 @@ function BuyButton({
   via,
   payWith,
   onPayPal,
+  wallet,
   label,
   renewal,
   onSubscribe,
@@ -425,6 +450,8 @@ function BuyButton({
   /** The ways checkout takes, as the server's payment settings say; null when not known. */
   payWith: PayWith | null;
   onPayPal: () => void;
+  /** Apple Pay's or Google Pay's own button (components/WalletButton.tsx), on the website. */
+  wallet: ReactNode;
   label: string;
   /** The auto-renewal terms, shown right by the button that agrees to them. */
   renewal: string | null;
@@ -493,6 +520,8 @@ function BuyButton({
           </Txt>
         </View>
       )}
+      {/* Apple Pay's button on Apple devices, Google Pay's elsewhere; there only when the device can pay with it. */}
+      {wallet}
       {/* PayPal's own button: its wordmark on its colours (components/PayPalButton.tsx). */}
       {paypal && <PayPalButton busy={busy && via === 'paypal'} disabled={busy} onPress={onPayPal} />}
       {!!renewal && <LegalText variant="footnote" tint={color.labelSecondary} style={styles.center} text={renewal} />}

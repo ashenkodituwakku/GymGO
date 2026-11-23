@@ -1964,8 +1964,11 @@ don't show.
 People pay by card, Apple Pay or Google Pay on Stripe's checkout page
 (whichever are turned on in Stripe's settings; the Pro page names only those),
 or with PayPal through GymGO's own PayPal account, from its own button, once
-PayPal's keys are set. `docs/PAYMENTS.md` has what to switch on, and the
-legal wording PayPal needs before it takes real payments.
+PayPal's keys are set. On the website, with Stripe's publishable key set, the
+Pro page also shows Apple Pay's own button on Apple devices and Google Pay's
+elsewhere, which open the wallet in one tap. `docs/PAYMENTS.md` has what to
+switch on, and the legal wording PayPal and the wallet buttons need before
+they take real payments.
 
 GymGO has two plans. When it first opens it asks **which country is
 yours**; you can change it in Profile → Country. **Free** is everything that

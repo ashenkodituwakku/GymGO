@@ -108,16 +108,35 @@ function makeFakePayPal() {
   };
 }
 
+/** Stripe customer ids, unique across every little Stripe (they share one database). */
+let customerCount = 0;
+
 /** Just enough of Stripe for the ways to pay and a checkout's settings. */
 function makeLittleStripe(settings: StripePaymentMethodConfiguration[] | 'unreadable') {
   const created: Array<Record<string, unknown>> = [];
+  const customers: string[] = [];
   const stripe: StripeApi = {
-    customers: { create: async () => ({ id: 'cus_1' }) },
+    customers: {
+      async create() {
+        customerCount += 1;
+        customers.push(`cus_little${customerCount}`);
+        return { id: `cus_little${customerCount}` };
+      },
+    },
     checkout: {
       sessions: {
         async create(params) {
           created.push(params);
-          return { id: 'cs_test_aaaaaaaaaaaaaaaaaaaa0', url: 'https://checkout.stripe.test/cs', customer: 'cus_1', client_reference_id: null, subscription: null };
+          // Shown on GymGO's own page (the wallet buttons): a client secret, and no page of Stripe's.
+          const onOurs = params.ui_mode === 'elements';
+          return {
+            id: 'cs_test_aaaaaaaaaaaaaaaaaaaa0',
+            url: onOurs ? null : 'https://checkout.stripe.test/cs',
+            client_secret: onOurs ? 'cs_test_aaaaaaaaaaaaaaaaaaaa0_secret_bbbbbbbbbb' : null,
+            customer: (params.customer as string | undefined) ?? null,
+            client_reference_id: null,
+            subscription: null,
+          };
         },
         retrieve: async () => {
           throw new Error('unused');
@@ -152,7 +171,7 @@ function makeLittleStripe(settings: StripePaymentMethodConfiguration[] | 'unread
       },
     },
   };
-  return { stripe, created };
+  return { stripe, created, customers };
 }
 
 const on = { available: true };
@@ -165,14 +184,25 @@ let db: Db;
 let clock = new Date('2026-09-24T12:00:00Z');
 const servers: Server[] = [];
 
-async function start(options: { stripe?: StripeApi | null; paypal?: PayPalApi | null; webhookId?: string | null; paymentMethodConfiguration?: string | null }) {
+async function start(options: {
+  stripe?: StripeApi | null;
+  paypal?: PayPalApi | null;
+  webhookId?: string | null;
+  paymentMethodConfiguration?: string | null;
+  publishableKey?: string | null;
+}) {
   const server = createServer(
     createApp({
       db,
       attribution: 'test',
       signupsPerHour: 1000,
       now: () => clock,
-      billing: { stripe: options.stripe ?? null, webhookSecret: null, paymentMethodConfiguration: options.paymentMethodConfiguration ?? null },
+      billing: {
+        stripe: options.stripe ?? null,
+        webhookSecret: null,
+        paymentMethodConfiguration: options.paymentMethodConfiguration ?? null,
+        publishableKey: options.publishableKey ?? null,
+      },
       paypal: { api: options.paypal ?? null, webhookId: options.webhookId ?? null },
     }),
   );
@@ -331,6 +361,77 @@ describe('the ways to pay', () => {
     const checkout = await call(base, 'POST', '/api/billing/checkout', { token: person.token, body: { interval: 'year', currency: 'aud', returnUrl: RETURN } });
     expect(checkout.status).toBe(200);
     expect(little.created.at(-1)!.payment_method_configuration).toBe('pmc_gymgo');
+  });
+});
+
+// --- Apple Pay's and Google Pay's own buttons (Stripe's Express Checkout) -------------------
+
+const PUBLISHABLE = 'pk_test_gymgoexample';
+
+describe('Apple Pay’s and Google Pay’s own buttons', () => {
+  it('are offered only with the publishable key set, and each only when it’s on in Stripe', async () => {
+    expect((await call(withoutPayPal, 'GET', '/api/billing/plans')).body.wallets).toBeNull();
+    const both = await start({ stripe: makeLittleStripe([DEFAULT_SETTINGS]).stripe, publishableKey: PUBLISHABLE });
+    expect((await call(both, 'GET', '/api/billing/plans')).body.wallets).toEqual({ publishableKey: PUBLISHABLE, applePay: true, googlePay: true });
+    const noApple = await start({ stripe: makeLittleStripe([{ ...DEFAULT_SETTINGS, apple_pay: off }]).stripe, publishableKey: PUBLISHABLE });
+    expect((await call(noApple, 'GET', '/api/billing/plans')).body.wallets).toEqual({ publishableKey: PUBLISHABLE, applePay: false, googlePay: true });
+    // Neither on, cards off (a wallet pays by card), or the settings unreadable: no buttons.
+    for (const settings of [[{ ...DEFAULT_SETTINGS, apple_pay: off, google_pay: off }], [{ ...DEFAULT_SETTINGS, card: off }], 'unreadable'] as const) {
+      const base = await start({ stripe: makeLittleStripe(settings as StripePaymentMethodConfiguration[] | 'unreadable').stripe, publishableKey: PUBLISHABLE });
+      expect((await call(base, 'GET', '/api/billing/plans')).body.wallets).toBeNull();
+    }
+    // No payments at all.
+    expect((await call(await start({ publishableKey: PUBLISHABLE }), 'GET', '/api/billing/plans')).body.wallets).toBeNull();
+  });
+
+  it('says plainly when they aren’t set up', async () => {
+    const person = await signUp(withoutPayPal);
+    const made = await call(withoutPayPal, 'POST', '/api/billing/wallet', { token: person.token, body: { interval: 'year', currency: 'aud', returnUrl: RETURN } });
+    expect(made.status).toBe(503);
+    expect(made.body.code).toBe('wallet_off');
+  });
+
+  it('make the checkout for GymGO’s own page, without telling Stripe anything new about the account', async () => {
+    const little = makeLittleStripe([DEFAULT_SETTINGS]);
+    const base = await start({ stripe: little.stripe, publishableKey: PUBLISHABLE });
+    const person = await signUp(base);
+    expect((await call(base, 'POST', '/api/billing/wallet', { body: { interval: 'year', currency: 'aud', returnUrl: RETURN } })).status).toBe(401);
+    const made = await call(base, 'POST', '/api/billing/wallet', { token: person.token, body: { interval: 'year', currency: 'aud', returnUrl: RETURN } });
+    expect(made.status).toBe(200);
+    expect(made.body).toEqual({ clientSecret: 'cs_test_aaaaaaaaaaaaaaaaaaaa0_secret_bbbbbbbbbb' });
+    const params = little.created.at(-1)!;
+    expect(params).toMatchObject({ mode: 'subscription', ui_mode: 'elements', client_reference_id: person.id, managed_payments: { enabled: false } });
+    // Back through the same return page as Stripe's checkout, which turns Pro on.
+    expect(params.return_url).toBe(`${base}/api/billing/return?to=${encodeURIComponent(RETURN)}&result=success&session_id={CHECKOUT_SESSION_ID}`);
+    // Stripe's page's own settings aren't for this one.
+    for (const key of ['success_url', 'cancel_url', 'custom_text', 'branding_settings']) expect(params).not.toHaveProperty(key);
+    // Made as the page shows the button, so no Stripe customer is made for it: Stripe makes one, from the wallet, if they pay.
+    expect(params).not.toHaveProperty('customer');
+    expect(little.customers).toEqual([]);
+    // An account that already has a Stripe customer pays as that customer.
+    expect((await call(base, 'POST', '/api/billing/checkout', { token: person.token, body: { interval: 'year', currency: 'aud', returnUrl: RETURN } })).status).toBe(200);
+    expect(little.customers).toHaveLength(1);
+    await call(base, 'POST', '/api/billing/wallet', { token: person.token, body: { interval: 'month', currency: 'usd', returnUrl: RETURN } });
+    expect(little.created.at(-1)!.customer).toBe(little.customers[0]);
+  });
+
+  it('carry the free trial, for monthly Pro only', async () => {
+    const little = makeLittleStripe([DEFAULT_SETTINGS]);
+    const base = await start({ stripe: little.stripe, publishableKey: PUBLISHABLE });
+    const person = await signUp(base);
+    const yearly = await call(base, 'POST', '/api/billing/wallet', { token: person.token, body: { interval: 'year', currency: 'aud', trial: true, returnUrl: RETURN } });
+    expect(yearly.body.code).toBe('trial_monthly_only');
+    const made = await call(base, 'POST', '/api/billing/wallet', { token: person.token, body: { interval: 'month', currency: 'aud', trial: true, returnUrl: RETURN } });
+    expect(made.status).toBe(200);
+    expect(little.created.at(-1)).toMatchObject({ payment_method_collection: 'always', subscription_data: { trial_period_days: TRIAL_DAYS } });
+  });
+
+  it('aren’t offered to someone who already has Pro', async () => {
+    const base = await start({ stripe: makeLittleStripe([DEFAULT_SETTINGS]).stripe, publishableKey: PUBLISHABLE });
+    const person = await payPalPro();
+    const made = await call(base, 'POST', '/api/billing/wallet', { token: person.token, body: { interval: 'year', currency: 'aud', returnUrl: RETURN } });
+    expect(made.status).toBe(409);
+    expect(made.body.code).toBe('already_pro');
   });
 });
 

@@ -82,6 +82,46 @@ export function orList(names: string[]): string {
   return `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`;
 }
 
+/**
+ * Apple Pay's and Google Pay's own buttons on the Pro page (Stripe's Express
+ * Checkout), when the server has them set up: the publishable key Stripe.js
+ * opens them with (public by design), and which of the two are on.
+ */
+export interface WalletButtons {
+  publishableKey: string;
+  applePay: boolean;
+  googlePay: boolean;
+}
+
+export type Wallet = 'applePay' | 'googlePay';
+
+/**
+ * The wallet a device has: Apple Pay on an iPhone, iPad or Mac, Google Pay
+ * on Android and everything else (Windows, Linux, ChromeOS, in Chrome). From
+ * what the browser says about itself: `navigator.userAgentData.platform`
+ * where there is one ("macOS", "iOS", "Android"), else `navigator.platform`
+ * ("MacIntel", "iPhone"), else the user agent. An iPad asking for desktop
+ * sites calls itself a Mac, which is still Apple.
+ */
+export function deviceWallet(device: { userAgent?: string; platform?: string; uaPlatform?: string }): Wallet {
+  const ua = device.userAgent ?? '';
+  const uaPlatform = (device.uaPlatform ?? '').trim();
+  const platform = (device.platform ?? '').trim();
+  if (/^android$/i.test(uaPlatform) || /android/i.test(ua)) return 'googlePay';
+  if (/^(macos|ios|ipados)$/i.test(uaPlatform)) return 'applePay';
+  if (uaPlatform === '' && /^(mac|iphone|ipad|ipod)/i.test(platform)) return 'applePay';
+  if (uaPlatform === '' && /iPhone|iPad|iPod|Macintosh/.test(ua)) return 'applePay';
+  return 'googlePay';
+}
+
+/** The wallet button to show on this device: its own wallet, when the server has that one on. */
+export function walletButtonFor(wallets: WalletButtons | null, wallet: Wallet): Wallet | null {
+  return wallets?.[wallet] ? wallet : null;
+}
+
+/** "Apple Pay", "Google Pay". */
+export const WALLET_NAME: Record<Wallet, string> = { applePay: 'Apple Pay', googlePay: 'Google Pay' };
+
 export interface ProPrice {
   /** Stripe's lookup key for this price, so the server never needs a price id. */
   lookupKey: string;

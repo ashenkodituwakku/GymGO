@@ -9,6 +9,23 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 251 · Apple Pay's and Google Pay's own buttons, for the device you're on
+
+*23 Nov 2026 · the commit "Pro: Apple Pay's and Google Pay's own buttons, the device's own wallet; off until set up"*
+
+You asked for Apple Pay and Google Pay buttons like the PayPal one, showing the right one for the device. On the website's Pro page, under Subscribe:
+
+- **Apple Pay on an iPhone, iPad or Mac; Google Pay on Android** (and on Windows, Linux or ChromeOS, in Chrome). Which device it is comes from what the browser says it runs on.
+- **The real buttons, in their own colours.** "Subscribe with Apple Pay" and "Subscribe with Google Pay", drawn by Stripe from Apple's and Google's own artwork: black on a light page, white in dark mode, the same height and corners as Subscribe and PayPal.
+- **One tap opens the wallet.** Apple and Google require their buttons to open their payment sheet straight away, not lead to another page. So these use Stripe's Express Checkout: Stripe's code shows the button on GymGO's page and opens Apple Pay or Google Pay itself. Once paid, the browser comes back through the server and Pro turns on, as after Stripe's page.
+- **Only when it can work.** The button shows only if the device can really pay with that wallet (Apple Pay set up in Safari, a card saved in Google Pay). Otherwise nothing shows and there's no gap. A Mac in Chrome, where Apple Pay can't show, gets no wallet button; Subscribe's page still takes Google Pay there.
+- The renewal terms name the button when it shows ("Tapping Subscribe, Apple Pay or PayPal agrees…"). A declined payment says why on the page.
+- **Not in the phone apps.** There, Pro is sold through the App Store's and Google Play's own purchase, and Apple doesn't allow Apple Pay for a subscription inside an iPhone app.
+
+**Yours, when you want it on:** Stripe's publishable key (`pk_test_…`, the same mode as the secret key) in `apps/server/.env.local` as `STRIPE_PUBLISHABLE_KEY`, and the web app's domain registered in Stripe (Settings → Payment method domains), in test and live mode. **Before it takes real payments**, the Privacy Policy needs a few words: the button brings Stripe's code onto GymGO's Pro page (Stripe uses it against fraud, with its own cookies), and Google Pay's button comes from Google. The policy now says Stripe takes payment "on its own page" and that GymGO has no tracking code. I haven't changed it, because that wording is yours to approve. `docs/PAYMENTS.md` has the steps and the wording. Until the key is set, nothing changes and nothing of Stripe's loads on GymGO's pages.
+
+- Checked: typecheck, lint and every package's tests pass (server 346, with 5 new for the wallet checkout; 4 new for which wallet a device gets). In a browser, with the server's answers and Stripe.js stood in, as an iPhone, a Mac, Android and Windows, in light and dark: each got the right wallet. A device that can't pay showed nothing and no gap, with PayPal still tappable. Three quick plan taps made one checkout, and a declined payment showed its message. With the real Stripe.js and a dummy key, no button and no errors. Nothing has talked to the real Stripe, and no real wallet payment has been tried: there are no keys here.
+
 ## Update 250 · The PayPal button is PayPal's own
 
 *23 Nov 2026 · the commit "Pro: PayPal's own button, its wordmark on its colours"*

@@ -280,6 +280,22 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `data-gympal-launcher`) once the Modal has left. Scratchpad `popups.cjs`
   runs open → Tab → Escape for any opener.
 
+- **Apple Pay's and Google Pay's own buttons** (23 Nov, Update 251).
+  Web only. `deviceWallet` (domain plans.ts) picks Apple Pay for
+  iPhone/iPad/Mac (userAgentData.platform, else navigator.platform, else
+  UA) and Google Pay for the rest; `walletButtonFor` shows it only if the
+  server's `wallets` (plans response, from `Billing.wallets()`: needs
+  `STRIPE_PUBLISHABLE_KEY` and the wallet on in Stripe's settings) has it.
+  components/WalletButton.tsx mounts Stripe's Express Checkout Element
+  (Checkout Sessions `ui_mode: 'elements'`, `POST /api/billing/wallet` →
+  `clientSecret`, Stripe.js `initCheckoutElementsSdk` from
+  js.stripe.com/dahlia, matching the server library's API version; bump
+  both together). Hidden (absolute, transparent, no pointer events) until
+  `ready` reports the wallet available. The wallet checkout passes the
+  account's existing Stripe customer or none (linked by
+  client_reference_id on completion, as any checkout). legal.ts doesn't
+  yet mention Stripe.js on the Pro page or Google Pay's button: owner's
+  wording (docs/PAYMENTS.md) before live payments.
 - **Apple Pay, Google Pay, PayPal** (22 Nov, Update 249). docs/PAYMENTS.md
   is the owner's set-up. billing.ts `payWith()` reads Stripe's payment
   method configuration (`paymentMethodConfigurations`: each method's

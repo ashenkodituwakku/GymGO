@@ -1,6 +1,7 @@
 /**
  * Paying for GymGO Pro: Stripe's own checkout page (card, Apple Pay, Google
- * Pay, whichever are on), or PayPal's, opened from the app.
+ * Pay, whichever are on), or PayPal's, opened from the app; on the website,
+ * Apple Pay's or Google Pay's own button too (components/WalletButton.tsx).
  *
  * In a browser the page simply goes to Stripe and comes back. On a phone it
  * opens in an in-app browser that closes itself when Stripe sends you back
@@ -12,7 +13,7 @@
  * with EXPO_PUBLIC_NATIVE_CHECKOUT=on.
  */
 
-import type { BillingCurrency, BillingInterval } from '@gymgo/domain';
+import { deviceWallet, type BillingCurrency, type BillingInterval, type Wallet } from '@gymgo/domain';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
@@ -24,6 +25,18 @@ const nativeSwitch = process.env.EXPO_PUBLIC_NATIVE_CHECKOUT;
 export const CAN_BUY_HERE = Platform.OS === 'web' || nativeSwitch === 'on' || (__DEV__ && nativeSwitch !== 'off');
 
 export type PurchaseOutcome = 'done' | 'cancelled' | 'left';
+
+/**
+ * This device's wallet, for its own button on the Pro page: Apple Pay on an
+ * iPhone, iPad or Mac, Google Pay on Android and the rest, from what the
+ * browser says it runs on. None in the phone apps, which sell Pro through
+ * their stores.
+ */
+export function walletHere(): Wallet | null {
+  if (Platform.OS !== 'web' || typeof navigator === 'undefined') return null;
+  const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
+  return deviceWallet({ userAgent: nav.userAgent, platform: nav.platform, uaPlatform: nav.userAgentData?.platform });
+}
 
 /** Where Stripe sends people back to: the app's screen at `path`. */
 function returnUrl(path: string): string {
@@ -48,6 +61,16 @@ export async function startCheckout(token: string, interval: BillingInterval, cu
   const back = returnUrl('pro');
   const { url } = await api.checkout(token, { interval, currency, returnUrl: back, plan, ...(trial ? { trial } : {}) });
   return visit(url, back);
+}
+
+/**
+ * The checkout behind Apple Pay's or Google Pay's own button on the Pro page
+ * (the website only, components/WalletButton.tsx): Stripe.js opens the
+ * wallet with this, then comes back to the Pro page through the server.
+ */
+export async function walletCheckoutSecret(token: string, interval: BillingInterval, currency: BillingCurrency, plan: 'pro' | 'duo' = 'pro', trial = false): Promise<string> {
+  const { clientSecret } = await api.walletCheckout(token, { interval, currency, returnUrl: returnUrl('pro'), plan, ...(trial ? { trial } : {}) });
+  return clientSecret;
 }
 
 /** Pro (or Duo) paid with PayPal, on PayPal's own page; `trial` as for Stripe. */

@@ -1097,10 +1097,14 @@ up, resetting a password, the legal pages, bug reports, Stripe's callbacks,
 Pro's prices and image files (phones and browsers load those without the
 app's sign-in; each is reached only from a signed-in screen). A route added
 later is closed unless it's put on that list. Straight after making an
-account there's a **welcome tour**, one page you scroll, as a product page
-plays as you scroll: find a gym that lets you in (pins drop, one opens),
-know what to do there (sets tick off, a record, the rest), collect it
-(cards fan out). Each part holds still while your scrolling plays it.
+account there's a **welcome tour**, one page you scroll, played by your
+scrolling: you fly through the opening, a statement lights up word by word,
+a map lands flat and zooms in on a gym, a lift's sets tick off as the weight
+counts up, a shelf of features slides sideways, a pack of cards turns over,
+and the numbers in GymGO (exercises, cities, countries, rarities, from its
+own lists) count up. Each part holds still while your scrolling plays it; a
+strip names the chapters (Find, Train, Collect) and the page takes each
+one's colour.
 **Next** plays the next part, and with Reduce Motion every part is simply
 shown. Then a few quick questions, each skippable, which GymGO uses: your
 country, what you train for (where the workout builder and programmes

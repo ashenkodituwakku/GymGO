@@ -315,6 +315,20 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `data-gympal-launcher`) once the Modal has left. Scratchpad `popups.cjs`
   runs open → Tab → Escape for any opener.
 
+- **Tour rebuilt** (24 Nov, Update 265). components/tour/: kit.tsx
+  (`Pinned` with `length` and `overlap` screens, `eased`/`smooth`/`rise`
+  worklets, `ChapterLight`), Opening.tsx (`Opening`, `Statement`: words
+  split on `*` for violet), FindTrain.tsx (`PartWords`, `PartStage`,
+  `roomFor`, `FindPart` (perspective rotateX tilt, camera scale with
+  transformOrigin at the picked pin), `TrainPart` (useAnimatedReaction →
+  CountUp 'tour.lifted', `RestRing` of 24 dots)), CollectMore.tsx
+  (`ReelPart` shelf: translateX from progress, rotateY by distance; calm →
+  grid; `CollectPart`: `PackCard` back/front with backfaceVisibility and a
+  0.5 opacity switch; `Numbers` from EXERCISES, CITY_LIST, COUNTRIES,
+  RARITIES; `Finale`). app/welcome.tsx orders the parts (`ORDER`), keeps
+  their places for Next, and feeds `chapterRanges` to the strip and the
+  light. With calm, Opening returns static styles (its progress 1 would be
+  "gone").
 - **Tour questions, soft background** (24 Nov, Update 263).
   components/WelcomeSetup.tsx (steps country → goal → days → location
   (only while `prefs.location`) → done; `chooseCountry`, `setPref('goal')`,

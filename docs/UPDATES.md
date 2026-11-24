@@ -9,6 +9,46 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 265 · A welcome tour you fly through
+
+*24 Nov 2026 · the commit "Welcome tour rebuilt as a film you scroll: fly-through, lit words, 3D map, a pack opened, a shelf, real numbers"*
+
+You asked to make the onboarding look "way better" and its scroll animations "revolutionary". The tour is rebuilt (components/tour/), still in GymGO's own look, with nothing in it that's a real gym:
+
+- **The opening:** the badge and "Welcome to GymGO", with a door, a lifter and a card floating round it. Scrolling flies you through it: the badge grows past you, the three scatter outward, the name lifts away. The next part slides up over it, so there's no gap.
+- **The statement:** "Find gyms that will let you in, and what a visit costs. Know what to do when you get there. And collect a card for every gym you visit." Its words light up one after another as you scroll, the key ones in violet.
+- **Find:**
+  - the map starts tilted back like one on a table, and lands flat as you scroll;
+  - pins drop with a bounce;
+  - the view zooms in on one gym while the others dim;
+  - what it publishes (or "Call first") rises up from below.
+- **Train:**
+  - the bench press card swings up into place;
+  - its sets tick off as the **weight lifted counts up** (1,460 kg);
+  - "Heaviest yet" lands with a gold glint;
+  - the rest timer fills as a **ring of dots**.
+- **And more**, a new part: six tiles (Rest timer, Plate maths, Your records, Timed sets, Friends' feed, Monthly report) on a **shelf that slides sideways as you scroll down**. The middle tile is forward and the rest turned a little away.
+- **Collect:**
+  - three cards **fly in face down** (GymGO's back) and fan out;
+  - they **turn over one after another**, like opening a pack, the Legendary one last;
+  - a band of light crosses it, then the tiers.
+- **In GymGO today**, a new part: **96** exercises, **63** cities built in, **198** countries and **5** rarities. They're counted up as they come into view, and read from the app's own lists, so they stay true as they grow.
+- **Chapters:**
+  - **Find · Train · Collect** across the top, each filling as you go through it; tap one to jump there.
+  - The background **washes in each chapter's colour**: green for Find, violet and blue for Train, gold and rose for Collect.
+- **Getting around:**
+  - **Next** plays the next part; Skip goes to the questions; the end leads on to them as before.
+  - With Reduce Motion nothing moves, holds or counts: the opening shows as it opens, the shelf becomes a grid, and every part is shown finished.
+
+- Checked: every package's tests, lint and typecheck pass (app 665, server 360, domain 205). In a browser against the local server:
+  - 25 screenshots down the tour at 390 light, then 1280 dark and 320 narrow;
+  - Reduce Motion at 390;
+  - Next through all eight parts to Set up GymGO, then the questions;
+  - the question flow again, answers saved;
+  - no console errors.
+- Fixed while checking: a blank beat between the opening and the statement (now it slides up over it), "Scroll to explore" over the tagline on a short screen (now only where there's room), the chapter strip on a narrow phone (the badge alone there), and Reduce Motion's opening (it showed as flown past, so blank).
+- Not checked: on a phone, where a part holds by moving with the scroll on the UI thread, and the cards turn with `backfaceVisibility` (each face also hides itself at the halfway point, in case).
+
 ## Update 264 · GymGO Max: Pro, with more from GymPal and a badge; Duo taken out
 
 *24 Nov 2026 · the commit "GymGO Max: Pro with more from GymPal and a badge; Duo taken out"*

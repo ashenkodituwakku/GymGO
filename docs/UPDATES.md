@@ -9,6 +9,15 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 277 · Refunds in your data export; the new screens checked
+
+*24 Nov 2026 · the commit "Refunds and disputes in the data export; the new screens checked"*
+
+- **Download my data** now includes any refunds and disputes on your payments (`refundsAndDisputes`: kind, charge, amount, reason, status, deadline), beside your subscriptions. The refund test checks it.
+- The other session's Calendar and Welcome back screens checked with axe at 390 light, 320 dark and 1280 dark: no violations, nothing scrolling sideways, no errors, and the wording passes the plain-words scan. Both looked right with a real workout log (22 workouts this month, a 7-week streak, 15 gyms collected).
+- The workout log's error says "Couldn’t connect to GymGO to load your workouts." (it read "Couldn’t reach the GymGO server for your log.") and "Couldn’t load your workouts. Try again."
+- Checked: server 374 and app 680 tests, typecheck.
+
 ## Update 276 · Refunds and disputes reach the owner
 
 *24 Nov 2026 · `77e7d12`*

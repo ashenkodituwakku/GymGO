@@ -30,7 +30,7 @@ async function load(token: string) {
       set({
         status: 'error',
         token,
-        message: error instanceof OfflineError ? 'Couldn’t reach the GymGO server for your log.' : 'Couldn’t load your log just now.',
+        message: error instanceof OfflineError ? 'Couldn’t connect to GymGO to load your workouts.' : 'Couldn’t load your workouts. Try again.',
       });
     }
   }

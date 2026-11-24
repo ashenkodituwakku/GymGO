@@ -554,6 +554,11 @@ describe('refunds and disputes', () => {
     expect(kept('evt_refund_1')!.emailed_at).toBeTruthy();
     // Still Pro: the subscription, not the refund, decides.
     expect((await call(withStripe.base, 'GET', '/api/billing', { token })).body.plan).toBe('pro');
+    // In their own data export.
+    const exported = await call(withStripe.base, 'GET', '/api/me/export', { token });
+    expect(exported.body.refundsAndDisputes).toEqual([
+      { kind: 'refund', chargeId: 'ch_refund_1', disputeId: null, amountMinor: 2999, currency: 'aud', reason: null, status: 'full', respondBy: null, receivedAt: clock.toISOString() },
+    ]);
   });
 
   it('keeps a dispute with its deadline, and its outcome', async () => {

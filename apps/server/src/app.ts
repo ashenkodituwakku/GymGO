@@ -1894,6 +1894,10 @@ export function createApp(options: AppOptions) {
           `select status, interval, currency, amount_minor as amountMinor, current_period_end as currentPeriodEnd, cancel_at as cancelAt,
                   cancel_at_period_end as cancelAtPeriodEnd, updated_at as updatedAt from subscriptions where user_id = ? order by updated_at`,
         ),
+        refundsAndDisputes: rows(
+          `select kind, charge_id as chargeId, dispute_id as disputeId, amount_minor as amountMinor, currency, reason, status,
+                  respond_by as respondBy, created_at as receivedAt from stripe_money_events where user_id = ? order by created_at`,
+        ),
         bugReports: rows(
           `select id, topic, description, reply_to as replyTo, context_json, status, created_at as createdAt, sent_at as emailedAt
            from bug_reports where user_id = ? order by created_at`,

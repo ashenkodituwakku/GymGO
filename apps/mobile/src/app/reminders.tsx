@@ -84,7 +84,7 @@ export default function RemindersScreen() {
           A nudge on training days
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          GymGO reminds you on the days you pick, even when it’s closed. Set on this phone: nothing is sent from a server.
+          Get a reminder on the days you choose, even when GymGO is closed. Reminders are set on this phone and don’t come from our server.
         </Txt>
       </View>
 

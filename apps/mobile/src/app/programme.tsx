@@ -246,7 +246,7 @@ function Running({ programme }: { programme: Programme }) {
               <View style={styles.easier}>
                 <Icon name="good" size={15} color={color.goodInk} />
                 <Txt variant="footnote" color={color.goodInk} style={[styles.flex, face('medium')]}>
-                  Easier week. Half the sets at about 10% lighter, so you recover.
+                  Easier week. Half the sets, about 10% lighter, to help you recover.
                 </Txt>
               </View>
             )}

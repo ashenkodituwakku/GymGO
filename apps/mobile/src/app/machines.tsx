@@ -198,8 +198,8 @@ export default function MachinesScreen() {
             <View style={styles.empty}>
               <HeroMark icon="search" size={52} />
               <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-                No gym within reach is known to have that. Try further out, or fewer machines. If your gym has it, tick it on the gym’s page so
-                the next person knows.
+                No nearby gyms are known to have this. Try a wider area or fewer machines. If your gym has it, mark it on the gym’s page to
+                help others.
               </Txt>
             </View>
           ) : (
@@ -215,8 +215,8 @@ export default function MachinesScreen() {
             </Card>
           )}
           <Txt variant="footnote" color={color.labelSecondary}>
-            A gym whose own record says it hasn’t got one is left out. Members count only when more say yes than no. Check before you go:
-            machines move, and break.
+            Gyms that list the machine as unavailable are left out. Member reports count when more say yes than no. Machines can move or
+            break, so check before you go.
           </Txt>
         </>
       )}

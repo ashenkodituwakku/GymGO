@@ -75,8 +75,8 @@ export function GooglePage({ record, onClose }: { record: GymRecord; onClose: ()
         <GoogleEmbed url={googleMapsEmbedUrl(record)} height={Math.round(Math.min(Math.max(height * 0.5, 320), 520))} />
 
         <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-          That’s Google’s own map and listing, straight from Google, free. Tap the ↗ on Google’s card or the button
-          below to see every photo and review in Google Maps.
+          This map and listing come from Google. Tap ↗ on the card or the button below to see all photos and reviews
+          in Google Maps.
         </Txt>
 
         <View style={styles.cta}>
@@ -92,7 +92,7 @@ export function GooglePage({ record, onClose }: { record: GymRecord; onClose: ()
           what="Street View"
           caption={
             <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-              Google’s Street View nearest the gym. Drag to look around: it may not be facing the door.
+              Google Street View near the gym. Drag to look around. It may not show the entrance.
             </Txt>
           }
         />
@@ -104,8 +104,8 @@ export function GooglePage({ record, onClose }: { record: GymRecord; onClose: ()
             </Txt>
             <PlaceDetails place={place} />
             <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-              Shown live from Google and not saved by GymGO. Google’s hours are when the gym is open, which isn’t always
-              when a visitor can come: GymGO’s own card says that.
+              Shown live from Google and not saved by GymGO. Google’s hours show when the gym is open, which may differ
+              from guest hours. GymGO’s card shows guest hours.
             </Txt>
             {/* Google's attribution, required wherever its place details show. */}
             <Txt style={styles.attribution}>Google Maps</Txt>
@@ -179,7 +179,7 @@ export function PlaceDetails({ place, hidePhotos = false }: { place: GooglePlace
         {closed ? (
           <View style={[styles.badge, { backgroundColor: color.noTint }]}>
             <Txt variant="footnote" color={color.noInk} style={face('semibold')}>
-              {place.businessStatus === 'CLOSED_PERMANENTLY' ? 'Google says: closed for good' : 'Google says: closed for now'}
+              {place.businessStatus === 'CLOSED_PERMANENTLY' ? 'Permanently closed, according to Google' : 'Temporarily closed, according to Google'}
             </Txt>
           </View>
         ) : place.openNow !== null ? (

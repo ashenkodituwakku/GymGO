@@ -71,8 +71,8 @@ export function describeUpdate(payload: OwnerUpdatePayload): string {
     const shown = payload.classes.slice(0, 4).map((item) => `${DAY_NAMES[item.day]!.slice(0, 3)} ${timeLabel(item.startMinute)} ${item.name}`);
     return `Class timetable: ${payload.classes.length} class${payload.classes.length === 1 ? '' : 'es'} a week (${shown.join(', ')}${payload.classes.length > 4 ? '…' : ''})`;
   }
-  if (payload.alwaysOpen) return 'Visitor hours: round the clock';
-  return `Visitor hours: ${payload.windows.map((window) => `${DAY_NAMES[window.day]!.slice(0, 3)} ${timeLabel(window.openMinute)}–${timeLabel(window.closeMinute % 1440)}`).join(', ')}`;
+  if (payload.alwaysOpen) return 'Guest hours: 24/7';
+  return `Guest hours: ${payload.windows.map((window) => `${DAY_NAMES[window.day]!.slice(0, 3)} ${timeLabel(window.openMinute)}–${timeLabel(window.closeMinute % 1440)}`).join(', ')}`;
 }
 
 export function OwnerUpdateQueue({ token, records, onChanged }: { token: string; records: GymRecord[]; onChanged?: () => void }) {
@@ -119,7 +119,7 @@ export function OwnerUpdateQueue({ token, records, onChanged }: { token: string;
             </Txt>
             <Txt variant="subhead">{describeUpdate(item.payload)}</Txt>
             <Txt variant="caption" color={color.labelSecondary}>
-              Check it against the gym’s own website or a call before approving: it shows as from the gym.
+              Check this against the gym’s website or call them before approving. It will be shown as coming from the gym.
             </Txt>
             <DecideButtons reasons={UPDATE_REASONS} onApprove={() => void decide(item, 'approve')} onReject={(reason) => void decide(item, 'reject', reason)} />
           </View>
@@ -176,7 +176,7 @@ export function ClaimQueue({ token, records }: { token: string; records: GymReco
               {item.evidence}
             </Txt>
             <Txt variant="caption" color={color.labelSecondary}>
-              {`Check before approving: the contact should be the gym’s own (its website’s domain, or the phone it lists${gym?.location.phone ? `: ${gym.location.phone}` : ''}). Approving lets them send its hours and price.`}
+              {`Before approving, check the contact belongs to the gym (an email on its website’s domain, or its listed phone${gym?.location.phone ? `, ${gym.location.phone}` : ''}). Approving lets them update its hours and price.`}
             </Txt>
             <DecideButtons reasons={CLAIM_REASONS} onApprove={() => void decide(item, 'approve')} onReject={(reason) => void decide(item, 'reject', reason)} />
           </View>

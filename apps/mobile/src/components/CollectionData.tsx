@@ -48,7 +48,7 @@ export function CollectionSyncLine({ when = 'any' }: { when?: 'any' | 'trouble' 
       <View style={styles.sync}>
         <Icon name="offline" size={16} color={color.labelSecondary} />
         <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
-          {LIMITED ? 'Kept on this device.' : 'Kept on this device only. Sign in to keep it on your account too, and see it on your other devices.'}
+          {LIMITED ? 'Kept on this device.' : 'Stored on this device only. Sign in to sync it across your devices.'}
         </Txt>
         {!LIMITED && <PrimaryButton label="Sign in" tone="quiet" onPress={() => router.push('/sign-in')} />}
       </View>
@@ -60,8 +60,8 @@ export function CollectionSyncLine({ when = 'any' }: { when?: 'any' | 'trouble' 
         <Icon name="offline" size={16} color={color.labelSecondary} />
         <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
           {sync === 'offline'
-            ? 'Couldn’t reach the GymGO server. Your check-ins are safe on this device and go to your account when it’s back.'
-            : 'Couldn’t sync with your account just now. Your check-ins are safe on this device.'}
+            ? 'Couldn’t connect to GymGO. Your check-ins are saved on this device and will sync later.'
+            : 'Couldn’t sync with your account. Your check-ins are saved on this device.'}
         </Txt>
         <PrimaryButton label="Try again" icon="refresh" tone="quiet" onPress={() => void (reconnect ? reconnect() : retry())} />
       </View>
@@ -71,7 +71,7 @@ export function CollectionSyncLine({ when = 'any' }: { when?: 'any' | 'trouble' 
     <View style={styles.sync} accessibilityLiveRegion="polite">
       <Icon name="cloud" size={16} color={color.brand} />
       <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
-        {sync === 'syncing' ? 'Syncing with your account…' : 'Synced with your account, so it’s on your other devices too.'}
+        {sync === 'syncing' ? 'Syncing with your account…' : 'Synced across your devices.'}
       </Txt>
     </View>
   );
@@ -102,7 +102,7 @@ export function useDeleteCollection(): { open: () => void; toggle: () => void; o
       haptic.warn();
       setStep('warning');
       // The server's own words if it answered; either way nothing has gone.
-      setProblem(error instanceof ApiError ? `${error.message} Nothing was deleted.` : 'Couldn’t reach the GymGO server, so nothing was deleted. Try again when you’re online.');
+      setProblem(error instanceof ApiError ? `${error.message} Nothing was deleted.` : 'Couldn’t connect to GymGO, so nothing was deleted. Try again when you’re online.');
     }
   };
   const cards = stats.gyms === 1 ? 'your card' : `all ${stats.gyms} of your cards`;
@@ -119,9 +119,9 @@ export function useDeleteCollection(): { open: () => void; toggle: () => void; o
           </Txt>
         </View>
         <Txt variant="subhead" color={color.label}>
-          {`This deletes ${cards} and ${visits}, with every rarity, gem and Foil rolled and every badge earned, ${
-            signedIn ? 'on this device and on your account, so on your other devices too' : 'on this device'
-          }. It can’t be undone: a gym you collect again rolls a new card.`}
+          {`This deletes ${cards} and ${visits}, including every rarity, gem, Foil and badge, ${
+            signedIn ? 'on all your devices' : 'on this device'
+          }. This can’t be undone. Collecting a gym again gives you a new card.`}
         </Txt>
         <LiveLine>
           {problem && (

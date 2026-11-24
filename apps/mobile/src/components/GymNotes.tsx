@@ -29,7 +29,7 @@ export function GymNotes({ gymId, isPro, inSheet, onPro }: { gymId: string; isPr
             style={styles.input}
           />
           <Txt variant="caption" color={color.labelSecondary}>
-            {`Kept on this device and never sent anywhere. ${note.text.length} of ${NOTE_LIMIT} characters.`}
+            {`Stored on this device only. ${note.text.length} of ${NOTE_LIMIT} characters.`}
           </Txt>
         </View>
       ) : (

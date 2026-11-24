@@ -127,8 +127,8 @@ export default function ReportBug() {
       <Animated.View style={styles.intro}>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.introText}>
           {notice
-            ? 'Is a photo or review on GymGO yours, posted without your permission? Send a notice and GymGO takes it down while it’s looked into.'
-            : 'Something not working, or not right? Say what happened and it goes straight to the people who make GymGO.'}
+            ? 'Is a photo or review on GymGO yours, posted without permission? Send a notice and we’ll take it down while we review it.'
+            : 'Something not working? Tell us what happened and it goes straight to the GymGO team.'}
         </Txt>
       </Animated.View>
 
@@ -214,13 +214,13 @@ export default function ReportBug() {
       <LiveLine>
         {replyMissing && (
           <Txt variant="footnote" color={color.maybeInk} style={styles.center}>
-            A notice needs an email address, so GymGO can tell you what happens to it.
+            Add your email so we can update you on your notice.
           </Txt>
         )}
       </LiveLine>
       <PrimaryButton label={busy ? 'Sending…' : notice ? 'Send notice' : 'Send report'} icon={notice ? 'mail' : 'bug'} onPress={() => void submit()} disabled={!ready} busy={busy} />
       <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-        Reports are kept on the GymGO server and emailed to the team. Please leave out passwords and card details.
+        Reports are stored by GymGO and emailed to the team. Don’t include passwords or card details.
       </Txt>
     </PageScroll>
   );
@@ -243,7 +243,7 @@ function SentScreen({ title, sent, onDone }: { title: string; sent: { emailed: b
           </Txt>
         </View>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          {sent.emailed ? 'It’s with the GymGO team now.' : 'It’s saved for the GymGO team, and emailed to them as soon as the server can.'}
+          {sent.emailed ? 'It’s with the GymGO team now.' : 'Saved. It’ll be emailed to the GymGO team shortly.'}
           {sent.replyTo ? ` If they need to know more, they’ll write to ${sent.replyTo}.` : ''}
         </Txt>
         <View style={styles.doneButton}>

@@ -227,7 +227,7 @@ function Reveal({ pull, record, cover, onClose, onOpenCollection }: {
                   </Txt>
                 )}
                 <Txt variant="caption" color="rgba(255, 255, 255, 0.62)" style={styles.centreText}>
-                  Each day you check in rolls again, and the card keeps its best. Rarity is luck, not a rating of the gym.
+                  Check in on another day to roll again. Cards keep their best roll. Rarity is random and isn’t a rating of the gym.
                 </Txt>
               </Animated.View>
             </ScrollView>

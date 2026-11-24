@@ -197,7 +197,7 @@ export default function FeedScreen() {
         <Card style={styles.invite}>
           <Txt variant="headline">Share your workouts with friends</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
-            Your friends see the workouts you log here, ones already logged included: the exercises, sets, time and records, and the gym when you tag one. Never your notes. Hide any one from its page, or stop sharing, whenever you like.
+            Friends can see all your workouts, including past ones. They see exercises, sets, time, records and any gym you tag. Your notes stay private. You can hide a workout from its page or stop sharing anytime.
           </Txt>
           <PrimaryButton label="Share my workouts" busy={switching} onPress={() => void share(true)} />
         </Card>

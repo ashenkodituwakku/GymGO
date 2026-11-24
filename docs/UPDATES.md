@@ -9,9 +9,25 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 271 · Plainer words, part 5: profile, collection, friends and gym owners
+
+*24 Nov 2026 · the commit "Plainer words: profile, collection, friends and gym owners"*
+
+The fifth part of the rewrite (docs/COPY.md) covers Profile, Account, Appearance, the collection and card pages, Friends and the feed, reports, filters, Google's listing, gym owners and moderation, weather, notes, photos, reminders and the member reports on a gym's page. For example:
+
+- "Check in at this gym to collect its card. Open its page at the gym and tap I’m here." (it read "A gym’s card is yours once you check in there: open its page at the gym and tap I’m here.")
+- "Send this code to a friend. Once you accept their request, you can see each other’s cards, but not when you trained." (it read "…They add it, you accept, and you can see each other’s cards. Never the days you trained.")
+- "Friends can see all your workouts, including past ones. They see exercises, sets, time, records and any gym you tag. Your notes stay private."
+- "Couldn’t connect to GymGO. Your check-ins are saved on this device and will sync later." in place of the lines about the server being reachable.
+- "When guests can visit, which can differ from member hours." Hours for guests are now "Guest hours" everywhere a gym owner or moderator sees them, and 24-hour opening reads "24/7".
+- "Gyms that list the machine as unavailable are left out. Member reports count when more say yes than no. Machines can move or break, so check before you go."
+- A price no longer published reads "(now unknown)", which is still unknown and not free.
+- GymPal is "it", not "him", in Account and Appearance.
+- Checked: app tests 665 and a typecheck; Collection, Friends, Feed, Machines, Reminders and Photos open with no errors and show the new words.
+
 ## Update 270 · Plainer words, part 4: training
 
-*24 Nov 2026 · the commit "Plainer words: training"*
+*24 Nov 2026 · `5bf7438`*
 
 The fourth part of the rewrite (docs/COPY.md) covers Workout, Progress, the exercise pages, templates, programmes, the plate and 1-rep max calculators, the monthly report, lifetime stats, trips, challenges and Head to head. For example:
 

@@ -67,7 +67,7 @@ export function MemberPrices({
       <Animated.View style={styles.wrap} layout={GLIDE}>
         <Txt variant="headline">What members paid</Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
-          GymGO doesn’t keep visit prices here: the exchange rate moves too much to check a price against. Ask what a visit costs when you call.
+          Visit prices aren’t available here because exchange rates change too often. Ask what a visit costs when you call.
         </Txt>
       </Animated.View>
     );
@@ -213,7 +213,7 @@ function Editor({
         ))}
       </View>
       <Txt variant="caption" color={color.labelSecondary}>
-        Only what you paid yourself, for one visit. Others see the amount and roughly when, never your name.
+        Enter what you paid for one visit. Others see the amount and roughly when, but not your name.
       </Txt>
       <View style={styles.buttons}>
         <View style={styles.flex}>

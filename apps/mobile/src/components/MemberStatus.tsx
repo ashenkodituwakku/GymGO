@@ -63,8 +63,8 @@ export function StatusWarning({ gymId, isDemo, token }: { gymId: string; isDemo:
         </Txt>
         <Txt variant="footnote" color={color.labelSecondary}>
           {summary.closed} member{summary.closed === 1 ? '' : 's'}, latest {shortDate(summary.latestClosedOn!)}
-          {summary.open > 0 ? `; ${summary.open} say${summary.open === 1 ? 's' : ''} it’s still open` : ''}. Not checked by GymGO: check
-          before you go.
+          {summary.open > 0 ? `; ${summary.open} say${summary.open === 1 ? 's' : ''} it’s still open` : ''}. GymGO hasn’t verified this, so
+          check before you go.
         </Txt>
       </View>
     </View>

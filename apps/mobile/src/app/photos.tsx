@@ -57,7 +57,7 @@ export default function PhotosScreen() {
         <View style={styles.privacy}>
           <Icon name="lock" size={15} color={color.goodInk} />
           <Txt variant="footnote" color={color.goodInk} style={styles.flex}>
-            {`Only on this ${Platform.OS === 'web' ? 'computer, in this browser' : 'phone'}: never uploaded, not in your account, and GymPal can’t see them. ${
+            {`Stored only on this ${Platform.OS === 'web' ? 'computer, in this browser' : 'phone'}. They aren’t uploaded or added to your account, and GymPal can’t see them. ${
               Platform.OS === 'web' ? 'Clearing this site’s data deletes them.' : 'Deleting GymGO deletes them.'
             }`}
           </Txt>
@@ -138,7 +138,7 @@ export default function PhotosScreen() {
       </LiveLine>
       <PrimaryButton label={busy ? 'Adding…' : 'Add a photo'} icon="plus" disabled={busy} onPress={() => void add()} />
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-        Each is kept 1,200 pixels across at most and saved afresh, without the original’s details of where and on what it was taken.
+        Photos are resized to at most 1,200 pixels and saved without location or camera details.
       </Txt>
     </PageScroll>
   );

@@ -79,7 +79,7 @@ export function RpePicker({ label, value, onPick, onClose }: { label: string; va
   return (
     <View style={styles.picker} accessibilityLabel={`${label}: how hard was it?`} role="group">
       <Txt variant="caption" color={color.labelSecondary} acronyms>
-        {value !== null ? `RPE ${value}: ${rpeMeaning(value)}` : 'How hard was it? 10 is nothing left, 8 two more reps'}
+        {value !== null ? `RPE ${value}: ${rpeMeaning(value)}` : 'How hard was it? 10 means no reps left, 8 means two left'}
       </Txt>
       <View style={styles.chips}>
         {RPE_VALUES.map((rpe) => (

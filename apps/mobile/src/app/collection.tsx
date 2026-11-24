@@ -134,7 +134,7 @@ export default function CollectionScreen() {
           Your collection is on your account
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          GymGO couldn’t load it just now. Anything you collect meanwhile is kept on this device and joins it when it’s back.
+          Couldn’t load your collection. New cards are saved on this device and will sync later.
         </Txt>
         <PrimaryButton
           label="Try again"
@@ -165,7 +165,7 @@ export default function CollectionScreen() {
           Start your collection
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          At a gym, open its page and tap I’m here. GymGO checks your location on this phone and gives you the gym’s card, with a rarity and a gem rolled by luck. Every day you go back rolls again, and the card climbs from Bronze to Platinum.
+          At a gym, open its page and tap I’m here to collect its card. Each card gets a random rarity and gem. Visit again on another day for another roll, and level the card up from Bronze to Platinum.
         </Txt>
         {/* The five cards there are to get, each in its shape and metal. */}
         <View style={styles.shapesBox} accessible accessibilityLabel={`Cards come in five rarities: ${RARITIES.map((rarity) => rarity.label).join(', ')}`}>
@@ -329,13 +329,13 @@ export default function CollectionScreen() {
           <Txt variant="headline">How cards work</Txt>
         </View>
         <Txt variant="footnote" color={color.labelSecondary}>
-          {`Each day you check in at a gym rolls its card: ${oddsLine()}. The card keeps its best roll, so going back is how it gets rarer. Its gem is picked at random when you first collect the gym, and 1 in ${FOIL_ONE_IN} cards is Foil.`}
+          {`Each daily check-in rolls the card’s rarity (${oddsLine()}). Cards keep their best roll, so repeat visits can make them rarer. The gem is random on your first visit, and 1 in ${FOIL_ONE_IN} cards is Foil.`}
         </Txt>
         <Txt variant="footnote" color={color.labelSecondary}>
-          Each rarity has its own shape and metal: rounded steel, cut green corners, notched blue, scooped purple, and a gold crest with a crown for Legendary. The card takes the colour of the gym’s own logo or website icon, or its gem’s when the logo is black, white or grey.
+          Each rarity has its own shape and finish, from rounded steel to a gold crest for Legendary. Cards use the gym’s logo colour, or the gem colour when the logo is black, white or grey.
         </Txt>
         <Txt variant="footnote" color={color.labelSecondary}>
-          Rarity is luck, not a rating of the gym, and it can’t be bought. The tier (Bronze to Platinum) counts your visits.
+          Rarity is random and can’t be bought. It isn’t a rating of the gym. Tiers (Bronze to Platinum) are based on your visits.
         </Txt>
       </View>
       <PrimaryButton label="Share your collection" icon="share" tone="quiet" onPress={() => void share()} />

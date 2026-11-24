@@ -97,7 +97,7 @@ export function FiltersContent({
             />
           ))}
         </View>
-        <Hint>The hours visitors can walk in, not members’ hours.</Hint>
+        <Hint>When guests can visit, which can differ from member hours.</Hint>
       </Group>
 
       <Group title="Opening hours">
@@ -113,9 +113,9 @@ export function FiltersContent({
         </View>
         <Hint>
           {filters.hours === 'allDay'
-            ? 'Open round the clock on the day you picked, by the hours the gym publishes.'
-            : 'Still open at 10 pm on the day you picked, by the hours the gym publishes.'}{' '}
-          Gyms that publish no hours are left out, not guessed.
+            ? 'Open 24 hours on the day you picked, based on published hours.'
+            : 'Open until at least 10 pm on the day you picked, based on published hours.'}{' '}
+          Gyms that don’t publish hours are left out.
         </Hint>
       </Group>
 
@@ -155,10 +155,10 @@ export function FiltersContent({
                 );
               })}
             </View>
-            <Hint>What you don’t get back: price, tax and any must-pay fee. Refundable deposits are shown separately.</Hint>
+            <Hint>The total you pay, including tax and required fees. Refundable deposits are shown separately.</Hint>
           </>
         ) : (
-          <Hint>GymGO doesn’t keep visit prices here: the exchange rate moves too much to check a price against. Every price is unknown, so ask when you call.</Hint>
+          <Hint>Visit prices aren’t available here because exchange rates change too often. Ask when you call.</Hint>
         )}
       </Group>
 

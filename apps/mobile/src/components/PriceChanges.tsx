@@ -88,7 +88,7 @@ export function changeText(note: PriceChange): string {
   const now = note.after ? priceLabel(note.after.amountMinor, note.after.currency) : null;
   if (was && now) return `${note.label}: ${was} → ${now}`;
   if (now) return `${note.label}: newly published, ${now}`;
-  return `${note.label}: ${was}, no longer published (not known, not free)`;
+  return `${note.label}: ${was}, no longer published (now unknown)`;
 }
 
 const sourceText = (note: PriceChange) => `${note.sourceLabel}${note.checkedAt ? `, checked ${dateLabel(note.checkedAt, { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}`;

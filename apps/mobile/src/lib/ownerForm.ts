@@ -49,7 +49,7 @@ export function windowsFrom(week: readonly DayHours[]): { windows: OpeningWindow
     if (close === open) return { problem: `${DAY_NAMES[day]}: it can’t close when it opens.` };
     windows.push({ day, openMinute: open, closeMinute: close > open ? close : close + 1440 });
   }
-  if (windows.length === 0) return { problem: 'Open at least one day, or say it’s open round the clock.' };
+  if (windows.length === 0) return { problem: 'Choose at least one day, or turn on 24/7.' };
   return { windows };
 }
 

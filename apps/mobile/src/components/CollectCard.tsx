@@ -93,9 +93,9 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
     };
     const fix = anywhere ? null : await currentFix(true, again);
     await pause(MIN_SCAN_MS - (Date.now() - started));
-    if (fix === 'denied') return stop('Collecting needs your location, just this once, to check you’re at the gym. It never leaves your phone.');
-    if (fix === 'off') return stop('Collecting needs your location, just this once, to check you’re at the gym. Location is off in Profile → Settings.');
-    if (fix === 'unavailable') return stop('Couldn’t find where you are just now. Step outside or by a window, then try again.');
+    if (fix === 'denied') return stop('To collect this card, allow location once so we can check you’re at the gym. It stays on your phone.');
+    if (fix === 'off') return stop('To collect this card, turn on location in Profile → Settings so we can check you’re at the gym.');
+    if (fix === 'unavailable') return stop('Couldn’t find your location. Move near a window or outside and try again.');
     setScan('checking');
     await pause(450);
     if (fix) {
@@ -105,7 +105,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
         return stop(`You’re ${distanceLabel(where.metres / 1000, location.address.countryCode)} away. Collect it when you’re there.`);
       }
       if (where.kind === 'rough') {
-        return stop(`Your location is only good to about ${distanceLabel(where.accuracyM / 1000, location.address.countryCode)} here, too rough to tell you’re inside. Try again in a moment.`);
+        return stop(`Your location is only good to about ${distanceLabel(where.accuracyM / 1000, location.address.countryCode)} here, which isn’t precise enough to confirm you’re there. Try again in a moment.`);
       }
     }
     setScan('done');
@@ -182,7 +182,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
       )}
       {anywhere && mine && step.kind !== 'collected' && (
         <Txt variant="footnote" color={color.labelSecondary}>
-          Dev account: checking in works from anywhere.
+          Dev account: you can check in from anywhere.
         </Txt>
       )}
       {step.kind === 'collected' &&

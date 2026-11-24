@@ -97,7 +97,7 @@ export function SessionNote({ session, compact = false }: { session: TrainingSes
       ) : (
         !compact && (
           <Txt variant="footnote" color={color.labelSecondary}>
-            How it went, a niggle, new shoes: a line for next time.
+            How it went, any niggles, new shoes…
           </Txt>
         )
       )}

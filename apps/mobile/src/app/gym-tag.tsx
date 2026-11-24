@@ -152,7 +152,7 @@ export default function GymTagScreen() {
 
       {currentId && !searching && (
         <View style={styles.group}>
-          <Pressable onPress={() => void choose(null)} disabled={saving} accessibilityRole="button" accessibilityLabel="No gym: take the gym off" style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+          <Pressable onPress={() => void choose(null)} disabled={saving} accessibilityRole="button" accessibilityLabel="No gym. Remove the gym tag" style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
             <Icon name="close" size={16} color={color.labelSecondary} />
             <Txt variant="body" color={color.labelSecondary} style={styles.flex}>
               No gym

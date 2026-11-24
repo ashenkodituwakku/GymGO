@@ -264,7 +264,7 @@ export default function FriendScreen() {
         })}
       </View>
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-        You see their cards and visit counts, never the days they went. Unfriend from Friends whenever you like.
+        You can see their cards and visit counts, but not when they went. You can unfriend them anytime in Friends.
       </Txt>
       {friend && (
         <PrimaryButton

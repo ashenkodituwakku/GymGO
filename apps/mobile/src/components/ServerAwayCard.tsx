@@ -30,7 +30,7 @@ export function ServerAwayCard() {
         <View style={styles.flex}>
           <Txt variant="title2">Can’t reach GymGO</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
-            You’re still signed in. Your saved gyms on this device work, and the rest comes back when the server does.
+            You’re still signed in. Gyms saved on this device still work, and everything else will be back once GymGO reconnects.
           </Txt>
         </View>
       </View>

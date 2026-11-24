@@ -415,7 +415,7 @@ export const LOOKS: Record<LookId, LookSpec> = {
   },
   liquid: {
     name: 'Liquid',
-    blurb: 'Everything in Liquid Glass: clear, bright-edged cards over soft colour',
+    blurb: 'Clear, bright-edged glass cards over soft colour',
     radius: { sm: 12, md: 18, lg: 24, xl: 30, sheet: 38, pill: 999 },
     solid: false,
     fonts: null,
@@ -459,7 +459,7 @@ export const LOOKS: Record<LookId, LookSpec> = {
   },
   classic: {
     name: 'Classic',
-    blurb: 'A nineties desktop: teal backdrop, bevelled grey',
+    blurb: 'Nineties desktop with a teal backdrop and bevelled grey',
     radius: { sm: 0, md: 0, lg: 0, xl: 0, sheet: 2, pill: 2 },
     solid: true,
     fonts: null,

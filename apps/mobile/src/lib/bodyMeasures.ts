@@ -36,7 +36,7 @@ export const MEASURES: readonly Measure[] = [
   { id: 'forearm', label: 'Forearm', min: 15, max: 60, how: 'Around the thickest part, below the elbow' },
   { id: 'thigh', label: 'Thigh', min: 30, max: 110, how: 'Around the thickest part, standing' },
   { id: 'calf', label: 'Calf', min: 20, max: 70, how: 'Around the thickest part, standing' },
-  { id: 'bodyFat', label: 'Body fat', min: 2, max: 70, how: 'From your scale or callipers: an estimate either way' },
+  { id: 'bodyFat', label: 'Body fat', min: 2, max: 70, how: 'From a scale or callipers. Both give an estimate.' },
 ];
 const BY_ID = new Map(MEASURES.map((measure) => [measure.id, measure]));
 

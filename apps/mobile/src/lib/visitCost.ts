@@ -189,7 +189,7 @@ export function breakEvenVisits(perMonthMinor: number, perVisitMinor: number): n
 export function compareLine(spend: Spend, price: VisitPrice | null, visitsIn30Days: number, checkedLabel: (iso: string) => string): string | null {
   const month = monthlyMinor(spend);
   if (month === null) return null;
-  if (!price) return 'This gym doesn’t publish a visit price, so GymGO can’t say when the membership beats paying each time.';
+  if (!price) return 'This gym doesn’t publish a visit price, so we can’t compare it with your membership.';
   const from = breakEvenVisits(month, price.amountMinor);
   const source = `${price.sourceLabel}${price.checkedAt ? `, checked ${checkedLabel(price.checkedAt)}` : ''}${price.stale ? '; to confirm' : ''}`;
   const went = `In the last 30 days you went ${visitsIn30Days === 1 ? 'once' : `${visitsIn30Days} times`}`;

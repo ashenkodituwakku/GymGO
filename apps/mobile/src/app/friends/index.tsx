@@ -140,7 +140,7 @@ export default function FriendsScreen() {
           </Txt>
         </View>
         <Txt variant="footnote" color={color.onBrandSoft}>
-          Send it to a friend. They add it, you accept, and you can see each other’s cards. Never the days you trained.
+          Send this code to a friend. Once you accept their request, you can see each other’s cards, but not when you trained.
         </Txt>
         <Pressy
           disabled={!view}

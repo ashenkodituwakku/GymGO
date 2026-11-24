@@ -209,7 +209,7 @@ export default function Saved() {
               : account.state === 'signed_in'
               ? 'Synced to your account.'
               : account.state === 'unreachable'
-                ? 'The GymGO server isn’t reachable, so these are this device’s copy. Anything you save now joins your account when it’s back.'
+                ? 'Couldn’t connect to GymGO. Showing gyms saved on this device. New saves will sync later.'
                 : (
                   <>
                     Saved on this device.{' '}

@@ -51,7 +51,7 @@ function basisWord(offer: VisitOffer): string {
   return offer.priceBasis === 'from' ? 'From ' : offer.priceBasis === 'recommended' ? 'About ' : '';
 }
 
-const CHAIN_NOTE = 'Prices the chain publishes for all its clubs. Each club sets its own, so this one may charge more: check before you join.';
+const CHAIN_NOTE = 'Prices published by the chain for all its clubs. Each club sets its own prices, so check with this one before you join.';
 
 /**
  * What to say when the gym's own sources disagree on a price: what the
@@ -242,7 +242,7 @@ export function JoinGym({ record }: { record: GymRecord }) {
       })}
       {memberships.length === 0 && (
         <Txt variant="subhead" color={color.labelSecondary}>
-          This gym doesn’t publish what joining costs, so we don’t show a price. {url ? 'Its website may say more.' : phone ? 'Ask when you call.' : ''}
+          This gym doesn’t publish its membership prices. {url ? 'Its website may say more.' : phone ? 'Ask when you call.' : ''}
         </Txt>
       )}
       {url ? (
@@ -257,7 +257,7 @@ export function JoinGym({ record }: { record: GymRecord }) {
       ) : null}
       {(url || phone) && (
         <Txt variant="caption" color={color.labelSecondary}>
-          You join with the gym itself. GymGO doesn’t take payment or pass on your details, and prices can change: check before you sign.
+          You sign up directly with the gym. GymGO doesn’t take payment or share your details. Prices can change, so check before you sign.
         </Txt>
       )}
     </Fold>

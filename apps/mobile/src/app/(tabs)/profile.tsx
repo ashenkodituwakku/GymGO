@@ -216,7 +216,7 @@ export default function Profile() {
       {/* Friends and leaderboards live on the server, which the limited website hasn't got. */}
       {!LIMITED && (
         <Group header="Friends">
-          <Row icon="workout" tile={TILE.orange} title="Feed" subtitle="Your friends’ workouts: like them, comment, share yours" onPress={() => router.push('/feed')} />
+          <Row icon="workout" tile={TILE.orange} title="Feed" subtitle="Like, comment and share workouts with friends" onPress={() => router.push('/feed')} />
           <Row icon="people" tile={TILE.indigo} title="Friends" subtitle="Add by code, see their cards, invite to train" onPress={() => router.push('/friends')} />
           <Row icon="trophy" tile={TILE.teal} title="Leaderboard" subtitle="Most gyms collected, if you join" onPress={() => router.push('/leaderboard')} />
         </Group>
@@ -280,7 +280,7 @@ export default function Profile() {
           icon="flame"
           tile={TILE.orange}
           title="RPE on sets"
-          subtitle={prefs.rpe ? 'Each set asks how hard it was, 6 to 10: how many reps you had left' : 'Off: sets don’t ask how hard they were'}
+          subtitle={prefs.rpe ? 'Rate each set from 6 to 10 by reps left in the tank' : 'Off'}
           toggle={{ value: prefs.rpe, onChange: (value) => setPref('rpe', value) }}
         />
         <Row
@@ -289,15 +289,15 @@ export default function Profile() {
           title="Location"
           subtitle={
             prefs.location
-              ? 'For gyms near you, checking in and saying how busy a gym is. It never leaves your device'
-              : 'Off: GymGO never asks where you are. Search a place instead'
+              ? 'Used for nearby gyms, check-ins and busy reports. Stays on your device'
+              : 'Off. Search for a place instead'
           }
           toggle={{ value: prefs.location, onChange: (value) => setPref('location', value) }}
         />
         <Row
           leading={<GymPalMark size={ROW.tile} still />}
           title="GymPal"
-          subtitle={prefs.gymPal ? 'GymGO’s AI assistant, and Ask GymPal on screens' : 'Off: no GymPal anywhere in the app'}
+          subtitle={prefs.gymPal ? 'GymGO’s AI assistant, and Ask GymPal on screens' : 'Off'}
           toggle={{ value: prefs.gymPal, onChange: (value) => setPref('gymPal', value) }}
         />
         <Row
@@ -326,9 +326,9 @@ export default function Profile() {
         <Row icon="good" tile={TILE.green} title="How we check facts" expanded={about === 'facts'} onPress={() => toggle('facts')} />
         {about === 'facts' && (
           <Explainer>
-            Every price, opening hour and machine comes from a named source: the gym’s own website, OpenStreetMap, or members
-            who train there. Each fact links to where it came from and says when it was checked. Anything nobody has published
-            is shown as unknown, never guessed, which is why most gyms say “Call first”.
+            Every price, opening hour and piece of equipment shows where it came from, such as the gym’s website, OpenStreetMap
+            or members who train there, and when it was checked. Details a gym hasn’t published show as unknown, which is why
+            most gyms say “Call first”.
           </Explainer>
         )}
         <Row icon="source" tile={TILE.indigo} title="Where the data comes from" expanded={about === 'sources'} onPress={() => toggle('sources')} />
@@ -464,7 +464,7 @@ function LimitedCard() {
         <View style={styles.flex}>
           <Txt variant="title2">GymGO limited version</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
-            {`Real gyms in ${BUILT_IN_CITIES} major cities, built in, from OpenStreetMap: no account needed. Your own account, reviews, members’ prices and visits, searching anywhere on the map and Pro come with the full version.`}
+            {`Real gyms in ${BUILT_IN_CITIES} major cities from OpenStreetMap, with no account needed. Accounts, reviews, member prices, worldwide search and Pro come with the full version.`}
           </Txt>
         </View>
       </View>
@@ -628,8 +628,8 @@ function PackRow() {
         : state.status === 'loading'
           ? 'Checking…'
           : state.failure === 'map'
-            ? 'Not saved: the map service didn’t answer. Try later.'
-            : 'Not saved: couldn’t reach GymGO. Tap to try again.';
+            ? 'Couldn’t save. The map service didn’t respond, so try again later.'
+            : 'Couldn’t save. Tap to try again.';
   return (
     <Row
       icon="download"

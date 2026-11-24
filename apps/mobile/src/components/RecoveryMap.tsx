@@ -119,7 +119,7 @@ export function RecoveryMap({ sessions, maxWidth }: { sessions: TrainingSession[
           ))}
       </View>
       <Txt variant="caption" color={color.labelSecondary}>
-        Counted for the muscles an exercise mainly works. It shows what you’ve trained, not whether a muscle has recovered: only you can tell that.
+        Based on the main muscles each exercise works. It shows what you’ve trained. Only you can tell whether a muscle has recovered.
       </Txt>
     </View>
   );

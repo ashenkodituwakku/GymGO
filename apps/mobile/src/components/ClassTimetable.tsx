@@ -41,7 +41,7 @@ export function ClassTimetable({ timetable, today }: { timetable: Timetable; tod
         </View>
       ))}
       <Txt variant="caption" color={color.labelSecondary}>
-        {`${source?.label ?? 'From the gym (verified owner)'}${source?.checkedAt ? `, approved ${dateLabel(source.checkedAt, { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}. Whether a class needs booking, a membership or a fee isn’t listed: ask the gym.`}
+        {`${source?.label ?? 'From the gym (verified owner)'}${source?.checkedAt ? `, approved ${dateLabel(source.checkedAt, { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}. Booking, membership and fees aren’t listed, so ask the gym.`}
       </Txt>
     </View>
   );

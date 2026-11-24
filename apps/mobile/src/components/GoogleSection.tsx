@@ -54,7 +54,7 @@ export function GoogleSection({ place, photosAbove = false }: { place: GooglePla
         </Txt>
       </View>
       <Txt variant="footnote" color={color.labelSecondary}>
-        Live from Google, not checked by GymGO and not saved. It doesn’t change GymGO’s answer above.
+        Shown live from Google. GymGO doesn’t check or save it, and it doesn’t change the answer above.
       </Txt>
       <PlaceDetails place={place} hidePhotos={photosAbove} />
       {/* Google's attribution, required wherever its place details show. */}

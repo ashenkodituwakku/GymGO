@@ -92,8 +92,8 @@ export function MemberAccess({
           </View>
           <Txt variant="caption" color={color.labelSecondary}>
             From {summary.count} member{summary.count === 1 ? '' : 's'} in the last year, latest{' '}
-            {new Date(summary.latestVisitOn!).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}. Their visits, not the
-            gym’s rule: still call first.
+            {new Date(summary.latestVisitOn!).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}. These are member reports,
+            so call the gym first.
           </Txt>
         </>
       )}
@@ -184,7 +184,7 @@ function Editor({
         {WHEN_CHOICES.map((option, index) => chip(option.label, option.label, when === index, () => setWhen(index)))}
       </View>
       <Txt variant="caption" color={color.labelSecondary}>
-        Only your own visit. Others see what happened and roughly when, never your name.
+        Report your own visit only. Others see what happened and roughly when, but not your name.
       </Txt>
       <View style={styles.buttons}>
         <View style={styles.flex}>

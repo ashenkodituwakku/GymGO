@@ -738,8 +738,8 @@ function Chat({
                 </Txt>
                 <Txt variant="caption" color={color.labelSecondary}>
                   {log.pro
-                    ? 'GymPal sees your latest workouts: exercises, sets and weights. Never your gyms or notes.'
-                    : 'With Pro, GymPal can see your workouts and answer for you: what to train today, how you’re going.'}
+                    ? 'GymPal can see your recent exercises, sets and weights. It can’t see your gyms or notes.'
+                    : 'With Pro, GymPal can use your workouts to answer questions like what to train today.'}
                 </Txt>
               </View>
               {log.pro ? (

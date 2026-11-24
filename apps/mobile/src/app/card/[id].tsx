@@ -69,7 +69,7 @@ export default function CardScreen() {
               Not in your collection
             </Txt>
             <Txt variant="subhead" color={color.labelSecondary} style={styles.centre}>
-              A gym’s card is yours once you check in there: open its page at the gym and tap I’m here.
+              Check in at this gym to collect its card. Open its page at the gym and tap I’m here.
             </Txt>
             <View style={styles.missingButton}>
               <PrimaryButton label="Open Collection" icon="trophy" onPress={() => router.replace('/collection')} />
@@ -121,8 +121,8 @@ export default function CardScreen() {
         )}
         <Txt variant="footnote" color={color.labelSecondary} style={styles.centre}>
           {entry
-            ? 'The picture shows what’s on the card: the gym, its city and the card’s look. Never the days you went.'
-            : 'The picture shows what’s on the card: the place and the day you finished the set.'}
+            ? 'The picture shows the gym, its city and the card design. It doesn’t show when you went.'
+            : 'The picture shows the place and the day you finished the set.'}
         </Txt>
       </View>
     </PageScroll>
@@ -140,8 +140,8 @@ function CardFacts({ entry, record }: { entry: CollectedGym; record: GymRecord |
       ? `From the ${logo.brand} logo`
       : 'From the gym’s website icon'
     : logo
-      ? `Its gem’s: the ${logo.brand} logo has no colour to take`
-      : 'Its gem’s: no logo or icon colour to take';
+      ? `Uses its gem colour, since the ${logo.brand} logo has no colour`
+      : 'Uses its gem colour, since there’s no logo colour';
   const rows: Array<{ label: string; value: string; swatch?: string; shape?: boolean }> = [
     { label: 'Rarity', value: `${rarityLabel(look.rarity)}${look.foil ? ' · Foil' : ''}`, shape: true },
     { label: 'Gem', value: gem.label, swatch: gem.colors[1] },

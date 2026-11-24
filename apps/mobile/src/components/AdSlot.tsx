@@ -140,7 +140,7 @@ export function AdSlot({ place, style }: { place: AdPlace; style?: object }) {
           hide();
         }}
         accessibilityRole="button"
-        accessibilityLabel="Not now: hide this for two weeks"
+        accessibilityLabel="Hide for two weeks"
         hitSlop={10}
         style={({ pressed }) => [styles.close, pressed && { opacity: 0.6 }]}
       >

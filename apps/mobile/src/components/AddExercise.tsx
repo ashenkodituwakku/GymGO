@@ -58,7 +58,7 @@ export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: 
         <Txt variant="headline" style={styles.flex}>
           Add an exercise
         </Txt>
-        <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Close, adding nothing" hitSlop={10} style={({ pressed }) => [styles.close, pressed && { opacity: 0.6 }]}>
+        <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Close without adding" hitSlop={10} style={({ pressed }) => [styles.close, pressed && { opacity: 0.6 }]}>
           <Icon name="close" size={14} color={color.labelSecondary} />
         </Pressable>
       </View>

@@ -259,7 +259,7 @@ export default function AppearanceScreen() {
                 onPress={() => pickMode(mode.id)}
                 accessibilityRole="radio"
                 aria-checked={on}
-                accessibilityLabel={mode.id === 'system' ? 'Automatic: follow your phone' : mode.label}
+                accessibilityLabel={mode.id === 'system' ? 'Automatic, matches your phone' : mode.label}
                 style={styles.mode}
               >
                 <View style={[styles.preview, on && styles.previewOn]}>
@@ -281,7 +281,7 @@ export default function AppearanceScreen() {
           })}
         </View>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-          Automatic follows your phone, so GymGO goes dark when your phone does.
+          Automatic matches your phone’s light or dark setting.
         </Txt>
 
         <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={[styles.section, styles.sectionGap, styles.headCaps]}>
@@ -469,7 +469,7 @@ export default function AppearanceScreen() {
             <View style={styles.flex}>
               <Txt variant="body">Move widgets with buttons</Txt>
               <Txt variant="footnote" color={color.labelSecondary}>
-                Up and down buttons on each widget while you customise Home, which then hold still, for when holding and dragging is hard
+                Show up and down buttons on widgets when customising Home, instead of dragging
               </Txt>
             </View>
             <Toggle
@@ -484,8 +484,8 @@ export default function AppearanceScreen() {
         </View>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {phoneCalm
-            ? 'Your phone’s Reduce Motion is on, so GymGO already keeps still.'
-            : 'In GymGO only, without changing your phone. Celebrations stay still with it on. Free for everyone.'}
+            ? 'Reduce Motion is on in your phone’s settings.'
+            : 'Reduces motion in GymGO only, including celebrations.'}
         </Txt>
 
         <View style={styles.accentHead}>
@@ -614,7 +614,7 @@ export default function AppearanceScreen() {
         </View>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {solidLook
-            ? `${LOOKS[lookInUse].name} draws everything as solid plates, so there’s no glass to set. Choose Standard, Frost or Liquid to use Liquid Glass.`
+            ? `${LOOKS[lookInUse].name} doesn’t use glass effects. Choose Standard, Frost or Liquid to use Liquid Glass.`
             : `How glassy GymGO is: the controls, sheets and bars over the map, and the cards on every page, with ${LOOKS[lookInUse].backdrop ? 'the page’s colours showing' : 'your accent glowing'} through from behind. 0% makes it all solid; 100% is the clearest that keeps text readable.`}
         </Txt>
 
@@ -699,8 +699,8 @@ export default function AppearanceScreen() {
         )}
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {billing.isPro
-            ? 'The accent colours buttons, links and your selections. Evidence colours (green, orange, grey) never change, so they always mean the same thing.'
-            : 'Indigo is everyone’s. The rest, from Midnight and Lagoon to Rainbow and Camo, come with GymGO Pro, as do the looks. Dark mode is free for everyone.'}
+            ? 'The accent colour is used for buttons, links and selections. Status colours (green, orange and grey) stay the same.'
+            : 'Indigo is free. Other accents and styles come with GymGO Pro. Dark mode is free.'}
         </Txt>
 
         <View style={styles.accentHead}>
@@ -789,7 +789,7 @@ export default function AppearanceScreen() {
           <PrimaryButton label="Play it" icon="play" tone="quiet" onPress={() => setPlaying((count) => count + 1)} />
         </View>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-          {`${CELEBRATIONS.find((item) => item.id === celebrationInUse)!.blurb}. It plays over the workout summary when you set a record or meet your weekly goal${billing.isPro ? '' : '; fireworks, gold stars and emoji come with GymGO Pro'}. Never with Reduce Motion on.`}
+          {`${CELEBRATIONS.find((item) => item.id === celebrationInUse)!.blurb}. Plays on the workout summary when you set a record or meet your weekly goal${billing.isPro ? '' : '. Fireworks, stars and emoji come with GymGO Pro'}. Off when Reduce Motion is on.`}
         </Txt>
 
         <View style={styles.accentHead}>
@@ -837,7 +837,7 @@ export default function AppearanceScreen() {
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
           {prefs.sounds
             ? `Tap one to hear a new record in it. It voices check-ins, records, sets and the timers; the cards keep their own sounds${billing.isPro ? '' : '. Arcade comes with GymGO Pro'}.`
-            : 'Sounds are off, so there’s nothing to hear: turn them on in Profile → Settings.'}
+            : 'Sounds are off. Turn them on in Profile → Settings.'}
         </Txt>
 
         <View style={styles.accentHead}>
@@ -963,11 +963,11 @@ export default function AppearanceScreen() {
 
 /** What each way of keeping GymPal does, and the other ways in. */
 function gymPalHow(button: GymPalButton, side: 'left' | 'right'): string {
-  const keys = Platform.OS === 'web' ? ` On a computer, ${GYMPAL_KEYS} opens him too.` : '';
-  const off = ' To have no GymPal at all, switch him off in Profile → Settings.';
-  if (button === 'tab') return `A small tab on the ${side} edge of the screen, low down: tap it, or pull it in.${keys}${off}`;
+  const keys = Platform.OS === 'web' ? ` On a computer, ${GYMPAL_KEYS} also opens it.` : '';
+  const off = ' To turn GymPal off completely, go to Profile → Settings.';
+  if (button === 'tab') return `A small tab on the ${side} edge of the screen. Tap it or pull it in.${keys}${off}`;
   if (button === 'corner') return `His button in the bottom ${side} corner.${keys}${off}`;
-  return `Nothing on screen.${Platform.OS === 'web' ? ` ${GYMPAL_KEYS} opens him` : ` Swipe in from the ${side} edge, near the bottom, to open him`}, or Profile → Ask GymPal and the Ask GymPal buttons.${off}`;
+  return `Nothing on screen.${Platform.OS === 'web' ? ` ${GYMPAL_KEYS} opens it` : ` Swipe in from the ${side} edge, near the bottom, to open it`}, or use Profile → Ask GymPal.${off}`;
 }
 
 /** "Your own" among the accents: the colour you picked, or a rainbow ring before you have. */
@@ -976,7 +976,7 @@ function mapNote(id: MapStyleId, scheme: 'light' | 'dark', isPro: boolean): stri
   const style = mapStyle(id);
   const dark = scheme === 'dark' && id !== 'deep' ? ' In dark mode every style but Deep blue shows the dark map.' : '';
   // An iPhone draws Apple's map, which has nothing like Classic.
-  const apple = Platform.OS === 'ios' ? ' On iPhone it’s Apple’s map: Muted is its muted map, Deep blue its dark one, and Classic its standard map.' : '';
+  const apple = Platform.OS === 'ios' ? ' On iPhone, these use Apple Maps styles.' : '';
   const pro = isPro ? '' : ' Muted, Classic and Deep blue come with GymGO Pro.';
   return `${style.blurb}, on Explore’s map.${dark}${apple}${pro}`;
 }

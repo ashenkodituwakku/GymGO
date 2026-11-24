@@ -128,7 +128,7 @@ export function BodyWeightCard({ unit }: { unit: WeightUnit }) {
       <View style={styles.foot}>
         <Icon name="lock" size={12} color={color.labelTertiary} />
         <Txt variant="caption" color={color.labelSecondary} style={styles.flex}>
-          On this phone only: never sent to GymGO.
+          Stored on this phone only. It isn’t sent to GymGO.
         </Txt>
         {todays && (
           <Pressable

@@ -101,14 +101,14 @@ function Claim({ gymName, gymId, country, token, view, onSignIn, onSent }: { gym
       )}
       <Txt variant="footnote" color={color.labelSecondary}>
         {view.verified
-          ? `Also run ${gymName}? Claim it too, and we’ll check just as carefully. We never show your details.`
-          : `Own or manage ${gymName}? Once we’ve checked, you can keep its visitor hours and casual price right here, marked as from the gym. We never show your details.`}
+          ? `Also run ${gymName}? Claim it too and we’ll verify it the same way. Your details stay private.`
+          : `Own or manage ${gymName}? Once you’re verified, you can update its guest hours and casual price here. Your details stay private.`}
       </Txt>
       {!open ? (
         <PrimaryButton label={token ? 'Claim this gym' : 'Sign in to claim this gym'} icon="key" tone="quiet" onPress={() => (token ? setOpen(true) : onSignIn())} />
       ) : (
         <>
-          <Input value={roleTitle} onChangeText={setRoleTitle} placeholder="Your role: owner, manager…" maxLength={80} accessibilityLabel="Your role at the gym" style={styles.input} />
+          <Input value={roleTitle} onChangeText={setRoleTitle} placeholder="Owner, manager…" maxLength={80} accessibilityLabel="Your role at the gym" style={styles.input} />
           <Input
             value={contact}
             onChangeText={setContact}
@@ -201,7 +201,7 @@ function OwnerTools({ record, token, view, onSent }: { record: GymRecord; token:
   return (
     <View style={styles.form}>
       <Txt variant="footnote" color={color.labelSecondary}>
-        You’re this gym’s verified owner. Keep its visitor hours, casual price and class timetable up to date: each is checked by a moderator, then shown as from the gym.
+        You’re the verified owner of this gym. Update its guest hours, casual price and class timetable here. A moderator reviews each change before it goes live.
       </Txt>
       {view.you!.submissions.slice(0, 4).map((item) => (
         <Txt key={item.id} variant="caption" color={item.status === 'rejected' ? color.noInk : color.labelSecondary}>
@@ -231,7 +231,7 @@ function OwnerTools({ record, token, view, onSent }: { record: GymRecord; token:
       {part === 'classes' && (
         <View style={styles.form}>
           <Txt variant="footnote" color={color.labelSecondary}>
-            Each week’s classes: the day, start and end (like 18:00 and 18:45) and what you call it. It replaces the timetable showing now.
+            Add each weekly class with its day, start and end time (like 18:00 to 18:45) and name. This replaces the current timetable.
           </Txt>
           {rows.map((row, index) => (
             <View key={index} style={styles.classRow}>
@@ -262,9 +262,9 @@ function OwnerTools({ record, token, view, onSent }: { record: GymRecord; token:
         <View style={styles.form}>
           <View style={styles.row}>
             <Txt variant="subhead" style={styles.flex}>
-              Open to visitors round the clock
+              Open to guests 24/7
             </Txt>
-            <Toggle value={allDay} onValueChange={setAllDay} accessibilityLabel="Open to visitors round the clock" />
+            <Toggle value={allDay} onValueChange={setAllDay} accessibilityLabel="Open to guests 24/7" />
           </View>
           {!allDay &&
             week.map((day, index) => (
@@ -298,7 +298,7 @@ function OwnerTools({ record, token, view, onSent }: { record: GymRecord; token:
               </View>
             ))}
           <Txt variant="caption" color={color.labelSecondary}>
-            The hours a visitor can walk in, not members’ 24/7 door. A close earlier than the open runs past midnight.
+            When guests can visit, which may differ from member access. A closing time earlier than the opening time means past midnight.
           </Txt>
           <PrimaryButton label="Send visitor hours" busy={sending} onPress={sendHours} />
           <PrimaryButton label="Cancel" tone="quiet" onPress={() => setPart(null)} />
@@ -308,7 +308,7 @@ function OwnerTools({ record, token, view, onSent }: { record: GymRecord; token:
         <View style={styles.form}>
           <Input value={price} onChangeText={setPrice} placeholder={`One casual visit, e.g. ${moneyLabel(2500, country)}`} keyboardType="decimal-pad" accessibilityLabel="Casual visit price" style={styles.input} />
           <Txt variant="caption" color={color.labelSecondary}>
-            The whole price: tax and any must-pay fee included.
+            The full price, including tax and required fees.
           </Txt>
           <Txt variant="subhead">Can anyone buy it (not only locals or members’ guests)?</Txt>
           <View style={styles.chips}>

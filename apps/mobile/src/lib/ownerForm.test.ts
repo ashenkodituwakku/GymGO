@@ -21,7 +21,7 @@ describe('the owner’s forms', () => {
       { day: 5, openMinute: 360, closeMinute: 1260 },
       { day: 6, openMinute: 960, closeMinute: 1560 },
     ]);
-    expect(windowsFrom(week.map((day) => ({ ...day, open: false })))).toEqual({ problem: 'Open at least one day, or say it’s open round the clock.' });
+    expect(windowsFrom(week.map((day) => ({ ...day, open: false })))).toEqual({ problem: 'Choose at least one day, or turn on 24/7.' });
     expect(windowsFrom([{ open: true, from: 'nine', to: '17:00' }])).toEqual({ problem: 'Sunday: write the times like 06:00 and 21:00.' });
   });
 

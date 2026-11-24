@@ -81,7 +81,7 @@ export function CrashScreen({ error, retry }: ErrorBoundaryProps) {
           <>
             <Txt variant="headline">Tell the team</Txt>
             <Txt variant="footnote" color={color.labelSecondary}>
-              Sends the error, any warnings just before it, the app’s version and the kind of device. Nothing about you, where you are or your gyms.
+              Sends the error, recent warnings, the app version and your device type. It doesn’t include your personal details, location or gyms.
             </Txt>
             <TextField
               label="What were you doing? (optional)"

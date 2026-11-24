@@ -170,7 +170,7 @@ export default function AccountScreen() {
         )}
       </LiveLine>
 
-      <Section title="Profile" footer="Only you see your profile picture. It isn’t shown with your reviews or photos, and its location data is removed.">
+      <Section title="Profile" footer="Only you can see your profile picture. It isn’t shown with your reviews or photos, and location data is removed.">
         <Line icon="person" tile={TILE.indigo} title="Name" value={me.displayName} onPress={() => setEditing(editing === 'name' ? null : 'name')} open={editing === 'name'} />
         {editing === 'name' && (
           <NameForm
@@ -202,7 +202,7 @@ export default function AccountScreen() {
         title="Signing in"
         footer={
           offered.length
-            ? 'Connect Apple or Google to sign in with a tap. You can always have more than one way in, and GymGO never lets you remove the last.'
+            ? 'Connect Apple or Google for one-tap sign-in. You can add more than one, but you can’t remove your last sign-in method.'
             : 'Signing in with Apple or Google will appear here once it’s available.'
         }
       >
@@ -267,7 +267,7 @@ export default function AccountScreen() {
               setExported('Saved');
             } catch (error) {
               // A server that answered but couldn't do it isn't out of reach.
-              setExported(error instanceof ApiError ? 'Couldn’t prepare it' : 'Couldn’t reach the server');
+              setExported(error instanceof ApiError ? 'Couldn’t prepare it' : 'Couldn’t connect to GymGO');
             }
           }}
         />
@@ -288,7 +288,7 @@ export default function AccountScreen() {
       <Section
         footer={
           confirmDelete
-            ? `This removes your account, saved gyms, gym collection, workouts, training log, reviews, photos and your reports from the server.${billing.isPro ? ' Your Pro subscription is cancelled first.' : ''}`
+            ? `This permanently deletes your account, saved gyms, collection, workouts, reviews, photos and reports.${billing.isPro ? ' Your Pro subscription is cancelled first.' : ''}`
             : undefined
         }
       >

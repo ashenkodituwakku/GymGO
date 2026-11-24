@@ -9,9 +9,25 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 270 · Plainer words, part 4: training
+
+*24 Nov 2026 · the commit "Plainer words: training"*
+
+The fourth part of the rewrite (docs/COPY.md) covers Workout, Progress, the exercise pages, templates, programmes, the plate and 1-rep max calculators, the monthly report, lifetime stats, trips, challenges and Head to head. For example:
+
+- "Popular training plans, ready to start. Each one rotates through its days." (it read "Well-known plans, ready to go. Each takes turns through its days: start one and you get the day after the last you did.")
+- The template summaries: "Two full-body days, A and B, with a rest day between. A simple way to learn the main lifts."
+- "Easier week. Half the sets at about 10% lighter, so you recover."
+- "Streak freeze used for the week of 3 Nov. Your streak continues."
+- "Estimates aren’t reliable above 12 reps. Try a heavier set." (it read "Past 12 reps the estimate isn’t worth much, so there isn’t one.")
+- "This gym’s equipment hasn’t been listed by the gym or its members, so most of it is unknown."
+- "Couldn’t delete it. Try again." everywhere ("just now" is gone).
+- "Stored on this device only" for body measurements.
+- Checked: app tests 665 and a typecheck; the screens' layout is unchanged, as only the words are.
+
 ## Update 269 · Plainer words, part 3: finding gyms and the gym page
 
-*24 Nov 2026 · the commit "Plainer words: finding gyms and the gym page"*
+*24 Nov 2026 · `8f8b993`*
 
 The third part of the rewrite (docs/COPY.md). The meaning is the same throughout: unknown stays unknown, and nothing reads as a yes or no it isn't.
 

@@ -94,7 +94,7 @@ export function WorkoutFit({ record, account, onSignIn }: { record: GymRecord; a
   if (!workout || !fit) {
     return (
       <Txt variant="subhead" color={color.labelSecondary}>
-        Save a workout from the builder (Build a workout here, above), then check it against any gym here.
+        Save a workout from the builder above, then check it against any gym.
       </Txt>
     );
   }
@@ -152,7 +152,7 @@ export function WorkoutFit({ record, account, onSignIn }: { record: GymRecord; a
       <PrimaryButton label={active ? 'Back to your workout' : swapped.size ? 'Start it here, with the swaps' : 'Start it here'} icon="play" onPress={start} />
       {active && (
         <Txt variant="footnote" color={color.labelSecondary}>
-          You have a workout in progress: finish it first to start this one.
+          You have a workout in progress. Finish it before starting this one.
         </Txt>
       )}
     </View>
@@ -165,7 +165,7 @@ function sourceLine(published: boolean, reporters: number): string {
   if (reporters > 0) return `From ${published ? `the gym’s own list and ${members}` : members}. Not known means nobody has said either way.`;
   return published
     ? 'From the gym’s own list; no member has reported yet. Not known means nobody has said either way.'
-    : 'Neither the gym nor its members have said what equipment it has yet, so most of it is not known. Not known isn’t “no”.';
+    : 'This gym’s equipment hasn’t been listed by the gym or its members, so most of it is unknown.';
 }
 
 function FitRow({ item, swapped, onSwap }: { item: FitItem; swapped: boolean; onSwap: () => void }) {
@@ -175,7 +175,7 @@ function FitRow({ item, swapped, onSwap }: { item: FitItem; swapped: boolean; on
     item.state === 'there'
       ? item.kit.length
         ? `Uses the ${kitList(item.kit)}`
-        : 'Body weight: nothing needed'
+        : 'Body weight only, no equipment needed'
       : item.state === 'missing'
         ? `Members say there’s no ${kitList(item.kit, 'or')}`
         : item.kit.length

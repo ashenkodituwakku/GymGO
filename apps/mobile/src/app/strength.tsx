@@ -68,7 +68,7 @@ export default function StrengthScreen() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: '1-rep max' }} />
       <Txt variant="subhead" color={color.labelSecondary}>
-        Type a set you’ve done: the weight, and how many reps you got.
+        Enter the weight and reps from a recent set.
       </Txt>
       <View style={styles.row}>
         <Input
@@ -120,7 +120,7 @@ export default function StrengthScreen() {
       <LiveLine>
         {typeof reps === 'number' && reps > 12 && (
           <Txt variant="footnote" color={color.maybeInk}>
-            Past 12 reps the estimate isn’t worth much, so there isn’t one. Try a heavier set.
+            Estimates aren’t reliable above 12 reps. Try a heavier set.
           </Txt>
         )}
       </LiveLine>
@@ -138,7 +138,7 @@ export default function StrengthScreen() {
           <Txt variant="footnote" color={color.onBrandSoft}>
             {reps === 1
               ? 'A single is your 1-rep max already.'
-              : `From ${formatWeight(weight as number, unit)} × ${reps}, by Epley’s formula. An estimate: most accurate from sets of 10 reps or fewer.`}
+              : `From ${formatWeight(weight as number, unit)} × ${reps}, using Epley’s formula. Most accurate for sets of 10 reps or fewer.`}
           </Txt>
         </View>
       )}
@@ -207,7 +207,7 @@ export default function StrengthScreen() {
         <ProOffer
           icon="target"
           title="Every percentage, with plates"
-          body="GymGO Pro lists 100% down to 50%, the plates for each, and what you could lift for 2 to 12 reps."
+          body="GymGO Pro shows 100% to 50% with plates, plus your estimated max for 2 to 12 reps."
           onPress={() => openPro('strength')}
         />
       )}
@@ -230,7 +230,7 @@ export default function StrengthScreen() {
             How it works
           </Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
-            {`Say you got ${unit === 'kg' ? '100 kg' : '225 lb'} for 5. That puts your 1-rep max near ${formatWeight(nearest((unit === 'kg' ? 100 : 225) * (1 + 5 / 30), unit), unit)}, without having to test it. Programs often ask for a share of it, like 5 sets at 80%.`}
+            {`Say you got ${unit === 'kg' ? '100 kg' : '225 lb'} for 5. That puts your 1-rep max near ${formatWeight(nearest((unit === 'kg' ? 100 : 225) * (1 + 5 / 30), unit), unit)}, without testing it. Programmes often use a percentage of it, like 5 sets at 80%.`}
           </Txt>
         </View>
       )}

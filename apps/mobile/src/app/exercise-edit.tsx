@@ -140,7 +140,7 @@ export default function ExerciseEditScreen() {
       stopAsking();
       router.replace('/exercises');
     } catch {
-      setProblem('Couldn’t delete it just now. Try again.');
+      setProblem('Couldn’t delete it. Try again.');
     }
   };
 
@@ -152,7 +152,7 @@ export default function ExerciseEditScreen() {
           {id ? 'Change exercise' : 'Your own exercise'}
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
-          For a move GymGO doesn’t list. It’s offered beside GymGO’s wherever you pick one, with its own records and history.
+          For exercises GymGO doesn’t have. It appears alongside GymGO’s exercises, with its own records and history.
         </Txt>
       </View>
 

@@ -170,7 +170,7 @@ export default function WorkoutEditScreen() {
         <Txt variant="subhead" color={color.labelSecondary}>
           {id
             ? 'Its exercises, sets, reps and rest. Workouts you’ve already done with it stay as you did them.'
-            : 'Pick the exercises, then the sets, reps and rest for each. Start it now, or keep it in My workouts.'}
+            : 'Choose exercises, then set the sets, reps and rest for each. Start now or save it to My workouts.'}
         </Txt>
       </View>
       <Card style={styles.nameCard}>
@@ -195,7 +195,7 @@ export default function WorkoutEditScreen() {
         <PrimaryButton label={active ? 'Back to your workout' : 'Start workout'} icon="play" disabled={draft.items.length === 0} onPress={start} />
         {active && (
           <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-            {`${active.name} is still going: finish or discard it before starting this one.`}
+            {`${active.name} is in progress. Finish or discard it before starting this one.`}
           </Txt>
         )}
         <PrimaryButton

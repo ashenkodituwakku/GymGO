@@ -82,7 +82,7 @@ export default function TripsScreen() {
             Training away from home?
           </Txt>
           <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-            Add where you’re going and when, and GymGO lists the gyms there that let visitors in on those days.
+            Add where and when you’re travelling to see gyms that take visitors on those days.
           </Txt>
         </View>
       )}

@@ -61,7 +61,7 @@ export default function MonthScreen() {
           Monthly report
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          Sign in to see your months of training: workouts, time, weight lifted, records and what you did most.
+          Sign in to see monthly reports of your training.
         </Txt>
         <View style={styles.button}>
           <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />
@@ -89,7 +89,7 @@ export default function MonthScreen() {
           Monthly report
         </Txt>
         <Txt variant="subhead" color={log.error ? color.dangerInk : color.labelSecondary} style={styles.center}>
-          {log.error ?? 'Each month you train gets its report here: workouts, time, weight lifted, records and what you did most.'}
+          {log.error ?? 'Your monthly reports will appear here once you log a workout.'}
         </Txt>
         {!log.error && (
           <View style={styles.button}>
@@ -289,7 +289,7 @@ export default function MonthScreen() {
                 </View>
               ))}
               <Txt variant="caption" color={color.labelSecondary}>
-                {`Working sets, a half for a muscle an exercise works second.${compared ? ` The lighter bar is ${before}.` : ''} On the body, the deeper the colour, the more sets.`}
+                {`Working sets, with secondary muscles counted as half.${compared ? ` The lighter bar is ${before}.` : ''} Darker colours mean more sets.`}
               </Txt>
             </View>
           </>
@@ -319,12 +319,12 @@ export default function MonthScreen() {
         tone="quiet"
         onPress={() =>
           void shareText(monthShareText(report, label, weight(totals.volumeKg)), `${label} on GymGO`).then((result) =>
-            setShared(result === 'copied' ? 'Copied: paste it anywhere' : result === 'failed' ? 'Couldn’t share it' : null),
+            setShared(result === 'copied' ? 'Copied to clipboard' : result === 'failed' ? 'Couldn’t share it' : null),
           )
         }
       />
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-        From your own log, by this device’s calendar. Sharing sends the totals, never which days you went.
+        From your workout log, using this device’s calendar. Sharing only includes totals, not which days you trained.
       </Txt>
     </PageScroll>
   );

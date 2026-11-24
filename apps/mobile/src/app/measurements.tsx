@@ -207,7 +207,7 @@ export default function MeasurementsScreen() {
         <View style={styles.privacy}>
           <Icon name="lock" size={12} color={color.labelTertiary} />
           <Txt variant="caption" color={color.labelSecondary} style={styles.flex}>
-            {`Only ${Platform.OS === 'web' ? 'in this browser' : 'on this phone'}: never uploaded, not in your account.`}
+            {`Stored ${Platform.OS === 'web' ? 'in this browser' : 'on this phone'} only. Not uploaded to your account.`}
           </Txt>
         </View>
       </View>

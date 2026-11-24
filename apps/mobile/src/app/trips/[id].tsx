@@ -63,7 +63,7 @@ export default function TripScreen() {
         {loaded && (
           <>
             <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-              This trip isn’t on this phone any more: it may be over, or removed.
+              This trip isn’t on this phone anymore. It may have ended or been removed.
             </Txt>
             <PrimaryButton label="Your trips" onPress={() => router.replace('/trips')} />
           </>
@@ -112,7 +112,7 @@ export default function TripScreen() {
         <Card style={styles.card}>
           <Txt variant="headline">GymGO hasn’t read the map there yet</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
-            {`Open ${trip.placeName} in Explore and tap Search this area. The gyms it finds stay on this phone, and this list fills in.`}
+            {`Open ${trip.placeName} in Explore and tap Search this area. Gyms it finds are saved on this phone and listed here.`}
           </Txt>
           <PrimaryButton label={`Search ${trip.placeName}`} icon="map" onPress={searchThere} />
         </Card>
@@ -122,7 +122,7 @@ export default function TripScreen() {
             {yes.length
               ? `${yes.length} gym${yes.length === 1 ? '' : 's'} let visitors in on at least one of your days, by the hours they publish.`
               : picks.length
-                ? 'None publish visitor hours that cover your days, but these may let you in: ask first.'
+                ? 'None publish guest hours for your dates, but these may let you in. Ask first.'
                 : 'No gym near there is known to let visitors in on your days.'}
           </Txt>
           {picks.length > 0 && (
@@ -146,7 +146,7 @@ export default function TripScreen() {
             </View>
           )}
           <Txt variant="footnote" color={color.labelSecondary}>
-            Checked at 7 am, noon and 6 pm on each day, on the gym’s clock. Hours change on public holidays: check before you go.
+            Checked at 7 am, noon and 6 pm each day, in the gym’s time zone. Hours can change on public holidays, so check before you go.
           </Txt>
           <PrimaryButton label={`Search ${trip.placeName} on the map`} tone="quiet" icon="map" onPress={searchThere} />
         </>

@@ -223,7 +223,7 @@ export default function WorkoutScreen() {
             router.push('/workout-edit');
           }}
           accessibilityRole="button"
-          accessibilityLabel="Make your own workout: pick each exercise, its sets, reps and rest"
+          accessibilityLabel="Make your own workout. Choose exercises, sets, reps and rest"
           style={({ pressed }) => [styles.ownLink, pressed && { opacity: 0.75 }]}
         >
           <Icon name="list" size={18} color={color.brand} />
@@ -486,7 +486,7 @@ export default function WorkoutScreen() {
 
             {record && (
               <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-                Seen what machines {gymName} has? Add them on its page so the next plan fits better.
+                Seen what machines {gymName} has? Add them on its page for better plans.
               </Txt>
             )}
             {record && (
@@ -499,7 +499,7 @@ export default function WorkoutScreen() {
           </Animated.View>
         )}
         <Txt variant="caption" color={color.labelSecondary} style={styles.center}>
-          General training ideas, not medical advice. Warm up, and pick weights you can move well.
+          General training guidance, not medical advice. Warm up and choose weights you can lift with good form.
         </Txt>
       </PageScroll>
     </>
@@ -528,7 +528,7 @@ function KitNote({ mode, has, gymName }: { mode: KitMode; has: Kit[]; gymName: s
   if (!gymName) {
     return (
       <Txt variant="footnote" color={color.labelSecondary}>
-        Built for a typical gym: dumbbells, barbells, a bench, cables, a squat rack and the common machines.
+        Built for a typical gym with dumbbells, barbells, a bench, cables, a squat rack and common machines.
       </Txt>
     );
   }
@@ -547,7 +547,7 @@ function KitNote({ mode, has, gymName }: { mode: KitMode; has: Kit[]; gymName: s
       <Txt variant="footnote" color={color.maybeInk}>
         {has.length
           ? `${gymName} has only ${has.length} machine${has.length === 1 ? '' : 's'} confirmed, so this plan assumes a typical gym.`
-          : `${gymName} hasn’t published its machines and no member has reported them yet, so this plan assumes a typical gym.`}{' '}
+          : `${gymName} hasn’t listed its equipment and no members have reported it yet. This plan assumes a typical gym.`}{' '}
         Anything not confirmed is marked “?”. Check when you get there.
       </Txt>
     </View>

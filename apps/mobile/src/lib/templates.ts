@@ -49,7 +49,7 @@ export const TEMPLATES: WorkoutTemplate[] = [
     name: 'Beginner full body',
     level: 'Beginner',
     perWeek: '3 days a week',
-    summary: 'Two whole-body days, A and B, taking turns with a day off between. The simplest way to learn the main lifts.',
+    summary: 'Two full-body days, A and B, with a rest day between. A simple way to learn the main lifts.',
     days: [
       {
         name: 'Full body A',
@@ -66,7 +66,7 @@ export const TEMPLATES: WorkoutTemplate[] = [
     name: 'Full body, 3 days',
     level: 'Beginner',
     perWeek: '3 days a week',
-    summary: 'Three different whole-body days, A, B and C, with a day off between. More variety than two days, the same main lifts each week.',
+    summary: 'Three full-body days, A, B and C, with a rest day between. More variety, with the same main lifts each week.',
     days: [
       {
         name: 'Full body A',
@@ -87,7 +87,7 @@ export const TEMPLATES: WorkoutTemplate[] = [
     name: '5×5 strength',
     level: 'Beginner',
     perWeek: '3 days a week',
-    summary: 'Five sets of five on the big barbell lifts, two days taking turns. Add a little weight each time every set is done.',
+    summary: 'Five sets of five on the main barbell lifts, alternating two days. Add a little weight each time you complete every set.',
     days: [
       { name: '5×5 A', items: [item('back-squat', 5, '5', 180), item('bench-press', 5, '5', 180), item('bb-row', 5, '5', 180)] },
       { name: '5×5 B', items: [item('back-squat', 5, '5', 180), item('ohp', 5, '5', 180), item('deadlift', 1, '5', 240)] },
@@ -98,7 +98,7 @@ export const TEMPLATES: WorkoutTemplate[] = [
     name: 'Body weight, anywhere',
     level: 'Beginner',
     perWeek: '3 days a week',
-    summary: 'No equipment at all: two days taking turns, for a hotel room, a park or a gym with no free space. Make it harder with slower reps, not faster.',
+    summary: 'Two alternating days with no equipment, for a hotel room, park or busy gym. Slow your reps down to make it harder.',
     days: [
       {
         name: 'Body weight A',
@@ -115,7 +115,7 @@ export const TEMPLATES: WorkoutTemplate[] = [
     name: 'Push, pull, legs',
     level: 'Intermediate',
     perWeek: '3 or 6 days a week',
-    summary: 'Pushing muscles, pulling muscles, then legs, in turn. Run it once a week, or twice for more volume.',
+    summary: 'Push, pull and legs days in rotation. Run it once a week, or twice for more volume.',
     days: [
       {
         name: 'Push',
@@ -136,7 +136,7 @@ export const TEMPLATES: WorkoutTemplate[] = [
     name: 'Upper / lower',
     level: 'Intermediate',
     perWeek: '4 days a week',
-    summary: 'Upper body, then lower body, twice a week: a heavier day and a lighter, higher-rep day for each. Each muscle trained twice a week.',
+    summary: 'Upper and lower body days, twice a week each, with one heavier day and one lighter, higher-rep day.',
     days: [
       {
         name: 'Upper A',
@@ -161,7 +161,7 @@ export const TEMPLATES: WorkoutTemplate[] = [
     name: 'Arnold split',
     level: 'Intermediate',
     perWeek: '3 or 6 days a week',
-    summary: 'Chest with back, shoulders with arms, then legs. Opposite muscles share a day, so one rests while the other works. Once a week, or twice for more.',
+    summary: 'Chest and back, shoulders and arms, then legs. Opposing muscles share a day. Run it once or twice a week.',
     days: [
       {
         name: 'Chest and back',
@@ -182,7 +182,7 @@ export const TEMPLATES: WorkoutTemplate[] = [
     name: 'Body-part split',
     level: 'Intermediate',
     perWeek: '5 days a week',
-    summary: 'One muscle group a day: chest, back, shoulders, legs, then arms. Plenty of sets for each, and a whole week for it to recover.',
+    summary: 'One muscle group a day, from chest to arms. Plenty of sets for each, with a full week to recover.',
     days: [
       {
         name: 'Chest',

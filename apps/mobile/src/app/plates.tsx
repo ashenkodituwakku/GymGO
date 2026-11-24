@@ -49,7 +49,7 @@ export default function PlatesScreen() {
   const load = typeof weight === 'number' ? plateLoad(weight, unit, bar, plates) : null;
   // Worked out to what the plates actually make, so the ramp ends below the real load.
   const ramp = load && load.total > bar ? warmUpSets(load.total, unit, bar, plates) : [];
-  const perSide = (plates: number[]) => (plates.length ? `${plates.map((plate) => Number(plate.toFixed(2))).join(' + ')} each side` : 'just the bar');
+  const perSide = (plates: number[]) => (plates.length ? `${plates.map((plate) => Number(plate.toFixed(2))).join(' + ')} each side` : 'bar only');
 
   const switchUnit = (next: WeightUnit) => {
     setPicked(next);
@@ -105,7 +105,7 @@ export default function PlatesScreen() {
       </LiveLine>
 
       {load && (
-        <View style={styles.card} accessible accessibilityLabel={`Each side: ${load.perSide.length ? load.perSide.map((plate) => formatWeight(plate, unit)).join(', ') : 'nothing, just the bar'}`}>
+        <View style={styles.card} accessible accessibilityLabel={`Each side: ${load.perSide.length ? load.perSide.map((plate) => formatWeight(plate, unit)).join(', ') : 'bar only'}`}>
           <Txt variant="label" color={color.labelSecondary}>
             Each side
           </Txt>
@@ -172,7 +172,7 @@ export default function PlatesScreen() {
               ))}
             </View>
             <Txt variant="footnote" color={color.labelSecondary}>
-              {`The empty bar, then about 40%, 60% and 80% of ${formatWeight(load!.total, unit)}, each rounded down to what the plates make. Then your working sets.`}
+              {`The empty bar, then about 40%, 60% and 80% of ${formatWeight(load!.total, unit)}, rounded down to your plates. Then your working sets.`}
             </Txt>
           </View>
         ) : (
@@ -208,7 +208,7 @@ export default function PlatesScreen() {
           <Pressable
             onPress={() => (billing.isPro ? setEditing(!editing) : openPro('plates'))}
             accessibilityRole="button"
-            accessibilityLabel={billing.isPro ? (editing ? 'Done choosing plates' : 'Change: choose your gym’s plates') : 'Change with Pro: choose your gym’s plates'}
+            accessibilityLabel={billing.isPro ? (editing ? 'Done choosing plates' : 'Choose your gym’s plates') : 'Choose your gym’s plates with Pro'}
             hitSlop={8}
             style={({ pressed }) => [styles.editPlates, pressed && { opacity: 0.7 }]}
           >

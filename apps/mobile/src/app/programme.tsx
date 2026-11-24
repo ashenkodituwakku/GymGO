@@ -72,7 +72,7 @@ export default function ProgrammeScreen() {
       <ScreenOptions options={{ title: 'Programme' }} />
       {programme ? <Running programme={programme} /> : <Chooser />}
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-        A general plan, not advice for you. Start lighter than you think, leave a rep or two in the tank, and swap anything that hurts.
+        This is a general plan and not personal advice. Start lighter than you think, leave a rep or two in reserve and swap anything that hurts.
       </Txt>
     </PageScroll>
   );
@@ -99,7 +99,7 @@ function Chooser() {
           Training programme
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
-          Pick a goal and how often you can train: GymGO plans the weeks, takes turns through the days, and puts in an easier week every fourth.
+          Choose a goal and how often you can train. GymGO plans your weeks and adds an easier week every fourth week.
         </Txt>
       </View>
       <Card style={styles.card}>
@@ -246,7 +246,7 @@ function Running({ programme }: { programme: Programme }) {
               <View style={styles.easier}>
                 <Icon name="good" size={15} color={color.goodInk} />
                 <Txt variant="footnote" color={color.goodInk} style={[styles.flex, face('medium')]}>
-                  An easier week: half the sets, about 10% lighter. You’ll come back fresher.
+                  Easier week. Half the sets at about 10% lighter, so you recover.
                 </Txt>
               </View>
             )}
@@ -254,7 +254,7 @@ function Running({ programme }: { programme: Programme }) {
         )}
         {!account.token && !LIMITED && (
           <Txt variant="footnote" color={color.maybeInk}>
-            Sign in (it’s free) so your workouts are kept: the programme counts the ones in your log.
+            Sign in to track your programme. It’s free.
           </Txt>
         )}
         {LIMITED && (
@@ -309,7 +309,7 @@ function Running({ programme }: { programme: Programme }) {
           <PrimaryButton label={active ? 'Back to your workout' : `Start ${day.name}`} icon="play" onPress={start} />
           {active && (
             <Txt variant="footnote" color={color.labelSecondary}>
-              {`${active.name} is still going: finish it first to start this one.`}
+              {`${active.name} is in progress. Finish it before starting this one.`}
             </Txt>
           )}
         </Card>
@@ -347,7 +347,7 @@ function Running({ programme }: { programme: Programme }) {
       const target = programmeTarget(last, reps, unit, progress.easier);
       if (target) return `Next: ${target.weight !== null ? `${formatWeight(target.weight, unit)} × ` : ''}${target.reps}. ${target.why}`;
     }
-    return last ? `Last time: ${setsSummary(last.sets, last.unit)}` : 'First time: start light.';
+    return last ? `Last time: ${setsSummary(last.sets, last.unit)}` : 'First time. Start light.';
   }
 }
 

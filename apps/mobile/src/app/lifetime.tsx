@@ -78,7 +78,7 @@ export default function LifetimeScreen() {
           Your lifetime in numbers
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          With the full version of GymGO and Pro, every workout you finish is added up here: the weight, sets, reps and hours, your favourites, and what it all compares to.
+          With the full version of GymGO and Pro, see all-time totals for every workout you finish.
         </Txt>
       </PageScroll>
     );
@@ -93,7 +93,7 @@ export default function LifetimeScreen() {
           Your lifetime in numbers
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          {`Every kilo, rep and hour you’ve logged${log.sessions.length ? ` across your ${plural(log.sessions.length, 'workout')}` : ''}, your favourite exercise and day, your biggest workout, and what all that weight compares to, as a picture to share too. Part of GymGO Pro.`}
+          {`See your all-time totals${log.sessions.length ? ` across ${plural(log.sessions.length, 'workout')}` : ''}, favourite exercises and biggest workout, ready to share. Included with GymGO Pro.`}
         </Txt>
         <View style={styles.button}>
           <PrimaryButton label="See GymGO Pro" icon="crown" onPress={() => openPro('lifetime')} />
@@ -136,7 +136,7 @@ export default function LifetimeScreen() {
           Your lifetime starts here
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          Finish a workout and it’s added up here: the weight, the sets, the hours, and your favourites.
+          Finish a workout to start your all-time totals.
         </Txt>
         <View style={styles.button}>
           <PrimaryButton label="Build a workout" icon="workout" onPress={() => router.push('/workout/any')} />
@@ -255,7 +255,7 @@ export default function LifetimeScreen() {
         </Txt>
       )}
       <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-        The picture shows your totals, your favourite exercise and the month you started. Never which days you went, or where.
+        The picture shows your totals, favourite exercise and the month you started. It doesn’t show when or where you trained.
       </Txt>
     </PageScroll>
   );

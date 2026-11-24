@@ -63,7 +63,7 @@ export function HeadToHead({ token, friendId, friendName, pro, unit }: { token: 
           </View>
         </View>
         <Txt variant="subhead" color={color.labelSecondary}>
-          {`Your best lifts beside ${first}’s, exercise by exercise: who’s heavier, whose set is stronger, who does more reps.`}
+          {`Your best lifts beside ${first}’s, exercise by exercise.`}
         </Txt>
         <PrimaryButton label="See GymGO Pro" tone="quiet" onPress={() => router.push({ pathname: '/pro', params: { reason: 'headToHead' } })} />
       </Card>
@@ -85,7 +85,7 @@ export function HeadToHead({ token, friendId, friendName, pro, unit }: { token: 
       )}
       {state === 'not-shared' && (
         <Txt variant="subhead" color={color.labelSecondary}>
-          {`${first} doesn’t share their workouts yet, so there’s nothing to compare. Once they do, their best lifts show here beside yours.`}
+          {`${first} doesn’t share their workouts yet. Once they do, you can compare lifts here.`}
         </Txt>
       )}
       {state === 'problem' && (
@@ -95,7 +95,7 @@ export function HeadToHead({ token, friendId, friendName, pro, unit }: { token: 
       )}
       {state === 'ready' && rows.length === 0 && (
         <Txt variant="subhead" color={color.labelSecondary}>
-          {`You and ${first} haven’t done the same exercise yet. Do one of their workouts from the feed, and you will have.`}
+          {`You and ${first} haven’t done the same exercise yet. Try one of their workouts from the feed.`}
         </Txt>
       )}
       {state === 'ready' && rows.length > 0 && (

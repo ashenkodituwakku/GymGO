@@ -55,7 +55,7 @@ export default function TemplatesScreen() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: 'Templates' }} />
       <Txt variant="subhead" color={color.labelSecondary}>
-        Well-known plans, ready to go. Each takes turns through its days: start one and you get the day after the last you did.
+        Popular training plans, ready to start. Each one rotates through its days.
       </Txt>
       {active && (
         <Card style={styles.busy}>
@@ -69,7 +69,7 @@ export default function TemplatesScreen() {
       <Pressable
         onPress={() => router.push('/programme')}
         accessibilityRole="link"
-        accessibilityLabel={programme ? `Your ${programmeTitle(programme.goal)}` : 'Training programme: weeks planned for you, with easier weeks'}
+        accessibilityLabel={programme ? `Your ${programmeTitle(programme.goal)}` : 'Training programme with planned weeks and easier weeks'}
         style={({ pressed }) => [styles.programme, pressed && { opacity: 0.8 }]}
       >
         <Icon name="workout" size={18} color={color.brand} />
@@ -147,7 +147,7 @@ export default function TemplatesScreen() {
         }}
       />
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-        These are general plans, not advice for you. Start lighter than you think, leave a rep or two in the tank, and add weight when every set
+        These are general plans and not personal advice. Start lighter than you think, leave a rep or two in reserve and add weight when every set
         feels good. Swap anything that hurts.
       </Txt>
     </PageScroll>

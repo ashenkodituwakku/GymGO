@@ -179,10 +179,10 @@ export function WeekCard({
       )}
       <View
         accessible
-        accessibilityLabel={`The last ${WEEKS} weeks: you trained on ${daysTrained} day${daysTrained === 1 ? '' : 's'}${goal ? `, and met your goal in ${weeksMet} week${weeksMet === 1 ? '' : 's'}` : ''}. Tap a day you trained to see what you did.`}
+        accessibilityLabel={`In the last ${WEEKS} weeks, you trained on ${daysTrained} day${daysTrained === 1 ? '' : 's'}${goal ? `, and met your goal in ${weeksMet} week${weeksMet === 1 ? '' : 's'}` : ''}. Tap a day to see that workout.`}
       >
         <Txt variant="caption" color={color.labelSecondary}>
-          {`The last ${WEEKS} weeks.${goal ? ' A green dot: goal met.' : ''} Tap a day to see it.`}
+          {`The last ${WEEKS} weeks.${goal ? ' Green dots mark weeks you met your goal.' : ''} Tap a day to see it.`}
         </Txt>
       </View>
     </View>
@@ -359,7 +359,7 @@ export function MuscleBalanceCard({ sessions, isPro, onPro, now = new Date() }: 
       <ProOffer
         icon="body"
         title="See your muscle balance"
-        body="GymGO Pro counts your sets for every muscle over the last four weeks, and names the ones you’ve missed."
+        body="GymGO Pro tracks sets for every muscle over 4 weeks and shows which ones need work."
         onPress={onPro}
       />
     );

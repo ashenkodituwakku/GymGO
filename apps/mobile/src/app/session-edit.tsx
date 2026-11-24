@@ -152,7 +152,7 @@ export default function SessionEditScreen() {
     const name = draft.name.trim().replace(/\s+/g, ' ');
     if (name.length < 1 || name.length > 80) return setProblem('Give it a name of up to 80 characters.');
     const finishedAt = finishFor(session.startedAt, draft.minutes);
-    if (!finishedAt) return setProblem('How long it took: whole minutes, from 1 to 1,440.');
+    if (!finishedAt) return setProblem('Enter a duration between 1 and 1,440 minutes.');
     const checked = checkEdits(draft.exercises, draft.unit);
     if (!checked.ok) return setProblem(checked.problem);
     setSaving(true);
@@ -219,7 +219,7 @@ export default function SessionEditScreen() {
           <Pressable
             onPress={() => router.push({ pathname: '/gym-tag', params: { session: session.id } })}
             accessibilityRole="button"
-            accessibilityLabel={session.gymName ? `Gym: ${session.gymName}. Change it` : 'Gym: none. Tag one'}
+            accessibilityLabel={session.gymName ? `Gym: ${session.gymName}. Change gym` : 'No gym tagged. Tag a gym'}
             style={({ pressed }) => [styles.gymRow, pressed && { opacity: 0.7 }]}
           >
             <Icon name="pin" size={16} color={color.brand} />

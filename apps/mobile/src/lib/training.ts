@@ -78,7 +78,7 @@ export const SET_KINDS: readonly SetKind[] = ['warmup', 'drop', 'failure'];
 /** How each type of set is shown and explained. */
 export const SET_KIND_WORDS: Record<SetKind, { letter: string; label: string; spoken: string; about: string }> = {
   warmup: { letter: 'W', label: 'Warm-up', spoken: 'warm-up set', about: 'Lighter, before your working sets. Left out of records, totals and set counts.' },
-  drop: { letter: 'D', label: 'Drop set', spoken: 'drop set', about: 'Straight after the set before, with less weight: no rest before it.' },
+  drop: { letter: 'D', label: 'Drop set', spoken: 'drop set', about: 'Done straight after the previous set with less weight, without resting.' },
   failure: { letter: 'F', label: 'To failure', spoken: 'failure set', about: 'As many reps as you could do.' },
 };
 
@@ -361,8 +361,8 @@ export type ExerciseMetric = 'e1rm' | 'heaviest' | 'setVolume' | 'sessionVolume'
 export const EXERCISE_METRICS: ReadonlyArray<{ id: ExerciseMetric; label: string; title: string; about: string }> = [
   { id: 'e1rm', label: '1-rep max', title: 'Estimated 1-rep max', about: 'Each point is your best set that day, as an estimated 1-rep max (sets of 12 reps or fewer).' },
   { id: 'heaviest', label: 'Heaviest', title: 'Heaviest weight', about: 'Each point is the heaviest weight you lifted that day, for any reps.' },
-  { id: 'setVolume', label: 'Best set', title: 'Best set (weight × reps)', about: 'Each point is your biggest single set that day: its weight times its reps.' },
-  { id: 'sessionVolume', label: 'Volume', title: 'Weight lifted that day', about: 'Each point is every working set that day added up: weight times reps.' },
+  { id: 'setVolume', label: 'Best set', title: 'Best set (weight × reps)', about: 'Your biggest set each day, measured as weight times reps.' },
+  { id: 'sessionVolume', label: 'Volume', title: 'Weight lifted that day', about: 'All your working sets each day, added up as weight times reps.' },
   { id: 'reps', label: 'Reps', title: 'Reps that day', about: 'Each point is every working rep you did that day.' },
 ];
 

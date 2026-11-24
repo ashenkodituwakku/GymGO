@@ -106,7 +106,7 @@ export default function SplitEditScreen() {
     // A template's name would make its days' workouts look like the template's.
     if (TEMPLATES.some((template) => template.name.toLowerCase() === checked.value.name.toLowerCase())) {
       haptic.warn();
-      return setProblem(`“${checked.value.name}” is one of GymGO’s templates: give yours a name of its own.`);
+      return setProblem(`“${checked.value.name}” is already a GymGO template name. Choose a different name.`);
     }
     setProblem(null);
     setSaving(true);
@@ -134,7 +134,7 @@ export default function SplitEditScreen() {
       stopAsking();
       router.canGoBack() ? router.back() : router.replace('/templates');
     } catch {
-      setProblem('Couldn’t delete it just now. Try again.');
+      setProblem('Couldn’t delete it. Try again.');
     }
   };
 
@@ -146,7 +146,7 @@ export default function SplitEditScreen() {
           {id ? 'Change split' : 'Your own split'}
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
-          Days that take turns, like the templates: each time, it offers the day after the one you did last.
+          Days rotate like the templates. Each time, you get the next day after the one you did last.
         </Txt>
       </View>
       <Card style={styles.nameCard}>

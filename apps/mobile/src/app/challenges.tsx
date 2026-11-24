@@ -102,7 +102,7 @@ export default function ChallengesScreen() {
           {view ? label : 'Monthly challenge'}
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
-          Pick how many days you’ll train this month. A day counts once you log a workout on it. Friends who join see your count and target, nothing more.
+          Choose how many days you’ll train this month. A day counts when you log a workout. Friends who join see only your count and target.
         </Txt>
       </View>
       {!view && !problem && <ListSkeleton rows={3} label="Loading this month’s challenge" />}
@@ -120,7 +120,7 @@ export default function ChallengesScreen() {
           <Bar value={mine.days} of={mine.target} />
           <Txt variant="subhead" color={color.labelSecondary}>
             {mine.target - mine.days > daysLeft(view.month)
-              ? `${daysLeft(view.month)} days left: out of reach this month, but every day still counts.`
+              ? `${daysLeft(view.month)} days left. Your target is out of reach this month, but every day still counts.`
               : `${mine.target - mine.days} to go, with ${daysLeft(view.month)} days left in ${label.split(' ')[0]}.`}
           </Txt>
         </Card>
@@ -159,7 +159,7 @@ export default function ChallengesScreen() {
       )}
       {view && view.friends.length === 0 && (
         <Txt variant="footnote" color={color.labelSecondary}>
-          None of your friends has joined this month yet. Add friends with your code (Profile → Friends), and they can join too.
+          None of your friends have joined this month. Add friends in Profile → Friends so they can join.
         </Txt>
       )}
       {view && view.cards.filter((card) => card.month !== view.month || !mine?.finished).length > 0 && (
@@ -213,7 +213,7 @@ function ChallengeCard({ month, target, small = false }: { month: string; target
         <Pressable
           onPress={() => void Share.share({ message: `I trained on ${target} days in ${label} with GymGO.` }).catch(() => undefined)}
           accessibilityRole="button"
-          accessibilityLabel={`Share it: your ${label} card`}
+          accessibilityLabel={`Share your ${label} card`}
           style={({ pressed }) => [styles.share, pressed && { opacity: 0.8 }]}
         >
           {/* The accent on white: white words on a faint wash of white read at under 4.5:1 here. */}

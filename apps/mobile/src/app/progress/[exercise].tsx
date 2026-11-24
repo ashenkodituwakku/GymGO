@@ -167,7 +167,7 @@ export default function ExerciseProgressScreen() {
           )}
           {exercise.own?.archived && (
             <Txt variant="footnote" color={color.labelSecondary}>
-              You deleted this exercise: it’s no longer offered, and kept here for the workouts you logged with it.
+              You deleted this exercise. It’s kept here for your past workouts.
             </Txt>
           )}
           <AskGymPal
@@ -273,7 +273,7 @@ export default function ExerciseProgressScreen() {
             ))}
           </View>
           <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-            The heaviest you’ve lifted for each number of reps, up to 20. One beaten by a heavier set for more reps isn’t listed.
+            Your heaviest weight for each rep count, up to 20. Weights beaten by a heavier set with more reps aren’t shown.
           </Txt>
         </>
       )}
@@ -307,7 +307,7 @@ export default function ExerciseProgressScreen() {
         <ProOffer
           icon="chart"
           title="See it on a chart"
-          body="GymGO Pro draws every exercise over time (your estimated 1-rep max, heaviest weight, biggest set, volume or reps) and shows what to lift next while you train."
+          body="GymGO Pro charts every exercise over time and suggests what to lift next during your workout."
           onPress={() => openPro('progress')}
         />
       )}

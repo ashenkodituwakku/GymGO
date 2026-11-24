@@ -85,7 +85,7 @@ export default function SavedWorkoutScreen() {
       haptic.success();
       router.canGoBack() ? router.back() : router.replace('/workouts');
     } catch {
-      setProblem('Couldn’t delete it just now. Try again.');
+      setProblem('Couldn’t delete it. Try again.');
     }
   };
 

@@ -124,8 +124,8 @@ export default function ProgressScreen() {
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           {LIMITED
-            ? 'With the full version of GymGO, every workout you finish is kept here, with your records and your streak. Workouts, templates and the timers all work in this one.'
-            : 'Sign in (it’s free) and every workout you finish is kept here, with your records and your streak.'}
+            ? 'The full version of GymGO saves every workout, with your records and streak. Workouts, templates and timers work here too.'
+            : 'Sign in to save your workouts, records and streak. It’s free.'}
         </Txt>
         {!LIMITED && <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />}
       </View>
@@ -146,9 +146,9 @@ export default function ProgressScreen() {
         <View style={styles.freeze} accessible>
           <Icon name="flame" size={18} color={color.brandOnTint} />
           <Txt variant="footnote" color={color.labelSecondaryOnTint} style={styles.flex}>
-            {`Streak freeze: you missed the week${streak.frozen.length > 1 ? 's' : ''} of ${streak.frozen
+            {`Streak freeze used for the week${streak.frozen.length > 1 ? 's' : ''} of ${streak.frozen
               .map((monday) => new Date(monday).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }))
-              .join(' and ')}, and your run carried on. Pro covers one missed week a month.`}
+              .join(' and ')}. Your streak continues. Pro covers 1 missed week a month.`}
           </Txt>
         </View>
       )}
@@ -156,7 +156,7 @@ export default function ProgressScreen() {
         <Pressable onPress={() => openPro('freeze')} accessibilityRole="button" style={({ pressed }) => [styles.freeze, pressed && { opacity: 0.7 }]}>
           <Icon name="flame" size={18} color={color.brandOnTint} />
           <Txt variant="footnote" color={color.labelSecondaryOnTint} style={styles.flex}>
-            {`A streak freeze would have kept your ${couldKeep.weeks}-week run going through the week you missed. GymGO Pro covers one missed week a month.`}
+            {`A streak freeze would have saved your ${couldKeep.weeks}-week streak. GymGO Pro covers 1 missed week a month.`}
           </Txt>
           <Icon name="chevron" size={13} color={color.labelTertiary} />
         </Pressable>
@@ -207,7 +207,7 @@ export default function ProgressScreen() {
           <Pressable
             onPress={() => router.push('/measurements')}
             accessibilityRole="link"
-            accessibilityLabel="Body measurements: waist, chest, arms and more, kept on this device only"
+            accessibilityLabel="Body measurements, stored on this device only"
             style={({ pressed }) => [styles.photosRow, pressed && { opacity: 0.8 }]}
           >
             <Icon name="body" size={18} color={color.brand} />
@@ -238,14 +238,14 @@ export default function ProgressScreen() {
         <Pressable
           onPress={() => router.push('/month')}
           accessibilityRole="link"
-          accessibilityLabel="Monthly report: your months of training, each against the month before"
+          accessibilityLabel="Monthly report, compared with the month before"
           style={({ pressed }) => [styles.photosRow, pressed && { opacity: 0.8 }]}
         >
           <Icon name="calendar" size={18} color={color.brand} />
           <View style={styles.photosText}>
             <Txt variant="headline">Monthly report</Txt>
             <Txt variant="footnote" color={color.labelSecondary}>
-              Each month against the one before: workouts, sets, records, muscles
+              Compare each month with the one before
             </Txt>
           </View>
           <Icon name="chevron" size={13} color={color.labelTertiary} />
@@ -262,7 +262,7 @@ export default function ProgressScreen() {
         <View style={styles.photosText}>
           <Txt variant="headline">Progress photos</Txt>
           <Txt variant="footnote" color={color.labelSecondary}>
-            Kept on this device only, never uploaded
+            Stored on this device only
           </Txt>
         </View>
         <Icon name="chevron" size={13} color={color.labelTertiary} />
@@ -350,7 +350,7 @@ export default function ProgressScreen() {
             <ProOffer
               icon="trophy"
               title="Your lifetime in numbers"
-              body="Every kilo, rep and hour you’ve logged added up, your favourites, and what all that weight compares to."
+              body="See your all-time totals and favourite exercises."
               onPress={() => openPro('lifetime')}
             />
           )}
@@ -522,7 +522,7 @@ function SessionRow({
             <Pressable
               onPress={() => {
                 if (!confirm) return setConfirm(true);
-                onDelete().catch(() => setProblem('Couldn’t delete it just now.'));
+                onDelete().catch(() => setProblem('Couldn’t delete it. Try again.'));
               }}
               accessibilityRole="button"
               style={styles.delete}

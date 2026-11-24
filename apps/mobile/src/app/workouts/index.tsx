@@ -163,7 +163,7 @@ export default function MyWorkouts() {
             })}
           </View>
           <Txt variant="footnote" color={color.labelSecondary} style={styles.footer}>
-            Saved to your account, so they’re on any device you sign in on. Tap one to see it, change it, share it or delete it.
+            Saved to your account and available on all your devices. Tap a workout to view, edit, share or delete it.
           </Txt>
           {billing.isPro && (
             <Group>

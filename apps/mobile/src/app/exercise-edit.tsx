@@ -25,7 +25,7 @@ import { matchesQuery } from '@/lib/exerciseLibrary';
 import { haptic } from '@/lib/haptics';
 import { addOwnExercise, changeOwnExercise, deleteOwnExercise, useOwnTraining } from '@/lib/ownTraining';
 import { usePageTitle } from '@/lib/pageTitle';
-import { color, radius, space, themed } from '@/lib/theme';
+import { FIELD_FRAME, color, radius, space, themed } from '@/lib/theme';
 import { EXERCISES, KIT_LABEL, MUSCLES, type Kit } from '@/lib/workout';
 import { useTapAgain } from '@/lib/tapAgain';
 
@@ -225,7 +225,7 @@ export default function ExerciseEditScreen() {
             {draft.drawnAs ? `Moves like ${EXERCISES.find((exercise) => exercise.id === draft.drawnAs)?.name ?? 'that exercise'}.` : 'A plain one, or borrow the moving icon of a GymGO exercise that looks like it.'}
           </Txt>
         </View>
-        <View style={styles.search}>
+        <View {...FIELD_FRAME} style={styles.search}>
           <Input value={query} onChangeText={setQuery} placeholder="Find one by name" autoCorrect={false} autoCapitalize="none" accessibilityLabel="Find a GymGO exercise whose icon it borrows" style={styles.searchInput} />
         </View>
         <View style={styles.looks} role="radiogroup" accessibilityLabel="Its icon">

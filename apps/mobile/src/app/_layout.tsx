@@ -96,6 +96,13 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
     '[role=tab],[role=checkbox],[role=radio],[role=button]{outline:1px solid CanvasText;outline-offset:-1px}' +
     '[role=tab][aria-selected=true],[role=checkbox][aria-checked=true],[role=radio][aria-checked=true]{forced-color-adjust:none;background-color:Highlight!important;color:HighlightText!important}' +
     '[role=tab][aria-selected=true] *,[role=checkbox][aria-checked=true] *,[role=radio][aria-checked=true] *{color:HighlightText!important}' +
+    // A field drawn as a tinted box with no border of its own (a set's weight, reps or time, the search box) lost its
+    // box with the tint and was bare words: every text field gets a border in the text colour, as Windows draws its own.
+    // Where the view round it draws the box (FIELD_FRAME in lib/theme.ts: a search pill, sign-in's fields), that view does.
+    'input:not([type=checkbox]):not([type=radio]):not([type=range]):not([data-field-frame] *),textarea:not([data-field-frame] *){border:1px solid CanvasText!important}' +
+    // Such a view shows focus by its colour, which forced colours take away: a ring in the highlight colour instead.
+    '[data-field-frame]{outline:1px solid CanvasText;outline-offset:-1px}[data-field-frame]:focus-within{outline:2px solid Highlight;outline-offset:-2px}' +
+    '[data-field-frame] input,[data-field-frame] textarea{outline:none!important}' +
     // A field marked wrong (a password that doesn't match) is red; forced colours make every border alike, so it's dashed round as well.
     '*:has(> input[aria-invalid=true]),*:has(> textarea[aria-invalid=true]){outline:2px dashed CanvasText;outline-offset:2px}}' +
     // Headings break into even lines rather than leaving one word on the last; paragraphs avoid ending on a lone word.

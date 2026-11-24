@@ -1091,5 +1091,12 @@ export function webFocusRing(focused: boolean): TextStyle {
   return (focused ? { outlineStyle: 'solid', outlineWidth: 2, outlineColor: color.brand, outlineOffset: 1 } : { outlineStyle: 'none' }) as unknown as TextStyle;
 }
 
+/**
+ * For the view round a text field that draws the field's box itself (a search pill with its icon, sign-in's
+ * framed fields). In forced colours (Windows High Contrast) the box is drawn round this view, not round the
+ * field inside it as well (app/_layout.tsx). A browser only; phones ignore it.
+ */
+export const FIELD_FRAME = { dataSet: { fieldFrame: '' } } as object;
+
 /** Minimum touch target, per Apple's Human Interface Guidelines. */
 export const HIT = 44;

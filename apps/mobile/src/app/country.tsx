@@ -18,7 +18,7 @@ import { useApp } from '@/lib/app-state';
 import { COUNTRIES, FOCUS_COUNTRY, builtInCountries, countryByCode, deviceCountry, searchCountries, type Country } from '@/lib/country';
 import { haptic } from '@/lib/haptics';
 import { CITY_LIST } from '@/lib/places';
-import { HEADER_EDGE, NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
+import { FIELD_FRAME, HEADER_EDGE, NO_WEB_OUTLINE, color, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { useOverhang, useScreenBottom } from '@/lib/layout';
 import { LIMITED } from '@/lib/limited';
@@ -117,7 +117,7 @@ export default function CountryScreen() {
                   ? 'You have GymGO Pro, so every country is open to you. This sets where GymGO opens.'
                   : 'GymGO Free covers one country, with every gym in it. GymGO Pro adds every other country, for when you travel.'}
               </Txt>
-              <View style={[styles.search, focused && styles.searchFocused]}>
+              <View {...FIELD_FRAME} style={[styles.search, focused && styles.searchFocused]}>
                 <Icon name="search" size={16} color={color.labelSecondary} />
                 <TextInput
                   value={query}

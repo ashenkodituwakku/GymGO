@@ -88,7 +88,7 @@ import { useThemeChoice } from '@/lib/themePrefs';
 import { MENU_BUTTON, navMode, sidebarInset } from '@/lib/navLayout';
 import { FOLD_SHIFT, useSidebarUnfolded } from './Sidebar';
 import { LIMITED } from '@/lib/limited';
-import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { FIELD_FRAME, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { BrandFill } from './BrandFill';
 import { Icon } from './Icon';
 import { ARRIVE_CURVE, POP_IN, Pressable, useCalm, usePressScale } from './motion';
@@ -754,7 +754,7 @@ function Chat({
             </View>
           )}
 
-          <View style={[styles.composer, focused && styles.composerFocused]}>
+          <View {...FIELD_FRAME} style={[styles.composer, focused && styles.composerFocused]}>
             <TextInput
               value={draft}
               onChangeText={setDraft}

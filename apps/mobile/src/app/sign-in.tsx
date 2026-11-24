@@ -20,7 +20,7 @@ import { ApiError, OfflineError, api, serverHosted } from '@/lib/api';
 import { accountCreationLocked, formatBirthMonthInput, lockAccountCreation, parseBirthMonth, takePendingSignIn, type PendingSignIn } from '@/lib/ageGate';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { NO_WEB_OUTLINE, color, dropShadow, face, radius, space, themed } from '@/lib/theme';
+import { FIELD_FRAME, NO_WEB_OUTLINE, color, dropShadow, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { LegalText } from '@/components/LegalText';
@@ -484,7 +484,7 @@ function AuthField({
   return (
     <View style={styles.field}>
       {/* `wrong`: the server turned this down (the email and password don't match): red, and its icon too. */}
-      <View style={[styles.fieldBox, focused && styles.fieldFocused, problem && styles.fieldProblem, wrong && styles.fieldWrong]}>
+      <View {...FIELD_FRAME} style={[styles.fieldBox, focused && styles.fieldFocused, problem && styles.fieldProblem, wrong && styles.fieldWrong]}>
         <Icon name={icon} size={17} color={wrong ? color.dangerInk : focused ? color.brand : color.labelTertiary} />
         <TextInput
           ref={ref}

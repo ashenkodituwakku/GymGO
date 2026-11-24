@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 260 · Text fields keep their box in Windows High Contrast; timed sets checked end to end
+
+*24 Nov 2026 · the commit "Text fields keep their box in High Contrast"*
+
+- **A set's weight, reps and time, and other tinted fields, lost their box in High Contrast.** Forced colours take away every fill. A field drawn only as a tinted box (a workout's set boxes, Edit workout's, measurements, plates, the 1-rep max calculator, adding a friend's code, Which gym?'s search) was left as bare words, or as a grey placeholder floating in the row. Now every text field has a one-pixel border in the text colour there, as Windows draws its own fields. Nothing changes with forced colours off: the rule only applies with them on.
+- **Fields whose box is drawn round them** don't get a second box inside it: sign-in's fields, the map's search, the country search, GymPal's message box, and the search pills in Exercises, Add exercise and "borrow an icon". These are marked `FIELD_FRAME` (lib/theme.ts). In High Contrast, that view is outlined instead, and while its field has focus it takes a two-pixel ring in the system's highlight colour, the field's own outline giving way. Before, they showed focus only by a colour forced colours had flattened, so focus couldn't be seen there.
+- **Timed and distance sets end to end**, which Update 258 hadn't covered. A plank (by the stopwatch, and typed) and a farmer's carry (typed, then from the placeholders) were logged, then checked on the summary ("2 s, 45 s"; "24 kg × 30 m"), Edit workout (TIME; KG × METRES) and each exercise page (Longest, Furthest and their charts). axe was clean on all four and the console had no errors; the test workout was deleted after.
+- Checked in a browser with forced colours on, dark and light: a workout's set boxes, sign-in with the email field focused, Exercises with its search focused, and the map. A sweep of 19 pages' fields: every field has one box, and fields in a frame have none of their own. With forced colours off, borders are as they were.
+- Not checked: Windows itself (this is Chromium's forced-colours emulation).
+
 ## Update 259 · The stopwatch, records and GymPal's answers are read out on the website too
 
-*24 Nov 2026 · the commit "The stopwatch, records and GymPal’s answers are read out on the website too"*
+*24 Nov 2026 · `39898a2`*
 
 On the website, React Native's way of telling a screen reader something (`AccessibilityInfo.announceForAccessibility`) does nothing at all, so a few things a screen reader should have said never were. They now go through `useAnnouncer` (components/ui.tsx; Update 257), which speaks on phones as before and uses a hidden polite live region in a browser.
 

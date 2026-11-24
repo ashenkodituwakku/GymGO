@@ -11,7 +11,7 @@ import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type ViewInstance } from 'react-native';
 import { addableExercises, kitShort, kitText } from '@/lib/exerciseLibrary';
 import { haptic } from '@/lib/haptics';
-import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { FIELD_FRAME, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { useApp } from '@/lib/app-state';
 import { useOwnTraining } from '@/lib/ownTraining';
 import { EXERCISES, ownExercises, type Exercise } from '@/lib/workout';
@@ -62,7 +62,7 @@ export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: 
           <Icon name="close" size={14} color={color.labelSecondary} />
         </Pressable>
       </View>
-      <View style={styles.search}>
+      <View {...FIELD_FRAME} style={styles.search}>
         <Icon name="search" size={16} color={color.labelSecondary} />
         <Input
           value={query}

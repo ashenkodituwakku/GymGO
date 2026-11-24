@@ -18,7 +18,7 @@ import type { RecentPlace } from '@/lib/recentPlaces';
 import { EMPTY, PLACEHOLDER_SHORT, mapPrompt, TIER, lookupLine, searchPrompt, summaryLine, timeLabel, visitWhen } from '@/lib/copy';
 import type { Lookup } from '@/lib/app-state';
 import { QUICK_BUDGET, SORTS, activeFilterCount, nearLabel, visitIsLater, type Filters } from '@/lib/query';
-import { NO_WEB_OUTLINE, color, concentric, face, radius, shadow, space, themed } from '@/lib/theme';
+import { FIELD_FRAME, NO_WEB_OUTLINE, color, concentric, face, radius, shadow, space, themed } from '@/lib/theme';
 import { haptic } from '@/lib/haptics';
 import { MarkImage, useGymMark } from './BrandLogo';
 import { GymRow } from './GymRow';
@@ -152,7 +152,7 @@ export const ResultsContent = memo(function ResultsContent({
 
   const search = (
     <View style={styles.searchRow}>
-      <View style={[styles.search, focused && styles.searchFocused]}>
+      <View {...FIELD_FRAME} style={[styles.search, focused && styles.searchFocused]}>
         <Icon name="search" size={16} color={color.labelSecondary} />
         <SearchInput
           ref={searchRef as never}

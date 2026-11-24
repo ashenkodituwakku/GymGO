@@ -118,6 +118,13 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Text fields in High Contrast** (24 Nov, Update 260). app/_layout.tsx
+  gives every input and textarea a 1px CanvasText border under
+  forced-colors (fills vanish there). A view that draws its field's box
+  itself (an icon pill, sign-in's fieldBox, GymPal's composer) takes
+  `{...FIELD_FRAME}` (lib/theme.ts): it is outlined instead, rings in
+  Highlight on :focus-within, and the field inside draws no border or
+  outline of its own. A new search pill needs the marker.
 - **Announcements on the web** (24 Nov, Update 259). React Native Web's
   `AccessibilityInfo.announceForAccessibility` is a no-op: never call it
   for something a browser's screen reader should hear. Use `useAnnouncer`

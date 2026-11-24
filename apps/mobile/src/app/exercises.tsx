@@ -19,7 +19,7 @@ import { ScreenOptions } from '@/components/ScreenOptions';
 import { useApp } from '@/lib/app-state';
 import { KIT_FILTERS, groupLabel, kitShort, kitText, libraryGroups, type KitFilter } from '@/lib/exerciseLibrary';
 import { usePageTitle } from '@/lib/pageTitle';
-import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { FIELD_FRAME, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { personalRecords } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
 import { useOwnTraining } from '@/lib/ownTraining';
@@ -61,7 +61,7 @@ export default function ExercisesScreen() {
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <ScreenOptions options={{ title: 'Exercises' }} />
-      <View style={styles.search}>
+      <View {...FIELD_FRAME} style={styles.search}>
         <Icon name="search" size={16} color={color.labelSecondary} />
         <Input
           value={query}

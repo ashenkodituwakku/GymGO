@@ -72,7 +72,7 @@ function Claim({ gymName, gymId, country, token, view, onSignIn, onSent }: { gym
   if (claim?.status === 'pending') {
     return (
       <Txt variant="footnote" color={color.labelSecondary}>
-        Your claim is waiting to be checked. We’ll use the contact you gave, so keep an eye on it.
+        Your claim is being reviewed. We’ll get in touch using the contact details you gave.
       </Txt>
     );
   }

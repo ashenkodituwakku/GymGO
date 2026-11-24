@@ -211,7 +211,7 @@ export default function TimerScreen() {
           {plan.id === 'custom' && <ChoiceChip label="Custom" selected onPress={() => undefined} />}
         </View>
         <Txt variant="footnote" color={color.labelSecondary}>
-          Tabata: 20 seconds as hard as you can, 10 seconds rest, eight rounds. EMOM: every minute on the minute; do your reps and rest for what’s left of the minute.
+          Tabata is 20 seconds as hard as you can, then 10 seconds rest, for eight rounds. EMOM means every minute on the minute. Do your reps, then rest until the next minute starts.
         </Txt>
       </View>
 

@@ -359,7 +359,7 @@ export default function AppearanceScreen() {
               <View style={styles.flex}>
                 <Txt variant="body">Fold away on the map</Txt>
                 <Txt variant="footnote" color={color.labelSecondary}>
-                  A small capsule on Explore; its arrow opens the sidebar
+                  A small capsule on Explore. Its arrow opens the sidebar
                 </Txt>
               </View>
               <Toggle
@@ -438,7 +438,7 @@ export default function AppearanceScreen() {
           </View>
         </View>
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-          On top of your phone’s own text size. Free for everyone.
+          Adds to your phone’s text size setting. Free for everyone.
         </Txt>
 
         <View style={styles.accentHead}>

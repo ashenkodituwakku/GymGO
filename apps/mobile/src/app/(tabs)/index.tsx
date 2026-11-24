@@ -200,7 +200,7 @@ export default function Home() {
   const today = nowIn(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', clock).date;
   const trip = tripToShow(trips.trips, today);
   const finders: Array<{ icon: IconName; title: string; detail: string; label: string; onPress: () => void }> = [
-    { icon: 'target', title: 'Machines', detail: 'Who has what', label: 'Machines: who has what', onPress: () => router.push('/machines') },
+    { icon: 'target', title: 'Machines', detail: 'Find one nearby', label: 'Machines. Find one nearby', onPress: () => router.push('/machines') },
     { icon: 'globe', title: 'Trips', detail: trips.trips.length ? `${trips.trips.length} planned` : 'Train away', label: 'Trips', onPress: () => router.push('/trips') },
   ];
 

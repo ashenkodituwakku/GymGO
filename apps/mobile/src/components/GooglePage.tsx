@@ -268,7 +268,7 @@ export function PlaceDetails({ place, hidePhotos = false }: { place: GooglePlace
         <View style={styles.reviews}>
           <Txt variant="title2">What people say on Google</Txt>
           <Txt variant="footnote" color={color.labelSecondary}>
-            Google picks these few and puts its most relevant first.
+            Google chooses these reviews and shows the most relevant first.
           </Txt>
           {place.reviews.map((review, index) => (
             <View key={`${review.author.name}-${index}`} style={styles.card}>

@@ -199,7 +199,7 @@ export default function MeasurementsScreen() {
         <LiveLine>
           {kept && (
             <Txt variant="footnote" color={color.goodInk}>
-              Kept for today. Measuring something again today replaces it.
+              Saved for today. A new measurement today replaces it.
             </Txt>
           )}
         </LiveLine>

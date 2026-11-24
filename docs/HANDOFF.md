@@ -127,7 +127,7 @@ mobile 550, domain 191 and web 39 tests, all passing.
   please do the welcome tour, sign-in and sign-up yourself, in the
   docs/COPY.md voice, since you're working there**; this session leaves those
   files alone. Legal text, GymPal's greeting and waiting messages stay.
-  Done so far (Updates 267–272): Pro and Max, Home, Explore and the gym
+  Done so far (Updates 267–273): Pro and Max, Home, Explore and the gym
   page, training, Profile and settings, collection, friends and feed, gym
   owners and moderation, filters, Google, weather, GymPal's panel, the
   server's error messages and the password reset email and pages. Server

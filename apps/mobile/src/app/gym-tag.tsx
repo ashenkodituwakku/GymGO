@@ -166,7 +166,7 @@ export default function GymTagScreen() {
           <View style={styles.group}>{found.map(row)}</View>
         ) : (
           <Txt variant="subhead" color={color.labelSecondary} style={styles.empty}>
-            No gym by that name here. Look it up on Explore first, then it shows up.
+            No gym found with that name. Find it on Explore first and it will show up here.
           </Txt>
         )
       ) : (

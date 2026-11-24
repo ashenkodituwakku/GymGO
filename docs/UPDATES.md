@@ -9,9 +9,23 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 273 · Plainer words, part 7: sentences the scan missed
+
+*24 Nov 2026 · the commit "Plainer words: sentences the scan missed"*
+
+The string scan behind parts 1–6 reads string literals and short JSX text, so it missed longer sentences that wrap across lines in a screen's JSX. A second scan over those lines found 26 more, mostly semicolon chains and "never" asides:
+
+- "A visit counts once a day when you check in at the gym. Your location is checked on your phone and isn’t sent anywhere." (it read "…at the gym; your location is only compared on the phone, never sent.")
+- Timer: "Tabata is 20 seconds as hard as you can, then 10 seconds rest, for eight rounds. EMOM means every minute on the minute. Do your reps, then rest until the next minute starts."
+- Leaderboard: "A gym counts after your first check-in, and visits count once a day." (it read "…once you’ve checked in there; a visit, once a day.")
+- Accessibility filter: "Each feature is checked separately, so an accessible entrance doesn’t mean accessible bathrooms. Gyms with no record show as unknown." Unknown still isn't "no".
+- Spend, the crash screen, a saved workout's kit marks, progress photos, the weekly recap picture, Not found, gym tags, trips, splits, measurements, Customise Home, the weekly chart, member equipment, gym claims and the server-away card.
+- Home's Machines tile: "Find one nearby" (it read "Who has what").
+- Checked: app tests 665 and a typecheck; Timer, Spend, Leaderboard, Collection (with its "How cards work" box and the empty state for a new account) and Home opened in a browser with no errors, each showing its new words.
+
 ## Update 272 · Plainer words, part 6: error messages and the password email
 
-*24 Nov 2026 · the commit "Plainer words: error messages and the password email"*
+*24 Nov 2026 · `6ba88c4`*
 
 The sixth part of the rewrite (docs/COPY.md) covers the messages the server sends back to the app, the password reset email and pages, and the app's own connection errors. For example:
 

@@ -347,7 +347,7 @@ export default function CollectionScreen() {
         )}
       </LiveLine>
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-        A visit counts once a day, when you check in at the gym; your location is only compared on the phone, never sent.
+        A visit counts once a day when you check in at the gym. Your location is checked on your phone and isn’t sent anywhere.
       </Txt>
       <CollectionSyncLine when="fine" />
 

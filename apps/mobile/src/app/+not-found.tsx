@@ -24,7 +24,7 @@ export default function NotFound() {
         This page isn’t in GymGO
       </Txt>
       <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-        The link may be old or mistyped. Every gym is a search away from Home.
+        The link may be old or mistyped. You can search for any gym from Home.
       </Txt>
       <View style={styles.button}>
         <PrimaryButton label="Go to Home" icon="home" onPress={() => router.replace('/')} />

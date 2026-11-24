@@ -247,6 +247,77 @@ export const CHECKOUT_LOOK = {
   border_style: 'rounded',
 } as const;
 
+/**
+ * A refund or dispute on one of GymGO's Stripe payments. Kept and passed on
+ * so the owner hears about it; it changes nobody's access. A refund doesn't
+ * cancel a subscription, and whether a dispute should end Pro is the
+ * owner's decision, made in Stripe's dashboard.
+ */
+export interface MoneyEvent {
+  eventId: string;
+  kind: 'refund' | 'dispute_opened' | 'dispute_closed';
+  chargeId: string | null;
+  disputeId: string | null;
+  /** For a refund, the total refunded on the charge so far. */
+  amountMinor: number;
+  currency: string;
+  /** A dispute's reason, as Stripe names it (fraudulent, duplicate, …). */
+  reason: string | null;
+  /** A refund: full or partial. A dispute: Stripe's status (needs_response, won, lost, …). */
+  status: string | null;
+  /** When evidence for a dispute is due. */
+  respondBy: string | null;
+  /** The GymGO account the payment's customer belongs to, when known. */
+  userId: string | null;
+  at: string;
+}
+
+/** The Stripe events kept as money events. */
+export const MONEY_EVENT_TYPES = ['charge.refunded', 'charge.dispute.created', 'charge.dispute.closed'] as const;
+
+/** An amount as the owner reads it: A$9.99, US$54.99, or the code for anything else. */
+export function moneyLabel(amountMinor: number, currency: string): string {
+  const code = currency.toUpperCase();
+  const symbol = code === 'AUD' ? 'A$' : code === 'USD' ? 'US$' : `${code} `;
+  return `${symbol}${(amountMinor / 100).toFixed(2)}`;
+}
+
+/** The email the owner gets for a refund or dispute: what happened, and what's theirs to do. */
+export function moneyEventEmail(event: MoneyEvent): { subject: string; text: string } {
+  const amount = moneyLabel(event.amountMinor, event.currency);
+  const charge = event.chargeId ?? 'unknown';
+  const account = event.userId ? `GymGO account: ${event.userId}` : 'Not linked to a GymGO account.';
+  const dashboard = event.kind === 'refund' || !event.disputeId
+    ? `https://dashboard.stripe.com/payments/${charge}`
+    : `https://dashboard.stripe.com/disputes/${event.disputeId}`;
+  const lines =
+    event.kind === 'refund'
+      ? [
+          `Stripe refunded ${amount} on charge ${charge} (${event.status === 'full' ? 'the full amount' : 'part of it'}).`,
+          account,
+          '',
+          'GymGO hasn’t changed anyone’s access. A refund doesn’t cancel a subscription, so to end Pro or Max as well, cancel the subscription in Stripe’s dashboard.',
+        ]
+      : event.kind === 'dispute_opened'
+        ? [
+            `A customer disputed ${amount} on charge ${charge}${event.reason ? ` (reason: ${event.reason.replace(/_/g, ' ')})` : ''}.`,
+            account,
+            '',
+            event.respondBy
+              ? `Respond in Stripe’s dashboard by ${event.respondBy.slice(0, 10)}. Evidence can’t be sent after that.`
+              : 'Respond in Stripe’s dashboard.',
+            'GymGO hasn’t changed anyone’s access.',
+          ]
+        : [`The dispute on charge ${charge} has closed: ${(event.status ?? 'unknown').replace(/_/g, ' ')}.`, account];
+  const subject =
+    event.kind === 'refund'
+      ? `GymGO payments: ${amount} refunded`
+      : event.kind === 'dispute_opened'
+        ? `GymGO payments: a dispute for ${amount}`
+        : `GymGO payments: dispute closed (${(event.status ?? 'unknown').replace(/_/g, ' ')})`;
+  return { subject, text: [...lines, '', `Stripe: ${dashboard}`, `Event ${event.eventId}, ${event.at}.`].join('\n') };
+}
+
 export interface BillingOptions {
   stripe: StripeApi | null;
   webhookSecret: string | null;
@@ -255,6 +326,8 @@ export interface BillingOptions {
   grantFor?: (userId: string) => ProGrant | null;
   /** A one-off payment went through (a gift, a day pass): perks.ts fulfils it, once. */
   onPaid?: (session: StripeCheckoutSession) => void;
+  /** A refund or dispute arrived (app.ts emails the owner). Nobody's access changes. */
+  onMoneyEvent?: (event: MoneyEvent) => void;
   /**
    * The payment method setting (pmc_…) GymGO's checkouts use, when not the
    * account's default (STRIPE_PAYMENT_METHOD_CONFIGURATION).
@@ -822,8 +895,12 @@ export class Billing {
     }
   }
 
-  private async apply(event: { type: string; data: { object: Record<string, unknown> } }): Promise<void> {
+  private async apply(event: { id: string; type: string; data: { object: Record<string, unknown> } }): Promise<void> {
     const object = event.data.object;
+    if ((MONEY_EVENT_TYPES as readonly string[]).includes(event.type)) {
+      this.recordMoney(event.id, event.type, object);
+      return;
+    }
     if ((event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') && object.mode === 'payment') {
       // Re-read from Stripe rather than trusting the event's copy.
       const session = await this.stripe.checkout.sessions.retrieve(String(object.id));
@@ -842,6 +919,44 @@ export class Billing {
       if (userId) this.store(subscription, userId);
     }
     // Invoices and everything else: the subscription events carry what matters.
+  }
+
+  /**
+   * Keep a refund or dispute and tell the owner. The event is signed by
+   * Stripe and only recorded, so it's read as sent; nobody's access changes.
+   */
+  private recordMoney(eventId: string, type: string, object: Record<string, unknown>): void {
+    const refund = type === 'charge.refunded';
+    const customer = refund ? idOf((object.customer ?? null) as Expandable) : null;
+    const known = customer
+      ? (this.db.prepare('select user_id from billing_customers where stripe_customer_id = ?').get(customer) as { user_id: string } | undefined)
+      : undefined;
+    const due = refund ? undefined : (object.evidence_details as { due_by?: unknown } | undefined)?.due_by;
+    const money: MoneyEvent = {
+      eventId,
+      kind: refund ? 'refund' : type === 'charge.dispute.created' ? 'dispute_opened' : 'dispute_closed',
+      chargeId: refund ? String(object.id) : idOf((object.charge ?? null) as Expandable),
+      disputeId: refund ? null : String(object.id),
+      amountMinor: Math.max(0, Math.round(Number(refund ? object.amount_refunded : object.amount) || 0)),
+      currency: String(object.currency ?? '').toLowerCase(),
+      reason: !refund && typeof object.reason === 'string' ? object.reason : null,
+      status: refund ? (object.refunded === true ? 'full' : 'partial') : typeof object.status === 'string' ? object.status : null,
+      respondBy: typeof due === 'number' ? new Date(due * 1000).toISOString() : null,
+      userId: known?.user_id ?? null,
+      at: this.options.now().toISOString(),
+    };
+    this.db
+      .prepare(
+        `insert or ignore into stripe_money_events (event_id, kind, charge_id, dispute_id, amount_minor, currency, reason, status, respond_by, user_id, created_at)
+         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(money.eventId, money.kind, money.chargeId, money.disputeId, money.amountMinor, money.currency, money.reason, money.status, money.respondBy, money.userId, money.at);
+    this.options.onMoneyEvent?.(money);
+  }
+
+  /** The owner has been emailed about this refund or dispute. */
+  markMoneyEmailed(eventId: string): void {
+    this.db.prepare('update stripe_money_events set emailed_at = ? where event_id = ?').run(this.options.now().toISOString(), eventId);
   }
 
   // --- Deleting an account -----------------------------------------------------------------

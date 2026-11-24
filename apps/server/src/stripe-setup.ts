@@ -148,7 +148,8 @@ async function main() {
   console.log('  on your computer:  stripe listen --forward-to localhost:4000/api/billing/webhook');
   console.log('                     then put the whsec_… it prints in STRIPE_WEBHOOK_SECRET');
   console.log('  once hosted:       add an endpoint at https://<your server>/api/billing/webhook in Stripe,');
-  console.log('                     for checkout.session.completed and customer.subscription.*');
+  console.log('                     for checkout.session.completed, customer.subscription.*, charge.refunded,');
+  console.log('                     charge.dispute.created and charge.dispute.closed');
 }
 
 main().catch((error: unknown) => {

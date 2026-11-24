@@ -251,6 +251,29 @@ The owner's tiers: **Free**, **Pro** (everything Pro had) and **Max**
    - Privacy → what we keep: drop "who’s on your Duo (or whose you’re on)";
      add that friends can see whether you're on Max (the badge).
 
+## Refunds and disputes (Update 274, 24 Nov 2026)
+
+When Stripe refunds a payment or a customer disputes one, the server now
+keeps a record (`stripe_money_events`) and emails it to the address bug
+reports go to (`GYMGO_BUG_REPORT_TO`, sent with the same mail settings).
+The email says how much, which charge and which GymGO account, and, for a
+dispute, the date evidence is due, with a link to the payment or dispute in
+Stripe's dashboard.
+
+**Nobody's access changes.** A refund doesn't cancel a subscription in
+Stripe, so someone refunded stays Pro or Max until you also cancel their
+subscription in Stripe's dashboard (the server hears about that and ends
+it). A disputed payment doesn't end Pro either. Whether a refund or a lost
+dispute should end access, or void an unused gift code, is your decision;
+it hasn't been built either way.
+
+**What you do:** add `charge.refunded`, `charge.dispute.created` and
+`charge.dispute.closed` to the webhook endpoint's events in Stripe
+(Developers → Webhooks → your endpoint → Select events), next to
+`checkout.session.completed` and `customer.subscription.*`. The Privacy
+Policy's list of what's kept may want a line for refund and dispute
+records when you next approve its wording.
+
 ## The phone apps and the stores
 
 Pro is a digital subscription, so the App Store and Google Play have their

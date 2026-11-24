@@ -6,7 +6,7 @@ import { LIMITS, PRO_PRICES } from '@gymgo/domain';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { US_GYMS } from '@gymgo/usa-data';
 import { createApp } from './app';
-import { safeReturnUrl, withQuery, type StripeApi, type StripeCheckoutSession, type StripeSubscription } from './billing';
+import { moneyEventEmail, safeReturnUrl, withQuery, type StripeApi, type StripeCheckoutSession, type StripeSubscription } from './billing';
 import { openDb, seedGyms, type Db } from './db';
 
 // --- A pretend Stripe: records what GymGO asks for; never touches the network. ---
@@ -152,10 +152,19 @@ let fake: ReturnType<typeof makeFakeStripe>;
 let withStripe: { server: Server; base: string };
 let withoutStripe: { server: Server; base: string };
 let clock = new Date('2026-09-24T12:00:00Z');
+/** Emails the server sent (to the owner, for refunds and disputes). */
+const mails: Array<{ to: string[]; subject: string; text: string }> = [];
 
 async function start(stripe: StripeApi | null) {
   const server = createServer(
-    createApp({ db, attribution: 'test', signupsPerHour: 1000, now: () => clock, billing: { stripe, webhookSecret: stripe ? WEBHOOK_SECRET : null } }),
+    createApp({
+      db,
+      attribution: 'test',
+      signupsPerHour: 1000,
+      now: () => clock,
+      billing: { stripe, webhookSecret: stripe ? WEBHOOK_SECRET : null },
+      bugReports: { send: async (message) => void mails.push(message), to: ['owner@example.com'] },
+    }),
   );
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   return { server, base: `http://127.0.0.1:${(server.address() as AddressInfo).port}` };
@@ -518,6 +527,59 @@ describe('webhooks', () => {
     fake.failRetrieve = false;
     expect((await call(withStripe.base, 'POST', '/api/billing/webhook', event)).status).toBe(200);
     expect((await call(withStripe.base, 'GET', '/api/billing', { token })).body.plan).toBe('free');
+  });
+});
+
+describe('refunds and disputes', () => {
+  const customerOf = (userId: string) =>
+    (db.prepare('select stripe_customer_id from billing_customers where user_id = ?').get(userId) as { stripe_customer_id: string }).stripe_customer_id;
+  const kept = (eventId: string) => db.prepare('select * from stripe_money_events where event_id = ?').get(eventId) as Record<string, unknown> | undefined;
+
+  it('keeps a refund, emails the owner once, and leaves Pro alone', async () => {
+    const { token, id } = await proAccount();
+    mails.length = 0;
+    const event = signedWebhook({
+      id: 'evt_refund_1',
+      type: 'charge.refunded',
+      data: { object: { id: 'ch_refund_1', customer: customerOf(id), amount: 2999, amount_refunded: 2999, refunded: true, currency: 'aud' } },
+    });
+    expect((await call(withStripe.base, 'POST', '/api/billing/webhook', event)).status).toBe(200);
+    expect((await call(withStripe.base, 'POST', '/api/billing/webhook', event)).status).toBe(200);
+    expect(kept('evt_refund_1')).toMatchObject({ kind: 'refund', charge_id: 'ch_refund_1', amount_minor: 2999, currency: 'aud', status: 'full', user_id: id });
+    expect(mails).toHaveLength(1);
+    expect(mails[0]!.to).toEqual(['owner@example.com']);
+    expect(mails[0]!.subject).toBe('GymGO payments: A$29.99 refunded');
+    expect(mails[0]!.text).toContain('A refund doesn’t cancel a subscription');
+    expect(mails[0]!.text).toContain(`GymGO account: ${id}`);
+    expect(kept('evt_refund_1')!.emailed_at).toBeTruthy();
+    // Still Pro: the subscription, not the refund, decides.
+    expect((await call(withStripe.base, 'GET', '/api/billing', { token })).body.plan).toBe('pro');
+  });
+
+  it('keeps a dispute with its deadline, and its outcome', async () => {
+    mails.length = 0;
+    const opened = signedWebhook({
+      id: 'evt_dispute_1',
+      type: 'charge.dispute.created',
+      data: { object: { id: 'dp_1', charge: 'ch_disputed', amount: 999, currency: 'usd', reason: 'product_not_received', status: 'needs_response', evidence_details: { due_by: Date.parse('2026-10-04T23:59:59Z') / 1000 } } },
+    });
+    expect((await call(withStripe.base, 'POST', '/api/billing/webhook', opened)).status).toBe(200);
+    expect(kept('evt_dispute_1')).toMatchObject({ kind: 'dispute_opened', charge_id: 'ch_disputed', dispute_id: 'dp_1', amount_minor: 999, reason: 'product_not_received', respond_by: '2026-10-04T23:59:59.000Z', user_id: null });
+    expect(mails[0]!.subject).toBe('GymGO payments: a dispute for US$9.99');
+    expect(mails[0]!.text).toContain('(reason: product not received)');
+    expect(mails[0]!.text).toContain('Respond in Stripe’s dashboard by 2026-10-04.');
+    expect(mails[0]!.text).toContain('https://dashboard.stripe.com/disputes/dp_1');
+
+    const closed = signedWebhook({ id: 'evt_dispute_2', type: 'charge.dispute.closed', data: { object: { id: 'dp_1', charge: 'ch_disputed', amount: 999, currency: 'usd', status: 'lost' } } });
+    expect((await call(withStripe.base, 'POST', '/api/billing/webhook', closed)).status).toBe(200);
+    expect(mails[1]!.subject).toBe('GymGO payments: dispute closed (lost)');
+    expect(mails[1]!.text).toContain('The dispute on charge ch_disputed has closed: lost.');
+  });
+
+  it('says when a refund was only part of the payment', () => {
+    const email = moneyEventEmail({ eventId: 'evt_x', kind: 'refund', chargeId: 'ch_x', disputeId: null, amountMinor: 500, currency: 'aud', reason: null, status: 'partial', respondBy: null, userId: null, at: '2026-09-24T12:00:00.000Z' });
+    expect(email.text).toContain('Stripe refunded A$5.00 on charge ch_x (part of it).');
+    expect(email.text).toContain('Not linked to a GymGO account.');
   });
 });
 

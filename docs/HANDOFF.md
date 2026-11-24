@@ -118,6 +118,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Refunds and disputes** (24 Nov, Update 274). billing.ts `MoneyEvent`,
+  `MONEY_EVENT_TYPES`, `moneyEventEmail`, `recordMoney`, table
+  `stripe_money_events`; app.ts emails them through `bugReports.send/to`.
+  Record and notify only: don't end access on a refund or dispute without
+  the owner deciding (docs/PAYMENTS.md).
 - **CLAIMED (24 Nov, session_01T19nwfpA683gnbhSJ8YpPV): rewriting the
   app's text so it doesn't read as AI-written.** The owner asked for every
   piece of text on the website to be redone; the house style is

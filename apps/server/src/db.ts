@@ -156,6 +156,22 @@ const SCHEMA = `
     type text not null,
     received_at text not null
   );
+  -- Refunds and disputes on GymGO's Stripe payments (billing.ts), kept and emailed to the
+  -- owner. They change nobody's access: that stays the owner's call, in Stripe.
+  create table if not exists stripe_money_events (
+    event_id text primary key,
+    kind text not null,
+    charge_id text,
+    dispute_id text,
+    amount_minor integer not null,
+    currency text not null,
+    reason text,
+    status text,
+    respond_by text,
+    user_id text references users(id) on delete set null,
+    created_at text not null,
+    emailed_at text
+  );
   -- PayPal's webhook events, each handled once (paypal.ts). Its subscriptions share the
   -- subscriptions table, their ids written "paypal:I-…".
   create table if not exists paypal_events (

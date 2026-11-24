@@ -215,7 +215,7 @@ import {
 } from './auth';
 import { DEV_PRO_EMAIL, matchesDevPassword } from './devAccount';
 import { legalIndexPage, legalPage, resetEmail, resetPasswordPage, securityTxt } from './legalPages';
-import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
+import { Billing, BillingError, moneyEventEmail, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
 import { PayPalError, PayPalPro, type PayPalApi } from './paypal';
 import { AreaError, AreaSearch, parseBox, whereIs } from './area';
 import { CountryPacks } from './countryPack';
@@ -826,6 +826,19 @@ export function createApp(options: AppOptions) {
     now,
     grantFor: (userId) => perks.grantFor(userId),
     onPaid: (session) => perks.fulfil(session),
+    // Refunds and disputes: emailed to whoever gets bug reports. Kept in the database either way.
+    onMoneyEvent: (event) => {
+      const send = options.bugReports?.send;
+      const to = options.bugReports?.to ?? [];
+      if (!send || to.length === 0) return;
+      void send({ to, ...moneyEventEmail(event) })
+        .then(() => billingFor.current?.markMoneyEmailed(event.eventId))
+        .catch((error: unknown) =>
+          (options.bugReports?.log ?? ((line: string) => console.warn(line)))(
+            `[server] Couldn't email the owner about Stripe event ${event.eventId}: ${error instanceof Error ? error.message : String(error)}`,
+          ),
+        );
+    },
   });
   billingFor.current = billing;
   perks.attach(billing);

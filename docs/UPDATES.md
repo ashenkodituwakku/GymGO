@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 274 · Refunds and disputes reach the owner
+
+*24 Nov 2026 · the commit "Refunds and disputes reach the owner"*
+
+Until now the server ignored Stripe's refund and dispute events, so the owner would only find out in Stripe's dashboard. Now:
+
+- `charge.refunded`, `charge.dispute.created` and `charge.dispute.closed` are kept in a new `stripe_money_events` table (once per event, like every webhook) and emailed to the bug-report address: the amount, the charge, the GymGO account when the customer is known, and for a dispute its reason and the date evidence is due, with a link into Stripe's dashboard.
+- **Nobody's access changes.** A refund doesn't cancel a subscription, and the email says so. Whether a refund or a lost dispute should end Pro or Max, or void an unused gift code, is left for the owner to decide (docs/PAYMENTS.md).
+- `stripe:setup` lists the three events to add to the webhook endpoint.
+- Checked: 3 new server tests (a full refund emailed once and Pro kept; a dispute with its deadline, then lost; a partial refund's email), server 373 tests, typecheck.
+
 ## Update 273 · Plainer words, part 7: sentences the scan missed
 
-*24 Nov 2026 · the commit "Plainer words: sentences the scan missed"*
+*24 Nov 2026 · `731ab49`*
 
 The string scan behind parts 1–6 reads string literals and short JSX text, so it missed longer sentences that wrap across lines in a screen's JSX. A second scan over those lines found 26 more, mostly semicolon chains and "never" asides:
 

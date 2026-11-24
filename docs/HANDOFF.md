@@ -118,6 +118,15 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **CLAIMED (24 Nov, session_01T19nwfpA683gnbhSJ8YpPV): rewriting the
+  app's text so it doesn't read as AI-written.** The owner asked for every
+  piece of text on the website to be redone; the house style is
+  docs/COPY.md. Write all new text that way. This session goes area by area
+  (Pro and Max first, then Home, Explore and gyms, Workout and Progress,
+  Profile and settings, friends and feed, GymPal, errors). **Other session:
+  please do the welcome tour, sign-in and sign-up yourself, in the
+  docs/COPY.md voice, since you're working there**; this session leaves those
+  files alone. Legal text, GymPal's greeting and waiting messages stay.
 - **Max's AI features** (24 Nov, Update 266; the claim is done). Server:
   apps/server/src/gymPalMax.ts (`cleanRequest`, `cleanCatalogue`,
   `workoutTask`, `readWorkout`, `NOTE_TASK`, `cleanNote`) and the routes

@@ -1,29 +1,25 @@
 /**
- * Gift Pro, Duo and partner day passes (domain perks.ts; the routes are in
+ * Gift Pro and partner day passes (domain perks.ts; the routes are in
  * app.ts). Stripe takes the money (billing.ts payOnce and checkout); this
  * keeps what was bought and who it's for.
  *
  * - Gift Pro: paying makes a gift code (once per checkout, whichever of the
  *   webhook or the return page says so first), shown to the buyer. Whoever
  *   redeems it gets a year of Pro, after any gift still running.
- * - Duo: a Duo subscriber adds one person by their friend code; that person
- *   is Pro for as long as the Duo subscription is. Either can end it.
  * - Partner day passes: only an admin adds one, once GymGO has an agreement
  *   with the gym. Booking makes a pending booking and a checkout with the
  *   pass and GymGO's fee as separate lines; paying gives a pass code to
  *   show at reception.
  *
- * Deleting an account removes its grants, Duo place and bookings (they
+ * Deleting an account removes its grants and bookings (they
  * cascade); a gift code it bought but nobody redeemed stays redeemable.
  */
 
 import { randomUUID } from 'node:crypto';
 import {
-  formatFriendCode,
   formatGiftCode,
   giftPeriod,
   makeGiftCode,
-  normaliseFriendCode,
   normaliseGiftCode,
   passTotal,
   type BillingCurrency,
@@ -80,15 +76,10 @@ export class Perks {
     return row.ends;
   }
 
-  /** For billing.planFor: a gift running now, or a place on a Duo whose subscriber still pays. */
+  /** For billing.planFor: a gifted year running now. */
   grantFor(userId: string): ProGrant | null {
     const gift = this.giftUntil(userId);
-    if (gift) return { via: 'gift', endsAt: gift, from: null };
-    const duo = this.db.prepare('select d.owner_user_id, u.display_name from duo_members d join users u on u.id = d.owner_user_id where d.member_user_id = ?').get(userId) as
-      | { owner_user_id: string; display_name: string }
-      | undefined;
-    if (duo && this.subscriptions.subscribed(duo.owner_user_id).duo) return { via: 'duo', endsAt: null, from: duo.display_name };
-    return null;
+    return gift ? { via: 'gift', endsAt: gift } : null;
   }
 
   // --- Gift Pro -----------------------------------------------------------------------
@@ -152,45 +143,6 @@ export class Perks {
       throw error;
     }
     return { endsAt: period.endsAt };
-  }
-
-  // --- Duo ----------------------------------------------------------------------------
-
-  duoView(userId: string): { role: 'owner' | 'member' | null; partner: { displayName: string } | null; canAdd: boolean } {
-    const asOwner = this.db.prepare('select u.display_name from duo_members d join users u on u.id = d.member_user_id where d.owner_user_id = ?').get(userId) as
-      | { display_name: string }
-      | undefined;
-    const ownsDuo = this.subscriptions.subscribed(userId).duo;
-    if (asOwner) return { role: 'owner', partner: { displayName: asOwner.display_name }, canAdd: ownsDuo };
-    const asMember = this.db.prepare('select u.display_name from duo_members d join users u on u.id = d.owner_user_id where d.member_user_id = ?').get(userId) as
-      | { display_name: string }
-      | undefined;
-    if (asMember) return { role: 'member', partner: { displayName: asMember.display_name }, canAdd: false };
-    return { role: ownsDuo ? 'owner' : null, partner: null, canAdd: ownsDuo };
-  }
-
-  /** A Duo subscriber adds (or swaps in) their one more person, by that person's friend code. */
-  addToDuo(ownerId: string, typed: string): { displayName: string } {
-    if (!this.subscriptions.subscribed(ownerId).duo) throw new PerkError(403, 'Adding someone needs a GymGO Pro Duo subscription.');
-    const code = normaliseFriendCode(typed);
-    if (!code) throw new PerkError(400, 'Use their friend code, like K7QM-2XPH (it’s on their Friends screen).');
-    const found = this.db.prepare('select f.user_id, u.display_name from friend_codes f join users u on u.id = f.user_id where f.code = ?').get(code) as
-      | { user_id: string; display_name: string }
-      | undefined;
-    if (!found) throw new PerkError(404, `No one has the code ${formatFriendCode(code)}.`);
-    if (found.user_id === ownerId) throw new PerkError(400, 'That’s your own code. Add someone else.');
-    if (this.subscriptions.subscribed(found.user_id).pro) throw new PerkError(409, `${found.display_name} already pays for Pro.`);
-    const elsewhere = this.db.prepare('select owner_user_id from duo_members where member_user_id = ?').get(found.user_id) as { owner_user_id: string } | undefined;
-    if (elsewhere && elsewhere.owner_user_id !== ownerId) throw new PerkError(409, `${found.display_name} is already on someone else’s Duo.`);
-    this.db
-      .prepare('insert into duo_members (owner_user_id, member_user_id, added_at) values (?, ?, ?) on conflict (owner_user_id) do update set member_user_id = excluded.member_user_id, added_at = excluded.added_at')
-      .run(ownerId, found.user_id, this.now().toISOString());
-    return { displayName: found.display_name };
-  }
-
-  /** The subscriber takes their person off, or the person leaves. */
-  leaveDuo(userId: string): void {
-    this.db.prepare('delete from duo_members where owner_user_id = ? or member_user_id = ?').run(userId, userId);
   }
 
   // --- Partner day passes ---------------------------------------------------------------

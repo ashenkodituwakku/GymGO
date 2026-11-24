@@ -27,7 +27,7 @@ export interface WalletButtonProps {
   /** Stripe's publishable key, from the server. */
   publishableKey: string;
   token: string;
-  choice: { interval: BillingInterval; currency: BillingCurrency; plan: 'pro' | 'duo'; trial: boolean };
+  choice: { interval: BillingInterval; currency: BillingCurrency; plan: 'pro' | 'max'; trial: boolean };
   /** Another checkout is opening: the button can't be tapped meanwhile. */
   disabled?: boolean;
   /** Whether the button is showing, for the renewal terms that name it. */

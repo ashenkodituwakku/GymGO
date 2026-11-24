@@ -3,8 +3,6 @@
  *
  * - Gift Pro: a one-off payment for a year of Pro, as a code to give anyone,
  *   who redeems it in the app.
- * - Duo: a Pro subscription for two, the subscriber and one more person they
- *   add, at its own price.
  * - Partner day passes: a visit to a gym GymGO has an agreement with, paid
  *   through GymGO with a booking fee shown before paying. No pass exists
  *   until the owner makes such an agreement and adds it; GymGO never lists
@@ -15,19 +13,7 @@
  */
 
 import { FRIEND_CODE_ALPHABET } from './social';
-import type { BillingCurrency, ProPrice } from './plans';
-
-/** Duo: one subscription, two people. */
-export const DUO_PRICES: ProPrice[] = [
-  { lookupKey: 'gymgo_duo_month_aud', interval: 'month', currency: 'aud', amountMinor: 599 },
-  { lookupKey: 'gymgo_duo_year_aud', interval: 'year', currency: 'aud', amountMinor: 4499 },
-  { lookupKey: 'gymgo_duo_month_usd', interval: 'month', currency: 'usd', amountMinor: 449 },
-  { lookupKey: 'gymgo_duo_year_usd', interval: 'year', currency: 'usd', amountMinor: 2999 },
-];
-
-export const DUO_PRODUCT = { name: 'GymGO Pro Duo', description: 'GymGO Pro for you and one more person you choose.' } as const;
-
-export const isDuoLookupKey = (key: string | null | undefined): boolean => DUO_PRICES.some((price) => price.lookupKey === key);
+import type { BillingCurrency } from './plans';
 
 /** Gift Pro: a year of Pro, paid once. */
 export interface GiftPrice {

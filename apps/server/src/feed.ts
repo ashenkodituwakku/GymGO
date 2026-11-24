@@ -24,6 +24,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { personalRecords, recordsBroken, setCount, volumeKg, type ExerciseRecords, type LoggedExercise, type NewRecord, type TrainingSession, type WeightUnit } from '@gymgo/domain';
+import { isMaxSql } from './billing';
 import type { Db } from './db';
 
 export class FeedError extends Error {
@@ -48,6 +49,8 @@ export interface FeedPerson {
   id: string;
   displayName: string;
   avatarUrl: string | null;
+  /** On GymGO Max: a badge by their name. */
+  max: boolean;
 }
 
 export interface FeedItem {
@@ -100,7 +103,7 @@ type SessionRow = {
   gym_id: string | null;
   gym_name: string | null;
 };
-type UserRow = { id: string; display_name: string; avatar_id: string | null };
+type UserRow = { id: string; display_name: string; avatar_id: string | null; max?: number };
 type CommentRow = { id: string; session_id: string; user_id: string; body: string; created_at: string };
 
 const SESSION_COLUMNS = 's.id, s.user_id, s.name, s.unit, s.started_at, s.finished_at, s.exercises_json, s.hidden, s.records_json, s.gym_id, s.gym_name';
@@ -109,6 +112,7 @@ const person = (row: UserRow): FeedPerson => ({
   id: row.id,
   displayName: row.display_name,
   avatarUrl: row.avatar_id ? `/api/avatars/${row.avatar_id}` : null,
+  max: row.max === 1,
 });
 
 /** A comment's text: trimmed, runs of spaces folded, at most two line breaks in a row. */
@@ -350,7 +354,7 @@ export class Feed {
   }
 
   private user(id: string): UserRow {
-    return (this.db.prepare('select id, display_name, avatar_id from users where id = ?').get(id) as UserRow | undefined) ?? { id, display_name: 'Someone', avatar_id: null };
+    return (this.db.prepare(`select id, display_name, avatar_id, ${isMaxSql('users.id')} as max from users where id = ?`).get(id) as UserRow | undefined) ?? { id, display_name: 'Someone', avatar_id: null };
   }
 
   private itemView(viewerId: string, row: SessionRow): FeedItem {

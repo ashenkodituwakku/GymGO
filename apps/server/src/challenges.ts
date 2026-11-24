@@ -8,6 +8,7 @@
  */
 
 import { CHALLENGE_TARGETS, isChallengeTarget, isMonthKey, isTimeZone, monthIn, nextMonth, trainingDays } from '@gymgo/domain';
+import { isMaxSql } from './billing';
 import type { Db } from './db';
 import type { Social } from './social';
 
@@ -32,6 +33,8 @@ interface MemberRow {
 export interface ChallengeStanding {
   displayName: string;
   avatarUrl: string | null;
+  /** On GymGO Max: a badge by their name. */
+  max: boolean;
   target: number;
   days: number;
   finished: boolean;
@@ -81,11 +84,12 @@ export class Challenges {
     const rows = people.map((id) => this.member(id, month)).filter((row): row is MemberRow => row !== null);
     const standings: ChallengeStanding[] = rows
       .map((row) => {
-        const who = this.db.prepare('select display_name, avatar_id from users where id = ?').get(row.user_id) as { display_name: string; avatar_id: string | null } | undefined;
+        const who = this.db.prepare(`select display_name, avatar_id, ${isMaxSql('users.id')} as max from users where id = ?`).get(row.user_id) as { display_name: string; avatar_id: string | null; max: number } | undefined;
         const { days, finished } = this.standing(row);
         return {
           displayName: who?.display_name ?? 'Someone',
           avatarUrl: who?.avatar_id ? `/api/avatars/${who.avatar_id}` : null,
+          max: who?.max === 1,
           target: row.target,
           days,
           finished,

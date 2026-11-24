@@ -98,7 +98,7 @@ import { CloseButton, Txt, useAnnouncer } from './ui';
 export const GREETING = 'Hi! I’m GymPal your personal assistant, ask me anything!';
 
 /** What the server takes: the latest 10 messages, or 30 with Pro, each question under 1,000 characters. */
-const KEEP = { free: 10, pro: 30 };
+const KEEP = { free: 10, pro: 30, max: 60 };
 const MAX_QUESTION = 1000;
 /** The corner button, and the tab on the edge: how far it sticks out and how tall it is. */
 const BUTTON = 52;
@@ -150,6 +150,7 @@ export function GymPal() {
   const sidebarUnfolded = useSidebarUnfolded();
   const { billing, openPro } = useApp();
   const pro = billing.isPro;
+  const max = billing.isMax;
   const [open, setOpen] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
   const [draft, setDraft] = useState('');
@@ -208,7 +209,7 @@ export function GymPal() {
       setPending(true);
       setProblem(null);
       try {
-        const sent = conversation.filter((line) => !line.waited).slice(-KEEP[pro ? 'pro' : 'free']);
+        const sent = conversation.filter((line) => !line.waited).slice(-KEEP[max ? 'max' : pro ? 'pro' : 'free']);
         const { reply } = await api.askGymPal(
           sent.map(({ role, content }) => ({ role, content })),
           { context: about?.text ?? null, useLog: withLog },
@@ -233,7 +234,7 @@ export function GymPal() {
         );
       }
     },
-    [pro, say, waitingFor],
+    [max, pro, say, waitingFor],
   );
 
   /** Asks `text`, with what a screen told GymPal (this question's, or the conversation's). */

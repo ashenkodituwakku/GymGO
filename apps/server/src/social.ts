@@ -27,6 +27,7 @@ import {
   type CollectionTotals,
   type FriendCard,
 } from '@gymgo/domain';
+import { isMaxSql } from './billing';
 import type { Db } from './db';
 
 export class SocialError extends Error {
@@ -53,6 +54,8 @@ export interface Person {
   id: string;
   displayName: string;
   avatarUrl: string | null;
+  /** On GymGO Max: a badge by their name. */
+  max: boolean;
 }
 
 export interface Friend extends Person {
@@ -80,7 +83,7 @@ export interface BoardEntry {
   you: boolean;
 }
 
-type UserRow = { id: string; display_name: string; avatar_id: string | null };
+type UserRow = { id: string; display_name: string; avatar_id: string | null; max?: number };
 type InviteRow = {
   id: string;
   from_user: string;
@@ -96,6 +99,7 @@ const person = (row: UserRow): Person => ({
   id: row.id,
   displayName: row.display_name,
   avatarUrl: row.avatar_id ? `/api/avatars/${row.avatar_id}` : null,
+  max: row.max === 1,
 });
 
 export class Social {
@@ -106,7 +110,7 @@ export class Social {
   ) {}
 
   private user(id: string): UserRow | null {
-    return (this.db.prepare('select id, display_name, avatar_id from users where id = ?').get(id) as UserRow | undefined) ?? null;
+    return (this.db.prepare(`select id, display_name, avatar_id, ${isMaxSql('users.id')} as max from users where id = ?`).get(id) as UserRow | undefined) ?? null;
   }
 
   private entries(userId: string): CollectedGym[] {

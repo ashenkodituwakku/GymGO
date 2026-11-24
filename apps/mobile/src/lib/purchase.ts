@@ -56,8 +56,8 @@ async function visit(url: string, back: string): Promise<PurchaseOutcome> {
   return checkout === 'cancelled' ? 'cancelled' : 'done';
 }
 
-/** Stripe Checkout for Pro or Duo; `trial` when the Pro screen showed the free trial (monthly Pro only). */
-export async function startCheckout(token: string, interval: BillingInterval, currency: BillingCurrency, plan: 'pro' | 'duo' = 'pro', trial = false): Promise<PurchaseOutcome> {
+/** Stripe Checkout for Pro or Max; `trial` when the Pro screen showed the free trial (monthly Pro only). */
+export async function startCheckout(token: string, interval: BillingInterval, currency: BillingCurrency, plan: 'pro' | 'max' = 'pro', trial = false): Promise<PurchaseOutcome> {
   const back = returnUrl('pro');
   const { url } = await api.checkout(token, { interval, currency, returnUrl: back, plan, ...(trial ? { trial } : {}) });
   return visit(url, back);
@@ -68,13 +68,13 @@ export async function startCheckout(token: string, interval: BillingInterval, cu
  * (the website only, components/WalletButton.tsx): Stripe.js opens the
  * wallet with this, then comes back to the Pro page through the server.
  */
-export async function walletCheckoutSecret(token: string, interval: BillingInterval, currency: BillingCurrency, plan: 'pro' | 'duo' = 'pro', trial = false): Promise<string> {
+export async function walletCheckoutSecret(token: string, interval: BillingInterval, currency: BillingCurrency, plan: 'pro' | 'max' = 'pro', trial = false): Promise<string> {
   const { clientSecret } = await api.walletCheckout(token, { interval, currency, returnUrl: returnUrl('pro'), plan, ...(trial ? { trial } : {}) });
   return clientSecret;
 }
 
-/** Pro (or Duo) paid with PayPal, on PayPal's own page; `trial` as for Stripe. */
-export async function startPayPalCheckout(token: string, interval: BillingInterval, currency: BillingCurrency, plan: 'pro' | 'duo' = 'pro', trial = false): Promise<PurchaseOutcome> {
+/** Pro (or Max) paid with PayPal, on PayPal's own page; `trial` as for Stripe. */
+export async function startPayPalCheckout(token: string, interval: BillingInterval, currency: BillingCurrency, plan: 'pro' | 'max' = 'pro', trial = false): Promise<PurchaseOutcome> {
   const back = returnUrl('pro');
   const { url } = await api.paypalCheckout(token, { interval, currency, returnUrl: back, plan, ...(trial ? { trial } : {}) });
   return visit(url, back);

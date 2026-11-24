@@ -24,6 +24,7 @@ import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { useTapAgain } from '@/lib/tapAgain';
+import { MAX_SPOKEN, MaxBadge } from '@/components/MaxBadge';
 
 const timeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
@@ -139,11 +140,14 @@ export default function ChallengesScreen() {
         <Card style={styles.card}>
           <Txt variant="headline">With your friends</Txt>
           {view.friends.map((friend) => (
-            <View key={`${friend.displayName}-${friend.you}`} style={styles.friend} accessible accessibilityLabel={`${friend.you ? 'You' : friend.displayName}: ${friend.days} of ${friend.target} days${friend.finished ? ', done' : ''}`}>
+            <View key={`${friend.displayName}-${friend.you}`} style={styles.friend} accessible accessibilityLabel={`${friend.you ? 'You' : friend.displayName}${friend.max && !friend.you ? MAX_SPOKEN : ''}: ${friend.days} of ${friend.target} days${friend.finished ? ', done' : ''}`}>
               <View style={styles.friendHead}>
-                <Txt variant="subhead" style={[styles.flex, friend.you && face('semibold')]}>
-                  {friend.you ? 'You' : friend.displayName}
-                </Txt>
+                <View style={[styles.flex, styles.nameRow]}>
+                  <Txt variant="subhead" numberOfLines={1} style={[styles.name, friend.you && face('semibold')]}>
+                    {friend.you ? 'You' : friend.displayName}
+                  </Txt>
+                  {friend.max && !friend.you && <MaxBadge />}
+                </View>
                 <Txt variant="footnote" color={friend.finished ? color.goodInk : color.labelSecondary}>
                   {friend.finished ? `Done: ${friend.days} days` : `${friend.days} of ${friend.target}`}
                 </Txt>
@@ -231,6 +235,8 @@ const styles = themed(() =>
     card: { gap: space[3] },
     flex: { flex: 1, minWidth: 0 },
     friend: { gap: 6 },
+    nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    name: { flexShrink: 1 },
     friendHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     track: { height: 8, borderRadius: 4, backgroundColor: color.fill, overflow: 'hidden' },
     fill: { height: 8, borderRadius: 4, backgroundColor: color.brandFill },

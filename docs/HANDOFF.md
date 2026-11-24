@@ -118,15 +118,25 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
-- **CLAIMED (24 Nov, session_01T19nwfpA683gnbhSJ8YpPV): GymGO Max, and
-  Duo taken out.** The owner's tiers: Free, **Pro** (everything Pro has
-  now) and **Max** (about A$10 a month: Pro plus many AI features and
-  badges); "no family or duo tiers". Round 1: Max's prices and product
-  (Stripe, PayPal), the server's tier, the Pro page with both, Duo
-  removed, a Max badge, GymPal's Max limit. Round 2: AI features for Max.
-  Please leave billing, plans, perks, pro.tsx, ProExtras and GymPal's
-  limits to this session until this line says done (the welcome tour's
-  tiers part will need Max too: this session will do it).
+- **CLAIMED (24 Nov, session_01T19nwfpA683gnbhSJ8YpPV): GymGO Max round 2,
+  its AI features.** Round 1 is done (Update 264, below). Please leave
+  GymPal (server gymPal.ts, the app's GymPal.tsx), `MAX_FEATURES` and the
+  Pro page to this session until this line says done.
+- **GymGO Max** (24 Nov, Update 264). The owner's tiers: Free, Pro
+  (unchanged) and Max (Pro plus AI features and badges); no Duo or family.
+  `MAX_PRICES`, `MAX_PRODUCT`, `isMaxLookupKey` and `MAX_FEATURES` (only
+  what's built) in packages/domain/src/plans.ts. A Max subscriber is Pro
+  (`plan: 'pro'`, `max: true` in GET /api/billing; `billing.isMax` in the
+  app), so every Pro check still works. Server: `Billing.isMax`,
+  `subscribed()` → `{ pro, max }`, checkout answers `switch_plan` instead
+  of making a second subscription; `isMaxSql(idColumn)` (billing.ts) puts
+  `max` on people in feed.ts, social.ts and challenges.ts for the badge
+  (components/MaxBadge.tsx, `MAX_SPOKEN` for whole-row labels).
+  `GYMPAL_PLANS.max` (300 a day, keeps 60). stripe-setup.ts makes Max,
+  takes Duo off sale, and sets the portal's `subscription_update` (Pro and
+  Max prices, prorated). Duo's code is gone; the `duo_members` table
+  stays, unused, so old data still exports. Legal wording is the owner's
+  (docs/PAYMENTS.md → GymGO Max).
 - **Text fields in High Contrast** (24 Nov, Update 260). app/_layout.tsx
   gives every input and textarea a 1px CanvasText border under
   forced-colors (fills vanish there). A view that draws its field's box

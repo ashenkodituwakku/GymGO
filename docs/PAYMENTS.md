@@ -48,7 +48,7 @@ Claude: every step below is the owner's. Built on 22 November 2026
     the account already has, or none, and Stripe makes one from the
     wallet's name and email only if they pay. At most 60 an hour each.
 - **PayPal** comes with its own button, under Subscribe, once its keys are
-  set and its plans are made. It works for monthly and yearly Pro and Duo,
+  set and its plans are made. It works for monthly and yearly Pro and Max,
   in A$ and US$, and for the free trial. Gift codes and day passes are still
   paid through Stripe (card, Apple Pay, Google Pay).
 - **Whichever way someone pays, Pro is the same.** PayPal's subscriptions
@@ -201,6 +201,55 @@ else's loads). Claude hasn't changed them. What would change:
 
 Until then: leave `STRIPE_PUBLISHABLE_KEY` unset (no button, and nothing
 of Stripe's loads on GymGO's pages), or set a test key only, to try it.
+
+## GymGO Max (Update 264, 24 Nov 2026)
+
+The owner's tiers: **Free**, **Pro** (everything Pro had) and **Max**
+(Pro, plus AI features and badges), and no Duo or family plan.
+
+- **Max's prices** (`MAX_PRICES`, packages/domain/src/plans.ts): A$9.99 a
+  month or A$79.99 a year; US$6.99 or US$54.99. Its own Stripe product,
+  "GymGO Max" (metadata `gymgo: max`), prices `gymgo_max_*`.
+- **What Max adds, so far** (`MAX_FEATURES`, only what's built): GymPal at
+  300 questions a day (Pro 100, Free 20) with twice Pro's memory of a chat,
+  and a Max badge by your name in the feed, comments, friends and
+  challenges. The AI features come next, each added to that list as it's
+  built.
+- **Switching.** A Pro subscriber switches to Max (or back, or monthly to
+  yearly) on Stripe's page for their subscription (Profile → Manage
+  subscription), which charges or credits the difference for the days left.
+  Checkout never makes a second subscription: it answers `switch_plan`.
+  PayPal subscriptions can't be switched in place, so the Pro page says to
+  cancel Pro at PayPal and choose Max once it ends.
+- **Duo is gone**: no price, no routes, nothing on the Pro page. Anyone who
+  had subscribed to Duo keeps Pro until they cancel; their partner's place
+  is gone. The setup script takes the Duo product off sale.
+- **GymPal's limit is per person, and OpenRouter's free models have their
+  own daily limit for the whole account** (50 a day, or 1,000 once $10 of
+  credit is bought there). A few busy Max subscribers could use that up.
+  Before selling Max widely, think about OpenRouter credit or a paid model
+  for Max.
+
+### What only the owner does
+
+1. **Run the Stripe setup again** (test mode first):
+   `npx pnpm@10 --filter @gymgo/server stripe:setup`. It makes the Max
+   product and prices, takes Duo off sale, and turns on switching between
+   Pro and Max on Stripe's subscription page (the "customer portal"
+   settings it made before are brought up to date).
+2. **PayPal** (only if you use it): `paypal:setup` again makes the Max plans.
+3. **The legal pages, before Max takes real payments.** The Terms and
+   Privacy Policy still describe Pro Duo and don't name Max
+   (`packages/domain/src/legal.ts`). Claude hasn't changed them: the wording
+   is yours to approve, with a new legal version so everyone agrees again.
+   What would change:
+   - Terms → Pro: "Pro Duo is the same subscription for two…" becomes:
+     "GymGO Max is everything in Pro, with more from GymPal and a Max badge
+     shown by your name to your friends, at its own price. You can switch
+     between Pro and Max on Stripe's page for your subscription; the
+     difference for the time left is charged or credited."
+   - Privacy → what we keep: drop "who’s on your Duo (or whose you’re on)";
+     add that friends can see whether you're on Max (the badge).
 
 ## The phone apps and the stores
 

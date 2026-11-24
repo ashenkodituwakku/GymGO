@@ -7,7 +7,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DUO_PRICES, GIFT_PRICES, LIMITS, PRO_PRICES, type BillingCurrency, type PayWith, type PlanId, type ProPrice, type WalletButtons } from '@gymgo/domain';
+import { GIFT_PRICES, LIMITS, MAX_PRICES, PRO_PRICES, type BillingCurrency, type PayWith, type PlanId, type ProPrice, type WalletButtons } from '@gymgo/domain';
 import { useCallback, useEffect, useState } from 'react';
 import { api, type BillingState } from './api';
 import type { AccountApi } from './useAccount';
@@ -22,10 +22,10 @@ const PLAN_KEY = 'gymgo.plan.v1';
 export type Sale = 'asking' | 'unreachable' | 'on' | 'off';
 
 export function useBilling(account: AccountApi) {
-  const [offer, setOffer] = useState<{ sale: Sale; prices: ProPrice[]; duo: ProPrice[]; gifts: Array<{ currency: BillingCurrency; amountMinor: number }>; payWith: PayWith | null; wallets: WalletButtons | null }>({
+  const [offer, setOffer] = useState<{ sale: Sale; prices: ProPrice[]; max: ProPrice[]; gifts: Array<{ currency: BillingCurrency; amountMinor: number }>; payWith: PayWith | null; wallets: WalletButtons | null }>({
     sale: 'asking',
     prices: PRO_PRICES,
-    duo: DUO_PRICES,
+    max: MAX_PRICES,
     gifts: GIFT_PRICES,
     payWith: null,
     wallets: null,
@@ -39,7 +39,7 @@ export function useBilling(account: AccountApi) {
     setOffer((current) => (current.sale === 'unreachable' ? { ...current, sale: 'asking' } : current));
     api
       .billingPlans()
-      .then((result) => setOffer({ sale: result.available ? 'on' : 'off', prices: result.prices, duo: result.duo ?? [], gifts: result.gifts ?? [], payWith: result.payWith ?? null, wallets: result.wallets ?? null }))
+      .then((result) => setOffer({ sale: result.available ? 'on' : 'off', prices: result.prices, max: result.max ?? [], gifts: result.gifts ?? [], payWith: result.payWith ?? null, wallets: result.wallets ?? null }))
       .catch(() => setOffer((current) => (current.sale === 'asking' ? { ...current, sale: 'unreachable' } : current)));
   }, []);
 
@@ -93,12 +93,12 @@ export function useBilling(account: AccountApi) {
     payWith: offer.payWith,
     /** Apple Pay's and Google Pay's own buttons for the Pro page, when the server has them set up. */
     wallets: offer.wallets,
-    /** Duo's prices, and a gift year's (empty when the server doesn't sell them). */
-    duoPrices: offer.duo,
+    /** Max's prices, and a gift year's (empty when the server doesn't sell them). */
+    maxPrices: offer.max,
     giftPrices: offer.gifts,
-    /** Your own subscription is a Duo. */
-    duo: state?.duo === true,
-    /** Pro through a gift or someone's Duo. */
+    /** On GymGO Max: Pro, with Max's extras (your own subscription). */
+    isMax: plan === 'pro' && state?.max === true,
+    /** Pro through a gifted year. */
     grant: state?.grant ?? null,
     /** The free trial of monthly Pro this account can start: new accounts, once. */
     trial: state?.trial ?? null,

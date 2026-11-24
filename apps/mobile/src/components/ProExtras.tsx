@@ -4,15 +4,13 @@
  * - Give Pro: a year as a gift code, paid once at Stripe; the codes you've
  *   bought, to send on.
  * - Redeem a code someone gave you.
- * - Duo: a Duo subscriber adds their one more person by friend code; that
- *   person sees whose Duo they're on and can leave.
  */
 
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { formatPlanPrice, type BillingCurrency } from '@gymgo/domain';
 import { shareText } from '@/lib/actions';
-import { api, problemText, type DuoState, type GiftBought } from '@/lib/api';
+import { api, problemText, type GiftBought } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { CAN_BUY_HERE, startGift } from '@/lib/purchase';
 import type { BillingApi } from '@/lib/useBilling';
@@ -24,8 +22,7 @@ const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 
 
 /** What makes you Pro, when it isn't your own subscription. */
 export function grantLine(grant: NonNullable<BillingApi['grant']>): string {
-  if (grant.via === 'gift') return `Pro until ${day(grant.endsAt!)}, a gift. No card, nothing to cancel: it simply ends.`;
-  return `Pro on ${grant.from ?? 'someone'}’s Duo, for as long as they keep it.`;
+  return `Pro until ${day(grant.endsAt!)}, a gift. No card, nothing to cancel: it simply ends.`;
 }
 
 export function GiftPro({ token, billing, currency, onSignIn }: { token: string | null; billing: BillingApi; currency: BillingCurrency; onSignIn: () => void }) {
@@ -145,78 +142,6 @@ export function RedeemGift({ token, billing, onSignIn }: { token: string | null;
         />
         <PrimaryButton label="Redeem" busy={busy} disabled={!code.trim()} onPress={() => void redeem()} />
       </View>
-      <LiveLine>
-        {note && (
-          <Txt variant="footnote" color={color.labelSecondary}>
-            {note}
-          </Txt>
-        )}
-      </LiveLine>
-    </View>
-  );
-}
-
-export function DuoPartner({ token }: { token: string }) {
-  const [duo, setDuo] = useState<DuoState | null>(null);
-  const [code, setCode] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState<string | null>(null);
-  useEffect(() => {
-    api.duo(token).then(setDuo).catch(() => setDuo(null));
-  }, [token]);
-  if (!duo || (duo.role === null && !duo.canAdd)) return null;
-
-  const act = async (work: () => Promise<DuoState>, done: string) => {
-    setBusy(true);
-    setNote(null);
-    try {
-      setDuo(await work());
-      haptic.success();
-      setCode('');
-      setNote(done);
-    } catch (error) {
-      haptic.warn();
-      setNote(problemText(error));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  if (duo.role === 'member') {
-    return (
-      <View style={styles.card}>
-        <Txt variant="headline">{`On ${duo.partner?.displayName ?? 'someone'}’s Duo`}</Txt>
-        <Txt variant="subhead" color={color.labelSecondary}>
-          You have Pro for as long as they keep their Duo. Nothing is shared but Pro: they can’t see your saved gyms, workouts or anything else.
-        </Txt>
-        <PrimaryButton label="Leave their Duo" tone="quiet" busy={busy} onPress={() => void act(() => api.leaveDuo(token), 'You’ve left. Pro ends now unless you have it another way.')} />
-      </View>
-    );
-  }
-  const add = () => void act(() => api.addToDuo(token, code), 'Done: they have Pro now.');
-  return (
-    <View style={styles.card}>
-      <Txt variant="headline">Your Duo</Txt>
-      <Txt variant="subhead" color={color.labelSecondary}>
-        {duo.partner
-          ? `${duo.partner.displayName} has Pro on your Duo. Nothing else is shared: not your saved gyms, workouts or collection.`
-          : 'Add one more person to your Pro: enter their friend code (it’s on their Friends screen).'}
-      </Txt>
-      <View style={styles.row}>
-        <Input
-          value={code}
-          onChangeText={setCode}
-          placeholder="e.g. K7QM-2XPH"
-          autoCapitalize="characters"
-          autoCorrect={false}
-          maxLength={12}
-          accessibilityLabel="Their friend code"
-          style={styles.input}
-          onSubmitEditing={() => code.trim() && !busy && add()}
-        />
-        <PrimaryButton label={duo.partner ? 'Swap' : 'Add'} busy={busy} disabled={!code.trim()} onPress={add} />
-      </View>
-      {duo.partner && <PrimaryButton label={`Take ${duo.partner.displayName} off`} tone="quiet" onPress={() => void act(() => api.leaveDuo(token), 'Done. Your Duo has room for someone again.')} />}
       <LiveLine>
         {note && (
           <Txt variant="footnote" color={color.labelSecondary}>

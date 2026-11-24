@@ -2039,20 +2039,25 @@ saved list always opens, wherever the gym is.
 | Arcade sounds | Marimba and bells | The workout and check-in sounds as chip tunes, picked in Appearance (the cards keep theirs) |
 | GymPal, the AI assistant | 20 questions a day | 100 a day, longer chats and answers, and (switched on in the chat) answers that know your training |
 
-One tier, two ways to pay, tax included:
+Two plans, tax included: **Pro**, everything above, and **Max**, everything
+in Pro and more.
 
-| | Australia | United States |
-|---|---|---|
-| Monthly | A$3.99 | US$2.99 |
-| Yearly | A$29.99 (save 37%) | US$19.99 (save 44%) |
+| | Pro, Australia | Pro, United States | Max, Australia | Max, United States |
+|---|---|---|---|---|
+| Monthly | A$3.99 | US$2.99 | A$9.99 | US$6.99 |
+| Yearly | A$29.99 (save 37%) | US$19.99 (save 44%) | A$79.99 (save 33%) | US$54.99 (save 34%) |
 
-The prices live in `packages/domain/src/plans.ts`; change them there and run the setup below
-again. Existing subscribers keep the price they signed up at.
+**GymGO Max** (Update 264) adds, so far: GymPal at 300 questions a day with
+twice Pro's memory of a chat, and a **Max badge** by your name where friends
+see it (the feed, comments, friends and challenges). More AI features for Max
+are on the way. A Pro subscriber switches to Max (or back) on Stripe's page
+for their subscription, Profile → Manage subscription, paying or being
+credited the difference for the days left; never a second subscription.
+There's no Duo or family plan (the owner's call, 24 Nov 2026).
 
-**Pro Duo** is the same Pro for two people: the subscriber adds one more
-person by their friend code (Pro screen → Your Duo), who has Pro for as long
-as the Duo lasts; either can end it, and nothing but Pro is shared. Planned
-at A$5.99 a month or A$44.99 a year (US$4.49 / US$29.99).
+The prices live in `packages/domain/src/plans.ts` (`PRO_PRICES`,
+`MAX_PRICES`); change them there and run the setup below again. Existing
+subscribers keep the price they signed up at.
 
 **Gift Pro** is a year of Pro paid once (A$29.99 or US$19.99, a year's
 price): paying gives a code like `K7QM-2XPH-9RTA` on the Pro screen to send
@@ -2067,8 +2072,8 @@ the next week, then Stripe's checkout. Paying gives a pass code on the gym's
 page to show at reception. **No gym has a pass**: there are no agreements
 yet, and GymGO never lists one a gym hasn't made.
 
-Duo and gift prices live in `packages/domain/src/perks.ts`; the setup below
-creates them in Stripe beside Pro's. All of this is the owner's to decide,
+Gift prices live in `packages/domain/src/perks.ts`; the setup below
+creates them in Stripe beside Pro's and Max's. All of this is the owner's to decide,
 and is tested only against a pretend Stripe here.
 
 People pay on **Stripe's own checkout page**, so GymGO never sees a card.

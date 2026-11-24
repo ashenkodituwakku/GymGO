@@ -25,7 +25,7 @@ const BY_SCREEN: Array<[RegExp, string[]]> = [
   [/^\/machines/, ['How does Find a machine work?', 'Where do the machine lists come from?']],
   [/^\/explore/, ['How do the filters work?', 'What does Search this area do?', 'Why do most gyms say Call first?']],
   [/^\/saved/, ['How do I compare gyms?', 'How many gyms can I save?']],
-  [/^\/pro/, ['What does GymGO Pro add?', 'Can I cancel Pro any time?', 'What is Pro Duo?']],
+  [/^\/pro/, ['What does GymGO Pro add?', 'Can I cancel Pro any time?', 'What does GymGO Max add?']],
   [/^\/(profile|account|appearance|reminders|country)/, ['What does GymGO Pro add?', 'How do I download my data?', 'How do training reminders work?']],
 ];
 

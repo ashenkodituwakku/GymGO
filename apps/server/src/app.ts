@@ -60,7 +60,7 @@
  *   GET    /api/gyms/:gymId/photo         the photo the gym's own website shares (JPEG/PNG/WebP), or 404
  *   GET    /api/gyms/:gymId/photo/:n      its website's photo n (0 is the one above; up to 3), or 404
  *   GET    /api/gyms/:gymId/site-photos   { count, from }: how many photos its own website gives, and the site
- *   GET    /api/billing/plans             GymGO Pro's prices, and whether it's on sale
+ *   GET    /api/billing/plans             GymGO Pro's and Max's prices, and whether they're on sale
  *   GET    /api/billing                   your plan (Free or Pro) and subscription
  *   POST   /api/billing/checkout          { interval, currency, returnUrl, plan?, trial? } -> { url } of Stripe Checkout
  *   POST   /api/billing/wallet            { interval, currency, returnUrl, plan?, trial? } -> { clientSecret } for Apple Pay's or Google Pay's button
@@ -68,9 +68,6 @@
  *   POST   /api/billing/gift              { currency, returnUrl } -> { url } of Stripe Checkout for a year of Pro as a gift code
  *   GET    /api/billing/gifts             the gift codes you bought, and whether they've been used
  *   POST   /api/billing/redeem            { code } -> a year of Pro (after any gift still running); your plan
- *   GET    /api/billing/duo               your Duo: who's on it, and whether you can add someone
- *   PUT    /api/billing/duo               Duo subscribers: { code } (their friend code) -> adds or swaps your one more person
- *   DELETE /api/billing/duo               take your person off, or leave someone's Duo
  *   GET    /api/gyms/:gymId/passes        day passes GymGO has agreed with the gym (none until the owner adds one)
  *   POST   /api/passes/:id/book           { forDate, returnUrl } -> { url } of Stripe Checkout: the pass and GymGO's fee
  *   GET    /api/passes/mine               your paid day passes, with the code to show
@@ -138,7 +135,7 @@
  *   POST   /api/bug-reports               anyone: { description, topic?: 'bug' | 'copyright', replyTo?, context? } -> kept, and emailed to the team
  *   GET    /api/moderation/bug-reports    moderators: the latest bug reports, and whether each was emailed
  *   GET    /api/weather?south=&west=      { weather }: MET Norway's forecast for the middle of that block's own map square (weather.ts), the next 12 hours
- *   GET    /api/gympal                    { on, pro, perDay, service }: whether GymPal, the chat, can answer on this server, your plan's questions a day, and the AI service chats go to
+ *   GET    /api/gympal                    { on, pro, max, perDay, service }: whether GymPal, the chat, can answer on this server, your plan's questions a day, and the AI service chats go to
  *   POST   /api/gympal                    { messages: [{ role: 'user' | 'assistant', content }] } -> { reply }, from a free model through Groq or OpenRouter
  *   DELETE /api/moderation/member-reports/:kind/:gymId/:userId   moderators: remove one
  *
@@ -751,10 +748,11 @@ export function createApp(options: AppOptions) {
   });
   const gymPal = new GymPal({ key: options.gymPal?.key ?? null, models: options.gymPal?.models, checkModels: options.gymPal?.checkModels, groq: options.gymPal?.groq, fetchImpl: options.gymPal?.fetchImpl, referer: options.publicUrl ?? null, log: options.gymPal?.log });
   // GymPal: plenty for real questions, and few enough that one person can't use up the free models' day for
-  // everyone; more with Pro (gymPal.ts, GYMPAL_PLANS).
+  // everyone; more with Pro, most with Max (gymPal.ts, GYMPAL_PLANS).
   const gymPalLimiters = {
     free: { minute: new AttemptLimiter(GYMPAL_PLANS.free.perMinute, 60_000), day: new AttemptLimiter(GYMPAL_PLANS.free.perDay, 24 * 60 * 60_000) },
     pro: { minute: new AttemptLimiter(GYMPAL_PLANS.pro.perMinute, 60_000), day: new AttemptLimiter(GYMPAL_PLANS.pro.perDay, 24 * 60 * 60_000) },
+    max: { minute: new AttemptLimiter(GYMPAL_PLANS.max.perMinute, 60_000), day: new AttemptLimiter(GYMPAL_PLANS.max.perDay, 24 * 60 * 60_000) },
   };
   const retryEvery = options.bugReports?.retryEveryMs ?? 0;
   if (bugReports.emailing && retryEvery > 0) {
@@ -1007,10 +1005,10 @@ export function createApp(options: AppOptions) {
     }
 
     if (method === 'GET' && path === '/api/billing/plans') {
-      const { available, prices, duo, gifts } = await billing.prices();
+      const { available, prices, max, gifts } = await billing.prices();
       // The ways to pay checkout will really offer (card, Apple Pay, Google Pay, PayPal), from the payment settings.
       // And Apple Pay's and Google Pay's own buttons, when the publishable key is set.
-      return send(res, 200, { available, prices, duo, gifts, limits: LIMITS, payWith: await billing.payWith(), wallets: await billing.wallets() });
+      return send(res, 200, { available, prices, max, gifts, limits: LIMITS, payWith: await billing.payWith(), wallets: await billing.wallets() });
     }
 
     // --- Pro with PayPal (paypal.ts) ----------------------------------------------------
@@ -1048,7 +1046,7 @@ export function createApp(options: AppOptions) {
       const currency = body.currency;
       if (interval !== 'month' && interval !== 'year') throw new HttpError(400, 'Choose monthly or yearly.');
       if (currency !== 'aud' && currency !== 'usd') throw new HttpError(400, 'Choose A$ or US$.');
-      const plan = body.plan === 'duo' ? 'duo' : 'pro';
+      const plan = body.plan === 'max' ? 'max' : 'pro';
       const returnUrl = returnUrlFrom(body.returnUrl);
       const back = `${publicBase(req)}/api/billing/paypal/return?to=${encodeURIComponent(returnUrl)}`;
       // PayPal adds the subscription's id (subscription_id) to the success address itself.
@@ -1095,7 +1093,7 @@ export function createApp(options: AppOptions) {
       const currency = body.currency;
       if (interval !== 'month' && interval !== 'year') throw new HttpError(400, 'Choose monthly or yearly.');
       if (currency !== 'aud' && currency !== 'usd') throw new HttpError(400, 'Choose A$ or US$.');
-      const plan = body.plan === 'duo' ? 'duo' : 'pro';
+      const plan = body.plan === 'max' ? 'max' : 'pro';
       const returnUrl = returnUrlFrom(body.returnUrl);
       const back = `${publicBase(req)}/api/billing/return?to=${encodeURIComponent(returnUrl)}`;
       const checkoutUrl = await billing.checkout(
@@ -1121,7 +1119,7 @@ export function createApp(options: AppOptions) {
       const currency = body.currency;
       if (interval !== 'month' && interval !== 'year') throw new HttpError(400, 'Choose monthly or yearly.');
       if (currency !== 'aud' && currency !== 'usd') throw new HttpError(400, 'Choose A$ or US$.');
-      const plan = body.plan === 'duo' ? 'duo' : 'pro';
+      const plan = body.plan === 'max' ? 'max' : 'pro';
       const back = `${publicBase(req)}/api/billing/return?to=${encodeURIComponent(returnUrlFrom(body.returnUrl))}`;
       const checkout = await billing.walletCheckout(
         account,
@@ -1132,8 +1130,8 @@ export function createApp(options: AppOptions) {
       return send(res, 200, checkout);
     }
 
-    // --- Gift Pro, Duo and day passes (perks.ts) ------------------------------------
-    if ((parts[0] === 'api' && parts[1] === 'billing' && (parts[2] === 'gift' || parts[2] === 'gifts' || parts[2] === 'redeem' || parts[2] === 'duo')) || (parts[0] === 'api' && (parts[1] === 'passes' || (parts[1] === 'admin' && parts[2] === 'passes')))) {
+    // --- Gift Pro and day passes (perks.ts) ------------------------------------
+    if ((parts[0] === 'api' && parts[1] === 'billing' && (parts[2] === 'gift' || parts[2] === 'gifts' || parts[2] === 'redeem')) || (parts[0] === 'api' && (parts[1] === 'passes' || (parts[1] === 'admin' && parts[2] === 'passes')))) {
       const { account, user } = requireAccount(req);
       const payBack = (returnUrl: string) => {
         const back = `${publicBase(req)}/api/billing/return?to=${encodeURIComponent(returnUrl)}`;
@@ -1154,19 +1152,6 @@ export function createApp(options: AppOptions) {
           const body = (await readJson(req)) as Record<string, unknown>;
           perks.redeem(account.id, typeof body.code === 'string' ? body.code : '');
           return send(res, 200, { ...billing.planFor(account.id), available: billing.enabled });
-        }
-        if (path === '/api/billing/duo') {
-          if (method === 'GET') return send(res, 200, perks.duoView(account.id));
-          if (method === 'PUT') {
-            if (!friendLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That’s a lot of codes for one day. Try again tomorrow.');
-            const body = (await readJson(req)) as Record<string, unknown>;
-            perks.addToDuo(account.id, typeof body.code === 'string' ? body.code : '');
-            return send(res, 200, perks.duoView(account.id));
-          }
-          if (method === 'DELETE') {
-            perks.leaveDuo(account.id);
-            return send(res, 200, perks.duoView(account.id));
-          }
         }
         if (path === '/api/passes/mine' && method === 'GET') return send(res, 200, { bookings: perks.bookingsFor(account.id) });
         if (parts[1] === 'passes' && parts[3] === 'book' && parts.length === 4 && method === 'POST') {
@@ -2766,7 +2751,8 @@ export function createApp(options: AppOptions) {
     if (method === 'GET' && path === '/api/gympal') {
       const { account } = requireAccount(req);
       const pro = billing.isPro(account.id);
-      return send(res, 200, { on: gymPal.on, pro, perDay: GYMPAL_PLANS[pro ? 'pro' : 'free'].perDay, service: gymPal.service });
+      const max = pro && billing.isMax(account.id);
+      return send(res, 200, { on: gymPal.on, pro, max, perDay: GYMPAL_PLANS[max ? 'max' : pro ? 'pro' : 'free'].perDay, service: gymPal.service });
     }
 
     if (method === 'POST' && path === '/api/gympal') {
@@ -2774,21 +2760,24 @@ export function createApp(options: AppOptions) {
       // Off, nothing is counted against anyone.
       if (!gymPal.on) throw new HttpError(503, 'GymPal isn’t switched on for this server yet.', 'gympal_off');
       const pro = billing.isPro(account.id);
-      const plan = GYMPAL_PLANS[pro ? 'pro' : 'free'];
+      const tier = pro && billing.isMax(account.id) ? 'max' : pro ? 'pro' : 'free';
+      const plan = GYMPAL_PLANS[tier];
       try {
-        // A conversation can be longer than most requests: Pro's 30 messages, GymPal's answers among them.
-        const body = (await readJson(req, 128 * 1024)) as Record<string, unknown> | null;
+        // A conversation can be longer than most requests: Max's 60 messages, GymPal's answers among them.
+        const body = (await readJson(req, 256 * 1024)) as Record<string, unknown> | null;
         const messages = cleanChat(body, plan);
         const context = cleanContext(body);
         const useLog = body?.useLog === true;
         if (useLog && !pro) throw new HttpError(403, 'Answers that know your training are part of GymGO Pro.', 'pro_required');
         const at = now().getTime();
-        const limits = gymPalLimiters[pro ? 'pro' : 'free'];
+        const limits = gymPalLimiters[tier];
         if (!limits.minute.allow(account.id, at)) throw new HttpError(429, 'That’s a lot of questions at once. Give GymPal a minute.');
         if (!limits.day.allow(account.id, at)) {
-          throw pro
+          throw tier === 'max'
             ? new HttpError(429, `That’s ${plan.perDay} questions today, the most there is. Try again tomorrow.`)
-            : new HttpError(429, `That’s your ${plan.perDay} questions for today. GymGO Pro has ${GYMPAL_PLANS.pro.perDay} a day.`, 'gympal_limit');
+            : tier === 'pro'
+              ? new HttpError(429, `That’s your ${plan.perDay} questions for today. GymGO Max has ${GYMPAL_PLANS.max.perDay} a day.`, 'gympal_limit')
+              : new HttpError(429, `That’s your ${plan.perDay} questions for today. GymGO Pro has ${GYMPAL_PLANS.pro.perDay} a day.`, 'gympal_limit');
         }
         // Their latest sessions, only when they've said GymPal may see them.
         const log = useLog

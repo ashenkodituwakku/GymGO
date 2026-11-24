@@ -1,6 +1,6 @@
 /**
  * Set up GymGO Pro in your PayPal business account: the product "GymGO Pro"
- * and a plan for each price GymGO sells (Pro and Pro Duo, monthly and
+ * and a plan for each price GymGO sells (Pro and Max, monthly and
  * yearly, in A$ and US$; and monthly Pro again with the free trial). The
  * server finds them by the product and each plan's description, and reads
  * the prices back from PayPal (paypal.ts).

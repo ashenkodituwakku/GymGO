@@ -2,7 +2,7 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import Stripe from 'stripe';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { DUO_PRICES, GIFT_PRICES, PRO_PRICES } from '@gymgo/domain';
+import { GIFT_PRICES, MAX_PRICES, PRO_PRICES } from '@gymgo/domain';
 import { MELBOURNE_GYMS } from '@gymgo/melbourne-data';
 import { createApp } from './app';
 import type { StripeApi, StripeCheckoutSession, StripeSubscription } from './billing';
@@ -15,7 +15,7 @@ const clock = new Date('2026-10-01T10:00:00Z');
 const sessions = new Map<string, StripeCheckoutSession & { line_items?: unknown }>();
 const subscriptions = new Map<string, StripeSubscription>();
 const created: Array<Record<string, unknown>> = [];
-const prices = [...PRO_PRICES, ...DUO_PRICES].map((price, index) => ({
+const prices = [...PRO_PRICES, ...MAX_PRICES].map((price, index) => ({
   id: `price_${index}`,
   active: true,
   lookup_key: price.lookupKey,
@@ -151,50 +151,57 @@ describe('gift Pro', () => {
   });
 });
 
-describe('Duo', () => {
-  it('lets a Duo subscriber add one person, who is Pro while the Duo is paid for', async () => {
-    const payer = await person('Payer');
-    const partner = await person('Partner');
-    const other = await person('Other');
-    expect((await call('PUT', '/api/billing/duo', { token: payer.token, body: { code: partner.code } })).status).toBe(403);
+describe('Max', () => {
+  it('is Pro with more: its own price, GymPal’s higher limit, a badge friends see, and no second subscription', async () => {
+    const payer = await person('Maxine');
+    const friend = await person('Friend');
+    expect((await call('POST', '/api/friends', { token: payer.token, body: { code: friend.code } })).status).toBe(200);
+    expect((await call('POST', `/api/friends/${payer.id}/accept`, { token: friend.token })).status).toBe(200);
+    const badge = async () => ((await call('GET', '/api/friends', { token: friend.token })).body!.friends as Array<{ displayName: string; max: boolean }>).find((each) => each.displayName === 'Maxine')!.max;
+    expect(await badge()).toBe(false);
 
-    const checkout = await call('POST', '/api/billing/checkout', { token: payer.token, body: { interval: 'year', currency: 'aud', plan: 'duo', returnUrl: 'gymgo://pro' } });
+    const plans = await call('GET', '/api/billing/plans', { token: payer.token });
+    expect(plans.body!.max.map((price: { lookupKey: string }) => price.lookupKey)).toEqual(MAX_PRICES.map((price) => price.lookupKey));
+    expect(plans.body!.duo).toBeUndefined();
+
+    const checkout = await call('POST', '/api/billing/checkout', { token: payer.token, body: { interval: 'year', currency: 'aud', plan: 'max', returnUrl: 'gymgo://pro' } });
     expect(checkout.status).toBe(200);
     expect(created.at(-1)).toMatchObject({ mode: 'subscription', line_items: [{ price: `price_${PRO_PRICES.length + 1}`, quantity: 1 }] });
     // Stripe holds the subscription once paid.
     const sessionId = checkout.body!.url.split('/').pop()!;
-    const duoPrice = prices[PRO_PRICES.length + 1]!;
+    const maxPrice = prices[PRO_PRICES.length + 1]!;
     const sub: StripeSubscription = {
-      id: 'sub_duo',
+      id: 'sub_max',
       status: 'active',
       customer: sessions.get(sessionId)!.customer,
       cancel_at_period_end: false,
       cancel_at: null,
       metadata: {},
-      items: { data: [{ current_period_end: Math.floor(Date.parse('2027-10-01T00:00:00Z') / 1000), price: duoPrice }] },
+      items: { data: [{ current_period_end: Math.floor(Date.parse('2027-10-01T00:00:00Z') / 1000), price: maxPrice }] },
     };
     subscriptions.set(sub.id, sub);
     sessions.set(sessionId, { ...sessions.get(sessionId)!, subscription: sub.id });
     await call('GET', `/api/billing/return?result=success&session_id=${sessionId}&to=${encodeURIComponent('gymgo://pro')}`);
-    expect((await call('GET', '/api/billing', { token: payer.token })).body).toMatchObject({ plan: 'pro', duo: true });
+    expect((await call('GET', '/api/billing', { token: payer.token })).body).toMatchObject({ plan: 'pro', max: true, grant: null });
+    expect((await call('GET', '/api/gympal', { token: payer.token })).body).toMatchObject({ pro: true, max: true, perDay: 300 });
+    expect(await badge()).toBe(true);
 
-    expect((await call('PUT', '/api/billing/duo', { token: payer.token, body: { code: payer.code } })).status).toBe(400);
-    const added = await call('PUT', '/api/billing/duo', { token: payer.token, body: { code: partner.code } });
-    expect(added.body).toEqual({ role: 'owner', partner: { displayName: 'Partner' }, canAdd: true });
-    expect((await call('GET', '/api/billing', { token: partner.token })).body).toMatchObject({ plan: 'pro', grant: { via: 'duo', from: 'Payer', endsAt: null } });
-    expect((await call('GET', '/api/billing/duo', { token: partner.token })).body).toMatchObject({ role: 'member', partner: { displayName: 'Payer' } });
+    // Max to Pro is a change on Stripe's page for the subscription, never a second subscription.
+    const second = await call('POST', '/api/billing/checkout', { token: payer.token, body: { interval: 'year', currency: 'aud', plan: 'pro', returnUrl: 'gymgo://pro' } });
+    expect(second.status).toBe(409);
+    expect(second.body!.code).toBe('switch_plan');
+    const again = await call('POST', '/api/billing/checkout', { token: payer.token, body: { interval: 'month', currency: 'aud', plan: 'max', returnUrl: 'gymgo://pro' } });
+    expect(again.body!.code).toBe('already_pro');
 
-    // Swapping: the new person in, the old one back to Free.
-    await call('PUT', '/api/billing/duo', { token: payer.token, body: { code: other.code } });
-    expect((await call('GET', '/api/billing', { token: partner.token })).body!.plan).toBe('free');
-    expect((await call('GET', '/api/billing', { token: other.token })).body!.plan).toBe('pro');
-
-    // The Duo ends: so does their Pro.
-    subscriptions.set(sub.id, { ...sub, status: 'canceled' });
+    // Switched to Pro there (the webhook or a sync says so): Pro, without Max's extras or badge.
+    subscriptions.set(sub.id, { ...sub, items: { data: [{ ...sub.items.data[0]!, price: prices[1]! }] } });
     await call('POST', '/api/billing/sync', { token: payer.token });
-    expect((await call('GET', '/api/billing', { token: other.token })).body!.plan).toBe('free');
-    // And they can leave any time.
-    expect((await call('DELETE', '/api/billing/duo', { token: other.token })).body).toMatchObject({ role: null, partner: null });
+    expect((await call('GET', '/api/billing', { token: payer.token })).body).toMatchObject({ plan: 'pro', max: false });
+    expect((await call('GET', '/api/gympal', { token: payer.token })).body).toMatchObject({ max: false, perDay: 100 });
+    expect(await badge()).toBe(false);
+
+    // Duo is gone.
+    expect((await call('GET', '/api/billing/duo', { token: payer.token })).status).toBe(404);
   });
 });
 

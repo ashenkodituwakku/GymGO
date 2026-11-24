@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { DUO_PRICES, GIFT_PRICES, formatGiftCode, giftPeriod, isDuoLookupKey, makeGiftCode, normaliseGiftCode, passTotal } from './perks';
-import { PRO_PRICES } from './plans';
+import { GIFT_PRICES, formatGiftCode, giftPeriod, makeGiftCode, normaliseGiftCode, passTotal } from './perks';
+import { MAX_PRICES, PRO_PRICES, isMaxLookupKey } from './plans';
 
-describe('gift Pro, Duo and day passes', () => {
+describe('gift Pro, Max and day passes', () => {
   it('make gift codes that read back however they’re typed', () => {
     let n = 0;
     const code = makeGiftCode(() => (n++ * 0.071) % 1);
@@ -20,10 +20,11 @@ describe('gift Pro, Duo and day passes', () => {
     expect(giftPeriod(now, '2026-01-01T00:00:00.000Z').startsAt).toBe(now.toISOString());
   });
 
-  it('keep Duo and gift prices apart from Pro’s, a gift costing a year of Pro', () => {
-    expect(isDuoLookupKey('gymgo_duo_year_aud')).toBe(true);
-    expect(isDuoLookupKey('gymgo_pro_year_aud')).toBe(false);
-    const keys = [...PRO_PRICES, ...DUO_PRICES, ...GIFT_PRICES].map((price) => price.lookupKey);
+  it('keep Max and gift prices apart from Pro’s, a gift costing a year of Pro, Max dearer than Pro', () => {
+    expect(isMaxLookupKey('gymgo_max_year_aud')).toBe(true);
+    expect(isMaxLookupKey('gymgo_pro_year_aud')).toBe(false);
+    for (const max of MAX_PRICES) expect(max.amountMinor).toBeGreaterThan(PRO_PRICES.find((price) => price.interval === max.interval && price.currency === max.currency)!.amountMinor);
+    const keys = [...PRO_PRICES, ...MAX_PRICES, ...GIFT_PRICES].map((price) => price.lookupKey);
     expect(new Set(keys).size).toBe(keys.length);
     for (const gift of GIFT_PRICES) expect(gift.amountMinor).toBe(PRO_PRICES.find((price) => price.interval === 'year' && price.currency === gift.currency)!.amountMinor);
     expect(passTotal({ priceMinor: 1500, feeMinor: 150, currency: 'aud' })).toBe(1650);

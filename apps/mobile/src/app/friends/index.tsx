@@ -29,6 +29,7 @@ import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { LIMITED } from '@/lib/limited';
+import { MAX_SPOKEN, MaxBadge } from '@/components/MaxBadge';
 
 export default function FriendsScreen() {
   useGlassRedraw();
@@ -247,14 +248,17 @@ export default function FriendsScreen() {
               router.push({ pathname: '/friends/[id]', params: { id: friend.id, name: friend.displayName } });
             }}
             accessibilityRole="button"
-            accessibilityLabel={`${friend.displayName}: ${friend.totals.gyms} gyms in ${friend.totals.cities} cities. See their cards`}
+            accessibilityLabel={`${friend.displayName}${friend.max ? MAX_SPOKEN : ''}: ${friend.totals.gyms} gyms in ${friend.totals.cities} cities. See their cards`}
             style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.fill }]}
           >
             <Avatar account={{ displayName: friend.displayName, avatarUrl: friend.avatarUrl }} size={40} variant="headline" person={friend.displayName} />
             <View style={styles.flex}>
-              <Txt variant="headline" numberOfLines={1}>
-                {friend.displayName}
-              </Txt>
+              <View style={styles.nameRow}>
+                <Txt variant="headline" numberOfLines={1} style={styles.name}>
+                  {friend.displayName}
+                </Txt>
+                {friend.max && <MaxBadge />}
+              </View>
               <Txt variant="footnote" color={color.labelSecondary}>
                 {friend.totals.gyms === 0
                   ? 'No gyms collected yet'
@@ -369,6 +373,9 @@ const styles = themed(() =>
     signedOut: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
     centre: { textAlign: 'center' },
     flex: { flex: 1, minWidth: 0 },
+    // A friend's name, then a Max badge when they're on Max.
+    nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    name: { flexShrink: 1 },
     card: { gap: space[2] },
     hero: { gap: space[2], padding: space[4], paddingTop: space[4] + 2, borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.brandFill },
     code: { letterSpacing: 3, fontVariant: ['tabular-nums'] },

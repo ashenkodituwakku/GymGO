@@ -390,8 +390,9 @@ describe('the free trial', () => {
     const yearly = await call(withStripe.base, 'POST', '/api/billing/checkout', { token, body: { interval: 'year', currency: 'aud', returnUrl: 'gymgo://pro', trial: true } });
     expect(yearly.status).toBe(400);
     expect(yearly.body.code).toBe('trial_monthly_only');
-    const duo = await call(withStripe.base, 'POST', '/api/billing/checkout', { token, body: { interval: 'month', currency: 'aud', returnUrl: 'gymgo://pro', plan: 'duo', trial: true } });
-    expect(duo.status).toBe(400);
+    const max = await call(withStripe.base, 'POST', '/api/billing/checkout', { token, body: { interval: 'month', currency: 'aud', returnUrl: 'gymgo://pro', plan: 'max', trial: true } });
+    expect(max.status).toBe(400);
+    expect(max.body.code).toBe('trial_monthly_only');
   });
 
   it('isn’t offered after an account’s first 30 days, and checkout says so rather than charging at once', async () => {

@@ -9,6 +9,26 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 264 · GymGO Max: Pro, with more from GymPal and a badge; Duo taken out
+
+*24 Nov 2026 · the commit "GymGO Max: Pro with more from GymPal and a badge; Duo taken out"*
+
+You asked for a Max subscription at about A$10 a month, with no Duo or family plan. Pro stays everything it is, and Max adds AI features and badges. This is the first of two rounds: the plan itself is here, and the AI features come next.
+
+- **The plans now**: Free; **Pro** at A$3.99 a month or A$29.99 a year (US$2.99 / US$19.99), as before; **Max** at **A$9.99 a month or A$79.99 a year** (US$6.99 / US$54.99). Max is everything in Pro, plus:
+  - **GymPal**: 300 questions a day (Pro 100, Free 20), and he remembers twice as much of a chat (60 messages to Pro's 30);
+  - **a Max badge** by your name where friends see it: on your workouts in the feed, by your comments, in their friends list and in monthly challenges. A screen reader hears "GymGO Max" after the name.
+- **The Pro page** has a Pro / Max choice above the yearly and monthly prices, and a card saying what Max adds, outlined when it's chosen. The Subscribe button says "Subscribe to Max" and the renewal terms name the plan. Max's card only lists what's built, and grows as the AI features come.
+- **Pro to Max is a switch, never a second subscription.** A Pro subscriber gets a **Switch to Max** button, which opens Stripe's page for their subscription; the difference for the days left is charged or credited. Checkout refuses a second subscription and says where to switch. PayPal can't switch in place, so a PayPal subscriber is told to cancel Pro there and choose Max once it ends.
+- **Duo is gone**: its prices, its routes, the "Your Duo" card, its line in GymPal's guide and its question in GymPal's suggestions. In the Stripe setup, the Duo product is taken off sale.
+- **Stripe setup** (`stripe:setup`): makes the Max product and prices, and turns on switching between Pro and Max (and monthly and yearly) on Stripe's subscription page, updating the settings it made before. **PayPal setup** makes Max's plans in place of Duo's.
+- **Not done, and yours to decide**:
+  - the Terms and Privacy Policy still describe Pro Duo; docs/PAYMENTS.md has the wording that would change. Friends seeing that you're on Max is new, and the policy should say so.
+  - GymPal runs on OpenRouter's free models, which have a daily limit for the whole account, so a few busy Max subscribers could use it up.
+- Checked:
+  - Server tests 360, including a new Max test: its prices, checkout, the switch and already-subscribed answers, GymPal at 300 and back to 100 after switching to Pro, and the badge appearing and going for a friend. Domain 205; app 665.
+  - In a browser: the Pro page as a Free account with Max chosen (light and dark, phone and desktop) and as a Pro account, and the friends list with a friend on Max (a test row, removed after). axe was clean on all of them.
+
 ## Update 263 · The welcome tour asks what it needs to, on a background of soft colour
 
 *24 Nov 2026 · the commit "Welcome tour: quick questions, a background of soft colour; sign-in on frosted glass"*
@@ -109,7 +129,7 @@ You asked to make the onboarding look cool and interactive, with scroll animatio
 
 ## Update 260 · Text fields keep their box in Windows High Contrast; timed sets checked end to end
 
-*24 Nov 2026 · the commit "Text fields keep their box in High Contrast"*
+*24 Nov 2026 · `90d22e3`*
 
 - **A set's weight, reps and time, and other tinted fields, lost their box in High Contrast.** Forced colours take away every fill. A field drawn only as a tinted box (a workout's set boxes, Edit workout's, measurements, plates, the 1-rep max calculator, adding a friend's code, Which gym?'s search) was left as bare words, or as a grey placeholder floating in the row. Now every text field has a one-pixel border in the text colour there, as Windows draws its own fields. Nothing changes with forced colours off: the rule only applies with them on.
 - **Fields whose box is drawn round them** don't get a second box inside it: sign-in's fields, the map's search, the country search, GymPal's message box, and the search pills in Exercises, Add exercise and "borrow an icon". These are marked `FIELD_FRAME` (lib/theme.ts). In High Contrast, that view is outlined instead, and while its field has focus it takes a two-pixel ring in the system's highlight colour, the field's own outline giving way. Before, they showed focus only by a colour forced colours had flattened, so focus couldn't be seen there.

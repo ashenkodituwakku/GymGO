@@ -401,7 +401,7 @@ describe('/api/gympal', () => {
 
   it('says whether it’s on, and answers', async () => {
     const token = await signUp();
-    expect((await call('GET', '/api/gympal', { token })).body).toEqual({ on: true, pro: false, perDay: GYMPAL_PLANS.free.perDay, service: 'OpenRouter' });
+    expect((await call('GET', '/api/gympal', { token })).body).toEqual({ on: true, pro: false, max: false, perDay: GYMPAL_PLANS.free.perDay, service: 'OpenRouter' });
     const answer = await call('POST', '/api/gympal', { token, body: { messages: [{ role: 'user', content: 'Where are my records?' }] } });
     expect(answer).toEqual({ status: 200, body: { reply: 'You asked: Where are my records?' } });
   });
@@ -432,7 +432,7 @@ describe('/api/gympal', () => {
       });
       const token = ((await signed.json()) as { token: string }).token;
       const state = await fetch(`${offBase}/api/gympal`, { headers: { authorization: `Bearer ${token}` } });
-      expect(await state.json()).toEqual({ on: false, pro: false, perDay: GYMPAL_PLANS.free.perDay, service: null });
+      expect(await state.json()).toEqual({ on: false, pro: false, max: false, perDay: GYMPAL_PLANS.free.perDay, service: null });
       const asked = await fetch(`${offBase}/api/gympal`, {
         method: 'POST',
         headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
@@ -478,7 +478,7 @@ describe('/api/gympal', () => {
     expect(refused.body.code).toBe('pro_required');
 
     const pro = await signUpPro();
-    expect((await call('GET', '/api/gympal', { token: pro })).body).toEqual({ on: true, pro: true, perDay: GYMPAL_PLANS.pro.perDay, service: 'OpenRouter' });
+    expect((await call('GET', '/api/gympal', { token: pro })).body).toEqual({ on: true, pro: true, max: false, perDay: GYMPAL_PLANS.pro.perDay, service: 'OpenRouter' });
     const finished = new Date(Date.now() - 3600_000);
     const logged = await call('POST', '/api/training', {
       token: pro,

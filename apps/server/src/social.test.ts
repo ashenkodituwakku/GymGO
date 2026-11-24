@@ -247,7 +247,7 @@ describe('monthly challenges', () => {
 
     // Dev sees nobody until Dev or Cat... Cat joined, so Dev sees Cat; Dev isn't shown until Dev joins.
     const devView = (await call('GET', `/api/challenges?tz=${TZ}`, { token: dev.token })).body!;
-    expect(devView.friends).toEqual([{ displayName: 'Cat', avatarUrl: null, target: 8, days: 2, finished: false, you: false }]);
+    expect(devView.friends).toEqual([{ displayName: 'Cat', avatarUrl: null, max: false, target: 8, days: 2, finished: false, you: false }]);
     // Only the count and target: no dates.
     expect(JSON.stringify(devView)).not.toContain('2026-09-10');
     // A stranger sees nothing of Cat.

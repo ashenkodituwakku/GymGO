@@ -143,6 +143,32 @@ export const PRO_PRODUCT = {
   description: 'Gyms in every country, unlimited saved gyms, compare up to 4 gyms, and a library of your workouts on every device.',
 } as const;
 
+/**
+ * GymGO Max: everything in Pro, with more from GymPal and a Max badge by
+ * your name where friends see it. Its own subscription at its own price; a
+ * Max subscriber is Pro as well, so every Pro feature is theirs.
+ */
+export const MAX_PRICES: ProPrice[] = [
+  { lookupKey: 'gymgo_max_month_aud', interval: 'month', currency: 'aud', amountMinor: 999 },
+  { lookupKey: 'gymgo_max_year_aud', interval: 'year', currency: 'aud', amountMinor: 7999 },
+  { lookupKey: 'gymgo_max_month_usd', interval: 'month', currency: 'usd', amountMinor: 699 },
+  { lookupKey: 'gymgo_max_year_usd', interval: 'year', currency: 'usd', amountMinor: 5499 },
+];
+
+export const MAX_PRODUCT = {
+  name: 'GymGO Max',
+  description: 'Everything in GymGO Pro, with more from GymPal and a Max badge by your name.',
+} as const;
+
+/** A price of Max's (not Pro's). */
+export const isMaxLookupKey = (key: string | null | undefined): boolean => MAX_PRICES.some((price) => price.lookupKey === key);
+
+/** What Max adds over Pro, for the Pro screen: only what's built. */
+export const MAX_FEATURES: Array<{ title: string; pro: string; max: string }> = [
+  { title: 'GymPal', pro: '100 questions a day', max: '300 a day, and he remembers twice as much of the chat' },
+  { title: 'Max badge', pro: 'Not included', max: 'By your name in the feed, in comments and on your profile' },
+];
+
 /** The headings the Pro screen groups what Pro adds under. */
 export const PRO_FEATURE_GROUPS = [
   { id: 'gyms', title: 'Finding gyms' },

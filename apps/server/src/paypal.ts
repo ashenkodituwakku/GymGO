@@ -27,10 +27,10 @@
  */
 
 import {
-  DUO_PRICES,
+  MAX_PRICES,
   PRO_PRICES,
   TRIAL_DAYS,
-  isDuoLookupKey,
+  isMaxLookupKey,
   type BillingCurrency,
   type BillingInterval,
   type ProPrice,
@@ -233,7 +233,7 @@ export function readPlanTag(description: string | undefined): { lookupKey: strin
 
 export interface PayPalPrice extends ProPrice {
   planId: string;
-  plan: 'pro' | 'duo';
+  plan: 'pro' | 'max';
   trial: boolean;
 }
 
@@ -242,7 +242,7 @@ export function priceFromPlan(plan: PayPalPlan): PayPalPrice | null {
   if (plan.status !== 'ACTIVE') return null;
   const tag = readPlanTag(plan.description);
   if (!tag) return null;
-  const known = [...PRO_PRICES, ...DUO_PRICES].find((price) => price.lookupKey === tag.lookupKey);
+  const known = [...PRO_PRICES, ...MAX_PRICES].find((price) => price.lookupKey === tag.lookupKey);
   if (!known) return null;
   const regular = plan.billing_cycles.find((cycle) => cycle.tenure_type === 'REGULAR');
   const unit = regular?.frequency.interval_unit;
@@ -255,19 +255,19 @@ export function priceFromPlan(plan: PayPalPlan): PayPalPrice | null {
   if (!Number.isFinite(amountMinor) || amountMinor <= 0) return null;
   // The plan must be the price it says it is, or it's not used: never a different interval or currency than shown.
   if (interval !== known.interval || currency !== known.currency) return null;
-  return { lookupKey: known.lookupKey, interval, currency, amountMinor, planId: plan.id, plan: isDuoLookupKey(known.lookupKey) ? 'duo' : 'pro', trial: tag.trial };
+  return { lookupKey: known.lookupKey, interval, currency, amountMinor, planId: plan.id, plan: isMaxLookupKey(known.lookupKey) ? 'max' : 'pro', trial: tag.trial };
 }
 
 /** The plans the setup script makes: every price GymGO sells, and monthly Pro again with the free trial. */
 export function plannedPlans(): Array<{ price: ProPrice; trial: boolean }> {
-  const all = [...PRO_PRICES, ...DUO_PRICES].map((price) => ({ price, trial: false }));
+  const all = [...PRO_PRICES, ...MAX_PRICES].map((price) => ({ price, trial: false }));
   const trials = PRO_PRICES.filter((price) => price.interval === 'month').map((price) => ({ price, trial: true }));
   return [...all, ...trials];
 }
 
 /** The body for PayPal's create-plan call, for one of GymGO's prices. */
 export function planBody(price: ProPrice, trial: boolean, productId: string = PAYPAL_PRODUCT_ID): Record<string, unknown> {
-  const name = `GymGO ${isDuoLookupKey(price.lookupKey) ? 'Duo' : 'Pro'}, ${price.interval === 'month' ? 'monthly' : 'yearly'} (${price.currency.toUpperCase()})${trial ? `, ${TRIAL_DAYS} days free` : ''}`;
+  const name = `GymGO ${isMaxLookupKey(price.lookupKey) ? 'Max' : 'Pro'}, ${price.interval === 'month' ? 'monthly' : 'yearly'} (${price.currency.toUpperCase()})${trial ? `, ${TRIAL_DAYS} days free` : ''}`;
   const regular = {
     frequency: { interval_unit: price.interval === 'month' ? 'MONTH' : 'YEAR', interval_count: 1 },
     tenure_type: 'REGULAR',
@@ -398,7 +398,7 @@ export class PayPalPro {
   /** A subscription for this account, and PayPal's page to approve it. */
   async checkout(
     account: { id: string },
-    choice: { interval: BillingInterval; currency: BillingCurrency; plan?: 'pro' | 'duo'; trial?: boolean },
+    choice: { interval: BillingInterval; currency: BillingCurrency; plan?: 'pro' | 'max'; trial?: boolean },
     urls: { success: string; cancel: string },
   ): Promise<string> {
     const api = this.api;

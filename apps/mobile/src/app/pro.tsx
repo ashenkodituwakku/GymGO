@@ -11,6 +11,7 @@
 
 import {
   ALWAYS_FREE,
+  MAX_FEATURES,
   PRO_FEATURES,
   PRO_FEATURE_GROUPS,
   WALLET_NAME,
@@ -35,7 +36,7 @@ import { PayPalButton } from '@/components/PayPalButton';
 import { WalletButton } from '@/components/WalletButton';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Segmented, Txt, LiveLine } from '@/components/ui';
-import { DuoPartner, GiftPro, RedeemGift, grantLine } from '@/components/ProExtras';
+import { GiftPro, RedeemGift, grantLine } from '@/components/ProExtras';
 import { AskGymPal } from '@/components/AskGymPal';
 import { useApp, type ProReason } from '@/lib/app-state';
 import type { Sale } from '@/lib/useBilling';
@@ -72,6 +73,7 @@ const FEATURE_ICON: Record<string, IconName> = {
   'Lifetime stats': 'trophy',
   'Arcade sounds': 'sound',
   GymPal: 'send',
+  'Max badge': 'trophy',
 };
 
 const REASON: Record<ProReason, string> = {
@@ -94,7 +96,7 @@ const REASON: Record<ProReason, string> = {
   lifetime: 'Your log and records are free. Pro adds your lifetime in numbers: every kilo, rep and hour, your favourites, and what all that weight compares to, as a picture to share too.',
   sounds: 'Sounds are free. Pro adds Arcade: the workout and check-in sounds as chip tunes, like an old games console.',
   headToHead: 'Friends and their workouts are free. Pro puts your best lifts beside a friend’s, exercise by exercise: heaviest, strongest set and most reps.',
-  gympal: 'GymPal is free, 20 questions a day. Pro gives you 100 a day, longer chats, and answers that know your training: what to train today, how you’re going.',
+  gympal: 'GymPal is free, 20 questions a day. Pro gives you 100 a day, longer chats, and answers that know your training: what to train today, how you’re going. Max gives you 300, and twice the memory.',
 };
 
 export default function ProScreen() {
@@ -103,8 +105,8 @@ export default function ProScreen() {
   const params = useLocalSearchParams<{ reason?: string; checkout?: string }>();
   const router = useRouter();
   const { account, billing, filters, prefs } = useApp();
-  // Pro for you alone, or Duo: you and one more person.
-  const [plan, setPlan] = useState<'pro' | 'duo'>('pro');
+  // Pro, or Max: Pro with more from GymPal and a badge.
+  const [plan, setPlan] = useState<'pro' | 'max'>('pro');
   // A new account's free trial of monthly Pro (the server decides who gets one).
   const trialOffer = !billing.isPro && plan === 'pro' ? billing.trial : null;
   // Yearly unless there's a trial to start, until you pick.
@@ -151,8 +153,10 @@ export default function ProScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const duoOnSale = billing.duoPrices.some((price) => price.currency === currency);
-  const list = plan === 'duo' && duoOnSale ? billing.duoPrices : billing.prices;
+  const maxOnSale = billing.maxPrices.some((price) => price.currency === currency);
+  const buying: 'pro' | 'max' = plan === 'max' && maxOnSale ? 'max' : 'pro';
+  const planName = buying === 'max' ? 'Max' : 'Pro';
+  const list = buying === 'max' ? billing.maxPrices : billing.prices;
   const monthly = proPrice('month', currency, list);
   const yearly = proPrice('year', currency, list);
   const saving = monthly && yearly ? annualSaving(monthly.amountMinor, yearly.amountMinor) : null;
@@ -168,7 +172,7 @@ export default function ProScreen() {
     setProblem(null);
     try {
       const start = with_ === 'paypal' ? startPayPalCheckout : startCheckout;
-      const outcome = await start(token, interval, currency, plan === 'duo' && duoOnSale ? 'duo' : 'pro', trial !== null);
+      const outcome = await start(token, interval, currency, buying, trial !== null);
       if (outcome === 'left') return; // The browser is on its way to Stripe or PayPal.
       const next = await billing.refresh(true);
       if (next?.plan === 'pro') {
@@ -223,9 +227,9 @@ export default function ProScreen() {
         {/* Already Pro --------------------------------------------------------- */}
         {billing.isPro && (
           <View style={[styles.card, styles.onPro]}>
-            <Txt variant="title2">{welcome ? 'Welcome to Pro' : 'You’re on Pro'}</Txt>
+            <Txt variant="title2">{welcome ? `Welcome to ${billing.isMax ? 'Max' : 'Pro'}` : `You’re on ${billing.isMax ? 'Max' : 'Pro'}`}</Txt>
             <Txt variant="subhead" color={color.labelSecondary}>
-              {billing.grant ? grantLine(billing.grant) : `${billing.duo ? 'Duo: you and one more person. ' : ''}${describeSubscription(billing.subscription)}`}
+              {billing.grant ? grantLine(billing.grant) : describeSubscription(billing.subscription)}
             </Txt>
             {billing.grant ? null : billing.subscription?.manageable === false ? null : CAN_BUY_HERE ? (
               <PrimaryButton
@@ -241,8 +245,6 @@ export default function ProScreen() {
             )}
           </View>
         )}
-
-        {signedIn && <DuoPartner token={token!} />}
 
         {/* Free vs Pro ------------------------------------------------------------ */}
         <View style={styles.card}>
@@ -281,23 +283,55 @@ export default function ProScreen() {
           ))}
         </View>
 
+        {/* What Max adds: to choose it, or (on Pro by a subscription of your own) to switch to it on Stripe's page. */}
+        {maxOnSale && !billing.isMax && (
+          <View style={[styles.card, buying === 'max' && !billing.isPro && styles.maxChosen]}>
+            <Txt variant="headline" accessibilityRole="header" level={2}>
+              GymGO Max
+            </Txt>
+            <Txt variant="subhead" color={color.labelSecondary}>
+              {`Everything in Pro, and more. From ${formatPlanPrice(proPrice('month', currency, billing.maxPrices)?.amountMinor ?? 0, currency)} a month.`}
+            </Txt>
+            {MAX_FEATURES.map((feature) => (
+              <View key={feature.title} style={styles.tableRow}>
+                <View style={styles.featureIcon}>
+                  <Icon name={FEATURE_ICON[feature.title] ?? 'star'} size={17} color={color.brand} />
+                </View>
+                <View style={styles.flex}>
+                  <Txt variant="subhead" style={face('medium')}>
+                    {feature.title}
+                  </Txt>
+                  <Txt variant="footnote" color={color.labelSecondary}>
+                    {feature.max}
+                  </Txt>
+                </View>
+              </View>
+            ))}
+            {billing.isPro && !billing.grant && billing.subscription?.manageable !== false && CAN_BUY_HERE && (
+              <>
+                <Txt variant="footnote" color={color.labelSecondary}>
+                  {billing.subscription?.provider === 'paypal'
+                    ? 'Paid with PayPal: cancel Pro there, and choose Max here once it ends.'
+                    : 'Switch on Stripe’s page for your subscription: you pay the difference for the days left.'}
+                </Txt>
+                {billing.subscription?.provider !== 'paypal' && <PrimaryButton label={busy ? 'Opening Stripe…' : 'Switch to Max'} tone="quiet" disabled={busy} onPress={() => void manage()} />}
+              </>
+            )}
+          </View>
+        )}
+
         {/* The plans ---------------------------------------------------------------- */}
         {!billing.isPro && (
           <>
-            {duoOnSale && (
+            {maxOnSale && (
               <Segmented
                 options={[
-                  { value: 'pro', label: 'Just me' },
-                  { value: 'duo', label: 'Duo: you + 1' },
+                  { value: 'pro', label: 'Pro' },
+                  { value: 'max', label: 'Max' },
                 ]}
                 value={plan}
                 onChange={setPlan}
               />
-            )}
-            {plan === 'duo' && duoOnSale && (
-              <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-                One subscription, two people: add one more person by their friend code after you subscribe. Only Pro is shared, nothing else.
-              </Txt>
             )}
             {trialOffer && monthly && (
               <View style={[styles.card, styles.trialCard]}>
@@ -354,7 +388,7 @@ export default function ProScreen() {
                     wallet={wallet}
                     publishableKey={billing.wallets.publishableKey}
                     token={token}
-                    choice={{ interval, currency, plan: plan === 'duo' && duoOnSale ? 'duo' : 'pro', trial: trial !== null }}
+                    choice={{ interval, currency, plan: buying, trial: trial !== null }}
                     disabled={busy}
                     onShown={setWalletShown}
                     onProblem={setProblem}
@@ -365,7 +399,7 @@ export default function ProScreen() {
                 trial
                   ? `Start ${trial.days}-day free trial`
                   : chosen
-                    ? `Subscribe${plan === 'duo' && duoOnSale ? ' to Duo' : ''} · ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}`
+                    ? `Subscribe${buying === 'max' ? ' to Max' : ''} · ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}`
                     : 'Subscribe'
               }
               renewal={
@@ -373,7 +407,7 @@ export default function ProScreen() {
                   ? null
                   : trial
                     ? `Free for ${trial.days} days, then ${formatPlanPrice(chosen.amountMinor, currency)} a month, tax included, until you cancel. ${billing.payWith?.paypal === 'direct' ? 'Stripe (or PayPal) takes your payment details' : 'Stripe takes your card'} now; the first payment is on ${dayLabel(trialEndsAt(new Date(), trial.days).toISOString())}. Cancel before then in Profile → Manage subscription and you aren’t charged. Tapping ${tapping('Start')} agrees to these terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
-                    : `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; Pro stays on to the end of the ${interval} you’ve paid for. Tapping ${tapping('Subscribe')} agrees to these renewal terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
+                    : `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; ${planName} stays on to the end of the ${interval} you’ve paid for. Tapping ${tapping('Subscribe')} agrees to these renewal terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
               }
               onSubscribe={() => void subscribe('stripe')}
               onSignIn={() => router.push('/sign-in')}
@@ -418,7 +452,7 @@ export default function ProScreen() {
           variant="caption"
           tint={color.labelSecondary}
           style={styles.fine}
-          text="Prices include tax. Pro and Duo renew automatically until you cancel; a gift year is paid once and doesn’t renew. A new account can try monthly Pro free for 3 days, once, in its first 30 days: the monthly price is charged when the trial ends unless you cancel before then. Cancel any time from Profile → Manage subscription, and you keep Pro until the end of what you’ve paid for. Changed your mind? Ask within 14 days of your first payment, or of a yearly renewal, for a full refund. If Pro ends, nothing you saved is deleted; you just can’t add more than Free allows. Payments are handled by Stripe: GymGO never sees your card, and Stripe gets your name and email for the receipt. [Terms of Service](terms) · [Refunds and Cancelling](refunds) · [Privacy Policy](privacy)"
+          text="Prices include tax. Pro and Max renew automatically until you cancel; a gift year is paid once and doesn’t renew. A new account can try monthly Pro free for 3 days, once, in its first 30 days: the monthly price is charged when the trial ends unless you cancel before then. Cancel any time from Profile → Manage subscription, and you keep Pro until the end of what you’ve paid for. Changed your mind? Ask within 14 days of your first payment, or of a yearly renewal, for a full refund. If Pro ends, nothing you saved is deleted; you just can’t add more than Free allows. Payments are handled by Stripe: GymGO never sees your card, and Stripe gets your name and email for the receipt. [Terms of Service](terms) · [Refunds and Cancelling](refunds) · [Privacy Policy](privacy)"
         />
       </PageScroll>
     </>
@@ -620,6 +654,8 @@ const styles = themed(() => StyleSheet.create({
   hero: { alignItems: 'center', gap: space[2], paddingTop: space[2] },
   card: { backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
   onPro: { borderWidth: 2, borderColor: color.brand },
+  // Max chosen below: its card is outlined, as the plan you're about to buy.
+  maxChosen: { borderWidth: 2, borderColor: color.brand },
   trialCard: { gap: space[1], backgroundColor: color.brandWash, borderWidth: 1, borderColor: color.brandBorder },
   tableHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   tableRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },

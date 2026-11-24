@@ -20,13 +20,14 @@
 
 import Stripe from 'stripe';
 import {
-  DUO_PRICES,
   GIFT_PRICES,
   LIMITS,
+  MAX_PRICES,
   PRO_PRICES,
   TRIAL_DAYS,
   formatPlanPrice,
-  isDuoLookupKey,
+  PRO_STATUSES,
+  isMaxLookupKey,
   isProStatus,
   trialOffer,
   type GiftPrice,
@@ -42,11 +43,11 @@ import {
 import type { Db } from './db';
 import { PAYPAL_ID_PREFIX, type PayPalPro } from './paypal';
 
-/** What a subscription checkout is for: Pro or Duo, monthly or yearly, A$ or US$, and the free trial. */
+/** What a subscription checkout is for: Pro or Max, monthly or yearly, A$ or US$, and the free trial. */
 export interface SubscriptionChoice {
   interval: BillingInterval;
   currency: BillingCurrency;
-  plan?: 'pro' | 'duo';
+  plan?: 'pro' | 'max';
   trial?: boolean;
 }
 
@@ -174,22 +175,20 @@ export interface SubscriptionView {
   trial: boolean;
 }
 
-/** Pro from something other than your own subscription. */
+/** Pro from something other than your own subscription: a gifted year. */
 export interface ProGrant {
-  via: 'gift' | 'duo';
-  /** When it ends: a gift's year; null while a Duo subscriber keeps paying. */
+  via: 'gift';
+  /** When the gifted year ends. */
   endsAt: string | null;
-  /** Whose Duo it is. */
-  from: string | null;
 }
 
 export interface PlanView {
   plan: PlanId;
   limits: PlanLimits;
   subscription: SubscriptionView | null;
-  /** Your own subscription is a Duo, so you can add one more person. */
-  duo: boolean;
-  /** Pro through a gift or someone's Duo, when your own subscription isn't what makes you Pro. */
+  /** Your own subscription is Max: Pro, with Max's extras. */
+  max: boolean;
+  /** Pro through a gift, when your own subscription isn't what makes you Pro. */
   grant: ProGrant | null;
   /** The free trial of monthly Pro this account can start (a new account's, once), or null. */
   trial: TrialOffer | null;
@@ -208,6 +207,14 @@ interface SubscriptionRow {
   cancel_at_period_end: number;
   updated_at: string;
 }
+
+/**
+ * SQL for whether the user whose id is in `idColumn` is on Max now (their own
+ * subscription, in a status that counts), for the Max badge by their name
+ * where friends see it. Built from constants only.
+ */
+export const isMaxSql = (idColumn: string): string =>
+  `exists (select 1 from subscriptions s where s.user_id = ${idColumn} and s.status in (${PRO_STATUSES.map((status) => `'${status}'`).join(', ')}) and s.price_lookup_key in (${MAX_PRICES.map((price) => `'${price.lookupKey}'`).join(', ')}))`;
 
 const iso = (seconds: number | null | undefined) => (seconds ? new Date(seconds * 1000).toISOString() : null);
 const idOf = (value: Expandable) => (value === null ? null : typeof value === 'string' ? value : value.id);
@@ -244,7 +251,7 @@ export interface BillingOptions {
   stripe: StripeApi | null;
   webhookSecret: string | null;
   now: () => Date;
-  /** Pro that isn't a subscription of your own (perks.ts: gifts and Duo). */
+  /** Pro that isn't a subscription of your own (perks.ts: gifts). */
   grantFor?: (userId: string) => ProGrant | null;
   /** A one-off payment went through (a gift, a day pass): perks.ts fulfils it, once. */
   onPaid?: (session: StripeCheckoutSession) => void;
@@ -265,7 +272,7 @@ export interface BillingOptions {
 }
 
 export class Billing {
-  private priceCache: { at: number; prices: Array<ProPrice & { id: string; plan: 'pro' | 'duo' }> } | null = null;
+  private priceCache: { at: number; prices: Array<ProPrice & { id: string; plan: 'pro' | 'max' }> } | null = null;
   private giftCache: { at: number; prices: Array<GiftPrice & { id: string }> } | null = null;
   private portalConfig: { id: string | null } | null = null;
   private iconCache: { at: number; file: string | null } | null = null;
@@ -294,14 +301,14 @@ export class Billing {
    * The prices on sale, read from Stripe by lookup key. Without Stripe, the
    * planned prices, marked as not on sale.
    */
-  async prices(): Promise<{ available: boolean; prices: ProPrice[]; duo: ProPrice[]; gifts: GiftPrice[] }> {
-    if (!this.enabled) return { available: false, prices: PRO_PRICES, duo: DUO_PRICES, gifts: GIFT_PRICES };
+  async prices(): Promise<{ available: boolean; prices: ProPrice[]; max: ProPrice[]; gifts: GiftPrice[] }> {
+    if (!this.enabled) return { available: false, prices: PRO_PRICES, max: MAX_PRICES, gifts: GIFT_PRICES };
     const live = await this.stripePrices();
     const strip = ({ id: _id, plan: _plan, ...price }: ProPrice & { id: string; plan: string }) => price;
     return {
       available: live.some((price) => price.plan === 'pro'),
       prices: live.filter((price) => price.plan === 'pro').map(strip),
-      duo: live.filter((price) => price.plan === 'duo').map(strip),
+      max: live.filter((price) => price.plan === 'max').map(strip),
       gifts: (await this.giftPrices()).map(({ id: _id, ...price }) => price),
     };
   }
@@ -367,18 +374,18 @@ export class Billing {
     return chosen ? { payment_method_configuration: chosen } : {};
   }
 
-  private async stripePrices(): Promise<Array<ProPrice & { id: string; plan: 'pro' | 'duo' }>> {
+  private async stripePrices(): Promise<Array<ProPrice & { id: string; plan: 'pro' | 'max' }>> {
     const now = this.options.now().getTime();
     if (this.priceCache && now - this.priceCache.at < PRICE_CACHE_MS) return this.priceCache.prices;
-    const planned = [...PRO_PRICES, ...DUO_PRICES];
+    const planned = [...PRO_PRICES, ...MAX_PRICES];
     const listed = await this.stripe.prices.list({ lookup_keys: planned.map((price) => price.lookupKey), active: true, limit: 20 });
-    const prices = listed.data.flatMap((price): Array<ProPrice & { id: string; plan: 'pro' | 'duo' }> => {
+    const prices = listed.data.flatMap((price): Array<ProPrice & { id: string; plan: 'pro' | 'max' }> => {
       const known = planned.find((item) => item.lookupKey === price.lookup_key);
       const interval = price.recurring?.interval;
       const currency = price.currency;
       if (!known || price.unit_amount === null) return [];
       if ((interval !== 'month' && interval !== 'year') || (currency !== 'aud' && currency !== 'usd')) return [];
-      return [{ id: price.id, lookupKey: known.lookupKey, interval, currency, amountMinor: price.unit_amount, plan: isDuoLookupKey(known.lookupKey) ? 'duo' : 'pro' }];
+      return [{ id: price.id, lookupKey: known.lookupKey, interval, currency, amountMinor: price.unit_amount, plan: isMaxLookupKey(known.lookupKey) ? 'max' : 'pro' }];
     });
     this.priceCache = { at: now, prices };
     return prices;
@@ -434,7 +441,7 @@ export class Billing {
 
   // --- Who is Pro --------------------------------------------------------------------
 
-  /** The subscription that makes this account Pro, if one does (not gifts or a Duo). */
+  /** The subscription that makes this account Pro (or Max), if one does (not a gift). */
   private currentSubscription(userId: string): { row: SubscriptionRow | null; shown: SubscriptionRow | null } {
     const rows = this.db
       .prepare('select * from subscriptions where user_id = ? order by updated_at desc')
@@ -444,10 +451,15 @@ export class Billing {
     return { row: current, shown: current ?? rows[0] ?? null };
   }
 
-  /** Pro by a subscription of your own; and whether it's a Duo. */
-  subscribed(userId: string): { pro: boolean; duo: boolean } {
+  /** Pro by a subscription of your own; and whether it's Max. */
+  subscribed(userId: string): { pro: boolean; max: boolean } {
     const { row } = this.currentSubscription(userId);
-    return { pro: row !== null, duo: row !== null && isDuoLookupKey(row.price_lookup_key) };
+    return { pro: row !== null, max: row !== null && isMaxLookupKey(row.price_lookup_key) };
+  }
+
+  /** Max, by a subscription of your own (a gift is a year of Pro, not Max). */
+  isMax(userId: string): boolean {
+    return this.subscribed(userId).max;
   }
 
   planFor(userId: string): PlanView {
@@ -458,7 +470,7 @@ export class Billing {
       plan,
       limits: LIMITS[plan],
       subscription: shown ? this.view(shown, this.customerIdFor(userId) !== null) : null,
-      duo: this.subscribed(userId).duo,
+      max: row !== null && isMaxLookupKey(row.price_lookup_key),
       grant,
       trial: plan === 'pro' ? null : this.trialFor(userId),
     };
@@ -547,8 +559,13 @@ export class Billing {
     choice: SubscriptionChoice,
     where: { page: 'stripe'; success: string; cancel: string; terms?: string; refunds?: string } | { page: 'gymgo'; returnUrl: string },
   ): Promise<StripeCheckoutSession> {
-    if (this.subscribed(account.id).pro) throw new BillingError(409, 'You already have GymGO Pro.', 'already_pro');
     const plan = choice.plan ?? 'pro';
+    const own = this.subscribed(account.id);
+    // Pro to Max (or back) is a change to the subscription you have, on Stripe's page for it, never a second one.
+    if (own.pro && own.max !== (plan === 'max')) {
+      throw new BillingError(409, `You have GymGO ${own.max ? 'Max' : 'Pro'}. Switch to ${plan === 'max' ? 'Max' : 'Pro'} in Manage subscription.`, 'switch_plan');
+    }
+    if (own.pro) throw new BillingError(409, `You already have GymGO ${own.max ? 'Max' : 'Pro'}.`, 'already_pro');
     // Only when the app showed the trial, so nobody is charged at once expecting free days, or the other way round.
     if (choice.trial) {
       if (plan !== 'pro' || choice.interval !== 'month') throw new BillingError(400, 'The free trial is for monthly Pro.', 'trial_monthly_only');

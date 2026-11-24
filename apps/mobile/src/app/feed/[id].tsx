@@ -33,6 +33,7 @@ import { usePageTitle } from '@/lib/pageTitle';
 import { RECORD_WORD, recordSet } from '@/lib/records';
 import { formatWeight, isDoneSet, isTimedSet, setLine, setTags, unitFor, type LoggedSet, type NewRecord, type WeightUnit } from '@/lib/training';
 import { color, face, radius, space, themed } from '@/lib/theme';
+import { MaxBadge } from '@/components/MaxBadge';
 
 const MAX_COMMENT = 300;
 
@@ -334,12 +335,15 @@ export default function FeedWorkoutScreen() {
               <View key={comment.id} style={styles.comment}>
                 <Avatar account={{ displayName: comment.person.displayName, avatarUrl: comment.person.avatarUrl }} size={32} variant="subhead" person={comment.you ? undefined : comment.person.displayName} />
                 <View style={styles.flex}>
-                  <Txt variant="footnote" color={color.labelSecondary}>
-                    <Txt variant="footnote" style={face('semibold')}>
+                  <View style={styles.commentHead}>
+                    <Txt variant="footnote" style={[styles.commentName, face('semibold')]} numberOfLines={1}>
                       {comment.you ? 'You' : comment.person.displayName}
                     </Txt>
-                    {`  ${feedWhen(comment.createdAt)}`}
-                  </Txt>
+                    {comment.person.max && <MaxBadge />}
+                    <Txt variant="footnote" color={color.labelSecondary}>
+                      {feedWhen(comment.createdAt)}
+                    </Txt>
+                  </View>
                   <Txt variant="subhead">
                     {comment.body}
                   </Txt>
@@ -452,6 +456,9 @@ const styles = themed(() =>
     setTag: { width: 24, textAlign: 'center' },
     comments: { gap: space[3], paddingTop: space[2] },
     comment: { flexDirection: 'row', gap: space[3], alignItems: 'flex-start' },
+    // Who, a Max badge when they're on Max, and when.
+    commentHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    commentName: { flexShrink: 1 },
     commentActions: { flexDirection: 'row', gap: space[4], marginTop: 2 },
     smallLink: { minHeight: 28, justifyContent: 'center' },
     composer: { flexDirection: 'row', alignItems: 'flex-end', gap: space[2], padding: space[3] },

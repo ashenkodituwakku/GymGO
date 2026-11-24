@@ -18,6 +18,7 @@ import type { FeedItem } from '@/lib/api';
 import { bestSetLine, feedCardLabel, feedExerciseName, feedWhen, firstName, likedLine, recordsFor, timeLine, volumeLine } from '@/lib/feed';
 import { workingSets } from '@/lib/training';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { MaxBadge } from './MaxBadge';
 
 /** Exercises on a card; the rest are a tap away. */
 const SHOWN = 3;
@@ -122,9 +123,12 @@ export function FeedByline({ item, gym = true }: { item: FeedItem; /** The gym a
     <View style={styles.head}>
       <Avatar account={{ displayName: item.person.displayName, avatarUrl: item.person.avatarUrl }} size={40} variant="headline" person={item.you ? undefined : item.person.displayName} />
       <View style={styles.flex}>
-        <Txt variant="subhead" numberOfLines={1} style={face('semibold')}>
-          {item.you ? 'You' : item.person.displayName}
-        </Txt>
+        <View style={styles.nameRow}>
+          <Txt variant="subhead" numberOfLines={1} style={[styles.name, face('semibold')]}>
+            {item.you ? 'You' : item.person.displayName}
+          </Txt>
+          {item.person.max && <MaxBadge />}
+        </View>
         <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
           {feedWhen(item.finishedAt)}
           {gym && item.gym ? ` · ${item.gym.name}` : ''}
@@ -169,6 +173,9 @@ const styles = themed(() =>
     body: { padding: space[4], paddingBottom: space[3], gap: space[3] },
     pressed: { backgroundColor: color.pressed },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+    // The name, then a Max badge when they're on Max; a long name shortens before the badge does.
+    nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    name: { flexShrink: 1 },
     flex: { flex: 1, minWidth: 0 },
     title: { marginTop: -space[1] },
     stats: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space[6], rowGap: space[2] },

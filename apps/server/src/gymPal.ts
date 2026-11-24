@@ -69,11 +69,12 @@ export const DEFAULT_MODELS = ['google/gemma-4-31b-it:free', 'thinkingmachines/i
 export const GYMPAL_PLANS = {
   free: { perMinute: 6, perDay: 20, keep: 10, maxChars: 8000, replyTokens: 700 },
   pro: { perMinute: 10, perDay: 100, keep: 30, maxChars: 20_000, replyTokens: 1200 },
+  max: { perMinute: 15, perDay: 300, keep: 60, maxChars: 40_000, replyTokens: 1600 },
 } as const;
 export type GymPalPlan = (typeof GYMPAL_PLANS)[keyof typeof GYMPAL_PLANS];
 
-/** The most the app may send: Pro's conversation, twice over (anything older is left out). */
-export const MAX_MESSAGES = GYMPAL_PLANS.pro.keep;
+/** The most the app may send: Max's conversation, twice over (anything older is left out). */
+export const MAX_MESSAGES = GYMPAL_PLANS.max.keep;
 /** What one question may say. */
 export const MAX_QUESTION_CHARS = 1000;
 /** What the app may say about the screen a question comes from. */

@@ -1,8 +1,9 @@
 /**
- * Set up GymGO Pro in your Stripe account: the products (Pro, Pro Duo, and
- * a year of Pro as a gift), their prices (monthly and yearly in A$ and US$;
+ * Set up GymGO Pro in your Stripe account: the products (Pro, Max, and a
+ * year of Pro as a gift), their prices (monthly and yearly in A$ and US$;
  * the gift paid once), GymGO's icon for the checkout page, and the settings
- * for Stripe's page where subscribers manage or cancel. Partner day passes need nothing here: each is priced
+ * for Stripe's page where subscribers manage, switch between Pro and Max,
+ * or cancel. Partner day passes need nothing here: each is priced
  * when it's booked.
  *
  *   npx pnpm@10 --filter @gymgo/server stripe:setup           test mode
@@ -19,7 +20,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Stripe from 'stripe';
-import { DUO_PRICES, DUO_PRODUCT, GIFT_PRICES, GIFT_PRODUCT, PRO_PRICES, PRO_PRODUCT, formatPlanPrice, type ProPrice } from '@gymgo/domain';
+import { GIFT_PRICES, GIFT_PRODUCT, MAX_PRICES, MAX_PRODUCT, PRO_PRICES, PRO_PRODUCT, formatPlanPrice, type ProPrice } from '@gymgo/domain';
 import { CHECKOUT_ICON_NAME } from './billing';
 import { STRIPE_SECRET_KEY } from './config';
 
@@ -53,15 +54,17 @@ async function main() {
     return made;
   };
 
-  /** Prices, by lookup key: made, or moved to a new price when the planned amount changed. */
+  /** Prices, by lookup key: made, or moved to a new price when the planned amount changed. Returns their ids. */
   const pricesFor = async (productId: string, tag: string, planned: Array<{ lookupKey: string; currency: 'aud' | 'usd'; amountMinor: number; interval?: ProPrice['interval'] }>) => {
     const current = await stripe.prices.list({ lookup_keys: planned.map((price) => price.lookupKey), active: true, limit: 10 });
+    const ids: string[] = [];
     for (const plan of planned) {
       const found = current.data.find((price) => price.lookup_key === plan.lookupKey);
       const label = `${formatPlanPrice(plan.amountMinor, plan.currency)}${plan.interval ? ` a ${plan.interval}` : ' once'}`;
       const same = found && found.unit_amount === plan.amountMinor && found.currency === plan.currency && (found.recurring?.interval ?? null) === (plan.interval ?? null);
       if (same) {
         console.log(`  ${plan.lookupKey}: ${label} already there`);
+        ids.push(found.id);
         continue;
       }
       const price = await stripe.prices.create({
@@ -76,13 +79,21 @@ async function main() {
         metadata: { gymgo: tag },
       });
       console.log(`  ${plan.lookupKey}: ${found ? 'changed to' : 'created'} ${label} (${price.id})`);
+      ids.push(price.id);
     }
+    return ids;
   };
 
   const product = await productFor('pro', PRO_PRODUCT);
-  await pricesFor(product.id, 'pro', PRO_PRICES);
-  const duo = await productFor('duo', DUO_PRODUCT);
-  await pricesFor(duo.id, 'duo', DUO_PRICES);
+  const proPrices = await pricesFor(product.id, 'pro', PRO_PRICES);
+  const max = await productFor('max', MAX_PRODUCT);
+  const maxPrices = await pricesFor(max.id, 'max', MAX_PRICES);
+  // Pro Duo was sold before Max; it's taken off sale (anyone already on it keeps it until they cancel).
+  const duo = existing.data.find((item) => item.metadata?.gymgo === 'duo');
+  if (duo) {
+    await stripe.products.update(duo.id, { active: false });
+    console.log(`  product ${duo.id} (${duo.name}) taken off sale`);
+  }
   const gift = await productFor('gift', GIFT_PRODUCT);
   await pricesFor(gift.id, 'gift', GIFT_PRICES);
 
@@ -100,27 +111,39 @@ async function main() {
     console.log(`  couldn't upload the checkout icon (${error instanceof Error ? error.message : error}); checkout still shows GymGO's name and colours`);
   }
 
-  // The page where subscribers update their card, see invoices or cancel.
+  // The page where subscribers update their card, see invoices, switch between Pro and Max, or cancel.
+  const features = {
+    customer_update: { enabled: true, allowed_updates: ['email' as const] },
+    invoice_history: { enabled: true },
+    payment_method_update: { enabled: true },
+    // Cancelling keeps Pro to the end of what's been paid for.
+    subscription_cancel: { enabled: true, mode: 'at_period_end' as const },
+    // Pro to Max, Max to Pro, monthly to yearly: the difference is charged or credited for the days left.
+    subscription_update: {
+      enabled: true,
+      default_allowed_updates: ['price' as const],
+      proration_behavior: 'create_prorations' as const,
+      products: [
+        { product: product.id, prices: proPrices },
+        { product: max.id, prices: maxPrices },
+      ],
+    },
+  };
   const configurations = await stripe.billingPortal.configurations.list({ active: true, limit: 20 });
   const portal = configurations.data.find((item) => item.metadata?.gymgo === 'pro');
   if (portal) {
-    console.log(`  customer portal settings ${portal.id} already there`);
+    await stripe.billingPortal.configurations.update(portal.id, { business_profile: { headline: 'Manage your GymGO subscription' }, features });
+    console.log(`  customer portal settings ${portal.id} brought up to date (switching between Pro and Max)`);
   } else {
     const created = await stripe.billingPortal.configurations.create({
-      business_profile: { headline: 'Manage your GymGO Pro subscription' },
-      features: {
-        customer_update: { enabled: true, allowed_updates: ['email'] },
-        invoice_history: { enabled: true },
-        payment_method_update: { enabled: true },
-        // Cancelling keeps Pro to the end of what's been paid for.
-        subscription_cancel: { enabled: true, mode: 'at_period_end' },
-      },
+      business_profile: { headline: 'Manage your GymGO subscription' },
+      features,
       metadata: { gymgo: 'pro' },
     });
     console.log(`  created customer portal settings ${created.id}`);
   }
 
-  console.log('\nDone. Restart GymGO and Pro is on sale.');
+  console.log('\nDone. Restart GymGO and Pro and Max are on sale.');
   console.log('Webhooks (recommended, so renewals, failed payments and cancellations arrive by themselves):');
   console.log('  on your computer:  stripe listen --forward-to localhost:4000/api/billing/webhook');
   console.log('                     then put the whsec_… it prints in STRIPE_WEBHOOK_SECRET');

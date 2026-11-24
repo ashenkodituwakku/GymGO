@@ -134,6 +134,8 @@ export interface Person {
   id: string;
   displayName: string;
   avatarUrl: string | null;
+  /** On GymGO Max: a badge by their name (missing from older servers). */
+  max?: boolean;
 }
 
 export interface FriendSummary extends Person {
@@ -166,6 +168,8 @@ export interface FeedPerson {
   id: string;
   displayName: string;
   avatarUrl: string | null;
+  /** On GymGO Max: a badge by their name (missing from older servers). */
+  max?: boolean;
 }
 
 /** A workout in the friends' feed (server feed.ts). */
@@ -500,18 +504,12 @@ export interface BillingState {
   subscription: SubscriptionInfo | null;
   /** Payments are connected on the server. */
   available: boolean;
-  /** Your own subscription is a Duo (missing from older servers). */
-  duo?: boolean;
-  /** Pro through a gift or someone's Duo. */
-  grant?: { via: 'gift' | 'duo'; endsAt: string | null; from: string | null } | null;
+  /** Your own subscription is Max (missing from older servers). */
+  max?: boolean;
+  /** Pro through a gifted year. */
+  grant?: { via: 'gift'; endsAt: string | null } | null;
   /** The free trial of monthly Pro this account can start (missing from older servers). */
   trial?: { days: number; offerEndsAt: string } | null;
-}
-
-export interface DuoState {
-  role: 'owner' | 'member' | null;
-  partner: { displayName: string } | null;
-  canAdd: boolean;
 }
 
 export interface GiftBought {
@@ -545,7 +543,7 @@ export interface ChallengeView {
   month: string;
   targets: number[];
   mine: { target: number; days: number; finished: boolean } | null;
-  friends: Array<{ displayName: string; avatarUrl: string | null; target: number; days: number; finished: boolean; you: boolean }>;
+  friends: Array<{ displayName: string; avatarUrl: string | null; max?: boolean; target: number; days: number; finished: boolean; you: boolean }>;
   cards: Array<{ month: string; target: number; finishedAt: string }>;
 }
 
@@ -681,7 +679,7 @@ export const api = {
     request<{
       available: boolean;
       prices: ProPrice[];
-      duo?: ProPrice[];
+      max?: ProPrice[];
       gifts?: Array<{ currency: BillingCurrency; amountMinor: number }>;
       limits: Record<PlanId, PlanLimits>;
       /** The ways checkout will really take (missing from older servers). */
@@ -691,20 +689,17 @@ export const api = {
     }>('GET', '/api/billing/plans'),
   billing: (token: string) => request<BillingState>('GET', '/api/billing', { token }),
   syncBilling: (token: string) => request<BillingState>('POST', '/api/billing/sync', { token }),
-  checkout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string; plan?: 'pro' | 'duo'; trial?: boolean }) =>
+  checkout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string; plan?: 'pro' | 'max'; trial?: boolean }) =>
     request<{ url: string }>('POST', '/api/billing/checkout', { token, body }),
   /** The checkout behind Apple Pay's or Google Pay's own button on the Pro page: Stripe.js opens it with the client secret. */
-  walletCheckout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string; plan?: 'pro' | 'duo'; trial?: boolean }) =>
+  walletCheckout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string; plan?: 'pro' | 'max'; trial?: boolean }) =>
     request<{ clientSecret: string }>('POST', '/api/billing/wallet', { token, body }),
   /** PayPal's page to approve a Pro subscription paid with PayPal (GymGO's own PayPal account). */
-  paypalCheckout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string; plan?: 'pro' | 'duo'; trial?: boolean }) =>
+  paypalCheckout: (token: string, body: { interval: BillingInterval; currency: BillingCurrency; returnUrl: string; plan?: 'pro' | 'max'; trial?: boolean }) =>
     request<{ url: string }>('POST', '/api/billing/paypal/checkout', { token, body }),
   giftCheckout: (token: string, body: { currency: BillingCurrency; returnUrl: string }) => request<{ url: string }>('POST', '/api/billing/gift', { token, body }),
   giftsBought: (token: string) => request<{ gifts: GiftBought[] }>('GET', '/api/billing/gifts', { token }),
   redeemGift: (token: string, code: string) => request<BillingState>('POST', '/api/billing/redeem', { token, body: { code } }),
-  duo: (token: string) => request<DuoState>('GET', '/api/billing/duo', { token }),
-  addToDuo: (token: string, code: string) => request<DuoState>('PUT', '/api/billing/duo', { token, body: { code } }),
-  leaveDuo: (token: string) => request<DuoState>('DELETE', '/api/billing/duo', { token }),
   gymPasses: (gymId: string) => request<{ passes: PartnerPass[]; available: boolean }>('GET', `/api/gyms/${encodeURIComponent(gymId)}/passes`),
   bookPass: (token: string, passId: string, body: { forDate: string; returnUrl: string }) =>
     request<{ url: string }>('POST', `/api/passes/${encodeURIComponent(passId)}/book`, { token, body }),

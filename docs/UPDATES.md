@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 278 · Checked after the rewrite: small screens, and code Safari and Firefox would trip on
+
+*24 Nov 2026 · the commit "Checks after the rewrite: small screens, Safari and Firefox code review"*
+
+No change to the app; a record of what was checked.
+
+- **Text cut short at 320 points wide**, on 29 screens with a real account (Home, Explore, Saved, Profile, Pro, Collection, Friends, Feed, Machines, Reminders, Photos, Timer, Spend, Leaderboard, Calendar, Account, Appearance, Progress, Templates, Programme, 1-rep max, Plates, Monthly report, Challenges, Trips, Workouts, Report a problem, a gym's page, Build with GymPal): nothing new cut short by the rewording. The two hits are meant: a very long gym name on Explore's list stops at three lines, as card titles do, with the full name read out and on the gym's page; and the Max badge's hidden "GymGO" for screen readers.
+- **Safari and Firefox, read through the code** (neither browser can run here): every frosted surface has Safari's prefix (written in liquidGlass.web.ts, added by React Native Web for style objects); the refraction filter is already only for Chromium; `text-wrap`, `text-box` and `interpolate-size` are extras that other browsers skip without breaking anything; and every date is built in a form Safari reads (`2026-11-24T12:00:00`). Nothing needed fixing. Trying both for real is still open.
+
 ## Update 277 · Refunds in your data export; the new screens checked
 
-*24 Nov 2026 · the commit "Refunds and disputes in the data export; the new screens checked"*
+*24 Nov 2026 · `640df97`*
 
 - **Download my data** now includes any refunds and disputes on your payments (`refundsAndDisputes`: kind, charge, amount, reason, status, deadline), beside your subscriptions. The refund test checks it.
 - The other session's Calendar and Welcome back screens checked with axe at 390 light, 320 dark and 1280 dark: no violations, nothing scrolling sideways, no errors, and the wording passes the plain-words scan. Both looked right with a real workout log (22 workouts this month, a 7-week streak, 15 gyms collected).

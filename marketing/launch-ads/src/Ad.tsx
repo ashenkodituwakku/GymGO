@@ -149,8 +149,8 @@ export const Ad: React.FC<AdScript> = (script) => {
           left: 0,
           right: 0,
           top: 0,
-          height: 700,
-          background: `linear-gradient(180deg, ${color.deep} 0%, rgba(42, 26, 176, 0.92) 60%, rgba(42, 26, 176, 0) 100%)`,
+          height: 720,
+          background: `linear-gradient(180deg, ${color.deep} 0%, ${color.deep} 56%, rgba(42, 26, 176, 0) 100%)`,
           opacity: interpolate(lift, [0, 140], [0, 1], clamp) * (1 - out),
         }}
       />
@@ -236,7 +236,8 @@ const Glow: React.FC<{ frame: number; amount: number }> = ({ frame, amount }) =>
 
 /** "Live now", in the corner of the eye for the whole ad: what's new, and where. */
 const LivePill: React.FC<{ frame: number; hidden: number }> = ({ frame, hidden }) => {
-  const shown = interpolate(frame, [4, 12], [0, 1], { ...clamp, easing: ease }) * (1 - hidden);
+  // On from the first frame: that frame is the video's cover on TikTok.
+  const shown = 1 - hidden;
   const blink = 0.55 + 0.45 * Math.cos((frame / BEAT) * Math.PI);
   return (
     <div style={{ position: 'absolute', top: safe.top + 6, left: 0, right: 0, display: 'flex', justifyContent: 'center', opacity: shown }}>

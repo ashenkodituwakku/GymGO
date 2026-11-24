@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 257 · The workout editor tells a screen reader where an exercise moved
+
+*24 Nov 2026 · the commit "The workout editor tells a screen reader where an exercise moved, or that it went"*
+
+Following Update 247 (Customise Home) to the other place things are put in order: the editor for your own workouts and splits.
+
+- **Moving an exercise up or down now says where to**: "Bench press moved to 2 of 5". Before, the list changed in silence while focus stayed on the button. Removing one says so too ("Bench press removed from Push day").
+- The announcing is one shared piece now (`useAnnouncer` in components/ui.tsx), used by Customise Home and the workout editor alike: the screen reader's own announcement on a phone, a polite live region that isn't seen and takes no room in a browser.
+- Checked: typecheck, hooks rules, app tests (660, with Updates 248 to 256 merged in) and server tests (360). **Not yet tried in a browser**: that check was stopped part-way, and the workout editor's announcements still need trying with a screen reader.
+
 ## Update 256 · Planks, holds, cardio and carries are logged, with a stopwatch
 
-*24 Nov 2026 · the commit "Timed and distance sets: planks, holds, cardio and carries logged, with a stopwatch"*
+*24 Nov 2026 · `a04e1e1`*
 
 You asked to keep polishing and add more of Hevy's features. Until now, a plank, a wall sit, a rower finisher or a farmer's carry in a workout had a "Done?" tick, but it wasn't saved: only sets of reps were. Hevy logs these by time or distance, and now GymGO does too, in its own look.
 
@@ -48,7 +58,7 @@ You asked to keep polishing and add more of Hevy's features. Until now, a plank,
 
 ## Update 255 · Your weeks as bars, save a friend's workout, share a workout as a picture
 
-*24 Nov 2026 · the commit "Your weeks as bars; save a friend's workout; share a workout as a picture; roomy Home on phones only"*
+*24 Nov 2026 · `b8d8a0a`*
 
 You asked to keep polishing and add more of Hevy's features. You also said the web version of Home was fine and only the phone's looked compacted. As before, Hevy's patterns are drawn in GymGO's own look.
 
@@ -81,7 +91,7 @@ You asked to keep polishing and add more of Hevy's features. You also said the w
 
 ## Update 254 · A roomier Home, Previous beside every set, and how it compares with last time
 
-*23 Nov 2026 · the commit "Home: room to breathe; Previous beside each set; compared with last time"*
+*23 Nov 2026 · `d6099c3`*
 
 You said the phone's Home felt cramped and asked to make it spacious and good to look at, to keep polishing, and for more of Hevy's features. Hevy's patterns are drawn in GymGO's own look.
 
@@ -105,7 +115,7 @@ You said the phone's Home felt cramped and asked to make it spacious and good to
 
 ## Update 253 · Tag your gym, friends' profiles, muscle split, and a calmer look
 
-*23 Nov 2026 · the commit "Workouts: tag the gym; a friend's workouts and muscle split; lighter secondary buttons"*
+*23 Nov 2026 · `e127500`*
 
 You asked to make the app cleaner and less clunky, to be able to tag which gym you went to on a workout, and for more from Hevy, looking really good. Hevy's features and patterns are drawn in GymGO's own look; nothing of Hevy's art or design is copied.
 
@@ -129,7 +139,7 @@ You asked to make the app cleaner and less clunky, to be able to tag which gym y
 
 ## Update 252 · A feed of your friends' workouts, and Head to head
 
-*23 Nov 2026 · the commit "Feed: your friends' workouts, likes and comments; Do this workout; Head to head (Pro)"*
+*23 Nov 2026 · `f5ab6ad`*
 
 You asked to keep polishing, add the features it needs and more Pro features, and a workout feed where you can see all your friends' workouts, taking inspiration from Hevy.
 
@@ -155,7 +165,7 @@ You asked to keep polishing, add the features it needs and more Pro features, an
 
 ## Update 251 · Apple Pay's and Google Pay's own buttons, for the device you're on
 
-*23 Nov 2026 · the commit "Pro: Apple Pay's and Google Pay's own buttons, the device's own wallet; off until set up"*
+*23 Nov 2026 · `16094db`*
 
 You asked for Apple Pay and Google Pay buttons like the PayPal one, showing the right one for the device. On the website's Pro page, under Subscribe:
 
@@ -172,7 +182,7 @@ You asked for Apple Pay and Google Pay buttons like the PayPal one, showing the 
 
 ## Update 250 · The PayPal button is PayPal's own
 
-*23 Nov 2026 · the commit "Pro: PayPal's own button, its wordmark on its colours"*
+*23 Nov 2026 · `3452d29`*
 
 You asked for the PayPal button to be the PayPal logo, clean, standing out, in PayPal's colours. It's now just PayPal's wordmark on PayPal's button colour, the size and corners of the Subscribe button above it:
 
@@ -184,7 +194,7 @@ You asked for the PayPal button to be the PayPal logo, clean, standing out, in P
 
 ## Update 249 · Apple Pay, Google Pay and PayPal, ready for you to switch on
 
-*22 Nov 2026 · the commit "Payments: Apple Pay and Google Pay through Stripe, PayPal through GymGO's own account; off until set up"*
+*22 Nov 2026 · `05cf947`*
 
 You asked to polish the app and include paying with Apple Pay, Google Pay and PayPal, which you'll set up later. Everything is built and switched off until you connect it; `docs/PAYMENTS.md` has the steps.
 
@@ -199,7 +209,7 @@ You asked to polish the app and include paying with Apple Pay, Google Pay and Pa
 
 ## Update 248 · No more hitch when you click the map
 
-*22 Nov 2026 · the commit "Explore: picking a gym on the map no longer redraws the whole app in that frame"*
+*22 Nov 2026 · `66ae240`*
 
 You asked to fix the momentary lag when you click the map. Measured in the browser, clicking a gym's pin did a lot of work all at once, on the very frame the map set off towards the gym and its card opened:
 
@@ -219,7 +229,7 @@ Clicking a pin now redraws 84 parts plus the top of the card, instead of 744 plu
 
 ## Update 247 · A screen reader hears where a widget went
 
-*22 Nov 2026 · the commit "Customise Home tells a screen reader where a widget moved, or that it came off"*
+*22 Nov 2026 · `47e7248`*
 
 - **After a widget moves, a screen reader says where to**: "Quick searches moved to 2 of 11". Before, moving one (with Update 246's buttons, a screen reader's own Move up and Move down, or a drag) changed the order in silence, so someone who can't see it had to go looking. Taking one off says so too ("Weather taken off Home"). On a phone it's the screen reader's own announcement; in a browser, a polite live region that takes no room and isn't seen.
 - Checked in the browser: Move down twice then back up, announced as "moved to 2 of 11", "3 of 11" and "1 of 11", with focus staying on the button between presses; the order back as it was afterwards. App tests 626.

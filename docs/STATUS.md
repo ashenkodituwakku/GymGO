@@ -526,6 +526,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Checked (22 Nov): the week's type rules in all 11 looks | ✅ | ✅ cut-text and spilled-label sweep, 10 looks × 6 pages at 390 and 5 pages at 1280; welcome headline in 8-bit and Comic at both widths | n/a | n/a | n/a | n/a |
 | Move widgets with buttons (22 Nov): an Appearance setting, off by default, adding up/down buttons to each widget while customising Home (and stopping the jiggle) | ✅ | ✅ in the browser: off shows none, on shows 20 on 11 widgets, moves keep focus, order restored; axe + target-size on Home editing × light/dark × 390/1280; settings test covers it; app 626 tests | ❌ not on a phone | n/a | ⚠️ the website gets it with the next publish | n/a |
 | Customise Home announces moves ("moved to 2 of 11") and removals to screen readers (22 Nov) | ✅ | ✅ in the browser: live region text after each move, focus kept; app 626 tests | ❌ not with VoiceOver or TalkBack on a phone | n/a | ⚠️ the website gets it with the next publish | n/a |
+| The workout editor announces moves and removals to screen readers (24 Nov); one shared announcer for it and Customise Home | ✅ | ⚠️ typecheck, hooks rules, app 660 and server 360 tests; not yet tried in a browser | ❌ not with VoiceOver or TalkBack | n/a | ⚠️ the website gets it with the next publish | n/a |
 
 **What "tested locally" means for the phone app, exactly:**
 

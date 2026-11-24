@@ -9,6 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 258 · Checked: the new screens from Updates 248 to 256
+
+*24 Nov 2026 · the commit "Checked the new screens; a curly apostrophe in the feed's report email"*
+
+The other session's recent work (the friends' feed, tagging the gym, sharing a workout as a picture, the Pro page's new ways to pay, the roomier Home and Progress's weekly bars) was put through the same checks as the rest of the app:
+
+- **axe** on the feed, Which gym?, Share, GymGO Pro, Friends, Workout, Home and Progress, light and dark, phone and desktop: clean.
+- **One heading for each page** to start from ("Feed", "Which gym?", "Share", "GymGO Pro" and so on); **labels match their words**; **nothing cut short** with text spacing turned up; **every target big enough** (WCAG 2.2's 24 points); **no console messages** beyond Reanimated's development note.
+- **Curly quotes**: the app's new words have none straight. One fix: the email moderators get when a comment in the feed is reported said "friends' feed" with a straight apostrophe; it's curly now.
+- Not covered here: the feed with friends' workouts in it (the test account's friend has logged none), and a workout in progress with a timed set.
+- Server tests 360.
+
 ## Update 257 · The workout editor tells a screen reader where an exercise moved
 
 *24 Nov 2026 · `2e4a2f6` (code) and `6b3b320` (docs)*

@@ -1542,7 +1542,7 @@ export function createApp(options: AppOptions) {
               const id = bugReports.create(
                 {
                   topic: 'bug',
-                  description: `A comment in the friends' feed was reported.\n\nComment ${commentId} on workout ${reported.sessionId}, by ${reported.author.displayName} (account ${reported.author.id}):\n\n${reported.body}\n\nA moderator can delete it: DELETE /api/feed/comments/${commentId}.`,
+                  description: `A comment in the friends’ feed was reported.\n\nComment ${commentId} on workout ${reported.sessionId}, by ${reported.author.displayName} (account ${reported.author.id}):\n\n${reported.body}\n\nA moderator can delete it: DELETE /api/feed/comments/${commentId}.`,
                   replyTo: null,
                   context: [{ label: 'Kind', value: 'Reported feed comment' }],
                 },

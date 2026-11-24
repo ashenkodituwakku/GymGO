@@ -570,6 +570,16 @@ worked second) with the month before as a lighter bar; and the biggest
 workout. When the month before had no workouts there's nothing to compare
 with, and it says so once rather than "+10,605 kg" on every total. It opens on the last finished
 month you trained in, and ‹ › step through the months with a workout.
+
+**Calendar** (Progress or Profile, free): every day you trained, month by
+month, Monday first, back to your first workout. Days you trained are
+filled in (a dot for each workout when there were two or more), with your
+weeks in a row, this month and this year above. Tap a day for its workouts,
+or a month's name for its monthly report. A workout counts on the day it
+started. **Edit workout** can move a workout to another day and start time
+(picked on a small calendar, typed as 6:30 pm or 18:30, never in the
+future), so one logged late goes on the day it was; the summary after you
+finish links to it.
 **Share this month** sends the totals in a few lines, never which days you
 went. Warm-ups never count; months are by this device's calendar.
 
@@ -714,7 +724,8 @@ workouts go to your log.
   removed. A set left blank is named rather than dropped, at least one set
   that isn't a warm-up has to stay, and the server checks the change as it
   checks a new workout. Records, totals and charts follow, since they're
-  worked out from the log; the day and the time it started stay as logged.
+  worked out from the log. The day and start time can change too (picked
+  on a small calendar and typed), never into the future.
   Leaving with changes not saved (Cancel, back, a swipe, closing the tab)
   asks **Discard your changes?** first; Save doesn't.
 - **Notes.** After Finish, **Add a note** under the summary ("left knee a

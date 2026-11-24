@@ -141,6 +141,18 @@ describe('a note on a session', () => {
     expect((await call('GET', '/api/training', { token })).body!.sessions[0]).toMatchObject({ name: 'Push, heavy', finishedAt: '2026-09-25T09:30:00.000Z', note: 'Kept' });
   });
 
+  it('moves to another day and start time, never into the future', async () => {
+    const token = await signUp();
+    const id = (await call('POST', '/api/training', { token, body: push })).body!.session.id;
+    // Logged late: it was really the Sunday before, at 6:30 pm.
+    const moved = await call('PATCH', `/api/training/${id}`, { token, body: { startedAt: '2026-09-20T18:30:00Z', finishedAt: '2026-09-20T19:20:00Z' } });
+    expect(moved.status).toBe(200);
+    expect(moved.body!.session).toMatchObject({ startedAt: '2026-09-20T18:30:00.000Z', finishedAt: '2026-09-20T19:20:00.000Z', exercises: push.exercises });
+    expect((await call('PATCH', `/api/training/${id}`, { token, body: { startedAt: '2026-09-27T18:30:00Z', finishedAt: '2026-09-27T19:20:00Z' } })).status).toBe(400);
+    expect((await call('PATCH', `/api/training/${id}`, { token, body: { startedAt: '2026-09-20T19:30:00Z' } })).status).toBe(400);
+    expect((await call('GET', '/api/training', { token })).body!.sessions[0]).toMatchObject({ startedAt: '2026-09-20T18:30:00.000Z' });
+  });
+
   it('is in Download my data', async () => {
     const token = await signUp();
     await call('POST', '/api/training', { token, body: { ...push, note: 'PB day' } });

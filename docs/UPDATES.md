@@ -9,6 +9,31 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 275 · A workout calendar, and moving a workout to the day it was
+
+*24 Nov 2026 · the commit "A workout calendar, and a workout's day and start time can change"*
+
+You asked for more Hevy features. Two more, in GymGO's own look:
+
+- **Calendar** (Progress → Calendar, or Profile → Calendar). It shows every day you trained, month by month.
+  - Each month is a grid, Monday first. Days you trained are filled in violet, with a dot for each workout when there were two or more. Today has a ring.
+  - At the top: your weeks in a row, workouts this month and workouts this year.
+  - Tap a day you trained to see its workouts (time, length, sets and gym). Each one opens in full.
+  - Tap a month's name for its monthly report.
+  - It shows six months at a time, back to your first workout. **Show earlier months** adds six more.
+  - A workout belongs to the day it started, so a late session that runs past midnight stays on the day you began it.
+- **Change a workout's day and start time** (Edit workout).
+  - Pick the day on a small calendar. Days after today can't be picked.
+  - Type the start time as 6:30 pm, 6.30pm, 6 pm or 18:30.
+  - It can't finish in the future. If it would, it says "That would finish in the future. Pick an earlier day or time."
+  - Records, streaks, the calendar and the monthly report follow the new day. If you don't change the day and time, they stay exactly as logged.
+  - Forgot to log a workout? Log it now, then tap **Edit workout** on the summary when you finish and set the day it really was. That link is new on the summary.
+- Checked:
+  - domain 205, server 371 (1 new, for moving a workout) and app 680 tests (12 new for the calendar and start times), typecheck and lint;
+  - in a browser: the calendar at 390 light and 1280 dark; tapping a day lists its workouts, which open; a month's name opens its report;
+  - in a browser: a workout moved to Friday 20 November at 6:30 pm, then shown on that day in the calendar; a time in the future refused; the edit screen at 320 wide.
+- Not checked: a real phone.
+
 ## Update 274 · Welcome back, and a smoother tour
 
 *24 Nov 2026 · the commit "Welcome back after signing in, a smoother tour, and the tour and sign-in in plain words"*

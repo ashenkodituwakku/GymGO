@@ -351,6 +351,19 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Calendar, a workout's day and start** (24 Nov, Update 275).
+  lib/calendar.ts (`dayKey`, `dayFromKey`, `sessionsByDay` by startedAt in
+  the device's time, `calendarMonth` Monday first, `calendarMonths` back
+  to the first workout with a limit and `more`, `yearSoFar`, `shortDay`,
+  `dayWords`; tested). components/MonthGrid.tsx draws a month: `canPick`
+  decides which days are buttons, the rest are drawn only. app/calendar.tsx
+  (route registered in _layout; Progress and Profile link to it) opens a
+  day's workouts at /feed/[id] and a month at /month?m=. session-edit.tsx:
+  Draft `day` and `start`; lib/sessionEdit.ts `parseClock`, `clockText`,
+  `whenFor` (keeps the original startedAt, seconds and all, when the day
+  and time weren't changed; refuses a finish more than 5 min ahead, as the
+  server does). The PATCH already accepted startedAt; training.test.ts now
+  covers it. train.tsx's summary has Edit workout.
 - **Welcome back, smoother tour** (24 Nov, Update 274). app/welcome-back.tsx
   (headerless, fade, no swipe back; in `SIDEBAR_STEPS_ASIDE` and GymPal's
   HIDDEN) reads lib/welcomeBack.ts `recapOf({ name, sessions, weeklyGoal,

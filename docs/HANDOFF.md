@@ -118,6 +118,15 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **CLAIMED (24 Nov, session_01T19nwfpA683gnbhSJ8YpPV): GymGO Max, and
+  Duo taken out.** The owner's tiers: Free, **Pro** (everything Pro has
+  now) and **Max** (about A$10 a month: Pro plus many AI features and
+  badges); "no family or duo tiers". Round 1: Max's prices and product
+  (Stripe, PayPal), the server's tier, the Pro page with both, Duo
+  removed, a Max badge, GymPal's Max limit. Round 2: AI features for Max.
+  Please leave billing, plans, perks, pro.tsx, ProExtras and GymPal's
+  limits to this session until this line says done (the welcome tour's
+  tiers part will need Max too: this session will do it).
 - **Text fields in High Contrast** (24 Nov, Update 260). app/_layout.tsx
   gives every input and textarea a 1px CanvasText border under
   forced-colors (fills vanish there). A view that draws its field's box

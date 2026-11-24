@@ -1113,6 +1113,9 @@ to find gyms near you. Then on to where you were going. Behind the tour and
 the sign-in page are slow pools of soft colour (still with Reduce Motion). The sign-up
 page has a brand panel beside the form on a wide screen, and a password
 strength meter (advice only; 8 characters is the rule).
+Signing in again opens **Welcome back**: a short recap of this week against
+your goal, your weeks in a row, your last workout and your collection, then
+Continue (on to where you were going) or Start workout.
 
 Your saved gyms follow you between your PC and your phone, and you can
 write reviews. Accounts live in the GymGO server's database:

@@ -19,9 +19,9 @@ import { Txt } from './ui';
 import { color, face, radius, space, themed } from '@/lib/theme';
 
 const THINGS: Array<{ icon: IconName; title: string; line: string }> = [
-  { icon: 'door', title: 'Gyms that let you in', line: 'Visit prices, guest hours and what to bring, as each gym publishes them.' },
-  { icon: 'workout', title: 'A plan for the kit there', line: 'Tap the muscles you want, tick off your sets, and watch your records climb.' },
-  { icon: 'cards', title: 'A card for every gym', line: 'Check in for its card. Every visit rolls a rarity.' },
+  { icon: 'door', title: 'Gyms that let you in', line: 'Visit prices, guest hours and what to bring.' },
+  { icon: 'workout', title: 'A plan for the kit there', line: 'Pick muscles and get a workout for the gym’s kit.' },
+  { icon: 'cards', title: 'A card for every gym', line: 'Check in to get its card. Every visit rolls a rarity.' },
 ];
 
 const SOFT = 'rgba(255, 255, 255, 0.74)';
@@ -104,7 +104,7 @@ export function AuthPerks() {
     { icon: 'cards', label: 'Collect cards' },
   ];
   return (
-    <View style={styles.perks} accessible accessibilityLabel="Free with an account: save gyms, log workouts, collect cards">
+    <View style={styles.perks} accessible accessibilityLabel="Free with an account. Save gyms, log workouts and collect cards.">
       {perks.map((perk, index) => (
         <Animated.View key={perk.label} entering={FadeInDown.duration(420).delay(120 + index * 110).easing(EASE_OUT).reduceMotion(ReduceMotion.System)} style={styles.perk}>
           <Icon name={perk.icon} size={13} color={color.brand} />

@@ -9,6 +9,41 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 273 · Welcome back, and a smoother tour
+
+*24 Nov 2026 · the commit "Welcome back after signing in, a smoother tour, and the tour and sign-in in plain words"*
+
+You asked for a welcome back screen, and for the animations to be better and cleaner.
+
+- **Welcome back.** Signing in again now opens a short recap before Home (a new account still gets the tour). It shows:
+  - your photo and "Welcome back, [name]", the words arriving one by one;
+  - one line on when you last trained, such as "You last trained yesterday." or "It’s been a while. Start with something light.";
+  - this week against your weekly goal, as a ring and a count;
+  - your weeks in a row;
+  - your last workout, which opens it;
+  - your collection, or "Check in at a gym to get your first card" if you don’t have one yet.
+  - **Continue** goes on to where you were going (a link you opened before signing in) or Home. **Start workout** goes straight to Train.
+  - The cards arrive in turn. With Reduce Motion they’re simply there. GymPal’s button stays out of the way on this screen.
+- **A smoother tour:**
+  - on the web, the tour follows your scrolling through a light spring, so a mouse wheel’s jumps play as one smooth movement (phones already follow your finger directly);
+  - each part now settles back and fades a little as you scroll past it, so one part hands over to the next with no hard cut;
+  - the opening takes a little longer, its badge fades later, and the statement slides up over it;
+  - the statement’s words rise slightly as they light up;
+  - "Scroll to explore" only shows when there’s room for it under the tagline;
+  - with Reduce Motion, the opening is shown still (it was blank).
+- **Plain words** (docs/COPY.md) on the tour, its questions, sign-in and sign-up. For example:
+  - "Pick muscles and get a workout for the gym’s kit." (it read "Tap the muscles you want, tick off your sets, and watch your records climb.")
+  - "Free covers one country. Change it any time in Profile."
+  - Goals read "8 to 15 reps, 60 to 90 s rest", "Heavier weights, sets of 5, longer rests" and "15 to 20 reps, short rests".
+  - "Location is off for GymGO. Turn it on in Settings, or search by place."
+  - "A steady routine with rest days." (it read "A good, steady routine, with rest days between.")
+  - The tour’s shelf: "Starts when you tick a set.", "A trophy every time you beat one.", "A stopwatch for planks. Distance for carries."
+- Checked:
+  - domain 205, server 370 and app 668 tests (3 new for the recap), typecheck and lint;
+  - in a browser, signing in as the dev account opens Welcome back with its week, streak, last workout and collection, and Continue goes on (light at 390 and dark at 1280);
+  - the tour scrolled through again after the changes, with no console errors.
+- Not checked: a real phone.
+
 ## Update 272 · Plainer words, part 6: error messages and the password email
 
 *24 Nov 2026 · the commit "Plainer words: error messages and the password email"*

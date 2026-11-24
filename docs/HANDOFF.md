@@ -351,6 +351,20 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Welcome back, smoother tour** (24 Nov, Update 273). app/welcome-back.tsx
+  (headerless, fade, no swipe back; in `SIDEBAR_STEPS_ASIDE` and GymPal's
+  HIDDEN) reads lib/welcomeBack.ts `recapOf({ name, sessions, weeklyGoal,
+  gyms, now })` → greeting, line, week, streak, last, gyms (tested).
+  sign-in.tsx `done(fresh)`: a new account → /welcome, a password or
+  provider sign-in → /welcome-back with `next` passed on; finishing a social
+  profile still goes straight on. Tour: welcome.tsx's `motionY` follows
+  `scrollY` through `withSpring` on the web only (all the parts, the light,
+  the strip and Aurora read it; Next and the strip's taps read raw
+  `scrollY`). kit.tsx `Pinned` fades and scales its hold over 0.6 screens
+  after its span (`leave`). The tour, WelcomeSetup, AuthShowcase and
+  onboarding.ts's `daysLine` are now in the docs/COPY.md voice, so the
+  "other session: please do the welcome tour, sign-in and sign-up" ask in
+  the copy claim is done.
 - **Tour questions, soft background** (24 Nov, Update 263).
   components/WelcomeSetup.tsx (steps country → goal → days → location
   (only while `prefs.location`) → done; `chooseCountry`, `setPref('goal')`,

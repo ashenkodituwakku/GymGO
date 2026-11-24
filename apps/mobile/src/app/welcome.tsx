@@ -30,8 +30,8 @@
 
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useRef, useState } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
-import Animated, { FadeIn, ReduceMotion, interpolate, runOnJS, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
+import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
+import Animated, { FadeIn, ReduceMotion, interpolate, runOnJS, useAnimatedReaction, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withSpring, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Aurora } from '@/components/Aurora';
 import { AppBadge, Wordmark } from '@/components/BrandMark';
@@ -47,6 +47,9 @@ import { WelcomeSetup } from '@/components/WelcomeSetup';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, face, radius, space, themed } from '@/lib/theme';
+
+/** A browser's scroll, smoothed: settling in a quarter of a second or so, never overshooting. */
+const SCROLL_SPRING = { damping: 28, stiffness: 240, mass: 0.55, overshootClamping: true };
 
 /** The parts in order, by name, for Next and the chapters. */
 const ORDER = ['opening', 'statement', 'find', 'train', 'reel', 'collect', 'numbers'] as const;
@@ -71,6 +74,15 @@ export default function WelcomeScreen() {
   // The scrolling part's own height: a part holds for this long.
   const [screen, setScreen] = useState(0);
   const scrollY = useSharedValue(0);
+  // What the animations follow: the scroll itself on a phone (already smooth to the finger); in a browser, eased
+  // after it on a spring, so a mouse wheel's steps of a hundred points glide rather than jump.
+  const motionY = useSharedValue(0);
+  useAnimatedReaction(
+    () => scrollY.value,
+    (y) => {
+      motionY.value = Platform.OS === 'web' ? withSpring(y, SCROLL_SPRING) : y;
+    },
+  );
   // How far it scrolls: from the content's size too, so Next's first tap knows.
   const room = useSharedValue(1);
   const contentHeight = useRef(0);
@@ -130,8 +142,8 @@ export default function WelcomeScreen() {
   return (
     <View style={[styles.page, { paddingTop: insets.top, paddingBottom: insets.bottom + space[3] }]}>
       {/* Pools of soft colour, then each chapter's own light, behind it all. */}
-      <Aurora scroll={phase === 'story' ? scrollY : undefined} span={Math.max(1, contentHeight.current - screen)} />
-      {phase === 'story' && !calm && screen > 0 && <ChapterLight scrollY={scrollY} ranges={chapterRanges} screen={screen} width={width} height={height} />}
+      <Aurora scroll={phase === 'story' ? motionY : undefined} span={Math.max(1, contentHeight.current - screen)} />
+      {phase === 'story' && !calm && screen > 0 && <ChapterLight scrollY={motionY} ranges={chapterRanges} screen={screen} width={width} height={height} />}
       <ScreenOptions options={{ headerShown: false }} />
       <Txt variant="body" accessibilityRole="header" level={1} style={styles.unseen}>
         Welcome to GymGO
@@ -145,7 +157,7 @@ export default function WelcomeScreen() {
           <View style={styles.top}>
             {/* On a narrow phone, the badge alone, so the chapters fit beside it. */}
             {width >= 400 ? <Wordmark height={22} /> : <AppBadge size={26} />}
-            <Chapters scrollY={scrollY} ranges={chapterRanges} onPick={goChapter} />
+            <Chapters scrollY={motionY} ranges={chapterRanges} onPick={goChapter} />
             {!atEnd ? (
               <Pressable onPress={toSetup} accessibilityRole="button" accessibilityLabel="Skip the tour, on to a few quick questions" hitSlop={10} style={({ pressed }) => [styles.skip, pressed && { opacity: 0.6 }]}>
                 <Txt variant="body" color={color.brand} style={face('semibold')}>
@@ -174,14 +186,14 @@ export default function WelcomeScreen() {
           >
             {screen > 0 && (
               <>
-                <Opening screen={screen} scrollY={scrollY} calm={calm} width={width} onPlace={place('opening')} />
-                <Statement screen={screen} scrollY={scrollY} calm={calm} width={width} onPlace={place('statement')} />
-                <FindPart screen={screen} scrollY={scrollY} calm={calm} width={width} wide={wide} onPlace={place('find')} />
-                <TrainPart screen={screen} scrollY={scrollY} calm={calm} width={width} wide={wide} onPlace={place('train')} />
-                <ReelPart screen={screen} scrollY={scrollY} calm={calm} width={width} wide={wide} onPlace={place('reel')} />
-                <CollectPart screen={screen} scrollY={scrollY} calm={calm} width={width} wide={wide} onPlace={place('collect')} />
-                <Numbers screen={screen} scrollY={scrollY} calm={calm} wide={wide} onPlace={place('numbers')} />
-                <Finale screen={screen} scrollY={scrollY} calm={calm} />
+                <Opening screen={screen} scrollY={motionY} calm={calm} width={width} onPlace={place('opening')} />
+                <Statement screen={screen} scrollY={motionY} calm={calm} width={width} onPlace={place('statement')} />
+                <FindPart screen={screen} scrollY={motionY} calm={calm} width={width} wide={wide} onPlace={place('find')} />
+                <TrainPart screen={screen} scrollY={motionY} calm={calm} width={width} wide={wide} onPlace={place('train')} />
+                <ReelPart screen={screen} scrollY={motionY} calm={calm} width={width} wide={wide} onPlace={place('reel')} />
+                <CollectPart screen={screen} scrollY={motionY} calm={calm} width={width} wide={wide} onPlace={place('collect')} />
+                <Numbers screen={screen} scrollY={motionY} calm={calm} wide={wide} onPlace={place('numbers')} />
+                <Finale screen={screen} scrollY={motionY} calm={calm} />
               </>
             )}
           </Animated.ScrollView>

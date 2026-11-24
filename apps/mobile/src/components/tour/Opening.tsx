@@ -131,7 +131,7 @@ function Token({ icon, angle, orbit, index, progress, calm }: { icon: IconName; 
 // --- The statement ----------------------------------------------------------------
 
 /** What GymGO does, in a paragraph. Words between asterisks light up in violet. */
-const STATEMENT = 'Find gyms that will *let you in,* and what a visit *costs.* Know *what to do* when you get there. And *collect a card* for every gym you visit.';
+const STATEMENT = 'Find gyms that will *let you in,* and what a visit *costs.* Know *what to do* when you get there. *Collect a card* for every gym you visit.';
 
 export function Statement({ screen, scrollY, calm, width, onPlace }: { screen: number; scrollY: SharedValue<number>; calm: boolean; width: number; onPlace: (top: number, height: number) => void }) {
   // Between asterisks, the words that light up violet: split on them, then into words.
@@ -159,7 +159,11 @@ export function Statement({ screen, scrollY, calm, width, onPlace }: { screen: n
 
 function Word({ word, highlight, index, count, progress, size }: { word: string; highlight: boolean; index: number; count: number; progress: SharedValue<number>; size: number }) {
   const at = 0.05 + (index / count) * 0.8;
-  const style = useAnimatedStyle(() => ({ opacity: 0.16 + eased(progress.value, at, at + 0.07) * 0.84 }));
+  // Each word lights and rises a touch into place as its turn comes.
+  const style = useAnimatedStyle(() => {
+    const t = eased(progress.value, at, at + 0.07);
+    return { opacity: 0.16 + t * 0.84, transform: [{ translateY: (1 - t) * 6 }] };
+  });
   return (
     <Animated.Text aria-hidden style={[styles.word, { fontSize: size, lineHeight: Math.round(size * 1.22), color: highlight ? color.brand : color.label }, face('bold'), style]}>
       {`${word} `}

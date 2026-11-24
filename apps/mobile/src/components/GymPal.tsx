@@ -115,7 +115,7 @@ const PANEL_FROM = 640;
 
 const TABS = new Set(['/', '/explore', '/saved', '/profile']);
 /** Where the corner is someone else's: no button there, though screens there can still open the chat. */
-const HIDDEN = new Set(['/train', '/welcome', '/compare', '/plates', '/pro', '/country', '/sign-in', '/report-bug']);
+const HIDDEN = new Set(['/train', '/welcome', '/welcome-back', '/compare', '/plates', '/pro', '/country', '/sign-in', '/report-bug']);
 
 /** Where the dumbbell's middle is, as shares of the logo (assets/gympal/gympal.svg's 100-unit box): what it lifts about. */
 const DUMBBELL_AT = '50% 48%';

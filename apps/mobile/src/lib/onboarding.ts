@@ -7,10 +7,10 @@
 
 /** A word on each number of days a week. */
 export function daysLine(days: number): string {
-  if (days <= 2) return 'A gentle start: easy to keep to.';
-  if (days <= 4) return 'A good, steady routine, with rest days between.';
-  if (days <= 6) return 'Most days: keep a rest day or two in there.';
-  return 'Every day: make some of them easy ones.';
+  if (days <= 2) return 'A gentle start.';
+  if (days <= 4) return 'A steady routine with rest days.';
+  if (days <= 6) return 'Most days. Keep a rest day or two.';
+  return 'Every day. Make some sessions easy.';
 }
 
 /**

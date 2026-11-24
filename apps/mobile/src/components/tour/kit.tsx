@@ -75,7 +75,14 @@ export function Pinned({
   const span = Math.max(1, screen * (length - 1));
   const progress = useDerivedValue(() => (calm ? 1 : Math.min(1, Math.max(0, (scrollY.value - top.value) / span))));
   const enter = useDerivedValue(() => (calm ? 1 : Math.min(1, Math.max(0, (scrollY.value - (top.value - screen * 0.6)) / (screen * 0.55)))));
-  const hold = useAnimatedStyle(() => (calm || STICKY ? {} : { transform: [{ translateY: Math.min(span, Math.max(0, scrollY.value - top.value)) }] }));
+  // Held still while it plays (on a phone, moved down with the scroll); then, as it goes, it settles back and fades, so the next part comes on clean.
+  const hold = useAnimatedStyle(() => {
+    if (calm) return {};
+    const leave = Math.min(1, Math.max(0, (scrollY.value - (top.value + span)) / (screen * 0.6)));
+    const settle = { opacity: 1 - leave * 0.9, transform: [{ scale: 1 - leave * 0.06 }] };
+    if (STICKY) return settle;
+    return { opacity: settle.opacity, transform: [{ translateY: Math.min(span, Math.max(0, scrollY.value - top.value)) }, { scale: 1 - leave * 0.06 }] };
+  });
   return (
     <View
       onLayout={(event) => {

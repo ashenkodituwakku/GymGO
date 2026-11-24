@@ -24,7 +24,7 @@ export function navMode(layout: NavLayout, width: number): NavMode {
 }
 
 /** The pages the docked sidebar steps aside for: the welcome tour, which is the whole screen. */
-const SIDEBAR_STEPS_ASIDE = new Set(['/welcome']);
+const SIDEBAR_STEPS_ASIDE = new Set(['/welcome', '/welcome-back']);
 
 /**
  * Whether the docked sidebar is beside this page. Once you're in it stays

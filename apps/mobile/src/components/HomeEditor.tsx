@@ -15,7 +15,7 @@
  */
 
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, Modal, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
+import { Modal, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import { Backdrop } from './Backdrop';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -42,7 +42,7 @@ import { Glass } from './Glass';
 import { Icon } from './Icon';
 import { useTabScroll } from './ios';
 import { Pressable, useCalm } from './motion';
-import { CloseButton, Txt } from './ui';
+import { CloseButton, Txt, useAnnouncer } from './ui';
 
 /** Room between widgets: Home's own, so nothing moves when editing starts. */
 export const WIDGET_GAP = space[6];
@@ -179,18 +179,9 @@ export function EditableWidgets({
     order.value = ids;
   }, [ids, order]);
 
-  /**
-   * Said to a screen reader after a widget moves or comes off ("Weather
-   * moved to 3 of 9"), however it was done: by a button, a screen reader's
-   * action or a drag. A phone's screen reader announces it; in a browser, a
-   * live region nobody sees.
-   */
-  const [said, setSaid] = useState('');
-  const say = (text: string) => {
-    if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(text);
-    // The same words twice in a row still count as news: a space makes them differ.
-    else setSaid((before) => (before === text ? `${text}\u00a0` : text));
-  };
+  // Said to a screen reader after a widget moves or comes off ("Weather moved to 3 of 9"), however it was
+  // done: by a button, a screen reader's action or a drag.
+  const { say, region } = useAnnouncer();
   const move = (id: HomeWidgetId, to: number) => {
     const place = Math.min(Math.max(0, to), ids.length - 1);
     onMove(id, place);
@@ -294,15 +285,7 @@ export function EditableWidgets({
 
   return (
     <View style={styles.list}>
-      {Platform.OS === 'web' && (
-        <View style={styles.unseen} aria-live="polite">
-          {said ? (
-            <Txt variant="footnote" color="transparent">
-              {said}
-            </Txt>
-          ) : null}
-        </View>
-      )}
+      {region}
       {ids.map((id, index) => {
         // Making room: the ones between where it was and where it's going move by its height.
         let shift = 0;
@@ -735,8 +718,6 @@ const styles = themed(() => {
     // A mouse held and dragged would select the words under it as it goes.
     list: { gap: WIDGET_GAP, userSelect: 'none' },
     item: { position: 'relative' },
-    // Read by a screen reader, not seen, taking no room (it's out of the stack's flow).
-    unseen: { position: 'absolute', width: 1, height: 1, overflow: 'hidden', pointerEvents: 'none' } as object,
     lifted: { ...shadow.float },
     // A section of the page, framed while editing so it has edges to hold.
     frame: { padding: space[3], borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.plate, overflow: 'hidden', ...shadow.plate },

@@ -5,7 +5,7 @@
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { createContext, forwardRef, useContext, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { ActivityIndicator, Platform, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle, type TextInputInstance, type ViewInstance } from 'react-native';
+import { AccessibilityInfo, ActivityIndicator, Platform, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle, type TextInputInstance, type ViewInstance } from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
 import { monogram } from '@/lib/monogram';
 import { haptic } from '@/lib/haptics';
@@ -215,6 +215,32 @@ export function FileName({ name, variant = 'footnote', color: tint = color.label
       </Txt>
     </View>
   );
+}
+
+/**
+ * Something to tell a screen reader after a change it can't see happen
+ * ("Weather moved to 3 of 9"): `say` it, and put `region` anywhere in the
+ * screen. A phone's screen reader announces it; in a browser it's a polite
+ * live region that isn't seen and takes no room.
+ */
+export function useAnnouncer(): { say: (text: string) => void; region: ReactNode } {
+  const [said, setSaid] = useState('');
+  const say = (text: string) => {
+    if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(text);
+    // The same words twice in a row still count as news: a space makes them differ.
+    else setSaid((before) => (before === text ? `${text}\u00a0` : text));
+  };
+  const region =
+    Platform.OS === 'web' ? (
+      <View style={styles.unseenLive} aria-live="polite">
+        {said ? (
+          <Txt variant="footnote" color="transparent">
+            {said}
+          </Txt>
+        ) : null}
+      </View>
+    ) : null;
+  return { say, region };
 }
 
 // --- Evidence tiers ---------------------------------------------------------
@@ -933,6 +959,7 @@ const styles = themed(() => StyleSheet.create({
   // A label that wraps (wider text: a reader's own spacing) stays centred in its segment.
   segmentText: { textAlign: 'center' },
   steady: { minWidth: 0, flexShrink: 1 },
+  unseenLive: { position: 'absolute', width: 1, height: 1, overflow: 'hidden', pointerEvents: 'none' } as object,
   fileName: { flexDirection: 'row', alignItems: 'baseline', minWidth: 0 },
   fileHead: { flexShrink: 1, minWidth: 0 },
   fileKeep: { flexShrink: 0 },

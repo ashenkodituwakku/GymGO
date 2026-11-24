@@ -20,7 +20,7 @@ import { ExerciseTile } from './ExerciseGlyph';
 import { GroupControls, joinableNext } from './GroupControls';
 import { Icon, type IconName } from './Icon';
 import { Pressable } from './motion';
-import { Chip, Input, Txt, LiveLine } from './ui';
+import { Chip, Input, Txt, LiveLine, useAnnouncer } from './ui';
 
 const restWords = (seconds: number) => (seconds === 0 ? 'No rest' : `${restLabel(seconds)} rest`);
 
@@ -31,10 +31,18 @@ export function PlanEditor({ items, onChange, where }: { items: PlanItem[]; onCh
     setResting(null);
     onChange(next);
   };
+  // A move or a removal, said to a screen reader: focus stays on the button, so the change isn't seen.
+  const { say, region } = useAnnouncer();
+  const move = (index: number, by: -1 | 1) => {
+    const name = exerciseName(items[index]!.exerciseId);
+    change(moveItem(items, index, by));
+    say(`${name} moved to ${index + by + 1} of ${items.length}`);
+  };
   const at = (index: number, patch: Partial<PlanItem>) => onChange(items.map((item, other) => (other === index ? { ...item, ...patch } : item)));
 
   return (
     <View style={styles.list}>
+      {region}
       {items.length === 0 && (
         <Txt variant="subhead" color={color.labelSecondary} style={styles.empty}>
           {`No exercises in ${where} yet. Add the first below.`}
@@ -59,7 +67,15 @@ export function PlanEditor({ items, onChange, where }: { items: PlanItem[]; onCh
                   {name}
                 </Txt>
               </View>
-              <SmallButton icon="close" label={`Remove ${name} from ${where}`} onPress={() => change(removeItem(items, index))} danger />
+              <SmallButton
+                icon="close"
+                label={`Remove ${name} from ${where}`}
+                onPress={() => {
+                  change(removeItem(items, index));
+                  say(`${name} removed from ${where}`);
+                }}
+                danger
+              />
             </View>
 
             {finisher ? (
@@ -145,8 +161,8 @@ export function PlanEditor({ items, onChange, where }: { items: PlanItem[]; onCh
               </View>
               {items.length > 1 && (
                 <View style={styles.order}>
-                  <SmallButton icon="chevron" turn={-90} label={`Move ${name} up`} disabled={index === 0} onPress={() => change(moveItem(items, index, -1))} />
-                  <SmallButton icon="chevron" turn={90} label={`Move ${name} down`} disabled={index === items.length - 1} onPress={() => change(moveItem(items, index, 1))} />
+                  <SmallButton icon="chevron" turn={-90} label={`Move ${name} up`} disabled={index === 0} onPress={() => move(index, -1)} />
+                  <SmallButton icon="chevron" turn={90} label={`Move ${name} down`} disabled={index === items.length - 1} onPress={() => move(index, 1)} />
                 </View>
               )}
             </View>

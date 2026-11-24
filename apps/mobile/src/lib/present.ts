@@ -43,7 +43,7 @@ export function priceLine(offers: OfferSelection, members?: { typicalMinor: numb
 /** A price line as one phrase, for Compare and screen readers: "A$22 per visit", "A$25, to confirm", "Price unknown". */
 export function priceText(price: PriceLine): string {
   if (price.headline === '—') return 'Price unknown';
-  if (price.headline === 'Ask') return 'Ask for the total: some fees aren’t published';
+  if (price.headline === 'Ask') return 'Ask for the total. Some fees aren’t published';
   if (price.caption === 'you can’t use') return `${price.headline}, which you can’t use`;
   return price.confirmed ? `${price.headline} ${price.caption}` : `${price.headline}, ${price.caption}`;
 }

@@ -76,7 +76,7 @@ describe('voice', () => {
   });
 
   it('describes evidence age honestly', () => {
-    expect(checkedAgo(null)).toBe('Never checked');
+    expect(checkedAgo(null)).toBe('Not checked yet');
     expect(checkedAgo(0)).toBe('Checked today');
     expect(checkedAgo(9)).toBe('Checked 9 days ago');
     expect(checkedAgo(140)).toBe('Checked 5 months ago');

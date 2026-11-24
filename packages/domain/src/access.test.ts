@@ -95,7 +95,7 @@ describe('visitor access', () => {
 
     expect(result.verdict).toBe('needs_confirmation');
     const reason = result.reasons.find((r) => r.code === 'booking_required');
-    expect(reason?.message).toContain('confirm with the gym before travelling');
+    expect(reason?.message).toContain('check with the gym first');
   });
 
   it('needs confirmation when a prerequisite is simply unestablished', () => {
@@ -122,7 +122,7 @@ describe('visitor access', () => {
     const reason = evaluateVisitorAccess(gym, SEVEN_PM, { asOf: NOW }).reasons.find(
       (r) => r.code === 'induction_required',
     );
-    expect(reason?.message).toContain('Reception is not staffed');
+    expect(reason?.message).toContain('Reception isn’t staffed');
   });
 
   it('rules out a temporarily closed gym', () => {

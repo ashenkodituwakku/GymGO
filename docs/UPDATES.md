@@ -9,9 +9,33 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 269 · Plainer words, part 3: finding gyms and the gym page
+
+*24 Nov 2026 · the commit "Plainer words: finding gyms and the gym page"*
+
+The third part of the rewrite (docs/COPY.md). The meaning is the same throughout: unknown stays unknown, and nothing reads as a yes or no it isn't.
+
+- **The visit answer's reasons** (packages/domain access.ts, offers.ts and money.ts), for example:
+  - "We haven’t confirmed this gym is still open" (it read "…is currently trading");
+  - "Members have 24-hour access, but guest hours may differ" (it read "…which does not establish guest entry");
+  - "Guests aren’t allowed in at that time";
+  - "Booking is required, usually 48 hours ahead. Your visit is 20 hours away, so check with the gym first";
+  - "A member needs to sign you in";
+  - "Guest hours were last checked 62 days ago and may be out of date";
+  - "Over your budget".
+  - The labels are now "Guests welcome", "Check first", "Closed to guests then" and "Unknown".
+- **The gym card and page**:
+  - "This gym doesn’t publish a visit price. Ask when you call."
+  - "This gym doesn’t publish its equipment list."
+  - "From OpenStreetMap volunteers and not checked by GymGO. Anything not listed is unknown."
+  - Demo listings say plainly what isn't real.
+- **Busy reports** read "No reports in the last hour" and "3 reports in the last hour. Shown once there are 3."; **photos** read "Your photo will appear here once a moderator approves it"; **reviews** read "Every review is checked by a moderator".
+- **Explore and Compare**: "Showing the 30 gyms nearest the centre. Zoom in to see more.", "Gyms in Japan need GymGO Pro", "Select gyms from your saved list, or tap Compare on a gym’s page".
+- Checked: a real and a demo gym page in a browser (axe clean); domain 205, server 370 and app 665 tests, their wording updated to match.
+
 ## Update 268 · Plainer words, part 2: Home, and lines used across the app
 
-*24 Nov 2026 · the commit "Plainer words: Home, and lines used across the app"*
+*24 Nov 2026 · `715e60d`*
 
 The second part of the rewrite (docs/COPY.md):
 

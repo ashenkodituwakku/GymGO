@@ -86,11 +86,11 @@ export default function Compare() {
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
           {pickable.length > 0
             ? only
-              ? `${only} is picked. Tick another of your saved gyms, or tap the compare button on another gym’s page.`
-              : 'Tick them from your saved gyms here, or tap the compare button on a gym’s page.'
+              ? `${only} is selected. Select another saved gym, or tap Compare on another gym’s page.`
+              : 'Select gyms from your saved list, or tap Compare on a gym’s page.'
             : only
-              ? `${only} is picked. Tick another in Saved, or tap the compare button on another gym’s page.`
-              : 'Tick them in Saved, or tap the compare button on a gym’s page. On iPhone you can also press and hold a gym on Home.'}
+              ? `${only} is selected. Select another in Saved, or tap Compare on another gym’s page.`
+              : 'Select gyms in Saved, or tap Compare on a gym’s page. On iPhone, you can also press and hold a gym on Home.'}
         </Txt>
         {pickable.length > 0 && (
           <View style={styles.pickList}>

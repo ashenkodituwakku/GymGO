@@ -60,12 +60,12 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
     setChecking(true);
     const fix = await currentFix(true, true);
     setChecking(false);
-    if (fix === 'denied') return setNotice('Saying how busy it is needs your location, just this once, to check you’re there. It never leaves your phone.');
-    if (fix === 'off') return setNotice('Saying how busy it is needs your location, just this once, to check you’re there. Location is off in Profile → Settings.');
-    if (fix === 'unavailable') return setNotice('Couldn’t find where you are just now. Try again in a moment.');
+    if (fix === 'denied') return setNotice('To report how busy it is, allow location once so we can check you’re at the gym. It stays on your phone.');
+    if (fix === 'off') return setNotice('To report how busy it is, turn on location in Profile → Settings so we can check you’re at the gym.');
+    if (fix === 'unavailable') return setNotice('Couldn’t find your location. Try again in a moment.');
     const where = checkIn(fix, location.position);
-    if (where.kind === 'far') return setNotice(`You’re ${distanceLabel(where.metres / 1000, location.address.countryCode)} away. Say how busy it is when you’re there.`);
-    if (where.kind === 'rough') return setNotice('Your location is too rough here to tell you’re inside. Try again in a moment.');
+    if (where.kind === 'far') return setNotice(`You’re ${distanceLabel(where.metres / 1000, location.address.countryCode)} away. You can report how busy it is when you’re there.`);
+    if (where.kind === 'rough') return setNotice('Your location isn’t precise enough to confirm you’re there. Try again in a moment.');
     setPicking(true);
   };
 
@@ -75,7 +75,7 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
       await api.reportBusy(token, location.id, level);
       haptic.success();
       setPicking(false);
-      setNotice('Thanks. It counts for the next hour, alongside other members’.');
+      setNotice('Thanks for reporting. It counts for the next hour.');
       load();
     } catch (error) {
       haptic.warn();
@@ -114,7 +114,7 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
           <Txt variant="caption" color={color.labelSecondary} numberOfLines={narrow ? 3 : 2}>
             {summary.count > 0
               ? `${summary.count} member${summary.count === 1 ? ' has' : 's have'} said in the last hour; it shows once ${summary.minimum} have.`
-              : 'No one here has said in the last hour.'}
+              : 'No reports in the last hour.'}
           </Txt>
           {/* On a 320-point phone the button goes under the words, which it squeezed to a few. */}
           {narrow && say}
@@ -134,10 +134,10 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
           <Txt variant="headline">{level ? `${level.label} right now` : 'Is it busy?'}</Txt>
           <Txt variant="footnote" color={color.labelSecondary}>
             {level
-              ? `${level.detail}, say ${summary.count} members here in the last hour (latest ${minutesAgo(summary.latestAt!)}).`
+              ? `${level.detail}, based on ${summary.count} reports in the last hour (latest ${minutesAgo(summary.latestAt!)}).`
               : summary.count > 0
-                ? `${summary.count} member${summary.count === 1 ? ' has' : 's have'} said in the last hour. It shows once ${summary.minimum} have.`
-                : 'No one here has said in the last hour.'}
+                ? `${summary.count} report${summary.count === 1 ? '' : 's'} in the last hour. Shown once there are ${summary.minimum}.`
+                : 'No reports in the last hour.'}
           </Txt>
         </View>
       </View>
@@ -166,7 +166,7 @@ export function MemberBusy({ location, account, onSignIn }: { location: GymLocat
       )}
       {anywhere && !picking && (
         <Txt variant="caption" color={color.labelSecondary}>
-          Dev account: you can say so from anywhere, to try it.
+          Dev account: you can report from anywhere for testing.
         </Txt>
       )}
     </Animated.View>

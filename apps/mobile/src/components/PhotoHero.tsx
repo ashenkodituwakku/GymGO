@@ -262,7 +262,7 @@ export function PhotoHero({
     try {
       await api.uploadPhoto(token, gymId, data);
       haptic.success();
-      setStep({ kind: 'done', text: 'Thanks. A moderator will check it, then it shows here with your name on it.' });
+      setStep({ kind: 'done', text: 'Thanks. Your photo will appear here once a moderator approves it.' });
       load();
     } catch (error) {
       haptic.warn();
@@ -273,7 +273,7 @@ export function PhotoHero({
             ? 'Can’t reach the GymGO server right now.'
             : error instanceof ApiError
               ? error.message
-              : 'That didn’t work. Try another photo?',
+              : 'Couldn’t upload that photo. Try another one.',
       });
     }
   };
@@ -305,7 +305,7 @@ export function PhotoHero({
       <View style={styles.confirm}>
         <Image source={{ uri: step.uri }} style={[styles.preview, { width }]} resizeMode="cover" />
         <Txt variant="subhead">
-          Did you take this photo, and are you happy for GymGO to show it with your name? We remove its location data first.
+          Did you take this photo? It’ll be shown with your name. We remove location data first.
         </Txt>
         <View style={styles.row}>
           <View style={styles.flex}>
@@ -340,7 +340,7 @@ export function PhotoHero({
       <Pressable
         onPress={() => void pick()}
         accessibilityRole="button"
-        accessibilityLabel={token ? 'Add one: a photo of this gym' : 'Sign in to add a photo of this gym'}
+        accessibilityLabel={token ? 'Add a photo of this gym' : 'Sign in to add a photo of this gym'}
         hitSlop={8}
         style={({ pressed }) => [styles.addPill, pressed && { opacity: 0.7 }]}
       >
@@ -369,7 +369,7 @@ export function PhotoHero({
           <View style={styles.fallbackRow}>
             <Icon name="photo" size={16} color={color.labelTertiary} />
             <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
-              {failed ? 'Members’ photos didn’t load: the GymGO server isn’t reachable.' : 'No member photos yet. Been here?'}
+              {failed ? 'Couldn’t load member photos.' : 'No member photos yet.'}
             </Txt>
             {addPill}
           </View>
@@ -384,10 +384,10 @@ export function PhotoHero({
             </Txt>
             <Txt variant="caption" color={color.labelSecondary}>
               {isDemo
-                ? 'An invented demo gym: nothing to photograph.'
+                ? 'This is a demo gym, so there are no photos.'
                 : failed
-                  ? 'The GymGO server isn’t reachable right now.'
-                  : 'Been here? Yours could be the first.'}
+                  ? 'Couldn’t connect to GymGO.'
+                  : 'Been here? Add the first photo.'}
             </Txt>
           </View>
           {addPill}

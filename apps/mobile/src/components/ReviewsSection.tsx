@@ -98,7 +98,7 @@ export function ReviewsSection({
     return (
       <View style={styles.wrap}>
         <Txt variant="subhead" color={color.labelSecondary}>
-          Reviews come from the GymGO server, which isn’t reachable right now.
+          Couldn’t load reviews right now.
         </Txt>
         {elsewhere}
       </View>
@@ -238,7 +238,7 @@ function Summary({ reviews }: { reviews: Review[] }) {
         </View>
       )}
       <Txt variant="caption" color={color.labelSecondary}>
-        From GymGO members. Visits aren’t verified, and a moderator reads every review before it appears.
+        From GymGO members. Visits aren’t verified. Every review is checked by a moderator.
       </Txt>
     </View>
   );
@@ -254,7 +254,7 @@ function NoneYet() {
       <View style={styles.flex}>
         <Txt variant="headline">No reviews yet</Txt>
         <Txt variant="footnote" color={color.labelSecondary}>
-          Trained here? Say what it’s like for the next person.
+          Trained here? Share what it’s like.
         </Txt>
       </View>
     </View>
@@ -374,7 +374,7 @@ function ReviewForm({ gymId, token, inSheet, onDone, onCancel }: { gymId: string
     stars === 0
       ? 'Tap a star to rate it.'
       : written < 10
-        ? `Say a little more: at least 10 characters${written ? ` (${10 - written} to go)` : ''}.`
+        ? `Write at least 10 characters${written ? ` (${10 - written} to go)` : ''}.`
         : null;
 
   const submit = async () => {
@@ -414,7 +414,7 @@ function ReviewForm({ gymId, token, inSheet, onDone, onCancel }: { gymId: string
 
       <View style={styles.details}>
         <Txt variant="footnote" color={color.labelSecondary}>
-          The details, if you like (tap a star again to clear it)
+          Rate the details (optional). Tap a star again to clear it.
         </Txt>
         {ASPECTS.map(({ id, label }) => (
           <View key={id} style={styles.detailRow}>
@@ -431,7 +431,7 @@ function ReviewForm({ gymId, token, inSheet, onDone, onCancel }: { gymId: string
         label="What was it like?"
         value={body}
         onChangeText={setBody}
-        placeholder="The kit, the crowd, the staff, getting in as a visitor…"
+        placeholder="Equipment, crowds, staff, guest entry…"
         multiline
         maxLength={2000}
         style={styles.body}
@@ -490,7 +490,7 @@ function Elsewhere({ record }: { record: GymRecord }) {
         ))}
       </View>
       <Txt variant="caption" color={color.labelSecondary}>
-        Opens their listing. Their reviews stay theirs: GymGO doesn’t copy them or add them to its own.
+        Opens their listing. GymGO doesn’t copy their reviews.
       </Txt>
     </View>
   );

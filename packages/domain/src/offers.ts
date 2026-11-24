@@ -142,13 +142,13 @@ export function assessOffer(
     reasons.push({
       code: 'no_gym_floor_access',
       severity: 'blocking',
-      message: `${productTypeLabel(offer.productType)} does not include access to the gym floor.`,
+      message: `${productTypeLabel(offer.productType)} doesn’t include the gym floor.`,
     });
   } else if (offer.grantsGymFloorAccess === 'unknown') {
     reasons.push({
       code: 'gym_floor_access_unknown',
       severity: 'confirm',
-      message: 'We have not confirmed that this price includes the gym floor.',
+      message: 'We haven’t confirmed this price includes the gym floor.',
     });
   }
 
@@ -159,8 +159,8 @@ export function assessOffer(
     profile.isExistingMember,
     { blocked: 'membership_required', unknown: 'membership_required_unknown' },
     {
-      blocked: 'This price is only available to existing members.',
-      unknown: 'This price is only available to existing members. Tell us if you are one.',
+      blocked: 'Only for existing members.',
+      unknown: 'Only for existing members. Let us know if you’re one.',
     },
   );
   if (membership) reasons.push(membership);
@@ -170,8 +170,8 @@ export function assessOffer(
     profile.isAccompaniedByMember,
     { blocked: 'member_guest_only', unknown: 'member_guest_only_unknown' },
     {
-      blocked: 'This price applies only to guests signed in by a member.',
-      unknown: 'This price applies only to guests signed in by a member.',
+      blocked: 'Only for guests signed in by a member.',
+      unknown: 'Only for guests signed in by a member.',
     },
   );
   if (guest) reasons.push(guest);
@@ -181,9 +181,9 @@ export function assessOffer(
     profile.isLocalResident,
     { blocked: 'local_resident_only', unknown: 'local_resident_only_unknown' },
     {
-      blocked: 'This offer is limited to people who live or work locally.',
+      blocked: 'Only for people who live or work locally.',
       unknown:
-        'This offer is limited to people who live or work locally. Confirm you qualify before relying on it.',
+        'Only for people who live or work locally. Check you qualify.',
     },
   );
   if (residency) reasons.push(residency);
@@ -205,7 +205,7 @@ export function assessOffer(
   }
 
   if (eligibility.photoIdRequired === 'yes') {
-    reasons.push({ code: 'offer_photo_id', severity: 'info', message: 'Photo identification required to buy.' });
+    reasons.push({ code: 'offer_photo_id', severity: 'info', message: 'Photo ID required.' });
   }
   if (eligibility.minAgeYears !== null) {
     reasons.push({
@@ -232,13 +232,13 @@ export function assessOffer(
     reasons.push({
       code: 'price_stale',
       severity: 'confirm',
-      message: `This price was last checked ${freshness.ageDays} days ago, past our ${freshness.targetDays}-day target.`,
+      message: `This price was last checked ${freshness.ageDays} days ago and may be out of date (we aim for every ${freshness.targetDays} days).`,
     });
   } else if (freshness.state === 'unknown') {
     reasons.push({
       code: 'price_unchecked',
       severity: 'confirm',
-      message: 'This price has no recorded check date.',
+      message: 'We don’t know when this price was last checked.',
     });
   }
 
@@ -255,7 +255,7 @@ export function assessOffer(
     reasons.push({
       code: 'over_budget',
       severity: 'blocking',
-      message: 'Costs more than your stated budget.',
+      message: 'Over your budget.',
     });
   }
 

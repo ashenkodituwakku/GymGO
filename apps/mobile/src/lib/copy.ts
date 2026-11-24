@@ -283,13 +283,13 @@ export function sourceLabel(status: string): string {
     case 'conflicting':
       return 'Sources disagree';
     default:
-      return 'Not established';
+      return 'Unconfirmed';
   }
 }
 
 /** "Checked today" / "Checked 9 days ago" / "Checked 4 months ago". */
 export function checkedAgo(ageDays: number | null): string {
-  if (ageDays === null) return 'Never checked';
+  if (ageDays === null) return 'Not checked yet';
   if (ageDays <= 0) return 'Checked today';
   if (ageDays === 1) return 'Checked yesterday';
   if (ageDays < 31) return `Checked ${ageDays} days ago`;

@@ -128,7 +128,7 @@ export function CollectCard({ record, onOpenCollection }: { record: GymRecord; o
   const detail = tier
     ? `${tier.label} · ${visits} visit${visits === 1 ? '' : 's'}${tier.next ? ` · ${tier.next.visits} more to ${tier.next.label}` : ''}`
     : anywhere
-      ? 'Dev account: collect it from anywhere, to try the collection.'
+      ? 'Dev account: you can collect from anywhere for testing.'
       : 'At the gym? Check in to add it to your collection.';
 
   return (

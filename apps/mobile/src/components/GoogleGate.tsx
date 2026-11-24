@@ -25,7 +25,7 @@ export function GoogleGate({ what, children }: { what: string; children: ReactNo
         <View style={styles.flex}>
           <Txt variant="headline">{what} from Google</Txt>
           <Txt variant="footnote" color={color.labelSecondary}>
-            Not loaded yet. It comes straight from Google, which sees your device’s IP address, as any website does.
+            Loads from Google, which can see your IP address.
           </Txt>
         </View>
       </View>

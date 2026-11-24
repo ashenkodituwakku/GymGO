@@ -423,11 +423,10 @@ export const ResultsContent = memo(function ResultsContent({
             <Icon name="globe" size={22} color={color.brandOnTint} />
           </View>
           <Txt variant="headline" style={styles.lockTitle}>
-            Gyms in {countryInSentence(locked.country)} are part of GymGO Pro
+            Gyms in {countryInSentence(locked.country)} need GymGO Pro
           </Txt>
           <Txt variant="subhead" color={color.labelSecondary} style={styles.lockText}>
-            GymGO Free covers {countryInSentence(locked.home)}, the country you chose, with every gym in it. Pro finds gyms in every country,
-            wherever you travel.
+            Free covers every gym in {countryInSentence(locked.home)}. Pro covers every country.
           </Txt>
           <View style={styles.lockButtons}>
             {onSeePro && <PrimaryButton label="See GymGO Pro" icon="crown" onPress={onSeePro} />}

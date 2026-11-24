@@ -130,11 +130,11 @@ function sumCharges(charges: MandatoryCharge[]): {
     lines.push({ label: charge.label, amountMinor: charge.amountMinor, kind: 'mandatory_fee' });
 
     if (charge.applies === 'unknown') {
-      unknownReasons.push(`We do not know whether ${charge.label.toLowerCase()} applies.`);
+      unknownReasons.push(`We don’t know if ${charge.label.toLowerCase()} applies.`);
       continue;
     }
     if (charge.amountMinor === null) {
-      unknownReasons.push(`${charge.label} applies but its amount is not confirmed.`);
+      unknownReasons.push(`${charge.label} applies, but the amount isn’t confirmed.`);
       continue;
     }
     totalMinor += charge.amountMinor;
@@ -157,7 +157,7 @@ export function computeCost(offer: VisitOffer): CostBreakdown {
 
   if (offer.baseAmountMinor === null) {
     baseKnown = false;
-    unknownReasons.push('The headline price is not confirmed.');
+    unknownReasons.push('The main price isn’t confirmed.');
     lines.push({ label: offer.label, amountMinor: null, kind: 'base' });
   } else {
     nonRefundable += offer.baseAmountMinor;
@@ -167,7 +167,7 @@ export function computeCost(offer: VisitOffer): CostBreakdown {
   if (!offer.taxIncluded) {
     if (offer.taxAmountMinor === null) {
       baseKnown = false;
-      unknownReasons.push('The price excludes tax and the tax amount is not confirmed.');
+      unknownReasons.push('The price excludes tax, and the tax amount isn’t confirmed.');
       lines.push({ label: 'Tax', amountMinor: null, kind: 'tax' });
     } else {
       nonRefundable += offer.taxAmountMinor;
@@ -283,7 +283,7 @@ export function describeMembership(offer: VisitOffer): MembershipCostView | null
     effectiveWeeklyNote =
       `${formatMoney(offer.baseAmountMinor, offer.currency)} ÷ ${days} days × 7 ` +
       `= ${formatMoney(effectiveWeeklyMinor, offer.currency)} per week. ` +
-      `Excludes joining and card fees, and assumes no price change during the term.`;
+      `Excludes joining and card fees. Assumes the price doesn’t change.`;
   }
 
   return {

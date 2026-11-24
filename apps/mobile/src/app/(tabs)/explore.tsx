@@ -474,15 +474,15 @@ function MapScreen() {
         setSelectedId(null);
         if (inBox.length === 0) {
           haptic.warn();
-          setNotice('OpenStreetMap has no gyms mapped in this area yet.');
+          setNotice('No gyms mapped in this area on OpenStreetMap yet.');
         } else {
           haptic.success();
           setNotice(
             answer.truncated
-              ? `Lots of gyms here, so these are the ${answer.gyms.length} nearest the middle. Zoom in to see the rest.`
+              ? `Showing the ${answer.gyms.length} gyms nearest the centre. Zoom in to see more.`
               : answer.gyms.length > 0
-                ? `${answer.gyms.length} gym${answer.gyms.length === 1 ? '' : 's'} from OpenStreetMap in this area. Map-only, so call before you go.`
-                : 'The map has no gyms here beyond the ones already shown.',
+                ? `Found ${answer.gyms.length} gym${answer.gyms.length === 1 ? '' : 's'} on OpenStreetMap. Details aren’t confirmed, so call before you go.`
+                : 'No more gyms found in this area.',
           );
         }
         if (!wide && sheetIndex.current === 0) mainSheet.current?.snapToIndex(1);
@@ -495,7 +495,7 @@ function MapScreen() {
           setFilters((current) => inArea(current, box, THIS_AREA, { timezone: current.timezone, countryCode }));
           setNotice(null);
         } else {
-          setNotice(problemText(error, 'Couldn’t search this area. Try again?'));
+          setNotice(problemText(error, 'Couldn’t search this area. Try again.'));
         }
       } finally {
         areaAsking.current = false;
@@ -793,9 +793,9 @@ function MapScreen() {
   // --- Shared content ---------------------------------------------------------
 
   const dataNote = showingDemo
-    ? 'The Sydney gyms are invented demo data, for testing.'
+    ? 'The Sydney gyms are demo data for testing.'
     : city.mapOnly || filters.bbox || outsideCities
-      ? `Real gyms from OpenStreetMap: names, addresses and sometimes opening hours, mapped by volunteers. Prices, guest hours and machines are unknown until a gym publishes them, so call first. ${MELBOURNE_ATTRIBUTION}.`
+      ? `Gyms from OpenStreetMap, mapped by volunteers. Prices, guest hours and equipment are unknown until a gym publishes them, so call first. ${MELBOURNE_ATTRIBUTION}.`
       : `Real gyms. Tap a fact to see where we read it; anything a gym doesn’t publish is unknown. ${MELBOURNE_ATTRIBUTION}.`;
 
   // Kept the same between redraws, like every other prop of the results panel: it's memoised, so
@@ -962,7 +962,7 @@ function MapScreen() {
     <Animated.View style={[styles.selfCheck, { top: insets.top + space[2] + 44 + 38 + space[2] }, start > 0 && { left: start + space[4] }, asideLeft]}>
       <Icon name="maybe" size={16} color={color.maybeInk} />
       <Txt variant="footnote" color={color.maybeInk} style={styles.flex}>
-        {`This device can’t work out time zones reliably, so guest-hour answers may be an hour out. (${selfCheck.detail})`}
+        {`This device’s time zone data may be wrong, so guest hours could be off by an hour. (${selfCheck.detail})`}
       </Txt>
     </Animated.View>
   );

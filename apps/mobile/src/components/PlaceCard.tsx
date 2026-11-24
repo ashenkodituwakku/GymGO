@@ -237,7 +237,7 @@ export function PlaceCard({
 
   // Demo listings have invented addresses and numbers. Say so, rather than
   // opening a map to nowhere or dialling a stranger.
-  const demo = (what: string) => () => setNotice(`Demo listing: ${what}`);
+  const demo = (what: string) => () => setNotice(`This is a demo listing. ${what}`);
 
   // Real listings hand off to the platform: Apple Maps on iPhone, the
   // system's maps app on Android, the dialler, and an in-app browser.
@@ -272,21 +272,21 @@ export function PlaceCard({
           icon="directions"
           label="Go"
           primary
-          onPress={location.isDemoData ? demo("this gym doesn’t exist, so there’s nowhere to route to.") : directions}
+          onPress={location.isDemoData ? demo('There are no directions to a demo gym.') : directions}
         />
         <ActionButton
           icon="call"
           label="Call"
           unavailable={!location.isDemoData && !location.phone}
           accessibilityLabel={!location.isDemoData && !location.phone ? 'Call: no phone number on record' : undefined}
-          onPress={location.isDemoData ? demo("that number isn’t real, so we haven’t dialled it.") : call}
+          onPress={location.isDemoData ? demo('Its phone number isn’t real.') : call}
         />
         <ActionButton
           icon="website"
           label="Website"
           unavailable={!location.isDemoData && !location.website}
           accessibilityLabel={!location.isDemoData && !location.website ? 'Website: none on record' : undefined}
-          onPress={location.isDemoData ? demo("there’s no real website to open.") : website}
+          onPress={location.isDemoData ? demo('It doesn’t have a website.') : website}
         />
         {!saveAndShareElsewhere && (
           <>
@@ -304,7 +304,7 @@ export function PlaceCard({
               label="Share"
               onPress={
                 location.isDemoData
-                  ? demo("it’s invented, so there’s nothing real to share.")
+                  ? demo('There’s nothing to share.')
                   : () => void shareGym(record).then((outcome) => setNotice(shareLine(outcome)))
               }
             />
@@ -397,7 +397,7 @@ export function PlaceCard({
           <AskGymPal
             flat
             title="Ask GymPal to help with the call"
-            detail="What to say, and what each answer means for your visit"
+            detail="What to ask and what the answers mean"
             request={{
               question: `Help me call ${location.name}. How should I ask these, and what should I listen for?`,
               about: `calling ${location.name}`,
@@ -433,7 +433,7 @@ export function PlaceCard({
           />
         )}
         {kit.length ? (
-          <Fact icon="gym" value={String(kit.length)} caption="kinds of kit" tint={color.label} />
+          <Fact icon="gym" value={String(kit.length)} caption="equipment types" tint={color.label} />
         ) : (
           <Fact icon="gym" value="Unlisted" caption="kit" tint={color.maybeInk} unknown />
         )}
@@ -450,7 +450,7 @@ export function PlaceCard({
             onOpenGoogle();
           }}
           accessibilityRole="button"
-          accessibilityLabel="See it on Google: this gym on Google Maps"
+          accessibilityLabel="See this gym on Google Maps"
           style={({ pressed }) => [styles.google, pressed && { opacity: 0.75 }]}
         >
           <View style={styles.rowIcon}>
@@ -459,7 +459,7 @@ export function PlaceCard({
           <View style={styles.flex}>
             <Txt variant="headline">See it on Google</Txt>
             <Txt variant="footnote" color={color.labelSecondary}>
-              Google’s rating, reviews and photos, free
+              Ratings, reviews and photos on Google
             </Txt>
           </View>
           <Icon name="chevron" size={14} color={color.labelTertiary} />
@@ -474,7 +474,7 @@ export function PlaceCard({
           onOpenWorkout();
         }}
         accessibilityRole="button"
-        accessibilityLabel="Build a workout here, for this gym’s machines"
+        accessibilityLabel="Build a workout for this gym’s equipment"
         style={({ pressed }) => [styles.google, pressed && { opacity: 0.75 }]}
       >
         <View style={styles.rowIcon}>
@@ -483,7 +483,7 @@ export function PlaceCard({
         <View style={styles.flex}>
           <Txt variant="headline">Build a workout here</Txt>
           <Txt variant="footnote" color={color.labelSecondary}>
-            Tap muscles on a body, get a plan for its machines
+            Choose muscles and get a workout for this gym
           </Txt>
         </View>
         <Icon name="chevron" size={14} color={color.labelTertiary} />
@@ -532,7 +532,7 @@ export function PlaceCard({
             })}
           {visitOffers.length === 0 && (
             <Txt variant="subhead" color={color.labelSecondary}>
-              This gym doesn’t publish a visit price, so we don’t show one. Ask when you call.
+              This gym doesn’t publish a visit price. Ask when you call.
             </Txt>
           )}
           {deposit && (
@@ -630,7 +630,7 @@ export function PlaceCard({
           </View>
           {kit.length === 0 && (
             <Txt variant="subhead" color={color.labelSecondary}>
-              The gym doesn’t publish its equipment, so GymGO doesn’t claim any.
+              This gym doesn’t publish its equipment list.
             </Txt>
           )}
           {record.equipment[0] && <Evidence provenance={record.equipment[0].provenance} />}
@@ -644,7 +644,7 @@ export function PlaceCard({
         ) : null}
 
         {workoutFit ? (
-          <Fold icon="workout" title="Can I do my workout here?" summary="Your saved workouts, against the kit known here">
+          <Fold icon="workout" title="Can I do my workout here?" summary="Check your saved workouts against this gym’s equipment">
             {workoutFit}
           </Fold>
         ) : null}
@@ -689,7 +689,7 @@ export function PlaceCard({
               </Pressable>
             )}
             <Txt variant="footnote" color={color.labelSecondary}>
-              Mapped by volunteers, not checked by GymGO. Anything not listed is unknown, not a no.
+              From OpenStreetMap volunteers and not checked by GymGO. Anything not listed is unknown.
             </Txt>
             <Evidence provenance={record.amenities[0]?.provenance ?? location.provenance} />
           </Fold>
@@ -728,7 +728,7 @@ export function PlaceCard({
 
       {location.isDemoData && (
         <Txt variant="caption" color={color.labelSecondary} style={styles.demo}>
-          Demo listing. This gym, its prices and its hours are invented for testing.
+          Demo listing. This gym, its prices and hours are made up for testing.
         </Txt>
       )}
     </View>
@@ -852,8 +852,8 @@ function Sources({ sources }: { sources: Source[] }) {
         </Pressable>
       ))}
       <Txt variant="caption" color={color.labelSecondary} style={styles.sourceNote}>
-        Anything not listed by the gym is marked unknown, not guessed. Map data © OpenStreetMap contributors, ODbL.
-        Nothing here was supplied by the gym.
+        Details the gym hasn’t published are marked unknown. Map data © OpenStreetMap contributors, ODbL.
+        None of this was supplied by the gym.
       </Txt>
     </View>
   );

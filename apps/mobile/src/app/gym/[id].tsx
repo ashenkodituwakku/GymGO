@@ -120,7 +120,7 @@ export default function GymPage() {
           Gym not found
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-          It may have been removed from GymGO. Try searching the map.
+          It may have been removed. Try searching the map.
         </Txt>
         <PrimaryButton label="Back" tone="quiet" onPress={() => router.back()} />
       </View>
@@ -150,7 +150,7 @@ export default function GymPage() {
             what="Street View"
             caption={
               <Txt variant="caption" color={color.labelSecondary}>
-                Google Street View outside the gym. It may not face the door.
+                Google Street View near the gym. It may not show the entrance.
               </Txt>
             }
           />

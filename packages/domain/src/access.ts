@@ -103,7 +103,7 @@ export function evaluateVisitorAccess(
       // A specific doubt ("it may have closed: …") says so; otherwise the usual line.
       message: record.location.operatingStatusNote?.startsWith('It may have closed')
         ? record.location.operatingStatusNote
-        : 'We have not confirmed that this gym is currently trading.',
+        : 'We haven’t confirmed this gym is still open.',
     });
   }
 
@@ -111,13 +111,13 @@ export function evaluateVisitorAccess(
   if (!scheduleIsEstablished(visitorSchedule)) {
     const memberNote = scheduleIsEstablished(memberSchedule)
       ? memberSchedule.alwaysOpen
-        ? ' Members have 24-hour access, which does not establish guest entry.'
-        : ' We have member hours, which do not establish guest entry.'
+        ? ' Members have 24-hour access, but guest hours may differ.'
+        : ' We only have member hours, and guest hours may differ.'
       : '';
     reasons.push({
       code: 'visitor_hours_unknown',
       severity: 'confirm',
-      message: `Visitor entry hours are not confirmed.${memberNote}`,
+      message: `Guest hours aren’t confirmed.${memberNote}`,
     });
   } else {
     freshness = assessFreshness(visitorSchedule.provenance, 'visitor_price_access', asOf, policy);
@@ -130,7 +130,7 @@ export function evaluateVisitorAccess(
         code: 'outside_visitor_hours',
         severity: 'blocking',
         message:
-          `Visitors are not admitted at the time you asked about.${exceptionNote}` +
+          `Guests aren’t allowed in at that time.${exceptionNote}` +
           (next ? ` Next guest entry: ${next}.` : ''),
       });
     } else if (visitorOpen.exceptionNote) {
@@ -145,7 +145,7 @@ export function evaluateVisitorAccess(
       reasons.push({
         code: 'visitor_hours_stale',
         severity: 'confirm',
-        message: `Visitor hours were last checked ${freshness.ageDays} days ago, past our ${freshness.targetDays}-day target.`,
+        message: `Guest hours were last checked ${freshness.ageDays} days ago and may be out of date (we aim for every ${freshness.targetDays} days).`,
       });
     }
   }
@@ -188,16 +188,16 @@ function prerequisiteReasons(
       code: 'booking_required',
       severity: 'confirm',
       message: tooLate
-        ? `Advance booking is required, normally ${lead} hours ahead. The time you asked about is ${Math.max(0, Math.round(hoursAway))} hours away, so confirm with the gym before travelling.`
+        ? `Booking is required, usually ${lead} hours ahead. Your visit is ${Math.max(0, Math.round(hoursAway))} hours away, so check with the gym first.`
         : lead === null
-          ? 'Advance booking is required. The notice period is not confirmed.'
-          : `Advance booking is required, at least ${lead} hours ahead.`,
+          ? 'Booking is required. How far ahead isn’t confirmed.'
+          : `Booking is required at least ${lead} hours ahead.`,
     });
   } else if (prerequisites.advanceBookingRequired === 'unknown') {
     reasons.push({
       code: 'booking_unknown',
       severity: 'confirm',
-      message: 'We have not confirmed whether visitors must book ahead.',
+      message: 'We haven’t confirmed whether you need to book.',
     });
   }
 
@@ -209,14 +209,14 @@ function prerequisiteReasons(
       code: 'induction_required',
       severity: 'confirm',
       message: staffedClosed
-        ? 'First-time visitors need an induction, and inductions only run while reception is staffed. Reception is not staffed at the time you asked about.'
+        ? 'First-time visitors need an induction, which needs staff on reception. Reception isn’t staffed at that time.'
         : 'First-time visitors need an induction before training.',
     });
   } else if (prerequisites.inductionRequired === 'unknown') {
     reasons.push({
       code: 'induction_unknown',
       severity: 'confirm',
-      message: 'We have not confirmed whether first-time visitors need an induction.',
+      message: 'We haven’t confirmed whether first-time visitors need an induction.',
     });
   }
 
@@ -225,19 +225,19 @@ function prerequisiteReasons(
     reasons.push({
       code: 'residency_restricted',
       severity: 'confirm',
-      message: 'Guest entry here is limited to people who live or work locally.',
+      message: 'Guest entry is only for people who live or work locally.',
     });
   } else if (prerequisites.residencyRule === 'non_local_only') {
     reasons.push({
       code: 'residency_restricted_non_local',
       severity: 'confirm',
-      message: 'Guest entry here is limited to people who do not live locally.',
+      message: 'Guest entry is only for people who don’t live locally.',
     });
   } else if (prerequisites.residencyRule === 'unknown') {
     reasons.push({
       code: 'residency_unknown',
       severity: 'info',
-      message: 'Residency conditions for guest entry are not established.',
+      message: 'We haven’t confirmed whether guest entry depends on where you live.',
     });
   }
 
@@ -246,13 +246,13 @@ function prerequisiteReasons(
     reasons.push({
       code: 'member_accompaniment_required',
       severity: 'confirm',
-      message: 'Visitors must be signed in by an existing member.',
+      message: 'A member needs to sign you in.',
     });
   } else if (prerequisites.memberAccompanimentRequired === 'unknown') {
     reasons.push({
       code: 'member_accompaniment_unknown',
       severity: 'info',
-      message: 'We have not confirmed whether a member must sign visitors in.',
+      message: 'We haven’t confirmed whether a member needs to sign you in.',
     });
   }
 
@@ -261,7 +261,7 @@ function prerequisiteReasons(
     reasons.push({
       code: 'photo_id_required',
       severity: 'info',
-      message: 'Bring photo identification.',
+      message: 'Bring photo ID.',
     });
   }
   if (prerequisites.minAgeYears !== null) {
@@ -289,13 +289,13 @@ function verdictFrom(reasons: AccessReason[], visitorScheduleKnown: boolean): Ac
 export function accessVerdictLabel(verdict: AccessVerdict): string {
   switch (verdict) {
     case 'admits_visitor':
-      return 'Visitors admitted';
+      return 'Guests welcome';
     case 'needs_confirmation':
-      return 'Needs confirmation';
+      return 'Check first';
     case 'not_admitted':
-      return 'Not admitted then';
+      return 'Closed to guests then';
     case 'unknown':
-      return 'Not established';
+      return 'Unknown';
   }
 }
 

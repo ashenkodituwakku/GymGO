@@ -34,19 +34,19 @@ export function CoachNote({ sessionId }: { sessionId: string }) {
       <Pressable
         onPress={() => router.push({ pathname: '/pro', params: { reason: 'max' } })}
         accessibilityRole="button"
-        accessibilityLabel="Coach’s note: GymPal’s take on each workout, with GymGO Max. See Max"
+        accessibilityLabel="AI coach notes, with GymGO Max. See Max"
         style={({ pressed }) => [styles.teaser, pressed && { backgroundColor: color.fill }]}
       >
         <Icon name="sparkle" size={18} color={color.brand} />
         <View style={styles.flex}>
           <View style={styles.titleRow}>
             <Txt variant="subhead" style={face('semibold')}>
-              Coach’s note
+              AI coach notes
             </Txt>
             <MaxBadge />
           </View>
           <Txt variant="footnote" color={color.labelSecondary}>
-            GymPal’s take on each workout: what went well, and what to aim for next.
+            Get personal feedback after every workout.
           </Txt>
         </View>
         <Icon name="chevron" size={13} color={color.labelTertiary} />
@@ -62,7 +62,7 @@ export function CoachNote({ sessionId }: { sessionId: string }) {
       setNote(answer.note);
       haptic.success();
     } catch (error) {
-      setProblem(problemText(error, 'GymPal couldn’t write a note just now. Try again?'));
+      setProblem(problemText(error, 'Couldn’t get a note right now. Try again.'));
     } finally {
       setBusy(false);
     }
@@ -73,7 +73,7 @@ export function CoachNote({ sessionId }: { sessionId: string }) {
       <View style={styles.titleRow}>
         <Icon name="sparkle" size={18} color={color.brand} />
         <Txt variant="headline" accessibilityRole="header" level={2}>
-          Coach’s note
+          Coach note
         </Txt>
       </View>
       <LiveLine>
@@ -81,11 +81,11 @@ export function CoachNote({ sessionId }: { sessionId: string }) {
           <Txt variant="body">{note}</Txt>
         ) : (
           <Txt variant="footnote" color={color.labelSecondary}>
-            GymPal looks at this workout beside your recent ones, and says what went well and what to aim for next. It’s one of your GymPal questions for today.
+            Get feedback on this workout based on your recent training. Uses 1 GymPal message.
           </Txt>
         )}
       </LiveLine>
-      {!note && <PrimaryButton label={busy ? 'GymPal is writing…' : 'Ask GymPal for a note'} tone="quiet" busy={busy} onPress={() => void ask()} />}
+      {!note && <PrimaryButton label={busy ? 'Writing…' : 'Get coach note'} tone="quiet" busy={busy} onPress={() => void ask()} />}
       <LiveLine>
         {problem && (
           <Txt variant="footnote" color={color.dangerInk}>

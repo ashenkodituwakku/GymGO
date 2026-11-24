@@ -45,7 +45,7 @@ export default function AiWorkoutScreen() {
 
   const build = async () => {
     if (request.trim().length < 3) {
-      setProblem('Say what you’d like: how long, which muscles, what kit.');
+      setProblem('Describe the workout you want, like how long and which muscles.');
       return;
     }
     setBusy(true);
@@ -58,7 +58,7 @@ export default function AiWorkoutScreen() {
       setBuilt(workout);
       haptic.success();
     } catch (error) {
-      setProblem(problemText(error, 'GymPal couldn’t build it just now. Try again?'));
+      setProblem(problemText(error, 'Couldn’t build a workout right now. Try again.'));
     } finally {
       setBusy(false);
     }
@@ -82,26 +82,26 @@ export default function AiWorkoutScreen() {
           <MaxBadge />
         </View>
         <Txt variant="body" color={color.labelSecondary}>
-          Say what you’d like, and GymPal builds the workout from GymGO’s exercises and your own, ready to start.
+          Describe the workout you want and GymPal will build it for you.
         </Txt>
 
         {serverless || !signedIn ? (
           <View style={styles.card}>
-            <Txt variant="subhead">{serverless ? 'GymPal needs GymGO’s server, which this website version doesn’t have.' : 'Sign in to build workouts with GymPal.'}</Txt>
+            <Txt variant="subhead">{serverless ? 'GymPal isn’t available in this version of GymGO.' : 'Sign in to build workouts with GymPal.'}</Txt>
             {!serverless && <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />}
           </View>
         ) : !billing.isMax ? (
           <View style={styles.card}>
-            <Txt variant="headline">Part of GymGO Max</Txt>
+            <Txt variant="headline">Included with GymGO Max</Txt>
             <Txt variant="subhead" color={color.labelSecondary}>
-              Max is everything in Pro, with workouts GymPal builds for you, a coach’s note after each workout, 300 GymPal questions a day and a Max badge by your name.
+              Get everything in Pro, plus AI workout building, coach notes after every workout and higher GymPal limits.
             </Txt>
             <PrimaryButton label="See GymGO Max" onPress={() => router.push({ pathname: '/pro', params: { reason: 'max' } })} />
           </View>
         ) : (
           <>
             <TextField
-              label="What would you like?"
+              label="Describe your workout"
               inSheet={false}
               value={request}
               onChangeText={setRequest}
@@ -120,11 +120,11 @@ export default function AiWorkoutScreen() {
             </View>
             <Txt variant="caption" color={color.labelSecondary}>
               {useLog
-                ? 'GymPal sees your latest workouts (exercises, sets and weights; never your gyms or notes) to build on them.'
-                : 'Switch on to let GymPal build on your latest workouts.'}{' '}
-              Each workout built is one of your GymPal questions for today.
+                ? 'GymPal can see your recent exercises, sets and weights. It can’t see your gyms or notes.'
+                : 'Turn on to build from your recent workouts.'}{' '}
+              Uses 1 GymPal message.
             </Txt>
-            <PrimaryButton label={busy ? 'GymPal is building it…' : built ? 'Build another' : 'Build my workout'} busy={busy} onPress={() => void build()} />
+            <PrimaryButton label={busy ? 'Building…' : built ? 'Build another' : 'Build workout'} busy={busy} onPress={() => void build()} />
           </>
         )}
 
@@ -160,11 +160,11 @@ export default function AiWorkoutScreen() {
                   </View>
                 </View>
               ))}
-              <PrimaryButton label="Start this workout" onPress={start} />
+              <PrimaryButton label="Start workout" onPress={start} />
               <View style={styles.hint}>
                 <Icon name="info" size={14} color={color.labelSecondary} />
                 <Txt variant="caption" color={color.labelSecondary} style={styles.flex}>
-                  You can swap, add or take out exercises as you go, as in any workout.
+                  You can swap, add or remove exercises during the workout.
                 </Txt>
               </View>
             </View>

@@ -140,7 +140,7 @@ export const PRO_PRICES: ProPrice[] = [
 
 export const PRO_PRODUCT = {
   name: 'GymGO Pro',
-  description: 'Gyms in every country, unlimited saved gyms, compare up to 4 gyms, and a library of your workouts on every device.',
+  description: 'Gyms worldwide, unlimited saved gyms, side-by-side comparisons and your workouts on every device.',
 } as const;
 
 /**
@@ -157,7 +157,7 @@ export const MAX_PRICES: ProPrice[] = [
 
 export const MAX_PRODUCT = {
   name: 'GymGO Max',
-  description: 'Everything in GymGO Pro, with more from GymPal and a Max badge by your name.',
+  description: 'Everything in GymGO Pro, plus AI workout building, coach notes and higher GymPal limits.',
 } as const;
 
 /** A price of Max's (not Pro's). */
@@ -165,11 +165,11 @@ export const isMaxLookupKey = (key: string | null | undefined): boolean => MAX_P
 
 /** What Max adds over Pro, for the Pro screen: only what's built. */
 export const MAX_FEATURES: Array<{ title: string; pro: string; max: string }> = [
-  { title: 'Workouts built for you', pro: 'Not included', max: 'Say what you’d like (“45 minutes, dumbbells only”) and GymPal builds it, ready to start' },
-  { title: 'Coach’s notes', pro: 'Not included', max: 'After a workout, GymPal says what went well and what to aim for next' },
-  { title: 'GymPal', pro: '100 questions a day', max: '300 a day, and he remembers twice as much of the chat' },
-  { title: 'Max badge', pro: 'Not included', max: 'By your name in the feed, in comments and on your profile' },
-];
+  { title: 'AI workout builder', pro: 'Not included', max: 'Describe a workout and GymPal builds it for you' },
+  { title: 'AI coach notes', pro: 'Not included', max: 'Personal feedback after every workout' },
+  { title: 'Higher GymPal limits', pro: '100 messages a day', max: '300 messages a day and longer conversations' },
+  { title: 'Max badge', pro: 'Not included', max: 'Shown next to your name in the feed and comments' },
+]
 
 /** The headings the Pro screen groups what Pro adds under. */
 export const PRO_FEATURE_GROUPS = [
@@ -182,41 +182,41 @@ export const PRO_FEATURE_GROUPS = [
 export const PRO_FEATURES: Array<{ title: string; free: string; pro: string; group: (typeof PRO_FEATURE_GROUPS)[number]['id'] }> = [
   { title: 'Gyms worldwide', free: 'Your country', pro: 'Every country', group: 'gyms' },
   { title: 'Saved gyms', free: `Up to ${LIMITS.free.savedGyms}`, pro: 'Unlimited', group: 'gyms' },
-  { title: 'Compare side by side', free: `${LIMITS.free.compare} gyms`, pro: `${LIMITS.pro.compare} gyms`, group: 'gyms' },
-  { title: 'Gym notes', free: 'Not included', pro: 'Your own, on each gym', group: 'gyms' },
-  { title: 'Workout library', free: 'Build, make your own, share', pro: 'Saved to your account', group: 'training' },
-  { title: 'Your own exercises', free: 'GymGO’s list', pro: 'Yours too, with records', group: 'training' },
-  { title: 'Your own splits', free: 'GymGO’s templates', pro: 'Your days, taking turns', group: 'training' },
-  { title: 'Progress charts', free: 'Records, rep records and history', pro: 'Charts per exercise: 1-rep max, heaviest, best set, volume, reps', group: 'training' },
-  { title: 'Session targets', free: 'Last time’s numbers', pro: 'What to lift next', group: 'training' },
-  { title: 'Muscle balance', free: 'Sets per workout', pro: 'Every muscle, last 4 weeks', group: 'training' },
-  { title: 'Warm-up sets', free: 'Mark any set as a warm-up', pro: 'A ramp to your weight, added to your workout', group: 'training' },
-  { title: 'Your plates', free: 'The usual set', pro: 'The ones your gym has', group: 'training' },
-  { title: 'Interval timer', free: 'Tabata and EMOM', pro: 'Your own, up to 10', group: 'training' },
-  { title: '1-rep max', free: 'Your max, and 3 percentages', pro: 'Every percentage, with plates', group: 'training' },
-  { title: 'Streak freeze', free: 'Not included', pro: 'One missed week a month', group: 'training' },
-  { title: 'Lifetime stats', free: 'Not included', pro: 'Every kilo, rep and hour, to share', group: 'training' },
-  { title: 'Head to head', free: 'Your friends’ workouts, likes and comments', pro: 'Your best lifts beside a friend’s', group: 'training' },
-  { title: 'GymPal', free: '20 questions a day', pro: '100 a day, and answers that know your training', group: 'training' },
-  { title: 'Colour themes', free: 'Indigo; light, dark or Dim; text size', pro: 'Twelve accents or your own, ten looks, corner styles, map styles', group: 'yours' },
-  { title: 'Profile ring', free: 'Your picture', pro: 'Ringed in your accent', group: 'yours' },
+  { title: 'Compare gyms', free: `${LIMITS.free.compare} at a time`, pro: `Up to ${LIMITS.pro.compare}`, group: 'gyms' },
+  { title: 'Gym notes', free: 'Not included', pro: 'Private notes on any gym', group: 'gyms' },
+  { title: 'Workout library', free: 'Build and share workouts', pro: 'Synced across devices', group: 'training' },
+  { title: 'Custom exercises', free: 'GymGO’s library', pro: 'Add your own, with records', group: 'training' },
+  { title: 'Custom splits', free: 'Built-in templates', pro: 'Create your own', group: 'training' },
+  { title: 'Progress charts', free: 'Records and history', pro: 'Charts for every exercise', group: 'training' },
+  { title: 'Next-session targets', free: 'Last session’s numbers', pro: 'Suggested weights and reps', group: 'training' },
+  { title: 'Muscle balance', free: 'Per workout', pro: '4-week view of every muscle', group: 'training' },
+  { title: 'Warm-up sets', free: 'Mark sets as warm-ups', pro: 'Automatic warm-up sets', group: 'training' },
+  { title: 'Custom plates', free: 'Standard plates', pro: 'Match your gym’s plates', group: 'training' },
+  { title: 'Interval timer', free: 'Tabata and EMOM', pro: 'Up to 10 custom timers', group: 'training' },
+  { title: '1-rep max', free: 'Max and 3 percentages', pro: 'Full percentage table', group: 'training' },
+  { title: 'Streak freeze', free: 'Not included', pro: '1 missed week a month', group: 'training' },
+  { title: 'Lifetime stats', free: 'Not included', pro: 'All-time totals, ready to share', group: 'training' },
+  { title: 'Head to head', free: 'Friends’ workouts and comments', pro: 'Compare lifts with friends', group: 'training' },
+  { title: 'GymPal', free: '20 messages a day', pro: '100 a day, using your training history', group: 'training' },
+  { title: 'Themes', free: 'Indigo, light, dark and Dim', pro: '12 accents, 10 styles, map styles', group: 'yours' },
+  { title: 'Profile ring', free: 'Profile picture', pro: 'Ring in your accent colour', group: 'yours' },
   { title: 'Celebrations', free: 'Confetti', pro: 'Fireworks, stars or emoji', group: 'yours' },
-  { title: 'Arcade sounds', free: 'Marimba', pro: 'Marimba or chip tunes', group: 'yours' },
+  { title: 'Sound packs', free: 'Marimba', pro: 'Marimba or Arcade chiptune', group: 'yours' },
 ];
 
 /** Free for everyone with a (free) account, always. Listed on the Pro screen so nobody wonders. */
 export const ALWAYS_FREE = [
-  'Every gym in your country, on the map and in the list',
-  'A gym’s page from a link or your saved list, wherever it is',
-  'The answer for your visit, and exactly why',
-  'The source and date behind every fact',
-  'Published prices, guest hours and machines',
-  'Reviews, photos and members’ machine reports',
-  'The workout builder',
-  'Logging your workouts, with a rest timer, a plate calculator and your records',
-  'A weekly goal, your training calendar and milestones',
-  'Friends, and a feed of their workouts to like and comment on',
-  'A profile picture, an interval timer and a 1-rep max calculator',
+  'Every gym in your country, on the map and in a list',
+  'Shared gym links, wherever the gym is',
+  'Whether you can visit, and why',
+  'Sources and dates for every detail',
+  'Published prices, guest hours and equipment',
+  'Reviews, photos and equipment reports',
+  'Workout builder',
+  'Workout logging with rest timer, plate calculator and records',
+  'Weekly goals, training calendar and milestones',
+  'Friends and an activity feed',
+  'Profile picture, interval timer and 1-rep max calculator',
   'Dark mode',
 ] as const;
 

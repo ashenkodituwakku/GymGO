@@ -22,7 +22,7 @@ const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 
 
 /** What makes you Pro, when it isn't your own subscription. */
 export function grantLine(grant: NonNullable<BillingApi['grant']>): string {
-  return `Pro until ${day(grant.endsAt!)}, a gift. No card, nothing to cancel: it simply ends.`;
+  return `Gifted Pro until ${day(grant.endsAt!)}. Nothing to cancel.`;
 }
 
 export function GiftPro({ token, billing, currency, onSignIn }: { token: string | null; billing: BillingApi; currency: BillingCurrency; onSignIn: () => void }) {
@@ -58,11 +58,11 @@ export function GiftPro({ token, billing, currency, onSignIn }: { token: string 
         <Txt variant="headline">Give Pro</Txt>
       </View>
       <Txt variant="subhead" color={color.labelSecondary}>
-        {`A year of GymGO Pro for anyone, as a code to send them${price ? `: ${formatPlanPrice(price.amountMinor, currency)}, paid once, tax included` : ''}. It doesn’t renew.`}
+        {`Send someone a year of GymGO Pro${price ? ` for ${formatPlanPrice(price.amountMinor, currency)} (tax included)` : ''}. One-off payment, no renewal.`}
       </Txt>
       {CAN_BUY_HERE && (
         <PrimaryButton
-          label={billing.sale !== 'on' || !price ? 'Not on sale yet' : busy ? 'Opening Stripe…' : token ? 'Buy a gift code' : 'Sign in to buy a gift'}
+          label={billing.sale !== 'on' || !price ? 'Coming soon' : busy ? 'Opening Stripe…' : token ? 'Buy a gift code' : 'Sign in to buy a gift'}
           icon="crown"
           tone="quiet"
           disabled={billing.sale !== 'on' || !price || busy}
@@ -83,7 +83,7 @@ export function GiftPro({ token, billing, currency, onSignIn }: { token: string 
               {gift.code}
             </Txt>
             <Txt variant="caption" color={color.labelSecondary}>
-              {gift.redeemed ? `Used ${day(gift.redeemedAt!)}` : `Bought ${day(gift.createdAt)} · not used yet`}
+              {gift.redeemed ? `Redeemed ${day(gift.redeemedAt!)}` : `Bought ${day(gift.createdAt)} · Not redeemed`}
             </Txt>
           </View>
           {!gift.redeemed && (
@@ -92,7 +92,7 @@ export function GiftPro({ token, billing, currency, onSignIn }: { token: string 
               icon={copied === gift.code ? 'check' : 'share'}
               tone="quiet"
               onPress={() =>
-                void shareText(`A year of GymGO Pro, from me. Open GymGO → Profile → GymGO Pro → Redeem, and enter ${gift.code}`, 'GymGO Pro, a gift').then((outcome) =>
+                void shareText(`Here’s a year of GymGO Pro. To redeem it, open GymGO, go to Profile → GymGO Pro and enter ${gift.code}`, 'A GymGO Pro gift').then((outcome) =>
                   setCopied(outcome === 'copied' ? gift.code : null),
                 )
               }
@@ -117,7 +117,7 @@ export function RedeemGift({ token, billing, onSignIn }: { token: string | null;
       haptic.success();
       setCode('');
       await billing.refresh();
-      setNote(next.grant?.endsAt ? `Done: you’re on Pro until ${day(next.grant.endsAt)}.` : 'Done: you’re on Pro.');
+      setNote(next.grant?.endsAt ? `Code redeemed. You have Pro until ${day(next.grant.endsAt)}.` : 'Code redeemed. You have Pro.');
     } catch (error) {
       haptic.warn();
       setNote(problemText(error));

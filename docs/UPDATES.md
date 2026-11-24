@@ -9,9 +9,23 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 267 · Plainer words, part 1: the Pro and Max page
+
+*24 Nov 2026 · the commit "Plainer words: the Pro and Max page"*
+
+You said the app's text read as AI-written ("300 a day and he remembers twice as much of the chat" is the giveaway) and asked for all of it to be redone. The rules for the rewrite are in **docs/COPY.md**, from research into common tells of AI writing: no "X: Y" colon chains, no "not X, but Y" contrasts, no stock words or over-reassurance, no narrating how the app works, GymPal called "GymPal" rather than "he", and short, benefit-first lines like a well-made app's. Facts don't change: prices, limits and promises read the same, only shorter. This first part covers the Pro and Max page.
+
+- **The plan tables**: every row is a short feature name and short cells ("Custom exercises": "GymGO’s library" / "Add your own, with records"; "Progress charts": "Records and history" / "Charts for every exercise").
+- **Max**: "AI workout builder", "AI coach notes", "Higher GymPal limits" (300 messages a day and longer conversations) and "Max badge". It doesn't say "more intelligent models", because Max uses the same models as Pro. That would only be true with a paid model, which is your call.
+- **The line under the title** when a Pro feature sent you here is now one plain sentence ("Free compares 2 gyms at a time. Pro compares up to 4."). So are "Free with an account", the trial ("Try Pro free for 3 days" / "Then A$3.99 a month. Cancel anytime."), the renewal terms by the button, and the fine print. The facts are the same: prices, the trial, the 14-day refund and what Stripe sees.
+- **Gifts, Build with GymPal and the coach note** read the same way: "Build workout", "Start workout", "Get coach note", "Uses 1 GymPal message".
+- Stripe's product descriptions (shown on its checkout page) are shorter, and take effect the next time `stripe:setup` runs.
+- Next: Home, Explore and gym pages, Workout and Progress, Profile and settings, friends and the feed, GymPal and the errors.
+- Checked: the Pro page in a browser (nothing cut off, axe clean); domain 205, server 370 and app 665 tests.
+
 ## Update 266 · GymGO Max: workouts GymPal builds for you, and a coach's note after each one
 
-*24 Nov 2026 · the commit "Max: Build with GymPal, and his coach's note after a workout"*
+*24 Nov 2026 · `478f069`*
 
 The second round of GymGO Max (Update 264 made the plan): two AI features, on the same models as the GymPal chat, each run only when you ask.
 

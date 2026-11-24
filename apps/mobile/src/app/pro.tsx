@@ -54,52 +54,54 @@ import { ScreenOptions } from '@/components/ScreenOptions';
 const FEATURE_ICON: Record<string, IconName> = {
   'Gyms worldwide': 'globe',
   'Saved gyms': 'saved',
-  'Compare side by side': 'compare',
+  'Compare gyms': 'compare',
   'Workout library': 'workout',
-  'Your own exercises': 'plus',
-  'Your own splits': 'calendar',
+  'Custom exercises': 'plus',
+  'Custom splits': 'calendar',
   'Progress charts': 'chart',
-  'Session targets': 'target',
-  'Colour themes': 'palette',
+  'Next-session targets': 'target',
+  Themes: 'palette',
   'Muscle balance': 'body',
   'Warm-up sets': 'flame',
   'Gym notes': 'list',
-  'Your plates': 'plates',
+  'Custom plates': 'plates',
   'Interval timer': 'timer',
   '1-rep max': 'target',
   'Streak freeze': 'flame',
   'Profile ring': 'person',
   Celebrations: 'star',
   'Lifetime stats': 'trophy',
-  'Arcade sounds': 'sound',
+  'Sound packs': 'sound',
+  'Head to head': 'compare',
   GymPal: 'send',
   'Max badge': 'trophy',
-  'Workouts built for you': 'workout',
-  'Coach’s notes': 'sparkle',
+  'AI workout builder': 'workout',
+  'AI coach notes': 'sparkle',
+  'Higher GymPal limits': 'send',
 };
 
 const REASON: Record<ProReason, string> = {
-  exercises: 'Make exercises of your own: they’re offered beside GymGO’s, with your records and history.',
-  splits: 'Make splits of your own: days that take turns, like the templates, saved to your account.',
-  saved: 'You’ve saved as many gyms as Free keeps. Pro saves as many as you like.',
-  compare: 'Free compares two gyms at a time. Pro lines up four.',
-  workouts: 'Keep your workouts in your account with Pro, and open them on any device.',
-  worldwide: 'GymGO Free covers the country you chose. Pro finds gyms in every country, wherever you travel.',
-  progress: 'Your log and records are free. Pro draws a chart for every exercise and works out what to lift next.',
-  themes: 'Dark mode is free for everyone. Pro adds eleven more accents, Rainbow and Camo among them, ten looks that redraw the whole app (Frost, Liquid, Soft, Paper, Material, Neon, Terminal, 8-bit, Classic and Comic), and three more map styles: Muted, Classic and Deep blue.',
-  balance: 'Your log, goal and milestones are free. Pro counts your sets for every muscle and names the ones you’ve missed.',
-  warmup: 'The plate calculator is free. Pro works out your warm-up sets to any weight, with the plates for each.',
-  notes: 'Pro keeps your own notes on each gym, like the door code or who to ask for. Only you see them.',
-  plates: 'The plate calculator uses the usual set for free. Pro lets it use the plates your gym really has, change plates and all.',
-  timers: 'Tabata and EMOM are free. Pro lets you set your own work, rest and rounds, and keep up to ten timers of your own.',
-  strength: 'Your estimated 1-rep max is free. Pro adds the whole percentage table, with the plates for each weight, and what you could lift for 2 to 12 reps.',
-  freeze: 'Pro’s streak freeze keeps your weekly streak going through one missed week a month.',
-  celebrations: 'Confetti is free. Pro celebrates your records and goals your way: fireworks, gold stars or a shower of emoji.',
-  lifetime: 'Your log and records are free. Pro adds your lifetime in numbers: every kilo, rep and hour, your favourites, and what all that weight compares to, as a picture to share too.',
-  sounds: 'Sounds are free. Pro adds Arcade: the workout and check-in sounds as chip tunes, like an old games console.',
-  headToHead: 'Friends and their workouts are free. Pro puts your best lifts beside a friend’s, exercise by exercise: heaviest, strongest set and most reps.',
-  max: 'Workouts GymPal builds for you, and his coach’s note after each workout, are part of GymGO Max.',
-  gympal: 'GymPal is free, 20 questions a day. Pro gives you 100 a day, longer chats, and answers that know your training: what to train today, how you’re going. Max gives you 300, and twice the memory.',
+  exercises: 'Create custom exercises, with their own records and history.',
+  splits: 'Create your own training splits and save them to your account.',
+  saved: 'You’ve reached the Free limit for saved gyms. Pro removes the limit.',
+  compare: 'Free compares 2 gyms at a time. Pro compares up to 4.',
+  workouts: 'Save workouts to your account and use them on any device.',
+  worldwide: 'Free covers gyms in your country. Pro covers gyms worldwide.',
+  progress: 'Get charts for every exercise and suggested weights for your next session.',
+  themes: 'Dark mode is free. Pro adds 11 accent colours, 10 app styles and 3 more map styles.',
+  balance: 'See your sets for every muscle over 4 weeks, and which ones need work.',
+  warmup: 'Get warm-up sets for any working weight, with the plates for each.',
+  notes: 'Add private notes to any gym, like a door code or who to ask for.',
+  plates: 'Set the plate calculator to the plates your gym has.',
+  timers: 'Tabata and EMOM are free. Pro lets you build and save up to 10 custom timers.',
+  strength: 'See the full 1-rep max percentage table with plates, and your estimated max for 2 to 12 reps.',
+  freeze: 'Keep your weekly streak through 1 missed week a month.',
+  celebrations: 'Celebrate records and goals with fireworks, stars or emoji.',
+  lifetime: 'See your all-time totals and favourite exercises, ready to share.',
+  sounds: 'Add Arcade, a chiptune sound pack for workouts and check-ins.',
+  headToHead: 'Compare your best lifts with a friend’s, exercise by exercise.',
+  max: 'AI workout building and coach notes come with GymGO Max.',
+  gympal: 'Free includes 20 GymPal messages a day. Pro raises that to 100 and uses your training history. Max raises it to 300.',
 };
 
 export default function ProScreen() {
@@ -182,7 +184,7 @@ export default function ProScreen() {
         haptic.success();
         setWelcome(true);
       } else if (outcome === 'done') {
-        setProblem(`${with_ === 'paypal' ? 'PayPal' : 'Stripe'} hasn’t confirmed the payment yet. Give it a moment, then open this screen again.`);
+        setProblem(`${with_ === 'paypal' ? 'PayPal' : 'Stripe'} hasn’t confirmed your payment yet. Check back in a moment.`);
       }
     } catch (error) {
       setProblem(messageFor(error));
@@ -223,7 +225,7 @@ export default function ProScreen() {
             GymGO Pro
           </Txt>
           <Txt variant="body" color={color.labelSecondary} style={styles.center} acronyms>
-            {billing.isPro ? 'Thanks for backing GymGO.' : reason ? REASON[reason] : 'What Free covers, and what Pro adds.'}
+            {billing.isPro ? 'Thanks for supporting GymGO.' : reason ? REASON[reason] : 'Compare what’s included in each plan.'}
           </Txt>
         </View>
 
@@ -243,7 +245,7 @@ export default function ProScreen() {
               />
             ) : (
               <Txt variant="footnote" color={color.labelSecondary}>
-                {serverHosted() ? 'Manage it on GymGO’s website.' : 'Manage it from GymGO on your computer.'}
+                {serverHosted() ? 'Manage your subscription on the GymGO website.' : 'Manage your subscription from GymGO on your computer.'}
               </Txt>
             )}
           </View>
@@ -293,7 +295,7 @@ export default function ProScreen() {
               GymGO Max
             </Txt>
             <Txt variant="subhead" color={color.labelSecondary}>
-              {`Everything in Pro, and more. From ${formatPlanPrice(proPrice('month', currency, billing.maxPrices)?.amountMinor ?? 0, currency)} a month.`}
+              {`Everything in Pro, plus AI features. From ${formatPlanPrice(proPrice('month', currency, billing.maxPrices)?.amountMinor ?? 0, currency)} a month.`}
             </Txt>
             {MAX_FEATURES.map((feature) => (
               <View key={feature.title} style={styles.tableRow}>
@@ -314,8 +316,8 @@ export default function ProScreen() {
               <>
                 <Txt variant="footnote" color={color.labelSecondary}>
                   {billing.subscription?.provider === 'paypal'
-                    ? 'Paid with PayPal: cancel Pro there, and choose Max here once it ends.'
-                    : 'Switch on Stripe’s page for your subscription: you pay the difference for the days left.'}
+                    ? 'You pay with PayPal. To switch, cancel Pro in PayPal, then choose Max here when it ends.'
+                    : 'You’ll be charged the difference for the rest of this billing period.'}
                 </Txt>
                 {billing.subscription?.provider !== 'paypal' && <PrimaryButton label={busy ? 'Opening Stripe…' : 'Switch to Max'} tone="quiet" disabled={busy} onPress={() => void manage()} />}
               </>
@@ -338,9 +340,9 @@ export default function ProScreen() {
             )}
             {trialOffer && monthly && (
               <View style={[styles.card, styles.trialCard]}>
-                <Txt variant="headline">{`New here? Try Pro free for ${trialOffer.days} days`}</Txt>
+                <Txt variant="headline">{`Try Pro free for ${trialOffer.days} days`}</Txt>
                 <Txt variant="subhead" color={color.labelSecondary}>
-                  {`Monthly Pro, free for ${trialOffer.days} days, then ${formatPlanPrice(monthly.amountMinor, currency)} a month until you cancel. Yours to start until ${dayLabel(trialOffer.offerEndsAt)}.`}
+                  {`Then ${formatPlanPrice(monthly.amountMinor, currency)} a month. Cancel anytime. Offer ends ${dayLabel(trialOffer.offerEndsAt)}.`}
                 </Txt>
               </View>
             )}
@@ -361,7 +363,7 @@ export default function ProScreen() {
                   onPress={() => setInterval('month')}
                   title="Monthly"
                   price={`${formatPlanPrice(monthly.amountMinor, currency)} a month`}
-                  detail={trialOffer ? `Free for ${trialOffer.days} days, then billed every month` : 'Billed every month'}
+                  detail={trialOffer ? `${trialOffer.days} days free, then billed monthly` : 'Billed monthly'}
                   tag={trialOffer ? `${trialOffer.days} days free` : null}
                 />
               )}
@@ -409,8 +411,8 @@ export default function ProScreen() {
                 !chosen
                   ? null
                   : trial
-                    ? `Free for ${trial.days} days, then ${formatPlanPrice(chosen.amountMinor, currency)} a month, tax included, until you cancel. ${billing.payWith?.paypal === 'direct' ? 'Stripe (or PayPal) takes your payment details' : 'Stripe takes your card'} now; the first payment is on ${dayLabel(trialEndsAt(new Date(), trial.days).toISOString())}. Cancel before then in Profile → Manage subscription and you aren’t charged. Tapping ${tapping('Start')} agrees to these terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
-                    : `Renews automatically at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval}, tax included, until you cancel. Cancel any time in Profile → Manage subscription; ${planName} stays on to the end of the ${interval} you’ve paid for. Tapping ${tapping('Subscribe')} agrees to these renewal terms and the [Terms of Service](terms); [Refunds and Cancelling](refunds) says when you get your money back.`
+                    ? `Free for ${trial.days} days, then ${formatPlanPrice(chosen.amountMinor, currency)} a month (tax included) until you cancel. You’ll add your payment details ${billing.payWith?.paypal === 'direct' ? 'with Stripe or PayPal' : 'with Stripe'} now. Your first payment is on ${dayLabel(trialEndsAt(new Date(), trial.days).toISOString())}; cancel before then in Profile → Manage subscription and you won’t be charged. By tapping ${tapping('Start')}, you agree to these terms and the [Terms of Service](terms). See [Refunds and Cancelling](refunds) for refunds.`
+                    : `Renews at ${formatPlanPrice(chosen.amountMinor, currency)} a ${interval} (tax included) until you cancel. Cancel anytime in Profile → Manage subscription and keep ${planName} until the end of the ${interval} you’ve paid for. By tapping ${tapping('Subscribe')}, you agree to these terms and the [Terms of Service](terms). See [Refunds and Cancelling](refunds) for refunds.`
               }
               onSubscribe={() => void subscribe('stripe')}
               onSignIn={() => router.push('/sign-in')}
@@ -434,7 +436,7 @@ export default function ProScreen() {
 
         {/* Always free -------------------------------------------------------------------- */}
         <View style={styles.card}>
-          <Txt variant="headline">Always free, with a free account</Txt>
+          <Txt variant="headline">Free with an account</Txt>
           {ALWAYS_FREE.map((line) => (
             <View key={line} style={styles.freeLine}>
               <Icon name="check" size={16} color={color.goodInk} />
@@ -447,15 +449,15 @@ export default function ProScreen() {
 
         <AskGymPal
           title="Questions about Pro? Ask GymPal"
-          detail="What it adds, and what stays free"
-          request={{ question: 'What does GymGO Pro add, and what stays free?' }}
+          detail="Features, pricing and what’s free"
+          request={{ question: 'What do GymGO Pro and Max include?' }}
         />
 
         <LegalText
           variant="caption"
           tint={color.labelSecondary}
           style={styles.fine}
-          text="Prices include tax. Pro and Max renew automatically until you cancel; a gift year is paid once and doesn’t renew. A new account can try monthly Pro free for 3 days, once, in its first 30 days: the monthly price is charged when the trial ends unless you cancel before then. Cancel any time from Profile → Manage subscription, and you keep Pro until the end of what you’ve paid for. Changed your mind? Ask within 14 days of your first payment, or of a yearly renewal, for a full refund. If Pro ends, nothing you saved is deleted; you just can’t add more than Free allows. Payments are handled by Stripe: GymGO never sees your card, and Stripe gets your name and email for the receipt. [Terms of Service](terms) · [Refunds and Cancelling](refunds) · [Privacy Policy](privacy)"
+          text="Prices include tax. Pro and Max renew until you cancel. A gift year is a one-off payment and doesn’t renew. New accounts can try monthly Pro free for 3 days, once, within 30 days of signing up; the monthly price is charged when the trial ends unless you cancel first. Cancel anytime in Profile → Manage subscription and keep your plan until the end of the period you’ve paid for. You can get a full refund within 14 days of your first payment or a yearly renewal. If your plan ends, your data stays, but you can’t add more than Free allows. Payments are processed by Stripe. GymGO doesn’t see your card details; Stripe receives your name and email for receipts. [Terms of Service](terms) · [Refunds and Cancelling](refunds) · [Privacy Policy](privacy)"
         />
       </PageScroll>
     </>
@@ -499,7 +501,7 @@ function BuyButton({
   if (!CAN_BUY_HERE) {
     return (
       <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-        Pro can’t be bought in this version of the app.
+        Pro isn’t available to buy in this version of the app.
       </Txt>
     );
   }
@@ -508,7 +510,7 @@ function BuyButton({
   if (SERVERLESS) {
     return (
       <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-        {LIMITED ? 'Pro comes with the full version of GymGO. This limited version shows what it includes.' : 'Pro can’t be bought in this version of GymGO.'}
+        {LIMITED ? 'Pro is available in the full version of GymGO.' : 'Pro isn’t available to buy in this version of GymGO.'}
       </Txt>
     );
   }
@@ -518,7 +520,7 @@ function BuyButton({
         <PrimaryButton label={sale === 'asking' ? 'Checking…' : 'Try again'} icon="refresh" tone="quiet" busy={sale === 'asking'} onPress={onAskAgain} />
         {sale === 'unreachable' && (
           <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-            Can’t reach the GymGO server, so Pro can’t be bought just now.
+            Can’t connect to GymGO right now. Try again in a moment.
           </Txt>
         )}
       </View>
@@ -527,9 +529,9 @@ function BuyButton({
   if (sale === 'off') {
     return (
       <View style={styles.gap}>
-        <PrimaryButton label="Not on sale yet" disabled onPress={() => undefined} />
+        <PrimaryButton label="Coming soon" disabled onPress={() => undefined} />
         <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-          Payments aren’t connected on this GymGO server yet, so these are the planned prices.
+          Payments aren’t set up yet. These are the planned prices.
         </Txt>
       </View>
     );
@@ -539,7 +541,7 @@ function BuyButton({
       <View style={styles.gap}>
         <PrimaryButton label="Sign in to subscribe" onPress={onSignIn} />
         <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-          Pro belongs to your GymGO account, so it works on your phone and your computer.
+          Your plan is linked to your account, so it works on all your devices.
         </Txt>
       </View>
     );
@@ -554,7 +556,7 @@ function BuyButton({
         <View style={styles.payWith}>
           <Icon name="lock" size={12} color={color.labelSecondary} />
           <Txt variant="footnote" color={color.labelSecondary} style={styles.payWithText}>
-            {`${orList(onStripe).replace(/^./, (first) => first.toUpperCase())}, on Stripe’s secure page`}
+            {`Pay securely by ${orList(onStripe)} with Stripe`}
           </Txt>
         </View>
       )}
@@ -617,20 +619,20 @@ function PlanOption({
 }
 
 function describeSubscription(subscription: ReturnType<typeof useApp>['billing']['subscription']): string {
-  if (!subscription) return 'Pro is on for this account.';
+  if (!subscription) return 'Pro is active on this account.';
   // The ready-made account for trying GymGO on your own computer: nobody paid, nothing renews.
-  if (subscription.manageable === false) return 'Pro for trying GymGO on this computer. No payment, nothing to renew.';
+  if (subscription.manageable === false) return 'Test account with Pro on this computer. No payment needed.';
   const price =
     subscription.amountMinor !== null && subscription.currency
       ? `${formatPlanPrice(subscription.amountMinor, subscription.currency)} a ${subscription.interval ?? 'period'}`
       : null;
   const date = (value: string) => new Date(value).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
-  if (subscription.trial && subscription.endsAt) return `Free trial, cancelled: Pro until ${date(subscription.endsAt)}, and you won’t be charged.`;
+  if (subscription.trial && subscription.endsAt) return `Trial cancelled. Pro until ${date(subscription.endsAt)}, and you won’t be charged.`;
   if (subscription.trial) {
-    return `Free trial${subscription.renewsAt ? ` until ${date(subscription.renewsAt)}` : ''}${price ? `, then ${price}` : ''}. Cancel before then in Manage subscription and you won’t be charged.`;
+    return `Free trial${subscription.renewsAt ? ` until ${date(subscription.renewsAt)}` : ''}${price ? `, then ${price}` : ''}. Cancel before it ends and you won’t be charged.`;
   }
-  if (subscription.endsAt) return [price, `Cancelled: Pro until ${date(subscription.endsAt)}`].filter(Boolean).join(' · ');
-  if (subscription.status === 'past_due') return 'Your last payment didn’t go through. Stripe will try again; update your card in Manage subscription.';
+  if (subscription.endsAt) return [price, `Cancelled. Active until ${date(subscription.endsAt)}`].filter(Boolean).join(' · ');
+  if (subscription.status === 'past_due') return 'Your last payment didn’t go through. Update your card in Manage subscription.';
   return [price, subscription.renewsAt ? `renews ${date(subscription.renewsAt)}` : null].filter(Boolean).join(' · ');
 }
 
@@ -642,7 +644,7 @@ function dayLabel(iso: string): string {
 function messageFor(error: unknown): string {
   if (error instanceof OfflineError) return serverOfflineLine(Platform.OS, serverHosted());
   if (error instanceof ApiError) return error.message;
-  return Platform.OS === 'web' ? 'Something went wrong opening Stripe. Try again.' : 'Something went wrong. Try again.';
+  return Platform.OS === 'web' ? 'Couldn’t open Stripe. Try again.' : 'Something went wrong. Try again.';
 }
 
 const styles = themed(() => StyleSheet.create({

@@ -9,9 +9,27 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 268 · Plainer words, part 2: Home, and lines used across the app
+
+*24 Nov 2026 · the commit "Plainer words: Home, and lines used across the app"*
+
+The second part of the rewrite (docs/COPY.md):
+
+- **Lines used across the app** (lib/copy.ts):
+  - visit answers: "Good to go: Matches everything you need", "Call first: Some details couldn’t be confirmed", "Not a match: Missing something you need";
+  - result counts: "9 gyms nearby · none confirmed at 7 pm", and "No matches. Remove a filter";
+  - connection errors: "Can’t connect to GymGO. Check your connection and try again";
+  - location notices: "Couldn’t find your location. Search a suburb or city instead";
+  - map searches: "Searching OpenStreetMap for gyms around Tokyo…";
+  - member reports: "2 members reported it closed in the last 6 months";
+  - empty states.
+  - The missing-photo label is now exactly "No photo supplied", as you asked for earlier.
+- **Home and its widgets**: "Sign in to track your workouts. It’s free.", "Your last workout will appear here.", "Based on when you last trained each muscle." (it read "when, not whether a muscle is ready"), "Gyms in Japan need GymGO Pro", "Your Home screen is empty. Add some widgets.", and the widget gallery's descriptions.
+- Checked: Home and Explore in a browser (axe clean); app tests 665, their wording updated to match.
+
 ## Update 267 · Plainer words, part 1: the Pro and Max page
 
-*24 Nov 2026 · the commit "Plainer words: the Pro and Max page"*
+*24 Nov 2026 · `f879c12`*
 
 You said the app's text read as AI-written ("300 a day and he remembers twice as much of the chat" is the giveaway) and asked for all of it to be redone. The rules for the rewrite are in **docs/COPY.md**, from research into common tells of AI writing: no "X: Y" colon chains, no "not X, but Y" contrasts, no stock words or over-reassurance, no narrating how the app works, GymPal called "GymPal" rather than "he", and short, benefit-first lines like a well-made app's. Facts don't change: prices, limits and promises read the same, only shorter. This first part covers the Pro and Max page.
 

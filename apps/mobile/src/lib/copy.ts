@@ -24,15 +24,15 @@ export interface TierCopy {
 export const TIER: Record<ResultTier, TierCopy> = {
   confirmed: {
     label: 'Good to go',
-    line: 'Everything you asked for checks out.',
+    line: 'Matches everything you need.',
   },
   needs_confirmation: {
     label: 'Call first',
-    line: 'Could work: a few things couldn’t be confirmed.',
+    line: 'Some details couldn’t be confirmed.',
   },
   ruled_out: {
-    label: 'Not a fit',
-    line: 'Something you need isn’t there.',
+    label: 'Not a match',
+    line: 'Missing something you need.',
   },
 };
 
@@ -92,7 +92,7 @@ export function accessShort(verdict: AccessVerdict): string {
     case 'needs_confirmation':
       return 'Check first';
     case 'not_admitted':
-      return 'Not then';
+      return 'Closed then';
     case 'unknown':
       return 'Unknown';
   }
@@ -111,7 +111,7 @@ export function visitWhen(minuteOfDay: number, tomorrow: boolean): string {
 export function summaryLine(total: number, confirmed: number, minuteOfDay: number, tomorrow = false): string {
   if (total === 0) return 'No gyms here yet';
   const gyms = total === 1 ? '1 gym' : `${total} gyms`;
-  if (confirmed === 0) return `${gyms} nearby · none a sure thing ${visitWhen(minuteOfDay, tomorrow)}`;
+  if (confirmed === 0) return `${gyms} nearby · none confirmed ${visitWhen(minuteOfDay, tomorrow)}`;
   return `${gyms} nearby · ${confirmed} good to go ${visitWhen(minuteOfDay, tomorrow)}`;
 }
 
@@ -121,10 +121,10 @@ export function summaryLine(total: number, confirmed: number, minuteOfDay: numbe
  */
 export function filtersButtonLabel(counts: { confirmed: number; needs_confirmation: number }): string {
   const possible = counts.confirmed + counts.needs_confirmation;
-  if (possible === 0) return 'No gyms: loosen a filter';
+  if (possible === 0) return 'No matches. Remove a filter';
   const gyms = `Show ${possible === 1 ? '1 gym' : `${possible} gyms`}`;
   if (counts.confirmed === possible) return gyms;
-  if (counts.confirmed === 0) return `${gyms} · none a sure thing`;
+  if (counts.confirmed === 0) return `${gyms} · none confirmed`;
   return `${gyms} · ${counts.confirmed} good to go`;
 }
 
@@ -135,32 +135,32 @@ export function filtersButtonLabel(counts: { confirmed: number; needs_confirmati
  * so whatever loaded the app can reach it while GymGO is running there.
  */
 export function serverOfflineLine(platform: string, hosted = false): string {
-  if (hosted) return 'Can’t reach GymGO. Check you’re online, then try again.';
+  if (hosted) return 'Can’t connect to GymGO. Check your connection and try again.';
   return platform === 'web'
-    ? 'Can’t reach the GymGO server. Start GymGO on this computer, then try again.'
-    : 'Can’t reach the GymGO server. Check GymGO is still running on your computer, then try again.';
+    ? 'Can’t connect to the GymGO server. Start GymGO on this computer and try again.'
+    : 'Can’t connect to the GymGO server. Make sure GymGO is running on your computer.';
 }
 
 /** What members said about whether a gym is still there, in the last six months. */
 export function statusSummaryLine(closed: number, open: number): string {
-  if (closed + open === 0) return 'The map can be out of date, and no member has said yet.';
+  if (closed + open === 0) return 'Map data can be out of date, and no members have reported yet.';
   const members = (count: number) => (count === 1 ? '1 member' : `${count} members`);
-  if (closed === 0) return `In the last six months, ${members(open)} said it’s still open.`;
-  if (open === 0) return `In the last six months, ${members(closed)} said it has closed.`;
-  return `In the last six months, ${members(closed)} said it has closed and ${open} said it’s still open.`;
+  if (closed === 0) return `${members(open)} confirmed it’s open in the last 6 months.`;
+  if (open === 0) return `${members(closed)} reported it closed in the last 6 months.`;
+  return `In the last 6 months, ${members(closed)} reported it closed and ${open} confirmed it’s open.`;
 }
 
 export const EMPTY = {
-  reviews: 'No reviews yet. Train there and be the first.',
-  photos: 'No photo supplied yet',
-  results: 'Nothing ticks every box. Loosen one and try again.',
+  reviews: 'No reviews yet. Be the first.',
+  photos: 'No photo supplied',
+  results: 'No gyms match all your filters. Try removing one.',
   /** No filters are on: what's missing is information, not a looser search. */
-  unconfirmedLine: 'Gyms rarely publish everything we check, so each card says exactly what to ask.',
+  unconfirmedLine: 'Gyms don’t always publish everything. Each card shows what to check.',
   /** When looking a typed place up failed (not when it wasn't found). */
-  outOfArea: "Couldn’t look that place up just now. Try again, or move the map there and tap Search this area.",
+  outOfArea: 'Couldn’t find that place. Try again, or move the map there and tap Search this area.',
   locationApproximate:
-    'Your phone is only sharing your approximate location, so distances may be well off. Turn on Precise Location for GymGO in Settings.',
-  crowd: 'GymGO doesn’t have live crowd info, so it won’t guess.',
+    'GymGO only has your approximate location, so distances may be off. Turn on Precise Location in Settings.',
+  crowd: 'Live crowd info isn’t available.',
 } as const;
 
 /** A place to type, in the words people use at home: suburbs in Australia, ZIP codes in the US. */
@@ -199,17 +199,17 @@ export function locatedNotice(
 ): string | null {
   switch (result.kind) {
     case 'off':
-      return `Location is off in Profile → Settings. Search ${placeWords(home)} instead.`;
+      return `Location is turned off in Profile → Settings. Search ${placeWords(home)} instead.`;
     case 'denied':
-      return `Location is off for GymGO. Search ${placeWords(home)} instead.`;
+      return `Location access is off for GymGO. Search ${placeWords(home)} instead.`;
     case 'unavailable':
-      return `Couldn’t get a fix on where you are. Search ${placeWords(home)} instead.`;
+      return `Couldn’t find your location. Search ${placeWords(home)} instead.`;
     case 'nearest':
-      return `Here’s ${result.city.name}, the nearest city GymGO has built in (${distanceLabel(result.km, result.city.country)} away).`;
+      return `Showing ${result.city.name}, the nearest city with GymGO data (${distanceLabel(result.km, result.city.country)} away).`;
     case 'home':
-      return `Couldn’t tell what time it is where you are, so here’s ${result.placeName}.`;
+      return `Couldn’t detect your time zone. Showing ${result.placeName}.`;
     case 'abroad':
-      return `You’re in ${countryInSentence(result.countryCode)}. GymGO Free covers ${countryInSentence(result.home)}, the country you chose; gyms everywhere else are part of Pro. Here’s ${countryInSentence(result.home)}.`;
+      return `You’re in ${countryInSentence(result.countryCode)}. Free covers gyms in ${countryInSentence(result.home)}; Pro covers every country. Showing ${countryInSentence(result.home)}.`;
     case 'here':
     case 'area':
       // Outside the built-in cities the lists say what's next (Search this area), so nothing more here.
@@ -226,13 +226,13 @@ export function lookupLine(state: 'ready' | 'searching' | 'failed' | 'none', pla
   const where = placeName === YOUR_LOCATION ? 'you' : placeName;
   switch (state) {
     case 'ready':
-      return `GymGO has no gyms built in around ${where}. Search this area to find them on OpenStreetMap.`;
+      return `No GymGO data around ${where} yet. Search this area to find gyms on OpenStreetMap.`;
     case 'searching':
-      return `Looking for gyms around ${where} on OpenStreetMap…`;
+      return `Searching OpenStreetMap for gyms around ${where}…`;
     case 'failed':
-      return `Couldn’t read the map around ${where} just now.`;
+      return `Couldn’t load the map around ${where}. Try again.`;
     case 'none':
-      return `OpenStreetMap has no gyms mapped around ${where} yet. Open the map, move it and tap Search this area to look further out.`;
+      return `No gyms mapped around ${where} on OpenStreetMap yet. Move the map and tap Search this area to look further.`;
   }
 }
 
@@ -241,10 +241,10 @@ export function lookupLine(state: 'ready' | 'searching' | 'failed' | 'none', pla
  * counts every gym in range, fits or not). "5 km", "3 mi": whole units.
  */
 export function noGymsLine(placeName: string, radiusKm: number, country: string): string {
-  if (placeName === THIS_AREA) return 'OpenStreetMap has no gyms mapped in this area yet.';
+  if (placeName === THIS_AREA) return 'No gyms mapped in this area on OpenStreetMap yet.';
   const reach = milesFor(country) ? `${Math.round(radiusKm / KM_PER_MILE)} mi` : `${Math.round(radiusKm)} km`;
   const where = placeName === YOUR_LOCATION ? 'you' : placeName;
-  return `No gyms mapped within ${reach} of ${where} yet. Open the map to look further out.`;
+  return `No gyms mapped within ${reach} of ${where} yet. Open the map to search further.`;
 }
 
 /** Past this, a distance on a gym's own page says where it's measured from. */

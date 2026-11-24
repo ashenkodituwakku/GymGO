@@ -46,17 +46,17 @@ describe('voice', () => {
   });
 
   it('does not claim a sure thing when nothing is confirmed', () => {
-    expect(summaryLine(9, 0, 19 * 60)).toBe('9 gyms nearby · none a sure thing at 7\u00a0pm');
+    expect(summaryLine(9, 0, 19 * 60)).toBe('9 gyms nearby · none confirmed at 7\u00a0pm');
     expect(summaryLine(9, 3, 19 * 60)).toBe('9 gyms nearby · 3 good to go at 7\u00a0pm');
     expect(summaryLine(1, 1, 7 * 60)).toBe('1 gym nearby · 1 good to go at 7\u00a0am');
-    expect(summaryLine(9, 0, 7 * 60, true)).toBe('9 gyms nearby · none a sure thing tomorrow at 7\u00a0am');
+    expect(summaryLine(9, 0, 7 * 60, true)).toBe('9 gyms nearby · none confirmed tomorrow at 7\u00a0am');
   });
 
   it('says what members reported about a gym being there, without "0 members"', () => {
-    expect(statusSummaryLine(0, 0)).toBe('The map can be out of date, and no member has said yet.');
-    expect(statusSummaryLine(0, 1)).toBe('In the last six months, 1 member said it’s still open.');
-    expect(statusSummaryLine(2, 0)).toBe('In the last six months, 2 members said it has closed.');
-    expect(statusSummaryLine(1, 3)).toBe('In the last six months, 1 member said it has closed and 3 said it’s still open.');
+    expect(statusSummaryLine(0, 0)).toBe('Map data can be out of date, and no members have reported yet.');
+    expect(statusSummaryLine(0, 1)).toBe('1 member confirmed it’s open in the last 6 months.');
+    expect(statusSummaryLine(2, 0)).toBe('2 members reported it closed in the last 6 months.');
+    expect(statusSummaryLine(1, 3)).toBe('In the last 6 months, 1 member reported it closed and 3 confirmed it’s open.');
   });
 
   it('says where to start the server, without naming a command that may not exist', () => {
@@ -64,13 +64,13 @@ describe('voice', () => {
     expect(serverOfflineLine('ios')).toContain('running on your computer');
     expect(serverOfflineLine('android')).not.toContain('gymgo command');
     // A hosted GymGO isn't yours to start: check the connection instead.
-    expect(serverOfflineLine('web', true)).toBe('Can’t reach GymGO. Check you’re online, then try again.');
+    expect(serverOfflineLine('web', true)).toBe('Can’t connect to GymGO. Check your connection and try again.');
     expect(serverOfflineLine('ios', true)).not.toContain('computer');
   });
 
   it("counts only gyms that could work on the Filters button, and says how sure", () => {
-    expect(filtersButtonLabel({ confirmed: 0, needs_confirmation: 0 })).toBe('No gyms: loosen a filter');
-    expect(filtersButtonLabel({ confirmed: 0, needs_confirmation: 40 })).toBe('Show 40 gyms · none a sure thing');
+    expect(filtersButtonLabel({ confirmed: 0, needs_confirmation: 0 })).toBe('No matches. Remove a filter');
+    expect(filtersButtonLabel({ confirmed: 0, needs_confirmation: 40 })).toBe('Show 40 gyms · none confirmed');
     expect(filtersButtonLabel({ confirmed: 3, needs_confirmation: 5 })).toBe('Show 8 gyms · 3 good to go');
     expect(filtersButtonLabel({ confirmed: 1, needs_confirmation: 0 })).toBe('Show 1 gym');
   });
@@ -184,18 +184,18 @@ describe('what finding you says', () => {
     expect(locatedNotice({ kind: 'area', fix: { approximate: false } })).toBeNull();
     expect(locatedNotice({ kind: 'area', fix: { approximate: true } })).toMatch(/approximate/i);
     // Switched off in Settings: say where it's switched off, and offer the search instead.
-    expect(locatedNotice({ kind: 'off' }, 'AU')).toBe('Location is off in Profile → Settings. Search a suburb or city instead.');
+    expect(locatedNotice({ kind: 'off' }, 'AU')).toBe('Location is turned off in Profile → Settings. Search a suburb or city instead.');
   });
 
   it('when you say no, suggests typing a place in the words used at home', () => {
-    expect(locatedNotice({ kind: 'denied' }, 'US')).toBe('Location is off for GymGO. Search a city or ZIP code instead.');
-    expect(locatedNotice({ kind: 'denied' }, 'AU')).toBe('Location is off for GymGO. Search a suburb or city instead.');
-    expect(locatedNotice({ kind: 'unavailable' }, 'DE')).toBe('Couldn’t get a fix on where you are. Search a town or city instead.');
+    expect(locatedNotice({ kind: 'denied' }, 'US')).toBe('Location access is off for GymGO. Search a city or ZIP code instead.');
+    expect(locatedNotice({ kind: 'denied' }, 'AU')).toBe('Location access is off for GymGO. Search a suburb or city instead.');
+    expect(locatedNotice({ kind: 'unavailable' }, 'DE')).toBe('Couldn’t find your location. Search a town or city instead.');
   });
 
   it('with no country chosen, says it shows the nearest built-in city, without claiming a search', () => {
     expect(locatedNotice({ kind: 'nearest', km: 2155.6, city: { name: 'Sydney', country: 'AU' } })).toBe(
-      'Here’s Sydney, the nearest city GymGO has built in (2,156\u00a0km away).',
+      'Showing Sydney, the nearest city with GymGO data (2,156\u00a0km away).',
     );
   });
 
@@ -223,17 +223,17 @@ describe('the search box', () => {
 
 describe('when there are no gyms to show', () => {
   it('says the map is being read, could not be, or has nothing there', () => {
-    expect(lookupLine('ready', 'Tokyo')).toBe('GymGO has no gyms built in around Tokyo. Search this area to find them on OpenStreetMap.');
-    expect(lookupLine('ready', YOUR_LOCATION)).toMatch(/^GymGO has no gyms built in around you\./);
-    expect(lookupLine('searching', 'Tokyo')).toBe('Looking for gyms around Tokyo on OpenStreetMap…');
-    expect(lookupLine('failed', 'Lima')).toMatch(/^Couldn’t read the map around Lima/);
-    expect(lookupLine('none', 'Nuuk')).toMatch(/^OpenStreetMap has no gyms mapped around Nuuk yet/);
+    expect(lookupLine('ready', 'Tokyo')).toBe('No GymGO data around Tokyo yet. Search this area to find gyms on OpenStreetMap.');
+    expect(lookupLine('ready', YOUR_LOCATION)).toMatch(/^No GymGO data around you yet\./);
+    expect(lookupLine('searching', 'Tokyo')).toBe('Searching OpenStreetMap for gyms around Tokyo…');
+    expect(lookupLine('failed', 'Lima')).toMatch(/^Couldn’t load the map around Lima/);
+    expect(lookupLine('none', 'Nuuk')).toMatch(/^No gyms mapped around Nuuk on OpenStreetMap yet/);
   });
 
   it('never blames the filters when nothing is in range, in the local unit', () => {
-    expect(noGymsLine('Fitzroy', 5, 'AU')).toBe('No gyms mapped within 5\u00a0km of Fitzroy yet. Open the map to look further out.');
-    expect(noGymsLine('your location', 5 * 1.609344, 'US')).toBe('No gyms mapped within 5\u00a0mi of you yet. Open the map to look further out.');
-    expect(noGymsLine('this area', 5, 'GB')).toBe('OpenStreetMap has no gyms mapped in this area yet.');
+    expect(noGymsLine('Fitzroy', 5, 'AU')).toBe('No gyms mapped within 5\u00a0km of Fitzroy yet. Open the map to search further.');
+    expect(noGymsLine('your location', 5 * 1.609344, 'US')).toBe('No gyms mapped within 5\u00a0mi of you yet. Open the map to search further.');
+    expect(noGymsLine('this area', 5, 'GB')).toBe('No gyms mapped in this area on OpenStreetMap yet.');
   });
 
   it('says where a far-off gym is measured from, on its own page', () => {

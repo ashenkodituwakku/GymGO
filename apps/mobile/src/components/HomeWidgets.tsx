@@ -103,11 +103,11 @@ function LogLine({ log, empty }: { log: LogState; empty: string }) {
   return (
     <Txt variant="footnote" color={color.labelSecondary}>
       {log.status === 'signed-out'
-        ? 'Sign in (it’s free) to keep a training log, and this fills in.'
+        ? 'Sign in to track your workouts. It’s free.'
         : log.status === 'loading'
-          ? 'Loading your log…'
+          ? 'Loading…'
           : log.status === 'error'
-            ? (log.error ?? 'Your log couldn’t be loaded just now.')
+            ? (log.error ?? 'Couldn’t load your workouts.')
             : empty}
     </Txt>
   );
@@ -119,8 +119,8 @@ export function LastWorkoutWidget({ log, busy }: { log: LogState; /** A workout'
   const latest = useMemo(() => log.sessions.reduce<TrainingSession | null>((best, item) => (!best || item.finishedAt > best.finishedAt ? item : best), null), [log.sessions]);
   if (!latest) {
     return (
-      <Frame icon="refresh" title="Last workout" onPress={() => router.push('/train')} label="Last workout: none logged yet. Start a workout">
-        <LogLine log={log} empty="Your last workout shows here once you’ve logged one." />
+      <Frame icon="refresh" title="Last workout" onPress={() => router.push('/train')} label="Last workout: none yet. Start a workout">
+        <LogLine log={log} empty="Your last workout will appear here." />
       </Frame>
     );
   }
@@ -130,7 +130,7 @@ export function LastWorkoutWidget({ log, busy }: { log: LogState; /** A workout'
   const ago = agoLabel(daysAgo(latest.finishedAt));
   const line = `${ago} · ${plural(latest.exercises.length, 'exercise')} · ${plural(sets, 'set')} · ${weightText(volumeKg(latest), latest.unit)}`;
   return (
-    <Frame icon="refresh" title="Last workout" link={{ text: 'Log', label: 'Your training log, on Progress', onPress: () => router.push('/progress') }}>
+    <Frame icon="refresh" title="Last workout" link={{ text: 'Log', label: 'Your workouts, on Progress', onPress: () => router.push('/progress') }}>
       <View style={styles.row}>
         <View style={styles.flex}>
           <Txt variant="headline" numberOfLines={2}>
@@ -177,7 +177,7 @@ export function MonthWidget({ log, unit }: { log: LogState; unit: WeightUnit }) 
   if (totals.workouts === 0) {
     return (
       <Frame icon="calendar" title={title} onPress={() => router.push('/month')} label={`This month: no workouts yet. Open the monthly report`}>
-        <LogLine log={log} empty="No workouts yet this month. Each one you log is added up here." />
+        <LogLine log={log} empty="No workouts yet this month." />
       </Frame>
     );
   }
@@ -224,14 +224,14 @@ export function RecoveryWidget({ log }: { log: LogState }) {
   if (trained.length === 0) {
     return (
       <Frame icon="person" title="Muscles trained" onPress={() => router.push('/progress')} label="Muscles trained: nothing in your log yet. See your progress">
-        <LogLine log={log} empty="When you last trained each muscle shows here once you’ve logged a workout." />
+        <LogLine log={log} empty="Log a workout to see which muscles you’ve trained." />
       </Frame>
     );
   }
   const latest = trained.slice(0, 3);
   const longest = [...map].reverse().filter((rest) => !latest.includes(rest)).slice(0, 3);
   const bands = new Map(map.map((rest) => [rest.muscle, rest.band]));
-  const chip = (rest: MuscleRest) => `${rest.label} · ${rest.days === null ? 'not logged' : rest.days === 0 ? 'today' : rest.days === 1 ? 'yesterday' : `${rest.days} days`}`;
+  const chip = (rest: MuscleRest) => `${rest.label} · ${rest.days === null ? 'not trained' : rest.days === 0 ? 'today' : rest.days === 1 ? 'yesterday' : `${rest.days} days`}`;
   return (
     <Frame
       icon="person"
@@ -267,7 +267,7 @@ export function RecoveryWidget({ log }: { log: LogState }) {
         <SmallFigures width={window.width < 360 ? 30 : 38} fillFor={(muscle) => heatShade(bands.get(muscle) ?? 'never')} />
       </View>
       <Txt variant="caption" color={color.labelSecondary}>
-        From your log: when, not whether a muscle is ready.
+        Based on when you last trained each muscle.
       </Txt>
     </Frame>
   );
@@ -310,11 +310,11 @@ export function BodyWeightWidget({ unit }: { unit: WeightUnit }) {
         </View>
       ) : (
         <Txt variant="footnote" color={color.labelSecondary}>
-          Log your weight on Progress now and then, and the latest shows here.
+          Log your weight on Progress to see it here.
         </Txt>
       )}
       <Txt variant="caption" color={color.labelSecondary}>
-        On this device only.
+        Stored on this device only.
       </Txt>
     </Frame>
   );

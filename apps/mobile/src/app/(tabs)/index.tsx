@@ -262,7 +262,7 @@ export default function Home() {
                     router.push({ pathname: '/workout/[id]', params: { id: 'any' } });
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel="Build a workout: tap the muscles you want to train"
+                  accessibilityLabel="Build a workout by choosing muscles"
                   style={roomy ? styles.workout : styles.workoutWide}
                 >
                   <BrandFill round={radius.xl} />
@@ -288,7 +288,7 @@ export default function Home() {
                       Build a workout
                     </Txt>
                     <Txt variant="subhead" color={color.onBrandSoft}>
-                      Tap the muscles you want, get a plan for your gym
+                      Choose muscles and get a workout for your gym
                     </Txt>
                     <View style={styles.workoutGo}>
                       <Txt variant="subhead" color={color.brandFill} style={face('semibold')}>
@@ -386,7 +386,7 @@ export default function Home() {
                     <View style={styles.flex}>
                       <Txt variant="headline" numberOfLines={1}>{`Trip to ${trip.placeName}`}</Txt>
                       <Txt variant="footnote" color={color.labelSecondaryOnTint} numberOfLines={2}>
-                        {`${tripWhen(trip, todayThere(trip))} · ${tripDatesLabel(trip)} · gyms that let visitors in`}
+                        {`${tripWhen(trip, todayThere(trip))} · ${tripDatesLabel(trip)} · gyms that take visitors`}
                       </Txt>
                     </View>
                     <Icon name="chevron" size={14} color={color.labelTertiary} />
@@ -455,14 +455,14 @@ export default function Home() {
                       <Pressable
                         onPress={() => openPro('worldwide')}
                         accessibilityRole="button"
-                        accessibilityLabel={`Gyms in ${countryInSentence(filters.countryCode)} are part of GymGO Pro. See GymGO Pro`}
+                        accessibilityLabel={`Gyms in ${countryInSentence(filters.countryCode)} need GymGO Pro. See Pro`}
                         style={({ pressed }) => [styles.locked, pressed && { opacity: 0.8 }]}
                       >
                         <Icon name="globe" size={22} color={color.brandOnTint} />
                         <View style={styles.lockedText}>
-                          <Txt variant="headline">Gyms in {countryInSentence(filters.countryCode)} are part of GymGO Pro</Txt>
+                          <Txt variant="headline">Gyms in {countryInSentence(filters.countryCode)} need GymGO Pro</Txt>
                           <Txt variant="footnote" color={color.labelSecondaryOnTint}>
-                            Free covers {prefs.country ? countryInSentence(prefs.country) : 'your country'}. Pro finds gyms in every country.
+                            Free covers {prefs.country ? countryInSentence(prefs.country) : 'your country'}. Pro covers every country.
                           </Txt>
                         </View>
                         <Icon name="chevron" size={14} color={color.labelTertiary} />
@@ -598,7 +598,7 @@ export default function Home() {
                     <View style={styles.section}>
                       <SectionHeader title={city ? 'Other cities' : 'Cities'} />
                       <Txt variant="footnote" color={color.labelSecondary} style={styles.anywhere}>
-                        {LIMITED ? 'Every city built into this version of GymGO.' : 'Or anywhere in the world: type a town on the map, or move the map and tap Search this area.'}
+                        {LIMITED ? 'Cities with GymGO data.' : 'Anywhere else, type a town on the map or move the map and tap Search this area.'}
                       </Txt>
                       {groups.map(({ label, country, cities }) => {
                         // A long list (the US has 40) shows its first dozen until asked for the rest.
@@ -785,7 +785,7 @@ export default function Home() {
         <View style={styles.customise}>
           {chosen.length === 0 && (
             <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-              Your Home has nothing on it yet. Add what you’d like to see.
+              Your Home screen is empty. Add some widgets.
             </Txt>
           )}
           <Pressable
@@ -794,7 +794,7 @@ export default function Home() {
               setEditing(true);
             }}
             accessibilityRole="button"
-            accessibilityHint="Move, take off and add the widgets on Home"
+            accessibilityHint="Rearrange, remove or add Home widgets"
             // Where focus comes back to when Done ends editing (components/HomeEditor.tsx EditBar).
             {...({ dataSet: { customiseHome: '' } } as object)}
             style={({ pressed }) => [styles.customiseButton, pressed && { opacity: 0.7 }]}
@@ -873,7 +873,7 @@ function ProgrammeUpNext({
       <Pressable
         onPress={onOpen}
         accessibilityRole="link"
-        accessibilityLabel={`Your ${programmeTitle(programme.goal)}: its weeks and what to lift`}
+        accessibilityLabel={`Your ${programmeTitle(programme.goal)}. See its weeks and targets`}
         style={({ pressed }) => [styles.templatesRow, styles.templatesUnder, pressed && { backgroundColor: color.fill }]}
       >
         <Icon name="workout" size={15} color={color.brand} />

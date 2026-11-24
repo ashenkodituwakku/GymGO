@@ -73,7 +73,7 @@ export function MemberKit({
       <Txt variant="headline">Members say</Txt>
       {tallies.length === 0 ? (
         <Txt variant="subhead" color={color.labelSecondary}>
-          Nobody has said what’s here yet. Trained here? You could be the first.
+          No equipment reported yet. Trained here? Add what you saw.
         </Txt>
       ) : (
         <View style={styles.tallies}>

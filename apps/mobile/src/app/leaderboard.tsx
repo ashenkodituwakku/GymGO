@@ -194,7 +194,7 @@ export default function LeaderboardScreen() {
         </Txt>
       )}
       <Txt variant="footnote" color={color.labelSecondary} style={styles.centre}>
-        Ranked by gyms collected, then visits. A gym counts once you’ve checked in there; a visit, once a day.
+        Ranked by gyms collected, then visits. A gym counts after your first check-in, and visits count once a day.
       </Txt>
     </PageScroll>
   );

@@ -38,7 +38,7 @@ export function ServerAwayCard() {
       <LiveLine>
         {tried && !trying && (
           <Txt variant="footnote" color={color.maybeInk}>
-            Still no answer. GymGO keeps trying by itself every 20 seconds.
+            Still can’t connect. GymGO will keep trying every 20 seconds.
           </Txt>
         )}
       </LiveLine>

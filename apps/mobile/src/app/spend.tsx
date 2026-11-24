@@ -55,7 +55,7 @@ export default function SpendScreen() {
           What each visit costs
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
-          Add what you pay; your check-ins and workouts logged at a gym are the visits. What you enter stays on this device.
+          Add what you pay. Visits are your check-ins and workouts logged at a gym. What you enter stays on this device.
         </Txt>
       </View>
 
@@ -102,8 +102,8 @@ export default function SpendScreen() {
         <PrimaryButton label={list.length ? 'Add something else you pay' : 'Add what you pay'} icon="plus" tone={list.length ? 'quiet' : 'brand'} onPress={() => setAdding(true)} />
       )}
       <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-        A membership counts by the day it ran; something paid once counts in the period you paid. Visits are the days you checked in or logged a workout at
-        that gym. Different currencies are never added together.
+        Memberships count for each day they ran. One-off payments count in the period you paid. Visits are the days you checked in or logged a
+        workout at that gym. Different currencies aren’t added together.
       </Txt>
     </PageScroll>
   );

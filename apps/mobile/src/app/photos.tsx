@@ -126,7 +126,7 @@ export default function PhotosScreen() {
 
       {photos.length === 0 && (
         <Txt variant="subhead" color={color.labelSecondary}>
-          No photos yet. Add one now and another in a few weeks: Then and now puts them side by side.
+          No photos yet. Add one now and another in a few weeks to compare them side by side in Then and now.
         </Txt>
       )}
       <LiveLine>

@@ -134,8 +134,8 @@ export function FiltersContent({
           })}
         </View>
         <Hint>
-          From OpenStreetMap and what gyms publish, each one separately: an entrance says nothing about bathrooms. A gym with no record is shown as not
-          known, never left out; one recorded without it is ruled out.
+          Based on OpenStreetMap and what gyms publish. Each feature is checked separately, so an accessible entrance doesn’t mean accessible
+          bathrooms. Gyms with no record show as unknown. Gyms recorded without the feature are left out.
         </Hint>
       </Group>
       <Group title="Budget per visit">

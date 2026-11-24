@@ -253,7 +253,7 @@ export default function ExerciseEditScreen() {
         {existing && <PrimaryButton label={deleting ? 'Tap again to delete it' : 'Delete this exercise'} icon="trash" tone="danger" onPress={() => void remove()} />}
         {existing && (
           <Txt variant="footnote" color={color.labelSecondary} style={styles.center}>
-            Deleted, it’s no longer offered; workouts you logged with it keep its name.
+            Once deleted, it won’t appear in the exercise list. Workouts you’ve logged with it keep its name.
           </Txt>
         )}
       </View>

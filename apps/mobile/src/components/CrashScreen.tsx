@@ -66,7 +66,7 @@ export function CrashScreen({ error, retry }: ErrorBoundaryProps) {
         Something went wrong
       </Txt>
       <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-        GymGO hit a problem it didn’t expect. Trying again usually fixes it; your saved gyms and workouts are safe.
+        Something went wrong. Trying again usually fixes it, and your saved gyms and workouts are safe.
       </Txt>
       <View style={styles.button}>
         <PrimaryButton label="Try again" onPress={() => void retry()} />

@@ -575,7 +575,7 @@ export function EditBar({ onAdd, onDone }: { onAdd: () => void; onDone: () => vo
           <Icon name="plus" size={18} color={color.brandOnTint} weight="bold" />
         </Pressable>
         <Txt variant="caption" color={color.labelSecondary} style={styles.flex} numberOfLines={2}>
-          Hold a widget to move it. − takes it off.
+          Hold a widget to move it. Tap − to remove it.
         </Txt>
         <Pressable
           onPress={() => {

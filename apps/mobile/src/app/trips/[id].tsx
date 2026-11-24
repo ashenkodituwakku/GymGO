@@ -104,7 +104,7 @@ export default function TripScreen() {
         <Card style={styles.card}>
           <Txt variant="headline">{`Gyms in ${countryInSentence(trip.countryCode)} are part of GymGO Pro`}</Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
-            Your trip is saved. With Pro, this lists the gyms there that let visitors in on your days.
+            Your trip is saved. With Pro, you’ll see gyms there that accept visitors on your dates.
           </Txt>
           <PrimaryButton label="See GymGO Pro" icon="crown" onPress={() => openPro('worldwide')} />
         </Card>

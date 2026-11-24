@@ -146,7 +146,7 @@ export default function SplitEditScreen() {
           {id ? 'Change split' : 'Your own split'}
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
-          Days rotate like the templates. Each time, you get the next day after the one you did last.
+          Days rotate like the templates. Each time you start, you get the day after the one you did last.
         </Txt>
       </View>
       <Card style={styles.nameCard}>

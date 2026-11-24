@@ -87,7 +87,7 @@ export function WorkoutFit({ record, account, onSignIn }: { record: GymRecord; a
   if (load.state === 'offline') {
     return (
       <Txt variant="subhead" color={color.labelSecondary}>
-        Can’t reach GymGO right now, so your saved workouts can’t be checked.
+        Couldn’t connect to GymGO, so your saved workouts can’t be checked right now.
       </Txt>
     );
   }

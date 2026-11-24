@@ -378,7 +378,7 @@ export function MuscleBalanceCard({ sessions, isPro, onPro, now = new Date() }: 
       </View>
       {trained.length === 0 ? (
         <Txt variant="subhead" color={color.labelSecondary}>
-          Nothing logged in the last four weeks. Finish a workout and it shows here.
+          No workouts in the last four weeks. Finished workouts will show here.
         </Txt>
       ) : (
         <View style={styles.bars}>

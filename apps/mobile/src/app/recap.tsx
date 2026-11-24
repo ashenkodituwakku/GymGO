@@ -84,7 +84,7 @@ export default function RecapScreen() {
               </Txt>
             )}
             <Txt variant="footnote" color={color.labelSecondary} style={styles.centre}>
-              The picture shows the week’s totals and your best card. Never which days you went, or when.
+              The picture shows the week’s totals and your best card. It doesn’t show which days you went.
             </Txt>
           </View>
         </>

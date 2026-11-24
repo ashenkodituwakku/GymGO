@@ -127,7 +127,7 @@ mobile 550, domain 191 and web 39 tests, all passing.
   please do the welcome tour, sign-in and sign-up yourself, in the
   docs/COPY.md voice, since you're working there**; this session leaves those
   files alone. Legal text, GymPal's greeting and waiting messages stay.
-  Done so far (Updates 267–272): Pro and Max, Home, Explore and the gym
+  Done so far (Updates 267–273): Pro and Max, Home, Explore and the gym
   page, training, Profile and settings, collection, friends and feed, gym
   owners and moderation, filters, Google, weather, GymPal's panel, the
   server's error messages and the password reset email and pages. Server
@@ -351,7 +351,7 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
-- **Welcome back, smoother tour** (24 Nov, Update 273). app/welcome-back.tsx
+- **Welcome back, smoother tour** (24 Nov, Update 274). app/welcome-back.tsx
   (headerless, fade, no swipe back; in `SIDEBAR_STEPS_ASIDE` and GymPal's
   HIDDEN) reads lib/welcomeBack.ts `recapOf({ name, sessions, weeklyGoal,
   gyms, now })` → greeting, line, week, streak, last, gyms (tested).

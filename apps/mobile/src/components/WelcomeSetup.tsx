@@ -34,9 +34,9 @@ type Step = 'country' | 'goal' | 'days' | 'location' | 'done';
 
 /** Each goal, as the builder plans it (lib/workout.ts DOSE). */
 const GOAL_ABOUT: Record<Goal, { icon: IconName; title: string; line: string }> = {
-  muscle: { icon: 'body', title: 'Build muscle', line: 'Sets of 8 to 15, about a minute to a minute and a half of rest.' },
-  strength: { icon: 'trophy', title: 'Get stronger', line: 'Heavier lifts: sets of 5 on the big lifts, longer rests.' },
-  endurance: { icon: 'bolt', title: 'Endurance', line: 'Lighter sets of 15 to 20, with short rests.' },
+  muscle: { icon: 'body', title: 'Build muscle', line: '8 to 15 reps, 60 to 90 s rest' },
+  strength: { icon: 'trophy', title: 'Get stronger', line: 'Heavier weights, sets of 5, longer rests' },
+  endurance: { icon: 'bolt', title: 'Endurance', line: '15 to 20 reps, short rests' },
 };
 
 export function WelcomeSetup({ onDone }: { onDone: () => void }) {
@@ -125,16 +125,16 @@ export function WelcomeSetup({ onDone }: { onDone: () => void }) {
         <Animated.View key={step} entering={enter} style={styles.step}>
           {step === 'country' && (
             <>
-              <Heading title="Where do you train?" line={LIMITED ? 'This sets where GymGO opens.' : billing.isPro ? 'This sets where GymGO opens: Pro covers every country.' : 'GymGO Free covers every gym in one country. You can change it later in Profile.'} />
+              <Heading title="Where do you train?" line={LIMITED ? 'GymGO opens here.' : billing.isPro ? 'Pro covers every country. GymGO opens here.' : 'Free covers one country. Change it any time in Profile.'} />
               {suggestedCountry && !query.trim() && (
-                <Choice selected={country === suggestedCountry.code} onPress={() => setCountry(suggestedCountry.code)} big label={suggestedCountry.name} note="Suggested for you" lead={<Flag code={suggestedCountry.code} size={30} />} />
+                <Choice selected={country === suggestedCountry.code} onPress={() => setCountry(suggestedCountry.code)} big label={suggestedCountry.name} note="Suggested" lead={<Flag code={suggestedCountry.code} size={30} />} />
               )}
               <View {...FIELD_FRAME} style={styles.search}>
                 <Icon name="search" size={16} color={color.labelSecondary} />
                 <TextInput
                   value={query}
                   onChangeText={setQuery}
-                  placeholder="Search for another country"
+                  placeholder="Search countries"
                   placeholderTextColor={color.labelSecondaryOnFill}
                   autoCorrect={false}
                   accessibilityLabel="Search countries"
@@ -147,7 +147,7 @@ export function WelcomeSetup({ onDone }: { onDone: () => void }) {
                 ))}
                 {query.trim() !== '' && offered.length === 0 && (
                   <Txt variant="subhead" color={color.labelSecondary}>
-                    No country by that name.
+                    No matches.
                   </Txt>
                 )}
               </View>
@@ -156,7 +156,7 @@ export function WelcomeSetup({ onDone }: { onDone: () => void }) {
 
           {step === 'goal' && (
             <>
-              <Heading title="What do you train for?" line="Workouts you build start here. You can pick another each time." />
+              <Heading title="What do you train for?" line="Your workouts start from this. Change it any time." />
               <View style={styles.list} role="radiogroup" accessibilityLabel="Your goal">
                 {GOALS.map((item) => {
                   const about = GOAL_ABOUT[item.id];
@@ -182,7 +182,7 @@ export function WelcomeSetup({ onDone }: { onDone: () => void }) {
 
           {step === 'days' && (
             <>
-              <Heading title="How many days a week?" line="Your week on Home and Progress counts towards it. Change it any time." />
+              <Heading title="How many days a week?" line="Sets your weekly goal on Home and Progress." />
               <View style={styles.days} role="radiogroup" accessibilityLabel="Days a week">
                 {[1, 2, 3, 4, 5, 6, 7].map((count) => (
                   <Pressable
@@ -230,11 +230,11 @@ export function WelcomeSetup({ onDone }: { onDone: () => void }) {
               </View>
               <Heading
                 title="Find gyms near you"
-                line={`GymGO uses where you are to show the nearest gyms first and to check you in. Your exact location stays on this ${Platform.OS === 'web' ? 'device' : 'phone'}: it's never saved or sent to GymGO.`}
+                line={`See the closest gyms first and check in when you arrive. Your exact location stays on your ${Platform.OS === 'web' ? 'device' : 'phone'} and is never saved or sent to GymGO.`}
               />
-              {where === 'denied' && <Note tone="maybe" text="Location is turned off for GymGO in your settings. You can turn it on there any time; until then, search by place." />}
-              {where === 'unavailable' && <Note tone="maybe" text="Couldn't find you just now. GymGO will try again when you look for gyms near you." />}
-              {where === 'on' && <Note tone="good" text="Found you. Gyms near you show first." />}
+              {where === 'denied' && <Note tone="maybe" text="Location is off for GymGO. Turn it on in Settings, or search by place." />}
+              {where === 'unavailable' && <Note tone="maybe" text="Couldn’t get your location. You can try again later." />}
+              {where === 'on' && <Note tone="good" text="Location on. Nearby gyms show first." />}
             </>
           )}
 
@@ -243,7 +243,7 @@ export function WelcomeSetup({ onDone }: { onDone: () => void }) {
               <View style={styles.doneMark}>
                 <Icon name="check" size={40} color={color.onBrand} />
               </View>
-              <Heading title="You’re all set" line="GymGO is ready. You can change any of these later." />
+              <Heading title="You’re all set" line="You can change these any time." />
               <View style={styles.summary}>
                 {answered.country && country && countryByCode(country) && <Chip lead={<Flag code={country} size={16} />} label={countryByCode(country)!.name} />}
                 {answered.goal && goal && <Chip icon={GOAL_ABOUT[goal].icon} label={GOAL_ABOUT[goal].title} />}

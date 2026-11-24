@@ -1611,6 +1611,8 @@ function Summary({
             // The workout as a picture, as a training app shares it (app/share-workout.tsx).
             { id: 'picture', icon: 'photo' as IconName, title: 'Share as a picture', go: () => router.push({ pathname: '/share-workout', params: { id: session.id } }), busy: false },
             { id: 'workout', icon: 'share' as IconName, title: 'Share this workout', go: () => void share(), busy: false },
+            // Logged late, or on the wrong day: its day, start and sets can change (app/session-edit.tsx).
+            { id: 'edit', icon: 'note' as IconName, title: 'Edit workout', go: () => router.push({ pathname: '/session-edit', params: { id: session.id } }), busy: false },
             { id: 'progress', icon: 'chart' as IconName, title: 'See your progress', go: onProgress, busy: false },
           ].map((row, index) => (
             <Pressable

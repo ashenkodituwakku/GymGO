@@ -108,3 +108,55 @@ export function finishFor(startedAt: string, minutes: string): string | null {
 
 /** How long it took, in whole minutes, at least 1. */
 export const minutesOf = (session: Pick<TrainingSession, 'startedAt' | 'finishedAt'>) => Math.max(1, Math.round((Date.parse(session.finishedAt) - Date.parse(session.startedAt)) / 60_000));
+
+// --- When it was --------------------------------------------------------------
+
+/**
+ * A time of day as typed: "6:30 pm", "6.30pm", "6 pm", "18:30" or "0630".
+ * Null when it isn't one.
+ */
+export function parseClock(text: string): { hours: number; minutes: number } | null {
+  const match = /^(\d{1,2})(?:[:.]?(\d{2}))?\s*([ap])\.?\s*(?:m\.?)?$|^(\d{1,2})(?:[:.]?(\d{2}))?$/i.exec(text.trim());
+  if (!match) return null;
+  const meridiem = match[3]?.toLowerCase();
+  let hours = Number(match[1] ?? match[4]);
+  const minutes = Number(match[2] ?? match[5] ?? 0);
+  if (minutes > 59) return null;
+  if (meridiem) {
+    if (hours < 1 || hours > 12) return null;
+    hours = (hours % 12) + (meridiem === 'p' ? 12 : 0);
+  } else if (hours > 23) return null;
+  return { hours, minutes };
+}
+
+/** A time of day as GymGO writes it: "6:30 pm", "12:05 am". */
+export function clockText(date: Date): string {
+  const hours = date.getHours();
+  return `${hours % 12 || 12}:${String(date.getMinutes()).padStart(2, '0')} ${hours < 12 ? 'am' : 'pm'}`;
+}
+
+export type WhenCheck = { ok: true; startedAt: string; finishedAt: string } | { ok: false; problem: string };
+
+/**
+ * When a workout started and finished, from the day picked (its key,
+ * "2026-11-24"), the start typed and how many minutes it took. It can't end
+ * in the future (a few minutes' grace for a clock that's slightly out).
+ * Left as it was, the start keeps its seconds, so nothing moves.
+ */
+export function whenFor(
+  { day, start, minutes }: { day: string; start: string; minutes: string },
+  original: { startedAt: string },
+  now: Date = new Date(),
+): WhenCheck {
+  const clock = parseClock(start);
+  if (!clock) return { ok: false, problem: 'Type the start time like 6:30 pm or 18:30.' };
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+  if (!match) return { ok: false, problem: 'Pick the day it was.' };
+  const was = new Date(original.startedAt);
+  const unchanged = day === `${was.getFullYear()}-${String(was.getMonth() + 1).padStart(2, '0')}-${String(was.getDate()).padStart(2, '0')}` && clock.hours === was.getHours() && clock.minutes === was.getMinutes();
+  const startedAt = unchanged ? original.startedAt : new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), clock.hours, clock.minutes).toISOString();
+  const finishedAt = finishFor(startedAt, minutes);
+  if (!finishedAt) return { ok: false, problem: 'Enter a duration between 1 and 1,440 minutes.' };
+  if (Date.parse(finishedAt) > now.getTime() + 5 * 60_000) return { ok: false, problem: 'That would finish in the future. Pick an earlier day or time.' };
+  return { ok: true, startedAt, finishedAt };
+}

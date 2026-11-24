@@ -104,14 +104,16 @@ export default function SignInScreen() {
 
   // Once only: signing in here and the account noticing it both land here.
   const closed = useRef(false);
-  const done = useCallback(() => {
+  // `fresh`: you've just signed in here (not arrived already signed in), so Welcome back says hello first.
+  const done = useCallback((fresh = false) => {
     if (closed.current) return;
     closed.current = true;
     haptic.success();
     // A link opened before signing in (a gym a friend sent) goes there now.
     const next = takeWanted();
-    // A new account sees the welcome tour first, then goes on.
+    // A new account sees the welcome tour first, then goes on; signing in again, Welcome back.
     if (takeNewAccount()) router.replace({ pathname: '/welcome', params: next ? { next } : {} });
+    else if (fresh) router.replace({ pathname: '/welcome-back', params: next ? { next } : {} });
     else if (next) router.replace(next as Href);
     else if (router.canGoBack()) router.back();
     else router.replace('/');
@@ -163,7 +165,7 @@ export default function SignInScreen() {
         noteNewAccount();
         await account.signUp(name.trim(), email.trim(), password, birthMonth ?? '');
       } else await account.signIn(email.trim(), password);
-      done();
+      done(true);
     } catch (caught) {
       noteNewAccount(false);
       if (tooYoung(caught)) refuseYoung();
@@ -199,7 +201,7 @@ export default function SignInScreen() {
     setError(null);
     try {
       if (await account.signInWith(provider, idToken, nonce, providedName)) noteNewAccount();
-      done();
+      done(true);
     } catch (caught) {
       if (caught instanceof ApiError && (caught.code === 'age_needed' || caught.code === 'terms_needed')) {
         // A new account: ask the age question and for the terms first, then finish with the same sign-in.

@@ -236,6 +236,24 @@ export default function ProgressScreen() {
 
       {log.sessions.length > 0 && (
         <Pressable
+          onPress={() => router.push('/calendar')}
+          accessibilityRole="link"
+          accessibilityLabel="Calendar, every day you trained"
+          style={({ pressed }) => [styles.photosRow, pressed && { opacity: 0.8 }]}
+        >
+          <Icon name="calendar" size={18} color={color.brand} />
+          <View style={styles.photosText}>
+            <Txt variant="headline">Calendar</Txt>
+            <Txt variant="footnote" color={color.labelSecondary}>
+              Every day you trained, month by month
+            </Txt>
+          </View>
+          <Icon name="chevron" size={13} color={color.labelTertiary} />
+        </Pressable>
+      )}
+
+      {log.sessions.length > 0 && (
+        <Pressable
           onPress={() => router.push('/month')}
           accessibilityRole="link"
           accessibilityLabel="Monthly report, compared with the month before"

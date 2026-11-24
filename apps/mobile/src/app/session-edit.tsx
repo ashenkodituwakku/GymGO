@@ -4,18 +4,22 @@
  * RPE, sets added or removed, exercises added or removed. Saved to your
  * account (PATCH /api/training/:id), checked as a new workout is, and your
  * records and totals follow, since they're worked out from the log. The day
- * and the time it started stay as logged. Leaving with changes not saved
- * (back, a swipe, Cancel, closing the tab) asks first.
+ * and start time can change too, picked on a small calendar and typed, so
+ * a workout logged late (or on the wrong day) goes on the day it was.
+ * Leaving with changes not saved (back, a swipe, Cancel, closing the tab)
+ * asks first.
  */
 
 import { useLocalSearchParams, usePreventRemove, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { AddExercise } from '@/components/AddExercise';
 import { ChoiceSheet } from '@/components/ChoiceSheet';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
-import { Pressable } from '@/components/motion';
+import { MonthGrid } from '@/components/MonthGrid';
+import { FADE_IN, Pressable } from '@/components/motion';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
@@ -27,7 +31,8 @@ import { askToDiscard } from '@/lib/askToDiscard';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
-import { checkEdits, draftsOf, finishFor, minutesOf, type EditedExercise } from '@/lib/sessionEdit';
+import { calendarMonth, dayFromKey, dayKey, dayWords, shiftMonth, shortDay } from '@/lib/calendar';
+import { checkEdits, clockText, draftsOf, minutesOf, whenFor, type EditedExercise } from '@/lib/sessionEdit';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { setTags, type DraftSet, type SetKind, type WeightUnit } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
@@ -37,6 +42,9 @@ interface Draft {
   name: string;
   unit: WeightUnit;
   minutes: string;
+  /** The day it started, "2026-11-24", and the time, as typed. */
+  day: string;
+  start: string;
   exercises: EditedExercise[];
 }
 
@@ -62,6 +70,9 @@ export default function SessionEditScreen() {
   const [saving, setSaving] = useState(false);
   const [typing, setTyping] = useState<SetAt | null>(null);
   const [rating, setRating] = useState<SetAt | null>(null);
+  // The small calendar for the day, open or not, and the month it shows.
+  const [pickingDay, setPickingDay] = useState(false);
+  const [shownMonth, setShownMonth] = useState<{ year: number; month: number } | null>(null);
   // The workout as it was logged, to tell whether anything's been changed.
   const [original, setOriginal] = useState<string | null>(null);
   // Saved, or discarded on purpose: leaving no longer asks.
@@ -70,7 +81,8 @@ export default function SessionEditScreen() {
   // Filled from the log once it's there; never again, so typing isn't undone by a reload.
   useEffect(() => {
     if (session && !draft) {
-      const filled = { name: session.name, unit: session.unit, minutes: String(minutesOf(session)), exercises: draftsOf(session) };
+      const started = new Date(session.startedAt);
+      const filled = { name: session.name, unit: session.unit, minutes: String(minutesOf(session)), day: dayKey(started), start: clockText(started), exercises: draftsOf(session) };
       setDraft(filled);
       setOriginal(JSON.stringify(filled));
     }
@@ -151,13 +163,13 @@ export default function SessionEditScreen() {
     setProblem(null);
     const name = draft.name.trim().replace(/\s+/g, ' ');
     if (name.length < 1 || name.length > 80) return setProblem('Give it a name of up to 80 characters.');
-    const finishedAt = finishFor(session.startedAt, draft.minutes);
-    if (!finishedAt) return setProblem('Enter a duration between 1 and 1,440 minutes.');
+    const when = whenFor(draft, session);
+    if (!when.ok) return setProblem(when.problem);
     const checked = checkEdits(draft.exercises, draft.unit);
     if (!checked.ok) return setProblem(checked.problem);
     setSaving(true);
     try {
-      const { session: saved } = await api.editTraining(token, session.id, { name, unit: draft.unit, finishedAt, exercises: checked.exercises });
+      const { session: saved } = await api.editTraining(token, session.id, { name, unit: draft.unit, startedAt: when.startedAt, finishedAt: when.finishedAt, exercises: checked.exercises });
       log.update(saved);
       haptic.success();
       // Saved: nothing to lose, so leaving doesn't ask.
@@ -171,7 +183,10 @@ export default function SessionEditScreen() {
     }
   };
 
-  const started = new Date(session.startedAt);
+  const pickedDay = dayFromKey(draft.day) ?? new Date(session.startedAt);
+  const calendarAt = shownMonth ?? { year: pickedDay.getFullYear(), month: pickedDay.getMonth() };
+  const today = new Date();
+  const atThisMonth = calendarAt.year === today.getFullYear() && calendarAt.month === today.getMonth();
   const typingSet = typing ? draft.exercises[typing.exercise]?.sets[typing.set] : undefined;
 
   return (
@@ -182,12 +197,95 @@ export default function SessionEditScreen() {
           Edit workout
         </Txt>
         <Txt variant="subhead" color={color.labelSecondary}>
-          {`Started ${started.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}, ${started.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}. The day and start stay as logged; records and totals follow your changes.`}
+          Fix anything you got wrong. Records and totals update to match.
         </Txt>
       </View>
 
       <View style={styles.card}>
         <TextField label="Name" inSheet={false} value={draft.name} onChangeText={(name) => setDraft({ ...draft, name })} maxLength={80} />
+        {/* When it was: the day on a small calendar, the start typed. */}
+        <View style={styles.pair}>
+          <View style={[styles.dayField, styles.field]}>
+            <Txt variant="footnote" color={color.labelSecondary} style={face('medium')}>
+              Day
+            </Txt>
+            <Pressable
+              onPress={() => {
+                haptic.select();
+                setShownMonth(null);
+                setPickingDay((open) => !open);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Day, ${dayWords(pickedDay)}. Change`}
+              accessibilityState={{ expanded: pickingDay }}
+              style={({ pressed }) => [styles.dayButton, pickingDay && styles.dayButtonOpen, pressed && { opacity: 0.8 }]}
+            >
+              <Icon name="calendar" size={16} color={color.brand} />
+              <Txt variant="body" numberOfLines={1} style={styles.flex}>
+                {shortDay(pickedDay)}
+              </Txt>
+            </Pressable>
+          </View>
+          <View style={styles.flex}>
+            <TextField
+              label="Start time"
+              inSheet={false}
+              value={draft.start}
+              onChangeText={(start) => setDraft({ ...draft, start })}
+              placeholder="6:30 pm"
+              autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={12}
+            />
+          </View>
+        </View>
+        {pickingDay && (
+          <Animated.View entering={FADE_IN} style={styles.dayPicker}>
+            <View style={styles.monthBar}>
+              <Pressable
+                onPress={() => {
+                  haptic.select();
+                  setShownMonth(shiftMonth(calendarAt.year, calendarAt.month, -1));
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Earlier month"
+                hitSlop={8}
+                style={({ pressed }) => [styles.monthStep, pressed && { opacity: 0.6 }]}
+              >
+                <View style={styles.chevronLeft}>
+                  <Icon name="chevron" size={13} color={color.brand} />
+                </View>
+              </Pressable>
+              <Txt variant="headline" accessibilityRole="header" style={[styles.flex, styles.centerText]}>
+                {calendarMonth(calendarAt.year, calendarAt.month, new Map(), today).label}
+              </Txt>
+              <Pressable
+                disabled={atThisMonth}
+                onPress={() => {
+                  haptic.select();
+                  setShownMonth(shiftMonth(calendarAt.year, calendarAt.month, 1));
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Later month"
+                accessibilityState={{ disabled: atThisMonth }}
+                hitSlop={8}
+                style={({ pressed }) => [styles.monthStep, atThisMonth && { opacity: 0.3 }, pressed && { opacity: 0.6 }]}
+              >
+                <Icon name="chevron" size={13} color={color.brand} />
+              </Pressable>
+            </View>
+            <MonthGrid
+              month={calendarMonth(calendarAt.year, calendarAt.month, new Map(), today)}
+              size={34}
+              selected={draft.day}
+              canPick={(day) => !day.future}
+              onPick={(day) => {
+                setDraft({ ...draft, day: day.key });
+                setPickingDay(false);
+              }}
+            />
+          </Animated.View>
+        )}
         <View style={styles.pair}>
           <View style={styles.flex}>
             <TextField
@@ -430,6 +528,15 @@ const styles = themed(() =>
     card: { gap: space[2], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     flex: { flex: 1, minWidth: 0 },
     pair: { flexDirection: 'row', alignItems: 'flex-end', gap: space[3] },
+    field: { gap: 6 },
+    dayButton: { flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: 48, paddingHorizontal: space[3], borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.cardGlass, borderWidth: StyleSheet.hairlineWidth, borderColor: color.separator, ...shadow.rim },
+    dayButtonOpen: { borderColor: color.brand },
+    dayField: { flex: 1.3, minWidth: 0 },
+    chevronLeft: { transform: [{ rotate: '180deg' }] },
+    dayPicker: { gap: space[2], padding: space[3], borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.groupedBackground },
+    monthBar: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    monthStep: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+    centerText: { textAlign: 'center' },
     unit: { gap: 6, width: 120 },
     unitLabel: { marginLeft: space[1] },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },

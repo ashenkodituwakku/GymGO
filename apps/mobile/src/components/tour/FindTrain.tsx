@@ -89,7 +89,7 @@ export function FindPart(props: PartProps) {
             <PartWords
               eyebrow="FIND"
               title="Find a gym that lets you in"
-              line="See what each gym publishes: the price of a visit, guest hours and what to bring. Where a gym doesn’t say, GymGO says call first, and what to ask."
+              line="Visit prices, guest hours and what to bring. If a gym doesn’t say, GymGO tells you what to ask."
               enter={play.enter}
               wide={props.wide}
             />
@@ -225,7 +225,7 @@ export function TrainPart(props: PartProps) {
             <PartWords
               eyebrow="TRAIN"
               title="Know what to do when you get there"
-              line="Tap the muscles you want to train for a plan that fits the kit, then tick off your sets. The rest timer, plate maths and your records come free."
+              line="Pick the muscles to train and get a plan for the gym’s kit. Rest timer, plate maths and records are free."
               enter={play.enter}
               wide={props.wide}
             />

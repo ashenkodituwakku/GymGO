@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkEdits, draftsOf, finishFor, minutesOf } from './sessionEdit';
+import { checkEdits, clockText, draftsOf, finishFor, minutesOf, parseClock, whenFor } from './sessionEdit';
 import type { TrainingSession } from './training';
 
 const session: TrainingSession = {
@@ -59,5 +59,44 @@ describe('editing a logged workout', () => {
     expect(finishFor(session.startedAt, '0')).toBeNull();
     expect(finishFor(session.startedAt, '1441')).toBeNull();
     expect(finishFor(session.startedAt, '45.5')).toBeNull();
+  });
+});
+
+describe('when a workout was', () => {
+  it('reads a start time typed the usual ways', () => {
+    expect(parseClock('6:30 pm')).toEqual({ hours: 18, minutes: 30 });
+    expect(parseClock('6.30pm')).toEqual({ hours: 18, minutes: 30 });
+    expect(parseClock('6 PM')).toEqual({ hours: 18, minutes: 0 });
+    expect(parseClock('6:30 p.m.')).toEqual({ hours: 18, minutes: 30 });
+    expect(parseClock('12:05 am')).toEqual({ hours: 0, minutes: 5 });
+    expect(parseClock('12 pm')).toEqual({ hours: 12, minutes: 0 });
+    expect(parseClock('18:30')).toEqual({ hours: 18, minutes: 30 });
+    expect(parseClock('0630')).toEqual({ hours: 6, minutes: 30 });
+    expect(parseClock('7')).toEqual({ hours: 7, minutes: 0 });
+    for (const bad of ['', '25:00', '6:75', '13 pm', '0 am', 'soon', '6:3']) expect(parseClock(bad)).toBeNull();
+  });
+
+  it('writes a time of day the way GymGO does', () => {
+    expect(clockText(new Date(2026, 10, 24, 18, 5))).toBe('6:05 pm');
+    expect(clockText(new Date(2026, 10, 24, 0, 30))).toBe('12:30 am');
+    expect(clockText(new Date(2026, 10, 24, 12, 0))).toBe('12:00 pm');
+  });
+
+  it('moves a workout to the day and time picked', () => {
+    const now = new Date(2026, 10, 25, 9, 0);
+    const original = { startedAt: new Date(2026, 10, 25, 7, 0, 41).toISOString() };
+    const moved = whenFor({ day: '2026-11-23', start: '6:30 pm', minutes: '50' }, original, now);
+    expect(moved).toEqual({ ok: true, startedAt: new Date(2026, 10, 23, 18, 30).toISOString(), finishedAt: new Date(2026, 10, 23, 19, 20).toISOString() });
+    // Left as it was: the start keeps its seconds.
+    const kept = whenFor({ day: '2026-11-25', start: '7:00 am', minutes: '45' }, original, now);
+    expect(kept).toEqual({ ok: true, startedAt: original.startedAt, finishedAt: new Date(Date.parse(original.startedAt) + 45 * 60_000).toISOString() });
+  });
+
+  it('says what’s wrong with a time that can’t be', () => {
+    const now = new Date(2026, 10, 25, 9, 0);
+    const original = { startedAt: new Date(2026, 10, 25, 7, 0).toISOString() };
+    expect(whenFor({ day: '2026-11-25', start: '8:30 am', minutes: '60' }, original, now)).toEqual({ ok: false, problem: 'That would finish in the future. Pick an earlier day or time.' });
+    expect(whenFor({ day: '2026-11-25', start: 'later', minutes: '60' }, original, now)).toMatchObject({ ok: false, problem: 'Type the start time like 6:30 pm or 18:30.' });
+    expect(whenFor({ day: '2026-11-24', start: '7 pm', minutes: '0' }, original, now)).toMatchObject({ ok: false });
   });
 });

@@ -9,9 +9,9 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
-## Update 274 · Refunds and disputes reach the owner
+## Update 276 · Refunds and disputes reach the owner
 
-*24 Nov 2026 · the commit "Refunds and disputes reach the owner"*
+*24 Nov 2026 · `77e7d12`*
 
 Until now the server ignored Stripe's refund and dispute events, so the owner would only find out in Stripe's dashboard. Now:
 
@@ -19,6 +19,65 @@ Until now the server ignored Stripe's refund and dispute events, so the owner wo
 - **Nobody's access changes.** A refund doesn't cancel a subscription, and the email says so. Whether a refund or a lost dispute should end Pro or Max, or void an unused gift code, is left for the owner to decide (docs/PAYMENTS.md).
 - `stripe:setup` lists the three events to add to the webhook endpoint.
 - Checked: 3 new server tests (a full refund emailed once and Pro kept; a dispute with its deadline, then lost; a partial refund's email), server 373 tests, typecheck.
+## Update 275 · A workout calendar, and moving a workout to the day it was
+
+*24 Nov 2026 · `4bda093`*
+
+You asked for more Hevy features. Two more, in GymGO's own look:
+
+- **Calendar** (Progress → Calendar, or Profile → Calendar). It shows every day you trained, month by month.
+  - Each month is a grid, Monday first. Days you trained are filled in violet, with a dot for each workout when there were two or more. Today has a ring.
+  - At the top: your weeks in a row, workouts this month and workouts this year.
+  - Tap a day you trained to see its workouts (time, length, sets and gym). Each one opens in full.
+  - Tap a month's name for its monthly report.
+  - It shows six months at a time, back to your first workout. **Show earlier months** adds six more.
+  - A workout belongs to the day it started, so a late session that runs past midnight stays on the day you began it.
+- **Change a workout's day and start time** (Edit workout).
+  - Pick the day on a small calendar. Days after today can't be picked.
+  - Type the start time as 6:30 pm, 6.30pm, 6 pm or 18:30.
+  - It can't finish in the future. If it would, it says "That would finish in the future. Pick an earlier day or time."
+  - Records, streaks, the calendar and the monthly report follow the new day. If you don't change the day and time, they stay exactly as logged.
+  - Forgot to log a workout? Log it now, then tap **Edit workout** on the summary when you finish and set the day it really was. That link is new on the summary.
+- Checked:
+  - domain 205, server 371 (1 new, for moving a workout) and app 680 tests (12 new for the calendar and start times), typecheck and lint;
+  - in a browser: the calendar at 390 light and 1280 dark; tapping a day lists its workouts, which open; a month's name opens its report;
+  - in a browser: a workout moved to Friday 20 November at 6:30 pm, then shown on that day in the calendar; a time in the future refused; the edit screen at 320 wide.
+- Not checked: a real phone.
+
+## Update 274 · Welcome back, and a smoother tour
+
+*24 Nov 2026 · `34457ac`*
+
+You asked for a welcome back screen, and for the animations to be better and cleaner.
+
+- **Welcome back.** Signing in again now opens a short recap before Home (a new account still gets the tour). It shows:
+  - your photo and "Welcome back, [name]", the words arriving one by one;
+  - one line on when you last trained, such as "You last trained yesterday." or "It’s been a while. Start with something light.";
+  - this week against your weekly goal, as a ring and a count;
+  - your weeks in a row;
+  - your last workout, which opens it;
+  - your collection, or "Check in at a gym to get your first card" if you don’t have one yet.
+  - **Continue** goes on to where you were going (a link you opened before signing in) or Home. **Start workout** goes straight to Train.
+  - The cards arrive in turn. With Reduce Motion they’re simply there. GymPal’s button stays out of the way on this screen.
+- **A smoother tour:**
+  - on the web, the tour follows your scrolling through a light spring, so a mouse wheel’s jumps play as one smooth movement (phones already follow your finger directly);
+  - each part now settles back and fades a little as you scroll past it, so one part hands over to the next with no hard cut;
+  - the opening takes a little longer, its badge fades later, and the statement slides up over it;
+  - the statement’s words rise slightly as they light up;
+  - "Scroll to explore" only shows when there’s room for it under the tagline;
+  - with Reduce Motion, the opening is shown still (it was blank).
+- **Plain words** (docs/COPY.md) on the tour, its questions, sign-in and sign-up. For example:
+  - "Pick muscles and get a workout for the gym’s kit." (it read "Tap the muscles you want, tick off your sets, and watch your records climb.")
+  - "Free covers one country. Change it any time in Profile."
+  - Goals read "8 to 15 reps, 60 to 90 s rest", "Heavier weights, sets of 5, longer rests" and "15 to 20 reps, short rests".
+  - "Location is off for GymGO. Turn it on in Settings, or search by place."
+  - "A steady routine with rest days." (it read "A good, steady routine, with rest days between.")
+  - The tour’s shelf: "Starts when you tick a set.", "A trophy every time you beat one.", "A stopwatch for planks. Distance for carries."
+- Checked:
+  - domain 205, server 370 and app 668 tests (3 new for the recap), typecheck and lint;
+  - in a browser, signing in as the dev account opens Welcome back with its week, streak, last workout and collection, and Continue goes on (light at 390 and dark at 1280);
+  - the tour scrolled through again after the changes, with no console errors.
+- Not checked: a real phone.
 
 ## Update 273 · Plainer words, part 7: sentences the scan missed
 

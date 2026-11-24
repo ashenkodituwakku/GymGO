@@ -118,7 +118,7 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
-- **Refunds and disputes** (24 Nov, Update 274). billing.ts `MoneyEvent`,
+- **Refunds and disputes** (24 Nov, Update 276). billing.ts `MoneyEvent`,
   `MONEY_EVENT_TYPES`, `moneyEventEmail`, `recordMoney`, table
   `stripe_money_events`; app.ts emails them through `bugReports.send/to`.
   Record and notify only: don't end access on a refund or dispute without
@@ -356,6 +356,33 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Calendar, a workout's day and start** (24 Nov, Update 275).
+  lib/calendar.ts (`dayKey`, `dayFromKey`, `sessionsByDay` by startedAt in
+  the device's time, `calendarMonth` Monday first, `calendarMonths` back
+  to the first workout with a limit and `more`, `yearSoFar`, `shortDay`,
+  `dayWords`; tested). components/MonthGrid.tsx draws a month: `canPick`
+  decides which days are buttons, the rest are drawn only. app/calendar.tsx
+  (route registered in _layout; Progress and Profile link to it) opens a
+  day's workouts at /feed/[id] and a month at /month?m=. session-edit.tsx:
+  Draft `day` and `start`; lib/sessionEdit.ts `parseClock`, `clockText`,
+  `whenFor` (keeps the original startedAt, seconds and all, when the day
+  and time weren't changed; refuses a finish more than 5 min ahead, as the
+  server does). The PATCH already accepted startedAt; training.test.ts now
+  covers it. train.tsx's summary has Edit workout.
+- **Welcome back, smoother tour** (24 Nov, Update 274). app/welcome-back.tsx
+  (headerless, fade, no swipe back; in `SIDEBAR_STEPS_ASIDE` and GymPal's
+  HIDDEN) reads lib/welcomeBack.ts `recapOf({ name, sessions, weeklyGoal,
+  gyms, now })` → greeting, line, week, streak, last, gyms (tested).
+  sign-in.tsx `done(fresh)`: a new account → /welcome, a password or
+  provider sign-in → /welcome-back with `next` passed on; finishing a social
+  profile still goes straight on. Tour: welcome.tsx's `motionY` follows
+  `scrollY` through `withSpring` on the web only (all the parts, the light,
+  the strip and Aurora read it; Next and the strip's taps read raw
+  `scrollY`). kit.tsx `Pinned` fades and scales its hold over 0.6 screens
+  after its span (`leave`). The tour, WelcomeSetup, AuthShowcase and
+  onboarding.ts's `daysLine` are now in the docs/COPY.md voice, so the
+  "other session: please do the welcome tour, sign-in and sign-up" ask in
+  the copy claim is done.
 - **Tour questions, soft background** (24 Nov, Update 263).
   components/WelcomeSetup.tsx (steps country → goal → days → location
   (only while `prefs.location`) → done; `chooseCountry`, `setPref('goal')`,

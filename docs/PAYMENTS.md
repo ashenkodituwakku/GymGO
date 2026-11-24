@@ -251,7 +251,7 @@ The owner's tiers: **Free**, **Pro** (everything Pro had) and **Max**
    - Privacy → what we keep: drop "who’s on your Duo (or whose you’re on)";
      add that friends can see whether you're on Max (the badge).
 
-## Refunds and disputes (Update 274, 24 Nov 2026)
+## Refunds and disputes (Update 276, 24 Nov 2026)
 
 When Stripe refunds a payment or a customer disputes one, the server now
 keeps a record (`stripe_money_events`) and emails it to the address bug

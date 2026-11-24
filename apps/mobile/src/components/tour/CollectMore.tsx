@@ -46,19 +46,19 @@ interface PartProps {
 // --- The reel ----------------------------------------------------------------------
 
 const TILES: Array<{ icon: IconName; title: string; line: string; colors: [string, string] }> = [
-  { icon: 'timer', title: 'Rest timer', line: 'Starts as you tick a set, with −15, +15 and Skip.', colors: ['#7C6CFF', '#4B3BD6'] },
+  { icon: 'timer', title: 'Rest timer', line: 'Starts when you tick a set.', colors: ['#7C6CFF', '#4B3BD6'] },
   { icon: 'plates', title: 'Plate maths', line: 'What to load on each side of the bar.', colors: ['#4DA3FF', '#2563EB'] },
-  { icon: 'trophy', title: 'Your records', line: 'Heaviest, strongest and longest, with a trophy the moment you beat one.', colors: ['#FFC94D', '#D98200'] },
-  { icon: 'clock', title: 'Timed sets', line: 'Planks by time, with a stopwatch on the set; carries by distance.', colors: ['#3FD0B6', '#0E8F7A'] },
-  { icon: 'people', title: 'Friends’ feed', line: 'Your friends’ workouts: like them, comment, or do theirs.', colors: ['#FF8AB8', '#D63B7A'] },
-  { icon: 'calendar', title: 'Monthly report', line: 'Your month against the last: workouts, time and weight lifted.', colors: ['#8E7BFF', '#3A2A8C'] },
+  { icon: 'trophy', title: 'Your records', line: 'A trophy every time you beat one.', colors: ['#FFC94D', '#D98200'] },
+  { icon: 'clock', title: 'Timed sets', line: 'A stopwatch for planks. Distance for carries.', colors: ['#3FD0B6', '#0E8F7A'] },
+  { icon: 'people', title: 'Friends’ feed', line: 'See and like your friends’ workouts.', colors: ['#FF8AB8', '#D63B7A'] },
+  { icon: 'calendar', title: 'Monthly report', line: 'This month compared with last month.', colors: ['#8E7BFF', '#3A2A8C'] },
 ];
 
 export function ReelPart(props: PartProps) {
   const tileW = props.wide ? 300 : Math.min(250, props.width * 0.66);
   const tileH = Math.round(tileW * 1.12);
   const gap = space[4];
-  const words = (enter: SharedValue<number>) => <PartWords eyebrow="AND MORE" title="Everything else, built in" line="The small things that make a workout go smoothly." enter={enter} wide={false} />;
+  const words = (enter: SharedValue<number>) => <PartWords eyebrow="AND MORE" title="Everything else, built in" line="Small things that make workouts easier." enter={enter} wide={false} />;
   if (props.calm) {
     // Still: the tiles in a grid, all at once.
     return (
@@ -166,7 +166,7 @@ export function CollectPart(props: PartProps) {
             <PartWords
               eyebrow="COLLECT"
               title="Collect every gym you visit"
-              line="Check in at a gym for its card. Every visit rolls a rarity, cards climb from Bronze to Platinum, and every gym in a suburb completes a set."
+              line="Check in to get each gym’s card. Every visit rolls a rarity."
               enter={play.enter}
               wide={props.wide}
             />
@@ -298,10 +298,10 @@ export function Numbers({ screen, scrollY, calm, wide, onPlace }: { screen: numb
   const style = useAnimatedStyle(() => rise(enter.value, 0, 1, 40));
   const cities = CITY_LIST.filter((city) => !city.demo).length;
   const stats: Array<{ id: string; value: number; label: string }> = [
-    { id: 'tour.exercises', value: EXERCISES.length, label: 'exercises to plan with' },
+    { id: 'tour.exercises', value: EXERCISES.length, label: 'exercises' },
     { id: 'tour.cities', value: cities, label: 'cities built in' },
-    { id: 'tour.countries', value: COUNTRIES.length, label: 'countries to choose from' },
-    { id: 'tour.rarities', value: RARITIES.length, label: 'rarities a visit can roll' },
+    { id: 'tour.countries', value: COUNTRIES.length, label: 'countries' },
+    { id: 'tour.rarities', value: RARITIES.length, label: 'card rarities' },
   ];
   return (
     <View
@@ -345,7 +345,7 @@ export function Finale({ screen, scrollY, calm }: { screen: number; scrollY: Sha
   const icons: IconName[] = ['door', 'workout', 'cards'];
   return (
     <View onLayout={(event) => (top.value = event.nativeEvent.layout.y)} style={[styles.finaleWrap, { minHeight: calm ? undefined : screen * 0.9 }]}>
-      <Animated.View style={[styles.finale, style]} accessible accessibilityLabel="Let’s set you up. A few quick questions, so GymGO opens where you train and plans for what you want. Skip any you like.">
+      <Animated.View style={[styles.finale, style]} accessible accessibilityLabel="Let’s set you up. A few quick questions. Skip any you like.">
         <View style={styles.trio} aria-hidden>
           {icons.map((icon, index) => (
             <FinaleIcon key={icon} icon={icon} index={index} enter={enter} />
@@ -355,7 +355,7 @@ export function Finale({ screen, scrollY, calm }: { screen: number; scrollY: Sha
           Let’s set you up
         </Txt>
         <Txt variant="body" color={color.labelSecondary} style={[styles.center, styles.lineNarrow]}>
-          A few quick questions, so GymGO opens where you train and plans for what you want. Skip any you like.
+          A few quick questions. Skip any you like.
         </Txt>
       </Animated.View>
     </View>
